@@ -1,4 +1,4 @@
-GFX_SCALE = 1.5
+GFX_SCALE = 3
 FMODE = "nearest"
 
 function love.load()
