@@ -315,14 +315,14 @@ function render_1P()
         for col=0,5 do
             local panel = P1_panels[idx]
             local count_this_panel = false
-            if(panel.color ~= 0 and panel.exclude_hover()) or panel.swapping then
+            if(panel.color ~= 0 and panel:exclude_hover()) or panel.swapping then
                 n_active_panels = n_active_panels + 1
             end
             if panel.color ~= 0 then
+                local draw_frame = 1
+                local draw_x = col*16+P1_spos_x
+                local draw_y = row * 16 + P1_spos_y + P1_displacement;
                 if panel.popped then
-                    local draw_frame = 1
-                    local draw_x = col*16+P1_spos_x
-                    local draw_y = row * 16 + P1_spos_y + P1_displacement;
                     if panel.matched then
                         if panel.timer < FRAMECOUNT_FLASH then
                             draw_frame = 6
@@ -350,10 +350,10 @@ function render_1P()
                     else
                         draw_frame = 1
                     end
-                    love.graphics.draw(IMG_panels[panel.color][draw_frame],
-                        draw_x*GFX_SCALE, draw_y*GFX_SCALE, 0, GFX_SCALE,
-                        GFX_SCALE)
                 end
+                love.graphics.draw(IMG_panels[panel.color][draw_frame],
+                    draw_x*GFX_SCALE, draw_y*GFX_SCALE, 0, GFX_SCALE,
+                    GFX_SCALE)
             end
             idx = idx + 1
         end

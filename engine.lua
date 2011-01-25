@@ -148,9 +148,9 @@ NORMAL = 3
 HARD   = 4
 VHARD  = 5
 
-P1_speed = 0   -- The player's speed level decides the amount of time
+P1_speed = 100   -- The player's speed level decides the amount of time
                  -- the stack takes to rise automatically
-P1_rise_timer = 0   -- When this value reaches 0, the stack will rise a pixel
+P1_rise_timer = 1   -- When this value reaches 0, the stack will rise a pixel
 P1_rise_lock = false   -- If the stack is rise locked, it won't rise until it is
                   -- unlocked.
 P1_has_risen = false   -- set once the stack rises once during the game
@@ -278,7 +278,7 @@ function PdP()
       -- count the number of panels in the top row (danger)
     panels_in_top_row = false
     for panel=1,6 do
-        if(P1_panels[panel]) then
+        if(P1_panels[panel].color ~= 0) then
             panels_in_top_row = true
             P1_danger_col[panel] = 1
         else
@@ -335,7 +335,9 @@ function PdP()
             P1_rise_timer = P1_rise_timer - 1
             if(P1_rise_timer == 0) then  -- try to rise
                 if(P1_displacement == 0) then
-                    if(P1_has_risen or panels_in_top_row) then
+                    if(P1_has_risen or
+                        panels_in_top_row) then
+                        error(tostring(P1_has_risen)..tostring(panels_in_top_row))
                         --P1_game_over=1;
                         P1_has_risen = P1_has_risen -- do nothing
                     else
@@ -392,11 +394,11 @@ function PdP()
 
 
     for row=bottom_row,0,-1 do
-        panel=row/8+1
+        panel=row*8+1
         for col=1,6 do
             -- first of all, we do Nothin' if we're not even looking
             -- at a space with any flags.
-            if(P1_panels[panel].has_flags()) then
+            if(P1_panels[panel]:has_flags()) then
                 if(P1_panels[panel].timer ~= 0) then
                     P1_panels[panel].timer = P1_panels[panel].timer - 1;
                     if(P1_panels[panel].timer == 0) then
@@ -489,7 +491,7 @@ function PdP()
                                                 if(P1_panels[panel].chaining) then
                                                     n_chain_panels = n_chain_panels - 1
                                                 end
-                                                P1_panels[panel].clear_flags()
+                                                P1_panels[panel]:clear_flags()
                                                 set_hoverers(panel-8,FRAMECOUNT_HOVER+1,true)
                                                 --TODO: obv cant pass bitmask here
                                             else
@@ -510,7 +512,7 @@ function PdP()
                                                     n_chain_panels = n_chain_panels - 1
                                                 end
                                                 P1_panels[panel].color = 0
-                                                P1_panels[panel].clear_flags()
+                                                P1_panels[panel]:clear_flags()
                                             -- Any panels sitting on top of it
                                             -- hover and are flagged as CHAINING
                                                 set_hoverers(panel-8,FRAMECOUNT_HOVER+1,true);
@@ -590,8 +592,8 @@ function PdP()
          -- the cursor must not be a non-panel.
         if((P1_panels[panel].color ~= 0) or (P1_panels[panel+1].color ~= 0)) then
             -- also, both spaces must be swappable.
-            something=P1_panels[panel].exclude_swap()
-            whatever=P1_panels[panel+1].exclude_swap()
+            something=P1_panels[panel]:exclude_swap()
+            whatever=P1_panels[panel+1]:exclude_swap()
             if((not something) and (not whatever)) then
                 if(P1_cur_row>0) then
                     something=P1_panels[panel-8].hovering
@@ -604,8 +606,8 @@ function PdP()
 
                     something=P1_panels[panel].chaining
                     whatever=P1_panels[panel+1].chaining
-                    P1_panels[panel].clear_flags()
-                    P1_panels[panel+1].clear_flags()
+                    P1_panels[panel]:clear_flags()
+                    P1_panels[panel+1]:clear_flags()
                     P1_panels[panel].swapping = true
                     P1_panels[panel].chaining = whatever
                     P1_panels[panel+1].swapping = true
@@ -813,8 +815,8 @@ function check_matches()
         panel = col
         old_panel = 0
         for row=0,bottom_row+1 do
-            something=P1_panels[panel].exclude_match()
-            if((P1_panels[panel] ~= 0) and (not something)) then
+            something=P1_panels[panel]:exclude_match()
+            if((P1_panels[panel].color ~= 0) and (not something)) then
                 if(count == 0) then
                     count=1
                 else
@@ -864,7 +866,7 @@ function check_matches()
         old_panel = 0
         panel = row * 8 + 1
         for col=1,6 do
-            something=P1_panels[panel].exclude_match()
+            something=P1_panels[panel]:exclude_match()
             if((P1_panels[panel].color ~= 0) and (not something)) then
                 if(count == 0) then
                     count = 1
@@ -942,7 +944,7 @@ function check_matches()
                 if(P1_panels[panel].color ~= 0) then
                     -- if a panel wasn't matched but was eligible,
                     -- we might have to remove its chain flag...!
-                    something=P1_panels[panel].exclude_match()
+                    something=P1_panels[panel]:exclude_match()
                     if(not something) then
                         if(row~=bottom_row) then
                             something=P1_panels[panel+8].swapping
@@ -1058,7 +1060,7 @@ function set_hoverers(first_hoverer, hover_time, add_chaining)
         if(P1_panels[panel].color == 0) then
             nonpanel = true
         end
-        something = P1_panels[panel].exclude_hover()
+        something = P1_panels[panel]:exclude_hover()
         if(nonpanel or something) then
             brk = true
         else
@@ -1066,7 +1068,7 @@ function set_hoverers(first_hoverer, hover_time, add_chaining)
                 hovers_time = hovers_time + P1_panels[panel].timer
             end
             something = P1_panels[panel].chaining
-            P1_panels[panel].clear_flags()
+            P1_panels[panel]:clear_flags()
             P1_panels[panel].hovering = true
             P1_panels[panel].chaining = something or add_chaining
             P1_panels[panel].timer = hoverstime
@@ -1102,7 +1104,7 @@ function set_hoverers_2(first_hoverer, hover_time, add_chaining)
         if(P1_panels[panel].color == 0) then
             nonpanel = true
         end
-        something = P1_panels[panel].exclude_hover()
+        something = P1_panels[panel]:exclude_hover()
         if(nonpanel or something) then
             brk = true
         else
@@ -1110,7 +1112,7 @@ function set_hoverers_2(first_hoverer, hover_time, add_chaining)
                 hovers_time = hovers_time + P1_panels[panel].timer
             end
             something = P1_panels[panel].chaining
-            P1_panels[panel].clear_flags()
+            P1_panels[panel]:clear_flags()
             P1_panels[panel].hovering = true
             P1_panels[panel].chaining = add_chaining or something
             P1_panels[panel].timer = hovers_time+not_first
@@ -1150,7 +1152,7 @@ function new_row()
         brk=0;
         P1_panels[panel] = Panel()
         while(not brk) do
-            P1_panels[panel].color = random(1,6)
+            P1_panels[panel].color = math.random(1,6)
             --TODO TODO TODO: hook this up to a real random function.
             brk = 1
             if(P1_panels[panel] == P1_panels[panel-8]) then
@@ -1167,7 +1169,7 @@ function new_row()
         brk = false
         P1_panels[panel] = Panel()
         while(not brk) do
-            P1_panels[panel].color = random(1,6)
+            P1_panels[panel].color = math.random(1,6)
             something = false
             if(whatever) then
                 if(P1_panels[panel].color == P1_panels[panel-1].color) then
