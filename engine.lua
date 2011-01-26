@@ -184,11 +184,13 @@ n_active_panels = 0
 n_chain_panels= 0
 
    -- These change depending on the difficulty and speed levels:
-FRAMECOUNT_HOVER = 0
-FRAMECOUNT_MATCH = 0
-FRAMECOUNT_FLASH = 0
-FRAMECOUNT_POP = 0
-FRAMECOUNT_RISE = 5
+FRAMECOUNT_HOVER = 9
+FRAMECOUNT_MATCH = 50
+FRAMECOUNT_FLASH = 13
+FRAMECOUNT_POP = 8
+FRAMECOUNT_RISE = 8
+
+P1_rise_timer = FRAMECOUNT_RISE
 
 
 

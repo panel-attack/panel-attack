@@ -2,8 +2,8 @@
 --int Font_NumRed;
 --int Font_NumBlue;
 
-P1_spos_x = 0   -- Position of the play area on the screen
-P1_spos_y = 0
+P1_spos_x = 4   -- Position of the play area on the screen
+P1_spos_y = 4
 
 --int P1ScoreDisplay;
 --int P1ScoreRender;
