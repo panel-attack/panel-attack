@@ -188,7 +188,7 @@ FRAMECOUNT_HOVER = 0
 FRAMECOUNT_MATCH = 0
 FRAMECOUNT_FLASH = 0
 FRAMECOUNT_POP = 0
-FRAMECOUNT_RISE = 0
+FRAMECOUNT_RISE = 5
 
 
 
@@ -337,9 +337,9 @@ function PdP()
                 if(P1_displacement == 0) then
                     if(P1_has_risen or
                         panels_in_top_row) then
-                        error(tostring(P1_has_risen)..tostring(panels_in_top_row))
-                        --P1_game_over=1;
-                        P1_has_risen = P1_has_risen -- do nothing
+                        --error(tostring(P1_has_risen)..tostring(panels_in_top_row))
+                        P1_game_over = true
+                        --P1_has_risen = P1_has_risen -- do nothing
                     else
                         new_row()
                         P1_displacement = 15
@@ -814,7 +814,7 @@ function check_matches()
     for col=1,6 do
         panel = col
         old_panel = 0
-        for row=0,bottom_row+1 do
+        for row=0,bottom_row do
             something=P1_panels[panel]:exclude_match()
             if((P1_panels[panel].color ~= 0) and (not something)) then
                 if(count == 0) then
@@ -1149,14 +1149,14 @@ function new_row()
     end
                      -- generate a new row
     for panel=89,90 do
-        brk=0;
+        brk = false
         P1_panels[panel] = Panel()
         while(not brk) do
             P1_panels[panel].color = math.random(1,6)
             --TODO TODO TODO: hook this up to a real random function.
-            brk = 1
+            brk = true
             if(P1_panels[panel] == P1_panels[panel-8]) then
-                brk = 0
+                brk = false
             end
         end
         P1_panels[panel].dimmed = true

@@ -28,6 +28,9 @@ function love.draw()
     if(crash_now) then
         error(crash_error)
     end
+    if(P1_game_over) then
+        error("game over lol")
+    end
 end
 
 crash_now = false
