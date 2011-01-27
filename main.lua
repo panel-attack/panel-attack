@@ -13,6 +13,8 @@ function love.load()
 
     -- load images and set up stuff
     graphics_init()
+    -- sets key repeat (well that was a bad idea)
+    -- input_init()
 
     -- create mainloop coroutine
     mainloop = coroutine.create(fmainloop)
@@ -35,6 +37,7 @@ end
 
 crash_now = false
 crash_error = nil
+CLOCK = 0
 
 function fmainloop()
     local textpos = 0
@@ -46,12 +49,14 @@ function fmainloop()
             render_1P()
             love.graphics.draw(IMG_frame, 0, 0, 0, GFX_SCALE, GFX_SCALE)
             love.graphics.print(_VERSION, textpos, 400)
+            render_cursor()
             textpos = textpos+1
         end)
         if not status then
             crash_error = err
             crash_now = true
         end
+        CLOCK = CLOCK + 1
         coroutine.yield()
     end
 end

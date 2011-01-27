@@ -437,7 +437,7 @@ void Render_Cards()
 }--]]
 
 function render_cursor()
-    love.graphics.draw(IMG_cursor[((CLOCK/16)%2)+1],
+    love.graphics.draw(IMG_cursor[(math.floor(CLOCK/16)%2)+1],
         (P1_cur_col*16+P1_spos_x-4)*GFX_SCALE,
         (P1_cur_row*16+P1_spos_y-4+P1_displacement)*GFX_SCALE,
         0, GFX_SCALE, GFX_SCALE)

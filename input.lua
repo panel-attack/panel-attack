@@ -14,16 +14,30 @@ swap_2_pressed = false
 
 
 -- keyboard assignment vars
-k_up = love.keyboard["up"]
-k_down = love.keyboard["down"]
-k_left = love.keyboard["left"]
-k_right = love.keyboard["right"]
-k_swap1 = love.keyboard["z"]
-k_swap2 = love.keyboard["z"]
-k_raise1 = love.keyboard["x"]
-k_raise2 = love.keyboard["x"]
+k_up = "up"
+k_down = "down"
+k_left = "left"
+k_right = "right"
+k_swap1 = "z"
+k_swap2 = "z"
+k_raise1 = "x"
+k_raise2 = "x"
 keys = {k_up=false, k_down=false, k_left=false, k_right=false, k_swap1=false,
     k_swap2=false, k_raise1=false, k_raise2=false}
+
+function love.keypressed(key, unicode)
+    keys[key] = true
+    --error(tostring(key)..tostring(k_down))
+    --for i,v in ipairs(keys) do print(i,v) end
+end
+
+--[[function love.keyreleased(key)
+    keys[key] = false
+end--]]
+
+function input_init()
+    love.keyboard.setKeyRepeat(500,50)
+end
 
 function controls()
     local new_dir = 0
@@ -69,6 +83,8 @@ function controls()
         P1_cur_dir = new_dir
         P1_cur_timer = 0
     end
+    keys = {k_up=false, k_down=false, k_left=false, k_right=false, k_swap1=false,
+        k_swap2=false, k_raise1=false, k_raise2=false}
 end
 
 --[[void Controls_SetDefaults()

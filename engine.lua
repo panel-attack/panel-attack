@@ -84,7 +84,7 @@ function Panel.exclude_hover(self)
 end
 
 function Panel.exclude_match(self)
-    return self.swapping or self.matched or self.popping or self.popped
+    return self.is_swapping or self.matched or self.popping or self.popped
             or self.hovering or self.dimmed or self.falling
 end
 
@@ -141,7 +141,7 @@ P1_danger_col = {false,false,false,false,false,false}
     -- set true if this column is near the top
 P1_danger_timer = 0   -- decides bounce frame when in danger
 
-P1_difficulty = 0
+P1_difficulty = 3
 VEASY  = 1
 EASY   = 2
 NORMAL = 3
@@ -188,7 +188,7 @@ FRAMECOUNT_HOVER = 9
 FRAMECOUNT_MATCH = 50
 FRAMECOUNT_FLASH = 13
 FRAMECOUNT_POP = 8
-FRAMECOUNT_RISE = 8
+FRAMECOUNT_RISE = 80
 
 P1_rise_timer = FRAMECOUNT_RISE
 
@@ -204,7 +204,7 @@ P1_prevent_manual_raise = false
 P1_swap_1 = false   -- attempt to initiate a swap on this frame
 P1_swap_2 = false
 
-P1_cur_wait_time = 0   -- number of ticks to wait before the cursor begins
+P1_cur_wait_time = 90   -- number of ticks to wait before the cursor begins
                      -- to move quickly... it's based on P1CurSensitivity
 P1_cur_timer = 0   -- number of ticks for which a new direction's been pressed
 P1_cur_dir = 0     -- the direction pressed
@@ -404,10 +404,10 @@ function PdP()
                 if(P1_panels[panel].timer ~= 0) then
                     P1_panels[panel].timer = P1_panels[panel].timer - 1;
                     if(P1_panels[panel].timer == 0) then
-                        if(P1_panels[panel].swapping) then
+                        if(P1_panels[panel].is_swapping) then
                             -- a swap has completed here.
-                            P1_panels[panel].swapping = false
-                            P1_panels[panel].dontswap = false
+                            P1_panels[panel].is_swapping = false
+                            P1_panels[panel].dont_swap = false
                             if(P1_panels[panel].is_swapping_from_left) then
                                 P1_panels[panel].is_swapping_from_left = false
                                 something = 1
@@ -610,10 +610,10 @@ function PdP()
                     whatever=P1_panels[panel+1].chaining
                     P1_panels[panel]:clear_flags()
                     P1_panels[panel+1]:clear_flags()
-                    P1_panels[panel].swapping = true
+                    P1_panels[panel].is_swapping = true
                     P1_panels[panel].chaining = whatever
-                    P1_panels[panel+1].swapping = true
-                    P1_panels[panel+1].swapping_from_left = true
+                    P1_panels[panel+1].is_swapping = true
+                    P1_panels[panel+1].is_swapping_from_left = true
                     P1_panels[panel+1].chaining = something
 
                     P1_panels[panel].timer = 3
@@ -949,7 +949,7 @@ function check_matches()
                     something=P1_panels[panel]:exclude_match()
                     if(not something) then
                         if(row~=bottom_row) then
-                            something=P1_panels[panel+8].swapping
+                            something=P1_panels[panel+8].is_swapping
                             if(not something) then
                                 -- no swapping panel below
                                 -- so this panel loses its chain flag
@@ -1066,14 +1066,14 @@ function set_hoverers(first_hoverer, hover_time, add_chaining)
         if(nonpanel or something) then
             brk = true
         else
-            if(P1_panels[panel].swapping) then
+            if(P1_panels[panel].is_swapping) then
                 hovers_time = hovers_time + P1_panels[panel].timer
             end
             something = P1_panels[panel].chaining
             P1_panels[panel]:clear_flags()
             P1_panels[panel].hovering = true
             P1_panels[panel].chaining = something or add_chaining
-            P1_panels[panel].timer = hoverstime
+            P1_panels[panel].timer = hovers_time
             if((not something) and (add_chaining)) then
                 n_chain_panels = n_chain_panels + 1
             end
@@ -1110,7 +1110,7 @@ function set_hoverers_2(first_hoverer, hover_time, add_chaining)
         if(nonpanel or something) then
             brk = true
         else
-            if(P1_panels[panel].swapping) then
+            if(P1_panels[panel].is_swapping) then
                 hovers_time = hovers_time + P1_panels[panel].timer
             end
             something = P1_panels[panel].chaining
