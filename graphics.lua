@@ -322,7 +322,7 @@ function render_1P()
                 local draw_frame = 1
                 local draw_x = col*16+P1_spos_x
                 local draw_y = row * 16 + P1_spos_y + P1_displacement;
-                if panel.popped then
+                if not panel.popped then
                     if panel.matched then
                         if panel.timer < FRAMECOUNT_FLASH then
                             draw_frame = 6
