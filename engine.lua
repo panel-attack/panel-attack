@@ -171,6 +171,7 @@ score_mode = 1
 SCOREMODE_TA    = 1
 SCOREMODE_PDP64 = 2
 
+P1_NCOLORS = 5
 P1_score = 0         -- der skore
 P1_chain_counter = 0   -- how high is the current chain?
                         -- Hah! I knew there could only be one chain.
@@ -498,7 +499,7 @@ function PdP()
                                                 --TODO: obv cant pass bitmask here
                                             else
                                                 P1_panels[panel].popping = false
-                                                P1_panels[panel].popped = false
+                                                P1_panels[panel].popped = true
                                                 P1_panels[panel].timer = (something-whatever)*FRAMECOUNT_POP;
                                             end
                                             something = P1_panels[panel].chain_index
@@ -1154,7 +1155,7 @@ function new_row()
         brk = false
         P1_panels[panel] = Panel()
         while(not brk) do
-            P1_panels[panel].color = math.random(1,6)
+            P1_panels[panel].color = math.random(1,P1_NCOLORS)
             --TODO TODO TODO: hook this up to a real random function.
             brk = true
             if(P1_panels[panel] == P1_panels[panel-8]) then
@@ -1171,7 +1172,7 @@ function new_row()
         brk = false
         P1_panels[panel] = Panel()
         while(not brk) do
-            P1_panels[panel].color = math.random(1,6)
+            P1_panels[panel].color = math.random(1,P1_NCOLORS)
             something = false
             if(whatever) then
                 if(P1_panels[panel].color == P1_panels[panel-1].color) then

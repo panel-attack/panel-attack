@@ -48,7 +48,7 @@ function fmainloop()
             --stage_background()
             render_1P()
             love.graphics.draw(IMG_frame, 0, 0, 0, GFX_SCALE, GFX_SCALE)
-            love.graphics.print(_VERSION, textpos, 400)
+--            love.graphics.print(_VERSION, textpos, 400)
             render_cursor()
             textpos = textpos+1
         end)
