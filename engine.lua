@@ -283,9 +283,9 @@ function PdP()
     for panel=1,6 do
         if(P1_panels[panel].color ~= 0) then
             panels_in_top_row = true
-            P1_danger_col[panel] = 1
+            P1_danger_col[panel] = true
         else
-            P1_danger_col[panel] = 0
+            P1_danger_col[panel] = false
         end
     end
     if(panels_in_top_row) then
