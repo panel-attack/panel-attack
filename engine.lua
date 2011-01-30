@@ -1158,7 +1158,7 @@ function new_row()
             P1_panels[panel].color = math.random(1,P1_NCOLORS)
             --TODO TODO TODO: hook this up to a real random function.
             brk = true
-            if(P1_panels[panel] == P1_panels[panel-8]) then
+            if P1_panels[panel].color == P1_panels[panel-8].color then
                 brk = false
             end
         end
@@ -1180,7 +1180,7 @@ function new_row()
                 end
             end
             something_else = false
-            if(P1_panels[panel] == P1_panels[panel-8]) then
+            if P1_panels[panel].color == P1_panels[panel-8].color then
                 something_else=1
             end
             brk = true
