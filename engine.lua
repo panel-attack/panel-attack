@@ -113,132 +113,9 @@ function Panel.clear_flags(self)
     self.landing = false
 end
 
--- The stack of panels.
-
-P1_panels = {}
 for i=1,96 do
     P1_panels[i] = Panel()
 end
-    --int P1_panels[96];
-    -- Twelve rows of 8 ints each, the first 6 representing
-    -- the panels on that row.
-    -- A panel's color can be retrieved using P1Stack[row<<3+col]
-
-    -- Stack displacement.
-P1_displacement = 0
-    -- This variable indicates how far below the top of the play
-    -- area the top row of panels actually is.
-    -- This variable being decremented causes the stack to rise.
-    -- During the automatic rising routine, if this variable is 0,
-    -- it's reset to 15, all the panels are moved up one row,
-    -- and a new row is generated at the bottom.
-    -- Only when the displacement is 0 are all 12 rows "in play."
-
-do_matches_check = false
-    -- if this is true a matches-check will occur for this frame.
-
-P1_danger_col = {false,false,false,false,false,false}
-    -- set true if this column is near the top
-P1_danger_timer = 0   -- decides bounce frame when in danger
-
-P1_difficulty = 3
-VEASY  = 1
-EASY   = 2
-NORMAL = 3
-HARD   = 4
-VHARD  = 5
-
-P1_speed = 100   -- The player's speed level decides the amount of time
-                 -- the stack takes to rise automatically
-P1_rise_timer = 1   -- When this value reaches 0, the stack will rise a pixel
-P1_rise_lock = false   -- If the stack is rise locked, it won't rise until it is
-                  -- unlocked.
-P1_has_risen = false   -- set once the stack rises once during the game
-
-P1_stop_time = 0
-P1_stop_time_timer = 0
-stop_time_combo = {{0,0,0,0,0},{0,0,0,0,0}}
-stop_time_chain = {{0,0,0,0,0},{0,0,0,0,0}}
-
-game_time = 0
-game_time_mode = 1
-game_time_timer = 0
-TIME_ELAPSED = 1
-TIME_REMAINING = 2
--- TODO: what the fuck are these for ^
-
-score_mode = 1
-SCOREMODE_TA    = 1
-SCOREMODE_PDP64 = 2
-
-P1_NCOLORS = 5
-P1_score = 0         -- der skore
-P1_chain_counter = 0   -- how high is the current chain?
-                        -- Hah! I knew there could only be one chain.
-
-   -- The following variables keep track of stuff:
-bottom_row = 0   -- row number of the bottom row that's "in play"
-panels_in_top_row = false  -- boolean, panels in the top row (danger)
-panels_in_second_row = false -- changes music state
-
-n_active_panels = 0
-n_chain_panels= 0
-
-   -- These change depending on the difficulty and speed levels:
-FRAMECOUNT_HOVER = 9
-FRAMECOUNT_MATCH = 50
-FRAMECOUNT_FLASH = 13
-FRAMECOUNT_POP = 8
-FRAMECOUNT_RISE = 80
-
-P1_rise_timer = FRAMECOUNT_RISE
-
-
-
-
-
-   -- Player input stuff:
-P1_manual_raise = false   -- set until raising is completed
-P1_manual_raise_yet = false  -- if not set, no actual raising's been done yet
-                       -- since manual raise button was pressed
-P1_prevent_manual_raise = false
-P1_swap_1 = false   -- attempt to initiate a swap on this frame
-P1_swap_2 = false
-
-P1_cur_wait_time = 90   -- number of ticks to wait before the cursor begins
-                     -- to move quickly... it's based on P1CurSensitivity
-P1_cur_timer = 0   -- number of ticks for which a new direction's been pressed
-P1_cur_dir = 0     -- the direction pressed
-P1_cur_row = 0  -- the row the cursor's on
-P1_cur_col = 0  -- the column the left half of the cursor's on
-
-DIR_UP    = 1
-DIR_DOWN  = 2
-DIR_LEFT  = 3
-DIR_RIGHT = 4
-
-P1_move_sound = false  -- this is set if the cursor movement sound should be played
-
- -- score lookup tables
-score_combo_PdP64 = {} --size 40
-score_combo_TA = {} --size 31
-score_chain_TA = {} --size 14
- -- TODO: figure out how to initialize these.
-
-for i=0,39 do
-    score_combo_PdP64[i] = 0
-end
-for i=0,30 do
-    score_combo_TA[i] = 0
-end
-for i=0,13 do
-    score_chain_TA[i] = 0
-end
-
-P1_game_over = false
-
-
-
    -- The engine routine.
 function PdP()
       -- The main game routine has five phases:
@@ -496,7 +373,6 @@ function PdP()
                                                 end
                                                 P1_panels[panel]:clear_flags()
                                                 set_hoverers(panel-8,FRAMECOUNT_HOVER+1,true)
-                                                --TODO: obv cant pass bitmask here
                                             else
                                                 P1_panels[panel].popping = false
                                                 P1_panels[panel].popped = true
@@ -528,7 +404,7 @@ function PdP()
                                                 +" This timer for a panel on row "+str(row)
                                                 +" column "+str(col)+" expired and I haven't"
                                                 +" the foggiest what to do with it...");--]]
-                                                --TODO: replace this with debugging output lewl
+                                                error("something terrible happened")
                                             end
                                         end
                                     end
@@ -564,7 +440,6 @@ function PdP()
                     P1_cur_row = P1_cur_row + 1
                     P1_move_sound = true
                 end
-                --TODO: make sure cur_col and cur_row are always 0-indexed
             else
                 if(P1_cur_dir==DIR_LEFT) then
                     if(P1_cur_col>0) then
@@ -790,10 +665,6 @@ function PdP()
    }
    --]]
 end
-
-
-   --//////////////////////////////////////////////////////////////////////////
-   -- The matches-checking routine.
 
 function check_matches()
     local row = 0
@@ -1044,9 +915,6 @@ function check_matches()
     end
 end
 
-
---addflags has been replaced with a boolean.
---if it is true, we should add the chaining flag.
 function set_hoverers(first_hoverer, hover_time, add_chaining)
     local hovers_time = 0
     local panel = 0
@@ -1085,7 +953,7 @@ function set_hoverers(first_hoverer, hover_time, add_chaining)
         end
     end
 end
---see comment for set_hoverers
+
 function set_hoverers_2(first_hoverer, hover_time, add_chaining)
     -- this version of the set_hoverers routine is for use during Phase 1&2,
     -- when panels above the first should be given an extra tick of hover time.
@@ -1131,7 +999,6 @@ function set_hoverers_2(first_hoverer, hover_time, add_chaining)
     end
 end
 
-
 function new_row()
     local panel = 0
     local something = false
@@ -1156,7 +1023,6 @@ function new_row()
         P1_panels[panel] = Panel()
         while(not brk) do
             P1_panels[panel].color = math.random(1,P1_NCOLORS)
-            --TODO TODO TODO: hook this up to a real random function.
             brk = true
             if P1_panels[panel].color == P1_panels[panel-8].color then
                 brk = false
@@ -1194,8 +1060,6 @@ function new_row()
     bottom_row = 10
     do_matches_check = true
 end
-
-
 
 function quiet_cursor_movement()
     local something = false
@@ -1239,4 +1103,3 @@ function quiet_cursor_movement()
         end
     end
 end
-

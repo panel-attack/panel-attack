@@ -2,9 +2,6 @@
 --int Font_NumRed;
 --int Font_NumBlue;
 
-P1_spos_x = 4   -- Position of the play area on the screen
-P1_spos_y = 4
-
 --int P1ScoreDisplay;
 --int P1ScoreRender;
 --int P1ScoreDigits[5];
@@ -14,8 +11,6 @@ P1_spos_y = 4
 --int GameTimeDisplayPosY;
 --int GameTimeRender;
 --int GameTimeDigits[7];
-
-Graphics_TIME = 0
 
 --int Graphics_Ready321;
 
@@ -70,7 +65,7 @@ int ChainCards21QueueLength;
 
 function load_img(s)
     local ret = love.graphics.newImage(s)
-    ret:setFilter(FMODE, FMODE)
+    ret:setFilter("nearest","nearest")
     return ret
 end
 
@@ -105,17 +100,6 @@ function graphics_init()
     --Graphics_ComboCards=LoadImage("graphics\combocards.bmp");
     --Graphics_ChainCards=LoadImage("graphics\ChainCards.bmp");
 
-    bounce_table = {1, 1, 1, 1,
-                    2, 2, 2,
-                    3, 3, 3,
-                    4, 4, 4}
-
-    danger_bounce_table = { 1, 1, 1,
-                            2, 2, 2,
-                            3, 3, 3,
-                            2, 2, 2,
-                            1, 1, 1,
-                            4, 4, 4}
 
     --for(a=0;a<2;a++) MrStopAni[a]=5;
     --for(a=2;a<5;a++) MrStopAni[a]=8;
@@ -196,8 +180,6 @@ end
       ComboCardsQueueLength--;
    }
 }--]]
-
-
 --[[
 void EnqueueChainCard(int xpos, int ypos, int hitno)
 {
@@ -305,9 +287,6 @@ void DrawChainCards21()
    }
 }--]]
 
-
-
-
 function render_1P()
     n_active_panels = 0
     for row=0,11 do
@@ -318,42 +297,40 @@ function render_1P()
             if(panel.color ~= 0 and panel:exclude_hover()) or panel.is_swapping then
                 n_active_panels = n_active_panels + 1
             end
-            if panel.color ~= 0 then
-                if not panel.popped then
-                    local draw_frame = 1
-                    local draw_x = col * 16 + P1_spos_x
-                    local draw_y = row * 16 + P1_spos_y + P1_displacement
-                    if panel.matched then
-                        if panel.timer < FRAMECOUNT_FLASH then
-                            draw_frame = 6
-                        else
-                            if panel.timer % 2 == 1 then --lol wtf?
-                                draw_frame = 5
-                            else
-                                draw_frame = 1
-                            end
-                        end
-                    elseif panel.popping then
+            if panel.color ~= 0 and not panel.popped then
+                local draw_frame = 1
+                local draw_x = col * 16 + P1_spos_x
+                local draw_y = row * 16 + P1_spos_y + P1_displacement
+                if panel.matched then
+                    if panel.timer < FRAMECOUNT_FLASH then
                         draw_frame = 6
-                    elseif panel.landing then
-                        draw_frame = bounce_table[panel.timer + 1]
-                    elseif panel.is_swapping then
-                        if panel.is_swapping_from_left then
-                            draw_x = draw_x - panel.timer * 4
-                        else
-                            draw_x = draw_x + panel.timer * 4
-                        end
-                    elseif P1_danger_col[col+1] and row <= bottom_row then
-                        draw_frame = danger_bounce_table[P1_danger_timer+1];
-                    elseif panel.dimmed then
-                        draw_frame = 7
                     else
-                        draw_frame = 1
+                        if panel.timer % 2 == 1 then
+                            draw_frame = 5
+                        else
+                            draw_frame = 1
+                        end
                     end
-                    love.graphics.draw(IMG_panels[panel.color][draw_frame],
-                        draw_x*GFX_SCALE, draw_y*GFX_SCALE, 0, GFX_SCALE,
-                        GFX_SCALE)
+                elseif panel.popping then
+                    draw_frame = 6
+                elseif panel.landing then
+                    draw_frame = bounce_table[panel.timer + 1]
+                elseif panel.is_swapping then
+                    if panel.is_swapping_from_left then
+                        draw_x = draw_x - panel.timer * 4
+                    else
+                        draw_x = draw_x + panel.timer * 4
+                    end
+                elseif P1_danger_col[col+1] and row <= bottom_row then
+                    draw_frame = danger_bounce_table[P1_danger_timer+1];
+                elseif panel.dimmed then
+                    draw_frame = 7
+                else
+                    draw_frame = 1
                 end
+                love.graphics.draw(IMG_panels[panel.color][draw_frame],
+                    draw_x*GFX_SCALE, draw_y*GFX_SCALE, 0, GFX_SCALE,
+                    GFX_SCALE)
             end
             idx = idx + 1
         end
@@ -425,9 +402,7 @@ void Render_Confetti()
          Confettis[a][CONFETTI_ANGLE]=an;
       }
    }
-
 }
-
 
 void Render_Cards()
 {
@@ -442,8 +417,6 @@ function render_cursor()
         (P1_cur_row*16+P1_spos_y-4+P1_displacement)*GFX_SCALE,
         0, GFX_SCALE, GFX_SCALE)
 end
-
-
 
 --[[void FadingPanels_1P(int draw_frame, int lightness)
     int col, row, panel;
