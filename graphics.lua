@@ -1,4 +1,3 @@
-
 --int Font_NumRed;
 --int Font_NumBlue;
 
@@ -158,12 +157,12 @@ end
       draw_x=card>>15;
       draw_x=draw_x&15;
       draw_x=draw_x<<4;
-      draw_x+=P1_spos_x;
+      draw_x+=self.pos_x;
 
       draw_y=card>>11;
       draw_y=draw_y&15;
       draw_y=draw_y<<4;
-      draw_y+=P1_spos_y+P1_displacement;
+      draw_y+=self.pos_y+self.displacement;
       draw_y-=CardAni[aniframe];
 
       iofs=card&2047;
@@ -224,12 +223,12 @@ void DrawChainCards16()
       draw_x=card>>15;
       draw_x=draw_x&15;
       draw_x=draw_x<<4;
-      draw_x+=P1_spos_x;
+      draw_x+=self.pos_x;
 
       draw_y=card>>11;
       draw_y=draw_y&15;
       draw_y=draw_y<<4;
-      draw_y+=P1_spos_y+P1_displacement;
+      draw_y+=self.pos_y+self.displacement;
       draw_y-=CardAni[aniframe];
 
       hitno=card&2047;
@@ -262,12 +261,12 @@ void DrawChainCards21()
       draw_x=card>>15;
       draw_x=draw_x&15;
       draw_x=draw_x<<4;
-      draw_x+=P1_spos_x;
+      draw_x+=self.pos_x;
 
       draw_y=card>>11;
       draw_y=draw_y&15;
       draw_y=draw_y<<4;
-      draw_y+=P1_spos_y+P1_displacement;
+      draw_y+=self.pos_y+self.displacement;
       draw_y-=CardAni[aniframe];
 
       tens=card&240;
@@ -287,22 +286,25 @@ void DrawChainCards21()
    }
 }--]]
 
-function render_1P()
-    n_active_panels = 0
+function Stack.render(self)
+    self.n_active_panels = 0
     for row=0,11 do
         local idx = row * 8 + 1
         for col=0,5 do
-            local panel = P1_panels[idx]
+            local panel = self.panels[idx]
             local count_this_panel = false
             if(panel.color ~= 0 and panel:exclude_hover()) or panel.is_swapping then
-                n_active_panels = n_active_panels + 1
+                self.n_active_panels = self.n_active_panels + 1
             end
             if panel.color ~= 0 and not panel.popped then
                 local draw_frame = 1
-                local draw_x = col * 16 + P1_spos_x
-                local draw_y = row * 16 + P1_spos_y + P1_displacement
+                local draw_x = col * 16 + self.pos_x
+                local draw_y = row * 16 + self.pos_y + self.displacement
                 if panel.matched then
-                    if panel.timer < FRAMECOUNT_FLASH then
+                    if panel.timer == nil then
+                        error("one")
+                    end
+                    if panel.timer < self.FRAMECOUNT_FLASH then
                         draw_frame = 6
                     else
                         if panel.timer % 2 == 1 then
@@ -321,8 +323,8 @@ function render_1P()
                     else
                         draw_x = draw_x + panel.timer * 4
                     end
-                elseif P1_danger_col[col+1] and row <= bottom_row then
-                    draw_frame = danger_bounce_table[P1_danger_timer+1];
+                elseif self.danger_col[col+1] and row <= self.bottom_row then
+                    draw_frame = danger_bounce_table[self.danger_timer+1];
                 elseif panel.dimmed then
                     draw_frame = 7
                 else
@@ -335,6 +337,9 @@ function render_1P()
             idx = idx + 1
         end
     end
+    love.graphics.draw(IMG_frame, (self.pos_x-4)*GFX_SCALE, (self.pos_y-4)*GFX_SCALE,
+            0, GFX_SCALE, GFX_SCALE)
+    self:render_cursor()
 end
 --[[
 void EnqueueConfetti(int x, int y)
@@ -411,10 +416,10 @@ void Render_Cards()
    DrawChainCards21();
 }--]]
 
-function render_cursor()
-    love.graphics.draw(IMG_cursor[(math.floor(CLOCK/16)%2)+1],
-        (P1_cur_col*16+P1_spos_x-4)*GFX_SCALE,
-        (P1_cur_row*16+P1_spos_y-4+P1_displacement)*GFX_SCALE,
+function Stack.render_cursor(self)
+    love.graphics.draw(IMG_cursor[(math.floor(self.CLOCK/16)%2)+1],
+        (self.cur_col*16+self.pos_x-4)*GFX_SCALE,
+        (self.cur_row*16+self.pos_y-4+self.displacement)*GFX_SCALE,
         0, GFX_SCALE, GFX_SCALE)
 end
 
@@ -430,8 +435,8 @@ end
             drawpanel=P1StackPanels[panel];
             if(drawpanel)
             {
-                draw_x=P1_spos_x+(col<<4);
-                draw_y=P1_spos_y+P1_displacement+(row<<4);
+                draw_x=self.pos_x+(col<<4);
+                draw_y=self.pos_y+self.displacement+(row<<4);
                 GrabRegion(draw_frame<<4,0,draw_frame<<4+15,15,draw_x,draw_y,
                     Graphics_Panels[drawpanel],screen);
                 if(lightness~=100)

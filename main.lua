@@ -17,6 +17,8 @@ function love.load()
     -- sets key repeat (well that was a bad idea)
     -- input_init()
 
+    P1 = Stack()
+
     -- create mainloop coroutine
     mainloop = coroutine.create(fmainloop)
 end
@@ -39,18 +41,16 @@ end
 function fmainloop()
     while true do
         local status, err = pcall(function ()
-            controls()
-            PdP()
+            controls(P1)
+            P1:PdP()
             --stage_background()
-            render_1P()
-            love.graphics.draw(IMG_frame, 0, 0, 0, GFX_SCALE, GFX_SCALE)
-            render_cursor()
+            P1:render()
         end)
         if not status then
             crash_error = err
             crash_now = true
         end
-        CLOCK = CLOCK + 1
+        P1.CLOCK = P1.CLOCK + 1
         coroutine.yield()
     end
 end
