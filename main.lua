@@ -1,6 +1,5 @@
 function love.load()
-    -- lol deterministic mode
-    math.randomseed(10000)
+    math.randomseed(os.time(os.date("*t")))
 
     -- set resolution!
     love.graphics.setMode(820,615)
