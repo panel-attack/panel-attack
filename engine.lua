@@ -200,6 +200,25 @@ function Panel.clear_flags(self)
     self.landing = false
 end
 
+--local_run is for the stack that belongs to this client.
+function Stack.local_run(self)
+    controls(self)
+    self:PdP()
+    self.CLOCK = self.CLOCK + 1
+    self:render()
+end
+
+--foreign_run is for a stack that belongs to another client.
+function Stack.foreign_run(self)
+    --[[
+    while(there are frames of input waiting for processing)
+        fake input for a frame
+        self:PdP()
+        self.CLOCK = self.CLOCK + 1
+    --]]
+    self:render()
+end
+
    -- The engine routine.
 function Stack.PdP(self)
       -- The main game routine has five phases:

@@ -33,7 +33,7 @@ function love.draw()
     if(crash_now) then
         error(crash_error)
     end
-    if(P1_game_over) then
+    if(P1.game_over) then
         error("game over lol")
     end
 end
@@ -41,16 +41,13 @@ end
 function fmainloop()
     while true do
         local status, err = pcall(function ()
-            controls(P1)
-            P1:PdP()
             --stage_background()
-            P1:render()
+            P1:local_run()
         end)
         if not status then
             crash_error = err
             crash_now = true
         end
-        P1.CLOCK = P1.CLOCK + 1
         coroutine.yield()
     end
 end
