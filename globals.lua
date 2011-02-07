@@ -11,6 +11,7 @@ k_raise1 = "x"
 k_raise2 = "x"
 keys = {k_up=false, k_down=false, k_left=false, k_right=false, k_swap1=false,
     k_swap2=false, k_raise1=false, k_raise2=false}
+keys.protect_raise = false
 
 bounce_table = {1, 1, 1, 1,
                 2, 2, 2,

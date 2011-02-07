@@ -236,22 +236,25 @@ function Stack.PdP(self)
     local col = 0       -- used for iterating through the StackPanels
     local panel = 0      -- used when row and col are avoidable
     local counter = 0    -- an extra general-purpose counter
+    local idx = 0
 
-      -- other general-purpose things:
+      -- other general-purpose bad ideas:
     local whatever = 0
     local something = 0
     local something_else = 0
 
-    if(self.stop_time ~= 0) then
+    if self.stop_time ~= 0 then
         self.stop_time_timer = self.stop_time_timer - 1
-        if(self.stop_time_timer == 0) then
+        if self.stop_time_timer == 0 then
             self.stop_time = self.stop_time - 1
-            if(self.stop_time ~= 0) then self.stop_time_timer=60 end
+            if self.stop_time ~= 0 then
+                self.stop_time_timer=60
+            end
         end
     end
 
 
-    if(self.displacement ~= 0) then
+    if self.displacement ~= 0 then
         self.bottom_row=10
     else
         self.bottom_row=11   -- the 12th row (row 11) is only "in play"
@@ -260,24 +263,24 @@ function Stack.PdP(self)
 
       -- count the number of panels in the top row (danger)
     self.panels_in_top_row = false
-    for panel=1,6 do
-        if(self.panels[panel].color ~= 0) then
+    for idx=1,6 do
+        if self.panels[idx].color ~= 0 then
             self.panels_in_top_row = true
-            self.danger_col[panel] = true
+            self.danger_col[idx] = true
         else
-            self.danger_col[panel] = false
+            self.danger_col[idx] = false
         end
     end
-    if(self.panels_in_top_row) then
-        if(self.stop_time == 0) then
-            self.danger_timer = self.danger_timer - 1
-            if(self.danger_timer<0) then self.danger_timer=17 end
+    if self.panels_in_top_row and self.stop_time == 0 then
+        self.danger_timer = self.danger_timer - 1
+        if self.danger_timer<0 then
+            self.danger_timer=17
         end
     end
 
     self.panels_in_second_row = false
-    for panel=9,14 do
-        if(self.panels[panel] ~= 0) then
+    for idx=9,14 do
+        if self.panels[idx] ~= 0 then
             self.panels_in_second_row = true
         end
     end
@@ -295,17 +298,18 @@ function Stack.PdP(self)
     end]]--
     --TODO: what the fuck are you talking about, "Game music?"
 
-    if((self.displacement == 0) and self.has_risen) then
-        if(not self.panels_in_top_row) then
-            self:new_row()
-        end
+    if self.displacement == 0 and self.has_risen and not self.panels_in_top_row then
+        self:new_row()
     end
 
-    if( self.n_active_panels ~= 0 ) then self.rise_lock = true
-    else self.rise_lock = false end
+    if self.n_active_panels ~= 0 then
+        self.rise_lock = true
+    else
+        self.rise_lock = false
+    end
 
-    if((self.displacement == 0) and self.panels_in_top_row and (not self.rise_lock) and
-            (self.stop_time == 0)) then
+    if self.displacement == 0 and self.panels_in_top_row and not self.rise_lock and
+            self.stop_time == 0 then
         self.game_over = true
     end
 
@@ -313,37 +317,33 @@ function Stack.PdP(self)
     -- Stack automatic rising
 
 
-    if((self.speed ~= 0) and (not self.manual_raise)) then --only rise if speed nonzero
-        if((self.stop_time == 0) and (not self.rise_lock)) then
-            self.rise_timer = self.rise_timer - 1
-            if(self.rise_timer == 0) then  -- try to rise
-                if(self.displacement == 0) then
-                    if(self.has_risen or
-                        self.panels_in_top_row) then
-                        --error(tostring(self.has_risen)..tostring(panels_in_top_row))
-                        self.game_over = true
-                        --self.has_risen = self.has_risen -- do nothing
+    if self.speed ~= 0 and not self.manual_raise and self.stop_time == 0
+            and not self.rise_lock then
+        self.rise_timer = self.rise_timer - 1
+        if self.rise_timer == 0 then  -- try to rise
+            if self.displacement == 0 then
+                if self.has_risen or self.panels_in_top_row then
+                    self.game_over = true
+                else
+                    self:new_row()
+                    self.displacement = 15
+                    self.has_risen = true
+                end
+            else
+                self.displacement = self.displacement - 1
+                if self.displacement == 0 then
+                    self.prevent_manual_raise = false
+                    if self.panels_in_top_row then
+                        for idx=89,94 do
+                            self.panels[idx].dimmed = false
+                        end
+                        self.bottom_row=11
                     else
                         self:new_row()
-                        self.displacement = 15
-                        self.has_risen = true
-                    end
-                else
-                    self.displacement = self.displacement - 1
-                    if(self.displacement == 0) then
-                        self.prevent_manual_raise = false
-                        if(self.panels_in_top_row) then
-                            for panel=89,94 do
-                                self.panels[panel].dimmed = false
-                            self.bottom_row=11
-                            end
-                        else
-                            self:new_row()
-                        end
                     end
                 end
-                self.rise_timer=self.FRAMECOUNT_RISE
             end
+            self.rise_timer=self.FRAMECOUNT_RISE
         end
     end
 
@@ -351,22 +351,22 @@ function Stack.PdP(self)
       --  Falling
 
     for row=self.bottom_row,0,-1 do
-        panel=row*8+1
+        idx=row*8+1
         for col=1,6 do
-            if(self.panels[panel].falling) then
+            if self.panels[idx].falling then
                -- if there's no panel below a falling panel,
                -- it must fall one row.
                -- I'm gonna assume there's no panel below,
                -- because the falling panel should've landed on
                -- it during the last frame if there was.
-                self.panels[panel+8] = self.panels[panel]
-                self.panels[panel+8].timer = 0
-                self.panels[panel] = Panel()
+                self.panels[idx+8] = self.panels[idx]
+                self.panels[idx+8].timer = 0
+                self.panels[idx] = Panel()
                -- the timer can be left behind because it should be 0.
                -- the tags can be left behind because they're not important
                -- until a panel is stuck in position.
             end
-            panel = panel + 1
+            idx = idx + 1
         end
     end
 

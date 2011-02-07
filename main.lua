@@ -32,9 +32,6 @@ function love.draw()
     if(crash_now) then
         error(crash_error)
     end
-    if(P1.game_over) then
-        error("game over lol")
-    end
 end
 
 function fmainloop()
@@ -42,6 +39,9 @@ function fmainloop()
         local status, err = pcall(function ()
             --stage_background()
             P1:local_run()
+            if P1.game_over then
+                error("game over lol")
+            end
         end)
         if not status then
             crash_error = err

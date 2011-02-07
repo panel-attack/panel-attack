@@ -1,34 +1,34 @@
 function love.keypressed(key, unicode)
     keys[key] = true
+    if key == k_raise1 or key == k_raise2 then
+        --Even if the user releases the key this frame, we should do a raise.
+        keys.protect_raise = true
+    end
 end
 
-function input_init()
-    love.keyboard.setKeyRepeat(500,50)
+function love.keyreleased(key, unicode)
+    if (not keys.protect_raise) and (key == k_raise1 or key == k_raise2) then
+        keys[key] = false
+    end
 end
 
 function controls(stack)
     local new_dir = 0
-    if keys[k_raise1] or keys[k_raise2] then
-        if not stack.prevent_manual_raise then
-            stack.manual_raise = true
-            stack.manual_raise_yet = false
-        end
+    if (keys[k_raise1] or keys[k_raise2]) and (not stack.prevent_manual_raise) then
+        stack.manual_raise = true
+        stack.manual_raise_yet = false
     end
 
-    if keys[k_swap1] then
-        if not stack.swap_1_pressed then
-            stack.swap_1 = true
-            stack.swap_1_pressed = true
-        end
+    if keys[k_swap1] and not stack.swap_1_pressed then
+        stack.swap_1 = true
+        stack.swap_1_pressed = true
     else
         stack.swap_1_pressed = false
     end
 
-    if keys[k_swap2] then
-        if not stack.swap_2_pressed then
-            stack.swap_2 = true
-            stack.swap_2_pressed = true
-        end
+    if keys[k_swap2] and not stack.swap_2_pressed then
+        stack.swap_2 = true
+        stack.swap_2_pressed = true
     else
         stack.swap_2_pressed = false
     end
@@ -42,16 +42,19 @@ function controls(stack)
     elseif keys[k_right] then
         new_dir = DIR_RIGHT
     end
-    if new_dir == stack.cur_dir then
-        if stack.cur_timer ~= stack.cur_wait_time then
-            stack.cur_timer = stack.cur_timer + 1
-        end
+    if new_dir == stack.cur_dir and stack.cur_timer ~= stack.cur_wait_time then
+        stack.cur_timer = stack.cur_timer + 1
     else
         stack.cur_dir = new_dir
         stack.cur_timer = 0
     end
-    keys = {k_up=false, k_down=false, k_left=false, k_right=false, k_swap1=false,
-        k_swap2=false, k_raise1=false, k_raise2=false}
+    keys[k_up] = false
+    keys[k_down] = false
+    keys[k_left] = false
+    keys[k_right] = false
+    keys[k_swap1] = false
+    keys[k_swap2] = false
+    keys.protect_raise = false
 end
 
 --[[void Controls_SetDefaults()
@@ -68,7 +71,6 @@ end
    k_Raise1=SCAN_Q;
    k_Raise2=SCAN_W;
 }--]]
-
 
 --[[void Controls_NewGame()
 {
