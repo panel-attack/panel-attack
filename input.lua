@@ -7,14 +7,15 @@ function love.keypressed(key, unicode)
 end
 
 function love.keyreleased(key, unicode)
-    if (not keys.protect_raise) and (key == k_raise1 or key == k_raise2) then
+    if key == k_raise1 or key == k_raise2 then
         keys[key] = false
     end
 end
 
 function controls(stack)
     local new_dir = 0
-    if (keys[k_raise1] or keys[k_raise2]) and (not stack.prevent_manual_raise) then
+    if (keys[k_raise1] or keys[k_raise2] or keys.protect_raise)
+            and (not stack.prevent_manual_raise) then
         stack.manual_raise = true
         stack.manual_raise_yet = false
     end
