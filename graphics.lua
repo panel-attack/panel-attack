@@ -339,6 +339,7 @@ function Stack.render(self)
     end
     love.graphics.draw(IMG_frame, (self.pos_x-4)*GFX_SCALE, (self.pos_y-4)*GFX_SCALE,
             0, GFX_SCALE, GFX_SCALE)
+    love.graphics.print("Score: "..self.score, 400, 400)
     self:render_cursor()
 end
 --[[

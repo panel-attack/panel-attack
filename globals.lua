@@ -9,8 +9,7 @@ k_swap1 = "z"
 k_swap2 = "z"
 k_raise1 = "x"
 k_raise2 = "x"
-keys = {k_up=false, k_down=false, k_left=false, k_right=false, k_swap1=false,
-    k_swap2=false, k_raise1=false, k_raise2=false}
+keys = {}
 keys.protect_raise = false
 
 bounce_table = {1, 1, 1, 1,
@@ -50,19 +49,49 @@ DIR_RIGHT = 4
 
  -- score lookup tables
 score_combo_PdP64 = {} --size 40
-score_combo_TA = {} --size 31
-score_chain_TA = {} --size 14
- -- TODO: figure out how to initialize these.
-
-for i=0,39 do
-    score_combo_PdP64[i] = 0
-end
-for i=0,30 do
-    score_combo_TA[i] = 0
-end
-for i=0,13 do
-    score_chain_TA[i] = 0
-end
+score_combo_TA = {0,0,0, --You get nothing for clearing 3 or less things.
+                    20,
+                    30,
+                    50,
+                    60,
+                    70,
+                    80,
+                    100,
+                    140,
+                    170,
+                    210,
+                    250,
+                    290,
+                    340,
+                    390,
+                    440,
+                    490,
+                    550,
+                    610,
+                    680,
+                    750,
+                    820,
+                    900,
+                    980,
+                    1060,
+                    1150,
+                    1240,
+                    1330}
+score_combo_TA[0]=0
+score_chain_TA = {0, --You get nothing for clearing things without chaining.
+                    50,
+                    80,
+                    150,
+                    300,
+                    400,
+                    500,
+                    700,
+                    900,
+                    1100,
+                    1300,
+                    1500,
+                    1800}
+score_chain_TA[0]=0
 
 GFX_SCALE = 3
 
