@@ -10,7 +10,7 @@ k_swap2 = "z"
 k_raise1 = "x"
 k_raise2 = "x"
 keys = {}
-keys.protect_raise = false
+protected_keys = {}
 
 bounce_table = {1, 1, 1, 1,
                 2, 2, 2,

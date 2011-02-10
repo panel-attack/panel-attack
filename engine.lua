@@ -78,10 +78,7 @@ Stack = class(function(s)
         s.swap_1 = false   -- attempt to initiate a swap on this frame
         s.swap_2 = false
 
-        s.swap_1_pressed = false
-        s.swap_2_pressed = false
-
-        s.cur_wait_time = 90   -- number of ticks to wait before the cursor begins
+        s.cur_wait_time = 25   -- number of ticks to wait before the cursor begins
                              -- to move quickly... it's based on P1CurSensitivity
         s.cur_timer = 0   -- number of ticks for which a new direction's been pressed
         s.cur_dir = 0     -- the direction pressed
