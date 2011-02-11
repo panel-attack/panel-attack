@@ -4,10 +4,7 @@ function love.keypressed(key, unicode)
 end
 
 function love.keyreleased(key, unicode)
-    if key == k_raise1 or key == k_raise2 or key == k_up or
-            key == k_down or key == k_left or key == k_right then
-        keys[key] = false
-    end
+    keys[key] = false
 end
 
 function controls(stack)
@@ -18,8 +15,8 @@ function controls(stack)
         stack.manual_raise_yet = false
     end
 
-    stack.swap_1 = keys[k_swap1]
-    stack.swap_2 = keys[k_swap2]
+    stack.swap_1 = protected_keys[k_swap1]
+    stack.swap_2 = protected_keys[k_swap2]
 
     if keys[k_up] or protected_keys[k_up] then
         new_dir = DIR_UP
@@ -30,6 +27,7 @@ function controls(stack)
     elseif keys[k_right] or protected_keys[k_right] then
         new_dir = DIR_RIGHT
     end
+
     if new_dir == stack.cur_dir then
         if stack.cur_timer ~= stack.cur_wait_time then
             stack.cur_timer = stack.cur_timer + 1
@@ -38,8 +36,7 @@ function controls(stack)
         stack.cur_dir = new_dir
         stack.cur_timer = 0
     end
-    keys[k_swap1] = false
-    keys[k_swap2] = false
+
     protected_keys = {}
 end
 
