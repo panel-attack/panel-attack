@@ -40,6 +40,40 @@ function controls(stack)
     protected_keys = {}
 end
 
+function fake_controls(stack, sdata)
+    local data = {}
+    for i=1,16 do
+        data[i] = string.sub(sdata,i,i) ~= "0"
+    end
+    local new_dir = 0
+    if (data[7] or data[8] or data[15] or data[16]) and (not stack.prevent_manual_raise) then
+        stack.manual_raise = true
+        stack.manual_raise_yet = false
+    end
+
+    stack.swap_1 = data[13]
+    stack.swap_2 = data[14]
+
+    if data[1] or data[9] then
+        new_dir = DIR_UP
+    elseif data[2] or data[10] then
+        new_dir = DIR_DOWN
+    elseif data[3] or data[11] then
+        new_dir = DIR_LEFT
+    elseif data[4] or data[12] then
+        new_dir = DIR_RIGHT
+    end
+
+    if new_dir == stack.cur_dir then
+        if stack.cur_timer ~= stack.cur_wait_time then
+            stack.cur_timer = stack.cur_timer + 1
+        end
+    else
+        stack.cur_dir = new_dir
+        stack.cur_timer = 0
+    end
+end
+
 --[[void Controls_SetDefaults()
 {
    P1InputSource=INPUT_KEYBOARD;

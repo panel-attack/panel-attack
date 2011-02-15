@@ -97,3 +97,7 @@ GFX_SCALE = 3
 
 crash_now = false
 crash_error = nil
+
+opponent_ready = false
+type_to_length = {G=1, H=1, N=1, P=121, O=121, I=23}
+leftovers = ""

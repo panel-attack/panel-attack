@@ -1,0 +1,37 @@
+REALLY BAD NETPLAY PROTOCOL TIME!
+
+The server will accept connections!
+
+The clients will perform a handshake like so:
+Client connects to server and says "H" followed by a 3-digit protocol version number
+    for example, "H139"
+Server can reply...
+    "H" (meaning you have to wait for an opponent)
+        Server will later send "G" when game is beginning
+    "G" (meaning the game is beginning)
+    "N" (meaning FUCK YOU your protocol is out of date)
+
+Whenever it likes, client will ask the server for panels by saying
+"P" followed by a 1-digit number of colors and a 6-digit bottommost row of panels.
+    for example, "P5524153"
+    Server will reply with "P" followed by 120 randomly generated panels.
+        Panels should be in the range from 1 to K inclusive where K is the number of colors.
+    Server will tell the other client "O" followed by the same panels.
+
+Each frame, client will send its input state to server by saying "I"
+followed by 22 characters:
+    6 digits to represent the frame number of the client, followed by 0 or 1 for keys:
+        up, down, left, right, swap_1, swap_2, raise_1, raise_2,
+        and the protected_keys versions of each of these.
+
+At any time during gameplay, client must accept any number of these messages:
+    "P" followed by 120 digits
+        This is 20 new rows of panels for the client's play area.
+    "O" followed by 120 digits
+        This is 20 new rows of panels for the opponent's play area.
+    "I" followed by 22 digits
+        This is a 6-digit frame number followed by an input state.
+        It represents a frame worth of the opponent's play.
+    Eventually:
+        "gg" followed by "w" or "l"
+            The game is over.  You [w]on or you [l]ost.

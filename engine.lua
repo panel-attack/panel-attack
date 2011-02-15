@@ -8,6 +8,8 @@
 Stack = class(function(s)
         s.pos_x = 4   -- Position of the play area on the screen
         s.pos_y = 4
+        s.panel_buffer = ""
+        s.input_buffer = ""
         s.panels = {}
         for i=1,96 do
             s.panels[i] = Panel()
@@ -199,6 +201,7 @@ end
 
 --local_run is for the stack that belongs to this client.
 function Stack.local_run(self)
+    send_controls()
     controls(self)
     self:PdP()
     self.CLOCK = self.CLOCK + 1
@@ -207,12 +210,12 @@ end
 
 --foreign_run is for a stack that belongs to another client.
 function Stack.foreign_run(self)
-    --[[
-    while(there are frames of input waiting for processing)
-        fake input for a frame
+    while string.len(self.input_buffer) ~= 0 do
+        fake_controls(self, string.sub(self.input_buffer,7,22))
         self:PdP()
         self.CLOCK = self.CLOCK + 1
-    --]]
+        self.input_buffer = string.sub(self.input_buffer,23)
+    end
     self:render()
 end
 
@@ -1035,6 +1038,34 @@ function Stack.set_hoverers_2(self, first_hoverer, hover_time, add_chaining)
 end
 
 function Stack.new_row(self)
+                     -- move cursor up
+    if(self.cur_row ~= 0) then
+        self.cur_row = self.cur_row - 1
+    end
+                     -- move panels up
+    for panel=1,86 do
+        self.panels[panel]=self.panels[panel+8];
+    end
+                     -- put bottom row into play
+    for panel=81,88 do
+        self.panels[panel].dimmed = false
+    end
+                     -- generate a new row
+    for panel=89,94 do
+        self.panels[panel] = Panel()
+        self.panels[panel].color = string.sub(self.panel_buffer,panel-88,panel-88)+0
+        self.panels[panel].dimmed = true
+    end
+    self.panel_buffer = string.sub(self.panel_buffer,7)
+    if string.len(self.panel_buffer) == 60 then
+        ask_for_panels(string.sub(self.panel_buffer,55,60))
+    end
+    self.displacement = 16
+    self.bottom_row = 10
+    self.do_matches_check = true
+end
+
+--[[function Stack.new_row(self)
     local panel = 0
     local something = false
     local something_else = false
@@ -1094,7 +1125,7 @@ function Stack.new_row(self)
     self.displacement = 16
     self.bottom_row = 10
     self.do_matches_check = true
-end
+end--]]
 
 function quiet_cursor_movement()
     local something = false
