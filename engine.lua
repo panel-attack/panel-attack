@@ -1050,6 +1050,10 @@ function Stack.new_row(self)
     for panel=81,88 do
         self.panels[panel].dimmed = false
     end
+
+    if string.len(self.panel_buffer) < 6 then
+        error("Ran out of buffered panels.  Is the server down?")
+    end
                      -- generate a new row
     for panel=89,94 do
         self.panels[panel] = Panel()

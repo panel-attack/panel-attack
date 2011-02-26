@@ -7,10 +7,11 @@ type_to_length = {"H": 4, "P": 8, "I": 23}
 
 class PanelServ(Protocol):
     def connectionMade(self):
-        self.index = len(self.factory.conns)
-        self.factory.conns.append(self)
+        self.index = self.factory.index
+        self.factory.index += 1
+        self.factory.conns[self.index] = self
         self.leftovers = ""
-        print("connected!")
+        print("connected! %s"%self.index)
 
     def dataReceived(self, data):
         data = self.leftovers + data
@@ -54,7 +55,7 @@ class PanelServ(Protocol):
         ncolors = int(data[:1])
         if ncolors < 2:
             return
-        ret = list(data[1:])
+        ret = list(map(int,data[1:]))
         for x in xrange(20):
             for y in xrange(2):
                 nogood = True
@@ -69,18 +70,19 @@ class PanelServ(Protocol):
                     color = random.randint(1,ncolors)
                     nogood = (prevtwo and color == ret[-1]) or color == ret[-6]
                 ret.append(color)
-        ret = "".join([str(x) for x in ret[6:]])
+        ret = "".join(map(str,ret[6:]))
         self.transport.write("P"+ret)
         self.neighbor.transport.write("O"+ret)
 
     def connectionLost(self, reason):
-        self.factory.conns.remove(self)
-        print("disconnected!")
+        del self.factory.conns[self.index]
+        print("disconnected! %s"%self.index)
 
 class PanelServFactory(Factory):
     protocol = PanelServ
     def __init__(self):
-        self.conns = []
+        self.conns = {}
+        self.index = 0
 
 reactor.listenTCP(49569, PanelServFactory())
 reactor.run()
