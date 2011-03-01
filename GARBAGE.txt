@@ -1,0 +1,59 @@
+Garbage works more or less like this.
+
+When a player makes a combo or chain, garbage is sent to the opponent.
+Garbage blocks will be named Kb for a 1xK rod, or KRb for a block of K rows.
+Rb rods made of metal are denoted M.
+
+The amount of garbage is as follows:
+
+4-combo: 3b
+5-combo: 4b
+6-combo: 5b
+7-combo: Rb
+8-combo: 3b + 4b
+9-combo: 2 * 4b
+10-combo: 2 * 5b
+11-combo: 5b + Rb
+12-combo: 2 * Rb
+13-combo: 3 * Rb                        #TODO: really?
+K-combo: (K-10) * Rb                    #TODO: reaaaalllyyy???
+K-chain: (K-1)Rb
+K metal blocks in combo: (K-2)M in addition to normal combo garbage
+
+For the purposes of this document, assume P1 is dropping garbage on P2.
+
+The garbage is not dropped instantly once it is awarded.
+It is, however, displayed above P2's
+stack N frames after it is awarded.     #TODO: find N.
+
+First, the garbage will wait for P1's chain to end.
+
+Then all the garbage that was created during P1's chain will wait until
+the most recent combo or chain (in this set of garbage)
+was at least M frames ago.              #TODO: find M.
+
+Then, all the garbage will wait until P2's chain to end.
+
+At this time, after Q frames, the       #TODO: find Q.
+garbage will fall into P2's stack.
+
+A few things worth noting about the above process:
+- It is possible to skip the second stage altogether if P1's
+    chain is of any respectable length.
+- Multiple chains worth of garbage may accumulate in the third
+    stage if P1 makes short chains or unchained combos
+    while P2 is making a long chain.
+
+Falling does not behave exactly correctly for garbage.
+If a piece of garbage has its bottom resting entirely on other
+pieces (or panels?) as they all begin to fall, it will begin
+to fall at the same time.
+However, if some of the squares immediately beneath the garbage
+are empty, it will wait 1 frame before falling.
+
+I believe this betrays the nature of the algorithm used to
+determine whether a piece will begin falling:
+Either all the spaces it rests on must be empty or
+all the spaces it rests on must be falling.
+
+One rich implementation of the game seems to have missed this detail :o
