@@ -8,6 +8,7 @@ function love.load()
 
     -- load files!
     love.filesystem.load("class.lua")()
+    love.filesystem.load("queue.lua")()
     love.filesystem.load("globals.lua")()
     love.filesystem.load("engine.lua")()
     love.filesystem.load("graphics.lua")()

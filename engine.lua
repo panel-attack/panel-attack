@@ -89,6 +89,8 @@ Stack = class(function(s)
 
         s.move_sound = false  -- this is set if the cursor movement sound should be played
         s.game_over = false
+
+        s.card_q = Queue()
     end)
 
 Panel = class(function(p)
@@ -217,6 +219,10 @@ function Stack.foreign_run(self)
         self.input_buffer = string.sub(self.input_buffer,23)
     end
     self:render()
+end
+
+function Stack.enqueue_card(self, chain, x, y, n)
+    self.card_q.push({frame=1, chain=chain, x=x, y=y, n=n})
 end
 
 -- The engine routine.
