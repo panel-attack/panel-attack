@@ -68,6 +68,10 @@ function load_img(s)
     return ret
 end
 
+function draw(img,x,y)
+    love.graphics.draw(img, x*GFX_SCALE, y*GFX_SCALE, 0, GFX_SCALE, GFX_SCALE)
+end
+
 function graphics_init()
     --Font_NumRed=LoadImage("graphics\Font_NumRed.bmp");
     --Font_NumBlue=LoadImage("graphics\Font_NumBlue.bmp");
@@ -95,6 +99,20 @@ function graphics_init()
                     load_img("assets/cur1.png")}
 
     IMG_frame = load_img("assets/frame.png")
+
+    IMG_cards = {}
+    IMG_cards[true] = {}
+    IMG_cards[false] = {}
+    for i=4,66 do
+        IMG_cards[false][i] = load_img("assets/panel75.png")
+        --IMG_cards[false][i] = load_img("assets/combo"
+        --    ..tostring(math.floor(i/10))..tostring(i%10)..".png")
+    end
+    for i=2,13 do
+        IMG_cards[true][i] = load_img("assets/panel76.png")
+        --IMG_cards[true][i] = load_img("assets/chain"
+        --    ..tostring(math.floor(i/10))..tostring(i%10)..".png")
+    end
 
     --Graphics_ComboCards=LoadImage("graphics\combocards.bmp");
     --Graphics_ChainCards=LoadImage("graphics\ChainCards.bmp");
@@ -143,42 +161,18 @@ end
    ComboCardsQueueLength++;
 }--]]
 
---[[void DrawComboCards()
-{
-   int i;
-   int card, aniframe, draw_x, draw_y, iofs;
-   int slide;
-   for(i=0;i<ComboCardsQueueLength;i++)
-   {
-      card=ComboCardsQueue[i];
-
-      aniframe=card>>19;
-
-      draw_x=card>>15;
-      draw_x=draw_x&15;
-      draw_x=draw_x<<4;
-      draw_x+=self.pos_x;
-
-      draw_y=card>>11;
-      draw_y=draw_y&15;
-      draw_y=draw_y<<4;
-      draw_y+=self.pos_y+self.displacement;
-      draw_y-=CardAni[aniframe];
-
-      iofs=card&2047;
-
-      TGrabRegion(iofs,0,iofs+15,15,draw_x,draw_y,Graphics_ComboCards,screen);
-
-      aniframe++;
-      if(aniframe==TMOL) slide=1;
-      else ComboCardsQueue[i]+=524288;
-   }
-   if(slide)
-   {
-      for(i=0;i<ComboCardsQueueLength;i++) ComboCardsQueue[i]=ComboCardsQueue[i+1];
-      ComboCardsQueueLength--;
-   }
-}--]]
+function Stack.draw_cards(self)
+    for i=self.card_q.first,self.card_q.last do
+        local card = self.card_q[i]
+        local draw_x = card.x * 4 + self.pos_x
+        local draw_y = card.y * 4 + self.pos_y - card_animation[card.frame]
+        draw(IMG_cards[card.chain][card.n], draw_x, draw_y)
+        card.frame = card.frame + 1
+        if(card.frame==card_animation.max) then
+            self.card_q:pop()
+        end
+    end
+end
 --[[
 void EnqueueChainCard(int xpos, int ypos, int hitno)
 {
@@ -341,6 +335,7 @@ function Stack.render(self)
             0, GFX_SCALE, GFX_SCALE)
     love.graphics.print("Score: "..self.score, 400, 400)
     love.graphics.print("cur_timer: "..self.cur_timer, 400, 420)
+    self:draw_cards()
     self:render_cursor()
 end
 --[[

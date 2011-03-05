@@ -16,7 +16,8 @@ The amount of garbage is as follows:
 11-combo: 5b + Rb
 12-combo: 2 * Rb
 13-combo: 3 * Rb
-14-or-more-combo: 4 * Rb
+14-to-19-combo: 4 * Rb
+20-to-24-combo: 6 * Rb
 K-chain: (K-1)Rb
 K metal blocks in combo: (K-2)M in addition to normal combo garbage
 

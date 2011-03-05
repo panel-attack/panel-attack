@@ -27,6 +27,8 @@ danger_bounce_table = { 1, 1, 1,
 IMG_panels = nil
 IMG_cursor = nil
 IMG_frame = nil
+IMG_cards = nil
+
 
 VEASY  = 1
 EASY   = 2
@@ -108,7 +110,3 @@ card_animation = {0, 1, 2, 3, 4, 5, 6, 6, 7, 7,
     13, 13, 13, 13, 13, 13, 13, 15, 15, 15,
     15, 15, 0}
 card_animation.max = 43
-
-cards = {}
-cards[false] = {}
-cards[true] = {}

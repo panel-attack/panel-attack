@@ -222,7 +222,7 @@ function Stack.foreign_run(self)
 end
 
 function Stack.enqueue_card(self, chain, x, y, n)
-    self.card_q.push({frame=1, chain=chain, x=x, y=y, n=n})
+    self.card_q:push({frame=1, chain=chain, x=x, y=y, n=n})
 end
 
 -- The engine routine.
@@ -895,17 +895,15 @@ function Stack.check_matches(self)
                     combo_size = 30
                 end
                 self.score = self.score + score_combo_TA[combo_size]
-            else
-                if(score_mode == SCOREMODE_PDP64) then
-                    if(combo_size<41) then
-                        self.score = self.score + score_combo_PdP64[combo_size]
-                    else
-                        self.score = self.score + 20400+((combo_size-40)*800)
-                    end
+            elseif(score_mode == SCOREMODE_PDP64) then
+                if(combo_size<41) then
+                    self.score = self.score + score_combo_PdP64[combo_size]
+                else
+                    self.score = self.score + 20400+((combo_size-40)*800)
                 end
             end
 
-            --EnqueueComboCard(first_panel_col,first_panel_row,combo_size<<4);
+            self:enqueue_card(false, first_panel_col, first_panel_row, combo_size)
             --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
             --          first_panel_row<<4+P1StackPosY+self.displacement-9);
             --TODO: this stuff ^
@@ -917,7 +915,7 @@ function Stack.check_matches(self)
                 something = 0
             end
 
-            --EnqueueChainCard(first_panel_col,first_panel_row,something);
+            self:enqueue_card(true, first_panel_col, first_panel_row, something)
             --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
             --          first_panel_row<<4+P1StackPosY+self.displacement-9);
         end
