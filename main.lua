@@ -21,7 +21,7 @@ function love.load()
 
     TCP_sock = socket.tcp()
     TCP_sock:settimeout(7)
-    if not TCP_sock:connect("50.17.236.201"--[["127.0.0.1"--]],49569) then
+    if not TCP_sock:connect(--[["50.17.236.201"--]]"127.0.0.1",49569) then
         error("Failed to connect =(")
     end
     TCP_sock:settimeout(0)

@@ -104,19 +104,16 @@ function graphics_init()
     IMG_cards[true] = {}
     IMG_cards[false] = {}
     for i=4,66 do
-        IMG_cards[false][i] = load_img("assets/panel75.png")
-        --IMG_cards[false][i] = load_img("assets/combo"
-        --    ..tostring(math.floor(i/10))..tostring(i%10)..".png")
+        IMG_cards[false][i] = load_img("assets/combo"
+            ..tostring(math.floor(i/10))..tostring(i%10)..".png")
     end
     for i=2,13 do
-        IMG_cards[true][i] = load_img("assets/panel76.png")
-        --IMG_cards[true][i] = load_img("assets/chain"
-        --    ..tostring(math.floor(i/10))..tostring(i%10)..".png")
+        IMG_cards[true][i] = load_img("assets/chain"
+            ..tostring(math.floor(i/10))..tostring(i%10)..".png")
     end
-
-    --Graphics_ComboCards=LoadImage("graphics\combocards.bmp");
-    --Graphics_ChainCards=LoadImage("graphics\ChainCards.bmp");
-
+    for i=14,99 do
+        IMG_cards[true][i] = load_img("assets/chain00.png")
+    end
 
     --for(a=0;a<2;a++) MrStopAni[a]=5;
     --for(a=2;a<5;a++) MrStopAni[a]=8;
@@ -151,21 +148,11 @@ function graphics_init()
     Graphics_Controller_R=LoadImage("graphics\controller_R.bmp");--]]
 end
 
---[[void EnqueueComboCard(int xpos, int ypos, int iofs)
-{
-   -- (animation frame) <<19
-   -- xpos              4 bits
-   -- ypos              4 bits
-   -- iofs              11 bits
-   ComboCardsQueue[ComboCardsQueueLength]=(xpos<<15) | (ypos<<11) | iofs;
-   ComboCardsQueueLength++;
-}--]]
-
 function Stack.draw_cards(self)
     for i=self.card_q.first,self.card_q.last do
         local card = self.card_q[i]
-        local draw_x = card.x * 4 + self.pos_x
-        local draw_y = card.y * 4 + self.pos_y - card_animation[card.frame]
+        local draw_x = card.x * 16 + self.pos_x
+        local draw_y = card.y * 16 + self.pos_y - card_animation[card.frame]
         draw(IMG_cards[card.chain][card.n], draw_x, draw_y)
         card.frame = card.frame + 1
         if(card.frame==card_animation.max) then
@@ -173,112 +160,6 @@ function Stack.draw_cards(self)
         end
     end
 end
---[[
-void EnqueueChainCard(int xpos, int ypos, int hitno)
-{
-   -- (animation frame) <<19
-   -- xpos              4 bits
-   -- ypos              4 bits
-   -- iofs              11 bits
-   int tens, ones;
-   int something;
-   something=hitno;
-
-   if(something>13)
-      if(ScoreMode==SCOREMODE_TA) something=0;
-
-   if(something<20)
-   {
-      ChainCards16Queue[ChainCards16QueueLength]
-         =(xpos<<15) | (ypos<<11) | something;
-      ChainCards16QueueLength++;
-   }
-   else
-   {
-      tens=something/10;
-      ones=something-(tens*10);
-      ChainCards21Queue[ChainCards21QueueLength]
-         =(xpos<<15) | (ypos<<11) | (tens<<4) | ones;
-      ChainCards21QueueLength++;
-   }
-}--]]
---[[
-void DrawChainCards16()
-{
-   int i;
-   int card, aniframe, draw_x, draw_y, hitno;
-   int slide;
-   for(i=0;i<ChainCards16QueueLength;i++)
-   {
-      card=ChainCards16Queue[i];
-
-      aniframe=card>>19;
-
-      draw_x=card>>15;
-      draw_x=draw_x&15;
-      draw_x=draw_x<<4;
-      draw_x+=self.pos_x;
-
-      draw_y=card>>11;
-      draw_y=draw_y&15;
-      draw_y=draw_y<<4;
-      draw_y+=self.pos_y+self.displacement;
-      draw_y-=CardAni[aniframe];
-
-      hitno=card&2047;
-      hitno=hitno<<4;
-
-      TGrabRegion(hitno,0,hitno+15,15,draw_x,draw_y,Graphics_ChainCards,screen);
-
-      aniframe++;
-      if(aniframe==TMOL) slide=1;
-      else ChainCards16Queue[i]+=524288;
-   }
-   if(slide)
-   {
-      for(i=0;i<ChainCards16QueueLength;i++) ChainCards16Queue[i]=ChainCards16Queue[i+1];
-      ChainCards16QueueLength--;
-   }
-}--]]
---[[
-void DrawChainCards21()
-{
-   int i;
-   int card, aniframe, draw_x, draw_y, tens, ones;
-   int slide;
-   for(i=0;i<ChainCards21QueueLength;i++)
-   {
-      card=ChainCards21Queue[i];
-
-      aniframe=card>>19;
-
-      draw_x=card>>15;
-      draw_x=draw_x&15;
-      draw_x=draw_x<<4;
-      draw_x+=self.pos_x;
-
-      draw_y=card>>11;
-      draw_y=draw_y&15;
-      draw_y=draw_y<<4;
-      draw_y+=self.pos_y+self.displacement;
-      draw_y-=CardAni[aniframe];
-
-      tens=card&240;
-      ones=card&15;50
-      ones=ones<<4;5-
-      TGrabRegion(tens,16,tens+13, 31,draw_x -3,draw_y,Graphics_ChainCards,screen);
-      TGrabRegion(ones,32,ones +6, 47,draw_x+11,draw_y,Graphics_ChainCards,screen);
-
-      aniframe++;
-      if(aniframe==TMOL) slide=1;
-      else ChainCards21Queue[i]+=524288;
-   }
-   if(slide)
-   {
-      for(i=0;i<ChainCards21QueueLength;i++) ChainCards21Queue[i]=ChainCards21Queue[i+1];
-      ChainCards21QueueLength--;
-   }
-}--]]
 
 function Stack.render(self)
     self.n_active_panels = 0
@@ -324,15 +205,12 @@ function Stack.render(self)
                 else
                     draw_frame = 1
                 end
-                love.graphics.draw(IMG_panels[panel.color][draw_frame],
-                    draw_x*GFX_SCALE, draw_y*GFX_SCALE, 0, GFX_SCALE,
-                    GFX_SCALE)
+                draw(IMG_panels[panel.color][draw_frame], draw_x, draw_y)
             end
             idx = idx + 1
         end
     end
-    love.graphics.draw(IMG_frame, (self.pos_x-4)*GFX_SCALE, (self.pos_y-4)*GFX_SCALE,
-            0, GFX_SCALE, GFX_SCALE)
+    draw(IMG_frame, self.pos_x-4, self.pos_y-4)
     love.graphics.print("Score: "..self.score, 400, 400)
     love.graphics.print("cur_timer: "..self.cur_timer, 400, 420)
     self:draw_cards()
@@ -404,20 +282,12 @@ void Render_Confetti()
          Confettis[a][CONFETTI_ANGLE]=an;
       }
    }
-}
-
-void Render_Cards()
-{
-   DrawComboCards();
-   DrawChainCards16();
-   DrawChainCards21();
 }--]]
 
 function Stack.render_cursor(self)
-    love.graphics.draw(IMG_cursor[(math.floor(self.CLOCK/16)%2)+1],
-        (self.cur_col*16+self.pos_x-4)*GFX_SCALE,
-        (self.cur_row*16+self.pos_y-4+self.displacement)*GFX_SCALE,
-        0, GFX_SCALE, GFX_SCALE)
+    draw(IMG_cursor[(math.floor(self.CLOCK/16)%2)+1],
+        self.cur_col*16+self.pos_x-4,
+        self.cur_row*16+self.pos_y-4+self.displacement)
 end
 
 --[[void FadingPanels_1P(int draw_frame, int lightness)
