@@ -106,6 +106,7 @@ function fmainloop()
     P1 = Stack()
     P2 = Stack()
     P2.pos_x = 172
+    P2.score_x = 410
 
     while P1.panel_buffer == "" or P2.panel_buffer == "" do
         local status, err = pcall(function ()

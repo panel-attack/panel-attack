@@ -211,8 +211,7 @@ function Stack.render(self)
         end
     end
     draw(IMG_frame, self.pos_x-4, self.pos_y-4)
-    love.graphics.print("Score: "..self.score, 400, 400)
-    love.graphics.print("cur_timer: "..self.cur_timer, 400, 420)
+    love.graphics.print("Score: "..self.score, self.score_x, 100)
     self:draw_cards()
     self:render_cursor()
 end

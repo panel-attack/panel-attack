@@ -8,6 +8,7 @@
 Stack = class(function(s)
         s.pos_x = 4   -- Position of the play area on the screen
         s.pos_y = 4
+        s.score_x = 315
         s.panel_buffer = ""
         s.input_buffer = ""
         s.panels = {}
