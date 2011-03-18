@@ -7,7 +7,7 @@ function fmainloop()
 end
 
 function main_select_mode()
-    local funcs = {main_solo, main_net_vs_setup, main_net_vs_setup}
+    local funcs = {main_solo, main_net_vs_setup, main_net_vs_setup, main_net_vs_setup}
     local args = {nil, "50.17.236.201", "50.18.48.184", "127.0.0.1"}
     while true do
         love.graphics.print("Press a key to choose\n"
