@@ -22,7 +22,7 @@ Each frame, client will send its input state to server by saying "I"
 followed by 22 characters:
     6 digits to represent the frame number of the client, followed by 0 or 1 for keys:
         up, down, left, right, swap_1, swap_2, raise_1, raise_2,
-        and the protected_keys versions of each of these.
+        and the this_frame_keys versions of each of these.
 
 At any time during gameplay, client must accept any number of these messages:
     "P" followed by 120 digits

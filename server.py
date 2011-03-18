@@ -40,12 +40,13 @@ class PanelServ(Protocol):
 
     def handshake(self, version):
         # TODO: care about the version number.
-        if self.index % 2 == 1:
-            self.neighbor = self.factory.conns[self.index-1]
+        if self.factory.wait_index is not None:
+            self.neighbor = self.factory.conns[self.factory.wait_index]
             self.neighbor.neighbor = self
             self.transport.write("G")
             self.neighbor.transport.write("G")
         else:
+            self.factory.wait_index = self.index
             self.transport.write("H")
 
     def forward_input(self, data):
@@ -57,14 +58,8 @@ class PanelServ(Protocol):
             return
         ret = list(map(int,data[1:]))
         for x in xrange(20):
-            for y in xrange(2):
-                nogood = True
-                while nogood:
-                    color = random.randint(1,ncolors)
-                    nogood = color == ret[-6]
-                ret.append(color)
-            for y in xrange(4):
-                prevtwo = ret[-1]==ret[-2]
+            for y in xrange(6):
+                prevtwo = y>1 and ret[-1]==ret[-2]
                 nogood = True
                 while nogood:
                     color = random.randint(1,ncolors)
@@ -76,6 +71,8 @@ class PanelServ(Protocol):
 
     def connectionLost(self, reason):
         del self.factory.conns[self.index]
+        if self.factory.wait_index == self.index:
+            self.factory.wait_index = None
         print("disconnected! %s"%self.index)
 
 class PanelServFactory(Factory):
@@ -83,6 +80,7 @@ class PanelServFactory(Factory):
     def __init__(self):
         self.conns = {}
         self.index = 0
+        self.wait_index = None
 
 reactor.listenTCP(49569, PanelServFactory())
 reactor.run()

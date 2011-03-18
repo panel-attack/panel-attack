@@ -16,7 +16,7 @@ function love.load()
     love.graphics.setMode(820,615)
 
     graphics_init()     -- load images and set up stuff
-    network_init()      -- set up connection to server
+    -- network_init()   -- we shouldn't set this up if we don't need it...
     -- input_init()     -- sets key repeat (well that was a bad idea)
 
     -- create mainloop coroutine
@@ -24,8 +24,10 @@ function love.load()
 end
 
 function love.draw()
+    -- TODO: try to enforce 60fps even if we don't get vsync.
     local status, err = coroutine.resume(mainloop)
     if not status then
         error(err)
     end
+    this_frame_keys = {}
 end

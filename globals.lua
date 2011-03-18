@@ -10,7 +10,7 @@ k_swap2 = "z"
 k_raise1 = "x"
 k_raise2 = "x"
 keys = {}
-protected_keys = {}
+this_frame_keys = {}
 
 bounce_table = {1, 1, 1, 1,
                 2, 2, 2,
@@ -97,10 +97,6 @@ score_chain_TA[0]=0
 
 GFX_SCALE = 3
 
-crash_now = false
-crash_error = nil
-
-opponent_ready = false
 type_to_length = {G=1, H=1, N=1, P=121, O=121, I=23}
 leftovers = ""
 
