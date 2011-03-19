@@ -63,6 +63,15 @@ int ChainCards21QueueLength;
 --int Graphics_Controller_R;
 
 function load_img(s)
+    s = love.image.newImageData(s)
+    local w, h = s:getWidth(), s:getHeight()
+    local wp = math.pow(2, math.ceil(math.log(w)/math.log(2)))
+    local hp = math.pow(2, math.ceil(math.log(h)/math.log(2)))
+    if wp ~= w or hp ~= h then
+        local padded = love.image.newImageData(wp, hp)
+        padded:paste(s, 0, 0)
+        s = padded
+    end
     local ret = love.graphics.newImage(s)
     ret:setFilter("nearest","nearest")
     return ret
@@ -119,13 +128,7 @@ function graphics_init()
     --for(a=2;a<5;a++) MrStopAni[a]=8;
     --for(a=5;a<25;a++) MrStopAni[a]=16;
 
-    --[[file=FileOpen("graphics\Card.ani",FILE_READ);
-    for(a=0;a<TMOL;a++)
-    {
-        CardAni[a] = FileReadByte(file);
-    }
-    FileClose(file);
-    file=FileOpen("graphics\timeslide.ani",FILE_READ);
+    --[[file=FileOpen("graphics\timeslide.ani",FILE_READ);
     for(a=1;a<65;a++)
     {
         TimeSlideAni[a] = FileReadByte(file);
@@ -176,9 +179,6 @@ function Stack.render(self)
                 local draw_x = col * 16 + self.pos_x
                 local draw_y = row * 16 + self.pos_y + self.displacement
                 if panel.matched then
-                    if panel.timer == nil then
-                        error("one")
-                    end
                     if panel.timer < self.FRAMECOUNT_FLASH then
                         draw_frame = 6
                     else
