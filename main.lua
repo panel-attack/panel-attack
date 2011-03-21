@@ -1,5 +1,4 @@
 socket = require("socket")
-
 require("class")
 require("queue")
 require("globals")
@@ -9,25 +8,29 @@ require("input")
 require("network")
 require("mainloop")
 
+local NEXT_FRAME_TIME
+local FRAME_STEP = 1/60
+
 function love.load()
-    math.randomseed(os.time(os.date("*t")))
-
-    -- set resolution!
-    love.graphics.setMode(820,615)
-
-    graphics_init()     -- load images and set up stuff
-    -- network_init()   -- we shouldn't set this up if we don't need it...
-    -- input_init()     -- sets key repeat (well that was a bad idea)
-
-    -- create mainloop coroutine
     mainloop = coroutine.create(fmainloop)
+    NEXT_FRAME_TIME = love.timer.getTime()
+end
+
+function love.update()
+    local now = love.timer.getTime()
+    while NEXT_FRAME_TIME < now do
+        local status, err = coroutine.resume(mainloop)
+        if not status then
+            error(err)
+        end
+        this_frame_keys = {}
+        NEXT_FRAME_TIME = NEXT_FRAME_TIME + FRAME_STEP
+    end
 end
 
 function love.draw()
-    -- TODO: try to enforce 60fps even if we don't get vsync.
-    local status, err = coroutine.resume(mainloop)
-    if not status then
-        error(err)
+    for i=gfx_q.first,gfx_q.last do
+        gfx_q[i][1](unpack(gfx_q[i][2]))
     end
-    this_frame_keys = {}
+    -- love.graphics.print("FPS: "..love.timer.getFPS(),315,115)
 end

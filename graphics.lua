@@ -77,8 +77,13 @@ function load_img(s)
     return ret
 end
 
-function draw(img,x,y)
-    love.graphics.draw(img, x*GFX_SCALE, y*GFX_SCALE, 0, GFX_SCALE, GFX_SCALE)
+function draw(img, x, y)
+    gfx_q:push({love.graphics.draw, {img, x*GFX_SCALE, y*GFX_SCALE,
+        0, GFX_SCALE, GFX_SCALE}})
+end
+
+function gprint(str, x, y)
+    gfx_q:push({love.graphics.print, {str, x, y}})
 end
 
 function graphics_init()
@@ -211,7 +216,7 @@ function Stack.render(self)
         end
     end
     draw(IMG_frame, self.pos_x-4, self.pos_y-4)
-    love.graphics.print("Score: "..self.score, self.score_x, 100)
+    gprint("Score: "..self.score, self.score_x, 100)
     self:draw_cards()
     self:render_cursor()
 end
