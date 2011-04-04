@@ -171,9 +171,9 @@ end
 
 function Stack.render(self)
     self.n_active_panels = 0
-    for row=0,11 do
-        local idx = row * 8 + 1
-        for col=0,5 do
+    for row=0,self.height-1 do
+        local idx = row * self.width + 1
+        for col=0,self.width-1 do
             local panel = self.panels[idx]
             local count_this_panel = false
             if(panel.color ~= 0 and panel:exclude_hover()) or panel.is_swapping then
@@ -223,69 +223,69 @@ end
 --[[
 void EnqueueConfetti(int x, int y)
 {
-   int b, c;
-   if(NumConfettis==MAXCONFETTIS)
-   {
-      for(c=0;c<NumConfettis;c++)
-      {
-         for(b=0;b<5;b++) Confettis[c][b]=Confettis[c+1][b];
-      }
-      NumConfettis--;
-   }
-   Confettis[NumConfettis][CONFETTI_TIMER]=CONFETTI_STARTTIMER;
-   Confettis[NumConfettis][CONFETTI_RADIUS]=CONFETTI_STARTRADIUS;
-   Confettis[NumConfettis][CONFETTI_ANGLE]=0;
-   Confettis[NumConfettis][CONFETTI_X]=x;
-   Confettis[NumConfettis][CONFETTI_Y]=y;
-   NumConfettis++;
+    int b, c;
+    if(NumConfettis==MAXCONFETTIS)
+    {
+        for(c=0;c<NumConfettis;c++)
+        {
+            for(b=0;b<5;b++) Confettis[c][b]=Confettis[c+1][b];
+        }
+        NumConfettis--;
+    }
+    Confettis[NumConfettis][CONFETTI_TIMER]=CONFETTI_STARTTIMER;
+    Confettis[NumConfettis][CONFETTI_RADIUS]=CONFETTI_STARTRADIUS;
+    Confettis[NumConfettis][CONFETTI_ANGLE]=0;
+    Confettis[NumConfettis][CONFETTI_X]=x;
+    Confettis[NumConfettis][CONFETTI_Y]=y;
+    NumConfettis++;
 }
 
 void Render_Confetti()
 {
-   int a, b, c;
-   int r, an, t;
+    int a, b, c;
+    int r, an, t;
 
-   for(a=0;a<NumConfettis;a++)
-   {
-      t=Confettis[a][CONFETTI_TIMER]-1;
-      r=Confettis[a][CONFETTI_RADIUS]-ConfettiAni[t];
-      an=Confettis[a][CONFETTI_ANGLE]-6;
+    for(a=0;a<NumConfettis;a++)
+    {
+        t=Confettis[a][CONFETTI_TIMER]-1;
+        r=Confettis[a][CONFETTI_RADIUS]-ConfettiAni[t];
+        an=Confettis[a][CONFETTI_ANGLE]-6;
 
-      ConfettiBuf[0][0]=(r*cos(an))>>16;
-      ConfettiBuf[0][1]=(r*sin(an))>>16;
-      ConfettiBuf[1][0]=(r*cos(an+60))>>16;
-      ConfettiBuf[1][1]=(r*sin(an+60))>>16;
-      ConfettiBuf[2][0]=(r*cos(an+120))>>16;
-      ConfettiBuf[2][1]=(r*sin(an+120))>>16;
-      for(c=0;c<3;c++)
-      {
-         ConfettiBuf[c+3][0]=0-ConfettiBuf[c][0];
-         ConfettiBuf[c+3][1]=0-ConfettiBuf[c][1];
-      }
-      for(c=0;c<6;c++)
-      {
-         ConfettiBuf[c][0]+=Confettis[a][CONFETTI_X];
-         ConfettiBuf[c][1]+=Confettis[a][CONFETTI_Y];
+        ConfettiBuf[0][0]=(r*cos(an))>>16;
+        ConfettiBuf[0][1]=(r*sin(an))>>16;
+        ConfettiBuf[1][0]=(r*cos(an+60))>>16;
+        ConfettiBuf[1][1]=(r*sin(an+60))>>16;
+        ConfettiBuf[2][0]=(r*cos(an+120))>>16;
+        ConfettiBuf[2][1]=(r*sin(an+120))>>16;
+        for(c=0;c<3;c++)
+        {
+            ConfettiBuf[c+3][0]=0-ConfettiBuf[c][0];
+            ConfettiBuf[c+3][1]=0-ConfettiBuf[c][1];
+        }
+        for(c=0;c<6;c++)
+        {
+            ConfettiBuf[c][0]+=Confettis[a][CONFETTI_X];
+            ConfettiBuf[c][1]+=Confettis[a][CONFETTI_Y];
 
-         TBlit(ConfettiBuf[c][0],ConfettiBuf[c][1],Graphics_Confetti,screen);
-      }
+            TBlit(ConfettiBuf[c][0],ConfettiBuf[c][1],Graphics_Confetti,screen);
+        }
 
-      if(!t)
-      {
-         for(c=a;c<NumConfettis;c++)
-         {
-            for(b=0;b<5;b++) Confettis[c][b]=Confettis[c+1][b];
-         }
-         NumConfettis--;
-         if(a~=(NumConfettis-1)) a--;
-      }
-      else
-      {
-         Confettis[a][CONFETTI_TIMER]=t;
-         Confettis[a][CONFETTI_RADIUS]=r;
-         Confettis[a][CONFETTI_ANGLE]=an;
-      }
-   }
+        if(!t)
+        {
+            for(c=a;c<NumConfettis;c++)
+            {
+                for(b=0;b<5;b++) Confettis[c][b]=Confettis[c+1][b];
+            }
+            NumConfettis--;
+            if(a~=(NumConfettis-1)) a--;
+        }
+        else
+        {
+            Confettis[a][CONFETTI_TIMER]=t;
+            Confettis[a][CONFETTI_RADIUS]=r;
+            Confettis[a][CONFETTI_ANGLE]=an;
+        }
+    }
 }--]]
 
 function Stack.render_cursor(self)
@@ -326,144 +326,144 @@ end
 --[[
 void Render_Info_1P()
 {
-   int col, something, draw_x;
-   if(GameTimeRender)
-   {
-      GameTimeRender=0;
-      something=GameTime;
-      GameTimeDigits[0]=something/36000;
-      something=something%36000;
-      GameTimeDigits[1]=something/3600;
-      something=something%3600;
+    int col, something, draw_x;
+    if(GameTimeRender)
+    {
+        GameTimeRender=0;
+        something=GameTime;
+        GameTimeDigits[0]=something/36000;
+        something=something%36000;
+        GameTimeDigits[1]=something/3600;
+        something=something%3600;
 
-      GameTimeDigits[2]=something/600;
-      something=something%600;
-      GameTimeDigits[3]=something/60;
-      something=something%60;
+        GameTimeDigits[2]=something/600;
+        something=something%600;
+        GameTimeDigits[3]=something/60;
+        something=something%60;
 
-      GameTimeDigits[4]=10;
-      GameTimeDigits[5]=something/10;
-      GameTimeDigits[6]=something%10;
+        GameTimeDigits[4]=10;
+        GameTimeDigits[5]=something/10;
+        GameTimeDigits[6]=something%10;
 
-      RectFill(0,0,64,16,rgb(255,0,255),GameTimeDisplay);
+        RectFill(0,0,64,16,rgb(255,0,255),GameTimeDisplay);
 
-      if(GameTimeDigits[0]) draw_x=0;
-      else draw_x=0-8;
-      something=0;
-      for(col=0;col<2;col++)
-      {  if(GameTimeDigits[col])
-         {  GrabRegion(GameTimeDigits[col]<<3,0,(GameTimeDigits[col]<<3)+7,15,draw_x,0,Font_NumRed,GameTimeDisplay);
-            something=1;
-         }
-         else
-         {  if(something) GrabRegion(GameTimeDigits[col]<<3,0,(GameTimeDigits[col]<<3)+7,15,draw_x,0,Font_NumRed,GameTimeDisplay);
-         }
-         draw_x+=8;
-      }
-      if(something) GrabRegion(80,0,87,15,draw_x,0,Font_NumRed,GameTimeDisplay);
-      draw_x+=8;
-      if(something || GameTimeDigits[2])
-         GrabRegion(GameTimeDigits[2]<<3,0,(GameTimeDigits[2]<<3)+7,15,draw_x,0,Font_NumRed,GameTimeDisplay);
-      draw_x+=8;
-      for(col=3;col<7;col++)
-      {  GrabRegion(GameTimeDigits[col]<<3,0,(GameTimeDigits[col]<<3)+7,15,draw_x,0,Font_NumRed,GameTimeDisplay);
-         draw_x+=8;
-      }
-   }
+        if(GameTimeDigits[0]) draw_x=0;
+        else draw_x=0-8;
+        something=0;
+        for(col=0;col<2;col++)
+        {  if(GameTimeDigits[col])
+            {  GrabRegion(GameTimeDigits[col]<<3,0,(GameTimeDigits[col]<<3)+7,15,draw_x,0,Font_NumRed,GameTimeDisplay);
+                something=1;
+            }
+            else
+            {  if(something) GrabRegion(GameTimeDigits[col]<<3,0,(GameTimeDigits[col]<<3)+7,15,draw_x,0,Font_NumRed,GameTimeDisplay);
+            }
+            draw_x+=8;
+        }
+        if(something) GrabRegion(80,0,87,15,draw_x,0,Font_NumRed,GameTimeDisplay);
+        draw_x+=8;
+        if(something || GameTimeDigits[2])
+            GrabRegion(GameTimeDigits[2]<<3,0,(GameTimeDigits[2]<<3)+7,15,draw_x,0,Font_NumRed,GameTimeDisplay);
+        draw_x+=8;
+        for(col=3;col<7;col++)
+        {  GrabRegion(GameTimeDigits[col]<<3,0,(GameTimeDigits[col]<<3)+7,15,draw_x,0,Font_NumRed,GameTimeDisplay);
+            draw_x+=8;
+        }
+    }
 
-   TBlit(48,39,GameTimeDisplay,screen);
-
-
-
-   if(P1ScoreRender)
-   {
-      P1ScoreRender=0;
-      something=P1Score;
-      P1ScoreDigits[0]=something/10000;
-      something=something%10000;
-      P1ScoreDigits[1]=something/1000;
-      something=something%1000;
-      P1ScoreDigits[2]=something/100;
-      something=something%100;
-      P1ScoreDigits[3]=something/10;
-      P1ScoreDigits[4]=something%10;
-
-      RectFill(0,0,40,16,rgb(255,0,255),P1ScoreDisplay);
-      draw_x=0;
-      something=0;
-      for(col=0;col<4;col++)
-      {
-         if(P1ScoreDigits[col])
-         {
-            GrabRegion(P1ScoreDigits[col]<<3,0,(P1ScoreDigits[col]<<3)+7,15,draw_x,0,Font_NumBlue,P1ScoreDisplay);
-            something=1;
-         }
-         else
-         {
-            if(something) GrabRegion(P1ScoreDigits[col]<<3,0,(P1ScoreDigits[col]<<3)+7,15,draw_x,0,Font_NumBlue,P1ScoreDisplay);
-         }
-         draw_x+=8;
-      }
-      col=4;
-      GrabRegion(P1ScoreDigits[col]<<3,0,(P1ScoreDigits[col]<<3)+7,15,draw_x,0,Font_NumBlue,P1ScoreDisplay);
-   }
-
-   TBlit(232,63,P1ScoreDisplay,screen);
+    TBlit(48,39,GameTimeDisplay,screen);
 
 
-   if(P1StopTime)
-   {
-      MrStopTimer--;
-      if(MrStopTimer<=0)
-      {
-         MrStopTimer=MrStopAni[P1StopTime];
-         if(MrStopState) MrStopState=0;
-         else MrStopState=1;
-         P1SpeedLVRender=1;
-      }
-   }
-   if(P1SpeedLVRender)
-   {
-      RectFill(0,0,48,48,rgb(255,0,255),P1SpeedLVDisplay);
-      if(P1StopTime)
-      {
-         Blit(0,0,Graphics_MrStop[MrStopState],P1SpeedLVDisplay);
-         if(MrStopState)
-         {
-            P1SpeedLVDigits[0]=P1StopTime/10;
-            P1SpeedLVDigits[1]=P1StopTime%10;
-            GrabRegion(P1SpeedLVDigits[0]<<3,0,(P1SpeedLVDigits[0]<<3)+7,15, 0,0,Font_NumRed,P1SpeedLVDisplay);
-            GrabRegion(P1SpeedLVDigits[1]<<3,0,(P1SpeedLVDigits[1]<<3)+7,15, 8,0,Font_NumRed,P1SpeedLVDisplay);
-         }
-      }
-      else
-      {
-         P1SpeedLVDigits[0]=P1SpeedLV/10;
-         P1SpeedLVDigits[1]=P1SpeedLV%10;
-         if(P1SpeedLVDigits[0]) GrabRegion(P1SpeedLVDigits[0]<<3,0,(P1SpeedLVDigits[0]<<3)+7,15, 32,2,Font_NumBlue,P1SpeedLVDisplay);
-         GrabRegion(P1SpeedLVDigits[1]<<3,0,(P1SpeedLVDigits[1]<<3)+7,15, 40,2,Font_NumBlue,P1SpeedLVDisplay);
-         Blit(1,25,Graphics_level,P1SpeedLVDisplay);
-         Blit(1,35,Graphics_Difficulty[P1DifficultyLV],P1SpeedLVDisplay);
-      }
-   }
 
-   TBlit(224,95,P1SpeedLVDisplay,screen);
+    if(P1ScoreRender)
+    {
+        P1ScoreRender=0;
+        something=P1Score;
+        P1ScoreDigits[0]=something/10000;
+        something=something%10000;
+        P1ScoreDigits[1]=something/1000;
+        something=something%1000;
+        P1ScoreDigits[2]=something/100;
+        something=something%100;
+        P1ScoreDigits[3]=something/10;
+        P1ScoreDigits[4]=something%10;
+
+        RectFill(0,0,40,16,rgb(255,0,255),P1ScoreDisplay);
+        draw_x=0;
+        something=0;
+        for(col=0;col<4;col++)
+        {
+            if(P1ScoreDigits[col])
+            {
+                GrabRegion(P1ScoreDigits[col]<<3,0,(P1ScoreDigits[col]<<3)+7,15,draw_x,0,Font_NumBlue,P1ScoreDisplay);
+                something=1;
+            }
+            else
+            {
+                if(something) GrabRegion(P1ScoreDigits[col]<<3,0,(P1ScoreDigits[col]<<3)+7,15,draw_x,0,Font_NumBlue,P1ScoreDisplay);
+            }
+            draw_x+=8;
+        }
+        col=4;
+        GrabRegion(P1ScoreDigits[col]<<3,0,(P1ScoreDigits[col]<<3)+7,15,draw_x,0,Font_NumBlue,P1ScoreDisplay);
+    }
+
+    TBlit(232,63,P1ScoreDisplay,screen);
+
+
+    if(P1StopTime)
+    {
+        MrStopTimer--;
+        if(MrStopTimer<=0)
+        {
+            MrStopTimer=MrStopAni[P1StopTime];
+            if(MrStopState) MrStopState=0;
+            else MrStopState=1;
+            P1SpeedLVRender=1;
+        }
+    }
+    if(P1SpeedLVRender)
+    {
+        RectFill(0,0,48,48,rgb(255,0,255),P1SpeedLVDisplay);
+        if(P1StopTime)
+        {
+            Blit(0,0,Graphics_MrStop[MrStopState],P1SpeedLVDisplay);
+            if(MrStopState)
+            {
+                P1SpeedLVDigits[0]=P1StopTime/10;
+                P1SpeedLVDigits[1]=P1StopTime%10;
+                GrabRegion(P1SpeedLVDigits[0]<<3,0,(P1SpeedLVDigits[0]<<3)+7,15, 0,0,Font_NumRed,P1SpeedLVDisplay);
+                GrabRegion(P1SpeedLVDigits[1]<<3,0,(P1SpeedLVDigits[1]<<3)+7,15, 8,0,Font_NumRed,P1SpeedLVDisplay);
+            }
+        }
+        else
+        {
+            P1SpeedLVDigits[0]=P1SpeedLV/10;
+            P1SpeedLVDigits[1]=P1SpeedLV%10;
+            if(P1SpeedLVDigits[0]) GrabRegion(P1SpeedLVDigits[0]<<3,0,(P1SpeedLVDigits[0]<<3)+7,15, 32,2,Font_NumBlue,P1SpeedLVDisplay);
+            GrabRegion(P1SpeedLVDigits[1]<<3,0,(P1SpeedLVDigits[1]<<3)+7,15, 40,2,Font_NumBlue,P1SpeedLVDisplay);
+            Blit(1,25,Graphics_level,P1SpeedLVDisplay);
+            Blit(1,35,Graphics_Difficulty[P1DifficultyLV],P1SpeedLVDisplay);
+        }
+    }
+
+    TBlit(224,95,P1SpeedLVDisplay,screen);
 }
 
 
 
 void Render_Controller()
 {
-   TBlit(234,165,Graphics_Controller,screen);
+    TBlit(234,165,Graphics_Controller,screen);
 
-   if(key[Keyboard_Up])     TBlit(247,179,Graphics_Controller_Up,screen);
-   if(key[Keyboard_Down])   TBlit(247,192,Graphics_Controller_Down,screen);
-   if(key[Keyboard_Left])   TBlit(240,186,Graphics_Controller_Left,screen);
-   if(key[Keyboard_Right])  TBlit(254,186,Graphics_Controller_Right,screen);
+    if(key[Keyboard_Up])     TBlit(247,179,Graphics_Controller_Up,screen);
+    if(key[Keyboard_Down])   TBlit(247,192,Graphics_Controller_Down,screen);
+    if(key[Keyboard_Left])   TBlit(240,186,Graphics_Controller_Left,screen);
+    if(key[Keyboard_Right])  TBlit(254,186,Graphics_Controller_Right,screen);
 
-   if(key[Keyboard_Swap1])  TBlit(283,193,Graphics_Controller_ABXY,screen);
-   if(key[Keyboard_Swap2])  TBlit(289,187,Graphics_Controller_ABXY,screen);
-   if(key[Keyboard_Raise1]) TBlit(240,165,Graphics_Controller_L,screen);
-   if(key[Keyboard_Raise2]) TBlit(278,165,Graphics_Controller_R,screen);
+    if(key[Keyboard_Swap1])  TBlit(283,193,Graphics_Controller_ABXY,screen);
+    if(key[Keyboard_Swap2])  TBlit(289,187,Graphics_Controller_ABXY,screen);
+    if(key[Keyboard_Raise1]) TBlit(240,165,Graphics_Controller_L,screen);
+    if(key[Keyboard_Raise2]) TBlit(278,165,Graphics_Controller_R,screen);
 
 }--]]

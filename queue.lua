@@ -23,3 +23,11 @@ end
 function Queue.len(self)
     return self.last - self.first + 1
 end
+
+function Queue.clear(self)
+    for i=self.first,self.last do
+        self[i]=nil
+    end
+    self.first = 0
+    self.last = -1
+end

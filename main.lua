@@ -32,5 +32,5 @@ function love.draw()
     for i=gfx_q.first,gfx_q.last do
         gfx_q[i][1](unpack(gfx_q[i][2]))
     end
-    -- love.graphics.print("FPS: "..love.timer.getFPS(),315,115)
+    love.graphics.print("FPS: "..love.timer.getFPS(),315,115)
 end

@@ -1,9 +1,9 @@
-   -- Stuff defined in this file:
-   --  . the data structures that store the configuration of
-   --    the stack of panels
-   --  . the main game routine
-   --    (rising, timers, falling, cursor movement, swapping, landing)
-   --  . the matches-checking routine
+    -- Stuff defined in this file:
+    --  . the data structures that store the configuration of
+    --    the stack of panels
+    --  . the main game routine
+    --    (rising, timers, falling, cursor movement, swapping, landing)
+    --  . the matches-checking routine
 
 Stack = class(function(s)
         s.pos_x = 4   -- Position of the play area on the screen
@@ -12,7 +12,10 @@ Stack = class(function(s)
         s.panel_buffer = ""
         s.input_buffer = ""
         s.panels = {}
-        for i=1,96 do
+        s.width = 6
+        s.height = 12
+        s.size = s.width * s.height
+        for i=1,s.width*s.height do
             s.panels[i] = Panel()
         end
 
@@ -95,9 +98,13 @@ Stack = class(function(s)
     end)
 
 Panel = class(function(p)
+        p:clear()
+    end)
+
+function Panel.clear(self)
         -- color 0 is an empty panel.
-        -- colors 1-6 are normal colors (6 is dark blue)
-        p.color = 0
+        -- colors 1-6 are normal colors
+        self.color = 0
         -- A panel's timer indicates for how many more frames it will:
         --  . be swapping
         --  . sit in the MATCHED state before being set POPPING
@@ -105,67 +112,24 @@ Panel = class(function(p)
         --  . sit and be POPPED before disappearing for good
         --  . hover before FALLING
         -- depending on which one of these flags is set on the panel.
-        p.timer = 0
+        self.timer = 0
         -- is_swapping is set if the panel is swapping.
         -- The panel's timer then counts down from 3 to 0,
         -- causing the swap to end 3 frames later.
         -- The timer is also used to offset the panel's
         -- position on the screen.
-        --  is_swapping_from_left indicates from which direction the panel
-        --  is swapping:
-        --   f - from right
-        --   t - from left
-        p.is_swapping = false
-        p.is_swapping_from_left = false
-        -- In some cases a swapping panel shouldn't be allowed to swap
-        -- again until it's done with the swapping it's doing already.
-        -- In these cases dont_swap should be set.
-        p.dont_swap = false
-        -- This flag is set when a panel's matched, then its timer counts
-        -- down until it reaches 0, at which time it will become popping
-        p.matched = false
-        -- Popping.  All the panels in a match become popping at once,
-        -- but their timers for remaining in this state will be higher
-        -- depending on their place in the match (FLAG_MATCHINDEX).
-        p.popping = false
-        -- This flag indicates that panel has popped, but it's still
-        -- there until the last panel in the match pops.  When
-        -- its timer reaches 0 the panel is GONE!
-        p.popped = false
-        -- This panel is floating and cannot be touched until
-        -- its timer reaches 0 and it begins to fall.
-        p.hovering = false
-        p.falling = false
-        -- A match made with a chain panel is a chain match...
-        -- Chain panels are de-flagged during the match-checking
-        -- routine, if they are eligible for a match but didn't make
-        -- one, and also are not sitting on top of a hovering or
-        -- swapping panel.  The chain flag must remain set on the panel
-        -- until it pops.
-        p.chaining = false
-        -- This panel is on the bottom row and isn't in play.
-        p.dimmed = false
-        -- A panel that landed just recently.  This flag is set
-        -- so that the timer can be used to index the correct
-        -- frame to be drawn for the panel (the 'bounce' effect).
-        -- These next definitions exclude panels in certain states
-        -- from being acted upon in certain ways.
-        p.landing = false
 
         -- And finally, each panel has a couple tags.
         -- Unlike the timers and flags, they don't need to be cleared
         -- when their data is no longer valid, because they should
         -- only be checked when the data is surely valid.
-        p.combo_index = 0
-        p.combo_size = 0
-        p.chain_index = 0
+        self.combo_index = 0
+        self.combo_size = 0
+        self.chain_index = 0
 
-        -- matching is for use in the match detection function and gets
-        -- reset every frame.
-        -- this should not be confused with matched, which is a flag
-        -- that persists between frames.
-        p.matching = false
-    end)
+        -- Also flags
+        self:clear_flags()
+end
 
 function Panel.exclude_hover(self)
     return self.matched or self.popping or self.popped or self.hovering
@@ -200,6 +164,7 @@ function Panel.clear_flags(self)
     self.chaining = false
     self.dimmed = false
     self.landing = false
+    self.matching = false
 end
 
 --local_run is for the stack that belongs to this client.
@@ -249,15 +214,15 @@ function Stack.PdP(self)
     end
 
     if self.displacement ~= 0 then
-        self.bottom_row=10
+        self.bottom_row=self.height-2
     else
-        self.bottom_row=11   -- the 12th row (row 11) is only "in play"
+        self.bottom_row=self.height-1   -- the 12th row (row 11) is only "in play"
     end                  -- when the stack displacement is 0
                         -- and there are panels in the top row
 
     -- count the number of panels in the top row (danger)
     self.panels_in_top_row = false
-    for idx=1,6 do
+    for idx=1,self.width do
         if self.panels[idx].color ~= 0 then
             self.panels_in_top_row = true
             self.danger_col[idx] = true
@@ -273,7 +238,7 @@ function Stack.PdP(self)
     end
 
     self.panels_in_second_row = false
-    for idx=9,14 do
+    for idx=1+self.width,2*self.width do
         if self.panels[idx] ~= 0 then
             self.panels_in_second_row = true
         end
@@ -328,10 +293,10 @@ function Stack.PdP(self)
                 if self.displacement == 0 then
                     self.prevent_manual_raise = false
                     if self.panels_in_top_row then
-                        for idx=89,94 do
+                        for idx=self.size-self.width+1,self.size do
                             self.panels[idx].dimmed = false
                         end
-                        self.bottom_row=11
+                        self.bottom_row=self.height - 1
                     else
                         self:new_row()
                     end
@@ -345,20 +310,21 @@ function Stack.PdP(self)
     -- Falling
 
     for row=self.bottom_row,0,-1 do
-        local idx = row*8+1
-        for col=1,6 do
+        local idx = row*self.width+1
+        for col=1,self.width do
             if self.panels[idx].falling then
-               -- if there's no panel below a falling panel,
-               -- it must fall one row.
-               -- I'm gonna assume there's no panel below,
-               -- because the falling panel should've landed on
-               -- it during the last frame if there was.
-                self.panels[idx+8] = self.panels[idx]
-                self.panels[idx+8].timer = 0
-                self.panels[idx] = Panel()
-               -- the timer can be left behind because it should be 0.
-               -- the tags can be left behind because they're not important
-               -- until a panel is stuck in position.
+                -- if there's no panel below a falling panel,
+                -- it must fall one row.
+                -- I'm gonna assume there's no panel below,
+                -- because the falling panel should've landed on
+                -- it during the last frame if there was.
+                self.panels[idx+self.width], self.panels[idx] =
+                    self.panels[idx], self.panels[idx+self.width]
+                self.panels[idx+self.width].timer = 0
+                self.panels[idx]:clear()
+                -- the timer can be left behind because it should be 0.
+                -- the tags can be left behind because they're not important
+                -- until a panel is stuck in position.
             end
             idx = idx + 1
         end
@@ -368,8 +334,8 @@ function Stack.PdP(self)
     -- Timer-expiring actions
 
     for row=self.bottom_row,0,-1 do
-        local idx=row*8+1
-        for col=1,6 do
+        local idx=row*self.width+1
+        for col=1,self.width do
             -- first of all, we do Nothin' if we're not even looking
             -- at a space with any flags.
             panel = self.panels[idx]
@@ -386,7 +352,7 @@ function Stack.PdP(self)
                         -- be done.
                         if panel.color ~= 0 then
                             if row~=self.bottom_row then
-                                if self.panels[idx+8].color == 0 then
+                                if self.panels[idx+self.width].color == 0 then
                                     self:set_hoverers_2(idx,
                                             self.FRAMECOUNT_HOVER,false)
                                     -- if there is no panel beneath this panel
@@ -404,7 +370,7 @@ function Stack.PdP(self)
                                                     self.FRAMECOUNT_HOVER+1,false)
                                         end
                                     end
-                                elseif self.panels[idx+8].hovering then
+                                elseif self.panels[idx+self.width].hovering then
                                     -- swap may have landed on a hover
                                     self:set_hoverers_2(idx,
                                             self.FRAMECOUNT_HOVER,false)
@@ -413,7 +379,7 @@ function Stack.PdP(self)
                         else
                             -- an empty space finished swapping...
                             -- panels above it hover
-                            self:set_hoverers(idx-8,
+                            self:set_hoverers(idx-self.width,
                                     self.FRAMECOUNT_HOVER+1,false)
                         end
                         -- swap completed, a matches-check will occur this frame.
@@ -423,14 +389,14 @@ function Stack.PdP(self)
                         -- it will now fall without sitting around
                         -- for any longer!
                         panel.hovering = false
-                        if self.panels[idx+8].color ~= 0 then
+                        if self.panels[idx+self.width].color ~= 0 then
                             panel.landing = true
                             panel.timer = 12
                             self.do_matches_check = true
                         else
                             panel.falling = true
-                            self.panels[idx], self.panels[idx+8] =
-                                self.panels[idx+8], self.panels[idx]
+                            self.panels[idx], self.panels[idx+self.width] =
+                                self.panels[idx+self.width], self.panels[idx]
                             panel.timer = 0
                             -- Not sure if needed:
                             self.panels[idx]:clear_flags()
@@ -462,7 +428,7 @@ function Stack.PdP(self)
                                 self.n_chain_panels = self.n_chain_panels - 1
                             end
                             panel:clear_flags()
-                            self:set_hoverers(idx-8,
+                            self:set_hoverers(idx-self.width,
                                     self.FRAMECOUNT_HOVER+1,true)
                         else
                             panel.popping = false
@@ -485,7 +451,7 @@ function Stack.PdP(self)
                         panel:clear_flags()
                         -- Any panels sitting on top of it
                         -- hover and are flagged as CHAINING
-                        self:set_hoverers(idx-8,self.FRAMECOUNT_HOVER+1,true);
+                        self:set_hoverers(idx-self.width,self.FRAMECOUNT_HOVER+1,true);
                     else
                         -- what the heck.
                         -- if a timer runs out and the routine can't
@@ -522,7 +488,7 @@ function Stack.PdP(self)
                 self.move_sound = true
             end
         elseif self.cur_dir==DIR_RIGHT then
-            if self.cur_col < 4 then
+            if self.cur_col < self.width-2 then
                 self.cur_col = self.cur_col + 1
                 self.move_sound = true
             end
@@ -536,15 +502,15 @@ function Stack.PdP(self)
 
     -- SWAPPING
     if self.swap_1 or self.swap_2 then
-        local idx = (self.cur_row*8) + self.cur_col + 1 --Since both of these are 0-indexed.
+        local idx = (self.cur_row*self.width) + self.cur_col + 1 --Since both of these are 0-indexed.
          -- in order for a swap to occur, one of the two panels in
          -- the cursor must not be a non-panel.
         if self.panels[idx].color ~= 0 or self.panels[idx+1].color ~= 0 then
             -- also, both spaces must be swappable.
             if not (self.panels[idx]:exclude_swap() or
                     self.panels[idx+1]:exclude_swap()) then
-                if self.cur_row == 0 or not (self.panels[idx-8].hovering or
-                        self.panels[idx-7].hovering) then
+                if self.cur_row == 0 or not (self.panels[idx-self.width].hovering or
+                        self.panels[idx-self.width+1].hovering) then
                     self.panels[idx], self.panels[idx+1] =
                         self.panels[idx+1], self.panels[idx]
                     local tmp_chaining = self.panels[idx].chaining
@@ -565,22 +531,22 @@ function Stack.PdP(self)
 
                     if self.cur_row ~= self.bottom_row then
                         if (self.panels[idx].color ~= 0) and (self.panels[idx+8].color
-                                == 0 or self.panels[idx+8].falling) then
+                                == 0 or self.panels[idx+self.width].falling) then
                             self.panels[idx].dont_swap = true
                         end
                         if (self.panels[idx+1].color ~= 0) and (self.panels[idx+9].color
-                                == 0 or self.panels[idx+9].falling) then
+                                == 0 or self.panels[idx+self.width+1].falling) then
                             self.panels[idx+1].dont_swap = true
                         end
                     end
 
                     if self.cur_row > 0 then
                         if self.panels[idx].color == 0 and
-                                self.panels[idx-8].color ~= 0 then
+                                self.panels[idx-self.width].color ~= 0 then
                             self.panels[idx].dont_swap = true
                         end
                         if self.panels[idx+1].color == 0 and
-                                self.panels[idx-7].color ~= 0 then
+                                self.panels[idx-self.width+1].color ~= 0 then
                             self.panels[idx+1].dont_swap = true
                         end
                     end
@@ -633,8 +599,8 @@ function Stack.PdP(self)
     --  isn't falling as well.
 
     for row=self.bottom_row,0,-1 do
-        local idx = row*8 + 1
-        for col=1,6 do
+        local idx = row*self.width + 1
+        for col=1,self.width do
             if self.panels[idx].falling then
                 -- if it's on the bottom row, it should surely land
                 if row == self.bottom_row then
@@ -645,15 +611,15 @@ function Stack.PdP(self)
                     --SFX_Land_Play=1;
                     --SFX LAWL
                 else
-                    if self.panels[idx+8].color ~= 0 then
+                    if self.panels[idx+self.width].color ~= 0 then
                         -- if there's a panel below, this panel's gonna land
                         -- unless the panel below is falling.
-                        if not self.panels[idx+8].falling then
+                        if not self.panels[idx+self.width].falling then
                             self.panels[idx].falling = false
                             -- if it lands on a hovering panel, it inherits
                             -- that panel's hover time.
-                            if self.panels[idx+8].hovering then
-                                self:set_hoverers(idx,self.panels[idx+8].timer,false)
+                            if self.panels[idx+self.width].hovering then
+                                self:set_hoverers(idx,self.panels[idx+self.width].timer,false)
                             else
                                 self.panels[idx].landing = true
                                 self.panels[idx].timer = 12
@@ -689,26 +655,26 @@ function Stack.PdP(self)
 
     --TODO: WTF IS GameTimeTimer
     --[[
-   GameTimeTimer--;
-   if(!GameTimeTimer)
-   {
-      GameTimeTimer=60;
-      Switch(GameTimeMode)
-      {
-         Case TIME_REMAINING:
-            GameTime--;
-            if(GameTime<0) GameTime=0;
+    GameTimeTimer--;
+    if(!GameTimeTimer)
+    {
+        GameTimeTimer=60;
+        Switch(GameTimeMode)
+        {
+            Case TIME_REMAINING:
+                GameTime--;
+                if(GameTime<0) GameTime=0;
 
-            if(!GameTime) SFX_Bell_Play=25;
-            else if(GameTime<15) SFX_Bell_Play=24;
+                if(!GameTime) SFX_Bell_Play=25;
+                else if(GameTime<15) SFX_Bell_Play=24;
 
-         Case TIME_ELAPSED:
-            GameTime++;
-            if(GameTime>359999) GameTime=359999;
-      }
-      GameTimeRender=1;
-   }
-   --]]
+            Case TIME_ELAPSED:
+                GameTime++;
+                if(GameTime>359999) GameTime=359999;
+        }
+        GameTimeRender=1;
+    }
+    --]]
 end
 
 function Stack.check_matches(self)
@@ -725,12 +691,12 @@ function Stack.check_matches(self)
     local something = 0
     local whatever = 0
 
-    for panel=1,96 do
+    for panel=1,self.size do
         self.panels[panel].matching = false
     end
     -- check vertical matches
     count = 0
-    for col=1,6 do
+    for col=1,self.width do
         panel = col
         old_panel = 0
         for row=0,self.bottom_row do
@@ -750,16 +716,16 @@ function Stack.check_matches(self)
                                 combo_size = combo_size + 1
                             end
                             if(count==3) then
-                                if(not self.panels[panel-8].matching) then
-                                    self.panels[panel-8].matching = true
-                                    if(self.panels[panel-8].chaining) then
+                                if(not self.panels[panel-self.width].matching) then
+                                    self.panels[panel-self.width].matching = true
+                                    if(self.panels[panel-self.width].chaining) then
                                         is_chain = true
                                     end
                                     combo_size = combo_size + 1
                                 end
-                                if(not self.panels[panel-16].matching) then
-                                    self.panels[panel-16].matching = true
-                                    if(self.panels[panel-16].chaining) then
+                                if(not self.panels[panel-2*self.width].matching) then
+                                    self.panels[panel-2*self.width].matching = true
+                                    if(self.panels[panel-2*self.width].chaining) then
                                         is_chain = true
                                     end
                                     combo_size = combo_size + 1
@@ -774,7 +740,7 @@ function Stack.check_matches(self)
                 count=0
             end
             old_panel = self.panels[panel].color
-            panel = panel + 8
+            panel = panel + self.width
         end
     end
 
@@ -783,8 +749,8 @@ function Stack.check_matches(self)
     panel = 0
     for row=0,self.bottom_row do
         old_panel = 0
-        panel = row * 8 + 1
-        for col=1,6 do
+        panel = row * self.width + 1
+        for col=1,self.width do
             something=self.panels[panel]:exclude_match()
             if((self.panels[panel].color ~= 0) and (not something)) then
                 if(count == 0) then
@@ -839,8 +805,8 @@ function Stack.check_matches(self)
 
     combo_index=combo_size;
     for row=self.bottom_row,0,-1 do
-        panel = row*8 + 6
-        for col=5,0,-1 do
+        panel = (row+1)*self.width
+        for col=self.width-1,0,-1 do
             if(self.panels[panel].matching) then
                 self.panels[panel].landing = false
                 self.panels[panel].matched = true
@@ -866,7 +832,7 @@ function Stack.check_matches(self)
                     something=self.panels[panel]:exclude_match()
                     if(not something) then
                         if(row~=self.bottom_row) then
-                            something=self.panels[panel+8].is_swapping
+                            something=self.panels[panel+self.width].is_swapping
                             if(not something) then
                                 -- no swapping panel below
                                 -- so this panel loses its chain flag
@@ -990,7 +956,7 @@ function Stack.set_hoverers(self, first_hoverer, hover_time, add_chaining)
                 self.n_chain_panels = self.n_chain_panels + 1
             end
         end
-        panel = panel - 8
+        panel = panel - self.width
         if(panel<1) then
             brk = true
         end
@@ -1035,7 +1001,7 @@ function Stack.set_hoverers_2(self, first_hoverer, hover_time, add_chaining)
             end
             not_first = 1
         end
-        panel = panel - 8
+        panel = panel - self.width
         if(panel<1) then
             brk = true
         end
@@ -1043,34 +1009,40 @@ function Stack.set_hoverers_2(self, first_hoverer, hover_time, add_chaining)
 end
 
 function Stack.new_row(self)
-                     -- move cursor up
+    -- move cursor up
     if(self.cur_row ~= 0) then
         self.cur_row = self.cur_row - 1
     end
-                     -- move panels up
-    for panel=1,86 do
-        self.panels[panel]=self.panels[panel+8];
+    local taking_these = {}
+    for i=1,self.width do
+        self.panels[i]:clear()
+        taking_these[i+(self.size-self.width)] = self.panels[i]
     end
-                     -- put bottom row into play
-    for panel=81,88 do
+    -- move panels up
+    for panel=1,self.size-self.width do
+        self.panels[panel]=self.panels[panel+self.width];
+    end
+    -- put bottom row into play
+    for panel=self.size-2*self.width+1,self.size-self.width do
         self.panels[panel].dimmed = false
     end
 
-    if string.len(self.panel_buffer) < 6 then
+    if string.len(self.panel_buffer) < self.width then
         error("Ran out of buffered panels.  Is the server down?")
     end
-                     -- generate a new row
-    for panel=89,94 do
-        self.panels[panel] = Panel()
-        self.panels[panel].color = string.sub(self.panel_buffer,panel-88,panel-88)+0
+    -- generate a new row
+    for panel=self.size-self.width+1,self.size do
+        self.panels[panel] = taking_these[panel]
+        local idx = panel - (self.size-self.width)
+        self.panels[panel].color = string.sub(self.panel_buffer,idx,idx)+0
         self.panels[panel].dimmed = true
     end
     self.panel_buffer = string.sub(self.panel_buffer,7)
-    if string.len(self.panel_buffer) == 60 then
-        ask_for_panels(string.sub(self.panel_buffer,55,60))
+    if string.len(self.panel_buffer) <= 10*self.width then
+        ask_for_panels(string.sub(self.panel_buffer,-6))
     end
     self.displacement = 16
-    self.bottom_row = 10
+    self.bottom_row = self.height - 2
     self.do_matches_check = true
 end
 
@@ -1165,7 +1137,7 @@ function quiet_cursor_movement()
                         end
                     else
                         if(self.cur_dir == DIR_RIGHT) then
-                            if(self.cur_col < 4) then
+                            if(self.cur_col < self.width - 2) then
                                 self.cur_col = self.cur_col + 1
                             end
                         end

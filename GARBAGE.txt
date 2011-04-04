@@ -57,7 +57,7 @@ A few things worth noting about the above process:
 # Either all the spaces it rests on must be empty or
 # all the spaces it rests on must be falling.
 
-Actually, that's not how the bug works.  I don't know what triggers it.
+Actually, that's not how the bug works.  I now suspect it works as above
+except that only 6-wide garbage is affected by the bug.
 
-To find precise garbage timings and to find out how this bug works,
-I will probably have to use snes9x's debugger.
+To find precise garbage timings I will probably have to use a debugger.

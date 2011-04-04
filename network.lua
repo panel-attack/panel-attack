@@ -1,5 +1,9 @@
+local TCP_sock = nil
+local type_to_length = {G=1, H=1, N=1, P=121, O=121, I=23}
+local leftovers = ""
+
 function flush_socket()
-    junk,err,data = TCP_sock:receive('*a')
+    local junk,err,data = TCP_sock:receive('*a')
     -- lol, if it returned successfully then that's bad!
     if not err then
         error("the connection closed unexpectedly")
@@ -21,7 +25,7 @@ function get_message()
     return typ, ret
 end
 
-process_message = {
+local process_message = {
     G=function(s) ask_for_panels("000000") end,
     H=function(s) end,
     N=function(s) error("Server told us to fuck off") end,
@@ -42,7 +46,7 @@ end
 function do_messages()
     flush_socket()
     while true do
-        typ, data = get_message()
+        local typ, data = get_message()
         if typ then
             process_message[typ](data)
         else

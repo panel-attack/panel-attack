@@ -1,5 +1,3 @@
---int Input_DirPressed =   -- last dir pressed
-
 -- keyboard assignment vars
 k_up = "up"
 k_down = "down"
@@ -96,9 +94,6 @@ score_chain_TA = {0, --You get nothing for clearing things without chaining.
 score_chain_TA[0]=0
 
 GFX_SCALE = 3
-
-type_to_length = {G=1, H=1, N=1, P=121, O=121, I=23}
-leftovers = ""
 
 card_animation = {0, 1, 2, 3, 4, 5, 6, 6, 7, 7,
     8, 8, 9, 9, 10, 10, 10, 11, 11, 11,

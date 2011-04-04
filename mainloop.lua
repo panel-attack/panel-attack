@@ -11,7 +11,7 @@ end
 
 local function wait()
     coroutine.yield()
-    gfx_q = Queue()
+    gfx_q:clear()
 end
 
 function main_select_mode()
