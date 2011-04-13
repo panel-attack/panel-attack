@@ -60,4 +60,7 @@ A few things worth noting about the above process:
 Actually, that's not how the bug works.  I now suspect it works as above
 except that only 6-wide garbage is affected by the bug.
 
+Nope, it just happened for a 5 on top of a 4 on top of a 3.
+The 3 and 4 cleared but the 5 did not.
+
 To find precise garbage timings I will probably have to use a debugger.

@@ -27,16 +27,11 @@ IMG_cursor = nil
 IMG_frame = nil
 IMG_cards = nil
 
-
 VEASY  = 1
 EASY   = 2
 NORMAL = 3
 HARD   = 4
 VHARD  = 5
-
-TIME_ELAPSED = 1
-TIME_REMAINING = 2
--- TODO: what the fuck are these for ^
 
 score_mode = 1
 SCOREMODE_TA    = 1
@@ -99,7 +94,7 @@ card_animation = {0, 1, 2, 3, 4, 5, 6, 6, 7, 7,
     8, 8, 9, 9, 10, 10, 10, 11, 11, 11,
     11, 11, 13, 13, 13, 13, 13, 13, 13, 13,
     13, 13, 13, 13, 13, 13, 13, 15, 15, 15,
-    15, 15, 0}
+    15, 15}
 card_animation.max = 43
 
 gfx_q = Queue()

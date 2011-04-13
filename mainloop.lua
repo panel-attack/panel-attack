@@ -1,17 +1,11 @@
-function fmainloop()
-    math.randomseed(os.time(os.date("*t")))
-    graphics_init() -- load images and set up stuff
+local wait = coroutine.yield
 
+function fmainloop()
     local func = main_select_mode
     local arg = nil
     while true do
         func,arg = func(arg)
     end
-end
-
-local function wait()
-    coroutine.yield()
-    gfx_q:clear()
 end
 
 function main_select_mode()

@@ -1,16 +1,16 @@
 function love.conf(t)
     t.title = "Panel Attack"
     t.author = "sharpobject@gmail.com"
-    t.screen.width = 820
+    t.screen.width = 819
     t.screen.height = 615
     t.modules.joystick = false
     t.modules.audio = false
     t.modules.mouse = false
     t.modules.sound = false
     t.modules.physics = false
-    t.screen.vsync = false       -- Enable vertical sync (boolean)
 
     -- DEFAULTS FROM HERE DOWN
+    t.screen.vsync = true       -- Enable vertical sync (boolean)
     t.screen.fullscreen = false -- Enable fullscreen (boolean)
     t.screen.fsaa = 0           -- The number of FSAA-buffers (number)
     t.identity = nil            -- The name of the save directory (string)

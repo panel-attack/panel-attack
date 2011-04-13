@@ -24,20 +24,6 @@
 --int Graphics_MrStop[2];
 --int Graphics_Difficulty[5];
 
---[[int TimeSlideAni[65];
-
-int CardAni[50];
-int Graphics_ComboCards;
-int Graphics_ChainCards;
-int ComboCardsQueue[50];
-int ComboCardsQueueLength;
-int ChainCards16Queue[50];
-int ChainCards16QueueLength;
-int ChainCards21Queue[50];
-int ChainCards21QueueLength;
---]]
-
-
 --int NumConfettis;
 --#define MAXCONFETTIS     8
 
@@ -51,16 +37,6 @@ int ChainCards21QueueLength;
 --int ConfettiBuf[6][2];
 --#define CONFETTI_STARTTIMER   40
 --#define CONFETTI_STARTRADIUS 150
-
-
---int Graphics_Controller;
---int Graphics_Controller_Up;
---int Graphics_Controller_Down;
---int Graphics_Controller_Left;
---int Graphics_Controller_Right;
---int Graphics_Controller_ABXY;
---int Graphics_Controller_L;
---int Graphics_Controller_R;
 
 function load_img(s)
     s = love.image.newImageData(s)
@@ -448,22 +424,4 @@ void Render_Info_1P()
     }
 
     TBlit(224,95,P1SpeedLVDisplay,screen);
-}
-
-
-
-void Render_Controller()
-{
-    TBlit(234,165,Graphics_Controller,screen);
-
-    if(key[Keyboard_Up])     TBlit(247,179,Graphics_Controller_Up,screen);
-    if(key[Keyboard_Down])   TBlit(247,192,Graphics_Controller_Down,screen);
-    if(key[Keyboard_Left])   TBlit(240,186,Graphics_Controller_Left,screen);
-    if(key[Keyboard_Right])  TBlit(254,186,Graphics_Controller_Right,screen);
-
-    if(key[Keyboard_Swap1])  TBlit(283,193,Graphics_Controller_ABXY,screen);
-    if(key[Keyboard_Swap2])  TBlit(289,187,Graphics_Controller_ABXY,screen);
-    if(key[Keyboard_Raise1]) TBlit(240,165,Graphics_Controller_L,screen);
-    if(key[Keyboard_Raise2]) TBlit(278,165,Graphics_Controller_R,screen);
-
 }--]]
