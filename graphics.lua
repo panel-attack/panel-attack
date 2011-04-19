@@ -120,16 +120,7 @@ function graphics_init()
     {
         ConfettiAni[a] = FileReadByte(file);
     }
-    FileClose(file);
-
-    Graphics_Controller=LoadImage("graphics\controller.bmp");
-    Graphics_Controller_Up=LoadImage("graphics\controller_Up.bmp");
-    Graphics_Controller_Down=LoadImage("graphics\controller_Down.bmp");
-    Graphics_Controller_Left=LoadImage("graphics\controller_Left.bmp");
-    Graphics_Controller_Right=LoadImage("graphics\controller_Right.bmp");
-    Graphics_Controller_ABXY=LoadImage("graphics\controller_ABXY.bmp");
-    Graphics_Controller_L=LoadImage("graphics\controller_L.bmp");
-    Graphics_Controller_R=LoadImage("graphics\controller_R.bmp");--]]
+    FileClose(file);--]]
 end
 
 function Stack.draw_cards(self)
