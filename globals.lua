@@ -98,3 +98,10 @@ card_animation = {0, 1, 2, 3, 4, 5, 6, 6, 7, 7,
 card_animation.max = 43
 
 gfx_q = Queue()
+
+FC_HOVER = {12, 12, 9,  6,  6 }
+FC_MATCH = {61, 61, 50, 37, 37}
+FC_FLASH = {16, 16, 13, 8,  8 }
+FC_POP   = {9,  9,  8,  7,  7 }
+stop_time_combo = {{3,2,2,2,1},{13,10,7,4,1}}
+stop_time_chain = {{7,5,3,2,1},{13,10,7,4,1}}

@@ -49,8 +49,6 @@ Stack = class(function(s)
 
         s.stop_time = 0
         s.stop_time_timer = 0
-        s.stop_time_combo = {{0,0,0,0,0},{0,0,0,0,0}}
-        s.stop_time_chain = {{0,0,0,0,0},{0,0,0,0,0}}
 
         s.game_time = 0
         s.game_time_mode = 1
@@ -68,10 +66,10 @@ Stack = class(function(s)
         s.n_chain_panels= 0
 
            -- These change depending on the difficulty and speed levels:
-        s.FRAMECOUNT_HOVER = 9
-        s.FRAMECOUNT_MATCH = 50
-        s.FRAMECOUNT_FLASH = 13
-        s.FRAMECOUNT_POP = 8
+        s.FRAMECOUNT_HOVER = FC_HOVER[s.difficulty]
+        s.FRAMECOUNT_MATCH = FC_MATCH[s.difficulty]
+        s.FRAMECOUNT_FLASH = FC_FLASH[s.difficulty]
+        s.FRAMECOUNT_POP   = FC_POP[s.difficulty]
         s.FRAMECOUNT_RISE = 60
 
         s.rise_timer = s.FRAMECOUNT_RISE
@@ -898,10 +896,10 @@ function Stack.check_matches(self)
                 self.stop_time = self.stop_time + 1
             else
                 if(is_chain) then
-                    self.stop_time = self.stop_time + self.stop_time_chain
+                    self.stop_time = self.stop_time + stop_time_chain
                         [(self.panels_in_top_row and 2) or 1][self.difficulty]
                 else
-                    self.stop_time = self.stop_time + self.stop_time_combo
+                    self.stop_time = self.stop_time + stop_time_combo
                         [(self.panels_in_top_row and 2) or 1][self.difficulty]
                 end
                 --MrStopState=1;
@@ -1046,68 +1044,6 @@ function Stack.new_row(self)
     self.do_matches_check = true
 end
 
---[[function Stack.new_row(self)
-    local panel = 0
-    local something = false
-    local something_else = false
-    local whatever = false
-    local brk = false
-                     -- move cursor up
-    if(self.cur_row ~= 0) then
-        self.cur_row = self.cur_row - 1
-    end
-                     -- move panels up
-    for panel=1,86 do
-        self.panels[panel]=self.panels[panel+8];
-    end
-                     -- put bottom row into play
-    for panel=81,88 do
-        self.panels[panel].dimmed = false
-    end
-                     -- generate a new row
-    for panel=89,90 do
-        brk = false
-        self.panels[panel] = Panel()
-        while(not brk) do
-            self.panels[panel].color = math.random(1,self.NCOLORS)
-            brk = true
-            if self.panels[panel].color == self.panels[panel-8].color then
-                brk = false
-            end
-        end
-        self.panels[panel].dimmed = true
-    end
-    for panel=91,94 do
-        whatever = false
-        if(self.panels[panel-1].color==self.panels[panel-2].color) then
-            whatever = true
-        end
-        brk = false
-        self.panels[panel] = Panel()
-        while(not brk) do
-            self.panels[panel].color = math.random(1,self.NCOLORS)
-            something = false
-            if(whatever) then
-                if(self.panels[panel].color == self.panels[panel-1].color) then
-                    something = true
-                end
-            end
-            something_else = false
-            if self.panels[panel].color == self.panels[panel-8].color then
-                something_else=1
-            end
-            brk = true
-            if(something or something_else) then
-                brk = false
-            end
-        end
-        self.panels[panel].dimmed = true
-    end
-    self.displacement = 16
-    self.bottom_row = 10
-    self.do_matches_check = true
-end--]]
-
 function quiet_cursor_movement()
     local something = false
     local whatever = false
@@ -1125,23 +1061,17 @@ function quiet_cursor_movement()
                 if(self.cur_row > 0) then
                     self.cur_row = self.cur_row - 1
                 end
-            else
-                if(self.cur_dir == DIR_DOWN) then
-                    if(self.cur_row < bottom_row) then
-                        self.cur_row = self.cur_row + 1
-                    end
-                else
-                    if(self.cur_dir == DIR_LEFT) then
-                        if(self.cur_col > 0) then
-                            self.cur_col = self.cur_col - 1
-                        end
-                    else
-                        if(self.cur_dir == DIR_RIGHT) then
-                            if(self.cur_col < self.width - 2) then
-                                self.cur_col = self.cur_col + 1
-                            end
-                        end
-                    end
+            elseif(self.cur_dir == DIR_DOWN) then
+                if(self.cur_row < bottom_row) then
+                    self.cur_row = self.cur_row + 1
+                end
+            elseif(self.cur_dir == DIR_LEFT) then
+                if(self.cur_col > 0) then
+                    self.cur_col = self.cur_col - 1
+                end
+            elseif(self.cur_dir == DIR_RIGHT) then
+                if(self.cur_col < self.width - 2) then
+                    self.cur_col = self.cur_col + 1
                 end
             end
         end
