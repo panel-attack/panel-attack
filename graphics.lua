@@ -143,14 +143,15 @@ function Stack.render(self)
         for col=0,self.width-1 do
             local panel = self.panels[idx]
             local count_this_panel = false
-            if(panel.color ~= 0 and panel:exclude_hover()) or panel.is_swapping then
+            if(panel.color ~= 0 and panel:exclude_hover()) or
+                    panel.state == "swapping" then
                 self.n_active_panels = self.n_active_panels + 1
             end
-            if panel.color ~= 0 and not panel.popped then
+            if panel.color ~= 0 and panel.state ~= "popped" then
                 local draw_frame = 1
                 local draw_x = col * 16 + self.pos_x
                 local draw_y = row * 16 + self.pos_y + self.displacement
-                if panel.matched then
+                if panel.state == "matched" then
                     if panel.timer < self.FRAMECOUNT_FLASH then
                         draw_frame = 6
                     else
@@ -160,11 +161,11 @@ function Stack.render(self)
                             draw_frame = 1
                         end
                     end
-                elseif panel.popping then
+                elseif panel.state == "popping" then
                     draw_frame = 6
-                elseif panel.landing then
+                elseif panel.state == "landing" then
                     draw_frame = bounce_table[panel.timer + 1]
-                elseif panel.is_swapping then
+                elseif panel.state == "swapping" then
                     if panel.is_swapping_from_left then
                         draw_x = draw_x - panel.timer * 4
                     else
@@ -172,7 +173,7 @@ function Stack.render(self)
                     end
                 elseif self.danger_col[col+1] and row <= self.bottom_row then
                     draw_frame = danger_bounce_table[self.danger_timer+1];
-                elseif panel.dimmed then
+                elseif panel.state == "dimmed" then
                     draw_frame = 7
                 else
                     draw_frame = 1

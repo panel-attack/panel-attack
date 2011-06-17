@@ -8,7 +8,7 @@ function love.keyreleased(key, unicode)
 end
 
 function controls(stack)
-    local new_dir = 0
+    local new_dir = nil
     if (keys[k_raise1] or keys[k_raise2] or this_frame_keys[k_raise1] or
             this_frame_keys[k_raise2]) and (not stack.prevent_manual_raise) then
         stack.manual_raise = true
@@ -19,13 +19,13 @@ function controls(stack)
     stack.swap_2 = this_frame_keys[k_swap2]
 
     if keys[k_up] or this_frame_keys[k_up] then
-        new_dir = DIR_UP
+        new_dir = "up"
     elseif keys[k_down] or this_frame_keys[k_down] then
-        new_dir = DIR_DOWN
+        new_dir = "down"
     elseif keys[k_left] or this_frame_keys[k_left] then
-        new_dir = DIR_LEFT
+        new_dir = "left"
     elseif keys[k_right] or this_frame_keys[k_right] then
-        new_dir = DIR_RIGHT
+        new_dir = "right"
     end
 
     if new_dir == stack.cur_dir then
@@ -43,7 +43,7 @@ function fake_controls(stack, sdata)
     for i=1,16 do
         data[i] = string.sub(sdata,i,i) ~= "0"
     end
-    local new_dir = 0
+    local new_dir = nil
     if (data[7] or data[8] or data[15] or data[16]) and (not stack.prevent_manual_raise) then
         stack.manual_raise = true
         stack.manual_raise_yet = false
@@ -53,13 +53,13 @@ function fake_controls(stack, sdata)
     stack.swap_2 = data[14]
 
     if data[1] or data[9] then
-        new_dir = DIR_UP
+        new_dir = "up"
     elseif data[2] or data[10] then
-        new_dir = DIR_DOWN
+        new_dir = "down"
     elseif data[3] or data[11] then
-        new_dir = DIR_LEFT
+        new_dir = "left"
     elseif data[4] or data[12] then
-        new_dir = DIR_RIGHT
+        new_dir = "right"
     end
 
     if new_dir == stack.cur_dir then

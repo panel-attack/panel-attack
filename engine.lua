@@ -70,7 +70,7 @@ Stack = class(function(s)
         s.FRAMECOUNT_MATCH = FC_MATCH[s.difficulty]
         s.FRAMECOUNT_FLASH = FC_FLASH[s.difficulty]
         s.FRAMECOUNT_POP   = FC_POP[s.difficulty]
-        s.FRAMECOUNT_RISE = 60
+        s.FRAMECOUNT_RISE  = 6
 
         s.rise_timer = s.FRAMECOUNT_RISE
 
@@ -85,7 +85,7 @@ Stack = class(function(s)
         s.cur_wait_time = 25   -- number of ticks to wait before the cursor begins
                              -- to move quickly... it's based on P1CurSensitivity
         s.cur_timer = 0   -- number of ticks for which a new direction's been pressed
-        s.cur_dir = 0     -- the direction pressed
+        s.cur_dir = nil     -- the direction pressed
         s.cur_row = 0  -- the row the cursor's on
         s.cur_col = 0  -- the column the left half of the cursor's on
 
@@ -101,7 +101,7 @@ Panel = class(function(p)
 
 function Panel.clear(self)
         -- color 0 is an empty panel.
-        -- colors 1-6 are normal colors
+        -- colors 1-7 are normal colors, 8 is [!].
         self.color = 0
         -- A panel's timer indicates for how many more frames it will:
         --  . be swapping
@@ -109,7 +109,7 @@ function Panel.clear(self)
         --  . sit in the POPPING state before actually being POPPED
         --  . sit and be POPPED before disappearing for good
         --  . hover before FALLING
-        -- depending on which one of these flags is set on the panel.
+        -- depending on which one of these states the panel is in.
         self.timer = 0
         -- is_swapping is set if the panel is swapping.
         -- The panel's timer then counts down from 3 to 0,
@@ -129,40 +129,44 @@ function Panel.clear(self)
         self:clear_flags()
 end
 
-function Panel.exclude_hover(self)
-    return self.matched or self.popping or self.popped or self.hovering
-            or self.falling
-end
+-- states:
+-- swapping, matched, popping, popped, hovering,
+-- falling, dimmed, landing, normal
+-- flags:
+-- from_left
+-- dont_swap
+-- chaining
 
-function Panel.exclude_match(self)
-    return self.is_swapping or self.matched or self.popping or self.popped
-            or self.hovering or self.dimmed or self.falling
-end
+do
+    exclude_hover_set = {matched=true, popping=true, popped=true,
+            hovering=true, falling=true}
+    function Panel.exclude_hover(self)
+        return exclude_hover_set[self.state]
+    end
 
-function Panel.exclude_swap(self)
-    return self.matched or self.popping or self.popped or self.hovering
-            or self.dimmed or self.dont_swap
+    exclude_match_set = {swapping=true, matched=true, popping=true,
+            popped=true, hovering=true, dimmed=true, falling=true}
+    function Panel.exclude_match(self)
+        return exclude_match_set[self.state]
+    end
+
+    exclude_swap_set = {matched=true, popping=true, popped=true,
+            hovering=true, dimmed=true}
+    function Panel.exclude_swap(self)
+        return exclude_swap_set[self.state] or self.dont_swap
+    end
 end
 
 function Panel.has_flags(self)
-    return self.is_swapping or self.is_swapping_from_left or self.dont_swap or
-            self.matched or self.popping or self.popped or self.hovering or
-            self.falling or self.chaining or self.dimmed or self.landing
+    return (self.state ~= "normal") or self.is_swapping_from_left
+            or self.dont_swap or self.chaining
 end
 
 function Panel.clear_flags(self)
-    self.is_swapping = false
     self.is_swapping_from_left = false
     self.dont_swap = false
-    self.matched = false
-    self.popping = false
-    self.popped = false
-    self.hovering = false
-    self.falling = false
     self.chaining = false
-    self.dimmed = false
-    self.landing = false
-    self.matching = false
+    self.state = "normal"
 end
 
 --local_run is for the stack that belongs to this client.
@@ -189,18 +193,11 @@ function Stack.enqueue_card(self, chain, x, y, n)
     self.card_q:push({frame=1, chain=chain, x=x, y=y, n=n})
 end
 
+local d_col = {up=0, down=0, left=-1, right=1}
+local d_row = {up=-1, down=1, left=0, right=0}
+
 -- The engine routine.
 function Stack.PdP(self)
-    -- The main game routine has five phases:
-    --  1. Decrement timers, act on expired one
-    --  2. Move falling panels down a row
-    --  3. Do things according to player input
-    --  4. Make falling panels land
-    --  5. Possibly do a matches-check
-
-    -- During these phases the entire StackPanels will be examined
-    -- several times, from first to last (or last to first).
-
     if self.stop_time ~= 0 then
         self.stop_time_timer = self.stop_time_timer - 1
         if self.stop_time_timer == 0 then
@@ -292,7 +289,7 @@ function Stack.PdP(self)
                     self.prevent_manual_raise = false
                     if self.panels_in_top_row then
                         for idx=self.size-self.width+1,self.size do
-                            self.panels[idx].dimmed = false
+                            self.panels[idx].state = "normal"
                         end
                         self.bottom_row=self.height - 1
                     else
@@ -310,7 +307,7 @@ function Stack.PdP(self)
     for row=self.bottom_row,0,-1 do
         local idx = row*self.width+1
         for col=1,self.width do
-            if self.panels[idx].falling then
+            if self.panels[idx].state == "falling" then
                 -- if there's no panel below a falling panel,
                 -- it must fall one row.
                 -- I'm gonna assume there's no panel below,
@@ -319,6 +316,9 @@ function Stack.PdP(self)
                 self.panels[idx+self.width], self.panels[idx] =
                     self.panels[idx], self.panels[idx+self.width]
                 self.panels[idx+self.width].timer = 0
+                if self.panels[idx].color ~= 0 then
+                    print(self.panels[idx].state)
+                end
                 self.panels[idx]:clear()
                 -- the timer can be left behind because it should be 0.
                 -- the tags can be left behind because they're not important
@@ -340,9 +340,9 @@ function Stack.PdP(self)
             if panel:has_flags() and panel.timer~=0 then
                 panel.timer = panel.timer - 1
                 if panel.timer == 0 then
-                    if panel.is_swapping then
+                    if panel.state=="swapping" then
                         -- a swap has completed here.
-                        panel.is_swapping = false
+                        panel.state = "normal"
                         panel.dont_swap = false
                         local from_left = panel.is_swapping_from_left
                         panel.is_swapping_from_left = false
@@ -358,17 +358,18 @@ function Stack.PdP(self)
                                     -- CRAZY BUG EMULATION:
                                     -- the space it was swapping from hovers too
                                     if from_left then
-                                        if self.panels[idx-1].falling then
+                                        if self.panels[idx-1].state == "falling" then
                                             self:set_hoverers_2(idx-1,
                                                     self.FRAMECOUNT_HOVER,false)
                                         end
                                     else
-                                        if self.panels[idx+1].falling then
+                                        if self.panels[idx+1].state == "falling" then
                                             self:set_hoverers(idx+1,
                                                     self.FRAMECOUNT_HOVER+1,false)
                                         end
                                     end
-                                elseif self.panels[idx+self.width].hovering then
+                                elseif self.panels[idx+self.width].state
+                                        == "hovering" then
                                     -- swap may have landed on a hover
                                     self:set_hoverers_2(idx,
                                             self.FRAMECOUNT_HOVER,false)
@@ -382,34 +383,32 @@ function Stack.PdP(self)
                         end
                         -- swap completed, a matches-check will occur this frame.
                         self.do_matches_check = true
-                    elseif panel.hovering then
+                    elseif panel.state == "hovering" then
                         -- This panel is no longer hovering.
                         -- it will now fall without sitting around
                         -- for any longer!
-                        panel.hovering = false
                         if self.panels[idx+self.width].color ~= 0 then
-                            panel.landing = true
+                            panel.state = "landing"
                             panel.timer = 12
                             self.do_matches_check = true
                         else
-                            panel.falling = true
+                            panel.state = "falling"
                             self.panels[idx], self.panels[idx+self.width] =
                                 self.panels[idx+self.width], self.panels[idx]
                             panel.timer = 0
                             -- Not sure if needed:
                             self.panels[idx]:clear_flags()
                         end
-                    elseif panel.landing then
-                        panel.landing = false
-                    elseif panel.matched then
-                        panel.matched = false
+                    elseif panel.state == "landing" then
+                        panel.state = "normal"
+                    elseif panel.state == "matched" then
                         -- This panel's match just finished the whole
                         -- flashing and looking distressed thing.
                         -- It is given a pop time based on its place
                         -- in the match.
-                        panel.popping = true
+                        panel.state = "popping"
                         panel.timer = panel.combo_index*self.FRAMECOUNT_POP
-                    elseif panel.popping then
+                    elseif panel.state == "popping" then
                         self.score = self.score + 10;
                         -- self.score_render=1;
                         -- TODO: What is self.score_render?
@@ -429,8 +428,7 @@ function Stack.PdP(self)
                             self:set_hoverers(idx-self.width,
                                     self.FRAMECOUNT_HOVER+1,true)
                         else
-                            panel.popping = false
-                            panel.popped = true
+                            panel.state = "popped"
                             panel.timer = (panel.combo_size-panel.combo_index)
                                     * self.FRAMECOUNT_POP
                         end
@@ -439,7 +437,7 @@ function Stack.PdP(self)
                         -- SFX_Pop_Play[0] = something;
                         -- SFX_Pop_Play[1] = whatever;
                         -- TODO: wtf are these
-                    elseif panel.popped then
+                    elseif panel.state == "popped" then
                         -- It's time for this panel
                         -- to be gone forever :'(
                         if panel.chaining then
@@ -469,28 +467,12 @@ function Stack.PdP(self)
 
     -- CURSOR MOVEMENT
     self.move_sound = false
-    if self.cur_timer == 0 or self.cur_timer == self.cur_wait_time then
-        if self.cur_dir == DIR_UP then
-            if self.cur_row > 0 then
-                self.cur_row = self.cur_row - 1
-                self.move_sound = true
-            end
-        elseif self.cur_dir == DIR_DOWN then
-            if self.cur_row < self.bottom_row then
-                self.cur_row = self.cur_row + 1
-                self.move_sound = true
-            end
-        elseif self.cur_dir == DIR_LEFT then
-            if self.cur_col > 0 then
-                self.cur_col = self.cur_col - 1
-                self.move_sound = true
-            end
-        elseif self.cur_dir==DIR_RIGHT then
-            if self.cur_col < self.width-2 then
-                self.cur_col = self.cur_col + 1
-                self.move_sound = true
-            end
-        end
+    if self.cur_dir and (self.cur_timer == 0 or
+        self.cur_timer == self.cur_wait_time) then
+        self.cur_row = bound(0, self.cur_row + d_row[self.cur_dir],
+                        self.bottom_row)
+        self.cur_col = bound(0, self.cur_col + d_col[self.cur_dir],
+                        self.width - 2)
     end
     if self.cur_timer ~= self.cur_wait_time then
         self.cur_timer = self.cur_timer + 1
@@ -507,17 +489,18 @@ function Stack.PdP(self)
             -- also, both spaces must be swappable.
             if not (self.panels[idx]:exclude_swap() or
                     self.panels[idx+1]:exclude_swap()) then
-                if self.cur_row == 0 or not (self.panels[idx-self.width].hovering or
-                        self.panels[idx-self.width+1].hovering) then
+                if self.cur_row == 0 or (self.panels[idx-self.width].state ~=
+                    "hovering" and self.panels[idx-self.width+1].state ~=
+                    "hovering") then
                     self.panels[idx], self.panels[idx+1] =
                         self.panels[idx+1], self.panels[idx]
                     local tmp_chaining = self.panels[idx].chaining
                     self.panels[idx]:clear_flags()
-                    self.panels[idx].is_swapping = true
+                    self.panels[idx].state = "swapping"
                     self.panels[idx].chaining = tmp_chaining
                     tmp_chaining = self.panels[idx+1].chaining
                     self.panels[idx+1]:clear_flags()
-                    self.panels[idx+1].is_swapping = true
+                    self.panels[idx+1].state = "swapping"
                     self.panels[idx+1].is_swapping_from_left = true
                     self.panels[idx+1].chaining = tmp_chaining
 
@@ -528,12 +511,12 @@ function Stack.PdP(self)
                     --lol SFX
 
                     if self.cur_row ~= self.bottom_row then
-                        if (self.panels[idx].color ~= 0) and (self.panels[idx+8].color
-                                == 0 or self.panels[idx+self.width].falling) then
+                        if (self.panels[idx].color ~= 0) and (self.panels[idx+self.width+1].color
+                                == 0 or self.panels[idx+self.width].state == "falling") then
                             self.panels[idx].dont_swap = true
                         end
-                        if (self.panels[idx+1].color ~= 0) and (self.panels[idx+9].color
-                                == 0 or self.panels[idx+self.width+1].falling) then
+                        if (self.panels[idx+1].color ~= 0) and (self.panels[idx+self.width+1].color
+                                == 0 or self.panels[idx+self.width+1].state == "falling") then
                             self.panels[idx+1].dont_swap = true
                         end
                     end
@@ -599,33 +582,29 @@ function Stack.PdP(self)
     for row=self.bottom_row,0,-1 do
         local idx = row*self.width + 1
         for col=1,self.width do
-            if self.panels[idx].falling then
+            if self.panels[idx].state == "falling" then
                 -- if it's on the bottom row, it should surely land
                 if row == self.bottom_row then
-                    self.panels[idx].falling = false
-                    self.panels[idx].landing = true
+                    self.panels[idx].state = "landing"
                     self.panels[idx].timer = 12
                     self.do_matches_check = true
                     --SFX_Land_Play=1;
                     --SFX LAWL
-                else
-                    if self.panels[idx+self.width].color ~= 0 then
-                        -- if there's a panel below, this panel's gonna land
-                        -- unless the panel below is falling.
-                        if not self.panels[idx+self.width].falling then
-                            self.panels[idx].falling = false
-                            -- if it lands on a hovering panel, it inherits
-                            -- that panel's hover time.
-                            if self.panels[idx+self.width].hovering then
-                                self:set_hoverers(idx,self.panels[idx+self.width].timer,false)
-                            else
-                                self.panels[idx].landing = true
-                                self.panels[idx].timer = 12
-                            end
-                            self.do_matches_check = true
-                            --SFX_Land_Play=1;
-                            --SFX LEWL
+                elseif self.panels[idx+self.width].color ~= 0 then
+                    -- if there's a panel below, this panel's gonna land
+                    -- unless the panel below is falling.
+                    if self.panels[idx+self.width].state ~= "falling" then
+                        -- if it lands on a hovering panel, it inherits
+                        -- that panel's hover time.
+                        if self.panels[idx+self.width].state == "hovering" then
+                            self:set_hoverers(idx,self.panels[idx+self.width].timer,false)
+                        else
+                            self.panels[idx].state = "landing"
+                            self.panels[idx].timer = 12
                         end
+                        self.do_matches_check = true
+                        --SFX_Land_Play=1;
+                        --SFX LEWL
                     end
                 end
             end
@@ -806,8 +785,7 @@ function Stack.check_matches(self)
         panel = (row+1)*self.width
         for col=self.width-1,0,-1 do
             if(self.panels[panel].matching) then
-                self.panels[panel].landing = false
-                self.panels[panel].matched = true
+                self.panels[panel].state = "matched"
                 self.panels[panel].timer = self.FRAMECOUNT_MATCH
                 if(is_chain) then
                     if(not self.panels[panel].chaining) then
@@ -830,7 +808,8 @@ function Stack.check_matches(self)
                     something=self.panels[panel]:exclude_match()
                     if(not something) then
                         if(row~=self.bottom_row) then
-                            something=self.panels[panel+self.width].is_swapping
+                            something=self.panels[panel+self.width].state
+                                    == "swapping"
                             if(not something) then
                                 -- no swapping panel below
                                 -- so this panel loses its chain flag
@@ -942,12 +921,12 @@ function Stack.set_hoverers(self, first_hoverer, hover_time, add_chaining)
         if(nonpanel or something) then
             brk = true
         else
-            if(self.panels[panel].is_swapping) then
+            if(self.panels[panel].state == "swapping") then
                 hovers_time = hovers_time + self.panels[panel].timer
             end
             something = self.panels[panel].chaining
             self.panels[panel]:clear_flags()
-            self.panels[panel].hovering = true
+            self.panels[panel].state = "hovering"
             self.panels[panel].chaining = something or add_chaining
             self.panels[panel].timer = hovers_time
             if((not something) and (add_chaining)) then
@@ -986,12 +965,12 @@ function Stack.set_hoverers_2(self, first_hoverer, hover_time, add_chaining)
         if(nonpanel or something) then
             brk = true
         else
-            if(self.panels[panel].is_swapping) then
+            if(self.panels[panel].state == "swapping") then
                 hovers_time = hovers_time + self.panels[panel].timer
             end
             something = self.panels[panel].chaining
             self.panels[panel]:clear_flags()
-            self.panels[panel].hovering = true
+            self.panels[panel].state = "hovering"
             self.panels[panel].chaining = add_chaining or something
             self.panels[panel].timer = hovers_time+not_first
             if((not something) and (add_chaining)) then
@@ -1022,7 +1001,7 @@ function Stack.new_row(self)
     end
     -- put bottom row into play
     for panel=self.size-2*self.width+1,self.size-self.width do
-        self.panels[panel].dimmed = false
+        self.panels[panel].state = "normal"
     end
 
     if string.len(self.panel_buffer) < self.width then
@@ -1033,7 +1012,7 @@ function Stack.new_row(self)
         self.panels[panel] = taking_these[panel]
         local idx = panel - (self.size-self.width)
         self.panels[panel].color = string.sub(self.panel_buffer,idx,idx)+0
-        self.panels[panel].dimmed = true
+        self.panels[panel].state = "dimmed"
     end
     self.panel_buffer = string.sub(self.panel_buffer,7)
     if string.len(self.panel_buffer) <= 10*self.width then
@@ -1045,38 +1024,20 @@ function Stack.new_row(self)
 end
 
 function quiet_cursor_movement()
-    local something = false
-    local whatever = false
-
-    if(self.cur_timer ~= 0) then
-         -- the cursor will move if a direction's was just pressed or has been
-         -- pressed for at least the self.cur_wait_time
-        self.move_sound = true
-        something = false
-        whatever = false
-        if(self.cur_timer == 1) then something = true end
-        if(self.cur_timer == self.cur_wait_time) then whatever = true end
-        if(something or whatever) then
-            if(self.cur_dir == DIR_UP) then
-                if(self.cur_row > 0) then
-                    self.cur_row = self.cur_row - 1
-                end
-            elseif(self.cur_dir == DIR_DOWN) then
-                if(self.cur_row < bottom_row) then
-                    self.cur_row = self.cur_row + 1
-                end
-            elseif(self.cur_dir == DIR_LEFT) then
-                if(self.cur_col > 0) then
-                    self.cur_col = self.cur_col - 1
-                end
-            elseif(self.cur_dir == DIR_RIGHT) then
-                if(self.cur_col < self.width - 2) then
-                    self.cur_col = self.cur_col + 1
-                end
-            end
-        end
-        if(not whatever) then
-            self.cur_timer = self.cur_timer + 1
-        end
+    if self.cur_timer == 0 then
+        return
+    end
+     -- the cursor will move if a direction's was just pressed or has been
+     -- pressed for at least the self.cur_wait_time
+    self.move_sound = true
+    if self.cur_dir and (self.cur_timer == 1 or
+        self.cur_timer == self.cur_wait_time) then
+        self.cur_row = bound(0, self.cur_row + d_row[self.cur_dir],
+                        self.bottom_row)
+        self.cur_col = bound(0, self.cur_col + d_col[self.cur_dir],
+                        self.width - 2)
+    end
+    if self.cur_timer ~= self.cur_wait_time then
+        self.cur_timer = self.cur_timer + 1
     end
 end

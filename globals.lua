@@ -3,10 +3,10 @@ k_up = "up"
 k_down = "down"
 k_left = "left"
 k_right = "right"
-k_swap1 = "z"
+k_swap1 = "x"
 k_swap2 = "z"
-k_raise1 = "x"
-k_raise2 = "x"
+k_raise1 = "c"
+k_raise2 = "v"
 keys = {}
 this_frame_keys = {}
 
@@ -33,14 +33,9 @@ NORMAL = 3
 HARD   = 4
 VHARD  = 5
 
-score_mode = 1
+score_mode = "snes"
 SCOREMODE_TA    = 1
 SCOREMODE_PDP64 = 2
-
-DIR_UP    = 1
-DIR_DOWN  = 2
-DIR_LEFT  = 3
-DIR_RIGHT = 4
 
  -- score lookup tables
 score_combo_PdP64 = {} --size 40
@@ -105,3 +100,12 @@ FC_FLASH = {16, 16, 13, 8,  8 }
 FC_POP   = {9,  9,  8,  7,  7 }
 stop_time_combo = {{3,2,2,2,1},{13,10,7,4,1}}
 stop_time_chain = {{7,5,3,2,1},{13,10,7,4,1}}
+
+min = math.min
+max = math.max
+-- bounds b so a<=b<=c
+function bound(a, b, c)
+    if b<a then return a end
+    if b>c then return c end
+    return b
+end
