@@ -493,20 +493,22 @@ function Stack.PdP(self)
                 "hovering"))
         -- If you have two pieces stacked vertically, you can't move
         -- both of them to the right or left by swapping with empty space.
-        do_swap = do_swap and not (self.cur_row > 0 and
-            (self.panels[idx-self.width].state == "swapping" and
-                self.panels[idx-self.width+1].state == "swapping") and
-            (self.panels[idx-self.width].color == 0 or
-                self.panels[idx-self.width+1].color == 0) and
-            (self.panels[idx-self.width].color ~= 0 or
-                self.panels[idx-self.width+1].color ~= 0))
-        do_swap = do_swap and not (self.cur_row ~= self.bottom_row and
-            (self.panels[idx+self.width].state == "swapping" and
-                self.panels[idx+self.width+1].state == "swapping") and
-            (self.panels[idx+self.width].color == 0 or
-                self.panels[idx+self.width+1].color == 0) and
-            (self.panels[idx+self.width].color ~= 0 or
-                self.panels[idx+self.width+1].color ~= 0))
+        if self.panels[idx].color == 0 or self.panels[idx+1].color == 0 then
+            do_swap = do_swap and not (self.cur_row > 0 and
+                (self.panels[idx-self.width].state == "swapping" and
+                    self.panels[idx-self.width+1].state == "swapping") and
+                (self.panels[idx-self.width].color == 0 or
+                    self.panels[idx-self.width+1].color == 0) and
+                (self.panels[idx-self.width].color ~= 0 or
+                    self.panels[idx-self.width+1].color ~= 0))
+            do_swap = do_swap and not (self.cur_row ~= self.bottom_row and
+                (self.panels[idx+self.width].state == "swapping" and
+                    self.panels[idx+self.width+1].state == "swapping") and
+                (self.panels[idx+self.width].color == 0 or
+                    self.panels[idx+self.width+1].color == 0) and
+                (self.panels[idx+self.width].color ~= 0 or
+                    self.panels[idx+self.width+1].color ~= 0))
+        end
 
         if do_swap then
             self.panels[idx], self.panels[idx+1] =
