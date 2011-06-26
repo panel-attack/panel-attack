@@ -33,9 +33,9 @@ NORMAL = 3
 HARD   = 4
 VHARD  = 5
 
-score_mode = "snes"
 SCOREMODE_TA    = 1
 SCOREMODE_PDP64 = 2
+score_mode = SCOREMODE_TA
 
  -- score lookup tables
 score_combo_PdP64 = {} --size 40

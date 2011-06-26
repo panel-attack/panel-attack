@@ -70,7 +70,7 @@ Stack = class(function(s)
         s.FRAMECOUNT_MATCH = FC_MATCH[s.difficulty]
         s.FRAMECOUNT_FLASH = FC_FLASH[s.difficulty]
         s.FRAMECOUNT_POP   = FC_POP[s.difficulty]
-        s.FRAMECOUNT_RISE  = 6
+        s.FRAMECOUNT_RISE  = 12
 
         s.rise_timer = s.FRAMECOUNT_RISE
 
@@ -316,9 +316,6 @@ function Stack.PdP(self)
                 self.panels[idx+self.width], self.panels[idx] =
                     self.panels[idx], self.panels[idx+self.width]
                 self.panels[idx+self.width].timer = 0
-                if self.panels[idx].color ~= 0 then
-                    print(self.panels[idx].state)
-                end
                 self.panels[idx]:clear()
                 -- the timer can be left behind because it should be 0.
                 -- the tags can be left behind because they're not important
@@ -510,8 +507,11 @@ function Stack.PdP(self)
                     --SFX_Swap_Play=1;
                     --lol SFX
 
+                    -- If you're swapping a panel into a position
+                    -- above an empty space or above a falling piece
+                    -- then you can't take it back since it will start falling.
                     if self.cur_row ~= self.bottom_row then
-                        if (self.panels[idx].color ~= 0) and (self.panels[idx+self.width+1].color
+                        if (self.panels[idx].color ~= 0) and (self.panels[idx+self.width].color
                                 == 0 or self.panels[idx+self.width].state == "falling") then
                             self.panels[idx].dont_swap = true
                         end
@@ -521,6 +521,9 @@ function Stack.PdP(self)
                         end
                     end
 
+                    -- If you're swapping a blank space under a panel,
+                    -- then you can't swap it back since the panel should
+                    -- start falling.
                     if self.cur_row > 0 then
                         if self.panels[idx].color == 0 and
                                 self.panels[idx-self.width].color ~= 0 then
@@ -597,6 +600,7 @@ function Stack.PdP(self)
                         -- if it lands on a hovering panel, it inherits
                         -- that panel's hover time.
                         if self.panels[idx+self.width].state == "hovering" then
+                            self.panels[idx].state = "normal"
                             self:set_hoverers(idx,self.panels[idx+self.width].timer,false)
                         else
                             self.panels[idx].state = "landing"
