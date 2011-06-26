@@ -480,60 +480,78 @@ function Stack.PdP(self)
     -- SWAPPING
     if self.swap_1 or self.swap_2 then
         local idx = (self.cur_row*self.width) + self.cur_col + 1 --Since both of these are 0-indexed.
-         -- in order for a swap to occur, one of the two panels in
-         -- the cursor must not be a non-panel.
-        if self.panels[idx].color ~= 0 or self.panels[idx+1].color ~= 0 then
-            -- also, both spaces must be swappable.
-            if not (self.panels[idx]:exclude_swap() or
-                    self.panels[idx+1]:exclude_swap()) then
-                if self.cur_row == 0 or (self.panels[idx-self.width].state ~=
-                    "hovering" and self.panels[idx-self.width+1].state ~=
-                    "hovering") then
-                    self.panels[idx], self.panels[idx+1] =
-                        self.panels[idx+1], self.panels[idx]
-                    local tmp_chaining = self.panels[idx].chaining
-                    self.panels[idx]:clear_flags()
-                    self.panels[idx].state = "swapping"
-                    self.panels[idx].chaining = tmp_chaining
-                    tmp_chaining = self.panels[idx+1].chaining
-                    self.panels[idx+1]:clear_flags()
-                    self.panels[idx+1].state = "swapping"
-                    self.panels[idx+1].is_swapping_from_left = true
-                    self.panels[idx+1].chaining = tmp_chaining
+        -- in order for a swap to occur, one of the two panels in
+        -- the cursor must not be a non-panel.
+        local do_swap = (self.panels[idx].color ~= 0 or
+                            self.panels[idx+1].color ~= 0) and
+        -- also, both spaces must be swappable.
+            (not self.panels[idx]:exclude_swap()) and
+            (not self.panels[idx+1]:exclude_swap()) and
+        -- also, neither space above us can be hovering.
+            (self.cur_row == 0 or (self.panels[idx-self.width].state ~=
+                "hovering" and self.panels[idx-self.width+1].state ~=
+                "hovering"))
+        -- If you have two pieces stacked vertically, you can't move
+        -- both of them to the right or left by swapping with empty space.
+        do_swap = do_swap and not (self.cur_row > 0 and
+            (self.panels[idx-self.width].state == "swapping" and
+                self.panels[idx-self.width+1].state == "swapping") and
+            (self.panels[idx-self.width].color == 0 or
+                self.panels[idx-self.width+1].color == 0) and
+            (self.panels[idx-self.width].color ~= 0 or
+                self.panels[idx-self.width+1].color ~= 0))
+        do_swap = do_swap and not (self.cur_row ~= self.bottom_row and
+            (self.panels[idx+self.width].state == "swapping" and
+                self.panels[idx+self.width+1].state == "swapping") and
+            (self.panels[idx+self.width].color == 0 or
+                self.panels[idx+self.width+1].color == 0) and
+            (self.panels[idx+self.width].color ~= 0 or
+                self.panels[idx+self.width+1].color ~= 0))
 
-                    self.panels[idx].timer = 3
-                    self.panels[idx+1].timer = 3
+        if do_swap then
+            self.panels[idx], self.panels[idx+1] =
+                self.panels[idx+1], self.panels[idx]
+            local tmp_chaining = self.panels[idx].chaining
+            self.panels[idx]:clear_flags()
+            self.panels[idx].state = "swapping"
+            self.panels[idx].chaining = tmp_chaining
+            tmp_chaining = self.panels[idx+1].chaining
+            self.panels[idx+1]:clear_flags()
+            self.panels[idx+1].state = "swapping"
+            self.panels[idx+1].is_swapping_from_left = true
+            self.panels[idx+1].chaining = tmp_chaining
 
-                    --SFX_Swap_Play=1;
-                    --lol SFX
+            self.panels[idx].timer = 3
+            self.panels[idx+1].timer = 3
 
-                    -- If you're swapping a panel into a position
-                    -- above an empty space or above a falling piece
-                    -- then you can't take it back since it will start falling.
-                    if self.cur_row ~= self.bottom_row then
-                        if (self.panels[idx].color ~= 0) and (self.panels[idx+self.width].color
-                                == 0 or self.panels[idx+self.width].state == "falling") then
-                            self.panels[idx].dont_swap = true
-                        end
-                        if (self.panels[idx+1].color ~= 0) and (self.panels[idx+self.width+1].color
-                                == 0 or self.panels[idx+self.width+1].state == "falling") then
-                            self.panels[idx+1].dont_swap = true
-                        end
-                    end
+            --SFX_Swap_Play=1;
+            --lol SFX
 
-                    -- If you're swapping a blank space under a panel,
-                    -- then you can't swap it back since the panel should
-                    -- start falling.
-                    if self.cur_row > 0 then
-                        if self.panels[idx].color == 0 and
-                                self.panels[idx-self.width].color ~= 0 then
-                            self.panels[idx].dont_swap = true
-                        end
-                        if self.panels[idx+1].color == 0 and
-                                self.panels[idx-self.width+1].color ~= 0 then
-                            self.panels[idx+1].dont_swap = true
-                        end
-                    end
+            -- If you're swapping a panel into a position
+            -- above an empty space or above a falling piece
+            -- then you can't take it back since it will start falling.
+            if self.cur_row ~= self.bottom_row then
+                if (self.panels[idx].color ~= 0) and (self.panels[idx+self.width].color
+                        == 0 or self.panels[idx+self.width].state == "falling") then
+                    self.panels[idx].dont_swap = true
+                end
+                if (self.panels[idx+1].color ~= 0) and (self.panels[idx+self.width+1].color
+                        == 0 or self.panels[idx+self.width+1].state == "falling") then
+                    self.panels[idx+1].dont_swap = true
+                end
+            end
+
+            -- If you're swapping a blank space under a panel,
+            -- then you can't swap it back since the panel should
+            -- start falling.
+            if self.cur_row > 0 then
+                if self.panels[idx].color == 0 and
+                        self.panels[idx-self.width].color ~= 0 then
+                    self.panels[idx].dont_swap = true
+                end
+                if self.panels[idx+1].color == 0 and
+                        self.panels[idx-self.width+1].color ~= 0 then
+                    self.panels[idx+1].dont_swap = true
                 end
             end
         end
