@@ -40,7 +40,7 @@ Stack = class(function(s)
 
         s.difficulty = 3
 
-        s.speed = 100   -- The player's speed level decides the amount of time
+        s.speed = 20   -- The player's speed level decides the amount of time
                          -- the stack takes to rise automatically
         s.rise_timer = 1   -- When this value reaches 0, the stack will rise a pixel
         s.rise_lock = false   -- If the stack is rise locked, it won't rise until it is
@@ -70,7 +70,7 @@ Stack = class(function(s)
         s.FRAMECOUNT_MATCH = FC_MATCH[s.difficulty]
         s.FRAMECOUNT_FLASH = FC_FLASH[s.difficulty]
         s.FRAMECOUNT_POP   = FC_POP[s.difficulty]
-        s.FRAMECOUNT_RISE  = 12
+        s.FRAMECOUNT_RISE  = speed_to_rise_time[s.speed]
 
         s.rise_timer = s.FRAMECOUNT_RISE
 
@@ -274,7 +274,7 @@ function Stack.PdP(self)
     if self.speed ~= 0 and not self.manual_raise and self.stop_time == 0
             and not self.rise_lock then
         self.rise_timer = self.rise_timer - 1
-        if self.rise_timer == 0 then  -- try to rise
+        if self.rise_timer <= 0 then  -- try to rise
             if self.displacement == 0 then
                 if self.has_risen or self.panels_in_top_row then
                     self.game_over = true
@@ -297,7 +297,7 @@ function Stack.PdP(self)
                     end
                 end
             end
-            self.rise_timer=self.FRAMECOUNT_RISE
+            self.rise_timer = self.rise_timer + self.FRAMECOUNT_RISE
         end
     end
 
