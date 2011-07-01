@@ -40,7 +40,7 @@ Stack = class(function(s)
 
         s.difficulty = 3
 
-        s.speed = 20   -- The player's speed level decides the amount of time
+        s.speed = 24   -- The player's speed level decides the amount of time
                          -- the stack takes to rise automatically
         s.rise_timer = 1   -- When this value reaches 0, the stack will rise a pixel
         s.rise_lock = false   -- If the stack is rise locked, it won't rise until it is

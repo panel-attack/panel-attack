@@ -9,14 +9,13 @@ function fmainloop()
 end
 
 function main_select_mode()
-    local args = {nil, "50.17.236.201", "50.18.48.184", "127.0.0.1"}
+    local args = {nil, "sfo.zkpq.ca", "127.0.0.1"}
     while true do
         gprint("Press a key to choose\n"
             ..  "1: 1P endless\n"
-            ..  "2: 2P endless on U.S. East server\n"
-            ..  "3: 2P endless on U.S. West server\n"
-            ..  "4: 2P endless on localhost", 300, 280)
-        for i=1,4 do
+            ..  "2: 2P endless at Tom's apartment\n"
+            ..  "3: 2P endless on localhost", 300, 280)
+        for i=1,3 do
             if this_frame_keys[tostring(i)] then
                 return i==1 and main_solo or main_net_vs_setup, args[i]
             end
