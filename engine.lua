@@ -21,6 +21,8 @@ Stack = class(function(s)
 
         s.CLOCK = 0
 
+        s.max_runs_per_frame = 3
+
         s.displacement = 0
         -- This variable indicates how far below the top of the play
         -- area the top row of panels actually is.
@@ -180,7 +182,9 @@ end
 
 --foreign_run is for a stack that belongs to another client.
 function Stack.foreign_run(self)
-    while string.len(self.input_buffer) ~= 0 do
+    local times_to_run = min(string.len(self.input_buffer)/22,
+            self.max_runs_per_frame)
+    for i=1,times_to_run do
         fake_controls(self, string.sub(self.input_buffer,7,22))
         self:PdP()
         self.CLOCK = self.CLOCK + 1
@@ -198,6 +202,19 @@ local d_row = {up=-1, down=1, left=0, right=0}
 
 -- The engine routine.
 function Stack.PdP(self)
+    self.n_active_panels = 0
+    for row=0,self.height-1 do
+        local idx = row * self.width + 1
+        for col=0,self.width-1 do
+            local panel = self.panels[idx]
+            if(panel.color ~= 0 and panel:exclude_hover()) or
+                    panel.state == "swapping" then
+                self.n_active_panels = self.n_active_panels + 1
+            end
+            idx = idx + 1
+        end
+    end
+
     if self.stop_time ~= 0 then
         self.stop_time_timer = self.stop_time_timer - 1
         if self.stop_time_timer == 0 then
@@ -878,12 +895,8 @@ function Stack.check_matches(self)
             first_panel_row = first_panel_row - 1 -- offset chain cards
         end
         if(is_chain) then
-            something = self.chain_counter;
-            if((score_mode==SCOREMODE_TA) and (self.chain_counter > 13)) then
-                something = 0
-            end
-
-            self:enqueue_card(true, first_panel_col, first_panel_row, something)
+            self:enqueue_card(true, first_panel_col, first_panel_row,
+                    self.chain_counter)
             --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
             --          first_panel_row<<4+P1StackPosY+self.displacement-9);
         end

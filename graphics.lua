@@ -137,16 +137,10 @@ function Stack.draw_cards(self)
 end
 
 function Stack.render(self)
-    self.n_active_panels = 0
     for row=0,self.height-1 do
         local idx = row * self.width + 1
         for col=0,self.width-1 do
             local panel = self.panels[idx]
-            local count_this_panel = false
-            if(panel.color ~= 0 and panel:exclude_hover()) or
-                    panel.state == "swapping" then
-                self.n_active_panels = self.n_active_panels + 1
-            end
             if panel.color ~= 0 and panel.state ~= "popped" then
                 local draw_frame = 1
                 local draw_x = col * 16 + self.pos_x

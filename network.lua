@@ -79,21 +79,24 @@ function make_local_panels(stack, prev_panels)
         end
     end
     stack.panel_buffer = stack.panel_buffer..string.sub(ret,7,-1)
+    replay_pan_buf = replay_pan_buf .. string.sub(ret,7,-1)
 end
 
 function send_controls()
-    if not TCP_sock then
-        return
-    end
     local t = function(k) if k then return "1" end return "0" end
     local framecount = P1.CLOCK..""
     while string.len(framecount) ~= 6 do
         framecount = "0"..framecount
     end
-    TCP_sock:send("I"..framecount..
+    local to_send = framecount ..
         t(keys[k_up])..t(keys[k_down])..t(keys[k_left])..t(keys[k_right])..
         t(keys[k_swap1])..t(keys[k_swap2])..t(keys[k_raise1])..t(keys[k_raise2])..
         t(this_frame_keys[k_up])..t(this_frame_keys[k_down])..t(this_frame_keys[k_left])..
         t(this_frame_keys[k_right])..t(this_frame_keys[k_swap1])..t(this_frame_keys[k_swap2])..
-        t(this_frame_keys[k_raise1])..t(this_frame_keys[k_raise2]))
+        t(this_frame_keys[k_raise1])..t(this_frame_keys[k_raise2])
+    if TCP_sock then
+        TCP_sock:send("I"..to_send)
+    else
+        replay_in_buf = replay_in_buf .. to_send
+    end
 end

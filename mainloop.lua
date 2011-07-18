@@ -9,15 +9,18 @@ function fmainloop()
 end
 
 function main_select_mode()
-    local args = {nil, "sfo.zkpq.ca", "127.0.0.1"}
+    local args = {nil, "sfo.zkpq.ca", --[["50.18.128.42",--]] "127.0.0.1"}
+    local fun = {main_solo, main_net_vs_setup, main_net_vs_setup, main_replay}
     while true do
         gprint("Press a key to choose\n"
             ..  "1: 1P endless\n"
             ..  "2: 2P endless at Tom's apartment\n"
-            ..  "3: 2P endless on localhost", 300, 280)
-        for i=1,3 do
+           -- ..  "3: 2P endless at AMZN West\n"
+            ..  "3: 2P endless on localhost\n"
+            .. "4: Replay of teh 1P endless!", 300, 280)
+        for i=1,4 do
             if this_frame_keys[tostring(i)] then
-                return i==1 and main_solo or main_net_vs_setup, args[i]
+                return fun[i], args[i]
             end
         end
         wait()
@@ -25,16 +28,18 @@ function main_select_mode()
 end
 
 function main_solo()
+    replay_pan_buf = ""
+    replay_in_buf = ""
     P1 = Stack()
     make_local_panels(P1, "000000")
     while true do
         P1:local_run()
         if P1.game_over then
-            error("game over lol")
+        -- TODO: proper game over.
+            return main_select_mode
         end
         wait()
     end
-    -- TODO: transition to some other state instead of erroring.
 end
 
 function main_net_vs_setup(ip)
@@ -62,4 +67,19 @@ function main_net_vs()
         wait()
     end
     -- TODO: transition to some other state instead of erroring.
+end
+
+function main_replay()
+    P1 = Stack()
+    P1.max_runs_per_frame = 1
+    P1.input_buffer = replay_in_buf..""
+    P1.panel_buffer = replay_pan_buf..""
+    while true do
+        P1:foreign_run()
+        if P1.game_over then
+        -- TODO: proper game over.
+            return main_select_mode
+        end
+        wait()
+    end
 end
