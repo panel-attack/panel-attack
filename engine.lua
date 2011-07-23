@@ -24,6 +24,8 @@ Stack = class(function(s)
 
         s.CLOCK = 0
 
+        s.max_runs_per_frame = 3
+
         s.displacement = 0
         -- This variable indicates how far below the top of the play
         -- area the top row of panels actually is.
@@ -183,7 +185,9 @@ end
 
 --foreign_run is for a stack that belongs to another client.
 function Stack.foreign_run(self)
-    while string.len(self.input_buffer) ~= 0 do
+    local times_to_run = min(string.len(self.input_buffer)/22,
+            self.max_runs_per_frame)
+    for i=1,times_to_run do
         fake_controls(self, string.sub(self.input_buffer,7,22))
         self:PdP()
         self.CLOCK = self.CLOCK + 1
@@ -212,6 +216,10 @@ function Stack.PdP(self)
         prow = panels[row]
         for col=1,width do
             panel = prow[col]
+    self.n_active_panels = 0
+    for row=1,self.height do
+        for col=1,self.width do
+            local panel = panels[row][col]
             if(panel.color ~= 0 and panel:exclude_hover()) or
                     panel.state == "swapping" then
                 self.n_active_panels = self.n_active_panels + 1
