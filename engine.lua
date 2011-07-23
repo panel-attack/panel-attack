@@ -212,11 +212,6 @@ function Stack.PdP(self)
     local panel = nil
 
     self.n_active_panels = 0
-    for row=1,height do
-        prow = panels[row]
-        for col=1,width do
-            panel = prow[col]
-    self.n_active_panels = 0
     for row=1,self.height do
         for col=1,self.width do
             local panel = panels[row][col]
