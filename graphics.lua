@@ -126,8 +126,8 @@ end
 function Stack.draw_cards(self)
     for i=self.card_q.first,self.card_q.last do
         local card = self.card_q[i]
-        local draw_x = card.x * 16 + self.pos_x
-        local draw_y = card.y * 16 + self.pos_y - card_animation[card.frame]
+        local draw_x = (card.x-1) * 16 + self.pos_x
+        local draw_y = (card.y-1) * 16 + self.pos_y - card_animation[card.frame]
         draw(IMG_cards[card.chain][card.n], draw_x, draw_y)
         card.frame = card.frame + 1
         if(card.frame==card_animation.max) then
@@ -137,20 +137,13 @@ function Stack.draw_cards(self)
 end
 
 function Stack.render(self)
-    self.n_active_panels = 0
-    for row=0,self.height-1 do
-        local idx = row * self.width + 1
-        for col=0,self.width-1 do
-            local panel = self.panels[idx]
-            local count_this_panel = false
-            if(panel.color ~= 0 and panel:exclude_hover()) or
-                    panel.state == "swapping" then
-                self.n_active_panels = self.n_active_panels + 1
-            end
+    for row=1,self.height do
+        for col=1,self.width do
+            local panel = self.panels[row][col]
             if panel.color ~= 0 and panel.state ~= "popped" then
                 local draw_frame = 1
-                local draw_x = col * 16 + self.pos_x
-                local draw_y = row * 16 + self.pos_y + self.displacement
+                local draw_x = (col-1) * 16 + self.pos_x
+                local draw_y = (row-1) * 16 + self.pos_y + self.displacement
                 if panel.state == "matched" then
                     if panel.timer < self.FRAMECOUNT_FLASH then
                         draw_frame = 6
@@ -180,7 +173,6 @@ function Stack.render(self)
                 end
                 draw(IMG_panels[panel.color][draw_frame], draw_x, draw_y)
             end
-            idx = idx + 1
         end
     end
     draw(IMG_frame, self.pos_x-4, self.pos_y-4)
@@ -258,8 +250,8 @@ void Render_Confetti()
 
 function Stack.render_cursor(self)
     draw(IMG_cursor[(math.floor(self.CLOCK/16)%2)+1],
-        self.cur_col*16+self.pos_x-4,
-        self.cur_row*16+self.pos_y-4+self.displacement)
+        (self.cur_col-1)*16+self.pos_x-4,
+        (self.cur_row-1)*16+self.pos_y-4+self.displacement)
 end
 
 --[[void FadingPanels_1P(int draw_frame, int lightness)

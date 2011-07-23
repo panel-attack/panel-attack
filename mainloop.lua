@@ -9,11 +9,12 @@ function fmainloop()
 end
 
 function main_select_mode()
-    local args = {nil, "sfo.zkpq.ca", "127.0.0.1"}
+    local args = {nil, "sfo.zkpq.ca", --[["50.18.128.42",--]] "127.0.0.1"}
     while true do
         gprint("Press a key to choose\n"
             ..  "1: 1P endless\n"
             ..  "2: 2P endless at Tom's apartment\n"
+           -- ..  "3: 2P endless at AMZN West\n"
             ..  "3: 2P endless on localhost", 300, 280)
         for i=1,3 do
             if this_frame_keys[tostring(i)] then
