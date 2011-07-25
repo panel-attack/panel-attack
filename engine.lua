@@ -143,19 +143,19 @@ end
 -- chaining
 
 do
-  exclude_hover_set = {matched=true, popping=true, popped=true,
+  local exclude_hover_set = {matched=true, popping=true, popped=true,
       hovering=true, falling=true}
   function Panel.exclude_hover(self)
     return exclude_hover_set[self.state]
   end
 
-  exclude_match_set = {swapping=true, matched=true, popping=true,
+  local exclude_match_set = {swapping=true, matched=true, popping=true,
       popped=true, hovering=true, dimmed=true, falling=true}
   function Panel.exclude_match(self)
-    return exclude_match_set[self.state]
+    return exclude_match_set[self.state] or self.color == 0 or self.color == 9
   end
 
-  exclude_swap_set = {matched=true, popping=true, popped=true,
+  local exclude_swap_set = {matched=true, popping=true, popped=true,
       hovering=true, dimmed=true}
   function Panel.exclude_swap(self)
     return exclude_swap_set[self.state] or self.dont_swap
@@ -172,6 +172,35 @@ function Panel.clear_flags(self)
   self.dont_swap = false
   self.chaining = false
   self.state = "normal"
+end
+
+function Stack.set_puzzle_state(self, pstr, n_turns)
+  while string.len(pstr) < self.size do
+    pstr = "0" .. pstr
+  end
+  local idx = 1
+  local panels = self.panels
+  for row=1, self.height do
+    for col=1, self.width do
+      panels[row][col]:clear()
+      panels[row][col].color = string.sub(pstr, idx, idx) + 0
+      idx = idx + 1
+    end
+  end
+  self.puzzle_moves = n_turns
+end
+
+function Stack.puzzle_done(self)
+  local panels = self.panels
+  for row=1, self.height do
+    for col=1, self.width do
+      local color = panels[row][col].color
+      if color ~= 0 and color ~= 9 then
+        return false
+      end
+    end
+  end
+  return true
 end
 
 --local_run is for the stack that belongs to this client.
@@ -211,17 +240,6 @@ function Stack.PdP(self)
   local prow = nil
   local panel = nil
 
-  self.n_active_panels = 0
-  for row=1,self.height do
-    for col=1,self.width do
-      local panel = panels[row][col]
-      if(panel.color ~= 0 and panel:exclude_hover()) or
-          panel.state == "swapping" then
-        self.n_active_panels = self.n_active_panels + 1
-      end
-    end
-  end
-
   -- TODO: We should really only have one variable for this shit.
   if self.stop_time ~= 0 then
     self.stop_time_timer = self.stop_time_timer - 1
@@ -236,7 +254,7 @@ function Stack.PdP(self)
   if self.displacement ~= 0 then
     self.bottom_row = height-1
   else
-    self.bottom_row = height   -- the 12th row (row 11) is only "in play"
+    self.bottom_row = height   -- the 12th row (row 12) is only "in play"
   end                  -- when the stack displacement is 0
             -- and there are panels in the top row
 
@@ -297,9 +315,8 @@ function Stack.PdP(self)
   -- Phase 0 //////////////////////////////////////////////////////////////
   -- Stack automatic rising
 
-
   if self.speed ~= 0 and not self.manual_raise and self.stop_time == 0
-      and not self.rise_lock then
+      and not self.rise_lock and not self.puzzle_mode then
     self.rise_timer = self.rise_timer - 1
     if self.rise_timer <= 0 then  -- try to rise
       if self.displacement == 0 then
@@ -535,7 +552,12 @@ function Stack.PdP(self)
           panels[row+1][col+1].color ~= 0))
     end
 
+    do_swap = do_swap and (self.puzzle_moves == nil or self.puzzle_moves > 0)
+
     if do_swap then
+      if self.puzzle_moves then
+        self.puzzle_moves = self.puzzle_moves - 1
+      end
       panels[row][col], panels[row][col+1] =
         panels[row][col+1], panels[row][col]
       local tmp_chaining = panels[row][col].chaining
@@ -587,7 +609,7 @@ function Stack.PdP(self)
   end
 
   -- MANUAL STACK RAISING
-  if self.manual_raise then
+  if self.manual_raise and not self.puzzle_mode then
     if not self.rise_lock then
       if self.displacement == 0 then
         if self.has_risen then
@@ -673,6 +695,17 @@ function Stack.PdP(self)
   if(self.score>99999) then
     self.score=99999
     -- lol owned
+  end
+
+  self.n_active_panels = 0
+  for row=1,self.height do
+    for col=1,self.width do
+      local panel = panels[row][col]
+      if(panel.color ~= 0 and panel:exclude_hover()) or
+          panel.state == "swapping" then
+        self.n_active_panels = self.n_active_panels + 1
+      end
+    end
   end
 
   --TODO: WTF IS GameTimeTimer
@@ -962,9 +995,11 @@ function Stack.set_hoverers(self, row, col, hover_time, add_chaining)
       something = panels[row][col].chaining
       panels[row][col]:clear_flags()
       panels[row][col].state = "hovering"
-      panels[row][col].chaining = something or add_chaining
+      local adding_chaining = (not something) and panels[row][col].color~=9 and
+          add_chaining
+      panels[row][col].chaining = (something or adding_chaining)
       panels[row][col].timer = hovers_time
-      if (not something) and (add_chaining) then
+      if adding_chaining then
         self.n_chain_panels = self.n_chain_panels + 1
       end
     end
@@ -1006,9 +1041,11 @@ function Stack.set_hoverers_2(self, row, col, hover_time, add_chaining)
       something = panels[row][col].chaining
       panels[row][col]:clear_flags()
       panels[row][col].state = "hovering"
-      panels[row][col].chaining = add_chaining or something
+      local adding_chaining = (not something) and panels[row][col].color~=9 and
+          add_chaining
+      panels[row][col].chaining = something or adding_chaining
       panels[row][col].timer = hovers_time+not_first
-      if (not something) and (add_chaining) then
+      if adding_chaining then
         self.n_chain_panels = self.n_chain_panels + 1
       end
       not_first = 1

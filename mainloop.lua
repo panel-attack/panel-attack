@@ -9,18 +9,38 @@ function fmainloop()
 end
 
 function main_select_mode()
-  local args = {nil, "sfo.zkpq.ca", --[["50.18.128.42",--]] "127.0.0.1"}
-  local fun = {main_solo, main_net_vs_setup, main_net_vs_setup, main_replay}
+  local items = {{"1P endless", main_solo},
+      {"1P puzzle", main_puzzle},
+      {"2P endless at Tom's apartment", main_net_vs_setup, "sfo.zkpq.ca"},
+      {"2P endless on localhost", main_net_vs_setup, "sfo.zkpq.ca"},
+      {"Replay of 1P endless", main_replay},
+      {"Quit", exit}}
+  local active_idx = 1
   while true do
-    gprint("Press a key to choose\n"
-      ..  "1: 1P endless\n"
-      ..  "2: 2P endless at Tom's apartment\n"
-       -- ..  "3: 2P endless at AMZN West\n"
-      ..  "3: 2P endless on localhost\n"
-      .. "4: Replay of teh 1P endless!", 300, 280)
-    for i=1,4 do
-      if this_frame_keys[tostring(i)] then
-        return fun[i], args[i]
+    to_print = ""
+    arrow = ""
+    for i=1,#items do
+      if active_idx == i then
+        arrow = arrow .. ">"
+      else
+        arrow = arrow .. "\n"
+      end
+      to_print = to_print .. "   " .. items[i][1] .. "\n"
+    end
+    gprint(arrow, 300, 280)
+    gprint(to_print, 300, 280)
+    if this_frame_keys[k_up] then
+      active_idx = ((active_idx - 2) % #items)+1
+    elseif this_frame_keys[k_down] then
+      active_idx = (active_idx % #items)+1
+    elseif this_frame_keys[k_swap1] or this_frame_keys["return"] or
+        this_frame_keys["kpenter"] then
+      return items[active_idx][2], items[active_idx][3]
+    elseif this_frame_keys[k_swap2] or this_frame_keys["escape"] then
+      if active_idx == 6 then
+        exit()
+      else
+        active_idx = 6
       end
     end
     wait()
@@ -79,6 +99,25 @@ function main_replay()
     if P1.game_over then
     -- TODO: proper game over.
       return main_select_mode
+    end
+    wait()
+  end
+end
+
+function main_puzzle()
+  replay_pan_buf = ""
+  replay_in_buf = ""
+  P1 = Stack()
+  P1.puzzle_mode = true
+  P1:set_puzzle_state("010000019000199900911900991900", 3)
+  while true do
+    P1:local_run()
+    if P1.n_active_panels == 0 then
+      if P1:puzzle_done() then
+        return main_select_mode
+      elseif P1.puzzle_moves == 0 then
+        error("PUZZLE LOSE :(")
+      end
     end
     wait()
   end

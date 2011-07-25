@@ -84,6 +84,10 @@ function graphics_init()
         tostring(i)..tostring(j)..".png")
     end
   end
+  IMG_panels[9]={}
+  for j=1,7 do
+    IMG_panels[9][j]=load_img("assets/panel00.png")
+  end
 
   IMG_cursor = {  load_img("assets/cur0.png"),
           load_img("assets/cur1.png")}
@@ -164,7 +168,7 @@ function Stack.render(self)
           else
             draw_x = draw_x + panel.timer * 4
           end
-        elseif self.danger_col[col+1] and row <= self.bottom_row then
+        elseif self.danger_col[col] and row <= self.bottom_row then
           draw_frame = danger_bounce_table[self.danger_timer+1];
         elseif panel.state == "dimmed" then
           draw_frame = 7
@@ -176,7 +180,11 @@ function Stack.render(self)
     end
   end
   draw(IMG_frame, self.pos_x-4, self.pos_y-4)
-  gprint("Score: "..self.score, self.score_x, 100)
+  if self.puzzle_moves then
+    gprint("Moves: "..self.puzzle_moves, self.score_x, 100)
+  else
+    gprint("Score: "..self.score, self.score_x, 100)
+  end
   self:draw_cards()
   self:render_cursor()
 end

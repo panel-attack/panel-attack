@@ -9,6 +9,12 @@ require("network")
 require("mainloop")
 
 local N_FRAMES = 0
+local QUITTING = false
+
+function exit()
+  QUITTING = true
+  coroutine.yield()
+end
 
 function love.run()
   love.load(arg)
@@ -41,6 +47,10 @@ function love.run()
     love.graphics.present()
 
     N_FRAMES = N_FRAMES + 1
+
+    if QUITTING then
+      return
+    end
   end
 end
 
