@@ -144,7 +144,7 @@ end
 
 do
   local exclude_hover_set = {matched=true, popping=true, popped=true,
-      hovering=true, falling=true}
+      hovering=true, falling=true, swapping=true}
   function Panel.exclude_hover(self)
     return exclude_hover_set[self.state]
   end
@@ -389,35 +389,35 @@ function Stack.PdP(self)
             if panel.color ~= 0 then
               if row~=self.bottom_row then
                 if panels[row+1][col].color == 0 then
-                  self:set_hoverers_2(row,col,
-                      self.FRAMECOUNT_HOVER,false)
+                  self:set_hoverers(row,col,
+                      self.FRAMECOUNT_HOVER,false,true)
                   -- if there is no panel beneath this panel
                   -- it will begin to hover.
                   -- CRAZY BUG EMULATION:
                   -- the space it was swapping from hovers too
                   if from_left then
                     if panels[row][col-1].state == "falling" then
-                      self:set_hoverers_2(row,col-1,
-                          self.FRAMECOUNT_HOVER,false)
+                      self:set_hoverers(row,col-1,
+                          self.FRAMECOUNT_HOVER,false,true)
                     end
                   else
                     if panels[row][col+1].state == "falling" then
                       self:set_hoverers(row,col+1,
-                          self.FRAMECOUNT_HOVER+1,false)
+                          self.FRAMECOUNT_HOVER+1,false,false)
                     end
                   end
                 elseif panels[row+1][col].state
                     == "hovering" then
                   -- swap may have landed on a hover
-                  self:set_hoverers_2(row,col,
-                      self.FRAMECOUNT_HOVER,false)
+                  self:set_hoverers(row,col,
+                      self.FRAMECOUNT_HOVER,false,true)
                 end
               end
             else
               -- an empty space finished swapping...
               -- panels above it hover
               self:set_hoverers(row-1,col,
-                  self.FRAMECOUNT_HOVER+1,false)
+                  self.FRAMECOUNT_HOVER+1,false,false)
             end
             -- swap completed, a matches-check will occur this frame.
             self.do_matches_check = true
@@ -464,7 +464,7 @@ function Stack.PdP(self)
               end
               panel:clear_flags()
               self:set_hoverers(row-1,col,
-                  self.FRAMECOUNT_HOVER+1,true)
+                  self.FRAMECOUNT_HOVER+1,true,false)
             else
               panel.state = "popped"
               panel.timer = (panel.combo_size-panel.combo_index)
@@ -485,7 +485,7 @@ function Stack.PdP(self)
             panel:clear_flags()
             -- Any panels sitting on top of it
             -- hover and are flagged as CHAINING
-            self:set_hoverers(row-1,col,self.FRAMECOUNT_HOVER+1,true);
+            self:set_hoverers(row-1,col,self.FRAMECOUNT_HOVER+1,true,false);
           else
             -- what the heck.
             -- if a timer runs out and the routine can't
@@ -665,7 +665,7 @@ function Stack.PdP(self)
             -- that panel's hover time.
             if panels[row+1][col].state == "hovering" then
               panels[row][col].state = "normal"
-              self:set_hoverers(row,col,panels[row+1][col].timer,false)
+              self:set_hoverers(row,col,panels[row+1][col].timer,false,false)
             else
               panels[row][col].state = "landing"
               panels[row][col].timer = 12
@@ -969,55 +969,14 @@ function Stack.check_matches(self)
   end
 end
 
-function Stack.set_hoverers(self, row, col, hover_time, add_chaining)
-  local hovers_time = 0
-  local panel = 0
-  local brk = false
-  local something = false
-  local nonpanel = false
-  local panels = self.panels
-  if row<1 then
-    brk = true
-  end
-  hovers_time = hover_time
-  while not brk do
-    nonpanel = false
-    if panels[row][col].color == 0 then
-      nonpanel = true
-    end
-    something = panels[row][col]:exclude_hover()
-    if nonpanel or something then
-      brk = true
-    else
-      if panels[row][col].state == "swapping" then
-        hovers_time = hovers_time + panels[row][col].timer
-      end
-      something = panels[row][col].chaining
-      panels[row][col]:clear_flags()
-      panels[row][col].state = "hovering"
-      local adding_chaining = (not something) and panels[row][col].color~=9 and
-          add_chaining
-      panels[row][col].chaining = (something or adding_chaining)
-      panels[row][col].timer = hovers_time
-      if adding_chaining then
-        self.n_chain_panels = self.n_chain_panels + 1
-      end
-    end
-    row = row - 1
-    if row<1 then
-      brk = true
-    end
-  end
-end
-
-function Stack.set_hoverers_2(self, row, col, hover_time, add_chaining)
-  -- this version of the set_hoverers routine is for use during Phase 1&2,
+function Stack.set_hoverers(self, row, col, hover_time, add_chaining,
+    extra_tick)
+  -- the extra_tick flag is for use during Phase 1&2,
   -- when panels above the first should be given an extra tick of hover time.
   -- This is because their timers will be decremented once on the same tick
   -- they are set, as Phase 1&2 iterates backward through the stack.
   local not_first = 0   -- if 1, the current panel isn't the first one
   local hovers_time = 0
-  local panel = 0
   local brk = false
   local something = false
   local nonpanel = false
@@ -1027,24 +986,28 @@ function Stack.set_hoverers_2(self, row, col, hover_time, add_chaining)
   end
   hovers_time=hover_time
   while not brk do
+    local panel = panels[row][col]
     nonpanel = false
-    if panels[row][col].color == 0 then
+    if panel.color == 0 then
       nonpanel = true
     end
-    something = panels[row][col]:exclude_hover()
+    something = panel:exclude_hover()
     if nonpanel or something then
       brk = true
     else
-      if panels[row][col].state == "swapping" then
+      if panel.state == "swapping" then
         hovers_time = hovers_time + panels[row][col].timer
       end
-      something = panels[row][col].chaining
-      panels[row][col]:clear_flags()
-      panels[row][col].state = "hovering"
-      local adding_chaining = (not something) and panels[row][col].color~=9 and
+      something = panel.chaining
+      panel:clear_flags()
+      panel.state = "hovering"
+      local adding_chaining = (not something) and panel.color~=9 and
           add_chaining
-      panels[row][col].chaining = something or adding_chaining
-      panels[row][col].timer = hovers_time+not_first
+      panel.chaining = something or adding_chaining
+      panel.timer = hovers_time
+      if extra_tick then
+        panel.timer = panel.timer + not_first
+      end
       if adding_chaining then
         self.n_chain_panels = self.n_chain_panels + 1
       end
