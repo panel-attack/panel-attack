@@ -978,7 +978,6 @@ function Stack.set_hoverers(self, row, col, hover_time, add_chaining,
   local not_first = 0   -- if 1, the current panel isn't the first one
   local hovers_time = 0
   local brk = false
-  local something = false
   local nonpanel = false
   local panels = self.panels
   if row<1 then
@@ -991,19 +990,18 @@ function Stack.set_hoverers(self, row, col, hover_time, add_chaining,
     if panel.color == 0 then
       nonpanel = true
     end
-    something = panel:exclude_hover()
-    if nonpanel or something then
+    if nonpanel or panel:exclude_hover() then
       brk = true
     else
       if panel.state == "swapping" then
         hovers_time = hovers_time + panels[row][col].timer
       end
-      something = panel.chaining
+      local chaining = panel.chaining
       panel:clear_flags()
       panel.state = "hovering"
-      local adding_chaining = (not something) and panel.color~=9 and
+      local adding_chaining = (not chaining) and panel.color~=9 and
           add_chaining
-      panel.chaining = something or adding_chaining
+      panel.chaining = chaining or adding_chaining
       panel.timer = hovers_time
       if extra_tick then
         panel.timer = panel.timer + not_first

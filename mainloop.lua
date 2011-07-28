@@ -103,13 +103,30 @@ function main_replay()
     wait()
   end
 end
-
+local awesome_idx = nil
 function main_puzzle()
   replay_pan_buf = ""
   replay_in_buf = ""
   P1 = Stack()
   P1.puzzle_mode = true
-  P1:set_puzzle_state("010000019000199900911900991900", 3)
+  P1.cur_row = 7
+  P1.cur_col = 3
+  local puzzles = {{"010000019000199900911900991900", 3},
+  {"4000441101", 1},
+  {"223233", 1},
+  {"400000600000600046400", 1},
+  {"100001300033100", 1},
+  {"4200002400002400", 1},
+  {"2000024400043300211310", 1},
+  {"5000001200014500043420166350226232", 1},
+  {"214365214365662622214365214365", 1},
+  {"5000054550441310513350", 2},
+  {"40000040000030000042000025200051200066500031320556512", 3}}
+  if awesome_idx == nil then
+    awesome_idx = math.random(#puzzles)
+  end
+  awesome_idx = (awesome_idx % #puzzles) + 1
+  P1:set_puzzle_state(unpack(puzzles[awesome_idx]))
   while true do
     P1:local_run()
     if P1.n_active_panels == 0 then
