@@ -3,7 +3,6 @@ function love.conf(t)
   t.author = "sharpobject@gmail.com"
   t.screen.width = 819
   t.screen.height = 615
-  t.modules.joystick = false
   t.modules.audio = false
   t.modules.mouse = false
   t.modules.sound = false
@@ -16,6 +15,7 @@ function love.conf(t)
   t.identity = nil            -- The name of the save directory (string)
   t.version = 0               -- The LÖVE version this game was made for (number)
   t.console = false           -- Attach a console (boolean, Windows only)
+  t.modules.joystick = true
   t.modules.timer = true      -- Enable the timer module (boolean)
   t.modules.image = true      -- Enable the image module (boolean)
   t.modules.graphics = true   -- Enable the graphics module (boolean)

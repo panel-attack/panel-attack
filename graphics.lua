@@ -184,6 +184,7 @@ function Stack.render(self)
     gprint("Moves: "..self.puzzle_moves, self.score_x, 100)
   else
     gprint("Score: "..self.score, self.score_x, 100)
+    gprint("Speed: "..self.speed, self.score_x, 130)
   end
   self:draw_cards()
   self:render_cursor()

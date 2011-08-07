@@ -117,6 +117,22 @@ for idx,val in ipairs(speed_to_rise_time) do
   speed_to_rise_time[idx] = val/16
 end
 
+-- Values past 51 weren't measured because all the speeds
+-- after that are the same anyway.
+panels_to_next_speed =
+  {9, 12, 12, 12, 12, 12, 15, 15, 18, 18,
+  24, 24, 24, 24, 24, 24, 21, 18, 18, 18,
+  36, 36, 36, 36, 36, 36, 36, 36, 36, 36,
+  39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
+  45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
+  45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
+  45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
+  45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
+  45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
+  45, 45, 45, 45, 45, 45, 45, 45, math.huge}
+
+
+
 min = math.min
 max = math.max
 -- bounds b so a<=b<=c
@@ -124,4 +140,17 @@ function bound(a, b, c)
   if b<a then return a end
   if b>c then return c end
   return b
+end
+
+-- map for numeric tables
+function map(func, tab)
+  local ret = {}
+  for key, val in ipairs(tab) do
+    ret[key]=func(val)
+  end
+end
+
+-- reduce for numeric tables
+function reduce(func, tab, ...)
+
 end

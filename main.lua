@@ -40,8 +40,10 @@ function love.run()
         if love.audio then love.audio.stop() end
         return
       end
+      --print(e,a,b,c)
       love.handlers[e](a,b,c)
     end
+    joystick_ax()
 
     love.timer.sleep(tau)
     love.graphics.present()
@@ -56,7 +58,8 @@ end
 
 
 function love.load()
-  math.randomseed(os.time(os.date("*t")))
+  math.randomseed(os.time())
+  for i=1,4 do math.random() end
   graphics_init() -- load images and set up stuff
   mainloop = coroutine.create(fmainloop)
 end
@@ -67,6 +70,13 @@ function love.update()
     error(err)
   end
   this_frame_keys = {}
+  local nbut = love.joystick.getNumButtons(0)
+  local dog = {}
+  for i=0,nbut-1 do
+    dog[i+1] = love.joystick.isDown(0,i)
+  end
+  --print(nbut, unpack(dog))
+  --print(love.joystick.getNumAxes(0), love.joystick.getAxes(0))
 end
 
 function love.draw()

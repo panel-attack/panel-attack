@@ -47,6 +47,7 @@ Stack = class(function(s)
 
     s.speed = 24   -- The player's speed level decides the amount of time
              -- the stack takes to rise automatically
+    s.panels_to_speedup = panels_to_next_speed[s.speed]
     s.rise_timer = 1   -- When this value reaches 0, the stack will rise a pixel
     s.rise_lock = false   -- If the stack is rise locked, it won't rise until it is
               -- unlocked.
@@ -175,6 +176,7 @@ function Panel.clear_flags(self)
 end
 
 function Stack.set_puzzle_state(self, pstr, n_turns)
+  -- Copy the puzzle into our state
   while string.len(pstr) < self.size do
     pstr = "0" .. pstr
   end
@@ -188,6 +190,9 @@ function Stack.set_puzzle_state(self, pstr, n_turns)
     end
   end
   self.puzzle_moves = n_turns
+
+  -- Also set up some nonstandard stuff to make the game puzzley
+  self.puzzle_mode = true
 end
 
 function Stack.puzzle_done(self)
@@ -312,6 +317,14 @@ function Stack.PdP(self)
     self.game_over = true
   end
 
+  -- Increase the speed if applicable
+  if self.panels_to_speedup <= 0 then
+    self.speed = self.speed + 1
+    self.panels_to_speedup = self.panels_to_speedup +
+      panels_to_next_speed[self.speed]
+    self.FRAMECOUNT_RISE = speed_to_rise_time[self.speed]
+  end
+
   -- Phase 0 //////////////////////////////////////////////////////////////
   -- Stack automatic rising
 
@@ -332,11 +345,12 @@ function Stack.PdP(self)
         if self.displacement == 0 then
           self.prevent_manual_raise = false
           if self.panels_in_top_row then
-            prow = panels[width]
+            self.do_matches_check = true
+            prow = panels[height]
             for idx=1,width do
               prow[idx].state = "normal"
             end
-            self.bottom_row=height - 1
+            self.bottom_row=height
           else
             self:new_row()
           end
@@ -349,7 +363,7 @@ function Stack.PdP(self)
   -- Phase 1 . ///////////////////////////////////////////////////////
   -- Falling
 
-  for row=self.bottom_row,2,-1 do
+  for row=self.bottom_row,1,-1 do
     for col=1,width do
       if panels[row][col].state == "falling" then
         -- if there's no panel below a falling panel,
@@ -478,6 +492,7 @@ function Stack.PdP(self)
           elseif panel.state == "popped" then
             -- It's time for this panel
             -- to be gone forever :'(
+            self.panels_to_speedup = self.panels_to_speedup - 1
             if panel.chaining then
               self.n_chain_panels = self.n_chain_panels - 1
             end
@@ -684,6 +699,7 @@ function Stack.PdP(self)
   -- generated during this tick, a matches-check is done.
   if self.do_matches_check then
     self:check_matches()
+    self.do_matches_check = false
   end
 
 

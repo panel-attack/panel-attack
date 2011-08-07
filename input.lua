@@ -1,3 +1,45 @@
+local __old_jp_handler = love.handlers.jp
+local __old_jr_handler = love.handlers.jr
+function love.handlers.jp(a, b, c)
+  __old_jp_handler(a,b,c)
+  love.keypressed("j"..a..b)
+end
+function love.handlers.jr(a,b,c)
+  __old_jr_handler(a,b,c)
+  love.keyreleased("j"..a..b)
+end
+
+local prev_ax = {}
+local axis_to_button = function(idx, value)
+  local prev = prev_ax[idx] or 0
+  if value > .5 then
+    if prev < .5 then
+      love.keypressed("ja"..idx.."1")
+    end
+  elseif value < -.5 then
+    if prev > -.5 then
+      love.keypressed("ja"..idx.."0")
+    end
+  else
+    if prev > .5 then
+      love.keyreleased("ja"..idx.."1")
+    elseif prev < -.5 then
+      love.keyreleased("ja"..idx.."0")
+    end
+  end
+  prev_ax[idx] = prev
+end
+
+function joystick_ax()
+  if love.joystick.getNumJoysticks() < 1 then
+    return
+  end
+  local axes = {love.joystick.getAxes(0)}
+  for idx,value in ipairs(axes) do
+    axis_to_button(idx, value)
+  end
+end
+
 function love.keypressed(key, unicode)
   keys[key] = true
   this_frame_keys[key] = true
