@@ -96,6 +96,8 @@ function send_controls()
     t(this_frame_keys[k_raise1])..t(this_frame_keys[k_raise2])
   if TCP_sock then
     TCP_sock:send("I"..to_send)
+  elseif P1.puzzle_mode then
+    preplay_in_buf = preplay_in_buf .. to_send
   else
     replay_in_buf = replay_in_buf .. to_send
   end

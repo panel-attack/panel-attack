@@ -42,6 +42,7 @@ class PanelServ(Protocol):
         # TODO: care about the version number.
         if self.factory.wait_index is not None:
             self.neighbor = self.factory.conns[self.factory.wait_index]
+            self.factory.wait_index = None
             self.neighbor.neighbor = self
             self.transport.write("G")
             self.neighbor.transport.write("G")

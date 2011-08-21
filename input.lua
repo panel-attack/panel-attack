@@ -14,29 +14,28 @@ local axis_to_button = function(idx, value)
   local prev = prev_ax[idx] or 0
   if value > .5 then
     if prev < .5 then
-      love.keypressed("ja"..idx.."1")
+      love.keypressed("ja"..idx.."+")
     end
   elseif value < -.5 then
     if prev > -.5 then
-      love.keypressed("ja"..idx.."0")
+      love.keypressed("ja"..idx.."-")
     end
   else
     if prev > .5 then
-      love.keyreleased("ja"..idx.."1")
+      love.keyreleased("ja"..idx.."+")
     elseif prev < -.5 then
-      love.keyreleased("ja"..idx.."0")
+      love.keyreleased("ja"..idx.."-")
     end
   end
-  prev_ax[idx] = prev
+  prev_ax[idx] = value
 end
 
 function joystick_ax()
-  if love.joystick.getNumJoysticks() < 1 then
-    return
-  end
-  local axes = {love.joystick.getAxes(0)}
-  for idx,value in ipairs(axes) do
-    axis_to_button(idx, value)
+  for i=0,love.joystick.getNumJoysticks()-1 do
+    local axes = {love.joystick.getAxes(i)}
+    for idx,value in ipairs(axes) do
+      axis_to_button(i..idx, value)
+    end
   end
 end
 

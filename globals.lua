@@ -131,26 +131,44 @@ panels_to_next_speed =
   45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
   45, 45, 45, 45, 45, 45, 45, 45, math.huge}
 
-
-
 min = math.min
 max = math.max
 -- bounds b so a<=b<=c
 function bound(a, b, c)
-  if b<a then return a end
-  if b>c then return c end
-  return b
+  if b<a then return a
+  elseif b>c then return c
+  else return b end
 end
 
 -- map for numeric tables
 function map(func, tab)
   local ret = {}
-  for key, val in ipairs(tab) do
-    ret[key]=func(val)
+  for i=1, #tab do
+    ret[i]=func(tab[i])
   end
+  return ret
+end
+
+function map_inplace(func, tab)
+  for i=1, #tab do
+    tab[i]=func(tab[i])
+  end
+  return tab
 end
 
 -- reduce for numeric tables
 function reduce(func, tab, ...)
-
+  local idx, value = 2, nil
+  if select("#", ...) ~= 0 then
+    value = select(1, ...)
+    idx = 1
+  elseif #tab == 0 then
+    error("Tried to reduce empty table with no initial value")
+  else
+    value = tab[1]
+  end
+  for i=idx,#tab do
+    value = func(value, tab[i])
+  end
+  return value
 end

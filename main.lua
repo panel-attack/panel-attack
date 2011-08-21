@@ -9,12 +9,6 @@ require("network")
 require("mainloop")
 
 local N_FRAMES = 0
-local QUITTING = false
-
-function exit()
-  QUITTING = true
-  coroutine.yield()
-end
 
 function love.run()
   love.load(arg)
@@ -27,6 +21,9 @@ function love.run()
     dt = math.min(0.1, love.timer.getDelta() )
 
     love.graphics.clear()
+    love.graphics.setColor(28, 28, 28)
+    love.graphics.rectangle("fill",-5,-5,900,900)
+    love.graphics.setColor(255, 255, 255)
     love.update(dt)
     love.draw()
     --love.graphics.print("FPS: ["..love.timer.getFPS().."] delay: ["..math.floor(tau).."ms] idle:["..math.floor(100 * (tau/1000)/dt).."%]", 10, 10)
@@ -50,9 +47,6 @@ function love.run()
 
     N_FRAMES = N_FRAMES + 1
 
-    if QUITTING then
-      return
-    end
   end
 end
 
@@ -70,13 +64,6 @@ function love.update()
     error(err)
   end
   this_frame_keys = {}
-  local nbut = love.joystick.getNumButtons(0)
-  local dog = {}
-  for i=0,nbut-1 do
-    dog[i+1] = love.joystick.isDown(0,i)
-  end
-  --print(nbut, unpack(dog))
-  --print(love.joystick.getNumAxes(0), love.joystick.getAxes(0))
 end
 
 function love.draw()
