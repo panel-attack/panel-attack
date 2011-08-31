@@ -38,6 +38,8 @@
 --#define CONFETTI_STARTTIMER   40
 --#define CONFETTI_STARTRADIUS 150
 
+local floor = math.floor
+
 function load_img(s)
   s = love.image.newImageData(s)
   local w, h = s:getWidth(), s:getHeight()
@@ -99,11 +101,11 @@ function graphics_init()
   IMG_cards[false] = {}
   for i=4,66 do
     IMG_cards[false][i] = load_img("assets/combo"
-      ..tostring(math.floor(i/10))..tostring(i%10)..".png")
+      ..tostring(floor(i/10))..tostring(i%10)..".png")
   end
   for i=2,13 do
     IMG_cards[true][i] = load_img("assets/chain"
-      ..tostring(math.floor(i/10))..tostring(i%10)..".png")
+      ..tostring(floor(i/10))..tostring(i%10)..".png")
   end
   for i=14,99 do
     IMG_cards[true][i] = load_img("assets/chain00.png")
@@ -169,7 +171,8 @@ function Stack.render(self)
             draw_x = draw_x + panel.timer * 4
           end
         elseif self.danger_col[col] and row <= self.bottom_row then
-          draw_frame = danger_bounce_table[self.danger_timer+1];
+          draw_frame = danger_bounce_table[
+            wrap(1,self.danger_timer+1+floor((col-1)/2),#danger_bounce_table)]
         elseif panel.state == "dimmed" then
           draw_frame = 7
         else
@@ -187,8 +190,8 @@ function Stack.render(self)
     gprint("Speed: "..self.speed, self.score_x, 130)
     if self.mode == "time" then
       local time_left = 120 - self.CLOCK/60
-      local mins = math.floor(time_left/60)
-      local secs = math.floor(time_left%60)
+      local mins = floor(time_left/60)
+      local secs = floor(time_left%60)
       gprint("Time: "..string.format("%01d:%02d",mins,secs), self.score_x, 145)
     end
   end
@@ -264,7 +267,7 @@ void Render_Confetti()
 }--]]
 
 function Stack.render_cursor(self)
-  draw(IMG_cursor[(math.floor(self.CLOCK/16)%2)+1],
+  draw(IMG_cursor[(floor(self.CLOCK/16)%2)+1],
     (self.cur_col-1)*16+self.pos_x-4,
     (self.cur_row-1)*16+self.pos_y-4+self.displacement)
 end
