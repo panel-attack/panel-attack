@@ -4,8 +4,10 @@
   --  . the main game routine
   --    (rising, timers, falling, cursor movement, swapping, landing)
   --  . the matches-checking routine
+local min = math.min
 
-Stack = class(function(s)
+Stack = class(function(s, mode, speed, difficulty)
+    s.mode = mode or "endless"
     s.pos_x = 4   -- Position of the play area on the screen
     s.pos_y = 4
     s.score_x = 315
@@ -43,9 +45,9 @@ Stack = class(function(s)
     -- set true if this column is near the top
     s.danger_timer = 0   -- decides bounce frame when in danger
 
-    s.difficulty = 3
+    s.difficulty = difficulty or 2
 
-    s.speed = 24   -- The player's speed level decides the amount of time
+    s.speed = speed or 24   -- The player's speed level decides the amount of time
              -- the stack takes to rise automatically
     s.panels_to_speedup = panels_to_next_speed[s.speed]
     s.rise_timer = 1   -- When this value reaches 0, the stack will rise a pixel
@@ -92,8 +94,8 @@ Stack = class(function(s)
                -- to move quickly... it's based on P1CurSensitivity
     s.cur_timer = 0   -- number of ticks for which a new direction's been pressed
     s.cur_dir = nil     -- the direction pressed
-    s.cur_row = 1  -- the row the cursor's on
-    s.cur_col = 1  -- the column the left half of the cursor's on
+    s.cur_row = 7  -- the row the cursor's on
+    s.cur_col = 3  -- the column the left half of the cursor's on
 
     s.move_sound = false  -- this is set if the cursor movement sound should be played
     s.game_over = false
@@ -190,9 +192,6 @@ function Stack.set_puzzle_state(self, pstr, n_turns)
     end
   end
   self.puzzle_moves = n_turns
-
-  -- Also set up some nonstandard stuff to make the game puzzley
-  self.puzzle_mode = true
 end
 
 function Stack.puzzle_done(self)
@@ -219,13 +218,13 @@ end
 
 --foreign_run is for a stack that belongs to another client.
 function Stack.foreign_run(self)
-  local times_to_run = min(string.len(self.input_buffer)/22,
+  local times_to_run = min(string.len(self.input_buffer),
       self.max_runs_per_frame)
   for i=1,times_to_run do
-    fake_controls(self, string.sub(self.input_buffer,7,22))
+    fake_controls(self, string.sub(self.input_buffer,1,1))
     self:PdP()
     self.CLOCK = self.CLOCK + 1
-    self.input_buffer = string.sub(self.input_buffer,23)
+    self.input_buffer = string.sub(self.input_buffer,2)
   end
   self:render()
 end
@@ -329,7 +328,7 @@ function Stack.PdP(self)
   -- Stack automatic rising
 
   if self.speed ~= 0 and not self.manual_raise and self.stop_time == 0
-      and not self.rise_lock and not self.puzzle_mode then
+      and not self.rise_lock and self.mode ~= "puzzle" then
     self.rise_timer = self.rise_timer - 1
     if self.rise_timer <= 0 then  -- try to rise
       if self.displacement == 0 then
@@ -624,7 +623,7 @@ function Stack.PdP(self)
   end
 
   -- MANUAL STACK RAISING
-  if self.manual_raise and not self.puzzle_mode then
+  if self.manual_raise and self.mode ~= "puzzle" then
     if not self.rise_lock then
       if self.displacement == 0 then
         if self.has_risen then
@@ -958,12 +957,12 @@ function Stack.check_matches(self)
       if(self.stop_time ~= 0) then
         self.stop_time = self.stop_time + 1
       else
-        if(is_chain) then
-          self.stop_time = self.stop_time + stop_time_chain
-            [(self.panels_in_top_row and 2) or 1][self.difficulty]
+        if self.panels_in_top_row then
+          self.stop_time = self.stop_time + stop_time_danger[self.difficulty]
+        elseif is_chain then
+          self.stop_time = self.stop_time + stop_time_chain[self.difficulty]
         else
-          self.stop_time = self.stop_time + stop_time_combo
-            [(self.panels_in_top_row and 2) or 1][self.difficulty]
+          self.stop_time = self.stop_time + stop_time_combo[self.difficulty]
         end
         --MrStopState=1;
         --MrStopTimer=MrStopAni[self.stop_time];

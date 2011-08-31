@@ -40,12 +40,18 @@ function joystick_ax()
 end
 
 function love.keypressed(key, unicode)
-  keys[key] = true
+  keys[key] = 0
   this_frame_keys[key] = true
 end
 
 function love.keyreleased(key, unicode)
-  keys[key] = false
+  keys[key] = nil
+end
+
+function key_counts()
+  for key,value in pairs(keys) do
+    keys[key] = value + 1
+  end
 end
 
 function controls(stack)
@@ -80,26 +86,23 @@ function controls(stack)
 end
 
 function fake_controls(stack, sdata)
-  local data = {}
-  for i=1,16 do
-    data[i] = string.sub(sdata,i,i) ~= "0"
-  end
   local new_dir = nil
-  if (data[7] or data[8] or data[15] or data[16]) and (not stack.prevent_manual_raise) then
+  local raise, swap, up, down, left, right = unpack(base64decode[sdata])
+  if (raise) and (not stack.prevent_manual_raise) then
     stack.manual_raise = true
     stack.manual_raise_yet = false
   end
 
-  stack.swap_1 = data[13]
-  stack.swap_2 = data[14]
+  stack.swap_1 = swap
+  stack.swap_2 = swap
 
-  if data[1] or data[9] then
+  if up then
     new_dir = "up"
-  elseif data[2] or data[10] then
+  elseif down then
     new_dir = "down"
-  elseif data[3] or data[11] then
+  elseif left then
     new_dir = "left"
-  elseif data[4] or data[12] then
+  elseif right then
     new_dir = "right"
   end
 

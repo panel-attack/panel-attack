@@ -180,11 +180,17 @@ function Stack.render(self)
     end
   end
   draw(IMG_frame, self.pos_x-4, self.pos_y-4)
-  if self.puzzle_moves then
+  if self.mode == "puzzle" then
     gprint("Moves: "..self.puzzle_moves, self.score_x, 100)
   else
     gprint("Score: "..self.score, self.score_x, 100)
     gprint("Speed: "..self.speed, self.score_x, 130)
+    if self.mode == "time" then
+      local time_left = 120 - self.CLOCK/60
+      local mins = math.floor(time_left/60)
+      local secs = math.floor(time_left%60)
+      gprint("Time: "..string.format("%01d:%02d",mins,secs), self.score_x, 145)
+    end
   end
   self:draw_cards()
   self:render_cursor()

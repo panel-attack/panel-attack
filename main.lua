@@ -1,7 +1,10 @@
 socket = require("socket")
+json = require("dkjson")
+require("util")
 require("class")
 require("queue")
 require("globals")
+require("save")
 require("engine")
 require("graphics")
 require("input")
@@ -9,6 +12,7 @@ require("network")
 require("mainloop")
 
 local N_FRAMES = 0
+local min = math.min
 
 function love.run()
   love.load(arg)
@@ -18,7 +22,7 @@ function love.run()
 
   while true do
     love.timer.step()
-    dt = math.min(0.1, love.timer.getDelta() )
+    dt = min(0.1, love.timer.getDelta() )
 
     love.graphics.clear()
     love.graphics.setColor(28, 28, 28)
@@ -41,6 +45,7 @@ function love.run()
       love.handlers[e](a,b,c)
     end
     joystick_ax()
+    key_counts()
 
     love.timer.sleep(tau)
     love.graphics.present()
@@ -50,10 +55,12 @@ function love.run()
   end
 end
 
-
 function love.load()
   math.randomseed(os.time())
   for i=1,4 do math.random() end
+  read_key_file()
+  replay = {}
+  read_replay_file()
   graphics_init() -- load images and set up stuff
   mainloop = coroutine.create(fmainloop)
 end

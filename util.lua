@@ -1,0 +1,92 @@
+-- bounds b so a<=b<=c
+function bound(a, b, c)
+  if b<a then return a
+  elseif b>c then return c
+  else return b end
+end
+
+-- mods b so a<=b<=c
+function wrap(a, b, c)
+  return (b-a)%(c-a+1)+a
+end
+
+-- map for numeric tables
+function map(func, tab)
+  local ret = {}
+  for i=1, #tab do
+    ret[i]=func(tab[i])
+  end
+  return ret
+end
+
+-- map for dicts
+function map_dict(func, tab)
+  local ret = {}
+  for key,val in pairs(tab) do
+    ret[key]=func(val)
+  end
+  return ret
+end
+
+function map_inplace(func, tab)
+  for i=1, #tab do
+    tab[i]=func(tab[i])
+  end
+  return tab
+end
+
+function map_dict_inplace(func, tab)
+  for key,val in pairs(tab) do
+    tab[key]=func(val)
+  end
+  return tab
+end
+
+-- reduce for numeric tables
+function reduce(func, tab, ...)
+  local idx, value = 2, nil
+  if select("#", ...) ~= 0 then
+    value = select(1, ...)
+    idx = 1
+  elseif #tab == 0 then
+    error("Tried to reduce empty table with no initial value")
+  else
+    value = tab[1]
+  end
+  for i=idx,#tab do
+    value = func(value, tab[i])
+  end
+  return value
+end
+
+function car(tab)
+  return tab[1]
+end
+-- This sucks lol
+function cdr(tab)
+  return {select(2, unpack(tab))}
+end
+
+-- an inverse of table.concat
+function procat(str)
+  local ret = {}
+  for i=1,#str do
+    ret[i]=str:sub(i,i)
+  end
+  return ret
+end
+
+-- Not actually for encoding/decoding byte streams as base64.
+-- Rather, it's for encoding streams of 6-bit symbols in printable characters.
+base64encode = procat("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890+/")
+base64decode = {}
+for i=1,64 do
+  local val = i-1
+  base64decode[base64encode[i]]={}
+  local bit = 32
+  for j=1,6 do
+    base64decode[base64encode[i]][j]=(val>=bit)
+    val=val%bit
+    bit=bit/2
+  end
+end

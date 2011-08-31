@@ -7,12 +7,12 @@ function love.conf(t)
   t.modules.mouse = false
   t.modules.sound = false
   t.modules.physics = false
+  t.identity = "Panel Attack"
 
   -- DEFAULTS FROM HERE DOWN
   t.screen.vsync = true       -- Enable vertical sync (boolean)
   t.screen.fullscreen = false -- Enable fullscreen (boolean)
   t.screen.fsaa = 0           -- The number of FSAA-buffers (number)
-  t.identity = nil            -- The name of the save directory (string)
   t.version = 0               -- The LÖVE version this game was made for (number)
   t.console = false           -- Attach a console (boolean, Windows only)
   t.modules.joystick = true

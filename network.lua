@@ -1,5 +1,5 @@
 local TCP_sock = nil
-local type_to_length = {G=1, H=1, N=1, P=121, O=121, I=23}
+local type_to_length = {G=1, H=1, N=1, P=121, O=121, I=2}
 local leftovers = ""
 
 function flush_socket()
@@ -79,7 +79,9 @@ function make_local_panels(stack, prev_panels)
     end
   end
   stack.panel_buffer = stack.panel_buffer..string.sub(ret,7,-1)
-  replay_pan_buf = replay_pan_buf .. string.sub(ret,7,-1)
+  if P1.mode == "endless" then
+    replay.pan_buf = replay.pan_buf .. string.sub(ret,7,-1)
+  end
 end
 
 function send_controls()
@@ -88,17 +90,20 @@ function send_controls()
   while string.len(framecount) ~= 6 do
     framecount = "0"..framecount
   end
-  local to_send = framecount ..
-    t(keys[k_up])..t(keys[k_down])..t(keys[k_left])..t(keys[k_right])..
-    t(keys[k_swap1])..t(keys[k_swap2])..t(keys[k_raise1])..t(keys[k_raise2])..
-    t(this_frame_keys[k_up])..t(this_frame_keys[k_down])..t(this_frame_keys[k_left])..
-    t(this_frame_keys[k_right])..t(this_frame_keys[k_swap1])..t(this_frame_keys[k_swap2])..
-    t(this_frame_keys[k_raise1])..t(this_frame_keys[k_raise2])
+  local to_send = base64encode[
+    ((keys[k_raise1] or keys[k_raise2] or this_frame_keys[k_raise1]
+      or this_frame_keys[k_raise2]) and 32 or 0) +
+    ((this_frame_keys[k_swap1] or this_frame_keys[k_swap2]) and 16 or 0) +
+    ((keys[k_up] or this_frame_keys[k_up]) and 8 or 0) +
+    ((keys[k_down] or this_frame_keys[k_down]) and 4 or 0) +
+    ((keys[k_left] or this_frame_keys[k_left]) and 2 or 0) +
+    ((keys[k_right] or this_frame_keys[k_right]) and 1 or 0)+1]
   if TCP_sock then
     TCP_sock:send("I"..to_send)
-  elseif P1.puzzle_mode then
+  elseif P1.mode == "puzzle" then
     preplay_in_buf = preplay_in_buf .. to_send
-  else
-    replay_in_buf = replay_in_buf .. to_send
+  elseif P1.mode == "endless" then
+    replay.in_buf = replay.in_buf .. to_send
+    --replay.in_buf[#replay.in_buf+1]=to_send
   end
 end
