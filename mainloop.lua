@@ -208,6 +208,10 @@ function main_net_vs()
 end
 
 function main_replay_endless()
+  if replay.speed == nil then
+    return main_dumb_transition,
+      {main_select_mode, "I don't have an endless replay :("}
+  end
   P1 = Stack("endless",replay.speed, replay.difficulty)
   P1.max_runs_per_frame = 1
   P1.input_buffer = table.concat({replay.in_buf})
@@ -226,6 +230,10 @@ function main_replay_endless()
 end
 
 function main_replay_puzzle()
+  if preplay_in_buf == nil or preplay_in_buf == "" then
+    return main_dumb_transition,
+      {main_select_mode, "I don't have a puzzle replay :("}
+  end
   P1 = Stack("puzzle")
   P1.max_runs_per_frame = 1
   P1.input_buffer = preplay_in_buf
