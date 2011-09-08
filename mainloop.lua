@@ -2,7 +2,7 @@ local wait = coroutine.yield
 
 local main_select_mode, main_endless, main_puzzle, main_net_vs_setup,
   main_replay_endless, main_replay_puzzle, main_net_vs,
-  main_config_input,
+  main_config_input, main_dumb_transition,
   menu_up, menu_down, menu_left, menu_right, menu_enter, menu_escape
 
 function fmainloop()
@@ -153,11 +153,12 @@ function main_endless(...)
   replay.difficulty = P1.difficulty
   make_local_panels(P1, "000000")
   while true do
+    P1:render()
     wait()
     if P1.game_over then
     -- TODO: proper game over.
       write_replay_file()
-      return main_select_mode
+      return main_dumb_transition, {main_select_mode, "You scored "..P1.score}
     end
     P1:local_run()
   end
@@ -167,10 +168,11 @@ function main_time_attack(...)
   P1 = Stack("time", ...)
   make_local_panels(P1, "000000")
   while true do
+    P1:render()
     wait()
     if P1.game_over or P1.CLOCK == 120*60 then
     -- TODO: proper game over.
-      return main_select_mode
+      return main_dumb_transition, {main_select_mode, "You scored "..P1.score}
     end
     P1:local_run()
   end
@@ -192,6 +194,8 @@ end
 
 function main_net_vs()
   while true do
+    P1:render()
+    P2:render()
     wait()
     do_messages()
     P1:local_run()
@@ -211,12 +215,13 @@ function main_replay_endless()
   P1.speed = replay.speed
   P1.difficulty = replay.difficulty
   while true do
-    P1:foreign_run()
+    P1:render()
     wait()
     if P1.game_over then
     -- TODO: proper game over.
-      return main_select_mode
+      return main_dumb_transition, {main_select_mode, "You scored "..P1.score}
     end
+    P1:foreign_run()
   end
 end
 
@@ -226,15 +231,16 @@ function main_replay_puzzle()
   P1.input_buffer = preplay_in_buf
   P1:set_puzzle_state(unpack(preplay_puzz))
   while true do
-    P1:foreign_run()
+    P1:render()
     wait()
     if P1.n_active_panels == 0 then
       if P1:puzzle_done() then
-        return main_select_mode
+        return main_dumb_transition, {main_select_mode, "You win!"}
       elseif P1.puzzle_moves == 0 then
-        return main_select_mode
+        return main_dumb_transition, {main_select_mode, "You lose :("}
       end
     end
+    P1:foreign_run()
   end
 end
 
@@ -242,7 +248,7 @@ local awesome_idx = 1
 function main_puzzle()
   P1 = Stack("puzzle")
   local puzzles = {
-  {"032510036520646325641313412143112146325461131516131516416123442315632515",5},
+  --{"032510036520646325641313412143112146325461131516131516416123442315632515",5},
   {"4000441101", 1},
   {"223233", 1},
   {"400000600000600046400", 1},
@@ -255,7 +261,6 @@ function main_puzzle()
   {"40000040000030000042000025200051200066500031320556512", 3},
   {"111111555555666666333333222222444444111111555555666666333333222222444444",1},
   {"010000019000199900911900991900", 3},
-  {"006020006020001013412143412146325461131516131516416123",5},
   }
   if awesome_idx == nil then
     awesome_idx = math.random(#puzzles)
@@ -264,58 +269,18 @@ function main_puzzle()
   preplay_puzz = puzzles[awesome_idx]
   preplay_in_buf = ""
   while true do
-    P1:local_run()
+    P1:render()
     wait()
     if P1.n_active_panels == 0 then
       if P1:puzzle_done() then
         awesome_idx = (awesome_idx % #puzzles) + 1
-        return main_puzzle
+        return main_dumb_transition, {main_select_mode, "You win!"}
       elseif P1.puzzle_moves == 0 then
-
-        awesome_idx = (awesome_idx % #puzzles) + 1
-        return main_puzzle
-        --   return main_select_mode
+        return main_dumb_transition, {main_select_mode, "You lose :("}
       end
     end
+    P1:local_run()
   end
-end
-
-  do -- set up bullshit replay
-  preplay_puzz = {"032510036520646325641313412143112146325461131516131516416123442315632515",5}
-  preplay_in_buf = {
-  "0000000000000000000000",
-  "0000000000000000000000",
-  "0000000000000000000000",
-  "0000000000000000000000",
-  "0000000000000000000000",
-  "0000000001000000000000",
-  "0000000000000000000000",
-  "0000000000000000000000",
-  "0000000001000000000000",
-  "0000000000000000000000",
-  "0000000000000000000000",
-  "0000000000000000001000",
-  "0000000010000000000000",
-  "0000000000000000000000",
-  "0000000000000000001000",
-  "0000000010000000000000",
-  "0000000000000000001000",
-  "0000000010000000000000",
-  "0000000000000000000000",
-  "0000000000000000001000",
-  "0000000010000000000000",
-  "0000000000000000000000",
-  "0000000000000000001000"}
-  for i=1,70 do
-    table.insert(preplay_in_buf, 11, "0000000000000000000000")
-  end
-  for i=1,70 do
-    table.insert(preplay_in_buf, 1, "0000000000000000000000")
-  end
-  for i=#preplay_in_buf+1,1000 do
-    preplay_in_buf[i] ="0000000000000000000000"
-  end
-  preplay_in_buf=table.concat(preplay_in_buf)
 end
 
 function main_config_input()
@@ -385,6 +350,17 @@ function main_config_input()
       else
         active_idx = #items
       end
+    end
+  end
+end
+
+function main_dumb_transition(next_func, text)
+  text = text or ""
+  while true do
+    gprint(text, 300, 280)
+    wait()
+    if menu_enter() or menu_escape() then
+      return next_func
     end
   end
 end

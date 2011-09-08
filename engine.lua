@@ -213,7 +213,6 @@ function Stack.local_run(self)
   controls(self)
   self:PdP()
   self.CLOCK = self.CLOCK + 1
-  self:render()
 end
 
 --foreign_run is for a stack that belongs to another client.
@@ -226,7 +225,6 @@ function Stack.foreign_run(self)
     self.CLOCK = self.CLOCK + 1
     self.input_buffer = string.sub(self.input_buffer,2)
   end
-  self:render()
 end
 
 function Stack.enqueue_card(self, chain, x, y, n)
