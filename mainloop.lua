@@ -1,8 +1,8 @@
 local wait = coroutine.yield
 
-local main_select_mode, main_endless, main_puzzle, main_net_vs_setup,
+local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_replay_endless, main_replay_puzzle, main_net_vs,
-  main_config_input, main_dumb_transition,
+  main_config_input, main_dumb_transition, main_select_puzz,
   menu_up, menu_down, menu_left, menu_right, menu_enter, menu_escape
 
 function fmainloop()
@@ -54,7 +54,7 @@ end
 
 function main_select_mode()
   local items = {{"1P endless", main_select_speed_99, {main_endless}},
-      {"1P puzzle", main_puzzle},
+      {"1P puzzle", main_select_puzz},
       {"1P time attack", main_select_speed_99, {main_time_attack}},
       {"2P endless at Tom's apartment", main_net_vs_setup, {"sfo.zkpq.ca"}},
       {"2P endless on localhost", main_net_vs_setup, {"127.0.0.1"}},
@@ -252,42 +252,73 @@ function main_replay_puzzle()
   end
 end
 
-local awesome_idx = 1
-function main_puzzle()
-  P1 = Stack("puzzle")
-  local puzzles = {
-  --{"032510036520646325641313412143112146325461131516131516416123442315632515",5},
-  {"4000441101", 1},
-  {"223233", 1},
-  {"400000600000600046400", 1},
-  {"100001300033100", 1},
-  {"4200002400002400", 1},
-  {"2000024400043300211310", 1},
-  {"5000001200014500043420166350226232", 1},
-  {"214365214365662622214365214365", 1},
-  {"5000054550441310513350", 2},
-  {"40000040000030000042000025200051200066500031320556512", 3},
-  {"111111555555666666333333222222444444111111555555666666333333222222444444",1},
-  {"010000019000199900911900991900", 3},
-  }
-  if awesome_idx == nil then
-    awesome_idx = math.random(#puzzles)
+function make_main_puzzle(puzzles)
+  local awesome_idx, ret = 1, nil
+  function ret()
+    P1 = Stack("puzzle")
+    if awesome_idx == nil then
+      awesome_idx = math.random(#puzzles)
+    end
+    P1:set_puzzle_state(unpack(puzzles[awesome_idx]))
+    preplay_puzz = puzzles[awesome_idx]
+    preplay_in_buf = ""
+    while true do
+      P1:render()
+      wait()
+      if P1.n_active_panels == 0 then
+        if P1:puzzle_done() then
+          awesome_idx = (awesome_idx % #puzzles) + 1
+          if awesome_idx == 1 then
+            return main_dumb_transition, {main_select_puzz, "You win!"}
+          else
+            return main_dumb_transition, {ret, "You win!"}
+          end
+        elseif P1.puzzle_moves == 0 then
+          return main_dumb_transition, {main_select_puzz, "You lose :("}
+        end
+      end
+      P1:local_run()
+    end
   end
-  P1:set_puzzle_state(unpack(puzzles[awesome_idx]))
-  preplay_puzz = puzzles[awesome_idx]
-  preplay_in_buf = ""
-  while true do
-    P1:render()
-    wait()
-    if P1.n_active_panels == 0 then
-      if P1:puzzle_done() then
-        awesome_idx = (awesome_idx % #puzzles) + 1
-        return main_dumb_transition, {main_select_mode, "You win!"}
-      elseif P1.puzzle_moves == 0 then
-        return main_dumb_transition, {main_select_mode, "You lose :("}
+  return ret
+end
+
+do
+  local items = {}
+  for key,val in spairs(puzzle_sets) do
+    items[#items+1] = {key, make_main_puzzle(val)}
+  end
+  items[#items+1] = {"Back", main_select_mode}
+  function main_select_puzz()
+    local active_idx = 1
+    while true do
+      local to_print = ""
+      local arrow = ""
+      for i=1,#items do
+        if active_idx == i then
+          arrow = arrow .. ">"
+        else
+          arrow = arrow .. "\n"
+        end
+        to_print = to_print .. "   " .. items[i][1] .. "\n"
+      end
+      gprint(arrow, 300, 280)
+      gprint(to_print, 300, 280)
+      wait()
+      if menu_up() then
+        active_idx = wrap(1, active_idx-1, #items)
+      elseif menu_down() then
+        active_idx = wrap(1, active_idx+1, #items)
+      elseif menu_enter() then
+        return items[active_idx][2], items[active_idx][3]
+      elseif menu_escape() then
+        if active_idx == #items then
+          return items[active_idx][2], items[active_idx][3]
+        else
+          active_idx = #items
+        end
       end
     end
-    P1:local_run()
   end
 end
 

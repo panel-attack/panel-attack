@@ -76,6 +76,21 @@ function procat(str)
   return ret
 end
 
+function spairs(tab)
+  local keys,vals,idx = {},{},0
+  for k in pairs(tab) do
+    keys[#keys+1] = k
+  end
+  table.sort(keys)
+  for i=1,#keys do
+    vals[i]=tab[keys[i]]
+  end
+  return function()
+    idx = idx + 1
+    return keys[idx], vals[idx]
+  end
+end
+
 -- Not actually for encoding/decoding byte streams as base64.
 -- Rather, it's for encoding streams of 6-bit symbols in printable characters.
 base64encode = procat("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890+/")

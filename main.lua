@@ -9,6 +9,7 @@ require("engine")
 require("graphics")
 require("input")
 require("network")
+require("puzzles")
 require("mainloop")
 
 local N_FRAMES = 0
