@@ -1,3 +1,6 @@
+local sort, pairs, select, unpack, error =
+  table.sort, pairs, select, unpack, error
+
 -- bounds b so a<=b<=c
 function bound(a, b, c)
   if b<a then return a
@@ -67,7 +70,7 @@ function cdr(tab)
   return {select(2, unpack(tab))}
 end
 
--- an inverse of table.concat
+-- a useful right inverse of table.concat
 function procat(str)
   local ret = {}
   for i=1,#str do

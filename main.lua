@@ -69,7 +69,7 @@ end
 function love.update()
   local status, err = coroutine.resume(mainloop)
   if not status then
-    error(err)
+    error(err..'\n'..debug.traceback(mainloop))
   end
   this_frame_keys = {}
 end

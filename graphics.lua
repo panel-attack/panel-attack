@@ -133,7 +133,7 @@ function Stack.draw_cards(self)
   for i=self.card_q.first,self.card_q.last do
     local card = self.card_q[i]
     local draw_x = (card.x-1) * 16 + self.pos_x
-    local draw_y = (card.y-1) * 16 + self.pos_y - card_animation[card.frame]
+    local draw_y = (11-card.y) * 16 + self.pos_y - card_animation[card.frame]
     draw(IMG_cards[card.chain][card.n], draw_x, draw_y)
     card.frame = card.frame + 1
     if(card.frame==card_animation.max) then
@@ -143,13 +143,13 @@ function Stack.draw_cards(self)
 end
 
 function Stack.render(self)
-  for row=1,self.height do
+  for row=0,self.height do
     for col=1,self.width do
       local panel = self.panels[row][col]
       if panel.color ~= 0 and panel.state ~= "popped" then
         local draw_frame = 1
         local draw_x = (col-1) * 16 + self.pos_x
-        local draw_y = (row-1) * 16 + self.pos_y + self.displacement
+        local draw_y = (11-(row)) * 16 + self.pos_y + self.displacement
         if panel.state == "matched" then
           if panel.timer < self.FRAMECOUNT_FLASH then
             draw_frame = 6
@@ -170,11 +170,11 @@ function Stack.render(self)
           else
             draw_x = draw_x + panel.timer * 4
           end
-        elseif self.danger_col[col] and row <= self.bottom_row then
-          draw_frame = danger_bounce_table[
-            wrap(1,self.danger_timer+1+floor((col-1)/2),#danger_bounce_table)]
         elseif panel.state == "dimmed" then
           draw_frame = 7
+        elseif self.danger_col[col] then
+          draw_frame = danger_bounce_table[
+            wrap(1,self.danger_timer+1+floor((col-1)/2),#danger_bounce_table)]
         else
           draw_frame = 1
         end
@@ -269,7 +269,7 @@ void Render_Confetti()
 function Stack.render_cursor(self)
   draw(IMG_cursor[(floor(self.CLOCK/16)%2)+1],
     (self.cur_col-1)*16+self.pos_x-4,
-    (self.cur_row-1)*16+self.pos_y-4+self.displacement)
+    (11-(self.cur_row))*16+self.pos_y-4+self.displacement)
 end
 
 --[[void FadingPanels_1P(int draw_frame, int lightness)
