@@ -66,8 +66,9 @@ Stack = class(function(s, mode, speed, difficulty)
     s.score = 0         -- der skore
     s.chain_counter = 0   -- how high is the current chain?
 
-    s.panels_in_top_row = false  -- boolean, panels in the top row (danger)
-    s.panels_in_second_row = false -- changes music state
+    s.panels_in_top_row = false -- boolean, for losing the game
+    s.danger = false  -- boolean, panels in the top row (danger)
+    s.danger_music = false -- changes music state
 
     s.n_active_panels = 0
     s.n_chain_panels= 0
@@ -262,34 +263,43 @@ function Stack.PdP(self)
     end
   end
 
-  -- count the number of panels in the top row (danger)
   self.panels_in_top_row = false
   local top_row = self.displacement%16==0 and self.height or self.height-1
   prow = panels[top_row]
   for idx=1,width do
     if prow[idx].color ~= 0 then
       self.panels_in_top_row = true
+    end
+  end
+
+  -- calculate which columns should bounce
+  self.danger = false
+  prow = panels[self.height-1]
+  for idx=1,width do
+    if prow[idx].color ~= 0 then
+      self.danger = true
       self.danger_col[idx] = true
     else
       self.danger_col[idx] = false
     end
   end
-  if self.panels_in_top_row and self.stop_time == 0 then
+  if self.danger and self.stop_time == 0 then
     self.danger_timer = self.danger_timer - 1
     if self.danger_timer<0 then
       self.danger_timer=17
     end
   end
 
-  self.panels_in_second_row = false
-  prow = panels[top_row-1]
+  -- determine whether to play danger music
+  self.danger_music = false
+  prow = panels[self.height-2]
   for idx=1,width do
     if prow[idx].color ~= 0 then
-      self.panels_in_second_row = true
+      self.danger_music = true
     end
   end
   --[[
-  if(panels_in_second_row) then
+  if(self.danger_music) then
     if(GameMusicState=MUSIC_NORMAL) then
      GameMusicState=MUSIC_DANGER
      GameMusicStateChange=1
@@ -302,7 +312,7 @@ function Stack.PdP(self)
   end]]--
   --TODO: what the fuck are you talking about, "Game music?"
 
-  if self.displacement == 0 and self.has_risen and not self.panels_in_top_row then
+  if self.displacement == 0 and self.has_risen then
     self:new_row()
   end
 
