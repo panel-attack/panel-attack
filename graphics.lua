@@ -91,6 +91,8 @@ function graphics_init()
     IMG_panels[9][j]=load_img("assets/panel00.png")
   end
 
+  IMG_garbage = load_img("assets/bluemid1.png")
+
   IMG_cursor = {  load_img("assets/cur0.png"),
           load_img("assets/cur1.png")}
 
@@ -150,35 +152,39 @@ function Stack.render(self)
         local draw_frame = 1
         local draw_x = (col-1) * 16 + self.pos_x
         local draw_y = (11-(row)) * 16 + self.pos_y + self.displacement
-        if panel.state == "matched" then
-          if panel.timer < self.FRAMECOUNT_FLASH then
-            draw_frame = 6
-          else
-            if panel.timer % 2 == 1 then
-              draw_frame = 5
-            else
-              draw_frame = 1
-            end
-          end
-        elseif panel.state == "popping" then
-          draw_frame = 6
-        elseif panel.state == "landing" then
-          draw_frame = bounce_table[panel.timer + 1]
-        elseif panel.state == "swapping" then
-          if panel.is_swapping_from_left then
-            draw_x = draw_x - panel.timer * 4
-          else
-            draw_x = draw_x + panel.timer * 4
-          end
-        elseif panel.state == "dimmed" then
-          draw_frame = 7
-        elseif self.danger_col[col] then
-          draw_frame = danger_bounce_table[
-            wrap(1,self.danger_timer+1+floor((col-1)/2),#danger_bounce_table)]
+        if panel.garbage then
+          draw(IMG_garbage, draw_x, draw_y)
         else
-          draw_frame = 1
+          if panel.state == "matched" then
+            if panel.timer < self.FRAMECOUNT_FLASH then
+              draw_frame = 6
+            else
+              if panel.timer % 2 == 1 then
+                draw_frame = 5
+              else
+                draw_frame = 1
+              end
+            end
+          elseif panel.state == "popping" then
+            draw_frame = 6
+          elseif panel.state == "landing" then
+            draw_frame = bounce_table[panel.timer + 1]
+          elseif panel.state == "swapping" then
+            if panel.is_swapping_from_left then
+              draw_x = draw_x - panel.timer * 4
+            else
+              draw_x = draw_x + panel.timer * 4
+            end
+          elseif panel.state == "dimmed" then
+            draw_frame = 7
+          elseif self.danger_col[col] then
+            draw_frame = danger_bounce_table[
+              wrap(1,self.danger_timer+1+floor((col-1)/2),#danger_bounce_table)]
+          else
+            draw_frame = 1
+          end
+          draw(IMG_panels[panel.color][draw_frame], draw_x, draw_y)
         end
-        draw(IMG_panels[panel.color][draw_frame], draw_x, draw_y)
       end
     end
   end

@@ -8,6 +8,24 @@ local min = math.min
 
 Stack = class(function(s, mode, speed, difficulty)
     s.mode = mode or "endless"
+    if s.mode == "2ptime" or s.mode == "vs" then
+      local level = speed
+      speed = level_to_starting_speed[level]
+      difficulty = level_to_difficulty[level]
+      s.max_hang_time = level_to_hang_time[level]
+      if s.mode == "2ptime" then
+        s.NCOLORS = level_to_ncolors_time[level]
+      else
+        s.NCOLORS = level_to_ncolors_vs[level]
+      end
+    end
+
+    s.garbage_cols = {{1,2,3,4,5,6,idx=1},
+                      {1,3,5,idx=1},
+                      {1,4,idx=1},
+                      {1,2,3,idx=1},
+                      {1,2,idx=1},
+                      {1,idx=1}}
     s.pos_x = 4   -- Position of the play area on the screen
     s.pos_y = 4
     s.score_x = 315
@@ -62,7 +80,7 @@ Stack = class(function(s, mode, speed, difficulty)
     s.game_time_mode = 1
     s.game_time_timer = 0
 
-    s.NCOLORS = 5
+    s.NCOLORS = s.NCOLORS or 5
     s.score = 0         -- der skore
     s.chain_counter = 0   -- how high is the current chain?
 
@@ -134,6 +152,12 @@ function Panel.clear(self)
     self.combo_size = 0
     self.chain_index = 0
 
+    self.x_offset = nil
+    self.y_offset = nil
+    self.width = nil
+    self.height = nil
+    self.garbage = nil
+
     -- Also flags
     self:clear_flags()
 end
@@ -150,7 +174,7 @@ do
   local exclude_hover_set = {matched=true, popping=true, popped=true,
       hovering=true, falling=true, swapping=true}
   function Panel.exclude_hover(self)
-    return exclude_hover_set[self.state]
+    return exclude_hover_set[self.state] or self.garbage
   end
 
   local exclude_match_set = {swapping=true, matched=true, popping=true,
@@ -162,7 +186,21 @@ do
   local exclude_swap_set = {matched=true, popping=true, popped=true,
       hovering=true, dimmed=true}
   function Panel.exclude_swap(self)
-    return exclude_swap_set[self.state] or self.dont_swap
+    return exclude_swap_set[self.state] or self.dont_swap or self.garbage
+  end
+
+  function Panel.support_garbage(self)
+    return self.color ~= 0 or self.hovering
+  end
+
+  local block_garbage_fall_set = {matched=true, popping=true,
+      popped=true, hovering=true, swapping=true}
+  function Panel.block_garbage_fall(self)
+    return block_garbage_fall_set[self.state] or self.color == 0
+  end
+
+  function Panel.dangerous(self)
+    return self.color ~= 0 and (self.state ~= "falling" or not self.garbage)
   end
 end
 
@@ -267,7 +305,7 @@ function Stack.PdP(self)
   local top_row = self.displacement%16==0 and self.height or self.height-1
   prow = panels[top_row]
   for idx=1,width do
-    if prow[idx].color ~= 0 then
+    if prow[idx]:dangerous() then
       self.panels_in_top_row = true
     end
   end
@@ -276,7 +314,7 @@ function Stack.PdP(self)
   self.danger = false
   prow = panels[self.height-1]
   for idx=1,width do
-    if prow[idx].color ~= 0 then
+    if prow[idx]:dangerous() then
       self.danger = true
       self.danger_col[idx] = true
     else
@@ -294,7 +332,7 @@ function Stack.PdP(self)
   self.danger_music = false
   prow = panels[self.height-2]
   for idx=1,width do
-    if prow[idx].color ~= 0 then
+    if prow[idx]:dangerous() then
       self.danger_music = true
     end
   end
@@ -361,36 +399,59 @@ function Stack.PdP(self)
     end
   end
 
-  -- Phase 1 . ///////////////////////////////////////////////////////
-  -- Falling
-
-  for row=1,self.height do
-    for col=1,width do
-      if panels[row][col].state == "falling" then
-        -- if there's no panel below a falling panel,
-        -- it must fall one row.
-        -- I'm gonna assume there's no panel below,
-        -- because the falling panel should've landed on
-        -- it during the last frame if there was.
-        self.panels[row-1][col], self.panels[row][col] =
-          self.panels[row][col], self.panels[row-1][col]
-        self.panels[row][col]:clear()
-        -- the timer can be left behind because it should be 0.
-        -- the tags can be left behind because they're not important
-        -- until a panel is stuck in position.
-      end
-    end
-  end
-
   -- Phase 2. /////////////////////////////////////////////////////////////
-  -- Timer-expiring actions
-
-  for row=1,self.height do
+  -- Timer-expiring actions + falling
+  local propogate_fall = {false,false,false,false,false,false}
+  local skip_col = 0
+  for row=1,#panels do
     for col=1,width do
+      local cntinue = false
+      if skip_col > 0 then
+        skip_col = skip_col - 1
+        cntinue=true
+      end
       -- first of all, we do Nothin' if we're not even looking
       -- at a space with any flags.
       panel = panels[row][col]
-      if panel:has_flags() and panel.timer~=0 then
+      if panel.garbage and not cntinue then
+        -- TODO: also deal with matching/popping garbage....
+        -- try to fall
+        if (panel.state=="normal" or panel.state=="falling")
+            and panel.x_offset==0 and panel.y_offset==0 then
+          local prow = panels[row-1]
+          local supported = false
+          for i=col,col+panel.width-1 do
+            supported = supported or prow[i]:support_garbage()
+          end
+          if not supported then
+            skip_col = panel.width-1
+            for x=col,col-1+panel.width do
+              panels[row-1][x]:clear()
+              propogate_fall[x] = true
+              for y=row,row-1+panel.height do
+                panels[y][x].state = "falling"
+                panels[y-1][x], panels[y][x] =
+                  panels[y][x], panels[y-1][x]
+              end
+            end
+          end
+        end
+        cntinue = true
+      end
+      if propogate_fall[col] and not cntinue then
+        if panel:block_garbage_fall() then
+          propogate_fall[col] = false
+        else
+          panel.state = "falling"
+          panel.timer = 0
+        end
+      end
+      if cntinue then
+      elseif panel.state == "falling" then
+        panels[row-1][col], panels[row][col] =
+          panels[row][col], panels[row-1][col]
+        panels[row][col]:clear()
+      elseif panel:has_flags() and panel.timer~=0 then
         panel.timer = panel.timer - 1
         if panel.timer == 0 then
           if panel.state=="swapping" then
@@ -663,13 +724,31 @@ function Stack.PdP(self)
   --  Now falling panels will land if they have something to land on that
   --  isn't falling as well.
 
-  for row=1,self.height do
+  for row=1,#panels do
     for col=1,width do
-      if panels[row][col].state == "falling" then
+      local panel = panels[row][col]
+      if panel.garbage then
+        if panel.state == "falling" and panel.x_offset == 0
+            and panel.y_offset == 0 then
+          local land = (row==1)
+          local prow = panels[row-1]
+          for i=col,col+panel.width-1 do
+            land = land or (prow[i].color ~= 0 and
+                prow[i].state ~= "falling")
+          end
+          if land then
+            for x=col,col-1+panel.width do
+              for y=row,row-1+panel.height do
+                panels[y][x].state = "normal"
+              end
+            end
+          end
+        end
+      elseif panel.state == "falling" then
         -- if it's on the bottom row, it should surely land
         if row == 1 then
-          panels[row][col].state = "landing"
-          panels[row][col].timer = 12
+          panel.state = "landing"
+          panel.timer = 12
           self.do_matches_check = true
           --SFX_Land_Play=1;
           --SFX LAWL
@@ -680,11 +759,11 @@ function Stack.PdP(self)
             -- if it lands on a hovering panel, it inherits
             -- that panel's hover time.
             if panels[row-1][col].state == "hovering" then
-              panels[row][col].state = "normal"
+              panel.state = "normal"
               self:set_hoverers(row,col,panels[row-1][col].timer,false,false)
             else
-              panels[row][col].state = "landing"
-              panels[row][col].timer = 12
+              panel.state = "landing"
+              panel.timer = 12
             end
             self.do_matches_check = true
             --SFX_Land_Play=1;
@@ -718,7 +797,7 @@ function Stack.PdP(self)
   for row=1,self.height do
     for col=1,self.width do
       local panel = panels[row][col]
-      if(panel.color ~= 0 and panel:exclude_hover()) or
+      if(panel.color ~= 0 and panel:exclude_hover() and not panel.garbage) or
           panel.state == "swapping" then
         self.n_active_panels = self.n_active_panels + 1
       end
@@ -747,6 +826,44 @@ function Stack.PdP(self)
     GameTimeRender=1;
   }
   --]]
+
+  for row=#panels,height+1,-1 do
+    local nonempty = false
+    local prow = panels[row]
+    for col=1,width do
+      nonempty = nonempty or (prow[col].color ~= 0)
+    end
+    if nonempty then
+      break
+    else
+      panels[row]=nil
+    end
+  end
+end
+
+-- drops a 1xwidth garbage.
+function Stack.drop_garbage(self, width, height)
+  local spawn_row = #self.panels+2
+  for i=#self.panels+1,#self.panels+height+1 do
+    self.panels[i] = {}
+    for j=1,self.width do
+      self.panels[i][j] = Panel()
+    end
+  end
+  local cols = self.garbage_cols[width]
+  local spawn_col = cols[cols.idx]
+  cols.idx = wrap(1, cols.idx+1, #cols)
+  for y=spawn_row,spawn_row+height-1 do
+    for x=spawn_col,spawn_col+width-1 do
+      local panel = self.panels[y][x]
+      panel.garbage = true
+      panel.color = 9
+      panel.width = width
+      panel.height = height
+      panel.y_offset = y-spawn_row
+      panel.x_offset = x-spawn_col
+    end
+  end
 end
 
 function Stack.check_matches(self)

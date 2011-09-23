@@ -83,6 +83,17 @@ function controls(stack)
     stack.cur_dir = new_dir
     stack.cur_timer = 0
   end
+
+  for i=1,3 do
+    if this_frame_keys[i..""] then
+      stack:drop_garbage(i+2,1)
+    end
+  end
+  for i=4,9 do
+    if this_frame_keys[i..""] then
+      stack:drop_garbage(6,i-3)
+    end
+  end
 end
 
 function fake_controls(stack, sdata)
