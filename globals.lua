@@ -121,3 +121,11 @@ level_to_ncolors_time   = {  5,  5,  6,  6,  6,  6,  6,  6,  6,  6}
 -- vs normal cpu -> vs level 4 for all levels
 -- vs hard cpu -> vs level 6 for all levels
 -- vs vhard cpu -> vs level 6 for all levels
+
+combo_garbage = {{}, {}, {}, {3}, {4},
+              {5}, {6}, {3,4}, {4,4}, {5,5},
+              {5,6}, {6,6}, {6,6,6}, {6,6,6,6},
+              [20]={6,6,6,6,6,6}}
+for i=1,72 do
+  combo_garbage[i] = combo_garbage[i] or combo_garbage[i-1]
+end

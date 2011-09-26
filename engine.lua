@@ -6,6 +6,7 @@
   --  . the matches-checking routine
 local min = math.min
 local garbage_bounce_time = #garbage_bounce_table
+local IDLE_FRAMES = 1
 
 Stack = class(function(s, mode, speed, difficulty)
     s.mode = mode or "endless"
@@ -27,6 +28,9 @@ Stack = class(function(s, mode, speed, difficulty)
                       {1,2,3,idx=1},
                       {1,2,idx=1},
                       {1,idx=1}}
+    s.later_garbage = {}
+    s.garbage_q = Queue()
+    s.garbage_to_send = Queue()
     s.pos_x = 4   -- Position of the play area on the screen
     s.pos_y = 4
     s.score_x = 315
@@ -87,6 +91,7 @@ Stack = class(function(s, mode, speed, difficulty)
     s.danger_music = false -- changes music state
 
     s.n_active_panels = 0
+    s.prev_active_panels = {}
     s.n_chain_panels= 0
 
        -- These change depending on the difficulty and speed levels:
@@ -261,7 +266,6 @@ function Stack.local_run(self)
   controls(self)
   self:prep_first_row()
   self:PdP()
-  self.CLOCK = self.CLOCK + 1
 end
 
 --foreign_run is for a stack that belongs to another client.
@@ -272,7 +276,6 @@ function Stack.foreign_run(self)
     fake_controls(self, string.sub(self.input_buffer,1,1))
     self:prep_first_row()
     self:PdP()
-    self.CLOCK = self.CLOCK + 1
     self.input_buffer = string.sub(self.input_buffer,2)
   end
 end
@@ -770,6 +773,7 @@ function Stack.PdP(self)
 
   -- if at the end of the routine there are no chain panels, the chain ends.
   if self.chain_counter ~= 0 and self.n_chain_panels == 0 then
+    self.chain_to_send = self.chain_counter
     self.chain_counter=0
   end
 
@@ -782,7 +786,7 @@ function Stack.PdP(self)
   for row=1,self.height do
     for col=1,self.width do
       local panel = panels[row][col]
-      if (panel.garbage and panel.state == "matched") or
+      if (panel.garbage and panel.state ~= "normal") or
          (panel.color ~= 0 and panel:exclude_hover() and not panel.garbage) or
           panel.state == "swapping" then
         self.n_active_panels = self.n_active_panels + 1
@@ -825,6 +829,32 @@ function Stack.PdP(self)
       panels[row]=nil
     end
   end
+
+  local garbage = self.later_garbage[self.CLOCK] or {}
+  for i=1,#garbage do
+    self.garbage_q:push(garbage[i])
+  end
+  self.later_garbage[self.CLOCK] = nil
+
+  local drop_it = self.n_active_panels == 0
+  for i=1,#self.prev_active_panels do
+    drop_it = drop_it and self.prev_active_panels[i] == 0
+  end
+  if drop_it then
+    if self.chain_to_send then
+      self:send_chain_garbage(self.chain_to_send)
+      self.chain_to_send = nil
+    end
+    while self.garbage_to_send:len() > 0 do
+      self:send_garbage(unpack(self.garbage_to_send:pop()))
+    end
+  end
+  if drop_it and self.garbage_q:len() > 0 then
+    self:drop_garbage(unpack(self.garbage_q:pop()))
+  end
+
+  self.prev_active_panels[self.CLOCK%IDLE_FRAMES+1] = self.n_active_panels
+  self.CLOCK = self.CLOCK + 1
 end
 
 -- drops a width x height garbage.
@@ -853,6 +883,38 @@ function Stack.drop_garbage(self, width, height, metal)
   end
 end
 
+function Stack.send_metal_garbage(self, n)
+  for i=3,n do
+    self.garbage_to_send:push({6, 1, true})
+  end
+end
+
+function Stack.send_chain_garbage(self, n)
+  self:send_garbage(6, n-1, false)
+end
+
+function Stack.send_combo_garbage(self, n)
+  local to_send = combo_garbage[n]
+  for i=1,#to_send do
+    self.garbage_to_send:push({to_send[i], 1, false})
+  end
+end
+
+function Stack.send_garbage(self, ...)
+  if self.garbage_target then
+    self.garbage_target:recv_garbage(self.CLOCK + 40, ...)
+  end
+end
+
+function Stack.recv_garbage(self, time, ...)
+  if self.CLOCK >= time then
+    error("Latency is too high :(")
+  end
+  local garbage = self.later_garbage[time] or {}
+  garbage[#garbage+1] = {...}
+  self.later_garbage[time] = garbage
+end
+
 function Stack.check_matches(self)
   local row = 0
   local col = 0
@@ -868,6 +930,7 @@ function Stack.check_matches(self)
   local panels = self.panels
   local q, garbage = Queue(), {}
   local seen, seenm = {}, {}
+  local metal_count = 0
 
   for col=1,self.width do
     for row=1,self.height do
@@ -925,13 +988,15 @@ function Stack.check_matches(self)
   while q:len() ~= 0 do
     local y,x,normal,metal = unpack(q:pop())
     local panel = panels[y][x]
-    if ((panel.garbage and panel.state~="falling") or panel.matching)
+    if ((panel.garbage and panel.state=="normal") or panel.matching)
         and ((normal and not seen[panel]) or
              (metal and not seenm[panel])) then
       if ((metal and panel.metal) or (normal and not panel.metal))
         and panel.garbage and not garbage[panel] then
         garbage[panel] = true
-        garbage_size = garbage_size + 1
+        if y <= self.height then
+          garbage_size = garbage_size + 1
+        end
       end
       seen[panel] = seen[panel] or normal
       seenm[panel] = seenm[panel] or metal
@@ -976,7 +1041,7 @@ function Stack.check_matches(self)
       self.FRAMECOUNT_POP * (combo_size + garbage_size)
   garbage_index=garbage_size-1
   combo_index=combo_size
-  for row=1,self.height do
+  for row=1,#panels do
     for col=self.width,1,-1 do
       local panel = panels[row][col]
       if garbage[panel] then
@@ -993,38 +1058,43 @@ function Stack.check_matches(self)
           self.n_chain_panels = self.n_chain_panels + 1
         end
         garbage_index = garbage_index - 1
-      elseif panel.matching then
-        panel.state = "matched"
-        panel.timer = self.FRAMECOUNT_MATCH
-        if is_chain and not panel.chaining then
-          panel.chaining = true
-          self.n_chain_panels = self.n_chain_panels + 1
-        end
-        panel.combo_index = combo_index
-        panel.combo_size = combo_size
-        panel.chain_index = self.chain_counter
-        combo_index = combo_index - 1
-        if combo_index == 0 then
-          first_panel_col = col
-          first_panel_row = row
-        end
-      else
-        -- if a panel wasn't matched but was eligible,
-        -- we might have to remove its chain flag...!
-        if not panel:exclude_match() then
-          if row~=1 then
-            -- no swapping panel below
-            -- so this panel loses its chain flag
-            if panels[row-1][col].state ~= "swapping" and
-                panel.chaining then
+      elseif row <= self.height then
+        if panel.matching then
+          if panel.color == 7 then
+            metal_count = metal_count + 1
+          end
+          panel.state = "matched"
+          panel.timer = self.FRAMECOUNT_MATCH
+          if is_chain and not panel.chaining then
+            panel.chaining = true
+            self.n_chain_panels = self.n_chain_panels + 1
+          end
+          panel.combo_index = combo_index
+          panel.combo_size = combo_size
+          panel.chain_index = self.chain_counter
+          combo_index = combo_index - 1
+          if combo_index == 0 then
+            first_panel_col = col
+            first_panel_row = row
+          end
+        else
+          -- if a panel wasn't matched but was eligible,
+          -- we might have to remove its chain flag...!
+          if not panel:exclude_match() then
+            if row~=1 then
+              -- no swapping panel below
+              -- so this panel loses its chain flag
+              if panels[row-1][col].state ~= "swapping" and
+                  panel.chaining then
+                panel.chaining = false
+                self.n_chain_panels = self.n_chain_panels - 1
+              end
+            -- a panel landed on the bottom row, so it surely
+            -- loses its chain flag.
+            elseif(panel.chaining) then
               panel.chaining = false
               self.n_chain_panels = self.n_chain_panels - 1
             end
-          -- a panel landed on the bottom row, so it surely
-          -- loses its chain flag.
-          elseif(panel.chaining) then
-            panel.chaining = false
-            self.n_chain_panels = self.n_chain_panels - 1
           end
         end
       end
@@ -1093,6 +1163,8 @@ function Stack.check_matches(self)
     self.manual_raise=false
     --self.score_render=1;
     --Nope.
+    self:send_metal_garbage(metal_count)
+    self:send_combo_garbage(combo_size)
   end
 end
 
@@ -1104,7 +1176,7 @@ function Stack.set_hoverers(self, row, col, hover_time, add_chaining,
   -- they are set, as Phase 1&2 iterates backward through the stack.
   local not_first = 0   -- if 1, the current panel isn't the first one
   local hovers_time = hover_time
-  local brk = row > self.height
+  local brk = row > #self.panels
   local panels = self.panels
   while not brk do
     local panel = panels[row][col]
@@ -1131,7 +1203,7 @@ function Stack.set_hoverers(self, row, col, hover_time, add_chaining,
       not_first = 1
     end
     row = row + 1
-    brk = brk or row > self.height
+    brk = brk or row > #self.panels
   end
 end
 
@@ -1140,10 +1212,10 @@ function Stack.new_row(self)
   -- move cursor up
   self.cur_row = bound(1, self.cur_row + 1, self.top_cur_col)
   -- move panels up
-  for row=self.height,1,-1 do
-    panels[row],panels[row-1] =
-      panels[row-1],panels[row]
+  for row=#panels+1,1,-1 do
+    panels[row] = panels[row-1]
   end
+  panels[0]={}
   -- put bottom row into play
   for col=1,self.width do
     panels[1][col].state = "normal"
@@ -1154,8 +1226,8 @@ function Stack.new_row(self)
   end
   -- generate a new row
   for col=1,self.width do
-    local panel = panels[0][col]
-    panel:clear()
+    local panel = Panel()
+    panels[0][col] = panel
     panel.color = string.sub(self.panel_buffer,col,col)+0
     panel.state = "dimmed"
   end

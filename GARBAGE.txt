@@ -45,22 +45,4 @@ A few things worth noting about the above process:
     stage if P1 makes short chains or unchained combos
     while P2 is making a long chain.
 
-# Falling does not behave exactly correctly for garbage.
-# If a piece of garbage has its bottom resting entirely on other
-# pieces (or panels?) as they all begin to fall, it will begin
-# to fall at the same time.
-# However, if some of the squares immediately beneath the garbage
-# are empty, it will wait 1 frame before falling.
-
-# I believe this betrays the nature of the algorithm used to
-# determine whether a piece will begin falling:
-# Either all the spaces it rests on must be empty or
-# all the spaces it rests on must be falling.
-
-Actually, that's not how the bug works.  I now suspect it works as above
-except that only 6-wide garbage is affected by the bug.
-
-Nope, it just happened for a 5 on top of a 4 on top of a 3.
-The 3 and 4 cleared but the 5 did not.
-
 To find precise garbage timings I will probably have to use a debugger.
