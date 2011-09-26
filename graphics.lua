@@ -39,6 +39,7 @@
 --#define CONFETTI_STARTRADIUS 150
 
 local floor = math.floor
+local garbage_match_time = #garbage_bounce_table
 
 function load_img(s)
   s = love.image.newImageData(s)
@@ -55,9 +56,12 @@ function load_img(s)
   return ret
 end
 
-function draw(img, x, y)
+function draw(img, x, y, rot, x_scale,y_scale)
+  rot = rot or 0
+  x_scale = x_scale or 1
+  y_scale = y_scale or 1
   gfx_q:push({love.graphics.draw, {img, x*GFX_SCALE, y*GFX_SCALE,
-    0, GFX_SCALE, GFX_SCALE}})
+    rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
 end
 
 function gprint(str, x, y)
@@ -92,6 +96,14 @@ function graphics_init()
   end
 
   IMG_garbage = load_img("assets/bluemid1.png")
+  IMG_garbage_l = load_img("assets/blueend10.png")
+  IMG_garbage_r = load_img("assets/blueend11.png")
+  IMG_garbage_pop = load_img("assets/bluepop.png")
+  IMG_garbage_flash = load_img("assets/garbageflash.png")
+
+  IMG_metal = load_img("assets/metalmid.png")
+  IMG_metal_l = load_img("assets/metalend0.png")
+  IMG_metal_r = load_img("assets/metalend1.png")
 
   IMG_cursor = {  load_img("assets/cur0.png"),
           load_img("assets/cur1.png")}
@@ -134,12 +146,16 @@ end
 function Stack.draw_cards(self)
   for i=self.card_q.first,self.card_q.last do
     local card = self.card_q[i]
-    local draw_x = (card.x-1) * 16 + self.pos_x
-    local draw_y = (11-card.y) * 16 + self.pos_y - card_animation[card.frame]
-    draw(IMG_cards[card.chain][card.n], draw_x, draw_y)
-    card.frame = card.frame + 1
-    if(card.frame==card_animation.max) then
-      self.card_q:pop()
+    if card_animation[card.frame] then
+      local draw_x = (card.x-1) * 16 + self.pos_x
+      local draw_y = (12-card.y) * 16 + self.pos_y -1- card_animation[card.frame]
+      draw(IMG_cards[card.chain][card.n], draw_x, draw_y)
+      card.frame = card.frame + 1
+      if(card_animation[card.frame]==nil) then
+        self.card_q:pop()
+      end
+    else
+      card.frame = card.frame + 1
     end
   end
 end
@@ -153,17 +169,71 @@ function Stack.render(self)
         local draw_x = (col-1) * 16 + self.pos_x
         local draw_y = (11-(row)) * 16 + self.pos_y + self.displacement
         if panel.garbage then
-          draw(IMG_garbage, draw_x, draw_y)
+          local done_here = false
+          if panel.state == "matched" then
+            local flash_time = panel.initial_time - panel.timer
+            if flash_time >= self.FRAMECOUNT_FLASH then
+              if panel.timer > panel.pop_time then
+                if panel.metal then
+                  draw(IMG_metal_l, draw_x, draw_y)
+                  draw(IMG_metal_r, draw_x+8, draw_y)
+                else
+                  draw(IMG_garbage_pop, draw_x, draw_y)
+                end
+               done_here = true
+              elseif panel.y_offset == -1 then
+                draw(IMG_panels[panel.color][
+                    garbage_bounce_table[panel.timer] or 1], draw_x, draw_y)
+                done_here = true
+              end
+            elseif flash_time % 2 == 1 then
+              if panel.metal then
+                draw(IMG_metal_l, draw_x, draw_y)
+                draw(IMG_metal_r, draw_x+8, draw_y)
+              else
+                draw(IMG_garbage_pop, draw_x, draw_y)
+              end
+              done_here = true
+            else
+              draw(IMG_garbage_flash, draw_x, draw_y)
+              done_here = true
+            end
+          end
+          if done_here or panel.y_offset > 0 then
+          elseif panel.metal then
+            draw(IMG_metal, draw_x, draw_y - 16 * (panel.height-1),0,
+                1,panel.height)
+            draw(IMG_metal, draw_x+8, draw_y - 16 * (panel.height-1),0,
+                1,panel.height)
+            if panel.x_offset == 0 then
+              draw(IMG_metal_l, draw_x, draw_y-16*(panel.height-1),0,
+                1,panel.height)
+            end
+            if panel.x_offset == panel.width - 1 then
+              draw(IMG_metal_r, draw_x+8, draw_y-16*(panel.height-1),0,
+                1,panel.height)
+            end
+          else
+            draw(IMG_garbage, draw_x, draw_y - 16 * (panel.height-1),0,
+                1,panel.height)
+            if panel.x_offset == 0 then
+              draw(IMG_garbage_l, draw_x, draw_y-16*(panel.height-1),0,
+                1,panel.height)
+            end
+            if panel.x_offset == panel.width - 1 then
+              draw(IMG_garbage_r, draw_x+8, draw_y-16*(panel.height-1),0,
+                1,panel.height)
+            end
+          end
         else
           if panel.state == "matched" then
-            if panel.timer < self.FRAMECOUNT_FLASH then
+            local flash_time = self.FRAMECOUNT_MATCH - panel.timer
+            if flash_time >= self.FRAMECOUNT_FLASH then
               draw_frame = 6
+            elseif flash_time % 2 == 1 then
+              draw_frame = 1
             else
-              if panel.timer % 2 == 1 then
-                draw_frame = 5
-              else
-                draw_frame = 1
-              end
+              draw_frame = 5
             end
           elseif panel.state == "popping" then
             draw_frame = 6

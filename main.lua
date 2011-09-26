@@ -36,15 +36,17 @@ function love.run()
     love.draw()
     love.graphics.setRenderTarget()
     love.graphics.draw(fb,0,0)
-    --[[love.graphics.setRenderTarget(fb2)
-    love.graphics.draw(fb,0,615,0,1,-1)
-    local fnum = N_FRAMES..""
-    while string.len(fnum) < 5 do
-      fnum = "0" .. fnum
+    if true then else
+      love.graphics.setRenderTarget(fb2)
+      love.graphics.draw(fb,0,615,0,1,-1)
+      local fnum = N_FRAMES..""
+      while string.len(fnum) < 5 do
+        fnum = "0" .. fnum
+      end
+      love.graphics.setRenderTarget()
+      love.filesystem.write("frame"..fnum..".png",
+          fb2:getImageData():encode("png"))
     end
-    love.graphics.setRenderTarget()
-    love.filesystem.write("frame"..fnum..".png",
-        fb2:getImageData():encode("png"))--]]
     --love.graphics.print("FPS: ["..love.timer.getFPS().."] delay: ["..math.floor(tau).."ms] idle:["..math.floor(100 * (tau/1000)/dt).."%]", 10, 10)
 
     if(N_FRAMES > 100) then

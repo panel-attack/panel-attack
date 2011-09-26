@@ -16,7 +16,12 @@ function Queue.pop(self)
   end
   local ret = self[first]
   self[first] = nil
-  self.first = first + 1
+  if self.first == self.last then
+    self.first = 0
+    self.last = -1
+  else
+    self.first = first + 1
+  end
   return ret
 end
 

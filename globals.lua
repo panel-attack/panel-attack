@@ -17,6 +17,12 @@ bounce_table = {1, 1, 1, 1,
                 3, 3, 3,
                 4, 4, 4}
 
+garbage_bounce_table = {1, 1, 1, 1,
+                        2, 2, 2,
+                        3, 3, 3,
+                        4, 4, 4,
+                        1, 1}
+
 danger_bounce_table = {1, 1, 1,
                        2, 2, 2,
                        3, 3, 3,
@@ -43,18 +49,18 @@ score_chain_TA = {  0,   50,   80,  150,  300,
 
 GFX_SCALE = 3
 
-card_animation = {0, 1, 2, 3, 4, 5, 6, 6, 7, 7,
-  8, 8, 9, 9, 10, 10, 10, 11, 11, 11,
+card_animation = {false,
+   0,  1,  2,  3,  4,  5,  6,  6,  7,  7,
+   8,  8,  9,  9, 10, 10, 10, 11, 11, 11,
   11, 11, 13, 13, 13, 13, 13, 13, 13, 13,
   13, 13, 13, 13, 13, 13, 13, 15, 15, 15,
   15, 15}
-card_animation.max = 43
 
 gfx_q = Queue()
 
 FC_HOVER = {12,  9,  6}
-FC_MATCH = {61, 50, 37}
-FC_FLASH = {16, 13,  8}
+FC_MATCH = {61, 49, 37}
+FC_FLASH = {44, 36,  22}
 FC_POP   = { 9,  8,  7}
 stop_time_combo =  { 2, 2, 2}
 stop_time_chain =  { 5, 3, 2}

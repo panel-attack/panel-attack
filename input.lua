@@ -94,6 +94,9 @@ function controls(stack)
       stack:drop_garbage(6,i-3)
     end
   end
+  if this_frame_keys["0"] then
+    stack:drop_garbage(6,1,true)
+  end
 end
 
 function fake_controls(stack, sdata)

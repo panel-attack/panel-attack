@@ -1,0 +1,20 @@
+In Tetris Attack, it seems like a panel cannot match in the same frame
+that it does some other state transition.  Right now this is implemented
+for the "landing" state but not for the "normal" state or any other state.
+
+In Tetris Attack, the rising of the stack is not smooth around displacement=0.
+This part of the animation takes just as long regardless of speed.
+This is most noticeable if you use L or R, the stack will sort of jitter on
+its way up.  I have no plans to implement this.
+
+In Tetris Attack, only one pair of panels can be swaping at any time, and
+the new swap can only be created in some frames of the old swap.  This is
+part of why it is easier to stealth in panel-attack.
+I have no plans to implement either of these things, but I might need to
+if I ever implement the first thing on this list.
+
+In Tetris Attack, a stack of garbage that should all begin falling at the same
+time will occasionally separate.  I have no plans to implement this.
+
+In Tetris Attack, you get nothing for chains past 13.  I will probably
+implement things for chains past 13.
