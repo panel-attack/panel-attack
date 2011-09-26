@@ -415,15 +415,16 @@ function Stack.PdP(self)
       -- first of all, we do Nothin' if we're not even looking
       -- at a space with any flags.
       panel = panels[row][col]
-      if panel.garbage and not cntinue then
+      if cntinue then
+      elseif panel.garbage then
         -- TODO: also deal with matching/popping garbage....
         if panel.state == "matched" then
           panel.timer = panel.timer - 1
           if panel.timer == 0 then
             if panel.y_offset == -1 then
-              local color = panel.color
+              local color, chaining = panel.color, panel.chaining
               panel:clear()
-              panel.color = color
+              panel.color, panel.chaining = color, chaining
               self:set_hoverers(row,col,1,false,true)
             else
               panel.state = "normal"
@@ -781,7 +782,8 @@ function Stack.PdP(self)
   for row=1,self.height do
     for col=1,self.width do
       local panel = panels[row][col]
-      if(panel.color ~= 0 and panel:exclude_hover() and not panel.garbage) or
+      if (panel.garbage and panel.state == "matched") or
+         (panel.color ~= 0 and panel:exclude_hover() and not panel.garbage) or
           panel.state == "swapping" then
         self.n_active_panels = self.n_active_panels + 1
       end
