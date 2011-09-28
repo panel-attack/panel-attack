@@ -79,6 +79,7 @@ function procat(str)
   return ret
 end
 
+-- iterate over frozen pairs in sorted order
 function spairs(tab)
   local keys,vals,idx = {},{},0
   for k in pairs(tab) do

@@ -30,7 +30,9 @@ Stack = class(function(s, mode, speed, difficulty)
                       {1,idx=1}}
     s.later_garbage = {}
     s.garbage_q = Queue()
-    s.garbage_to_send = Queue()
+    -- garbage_to_send[frame] is an array of garbage to send at frame.
+    -- garbage_to_send.chain is an array of garbage to send when the chain ends.
+    s.garbage_to_send = {}
     s.pos_x = 4   -- Position of the play area on the screen
     s.pos_y = 4
     s.score_x = 315
@@ -435,28 +437,28 @@ function Stack.PdP(self)
           end
         -- try to fall
         elseif (panel.state=="normal" or panel.state=="falling")
-            and panel.x_offset==0 and panel.y_offset==0 then
+            and panel.x_offset==0 then
           local prow = panels[row-1]
           local supported = false
-          for i=col,col+panel.width-1 do
-            supported = supported or prow[i]:support_garbage()
+          if panel.y_offset == 0 then
+            for i=col,col+panel.width-1 do
+              supported = supported or prow[i]:support_garbage()
+            end
+          else
+            supported = not propogate_fall[col]
           end
           if supported then
             for x=col,col-1+panel.width do
-              for y=row,row-1+panel.height do
-                panels[y][x].state = "normal"
-              end
+              panels[row][x].state = "normal"
             end
           else
             skip_col = panel.width-1
             for x=col,col-1+panel.width do
               panels[row-1][x]:clear()
               propogate_fall[x] = true
-              for y=row,row-1+panel.height do
-                panels[y][x].state = "falling"
-                panels[y-1][x], panels[y][x] =
-                  panels[y][x], panels[y-1][x]
-              end
+              panels[row][x].state = "falling"
+              panels[row-1][x], panels[row][x] =
+                panels[row][x], panels[row-1][x]
             end
           end
         end
@@ -773,7 +775,7 @@ function Stack.PdP(self)
 
   -- if at the end of the routine there are no chain panels, the chain ends.
   if self.chain_counter ~= 0 and self.n_chain_panels == 0 then
-    self.chain_to_send = self.chain_counter
+    self:set_chain_garbage(self.chain_counter)
     self.chain_counter=0
   end
 
@@ -817,6 +819,30 @@ function Stack.PdP(self)
   }
   --]]
 
+  local to_send = self.garbage_to_send[self.CLOCK]
+  if to_send then
+    self.garbage_to_send[self.CLOCK] = nil
+
+    -- if there's no chain, we can send it
+    if self.chain_counter == 0 then
+      table.sort(to_send, function(a,b)
+            if a[4] or b[3] then return true end
+            if b[4] or a[3] then return false end
+            return a[1] < b[1]
+          end)
+      for i=1,#to_send do
+        self:really_send(unpack(to_send[i]))
+      end
+    elseif self.garbage_to_send.chain then
+      local waiting_for_chain = self.garbage_to_send.chain
+      for i=1,#to_send do
+        waiting_for_chain[#waiting_for_chain+1] = to_send[i]
+      end
+    else
+      self.garbage_to_send.chain = to_send
+    end
+  end
+
   for row=#panels,height+1,-1 do
     local nonempty = false
     local prow = panels[row]
@@ -830,24 +856,17 @@ function Stack.PdP(self)
     end
   end
 
-  local garbage = self.later_garbage[self.CLOCK] or {}
-  for i=1,#garbage do
-    self.garbage_q:push(garbage[i])
+  local garbage = self.later_garbage[self.CLOCK]
+  if garbage then
+    self.later_garbage[self.CLOCK] = nil
+    for i=1,#garbage do
+      self.garbage_q:push(garbage[i])
+    end
   end
-  self.later_garbage[self.CLOCK] = nil
 
   local drop_it = self.n_active_panels == 0
   for i=1,#self.prev_active_panels do
     drop_it = drop_it and self.prev_active_panels[i] == 0
-  end
-  if drop_it then
-    if self.chain_to_send then
-      self:send_chain_garbage(self.chain_to_send)
-      self.chain_to_send = nil
-    end
-    while self.garbage_to_send:len() > 0 do
-      self:send_garbage(unpack(self.garbage_to_send:pop()))
-    end
   end
   if drop_it and self.garbage_q:len() > 0 then
     self:drop_garbage(unpack(self.garbage_q:pop()))
@@ -883,26 +902,50 @@ function Stack.drop_garbage(self, width, height, metal)
   end
 end
 
-function Stack.send_metal_garbage(self, n)
-  for i=3,n do
-    self.garbage_to_send:push({6, 1, true})
+-- prepare to send some garbage!
+-- also, delay any combo garbage that wasn't sent out yet
+-- and set it to be sent at the same time as this garbage.
+function Stack.set_combo_garbage(self, n_combo, n_metal)
+  local stuff_to_send = {}
+  for i=3,n_metal do
+    stuff_to_send[#stuff_to_send+1] = {6, 1, true}
   end
-end
-
-function Stack.send_chain_garbage(self, n)
-  self:send_garbage(6, n-1, false)
-end
-
-function Stack.send_combo_garbage(self, n)
-  local to_send = combo_garbage[n]
-  for i=1,#to_send do
-    self.garbage_to_send:push({to_send[i], 1, false})
+  local combo_pieces = combo_garbage[n_combo]
+  for i=1,#combo_pieces do
+    stuff_to_send[#stuff_to_send+1] = {combo_pieces[1], 1, false}
   end
+  for k,v in pairs(self.garbage_to_send) do
+    if type(k) == "number" then
+      for i=1,#v do
+        stuff_to_send[#stuff_to_send+1] = v[i]
+      end
+      self.garbage_to_send[k]=nil
+    end
+  end
+  self.garbage_to_send[self.CLOCK+100] = stuff_to_send
 end
 
-function Stack.send_garbage(self, ...)
+-- the chain is over!
+-- let's send it and the stuff waiting on it.
+function Stack.set_chain_garbage(self, n_chain)
+  local tab = self.garbage_to_send[self.CLOCK]
+  if not tab then
+    tab = {}
+    self.garbage_to_send[self.CLOCK] = tab
+  end
+  local to_add = self.garbage_to_send.chain
+  if to_add then
+    for i=1,#to_add do
+      tab[#tab+1] = to_add[i]
+    end
+    self.garbage_to_send.chain = nil
+  end
+  tab[#tab+1] = {6, n_chain-1, false, true}
+end
+
+function Stack.really_send(self, ...)
   if self.garbage_target then
-    self.garbage_target:recv_garbage(self.CLOCK + 40, ...)
+    self.garbage_target:recv_garbage(self.CLOCK + 52, ...)
   end
 end
 
@@ -985,6 +1028,8 @@ function Stack.check_matches(self)
     end
   end
 
+  -- This is basically two flood fills at the same time.
+  -- One for clearing normal garbage, one for metal.
   while q:len() ~= 0 do
     local y,x,normal,metal = unpack(q:pop())
     local panel = panels[y][x]
@@ -1060,7 +1105,7 @@ function Stack.check_matches(self)
         garbage_index = garbage_index - 1
       elseif row <= self.height then
         if panel.matching then
-          if panel.color == 7 then
+          if panel.color == 8 then
             metal_count = metal_count + 1
           end
           panel.state = "matched"
@@ -1163,8 +1208,7 @@ function Stack.check_matches(self)
     self.manual_raise=false
     --self.score_render=1;
     --Nope.
-    self:send_metal_garbage(metal_count)
-    self:send_combo_garbage(combo_size)
+    self:set_combo_garbage(combo_size, metal_count)
   end
 end
 
