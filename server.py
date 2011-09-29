@@ -3,7 +3,7 @@ import random
 from twisted.internet.protocol import Protocol, Factory
 from twisted.internet import reactor
 
-type_to_length = {"H": 4, "P": 8, "I": 2}
+type_to_length = {"H": 4, "P": 8, "I": 2, "Q": 8}
 
 class PanelServ(Protocol):
     def connectionMade(self):
@@ -30,6 +30,8 @@ class PanelServ(Protocol):
                 self.panels(goo)
             elif type == "I":
                 self.forward_input(goo)
+            elif type == "Q":
+                self.garbage_panels(goo)
             else:
                 if not erryet:
                     erryet = True
@@ -69,6 +71,22 @@ class PanelServ(Protocol):
         ret = "".join(map(str,ret[6:]))
         self.transport.write("P"+ret)
         self.neighbor.transport.write("O"+ret)
+
+    def garbage_panels(self, data):
+        ncolors = int(data[:1])
+        if ncolors < 2:
+            return
+        ret = list(map(int,data[1:]))
+        for x in xrange(20):
+            for y in xrange(6):
+                nogood = True
+                while nogood:
+                    color = random.randint(1,ncolors)
+                    nogood = (y>0 and color == ret[-1]) or color == ret[-6]
+                ret.append(color)
+        ret = "".join(map(str,ret[6:]))
+        self.transport.write("Q"+ret)
+        self.neighbor.transport.write("R"+ret)
 
     def connectionLost(self, reason):
         del self.factory.conns[self.index]

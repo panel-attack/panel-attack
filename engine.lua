@@ -9,7 +9,9 @@ local garbage_bounce_time = #garbage_bounce_table
 local IDLE_FRAMES = 1
 
 Stack = class(function(s, mode, speed, difficulty)
+    s.max_health = 150
     s.mode = mode or "endless"
+
     if s.mode == "2ptime" or s.mode == "vs" then
       local level = speed
       speed = level_to_starting_speed[level]
@@ -21,6 +23,8 @@ Stack = class(function(s, mode, speed, difficulty)
         s.NCOLORS = level_to_ncolors_vs[level]
       end
     end
+
+    s.health = s.max_health
 
     s.garbage_cols = {{1,2,3,4,5,6,idx=1},
                       {1,3,5,idx=1},
@@ -37,6 +41,7 @@ Stack = class(function(s, mode, speed, difficulty)
     s.pos_y = 4
     s.score_x = 315
     s.panel_buffer = ""
+    s.gpanel_buffer = ""
     s.input_buffer = ""
     s.panels = {}
     s.width = 6
@@ -69,7 +74,7 @@ Stack = class(function(s, mode, speed, difficulty)
 
     s.difficulty = difficulty or 2
 
-    s.speed = speed or 24   -- The player's speed level decides the amount of time
+    s.speed = speed or 1   -- The player's speed level decides the amount of time
              -- the stack takes to rise automatically
     s.panels_to_speedup = panels_to_next_speed[s.speed]
     s.rise_timer = 1   -- When this value reaches 0, the stack will rise a pixel
@@ -361,16 +366,8 @@ function Stack.PdP(self)
     self:new_row()
   end
 
-  if self.n_active_panels ~= 0 then
-    self.rise_lock = true
-  else
-    self.rise_lock = false
-  end
-
-  if self.panels_in_top_row and
-      not self.rise_lock and self.stop_time == 0 then
-    self.game_over = true
-  end
+  self.rise_lock = self.n_active_panels ~= 0 or
+      self.prev_active_panels[(self.CLOCK-1)%IDLE_FRAMES+1] ~= 0
 
   -- Increase the speed if applicable
   if self.panels_to_speedup <= 0 then
@@ -382,27 +379,24 @@ function Stack.PdP(self)
 
   -- Phase 0 //////////////////////////////////////////////////////////////
   -- Stack automatic rising
-
   if self.speed ~= 0 and not self.manual_raise and self.stop_time == 0
       and not self.rise_lock and self.mode ~= "puzzle" then
-    self.rise_timer = self.rise_timer - 1
-    if self.rise_timer <= 0 then  -- try to rise
-      if self.displacement == 0 then
-        if self.has_risen or self.panels_in_top_row then
-          self.game_over = true
-        else
-          self:new_row()
-          self.displacement = 15
-          self.has_risen = true
-        end
-      else
+    if self.panels_in_top_row then
+      self.health = self.health - 1
+      if self.health == 0 then
+        self.game_over = true
+      end
+    else
+      self.rise_timer = self.rise_timer - 1
+      if self.rise_timer <= 0 then  -- try to rise
         self.displacement = self.displacement - 1
         if self.displacement == 0 then
           self.prevent_manual_raise = false
           self:new_row()
         end
+        self.rise_timer = self.rise_timer + self.FRAMECOUNT_RISE
       end
-      self.rise_timer = self.rise_timer + self.FRAMECOUNT_RISE
+      self.health = self.max_health
     end
   end
 
@@ -430,7 +424,7 @@ function Stack.PdP(self)
               local color, chaining = panel.color, panel.chaining
               panel:clear()
               panel.color, panel.chaining = color, chaining
-              self:set_hoverers(row,col,1,false,true)
+              self:set_hoverers(row,col,5,false,true)
             else
               panel.state = "normal"
             end
@@ -546,10 +540,12 @@ function Stack.PdP(self)
             end
             -- swap completed, a matches-check will occur this frame.
           elseif panel.state == "hovering" then
+            if panels[row-1][col].state == "hovering" then
+              panel.timer = panels[row-1][col].timer
             -- This panel is no longer hovering.
             -- it will now fall without sitting around
             -- for any longer!
-            if panels[row-1][col].color ~= 0 then
+            elseif panels[row-1][col].color ~= 0 then
               panel.state = "landing"
               panel.timer = 12
             else
@@ -653,7 +649,7 @@ function Stack.PdP(self)
       (not panels[row][col]:exclude_swap()) and
       (not panels[row][col+1]:exclude_swap()) and
     -- also, neither space above us can be hovering.
-      (self.cur_row == self.height or (panels[row+1][col].state ~=
+      (self.cur_row == #panels or (panels[row+1][col].state ~=
         "hovering" and panels[row+1][col+1].state ~=
         "hovering"))
     -- If you have two pieces stacked vertically, you can't move
@@ -735,27 +731,18 @@ function Stack.PdP(self)
   -- MANUAL STACK RAISING
   if self.manual_raise and self.mode ~= "puzzle" then
     if not self.rise_lock then
-      if self.displacement == 0 then
-        if self.has_risen then
-          if self.panels_in_top_row then
-            self.game_over = true
-          end
-        else
-          self:new_row()
-          self.displacement = 15
-          self.has_risen = true
+      if self.panels_in_top_row then
+        self.game_over = true
+      end
+      self.has_risen = true
+      self.displacement = self.displacement - 1
+      if self.displacement == 1 then
+        self.manual_raise = false
+        self.rise_timer = 1
+        if not self.prevent_manual_raise then
+          self.score = self.score + 1
         end
-      else
-        self.has_risen = true
-        self.displacement = self.displacement - 1
-        if self.displacement == 1 then
-          self.manual_raise = false
-          self.rise_timer = 1
-          if not self.prevent_manual_raise then
-            self.score = self.score + 1
-          end
-          self.prevent_manual_raise = true
-        end
+        self.prevent_manual_raise = true
       end
       self.manual_raise_yet = true  --ehhhh
       self.stop_time = 0
@@ -784,6 +771,7 @@ function Stack.PdP(self)
     -- lol owned
   end
 
+  self.prev_active_panels[self.CLOCK%IDLE_FRAMES+1] = self.n_active_panels
   self.n_active_panels = 0
   for row=1,self.height do
     for col=1,self.width do
@@ -872,7 +860,6 @@ function Stack.PdP(self)
     self:drop_garbage(unpack(self.garbage_q:pop()))
   end
 
-  self.prev_active_panels[self.CLOCK%IDLE_FRAMES+1] = self.n_active_panels
   self.CLOCK = self.CLOCK + 1
 end
 
@@ -1087,6 +1074,7 @@ function Stack.check_matches(self)
   garbage_index=garbage_size-1
   combo_index=combo_size
   for row=1,#panels do
+    local gpan_row = nil
     for col=self.width,1,-1 do
       local panel = panels[row][col]
       if garbage[panel] then
@@ -1098,7 +1086,14 @@ function Stack.check_matches(self)
         panel.y_offset = panel.y_offset - 1
         panel.height = panel.height - 1
         if panel.y_offset == -1 then
-          panel.color = math.random(1, self.NCOLORS)
+          if gpan_row == nil then
+            gpan_row = string.sub(self.gpanel_buffer, 1, 6)
+            self.gpanel_buffer = string.sub(self.gpanel_buffer,7)
+            if string.len(self.gpanel_buffer) <= 10*self.width then
+              ask_for_gpanels(string.sub(self.panel_buffer,-6))
+            end
+          end
+          panel.color = string.sub(gpan_row, col, col) + 0
           panel.chaining = true
           self.n_chain_panels = self.n_chain_panels + 1
         end

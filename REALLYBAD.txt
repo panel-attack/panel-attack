@@ -18,20 +18,19 @@ Whenever it likes, client will ask the server for panels by saying
         Panels should be in the range from 1 to K inclusive where K is the number of colors.
     Server will tell the other client "O" followed by the same panels.
 
+The client can also ask for panels for garbage to turn into by saying
+"Q6123456" in a similar way.
+    Server will reply with "Q" followed by 120 randomly generated panels.
+    Server will tell the other client "R" followed by the same panels.
+
 Each frame, client will send its input state to server by saying "I"
-followed by 22 characters:
-    6 digits to represent the frame number of the client, followed by 0 or 1 for keys:
-        up, down, left, right, swap_1, swap_2, raise_1, raise_2,
-        and the this_frame_keys versions of each of these.
+followed by 1 character representing the input state.
 
 At any time during gameplay, client must accept any number of these messages:
     "P" followed by 120 digits
         This is 20 new rows of panels for the client's play area.
     "O" followed by 120 digits
         This is 20 new rows of panels for the opponent's play area.
-    "I" followed by 22 digits
-        This is a 6-digit frame number followed by an input state.
+    "I" followed by 1 digits
+        This is an input state.
         It represents a frame worth of the opponent's play.
-    Eventually:
-        "gg" followed by "w" or "l"
-            The game is over.  You [w]on or you [l]ost.

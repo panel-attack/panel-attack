@@ -56,8 +56,8 @@ function main_select_mode()
   local items = {{"1P endless", main_select_speed_99, {main_endless}},
       {"1P puzzle", main_select_puzz},
       {"1P time attack", main_select_speed_99, {main_time_attack}},
-      {"2P endless at Tom's apartment", main_net_vs_setup, {"sfo.zkpq.ca"}},
-      {"2P endless on localhost", main_net_vs_setup, {"127.0.0.1"}},
+      {"2P fakevs at Tom's apartment", main_net_vs_setup, {"sfo.zkpq.ca"}},
+      {"2P fakevs on localhost", main_net_vs_setup, {"127.0.0.1"}},
       {"Replay of 1P endless", main_replay_endless},
       {"Replay of 1P puzzle", main_replay_puzzle},
       {"Configure input", main_config_input},
@@ -147,12 +147,14 @@ end
 function main_endless(...)
   replay.pan_buf = ""
   replay.in_buf = ""
+  replay.gpan_buf = ""
   replay.mode = "endless"
   P1 = Stack("endless", ...)
   P1.garbage_target = P1
   replay.speed = P1.speed
   replay.difficulty = P1.difficulty
   make_local_panels(P1, "000000")
+  make_local_gpanels(P1, "000000")
   while true do
     P1:render()
     wait()
@@ -183,9 +185,12 @@ function main_net_vs_setup(ip)
   network_init(ip)
   P1 = Stack("endless")
   P2 = Stack("endless")
+  P1.garbage_target = P2
+  P2.garbage_target = P1
   P2.pos_x = 172
   P2.score_x = 410
-  while P1.panel_buffer == "" or P2.panel_buffer == "" do
+  while P1.panel_buffer == "" or P2.panel_buffer == ""
+    or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
     gprint("Waiting for opponent...", 300, 280)
     do_messages()
     wait()
@@ -218,6 +223,7 @@ function main_replay_endless()
   P1.max_runs_per_frame = 1
   P1.input_buffer = table.concat({replay.in_buf})
   P1.panel_buffer = replay.pan_buf
+  P1.gpanel_buffer = replay.gpan_buf
   P1.speed = replay.speed
   P1.difficulty = replay.difficulty
   while true do

@@ -1,5 +1,5 @@
 local TCP_sock = nil
-local type_to_length = {G=1, H=1, N=1, P=121, O=121, I=2}
+local type_to_length = {G=1, H=1, N=1, P=121, O=121, I=2, Q=121, R=121}
 local leftovers = ""
 
 function flush_socket()
@@ -26,12 +26,14 @@ function get_message()
 end
 
 local process_message = {
-  G=function(s) ask_for_panels("000000") end,
+  G=function(s) ask_for_panels("000000") ask_for_gpanels("000000") end,
   H=function(s) end,
   N=function(s) error("Server told us to fuck off") end,
   P=function(s) P1.panel_buffer = P1.panel_buffer..s end,
   O=function(s) P2.panel_buffer = P2.panel_buffer..s end,
-  I=function(s) P2.input_buffer = P2.input_buffer..s end}
+  I=function(s) P2.input_buffer = P2.input_buffer..s end,
+  Q=function(s) P1.gpanel_buffer = P1.gpanel_buffer..s end,
+  R=function(s) P2.gpanel_buffer = P2.gpanel_buffer..s end}
 
 function network_init(ip)
   TCP_sock = socket.tcp()
@@ -63,6 +65,14 @@ function ask_for_panels(prev_panels)
   end
 end
 
+function ask_for_gpanels(prev_panels)
+  if TCP_sock then
+    TCP_sock:send("Q"..tostring(P1.NCOLORS)..prev_panels)
+  else
+    make_local_gpanels(P1, prev_panels)
+  end
+end
+
 function make_local_panels(stack, prev_panels)
   local ncolors = stack.NCOLORS
   local ret = prev_panels
@@ -81,6 +91,26 @@ function make_local_panels(stack, prev_panels)
   stack.panel_buffer = stack.panel_buffer..string.sub(ret,7,-1)
   if P1.mode == "endless" then
     replay.pan_buf = replay.pan_buf .. string.sub(ret,7,-1)
+  end
+end
+
+function make_local_gpanels(stack, prev_panels)
+  local ncolors = stack.NCOLORS
+  local ret = prev_panels
+  for x=0,19 do
+    for y=0,5 do
+      local nogood = true
+      while nogood do
+        color = tostring(math.random(1,ncolors))
+        nogood = (y>0 and color == string.sub(ret,-1,-1)) or
+          color == string.sub(ret,-6,-6)
+      end
+      ret = ret..color
+    end
+  end
+  stack.gpanel_buffer = stack.gpanel_buffer..string.sub(ret,7,-1)
+  if P1.mode == "endless" then
+    replay.gpan_buf = replay.gpan_buf .. string.sub(ret,7,-1)
   end
 end
 

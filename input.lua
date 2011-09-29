@@ -84,7 +84,7 @@ function controls(stack)
     stack.cur_timer = 0
   end
 
-  for i=1,3 do
+  --[[for i=1,3 do
     if this_frame_keys[i..""] then
       stack:drop_garbage(i+2,1)
     end
@@ -96,7 +96,7 @@ function controls(stack)
   end
   if this_frame_keys["0"] then
     stack:drop_garbage(6,1,true)
-  end
+  end--]]
 end
 
 function fake_controls(stack, sdata)
