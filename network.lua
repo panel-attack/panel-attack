@@ -89,7 +89,8 @@ function make_local_panels(stack, prev_panels)
     end
   end
   stack.panel_buffer = stack.panel_buffer..string.sub(ret,7,-1)
-  if P1.mode == "endless" then
+  local replay = replay[P1.mode]
+  if replay and replay.pan_buf then
     replay.pan_buf = replay.pan_buf .. string.sub(ret,7,-1)
   end
 end
@@ -109,7 +110,8 @@ function make_local_gpanels(stack, prev_panels)
     end
   end
   stack.gpanel_buffer = stack.gpanel_buffer..string.sub(ret,7,-1)
-  if P1.mode == "endless" then
+  local replay = replay[P1.mode]
+  if replay and replay.gpan_buf then
     replay.gpan_buf = replay.gpan_buf .. string.sub(ret,7,-1)
   end
 end
@@ -130,10 +132,10 @@ function send_controls()
     ((keys[k_right] or this_frame_keys[k_right]) and 1 or 0)+1]
   if TCP_sock then
     TCP_sock:send("I"..to_send)
-  elseif P1.mode == "puzzle" then
-    preplay_in_buf = preplay_in_buf .. to_send
-  elseif P1.mode == "endless" then
-    replay.in_buf = replay.in_buf .. to_send
-    --replay.in_buf[#replay.in_buf+1]=to_send
+  else
+    local replay = replay[P1.mode]
+    if replay and replay.in_buf then
+      replay.in_buf = replay.in_buf .. to_send
+    end
   end
 end

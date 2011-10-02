@@ -83,6 +83,7 @@ function love.load()
 end
 
 function love.update()
+  gfx_q:clear()
   local status, err = coroutine.resume(mainloop)
   if not status then
     error(err..'\n'..debug.traceback(mainloop))
@@ -94,6 +95,5 @@ function love.draw()
   for i=gfx_q.first,gfx_q.last do
     gfx_q[i][1](unpack(gfx_q[i][2]))
   end
-  gfx_q:clear()
   love.graphics.print("FPS: "..love.timer.getFPS(),315,115)
 end

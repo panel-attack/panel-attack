@@ -145,12 +145,13 @@ function main_select_speed_99(next_func, ...)
 end
 
 function main_endless(...)
+  replay.endless = {}
+  local replay=replay.endless
   replay.pan_buf = ""
   replay.in_buf = ""
   replay.gpan_buf = ""
   replay.mode = "endless"
   P1 = Stack("endless", ...)
-  P1.garbage_target = P1
   replay.speed = P1.speed
   replay.difficulty = P1.difficulty
   make_local_panels(P1, "000000")
@@ -214,7 +215,8 @@ function main_net_vs()
 end
 
 function main_replay_endless()
-  if replay.speed == nil then
+  local replay = replay.endless
+  if replay == nil or replay.speed == nil then
     return main_dumb_transition,
       {main_select_mode, "I don't have an endless replay :("}
   end
@@ -238,18 +240,20 @@ function main_replay_endless()
 end
 
 function main_replay_puzzle()
-  if preplay_in_buf == nil or preplay_in_buf == "" then
+  local replay = replay.puzzle
+  if replay.in_buf == nil or replay.in_buf == "" then
     return main_dumb_transition,
       {main_select_mode, "I don't have a puzzle replay :("}
   end
   P1 = Stack("puzzle")
   P1.max_runs_per_frame = 1
-  P1.input_buffer = preplay_in_buf
-  P1:set_puzzle_state(unpack(preplay_puzz))
+  P1.input_buffer = replay.in_buf
+  P1:set_puzzle_state(unpack(replay.puzzle))
   while true do
     P1:render()
     wait()
-    if P1.n_active_panels == 0 then
+    if P1.n_active_panels == 0 and
+        reduce(function(a,b)return a+b end,P1.prev_active_panels,0) == 0 then
       if P1:puzzle_done() then
         return main_dumb_transition, {main_select_mode, "You win!"}
       elseif P1.puzzle_moves == 0 then
@@ -263,25 +267,30 @@ end
 function make_main_puzzle(puzzles)
   local awesome_idx, ret = 1, nil
   function ret()
+    replay.puzzle = {}
+    local replay = replay.puzzle
     P1 = Stack("puzzle")
     if awesome_idx == nil then
       awesome_idx = math.random(#puzzles)
     end
     P1:set_puzzle_state(unpack(puzzles[awesome_idx]))
-    preplay_puzz = puzzles[awesome_idx]
-    preplay_in_buf = ""
+    replay.puzzle = puzzles[awesome_idx]
+    replay.in_buf = ""
     while true do
       P1:render()
       wait()
-      if P1.n_active_panels == 0 then
+      if P1.n_active_panels == 0 and
+          reduce(function(a,b)return a+b end,P1.prev_active_panels,0) == 0 then
         if P1:puzzle_done() then
           awesome_idx = (awesome_idx % #puzzles) + 1
+          write_replay_file()
           if awesome_idx == 1 then
             return main_dumb_transition, {main_select_puzz, "You win!"}
           else
             return main_dumb_transition, {ret, "You win!"}
           end
         elseif P1.puzzle_moves == 0 then
+          write_replay_file()
           return main_dumb_transition, {main_select_puzz, "You lose :("}
         end
       end

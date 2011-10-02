@@ -9,14 +9,16 @@ local garbage_bounce_time = #garbage_bounce_table
 local IDLE_FRAMES = 1
 
 Stack = class(function(s, mode, speed, difficulty)
-    s.max_health = 150
+    s.max_health = 50
     s.mode = mode or "endless"
 
     if s.mode == "2ptime" or s.mode == "vs" then
-      local level = speed
+      local level = 5--speed or 5
       speed = level_to_starting_speed[level]
       difficulty = level_to_difficulty[level]
-      s.max_hang_time = level_to_hang_time[level]
+      print(speed, difficulty)
+      s.speed_times = {15*60, idx=1, delta=15*60}
+      s.max_health = level_to_hang_time[level]
       if s.mode == "2ptime" then
         s.NCOLORS = level_to_ncolors_time[level]
       else
@@ -76,7 +78,9 @@ Stack = class(function(s, mode, speed, difficulty)
 
     s.speed = speed or 1   -- The player's speed level decides the amount of time
              -- the stack takes to rise automatically
-    s.panels_to_speedup = panels_to_next_speed[s.speed]
+    if s.speed_times == nil then
+      s.panels_to_speedup = panels_to_next_speed[s.speed]
+    end
     s.rise_timer = 1   -- When this value reaches 0, the stack will rise a pixel
     s.rise_lock = false   -- If the stack is rise locked, it won't rise until it is
               -- unlocked.
@@ -185,7 +189,7 @@ end
 
 do
   local exclude_hover_set = {matched=true, popping=true, popped=true,
-      hovering=true, falling=true, swapping=true}
+      hovering=true, falling=true}
   function Panel.exclude_hover(self)
     return exclude_hover_set[self.state] or self.garbage
   end
@@ -194,7 +198,6 @@ do
       popped=true, hovering=true, dimmed=true, falling=true}
   function Panel.exclude_match(self)
     return exclude_match_set[self.state] or self.color == 0 or self.color == 9
-      or (self.state == "landing" and self.timer == 12)
   end
 
   local exclude_swap_set = {matched=true, popping=true, popped=true,
@@ -370,7 +373,17 @@ function Stack.PdP(self)
       self.prev_active_panels[(self.CLOCK-1)%IDLE_FRAMES+1] ~= 0
 
   -- Increase the speed if applicable
-  if self.panels_to_speedup <= 0 then
+  if self.speed_times then
+    local time = self.speed_times[self.speed_times.idx]
+    if self.CLOCK == time then
+      self.speed = min(self.speed + 1, 99)
+      if self.speed_times.idx ~= #self.speed_times then
+        self.speed_times.idx = self.speed_times.idx + 1
+      else
+        self.speed_times[self.speed_times.idx] = time + self.speed_times.delta
+      end
+    end
+  elseif self.panels_to_speedup <= 0 then
     self.speed = self.speed + 1
     self.panels_to_speedup = self.panels_to_speedup +
       panels_to_next_speed[self.speed]
@@ -399,6 +412,11 @@ function Stack.PdP(self)
       self.health = self.max_health
     end
   end
+
+  -- Phase 5. /////////////////////////////////////////////////////////////
+  -- If a swap completed, one or more panels landed, or a new row was
+  -- generated during this tick, a matches-check is done.
+  self:check_matches()
 
   -- Phase 2. /////////////////////////////////////////////////////////////
   -- Timer-expiring actions + falling
@@ -597,7 +615,9 @@ function Stack.PdP(self)
           elseif panel.state == "popped" then
             -- It's time for this panel
             -- to be gone forever :'(
-            self.panels_to_speedup = self.panels_to_speedup - 1
+            if self.panels_to_speedup then
+              self.panels_to_speedup = self.panels_to_speedup - 1
+            end
             if panel.chaining then
               self.n_chain_panels = self.n_chain_panels - 1
             end
@@ -754,12 +774,6 @@ function Stack.PdP(self)
     -- the raising is cancelled
   end
 
-  -- Phase 5. /////////////////////////////////////////////////////////////
-  -- If a swap completed, one or more panels landed, or a new row was
-  -- generated during this tick, a matches-check is done.
-  self:check_matches()
-
-
   -- if at the end of the routine there are no chain panels, the chain ends.
   if self.chain_counter ~= 0 and self.n_chain_panels == 0 then
     self:set_chain_garbage(self.chain_counter)
@@ -777,7 +791,7 @@ function Stack.PdP(self)
     for col=1,self.width do
       local panel = panels[row][col]
       if (panel.garbage and panel.state ~= "normal") or
-         (panel.color ~= 0 and panel:exclude_hover() and not panel.garbage) or
+         (panel.color ~= 0 and (panel:exclude_hover() or panel.state == "swapping") and not panel.garbage) or
           panel.state == "swapping" then
         self.n_active_panels = self.n_active_panels + 1
       end
@@ -1079,7 +1093,7 @@ function Stack.check_matches(self)
       local panel = panels[row][col]
       if garbage[panel] then
         panel.state = "matched"
-        panel.timer = garbage_match_time
+        panel.timer = garbage_match_time + 1
         panel.initial_time = garbage_match_time
         panel.pop_time = self.FRAMECOUNT_POP * garbage_index
             + garbage_bounce_time
@@ -1104,7 +1118,7 @@ function Stack.check_matches(self)
             metal_count = metal_count + 1
           end
           panel.state = "matched"
-          panel.timer = self.FRAMECOUNT_MATCH
+          panel.timer = self.FRAMECOUNT_MATCH + 1
           if is_chain and not panel.chaining then
             panel.chaining = true
             self.n_chain_panels = self.n_chain_panels + 1
@@ -1224,20 +1238,22 @@ function Stack.set_hoverers(self, row, col, hover_time, add_chaining,
       brk = true
     else
       if panel.state == "swapping" then
-        hovers_time = hovers_time + panels[row][col].timer
-      end
-      local chaining = panel.chaining
-      panel:clear_flags()
-      panel.state = "hovering"
-      local adding_chaining = (not chaining) and panel.color~=9 and
-          add_chaining
-      panel.chaining = chaining or adding_chaining
-      panel.timer = hovers_time
-      if extra_tick then
-        panel.timer = panel.timer + not_first
-      end
-      if adding_chaining then
-        self.n_chain_panels = self.n_chain_panels + 1
+        print(extra_tick)
+        hovers_time = hovers_time + panels[row][col].timer - 1
+      else
+        local chaining = panel.chaining
+        panel:clear_flags()
+        panel.state = "hovering"
+        local adding_chaining = (not chaining) and panel.color~=9 and
+            add_chaining
+        panel.chaining = chaining or adding_chaining
+        panel.timer = hovers_time
+        if extra_tick then
+          panel.timer = panel.timer + not_first
+        end
+        if adding_chaining then
+          self.n_chain_panels = self.n_chain_panels + 1
+        end
       end
       not_first = 1
     end
