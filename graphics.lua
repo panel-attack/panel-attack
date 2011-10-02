@@ -148,7 +148,8 @@ function Stack.draw_cards(self)
     local card = self.card_q[i]
     if card_animation[card.frame] then
       local draw_x = (card.x-1) * 16 + self.pos_x
-      local draw_y = (12-card.y) * 16 + self.pos_y -1- card_animation[card.frame]
+      local draw_y = (11-card.y) * 16 + self.pos_y + 1 + self.displacement
+          - card_animation[card.frame]
       draw(IMG_cards[card.chain][card.n], draw_x, draw_y)
       card.frame = card.frame + 1
       if(card_animation[card.frame]==nil) then
