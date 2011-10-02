@@ -9,14 +9,13 @@ local garbage_bounce_time = #garbage_bounce_table
 local IDLE_FRAMES = 1
 
 Stack = class(function(s, mode, speed, difficulty)
-    s.max_health = 50
+    s.max_health = 1
     s.mode = mode or "endless"
 
     if s.mode == "2ptime" or s.mode == "vs" then
-      local level = 5--speed or 5
+      local level = speed or 5
       speed = level_to_starting_speed[level]
       difficulty = level_to_difficulty[level]
-      print(speed, difficulty)
       s.speed_times = {15*60, idx=1, delta=15*60}
       s.max_health = level_to_hang_time[level]
       if s.mode == "2ptime" then
@@ -1238,7 +1237,6 @@ function Stack.set_hoverers(self, row, col, hover_time, add_chaining,
       brk = true
     else
       if panel.state == "swapping" then
-        print(extra_tick)
         hovers_time = hovers_time + panels[row][col].timer - 1
       else
         local chaining = panel.chaining
