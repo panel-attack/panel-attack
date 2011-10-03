@@ -54,7 +54,7 @@ function key_counts()
   end
 end
 
-function controls(stack)
+--[[function controls(stack)
   local new_dir = nil
   if (keys[k_raise1] or keys[k_raise2] or this_frame_keys[k_raise1] or
       this_frame_keys[k_raise2]) and (not stack.prevent_manual_raise) then
@@ -82,7 +82,7 @@ function controls(stack)
   else
     stack.cur_dir = new_dir
     stack.cur_timer = 0
-  end
+  end--]]
 
   --[[for i=1,3 do
     if this_frame_keys[i..""] then
@@ -97,10 +97,11 @@ function controls(stack)
   if this_frame_keys["0"] then
     stack:drop_garbage(6,1,true)
   end--]]
-end
+--end
 
-function fake_controls(stack, sdata)
+function fake_controls(stack)
   local new_dir = nil
+  local sdata = stack.input_state
   local raise, swap, up, down, left, right = unpack(base64decode[sdata])
   if (raise) and (not stack.prevent_manual_raise) then
     stack.manual_raise = true

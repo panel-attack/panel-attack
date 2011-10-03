@@ -56,7 +56,7 @@ function main_select_mode()
   local items = {{"1P endless", main_select_speed_99, {main_endless}},
       {"1P puzzle", main_select_puzz},
       {"1P time attack", main_select_speed_99, {main_time_attack}},
-      {"2P fakevs at Tom's apartment", main_net_vs_setup, {"sfo.zkpq.ca"}},
+      {"2P fakevs at dustinho.com", main_net_vs_setup, {"dustinho.com"}},
       {"2P fakevs on localhost", main_net_vs_setup, {"127.0.0.1"}},
       {"Replay of 1P endless", main_replay_endless},
       {"Replay of 1P puzzle", main_replay_puzzle},
@@ -165,6 +165,12 @@ function main_endless(...)
       return main_dumb_transition, {main_select_mode, "You scored "..P1.score}
     end
     P1:local_run()
+    --groundhogday mode
+    --[[if P1.CLOCK == 1001 then
+      local prev_states = P1.prev_states
+      P1 = prev_states[600]
+      P1.prev_states = prev_states
+    end--]]
   end
 end
 
@@ -184,8 +190,8 @@ end
 
 function main_net_vs_setup(ip)
   network_init(ip)
-  P1 = Stack("endless")
-  P2 = Stack("endless")
+  P1 = Stack("vs")
+  P2 = Stack("vs")
   P1.garbage_target = P2
   P2.garbage_target = P1
   P2.pos_x = 172
@@ -200,6 +206,7 @@ function main_net_vs_setup(ip)
 end
 
 function main_net_vs()
+  --STONER_MODE = true
   while true do
     P1:render()
     P2:render()

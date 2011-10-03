@@ -25,6 +25,18 @@ function get_message()
   return typ, ret
 end
 
+local lag_q = Queue()
+function net_send(...)
+  if not STONER_MODE then
+    TCP_sock:send(...)
+  else
+    lag_q:push({...})
+    if lag_q:len() == 70 then
+      TCP_sock:send(unpack(lag_q:pop()))
+    end
+  end
+end
+
 local process_message = {
   G=function(s) ask_for_panels("000000") ask_for_gpanels("000000") end,
   H=function(s) end,
@@ -42,7 +54,7 @@ function network_init(ip)
     error("Failed to connect =(")
   end
   TCP_sock:settimeout(0)
-  TCP_sock:send("Hlol")
+  net_send("Hlol")
 end
 
 function do_messages()
@@ -59,7 +71,7 @@ end
 
 function ask_for_panels(prev_panels)
   if TCP_sock then
-    TCP_sock:send("P"..tostring(P1.NCOLORS)..prev_panels)
+    net_send("P"..tostring(P1.NCOLORS)..prev_panels)
   else
     make_local_panels(P1, prev_panels)
   end
@@ -67,7 +79,7 @@ end
 
 function ask_for_gpanels(prev_panels)
   if TCP_sock then
-    TCP_sock:send("Q"..tostring(P1.NCOLORS)..prev_panels)
+    net_send("Q"..tostring(P1.NCOLORS)..prev_panels)
   else
     make_local_gpanels(P1, prev_panels)
   end
@@ -131,11 +143,12 @@ function send_controls()
     ((keys[k_left] or this_frame_keys[k_left]) and 2 or 0) +
     ((keys[k_right] or this_frame_keys[k_right]) and 1 or 0)+1]
   if TCP_sock then
-    TCP_sock:send("I"..to_send)
+    net_send("I"..to_send)
   else
     local replay = replay[P1.mode]
     if replay and replay.in_buf then
       replay.in_buf = replay.in_buf .. to_send
     end
   end
+  return to_send
 end

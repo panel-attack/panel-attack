@@ -265,11 +265,12 @@ function Stack.render(self)
   else
     gprint("Score: "..self.score, self.score_x, 100)
     gprint("Speed: "..self.speed, self.score_x, 130)
+    gprint("Frame: "..self.CLOCK, self.score_x, 145)
     if self.mode == "time" then
       local time_left = 120 - self.CLOCK/60
       local mins = floor(time_left/60)
       local secs = floor(time_left%60)
-      gprint("Time: "..string.format("%01d:%02d",mins,secs), self.score_x, 145)
+      gprint("Time: "..string.format("%01d:%02d",mins,secs), self.score_x, 160)
     end
   end
   self:draw_cards()

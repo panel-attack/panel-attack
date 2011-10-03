@@ -95,6 +95,44 @@ function spairs(tab)
   end
 end
 
+function shallowcpy(tab)
+  local ret = {}
+  for k,v in pairs(tab) do
+    ret[k]=v
+  end
+  return ret
+end
+
+do
+  local mapping = {}
+  local real_deepcpy
+  function real_deepcpy(tab)
+    if mapping[tab] ~= nil then
+      return mapping[tab]
+    end
+    local ret = {}
+    mapping[tab] = ret
+    mapping[ret] = ret
+    for k,v in pairs(tab) do
+      if type(k) == "table" then
+        k=real_deepcpy(k)
+      end
+      if type(v) == "table" then
+        v=real_deepcpy(v)
+      end
+      ret[k]=v
+    end
+    return setmetatable(ret, getmetatable(tab))
+  end
+
+  function deepcpy(tab)
+    if type(tab) ~= "table" then return tab end
+    local ret = real_deepcpy(tab)
+    mapping = {}
+    return ret
+  end
+end
+
 -- Not actually for encoding/decoding byte streams as base64.
 -- Rather, it's for encoding streams of 6-bit symbols in printable characters.
 base64encode = procat("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890+/")

@@ -133,6 +133,8 @@ Stack = class(function(s, mode, speed, difficulty)
     s.game_over = false
 
     s.card_q = Queue()
+
+    s.prev_states = {}
   end)
 
 Panel = class(function(p)
@@ -262,6 +264,20 @@ function Stack.puzzle_done(self)
   return true
 end
 
+function Stack.prep_rollback(self)
+  -- Do stuff for rollback.
+  local prev_states = self.prev_states
+  -- prev_states will not exist if we're doing a rollback right now
+  if prev_states then
+    local garbage_target = self.garbage_target
+    self.garbage_target = nil
+    self.prev_states = nil
+    prev_states[self.CLOCK] = deepcpy(self)
+    self.prev_states = prev_states
+    self.garbage_target = garbage_target
+  end
+end
+
 function Stack.prep_first_row(self)
   if self.CLOCK == 0 and self.mode ~= "puzzle" then
     self:new_row()
@@ -271,8 +287,9 @@ end
 
 --local_run is for the stack that belongs to this client.
 function Stack.local_run(self)
-  send_controls()
-  controls(self)
+  self.input_state = send_controls()
+  self:prep_rollback()
+  fake_controls(self)
   self:prep_first_row()
   self:PdP()
 end
@@ -282,7 +299,9 @@ function Stack.foreign_run(self)
   local times_to_run = min(string.len(self.input_buffer),
       self.max_runs_per_frame)
   for i=1,times_to_run do
-    fake_controls(self, string.sub(self.input_buffer,1,1))
+    self.input_state = string.sub(self.input_buffer,1,1)
+    self:prep_rollback()
+    fake_controls(self)
     self:prep_first_row()
     self:PdP()
     self.input_buffer = string.sub(self.input_buffer,2)
@@ -298,6 +317,7 @@ local d_row = {up=1, down=-1, left=0, right=0}
 
 -- The engine routine.
 function Stack.PdP(self)
+
   local panels = self.panels
   local width = self.width
   local height = self.height
@@ -831,9 +851,7 @@ function Stack.PdP(self)
             if b[4] or a[3] then return false end
             return a[1] < b[1]
           end)
-      for i=1,#to_send do
-        self:really_send(unpack(to_send[i]))
-      end
+      self:really_send(to_send)
     elseif self.garbage_to_send.chain then
       local waiting_for_chain = self.garbage_to_send.chain
       for i=1,#to_send do
@@ -949,12 +967,34 @@ function Stack.really_send(self, ...)
   end
 end
 
-function Stack.recv_garbage(self, time, ...)
-  if self.CLOCK >= time then
-    error("Latency is too high :(")
+function Stack.recv_garbage(self, time, to_recv)
+  if self.CLOCK > time then
+    if self.CLOCK - time > 200 then
+      error("Latency is too high :(")
+    else
+      --MAGICAL ROLLBACK!?!?
+      print("attempting magical rollback")
+      local prev_states = self.prev_states
+      local old_self = prev_states[time]
+      old_self:recv_garbage(time, to_recv)
+      for t=time,self.CLOCK-1 do
+        old_self.input_state = prev_states[t].input_state
+        prev_states[t] = deepcpy(old_self)
+        fake_controls(old_self)
+        old_self:PdP()
+      end
+      local nogood_keys = {input_buffer=true,gpanel_buffer=true,panel_buffer=true}
+      for k,v in pairs(old_self) do
+        if not nogood_keys[k] then
+          self[k]=v
+        end
+      end
+    end
   end
   local garbage = self.later_garbage[time] or {}
-  garbage[#garbage+1] = {...}
+  for i=1,#to_recv do
+    garbage[#garbage+1] = to_recv[i]
+  end
   self.later_garbage[time] = garbage
 end
 
