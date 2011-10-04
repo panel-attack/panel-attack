@@ -196,6 +196,7 @@ function main_net_vs_setup(ip)
   P2.garbage_target = P1
   P2.pos_x = 172
   P2.score_x = 410
+  replay.vs = {P="",O="",I="",Q="",R="",in_buf=""}
   while P1.panel_buffer == "" or P2.panel_buffer == ""
     or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
     gprint("Waiting for opponent...", 300, 280)
@@ -207,18 +208,32 @@ end
 
 function main_net_vs()
   --STONER_MODE = true
+  local end_text = nil
   while true do
     P1:render()
     P2:render()
     wait()
     do_messages()
-    P1:local_run()
-    P2:foreign_run()
-    if P1.game_over then
-      error("game over lol")
+    if not P1.game_over then
+      P1:local_run()
+    end
+    if not P2.game_over then
+      P2:foreign_run()
+    end
+    if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
+      end_text = "Draw"
+    elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
+      end_text = "You lose :("
+    elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
+      end_text = "You win ^^"
+    end
+    if end_text then
+      undo_stonermode()
+      write_replay_file()
+      close_socket()
+      return main_dumb_transition, {main_select_mode, end_text}
     end
   end
-  -- TODO: transition to some other state instead of erroring.
 end
 
 function main_replay_endless()

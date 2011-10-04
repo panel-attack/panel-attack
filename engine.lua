@@ -973,7 +973,7 @@ function Stack.recv_garbage(self, time, to_recv)
       error("Latency is too high :(")
     else
       --MAGICAL ROLLBACK!?!?
-      print("attempting magical rollback")
+      print("attempting magical rollback with difference = "..self.CLOCK-time)
       local prev_states = self.prev_states
       local old_self = prev_states[time]
       old_self:recv_garbage(time, to_recv)

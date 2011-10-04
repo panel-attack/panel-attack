@@ -1,5 +1,7 @@
 local sort, pairs, select, unpack, error =
   table.sort, pairs, select, unpack, error
+local type, setmetatable, getmetatable =
+      type, setmetatable, getmetatable
 
 -- bounds b so a<=b<=c
 function bound(a, b, c)
@@ -85,7 +87,7 @@ function spairs(tab)
   for k in pairs(tab) do
     keys[#keys+1] = k
   end
-  table.sort(keys)
+  sort(keys)
   for i=1,#keys do
     vals[i]=tab[keys[i]]
   end
@@ -103,34 +105,32 @@ function shallowcpy(tab)
   return ret
 end
 
-do
-  local mapping = {}
-  local real_deepcpy
-  function real_deepcpy(tab)
-    if mapping[tab] ~= nil then
-      return mapping[tab]
-    end
-    local ret = {}
-    mapping[tab] = ret
-    mapping[ret] = ret
-    for k,v in pairs(tab) do
-      if type(k) == "table" then
-        k=real_deepcpy(k)
-      end
-      if type(v) == "table" then
-        v=real_deepcpy(v)
-      end
-      ret[k]=v
-    end
-    return setmetatable(ret, getmetatable(tab))
+local deepcpy_mapping = {}
+local real_deepcpy
+function real_deepcpy(tab)
+  if deepcpy_mapping[tab] ~= nil then
+    return deepcpy_mapping[tab]
   end
+  local ret = {}
+  deepcpy_mapping[tab] = ret
+  deepcpy_mapping[ret] = ret
+  for k,v in pairs(tab) do
+    if type(k) == "table" then
+      k=real_deepcpy(k)
+    end
+    if type(v) == "table" then
+      v=real_deepcpy(v)
+    end
+    ret[k]=v
+  end
+  return setmetatable(ret, getmetatable(tab))
+end
 
-  function deepcpy(tab)
-    if type(tab) ~= "table" then return tab end
-    local ret = real_deepcpy(tab)
-    mapping = {}
-    return ret
-  end
+function deepcpy(tab)
+  if type(tab) ~= "table" then return tab end
+  local ret = real_deepcpy(tab)
+  deepcpy_mapping = {}
+  return ret
 end
 
 -- Not actually for encoding/decoding byte streams as base64.

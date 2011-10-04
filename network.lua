@@ -11,6 +11,11 @@ function flush_socket()
   leftovers = leftovers..data
 end
 
+function close_socket()
+  TCP_sock:close()
+  TCP_sock = nil
+end
+
 function get_message()
   if string.len(leftovers) == 0 then
     return nil
@@ -34,6 +39,12 @@ function net_send(...)
     if lag_q:len() == 70 then
       TCP_sock:send(unpack(lag_q:pop()))
     end
+  end
+end
+
+function undo_stonermode()
+  while lag_q:len() ~= 0 do
+    TCP_sock:send(unpack(lag_q:pop()))
   end
 end
 
@@ -63,6 +74,9 @@ function do_messages()
     local typ, data = get_message()
     if typ then
       process_message[typ](data)
+      if replay.vs[typ] then
+        replay.vs[typ]=replay.vs[typ]..data
+      end
     else
       break
     end
@@ -144,11 +158,10 @@ function send_controls()
     ((keys[k_right] or this_frame_keys[k_right]) and 1 or 0)+1]
   if TCP_sock then
     net_send("I"..to_send)
-  else
-    local replay = replay[P1.mode]
-    if replay and replay.in_buf then
-      replay.in_buf = replay.in_buf .. to_send
-    end
+  end
+  local replay = replay[P1.mode]
+  if replay and replay.in_buf then
+    replay.in_buf = replay.in_buf .. to_send
   end
   return to_send
 end
