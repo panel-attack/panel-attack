@@ -74,8 +74,8 @@ function do_messages()
     local typ, data = get_message()
     if typ then
       process_message[typ](data)
-      if replay.vs[typ] then
-        replay.vs[typ]=replay.vs[typ]..data
+      if replay[P1.mode][typ] then
+        replay[P1.mode][typ]=replay[P1.mode][typ]..data
       end
     else
       break

@@ -1,6 +1,6 @@
 In Tetris Attack, it seems like a panel cannot match in the same frame
-that it does some other state transition.  Right now this is implemented
-for the "landing" state but not for the "normal" state or any other state.
+that it does some other state transition.  This is implemented in panel
+attack by performing the matches check before the other state transitions.
 
 In Tetris Attack, the rising of the stack is not smooth around displacement=0.
 This part of the animation takes just as long regardless of speed.
@@ -10,11 +10,22 @@ its way up.  I have no plans to implement this.
 In Tetris Attack, only one pair of panels can be swaping at any time, and
 the new swap can only be created in some frames of the old swap.  This is
 part of why it is easier to stealth in panel-attack.
-I have no plans to implement either of these things, but I might need to
-if I ever implement the first thing on this list.
+I have no plans to implement either of these things.
 
 In Tetris Attack, a stack of garbage that should all begin falling at the same
 time will occasionally separate.  I have no plans to implement this.
 
 In Tetris Attack, you get nothing for chains past 13.  I will probably
 implement things for chains past 13.
+
+0 0 0 0 2 9
+0 0 0 0[9 2]
+0 0 0 0 2 9
+0 0 0 0 1 9
+0 0 0 0 1 9
+0 0 0 0 1 9
+
+The chain that is performed by swapping in the above configuration
+just as the match of 1's finishes clearing becomes possible 1 frame too
+early and stops being possible 1 frame too early.  As a result it is possible
+for the correct number of frames.  This doesn't seem like a big issue.
