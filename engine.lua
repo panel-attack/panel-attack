@@ -273,6 +273,7 @@ function Stack.prep_rollback(self)
     self.garbage_target = nil
     self.prev_states = nil
     prev_states[self.CLOCK] = deepcpy(self)
+    prev_states[self.CLOCK-400] = nil
     self.prev_states = prev_states
     self.garbage_target = garbage_target
   end
