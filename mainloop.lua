@@ -275,7 +275,7 @@ function main_replay_puzzle()
     P1:render()
     wait()
     if P1.n_active_panels == 0 and
-        reduce(function(a,b)return a+b end,P1.prev_active_panels,0) == 0 then
+        P1.prev_active_panels == 0 then
       if P1:puzzle_done() then
         return main_dumb_transition, {main_select_mode, "You win!"}
       elseif P1.puzzle_moves == 0 then
@@ -302,7 +302,7 @@ function make_main_puzzle(puzzles)
       P1:render()
       wait()
       if P1.n_active_panels == 0 and
-          reduce(function(a,b)return a+b end,P1.prev_active_panels,0) == 0 then
+          prev_active_panels == 0 then
         if P1:puzzle_done() then
           awesome_idx = (awesome_idx % #puzzles) + 1
           write_replay_file()

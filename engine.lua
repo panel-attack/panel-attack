@@ -6,7 +6,7 @@
   --  . the matches-checking routine
 local min = math.min
 local garbage_bounce_time = #garbage_bounce_table
-local IDLE_FRAMES = 1
+local GARBAGE_DELAY = 52
 
 Stack = class(function(s, mode, speed, difficulty)
     s.max_health = 1
@@ -101,7 +101,7 @@ Stack = class(function(s, mode, speed, difficulty)
     s.danger_music = false -- changes music state
 
     s.n_active_panels = 0
-    s.prev_active_panels = {}
+    s.prev_active_panels = 0
     s.n_chain_panels= 0
 
        -- These change depending on the difficulty and speed levels:
@@ -389,7 +389,7 @@ function Stack.PdP(self)
   end
 
   self.rise_lock = self.n_active_panels ~= 0 or
-      self.prev_active_panels[(self.CLOCK-1)%IDLE_FRAMES+1] ~= 0
+      self.prev_active_panels ~= 0
 
   -- Increase the speed if applicable
   if self.speed_times then
@@ -804,7 +804,7 @@ function Stack.PdP(self)
     -- lol owned
   end
 
-  self.prev_active_panels[self.CLOCK%IDLE_FRAMES+1] = self.n_active_panels
+  self.prev_active_panels = self.n_active_panels
   self.n_active_panels = 0
   for row=1,self.height do
     for col=1,self.width do
@@ -883,10 +883,8 @@ function Stack.PdP(self)
     end
   end
 
-  local drop_it = self.n_active_panels == 0
-  for i=1,#self.prev_active_panels do
-    drop_it = drop_it and self.prev_active_panels[i] == 0
-  end
+  local drop_it = self.n_active_panels == 0 and
+      self.prev_active_panels == 0
   if drop_it and self.garbage_q:len() > 0 then
     self:drop_garbage(unpack(self.garbage_q:pop()))
   end
@@ -963,20 +961,53 @@ end
 
 function Stack.really_send(self, ...)
   if self.garbage_target then
-    self.garbage_target:recv_garbage(self.CLOCK + 52, ...)
+    self.garbage_target:recv_garbage(self.CLOCK + GARBAGE_DELAY, ...)
   end
 end
 
 function Stack.recv_garbage(self, time, to_recv)
+  if self.in_rollback then
+    error("This error doesn't even vaguely make sense")
+  end
   if self.CLOCK > time then
+    local prev_states = self.prev_states
+    local next_self = prev_states[time+1]
+    while next_self and (next_self.prev_active_panels ~= 0 or
+        next_self.active_panels ~= 0) do
+      time = time + 1
+      next_self = prev_states[time+1]
+    end
     if self.CLOCK - time > 200 then
       error("Latency is too high :(")
     else
-      --MAGICAL ROLLBACK!?!?
-      print("attempting magical rollback with difference = "..self.CLOCK-time)
-      local prev_states = self.prev_states
       local old_self = prev_states[time]
+      --MAGICAL ROLLBACK!?!?
+      self.in_rollback = true
+      print("attempting magical rollback with difference = "..self.CLOCK-time)
       old_self:recv_garbage(time, to_recv)
+
+      -- The garbage that we send this time might (rarely) not be the same
+      -- as the garbage we sent before.  Wipe out the garbage we sent before...
+      local first_wipe_time = time + GARBAGE_DELAY
+      local other_later_garbage = self.garbage_target.later_garbage
+      for k,v in pairs(other_later_garbage) do
+        if k >= first_wipe_time then
+          other_later_garbage[k] = nil
+        end
+      end
+      -- and record the garbage that we send this time!
+      old_self.garbage_target = self.garbage_target
+
+      -- We can do it like this because the sender of the garbage
+      -- and self.garbage_target are the same thing.
+      -- Since we're in this code at all, we know that self.garbage_target
+      -- is waaaaay behind us, so it couldn't possibly have processed
+      -- the garbage that we sent during the frames we're rolling back.
+      --
+      -- If a mode with >2 players is implemented, we can continue doing
+      -- the same thing as long as we keep all of the opponents'
+      -- stacks in sync.
+
       for t=time,self.CLOCK-1 do
         old_self.input_state = prev_states[t].input_state
         prev_states[t] = deepcpy(old_self)
@@ -989,6 +1020,7 @@ function Stack.recv_garbage(self, time, to_recv)
           self[k]=v
         end
       end
+      self.in_rollback = nil
     end
   end
   local garbage = self.later_garbage[time] or {}
