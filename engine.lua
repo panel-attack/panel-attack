@@ -14,6 +14,7 @@ Stack = class(function(s, mode, speed, difficulty)
 
     if s.mode == "2ptime" or s.mode == "vs" then
       local level = speed or 5
+      s.level = level
       speed = level_to_starting_speed[level]
       difficulty = level_to_difficulty[level]
       s.speed_times = {15*60, idx=1, delta=15*60}
@@ -88,10 +89,6 @@ Stack = class(function(s, mode, speed, difficulty)
     s.stop_time = 0
     s.stop_time_timer = 0
 
-    s.game_time = 0
-    s.game_time_mode = 1
-    s.game_time_timer = 0
-
     s.NCOLORS = s.NCOLORS or 5
     s.score = 0         -- der skore
     s.chain_counter = 0   -- how high is the current chain?
@@ -159,14 +156,6 @@ function Panel.clear(self)
     -- The timer is also used to offset the panel's
     -- position on the screen.
 
-    -- And finally, each panel has a couple tags.
-    -- Unlike the timers and flags, they don't need to be cleared
-    -- when their data is no longer valid, because they should
-    -- only be checked when the data is surely valid.
-    self.combo_index = 0
-    self.combo_size = 0
-    self.chain_index = 0
-
     self.initial_time = nil
     self.pop_time = nil
     self.x_offset = nil
@@ -228,9 +217,12 @@ function Panel.has_flags(self)
 end
 
 function Panel.clear_flags(self)
-  self.is_swapping_from_left = false
-  self.dont_swap = false
-  self.chaining = false
+  self.combo_index = nil
+  self.combo_size = nil
+  self.chain_index = nil
+  self.is_swapping_from_left = nil
+  self.dont_swap = nil
+  self.chaining = nil
   self.state = "normal"
 end
 
@@ -290,7 +282,7 @@ end
 function Stack.local_run(self)
   self.input_state = send_controls()
   self:prep_rollback()
-  fake_controls(self)
+  self:controls()
   self:prep_first_row()
   self:PdP()
 end
@@ -302,7 +294,7 @@ function Stack.foreign_run(self)
   for i=1,times_to_run do
     self.input_state = string.sub(self.input_buffer,1,1)
     self:prep_rollback()
-    fake_controls(self)
+    self:controls()
     self:prep_first_row()
     self:PdP()
     self.input_buffer = string.sub(self.input_buffer,2)
@@ -371,19 +363,6 @@ function Stack.PdP(self)
       self.danger_music = true
     end
   end
-  --[[
-  if(self.danger_music) then
-    if(GameMusicState=MUSIC_NORMAL) then
-     GameMusicState=MUSIC_DANGER
-     GameMusicStateChange=1
-    end
-  else
-    if(GameMusicState=MUSIC_DANGER) then
-      GameMusicState=MUSIC_NORMAL
-      GameMusicStateChange=1
-    end
-  end]]--
-  --TODO: what the fuck are you talking about, "Game music?"
 
   if self.displacement == 0 and self.has_risen then
     self:new_row()
@@ -538,9 +517,9 @@ function Stack.PdP(self)
           if panel.state=="swapping" then
             -- a swap has completed here.
             panel.state = "normal"
-            panel.dont_swap = false
+            panel.dont_swap = nil
             local from_left = panel.is_swapping_from_left
-            panel.is_swapping_from_left = false
+            panel.is_swapping_from_left = nil
             -- Now there are a few cases where some hovering must
             -- be done.
             if panel.color ~= 0 then
@@ -818,29 +797,6 @@ function Stack.PdP(self)
     end
   end
 
-  --TODO: WTF IS GameTimeTimer
-  --[[
-  GameTimeTimer--;
-  if(!GameTimeTimer)
-  {
-    GameTimeTimer=60;
-    Switch(GameTimeMode)
-    {
-      Case TIME_REMAINING:
-        GameTime--;
-        if(GameTime<0) GameTime=0;
-
-        if(!GameTime) SFX_Bell_Play=25;
-        else if(GameTime<15) SFX_Bell_Play=24;
-
-      Case TIME_ELAPSED:
-        GameTime++;
-        if(GameTime>359999) GameTime=359999;
-    }
-    GameTimeRender=1;
-  }
-  --]]
-
   local to_send = self.garbage_to_send[self.CLOCK]
   if to_send then
     self.garbage_to_send[self.CLOCK] = nil
@@ -914,7 +870,9 @@ function Stack.drop_garbage(self, width, height, metal)
       panel.height = height
       panel.y_offset = y-spawn_row
       panel.x_offset = x-spawn_col
-      panel.metal = metal
+      if metal then
+        panel.metal = metal
+      end
     end
   end
 end
@@ -1012,7 +970,7 @@ function Stack.recv_garbage(self, time, to_recv)
       for t=time,self.CLOCK-1 do
         old_self.input_state = prev_states[t].input_state
         prev_states[t] = deepcpy(old_self)
-        fake_controls(old_self)
+        old_self:controls()
         old_self:PdP()
       end
       local nogood_keys = {input_buffer=true,gpanel_buffer=true,panel_buffer=true}
@@ -1131,22 +1089,6 @@ function Stack.check_matches(self)
     end
   end
 
-  --[[for row=1,#panels do
-    for col=1,self.width do
-      local panel = panels[row][col]
-      if garbage[panel] then
-        if panel.y_offset == 0 then
-          panel.color = math.random(1,self.NCOLORS)
-          panel.state = "matching"
-          panel.timer = 2
-        else
-          panel.y_offset = panel.y_offset - 1
-          panel.height = panel.height - 1
-        end
-      end
-    end
-  end--]]
-
   if is_chain then
     if self.chain_counter ~= 0 then
       self.chain_counter = self.chain_counter + 1
@@ -1212,13 +1154,13 @@ function Stack.check_matches(self)
               -- so this panel loses its chain flag
               if panels[row-1][col].state ~= "swapping" and
                   panel.chaining then
-                panel.chaining = false
+                panel.chaining = nil
                 self.n_chain_panels = self.n_chain_panels - 1
               end
             -- a panel landed on the bottom row, so it surely
             -- loses its chain flag.
             elseif(panel.chaining) then
-              panel.chaining = false
+              panel.chaining = nil
               self.n_chain_panels = self.n_chain_panels - 1
             end
           end

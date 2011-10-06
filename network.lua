@@ -1,5 +1,5 @@
 local TCP_sock = nil
-local type_to_length = {G=1, H=1, N=1, P=121, O=121, I=2, Q=121, R=121}
+local type_to_length = {G=1, H=1, N=1, P=121, O=121, I=2, Q=121, R=121, L=2}
 local leftovers = ""
 
 function flush_socket()
@@ -49,7 +49,8 @@ function undo_stonermode()
 end
 
 local process_message = {
-  G=function(s) ask_for_panels("000000") ask_for_gpanels("000000") end,
+  L=function(s) P2_level = ({["0"]=10})[s] or (s+0) end,
+  G=function(s) got_opponent = true end,
   H=function(s) end,
   N=function(s) error("Server told us to fuck off") end,
   P=function(s) P1.panel_buffer = P1.panel_buffer..s end,
@@ -65,7 +66,7 @@ function network_init(ip)
     error("Failed to connect =(")
   end
   TCP_sock:settimeout(0)
-  net_send("Hlol")
+  net_send("H000")
 end
 
 function do_messages()
@@ -74,7 +75,7 @@ function do_messages()
     local typ, data = get_message()
     if typ then
       process_message[typ](data)
-      if replay[P1.mode][typ] then
+      if P1 and replay[P1.mode][typ] then
         replay[P1.mode][typ]=replay[P1.mode][typ]..data
       end
     else

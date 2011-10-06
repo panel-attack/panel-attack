@@ -189,17 +189,51 @@ function main_time_attack(...)
 end
 
 function main_net_vs_setup(ip)
+  P1, P1_level, P2_level, got_opponent = nil, nil, nil, nil, nil
+  P2 = {panel_buffer="", gpanel_buffer=""}
   network_init(ip)
-  P1 = Stack("vs")
-  P2 = Stack("vs")
+  local my_level, to_print, fake_P2 = 5, nil, P2
+  while got_opponent == nil do
+    gprint("Waiting for opponent...", 300, 280)
+    do_messages()
+    wait()
+  end
+  while P1_level == nil or P2_level == nil do
+    to_print = (P1_level and "L" or"Choose l") .. "evel: "..my_level..
+        "\nOpponent's level: "..(P2_level or "???")
+    gprint(to_print, 300, 280)
+    wait()
+    do_messages()
+    if P1_level then
+    elseif menu_enter() then
+      P1_level = my_level
+      net_send("L"..(({[10]=0})[my_level] or my_level))
+    elseif menu_up() or menu_right() then
+      my_level = bound(1,my_level+1,10)
+    elseif menu_down() or menu_left() then
+      my_level = bound(1,my_level-1,10)
+    end
+  end
+  P1 = Stack("vs", P1_level)
+  P2 = Stack("vs", P2_level)
+  P2.panel_buffer = fake_P2.panel_buffer
+  P2.gpanel_buffer = fake_P2.gpanel_buffer
   P1.garbage_target = P2
   P2.garbage_target = P1
   P2.pos_x = 172
   P2.score_x = 410
   replay.vs = {P="",O="",I="",Q="",R="",in_buf=""}
+  ask_for_panels("000000")
+  ask_for_gpanels("000000")
+  to_print = "Level: "..my_level.."\nOpponent's level: "..(P2_level or "???")
+  for i=1,30 do
+    gprint(to_print,300, 280)
+    do_messages()
+    wait()
+  end
   while P1.panel_buffer == "" or P2.panel_buffer == ""
     or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
-    gprint("Waiting for opponent...", 300, 280)
+    gprint(to_print,300, 280)
     do_messages()
     wait()
   end

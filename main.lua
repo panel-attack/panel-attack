@@ -47,7 +47,6 @@ function love.run()
       love.filesystem.write("frame"..fnum..".png",
           fb2:getImageData():encode("png"))
     end
-    --love.graphics.print("FPS: ["..love.timer.getFPS().."] delay: ["..math.floor(tau).."ms] idle:["..math.floor(100 * (tau/1000)/dt).."%]", 10, 10)
 
     if(N_FRAMES > 100) then
       tau = tau + (love.timer.getFPS()-60)*0.2*dt
@@ -58,7 +57,6 @@ function love.run()
         if love.audio then love.audio.stop() end
         return
       end
-      --print(e,a,b,c)
       love.handlers[e](a,b,c)
     end
     joystick_ax()

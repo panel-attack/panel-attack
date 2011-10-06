@@ -54,62 +54,17 @@ function key_counts()
   end
 end
 
---[[function controls(stack)
+function Stack.controls(self)
   local new_dir = nil
-  if (keys[k_raise1] or keys[k_raise2] or this_frame_keys[k_raise1] or
-      this_frame_keys[k_raise2]) and (not stack.prevent_manual_raise) then
-    stack.manual_raise = true
-    stack.manual_raise_yet = false
-  end
-
-  stack.swap_1 = this_frame_keys[k_swap1]
-  stack.swap_2 = this_frame_keys[k_swap2]
-
-  if keys[k_up] or this_frame_keys[k_up] then
-    new_dir = "up"
-  elseif keys[k_down] or this_frame_keys[k_down] then
-    new_dir = "down"
-  elseif keys[k_left] or this_frame_keys[k_left] then
-    new_dir = "left"
-  elseif keys[k_right] or this_frame_keys[k_right] then
-    new_dir = "right"
-  end
-
-  if new_dir == stack.cur_dir then
-    if stack.cur_timer ~= stack.cur_wait_time then
-      stack.cur_timer = stack.cur_timer + 1
-    end
-  else
-    stack.cur_dir = new_dir
-    stack.cur_timer = 0
-  end--]]
-
-  --[[for i=1,3 do
-    if this_frame_keys[i..""] then
-      stack:drop_garbage(i+2,1)
-    end
-  end
-  for i=4,9 do
-    if this_frame_keys[i..""] then
-      stack:drop_garbage(6,i-3)
-    end
-  end
-  if this_frame_keys["0"] then
-    stack:drop_garbage(6,1,true)
-  end--]]
---end
-
-function fake_controls(stack)
-  local new_dir = nil
-  local sdata = stack.input_state
+  local sdata = self.input_state
   local raise, swap, up, down, left, right = unpack(base64decode[sdata])
-  if (raise) and (not stack.prevent_manual_raise) then
-    stack.manual_raise = true
-    stack.manual_raise_yet = false
+  if (raise) and (not self.prevent_manual_raise) then
+    self.manual_raise = true
+    self.manual_raise_yet = false
   end
 
-  stack.swap_1 = swap
-  stack.swap_2 = swap
+  self.swap_1 = swap
+  self.swap_2 = swap
 
   if up then
     new_dir = "up"
@@ -121,12 +76,12 @@ function fake_controls(stack)
     new_dir = "right"
   end
 
-  if new_dir == stack.cur_dir then
-    if stack.cur_timer ~= stack.cur_wait_time then
-      stack.cur_timer = stack.cur_timer + 1
+  if new_dir == self.cur_dir then
+    if self.cur_timer ~= self.cur_wait_time then
+      self.cur_timer = self.cur_timer + 1
     end
   else
-    stack.cur_dir = new_dir
-    stack.cur_timer = 0
+    self.cur_dir = new_dir
+    self.cur_timer = 0
   end
 end

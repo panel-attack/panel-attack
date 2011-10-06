@@ -7,10 +7,23 @@ Client connects to server and says "H" followed by a 3-digit protocol version nu
     for example, "H139"
 Server can reply...
     "H" (meaning you have to wait for an opponent)
-        Server will later send "G" when game is beginning
-    "G" (meaning the game is beginning)
+        Server will later send "G" when opponent is found
+    "G" (meaning pick your level)
     "N" (meaning FUCK YOU your protocol is out of date)
 
+Client picks a level!
+    In this state, server can send "L" followed by a level (0=10)
+    This is the level the opponent chose.  This choice cannot be undone.
+    For example, "L5"
+Client can say
+"L" followed by a level (0=10)
+    This is the level the client picks.  For example, "L5"
+
+After a client sends L and receives L, it will ask for panels and
+garbage panels.  Play will begin as soon as panels and garbage
+panels are known for both stacks.
+
+gameplay!
 Whenever it likes, client will ask the server for panels by saying
 "P" followed by a 1-digit number of colors and a 6-digit bottommost row of panels.
     for example, "P5524153"

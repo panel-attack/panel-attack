@@ -271,6 +271,8 @@ function Stack.render(self)
       local mins = floor(time_left/60)
       local secs = floor(time_left%60)
       gprint("Time: "..string.format("%01d:%02d",mins,secs), self.score_x, 160)
+    elseif self.level then
+      gprint("Level: "..self.level, self.score_x, 160)
     end
   end
   self:draw_cards()

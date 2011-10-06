@@ -3,7 +3,8 @@ import random
 from twisted.internet.protocol import Protocol, Factory
 from twisted.internet import reactor
 
-type_to_length = {"H": 4, "P": 8, "I": 2, "Q": 8}
+VERSION = "000"
+type_to_length = {"H":4, "P":8, "I":2, "L":2, "Q":8}
 
 class PanelServ(Protocol):
     def connectionMade(self):
@@ -32,6 +33,8 @@ class PanelServ(Protocol):
                 self.forward_input(goo)
             elif type == "Q":
                 self.garbage_panels(goo)
+            elif type == "L":
+                self.neighbor.transport.write("L"+goo)
             else:
                 if not erryet:
                     erryet = True
@@ -41,8 +44,9 @@ class PanelServ(Protocol):
         self.leftovers = data[idx:]
 
     def handshake(self, version):
-        # TODO: care about the version number.
-        if self.factory.wait_index is not None:
+        if version != VERSION:
+            self.transport.write("N")
+        elif self.factory.wait_index is not None:
             self.neighbor = self.factory.conns[self.factory.wait_index]
             self.factory.wait_index = None
             self.neighbor.neighbor = self
