@@ -83,7 +83,6 @@ do
       elseif menu_down() then
         active_idx = wrap(1, active_idx+1, #items)
       elseif menu_enter() then
-        print(items[active_idx][2])
         return items[active_idx][2], items[active_idx][3]
       elseif menu_escape() then
         if active_idx == #items then
