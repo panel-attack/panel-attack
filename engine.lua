@@ -11,6 +11,9 @@ local GARBAGE_DELAY = 52
 Stack = class(function(s, mode, speed, difficulty)
     s.max_health = 1
     s.mode = mode or "endless"
+    if mode ~= "puzzle" then
+      s.do_first_row = true
+    end
 
     if s.mode == "2ptime" or s.mode == "vs" then
       local level = speed or 5
@@ -271,8 +274,19 @@ function Stack.prep_rollback(self)
   end
 end
 
+function Stack.starting_state(self, n)
+  if self.do_first_row then
+    self.do_first_row = nil
+    for i=1,(n or 8) do
+      self:new_row()
+      self.cur_row = self.cur_row-1
+    end
+  end
+end
+
 function Stack.prep_first_row(self)
-  if self.CLOCK == 0 and self.mode ~= "puzzle" then
+  if self.do_first_row then
+    self.do_first_row = nil
     self:new_row()
     self.cur_row = self.cur_row-1
   end

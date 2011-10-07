@@ -66,7 +66,7 @@ function network_init(ip)
     error("Failed to connect =(")
   end
   TCP_sock:settimeout(0)
-  net_send("H000")
+  net_send("H001")
 end
 
 function do_messages()

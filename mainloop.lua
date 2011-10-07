@@ -6,7 +6,7 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   menu_up, menu_down, menu_left, menu_right, menu_enter, menu_escape
 
 function fmainloop()
-  local func, arg = main_select_mode, {}
+  local func, arg = main_select_mode, nil
   while true do
     func,arg = func(unpack(arg or {}))
   end
@@ -52,42 +52,45 @@ function menu_escape()
     (this_frame_keys[k_swap2] and not menu_reserved_keys[k_swap2])
 end
 
-function main_select_mode()
-  local items = {{"1P endless", main_select_speed_99, {main_endless}},
-      {"1P puzzle", main_select_puzz},
-      {"1P time attack", main_select_speed_99, {main_time_attack}},
-      {"2P fakevs at dustinho.com", main_net_vs_setup, {"dustinho.com"}},
-      {"2P fakevs on localhost", main_net_vs_setup, {"127.0.0.1"}},
-      {"Replay of 1P endless", main_replay_endless},
-      {"Replay of 1P puzzle", main_replay_puzzle},
-      {"Configure input", main_config_input},
-      {"Quit", os.exit}}
+do
   local active_idx = 1
-  while true do
-    local to_print = ""
-    local arrow = ""
-    for i=1,#items do
-      if active_idx == i then
-        arrow = arrow .. ">"
-      else
-        arrow = arrow .. "\n"
+  function main_select_mode()
+    local items = {{"1P endless", main_select_speed_99, {main_endless}},
+        {"1P puzzle", main_select_puzz},
+        {"1P time attack", main_select_speed_99, {main_time_attack}},
+        {"2P fakevs at dustinho.com", main_net_vs_setup, {"dustinho.com"}},
+        {"2P fakevs on localhost", main_net_vs_setup, {"127.0.0.1"}},
+        {"Replay of 1P endless", main_replay_endless},
+        {"Replay of 1P puzzle", main_replay_puzzle},
+        {"Configure input", main_config_input},
+        {"Quit", os.exit}}
+    while true do
+      local to_print = ""
+      local arrow = ""
+      for i=1,#items do
+        if active_idx == i then
+          arrow = arrow .. ">"
+        else
+          arrow = arrow .. "\n"
+        end
+        to_print = to_print .. "   " .. items[i][1] .. "\n"
       end
-      to_print = to_print .. "   " .. items[i][1] .. "\n"
-    end
-    gprint(arrow, 300, 280)
-    gprint(to_print, 300, 280)
-    wait()
-    if menu_up() then
-      active_idx = wrap(1, active_idx-1, #items)
-    elseif menu_down() then
-      active_idx = wrap(1, active_idx+1, #items)
-    elseif menu_enter() then
-      return items[active_idx][2], items[active_idx][3]
-    elseif menu_escape() then
-      if active_idx == #items then
+      gprint(arrow, 300, 280)
+      gprint(to_print, 300, 280)
+      wait()
+      if menu_up() then
+        active_idx = wrap(1, active_idx-1, #items)
+      elseif menu_down() then
+        active_idx = wrap(1, active_idx+1, #items)
+      elseif menu_enter() then
+        print(items[active_idx][2])
         return items[active_idx][2], items[active_idx][3]
-      else
-        active_idx = #items
+      elseif menu_escape() then
+        if active_idx == #items then
+          return items[active_idx][2], items[active_idx][3]
+        else
+          active_idx = #items
+        end
       end
     end
   end
@@ -237,6 +240,8 @@ function main_net_vs_setup(ip)
     do_messages()
     wait()
   end
+  P1:starting_state()
+  P2:starting_state()
   return main_net_vs
 end
 
@@ -336,7 +341,7 @@ function make_main_puzzle(puzzles)
       P1:render()
       wait()
       if P1.n_active_panels == 0 and
-          prev_active_panels == 0 then
+          P1.prev_active_panels == 0 then
         if P1:puzzle_done() then
           awesome_idx = (awesome_idx % #puzzles) + 1
           write_replay_file()

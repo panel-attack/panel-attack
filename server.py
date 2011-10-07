@@ -3,7 +3,7 @@ import random
 from twisted.internet.protocol import Protocol, Factory
 from twisted.internet import reactor
 
-VERSION = "000"
+VERSION = "001"
 type_to_length = {"H":4, "P":8, "I":2, "L":2, "Q":8}
 
 class PanelServ(Protocol):
@@ -30,7 +30,7 @@ class PanelServ(Protocol):
             elif type == "P":
                 self.panels(goo)
             elif type == "I":
-                self.forward_input(goo)
+                self.neighbor.transport.write("I"+goo)
             elif type == "Q":
                 self.garbage_panels(goo)
             elif type == "L":
@@ -56,15 +56,20 @@ class PanelServ(Protocol):
             self.factory.wait_index = self.index
             self.transport.write("H")
 
-    def forward_input(self, data):
-        self.neighbor.transport.write("I"+data)
-
     def panels(self, data):
         ncolors = int(data[:1])
         if ncolors < 2:
             return
-        ret = list(map(int,data[1:]))
-        for x in xrange(20):
+        prev_panels = data[1:]
+        cut_panels = False
+        ret = list(map(int,prev_panels))
+        if prev_panels == "000000":
+            first_seven = getattr(self, "first_seven", None)
+            if first_seven and self.op_ncolors == ncolors:
+                ret = first_seven
+            else:
+                cut_panels = True
+        for x in xrange(21-len(ret)/6):
             for y in xrange(6):
                 prevtwo = y>1 and ret[-1]==ret[-2]
                 nogood = True
@@ -72,7 +77,21 @@ class PanelServ(Protocol):
                     color = random.randint(1,ncolors)
                     nogood = (prevtwo and color == ret[-1]) or color == ret[-6]
                 ret.append(color)
+        if cut_panels:
+            height = [7]*6
+            to_remove = 12
+            while to_remove:
+                idx = random.randint(0,5)
+                if height[idx]:
+                    #          v 7->1, 6->2, etc
+                    ret[6*(-height[idx]+8) + idx] = "0"
+                    height[idx] -= 1
+                    to_remove -= 1
+            self.neighbor.first_seven = ret[:48]
+            self.neighbor.op_ncolors = ncolors
+
         ret = "".join(map(str,ret[6:]))
+        print ret
         self.transport.write("P"+ret)
         self.neighbor.transport.write("O"+ret)
 
