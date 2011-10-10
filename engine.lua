@@ -158,6 +158,7 @@ function Stack.mkcpy(self, other)
   else
 
   end--]]
+  other.later_garbage = self.later_garbage
   other.garbage_q = deepcpy(self.garbage_q)
   other.garbage_to_send = deepcpy(self.garbage_to_send)
   other.input_state = self.input_state
