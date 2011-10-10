@@ -4,9 +4,10 @@
   --  . the main game routine
   --    (rising, timers, falling, cursor movement, swapping, landing)
   --  . the matches-checking routine
-local min = math.min
+local min, pairs, deepcpy = math.min, pairs, deepcpy
 local garbage_bounce_time = #garbage_bounce_table
 local GARBAGE_DELAY = 52
+local clone_pool = {}
 
 Stack = class(function(s, mode, speed, difficulty)
     s.max_health = 1
@@ -51,7 +52,6 @@ Stack = class(function(s, mode, speed, difficulty)
     s.panels = {}
     s.width = 6
     s.height = 12
-    s.size = s.width * s.height
     for i=0,s.height do
       s.panels[i] = {}
       for j=1,s.width do
@@ -136,6 +136,83 @@ Stack = class(function(s, mode, speed, difficulty)
 
     s.prev_states = {}
   end)
+
+function Stack.mkcpy(self, other)
+  if other == nil then
+    if #clone_pool == 0 then
+      other = {}
+    else
+      other = clone_pool[#clone_pool]
+      clone_pool[#clone_pool] = nil
+    end
+  end
+  other.speed = self.speed
+  other.health = self.health
+  other.garbage_cols = deepcpy(self.garbage_cols)
+  --[[if self.garbage_cols then
+    other.garbage_idxs = other.garbage_idxs or {}
+    local n_g_cols = #(self.garbage_cols or other.garbage_cols)
+    for i=1,n_g_cols do
+      other.garbage_idxs[i]=self.garbage_cols[i].idx
+    end
+  else
+
+  end--]]
+  other.garbage_q = deepcpy(self.garbage_q)
+  other.garbage_to_send = deepcpy(self.garbage_to_send)
+  other.input_state = self.input_state
+  local height = self.height or other.height
+  local width = self.width or other.width
+  local height_to_cpy = #self.panels
+  other.panels = other.panels or {}
+  for i=1,height_to_cpy do
+    if other.panels[i] == nil then
+      other.panels[i] = {}
+      for j=1,self.width do
+        other.panels[i][j] = Panel()
+      end
+    end
+    for j=1,(self.width or other.width) do
+      local opanel = other.panels[i][j]
+      local spanel = self.panels[i][j]
+      opanel:clear()
+      for k,v in pairs(spanel) do
+        opanel[k] = v
+      end
+    end
+  end
+  for i=height_to_cpy+1,#other.panels do
+    for j=1,self.width do
+      other.panels[i][j]:clear()
+    end
+  end
+  other.CLOCK = self.CLOCK
+  other.displacement = self.displacement
+  other.speed_times = deepcpy(self.speed_times)
+  other.panels_to_speedup = self.panels_to_speedup
+  other.stop_time = self.stop_time
+  other.stop_time_timer = self.stop_time_timer
+  other.score = self.score
+  other.chain_counter = self.chain_counter
+  other.n_active_panels = self.n_active_panels
+  other.prev_active_panels = self.prev_active_panels
+  other.n_chain_panels = self.n_chain_panels
+  other.FRAMECOUNT_RISE = self.FRAMECOUNT_RISE
+  other.rise_timer = self.rise_timer
+  other.manual_raise_yet = self.manual_raise_yet
+  other.prevent_manual_raise = self.prevent_manual_raise
+  other.cur_timer = self.cur_timer
+  other.cur_dir = self.cur_dir
+  other.cur_row = self.cur_row
+  other.cur_col = self.cur_col
+  other.card_q = deepcpy(self.card_q)
+  return other
+end
+
+function Stack.fromcpy(self, other)
+  Stack.mkcpy(other,self)
+  self:remove_extra_rows()
+end
 
 Panel = class(function(p)
     p:clear()
@@ -231,7 +308,8 @@ end
 
 function Stack.set_puzzle_state(self, pstr, n_turns)
   -- Copy the puzzle into our state
-  while string.len(pstr) < self.size do
+  local sz = self.width * self.height
+  while string.len(pstr) < sz do
     pstr = "0" .. pstr
   end
   local idx = 1
@@ -267,7 +345,8 @@ function Stack.prep_rollback(self)
     local garbage_target = self.garbage_target
     self.garbage_target = nil
     self.prev_states = nil
-    prev_states[self.CLOCK] = deepcpy(self)
+    prev_states[self.CLOCK] = self:mkcpy()
+    clone_pool[#clone_pool+1] = prev_states[self.CLOCK-400]
     prev_states[self.CLOCK-400] = nil
     self.prev_states = prev_states
     self.garbage_target = garbage_target
@@ -817,12 +896,14 @@ function Stack.PdP(self)
 
     -- if there's no chain, we can send it
     if self.chain_counter == 0 then
-      table.sort(to_send, function(a,b)
+      if #to_send > 0 then
+        table.sort(to_send, function(a,b)
             if a[4] or b[3] then return true end
             if b[4] or a[3] then return false end
             return a[1] < b[1]
           end)
-      self:really_send(to_send)
+        self:really_send(to_send)
+      end
     elseif self.garbage_to_send.chain then
       local waiting_for_chain = self.garbage_to_send.chain
       for i=1,#to_send do
@@ -833,7 +914,29 @@ function Stack.PdP(self)
     end
   end
 
-  for row=#panels,height+1,-1 do
+  self:remove_extra_rows()
+
+  local garbage = self.later_garbage[self.CLOCK]
+  if garbage then
+    for i=1,#garbage do
+      self.garbage_q:push(garbage[i])
+    end
+  end
+  self.later_garbage[self.CLOCK-409] = nil
+
+  local drop_it = self.n_active_panels == 0 and
+      self.prev_active_panels == 0
+  if drop_it and self.garbage_q:len() > 0 then
+    self:drop_garbage(unpack(self.garbage_q:pop()))
+  end
+
+  self.CLOCK = self.CLOCK + 1
+end
+
+function Stack.remove_extra_rows(self)
+  local panels = self.panels
+  local width = self.width
+  for row=#panels,self.height+1,-1 do
     local nonempty = false
     local prow = panels[row]
     for col=1,width do
@@ -845,22 +948,6 @@ function Stack.PdP(self)
       panels[row]=nil
     end
   end
-
-  local garbage = self.later_garbage[self.CLOCK]
-  if garbage then
-    self.later_garbage[self.CLOCK] = nil
-    for i=1,#garbage do
-      self.garbage_q:push(garbage[i])
-    end
-  end
-
-  local drop_it = self.n_active_panels == 0 and
-      self.prev_active_panels == 0
-  if drop_it and self.garbage_q:len() > 0 then
-    self:drop_garbage(unpack(self.garbage_q:pop()))
-  end
-
-  self.CLOCK = self.CLOCK + 1
 end
 
 -- drops a width x height garbage.
@@ -932,32 +1019,30 @@ function Stack.set_chain_garbage(self, n_chain)
   tab[#tab+1] = {6, n_chain-1, false, true}
 end
 
-function Stack.really_send(self, ...)
+function Stack.really_send(self, to_send)
   if self.garbage_target then
-    self.garbage_target:recv_garbage(self.CLOCK + GARBAGE_DELAY, ...)
+    self.garbage_target:recv_garbage(self.CLOCK + GARBAGE_DELAY, to_send)
   end
 end
 
 function Stack.recv_garbage(self, time, to_recv)
-  if self.in_rollback then
-    error("This error doesn't even vaguely make sense")
-  end
   if self.CLOCK > time then
     local prev_states = self.prev_states
     local next_self = prev_states[time+1]
     while next_self and (next_self.prev_active_panels ~= 0 or
-        next_self.active_panels ~= 0) do
+        next_self.n_active_panels ~= 0) do
       time = time + 1
       next_self = prev_states[time+1]
     end
     if self.CLOCK - time > 200 then
       error("Latency is too high :(")
     else
+      local CLOCK = self.CLOCK
       local old_self = prev_states[time]
       --MAGICAL ROLLBACK!?!?
       self.in_rollback = true
-      print("attempting magical rollback with difference = "..self.CLOCK-time)
-      old_self:recv_garbage(time, to_recv)
+      print("attempting magical rollback with difference = "..self.CLOCK-time..
+          " at time "..self.CLOCK)
 
       -- The garbage that we send this time might (rarely) not be the same
       -- as the garbage we sent before.  Wipe out the garbage we sent before...
@@ -969,7 +1054,6 @@ function Stack.recv_garbage(self, time, to_recv)
         end
       end
       -- and record the garbage that we send this time!
-      old_self.garbage_target = self.garbage_target
 
       -- We can do it like this because the sender of the garbage
       -- and self.garbage_target are the same thing.
@@ -981,17 +1065,14 @@ function Stack.recv_garbage(self, time, to_recv)
       -- the same thing as long as we keep all of the opponents'
       -- stacks in sync.
 
-      for t=time,self.CLOCK-1 do
-        old_self.input_state = prev_states[t].input_state
-        prev_states[t] = deepcpy(old_self)
-        old_self:controls()
-        old_self:PdP()
-      end
-      local nogood_keys = {input_buffer=true,gpanel_buffer=true,panel_buffer=true}
-      for k,v in pairs(old_self) do
-        if not nogood_keys[k] then
-          self[k]=v
-        end
+      self:fromcpy(prev_states[time])
+      self:recv_garbage(time, to_recv)
+
+      for t=time,CLOCK-1 do
+        self.input_state = prev_states[t].input_state
+        self:mkcpy(prev_states[t])
+        self:controls()
+        self:PdP()
       end
       self.in_rollback = nil
     end

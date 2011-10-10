@@ -6,4 +6,4 @@ cat ~/lovex/love.exe panel-attack.love > panel.exe
 echo "Zip windows exe"
 cp ~/lovex/*dll .
 zip panel.zip *dll panel.exe
-rm panel.exe *dll
+rm *dll
