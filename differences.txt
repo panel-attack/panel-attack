@@ -28,4 +28,10 @@ implement things for chains past 13.
 The chain that is performed by swapping in the above configuration
 just as the match of 1's finishes clearing becomes possible 1 frame too
 early and stops being possible 1 frame too early.  As a result it is possible
-for the correct number of frames.  This doesn't seem like a big issue.
+for the correct number of frames.  This isn't a big issue.
+
+The procedures for generating initial configurations of panels and clusters
+of [!] blocks bear only a superficial resemblance to the ones employed in
+Tetris Attack.  Many fewer initial configurations are posible in Tetris Attack,
+and Tetris Attack's procedure for [!] blocks is based on how many
+panels the player clears, while panel-attack's is not.

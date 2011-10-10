@@ -3,7 +3,7 @@ import random
 from twisted.internet.protocol import Protocol, Factory
 from twisted.internet import reactor
 
-VERSION = "001"
+VERSION = "002"
 type_to_length = {"H":4, "P":8, "I":2, "L":2, "Q":8}
 
 class PanelServ(Protocol):
@@ -12,6 +12,11 @@ class PanelServ(Protocol):
         self.factory.index += 1
         self.factory.conns[self.index] = self
         self.leftovers = ""
+        self.vs_mode = False
+        self.metal = False
+        self.rows_left = 14+random.randint(1,8)
+        self.prev_metal_col = None
+        self.metal_col = None
         print("connected! %s"%self.index)
 
     def dataReceived(self, data):
@@ -67,16 +72,32 @@ class PanelServ(Protocol):
             first_seven = getattr(self, "first_seven", None)
             if first_seven and self.op_ncolors == ncolors:
                 ret = first_seven
+                self.rows_left -= 7
             else:
                 cut_panels = True
         for x in xrange(21-len(ret)/6):
+            if self.metal:
+                nogood = True
+                while nogood:
+                    self.metal_col = random.randint(0,5)
+                    nogood = (self.metal_col == self.prev_metal_col)
             for y in xrange(6):
                 prevtwo = y>1 and ret[-1]==ret[-2]
                 nogood = True
                 while nogood:
-                    color = random.randint(1,ncolors)
+                    color = 8 if y == self.metal_col else random.randint(1,ncolors)
                     nogood = (prevtwo and color == ret[-1]) or color == ret[-6]
                 ret.append(color)
+            self.prev_metal_col = self.metal_col
+            self.metal_col = None
+            self.rows_left -= 1
+            if self.rows_left == 0:
+                if self.vs_mode:
+                    self.metal = not self.metal
+                if self.metal:
+                    self.rows_left = random.randint(1,4)
+                else:
+                    self.rows_left = random.randint(1,8)
         if cut_panels:
             height = [7]*6
             to_remove = 12
@@ -96,6 +117,7 @@ class PanelServ(Protocol):
         self.neighbor.transport.write("O"+ret)
 
     def garbage_panels(self, data):
+        self.vs_mode = True
         ncolors = int(data[:1])
         if ncolors < 2:
             return

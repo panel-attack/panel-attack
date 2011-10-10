@@ -226,8 +226,8 @@ function main_net_vs_setup(ip)
   P2.pos_x = 172
   P2.score_x = 410
   replay.vs = {P="",O="",I="",Q="",R="",in_buf=""}
-  ask_for_panels("000000")
   ask_for_gpanels("000000")
+  ask_for_panels("000000")
   to_print = "Level: "..my_level.."\nOpponent's level: "..(P2_level or "???")
   for i=1,30 do
     gprint(to_print,300, 280)
