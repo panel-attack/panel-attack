@@ -9,6 +9,7 @@ function fmainloop()
   local func, arg = main_select_mode, nil
   while true do
     func,arg = func(unpack(arg or {}))
+    collectgarbage("collect")
   end
 end
 

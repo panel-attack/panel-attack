@@ -168,11 +168,11 @@ function Stack.mkcpy(self, other)
   for i=1,height_to_cpy do
     if other.panels[i] == nil then
       other.panels[i] = {}
-      for j=1,self.width do
+      for j=1,width do
         other.panels[i][j] = Panel()
       end
     end
-    for j=1,(self.width or other.width) do
+    for j=1,width do
       local opanel = other.panels[i][j]
       local spanel = self.panels[i][j]
       opanel:clear()
@@ -182,7 +182,7 @@ function Stack.mkcpy(self, other)
     end
   end
   for i=height_to_cpy+1,#other.panels do
-    for j=1,self.width do
+    for j=1,width do
       other.panels[i][j]:clear()
     end
   end
