@@ -280,6 +280,10 @@ do
     return self.color ~= 0 or self.hovering
   end
 
+  -- "Block garbage fall" means
+  -- "falling-ness should not propogate up through this panel"
+  -- We need this because garbage doesn't hover, it just falls
+  -- opportunistically.
   local block_garbage_fall_set = {matched=true, popping=true,
       popped=true, hovering=true, swapping=true}
   function Panel.block_garbage_fall(self)
