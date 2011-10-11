@@ -162,13 +162,19 @@ function Stack.draw_cards(self)
 end
 
 function Stack.render(self)
+  local mx,my
+  if DEBUG_MODE then
+    local mx,my = love.mouse.getPosition()
+    mx = mx / GFX_SCALE
+    my = my / GFX_SCALE
+  end
   for row=0,self.height do
     for col=1,self.width do
       local panel = self.panels[row][col]
+      local draw_x = (col-1) * 16 + self.pos_x
+      local draw_y = (11-(row)) * 16 + self.pos_y + self.displacement
       if panel.color ~= 0 and panel.state ~= "popped" then
         local draw_frame = 1
-        local draw_x = (col-1) * 16 + self.pos_x
-        local draw_y = (11-(row)) * 16 + self.pos_y + self.displacement
         if panel.garbage then
           local done_here = false
           if panel.state == "matched" then
@@ -256,6 +262,11 @@ function Stack.render(self)
           end
           draw(IMG_panels[panel.color][draw_frame], draw_x, draw_y)
         end
+      end
+      if DEBUG_MODE and mx >= draw_x and mx < draw_x + 16 and
+          my >= draw_y and my < draw_y + 16 then
+        mouse_panel = {row, col, panel}
+        draw(IMG_panels[4][1], draw_x+16/3, draw_y+16/3, 0, 0.33333333, 0.3333333)
       end
     end
   end

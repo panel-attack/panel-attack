@@ -3,7 +3,8 @@ local wait = coroutine.yield
 local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_replay_endless, main_replay_puzzle, main_net_vs,
   main_config_input, main_dumb_transition, main_select_puzz,
-  menu_up, menu_down, menu_left, menu_right, menu_enter, menu_escape
+  menu_up, menu_down, menu_left, menu_right, menu_enter, menu_escape,
+  main_replay_vs
 
 function fmainloop()
   local func, arg = main_select_mode, nil
@@ -63,6 +64,7 @@ do
         {"2P fakevs on localhost", main_net_vs_setup, {"127.0.0.1"}},
         {"Replay of 1P endless", main_replay_endless},
         {"Replay of 1P puzzle", main_replay_puzzle},
+        {"Replay of 2P fakevs", main_replay_vs},
         {"Configure input", main_config_input},
         {"Quit", os.exit}}
     while true do
@@ -270,6 +272,65 @@ function main_net_vs()
       undo_stonermode()
       write_replay_file()
       close_socket()
+      return main_dumb_transition, {main_select_mode, end_text}
+    end
+  end
+end
+
+function main_replay_vs()
+  local replay = replay.vs
+  P1 = Stack("vs", 5)
+  P2 = Stack("vs", 5)
+  P1.garbage_target = P2
+  P2.garbage_target = P1
+  P2.pos_x = 172
+  P2.score_x = 410
+  P1.input_buffer = replay.in_buf
+  P1.panel_buffer = replay.P
+  P1.gpanel_buffer = replay.Q
+  P2.input_buffer = replay.I
+  P2.panel_buffer = replay.O
+  P2.gpanel_buffer = replay.R
+  P1.max_runs_per_frame = 1
+  P2.max_runs_per_frame = 1
+  P1:starting_state()
+  P2:starting_state()
+  local end_text = nil
+  local run = true
+  while true do
+    mouse_panel = nil
+    P1:render()
+    P2:render()
+    if mouse_panel then
+      local str = "Panel info:\nrow: "..mouse_panel[1].."\ncol: "..mouse_panel[2]
+      for k,v in spairs(mouse_panel[3]) do
+        str = str .. "\n".. k .. ": "..tostring(v)
+      end
+      gprint(str, 350, 400)
+    end
+    wait()
+    if this_frame_keys["return"] then
+      run = not run
+    end
+    if this_frame_keys["\\"] then
+      run = false
+    end
+    if run or this_frame_keys["\\"] then
+      if not P1.game_over then
+        P1:foreign_run()
+      end
+      if not P2.game_over then
+        P2:foreign_run()
+      end
+    end
+    if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
+      end_text = "Draw"
+    elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
+      end_text = "You lose :("
+    elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
+      end_text = "You win ^^"
+    end
+    if end_text then
       return main_dumb_transition, {main_select_mode, end_text}
     end
   end

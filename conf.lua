@@ -4,7 +4,7 @@ function love.conf(t)
   t.screen.width = 819
   t.screen.height = 615
   t.modules.audio = false
-  t.modules.mouse = false
+  t.modules.mouse = true
   t.modules.sound = false
   t.modules.physics = false
   t.identity = "Panel Attack"

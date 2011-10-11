@@ -129,3 +129,5 @@ combo_garbage = {{}, {}, {}, {3}, {4},
 for i=1,72 do
   combo_garbage[i] = combo_garbage[i] or combo_garbage[i-1]
 end
+
+DEBUG_MODE = nil
