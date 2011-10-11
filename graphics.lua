@@ -164,7 +164,7 @@ end
 function Stack.render(self)
   local mx,my
   if DEBUG_MODE then
-    local mx,my = love.mouse.getPosition()
+    mx,my = love.mouse.getPosition()
     mx = mx / GFX_SCALE
     my = my / GFX_SCALE
   end
