@@ -521,12 +521,9 @@ function Stack.PdP(self)
         skip_col = skip_col - 1
         cntinue=true
       end
-      -- first of all, we do Nothin' if we're not even looking
-      -- at a space with any flags.
       panel = panels[row][col]
       if cntinue then
       elseif panel.garbage then
-        -- TODO: also deal with matching/popping garbage....
         if panel.state == "matched" then
           panel.timer = panel.timer - 1
           if panel.timer == 0 then
@@ -554,6 +551,7 @@ function Stack.PdP(self)
           if supported then
             for x=col,col-1+panel.width do
               panels[row][x].state = "normal"
+              propogate_fall[x] = false
             end
           else
             skip_col = panel.width-1
@@ -1103,7 +1101,7 @@ function Stack.check_matches(self)
 
   for col=1,self.width do
     for row=1,self.height do
-      panels[row][col].matching = false
+      panels[row][col].matching = nil
     end
   end
 
@@ -1354,7 +1352,9 @@ function Stack.set_hoverers(self, row, col, hover_time, add_chaining,
         panel.state = "hovering"
         local adding_chaining = (not chaining) and panel.color~=9 and
             add_chaining
-        panel.chaining = chaining or adding_chaining
+        if chaining or adding_chaining then
+          panel.chaining = true
+        end
         panel.timer = hovers_time
         if extra_tick then
           panel.timer = panel.timer + not_first
