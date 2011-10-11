@@ -343,7 +343,6 @@ function main_replay_endless()
       {main_select_mode, "I don't have an endless replay :("}
   end
   P1 = Stack("endless",replay.speed, replay.difficulty)
-  P1.garbage_target = P1
   P1.max_runs_per_frame = 1
   P1.input_buffer = table.concat({replay.in_buf})
   P1.panel_buffer = replay.pan_buf
