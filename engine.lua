@@ -900,9 +900,7 @@ function Stack.PdP(self)
     if self.chain_counter == 0 then
       if #to_send > 0 then
         table.sort(to_send, function(a,b)
-            if a[4] or b[3] then return true end
-            if b[4] or a[3] then return false end
-            return a[1] < b[1]
+            return (a[4] and not b[4]) or (b[3] and not a[3]) or a[1] < b[1]
           end)
         self:really_send(to_send)
       end
