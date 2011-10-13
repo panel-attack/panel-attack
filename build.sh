@@ -1,6 +1,6 @@
 #!/bin/sh
 rm panel-attack.love panel.zip panel.exe
-zip -r panel-attack.love *.lua *.txt README THANKS COPYING server.py build.sh assets/*.png
+zip -r panel-attack.love *.lua *.txt README THANKS COPYING server.py build.sh assets/*.png assets/*/*png
 echo "Build windows exe"
 cat ~/lovex/love.exe panel-attack.love > panel.exe
 echo "Zip windows exe"

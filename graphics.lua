@@ -108,8 +108,8 @@ function graphics_init()
     end
   end
 
-  --[[IMG_cirno = load_img("assets/cirno.png")
-  IMG_mokou = load_img("assets/mokou.png")--]]
+  IMG_cirno = load_img("assets/cirno.png")
+  IMG_mokou = load_img("assets/mokou.png")
 
   IMG_metal = load_img("assets/metalmid.png")
   IMG_metal_l = load_img("assets/metalend0.png")
@@ -178,11 +178,11 @@ function Stack.render(self)
     mx = mx / GFX_SCALE
     my = my / GFX_SCALE
   end
-  --[[if P1 == self then
-    draw(IMG_mokou, self.pos_x, self.pos_y, 0, 1/3, 1/3)
+  if P1 == self then
+    draw(IMG_mokou, self.pos_x, self.pos_y)--, 0, 1/3, 1/3)
   else
-    draw(IMG_cirno, self.pos_x, self.pos_y, 0, 1/3, 1/3)
-  end--]]
+    draw(IMG_cirno, self.pos_x, self.pos_y)--, 0, 1/3, 1/3)
+  end
   for row=0,self.height do
     for col=1,self.width do
       local panel = self.panels[row][col]
@@ -216,9 +216,9 @@ function Stack.render(self)
                 end
               end
               if height%2==1 then
-                draw(imgs.face, draw_x+40, top_y+16*((height-1)/2))
+                draw(imgs.face, draw_x+8*(width-1), top_y+16*((height-1)/2))
               else
-                draw(imgs.doubleface, draw_x+40, top_y+16*((height-2)/2))
+                draw(imgs.doubleface, draw_x+8*(width-1), top_y+16*((height-2)/2))
               end
               draw(imgs.left, draw_x, top_y, 0, 1, height*16)
               draw(imgs.right, draw_x+16*(width-1)+8, top_y, 0, 1, height*16)
