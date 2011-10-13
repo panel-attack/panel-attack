@@ -95,11 +95,21 @@ function graphics_init()
     IMG_panels[9][j]=load_img("assets/panel00.png")
   end
 
-  IMG_garbage = load_img("assets/bluemid1.png")
-  IMG_garbage_l = load_img("assets/blueend10.png")
-  IMG_garbage_r = load_img("assets/blueend11.png")
-  IMG_garbage_pop = load_img("assets/bluepop.png")
-  IMG_garbage_flash = load_img("assets/garbageflash.png")
+  local g_keys = {"ice", "fire"}
+  local g_parts = {"topleft", "botleft", "topright", "botright",
+                    "top", "bot", "left", "right", "face", "pop",
+                    "doubleface", "filler1", "filler2", "flash"}
+  IMG_garbage = {}
+  for _,key in ipairs(g_keys) do
+    local imgs = {}
+    IMG_garbage[key] = imgs
+    for _,part in ipairs(g_parts) do
+      imgs[part] = load_img("assets/"..key.."/"..part..".png")
+    end
+  end
+
+  --[[IMG_cirno = load_img("assets/cirno.png")
+  IMG_mokou = load_img("assets/mokou.png")--]]
 
   IMG_metal = load_img("assets/metalmid.png")
   IMG_metal_l = load_img("assets/metalend0.png")
@@ -168,6 +178,11 @@ function Stack.render(self)
     mx = mx / GFX_SCALE
     my = my / GFX_SCALE
   end
+  --[[if P1 == self then
+    draw(IMG_mokou, self.pos_x, self.pos_y, 0, 1/3, 1/3)
+  else
+    draw(IMG_cirno, self.pos_x, self.pos_y, 0, 1/3, 1/3)
+  end--]]
   for row=0,self.height do
     for col=1,self.width do
       local panel = self.panels[row][col]
@@ -176,7 +191,45 @@ function Stack.render(self)
       if panel.color ~= 0 and panel.state ~= "popped" then
         local draw_frame = 1
         if panel.garbage then
-          local done_here = false
+          local imgs = {}
+          if not panel.metal then
+            local style = self.ice and "ice" or "fire"
+            imgs = IMG_garbage[style]
+          end
+          if panel.x_offset == 0 and panel.y_offset == 0 then
+            -- draw the entire block!
+            if panel.metal then
+              draw(IMG_metal_l, draw_x, draw_y)
+              draw(IMG_metal_r, draw_x+16*(panel.width-1)+8,draw_y)
+              for i=1,2*(panel.width-1) do
+                draw(IMG_metal, draw_x+8*i, draw_y)
+              end
+            else
+              local height, width = panel.height, panel.width
+              local top_y = draw_y - (height-1) * 16
+              local use_1 = ((height-(height%2))/2)%2==0
+              for i=0,height-1 do
+                for j=1,width-1 do
+                  draw((use_1 or height<3) and imgs.filler1 or
+                    imgs.filler2, draw_x+16*j-8, top_y+16*i)
+                  use_1 = not use_1
+                end
+              end
+              if height%2==1 then
+                draw(imgs.face, draw_x+40, top_y+16*((height-1)/2))
+              else
+                draw(imgs.doubleface, draw_x+40, top_y+16*((height-2)/2))
+              end
+              draw(imgs.left, draw_x, top_y, 0, 1, height*16)
+              draw(imgs.right, draw_x+16*(width-1)+8, top_y, 0, 1, height*16)
+              draw(imgs.top, draw_x, top_y, 0, width*16)
+              draw(imgs.bot, draw_x, draw_y+14, 0, width*16)
+              draw(imgs.topleft, draw_x, top_y)
+              draw(imgs.topright, draw_x+16*width-8, top_y)
+              draw(imgs.botleft, draw_x, draw_y+13)
+              draw(imgs.botright, draw_x+16*width-8, draw_y+13)
+            end
+          end
           if panel.state == "matched" then
             local flash_time = panel.initial_time - panel.timer
             if flash_time >= self.FRAMECOUNT_FLASH then
@@ -185,51 +238,21 @@ function Stack.render(self)
                   draw(IMG_metal_l, draw_x, draw_y)
                   draw(IMG_metal_r, draw_x+8, draw_y)
                 else
-                  draw(IMG_garbage_pop, draw_x, draw_y)
+                  draw(imgs.pop, draw_x, draw_y)
                 end
-               done_here = true
               elseif panel.y_offset == -1 then
                 draw(IMG_panels[panel.color][
                     garbage_bounce_table[panel.timer] or 1], draw_x, draw_y)
-                done_here = true
               end
             elseif flash_time % 2 == 1 then
               if panel.metal then
                 draw(IMG_metal_l, draw_x, draw_y)
                 draw(IMG_metal_r, draw_x+8, draw_y)
               else
-                draw(IMG_garbage_pop, draw_x, draw_y)
+                draw(imgs.pop, draw_x, draw_y)
               end
-              done_here = true
             else
-              draw(IMG_garbage_flash, draw_x, draw_y)
-              done_here = true
-            end
-          end
-          if done_here or panel.y_offset > 0 then
-          elseif panel.metal then
-            draw(IMG_metal, draw_x, draw_y - 16 * (panel.height-1),0,
-                1,panel.height)
-            draw(IMG_metal, draw_x+8, draw_y - 16 * (panel.height-1),0,
-                1,panel.height)
-            if panel.x_offset == 0 then
-              draw(IMG_metal_l, draw_x, draw_y-16*(panel.height-1),0,
-                1,panel.height)
-            end
-            if panel.x_offset == panel.width - 1 then
-              draw(IMG_metal_r, draw_x+8, draw_y-16*(panel.height-1),0,
-                1,panel.height)
-            end
-          else
-            draw(IMG_garbage, draw_x, draw_y - 16 * (panel.height-1),0,
-                1,panel.height)
-            if panel.x_offset == 0 then
-              draw(IMG_garbage_l, draw_x, draw_y-16*(panel.height-1),0,
-                1,panel.height)
-            end
-            if panel.x_offset == panel.width - 1 then
-              draw(IMG_garbage_r, draw_x+8, draw_y-16*(panel.height-1),0,
-                1,panel.height)
+              draw(imgs.flash, draw_x, draw_y)
             end
           end
         else

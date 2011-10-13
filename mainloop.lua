@@ -281,6 +281,7 @@ function main_replay_vs()
   local replay = replay.vs
   P1 = Stack("vs", 5)
   P2 = Stack("vs", 5)
+  P1.ice = true
   P1.garbage_target = P2
   P2.garbage_target = P1
   P2.pos_x = 172
