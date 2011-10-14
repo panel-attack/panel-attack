@@ -10,6 +10,7 @@ local GARBAGE_DELAY = 52
 local clone_pool = {}
 
 Stack = class(function(s, mode, speed, difficulty)
+    s.character = uniformly(characters)
     s.max_health = 1
     s.mode = mode or "endless"
     if mode ~= "puzzle" then

@@ -95,21 +95,18 @@ function graphics_init()
     IMG_panels[9][j]=load_img("assets/panel00.png")
   end
 
-  local g_keys = {"ice", "fire"}
   local g_parts = {"topleft", "botleft", "topright", "botright",
                     "top", "bot", "left", "right", "face", "pop",
-                    "doubleface", "filler1", "filler2", "flash"}
+                    "doubleface", "filler1", "filler2", "flash",
+                    "portrait"}
   IMG_garbage = {}
-  for _,key in ipairs(g_keys) do
+  for _,key in ipairs(characters) do
     local imgs = {}
     IMG_garbage[key] = imgs
     for _,part in ipairs(g_parts) do
       imgs[part] = load_img("assets/"..key.."/"..part..".png")
     end
   end
-
-  IMG_cirno = load_img("assets/cirno.png")
-  IMG_mokou = load_img("assets/mokou.png")
 
   IMG_metal = load_img("assets/metalmid.png")
   IMG_metal_l = load_img("assets/metalend0.png")
@@ -179,9 +176,9 @@ function Stack.render(self)
     my = my / GFX_SCALE
   end
   if P1 == self then
-    draw(IMG_mokou, self.pos_x, self.pos_y)--, 0, 1/3, 1/3)
+    draw(IMG_garbage[self.character].portrait, self.pos_x, self.pos_y)
   else
-    draw(IMG_cirno, self.pos_x, self.pos_y)--, 0, 1/3, 1/3)
+    draw(IMG_garbage[self.character].portrait, self.pos_x+96, self.pos_y, 0, -1)
   end
   for row=0,self.height do
     for col=1,self.width do
@@ -193,8 +190,7 @@ function Stack.render(self)
         if panel.garbage then
           local imgs = {}
           if not panel.metal then
-            local style = self.ice and "ice" or "fire"
-            imgs = IMG_garbage[style]
+            imgs = IMG_garbage[self.garbage_target.character]
           end
           if panel.x_offset == 0 and panel.y_offset == 0 then
             -- draw the entire block!

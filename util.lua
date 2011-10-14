@@ -2,6 +2,7 @@ local sort, pairs, select, unpack, error =
   table.sort, pairs, select, unpack, error
 local type, setmetatable, getmetatable =
       type, setmetatable, getmetatable
+local random = math.random
 
 -- bounds b so a<=b<=c
 function bound(a, b, c)
@@ -95,6 +96,10 @@ function spairs(tab)
     idx = idx + 1
     return keys[idx], vals[idx]
   end
+end
+
+function uniformly(t)
+  return t[random(#t)]
 end
 
 function shallowcpy(tab)

@@ -130,4 +130,7 @@ for i=1,72 do
   combo_garbage[i] = combo_garbage[i] or combo_garbage[i-1]
 end
 
+characters = {"lip", "windy", "sherbet", "thiana", "ruby",
+              "elias", "flare", "neris", "seren"}
+
 DEBUG_MODE = nil
