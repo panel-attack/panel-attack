@@ -227,7 +227,8 @@ function main_net_vs_setup(ip)
   P2.garbage_target = P1
   P2.pos_x = 172
   P2.score_x = 410
-  replay.vs = {P="",O="",I="",Q="",R="",in_buf=""}
+  replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
+              P1_level=P1_level,P2_level=P2_level}
   ask_for_gpanels("000000")
   ask_for_panels("000000")
   to_print = "Level: "..my_level.."\nOpponent's level: "..(P2_level or "???")
@@ -279,8 +280,8 @@ end
 
 function main_replay_vs()
   local replay = replay.vs
-  P1 = Stack("vs", 5)
-  P2 = Stack("vs", 5)
+  P1 = Stack("vs", replay.P1_level or 5)
+  P2 = Stack("vs", replay.P2_level or 5)
   P1.ice = true
   P1.garbage_target = P2
   P2.garbage_target = P1
