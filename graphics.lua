@@ -294,6 +294,7 @@ function Stack.render(self)
   draw(IMG_wall, self.pos_x, self.pos_y + self.height*16)
   if self.mode == "puzzle" then
     gprint("Moves: "..self.puzzle_moves, self.score_x, 100)
+    gprint("Frame: "..self.CLOCK, self.score_x, 130)
   else
     gprint("Score: "..self.score, self.score_x, 100)
     gprint("Speed: "..self.speed, self.score_x, 130)

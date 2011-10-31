@@ -372,18 +372,35 @@ function main_replay_puzzle()
   P1.max_runs_per_frame = 1
   P1.input_buffer = replay.in_buf
   P1:set_puzzle_state(unpack(replay.puzzle))
+  local run = true
   while true do
+    mouse_panel = nil
     P1:render()
-    wait()
-    if P1.n_active_panels == 0 and
-        P1.prev_active_panels == 0 then
-      if P1:puzzle_done() then
-        return main_dumb_transition, {main_select_mode, "You win!"}
-      elseif P1.puzzle_moves == 0 then
-        return main_dumb_transition, {main_select_mode, "You lose :("}
+    if mouse_panel then
+      local str = "Panel info:\nrow: "..mouse_panel[1].."\ncol: "..mouse_panel[2]
+      for k,v in spairs(mouse_panel[3]) do
+        str = str .. "\n".. k .. ": "..tostring(v)
       end
+      gprint(str, 350, 400)
     end
-    P1:foreign_run()
+    wait()
+    if this_frame_keys["return"] then
+      run = not run
+    end
+    if this_frame_keys["\\"] then
+      run = false
+    end
+    if run or this_frame_keys["\\"] then
+      if P1.n_active_panels == 0 and
+          P1.prev_active_panels == 0 then
+        if P1:puzzle_done() then
+          return main_dumb_transition, {main_select_mode, "You win!"}
+        elseif P1.puzzle_moves == 0 then
+          return main_dumb_transition, {main_select_mode, "You lose :("}
+        end
+      end
+      P1:foreign_run()
+    end
   end
 end
 
