@@ -273,7 +273,7 @@ function main_net_vs()
       undo_stonermode()
       write_replay_file()
       close_socket()
-      return main_dumb_transition, {main_select_mode, end_text}
+      return main_dumb_transition, {main_select_mode, end_text, 45}
     end
   end
 end
@@ -533,13 +533,16 @@ function main_config_input()
   end
 end
 
-function main_dumb_transition(next_func, text)
+function main_dumb_transition(next_func, text, time)
   text = text or ""
+  time = time or 0
+  local t = 0
   while true do
     gprint(text, 300, 280)
     wait()
-    if menu_enter() or menu_escape() then
+    if t >= time and (menu_enter() or menu_escape()) then
       return next_func
     end
+    t = t + 1
   end
 end

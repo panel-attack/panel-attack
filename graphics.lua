@@ -116,6 +116,7 @@ function graphics_init()
           load_img("assets/cur1.png")}
 
   IMG_frame = load_img("assets/frame.png")
+  IMG_wall = load_img("assets/wall.png")
 
   IMG_cards = {}
   IMG_cards[true] = {}
@@ -290,6 +291,7 @@ function Stack.render(self)
     end
   end
   draw(IMG_frame, self.pos_x-4, self.pos_y-4)
+  draw(IMG_wall, self.pos_x, self.pos_y + self.height*16)
   if self.mode == "puzzle" then
     gprint("Moves: "..self.puzzle_moves, self.score_x, 100)
   else

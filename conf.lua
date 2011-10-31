@@ -2,7 +2,7 @@ function love.conf(t)
   t.title = "Panel Attack"
   t.author = "sharpobject@gmail.com"
   t.screen.width = 819
-  t.screen.height = 615
+  t.screen.height = 612
   t.modules.audio = false
   t.modules.mouse = true
   t.modules.sound = false
