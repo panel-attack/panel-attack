@@ -269,7 +269,7 @@ do
       popped=true, dimmed=true, falling=true}
   function Panel.exclude_match(self)
     return exclude_match_set[self.state] or self.color == 0 or self.color == 9
-      or (self.state == "hovering" and not self.just_started_hover)
+      or (self.state == "hovering" and not self.match_anyway)
   end
 
   local exclude_swap_set = {matched=true, popping=true, popped=true,
@@ -525,7 +525,7 @@ function Stack.PdP(self)
   -- This is pretty dirty :(
   for row=1,#panels do
     for col=1,width do
-      panels[row][col].just_started_hover = nil
+      panels[row][col].match_anyway = nil
     end
   end
 
@@ -657,7 +657,8 @@ function Stack.PdP(self)
                     == "hovering" then
                   -- swap may have landed on a hover
                   self:set_hoverers(row,col,
-                      self.FRAMECOUNT_HOVER,false,true)
+                      self.FRAMECOUNT_HOVER,false,true,
+                      panels[row-1][col].match_anyway)
                 end
               end
             else
@@ -710,7 +711,7 @@ function Stack.PdP(self)
               end
               panel:clear_flags()
               self:set_hoverers(row+1,col,
-                  self.FRAMECOUNT_HOVER+1,true,false)
+                  self.FRAMECOUNT_HOVER+1,true,false,true)
             else
               panel.state = "popped"
               panel.timer = (panel.combo_size-panel.combo_index)
@@ -734,7 +735,7 @@ function Stack.PdP(self)
             panel:clear_flags()
             -- Any panels sitting on top of it
             -- hover and are flagged as CHAINING
-            self:set_hoverers(row+1,col,self.FRAMECOUNT_HOVER+1,true,false);
+            self:set_hoverers(row+1,col,self.FRAMECOUNT_HOVER+1,true,false,true)
           else
             -- what the heck.
             -- if a timer runs out and the routine can't
@@ -1152,7 +1153,7 @@ function Stack.check_matches(self)
             combo_size = combo_size + 1
             panel.matching = true
           end
-          if panel.just_started_hover and panel.chaining then
+          if panel.match_anyway and panel.chaining then
             panel.chaining = nil
             self.n_chain_panels = self.n_chain_panels - 1
           end
@@ -1175,7 +1176,7 @@ function Stack.check_matches(self)
             combo_size = combo_size + 1
             panel.matching = true
           end
-          if panel.just_started_hover and panel.chaining then
+          if panel.match_anyway and panel.chaining then
             panel.chaining = nil
             self.n_chain_panels = self.n_chain_panels - 1
           end
@@ -1277,7 +1278,7 @@ function Stack.check_matches(self)
           -- we might have to remove its chain flag...!
           -- It can't actually chain the first frame it hovers,
           -- so it can keep its chaining flag in that case.
-          if not (panel.just_started_hover or panel:exclude_match()) then
+          if not (panel.match_anyway or panel:exclude_match()) then
             if row~=1 then
               -- no swapping panel below
               -- so this panel loses its chain flag
@@ -1365,7 +1366,7 @@ function Stack.check_matches(self)
 end
 
 function Stack.set_hoverers(self, row, col, hover_time, add_chaining,
-    extra_tick)
+    extra_tick, match_anyway)
   -- the extra_tick flag is for use during Phase 1&2,
   -- when panels above the first should be given an extra tick of hover time.
   -- This is because their timers will be decremented once on the same tick
@@ -1386,7 +1387,7 @@ function Stack.set_hoverers(self, row, col, hover_time, add_chaining,
         local chaining = panel.chaining
         panel:clear_flags()
         panel.state = "hovering"
-        panel.just_started_hover = true
+        panel.match_anyway = match_anyway
         local adding_chaining = (not chaining) and panel.color~=9 and
             add_chaining
         if chaining or adding_chaining then
