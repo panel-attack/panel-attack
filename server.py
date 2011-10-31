@@ -3,7 +3,7 @@ import random
 from twisted.internet.protocol import Protocol, Factory
 from twisted.internet import reactor
 
-VERSION = "002"
+VERSION = "003"
 type_to_length = {"H":4, "P":8, "I":2, "L":2, "Q":8}
 
 class PanelServ(Protocol):
