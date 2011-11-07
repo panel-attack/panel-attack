@@ -1,0 +1,15 @@
+from PIL import Image
+img = Image.open("5x.png")
+w,h = img.size
+img.crop((0,0,8,3)).save("topleft.png")
+img.crop((w-8,0,w,3)).save("topright.png")
+img.crop((0,h-3,8,h)).save("botleft.png")
+img.crop((w-8,h-3,w,h)).save("botright.png")
+img.crop((0,6,8,7)).save("left.png")
+img.crop((w-8,6,w,7)).save("right.png")
+img.crop((17,0,18,2)).save("top.png")
+img.crop((17,h-2,18,h)).save("bot.png")
+img.crop((24,16,40,32)).save("filler1.png")
+img.crop((8,16,24,32)).save("filler2.png")
+img.crop((40,16,56,48)).save("doubleface.png")
+img.crop((40,24,56,40)).save("face.png")

@@ -144,7 +144,6 @@ function make_local_gpanels(stack, prev_panels)
 end
 
 function Stack.send_controls(self)
-  local t = function(c) if c then return "1" end return "0" end
   local k = K[self.which]
   local to_send = base64encode[
     ((keys[k.raise1] or keys[k.raise2] or this_frame_keys[k.raise1]
