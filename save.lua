@@ -1,22 +1,23 @@
 function write_key_file() pcall(function()
   local file = love.filesystem.newFile("keys.txt")
-  local to_write = {}
-  for _,name in ipairs(key_names) do
-    to_write[name] = _G[name]
-  end
   file:open("w")
-  file:write(json.encode(to_write))
+  file:write(json.encode(K))
   file:close()
 end) end
 
 function read_key_file() pcall(function()
+  local K=K
   local file = love.filesystem.newFile("keys.txt")
   file:open("r")
   local teh_json = file:read(file:getSize())
   local user_conf = json.decode(teh_json)
   file:close()
-  for _,name in ipairs(key_names) do
-    _G[name] = user_conf[name] or _G[name]
+  -- TODO: remove this later, it just converts the old format.
+  if #user_conf == 0 then
+    user_conf = {user_conf, {}, {}, {}}
+  end
+  for k,v in ipairs(user_conf) do
+    K[k]=v
   end
 end) end
 

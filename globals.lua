@@ -1,14 +1,9 @@
 -- keyboard assignment vars
-k_up = "up"
-k_down = "down"
-k_left = "left"
-k_right = "right"
-k_swap1 = "z"
-k_swap2 = "x"
-k_raise1 = "c"
-k_raise2 = "v"
-key_names = {"k_up", "k_down", "k_left", "k_right", "k_swap1",
-  "k_swap2", "k_raise1", "k_raise2"}
+K = {{up="up", down="down", left="left", right="right",
+      swap1="z", swap2="x", raise1="c", raise2="v"},
+      {},{},{}}
+key_names = {"up", "down", "left", "right", "swap1",
+  "swap2", "raise1", "raise2"}
 keys = {}
 this_frame_keys = {}
 

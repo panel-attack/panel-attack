@@ -143,24 +143,21 @@ function make_local_gpanels(stack, prev_panels)
   end
 end
 
-function send_controls()
-  local t = function(k) if k then return "1" end return "0" end
-  local framecount = P1.CLOCK..""
-  while string.len(framecount) ~= 6 do
-    framecount = "0"..framecount
-  end
+function Stack.send_controls(self)
+  local t = function(c) if c then return "1" end return "0" end
+  local k = K[self.which]
   local to_send = base64encode[
-    ((keys[k_raise1] or keys[k_raise2] or this_frame_keys[k_raise1]
-      or this_frame_keys[k_raise2]) and 32 or 0) +
-    ((this_frame_keys[k_swap1] or this_frame_keys[k_swap2]) and 16 or 0) +
-    ((keys[k_up] or this_frame_keys[k_up]) and 8 or 0) +
-    ((keys[k_down] or this_frame_keys[k_down]) and 4 or 0) +
-    ((keys[k_left] or this_frame_keys[k_left]) and 2 or 0) +
-    ((keys[k_right] or this_frame_keys[k_right]) and 1 or 0)+1]
+    ((keys[k.raise1] or keys[k.raise2] or this_frame_keys[k.raise1]
+      or this_frame_keys[k.raise2]) and 32 or 0) +
+    ((this_frame_keys[k.swap1] or this_frame_keys[k.swap2]) and 16 or 0) +
+    ((keys[k.up] or this_frame_keys[k.up]) and 8 or 0) +
+    ((keys[k.down] or this_frame_keys[k.down]) and 4 or 0) +
+    ((keys[k.left] or this_frame_keys[k.left]) and 2 or 0) +
+    ((keys[k.right] or this_frame_keys[k.right]) and 1 or 0)+1]
   if TCP_sock then
     net_send("I"..to_send)
   end
-  local replay = replay[P1.mode]
+  local replay = replay[self.mode]
   if replay and replay.in_buf then
     replay.in_buf = replay.in_buf .. to_send
   end

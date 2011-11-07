@@ -9,7 +9,7 @@ local garbage_bounce_time = #garbage_bounce_table
 local GARBAGE_DELAY = 52
 local clone_pool = {}
 
-Stack = class(function(s, mode, speed, difficulty)
+Stack = class(function(s, which, mode, speed, difficulty)
     s.character = uniformly(characters)
     s.max_health = 1
     s.mode = mode or "endless"
@@ -135,6 +135,8 @@ Stack = class(function(s, mode, speed, difficulty)
 
     s.card_q = Queue()
 
+    s.which = which or 1 -- Pk.which == k
+
     s.prev_states = {}
   end)
 
@@ -147,6 +149,7 @@ function Stack.mkcpy(self, other)
       clone_pool[#clone_pool] = nil
     end
   end
+  other.do_swap = self.do_swap
   other.speed = self.speed
   other.health = self.health
   other.garbage_cols = deepcpy(self.garbage_cols)
@@ -379,7 +382,7 @@ end
 
 --local_run is for the stack that belongs to this client.
 function Stack.local_run(self)
-  self.input_state = send_controls()
+  self.input_state = self:send_controls()
   self:prep_rollback()
   self:controls()
   self:prep_first_row()
