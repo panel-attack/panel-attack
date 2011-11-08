@@ -14,7 +14,11 @@ function read_key_file() pcall(function()
   file:close()
   -- TODO: remove this later, it just converts the old format.
   if #user_conf == 0 then
-    user_conf = {user_conf, {}, {}, {}}
+    local new_conf = {}
+    for k,v in pairs(user_conf) do
+      new_conf[k:sub(3)] = v
+    end
+    user_conf = {new_conf, {}, {}, {}}
   end
   for k,v in ipairs(user_conf) do
     K[k]=v

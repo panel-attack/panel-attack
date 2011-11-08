@@ -308,8 +308,8 @@ main_local_vs_setup = multi_func(function()
   local chosen, maybe = {}, {5,5}
   local P1_level, P2_level = nil, nil
   while chosen[1] == nil or chosen[2] == nil do
-    to_print = (chosen[1] and "" or "Choose") .. "P1 level: "..maybe[1].."\n"
-        ..(chosen[2] and "" or "Choose") .. "P2 level: "..(maybe[2])
+    to_print = (chosen[1] and "" or "Choose ") .. "P1 level: "..maybe[1].."\n"
+        ..(chosen[2] and "" or "Choose ") .. "P2 level: "..(maybe[2])
     gprint(to_print, 300, 280)
     wait()
     for i=1,2 do
