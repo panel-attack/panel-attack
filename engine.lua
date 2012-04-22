@@ -137,6 +137,8 @@ Stack = class(function(s, which, mode, speed, difficulty)
 
     s.which = which or 1 -- Pk.which == k
 
+    s.shake_offset = -9000
+
     s.prev_states = {}
   end)
 
@@ -572,6 +574,11 @@ function Stack.PdP(self)
             supported = not propogate_fall[col]
           end
           if supported then
+            if panel.fresh then
+              panel.fresh = nil
+              -- SHAKE
+              self.shake_offset = self.CLOCK
+            end
             for x=col,col-1+panel.width do
               panels[row][x].state = "normal"
               propogate_fall[x] = false
@@ -1008,6 +1015,7 @@ function Stack.drop_garbage(self, width, height, metal)
       end
     end
   end
+  self.panels[spawn_row+height-1][spawn_col].fresh = true
 end
 
 -- prepare to send some garbage!

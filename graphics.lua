@@ -39,6 +39,7 @@
 --#define CONFETTI_STARTRADIUS 150
 
 local floor = math.floor
+local ceil = math.ceil
 local garbage_match_time = #garbage_bounce_table
 
 function load_img(s)
@@ -181,11 +182,13 @@ function Stack.render(self)
   else
     draw(IMG_garbage[self.character].portrait, self.pos_x+96, self.pos_y, 0, -1)
   end
+  local shake_idx = self.CLOCK - 1 - self.shake_offset
+  local shake = ceil((shake_arr[shake_idx] or 0) * 9)
   for row=0,self.height do
     for col=1,self.width do
       local panel = self.panels[row][col]
       local draw_x = (col-1) * 16 + self.pos_x
-      local draw_y = (11-(row)) * 16 + self.pos_y + self.displacement
+      local draw_y = (11-(row)) * 16 + self.pos_y + self.displacement - shake
       if panel.color ~= 0 and panel.state ~= "popped" then
         local draw_frame = 1
         if panel.garbage then
@@ -291,7 +294,7 @@ function Stack.render(self)
     end
   end
   draw(IMG_frame, self.pos_x-4, self.pos_y-4)
-  draw(IMG_wall, self.pos_x, self.pos_y + self.height*16)
+  draw(IMG_wall, self.pos_x, self.pos_y - shake + self.height*16)
   if self.mode == "puzzle" then
     gprint("Moves: "..self.puzzle_moves, self.score_x, 100)
     gprint("Frame: "..self.CLOCK, self.score_x, 130)

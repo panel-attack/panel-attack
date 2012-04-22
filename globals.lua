@@ -129,3 +129,26 @@ characters = {"lip", "windy", "sherbet", "thiana", "ruby",
               "elias", "flare", "neris", "seren"}
 
 DEBUG_MODE = nil
+
+shake_arr = {}
+
+local shake_idx = -6
+for i=14,6,-2.12 do
+  local x = -math.pi
+  local step = math.pi * 2 / i
+  for j=1,i do
+    shake_arr[shake_idx] = (1 + math.cos(x))/2
+    x = x + step
+    shake_idx = shake_idx + 1
+  end
+end
+
+-- 1 -> 1
+-- #shake -> 0
+local shake_step = 1/(#shake_arr - 1)
+local shake_mult = 1
+for i=1,#shake_arr do
+  shake_arr[i] = shake_arr[i] * shake_mult
+  print(shake_arr[i])
+  shake_mult = shake_mult - shake_step
+end

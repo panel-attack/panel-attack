@@ -30,11 +30,47 @@ local axis_to_button = function(idx, value)
   prev_ax[idx] = value
 end
 
+local prev_hat = {{},{}}
+local hat_to_button = function(idx, value)
+  if string.len(value) == 1 then
+    if value == "l" or value == "r" then
+      value = value .. "c"
+    else
+      value = "c" .. value
+    end
+  end
+  value = procat(value)
+  for i=1,2 do
+    local prev = prev_hat[i][idx] or "c"
+    if value[i] ~= prev and value[i] ~= "c" then
+      love.keypressed("jh"..idx..value[i])
+    end
+    if prev ~= value[i] and prev ~= "c" then
+      love.keyreleased("jh"..idx..prev)
+    end
+    prev_hat[i][idx] = value[i]
+  end
+end
+
+function love.joystick.getHats(which)
+  local n = love.joystick.getNumHats(which)
+  local ret = {}
+  for i=0,n-1 do
+    ret[i+1] = love.joystick.getHat(which, i)
+  end
+  return unpack(ret)
+end
+
 function joystick_ax()
   for i=0,love.joystick.getNumJoysticks()-1 do
     local axes = {love.joystick.getAxes(i)}
     for idx,value in ipairs(axes) do
       axis_to_button(i..idx, value)
+    end
+
+    local hats = {love.joystick.getHats(i)}
+    for idx,value in ipairs(hats) do
+      hat_to_button(i..idx, value)
     end
   end
 end
