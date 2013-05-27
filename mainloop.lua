@@ -82,7 +82,7 @@ do
     local items = {{"1P endless", main_select_speed_99, {main_endless}},
         {"1P puzzle", main_select_puzz},
         {"1P time attack", main_select_speed_99, {main_time_attack}},
-        {"2P fakevs at dustinho.com", main_net_vs_setup, {"dustinho.com"}},
+        {"2P fakevs at burke.ro", main_net_vs_setup, {"burke.ro"}},
         {"2P fakevs local game", main_local_vs_setup},
         {"Replay of 1P endless", main_replay_endless},
         {"Replay of 1P puzzle", main_replay_puzzle},

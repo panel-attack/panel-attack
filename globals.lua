@@ -55,7 +55,7 @@ gfx_q = Queue()
 
 FC_HOVER = {12,  9,  6}
 FC_MATCH = {61, 49, 37}
-FC_FLASH = {44, 36,  22}
+FC_FLASH = {44, 36, 22}
 FC_POP   = { 9,  8,  7}
 stop_time_combo =  { 2, 2, 2}
 stop_time_chain =  { 5, 3, 2}

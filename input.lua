@@ -1,10 +1,24 @@
-local __old_jp_handler = love.handlers.jp
-local __old_jr_handler = love.handlers.jr
-function love.handlers.jp(a, b, c)
+local jpexists, jpname, jrname
+for k,v in pairs(love.handlers) do
+  if k=="jp" then
+    jpexists = true
+  end
+end
+if jpexists then
+  print("I AM A DOUCHE")
+  jpname = "jp"
+  jrname = "jr"
+else
+  jpname = "joystickpressed"
+  jrname = "joystickreleased"
+end
+local __old_jp_handler = love.handlers[jpname]
+local __old_jr_handler = love.handlers[jrname]
+love.handlers[jpname] = function(a, b, c)
   __old_jp_handler(a,b,c)
   love.keypressed("j"..a..b)
 end
-function love.handlers.jr(a,b,c)
+love.handlers[jrname] = function(a,b,c)
   __old_jr_handler(a,b,c)
   love.keyreleased("j"..a..b)
 end

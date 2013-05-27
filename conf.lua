@@ -1,6 +1,7 @@
 function love.conf(t)
   t.title = "Panel Attack"
   t.author = "sharpobject@gmail.com"
+  t.url = "https://github.com/sharpobject/panel-attack"
   t.screen.width = 819
   t.screen.height = 612
   t.modules.audio = false
@@ -8,12 +9,13 @@ function love.conf(t)
   t.modules.sound = false
   t.modules.physics = false
   t.identity = "Panel Attack"
+  t.version = "0.8.0"
+  t.release = false
 
   -- DEFAULTS FROM HERE DOWN
   t.screen.vsync = true       -- Enable vertical sync (boolean)
   t.screen.fullscreen = false -- Enable fullscreen (boolean)
   t.screen.fsaa = 0           -- The number of FSAA-buffers (number)
-  t.version = 0               -- The LÖVE version this game was made for (number)
   t.console = false           -- Attach a console (boolean, Windows only)
   t.modules.joystick = true
   t.modules.timer = true      -- Enable the timer module (boolean)
