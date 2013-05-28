@@ -5,7 +5,6 @@ for k,v in pairs(love.handlers) do
   end
 end
 if jpexists then
-  print("I AM A DOUCHE")
   jpname = "jp"
   jrname = "jr"
 else
