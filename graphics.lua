@@ -109,6 +109,7 @@ function graphics_init()
     end
   end
 
+  IMG_metal_flash = load_img("assets/garbageflash.png")
   IMG_metal = load_img("assets/metalmid.png")
   IMG_metal_l = load_img("assets/metalend0.png")
   IMG_metal_r = load_img("assets/metalend1.png")
@@ -192,7 +193,7 @@ function Stack.render(self)
       if panel.color ~= 0 and panel.state ~= "popped" then
         local draw_frame = 1
         if panel.garbage then
-          local imgs = {}
+          local imgs = {flash=IMG_metal_flash}
           if not panel.metal then
             imgs = IMG_garbage[self.garbage_target.character]
           end
