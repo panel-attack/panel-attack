@@ -1,11 +1,11 @@
-local wait = coroutine.yield
+local wait, resume = coroutine.yield, coroutine.resume
 
 local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_replay_endless, main_replay_puzzle, main_net_vs,
   main_config_input, main_dumb_transition, main_select_puzz,
   menu_up, menu_down, menu_left, menu_right, menu_enter, menu_escape,
   main_replay_vs, main_local_vs_setup, main_local_vs, menu_key_func,
-  multi_func, normal_key
+  multi_func, normal_key, main_set_name, main_net_vs_room, main_net_vs_lobby
 
 function fmainloop()
   local func, arg = main_select_mode, nil
@@ -88,6 +88,7 @@ do
         {"Replay of 1P puzzle", main_replay_puzzle},
         {"Replay of 2P fakevs", main_replay_vs},
         {"Configure input", main_config_input},
+        {"Set name", main_set_name},
         {"Quit", os.exit}}
     local k = K[1]
     while true do
@@ -217,10 +218,246 @@ function main_time_attack(...)
   end
 end
 
-function main_net_vs_setup(ip)
-  P1, P1_level, P2_level, got_opponent = nil, nil, nil, nil, nil
+function main_net_vs_room()
   P2 = {panel_buffer="", gpanel_buffer=""}
+  local k = K[1]
+  local map = {{"level", "level", "level", "level", "ready"},
+               {"windy", "sherbet", "thiana", "ruby", "lip"},
+               {"elias", "flare", "neris", "seren", "leave"}}
+  local cursor,op_cursor,X,Y = {1,1},{1,1},3,5
+  local up,down,left,right = {-1,0}, {1,0}, {0,-1}, {0,1}
+  local my_state = {character=config.character, level=config.level, cursor="level", ready=false}
+  local prev_state = shallowcpy(my_state)
+  local op_state = global_op_state or {character="lip", level=5, cursor="level", ready=false}
+  global_op_state = nil
+  local selected = false
+  local active_str = "level"
+  local selectable = {level=true, ready=true}
+  local function move_cursor(direction)
+    local dx,dy = unpack(direction)
+    local can_x,can_y = wrap(1, cursor[1]+dx, X), wrap(1, cursor[2]+dy, Y)
+    while can_x ~= cursor[1] or can_y ~= cursor[2] do
+      if map[can_x][can_y] and map[can_x][can_y] ~= map[cursor[1]][cursor[2]] then
+        break
+      end
+      can_x,can_y = wrap(1, can_x+dx, X), wrap(1, can_y+dy, Y)
+    end
+    cursor[1],cursor[2] = can_x,can_y
+  end
+  local function do_leave()
+    json_send({leave_room=true})
+  end
+  local name_to_xy = {}
+  for i=1,X do
+    for j=1,Y do
+      if map[i][j] then
+        name_to_xy[map[i][j]] = {i,j}
+      end
+    end
+  end
+  local function draw_button(x,y,w,h,str)
+    local menu_width = Y*100
+    local menu_height = X*100
+    local spacing = 4
+    local x_padding = math.floor((819-menu_width)/2)
+    local y_padding = math.floor((612-menu_height)/2)
+    set_color(unpack(colors.white))
+    render_x = x_padding+(y-1)*100+spacing
+    render_y = y_padding+(x-1)*100+spacing
+    grectangle("line", render_x, render_y, w*100-2*spacing, h*100-2*spacing)
+    local y_add,x_add = 42,30
+    local pstr = str
+    if str == "level" then
+      pstr = pstr .. "\nLevel: "..my_state.level.."\nOpponent's level: "..op_state.level
+      y_add,x_add = 9,180
+    end
+    if my_state.cursor == str then pstr = pstr.."\nYou!" end
+    if op_state.cursor == str then pstr = pstr.."\nOpponent!" end
+    gprint(pstr, render_x+30, render_y+y_add)
+  end
+  while true do
+    for _,msg in ipairs(this_frame_messages) do
+      if msg.menu_state then
+        op_state = msg.menu_state
+      end
+      if msg.leave_room then
+        return main_net_vs_lobby
+      end
+      if msg.match_start then
+        local fake_P2 = P2
+        P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character)
+        P2 = Stack(2, "vs", msg.opponent_settings.level, msg.opponent_settings.character)
+        P2.panel_buffer = fake_P2.panel_buffer
+        P2.gpanel_buffer = fake_P2.gpanel_buffer
+        P1.garbage_target = P2
+        P2.garbage_target = P1
+        P2.pos_x = 172
+        P2.score_x = 410
+        replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
+                    P1_level=P1.level,P2_level=P2.level,
+                    P1_char=P1.character,P2_char=P2.character}
+        ask_for_gpanels("000000")
+        ask_for_panels("000000")
+        to_print = "Game is starting!\n".."Level: "..P1.level.."\nOpponent's level: "..P2.level
+        for i=1,30 do
+          gprint(to_print,300, 280)
+          do_messages()
+          wait()
+        end
+        while P1.panel_buffer == "" or P2.panel_buffer == ""
+          or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
+          gprint(to_print,300, 280)
+          do_messages()
+          wait()
+        end
+        P1:starting_state()
+        P2:starting_state()
+        return main_net_vs
+      end
+    end
+    draw_button(1,1,4,1,"level")
+    draw_button(1,5,1,1,"ready")
+    for i=2,X do
+      for j=1,Y do
+        draw_button(i,j,1,1,map[i][j])
+      end
+    end
+    gprint("You: "..json.encode(my_state).."\nOpponent: "..json.encode(op_state), 50, 50)
+    wait()
+    if menu_up(k) then
+      if not selected then move_cursor(up) end
+    elseif menu_down(k) then
+      if not selected then move_cursor(down) end
+    elseif menu_left(k) then
+      if selected and active_str == "level" then
+        config.level = bound(1, config.level-1, 10)
+      end
+      if not selected then move_cursor(left) end
+    elseif menu_right(k) then
+      if selected and active_str == "level" then
+        config.level = bound(1, config.level+1, 10)
+      end
+      if not selected then move_cursor(right) end
+    elseif menu_enter(k) then
+      if selectable[active_str] then
+        selected = not selected
+      elseif active_str == "leave" then
+        do_leave()
+      else
+        config.character = active_str
+      end
+    elseif menu_escape(k) then
+      if active_str == "leave" then
+        do_leave()
+      end
+      cursor = shallowcpy(name_to_xy["leave"])
+    end
+    active_str = map[cursor[1]][cursor[2]]
+    my_state = {character=config.character, level=config.level, cursor=active_str,
+                ready=(selected and active_str=="ready")}
+    if not content_equal(my_state, prev_state) then
+      json_send({menu_state=my_state})
+    end
+    prev_state = my_state
+    do_messages()
+  end
+end
+
+function main_net_vs_lobby()
+  local active_name, active_idx, active_back = ""
+  local unpaired_players = {} -- list
+  local willing_players = {} -- set
+  local k = K[1]
+  local notice = {[true]="Select a player name to ask for a match.", [false]="You are all alone in the lobby :("}
+  while true do
+    for _,msg in ipairs(this_frame_messages) do
+      if msg.choose_another_name then
+        error("name is taken :<")
+      end
+      if msg.create_room then
+        return main_net_vs_room
+      end
+      if msg.unpaired then
+        unpaired_players = msg.unpaired
+        -- players who leave the unpaired list no longer have standing invitations to us.
+        local new_willing = {}
+        for _,player in ipairs(unpaired_players) do
+          new_willing[player] = willing_players[player]
+        end
+        willing_players = new_willing
+      end
+      if msg.game_request then
+        willing_players[msg.game_request.sender] = true
+      end
+    end
+    local to_print = ""
+    local arrow = ""
+    active_idx = 1
+    items = {}
+    for _,v in ipairs(unpaired_players) do
+      if v ~= config.name then
+        items[#items+1] = v
+      end
+    end
+    if active_back then
+      if active_idx ~= 1 then
+        active_idx = #items+1
+      end
+    else
+      while active_idx < #items and items[active_idx] < active_name do
+        active_idx = active_idx + 1
+      end
+      active_name = items[active_idx]
+    end
+    items[#items+1] = "Back to main menu"
+    for i=1,#items do
+      if active_idx == i then
+        arrow = arrow .. ">"
+      else
+        arrow = arrow .. "\n"
+      end
+      to_print = to_print .. "   " .. items[i] .. (willing_players[items[i]] and " (Wants to play with you :o)" or "") .. "\n"
+    end
+    gprint(notice[#items > 1], 300, 250)
+    gprint(arrow, 300, 280)
+    gprint(to_print, 300, 280)
+    wait()
+    if menu_up(k) then
+      active_idx = wrap(1, active_idx-1, #items)
+    elseif menu_down(k) then
+      active_idx = wrap(1, active_idx+1, #items)
+    elseif menu_enter(k) then
+      if active_idx == #items then
+        return main_select_mode
+      end
+      request_game(items[active_idx])
+    elseif menu_escape(k) then
+      if active_idx == #items then
+        return main_select_mode
+      else
+        active_idx = #items
+      end
+    end
+    active_back = active_idx == #items
+    do_messages()
+  end
+end
+
+function main_net_vs_setup(ip)
+  if not config.name then
+    return main_set_name
+  end
+  P1, P1_level, P2_level, got_opponent = nil
+  P2 = {panel_buffer="", gpanel_buffer=""}
+  gprint("Setting up connection...", 300, 280)
+  wait()
   network_init(ip)
+  while not connection_is_ready() do
+    gprint("Connecting...", 300, 280)
+    wait()
+    do_messages()
+  end
+  if true then return main_net_vs_lobby end
   local my_level, to_print, fake_P2 = 5, nil, P2
   local k = K[1]
   while got_opponent == nil do
@@ -277,6 +514,11 @@ function main_net_vs()
   --STONER_MODE = true
   local end_text = nil
   while true do
+    for _,msg in ipairs(this_frame_messages) do
+      if msg.leave_room then
+        return main_net_vs_lobby
+      end
+    end
     P1:render()
     P2:render()
     wait()
@@ -297,8 +539,8 @@ function main_net_vs()
     if end_text then
       undo_stonermode()
       write_replay_file()
-      close_socket()
-      return main_dumb_transition, {main_select_mode, end_text, 45}
+      json_send({game_over=true})
+      return main_dumb_transition, {main_net_vs_lobby, end_text, 45}
     end
   end
 end
@@ -340,6 +582,12 @@ main_local_vs_setup = multi_func(function()
   P2.garbage_target = P1
   P2.pos_x = 172
   P2.score_x = 410
+  -- TODO: this does not correctly implement starting configurations.
+  -- Starting configurations should be identical for visible blocks, and
+  -- they should not be completely flat.
+  --
+  -- In general the block-generation logic should be the same as the server's, so
+  -- maybe there should be only one implementation.
   make_local_panels(P1, "000000")
   make_local_gpanels(P1, "000000")
   make_local_panels(P2, "000000")
@@ -660,17 +908,47 @@ function main_config_input()
   end
 end
 
+function main_set_name()
+  local name = ""
+  while true do
+    local to_print = "Enter your name:\n"..name
+    gprint(to_print, 300, 280)
+    wait()
+    if this_frame_keys["escape"] then
+      return main_select_mode
+    end
+    if this_frame_keys["return"] or this_frame_keys["kenter"] then
+      config.name = name
+      write_conf_file()
+      return main_select_mode
+    end
+    for _,v in ipairs(this_frame_unicodes) do
+      name = name .. v
+    end
+  end
+end
+
 function main_dumb_transition(next_func, text, time)
   text = text or ""
   time = time or 0
   local t = 0
   local k = K[1]
   while true do
+    if next_func == main_net_vs_room then
+      for _,msg in ipairs(this_frame_messages) do
+        if msg.menu_state then
+          global_op_state = msg.menu_state
+        end
+      end
+    end
     gprint(text, 300, 280)
     wait()
     if t >= time and (menu_enter(k) or menu_escape(k)) then
       return next_func
     end
     t = t + 1
+    if TCP_sock then
+      do_messages()
+    end
   end
 end

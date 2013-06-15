@@ -1,6 +1,10 @@
 local TCP_sock = nil
-local type_to_length = {G=1, H=1, N=1, P=121, O=121, I=2, Q=121, R=121, L=2}
+local type_to_length = {G=1, H=1, N=1, E=4, P=121, O=121, I=2, Q=121, R=121, L=2}
 local leftovers = ""
+local wait = coroutine.yield
+local floor = math.floor
+local char = string.char
+local byte = string.byte
 
 function flush_socket()
   local junk,err,data = TCP_sock:receive('*a')
@@ -20,13 +24,25 @@ function get_message()
   if string.len(leftovers) == 0 then
     return nil
   end
-  local typ = string.sub(leftovers,1,1)
-  local len = type_to_length[typ]
+  local typ, gap, len = string.sub(leftovers,1,1), 0
+  if typ == "J" then
+    if string.len(leftovers) >= 4 then
+      len = byte(string.sub(leftovers,2,2)) * 65536 +
+            byte(string.sub(leftovers,3,3)) * 256 +
+            byte(string.sub(leftovers,4,4))
+      print("json message has length "..len)
+      gap = 3
+    else
+      return nil
+    end
+  else
+    len = type_to_length[typ] - 1
+  end
   if len > string.len(leftovers) then
     return nil
   end
-  local ret = string.sub(leftovers,2,type_to_length[typ])
-  leftovers = string.sub(leftovers,type_to_length[typ]+1)
+  local ret = string.sub(leftovers,2+gap,len+gap+1)
+  leftovers = string.sub(leftovers,len+gap+2)
   return typ, ret
 end
 
@@ -42,22 +58,33 @@ function net_send(...)
   end
 end
 
+function json_send(obj)
+  local json = json.encode(obj)
+  local len = json:len()
+  local prefix = "J"..char(len/65536)..char((len/256)%256)..char(len%256)
+  net_send(prefix..json)
+end
+
 function undo_stonermode()
   while lag_q:len() ~= 0 do
     TCP_sock:send(unpack(lag_q:pop()))
   end
 end
 
+local got_H = false
+
 local process_message = {
   L=function(s) P2_level = ({["0"]=10})[s] or (s+0) end,
-  G=function(s) got_opponent = true end,
-  H=function(s) end,
+  --G=function(s) got_opponent = true end,
+  H=function(s) got_H = true end,
   N=function(s) error("Server told us to fuck off") end,
   P=function(s) P1.panel_buffer = P1.panel_buffer..s end,
   O=function(s) P2.panel_buffer = P2.panel_buffer..s end,
   I=function(s) P2.input_buffer = P2.input_buffer..s end,
   Q=function(s) P1.gpanel_buffer = P1.gpanel_buffer..s end,
-  R=function(s) P2.gpanel_buffer = P2.gpanel_buffer..s end}
+  R=function(s) P2.gpanel_buffer = P2.gpanel_buffer..s end,
+  E=function(s) net_send("F"..s) end,
+  J=function(s) this_frame_messages[#this_frame_messages+1] = json.decode(s) print("JSON LOL "..s)end}
 
 function network_init(ip)
   TCP_sock = socket.tcp()
@@ -66,7 +93,14 @@ function network_init(ip)
     error("Failed to connect =(")
   end
   TCP_sock:settimeout(0)
-  net_send("H003")
+  got_H = false
+  net_send("H004")
+  assert(config.name and config.level and config.character)
+  json_send({name=config.name, level=config.level, character=config.character})
+end
+
+function connection_is_ready()
+  return got_H and #this_frame_messages > 0
 end
 
 function do_messages()
@@ -74,6 +108,9 @@ function do_messages()
   while true do
     local typ, data = get_message()
     if typ then
+      if typ ~= "I" then
+        print("Got message "..typ.." "..data)
+      end
       process_message[typ](data)
       if P1 and replay[P1.mode][typ] then
         replay[P1.mode][typ]=replay[P1.mode][typ]..data
@@ -82,6 +119,10 @@ function do_messages()
       break
     end
   end
+end
+
+function request_game(name)
+  json_send({game_request = {sender=config.name, receiver=name}})
 end
 
 function ask_for_panels(prev_panels)

@@ -91,6 +91,9 @@ end
 function love.keypressed(key, unicode)
   keys[key] = 0
   this_frame_keys[key] = true
+  if unicode >= 32 and unicode < 126 then
+    this_frame_unicodes[#this_frame_unicodes+1] = string.char(unicode)
+  end
 end
 
 function love.keyreleased(key, unicode)

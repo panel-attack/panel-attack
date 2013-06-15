@@ -86,6 +86,7 @@ function love.load()
   math.randomseed(os.time())
   for i=1,4 do math.random() end
   read_key_file()
+  read_conf_file() -- TODO: stop making new config files
   replay = {}
   read_replay_file()
   graphics_init() -- load images and set up stuff
@@ -102,6 +103,8 @@ function love.update(dt)
     error(err..'\n'..debug.traceback(mainloop))
   end
   this_frame_keys = {}
+  this_frame_unicodes = {}
+  this_frame_messages = {}
 end
 
 function love.draw()
@@ -114,7 +117,7 @@ function love.draw()
   love.graphics.print("FPS: "..love.timer.getFPS(),315,115)
 
 
-  if(N_FRAMES > 100) then
+  if(N_FRAMES > 300) then
     tau = tau + (love.timer.getFPS()-60)*0.2*dt_for_delay
   end
   love_timer_sleep(tau)

@@ -19,6 +19,7 @@ Stack = class(function(s, which, mode, speed, difficulty)
 
     if s.mode == "2ptime" or s.mode == "vs" then
       local level = speed or 5
+      s.character = (type(difficulty) == "string") and difficulty or s.character
       s.level = level
       speed = level_to_starting_speed[level]
       difficulty = level_to_difficulty[level]

@@ -102,6 +102,37 @@ function uniformly(t)
   return t[random(#t)]
 end
 
+function content_equal(a,b)
+  if type(a) ~= "table" or type(b) ~= "table" then
+    return a == b
+  end
+  for i=1,2 do
+    for k,v in pairs(a) do
+      if b[k] ~= v then
+        return false
+      end
+    end
+    a,b=b,a
+  end
+  return true
+end
+
+-- does not perform deep comparisons of keys which are tables.
+function deep_content_equal(a,b)
+  if type(a) ~= "table" or type(b) ~= "table" then
+    return a == b
+  end
+  for i=1,2 do
+    for k,v in pairs(a) do
+      if not deep_content_equal(v,b[k]) then
+        return false
+      end
+    end
+    a,b=b,a
+  end
+  return true
+end
+
 function shallowcpy(tab)
   local ret = {}
   for k,v in pairs(tab) do

@@ -25,6 +25,23 @@ function read_key_file() pcall(function()
   end
 end) end
 
+function write_conf_file() pcall(function()
+  local file = love.filesystem.newFile("conf.json")
+  file:open("w")
+  file:write(json.encode(config))
+  file:close()
+end) end
+
+function read_conf_file() pcall(function()
+  local file = love.filesystem.newFile("conf.json")
+  file:open("r")
+  local teh_json = file:read(file:getSize())
+  for k,v in pairs(json.decode(teh_json)) do
+    config[k] = v
+  end
+  file:close()
+end) end
+
 function read_replay_file() pcall(function()
   local file = love.filesystem.newFile("replay.txt")
   file:open("r")

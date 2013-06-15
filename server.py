@@ -21,7 +21,6 @@ class PanelServ(Protocol):
 
     def dataReceived(self, data):
         data = self.leftovers + data
-        go = True
         idx = 0
         datalen = len(data)
         erryet = False

@@ -6,6 +6,9 @@ key_names = {"up", "down", "left", "right", "swap1",
   "swap2", "raise1", "raise2"}
 keys = {}
 this_frame_keys = {}
+this_frame_unicodes = {}
+this_frame_messages = {}
+config = {character="lip", level=5, name="defaultname"}
 
 bounce_table = {1, 1, 1, 1,
                 2, 2, 2,
@@ -152,3 +155,13 @@ for i=1,#shake_arr do
   print(shake_arr[i])
   shake_mult = shake_mult - shake_step
 end
+
+colors = {  red     = {220, 50,  47 },
+            orange  = {255, 140, 0  },
+            green   = {80,  169, 0  },
+            purple  = {168, 128, 192},
+            blue    = {38,  139, 210},
+            pink    = {211, 68,  134},
+            white   = {234, 234, 234},
+            black   = {20,  20,  20 },
+            dgray   = {28,  28,  28 }}

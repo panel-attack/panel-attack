@@ -65,8 +65,22 @@ function draw(img, x, y, rot, x_scale,y_scale)
     rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
 end
 
+function grectangle(mode, x, y, w, h)
+  gfx_q:push({love.graphics.rectangle, {mode, x, y, w, h}})
+end
+
 function gprint(str, x, y)
   gfx_q:push({love.graphics.print, {str, x, y}})
+end
+
+local _r, _g, _b, _a
+function set_color(r, g, b, a)
+  a = a or 255
+  -- only do it if this color isn't the same as the previous one...
+  if _r~=r or _g~=g or _b~=b or _a~=a then
+      _r,_g,_b,_a = r,g,b,a
+      gfx_q:push({love.graphics.setColor, {r, g, b, a}})
+  end
 end
 
 function graphics_init()
