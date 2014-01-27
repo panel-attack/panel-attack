@@ -13,74 +13,6 @@ require("puzzles")
 require("mainloop")
 
 local N_FRAMES = 0
-local tau = 10/1000
-local dt_for_delay = 0
-local min = math.min
-
-local love_timer_sleep = love.timer.sleep -- in s (like >=0.8.0)
-if love._version:find("^0%.[0-7]%.") then -- if version < 0.8.0
-   -- love.timer.sleep in ms
-   love_timer_sleep = function(s) love.timer.sleep(s*1000) end
-end
-
---[[function love.run()
-  love.load(arg)
-
-  local dt  = 0        -- time for current frame
-  local tau = 10       -- initial value for delay between frames
-  local USE_FB = false
-  if USE_FB then
-    local fb = love.graphics.newFramebuffer()
-    local fb2 = love.graphics.newFramebuffer()
-  end
-
-  while true do
-    love.timer.step()
-    dt = min(0.1, love.timer.getDelta() )
-
-    if USE_FB then
-      love.graphics.setRenderTarget(fb)
-    end
-    love.graphics.clear()
-    love.update(dt)
-    love.draw()
-    if USE_FB then
-      love.graphics.setRenderTarget()
-      love.graphics.draw(fb,0,0)
-    end
-    if true then else
-      love.graphics.setRenderTarget(fb2)
-      love.graphics.draw(fb,0,615,0,1,-1)
-      local fnum = N_FRAMES..""
-      while string.len(fnum) < 5 do
-        fnum = "0" .. fnum
-      end
-      love.graphics.setRenderTarget()
-      love.filesystem.write("frame"..fnum..".png",
-          fb2:getImageData():encode("png"))
-    end
-
-    if(N_FRAMES > 100) then
-      tau = tau + (love.timer.getFPS()-60)*0.2*dt
-    end
-
-    for e,a,b,c in love.event.poll() do
-      if e == "q" then
-        if love.audio then love.audio.stop() end
-        return
-      end
-      love.handlers[e](a,b,c)
-    end
-    joystick_ax()
-    key_counts()
-
-    love_timer_sleep(tau)
-    love.graphics.present()
-
-    N_FRAMES = N_FRAMES + 1
-
-  end
-end--]]
 
 function love.load()
   math.randomseed(os.time())
@@ -94,7 +26,6 @@ function love.load()
 end
 
 function love.update(dt)
-  dt_for_delay = dt
   joystick_ax()
   key_counts()
   gfx_q:clear()
@@ -116,10 +47,5 @@ function love.draw()
   end
   love.graphics.print("FPS: "..love.timer.getFPS(),315,115)
 
-
-  if(N_FRAMES > 300) then
-    tau = tau + (love.timer.getFPS()-60)*0.2*dt_for_delay
-  end
-  love_timer_sleep(tau)
   N_FRAMES = N_FRAMES + 1
 end

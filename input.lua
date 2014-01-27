@@ -75,7 +75,7 @@ function love.joystick.getHats(which)
 end
 
 function joystick_ax()
-  for i=0,love.joystick.getNumJoysticks()-1 do
+  for i=0,love.joystick.getJoystickCount()-1 do
     local axes = {love.joystick.getAxes(i)}
     for idx,value in ipairs(axes) do
       axis_to_button(i..idx, value)
@@ -88,12 +88,15 @@ function joystick_ax()
   end
 end
 
-function love.keypressed(key, unicode)
-  keys[key] = 0
-  this_frame_keys[key] = true
-  if unicode >= 32 and unicode < 126 then
-    this_frame_unicodes[#this_frame_unicodes+1] = string.char(unicode)
+function love.keypressed(key, rep)
+  if not rep then
+    keys[key] = 0
   end
+  this_frame_keys[key] = true
+end
+
+function love.textinput(text)
+  this_frame_unicodes[#this_frame_unicodes+1] = text
 end
 
 function love.keyreleased(key, unicode)

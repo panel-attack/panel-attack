@@ -2,14 +2,14 @@ function love.conf(t)
   t.title = "Panel Attack"
   t.author = "sharpobject@gmail.com"
   t.url = "https://github.com/sharpobject/panel-attack"
-  t.screen.width = 819
-  t.screen.height = 612
+  t.window.width = 819
+  t.window.height = 612
   t.modules.audio = false
   t.modules.mouse = true
   t.modules.sound = false
   t.modules.physics = false
   t.identity = "Panel Attack"
-  t.version = "0.8.0"
+  t.version = "0.9.0"
   t.release = false
 
   -- DEFAULTS FROM HERE DOWN
