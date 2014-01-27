@@ -10,6 +10,8 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
 function fmainloop()
   local func, arg = main_select_mode, nil
   while true do
+    leftover_time = 1/120
+    consuming_timesteps = false
     func,arg = func(unpack(arg or {}))
     collectgarbage("collect")
   end
@@ -513,7 +515,10 @@ end
 function main_net_vs()
   --STONER_MODE = true
   local end_text = nil
+  consuming_timesteps = true
   while true do
+    -- Uncomment this to cripple your game :D
+    -- love.timer.sleep(0.030)
     for _,msg in ipairs(this_frame_messages) do
       if msg.leave_room then
         return main_net_vs_lobby
@@ -523,8 +528,18 @@ function main_net_vs()
     P2:render()
     wait()
     do_messages()
-    if not P1.game_over then
-      P1:local_run()
+    print(P1.CLOCK, P2.CLOCK)
+    for i=1,4 do
+      if leftover_time >= 1/60 then
+        if i > 1 then
+          key_counts()
+          this_frame_keys = {}
+        end
+        if not P1.game_over then
+          P1:local_run()
+        end
+        leftover_time = leftover_time - 1/60
+      end
     end
     if not P2.game_over then
       P2:foreign_run()

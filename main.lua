@@ -26,6 +26,9 @@ function love.load()
 end
 
 function love.update(dt)
+  if consuming_timesteps then
+    leftover_time = leftover_time + dt
+  end
   joystick_ax()
   key_counts()
   gfx_q:clear()
