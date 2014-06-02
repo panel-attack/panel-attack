@@ -13,13 +13,13 @@ else
 end
 local __old_jp_handler = love.handlers[jpname]
 local __old_jr_handler = love.handlers[jrname]
-love.handlers[jpname] = function(a, b, c)
-  __old_jp_handler(a,b,c)
-  love.keypressed("j"..a..b)
+love.handlers[jpname] = function(a, b)
+  __old_jp_handler(a,b)
+  love.keypressed("j"..a:getID()..b)
 end
-love.handlers[jrname] = function(a,b,c)
-  __old_jr_handler(a,b,c)
-  love.keyreleased("j"..a..b)
+love.handlers[jrname] = function(a,b)
+  __old_jr_handler(a,b)
+  love.keyreleased("j"..a:getID()..b)
 end
 
 local prev_ax = {}
@@ -65,25 +65,26 @@ local hat_to_button = function(idx, value)
   end
 end
 
-function love.joystick.getHats(which)
-  local n = love.joystick.getNumHats(which)
+function love.joystick.getHats(joystick)
+  local n = joystick:getHatCount()
   local ret = {}
-  for i=0,n-1 do
-    ret[i+1] = love.joystick.getHat(which, i)
+  for i=1,n do
+    ret[i] = joystick:getHat(i)
   end
   return unpack(ret)
 end
 
 function joystick_ax()
-  for i=0,love.joystick.getJoystickCount()-1 do
-    local axes = {love.joystick.getAxes(i)}
+  local joysticks = love.joystick.getJoysticks()
+  for k,v in ipairs(joysticks) do
+    local axes = {v:getAxes()}
     for idx,value in ipairs(axes) do
-      axis_to_button(i..idx, value)
+      axis_to_button(k..idx, value)
     end
 
-    local hats = {love.joystick.getHats(i)}
+    local hats = {love.joystick.getHats(v)}
     for idx,value in ipairs(hats) do
-      hat_to_button(i..idx, value)
+      hat_to_button(k..idx, value)
     end
   end
 end
