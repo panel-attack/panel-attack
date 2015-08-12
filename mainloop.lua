@@ -17,6 +17,19 @@ function fmainloop()
   end
 end
 
+-- Wrapper for doing something at 60hz
+-- The rest of the stuff happens at whatever rate is convenient
+function variable_step(f)
+  for i=1,4 do
+    if leftover_time >= 1/60 then
+      f()
+      key_counts()
+      this_frame_keys = {}
+      leftover_time = leftover_time - 1/60
+    end
+  end
+end
+
 -- Changes the behavior of menu_foo functions.
 -- In a menu that doesn't specifically pertain to multiple players,
 -- up, down, left, right should always work.  But in a multiplayer
@@ -177,6 +190,7 @@ function main_select_speed_99(next_func, ...)
 end
 
 function main_endless(...)
+  consuming_timesteps = true
   replay.endless = {}
   local replay=replay.endless
   replay.pan_buf = ""
@@ -196,7 +210,7 @@ function main_endless(...)
       write_replay_file()
       return main_dumb_transition, {main_select_mode, "You scored "..P1.score}
     end
-    P1:local_run()
+    variable_step(function() P1:local_run() end)
     --groundhogday mode
     --[[if P1.CLOCK == 1001 then
       local prev_states = P1.prev_states
@@ -207,6 +221,7 @@ function main_endless(...)
 end
 
 function main_time_attack(...)
+  consuming_timesteps = true
   P1 = Stack(1, "time", ...)
   make_local_panels(P1, "000000")
   while true do
@@ -216,7 +231,9 @@ function main_time_attack(...)
     -- TODO: proper game over.
       return main_dumb_transition, {main_select_mode, "You scored "..P1.score}
     end
-    P1:local_run()
+    variable_step(function()
+      if (not P1.game_over)  and P1.CLOCK < 120 * 60 then
+        P1:local_run() end end)
   end
 end
 
@@ -529,18 +546,9 @@ function main_net_vs()
     wait()
     do_messages()
     print(P1.CLOCK, P2.CLOCK)
-    for i=1,4 do
-      if leftover_time >= 1/60 then
-        if i > 1 then
-          key_counts()
-          this_frame_keys = {}
-        end
-        if not P1.game_over then
-          P1:local_run()
-        end
-        leftover_time = leftover_time - 1/60
-      end
-    end
+    variable_step(function()
+      if not P1.game_over then
+        P1:local_run() end end)
     if not P2.game_over then
       P2:foreign_run()
     end
@@ -618,17 +626,18 @@ end)
 
 function main_local_vs()
   -- TODO: replay!
+  consuming_timesteps = true
   local end_text = nil
   while true do
     P1:render()
     P2:render()
     wait()
-    if not P1.game_over then
-      P1:local_run()
-    end
-    if not P2.game_over then
-      P2:local_run()
-    end
+    variable_step(function()
+        if not P1.game_over and not P2.game_over() then
+          P1:local_run()
+          P2:local_run()
+        end
+      end)
     if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
       end_text = "Draw"
     elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
@@ -771,6 +780,7 @@ end
 function make_main_puzzle(puzzles)
   local awesome_idx, ret = 1, nil
   function ret()
+    consuming_timesteps = true
     replay.puzzle = {}
     local replay = replay.puzzle
     P1 = Stack(1, "puzzle")
@@ -798,7 +808,9 @@ function make_main_puzzle(puzzles)
           return main_dumb_transition, {main_select_puzz, "You lose :("}
         end
       end
-      P1:local_run()
+      variable_step(function() 
+        if P1.n_active_panels ~= 0 or P1.prev_active_panels ~= 0 or
+          P1.puzzle_moves ~= 0 then P1:local_run() end end)
     end
   end
   return ret

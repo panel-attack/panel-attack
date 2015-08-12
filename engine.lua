@@ -385,6 +385,7 @@ end
 
 --local_run is for the stack that belongs to this client.
 function Stack.local_run(self)
+  self:update_cards()
   self.input_state = self:send_controls()
   self:prep_rollback()
   self:controls()
@@ -397,6 +398,7 @@ function Stack.foreign_run(self)
   local times_to_run = min(string.len(self.input_buffer),
       self.max_runs_per_frame)
   for i=1,times_to_run do
+    self:update_cards()
     self.input_state = string.sub(self.input_buffer,1,1)
     self:prep_rollback()
     self:controls()

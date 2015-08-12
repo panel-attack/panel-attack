@@ -167,6 +167,20 @@ function graphics_init()
   FileClose(file);--]]
 end
 
+function Stack.update_cards(self)
+  for i=self.card_q.first,self.card_q.last do
+    local card = self.card_q[i]
+    if card_animation[card.frame] then
+      card.frame = card.frame + 1
+      if(card_animation[card.frame]==nil) then
+        self.card_q:pop()
+      end
+    else
+      card.frame = card.frame + 1
+    end
+  end
+end
+
 function Stack.draw_cards(self)
   for i=self.card_q.first,self.card_q.last do
     local card = self.card_q[i]
@@ -175,12 +189,12 @@ function Stack.draw_cards(self)
       local draw_y = (11-card.y) * 16 + self.pos_y + 1 + self.displacement
           - card_animation[card.frame]
       draw(IMG_cards[card.chain][card.n], draw_x, draw_y)
-      card.frame = card.frame + 1
-      if(card_animation[card.frame]==nil) then
-        self.card_q:pop()
-      end
+  --    card.frame = card.frame + 1
+  --    if(card_animation[card.frame]==nil) then
+  --      self.card_q:pop()
+  --    end
     else
-      card.frame = card.frame + 1
+  --    card.frame = card.frame + 1
     end
   end
 end

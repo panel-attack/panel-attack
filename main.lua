@@ -30,14 +30,18 @@ function love.update(dt)
     leftover_time = leftover_time + dt
   end
   joystick_ax()
-  key_counts()
+  if not consuming_timesteps then
+    key_counts()
+  end
   gfx_q:clear()
   local status, err = coroutine.resume(mainloop)
   if not status then
     error(err..'\n'..debug.traceback(mainloop))
   end
-  this_frame_keys = {}
-  this_frame_unicodes = {}
+  if not consuming_timesteps then
+    this_frame_keys = {}
+    this_frame_unicodes = {}
+  end
   this_frame_messages = {}
 end
 
