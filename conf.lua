@@ -13,9 +13,9 @@ function love.conf(t)
   t.release = false
 
   -- DEFAULTS FROM HERE DOWN
-  t.screen.vsync = true       -- Enable vertical sync (boolean)
-  t.screen.fullscreen = false -- Enable fullscreen (boolean)
-  t.screen.fsaa = 0           -- The number of FSAA-buffers (number)
+  (t.screen or t.window).vsync = true       -- Enable vertical sync (boolean)
+  (t.screen or t.window).fullscreen = false -- Enable fullscreen (boolean)
+  (t.screen or t.window).fsaa = 0           -- The number of FSAA-buffers (number)
   t.console = false           -- Attach a console (boolean, Windows only)
   t.modules.joystick = true
   t.modules.timer = true      -- Enable the timer module (boolean)

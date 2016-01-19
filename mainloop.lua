@@ -633,7 +633,7 @@ function main_local_vs()
     P2:render()
     wait()
     variable_step(function()
-        if not P1.game_over and not P2.game_over() then
+        if not P1.game_over and not P2.game_over then
           P1:local_run()
           P2:local_run()
         end
