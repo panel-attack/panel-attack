@@ -1296,8 +1296,9 @@ function Stack.check_matches(self)
             if row~=1 then
               -- no swapping panel below
               -- so this panel loses its chain flag
-              if panels[row-1][col].state ~= "swapping" and
-                  panel.chaining then
+              --if panels[row-1][col].state ~= "swapping" and
+              --    panel.chaining then
+              if panel.chaining then
                 panel.chaining = nil
                 self.n_chain_panels = self.n_chain_panels - 1
               end

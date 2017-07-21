@@ -321,6 +321,7 @@ function Stack.render(self)
                 gprint(tostring(panel.debug_tag), draw_x*3, draw_y*3+20)
               end
             end
+            gprint(panel.chaining and "chaining" or "nah", draw_x*3, draw_y*3+30)
           end
         end
       end
