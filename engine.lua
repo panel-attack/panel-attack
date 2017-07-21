@@ -650,7 +650,7 @@ function Stack.PdP(self)
               if row~=1 then
                 if panels[row-1][col].color == 0 then
                   self:set_hoverers(row,col,
-                      self.FRAMECOUNT_HOVER,false,true)
+                      self.FRAMECOUNT_HOVER,false,true,true)
                   -- if there is no panel beneath this panel
                   -- it will begin to hover.
                   -- CRAZY BUG EMULATION:
@@ -671,14 +671,14 @@ function Stack.PdP(self)
                   -- swap may have landed on a hover
                   self:set_hoverers(row,col,
                       self.FRAMECOUNT_HOVER,false,true,
-                      panels[row-1][col].match_anyway)
+                      panels[row-1][col].match_anyway, "inherited")
                 end
               end
             else
               -- an empty space finished swapping...
               -- panels above it hover
               self:set_hoverers(row+1,col,
-                  self.FRAMECOUNT_HOVER+1,false,false)
+                  self.FRAMECOUNT_HOVER+1,false,false, "empty")
             end
           elseif panel.state == "hovering" then
             if panels[row-1][col].state == "hovering" then
@@ -724,7 +724,7 @@ function Stack.PdP(self)
               end
               panel:clear_flags()
               self:set_hoverers(row+1,col,
-                  self.FRAMECOUNT_HOVER+1,true,false,true)
+                  self.FRAMECOUNT_HOVER+1,true,false,true, "combo")
             else
               panel.state = "popped"
               panel.timer = (panel.combo_size-panel.combo_index)
@@ -748,7 +748,7 @@ function Stack.PdP(self)
             panel:clear_flags()
             -- Any panels sitting on top of it
             -- hover and are flagged as CHAINING
-            self:set_hoverers(row+1,col,self.FRAMECOUNT_HOVER+1,true,false,true)
+            self:set_hoverers(row+1,col,self.FRAMECOUNT_HOVER+1,true,false,true, "popped")
           else
             -- what the heck.
             -- if a timer runs out and the routine can't
@@ -1380,7 +1380,7 @@ function Stack.check_matches(self)
 end
 
 function Stack.set_hoverers(self, row, col, hover_time, add_chaining,
-    extra_tick, match_anyway)
+    extra_tick, match_anyway, debug_tag)
   -- the extra_tick flag is for use during Phase 1&2,
   -- when panels above the first should be given an extra tick of hover time.
   -- This is because their timers will be decremented once on the same tick
@@ -1402,6 +1402,7 @@ function Stack.set_hoverers(self, row, col, hover_time, add_chaining,
         panel:clear_flags()
         panel.state = "hovering"
         panel.match_anyway = match_anyway
+        panel.debug_tag = debug_tag
         local adding_chaining = (not chaining) and panel.color~=9 and
             add_chaining
         if chaining or adding_chaining then

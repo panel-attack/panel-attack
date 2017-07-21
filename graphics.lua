@@ -313,6 +313,15 @@ function Stack.render(self)
             draw_frame = 1
           end
           draw(IMG_panels[panel.color][draw_frame], draw_x, draw_y)
+          if DEBUG_MODE then
+            gprint(panel.state, draw_x*3, draw_y*3)
+            if panel.match_anyway ~= nil then
+              gprint(tostring(panel.match_anyway), draw_x*3, draw_y*3+10)
+              if panel.debug_tag then
+                gprint(tostring(panel.debug_tag), draw_x*3, draw_y*3+20)
+              end
+            end
+          end
         end
       end
       if DEBUG_MODE and mx >= draw_x and mx < draw_x + 16 and
