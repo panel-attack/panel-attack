@@ -650,7 +650,7 @@ function Stack.PdP(self)
               if row~=1 then
                 if panels[row-1][col].color == 0 then
                   self:set_hoverers(row,col,
-                      self.FRAMECOUNT_HOVER,false,true,true)
+                      self.FRAMECOUNT_HOVER,false,true,false)
                   -- if there is no panel beneath this panel
                   -- it will begin to hover.
                   -- CRAZY BUG EMULATION:
@@ -678,7 +678,7 @@ function Stack.PdP(self)
               -- an empty space finished swapping...
               -- panels above it hover
               self:set_hoverers(row+1,col,
-                  self.FRAMECOUNT_HOVER+1,false,false, "empty")
+                  self.FRAMECOUNT_HOVER+1,false,false,false,"empty")
             end
           elseif panel.state == "hovering" then
             if panels[row-1][col].state == "hovering" then
@@ -1382,6 +1382,7 @@ end
 
 function Stack.set_hoverers(self, row, col, hover_time, add_chaining,
     extra_tick, match_anyway, debug_tag)
+  assert(type(match_anyway) ~= "string")
   -- the extra_tick flag is for use during Phase 1&2,
   -- when panels above the first should be given an extra tick of hover time.
   -- This is because their timers will be decremented once on the same tick
