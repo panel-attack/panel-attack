@@ -211,8 +211,8 @@ function Stack.render(self)
   else
     draw(IMG_garbage[self.character].portrait, self.pos_x+96, self.pos_y, 0, -1)
   end
-  local shake_idx = self.CLOCK - 1 - self.shake_offset
-  local shake = ceil((shake_arr[shake_idx] or 0) * 9)
+  local shake_idx = #shake_arr - self.shake_time
+  local shake = ceil((shake_arr[shake_idx] or 0) * 13)
   for row=0,self.height do
     for col=1,self.width do
       local panel = self.panels[row][col]

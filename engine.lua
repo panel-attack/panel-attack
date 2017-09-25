@@ -5,6 +5,7 @@
   --    (rising, timers, falling, cursor movement, swapping, landing)
   --  . the matches-checking routine
 local min, pairs, deepcpy = math.min, pairs, deepcpy
+local max = math.max
 local garbage_bounce_time = #garbage_bounce_table
 local GARBAGE_DELAY = 52
 local clone_pool = {}
@@ -129,7 +130,7 @@ Stack = class(function(s, which, mode, speed, difficulty)
     s.cur_dir = nil     -- the direction pressed
     s.cur_row = 7  -- the row the cursor's on
     s.cur_col = 3  -- the column the left half of the cursor's on
-    s.top_cur_col = s.height + (s.mode == "puzzle" and 0 or -1)
+    s.top_cur_row = s.height + (s.mode == "puzzle" and 0 or -1)
 
     s.move_sound = false  -- this is set if the cursor movement sound should be played
     s.game_over = false
@@ -138,7 +139,8 @@ Stack = class(function(s, which, mode, speed, difficulty)
 
     s.which = which or 1 -- Pk.which == k
 
-    s.shake_offset = -9000
+    s.shake_time = 0
+    s.shake_panels = 0
 
     s.prev_states = {}
   end)
@@ -473,11 +475,13 @@ function Stack.PdP(self)
   end
 
   if self.displacement == 0 and self.has_risen then
+    self.top_cur_row = s.height
     self:new_row()
   end
 
   self.rise_lock = self.n_active_panels ~= 0 or
-      self.prev_active_panels ~= 0
+      self.prev_active_panels ~= 0 or
+      self.shake_time ~= 0
 
   -- Increase the speed if applicable
   if self.speed_times then
@@ -503,7 +507,7 @@ function Stack.PdP(self)
       and not self.rise_lock and self.mode ~= "puzzle" then
     if self.panels_in_top_row then
       self.health = self.health - 1
-      if self.health == 0 then
+      if self.health == 0 and self.shake_time == 0 then
         self.game_over = true
       end
     else
@@ -512,12 +516,17 @@ function Stack.PdP(self)
         self.displacement = self.displacement - 1
         if self.displacement == 0 then
           self.prevent_manual_raise = false
+          self.top_cur_row = self.height
           self:new_row()
         end
         self.rise_timer = self.rise_timer + self.FRAMECOUNT_RISE
       end
       self.health = self.max_health
     end
+  end
+
+  if self.displacement % 16 ~= 0 then
+    self.top_cur_row = self.height - 1
   end
 
   -- Begin the swap we input last frame.
@@ -542,6 +551,7 @@ function Stack.PdP(self)
   -- Timer-expiring actions + falling
   local propogate_fall = {false,false,false,false,false,false}
   local skip_col = 0
+  local fallen_garbage = 0
   for row=1,#panels do
     for col=1,width do
       local cntinue = false
@@ -579,8 +589,9 @@ function Stack.PdP(self)
           if supported then
             if panel.fresh then
               panel.fresh = nil
-              -- SHAKE
-              self.shake_offset = self.CLOCK
+              if row - panel.y_offset <= self.height then
+                self.shake_panels = self.shake_panels + 1
+              end
             end
             for x=col,col-1+panel.width do
               panels[row][x].state = "normal"
@@ -762,6 +773,10 @@ function Stack.PdP(self)
     end
   end
 
+  self.shake_time = self.shake_time - 1
+  self.shake_time = max(self.shake_time, garbage_to_shake_time[self.shake_panels])
+  self.shake_panels = 0
+
   -- Phase 3. /////////////////////////////////////////////////////////////
   -- Actions performed according to player input
 
@@ -770,9 +785,11 @@ function Stack.PdP(self)
   if self.cur_dir and (self.cur_timer == 0 or
     self.cur_timer == self.cur_wait_time) then
     self.cur_row = bound(1, self.cur_row + d_row[self.cur_dir],
-            self.top_cur_col)
+            self.top_cur_row)
     self.cur_col = bound(1, self.cur_col + d_col[self.cur_dir],
             width - 1)
+  else
+    self.cur_row = bound(1, self.cur_row, self.top_cur_row)
   end
   if self.cur_timer ~= self.cur_wait_time then
     self.cur_timer = self.cur_timer + 1
@@ -1428,7 +1445,7 @@ end
 function Stack.new_row(self)
   local panels = self.panels
   -- move cursor up
-  self.cur_row = bound(1, self.cur_row + 1, self.top_cur_col)
+  self.cur_row = bound(1, self.cur_row + 1, self.top_cur_row)
   -- move panels up
   for row=#panels+1,1,-1 do
     panels[row] = panels[row-1]

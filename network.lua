@@ -77,7 +77,7 @@ local process_message = {
   L=function(s) P2_level = ({["0"]=10})[s] or (s+0) end,
   --G=function(s) got_opponent = true end,
   H=function(s) got_H = true end,
-  N=function(s) error("Server told us to fuck off") end,
+  N=function(s) error("Server told us to upgrade the game at burke.ro/panel.zip") end,
   P=function(s) P1.panel_buffer = P1.panel_buffer..s end,
   O=function(s) P2.panel_buffer = P2.panel_buffer..s end,
   I=function(s) P2.input_buffer = P2.input_buffer..s end,
@@ -94,7 +94,7 @@ function network_init(ip)
   end
   TCP_sock:settimeout(0)
   got_H = false
-  net_send("H007")
+  net_send("H008")
   assert(config.name and config.level and config.character)
   json_send({name=config.name, level=config.level, character=config.character})
 end

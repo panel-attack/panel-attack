@@ -136,7 +136,7 @@ DEBUG_MODE = nil
 shake_arr = {}
 
 local shake_idx = -6
-for i=14,6,-2.12 do
+for i=14,6,-1 do
   local x = -math.pi
   local step = math.pi * 2 / i
   for j=1,i do
@@ -146,6 +146,8 @@ for i=14,6,-2.12 do
   end
 end
 
+print("#shake arr "..#shake_arr)
+
 -- 1 -> 1
 -- #shake -> 0
 local shake_step = 1/(#shake_arr - 1)
@@ -154,6 +156,17 @@ for i=1,#shake_arr do
   shake_arr[i] = shake_arr[i] * shake_mult
   print(shake_arr[i])
   shake_mult = shake_mult - shake_step
+end
+
+garbage_to_shake_time = {
+  [0] = 0,
+  18, 18, 18, 18, 24, 42, 42, 42, 42, 42,
+  42, 66, 66, 66, 66, 66, 66, 66, 66, 66,
+  66, 66, 66, 76
+}
+
+for i=25,1000 do
+  garbage_to_shake_time[i] = garbage_to_shake_time[i-1]
 end
 
 colors = {  red     = {220, 50,  47 },
