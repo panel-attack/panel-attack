@@ -94,6 +94,7 @@ menu_escape = menu_key_func({"escape","x"}, {"swap2"}, false)
 do
   local active_idx = 1
   function main_select_mode()
+    close_socket()
     local items = {{"1P endless", main_select_speed_99, {main_endless}},
         {"1P puzzle", main_select_puzz},
         {"1P time attack", main_select_speed_99, {main_time_attack}},

@@ -16,7 +16,9 @@ function flush_socket()
 end
 
 function close_socket()
-  TCP_sock:close()
+  if TCP_sock then
+    TCP_sock:close()
+  end
   TCP_sock = nil
 end
 
