@@ -96,7 +96,7 @@ function network_init(ip)
   end
   TCP_sock:settimeout(0)
   got_H = false
-  net_send("H010")
+  net_send("H011")
   assert(config.name and config.level and config.character)
   json_send({name=config.name, level=config.level, character=config.character})
 end
