@@ -475,7 +475,7 @@ function Stack.PdP(self)
   end
 
   if self.displacement == 0 and self.has_risen then
-    self.top_cur_row = s.height
+    self.top_cur_row = self.height
     self:new_row()
   end
 
@@ -589,8 +589,8 @@ function Stack.PdP(self)
           end
           if supported then
             if panel.fresh then
-              panel.fresh = nil
               if row - panel.y_offset <= self.height then
+                panel.fresh = nil
                 shake_panels = shake_panels + 1
               end
             end

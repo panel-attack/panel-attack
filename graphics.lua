@@ -349,6 +349,8 @@ function Stack.render(self)
     elseif self.level then
       gprint("Level: "..self.level, self.score_x, 160)
     end
+    gprint("Health: "..self.health, self.score_x, 175)
+    gprint("Shake: "..self.shake_time, self.score_x, 190)
   end
   self:draw_cards()
   self:render_cursor()
