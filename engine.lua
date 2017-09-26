@@ -140,7 +140,6 @@ Stack = class(function(s, which, mode, speed, difficulty)
     s.which = which or 1 -- Pk.which == k
 
     s.shake_time = 0
-    s.shake_panels = 0
 
     s.prev_states = {}
   end)
@@ -214,6 +213,7 @@ function Stack.mkcpy(self, other)
   other.cur_dir = self.cur_dir
   other.cur_row = self.cur_row
   other.cur_col = self.cur_col
+  other.shake_time = self.shake_time
   other.card_q = deepcpy(self.card_q)
   return other
 end
@@ -552,6 +552,7 @@ function Stack.PdP(self)
   local propogate_fall = {false,false,false,false,false,false}
   local skip_col = 0
   local fallen_garbage = 0
+  local shake_panels = 0
   for row=1,#panels do
     for col=1,width do
       local cntinue = false
@@ -590,7 +591,7 @@ function Stack.PdP(self)
             if panel.fresh then
               panel.fresh = nil
               if row - panel.y_offset <= self.height then
-                self.shake_panels = self.shake_panels + 1
+                shake_panels = shake_panels + 1
               end
             end
             for x=col,col-1+panel.width do
@@ -774,8 +775,7 @@ function Stack.PdP(self)
   end
 
   self.shake_time = self.shake_time - 1
-  self.shake_time = max(self.shake_time, garbage_to_shake_time[self.shake_panels])
-  self.shake_panels = 0
+  self.shake_time = max(self.shake_time, garbage_to_shake_time[shake_panels])
 
   -- Phase 3. /////////////////////////////////////////////////////////////
   -- Actions performed according to player input
