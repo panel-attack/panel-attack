@@ -351,6 +351,12 @@ function Stack.render(self)
     end
     gprint("Health: "..self.health, self.score_x, 175)
     gprint("Shake: "..self.shake_time, self.score_x, 190)
+    --gprint("Panel buffer: "..#self.panel_buffer, self.score_x, 190)
+    --[[local danger = {}
+    for i=1,6 do
+      danger[i] = self.panels[12][i]:dangerous()
+    end
+    gprint("Danger: "..table.concat(map(function(x) if x then return "1" else return "0" end end, danger)), self.score_x, 205)--]]
   end
   self:draw_cards()
   self:render_cursor()

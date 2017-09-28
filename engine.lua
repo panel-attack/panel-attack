@@ -521,8 +521,11 @@ function Stack.PdP(self)
         end
         self.rise_timer = self.rise_timer + self.FRAMECOUNT_RISE
       end
-      self.health = self.max_health
     end
+  end
+
+  if not self.panels_in_top_row then
+    self.health = self.max_health
   end
 
   if self.displacement % 16 ~= 0 then
@@ -570,7 +573,7 @@ function Stack.PdP(self)
               local color, chaining = panel.color, panel.chaining
               panel:clear()
               panel.color, panel.chaining = color, chaining
-              self:set_hoverers(row,col,5,false,true)
+              self:set_hoverers(row,col,5,true,true)
             else
               panel.state = "normal"
             end
