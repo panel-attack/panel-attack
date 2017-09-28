@@ -579,36 +579,37 @@ function Stack.PdP(self)
             end
           end
         -- try to fall
-        elseif (panel.state=="normal" or panel.state=="falling")
-            and panel.x_offset==0 then
-          local prow = panels[row-1]
-          local supported = false
-          if panel.y_offset == 0 then
-            for i=col,col+panel.width-1 do
-              supported = supported or prow[i]:support_garbage()
+        elseif (panel.state=="normal" or panel.state=="falling") then
+          if panel.x_offset==0 then
+            local prow = panels[row-1]
+            local supported = false
+            if panel.y_offset == 0 then
+              for i=col,col+panel.width-1 do
+                supported = supported or prow[i]:support_garbage()
+              end
+            else
+              supported = not propogate_fall[col]
             end
-          else
-            supported = not propogate_fall[col]
-          end
-          if supported then
-            if panel.fresh then
-              if row - panel.y_offset <= self.height then
-                panel.fresh = nil
-                shake_panels = shake_panels + 1
+            if supported then
+              for x=col,col-1+panel.width do
+                panels[row][x].state = "normal"
+                propogate_fall[x] = false
+              end
+            else
+              skip_col = panel.width-1
+              for x=col,col-1+panel.width do
+                panels[row-1][x]:clear()
+                propogate_fall[x] = true
+                panels[row][x].state = "falling"
+                panels[row-1][x], panels[row][x] =
+                  panels[row][x], panels[row-1][x]
               end
             end
-            for x=col,col-1+panel.width do
-              panels[row][x].state = "normal"
-              propogate_fall[x] = false
-            end
-          else
-            skip_col = panel.width-1
-            for x=col,col-1+panel.width do
-              panels[row-1][x]:clear()
-              propogate_fall[x] = true
-              panels[row][x].state = "falling"
-              panels[row-1][x], panels[row][x] =
-                panels[row][x], panels[row-1][x]
+          end
+          if panel.fresh and panel.state == "normal" then
+            if row <= self.height then
+              panel.fresh = nil
+              shake_panels = shake_panels + 1
             end
           end
         end
@@ -1033,12 +1034,12 @@ function Stack.drop_garbage(self, width, height, metal)
       panel.height = height
       panel.y_offset = y-spawn_row
       panel.x_offset = x-spawn_col
+      panel.fresh = true
       if metal then
         panel.metal = metal
       end
     end
   end
-  self.panels[spawn_row+height-1][spawn_col].fresh = true
 end
 
 -- prepare to send some garbage!
