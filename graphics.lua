@@ -186,7 +186,7 @@ function Stack.draw_cards(self)
     local card = self.card_q[i]
     if card_animation[card.frame] then
       local draw_x = (card.x-1) * 16 + self.pos_x
-      local draw_y = (11-card.y) * 16 + self.pos_y + 1 + self.displacement
+      local draw_y = (11-card.y) * 16 + self.pos_y + self.displacement
           - card_animation[card.frame]
       draw(IMG_cards[card.chain][card.n], draw_x, draw_y)
   --    card.frame = card.frame + 1
@@ -351,6 +351,7 @@ function Stack.render(self)
     end
     gprint("Health: "..self.health, self.score_x, 175)
     gprint("Shake: "..self.shake_time, self.score_x, 190)
+    gprint("Stop time: "..self.stop_time.." "..self.stop_time_timer, self.score_x, 205)
     --gprint("Panel buffer: "..#self.panel_buffer, self.score_x, 190)
     --[[local danger = {}
     for i=1,6 do
