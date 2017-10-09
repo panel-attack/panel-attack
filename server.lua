@@ -11,6 +11,7 @@ local ipairs = ipairs
 local random = math.random
 local lobby_changed = false
 local time = os.time
+local floor = math.floor
 local TIMEOUT = 10
 
 
@@ -114,7 +115,7 @@ function Connection.send(self, stuff)
   if type(stuff) == "table" then
     local json = json.encode(stuff)
     local len = json:len()
-    local prefix = "J"..char(len/65536)..char((len/256)%256)..char(len%256)
+    local prefix = "J"..char(floor(len/65536))..char(floor((len/256)%256))..char(len%256)
     print(byte(prefix[1]), byte(prefix[2]), byte(prefix[3]), byte(prefix[4]))
     print("sending json "..json)
     stuff = prefix..json
