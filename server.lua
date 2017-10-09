@@ -148,6 +148,7 @@ function Connection.setup_game(self)
   self.rows_left = 14+random(1,8)
   self.prev_metal_col = nil
   self.metal_col = nil
+  self.first_seven = nil
 end
 
 function Connection.close(self)
@@ -193,7 +194,9 @@ function Connection.P(self, message)
   if not ok_ncolors[message[1]] then return end
   local ncolors = 0 + message[1]
   local ret = make_panels(ncolors, string.sub(message, 2, 7), self)
-  if self.first_seven and self.opponent then
+  if self.first_seven and self.opponent and 
+      ((self.level < 9 and self.opponent.level < 9) or
+       (self.level >= 9 and self.opponent.level >= 9)) then
     self.opponent.first_seven = self.first_seven
   end
   self:send("P"..ret)
