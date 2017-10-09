@@ -93,7 +93,7 @@ Stack = class(function(s, which, mode, speed, difficulty)
     s.has_risen = false   -- set once the stack rises once during the game
 
     s.stop_time = 0
-    s.stop_time_timer = 0
+    s.pre_stop_time = 0
 
     s.NCOLORS = s.NCOLORS or 5
     s.score = 0         -- der skore
@@ -199,7 +199,7 @@ function Stack.mkcpy(self, other)
   other.speed_times = deepcpy(self.speed_times)
   other.panels_to_speedup = self.panels_to_speedup
   other.stop_time = self.stop_time
-  other.stop_time_timer = self.stop_time_timer
+  other.pre_stop_time = self.pre_stop_time
   other.score = self.score
   other.chain_counter = self.chain_counter
   other.n_active_panels = self.n_active_panels
@@ -427,15 +427,10 @@ function Stack.PdP(self)
   local panel = nil
   local swapped_this_frame = nil
 
-  -- TODO: We should really only have one variable for this shit.
-  if self.stop_time ~= 0 then
-    self.stop_time_timer = self.stop_time_timer - 1
-    if self.stop_time_timer == 0 then
-      self.stop_time = self.stop_time - 1
-      if self.stop_time ~= 0 then
-        self.stop_time_timer=60
-      end
-    end
+  if self.pre_stop_time ~= 0 then
+    self.pre_stop_time = self.pre_stop_time - 1
+  elseif self.stop_time ~= 0 then
+    self.stop_time = self.stop_time - 1
   end
 
   self.panels_in_top_row = false
@@ -863,7 +858,6 @@ function Stack.PdP(self)
       end
       self.manual_raise_yet = true  --ehhhh
       self.stop_time = 0
-      self.stop_time_timer = 0
     elseif not self.manual_raise_yet then
       self.manual_raise = false
     end
@@ -1261,6 +1255,8 @@ function Stack.check_matches(self)
     end
   end
 
+  local pre_stop_time = self.FRAMECOUNT_MATCH +
+      self.FRAMECOUNT_POP * (combo_size + garbage_size)
   local garbage_match_time = self.FRAMECOUNT_MATCH + garbage_bounce_time +
       self.FRAMECOUNT_POP * (combo_size + garbage_size)
   garbage_index=garbage_size-1
@@ -1371,24 +1367,17 @@ function Stack.check_matches(self)
       self.score = self.score + score_chain_TA[something]
     end
     if((combo_size>3) or is_chain) then
-      if(self.stop_time ~= 0) then
-        self.stop_time = self.stop_time + 1
+      if self.panels_in_top_row then
+        self.stop_time = max(self.stop_time, stop_time_danger[self.difficulty])
+      elseif is_chain then
+        self.stop_time = max(self.stop_time, stop_time_chain[self.difficulty])
       else
-        if self.panels_in_top_row then
-          self.stop_time = self.stop_time + stop_time_danger[self.difficulty]
-        elseif is_chain then
-          self.stop_time = self.stop_time + stop_time_chain[self.difficulty]
-        else
-          self.stop_time = self.stop_time + stop_time_combo[self.difficulty]
-        end
-        --MrStopState=1;
-        --MrStopTimer=MrStopAni[self.stop_time];
-        --TODO: Mr Stop ^
-        self.stop_time_timer = 60
+        self.stop_time = max(self.stop_time + stop_time_combo[self.difficulty])
       end
-      if(self.stop_time>99) then
-        self.stop_time = 99
-      end
+      self.pre_stop_time = max(self.pre_stop_time, pre_stop_time)
+      --MrStopState=1;
+      --MrStopTimer=MrStopAni[self.stop_time];
+      --TODO: Mr Stop ^
 
       --SFX_Buddy_Play=P1Stage;
       --SFX_Land_Play=0;

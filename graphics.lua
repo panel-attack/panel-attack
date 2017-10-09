@@ -351,7 +351,8 @@ function Stack.render(self)
     end
     gprint("Health: "..self.health, self.score_x, 175)
     gprint("Shake: "..self.shake_time, self.score_x, 190)
-    gprint("Stop time: "..self.stop_time.." "..self.stop_time_timer, self.score_x, 205)
+    gprint("Stop: "..self.stop_time, self.score_x, 205)
+    gprint("Pre stop: "..self.pre_stop_time, self.score_x, 220)
     --gprint("Panel buffer: "..#self.panel_buffer, self.score_x, 190)
     --[[local danger = {}
     for i=1,6 do

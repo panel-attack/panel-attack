@@ -60,9 +60,9 @@ FC_HOVER = {12,  9,  6}
 FC_MATCH = {61, 49, 37}
 FC_FLASH = {44, 36, 22}
 FC_POP   = { 9,  8,  7}
-stop_time_combo =  { 2, 2, 2}
-stop_time_chain =  { 5, 3, 2}
-stop_time_danger = {10, 7, 4}
+stop_time_combo =  {120, 120, 120}
+stop_time_chain =  {300, 180, 120}
+stop_time_danger = {600, 420, 240}
 
 -- Yes, 2 is slower than 1 and 50..99 are the same.
 speed_to_rise_time = map(function(x) return x/16 end,
