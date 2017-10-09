@@ -1256,7 +1256,7 @@ function Stack.check_matches(self)
   end
 
   local pre_stop_time = self.FRAMECOUNT_MATCH +
-      self.FRAMECOUNT_POP * (combo_size + garbage_size)
+      self.FRAMECOUNT_POP * combo_size
   local garbage_match_time = self.FRAMECOUNT_MATCH + garbage_bounce_time +
       self.FRAMECOUNT_POP * (combo_size + garbage_size)
   garbage_index=garbage_size-1
@@ -1372,7 +1372,7 @@ function Stack.check_matches(self)
       elseif is_chain then
         self.stop_time = max(self.stop_time, stop_time_chain[self.difficulty])
       else
-        self.stop_time = max(self.stop_time + stop_time_combo[self.difficulty])
+        self.stop_time = max(self.stop_time,  stop_time_combo[self.difficulty])
       end
       self.pre_stop_time = max(self.pre_stop_time, pre_stop_time)
       --MrStopState=1;
