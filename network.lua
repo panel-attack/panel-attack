@@ -63,7 +63,7 @@ end
 function json_send(obj)
   local json = json.encode(obj)
   local len = json:len()
-  local prefix = "J"..char(len/65536)..char((len/256)%256)..char(len%256)
+  local prefix = "J"..char(floor(len/65536))..char(floor((len/256)%256))..char(len%256)
   net_send(prefix..json)
 end
 
@@ -96,7 +96,7 @@ function network_init(ip)
   end
   TCP_sock:settimeout(0)
   got_H = false
-  net_send("H014")
+  net_send("H015")
   assert(config.name and config.level and config.character)
   json_send({name=config.name, level=config.level, character=config.character})
 end
