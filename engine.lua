@@ -23,9 +23,17 @@ Stack = class(function(s, which, mode, speed, difficulty)
       s.character = (type(difficulty) == "string") and difficulty or s.character
       s.level = level
       speed = level_to_starting_speed[level]
-      difficulty = level_to_difficulty[level]
+      --difficulty = level_to_difficulty[level]
       s.speed_times = {15*60, idx=1, delta=15*60}
       s.max_health = level_to_hang_time[level]
+      s.FRAMECOUNT_HOVER  = level_to_hover[s.level]
+      s.FRAMECOUNT_FLASH  = level_to_flash[s.level]
+      s.FRAMECOUNT_FACE   = level_to_face[s.level]
+      s.FRAMECOUNT_POP    = level_to_pop[s.level]
+      s.combo_constant    = level_to_combo_constant[s.level]
+      s.combo_coefficient = level_to_combo_coefficient[s.level]
+      s.chain_constant    = level_to_chain_constant[s.level]
+      s.chain_coefficient = level_to_chain_coefficient[s.level]
       if s.mode == "2ptime" then
         s.NCOLORS = level_to_ncolors_time[level]
       else
@@ -108,10 +116,11 @@ Stack = class(function(s, which, mode, speed, difficulty)
     s.n_chain_panels= 0
 
        -- These change depending on the difficulty and speed levels:
-    s.FRAMECOUNT_HOVER = FC_HOVER[s.difficulty]
-    s.FRAMECOUNT_MATCH = FC_MATCH[s.difficulty]
-    s.FRAMECOUNT_FLASH = FC_FLASH[s.difficulty]
-    s.FRAMECOUNT_POP   = FC_POP[s.difficulty]
+    s.FRAMECOUNT_HOVER = s.FRAMECOUNT_HOVER or FC_HOVER[s.difficulty]
+    s.FRAMECOUNT_FLASH = s.FRAMECOUNT_FLASH or FC_FLASH[s.difficulty]
+    s.FRAMECOUNT_FACE  = s.FRAMECOUNT_FACE or FC_FACE[s.difficulty]
+    s.FRAMECOUNT_POP   = s.FRAMECOUNT_POP or FC_POP[s.difficulty]
+    s.FRAMECOUNT_MATCH = s.FRAMECOUNT_FACE + s.FRAMECOUNT_FLASH
     s.FRAMECOUNT_RISE  = speed_to_rise_time[s.speed]
 
     s.rise_timer = s.FRAMECOUNT_RISE
@@ -1367,13 +1376,37 @@ function Stack.check_matches(self)
       self.score = self.score + score_chain_TA[something]
     end
     if((combo_size>3) or is_chain) then
-      if self.panels_in_top_row then
-        self.stop_time = max(self.stop_time, stop_time_danger[self.difficulty])
+      local stop_time
+      if self.panels_in_top_row and is_chain then
+        if self.level then
+          local length = (self.chain_counter > 4) and 6 or self.chain_counter
+          stop_time = -8 * self.level + 168 +
+                      (self.chain_counter - 1) * (-2*self.level+22)
+        else
+          stop_time = stop_time_danger[self.difficulty]
+        end
+      elseif self.panels_in_top_row then
+        if self.level then
+          local length = (combo_size < 9) and 2 or 3
+          stop_time = self.chain_coefficient * length + self.chain_constant
+        else
+          stop_time = stop_time_danger[self.difficulty]
+        end
       elseif is_chain then
-        self.stop_time = max(self.stop_time, stop_time_chain[self.difficulty])
+        if self.level then
+          local length = min(self.chain_counter, 13)
+          stop_time = self.chain_coefficient * length + self.chain_constant
+        else
+          stop_time = stop_time_chain[self.difficulty]
+        end
       else
-        self.stop_time = max(self.stop_time,  stop_time_combo[self.difficulty])
+        if self.level then
+          stop_time = self.combo_coefficient * combo_size + self.combo_constant
+        else
+          stop_time = stop_time_combo[self.difficulty]
+        end
       end
+      self.stop_time = max(self.stop_time, stop_time)
       self.pre_stop_time = max(self.pre_stop_time, pre_stop_time)
       --MrStopState=1;
       --MrStopTimer=MrStopAni[self.stop_time];

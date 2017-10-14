@@ -57,8 +57,10 @@ card_animation = {false,
 gfx_q = Queue()
 
 FC_HOVER = {12,  9,  6}
-FC_MATCH = {61, 49, 37}
+-- TODO: delete FC_MATCH?
+--FC_MATCH = {61, 49, 37}
 FC_FLASH = {44, 36, 22}
+FC_FACE  = {17, 13, 15} -- idk this is just MATCH-FLASH
 FC_POP   = { 9,  8,  7}
 stop_time_combo =  {120, 120, 120}
 stop_time_chain =  {300, 180, 120}
@@ -102,11 +104,20 @@ panels_to_next_speed =
 -- A level is a speed, a difficulty, and an amount of time
 -- that can be spent at the top of the screen without dying.
 -- level also determines the number of colors
-level_to_starting_speed = {  1,  5,  9, 13, 17, 21, 25, 29, 27, 32}
-level_to_difficulty     = {  1,  1,  2,  2,  2,  2,  2,  3,  3,  3}
-level_to_hang_time      = {121,100, 80, 65, 50, 40, 30, 20, 10,  1}
-level_to_ncolors_vs     = {  5,  5,  5,  5,  5,  5,  5,  5,  6,  6}
-level_to_ncolors_time   = {  5,  5,  6,  6,  6,  6,  6,  6,  6,  6}
+level_to_starting_speed    = {  1,  5,  9, 13, 17, 21, 25, 29, 27, 32}
+--level_to_difficulty        = {  1,  1,  2,  2,  2,  2,  2,  3,  3,  3}
+level_to_hang_time         = {121,100, 80, 65, 50, 40, 30, 20, 10,  1}
+level_to_ncolors_vs        = {  5,  5,  5,  5,  5,  5,  5,  5,  6,  6}
+level_to_ncolors_time      = {  5,  5,  6,  6,  6,  6,  6,  6,  6,  6}
+level_to_hover             = { 12, 12, 11, 10,  9,  6,  5,  4,  3,  6}
+level_to_pop               = {  9,  9,  8,  8,  8,  8,  8,  7,  7,  7}
+level_to_flash             = { 44, 44, 42, 42, 38, 36, 34, 32, 30, 28}
+level_to_face              = { 15, 14, 14, 13, 12, 11, 10, 10,  9,  8}
+level_to_combo_constant    = {-20,-16,-12, -8, -3,  2,  7, 12, 17, 22}
+level_to_combo_coefficient = { 20, 18, 16, 14, 12, 10,  8,  6,  4,  2}
+level_to_chain_constant    = { 80, 77, 74, 71, 68, 65, 62, 60, 58, 56}
+level_to_chain_coefficient = { 20, 18, 16, 14, 12, 10,  8,  6,  4,  2}
+
 
 
 -- Stage clear seems to use a variant of vs mode's speed system,
@@ -123,7 +134,8 @@ level_to_ncolors_time   = {  5,  5,  6,  6,  6,  6,  6,  6,  6,  6}
 combo_garbage = {{}, {}, {}, {3}, {4},
               {5}, {6}, {3,4}, {4,4}, {5,5},
               {5,6}, {6,6}, {6,6,6}, {6,6,6,6},
-              [20]={6,6,6,6,6,6}}
+              [20]={6,6,6,6,6,6},
+              [27]={6,6,6,6,6,6,6,6}}
 for i=1,72 do
   combo_garbage[i] = combo_garbage[i] or combo_garbage[i-1]
 end
