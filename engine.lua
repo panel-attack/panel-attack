@@ -937,7 +937,8 @@ function Stack.PdP(self)
   self.later_garbage[self.CLOCK-409] = nil
 
   local drop_it = self.n_active_panels == 0 and
-      self.prev_active_panels == 0
+      self.prev_active_panels == 0 and
+      not self.panels_in_top_row
   if drop_it and self.garbage_q:len() > 0 then
     self:drop_garbage(unpack(self.garbage_q:pop()))
   end

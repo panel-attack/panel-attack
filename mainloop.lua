@@ -725,14 +725,23 @@ function main_replay_endless()
   P1.gpanel_buffer = replay.gpan_buf
   P1.speed = replay.speed
   P1.difficulty = replay.difficulty
+  local run = true
   while true do
     P1:render()
     wait()
-    if P1.game_over then
-    -- TODO: proper game over.
-      return main_dumb_transition, {main_select_mode, "You scored "..P1.score}
+    if this_frame_keys["return"] then
+      run = not run
     end
-    P1:foreign_run()
+    if this_frame_keys["\\"] then
+      run = false
+    end
+    if run or this_frame_keys["\\"] then
+      if P1.game_over then
+      -- TODO: proper game over.
+        return main_dumb_transition, {main_select_mode, "You scored "..P1.score}
+      end
+      P1:foreign_run()
+    end
   end
 end
 
