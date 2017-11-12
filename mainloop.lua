@@ -247,9 +247,11 @@ function main_net_vs_room()
   local cursor,op_cursor,X,Y = {1,1},{1,1},3,5
   local up,down,left,right = {-1,0}, {1,0}, {0,-1}, {0,1}
   local my_state = {character=config.character, level=config.level, cursor="level", ready=false}
+  my_win_count = my_win_count or 0
   local prev_state = shallowcpy(my_state)
   local op_state = global_op_state or {character="lip", level=5, cursor="level", ready=false}
   global_op_state = nil
+  op_win_count = op_win_count or 0
   local selected = false
   local active_str = "level"
   local selectable = {level=true, ready=true}
@@ -265,6 +267,8 @@ function main_net_vs_room()
     cursor[1],cursor[2] = can_x,can_y
   end
   local function do_leave()
+	my_win_count = 0
+	op_win_count = 0
     json_send({leave_room=true})
   end
   local name_to_xy = {}
@@ -301,6 +305,8 @@ function main_net_vs_room()
         op_state = msg.menu_state
       end
       if msg.leave_room then
+		my_win_count = 0
+		op_win_count = 0
         return main_net_vs_lobby
       end
       if msg.match_start then
@@ -342,7 +348,7 @@ function main_net_vs_room()
         draw_button(i,j,1,1,map[i][j])
       end
     end
-    gprint("You: "..json.encode(my_state).."\nOpponent: "..json.encode(op_state), 50, 50)
+    gprint("You: "..json.encode(my_state).."  Wins: "..my_win_count.."\nOpponent: "..json.encode(op_state).."  Wins: "..op_win_count, 50, 50)
     wait()
     if menu_up(k) then
       if not selected then move_cursor(up) end
@@ -557,8 +563,10 @@ function main_net_vs()
       end_text = "Draw"
     elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
       end_text = "You lose :("
+	  op_win_count = op_win_count + 1
     elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
       end_text = "You win ^^"
+	  my_win_count = my_win_count + 1
     end
     if end_text then
       undo_stonermode()
