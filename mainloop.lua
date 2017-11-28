@@ -295,8 +295,8 @@ function main_net_vs_room()
       pstr = pstr .. "\nLevel: "..my_state.level.."\nOpponent's level: "..op_state.level
       y_add,x_add = 9,180
     end
-    if my_state.cursor == str then pstr = pstr.."\nYou!" end
-    if op_state.cursor == str then pstr = pstr.."\nOpponent!" end
+    if my_state.cursor == str then pstr = pstr.."\n"..my_name end
+    if op_state.cursor == str then pstr = pstr.."\n"..op_name end
     gprint(pstr, render_x+30, render_y+y_add)
   end
   while true do
@@ -348,7 +348,7 @@ function main_net_vs_room()
         draw_button(i,j,1,1,map[i][j])
       end
     end
-    gprint("You: "..json.encode(my_state).."  Wins: "..my_win_count.."\nOpponent: "..json.encode(op_state).."  Wins: "..op_win_count, 50, 50)
+    gprint(my_name..": "..json.encode(my_state).."  Wins: "..my_win_count.."\n"..op_name..": "..json.encode(op_state).."  Wins: "..op_win_count, 50, 50)
     wait()
     if menu_up(k) then
       if not selected then move_cursor(up) end
@@ -456,6 +456,7 @@ function main_net_vs_lobby()
       if active_idx == #items then
         return main_select_mode
       end
+	  op_name = items[active_idx]
       request_game(items[active_idx])
     elseif menu_escape(k) then
       if active_idx == #items then
@@ -472,6 +473,7 @@ end
 function main_net_vs_setup(ip)
   if not config.name then
     return main_set_name
+	else my_name = config.name
   end
   P1, P1_level, P2_level, got_opponent = nil
   P2 = {panel_buffer="", gpanel_buffer=""}
@@ -562,10 +564,10 @@ function main_net_vs()
     if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
       end_text = "Draw"
     elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
-      end_text = "You lose :("
+      end_text = op_name.." Wins :("
 	  op_win_count = op_win_count + 1
     elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
-      end_text = "You win ^^"
+      end_text = my_name.." Wins ^^"
 	  my_win_count = my_win_count + 1
     end
     if end_text then
