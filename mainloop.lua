@@ -542,6 +542,10 @@ function main_net_vs()
   --STONER_MODE = true
   local end_text = nil
   consuming_timesteps = true
+  local op_name_y = 40
+  if string.len(my_name) > 12 then
+		op_name_y = 55
+  end
   while true do
     -- Uncomment this to cripple your game :D
     -- love.timer.sleep(0.030)
@@ -550,6 +554,10 @@ function main_net_vs()
         return main_net_vs_lobby
       end
     end
+	gprint(my_name, 315, 40)
+	gprint(op_name, 410, op_name_y)
+	gprint("Wins: "..my_win_count, 315, 70)
+	gprint("Wins: "..op_win_count, 410, 70)
     P1:render()
     P2:render()
     wait()
