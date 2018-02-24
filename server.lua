@@ -15,7 +15,7 @@ local floor = math.floor
 local TIMEOUT = 10
 
 
-local VERSION = "017"
+local VERSION = "018"
 local type_to_length = {H=4, E=4, F=4, P=8, I=2, L=2, Q=8}
 local INDEX = 1
 local connections = {}
