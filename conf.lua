@@ -11,6 +11,7 @@ function love.conf(t)
   t.identity = "Panel Attack"
   t.version = "0.9.0"
   t.release = false
+  t.externalstorage = true
 
   -- DEFAULTS FROM HERE DOWN
   local window = t.window or t.screen
