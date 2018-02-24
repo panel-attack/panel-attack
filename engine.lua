@@ -1266,7 +1266,7 @@ function Stack.check_matches(self)
   end
 
   local pre_stop_time = self.FRAMECOUNT_MATCH +
-      self.FRAMECOUNT_POP * combo_size
+      self.FRAMECOUNT_POP * (combo_size + garbage_size)
   local garbage_match_time = self.FRAMECOUNT_MATCH + garbage_bounce_time +
       self.FRAMECOUNT_POP * (combo_size + garbage_size)
   garbage_index=garbage_size-1
