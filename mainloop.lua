@@ -390,7 +390,8 @@ function main_net_vs_room()
 end
 
 function main_net_vs_lobby()
-  local active_name, active_idx, active_back = ""
+  local active_name, active_idx, active_back = "", 1
+  local items
   local unpaired_players = {} -- list
   local willing_players = {} -- set
   local k = K[1]
@@ -418,7 +419,6 @@ function main_net_vs_lobby()
     end
     local to_print = ""
     local arrow = ""
-    active_idx = 1
     items = {}
     for _,v in ipairs(unpaired_players) do
       if v ~= config.name then
@@ -430,8 +430,8 @@ function main_net_vs_lobby()
         active_idx = #items+1
       end
     else
-      while active_idx < #items and items[active_idx] < active_name do
-        active_idx = active_idx + 1
+      while active_idx > #items do
+        active_idx = active_idx - 1
       end
       active_name = items[active_idx]
     end
