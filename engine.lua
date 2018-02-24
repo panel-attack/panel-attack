@@ -1417,6 +1417,9 @@ function Stack.check_matches(self)
       --SFX_Land_Play=0;
       --lol SFX
     end
+    --if garbage_size > 0 then
+      self.pre_stop_time = max(self.pre_stop_time, pre_stop_time)
+    --end
 
     self.manual_raise=false
     --self.score_render=1;
