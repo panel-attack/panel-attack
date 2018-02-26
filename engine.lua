@@ -802,7 +802,7 @@ function Stack.PdP(self)
 	(self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and
 	(self.cur_row ~= prev_row or self.cur_col ~= prev_col))	then
 		SFX_P1Cursor_Play=1 
-		local sound06 = love.audio.newSource("06.ogg", "static")
+		local sound06 = love.audio.newSource("sounds/SFX/06move.ogg", "static")
 		sound06:stop()
 		sound06:play()
 	end
@@ -979,8 +979,10 @@ function Stack.swap(self)
   panels[row][col].timer = 4
   panels[row][col+1].timer = 4
 
-  --SFX_Swap_Play=1;
-  --lol SFX
+  SFX_Swap_Play=1;
+  local sound08 = love.audio.newSource("sounds/SFX/08swap.ogg", "static")
+  sound08:stop()
+  sound08:play()
 
   -- If you're swapping a panel into a position
   -- above an empty space or above a falling piece
