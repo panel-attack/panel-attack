@@ -789,20 +789,31 @@ function Stack.PdP(self)
   -- Actions performed according to player input
 
   -- CURSOR MOVEMENT
-  self.move_sound = false
+  self.move_sound = true
   if self.cur_dir and (self.cur_timer == 0 or
     self.cur_timer == self.cur_wait_time) then
+	local prev_row = self.cur_row
+	local prev_col = self.cur_col
     self.cur_row = bound(1, self.cur_row + d_row[self.cur_dir],
             self.top_cur_row)
     self.cur_col = bound(1, self.cur_col + d_col[self.cur_dir],
             width - 1)
+	if(self.move_sound and 
+	(self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and
+	(self.cur_row ~= prev_row or self.cur_col ~= prev_col))	then
+		SFX_P1Cursor_Play=1 
+		local sound06 = love.audio.newSource("06.ogg", "static")
+		sound06:stop()
+		sound06:play()
+	end
+    --TODO:SFX
   else
     self.cur_row = bound(1, self.cur_row, self.top_cur_row)
   end
   if self.cur_timer ~= self.cur_wait_time then
     self.cur_timer = self.cur_timer + 1
-    --if(self.move_sound and self.cur_timer == 0) then SFX_P1Cursor_Play=1 end
-    --TODO:SFX
+    
+	
   end
 
   -- SWAPPING
