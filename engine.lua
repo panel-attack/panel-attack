@@ -980,6 +980,9 @@ function Stack.PdP(self)
 		SFX_Fanfare1:play()
 	end
 	SFX_Fanfare_Play=0
+	if self.game_over then
+		SFX_GameOver:play()
+	end
   end
   
 

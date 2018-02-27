@@ -198,3 +198,4 @@ SFX_Fanfare_Play = 0
 SFX_Fanfare1 = love.audio.newSource("sounds/SFX/F6Fanfare1.ogg", "static")
 SFX_Fanfare2 = love.audio.newSource("sounds/SFX/F7Fanfare2.ogg", "static")
 SFX_Fanfare3 = love.audio.newSource("sounds/SFX/F8Fanfare3.ogg", "static")
+SFX_GameOver = love.audio.newSource("sounds/SFX/0DGameOver.ogg", "static")
