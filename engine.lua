@@ -633,8 +633,8 @@ function Stack.PdP(self)
         if row == 1 then
           panel.state = "landing"
           panel.timer = 12
-          --SFX_Land_Play=1;
-          --SFX LAWL
+          SFX_Land_Play=1;
+          
         -- if there's a panel below, this panel's gonna land
         -- unless the panel below is falling.
         elseif panels[row-1][col].color ~= 0 and
@@ -648,8 +648,7 @@ function Stack.PdP(self)
             panel.state = "landing"
             panel.timer = 12
           end
-          --SFX_Land_Play=1;
-          --SFX LEWL
+          SFX_Land_Play=1;
         else
           panels[row-1][col], panels[row][col] =
             panels[row][col], panels[row-1][col]
@@ -806,7 +805,6 @@ function Stack.PdP(self)
 		sound06:stop()
 		sound06:play()
 	end
-    --TODO:SFX
   else
     self.cur_row = bound(1, self.cur_row, self.top_cur_row)
   end
@@ -953,6 +951,26 @@ function Stack.PdP(self)
   if drop_it and self.garbage_q:len() > 0 then
     self:drop_garbage(unpack(self.garbage_q:pop()))
   end
+  
+  --Play Sounds
+  local SFX_mute = false
+  if (not SFX_mute) then
+	if SFX_Land_Play == 1 then
+		local sound12cLand = love.audio.newSource("sounds/SFX/12cLand.ogg", "static")
+		sound12cLand:stop()
+		sound12cLand:play()
+		SFX_Land_Play=0
+	end
+	if SFX_Buddy_Play == 1 then
+		--TODO: choose sound to play based on the stack's character
+		--stop playing panel land sound if we are going to play a buddy sound
+		SFX_Land:stop()
+		SFX_Buddy_Lip:stop()
+		SFX_Buddy_Lip:play()
+		SFX_Buddy_Play=0
+	end
+  end
+  
 
   self.CLOCK = self.CLOCK + 1
 end
@@ -1426,9 +1444,8 @@ function Stack.check_matches(self)
       --MrStopTimer=MrStopAni[self.stop_time];
       --TODO: Mr Stop ^
 
-      --SFX_Buddy_Play=P1Stage;
-      --SFX_Land_Play=0;
-      --lol SFX
+      SFX_Buddy_Play=1;
+	  SFX_Land_Play=0;
     end
     --if garbage_size > 0 then
       self.pre_stop_time = max(self.pre_stop_time, pre_stop_time)

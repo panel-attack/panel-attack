@@ -190,3 +190,7 @@ colors = {  red     = {220, 50,  47 },
             white   = {234, 234, 234},
             black   = {20,  20,  20 },
             dgray   = {28,  28,  28 }}
+
+--sounds: SFX, music
+SFX_Land = love.audio.newSource("sounds/SFX/12cLand.ogg", "static")
+SFX_Buddy_Lip = love.audio.newSource("sounds/Character_SFX/PDPlipA.ogg", "static")
