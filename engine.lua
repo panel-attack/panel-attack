@@ -886,6 +886,7 @@ function Stack.PdP(self)
   -- if at the end of the routine there are no chain panels, the chain ends.
   if self.chain_counter ~= 0 and self.n_chain_panels == 0 then
     self:set_chain_garbage(self.chain_counter)
+	SFX_Fanfare_Play = self.chain_counter
     self.chain_counter=0
   end
 
@@ -969,6 +970,16 @@ function Stack.PdP(self)
 		SFX_Buddy_Lip:play()
 		SFX_Buddy_Play=0
 	end
+	if SFX_Fanfare_Play == 0 then
+	--do nothing
+	elseif SFX_Fanfare_Play >= 6 then
+		SFX_Fanfare3:play()
+	elseif SFX_Fanfare_Play >= 5 then
+		SFX_Fanfare2:play()
+	elseif SFX_Fanfare_Play >= 4 then
+		SFX_Fanfare1:play()
+	end
+	SFX_Fanfare_Play=0
   end
   
 
