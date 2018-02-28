@@ -953,9 +953,16 @@ function Stack.PdP(self)
   --Play Sounds
   local SFX_mute = false
   if (not SFX_mute) then
+	if SFX_Swap_Play == 1 then
+		SFX_Swap:stop()
+		SFX_Swap:play()
+		SFX_Swap_Play=0
+	end
 	if SFX_Cur_Move_Play == 1 then
-		SFX_Cur_Move:stop()
-		SFX_Cur_Move:play()
+		if not (self.mode == "vs" and SFX_Swap:isPlaying()) then
+			SFX_Cur_Move:stop()
+			SFX_Cur_Move:play()
+		end
 		SFX_Cur_Move_Play=0
 	end
 	if SFX_Land_Play == 1 then
@@ -1014,9 +1021,6 @@ function Stack.swap(self)
   panels[row][col+1].timer = 4
 
   SFX_Swap_Play=1;
-  local sound08 = love.audio.newSource("sounds/SFX/08swap.ogg", "static")
-  sound08:stop()
-  sound08:play()
 
   -- If you're swapping a panel into a position
   -- above an empty space or above a falling piece

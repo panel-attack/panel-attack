@@ -193,6 +193,7 @@ colors = {  red     = {220, 50,  47 },
 
 --sounds: SFX, music
 SFX_Cur_Move = love.audio.newSource("sounds/SFX/06move.ogg", "static")
+SFX_Swap = love.audio.newSource("sounds/SFX/08swap.ogg", "static")
 SFX_Land = love.audio.newSource("sounds/SFX/12cLand.ogg", "static")
 SFX_Buddy_Lip = love.audio.newSource("sounds/Character_SFX/PDPlipA.ogg", "static")
 SFX_Fanfare_Play = 0
