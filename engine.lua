@@ -800,10 +800,7 @@ function Stack.PdP(self)
 	if(self.move_sound and 
 	(self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and
 	(self.cur_row ~= prev_row or self.cur_col ~= prev_col))	then
-		SFX_P1Cursor_Play=1 
-		local sound06 = love.audio.newSource("sounds/SFX/06move.ogg", "static")
-		sound06:stop()
-		sound06:play()
+		SFX_Cur_Move_Play=1 
 	end
   else
     self.cur_row = bound(1, self.cur_row, self.top_cur_row)
@@ -956,6 +953,11 @@ function Stack.PdP(self)
   --Play Sounds
   local SFX_mute = false
   if (not SFX_mute) then
+	if SFX_Cur_Move_Play == 1 then
+		SFX_Cur_Move:stop()
+		SFX_Cur_Move:play()
+		SFX_Cur_Move_Play=0
+	end
 	if SFX_Land_Play == 1 then
 		local sound12cLand = love.audio.newSource("sounds/SFX/12cLand.ogg", "static")
 		sound12cLand:stop()
