@@ -958,7 +958,7 @@ function Stack.PdP(self)
 			music_character_normal[winningPlayer().character]:stop()
 			music_character_danger[winningPlayer().character]:play()
 		end
-	elseif not music_lip_normal:isPlaying() then
+	elseif not music_character_normal[winningPlayer().character]:isPlaying() then
 	music_character_danger[winningPlayer().character]:stop()
 	music_character_normal[winningPlayer().character]:play()
 	end
