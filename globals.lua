@@ -201,3 +201,7 @@ SFX_Fanfare1 = love.audio.newSource("sounds/SFX/F6Fanfare1.ogg", "static")
 SFX_Fanfare2 = love.audio.newSource("sounds/SFX/F7Fanfare2.ogg", "static")
 SFX_Fanfare3 = love.audio.newSource("sounds/SFX/F8Fanfare3.ogg", "static")
 SFX_GameOver = love.audio.newSource("sounds/SFX/0DGameOver.ogg", "static")
+Character_SFX = {}
+for i,name in ipairs(characters) do
+	Character_SFX[name] = love.audio.newSource("sounds/Character_SFX/"..name..".ogg", "static")
+end

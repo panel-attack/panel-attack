@@ -975,8 +975,8 @@ function Stack.PdP(self)
 		--TODO: choose sound to play based on the stack's character
 		--stop playing panel land sound if we are going to play a buddy sound
 		SFX_Land:stop()
-		SFX_Buddy_Lip:stop()
-		SFX_Buddy_Lip:play()
+		Character_SFX[self.character]:stop()
+		Character_SFX[self.character]:play()
 		SFX_Buddy_Play=0
 	end
 	if SFX_Fanfare_Play == 0 then
