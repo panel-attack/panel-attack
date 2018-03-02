@@ -190,20 +190,34 @@ colors = {  red     = {220, 50,  47 },
             white   = {234, 234, 234},
             black   = {20,  20,  20 },
             dgray   = {28,  28,  28 }}
+			
+-- win counters
+my_win_count = 0
+op_win_count = 0
 
 --sounds: SFX, music
 SFX_Cur_Move = love.audio.newSource("sounds/SFX/06move.ogg", "static")
 SFX_Swap = love.audio.newSource("sounds/SFX/08swap.ogg", "static")
 SFX_Land = love.audio.newSource("sounds/SFX/12cLand.ogg", "static")
-SFX_Buddy_Lip = love.audio.newSource("sounds/Character_SFX/lip.ogg", "static")
+SFX_Buddy_Lip = love.audio.newSource("sounds/character_SFX/lip.ogg", "static")
 SFX_Fanfare_Play = 0
 SFX_Fanfare1 = love.audio.newSource("sounds/SFX/F6Fanfare1.ogg", "static")
 SFX_Fanfare2 = love.audio.newSource("sounds/SFX/F7Fanfare2.ogg", "static")
 SFX_Fanfare3 = love.audio.newSource("sounds/SFX/F8Fanfare3.ogg", "static")
 SFX_GameOver = love.audio.newSource("sounds/SFX/0DGameOver.ogg", "static")
-Character_SFX = {}
+SFX_GameOver_Play = 0
+character_SFX = {}
 for i,name in ipairs(characters) do
-	Character_SFX[name] = love.audio.newSource("sounds/Character_SFX/"..name..".ogg", "static")
+	character_SFX[name] = love.audio.newSource("sounds/character_SFX/"..name..".ogg", "static")
 end
 music_lip_normal = love.audio.newSource("sounds/music/lip_music_normal_clip.ogg")
 music_lip_danger = love.audio.newSource("sounds/music/lip_music_danger_clip.ogg")
+
+music_character_normal = {}
+for i,name in ipairs(characters) do
+	music_character_normal[name] = love.audio.newSource("sounds/Music/"..name.."_music_normal.ogg")
+end
+music_character_danger = {}
+for i,name in ipairs(characters) do
+	music_character_danger[name] = love.audio.newSource("sounds/Music/"..name.."_music_danger.ogg")
+end

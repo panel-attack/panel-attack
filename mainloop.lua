@@ -984,6 +984,12 @@ function main_set_name()
 end
 
 function main_dumb_transition(next_func, text, time)
+  love.audio.stop()
+  if (not SFX_mute and SFX_GameOver_Play) then
+	SFX_GameOver:play()
+  end
+  SFX_GameOver_Play = 0
+
   text = text or ""
   time = time or 0
   local t = 0

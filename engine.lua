@@ -954,13 +954,13 @@ function Stack.PdP(self)
   local music_mute = false
   if (not music_mute) then
 	if (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
-		if not music_lip_danger:isPlaying() then
-			music_lip_normal:stop()
-			music_lip_danger:play()
+		if not music_character_danger[winningPlayer().character]:isPlaying() then
+			music_character_normal[winningPlayer().character]:stop()
+			music_character_danger[winningPlayer().character]:play()
 		end
 	elseif not music_lip_normal:isPlaying() then
-	music_lip_danger:stop()
-	music_lip_normal:play()
+	music_character_danger[winningPlayer().character]:stop()
+	music_character_normal[winningPlayer().character]:play()
 	end
   end
   
@@ -988,8 +988,8 @@ function Stack.PdP(self)
 		--TODO: choose sound to play based on the stack's character
 		--stop playing panel land sound if we are going to play a buddy sound
 		SFX_Land:stop()
-		Character_SFX[self.character]:stop()
-		Character_SFX[self.character]:play()
+		character_SFX[self.character]:stop()
+		character_SFX[self.character]:play()
 		SFX_Buddy_Play=0
 	end
 	if SFX_Fanfare_Play == 0 then
@@ -1003,18 +1003,20 @@ function Stack.PdP(self)
 	end
 	SFX_Fanfare_Play=0
 	if (self.game_over or (self.garbage_target and self.garbage_target.game_over)) then
-		love.audio.stop()
-		SFX_GameOver:play()
-	end
-  else --sfx are muted
-  --just in case sfx are muted there won't have been a "love.audio.stop()" command run for game_over
-  --so we should do this here
-	if (self.game_over or (self.garbage_target and self.garbage_target.game_over)) then
-	love.audio.stop()
+		SFX_GameOver_Play = 1
 	end
   end
 
   self.CLOCK = self.CLOCK + 1
+end
+
+function winningPlayer()
+	if not P2 then
+		return P1
+	elseif op_win_count > my_win_count then
+		return P2
+	else return P1
+	end
 end
 
 function Stack.swap(self)
