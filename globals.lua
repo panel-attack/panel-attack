@@ -205,3 +205,5 @@ Character_SFX = {}
 for i,name in ipairs(characters) do
 	Character_SFX[name] = love.audio.newSource("sounds/Character_SFX/"..name..".ogg", "static")
 end
+music_lip_normal = love.audio.newSource("sounds/music/lip_music_normal_clip.ogg")
+music_lip_danger = love.audio.newSource("sounds/music/lip_music_danger_clip.ogg")

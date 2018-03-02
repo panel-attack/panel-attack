@@ -950,7 +950,20 @@ function Stack.PdP(self)
     self:drop_garbage(unpack(self.garbage_q:pop()))
   end
   
-  --Play Sounds
+  --Play Sounds / music
+  local music_mute = false
+  if (not music_mute) then
+	if (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
+		if not music_lip_danger:isPlaying() then
+			music_lip_normal:stop()
+			music_lip_danger:play()
+		end
+	elseif not music_lip_normal:isPlaying() then
+	music_lip_danger:stop()
+	music_lip_normal:play()
+	end
+  end
+  
   local SFX_mute = false
   if (not SFX_mute) then
 	if SFX_Swap_Play == 1 then
@@ -989,11 +1002,17 @@ function Stack.PdP(self)
 		SFX_Fanfare1:play()
 	end
 	SFX_Fanfare_Play=0
-	if self.game_over then
+	if (self.game_over or (self.garbage_target and self.garbage_target.game_over)) then
+		love.audio.stop()
 		SFX_GameOver:play()
 	end
+  else --sfx are muted
+  --just in case sfx are muted there won't have been a "love.audio.stop()" command run for game_over
+  --so we should do this here
+	if (self.game_over or (self.garbage_target and self.garbage_target.game_over)) then
+	love.audio.stop()
+	end
   end
-  
 
   self.CLOCK = self.CLOCK + 1
 end
