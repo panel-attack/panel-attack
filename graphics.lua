@@ -353,6 +353,8 @@ function Stack.render(self)
     gprint("Shake: "..self.shake_time, self.score_x, 190)
     gprint("Stop: "..self.stop_time, self.score_x, 205)
     gprint("Pre stop: "..self.pre_stop_time, self.score_x, 220)
+	if self.danger then gprint("danger", self.score_x,235) end
+	if self.danger_music then gprint("danger music", self.score_x, 250) end
     --gprint("Panel buffer: "..#self.panel_buffer, self.score_x, 190)
     --[[local danger = {}
     for i=1,6 do
