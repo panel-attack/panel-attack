@@ -108,8 +108,8 @@ Stack = class(function(s, which, mode, speed, difficulty)
     s.chain_counter = 0   -- how high is the current chain?
 
     s.panels_in_top_row = false -- boolean, for losing the game
-    s.danger = false  -- boolean, panels in the top row (danger)
-    s.danger_music = false -- changes music state
+    s.danger = s.danger or false  -- boolean, panels in the top row (danger)
+    s.danger_music = s.danger_music or false -- changes music state
 
     s.n_active_panels = 0
     s.prev_active_panels = 0
@@ -452,6 +452,7 @@ function Stack.PdP(self)
   end
 
   -- calculate which columns should bounce
+  local prev_danger = self.danger
   self.danger = false
   prow = panels[self.height-1]
   for idx=1,width do
@@ -470,14 +471,25 @@ function Stack.PdP(self)
   end
 
   -- determine whether to play danger music
+  local prev_danger_music = self.danger_music
   self.danger_music = false
-  prow = panels[self.height-2]
+  local falling_garbage_in_top_row
+  prow = panels[self.height]
   for idx=1,width do
-    if prow[idx]:dangerous() then
-      self.danger_music = true
+    if prow[idx].garbage and prow[idx].state == "falling" then
+      falling_garbage_in_top_row = true
     end
   end
-
+  if falling_garbage_in_top_row then
+	self.danger_music = prev_danger_music
+  else
+	  prow = panels[self.height-2]
+	  for idx=1,width do
+		if prow[idx]:dangerous() then
+		  self.danger_music = true
+		end
+	  end
+  end
   if self.displacement == 0 and self.has_risen then
     self.top_cur_row = self.height
     self:new_row()
