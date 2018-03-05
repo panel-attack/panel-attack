@@ -800,6 +800,7 @@ function Stack.PdP(self)
   end
 
   self.shake_time = self.shake_time - 1
+  local prev_shake_time = self.shake_time
   self.shake_time = max(self.shake_time, shake_time)
 
   -- Phase 3. /////////////////////////////////////////////////////////////
