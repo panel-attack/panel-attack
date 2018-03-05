@@ -473,14 +473,20 @@ function Stack.PdP(self)
   -- determine whether to play danger music
   local prev_danger_music = self.danger_music
   self.danger_music = false
-  local falling_garbage_in_top_row
+  local falling_garbage_in_top_two_rows = false
   prow = panels[self.height]
   for idx=1,width do
     if prow[idx].garbage and prow[idx].state == "falling" then
-      falling_garbage_in_top_row = true
+      falling_garbage_in_top_two_rows = true
     end
   end
-  if falling_garbage_in_top_row then
+  prow = panels[self.height-1]
+  for idx=1,width do
+    if prow[idx].garbage and prow[idx].state == "falling" then
+      falling_garbage_in_top_two_rows = true
+    end
+  end
+  if falling_garbage_in_top_two_rows then
 	self.danger_music = prev_danger_music
   else
 	  prow = panels[self.height-2]
