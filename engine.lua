@@ -630,6 +630,10 @@ function Stack.PdP(self)
           end
           if panel.shake_time and panel.state == "normal" then
             if row <= self.height then
+			  if panel.height > 3 then
+				SFX_GarbageThud_Play = 3
+			  else SFX_GarbageThud_Play = panel.height
+			  end
               shake_time = max(shake_time, panel.shake_time)
               panel.shake_time = nil
             end
@@ -798,10 +802,11 @@ function Stack.PdP(self)
       end
     end
   end
-
-  self.shake_time = self.shake_time - 1
+  
   local prev_shake_time = self.shake_time
+  self.shake_time = self.shake_time - 1
   self.shake_time = max(self.shake_time, shake_time)
+  if self.shake_time > prev_shake_time then SFX_GarbageThud_Play = 1 end
 
   -- Phase 3. /////////////////////////////////////////////////////////////
   -- Actions performed according to player input
@@ -1004,8 +1009,6 @@ function Stack.PdP(self)
 		SFX_Land_Play=0
 	end
 	if SFX_Buddy_Play == 1 then
-		--TODO: choose sound to play based on the stack's character
-		--stop playing panel land sound if we are going to play a buddy sound
 		SFX_Land:stop()
 		character_SFX[self.character]:stop()
 		character_SFX[self.character]:play()
@@ -1021,6 +1024,21 @@ function Stack.PdP(self)
 		SFX_Fanfare1:play()
 	end
 	SFX_Fanfare_Play=0
+	if SFX_GarbageThud_Play >= 1 and SFX_GarbageThud_Play <= 3 then
+		local thud_interrupted = false
+		for i=1,3 do
+			if SFX_GarbageThud[i]:isPlaying() and self.shake_time >= prev_shake_time then
+				SFX_GarbageThud[i]:stop()
+				SFX_GarbageThud[i]:play()
+				thud_interrupted = true
+			end
+		end
+		if not thud_interrupted then
+		SFX_GarbageThud[SFX_GarbageThud_Play]:play()
+		end
+		SFX_GarbageThud_Play = 0
+	end
+	
 	if (self.game_over or (self.garbage_target and self.garbage_target.game_over)) then
 		SFX_GameOver_Play = 1
 	end
