@@ -143,7 +143,7 @@ end
 characters = {"lip", "windy", "sherbet", "thiana", "ruby",
               "elias", "flare", "neris", "seren"}
 
-DEBUG_MODE = true
+DEBUG_MODE = nil
 
 shake_arr = {}
 
