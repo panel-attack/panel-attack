@@ -806,7 +806,7 @@ function Stack.PdP(self)
   local prev_shake_time = self.shake_time
   self.shake_time = self.shake_time - 1
   self.shake_time = max(self.shake_time, shake_time)
-  if self.shake_time > prev_shake_time then SFX_GarbageThud_Play = 1 end
+
 
   -- Phase 3. /////////////////////////////////////////////////////////////
   -- Actions performed according to player input
@@ -1025,16 +1025,16 @@ function Stack.PdP(self)
 	end
 	SFX_Fanfare_Play=0
 	if SFX_GarbageThud_Play >= 1 and SFX_GarbageThud_Play <= 3 then
-		local thud_interrupted = false
+		local interrupted_thud = nil
 		for i=1,3 do
-			if SFX_GarbageThud[i]:isPlaying() and self.shake_time >= prev_shake_time then
+			if SFX_GarbageThud[i]:isPlaying() and self.shake_time > prev_shake_time then
 				SFX_GarbageThud[i]:stop()
-				SFX_GarbageThud[i]:play()
-				thud_interrupted = true
+				interrupted_thud = i
 			end
 		end
-		if not thud_interrupted then
-		SFX_GarbageThud[SFX_GarbageThud_Play]:play()
+		if interrupted_thud and interrupted_thud > SFX_GarbageThud_Play then
+			SFX_GarbageThud[interrupted_thud]:play()
+		else SFX_GarbageThud[SFX_GarbageThud_Play]:play()
 		end
 		SFX_GarbageThud_Play = 0
 	end
