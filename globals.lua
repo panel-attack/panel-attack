@@ -223,3 +223,10 @@ music_character_danger = {}
 for i,name in ipairs(characters) do
 	music_character_danger[name] = love.audio.newSource("sounds/Music/"..name.."_music_danger.ogg")
 end
+SFX_pops = {}
+for popLevel=1,4 do
+	SFX_pops[popLevel] = {}
+	for popIndex=1,10 do
+		SFX_pops[popLevel][popIndex] = love.audio.newSource("sounds/SFX/pop"..popLevel.."-"..popIndex..".ogg")
+	end
+end

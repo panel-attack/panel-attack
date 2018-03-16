@@ -770,12 +770,9 @@ function Stack.PdP(self)
               panel.state = "popped"
               panel.timer = (panel.combo_size-panel.combo_index)
                   * self.FRAMECOUNT_POP
+			  SFX_Pop_Play = 1
+			  self.poppedPanelIndex = panel.combo_index
             end
-            --something = panel.chain_index
-            --if(something == 0) then something=1 end
-            -- SFX_Pop_Play[0] = something;
-            -- SFX_Pop_Play[1] = whatever;
-            -- TODO: wtf are these
           elseif panel.state == "popped" then
             -- It's time for this panel
             -- to be gone forever :'(
@@ -1038,7 +1035,10 @@ function Stack.PdP(self)
 		end
 		SFX_GarbageThud_Play = 0
 	end
-	
+	if SFX_Pop_Play then
+		SFX_pops[max(self.chain_counter,1)][min(self.poppedPanelIndex,10)]:play()
+	SFX_Pop_Play = nil
+	end
 	if (self.game_over or (self.garbage_target and self.garbage_target.game_over)) then
 		SFX_GameOver_Play = 1
 	end
