@@ -759,6 +759,8 @@ function Stack.PdP(self)
             -- If it is the last panel to pop,
             -- it should be removed immediately!
             if panel.combo_size == panel.combo_index then
+			  SFX_Pop_Play = 1
+			  self.poppedPanelIndex = panel.combo_index
               panel.color=0;
               if(panel.chaining) then
                 self.n_chain_panels = self.n_chain_panels - 1
@@ -1036,7 +1038,7 @@ function Stack.PdP(self)
 		SFX_GarbageThud_Play = 0
 	end
 	if SFX_Pop_Play then
-		SFX_pops[max(self.chain_counter,1)][min(self.poppedPanelIndex,10)]:play()
+		SFX_pops[min(max(self.chain_counter,1),4)][min(self.poppedPanelIndex,10)]:play()
 	SFX_Pop_Play = nil
 	end
 	if (self.game_over or (self.garbage_target and self.garbage_target.game_over)) then
