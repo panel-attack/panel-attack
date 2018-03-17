@@ -142,6 +142,9 @@ Stack = class(function(s, which, mode, speed, difficulty)
     s.top_cur_row = s.height + (s.mode == "puzzle" and 0 or -1)
 
     s.move_sound = false  -- this is set if the cursor movement sound should be played
+	s.poppedPanelIndex = s.poppedPanelIndex or 1
+	s.lastPopLevelPlayed = s.lastPopLevelPlayed or 1
+	s.lastPopIndexPlayed = s.lastPopIndexPlayed or 1
     s.game_over = false
 
     s.card_q = Queue()
@@ -1013,6 +1016,7 @@ function Stack.PdP(self)
 	end
 	if SFX_Buddy_Play == 1 then
 		SFX_Land:stop()
+		SFX_pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
 		character_SFX[self.character]:stop()
 		character_SFX[self.character]:play()
 		SFX_Buddy_Play=0
@@ -1020,10 +1024,13 @@ function Stack.PdP(self)
 	if SFX_Fanfare_Play == 0 then
 	--do nothing
 	elseif SFX_Fanfare_Play >= 6 then
+		SFX_pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
 		SFX_Fanfare3:play()
 	elseif SFX_Fanfare_Play >= 5 then
+		SFX_pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
 		SFX_Fanfare2:play()
 	elseif SFX_Fanfare_Play >= 4 then
+		SFX_pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
 		SFX_Fanfare1:play()
 	end
 	SFX_Fanfare_Play=0
@@ -1050,11 +1057,11 @@ function Stack.PdP(self)
 			popIndex = min(self.poppedPanelIndex,10)
 		end
 		--stop the previous pop sound
-		SFX_pops[popLevel][max(popIndex-1,1)]:stop()
-		--stop the pop sound we are about to play, especially applicable for the last pop index that plays repeatedly
-		SFX_pops[popLevel][popIndex]:stop()
+		SFX_pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
 		--play the appropriate pop sound
 		SFX_pops[popLevel][popIndex]:play()
+		self.lastPopLevelPlayed = popLevel
+		self.lastPopIndexPlayed = popIndex
 		SFX_Pop_Play = nil
 		SFX_Garbage_Pop_Play = nil
 	end
