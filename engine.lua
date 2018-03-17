@@ -256,6 +256,7 @@ function Panel.clear(self)
 
     self.initial_time = nil
     self.pop_time = nil
+	self.pop_index = nil
     self.x_offset = nil
     self.y_offset = nil
     self.width = nil
@@ -591,6 +592,7 @@ function Stack.PdP(self)
         if panel.state == "matched" then
           panel.timer = panel.timer - 1
           if panel.timer == 0 then
+		    SFX_Garbage_Pop_Play = 1--panel.pop_index
             if panel.y_offset == -1 then
               local color, chaining = panel.color, panel.chaining
               panel:clear()
@@ -1037,9 +1039,14 @@ function Stack.PdP(self)
 		end
 		SFX_GarbageThud_Play = 0
 	end
-	if SFX_Pop_Play then
+	if SFX_Pop_Play or SFX_Garbage_Pop_Play then
 		local popLevel = min(max(self.chain_counter,1),4)
-		local popIndex = min(self.poppedPanelIndex,10)
+		local popIndex = 1
+		if SFX_Garbage_Pop_Play then
+			popIndex = 1--SFX_Garbage_Pop_Play
+		else
+			popIndex = min(self.poppedPanelIndex,10)
+		end
 		--stop the previous pop sound
 		SFX_pops[popLevel][max(popIndex-1,1)]:stop()
 		--stop the pop sound we are about to play, especially applicable for the last pop index that plays repeatedly
@@ -1047,6 +1054,7 @@ function Stack.PdP(self)
 		--play the appropriate pop sound
 		SFX_pops[popLevel][popIndex]:play()
 		SFX_Pop_Play = nil
+		SFX_Garbage_Pop_Play = nil
 	end
 	if (self.game_over or (self.garbage_target and self.garbage_target.game_over)) then
 		SFX_GameOver_Play = 1
@@ -1399,6 +1407,7 @@ function Stack.check_matches(self)
         panel.initial_time = garbage_match_time
         panel.pop_time = self.FRAMECOUNT_POP * garbage_index
             + garbage_bounce_time
+		panel.pop_index = min(max(garbage_size - garbage_index,1),10)
         panel.y_offset = panel.y_offset - 1
         panel.height = panel.height - 1
         if panel.y_offset == -1 then
