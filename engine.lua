@@ -1038,8 +1038,15 @@ function Stack.PdP(self)
 		SFX_GarbageThud_Play = 0
 	end
 	if SFX_Pop_Play then
-		SFX_pops[min(max(self.chain_counter,1),4)][min(self.poppedPanelIndex,10)]:play()
-	SFX_Pop_Play = nil
+		local popLevel = min(max(self.chain_counter,1),4)
+		local popIndex = min(self.poppedPanelIndex,10)
+		--stop the previous pop sound
+		SFX_pops[popLevel][max(popIndex-1,1)]:stop()
+		--stop the pop sound we are about to play, especially applicable for the last pop index that plays repeatedly
+		SFX_pops[popLevel][popIndex]:stop()
+		--play the appropriate pop sound
+		SFX_pops[popLevel][popIndex]:play()
+		SFX_Pop_Play = nil
 	end
 	if (self.game_over or (self.garbage_target and self.garbage_target.game_over)) then
 		SFX_GameOver_Play = 1
