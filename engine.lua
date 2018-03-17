@@ -591,8 +591,10 @@ function Stack.PdP(self)
       elseif panel.garbage then
         if panel.state == "matched" then
           panel.timer = panel.timer - 1
+		  if panel.timer == panel.pop_time then
+		  SFX_Garbage_Pop_Play = panel.pop_index
+		  end
           if panel.timer == 0 then
-		    SFX_Garbage_Pop_Play = 1--panel.pop_index
             if panel.y_offset == -1 then
               local color, chaining = panel.color, panel.chaining
               panel:clear()
@@ -1043,7 +1045,7 @@ function Stack.PdP(self)
 		local popLevel = min(max(self.chain_counter,1),4)
 		local popIndex = 1
 		if SFX_Garbage_Pop_Play then
-			popIndex = 1--SFX_Garbage_Pop_Play
+			popIndex = SFX_Garbage_Pop_Play
 		else
 			popIndex = min(self.poppedPanelIndex,10)
 		end
