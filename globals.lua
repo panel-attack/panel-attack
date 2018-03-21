@@ -232,11 +232,11 @@ end
 
 music_character_normal = {}
 for i,name in ipairs(characters) do
-	music_character_normal[name] = love.audio.newSource("sounds/Music/"..name.."_music_normal.ogg")
+	music_character_normal[name] = love.audio.newSource("sounds/Music/"..stages[name].."_normal.it")
 end
 music_character_danger = {}
 for i,name in ipairs(characters) do
-	music_character_danger[name] = love.audio.newSource("sounds/Music/"..name.."_music_danger.ogg")
+	music_character_danger[name] = love.audio.newSource("sounds/Music/"..stages[name].."_danger.it")
 end
 SFX_pops = {}
 for popLevel=1,4 do
