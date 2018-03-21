@@ -142,6 +142,21 @@ end
 
 characters = {"lip", "windy", "sherbet", "thiana", "ruby",
               "elias", "flare", "neris", "seren"}
+stages = {}
+stages["lip"] = "flower"
+stages["windy"] = "wind"
+stages["sherbet"] = "ice"
+stages["thiana"] = "forest"
+stages["ruby"] = "jewel"
+stages["elias"] = "water"
+stages["flare"] = "fire"
+stages["neris"] = "sea"
+stages["seren"] = "moon"
+--[[
+stages["phoenix"] = ""
+--]]
+
+
 
 DEBUG_MODE = nil
 
