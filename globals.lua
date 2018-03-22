@@ -153,10 +153,24 @@ stages["flare"] = "fire"
 stages["neris"] = "sea"
 stages["seren"] = "moon"
 --[[
-stages["phoenix"] = ""
+stages["phoenix"] = "cave"
+stages["dragon"] = "cave"
+stages["thanatos"] = "king"
+stages["cordelia"] = "cordelia"
 --]]
-
-
+stages["lakitu"] = "wind"
+stages["bumpty"] = "ice"
+stages["poochy"] = "forest"
+stages["wiggler"] = "jewel"
+stages["froggy"] = "water"
+stages["blargg"] = "fire"
+stages["lungefish"] = "sea"
+stages["rafael"] = "moon"
+stages["yoshi"] = "yoshi"
+stages["hookbill"] = "cave"
+stages["navalpiranha"] = "cave"
+stages["kamek"] = "cave"
+stages["bowser"] = "king"
 
 DEBUG_MODE = nil
 
