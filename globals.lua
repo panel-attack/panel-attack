@@ -141,7 +141,10 @@ for i=1,72 do
 end
 
 characters = {"lip", "windy", "sherbet", "thiana", "ruby",
-              "elias", "flare", "neris", "seren"}
+              "elias", "flare", "neris", "seren", "lakitu", 
+			  "bumpty", "poochy", "wiggler", "froggy", "blargg",
+			  "lungefish", "raphael", "yoshi", "hookbill",
+			  "navalpiranha", "kamek", "bowser"}
 stages = {}
 stages["lip"] = "flower"
 stages["windy"] = "wind"
@@ -152,12 +155,10 @@ stages["elias"] = "water"
 stages["flare"] = "fire"
 stages["neris"] = "sea"
 stages["seren"] = "moon"
---[[
 stages["phoenix"] = "cave"
 stages["dragon"] = "cave"
 stages["thanatos"] = "king"
 stages["cordelia"] = "cordelia"
---]]
 stages["lakitu"] = "wind"
 stages["bumpty"] = "ice"
 stages["poochy"] = "forest"
@@ -165,7 +166,7 @@ stages["wiggler"] = "jewel"
 stages["froggy"] = "water"
 stages["blargg"] = "fire"
 stages["lungefish"] = "sea"
-stages["rafael"] = "moon"
+stages["raphael"] = "moon"
 stages["yoshi"] = "yoshi"
 stages["hookbill"] = "cave"
 stages["navalpiranha"] = "cave"
