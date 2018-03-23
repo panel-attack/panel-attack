@@ -141,8 +141,8 @@ for i=1,72 do
 end
 
 characters = {"lip", "windy", "sherbet", "thiana", "ruby",
-              "elias", "flare", "neris", "seren", "lakitu", 
-			  "bumpty", "poochy", "wiggler", "froggy", "blargg",
+              "elias", "flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia", 
+			  "lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg",
 			  "lungefish", "raphael", "yoshi", "hookbill",
 			  "navalpiranha", "kamek", "bowser"}
 stages = {}

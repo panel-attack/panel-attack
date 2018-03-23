@@ -243,7 +243,7 @@ function main_net_vs_room()
   local k = K[1]
   local map = {{"level", "level", "level", "level", "level", "level", "ready"},
                {"windy", "sherbet", "thiana", "ruby", "lip", "elias", "flare"},
-               {"neris", "seren", "     ", "    ", "   ", "  ", ""},--"phoenix", "dragon", "thanatos", "cordelia"], ""},
+               {"neris", "seren", "phoenix", "dragon", "thanatos", "cordelia", ""},
 			   {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
 			   {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
   local cursor,op_cursor,X,Y = {1,1},{1,1},5,7
