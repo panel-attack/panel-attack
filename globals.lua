@@ -141,7 +141,37 @@ for i=1,72 do
 end
 
 characters = {"lip", "windy", "sherbet", "thiana", "ruby",
-              "elias", "flare", "neris", "seren"}
+              "elias", "flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia", 
+			  "lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg",
+			  "lungefish", "raphael", "yoshi", "hookbill",
+			  "navalpiranha", "kamek", "bowser"}
+stages = {}
+stages["lip"] = "flower"
+stages["windy"] = "wind"
+stages["sherbet"] = "ice"
+stages["thiana"] = "forest"
+stages["ruby"] = "jewel"
+stages["elias"] = "water"
+stages["flare"] = "fire"
+stages["neris"] = "sea"
+stages["seren"] = "moon"
+stages["phoenix"] = "cave"
+stages["dragon"] = "cave"
+stages["thanatos"] = "king"
+stages["cordelia"] = "cordelia"
+stages["lakitu"] = "wind"
+stages["bumpty"] = "ice"
+stages["poochy"] = "forest"
+stages["wiggler"] = "jewel"
+stages["froggy"] = "water"
+stages["blargg"] = "fire"
+stages["lungefish"] = "sea"
+stages["raphael"] = "moon"
+stages["yoshi"] = "yoshi"
+stages["hookbill"] = "cave"
+stages["navalpiranha"] = "cave"
+stages["kamek"] = "cave"
+stages["bowser"] = "king"
 
 DEBUG_MODE = nil
 
@@ -190,3 +220,43 @@ colors = {  red     = {220, 50,  47 },
             white   = {234, 234, 234},
             black   = {20,  20,  20 },
             dgray   = {28,  28,  28 }}
+			
+-- win counters
+my_win_count = 0
+op_win_count = 0
+
+--sounds: SFX, music
+SFX_Cur_Move = love.audio.newSource("sounds/SFX/06move.ogg", "static")
+SFX_Swap = love.audio.newSource("sounds/SFX/08swap.ogg", "static")
+SFX_Land = love.audio.newSource("sounds/SFX/12cLand.ogg", "static")
+SFX_Fanfare_Play = 0
+SFX_Fanfare1 = love.audio.newSource("sounds/SFX/F6Fanfare1.ogg", "static")
+SFX_Fanfare2 = love.audio.newSource("sounds/SFX/F7Fanfare2.ogg", "static")
+SFX_Fanfare3 = love.audio.newSource("sounds/SFX/F8Fanfare3.ogg", "static")
+SFX_GameOver = love.audio.newSource("sounds/SFX/0DGameOver.ogg", "static")
+SFX_GameOver_Play = 0
+SFX_GarbageThud = {}
+SFX_GarbageThud[1] = love.audio.newSource("sounds/SFX/Thud_1.ogg")
+SFX_GarbageThud[2] = love.audio.newSource("sounds/SFX/Thud_2.ogg")
+SFX_GarbageThud[3] = love.audio.newSource("sounds/SFX/Thud_3.ogg")
+SFX_GarbageThud_Play = 0
+character_SFX = {}
+for i,name in ipairs(characters) do
+	character_SFX[name] = love.audio.newSource("sounds/character_SFX/"..name..".ogg", "static")
+end
+
+music_character_normal = {}
+for i,name in ipairs(characters) do
+	music_character_normal[name] = love.audio.newSource("sounds/Music/"..stages[name].."_normal.it")
+end
+music_character_danger = {}
+for i,name in ipairs(characters) do
+	music_character_danger[name] = love.audio.newSource("sounds/Music/"..stages[name].."_danger.it")
+end
+SFX_pops = {}
+for popLevel=1,4 do
+	SFX_pops[popLevel] = {}
+	for popIndex=1,10 do
+		SFX_pops[popLevel][popIndex] = love.audio.newSource("sounds/SFX/pop"..popLevel.."-"..popIndex..".ogg", "static")
+	end
+end

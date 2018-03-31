@@ -241,10 +241,12 @@ end
 function main_net_vs_room()
   P2 = {panel_buffer="", gpanel_buffer=""}
   local k = K[1]
-  local map = {{"level", "level", "level", "level", "ready"},
-               {"windy", "sherbet", "thiana", "ruby", "lip"},
-               {"elias", "flare", "neris", "seren", "leave"}}
-  local cursor,op_cursor,X,Y = {1,1},{1,1},3,5
+  local map = {{"level", "level", "level", "level", "level", "level", "ready"},
+               {"windy", "sherbet", "thiana", "ruby", "lip", "elias", "flare"},
+               {"neris", "seren", "phoenix", "dragon", "thanatos", "cordelia", ""},
+			   {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
+			   {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
+  local cursor,op_cursor,X,Y = {1,1},{1,1},5,7
   local up,down,left,right = {-1,0}, {1,0}, {0,-1}, {0,1}
   local my_state = {character=config.character, level=config.level, cursor="level", ready=false}
   my_win_count = my_win_count or 0
@@ -281,7 +283,7 @@ function main_net_vs_room()
   end
   local function draw_button(x,y,w,h,str)
     local menu_width = Y*100
-    local menu_height = X*100
+    local menu_height = X*80
     local spacing = 4
     local x_padding = math.floor((819-menu_width)/2)
     local y_padding = math.floor((612-menu_height)/2)
@@ -289,7 +291,7 @@ function main_net_vs_room()
     render_x = x_padding+(y-1)*100+spacing
     render_y = y_padding+(x-1)*100+spacing
     grectangle("line", render_x, render_y, w*100-2*spacing, h*100-2*spacing)
-    local y_add,x_add = 42,30
+    local y_add,x_add = 10,30
     local pstr = str
     if str == "level" then
       pstr = pstr .. "\nLevel: "..my_state.level.."\nOpponent's level: "..op_state.level
@@ -297,7 +299,7 @@ function main_net_vs_room()
     end
     if my_state.cursor == str then pstr = pstr.."\n"..my_name end
     if op_state.cursor == str then pstr = pstr.."\n"..op_name end
-    gprint(pstr, render_x+30, render_y+y_add)
+    gprint(pstr, render_x+10, render_y+y_add)
   end
   while true do
     for _,msg in ipairs(this_frame_messages) do
@@ -341,8 +343,8 @@ function main_net_vs_room()
         return main_net_vs
       end
     end
-    draw_button(1,1,4,1,"level")
-    draw_button(1,5,1,1,"ready")
+    draw_button(1,1,6,1,"level")
+    draw_button(1,7,1,1,"ready")
     for i=2,X do
       for j=1,Y do
         draw_button(i,j,1,1,map[i][j])
@@ -369,7 +371,9 @@ function main_net_vs_room()
         selected = not selected
       elseif active_str == "leave" then
         do_leave()
-      else
+      elseif active_str == "" then
+	    --do nothing
+	  else
         config.character = active_str
       end
     elseif menu_escape(k) then
@@ -984,6 +988,12 @@ function main_set_name()
 end
 
 function main_dumb_transition(next_func, text, time)
+  love.audio.stop()
+  if (not SFX_mute and SFX_GameOver_Play) then
+	SFX_GameOver:play()
+  end
+  SFX_GameOver_Play = 0
+
   text = text or ""
   time = time or 0
   local t = 0

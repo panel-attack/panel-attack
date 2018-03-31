@@ -4,9 +4,9 @@ function love.conf(t)
   t.url = "https://github.com/sharpobject/panel-attack"
   t.window.width = 819
   t.window.height = 612
-  t.modules.audio = false
+  t.modules.audio = true
   t.modules.mouse = true
-  t.modules.sound = false
+  t.modules.sound = true
   t.modules.physics = false
   t.identity = "Panel Attack"
   t.version = "0.9.0"

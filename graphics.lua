@@ -284,6 +284,17 @@ function Stack.render(self)
               draw(imgs.flash, draw_x, draw_y)
             end
           end
+		  --this adds the drawing of state flags to garbage panels
+		  if DEBUG_MODE then
+            gprint(panel.state, draw_x*3, draw_y*3)
+            if panel.match_anyway ~= nil then
+              gprint(tostring(panel.match_anyway), draw_x*3, draw_y*3+10)
+              if panel.debug_tag then
+                gprint(tostring(panel.debug_tag), draw_x*3, draw_y*3+20)
+              end
+            end
+            gprint(panel.chaining and "chaining" or "nah", draw_x*3, draw_y*3+30)
+		  end
         else
           if panel.state == "matched" then
             local flash_time = self.FRAMECOUNT_MATCH - panel.timer
@@ -353,6 +364,8 @@ function Stack.render(self)
     gprint("Shake: "..self.shake_time, self.score_x, 190)
     gprint("Stop: "..self.stop_time, self.score_x, 205)
     gprint("Pre stop: "..self.pre_stop_time, self.score_x, 220)
+	if self.danger then gprint("danger", self.score_x,235) end
+	if self.danger_music then gprint("danger music", self.score_x, 250) end
     --gprint("Panel buffer: "..#self.panel_buffer, self.score_x, 190)
     --[[local danger = {}
     for i=1,6 do
