@@ -17,6 +17,12 @@ Stack = class(function(s, which, mode, speed, difficulty)
     if mode ~= "puzzle" then
       s.do_first_row = true
     end
+	if s.mode == "endless" then
+		s.NCOLORS = difficulty_to_ncolors_endless[difficulty]
+	end
+	if s.mode == "time" then
+		s.NCOLORS = difficulty_to_ncolors_1Ptime[difficulty]
+	end
 
     if s.mode == "2ptime" or s.mode == "vs" then
       local level = speed or 5
