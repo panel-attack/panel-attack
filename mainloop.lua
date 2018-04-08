@@ -294,7 +294,7 @@ function main_net_vs_room()
     local y_add,x_add = 10,30
     local pstr = str
     if str == "level" then
-      if selected then
+      if selected and active_str == "level" then
 		pstr = pstr .. "\nLevel: < "..my_state.level.." >\nOpponent's level: "..op_state.level
 	  else
 	    pstr = pstr .. "\nLevel: "..my_state.level.."\nOpponent's level: "..op_state.level
@@ -379,6 +379,9 @@ function main_net_vs_room()
 	    --do nothing
 	  else
         config.character = active_str
+		--When we select a character, move cursor to "ready"
+		active_str = "ready"
+		cursor = shallowcpy(name_to_xy["ready"])
       end
     elseif menu_escape(k) then
       if active_str == "leave" then
