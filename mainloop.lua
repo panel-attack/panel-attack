@@ -294,7 +294,11 @@ function main_net_vs_room()
     local y_add,x_add = 10,30
     local pstr = str
     if str == "level" then
-      pstr = pstr .. "\nLevel: "..my_state.level.."\nOpponent's level: "..op_state.level
+      if selected then
+		pstr = pstr .. "\nLevel: < "..my_state.level.." >\nOpponent's level: "..op_state.level
+	  else
+	    pstr = pstr .. "\nLevel: "..my_state.level.."\nOpponent's level: "..op_state.level
+	  end
       y_add,x_add = 9,180
     end
     if my_state.cursor == str then pstr = pstr.."\n"..my_name end
