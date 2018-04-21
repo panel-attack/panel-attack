@@ -242,8 +242,8 @@ function main_net_vs_room()
   P2 = {panel_buffer="", gpanel_buffer=""}
   local k = K[1]
   local map = {{"level", "level", "level", "level", "level", "level", "ready"},
-               {"windy", "sherbet", "thiana", "ruby", "lip", "elias", "flare"},
-               {"neris", "seren", "phoenix", "dragon", "thanatos", "cordelia", ""},
+               {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
+               {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
 			   {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
 			   {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
   local cursor,op_cursor,X,Y = {1,1},{1,1},5,7
@@ -294,7 +294,11 @@ function main_net_vs_room()
     local y_add,x_add = 10,30
     local pstr = str
     if str == "level" then
-      pstr = pstr .. "\nLevel: "..my_state.level.."\nOpponent's level: "..op_state.level
+      if selected and active_str == "level" then
+		pstr = pstr .. "\nLevel: < "..my_state.level.." >\nOpponent's level: "..op_state.level
+	  else
+	    pstr = pstr .. "\nLevel: "..my_state.level.."\nOpponent's level: "..op_state.level
+	  end
       y_add,x_add = 9,180
     end
     if my_state.cursor == str then pstr = pstr.."\n"..my_name end
@@ -371,10 +375,13 @@ function main_net_vs_room()
         selected = not selected
       elseif active_str == "leave" then
         do_leave()
-      elseif active_str == "" then
-	    --do nothing
+      elseif active_str == "random" then
+	    config.character = uniformly(characters)
 	  else
         config.character = active_str
+		--When we select a character, move cursor to "ready"
+		active_str = "ready"
+		cursor = shallowcpy(name_to_xy["ready"])
       end
     elseif menu_escape(k) then
       if active_str == "leave" then
