@@ -19,6 +19,8 @@ local VERSION = "019"
 local type_to_length = {H=4, E=4, F=4, P=8, I=2, L=2, Q=8}
 local INDEX = 1
 local connections = {}
+local ROOMNUMBER = 1
+local rooms = {}
 local name_to_idx = {}
 local socket_to_idx = {}
 local proposals = {}
@@ -30,7 +32,7 @@ function lobby_state()
       names[#names+1] = v.name
     end
   end
-  return {unpaired = names}
+  return {unpaired = names} --TODO: also include spectatable rooms here
 end
 
 function propose_game(sender, receiver, message)
@@ -64,6 +66,7 @@ function clear_proposals(name)
 end
 
 function create_room(a, b)
+  room = Room(a,b)
   lobby_changed = true
   clear_proposals(a.name)
   clear_proposals(b.name)
@@ -82,9 +85,11 @@ function create_room(a, b)
   b.opponent = a
   a:send(a_msg)
   b:send(b_msg)
+  --TODO: list the room as spectatable
 end
 
 function start_match(a, b)
+  --TODO: until we decide to implement joining as a spectator during a game in progress, list the room as not spectatable
   local msg = {match_start = true,
                 player_settings = {character = a.character, level = a.level},
                 opponent_settings = {character = b.character, level = b.level}}
@@ -93,6 +98,28 @@ function start_match(a, b)
   b:send(msg)
   a:setup_game()
   b:setup_game()
+end
+
+Room = class(function(self, a, b)
+  self.a = a --player a
+  self.b = b --player b
+  self.spectators = {}
+  self.roomNumber = ROOMNUMBER
+  ROOMNUMBER = ROOMNUMBER + 1
+  rooms[self.roomNumber] = self
+end)
+
+function Room.state(self)
+  return self.a.state
+end
+
+function Room.is_spectatable(self)
+  return self.a.state == "room"
+end
+
+function Room.close(self)
+	--TODO: notify spectators that the room has closed.
+	rooms[self.roomNumber] = nil
 end
 
 Connection = class(function(s, socket)
@@ -104,6 +131,7 @@ Connection = class(function(s, socket)
   socket:settimeout(0)
   s.leftovers = ""
   s.state = "needs_name"
+  s.room = nil
   s.last_read = time()
 end)
 
@@ -144,6 +172,7 @@ end
 
 function Connection.setup_game(self)
   self.state = "playing"
+  lobby_changed = true --TODO: remove this line when we implement joining games in progress
   self.vs_mode = true
   self.metal = false
   self.rows_left = 14+random(1,8)
