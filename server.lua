@@ -32,6 +32,12 @@ function lobby_state()
       names[#names+1] = v.name
     end
   end
+  for k,v in pairs(rooms) do
+	if rooms[k]:state() == "room" then
+	  names[#names+1] = v.roomNumber
+	end
+  end
+  --names[#names+1] = 21 -- this demonstrates I can add items to the lobby list
   return {unpaired = names} --TODO: also include spectatable rooms here
 end
 
@@ -66,7 +72,6 @@ function clear_proposals(name)
 end
 
 function create_room(a, b)
-  room = Room(a,b)
   lobby_changed = true
   clear_proposals(a.name)
   clear_proposals(b.name)
@@ -76,6 +81,7 @@ function create_room(a, b)
   b.cursor = "level"
   a.ready = false
   b.ready = false
+  room = Room(a,b)
   local a_msg, b_msg = {create_room = true}, {create_room = true}
   a_msg.opponent = b.name
   a_msg.menu_state = b:menu_state()
@@ -90,12 +96,14 @@ end
 
 function start_match(a, b)
   --TODO: until we decide to implement joining as a spectator during a game in progress, list the room as not spectatable
+  
   local msg = {match_start = true,
                 player_settings = {character = a.character, level = a.level},
                 opponent_settings = {character = b.character, level = b.level}}
   a:send(msg)
   msg.player_settings, msg.opponent_settings = msg.opponent_settings, msg.player_settings
   b:send(msg)
+  lobby_changed = true
   a:setup_game()
   b:setup_game()
 end
@@ -103,10 +111,17 @@ end
 Room = class(function(self, a, b)
   self.a = a --player a
   self.b = b --player b
-  self.spectators = {}
-  self.roomNumber = ROOMNUMBER
-  ROOMNUMBER = ROOMNUMBER + 1
+  
+  if not self.a.room then
+	self.roomNumber = ROOMNUMBER
+	ROOMNUMBER = ROOMNUMBER + 1
+	self.spectators = {}
+  else
+  self.spectators = self.a.room.spectators
+  self.roomNumber = self.a.room.roomNumber
+  
   rooms[self.roomNumber] = self
+  end
 end)
 
 function Room.state(self)
@@ -119,7 +134,9 @@ end
 
 function Room.close(self)
 	--TODO: notify spectators that the room has closed.
-	rooms[self.roomNumber] = nil
+	if rooms[self.roomNumber] then
+		rooms[self.roomNumber] = nil
+	end
 end
 
 Connection = class(function(s, socket)
@@ -167,6 +184,9 @@ function Connection.opponent_disconnected(self)
   lobby_changed = true
   local msg = lobby_state()
   msg.leave_room = true
+  if self.room then
+	self.room:close()
+  end
   self:send(msg)
 end
 
@@ -184,6 +204,9 @@ end
 function Connection.close(self)
   if self.state == "lobby" then
     lobby_changed = true
+  end
+  if self.room then
+    self.room:close()
   end
   clear_proposals(self.name)
   if self.opponent then
