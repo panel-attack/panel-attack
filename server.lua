@@ -38,8 +38,7 @@ function lobby_state()
   for _,v in pairs(rooms) do
 	  spectatableRooms[#spectatableRooms+1] = {roomNumber = v.roomNumber, name = v.name , state = v:state()}
   end
-  --names[#names+1] = 21 -- this demonstrates I can add items to the lobby list
-  return {unpaired = names, spectatable = spectatableRooms} --TODO: also include spectatable rooms here
+  return {unpaired = names, spectatable = spectatableRooms}
 end
 
 function propose_game(sender, receiver, message)
@@ -92,11 +91,9 @@ function create_room(a, b)
   b.opponent = a
   a:send(a_msg)
   b:send(b_msg)
-  --TODO: list the room as spectatable
 end
 
 function start_match(a, b)
-  --TODO: until we decide to implement joining as a spectator during a game in progress, list the room as not spectatable
   
   local msg = {match_start = true,
                 player_settings = {character = a.character, level = a.level},
@@ -121,8 +118,6 @@ Room = class(function(self, a, b)
 	self.spectators = {}
   else
 	self.spectators = self.a.room.spectators
-	--self.roomNumber = ROOMNUMBER --
-	--ROOMNUMBER = ROOMNUMBER + 1 --
 	self.roomNumber = self.a.room.roomNumber
   
   end
