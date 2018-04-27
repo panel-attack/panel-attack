@@ -13,8 +13,8 @@ local lobby_changed = false
 local time = os.time
 local floor = math.floor
 local TIMEOUT = 10
-local CHARACTERSELECT = "joinable"
-local PLAYING = "playing, not joinable"
+local CHARACTERSELECT = "joinable" -- room states
+local PLAYING = "playing, not joinable" -- room states
 
 
 local VERSION = "019"
