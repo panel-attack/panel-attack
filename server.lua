@@ -93,6 +93,10 @@ function create_room(a, b)
   b:send(b_msg)
 end
 
+function spectate_room(user, requestedRoom)
+requestedRoom:add_spectator(user)
+end
+
 function start_match(a, b)
   
   local msg = {match_start = true,
@@ -136,6 +140,21 @@ end
 
 function Room.is_spectatable(self)
   return self.a.state == "room"
+end
+
+function Room.add_spectator(self, user)
+  user.state = "spectating"
+  self.spectators[#spectators+1] = user
+  print(user.name .. " joined " .. self.name .. " as a spectator")
+end
+
+function Room.remove_spectator(self, user)
+  for k,v in ipairs(self.spectators) do
+	if v == user.name then
+	  print(user.name .. " left " .. self.name .. as a spectator")
+	  spectators[k] = nil
+	end
+  end
 end
 
 function Room.close(self)
@@ -310,6 +329,7 @@ function Connection.J(self, message)
     if requestedRoom and requestedRoom:state() == CHARACTERSELECT then
 	-- TODO: allow them to join
 	  print("join allowed")
+	  spectate_room(message.sender, requestedRoom)
 	  
 	elseif requestedRoom and requestedRoom:state() == "playing, not joinable" then
 	-- TODO: deny the join request, maybe queue them to join as soon as the status changes from "playing" to "room"
