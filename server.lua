@@ -13,6 +13,8 @@ local lobby_changed = false
 local time = os.time
 local floor = math.floor
 local TIMEOUT = 10
+local CHARACTERSELECT = "joinable"
+local PLAYING = "playing, not joinable"
 
 
 local VERSION = "019"
@@ -32,13 +34,12 @@ function lobby_state()
       names[#names+1] = v.name
     end
   end
-  for k,v in pairs(rooms) do
-	if rooms[k]:state() == "room" then
-	  names[#names+1] = v.roomNumber
-	end
+  local spectatableRooms = {}
+  for _,v in pairs(rooms) do
+	  spectatableRooms[#spectatableRooms+1] = {roomNumber = v.roomNumber, name = v.name , state = v:state()}
   end
   --names[#names+1] = 21 -- this demonstrates I can add items to the lobby list
-  return {unpaired = names} --TODO: also include spectatable rooms here
+  return {unpaired = names, spectatable = spectatableRooms} --TODO: also include spectatable rooms here
 end
 
 function propose_game(sender, receiver, message)
@@ -81,7 +82,7 @@ function create_room(a, b)
   b.cursor = "level"
   a.ready = false
   b.ready = false
-  room = Room(a,b)
+  Room(a,b)
   local a_msg, b_msg = {create_room = true}, {create_room = true}
   a_msg.opponent = b.name
   a_msg.menu_state = b:menu_state()
@@ -111,21 +112,31 @@ end
 Room = class(function(self, a, b)
   self.a = a --player a
   self.b = b --player b
-  
+  self.name = a.name.." vs "..b.name
   if not self.a.room then
 	self.roomNumber = ROOMNUMBER
 	ROOMNUMBER = ROOMNUMBER + 1
+	self.a.room = self
+	self.b.room = self
 	self.spectators = {}
   else
-  self.spectators = self.a.room.spectators
-  self.roomNumber = self.a.room.roomNumber
+	self.spectators = self.a.room.spectators
+	--self.roomNumber = ROOMNUMBER --
+	--ROOMNUMBER = ROOMNUMBER + 1 --
+	self.roomNumber = self.a.room.roomNumber
   
-  rooms[self.roomNumber] = self
   end
+  rooms[self.roomNumber] = self
 end)
 
 function Room.state(self)
-  return self.a.state
+  if self.a.state == "room" then
+    return CHARACTERSELECT
+  elseif self.a.state == "playing" then
+    return PLAYING
+  else
+    return self.a.state
+  end
 end
 
 function Room.is_spectatable(self)
@@ -137,6 +148,14 @@ function Room.close(self)
 	if rooms[self.roomNumber] then
 		rooms[self.roomNumber] = nil
 	end
+end
+
+function roomNumberToRoom(roomNr)
+  for k,v in pairs(rooms) do
+    if rooms[k].roomNumber and rooms[k].roomNumber == roomNr then
+      return v
+    end
+  end
 end
 
 Connection = class(function(s, socket)
@@ -291,6 +310,19 @@ function Connection.J(self, message)
     if message.game_request.sender == self.name then
       propose_game(message.game_request.sender, message.game_request.receiver, message)
     end
+  elseif self.state == "lobby" and message.spectate_request then
+	local requestedRoom = roomNumberToRoom(message.spectate_request.roomNumber)
+    if requestedRoom and requestedRoom:state() == CHARACTERSELECT then
+	-- TODO: allow them to join
+	  print("join allowed")
+	  
+	elseif requestedRoom and requestedRoom:state() == "playing, not joinable" then
+	-- TODO: deny the join request, maybe queue them to join as soon as the status changes from "playing" to "room"
+	  print("join denied")
+	else
+	-- TODO: tell the client the join request failed, couldn't find the room.
+	  print("couldn't find room")
+	end
   elseif self.state == "room" and message.menu_state then
     self.level = message.menu_state.level
     self.character = message.menu_state.character

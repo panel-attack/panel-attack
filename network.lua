@@ -127,6 +127,10 @@ function request_game(name)
   json_send({game_request = {sender=config.name, receiver=name}})
 end
 
+function request_spectate(roomNr)
+  json_send({spectate_request = {sender=config.name, roomNumber = roomNr}})
+end
+
 function ask_for_panels(prev_panels)
   if TCP_sock then
     net_send("P"..tostring(P1.NCOLORS)..prev_panels)

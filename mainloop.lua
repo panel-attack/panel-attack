@@ -6,6 +6,9 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   menu_up, menu_down, menu_left, menu_right, menu_enter, menu_escape,
   main_replay_vs, main_local_vs_setup, main_local_vs, menu_key_func,
   multi_func, normal_key, main_set_name, main_net_vs_room, main_net_vs_lobby
+  
+local PLAYING = "playing, not joinable"
+local CHARACTERSELECT = "joinable"
 
 function fmainloop()
   local func, arg = main_select_mode, nil
@@ -405,6 +408,7 @@ function main_net_vs_lobby()
   local items
   local unpaired_players = {} -- list
   local willing_players = {} -- set
+  local spectatable_rooms = {}
   local k = K[1]
   local notice = {[true]="Select a player name to ask for a match.", [false]="You are all alone in the lobby :("}
   while true do
@@ -424,6 +428,9 @@ function main_net_vs_lobby()
         end
         willing_players = new_willing
       end
+	  if msg.spectatable then
+	    spectatable_rooms = msg.spectatable
+	  end
       if msg.game_request then
         willing_players[msg.game_request.sender] = true
       end
@@ -436,6 +443,10 @@ function main_net_vs_lobby()
         items[#items+1] = v
       end
     end
+	local lastPlayerIndex = #items --the rest of the items will be spectatable rooms, except the last item
+    for _,v in ipairs(spectatable_rooms) do
+	  items[#items+1] = v
+	end
     if active_back then
       if active_idx ~= 1 then
         active_idx = #items+1
@@ -446,14 +457,21 @@ function main_net_vs_lobby()
       end
       active_name = items[active_idx]
     end
-    items[#items+1] = "Back to main menu"
+	
+	items[#items+1] = "Back to main menu" -- the last item is "Back to the main menu"
     for i=1,#items do
       if active_idx == i then
         arrow = arrow .. ">"
       else
         arrow = arrow .. "\n"
       end
-      to_print = to_print .. "   " .. items[i] .. (willing_players[items[i]] and " (Wants to play with you :o)" or "") .. "\n"
+	  if i <= lastPlayerIndex then
+		to_print = to_print .. "   " .. items[i] .. (willing_players[items[i]] and " (Wants to play with you :o)" or "") .. "\n"
+	  elseif i < #items and items[i].name then
+	    to_print = to_print .. "   spectate " .. items[i].name .. " (".. items[i].state .. ")\n" --printing room names 
+	  else
+	    to_print = to_print .. "   " .. items[i]
+	  end
     end
     gprint(notice[#items > 1], 300, 250)
     gprint(arrow, 300, 280)
@@ -467,8 +485,12 @@ function main_net_vs_lobby()
       if active_idx == #items then
         return main_select_mode
       end
-	  op_name = items[active_idx]
-      request_game(items[active_idx])
+	  if active_idx <= lastPlayerIndex then
+		op_name = items[active_idx]
+		request_game(items[active_idx])
+	  else
+	    request_spectate(items[active_idx].roomNumber)
+	  end
     elseif menu_escape(k) then
       if active_idx == #items then
         return main_select_mode
