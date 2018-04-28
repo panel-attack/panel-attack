@@ -9,6 +9,7 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   
 local PLAYING = "playing, not joinable"  -- room states
 local CHARACTERSELECT = "joinable" --room states
+local currently_spectating = false
 
 function fmainloop()
   local func, arg = main_select_mode, nil
@@ -319,10 +320,17 @@ function main_net_vs_room()
         return main_net_vs_lobby
       end
       if msg.match_start then
-        local fake_P2 = P2
+        if currently_spectating then
+		  local fake_P1 = P1
+		end
+		local fake_P2 = P2
         P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character)
         P2 = Stack(2, "vs", msg.opponent_settings.level, msg.opponent_settings.character)
-        P2.panel_buffer = fake_P2.panel_buffer
+        if currently_spectating then
+		  P1.panel_buffer = fake_P1.panel_buffer
+          P1.gpanel_buffer = fake_P1.gpanel_buffer
+		end
+		P2.panel_buffer = fake_P2.panel_buffer
         P2.gpanel_buffer = fake_P2.gpanel_buffer
         P1.garbage_target = P2
         P2.garbage_target = P1
@@ -416,7 +424,7 @@ function main_net_vs_lobby()
       if msg.choose_another_name then
         error("name is taken :<")
       end
-      if msg.create_room then
+      if msg.create_room or msg.spectate_request_granted then
         return main_net_vs_room
       end
       if msg.unpaired then
@@ -486,9 +494,13 @@ function main_net_vs_lobby()
         return main_select_mode
       end
 	  if active_idx <= lastPlayerIndex then
+		
 		op_name = items[active_idx]
+		currently_spectating = false
 		request_game(items[active_idx])
 	  else
+		op_name = items[active_idx].a
+	    currently_spectating = true
 	    request_spectate(items[active_idx].roomNumber)
 	  end
     elseif menu_escape(k) then
@@ -554,7 +566,11 @@ function main_net_vs_setup(ip)
               P1_level=P1_level,P2_level=P2_level}
   ask_for_gpanels("000000")
   ask_for_panels("000000")
-  to_print = "Level: "..my_level.."\nOpponent's level: "..(P2_level or "???")
+  if not currently_spectating then
+    to_print = "Level: "..my_level.."\nOpponent's level: "..(P2_level or "???")
+  else
+    to_print = "P1 Level: "..my_level.."\nP2 level: "..(P2_level or "???")
+  end
   for i=1,30 do
     gprint(to_print,300, 280)
     do_messages()
@@ -587,10 +603,12 @@ function main_net_vs()
         return main_net_vs_lobby
       end
     end
-	gprint(my_name, 315, 40)
-	gprint(op_name, 410, op_name_y)
-	gprint("Wins: "..my_win_count, 315, 70)
-	gprint("Wins: "..op_win_count, 410, 70)
+	if not currently_spectating then
+		gprint(my_name, 315, 40)
+		gprint(op_name, 410, op_name_y)
+		gprint("Wins: "..my_win_count, 315, 70)
+		gprint("Wins: "..op_win_count, 410, 70)
+	end
     P1:render()
     P2:render()
     wait()
@@ -598,7 +616,13 @@ function main_net_vs()
     print(P1.CLOCK, P2.CLOCK)
     variable_step(function()
       if not P1.game_over then
-        P1:local_run() end end)
+		if currently_spectating then
+		  P1:foreign_run()
+		else
+          P1:local_run() 
+		end
+	  end
+	end)
     if not P2.game_over then
       P2:foreign_run()
     end

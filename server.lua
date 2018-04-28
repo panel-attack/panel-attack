@@ -36,7 +36,7 @@ function lobby_state()
   end
   local spectatableRooms = {}
   for _,v in pairs(rooms) do
-	  spectatableRooms[#spectatableRooms+1] = {roomNumber = v.roomNumber, name = v.name , state = v:state()}
+	  spectatableRooms[#spectatableRooms+1] = {roomNumber = v.roomNumber, name = v.name , a = v.a.name, b = v.b.name, state = v:state()}
   end
   return {unpaired = names, spectatable = spectatableRooms}
 end
@@ -77,6 +77,8 @@ function create_room(a, b)
   clear_proposals(b.name)
   a.state = "room"
   b.state = "room"
+  a.player_number = 1
+  b.player_number = 2
   a.cursor = "level"
   b.cursor = "level"
   a.ready = false
@@ -93,9 +95,6 @@ function create_room(a, b)
   b:send(b_msg)
 end
 
-function spectate_room(user, requestedRoom)
-requestedRoom:add_spectator(user)
-end
 
 function start_match(a, b)
   
@@ -103,6 +102,7 @@ function start_match(a, b)
                 player_settings = {character = a.character, level = a.level},
                 opponent_settings = {character = b.character, level = b.level}}
   a:send(msg)
+  a.room:send_to_spectators(msg)
   msg.player_settings, msg.opponent_settings = msg.opponent_settings, msg.player_settings
   b:send(msg)
   lobby_changed = true
@@ -142,16 +142,18 @@ function Room.is_spectatable(self)
   return self.a.state == "room"
 end
 
-function Room.add_spectator(self, user)
-  user.state = "spectating"
-  self.spectators[#spectators+1] = user
-  print(user.name .. " joined " .. self.name .. " as a spectator")
+function Room.add_spectator(self, new_spectator_connection)
+  new_spectator_connection.state = "spectating"
+  self.spectators[#self.spectators+1] = new_spectator_connection
+  print(new_spectator_connection.name .. " joined " .. self.name .. " as a spectator")
+  msg = {spectate_request_granted = true, spectate_request_rejected = false}
+  new_spectator_connection:send(msg)
 end
 
 function Room.remove_spectator(self, user)
   for k,v in ipairs(self.spectators) do
 	if v == user.name then
-	  print(user.name .. " left " .. self.name .. as a spectator")
+	  print(user.name .. " left " .. self.name .. " as a spectator")
 	  spectators[k] = nil
 	end
   end
@@ -159,6 +161,12 @@ end
 
 function Room.close(self)
 	--TODO: notify spectators that the room has closed.
+	if self.a then
+	  self.a.player_number = 0
+	end
+	if self.b then
+	  self.b.player_number = 0
+	end
 	if rooms[self.roomNumber] then
 		rooms[self.roomNumber] = nil
 	end
@@ -183,6 +191,7 @@ Connection = class(function(s, socket)
   s.state = "needs_name"
   s.room = nil
   s.last_read = time()
+  s.player_number = 0  -- 0 if not a player in a room, 1 if player "a" in a room, 2 if player "b" in a room
 end)
 
 function Connection.menu_state(self)
@@ -224,7 +233,9 @@ function Connection.opponent_disconnected(self)
 end
 
 function Connection.setup_game(self)
-  self.state = "playing"
+  if self.state ~= "spectating" then
+    self.state = "playing"
+  end
   lobby_changed = true --TODO: remove this line when we implement joining games in progress
   self.vs_mode = true
   self.metal = false
@@ -264,6 +275,14 @@ end
 function Connection.I(self, message)
   if self.opponent then
     self.opponent:send("I"..message)
+	self.room:send_to_spectators("I"..message)
+  end
+end
+
+function Room.send_to_spectators(self, message)
+  --TODO: maybe try to do this in a different thread?
+  for k,v in ipairs(self.spectators) do
+	v:send(message)
   end
 end
 
@@ -329,7 +348,7 @@ function Connection.J(self, message)
     if requestedRoom and requestedRoom:state() == CHARACTERSELECT then
 	-- TODO: allow them to join
 	  print("join allowed")
-	  spectate_room(message.sender, requestedRoom)
+	 requestedRoom:add_spectator(connections[name_to_idx[message.spectate_request.sender]])
 	  
 	elseif requestedRoom and requestedRoom:state() == "playing, not joinable" then
 	-- TODO: deny the join request, maybe queue them to join as soon as the status changes from "playing" to "room"
