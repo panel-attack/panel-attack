@@ -243,6 +243,9 @@ function main_time_attack(...)
 end
 
 function main_net_vs_room()
+  if currently_spectating then
+    P1 = {panel_buffer="", gpanel_buffer=""}
+  end
   P2 = {panel_buffer="", gpanel_buffer=""}
   local k = K[1]
   local map = {{"level", "level", "level", "level", "level", "level", "ready"},
