@@ -108,6 +108,9 @@ function start_match(a, b)
   lobby_changed = true
   a:setup_game()
   b:setup_game()
+  for k,v in ipairs(a.room.spectators) do
+	v:setup_game()
+  end
 end
 
 Room = class(function(self, a, b)
@@ -170,6 +173,9 @@ function Room.close(self)
 	if rooms[self.roomNumber] then
 		rooms[self.roomNumber] = nil
 	end
+	local msg = lobby_state()
+	msg.leave_room = true
+	self:send_to_spectators(msg)
 end
 
 function roomNumberToRoom(roomNr)
@@ -305,8 +311,18 @@ function Connection.P(self, message)
     self.opponent.first_seven = self.first_seven
   end
   self:send("P"..ret)
+  if self.player_number == 1 then
+    self.room:send_to_spectators("P"..ret)
+  elseif self.player_number == 2 then
+    self.room:send_to_spectators{"O"..ret}
+  end
   if self.opponent then
     self.opponent:send("O"..ret)
+	if self.opponent.player_number == 2 then
+	  self.room:send_to_spectators("O"..ret)
+	elseif self.opponent.player_number == 1 then
+	  self.room:send_to_spectators("P"..ret)
+	end
   end
 end
 
@@ -315,6 +331,11 @@ function Connection.Q(self, message)
   local ncolors = 0 + message[1]
   local ret = make_gpanels(ncolors, string.sub(message, 2, 7))
   self:send("Q"..ret)
+  if self.player_number == 1 then
+    self.room:send_to_spectators("Q"..ret)
+  elseif self.player_number == 2 then
+    self.room:send_to_spectators("R"..ret)
+  end
   if self.opponent then
     self.opponent:send("R"..ret)
   end
@@ -366,6 +387,7 @@ function Connection.J(self, message)
       start_match(self, self.opponent)
     else
       self.opponent:send(message)
+	  self.room:send_to_spectators(message) -- TODO: may need to include in the message who is sending the message
     end
   elseif self.state == "playing" and message.game_over then
     if self.opponent.game_over then
