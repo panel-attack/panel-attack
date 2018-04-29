@@ -148,6 +148,7 @@ end
 
 function Room.add_spectator(self, new_spectator_connection)
   new_spectator_connection.state = "spectating"
+  new_spectator_connection.room = self
   self.spectators[#self.spectators+1] = new_spectator_connection
   print(new_spectator_connection.name .. " joined " .. self.name .. " as a spectator")
   msg = {spectate_request_granted = true, spectate_request_rejected = false}
