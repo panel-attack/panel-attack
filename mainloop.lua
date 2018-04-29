@@ -243,9 +243,6 @@ function main_time_attack(...)
 end
 
 function main_net_vs_room()
-  if currently_spectating then
-    P1 = {panel_buffer="", gpanel_buffer=""}
-  end
   P2 = {panel_buffer="", gpanel_buffer=""}
   local k = K[1]
   local map = {{"level", "level", "level", "level", "level", "level", "ready"},
@@ -323,8 +320,13 @@ function main_net_vs_room()
         return main_net_vs_lobby
       end
       if msg.match_start then
-        if currently_spectating then
-		  local fake_P1 = P1
+        local fake_P1
+		print("currently_spectating: "..tostring(currently_spectating))
+		if currently_spectating then
+		  print("created fake_P1")
+		  fake_P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character)
+		  fake_P1.panel_buffer = ""
+		  fake_P1.gpanel_buffer = ""
 		end
 		local fake_P2 = P2
         P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character)
@@ -342,8 +344,10 @@ function main_net_vs_room()
         replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
                     P1_level=P1.level,P2_level=P2.level,
                     P1_char=P1.character,P2_char=P2.character}
-        ask_for_gpanels("000000")
-        ask_for_panels("000000")
+        if not currently_spectating then
+			ask_for_gpanels("000000")
+			ask_for_panels("000000")
+		end
         to_print = "Game is starting!\n".."Level: "..P1.level.."\nOpponent's level: "..P2.level
         for i=1,30 do
           gprint(to_print,300, 280)
@@ -406,7 +410,7 @@ function main_net_vs_room()
     active_str = map[cursor[1]][cursor[2]]
     my_state = {character=config.character, level=config.level, cursor=active_str,
                 ready=(selected and active_str=="ready")}
-    if not content_equal(my_state, prev_state) then
+    if not content_equal(my_state, prev_state) and not currently_spectating then
       json_send({menu_state=my_state})
     end
     prev_state = my_state
@@ -559,6 +563,10 @@ function main_net_vs_setup(ip)
   end
   P1 = Stack(1, "vs", P1_level)
   P2 = Stack(2, "vs", P2_level)
+  if currently_spectating then
+    P1.panel_buffer = fake_P1.panel_buffer
+	P1.gpanel_buffer = fake_P1.gpanel_buffer
+  end
   P2.panel_buffer = fake_P2.panel_buffer
   P2.gpanel_buffer = fake_P2.gpanel_buffer
   P1.garbage_target = P2
