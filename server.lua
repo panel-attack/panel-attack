@@ -18,7 +18,7 @@ local PLAYING = "playing, not joinable" -- room states
 
 
 local VERSION = "019"
-local type_to_length = {H=4, E=4, F=4, P=8, I=2, L=2, Q=8}
+local type_to_length = {H=4, E=4, F=4, P=8, I=2, L=2, Q=8, U=2}
 local INDEX = 1
 local connections = {}
 local ROOMNUMBER = 1
@@ -281,7 +281,11 @@ end
 function Connection.I(self, message)
   if self.opponent then
     self.opponent:send("I"..message)
-	self.room:send_to_spectators("I"..message)
+	if self.player_number == 1 then
+	  self.room:send_to_spectators("U"..message)
+	elseif self.player_number == 2 then
+	  self.room:send_to_spectators("I"..message)
+	end
   end
 end
 
