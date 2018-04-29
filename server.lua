@@ -318,15 +318,10 @@ function Connection.P(self, message)
   if self.player_number == 1 then
     self.room:send_to_spectators("P"..ret)
   elseif self.player_number == 2 then
-    self.room:send_to_spectators{"O"..ret}
+    self.room:send_to_spectators("O"..ret)
   end
   if self.opponent then
     self.opponent:send("O"..ret)
-	if self.opponent.player_number == 2 then
-	  self.room:send_to_spectators("O"..ret)
-	elseif self.opponent.player_number == 1 then
-	  self.room:send_to_spectators("P"..ret)
-	end
   end
 end
 

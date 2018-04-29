@@ -130,6 +130,8 @@ The client can also ask for panels for garbage to turn into by saying
 
 Each frame, client will send its input state to server by saying "I"
 followed by 1 character representing the input state.
+spectators for a room will also be sent the same "I" message for what is should render on Player 2's stack
+spectators are sent similar messages starting with "U" for inputs that should be rendered on Player 1's stack
 
 At any time during gameplay, client must accept any number of these messages:
     "P" followed by 120 digits
