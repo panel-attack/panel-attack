@@ -374,47 +374,55 @@ function main_net_vs_room()
     end
     gprint(my_name..": "..json.encode(my_state).."  Wins: "..my_win_count.."\n"..op_name..": "..json.encode(op_state).."  Wins: "..op_win_count, 50, 50)
     wait()
-    if menu_up(k) then
-      if not selected then move_cursor(up) end
-    elseif menu_down(k) then
-      if not selected then move_cursor(down) end
-    elseif menu_left(k) then
-      if selected and active_str == "level" then
-        config.level = bound(1, config.level-1, 10)
-      end
-      if not selected then move_cursor(left) end
-    elseif menu_right(k) then
-      if selected and active_str == "level" then
-        config.level = bound(1, config.level+1, 10)
-      end
-      if not selected then move_cursor(right) end
-    elseif menu_enter(k) then
-      if selectable[active_str] then
-        selected = not selected
-      elseif active_str == "leave" then
-        do_leave()
-      elseif active_str == "random" then
-	    config.character = uniformly(characters)
-	  else
-        config.character = active_str
-		--When we select a character, move cursor to "ready"
-		active_str = "ready"
-		cursor = shallowcpy(name_to_xy["ready"])
-      end
-    elseif menu_escape(k) then
-      if active_str == "leave" then
-        do_leave()
-      end
-      cursor = shallowcpy(name_to_xy["leave"])
-    end
-    active_str = map[cursor[1]][cursor[2]]
-    my_state = {character=config.character, level=config.level, cursor=active_str,
-                ready=(selected and active_str=="ready")}
-    if not content_equal(my_state, prev_state) and not currently_spectating then
-      json_send({menu_state=my_state})
-    end
-    prev_state = my_state
-    do_messages()
+    if not currently_spectating then
+		if menu_up(k) then
+		  if not selected then move_cursor(up) end
+		elseif menu_down(k) then
+		  if not selected then move_cursor(down) end
+		elseif menu_left(k) then
+		  if selected and active_str == "level" then
+			config.level = bound(1, config.level-1, 10)
+		  end
+		  if not selected then move_cursor(left) end
+		elseif menu_right(k) then
+		  if selected and active_str == "level" then
+			config.level = bound(1, config.level+1, 10)
+		  end
+		  if not selected then move_cursor(right) end
+		elseif menu_enter(k) then
+		  if selectable[active_str] then
+			selected = not selected
+		  elseif active_str == "leave" then
+			do_leave()
+		  elseif active_str == "random" then
+			config.character = uniformly(characters)
+		  else
+			config.character = active_str
+			--When we select a character, move cursor to "ready"
+			active_str = "ready"
+			cursor = shallowcpy(name_to_xy["ready"])
+		  end
+		elseif menu_escape(k) then
+		  if active_str == "leave" then
+			do_leave()
+		  end
+		  cursor = shallowcpy(name_to_xy["leave"])
+		end
+		active_str = map[cursor[1]][cursor[2]]
+		my_state = {character=config.character, level=config.level, cursor=active_str,
+					ready=(selected and active_str=="ready")}
+		if not content_equal(my_state, prev_state) and not currently_spectating then
+		  json_send({menu_state=my_state})
+		end
+		prev_state = my_state
+	else -- (we are are spectating)
+		if menu_escape(k) then
+		  do_leave()
+		  return main_net_vs_lobby
+		end
+	end
+	do_messages()
+	
   end
 end
 
@@ -506,7 +514,8 @@ function main_net_vs_lobby()
 		currently_spectating = false
 		request_game(items[active_idx])
 	  else
-		op_name = items[active_idx].a
+	    my_name = items[active_idx].a
+		op_name = items[active_idx].b
 	    currently_spectating = true
 	    request_spectate(items[active_idx].roomNumber)
 	  end
@@ -600,6 +609,7 @@ end
 
 function main_net_vs()
   --STONER_MODE = true
+  local k = K[1]  --may help with spectators leaving games in progress
   local end_text = nil
   consuming_timesteps = true
   local op_name_y = 40
@@ -614,12 +624,15 @@ function main_net_vs()
         return main_net_vs_lobby
       end
     end
-	if not currently_spectating then
-		gprint(my_name, 315, 40)
-		gprint(op_name, 410, op_name_y)
-		gprint("Wins: "..my_win_count, 315, 70)
-		gprint("Wins: "..op_win_count, 410, 70)
-	end
+	gprint(my_name, 315, 40)
+	gprint(op_name, 410, op_name_y)
+	gprint("Wins: "..my_win_count, 315, 70)
+	gprint("Wins: "..op_win_count, 410, 70)
+	--TODO: allow spectators to leave a game in progress
+	--if menu_escape(k) and currently_spectating then
+	--	  do_leave()
+	--	  return main_net_vs_lobby
+	--end
     P1:render()
     P2:render()
     wait()
@@ -650,7 +663,7 @@ function main_net_vs()
       undo_stonermode()
       write_replay_file()
       json_send({game_over=true})
-      return main_dumb_transition, {main_net_vs_lobby, end_text, 45}
+      return main_dumb_transition, {main_net_vs_lobby, end_text, 180}
     end
   end
 end
@@ -1072,7 +1085,7 @@ function main_dumb_transition(next_func, text, time)
     end
     gprint(text, 300, 280)
     wait()
-    if t >= time and (menu_enter(k) or menu_escape(k)) then
+    if t >= time or (menu_enter(k) or menu_escape(k)) then
       return next_func
     end
     t = t + 1

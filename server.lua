@@ -93,6 +93,7 @@ function create_room(a, b)
   b.opponent = a
   a:send(a_msg)
   b:send(b_msg)
+  a.room:reinvite_spectators()
 end
 
 
@@ -153,11 +154,21 @@ function Room.add_spectator(self, new_spectator_connection)
   new_spectator_connection:send(msg)
 end
 
-function Room.remove_spectator(self, user)
+function Room.reinvite_spectators(self)
+  msg = {spectate_request_granted = true, spectate_request_rejected = false}
   for k,v in ipairs(self.spectators) do
-	if v == user.name then
-	  print(user.name .. " left " .. self.name .. " as a spectator")
-	  spectators[k] = nil
+	self.spectators[k]:send(msg)
+  end
+end
+
+function Room.remove_spectator(self, connection)
+  for k,v in ipairs(self.spectators) do
+	if v.name == connection.name then
+	  self.spectators[k].state = "lobby"
+	  print(connection.name .. " left " .. self.name .. " as a spectator")
+	  self.spectators[k] = nil
+	  lobby_changed = true
+	  connection:send(lobby_state())
 	end
   end
 end
@@ -213,12 +224,12 @@ function Connection.send(self, stuff)
     print("sending json "..json)
     stuff = prefix..json
   else
-    if stuff[1] ~= "I" then
+    if stuff[1] ~= "I" and stuff[1] ~= "U" then
       print("sending non-json "..stuff)
     end
   end
   local foo = {self.socket:send(stuff)}
-  if stuff[1] ~= "I" then
+  if stuff[1] ~= "I" and stuff[1] ~= "U" then
     print(unpack(foo))
   end
   if not foo[1] then
@@ -398,6 +409,8 @@ function Connection.J(self, message)
     local op = self.opponent
     self:opponent_disconnected()
     op:opponent_disconnected()
+  elseif (self.state == "spectating") and message.leave_room then
+	self.room:remove_spectator(self)
   end
 end
 
