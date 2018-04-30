@@ -102,7 +102,7 @@ do
     local items = {{"1P endless", main_select_speed_99, {main_endless}},
         {"1P puzzle", main_select_puzz},
         {"1P time attack", main_select_speed_99, {main_time_attack}},
-        {"2P fakevs at localhost", main_net_vs_setup, {"localhost"}},
+        {"2P fakevs at burke.ro", main_net_vs_setup, {"burke.ro"}},
         {"2P fakevs local game", main_local_vs_setup},
         {"Replay of 1P endless", main_replay_endless},
         {"Replay of 1P puzzle", main_replay_puzzle},
@@ -663,7 +663,7 @@ function main_net_vs()
       undo_stonermode()
       write_replay_file()
       json_send({game_over=true})
-      return main_dumb_transition, {main_net_vs_lobby, end_text, 180}
+      return main_dumb_transition, {main_net_vs_lobby, end_text, 45, 180}
     end
   end
 end
@@ -1064,7 +1064,7 @@ function main_set_name()
   end
 end
 
-function main_dumb_transition(next_func, text, time)
+function main_dumb_transition(next_func, text, timemin, timemax)
   love.audio.stop()
   if (not SFX_mute and SFX_GameOver_Play) then
 	SFX_GameOver:play()
@@ -1072,7 +1072,8 @@ function main_dumb_transition(next_func, text, time)
   SFX_GameOver_Play = 0
 
   text = text or ""
-  time = time or 0
+  timemin = timemin or 0
+  timemax = timemax or 3600
   local t = 0
   local k = K[1]
   while true do
@@ -1085,7 +1086,7 @@ function main_dumb_transition(next_func, text, time)
     end
     gprint(text, 300, 280)
     wait()
-    if t >= time or (menu_enter(k) or menu_escape(k)) then
+    if t >= timemin and (t >=timemax or (menu_enter(k) or menu_escape(k))) then
       return next_func
     end
     t = t + 1
