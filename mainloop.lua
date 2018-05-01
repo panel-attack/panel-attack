@@ -650,19 +650,26 @@ function main_net_vs()
     if not P2.game_over then
       P2:foreign_run()
     end
+	local i-say-i-won = false
+	local i-say-we-tied = false
     if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
       end_text = "Draw"
+	  i-say-we-tied = true
     elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
       end_text = op_name.." Wins :("
 	  op_win_count = op_win_count + 1
     elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
       end_text = my_name.." Wins ^^"
-	  my_win_count = my_win_count + 1
+	  if not i-say-we-tied then
+		i-say-i-won = true
+		my_win_count = my_win_count + 1
+	  end
+	  
     end
     if end_text then
       undo_stonermode()
       write_replay_file()
-      json_send({game_over=true})
+      json_send({game_over=true, i-won=i-say-i-won , tie=i-say-we-tied})
       return main_dumb_transition, {main_net_vs_lobby, end_text, 45, 180}
     end
   end
