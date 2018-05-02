@@ -103,6 +103,7 @@ do
         {"1P puzzle", main_select_puzz},
         {"1P time attack", main_select_speed_99, {main_time_attack}},
         {"2P fakevs at burke.ro", main_net_vs_setup, {"burke.ro"}},
+		{"2P fakevs at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
         {"2P fakevs local game", main_local_vs_setup},
         {"Replay of 1P endless", main_replay_endless},
         {"Replay of 1P puzzle", main_replay_puzzle},
@@ -650,18 +651,18 @@ function main_net_vs()
     if not P2.game_over then
       P2:foreign_run()
     end
-	local i-say-i-won = false
-	local i-say-we-tied = false
+	local i_say_i_won = false
+	local i_say_we_tied = false
     if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
       end_text = "Draw"
-	  i-say-we-tied = true
+	  i_say_we_tied = true
     elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
       end_text = op_name.." Wins :("
 	  op_win_count = op_win_count + 1
     elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
       end_text = my_name.." Wins ^^"
-	  if not i-say-we-tied then
-		i-say-i-won = true
+	  if not i_say_we_tied then
+		i_say_i_won = true
 		my_win_count = my_win_count + 1
 	  end
 	  
@@ -669,7 +670,7 @@ function main_net_vs()
     if end_text then
       undo_stonermode()
       write_replay_file()
-      json_send({game_over=true, i-won=i-say-i-won , tie=i-say-we-tied})
+      json_send({game_over=true, i_won=i_say_i_won , tie=i_say_we_tied})
       return main_dumb_transition, {main_net_vs_lobby, end_text, 45, 180}
     end
   end
