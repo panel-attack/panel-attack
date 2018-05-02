@@ -1,9 +1,12 @@
+require("consts")
+
 function love.conf(t)
   t.title = "Panel Attack"
   t.author = "sharpobject@gmail.com"
   t.url = "https://github.com/sharpobject/panel-attack"
-  t.window.width = 819
-  t.window.height = 612
+  t.window.width = default_width
+  t.window.height = default_height
+  t.window.resizable = true
   t.modules.audio = true
   t.modules.mouse = true
   t.modules.sound = true

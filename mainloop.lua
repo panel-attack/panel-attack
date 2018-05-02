@@ -105,6 +105,7 @@ do
         {"Replay of 2P fakevs", main_replay_vs},
         {"Configure input", main_config_input},
         {"Set name", main_set_name},
+        {"Fullscreen (LAlt+Enter)", fullscreen},
         {"Quit", os.exit}}
     local k = K[1]
     while true do
@@ -992,6 +993,11 @@ function main_set_name()
       name = name .. v
     end
   end
+end
+
+function fullscreen()
+  love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
+  return main_select_mode
 end
 
 function main_dumb_transition(next_func, text, time)

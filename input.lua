@@ -90,6 +90,10 @@ function joystick_ax()
 end
 
 function love.keypressed(key, rep)
+  if key == "return" and not rep and love.keyboard.isDown("lalt") then
+    love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
+    return
+  end
   if not rep then
     keys[key] = 0
   end

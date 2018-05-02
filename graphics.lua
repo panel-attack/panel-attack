@@ -376,6 +376,16 @@ function Stack.render(self)
   self:draw_cards()
   self:render_cursor()
 end
+
+function scale_letterbox(width, height, w_ratio, h_ratio)
+  if height / h_ratio > width / w_ratio then
+    local scaled_height = h_ratio * width / w_ratio
+    return 0, (height - scaled_height) / 2, width, scaled_height
+  end
+  local scaled_width = w_ratio * height / h_ratio
+  return (width - scaled_width) / 2, 0, scaled_width, height
+end
+
 --[[
 void EnqueueConfetti(int x, int y)
 {
