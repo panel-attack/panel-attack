@@ -13,12 +13,16 @@ local lobby_changed = false
 local time = os.time
 local floor = math.floor
 local TIMEOUT = 10
+local CHARACTERSELECT = "joinable" -- room states
+local PLAYING = "playing, not joinable" -- room states
 
 
 local VERSION = "019"
-local type_to_length = {H=4, E=4, F=4, P=8, I=2, L=2, Q=8}
+local type_to_length = {H=4, E=4, F=4, P=8, I=2, L=2, Q=8, U=2}
 local INDEX = 1
 local connections = {}
+local ROOMNUMBER = 1
+local rooms = {}
 local name_to_idx = {}
 local socket_to_idx = {}
 local proposals = {}
@@ -30,7 +34,11 @@ function lobby_state()
       names[#names+1] = v.name
     end
   end
-  return {unpaired = names}
+  local spectatableRooms = {}
+  for _,v in pairs(rooms) do
+	  spectatableRooms[#spectatableRooms+1] = {roomNumber = v.roomNumber, name = v.name , a = v.a.name, b = v.b.name, state = v:state()}
+  end
+  return {unpaired = names, spectatable = spectatableRooms}
 end
 
 function propose_game(sender, receiver, message)
@@ -69,10 +77,13 @@ function create_room(a, b)
   clear_proposals(b.name)
   a.state = "room"
   b.state = "room"
+  a.player_number = 1
+  b.player_number = 2
   a.cursor = "level"
   b.cursor = "level"
   a.ready = false
   b.ready = false
+  Room(a,b)
   local a_msg, b_msg = {create_room = true}, {create_room = true}
   a_msg.opponent = b.name
   a_msg.menu_state = b:menu_state()
@@ -82,17 +93,109 @@ function create_room(a, b)
   b.opponent = a
   a:send(a_msg)
   b:send(b_msg)
+  a.room:reinvite_spectators()
 end
 
+
 function start_match(a, b)
+  
   local msg = {match_start = true,
                 player_settings = {character = a.character, level = a.level},
                 opponent_settings = {character = b.character, level = b.level}}
   a:send(msg)
+  a.room:send_to_spectators(msg)
   msg.player_settings, msg.opponent_settings = msg.opponent_settings, msg.player_settings
   b:send(msg)
+  lobby_changed = true
   a:setup_game()
   b:setup_game()
+  for k,v in ipairs(a.room.spectators) do
+	v:setup_game()
+  end
+end
+
+Room = class(function(self, a, b)
+  self.a = a --player a
+  self.b = b --player b
+  self.name = a.name.." vs "..b.name
+  if not self.a.room then
+	self.roomNumber = ROOMNUMBER
+	ROOMNUMBER = ROOMNUMBER + 1
+	self.a.room = self
+	self.b.room = self
+	self.spectators = {}
+  else
+	self.spectators = self.a.room.spectators
+	self.roomNumber = self.a.room.roomNumber
+  
+  end
+  rooms[self.roomNumber] = self
+end)
+
+function Room.state(self)
+  if self.a.state == "room" then
+    return CHARACTERSELECT
+  elseif self.a.state == "playing" then
+    return PLAYING
+  else
+    return self.a.state
+  end
+end
+
+function Room.is_spectatable(self)
+  return self.a.state == "room"
+end
+
+function Room.add_spectator(self, new_spectator_connection)
+  new_spectator_connection.state = "spectating"
+  new_spectator_connection.room = self
+  self.spectators[#self.spectators+1] = new_spectator_connection
+  print(new_spectator_connection.name .. " joined " .. self.name .. " as a spectator")
+  msg = {spectate_request_granted = true, spectate_request_rejected = false}
+  new_spectator_connection:send(msg)
+end
+
+function Room.reinvite_spectators(self)
+  msg = {spectate_request_granted = true, spectate_request_rejected = false}
+  for k,v in ipairs(self.spectators) do
+	self.spectators[k]:send(msg)
+  end
+end
+
+function Room.remove_spectator(self, connection)
+  for k,v in ipairs(self.spectators) do
+	if v.name == connection.name then
+	  self.spectators[k].state = "lobby"
+	  print(connection.name .. " left " .. self.name .. " as a spectator")
+	  self.spectators[k] = nil
+	  lobby_changed = true
+	  connection:send(lobby_state())
+	end
+  end
+end
+
+function Room.close(self)
+	--TODO: notify spectators that the room has closed.
+	if self.a then
+	  self.a.player_number = 0
+	end
+	if self.b then
+	  self.b.player_number = 0
+	end
+	if rooms[self.roomNumber] then
+		rooms[self.roomNumber] = nil
+	end
+	local msg = lobby_state()
+	msg.leave_room = true
+	self:send_to_spectators(msg)
+end
+
+function roomNumberToRoom(roomNr)
+  for k,v in pairs(rooms) do
+    if rooms[k].roomNumber and rooms[k].roomNumber == roomNr then
+      return v
+    end
+  end
 end
 
 Connection = class(function(s, socket)
@@ -104,7 +207,9 @@ Connection = class(function(s, socket)
   socket:settimeout(0)
   s.leftovers = ""
   s.state = "needs_name"
+  s.room = nil
   s.last_read = time()
+  s.player_number = 0  -- 0 if not a player in a room, 1 if player "a" in a room, 2 if player "b" in a room
 end)
 
 function Connection.menu_state(self)
@@ -120,12 +225,12 @@ function Connection.send(self, stuff)
     print("sending json "..json)
     stuff = prefix..json
   else
-    if stuff[1] ~= "I" then
+    if stuff[1] ~= "I" and stuff[1] ~= "U" then
       print("sending non-json "..stuff)
     end
   end
   local foo = {self.socket:send(stuff)}
-  if stuff[1] ~= "I" then
+  if stuff[1] ~= "I" and stuff[1] ~= "U" then
     print(unpack(foo))
   end
   if not foo[1] then
@@ -139,11 +244,17 @@ function Connection.opponent_disconnected(self)
   lobby_changed = true
   local msg = lobby_state()
   msg.leave_room = true
+  if self.room then
+	self.room:close()
+  end
   self:send(msg)
 end
 
 function Connection.setup_game(self)
-  self.state = "playing"
+  if self.state ~= "spectating" then
+    self.state = "playing"
+  end
+  lobby_changed = true --TODO: remove this line when we implement joining games in progress
   self.vs_mode = true
   self.metal = false
   self.rows_left = 14+random(1,8)
@@ -155,6 +266,9 @@ end
 function Connection.close(self)
   if self.state == "lobby" then
     lobby_changed = true
+  end
+  if self.room then
+    self.room:close()
   end
   clear_proposals(self.name)
   if self.opponent then
@@ -179,6 +293,18 @@ end
 function Connection.I(self, message)
   if self.opponent then
     self.opponent:send("I"..message)
+	if self.player_number == 1 then
+	  self.room:send_to_spectators("U"..message)
+	elseif self.player_number == 2 then
+	  self.room:send_to_spectators("I"..message)
+	end
+  end
+end
+
+function Room.send_to_spectators(self, message)
+  --TODO: maybe try to do this in a different thread?
+  for k,v in ipairs(self.spectators) do
+	v:send(message)
   end
 end
 
@@ -201,6 +327,11 @@ function Connection.P(self, message)
     self.opponent.first_seven = self.first_seven
   end
   self:send("P"..ret)
+  if self.player_number == 1 then
+    self.room:send_to_spectators("P"..ret)
+  elseif self.player_number == 2 then
+    self.room:send_to_spectators("O"..ret)
+  end
   if self.opponent then
     self.opponent:send("O"..ret)
   end
@@ -211,6 +342,11 @@ function Connection.Q(self, message)
   local ncolors = 0 + message[1]
   local ret = make_gpanels(ncolors, string.sub(message, 2, 7))
   self:send("Q"..ret)
+  if self.player_number == 1 then
+    self.room:send_to_spectators("Q"..ret)
+  elseif self.player_number == 2 then
+    self.room:send_to_spectators("R"..ret)
+  end
   if self.opponent then
     self.opponent:send("R"..ret)
   end
@@ -239,6 +375,20 @@ function Connection.J(self, message)
     if message.game_request.sender == self.name then
       propose_game(message.game_request.sender, message.game_request.receiver, message)
     end
+  elseif self.state == "lobby" and message.spectate_request then
+	local requestedRoom = roomNumberToRoom(message.spectate_request.roomNumber)
+    if requestedRoom and requestedRoom:state() == CHARACTERSELECT then
+	-- TODO: allow them to join
+	  print("join allowed")
+	 requestedRoom:add_spectator(connections[name_to_idx[message.spectate_request.sender]])
+	  
+	elseif requestedRoom and requestedRoom:state() == "playing, not joinable" then
+	-- TODO: deny the join request, maybe queue them to join as soon as the status changes from "playing" to "room"
+	  print("join denied")
+	else
+	-- TODO: tell the client the join request failed, couldn't find the room.
+	  print("couldn't find room")
+	end
   elseif self.state == "room" and message.menu_state then
     self.level = message.menu_state.level
     self.character = message.menu_state.character
@@ -248,6 +398,7 @@ function Connection.J(self, message)
       start_match(self, self.opponent)
     else
       self.opponent:send(message)
+	  self.room:send_to_spectators(message) -- TODO: may need to include in the message who is sending the message
     end
   elseif self.state == "playing" and message.game_over then
     if self.opponent.game_over then
@@ -259,6 +410,8 @@ function Connection.J(self, message)
     local op = self.opponent
     self:opponent_disconnected()
     op:opponent_disconnected()
+  elseif (self.state == "spectating") and message.leave_room then
+	self.room:remove_spectator(self)
   end
 end
 
