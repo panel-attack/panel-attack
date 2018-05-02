@@ -1,5 +1,5 @@
 local TCP_sock = nil
-local type_to_length = {G=1, H=1, N=1, E=4, P=121, O=121, I=2, Q=121, R=121, L=2}
+local type_to_length = {G=1, H=1, N=1, E=4, P=121, O=121, I=2, Q=121, R=121, L=2, U=2}
 local leftovers = ""
 local wait = coroutine.yield
 local floor = math.floor
@@ -82,6 +82,7 @@ local process_message = {
   N=function(s) error("Server told us to upgrade the game at burke.ro/panel.zip") end,
   P=function(s) P1.panel_buffer = P1.panel_buffer..s end,
   O=function(s) P2.panel_buffer = P2.panel_buffer..s end,
+  U=function(s) P1.input_buffer = P1.input_buffer..s end,  -- used for P1's inputs when spectating.
   I=function(s) P2.input_buffer = P2.input_buffer..s end,
   Q=function(s) P1.gpanel_buffer = P1.gpanel_buffer..s end,
   R=function(s) P2.gpanel_buffer = P2.gpanel_buffer..s end,
@@ -110,10 +111,13 @@ function do_messages()
   while true do
     local typ, data = get_message()
     if typ then
-      if typ ~= "I" then
+      if typ ~= "I" and type ~= "U" then
         print("Got message "..typ.." "..data)
       end
       process_message[typ](data)
+	  if typ == "U" then
+	    typ = "in_buf"
+	  end
       if P1 and replay[P1.mode][typ] then
         replay[P1.mode][typ]=replay[P1.mode][typ]..data
       end
@@ -125,6 +129,10 @@ end
 
 function request_game(name)
   json_send({game_request = {sender=config.name, receiver=name}})
+end
+
+function request_spectate(roomNr)
+  json_send({spectate_request = {sender=config.name, roomNumber = roomNr}})
 end
 
 function ask_for_panels(prev_panels)

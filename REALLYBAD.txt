@@ -59,6 +59,8 @@ The server sends Bob {"game_request_to_client": {"sender": "Alice", "receiver":"
 #Bob sends the server {"game_request_reply": {"sender": "Alice", "receiver":"Bob", "reply": true/false}}
 #server asserts these fields are set correctly, that Alice actually requested a game before beginning the room, etc.
 Actually, both players can send requests, and when they have, the room will start.
+#spectators can then join
+#spectators may not join during a game in progress, only between games, until we implement joining in progress
 
 #After bob sends "game_request_reply", server sends a message to create the room
 This message is also a menu_state message
@@ -128,6 +130,8 @@ The client can also ask for panels for garbage to turn into by saying
 
 Each frame, client will send its input state to server by saying "I"
 followed by 1 character representing the input state.
+spectators for a room will also be sent the same "I" message for what is should render on Player 2's stack
+spectators are sent similar messages starting with "U" for inputs that should be rendered on Player 1's stack
 
 At any time during gameplay, client must accept any number of these messages:
     "P" followed by 120 digits

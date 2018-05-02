@@ -6,6 +6,10 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   menu_up, menu_down, menu_left, menu_right, menu_enter, menu_escape,
   main_replay_vs, main_local_vs_setup, main_local_vs, menu_key_func,
   multi_func, normal_key, main_set_name, main_net_vs_room, main_net_vs_lobby
+  
+local PLAYING = "playing, not joinable"  -- room states
+local CHARACTERSELECT = "joinable" --room states
+local currently_spectating = false
 
 function fmainloop()
   local func, arg = main_select_mode, nil
@@ -317,10 +321,22 @@ function main_net_vs_room()
         return main_net_vs_lobby
       end
       if msg.match_start then
-        local fake_P2 = P2
+        local fake_P1
+		print("currently_spectating: "..tostring(currently_spectating))
+		if currently_spectating then
+		  print("created fake_P1")
+		  fake_P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character)
+		  fake_P1.panel_buffer = ""
+		  fake_P1.gpanel_buffer = ""
+		end
+		local fake_P2 = P2
         P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character)
         P2 = Stack(2, "vs", msg.opponent_settings.level, msg.opponent_settings.character)
-        P2.panel_buffer = fake_P2.panel_buffer
+        if currently_spectating then
+		  P1.panel_buffer = fake_P1.panel_buffer
+          P1.gpanel_buffer = fake_P1.gpanel_buffer
+		end
+		P2.panel_buffer = fake_P2.panel_buffer
         P2.gpanel_buffer = fake_P2.gpanel_buffer
         P1.garbage_target = P2
         P2.garbage_target = P1
@@ -329,8 +345,10 @@ function main_net_vs_room()
         replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
                     P1_level=P1.level,P2_level=P2.level,
                     P1_char=P1.character,P2_char=P2.character}
-        ask_for_gpanels("000000")
-        ask_for_panels("000000")
+        if not currently_spectating then
+			ask_for_gpanels("000000")
+			ask_for_panels("000000")
+		end
         to_print = "Game is starting!\n".."Level: "..P1.level.."\nOpponent's level: "..P2.level
         for i=1,30 do
           gprint(to_print,300, 280)
@@ -357,47 +375,55 @@ function main_net_vs_room()
     end
     gprint(my_name..": "..json.encode(my_state).."  Wins: "..my_win_count.."\n"..op_name..": "..json.encode(op_state).."  Wins: "..op_win_count, 50, 50)
     wait()
-    if menu_up(k) then
-      if not selected then move_cursor(up) end
-    elseif menu_down(k) then
-      if not selected then move_cursor(down) end
-    elseif menu_left(k) then
-      if selected and active_str == "level" then
-        config.level = bound(1, config.level-1, 10)
-      end
-      if not selected then move_cursor(left) end
-    elseif menu_right(k) then
-      if selected and active_str == "level" then
-        config.level = bound(1, config.level+1, 10)
-      end
-      if not selected then move_cursor(right) end
-    elseif menu_enter(k) then
-      if selectable[active_str] then
-        selected = not selected
-      elseif active_str == "leave" then
-        do_leave()
-      elseif active_str == "random" then
-	    config.character = uniformly(characters)
-	  else
-        config.character = active_str
-		--When we select a character, move cursor to "ready"
-		active_str = "ready"
-		cursor = shallowcpy(name_to_xy["ready"])
-      end
-    elseif menu_escape(k) then
-      if active_str == "leave" then
-        do_leave()
-      end
-      cursor = shallowcpy(name_to_xy["leave"])
-    end
-    active_str = map[cursor[1]][cursor[2]]
-    my_state = {character=config.character, level=config.level, cursor=active_str,
-                ready=(selected and active_str=="ready")}
-    if not content_equal(my_state, prev_state) then
-      json_send({menu_state=my_state})
-    end
-    prev_state = my_state
-    do_messages()
+    if not currently_spectating then
+		if menu_up(k) then
+		  if not selected then move_cursor(up) end
+		elseif menu_down(k) then
+		  if not selected then move_cursor(down) end
+		elseif menu_left(k) then
+		  if selected and active_str == "level" then
+			config.level = bound(1, config.level-1, 10)
+		  end
+		  if not selected then move_cursor(left) end
+		elseif menu_right(k) then
+		  if selected and active_str == "level" then
+			config.level = bound(1, config.level+1, 10)
+		  end
+		  if not selected then move_cursor(right) end
+		elseif menu_enter(k) then
+		  if selectable[active_str] then
+			selected = not selected
+		  elseif active_str == "leave" then
+			do_leave()
+		  elseif active_str == "random" then
+			config.character = uniformly(characters)
+		  else
+			config.character = active_str
+			--When we select a character, move cursor to "ready"
+			active_str = "ready"
+			cursor = shallowcpy(name_to_xy["ready"])
+		  end
+		elseif menu_escape(k) then
+		  if active_str == "leave" then
+			do_leave()
+		  end
+		  cursor = shallowcpy(name_to_xy["leave"])
+		end
+		active_str = map[cursor[1]][cursor[2]]
+		my_state = {character=config.character, level=config.level, cursor=active_str,
+					ready=(selected and active_str=="ready")}
+		if not content_equal(my_state, prev_state) and not currently_spectating then
+		  json_send({menu_state=my_state})
+		end
+		prev_state = my_state
+	else -- (we are are spectating)
+		if menu_escape(k) then
+		  do_leave()
+		  return main_net_vs_lobby
+		end
+	end
+	do_messages()
+	
   end
 end
 
@@ -406,6 +432,7 @@ function main_net_vs_lobby()
   local items
   local unpaired_players = {} -- list
   local willing_players = {} -- set
+  local spectatable_rooms = {}
   local k = K[1]
   local notice = {[true]="Select a player name to ask for a match.", [false]="You are all alone in the lobby :("}
   while true do
@@ -413,7 +440,7 @@ function main_net_vs_lobby()
       if msg.choose_another_name then
         error("name is taken :<")
       end
-      if msg.create_room then
+      if msg.create_room or msg.spectate_request_granted then
         return main_net_vs_room
       end
       if msg.unpaired then
@@ -425,6 +452,9 @@ function main_net_vs_lobby()
         end
         willing_players = new_willing
       end
+	  if msg.spectatable then
+	    spectatable_rooms = msg.spectatable
+	  end
       if msg.game_request then
         willing_players[msg.game_request.sender] = true
       end
@@ -437,6 +467,10 @@ function main_net_vs_lobby()
         items[#items+1] = v
       end
     end
+	local lastPlayerIndex = #items --the rest of the items will be spectatable rooms, except the last item
+    for _,v in ipairs(spectatable_rooms) do
+	  items[#items+1] = v
+	end
     if active_back then
       if active_idx ~= 1 then
         active_idx = #items+1
@@ -447,14 +481,21 @@ function main_net_vs_lobby()
       end
       active_name = items[active_idx]
     end
-    items[#items+1] = "Back to main menu"
+	
+	items[#items+1] = "Back to main menu" -- the last item is "Back to the main menu"
     for i=1,#items do
       if active_idx == i then
         arrow = arrow .. ">"
       else
         arrow = arrow .. "\n"
       end
-      to_print = to_print .. "   " .. items[i] .. (willing_players[items[i]] and " (Wants to play with you :o)" or "") .. "\n"
+	  if i <= lastPlayerIndex then
+		to_print = to_print .. "   " .. items[i] .. (willing_players[items[i]] and " (Wants to play with you :o)" or "") .. "\n"
+	  elseif i < #items and items[i].name then
+	    to_print = to_print .. "   spectate " .. items[i].name .. " (".. items[i].state .. ")\n" --printing room names 
+	  else
+	    to_print = to_print .. "   " .. items[i]
+	  end
     end
     gprint(notice[#items > 1], 300, 250)
     gprint(arrow, 300, 280)
@@ -468,8 +509,17 @@ function main_net_vs_lobby()
       if active_idx == #items then
         return main_select_mode
       end
-	  op_name = items[active_idx]
-      request_game(items[active_idx])
+	  if active_idx <= lastPlayerIndex then
+		
+		op_name = items[active_idx]
+		currently_spectating = false
+		request_game(items[active_idx])
+	  else
+	    my_name = items[active_idx].a
+		op_name = items[active_idx].b
+	    currently_spectating = true
+	    request_spectate(items[active_idx].roomNumber)
+	  end
     elseif menu_escape(k) then
       if active_idx == #items then
         return main_select_mode
@@ -523,6 +573,10 @@ function main_net_vs_setup(ip)
   end
   P1 = Stack(1, "vs", P1_level)
   P2 = Stack(2, "vs", P2_level)
+  if currently_spectating then
+    P1.panel_buffer = fake_P1.panel_buffer
+	P1.gpanel_buffer = fake_P1.gpanel_buffer
+  end
   P2.panel_buffer = fake_P2.panel_buffer
   P2.gpanel_buffer = fake_P2.gpanel_buffer
   P1.garbage_target = P2
@@ -533,7 +587,11 @@ function main_net_vs_setup(ip)
               P1_level=P1_level,P2_level=P2_level}
   ask_for_gpanels("000000")
   ask_for_panels("000000")
-  to_print = "Level: "..my_level.."\nOpponent's level: "..(P2_level or "???")
+  if not currently_spectating then
+    to_print = "Level: "..my_level.."\nOpponent's level: "..(P2_level or "???")
+  else
+    to_print = "P1 Level: "..my_level.."\nP2 level: "..(P2_level or "???")
+  end
   for i=1,30 do
     gprint(to_print,300, 280)
     do_messages()
@@ -552,6 +610,7 @@ end
 
 function main_net_vs()
   --STONER_MODE = true
+  local k = K[1]  --may help with spectators leaving games in progress
   local end_text = nil
   consuming_timesteps = true
   local op_name_y = 40
@@ -570,6 +629,11 @@ function main_net_vs()
 	gprint(op_name, 410, op_name_y)
 	gprint("Wins: "..my_win_count, 315, 70)
 	gprint("Wins: "..op_win_count, 410, 70)
+	--TODO: allow spectators to leave a game in progress
+	--if menu_escape(k) and currently_spectating then
+	--	  do_leave()
+	--	  return main_net_vs_lobby
+	--end
     P1:render()
     P2:render()
     wait()
@@ -577,7 +641,13 @@ function main_net_vs()
     print(P1.CLOCK, P2.CLOCK)
     variable_step(function()
       if not P1.game_over then
-        P1:local_run() end end)
+		if currently_spectating then
+		  P1:foreign_run()
+		else
+          P1:local_run() 
+		end
+	  end
+	end)
     if not P2.game_over then
       P2:foreign_run()
     end
@@ -594,7 +664,7 @@ function main_net_vs()
       undo_stonermode()
       write_replay_file()
       json_send({game_over=true})
-      return main_dumb_transition, {main_net_vs_lobby, end_text, 45}
+      return main_dumb_transition, {main_net_vs_lobby, end_text, 45, 180}
     end
   end
 end
@@ -1000,7 +1070,7 @@ function fullscreen()
   return main_select_mode
 end
 
-function main_dumb_transition(next_func, text, time)
+function main_dumb_transition(next_func, text, timemin, timemax)
   love.audio.stop()
   if (not SFX_mute and SFX_GameOver_Play) then
 	SFX_GameOver:play()
@@ -1008,7 +1078,8 @@ function main_dumb_transition(next_func, text, time)
   SFX_GameOver_Play = 0
 
   text = text or ""
-  time = time or 0
+  timemin = timemin or 0
+  timemax = timemax or 3600
   local t = 0
   local k = K[1]
   while true do
@@ -1021,7 +1092,7 @@ function main_dumb_transition(next_func, text, time)
     end
     gprint(text, 300, 280)
     wait()
-    if t >= time and (menu_enter(k) or menu_escape(k)) then
+    if t >= timemin and (t >=timemax or (menu_enter(k) or menu_escape(k))) then
       return next_func
     end
     t = t + 1
