@@ -325,13 +325,13 @@ function main_net_vs_room()
 		print("currently_spectating: "..tostring(currently_spectating))
 		if currently_spectating then
 		  print("created fake_P1")
-		  fake_P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character)
+		  fake_P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
 		  fake_P1.panel_buffer = ""
 		  fake_P1.gpanel_buffer = ""
 		end
 		local fake_P2 = P2
-        P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character)
-        P2 = Stack(2, "vs", msg.opponent_settings.level, msg.opponent_settings.character)
+        P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
+        P2 = Stack(2, "vs", msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
         if currently_spectating then
 		  P1.panel_buffer = fake_P1.panel_buffer
           P1.gpanel_buffer = fake_P1.gpanel_buffer
@@ -651,26 +651,24 @@ function main_net_vs()
     if not P2.game_over then
       P2:foreign_run()
     end
-	local i_say_i_won = false
-	local i_say_we_tied = false
+	local outcome_claim = nil
     if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
       end_text = "Draw"
-	  i_say_we_tied = true
+	  outcome_claim = 0
     elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
       end_text = op_name.." Wins :("
 	  op_win_count = op_win_count + 1
+	  outcome_claim = P2.player_number
     elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
       end_text = my_name.." Wins ^^"
-	  if not i_say_we_tied then
-		i_say_i_won = true
-		my_win_count = my_win_count + 1
-	  end
+	  my_win_count = my_win_count + 1
+	  outcome_claim = P1.player_number
 	  
     end
     if end_text then
       undo_stonermode()
       write_replay_file()
-      json_send({game_over=true, i_won=i_say_i_won , tie=i_say_we_tied})
+      json_send({game_over=true, outcome=outcome_claim})
       return main_dumb_transition, {main_net_vs_lobby, end_text, 45, 180}
     end
   end
