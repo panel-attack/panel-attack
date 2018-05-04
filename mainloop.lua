@@ -253,7 +253,8 @@ function main_net_vs_room()
 			   {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
   local cursor,op_cursor,X,Y = {1,1},{1,1},5,7
   local up,down,left,right = {-1,0}, {1,0}, {0,-1}, {0,1}
-  local my_state = {character=config.character, level=config.level, cursor="level", ready=false}
+  local my_state = global_my_state or {character=config.character, level=config.level, cursor="level", ready=false}
+  global_my_state = nil
   my_win_count = my_win_count or 0
   local prev_state = shallowcpy(my_state)
   local op_state = global_op_state or {character="lip", level=5, cursor="level", ready=false}
@@ -313,7 +314,15 @@ function main_net_vs_room()
   while true do
     for _,msg in ipairs(this_frame_messages) do
       if msg.menu_state then
-        op_state = msg.menu_state
+	    if currently_spectating then
+		  if msg.menu_state.player_number == 2 then
+		    op_state = msg.menu_state
+		  elseif msg.menu_state.player_number == 1 then
+		    my_state = msg.menu_state
+		  end
+		else
+          op_state = msg.menu_state
+		end
       end
       if msg.leave_room then
 		my_win_count = 0
@@ -441,6 +450,8 @@ function main_net_vs_lobby()
         error("name is taken :<")
       end
       if msg.create_room or msg.spectate_request_granted then
+	    global_my_state = msg.a_menu_state
+		global_op_state = msg.b_menu_state
         return main_net_vs_room
       end
       if msg.unpaired then
@@ -1081,7 +1092,15 @@ function main_dumb_transition(next_func, text, timemin, timemax)
     if next_func == main_net_vs_room then
       for _,msg in ipairs(this_frame_messages) do
         if msg.menu_state then
-          global_op_state = msg.menu_state
+		  if currently_spectating then
+		    if msg.menu_state.player_number == 1 then
+			  global_my_state = msg.menu_state
+			elseif msg.menu_state.player_number == 2 then
+			  global_op_state = msg.menu_state
+			end
+		  else
+            global_op_state = msg.menu_state
+		  end
         end
       end
     end

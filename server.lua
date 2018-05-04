@@ -151,12 +151,15 @@ function Room.add_spectator(self, new_spectator_connection)
   new_spectator_connection.room = self
   self.spectators[#self.spectators+1] = new_spectator_connection
   print(new_spectator_connection.name .. " joined " .. self.name .. " as a spectator")
-  msg = {spectate_request_granted = true, spectate_request_rejected = false}
+  
+  msg = {spectate_request_granted = true, spectate_request_rejected = false, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()}
   new_spectator_connection:send(msg)
+
+  
 end
 
 function Room.reinvite_spectators(self)
-  msg = {spectate_request_granted = true, spectate_request_rejected = false}
+  msg = {spectate_request_granted = true, spectate_request_rejected = false, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()}
   for k,v in ipairs(self.spectators) do
 	self.spectators[k]:send(msg)
   end
@@ -213,7 +216,8 @@ Connection = class(function(s, socket)
 end)
 
 function Connection.menu_state(self)
-  return {cursor=self.cursor, ready=self.ready, character=self.character, level=self.level}
+  return {cursor=self.cursor, ready=self.ready, character=self.character, level=self.level, player_number=self.player_number}
+  --note: player_number here is the player_number of the connection as according to the server, not the "which" of any Stack
 end
 
 function Connection.send(self, stuff)
@@ -390,7 +394,8 @@ function Connection.J(self, message)
 	  print("couldn't find room")
 	end
   elseif self.state == "room" and message.menu_state then
-    self.level = message.menu_state.level
+    message.menu_state.player_number = self.player_number
+	self.level = message.menu_state.level
     self.character = message.menu_state.character
     self.ready = message.menu_state.ready
     self.cursor = message.menu_state.cursor
