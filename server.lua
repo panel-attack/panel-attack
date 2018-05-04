@@ -267,7 +267,7 @@ function Connection.close(self)
   if self.state == "lobby" then
     lobby_changed = true
   end
-  if self.room then
+  if self.room and (self.room.a.name == self.name or self.room.b.name == self.name) then
     self.room:close()
   end
   clear_proposals(self.name)
