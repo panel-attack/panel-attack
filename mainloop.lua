@@ -314,8 +314,7 @@ function main_net_vs_room()
   while true do
     for _,msg in ipairs(this_frame_messages) do
       if msg.win_counts then
-	    my_win_count = msg.win_counts[1] or 0
-	    op_win_count = msg.win_counts[2] or 0
+	    update_win_counts(msg.win_counts)
 	  end
 	  if msg.menu_state then
 	    if currently_spectating then
@@ -457,8 +456,7 @@ function main_net_vs_lobby()
 	    global_my_state = msg.a_menu_state
 		global_op_state = msg.b_menu_state
 		if msg.win_counts then
-	      my_win_count = msg.win_counts[1] or 0
-	      op_win_count = msg.win_counts[2] or 0
+		  update_win_counts(msg.win_counts)
 		end
         return main_net_vs_room
       end
@@ -551,12 +549,25 @@ function main_net_vs_lobby()
   end
 end
 
+function update_win_counts(win_counts)
+  if (P1 and P1.player_number == 1) or currently_spectating then
+	my_win_count = win_counts[1] or 0
+	op_win_count = win_counts[2] or 0
+  elseif P1.player_number == 2 then
+	my_win_count = win_counts[2] or 0
+	op_win_count = win_counts[1] or 0
+  end
+end
+
 function main_net_vs_setup(ip)
   if not config.name then
     return main_set_name
 	else my_name = config.name
   end
   P1, P1_level, P2_level, got_opponent = nil
+  if currently_spectating then
+	P1 = {panel_buffer="", gpanel_buffer=""}
+  end
   P2 = {panel_buffer="", gpanel_buffer=""}
   gprint("Setting up connection...", 300, 280)
   wait()
@@ -1116,8 +1127,7 @@ function main_dumb_transition(next_func, text, timemin, timemax)
 		  end
         end
 		if msg.win_counts then
-	      my_win_count = msg.win_counts[1] or 0
-	      op_win_count = msg.win_counts[2] or 0
+	      update_win_counts(msg.win_counts)
 		end
       end
     end

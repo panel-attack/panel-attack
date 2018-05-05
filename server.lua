@@ -77,8 +77,18 @@ function create_room(a, b)
   clear_proposals(b.name)
   a.state = "room"
   b.state = "room"
-  a.player_number = 1
-  b.player_number = 2
+  if a.player_number and a.player_number ~= 0 and a.player_number ~= 1 then
+    print("creating room. player a does not have player_number 1. Swapping players a and b")
+	a, b = b, a
+	if a.player_number == 1 then
+	  print("Success. player a has player_number 1 now.")
+	else
+	  print("ERROR. Player a still doesn't have player_number 1")
+	end
+  else
+    a.player_number = 1
+    b.player_number = 2
+  end
   a.cursor = "level"
   b.cursor = "level"
   a.ready = false
@@ -464,7 +474,11 @@ function Connection.J(self, message)
     self.ready = message.menu_state.ready
     self.cursor = message.menu_state.cursor
     if self.ready and self.opponent.ready then
-      start_match(self, self.opponent)
+		if self.player_number == 1 then
+		  start_match(self, self.opponent)
+		else
+		  start_match(self.opponent, self)
+		end
     else
       self.opponent:send(message)
 	  self.room:send_to_spectators(message) -- TODO: may need to include in the message who is sending the message
