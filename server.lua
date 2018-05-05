@@ -98,6 +98,15 @@ end
 
 
 function start_match(a, b)
+  if (a.player_number ~= 1) then
+    print("Match starting, players a and b need to be swapped.")
+    a, b = b, a
+	if(a.player_number == 1) then
+	  print("Success, player a now has player_number 1.")
+	else
+	  print("ERROR: player a still doesn't have player_number 1.")
+	end
+  end
   
   local msg = {match_start = true,
                 player_settings = {character = a.character, level = a.level},
