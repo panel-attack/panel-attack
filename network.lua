@@ -111,7 +111,7 @@ function do_messages()
   while true do
     local typ, data = get_message()
     if typ then
-      if typ ~= "I" and type ~= "U" then
+      if typ ~= "I" and typ ~= "U" then
         print("Got message "..typ.." "..data)
       end
       process_message[typ](data)
