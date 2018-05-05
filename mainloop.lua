@@ -313,7 +313,11 @@ function main_net_vs_room()
   end
   while true do
     for _,msg in ipairs(this_frame_messages) do
-      if msg.menu_state then
+      if msg.win_counts then
+	    my_win_count = msg.win_counts[1] or 0
+	    op_win_count = msg.win_counts[2] or 0
+	  end
+	  if msg.menu_state then
 	    if currently_spectating then
 		  if msg.menu_state.player_number == 2 then
 		    op_state = msg.menu_state
@@ -452,6 +456,10 @@ function main_net_vs_lobby()
       if msg.create_room or msg.spectate_request_granted then
 	    global_my_state = msg.a_menu_state
 		global_op_state = msg.b_menu_state
+		if msg.win_counts then
+	      my_win_count = msg.win_counts[1] or 0
+	      op_win_count = msg.win_counts[2] or 0
+		end
         return main_net_vs_room
       end
       if msg.unpaired then
@@ -668,11 +676,11 @@ function main_net_vs()
 	  outcome_claim = 0
     elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
       end_text = op_name.." Wins :("
-	  op_win_count = op_win_count + 1
+	  --op_win_count = op_win_count + 1
 	  outcome_claim = P2.player_number
     elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
       end_text = my_name.." Wins ^^"
-	  my_win_count = my_win_count + 1
+	  --my_win_count = my_win_count + 1
 	  outcome_claim = P1.player_number
 	  
     end
@@ -1107,6 +1115,10 @@ function main_dumb_transition(next_func, text, timemin, timemax)
             global_op_state = msg.menu_state
 		  end
         end
+		if msg.win_counts then
+	      my_win_count = msg.win_counts[1] or 0
+	      op_win_count = msg.win_counts[2] or 0
+		end
       end
     end
     gprint(text, 300, 280)

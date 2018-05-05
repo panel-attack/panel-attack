@@ -167,7 +167,7 @@ function Room.add_spectator(self, new_spectator_connection)
   self.spectators[#self.spectators+1] = new_spectator_connection
   print(new_spectator_connection.name .. " joined " .. self.name .. " as a spectator")
   
-  msg = {spectate_request_granted = true, spectate_request_rejected = false, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()}
+  msg = {spectate_request_granted = true, spectate_request_rejected = false, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state(), win_counts=self.win_counts}
   new_spectator_connection:send(msg)
 
   
@@ -357,6 +357,12 @@ function Room.resolve_game_outcome(self)
 			adjust_ranking(self, i)
 			someone_scored = true
 		  end
+		end
+		if someone_scored then
+		  local msg = {win_counts=self.win_counts}
+		  self.a:send(msg)
+		  self.b:send(msg)
+		  self:send_to_spectators(msg)
 		end
 	    return true
 	  end
