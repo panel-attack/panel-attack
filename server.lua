@@ -83,7 +83,9 @@ function create_room(a, b)
   b.cursor = "level"
   a.ready = false
   b.ready = false
-  Room(a,b)
+  if not a.room then
+    Room(a,b)
+  end
   local a_msg, b_msg = {create_room = true}, {create_room = true}
   a_msg.opponent = b.name
   a_msg.menu_state = b:menu_state()
@@ -109,8 +111,8 @@ function start_match(a, b)
   end
   
   local msg = {match_start = true,
-                player_settings = {character = a.character, level = a.level},
-                opponent_settings = {character = b.character, level = b.level}}
+                player_settings = {character = a.character, level = a.level, player_number = a.player_number},
+                opponent_settings = {character = b.character, level = b.level, player_number = b.player_number}}
   a:send(msg)
   a.room:send_to_spectators(msg)
   msg.player_settings, msg.opponent_settings = msg.opponent_settings, msg.player_settings
@@ -133,11 +135,15 @@ Room = class(function(self, a, b)
 	self.a.room = self
 	self.b.room = self
 	self.spectators = {}
+	self.win_counts = {}
+	self.win_counts[1] = 0
+	self.win_counts[2] = 0
   else
+    self.win_counts = self.a.room.win_counts
 	self.spectators = self.a.room.spectators
 	self.roomNumber = self.a.room.roomNumber
-  
   end
+  self.game_outcome_reports = {}
   rooms[self.roomNumber] = self
 end)
 
@@ -321,6 +327,49 @@ function Room.send_to_spectators(self, message)
   end
 end
 
+function Room.resolve_game_outcome(self)
+  --Note: return value is whether the outcome could be resolved
+  if not self.game_outcome_reports[1] or not self.game_outcome_reports[2] then
+    return false
+  else
+	  local outcome = nil
+	  if self.game_outcome_reports[1] ~= self.game_outcome_reports[2] then
+		  --if clients disagree, the server needs to decide the outcome, perhaps by watching a replay it had created during the game.
+		  --for now though...
+		  print("clients "..self.a.name.." and "..self.b.name.." disagree on their game outcome. So the server will decide.")
+		  outcome = 0
+	  else
+		outcome = self.game_outcome_reports[1]
+	  end
+	  print("resolve_game_outcome says: "..outcome)
+	  --outcome is the player number of the winner, or 0 for a tie
+	  if outcome == 0 then
+	    print("tie.  Nobody scored")
+	    --do nothing. no points or ranking adjustments for ties.
+		return true
+	  else
+		local someone_scored = false
+	    for i=1,2,1--[[or Number of players if we implement more than 2 players]] do
+		  print("checking if player "..i.." scored...")
+		  if outcome == i then
+		    print("Player "..i.." scored")
+			self.win_counts[i] = self.win_counts[i] + 1
+			adjust_ranking(self, i)
+			someone_scored = true
+		  end
+		end
+	    return true
+	  end
+  end
+end
+
+function adjust_ranking(room, winning_player_number)
+	--for now, do nothing
+	--compare player's difficulty levels, don't adjust rank if they are different
+	--check that both players have indicated they wanted a ranked match?
+	print("We'd be adjusting the ranking of "..room.a.name.." and "..room.b.name..". Player "..winning_player_number.." wins!")
+end
+
 -- got pong
 function Connection.F(self, message)
 end
@@ -415,11 +464,15 @@ function Connection.J(self, message)
 	  self.room:send_to_spectators(message) -- TODO: may need to include in the message who is sending the message
     end
   elseif self.state == "playing" and message.game_over then
-    if self.opponent.game_over then
-      create_room(self, self.opponent)
-    else
-      self.game_over = true
-    end
+	self.room.game_outcome_reports[self.player_number] = message.outcome
+	  if self.room:resolve_game_outcome() then
+	    
+		print("\n*******************************")
+		print("***"..self.room.a.name.." ".. self.room.win_counts[1].." - "..self.room.win_counts[2].." "..self.room.b.name.."***")
+		print("*******************************\n")
+		self.room.game_outcome_reports = {}
+	    create_room(self, self.opponent)
+	  end
   elseif (self.state == "playing" or self.state == "room") and message.leave_room then
     local op = self.opponent
     self:opponent_disconnected()
@@ -502,6 +555,27 @@ function broadcast_lobby()
     lobby_changed = false
   end
 end
+
+--[[function process_game_over_message(sender, message)
+  sender.room.game_outcome_reports[sender.player_number] = {i_won=message.i_won, tie=message.tie}
+  print("processing game_over message. Sender: "..sender.name)
+  local reports = sender.room.game_outcome_reports
+  if not reports[sender.opponent.player_number] then
+    sender.room.game_outcome_reports["official outcome"] = "pending other player's report"
+  elseif reports[1].tie and reports[2].tie then
+    sender.room.game_outcome_reports["official outcome"] = "tie"
+  elseif reports[1].i_won ~= not reports[2].i_won or reports[1].tie ~= reports[2].tie then
+    sender.room.game_outcome_reports["official outcome"] = "clients disagree"
+  elseif reports[1].i_won then
+    sender.room.game_outcome_reports["official outcome"] = 1
+  elseif reports[2].i_won then
+    sender.room.game_outcome_reports["official outcome"] = 2
+  else
+    print("Error: nobody won or tied?")
+  end
+  print("process_game_over_message outcome for "..sender.room.name..": "..sender.room.game_outcome_reports["official outcome"])
+end
+--]]
 
 local server_socket = socket.bind("localhost", 49569)
 
