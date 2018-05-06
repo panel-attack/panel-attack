@@ -10,7 +10,7 @@ local garbage_bounce_time = #garbage_bounce_table
 local GARBAGE_DELAY = 52
 local clone_pool = {}
 
-Stack = class(function(s, which, mode, speed, difficulty)
+Stack = class(function(s, which, mode, speed, difficulty, player_number)
     s.character = uniformly(characters)
     s.max_health = 1
     s.mode = mode or "endless"
@@ -46,7 +46,6 @@ Stack = class(function(s, which, mode, speed, difficulty)
         s.NCOLORS = level_to_ncolors_vs[level]
       end
     end
-
     s.health = s.max_health
 
     s.garbage_cols = {{1,2,3,4,5,6,idx=1},
@@ -156,7 +155,8 @@ Stack = class(function(s, which, mode, speed, difficulty)
     s.card_q = Queue()
 
     s.which = which or 1 -- Pk.which == k
-
+	s.player_number = player_number or s.which --player number according to the multiplayer server, for game outcome reporting
+	
     s.shake_time = 0
 
     s.prev_states = {}

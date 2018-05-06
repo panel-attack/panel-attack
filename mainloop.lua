@@ -103,6 +103,7 @@ do
         {"1P puzzle", main_select_puzz},
         {"1P time attack", main_select_speed_99, {main_time_attack}},
         {"2P fakevs at burke.ro", main_net_vs_setup, {"burke.ro"}},
+		{"2P fakevs at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
         {"2P fakevs local game", main_local_vs_setup},
         {"Replay of 1P endless", main_replay_endless},
         {"Replay of 1P puzzle", main_replay_puzzle},
@@ -244,6 +245,9 @@ function main_time_attack(...)
 end
 
 function main_net_vs_room()
+  if currently_spectating then
+    P1 = {panel_buffer="", gpanel_buffer=""}
+  end
   P2 = {panel_buffer="", gpanel_buffer=""}
   local k = K[1]
   local map = {{"level", "level", "level", "level", "level", "level", "ready"},
@@ -253,7 +257,8 @@ function main_net_vs_room()
 			   {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
   local cursor,op_cursor,X,Y = {1,1},{1,1},5,7
   local up,down,left,right = {-1,0}, {1,0}, {0,-1}, {0,1}
-  local my_state = {character=config.character, level=config.level, cursor="level", ready=false}
+  local my_state = global_my_state or {character=config.character, level=config.level, cursor="level", ready=false}
+  global_my_state = nil
   my_win_count = my_win_count or 0
   local prev_state = shallowcpy(my_state)
   local op_state = global_op_state or {character="lip", level=5, cursor="level", ready=false}
@@ -312,8 +317,19 @@ function main_net_vs_room()
   end
   while true do
     for _,msg in ipairs(this_frame_messages) do
-      if msg.menu_state then
-        op_state = msg.menu_state
+      if msg.win_counts then
+	    update_win_counts(msg.win_counts)
+	  end
+	  if msg.menu_state then
+	    if currently_spectating then
+		  if msg.menu_state.player_number == 2 then
+		    op_state = msg.menu_state
+		  elseif msg.menu_state.player_number == 1 then
+		    my_state = msg.menu_state
+		  end
+		else
+          op_state = msg.menu_state
+		end
       end
       if msg.leave_room then
 		my_win_count = 0
@@ -325,13 +341,13 @@ function main_net_vs_room()
 		print("currently_spectating: "..tostring(currently_spectating))
 		if currently_spectating then
 		  print("created fake_P1")
-		  fake_P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character)
+		  fake_P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
 		  fake_P1.panel_buffer = ""
 		  fake_P1.gpanel_buffer = ""
 		end
 		local fake_P2 = P2
-        P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character)
-        P2 = Stack(2, "vs", msg.opponent_settings.level, msg.opponent_settings.character)
+        P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
+        P2 = Stack(2, "vs", msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
         if currently_spectating then
 		  P1.panel_buffer = fake_P1.panel_buffer
           P1.gpanel_buffer = fake_P1.gpanel_buffer
@@ -441,6 +457,11 @@ function main_net_vs_lobby()
         error("name is taken :<")
       end
       if msg.create_room or msg.spectate_request_granted then
+	    global_my_state = msg.a_menu_state
+		global_op_state = msg.b_menu_state
+		if msg.win_counts then
+		  update_win_counts(msg.win_counts)
+		end
         return main_net_vs_room
       end
       if msg.unpaired then
@@ -529,6 +550,16 @@ function main_net_vs_lobby()
     end
     active_back = active_idx == #items
     do_messages()
+  end
+end
+
+function update_win_counts(win_counts)
+  if (P1 and P1.player_number == 1) or currently_spectating then
+	my_win_count = win_counts[1] or 0
+	op_win_count = win_counts[2] or 0
+  elseif P1.player_number == 2 then
+	my_win_count = win_counts[2] or 0
+	op_win_count = win_counts[1] or 0
   end
 end
 
@@ -651,19 +682,24 @@ function main_net_vs()
     if not P2.game_over then
       P2:foreign_run()
     end
+	local outcome_claim = nil
     if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
       end_text = "Draw"
+	  outcome_claim = 0
     elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
       end_text = op_name.." Wins :("
-	  op_win_count = op_win_count + 1
+	  op_win_count = op_win_count + 1 -- leaving these in just in case used with an old server that doesn't keep score.  win_counts will get overwritten after this by the server anyway.
+	  outcome_claim = P2.player_number
     elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
       end_text = my_name.." Wins ^^"
-	  my_win_count = my_win_count + 1
+	  my_win_count = my_win_count + 1 -- leave this in
+	  outcome_claim = P1.player_number
+	  
     end
     if end_text then
       undo_stonermode()
       write_replay_file()
-      json_send({game_over=true})
+      json_send({game_over=true, outcome=outcome_claim})
       return main_dumb_transition, {main_net_vs_lobby, end_text, 45, 180}
     end
   end
@@ -1086,8 +1122,19 @@ function main_dumb_transition(next_func, text, timemin, timemax)
     if next_func == main_net_vs_room then
       for _,msg in ipairs(this_frame_messages) do
         if msg.menu_state then
-          global_op_state = msg.menu_state
+		  if currently_spectating then
+		    if msg.menu_state.player_number == 1 then
+			  global_my_state = msg.menu_state
+			elseif msg.menu_state.player_number == 2 then
+			  global_op_state = msg.menu_state
+			end
+		  else
+            global_op_state = msg.menu_state
+		  end
         end
+		if msg.win_counts then
+	      update_win_counts(msg.win_counts)
+		end
       end
     end
     gprint(text, 300, 280)
