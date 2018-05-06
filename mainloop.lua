@@ -573,12 +573,32 @@ function main_net_vs_setup(ip)
   gprint("Setting up connection...", 300, 280)
   wait()
   network_init(ip)
+  local timeout_counter = 0
   while not connection_is_ready() do
-    gprint("Connecting...", 300, 280)
+    for _,msg in ipairs(this_frame_messages) do
+		if msg.login_successful then
+		  if msg.new_user_id then
+			--TODO: create new user id file
+			return main_dumb_transition, {main_net_vs_lobby, "Welcome, new user: " .. my_name, 120, 300}
+		  else
+			return main_dumb_transition, {main_net_vs_lobby, "Welcome back, "..my_name, 15, 90}
+		  end
+		elseif msg.login_failed then
+			--TODO: create a menu here to let the user choose choose "continue unranked" or "get a new user_id"
+			return main_dumb_transition, {main_net_vs_lobby, "Login for ranked matches failed. \n"..msg.reason.."\n You may continue unranked, or delete the invalid file to have a new one assigned",180,1000}
+		end
+	end
+	if not connection_is_ready() then
+	  gprint("Connecting...", 300, 280)
+	else
+	  gprint("Logging in...", 300, 280)
+	end
     wait()
     do_messages()
+	timeout_counter = timeout_counter + 1
   end
-  if true then return main_net_vs_lobby end
+  
+  if true then return main_dumb_transition, {main_net_vs_lobby, "Login for ranked matches timed out.\nThis server probably doesn't support ranking", 15, 180} end
   local my_level, to_print, fake_P2 = 5, nil, P2
   local k = K[1]
   while got_opponent == nil do

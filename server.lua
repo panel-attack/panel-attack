@@ -228,25 +228,25 @@ end
 
 Playerbase = class(function (s, name)
   s.name = name
-  s.players = {{user_id = "e2016ef09a0c7c2fa70a0fb5b99e9674", user_name = "Bob"},
-			   {user_id = "d28ac48ba5e1a82e09b9579b0a5a7def", user_name = "Alice"}}
+  s.players = {["e2016ef09a0c7c2fa70a0fb5b99e9674"]="Bob",
+			   ["d28ac48ba5e1a82e09b9579b0a5a7def"]="Alice"}
 end)
 
-function Playerbase.add_player(s, connection)
-  
+function Playerbase.add_player(s, user_id, user_name)
+  s.players[user_id] = user_name
 end
+
 function generate_new_user_id()
-return "some random hex value" --TODO: generate random hex value
+  return "some random hex value" --TODO: generate random hex value
 end
 
 Leaderboard = class(function (s, name)
   s.name = name
-  s.players =  {{user_id = "e2016ef09a0c7c2fa70a0fb5b99e9674", ranking = 1500},
-				{user_id = "d28ac48ba5e1a82e09b9579b0a5a7def", ranking = 1600}} -- TODO: read in from saved file
+  s.players =  {["e2016ef09a0c7c2fa70a0fb5b99e9674"] = {ranking=1500}, 
+				["d28ac48ba5e1a82e09b9579b0a5a7def"] = {ranking=1600}} -- TODO: read in from saved file
   
 end)
 
-Leaderboard
 
 Connection = class(function(s, socket--[[, user_id]])
   s.index = INDEX
@@ -288,6 +288,25 @@ function Connection.send(self, stuff)
   if not foo[1] then
     self:close()
   end
+end
+
+function Connection.login(self)
+  --returns whether the login was successful
+  local success = true
+  if self.user_id == "need a user id" then
+    their_new_user_id = generate_new_user_id()
+	playerbase.add_player(their_new_user_id, self.name)
+	self.send({login_successful=true, new_user_id=their_new_user_id})
+	self.user_id = their_new_user_id
+  end
+  if not playerbase.players[self.user_id] then
+    self.send({login_successful=false, reason="user_id not found"})
+	return false
+  elseif playerbase.players[self.user_id] ~= self.name then
+    playerbase.players[self.user_id] = self.name
+  end
+  self.send({login_successful=true})
+  return success
 end
 
 function Connection.opponent_disconnected(self)
@@ -472,6 +491,8 @@ function Connection.J(self, message)
       self.state = "lobby"
       name_to_idx[self.name] = self.index
     end
+  elseif message.login_request then
+    self.login(message.user_id)
   elseif self.state == "lobby" and message.game_request then
     if message.game_request.sender == self.name then
       propose_game(message.game_request.sender, message.game_request.receiver, message)
@@ -621,6 +642,7 @@ end
 --]]
 
 local server_socket = socket.bind("localhost", 49569)
+local playerbase = Playerbase("playerbase")
 
 local prev_now = time()
 while true do
