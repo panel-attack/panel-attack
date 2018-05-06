@@ -10,6 +10,7 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
 local PLAYING = "playing, not joinable"  -- room states
 local CHARACTERSELECT = "joinable" --room states
 local currently_spectating = false
+connection_up_time = 0
 
 function fmainloop()
   local func, arg = main_select_mode, nil
@@ -99,6 +100,7 @@ do
   local active_idx = 1
   function main_select_mode()
     close_socket()
+	connection_up_time = 0
     local items = {{"1P endless", main_select_speed_99, {main_endless}},
         {"1P puzzle", main_select_puzz},
         {"1P time attack", main_select_speed_99, {main_time_attack}},
@@ -575,7 +577,14 @@ function main_net_vs_setup(ip)
   network_init(ip)
   local timeout_counter = 0
   while not connection_is_ready() do
-    for _,msg in ipairs(this_frame_messages) do
+    gprint("Connecting...", 300, 280)
+    wait()
+    do_messages()
+  end
+  local logged_in = false
+  while not logged_in and connection_up_time < 2 do
+    gprint("Logging in...", 300, 280)
+	for _,msg in ipairs(this_frame_messages) do
 		if msg.login_successful then
 		  if msg.new_user_id then
 			--TODO: create new user id file
@@ -584,21 +593,15 @@ function main_net_vs_setup(ip)
 			return main_dumb_transition, {main_net_vs_lobby, "Welcome back, "..my_name, 15, 90}
 		  end
 		elseif msg.login_failed then
-			--TODO: create a menu here to let the user choose choose "continue unranked" or "get a new user_id"
+			--TODO: create a menu here to let the user choose "continue unranked" or "get a new user_id"
 			return main_dumb_transition, {main_net_vs_lobby, "Login for ranked matches failed. \n"..msg.reason.."\n You may continue unranked, or delete the invalid file to have a new one assigned",180,1000}
 		end
 	end
-	if not connection_is_ready() then
-	  gprint("Connecting...", 300, 280)
-	else
-	  gprint("Logging in...", 300, 280)
-	end
-    wait()
-    do_messages()
-	timeout_counter = timeout_counter + 1
+	wait()
+	do_messages()
   end
-  
-  if true then return main_dumb_transition, {main_net_vs_lobby, "Login for ranked matches timed out.\nThis server probably doesn't support ranking", 15, 180} end
+  --TODO: figure out why the game_over SFX is being played here.
+  if true then return main_dumb_transition, {main_net_vs_lobby, "Login for ranked matches timed out.\nThis server probably doesn't support ranking./n", 15, 600} end
   local my_level, to_print, fake_P2 = 5, nil, P2
   local k = K[1]
   while got_opponent == nil do
@@ -1128,7 +1131,7 @@ end
 
 function main_dumb_transition(next_func, text, timemin, timemax)
   love.audio.stop()
-  if (not SFX_mute and SFX_GameOver_Play) then
+  if not SFX_mute and SFX_GameOver_Play == 1 then
 	SFX_GameOver:play()
   end
   SFX_GameOver_Play = 0

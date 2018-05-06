@@ -1071,7 +1071,7 @@ function Stack.PdP(self)
 		SFX_Pop_Play = nil
 		SFX_Garbage_Pop_Play = nil
 	end
-	if (self.game_over or (self.garbage_target and self.garbage_target.game_over)) then
+	if self.game_over or (self.garbage_target and self.garbage_target.game_over) then
 		SFX_GameOver_Play = 1
 	end
   end
