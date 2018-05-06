@@ -11,6 +11,9 @@ local PLAYING = "playing, not joinable"  -- room states
 local CHARACTERSELECT = "joinable" --room states
 local currently_spectating = false
 connection_up_time = 0
+logged_in = 0
+connected_server_ip = nil
+my_user_id = ""
 
 function fmainloop()
   local func, arg = main_select_mode, nil
@@ -100,7 +103,9 @@ do
   local active_idx = 1
   function main_select_mode()
     close_socket()
+	logged_in = 0
 	connection_up_time = 0
+	connected_server_ip = ""
     local items = {{"1P endless", main_select_speed_99, {main_endless}},
         {"1P puzzle", main_select_puzz},
         {"1P time attack", main_select_speed_99, {main_time_attack}},
@@ -581,11 +586,83 @@ function main_net_vs_setup(ip)
     wait()
     do_messages()
   end
-  local logged_in = false
+  connected_server_ip = ip
+  logged_in = false
+  login() --Note: login() calls main_net_vs_lobby if the server supports ranking, if it doesn't the rest of this code runs.
+  if not logged_in then 
+	  --TODO: figure out why the game_over SFX is being played here.
+	  if true then return main_dumb_transition, {main_net_vs_lobby, "Login for ranked matches timed out.\nThis server probably doesn't support ranking.\n\nYou may continue unranked.\n\nPress A or Enter", 15, 600} end
+	  local my_level, to_print, fake_P2 = 5, nil, P2
+	  local k = K[1]
+	  while got_opponent == nil do
+		gprint("Waiting for opponent...", 300, 280)
+		do_messages()
+		wait()
+	  end
+	  while P1_level == nil or P2_level == nil do
+		to_print = (P1_level and "L" or"Choose l") .. "evel: "..my_level..
+			"\nOpponent's level: "..(P2_level or "???")
+		gprint(to_print, 300, 280)
+		wait()
+		do_messages()
+		if P1_level then
+		elseif menu_enter(k) then
+		  P1_level = my_level
+		  net_send("L"..(({[10]=0})[my_level] or my_level))
+		elseif menu_up(k) or menu_right(k) then
+		  my_level = bound(1,my_level+1,10)
+		elseif menu_down(k) or menu_left(k) then
+		  my_level = bound(1,my_level-1,10)
+		end
+	  end
+	  P1 = Stack(1, "vs", P1_level)
+	  P2 = Stack(2, "vs", P2_level)
+	  if currently_spectating then
+		P1.panel_buffer = fake_P1.panel_buffer
+		P1.gpanel_buffer = fake_P1.gpanel_buffer
+	  end
+	  P2.panel_buffer = fake_P2.panel_buffer
+	  P2.gpanel_buffer = fake_P2.gpanel_buffer
+	  P1.garbage_target = P2
+	  P2.garbage_target = P1
+	  P2.pos_x = 172
+	  P2.score_x = 410
+	  replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
+				  P1_level=P1_level,P2_level=P2_level}
+	  ask_for_gpanels("000000")
+	  ask_for_panels("000000")
+	  if not currently_spectating then
+		to_print = "Level: "..my_level.."\nOpponent's level: "..(P2_level or "???")
+	  else
+		to_print = "P1 Level: "..my_level.."\nP2 level: "..(P2_level or "???")
+	  end
+	  for i=1,30 do
+		gprint(to_print,300, 280)
+		do_messages()
+		wait()
+	  end
+	  while P1.panel_buffer == "" or P2.panel_buffer == ""
+		or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
+		gprint(to_print,300, 280)
+		do_messages()
+		wait()
+	  end
+	  P1:starting_state()
+	  P2:starting_state()
+	  return main_net_vs
+  end
+end
+
+function login()
+--TODO: load user_id from saved user_id file with a file path based on connected_server_ip. ie: ".\"..connected_server_ip.."\user_id.txt"
+		--This would support saving credentials (user_id) for multiple servers, even.
+  my_user_id = "e2016ef09a0c7c2fa70a0fb5b99e9674" --same as Bob's hard-coded user_id
+  json_send({login=true, outcome=outcome_claim})
   while not logged_in and connection_up_time < 2 do
     gprint("Logging in...", 300, 280)
 	for _,msg in ipairs(this_frame_messages) do
 		if msg.login_successful then
+		  logged_in = true
 		  if msg.new_user_id then
 			--TODO: create new user id file
 			return main_dumb_transition, {main_net_vs_lobby, "Welcome, new user: " .. my_name, 120, 300}
@@ -600,68 +677,7 @@ function main_net_vs_setup(ip)
 	wait()
 	do_messages()
   end
-  --TODO: figure out why the game_over SFX is being played here.
-  if true then return main_dumb_transition, {main_net_vs_lobby, "Login for ranked matches timed out.\nThis server probably doesn't support ranking./n", 15, 600} end
-  local my_level, to_print, fake_P2 = 5, nil, P2
-  local k = K[1]
-  while got_opponent == nil do
-    gprint("Waiting for opponent...", 300, 280)
-    do_messages()
-    wait()
-  end
-  while P1_level == nil or P2_level == nil do
-    to_print = (P1_level and "L" or"Choose l") .. "evel: "..my_level..
-        "\nOpponent's level: "..(P2_level or "???")
-    gprint(to_print, 300, 280)
-    wait()
-    do_messages()
-    if P1_level then
-    elseif menu_enter(k) then
-      P1_level = my_level
-      net_send("L"..(({[10]=0})[my_level] or my_level))
-    elseif menu_up(k) or menu_right(k) then
-      my_level = bound(1,my_level+1,10)
-    elseif menu_down(k) or menu_left(k) then
-      my_level = bound(1,my_level-1,10)
-    end
-  end
-  P1 = Stack(1, "vs", P1_level)
-  P2 = Stack(2, "vs", P2_level)
-  if currently_spectating then
-    P1.panel_buffer = fake_P1.panel_buffer
-	P1.gpanel_buffer = fake_P1.gpanel_buffer
-  end
-  P2.panel_buffer = fake_P2.panel_buffer
-  P2.gpanel_buffer = fake_P2.gpanel_buffer
-  P1.garbage_target = P2
-  P2.garbage_target = P1
-  P2.pos_x = 172
-  P2.score_x = 410
-  replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
-              P1_level=P1_level,P2_level=P2_level}
-  ask_for_gpanels("000000")
-  ask_for_panels("000000")
-  if not currently_spectating then
-    to_print = "Level: "..my_level.."\nOpponent's level: "..(P2_level or "???")
-  else
-    to_print = "P1 Level: "..my_level.."\nP2 level: "..(P2_level or "???")
-  end
-  for i=1,30 do
-    gprint(to_print,300, 280)
-    do_messages()
-    wait()
-  end
-  while P1.panel_buffer == "" or P2.panel_buffer == ""
-    or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
-    gprint(to_print,300, 280)
-    do_messages()
-    wait()
-  end
-  P1:starting_state()
-  P2:starting_state()
-  return main_net_vs
 end
-
 function main_net_vs()
   --STONER_MODE = true
   local k = K[1]  --may help with spectators leaving games in progress

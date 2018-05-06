@@ -298,9 +298,11 @@ function Connection.login(self)
 	playerbase.add_player(their_new_user_id, self.name)
 	self.send({login_successful=true, new_user_id=their_new_user_id})
 	self.user_id = their_new_user_id
+	print("Connection with name "..self.name.." was assigned a new user_id")
   end
   if not playerbase.players[self.user_id] then
     self.send({login_successful=false, reason="user_id not found"})
+	print("Login failure: "..self.name.." specified an invalid user_id")
 	return false
   elseif playerbase.players[self.user_id] ~= self.name then
     playerbase.players[self.user_id] = self.name
