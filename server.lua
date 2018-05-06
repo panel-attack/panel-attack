@@ -226,7 +226,29 @@ function roomNumberToRoom(roomNr)
   end
 end
 
-Connection = class(function(s, socket)
+Playerbase = class(function (s, name)
+  s.name = name
+  s.players = {{user_id = "e2016ef09a0c7c2fa70a0fb5b99e9674", user_name = "Bob"},
+			   {user_id = "d28ac48ba5e1a82e09b9579b0a5a7def", user_name = "Alice"}}
+end)
+
+function Playerbase.add_player(s, connection)
+  
+end
+function generate_new_user_id()
+return "some random hex value" --TODO: generate random hex value
+end
+
+Leaderboard = class(function (s, name)
+  s.name = name
+  s.players =  {{user_id = "e2016ef09a0c7c2fa70a0fb5b99e9674", ranking = 1500},
+				{user_id = "d28ac48ba5e1a82e09b9579b0a5a7def", ranking = 1600}} -- TODO: read in from saved file
+  
+end)
+
+Leaderboard
+
+Connection = class(function(s, socket--[[, user_id]])
   s.index = INDEX
   INDEX = INDEX + 1
   connections[s.index] = s
@@ -238,6 +260,7 @@ Connection = class(function(s, socket)
   s.room = nil
   s.last_read = time()
   s.player_number = 0  -- 0 if not a player in a room, 1 if player "a" in a room, 2 if player "b" in a room
+  --TODO: s.player_id = verify_user_id()
 end)
 
 function Connection.menu_state(self)
