@@ -244,6 +244,9 @@ function main_time_attack(...)
 end
 
 function main_net_vs_room()
+  if currently_spectating then
+    P1 = {panel_buffer="", gpanel_buffer=""}
+  end
   P2 = {panel_buffer="", gpanel_buffer=""}
   local k = K[1]
   local map = {{"level", "level", "level", "level", "level", "level", "ready"},
@@ -565,9 +568,6 @@ function main_net_vs_setup(ip)
 	else my_name = config.name
   end
   P1, P1_level, P2_level, got_opponent = nil
-  if currently_spectating then
-	P1 = {panel_buffer="", gpanel_buffer=""}
-  end
   P2 = {panel_buffer="", gpanel_buffer=""}
   gprint("Setting up connection...", 300, 280)
   wait()
@@ -687,11 +687,11 @@ function main_net_vs()
 	  outcome_claim = 0
     elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
       end_text = op_name.." Wins :("
-	  --op_win_count = op_win_count + 1
+	  op_win_count = op_win_count + 1 -- leaving these in just in case used with an old server that doesn't keep score.  win_counts will get overwritten after this by the server anyway.
 	  outcome_claim = P2.player_number
     elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
       end_text = my_name.." Wins ^^"
-	  --my_win_count = my_win_count + 1
+	  my_win_count = my_win_count + 1 -- leave this in
 	  outcome_claim = P1.player_number
 	  
     end

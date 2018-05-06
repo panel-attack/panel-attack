@@ -118,7 +118,7 @@ function do_messages()
 	  if typ == "U" then
 	    typ = "in_buf"
 	  end
-      if P1 and replay[P1.mode][typ] then
+      if P1 and P1.mode and replay[P1.mode][typ] then
         replay[P1.mode][typ]=replay[P1.mode][typ]..data
       end
     else
