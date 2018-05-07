@@ -5,7 +5,7 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_config_input, main_dumb_transition, main_select_puzz,
   menu_up, menu_down, menu_left, menu_right, menu_enter, menu_escape,
   main_replay_vs, main_local_vs_setup, main_local_vs, menu_key_func,
-  multi_func, normal_key, main_set_name, main_net_vs_room, main_net_vs_lobby
+  multi_func, normal_key, main_set_name, main_net_vs_room, main_net_vs_lobby, login
   
 local PLAYING = "playing, not joinable"  -- room states
 local CHARACTERSELECT = "joinable" --room states
@@ -588,7 +588,33 @@ function main_net_vs_setup(ip)
   end
   connected_server_ip = ip
   logged_in = false
-  login() --Note: login() calls main_net_vs_lobby if the server supports ranking, if it doesn't the rest of this code runs.
+  --attempt login
+  --TODO: load user_id from saved user_id file with a file path based on connected_server_ip. ie: ".\"..connected_server_ip.."\user_id.txt"
+		--This would support saving credentials (user_id) for multiple servers, even.
+  my_user_id = "e2016ef09a0c7c2fa70a0fb5b99e9674-thisMakesItWrong" --almost the same as Bob's hard-coded user_id
+  --my_user_id = "e2016ef09a0c7c2fa70a0fb5b99e9674" --same as Bob's hard-coded user_id
+  json_send({login_request=true, user_id=my_user_id})
+  while not logged_in and connection_up_time < 2 do
+    gprint("Logging in...", 300, 280)
+	for _,msg in ipairs(this_frame_messages) do
+		if msg.login_successful then
+		  logged_in = true
+		  if msg.new_user_id then
+			--TODO: create new user id file
+			return main_dumb_transition, {main_net_vs_lobby, "Welcome, new user: " .. my_name, 120, 300}
+		  elseif msg.name_changed then
+		    return main_dumb_transition, {main_net_vs_lobby, "Welcome, your username has been updated. \n\nOld name:  \""..msg.old_name.."\"\n\nNew name:  \""..msg.new_name.."\"", 120, 300}
+		  else
+			return main_dumb_transition, {main_net_vs_lobby, "Welcome back, "..my_name, 15, 90}
+		  end
+		elseif msg.login_denied then
+			--TODO: create a menu here to let the user choose "continue unranked" or "get a new user_id"
+			return main_dumb_transition, {main_net_vs_lobby, "Login for ranked matches failed.\n"..msg.reason.."\n\nYou may continue unranked,\nor delete your invalid user_id file to have a new one assigned.",180,600}
+		end
+	end
+	wait()
+	do_messages()
+  end
   if not logged_in then 
 	  --TODO: figure out why the game_over SFX is being played here.
 	  if true then return main_dumb_transition, {main_net_vs_lobby, "Login for ranked matches timed out.\nThis server probably doesn't support ranking.\n\nYou may continue unranked.\n\nPress A or Enter", 15, 600} end
@@ -646,6 +672,7 @@ function main_net_vs_setup(ip)
 		gprint(to_print,300, 280)
 		do_messages()
 		wait()
+		wait()
 	  end
 	  P1:starting_state()
 	  P2:starting_state()
@@ -653,31 +680,6 @@ function main_net_vs_setup(ip)
   end
 end
 
-function login()
---TODO: load user_id from saved user_id file with a file path based on connected_server_ip. ie: ".\"..connected_server_ip.."\user_id.txt"
-		--This would support saving credentials (user_id) for multiple servers, even.
-  my_user_id = "e2016ef09a0c7c2fa70a0fb5b99e9674" --same as Bob's hard-coded user_id
-  json_send({login=true, outcome=outcome_claim})
-  while not logged_in and connection_up_time < 2 do
-    gprint("Logging in...", 300, 280)
-	for _,msg in ipairs(this_frame_messages) do
-		if msg.login_successful then
-		  logged_in = true
-		  if msg.new_user_id then
-			--TODO: create new user id file
-			return main_dumb_transition, {main_net_vs_lobby, "Welcome, new user: " .. my_name, 120, 300}
-		  else
-			return main_dumb_transition, {main_net_vs_lobby, "Welcome back, "..my_name, 15, 90}
-		  end
-		elseif msg.login_failed then
-			--TODO: create a menu here to let the user choose "continue unranked" or "get a new user_id"
-			return main_dumb_transition, {main_net_vs_lobby, "Login for ranked matches failed. \n"..msg.reason.."\n You may continue unranked, or delete the invalid file to have a new one assigned",180,1000}
-		end
-	end
-	wait()
-	do_messages()
-  end
-end
 function main_net_vs()
   --STONER_MODE = true
   local k = K[1]  --may help with spectators leaving games in progress

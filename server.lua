@@ -260,6 +260,7 @@ Connection = class(function(s, socket--[[, user_id]])
   s.room = nil
   s.last_read = time()
   s.player_number = 0  -- 0 if not a player in a room, 1 if player "a" in a room, 2 if player "b" in a room
+  s.logged_in = false --whether connection has successfully logged into the ranking system.
   --TODO: s.player_id = verify_user_id()
 end)
 
@@ -290,9 +291,16 @@ function Connection.send(self, stuff)
   end
 end
 
-function Connection.login(self)
+function Connection.login(self, user_id)
   --returns whether the login was successful
-  local success = true
+  --print("Connection.login was called!")
+  self.user_id = user_id
+  if not self.user_id then
+    local the_reason = "Client did not send a user_id in the login request"
+    self:send({login_denied=true, login_successful=false, reason=the_reason})
+	print("Login denied.  Reason:  "..the_reason)
+	success = false
+  end
   if self.user_id == "need a user id" then
     their_new_user_id = generate_new_user_id()
 	playerbase.add_player(their_new_user_id, self.name)
@@ -301,14 +309,24 @@ function Connection.login(self)
 	print("Connection with name "..self.name.." was assigned a new user_id")
   end
   if not playerbase.players[self.user_id] then
-    self.send({login_successful=false, reason="user_id not found"})
+    self:send({login_successful=false, login_denied=true, reason="The user_id provided was not found on this server"})
 	print("Login failure: "..self.name.." specified an invalid user_id")
 	return false
   elseif playerbase.players[self.user_id] ~= self.name then
+    local the_old_name = playerbase.players[self.user_id]
     playerbase.players[self.user_id] = self.name
+	self.logged_in = true
+	self:send({login_successful=true, name_changed=true , old_name=the_old_name, new_name=self.name})
+	print("Login successful and changed name "..the_old_name.." to "..self.name)
+  elseif playerbase.players[self.user_id] then
+    self.logged_in = true
+	self:send({login_successful=true})
+  else
+    local the_reason = "unknown"
+    self:send({login_denied=true, login_successful=false, reason=the_reason})
+	print("login denied.  Reason:  "..the_reason)
   end
-  self.send({login_successful=true})
-  return success
+  return self.logged_in
 end
 
 function Connection.opponent_disconnected(self)
@@ -494,7 +512,7 @@ function Connection.J(self, message)
       name_to_idx[self.name] = self.index
     end
   elseif message.login_request then
-    self.login(message.user_id)
+	self:login(message.user_id)
   elseif self.state == "lobby" and message.game_request then
     if message.game_request.sender == self.name then
       propose_game(message.game_request.sender, message.game_request.receiver, message)
@@ -644,7 +662,7 @@ end
 --]]
 
 local server_socket = socket.bind("localhost", 49569)
-local playerbase = Playerbase("playerbase")
+playerbase = Playerbase("playerbase")
 
 local prev_now = time()
 while true do
