@@ -5,7 +5,7 @@
 -- extract_mt() - Get a number from the Mersenne Twister RNG.
 -- seed_from_mt(seed) - Seed the ISAAC RNG, optionally seeding the Mersenne Twister RNG beforehand.
 -- generate_isaac() - Force a reseed.
--- random(min, max) - Get a random number between min and max.
+-- cs_random(min, max) - Get a random number between min and max.
 
 -- Helper functions:
 local function toBinary(a) -- Convert from an integer to an arbitrary-length table of bits
@@ -240,7 +240,7 @@ local function getRandom()
 	end
 end
 
-function random(min, max)
+function cs_random(min, max)
 	if not max then
 		max = 2^32-1
 	end
