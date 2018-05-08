@@ -236,6 +236,10 @@ function Playerbase.add_player(s, user_id, user_name)
   s.players[user_id] = user_name
 end
 
+function seed_csprng(seed)
+
+end
+
 function generate_new_user_id()
   return "some random hex value" --TODO: generate random hex value
 end
