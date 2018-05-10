@@ -3,6 +3,7 @@ require("class")
 json = require("dkjson")
 require("stridx")
 require("gen_panels")
+require("csprng")
 
 local byte = string.byte
 local char = string.char
@@ -233,15 +234,14 @@ Playerbase = class(function (s, name)
 end)
 
 function Playerbase.add_player(s, user_id, user_name)
+  print(s.players["d28ac48ba5e1a82e09b9579b0a5a7def"])
   s.players[user_id] = user_name
 end
 
-function seed_csprng(seed)
-
-end
-
 function generate_new_user_id()
-  return "some random hex value" --TODO: generate random hex value
+  new_user_id = cs_random()
+  print("new_user_id: "..new_user_id)
+  return tostring(new_user_id)
 end
 
 Leaderboard = class(function (s, name)
@@ -305,8 +305,12 @@ function Connection.login(self, user_id)
 	print("Login denied.  Reason:  "..the_reason)
 	success = false
   end
-  if self.user_id == "need a user id" then
-    their_new_user_id = generate_new_user_id()
+  if self.user_id == "need a new user id" then
+    print(self.name.." needs a new user id!")
+    local their_new_user_id
+	while not their_new_user_id or playerbase.players[their_new_user_id] do
+	  their_new_user_id = generate_new_user_id()
+	end
 	playerbase.add_player(their_new_user_id, self.name)
 	self.send({login_successful=true, new_user_id=their_new_user_id})
 	self.user_id = their_new_user_id
@@ -667,6 +671,9 @@ end
 
 local server_socket = socket.bind("localhost", 49569)
 playerbase = Playerbase("playerbase")
+initialize_mt_generator(2000) --TODO: load a different number from a csprng_seed.txt file.
+seed_from_mt(extract_mt())
+print("initialized!")
 
 local prev_now = time()
 while true do

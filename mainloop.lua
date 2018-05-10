@@ -591,8 +591,9 @@ function main_net_vs_setup(ip)
   --attempt login
   --TODO: load user_id from saved user_id file with a file path based on connected_server_ip. ie: ".\"..connected_server_ip.."\user_id.txt"
 		--This would support saving credentials (user_id) for multiple servers, even.
-  my_user_id = "e2016ef09a0c7c2fa70a0fb5b99e9674-thisMakesItWrong" --almost the same as Bob's hard-coded user_id
+  --my_user_id = "e2016ef09a0c7c2fa70a0fb5b99e9674-thisMakesItWrong" --almost the same as Bob's hard-coded user_id
   --my_user_id = "e2016ef09a0c7c2fa70a0fb5b99e9674" --same as Bob's hard-coded user_id
+  my_user_id = "need a new user id"
   json_send({login_request=true, user_id=my_user_id})
   while not logged_in and connection_up_time < 2 do
     gprint("Logging in...", 300, 280)
