@@ -59,3 +59,25 @@ function write_replay_file() pcall(function()
   file:write(json.encode(replay))
   file:close()
 end) end
+
+function write_user_id_file() pcall(function()
+  love.filesystem.createDirectory("servers/"..connected_server_ip)
+  local file = love.filesystem.newFile("servers/"..connected_server_ip.."/user_id.txt")
+  file:open("w")
+  file:write(tostring(my_user_id))
+  file:close()
+end) end
+
+function read_user_id_file() pcall(function()
+  local file = love.filesystem.newFile("servers/"..connected_server_ip.."/user_id.txt")
+  file:open("r")
+  my_user_id = file:read()
+  file:close()
+end) end
+
+function write_playerbase_file() pcall(function()
+  local f = assert(io.open("playerbase.txt", "w"))
+  io.output(f)
+  io.write(json.encode(playerbase.players))
+  io.close(f)
+end) end

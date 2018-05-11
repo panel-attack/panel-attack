@@ -13,7 +13,7 @@ local currently_spectating = false
 connection_up_time = 0
 logged_in = 0
 connected_server_ip = nil
-my_user_id = ""
+my_user_id = nil
 
 function fmainloop()
   local func, arg = main_select_mode, nil
@@ -593,7 +593,10 @@ function main_net_vs_setup(ip)
 		--This would support saving credentials (user_id) for multiple servers, even.
   --my_user_id = "e2016ef09a0c7c2fa70a0fb5b99e9674-thisMakesItWrong" --almost the same as Bob's hard-coded user_id
   --my_user_id = "e2016ef09a0c7c2fa70a0fb5b99e9674" --same as Bob's hard-coded user_id
-  my_user_id = "need a new user id"
+  read_user_id_file()
+  if not my_user_id then
+    my_user_id = "need a new user id"
+  end
   json_send({login_request=true, user_id=my_user_id})
   while not logged_in and connection_up_time < 2 do
     gprint("Logging in...", 300, 280)
@@ -601,7 +604,9 @@ function main_net_vs_setup(ip)
 		if msg.login_successful then
 		  logged_in = true
 		  if msg.new_user_id then
-			--TODO: create new user id file
+			my_user_id = msg.new_user_id
+			print("about to write user id file")
+			write_user_id_file()
 			return main_dumb_transition, {main_net_vs_lobby, "Welcome, new user: " .. my_name, 120, 300}
 		  elseif msg.name_changed then
 		    return main_dumb_transition, {main_net_vs_lobby, "Welcome, your username has been updated. \n\nOld name:  \""..msg.old_name.."\"\n\nNew name:  \""..msg.new_name.."\"", 120, 300}

@@ -4,6 +4,7 @@ json = require("dkjson")
 require("stridx")
 require("gen_panels")
 require("csprng")
+require("save")
 
 local byte = string.byte
 local char = string.char
@@ -27,6 +28,9 @@ local rooms = {}
 local name_to_idx = {}
 local socket_to_idx = {}
 local proposals = {}
+local playerbases = {}
+
+
 
 function lobby_state()
   local names = {}
@@ -231,11 +235,13 @@ Playerbase = class(function (s, name)
   s.name = name
   s.players = {["e2016ef09a0c7c2fa70a0fb5b99e9674"]="Bob",
 			   ["d28ac48ba5e1a82e09b9579b0a5a7def"]="Alice"}
+  playerbases[#playerbases+1] = s
 end)
 
-function Playerbase.add_player(s, user_id, user_name)
-  print(s.players["d28ac48ba5e1a82e09b9579b0a5a7def"])
-  s.players[user_id] = user_name
+function Playerbase.add_player(self, user_id, user_name)
+  print(self.players["d28ac48ba5e1a82e09b9579b0a5a7def"])
+  self.players[user_id] = user_name
+  write_playerbase_file()
 end
 
 function generate_new_user_id()
@@ -311,8 +317,8 @@ function Connection.login(self, user_id)
 	while not their_new_user_id or playerbase.players[their_new_user_id] do
 	  their_new_user_id = generate_new_user_id()
 	end
-	playerbase.add_player(their_new_user_id, self.name)
-	self.send({login_successful=true, new_user_id=their_new_user_id})
+	playerbase:add_player(their_new_user_id, self.name)
+	self:send({login_successful=true, new_user_id=their_new_user_id})
 	self.user_id = their_new_user_id
 	print("Connection with name "..self.name.." was assigned a new user_id")
   end
