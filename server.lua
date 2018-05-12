@@ -231,17 +231,31 @@ function roomNumberToRoom(roomNr)
   end
 end
 
+--TODO: maybe support multiple playerbases 
 Playerbase = class(function (s, name)
   s.name = name
-  s.players = {["e2016ef09a0c7c2fa70a0fb5b99e9674"]="Bob",
-			   ["d28ac48ba5e1a82e09b9579b0a5a7def"]="Alice"}
+  s.players = {}--{["e2016ef09a0c7c2fa70a0fb5b99e9674"]="Bob",
+			   --["d28ac48ba5e1a82e09b9579b0a5a7def"]="Alice"}
+  s.deleted_players = {}
   playerbases[#playerbases+1] = s
 end)
 
 function Playerbase.add_player(self, user_id, user_name)
-  print(self.players["d28ac48ba5e1a82e09b9579b0a5a7def"])
   self.players[user_id] = user_name
-  write_playerbase_file()
+  write_players_file()
+end
+
+function Playerbase.delete_player(self, user_id)
+ -- returns whether a player was deleted
+  if self.players[user_id] then
+    self.deleted_players[user_id] = self.players[user_id]
+	self.players[user_id] = nil
+	write_players_file()
+	write_deleted_players_file()
+	return true
+  else
+    return false
+  end
 end
 
 function generate_new_user_id()
@@ -250,6 +264,7 @@ function generate_new_user_id()
   return tostring(new_user_id)
 end
 
+--TODO: support multiple leaderboards
 Leaderboard = class(function (s, name)
   s.name = name
   s.players =  {["e2016ef09a0c7c2fa70a0fb5b99e9674"] = {ranking=1500}, 
@@ -677,6 +692,8 @@ end
 
 local server_socket = socket.bind("localhost", 49569)
 playerbase = Playerbase("playerbase")
+read_players_file()
+read_deleted_players_file()
 initialize_mt_generator(2000) --TODO: load a different number from a csprng_seed.txt file.
 seed_from_mt(extract_mt())
 print("initialized!")
