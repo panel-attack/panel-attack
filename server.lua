@@ -272,6 +272,42 @@ Leaderboard = class(function (s, name)
   
 end)
 
+function Leaderboard.update(self, user_id, new_ranking)
+  if self.players[user_id] then
+    self.players[user_id].ranking = new_ranking
+  else
+    self.players[user_id] = {ranking=new_ranking}
+  end
+  --TODO: write_leaderboard_file()
+end
+
+function Leaderboard.get_report(self)
+--returns the leaderboard as an array sorted from highest ranking to lowest, 
+--with usernames from playerbase.players instead of user_ids
+--ie report[1] will give the highest ranking player's user_name and how many points they have. Like this:
+--report[1] might return {user_name="Alice",ranking=2250}
+--report[2] might return {user_name="Bob",ranking=2100}
+  report = {}
+  for k,v in ipairs(self.players) do
+	local insert_index = 1
+    while true  do
+      if playerbase.players[k] then --only include in the report players who are still listed in the playerbase
+		  if report[insert_index] and report[insert_index].ranking >= self.players[k].ranking then
+			table.insert(report, insert_index, {user_name=playerbase.players[k],ranking=v.ranking})
+			break
+		  elseif insert_index == #self.players or #report == 0 then
+			table.insert(report, {user_name=playerbase.players[k],ranking=v.ranking}) -- at the end of the table.
+			break
+		  end
+	  end
+	  if insert_index > #self.players then  --if we are here, the current player will not be included in the report
+	    break
+	  end
+	  insert_index = insert_index + 1
+	end
+  end
+  return report
+end
 
 Connection = class(function(s, socket--[[, user_id]])
   s.index = INDEX
