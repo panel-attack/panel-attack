@@ -268,7 +268,9 @@ end
 Leaderboard = class(function (s, name)
   s.name = name
   s.players =  {["e2016ef09a0c7c2fa70a0fb5b99e9674"] = {ranking=1500}, 
-				["d28ac48ba5e1a82e09b9579b0a5a7def"] = {ranking=1600}} -- TODO: read in from saved file
+				["d28ac48ba5e1a82e09b9579b0a5a7def"] = {ranking=1600},
+				["59281"] = {ranking=3000},
+				["some bad id"] = {ranking=4000}} -- TODO: read in from saved file
   
 end)
 
@@ -287,23 +289,25 @@ function Leaderboard.get_report(self)
 --ie report[1] will give the highest ranking player's user_name and how many points they have. Like this:
 --report[1] might return {user_name="Alice",ranking=2250}
 --report[2] might return {user_name="Bob",ranking=2100}
-  report = {}
-  for k,v in ipairs(self.players) do
-	local insert_index = 1
-    while true  do
+  local report = {}
+  local leaderboard_player_count = 0
+  --count how many entries there are in self.players since #self.players will not give us an accurate answer for sparse tables
+  for k,v in pairs(self.players) do
+    leaderboard_player_count = leaderboard_player_count + 1
+  end
+  for k,v in pairs(self.players) do
+	for insert_index=1, leaderboard_player_count do
       if playerbase.players[k] then --only include in the report players who are still listed in the playerbase
-		  if report[insert_index] and report[insert_index].ranking >= self.players[k].ranking then
+		if v.ranking then -- don't include entries who's ranking is nil (which shouldn't happen anyway)
+		  if report[insert_index] and report[insert_index].ranking and v.ranking >= report[insert_index].ranking then
 			table.insert(report, insert_index, {user_name=playerbase.players[k],ranking=v.ranking})
 			break
-		  elseif insert_index == #self.players or #report == 0 then
+		  elseif insert_index == leaderboard_player_count or #report == 0 then
 			table.insert(report, {user_name=playerbase.players[k],ranking=v.ranking}) -- at the end of the table.
-			break
+		    break
 		  end
+		end
 	  end
-	  if insert_index > #self.players then  --if we are here, the current player will not be included in the report
-	    break
-	  end
-	  insert_index = insert_index + 1
 	end
   end
   return report
@@ -362,7 +366,7 @@ function Connection.login(self, user_id)
 	print("Login denied.  Reason:  "..the_reason)
 	success = false
   end
-  if self.user_id == "need a new user id" then
+  if self.user_id == "need a new user id" and self.name then
     print(self.name.." needs a new user id!")
     local their_new_user_id
 	while not their_new_user_id or playerbase.players[their_new_user_id] do
@@ -373,7 +377,11 @@ function Connection.login(self, user_id)
 	self.user_id = their_new_user_id
 	print("Connection with name "..self.name.." was assigned a new user_id")
   end
-  if not playerbase.players[self.user_id] then
+  if not self.name then
+    self:send({login_successful=false, login_denied=true, reason="Player has no name"})
+	print("Login failure: Player has no name")
+	return false
+  elseif not playerbase.players[self.user_id] then
     self:send({login_successful=false, login_denied=true, reason="The user_id provided was not found on this server"})
 	print("Login failure: "..self.name.." specified an invalid user_id")
 	return false
@@ -730,6 +738,10 @@ local server_socket = socket.bind("localhost", 49569)
 playerbase = Playerbase("playerbase")
 read_players_file()
 read_deleted_players_file()
+leaderboard = Leaderboard("leaderboard")
+--TODO: remove test print for leaderboard
+print("playerbase: "..json.encode(playerbase.players))
+print("leaderboard report: "..json.encode(leaderboard:get_report()))
 initialize_mt_generator(2000) --TODO: load a different number from a csprng_seed.txt file.
 seed_from_mt(extract_mt())
 print("initialized!")
