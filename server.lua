@@ -324,6 +324,7 @@ Connection = class(function(s, socket)
   s.last_read = time()
   s.player_number = 0  -- 0 if not a player in a room, 1 if player "a" in a room, 2 if player "b" in a room
   s.logged_in = false --whether connection has successfully logged into the ranking system.
+  s.user_id = nil
 end)
 
 function Connection.menu_state(self)
