@@ -25,3 +25,17 @@ function read_deleted_players_file() pcall(function()
   playerbase.deleted_players = json.decode(io.read("*all"))
   io.close(f)
 end) end
+
+function write_leaderboard_file() pcall(function()
+  local f = assert(io.open("leaderboard.txt", "w"))
+  io.output(f)
+  io.write(json.encode(leaderboard.players))
+  io.close(f)
+end) end
+
+function read_leaderboard_file() pcall(function()
+  local f = assert(io.open("leaderboard.txt", "r"))
+  io.input(f)
+  leaderboard.players = json.decode(io.read("*all"))
+  io.close(f)
+end) end

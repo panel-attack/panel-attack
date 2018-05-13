@@ -265,11 +265,7 @@ end
 --TODO: support multiple leaderboards
 Leaderboard = class(function (s, name)
   s.name = name
-  s.players =  {["e2016ef09a0c7c2fa70a0fb5b99e9674"] = {ranking=1500}, 
-				["d28ac48ba5e1a82e09b9579b0a5a7def"] = {ranking=1600},
-				["59281"] = {ranking=3000},
-				["some bad id"] = {ranking=4000}} -- TODO: read in from saved file
-  
+  s.players = {}
 end)
 
 function Leaderboard.update(self, user_id, new_ranking)
@@ -278,7 +274,7 @@ function Leaderboard.update(self, user_id, new_ranking)
   else
     self.players[user_id] = {ranking=new_ranking}
   end
-  --TODO: write_leaderboard_file()
+  write_leaderboard_file()
 end
 
 function Leaderboard.get_report(self)
@@ -737,6 +733,7 @@ playerbase = Playerbase("playerbase")
 read_players_file()
 read_deleted_players_file()
 leaderboard = Leaderboard("leaderboard")
+read_leaderboard_file()
 --TODO: remove test print for leaderboard
 print("playerbase: "..json.encode(playerbase.players))
 print("leaderboard report: "..json.encode(leaderboard:get_report()))
