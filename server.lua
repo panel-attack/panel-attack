@@ -313,7 +313,7 @@ function Leaderboard.get_report(self)
   return report
 end
 
-Connection = class(function(s, socket--[[, user_id]])
+Connection = class(function(s, socket)
   s.index = INDEX
   INDEX = INDEX + 1
   connections[s.index] = s
