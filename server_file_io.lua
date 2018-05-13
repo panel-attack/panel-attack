@@ -39,3 +39,11 @@ function read_leaderboard_file() pcall(function()
   leaderboard.players = json.decode(io.read("*all"))
   io.close(f)
 end) end
+
+function read_csprng_seed_file() pcall(function()
+  local f = assert(io.open("csprng_seed.txt", "r"))
+  io.input(f)
+  local seed = io.read("*all")
+  io.close(f)
+  return seed
+end) end
