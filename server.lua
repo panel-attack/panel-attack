@@ -741,7 +741,7 @@ read_csprng_seed_file()
 if csprng_seed == 2000 then
 print("ALERT! YOU SHOULD CHANGE YOUR CSPRNG_SEED.TXT FILE TO MAKE YOUR USER_IDS MORE SECURE!")
 end
-initialize_mt_generator(csprng_seed) --TODO: load a different number from a csprng_seed.txt file.
+initialize_mt_generator(csprng_seed)
 seed_from_mt(extract_mt())
 print("initialized!")
 
