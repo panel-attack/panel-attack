@@ -30,8 +30,6 @@ local socket_to_idx = {}
 local proposals = {}
 local playerbases = {}
 
-
-
 function lobby_state()
   local names = {}
   for _,v in pairs(connections) do
@@ -326,7 +324,6 @@ Connection = class(function(s, socket)
   s.last_read = time()
   s.player_number = 0  -- 0 if not a player in a room, 1 if player "a" in a room, 2 if player "b" in a room
   s.logged_in = false --whether connection has successfully logged into the ranking system.
-  --TODO: s.player_id = verify_user_id()
 end)
 
 function Connection.menu_state(self)

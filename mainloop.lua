@@ -665,13 +665,13 @@ function main_net_vs_setup(ip)
   P2.pos_x = 172
   P2.score_x = 410
   replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
-            P1_level=P1_level,P2_level=P2_level}
+              P1_level=P1_level,P2_level=P2_level}
   ask_for_gpanels("000000")
   ask_for_panels("000000")
   if not currently_spectating then
     to_print = "Level: "..my_level.."\nOpponent's level: "..(P2_level or "???")
   else
-	to_print = "P1 Level: "..my_level.."\nP2 level: "..(P2_level or "???")
+    to_print = "P1 Level: "..my_level.."\nP2 level: "..(P2_level or "???")
   end
   for i=1,30 do
     gprint(to_print,300, 280)
