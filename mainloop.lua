@@ -632,30 +632,30 @@ function main_net_vs_setup(ip)
   local my_level, to_print, fake_P2 = 5, nil, P2
   local k = K[1]
   while got_opponent == nil do
-	gprint("Waiting for opponent...", 300, 280)
-	do_messages()
-	wait()
+    gprint("Waiting for opponent...", 300, 280)
+    do_messages()
+    wait()
   end
   while P1_level == nil or P2_level == nil do
-	to_print = (P1_level and "L" or"Choose l") .. "evel: "..my_level..
-		"\nOpponent's level: "..(P2_level or "???")
-	gprint(to_print, 300, 280)
-	wait()
-	do_messages()
-	if P1_level then
-	elseif menu_enter(k) then
-	  P1_level = my_level
-	  net_send("L"..(({[10]=0})[my_level] or my_level))
-	elseif menu_up(k) or menu_right(k) then
-	  my_level = bound(1,my_level+1,10)
-	elseif menu_down(k) or menu_left(k) then
-	  my_level = bound(1,my_level-1,10)
-	end
+    to_print = (P1_level and "L" or"Choose l") .. "evel: "..my_level..
+        "\nOpponent's level: "..(P2_level or "???")
+    gprint(to_print, 300, 280)
+    wait()
+    do_messages()
+    if P1_level then
+    elseif menu_enter(k) then
+      P1_level = my_level
+      net_send("L"..(({[10]=0})[my_level] or my_level))
+    elseif menu_up(k) or menu_right(k) then
+      my_level = bound(1,my_level+1,10)
+    elseif menu_down(k) or menu_left(k) then
+      my_level = bound(1,my_level-1,10)
+    end
   end
   P1 = Stack(1, "vs", P1_level)
   P2 = Stack(2, "vs", P2_level)
   if currently_spectating then
-	P1.panel_buffer = fake_P1.panel_buffer
+    P1.panel_buffer = fake_P1.panel_buffer
 	P1.gpanel_buffer = fake_P1.gpanel_buffer
   end
   P2.panel_buffer = fake_P2.panel_buffer
