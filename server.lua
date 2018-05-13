@@ -737,7 +737,11 @@ read_leaderboard_file()
 --TODO: remove test print for leaderboard
 print("playerbase: "..json.encode(playerbase.players))
 print("leaderboard report: "..json.encode(leaderboard:get_report()))
-initialize_mt_generator(2000) --TODO: load a different number from a csprng_seed.txt file.
+read_csprng_seed_file()
+if csprng_seed == 2000 then
+print("ALERT! YOU SHOULD CHANGE YOUR CSPRNG_SEED.TXT FILE TO MAKE YOUR USER_IDS MORE SECURE!")
+end
+initialize_mt_generator(csprng_seed) --TODO: load a different number from a csprng_seed.txt file.
 seed_from_mt(extract_mt())
 print("initialized!")
 

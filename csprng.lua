@@ -56,7 +56,6 @@ function initialize_mt_generator(seed)
 		end
 		MT[i] = fromBinary(b)
 	end
-	print("initialize_mt_generator finished")
 end
 
 local function generate_mt() -- Restock the MT with new random numbers.
@@ -92,7 +91,6 @@ function seed_from_mt(seed) -- seed ISAAC with numbers from the MT:
 		mtSeed = seed
 	end
 	if not mtSeeded or (math.random(1, 100) == 50) then -- Always seed the first time around. Otherwise, seed approximately once per 100 times.
-		print("not mtSeeded, initalizing_mt_generator(nil)")
 		initialize_mt_generator(mtSeed)
 		mtSeeded = true
 		mtSeed = extract_mt()
