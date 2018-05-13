@@ -258,6 +258,7 @@ function main_net_vs_room()
   end
   P2 = {panel_buffer="", gpanel_buffer=""}
   local k = K[1]
+  --TODO: UI for toggling ranked/casual
   local map = {{"level", "level", "level", "level", "level", "level", "ready"},
                {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
                {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},

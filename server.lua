@@ -513,6 +513,24 @@ function adjust_ranking(room, winning_player_number)
 	--compare player's difficulty levels, don't adjust rank if they are different
 	--check that both players have indicated they wanted a ranked match?
 	print("We'd be adjusting the ranking of "..room.a.name.." and "..room.b.name..". Player "..winning_player_number.." wins!")
+	--TODO: implement the algorithm Bbforky suggested
+		--[[}
+		Formula for Calculating expected outcome:
+
+		Oe=1/(1+10^((Ro-Rc)/400))
+
+		Oe= Expected Outcome
+		Ro= Current rating of opponent
+		Rc= Current rating
+
+		Formula for Calculating new rating:
+
+		Rn=Rc+k(Oa-Oe)
+
+		Rn=New Rating
+		Oa=Actual Outcome (0 for loss, 1 for win)
+		k= Constant (Probably will use 10)
+		]]--
 end
 
 -- got pong
