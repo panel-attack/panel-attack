@@ -5,7 +5,7 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_config_input, main_dumb_transition, main_select_puzz,
   menu_up, menu_down, menu_left, menu_right, menu_enter, menu_escape,
   main_replay_vs, main_local_vs_setup, main_local_vs, menu_key_func,
-  multi_func, normal_key, main_set_name, main_net_vs_room, main_net_vs_lobby, login
+  multi_func, normal_key, main_set_name, main_net_vs_room, main_net_vs_lobby
   
 local PLAYING = "playing, not joinable"  -- room states
 local CHARACTERSELECT = "joinable" --room states
@@ -106,6 +106,7 @@ do
 	logged_in = 0
 	connection_up_time = 0
 	connected_server_ip = ""
+	current_server_supports_ranking = false
     local items = {{"1P endless", main_select_speed_99, {main_endless}},
         {"1P puzzle", main_select_puzz},
         {"1P time attack", main_select_speed_99, {main_time_attack}},
@@ -457,8 +458,47 @@ function main_net_vs_lobby()
   local willing_players = {} -- set
   local spectatable_rooms = {}
   local k = K[1]
-  local notice = {[true]="Select a player name to ask for a match.", [false]="You are all alone in the lobby :("}
+  local notice = {[true]="Select a player name to ask for a match.", [false]="You are all alone in the lobby :("}  
+  --attempt login
+  read_user_id_file()
+  if not my_user_id then
+    my_user_id = "need a new user id"
+  end
+  json_send({login_request=true, user_id=my_user_id}) 
+  local login_status_message = "   Logging in..."
+  local login_status_message_duration = 2
+  local login_denied = false
   while true do
+	  if connection_up_time <= login_status_message_duration then
+		gprint(login_status_message, 300, 160)
+		for _,msg in ipairs(this_frame_messages) do
+			if msg.login_successful then
+			  current_server_supports_ranking = true
+			  logged_in = true
+			  if msg.new_user_id then
+				my_user_id = msg.new_user_id
+				print("about to write user id file")
+				write_user_id_file()
+				login_status_message = "Welcome, new user: "..my_name
+			  elseif msg.name_changed then
+				login_status_message = "Welcome, your username has been updated. \n\nOld name:  \""..msg.old_name.."\"\n\nNew name:  \""..msg.new_name.."\""
+				login_status_message_duration = 5
+			  else
+				login_status_message = "Welcome back, "..my_name
+			  end
+			elseif msg.login_denied then
+			    current_server_supports_ranking = true
+				login_denied = true
+				--TODO: create a menu here to let the user choose "continue unranked" or "get a new user_id"
+				login_status_message = "Login for ranked matches failed.\n"..msg.reason.."\n\nYou may continue unranked,\nor delete your invalid user_id file to have a new one assigned."
+				login_status_message_duration = 10
+			end
+		end
+		if connection_up_time == 2 and not current_server_supports_ranking then
+				login_status_message = "Login for ranked matches timed out.\nThis server probably doesn't support ranking.\n\nYou may continue unranked."
+				login_status_message_duration = 7
+		end
+	  end
     for _,msg in ipairs(this_frame_messages) do
       if msg.choose_another_name then
         error("name is taken :<")
@@ -588,102 +628,66 @@ function main_net_vs_setup(ip)
   end
   connected_server_ip = ip
   logged_in = false
-  --attempt login
-  --TODO: load user_id from saved user_id file with a file path based on connected_server_ip. ie: ".\"..connected_server_ip.."\user_id.txt"
-		--This would support saving credentials (user_id) for multiple servers, even.
-  --my_user_id = "e2016ef09a0c7c2fa70a0fb5b99e9674-thisMakesItWrong" --almost the same as Bob's hard-coded user_id
-  --my_user_id = "e2016ef09a0c7c2fa70a0fb5b99e9674" --same as Bob's hard-coded user_id
-  read_user_id_file()
-  if not my_user_id then
-    my_user_id = "need a new user id"
+  if true then return main_net_vs_lobby end
+  local my_level, to_print, fake_P2 = 5, nil, P2
+  local k = K[1]
+  while got_opponent == nil do
+	gprint("Waiting for opponent...", 300, 280)
+	do_messages()
+	wait()
   end
-  json_send({login_request=true, user_id=my_user_id})
-  while not logged_in and connection_up_time < 2 do
-    gprint("Logging in...", 300, 280)
-	for _,msg in ipairs(this_frame_messages) do
-		if msg.login_successful then
-		  logged_in = true
-		  if msg.new_user_id then
-			my_user_id = msg.new_user_id
-			print("about to write user id file")
-			write_user_id_file()
-			return main_dumb_transition, {main_net_vs_lobby, "Welcome, new user: " .. my_name, 120, 300}
-		  elseif msg.name_changed then
-		    return main_dumb_transition, {main_net_vs_lobby, "Welcome, your username has been updated. \n\nOld name:  \""..msg.old_name.."\"\n\nNew name:  \""..msg.new_name.."\"", 120, 300}
-		  else
-			return main_dumb_transition, {main_net_vs_lobby, "Welcome back, "..my_name, 15, 90}
-		  end
-		elseif msg.login_denied then
-			--TODO: create a menu here to let the user choose "continue unranked" or "get a new user_id"
-			return main_dumb_transition, {main_net_vs_lobby, "Login for ranked matches failed.\n"..msg.reason.."\n\nYou may continue unranked,\nor delete your invalid user_id file to have a new one assigned.",180,600}
-		end
-	end
+  while P1_level == nil or P2_level == nil do
+	to_print = (P1_level and "L" or"Choose l") .. "evel: "..my_level..
+		"\nOpponent's level: "..(P2_level or "???")
+	gprint(to_print, 300, 280)
 	wait()
 	do_messages()
+	if P1_level then
+	elseif menu_enter(k) then
+	  P1_level = my_level
+	  net_send("L"..(({[10]=0})[my_level] or my_level))
+	elseif menu_up(k) or menu_right(k) then
+	  my_level = bound(1,my_level+1,10)
+	elseif menu_down(k) or menu_left(k) then
+	  my_level = bound(1,my_level-1,10)
+	end
   end
-  if not logged_in then 
-	  --TODO: figure out why the game_over SFX is being played here.
-	  if true then return main_dumb_transition, {main_net_vs_lobby, "Login for ranked matches timed out.\nThis server probably doesn't support ranking.\n\nYou may continue unranked.\n\nPress A or Enter", 15, 600} end
-	  local my_level, to_print, fake_P2 = 5, nil, P2
-	  local k = K[1]
-	  while got_opponent == nil do
-		gprint("Waiting for opponent...", 300, 280)
-		do_messages()
-		wait()
-	  end
-	  while P1_level == nil or P2_level == nil do
-		to_print = (P1_level and "L" or"Choose l") .. "evel: "..my_level..
-			"\nOpponent's level: "..(P2_level or "???")
-		gprint(to_print, 300, 280)
-		wait()
-		do_messages()
-		if P1_level then
-		elseif menu_enter(k) then
-		  P1_level = my_level
-		  net_send("L"..(({[10]=0})[my_level] or my_level))
-		elseif menu_up(k) or menu_right(k) then
-		  my_level = bound(1,my_level+1,10)
-		elseif menu_down(k) or menu_left(k) then
-		  my_level = bound(1,my_level-1,10)
-		end
-	  end
-	  P1 = Stack(1, "vs", P1_level)
-	  P2 = Stack(2, "vs", P2_level)
-	  if currently_spectating then
-		P1.panel_buffer = fake_P1.panel_buffer
-		P1.gpanel_buffer = fake_P1.gpanel_buffer
-	  end
-	  P2.panel_buffer = fake_P2.panel_buffer
-	  P2.gpanel_buffer = fake_P2.gpanel_buffer
-	  P1.garbage_target = P2
-	  P2.garbage_target = P1
-	  P2.pos_x = 172
-	  P2.score_x = 410
-	  replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
-				  P1_level=P1_level,P2_level=P2_level}
-	  ask_for_gpanels("000000")
-	  ask_for_panels("000000")
-	  if not currently_spectating then
-		to_print = "Level: "..my_level.."\nOpponent's level: "..(P2_level or "???")
-	  else
-		to_print = "P1 Level: "..my_level.."\nP2 level: "..(P2_level or "???")
-	  end
-	  for i=1,30 do
-		gprint(to_print,300, 280)
-		do_messages()
-		wait()
-	  end
-	  while P1.panel_buffer == "" or P2.panel_buffer == ""
-		or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
-		gprint(to_print,300, 280)
-		do_messages()
-		wait()
-		wait()
-	  end
-	  P1:starting_state()
-	  P2:starting_state()
-	  return main_net_vs
+  P1 = Stack(1, "vs", P1_level)
+  P2 = Stack(2, "vs", P2_level)
+  if currently_spectating then
+	P1.panel_buffer = fake_P1.panel_buffer
+	P1.gpanel_buffer = fake_P1.gpanel_buffer
   end
+  P2.panel_buffer = fake_P2.panel_buffer
+  P2.gpanel_buffer = fake_P2.gpanel_buffer
+  P1.garbage_target = P2
+  P2.garbage_target = P1
+  P2.pos_x = 172
+  P2.score_x = 410
+  replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
+			  P1_level=P1_level,P2_level=P2_level}
+  ask_for_gpanels("000000")
+  ask_for_panels("000000")
+  if not currently_spectating then
+	to_print = "Level: "..my_level.."\nOpponent's level: "..(P2_level or "???")
+  else
+	to_print = "P1 Level: "..my_level.."\nP2 level: "..(P2_level or "???")
+  end
+  for i=1,30 do
+	gprint(to_print,300, 280)
+	do_messages()
+	wait()
+  end
+  while P1.panel_buffer == "" or P2.panel_buffer == ""
+	or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
+	gprint(to_print,300, 280)
+	do_messages()
+	wait()
+	wait()
+  end
+  P1:starting_state()
+  P2:starting_state()
+  return main_net_vs
 end
 
 function main_net_vs()
