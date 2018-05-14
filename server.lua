@@ -139,6 +139,7 @@ function start_match(a, b)
 end
 
 Room = class(function(self, a, b)
+  --TODO: it would be nice to call players a and b something more like self.players[1] and self.players[2]
   self.a = a --player a
   self.b = b --player b
   self.name = a.name.." vs "..b.name
@@ -513,6 +514,17 @@ function adjust_ranking(room, winning_player_number)
 	--compare player's difficulty levels, don't adjust rank if they are different
 	--check that both players have indicated they wanted a ranked match?
 	print("We'd be adjusting the ranking of "..room.a.name.." and "..room.b.name..". Player "..winning_player_number.." wins!")
+	--for room.players
+	local Oe = 0
+	local Ro = 0
+	local Rc = 0
+	
+	local Rn = 0
+	local Oa = 0
+	local k = 10
+	
+	
+	
 	--TODO: implement the algorithm Bbforky suggested
 		--[[}
 		Formula for Calculating expected outcome:
