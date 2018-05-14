@@ -17,6 +17,7 @@ local floor = math.floor
 local TIMEOUT = 10
 local CHARACTERSELECT = "joinable" -- room states
 local PLAYING = "playing, not joinable" -- room states
+local DEFAULT_RANKING = 1500
 
 
 local VERSION = "019"
@@ -322,6 +323,7 @@ Connection = class(function(s, socket)
   s.player_number = 0  -- 0 if not a player in a room, 1 if player "a" in a room, 2 if player "b" in a room
   s.logged_in = false --whether connection has successfully logged into the ranking system.
   s.user_id = nil
+  s.wants_ranked_match = true --TODO: let the user change wants_ranked_match
 end)
 
 function Connection.menu_state(self)
@@ -509,40 +511,96 @@ function Room.resolve_game_outcome(self)
   end
 end
 
+function Room.ranking_adjustment_approved(self)
+  --returns whether both players in the room have game states such that ranking adjustment should be approved
+  local players = {self.a, self.b}
+  local approval = true
+  local prev_player_level = players[1].level
+  for player_number = 1,2 do
+	if playerbase.players[players[player_number].user_id]
+	and not playerbase.deleted_players[players[player_number].user_id]
+	and players[player_number].logged_in
+	and players[player_number].wants_ranked_match then
+	  print(players[player_number].name.."'s current game state allows ranking adjustment")
+	else
+	  print(players[player_number].name.."'s current game state prohibits ranking adjustment")
+	  approval = false
+	end
+	if players[player_number].level ~= prev_player_level then
+	  approval = false
+	  print("Players' difficulty levels don't match.  Ranking adjustment prohibited.")
+	end
+	prev_player_level = players[player_number].level
+  end
+  return approval
+end
+
 function adjust_ranking(room, winning_player_number)
-	--for now, do nothing
-	--compare player's difficulty levels, don't adjust rank if they are different
-	--check that both players have indicated they wanted a ranked match?
 	print("We'd be adjusting the ranking of "..room.a.name.." and "..room.b.name..". Player "..winning_player_number.." wins!")
-	--for room.players
-	local Oe = 0
-	local Ro = 0
-	local Rc = 0
-	
-	local Rn = 0
-	local Oa = 0
-	local k = 10
-	
-	
-	
-	--TODO: implement the algorithm Bbforky suggested
-		--[[}
-		Formula for Calculating expected outcome:
+	local players = {room.a, room.b}
+	local continue = true
+	--check that it's ok to adjust ranking
+	continue = room:ranking_adjustment_approved()
+	if continue then
+		  for player_number = 1,2 do
+		    --if they aren't on the leaderboard yet, give them the default ranking
+	        if not leaderboard.players[players[player_number].user_id] or not leaderboard.players[players[player_number].user_id].ranking then  
+			  leaderboard:update(players[player_number].user_id, DEFAULT_RANKING)
+			end
+		  end
+		--[[ --Algorithm we are implementing, per community member Bbforky:
+			Formula for Calculating expected outcome:
 
-		Oe=1/(1+10^((Ro-Rc)/400))
+			Oe=1/(1+10^((Ro-Rc)/400)))
 
-		Oe= Expected Outcome
-		Ro= Current rating of opponent
-		Rc= Current rating
+			Oe= Expected Outcome
+			Ro= Current rating of opponent
+			Rc= Current rating
 
-		Formula for Calculating new rating:
+			Formula for Calculating new rating:
 
-		Rn=Rc+k(Oa-Oe)
+			Rn=Rc+k(Oa-Oe)
 
-		Rn=New Rating
-		Oa=Actual Outcome (0 for loss, 1 for win)
-		k= Constant (Probably will use 10)
+			Rn=New Rating
+			Oa=Actual Outcome (0 for loss, 1 for win)
+			k= Constant (Probably will use 10)
 		]]--
+		local new_rankings = {}
+		local Ro, Rc, Oe, Oa
+		local k = 10
+		for player_number = 1,2 do
+		  Ro = leaderboard.players[players[player_number].opponent.user_id].ranking
+		  Rc = leaderboard.players[players[player_number].user_id].ranking
+		  Oe = 1/(1+10^((Ro-Rc/400)))
+		  
+		  if players[player_number].player_number == winning_player_number then
+			Oa = 1
+		  else
+			Oa = 0
+		  new_rankings[player_number] = Rc + k*(Oa-Oe)
+		  end
+		end
+		--check that both player's new rankings are numeric (and not nil)
+		for player_number = 1,2 do
+		  if tonumber(new_rankings[player_number]) then
+		    continue = true
+		  else
+		    print(players[player_number].name.."'s new ranking wasn't calculated properly.  Not adjusting the ranking for this match")
+		    continue = false
+		  end
+		end
+		if continue then
+			--now that both new_rankings have been calculated properly, actually update the leaderboard
+			for player_number = 1,2 do
+			  print(playerbase.players[players[player_number].user_id])
+			  print("Old ranking:"..leaderboard.players[players[player_number].user_id])
+			  leaderboard:update(players[player_number].user_id, new_rankings[player_number])
+			  print("New ranking:"..leaderboard.players[players[player_number].user_id])
+			end
+		end
+	else
+	  print("Not adjusting rankings.  Match settings prohibited this.")
+	end
 end
 
 -- got pong
