@@ -18,7 +18,7 @@ local floor = math.floor
 local TIMEOUT = 10
 local CHARACTERSELECT = "joinable" -- room states
 local PLAYING = "playing, not joinable" -- room states
-local DEFAULT_RANKING = 1500
+local DEFAULT_RATING = 1500
 
 
 local VERSION = "019"
@@ -128,17 +128,17 @@ function start_match(a, b)
   local msg = {match_start = true, ranked = false,
                 player_settings = {character = a.character, level = a.level, player_number = a.player_number},
                 opponent_settings = {character = b.character, level = b.level, player_number = b.player_number}}
-  if a.room:ranking_adjustment_approved() then
+  if a.room:rating_adjustment_approved() then
     msg.ranked = true
 	if leaderboard.players[a.user_id] then
-      msg.player_settings.ranking = round(leaderboard.players[a.user_id].ranking)
+      msg.player_settings.rating = round(leaderboard.players[a.user_id].rating)
 	else
-	  msg.player_settings.ranking = DEFAULT_RANKING
+	  msg.player_settings.rating = DEFAULT_RATING
 	end
 	if leaderboard.players[b.user_id] then
-      msg.opponent_settings.ranking = round(leaderboard.players[b.user_id].ranking)
+      msg.opponent_settings.rating = round(leaderboard.players[b.user_id].rating)
 	else
-	  msg.opponent_settings.ranking = DEFAULT_RANKING
+	  msg.opponent_settings.rating = DEFAULT_RATING
 	end
   end
   a:send(msg)
@@ -284,25 +284,25 @@ Leaderboard = class(function (s, name)
   s.players = {}
 end)
 
-function Leaderboard.update(self, user_id, new_ranking)
+function Leaderboard.update(self, user_id, new_rating)
   print("in Leaderboard.update")
   if self.players[user_id] then
-    self.players[user_id].ranking = new_ranking
+    self.players[user_id].rating = new_rating
   else
-    self.players[user_id] = {ranking=new_ranking}
+    self.players[user_id] = {rating=new_rating}
   end
-  print("new_ranking = "..new_ranking)
+  print("new_rating = "..new_rating)
   print("about to write_leaderboard_file")
   write_leaderboard_file()
   print("done with Leaderboard.update")
 end
 
 function Leaderboard.get_report(self)
---returns the leaderboard as an array sorted from highest ranking to lowest, 
+--returns the leaderboard as an array sorted from highest rating to lowest, 
 --with usernames from playerbase.players instead of user_ids
---ie report[1] will give the highest ranking player's user_name and how many points they have. Like this:
---report[1] might return {user_name="Alice",ranking=2250}
---report[2] might return {user_name="Bob",ranking=2100}
+--ie report[1] will give the highest rating player's user_name and how many points they have. Like this:
+--report[1] might return {user_name="Alice",rating=2250}
+--report[2] might return {user_name="Bob",rating=2100}
   local report = {}
   local leaderboard_player_count = 0
   --count how many entries there are in self.players since #self.players will not give us an accurate answer for sparse tables
@@ -312,12 +312,12 @@ function Leaderboard.get_report(self)
   for k,v in pairs(self.players) do
 	for insert_index=1, leaderboard_player_count do
       if playerbase.players[k] then --only include in the report players who are still listed in the playerbase
-		if v.ranking then -- don't include entries who's ranking is nil (which shouldn't happen anyway)
-		  if report[insert_index] and report[insert_index].ranking and v.ranking >= report[insert_index].ranking then
-			table.insert(report, insert_index, {user_name=playerbase.players[k],ranking=v.ranking})
+		if v.rating then -- don't include entries who's rating is nil (which shouldn't happen anyway)
+		  if report[insert_index] and report[insert_index].rating and v.rating >= report[insert_index].rating then
+			table.insert(report, insert_index, {user_name=playerbase.players[k],rating=v.rating})
 			break
 		  elseif insert_index == leaderboard_player_count or #report == 0 then
-			table.insert(report, {user_name=playerbase.players[k],ranking=v.ranking}) -- at the end of the table.
+			table.insert(report, {user_name=playerbase.players[k],rating=v.rating}) -- at the end of the table.
 		    break
 		  end
 		end
@@ -339,7 +339,7 @@ Connection = class(function(s, socket)
   s.room = nil
   s.last_read = time()
   s.player_number = 0  -- 0 if not a player in a room, 1 if player "a" in a room, 2 if player "b" in a room
-  s.logged_in = false --whether connection has successfully logged into the ranking system.
+  s.logged_in = false --whether connection has successfully logged into the rating system.
   s.user_id = nil
   s.wants_ranked_match = true --TODO: let the user change wants_ranked_match
 end)
@@ -348,9 +348,9 @@ function Connection.menu_state(self)
   state = {cursor=self.cursor, ready=self.ready, character=self.character, level=self.level, player_number=self.player_number}
     if self.user_id then
 	  if leaderboard.players[self.user_id] then
-        state.ranking = round(leaderboard.players[self.user_id].ranking)
+        state.rating = round(leaderboard.players[self.user_id].rating)
 	  else 
-	    state.ranking = DEFAULT_RANKING
+	    state.rating = DEFAULT_RATING
 	  end
     end
   
@@ -514,7 +514,7 @@ function Room.resolve_game_outcome(self)
 	  --outcome is the player number of the winner, or 0 for a tie
 	  if outcome == 0 then
 	    print("tie.  Nobody scored")
-	    --do nothing. no points or ranking adjustments for ties.
+	    --do nothing. no points or rating adjustments for ties.
 		return true
 	  else
 		local someone_scored = false
@@ -523,7 +523,7 @@ function Room.resolve_game_outcome(self)
 		  if outcome == i then
 		    print("Player "..i.." scored")
 			self.win_counts[i] = self.win_counts[i] + 1
-			adjust_ranking(self, i)
+			adjust_rating(self, i)
 			someone_scored = true
 		  end
 		end
@@ -538,8 +538,8 @@ function Room.resolve_game_outcome(self)
   end
 end
 
-function Room.ranking_adjustment_approved(self)
-  --returns whether both players in the room have game states such that ranking adjustment should be approved
+function Room.rating_adjustment_approved(self)
+  --returns whether both players in the room have game states such that rating adjustment should be approved
   local players = {self.a, self.b}
   local approval = true
   local prev_player_level = players[1].level
@@ -548,9 +548,9 @@ function Room.ranking_adjustment_approved(self)
 	and not playerbase.deleted_players[players[player_number].user_id]
 	and players[player_number].logged_in
 	and players[player_number].wants_ranked_match then
-	  print(players[player_number].name.."'s current game state allows ranking adjustment")
+	  print(players[player_number].name.."'s current game state allows rating adjustment")
 	else
-	  print(players[player_number].name.."'s current game state prohibits ranking adjustment")
+	  print(players[player_number].name.."'s current game state prohibits rating adjustment")
 	  approval = false
 	end
 	if players[player_number].level ~= prev_player_level then
@@ -562,18 +562,18 @@ function Room.ranking_adjustment_approved(self)
   return approval
 end
 
-function adjust_ranking(room, winning_player_number)
-	print("We'd be adjusting the ranking of "..room.a.name.." and "..room.b.name..". Player "..winning_player_number.." wins!")
+function adjust_rating(room, winning_player_number)
+	print("We'd be adjusting the rating of "..room.a.name.." and "..room.b.name..". Player "..winning_player_number.." wins!")
 	local players = {room.a, room.b}
 	local continue = true
-	--check that it's ok to adjust ranking
-	continue = room:ranking_adjustment_approved()
+	--check that it's ok to adjust rating
+	continue = room:rating_adjustment_approved()
 	if continue then
 		  for player_number = 1,2 do
-		    --if they aren't on the leaderboard yet, give them the default ranking
-	        if not leaderboard.players[players[player_number].user_id] or not leaderboard.players[players[player_number].user_id].ranking then  
-			  leaderboard:update(players[player_number].user_id, DEFAULT_RANKING)
-			  print("Gave "..leaderboard.players[players[player_number].user_id].." a new ranking of "..DEFAULT_RANKING)
+		    --if they aren't on the leaderboard yet, give them the default rating
+	        if not leaderboard.players[players[player_number].user_id] or not leaderboard.players[players[player_number].user_id].rating then  
+			  leaderboard:update(players[player_number].user_id, DEFAULT_RATING)
+			  print("Gave "..leaderboard.players[players[player_number].user_id].." a new rating of "..DEFAULT_RATING)
 			end
 		  end
 		--[[ --Algorithm we are implementing, per community member Bbforky:
@@ -593,16 +593,16 @@ function adjust_ranking(room, winning_player_number)
 			Oa=Actual Outcome (0 for loss, 1 for win)
 			k= Constant (Probably will use 10)
 		]]--
-		local new_rankings = {}
+		local new_ratings = {}
 		local Ro, Rc, Oe, Oa
 		local k = 10
 		for player_number = 1,2 do
 		  -- print("calculating expected outcome for")
-		  -- print(players[player_number].name.." Ranking: "..leaderboard.players[players[player_number].user_id].ranking)
+		  -- print(players[player_number].name.." Ranking: "..leaderboard.players[players[player_number].user_id].rating)
 		  -- print("vs")
-		  -- print(players[player_number].opponent.name.." Ranking: "..leaderboard.players[players[player_number].opponent.user_id].ranking)
-		  Ro = leaderboard.players[players[player_number].opponent.user_id].ranking
-		  Rc = leaderboard.players[players[player_number].user_id].ranking
+		  -- print(players[player_number].opponent.name.." Ranking: "..leaderboard.players[players[player_number].opponent.user_id].rating)
+		  Ro = leaderboard.players[players[player_number].opponent.user_id].rating
+		  Rc = leaderboard.players[players[player_number].user_id].rating
 		  Oe = 1/(1+10^((Ro-Rc)/400))
 		  -- print("Ro="..Ro)
 		  -- print("Rc="..Rc)
@@ -615,30 +615,30 @@ function adjust_ranking(room, winning_player_number)
 		  else
 			Oa = 0
 		  end
-		  new_rankings[player_number] = Rc + k*(Oa-Oe)
-		  print("new_rankings["..player_number.."] = "..new_rankings[player_number])
+		  new_ratings[player_number] = Rc + k*(Oa-Oe)
+		  print("new_ratings["..player_number.."] = "..new_ratings[player_number])
 		end
-		--check that both player's new rankings are numeric (and not nil)
+		--check that both player's new ratings are numeric (and not nil)
 		for player_number = 1,2 do
-		  if tonumber(new_rankings[player_number]) then
+		  if tonumber(new_ratings[player_number]) then
 		    print()
 		    continue = true
 		  else
-		    print(players[player_number].name.."'s new ranking wasn't calculated properly.  Not adjusting the ranking for this match")
+		    print(players[player_number].name.."'s new rating wasn't calculated properly.  Not adjusting the rating for this match")
 		    continue = false
 		  end
 		end
 		if continue then
-			--now that both new_rankings have been calculated properly, actually update the leaderboard
+			--now that both new_ratings have been calculated properly, actually update the leaderboard
 			for player_number = 1,2 do
 			  print(playerbase.players[players[player_number].user_id])
-			  print("Old ranking:"..leaderboard.players[players[player_number].user_id].ranking)
-			  leaderboard:update(players[player_number].user_id, new_rankings[player_number])
-			  print("New ranking:"..leaderboard.players[players[player_number].user_id].ranking)
+			  print("Old rating:"..leaderboard.players[players[player_number].user_id].rating)
+			  leaderboard:update(players[player_number].user_id, new_ratings[player_number])
+			  print("New rating:"..leaderboard.players[players[player_number].user_id].rating)
 			end
 		end
 	else
-	  print("Not adjusting rankings.  Match settings prohibited this.")
+	  print("Not adjusting ratings.  Match settings prohibited this.")
 	end
 end
 
@@ -729,9 +729,9 @@ function Connection.J(self, message)
     message.menu_state.player_number = self.player_number
 	if self.user_id then
 	  if leaderboard.players[self.user_id] then
-        message.menu_state.ranking = round(leaderboard.players[self.user_id].ranking)
+        message.menu_state.rating = round(leaderboard.players[self.user_id].rating)
 	  else 
-	    message.menu_state.ranking = DEFAULT_RANKING
+	    message.menu_state.rating = DEFAULT_RATING
 	  end
     end
 	self.level = message.menu_state.level
