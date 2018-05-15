@@ -106,6 +106,9 @@ function create_room(a, b)
   a_msg.menu_state = b:menu_state()
   b_msg.opponent = a.name
   b_msg.menu_state = a:menu_state()
+
+  a_msg.ratings = a.room.ratings
+  b_msg.ratings = a.room.ratings --yes, a.room.ratings
   a.opponent = b
   b.opponent = a
   a:send(a_msg)
@@ -167,6 +170,15 @@ Room = class(function(self, a, b)
 	self.win_counts = {}
 	self.win_counts[1] = 0
 	self.win_counts[2] = 0
+	local a_rating, b_rating
+    if a.user_id and leaderboard.players[a.user_id] and leaderboard.players[a.user_id].rating then
+      a_rating = round(leaderboard.players[a.user_id].rating)
+    end
+    if a.user_id and leaderboard.players[b.user_id] and leaderboard.players[a.user_id].rating then
+      b_rating = round(leaderboard.players[b.user_id].rating)
+    end
+    self.ratings = {{old=a_rating or DEFAULT_RATING, new=a_rating or DEFAULT_RATING, difference=0},
+				    {old=b_rating or DEFAULT_RATING, new=b_rating or DEFAULT_RATING, difference=0}}
   else
     self.win_counts = self.a.room.win_counts
 	self.spectators = self.a.room.spectators
@@ -196,14 +208,14 @@ function Room.add_spectator(self, new_spectator_connection)
   self.spectators[#self.spectators+1] = new_spectator_connection
   print(new_spectator_connection.name .. " joined " .. self.name .. " as a spectator")
   
-  msg = {spectate_request_granted = true, spectate_request_rejected = false, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state(), win_counts=self.win_counts}
+  msg = {spectate_request_granted = true, spectate_request_rejected = false, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state(), win_counts=self.win_counts}
   new_spectator_connection:send(msg)
 
   
 end
 
 function Room.reinvite_spectators(self)
-  msg = {spectate_request_granted = true, spectate_request_rejected = false, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()}
+  msg = {spectate_request_granted = true, spectate_request_rejected = false, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()}
   for k,v in ipairs(self.spectators) do
 	self.spectators[k]:send(msg)
   end
@@ -496,6 +508,12 @@ function Room.send_to_spectators(self, message)
   end
 end
 
+function Room.send(self, message)
+  self.a:send(message)
+  self.b:send(message)
+  self:send_to_spectators(message)
+end
+
 function Room.resolve_game_outcome(self)
   --Note: return value is whether the outcome could be resolved
   if not self.game_outcome_reports[1] or not self.game_outcome_reports[2] then
@@ -593,10 +611,11 @@ function adjust_ratings(room, winning_player_number)
 			Oa=Actual Outcome (0 for loss, 1 for win)
 			k= Constant (Probably will use 10)
 		]]--
-		local new_ratings = {}
+		room.ratings = {}
 		local Ro, Rc, Oe, Oa
 		local k = 10
 		for player_number = 1,2 do
+		  room.ratings[player_number] = {}
 		  -- print("calculating expected outcome for")
 		  -- print(players[player_number].name.." Ranking: "..leaderboard.players[players[player_number].user_id].rating)
 		  -- print("vs")
@@ -615,12 +634,12 @@ function adjust_ratings(room, winning_player_number)
 		  else
 			Oa = 0
 		  end
-		  new_ratings[player_number] = Rc + k*(Oa-Oe)
-		  print("new_ratings["..player_number.."] = "..new_ratings[player_number])
+		  room.ratings[player_number].new = Rc + k*(Oa-Oe)
+		  print("room.ratings["..player_number.."].new = "..room.ratings[player_number].new)
 		end
-		--check that both player's new ratings are numeric (and not nil)
+		--check that both player's new room.ratings are numeric (and not nil)
 		for player_number = 1,2 do
-		  if tonumber(new_ratings[player_number]) then
+		  if tonumber(room.ratings[player_number].new) then
 		    print()
 		    continue = true
 		  else
@@ -629,13 +648,22 @@ function adjust_ratings(room, winning_player_number)
 		  end
 		end
 		if continue then
-			--now that both new_ratings have been calculated properly, actually update the leaderboard
+			--now that both new room.ratings have been calculated properly, actually update the leaderboard
 			for player_number = 1,2 do
 			  print(playerbase.players[players[player_number].user_id])
 			  print("Old rating:"..leaderboard.players[players[player_number].user_id].rating)
-			  leaderboard:update(players[player_number].user_id, new_ratings[player_number])
+			  room.ratings[player_number].old = leaderboard.players[players[player_number].user_id].rating
+			  leaderboard:update(players[player_number].user_id, room.ratings[player_number].new)
 			  print("New rating:"..leaderboard.players[players[player_number].user_id].rating)
 			end
+			for player_number = 1,2 do
+			  --round and calculate rating gain or loss (difference) to send to the clients
+			  room.ratings[player_number].old = round(room.ratings[player_number].old)
+			  room.ratings[player_number].new = round(room.ratings[player_number].new)
+			  room.ratings[player_number].difference = room.ratings[player_number].new - room.ratings[player_number].old
+			end
+			msg = {rating_updates=true, ratings=room.ratings}
+			room:send(msg)
 		end
 	else
 	  print("Not adjusting ratings.  Match settings prohibited this.")
