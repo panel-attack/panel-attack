@@ -5,6 +5,7 @@ require("stridx")
 require("gen_panels")
 require("csprng")
 require("server_file_io")
+require("util")
 
 local byte = string.byte
 local char = string.char
@@ -124,9 +125,22 @@ function start_match(a, b)
 	end
   end
   
-  local msg = {match_start = true,
+  local msg = {match_start = true, ranked = false,
                 player_settings = {character = a.character, level = a.level, player_number = a.player_number},
                 opponent_settings = {character = b.character, level = b.level, player_number = b.player_number}}
+  if a.room:ranking_adjustment_approved() then
+    msg.ranked = true
+	if leaderboard.players[a.user_id] then
+      msg.player_settings.ranking = round(leaderboard.players[a.user_id].ranking)
+	else
+	  msg.player_settings.ranking = DEFAULT_RANKING
+	end
+	if leaderboard.players[b.user_id] then
+      msg.opponent_settings.ranking = round(leaderboard.players[b.user_id].ranking)
+	else
+	  msg.opponent_settings.ranking = DEFAULT_RANKING
+	end
+  end
   a:send(msg)
   a.room:send_to_spectators(msg)
   msg.player_settings, msg.opponent_settings = msg.opponent_settings, msg.player_settings
@@ -240,7 +254,7 @@ Playerbase = class(function (s, name)
   playerbases[#playerbases+1] = s
 end)
 
-function Playerbase.add_player(self, user_id, user_name)
+function Playerbase.update(self, user_id, user_name)
   self.players[user_id] = user_name
   write_players_file()
 end
@@ -271,12 +285,16 @@ Leaderboard = class(function (s, name)
 end)
 
 function Leaderboard.update(self, user_id, new_ranking)
+  print("in Leaderboard.update")
   if self.players[user_id] then
     self.players[user_id].ranking = new_ranking
   else
     self.players[user_id] = {ranking=new_ranking}
   end
+  print("new_ranking = "..new_ranking)
+  print("about to write_leaderboard_file")
   write_leaderboard_file()
+  print("done with Leaderboard.update")
 end
 
 function Leaderboard.get_report(self)
@@ -327,7 +345,16 @@ Connection = class(function(s, socket)
 end)
 
 function Connection.menu_state(self)
-  return {cursor=self.cursor, ready=self.ready, character=self.character, level=self.level, player_number=self.player_number}
+  state = {cursor=self.cursor, ready=self.ready, character=self.character, level=self.level, player_number=self.player_number}
+    if self.user_id then
+	  if leaderboard.players[self.user_id] then
+        state.ranking = round(leaderboard.players[self.user_id].ranking)
+	  else 
+	    state.ranking = DEFAULT_RANKING
+	  end
+    end
+  
+  return 
   --note: player_number here is the player_number of the connection as according to the server, not the "which" of any Stack
 end
 
@@ -369,7 +396,7 @@ function Connection.login(self, user_id)
 	while not their_new_user_id or playerbase.players[their_new_user_id] do
 	  their_new_user_id = generate_new_user_id()
 	end
-	playerbase:add_player(their_new_user_id, self.name)
+	playerbase:update(their_new_user_id, self.name)
 	self:send({login_successful=true, new_user_id=their_new_user_id})
 	self.user_id = their_new_user_id
 	print("Connection with name "..self.name.." was assigned a new user_id")
@@ -384,7 +411,7 @@ function Connection.login(self, user_id)
 	return false
   elseif playerbase.players[self.user_id] ~= self.name then
     local the_old_name = playerbase.players[self.user_id]
-    playerbase.players[self.user_id] = self.name
+    playerbase:update(self.user_id, self.name)
 	self.logged_in = true
 	self:send({login_successful=true, name_changed=true , old_name=the_old_name, new_name=self.name})
 	print("Login successful and changed name "..the_old_name.." to "..self.name)
@@ -546,6 +573,7 @@ function adjust_ranking(room, winning_player_number)
 		    --if they aren't on the leaderboard yet, give them the default ranking
 	        if not leaderboard.players[players[player_number].user_id] or not leaderboard.players[players[player_number].user_id].ranking then  
 			  leaderboard:update(players[player_number].user_id, DEFAULT_RANKING)
+			  print("Gave "..leaderboard.players[players[player_number].user_id].." a new ranking of "..DEFAULT_RANKING)
 			end
 		  end
 		--[[ --Algorithm we are implementing, per community member Bbforky:
@@ -569,20 +597,31 @@ function adjust_ranking(room, winning_player_number)
 		local Ro, Rc, Oe, Oa
 		local k = 10
 		for player_number = 1,2 do
+		  -- print("calculating expected outcome for")
+		  -- print(players[player_number].name.." Ranking: "..leaderboard.players[players[player_number].user_id].ranking)
+		  -- print("vs")
+		  -- print(players[player_number].opponent.name.." Ranking: "..leaderboard.players[players[player_number].opponent.user_id].ranking)
 		  Ro = leaderboard.players[players[player_number].opponent.user_id].ranking
 		  Rc = leaderboard.players[players[player_number].user_id].ranking
-		  Oe = 1/(1+10^((Ro-Rc/400)))
+		  Oe = 1/(1+10^((Ro-Rc)/400))
+		  -- print("Ro="..Ro)
+		  -- print("Rc="..Rc)
+		  -- print("Ro-Rc="..Ro-Rc)
+		  -- print("1/(1+10^((Ro-Rc)/400))="..1/(1+10^((Ro-Rc)/400)))
+		  -- print("expected outcome: "..Oe)
 		  
 		  if players[player_number].player_number == winning_player_number then
 			Oa = 1
 		  else
 			Oa = 0
-		  new_rankings[player_number] = Rc + k*(Oa-Oe)
 		  end
+		  new_rankings[player_number] = Rc + k*(Oa-Oe)
+		  print("new_rankings["..player_number.."] = "..new_rankings[player_number])
 		end
 		--check that both player's new rankings are numeric (and not nil)
 		for player_number = 1,2 do
 		  if tonumber(new_rankings[player_number]) then
+		    print()
 		    continue = true
 		  else
 		    print(players[player_number].name.."'s new ranking wasn't calculated properly.  Not adjusting the ranking for this match")
@@ -593,9 +632,9 @@ function adjust_ranking(room, winning_player_number)
 			--now that both new_rankings have been calculated properly, actually update the leaderboard
 			for player_number = 1,2 do
 			  print(playerbase.players[players[player_number].user_id])
-			  print("Old ranking:"..leaderboard.players[players[player_number].user_id])
+			  print("Old ranking:"..leaderboard.players[players[player_number].user_id].ranking)
 			  leaderboard:update(players[player_number].user_id, new_rankings[player_number])
-			  print("New ranking:"..leaderboard.players[players[player_number].user_id])
+			  print("New ranking:"..leaderboard.players[players[player_number].user_id].ranking)
 			end
 		end
 	else
@@ -688,6 +727,13 @@ function Connection.J(self, message)
 	end
   elseif self.state == "room" and message.menu_state then
     message.menu_state.player_number = self.player_number
+	if self.user_id then
+	  if leaderboard.players[self.user_id] then
+        message.menu_state.ranking = round(leaderboard.players[self.user_id].ranking)
+	  else 
+	    message.menu_state.ranking = DEFAULT_RANKING
+	  end
+    end
 	self.level = message.menu_state.level
     self.character = message.menu_state.character
     self.ready = message.menu_state.ready
