@@ -523,7 +523,7 @@ function Room.resolve_game_outcome(self)
 		  if outcome == i then
 		    print("Player "..i.." scored")
 			self.win_counts[i] = self.win_counts[i] + 1
-			adjust_rating(self, i)
+			adjust_ratings(self, i)
 			someone_scored = true
 		  end
 		end
@@ -562,7 +562,7 @@ function Room.rating_adjustment_approved(self)
   return approval
 end
 
-function adjust_rating(room, winning_player_number)
+function adjust_ratings(room, winning_player_number)
 	print("We'd be adjusting the rating of "..room.a.name.." and "..room.b.name..". Player "..winning_player_number.." wins!")
 	local players = {room.a, room.b}
 	local continue = true
