@@ -414,17 +414,17 @@ function main_net_vs_room()
 		else
 		  op_rating_difference = "("..global_current_room_ratings[op_player_number].difference..") "
 		end
-		state = state..":  Rating: "..my_rating_difference..global_current_room_ratings[my_player_number].new.." "
+		state = state..":  Rating: "..my_rating_difference..global_current_room_ratings[my_player_number].new
 	end
     
-	
-	state = state..json.encode(my_state).."  Wins: "..my_win_count.."\n"
+	state = state.."  Wins: "..my_win_count
+	state = state.." "..json.encode(my_state).."\n"
 	state = state..op_name
 	if current_server_supports_ranking then
 	    state = state..":  Rating: "..op_rating_difference..global_current_room_ratings[op_player_number].new
 	end
-	state = state.." "..json.encode(op_state)
 	state = state.."  Wins: "..op_win_count
+	state = state.." "..json.encode(op_state)
 	gprint(state, 50, 50)
     wait()
     if not currently_spectating then

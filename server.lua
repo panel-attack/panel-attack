@@ -361,7 +361,7 @@ Connection = class(function(s, socket)
 end)
 
 function Connection.menu_state(self)
-  state = {cursor=self.cursor, ready=self.ready, character=self.character, level=self.level, player_number=self.player_number}
+  state = {cursor=self.cursor, ready=self.ready, character=self.character, level=self.level}
   
   return state
   --note: player_number here is the player_number of the connection as according to the server, not the "which" of any Stack
