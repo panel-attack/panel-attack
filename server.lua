@@ -102,8 +102,12 @@ function create_room(a, b)
     Room(a,b)
   end
   local a_msg, b_msg = {create_room = true}, {create_room = true}
+  a_msg.your_player_number = 1
+  a_msg.op_player_number = 2
   a_msg.opponent = b.name
   a_msg.menu_state = b:menu_state()
+  b_msg.your_player_number = 2
+  b_msg.op_player_number = 1
   b_msg.opponent = a.name
   b_msg.menu_state = a:menu_state()
 
@@ -358,15 +362,8 @@ end)
 
 function Connection.menu_state(self)
   state = {cursor=self.cursor, ready=self.ready, character=self.character, level=self.level, player_number=self.player_number}
-    if self.user_id then
-	  if leaderboard.players[self.user_id] then
-        state.rating = round(leaderboard.players[self.user_id].rating)
-	  else 
-	    state.rating = DEFAULT_RATING
-	  end
-    end
   
-  return 
+  return state
   --note: player_number here is the player_number of the connection as according to the server, not the "which" of any Stack
 end
 
@@ -754,14 +751,6 @@ function Connection.J(self, message)
 	  print("couldn't find room")
 	end
   elseif self.state == "room" and message.menu_state then
-    message.menu_state.player_number = self.player_number
-	if self.user_id then
-	  if leaderboard.players[self.user_id] then
-        message.menu_state.rating = round(leaderboard.players[self.user_id].rating)
-	  else 
-	    message.menu_state.rating = DEFAULT_RATING
-	  end
-    end
 	self.level = message.menu_state.level
     self.character = message.menu_state.character
     self.ready = message.menu_state.ready
@@ -774,6 +763,7 @@ function Connection.J(self, message)
 		end
     else
       self.opponent:send(message)
+	  message.player_number = self.player_number
 	  self.room:send_to_spectators(message) -- TODO: may need to include in the message who is sending the message
     end
   elseif self.state == "playing" and message.game_over then

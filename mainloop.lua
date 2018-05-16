@@ -266,11 +266,11 @@ function main_net_vs_room()
 			   {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
   local cursor,op_cursor,X,Y = {1,1},{1,1},5,7
   local up,down,left,right = {-1,0}, {1,0}, {0,-1}, {0,1}
-  local my_state = global_my_state or {character=config.character, level=config.level, cursor="level", player_number=1, ready=false}
+  local my_state = global_my_state or {character=config.character, level=config.level, cursor="level", ready=false}
   global_my_state = nil
   my_win_count = my_win_count or 0
   local prev_state = shallowcpy(my_state)
-  local op_state = global_op_state or {character="lip", level=5, cursor="level", player_number=2, ready=false}
+  local op_state = global_op_state or {character="lip", level=5, cursor="level", ready=false}
   global_op_state = nil
   op_win_count = op_win_count or 0
   global_current_room_ratings = global_current_room_ratings or {{new=0,old=0,difference=0},{new=0,old=0,difference=0}}
@@ -332,9 +332,9 @@ function main_net_vs_room()
 	  end
 	  if msg.menu_state then
 	    if currently_spectating then
-		  if msg.menu_state.player_number == 2 then
+		  if msg.player_number == 2 then
 		    op_state = msg.menu_state
-		  elseif msg.menu_state.player_number == 1 then
+		  elseif msg.player_number == 1 then
 		    my_state = msg.menu_state
 		  end
 		else
@@ -401,23 +401,31 @@ function main_net_vs_room()
     end
 	local my_rating_difference = ""
 	local op_rating_difference = ""
-	if global_current_room_ratings[my_state.player_number].difference >= 0 then
-	  my_rating_difference = "(+"..global_current_room_ratings[my_state.player_number].difference..") "
-	else
-	  my_rating_difference = "("..global_current_room_ratings[my_state.player_number].difference..") "
+	local state = ""
+	state = state..my_name
+	if current_server_supports_ranking then
+		if global_current_room_ratings[my_player_number].difference >= 0 then
+		  my_rating_difference = "(+"..global_current_room_ratings[my_player_number].difference..") "
+		else
+		  my_rating_difference = "("..global_current_room_ratings[my_player_number].difference..") "
+		end
+		if global_current_room_ratings[op_player_number].difference >= 0 then
+		  op_rating_difference = "(+"..global_current_room_ratings[op_player_number].difference..") "
+		else
+		  op_rating_difference = "("..global_current_room_ratings[op_player_number].difference..") "
+		end
+		state = state..":  Rating: "..my_rating_difference..global_current_room_ratings[my_player_number].new.." "
 	end
-	if global_current_room_ratings[op_state.player_number].difference >= 0 then
-	  op_rating_difference = "(+"..global_current_room_ratings[op_state.player_number].difference..") "
-	else
-	  op_rating_difference = "("..global_current_room_ratings[my_state.player_number].difference..") "
+    
+	
+	state = state..json.encode(my_state).."  Wins: "..my_win_count.."\n"
+	state = state..op_name
+	if current_server_supports_ranking then
+	    state = state..":  Rating: "..op_rating_difference..global_current_room_ratings[op_player_number].new
 	end
-    gprint(my_name
-	..	":  Rating: "..my_rating_difference..global_current_room_ratings[my_state.player_number].new.." "
-	..json.encode(my_state).."  Wins: "..my_win_count.."\n"
-	..op_name
-	..":  Rating: "..op_rating_difference..global_current_room_ratings[op_state.player_number].new
-	.." "..json.encode(op_state)
-	.."  Wins: "..op_win_count, 50, 50)
+	state = state.." "..json.encode(op_state)
+	state = state.."  Wins: "..op_win_count
+	gprint(state, 50, 50)
     wait()
     if not currently_spectating then
 		if menu_up(k) then
@@ -454,8 +462,7 @@ function main_net_vs_room()
 		  cursor = shallowcpy(name_to_xy["leave"])
 		end
 		active_str = map[cursor[1]][cursor[2]]
-		local my_player_number = my_state.player_number
-		my_state = {character=config.character, level=config.level, cursor=active_str, player_number=my_player_number,
+		my_state = {character=config.character, level=config.level, cursor=active_str,
 					ready=(selected and active_str=="ready")}
 		if not content_equal(my_state, prev_state) and not currently_spectating then
 		  json_send({menu_state=my_state})
@@ -530,6 +537,17 @@ function main_net_vs_lobby()
 		end
 	    global_my_state = msg.a_menu_state
 		global_op_state = msg.b_menu_state
+		if msg.your_player_number then
+		  my_player_number = msg.your_player_number
+		else
+		  my_player_number = 1
+		end
+		if msg.op_player_number then
+		  op_player_number = msg.op_player_number
+		else
+		  op_player_number = 2
+		end
+		
 		if msg.win_counts then
 		  update_win_counts(msg.win_counts)
 		end
