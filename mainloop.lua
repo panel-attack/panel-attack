@@ -259,12 +259,24 @@ function main_net_vs_room()
   P2 = {panel_buffer="", gpanel_buffer=""}
   local k = K[1]
   --TODO: UI for toggling ranked/casual
-  local map = {{"level", "level", "level", "level", "level", "level", "ready"},
-               {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
-               {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
-			   {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
-			   {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
-  local cursor,op_cursor,X,Y = {1,1},{1,1},5,7
+  local map = {}
+  print("current_server_supports_ranking: "..tostring(current_server_supports_ranking))
+  local cursor,op_cursor,X,Y
+  if current_server_supports_ranking then
+	map = {{"match type desired", "match type desired", "match type desired", "match type desired", "level", "level", "ready"},
+		   {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
+		   {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
+		   {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
+		   {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
+    cursor,op_cursor,X,Y = {1,5},{1,5},5,7
+  else
+	map = {{"level", "level", "level", "level", "level", "level", "ready"},
+		   {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
+		   {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
+		   {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
+		   {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
+    cursor,op_cursor,X,Y = {1,1},{1,1},5,7
+  end
   local up,down,left,right = {-1,0}, {1,0}, {0,-1}, {0,1}
   local my_state = global_my_state or {character=config.character, level=config.level, cursor="level", ready=false}
   global_my_state = nil
@@ -315,10 +327,21 @@ function main_net_vs_room()
     local pstr = str
     if str == "level" then
       if selected and active_str == "level" then
-		pstr = pstr .. "\nLevel: < "..my_state.level.." >\nOpponent's level: "..op_state.level
+		pstr = pstr .. "\n"..my_name.."'s level: < "..my_state.level.." >\n"..op_name.."'s level: "..op_state.level
 	  else
-	    pstr = pstr .. "\nLevel: "..my_state.level.."\nOpponent's level: "..op_state.level
+	    pstr = pstr .. "\n"..my_name.."'s level: "..my_state.level.."\n"..op_name.."'s level: "..op_state.level
 	  end
+      y_add,x_add = 9,180
+    end
+	if str == "match type desired" then
+	  local my_type_selection, op_type_selection = "[casual]  ranked", "[casual]  ranked"
+	  if my_state.ranked then
+	    my_type_selection = "casual  [ranked]"
+	  end
+	  if op_state.ranked then
+	    op_type_selection = "casual  [ranked]"
+	  end
+	  pstr = pstr .. "\n"..my_name..": "..my_type_selection.."\n"..op_name..": "..op_type_selection
       y_add,x_add = 9,180
     end
     if my_state.cursor == str then pstr = pstr.."\n"..my_name end
@@ -392,7 +415,13 @@ function main_net_vs_room()
         return main_net_vs
       end
     end
-    draw_button(1,1,6,1,"level")
+	if current_server_supports_ranking then
+	  draw_button(1,1,4,1,"match type desired")
+	  draw_button(1,5,2,1,"level")
+	else
+	  draw_button(1,1,6,1,"level")
+	end
+    
     draw_button(1,7,1,1,"ready")
     for i=2,X do
       for j=1,Y do
@@ -449,6 +478,8 @@ function main_net_vs_room()
 			do_leave()
 		  elseif active_str == "random" then
 			config.character = uniformly(characters)
+		  elseif active_str == "match type desired" then
+		    config.ranked = not config.ranked
 		  else
 			config.character = active_str
 			--When we select a character, move cursor to "ready"
