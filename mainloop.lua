@@ -517,8 +517,9 @@ function main_net_vs_lobby()
 			elseif msg.login_denied then
 			    current_server_supports_ranking = true
 				login_denied = true
+				error(json.encode(msg))
 				--TODO: create a menu here to let the user choose "continue unranked" or "get a new user_id"
-				login_status_message = "Login for ranked matches failed.\n"..msg.reason.."\n\nYou may continue unranked,\nor delete your invalid user_id file to have a new one assigned."
+				--login_status_message = "Login for ranked matches failed.\n"..msg.reason.."\n\nYou may continue unranked,\nor delete your invalid user_id file to have a new one assigned."
 				login_status_message_duration = 10
 			end
 		end

@@ -393,13 +393,18 @@ function Connection.login(self, user_id)
   --returns whether the login was successful
   --print("Connection.login was called!")
   self.user_id = user_id
-  if not self.user_id then
-    local the_reason = "Client did not send a user_id in the login request"
-    self:send({login_denied=true, login_successful=false, reason=the_reason})
-	print("Login denied.  Reason:  "..the_reason)
+  self.logged_in = false
+  local IP_logging_in, port = self.socket:getsockname()
+  print("New login attempt:  "..IP_logging_in..":"..port)
+  if is_banned(IP_logging_in) then
+    deny_login(self, "Awaiting ban timeout")
+  elseif not self.name then
+    deny_login(self, "Player has no name")
+	print("Login failure: Player has no name")
+  elseif not self.user_id then
+    deny_login(self, "Client did not send a user_id in the login request")
 	success = false
-  end
-  if self.user_id == "need a new user id" and self.name then
+  elseif self.user_id == "need a new user id" and self.name then
     print(self.name.." needs a new user id!")
     local their_new_user_id
 	while not their_new_user_id or playerbase.players[their_new_user_id] do
@@ -408,16 +413,11 @@ function Connection.login(self, user_id)
 	playerbase:update(their_new_user_id, self.name)
 	self:send({login_successful=true, new_user_id=their_new_user_id})
 	self.user_id = their_new_user_id
+	self.logged_in = true
 	print("Connection with name "..self.name.." was assigned a new user_id")
-  end
-  if not self.name then
-    self:send({login_successful=false, login_denied=true, reason="Player has no name"})
-	print("Login failure: Player has no name")
-	return false
   elseif not playerbase.players[self.user_id] then
-    self:send({login_successful=false, login_denied=true, reason="The user_id provided was not found on this server"})
+    deny_login(self, "The user_id provided was not found on this server")
 	print("Login failure: "..self.name.." specified an invalid user_id")
-	return false
   elseif playerbase.players[self.user_id] ~= self.name then
     local the_old_name = playerbase.players[self.user_id]
     playerbase:update(self.user_id, self.name)
@@ -428,11 +428,46 @@ function Connection.login(self, user_id)
     self.logged_in = true
 	self:send({login_successful=true})
   else
-    local the_reason = "unknown"
-    self:send({login_denied=true, login_successful=false, reason=the_reason})
-	print("login denied.  Reason:  "..the_reason)
+    deny_login(self, "Unknown")
   end
   return self.logged_in
+end
+
+--TODO: revisit this to determine whether it is good.
+function deny_login(connection, reason)
+    local new_violation_count = 0
+	local IP, port = connection.socket:getsockname()
+	if is_banned(IP) then
+	  --don't adjust ban_list
+	elseif ban_list[IP] and reason == "The user_id provided was not found on this server" then
+      ban_list[IP].violation_count = ban_list[IP].violation_count + 1
+	  ban_list[IP].unban_time = os.time()+60*ban_list[IP].violation_count
+	elseif reason == "The user_id provided was not found on this server" then
+	  ban_list[IP] = {violation_count=1, unban_time = os.time()+60}
+	else
+	  ban_list[IP] = {violation_count=0, unban_time = os.time()}
+	end
+	ban_list[IP].user_name = connection.name or ""
+	ban_list[IP].reason = reason
+    connection:send({login_denied=true, reason=reason, 
+					ban_duration=math.floor((ban_list[IP].unban_time-os.time())/60).."min"..((ban_list[IP].unban_time-os.time())%60).."sec",
+					violation_count = ban_list[IP].violation_count})
+	print("login denied.  Reason:  "..reason)
+end
+
+function unban(connection)
+  local IP, port = connection.socket:getsockname()
+  if ban_list[IP] then
+    ban_list[IP] = nil
+  end
+end
+
+function is_banned(IP)
+  local is_banned = false
+    if ban_list[IP] and ban_list[IP].unban_time - os.time() > 0 then
+	  is_banned = true
+	end
+  return is_banned
 end
 
 function Connection.opponent_disconnected(self)
@@ -886,6 +921,7 @@ read_players_file()
 read_deleted_players_file()
 leaderboard = Leaderboard("leaderboard")
 read_leaderboard_file()
+print(os.time())
 --TODO: remove test print for leaderboard
 print("playerbase: "..json.encode(playerbase.players))
 print("leaderboard report: "..json.encode(leaderboard:get_report()))
@@ -895,6 +931,7 @@ print("ALERT! YOU SHOULD CHANGE YOUR CSPRNG_SEED.TXT FILE TO MAKE YOUR USER_IDS 
 end
 initialize_mt_generator(csprng_seed)
 seed_from_mt(extract_mt())
+ban_list = {}
 print("initialized!")
 
 local prev_now = time()
