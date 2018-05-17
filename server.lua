@@ -927,7 +927,7 @@ end
 end
 --]]
 
-local server_socket = socket.bind("localhost", 49569)
+local server_socket = socket.bind("*", 49569)
 playerbase = Playerbase("playerbase")
 read_players_file()
 read_deleted_players_file()
