@@ -259,7 +259,6 @@ function main_net_vs_room()
   end
   P2 = {panel_buffer="", gpanel_buffer=""}
   local k = K[1]
-  --TODO: UI for toggling ranked/casual
   local map = {}
   print("current_server_supports_ranking: "..tostring(current_server_supports_ranking))
   local cursor,op_cursor,X,Y
@@ -287,6 +286,7 @@ function main_net_vs_room()
   global_op_state = nil
   op_win_count = op_win_count or 0
   global_current_room_ratings = global_current_room_ratings or {{new=0,old=0,difference=0},{new=0,old=0,difference=0}}
+  match_type = match_type or "casual"
   local selected = false
   local active_str = "level"
   local selectable = {level=true, ready=true}
@@ -337,10 +337,10 @@ function main_net_vs_room()
 	if str == "match type desired" then
 	  local my_type_selection, op_type_selection = "[casual]  ranked", "[casual]  ranked"
 	  if my_state.ranked then
-	    my_type_selection = "casual  [ranked]"
+	    my_type_selection = " casual  [ranked]"
 	  end
 	  if op_state.ranked then
-	    op_type_selection = "casual  [ranked]"
+	    op_type_selection = " casual  [ranked]"
 	  end
 	  pstr = pstr .. "\n"..my_name..": "..my_type_selection.."\n"..op_name..": "..op_type_selection
       y_add,x_add = 9,180
@@ -365,6 +365,16 @@ function main_net_vs_room()
           op_state = msg.menu_state
 		end
       end
+	  if msg.ranked_match_approved then
+	    match_type = "Ranked"
+		match_type_message = ""
+	  elseif msg.ranked_match_denied then
+	    match_type = "Casual"
+		match_type_message = "Not ranked. "
+		if msg.reasons then
+		  match_type_message = match_type_message..(msg.reasons[1] or "Reason unknown")
+		end
+	  end
       if msg.leave_room then
 		my_win_count = 0
 		op_win_count = 0
@@ -456,6 +466,11 @@ function main_net_vs_room()
 	state = state.."  Wins: "..op_win_count
 	state = state.." "..json.encode(op_state)
 	gprint(state, 50, 50)
+	if not my_state.ranked and not op_state.ranked then
+	  match_type_message = ""
+	end
+	gprint(match_type, 375, 15)
+	gprint(match_type_message,100,85)
     wait()
     if not currently_spectating then
 		if menu_up(k) then
@@ -494,7 +509,7 @@ function main_net_vs_room()
 		  cursor = shallowcpy(name_to_xy["leave"])
 		end
 		active_str = map[cursor[1]][cursor[2]]
-		my_state = {character=config.character, level=config.level, cursor=active_str,
+		my_state = {character=config.character, level=config.level, cursor=active_str, ranked=config.ranked,
 					ready=(selected and active_str=="ready")}
 		if not content_equal(my_state, prev_state) and not currently_spectating then
 		  json_send({menu_state=my_state})

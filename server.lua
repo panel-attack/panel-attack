@@ -135,7 +135,8 @@ function start_match(a, b)
   local msg = {match_start = true, ranked = false,
                 player_settings = {character = a.character, level = a.level, player_number = a.player_number},
                 opponent_settings = {character = b.character, level = b.level, player_number = b.player_number}}
-  if a.room:rating_adjustment_approved() then
+  local room_is_ranked, reasons = a.room:rating_adjustment_approved()
+  if room_is_ranked then
     msg.ranked = true
 	if leaderboard.players[a.user_id] then
       msg.player_settings.rating = round(leaderboard.players[a.user_id].rating)
@@ -357,11 +358,11 @@ Connection = class(function(s, socket)
   s.player_number = 0  -- 0 if not a player in a room, 1 if player "a" in a room, 2 if player "b" in a room
   s.logged_in = false --whether connection has successfully logged into the rating system.
   s.user_id = nil
-  s.wants_ranked_match = true --TODO: let the user change wants_ranked_match
+  s.wants_ranked_match = false --TODO: let the user change wants_ranked_match
 end)
 
 function Connection.menu_state(self)
-  state = {cursor=self.cursor, ready=self.ready, character=self.character, level=self.level}
+  state = {cursor=self.cursor, ready=self.ready, character=self.character, level=self.level, ranked=self.wants_ranked_match}
   
   return state
   --note: player_number here is the player_number of the connection as according to the server, not the "which" of any Stack
@@ -591,25 +592,25 @@ end
 function Room.rating_adjustment_approved(self)
   --returns whether both players in the room have game states such that rating adjustment should be approved
   local players = {self.a, self.b}
-  local approval = true
+  local reasons = {}
   local prev_player_level = players[1].level
   for player_number = 1,2 do
-	if playerbase.players[players[player_number].user_id]
-	and not playerbase.deleted_players[players[player_number].user_id]
-	and players[player_number].logged_in
-	and players[player_number].wants_ranked_match then
-	  print(players[player_number].name.."'s current game state allows rating adjustment")
-	else
-	  print(players[player_number].name.."'s current game state prohibits rating adjustment")
-	  approval = false
+	if not playerbase.players[players[player_number].user_id] or not players[player_number].logged_in or playerbase.deleted_players[players[player_number].user_id]then
+	  reasons[#reasons+1] = players[player_number].name.." didn't log in"
 	end
+    if not players[player_number].wants_ranked_match then
+	  reasons[#reasons+1] = players[player_number].name.." doesn't want ranked"
+    end
 	if players[player_number].level ~= prev_player_level then
-	  approval = false
-	  print("Players' difficulty levels don't match.  Ranking adjustment prohibited.")
+      reasons[#reasons+1] = "levels don't match"
 	end
 	prev_player_level = players[player_number].level
   end
-  return approval
+  if reasons[1] then
+    return false, reasons
+  else 
+    return true, reasons  
+  end
 end
 
 function adjust_ratings(room, winning_player_number)
@@ -617,7 +618,7 @@ function adjust_ratings(room, winning_player_number)
 	local players = {room.a, room.b}
 	local continue = true
 	--check that it's ok to adjust rating
-	continue = room:rating_adjustment_approved()
+	continue, reasons = room:rating_adjustment_approved()
 	if continue then
 		  for player_number = 1,2 do
 		    --if they aren't on the leaderboard yet, give them the default rating
@@ -698,7 +699,7 @@ function adjust_ratings(room, winning_player_number)
 			room:send(msg)
 		end
 	else
-	  print("Not adjusting ratings.  Match settings prohibited this.")
+	  print("Not adjusting ratings.  "..reasons[1])
 	end
 end
 
@@ -790,7 +791,18 @@ function Connection.J(self, message)
     self.character = message.menu_state.character
     self.ready = message.menu_state.ready
     self.cursor = message.menu_state.cursor
-    if self.ready and self.opponent.ready then
+	self.wants_ranked_match = message.menu_state.ranked
+    
+	if self.wants_ranked_match or self.opponent.wants_ranked_match then
+	  local ranked_match_approved, reasons = self.room:rating_adjustment_approved()
+	  if ranked_match_approved then
+	    self.room:send({ranked_match_approved=true})
+	  else
+		self.room:send({ranked_match_denied=true, reasons=reasons})
+	  end 
+	end
+	
+	if self.ready and self.opponent.ready then
 		if self.player_number == 1 then
 		  start_match(self, self.opponent)
 		else
