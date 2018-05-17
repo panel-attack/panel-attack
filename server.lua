@@ -623,7 +623,7 @@ function adjust_ratings(room, winning_player_number)
 		    --if they aren't on the leaderboard yet, give them the default rating
 	        if not leaderboard.players[players[player_number].user_id] or not leaderboard.players[players[player_number].user_id].rating then  
 			  leaderboard:update(players[player_number].user_id, DEFAULT_RATING)
-			  print("Gave "..leaderboard.players[players[player_number].user_id].." a new rating of "..DEFAULT_RATING)
+			  print("Gave "..playerbase.players[players[player_number].user_id].." a new rating of "..DEFAULT_RATING)
 			end
 		  end
 		--[[ --Algorithm we are implementing, per community member Bbforky:
