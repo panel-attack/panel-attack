@@ -1,4 +1,4 @@
-require("socket")
+local socket = require("socket")
 require("class")
 json = require("dkjson")
 require("stridx")
@@ -242,9 +242,16 @@ function Room.close(self)
 	--TODO: notify spectators that the room has closed.
 	if self.a then
 	  self.a.player_number = 0
+	  self.a.room = nil
 	end
 	if self.b then
 	  self.b.player_number = 0
+	  self.b.room = nil
+	end
+	for k,v in ipairs(self.spectators) do
+	  if v.room then
+	    v.room = nil
+	  end
 	end
 	if rooms[self.roomNumber] then
 		rooms[self.roomNumber] = nil

@@ -111,8 +111,8 @@ do
         {"1P puzzle", main_select_puzz},
         {"1P time attack", main_select_speed_99, {main_time_attack}},
         {"2P fakevs at burke.ro", main_net_vs_setup, {"burke.ro"}},
+		--{"2P fakevs at Jon's server (US-East, beta for ranking and spectating)", main_net_vs_setup, {"18.188.43.50"}},
 		{"2P fakevs at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
-		--{"2P fakevs at Jon's server (US-East, beta for ranking, spectating)", main_net_vs_setup, {"ec2-18-218-138-143.us-east-2.compute.amazonaws.com"}},
 		--{"2P fakevs at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
         {"2P fakevs local game", main_local_vs_setup},
         {"Replay of 1P endless", main_replay_endless},
@@ -288,6 +288,7 @@ function main_net_vs_room()
   op_win_count = op_win_count or 0
   global_current_room_ratings = global_current_room_ratings or {{new=0,old=0,difference=0},{new=0,old=0,difference=0}}
   match_type = match_type or "casual"
+  match_type_message = match_type_message or ""
   local selected = false
   local active_str = "level"
   local selectable = {level=true, ready=true}
