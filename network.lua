@@ -86,7 +86,7 @@ local process_message = {
   I=function(s) P2.input_buffer = P2.input_buffer..s end,
   Q=function(s) P1.gpanel_buffer = P1.gpanel_buffer..s end,
   R=function(s) P2.gpanel_buffer = P2.gpanel_buffer..s end,
-  E=function(s) net_send("F"..s) end,
+  E=function(s) net_send("F"..s) connection_up_time = connection_up_time +1 end,  --connection_up_time counts "E" messages, not seconds
   J=function(s) this_frame_messages[#this_frame_messages+1] = json.decode(s) print("JSON LOL "..s)end}
 
 function network_init(ip)

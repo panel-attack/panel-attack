@@ -1,0 +1,1 @@
+If you want to host your own server with ranking, be sure to change your csprng_seed.txt file, or your user_ids will be less secure.

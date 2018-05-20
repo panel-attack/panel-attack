@@ -169,6 +169,11 @@ function deepcpy(tab)
   return ret
 end
 
+function round(positive_exact_number)
+  local rounded_to_nearest_whole_number = math.floor(positive_exact_number+0.5)
+  return rounded_to_nearest_whole_number
+end
+
 -- Not actually for encoding/decoding byte streams as base64.
 -- Rather, it's for encoding streams of 6-bit symbols in printable characters.
 base64encode = procat("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890+/")
