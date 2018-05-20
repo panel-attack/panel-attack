@@ -15,6 +15,10 @@ require("consts")
 
 local N_FRAMES = 0
 local canvas = love.graphics.newCanvas(default_width, default_height)
+local last_x = 0
+local last_y = 0
+local input_delta = 0.0
+local pointer_hidden = false
 
 function love.load()
   math.randomseed(os.time())
@@ -28,6 +32,26 @@ function love.load()
 end
 
 function love.update(dt)
+  if love.mouse.getX() == last_x and love.mouse.getY() == last_y then
+    if not pointer_hidden then
+      if input_delta > mouse_pointer_timeout then
+        pointer_hidden = true
+        love.mouse.setVisible(false)
+      else
+       input_delta = input_delta + dt
+      end
+    end
+  else
+    last_x = love.mouse.getX()
+    last_y = love.mouse.getY()
+    input_delta = 0.0
+    if pointer_hidden then
+      pointer_hidden = false
+      love.mouse.setVisible(true)
+    end
+  end
+  
+  
   if consuming_timesteps then
     leftover_time = leftover_time + dt
   end
