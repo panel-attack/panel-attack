@@ -113,7 +113,7 @@ do
         {"1P puzzle", main_select_puzz},
         {"1P time attack", main_select_speed_99, {main_time_attack}},
         {"2P fakevs at burke.ro", main_net_vs_setup, {"burke.ro"}},
-		{"2P fakevs at Jon's server (US-East, beta for ranking and spectating)", main_net_vs_setup, {"18.188.43.50"}},
+		{"2P fakevs at Jon's server (US-East, beta for spectating and ranking)", main_net_vs_setup, {"18.188.43.50"}},
 		{"2P fakevs at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
 		--{"2P fakevs at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
         {"2P fakevs local game", main_local_vs_setup},
@@ -289,7 +289,8 @@ function main_net_vs_room()
   global_op_state = nil
   op_win_count = op_win_count or 0
   global_current_room_ratings = global_current_room_ratings or {{new=0,old=0,difference=0},{new=0,old=0,difference=0}}
-  match_type = match_type or "casual"
+  match_type = match_type or "Casual"
+  if match_type == "" then match_type = "Casual" end
   match_type_message = match_type_message or ""
   local selected = false
   local active_str = "level"
@@ -538,6 +539,8 @@ function main_net_vs_lobby()
   local spectatable_rooms = {}
   local k = K[1]
   local notice = {[true]="Select a player name to ask for a match.", [false]="You are all alone in the lobby :("}  
+  match_type = ""
+  match_type_message = ""
   --attempt login
   read_user_id_file()
   if not my_user_id then
@@ -804,6 +807,16 @@ function main_net_vs()
 	gprint(op_name, 410, op_name_y)
 	gprint("Wins: "..my_win_count, 315, 70)
 	gprint("Wins: "..op_win_count, 410, 70)
+	if match_type == "Ranked" then
+	  if global_current_room_ratings[my_player_number] 
+	  and global_current_room_ratings[my_player_number].new then
+	    gprint("Rating: "..global_current_room_ratings[my_player_number].new, 315, 85)
+	  end
+	  if global_current_room_ratings[op_player_number] 
+	  and global_current_room_ratings[op_player_number].new then
+	    gprint("Rating: "..global_current_room_ratings[op_player_number].new, 410, 85)
+	  end
+	end
 	--TODO: allow spectators to leave a game in progress
 	--if menu_escape(k) and currently_spectating then
 	--	  do_leave()
