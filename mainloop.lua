@@ -107,11 +107,13 @@ do
 	connection_up_time = 0
 	connected_server_ip = ""
 	current_server_supports_ranking = false
+	match_type = ""
+	match_type_message = ""
     local items = {{"1P endless", main_select_speed_99, {main_endless}},
         {"1P puzzle", main_select_puzz},
         {"1P time attack", main_select_speed_99, {main_time_attack}},
         {"2P fakevs at burke.ro", main_net_vs_setup, {"burke.ro"}},
-		--{"2P fakevs at Jon's server (US-East, beta for ranking and spectating)", main_net_vs_setup, {"18.188.43.50"}},
+		{"2P fakevs at Jon's server (US-East, beta for ranking and spectating)", main_net_vs_setup, {"18.188.43.50"}},
 		{"2P fakevs at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
 		--{"2P fakevs at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
         {"2P fakevs local game", main_local_vs_setup},
