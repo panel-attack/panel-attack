@@ -550,6 +550,7 @@ function main_net_vs_lobby()
   local login_status_message = "   Logging in..."
   local login_status_message_duration = 2
   local login_denied = false
+  local prev_act_idx = active_idx
   while true do
 	  if connection_up_time <= login_status_message_duration then
 		gprint(login_status_message, 300, 160)
@@ -632,22 +633,21 @@ function main_net_vs_lobby()
         items[#items+1] = v
       end
     end
-	local lastPlayerIndex = #items --the rest of the items will be spectatable rooms, except the last item
+	local lastPlayerIndex = #items --the rest of the items will be spectatable rooms, except the last two items (leaderboard and back to main menu)
     for _,v in ipairs(spectatable_rooms) do
 	  items[#items+1] = v
 	end
+	items[#items+1] = "Show Leaderboard"  -- the second to last item is "Leaderboard"
+	items[#items+1] = "Back to main menu" -- the last item is "Back to the main menu"
     if active_back then
-      if active_idx ~= 1 then
-        active_idx = #items+1
-      end
+      active_idx = #items
     else
       while active_idx > #items do
+	    print("active_idx > #items.  Decrementing active_idx")
         active_idx = active_idx - 1
       end
       active_name = items[active_idx]
     end
-	
-	items[#items+1] = "Back to main menu" -- the last item is "Back to the main menu"
     for i=1,#items do
       if active_idx == i then
         arrow = arrow .. ">"
@@ -656,17 +656,20 @@ function main_net_vs_lobby()
       end
 	  if i <= lastPlayerIndex then
 		to_print = to_print .. "   " .. items[i] .. (willing_players[items[i]] and " (Wants to play with you :o)" or "") .. "\n"
-	  elseif i < #items and items[i].name then
+	  elseif i < #items - 1 and items[i].name then
 	    to_print = to_print .. "   spectate " .. items[i].name .. " (".. items[i].state .. ")\n" --printing room names 
+	  elseif i < #items then
+	    to_print = to_print .. "   " .. items[i] .. "\n"
 	  else
 	    to_print = to_print .. "   " .. items[i]
 	  end
     end
-    gprint(notice[#items > 1], 300, 250)
+    gprint(notice[#items > 2], 300, 250)
     gprint(arrow, 300, 280)
     gprint(to_print, 300, 280)
     wait()
     if menu_up(k) then
+	  print("menu_up pressed")
       active_idx = wrap(1, active_idx-1, #items)
     elseif menu_down(k) then
       active_idx = wrap(1, active_idx+1, #items)
@@ -674,7 +677,9 @@ function main_net_vs_lobby()
       if active_idx == #items then
         return main_select_mode
       end
-	  if active_idx <= lastPlayerIndex then
+	  if active_idx == #items - 1 then
+	    json_send({leaderboard_request=true})
+	  elseif active_idx <= lastPlayerIndex then
 		
 		op_name = items[active_idx]
 		currently_spectating = false
@@ -693,6 +698,10 @@ function main_net_vs_lobby()
       end
     end
     active_back = active_idx == #items
+	if active_idx ~= prev_act_idx then
+	  print("#items: "..#items.."  idx_old: "..prev_act_idx.."  idx_new: "..active_idx.."  active_back: "..tostring(active_back))
+	  prev_act_idx = active_idx
+	end
     do_messages()
   end
 end
