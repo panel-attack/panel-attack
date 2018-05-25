@@ -179,7 +179,7 @@ Room = class(function(self, a, b)
     if a.user_id and leaderboard.players[a.user_id] and leaderboard.players[a.user_id].rating then
       a_rating = round(leaderboard.players[a.user_id].rating)
     end
-    if a.user_id and leaderboard.players[b.user_id] and leaderboard.players[a.user_id].rating then
+    if b.user_id and leaderboard.players[b.user_id] and leaderboard.players[b.user_id].rating then
       b_rating = round(leaderboard.players[b.user_id].rating)
     end
     self.ratings = {{old=a_rating or DEFAULT_RATING, new=a_rating or DEFAULT_RATING, difference=0},
