@@ -321,7 +321,7 @@ function Leaderboard.update(self, user_id, new_rating)
   print("done with Leaderboard.update")
 end
 
-function Leaderboard.get_report(self)
+function Leaderboard.get_report(self, user_id_of_requester)
 --returns the leaderboard as an array sorted from highest rating to lowest, 
 --with usernames from playerbase.players instead of user_ids
 --ie report[1] will give the highest rating player's user_name and how many points they have. Like this:
@@ -335,13 +335,17 @@ function Leaderboard.get_report(self)
   end
   for k,v in pairs(self.players) do
 	for insert_index=1, leaderboard_player_count do
+	  local player_is_leaderboard_requester = false
       if playerbase.players[k] then --only include in the report players who are still listed in the playerbase
 		if v.rating then -- don't include entries who's rating is nil (which shouldn't happen anyway)
+		  if k == user_id_of_requester then
+		    player_is_leaderboard_requester = true
+	      end
 		  if report[insert_index] and report[insert_index].rating and v.rating >= report[insert_index].rating then
-			table.insert(report, insert_index, {user_name=playerbase.players[k],rating=v.rating})
+			table.insert(report, insert_index, {user_name=playerbase.players[k],rating=v.rating,is_you=player_is_leaderboard_requester})
 			break
 		  elseif insert_index == leaderboard_player_count or #report == 0 then
-			table.insert(report, {user_name=playerbase.players[k],rating=v.rating}) -- at the end of the table.
+			table.insert(report, {user_name=playerbase.players[k],rating=v.rating,is_you=player_is_leaderboard_requester}) -- at the end of the table.
 		    break
 		  end
 		end
@@ -779,6 +783,8 @@ function Connection.J(self, message)
     if message.game_request.sender == self.name then
       propose_game(message.game_request.sender, message.game_request.receiver, message)
     end
+  elseif message.leaderboard_request then
+    self:send(leaderboard:get_report())
   elseif self.state == "lobby" and message.spectate_request then
 	local requestedRoom = roomNumberToRoom(message.spectate_request.roomNumber)
     if requestedRoom and requestedRoom:state() == CHARACTERSELECT then
