@@ -326,7 +326,7 @@ function Leaderboard.get_report(self, user_id_of_requester)
 --with usernames from playerbase.players instead of user_ids
 --ie report[1] will give the highest rating player's user_name and how many points they have. Like this:
 --report[1] might return {user_name="Alice",rating=2250}
---report[2] might return {user_name="Bob",rating=2100}
+--report[2] might return {user_name="Bob",rating=2100,is_you=true} if Bob requested the leaderboard
   local report = {}
   local leaderboard_player_count = 0
   --count how many entries there are in self.players since #self.players will not give us an accurate answer for sparse tables
@@ -335,7 +335,7 @@ function Leaderboard.get_report(self, user_id_of_requester)
   end
   for k,v in pairs(self.players) do
 	for insert_index=1, leaderboard_player_count do
-	  local player_is_leaderboard_requester = false
+	  local player_is_leaderboard_requester = nil
       if playerbase.players[k] then --only include in the report players who are still listed in the playerbase
 		if v.rating then -- don't include entries who's rating is nil (which shouldn't happen anyway)
 		  if k == user_id_of_requester then
@@ -351,6 +351,9 @@ function Leaderboard.get_report(self, user_id_of_requester)
 		end
 	  end
 	end
+  end
+  for k,v in pairs(report) do 
+    v.rating = round(v.rating)
   end
   return report
 end
