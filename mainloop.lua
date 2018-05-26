@@ -866,7 +866,11 @@ function main_net_vs()
       undo_stonermode()
       write_replay_file()
       json_send({game_over=true, outcome=outcome_claim})
-      return main_dumb_transition, {main_net_vs_lobby, end_text, 45, 180}
+	  if currently_spectating then
+	    return main_dumb_transition, {main_net_vs_lobby, end_text, 45, 45}
+	  else
+        return main_dumb_transition, {main_net_vs_lobby, end_text, 45, 180}
+	  end
     end
   end
 end
