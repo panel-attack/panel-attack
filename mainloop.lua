@@ -638,7 +638,7 @@ function main_net_vs_lobby()
 		  end
 		end
 		leaderboard_first_idx_to_show = math.max((my_rank or 1)-8,1)
-		leaderboard_last_idx_to_show = math.min((my_rank or 1)+8,#leaderboard_report)
+		leaderboard_last_idx_to_show = math.min(leaderboard_first_idx_to_show + 20,#leaderboard_report)
 		leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
 	  end
     end
@@ -694,18 +694,22 @@ function main_net_vs_lobby()
 	
     wait()
     if menu_up(k) then
-	  if showing_leaderboard and leaderboard_first_idx_to_show>1 then
-	    leaderboard_first_idx_to_show = leaderboard_first_idx_to_show - 1
-        leaderboard_last_idx_to_show = leaderboard_last_idx_to_show - 1	
-        leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
+	  if showing_leaderboard then
+	    if leaderboard_first_idx_to_show>1 then
+	      leaderboard_first_idx_to_show = leaderboard_first_idx_to_show - 1
+          leaderboard_last_idx_to_show = leaderboard_last_idx_to_show - 1	
+          leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
+	    end
 	  else
         active_idx = wrap(1, active_idx-1, #items)
       end
     elseif menu_down(k) then
-	  if showing_leaderboard and leaderboard_last_idx_to_show < #leaderboard_report then
-	    leaderboard_first_idx_to_show = leaderboard_first_idx_to_show + 1
-        leaderboard_last_idx_to_show = leaderboard_last_idx_to_show + 1
-        leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
+	  if showing_leaderboard then
+	    if leaderboard_last_idx_to_show < #leaderboard_report then
+	      leaderboard_first_idx_to_show = leaderboard_first_idx_to_show + 1
+          leaderboard_last_idx_to_show = leaderboard_last_idx_to_show + 1
+          leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
+		end
 	  else
         active_idx = wrap(1, active_idx+1, #items)
 	  end
