@@ -14,6 +14,7 @@ connection_up_time = 0
 logged_in = 0
 connected_server_ip = nil
 my_user_id = nil
+leaderboard_report = nil
 
 function fmainloop()
   local func, arg = main_select_mode, nil
@@ -539,6 +540,8 @@ function main_net_vs_lobby()
   local spectatable_rooms = {}
   local k = K[1]
   local notice = {[true]="Select a player name to ask for a match.", [false]="You are all alone in the lobby :("}  
+  local leaderboard_string = ""
+  local my_rank
   match_type = ""
   match_type_message = ""
   --attempt login
@@ -551,9 +554,11 @@ function main_net_vs_lobby()
   local login_status_message_duration = 2
   local login_denied = false
   local prev_act_idx = active_idx
+  local showing_leaderboard = false
+  local lobby_menu_x = {[true]=100, [false]=300} --will be used to make room in case the leaderboard should be shown.
   while true do
 	  if connection_up_time <= login_status_message_duration then
-		gprint(login_status_message, 300, 160)
+		gprint(login_status_message, lobby_menu_x[showing_leaderboard], 160)
 		for _,msg in ipairs(this_frame_messages) do
 			if msg.login_successful then
 			  current_server_supports_ranking = true
@@ -624,6 +629,18 @@ function main_net_vs_lobby()
       if msg.game_request then
         willing_players[msg.game_request.sender] = true
       end
+	  if msg.leaderboard_report then
+	    showing_leaderboard = true
+		leaderboard_report = msg.leaderboard_report
+		for k,v in ipairs(leaderboard_report) do
+		  if v.is_you then
+		    my_rank = k
+		  end
+		end
+		leaderboard_first_idx_to_show = math.max((my_rank or 1)-8,1)
+		leaderboard_last_idx_to_show = math.min((my_rank or 1)+8,#leaderboard_report)
+		leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
+	  end
     end
     local to_print = ""
     local arrow = ""
@@ -637,7 +654,11 @@ function main_net_vs_lobby()
     for _,v in ipairs(spectatable_rooms) do
 	  items[#items+1] = v
 	end
-	items[#items+1] = "Show Leaderboard"  -- the second to last item is "Leaderboard"
+	if showing_leaderboard then
+	  items[#items+1] = "Hide Leaderboard"
+	else
+	  items[#items+1] = "Show Leaderboard"  -- the second to last item is "Leaderboard"
+	end
 	items[#items+1] = "Back to main menu" -- the last item is "Back to the main menu"
     if active_back then
       active_idx = #items
@@ -664,21 +685,40 @@ function main_net_vs_lobby()
 	    to_print = to_print .. "   " .. items[i]
 	  end
     end
-    gprint(notice[#items > 2], 300, 250)
-    gprint(arrow, 300, 280)
-    gprint(to_print, 300, 280)
+    gprint(notice[#items > 2], lobby_menu_x[showing_leaderboard], 250)
+    gprint(arrow, lobby_menu_x[showing_leaderboard], 280)
+    gprint(to_print, lobby_menu_x[showing_leaderboard], 280)
+	if showing_leaderboard then
+	  gprint(leaderboard_string, 500, 160)
+	end
+	
     wait()
     if menu_up(k) then
-	  print("menu_up pressed")
-      active_idx = wrap(1, active_idx-1, #items)
+	  if showing_leaderboard and leaderboard_first_idx_to_show>1 then
+	    leaderboard_first_idx_to_show = leaderboard_first_idx_to_show - 1
+        leaderboard_last_idx_to_show = leaderboard_last_idx_to_show - 1	
+        leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
+	  else
+        active_idx = wrap(1, active_idx-1, #items)
+      end
     elseif menu_down(k) then
-      active_idx = wrap(1, active_idx+1, #items)
+	  if showing_leaderboard and leaderboard_last_idx_to_show < #leaderboard_report then
+	    leaderboard_first_idx_to_show = leaderboard_first_idx_to_show + 1
+        leaderboard_last_idx_to_show = leaderboard_last_idx_to_show + 1
+        leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
+	  else
+        active_idx = wrap(1, active_idx+1, #items)
+	  end
     elseif menu_enter(k) then
       if active_idx == #items then
         return main_select_mode
       end
 	  if active_idx == #items - 1 then
-	    json_send({leaderboard_request=true})
+	    if not showing_leaderboard then
+	      json_send({leaderboard_request=true})
+		else
+		  showing_leaderboard = false --toggle it off
+		end
 	  elseif active_idx <= lastPlayerIndex then
 		
 		op_name = items[active_idx]
@@ -714,6 +754,24 @@ function update_win_counts(win_counts)
 	my_win_count = win_counts[2] or 0
 	op_win_count = win_counts[1] or 0
   end
+end
+
+function build_viewable_leaderboard_string(report, first_viewable_idx, last_viewable_idx)
+  str = "        Leaderboard\n      Rank    Rating   Player\n"
+  first_viewable_idx = math.max(first_viewable_idx,1)
+  last_viewable_idx = math.min(last_viewable_idx, #report)
+  for i=first_viewable_idx,last_viewable_idx do
+    if report[i].is_you then
+	  str = str.."You-> "
+	else
+	  str = str.."      "
+	end
+	str = str..i.."    "..report[i].rating.."    "..report[i].user_name
+	if i < #report then
+	  str = str.."\n"
+	end
+  end
+  return str
 end
 
 function main_net_vs_setup(ip)

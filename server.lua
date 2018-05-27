@@ -789,7 +789,7 @@ function Connection.J(self, message)
       propose_game(message.game_request.sender, message.game_request.receiver, message)
     end
   elseif message.leaderboard_request then
-    self:send(leaderboard:get_report())
+    self:send({leaderboard_report=leaderboard:get_report(self)})
   elseif self.state == "lobby" and message.spectate_request then
 	local requestedRoom = roomNumberToRoom(message.spectate_request.roomNumber)
     if requestedRoom and requestedRoom:state() == CHARACTERSELECT then
