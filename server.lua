@@ -516,6 +516,8 @@ function Connection.close(self)
   end
   if self.room and (self.room.a.name == self.name or self.room.b.name == self.name) then
     self.room:close()
+  elseif self.room then
+    self.room:remove_spectator(self)
   end
   clear_proposals(self.name)
   if self.opponent then
@@ -793,7 +795,7 @@ function Connection.J(self, message)
     if requestedRoom and requestedRoom:state() == CHARACTERSELECT then
 	-- TODO: allow them to join
 	  print("join allowed")
-	 requestedRoom:add_spectator(connections[name_to_idx[message.spectate_request.sender]])
+	 requestedRoom:add_spectator(self)
 	  
 	elseif requestedRoom and requestedRoom:state() == "playing, not joinable" then
 	-- TODO: deny the join request, maybe queue them to join as soon as the status changes from "playing" to "room"
