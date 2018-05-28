@@ -577,10 +577,10 @@ function main_net_vs_lobby()
 			elseif msg.login_denied then
 			    current_server_supports_ranking = true
 				login_denied = true
-				error(json.encode(msg))
 				--TODO: create a menu here to let the user choose "continue unranked" or "get a new user_id"
 				--login_status_message = "Login for ranked matches failed.\n"..msg.reason.."\n\nYou may continue unranked,\nor delete your invalid user_id file to have a new one assigned."
 				login_status_message_duration = 10
+				return main_dumb_transition, {main_select_mode, "Error message received from the server:\n\n"..json.encode(msg),60,600}
 			end
 		end
 		if connection_up_time == 2 and not current_server_supports_ranking then
@@ -590,7 +590,7 @@ function main_net_vs_lobby()
 	  end
     for _,msg in ipairs(this_frame_messages) do
       if msg.choose_another_name then
-        error("name is taken :<")
+        return main_dumb_transition, {main_select_mode, "Error: name is taken :<\n\nIf you had just left the server,\nit may not have realized it yet, try joining again.\n\nThis can also happen if you have two\ninstances of Panel Attack open.\n\nPress Swap or Back to continue.", 60, 600}
       end
       if msg.create_room or msg.spectate_request_granted then
 	    if msg.ratings then
