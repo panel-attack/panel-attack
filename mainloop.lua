@@ -512,6 +512,7 @@ function main_net_vs_room()
 		  if active_str == "leave" then
 			do_leave()
 		  end
+		  selected = false
 		  cursor = shallowcpy(name_to_xy["leave"])
 		end
 		active_str = map[cursor[1]][cursor[2]]
@@ -661,8 +662,10 @@ function main_net_vs_lobby()
 	end
 	items[#items+1] = "Back to main menu" -- the last item is "Back to the main menu"
     if active_back then
-      active_idx = #items
-    else
+	  active_idx = #items
+    elseif showing_leaderboard then
+	  active_idx = #items - 1 --the position of the "hide leaderboard" menu item
+	else
       while active_idx > #items do
 	    print("active_idx > #items.  Decrementing active_idx")
         active_idx = active_idx - 1
@@ -737,7 +740,9 @@ function main_net_vs_lobby()
     elseif menu_escape(k) then
       if active_idx == #items then
         return main_select_mode
-      else
+      elseif showing_leaderboard then
+	    showing_leaderboard = false
+	  else
         active_idx = #items
       end
     end
