@@ -166,6 +166,9 @@ Room = class(function(self, a, b)
   self.a = a --player a
   self.b = b --player b
   self.name = a.name.." vs "..b.name
+  if self.replay then
+  --self.prev_replay = self.replay  --not sure if we'll need this.
+  end
   if not self.a.room then
 	self.roomNumber = ROOMNUMBER
 	ROOMNUMBER = ROOMNUMBER + 1
@@ -213,7 +216,9 @@ function Room.add_spectator(self, new_spectator_connection)
   self.spectators[#self.spectators+1] = new_spectator_connection
   print(new_spectator_connection.name .. " joined " .. self.name .. " as a spectator")
   
-  msg = {spectate_request_granted = true, spectate_request_rejected = false, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state(), win_counts=self.win_counts}
+  msg = {spectate_request_granted = true, spectate_request_rejected = false, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state(), win_counts=self.win_counts, match_start=replay_of_match_so_far~=nil, replay_of_match_so_far = self.replay, ranked = self:rating_adjustment_approved(), 
+				player_settings = {character = self.a.character, level = self.a.level, player_number = self.a.player_number},
+                opponent_settings = {character = self.b.character, level = self.b.level, player_number = self.b.player_number}}
   new_spectator_connection:send(msg)
 
   
@@ -544,8 +549,10 @@ function Connection.I(self, message)
     self.opponent:send("I"..message)
 	if self.player_number == 1 then
 	  self.room:send_to_spectators("U"..message)
+	  self.room.replay.vs.in_buf = self.room.replay.vs.in_buf..message
 	elseif self.player_number == 2 then
 	  self.room:send_to_spectators("I"..message)
+	  self.room.replay.vs.I = self.room.replay.vs.I..message
 	end
   end
 end
@@ -568,6 +575,8 @@ function Room.resolve_game_outcome(self)
   if not self.game_outcome_reports[1] or not self.game_outcome_reports[2] then
     return false
   else
+      write_replay_file(self.replay, "replay.txt")
+	  self.replay = nil
 	  local outcome = nil
 	  if self.game_outcome_reports[1] ~= self.game_outcome_reports[2] then
 		  --if clients disagree, the server needs to decide the outcome, perhaps by watching a replay it had created during the game.
@@ -740,8 +749,10 @@ function Connection.P(self, message)
   self:send("P"..ret)
   if self.player_number == 1 then
     self.room:send_to_spectators("P"..ret)
+	self.room.replay.vs.P = self.room.replay.vs.P..ret
   elseif self.player_number == 2 then
     self.room:send_to_spectators("O"..ret)
+	self.room.replay.vs.O = self.room.replay.vs.O..ret
   end
   if self.opponent then
     self.opponent:send("O"..ret)
@@ -755,8 +766,10 @@ function Connection.Q(self, message)
   self:send("Q"..ret)
   if self.player_number == 1 then
     self.room:send_to_spectators("Q"..ret)
+	self.room.replay.vs.Q = self.room.replay.vs.Q..ret
   elseif self.player_number == 2 then
     self.room:send_to_spectators("R"..ret)
+	self.room.replay.vs.R = self.room.replay.vs.R..ret
   end
   if self.opponent then
     self.opponent:send("R"..ret)
@@ -795,11 +808,12 @@ function Connection.J(self, message)
     if requestedRoom and requestedRoom:state() == CHARACTERSELECT then
 	-- TODO: allow them to join
 	  print("join allowed")
-	 requestedRoom:add_spectator(self)
+	  requestedRoom:add_spectator(self)
 	  
-	elseif requestedRoom and requestedRoom:state() == "playing, not joinable" then
+	elseif requestedRoom and requestedRoom:state() == PLAYING then
 	-- TODO: deny the join request, maybe queue them to join as soon as the status changes from "playing" to "room"
-	  print("join denied")
+	  print("join-in-progress allowed")
+	  requestedRoom:add_spectator(self)
 	else
 	-- TODO: tell the client the join request failed, couldn't find the room.
 	  print("couldn't find room")
@@ -821,6 +835,10 @@ function Connection.J(self, message)
 	end
 	
 	if self.ready and self.opponent.ready then
+		self.room.replay = {}
+		self.room.replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
+                    P1_level=self.room.a.level,P2_level=self.room.b.level,
+                    P1_char=self.room.a.character,P2_char=self.room.b.character}
 		if self.player_number == 1 then
 		  start_match(self, self.opponent)
 		else

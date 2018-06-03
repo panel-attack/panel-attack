@@ -418,6 +418,10 @@ end
 function Stack.foreign_run(self)
   local times_to_run = min(string.len(self.input_buffer),
       self.max_runs_per_frame)
+  if self.play_to_end then
+    times_to_run = string.len(self.input_buffer)
+	self.play_to_end = nil
+  end
   for i=1,times_to_run do
     self:update_cards()
     self.input_state = string.sub(self.input_buffer,1,1)

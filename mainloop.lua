@@ -15,6 +15,7 @@ logged_in = 0
 connected_server_ip = nil
 my_user_id = nil
 leaderboard_report = nil
+replay_of_match_so_far = nil
 
 function fmainloop()
   local func, arg = main_select_mode, nil
@@ -116,7 +117,7 @@ do
         {"2P fakevs at burke.ro", main_net_vs_setup, {"burke.ro"}},
 		{"2P fakevs at Jon's server (US-East, beta for spectating and ranking)", main_net_vs_setup, {"18.188.43.50"}},
 		{"2P fakevs at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
-		--{"2P fakevs at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
+		{"2P fakevs at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
         {"2P fakevs local game", main_local_vs_setup},
         {"Replay of 1P endless", main_replay_endless},
         {"Replay of 1P puzzle", main_replay_puzzle},
@@ -386,7 +387,7 @@ function main_net_vs_room()
 		op_win_count = 0
         return main_net_vs_lobby
       end
-      if msg.match_start then
+      if msg.match_start or replay_of_match_so_far then
         local fake_P1
 		print("currently_spectating: "..tostring(currently_spectating))
 		if currently_spectating then
@@ -411,6 +412,18 @@ function main_net_vs_room()
         replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
                     P1_level=P1.level,P2_level=P2.level,
                     P1_char=P1.character,P2_char=P2.character}
+		if currently_spectating and replay_of_match_so_far then --we joined a match in progress
+		  replay.vs = replay_of_match_so_far.vs
+		  P1.input_buffer = replay_of_match_so_far.vs.in_buf
+		  P1.panel_buffer = replay_of_match_so_far.vs.P
+		  P1.gpanel_buffer = replay_of_match_so_far.vs.Q
+		  P2.input_buffer = replay_of_match_so_far.vs.I
+		  P2.panel_buffer = replay_of_match_so_far.vs.O
+		  P2.gpanel_buffer = replay_of_match_so_far.vs.R
+		  replay_of_match_so_far = nil
+		  P1.play_to_end = true  --this makes foreign_run run until caught up
+		  P2.play_to_end = true
+		end
         if not currently_spectating then
 			ask_for_gpanels("000000")
 			ask_for_panels("000000")
@@ -611,6 +624,9 @@ function main_net_vs_lobby()
 		
 		if msg.win_counts then
 		  update_win_counts(msg.win_counts)
+		end
+		if msg.replay_of_match_so_far then
+		  replay_of_match_so_far = msg.replay_of_match_so_far
 		end
         return main_net_vs_room
       end
@@ -1035,8 +1051,7 @@ function main_replay_vs()
   P2.input_buffer = replay.I
   P2.panel_buffer = replay.O
   P2.gpanel_buffer = replay.R
-  P1.max_runs_per_frame = 1
-  P2.max_runs_per_frame = 1
+
   P1:starting_state()
   P2:starting_state()
   local end_text = nil
