@@ -216,11 +216,13 @@ function Room.add_spectator(self, new_spectator_connection)
   self.spectators[#self.spectators+1] = new_spectator_connection
   print(new_spectator_connection.name .. " joined " .. self.name .. " as a spectator")
   
-  msg = {spectate_request_granted = true, spectate_request_rejected = false, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state(), win_counts=self.win_counts, match_start=replay_of_match_so_far~=nil, replay_of_match_so_far = self.replay, ranked = self:rating_adjustment_approved(), 
+  msg = {spectate_request_granted = true, spectate_request_rejected = false, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state(), win_counts=self.win_counts, match_start=replay_of_match_so_far~=nil, replay_of_match_so_far = self.replay, ranked = self:rating_adjustment_approved(),
 				player_settings = {character = self.a.character, level = self.a.level, player_number = self.a.player_number},
                 opponent_settings = {character = self.b.character, level = self.b.level, player_number = self.b.player_number}}
   new_spectator_connection:send(msg)
-  print(json.encode(self:spectator_names()))
+  msg = {spectators=self:spectator_names()}
+  print("sending spectator list: "..json.encode(msg))
+  self:send(msg)
 end
 
 function Room.spectator_names(self)
@@ -248,6 +250,9 @@ function Room.remove_spectator(self, connection)
 	  connection:send(lobby_state())
 	end
   end
+  msg = {spectators=self:spectator_names()}
+  print("sending spectator list: "..json.encode(msg))
+  self:send(msg)
 end
 
 function Room.close(self)

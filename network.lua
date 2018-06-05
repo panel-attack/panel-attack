@@ -115,10 +115,16 @@ function do_messages()
         print("Got message "..typ.." "..data)
       end
       process_message[typ](data)
-	  if typ == "J" and this_frame_messages[#this_frame_messages].replay_of_match_so_far then
-	    --print("***BREAKING do_messages because received a replay")
-	    break  -- don't process any more messages this frame
-		       -- we need to initialize P1 and P2 before we do any I or U messages
+	  if typ == "J" then
+		if this_frame_messages[#this_frame_messages].replay_of_match_so_far then
+		  --print("***BREAKING do_messages because received a replay")
+		  break  -- don't process any more messages this frame
+				   -- we need to initialize P1 and P2 before we do any I or U messages
+		end
+		if data.spectators then
+		  spectator_list = data.spectators
+		  spectators_string = spectator_list_string(data.spectators)
+		end
 	  end
 	  if typ == "U" then
 	    typ = "in_buf"

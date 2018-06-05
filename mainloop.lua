@@ -16,6 +16,9 @@ connected_server_ip = nil
 my_user_id = nil
 leaderboard_report = nil
 replay_of_match_so_far = nil
+spectator_list = nil
+spectators_string = ""
+--TODO reset the spectator list when appropriate, maybe at main_net_vs_lobby
 
 function fmainloop()
   local func, arg = main_select_mode, nil
@@ -117,7 +120,7 @@ do
         {"2P fakevs at burke.ro", main_net_vs_setup, {"burke.ro"}},
 		{"2P fakevs at Jon's server (US-East, beta for spectating and ranking)", main_net_vs_setup, {"18.188.43.50"}},
 		{"2P fakevs at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
-		--{"2P fakevs at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
+		{"2P fakevs at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
         {"2P fakevs local game", main_local_vs_setup},
         {"Replay of 1P endless", main_replay_endless},
         {"Replay of 1P puzzle", main_replay_puzzle},
@@ -386,6 +389,10 @@ function main_net_vs_room()
 		my_win_count = 0
 		op_win_count = 0
         return main_net_vs_lobby
+      end
+	  if msg.spectators then
+	    spectator_list = msg.spectators
+		spectators_string = spectator_list_string(msg.spectators)
       end
       if msg.match_start or replay_of_match_so_far then
         local fake_P1
@@ -776,6 +783,20 @@ function update_win_counts(win_counts)
   end
 end
 
+function spectator_list_string(list)
+  local str = ""
+  for k,v in ipairs(list) do
+    str = str..v
+	if k<#list then
+	  str = str.."\n"
+	end
+  end
+  if str ~= "" then
+    str = "Spectator(s):\n"..str
+  end
+  return str
+end
+
 function build_viewable_leaderboard_string(report, first_viewable_idx, last_viewable_idx)
   str = "        Leaderboard\n      Rank    Rating   Player\n"
   first_viewable_idx = math.max(first_viewable_idx,1)
@@ -889,11 +910,18 @@ function main_net_vs()
       if msg.leave_room then
         return main_net_vs_lobby
       end
+	  if msg.spectators then
+	    spectator_list = msg.spectators
+		spectators_string = spectator_list_string(msg.spectators)
+      end
     end
 	gprint(my_name, 315, 40)
 	gprint(op_name, 410, op_name_y)
 	gprint("Wins: "..my_win_count, 315, 70)
 	gprint("Wins: "..op_win_count, 410, 70)
+	if not DEBUG_MODE then --this is printed in the same space as the debug details
+	  gprint(spectators_string, 315, 265)
+	end
 	if match_type == "Ranked" then
 	  if global_current_room_ratings[my_player_number] 
 	  and global_current_room_ratings[my_player_number].new then
@@ -1366,8 +1394,8 @@ function main_dumb_transition(next_func, text, timemin, timemax)
   local t = 0
   local k = K[1]
   while true do
-    if next_func == main_net_vs_room then
-      for _,msg in ipairs(this_frame_messages) do
+    for _,msg in ipairs(this_frame_messages) do
+	  if next_func == main_net_vs_room then
         if msg.menu_state then
 		  if currently_spectating then
 		    if msg.menu_state.player_number == 1 then
@@ -1386,6 +1414,11 @@ function main_dumb_transition(next_func, text, timemin, timemax)
 		  global_current_room_ratings = msg.ratings
 		end
       end
+	  if msg.spectators then
+	    spectator_list = msg.spectators
+		spectators_string = spectator_list_string(msg.spectators)
+      end 
+	  --TODO: anything else we should be listening for during main_dumb_transition?
     end
     gprint(text, 300, 280)
     wait()
