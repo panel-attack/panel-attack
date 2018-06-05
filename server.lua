@@ -220,8 +220,15 @@ function Room.add_spectator(self, new_spectator_connection)
 				player_settings = {character = self.a.character, level = self.a.level, player_number = self.a.player_number},
                 opponent_settings = {character = self.b.character, level = self.b.level, player_number = self.b.player_number}}
   new_spectator_connection:send(msg)
+  print(json.encode(self:spectator_names()))
+end
 
-  
+function Room.spectator_names(self)
+  local list = {}
+  for k,v in ipairs(self.spectators) do
+    list[#list+1] = v.name
+  end
+  return list
 end
 
 function Room.reinvite_spectators(self)
