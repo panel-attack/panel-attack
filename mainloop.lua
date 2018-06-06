@@ -436,6 +436,9 @@ function main_net_vs_room()
 			ask_for_panels("000000")
 		end
         to_print = "Game is starting!\n".."Level: "..P1.level.."\nOpponent's level: "..P2.level
+		if P1.play_to_end or P2.play_to_end then
+		  to_print = "Joined a match in progress.\nCatching up..."
+		end
         for i=1,30 do
           gprint(to_print,300, 280)
           do_messages()
@@ -937,20 +940,33 @@ function main_net_vs()
 	--	  do_leave()
 	--	  return main_net_vs_lobby
 	--end
-    P1:render()
-    P2:render()
-    wait()
-    do_messages()
+    if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
+	  P1:render()
+	  P2:render()
+	  wait()
+	  do_messages()
+	end
+    
     print(P1.CLOCK, P2.CLOCK)
-    variable_step(function()
-      if not P1.game_over then
+	if (P1 and P1.play_to_end) or (P2 and P2.play_to_end) then
+	  if not P1.game_over then
 		if currently_spectating then
 		  P1:foreign_run()
 		else
           P1:local_run() 
 		end
 	  end
-	end)
+	else
+      variable_step(function()
+        if not P1.game_over then
+		  if currently_spectating then
+	  	    P1:foreign_run()
+		  else
+            P1:local_run() 
+		  end
+	    end
+	  end)
+	end
     if not P2.game_over then
       P2:foreign_run()
     end
@@ -1079,6 +1095,8 @@ function main_replay_vs()
   P2.input_buffer = replay.I
   P2.panel_buffer = replay.O
   P2.gpanel_buffer = replay.R
+  P1.max_runs_per_frame = 1
+  P2.max_runs_per_frame = 1
 
   P1:starting_state()
   P2:starting_state()
