@@ -7,14 +7,18 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_replay_vs, main_local_vs_setup, main_local_vs, menu_key_func,
   multi_func, normal_key, main_set_name, main_net_vs_room, main_net_vs_lobby
   
-local PLAYING = "playing, not joinable"  -- room states
-local CHARACTERSELECT = "joinable" --room states
+local PLAYING = "playing"  -- room states
+local CHARACTERSELECT = "character select" --room states
 local currently_spectating = false
 connection_up_time = 0
 logged_in = 0
 connected_server_ip = nil
 my_user_id = nil
 leaderboard_report = nil
+replay_of_match_so_far = nil
+spectator_list = nil
+spectators_string = ""
+--TODO reset the spectator list when appropriate, maybe at main_net_vs_lobby
 
 function fmainloop()
   local func, arg = main_select_mode, nil
@@ -386,7 +390,7 @@ function main_net_vs_room()
 		op_win_count = 0
         return main_net_vs_lobby
       end
-      if msg.match_start then
+      if msg.match_start or replay_of_match_so_far then
         local fake_P1
 		print("currently_spectating: "..tostring(currently_spectating))
 		if currently_spectating then
@@ -411,11 +415,26 @@ function main_net_vs_room()
         replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
                     P1_level=P1.level,P2_level=P2.level,
                     P1_char=P1.character,P2_char=P2.character}
+		if currently_spectating and replay_of_match_so_far then --we joined a match in progress
+		  replay.vs = replay_of_match_so_far.vs
+		  P1.input_buffer = replay_of_match_so_far.vs.in_buf
+		  P1.panel_buffer = replay_of_match_so_far.vs.P
+		  P1.gpanel_buffer = replay_of_match_so_far.vs.Q
+		  P2.input_buffer = replay_of_match_so_far.vs.I
+		  P2.panel_buffer = replay_of_match_so_far.vs.O
+		  P2.gpanel_buffer = replay_of_match_so_far.vs.R
+		  replay_of_match_so_far = nil
+		  P1.play_to_end = true  --this makes foreign_run run until caught up
+		  P2.play_to_end = true
+		end
         if not currently_spectating then
 			ask_for_gpanels("000000")
 			ask_for_panels("000000")
 		end
         to_print = "Game is starting!\n".."Level: "..P1.level.."\nOpponent's level: "..P2.level
+		if P1.play_to_end or P2.play_to_end then
+		  to_print = "Joined a match in progress.\nCatching up..."
+		end
         for i=1,30 do
           gprint(to_print,300, 280)
           do_messages()
@@ -613,6 +632,9 @@ function main_net_vs_lobby()
 		if msg.win_counts then
 		  update_win_counts(msg.win_counts)
 		end
+		if msg.replay_of_match_so_far then
+		  replay_of_match_so_far = msg.replay_of_match_so_far
+		end
         return main_net_vs_room
       end
       if msg.unpaired then
@@ -717,6 +739,8 @@ function main_net_vs_lobby()
         active_idx = wrap(1, active_idx+1, #items)
 	  end
     elseif menu_enter(k) then
+	  spectator_list = {}
+	  spectators_string = ""
       if active_idx == #items then
         return main_select_mode
       end
@@ -727,7 +751,7 @@ function main_net_vs_lobby()
 		  showing_leaderboard = false --toggle it off
 		end
 	  elseif active_idx <= lastPlayerIndex then
-		
+		my_name = config.name
 		op_name = items[active_idx]
 		currently_spectating = false
 		request_game(items[active_idx])
@@ -763,6 +787,20 @@ function update_win_counts(win_counts)
 	my_win_count = win_counts[2] or 0
 	op_win_count = win_counts[1] or 0
   end
+end
+
+function spectator_list_string(list)
+  local str = ""
+  for k,v in ipairs(list) do
+    str = str..v
+	if k<#list then
+	  str = str.."\n"
+	end
+  end
+  if str ~= "" then
+    str = "Spectator(s):\n"..str
+  end
+  return str
 end
 
 function build_viewable_leaderboard_string(report, first_viewable_idx, last_viewable_idx)
@@ -883,6 +921,9 @@ function main_net_vs()
 	gprint(op_name, 410, op_name_y)
 	gprint("Wins: "..my_win_count, 315, 70)
 	gprint("Wins: "..op_win_count, 410, 70)
+	if not DEBUG_MODE then --this is printed in the same space as the debug details
+	  gprint(spectators_string, 315, 265)
+	end
 	if match_type == "Ranked" then
 	  if global_current_room_ratings[my_player_number] 
 	  and global_current_room_ratings[my_player_number].new then
@@ -898,20 +939,33 @@ function main_net_vs()
 	--	  do_leave()
 	--	  return main_net_vs_lobby
 	--end
-    P1:render()
-    P2:render()
-    wait()
-    do_messages()
+    if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
+	  P1:render()
+	  P2:render()
+	  wait()
+	  do_messages()
+	end
+    
     print(P1.CLOCK, P2.CLOCK)
-    variable_step(function()
-      if not P1.game_over then
+	if (P1 and P1.play_to_end) or (P2 and P2.play_to_end) then
+	  if not P1.game_over then
 		if currently_spectating then
 		  P1:foreign_run()
 		else
           P1:local_run() 
 		end
 	  end
-	end)
+	else
+      variable_step(function()
+        if not P1.game_over then
+		  if currently_spectating then
+	  	    P1:foreign_run()
+		  else
+            P1:local_run() 
+		  end
+	    end
+	  end)
+	end
     if not P2.game_over then
       P2:foreign_run()
     end
@@ -1042,6 +1096,7 @@ function main_replay_vs()
   P2.gpanel_buffer = replay.R
   P1.max_runs_per_frame = 1
   P2.max_runs_per_frame = 1
+
   P1:starting_state()
   P2:starting_state()
   local end_text = nil
@@ -1356,8 +1411,8 @@ function main_dumb_transition(next_func, text, timemin, timemax)
   local t = 0
   local k = K[1]
   while true do
-    if next_func == main_net_vs_room then
-      for _,msg in ipairs(this_frame_messages) do
+    for _,msg in ipairs(this_frame_messages) do
+	  if next_func == main_net_vs_room then
         if msg.menu_state then
 		  if currently_spectating then
 		    if msg.menu_state.player_number == 1 then
@@ -1376,6 +1431,7 @@ function main_dumb_transition(next_func, text, timemin, timemax)
 		  global_current_room_ratings = msg.ratings
 		end
       end
+	  --TODO: anything else we should be listening for during main_dumb_transition?
     end
     gprint(text, 300, 280)
     wait()
