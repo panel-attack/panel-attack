@@ -107,6 +107,7 @@ menu_escape = menu_key_func({"escape","x"}, {"swap2"}, false)
 do
   local active_idx = 1
   function main_select_mode()
+    love.audio.stop()
     close_socket()
 	logged_in = 0
 	connection_up_time = 0
@@ -262,6 +263,7 @@ function main_time_attack(...)
 end
 
 function main_net_vs_room()
+  love.audio.stop()
   if currently_spectating then
     P1 = {panel_buffer="", gpanel_buffer=""}
   end
@@ -562,6 +564,7 @@ function main_net_vs_lobby()
   local notice = {[true]="Select a player name to ask for a match.", [false]="You are all alone in the lobby :("}  
   local leaderboard_string = ""
   local my_rank
+  love.audio.stop()
   match_type = ""
   match_type_message = ""
   --attempt login
@@ -943,6 +946,13 @@ function main_net_vs()
 	  P1:render()
 	  P2:render()
 	  wait()
+	  if currently_spectating and this_frame_keys["escape"] then
+	    print("spectator pressed escape during a game")
+	    my_win_count = 0
+	    op_win_count = 0
+        json_send({leave_room=true})
+	    return main_net_vs_lobby
+	  end
 	  do_messages()
 	end
     
@@ -1113,6 +1123,9 @@ function main_replay_vs()
       gprint(str, 350, 400)
     end
     wait()
+	if this_frame_keys["escape"] then
+	  return main_select_mode
+	end
     if this_frame_keys["return"] then
       run = not run
     end
@@ -1157,6 +1170,9 @@ function main_replay_endless()
   while true do
     P1:render()
     wait()
+	if this_frame_keys["escape"] then
+	  return main_select_mode
+	end
     if this_frame_keys["return"] then
       run = not run
     end
@@ -1195,6 +1211,9 @@ function main_replay_puzzle()
       gprint(str, 350, 400)
     end
     wait()
+	if this_frame_keys["escape"] then
+	  return main_select_mode
+	end
     if this_frame_keys["return"] then
       run = not run
     end
