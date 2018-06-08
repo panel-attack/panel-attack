@@ -1444,8 +1444,10 @@ function Stack.check_matches(self)
             end
           end
           panel.color = string.sub(gpan_row, col, col) + 0
-          panel.chaining = true
-          self.n_chain_panels = self.n_chain_panels + 1
+		  if is_chain then
+            panel.chaining = true
+            self.n_chain_panels = self.n_chain_panels + 1
+		  end
         end
         garbage_index = garbage_index - 1
       elseif row <= self.height then
