@@ -7,8 +7,8 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_replay_vs, main_local_vs_setup, main_local_vs, menu_key_func,
   multi_func, normal_key, main_set_name, main_net_vs_room, main_net_vs_lobby
   
-local PLAYING = "playing, not joinable"  -- room states
-local CHARACTERSELECT = "joinable" --room states
+local PLAYING = "playing"  -- room states
+local CHARACTERSELECT = "character select" --room states
 local currently_spectating = false
 connection_up_time = 0
 logged_in = 0
@@ -120,7 +120,7 @@ do
         {"2P fakevs at burke.ro", main_net_vs_setup, {"burke.ro"}},
 		{"2P fakevs at Jon's server (US-East, beta for spectating and ranking)", main_net_vs_setup, {"18.188.43.50"}},
 		{"2P fakevs at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
-		{"2P fakevs at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
+		--{"2P fakevs at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
         {"2P fakevs local game", main_local_vs_setup},
         {"Replay of 1P endless", main_replay_endless},
         {"Replay of 1P puzzle", main_replay_puzzle},

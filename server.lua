@@ -16,8 +16,8 @@ local lobby_changed = false
 local time = os.time
 local floor = math.floor
 local TIMEOUT = 10
-local CHARACTERSELECT = "joinable" -- room states
-local PLAYING = "playing, not joinable" -- room states
+local CHARACTERSELECT = "character select" -- room states
+local PLAYING = "playing" -- room states
 local DEFAULT_RATING = 1500
 
 
