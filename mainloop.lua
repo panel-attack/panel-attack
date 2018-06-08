@@ -390,10 +390,6 @@ function main_net_vs_room()
 		op_win_count = 0
         return main_net_vs_lobby
       end
-	  if msg.spectators then
-	    spectator_list = msg.spectators
-		spectators_string = spectator_list_string(msg.spectators)
-      end
       if msg.match_start or replay_of_match_so_far then
         local fake_P1
 		print("currently_spectating: "..tostring(currently_spectating))
@@ -740,6 +736,8 @@ function main_net_vs_lobby()
         active_idx = wrap(1, active_idx+1, #items)
 	  end
     elseif menu_enter(k) then
+	  spectator_list = {}
+	  spectators_string = ""
       if active_idx == #items then
         return main_select_mode
       end
@@ -750,7 +748,7 @@ function main_net_vs_lobby()
 		  showing_leaderboard = false --toggle it off
 		end
 	  elseif active_idx <= lastPlayerIndex then
-		
+		my_name = config.name
 		op_name = items[active_idx]
 		currently_spectating = false
 		request_game(items[active_idx])
@@ -912,10 +910,6 @@ function main_net_vs()
     for _,msg in ipairs(this_frame_messages) do
       if msg.leave_room then
         return main_net_vs_lobby
-      end
-	  if msg.spectators then
-	    spectator_list = msg.spectators
-		spectators_string = spectator_list_string(msg.spectators)
       end
     end
 	gprint(my_name, 315, 40)
@@ -1432,10 +1426,6 @@ function main_dumb_transition(next_func, text, timemin, timemax)
 		  global_current_room_ratings = msg.ratings
 		end
       end
-	  if msg.spectators then
-	    spectator_list = msg.spectators
-		spectators_string = spectator_list_string(msg.spectators)
-      end 
 	  --TODO: anything else we should be listening for during main_dumb_transition?
     end
     gprint(text, 300, 280)

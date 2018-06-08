@@ -259,15 +259,18 @@ function Room.close(self)
 	--TODO: notify spectators that the room has closed.
 	if self.a then
 	  self.a.player_number = 0
+	  self.a.state = "lobby"
 	  self.a.room = nil
 	end
 	if self.b then
 	  self.b.player_number = 0
+	  self.b.state = "lobby"
 	  self.b.room = nil
 	end
 	for k,v in ipairs(self.spectators) do
 	  if v.room then
 	    v.room = nil
+		v.state = "lobby"
 	  end
 	end
 	if rooms[self.roomNumber] then
@@ -875,6 +878,9 @@ function Connection.J(self, message)
     local op = self.opponent
     self:opponent_disconnected()
     op:opponent_disconnected()
+	for k, v in pairs(self.room.spectators) do
+	  v:opponent_disconnected()
+	end
   elseif (self.state == "spectating") and message.leave_room then
 	self.room:remove_spectator(self)
   end
