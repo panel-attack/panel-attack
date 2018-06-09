@@ -393,13 +393,11 @@ function main_net_vs_room()
         return main_net_vs_lobby
       end
       if msg.match_start or replay_of_match_so_far then
-        local fake_P1
+        local fake_P1 = P1
 		print("currently_spectating: "..tostring(currently_spectating))
 		if currently_spectating then
 		  print("created fake_P1")
 		  fake_P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
-		  fake_P1.panel_buffer = ""
-		  fake_P1.gpanel_buffer = ""
 		end
 		local fake_P2 = P2
         P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
@@ -442,11 +440,28 @@ function main_net_vs_room()
           do_messages()
           wait()
         end
+		local game_start_timeout = 0
         while P1.panel_buffer == "" or P2.panel_buffer == ""
           or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
+		  --testing getting stuck here at "Game is starting"
+		  game_start_timeout = game_start_timeout + 1
+		  print("game_start_timeout = "..game_start_timeout)
+		  print("P1.panel_buffer = "..P1.panel_buffer)
+		  print("P2.panel_buffer = "..P2.panel_buffer)
+		  print("P1.gpanel_buffer = "..P1.gpanel_buffer)
+		  print("P2.gpanel_buffer = "..P2.gpanel_buffer)
           gprint(to_print,300, 280)
           do_messages()
           wait()
+		  if game_start_timeout > 500 then
+		    return main_dumb_transition, {main_select_mode, 
+			                "game start timed out.\n Please screenshot this and\npost it in #panel-attack-bugs-features"
+			                .."\n".."P1.panel_buffer = "..P1.panel_buffer
+		                    .."\n".."P2.panel_buffer = "..P2.panel_buffer
+		                    .."\n".."P1.panel_buffer = "..P1.gpanel_buffer
+		                    .."\n".."P2.panel_buffer = "..P2.gpanel_buffer,
+							600}
+		  end
         end
         P1:starting_state()
         P2:starting_state()
