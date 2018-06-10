@@ -266,8 +266,10 @@ function main_net_vs_room()
   love.audio.stop()
   if currently_spectating then
     P1 = {panel_buffer="", gpanel_buffer=""}
+	print("we reset P1 buffers at start of main_net_vs_room()")
   end
   P2 = {panel_buffer="", gpanel_buffer=""}
+  print("we reset P2 buffers at start of main_net_vs_room()")
   local k = K[1]
   local map = {}
   print("current_server_supports_ranking: "..tostring(current_server_supports_ranking))
@@ -455,11 +457,13 @@ function main_net_vs_room()
           wait()
 		  if game_start_timeout > 500 then
 		    return main_dumb_transition, {main_select_mode, 
-			                "game start timed out.\n Please screenshot this and\npost it in #panel-attack-bugs-features"
+			                "game-is-starting bug diagnostic version 2\n\ngame start timed out.\n Please screenshot this and\npost it in #panel-attack-bugs-features"
+							.."\n".."msg.match_start = "..tostring(msg.match_start)
+							.."\n".."replay_of_match_so_far = "..(tostring(replay_of_match_so_far) or "nil")
 			                .."\n".."P1.panel_buffer = "..P1.panel_buffer
 		                    .."\n".."P2.panel_buffer = "..P2.panel_buffer
-		                    .."\n".."P1.panel_buffer = "..P1.gpanel_buffer
-		                    .."\n".."P2.panel_buffer = "..P2.gpanel_buffer,
+		                    .."\n".."P1.gpanel_buffer = "..P1.gpanel_buffer
+		                    .."\n".."P2.gpanel_buffer = "..P2.gpanel_buffer,
 							600}
 		  end
         end
