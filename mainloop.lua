@@ -397,10 +397,6 @@ function main_net_vs_room()
       if msg.match_start or replay_of_match_so_far then
         local fake_P1 = P1
 		print("currently_spectating: "..tostring(currently_spectating))
-		if currently_spectating then
-		  print("created fake_P1")
-		  fake_P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
-		end
 		local fake_P2 = P2
         P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
         P2 = Stack(2, "vs", msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
