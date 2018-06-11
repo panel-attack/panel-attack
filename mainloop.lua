@@ -458,7 +458,7 @@ function main_net_vs_room()
 		  if game_start_timeout > 500 then
 		    return main_dumb_transition, {main_select_mode, 
 			                "game-is-starting bug diagnostic version 2\n\ngame start timed out.\n Please screenshot this and\npost it in #panel-attack-bugs-features"
-							.."\n".."msg.match_start = "..tostring(msg.match_start)
+							.."\n".."msg.match_start = "..(tostring(msg.match_start) or "nil")
 							.."\n".."replay_of_match_so_far = "..(tostring(replay_of_match_so_far) or "nil")
 			                .."\n".."P1.panel_buffer = "..P1.panel_buffer
 		                    .."\n".."P2.panel_buffer = "..P2.panel_buffer
