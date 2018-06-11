@@ -266,8 +266,10 @@ function main_net_vs_room()
   love.audio.stop()
   if currently_spectating then
     P1 = {panel_buffer="", gpanel_buffer=""}
+	print("we reset P1 buffers at start of main_net_vs_room()")
   end
   P2 = {panel_buffer="", gpanel_buffer=""}
+  print("we reset P2 buffers at start of main_net_vs_room()")
   local k = K[1]
   local map = {}
   print("current_server_supports_ranking: "..tostring(current_server_supports_ranking))
@@ -395,10 +397,6 @@ function main_net_vs_room()
       if msg.match_start or replay_of_match_so_far then
         local fake_P1 = P1
 		print("currently_spectating: "..tostring(currently_spectating))
-		if currently_spectating then
-		  print("created fake_P1")
-		  fake_P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
-		end
 		local fake_P2 = P2
         P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
         P2 = Stack(2, "vs", msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
@@ -455,11 +453,13 @@ function main_net_vs_room()
           wait()
 		  if game_start_timeout > 500 then
 		    return main_dumb_transition, {main_select_mode, 
-			                "game start timed out.\n Please screenshot this and\npost it in #panel-attack-bugs-features"
+			                "game-is-starting bug diagnostic version 2\n\ngame start timed out.\n Please screenshot this and\npost it in #panel-attack-bugs-features"
+							.."\n".."msg.match_start = "..(tostring(msg.match_start) or "nil")
+							.."\n".."replay_of_match_so_far = "..(tostring(replay_of_match_so_far) or "nil")
 			                .."\n".."P1.panel_buffer = "..P1.panel_buffer
 		                    .."\n".."P2.panel_buffer = "..P2.panel_buffer
-		                    .."\n".."P1.panel_buffer = "..P1.gpanel_buffer
-		                    .."\n".."P2.panel_buffer = "..P2.gpanel_buffer,
+		                    .."\n".."P1.gpanel_buffer = "..P1.gpanel_buffer
+		                    .."\n".."P2.gpanel_buffer = "..P2.gpanel_buffer,
 							600}
 		  end
         end
