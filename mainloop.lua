@@ -1435,7 +1435,7 @@ end
 function main_dumb_transition(next_func, text, timemin, timemax)
   love.audio.stop()
   if not SFX_mute and SFX_GameOver_Play == 1 then
-	SFX.game_over:play()
+	sounds.SFX.game_over:play()
   end
   SFX_GameOver_Play = 0
 

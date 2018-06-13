@@ -232,37 +232,40 @@ op_win_count = 0
 SFX_Fanfare_Play = 0
 SFX_GameOver_Play = 0
 SFX_GarbageThud_Play = 0
-SFX = {
-  cur_move = love.audio.newSource("sounds/SFX/06move.ogg", "static"),
-  swap = love.audio.newSource("sounds/SFX/08swap.ogg", "static"),
-  land = love.audio.newSource("sounds/SFX/12cLand.ogg", "static"),
-  fanfare1 = love.audio.newSource("sounds/SFX/F6Fanfare1.ogg", "static"),
-  fanfare2 = love.audio.newSource("sounds/SFX/F7Fanfare2.ogg", "static"),
-  fanfare3 = love.audio.newSource("sounds/SFX/F8Fanfare3.ogg", "static"),
-  game_over = love.audio.newSource("sounds/SFX/0DGameOver.ogg", "static"),
-  garbage_thud = {
-    love.audio.newSource("sounds/SFX/Thud_1.ogg"),
-    love.audio.newSource("sounds/SFX/Thud_2.ogg"),
-    love.audio.newSource("sounds/SFX/Thud_3.ogg")
+sounds = {
+  SFX = {
+    cur_move = love.audio.newSource("sounds/SFX/06move.ogg", "static"),
+    swap = love.audio.newSource("sounds/SFX/08swap.ogg", "static"),
+    land = love.audio.newSource("sounds/SFX/12cLand.ogg", "static"),
+    fanfare1 = love.audio.newSource("sounds/SFX/F6Fanfare1.ogg", "static"),
+    fanfare2 = love.audio.newSource("sounds/SFX/F7Fanfare2.ogg", "static"),
+    fanfare3 = love.audio.newSource("sounds/SFX/F8Fanfare3.ogg", "static"),
+    game_over = love.audio.newSource("sounds/SFX/0DGameOver.ogg", "static"),
+    garbage_thud = {
+      love.audio.newSource("sounds/SFX/Thud_1.ogg"),
+      love.audio.newSource("sounds/SFX/Thud_2.ogg"),
+      love.audio.newSource("sounds/SFX/Thud_3.ogg")
+    },
+    character = {},
+    pops = {}
   },
-  character = {},
-  pops = {}
+  music = {
+    character_normal = {},
+	character_danger = {}
+  }
 }
 for i,name in ipairs(characters) do
-	SFX.character[name] = love.audio.newSource("sounds/character_SFX/"..name..".ogg", "static")
+	sounds.SFX.character[name] = love.audio.newSource("sounds/character_SFX/"..name..".ogg", "static")
 end
-
-music_character_normal = {}
 for i,name in ipairs(characters) do
-	music_character_normal[name] = love.audio.newSource("sounds/Music/"..stages[name].."_normal.it")
+	sounds.music.character_normal[name] = love.audio.newSource("sounds/Music/"..stages[name].."_normal.it")
 end
-music_character_danger = {}
 for i,name in ipairs(characters) do
-	music_character_danger[name] = love.audio.newSource("sounds/Music/"..stages[name].."_danger.it")
+	sounds.music.character_danger[name] = love.audio.newSource("sounds/Music/"..stages[name].."_danger.it")
 end
 for popLevel=1,4 do
-	SFX.pops[popLevel] = {}
+	sounds.SFX.pops[popLevel] = {}
 	for popIndex=1,10 do
-		SFX.pops[popLevel][popIndex] = love.audio.newSource("sounds/SFX/pop"..popLevel.."-"..popIndex..".ogg", "static")
+		sounds.SFX.pops[popLevel][popIndex] = love.audio.newSource("sounds/SFX/pop"..popLevel.."-"..popIndex..".ogg", "static")
 	end
 end
