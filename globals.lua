@@ -145,9 +145,9 @@ end
 
 characters = {"lip", "windy", "sherbet", "thiana", "ruby",
               "elias", "flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia", 
-			  "lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg",
-			  "lungefish", "raphael", "yoshi", "hookbill",
-			  "navalpiranha", "kamek", "bowser"}
+              "lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg",
+              "lungefish", "raphael", "yoshi", "hookbill",
+              "navalpiranha", "kamek", "bowser"}
 stages = {}
 stages["lip"] = "flower"
 stages["windy"] = "wind"
@@ -223,7 +223,7 @@ colors = {  red     = {220, 50,  47 },
             white   = {234, 234, 234},
             black   = {20,  20,  20 },
             dgray   = {28,  28,  28 }}
-			
+            
 -- win counters
 my_win_count = 0
 op_win_count = 0
@@ -251,21 +251,21 @@ sounds = {
   },
   music = {
     character_normal = {},
-	character_danger = {}
+    character_danger = {}
   }
 }
 for i,name in ipairs(characters) do
-	sounds.SFX.character[name] = love.audio.newSource("sounds/character_SFX/"..name..".ogg", "static")
+    sounds.SFX.character[name] = love.audio.newSource("sounds/character_SFX/"..name..".ogg", "static")
 end
 for i,name in ipairs(characters) do
-	sounds.music.character_normal[name] = love.audio.newSource("sounds/Music/"..stages[name].."_normal.it")
+    sounds.music.character_normal[name] = love.audio.newSource("sounds/Music/"..stages[name].."_normal.it")
 end
 for i,name in ipairs(characters) do
-	sounds.music.character_danger[name] = love.audio.newSource("sounds/Music/"..stages[name].."_danger.it")
+    sounds.music.character_danger[name] = love.audio.newSource("sounds/Music/"..stages[name].."_danger.it")
 end
 for popLevel=1,4 do
-	sounds.SFX.pops[popLevel] = {}
-	for popIndex=1,10 do
-		sounds.SFX.pops[popLevel][popIndex] = love.audio.newSource("sounds/SFX/pop"..popLevel.."-"..popIndex..".ogg", "static")
-	end
+    sounds.SFX.pops[popLevel] = {}
+    for popIndex=1,10 do
+        sounds.SFX.pops[popLevel][popIndex] = love.audio.newSource("sounds/SFX/pop"..popLevel.."-"..popIndex..".ogg", "static")
+    end
 end

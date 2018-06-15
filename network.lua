@@ -93,7 +93,7 @@ local process_message = {
     print("JSON LOL "..s)
     if current_message.spectators then
       spectator_list = current_message.spectators
-	  spectators_string = spectator_list_string(current_message.spectators)
+      spectators_string = spectator_list_string(current_message.spectators)
     end
   end}
 
@@ -123,16 +123,16 @@ function do_messages()
         print("Got message "..typ.." "..data)
       end
       process_message[typ](data)
-	  if typ == "J" then
-		if this_frame_messages[#this_frame_messages].replay_of_match_so_far then
-		  --print("***BREAKING do_messages because received a replay")
-		  break  -- don't process any more messages this frame
-				   -- we need to initialize P1 and P2 before we do any I or U messages
-		end
-	  end
-	  if typ == "U" then
-	    typ = "in_buf"
-	  end
+      if typ == "J" then
+        if this_frame_messages[#this_frame_messages].replay_of_match_so_far then
+          --print("***BREAKING do_messages because received a replay")
+          break  -- don't process any more messages this frame
+                   -- we need to initialize P1 and P2 before we do any I or U messages
+        end
+      end
+      if typ == "U" then
+        typ = "in_buf"
+      end
       if P1 and P1.mode and replay[P1.mode][typ] then
         replay[P1.mode][typ]=replay[P1.mode][typ]..data
       end
