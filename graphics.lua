@@ -201,7 +201,7 @@ end
 
 function Stack.render(self)
   local mx,my
-  if DEBUG_MODE then
+  if config.debug_mode then
     mx,my = love.mouse.getPosition()
     mx = mx / GFX_SCALE
     my = my / GFX_SCALE
@@ -285,7 +285,7 @@ function Stack.render(self)
             end
           end
 		  --this adds the drawing of state flags to garbage panels
-		  if DEBUG_MODE then
+		  if config.debug_mode then
             gprint(panel.state, draw_x*3, draw_y*3)
             if panel.match_anyway ~= nil then
               gprint(tostring(panel.match_anyway), draw_x*3, draw_y*3+10)
@@ -324,7 +324,7 @@ function Stack.render(self)
             draw_frame = 1
           end
           draw(IMG_panels[panel.color][draw_frame], draw_x, draw_y)
-          if DEBUG_MODE then
+          if config.debug_mode then
             gprint(panel.state, draw_x*3, draw_y*3)
             if panel.match_anyway ~= nil then
               gprint(tostring(panel.match_anyway), draw_x*3, draw_y*3+10)
@@ -336,7 +336,7 @@ function Stack.render(self)
           end
         end
       end
-      if DEBUG_MODE and mx >= draw_x and mx < draw_x + 16 and
+      if config.debug_mode and mx >= draw_x and mx < draw_x + 16 and
           my >= draw_y and my < draw_y + 16 then
         mouse_panel = {row, col, panel}
         draw(IMG_panels[4][1], draw_x+16/3, draw_y+16/3, 0, 0.33333333, 0.3333333)
@@ -364,8 +364,8 @@ function Stack.render(self)
     gprint("Shake: "..self.shake_time, self.score_x, 190)
     gprint("Stop: "..self.stop_time, self.score_x, 205)
     gprint("Pre stop: "..self.pre_stop_time, self.score_x, 220)
-	if DEBUG_MODE and self.danger then gprint("danger", self.score_x,235) end
-	if DEBUG_MODE and self.danger_music then gprint("danger music", self.score_x, 250) end
+	if config.debug_mode and self.danger then gprint("danger", self.score_x,235) end
+	if config.debug_mode and self.danger_music then gprint("danger music", self.score_x, 250) end
 	if match_type then gprint(match_type, 375, 15) end
 	--gprint("Player"..self.player_number, self.score_x,265)
     --gprint("Panel buffer: "..#self.panel_buffer, self.score_x, 190)

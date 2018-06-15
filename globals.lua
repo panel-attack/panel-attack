@@ -176,7 +176,7 @@ stages["navalpiranha"] = "cave"
 stages["kamek"] = "cave"
 stages["bowser"] = "king"
 
-DEBUG_MODE = false
+config.debug_mode = false
 
 shake_arr = {}
 
