@@ -45,18 +45,18 @@ function read_csprng_seed_file() pcall(function()
   if f then
     io.input(f)
     csprng_seed = io.read("*all")
-	io.close(f)
+    io.close(f)
   else
     print("csprng_seed.txt could not be read.  Writing a new default (2000) csprng_seed.txt")
     local new_file = io.open("csprng_seed.txt", "w")
     io.output(new_file)
     io.write("2000")
     io.close(new_file)
-	csprng_seed = "2000"
+    csprng_seed = "2000"
   end
   if tonumber(csprng_seed) then
     local tempvar = tonumber(csprng_seed)
-	csprng_seed = tempvar
+    csprng_seed = tempvar
   else 
     print("ERROR: csprng_seed.txt content is not numeric.  Using default (2000) as csprng_seed")
     csprng_seed = 2000

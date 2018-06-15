@@ -4,7 +4,7 @@ function set_volume(source, new_volume)
   if type(source) == "table" then
     for _,v in pairs(source) do
       set_volume(v, new_volume)
-	end
+    end
   else
     source:setVolume(new_volume)
   end
