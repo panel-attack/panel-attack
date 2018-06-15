@@ -128,6 +128,7 @@ do
         {"Replay of 2P fakevs", main_replay_vs},
         {"Configure input", main_config_input},
         {"Set name", main_set_name},
+		{"Options", main_options},
         {"Fullscreen (LAlt+Enter)", fullscreen},
         {"Quit", os.exit}}
     local k = K[1]
@@ -939,7 +940,7 @@ function main_net_vs()
 	gprint(op_name, 410, op_name_y)
 	gprint("Wins: "..my_win_count, 315, 70)
 	gprint("Wins: "..op_win_count, 410, 70)
-	if not DEBUG_MODE then --this is printed in the same space as the debug details
+	if not config.debug_mode then --this is printed in the same space as the debug details
 	  gprint(spectators_string, 315, 265)
 	end
 	if match_type == "Ranked" then
@@ -1407,6 +1408,155 @@ function main_config_input()
   end
 end
 
+function main_options()
+  local option_names = {"Master Volume", "SFX Volume", "Music Volume", "Debug Mode"}
+  local items, active_idx = {}, 1
+  local k = K[1]
+  local selected, deselected_this_frame, adjust_active_value = false, false, false
+  local function get_items()
+  local debug_mode_text = {[true]="On", [false]="Off"}  
+    items = {
+    --{[1]"Option Name", [2]default value, [3]type, [4]min or bool value,
+    -- [5]max, [6]sound_source, [7]selectable, [8]next_func, [9]play_while selected}
+      {"Master Volume", config.master_volume or 100, "numeric", 0, 100, sounds.music.character_normal["lip"], true, nil, true},
+      {"SFX Volume", config.SFX_volume or 100, "numeric", 0, 100, sounds.SFX.cur_move, true},
+      {"Music Volume", config.music_volume or 100, "numeric", 0, 100, sounds.music.character_normal["lip"], true, nil, true},
+      {"Debug Mode", debug_mode_text[config.debug_mode or false], "bool", false, nil, nil,false},
+      {"Back", "", nil, nil, nil, nil, false, main_select_mode}
+    }
+  end
+  local function print_stuff()
+    local to_print, to_print2, arrow = "", "", ""
+    for i=1,#items do
+      if active_idx == i then
+        arrow = arrow .. ">"
+      else
+        arrow = arrow .. "\n"
+      end
+      to_print = to_print .. "   " .. items[i][1] .. "\n"
+      to_print2 = to_print2 .. "                  " 
+      if active_idx == i and selected then  
+        to_print2 = to_print2 .. "                < "
+      else
+        to_print2 = to_print2 .. "                  "
+      end
+      to_print2 = to_print2.. items[i][2] 
+      if active_idx == i and selected then
+        to_print2 = to_print2 .. " >"
+      end
+      to_print2 = to_print2 .. "\n"
+    end
+    gprint(arrow, 300, 280)
+    gprint(to_print, 300, 280)
+    gprint(to_print2, 300, 280)
+  end
+  local function adjust_left()
+    if items[active_idx][3] == "numeric" then
+      if items[active_idx][2] > items[active_idx][4] then --value > minimum
+        items[active_idx][2] = items[active_idx][2] - 1
+      end
+    end
+    --the following is enough for "bool"
+    adjust_active_value = true
+    if items[active_idx][6] and not items[active_idx][9] then
+    --sound_source for this menu item exists and not play_while_selected
+      items[active_idx][6]:stop()
+      items[active_idx][6]:play()
+    end
+  end
+  local function adjust_right()
+    if items[active_idx][3] == "numeric" then
+      if items[active_idx][2] < items[active_idx][5] then --value < maximum
+        items[active_idx][2] = items[active_idx][2] + 1
+      end
+    end
+    --the following is enough for "bool"
+    adjust_active_value = true
+    if items[active_idx][6] and not items[active_idx][9] then 
+    --sound_source for this menu item exists and not play_while_selected
+      items[active_idx][6]:stop()
+      items[active_idx][6]:play()
+    end
+  end
+  while true do
+    get_items()
+    print_stuff()
+    wait()
+    if menu_up(K[1]) and not selected then
+      active_idx = wrap(1, active_idx-1, #items)
+    elseif menu_down(K[1]) and not selected then
+      active_idx = wrap(1, active_idx+1, #items)
+    elseif menu_left(K[1]) and selected then
+      adjust_left()
+    elseif menu_right(K[1]) and selected then
+      adjust_right()
+    elseif menu_enter(K[1]) then
+      if items[active_idx][7] then --is selectable
+        selected = not selected
+        if not selected then
+          deselected_this_frame = true
+          adjust_active_value = true
+        end
+      elseif items[active_idx][3] == "bool" then
+          adjust_active_value = true
+      elseif active_idx == #items then
+        write_conf_file()
+        return items[active_idx][8] --next_func
+      end
+    elseif menu_escape(K[1]) then
+      if selected then
+        selected = not selected
+        deselected_this_frame = true
+      elseif active_idx == #items then
+        write_conf_file()
+        return main_select_mode
+      else
+        active_idx = #items
+      end
+    end
+    if adjust_active_value then
+      if items[active_idx][3] == "bool" then
+        if active_idx == 4 then
+          config.debug_mode = not config.debug_mode
+        end
+        --add any other bool config updates here
+      elseif items[active_idx][3] == "numeric" then
+        if config.master_volume ~= items[1][2] then
+          config.master_volume = items[1][2]
+          love.audio.setVolume(config.master_volume/100)
+        end
+        if config.SFX_volume ~= items[2][2] then --SFX volume should be updated
+          config.SFX_volume = items[2][2]
+          items[2][6]:setVolume(config.SFX_volume/100) --do just the one sound effect until we deselect
+        end
+        if active_idx == 2 and deselected_this_frame then --SFX Volume
+          set_volume(sounds.SFX, config.SFX_volume/100)
+        end
+        if config.music_volume ~= items[3][2] then --music volume should be updated
+          config.music_volume = items[3][2]
+          items[3][6]:setVolume(config.music_volume/100) --do just the one music source until we deselect
+        end
+        if active_idx == 3 and deselected_this_frame then --Music Volume
+          set_volume(sounds.music, config.music_volume/100) 
+        end
+        --add any other number config updates here
+      end
+      adjust_active_value = false
+    end
+    if selected and items[active_idx][9] and items[active_idx][6] and not items[active_idx][6]:isPlaying() then
+    --if selected and play_while_selected and sound source exists and it isn't playing
+      items[active_idx][6]:play()
+    end
+    if deselected_this_frame then
+      if items[active_idx][6] then --sound_source for this menu item exists 
+        items[active_idx][6]:stop()
+        love.audio.stop()
+      end
+      deselected_this_frame = false
+    end
+  end
+end
+
 function main_set_name()
   local name = ""
   while true do
@@ -1435,7 +1585,7 @@ end
 function main_dumb_transition(next_func, text, timemin, timemax)
   love.audio.stop()
   if not SFX_mute and SFX_GameOver_Play == 1 then
-	SFX_GameOver:play()
+	sounds.SFX.game_over:play()
   end
   SFX_GameOver_Play = 0
 
