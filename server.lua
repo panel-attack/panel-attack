@@ -80,44 +80,24 @@ function create_room(a, b)
   lobby_changed = true
   clear_proposals(a.name)
   clear_proposals(b.name)
-  a.state = "room"
-  b.state = "room"
-  if a.player_number and a.player_number ~= 0 and a.player_number ~= 1 then
-    print("creating room. player a does not have player_number 1. Swapping players a and b")
-    a, b = b, a
-    if a.player_number == 1 then
-      print("Success. player a has player_number 1 now.")
-    else
-      print("ERROR. Player a still doesn't have player_number 1")
-    end
-  else
-    a.player_number = 1
-    b.player_number = 2
-  end
-  a.cursor = "level"
-  b.cursor = "level"
-  a.ready = false
-  b.ready = false
-  if not a.room then
-    Room(a,b)
-  end
+  local new_room = Room(a,b)
   local a_msg, b_msg = {create_room = true}, {create_room = true}
   a_msg.your_player_number = 1
   a_msg.op_player_number = 2
-  a_msg.opponent = b.name
-  a_msg.menu_state = b:menu_state()
+  a_msg.opponent = new_room.b.name
+  a_msg.menu_state = new_room.b:menu_state()
   b_msg.your_player_number = 2
   b_msg.op_player_number = 1
-  b_msg.opponent = a.name
-  b_msg.menu_state = a:menu_state()
-
-  a_msg.ratings = a.room.ratings
-  b_msg.ratings = a.room.ratings --yes, a.room.ratings
-  a.opponent = b
-  b.opponent = a
-  a:send(a_msg)
-  b:send(b_msg)
-  a.room:reinvite_spectators()
+  b_msg.opponent = new_room.a.name
+  b_msg.menu_state = new_room.a:menu_state()
+  a_msg.ratings = new_room.ratings
+  b_msg.ratings = new_room.ratings
+  new_room.a.opponent = new_room.b
+  new_room.b.opponent = new_room.a
+  new_room.a:send(a_msg)
+  new_room.b:send(b_msg)
+  new_room:character_select()
+  
 end
 
 
@@ -196,8 +176,35 @@ Room = class(function(self, a, b)
   rooms[self.roomNumber] = self
 end)
 
+function Room.character_select(self)
+  print("Called Server.lua Room.character_select")
+  self.a.state = "character select"
+  self.b.state = "character select"
+  if self.a.player_number and self.a.player_number ~= 0 and self.a.player_number ~= 1 then
+    print("initializing room. player a does not have player_number 1. Swapping players a and b")
+    self.a, self.b = self.b, self.a
+    if self.a.player_number == 1 then
+      print("Success. player a has player_number 1 now.")
+    else
+      print("ERROR. Player a still doesn't have player_number 1")
+    end
+  else
+    self.a.player_number = 1
+    self.b.player_number = 2
+  end
+  self.a.cursor = "level"
+  self.b.cursor = "level"
+  self.a.ready = false
+  self.b.ready = false
+  self:send({rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()})
+  -- local msg = {spectate_request_granted = true, spectate_request_rejected = false, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()}
+  -- for k,v in ipairs(self.spectators) do
+    -- self.spectators[k]:send(msg)
+  -- end
+end
+
 function Room.state(self)
-  if self.a.state == "room" then
+  if self.a.state == "character select" then
     return CHARACTERSELECT
   elseif self.a.state == "playing" then
     return PLAYING
@@ -207,7 +214,7 @@ function Room.state(self)
 end
 
 function Room.is_spectatable(self)
-  return self.a.state == "room"
+  return self.a.state == "character select"
 end
 
 function Room.add_spectator(self, new_spectator_connection)
@@ -231,13 +238,6 @@ function Room.spectator_names(self)
     list[#list+1] = v.name
   end
   return list
-end
-
-function Room.reinvite_spectators(self)
-  msg = {spectate_request_granted = true, spectate_request_rejected = false, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()}
-  for k,v in ipairs(self.spectators) do
-    self.spectators[k]:send(msg)
-  end
 end
 
 function Room.remove_spectator(self, connection)
@@ -826,14 +826,13 @@ function Connection.J(self, message)
       requestedRoom:add_spectator(self)
       
     elseif requestedRoom and requestedRoom:state() == PLAYING then
-    -- TODO: deny the join request, maybe queue them to join as soon as the status changes from "playing" to "room"
       print("join-in-progress allowed")
       requestedRoom:add_spectator(self)
     else
     -- TODO: tell the client the join request failed, couldn't find the room.
       print("couldn't find room")
     end
-  elseif self.state == "room" and message.menu_state then
+  elseif self.state == "character select" and message.menu_state then
     self.level = message.menu_state.level
     self.character = message.menu_state.character
     self.ready = message.menu_state.ready
@@ -872,9 +871,9 @@ function Connection.J(self, message)
         print("***"..self.room.a.name.." ".. self.room.win_counts[1].." - "..self.room.win_counts[2].." "..self.room.b.name.."***")
         print("*******************************\n")
         self.room.game_outcome_reports = {}
-        create_room(self, self.opponent)
+        self.room:character_select()
       end
-  elseif (self.state == "playing" or self.state == "room") and message.leave_room then
+  elseif (self.state == "playing" or self.state == "character select") and message.leave_room then
     local op = self.opponent
     self:opponent_disconnected()
     op:opponent_disconnected()
