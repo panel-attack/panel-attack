@@ -91,6 +91,9 @@ local process_message = {
     local current_message = json.decode(s)
     this_frame_messages[#this_frame_messages+1] = current_message
     print("JSON LOL "..s)
+    if not current_message then
+      error("Error in network.lua process_message\nMessage: \""..(s or "nil").."\"\ncould not be decoded")
+    end
     if current_message.spectators then
       spectator_list = current_message.spectators
       spectators_string = spectator_list_string(current_message.spectators)
