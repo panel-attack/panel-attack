@@ -5,7 +5,8 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_config_input, main_dumb_transition, main_select_puzz,
   menu_up, menu_down, menu_left, menu_right, menu_enter, menu_escape,
   main_replay_vs, main_local_vs_setup, main_local_vs, menu_key_func,
-  multi_func, normal_key, main_set_name, main_net_vs_room, main_net_vs_lobby
+  multi_func, normal_key, main_set_name, main_net_vs_room, main_net_vs_lobby,
+  main_local_vs_yourself_setup, main_local_vs_yourself
   
 local PLAYING = "playing"  -- room states
 local CHARACTERSELECT = "character select" --room states
@@ -117,6 +118,7 @@ do
     local items = {{"1P endless", main_select_speed_99, {main_endless}},
         {"1P puzzle", main_select_puzz},
         {"1P time attack", main_select_speed_99, {main_time_attack}},
+        {"1P vs yourself", main_local_vs_yourself_setup},
         --{"2P vs online at burke.ro", main_net_vs_setup, {"burke.ro"}},
         {"2P vs online at Jon's server", main_net_vs_setup, {"18.188.43.50"}},
         --{"2P vs online at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
@@ -1112,6 +1114,74 @@ function main_local_vs()
     elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
       end_text = "P1 wins ^^"
     end
+    if end_text then
+      return main_dumb_transition, {main_select_mode, end_text, 45}
+    end
+  end
+end
+
+main_local_vs_yourself_setup = multi_func(function()
+  local K = K
+  local chosen, maybe = {}, {global_local_vs_p1_level or 5}
+  local P1_level = nil
+  while chosen[1] == nil do
+    to_print = (chosen[1] and "" or "Choose ") .. "Your level: "..maybe[1]
+    gprint(to_print, 300, 280)
+    wait()
+    local i = 1
+    local k=K[i]
+    if menu_escape(k) then
+      if chosen[i] then
+        chosen[i] = nil
+      else
+        return main_select_mode
+      end
+    elseif menu_enter(k) then
+      chosen[i] = maybe[i]
+      global_local_vs_p1_level = maybe[i]
+    elseif menu_up(k) or menu_right(k) then
+      if not chosen[i] then
+        maybe[i] = bound(1,maybe[i]+1,10)
+      end
+    elseif menu_down(k) or menu_left(k) then
+      if not chosen[i] then
+        maybe[i] = bound(1,maybe[i]-1,10)
+      end
+    end
+  end
+  to_print = "P1 level: "..maybe[1]
+  P1 = Stack(1, "vs", chosen[1])
+  P1.garbage_target = P1
+  -- TODO: this does not correctly implement starting configurations.
+  -- Starting configurations should be identical for visible blocks, and
+  -- they should not be completely flat.
+  --
+  -- In general the block-generation logic should be the same as the server's, so
+  -- maybe there should be only one implementation.
+  make_local_panels(P1, "000000")
+  make_local_gpanels(P1, "000000")
+  for i=1,30 do
+    gprint(to_print,300, 280)
+    wait()
+  end
+  P1:starting_state()
+  return main_local_vs_yourself
+end)
+
+function main_local_vs_yourself()
+  -- TODO: replay!
+  consuming_timesteps = true
+  local end_text = nil
+  while true do
+    P1:render()
+    wait()
+    variable_step(function()
+        if not P1.game_over then
+          P1:local_run()
+        else 
+          end_text = "Game Over"
+        end
+      end)
     if end_text then
       return main_dumb_transition, {main_select_mode, end_text, 45}
     end
