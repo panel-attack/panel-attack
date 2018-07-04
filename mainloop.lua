@@ -124,7 +124,7 @@ do
         {"2P vs local game", main_local_vs_setup},
         {"Replay of 1P endless", main_replay_endless},
         {"Replay of 1P puzzle", main_replay_puzzle},
-        {"Replay of 2P fakevs", main_replay_vs},
+        {"Replay of 2P vs", main_replay_vs},
         {"Configure input", main_config_input},
         {"Set name", main_set_name},
         {"Options", main_options},
