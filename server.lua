@@ -196,7 +196,7 @@ function Room.character_select(self)
   self.b.cursor = "level"
   self.a.ready = false
   self.b.ready = false
-  self:send({rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()})
+  self:send({character_select=true, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()})
   -- local msg = {spectate_request_granted = true, spectate_request_rejected = false, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()}
   -- for k,v in ipairs(self.spectators) do
     -- self.spectators[k]:send(msg)

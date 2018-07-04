@@ -267,14 +267,15 @@ function main_net_vs_room()
   local opponent_connected = false
   while not global_initialize_room_msg do
     for _,msg in ipairs(this_frame_messages) do
-      print("Message recieved at start of main_net_vs_room():\n"..json.encode(msg))
+      print("Message received at start of main_net_vs_room():\n"..json.encode(msg))
       if msg.create_room or msg.character_select or msg.spectate_request_granted then
         global_initialize_room_msg = msg
       else
         gprint("Waiting for opponent...", 300, 280)
       end
-    wait()
     end
+	wait()
+	do_messages()
   end
   msg = global_initialize_room_msg
   global_initialize_room_msg = nil
@@ -400,6 +401,7 @@ function main_net_vs_room()
     if op_state.cursor == str then pstr = pstr.."\n"..op_name end
     gprint(pstr, render_x+10, render_y+y_add)
   end
+  print("got to LOC before net_vs_room character select loop")
   while true do
     for _,msg in ipairs(this_frame_messages) do
       if msg.win_counts then
@@ -1606,28 +1608,28 @@ function main_dumb_transition(next_func, text, timemin, timemax)
   local t = 0
   local k = K[1]
   while true do
-    for _,msg in ipairs(this_frame_messages) do
-      if next_func == main_net_vs_room then
-        if msg.menu_state then
-          if currently_spectating then
-            if msg.menu_state.player_number == 1 then
-              global_my_state = msg.menu_state
-            elseif msg.menu_state.player_number == 2 then
-              global_op_state = msg.menu_state
-            end
-          else
-            global_op_state = msg.menu_state
-          end
-        end
-        if msg.win_counts then
-          update_win_counts(msg.win_counts)
-        end
-        if msg.rating_updates then
-          global_current_room_ratings = msg.ratings
-        end
-      end
-      --TODO: anything else we should be listening for during main_dumb_transition?
-    end
+    -- for _,msg in ipairs(this_frame_messages) do
+      -- if next_func == main_net_vs_room then
+        -- if msg.menu_state then
+          -- if currently_spectating then
+            -- if msg.menu_state.player_number == 1 then
+              -- global_my_state = msg.menu_state
+            -- elseif msg.menu_state.player_number == 2 then
+              -- global_op_state = msg.menu_state
+            -- end
+          -- else
+            -- global_op_state = msg.menu_state
+          -- end
+        -- end
+        -- if msg.win_counts then
+          -- update_win_counts(msg.win_counts)
+        -- end
+        -- if msg.rating_updates then
+          -- global_current_room_ratings = msg.ratings
+        -- end
+      -- end
+      -- --TODO: anything else we should be listening for during main_dumb_transition?
+    -- end
     gprint(text, 300, 280)
     wait()
     if t >= timemin and (t >=timemax or (menu_enter(k) or menu_escape(k))) then
@@ -1635,7 +1637,7 @@ function main_dumb_transition(next_func, text, timemin, timemax)
     end
     t = t + 1
     if TCP_sock then
-      do_messages()
+    --  do_messages()
     end
   end
 end
