@@ -274,8 +274,8 @@ function main_net_vs_room()
         gprint("Waiting for opponent...", 300, 280)
       end
     end
-	wait()
-	do_messages()
+    wait()
+    do_messages()
   end
   msg = global_initialize_room_msg
   global_initialize_room_msg = nil
