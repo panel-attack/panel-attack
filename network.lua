@@ -40,7 +40,7 @@ function get_message()
   else
     len = type_to_length[typ] - 1
   end
-  if len > string.len(leftovers) then
+  if len + gap + 1 > string.len(leftovers) then
     return nil
   end
   local ret = string.sub(leftovers,2+gap,len+gap+1)
