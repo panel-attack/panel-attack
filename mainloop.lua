@@ -122,7 +122,7 @@ do
         --{"2P vs online at burke.ro", main_net_vs_setup, {"burke.ro"}},
         {"2P vs online at Jon's server", main_net_vs_setup, {"18.188.43.50"}},
         --{"2P vs online at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
-        --{"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
+        {"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
         {"2P vs local game", main_local_vs_setup},
         {"Replay of 1P endless", main_replay_endless},
         {"Replay of 1P puzzle", main_replay_puzzle},
@@ -288,15 +288,22 @@ function main_net_vs_room()
   global_op_state = msg.b_menu_state
   if msg.your_player_number then
     my_player_number = msg.your_player_number
+  elseif my_player_number and my_player_number ~= 0 then
+    print("We assumed our player number is still "..my_player_number)
   else
+    error("We never heard from the server as to what player number we are")
+    print("Error: The server never told us our player number.  Assuming it is 1")
     my_player_number = 1
   end
   if msg.op_player_number then
-    op_player_number = msg.op_player_number
+    op_player_number = msg.op_player_number or op_player_number
+  elseif op_player_number and op_player_number ~= 0 then
+    print("We assumed op player number is still "..op_player_number)
   else
+    error("We never heard from the server as to what player number we are")
+    print("Error: The server never told us our player number.  Assuming it is 2")
     op_player_number = 2
   end
-    
     if msg.win_counts then
       update_win_counts(msg.win_counts)
     end
@@ -617,6 +624,8 @@ function main_net_vs_lobby()
   local willing_players = {} -- set
   local spectatable_rooms = {}
   local k = K[1]
+  my_player_number = nil
+  op_player_number = nil
   local notice = {[true]="Select a player name to ask for a match.", [false]="You are all alone in the lobby :("}  
   local leaderboard_string = ""
   local my_rank
