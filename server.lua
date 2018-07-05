@@ -21,7 +21,7 @@ local PLAYING = "playing" -- room states
 local DEFAULT_RATING = 1500
 
 
-local VERSION = "020"
+local VERSION = "021"
 local type_to_length = {H=4, E=4, F=4, P=8, I=2, L=2, Q=8, U=2}
 local INDEX = 1
 local connections = {}
