@@ -122,7 +122,7 @@ do
         --{"2P vs online at burke.ro", main_net_vs_setup, {"burke.ro"}},
         {"2P vs online at Jon's server", main_net_vs_setup, {"18.188.43.50"}},
         --{"2P vs online at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
-        {"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
+        --{"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
         {"2P vs local game", main_local_vs_setup},
         {"Replay of 1P endless", main_replay_endless},
         {"Replay of 1P puzzle", main_replay_puzzle},
@@ -288,6 +288,8 @@ function main_net_vs_room()
   global_op_state = msg.b_menu_state
   if msg.your_player_number then
     my_player_number = msg.your_player_number
+  elseif currently_spectating then
+    my_player_number = 1
   elseif my_player_number and my_player_number ~= 0 then
     print("We assumed our player number is still "..my_player_number)
   else
@@ -297,6 +299,8 @@ function main_net_vs_room()
   end
   if msg.op_player_number then
     op_player_number = msg.op_player_number or op_player_number
+  elseif currently_spectating then
+    op_player_number = 2
   elseif op_player_number and op_player_number ~= 0 then
     print("We assumed op player number is still "..op_player_number)
   else
