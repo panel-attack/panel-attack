@@ -877,9 +877,11 @@ function Connection.J(self, message)
     local op = self.opponent
     self:opponent_disconnected()
     op:opponent_disconnected()
-    for k, v in pairs(self.room.spectators) do
-      v:opponent_disconnected()
-    end
+    if self.room and self.room.spectators then
+	  for k, v in pairs(self.room.spectators) do
+        v:opponent_disconnected()
+      end
+	end
   elseif (self.state == "spectating") and message.leave_room then
     self.room:remove_spectator(self)
   end
