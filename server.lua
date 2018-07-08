@@ -230,6 +230,7 @@ function Room.add_spectator(self, new_spectator_connection)
   msg = {spectators=self:spectator_names()}
   print("sending spectator list: "..json.encode(msg))
   self:send(msg)
+  lobby_changed = true
 end
 
 function Room.spectator_names(self)
