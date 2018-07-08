@@ -234,14 +234,14 @@ end
 
 function Room.spectator_names(self)
   local list = {}
-  for k,v in ipairs(self.spectators) do
+  for k,v in pairs(self.spectators) do
     list[#list+1] = v.name
   end
   return list
 end
 
 function Room.remove_spectator(self, connection)
-  for k,v in ipairs(self.spectators) do
+  for k,v in pairs(self.spectators) do
     if v.name == connection.name then
       self.spectators[k].state = "lobby"
       print(connection.name .. " left " .. self.name .. " as a spectator")
@@ -267,7 +267,7 @@ function Room.close(self)
       self.b.state = "lobby"
       self.b.room = nil
     end
-    for k,v in ipairs(self.spectators) do
+    for k,v in pairs(self.spectators) do
       if v.room then
         v.room = nil
         v.state = "lobby"
