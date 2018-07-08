@@ -122,7 +122,7 @@ do
         --{"2P vs online at burke.ro", main_net_vs_setup, {"burke.ro"}},
         {"2P vs online at Jon's server", main_net_vs_setup, {"18.188.43.50"}},
         --{"2P vs online at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
-        --{"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
+        {"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
         {"2P vs local game", main_local_vs_setup},
         {"Replay of 1P endless", main_replay_endless},
         {"Replay of 1P puzzle", main_replay_puzzle},
@@ -349,6 +349,16 @@ function main_net_vs_room()
   global_op_state = nil
   op_win_count = op_win_count or 0
   global_current_room_ratings = global_current_room_ratings or {{new=0,old=0,difference=0},{new=0,old=0,difference=0}}
+  my_expected_win_ratio = (100*round(1/(1+10^
+        ((global_current_room_ratings[op_player_number].new
+            -global_current_room_ratings[my_player_number].new)
+          /rating_spread_modifier))
+        ,2))
+  op_expected_win_ratio = (100*round(1/(1+10^
+        ((global_current_room_ratings[my_player_number].new
+            -global_current_room_ratings[op_player_number].new)
+          /rating_spread_modifier))
+        ,2))
   match_type = match_type or "Casual"
   if match_type == "" then match_type = "Casual" end
   match_type_message = match_type_message or ""
@@ -535,30 +545,56 @@ function main_net_vs_room()
     end
     local my_rating_difference = ""
     local op_rating_difference = ""
+    if current_server_supports_ranking then
+      if global_current_room_ratings[my_player_number].difference >= 0 then
+        my_rating_difference = "(+"..global_current_room_ratings[my_player_number].difference..") "
+      else
+        my_rating_difference = "("..global_current_room_ratings[my_player_number].difference..") "
+      end
+      if global_current_room_ratings[op_player_number].difference >= 0 then
+        op_rating_difference = "(+"..global_current_room_ratings[op_player_number].difference..") "
+      else
+        op_rating_difference = "("..global_current_room_ratings[op_player_number].difference..") "
+      end
+    end
     local state = ""
+    --my state - add to be displayed
     state = state..my_name
     if current_server_supports_ranking then
-        if global_current_room_ratings[my_player_number].difference >= 0 then
-          my_rating_difference = "(+"..global_current_room_ratings[my_player_number].difference..") "
-        else
-          my_rating_difference = "("..global_current_room_ratings[my_player_number].difference..") "
-        end
-        if global_current_room_ratings[op_player_number].difference >= 0 then
-          op_rating_difference = "(+"..global_current_room_ratings[op_player_number].difference..") "
-        else
-          op_rating_difference = "("..global_current_room_ratings[op_player_number].difference..") "
-        end
         state = state..":  Rating: "..my_rating_difference..global_current_room_ratings[my_player_number].new
     end
-    
     state = state.."  Wins: "..my_win_count
-    state = state.." "..json.encode(my_state).."\n"
+    if current_server_supports_ranking or my_win_count + op_win_count > 0 then
+      state = state.."  Win Ratio:"
+    end
+    if my_win_count + op_win_count > 0 then
+      state = state.."  actual: "..(100*round(my_win_count/(op_win_count+my_win_count),2)).."%"
+    end
+    if current_server_supports_ranking then
+      state = state.."  expected: "
+        ..my_expected_win_ratio.."%"
+    end
+    state = state.."  Char: "..my_state.character.."  Ready: "..tostring(my_state.ready or false)
+    --state = state.." "..json.encode(my_state).."\n"
+    state = state.."\n"
+    --op state - add to be displayed
     state = state..op_name
     if current_server_supports_ranking then
         state = state..":  Rating: "..op_rating_difference..global_current_room_ratings[op_player_number].new
     end
-    state = state.."  Wins: "..op_win_count
-    state = state.." "..json.encode(op_state)
+    state = state.."  Wins: "..op_win_count 
+    if current_server_supports_ranking or my_win_count + op_win_count > 0 then
+      state = state.."  Win Ratio:"
+    end
+    if my_win_count + op_win_count > 0 then
+      state = state.."  actual: "..(100*round(op_win_count/(op_win_count+my_win_count),2)).."%"
+    end
+    if current_server_supports_ranking then
+      state = state.."  expected: "
+        ..op_expected_win_ratio.."%"
+    end
+    state = state.."  Char: "..op_state.character.."  Ready: "..tostring(op_state.ready or false)
+    --state = state.." "..json.encode(op_state)
     gprint(state, 50, 50)
     if not my_state.ranked and not op_state.ranked then
       match_type_message = ""

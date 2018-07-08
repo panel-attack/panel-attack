@@ -884,10 +884,10 @@ function Connection.J(self, message)
     self:opponent_disconnected()
     op:opponent_disconnected()
     if self.room and self.room.spectators then
-	  for k, v in pairs(self.room.spectators) do
+      for k, v in pairs(self.room.spectators) do
         v:opponent_disconnected()
       end
-	end
+    end
   elseif (self.state == "spectating") and message.leave_room then
     self.room:remove_spectator(self)
   end
