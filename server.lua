@@ -136,7 +136,7 @@ function start_match(a, b)
   lobby_changed = true
   a:setup_game()
   b:setup_game()
-  for k,v in ipairs(a.room.spectators) do
+  for k,v in pairs(a.room.spectators) do
     v:setup_game()
   end
 end
@@ -574,7 +574,7 @@ end
 
 function Room.send_to_spectators(self, message)
   --TODO: maybe try to do this in a different thread?
-  for k,v in ipairs(self.spectators) do
+  for k,v in pairs(self.spectators) do
     if v then
       v:send(message)
     end
