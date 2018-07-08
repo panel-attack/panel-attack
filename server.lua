@@ -136,7 +136,7 @@ function start_match(a, b)
   lobby_changed = true
   a:setup_game()
   b:setup_game()
-  for k,v in ipairs(a.room.spectators) do
+  for k,v in pairs(a.room.spectators) do
     v:setup_game()
   end
 end
@@ -234,14 +234,14 @@ end
 
 function Room.spectator_names(self)
   local list = {}
-  for k,v in ipairs(self.spectators) do
+  for k,v in pairs(self.spectators) do
     list[#list+1] = v.name
   end
   return list
 end
 
 function Room.remove_spectator(self, connection)
-  for k,v in ipairs(self.spectators) do
+  for k,v in pairs(self.spectators) do
     if v.name == connection.name then
       self.spectators[k].state = "lobby"
       print(connection.name .. " left " .. self.name .. " as a spectator")
@@ -267,7 +267,7 @@ function Room.close(self)
       self.b.state = "lobby"
       self.b.room = nil
     end
-    for k,v in ipairs(self.spectators) do
+    for k,v in pairs(self.spectators) do
       if v.room then
         v.room = nil
         v.state = "lobby"
@@ -574,14 +574,20 @@ end
 
 function Room.send_to_spectators(self, message)
   --TODO: maybe try to do this in a different thread?
-  for k,v in ipairs(self.spectators) do
-    v:send(message)
+  for k,v in pairs(self.spectators) do
+    if v then
+      v:send(message)
+    end
   end
 end
 
 function Room.send(self, message)
-  self.a:send(message)
-  self.b:send(message)
+  if self.a then
+    self.a:send(message)
+  end
+  if self.b then
+    self.b:send(message)
+  end
   self:send_to_spectators(message)
 end
 
