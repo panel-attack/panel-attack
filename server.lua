@@ -575,13 +575,19 @@ end
 function Room.send_to_spectators(self, message)
   --TODO: maybe try to do this in a different thread?
   for k,v in ipairs(self.spectators) do
-    v:send(message)
+    if v then
+      v:send(message)
+    end
   end
 end
 
 function Room.send(self, message)
-  self.a:send(message)
-  self.b:send(message)
+  if self.a then
+    self.a:send(message)
+  end
+  if self.b then
+    self.b:send(message)
+  end
   self:send_to_spectators(message)
 end
 
