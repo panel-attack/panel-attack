@@ -1,4 +1,5 @@
 require("util")
+require("server_globals")
 local random = math.random
 
 -- stuff should have first_seven, metal, vs_mode, metal_col, prev_metal_col
@@ -16,15 +17,7 @@ function make_panels(ncolors, prev_panels, stuff)
       cut_panels = true
     end
   end
-
   for x=0,rows_to_make-1 do
-    if stuff.metal then
-      local nogood = true
-      while nogood do
-        stuff.metal_col = random(0,5)
-        nogood = stuff.metal_col == stuff.prev_metal_col
-      end
-    end
     for y=0,5 do
       local prevtwo = y>1 and string.sub(ret,-1,-1) == string.sub(ret,-2,-2)
       local nogood,color = true
@@ -35,20 +28,40 @@ function make_panels(ncolors, prev_panels, stuff)
       end
       ret = ret..color
     end
-    stuff.prev_metal_col = stuff.metal_col
-    stuff.metal_col = nil
-    stuff.rows_left = stuff.rows_left - 1
-    if stuff.rows_left == 0 then
-      if stuff.vs_mode then
-        stuff.metal = not stuff.metal
-      end
-      if stuff.metal then
-        stuff.rows_left = random(3,4)
+  end
+  print("panels before potential shock block position assignments:")
+  print(ret)
+    --assign potential shock block placements
+  local row_width = 6 --this may belong in globals if we were to ever make a game mode with a different width
+  local new_ret = "000000"
+  local prev_row
+  for i=2,rows_to_make+1 do
+    prev_row = string.sub(new_ret,0-row_width,-1)
+    local first, second --locations of potential shock blocks
+    --while panel vertically adjacent is not numeric, so can be a shock block 
+    while not first or not tonumber(string.sub(prev_row, first, first)) do 
+      first = math.random(1,row_width)
+    end
+    while not second or second==first or not tonumber(string.sub(prev_row, second, second)) do 
+      second = math.random(1,row_width)
+    end
+    local new_row = ""
+    for j=1, row_width do
+      num_from_ret = tonumber(string.sub(ret,(i-1)*row_width+j, (i-1)*row_width+j)) or 0
+      if j==first then
+        print(num_from_ret)
+        new_row = new_row..(panel_color_number_to_upper[num_from_ret] or "0")
+      elseif j==second then
+        new_row = new_row..(panel_color_number_to_lower[num_from_ret] or "0")
       else
-        stuff.rows_left = random(7,10)
+        new_row = new_row..num_from_ret
       end
     end
+    new_ret = new_ret..new_row
   end
+  ret = new_ret
+  print("panels after potential shock block position assignments:")
+  print(ret)
   if cut_panels then
     ret = procat(ret)
     local height = {7,7,7,7,7,7}
