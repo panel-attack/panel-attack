@@ -40,6 +40,16 @@ function read_leaderboard_file() pcall(function()
   io.close(f)
 end) end
 
+function write_replay_file(replay, path, filename) pcall(function()
+  print("about to open new replay file for writing")
+  local f = assert(io.open(path.."/"..filename, "w"))
+  print("past file open")
+  io.output(f)
+  io.write(json.encode(replay))
+  io.close(f)
+  print("finished write_replay_file()")
+end) end
+
 function read_csprng_seed_file() pcall(function()
   local f = io.open("csprng_seed.txt", "r")
   if f then
@@ -63,9 +73,10 @@ function read_csprng_seed_file() pcall(function()
   end
 end) end
 
-function write_replay_file(replay_table, file_name) pcall(function()
-  local f = io.open(file_name, "w")
-  io.output(f)
-  io.write(json.encode(replay_table))
-  io.close(f)
-end) end
+--old
+-- function write_replay_file(replay_table, file_name) pcall(function()
+  -- local f = io.open(file_name, "w")
+  -- io.output(f)
+  -- io.write(json.encode(replay_table))
+  -- io.close(f)
+-- end) end

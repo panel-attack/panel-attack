@@ -6,6 +6,7 @@ require("gen_panels")
 require("csprng")
 require("server_file_io")
 require("util")
+require("lfs")
 
 local byte = string.byte
 local char = string.char
@@ -597,7 +598,13 @@ function Room.resolve_game_outcome(self)
   if not self.game_outcome_reports[1] or not self.game_outcome_reports[2] then
     return false
   else
-      write_replay_file(self.replay, "replay.txt")
+      local now = os.date("*t")
+      local path = "ftp/replays"
+      local filename = string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec).."-"..self.a.name.."-vs-"..self.b.name..".txt"
+      print("saving replay as "..path.."/"..filename)
+      
+      write_replay_file(self.replay, path, filename)
+      --write_replay_file(self.replay, "replay.txt")
       self.replay = nil
       local outcome = nil
       if self.game_outcome_reports[1] ~= self.game_outcome_reports[2] then
@@ -873,7 +880,6 @@ function Connection.J(self, message)
   elseif self.state == "playing" and message.game_over then
     self.room.game_outcome_reports[self.player_number] = message.outcome
       if self.room:resolve_game_outcome() then
-        
         print("\n*******************************")
         print("***"..self.room.a.name.." ".. self.room.win_counts[1].." - "..self.room.win_counts[2].." "..self.room.b.name.."***")
         print("*******************************\n")
