@@ -1,3 +1,38 @@
+local lfs = require("lfs")
+
+function isFile(name)
+    if type(name)~="string" then return false end
+    if not isDir(name) then
+        return os.rename(name,name) and true or false
+        -- note that the short evaluation is to
+        -- return false instead of a possible nil
+    end
+    return false
+end
+
+function isFileOrDir(name)
+    if type(name)~="string" then return false end
+    return os.rename(name, name) and true or false
+end
+
+function isDir(name)
+    if type(name)~="string" then return false end
+    local cd = lfs.currentdir()
+    local is = lfs.chdir(name) and true or false
+    lfs.chdir(cd)
+    return is
+end
+
+function mkDir(path)
+  print("mkDir(path)")
+  local sep, pStr = package.config:sub(1, 1), ""
+  for dir in path:gmatch("[^" .. sep .. "]+") do
+    pStr = pStr .. dir .. sep
+    lfs.mkdir(pStr)
+  end
+  print("got to the end of mkDir(path)")
+end
+
 function write_players_file() pcall(function()
   local f = assert(io.open("players.txt", "w"))
   io.output(f)
@@ -42,6 +77,7 @@ end) end
 
 function write_replay_file(replay, path, filename) pcall(function()
   print("about to open new replay file for writing")
+  mkDir(path)
   local f = assert(io.open(path.."/"..filename, "w"))
   print("past file open")
   io.output(f)

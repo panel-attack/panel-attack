@@ -6,7 +6,7 @@ require("gen_panels")
 require("csprng")
 require("server_file_io")
 require("util")
-require("lfs")
+local lfs = require("lfs")
 
 local byte = string.byte
 local char = string.char
@@ -20,6 +20,7 @@ local TIMEOUT = 10
 local CHARACTERSELECT = "character select" -- room states
 local PLAYING = "playing" -- room states
 local DEFAULT_RATING = 1500
+local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
 
 local VERSION = "021"
@@ -118,6 +119,11 @@ function start_match(a, b)
                 opponent_settings = {character = b.character, level = b.level, player_number = b.player_number}}
   local room_is_ranked, reasons = a.room:rating_adjustment_approved()
   if room_is_ranked then
+    a.room.replay.ranked=true
+    a.room.replay.P1_name=a.name
+    a.room.replay.P2_name=b.name
+    a.room.replay.P1_char=a.character
+    a.room.replay.P2_char=b.character
     msg.ranked = true
     if leaderboard.players[a.user_id] then
       msg.player_settings.rating = round(leaderboard.players[a.user_id].rating)
@@ -147,9 +153,6 @@ Room = class(function(self, a, b)
   self.a = a --player a
   self.b = b --player b
   self.name = a.name.." vs "..b.name
-  if self.replay then
-  --self.prev_replay = self.replay  --not sure if we'll need this.
-  end
   if not self.a.room then
     self.roomNumber = ROOMNUMBER
     ROOMNUMBER = ROOMNUMBER + 1
@@ -599,9 +602,15 @@ function Room.resolve_game_outcome(self)
     return false
   else
       local now = os.date("*t")
-      local path = "ftp/replays"
-      local filename = string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec).."-"..self.a.name.."-vs-"..self.b.name..".txt"
-      print("saving replay as "..path.."/"..filename)
+      local path = "ftp"..sep.."replays"..sep..now.year..sep..now.month..sep..now.day..sep..self.a.name.."-vs-"..self.b.name
+      local filename = string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec).."-"..self.a.name.."-vs-"..self.b.name
+      if self.replay.ranked then
+        filename = filename.."-Ranked"
+      else
+        filename = filename.."-Casual"
+      end
+      filename = filename..".txt"
+      print("saving replay as "..path..sep..filename)
       
       write_replay_file(self.replay, path, filename)
       --write_replay_file(self.replay, "replay.txt")
