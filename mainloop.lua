@@ -444,11 +444,11 @@ function main_net_vs_room()
       if msg.ranked_match_approved then
         match_type = "Ranked"
         match_type_message = ""
-        replay.ranked = true
+        replay.vs.ranked = true
       elseif msg.ranked_match_denied then
         match_type = "Casual"
         match_type_message = "Not ranked. "
-        replay.ranked = false
+        replay.vs.ranked = false
         if msg.reasons then
           match_type_message = match_type_message..(msg.reasons[1] or "Reason unknown")
         end
