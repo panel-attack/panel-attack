@@ -476,6 +476,7 @@ function main_net_vs_room()
         P2.score_x = 410
         replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
                     P1_level=P1.level,P2_level=P2.level,
+                    P1_name=my_name, P2_name=op_name,
                     P1_char=P1.character,P2_char=P2.character}
         if currently_spectating and replay_of_match_so_far then --we joined a match in progress
           replay.vs = replay_of_match_so_far.vs

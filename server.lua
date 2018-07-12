@@ -120,10 +120,6 @@ function start_match(a, b)
   local room_is_ranked, reasons = a.room:rating_adjustment_approved()
   if room_is_ranked then
     a.room.replay.vs.ranked=true
-    a.room.replay.vs.P1_name=a.name
-    a.room.replay.vs.P2_name=b.name
-    a.room.replay.vs.P1_char=a.character
-    a.room.replay.vs.P2_char=b.character
     msg.ranked = true
     if leaderboard.players[a.user_id] then
       msg.player_settings.rating = round(leaderboard.players[a.user_id].rating)
@@ -136,6 +132,10 @@ function start_match(a, b)
       msg.opponent_settings.rating = DEFAULT_RATING
     end
   end
+  a.room.replay.vs.P1_name=a.name
+  a.room.replay.vs.P2_name=b.name
+  a.room.replay.vs.P1_char=a.character
+  a.room.replay.vs.P2_char=b.character
   a:send(msg)
   a.room:send_to_spectators(msg)
   msg.player_settings, msg.opponent_settings = msg.opponent_settings, msg.player_settings
@@ -602,7 +602,7 @@ function Room.resolve_game_outcome(self)
     return false
   else
       local now = os.date("*t")
-      local path = "ftp"..sep.."replays"..sep..string.format("%04d-%02d-%02d", now.year, now.month, now.day)
+      local path = "ftp"..sep.."replays"..sep..string.format("%04d"..sep.."%02d"..sep.."%02d", now.year, now.month, now.day)
       --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
       if self.b.name <  self.a.name then
         path = path..sep..self.b.name.."-vs-"..self.a.name
