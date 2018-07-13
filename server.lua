@@ -20,6 +20,7 @@ local TIMEOUT = 10
 local CHARACTERSELECT = "character select" -- room states
 local PLAYING = "playing" -- room states
 local DEFAULT_RATING = 1500
+local NAME_LENGTH_LIMIT = 16
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
 
@@ -829,7 +830,13 @@ function Connection.J(self, message)
       for _,v in pairs(connections) do
         names[#names+1] = v.name -- fine if name is nil :o
       end
-      response = {choose_another_name = {used_names = names}}
+      response = {choose_another_name = {used_names = names} }
+      self:send(response)
+    elseif message.name:find("[^_%w]") then
+      response = {choose_another_name = {reason = "Allowed characters are alphanumeric and underscores"}}
+      self:send(response)
+    elseif string.len(message.name) > NAME_LENGTH_LIMIT then
+      response = {choose_another_name = {reason = "The name length limit is "..NAME_LENGTH_LIMIT.. " characters"}}
       self:send(response)
     else
       self.name = message.name

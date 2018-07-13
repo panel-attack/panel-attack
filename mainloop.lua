@@ -720,8 +720,10 @@ function main_net_vs_lobby()
         end
       end
     for _,msg in ipairs(this_frame_messages) do
-      if msg.choose_another_name then
+      if msg.choose_another_name and msg.choose_another_name.used_names then
         return main_dumb_transition, {main_select_mode, "Error: name is taken :<\n\nIf you had just left the server,\nit may not have realized it yet, try joining again.\n\nThis can also happen if you have two\ninstances of Panel Attack open.\n\nPress Swap or Back to continue.", 60, 600}
+      elseif msg.choose_another_name and msg.choose_another_name.reason then
+        return main_dumb_transition, {main_select_mode, "Error: ".. msg.choose_another_name.reason, 60}
       end
       if msg.create_room or msg.spectate_request_granted then
         global_initialize_room_msg = msg
