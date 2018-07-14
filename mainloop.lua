@@ -444,9 +444,11 @@ function main_net_vs_room()
       if msg.ranked_match_approved then
         match_type = "Ranked"
         match_type_message = ""
+        replay.vs.ranked = true
       elseif msg.ranked_match_denied then
         match_type = "Casual"
         match_type_message = "Not ranked. "
+        replay.vs.ranked = false
         if msg.reasons then
           match_type_message = match_type_message..(msg.reasons[1] or "Reason unknown")
         end
@@ -474,6 +476,7 @@ function main_net_vs_room()
         P2.score_x = 410
         replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
                     P1_level=P1.level,P2_level=P2.level,
+                    P1_name=my_name, P2_name=op_name,
                     P1_char=P1.character,P2_char=P2.character}
         if currently_spectating and replay_of_match_so_far then --we joined a match in progress
           replay.vs = replay_of_match_so_far.vs
@@ -717,8 +720,10 @@ function main_net_vs_lobby()
         end
       end
     for _,msg in ipairs(this_frame_messages) do
-      if msg.choose_another_name then
+      if msg.choose_another_name and msg.choose_another_name.used_names then
         return main_dumb_transition, {main_select_mode, "Error: name is taken :<\n\nIf you had just left the server,\nit may not have realized it yet, try joining again.\n\nThis can also happen if you have two\ninstances of Panel Attack open.\n\nPress Swap or Back to continue.", 60, 600}
+      elseif msg.choose_another_name and msg.choose_another_name.reason then
+        return main_dumb_transition, {main_select_mode, "Error: ".. msg.choose_another_name.reason, 60}
       end
       if msg.create_room or msg.spectate_request_granted then
         global_initialize_room_msg = msg
@@ -964,7 +969,9 @@ function main_net_vs_setup(ip)
   P2.pos_x = 172
   P2.score_x = 410
   replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
-              P1_level=P1_level,P2_level=P2_level}
+              P1_level=P1_level,P2_level=P2_level,
+              ranked=false, P1_name=my_name, P2_name=op_name,
+              P1_char=P1.character, P2_char=P2.character}
   ask_for_gpanels("000000")
   ask_for_panels("000000")
   if not currently_spectating then
@@ -1005,8 +1012,8 @@ function main_net_vs()
         return main_net_vs_lobby
       end
     end
-    gprint(my_name, 315, 40)
-    gprint(op_name, 410, op_name_y)
+    gprint(my_name or "", 315, 40)
+    gprint(op_name or "", 410, op_name_y)
     gprint("Wins: "..my_win_count, 315, 70)
     gprint("Wins: "..op_win_count, 410, 70)
     if not config.debug_mode then --this is printed in the same space as the debug details
@@ -1254,13 +1261,28 @@ function main_replay_vs()
   P2.gpanel_buffer = replay.R
   P1.max_runs_per_frame = 1
   P2.max_runs_per_frame = 1
+  P1.character = replay.P1_char
+  P2.character = replay.P2_char
+  my_name = replay.P1_name or "Player 1"
+  op_name = replay.P2_name or "Player 2"
+  if replay.ranked then
+    match_type = "Ranked"
+  else
+    match_type = "Casual"
+  end
 
   P1:starting_state()
   P2:starting_state()
   local end_text = nil
   local run = true
+  local op_name_y = 40
+  if string.len(my_name) > 12 then
+    op_name_y = 55
+  end
   while true do
     mouse_panel = nil
+    gprint(my_name or "", 315, 40)
+    gprint(op_name or "", 410, op_name_y)
     P1:render()
     P2:render()
     if mouse_panel then

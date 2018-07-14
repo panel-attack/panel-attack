@@ -6,6 +6,8 @@ require("gen_panels")
 require("csprng")
 require("server_file_io")
 require("util")
+require("timezones")
+local lfs = require("lfs")
 
 local byte = string.byte
 local char = string.char
@@ -19,6 +21,8 @@ local TIMEOUT = 10
 local CHARACTERSELECT = "character select" -- room states
 local PLAYING = "playing" -- room states
 local DEFAULT_RATING = 1500
+local NAME_LENGTH_LIMIT = 16
+local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
 
 local VERSION = "021"
@@ -117,6 +121,7 @@ function start_match(a, b)
                 opponent_settings = {character = b.character, level = b.level, player_number = b.player_number}}
   local room_is_ranked, reasons = a.room:rating_adjustment_approved()
   if room_is_ranked then
+    a.room.replay.vs.ranked=true
     msg.ranked = true
     if leaderboard.players[a.user_id] then
       msg.player_settings.rating = round(leaderboard.players[a.user_id].rating)
@@ -129,6 +134,10 @@ function start_match(a, b)
       msg.opponent_settings.rating = DEFAULT_RATING
     end
   end
+  a.room.replay.vs.P1_name=a.name
+  a.room.replay.vs.P2_name=b.name
+  a.room.replay.vs.P1_char=a.character
+  a.room.replay.vs.P2_char=b.character
   a:send(msg)
   a.room:send_to_spectators(msg)
   msg.player_settings, msg.opponent_settings = msg.opponent_settings, msg.player_settings
@@ -146,9 +155,6 @@ Room = class(function(self, a, b)
   self.a = a --player a
   self.b = b --player b
   self.name = a.name.." vs "..b.name
-  if self.replay then
-  --self.prev_replay = self.replay  --not sure if we'll need this.
-  end
   if not self.a.room then
     self.roomNumber = ROOMNUMBER
     ROOMNUMBER = ROOMNUMBER + 1
@@ -597,7 +603,26 @@ function Room.resolve_game_outcome(self)
   if not self.game_outcome_reports[1] or not self.game_outcome_reports[2] then
     return false
   else
-      write_replay_file(self.replay, "replay.txt")
+      --use UTC time for dates on replays
+      local now = os.date("*t",to_UTC(os.time()))
+      local path = "ftp"..sep.."replays"..sep..string.format("%04d"..sep.."%02d"..sep.."%02d", now.year, now.month, now.day)
+      --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
+      if self.b.name <  self.a.name then
+        path = path..sep..self.b.name.."-vs-"..self.a.name
+      else
+        path = path..sep..self.a.name.."-vs-"..self.b.name
+      end
+      local filename = string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec).."-"..self.a.name.."-vs-"..self.b.name
+      if self.replay.vs.ranked then
+        filename = filename.."-Ranked"
+      else
+        filename = filename.."-Casual"
+      end
+      filename = filename..".txt"
+      print("saving replay as "..path..sep..filename)
+      
+      write_replay_file(self.replay, path, filename)
+      --write_replay_file(self.replay, "replay.txt")
       self.replay = nil
       local outcome = nil
       if self.game_outcome_reports[1] ~= self.game_outcome_reports[2] then
@@ -801,13 +826,25 @@ end
 function Connection.J(self, message)
   message = json.decode(message)
   local response
-  if self.state == "needs_name" and message.name then
-    if name_to_idx[message.name] then
+  if self.state == "needs_name" then
+    if not message.name or message.name == "" then
+      print("connection didn't send a name")
+      response = {choose_another_name = {reason = "Name cannot be blank"}}
+      self:send(response)
+      return
+    elseif name_to_idx[message.name] then
+      print("connection sent name: "..message.name)
       local names = {}
       for _,v in pairs(connections) do
         names[#names+1] = v.name -- fine if name is nil :o
       end
-      response = {choose_another_name = {used_names = names}}
+      response = {choose_another_name = {used_names = names} }
+      self:send(response)
+    elseif message.name:find("[^_%w]") then
+      response = {choose_another_name = {reason = "Usernames are limited to alphanumeric and underscores"}}
+      self:send(response)
+    elseif string.len(message.name) > NAME_LENGTH_LIMIT then
+      response = {choose_another_name = {reason = "The name length limit is "..NAME_LENGTH_LIMIT.. " characters"}}
       self:send(response)
     else
       self.name = message.name
@@ -873,7 +910,6 @@ function Connection.J(self, message)
   elseif self.state == "playing" and message.game_over then
     self.room.game_outcome_reports[self.player_number] = message.outcome
       if self.room:resolve_game_outcome() then
-        
         print("\n*******************************")
         print("***"..self.room.a.name.." ".. self.room.win_counts[1].." - "..self.room.win_counts[2].." "..self.room.b.name.."***")
         print("*******************************\n")
@@ -1006,7 +1042,23 @@ end
 initialize_mt_generator(csprng_seed)
 seed_from_mt(extract_mt())
 ban_list = {}
+--timezone testing
+-- print("server_UTC_offset (in seconds) is "..tzoffset)
+-- print("that's "..(tzoffset/3600).." hours")
+-- local server_start_time = os.time()
+-- print("current local time: "..server_start_time)
+-- print("current UTC time: "..to_UTC(server_start_time))
+-- local now = os.date("*t")
+-- local formatted_local_time = string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
+-- print("formatted local time: "..formatted_local_time)
+-- now = os.date("*t",to_UTC(server_start_time))
+-- local formatted_UTC_time = string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
+-- print("formatted UTC time: "..formatted_UTC_time)
+
 print("initialized!")
+-- print("get_timezone() output: "..get_timezone())
+-- print("get_timezone_offset(os.time()) output: "..get_timezone_offset(os.time()))
+-- print("get_tzoffset(get_timezone()) output:"..get_tzoffset(get_timezone()))
 
 local prev_now = time()
 while true do
