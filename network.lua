@@ -109,8 +109,8 @@ function network_init(ip)
   TCP_sock:settimeout(0)
   got_H = false
   net_send("H021")
-  assert(config.name and config.level and config.character)
-  json_send({name=config.name, level=config.level, character=config.character})
+  assert(config.name and config.level and config.character and config.save_replays_publicly)
+  json_send({name=config.name, level=config.level, character=config.character, save_replays_publicly = config.save_replays_publicly})
 end
 
 function connection_is_ready()
