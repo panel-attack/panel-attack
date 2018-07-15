@@ -1563,19 +1563,28 @@ function main_config_input()
 end
 
 function main_options()
-  local option_names = {"Master Volume", "SFX Volume", "Music Volume", "Debug Mode"}
   local items, active_idx = {}, 1
   local k = K[1]
   local selected, deselected_this_frame, adjust_active_value = false, false, false
   local function get_items()
+  local save_replays_publicly_choices = {"with my name", "anonymously", "not at all"}
+  --make so we can get "anonymously" from save_replays_publicly_choices["anonymously"]
+  for k,v in ipairs(save_replays_publicly_choices) do
+    save_replays_publicly_choices[v] = v
+  end
+  
   local debug_mode_text = {[true]="On", [false]="Off"}  
     items = {
-    --{[1]"Option Name", [2]default value, [3]type, [4]min or bool value,
+    --{[1]"Option Name", [2]current or default value, [3]type, [4]min or bool value or choices_table,
     -- [5]max, [6]sound_source, [7]selectable, [8]next_func, [9]play_while selected}
       {"Master Volume", config.master_volume or 100, "numeric", 0, 100, sounds.music.character_normal["lip"], true, nil, true},
       {"SFX Volume", config.SFX_volume or 100, "numeric", 0, 100, sounds.SFX.cur_move, true},
       {"Music Volume", config.music_volume or 100, "numeric", 0, 100, sounds.music.character_normal["lip"], true, nil, true},
       {"Debug Mode", debug_mode_text[config.debug_mode or false], "bool", false, nil, nil,false},
+      {"Save replays publicly", 
+        save_replays_publicly_choices[config.save_replays_publicly]
+          or save_replays_publicly_choices["with my name"],
+        "multiple choice", save_replays_publicly_choices},
       {"Back", "", nil, nil, nil, nil, false, main_select_mode}
     }
   end
@@ -1651,8 +1660,9 @@ function main_options()
           deselected_this_frame = true
           adjust_active_value = true
         end
-      elseif items[active_idx][3] == "bool" then
-          adjust_active_value = true
+      elseif items[active_idx][3] == "bool" or items[active_idx][3] == "multiple choice" then
+        print("Enter Pressed on bool or multiple choice.")
+        adjust_active_value = true
       elseif active_idx == #items then
         write_conf_file()
         return items[active_idx][8] --next_func
@@ -1693,7 +1703,23 @@ function main_options()
         if active_idx == 3 and deselected_this_frame then --Music Volume
           set_volume(sounds.music, config.music_volume/100) 
         end
-        --add any other number config updates here
+        --add any other numeric config updates here
+      elseif items[active_idx][3] == "multiple choice" then
+        local active_choice_num = 1
+        --find the key for the currently selected choice
+        for k,v in ipairs(items[active_idx][4]) do
+          if v == items[active_idx][2] then
+            active_choice_num = k
+          end
+        end
+        -- the next line of code means
+        -- current_choice_num = choices[wrap(1, next_choice_num, last_choice_num)]
+        items[active_idx][2] = items[active_idx][4][wrap(1,active_choice_num + 1, #items[active_idx][4])]
+        if active_idx == 5 then
+          config.save_replays_publicly = items[active_idx][2]
+        --add any other multiple choice config updates here
+        end
+
       end
       adjust_active_value = false
     end

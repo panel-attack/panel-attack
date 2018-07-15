@@ -603,16 +603,27 @@ function Room.resolve_game_outcome(self)
   if not self.game_outcome_reports[1] or not self.game_outcome_reports[2] then
     return false
   else
+    if self.a.save_replays_publicly ~= "not at all" and self.b.save_replays_publicly ~= "not at all" then
       --use UTC time for dates on replays
       local now = os.date("*t",to_UTC(os.time()))
       local path = "ftp"..sep.."replays"..sep..string.format("%04d"..sep.."%02d"..sep.."%02d", now.year, now.month, now.day)
-      --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
-      if self.b.name <  self.a.name then
-        path = path..sep..self.b.name.."-vs-"..self.a.name
-      else
-        path = path..sep..self.a.name.."-vs-"..self.b.name
+      local rep_a_name, rep_b_name = self.a.name, self.b.name
+      if self.a.save_replays_publicly == "anonymously" then
+        rep_a_name = "anonymous"
+        self.replay.P1_name = "anonymous"
       end
-      local filename = string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec).."-"..self.a.name.."-vs-"..self.b.name
+      if self.b.save_replays_publicly == "anonymously" then
+        rep_b_name = "anonymous"
+        self.replay.P2_name = "anonymous"
+      end
+      --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
+      --don't switch to put "anonymous" first though
+      if rep_b_name <  rep_a_name and rep_b_name ~= "anonymous" then
+        path = path..sep..rep_b_name.."-vs-"..rep_a_name
+      else
+        path = path..sep..rep_a_name.."-vs-"..rep_b_name
+      end
+      local filename = string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec).."-"..rep_a_name.."-vs-"..rep_b_name
       if self.replay.vs.ranked then
         filename = filename.."-Ranked"
       else
@@ -623,6 +634,9 @@ function Room.resolve_game_outcome(self)
       
       write_replay_file(self.replay, path, filename)
       --write_replay_file(self.replay, "replay.txt")
+    else
+      print("replay not saved because a player didn't want it saved")
+    end
       self.replay = nil
       local outcome = nil
       if self.game_outcome_reports[1] ~= self.game_outcome_reports[2] then
@@ -832,6 +846,11 @@ function Connection.J(self, message)
       response = {choose_another_name = {reason = "Name cannot be blank"}}
       self:send(response)
       return
+    elseif string.lower(message.name) == "anonymous" then
+      print("connection tried to use name\"anonymous\"")
+      response = {choose_another_name = {reason = "Username cannot be \"anonymous\""}}
+      self:send(response)
+      return
     elseif name_to_idx[message.name] then
       print("connection sent name: "..message.name)
       local names = {}
@@ -850,6 +869,7 @@ function Connection.J(self, message)
       self.name = message.name
       self.character = message.character
       self.level = message.level
+      self.save_replays_publicly = message.save_replays_publicly
       lobby_changed = true
       self.state = "lobby"
       name_to_idx[self.name] = self.index

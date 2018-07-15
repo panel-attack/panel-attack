@@ -27,7 +27,7 @@ function love.load()
   read_key_file()
   read_conf_file() -- TODO: stop making new config files
   replay = {}
-  config = {character="lip", level=5, name="defaultname",master_volume=100, SFX_volume=100, music_volume=100, debug_mode=false}
+  config = {character="lip", level=5, name="defaultname", master_volume=100, SFX_volume=100, music_volume=100, debug_mode=false, save_replays_publicly = "with my name"}
   read_conf_file()
   read_replay_file()
   love.audio.setVolume(config.master_volume/100)
