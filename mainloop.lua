@@ -444,11 +444,9 @@ function main_net_vs_room()
       if msg.ranked_match_approved then
         match_type = "Ranked"
         match_type_message = ""
-        replay.vs.ranked = true
       elseif msg.ranked_match_denied then
         match_type = "Casual"
         match_type_message = "Not ranked. "
-        replay.vs.ranked = false
         if msg.reasons then
           match_type_message = match_type_message..(msg.reasons[1] or "Reason unknown")
         end
@@ -477,7 +475,8 @@ function main_net_vs_room()
         replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
                     P1_level=P1.level,P2_level=P2.level,
                     P1_name=my_name, P2_name=op_name,
-                    P1_char=P1.character,P2_char=P2.character}
+                    P1_char=P1.character,P2_char=P2.character,
+                    ranked=msg.ranked}
         if currently_spectating and replay_of_match_so_far then --we joined a match in progress
           replay.vs = replay_of_match_so_far.vs
           P1.input_buffer = replay_of_match_so_far.vs.in_buf
@@ -486,6 +485,12 @@ function main_net_vs_room()
           P2.input_buffer = replay_of_match_so_far.vs.I
           P2.panel_buffer = replay_of_match_so_far.vs.O
           P2.gpanel_buffer = replay_of_match_so_far.vs.R
+          if replay.vs.ranked then
+            match_type = "Ranked"
+            match_type_message = ""
+          else 
+            match_type = "Casual"
+          end
           replay_of_match_so_far = nil
           P1.play_to_end = true  --this makes foreign_run run until caught up
           P2.play_to_end = true
