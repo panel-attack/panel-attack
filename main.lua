@@ -13,6 +13,7 @@ require("puzzles")
 require("mainloop")
 require("consts")
 require("sound")
+require("timezones")
 
 local N_FRAMES = 0
 local canvas = love.graphics.newCanvas(default_width, default_height)
