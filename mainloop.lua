@@ -308,13 +308,18 @@ function main_net_vs_room()
     print("Error: The server never told us our player number.  Assuming it is 2")
     op_player_number = 2
   end
-    if msg.win_counts then
-      update_win_counts(msg.win_counts)
-    end
-    if msg.replay_of_match_so_far then
-      replay_of_match_so_far = msg.replay_of_match_so_far
-    end
-  
+  if msg.win_counts then
+    update_win_counts(msg.win_counts)
+  end
+  if msg.replay_of_match_so_far then
+    replay_of_match_so_far = msg.replay_of_match_so_far
+  end
+  if msg.ranked then
+    match_type = "Ranked"
+    match_type_message = ""
+  else 
+    match_type = "Casual"
+  end
   if currently_spectating then
     P1 = {panel_buffer="", gpanel_buffer=""}
     print("we reset P1 buffers at start of main_net_vs_room()")
@@ -1318,9 +1323,17 @@ function main_replay_vs()
     if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
       end_text = "Draw"
     elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
-      end_text = "You lose :("
+      if replay.P2_name and replay.P2_name ~= "anonymous" then
+        end_text = replay.P2_name.." wins"
+      else
+        end_text = "P2 wins"
+      end
     elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
-      end_text = "You win ^^"
+      if replay.P1_name and replay.P1_name ~= "anonymous" then
+        end_text = replay.P1_name.." wins"
+      else
+        end_text = "P1 wins"
+      end
     end
     if end_text then
       return main_dumb_transition, {main_select_mode, end_text}
