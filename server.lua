@@ -603,10 +603,21 @@ function Room.resolve_game_outcome(self)
   if not self.game_outcome_reports[1] or not self.game_outcome_reports[2] then
     return false
   else
+    local outcome = nil
+    if self.game_outcome_reports[1] ~= self.game_outcome_reports[2] then
+        --if clients disagree, the server needs to decide the outcome, perhaps by watching a replay it had created during the game.
+        --for now though...
+        print("clients "..self.a.name.." and "..self.b.name.." disagree on their game outcome. So the server will decide.")
+        outcome = 0
+    else
+      outcome = self.game_outcome_reports[1]
+    end
+    print("resolve_game_outcome says: "..outcome)
+    --outcome is the player number of the winner, or 0 for a tie
     if self.a.save_replays_publicly ~= "not at all" and self.b.save_replays_publicly ~= "not at all" then
       --use UTC time for dates on replays
       local now = os.date("*t",to_UTC(os.time()))
-      local path = "ftp"..sep.."replays"..sep..string.format("%04d"..sep.."%02d"..sep.."%02d", now.year, now.month, now.day)
+      local path = "ftp"..sep.."replays"..sep.."v"..VERSION..sep..string.format("%04d"..sep.."%02d"..sep.."%02d", now.year, now.month, now.day)
       local rep_a_name, rep_b_name = self.a.name, self.b.name
       if self.a.save_replays_publicly == "anonymously" then
         rep_a_name = "anonymous"
@@ -623,11 +634,16 @@ function Room.resolve_game_outcome(self)
       else
         path = path..sep..rep_a_name.."-vs-"..rep_b_name
       end
-      local filename = string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec).."-"..rep_a_name.."-vs-"..rep_b_name
+      local filename = "v"..VERSION.."-"..string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec).."-"..rep_a_name.."-L"..self.replay.vs.P1_level.."-vs-"..rep_b_name.."-L"..self.replay.vs.P2_level
       if self.replay.vs.ranked then
         filename = filename.."-Ranked"
       else
         filename = filename.."-Casual"
+      end
+      if outcome == 1 or outcome == 2 then
+        filename = filename.."-P"..outcome.."wins"
+      elseif outcome == 0 then
+        filename = filename.."-draw"
       end
       filename = filename..".txt"
       print("saving replay as "..path..sep..filename)
@@ -637,41 +653,30 @@ function Room.resolve_game_outcome(self)
     else
       print("replay not saved because a player didn't want it saved")
     end
-      self.replay = nil
-      local outcome = nil
-      if self.game_outcome_reports[1] ~= self.game_outcome_reports[2] then
-          --if clients disagree, the server needs to decide the outcome, perhaps by watching a replay it had created during the game.
-          --for now though...
-          print("clients "..self.a.name.." and "..self.b.name.." disagree on their game outcome. So the server will decide.")
-          outcome = 0
-      else
-        outcome = self.game_outcome_reports[1]
-      end
-      print("resolve_game_outcome says: "..outcome)
-      --outcome is the player number of the winner, or 0 for a tie
-      if outcome == 0 then
-        print("tie.  Nobody scored")
-        --do nothing. no points or rating adjustments for ties.
-        return true
-      else
-        local someone_scored = false
-        for i=1,2,1--[[or Number of players if we implement more than 2 players]] do
-          print("checking if player "..i.." scored...")
-          if outcome == i then
-            print("Player "..i.." scored")
-            self.win_counts[i] = self.win_counts[i] + 1
-            adjust_ratings(self, i)
-            someone_scored = true
-          end
+    self.replay = nil
+    if outcome == 0 then
+      print("tie.  Nobody scored")
+      --do nothing. no points or rating adjustments for ties.
+      return true
+    else
+      local someone_scored = false
+      for i=1,2,1--[[or Number of players if we implement more than 2 players]] do
+        print("checking if player "..i.." scored...")
+        if outcome == i then
+          print("Player "..i.." scored")
+          self.win_counts[i] = self.win_counts[i] + 1
+          adjust_ratings(self, i)
+          someone_scored = true
         end
-        if someone_scored then
-          local msg = {win_counts=self.win_counts}
-          self.a:send(msg)
-          self.b:send(msg)
-          self:send_to_spectators(msg)
-        end
-        return true
       end
+      if someone_scored then
+        local msg = {win_counts=self.win_counts}
+        self.a:send(msg)
+        self.b:send(msg)
+        self:send_to_spectators(msg)
+      end
+      return true
+    end
   end
 end
 
@@ -916,7 +921,7 @@ function Connection.J(self, message)
         self.room.replay = {}
         self.room.replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
                     P1_level=self.room.a.level,P2_level=self.room.b.level,
-                    P1_char=self.room.a.character,P2_char=self.room.b.character}
+                    P1_char=self.room.a.character,P2_char=self.room.b.character, ranked = self.room:rating_adjustment_approved()}
         if self.player_number == 1 then
           start_match(self, self.opponent)
         else

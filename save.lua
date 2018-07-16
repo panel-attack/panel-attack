@@ -63,6 +63,7 @@ function write_replay_file() pcall(function()
 end) end
 
 function write_replay_file(path, filename) pcall(function()
+  love.filesystem.createDirectory(path)
   local file = love.filesystem.newFile(path.."/"..filename)
   file:open("w")
   file:write(json.encode(replay))
