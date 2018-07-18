@@ -148,6 +148,8 @@ Stack = class(function(s, which, mode, speed, difficulty, player_number)
 
     s.move_sound = false  -- this is set if the cursor movement sound should be played
     s.poppedPanelIndex = s.poppedPanelIndex or 1
+    s.panels_cleared = s.panels_cleared or 0
+    s.metal_panels_queued = s.metal_panels_queued or 0
     s.lastPopLevelPlayed = s.lastPopLevelPlayed or 1
     s.lastPopIndexPlayed = s.lastPopIndexPlayed or 1
     s.game_over = false
@@ -778,6 +780,10 @@ function Stack.PdP(self)
             -- If it is the last panel to pop,
             -- it should be removed immediately!
             if panel.combo_size == panel.combo_index then
+              self.panels_cleared = self.panels_cleared + 1
+              if self.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
+                self.metal_panels_queued = self.metal_panels_queued + 1
+              end
               SFX_Pop_Play = 1
               self.poppedPanelIndex = panel.combo_index
               panel.color=0;
@@ -791,9 +797,14 @@ function Stack.PdP(self)
               panel.state = "popped"
               panel.timer = (panel.combo_size-panel.combo_index)
                   * self.FRAMECOUNT_POP
+              self.panels_cleared = self.panels_cleared + 1
+              if self.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
+                self.metal_panels_queued = self.metal_panels_queued + 1
+              end
               SFX_Pop_Play = 1
               self.poppedPanelIndex = panel.combo_index
             end
+            
           elseif panel.state == "popped" then
             -- It's time for this panel
             -- to be gone forever :'(

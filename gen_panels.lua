@@ -29,16 +29,16 @@ function make_panels(ncolors, prev_panels, stuff)
       ret = ret..color
     end
   end
-  print("panels before potential shock block position assignments:")
+  print("panels before potential metal panel position assignments:")
   print(ret)
-    --assign potential shock block placements
+    --assign potential metal panel placements
   local row_width = 6 --this may belong in globals if we were to ever make a game mode with a different width
   local new_ret = "000000"
   local prev_row
   for i=2,rows_to_make+1 do
     prev_row = string.sub(new_ret,0-row_width,-1)
-    local first, second --locations of potential shock blocks
-    --while panel vertically adjacent is not numeric, so can be a shock block 
+    local first, second --locations of potential metal panels
+    --while panel vertically adjacent is not numeric, so can be a metal panel 
     while not first or not tonumber(string.sub(prev_row, first, first)) do 
       first = math.random(1,row_width)
     end
@@ -60,7 +60,7 @@ function make_panels(ncolors, prev_panels, stuff)
     new_ret = new_ret..new_row
   end
   ret = new_ret
-  print("panels after potential shock block position assignments:")
+  print("panels after potential metal panel position assignments:")
   print(ret)
   if cut_panels then
     ret = procat(ret)

@@ -229,8 +229,8 @@ panel_color_to_number = { ["A"]=1, ["B"]=2, ["C"]=3, ["D"]=4, ["E"]=5, ["F"]=6, 
                           ["a"]=1, ["b"]=2, ["c"]=3, ["d"]=4, ["e"]=5, ["f"]=6, ["g"]=7, ["h"]=8,
                           ["1"]=1, ["2"]=2, ["3"]=3, ["4"]=4, ["5"]=5, ["6"]=6, ["7"]=7, ["8"]=8}
                                 
---how many panels you have to pop to earn a shock block in your next row.
-level_to_shock_block_frequency = {12, 14, 16, 19, 23, 26, 29, 33, 37, 41}
+--how many panels you have to pop to earn a metal panel in your next row.
+level_to_metal_panel_frequency = {12, 14, 16, 19, 23, 26, 29, 33, 37, 41}
             
 -- win counters
 my_win_count = 0

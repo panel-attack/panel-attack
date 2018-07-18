@@ -366,6 +366,12 @@ function Stack.render(self)
     gprint("Pre stop: "..self.pre_stop_time, self.score_x, 220)
     if config.debug_mode and self.danger then gprint("danger", self.score_x,235) end
     if config.debug_mode and self.danger_music then gprint("danger music", self.score_x, 250) end
+    if config.debug_mode then
+      gprint("panels cleared: "..(self.panels_cleared or 0), self.score_x, 265)
+    end
+    if config.debug_mode then
+      gprint("metal panels queued: "..(self.metal_panels_queued or 0), self.score_x, 280)
+    end
     if match_type then gprint(match_type, 375, 15) end
     --gprint("Player"..self.player_number, self.score_x,265)
     --gprint("Panel buffer: "..#self.panel_buffer, self.score_x, 190)
