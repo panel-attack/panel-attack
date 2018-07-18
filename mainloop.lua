@@ -7,7 +7,8 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_replay_vs, main_local_vs_setup, main_local_vs, menu_key_func,
   multi_func, normal_key, main_set_name, main_net_vs_room, main_net_vs_lobby,
   main_local_vs_yourself_setup, main_local_vs_yourself
-  
+
+VERSION = "021"
 local PLAYING = "playing"  -- room states
 local CHARACTERSELECT = "character select" --room states
 local currently_spectating = false
@@ -308,13 +309,18 @@ function main_net_vs_room()
     print("Error: The server never told us our player number.  Assuming it is 2")
     op_player_number = 2
   end
-    if msg.win_counts then
-      update_win_counts(msg.win_counts)
-    end
-    if msg.replay_of_match_so_far then
-      replay_of_match_so_far = msg.replay_of_match_so_far
-    end
-  
+  if msg.win_counts then
+    update_win_counts(msg.win_counts)
+  end
+  if msg.replay_of_match_so_far then
+    replay_of_match_so_far = msg.replay_of_match_so_far
+  end
+  if msg.ranked then
+    match_type = "Ranked"
+    match_type_message = ""
+  else 
+    match_type = "Casual"
+  end
   if currently_spectating then
     P1 = {panel_buffer="", gpanel_buffer=""}
     print("we reset P1 buffers at start of main_net_vs_room()")
@@ -474,7 +480,9 @@ function main_net_vs_room()
         P2.score_x = 410
         replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
                     P1_level=P1.level,P2_level=P2.level,
-                    P1_char=P1.character,P2_char=P2.character}
+                    P1_name=my_name, P2_name=op_name,
+                    P1_char=P1.character,P2_char=P2.character,
+                    ranked=msg.ranked}
         if currently_spectating and replay_of_match_so_far then --we joined a match in progress
           replay.vs = replay_of_match_so_far.vs
           P1.input_buffer = replay_of_match_so_far.vs.in_buf
@@ -483,6 +491,12 @@ function main_net_vs_room()
           P2.input_buffer = replay_of_match_so_far.vs.I
           P2.panel_buffer = replay_of_match_so_far.vs.O
           P2.gpanel_buffer = replay_of_match_so_far.vs.R
+          if replay.vs.ranked then
+            match_type = "Ranked"
+            match_type_message = ""
+          else 
+            match_type = "Casual"
+          end
           replay_of_match_so_far = nil
           P1.play_to_end = true  --this makes foreign_run run until caught up
           P2.play_to_end = true
@@ -717,8 +731,10 @@ function main_net_vs_lobby()
         end
       end
     for _,msg in ipairs(this_frame_messages) do
-      if msg.choose_another_name then
+      if msg.choose_another_name and msg.choose_another_name.used_names then
         return main_dumb_transition, {main_select_mode, "Error: name is taken :<\n\nIf you had just left the server,\nit may not have realized it yet, try joining again.\n\nThis can also happen if you have two\ninstances of Panel Attack open.\n\nPress Swap or Back to continue.", 60, 600}
+      elseif msg.choose_another_name and msg.choose_another_name.reason then
+        return main_dumb_transition, {main_select_mode, "Error: ".. msg.choose_another_name.reason, 60}
       end
       if msg.create_room or msg.spectate_request_granted then
         global_initialize_room_msg = msg
@@ -964,7 +980,9 @@ function main_net_vs_setup(ip)
   P2.pos_x = 172
   P2.score_x = 410
   replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
-              P1_level=P1_level,P2_level=P2_level}
+              P1_level=P1_level,P2_level=P2_level,
+              ranked=false, P1_name=my_name, P2_name=op_name,
+              P1_char=P1.character, P2_char=P2.character}
   ask_for_gpanels("000000")
   ask_for_panels("000000")
   if not currently_spectating then
@@ -1005,8 +1023,8 @@ function main_net_vs()
         return main_net_vs_lobby
       end
     end
-    gprint(my_name, 315, 40)
-    gprint(op_name, 410, op_name_y)
+    gprint(my_name or "", 315, 40)
+    gprint(op_name or "", 410, op_name_y)
     gprint("Wins: "..my_win_count, 315, 70)
     gprint("Wins: "..op_win_count, 410, 70)
     if not config.debug_mode then --this is printed in the same space as the debug details
@@ -1075,8 +1093,31 @@ function main_net_vs()
     end
     if end_text then
       undo_stonermode()
-      write_replay_file()
       json_send({game_over=true, outcome=outcome_claim})
+      local now = os.date("*t",to_UTC(os.time()))
+      local sep = "/"
+      local path = "replays"..sep.."v"..VERSION..sep..string.format("%04d"..sep.."%02d"..sep.."%02d", now.year, now.month, now.day)
+      local rep_a_name, rep_b_name = my_name, op_name
+      --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
+      if rep_b_name <  rep_a_name then
+        path = path..sep..rep_b_name.."-vs-"..rep_a_name
+      else
+        path = path..sep..rep_a_name.."-vs-"..rep_b_name
+      end
+      local filename = "v"..VERSION.."-"..string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec).."-"..rep_a_name.."-L"..P1.level.."-vs-"..rep_b_name.."-L"..P2.level
+      if match_type and match_type ~= "" then
+        filename = filename.."-"..match_type
+      end
+      if outcome_claim == 1 or outcome_claim == 2 then
+        filename = filename.."-P"..outcome_claim.."wins"
+      elseif outcome_claim == 0 then
+        filename = filename.."-draw"
+      end
+      filename = filename..".txt"
+      print("saving replay as "..path..sep..filename)
+      write_replay_file(path, filename)
+      print("also saving replay as replay.txt")
+      write_replay_file()
       if currently_spectating then
         return main_dumb_transition, {main_net_vs_room, end_text, 45, 45}
       else
@@ -1254,13 +1295,28 @@ function main_replay_vs()
   P2.gpanel_buffer = replay.R
   P1.max_runs_per_frame = 1
   P2.max_runs_per_frame = 1
+  P1.character = replay.P1_char
+  P2.character = replay.P2_char
+  my_name = replay.P1_name or "Player 1"
+  op_name = replay.P2_name or "Player 2"
+  if replay.ranked then
+    match_type = "Ranked"
+  else
+    match_type = "Casual"
+  end
 
   P1:starting_state()
   P2:starting_state()
   local end_text = nil
   local run = true
+  local op_name_y = 40
+  if string.len(my_name) > 12 then
+    op_name_y = 55
+  end
   while true do
     mouse_panel = nil
+    gprint(my_name or "", 315, 40)
+    gprint(op_name or "", 410, op_name_y)
     P1:render()
     P2:render()
     if mouse_panel then
@@ -1291,9 +1347,17 @@ function main_replay_vs()
     if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
       end_text = "Draw"
     elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
-      end_text = "You lose :("
+      if replay.P2_name and replay.P2_name ~= "anonymous" then
+        end_text = replay.P2_name.." wins"
+      else
+        end_text = "P2 wins"
+      end
     elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
-      end_text = "You win ^^"
+      if replay.P1_name and replay.P1_name ~= "anonymous" then
+        end_text = replay.P1_name.." wins"
+      else
+        end_text = "P1 wins"
+      end
     end
     if end_text then
       return main_dumb_transition, {main_select_mode, end_text}
@@ -1541,19 +1605,28 @@ function main_config_input()
 end
 
 function main_options()
-  local option_names = {"Master Volume", "SFX Volume", "Music Volume", "Debug Mode"}
   local items, active_idx = {}, 1
   local k = K[1]
   local selected, deselected_this_frame, adjust_active_value = false, false, false
   local function get_items()
+  local save_replays_publicly_choices = {"with my name", "anonymously", "not at all"}
+  --make so we can get "anonymously" from save_replays_publicly_choices["anonymously"]
+  for k,v in ipairs(save_replays_publicly_choices) do
+    save_replays_publicly_choices[v] = v
+  end
+  
   local debug_mode_text = {[true]="On", [false]="Off"}  
     items = {
-    --{[1]"Option Name", [2]default value, [3]type, [4]min or bool value,
+    --{[1]"Option Name", [2]current or default value, [3]type, [4]min or bool value or choices_table,
     -- [5]max, [6]sound_source, [7]selectable, [8]next_func, [9]play_while selected}
       {"Master Volume", config.master_volume or 100, "numeric", 0, 100, sounds.music.character_normal["lip"], true, nil, true},
       {"SFX Volume", config.SFX_volume or 100, "numeric", 0, 100, sounds.SFX.cur_move, true},
       {"Music Volume", config.music_volume or 100, "numeric", 0, 100, sounds.music.character_normal["lip"], true, nil, true},
       {"Debug Mode", debug_mode_text[config.debug_mode or false], "bool", false, nil, nil,false},
+      {"Save replays publicly", 
+        save_replays_publicly_choices[config.save_replays_publicly]
+          or save_replays_publicly_choices["with my name"],
+        "multiple choice", save_replays_publicly_choices},
       {"Back", "", nil, nil, nil, nil, false, main_select_mode}
     }
   end
@@ -1629,8 +1702,9 @@ function main_options()
           deselected_this_frame = true
           adjust_active_value = true
         end
-      elseif items[active_idx][3] == "bool" then
-          adjust_active_value = true
+      elseif items[active_idx][3] == "bool" or items[active_idx][3] == "multiple choice" then
+        print("Enter Pressed on bool or multiple choice.")
+        adjust_active_value = true
       elseif active_idx == #items then
         write_conf_file()
         return items[active_idx][8] --next_func
@@ -1671,7 +1745,23 @@ function main_options()
         if active_idx == 3 and deselected_this_frame then --Music Volume
           set_volume(sounds.music, config.music_volume/100) 
         end
-        --add any other number config updates here
+        --add any other numeric config updates here
+      elseif items[active_idx][3] == "multiple choice" then
+        local active_choice_num = 1
+        --find the key for the currently selected choice
+        for k,v in ipairs(items[active_idx][4]) do
+          if v == items[active_idx][2] then
+            active_choice_num = k
+          end
+        end
+        -- the next line of code means
+        -- current_choice_num = choices[wrap(1, next_choice_num, last_choice_num)]
+        items[active_idx][2] = items[active_idx][4][wrap(1,active_choice_num + 1, #items[active_idx][4])]
+        if active_idx == 5 then
+          config.save_replays_publicly = items[active_idx][2]
+        --add any other multiple choice config updates here
+        end
+
       end
       adjust_active_value = false
     end

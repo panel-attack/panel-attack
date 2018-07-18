@@ -10,7 +10,6 @@ keys = {}
 this_frame_keys = {}
 this_frame_unicodes = {}
 this_frame_messages = {}
-config = {character="lip", level=5, name="defaultname"}
 
 bounce_table = {1, 1, 1, 1,
                 2, 2, 2,
@@ -177,8 +176,6 @@ stages["hookbill"] = "cave"
 stages["navalpiranha"] = "cave"
 stages["kamek"] = "cave"
 stages["bowser"] = "king"
-
-config.debug_mode = false
 
 shake_arr = {}
 
