@@ -1651,10 +1651,35 @@ function Stack.new_row(self)
     error("Ran out of buffered panels.  Is the server down?")
   end
   -- generate a new row
+  local metal_panels_this_row = 0
+  if self.metal_panels_queued > 3 then
+    self.metal_panels_queued = self.metal_panels_queued - 2
+    metal_panels_this_row = 2
+  elseif self.metal_panels_queued > 0 then
+    self.metal_panels_queued = self.metal_panels_queued - 1
+    metal_panels_this_row = 1
+  end
   for col=1,self.width do
     local panel = Panel()
     panels[0][col] = panel
-    panel.color = string.sub(self.panel_buffer,col,col)+0
+    this_panel_color = string.sub(self.panel_buffer,col,col)
+    --a capital letter for the place where the first shock block should spawn (if earned), and a lower case letter is where a second should spawn (if earned).  (color 7 is metal)
+    if tonumber(this_panel_color) then
+      --do nothing special
+    elseif this_panel_color >= "A" and this_panel_color <= "Z" then
+      if metal_panels_this_row > 0 then
+        this_panel_color = 7
+      else
+        this_panel_color = panel_color_to_number[this_panel_color]
+      end
+    elseif this_panel_color >= "a" and this_panel_color <= "z" then
+      if metal_panels_this_row > 1 then
+        this_panel_color = 7
+      else
+        this_panel_color = panel_color_to_number[this_panel_color]
+      end
+    end
+    panel.color = this_panel_color+0
     panel.state = "dimmed"
   end
   self.panel_buffer = string.sub(self.panel_buffer,7)

@@ -34,28 +34,35 @@ function make_panels(ncolors, prev_panels, stuff)
     --assign potential metal panel placements
   local row_width = 6 --this may belong in globals if we were to ever make a game mode with a different width
   local new_ret = "000000"
+  local new_row
   local prev_row
   for i=2,rows_to_make+1 do
-    prev_row = string.sub(new_ret,0-row_width,-1)
-    local first, second --locations of potential metal panels
-    --while panel vertically adjacent is not numeric, so can be a metal panel 
-    while not first or not tonumber(string.sub(prev_row, first, first)) do 
-      first = math.random(1,row_width)
-    end
-    while not second or second==first or not tonumber(string.sub(prev_row, second, second)) do 
-      second = math.random(1,row_width)
-    end
-    local new_row = ""
-    for j=1, row_width do
-      num_from_ret = tonumber(string.sub(ret,(i-1)*row_width+j, (i-1)*row_width+j)) or 0
-      if j==first then
-        print(num_from_ret)
-        new_row = new_row..(panel_color_number_to_upper[num_from_ret] or "0")
-      elseif j==second then
-        new_row = new_row..(panel_color_number_to_lower[num_from_ret] or "0")
-      else
-        new_row = new_row..num_from_ret
+    current_row_from_ret =  string.sub(ret,(i-1)*row_width+1, (i-1)*row_width+row_width)
+    print("current_row_from_ret: "..current_row_from_ret)
+    if tonumber(current_row_from_ret) then --doesn't already have letters in it for metal panel locations
+      prev_row = string.sub(new_ret,0-row_width,-1)
+      local first, second --locations of potential metal panels
+      --while panel vertically adjacent is not numeric, so can be a metal panel 
+      while not first or not tonumber(string.sub(prev_row, first, first)) do 
+        first = math.random(1,row_width)
       end
+      while not second or second==first or not tonumber(string.sub(prev_row, second, second)) do 
+        second = math.random(1,row_width)
+      end
+      new_row = ""
+      for j=1, row_width do
+        chr_from_ret =string.sub(ret,(i-1)*row_width+j, (i-1)*row_width+j)
+        num_from_ret = tonumber(chr_from_ret)
+        if j==first then
+          new_row = new_row..(panel_color_number_to_upper[num_from_ret] or chr_from_ret or "0")
+        elseif j==second then
+          new_row = new_row..(panel_color_number_to_lower[num_from_ret] or chr_from_ret or "0")
+        else
+          new_row = new_row..chr_from_ret
+        end
+      end
+    else 
+      new_row = current_row_from_ret
     end
     new_ret = new_ret..new_row
   end

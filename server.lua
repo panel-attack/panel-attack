@@ -1080,6 +1080,9 @@ ban_list = {}
 -- local formatted_UTC_time = string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
 -- print("formatted UTC time: "..formatted_UTC_time)
 
+--test make_panels
+--print(make_panels(5,"000000",{})) 
+
 print("initialized!")
 -- print("get_timezone() output: "..get_timezone())
 -- print("get_timezone_offset(os.time()) output: "..get_timezone_offset(os.time()))
