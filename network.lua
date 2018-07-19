@@ -171,19 +171,7 @@ end
 
 function make_local_panels(stack, prev_panels)
   local ncolors = stack.NCOLORS
-  local ret = prev_panels
-  for x=0,19 do
-    for y=0,5 do
-      local prevtwo = y>1 and string.sub(ret,-1,-1) == string.sub(ret,-2,-2)
-      local nogood = true
-      while nogood do
-        color = tostring(math.random(1,ncolors))
-        nogood = (prevtwo and color == string.sub(ret,-1,-1)) or
-          color == string.sub(ret,-6,-6)
-      end
-      ret = ret..color
-    end
-  end
+  local ret = make_panels(stack.NCOLORS, prev_panels, stack)
   stack.panel_buffer = stack.panel_buffer..string.sub(ret,7,-1)
   local replay = replay[P1.mode]
   if replay and replay.pan_buf then
@@ -192,19 +180,7 @@ function make_local_panels(stack, prev_panels)
 end
 
 function make_local_gpanels(stack, prev_panels)
-  local ncolors = stack.NCOLORS
-  local ret = prev_panels
-  for x=0,19 do
-    for y=0,5 do
-      local nogood = true
-      while nogood do
-        color = tostring(math.random(1,ncolors))
-        nogood = (y>0 and color == string.sub(ret,-1,-1)) or
-          color == string.sub(ret,-6,-6)
-      end
-      ret = ret..color
-    end
-  end
+  ret = make_gpanels(stack.NCOLORS, prev_panels)
   stack.gpanel_buffer = stack.gpanel_buffer..string.sub(ret,7,-1)
   local replay = replay[P1.mode]
   if replay and replay.gpan_buf then

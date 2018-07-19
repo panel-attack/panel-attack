@@ -14,6 +14,7 @@ require("mainloop")
 require("consts")
 require("sound")
 require("timezones")
+require("gen_panels")
 
 local N_FRAMES = 0
 local canvas = love.graphics.newCanvas(default_width, default_height)

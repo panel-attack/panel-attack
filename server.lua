@@ -25,7 +25,7 @@ local NAME_LENGTH_LIMIT = 16
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
 
-local VERSION = "021"
+local VERSION = "022"
 local type_to_length = {H=4, E=4, F=4, P=8, I=2, L=2, Q=8, U=2}
 local INDEX = 1
 local connections = {}
@@ -1079,9 +1079,6 @@ ban_list = {}
 -- now = os.date("*t",to_UTC(server_start_time))
 -- local formatted_UTC_time = string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
 -- print("formatted UTC time: "..formatted_UTC_time)
-
---test make_panels
---print(make_panels(5,"000000",{})) 
 
 print("initialized!")
 -- print("get_timezone() output: "..get_timezone())

@@ -1663,18 +1663,18 @@ function Stack.new_row(self)
     local panel = Panel()
     panels[0][col] = panel
     this_panel_color = string.sub(self.panel_buffer,col,col)
-    --a capital letter for the place where the first shock block should spawn (if earned), and a lower case letter is where a second should spawn (if earned).  (color 7 is metal)
+    --a capital letter for the place where the first shock block should spawn (if earned), and a lower case letter is where a second should spawn (if earned).  (color 8 is metal)
     if tonumber(this_panel_color) then
       --do nothing special
     elseif this_panel_color >= "A" and this_panel_color <= "Z" then
       if metal_panels_this_row > 0 then
-        this_panel_color = 7
+        this_panel_color = 8
       else
         this_panel_color = panel_color_to_number[this_panel_color]
       end
     elseif this_panel_color >= "a" and this_panel_color <= "z" then
       if metal_panels_this_row > 1 then
-        this_panel_color = 7
+        this_panel_color = 8
       else
         this_panel_color = panel_color_to_number[this_panel_color]
       end
