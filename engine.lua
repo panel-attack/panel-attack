@@ -148,6 +148,8 @@ Stack = class(function(s, which, mode, speed, difficulty, player_number)
 
     s.move_sound = false  -- this is set if the cursor movement sound should be played
     s.poppedPanelIndex = s.poppedPanelIndex or 1
+    s.panels_cleared = s.panels_cleared or 0
+    s.metal_panels_queued = s.metal_panels_queued or 0
     s.lastPopLevelPlayed = s.lastPopLevelPlayed or 1
     s.lastPopIndexPlayed = s.lastPopIndexPlayed or 1
     s.game_over = false
@@ -778,6 +780,10 @@ function Stack.PdP(self)
             -- If it is the last panel to pop,
             -- it should be removed immediately!
             if panel.combo_size == panel.combo_index then
+              self.panels_cleared = self.panels_cleared + 1
+              if self.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
+                self.metal_panels_queued = self.metal_panels_queued + 1
+              end
               SFX_Pop_Play = 1
               self.poppedPanelIndex = panel.combo_index
               panel.color=0;
@@ -791,9 +797,14 @@ function Stack.PdP(self)
               panel.state = "popped"
               panel.timer = (panel.combo_size-panel.combo_index)
                   * self.FRAMECOUNT_POP
+              self.panels_cleared = self.panels_cleared + 1
+              if self.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
+                self.metal_panels_queued = self.metal_panels_queued + 1
+              end
               SFX_Pop_Play = 1
               self.poppedPanelIndex = panel.combo_index
             end
+            
           elseif panel.state == "popped" then
             -- It's time for this panel
             -- to be gone forever :'(
@@ -1563,8 +1574,8 @@ function Stack.check_matches(self)
       --MrStopTimer=MrStopAni[self.stop_time];
       --TODO: Mr Stop ^
 
-      SFX_Buddy_Play=1;
-      SFX_Land_Play=0;
+      SFX_Buddy_Play=1
+      SFX_Land_Play=0
     end
     --if garbage_size > 0 then
       self.pre_stop_time = max(self.pre_stop_time, pre_stop_time)
@@ -1573,6 +1584,9 @@ function Stack.check_matches(self)
     self.manual_raise=false
     --self.score_render=1;
     --Nope.
+    if metal_count > 2 then
+      SFX_Buddy_Play=1
+    end
     self:set_combo_garbage(combo_size, metal_count)
   end
 end
@@ -1640,10 +1654,35 @@ function Stack.new_row(self)
     error("Ran out of buffered panels.  Is the server down?")
   end
   -- generate a new row
+  local metal_panels_this_row = 0
+  if self.metal_panels_queued > 3 then
+    self.metal_panels_queued = self.metal_panels_queued - 2
+    metal_panels_this_row = 2
+  elseif self.metal_panels_queued > 0 then
+    self.metal_panels_queued = self.metal_panels_queued - 1
+    metal_panels_this_row = 1
+  end
   for col=1,self.width do
     local panel = Panel()
     panels[0][col] = panel
-    panel.color = string.sub(self.panel_buffer,col,col)+0
+    this_panel_color = string.sub(self.panel_buffer,col,col)
+    --a capital letter for the place where the first shock block should spawn (if earned), and a lower case letter is where a second should spawn (if earned).  (color 8 is metal)
+    if tonumber(this_panel_color) then
+      --do nothing special
+    elseif this_panel_color >= "A" and this_panel_color <= "Z" then
+      if metal_panels_this_row > 0 then
+        this_panel_color = 8
+      else
+        this_panel_color = panel_color_to_number[this_panel_color]
+      end
+    elseif this_panel_color >= "a" and this_panel_color <= "z" then
+      if metal_panels_this_row > 1 then
+        this_panel_color = 8
+      else
+        this_panel_color = panel_color_to_number[this_panel_color]
+      end
+    end
+    panel.color = this_panel_color+0
     panel.state = "dimmed"
   end
   self.panel_buffer = string.sub(self.panel_buffer,7)
