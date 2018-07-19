@@ -27,7 +27,7 @@ function make_panels(ncolors, prev_panels, stuff)
         color = (y==stuff.metal_col) and 8 or tostring(math.random(1,ncolors))
         nogood = (prevtwo and color == string.sub(ret,-1,-1)) or
           color == string.sub(ret,-6,-6) or
-          (y>0 and color == string.sub(ret,-1,-1) and stuff.mode == "vs" and stuff.level > 7)
+          (y>0 and color == string.sub(ret,-1,-1) and (stuff.vs_mode or stuff.mode == "vs") and stuff.level > 7)
       end
       ret = ret..color
     end
