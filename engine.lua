@@ -1574,8 +1574,8 @@ function Stack.check_matches(self)
       --MrStopTimer=MrStopAni[self.stop_time];
       --TODO: Mr Stop ^
 
-      SFX_Buddy_Play=1;
-      SFX_Land_Play=0;
+      SFX_Buddy_Play=1
+      SFX_Land_Play=0
     end
     --if garbage_size > 0 then
       self.pre_stop_time = max(self.pre_stop_time, pre_stop_time)
@@ -1584,6 +1584,9 @@ function Stack.check_matches(self)
     self.manual_raise=false
     --self.score_render=1;
     --Nope.
+    if metal_count > 2 then
+      SFX_Buddy_Play=1
+    end
     self:set_combo_garbage(combo_size, metal_count)
   end
 end
