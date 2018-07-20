@@ -37,6 +37,7 @@
 --int ConfettiBuf[6][2];
 --#define CONFETTI_STARTTIMER   40
 --#define CONFETTI_STARTRADIUS 150
+require("input")
 
 local floor = math.floor
 local ceil = math.ceil
@@ -371,6 +372,20 @@ function Stack.render(self)
     end
     if config.debug_mode then
       gprint("metal q: "..(self.metal_panels_queued or 0), self.score_x, 280)
+    end
+    if config.debug_mode and self.input_state then
+      -- print(self.input_state)
+      -- print(base64decode[self.input_state])
+      local iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
+      -- print(tostring(raise))
+      local inputs_to_print = "inputs:"
+      if iraise then inputs_to_print = inputs_to_print.."\nraise" end --◄▲▼►
+      if iswap then inputs_to_print = inputs_to_print.."\nswap" end
+      if iup then inputs_to_print = inputs_to_print.."\nup" end
+      if idown then inputs_to_print = inputs_to_print.."\ndown" end
+      if ileft then inputs_to_print = inputs_to_print.."\nleft" end
+      if iright then inputs_to_print = inputs_to_print.."\nright" end
+      gprint(inputs_to_print, self.score_x, 295)
     end
     if match_type then gprint(match_type, 375, 15) end
     --gprint("Player"..self.player_number, self.score_x,265)
