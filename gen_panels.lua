@@ -15,7 +15,7 @@ function make_panels(ncolors, prev_panels, stuff)
     if stuff.first_seven then
       ret = stuff.first_seven
       rows_to_make = rows_to_make - 7
-    else
+    elseif stuff.vs_mode or stuff.mode == "vs" then
       cut_panels = true
     end
   end
@@ -87,6 +87,10 @@ function make_panels(ncolors, prev_panels, stuff)
     ret = table.concat(ret)
     stuff.first_seven = string.sub(ret,1,48)
   end
+  -- if cut_panels then
+    -- print("panels after cut_panels")
+    -- print(ret)
+  -- end
   return string.sub(ret,7,-1)
 end
 
