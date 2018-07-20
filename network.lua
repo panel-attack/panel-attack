@@ -172,19 +172,19 @@ end
 function make_local_panels(stack, prev_panels)
   local ncolors = stack.NCOLORS
   local ret = make_panels(stack.NCOLORS, prev_panels, stack)
-  stack.panel_buffer = stack.panel_buffer..string.sub(ret,7,-1)
+  stack.panel_buffer = stack.panel_buffer..ret
   local replay = replay[P1.mode]
   if replay and replay.pan_buf then
-    replay.pan_buf = replay.pan_buf .. string.sub(ret,7,-1)
+    replay.pan_buf = replay.pan_buf .. ret
   end
 end
 
 function make_local_gpanels(stack, prev_panels)
   ret = make_gpanels(stack.NCOLORS, prev_panels)
-  stack.gpanel_buffer = stack.gpanel_buffer..string.sub(ret,7,-1)
+  stack.gpanel_buffer = stack.gpanel_buffer..ret
   local replay = replay[P1.mode]
   if replay and replay.gpan_buf then
-    replay.gpan_buf = replay.gpan_buf .. string.sub(ret,7,-1)
+    replay.gpan_buf = replay.gpan_buf .. ret
   end
 end
 
