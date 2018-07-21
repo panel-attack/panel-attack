@@ -149,6 +149,10 @@ function graphics_init()
   for i=14,99 do
     IMG_cards[true][i] = load_img("assets/chain00.png")
   end
+  IMG_character_icons = {}
+  for k,name in ipairs(characters) do
+    IMG_character_icons[name] = load_img("assets/"..name.."/icon.png")
+  end
 
   --for(a=0;a<2;a++) MrStopAni[a]=5;
   --for(a=2;a<5;a++) MrStopAni[a]=8;

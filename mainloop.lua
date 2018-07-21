@@ -123,7 +123,7 @@ do
         --{"2P vs online at burke.ro", main_net_vs_setup, {"burke.ro"}},
         {"2P vs online at Jon's server", main_net_vs_setup, {"18.188.43.50"}},
         --{"2P vs online at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
-        {"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
+        --{"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
         {"2P vs local game", main_local_vs_setup},
         {"Replay of 1P endless", main_replay_endless},
         {"Replay of 1P puzzle", main_replay_puzzle},
@@ -405,6 +405,10 @@ function main_net_vs_room()
     render_x = x_padding+(y-1)*100+spacing
     render_y = y_padding+(x-1)*100+spacing
     grectangle("line", render_x, render_y, w*100-2*spacing, h*100-2*spacing)
+    if str == "lip" and IMG_character_icons[str] then
+      draw(IMG_character_icons[str], render_x, render_y)
+      print("drew "..str.."'s icon")
+    end
     local y_add,x_add = 10,30
     local pstr = str
     if str == "level" then
