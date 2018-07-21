@@ -66,6 +66,14 @@ function draw(img, x, y, rot, x_scale,y_scale)
     rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
 end
 
+function menu_draw(img, x, y, rot, x_scale,y_scale)
+  rot = rot or 0
+  x_scale = x_scale or 1
+  y_scale = y_scale or 1
+  gfx_q:push({love.graphics.draw, {img, x, y,
+    rot, x_scale, y_scale}})
+end
+
 function grectangle(mode, x, y, w, h)
   gfx_q:push({love.graphics.rectangle, {mode, x, y, w, h}})
 end

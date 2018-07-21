@@ -404,10 +404,12 @@ function main_net_vs_room()
     set_color(unpack(colors.white))
     render_x = x_padding+(y-1)*100+spacing
     render_y = y_padding+(x-1)*100+spacing
-    grectangle("line", render_x, render_y, w*100-2*spacing, h*100-2*spacing)
-    if str == "lip" and IMG_character_icons[str] then
-      draw(IMG_character_icons[str], render_x, render_y)
-      print("drew "..str.."'s icon")
+    button_width = w*100-2*spacing
+    button_height = h*100-2*spacing
+    grectangle("line", render_x, render_y, button_width, button_height)
+    if IMG_character_icons[str] then
+      local orig_w, orig_h = IMG_character_icons[str]:getDimensions()
+      menu_draw(IMG_character_icons[str], render_x, render_y, 0, (button_width/orig_w), button_height/orig_h )
     end
     local y_add,x_add = 10,30
     local pstr = str
