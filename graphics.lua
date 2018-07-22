@@ -44,15 +44,15 @@ local ceil = math.ceil
 local garbage_match_time = #garbage_bounce_table
 
 function load_img(s)
-  s = love.image.newImageData(s)
-  local w, h = s:getWidth(), s:getHeight()
-  local wp = math.pow(2, math.ceil(math.log(w)/math.log(2)))
-  local hp = math.pow(2, math.ceil(math.log(h)/math.log(2)))
-  if wp ~= w or hp ~= h then
-    local padded = love.image.newImageData(wp, hp)
-    padded:paste(s, 0, 0)
-    s = padded
-  end
+  -- s = love.image.newImageData(s)
+  -- local w, h = s:getWidth(), s:getHeight()
+  -- local wp = math.pow(2, math.ceil(math.log(w)/math.log(2)))
+  -- local hp = math.pow(2, math.ceil(math.log(h)/math.log(2)))
+  -- if wp ~= w or hp ~= h then
+    -- local padded = love.image.newImageData(wp, hp)
+    -- padded:paste(s, 0, 0)
+    -- s = padded
+  -- end
   local ret = love.graphics.newImage(s)
   ret:setFilter("nearest","nearest")
   return ret
@@ -64,6 +64,22 @@ function draw(img, x, y, rot, x_scale,y_scale)
   y_scale = y_scale or 1
   gfx_q:push({love.graphics.draw, {img, x*GFX_SCALE, y*GFX_SCALE,
     rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
+end
+
+function menu_draw(img, x, y, rot, x_scale,y_scale)
+  rot = rot or 0
+  x_scale = x_scale or 1
+  y_scale = y_scale or 1
+  gfx_q:push({love.graphics.draw, {img, x, y,
+    rot, x_scale, y_scale}})
+end
+
+function menu_drawq(img, quad, x, y, rot, x_scale,y_scale)
+  rot = rot or 0
+  x_scale = x_scale or 1
+  y_scale = y_scale or 1
+  gfx_q:push({love.graphics.draw, {img, quad, x, y,
+    rot, x_scale, y_scale}})
 end
 
 function grectangle(mode, x, y, w, h)
@@ -149,6 +165,34 @@ function graphics_init()
   for i=14,99 do
     IMG_cards[true][i] = load_img("assets/chain00.png")
   end
+  IMG_character_icons = {}
+  for k,name in ipairs(characters) do
+    IMG_character_icons[name] = load_img("assets/"..name.."/icon.png")
+  end
+  local MAX_SUPPORTED_PLAYERS = 2
+  IMG_char_sel_cursors = {}
+  for player_num=1,MAX_SUPPORTED_PLAYERS do
+    IMG_char_sel_cursors[player_num] = {}
+    for position_num=1,2 do
+      IMG_char_sel_cursors[player_num][position_num] = load_img("assets/char_sel_cur_"..player_num.."P_pos"..position_num..".png")
+    end
+  end
+  IMG_char_sel_cursor_halves = {left={}, right={}}
+  for player_num=1,MAX_SUPPORTED_PLAYERS do
+    IMG_char_sel_cursor_halves.left[player_num] = {}
+    for position_num=1,2 do
+      local cur_width, cur_height = IMG_char_sel_cursors[player_num][position_num]:getDimensions()
+      local half_width, half_height = cur_width/2, cur_height/2
+      IMG_char_sel_cursor_halves["left"][player_num][position_num] = love.graphics.newQuad(0,0,half_width,cur_height,cur_width, cur_height)
+    end
+    IMG_char_sel_cursor_halves.right[player_num] = {}
+    for position_num=1,2 do
+      local cur_width, cur_height = IMG_char_sel_cursors[player_num][position_num]:getDimensions()
+      local half_width, half_height = cur_width/2, cur_height/2
+      IMG_char_sel_cursor_halves.right[player_num][position_num] = love.graphics.newQuad(half_width,0,half_width,cur_height,cur_width, cur_height)
+    end
+  end
+  
 
   --for(a=0;a<2;a++) MrStopAni[a]=5;
   --for(a=2;a<5;a++) MrStopAni[a]=8;

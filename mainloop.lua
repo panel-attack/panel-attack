@@ -123,7 +123,7 @@ do
         --{"2P vs online at burke.ro", main_net_vs_setup, {"burke.ro"}},
         {"2P vs online at Jon's server", main_net_vs_setup, {"18.188.43.50"}},
         --{"2P vs online at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
-        {"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
+        --{"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
         {"2P vs local game", main_local_vs_setup},
         {"Replay of 1P endless", main_replay_endless},
         {"Replay of 1P puzzle", main_replay_puzzle},
@@ -398,13 +398,19 @@ function main_net_vs_room()
   local function draw_button(x,y,w,h,str)
     local menu_width = Y*100
     local menu_height = X*80
-    local spacing = 4
+    local spacing = 8
     local x_padding = math.floor((819-menu_width)/2)
     local y_padding = math.floor((612-menu_height)/2)
     set_color(unpack(colors.white))
     render_x = x_padding+(y-1)*100+spacing
     render_y = y_padding+(x-1)*100+spacing
-    grectangle("line", render_x, render_y, w*100-2*spacing, h*100-2*spacing)
+    button_width = w*100-2*spacing
+    button_height = h*100-2*spacing
+    grectangle("line", render_x, render_y, button_width, button_height)
+    if IMG_character_icons[str] then
+      local orig_w, orig_h = IMG_character_icons[str]:getDimensions()
+      menu_draw(IMG_character_icons[str], render_x, render_y, 0, button_width/orig_w, button_height/orig_h )
+    end
     local y_add,x_add = 10,30
     local pstr = str
     if str == "level" then
@@ -428,10 +434,37 @@ function main_net_vs_room()
     end
     if my_state.cursor == str then pstr = pstr.."\n"..my_name end
     if op_state.cursor == str then pstr = pstr.."\n"..op_name end
-    gprint(pstr, render_x+10, render_y+y_add)
+    local cur_blink_frequency = 4
+    local cur_pos_change_frequency = 8
+    local player_num
+    if op_state.cursor == str then
+      player_num = 2
+      local cursor_frame = (math.floor(menu_clock/cur_pos_change_frequency)+player_num)%2+1
+      cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
+      local cur_img_w, cur_img_h = cur_img:getDimensions()
+      cur_img_left = IMG_char_sel_cursor_halves.left[player_num][cursor_frame]
+      cur_img_right = IMG_char_sel_cursor_halves.right[player_num][cursor_frame]
+      local cursor_scale = (button_height+(spacing*2))/cur_img_h
+      menu_drawq(cur_img, cur_img_left, render_x-spacing, render_y-spacing, 0, cursor_scale , cursor_scale)
+      menu_drawq(cur_img, cur_img_right, render_x+button_width+spacing-cur_img_w*cursor_scale/2, render_y-spacing, 0, cursor_scale, cursor_scale)
+    end
+    if my_state.cursor == str then
+      player_num = 1
+      local cursor_frame = (math.floor(menu_clock/cur_pos_change_frequency)+player_num)%2+1
+      cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
+      local cur_img_w, cur_img_h = cur_img:getDimensions()
+      cur_img_left = IMG_char_sel_cursor_halves.left[player_num][cursor_frame]
+      cur_img_right = IMG_char_sel_cursor_halves.right[player_num][cursor_frame]
+      local cursor_scale = (button_height+(spacing*2))/cur_img_h
+      menu_drawq(cur_img, cur_img_left, render_x-spacing, render_y-spacing, 0, cursor_scale , cursor_scale)
+      menu_drawq(cur_img, cur_img_right, render_x+button_width+spacing-cur_img_w*cursor_scale/2, render_y-spacing, 0, cursor_scale, cursor_scale)
+    end
+    gprint(pstr, render_x+6, render_y+y_add)
   end
   print("got to LOC before net_vs_room character select loop")
+  menu_clock = 0
   while true do
+    menu_clock = menu_clock + 1
     for _,msg in ipairs(this_frame_messages) do
       if msg.win_counts then
         update_win_counts(msg.win_counts)
