@@ -74,6 +74,14 @@ function menu_draw(img, x, y, rot, x_scale,y_scale)
     rot, x_scale, y_scale}})
 end
 
+function menu_drawq(img, quad, x, y, rot, x_scale,y_scale)
+  rot = rot or 0
+  x_scale = x_scale or 1
+  y_scale = y_scale or 1
+  gfx_q:push({love.graphics.draw, {img, quad, x, y,
+    rot, x_scale, y_scale}})
+end
+
 function grectangle(mode, x, y, w, h)
   gfx_q:push({love.graphics.rectangle, {mode, x, y, w, h}})
 end
@@ -175,13 +183,13 @@ function graphics_init()
     for position_num=1,2 do
       local cur_width, cur_height = IMG_char_sel_cursors[player_num][position_num]:getDimensions()
       local half_width, half_height = cur_width/2, cur_height/2
-      IMG_char_sel_cursor_halves["left"][player_num][position_num] = love.graphics.newQuad(0,0,half_width,half_height,cur_width, cur_height)
+      IMG_char_sel_cursor_halves["left"][player_num][position_num] = love.graphics.newQuad(0,0,half_width,cur_height,cur_width, cur_height)
     end
     IMG_char_sel_cursor_halves.right[player_num] = {}
     for position_num=1,2 do
       local cur_width, cur_height = IMG_char_sel_cursors[player_num][position_num]:getDimensions()
       local half_width, half_height = cur_width/2, cur_height/2
-      IMG_char_sel_cursor_halves.right[player_num][position_num] = love.graphics.newQuad(half_width,half_height,half_width,half_height,cur_width, cur_height)
+      IMG_char_sel_cursor_halves.right[player_num][position_num] = love.graphics.newQuad(half_width,0,half_width,cur_height,cur_width, cur_height)
     end
   end
   

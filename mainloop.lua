@@ -398,7 +398,7 @@ function main_net_vs_room()
   local function draw_button(x,y,w,h,str)
     local menu_width = Y*100
     local menu_height = X*80
-    local spacing = 4
+    local spacing = 8
     local x_padding = math.floor((819-menu_width)/2)
     local y_padding = math.floor((612-menu_height)/2)
     set_color(unpack(colors.white))
@@ -442,22 +442,24 @@ function main_net_vs_room()
       local cursor_frame = (math.floor(menu_clock/cur_pos_change_frequency)+player_num)%2+1
       cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
       local cur_img_w, cur_img_h = cur_img:getDimensions()
-      print("\nbutton_width: "..button_width.."  buttonheight: "..button_height)
-      print("cur_img_w: "..cur_img_w.."  cur_img_h: "..cur_img_h)
-      print("w_scale: "..button_width/cur_img_w.."  h_scale: "..button_height/cur_img_h)
-      menu_draw(cur_img, render_x, render_y, 0, button_width/cur_img_w, button_height/cur_img_h)
+      cur_img_left = IMG_char_sel_cursor_halves.left[player_num][cursor_frame]
+      cur_img_right = IMG_char_sel_cursor_halves.right[player_num][cursor_frame]
+      local cursor_scale = (button_height+(spacing*2))/cur_img_h
+      menu_drawq(cur_img, cur_img_left, render_x-spacing, render_y-spacing, 0, cursor_scale , cursor_scale)
+      menu_drawq(cur_img, cur_img_right, render_x+button_width+spacing-cur_img_w*cursor_scale/2, render_y-spacing, 0, cursor_scale, cursor_scale)
     end
     if my_state.cursor == str then
       player_num = 1
       local cursor_frame = (math.floor(menu_clock/cur_pos_change_frequency)+player_num)%2+1
       cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
       local cur_img_w, cur_img_h = cur_img:getDimensions()
-      print("\nbutton_width: "..button_width.."  buttonheight: "..button_height)
-      print("cur_img_w: "..cur_img_w.."  cur_img_h: "..cur_img_h)
-      print("w_scale: "..button_width/cur_img_w.."  h_scale: "..button_height/cur_img_h)
-      menu_draw(cur_img, render_x, render_y, 0, button_width/cur_img_w, button_height/cur_img_h)
+      cur_img_left = IMG_char_sel_cursor_halves.left[player_num][cursor_frame]
+      cur_img_right = IMG_char_sel_cursor_halves.right[player_num][cursor_frame]
+      local cursor_scale = (button_height+(spacing*2))/cur_img_h
+      menu_drawq(cur_img, cur_img_left, render_x-spacing, render_y-spacing, 0, cursor_scale , cursor_scale)
+      menu_drawq(cur_img, cur_img_right, render_x+button_width+spacing-cur_img_w*cursor_scale/2, render_y-spacing, 0, cursor_scale, cursor_scale)
     end
-    gprint(pstr, render_x+10, render_y+y_add)
+    gprint(pstr, render_x+6, render_y+y_add)
   end
   print("got to LOC before net_vs_room character select loop")
   menu_clock = 0
