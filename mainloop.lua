@@ -437,27 +437,55 @@ function main_net_vs_room()
     local cur_blink_frequency = 4
     local cur_pos_change_frequency = 8
     local player_num
+    local draw_cur_this_frame = false
+    local cursor_frame = 1
     if op_state.cursor == str then
       player_num = 2
-      local cursor_frame = (math.floor(menu_clock/cur_pos_change_frequency)+player_num)%2+1
-      cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
-      local cur_img_w, cur_img_h = cur_img:getDimensions()
-      cur_img_left = IMG_char_sel_cursor_halves.left[player_num][cursor_frame]
-      cur_img_right = IMG_char_sel_cursor_halves.right[player_num][cursor_frame]
-      local cursor_scale = (button_height+(spacing*2))/cur_img_h
-      menu_drawq(cur_img, cur_img_left, render_x-spacing, render_y-spacing, 0, cursor_scale , cursor_scale)
-      menu_drawq(cur_img, cur_img_right, render_x+button_width+spacing-cur_img_w*cursor_scale/2, render_y-spacing, 0, cursor_scale, cursor_scale)
+      if op_state.ready then
+        if (math.floor(menu_clock/cur_blink_frequency)+player_num)%2+1 == player_num then
+          draw_cur_this_frame = true
+          cursor_frame = 1
+        else
+          draw_cur_this_frame = false
+        end
+      else
+        draw_cur_this_frame = true
+        cursor_frame = (math.floor(menu_clock/cur_pos_change_frequency)+player_num)%2+1
+        cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
+      end
+      if draw_cur_this_frame then
+        cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
+        cur_img_left = IMG_char_sel_cursor_halves.left[player_num][cursor_frame]
+        cur_img_right = IMG_char_sel_cursor_halves.right[player_num][cursor_frame]
+        local cur_img_w, cur_img_h = cur_img:getDimensions()
+        local cursor_scale = (button_height+(spacing*2))/cur_img_h
+        menu_drawq(cur_img, cur_img_left, render_x-spacing, render_y-spacing, 0, cursor_scale , cursor_scale)
+        menu_drawq(cur_img, cur_img_right, render_x+button_width+spacing-cur_img_w*cursor_scale/2, render_y-spacing, 0, cursor_scale, cursor_scale)
+      end
     end
     if my_state.cursor == str then
       player_num = 1
-      local cursor_frame = (math.floor(menu_clock/cur_pos_change_frequency)+player_num)%2+1
-      cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
-      local cur_img_w, cur_img_h = cur_img:getDimensions()
-      cur_img_left = IMG_char_sel_cursor_halves.left[player_num][cursor_frame]
-      cur_img_right = IMG_char_sel_cursor_halves.right[player_num][cursor_frame]
-      local cursor_scale = (button_height+(spacing*2))/cur_img_h
-      menu_drawq(cur_img, cur_img_left, render_x-spacing, render_y-spacing, 0, cursor_scale , cursor_scale)
-      menu_drawq(cur_img, cur_img_right, render_x+button_width+spacing-cur_img_w*cursor_scale/2, render_y-spacing, 0, cursor_scale, cursor_scale)
+      if my_state.ready then
+        if (math.floor(menu_clock/cur_blink_frequency)+player_num)%2+1 == player_num then
+          draw_cur_this_frame = true
+          cursor_frame = 1
+        else
+          draw_cur_this_frame = false
+        end
+      else
+        draw_cur_this_frame = true
+        cursor_frame = (math.floor(menu_clock/cur_pos_change_frequency)+player_num)%2+1
+        cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
+      end
+      if draw_cur_this_frame then
+        cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
+        cur_img_left = IMG_char_sel_cursor_halves.left[player_num][cursor_frame]
+        cur_img_right = IMG_char_sel_cursor_halves.right[player_num][cursor_frame]
+        local cur_img_w, cur_img_h = cur_img:getDimensions()
+        local cursor_scale = (button_height+(spacing*2))/cur_img_h
+        menu_drawq(cur_img, cur_img_left, render_x-spacing, render_y-spacing, 0, cursor_scale , cursor_scale)
+        menu_drawq(cur_img, cur_img_right, render_x+button_width+spacing-cur_img_w*cursor_scale/2, render_y-spacing, 0, cursor_scale, cursor_scale)
+      end
     end
     gprint(pstr, render_x+6, render_y+y_add)
   end
