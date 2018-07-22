@@ -409,7 +409,7 @@ function main_net_vs_room()
     grectangle("line", render_x, render_y, button_width, button_height)
     if IMG_character_icons[str] then
       local orig_w, orig_h = IMG_character_icons[str]:getDimensions()
-      menu_draw(IMG_character_icons[str], render_x, render_y, 0, (button_width/orig_w), button_height/orig_h )
+      menu_draw(IMG_character_icons[str], render_x, render_y, 0, button_width/orig_w, button_height/orig_h )
     end
     local y_add,x_add = 10,30
     local pstr = str
@@ -434,10 +434,35 @@ function main_net_vs_room()
     end
     if my_state.cursor == str then pstr = pstr.."\n"..my_name end
     if op_state.cursor == str then pstr = pstr.."\n"..op_name end
+    local cur_blink_frequency = 4
+    local cur_pos_change_frequency = 8
+    local player_num
+    if op_state.cursor == str then
+      player_num = 2
+      local cursor_frame = (math.floor(menu_clock/cur_pos_change_frequency)+player_num)%2+1
+      cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
+      local cur_img_w, cur_img_h = cur_img:getDimensions()
+      print("\nbutton_width: "..button_width.."  buttonheight: "..button_height)
+      print("cur_img_w: "..cur_img_w.."  cur_img_h: "..cur_img_h)
+      print("w_scale: "..button_width/cur_img_w.."  h_scale: "..button_height/cur_img_h)
+      menu_draw(cur_img, render_x, render_y, 0, button_width/cur_img_w, button_height/cur_img_h)
+    end
+    if my_state.cursor == str then
+      player_num = 1
+      local cursor_frame = (math.floor(menu_clock/cur_pos_change_frequency)+player_num)%2+1
+      cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
+      local cur_img_w, cur_img_h = cur_img:getDimensions()
+      print("\nbutton_width: "..button_width.."  buttonheight: "..button_height)
+      print("cur_img_w: "..cur_img_w.."  cur_img_h: "..cur_img_h)
+      print("w_scale: "..button_width/cur_img_w.."  h_scale: "..button_height/cur_img_h)
+      menu_draw(cur_img, render_x, render_y, 0, button_width/cur_img_w, button_height/cur_img_h)
+    end
     gprint(pstr, render_x+10, render_y+y_add)
   end
   print("got to LOC before net_vs_room character select loop")
+  menu_clock = 0
   while true do
+    menu_clock = menu_clock + 1
     for _,msg in ipairs(this_frame_messages) do
       if msg.win_counts then
         update_win_counts(msg.win_counts)
