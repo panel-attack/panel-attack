@@ -114,18 +114,24 @@ function recursive_copy(source, destination)
     if lfs.isDirectory(source.."/"..name) then
       print("calling recursive_copy(source".."/"..name..", ".. destination.."/"..name..")")
       recursive_copy(source.."/"..name, destination.."/"..name)
+      
     elseif lfs.isFile(source.."/"..name) then
+      if not lfs.isDirectory(destination) then
+       love.filesystem.createDirectory(destination)
+      end
       print("copying file:  "..source.."/"..name.." to "..destination.."/"..name)
+      
       local source_file = lfs.newFile(source.."/"..name)
       source_file:open("r")
       local source_size = source_file:getSize()
       temp = source_file:read(source_size)
       source_file:close()
-      print(temp)
+      
       local new_file = lfs.newFile(destination.."/"..name)
       new_file:open("w")
       local success, message =  new_file:write(temp, source_size)
       new_file:close()
+      
       print(message)
     else 
       print("name:  "..name.." isn't a directory or file?")

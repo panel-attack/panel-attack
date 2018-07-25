@@ -410,9 +410,9 @@ function main_net_vs_room()
     button_width = w*100-2*spacing
     button_height = h*100-2*spacing
     grectangle("line", render_x, render_y, button_width, button_height)
-    if IMG_character_icons[str] then
-      local orig_w, orig_h = IMG_character_icons[str]:getDimensions()
-      menu_draw(IMG_character_icons[str], render_x, render_y, 0, button_width/orig_w, button_height/orig_h )
+    if IMG_character_icons[character_display_names_to_original_names[str]] then
+      local orig_w, orig_h = IMG_character_icons[character_display_names_to_original_names[str]]:getDimensions()
+      menu_draw(IMG_character_icons[character_display_names_to_original_names[str]], render_x, render_y, 0, button_width/orig_w, button_height/orig_h )
     end
     local y_add,x_add = 10,30
     local pstr = str
@@ -442,7 +442,7 @@ function main_net_vs_room()
     local player_num
     local draw_cur_this_frame = false
     local cursor_frame = 1
-    if op_state.cursor == str then
+    if op_state.cursor == str or op_state.cursor == character_display_names_to_original_names[str] then
       player_num = 2
       if op_state.ready then
         if (math.floor(menu_clock/cur_blink_frequency)+player_num)%2+1 == player_num then
@@ -466,7 +466,7 @@ function main_net_vs_room()
         menu_drawq(cur_img, cur_img_right, render_x+button_width+spacing-cur_img_w*cursor_scale/2, render_y-spacing, 0, cursor_scale, cursor_scale)
       end
     end
-    if my_state.cursor == str then
+    if my_state.cursor == str or my_state.cursor == character_display_names_to_original_names[str] then
       player_num = 1
       if my_state.ready then
         if (math.floor(menu_clock/cur_blink_frequency)+player_num)%2+1 == player_num then
@@ -619,7 +619,7 @@ function main_net_vs_room()
     draw_button(1,7,1,1,"ready")
     for i=2,X do
       for j=1,Y do
-        draw_button(i,j,1,1,map[i][j])
+        draw_button(i,j,1,1,character_display_names[map[i][j]] or map[i][j])
       end
     end
     local my_rating_difference = ""
@@ -653,7 +653,7 @@ function main_net_vs_room()
       state = state.."  expected: "
         ..my_expected_win_ratio.."%"
     end
-    state = state.."  Char: "..my_state.character.."  Ready: "..tostring(my_state.ready or false)
+    state = state.."  Char: "..character_display_names[my_state.character].."  Ready: "..tostring(my_state.ready or false)
     --state = state.." "..json.encode(my_state).."\n"
     state = state.."\n"
     --op state - add to be displayed
@@ -672,7 +672,7 @@ function main_net_vs_room()
       state = state.."  expected: "
         ..op_expected_win_ratio.."%"
     end
-    state = state.."  Char: "..op_state.character.."  Ready: "..tostring(op_state.ready or false)
+    state = state.."  Char: "..character_display_names[op_state.character].."  Ready: "..tostring(op_state.ready or false)
     --state = state.." "..json.encode(op_state)
     gprint(state, 50, 50)
     if not my_state.ranked and not op_state.ranked then
@@ -1859,11 +1859,11 @@ function main_options()
     end
     if items[active_idx][3] == "function" and do_menu_function then
       if items[active_idx][1] == "About custom graphics" then
-        if not love.filesystem.isDirectory("customassets/Example folder structure")then
+        if not love.filesystem.isDirectory("assets/Example folder structure")then
           print("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.")
           gprint("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.", 280, 280)
           wait()
-          recursive_copy("assets/"..default_assets_dir, "customassets/Example folder structure")
+          recursive_copy("assets/"..default_assets_dir, "assets/Example folder structure")
         end
         local custom_graphics_readme = read_txt_file("Custom Graphics Readme.txt")
         while true do

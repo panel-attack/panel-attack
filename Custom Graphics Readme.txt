@@ -23,4 +23,3 @@ Step by step instructions for using custom graphics (Windows example):
 
 Note: if you would like to display a different character name for a custom character,
 include a name.txt file in that character's folder. (but don't change the folder name!)
-(this last character name change bit isn't supported just yet)

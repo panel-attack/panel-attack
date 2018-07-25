@@ -201,8 +201,27 @@ function graphics_init()
       IMG_char_sel_cursor_halves.right[player_num][position_num] = love.graphics.newQuad(half_width,0,half_width,cur_height,cur_width, cur_height)
     end
   end
-  
-
+  character_display_names = {}
+  for k, original_name in ipairs(characters) do
+    name_txt_file = love.filesystem.newFile("assets/"..config.assets_dir.."/"..original_name.."/name.txt")
+    --print(original_name)
+    open_success, err = name_txt_file:open("r")
+    --if err then print(err) end
+    local display_name = name_txt_file:read(name_txt_file:getSize())
+    if display_name then
+      character_display_names[original_name] = display_name
+    else
+      character_display_names[original_name] = original_name
+    end
+  end
+  print("character_display_names: ")
+  for k,v in pairs(character_display_names) do
+    print(k.." = "..v)
+  end
+  character_display_names_to_original_names = {}
+  for k,v in pairs(character_display_names) do
+    character_display_names_to_original_names[v] = k
+  end
   --for(a=0;a<2;a++) MrStopAni[a]=5;
   --for(a=2;a<5;a++) MrStopAni[a]=8;
   --for(a=5;a<25;a++) MrStopAni[a]=16;
