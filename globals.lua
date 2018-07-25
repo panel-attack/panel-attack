@@ -237,6 +237,8 @@ level_to_metal_panel_frequency = {12, 14, 16, 19, 23, 26, 29, 33, 37, 41}
 my_win_count = 0
 op_win_count = 0
 
+default_assets_dir = "Stock PdP_TA"
+
 --sounds: SFX, music
 SFX_Fanfare_Play = 0
 SFX_GameOver_Play = 0

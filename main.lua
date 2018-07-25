@@ -27,14 +27,14 @@ function love.load()
   math.randomseed(os.time())
   for i=1,4 do math.random() end
   read_key_file()
-  read_conf_file() -- TODO: stop making new config files
   replay = {}
-  config = {character="lip", level=5, name="defaultname", master_volume=100, SFX_volume=100, music_volume=100, debug_mode=false, save_replays_publicly = "with my name"}
-  read_conf_file()
+  config = {character="lip", level=5, name="defaultname", master_volume=100, SFX_volume=100, music_volume=100, debug_mode=false, save_replays_publicly = "with my name", assets_dir=default_assets_dir}
+  read_conf_file() -- TODO: stop making new config files
   read_replay_file()
   love.audio.setVolume(config.master_volume/100)
   set_volume(sounds.SFX, config.SFX_volume/100)
   set_volume(sounds.music, config.music_volume/100) 
+  gprint("loading graphics...", 300, 280)
   graphics_init() -- load images and set up stuff
   mainloop = coroutine.create(fmainloop)
 end
