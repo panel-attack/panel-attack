@@ -1861,7 +1861,7 @@ function main_options()
       if items[active_idx][1] == "About custom graphics" then
         if not love.filesystem.isDirectory("assets/Example folder structure")then
           print("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.")
-          gprint("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.", 280, 280)
+          gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
           wait()
           recursive_copy("assets/"..default_assets_dir, "assets/Example folder structure")
         end
