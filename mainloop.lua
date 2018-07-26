@@ -442,7 +442,7 @@ function main_net_vs_room()
     local player_num
     local draw_cur_this_frame = false
     local cursor_frame = 1
-    if op_state.cursor == str or op_state.cursor == character_display_names_to_original_names[str] then
+    if op_state and op_state.cursor and (op_state.cursor == str or op_state.cursor == character_display_names_to_original_names[str]) then
       player_num = 2
       if op_state.ready then
         if (math.floor(menu_clock/cur_blink_frequency)+player_num)%2+1 == player_num then
@@ -466,7 +466,7 @@ function main_net_vs_room()
         menu_drawq(cur_img, cur_img_right, render_x+button_width+spacing-cur_img_w*cursor_scale/2, render_y-spacing, 0, cursor_scale, cursor_scale)
       end
     end
-    if my_state.cursor == str or my_state.cursor == character_display_names_to_original_names[str] then
+    if my_state and my_state.cursor and (my_state.cursor == str or my_state.cursor == character_display_names_to_original_names[str]) then
       player_num = 1
       if my_state.ready then
         if (math.floor(menu_clock/cur_blink_frequency)+player_num)%2+1 == player_num then
