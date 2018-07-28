@@ -11,26 +11,13 @@ function set_volume(source, new_volume)
   end
 end
 
-function load_char_SFX(path_and_filename)
-  local lfs = love.filesystem
-  for k, char_name in (characters) do
-    if lfs.isFile("sounds/"..sounds_dir.."/"..sounds_dir.."/characters/"..char_name.."/"..path_and_filename) then
-    --TODO this whole function
-    end
-  end
-  if lfs.isFile("sounds/"..sounds_dir.."/") then
-  elseif lfs.isFile("sounds/"..sounds_dir.."/"..sounds_dir) then
-  elseif lfs.isFile("sounds/"..sounds_dir.."/"..default_sounds_dir) then
-  end
-end
-
 -- returns a new sound effect if it can be found, else returns nil
 function find_sound(sound_name, dirs_to_check)
-  local found_file
+  local found_source
   for k,dir in ipairs(dirs_to_check) do
-    found_file = check_supported_extensions(dir..sound_name)
-    if found_file then
-      return love.audio.newSource(found_file, static)
+    found_source = check_supported_extensions(dir..sound_name)
+    if found_source then
+      return found_source
     end
   end
   return nil
@@ -42,36 +29,75 @@ function find_generic_SFX(SFX_name)
   return find_sound(SFX_name, dirs_to_check)
 end
 
+function find_character_SFX(character, SFX_name)
+  local dirs_to_check = {"sounds/"..sounds_dir.."/characters/",
+                         "sounds/"..default_sounds_dir.."/characters/"}
+  local cur_dir_contains_chain
+  for k,current_dir in ipairs(dirs_to_check) do
+    --Note: if there is a chain or a combo, but not the other, return the same SFX for either inquiry.
+    --This way, we can always depend on a character having a combo and a chain SFX.
+    --If they are missing others, that's fine.
+    --(ie. some characters won't have "match_garbage" or a fancier "chain-x6")
+    local cur_dir_chain = check_supported_extensions(current_dir.."/"..character.."/chain")
+    if SFX_name == "chain" and cur_dir_chain then 
+      return cur_dir_chain
+    end
+    local cur_dir_combo = check_supported_extensions(current_dir.."/"..character.."/combo")
+    if SFX_name == "combo" and cur_dir_combo then 
+      return cur_dir_combo
+    elseif cur_dir_chain then
+      return cur_dir_chain --in place of the combo SFX
+    end
+    if SFX_name == "chain" and cur_dir_combo then
+      return cur_dir_combo
+    end
+    
+    local other_requested_SFX = check_supported_extensions(current_dir.."/"..character.."/"..SFX_name)
+    if other_requested_SFX then
+      return other_requested_SFX
+    end
+    if cur_dir_chain or cur_dir_combo --[[and we didn't find the requested SFX in this dir]] then
+      return nil --don't continue looking in other fallback directories, the user wants to use only files from this directory
+  --else
+    --keep looking
+    end
+  end
+  --if not found in above directories:
+  return nil
+end
+
 --returns audio source based on character and music_type (normal, danger, normal_start, or danger_start)
 function find_music(character, music_type)
-  local found_file
-  local character_music_overrides_stage_music = check_supported_extensions("sounds/"..sounds_dir.."characters/"..character.."/"..normal)
+  local found_source
+  local character_music_overrides_stage_music = check_supported_extensions("sounds/"..sounds_dir.."characters/"..character.."/normal")
   if character_music_overrides_stage_music then
-    found_file = check_supported_extensions("sounds"..sounds_dir.."/characters/"..character.."/"..music_type)
-    return found_file
+    found_source = check_supported_extensions("sounds"..sounds_dir.."/characters/"..character.."/"..music_type)
+    return found_source
   elseif stages[character] then
-    found_file = check_supported_extensions("sounds"..sounds_dir.."/music/"..stages[character]..music_type)
-    return found_file
+    found_source = check_supported_extensions("sounds"..sounds_dir.."/music/"..stages[character].."/"..music_type)
+    return found_source
   else
     --nothing, I think...  --TODO: check this
   end
 end
 
-function find_character_SFX(SFX_name)
-  local dirs_to_check
-  -- TODO: this whole function
+--TODO:
+function assert_requirements_met()
+--assert we have combos and chains for each character
+
+--assert we have music and danger_music for each character
 end
 
 function SFX_init()
 
 end
 
---returns the full path, name, and extension of the first found file, or nil if it could not find a file
+--returns a source, or nil if it could not find a file
 function check_supported_extensions(path_and_filename)
   local ret
   for k, extension in ipairs(supported_sound_formats) do
     if love.filesystem.isFile(path_and_filename..extension) then
-      return path_and_filename..extension
+      return love.audio.newSource(path_and_filename..extension)
     end
   end
   return nil
@@ -86,17 +112,17 @@ function sound_init()
   SFX_GarbageThud_Play = 0
   sounds = {
     SFX = {
-      cur_move = find_generic_SFX("06move.ogg", "static"),
-      swap = love.audio.newSource("sounds/"..sounds_dir.."/SFX/08swap.ogg", "static"),
-      land = love.audio.newSource("sounds/"..sounds_dir.."/SFX/12cLand.ogg", "static"),
-      fanfare1 = love.audio.newSource("sounds/"..sounds_dir.."/SFX/F6Fanfare1.ogg", "static"),
-      fanfare2 = love.audio.newSource("sounds/"..sounds_dir.."/SFX/F7Fanfare2.ogg", "static"),
-      fanfare3 = love.audio.newSource("sounds/"..sounds_dir.."/SFX/F8Fanfare3.ogg", "static"),
-      game_over = love.audio.newSource("sounds/"..sounds_dir.."/SFX/0DGameOver.ogg", "static"),
+      cur_move = find_generic_SFX("move", "static"),
+      swap = find_generic_SFX("sounds/"..sounds_dir.."/SFX/swap", "static"),
+      land = find_generic_SFX("sounds/"..sounds_dir.."/SFX/Land", "static"),
+      fanfare1 = find_generic_SFX("sounds/"..sounds_dir.."/SFX/Fanfare1", "static"),
+      fanfare2 = find_generic_SFX("sounds/"..sounds_dir.."/SFX/Fanfare2", "static"),
+      fanfare3 = find_generic_SFX("sounds/"..sounds_dir.."/SFX/Fanfare3", "static"),
+      game_over = find_generic_SFX("sounds/"..sounds_dir.."/SFX/GameOver", "static"),
       garbage_thud = {
-        love.audio.newSource("sounds/"..sounds_dir.."/SFX/Thud_1.ogg"),
-        love.audio.newSource("sounds/"..sounds_dir.."/SFX/Thud_2.ogg"),
-        love.audio.newSource("sounds/"..sounds_dir.."/SFX/Thud_3.ogg")
+        find_generic_SFX("sounds/"..sounds_dir.."/SFX/Thud_1"),
+        find_generic_SFX("sounds/"..sounds_dir.."/SFX/Thud_2"),
+        find_generic_SFX("sounds/"..sounds_dir.."/SFX/Thud_3")
       },
       character = {},
       pops = {}
@@ -107,21 +133,24 @@ function sound_init()
     }
   }
   for i,name in ipairs(characters) do
-      sounds.SFX.character[name] = love.audio.newSource("sounds/"..sounds_dir.."/characters/"..name.."/chain.ogg", "static")
+      sounds.SFX.character[name] = find_character_SFX(name, "chain")
   end
   for i,name in ipairs(characters) do
-      sounds.music.character_normal[name] = love.audio.newSource("sounds/"..sounds_dir.."/Music/"..stages[name].."_normal.it")
+      sounds.music.character_normal[name] = find_music(name, "normal")
   end
   for i,name in ipairs(characters) do
-      sounds.music.character_danger[name] = love.audio.newSource("sounds/"..sounds_dir.."/Music/"..stages[name].."_danger.it")
+      sounds.music.character_danger[name] = find_music(name, "danger")
   end
   for popLevel=1,4 do
       sounds.SFX.pops[popLevel] = {}
       for popIndex=1,10 do
-          sounds.SFX.pops[popLevel][popIndex] = love.audio.newSource("sounds/"..sounds_dir.."/SFX/pop"..popLevel.."-"..popIndex..".ogg", "static")
+          sounds.SFX.pops[popLevel][popIndex] = find_generic_SFX(
+"pop"..popLevel.."-"..popIndex)
       end
   end
-  love.audio.setVolume(config.master_volume/100)
-  set_volume(sounds.SFX, config.SFX_volume/100)
-  set_volume(sounds.music, config.music_volume/100) 
+  
+  -- TODO: turn this bit back on
+  -- love.audio.setVolume(config.master_volume/100)
+  -- set_volume(sounds.SFX, config.SFX_volume/100)
+  -- set_volume(sounds.music, config.music_volume/100) 
 end
