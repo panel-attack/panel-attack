@@ -1894,7 +1894,7 @@ function main_options()
         end
         local custom_sounds_readme = read_txt_file("Custom Sounds Readme.txt")
         while true do
-          gprint(custom_sounds_readme, 100, 150)      
+          gprint(custom_sounds_readme, 30, 150)      
           do_menu_function = false
           wait()
           if menu_escape(K[1]) or menu_enter(K[1]) then
