@@ -1,5 +1,5 @@
 --sets the volume of a single source or table of sources
-supported_sound_formats = {".ogg",".mp3", ".it"}
+supported_sound_formats = {".mp3",".ogg", ".it"}
 function set_volume(source, new_volume)
   print("set_volume called")
   if type(source) == "table" then

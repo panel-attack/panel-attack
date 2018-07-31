@@ -1,20 +1,33 @@
-PA sound loading rules to implement (draft)
+About Custom Sounds in Panel Attack
 
-Music directory priority:
-1. Sounds/chosen sounds dir/characters/character name/
-2. Sounds/chosen sounds dir/music/
-3. sounds/default sounds dir/music/
+Currently, sound files with the following extensions are supported:
+.mp3, .ogg, .it
 
-If a "normal" music file is found in a folder, only use music from that folder, 
-don't try to fail back to a default folder.
-(we don't want to use danger music that has nothing to do with what the user specified
-as the normal music)
+About Music:
+-Music files should be named "normal_music" and "danger_music"
+-If your music has an intro (and for looping purposes, the intro should not be played again when the song ends),
+   cut it from the main music file, and name it "normal_music_start" or "danger_music_start"
+-Here is the order of folders in which the game looks for music.
+    1. %appdata%/Panel Attack/sounds/chosen sound pack/characters/character name/
+    2. %appdata%/Panel Attack/sounds/chosen sound pack/music/stage name
+    3. default sounds directory/music/stage name
+**DO NOT change the character folder names!**  You may place a txt file with your character's name to help
+  you remember which character it is. (For example: sounds/Pokemon/characters/blargg/Charmander.txt)
+Note: If you include a "normal_music" file in a character or stage folder, 
+  the game will not look for that character's music in other folders.
 
-We'll use a similar rule for character SFX.  If the user specified a "chain" sound file, and 
-nothing else in that character's folder, we won't want to use other sound effects from default characters
-for SFX like "garbage_match".  (Some characters won't have a "garbage_match" sound effect).
-An exception to this is if a user specified a "chain" sound file, and no "combo" sound file,
-we'll use their "chain" file for "combo" events.
-
-
-
+About Sound Effects (SFX):
+-Game SFX go in:  sounds/[sound_pack_name_here]/SFX and file names should be:
+    Game SFX: "move", "swap", "land", "game_over" Fanfares: "fanfare1", "fanfare2", "fanfare3"
+    Garbage Thuds: "thud_1", "thud_2", "thud_3"
+    Panel pops: "pop1-1", "pop1-2","pop1-3",...,"pop1-10","pop2-1",...,"pop2-10",...,"pop4-10"
+-Character SFX go in:  
+  %appdata%/Panel Attack/sounds/[sound_pack_name_here]/[character_name_here] **Don't change character folder name**
+-Note:  Providing just a "chain" or just a "combo" sound effect for a character is OK. It would 
+  get used for all combos and chains.
+-A character's combo sound effect should be named "combo"
+-Depending on the current chain length, the chain SFX file with the appopriate file name will be played:
+    x2/3 plays "chain",  x4 plays "chain2", x5 plays "chain_echo", x6+ plays "chain2_echo"
+-If your character should make a sound when you clear garbage, include a sound file named "garbage_match"
+-Once implemented, if you would like matching six metal blocks to trigger an echoing effect,
+    please provide a "combo_echo" file.
