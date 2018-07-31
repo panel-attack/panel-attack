@@ -66,27 +66,32 @@ function find_character_SFX(character, SFX_name)
   return nil
 end
 
---returns audio source based on character and music_type (normal, danger, normal_start, or danger_start)
+--returns audio source based on character and music_type (normal_music, danger_music, normal_music_start, or danger_music_start)
 function find_music(character, music_type)
   local found_source
-  local character_music_overrides_stage_music = check_supported_extensions("sounds/"..sounds_dir.."characters/"..character.."/normal")
+  local character_music_overrides_stage_music = check_supported_extensions("sounds/"..sounds_dir.."characters/"..character.."/normal_music")
   if character_music_overrides_stage_music then
     found_source = check_supported_extensions("sounds"..sounds_dir.."/characters/"..character.."/"..music_type)
+    if found_source then
+      print("In selected sound directory, found "..music_type.." for "..character)
+    else
+      print("In selected sound directory, did not find "..music_type.." for "..character)
+    end
     return found_source
   elseif stages[character] then
     found_source = check_supported_extensions("sounds"..sounds_dir.."/music/"..stages[character].."/"..music_type)
+    if found_source then
+      print("In selected sound directory, found "..music_type.." for "..character)
+    else
+      print("In selected sound directory, did not find "..music_type.." for "..character)
+    end
     return found_source
   else
     --nothing, I think...  --TODO: check this
   end
 end
 
---TODO:
-function assert_requirements_met()
---assert we have combos and chains for each character
 
---assert we have music and danger_music for each character
-end
 
 function SFX_init()
 
@@ -103,6 +108,35 @@ function check_supported_extensions(path_and_filename)
   return nil
 end
 
+--TODO:
+function assert_requirements_met()
+  --assert we have all required generic sound effects
+  local SFX_requirements =  {"cur_move", "swap", "fanfare1", "fanfare2", "fanfare3", "game_over"}
+  for k,v in ipairs(SFX_requirements) do
+    assert(sounds.SFX[v], "SFX \""..v.."\"was not loaded")
+  end
+  local NUM_REQUIRED_GARBAGE_THUDS = 3
+  for i=1, NUM_REQUIRED_GARBAGE_THUDS do
+    assert(sounds.SFX.garbage_thud[i], "SFX garbage_thud "..i.."was not loaded")
+  end
+    --assert we have the required SFX and music for each character
+  for i,name in ipairs(characters) do
+    for k, sound in ipairs(required_char_SFX) do
+      assert(sounds.SFX.character[name][sound], "Character SFX"..sound.." for "..name.." was not loaded.")
+    end
+    for k, music_type in ipairs(required_char_music) do
+      assert(sounds.music.characters[name][music_type], music_type.." for "..name.." was not loaded.")
+    end
+  end
+  --assert pops have been loaded
+  for popLevel=1,4 do
+      sounds.SFX.pops[popLevel] = {}
+      for popIndex=1,10 do
+          assert(sounds.SFX.pops[popLevel][popIndex], "SFX pop"..popLevel.."-"..popIndex.." was not loaded")
+      end
+  end
+end
+
 function sound_init()
   default_sounds_dir = "Stock PdP_TA"
   sounds_dir = "Stock PdP_TA" -- TODO: pull this from config
@@ -112,34 +146,39 @@ function sound_init()
   SFX_GarbageThud_Play = 0
   sounds = {
     SFX = {
-      cur_move = find_generic_SFX("move", "static"),
-      swap = find_generic_SFX("sounds/"..sounds_dir.."/SFX/swap", "static"),
-      land = find_generic_SFX("sounds/"..sounds_dir.."/SFX/Land", "static"),
-      fanfare1 = find_generic_SFX("sounds/"..sounds_dir.."/SFX/Fanfare1", "static"),
-      fanfare2 = find_generic_SFX("sounds/"..sounds_dir.."/SFX/Fanfare2", "static"),
-      fanfare3 = find_generic_SFX("sounds/"..sounds_dir.."/SFX/Fanfare3", "static"),
-      game_over = find_generic_SFX("sounds/"..sounds_dir.."/SFX/GameOver", "static"),
+      cur_move = find_generic_SFX("move"),
+      swap = find_generic_SFX("swap"),
+      land = find_generic_SFX("land"),
+      fanfare1 = find_generic_SFX("sounds/"..sounds_dir.."/SFX/Fanfare1"),
+      fanfare2 = find_generic_SFX("sounds/"..sounds_dir.."/SFX/Fanfare2"),
+      fanfare3 = find_generic_SFX("sounds/"..sounds_dir.."/SFX/Fanfare3"),
+      game_over = find_generic_SFX("sounds/"..sounds_dir.."/SFX/GameOver"),
       garbage_thud = {
         find_generic_SFX("sounds/"..sounds_dir.."/SFX/Thud_1"),
         find_generic_SFX("sounds/"..sounds_dir.."/SFX/Thud_2"),
         find_generic_SFX("sounds/"..sounds_dir.."/SFX/Thud_3")
       },
-      character = {},
+      characters = {},
       pops = {}
     },
     music = {
-      character_normal = {},
-      character_danger = {}
+      characters = {},
     }
   }
+  required_char_SFX = {"chain", "combo"}
+  -- @CardsOfTheHeart says there are 4 chain sfx: --x2/x3, --x4, --x5 is x2/x3 with an echo effect, --x6+ is x4 with an echo effect
+  allowed_char_SFX = {"chain", "combo", "combo_echo", "chain_echo", "chain2" ,"chain2_echo", "garbage_match"}
+  required_char_music = {"normal_music", "danger_music"}
+  allowed_char_music = {"normal_music", "danger_music", "normal_music_start", "danger_music_start"}
   for i,name in ipairs(characters) do
-      sounds.SFX.character[name] = find_character_SFX(name, "chain")
-  end
-  for i,name in ipairs(characters) do
-      sounds.music.character_normal[name] = find_music(name, "normal")
-  end
-  for i,name in ipairs(characters) do
-      sounds.music.character_danger[name] = find_music(name, "danger")
+    sounds.SFX.characters[name] = {}
+    for k, sound in ipairs(required_char_SFX) do
+      sounds.SFX.characters[name][sound] = find_character_SFX(name, sound)
+    end
+    sounds.music.characters[name] = {}
+    for k, music_type in ipairs(required_char_music) do
+      sounds.music.characters[name][music_type] = find_music(name, music_type)
+    end
   end
   for popLevel=1,4 do
       sounds.SFX.pops[popLevel] = {}
@@ -148,7 +187,7 @@ function sound_init()
 "pop"..popLevel.."-"..popIndex)
       end
   end
-  
+  assert_requirements_met()
   -- TODO: turn this bit back on
   -- love.audio.setVolume(config.master_volume/100)
   -- set_volume(sounds.SFX, config.SFX_volume/100)
