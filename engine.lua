@@ -1006,13 +1006,13 @@ function Stack.PdP(self)
   --Play Sounds / music
   if not music_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
     if (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
-        if not sounds.music.character_danger[winningPlayer().character]:isPlaying() then
-            sounds.music.character_normal[winningPlayer().character]:stop()
-            sounds.music.character_danger[winningPlayer().character]:play()
+        if not sounds.music.characters[winningPlayer().character].danger_music:isPlaying() then
+            sounds.music.characters[winningPlayer().character].normal_music:stop()
+            sounds.music.characters[winningPlayer().character].danger_music:play()
         end
-    elseif not sounds.music.character_normal[winningPlayer().character]:isPlaying() then
-    sounds.music.character_danger[winningPlayer().character]:stop()
-    sounds.music.character_normal[winningPlayer().character]:play()
+    elseif not sounds.music.characters[winningPlayer().character].normal_music:isPlaying() then
+    sounds.music.characters[winningPlayer().character].danger_music:stop()
+    sounds.music.characters[winningPlayer().character].normal_music:play()
     end
   end
   if not SFX_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
@@ -1036,8 +1036,10 @@ function Stack.PdP(self)
     if SFX_Buddy_Play == 1 then
         sounds.SFX.land:stop()
         sounds.SFX.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        sounds.SFX.character[self.character]:stop()
-        sounds.SFX.character[self.character]:play()
+        sounds.SFX.characters[self.character]["chain"]:stop()
+        sounds.SFX.characters[self.character]["combo"]:stop()
+        sounds.SFX.characters[self.character]["chain"]:play()
+        --TODO: implement other character sound events, rather than always playing their "chain" SFX. (i.e. "chain2", "combo", "garbage_match")
         SFX_Buddy_Play=0
     end
     if SFX_Fanfare_Play == 0 then

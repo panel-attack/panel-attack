@@ -71,7 +71,7 @@ function find_music(character, music_type)
   local found_source
   local character_music_overrides_stage_music = check_supported_extensions("sounds/"..sounds_dir.."characters/"..character.."/normal_music")
   if character_music_overrides_stage_music then
-    found_source = check_supported_extensions("sounds"..sounds_dir.."/characters/"..character.."/"..music_type)
+    found_source = check_supported_extensions("sounds/"..sounds_dir.."/characters/"..character.."/"..music_type)
     if found_source then
       print("In selected sound directory, found "..music_type.." for "..character)
     else
@@ -79,7 +79,7 @@ function find_music(character, music_type)
     end
     return found_source
   elseif stages[character] then
-    found_source = check_supported_extensions("sounds"..sounds_dir.."/music/"..stages[character].."/"..music_type)
+    found_source = check_supported_extensions("sounds/"..sounds_dir.."/music/"..stages[character].."/"..music_type)
     if found_source then
       print("In selected sound directory, found "..music_type.." for "..character)
     else
@@ -89,12 +89,6 @@ function find_music(character, music_type)
   else
     --nothing, I think...  --TODO: check this
   end
-end
-
-
-
-function SFX_init()
-
 end
 
 --returns a source, or nil if it could not find a file
@@ -122,7 +116,7 @@ function assert_requirements_met()
     --assert we have the required SFX and music for each character
   for i,name in ipairs(characters) do
     for k, sound in ipairs(required_char_SFX) do
-      assert(sounds.SFX.character[name][sound], "Character SFX"..sound.." for "..name.." was not loaded.")
+      assert(sounds.SFX.characters[name][sound], "Character SFX"..sound.." for "..name.." was not loaded.")
     end
     for k, music_type in ipairs(required_char_music) do
       assert(sounds.music.characters[name][music_type], music_type.." for "..name.." was not loaded.")
@@ -130,7 +124,6 @@ function assert_requirements_met()
   end
   --assert pops have been loaded
   for popLevel=1,4 do
-      sounds.SFX.pops[popLevel] = {}
       for popIndex=1,10 do
           assert(sounds.SFX.pops[popLevel][popIndex], "SFX pop"..popLevel.."-"..popIndex.." was not loaded")
       end
@@ -139,7 +132,7 @@ end
 
 function sound_init()
   default_sounds_dir = "Stock PdP_TA"
-  sounds_dir = "Stock PdP_TA" -- TODO: pull this from config
+  sounds_dir = config.sounds_dir or default_sounds_dir -- TODO: pull this from config
   --sounds: SFX, music
   SFX_Fanfare_Play = 0
   SFX_GameOver_Play = 0
@@ -149,14 +142,14 @@ function sound_init()
       cur_move = find_generic_SFX("move"),
       swap = find_generic_SFX("swap"),
       land = find_generic_SFX("land"),
-      fanfare1 = find_generic_SFX("sounds/"..sounds_dir.."/SFX/Fanfare1"),
-      fanfare2 = find_generic_SFX("sounds/"..sounds_dir.."/SFX/Fanfare2"),
-      fanfare3 = find_generic_SFX("sounds/"..sounds_dir.."/SFX/Fanfare3"),
-      game_over = find_generic_SFX("sounds/"..sounds_dir.."/SFX/GameOver"),
+      fanfare1 = find_generic_SFX("fanfare1"),
+      fanfare2 = find_generic_SFX("fanfare2"),
+      fanfare3 = find_generic_SFX("fanfare3"),
+      game_over = find_generic_SFX("gameover"),
       garbage_thud = {
-        find_generic_SFX("sounds/"..sounds_dir.."/SFX/Thud_1"),
-        find_generic_SFX("sounds/"..sounds_dir.."/SFX/Thud_2"),
-        find_generic_SFX("sounds/"..sounds_dir.."/SFX/Thud_3")
+        find_generic_SFX("thud_1"),
+        find_generic_SFX("thud_2"),
+        find_generic_SFX("thud_3")
       },
       characters = {},
       pops = {}
@@ -181,15 +174,14 @@ function sound_init()
     end
   end
   for popLevel=1,4 do
-      sounds.SFX.pops[popLevel] = {}
-      for popIndex=1,10 do
-          sounds.SFX.pops[popLevel][popIndex] = find_generic_SFX(
-"pop"..popLevel.."-"..popIndex)
-      end
+    sounds.SFX.pops[popLevel] = {}
+    for popIndex=1,10 do
+      sounds.SFX.pops[popLevel][popIndex] = find_generic_SFX("pop"..popLevel.."-"..popIndex)
+    end
   end
   assert_requirements_met()
-  -- TODO: turn this bit back on
-  -- love.audio.setVolume(config.master_volume/100)
-  -- set_volume(sounds.SFX, config.SFX_volume/100)
-  -- set_volume(sounds.music, config.music_volume/100) 
+  
+  love.audio.setVolume(config.master_volume/100)
+  set_volume(sounds.SFX, config.SFX_volume/100)
+  set_volume(sounds.music, config.music_volume/100) 
 end

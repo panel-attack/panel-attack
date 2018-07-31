@@ -1677,6 +1677,7 @@ function main_options()
   local function get_items()
   local save_replays_publicly_choices = {"with my name", "anonymously", "not at all"}
   assets_dir_before_options_menu = config.assets_dir or default_assets_dir
+  sounds_dir_before_options_menu = config.sounds_dir or default_sounds_dir
   --make so we can get "anonymously" from save_replays_publicly_choices["anonymously"]
   for k,v in ipairs(save_replays_publicly_choices) do
     save_replays_publicly_choices[v] = v
@@ -1688,6 +1689,13 @@ function main_options()
       asset_sets[#asset_sets+1] = v
     end
   end
+  local raw_sounds_dir_list = love.filesystem.getDirectoryItems("sounds")
+  local sound_sets = {}
+  for k,v in ipairs(raw_sounds_dir_list) do
+    if love.filesystem.isDirectory("sounds/"..v) and v ~= "Example folder structure" then
+      sound_sets[#sound_sets+1] = v
+    end
+  end
   print("asset_sets:")
   for k,v in ipairs(asset_sets) do
     print(v)
@@ -1696,9 +1704,9 @@ function main_options()
     --options menu table reference:
     --{[1]"Option Name", [2]current or default value, [3]type, [4]min or bool value or choices_table,
     -- [5]max, [6]sound_source, [7]selectable, [8]next_func, [9]play_while selected}
-      {"Master Volume", config.master_volume or 100, "numeric", 0, 100, sounds.music.character_normal["lip"], true, nil, true},
+      {"Master Volume", config.master_volume or 100, "numeric", 0, 100, sounds.music.characters["lip"].normal_music, true, nil, true},
       {"SFX Volume", config.SFX_volume or 100, "numeric", 0, 100, sounds.SFX.cur_move, true},
-      {"Music Volume", config.music_volume or 100, "numeric", 0, 100, sounds.music.character_normal["lip"], true, nil, true},
+      {"Music Volume", config.music_volume or 100, "numeric", 0, 100, sounds.music.characters["lip"].normal_music, true, nil, true},
       {"Debug Mode", debug_mode_text[config.debug_mode or false], "bool", false, nil, nil,false},
       {"Save replays publicly", 
         save_replays_publicly_choices[config.save_replays_publicly]
@@ -1706,6 +1714,8 @@ function main_options()
         "multiple choice", save_replays_publicly_choices},
       {"Graphics set", config.assets_dir or default_assets_dir, "multiple choice", asset_sets},
       {"About custom graphics", "", "function", nil, nil, nil, nil, show_custom_graphics_readme},
+      {"Sounds set", config.sounds_dir or default_sounds_dir, "multiple choice", sound_sets},
+      {"About custom sounds", "", "function", nil, nil, nil, nil, show_custom_sounds_readme},
       {"Back", "", nil, nil, nil, nil, false, main_select_mode}
     }
   end
@@ -1875,6 +1885,23 @@ function main_options()
           end
         end
       end
+      if items[active_idx][1] == "About custom sounds" then
+        if not love.filesystem.isDirectory("sounds/Example folder structure")then
+          print("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.")
+          gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
+          wait()
+          recursive_copy("sounds/"..default_sounds_dir, "sounds/Example folder structure")
+        end
+        local custom_sounds_readme = read_txt_file("Custom Sounds Readme.txt")
+        while true do
+          gprint(custom_sounds_readme, 100, 150)      
+          do_menu_function = false
+          wait()
+          if menu_escape(K[1]) or menu_enter(K[1]) then
+            break;
+          end
+        end
+      end
     end
     if selected and items[active_idx][9] and items[active_idx][6] and not items[active_idx][6]:isPlaying() then
     --if selected and play_while_selected and sound source exists and it isn't playing
@@ -1900,6 +1927,12 @@ function exit_options_menu()
     graphics_init()
   end
   assets_dir_before_options_menu = nil
+  if config.sounds_dir ~= sounds_dir_before_options_menu then
+    gprint("reloading sounds...", 300, 305)
+    wait()
+    sound_init()
+  end
+  sounds_dir_before_options_menu = nil
   return main_select_mode
 end
 
