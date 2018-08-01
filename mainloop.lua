@@ -1862,6 +1862,8 @@ function main_options()
           config.save_replays_publicly = items[active_idx][2]
         elseif active_idx == 6 then
           config.assets_dir = items[active_idx][2]
+        elseif active_idx == 8 then
+          config.sounds_dir = items[active_idx][2]
         end
         --add any other multiple choice config updates here
       end

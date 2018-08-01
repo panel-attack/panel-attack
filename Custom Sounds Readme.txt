@@ -3,8 +3,8 @@ About Custom Sounds in Panel Attack
 Currently, sound files with the following extensions are supported:
 .mp3, .ogg, .it
 
-**DO NOT change the character folder names!**  You may place a txt file with your character's name to help
-  you remember which character it is. (For example: sounds/Pokemon/characters/blargg/Charmander.txt)
+**IMPORTANT: DO NOT change the character folder names!**  You may place a txt file with your character's name
+to help you remember which character it is. (For example: sounds/Pokemon/characters/blargg/Charmander.txt)
 
 About Sound Effects (SFX):
 -Game SFX go in:  sounds/[sound_pack_name_here]/SFX and file names should be:

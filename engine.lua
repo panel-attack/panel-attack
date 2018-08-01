@@ -1033,12 +1033,15 @@ function Stack.PdP(self)
         sounds.SFX.land:play()
         SFX_Land_Play=0
     end
-    if SFX_Buddy_Play == 1 then
+    if SFX_Buddy_Play and SFX_Buddy_Play ~= 0 then
         sounds.SFX.land:stop()
         sounds.SFX.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         sounds.SFX.characters[self.character]["chain"]:stop()
         sounds.SFX.characters[self.character]["combo"]:stop()
-        sounds.SFX.characters[self.character]["chain"]:play()
+        sounds.SFX.characters[self.character]["chain2"]:stop()
+        sounds.SFX.characters[self.character]["chain_echo"]:stop()
+        sounds.SFX.characters[self.character]["chain2_echo"]:stop()
+        sounds.SFX.characters[self.character][SFX_Buddy_Play]:play()
         --TODO: implement other character sound events, rather than always playing their "chain" SFX. (i.e. "chain2", "combo", "garbage_match")
         SFX_Buddy_Play=0
     end
@@ -1575,8 +1578,21 @@ function Stack.check_matches(self)
       --MrStopState=1;
       --MrStopTimer=MrStopAni[self.stop_time];
       --TODO: Mr Stop ^
-
-      SFX_Buddy_Play=1
+      -- @CardsOfTheHeart says there are 4 chain sfx: --x2/x3, --x4, --x5 is x2/x3 with an echo effect, --x6+ is x4 with an echo effect
+      if is_chain then
+        local length = min(self.chain_counter, 13)
+        if length < 4 then 
+          SFX_Buddy_Play = "chain"
+        elseif length == 4 then
+          SFX_Buddy_Play = "chain2"
+        elseif length == 5 then
+          SFX_Buddy_Play = "chain_echo"
+        elseif length >= 6 then
+          SFX_Buddy_Play = "chain2_echo"
+        end
+      elseif combo_size > 3 then
+        SFX_Buddy_Play = "combo"
+      end
       SFX_Land_Play=0
     end
     --if garbage_size > 0 then
@@ -1586,8 +1602,10 @@ function Stack.check_matches(self)
     self.manual_raise=false
     --self.score_render=1;
     --Nope.
-    if metal_count > 2 then
-      SFX_Buddy_Play=1
+    if metal_count > 5 then
+      SFX_Buddy_Play = "combo_echo"
+    elseif metal_count > 2 then
+      SFX_Buddy_Play = "combo"
     end
     self:set_combo_garbage(combo_size, metal_count)
   end
