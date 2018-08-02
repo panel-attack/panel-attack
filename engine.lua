@@ -397,7 +397,7 @@ function Stack.starting_state(self, n)
       self.cur_row = self.cur_row-1
     end
   end
-  stop_character_sounds(character)
+  stop_character_sounds(self.character)
 end
 
 function Stack.prep_first_row(self)
