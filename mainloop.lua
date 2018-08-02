@@ -1978,6 +1978,12 @@ function fullscreen()
 end
 
 function main_dumb_transition(next_func, text, timemin, timemax)
+  if P1 and P1.character then 
+    stop_character_sounds(P1.character)
+  end
+  if P2 and P2.character then 
+    stop_character_sounds(P2.character)
+  end
   love.audio.stop()
   if not SFX_mute and SFX_GameOver_Play == 1 then
     sounds.SFX.game_over:play()

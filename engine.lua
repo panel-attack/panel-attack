@@ -356,7 +356,8 @@ function Stack.set_puzzle_state(self, pstr, n_turns)
       idx = idx + 1
     end
   end
-  self.puzzle_moves = n_turns
+  self.puzzle_moves = n_turns  
+  stop_character_sounds(self.character)
 end
 
 function Stack.puzzle_done(self)
@@ -396,6 +397,7 @@ function Stack.starting_state(self, n)
       self.cur_row = self.cur_row-1
     end
   end
+  stop_character_sounds(character)
 end
 
 function Stack.prep_first_row(self)
@@ -1041,7 +1043,7 @@ function Stack.PdP(self)
           normal_music_intro_started = true
         end
       end
-      if (normal_music_intro_started and not sounds.music.characters[winningPlayer().character].normal_music_start:isPlaying()) or not normal_music_intro_exists then
+      if not sounds.music.characters[winningPlayer().character].normal_music_start or (normal_music_intro_started and not sounds.music.characters[winningPlayer().character].normal_music_start:isPlaying()) then
         normal_music_intro_started = nil
         
         sounds.music.characters[winningPlayer().character].normal_music:setLooping(true)

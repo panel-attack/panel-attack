@@ -154,6 +154,24 @@ function assert_requirements_met()
   end
 end
 
+function stop_character_sounds(character)
+  danger_music_intro_started = nil
+  danger_music_intro_finished = nil
+  danger_music_intro_playing = nil
+  normal_music_intro_exists = nil
+  normal_music_intro_started = nil
+  for k, sound in ipairs(allowed_char_SFX) do
+    if sounds.SFX.characters[character][sound] then
+      sounds.SFX.characters[character][sound]:stop()
+    end
+  end
+  for k, music_type in ipairs(allowed_char_music) do
+    if sounds.music.characters[character][music_type] then
+      sounds.music.characters[character][music_type]:stop()
+    end
+  end
+end
+
 function sound_init()
   default_sounds_dir = "Stock PdP_TA"
   sounds_dir = config.sounds_dir or default_sounds_dir
