@@ -1075,8 +1075,9 @@ function Stack.PdP(self)
         sounds.SFX.characters[self.character]["chain2"]:stop()
         sounds.SFX.characters[self.character]["chain_echo"]:stop()
         sounds.SFX.characters[self.character]["chain2_echo"]:stop()
-        sounds.SFX.characters[self.character][SFX_Buddy_Play]:play()
-        --TODO: implement other character sound events, rather than always playing their "chain" SFX. (i.e. "chain2", "combo", "garbage_match")
+        if sounds.SFX.characters[self.character][SFX_Buddy_Play] then
+          sounds.SFX.characters[self.character][SFX_Buddy_Play]:play()
+        end
         SFX_Buddy_Play=0
     end
     if SFX_Fanfare_Play == 0 then
@@ -1435,6 +1436,7 @@ function Stack.check_matches(self)
       if ((metal and panel.metal) or (normal and not panel.metal))
         and panel.garbage and not garbage[panel] then
         garbage[panel] = true
+        SFX_Buddy_Play = "garbage_match"
         if y <= self.height then
           garbage_size = garbage_size + 1
         end

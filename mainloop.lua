@@ -36,7 +36,7 @@ function fmainloop()
   gprint("Loading graphics...", 300, 280)
   wait()
   graphics_init() -- load images and set up stuff
-  gprint("Loading sounds...", 300, 280)
+  gprint("Loading sounds... (this takes a few seconds)", 300, 280)
   wait()
   sound_init()
   while true do
