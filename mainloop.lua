@@ -6,7 +6,8 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   menu_up, menu_down, menu_left, menu_right, menu_enter, menu_escape,
   main_replay_vs, main_local_vs_setup, main_local_vs, menu_key_func,
   multi_func, normal_key, main_set_name, main_net_vs_room, main_net_vs_lobby,
-  main_local_vs_yourself_setup, main_local_vs_yourself
+  main_local_vs_yourself_setup, main_local_vs_yourself,
+  main_options, exit_options_menu
 
 VERSION = "022"
 local PLAYING = "playing"  -- room states
@@ -20,9 +21,24 @@ leaderboard_report = nil
 replay_of_match_so_far = nil
 spectator_list = nil
 spectators_string = ""
+debug_mode_text = {[true]="On", [false]="Off"}  
 
 function fmainloop()
   local func, arg = main_select_mode, nil
+  replay = {}
+  config = {character="lip", level=5, name="defaultname", master_volume=100, SFX_volume=100, music_volume=100, debug_mode=false, save_replays_publicly = "with my name", assets_dir=default_assets_dir}
+  gprint("Reading config file", 300, 280)
+  wait()
+  read_conf_file() -- TODO: stop making new config files
+  gprint("Reading replay file", 300, 280)
+  wait()
+  read_replay_file()
+  gprint("Loading graphics...", 300, 280)
+  wait()
+  graphics_init() -- load images and set up stuff
+  gprint("Loading sounds... (this takes a few seconds)", 300, 280)
+  wait()
+  sound_init()
   while true do
     leftover_time = 1/120
     consuming_timesteps = false
@@ -347,7 +363,7 @@ function main_net_vs_room()
     cursor,op_cursor,X,Y = {1,1},{1,1},5,7
   end
   local up,down,left,right = {-1,0}, {1,0}, {0,-1}, {0,1}
-  local my_state = global_my_state or {character=config.character, level=config.level, cursor="level", ready=false}
+  my_state = global_my_state or {character=config.character, level=config.level, cursor="level", ready=false}
   global_my_state = nil
   my_win_count = my_win_count or 0
   local prev_state = shallowcpy(my_state)
@@ -385,6 +401,7 @@ function main_net_vs_room()
   local function do_leave()
     my_win_count = 0
     op_win_count = 0
+    write_char_sel_settings_to_file()
     json_send({leave_room=true})
   end
   local name_to_xy = {}
@@ -407,9 +424,9 @@ function main_net_vs_room()
     button_width = w*100-2*spacing
     button_height = h*100-2*spacing
     grectangle("line", render_x, render_y, button_width, button_height)
-    if IMG_character_icons[str] then
-      local orig_w, orig_h = IMG_character_icons[str]:getDimensions()
-      menu_draw(IMG_character_icons[str], render_x, render_y, 0, button_width/orig_w, button_height/orig_h )
+    if IMG_character_icons[character_display_names_to_original_names[str]] then
+      local orig_w, orig_h = IMG_character_icons[character_display_names_to_original_names[str]]:getDimensions()
+      menu_draw(IMG_character_icons[character_display_names_to_original_names[str]], render_x, render_y, 0, button_width/orig_w, button_height/orig_h )
     end
     local y_add,x_add = 10,30
     local pstr = str
@@ -439,7 +456,7 @@ function main_net_vs_room()
     local player_num
     local draw_cur_this_frame = false
     local cursor_frame = 1
-    if op_state.cursor == str then
+    if op_state and op_state.cursor and (op_state.cursor == str or op_state.cursor == character_display_names_to_original_names[str]) then
       player_num = 2
       if op_state.ready then
         if (math.floor(menu_clock/cur_blink_frequency)+player_num)%2+1 == player_num then
@@ -463,7 +480,7 @@ function main_net_vs_room()
         menu_drawq(cur_img, cur_img_right, render_x+button_width+spacing-cur_img_w*cursor_scale/2, render_y-spacing, 0, cursor_scale, cursor_scale)
       end
     end
-    if my_state.cursor == str then
+    if my_state and my_state.cursor and (my_state.cursor == str or my_state.cursor == character_display_names_to_original_names[str]) then
       player_num = 1
       if my_state.ready then
         if (math.floor(menu_clock/cur_blink_frequency)+player_num)%2+1 == player_num then
@@ -521,6 +538,7 @@ function main_net_vs_room()
       if msg.leave_room then
         my_win_count = 0
         op_win_count = 0
+        write_char_sel_settings_to_file()
         return main_net_vs_lobby
       end
       if msg.match_start or replay_of_match_so_far then
@@ -615,7 +633,7 @@ function main_net_vs_room()
     draw_button(1,7,1,1,"ready")
     for i=2,X do
       for j=1,Y do
-        draw_button(i,j,1,1,map[i][j])
+        draw_button(i,j,1,1,character_display_names[map[i][j]] or map[i][j])
       end
     end
     local my_rating_difference = ""
@@ -649,7 +667,7 @@ function main_net_vs_room()
       state = state.."  expected: "
         ..my_expected_win_ratio.."%"
     end
-    state = state.."  Char: "..my_state.character.."  Ready: "..tostring(my_state.ready or false)
+    state = state.."  Char: "..character_display_names[my_state.character].."  Ready: "..tostring(my_state.ready or false)
     --state = state.." "..json.encode(my_state).."\n"
     state = state.."\n"
     --op state - add to be displayed
@@ -668,7 +686,7 @@ function main_net_vs_room()
       state = state.."  expected: "
         ..op_expected_win_ratio.."%"
     end
-    state = state.."  Char: "..op_state.character.."  Ready: "..tostring(op_state.ready or false)
+    state = state.."  Char: "..character_display_names[op_state.character].."  Ready: "..tostring(op_state.ready or false)
     --state = state.." "..json.encode(op_state)
     gprint(state, 50, 50)
     if not my_state.ranked and not op_state.ranked then
@@ -1081,6 +1099,7 @@ function main_net_vs()
     -- love.timer.sleep(0.030)
     for _,msg in ipairs(this_frame_messages) do
       if msg.leave_room then
+        write_char_sel_settings_to_file()
         return main_net_vs_lobby
       end
     end
@@ -1671,23 +1690,46 @@ function main_options()
   local selected, deselected_this_frame, adjust_active_value = false, false, false
   local function get_items()
   local save_replays_publicly_choices = {"with my name", "anonymously", "not at all"}
+  assets_dir_before_options_menu = config.assets_dir or default_assets_dir
+  sounds_dir_before_options_menu = config.sounds_dir or default_sounds_dir
   --make so we can get "anonymously" from save_replays_publicly_choices["anonymously"]
   for k,v in ipairs(save_replays_publicly_choices) do
     save_replays_publicly_choices[v] = v
   end
-  
-  local debug_mode_text = {[true]="On", [false]="Off"}  
+  local raw_assets_dir_list = love.filesystem.getDirectoryItems("assets")
+  local asset_sets = {}
+  for k,v in ipairs(raw_assets_dir_list) do
+    if love.filesystem.isDirectory("assets/"..v) and v ~= "Example folder structure" then
+      asset_sets[#asset_sets+1] = v
+    end
+  end
+  local raw_sounds_dir_list = love.filesystem.getDirectoryItems("sounds")
+  local sound_sets = {}
+  for k,v in ipairs(raw_sounds_dir_list) do
+    if love.filesystem.isDirectory("sounds/"..v) and v ~= "Example folder structure" then
+      sound_sets[#sound_sets+1] = v
+    end
+  end
+  print("asset_sets:")
+  for k,v in ipairs(asset_sets) do
+    print(v)
+  end
     items = {
+    --options menu table reference:
     --{[1]"Option Name", [2]current or default value, [3]type, [4]min or bool value or choices_table,
     -- [5]max, [6]sound_source, [7]selectable, [8]next_func, [9]play_while selected}
-      {"Master Volume", config.master_volume or 100, "numeric", 0, 100, sounds.music.character_normal["lip"], true, nil, true},
+      {"Master Volume", config.master_volume or 100, "numeric", 0, 100, sounds.music.characters["lip"].normal_music, true, nil, true},
       {"SFX Volume", config.SFX_volume or 100, "numeric", 0, 100, sounds.SFX.cur_move, true},
-      {"Music Volume", config.music_volume or 100, "numeric", 0, 100, sounds.music.character_normal["lip"], true, nil, true},
+      {"Music Volume", config.music_volume or 100, "numeric", 0, 100, sounds.music.characters["lip"].normal_music, true, nil, true},
       {"Debug Mode", debug_mode_text[config.debug_mode or false], "bool", false, nil, nil,false},
       {"Save replays publicly", 
         save_replays_publicly_choices[config.save_replays_publicly]
           or save_replays_publicly_choices["with my name"],
         "multiple choice", save_replays_publicly_choices},
+      {"Graphics set", config.assets_dir or default_assets_dir, "multiple choice", asset_sets},
+      {"About custom graphics", "", "function", nil, nil, nil, nil, show_custom_graphics_readme},
+      {"Sounds set", config.sounds_dir or default_sounds_dir, "multiple choice", sound_sets},
+      {"About custom sounds", "", "function", nil, nil, nil, nil, show_custom_sounds_readme},
       {"Back", "", nil, nil, nil, nil, false, main_select_mode}
     }
   end
@@ -1721,6 +1763,9 @@ function main_options()
       if items[active_idx][2] > items[active_idx][4] then --value > minimum
         items[active_idx][2] = items[active_idx][2] - 1
       end
+    elseif items[active_idx][3] == "multiple choice" then
+      adjust_backwards = true
+      adjust_active_value = true
     end
     --the following is enough for "bool"
     adjust_active_value = true
@@ -1735,6 +1780,8 @@ function main_options()
       if items[active_idx][2] < items[active_idx][5] then --value < maximum
         items[active_idx][2] = items[active_idx][2] + 1
       end
+    elseif items[active_idx][3] == "multiple choice" then
+      adjust_active_value = true
     end
     --the following is enough for "bool"
     adjust_active_value = true
@@ -1744,17 +1791,19 @@ function main_options()
       items[active_idx][6]:play()
     end
   end
+  get_items()
+  local do_menu_function = false
   while true do
-    get_items()
+    --get_items()
     print_stuff()
     wait()
     if menu_up(K[1]) and not selected then
       active_idx = wrap(1, active_idx-1, #items)
     elseif menu_down(K[1]) and not selected then
       active_idx = wrap(1, active_idx+1, #items)
-    elseif menu_left(K[1]) and selected then
+    elseif menu_left(K[1]) and (selected or not items[active_idx][7]) then --or not selectable
       adjust_left()
-    elseif menu_right(K[1]) and selected then
+    elseif menu_right(K[1]) and (selected or not items[active_idx][7]) then --or not selectable
       adjust_right()
     elseif menu_enter(K[1]) then
       if items[active_idx][7] then --is selectable
@@ -1764,19 +1813,18 @@ function main_options()
           adjust_active_value = true
         end
       elseif items[active_idx][3] == "bool" or items[active_idx][3] == "multiple choice" then
-        print("Enter Pressed on bool or multiple choice.")
         adjust_active_value = true
+      elseif items[active_idx][3] == "function" then
+        do_menu_function = true
       elseif active_idx == #items then
-        write_conf_file()
-        return items[active_idx][8] --next_func
+        return exit_options_menu
       end
     elseif menu_escape(K[1]) then
       if selected then
         selected = not selected
         deselected_this_frame = true
       elseif active_idx == #items then
-        write_conf_file()
-        return main_select_mode
+        return exit_options_menu
       else
         active_idx = #items
       end
@@ -1785,6 +1833,7 @@ function main_options()
       if items[active_idx][3] == "bool" then
         if active_idx == 4 then
           config.debug_mode = not config.debug_mode
+          items[active_idx][2] = debug_mode_text[config.debug_mode or false]
         end
         --add any other bool config updates here
       elseif items[active_idx][3] == "numeric" then
@@ -1817,14 +1866,58 @@ function main_options()
         end
         -- the next line of code means
         -- current_choice_num = choices[wrap(1, next_choice_num, last_choice_num)]
-        items[active_idx][2] = items[active_idx][4][wrap(1,active_choice_num + 1, #items[active_idx][4])]
+        if adjust_backwards then
+          items[active_idx][2] = items[active_idx][4][wrap(1,active_choice_num - 1, #items[active_idx][4])]
+          adjust_backwards = nil
+        else
+          items[active_idx][2] = items[active_idx][4][wrap(1,active_choice_num + 1, #items[active_idx][4])]
+        end
         if active_idx == 5 then
           config.save_replays_publicly = items[active_idx][2]
-        --add any other multiple choice config updates here
+        elseif active_idx == 6 then
+          config.assets_dir = items[active_idx][2]
+        elseif active_idx == 8 then
+          config.sounds_dir = items[active_idx][2]
         end
-
+        --add any other multiple choice config updates here
       end
       adjust_active_value = false
+    end
+    if items[active_idx][3] == "function" and do_menu_function then
+      if items[active_idx][1] == "About custom graphics" then
+        if not love.filesystem.isDirectory("assets/Example folder structure")then
+          print("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.")
+          gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
+          wait()
+          recursive_copy("assets/"..default_assets_dir, "assets/Example folder structure")
+        end
+        local custom_graphics_readme = read_txt_file("Custom Graphics Readme.txt")
+        while true do
+          gprint(custom_graphics_readme, 100, 150)      
+          do_menu_function = false
+          wait()
+          if menu_escape(K[1]) or menu_enter(K[1]) then
+            break;
+          end
+        end
+      end
+      if items[active_idx][1] == "About custom sounds" then
+        if not love.filesystem.isDirectory("sounds/Example folder structure")then
+          print("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.")
+          gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
+          wait()
+          recursive_copy("sounds/"..default_sounds_dir, "sounds/Example folder structure")
+        end
+        local custom_sounds_readme = read_txt_file("Custom Sounds Readme.txt")
+        while true do
+          gprint(custom_sounds_readme, 30, 150)      
+          do_menu_function = false
+          wait()
+          if menu_escape(K[1]) or menu_enter(K[1]) then
+            break;
+          end
+        end
+      end
     end
     if selected and items[active_idx][9] and items[active_idx][6] and not items[active_idx][6]:isPlaying() then
     --if selected and play_while_selected and sound source exists and it isn't playing
@@ -1838,6 +1931,25 @@ function main_options()
       deselected_this_frame = false
     end
   end
+end
+
+function exit_options_menu()
+  gprint("writing config to file...", 300,280)
+  wait()
+  write_conf_file()
+  if config.assets_dir ~= assets_dir_before_options_menu then
+    gprint("reloading graphics...", 300, 305)
+    wait()
+    graphics_init()
+  end
+  assets_dir_before_options_menu = nil
+  if config.sounds_dir ~= sounds_dir_before_options_menu then
+    gprint("reloading sounds...", 300, 305)
+    wait()
+    sound_init()
+  end
+  sounds_dir_before_options_menu = nil
+  return main_select_mode
 end
 
 function main_set_name()
@@ -1866,6 +1978,12 @@ function fullscreen()
 end
 
 function main_dumb_transition(next_func, text, timemin, timemax)
+  if P1 and P1.character then 
+    stop_character_sounds(P1.character)
+  end
+  if P2 and P2.character then 
+    stop_character_sounds(P2.character)
+  end
   love.audio.stop()
   if not SFX_mute and SFX_GameOver_Play == 1 then
     sounds.SFX.game_over:play()
@@ -1910,4 +2028,22 @@ function main_dumb_transition(next_func, text, timemin, timemax)
     --  do_messages()
     end
   end
+end
+
+function write_char_sel_settings_to_file()
+  if not currently_spectating and my_state then
+    gprint("saving character select settings...")
+    if not closing then
+      wait()
+    end
+    config.character = my_state.character
+    config.level = my_state.level
+    config.ranked = my_state.ranked
+    write_conf_file()
+  end
+end
+
+function love.quit()
+  closing = true
+  write_char_sel_settings_to_file()
 end

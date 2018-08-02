@@ -356,7 +356,8 @@ function Stack.set_puzzle_state(self, pstr, n_turns)
       idx = idx + 1
     end
   end
-  self.puzzle_moves = n_turns
+  self.puzzle_moves = n_turns  
+  stop_character_sounds(self.character)
 end
 
 function Stack.puzzle_done(self)
@@ -396,6 +397,7 @@ function Stack.starting_state(self, n)
       self.cur_row = self.cur_row-1
     end
   end
+  stop_character_sounds(self.character)
 end
 
 function Stack.prep_first_row(self)
@@ -1005,14 +1007,48 @@ function Stack.PdP(self)
   
   --Play Sounds / music
   if not music_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
+  
     if (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
-        if not sounds.music.character_danger[winningPlayer().character]:isPlaying() then
-            sounds.music.character_normal[winningPlayer().character]:stop()
-            sounds.music.character_danger[winningPlayer().character]:play()
+      if sounds.music.characters[winningPlayer().character].normal_music_start then
+        sounds.music.characters[winningPlayer().character].normal_music_start:stop()
+      end
+      sounds.music.characters[winningPlayer().character].normal_music:stop()
+      --if intro exists and it's not playing, and it 
+      if sounds.music.characters[winningPlayer().character].danger_music_start and not danger_music_intro_finished then
+        if danger_music_intro_started and not sounds.music.characters[winningPlayer().character].danger_music_start:isPlaying() then
+          danger_music_intro_finished = true
+        else
+          sounds.music.characters[winningPlayer().character].danger_music_start:play()
+          danger_music_intro_started = true
         end
-    elseif not sounds.music.character_normal[winningPlayer().character]:isPlaying() then
-    sounds.music.character_danger[winningPlayer().character]:stop()
-    sounds.music.character_normal[winningPlayer().character]:play()
+      end
+      if danger_music_intro_finished or not sounds.music.characters[winningPlayer().character].danger_music_start then
+        --danger music intro finished or doesn't exist
+        danger_music_intro_started = nil
+        sounds.music.characters[winningPlayer().character].danger_music:setLooping(true)
+        sounds.music.characters[winningPlayer().character].danger_music:play()
+      end
+    else --we should be playing normal_music or normal_music_start
+      if sounds.music.characters[winningPlayer().character].danger_music_start then
+        sounds.music.characters[winningPlayer().character].danger_music_start:stop()
+      end
+      sounds.music.characters[winningPlayer().character].danger_music:stop()
+      danger_music_intro_started = nil
+      danger_music_intro_finished = nil
+      danger_music_intro_playing = nil
+      if not normal_music_intro_started then
+        if sounds.music.characters[winningPlayer().character].normal_music_start then
+          sounds.music.characters[winningPlayer().character].normal_music_start:play()
+          normal_music_intro_exists = true
+          normal_music_intro_started = true
+        end
+      end
+      if not sounds.music.characters[winningPlayer().character].normal_music_start or (normal_music_intro_started and not sounds.music.characters[winningPlayer().character].normal_music_start:isPlaying()) then
+        normal_music_intro_started = nil
+        
+        sounds.music.characters[winningPlayer().character].normal_music:setLooping(true)
+        sounds.music.characters[winningPlayer().character].normal_music:play()
+      end
     end
   end
   if not SFX_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
@@ -1033,12 +1069,25 @@ function Stack.PdP(self)
         sounds.SFX.land:play()
         SFX_Land_Play=0
     end
-    if SFX_Buddy_Play == 1 then
+    if SFX_Buddy_Play and SFX_Buddy_Play ~= 0 then
         sounds.SFX.land:stop()
         sounds.SFX.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        sounds.SFX.character[self.character]:stop()
-        sounds.SFX.character[self.character]:play()
+        sounds.SFX.characters[self.character]["chain"]:stop()
+        sounds.SFX.characters[self.character]["combo"]:stop()
+        sounds.SFX.characters[self.character]["chain2"]:stop()
+        sounds.SFX.characters[self.character]["chain_echo"]:stop()
+        sounds.SFX.characters[self.character]["chain2_echo"]:stop()
+        if sounds.SFX.characters[self.character][SFX_Buddy_Play] then
+          sounds.SFX.characters[self.character][SFX_Buddy_Play]:play()
+        end
         SFX_Buddy_Play=0
+    end
+    if SFX_garbage_match_play then
+      if sounds.SFX.characters[self.character]["garbage_match"] then
+        sounds.SFX.characters[self.character]["garbage_match"]:stop()
+        sounds.SFX.characters[self.character]["garbage_match"]:play()
+      end
+      SFX_garbage_match_play = nil
     end
     if SFX_Fanfare_Play == 0 then
     --do nothing
@@ -1396,6 +1445,7 @@ function Stack.check_matches(self)
       if ((metal and panel.metal) or (normal and not panel.metal))
         and panel.garbage and not garbage[panel] then
         garbage[panel] = true
+        SFX_garbage_match_play = true
         if y <= self.height then
           garbage_size = garbage_size + 1
         end
@@ -1573,8 +1623,21 @@ function Stack.check_matches(self)
       --MrStopState=1;
       --MrStopTimer=MrStopAni[self.stop_time];
       --TODO: Mr Stop ^
-
-      SFX_Buddy_Play=1
+      -- @CardsOfTheHeart says there are 4 chain sfx: --x2/x3, --x4, --x5 is x2/x3 with an echo effect, --x6+ is x4 with an echo effect
+      if is_chain then
+        local length = min(self.chain_counter, 13)
+        if length < 4 then 
+          SFX_Buddy_Play = "chain"
+        elseif length == 4 then
+          SFX_Buddy_Play = "chain2"
+        elseif length == 5 then
+          SFX_Buddy_Play = "chain_echo"
+        elseif length >= 6 then
+          SFX_Buddy_Play = "chain2_echo"
+        end
+      elseif combo_size > 3 then
+        SFX_Buddy_Play = "combo"
+      end
       SFX_Land_Play=0
     end
     --if garbage_size > 0 then
@@ -1584,8 +1647,10 @@ function Stack.check_matches(self)
     self.manual_raise=false
     --self.score_render=1;
     --Nope.
-    if metal_count > 2 then
-      SFX_Buddy_Play=1
+    if metal_count > 5 then
+      SFX_Buddy_Play = "combo_echo"
+    elseif metal_count > 2 then
+      SFX_Buddy_Play = "combo"
     end
     self:set_combo_garbage(combo_size, metal_count)
   end

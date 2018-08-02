@@ -43,17 +43,26 @@ local floor = math.floor
 local ceil = math.ceil
 local garbage_match_time = #garbage_bounce_table
 
-function load_img(s)
-  -- s = love.image.newImageData(s)
-  -- local w, h = s:getWidth(), s:getHeight()
+function load_img(path_and_name)
+  local img
+  if pcall(function () 
+    img = love.image.newImageData("assets/"..(config.assets_dir or default_assets_dir).."/"..path_and_name)
+  end) then 
+    if config.assets_dir and config.assets_dir ~= default_assets_dir then
+      print("loaded custom asset: "..config.assets_dir.."/"..path_and_name)
+    end
+  else
+    img = love.image.newImageData("assets/"..default_assets_dir.."/"..path_and_name)
+  end
+  -- local w, h = img:getWidth(), img:getHeight()
   -- local wp = math.pow(2, math.ceil(math.log(w)/math.log(2)))
   -- local hp = math.pow(2, math.ceil(math.log(h)/math.log(2)))
   -- if wp ~= w or hp ~= h then
     -- local padded = love.image.newImageData(wp, hp)
-    -- padded:paste(s, 0, 0)
-    -- s = padded
+    -- padded:paste(img, 0, 0)
+    -- img = padded
   -- end
-  local ret = love.graphics.newImage(s)
+  local ret = love.graphics.newImage(img)
   ret:setFilter("nearest","nearest")
   return ret
 end
@@ -118,13 +127,13 @@ function graphics_init()
   for i=1,8 do
     IMG_panels[i]={}
     for j=1,7 do
-      IMG_panels[i][j]=load_img("assets/panel"..
+      IMG_panels[i][j]=load_img("panel"..
         tostring(i)..tostring(j)..".png")
     end
   end
   IMG_panels[9]={}
   for j=1,7 do
-    IMG_panels[9][j]=load_img("assets/panel00.png")
+    IMG_panels[9][j]=load_img("panel00.png")
   end
 
   local g_parts = {"topleft", "botleft", "topright", "botright",
@@ -136,45 +145,45 @@ function graphics_init()
     local imgs = {}
     IMG_garbage[key] = imgs
     for _,part in ipairs(g_parts) do
-      imgs[part] = load_img("assets/"..key.."/"..part..".png")
+      imgs[part] = load_img(""..key.."/"..part..".png")
     end
   end
 
-  IMG_metal_flash = load_img("assets/garbageflash.png")
-  IMG_metal = load_img("assets/metalmid.png")
-  IMG_metal_l = load_img("assets/metalend0.png")
-  IMG_metal_r = load_img("assets/metalend1.png")
+  IMG_metal_flash = load_img("garbageflash.png")
+  IMG_metal = load_img("metalmid.png")
+  IMG_metal_l = load_img("metalend0.png")
+  IMG_metal_r = load_img("metalend1.png")
 
-  IMG_cursor = {  load_img("assets/cur0.png"),
-          load_img("assets/cur1.png")}
+  IMG_cursor = {  load_img("cur0.png"),
+          load_img("cur1.png")}
 
-  IMG_frame = load_img("assets/frame.png")
-  IMG_wall = load_img("assets/wall.png")
+  IMG_frame = load_img("frame.png")
+  IMG_wall = load_img("wall.png")
 
   IMG_cards = {}
   IMG_cards[true] = {}
   IMG_cards[false] = {}
   for i=4,66 do
-    IMG_cards[false][i] = load_img("assets/combo"
+    IMG_cards[false][i] = load_img("combo"
       ..tostring(floor(i/10))..tostring(i%10)..".png")
   end
   for i=2,13 do
-    IMG_cards[true][i] = load_img("assets/chain"
+    IMG_cards[true][i] = load_img("chain"
       ..tostring(floor(i/10))..tostring(i%10)..".png")
   end
   for i=14,99 do
-    IMG_cards[true][i] = load_img("assets/chain00.png")
+    IMG_cards[true][i] = load_img("chain00.png")
   end
   IMG_character_icons = {}
   for k,name in ipairs(characters) do
-    IMG_character_icons[name] = load_img("assets/"..name.."/icon.png")
+    IMG_character_icons[name] = load_img(""..name.."/icon.png")
   end
   local MAX_SUPPORTED_PLAYERS = 2
   IMG_char_sel_cursors = {}
   for player_num=1,MAX_SUPPORTED_PLAYERS do
     IMG_char_sel_cursors[player_num] = {}
     for position_num=1,2 do
-      IMG_char_sel_cursors[player_num][position_num] = load_img("assets/char_sel_cur_"..player_num.."P_pos"..position_num..".png")
+      IMG_char_sel_cursors[player_num][position_num] = load_img("char_sel_cur_"..player_num.."P_pos"..position_num..".png")
     end
   end
   IMG_char_sel_cursor_halves = {left={}, right={}}
@@ -192,8 +201,27 @@ function graphics_init()
       IMG_char_sel_cursor_halves.right[player_num][position_num] = love.graphics.newQuad(half_width,0,half_width,cur_height,cur_width, cur_height)
     end
   end
-  
-
+  character_display_names = {}
+  for k, original_name in ipairs(characters) do
+    name_txt_file = love.filesystem.newFile("assets/"..config.assets_dir.."/"..original_name.."/name.txt")
+    --print(original_name)
+    open_success, err = name_txt_file:open("r")
+    --if err then print(err) end
+    local display_name = name_txt_file:read(name_txt_file:getSize())
+    if display_name then
+      character_display_names[original_name] = display_name
+    else
+      character_display_names[original_name] = original_name
+    end
+  end
+  print("character_display_names: ")
+  for k,v in pairs(character_display_names) do
+    print(k.." = "..v)
+  end
+  character_display_names_to_original_names = {}
+  for k,v in pairs(character_display_names) do
+    character_display_names_to_original_names[v] = k
+  end
   --for(a=0;a<2;a++) MrStopAni[a]=5;
   --for(a=2;a<5;a++) MrStopAni[a]=8;
   --for(a=5;a<25;a++) MrStopAni[a]=16;
