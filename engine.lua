@@ -1005,14 +1005,48 @@ function Stack.PdP(self)
   
   --Play Sounds / music
   if not music_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
+  
     if (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
-        if not sounds.music.characters[winningPlayer().character].danger_music:isPlaying() then
-            sounds.music.characters[winningPlayer().character].normal_music:stop()
-            sounds.music.characters[winningPlayer().character].danger_music:play()
+      if sounds.music.characters[winningPlayer().character].normal_music_start then
+        sounds.music.characters[winningPlayer().character].normal_music_start:stop()
+      end
+      sounds.music.characters[winningPlayer().character].normal_music:stop()
+      --if intro exists and it's not playing, and it 
+      if sounds.music.characters[winningPlayer().character].danger_music_start and not danger_music_intro_finished then
+        if danger_music_intro_started and not sounds.music.characters[winningPlayer().character].danger_music_start:isPlaying() then
+          danger_music_intro_finished = true
+        else
+          sounds.music.characters[winningPlayer().character].danger_music_start:play()
+          danger_music_intro_started = true
         end
-    elseif not sounds.music.characters[winningPlayer().character].normal_music:isPlaying() then
-    sounds.music.characters[winningPlayer().character].danger_music:stop()
-    sounds.music.characters[winningPlayer().character].normal_music:play()
+      end
+      if danger_music_intro_finished or not sounds.music.characters[winningPlayer().character].danger_music_start then
+        --danger music intro finished or doesn't exist
+        danger_music_intro_started = nil
+        sounds.music.characters[winningPlayer().character].danger_music:setLooping(true)
+        sounds.music.characters[winningPlayer().character].danger_music:play()
+      end
+    else --we should be playing normal_music or normal_music_start
+      if sounds.music.characters[winningPlayer().character].danger_music_start then
+        sounds.music.characters[winningPlayer().character].danger_music_start:stop()
+      end
+      sounds.music.characters[winningPlayer().character].danger_music:stop()
+      danger_music_intro_started = nil
+      danger_music_intro_finished = nil
+      danger_music_intro_playing = nil
+      if not normal_music_intro_started then
+        if sounds.music.characters[winningPlayer().character].normal_music_start then
+          sounds.music.characters[winningPlayer().character].normal_music_start:play()
+          normal_music_intro_exists = true
+          normal_music_intro_started = true
+        end
+      end
+      if (normal_music_intro_started and not sounds.music.characters[winningPlayer().character].normal_music_start:isPlaying()) or not normal_music_intro_exists then
+        normal_music_intro_started = nil
+        
+        sounds.music.characters[winningPlayer().character].normal_music:setLooping(true)
+        sounds.music.characters[winningPlayer().character].normal_music:play()
+      end
     end
   end
   if not SFX_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then

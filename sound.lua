@@ -117,13 +117,16 @@ end
 function check_supported_extensions(path_and_filename)
   for k, extension in ipairs(supported_sound_formats) do
     if love.filesystem.isFile(path_and_filename..extension) then
-      return love.audio.newSource(path_and_filename..extension)
+      if string.find(path_and_filename, "music") then
+        return love.audio.newSource(path_and_filename..extension)
+      else
+        return love.audio.newSource(path_and_filename..extension, "static")
+      end
     end
   end
   return nil
 end
 
---TODO:
 function assert_requirements_met()
   --assert we have all required generic sound effects
   local SFX_requirements =  {"cur_move", "swap", "fanfare1", "fanfare2", "fanfare3", "game_over"}
@@ -197,7 +200,7 @@ function sound_init()
       end
     end
     sounds.music.characters[name] = {}
-    for k, music_type in ipairs(required_char_music) do
+    for k, music_type in ipairs(allowed_char_music) do
       sounds.music.characters[name][music_type] = find_music(name, music_type)
     end
   end
