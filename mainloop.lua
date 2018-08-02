@@ -25,6 +25,20 @@ debug_mode_text = {[true]="On", [false]="Off"}
 
 function fmainloop()
   local func, arg = main_select_mode, nil
+  replay = {}
+  config = {character="lip", level=5, name="defaultname", master_volume=100, SFX_volume=100, music_volume=100, debug_mode=false, save_replays_publicly = "with my name", assets_dir=default_assets_dir}
+  gprint("Reading config file", 300, 280)
+  wait()
+  read_conf_file() -- TODO: stop making new config files
+  gprint("Reading replay file", 300, 280)
+  wait()
+  read_replay_file()
+  gprint("Loading graphics...", 300, 280)
+  wait()
+  graphics_init() -- load images and set up stuff
+  gprint("Loading sounds...", 300, 280)
+  wait()
+  sound_init()
   while true do
     leftover_time = 1/120
     consuming_timesteps = false
