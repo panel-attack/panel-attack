@@ -1080,6 +1080,13 @@ function Stack.PdP(self)
         end
         SFX_Buddy_Play=0
     end
+    if SFX_garbage_match_play then
+      if sounds.SFX.characters[self.character]["garbage_match"] then
+        sounds.SFX.characters[self.character]["garbage_match"]:stop()
+        sounds.SFX.characters[self.character]["garbage_match"]:play()
+      end
+      SFX_garbage_match_play = nil
+    end
     if SFX_Fanfare_Play == 0 then
     --do nothing
     elseif SFX_Fanfare_Play >= 6 then
@@ -1436,7 +1443,7 @@ function Stack.check_matches(self)
       if ((metal and panel.metal) or (normal and not panel.metal))
         and panel.garbage and not garbage[panel] then
         garbage[panel] = true
-        SFX_Buddy_Play = "garbage_match"
+        SFX_garbage_match_play = true
         if y <= self.height then
           garbage_size = garbage_size + 1
         end
