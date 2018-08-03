@@ -763,7 +763,11 @@ function main_character_select()
           end
         elseif menu_escape(k) then
           if active_str == "leave" then
-            do_leave()
+            if character_select_mode == "2p_net_vs" then
+              do_leave()
+            else
+              return main_select_mode
+            end
           end
           selected = false
           cursor = shallowcpy(name_to_xy["leave"])
