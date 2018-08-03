@@ -5,7 +5,7 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_config_input, main_dumb_transition, main_select_puzz,
   menu_up, menu_down, menu_left, menu_right, menu_enter, menu_escape,
   main_replay_vs, main_local_vs_setup, main_local_vs, menu_key_func,
-  multi_func, normal_key, main_set_name, main_net_vs_room, main_net_vs_lobby,
+  multi_func, normal_key, main_set_name, main_character_select, main_net_vs_lobby,
   main_local_vs_yourself_setup, main_local_vs_yourself,
   main_options, exit_options_menu
 
@@ -282,107 +282,126 @@ function main_time_attack(...)
 end
 
 function main_net_vs_room()
+  character_select_mode = "2p_net_vs"
+  return main_character_select()
+end
+
+function main_character_select()
   love.audio.stop()
-  local opponent_connected = false
-  while not global_initialize_room_msg do
-    for _,msg in ipairs(this_frame_messages) do
-      print("Message received at start of main_net_vs_room():\n"..json.encode(msg))
-      if msg.create_room or msg.character_select or msg.spectate_request_granted then
-        global_initialize_room_msg = msg
-      else
-        gprint("Waiting for opponent...", 300, 280)
-      end
-    end
-    wait()
-    do_messages()
-  end
-  msg = global_initialize_room_msg
-  global_initialize_room_msg = nil
-  if msg.ratings then
-      global_current_room_ratings = msg.ratings
-  end
-  global_my_state = msg.a_menu_state
-  global_op_state = msg.b_menu_state
-  if msg.your_player_number then
-    my_player_number = msg.your_player_number
-  elseif currently_spectating then
-    my_player_number = 1
-  elseif my_player_number and my_player_number ~= 0 then
-    print("We assumed our player number is still "..my_player_number)
-  else
-    error("We never heard from the server as to what player number we are")
-    print("Error: The server never told us our player number.  Assuming it is 1")
-    my_player_number = 1
-  end
-  if msg.op_player_number then
-    op_player_number = msg.op_player_number or op_player_number
-  elseif currently_spectating then
-    op_player_number = 2
-  elseif op_player_number and op_player_number ~= 0 then
-    print("We assumed op player number is still "..op_player_number)
-  else
-    error("We never heard from the server as to what player number we are")
-    print("Error: The server never told us our player number.  Assuming it is 2")
-    op_player_number = 2
-  end
-  if msg.win_counts then
-    update_win_counts(msg.win_counts)
-  end
-  if msg.replay_of_match_so_far then
-    replay_of_match_so_far = msg.replay_of_match_so_far
-  end
-  if msg.ranked then
-    match_type = "Ranked"
-    match_type_message = ""
-  else 
-    match_type = "Casual"
-  end
-  if currently_spectating then
-    P1 = {panel_buffer="", gpanel_buffer=""}
-    print("we reset P1 buffers at start of main_net_vs_room()")
-  end
-  P2 = {panel_buffer="", gpanel_buffer=""}
-  print("we reset P2 buffers at start of main_net_vs_room()")
-  local k = K[1]
   local map = {}
-  print("current_server_supports_ranking: "..tostring(current_server_supports_ranking))
-  local cursor,op_cursor,X,Y
-  if current_server_supports_ranking then
-    map = {{"match type desired", "match type desired", "match type desired", "match type desired", "level", "level", "ready"},
-           {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
-           {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
-           {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
-           {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
-    cursor,op_cursor,X,Y = {1,5},{1,5},5,7
-  else
+  if character_select_mode == "2p_net_vs" then
+    local opponent_connected = false
+    while not global_initialize_room_msg do
+      for _,msg in ipairs(this_frame_messages) do
+        print("Message received at start of main_character_select():\n"..json.encode(msg))
+        if msg.create_room or msg.character_select or msg.spectate_request_granted then
+          global_initialize_room_msg = msg
+        else
+          gprint("Waiting for opponent...", 300, 280)
+        end
+      end
+      wait()
+      do_messages()
+    end
+    msg = global_initialize_room_msg
+    global_initialize_room_msg = nil
+    if msg.ratings then
+        global_current_room_ratings = msg.ratings
+    end
+    global_my_state = msg.a_menu_state
+    global_op_state = msg.b_menu_state
+    if msg.your_player_number then
+      my_player_number = msg.your_player_number
+    elseif currently_spectating then
+      my_player_number = 1
+    elseif my_player_number and my_player_number ~= 0 then
+      print("We assumed our player number is still "..my_player_number)
+    else
+      error("We never heard from the server as to what player number we are")
+      print("Error: The server never told us our player number.  Assuming it is 1")
+      my_player_number = 1
+    end
+    if msg.op_player_number then
+      op_player_number = msg.op_player_number or op_player_number
+    elseif currently_spectating then
+      op_player_number = 2
+    elseif op_player_number and op_player_number ~= 0 then
+      print("We assumed op player number is still "..op_player_number)
+    else
+      error("We never heard from the server as to what player number we are")
+      print("Error: The server never told us our player number.  Assuming it is 2")
+      op_player_number = 2
+    end
+    if msg.win_counts then
+      update_win_counts(msg.win_counts)
+    end
+    if msg.replay_of_match_so_far then
+      replay_of_match_so_far = msg.replay_of_match_so_far
+    end
+    if msg.ranked then
+      match_type = "Ranked"
+      match_type_message = ""
+    else 
+      match_type = "Casual"
+    end
+    if currently_spectating then
+      P1 = {panel_buffer="", gpanel_buffer=""}
+      print("we reset P1 buffers at start of main_character_select()")
+    end
+    P2 = {panel_buffer="", gpanel_buffer=""}
+    print("we reset P2 buffers at start of main_character_select()")
+    print("current_server_supports_ranking: "..tostring(current_server_supports_ranking))
+    local cursor,op_cursor,X,Y
+    if current_server_supports_ranking then
+      map = {{"match type desired", "match type desired", "match type desired", "match type desired", "level", "level", "ready"},
+             {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
+             {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
+             {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
+             {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
+    else
+      map = {{"level", "level", "level", "level", "level", "level", "ready"},
+             {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
+             {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
+             {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
+             {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
+    end       
+  end
+  if character_select_mode == "1p_vs_yourself" then
     map = {{"level", "level", "level", "level", "level", "level", "ready"},
            {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
            {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
            {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
            {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
-    cursor,op_cursor,X,Y = {1,1},{1,1},5,7
   end
+  if character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs" then
+    local op_state = global_op_state or {character="lip", level=5, cursor="level", ready=false}
+    global_op_state = nil
+  end
+  cursor,op_cursor,X,Y = {1,1},{1,1},5,7
+  local k = K[1]
   local up,down,left,right = {-1,0}, {1,0}, {0,-1}, {0,1}
   my_state = global_my_state or {character=config.character, level=config.level, cursor="level", ready=false}
   global_my_state = nil
   my_win_count = my_win_count or 0
   local prev_state = shallowcpy(my_state)
-  local op_state = global_op_state or {character="lip", level=5, cursor="level", ready=false}
-  global_op_state = nil
   op_win_count = op_win_count or 0
-  global_current_room_ratings = global_current_room_ratings or {{new=0,old=0,difference=0},{new=0,old=0,difference=0}}
-  my_expected_win_ratio = (100*round(1/(1+10^
-        ((global_current_room_ratings[op_player_number].new
-            -global_current_room_ratings[my_player_number].new)
-          /rating_spread_modifier))
-        ,2))
-  op_expected_win_ratio = (100*round(1/(1+10^
-        ((global_current_room_ratings[my_player_number].new
-            -global_current_room_ratings[op_player_number].new)
-          /rating_spread_modifier))
-        ,2))
-  match_type = match_type or "Casual"
-  if match_type == "" then match_type = "Casual" end
+  if character_select_mode == "2p_net_vs" then
+    global_current_room_ratings = global_current_room_ratings or {{new=0,old=0,difference=0},{new=0,old=0,difference=0}}
+    my_expected_win_ratio = (100*round(1/(1+10^
+          ((global_current_room_ratings[op_player_number].new
+              -global_current_room_ratings[my_player_number].new)
+            /rating_spread_modifier))
+          ,2))
+    op_expected_win_ratio = (100*round(1/(1+10^
+          ((global_current_room_ratings[my_player_number].new
+              -global_current_room_ratings[op_player_number].new)
+            /rating_spread_modifier))
+          ,2))
+  end
+  if character_select_mode == "2p_net_vs" then
+    match_type = match_type or "Casual"
+    if match_type == "" then match_type = "Casual" end
+  end
   match_type_message = match_type_message or ""
   local selected = false
   local active_str = "level"
@@ -405,6 +424,8 @@ function main_net_vs_room()
     json_send({leave_room=true})
   end
   local name_to_xy = {}
+  print("character_select_mode = "..(character_select_mode or "nil"))
+  print("map[1][1] = "..(map[1][1] or "nil"))
   for i=1,X do
     for j=1,Y do
       if map[i][j] then
@@ -432,9 +453,12 @@ function main_net_vs_room()
     local pstr = str
     if str == "level" then
       if selected and active_str == "level" then
-        pstr = pstr .. "\n"..my_name.."'s level: < "..my_state.level.." >\n"..op_name.."'s level: "..op_state.level
+        pstr = pstr .. "\n"..my_name.."'s level: < "..my_state.level.." >"
       else
-        pstr = pstr .. "\n"..my_name.."'s level: "..my_state.level.."\n"..op_name.."'s level: "..op_state.level
+        pstr = pstr .. "\n"..my_name.."'s level: "..my_state.level
+      end
+      if character_select_mode == "2p_net_vs" then
+        pstr = pstr .. "\n"..op_name.."'s level: "..op_state.level
       end
       y_add,x_add = 9,180
     end
@@ -450,7 +474,7 @@ function main_net_vs_room()
       y_add,x_add = 9,180
     end
     if my_state.cursor == str then pstr = pstr.."\n"..my_name end
-    if op_state.cursor == str then pstr = pstr.."\n"..op_name end
+    if op_state and op_name and op_state.cursor == str then pstr = pstr.."\n"..op_name end
     local cur_blink_frequency = 4
     local cur_pos_change_frequency = 8
     local player_num
@@ -510,117 +534,119 @@ function main_net_vs_room()
   menu_clock = 0
   while true do
     menu_clock = menu_clock + 1
-    for _,msg in ipairs(this_frame_messages) do
-      if msg.win_counts then
-        update_win_counts(msg.win_counts)
-      end
-      if msg.menu_state then
-        if currently_spectating then
-          if msg.player_number == 2 then
+    if character_select_mode == "2p_net_vs" then
+      for _,msg in ipairs(this_frame_messages) do
+        if msg.win_counts then
+          update_win_counts(msg.win_counts)
+        end
+        if msg.menu_state then
+          if currently_spectating then
+            if msg.player_number == 2 then
+              op_state = msg.menu_state
+            elseif msg.player_number == 1 then
+              my_state = msg.menu_state
+            end
+          else
             op_state = msg.menu_state
-          elseif msg.player_number == 1 then
-            my_state = msg.menu_state
-          end
-        else
-          op_state = msg.menu_state
-        end
-      end
-      if msg.ranked_match_approved then
-        match_type = "Ranked"
-        match_type_message = ""
-      elseif msg.ranked_match_denied then
-        match_type = "Casual"
-        match_type_message = "Not ranked. "
-        if msg.reasons then
-          match_type_message = match_type_message..(msg.reasons[1] or "Reason unknown")
-        end
-      end
-      if msg.leave_room then
-        my_win_count = 0
-        op_win_count = 0
-        write_char_sel_settings_to_file()
-        return main_net_vs_lobby
-      end
-      if msg.match_start or replay_of_match_so_far then
-        local fake_P1 = P1
-        print("currently_spectating: "..tostring(currently_spectating))
-        local fake_P2 = P2
-        P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
-        P2 = Stack(2, "vs", msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
-        if currently_spectating then
-          P1.panel_buffer = fake_P1.panel_buffer
-          P1.gpanel_buffer = fake_P1.gpanel_buffer
-        end
-        P2.panel_buffer = fake_P2.panel_buffer
-        P2.gpanel_buffer = fake_P2.gpanel_buffer
-        P1.garbage_target = P2
-        P2.garbage_target = P1
-        P2.pos_x = 172
-        P2.score_x = 410
-        replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
-                    P1_level=P1.level,P2_level=P2.level,
-                    P1_name=my_name, P2_name=op_name,
-                    P1_char=P1.character,P2_char=P2.character,
-                    ranked=msg.ranked}
-        if currently_spectating and replay_of_match_so_far then --we joined a match in progress
-          replay.vs = replay_of_match_so_far.vs
-          P1.input_buffer = replay_of_match_so_far.vs.in_buf
-          P1.panel_buffer = replay_of_match_so_far.vs.P
-          P1.gpanel_buffer = replay_of_match_so_far.vs.Q
-          P2.input_buffer = replay_of_match_so_far.vs.I
-          P2.panel_buffer = replay_of_match_so_far.vs.O
-          P2.gpanel_buffer = replay_of_match_so_far.vs.R
-          if replay.vs.ranked then
-            match_type = "Ranked"
-            match_type_message = ""
-          else 
-            match_type = "Casual"
-          end
-          replay_of_match_so_far = nil
-          P1.play_to_end = true  --this makes foreign_run run until caught up
-          P2.play_to_end = true
-        end
-        if not currently_spectating then
-            ask_for_gpanels("000000")
-            ask_for_panels("000000")
-        end
-        to_print = "Game is starting!\n".."Level: "..P1.level.."\nOpponent's level: "..P2.level
-        if P1.play_to_end or P2.play_to_end then
-          to_print = "Joined a match in progress.\nCatching up..."
-        end
-        for i=1,30 do
-          gprint(to_print,300, 280)
-          do_messages()
-          wait()
-        end
-        local game_start_timeout = 0
-        while P1.panel_buffer == "" or P2.panel_buffer == ""
-          or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
-          --testing getting stuck here at "Game is starting"
-          game_start_timeout = game_start_timeout + 1
-          print("game_start_timeout = "..game_start_timeout)
-          print("P1.panel_buffer = "..P1.panel_buffer)
-          print("P2.panel_buffer = "..P2.panel_buffer)
-          print("P1.gpanel_buffer = "..P1.gpanel_buffer)
-          print("P2.gpanel_buffer = "..P2.gpanel_buffer)
-          gprint(to_print,300, 280)
-          do_messages()
-          wait()
-          if game_start_timeout > 500 then
-            return main_dumb_transition, {main_select_mode, 
-                            "game-is-starting bug diagnostic version 2\n\ngame start timed out.\n Please screenshot this and\npost it in #panel-attack-bugs-features"
-                            .."\n".."msg.match_start = "..(tostring(msg.match_start) or "nil")
-                            .."\n".."replay_of_match_so_far = "..(tostring(replay_of_match_so_far) or "nil")
-                            .."\n".."P1.panel_buffer = "..P1.panel_buffer
-                            .."\n".."P2.panel_buffer = "..P2.panel_buffer
-                            .."\n".."P1.gpanel_buffer = "..P1.gpanel_buffer
-                            .."\n".."P2.gpanel_buffer = "..P2.gpanel_buffer,
-                            600}
           end
         end
-        P1:starting_state()
-        P2:starting_state()
-        return main_net_vs
+        if msg.ranked_match_approved then
+          match_type = "Ranked"
+          match_type_message = ""
+        elseif msg.ranked_match_denied then
+          match_type = "Casual"
+          match_type_message = "Not ranked. "
+          if msg.reasons then
+            match_type_message = match_type_message..(msg.reasons[1] or "Reason unknown")
+          end
+        end
+        if msg.leave_room then
+          my_win_count = 0
+          op_win_count = 0
+          write_char_sel_settings_to_file()
+          return main_net_vs_lobby
+        end
+        if msg.match_start or replay_of_match_so_far then
+          local fake_P1 = P1
+          print("currently_spectating: "..tostring(currently_spectating))
+          local fake_P2 = P2
+          P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
+          P2 = Stack(2, "vs", msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
+          if currently_spectating then
+            P1.panel_buffer = fake_P1.panel_buffer
+            P1.gpanel_buffer = fake_P1.gpanel_buffer
+          end
+          P2.panel_buffer = fake_P2.panel_buffer
+          P2.gpanel_buffer = fake_P2.gpanel_buffer
+          P1.garbage_target = P2
+          P2.garbage_target = P1
+          P2.pos_x = 172
+          P2.score_x = 410
+          replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
+                      P1_level=P1.level,P2_level=P2.level,
+                      P1_name=my_name, P2_name=op_name,
+                      P1_char=P1.character,P2_char=P2.character,
+                      ranked=msg.ranked}
+          if currently_spectating and replay_of_match_so_far then --we joined a match in progress
+            replay.vs = replay_of_match_so_far.vs
+            P1.input_buffer = replay_of_match_so_far.vs.in_buf
+            P1.panel_buffer = replay_of_match_so_far.vs.P
+            P1.gpanel_buffer = replay_of_match_so_far.vs.Q
+            P2.input_buffer = replay_of_match_so_far.vs.I
+            P2.panel_buffer = replay_of_match_so_far.vs.O
+            P2.gpanel_buffer = replay_of_match_so_far.vs.R
+            if replay.vs.ranked then
+              match_type = "Ranked"
+              match_type_message = ""
+            else 
+              match_type = "Casual"
+            end
+            replay_of_match_so_far = nil
+            P1.play_to_end = true  --this makes foreign_run run until caught up
+            P2.play_to_end = true
+          end
+          if not currently_spectating then
+              ask_for_gpanels("000000")
+              ask_for_panels("000000")
+          end
+          to_print = "Game is starting!\n".."Level: "..P1.level.."\nOpponent's level: "..P2.level
+          if P1.play_to_end or P2.play_to_end then
+            to_print = "Joined a match in progress.\nCatching up..."
+          end
+          for i=1,30 do
+            gprint(to_print,300, 280)
+            do_messages()
+            wait()
+          end
+          local game_start_timeout = 0
+          while P1.panel_buffer == "" or P2.panel_buffer == ""
+            or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
+            --testing getting stuck here at "Game is starting"
+            game_start_timeout = game_start_timeout + 1
+            print("game_start_timeout = "..game_start_timeout)
+            print("P1.panel_buffer = "..P1.panel_buffer)
+            print("P2.panel_buffer = "..P2.panel_buffer)
+            print("P1.gpanel_buffer = "..P1.gpanel_buffer)
+            print("P2.gpanel_buffer = "..P2.gpanel_buffer)
+            gprint(to_print,300, 280)
+            do_messages()
+            wait()
+            if game_start_timeout > 500 then
+              return main_dumb_transition, {main_select_mode, 
+                              "game-is-starting bug diagnostic version 2\n\ngame start timed out.\n Please screenshot this and\npost it in #panel-attack-bugs-features"
+                              .."\n".."msg.match_start = "..(tostring(msg.match_start) or "nil")
+                              .."\n".."replay_of_match_so_far = "..(tostring(replay_of_match_so_far) or "nil")
+                              .."\n".."P1.panel_buffer = "..P1.panel_buffer
+                              .."\n".."P2.panel_buffer = "..P2.panel_buffer
+                              .."\n".."P1.gpanel_buffer = "..P1.gpanel_buffer
+                              .."\n".."P2.gpanel_buffer = "..P2.gpanel_buffer,
+                              600}
+            end
+          end
+          P1:starting_state()
+          P2:starting_state()
+          return main_net_vs
+        end
       end
     end
     if current_server_supports_ranking then
@@ -656,7 +682,9 @@ function main_net_vs_room()
     if current_server_supports_ranking then
         state = state..":  Rating: "..my_rating_difference..global_current_room_ratings[my_player_number].new
     end
-    state = state.."  Wins: "..my_win_count
+    if character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs" then
+      state = state.."  Wins: "..my_win_count
+    end
     if current_server_supports_ranking or my_win_count + op_win_count > 0 then
       state = state.."  Win Ratio:"
     end
@@ -669,31 +697,35 @@ function main_net_vs_room()
     end
     state = state.."  Char: "..character_display_names[my_state.character].."  Ready: "..tostring(my_state.ready or false)
     --state = state.." "..json.encode(my_state).."\n"
-    state = state.."\n"
-    --op state - add to be displayed
-    state = state..op_name
-    if current_server_supports_ranking then
-        state = state..":  Rating: "..op_rating_difference..global_current_room_ratings[op_player_number].new
+    if op_state and op_name then
+      state = state.."\n"
+      --op state - add to be displayed
+      state = state..op_name
+      if current_server_supports_ranking then
+          state = state..":  Rating: "..op_rating_difference..global_current_room_ratings[op_player_number].new
+      end
+      state = state.."  Wins: "..op_win_count 
+      if current_server_supports_ranking or my_win_count + op_win_count > 0 then
+        state = state.."  Win Ratio:"
+      end
+      if my_win_count + op_win_count > 0 then
+        state = state.."  actual: "..(100*round(op_win_count/(op_win_count+my_win_count),2)).."%"
+      end
+      if current_server_supports_ranking then
+        state = state.."  expected: "
+          ..op_expected_win_ratio.."%"
+      end
+      state = state.."  Char: "..character_display_names[op_state.character].."  Ready: "..tostring(op_state.ready or false)
+      --state = state.." "..json.encode(op_state)
     end
-    state = state.."  Wins: "..op_win_count 
-    if current_server_supports_ranking or my_win_count + op_win_count > 0 then
-      state = state.."  Win Ratio:"
-    end
-    if my_win_count + op_win_count > 0 then
-      state = state.."  actual: "..(100*round(op_win_count/(op_win_count+my_win_count),2)).."%"
-    end
-    if current_server_supports_ranking then
-      state = state.."  expected: "
-        ..op_expected_win_ratio.."%"
-    end
-    state = state.."  Char: "..character_display_names[op_state.character].."  Ready: "..tostring(op_state.ready or false)
-    --state = state.." "..json.encode(op_state)
     gprint(state, 50, 50)
-    if not my_state.ranked and not op_state.ranked then
-      match_type_message = ""
+    if character_select_mode == "2p_net_vs" then
+      if not my_state.ranked and not op_state.ranked then
+        match_type_message = ""
+      end
+      gprint(match_type, 375, 15)
+      gprint(match_type_message,100,85)
     end
-    gprint(match_type, 375, 15)
-    gprint(match_type_message,100,85)
     wait()
     if not currently_spectating then
         if menu_up(k) then
@@ -714,7 +746,11 @@ function main_net_vs_room()
           if selectable[active_str] then
             selected = not selected
           elseif active_str == "leave" then
-            do_leave()
+            if character_select_mode == "2p_net_vs" then
+              do_leave()
+            else
+              return main_select_mode
+            end
           elseif active_str == "random" then
             config.character = uniformly(characters)
           elseif active_str == "match type desired" then
@@ -727,7 +763,11 @@ function main_net_vs_room()
           end
         elseif menu_escape(k) then
           if active_str == "leave" then
-            do_leave()
+            if character_select_mode == "2p_net_vs" then
+              do_leave()
+            else
+              return main_select_mode
+            end
           end
           selected = false
           cursor = shallowcpy(name_to_xy["leave"])
@@ -735,7 +775,7 @@ function main_net_vs_room()
         active_str = map[cursor[1]][cursor[2]]
         my_state = {character=config.character, level=config.level, cursor=active_str, ranked=config.ranked,
                     ready=(selected and active_str=="ready")}
-        if not content_equal(my_state, prev_state) and not currently_spectating then
+        if character_select_mode == "2p_net_vs" and not content_equal(my_state, prev_state) and not currently_spectating then
           json_send({menu_state=my_state})
         end
         prev_state = my_state
@@ -745,8 +785,17 @@ function main_net_vs_room()
           return main_net_vs_lobby
         end
     end
-    do_messages()
-    
+    if my_state.ready and character_select_mode == "1p_vs_yourself" then
+      P1 = Stack(1, "vs", my_state.level, my_state.character)
+      P1.garbage_target = P1
+      make_local_panels(P1, "000000")
+      make_local_gpanels(P1, "000000")
+      P1:starting_state()
+      return main_dumb_transition, {main_local_vs_yourself, "Game is starting...", 30, 30}
+    end
+    if character_select_mode == "2p_net_vs" then 
+      do_messages()
+    end
   end
 end
 
@@ -817,8 +866,8 @@ function main_net_vs_lobby()
       end
       if msg.create_room or msg.spectate_request_granted then
         global_initialize_room_msg = msg
-        
-        return main_net_vs_room
+        character_select_mode = "2p_net_vs"
+        return main_character_select
       end
       if msg.unpaired then
         unpaired_players = msg.unpaired
@@ -1198,10 +1247,11 @@ function main_net_vs()
       write_replay_file(path, filename)
       print("also saving replay as replay.txt")
       write_replay_file()
+      character_select_mode = "2p_net_vs"
       if currently_spectating then
-        return main_dumb_transition, {main_net_vs_room, end_text, 45, 45}
+        return main_dumb_transition, {main_character_select, end_text, 45, 45}
       else
-        return main_dumb_transition, {main_net_vs_room, end_text, 45, 180}
+        return main_dumb_transition, {main_character_select, end_text, 45, 180}
       end
     end
   end
@@ -1290,53 +1340,11 @@ function main_local_vs()
   end
 end
 
-main_local_vs_yourself_setup = multi_func(function()
-  local K = K
-  local chosen, maybe = {}, {global_local_vs_p1_level or 5}
-  local P1_level = nil
-  while chosen[1] == nil do
-    to_print = (chosen[1] and "" or "Choose ") .. "Your level: "..maybe[1]
-    gprint(to_print, 300, 280)
-    wait()
-    local i = 1
-    local k=K[i]
-    if menu_escape(k) then
-      if chosen[i] then
-        chosen[i] = nil
-      else
-        return main_select_mode
-      end
-    elseif menu_enter(k) then
-      chosen[i] = maybe[i]
-      global_local_vs_p1_level = maybe[i]
-    elseif menu_up(k) or menu_right(k) then
-      if not chosen[i] then
-        maybe[i] = bound(1,maybe[i]+1,10)
-      end
-    elseif menu_down(k) or menu_left(k) then
-      if not chosen[i] then
-        maybe[i] = bound(1,maybe[i]-1,10)
-      end
-    end
-  end
-  to_print = "P1 level: "..maybe[1]
-  P1 = Stack(1, "vs", chosen[1])
-  P1.garbage_target = P1
-  -- TODO: this does not correctly implement starting configurations.
-  -- Starting configurations should be identical for visible blocks, and
-  -- they should not be completely flat.
-  --
-  -- In general the block-generation logic should be the same as the server's, so
-  -- maybe there should be only one implementation.
-  make_local_panels(P1, "000000")
-  make_local_gpanels(P1, "000000")
-  for i=1,30 do
-    gprint(to_print,300, 280)
-    wait()
-  end
-  P1:starting_state()
-  return main_local_vs_yourself
-end)
+function main_local_vs_yourself_setup()
+  my_name = config.name or "Player 1"
+  character_select_mode = "1p_vs_yourself"
+  return main_character_select
+end
 
 function main_local_vs_yourself()
   -- TODO: replay!
@@ -1353,7 +1361,7 @@ function main_local_vs_yourself()
         end
       end)
     if end_text then
-      return main_dumb_transition, {main_select_mode, end_text, 45}
+      return main_dumb_transition, {main_character_select, end_text, 45}
     end
   end
 end
@@ -1379,10 +1387,12 @@ function main_replay_vs()
   P2.character = replay.P2_char
   my_name = replay.P1_name or "Player 1"
   op_name = replay.P2_name or "Player 2"
-  if replay.ranked then
-    match_type = "Ranked"
-  else
-    match_type = "Casual"
+  if character_select_mode == "2p_net_vs" then
+    if replay.ranked then
+      match_type = "Ranked"
+    else
+      match_type = "Casual"
+    end
   end
 
   P1:starting_state()
@@ -1997,7 +2007,7 @@ function main_dumb_transition(next_func, text, timemin, timemax)
   local k = K[1]
   while true do
     -- for _,msg in ipairs(this_frame_messages) do
-      -- if next_func == main_net_vs_room then
+      -- if next_func == main_character_select then
         -- if msg.menu_state then
           -- if currently_spectating then
             -- if msg.menu_state.player_number == 1 then
