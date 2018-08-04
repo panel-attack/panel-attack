@@ -373,10 +373,8 @@ function main_character_select()
            {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
            {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
   end
-  if character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs" then
-    local op_state = global_op_state or {character="lip", level=5, cursor="level", ready=false}
-    global_op_state = nil
-  end
+  local op_state = global_op_state or {character="lip", level=5, cursor="level", ready=false}
+  global_op_state = nil
   cursor,op_cursor,X,Y = {1,1},{1,1},5,7
   local k = K[1]
   local up,down,left,right = {-1,0}, {1,0}, {0,-1}, {0,1}
@@ -480,7 +478,8 @@ function main_character_select()
     local player_num
     local draw_cur_this_frame = false
     local cursor_frame = 1
-    if op_state and op_state.cursor and (op_state.cursor == str or op_state.cursor == character_display_names_to_original_names[str]) then
+    if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs")
+    and op_state and op_state.cursor and (op_state.cursor == str or op_state.cursor == character_display_names_to_original_names[str]) then
       player_num = 2
       if op_state.ready then
         if (math.floor(menu_clock/cur_blink_frequency)+player_num)%2+1 == player_num then
@@ -1076,8 +1075,8 @@ function main_net_vs_setup(ip)
   local k = K[1]
   while got_opponent == nil do
     gprint("Waiting for opponent...", 300, 280)
-    do_messages()
     wait()
+    do_messages()
   end
   while P1_level == nil or P2_level == nil do
     to_print = (P1_level and "L" or"Choose l") .. "evel: "..my_level..
