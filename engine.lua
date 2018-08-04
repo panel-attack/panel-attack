@@ -1013,7 +1013,7 @@ function Stack.PdP(self)
         sounds.music.characters[winningPlayer().character].normal_music_start:stop()
       end
       sounds.music.characters[winningPlayer().character].normal_music:stop()
-      --if intro exists and it's not playing, and it 
+      normal_music_intro_finished = nil
       if sounds.music.characters[winningPlayer().character].danger_music_start and not danger_music_intro_finished then
         if danger_music_intro_started and not sounds.music.characters[winningPlayer().character].danger_music_start:isPlaying() then
           danger_music_intro_finished = true
@@ -1036,15 +1036,16 @@ function Stack.PdP(self)
       danger_music_intro_started = nil
       danger_music_intro_finished = nil
       danger_music_intro_playing = nil
-      if not normal_music_intro_started then
+      if not normal_music_intro_started and not normal_music_intro_finished then
         if sounds.music.characters[winningPlayer().character].normal_music_start then
           sounds.music.characters[winningPlayer().character].normal_music_start:play()
           normal_music_intro_exists = true
           normal_music_intro_started = true
         end
       end
-      if not sounds.music.characters[winningPlayer().character].normal_music_start or (normal_music_intro_started and not sounds.music.characters[winningPlayer().character].normal_music_start:isPlaying()) then
+      if normal_music_intro_finished or not sounds.music.characters[winningPlayer().character].normal_music_start or (normal_music_intro_started and not sounds.music.characters[winningPlayer().character].normal_music_start:isPlaying()) then
         normal_music_intro_started = nil
+        normal_music_intro_finished = true
         
         sounds.music.characters[winningPlayer().character].normal_music:setLooping(true)
         sounds.music.characters[winningPlayer().character].normal_music:play()
