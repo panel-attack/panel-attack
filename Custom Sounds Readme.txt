@@ -19,8 +19,7 @@ About Sound Effects (SFX):
 -Depending on the current chain length, the chain SFX file with the appopriate file name will be played:
     x2/3 plays "chain",  x4 plays "chain2", x5 plays "chain_echo", x6+ plays "chain2_echo"
 -If your character should make a sound when you clear garbage, include a sound file named "garbage_match"
--Once implemented, if you would like matching six metal blocks to trigger an echoing effect,
-    please provide a "combo_echo" file.
+-If you would like matching six metal blocks have a different sound effect, provide a "combo_echo" file.
 
 About Music:
 -Music files should be named "normal_music" and "danger_music"
