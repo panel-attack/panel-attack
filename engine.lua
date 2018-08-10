@@ -373,6 +373,18 @@ function Stack.puzzle_done(self)
   return true
 end
 
+function Stack.has_falling_garbage(self)
+  for i=1,self.height+3 do --we shouldn't have to check quite 3 rows above height, but just to make sure...
+    local prow = self.panels[i]
+    for j=1,self.width do
+      if prow and prow[j].garbage and prow[j].state == "falling" then
+        return true
+      end
+    end
+  end
+  return false
+end
+
 function Stack.prep_rollback(self)
   -- Do stuff for rollback.
   local prev_states = self.prev_states
@@ -1000,7 +1012,10 @@ function Stack.PdP(self)
 
   local drop_it = self.n_active_panels == 0 and
       self.prev_active_panels == 0 and
-      not self.panels_in_top_row
+      not self.panels_in_top_row and not self:has_falling_garbage()
+  print("drop_it = "..tostring(drop_it))
+  print("self:has_falling_garbage() = "..tostring(self:has_falling_garbage()))
+  print("\n")
   if drop_it and self.garbage_q:len() > 0 then
     self:drop_garbage(unpack(self.garbage_q:pop()))
   end
@@ -1227,7 +1242,7 @@ end
 
 -- drops a width x height garbage.
 function Stack.drop_garbage(self, width, height, metal)
-  local spawn_row = #self.panels+2
+  local spawn_row = #self.panels
   for i=#self.panels+1,#self.panels+height+1 do
     self.panels[i] = {}
     for j=1,self.width do
@@ -1248,6 +1263,7 @@ function Stack.drop_garbage(self, width, height, metal)
       panel.y_offset = y-spawn_row
       panel.x_offset = x-spawn_col
       panel.shake_time = shake_time
+      panel.state = "falling"
       if metal then
         panel.metal = metal
       end
