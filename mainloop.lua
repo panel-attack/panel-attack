@@ -291,17 +291,35 @@ function main_character_select()
   local map = {}
   if character_select_mode == "2p_net_vs" then
     local opponent_connected = false
-    while not global_initialize_room_msg do
+    local retries, retry_limit = 0, 500
+    while not global_initialize_room_msg and retries < retry_limit do
       for _,msg in ipairs(this_frame_messages) do
-        print("Message received at start of main_character_select():\n"..json.encode(msg))
         if msg.create_room or msg.character_select or msg.spectate_request_granted then
           global_initialize_room_msg = msg
-        else
-          gprint("Waiting for opponent...", 300, 280)
         end
       end
+      gprint("Waiting for room initialization...", 300, 280)
       wait()
       do_messages()
+      retries = retries + 1
+    end
+    if room_number_last_spectated and retries >= retry_limit and currently_spectating then
+      request_spectate(room_number_last_spectated)
+      retries = 0
+      while not global_initialize_room_msg and retries < retry_limit do
+        for _,msg in ipairs(this_frame_messages) do
+          if msg.create_room or msg.character_select or msg.spectate_request_granted then
+            global_initialize_room_msg = msg
+          end
+        end
+        gprint("Lost connection.  Trying to rejoin...", 300, 280)
+        wait()
+        do_messages()
+        retries = retries + 1
+      end
+    end
+    if not global_initialize_room_msg then
+      return main_dumb_transition, {main_select_mode, "Failed to connect.\n\nReturning to main menu", 60, 300}
     end
     msg = global_initialize_room_msg
     global_initialize_room_msg = nil
@@ -990,6 +1008,7 @@ function main_net_vs_lobby()
         my_name = items[active_idx].a
         op_name = items[active_idx].b
         currently_spectating = true
+        room_number_last_spectated = items[active_idx].roomNumber
         request_spectate(items[active_idx].roomNumber)
       end
     elseif menu_escape(k) then
