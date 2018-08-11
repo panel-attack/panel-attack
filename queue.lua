@@ -25,6 +25,10 @@ function Queue.pop(self)
   return ret
 end
 
+function Queue.peek(self)
+  return self[self.first]
+end
+
 function Queue.len(self)
   return self.last - self.first + 1
 end

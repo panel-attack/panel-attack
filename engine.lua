@@ -1009,13 +1009,34 @@ function Stack.PdP(self)
     end
   end
   self.later_garbage[self.CLOCK-409] = nil
-
+  
+  --double-check panels_in_top_row
+  self.panels_in_top_row = false
+  local prow = panels[top_row]
+  for idx=1,width do
+    if prow[idx]:dangerous() then
+      self.panels_in_top_row = true
+    end
+  end
+  local garbage_fits_in_populated_top_row 
+  if self.garbage_q:len() > 0 and self.panels_in_top_row then
+    --even if there are some panels in the top row,
+    --check if the next block in the garbage_q would fit anyway
+    --ie. 3-wide garbage might fit if there are three empty spaces where it would spawn
+    garbage_fits_in_populated_top_row = true
+    local next_garbage_block_width, _height, _metal = unpack(self.garbage_q:peek())
+    local cols = self.garbage_cols[next_garbage_block_width]
+    local spawn_col = cols[cols.idx]
+    local spawn_row = #self.panels
+    for idx=spawn_col, spawn_col+next_garbage_block_width-1 do
+      if prow[idx]:dangerous() then 
+        garbage_fits_in_populated_top_row = nil
+      end
+    end
+  end
   local drop_it = self.n_active_panels == 0 and
-      self.prev_active_panels == 0 and
-      not self.panels_in_top_row and not self:has_falling_garbage()
-  print("drop_it = "..tostring(drop_it))
-  print("self:has_falling_garbage() = "..tostring(self:has_falling_garbage()))
-  print("\n")
+      self.prev_active_panels == 0 and 
+      (not self.panels_in_top_row or garbage_fits_in_populated_top_row) and not self:has_falling_garbage()
   if drop_it and self.garbage_q:len() > 0 then
     self:drop_garbage(unpack(self.garbage_q:pop()))
   end
