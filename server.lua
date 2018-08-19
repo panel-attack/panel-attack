@@ -887,15 +887,26 @@ function Connection.J(self, message)
     end
   elseif message.leaderboard_request then
     self:send({leaderboard_report=leaderboard:get_report(self)})
-  elseif self.state == "lobby" and message.spectate_request then
+  elseif message.spectate_request then
     local requestedRoom = roomNumberToRoom(message.spectate_request.roomNumber)
+    if self.state ~= "lobby" then
+      if requestedRoom then
+        print("removing "..self.name.." from room nr "..message.spectate_request.roomNumber)
+        requestedRoom:remove_spectator()
+      else
+        print("could not find room to remove "..self.name)
+      self.state = "lobby"
+      end
+    end
     if requestedRoom and requestedRoom:state() == CHARACTERSELECT then
     -- TODO: allow them to join
       print("join allowed")
+      print("adding "..self.name.." to room nr "..message.spectate_request.roomNumber)
       requestedRoom:add_spectator(self)
       
     elseif requestedRoom and requestedRoom:state() == PLAYING then
       print("join-in-progress allowed")
+      print("adding "..self.name.." to room nr "..message.spectate_request.roomNumber)
       requestedRoom:add_spectator(self)
     else
     -- TODO: tell the client the join request failed, couldn't find the room.
