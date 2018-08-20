@@ -550,9 +550,17 @@ void Render_Confetti()
 }--]]
 
 function Stack.render_cursor(self)
-  draw(IMG_cursor[(floor(self.CLOCK/16)%2)+1],
-    (self.cur_col-1)*16+self.pos_x-4,
-    (11-(self.cur_row))*16+self.pos_y-4+self.displacement)
+  if self.countdown_timer then
+    if self.CLOCK % 2 == 0 then
+      draw(IMG_cursor[1],
+        (self.cur_col-1)*16+self.pos_x-4,
+        (11-(self.cur_row))*16+self.pos_y-4+self.displacement)
+    end
+  else
+    draw(IMG_cursor[(floor(self.CLOCK/16)%2)+1],
+      (self.cur_col-1)*16+self.pos_x-4,
+      (11-(self.cur_row))*16+self.pos_y-4+self.displacement)
+  end
 end
 
 --[[void FadingPanels_1P(int draw_frame, int lightness)
