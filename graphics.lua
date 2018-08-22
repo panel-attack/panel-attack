@@ -154,6 +154,11 @@ function graphics_init()
   IMG_metal_l = load_img("metalend0.png")
   IMG_metal_r = load_img("metalend1.png")
 
+  IMG_ready = load_img("ready.png")
+  IMG_numbers = {}
+  for i=1,3 do
+    IMG_numbers[i] = load_img(i..".png")
+  end
   IMG_cursor = {  load_img("cur0.png"),
           load_img("cur1.png")}
 
@@ -470,6 +475,9 @@ function Stack.render(self)
   end
   self:draw_cards()
   self:render_cursor()
+  if self.do_countdown then
+    self:render_countdown()
+  end
 end
 
 function scale_letterbox(width, height, w_ratio, h_ratio)
@@ -560,6 +568,31 @@ function Stack.render_cursor(self)
     draw(IMG_cursor[(floor(self.CLOCK/16)%2)+1],
       (self.cur_col-1)*16+self.pos_x-4,
       (11-(self.cur_row))*16+self.pos_y-4+self.displacement)
+  end
+end
+
+function Stack.render_countdown(self)
+  if self.do_countdown and self.countdown_CLOCK then
+    local ready_x = self.pos_x + 12
+    local initial_ready_y = self.pos_y 
+    local ready_y_drop_speed = 6
+    local countdown_x = self.pos_x + 40
+    local countdown_y = self.pos_y + 64
+    if self.countdown_CLOCK <= 8 then
+      local ready_y = initial_ready_y + (self.CLOCK - 1) * ready_y_drop_speed
+      draw(IMG_ready, ready_x, ready_y)
+      if self.countdown_CLOCK == 8 then
+        self.ready_y = ready_y
+      end
+    elseif self.countdown_CLOCK >= 9 and self.countdown_timer and self.countdown_timer > 0 then
+      if self.countdown_timer >= 100 then
+        draw(IMG_ready, ready_x, self.ready_y)
+      end
+      local IMG_number_to_draw = IMG_numbers[math.ceil(self.countdown_timer / 60)]
+      if IMG_number_to_draw then
+        draw(IMG_number_to_draw, countdown_x, countdown_y)
+      end
+    end
   end
 end
 

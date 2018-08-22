@@ -471,39 +471,53 @@ function Stack.PdP(self)
 
   if self.do_countdown then
     self.rise_lock = true
-    if not self.countdown_state then
+    if not self.countdown_cursor_state then
+      self.countdown_CLOCK = self.CLOCK
       self.starting_cur_row = self.cur_row
       self.starting_cur_col = self.cur_col
       self.cur_row = self.height
       self.cur_col = self.width-1
-      self.countdown_state = "moving_down"
+      self.countdown_cursor_state = "ready_falling"
       self.countdown_cur_speed = 4 --one move every this many frames
         
     end
-    if self.countdown_state == "moving_down" then
+    if self.countdown_CLOCK == 8 then
+      self.countdown_cursor_state = "moving_down"
+      self.countdown_timer = 180 --3 seconds at 60 fps
+    elseif self.countdown_cursor_state == "moving_down" then
       --move down
       if self.cur_row == self.starting_cur_row then
-        self.countdown_state = "moving_left"
+        self.countdown_cursor_state = "moving_left"
       elseif self.CLOCK % self.countdown_cur_speed == 0 then
         self.cur_row = self.cur_row - 1
       end
-    elseif self.countdown_state == "moving_left" then
+    elseif self.countdown_cursor_state == "moving_left" then
       --move left
       if self.cur_col == self.starting_cur_col then
-        self.countdown_state = "counting_down"
-        self.countdown_timer = 180 --3 seconds at 60 fps
+        self.countdown_cursor_state = "ready"
       elseif self.CLOCK % self.countdown_cur_speed == 0 then
         self.cur_col = self.cur_col - 1
       end
-    elseif self.countdown_state == "counting_down" then
+    end
+    if self.countdown_timer then
       if self.countdown_timer == 0 then 
+        --we are done counting down
         self.do_countdown = nil
         self.countdown_timer = nil
         self.starting_cur_row = nil
         self.starting_cur_col = nil
-      else
+        self.countdown_CLOCK = nil
+        SFX_Go_Play = 1
+      elseif self.countdown_timer and self.countdown_timer % 60 == 0 then
+          --play beep for timer dropping to next second in 3-2-1 countdown
+          SFX_Countdown_Play = 1
+      end
+      if self.countdown_timer then
         self.countdown_timer = self.countdown_timer - 1
       end
+    end
+    if self.countdown_CLOCK then
+      self.countdown_CLOCK = self.countdown_CLOCK + 1
     end
   end
   
@@ -1087,13 +1101,16 @@ function Stack.PdP(self)
   if not music_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
   
     if self.do_countdown then 
-      if self.countdown_timer then
-        if self.countdown_timer == 1 then
-          --TODO: play "Go" sound effect
-        elseif self.countdown_timer % 60 == 0 then
-          --play beep for timer dropping to next second in 3-2-1 countdown
-        end
+      if SFX_Go_Play == 1 then
+        sounds.SFX.go:stop()
+        sounds.SFX.go:play()
+        SFX_Go_Play=0
+      elseif SFX_Countdown_Play == 1 then
+        sounds.SFX.countdown:stop()
+        sounds.SFX.countdown:play()
+        SFX_Go_Play=0
       end
+        
     elseif (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
       if sounds.music.characters[winningPlayer().character].normal_music_start then
         sounds.music.characters[winningPlayer().character].normal_music_start:stop()
@@ -1145,7 +1162,8 @@ function Stack.PdP(self)
         SFX_Swap_Play=0
     end
     if SFX_Cur_Move_Play == 1 then
-        if not (self.mode == "vs" and sounds.SFX.swap:isPlaying()) then
+        if not (self.mode == "vs" and sounds.SFX.swap:isPlaying())
+        and not self.do_countdown then
             sounds.SFX.cur_move:stop()
             sounds.SFX.cur_move:play()
         end
@@ -1155,6 +1173,20 @@ function Stack.PdP(self)
         sounds.SFX.land:stop()
         sounds.SFX.land:play()
         SFX_Land_Play=0
+    end
+    if SFX_Countdown_Play == 1 then
+        if self.which == 1 then
+            sounds.SFX.countdown:stop()
+            sounds.SFX.countdown:play()
+        end
+        SFX_Countdown_Play=0
+    end
+    if SFX_Go_Play == 1 then
+        if self.which == 1 then
+            sounds.SFX.go:stop()
+            sounds.SFX.go:play()
+        end
+        SFX_Go_Play=0
     end
     if SFX_Buddy_Play and SFX_Buddy_Play ~= 0 then
         sounds.SFX.land:stop()
