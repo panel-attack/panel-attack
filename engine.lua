@@ -76,6 +76,7 @@ Stack = class(function(s, which, mode, speed, difficulty, player_number)
     end
 
     s.CLOCK = 0
+    s.game_stopwatch = 0
     s.do_countdown = true
     s.max_runs_per_frame = 3
 
@@ -215,6 +216,8 @@ function Stack.mkcpy(self, other)
     end
   end
   other.CLOCK = self.CLOCK
+  other.game_stopwatch = self.game_stopwatch
+  other.game_stopwatch_running = self.game_stopwatch_running
   other.displacement = self.displacement
   other.speed_times = deepcpy(self.speed_times)
   other.panels_to_speedup = self.panels_to_speedup
@@ -236,6 +239,7 @@ function Stack.mkcpy(self, other)
   other.shake_time = self.shake_time
   other.card_q = deepcpy(self.card_q)
   other.do_countdown = self.do_countdown
+  other.ready_y = self.ready_y
   return other
 end
 
@@ -468,8 +472,9 @@ function Stack.PdP(self)
   local prow = nil
   local panel = nil
   local swapped_this_frame = nil
-
+  self.game_stopwatch_running = true
   if self.do_countdown then
+    self.game_stopwatch_running = nil
     self.rise_lock = true
     if not self.countdown_cursor_state then
       self.countdown_CLOCK = self.CLOCK
@@ -1262,6 +1267,9 @@ function Stack.PdP(self)
   end
 
   self.CLOCK = self.CLOCK + 1
+  if self.game_stopwatch_running then
+    self.game_stopwatch = (self.game_stopwatch or -1) + 1
+  end
 end
 
 function winningPlayer()

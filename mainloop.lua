@@ -9,7 +9,7 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_local_vs_yourself_setup, main_local_vs_yourself,
   main_options, exit_options_menu
 
-VERSION = "024_alpha"
+VERSION = "023"
 local PLAYING = "playing"  -- room states
 local CHARACTERSELECT = "character select" --room states
 local currently_spectating = false
@@ -138,7 +138,8 @@ do
         {"1P vs yourself", main_local_vs_yourself_setup},
         --{"2P vs online at burke.ro", main_net_vs_setup, {"burke.ro"}},
         --{"2P vs online at Jon's server", main_net_vs_setup, {"18.188.43.50"}},
-        {"This test build is for offline-use only"--[["2P vs online at Jon's server"]], main_select_mode},
+        {"2P vs online (USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 024alpha)", main_net_vs_setup, {"18.188.43.50"}},
+        --{"This test build is for offline-use only"--[["2P vs online at Jon's server"]], main_select_mode},
         --{"2P vs online at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
         --{"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
         {"2P vs local game", main_local_vs_setup},
@@ -253,7 +254,8 @@ function main_endless(...)
     if P1.game_over then
     -- TODO: proper game over.
       write_replay_file()
-      return main_dumb_transition, {main_select_mode, "You scored "..P1.score}
+      local end_text = "You scored "..P1.score.."\nin "..frames_to_time_string(P1.game_stopwatch, true)
+        return main_dumb_transition, {main_select_mode, end_text, 30}
     end
     variable_step(function() P1:local_run() end)
     --groundhogday mode
@@ -272,12 +274,13 @@ function main_time_attack(...)
   while true do
     P1:render()
     wait()
-    if P1.game_over or P1.CLOCK == 120*60 then
+    if P1.game_over or (P1.game_stopwatch and P1.game_stopwatch == 120*60) then
     -- TODO: proper game over.
-      return main_dumb_transition, {main_select_mode, "You scored "..P1.score}
+      local end_text = "You scored "..P1.score.."\nin "..frames_to_time_string(P1.game_stopwatch)
+        return main_dumb_transition, {main_select_mode, end_text, 30}
     end
     variable_step(function()
-      if (not P1.game_over)  and P1.CLOCK < 120 * 60 then
+      if (not P1.game_over)  and P1.game_stopwatch and P1.game_stopwatch < 120 * 60 then
         P1:local_run() end end)
   end
 end
@@ -1505,7 +1508,8 @@ function main_replay_endless()
     if run or this_frame_keys["\\"] then
       if P1.game_over then
       -- TODO: proper game over.
-        return main_dumb_transition, {main_select_mode, "You scored "..P1.score}
+        local end_text = "You scored "..P1.score.."\nin "..frames_to_time_string(P1.game_stopwatch, true)
+        return main_dumb_transition, {main_select_mode, end_text, 30}
       end
       P1:foreign_run()
     end
