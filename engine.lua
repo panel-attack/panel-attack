@@ -218,6 +218,7 @@ function Stack.mkcpy(self, other)
   other.CLOCK = self.CLOCK
   other.game_stopwatch = self.game_stopwatch
   other.game_stopwatch_running = self.game_stopwatch_running
+  other.cursor_lock = self.cursor_lock
   other.displacement = self.displacement
   other.speed_times = deepcpy(self.speed_times)
   other.panels_to_speedup = self.panels_to_speedup
@@ -484,7 +485,7 @@ function Stack.PdP(self)
       self.cur_col = self.width-1
       self.countdown_cursor_state = "ready_falling"
       self.countdown_cur_speed = 4 --one move every this many frames
-        
+      self.cursor_lock = true      
     end
     if self.countdown_CLOCK == 8 then
       self.countdown_cursor_state = "moving_down"
@@ -500,6 +501,7 @@ function Stack.PdP(self)
       --move left
       if self.cur_col == self.starting_cur_col then
         self.countdown_cursor_state = "ready"
+        self.cursor_lock = nil
       elseif self.CLOCK % self.countdown_cur_speed == 0 then
         self.cur_col = self.cur_col - 1
       end
@@ -512,10 +514,14 @@ function Stack.PdP(self)
         self.starting_cur_row = nil
         self.starting_cur_col = nil
         self.countdown_CLOCK = nil
-        SFX_Go_Play = 1
-      elseif self.countdown_timer and self.countdown_timer % 60 == 0 then
-          --play beep for timer dropping to next second in 3-2-1 countdown
-          SFX_Countdown_Play = 1
+        if self.which == 1 then
+          SFX_Go_Play=1
+        end
+      elseif self.countdown_timer and self.countdown_timer % 60 == 0 and self.which == 1 then
+        --play beep for timer dropping to next second in 3-2-1 countdown
+        if self.which == 1 then
+          SFX_Countdown_Play=1
+        end
       end
       if self.countdown_timer then
         self.countdown_timer = self.countdown_timer - 1
@@ -916,7 +922,7 @@ function Stack.PdP(self)
   -- CURSOR MOVEMENT
   self.move_sound = true
   if self.cur_dir and (self.cur_timer == 0 or
-    self.cur_timer == self.cur_wait_time) then
+    self.cur_timer == self.cur_wait_time) and not self.cursor_lock then
     local prev_row = self.cur_row
     local prev_col = self.cur_col
     self.cur_row = bound(1, self.cur_row + d_row[self.cur_dir],
@@ -953,7 +959,9 @@ function Stack.PdP(self)
         "hovering" and panels[row+1][col+1].state ~=
         "hovering")) and
     --also, we can't swap if the game countdown isn't finished
-      not self.do_countdown
+      not self.do_countdown and
+    --also, don't swap on the first frame of a puzzle
+      not (self.mode == "puzzle" and self.CLOCK and self.CLOCK <= 1)
     -- If you have two pieces stacked vertically, you can't move
     -- both of them to the right or left by swapping with empty space.
     -- TODO: This might be wrong if something lands on a swapping panel?

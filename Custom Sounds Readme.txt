@@ -8,7 +8,7 @@ to help you remember which character it is. (For example: sounds/pokemon/charact
 
 About Sound Effects (SFX):
 -Game SFX go in:  "%appdata%/Panel Attack/sounds/[sound_pack_name_here]/SFX" and file names should be:
-    Game SFX: "move", "swap", "land", "game_over"  Fanfares: "fanfare1", "fanfare2", "fanfare3"
+    Game SFX: "countdown" "go" "move", "swap", "land", "game_over"  Fanfares: "fanfare1", "fanfare2", "fanfare3" 
     Garbage Thuds: "thud_1", "thud_2", "thud_3"
     Panel pops: "pop1-1", "pop1-2", "pop1-3", ..., "pop1-10", "pop2-1", ..., "pop2-10", ..., "pop4-10"
 -**Don't change character folder names!** Use the default character's name. Character SFX go in:  

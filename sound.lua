@@ -174,7 +174,6 @@ function stop_character_sounds(character)
 end
 
 function sound_init()
-  default_sounds_dir = "Stock PdP_TA"
   sounds_dir = config.sounds_dir or default_sounds_dir
   --sounds: SFX, music
   SFX_Fanfare_Play = 0

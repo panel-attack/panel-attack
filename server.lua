@@ -932,7 +932,8 @@ function Connection.J(self, message)
         self.room.replay = {}
         self.room.replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
                     P1_level=self.room.a.level,P2_level=self.room.b.level,
-                    P1_char=self.room.a.character,P2_char=self.room.b.character, ranked = self.room:rating_adjustment_approved()}
+                    P1_char=self.room.a.character,P2_char=self.room.b.character, ranked = self.room:rating_adjustment_approved(),
+                    do_countdown = true}
         if self.player_number == 1 then
           start_match(self, self.opponent)
         else

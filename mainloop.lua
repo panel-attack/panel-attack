@@ -21,12 +21,13 @@ leaderboard_report = nil
 replay_of_match_so_far = nil
 spectator_list = nil
 spectators_string = ""
-debug_mode_text = {[true]="On", [false]="Off"}  
+debug_mode_text = {[true]="On", [false]="Off"} 
+ready_countdown_1P_text = {[true]="On", [false]="Off"}
 
 function fmainloop()
   local func, arg = main_select_mode, nil
   replay = {}
-  config = {character="lip", level=5, name="defaultname", master_volume=100, SFX_volume=100, music_volume=100, debug_mode=false, save_replays_publicly = "with my name", assets_dir=default_assets_dir}
+  config = {character="lip", level=5, name="defaultname", master_volume=100, SFX_volume=100, music_volume=100, debug_mode=false, ready_countdown_1P = true, save_replays_publicly = "with my name", assets_dir=default_assets_dir, sounds_dir=default_sounds_dir}
   gprint("Reading config file", 300, 280)
   wait()
   read_conf_file() -- TODO: stop making new config files
@@ -138,7 +139,7 @@ do
         {"1P vs yourself", main_local_vs_yourself_setup},
         --{"2P vs online at burke.ro", main_net_vs_setup, {"burke.ro"}},
         --{"2P vs online at Jon's server", main_net_vs_setup, {"18.188.43.50"}},
-        {"2P vs online (USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 024alpha)", main_net_vs_setup, {"18.188.43.50"}},
+        {"2P vs online (USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 024beta2)", main_net_vs_setup, {"18.188.43.50"}},
         --{"This test build is for offline-use only"--[["2P vs online at Jon's server"]], main_select_mode},
         --{"2P vs online at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
         --{"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
@@ -244,6 +245,8 @@ function main_endless(...)
   replay.gpan_buf = ""
   replay.mode = "endless"
   P1 = Stack(1, "endless", ...)
+  P1.do_countdown = config.ready_countdown_1P or false
+  replay.do_countdown = P1.do_countdown or false
   replay.speed = P1.speed
   replay.difficulty = P1.difficulty
   make_local_panels(P1, "000000")
@@ -1132,7 +1135,8 @@ function main_net_vs_setup(ip)
   replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
               P1_level=P1_level,P2_level=P2_level,
               ranked=false, P1_name=my_name, P2_name=op_name,
-              P1_char=P1.character, P2_char=P2.character}
+              P1_char=P1.character, P2_char=P2.character,
+              do_countdown = true}
   ask_for_gpanels("000000")
   ask_for_panels("000000")
   if not currently_spectating then
@@ -1394,6 +1398,8 @@ function main_replay_vs()
   local replay = replay.vs
   P1 = Stack(1, "vs", replay.P1_level or 5)
   P2 = Stack(2, "vs", replay.P2_level or 5)
+  P1.do_countdown = replay.do_countdown or false
+  P2.do_countdown = replay.do_countdown or false
   P1.ice = true
   P1.garbage_target = P2
   P2.garbage_target = P1
@@ -1486,6 +1492,7 @@ function main_replay_endless()
       {main_select_mode, "I don't have an endless replay :("}
   end
   P1 = Stack(1, "endless", replay.speed, replay.difficulty)
+  P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
   P1.input_buffer = table.concat({replay.in_buf})
   P1.panel_buffer = replay.pan_buf
@@ -1523,6 +1530,7 @@ function main_replay_puzzle()
       {main_select_mode, "I don't have a puzzle replay :("}
   end
   P1 = Stack(1, "puzzle")
+  P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
   P1.input_buffer = replay.in_buf
   P1:set_puzzle_state(unpack(replay.puzzle))
@@ -1568,6 +1576,8 @@ function make_main_puzzle(puzzles)
     replay.puzzle = {}
     local replay = replay.puzzle
     P1 = Stack(1, "puzzle")
+    P1.do_countdown = config.ready_countdown_1P or false
+    local start_delay = 0
     if awesome_idx == nil then
       awesome_idx = math.random(#puzzles)
     end
@@ -1583,13 +1593,13 @@ function make_main_puzzle(puzzles)
           awesome_idx = (awesome_idx % #puzzles) + 1
           write_replay_file()
           if awesome_idx == 1 then
-            return main_dumb_transition, {main_select_puzz, "You win!"}
+            return main_dumb_transition, {main_select_puzz, "You win!", 30}
           else
-            return main_dumb_transition, {ret, "You win!"}
+            return main_dumb_transition, {ret, "You win!", 30}
           end
         elseif P1.puzzle_moves == 0 then
           write_replay_file()
-          return main_dumb_transition, {main_select_puzz, "You lose :("}
+          return main_dumb_transition, {main_select_puzz, "You lose :(", 30}
         end
       end
       variable_step(function() 
@@ -1765,6 +1775,7 @@ function main_options()
       {"About custom graphics", "", "function", nil, nil, nil, nil, show_custom_graphics_readme},
       {"Sounds set", config.sounds_dir or default_sounds_dir, "multiple choice", sound_sets},
       {"About custom sounds", "", "function", nil, nil, nil, nil, show_custom_sounds_readme},
+      {"Ready countdown", ready_countdown_1P_text[config.ready_countdown_1P or false], "bool", true, nil, nil,false},
       {"Back", "", nil, nil, nil, nil, false, main_select_mode}
     }
   end
@@ -1869,6 +1880,10 @@ function main_options()
         if active_idx == 4 then
           config.debug_mode = not config.debug_mode
           items[active_idx][2] = debug_mode_text[config.debug_mode or false]
+        end
+        if items[active_idx][1] == "Ready countdown" then
+          config.ready_countdown_1P = not config.ready_countdown_1P
+          items[active_idx][2] = ready_countdown_1P_text[config.ready_countdown_1P]
         end
         --add any other bool config updates here
       elseif items[active_idx][3] == "numeric" then
