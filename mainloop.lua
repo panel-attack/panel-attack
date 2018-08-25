@@ -190,7 +190,9 @@ function main_select_speed_99(next_func, ...)
                 {"Difficulty"},
                 {"Go!", next_func},
                 {"Back", main_select_mode}}
-  local speed, difficulty, active_idx = 1,1,1
+  speed = config.endless_speed or 1
+  difficulty = config.endless_difficulty or 1
+  active_idx = 1
   local k = K[1]
   while true do
     local to_print, to_print2, arrow = "", "", ""
@@ -220,6 +222,13 @@ function main_select_speed_99(next_func, ...)
       elseif active_idx==2 then difficulty = bound(1,difficulty-1,3) end
     elseif menu_enter(k) then
       if active_idx == 3 then
+        if config.endless_speed ~= speed or config.endless_difficulty ~= difficulty then
+          config.endless_speed = speed
+          config.endless_difficulty = difficulty
+          gprint("saving settings...", 300,280)
+          wait()
+          write_conf_file()
+        end
         return items[active_idx][2], {speed, difficulty, ...}
       elseif active_idx == 4 then
         return items[active_idx][2], items[active_idx][3]
@@ -251,6 +260,7 @@ function main_endless(...)
   replay.difficulty = P1.difficulty
   make_local_panels(P1, "000000")
   make_local_gpanels(P1, "000000")
+  P1:starting_state()
   while true do
     P1:render()
     wait()
@@ -258,7 +268,7 @@ function main_endless(...)
     -- TODO: proper game over.
       write_replay_file()
       local end_text = "You scored "..P1.score.."\nin "..frames_to_time_string(P1.game_stopwatch, true)
-        return main_dumb_transition, {main_select_mode, end_text, 30}
+        return main_dumb_transition, {main_select_mode, end_text, 60}
     end
     variable_step(function() P1:local_run() end)
     --groundhogday mode

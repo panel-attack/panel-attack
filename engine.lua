@@ -960,8 +960,8 @@ function Stack.PdP(self)
         "hovering")) and
     --also, we can't swap if the game countdown isn't finished
       not self.do_countdown and
-    --also, don't swap on the first frame of a puzzle
-      not (self.mode == "puzzle" and self.CLOCK and self.CLOCK <= 1)
+    --also, don't swap on the first frame
+      not (self.CLOCK and self.CLOCK <= 1)
     -- If you have two pieces stacked vertically, you can't move
     -- both of them to the right or left by swapping with empty space.
     -- TODO: This might be wrong if something lands on a swapping panel?
