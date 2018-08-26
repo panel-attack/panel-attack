@@ -149,9 +149,13 @@ do
         {"Replay of 2P vs", main_replay_vs},
         {"Configure input", main_config_input},
         {"Set name", main_set_name},
-        {"Options", main_options},
-        {"Fullscreen (LAlt+Enter)", fullscreen},
-        {"Quit", os.exit}}
+        {"Options", main_options}}
+    if love.graphics.isSupported("canvas") then
+      items[#items+1] = {"Fullscreen (LAlt+Enter)", fullscreen}
+    else
+      items[#items+1] = {"Your graphics card doesn't support canvases for fullscreen", main_select_mode}
+    end
+    items[#items+1] = {"Quit", os.exit}
     local k = K[1]
     while true do
       local to_print = ""
@@ -2033,7 +2037,9 @@ function main_set_name()
 end
 
 function fullscreen()
-  love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
+  if love.graphics.isSupported("canvas") then
+    love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
+  end
   return main_select_mode
 end
 
