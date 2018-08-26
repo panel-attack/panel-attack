@@ -70,16 +70,14 @@ function read_replay_file() pcall(function()
   end
 end) end
 
-function write_replay_file() pcall(function()
-  local file = love.filesystem.newFile("replay.txt")
-  file:open("w")
-  file:write(json.encode(replay))
-  file:close()
-end) end
-
 function write_replay_file(path, filename) pcall(function()
-  love.filesystem.createDirectory(path)
-  local file = love.filesystem.newFile(path.."/"..filename)
+  local file
+  if path and filename then
+    love.filesystem.createDirectory(path)
+    file = love.filesystem.newFile(path.."/"..filename)
+  else
+    file = love.filesystem.newFile("replay.txt")
+  end
   file:open("w")
   file:write(json.encode(replay))
   file:close()
