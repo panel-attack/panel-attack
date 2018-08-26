@@ -76,7 +76,8 @@ Stack = class(function(s, which, mode, speed, difficulty, player_number)
     end
 
     s.CLOCK = 0
-
+    s.game_stopwatch = 0
+    s.do_countdown = true
     s.max_runs_per_frame = 3
 
     s.displacement = 16
@@ -215,6 +216,9 @@ function Stack.mkcpy(self, other)
     end
   end
   other.CLOCK = self.CLOCK
+  other.game_stopwatch = self.game_stopwatch
+  other.game_stopwatch_running = self.game_stopwatch_running
+  other.cursor_lock = self.cursor_lock
   other.displacement = self.displacement
   other.speed_times = deepcpy(self.speed_times)
   other.panels_to_speedup = self.panels_to_speedup
@@ -235,6 +239,8 @@ function Stack.mkcpy(self, other)
   other.cur_col = self.cur_col
   other.shake_time = self.shake_time
   other.card_q = deepcpy(self.card_q)
+  other.do_countdown = self.do_countdown
+  other.ready_y = self.ready_y
   return other
 end
 
@@ -467,7 +473,65 @@ function Stack.PdP(self)
   local prow = nil
   local panel = nil
   local swapped_this_frame = nil
-
+  self.game_stopwatch_running = true
+  if self.do_countdown then
+    self.game_stopwatch_running = nil
+    self.rise_lock = true
+    if not self.countdown_cursor_state then
+      self.countdown_CLOCK = self.CLOCK
+      self.starting_cur_row = self.cur_row
+      self.starting_cur_col = self.cur_col
+      self.cur_row = self.height
+      self.cur_col = self.width-1
+      self.countdown_cursor_state = "ready_falling"
+      self.countdown_cur_speed = 4 --one move every this many frames
+      self.cursor_lock = true      
+    end
+    if self.countdown_CLOCK == 8 then
+      self.countdown_cursor_state = "moving_down"
+      self.countdown_timer = 180 --3 seconds at 60 fps
+    elseif self.countdown_cursor_state == "moving_down" then
+      --move down
+      if self.cur_row == self.starting_cur_row then
+        self.countdown_cursor_state = "moving_left"
+      elseif self.CLOCK % self.countdown_cur_speed == 0 then
+        self.cur_row = self.cur_row - 1
+      end
+    elseif self.countdown_cursor_state == "moving_left" then
+      --move left
+      if self.cur_col == self.starting_cur_col then
+        self.countdown_cursor_state = "ready"
+        self.cursor_lock = nil
+      elseif self.CLOCK % self.countdown_cur_speed == 0 then
+        self.cur_col = self.cur_col - 1
+      end
+    end
+    if self.countdown_timer then
+      if self.countdown_timer == 0 then 
+        --we are done counting down
+        self.do_countdown = nil
+        self.countdown_timer = nil
+        self.starting_cur_row = nil
+        self.starting_cur_col = nil
+        self.countdown_CLOCK = nil
+        if self.which == 1 then
+          SFX_Go_Play=1
+        end
+      elseif self.countdown_timer and self.countdown_timer % 60 == 0 and self.which == 1 then
+        --play beep for timer dropping to next second in 3-2-1 countdown
+        if self.which == 1 then
+          SFX_Countdown_Play=1
+        end
+      end
+      if self.countdown_timer then
+        self.countdown_timer = self.countdown_timer - 1
+      end
+    end
+    if self.countdown_CLOCK then
+      self.countdown_CLOCK = self.countdown_CLOCK + 1
+    end
+  end
+  
   if self.pre_stop_time ~= 0 then
     self.pre_stop_time = self.pre_stop_time - 1
   elseif self.stop_time ~= 0 then
@@ -535,7 +599,8 @@ function Stack.PdP(self)
 
   self.rise_lock = self.n_active_panels ~= 0 or
       self.prev_active_panels ~= 0 or
-      self.shake_time ~= 0
+      self.shake_time ~= 0 or
+      self.do_countdown
 
   -- Increase the speed if applicable
   if self.speed_times then
@@ -857,7 +922,7 @@ function Stack.PdP(self)
   -- CURSOR MOVEMENT
   self.move_sound = true
   if self.cur_dir and (self.cur_timer == 0 or
-    self.cur_timer == self.cur_wait_time) then
+    self.cur_timer == self.cur_wait_time) and not self.cursor_lock then
     local prev_row = self.cur_row
     local prev_col = self.cur_col
     self.cur_row = bound(1, self.cur_row + d_row[self.cur_dir],
@@ -892,7 +957,11 @@ function Stack.PdP(self)
     -- also, neither space above us can be hovering.
       (self.cur_row == #panels or (panels[row+1][col].state ~=
         "hovering" and panels[row+1][col+1].state ~=
-        "hovering"))
+        "hovering")) and
+    --also, we can't swap if the game countdown isn't finished
+      not self.do_countdown and
+    --also, don't swap on the first frame
+      not (self.CLOCK and self.CLOCK <= 1)
     -- If you have two pieces stacked vertically, you can't move
     -- both of them to the right or left by swapping with empty space.
     -- TODO: This might be wrong if something lands on a swapping panel?
@@ -1044,7 +1113,18 @@ function Stack.PdP(self)
   --Play Sounds / music
   if not music_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
   
-    if (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
+    if self.do_countdown then 
+      if SFX_Go_Play == 1 then
+        sounds.SFX.go:stop()
+        sounds.SFX.go:play()
+        SFX_Go_Play=0
+      elseif SFX_Countdown_Play == 1 then
+        sounds.SFX.countdown:stop()
+        sounds.SFX.countdown:play()
+        SFX_Go_Play=0
+      end
+        
+    elseif (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
       if sounds.music.characters[winningPlayer().character].normal_music_start then
         sounds.music.characters[winningPlayer().character].normal_music_start:stop()
       end
@@ -1095,7 +1175,8 @@ function Stack.PdP(self)
         SFX_Swap_Play=0
     end
     if SFX_Cur_Move_Play == 1 then
-        if not (self.mode == "vs" and sounds.SFX.swap:isPlaying()) then
+        if not (self.mode == "vs" and sounds.SFX.swap:isPlaying())
+        and not self.do_countdown then
             sounds.SFX.cur_move:stop()
             sounds.SFX.cur_move:play()
         end
@@ -1105,6 +1186,20 @@ function Stack.PdP(self)
         sounds.SFX.land:stop()
         sounds.SFX.land:play()
         SFX_Land_Play=0
+    end
+    if SFX_Countdown_Play == 1 then
+        if self.which == 1 then
+            sounds.SFX.countdown:stop()
+            sounds.SFX.countdown:play()
+        end
+        SFX_Countdown_Play=0
+    end
+    if SFX_Go_Play == 1 then
+        if self.which == 1 then
+            sounds.SFX.go:stop()
+            sounds.SFX.go:play()
+        end
+        SFX_Go_Play=0
     end
     if SFX_Buddy_Play and SFX_Buddy_Play ~= 0 then
         sounds.SFX.land:stop()
@@ -1180,6 +1275,9 @@ function Stack.PdP(self)
   end
 
   self.CLOCK = self.CLOCK + 1
+  if self.game_stopwatch_running then
+    self.game_stopwatch = (self.game_stopwatch or -1) + 1
+  end
 end
 
 function winningPlayer()

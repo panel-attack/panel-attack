@@ -129,7 +129,7 @@ end
 
 function assert_requirements_met()
   --assert we have all required generic sound effects
-  local SFX_requirements =  {"cur_move", "swap", "fanfare1", "fanfare2", "fanfare3", "game_over"}
+  local SFX_requirements =  {"cur_move", "swap", "fanfare1", "fanfare2", "fanfare3", "game_over", "countdown", "go"}
   for k,v in ipairs(SFX_requirements) do
     assert(sounds.SFX[v], "SFX \""..v.."\"was not loaded")
   end
@@ -174,7 +174,6 @@ function stop_character_sounds(character)
 end
 
 function sound_init()
-  default_sounds_dir = "Stock PdP_TA"
   sounds_dir = config.sounds_dir or default_sounds_dir
   --sounds: SFX, music
   SFX_Fanfare_Play = 0
@@ -189,6 +188,8 @@ function sound_init()
       fanfare2 = find_generic_SFX("fanfare2"),
       fanfare3 = find_generic_SFX("fanfare3"),
       game_over = find_generic_SFX("gameover"),
+      countdown = find_generic_SFX("countdown"),
+      go = find_generic_SFX("go"),
       garbage_thud = {
         find_generic_SFX("thud_1"),
         find_generic_SFX("thud_2"),

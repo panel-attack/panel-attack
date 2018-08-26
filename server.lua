@@ -25,7 +25,7 @@ local NAME_LENGTH_LIMIT = 16
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
 
-local VERSION = "023"
+local VERSION = "024"
 local type_to_length = {H=4, E=4, F=4, P=8, I=2, L=2, Q=8, U=2}
 local INDEX = 1
 local connections = {}
@@ -932,7 +932,8 @@ function Connection.J(self, message)
         self.room.replay = {}
         self.room.replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
                     P1_level=self.room.a.level,P2_level=self.room.b.level,
-                    P1_char=self.room.a.character,P2_char=self.room.b.character, ranked = self.room:rating_adjustment_approved()}
+                    P1_char=self.room.a.character,P2_char=self.room.b.character, ranked = self.room:rating_adjustment_approved(),
+                    do_countdown = true}
         if self.player_number == 1 then
           start_match(self, self.opponent)
         else

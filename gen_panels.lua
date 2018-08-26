@@ -15,7 +15,7 @@ function make_panels(ncolors, prev_panels, stuff)
     if stuff.first_seven then
       ret = stuff.first_seven
       rows_to_make = rows_to_make - 7
-    elseif stuff.vs_mode or stuff.mode == "vs" then
+    elseif stuff.vs_mode or stuff.mode == "vs" or stuff.mode == "endless" or stuff.mode == "time" then
       cut_panels = true
     end
   end

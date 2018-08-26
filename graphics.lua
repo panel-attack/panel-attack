@@ -38,6 +38,7 @@
 --#define CONFETTI_STARTTIMER   40
 --#define CONFETTI_STARTRADIUS 150
 require("input")
+require("util")
 
 local floor = math.floor
 local ceil = math.ceil
@@ -154,6 +155,11 @@ function graphics_init()
   IMG_metal_l = load_img("metalend0.png")
   IMG_metal_r = load_img("metalend1.png")
 
+  IMG_ready = load_img("ready.png")
+  IMG_numbers = {}
+  for i=1,3 do
+    IMG_numbers[i] = load_img(i..".png")
+  end
   IMG_cursor = {  load_img("cur0.png"),
           load_img("cur1.png")}
 
@@ -426,9 +432,13 @@ function Stack.render(self)
     gprint("Speed: "..self.speed, self.score_x, 130)
     gprint("Frame: "..self.CLOCK, self.score_x, 145)
     if self.mode == "time" then
-      local time_left = 120 - self.CLOCK/60
-      local mins = floor(time_left/60)
-      local secs = floor(time_left%60)
+      local time_left = 120 - (self.game_stopwatch or 120)/60
+      local mins = math.floor(time_left/60)
+      local secs = math.ceil(time_left% 60)
+      if secs == 60 then 
+        secs = 0 
+        mins = mins+1
+      end
       gprint("Time: "..string.format("%01d:%02d",mins,secs), self.score_x, 160)
     elseif self.level then
       gprint("Level: "..self.level, self.score_x, 160)
@@ -459,7 +469,10 @@ function Stack.render(self)
       if iright then inputs_to_print = inputs_to_print.."\nright" end
       gprint(inputs_to_print, self.score_x, 295)
     end
-    if match_type then gprint(match_type, 375, 15) end
+    if match_type then gprint(match_type, 375, 10) end
+    if P1 and P1.game_stopwatch and tonumber(P1.game_stopwatch) then 
+      gprint(frames_to_time_string(P1.game_stopwatch, P1.mode == "endless"), 385, 25)
+    end
     --gprint("Player"..self.player_number, self.score_x,265)
     --gprint("Panel buffer: "..#self.panel_buffer, self.score_x, 190)
     --[[local danger = {}
@@ -470,6 +483,9 @@ function Stack.render(self)
   end
   self:draw_cards()
   self:render_cursor()
+  if self.do_countdown then
+    self:render_countdown()
+  end
 end
 
 function scale_letterbox(width, height, w_ratio, h_ratio)
@@ -550,9 +566,42 @@ void Render_Confetti()
 }--]]
 
 function Stack.render_cursor(self)
-  draw(IMG_cursor[(floor(self.CLOCK/16)%2)+1],
-    (self.cur_col-1)*16+self.pos_x-4,
-    (11-(self.cur_row))*16+self.pos_y-4+self.displacement)
+  if self.countdown_timer then
+    if self.CLOCK % 2 == 0 then
+      draw(IMG_cursor[1],
+        (self.cur_col-1)*16+self.pos_x-4,
+        (11-(self.cur_row))*16+self.pos_y-4+self.displacement)
+    end
+  else
+    draw(IMG_cursor[(floor(self.CLOCK/16)%2)+1],
+      (self.cur_col-1)*16+self.pos_x-4,
+      (11-(self.cur_row))*16+self.pos_y-4+self.displacement)
+  end
+end
+
+function Stack.render_countdown(self)
+  if self.do_countdown and self.countdown_CLOCK then
+    local ready_x = self.pos_x + 12
+    local initial_ready_y = self.pos_y 
+    local ready_y_drop_speed = 6
+    local countdown_x = self.pos_x + 40
+    local countdown_y = self.pos_y + 64
+    if self.countdown_CLOCK <= 8 then
+      local ready_y = initial_ready_y + (self.CLOCK - 1) * ready_y_drop_speed
+      draw(IMG_ready, ready_x, ready_y)
+      if self.countdown_CLOCK == 8 then
+        self.ready_y = ready_y
+      end
+    elseif self.countdown_CLOCK >= 9 and self.countdown_timer and self.countdown_timer > 0 then
+      if self.countdown_timer >= 100 then
+        draw(IMG_ready, ready_x, self.ready_y or initial_ready_y + 8 * 6)
+      end
+      local IMG_number_to_draw = IMG_numbers[math.ceil(self.countdown_timer / 60)]
+      if IMG_number_to_draw then
+        draw(IMG_number_to_draw, countdown_x, countdown_y)
+      end
+    end
+  end
 end
 
 --[[void FadingPanels_1P(int draw_frame, int lightness)

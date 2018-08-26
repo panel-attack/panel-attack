@@ -238,3 +238,4 @@ my_win_count = 0
 op_win_count = 0
 
 default_assets_dir = "Stock PdP_TA"
+default_sounds_dir = "Stock PdP_TA"
