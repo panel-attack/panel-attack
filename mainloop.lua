@@ -21,7 +21,7 @@ leaderboard_report = nil
 replay_of_match_so_far = nil
 spectator_list = nil
 spectators_string = ""
-debug_mode_text = {[true]="On", [false]="Off"}  
+debug_mode_text = {[true]="On", [false]="Off"}
 
 function fmainloop()
   local func, arg = main_select_mode, nil
@@ -149,7 +149,7 @@ do
         {"Options", main_options},
         {"Fullscreen (LAlt+Enter)", fullscreen},
         {"Quit", os.exit}}
-    local k = K[1]
+    local k = keyboard[1]
     while true do
       local to_print = ""
       local arrow = ""
@@ -188,7 +188,7 @@ function main_select_speed_99(next_func, ...)
                 {"Go!", next_func},
                 {"Back", main_select_mode}}
   local speed, difficulty, active_idx = 1,1,1
-  local k = K[1]
+  local k = keyboard[1]
   while true do
     local to_print, to_print2, arrow = "", "", ""
     for i=1,#items do
@@ -359,7 +359,7 @@ function main_character_select()
     if msg.ranked then
       match_type = "Ranked"
       match_type_message = ""
-    else 
+    else
       match_type = "Casual"
     end
     if currently_spectating then
@@ -382,7 +382,7 @@ function main_character_select()
              {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
              {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
              {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
-    end       
+    end
   end
   if character_select_mode == "1p_vs_yourself" then
     map = {{"level", "level", "level", "level", "level", "level", "ready"},
@@ -394,7 +394,7 @@ function main_character_select()
   local op_state = global_op_state or {character="lip", level=5, cursor="level", ready=false}
   global_op_state = nil
   cursor,op_cursor,X,Y = {1,1},{1,1},5,7
-  local k = K[1]
+  local k = keyboard[1]
   local up,down,left,right = {-1,0}, {1,0}, {0,-1}, {0,1}
   my_state = global_my_state or {character=config.character, level=config.level, cursor="level", ready=false}
   global_my_state = nil
@@ -615,7 +615,7 @@ function main_character_select()
             if replay.vs.ranked then
               match_type = "Ranked"
               match_type_message = ""
-            else 
+            else
               match_type = "Casual"
             end
             replay_of_match_so_far = nil
@@ -649,7 +649,7 @@ function main_character_select()
             do_messages()
             wait()
             if game_start_timeout > 500 then
-              return main_dumb_transition, {main_select_mode, 
+              return main_dumb_transition, {main_select_mode,
                               "game-is-starting bug diagnostic version 2\n\ngame start timed out.\n Please screenshot this and\npost it in #panel-attack-bugs-features"
                               .."\n".."msg.match_start = "..(tostring(msg.match_start) or "nil")
                               .."\n".."replay_of_match_so_far = "..(tostring(replay_of_match_so_far) or "nil")
@@ -672,7 +672,7 @@ function main_character_select()
     else
       draw_button(1,1,6,1,"level")
     end
-    
+
     draw_button(1,7,1,1,"ready")
     for i=2,X do
       for j=1,Y do
@@ -721,7 +721,7 @@ function main_character_select()
       if current_server_supports_ranking then
           state = state..":  Rating: "..op_rating_difference..global_current_room_ratings[op_player_number].new
       end
-      state = state.."  Wins: "..op_win_count 
+      state = state.."  Wins: "..op_win_count
       if current_server_supports_ranking or my_win_count + op_win_count > 0 then
         state = state.."  Win Ratio:"
       end
@@ -810,7 +810,7 @@ function main_character_select()
       P1:starting_state()
       return main_dumb_transition, {main_local_vs_yourself, "Game is starting...", 30, 30}
     end
-    if character_select_mode == "2p_net_vs" then 
+    if character_select_mode == "2p_net_vs" then
       do_messages()
     end
   end
@@ -822,10 +822,10 @@ function main_net_vs_lobby()
   local unpaired_players = {} -- list
   local willing_players = {} -- set
   local spectatable_rooms = {}
-  local k = K[1]
+  local k = keyboard[1]
   my_player_number = nil
   op_player_number = nil
-  local notice = {[true]="Select a player name to ask for a match.", [false]="You are all alone in the lobby :("}  
+  local notice = {[true]="Select a player name to ask for a match.", [false]="You are all alone in the lobby :("}
   local leaderboard_string = ""
   local my_rank
   love.audio.stop()
@@ -836,7 +836,7 @@ function main_net_vs_lobby()
   if not my_user_id then
     my_user_id = "need a new user id"
   end
-  json_send({login_request=true, user_id=my_user_id}) 
+  json_send({login_request=true, user_id=my_user_id})
   local login_status_message = "   Logging in..."
   local login_status_message_duration = 2
   local login_denied = false
@@ -952,7 +952,7 @@ function main_net_vs_lobby()
       if i <= lastPlayerIndex then
         to_print = to_print .. "   " .. items[i] .. (willing_players[items[i]] and " (Wants to play with you :o)" or "") .. "\n"
       elseif i < #items - 1 and items[i].name then
-        to_print = to_print .. "   spectate " .. items[i].name .. " (".. items[i].state .. ")\n" --printing room names 
+        to_print = to_print .. "   spectate " .. items[i].name .. " (".. items[i].state .. ")\n" --printing room names
       elseif i < #items then
         to_print = to_print .. "   " .. items[i] .. "\n"
       else
@@ -965,13 +965,13 @@ function main_net_vs_lobby()
     if showing_leaderboard then
       gprint(leaderboard_string, 500, 160)
     end
-    
+
     wait()
     if menu_up(k) then
       if showing_leaderboard then
         if leaderboard_first_idx_to_show>1 then
           leaderboard_first_idx_to_show = leaderboard_first_idx_to_show - 1
-          leaderboard_last_idx_to_show = leaderboard_last_idx_to_show - 1    
+          leaderboard_last_idx_to_show = leaderboard_last_idx_to_show - 1
           leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
         end
       else
@@ -1091,7 +1091,7 @@ function main_net_vs_setup(ip)
   logged_in = false
   if true then return main_net_vs_lobby end
   local my_level, to_print, fake_P2 = 5, nil, P2
-  local k = K[1]
+  local k = keyboard[1]
   while got_opponent == nil do
     gprint("Waiting for opponent...", 300, 280)
     wait()
@@ -1154,7 +1154,7 @@ end
 
 function main_net_vs()
   --STONER_MODE = true
-  local k = K[1]  --may help with spectators leaving games in progress
+  local k = keyboard[1]  --may help with spectators leaving games in progress
   local end_text = nil
   consuming_timesteps = true
   local op_name_y = 40
@@ -1178,11 +1178,11 @@ function main_net_vs()
       gprint(spectators_string, 315, 265)
     end
     if match_type == "Ranked" then
-      if global_current_room_ratings[my_player_number] 
+      if global_current_room_ratings[my_player_number]
       and global_current_room_ratings[my_player_number].new then
         gprint("Rating: "..global_current_room_ratings[my_player_number].new, 315, 85)
       end
-      if global_current_room_ratings[op_player_number] 
+      if global_current_room_ratings[op_player_number]
       and global_current_room_ratings[op_player_number].new then
         gprint("Rating: "..global_current_room_ratings[op_player_number].new, 410, 85)
       end
@@ -1200,14 +1200,14 @@ function main_net_vs()
       end
       do_messages()
     end
-    
+
     print(P1.CLOCK, P2.CLOCK)
     if (P1 and P1.play_to_end) or (P2 and P2.play_to_end) then
       if not P1.game_over then
         if currently_spectating then
           P1:foreign_run()
         else
-          P1:local_run() 
+          P1:local_run()
         end
       end
     else
@@ -1216,7 +1216,7 @@ function main_net_vs()
           if currently_spectating then
               P1:foreign_run()
           else
-            P1:local_run() 
+            P1:local_run()
           end
         end
       end)
@@ -1236,7 +1236,7 @@ function main_net_vs()
       end_text = my_name.." Wins ^^"
       my_win_count = my_win_count + 1 -- leave this in
       outcome_claim = P1.player_number
-      
+
     end
     if end_text then
       undo_stonermode()
@@ -1276,7 +1276,7 @@ function main_net_vs()
 end
 
 main_local_vs_setup = multi_func(function()
-  local K = K
+  local K = keyboard
   local chosen, maybe = {}, {5,5}
   local P1_level, P2_level = nil, nil
   while chosen[1] == nil or chosen[2] == nil do
@@ -1376,7 +1376,7 @@ function main_local_vs_yourself()
     variable_step(function()
         if not P1.game_over then
           P1:local_run()
-        else 
+        else
           end_text = "Game Over"
         end
       end)
@@ -1587,7 +1587,7 @@ function make_main_puzzle(puzzles)
           return main_dumb_transition, {main_select_puzz, "You lose :("}
         end
       end
-      variable_step(function() 
+      variable_step(function()
         if P1.n_active_panels ~= 0 or P1.prev_active_panels ~= 0 or
           P1.puzzle_moves ~= 0 then P1:local_run() end end)
     end
@@ -1603,7 +1603,7 @@ do
   items[#items+1] = {"Back", main_select_mode}
   function main_select_puzz()
     local active_idx = 1
-    local k = K[1]
+    local k = keyboard[1]
     while true do
       local to_print = ""
       local arrow = ""
@@ -1638,7 +1638,7 @@ end
 function main_config_input()
   local pretty_names = {"Up", "Down", "Left", "Right", "A", "B", "L", "R"}
   local items, active_idx = {}, 1
-  local k = K[1]
+  local k = keyboard[1]
   local active_player = 1
   local function get_items()
     items = {[0]={"Player ", ""..active_player}}
@@ -1716,7 +1716,7 @@ end
 
 function main_options()
   local items, active_idx = {}, 1
-  local k = K[1]
+  local k = keyboard[1]
   local selected, deselected_this_frame, adjust_active_value = false, false, false
   local function get_items()
   local save_replays_publicly_choices = {"with my name", "anonymously", "not at all"}
@@ -1752,7 +1752,7 @@ function main_options()
       {"SFX Volume", config.SFX_volume or 100, "numeric", 0, 100, sounds.SFX.cur_move, true},
       {"Music Volume", config.music_volume or 100, "numeric", 0, 100, sounds.music.characters["lip"].normal_music, true, nil, true},
       {"Debug Mode", debug_mode_text[config.debug_mode or false], "bool", false, nil, nil,false},
-      {"Save replays publicly", 
+      {"Save replays publicly",
         save_replays_publicly_choices[config.save_replays_publicly]
           or save_replays_publicly_choices["with my name"],
         "multiple choice", save_replays_publicly_choices},
@@ -1772,13 +1772,13 @@ function main_options()
         arrow = arrow .. "\n"
       end
       to_print = to_print .. "   " .. items[i][1] .. "\n"
-      to_print2 = to_print2 .. "                  " 
-      if active_idx == i and selected then  
+      to_print2 = to_print2 .. "                  "
+      if active_idx == i and selected then
         to_print2 = to_print2 .. "                < "
       else
         to_print2 = to_print2 .. "                  "
       end
-      to_print2 = to_print2.. items[i][2] 
+      to_print2 = to_print2.. items[i][2]
       if active_idx == i and selected then
         to_print2 = to_print2 .. " >"
       end
@@ -1815,7 +1815,7 @@ function main_options()
     end
     --the following is enough for "bool"
     adjust_active_value = true
-    if items[active_idx][6] and not items[active_idx][9] then 
+    if items[active_idx][6] and not items[active_idx][9] then
     --sound_source for this menu item exists and not play_while_selected
       items[active_idx][6]:stop()
       items[active_idx][6]:play()
@@ -1883,7 +1883,7 @@ function main_options()
           items[3][6]:setVolume(config.music_volume/100) --do just the one music source until we deselect
         end
         if active_idx == 3 and deselected_this_frame then --Music Volume
-          set_volume(sounds.music, config.music_volume/100) 
+          set_volume(sounds.music, config.music_volume/100)
         end
         --add any other numeric config updates here
       elseif items[active_idx][3] == "multiple choice" then
@@ -1923,7 +1923,7 @@ function main_options()
         end
         local custom_graphics_readme = read_txt_file("Custom Graphics Readme.txt")
         while true do
-          gprint(custom_graphics_readme, 100, 150)      
+          gprint(custom_graphics_readme, 100, 150)
           do_menu_function = false
           wait()
           if menu_escape(K[1]) or menu_enter(K[1]) then
@@ -1940,7 +1940,7 @@ function main_options()
         end
         local custom_sounds_readme = read_txt_file("Custom Sounds Readme.txt")
         while true do
-          gprint(custom_sounds_readme, 30, 150)      
+          gprint(custom_sounds_readme, 30, 150)
           do_menu_function = false
           wait()
           if menu_escape(K[1]) or menu_enter(K[1]) then
@@ -1954,7 +1954,7 @@ function main_options()
       items[active_idx][6]:play()
     end
     if deselected_this_frame then
-      if items[active_idx][6] then --sound_source for this menu item exists 
+      if items[active_idx][6] then --sound_source for this menu item exists
         items[active_idx][6]:stop()
         love.audio.stop()
       end
@@ -2008,10 +2008,10 @@ function fullscreen()
 end
 
 function main_dumb_transition(next_func, text, timemin, timemax)
-  if P1 and P1.character then 
+  if P1 and P1.character then
     stop_character_sounds(P1.character)
   end
-  if P2 and P2.character then 
+  if P2 and P2.character then
     stop_character_sounds(P2.character)
   end
   love.audio.stop()
@@ -2024,7 +2024,7 @@ function main_dumb_transition(next_func, text, timemin, timemax)
   timemin = timemin or 0
   timemax = timemax or 3600
   local t = 0
-  local k = K[1]
+  local k = keyboard[1]
   while true do
     -- for _,msg in ipairs(this_frame_messages) do
       -- if next_func == main_character_select then
