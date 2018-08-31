@@ -5,16 +5,16 @@ LABEL maintainer2="Sara Silva"
 
 WORKDIR /home
 
-RUN apt-get update && apt-get upgrade 
+RUN apt-get update && apt-get upgrade
 
-RUN apt-get install git \ 
+RUN apt-get install git \
                     wget \
                     gcc \
-                    g++ \ 
+                    g++ \
                     mercurial \
                     vim \
                     lua5.3 \
-                    -y 
+                    -y
 
 RUN hg clone https://bitbucket.org/rude/love
 
@@ -24,5 +24,4 @@ RUN apt-get install build-essential autotools-dev automake libtool pkg-config li
 
 RUN hg update 0.9.0
 
-RUN ./platform/unix/automagic && ./configure && make -j 3 && make install -j 3 
-
+RUN ./platform/unix/automagic && ./configure && make -j 3 && make install -j 3
