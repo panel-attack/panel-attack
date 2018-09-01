@@ -16,22 +16,27 @@ require("sound")
 require("timezones")
 require("gen_panels")
 
-local N_FRAMES = 0
-local canvas = love.graphics.newCanvas(default_width, default_height)
+
+function love.load()
+
+  math.randomseed(os.time())
+  for i=1,4 do math.random() end
+  read_key_file()
+  mainloop = coroutine.create(fmainloop)
+
+end
+
 local last_x = 0
 local last_y = 0
 local input_delta = 0.0
 local pointer_hidden = false
 
-function love.load()
-  math.randomseed(os.time())
-  for i=1,4 do math.random() end
-  read_key_file()
-  mainloop = coroutine.create(fmainloop)
-end
-
+-- update screen
 function love.update(dt)
+
+  -- if mouse not change positivo
   if love.mouse.getX() == last_x and love.mouse.getY() == last_y then
+
     if not pointer_hidden then
       if input_delta > mouse_pointer_timeout then
         pointer_hidden = true
@@ -40,7 +45,9 @@ function love.update(dt)
        input_delta = input_delta + dt
       end
     end
+    
   else
+    -- else
     last_x = love.mouse.getX()
     last_y = love.mouse.getY()
     input_delta = 0.0
@@ -49,8 +56,8 @@ function love.update(dt)
       love.mouse.setVisible(true)
     end
   end
-  
-  
+
+
   if consuming_timesteps then
     leftover_time = leftover_time + dt
   end
@@ -70,8 +77,11 @@ function love.update(dt)
   this_frame_messages = {}
 end
 
+local N_FRAMES = 0
+local canvas = love.graphics.newCanvas(default_width, default_height)
+
 function love.draw()
-  love.graphics.setCanvas(canvas)  
+  love.graphics.setCanvas(canvas)
   love.graphics.setBackgroundColor(28, 28, 28)
   love.graphics.clear()
   for i=gfx_q.first,gfx_q.last do
