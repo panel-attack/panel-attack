@@ -218,18 +218,18 @@ json.null = setmetatable ({}, {
 
 local function isarray (tbl)
   local max, n, arraylen = 0, 0, 0
-  for k,v in pairs (tbl) do
-    if k == 'n' and type(v) == 'number' then
-      arraylen = v
-      if v > max then
-        max = v
+  for key, value in pairs (tbl) do
+    if key == 'n' and type(value) == 'number' then
+      arraylen = value
+      if value > max then
+        max = value
       end
     else
-      if type(k) ~= 'number' or k < 1 or floor(k) ~= k then
+      if type(key) ~= 'number' or key < 1 or floor(key) ~= key then
         return false
       end
-      if k > max then
-        max = k
+      if key > max then
+        max = key
       end
       n = n + 1
     end
@@ -320,9 +320,9 @@ end
 local encode2 -- forward declaration
 
 local function addpair (key, value, prev, indent, level, buffer, buflen, tables, globalorder)
-  local kt = type (key)
-  if kt ~= 'string' and kt ~= 'number' then
-    return nil, "type '" .. kt .. "' is not supported as a key by JSON."
+  local keytype = type (key)
+  if keytype ~= 'string' and keytype ~= 'number' then
+    return nil, "type '" .. keytype .. "' is not supported as a key by JSON."
   end
   if prev then
     buflen = buflen + 1
@@ -605,28 +605,28 @@ local function scantable (what, closechar, str, startpos, nullval, objectmeta, a
     if char == closechar then
       return tbl, pos + 1
     end
-    local val1, err
-    val1, pos, err = scanvalue (str, pos, nullval, objectmeta, arraymeta)
+    local scan1, err
+    scan1, pos, err = scanvalue (str, pos, nullval, objectmeta, arraymeta)
     if err then return nil, pos, err end
     pos = scanwhite (str, pos)
     if not pos then return unterminated (str, what, startpos) end
     char = strsub (str, pos, pos)
     if char == ':' then
-      if val1 == nil then
+      if scan1 == nil then
         return nil, pos, "cannot use nil as table index (at " .. loc (str, pos) .. ")"
       end
       pos = scanwhite (str, pos + 1)
       if not pos then return unterminated (str, what, startpos) end
-      local val2
-      val2, pos, err = scanvalue (str, pos, nullval, objectmeta, arraymeta)
+      local scan2
+      scan2, pos, err = scanvalue (str, pos, nullval, objectmeta, arraymeta)
       if err then return nil, pos, err end
-      tbl[val1] = val2
+      tbl[scan1] = scan2
       pos = scanwhite (str, pos)
       if not pos then return unterminated (str, what, startpos) end
       char = strsub (str, pos, pos)
     else
       n = n + 1
-      tbl[n] = val1
+      tbl[n] = scan1
     end
     if char == ',' then
       pos = pos + 1
@@ -648,22 +648,22 @@ scanvalue = function (str, pos, nullval, objectmeta, arraymeta)
   elseif char == '\"' then
     return scanstring (str, pos)
   else
-    local pstart, pend = strfind (str, "^%-?[%d%.]+[eE]?[%+%-]?%d*", pos)
-    if pstart then
-      local number = tonumber (strsub (str, pstart, pend))
+    local pos_start, pos_end = strfind (str, "^%-?[%d%.]+[eE]?[%+%-]?%d*", pos)
+    if pos_start then
+      local number = tonumber (strsub (str, pos_start, pos_end))
       if number then
-        return number, pend + 1
+        return number, pos_end + 1
       end
     end
-    pstart, pend = strfind (str, "^%a%w*", pos)
-    if pstart then
-      local name = strsub (str, pstart, pend)
+    pos_start, pos_end = strfind (str, "^%a%w*", pos)
+    if pos_start then
+      local name = strsub (str, pos_start, pos_end)
       if name == 'true' then
-        return true, pend + 1
+        return true, pos_end + 1
       elseif name == 'false' then
-        return false, pend + 1
+        return false, pos_end + 1
       elseif name == 'null' then
-        return nullval, pend + 1
+        return nullval, pos_end + 1
       end
     end
     return nil, pos, 'no valid JSON value at ' .. loc (str, pos)
@@ -677,9 +677,9 @@ function json.decode (str, pos, nullval, objectmeta, arraymeta)
 end
 
 function json.use_lpeg ()
-  local g = require ('lpeg')
-  local pegmatch = g.match
-  local P, S, R, V = g.P, g.S, g.R, g.V
+  local lpeg = require ('lpeg')
+  local pegmatch = lpeg.match
+  local P, S, R, V = lpeg.P, lpeg.S, lpeg.R, lpeg.V
 
   local SpecialChars = (R"\0\31" + S"\"\\\127" +
     P"\194" * (R"\128\159" + P"\173") +
@@ -691,7 +691,7 @@ function json.use_lpeg ()
     P"\239\187\191" +
     P"\229\191" + R"\176\191") / escapeutf8
 
-  local QuoteStr = g.Cs (g.Cc "\"" * (SpecialChars + 1)^0 * g.Cc "\"")
+  local QuoteStr = lpeg.Cs (lpeg.Cc "\"" * (SpecialChars + 1)^0 * lpeg.Cc "\"")
 
   quotestring = function (str)
     return pegmatch (QuoteStr, str)
@@ -707,13 +707,13 @@ function json.use_lpeg ()
   end
 
   local function Err (msg)
-    return g.Cmt (g.Cc (msg) * g.Carg (2), ErrorCall)
+    return lpeg.Cmt (lpeg.Cc (msg) * lpeg.Carg (2), ErrorCall)
   end
 
   local Space = (S" \n\r\t" + P"\239\187\191")^0
 
   local PlainChar = 1 - S"\"\\\n\r"
-  local EscapeSequence = (P"\\" * g.C (S"\"\\/bfnrt" + Err "unsupported escape sequence")) / escapechars
+  local EscapeSequence = (P"\\" * lpeg.C (S"\"\\/bfnrt" + Err "unsupported escape sequence")) / escapechars
   local HexDigit = R("09", "af", "AF")
   local function UTF16Surrogate (match, pos, high, low)
     high, low = tonumber (high, 16), tonumber (low, 16)
@@ -726,15 +726,15 @@ function json.use_lpeg ()
   local function UTF16BMP (hex)
     return unichar (tonumber (hex, 16))
   end
-  local U16Sequence = (P'\\u' * g.C (HexDigit * HexDigit * HexDigit * HexDigit))
-  local UnicodeEscape = g.Cmt (U16Sequence * U16Sequence, UTF16Surrogate) + U16Sequence/UTF16BMP
+  local U16Sequence = (P'\\u' * lpeg.C (HexDigit * HexDigit * HexDigit * HexDigit))
+  local UnicodeEscape = lpeg.Cmt (U16Sequence * U16Sequence, UTF16Surrogate) + U16Sequence/UTF16BMP
   local Char = UnicodeEscape + EscapeSequence + PlainChar
-  local String = P"\"" * g.Cs (Char ^ 0) * (P"\"" + Err "unterminated string")
+  local String = P"\"" * lpeg.Cs (Char ^ 0) * (P"\"" + Err "unterminated string")
   local Integer = P"-"^(-1) * (P"0" + (R"19" * R"09"^0))
   local Fractal = P"." * R"09"^0
   local Exponent = (S"eE") * (S"+-")^(-1) * R"09"^1
   local Number = (Integer * Fractal^(-1) * Exponent^(-1))/tonumber
-  local Constant = P"true" * g.Cc (true) + P"false" * g.Cc (false) + P"null" * g.Carg (1)
+  local Constant = P"true" * lpeg.Cc (true) + P"false" * lpeg.Cc (false) + P"null" * lpeg.Carg (1)
   local SimpleValue = Number + String + Constant
   local ArrayContent, ObjectContent
 
@@ -767,14 +767,14 @@ function json.use_lpeg ()
     return pos,t-- setmetatable (t, state.objectmeta)
   end
 
-  local Array = P"[" * g.Cmt (g.Carg(1) * g.Carg(2), parsearray) * Space * (P"]" + Err "']' expected")
-  local Object = P"{" * g.Cmt (g.Carg(1) * g.Carg(2), parseobject) * Space * (P"}" + Err "'}' expected")
+  local Array = P"[" * lpeg.Cmt (g.Carg(1) * lpeg.Carg(2), parsearray) * Space * (P"]" + Err "']' expected")
+  local Object = P"{" * lpeg.Cmt (g.Carg(1) * lpeg.Carg(2), parseobject) * Space * (P"}" + Err "'}' expected")
   local Value = Space * (Array + Object + SimpleValue)
   local ExpectedValue = Value + Space * Err "value expected"
-  ArrayContent = Value * Space * (P',' * g.Cc'cont' + g.Cc'last') * g.Cp()
-  local Pair = g.Cg (Space * String * Space * (P":" + Err "colon expected") * ExpectedValue)
-  ObjectContent = Pair * Space * (P',' * g.Cc'cont' + g.Cc'last') * g.Cp()
-  local DecodeValue = ExpectedValue * g.Cp ()
+  ArrayContent = Value * Space * (P',' * lpeg.Cc'cont' + lpeg.Cc'last') * lpeg.Cp()
+  local Pair = lpeg.Cg (Space * String * Space * (P":" + Err "colon expected") * ExpectedValue)
+  ObjectContent = Pair * Space * (P',' * lpeg.Cc'cont' + lpeg.Cc'last') * lpeg.Cp()
+  local DecodeValue = ExpectedValue * lpeg.Cp ()
 
   function json.decode (str, pos, nullval, objectmeta, arraymeta)
     local state = {
