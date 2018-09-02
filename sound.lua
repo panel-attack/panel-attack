@@ -34,7 +34,7 @@ function find_character_SFX(character, SFXSoundName)
   local DIRECTORIES_TO_CHECK = {"sounds/"..sounds_dir.."/characters/",
                               "sounds/"..default_sounds_dir.."/characters/"}
   
-  
+  -- variable initialized but never used in this file
   local cur_dir_contains_chain
   
   for k,currentDirectory in ipairs(DIRECTORIES_TO_CHECK) do
@@ -165,12 +165,12 @@ function stop_character_sounds(character)
   local normal_music_intro_exists = nil
   local normal_music_intro_started = nil
   local normal_music_intro_finished = nil
-  for k, sound in ipairs(allowedCharacterSFX) do
+  for characterSFX, sound in ipairs(allowedCharacterSFX) do
     if sounds.SFX.characters[character][sound] then
       sounds.SFX.characters[character][sound]:stop()
     end
   end
-  for k, musicType in ipairs(allowedCharacterMusic) do
+  for characterMusic, musicType in ipairs(allowedCharacterMusic) do
     if sounds.music.characters[character][musicType] then
       sounds.music.characters[character][musicType]:stop()
     end
@@ -180,7 +180,8 @@ end
 function sound_init()
   default_sounds_dir = "Stock PdP_TA"
   sounds_dir = config.sounds_dir or default_sounds_dir
-
+  -- sounds: SFX, music
+  -- globlal variables
   SFX_Fanfare_Play = 0
   SFX_GameOver_Play = 0
   SFX_GarbageThud_Play = 0
@@ -210,9 +211,9 @@ function sound_init()
   allowedCharacterSFX = {"chain", "combo", "combo_echo", "chain_echo", "chain2" ,"chain2_echo", "garbage_match"}
   requiredCharacterMusic = {"normal_music", "danger_music"}
   allowedCharacterMusic = {"normal_music", "danger_music", "normal_music_start", "danger_music_start"}
-  for i,name in ipairs(characters) do
+  for character,name in ipairs(characters) do
     sounds.SFX.characters[name] = {}
-    for k, sound in ipairs(allowedCharacterSFX) do
+    for characterSFX, sound in ipairs(allowedCharacterSFX) do
       sounds.SFX.characters[name][sound] = find_character_SFX(name, sound)
       if not sounds.SFX.characters[name][sound] then
         if string.find(sound, "chain") then
@@ -223,8 +224,8 @@ function sound_init()
       end
     end
     sounds.music.characters[name] = {}
-    for k, music_type in ipairs(allowedCharacterMusic) do
-      sounds.music.characters[name][music_type] = find_music(name, music_type)
+    for characterMusic, musicType in ipairs(allowedCharacterMusic) do
+      sounds.music.characters[name][musicType] = find_music(name, musicType)
     end
   end
   for popLevel=1,4 do
