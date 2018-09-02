@@ -1,13 +1,8 @@
 local TCP_sock = nil
-local type_to_length = {G=1, H=1, N=1, E=4, P=121, O=121, I=2, Q=121, R=121, L=2, U=2}
 local leftovers = ""
-local wait = coroutine.yield
-local floor = math.floor
-local char = string.char
-local byte = string.byte
 
 function flush_socket()
-  local junk,err,data = TCP_sock:receive('*a')
+  local err,data = TCP_sock:receive('*a')
   -- lol, if it returned successfully then that's bad!
   if not err then
     error("the connection closed unexpectedly")
@@ -27,6 +22,8 @@ function get_message()
     return nil
   end
   local typ, gap, len = string.sub(leftovers,1,1), 0
+  local byte = string.byte
+  local type_to_length = {G=1, H=1, N=1, E=4, P=121, O=121, I=2, Q=121, R=121, L=2, U=2}
   if typ == "J" then
     if string.len(leftovers) >= 4 then
       len = byte(string.sub(leftovers,2,2)) * 65536 +
@@ -63,6 +60,8 @@ end
 function json_send(obj)
   local json = json.encode(obj)
   local len = json:len()
+  local floor = math.floor
+  local char = string.char
   local prefix = "J"..char(floor(len/65536))..char(floor((len/256)%256))..char(len%256)
   net_send(prefix..json)
 end
@@ -170,7 +169,6 @@ function ask_for_gpanels(prev_panels)
 end
 
 function make_local_panels(stack, prev_panels)
-  local ncolors = stack.NCOLORS
   local ret = make_panels(stack.NCOLORS, prev_panels, stack)
   stack.panel_buffer = stack.panel_buffer..ret
   local replay = replay[P1.mode]
