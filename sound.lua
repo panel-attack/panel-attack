@@ -1,38 +1,38 @@
 -- sets the volume of a single source or table of sources
-supportedSoundsFormats = {".mp3",".ogg", ".it"}
+supported_sounds_formats = {".mp3",".ogg", ".it"}
 
-function set_volume(source, newVolume)
+function set_volume(source, new_volume)
   if config.debug_mode then print("set_volume called") end
   if type(source) == "table" then
     for _,volume in pairs(source) do
-      set_volume(volume, newVolume)
+      set_volume(volume, new_volume)
     end
   else
-    source:setVolume(newVolume)
+    source:setVolume(new_volume)
   end
 end
 
 -- returns a new sound effect if it can be found, else returns nil
-function find_sound(soundName, directoriesToCheck)
-  local foundSource
-  for searchSFX,directory in ipairs(directoriesToCheck) do
-    foundSource = check_supported_extensions(directory..soundName)
-    if foundSource then
-      return foundSource
+function find_sound(sound_name, directories_to_check)
+  local found_source
+  for search_SFX,directory in ipairs(directories_to_check) do
+    found_source = check_supported_extensions(directory..sound_name)
+    if found_source then
+      return found_source
     end
   end
   return nil
 end
 
-function find_generic_SFX(SFXSoundName)
+function find_generic_SFX(SFX_sound_name)
   local DIRECTORIES_TO_CHECK = {"sounds/"..sounds_dir.."/SFX/",
                                 "sounds/"..default_sounds_dir.."/SFX/"}
-  return find_sound(SFXSoundName, DIRECTORIES_TO_CHECK)
+  return find_sound(SFX_sound_name, DIRECTORIES_TO_CHECK)
 end
 
-function find_character_SFX(character, SFXSoundName)
+function find_character_SFX(character, SFX_sound_name)
   local DIRECTORIES_TO_CHECK = {"sounds/"..sounds_dir.."/characters/",
-                              "sounds/"..default_sounds_dir.."/characters/"}
+                                "sounds/"..default_sounds_dir.."/characters/"}
   
   -- variable initialized but never used in this file
   local cur_dir_contains_chain
@@ -42,33 +42,33 @@ function find_character_SFX(character, SFXSoundName)
     -- this way, we can always depend on a character having a combo and a chain SFX.
     -- if they are missing others, that's fine.
     -- (ie. some characters won't have "match_garbage" or a fancier "chain-x6")
-    local currentDirectoryHasChainSound = check_supported_extensions(currentDirectory.."/"..character.."/chain")
-    if SFXSounName == "chain" and currentDirectoryHasChainSound then 
-      if config.debug_mode then print("loaded "..SFXSoundName.." for "..character) end
-      return currentDirectoryHasChainSound
+    local current_directory_has_chain_sound = check_supported_extensions(currentDirectory.."/"..character.."/chain")
+    if SFXSounName == "chain" and current_directory_has_chain_sound then 
+      if config.debug_mode then print("loaded "..SFX_sound_name.." for "..character) end
+      return current_directory_has_chain_sound
     end
-    local currentDirectoryComboSound = check_supported_extensions(currentDirectory.."/"..character.."/combo")
-    if SFXSoundName == "combo" and currentDirectoryComboSound then 
-      if config.debug_mode then print("loaded "..SFXSoundName.." for "..character) end
-      return currentDirectoryComboSound
-    elseif SFXSoundName == "combo" and currentDirectoryHasChainSound then
-      if config.debug_mode then print("substituted found chain SFX for "..SFXSoundName.." for "..character) end
-      return currentDirectoryHasChainSound -- in place of the combo SFX
+    local current_directory_has_combo_sound = check_supported_extensions(currentDirectory.."/"..character.."/combo")
+    if SFX_sound_name == "combo" and current_directory_has_combo_sound then 
+      if config.debug_mode then print("loaded "..SFX_sound_name.." for "..character) end
+      return current_directory_has_combo_sound
+    elseif SFX_sound_name == "combo" and current_directory_has_chain_sound then
+      if config.debug_mode then print("substituted found chain SFX for "..SFX_sound_name.." for "..character) end
+      return current_directory_has_chain_sound -- in place of the combo SFX
     end
-    if SFXSoundName == "chain" and currentDirectoryComboSound then
-      if config.debug_mode then print("substituted found combo SFX for "..SFXSoundName.." for "..character) end
-      return currentDirectoryComboSound
+    if SFX_sound_name == "chain" and current_directory_has_combo_sound then
+      if config.debug_mode then print("substituted found combo SFX for "..SFX_sound_name.." for "..character) end
+      return current_directory_has_combo_sound
     end
     
-    local otherRequestedSFX = check_supported_extensions(currentDirectory.."/"..character.."/"..SFXSoundName)
-    if otherRequestedSFX then
-      if config.debug_mode then print("loaded "..SFXSoundName.." for "..character) end
-      return otherRequestedSFX
+    local other_requested_SFX = check_supported_extensions(currentDirectory.."/"..character.."/"..SFX_sound_name)
+    if other_requested_SFX then
+      if config.debug_mode then print("loaded "..SFX_sound_name.." for "..character) end
+      return other_requested_SFX
     else
-      if config.debug_mode then print("did not find "..SFXSoundName.." for "..character.." in current directory: "..current_dir) end
+      if config.debug_mode then print("did not find "..SFX_sound_name.." for "..character.." in current directory: "..current_dir) end
     end
-    if currentDirectoryHasChainSound or currentDirectoryComboSound --[[and we didn't find the requested SFX in this dir]] then
-      if config.debug_mode then print("chain or combo was provided, but "..SFXSoundName.." was not.") end
+    if current_directory_has_chain_sound or current_directory_has_combo_sound --[[and we didn't find the requested SFX in this dir]] then
+      if config.debug_mode then print("chain or combo was provided, but "..SFX_sound_name.." was not.") end
       return nil -- don't continue looking in other fallback directories,
   -- else
     -- keep looking
@@ -79,52 +79,52 @@ function find_character_SFX(character, SFXSoundName)
 end
 
 -- returns audio source based on character and music_type (normal_music, danger_music, normal_music_start, or danger_music_start)
-function find_music(character, musicType)
-  local foundSource
-  local characterThemeOverridesStageTheme = check_supported_extensions("sounds/"..sounds_dir.."/characters/"..character.."/normal_music")
-  if characterThemeOverridesStageTheme then
-    foundSource = check_supported_extensions("sounds/"..sounds_dir.."/characters/"..character.."/"..musicType)
-    if foundSource then
-      if config.debug_mode then print("In selected sound directory, found "..musicType.." for "..character) end
+function find_music(character, music_type)
+  local found_source
+  local character_theme_overrides_stage_theme = check_supported_extensions("sounds/"..sounds_dir.."/characters/"..character.."/normal_music")
+  if character_theme_overrides_stage_theme then
+    found_source = check_supported_extensions("sounds/"..sounds_dir.."/characters/"..character.."/"..music_type)
+    if found_source then
+      if config.debug_mode then print("In selected sound directory, found "..music_type.." for "..character) end
     else
-      if config.debug_mode then print("In selected sound directory, did not find "..musicType.." for "..character) end
+      if config.debug_mode then print("In selected sound directory, did not find "..music_type.." for "..character) end
     end
-    return foundSource
+    return found_source
   else
     if stages[character] then
       soundSetOverridesDefaultSoundSet = check_supported_extensions("sounds/"..sounds_dir.."/music/"..stages[character].."/normal_music")
       if soundSetOverridesDefaultSoundSet then
-        foundSource = check_supported_extensions("sounds/"..sounds_dir.."/music/"..stages[character].."/"..musicType)
-        if foundSource then
-          if config.debug_mode then print("In selected sound directory stages, found "..musicType.." for "..character) end
+        found_source = check_supported_extensions("sounds/"..sounds_dir.."/music/"..stages[character].."/"..music_type)
+        if found_source then
+          if config.debug_mode then print("In selected sound directory stages, found "..music_type.." for "..character) end
           
         else
-          if config.debug_mode then print("In selected sound directory stages, did not find "..musicType.." for "..character) end
+          if config.debug_mode then print("In selected sound directory stages, did not find "..music_type.." for "..character) end
         end
-        return foundSource
+        return found_source
       else
-        foundSource = check_supported_extensions("sounds/"..default_sounds_dir.."/music/"..stages[character].."/"..musicType)
-        if foundSource then
-          if config.debug_mode then print("In default sound directory stages, found "..musicType.." for "..character) end
+        found_source = check_supported_extensions("sounds/"..default_sounds_dir.."/music/"..stages[character].."/"..music_type)
+        if found_source then
+          if config.debug_mode then print("In default sound directory stages, found "..music_type.." for "..character) end
         else
-          if config.debug_mode then print("In default sound directory stages, did not find "..musicType.." for "..character) end
+          if config.debug_mode then print("In default sound directory stages, did not find "..music_type.." for "..character) end
         end
-        return foundSource
+        return found_source
       end
     end
-    return foundSource
+    return found_source
   end
   return nil
 end
 
 -- returns a source, or nil if it could not find a file
-function check_supported_extensions(pathAndFilename)
-  for k, extension in ipairs(supportedSoundsFormats) do
-    if love.filesystem.isFile(pathAndFilename..extension) then
-      if string.find(pathAndFilename, "music") then
-        return love.audio.newSource(pathAndFilename..extension)
+function check_supported_extensions(path_and_filename)
+  for k, extension in ipairs(supported_sounds_formats) do
+    if love.filesystem.isFile(path_and_filename..extension) then
+      if string.find(path_and_filename, "music") then
+        return love.audio.newSource(path_and_filename..extension)
       else
-        return love.audio.newSource(pathAndFilename..extension, "static")
+        return love.audio.newSource(path_and_filename..extension, "static")
       end
     end
   end
@@ -134,19 +134,19 @@ end
 function assert_requirements_met()
   -- assert we have all required generic sound effects
   local SFX_REQUIREMENTS =  {"cur_move", "swap", "fanfare1", "fanfare2", "fanfare3", "game_over"}
-  for k,SFXSounds in ipairs(SFX_REQUIREMENTS) do
-    assert(sounds.SFX[SFXSounds], "SFX \""..SFXSounds.."\"was not loaded")
+  for k,SFX_sounds in ipairs(SFX_REQUIREMENTS) do
+    assert(sounds.SFX[SFX_sounds], "SFX \""..SFX_sounds.."\"was not loaded")
   end
-  local NUM_REQUIRED_GARBAGE_THUDS = 3
-  for i=1, NUM_REQUIRED_GARBAGE_THUDS do
+  local NUMBER_REQUIRED_GARBAGE_THUDS = 3
+  for i=1, NUMBER_REQUIRED_GARBAGE_THUDS do
     assert(sounds.SFX.garbage_thud[i], "SFX garbage_thud "..i.."was not loaded")
   end
     -- assert we have the required SFX and music for each character
   for character,name in ipairs(characters) do
-    for characterSFX, sound in ipairs(requiredCharacterSFX) do
+    for characterSFX, sound in ipairs(required_characters_SFX) do
       assert(sounds.SFX.characters[name][sound], "Character SFX"..sound.." for "..name.." was not loaded.")
     end
-    for characterTheme, musicType in ipairs(requiredCharacterMusic) do
+    for characterTheme, musicType in ipairs(required_character_music) do
       assert(sounds.music.characters[name][musicType], musicType.." for "..name.." was not loaded.")
     end
   end
@@ -165,12 +165,12 @@ function stop_character_sounds(character)
   local normal_music_intro_exists = nil
   local normal_music_intro_started = nil
   local normal_music_intro_finished = nil
-  for characterSFX, sound in ipairs(allowedCharacterSFX) do
+  for characterSFX, sound in ipairs(allowed_SFX_character) do
     if sounds.SFX.characters[character][sound] then
       sounds.SFX.characters[character][sound]:stop()
     end
   end
-  for characterMusic, musicType in ipairs(allowedCharacterMusic) do
+  for characterMusic, musicType in ipairs(allowed_character_music) do
     if sounds.music.characters[character][musicType] then
       sounds.music.characters[character][musicType]:stop()
     end
@@ -206,14 +206,14 @@ function sound_init()
       characters = {},
     }
   }
-  requiredCharacterSFX = {"chain", "combo"}
+  required_characters_SFX = {"chain", "combo"}
   -- @CardsOfTheHeart says there are 4 chain sfx: --x2/x3, --x4, --x5 is x2/x3 with an echo effect, --x6+ is x4 with an echo effect
-  allowedCharacterSFX = {"chain", "combo", "combo_echo", "chain_echo", "chain2" ,"chain2_echo", "garbage_match"}
-  requiredCharacterMusic = {"normal_music", "danger_music"}
-  allowedCharacterMusic = {"normal_music", "danger_music", "normal_music_start", "danger_music_start"}
+  allowed_SFX_character = {"chain", "combo", "combo_echo", "chain_echo", "chain2" ,"chain2_echo", "garbage_match"}
+  required_character_music = {"normal_music", "danger_music"}
+  allowed_character_music = {"normal_music", "danger_music", "normal_music_start", "danger_music_start"}
   for character,name in ipairs(characters) do
     sounds.SFX.characters[name] = {}
-    for characterSFX, sound in ipairs(allowedCharacterSFX) do
+    for characterSFX, sound in ipairs(allowed_SFX_character) do
       sounds.SFX.characters[name][sound] = find_character_SFX(name, sound)
       if not sounds.SFX.characters[name][sound] then
         if string.find(sound, "chain") then
@@ -224,8 +224,8 @@ function sound_init()
       end
     end
     sounds.music.characters[name] = {}
-    for characterMusic, musicType in ipairs(allowedCharacterMusic) do
-      sounds.music.characters[name][musicType] = find_music(name, musicType)
+    for characterMusic, music_type in ipairs(allowed_character_music) do
+      sounds.music.characters[name][music_type] = find_music(name, music_type)
     end
   end
   for popLevel=1,4 do
