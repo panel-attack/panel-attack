@@ -13,26 +13,26 @@ local byte = string.byte
 local char = string.char
 local pairs = pairs
 local ipairs = ipairs
-local random = math.random
-local lobby_changed = false
+local randomNumber = math.random
+local lobbyChanged = false
 local time = os.time
 local floor = math.floor
 local TIMEOUT = 10
-local CHARACTERSELECT = "character select" -- room states
+local CHARACTER_SELECT = "character select" -- room states
 local PLAYING = "playing" -- room states
 local DEFAULT_RATING = 1500
 local NAME_LENGTH_LIMIT = 16
-local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
+local directorySeparator = package.config:sub(1, 1) --determines os directory directorySeparatorarator (i.e. "/" or "\")
 
 
 local VERSION = "023"
 local type_to_length = {H=4, E=4, F=4, P=8, I=2, L=2, Q=8, U=2}
 local INDEX = 1
 local connections = {}
-local ROOMNUMBER = 1
+local ROOM_NUMBER = 1
 local rooms = {}
-local name_to_idx = {}
-local socket_to_idx = {}
+local nameToIndex = {}
+local socketToIndex = {}
 local proposals = {}
 local playerbases = {}
 
@@ -51,7 +51,7 @@ function lobby_state()
 end
 
 function propose_game(sender, receiver, message)
-  local s_c, r_c = name_to_idx[sender], name_to_idx[receiver]
+  local s_c, r_c = nameToIndex[sender], nameToIndex[receiver]
   if s_c then s_c = connections[s_c] end
   if r_c then r_c = connections[r_c] end
   if s_c and s_c.state == "lobby" and r_c and r_c.state == "lobby" then
@@ -81,7 +81,7 @@ function clear_proposals(name)
 end
 
 function create_room(a, b)
-  lobby_changed = true
+  lobbyChanged = true
   clear_proposals(a.name)
   clear_proposals(b.name)
   local new_room = Room(a,b)
@@ -142,7 +142,7 @@ function start_match(a, b)
   a.room:send_to_spectators(msg)
   msg.player_settings, msg.opponent_settings = msg.opponent_settings, msg.player_settings
   b:send(msg)
-  lobby_changed = true
+  lobbyChanged = true
   a:setup_game()
   b:setup_game()
   for k,v in pairs(a.room.spectators) do
@@ -156,8 +156,8 @@ Room = class(function(self, a, b)
   self.b = b --player b
   self.name = a.name.." vs "..b.name
   if not self.a.room then
-    self.roomNumber = ROOMNUMBER
-    ROOMNUMBER = ROOMNUMBER + 1
+    self.roomNumber = ROOM_NUMBER
+    ROOM_NUMBER = ROOM_NUMBER + 1
     self.a.room = self
     self.b.room = self
     self.spectators = {}
@@ -211,7 +211,7 @@ end
 
 function Room.state(self)
   if self.a.state == "character select" then
-    return CHARACTERSELECT
+    return CHARACTER_SELECT
   elseif self.a.state == "playing" then
     return PLAYING
   else
@@ -236,7 +236,7 @@ function Room.add_spectator(self, new_spectator_connection)
   msg = {spectators=self:spectator_names()}
   print("sending spectator list: "..json.encode(msg))
   self:send(msg)
-  lobby_changed = true
+  lobbyChanged = true
 end
 
 function Room.spectator_names(self)
@@ -253,7 +253,7 @@ function Room.remove_spectator(self, connection)
       self.spectators[k].state = "lobby"
       print(connection.name .. " left " .. self.name .. " as a spectator")
       self.spectators[k] = nil
-      lobby_changed = true
+      lobbyChanged = true
       connection:send(lobby_state())
     end
   end
@@ -389,7 +389,7 @@ Connection = class(function(s, socket)
   s.index = INDEX
   INDEX = INDEX + 1
   connections[s.index] = s
-  socket_to_idx[socket] = s.index
+  socketToIndex[socket] = s.index
   s.socket = socket
   socket:settimeout(0)
   s.leftovers = ""
@@ -515,7 +515,7 @@ end
 function Connection.opponent_disconnected(self)
   self.opponent = nil
   self.state = "lobby"
-  lobby_changed = true
+  lobbyChanged = true
   local msg = lobby_state()
   msg.leave_room = true
   if self.room then
@@ -528,10 +528,10 @@ function Connection.setup_game(self)
   if self.state ~= "spectating" then
     self.state = "playing"
   end
-  lobby_changed = true --TODO: remove this line when we implement joining games in progress
+  lobbyChanged = true --TODO: remove this line when we implement joining games in progress
   self.vs_mode = true
   self.metal = false
-  self.rows_left = 14+random(1,8)
+  self.rows_left = 14+randomNumber(1,8)
   self.prev_metal_col = nil
   self.metal_col = nil
   self.first_seven = nil
@@ -539,7 +539,7 @@ end
 
 function Connection.close(self)
   if self.state == "lobby" then
-    lobby_changed = true
+    lobbyChanged = true
   end
   if self.room and (self.room.a.name == self.name or self.room.b.name == self.name) then
     self.room:close()
@@ -551,9 +551,9 @@ function Connection.close(self)
     self.opponent:opponent_disconnected()
   end
   if self.name then
-    name_to_idx[self.name] = nil
+    nameToIndex[self.name] = nil
   end
-  socket_to_idx[self.socket] = nil
+  socketToIndex[self.socket] = nil
   connections[self.index] = nil
   self.socket:close()
 end
@@ -617,7 +617,7 @@ function Room.resolve_game_outcome(self)
     if self.a.save_replays_publicly ~= "not at all" and self.b.save_replays_publicly ~= "not at all" then
       --use UTC time for dates on replays
       local now = os.date("*t",to_UTC(os.time()))
-      local path = "ftp"..sep.."replays"..sep.."v"..VERSION..sep..string.format("%04d"..sep.."%02d"..sep.."%02d", now.year, now.month, now.day)
+      local path = "ftp"..directorySeparator.."replays"..directorySeparator.."v"..VERSION..directorySeparator..string.format("%04d"..directorySeparator.."%02d"..directorySeparator.."%02d", now.year, now.month, now.day)
       local rep_a_name, rep_b_name = self.a.name, self.b.name
       if self.a.save_replays_publicly == "anonymously" then
         rep_a_name = "anonymous"
@@ -630,9 +630,9 @@ function Room.resolve_game_outcome(self)
       --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
       --don't switch to put "anonymous" first though
       if rep_b_name <  rep_a_name and rep_b_name ~= "anonymous" then
-        path = path..sep..rep_b_name.."-vs-"..rep_a_name
+        path = path..directorySeparator..rep_b_name.."-vs-"..rep_a_name
       else
-        path = path..sep..rep_a_name.."-vs-"..rep_b_name
+        path = path..directorySeparator..rep_a_name.."-vs-"..rep_b_name
       end
       local filename = "v"..VERSION.."-"..string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec).."-"..rep_a_name.."-L"..self.replay.vs.P1_level.."-vs-"..rep_b_name.."-L"..self.replay.vs.P2_level
       if self.replay.vs.ranked then
@@ -646,7 +646,7 @@ function Room.resolve_game_outcome(self)
         filename = filename.."-draw"
       end
       filename = filename..".txt"
-      print("saving replay as "..path..sep..filename)
+      print("saving replay as "..path..directorySeparator..filename)
       
       write_replay_file(self.replay, path, filename)
       --write_replay_file(self.replay, "replay.txt")
@@ -856,7 +856,7 @@ function Connection.J(self, message)
       response = {choose_another_name = {reason = "Username cannot be \"anonymous\""}}
       self:send(response)
       return
-    elseif name_to_idx[message.name] then
+    elseif nameToIndex[message.name] then
       print("connection sent name: "..message.name)
       local names = {}
       for _,v in pairs(connections) do
@@ -875,9 +875,9 @@ function Connection.J(self, message)
       self.character = message.character
       self.level = message.level
       self.save_replays_publicly = message.save_replays_publicly
-      lobby_changed = true
+      lobbyChanged = true
       self.state = "lobby"
-      name_to_idx[self.name] = self.index
+      nameToIndex[self.name] = self.index
     end
   elseif message.login_request then
     self:login(message.user_id)
@@ -898,7 +898,7 @@ function Connection.J(self, message)
       self.state = "lobby"
       end
     end
-    if requestedRoom and requestedRoom:state() == CHARACTERSELECT then
+    if requestedRoom and requestedRoom:state() == CHARACTER_SELECT then
     -- TODO: allow them to join
       print("join allowed")
       print("adding "..self.name.." to room nr "..message.spectate_request.roomNumber)
@@ -1030,13 +1030,13 @@ function Connection.read(self)
 end
 
 function broadcast_lobby()
-  if lobby_changed then
+  if lobbyChanged then
     for _,v in pairs(connections) do
       if v.state == "lobby" then
         v:send(lobby_state())
       end
     end
-    lobby_changed = false
+    lobbyChanged = false
   end
 end
 
@@ -1110,8 +1110,8 @@ while true do
   local ready = socket.select(recvt, nil, 1)
   assert(type(ready) == "table")
   for _,v in ipairs(ready) do
-    if socket_to_idx[v] then
-      connections[socket_to_idx[v]]:read()
+    if socketToIndex[v] then
+      connections[socketToIndex[v]]:read()
     end
   end
   local now = time()
