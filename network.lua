@@ -2,12 +2,13 @@ local TCP_sock = nil
 local leftovers = ''
 
 function flush_socket()
-    local err, data = TCP_sock:receive('*a')
+    local err 
     -- lol, if it returned successfully then that's bad!
     if not err then
         error('the connection closed unexpectedly')
     end
 
+	local data = TCP_sock:receive('*a')
     leftovers = leftovers..data
 end
 
@@ -24,60 +25,65 @@ function get_message()
         return nil
     end
 
-    local typ, gap, len = string.sub(leftovers,1,1), 0
+    local kind, gap, length = string.sub(leftovers,1,1), 0
     local byte = string.byte
-    local type_to_length = {G=1, H=1, N=1, E=4, P=121, O=121, I=2, Q=121, R=121,
-                            L=2, U=2}
+    local type_to_length = {G=1, H=1, N=1, E=4, P=121, O=121, I=2, Q=121, 
+						R=121, L=2, U=2}
 
-    if typ == 'J' then
+    if kind == 'J' then
         if string.len(leftovers) >= 4 then
-            len = byte(string.sub(leftovers,2,2)) * 65536 +
-            byte(string.sub(leftovers,3,3)) * 256 +
-            byte(string.sub(leftovers,4,4))
-            print('json message has length '.. len)
+            length = byte(string.sub(leftovers,2,2)) * 65536 +
+            	byte(string.sub(leftovers,3,3)) * BITS_256 +
+            	byte(string.sub(leftovers,4,4))
+            print('json message has length '.. length)
             gap = 3
         else
             return nil
         end
     else
-        len = type_to_length[typ] - 1
+        length = type_to_length[kind] - 1
     end
 
-    if len + gap + 1 > string.len(leftovers) then
+    if length + gap + 1 > string.len(leftovers) then
         return nil
     end
 
-    local ret = string.sub(leftovers,2+gap,len+gap+1)
-    leftovers = string.sub(leftovers,len+gap+2)
-    return typ, ret
+    local devolution = string.sub(leftovers,2+gap,length+gap+1)
+    leftovers = string.sub(leftovers,length+gap+2)
+
+    return kind, devolution
 end
 
-local lag_q = Queue()
+local lag_queue = Queue()
+
 function net_send(...)
     if not STONER_MODE then
         TCP_sock:send(...)
     else
-        lag_q:push({...})
+        lag_queue:push({...})
 
-        if lag_q:len() == 70 then
-            TCP_sock:send(unpack(lag_q:pop()))
+        if lag_queue:len() == 70 then
+            TCP_sock:send(unpack(lag_queue:pop()))
         end
     end
 end
 
+BITS_256 = 256
+
 function json_send(obj)
     local json = json.encode(obj)
-    local len = json:len()
+    local json_length = json:len()
     local floor = math.floor
     local char = string.char
-    local prefix = 'J'..char(floor(len/65536))..char(floor((len/256)%256))..
-        char(len%256)
+    local prefix = 'J' .. char(floor(json_length/65536)) .. 
+		char(floor((json_length/BITS_256)%BITS_256)) .. char(json_length%BITS_256)
+
     net_send(prefix..json)
 end
 
 function undo_stonermode()
-    while lag_q:len() ~= 0 do
-        TCP_sock:send(unpack(lag_q:pop()))
+    while lag_queue:len() ~= 0 do
+        TCP_sock:send(unpack(lag_queue:pop()))
     end
 end
 
@@ -98,7 +104,7 @@ local process_message = {
     Q = function(s) P1.gpanel_buffer = P1.gpanel_buffer..s end,
     R = function(s) P2.gpanel_buffer = P2.gpanel_buffer..s end,
     --connection_up_time counts 'E' messages, not seconds
-    E = function(s) net_send('F'..s) connection_up_time = connection_up_time +1 end,  
+    E = function(s) net_send('F'..s) connection_up_time = connection_up_time + 1 end,  
     J = function(s)
         local current_message = json.decode(s)
         this_frame_messages[#this_frame_messages+1] = current_message
@@ -144,29 +150,30 @@ function do_messages()
     flush_socket()
 
     while true do
-        local typ, data = get_message()
+        local kind, data = get_message()
 
         if typ then
-            if typ ~= 'I' and typ ~= 'U' then
-                print('Got message '..typ..' '..data)
+            if kind ~= 'I' and kind ~= 'U' then
+                print('Got message '.. kind ..' '..data)
             end
 
-            process_message[typ](data)
+            process_message[kind](data)
 
-            if typ == 'J' then
+            if kind == 'J' then
                 if this_frame_messages[#this_frame_messages].replay_of_match_so_far then
                     --print('***BREAKING do_messages because received a replay')
                     break  -- don't process any more messages this frame
-                   -- we need to initialize P1 and P2 before we do any I or U messages
+                   -- we need to initialize P1 and P2 before we do any 
+				   --I or U messages
                 end
             end
 
-            if typ == 'U' then
-                typ = 'in_buf'
+            if kind == 'U' then
+                kind = 'in_buf'
             end
 
-            if P1 and P1.mode and replay[P1.mode][typ] then
-                replay[P1.mode][typ]=replay[P1.mode][typ]..data
+            if P1 and P1.mode and replay[P1.mode][kind] then
+                replay[P1.mode][kind]=replay[P1.mode][kind]..data
             end
         else
             break
@@ -200,8 +207,10 @@ end
 
 function make_local_panels(stack, prev_panels)
     local ret = make_panels(stack.NCOLORS, prev_panels, stack)
-    stack.panel_buffer = stack.panel_buffer..ret
-    local replay = replay[P1.mode]
+
+    stack.panel_buffer = stack.panel_buffer .. ret
+    
+	local replay = replay[P1.mode]
 
     if replay and replay.pan_buf then
         replay.pan_buf = replay.pan_buf .. ret
@@ -210,7 +219,7 @@ end
 
 function make_local_gpanels(stack, prev_panels)
     ret = make_gpanels(stack.NCOLORS, prev_panels)
-    stack.gpanel_buffer = stack.gpanel_buffer..ret
+    stack.gpanel_buffer = stack.gpanel_buffer .. ret
     local replay = replay[P1.mode]
 
     if replay and replay.gpan_buf then
