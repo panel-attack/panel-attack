@@ -2,14 +2,14 @@ local TCP_sock = nil
 local leftovers = ''
 
 function flush_socket()
-    local err 
+    local success 
     -- lol, if it returned successfully then that's bad!
-    if not err then
+    if not success then
         error('the connection closed unexpectedly')
     end
 
 	local data = TCP_sock:receive('*a')
-    leftovers = leftovers..data
+    leftovers = leftovers .. data
 end
 
 function close_socket()
@@ -56,7 +56,7 @@ end
 
 local lag_queue = Queue()
 
-function net_send(...)
+function send_net(...)
     if not STONER_MODE then
         TCP_sock:send(...)
     else
@@ -70,7 +70,7 @@ end
 
 BITS_256 = 256
 
-function json_send(obj)
+function send_json(obj)
     local json = json.encode(obj)
     local json_length = json:len()
     local floor = math.floor
@@ -78,7 +78,7 @@ function json_send(obj)
     local prefix = 'J' .. char(floor(json_length/65536)) .. 
 		char(floor((json_length/BITS_256)%BITS_256)) .. char(json_length%BITS_256)
 
-    net_send(prefix..json)
+    send_net(prefix..json)
 end
 
 function undo_stonermode()
@@ -104,7 +104,7 @@ local process_message = {
     Q = function(s) P1.gpanel_buffer = P1.gpanel_buffer..s end,
     R = function(s) P2.gpanel_buffer = P2.gpanel_buffer..s end,
     --connection_up_time counts 'E' messages, not seconds
-    E = function(s) net_send('F'..s) connection_up_time = connection_up_time + 1 end,  
+    E = function(s) send_net('F'..s) connection_up_time = connection_up_time + 1 end,  
     J = function(s)
         local current_message = json.decode(s)
         this_frame_messages[#this_frame_messages+1] = current_message
@@ -124,7 +124,7 @@ local process_message = {
     end
 }
 
-function network_init(ip)
+function init_network(ip)
     TCP_sock = socket.tcp()
     TCP_sock:settimeout(7)
 
@@ -134,15 +134,15 @@ function network_init(ip)
 
     TCP_sock:settimeout(0)
     got_H = false
-    net_send('H'..VERSION)
+    send_net('H'..VERSION)
     assert(config.name and config.level and config.character and 
            config.save_replays_publicly)
 
-    json_send({name=config.name, level=config.level, character=config.character, 
+    send_json({name=config.name, level=config.level, character=config.character, 
               save_replays_publicly = config.save_replays_publicly})
 end
 
-function connection_is_ready()
+function check_connection()
     return got_H and #this_frame_messages > 0
 end
 
@@ -182,24 +182,24 @@ function do_messages()
 end
 
 function request_game(name)
-    json_send({game_request={sender=config.name, receiver=name}})
+    send_json({game_request={sender=config.name, receiver=name}})
 end
 
 function request_spectate(roomNr)
-    json_send({spectate_request={sender=config.name, roomNumber = roomNr}})
+    send_json({spectate_request={sender=config.name, roomNumber = roomNr}})
 end
 
-function ask_for_panels(prev_panels)
+function ask_panels(prev_panels)
     if TCP_sock then
-        net_send('P'..tostring(P1.NCOLORS)..prev_panels)
+        send_net('P'..tostring(P1.NCOLORS)..prev_panels)
     else
         make_local_panels(P1, prev_panels)
     end
 end
 
-function ask_for_gpanels(prev_panels)
+function ask_gpanels(prev_panels)
     if TCP_sock then
-        net_send('Q'..tostring(P1.NCOLORS)..prev_panels)
+        send_net('Q'..tostring(P1.NCOLORS)..prev_panels)
     else
         make_local_gpanels(P1, prev_panels)
     end
@@ -239,7 +239,7 @@ function Stack.send_controls(self)
     ((keys[k.right] or this_frame_keys[k.right]) and 1 or 0)+1]
 
     if TCP_sock then
-        net_send('I'..to_send)
+        send_net('I'..to_send)
     end
 
     local replay = replay[self.mode]
