@@ -3,12 +3,12 @@ require("queue")
 -- keyboard assignment vars
 keyboard = {
     {up="up", down="down", left="left", right="right",
-     swap1="z", swap2="x", raiseFaster1="c", raiseFaster2="v"}, -- 
+     swap1="z", swap2="x", raise_faster1="c", raise_faster2="v"},
     {},{},{}
 }
 
 key_names = {"up", "down", "left", "right", "swap1",
-             "swap2", "raiseFaster1", "raiseFaster2"} -- Alterado p raiseFaster
+             "swap2", "raise_faster1", "raise_faster2"} -- Alterado p raise_faster
 keys = {}
 this_frame_keys = {}
 this_frame_unicodes = {}
@@ -128,7 +128,7 @@ panels_to_next_speed = {
 -- exposing speed and difficulty directly, they expose levels.
 -- A level is a speed, a difficulty, and an amount of time
 -- that can be spent at the top of the screen without dying.
--- level also determines the number of colors
+-- level also determines the number of COLORS
 level_to_starting_speed    = {  1,  5,  9, 13, 17, 21, 25, 29, 27, 32}
 --level_to_difficulty        = {  1,  1,  2,  2,  2,  2,  2,  3,  3,  3}
 level_to_hang_time         = {121,100, 80, 65, 50, 40, 30, 20, 10,  1}
