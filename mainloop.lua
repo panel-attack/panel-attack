@@ -1,43 +1,32 @@
-local wait, resume = coroutine.yield, coroutine.resume
+local coroutine_wait = coroutine.yield
+local coroutine_resume = coroutine.resume
 
-local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
-  main_replay_endless, main_replay_puzzle, main_net_vs,
-  main_config_input, main_dumb_transition, main_select_puzz,
-  menu_up, menu_down, menu_left, menu_right, menu_enter, menu_escape,
-  main_replay_vs, main_local_vs_setup, main_local_vs, menu_key_func,
-  multi_func, normal_key, main_set_name, main_character_select, main_net_vs_lobby,
-  main_local_vs_yourself_setup, main_local_vs_yourself,
-  main_options, exit_options_menu
-
-VERSION = "023"
-local PLAYING = "playing"  -- room states
-local CHARACTERSELECT = "character select" --room states
+local versionString = "023"
 local currently_spectating = false
-connection_up_time = 0
-logged_in = 0
-connected_server_ip = nil
-my_user_id = nil
-leaderboard_report = nil
-replay_of_match_so_far = nil
-spectator_list = nil
-spectators_string = ""
-debug_mode_text = {[true]="On", [false]="Off"}  
+local connectionUptime = 0
+local isLoggedIn = false
+local connectedServerIp = nil
+local playerUsername = nil
+local leaderboard_report = nil
+local replay_of_match_so_far = nil
+local spectator_list = nil
+local debug_mode_text = {[true]="On", [false]="Off"}  
 
-function fmainloop()
+function load_game_resources()
   local func, arg = main_select_mode, nil
   replay = {}
   config = {character="lip", level=5, name="defaultname", master_volume=100, SFX_volume=100, music_volume=100, debug_mode=false, save_replays_publicly = "with my name", assets_dir=default_assets_dir}
   gprint("Reading config file", 300, 280)
-  wait()
+  coroutine_wait()
   read_conf_file() -- TODO: stop making new config files
   gprint("Reading replay file", 300, 280)
-  wait()
+  coroutine_wait()
   read_replay_file()
   gprint("Loading graphics...", 300, 280)
-  wait()
+  coroutine_wait()
   graphics_init() -- load images and set up stuff
   gprint("Loading sounds... (this takes a few seconds)", 300, 280)
-  wait()
+  coroutine_wait()
   sound_init()
   while true do
     leftover_time = 1/120
@@ -49,13 +38,14 @@ end
 
 -- Wrapper for doing something at 60hz
 -- The rest of the stuff happens at whatever rate is convenient
-function variable_step(f)
+function run_function_as_60hz(func)
+  local frequency = 1/60
   for i=1,4 do
-    if leftover_time >= 1/60 then
-      f()
+    if leftover_time >= frequency then
+      func()
       key_counts()
       this_frame_keys = {}
-      leftover_time = leftover_time - 1/60
+      leftover_time = leftover_time - frequency
     end
   end
 end
@@ -114,27 +104,28 @@ function menu_key_func(fixed, configurable, rept)
   end
 end
 
-menu_up = menu_key_func({"up"}, {"up"}, true)
-menu_down = menu_key_func({"down"}, {"down"}, true)
-menu_left = menu_key_func({"left"}, {"left"}, true)
-menu_right = menu_key_func({"right"}, {"right"}, true)
-menu_enter = menu_key_func({"return","kenter","z"}, {"swap1"}, false)
-menu_escape = menu_key_func({"escape","x"}, {"swap2"}, false)
+menu_key_up = menu_key_func({"up"}, {"up"}, true)
+menu_key_down = menu_key_func({"down"}, {"down"}, true)
+menu_key_left = menu_key_func({"left"}, {"left"}, true)
+menu_key_right = menu_key_func({"right"}, {"right"}, true)
+menu_key_enter = menu_key_func({"return","kenter","z"}, {"swap1"}, false)
+menu_key_escape = menu_key_func({"escape", "x"}, {"swap2"}, false)
 
 do
   local active_idx = 1
   function main_select_mode()
     love.audio.stop()
     close_socket()
-    logged_in = 0
-    connection_up_time = 0
-    connected_server_ip = ""
-    current_server_supports_ranking = false
-    match_type = ""
-    match_type_message = ""
-    local items = {{"1P endless", main_select_speed_99, {main_endless}},
+    local isLoggedIn = false
+    local connectionUptime = 0
+    local connectedServerIp = ""
+    local current_server_supports_ranking = false
+    local match_type = ""
+    local match_type_message = ""
+    local items = {
+        {"1P endless", select_speed_and_level_menu, {main_endless}},
         {"1P puzzle", main_select_puzz},
-        {"1P time attack", main_select_speed_99, {main_time_attack}},
+        {"1P time attack", select_speed_and_level_menu, {main_time_attack}},
         {"1P vs yourself", main_local_vs_yourself_setup},
         --{"2P vs online at burke.ro", main_net_vs_setup, {"burke.ro"}},
         {"2P vs online at Jon's server", main_net_vs_setup, {"18.188.43.50"}},
@@ -163,14 +154,14 @@ do
       end
       gprint(arrow, 300, 280)
       gprint(to_print, 300, 280)
-      wait()
-      if menu_up(k) then
+      coroutine_wait()
+      if menu_key_up(k) then
         active_idx = wrap(1, active_idx-1, #items)
-      elseif menu_down(k) then
+      elseif menu_key_down(k) then
         active_idx = wrap(1, active_idx+1, #items)
-      elseif menu_enter(k) then
+      elseif menu_key_enter(k) then
         return items[active_idx][2], items[active_idx][3]
-      elseif menu_escape(k) then
+      elseif menu_key_escape(k) then
         if active_idx == #items then
           return items[active_idx][2], items[active_idx][3]
         else
@@ -181,7 +172,7 @@ do
   end
 end
 
-function main_select_speed_99(next_func, ...)
+function select_speed_and_level_menu(next_func, ...)
   local difficulties = {"Easy", "Normal", "Hard"}
   local items = {{"Speed"},
                 {"Difficulty"},
@@ -204,18 +195,18 @@ function main_select_speed_99(next_func, ...)
     gprint(arrow, 300, 280)
     gprint(to_print, 300, 280)
     gprint(to_print2, 300, 280)
-    wait()
-    if menu_up(k) then
+    coroutine_wait()
+    if menu_key_up(k) then
       active_idx = wrap(1, active_idx-1, #items)
-    elseif menu_down(k) then
+    elseif menu_key_down(k) then
       active_idx = wrap(1, active_idx+1, #items)
-    elseif menu_right(k) then
+    elseif menu_key_right(k) then
       if active_idx==1 then speed = bound(1,speed+1,99)
       elseif active_idx==2 then difficulty = bound(1,difficulty+1,3) end
-    elseif menu_left(k) then
+    elseif menu_key_left(k) then
       if active_idx==1 then speed = bound(1,speed-1,99)
       elseif active_idx==2 then difficulty = bound(1,difficulty-1,3) end
-    elseif menu_enter(k) then
+    elseif menu_key_enter(k) then
       if active_idx == 3 then
         return items[active_idx][2], {speed, difficulty, ...}
       elseif active_idx == 4 then
@@ -223,7 +214,7 @@ function main_select_speed_99(next_func, ...)
       else
         active_idx = wrap(1, active_idx + 1, #items)
       end
-    elseif menu_escape(k) then
+    elseif menu_key_escape(k) then
       if active_idx == #items then
         return items[active_idx][2], items[active_idx][3]
       else
@@ -248,13 +239,13 @@ function main_endless(...)
   make_local_gpanels(P1, "000000")
   while true do
     P1:render()
-    wait()
+    coroutine_wait()
     if P1.game_over then
     -- TODO: proper game over.
       write_replay_file()
       return main_dumb_transition, {main_select_mode, "You scored "..P1.score}
     end
-    variable_step(function() P1:local_run() end)
+    run_function_as_60hz(function() P1:local_run() end)
     --groundhogday mode
     --[[if P1.CLOCK == 1001 then
       local prev_states = P1.prev_states
@@ -270,12 +261,12 @@ function main_time_attack(...)
   make_local_panels(P1, "000000")
   while true do
     P1:render()
-    wait()
+    coroutine_wait()
     if P1.game_over or P1.CLOCK == 120*60 then
     -- TODO: proper game over.
       return main_dumb_transition, {main_select_mode, "You scored "..P1.score}
     end
-    variable_step(function()
+    run_function_as_60hz(function()
       if (not P1.game_over)  and P1.CLOCK < 120 * 60 then
         P1:local_run() end end)
   end
@@ -299,7 +290,7 @@ function main_character_select()
         end
       end
       gprint("Waiting for room initialization...", 300, 280)
-      wait()
+      coroutine_wait()
       do_messages()
       retries = retries + 1
     end
@@ -313,7 +304,7 @@ function main_character_select()
           end
         end
         gprint("Lost connection.  Trying to rejoin...", 300, 280)
-        wait()
+        coroutine_wait()
         do_messages()
         retries = retries + 1
       end
@@ -633,7 +624,7 @@ function main_character_select()
           for i=1,30 do
             gprint(to_print,300, 280)
             do_messages()
-            wait()
+            coroutine_wait()
           end
           local game_start_timeout = 0
           while P1.panel_buffer == "" or P2.panel_buffer == ""
@@ -647,7 +638,7 @@ function main_character_select()
             print("P2.gpanel_buffer = "..P2.gpanel_buffer)
             gprint(to_print,300, 280)
             do_messages()
-            wait()
+            coroutine_wait()
             if game_start_timeout > 500 then
               return main_dumb_transition, {main_select_mode, 
                               "game-is-starting bug diagnostic version 2\n\ngame start timed out.\n Please screenshot this and\npost it in #panel-attack-bugs-features"
@@ -743,23 +734,23 @@ function main_character_select()
       gprint(match_type, 375, 15)
       gprint(match_type_message,100,85)
     end
-    wait()
+    coroutine_wait()
     if not currently_spectating then
-        if menu_up(k) then
+        if menu_key_up(k) then
           if not selected then move_cursor(up) end
-        elseif menu_down(k) then
+        elseif menu_key_down(k) then
           if not selected then move_cursor(down) end
-        elseif menu_left(k) then
+        elseif menu_key_left(k) then
           if selected and active_str == "level" then
             config.level = bound(1, config.level-1, 10)
           end
           if not selected then move_cursor(left) end
-        elseif menu_right(k) then
+        elseif menu_key_right(k) then
           if selected and active_str == "level" then
             config.level = bound(1, config.level+1, 10)
           end
           if not selected then move_cursor(right) end
-        elseif menu_enter(k) then
+        elseif menu_key_enter(k) then
           if selectable[active_str] then
             selected = not selected
           elseif active_str == "leave" then
@@ -778,7 +769,7 @@ function main_character_select()
             active_str = "ready"
             cursor = shallowcpy(name_to_xy["ready"])
           end
-        elseif menu_escape(k) then
+        elseif menu_key_escape(k) then
           if active_str == "leave" then
             if character_select_mode == "2p_net_vs" then
               do_leave()
@@ -797,7 +788,7 @@ function main_character_select()
         end
         prev_state = my_state
     else -- (we are are spectating)
-        if menu_escape(k) then
+        if menu_key_escape(k) then
           do_leave()
           return main_net_vs_lobby
         end
@@ -833,10 +824,10 @@ function main_net_vs_lobby()
   match_type_message = ""
   --attempt login
   read_user_id_file()
-  if not my_user_id then
-    my_user_id = "need a new user id"
+  if not playerUsername then
+    playerUsername = "need a new user id"
   end
-  json_send({login_request=true, user_id=my_user_id}) 
+  json_send({login_request=true, user_id=playerUsername}) 
   local login_status_message = "   Logging in..."
   local login_status_message_duration = 2
   local login_denied = false
@@ -844,14 +835,14 @@ function main_net_vs_lobby()
   local showing_leaderboard = false
   local lobby_menu_x = {[true]=100, [false]=300} --will be used to make room in case the leaderboard should be shown.
   while true do
-      if connection_up_time <= login_status_message_duration then
+      if connectionUptime <= login_status_message_duration then
         gprint(login_status_message, lobby_menu_x[showing_leaderboard], 160)
         for _,msg in ipairs(this_frame_messages) do
             if msg.login_successful then
               current_server_supports_ranking = true
-              logged_in = true
+              isLoggedIn = true
               if msg.new_user_id then
-                my_user_id = msg.new_user_id
+                playerUsername = msg.new_user_id
                 print("about to write user id file")
                 write_user_id_file()
                 login_status_message = "Welcome, new user: "..my_name
@@ -870,7 +861,7 @@ function main_net_vs_lobby()
                 return main_dumb_transition, {main_select_mode, "Error message received from the server:\n\n"..json.encode(msg),60,600}
             end
         end
-        if connection_up_time == 2 and not current_server_supports_ranking then
+        if connectionUptime == 2 and not current_server_supports_ranking then
                 login_status_message = "Login for ranked matches timed out.\nThis server probably doesn't support ranking.\n\nYou may continue unranked."
                 login_status_message_duration = 7
         end
@@ -966,8 +957,8 @@ function main_net_vs_lobby()
       gprint(leaderboard_string, 500, 160)
     end
     
-    wait()
-    if menu_up(k) then
+    coroutine_wait()
+    if menu_key_up(k) then
       if showing_leaderboard then
         if leaderboard_first_idx_to_show>1 then
           leaderboard_first_idx_to_show = leaderboard_first_idx_to_show - 1
@@ -977,7 +968,7 @@ function main_net_vs_lobby()
       else
         active_idx = wrap(1, active_idx-1, #items)
       end
-    elseif menu_down(k) then
+    elseif menu_key_down(k) then
       if showing_leaderboard then
         if leaderboard_last_idx_to_show < #leaderboard_report then
           leaderboard_first_idx_to_show = leaderboard_first_idx_to_show + 1
@@ -987,7 +978,7 @@ function main_net_vs_lobby()
       else
         active_idx = wrap(1, active_idx+1, #items)
       end
-    elseif menu_enter(k) then
+    elseif menu_key_enter(k) then
       spectator_list = {}
       spectators_string = ""
       if active_idx == #items then
@@ -1011,7 +1002,7 @@ function main_net_vs_lobby()
         room_number_last_spectated = items[active_idx].roomNumber
         request_spectate(items[active_idx].roomNumber)
       end
-    elseif menu_escape(k) then
+    elseif menu_key_escape(k) then
       if active_idx == #items then
         return main_select_mode
       elseif showing_leaderboard then
@@ -1079,37 +1070,37 @@ function main_net_vs_setup(ip)
   P1, P1_level, P2_level, got_opponent = nil
   P2 = {panel_buffer="", gpanel_buffer=""}
   gprint("Setting up connection...", 300, 280)
-  wait()
+  coroutine_wait()
   network_init(ip)
   local timeout_counter = 0
   while not connection_is_ready() do
     gprint("Connecting...", 300, 280)
-    wait()
+    coroutine_wait()
     do_messages()
   end
-  connected_server_ip = ip
-  logged_in = false
+  connectedServerIp = ip
+  isLoggedIn = false
   if true then return main_net_vs_lobby end
   local my_level, to_print, fake_P2 = 5, nil, P2
   local k = K[1]
   while got_opponent == nil do
     gprint("Waiting for opponent...", 300, 280)
-    wait()
+    coroutine_wait()
     do_messages()
   end
   while P1_level == nil or P2_level == nil do
     to_print = (P1_level and "L" or"Choose l") .. "evel: "..my_level..
         "\nOpponent's level: "..(P2_level or "???")
     gprint(to_print, 300, 280)
-    wait()
+    coroutine_wait()
     do_messages()
     if P1_level then
-    elseif menu_enter(k) then
+    elseif menu_key_enter(k) then
       P1_level = my_level
       net_send("L"..(({[10]=0})[my_level] or my_level))
-    elseif menu_up(k) or menu_right(k) then
+    elseif menu_key_up(k) or menu_key_right(k) then
       my_level = bound(1,my_level+1,10)
-    elseif menu_down(k) or menu_left(k) then
+    elseif menu_key_down(k) or menu_key_left(k) then
       my_level = bound(1,my_level-1,10)
     end
   end
@@ -1139,13 +1130,13 @@ function main_net_vs_setup(ip)
   for i=1,30 do
     gprint(to_print,300, 280)
     do_messages()
-    wait()
+    coroutine_wait()
   end
   while P1.panel_buffer == "" or P2.panel_buffer == ""
     or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
     gprint(to_print,300, 280)
     do_messages()
-    wait()
+    coroutine_wait()
   end
   P1:starting_state()
   P2:starting_state()
@@ -1190,7 +1181,7 @@ function main_net_vs()
     if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
       P1:render()
       P2:render()
-      wait()
+      coroutine_wait()
       if currently_spectating and this_frame_keys["escape"] then
         print("spectator pressed escape during a game")
         my_win_count = 0
@@ -1211,7 +1202,7 @@ function main_net_vs()
         end
       end
     else
-      variable_step(function()
+      run_function_as_60hz(function()
         if not P1.game_over then
           if currently_spectating then
               P1:foreign_run()
@@ -1243,7 +1234,7 @@ function main_net_vs()
       json_send({game_over=true, outcome=outcome_claim})
       local now = os.date("*t",to_UTC(os.time()))
       local sep = "/"
-      local path = "replays"..sep.."v"..VERSION..sep..string.format("%04d"..sep.."%02d"..sep.."%02d", now.year, now.month, now.day)
+      local path = "replays"..sep.."v"..versionString..sep..string.format("%04d"..sep.."%02d"..sep.."%02d", now.year, now.month, now.day)
       local rep_a_name, rep_b_name = my_name, op_name
       --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
       if rep_b_name <  rep_a_name then
@@ -1251,7 +1242,7 @@ function main_net_vs()
       else
         path = path..sep..rep_a_name.."-vs-"..rep_b_name
       end
-      local filename = "v"..VERSION.."-"..string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec).."-"..rep_a_name.."-L"..P1.level.."-vs-"..rep_b_name.."-L"..P2.level
+      local filename = "v"..versionString.."-"..string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec).."-"..rep_a_name.."-L"..P1.level.."-vs-"..rep_b_name.."-L"..P2.level
       if match_type and match_type ~= "" then
         filename = filename.."-"..match_type
       end
@@ -1283,22 +1274,22 @@ main_local_vs_setup = multi_func(function()
     to_print = (chosen[1] and "" or "Choose ") .. "P1 level: "..maybe[1].."\n"
         ..(chosen[2] and "" or "Choose ") .. "P2 level: "..(maybe[2])
     gprint(to_print, 300, 280)
-    wait()
+    coroutine_wait()
     for i=1,2 do
       local k=K[i]
-      if menu_escape(k) then
+      if menu_key_escape(k) then
         if chosen[i] then
           chosen[i] = nil
         else
           return main_select_mode
         end
-      elseif menu_enter(k) then
+      elseif menu_key_enter(k) then
         chosen[i] = maybe[i]
-      elseif menu_up(k) or menu_right(k) then
+      elseif menu_key_up(k) or menu_key_right(k) then
         if not chosen[i] then
           maybe[i] = bound(1,maybe[i]+1,10)
         end
-      elseif menu_down(k) or menu_left(k) then
+      elseif menu_key_down(k) or menu_key_left(k) then
         if not chosen[i] then
           maybe[i] = bound(1,maybe[i]-1,10)
         end
@@ -1324,7 +1315,7 @@ main_local_vs_setup = multi_func(function()
   make_local_gpanels(P2, "000000")
   for i=1,30 do
     gprint(to_print,300, 280)
-    wait()
+    coroutine_wait()
   end
   P1:starting_state()
   P2:starting_state()
@@ -1338,8 +1329,8 @@ function main_local_vs()
   while true do
     P1:render()
     P2:render()
-    wait()
-    variable_step(function()
+    coroutine_wait()
+    run_function_as_60hz(function()
         if not P1.game_over and not P2.game_over then
           P1:local_run()
           P2:local_run()
@@ -1372,8 +1363,8 @@ function main_local_vs_yourself()
   local end_text = nil
   while true do
     P1:render()
-    wait()
-    variable_step(function()
+    coroutine_wait()
+    run_function_as_60hz(function()
         if not P1.game_over then
           P1:local_run()
         else 
@@ -1436,7 +1427,7 @@ function main_replay_vs()
       end
       gprint(str, 350, 400)
     end
-    wait()
+    coroutine_wait()
     if this_frame_keys["escape"] then
       return main_select_mode
     end
@@ -1491,7 +1482,7 @@ function main_replay_endless()
   local run = true
   while true do
     P1:render()
-    wait()
+    coroutine_wait()
     if this_frame_keys["escape"] then
       return main_select_mode
     end
@@ -1532,7 +1523,7 @@ function main_replay_puzzle()
       end
       gprint(str, 350, 400)
     end
-    wait()
+    coroutine_wait()
     if this_frame_keys["escape"] then
       return main_select_mode
     end
@@ -1571,7 +1562,7 @@ function make_main_puzzle(puzzles)
     replay.in_buf = ""
     while true do
       P1:render()
-      wait()
+      coroutine_wait()
       if P1.n_active_panels == 0 and
           P1.prev_active_panels == 0 then
         if P1:puzzle_done() then
@@ -1587,7 +1578,7 @@ function make_main_puzzle(puzzles)
           return main_dumb_transition, {main_select_puzz, "You lose :("}
         end
       end
-      variable_step(function() 
+      run_function_as_60hz(function() 
         if P1.n_active_panels ~= 0 or P1.prev_active_panels ~= 0 or
           P1.puzzle_moves ~= 0 then P1:local_run() end end)
     end
@@ -1617,14 +1608,14 @@ do
       end
       gprint(arrow, 300, 280)
       gprint(to_print, 300, 280)
-      wait()
-      if menu_up(k) then
+      coroutine_wait()
+      if menu_key_up(k) then
         active_idx = wrap(1, active_idx-1, #items)
-      elseif menu_down(k) then
+      elseif menu_key_down(k) then
         active_idx = wrap(1, active_idx+1, #items)
-      elseif menu_enter(k) then
+      elseif menu_key_enter(k) then
         return items[active_idx][2], items[active_idx][3]
-      elseif menu_escape(k) then
+      elseif menu_key_escape(k) then
         if active_idx == #items then
           return items[active_idx][2], items[active_idx][3]
         else
@@ -1669,7 +1660,7 @@ function main_config_input()
       get_items()
       items[idx][2] = "___"
       print_stuff()
-      wait()
+      coroutine_wait()
       for key,val in pairs(this_frame_keys) do
         if val then
           k[key_names[idx]] = key
@@ -1681,18 +1672,18 @@ function main_config_input()
   while true do
     get_items()
     print_stuff()
-    wait()
-    if menu_up(K[1]) then
+    coroutine_wait()
+    if menu_key_up(K[1]) then
       active_idx = wrap(1, active_idx-1, #items)
-    elseif menu_down(K[1]) then
+    elseif menu_key_down(K[1]) then
       active_idx = wrap(1, active_idx+1, #items)
-    elseif menu_left(K[1]) then
+    elseif menu_key_left(K[1]) then
       active_player = wrap(1, active_player-1, 2)
       k=K[active_player]
-    elseif menu_right(K[1]) then
+    elseif menu_key_right(K[1]) then
       active_player = wrap(1, active_player+1, 2)
       k=K[active_player]
-    elseif menu_enter(K[1]) then
+    elseif menu_key_enter(K[1]) then
       if active_idx <= #key_names then
         set_key(active_idx)
         write_key_file()
@@ -1704,7 +1695,7 @@ function main_config_input()
       else
         return items[active_idx][3], items[active_idx][4]
       end
-    elseif menu_escape(K[1]) then
+    elseif menu_key_escape(K[1]) then
       if active_idx == #items then
         return items[active_idx][3], items[active_idx][4]
       else
@@ -1826,16 +1817,16 @@ function main_options()
   while true do
     --get_items()
     print_stuff()
-    wait()
-    if menu_up(K[1]) and not selected then
+    coroutine_wait()
+    if menu_key_up(K[1]) and not selected then
       active_idx = wrap(1, active_idx-1, #items)
-    elseif menu_down(K[1]) and not selected then
+    elseif menu_key_down(K[1]) and not selected then
       active_idx = wrap(1, active_idx+1, #items)
-    elseif menu_left(K[1]) and (selected or not items[active_idx][7]) then --or not selectable
+    elseif menu_key_left(K[1]) and (selected or not items[active_idx][7]) then --or not selectable
       adjust_left()
-    elseif menu_right(K[1]) and (selected or not items[active_idx][7]) then --or not selectable
+    elseif menu_key_right(K[1]) and (selected or not items[active_idx][7]) then --or not selectable
       adjust_right()
-    elseif menu_enter(K[1]) then
+    elseif menu_key_enter(K[1]) then
       if items[active_idx][7] then --is selectable
         selected = not selected
         if not selected then
@@ -1849,7 +1840,7 @@ function main_options()
       elseif active_idx == #items then
         return exit_options_menu
       end
-    elseif menu_escape(K[1]) then
+    elseif menu_key_escape(K[1]) then
       if selected then
         selected = not selected
         deselected_this_frame = true
@@ -1918,15 +1909,15 @@ function main_options()
         if not love.filesystem.isDirectory("assets/Example folder structure")then
           print("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.")
           gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
-          wait()
+          coroutine_wait()
           recursive_copy("assets/"..default_assets_dir, "assets/Example folder structure")
         end
         local custom_graphics_readme = read_txt_file("Custom Graphics Readme.txt")
         while true do
           gprint(custom_graphics_readme, 100, 150)      
           do_menu_function = false
-          wait()
-          if menu_escape(K[1]) or menu_enter(K[1]) then
+          coroutine_wait()
+          if menu_key_escape(K[1]) or menu_key_enter(K[1]) then
             break;
           end
         end
@@ -1935,15 +1926,15 @@ function main_options()
         if not love.filesystem.isDirectory("sounds/Example folder structure")then
           print("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.")
           gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
-          wait()
+          coroutine_wait()
           recursive_copy("sounds/"..default_sounds_dir, "sounds/Example folder structure")
         end
         local custom_sounds_readme = read_txt_file("Custom Sounds Readme.txt")
         while true do
           gprint(custom_sounds_readme, 30, 150)      
           do_menu_function = false
-          wait()
-          if menu_escape(K[1]) or menu_enter(K[1]) then
+          coroutine_wait()
+          if menu_key_escape(K[1]) or menu_key_enter(K[1]) then
             break;
           end
         end
@@ -1965,17 +1956,17 @@ end
 
 function exit_options_menu()
   gprint("writing config to file...", 300,280)
-  wait()
+  coroutine_wait()
   write_conf_file()
   if config.assets_dir ~= assets_dir_before_options_menu then
     gprint("reloading graphics...", 300, 305)
-    wait()
+    coroutine_wait()
     graphics_init()
   end
   assets_dir_before_options_menu = nil
   if config.sounds_dir ~= sounds_dir_before_options_menu then
     gprint("reloading sounds...", 300, 305)
-    wait()
+    coroutine_wait()
     sound_init()
   end
   sounds_dir_before_options_menu = nil
@@ -1987,7 +1978,7 @@ function main_set_name()
   while true do
     local to_print = "Enter your name:\n"..name
     gprint(to_print, 300, 280)
-    wait()
+    coroutine_wait()
     if this_frame_keys["escape"] then
       return main_select_mode
     end
@@ -2049,8 +2040,8 @@ function main_dumb_transition(next_func, text, timemin, timemax)
       -- --TODO: anything else we should be listening for during main_dumb_transition?
     -- end
     gprint(text, 300, 280)
-    wait()
-    if t >= timemin and (t >=timemax or (menu_enter(k) or menu_escape(k))) then
+    coroutine_wait()
+    if t >= timemin and (t >=timemax or (menu_key_enter(k) or menu_key_escape(k))) then
       return next_func
     end
     t = t + 1
@@ -2064,7 +2055,7 @@ function write_char_sel_settings_to_file()
   if not currently_spectating and my_state then
     gprint("saving character select settings...")
     if not closing then
-      wait()
+      coroutine_wait()
     end
     config.character = my_state.character
     config.level = my_state.level
