@@ -117,9 +117,11 @@ function start_match(a, b)
 		end
 	end
 	
-	local msg = {match_start = true, ranked = false,
-	player_settings = {character = a.character, level = a.level, player_number = a.player_number},
-	opponent_settings = {character = b.character, level = b.level, player_number = b.player_number}}
+	local msg = {
+    	match_start = true, ranked = false,
+		player_settings = {character = a.character, level = a.level, player_number = a.player_number},
+    	opponent_settings = {character = b.character, level = b.level, player_number = b.player_number}
+  	}
 
 	local room_is_ranked, reasons = a.room:rating_adjustment_approved()
 	if room_is_ranked then
@@ -130,6 +132,7 @@ function start_match(a, b)
 		else
 			msg.player_settings.rating = DEFAULT_RATING
 		end
+		
 		if leaderboard.players[b.user_id] then
 			msg.opponent_settings.rating = round(leaderboard.players[b.user_id].rating)
 		else
@@ -265,13 +268,13 @@ function Room.character_select(self)
 		}
 
 		new_spectator_connection:send(msg)
-		msg = {spectators=self:spectator_names()}
+		msg = {spectators=self:add_spectator_names()}
 		print("sending spectator list: "..json.encode(msg))
 		self:send(msg)
 		lobby_changed = true
 	end
 	
-	function Room.spectator_names(self) 
+	function Room.add_spectator_names(self) 
 		local spectator_list = {}
 
 		for k,v in pairs(self.spectators) do
@@ -292,7 +295,7 @@ function Room.character_select(self)
 			end
 		end
 
-		msg = {spectators=self:spectator_names()}
+		msg = {spectators=self:add_spectator_names()}
 		print("sending spectator list: "..json.encode(msg))
 		self:send(msg)
 	end
@@ -327,7 +330,7 @@ function Room.character_select(self)
 		self:send_to_spectators(msg)
 	end
 	
-	function roomNumberToRoom(roomNr)
+	function room_number_to_room(roomNr)
 		for k,v in pairs(rooms) do
 			if rooms[k].roomNumber and rooms[k].roomNumber == roomNr then
 				return v
@@ -994,7 +997,7 @@ function Room.character_select(self)
 				elseif message.leaderboard_request then
 					self:send({leaderboard_report=leaderboard:get_report(self)})
 				elseif message.spectate_request then
-					local requestedRoom = roomNumberToRoom(message.spectate_request.roomNumber)
+					local requestedRoom = room_number_to_room(message.spectate_request.roomNumber)
 
 					if self.state ~= "lobby" then
 						if requestedRoom then
