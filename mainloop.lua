@@ -82,7 +82,7 @@ function menu_key_func(fixed, configurable, rept)
     query = repeating_key
   end
   for i=1,#fixed do
-    menu_reserved_keys[#menu_reserved_keys+1] = fixed[i]
+    menu_reserved_keys[#menu_reserved_keys + 1] = fixed[i]
   end
   return function(k)
     local res = false
@@ -94,7 +94,7 @@ function menu_key_func(fixed, configurable, rept)
       for i=1,#fixed do
         res = res or query(fixed[i])
       end
-      for i=1,#configurable do
+      for i=1, #configurable do
         local keyname = k[configurable[i]]
         res = res or query(keyname) and
             not menu_reserved_keys[keyname]
@@ -104,12 +104,43 @@ function menu_key_func(fixed, configurable, rept)
   end
 end
 
-menu_key_up = menu_key_func({"up"}, {"up"}, true)
-menu_key_down = menu_key_func({"down"}, {"down"}, true)
-menu_key_left = menu_key_func({"left"}, {"left"}, true)
-menu_key_right = menu_key_func({"right"}, {"right"}, true)
-menu_key_enter = menu_key_func({"return","kenter","z"}, {"swap1"}, false)
-menu_key_escape = menu_key_func({"escape", "x"}, {"swap2"}, false)
+menu_key_up = menu_key_func(
+    {"up"},
+    {"up"},
+    true
+  )
+menu_key_down = menu_key_func(
+    {"down"},
+    {"down"},
+    true
+  )
+menu_key_left = menu_key_func(
+    {"left"},
+    {"left"},
+    true
+  )
+menu_key_right = menu_key_func(
+    {"right"},
+    {"right"},
+    true
+  )
+menu_key_enter = menu_key_func(
+    {
+      "return",
+      "kenter",
+      "z"
+    },
+    {"swap1"},
+    false
+  )
+menu_key_escape = menu_key_func(
+    {
+      "escape",
+      "x"
+    },
+    {"swap2"},
+    false
+  )
 
 do
   local active_idx = 1
@@ -119,53 +150,98 @@ do
     local isLoggedIn = false
     local connectionUptime = 0
     local connectedServerIp = ""
-    local current_server_supports_ranking = false
-    local match_type = ""
-    local match_type_message = ""
-    local items = {
-        {"1P endless", select_speed_and_level_menu, {main_endless}},
-        {"1P puzzle", main_select_puzz},
-        {"1P time attack", select_speed_and_level_menu, {main_time_attack}},
-        {"1P vs yourself", main_local_vs_yourself_setup},
+    local serverSupportsRanking = false
+    local matchType = ""
+    local matchTypeMessage = ""
+    local menu_options = {
+        {
+          "1P endless",
+          select_speed_and_level_menu,
+          {main_endless}
+        },
+        {
+          "1P puzzle",
+          main_select_puzz
+        },
+        {
+          "1P time attack",
+          select_speed_and_level_menu,
+          {main_time_attack}
+        },
+        {
+          "1P vs yourself",
+          main_local_vs_yourself_setup
+        },
         --{"2P vs online at burke.ro", main_net_vs_setup, {"burke.ro"}},
-        {"2P vs online at Jon's server", main_net_vs_setup, {"18.188.43.50"}},
+        {
+          "2P vs online at Jon's server",
+          main_net_vs_setup,
+          {"18.188.43.50"}
+        },
         --{"2P vs online at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
         --{"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
-        {"2P vs local game", main_local_vs_setup},
-        {"Replay of 1P endless", main_replay_endless},
-        {"Replay of 1P puzzle", main_replay_puzzle},
-        {"Replay of 2P vs", main_replay_vs},
-        {"Configure input", main_config_input},
-        {"Set name", main_set_name},
-        {"Options", main_options},
-        {"Fullscreen (LAlt+Enter)", fullscreen},
-        {"Quit", os.exit}}
+        {
+          "2P vs local game",
+          main_local_vs_setup
+        },
+        {
+          "Replay of 1P endless",
+          main_replay_endless
+        },
+        {
+          "Replay of 1P puzzle",
+          main_replay_puzzle
+        },
+        {
+          "Replay of 2P vs",
+          main_replay_vs
+        },
+        {
+          "Configure input",
+          main_config_input
+        },
+        {
+          "Set name",
+          main_set_name
+        },
+        {
+          "Options",
+          main_options
+        },
+        {
+          "Fullscreen (LAlt+Enter)",
+          fullscreen
+        },
+        {
+          "Quit",os.exit
+        }
+    }
     local k = K[1]
     while true do
       local to_print = ""
       local arrow = ""
-      for i=1,#items do
+      for i=1,#menu_options do
         if active_idx == i then
           arrow = arrow .. ">"
         else
           arrow = arrow .. "\n"
         end
-        to_print = to_print .. "   " .. items[i][1] .. "\n"
+        to_print = to_print .. "   " .. menu_options[i][1] .. "\n"
       end
       gprint(arrow, 300, 280)
       gprint(to_print, 300, 280)
       coroutine_wait()
       if menu_key_up(k) then
-        active_idx = wrap(1, active_idx-1, #items)
+        active_idx = wrap(1, active_idx-1, #menu_options)
       elseif menu_key_down(k) then
-        active_idx = wrap(1, active_idx+1, #items)
+        active_idx = wrap(1, active_idx+1, #menu_options)
       elseif menu_key_enter(k) then
-        return items[active_idx][2], items[active_idx][3]
+        return menu_options[active_idx][2], menu_options[active_idx][3]
       elseif menu_key_escape(k) then
-        if active_idx == #items then
-          return items[active_idx][2], items[active_idx][3]
+        if active_idx == #menu_options then
+          return menu_options[active_idx][2], menu_options[active_idx][3]
         else
-          active_idx = #items
+          active_idx = #menu_options
         end
       end
     end
@@ -173,22 +249,34 @@ do
 end
 
 function select_speed_and_level_menu(next_func, ...)
-  local difficulties = {"Easy", "Normal", "Hard"}
-  local items = {{"Speed"},
-                {"Difficulty"},
-                {"Go!", next_func},
-                {"Back", main_select_mode}}
-  local speed, difficulty, active_idx = 1,1,1
+  local difficulties = {
+    "Easy",
+    "Normal",
+    "Hard"
+  }
+  local menu_options = {
+    {"Speed"},
+    {"Difficulty"},
+    {
+      "Go!",
+      next_func
+    },
+    {
+      "Back",
+      main_select_mode
+    }
+  }
+  local speed, difficulty, active_idx = 1, 1, 1
   local k = K[1]
   while true do
     local to_print, to_print2, arrow = "", "", ""
-    for i=1,#items do
+    for i=1, #menu_options do
       if active_idx == i then
         arrow = arrow .. ">"
       else
         arrow = arrow .. "\n"
       end
-      to_print = to_print .. "   " .. items[i][1] .. "\n"
+      to_print = to_print .. "   " .. menu_options[i][1] .. "\n"
     end
     to_print2 = "                  " .. speed .. "\n                  "
       .. difficulties[difficulty]
@@ -197,28 +285,28 @@ function select_speed_and_level_menu(next_func, ...)
     gprint(to_print2, 300, 280)
     coroutine_wait()
     if menu_key_up(k) then
-      active_idx = wrap(1, active_idx-1, #items)
+      active_idx = wrap(1, active_idx-1, #menu_options)
     elseif menu_key_down(k) then
-      active_idx = wrap(1, active_idx+1, #items)
+      active_idx = wrap(1, active_idx+1, #menu_options)
     elseif menu_key_right(k) then
-      if active_idx==1 then speed = bound(1,speed+1,99)
-      elseif active_idx==2 then difficulty = bound(1,difficulty+1,3) end
+      if active_idx==1 then speed = bound(1,speed+1, 99)
+      elseif active_idx==2 then difficulty = bound(1, difficulty+1, 3) end
     elseif menu_key_left(k) then
       if active_idx==1 then speed = bound(1,speed-1,99)
       elseif active_idx==2 then difficulty = bound(1,difficulty-1,3) end
     elseif menu_key_enter(k) then
       if active_idx == 3 then
-        return items[active_idx][2], {speed, difficulty, ...}
+        return menu_options[active_idx][2], {speed, difficulty, ...}
       elseif active_idx == 4 then
-        return items[active_idx][2], items[active_idx][3]
+        return menu_options[active_idx][2], menu_options[active_idx][3]
       else
-        active_idx = wrap(1, active_idx + 1, #items)
+        active_idx = wrap(1, active_idx + 1, #menu_options)
       end
     elseif menu_key_escape(k) then
-      if active_idx == #items then
-        return items[active_idx][2], items[active_idx][3]
+      if active_idx == #menu_options then
+        return menu_options[active_idx][2], menu_options[active_idx][3]
       else
-        active_idx = #items
+        active_idx = #menu_options
       end
     end
   end
@@ -227,7 +315,7 @@ end
 function main_endless(...)
   consuming_timesteps = true
   replay.endless = {}
-  local replay=replay.endless
+  local replay = replay.endless
   replay.pan_buf = ""
   replay.in_buf = ""
   replay.gpan_buf = ""
@@ -243,7 +331,7 @@ function main_endless(...)
     if P1.game_over then
     -- TODO: proper game over.
       write_replay_file()
-      return main_dumb_transition, {main_select_mode, "You scored "..P1.score}
+      return main_dumb_transition, {main_select_mode, "You scored " .. P1.score}
     end
     run_function_as_60hz(function() P1:local_run() end)
     --groundhogday mode
@@ -262,12 +350,12 @@ function main_time_attack(...)
   while true do
     P1:render()
     coroutine_wait()
-    if P1.game_over or P1.CLOCK == 120*60 then
+    if P1.game_over or P1.CLOCK == 120 * 60 then
     -- TODO: proper game over.
       return main_dumb_transition, {main_select_mode, "You scored "..P1.score}
     end
     run_function_as_60hz(function()
-      if (not P1.game_over)  and P1.CLOCK < 120 * 60 then
+      if (not P1.game_over) and P1.CLOCK < 120 * 60 then
         P1:local_run() end end)
   end
 end
@@ -284,9 +372,9 @@ function main_character_select()
     local opponent_connected = false
     local retries, retry_limit = 0, 500
     while not global_initialize_room_msg and retries < retry_limit do
-      for _,msg in ipairs(this_frame_messages) do
-        if msg.create_room or msg.character_select or msg.spectate_request_granted then
-          global_initialize_room_msg = msg
+      for _, message in ipairs(this_frame_messages) do
+        if message.create_room or message.character_select or message.spectate_request_granted then
+          global_initialize_room_msg = message
         end
       end
       gprint("Waiting for room initialization...", 300, 280)
@@ -298,9 +386,9 @@ function main_character_select()
       request_spectate(room_number_last_spectated)
       retries = 0
       while not global_initialize_room_msg and retries < retry_limit do
-        for _,msg in ipairs(this_frame_messages) do
-          if msg.create_room or msg.character_select or msg.spectate_request_granted then
-            global_initialize_room_msg = msg
+        for _, message in ipairs(this_frame_messages) do
+          if message.create_room or message.character_select or message.spectate_request_granted then
+            global_initialize_room_msg = message
           end
         end
         gprint("Lost connection.  Trying to rejoin...", 300, 280)
@@ -312,88 +400,219 @@ function main_character_select()
     if not global_initialize_room_msg then
       return main_dumb_transition, {main_select_mode, "Failed to connect.\n\nReturning to main menu", 60, 300}
     end
-    msg = global_initialize_room_msg
+    message = global_initialize_room_msg
     global_initialize_room_msg = nil
-    if msg.ratings then
-        global_current_room_ratings = msg.ratings
+    if message.ratings then
+        global_current_room_ratings = message.ratings
     end
-    global_my_state = msg.a_menu_state
-    global_op_state = msg.b_menu_state
-    if msg.your_player_number then
-      my_player_number = msg.your_player_number
+    global_my_state = message.a_menu_state
+    global_op_state = message.b_menu_state
+    if message.your_player_number then
+      my_player_number = message.your_player_number
     elseif currently_spectating then
       my_player_number = 1
     elseif my_player_number and my_player_number ~= 0 then
-      print("We assumed our player number is still "..my_player_number)
+      print("We assumed our player number is still " .. my_player_number)
     else
       error("We never heard from the server as to what player number we are")
       print("Error: The server never told us our player number.  Assuming it is 1")
       my_player_number = 1
     end
-    if msg.op_player_number then
-      op_player_number = msg.op_player_number or op_player_number
+    if message.op_player_number then
+      op_player_number = message.op_player_number or op_player_number
     elseif currently_spectating then
       op_player_number = 2
     elseif op_player_number and op_player_number ~= 0 then
-      print("We assumed op player number is still "..op_player_number)
+      print("We assumed op player number is still " .. op_player_number)
     else
       error("We never heard from the server as to what player number we are")
       print("Error: The server never told us our player number.  Assuming it is 2")
       op_player_number = 2
     end
-    if msg.win_counts then
-      update_win_counts(msg.win_counts)
+    if message.win_counts then
+      update_win_counts(message.win_counts)
     end
-    if msg.replay_of_match_so_far then
-      replay_of_match_so_far = msg.replay_of_match_so_far
+    if message.replay_of_match_so_far then
+      replay_of_match_so_far = message.replay_of_match_so_far
     end
-    if msg.ranked then
-      match_type = "Ranked"
+    if message.ranked then
+      matchType = "Ranked"
       match_type_message = ""
     else 
-      match_type = "Casual"
+      matchType = "Casual"
     end
     if currently_spectating then
       P1 = {panel_buffer="", gpanel_buffer=""}
       print("we reset P1 buffers at start of main_character_select()")
     end
-    P2 = {panel_buffer="", gpanel_buffer=""}
+    P2 = {
+      panel_buffer="",
+      gpanel_buffer=""
+    }
     print("we reset P2 buffers at start of main_character_select()")
-    print("current_server_supports_ranking: "..tostring(current_server_supports_ranking))
-    local cursor,op_cursor,X,Y
-    if current_server_supports_ranking then
-      map = {{"match type desired", "match type desired", "match type desired", "match type desired", "level", "level", "ready"},
-             {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
-             {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
-             {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
-             {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
+    print("serverSupportsRanking: "..tostring(serverSupportsRanking))
+    local cursor,op_cursor, coordenate_x, coordenate_y
+    if serverSupportsRanking then
+      map = {
+        {
+          "match type desired",
+          "match type desired",
+          "match type desired",
+          "match type desired",
+          "level",
+          "level",
+          "ready"
+        },
+        {
+          "random",
+          "windy",
+          "sherbet",
+          "thiana",
+          "ruby",
+          "lip",
+          "elias"
+        },
+        {
+          "flare",
+          "neris",
+          "seren",
+          "phoenix",
+          "dragon",
+          "thanatos",
+          "cordelia"
+        },
+        {
+          "lakitu",
+          "bumpty",
+          "poochy",
+          "wiggler",
+          "froggy",
+          "blargg",
+          "lungefish"
+        },
+        {
+          "raphael",
+          "yoshi",
+          "hookbill",
+          "navalpiranha",
+          "kamek",
+          "bowser",
+          "leave"
+        }
+      }
     else
-      map = {{"level", "level", "level", "level", "level", "level", "ready"},
-             {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
-             {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
-             {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
-             {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
+      map = {
+        {
+          "level",
+          "level",
+          "level",
+          "level", 
+          "level",
+          "level",
+          "ready"
+        },
+        {
+          "random",
+          "windy",
+          "sherbet",
+          "thiana",
+          "ruby",
+          "lip",
+          "elias"
+        },
+        {
+          "flare",
+          "neris",
+          "seren",
+          "phoenix",
+          "dragon",
+          "thanatos",
+          "cordelia"
+        },
+        {
+          "lakitu",
+          "bumpty",
+          "poochy",
+          "wiggler",
+          "froggy",
+          "blargg",
+          "lungefish"
+        },
+        {
+          "raphael",
+          "yoshi",
+          "hookbill",
+          "navalpiranha",
+          "kamek",
+          "bowser",
+          "leave"
+        }
+      }
     end       
   end
   if character_select_mode == "1p_vs_yourself" then
-    map = {{"level", "level", "level", "level", "level", "level", "ready"},
-           {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
-           {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
-           {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
-           {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
+    map = {
+      {
+        "level",
+        "level",
+        "level",
+        "level",
+        "level",
+        "level",
+        "ready"
+      },
+      {
+        "random",
+        "windy",
+        "sherbet",
+        "thiana",
+        "ruby",
+        "lip",
+        "elias"
+      },
+      {
+        "flare",
+        "neris",
+        "seren",
+        "phoenix",
+        "dragon",
+        "thanatos",
+        "cordelia"
+      },
+      {
+        "lakitu",
+        "bumpty",
+        "poochy",
+        "wiggler",
+        "froggy",
+        "blargg",
+        "lungefish"
+      },
+      {
+        "raphael",
+        "yoshi",
+        "hookbill",
+        "navalpiranha",
+        "kamek",
+        "bowser",
+        "leave"
+      }
+    }
   end
   local op_state = global_op_state or {character="lip", level=5, cursor="level", ready=false}
   global_op_state = nil
-  cursor,op_cursor,X,Y = {1,1},{1,1},5,7
+  cursor, op_cursor, coordenate_x, coordenate_y = {1, 1}, {1, 1}, 5, 7
   local k = K[1]
-  local up,down,left,right = {-1,0}, {1,0}, {0,-1}, {0,1}
-  my_state = global_my_state or {character=config.character, level=config.level, cursor="level", ready=false}
+  local up, down, left, right = {-1, 0}, {1, 0}, {0, -1}, {0, 1}
+  my_state = global_my_state or
+    {character=config.character, level=config.level, cursor="level", ready=false}
   global_my_state = nil
   my_win_count = my_win_count or 0
   local prev_state = shallowcpy(my_state)
   op_win_count = op_win_count or 0
   if character_select_mode == "2p_net_vs" then
-    global_current_room_ratings = global_current_room_ratings or {{new=0,old=0,difference=0},{new=0,old=0,difference=0}}
+    global_current_room_ratings = global_current_room_ratings or 
+      {{new=0, old=0, difference=0}, {new=0, old=0, difference=0}}
     my_expected_win_ratio = (100*round(1/(1+10^
           ((global_current_room_ratings[op_player_number].new
               -global_current_room_ratings[my_player_number].new)
@@ -406,23 +625,25 @@ function main_character_select()
           ,2))
   end
   if character_select_mode == "2p_net_vs" then
-    match_type = match_type or "Casual"
-    if match_type == "" then match_type = "Casual" end
+    matchType = matchType or "Casual"
+    if matchType == "" then
+       matchType = "Casual" 
+    end
   end
   match_type_message = match_type_message or ""
   local selected = false
   local active_str = "level"
   local selectable = {level=true, ready=true}
   local function move_cursor(direction)
-    local dx,dy = unpack(direction)
-    local can_x,can_y = wrap(1, cursor[1]+dx, X), wrap(1, cursor[2]+dy, Y)
+    local dx, dy = unpack(direction)
+    local can_x,can_y = wrap(1, cursor[1]+dx, coordenate_x), wrap(1, cursor[2]+dy, coordenate_y)
     while can_x ~= cursor[1] or can_y ~= cursor[2] do
       if map[can_x][can_y] and map[can_x][can_y] ~= map[cursor[1]][cursor[2]] then
         break
       end
-      can_x,can_y = wrap(1, can_x+dx, X), wrap(1, can_y+dy, Y)
+      can_x,can_y = wrap(1, can_x+dx, coordenate_x), wrap(1, can_y+dy, coordenate_y)
     end
-    cursor[1],cursor[2] = can_x,can_y
+    cursor[1], cursor[2] = can_x,can_y
   end
   local function do_leave()
     my_win_count = 0
@@ -431,18 +652,18 @@ function main_character_select()
     json_send({leave_room=true})
   end
   local name_to_xy = {}
-  print("character_select_mode = "..(character_select_mode or "nil"))
+  print("character_select_mode = " .. (character_select_mode or "nil"))
   print("map[1][1] = "..(map[1][1] or "nil"))
-  for i=1,X do
-    for j=1,Y do
+  for i=1, coordenate_x do
+    for j=1, coordenate_y do
       if map[i][j] then
         name_to_xy[map[i][j]] = {i,j}
       end
     end
   end
-  local function draw_button(x,y,w,h,str)
-    local menu_width = Y*100
-    local menu_height = X*80
+  local function draw_button(x, y, w, h, str)
+    local menu_width = coordenate_y*100
+    local menu_height = coordenate_x*80
     local spacing = 8
     local x_padding = math.floor((819-menu_width)/2)
     local y_padding = math.floor((612-menu_height)/2)
@@ -454,20 +675,21 @@ function main_character_select()
     grectangle("line", render_x, render_y, button_width, button_height)
     if IMG_character_icons[character_display_names_to_original_names[str]] then
       local orig_w, orig_h = IMG_character_icons[character_display_names_to_original_names[str]]:getDimensions()
-      menu_draw(IMG_character_icons[character_display_names_to_original_names[str]], render_x, render_y, 0, button_width/orig_w, button_height/orig_h )
+      menu_draw(IMG_character_icons[character_display_names_to_original_names[str]],
+        render_x, render_y, 0, button_width/orig_w, button_height/orig_h )
     end
-    local y_add,x_add = 10,30
+    local y_add, x_add = 10, 30
     local pstr = str
     if str == "level" then
       if selected and active_str == "level" then
-        pstr = pstr .. "\n"..my_name.."'s level: < "..my_state.level.." >"
+        pstr = pstr .. "\n" .. my_name .. "'s level: < " .. my_state.level .. " >"
       else
-        pstr = pstr .. "\n"..my_name.."'s level: "..my_state.level
+        pstr = pstr .. "\n" .. my_name .. "'s level: " .. my_state.level
       end
       if character_select_mode == "2p_net_vs" then
-        pstr = pstr .. "\n"..op_name.."'s level: "..op_state.level
+        pstr = pstr .. "\n" .. op_name .. "'s level: " .. op_state.level
       end
-      y_add,x_add = 9,180
+      y_add, x_add = 9, 180
     end
     if str == "match type desired" then
       local my_type_selection, op_type_selection = "[casual]  ranked", "[casual]  ranked"
@@ -477,11 +699,19 @@ function main_character_select()
       if op_state.ranked then
         op_type_selection = " casual  [ranked]"
       end
-      pstr = pstr .. "\n"..my_name..": "..my_type_selection.."\n"..op_name..": "..op_type_selection
-      y_add,x_add = 9,180
+      pstr = pstr .. "\n" .. my_name .. ": " .. my_type_selection .. "\n" .. 
+        op_name .. ": " .. op_type_selection
+      y_add, x_add = 9, 180
     end
-    if my_state.cursor == str then pstr = pstr.."\n"..my_name end
-    if op_state and op_name and op_state.cursor == str then pstr = pstr.."\n"..op_name end
+
+    if my_state.cursor == str then
+      pstr = pstr.."\n" .. my_name
+    end
+
+    if op_state and op_name and op_state.cursor == str then
+      pstr = pstr .. "\n" .. op_name
+    end
+
     local cur_blink_frequency = 4
     local cur_pos_change_frequency = 8
     local player_num
@@ -499,7 +729,7 @@ function main_character_select()
         end
       else
         draw_cur_this_frame = true
-        cursor_frame = (math.floor(menu_clock/cur_pos_change_frequency)+player_num)%2+1
+        cursor_frame = (math.floor(menu_clock/cur_pos_change_frequency)+player_num) % 2 + 1
         cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
       end
       if draw_cur_this_frame then
@@ -507,15 +737,17 @@ function main_character_select()
         cur_img_left = IMG_char_sel_cursor_halves.left[player_num][cursor_frame]
         cur_img_right = IMG_char_sel_cursor_halves.right[player_num][cursor_frame]
         local cur_img_w, cur_img_h = cur_img:getDimensions()
-        local cursor_scale = (button_height+(spacing*2))/cur_img_h
-        menu_drawq(cur_img, cur_img_left, render_x-spacing, render_y-spacing, 0, cursor_scale , cursor_scale)
-        menu_drawq(cur_img, cur_img_right, render_x+button_width+spacing-cur_img_w*cursor_scale/2, render_y-spacing, 0, cursor_scale, cursor_scale)
+        local cursor_scale = (button_height + (spacing * 2)) / cur_img_h
+        menu_drawq(cur_img, cur_img_left, render_x - spacing, render_y-spacing, 0, cursor_scale , cursor_scale)
+        menu_drawq(cur_img, cur_img_right,
+          render_x + button_width + spacing - cur_img_w * cursor_scale / 2,
+          render_y - spacing, 0, cursor_scale, cursor_scale)
       end
     end
     if my_state and my_state.cursor and (my_state.cursor == str or my_state.cursor == character_display_names_to_original_names[str]) then
       player_num = 1
       if my_state.ready then
-        if (math.floor(menu_clock/cur_blink_frequency)+player_num)%2+1 == player_num then
+        if (math.floor(menu_clock / cur_blink_frequency) + player_num) % 2 + 1 == player_num then
           draw_cur_this_frame = true
           cursor_frame = 1
         else
@@ -523,7 +755,7 @@ function main_character_select()
         end
       else
         draw_cur_this_frame = true
-        cursor_frame = (math.floor(menu_clock/cur_pos_change_frequency)+player_num)%2+1
+        cursor_frame = (math.floor(menu_clock / cur_pos_change_frequency) + player_num) % 2 + 1
         cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
       end
       if draw_cur_this_frame then
@@ -531,55 +763,59 @@ function main_character_select()
         cur_img_left = IMG_char_sel_cursor_halves.left[player_num][cursor_frame]
         cur_img_right = IMG_char_sel_cursor_halves.right[player_num][cursor_frame]
         local cur_img_w, cur_img_h = cur_img:getDimensions()
-        local cursor_scale = (button_height+(spacing*2))/cur_img_h
+        local cursor_scale = (button_height + (spacing * 2)) / cur_img_h
         menu_drawq(cur_img, cur_img_left, render_x-spacing, render_y-spacing, 0, cursor_scale , cursor_scale)
-        menu_drawq(cur_img, cur_img_right, render_x+button_width+spacing-cur_img_w*cursor_scale/2, render_y-spacing, 0, cursor_scale, cursor_scale)
+        menu_drawq(cur_img, cur_img_right,
+          render_x + button_width + spacing - cur_img_w * cursor_scale / 2,
+          render_y - spacing, 0, cursor_scale, cursor_scale)
       end
     end
-    gprint(pstr, render_x+6, render_y+y_add)
+    gprint(pstr, render_x + 6, render_y + y_add)
   end
   print("got to LOC before net_vs_room character select loop")
   menu_clock = 0
   while true do
     menu_clock = menu_clock + 1
     if character_select_mode == "2p_net_vs" then
-      for _,msg in ipairs(this_frame_messages) do
-        if msg.win_counts then
-          update_win_counts(msg.win_counts)
+      for _, message in ipairs(this_frame_messages) do
+        if message.win_counts then
+          update_win_counts(message.win_counts)
         end
-        if msg.menu_state then
+        if message.menu_state then
           if currently_spectating then
-            if msg.player_number == 2 then
-              op_state = msg.menu_state
-            elseif msg.player_number == 1 then
-              my_state = msg.menu_state
+            if message.player_number == 2 then
+              op_state = message.menu_state
+            elseif message.player_number == 1 then
+              my_state = message.menu_state
             end
           else
-            op_state = msg.menu_state
+            op_state = message.menu_state
           end
         end
-        if msg.ranked_match_approved then
-          match_type = "Ranked"
+        if message.ranked_match_approved then
+          matchType = "Ranked"
           match_type_message = ""
-        elseif msg.ranked_match_denied then
-          match_type = "Casual"
+        elseif message.ranked_match_denied then
+          matchType = "Casual"
           match_type_message = "Not ranked. "
-          if msg.reasons then
-            match_type_message = match_type_message..(msg.reasons[1] or "Reason unknown")
+          if message.reasons then
+            match_type_message = match_type_message .. (message.reasons[1] or "Reason unknown")
           end
         end
-        if msg.leave_room then
+        if message.leave_room then
           my_win_count = 0
           op_win_count = 0
           write_char_sel_settings_to_file()
           return main_net_vs_lobby
         end
-        if msg.match_start or replay_of_match_so_far then
+        if message.match_start or replay_of_match_so_far then
           local fake_P1 = P1
-          print("currently_spectating: "..tostring(currently_spectating))
+          print("currently_spectating: " .. tostring(currently_spectating))
           local fake_P2 = P2
-          P1 = Stack(1, "vs", msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
-          P2 = Stack(2, "vs", msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
+          P1 = Stack(1, "vs", message.player_settings.level,
+            message.player_settings.character, message.player_settings.player_number)
+          P2 = Stack(2, "vs", message.opponent_settings.level,
+            message.opponent_settings.character, message.opponent_settings.player_number)
           if currently_spectating then
             P1.panel_buffer = fake_P1.panel_buffer
             P1.gpanel_buffer = fake_P1.gpanel_buffer
@@ -590,11 +826,21 @@ function main_character_select()
           P2.garbage_target = P1
           P2.pos_x = 172
           P2.score_x = 410
-          replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
-                      P1_level=P1.level,P2_level=P2.level,
-                      P1_name=my_name, P2_name=op_name,
-                      P1_char=P1.character,P2_char=P2.character,
-                      ranked=msg.ranked}
+          replay.vs = {
+            P = "",
+            O = "",
+            I = "",
+            Q = "",
+            R = "",
+            in_buf = "",
+            P1_level = P1.level,
+            P2_level = P2.level,
+            P1_name = my_name,
+            P2_name = op_name,
+            P1_char = P1.character,
+            P2_char = P2.character,
+            ranked = message.ranked
+          }
           if currently_spectating and replay_of_match_so_far then --we joined a match in progress
             replay.vs = replay_of_match_so_far.vs
             P1.input_buffer = replay_of_match_so_far.vs.in_buf
@@ -604,10 +850,10 @@ function main_character_select()
             P2.panel_buffer = replay_of_match_so_far.vs.O
             P2.gpanel_buffer = replay_of_match_so_far.vs.R
             if replay.vs.ranked then
-              match_type = "Ranked"
+              matchType = "Ranked"
               match_type_message = ""
             else 
-              match_type = "Casual"
+              matchType = "Casual"
             end
             replay_of_match_so_far = nil
             P1.play_to_end = true  --this makes foreign_run run until caught up
@@ -621,7 +867,7 @@ function main_character_select()
           if P1.play_to_end or P2.play_to_end then
             to_print = "Joined a match in progress.\nCatching up..."
           end
-          for i=1,30 do
+          for i=1, 30 do
             gprint(to_print,300, 280)
             do_messages()
             coroutine_wait()
@@ -631,18 +877,18 @@ function main_character_select()
             or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
             --testing getting stuck here at "Game is starting"
             game_start_timeout = game_start_timeout + 1
-            print("game_start_timeout = "..game_start_timeout)
-            print("P1.panel_buffer = "..P1.panel_buffer)
-            print("P2.panel_buffer = "..P2.panel_buffer)
-            print("P1.gpanel_buffer = "..P1.gpanel_buffer)
-            print("P2.gpanel_buffer = "..P2.gpanel_buffer)
-            gprint(to_print,300, 280)
+            print("game_start_timeout = " .. game_start_timeout)
+            print("P1.panel_buffer = " .. P1.panel_buffer)
+            print("P2.panel_buffer = " .. P2.panel_buffer)
+            print("P1.gpanel_buffer = " .. P1.gpanel_buffer)
+            print("P2.gpanel_buffer = " .. P2.gpanel_buffer)
+            gprint(to_print, 300, 280)
             do_messages()
             coroutine_wait()
             if game_start_timeout > 500 then
               return main_dumb_transition, {main_select_mode, 
                               "game-is-starting bug diagnostic version 2\n\ngame start timed out.\n Please screenshot this and\npost it in #panel-attack-bugs-features"
-                              .."\n".."msg.match_start = "..(tostring(msg.match_start) or "nil")
+                              .."\n".."message.match_start = "..(tostring(message.match_start) or "nil")
                               .."\n".."replay_of_match_so_far = "..(tostring(replay_of_match_so_far) or "nil")
                               .."\n".."P1.panel_buffer = "..P1.panel_buffer
                               .."\n".."P2.panel_buffer = "..P2.panel_buffer
@@ -657,73 +903,75 @@ function main_character_select()
         end
       end
     end
-    if current_server_supports_ranking then
-      draw_button(1,1,4,1,"match type desired")
-      draw_button(1,5,2,1,"level")
+    if serverSupportsRanking then
+      draw_button(1, 1, 4, 1, "match type desired")
+      draw_button(1, 5, 2, 1, "level")
     else
-      draw_button(1,1,6,1,"level")
+      draw_button(1, 1, 6, 1, "level")
     end
     
-    draw_button(1,7,1,1,"ready")
-    for i=2,X do
-      for j=1,Y do
-        draw_button(i,j,1,1,character_display_names[map[i][j]] or map[i][j])
+    draw_button(1, 7, 1, 1, "ready")
+    for i=2, coordenate_x do
+      for j=1, coordenate_y do
+        draw_button(i, j, 1, 1, character_display_names[map[i][j]] or map[i][j])
       end
     end
-    local my_rating_difference = ""
-    local op_rating_difference = ""
-    if current_server_supports_ranking then
+    local myRatingDifference = ""
+    local opRatingDifference = ""
+    if serverSupportsRanking then
       if global_current_room_ratings[my_player_number].difference >= 0 then
-        my_rating_difference = "(+"..global_current_room_ratings[my_player_number].difference..") "
+        myRatingDifference = "(+" .. global_current_room_ratings[my_player_number].difference .. ") "
       else
-        my_rating_difference = "("..global_current_room_ratings[my_player_number].difference..") "
+        myRatingDifference = "(" .. global_current_room_ratings[my_player_number].difference .. ") "
       end
       if global_current_room_ratings[op_player_number].difference >= 0 then
-        op_rating_difference = "(+"..global_current_room_ratings[op_player_number].difference..") "
+        opRatingDifference = "(+" .. global_current_room_ratings[op_player_number].difference .. ") "
       else
-        op_rating_difference = "("..global_current_room_ratings[op_player_number].difference..") "
+        opRatingDifference = "(" .. global_current_room_ratings[op_player_number].difference .. ") "
       end
     end
     local state = ""
     --my state - add to be displayed
-    state = state..my_name
-    if current_server_supports_ranking then
-        state = state..":  Rating: "..my_rating_difference..global_current_room_ratings[my_player_number].new
+    state = state .. my_name
+    if serverSupportsRanking then
+        state = state .. ":  Rating: " .. myRatingDifference .. global_current_room_ratings[my_player_number].new
     end
     if character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs" then
-      state = state.."  Wins: "..my_win_count
+      state = state .. "  Wins: " .. my_win_count
     end
-    if current_server_supports_ranking or my_win_count + op_win_count > 0 then
-      state = state.."  Win Ratio:"
+    if serverSupportsRanking or my_win_count + op_win_count > 0 then
+      state = state .. "  Win Ratio:"
     end
     if my_win_count + op_win_count > 0 then
-      state = state.."  actual: "..(100*round(my_win_count/(op_win_count+my_win_count),2)).."%"
+      state = state .. "  actual: " .. (100 * round(my_win_count/(op_win_count+my_win_count), 2)) .. "%"
     end
-    if current_server_supports_ranking then
-      state = state.."  expected: "
-        ..my_expected_win_ratio.."%"
+    if serverSupportsRanking then
+      state = state .. "  expected: "
+        ..my_expected_win_ratio .. "%"
     end
-    state = state.."  Char: "..character_display_names[my_state.character].."  Ready: "..tostring(my_state.ready or false)
+    state = state .. "  Char: " .. character_display_names[my_state.character]..
+      "  Ready: " .. tostring(my_state.ready or false)
     --state = state.." "..json.encode(my_state).."\n"
     if op_state and op_name then
-      state = state.."\n"
+      state = state .. "\n"
       --op state - add to be displayed
-      state = state..op_name
-      if current_server_supports_ranking then
-          state = state..":  Rating: "..op_rating_difference..global_current_room_ratings[op_player_number].new
+      state = state .. op_name
+      if serverSupportsRanking then
+          state = state .. ":  Rating: " .. opRatingDifference..
+            global_current_room_ratings[op_player_number].new
       end
-      state = state.."  Wins: "..op_win_count 
-      if current_server_supports_ranking or my_win_count + op_win_count > 0 then
-        state = state.."  Win Ratio:"
+      state = state .. "  Wins: " .. op_win_count 
+      if serverSupportsRanking or my_win_count + op_win_count > 0 then
+        state = state .. "  Win Ratio:"
       end
       if my_win_count + op_win_count > 0 then
-        state = state.."  actual: "..(100*round(op_win_count/(op_win_count+my_win_count),2)).."%"
+        state = state .. "  actual: " .. (100*round(op_win_count/(op_win_count+my_win_count),2)) .. "%"
       end
-      if current_server_supports_ranking then
-        state = state.."  expected: "
-          ..op_expected_win_ratio.."%"
+      if serverSupportsRanking then
+        state = state .. "  expected: " .. op_expected_win_ratio .. "%"
       end
-      state = state.."  Char: "..character_display_names[op_state.character].."  Ready: "..tostring(op_state.ready or false)
+      state = state.."  Char: " .. character_display_names[op_state.character] .. 
+        "  Ready: " .. tostring(op_state.ready or false)
       --state = state.." "..json.encode(op_state)
     end
     gprint(state, 50, 50)
@@ -731,8 +979,8 @@ function main_character_select()
       if not my_state.ranked and not op_state.ranked then
         match_type_message = ""
       end
-      gprint(match_type, 375, 15)
-      gprint(match_type_message,100,85)
+      gprint(matchType, 375, 15)
+      gprint(match_type_message, 100, 85)
     end
     coroutine_wait()
     if not currently_spectating then
@@ -742,12 +990,12 @@ function main_character_select()
           if not selected then move_cursor(down) end
         elseif menu_key_left(k) then
           if selected and active_str == "level" then
-            config.level = bound(1, config.level-1, 10)
+            config.level = bound(1, config.level - 1, 10)
           end
           if not selected then move_cursor(left) end
         elseif menu_key_right(k) then
           if selected and active_str == "level" then
-            config.level = bound(1, config.level+1, 10)
+            config.level = bound(1, config.level + 1, 10)
           end
           if not selected then move_cursor(right) end
         elseif menu_key_enter(k) then
@@ -809,18 +1057,20 @@ end
 
 function main_net_vs_lobby()
   local active_name, active_idx, active_back = "", 1
-  local items
+  local menu_options
   local unpaired_players = {} -- list
   local willing_players = {} -- set
   local spectatable_rooms = {}
   local k = K[1]
   my_player_number = nil
   op_player_number = nil
-  local notice = {[true]="Select a player name to ask for a match.", [false]="You are all alone in the lobby :("}  
+  local notice = {
+    [true] = "Select a player name to ask for a match.",
+    [false] = "You are all alone in the lobby :("}  
   local leaderboard_string = ""
   local my_rank
   love.audio.stop()
-  match_type = ""
+  matchType = ""
   match_type_message = ""
   --attempt login
   read_user_id_file()
@@ -837,120 +1087,123 @@ function main_net_vs_lobby()
   while true do
       if connectionUptime <= login_status_message_duration then
         gprint(login_status_message, lobby_menu_x[showing_leaderboard], 160)
-        for _,msg in ipairs(this_frame_messages) do
-            if msg.login_successful then
-              current_server_supports_ranking = true
+        for _,message in ipairs(this_frame_messages) do
+            if message.login_successful then
+              serverSupportsRanking = true
               isLoggedIn = true
-              if msg.new_user_id then
-                playerUsername = msg.new_user_id
+              if message.new_user_id then
+                playerUsername = message.new_user_id
                 print("about to write user id file")
                 write_user_id_file()
                 login_status_message = "Welcome, new user: "..my_name
-              elseif msg.name_changed then
-                login_status_message = "Welcome, your username has been updated. \n\nOld name:  \""..msg.old_name.."\"\n\nNew name:  \""..msg.new_name.."\""
+              elseif message.name_changed then
+                login_status_message = "Welcome, your username has been updated. \n\nOld name:  \""
+                  .. message.old_name .. "\"\n\nNew name:  \"" .. message.new_name .. "\""
                 login_status_message_duration = 5
               else
-                login_status_message = "Welcome back, "..my_name
+                login_status_message = "Welcome back, " .. my_name
               end
-            elseif msg.login_denied then
-                current_server_supports_ranking = true
+            elseif message.login_denied then
+                serverSupportsRanking = true
                 login_denied = true
                 --TODO: create a menu here to let the user choose "continue unranked" or "get a new user_id"
-                --login_status_message = "Login for ranked matches failed.\n"..msg.reason.."\n\nYou may continue unranked,\nor delete your invalid user_id file to have a new one assigned."
+                --login_status_message = "Login for ranked matches failed.\n"..message.reason.."\n\nYou may continue unranked,\nor delete your invalid user_id file to have a new one assigned."
                 login_status_message_duration = 10
-                return main_dumb_transition, {main_select_mode, "Error message received from the server:\n\n"..json.encode(msg),60,600}
+                return main_dumb_transition, {main_select_mode, "Error message received from the server:\n\n"..json.encode(message),60,600}
             end
         end
-        if connectionUptime == 2 and not current_server_supports_ranking then
+        if connectionUptime == 2 and not serverSupportsRanking then
                 login_status_message = "Login for ranked matches timed out.\nThis server probably doesn't support ranking.\n\nYou may continue unranked."
                 login_status_message_duration = 7
         end
       end
-    for _,msg in ipairs(this_frame_messages) do
-      if msg.choose_another_name and msg.choose_another_name.used_names then
+    for _, message in ipairs(this_frame_messages) do
+      if message.choose_another_name and message.choose_another_name.used_names then
         return main_dumb_transition, {main_select_mode, "Error: name is taken :<\n\nIf you had just left the server,\nit may not have realized it yet, try joining again.\n\nThis can also happen if you have two\ninstances of Panel Attack open.\n\nPress Swap or Back to continue.", 60, 600}
-      elseif msg.choose_another_name and msg.choose_another_name.reason then
-        return main_dumb_transition, {main_select_mode, "Error: ".. msg.choose_another_name.reason, 60}
+      elseif message.choose_another_name and message.choose_another_name.reason then
+        return main_dumb_transition, {main_select_mode, "Error: ".. message.choose_another_name.reason, 60}
       end
-      if msg.create_room or msg.spectate_request_granted then
-        global_initialize_room_msg = msg
+      if message.create_room or message.spectate_request_granted then
+        global_initialize_room_msg = message
         character_select_mode = "2p_net_vs"
         return main_character_select
       end
-      if msg.unpaired then
-        unpaired_players = msg.unpaired
+      if message.unpaired then
+        unpaired_players = message.unpaired
         -- players who leave the unpaired list no longer have standing invitations to us.
         local new_willing = {}
-        for _,player in ipairs(unpaired_players) do
+        for _, player in ipairs(unpaired_players) do
           new_willing[player] = willing_players[player]
         end
         willing_players = new_willing
       end
-      if msg.spectatable then
-        spectatable_rooms = msg.spectatable
+      if message.spectatable then
+        spectatable_rooms = message.spectatable
       end
-      if msg.game_request then
-        willing_players[msg.game_request.sender] = true
+      if message.game_request then
+        willing_players[message.game_request.sender] = true
       end
-      if msg.leaderboard_report then
+      if message.leaderboard_report then
         showing_leaderboard = true
-        leaderboard_report = msg.leaderboard_report
-        for k,v in ipairs(leaderboard_report) do
+        leaderboard_report = message.leaderboard_report
+        for k, v in ipairs(leaderboard_report) do
           if v.is_you then
             my_rank = k
           end
         end
-        leaderboard_first_idx_to_show = math.max((my_rank or 1)-8,1)
-        leaderboard_last_idx_to_show = math.min(leaderboard_first_idx_to_show + 20,#leaderboard_report)
-        leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
+        leaderboard_first_idx_to_show = math.max((my_rank or 1) - 8, 1)
+        leaderboard_last_idx_to_show = math.min(leaderboard_first_idx_to_show + 20, #leaderboard_report)
+        leaderboard_string = build_viewable_leaderboard_string(leaderboard_report,
+          leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
       end
     end
     local to_print = ""
     local arrow = ""
-    items = {}
-    for _,v in ipairs(unpaired_players) do
+    menu_options = {}
+    for _, v in ipairs(unpaired_players) do
       if v ~= config.name then
-        items[#items+1] = v
+        menu_options[#menu_options + 1] = v
       end
     end
-    local lastPlayerIndex = #items --the rest of the items will be spectatable rooms, except the last two items (leaderboard and back to main menu)
-    for _,v in ipairs(spectatable_rooms) do
-      items[#items+1] = v
+    local lastPlayerIndex = #menu_options --the rest of the menu_options will be spectatable rooms, except the last two menu_options (leaderboard and back to main menu)
+    for _, v in ipairs(spectatable_rooms) do
+      menu_options[#menu_options + 1] = v
     end
     if showing_leaderboard then
-      items[#items+1] = "Hide Leaderboard"
+      menu_options[#menu_options + 1] = "Hide Leaderboard"
     else
-      items[#items+1] = "Show Leaderboard"  -- the second to last item is "Leaderboard"
+      menu_options[#menu_options + 1] = "Show Leaderboard"  -- the second to last item is "Leaderboard"
     end
-    items[#items+1] = "Back to main menu" -- the last item is "Back to the main menu"
+    menu_options[#menu_options + 1] = "Back to main menu" -- the last item is "Back to the main menu"
     if active_back then
-      active_idx = #items
+      active_idx = #menu_options
     elseif showing_leaderboard then
-      active_idx = #items - 1 --the position of the "hide leaderboard" menu item
+      active_idx = #menu_options - 1 --the position of the "hide leaderboard" menu item
     else
-      while active_idx > #items do
-        print("active_idx > #items.  Decrementing active_idx")
+      while active_idx > #menu_options do
+        print("active_idx > #menu_options.  Decrementing active_idx")
         active_idx = active_idx - 1
       end
-      active_name = items[active_idx]
+      active_name = menu_options[active_idx]
     end
-    for i=1,#items do
+    for i=1, #menu_options do
       if active_idx == i then
         arrow = arrow .. ">"
       else
         arrow = arrow .. "\n"
       end
       if i <= lastPlayerIndex then
-        to_print = to_print .. "   " .. items[i] .. (willing_players[items[i]] and " (Wants to play with you :o)" or "") .. "\n"
-      elseif i < #items - 1 and items[i].name then
-        to_print = to_print .. "   spectate " .. items[i].name .. " (".. items[i].state .. ")\n" --printing room names 
-      elseif i < #items then
-        to_print = to_print .. "   " .. items[i] .. "\n"
+        to_print = to_print .. "   " .. menu_options[i] ..
+          (willing_players[menu_options[i]] and " (Wants to play with you :o)" or "") .. "\n"
+      elseif i < #menu_options - 1 and menu_options[i].name then
+        to_print = to_print .. "   spectate " .. menu_options[i].name .. " (".. menu_options[i].state .. ")\n" --printing room names 
+      elseif i < #menu_options then
+        to_print = to_print .. "   " .. menu_options[i] .. "\n"
       else
-        to_print = to_print .. "   " .. items[i]
+        to_print = to_print .. "   " .. menu_options[i]
       end
     end
-    gprint(notice[#items > 2], lobby_menu_x[showing_leaderboard], 250)
+    gprint(notice[#menu_options > 2], lobby_menu_x[showing_leaderboard], 250)
     gprint(arrow, lobby_menu_x[showing_leaderboard], 280)
     gprint(to_print, lobby_menu_x[showing_leaderboard], 280)
     if showing_leaderboard then
@@ -966,7 +1219,7 @@ function main_net_vs_lobby()
           leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
         end
       else
-        active_idx = wrap(1, active_idx-1, #items)
+        active_idx = wrap(1, active_idx-1, #menu_options)
       end
     elseif menu_key_down(k) then
       if showing_leaderboard then
@@ -976,15 +1229,15 @@ function main_net_vs_lobby()
           leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
         end
       else
-        active_idx = wrap(1, active_idx+1, #items)
+        active_idx = wrap(1, active_idx+1, #menu_options)
       end
     elseif menu_key_enter(k) then
       spectator_list = {}
       spectators_string = ""
-      if active_idx == #items then
+      if active_idx == #menu_options then
         return main_select_mode
       end
-      if active_idx == #items - 1 then
+      if active_idx == #menu_options - 1 then
         if not showing_leaderboard then
           json_send({leaderboard_request=true})
         else
@@ -992,28 +1245,28 @@ function main_net_vs_lobby()
         end
       elseif active_idx <= lastPlayerIndex then
         my_name = config.name
-        op_name = items[active_idx]
+        op_name = menu_options[active_idx]
         currently_spectating = false
-        request_game(items[active_idx])
+        request_game(menu_options[active_idx])
       else
-        my_name = items[active_idx].a
-        op_name = items[active_idx].b
+        my_name = menu_options[active_idx].a
+        op_name = menu_options[active_idx].b
         currently_spectating = true
-        room_number_last_spectated = items[active_idx].roomNumber
-        request_spectate(items[active_idx].roomNumber)
+        room_number_last_spectated = menu_options[active_idx].roomNumber
+        request_spectate(menu_options[active_idx].roomNumber)
       end
     elseif menu_key_escape(k) then
-      if active_idx == #items then
+      if active_idx == #menu_options then
         return main_select_mode
       elseif showing_leaderboard then
         showing_leaderboard = false
       else
-        active_idx = #items
+        active_idx = #menu_options
       end
     end
-    active_back = active_idx == #items
+    active_back = active_idx == #menu_options
     if active_idx ~= prev_act_idx then
-      print("#items: "..#items.."  idx_old: "..prev_act_idx.."  idx_new: "..active_idx.."  active_back: "..tostring(active_back))
+      print("#menu_options: "..#menu_options.."  idx_old: "..prev_act_idx.."  idx_new: "..active_idx.."  active_back: "..tostring(active_back))
       prev_act_idx = active_idx
     end
     do_messages()
@@ -1155,8 +1408,8 @@ function main_net_vs()
   while true do
     -- Uncomment this to cripple your game :D
     -- love.timer.sleep(0.030)
-    for _,msg in ipairs(this_frame_messages) do
-      if msg.leave_room then
+    for _,message in ipairs(this_frame_messages) do
+      if message.leave_room then
         write_char_sel_settings_to_file()
         return main_net_vs_lobby
       end
@@ -1168,7 +1421,7 @@ function main_net_vs()
     if not config.debug_mode then --this is printed in the same space as the debug details
       gprint(spectators_string, 315, 265)
     end
-    if match_type == "Ranked" then
+    if matchType == "Ranked" then
       if global_current_room_ratings[my_player_number] 
       and global_current_room_ratings[my_player_number].new then
         gprint("Rating: "..global_current_room_ratings[my_player_number].new, 315, 85)
@@ -1243,8 +1496,8 @@ function main_net_vs()
         path = path..sep..rep_a_name.."-vs-"..rep_b_name
       end
       local filename = "v"..versionString.."-"..string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec).."-"..rep_a_name.."-L"..P1.level.."-vs-"..rep_b_name.."-L"..P2.level
-      if match_type and match_type ~= "" then
-        filename = filename.."-"..match_type
+      if matchType and matchType ~= "" then
+        filename = filename.."-"..matchType
       end
       if outcome_claim == 1 or outcome_claim == 2 then
         filename = filename.."-P"..outcome_claim.."wins"
@@ -1400,9 +1653,9 @@ function main_replay_vs()
   op_name = replay.P2_name or "Player 2"
   if character_select_mode == "2p_net_vs" then
     if replay.ranked then
-      match_type = "Ranked"
+      matchType = "Ranked"
     else
-      match_type = "Casual"
+      matchType = "Casual"
     end
   end
 
@@ -1587,39 +1840,39 @@ function make_main_puzzle(puzzles)
 end
 
 do
-  local items = {}
+  local menu_options = {}
   for key,val in spairs(puzzle_sets) do
-    items[#items+1] = {key, make_main_puzzle(val)}
+    menu_options[#menu_options+1] = {key, make_main_puzzle(val)}
   end
-  items[#items+1] = {"Back", main_select_mode}
+  menu_options[#menu_options+1] = {"Back", main_select_mode}
   function main_select_puzz()
     local active_idx = 1
     local k = K[1]
     while true do
       local to_print = ""
       local arrow = ""
-      for i=1,#items do
+      for i=1,#menu_options do
         if active_idx == i then
           arrow = arrow .. ">"
         else
           arrow = arrow .. "\n"
         end
-        to_print = to_print .. "   " .. items[i][1] .. "\n"
+        to_print = to_print .. "   " .. menu_options[i][1] .. "\n"
       end
       gprint(arrow, 300, 280)
       gprint(to_print, 300, 280)
       coroutine_wait()
       if menu_key_up(k) then
-        active_idx = wrap(1, active_idx-1, #items)
+        active_idx = wrap(1, active_idx-1, #menu_options)
       elseif menu_key_down(k) then
-        active_idx = wrap(1, active_idx+1, #items)
+        active_idx = wrap(1, active_idx+1, #menu_options)
       elseif menu_key_enter(k) then
-        return items[active_idx][2], items[active_idx][3]
+        return menu_options[active_idx][2], menu_options[active_idx][3]
       elseif menu_key_escape(k) then
-        if active_idx == #items then
-          return items[active_idx][2], items[active_idx][3]
+        if active_idx == #menu_options then
+          return menu_options[active_idx][2], menu_options[active_idx][3]
         else
-          active_idx = #items
+          active_idx = #menu_options
         end
       end
     end
@@ -1628,27 +1881,27 @@ end
 
 function main_config_input()
   local pretty_names = {"Up", "Down", "Left", "Right", "A", "B", "L", "R"}
-  local items, active_idx = {}, 1
+  local menu_options, active_idx = {}, 1
   local k = K[1]
   local active_player = 1
   local function get_items()
-    items = {[0]={"Player ", ""..active_player}}
+    menu_options = {[0]={"Player ", ""..active_player}}
     for i=1,#key_names do
-      items[#items+1] = {pretty_names[i], k[key_names[i]] or "none"}
+      menu_options[#menu_options+1] = {pretty_names[i], k[key_names[i]] or "none"}
     end
-    items[#items+1] = {"Set all keys", ""}
-    items[#items+1] = {"Back", "", main_select_mode}
+    menu_options[#menu_options+1] = {"Set all keys", ""}
+    menu_options[#menu_options+1] = {"Back", "", main_select_mode}
   end
   local function print_stuff()
     local to_print, to_print2, arrow = "", "", ""
-    for i=0,#items do
+    for i=0,#menu_options do
       if active_idx == i then
         arrow = arrow .. ">"
       else
         arrow = arrow .. "\n"
       end
-      to_print = to_print .. "   " .. items[i][1] .. "\n"
-      to_print2 = to_print2 .. "                  " .. items[i][2] .. "\n"
+      to_print = to_print .. "   " .. menu_options[i][1] .. "\n"
+      to_print2 = to_print2 .. "                  " .. menu_options[i][2] .. "\n"
     end
     gprint(arrow, 300, 280)
     gprint(to_print, 300, 280)
@@ -1658,7 +1911,7 @@ function main_config_input()
     local brk = false
     while not brk do
       get_items()
-      items[idx][2] = "___"
+      menu_options[idx][2] = "___"
       print_stuff()
       coroutine_wait()
       for key,val in pairs(this_frame_keys) do
@@ -1674,9 +1927,9 @@ function main_config_input()
     print_stuff()
     coroutine_wait()
     if menu_key_up(K[1]) then
-      active_idx = wrap(1, active_idx-1, #items)
+      active_idx = wrap(1, active_idx-1, #menu_options)
     elseif menu_key_down(K[1]) then
-      active_idx = wrap(1, active_idx+1, #items)
+      active_idx = wrap(1, active_idx+1, #menu_options)
     elseif menu_key_left(K[1]) then
       active_player = wrap(1, active_player-1, 2)
       k=K[active_player]
@@ -1693,20 +1946,20 @@ function main_config_input()
           write_key_file()
         end
       else
-        return items[active_idx][3], items[active_idx][4]
+        return menu_options[active_idx][3], menu_options[active_idx][4]
       end
     elseif menu_key_escape(K[1]) then
-      if active_idx == #items then
-        return items[active_idx][3], items[active_idx][4]
+      if active_idx == #menu_options then
+        return menu_options[active_idx][3], menu_options[active_idx][4]
       else
-        active_idx = #items
+        active_idx = #menu_options
       end
     end
   end
 end
 
 function main_options()
-  local items, active_idx = {}, 1
+  local menu_options, active_idx = {}, 1
   local k = K[1]
   local selected, deselected_this_frame, adjust_active_value = false, false, false
   local function get_items()
@@ -1735,7 +1988,7 @@ function main_options()
   for k,v in ipairs(asset_sets) do
     print(v)
   end
-    items = {
+    menu_options = {
     --options menu table reference:
     --{[1]"Option Name", [2]current or default value, [3]type, [4]min or bool value or choices_table,
     -- [5]max, [6]sound_source, [7]selectable, [8]next_func, [9]play_while selected}
@@ -1756,20 +2009,20 @@ function main_options()
   end
   local function print_stuff()
     local to_print, to_print2, arrow = "", "", ""
-    for i=1,#items do
+    for i=1,#menu_options do
       if active_idx == i then
         arrow = arrow .. ">"
       else
         arrow = arrow .. "\n"
       end
-      to_print = to_print .. "   " .. items[i][1] .. "\n"
+      to_print = to_print .. "   " .. menu_options[i][1] .. "\n"
       to_print2 = to_print2 .. "                  " 
       if active_idx == i and selected then  
         to_print2 = to_print2 .. "                < "
       else
         to_print2 = to_print2 .. "                  "
       end
-      to_print2 = to_print2.. items[i][2] 
+      to_print2 = to_print2.. menu_options[i][2] 
       if active_idx == i and selected then
         to_print2 = to_print2 .. " >"
       end
@@ -1780,36 +2033,36 @@ function main_options()
     gprint(to_print2, 300, 280)
   end
   local function adjust_left()
-    if items[active_idx][3] == "numeric" then
-      if items[active_idx][2] > items[active_idx][4] then --value > minimum
-        items[active_idx][2] = items[active_idx][2] - 1
+    if menu_options[active_idx][3] == "numeric" then
+      if menu_options[active_idx][2] > menu_options[active_idx][4] then --value > minimum
+        menu_options[active_idx][2] = menu_options[active_idx][2] - 1
       end
-    elseif items[active_idx][3] == "multiple choice" then
+    elseif menu_options[active_idx][3] == "multiple choice" then
       adjust_backwards = true
       adjust_active_value = true
     end
     --the following is enough for "bool"
     adjust_active_value = true
-    if items[active_idx][6] and not items[active_idx][9] then
+    if menu_options[active_idx][6] and not menu_options[active_idx][9] then
     --sound_source for this menu item exists and not play_while_selected
-      items[active_idx][6]:stop()
-      items[active_idx][6]:play()
+      menu_options[active_idx][6]:stop()
+      menu_options[active_idx][6]:play()
     end
   end
   local function adjust_right()
-    if items[active_idx][3] == "numeric" then
-      if items[active_idx][2] < items[active_idx][5] then --value < maximum
-        items[active_idx][2] = items[active_idx][2] + 1
+    if menu_options[active_idx][3] == "numeric" then
+      if menu_options[active_idx][2] < menu_options[active_idx][5] then --value < maximum
+        menu_options[active_idx][2] = menu_options[active_idx][2] + 1
       end
-    elseif items[active_idx][3] == "multiple choice" then
+    elseif menu_options[active_idx][3] == "multiple choice" then
       adjust_active_value = true
     end
     --the following is enough for "bool"
     adjust_active_value = true
-    if items[active_idx][6] and not items[active_idx][9] then 
+    if menu_options[active_idx][6] and not menu_options[active_idx][9] then 
     --sound_source for this menu item exists and not play_while_selected
-      items[active_idx][6]:stop()
-      items[active_idx][6]:play()
+      menu_options[active_idx][6]:stop()
+      menu_options[active_idx][6]:play()
     end
   end
   get_items()
@@ -1819,93 +2072,93 @@ function main_options()
     print_stuff()
     coroutine_wait()
     if menu_key_up(K[1]) and not selected then
-      active_idx = wrap(1, active_idx-1, #items)
+      active_idx = wrap(1, active_idx-1, #menu_options)
     elseif menu_key_down(K[1]) and not selected then
-      active_idx = wrap(1, active_idx+1, #items)
-    elseif menu_key_left(K[1]) and (selected or not items[active_idx][7]) then --or not selectable
+      active_idx = wrap(1, active_idx+1, #menu_options)
+    elseif menu_key_left(K[1]) and (selected or not menu_options[active_idx][7]) then --or not selectable
       adjust_left()
-    elseif menu_key_right(K[1]) and (selected or not items[active_idx][7]) then --or not selectable
+    elseif menu_key_right(K[1]) and (selected or not menu_options[active_idx][7]) then --or not selectable
       adjust_right()
     elseif menu_key_enter(K[1]) then
-      if items[active_idx][7] then --is selectable
+      if menu_options[active_idx][7] then --is selectable
         selected = not selected
         if not selected then
           deselected_this_frame = true
           adjust_active_value = true
         end
-      elseif items[active_idx][3] == "bool" or items[active_idx][3] == "multiple choice" then
+      elseif menu_options[active_idx][3] == "bool" or menu_options[active_idx][3] == "multiple choice" then
         adjust_active_value = true
-      elseif items[active_idx][3] == "function" then
+      elseif menu_options[active_idx][3] == "function" then
         do_menu_function = true
-      elseif active_idx == #items then
+      elseif active_idx == #menu_options then
         return exit_options_menu
       end
     elseif menu_key_escape(K[1]) then
       if selected then
         selected = not selected
         deselected_this_frame = true
-      elseif active_idx == #items then
+      elseif active_idx == #menu_options then
         return exit_options_menu
       else
-        active_idx = #items
+        active_idx = #menu_options
       end
     end
     if adjust_active_value then
-      if items[active_idx][3] == "bool" then
+      if menu_options[active_idx][3] == "bool" then
         if active_idx == 4 then
           config.debug_mode = not config.debug_mode
-          items[active_idx][2] = debug_mode_text[config.debug_mode or false]
+          menu_options[active_idx][2] = debug_mode_text[config.debug_mode or false]
         end
         --add any other bool config updates here
-      elseif items[active_idx][3] == "numeric" then
-        if config.master_volume ~= items[1][2] then
-          config.master_volume = items[1][2]
+      elseif menu_options[active_idx][3] == "numeric" then
+        if config.master_volume ~= menu_options[1][2] then
+          config.master_volume = menu_options[1][2]
           love.audio.setVolume(config.master_volume/100)
         end
-        if config.SFX_volume ~= items[2][2] then --SFX volume should be updated
-          config.SFX_volume = items[2][2]
-          items[2][6]:setVolume(config.SFX_volume/100) --do just the one sound effect until we deselect
+        if config.SFX_volume ~= menu_options[2][2] then --SFX volume should be updated
+          config.SFX_volume = menu_options[2][2]
+          menu_options[2][6]:setVolume(config.SFX_volume/100) --do just the one sound effect until we deselect
         end
         if active_idx == 2 and deselected_this_frame then --SFX Volume
           set_volume(sounds.SFX, config.SFX_volume/100)
         end
-        if config.music_volume ~= items[3][2] then --music volume should be updated
-          config.music_volume = items[3][2]
-          items[3][6]:setVolume(config.music_volume/100) --do just the one music source until we deselect
+        if config.music_volume ~= menu_options[3][2] then --music volume should be updated
+          config.music_volume = menu_options[3][2]
+          menu_options[3][6]:setVolume(config.music_volume/100) --do just the one music source until we deselect
         end
         if active_idx == 3 and deselected_this_frame then --Music Volume
           set_volume(sounds.music, config.music_volume/100) 
         end
         --add any other numeric config updates here
-      elseif items[active_idx][3] == "multiple choice" then
+      elseif menu_options[active_idx][3] == "multiple choice" then
         local active_choice_num = 1
         --find the key for the currently selected choice
-        for k,v in ipairs(items[active_idx][4]) do
-          if v == items[active_idx][2] then
+        for k,v in ipairs(menu_options[active_idx][4]) do
+          if v == menu_options[active_idx][2] then
             active_choice_num = k
           end
         end
         -- the next line of code means
         -- current_choice_num = choices[wrap(1, next_choice_num, last_choice_num)]
         if adjust_backwards then
-          items[active_idx][2] = items[active_idx][4][wrap(1,active_choice_num - 1, #items[active_idx][4])]
+          menu_options[active_idx][2] = menu_options[active_idx][4][wrap(1,active_choice_num - 1, #menu_options[active_idx][4])]
           adjust_backwards = nil
         else
-          items[active_idx][2] = items[active_idx][4][wrap(1,active_choice_num + 1, #items[active_idx][4])]
+          menu_options[active_idx][2] = menu_options[active_idx][4][wrap(1,active_choice_num + 1, #menu_options[active_idx][4])]
         end
         if active_idx == 5 then
-          config.save_replays_publicly = items[active_idx][2]
+          config.save_replays_publicly = menu_options[active_idx][2]
         elseif active_idx == 6 then
-          config.assets_dir = items[active_idx][2]
+          config.assets_dir = menu_options[active_idx][2]
         elseif active_idx == 8 then
-          config.sounds_dir = items[active_idx][2]
+          config.sounds_dir = menu_options[active_idx][2]
         end
         --add any other multiple choice config updates here
       end
       adjust_active_value = false
     end
-    if items[active_idx][3] == "function" and do_menu_function then
-      if items[active_idx][1] == "About custom graphics" then
+    if menu_options[active_idx][3] == "function" and do_menu_function then
+      if menu_options[active_idx][1] == "About custom graphics" then
         if not love.filesystem.isDirectory("assets/Example folder structure")then
           print("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.")
           gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
@@ -1922,7 +2175,7 @@ function main_options()
           end
         end
       end
-      if items[active_idx][1] == "About custom sounds" then
+      if menu_options[active_idx][1] == "About custom sounds" then
         if not love.filesystem.isDirectory("sounds/Example folder structure")then
           print("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.")
           gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
@@ -1940,13 +2193,13 @@ function main_options()
         end
       end
     end
-    if selected and items[active_idx][9] and items[active_idx][6] and not items[active_idx][6]:isPlaying() then
+    if selected and menu_options[active_idx][9] and menu_options[active_idx][6] and not menu_options[active_idx][6]:isPlaying() then
     --if selected and play_while_selected and sound source exists and it isn't playing
-      items[active_idx][6]:play()
+      menu_options[active_idx][6]:play()
     end
     if deselected_this_frame then
-      if items[active_idx][6] then --sound_source for this menu item exists 
-        items[active_idx][6]:stop()
+      if menu_options[active_idx][6] then --sound_source for this menu item exists 
+        menu_options[active_idx][6]:stop()
         love.audio.stop()
       end
       deselected_this_frame = false
@@ -2017,24 +2270,24 @@ function main_dumb_transition(next_func, text, timemin, timemax)
   local t = 0
   local k = K[1]
   while true do
-    -- for _,msg in ipairs(this_frame_messages) do
+    -- for _,message in ipairs(this_frame_messages) do
       -- if next_func == main_character_select then
-        -- if msg.menu_state then
+        -- if message.menu_state then
           -- if currently_spectating then
-            -- if msg.menu_state.player_number == 1 then
-              -- global_my_state = msg.menu_state
-            -- elseif msg.menu_state.player_number == 2 then
-              -- global_op_state = msg.menu_state
+            -- if message.menu_state.player_number == 1 then
+              -- global_my_state = message.menu_state
+            -- elseif message.menu_state.player_number == 2 then
+              -- global_op_state = message.menu_state
             -- end
           -- else
-            -- global_op_state = msg.menu_state
+            -- global_op_state = message.menu_state
           -- end
         -- end
-        -- if msg.win_counts then
-          -- update_win_counts(msg.win_counts)
+        -- if message.win_counts then
+          -- update_win_counts(message.win_counts)
         -- end
-        -- if msg.rating_updates then
-          -- global_current_room_ratings = msg.ratings
+        -- if message.rating_updates then
+          -- global_current_room_ratings = message.ratings
         -- end
       -- end
       -- --TODO: anything else we should be listening for during main_dumb_transition?
