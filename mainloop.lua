@@ -451,7 +451,7 @@ function main_character_select()
     }
     print("we reset P2 buffers at start of main_character_select()")
     print("serverSupportsRanking: "..tostring(serverSupportsRanking))
-    local cursor,op_cursor, coordenate_x, coordenate_y
+    local cursor,op_cursor, coordenate_x, coordenate_y = nil, nil, nil
     if serverSupportsRanking then
       map = {
         {
@@ -636,12 +636,12 @@ function main_character_select()
   local selectable = {level=true, ready=true}
   local function move_cursor(direction)
     local dx, dy = unpack(direction)
-    local can_x,can_y = wrap(1, cursor[1]+dx, coordenate_x), wrap(1, cursor[2]+dy, coordenate_y)
+    local can_x, can_y = wrap(1, cursor[1]+dx, coordenate_x), wrap(1, cursor[2]+dy, coordenate_y)
     while can_x ~= cursor[1] or can_y ~= cursor[2] do
       if map[can_x][can_y] and map[can_x][can_y] ~= map[cursor[1]][cursor[2]] then
         break
       end
-      can_x,can_y = wrap(1, can_x+dx, coordenate_x), wrap(1, can_y+dy, coordenate_y)
+      can_x, can_y = wrap(1, can_x+dx, coordenate_x), wrap(1, can_y+dy, coordenate_y)
     end
     cursor[1], cursor[2] = can_x,can_y
   end
@@ -1057,7 +1057,7 @@ end
 
 function main_net_vs_lobby()
   local active_name, active_idx, active_back = "", 1
-  local menu_options
+  local menu_options = nil
   local unpaired_players = {} -- list
   local willing_players = {} -- set
   local spectatable_rooms = {}
@@ -1068,7 +1068,7 @@ function main_net_vs_lobby()
     [true] = "Select a player name to ask for a match.",
     [false] = "You are all alone in the lobby :("}  
   local leaderboard_string = ""
-  local my_rank
+  local my_rank = nil
   love.audio.stop()
   matchType = ""
   match_type_message = ""
@@ -1303,13 +1303,13 @@ function build_viewable_leaderboard_string(report, first_viewable_idx, last_view
   last_viewable_idx = math.min(last_viewable_idx, #report)
   for i=first_viewable_idx,last_viewable_idx do
     if report[i].is_you then
-      str = str.."You-> "
+      str = str .. "You-> "
     else
-      str = str.."      "
+      str = str .. "      "
     end
-    str = str..i.."    "..report[i].rating.."    "..report[i].user_name
+    str = str .. i .. "    " .. report[i].rating .. "    " .. report[i].user_name
     if i < #report then
-      str = str.."\n"
+      str = str .. "\n"
     end
   end
   return str
@@ -1320,7 +1320,7 @@ function main_net_vs_setup(ip)
     return main_set_name
     else my_name = config.name
   end
-  P1, P1_level, P2_level, got_opponent = nil
+  P1, P1_level, P2_level, got_opponent = nil, nil, nil, nil
   P2 = {panel_buffer="", gpanel_buffer=""}
   gprint("Setting up connection...", 300, 280)
   coroutine_wait()
@@ -1380,7 +1380,7 @@ function main_net_vs_setup(ip)
   else
     to_print = "P1 Level: "..my_level.."\nP2 level: "..(P2_level or "???")
   end
-  for i=1,30 do
+  for i=1, 30 do
     gprint(to_print,300, 280)
     do_messages()
     coroutine_wait()
@@ -2229,7 +2229,7 @@ end
 function main_set_name()
   local name = ""
   while true do
-    local to_print = "Enter your name:\n"..name
+    local to_print = "Enter your name:\n" .. name
     gprint(to_print, 300, 280)
     coroutine_wait()
     if this_frame_keys["escape"] then
