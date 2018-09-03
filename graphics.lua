@@ -39,24 +39,23 @@
 --#define CONFETTI_STARTRADIUS 150
 require("input")
 
-local floor = math.floor
 local ceil = math.ceil
-local garbage_match_time = #garbage_bounce_table
+local len_garbage = #garbage_bounce_table
 
-function load_img(path_and_name)
+function load_img(image_path)
 
     local img
 
     if pcall(
-        function () 
-            img = love.image.newImageData("assets/"..(config.assets_dir or default_assets_dir).."/"..path_and_name)
-        end) then 
-        
+        function ()
+            img = love.image.newImageData("assets/"..(config.assets_dir or default_assets_dir).."/"..image_path)
+        end) then
+
         if config.assets_dir and config.assets_dir ~= default_assets_dir then
-            print("loaded custom asset: "..config.assets_dir.."/"..path_and_name)
+            print("loaded custom asset: "..config.assets_dir.."/"..image_path)
         end
     else
-        img = love.image.newImageData("assets/"..default_assets_dir.."/"..path_and_name)
+        img = love.image.newImageData("assets/"..default_assets_dir.."/"..image_path)
     end
 
     -- local w, h = img:getWidth(), img:getHeight()
@@ -68,13 +67,13 @@ function load_img(path_and_name)
     -- img = padded
     -- end
 
-    local ret = love.graphics.newImage(img)
-    ret:setFilter("nearest","nearest")
+    local draw_image = love.graphics.newImage(img)
+    draw_image:setFilter("nearest","nearest")
 
-    return ret
+    return draw_image
 end
 
-function draw(img, x, y, rot, x_scale,y_scale)
+function draw(img, x, y, rot, x_scale, y_scale)
     rot = rot or 0
     x_scale = x_scale or 1
     y_scale = y_scale or 1
@@ -111,7 +110,7 @@ function menu_draw(img, x, y, rot, x_scale,y_scale)
 
 end
 
-function menu_drawq(img, quad, x, y, rot, x_scale,y_scale)
+function menu_drawq(img, quad, x, y, rot, x_scale, y_scale)
     rot = rot or 0
     x_scale = x_scale or 1
     y_scale = y_scale or 1
@@ -156,9 +155,11 @@ function gprint(str, x, y)
 end
 
 local _r, _g, _b, _a
+local MAX_ALPHA
 
 function set_color(r, g, b, a)
-    a = a or 255
+
+    a = a or MAX_ALPHA
 
     -- only do it if this color isn't the same as the previous one...
     if _r ~= r or _g ~= g or _b ~= b or _a ~= a then
@@ -168,9 +169,12 @@ function set_color(r, g, b, a)
 
 end
 
+local floor = math.floor
+
 function graphics_init()
     --Font_NumRed=LoadImage("graphics\Font_NumRed.bmp");
     --Font_NumBlue=LoadImage("graphics\Font_NumBlue.bmp");
+
 
     --GameTimeDisplay=NewImage(64,16);
     --P1ScoreDisplay=NewImage(40,16);
@@ -236,7 +240,7 @@ function graphics_init()
     for i=4,66 do
         IMG_cards[false][i] = load_img("combo"..tostring(floor(i/10))..tostring(i%10)..".png")
     end
- 
+
     for i=2,13 do
         IMG_cards[true][i] = load_img("chain"..tostring(floor(i/10))..tostring(i%10)..".png")
     end
@@ -246,11 +250,11 @@ function graphics_init()
     end
 
     IMG_character_icons = {}
-    
+
     for k,name in ipairs(characters) do
         IMG_character_icons[name] = load_img(""..name.."/icon.png")
     end
-    
+
     local MAX_SUPPORTED_PLAYERS = 2
     IMG_char_sel_cursors = {}
     for player_num=1,MAX_SUPPORTED_PLAYERS do
@@ -270,18 +274,18 @@ function graphics_init()
             local half_width, half_height = cur_width/2, cur_height/2
           IMG_char_sel_cursor_halves["left"][player_num][position_num] = love.graphics.newQuad(0,0,half_width,cur_height,cur_width, cur_height)
         end
-        
+
         IMG_char_sel_cursor_halves.right[player_num] = {}
-        
+
         for position_num=1,2 do
             local cur_width, cur_height = IMG_char_sel_cursors[player_num][position_num]:getDimensions()
             local half_width, half_height = cur_width/2, cur_height/2
             IMG_char_sel_cursor_halves.right[player_num][position_num] = love.graphics.newQuad(half_width,0,half_width,cur_height,cur_width, cur_height)
          end
     end
-    
+
     character_display_names = {}
-    
+
     for k, original_name in ipairs(characters) do
         name_txt_file = love.filesystem.newFile("assets/"..config.assets_dir.."/"..original_name.."/name.txt")
         --print(original_name)
@@ -295,13 +299,13 @@ function graphics_init()
         end
     end
     print("character_display_names: ")
-  
+
     for k,v in pairs(character_display_names) do
         print(k.." = "..v)
     end
-    
+
     character_display_names_to_original_names = {}
-  
+
     for k,v in pairs(character_display_names) do
         character_display_names_to_original_names[v] = k
     end
@@ -361,12 +365,12 @@ function Stack.draw_cards(self)
 end
 
 function Stack.render(self)
-    
-    local mx,my
+
+    local mouse_x,mouse_y
     if config.debug_mode then
-        mx,my = love.mouse.getPosition()
-        mx = mx / GFX_SCALE
-        my = my / GFX_SCALE
+        mouse_x,mouse_y = love.mouse.getPosition()
+        mouse_x = mouse_y / GFX_SCALE
+        mouse_y = mouse_y / GFX_SCALE
     end
 
     if P1 == self then
@@ -386,31 +390,31 @@ function Stack.render(self)
             local draw_y = (11-(row)) * 16 + self.pos_y + self.displacement - shake
 
             if panel.color ~= 0 and panel.state ~= "popped" then
-                local draw_frame = 1
 
+                local draw_frame = 1
                 if panel.garbage then
                     local imgs = {flash=IMG_metal_flash}
                     if not panel.metal then
                         imgs = IMG_garbage[self.garbage_target.character]
                     end
-                    
+
                     if panel.x_offset == 0 and panel.y_offset == 0 then
                         -- draw the entire block!
                         if panel.metal then
                             draw(IMG_metal_l, draw_x, draw_y)
                             draw(IMG_metal_r, draw_x+16*(panel.width-1)+8,draw_y)
-                            
+
                             for i=1,2*(panel.width-1) do
                                 draw(IMG_metal, draw_x+8*i, draw_y)
                             end
                         else
                             local height, width = panel.height, panel.width
                             local top_y = draw_y - (height-1) * 16
-                            local use_1 = ((height-(height%2))/2)%2==0
-                            
+                            local odd = ((height-(height%2))/2)%2==0
+
                             for i=0,height-1 do
                                 for j=1,width-1 do
-                                    draw((use_1 or height<3) and imgs.filler1 or imgs.filler2, draw_x+16*j-8, top_y+16*i) use_1 = not use_1
+                                    draw((odd or height<3) and imgs.filler1 or imgs.filler2, draw_x+16*j-8, top_y+16*i) odd = not odd
                                 end
                             end
 
@@ -459,7 +463,7 @@ function Stack.render(self)
                             draw(imgs.flash, draw_x, draw_y)
                          end
                     end
-                    
+
                     --this adds the drawing of state flags to garbage panels
                     if config.debug_mode then
                         gprint(panel.state, draw_x*3, draw_y*3)
@@ -502,7 +506,7 @@ function Stack.render(self)
                     end
 
                     draw(IMG_panels[panel.color][draw_frame], draw_x, draw_y)
-                    
+
                     if config.debug_mode then
                         gprint(panel.state, draw_x*3, draw_y*3)
                         if panel.match_anyway ~= nil then
@@ -534,7 +538,7 @@ function Stack.render(self)
         gprint("Score: "..self.score, self.score_x, 100)
         gprint("Speed: "..self.speed, self.score_x, 130)
         gprint("Frame: "..self.CLOCK, self.score_x, 145)
-        
+
         if self.mode == "time" then
             local time_left = 120 - self.CLOCK/60
             local mins = floor(time_left/60)
@@ -553,7 +557,7 @@ function Stack.render(self)
         if config.debug_mode and self.danger then
             gprint("danger", self.score_x,235)
         end
-    
+
         if config.debug_mode and self.danger_music then
             gprint("danger music", self.score_x, 250)
         end
@@ -573,13 +577,13 @@ function Stack.render(self)
             -- print(tostring(raise))
             local inputs_to_print = "inputs:"
 
-            if iraise then 
+            if iraise then
                 inputs_to_print = inputs_to_print.."\nraise"
             end --◄▲▼►
             if iswap then
                 inputs_to_print = inputs_to_print.."\nswap"
             end
-           
+
             if iup then
                 inputs_to_print = inputs_to_print.."\nup"
             end
@@ -616,13 +620,13 @@ end
 
 function scale_letterbox(width, height, w_ratio, h_ratio)
     if height / h_ratio > width / w_ratio then
-    
+
         local scaled_height = h_ratio * width / w_ratio
         return 0, (height - scaled_height) / 2, width, scaled_height
     end
-    
+
     local scaled_width = w_ratio * height / h_ratio
-    
+
     return (width - scaled_width) / 2, 0, scaled_width, height
 end
 
