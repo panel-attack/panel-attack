@@ -62,9 +62,9 @@ function love.update(dt)
     if consuming_timesteps then
         leftover_time = leftover_time + dt
     end
-    
+
     joystick_ax()
-    
+
     if not consuming_timesteps then
         key_counts()
     end
@@ -76,7 +76,7 @@ function love.update(dt)
     if not status then
         error(err..'\n'..debug.traceback(mainloop))
     end
-    
+
     if not consuming_timesteps then
         this_frame_keys = {}
         this_frame_unicodes = {}
@@ -114,7 +114,7 @@ function love.draw()
     love.graphics.setCanvas()
     love.graphics.clear()
 
-    x, y, w, h = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 4, 3)
-    love.graphics.draw(canvas, x, y, 0, w/default_width, h/default_height)
+    x, y, width, height = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 4, 3)
+    love.graphics.draw(canvas, x, y, 0, width/default_width, height/default_height)
 
 end
