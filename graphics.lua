@@ -154,7 +154,10 @@ function gprint(str, x, y)
             })
 end
 
-local _r, _g, _b, _a
+local _r = 0
+local _g = 0
+local _b = 0
+local _a = 0
 local MAX_ALPHA
 
 function set_color(r, g, b, a)
