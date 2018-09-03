@@ -29,7 +29,7 @@ function load_game_resources()
   coroutine_wait()
   sound_init()
   while true do
-    leftover_time = 1/120
+    leftover_time = 1 / 120
     consuming_timesteps = false
     func,arg = func(unpack(arg or {}))
     collectgarbage("collect")
@@ -39,8 +39,8 @@ end
 -- Wrapper for doing something at 60hz
 -- The rest of the stuff happens at whatever rate is convenient
 function run_function_as_60hz(func)
-  local frequency = 1/60
-  for i=1,4 do
+  local frequency = 1 / 60
+  for i=1, 4 do
     if leftover_time >= frequency then
       func()
       key_counts()
@@ -81,7 +81,7 @@ function menu_key_func(fixed, configurable, rept)
   if rept then
     query = repeating_key
   end
-  for i=1,#fixed do
+  for i=1, #fixed do
     menu_reserved_keys[#menu_reserved_keys + 1] = fixed[i]
   end
   return function(k)
@@ -91,7 +91,7 @@ function menu_key_func(fixed, configurable, rept)
         res = res or query(k[configurable[i]])
       end
     else
-      for i=1,#fixed do
+      for i=1, #fixed do
         res = res or query(fixed[i])
       end
       for i=1, #configurable do
@@ -220,7 +220,7 @@ do
     while true do
       local to_print = ""
       local arrow = ""
-      for i=1,#menu_options do
+      for i=1, #menu_options do
         if active_idx == i then
           arrow = arrow .. ">"
         else
@@ -232,9 +232,9 @@ do
       gprint(to_print, 300, 280)
       coroutine_wait()
       if menu_key_up(k) then
-        active_idx = wrap(1, active_idx-1, #menu_options)
+        active_idx = wrap(1, active_idx - 1, #menu_options)
       elseif menu_key_down(k) then
-        active_idx = wrap(1, active_idx+1, #menu_options)
+        active_idx = wrap(1, active_idx + 1, #menu_options)
       elseif menu_key_enter(k) then
         return menu_options[active_idx][2], menu_options[active_idx][3]
       elseif menu_key_escape(k) then
@@ -285,15 +285,15 @@ function select_speed_and_level_menu(next_func, ...)
     gprint(to_print2, 300, 280)
     coroutine_wait()
     if menu_key_up(k) then
-      active_idx = wrap(1, active_idx-1, #menu_options)
+      active_idx = wrap(1, active_idx - 1, #menu_options)
     elseif menu_key_down(k) then
-      active_idx = wrap(1, active_idx+1, #menu_options)
+      active_idx = wrap(1, active_idx + 1, #menu_options)
     elseif menu_key_right(k) then
-      if active_idx==1 then speed = bound(1,speed+1, 99)
-      elseif active_idx==2 then difficulty = bound(1, difficulty+1, 3) end
+      if active_idx == 1 then speed = bound(1, speed + 1, 99)
+      elseif active_idx == 2 then difficulty = bound(1, difficulty + 1, 3) end
     elseif menu_key_left(k) then
-      if active_idx==1 then speed = bound(1,speed-1,99)
-      elseif active_idx==2 then difficulty = bound(1,difficulty-1,3) end
+      if active_idx == 1 then speed = bound(1,speed-1,99)
+      elseif active_idx == 2 then difficulty = bound(1, difficulty - 1, 3) end
     elseif menu_key_enter(k) then
       if active_idx == 3 then
         return menu_options[active_idx][2], {speed, difficulty, ...}
@@ -352,7 +352,7 @@ function main_time_attack(...)
     coroutine_wait()
     if P1.game_over or P1.CLOCK == 120 * 60 then
     -- TODO: proper game over.
-      return main_dumb_transition, {main_select_mode, "You scored "..P1.score}
+      return main_dumb_transition, {main_select_mode, "You scored " .. P1.score}
     end
     run_function_as_60hz(function()
       if (not P1.game_over) and P1.CLOCK < 120 * 60 then
@@ -662,16 +662,16 @@ function main_character_select()
     end
   end
   local function draw_button(x, y, w, h, str)
-    local menu_width = coordenate_y*100
-    local menu_height = coordenate_x*80
+    local menu_width = coordenate_y * 100
+    local menu_height = coordenate_x * 80
     local spacing = 8
-    local x_padding = math.floor((819-menu_width)/2)
-    local y_padding = math.floor((612-menu_height)/2)
+    local x_padding = math.floor((819-menu_width) / 2)
+    local y_padding = math.floor((612-menu_height) / 2)
     set_color(unpack(colors.white))
-    render_x = x_padding+(y-1)*100+spacing
-    render_y = y_padding+(x-1)*100+spacing
-    button_width = w*100-2*spacing
-    button_height = h*100-2*spacing
+    render_x = x_padding + (y - 1) * 100 + spacing
+    render_y = y_padding+(x - 1) * 100 + spacing
+    button_width = w * 100 - 2 * spacing
+    button_height = h*100 - 2 * spacing
     grectangle("line", render_x, render_y, button_width, button_height)
     if IMG_character_icons[character_display_names_to_original_names[str]] then
       local orig_w, orig_h = IMG_character_icons[character_display_names_to_original_names[str]]:getDimensions()
@@ -721,7 +721,7 @@ function main_character_select()
     and op_state and op_state.cursor and (op_state.cursor == str or op_state.cursor == character_display_names_to_original_names[str]) then
       player_num = 2
       if op_state.ready then
-        if (math.floor(menu_clock/cur_blink_frequency)+player_num)%2+1 == player_num then
+        if (math.floor(menu_clock/cur_blink_frequency)+player_num)% 2 + 1 == player_num then
           draw_cur_this_frame = true
           cursor_frame = 1
         else
@@ -867,6 +867,7 @@ function main_character_select()
           if P1.play_to_end or P2.play_to_end then
             to_print = "Joined a match in progress.\nCatching up..."
           end
+
           for i=1, 30 do
             gprint(to_print,300, 280)
             do_messages()
@@ -885,7 +886,8 @@ function main_character_select()
             gprint(to_print, 300, 280)
             do_messages()
             coroutine_wait()
-            if game_start_timeout > 500 then
+            local LIMITTIMEOUT = 500
+            if game_start_timeout > LIMITTIMEOUT then
               return main_dumb_transition, {main_select_mode, 
                               "game-is-starting bug diagnostic version 2\n\ngame start timed out.\n Please screenshot this and\npost it in #panel-attack-bugs-features"
                               .."\n".."message.match_start = "..(tostring(message.match_start) or "nil")
@@ -1380,6 +1382,7 @@ function main_net_vs_setup(ip)
   else
     to_print = "P1 Level: "..my_level.."\nP2 level: "..(P2_level or "???")
   end
+
   for i=1, 30 do
     gprint(to_print,300, 280)
     do_messages()
@@ -1528,7 +1531,7 @@ main_local_vs_setup = multi_func(function()
         ..(chosen[2] and "" or "Choose ") .. "P2 level: "..(maybe[2])
     gprint(to_print, 300, 280)
     coroutine_wait()
-    for i=1,2 do
+    for i=1, 2 do
       local k=K[i]
       if menu_key_escape(k) then
         if chosen[i] then
@@ -1540,16 +1543,16 @@ main_local_vs_setup = multi_func(function()
         chosen[i] = maybe[i]
       elseif menu_key_up(k) or menu_key_right(k) then
         if not chosen[i] then
-          maybe[i] = bound(1,maybe[i]+1,10)
+          maybe[i] = bound(1, maybe[i] + 1, 10)
         end
       elseif menu_key_down(k) or menu_key_left(k) then
         if not chosen[i] then
-          maybe[i] = bound(1,maybe[i]-1,10)
+          maybe[i] = bound(1, maybe[i] - 1, 10)
         end
       end
     end
   end
-  to_print = "P1 level: "..maybe[1].."\nP2 level: "..(maybe[2])
+  to_print = "P1 level: " .. maybe[1] .. "\nP2 level: " .. (maybe[2])
   P1 = Stack(1, "vs", chosen[1])
   P2 = Stack(2, "vs", chosen[2])
   P1.garbage_target = P2
@@ -1566,7 +1569,7 @@ main_local_vs_setup = multi_func(function()
   make_local_gpanels(P1, "000000")
   make_local_panels(P2, "000000")
   make_local_gpanels(P2, "000000")
-  for i=1,30 do
+  for i=1, 30 do
     gprint(to_print,300, 280)
     coroutine_wait()
   end
@@ -1674,9 +1677,9 @@ function main_replay_vs()
     P1:render()
     P2:render()
     if mouse_panel then
-      local str = "Panel info:\nrow: "..mouse_panel[1].."\ncol: "..mouse_panel[2]
+      local str = "Panel info:\nrow: " .. mouse_panel[1] .. "\ncol: " .. mouse_panel[2]
       for k,v in spairs(mouse_panel[3]) do
-        str = str .. "\n".. k .. ": "..tostring(v)
+        str = str .. "\n".. k .. ": " .. tostring(v)
       end
       gprint(str, 350, 400)
     end
@@ -1702,7 +1705,7 @@ function main_replay_vs()
       end_text = "Draw"
     elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
       if replay.P2_name and replay.P2_name ~= "anonymous" then
-        end_text = replay.P2_name.." wins"
+        end_text = replay.P2_name .. " wins"
       else
         end_text = "P2 wins"
       end
@@ -1748,7 +1751,7 @@ function main_replay_endless()
     if run or this_frame_keys["\\"] then
       if P1.game_over then
       -- TODO: proper game over.
-        return main_dumb_transition, {main_select_mode, "You scored "..P1.score}
+        return main_dumb_transition, {main_select_mode, "You scored " .. P1.score}
       end
       P1:foreign_run()
     end
@@ -1772,7 +1775,7 @@ function main_replay_puzzle()
     if mouse_panel then
       local str = "Panel info:\nrow: "..mouse_panel[1].."\ncol: "..mouse_panel[2]
       for k,v in spairs(mouse_panel[3]) do
-        str = str .. "\n".. k .. ": "..tostring(v)
+        str = str .. "\n" .. k .. ": " .. tostring(v)
       end
       gprint(str, 350, 400)
     end
@@ -1842,9 +1845,9 @@ end
 do
   local menu_options = {}
   for key,val in spairs(puzzle_sets) do
-    menu_options[#menu_options+1] = {key, make_main_puzzle(val)}
+    menu_options[#menu_options + 1] = {key, make_main_puzzle(val)}
   end
-  menu_options[#menu_options+1] = {"Back", main_select_mode}
+  menu_options[#menu_options + 1] = {"Back", main_select_mode}
   function main_select_puzz()
     local active_idx = 1
     local k = K[1]
@@ -1886,15 +1889,15 @@ function main_config_input()
   local active_player = 1
   local function get_items()
     menu_options = {[0]={"Player ", ""..active_player}}
-    for i=1,#key_names do
-      menu_options[#menu_options+1] = {pretty_names[i], k[key_names[i]] or "none"}
+    for i=1, #key_names do
+      menu_options[#menu_options + 1] = {pretty_names[i], k[key_names[i]] or "none"}
     end
-    menu_options[#menu_options+1] = {"Set all keys", ""}
-    menu_options[#menu_options+1] = {"Back", "", main_select_mode}
+    menu_options[#menu_options + 1] = {"Set all keys", ""}
+    menu_options[#menu_options + 1] = {"Back", "", main_select_mode}
   end
   local function print_stuff()
     local to_print, to_print2, arrow = "", "", ""
-    for i=0,#menu_options do
+    for i=0, #menu_options do
       if active_idx == i then
         arrow = arrow .. ">"
       else
@@ -1927,21 +1930,21 @@ function main_config_input()
     print_stuff()
     coroutine_wait()
     if menu_key_up(K[1]) then
-      active_idx = wrap(1, active_idx-1, #menu_options)
+      active_idx = wrap(1, active_idx - 1, #menu_options)
     elseif menu_key_down(K[1]) then
-      active_idx = wrap(1, active_idx+1, #menu_options)
+      active_idx = wrap(1, active_idx + 1, #menu_options)
     elseif menu_key_left(K[1]) then
-      active_player = wrap(1, active_player-1, 2)
+      active_player = wrap(1, active_player - 1, 2)
       k=K[active_player]
     elseif menu_key_right(K[1]) then
-      active_player = wrap(1, active_player+1, 2)
+      active_player = wrap(1, active_player + 1, 2)
       k=K[active_player]
     elseif menu_key_enter(K[1]) then
       if active_idx <= #key_names then
         set_key(active_idx)
         write_key_file()
       elseif active_idx == #key_names + 1 then
-        for i=1,8 do
+        for i=1, 8 do
           set_key(i)
           write_key_file()
         end
@@ -1974,14 +1977,14 @@ function main_options()
   local asset_sets = {}
   for k,v in ipairs(raw_assets_dir_list) do
     if love.filesystem.isDirectory("assets/"..v) and v ~= "Example folder structure" then
-      asset_sets[#asset_sets+1] = v
+      asset_sets[#asset_sets + 1] = v
     end
   end
   local raw_sounds_dir_list = love.filesystem.getDirectoryItems("sounds")
   local sound_sets = {}
   for k,v in ipairs(raw_sounds_dir_list) do
     if love.filesystem.isDirectory("sounds/"..v) and v ~= "Example folder structure" then
-      sound_sets[#sound_sets+1] = v
+      sound_sets[#sound_sets + 1] = v
     end
   end
   print("asset_sets:")
@@ -2022,7 +2025,7 @@ function main_options()
       else
         to_print2 = to_print2 .. "                  "
       end
-      to_print2 = to_print2.. menu_options[i][2] 
+      to_print2 = to_print2 .. menu_options[i][2] 
       if active_idx == i and selected then
         to_print2 = to_print2 .. " >"
       end
@@ -2113,21 +2116,21 @@ function main_options()
       elseif menu_options[active_idx][3] == "numeric" then
         if config.master_volume ~= menu_options[1][2] then
           config.master_volume = menu_options[1][2]
-          love.audio.setVolume(config.master_volume/100)
+          love.audio.setVolume(config.master_volume / 100)
         end
         if config.SFX_volume ~= menu_options[2][2] then --SFX volume should be updated
           config.SFX_volume = menu_options[2][2]
-          menu_options[2][6]:setVolume(config.SFX_volume/100) --do just the one sound effect until we deselect
+          menu_options[2][6]:setVolume(config.SFX_volume / 100) --do just the one sound effect until we deselect
         end
         if active_idx == 2 and deselected_this_frame then --SFX Volume
-          set_volume(sounds.SFX, config.SFX_volume/100)
+          set_volume(sounds.SFX, config.SFX_volume / 100)
         end
         if config.music_volume ~= menu_options[3][2] then --music volume should be updated
           config.music_volume = menu_options[3][2]
-          menu_options[3][6]:setVolume(config.music_volume/100) --do just the one music source until we deselect
+          menu_options[3][6]:setVolume(config.music_volume / 100) --do just the one music source until we deselect
         end
         if active_idx == 3 and deselected_this_frame then --Music Volume
-          set_volume(sounds.music, config.music_volume/100) 
+          set_volume(sounds.music, config.music_volume / 100) 
         end
         --add any other numeric config updates here
       elseif menu_options[active_idx][3] == "multiple choice" then
@@ -2163,7 +2166,7 @@ function main_options()
           print("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.")
           gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
           coroutine_wait()
-          recursive_copy("assets/"..default_assets_dir, "assets/Example folder structure")
+          recursive_copy("assets/" .. default_assets_dir, "assets/Example folder structure")
         end
         local custom_graphics_readme = read_txt_file("Custom Graphics Readme.txt")
         while true do
@@ -2180,7 +2183,7 @@ function main_options()
           print("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.")
           gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
           coroutine_wait()
-          recursive_copy("sounds/"..default_sounds_dir, "sounds/Example folder structure")
+          recursive_copy("sounds/" .. default_sounds_dir, "sounds/Example folder structure")
         end
         local custom_sounds_readme = read_txt_file("Custom Sounds Readme.txt")
         while true do
@@ -2208,7 +2211,7 @@ function main_options()
 end
 
 function exit_options_menu()
-  gprint("writing config to file...", 300,280)
+  gprint("writing config to file...", 300, 280)
   coroutine_wait()
   write_conf_file()
   if config.assets_dir ~= assets_dir_before_options_menu then
