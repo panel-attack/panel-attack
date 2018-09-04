@@ -20,7 +20,7 @@ local floor = math.floor
 local TIMEOUT = 10
 local CHARACTERSELECT = "character select" -- room states
 local PLAYING = "playing" -- room states
-local DEFAULT_RATING = 1500
+local DEFAULT_RATING = 1600
 local NAME_LENGTH_LIMIT = 16
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
@@ -335,12 +335,18 @@ Leaderboard = class(function (s, name)
   s.players = {}
 end)
 
-function Leaderboard.update(self, user_id, new_rating)
+function Leaderboard.update(self, user_id, new_rating, match_details)
   print("in Leaderboard.update")
   if self.players[user_id] then
     self.players[user_id].rating = new_rating
   else
     self.players[user_id] = {rating=new_rating}
+  end
+  if match_details and match_details ~= "" then
+    for k,v in pairs(match_details) do
+      self.players[user_id].ranked_games_won = (self.players[user_id].games_won or 0) + v.outcome
+      self.players[user_id].ranked_games_played = (self.players[user_id].ranked_games_played or 0) + 1
+    end
   end
   print("new_rating = "..new_rating)
   print("about to write_leaderboard_file")
@@ -364,16 +370,18 @@ function Leaderboard.get_report(self, user_id_of_requester)
     for insert_index=1, leaderboard_player_count do
       local player_is_leaderboard_requester = nil
       if playerbase.players[k] then --only include in the report players who are still listed in the playerbase
-        if v.rating then -- don't include entries who's rating is nil (which shouldn't happen anyway)
-          if k == user_id_of_requester then
-            player_is_leaderboard_requester = true
-          end
-          if report[insert_index] and report[insert_index].rating and v.rating >= report[insert_index].rating then
-            table.insert(report, insert_index, {user_name=playerbase.players[k],rating=v.rating,is_you=player_is_leaderboard_requester})
-            break
-          elseif insert_index == leaderboard_player_count or #report == 0 then
-            table.insert(report, {user_name=playerbase.players[k],rating=v.rating,is_you=player_is_leaderboard_requester}) -- at the end of the table.
-            break
+        if v.placement_done then --don't include players who haven't finished placement
+          if v.rating then -- don't include entries who's rating is nil (which shouldn't happen anyway)
+            if k == user_id_of_requester then
+              player_is_leaderboard_requester = true
+            end
+            if report[insert_index] and report[insert_index].rating and v.rating >= report[insert_index].rating then
+              table.insert(report, insert_index, {user_name=playerbase.players[k],rating=v.rating,is_you=player_is_leaderboard_requester})
+              break
+            elseif insert_index == leaderboard_player_count or #report == 0 then
+              table.insert(report, {user_name=playerbase.players[k],rating=v.rating,is_you=player_is_leaderboard_requester}) -- at the end of the table.
+              break
+            end
           end
         end
       end
@@ -689,6 +697,9 @@ function Room.rating_adjustment_approved(self)
     if not playerbase.players[players[player_number].user_id] or not players[player_number].logged_in or playerbase.deleted_players[players[player_number].user_id]then
       reasons[#reasons+1] = players[player_number].name.." didn't log in"
     end
+    if not leaderboard.players[players[1].user_id].placement_done and not leaderboard.players[players[2].user_id].placement_done then
+      reasons[#reasons+1] = "Neither player has finished enough placement matches against already ranked players"
+    end
     if not players[player_number].wants_ranked_match then
       reasons[#reasons+1] = players[player_number].name.." doesn't want ranked"
     end
@@ -704,91 +715,114 @@ function Room.rating_adjustment_approved(self)
   end
 end
 
+function calculate_rating_adjustment(Rc, Ro, Oa, k)
+  --[[ --Algorithm we are implementing, per community member Bbforky:
+      Formula for Calculating expected outcome:
+
+      Oe=1/(1+10^((Ro-Rc)/400)))
+
+      Oe= Expected Outcome
+      Ro= Current rating of opponent
+      Rc= Current rating
+
+      Formula for Calculating new rating:
+
+      Rn=Rc+k(Oa-Oe)
+
+      Rn=New Rating
+      Oa=Actual Outcome (0 for loss, 1 for win)
+      k= Constant (Probably will use 10)
+  ]]--
+    -- print("calculating expected outcome for")
+    -- print(players[player_number].name.." Ranking: "..leaderboard.players[players[player_number].user_id].rating)
+    -- print("vs")
+    -- print(players[player_number].opponent.name.." Ranking: "..leaderboard.players[players[player_number].opponent.user_id].rating)
+    Oe = 1/(1+10^((Ro-Rc)/400))
+    -- print("Ro="..Ro)
+    -- print("Rc="..Rc)
+    -- print("Ro-Rc="..Ro-Rc)
+    -- print("1/(1+10^((Ro-Rc)/400))="..1/(1+10^((Ro-Rc)/400)))
+    -- print("expected outcome: "..Oe)
+    Rn = Rc + k*(Oa-Oe)
+  return Rn
+end
+
 function adjust_ratings(room, winning_player_number)
     print("We'd be adjusting the rating of "..room.a.name.." and "..room.b.name..". Player "..winning_player_number.." wins!")
     local players = {room.a, room.b}
     local continue = true
-    --check that it's ok to adjust rating
+    --check that it's ok to adjust ratings
     continue, reasons = room:rating_adjustment_approved()
     if continue then
+      room.ratings = {}
+      for player_number = 1,2 do
+        --if they aren't on the leaderboard yet, give them the default rating
+        if not leaderboard.players[players[player_number].user_id] or not leaderboard.players[players[player_number].user_id].rating then  
+          leaderboard:update(players[player_number].user_id, DEFAULT_RATING)
+          print("Gave "..playerbase.players[players[player_number].user_id].." a new rating of "..DEFAULT_RATING)
+        end
+      end
+      
+      for player_number = 1,2 do
+        local k, Oa --max point change per match, actual outcome
+        room.ratings[player_number] = {}
+        if leaderboard.players[players[player_number].user_id].placement_done == true then
+          k = 10
+        else
+          k = 50
+        end
+        if players[player_number].player_number == winning_player_number then
+          Oa = 1
+        else
+          Oa = 0
+        end
+        if leaderboard.players[players[player_number].user_id].placement_done == true then
+          if leaderboard.players[players[player_number].opponent.user_id].placement_done then
+            print("Player "..player_number.." played a non-placement ranked match.  Updating his rating now.")
+            room.ratings[player_number].new = calculate_rating_adjustment(leaderboard.players[players[player_number].user_id].rating, leaderboard.players[players[player_number].opponent.user_id].rating, Oa, k)
+          else
+            print("Player "..player_number.." played ranked against an unranked opponent.  We'll process this match when his opponent has finished placement")
+            room.ratings[player_number].placement_matches_played = leaderboard.players[players[player_number].user_id].ranked_games_played
+          end
+        else -- this player has not finished placement
+          if leaderboard.players[players[player_number].opponent.user_id].placement_done then
+            print("Player "..player_number.." (unranked) just played a placement match against a ranked player.")
+          else
+            print("Neither player is done with placement.  We should not have gotten to this line of code")
+          end
+        end
+        
+        
+    print("room.ratings["..player_number.."].new = "..room.ratings[player_number].new)
+      end
+      --check that both player's new room.ratings are numeric (and not nil)
+      for player_number = 1,2 do
+        if tonumber(room.ratings[player_number].new) then
+          print()
+          continue = true
+        else
+          print(players[player_number].name.."'s new rating wasn't calculated properly.  Not adjusting the rating for this match")
+          continue = false
+        end
+      end
+      if continue then
+          --now that both new room.ratings have been calculated properly, actually update the leaderboard
           for player_number = 1,2 do
-            --if they aren't on the leaderboard yet, give them the default rating
-            if not leaderboard.players[players[player_number].user_id] or not leaderboard.players[players[player_number].user_id].rating then  
-              leaderboard:update(players[player_number].user_id, DEFAULT_RATING)
-              print("Gave "..playerbase.players[players[player_number].user_id].." a new rating of "..DEFAULT_RATING)
-            end
+            print(playerbase.players[players[player_number].user_id])
+            print("Old rating:"..leaderboard.players[players[player_number].user_id].rating)
+            room.ratings[player_number].old = leaderboard.players[players[player_number].user_id].rating
+            leaderboard:update(players[player_number].user_id, room.ratings[player_number].new)
+            print("New rating:"..leaderboard.players[players[player_number].user_id].rating)
           end
-        --[[ --Algorithm we are implementing, per community member Bbforky:
-            Formula for Calculating expected outcome:
-
-            Oe=1/(1+10^((Ro-Rc)/400)))
-
-            Oe= Expected Outcome
-            Ro= Current rating of opponent
-            Rc= Current rating
-
-            Formula for Calculating new rating:
-
-            Rn=Rc+k(Oa-Oe)
-
-            Rn=New Rating
-            Oa=Actual Outcome (0 for loss, 1 for win)
-            k= Constant (Probably will use 10)
-        ]]--
-        room.ratings = {}
-        local Ro, Rc, Oe, Oa
-        local k = 10
-        for player_number = 1,2 do
-          room.ratings[player_number] = {}
-          -- print("calculating expected outcome for")
-          -- print(players[player_number].name.." Ranking: "..leaderboard.players[players[player_number].user_id].rating)
-          -- print("vs")
-          -- print(players[player_number].opponent.name.." Ranking: "..leaderboard.players[players[player_number].opponent.user_id].rating)
-          Ro = leaderboard.players[players[player_number].opponent.user_id].rating
-          Rc = leaderboard.players[players[player_number].user_id].rating
-          Oe = 1/(1+10^((Ro-Rc)/400))
-          -- print("Ro="..Ro)
-          -- print("Rc="..Rc)
-          -- print("Ro-Rc="..Ro-Rc)
-          -- print("1/(1+10^((Ro-Rc)/400))="..1/(1+10^((Ro-Rc)/400)))
-          -- print("expected outcome: "..Oe)
-          
-          if players[player_number].player_number == winning_player_number then
-            Oa = 1
-          else
-            Oa = 0
+          for player_number = 1,2 do
+            --round and calculate rating gain or loss (difference) to send to the clients
+            room.ratings[player_number].old = round(room.ratings[player_number].old)
+            room.ratings[player_number].new = round(room.ratings[player_number].new)
+            room.ratings[player_number].difference = room.ratings[player_number].new - room.ratings[player_number].old
           end
-          room.ratings[player_number].new = Rc + k*(Oa-Oe)
-          print("room.ratings["..player_number.."].new = "..room.ratings[player_number].new)
-        end
-        --check that both player's new room.ratings are numeric (and not nil)
-        for player_number = 1,2 do
-          if tonumber(room.ratings[player_number].new) then
-            print()
-            continue = true
-          else
-            print(players[player_number].name.."'s new rating wasn't calculated properly.  Not adjusting the rating for this match")
-            continue = false
-          end
-        end
-        if continue then
-            --now that both new room.ratings have been calculated properly, actually update the leaderboard
-            for player_number = 1,2 do
-              print(playerbase.players[players[player_number].user_id])
-              print("Old rating:"..leaderboard.players[players[player_number].user_id].rating)
-              room.ratings[player_number].old = leaderboard.players[players[player_number].user_id].rating
-              leaderboard:update(players[player_number].user_id, room.ratings[player_number].new)
-              print("New rating:"..leaderboard.players[players[player_number].user_id].rating)
-            end
-            for player_number = 1,2 do
-              --round and calculate rating gain or loss (difference) to send to the clients
-              room.ratings[player_number].old = round(room.ratings[player_number].old)
-              room.ratings[player_number].new = round(room.ratings[player_number].new)
-              room.ratings[player_number].difference = room.ratings[player_number].new - room.ratings[player_number].old
-            end
-            msg = {rating_updates=true, ratings=room.ratings}
-            room:send(msg)
-        end
+          msg = {rating_updates=true, ratings=room.ratings}
+          room:send(msg)
+      end
     else
       print("Not adjusting ratings.  "..reasons[1])
     end
@@ -1068,6 +1102,7 @@ read_players_file()
 read_deleted_players_file()
 leaderboard = Leaderboard("leaderboard")
 read_leaderboard_file()
+write_leaderboard_file()
 print(os.time())
 --TODO: remove test print for leaderboard
 print("playerbase: "..json.encode(playerbase.players))

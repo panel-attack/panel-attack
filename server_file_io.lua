@@ -1,4 +1,5 @@
 local lfs = require("lfs")
+local csvfile = require("simplecsv")
 
 function isFile(name)
     if type(name)~="string" then return false end
@@ -66,13 +67,33 @@ function write_leaderboard_file() pcall(function()
   io.output(f)
   io.write(json.encode(leaderboard.players))
   io.close(f)
+  --now also write a CSV version of the file
+  local csv = "user_id,user_name,rating,placement_done,placement_matches,final_placement_rating,ranked_games_played,ranked_games_won"
+  local leaderboard_table = {{"user_id","user_name","rating","placement_done","placement_matches","final_placement_rating","ranked_games_played","ranked_games_won"}}
+  
+  for user_id,v in pairs(leaderboard.players) do
+    leaderboard_table[#leaderboard_table+1] = 
+      {user_id, v.user_name,v.rating,v.placement_done,v.placement_matches,v.final_placement_rating,v.ranked_games_played,v.ranked_games_won}
+      
+    -- csv = csv.."\n"..user_id..","..(v.user_name or "")..","..(v.rating or "")..","
+    -- ..(v.placement_done or "")..","..(v.placement_matches or "")..","
+    -- ..(v.final_placement_rating or "")..","..(v.ranked_games_played or "")..","..(v.ranked_games_won or "")
+    
+  end
+  local csv_file = assert(io.open("leaderboard.csv", "w"))
+  io.output(csv_file)
+  io.write(csv)
+  io.close(csv_file)
 end) end
 
 function read_leaderboard_file() pcall(function()
-  local f = assert(io.open("leaderboard.txt", "r"))
+  -- local f = assert(io.open("leaderboard.txt", "r"))
+  -- io.input(f)
+  -- leaderboard.players = json.decode(io.read("*all"))
+  -- io.close(f)
+  local csv = assert(io.open("leaderboard.csv", "r"))
   io.input(f)
-  leaderboard.players = json.decode(io.read("*all"))
-  io.close(f)
+  leaderboard.players = {}
 end) end
 
 function write_replay_file(replay, path, filename) pcall(function()
