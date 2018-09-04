@@ -216,9 +216,9 @@ json.null = setmetatable ({}, {
   __tojson = function () return 'null' end
 })
 
-local function isarray (tbl)
-  local max, n, arraylen = 0, 0, 0
-  for key, value in pairs (tbl) do
+local function isarray (table)
+  local max, count, arraylen = 0, 0, 0
+  for key, value in pairs (table) do
     if key == 'n' and type(value) == 'number' then
       arraylen = value
       if value > max then
@@ -231,10 +231,10 @@ local function isarray (tbl)
       if key > max then
         max = key
       end
-      n = n + 1
+      count = count + 1
     end
   end
-  if max > 10 and max > arraylen and max > n * 2 then
+  if max > 10 and max > arraylen and max > count * 2 then
     return false -- don't create an array with too many holes
   end
   return true, max
@@ -250,16 +250,16 @@ local function escapeutf8 (uchar)
   if value then
     return value
   end
-  local a, b, c, d = strbyte (uchar, 1, 4)
-  a, b, c, d = a or 0, b or 0, c or 0, d or 0
-  if a <= 0x7f then
-    value = a
-  elseif 0xc0 <= a and a <= 0xdf and b >= 0x80 then
-    value = (a - 0xc0) * 0x40 + b - 0x80
-  elseif 0xe0 <= a and a <= 0xef and b >= 0x80 and c >= 0x80 then
-    value = ((a - 0xe0) * 0x40 + b - 0x80) * 0x40 + c - 0x80
-  elseif 0xf0 <= a and a <= 0xf7 and b >= 0x80 and c >= 0x80 and d >= 0x80 then
-    value = (((a - 0xf0) * 0x40 + b - 0x80) * 0x40 + c - 0x80) * 0x40 + d - 0x80
+  local byte_1, byte_2, byte_3, byte_4 = strbyte (uchar, 1, 4)
+  byte_1, byte_2, byte_3, byte_4 = byte_1 or 0, byte_2 or 0, byte_3 or 0, byte_4 or 0
+  if byte_1 <= 0x7f then
+    value = byte_1
+  elseif 0xc0 <= byte_1 and byte_1 <= 0xdf and byte_2 >= 0x80 then
+    value = (byte_1 - 0xc0) * 0x40 + byte_2 - 0x80
+  elseif 0xe0 <= byte_1 and byte_1 <= 0xef and byte_2 >= 0x80 and byte_3 >= 0x80 then
+    value = ((byte_1 - 0xe0) * 0x40 + byte_2 - 0x80) * 0x40 + byte_3 - 0x80
+  elseif 0xf0 <= byte_1 and byte_1 <= 0xf7 and byte_2 >= 0x80 and byte_3 >= 0x80 and byte_4 >= 0x80 then
+    value = (((byte_1 - 0xf0) * 0x40 + byte_2 - 0x80) * 0x40 + byte_3 - 0x80) * 0x40 + byte_4 - 0x80
   else
     return ''
   end
