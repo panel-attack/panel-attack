@@ -94,11 +94,14 @@ end
 ---------------------------------------------------------------------
 function write(path, data, sep)
     sep = sep or ','
+    --this assumes that the first row has the maximum number of columns
+    --and that no items in the first row are nil
+    local num_of_columns = #data[1]
     local file = assert(io.open(path, "w"))
     for i=1,#data do
-        for j=1,#data[i] do
+        for j=1,num_of_columns do
             if j>1 then file:write(sep) end
-            file:write(data[i][j])
+            file:write(data[i][j] or '')
         end
         file:write('\n')
     end
