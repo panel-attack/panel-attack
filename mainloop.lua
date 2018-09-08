@@ -2012,79 +2012,86 @@ end
 function make_main_puzzle(puzzles)
 	local awesome_idx, ret = 1, nil
 	function ret()
-	  consuming_timesteps = true
-	  replay.puzzle = {}
-	  local replay = replay.puzzle
-	  P1 = Stack(1, "puzzle")
-	  if awesome_idx == nil then
-	    awesome_idx = math.random(#puzzles)
-	  end
-	  P1:set_puzzle_state(unpack(puzzles[awesome_idx]))
-	  replay.puzzle = puzzles[awesome_idx]
-	  replay.in_buf = ""
-	  while true do
-	    P1:render()
-	    coroutine_wait()
-	    if P1.n_active_panels == 0 and
-	        P1.prev_active_panels == 0 then
-	      if P1:puzzle_done() then
-	        awesome_idx = (awesome_idx % #puzzles) + 1
-	        write_replay_file()
-	        if awesome_idx == 1 then
-	          return main_dumb_transition, {main_select_puzz, "You win!"}
-	        else
-	          return main_dumb_transition, {ret, "You win!"}
+        consuming_timesteps = true
+        replay.puzzle = {}
+        local replay = replay.puzzle
+        P1 = Stack(1, "puzzle")
+        
+        if awesome_idx == nil then
+	        awesome_idx = math.random(#puzzles)
+	    end
+        
+        P1:set_puzzle_state(unpack(puzzles[awesome_idx]))
+        replay.puzzle = puzzles[awesome_idx]
+        replay.in_buf = ""
+        while true do
+            P1:render()
+            coroutine_wait()
+	        if P1.n_active_panels == 0 and
+	            P1.prev_active_panels == 0 then
+	            if P1:puzzle_done() then
+	                awesome_idx = (awesome_idx % #puzzles) + 1
+	                write_replay_file()
+	            if awesome_idx == 1 then
+	                return main_dumb_transition, {main_select_puzz, "You win!"}
+	            else
+	                return main_dumb_transition, {ret, "You win!"}
+	            end
+	        elseif P1.puzzle_moves == 0 then
+	            write_replay_file()
+	            return main_dumb_transition, {main_select_puzz, "You lose :("}
 	        end
-	      elseif P1.puzzle_moves == 0 then
-	        write_replay_file()
-	        return main_dumb_transition, {main_select_puzz, "You lose :("}
-	      end
 	    end
 	    run_function_as_60hz(function() 
-	      if P1.n_active_panels ~= 0 or P1.prev_active_panels ~= 0 or
-	        P1.puzzle_moves ~= 0 then P1:local_run() end end)
-	  end
+	        if P1.n_active_panels ~= 0 or P1.prev_active_panels ~= 0 or
+	            P1.puzzle_moves ~= 0 then P1:local_run() end end)
+	    end
 	end
 	return ret
 end
 
 do
-	local menu_options = {}
+    local menu_options = {}
+    
 	for key,val in spairs(puzzle_sets) do
-	  menu_options[#menu_options + 1] = {key, make_main_puzzle(val)}
+	    menu_options[#menu_options + 1] = {key, make_main_puzzle(val)}
 	end
-	menu_options[#menu_options + 1] = {"Back", main_select_mode}
+    
+    menu_options[#menu_options + 1] = {"Back", main_select_mode}
 	function main_select_puzz()
-	  local active_idx = 1
-	  local k = K[1]
-	  while true do
-	    local to_print = ""
-	    local arrow = ""
-	    for i=1,#menu_options do
-	      if active_idx == i then
-	        arrow = arrow .. ">"
-	      else
-	        arrow = arrow .. "\n"
-	      end
-	      to_print = to_print .. "   " .. menu_options[i][1] .. "\n"
+        local active_idx = 1
+        local k = K[1]
+        while true do
+            local to_print = ""
+            local arrow = ""
+            for i=1,#menu_options do
+	            if active_idx == i then
+	                arrow = arrow .. ">"
+	            else
+	                arrow = arrow .. "\n"
+                end
+                
+	            to_print = to_print .. "   " .. menu_options[i][1] .. "\n"
+            end
+            
+            gprint(arrow, 300, 280)
+            gprint(to_print, 300, 280)
+            coroutine_wait()
+            
+            if menu_key_up(k) then
+	            active_idx = wrap(1, active_idx-1, #menu_options)
+	        elseif menu_key_down(k) then
+	            active_idx = wrap(1, active_idx+1, #menu_options)
+	        elseif menu_key_enter(k) then
+	            return menu_options[active_idx][2], menu_options[active_idx][3]
+	        elseif menu_key_escape(k) then
+	            if active_idx == #menu_options then
+	                return menu_options[active_idx][2], menu_options[active_idx][3]
+	            else
+	                active_idx = #menu_options
+	            end
+	        end
 	    end
-	    gprint(arrow, 300, 280)
-	    gprint(to_print, 300, 280)
-	    coroutine_wait()
-	    if menu_key_up(k) then
-	      active_idx = wrap(1, active_idx-1, #menu_options)
-	    elseif menu_key_down(k) then
-	      active_idx = wrap(1, active_idx+1, #menu_options)
-	    elseif menu_key_enter(k) then
-	      return menu_options[active_idx][2], menu_options[active_idx][3]
-	    elseif menu_key_escape(k) then
-	      if active_idx == #menu_options then
-	        return menu_options[active_idx][2], menu_options[active_idx][3]
-	      else
-	        active_idx = #menu_options
-	      end
-	    end
-	  end
 	end
 end
 
@@ -2093,43 +2100,49 @@ function main_config_input()
 	local menu_options, active_idx = {}, 1
 	local k = K[1]
 	local active_player = 1
-	local function get_items()
-	  menu_options = {[0]={"Player ", ""..active_player}}
-	  for i=1, #key_names do
-	    menu_options[#menu_options + 1] = {pretty_names[i], k[key_names[i]] or "none"}
-	  end
-	  menu_options[#menu_options + 1] = {"Set all keys", ""}
-	  menu_options[#menu_options + 1] = {"Back", "", main_select_mode}
-	end
+    
+    local function get_items()
+	    menu_options = {[0]={"Player ", ""..active_player}}
+	    for i=1, #key_names do
+    	    menu_options[#menu_options + 1] = {pretty_names[i], k[key_names[i]] or "none"}
+	    end
+        
+        menu_options[#menu_options + 1] = {"Set all keys", ""}
+	    menu_options[#menu_options + 1] = {"Back", "", main_select_mode}
+    end
+    
 	local function print_stuff()
-	  local to_print, to_print2, arrow = "", "", ""
-	  for i=0, #menu_options do
-	    if active_idx == i then
-	      arrow = arrow .. ">"
-	    else
-	      arrow = arrow .. "\n"
-	    end
-	    to_print = to_print .. "   " .. menu_options[i][1] .. "\n"
-	    to_print2 = to_print2 .. "                  " .. menu_options[i][2] .. "\n"
-	  end
-	  gprint(arrow, 300, 280)
-	  gprint(to_print, 300, 280)
-	  gprint(to_print2, 300, 280)
-	end
+	    local to_print, to_print2, arrow = "", "", ""
+	    for i=0, #menu_options do
+	        if active_idx == i then
+	            arrow = arrow .. ">"
+	        else
+	            arrow = arrow .. "\n"
+            end
+            
+            to_print = to_print .. "   " .. menu_options[i][1] .. "\n"
+            to_print2 = to_print2 .. "                  " .. menu_options[i][2] .. "\n"
+        end
+        
+        gprint(arrow, 300, 280)
+        gprint(to_print, 300, 280)
+        gprint(to_print2, 300, 280)
+    end
+    
 	local function set_key(idx)
-	  local brk = false
-	  while not brk do
-	    get_items()
-	    menu_options[idx][2] = "___"
-	    print_stuff()
-	    coroutine_wait()
-	    for key,val in pairs(this_frame_keys) do
-	      if val then
-	        k[key_names[idx]] = key
-	        brk = true
-	      end
+	    local brk = false
+	    while not brk do
+            get_items()
+            menu_options[idx][2] = "___"
+            print_stuff()
+            coroutine_wait()
+	        for key,val in pairs(this_frame_keys) do
+	            if val then
+	                k[key_names[idx]] = key
+	                brk = true
+	            end
+	        end
 	    end
-	  end
 	end
 	while true do
 	  get_items()
