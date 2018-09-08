@@ -1170,27 +1170,30 @@ function main_character_select()
 end
 
 function main_net_vs_lobby()
-	local active_name, active_idx, active_back = "", 1
-	local menu_options = nil
-	local unpaired_players = {} -- list
-	local willing_players = {} -- set
-	local spectatable_rooms = {}
-	local k = K[1]
-	my_player_number = nil
-	op_player_number = nil
-	local notice = {
-	  [true] = "Select a player name to ask for a match.",
-	  [false] = "You are all alone in the lobby :("}  
+    local active_name, active_idx, active_back = "", 1
+    local menu_options = nil
+    local unpaired_players = {} -- list
+    local willing_players = {} -- set
+    local spectatable_rooms = {}
+    local k = K[1]
+    my_player_number = nil
+    op_player_number = nil
+    local notice = {
+		[true] = "Select a player name to ask for a match.",
+		[false] = "You are all alone in the lobby :("}  
 	local leaderboard_string = ""
-	local my_rank = nil
-	love.audio.stop()
+    local my_rank = nil
+    
+    love.audio.stop()
+    
 	matchType = ""
 	match_type_message = ""
 	--attempt login
 	read_user_id_file()
 	if not playerUsername then
-	  playerUsername = "need a new user id"
-	end
+	    playerUsername = "need a new user id"
+    end
+    
 	json_send({login_request=true, user_id=playerUsername}) 
 	local login_status_message = "   Logging in..."
 	local login_status_message_duration = 2
@@ -1198,192 +1201,217 @@ function main_net_vs_lobby()
 	local prev_act_idx = active_idx
 	local showing_leaderboard = false
 	local lobby_menu_x = {[true]=100, [false]=300} --will be used to make room in case the leaderboard should be shown.
-	while true do
+    
+    while true do
 	    if connectionUptime <= login_status_message_duration then
-	      gprint(login_status_message, lobby_menu_x[showing_leaderboard], 160)
-	      for _,message in ipairs(this_frame_messages) do
-	          if message.login_successful then
-	            serverSupportsRanking = true
-	            isLoggedIn = true
-	            if message.new_user_id then
-	              playerUsername = message.new_user_id
-	              print("about to write user id file")
-	              write_user_id_file()
-	              login_status_message = "Welcome, new user: "..my_name
-	            elseif message.name_changed then
-	              login_status_message = "Welcome, your username has been updated. \n\nOld name:  \""
-	                .. message.old_name .. "\"\n\nNew name:  \"" .. message.new_name .. "\""
-	              login_status_message_duration = 5
-	            else
-	              login_status_message = "Welcome back, " .. my_name
+	        gprint(login_status_message, lobby_menu_x[showing_leaderboard], 160)
+	        for _,message in ipairs(this_frame_messages) do
+	            if message.login_successful then
+	                serverSupportsRanking = true
+	                isLoggedIn = true
+	                if message.new_user_id then
+	                    playerUsername = message.new_user_id
+	                    print("about to write user id file")
+	                    write_user_id_file()
+	                    login_status_message = "Welcome, new user: "..my_name
+	                elseif message.name_changed then
+	                    login_status_message = "Welcome, your username has been updated. \n\nOld name:  \""
+	                    .. message.old_name .. "\"\n\nNew name:  \"" .. message.new_name .. "\""
+	                    login_status_message_duration = 5
+	                else
+	                    login_status_message = "Welcome back, " .. my_name
+	                end
+	            elseif message.login_denied then
+                    serverSupportsRanking = true
+                    login_denied = true
+                    --TODO: create a menu here to let the user choose "continue unranked" or "get a new user_id"
+                    --login_status_message = "Login for ranked matches failed.\n"..message.reason.."\n\nYou may continue unranked,\nor delete your invalid user_id file to have a new one assigned."
+	                login_status_message_duration = 10
+	                return main_dumb_transition, {main_select_mode, "Error message received from the server:\n\n"..json.encode(message),60,600}
 	            end
-	          elseif message.login_denied then
-	              serverSupportsRanking = true
-	              login_denied = true
-	              --TODO: create a menu here to let the user choose "continue unranked" or "get a new user_id"
-	              --login_status_message = "Login for ranked matches failed.\n"..message.reason.."\n\nYou may continue unranked,\nor delete your invalid user_id file to have a new one assigned."
-	              login_status_message_duration = 10
-	              return main_dumb_transition, {main_select_mode, "Error message received from the server:\n\n"..json.encode(message),60,600}
-	          end
-	      end
-	      if connectionUptime == 2 and not serverSupportsRanking then
-	              login_status_message = "Login for ranked matches timed out.\nThis server probably doesn't support ranking.\n\nYou may continue unranked."
-	              login_status_message_duration = 7
-	      end
-	    end
-	  for _, message in ipairs(this_frame_messages) do
-	    if message.choose_another_name and message.choose_another_name.used_names then
-	      return main_dumb_transition, {main_select_mode, "Error: name is taken :<\n\nIf you had just left the server,\nit may not have realized it yet, try joining again.\n\nThis can also happen if you have two\ninstances of Panel Attack open.\n\nPress Swap or Back to continue.", 60, 600}
-	    elseif message.choose_another_name and message.choose_another_name.reason then
-	      return main_dumb_transition, {main_select_mode, "Error: ".. message.choose_another_name.reason, 60}
-	    end
-	    if message.create_room or message.spectate_request_granted then
-	      global_initialize_room_msg = message
-	      character_select_mode = "2p_net_vs"
-	      return main_character_select
-	    end
-	    if message.unpaired then
-	      unpaired_players = message.unpaired
-	      -- players who leave the unpaired list no longer have standing invitations to us.
-	      local new_willing = {}
-	      for _, player in ipairs(unpaired_players) do
-	        new_willing[player] = willing_players[player]
-	      end
-	      willing_players = new_willing
-	    end
-	    if message.spectatable then
-	      spectatable_rooms = message.spectatable
-	    end
-	    if message.game_request then
-	      willing_players[message.game_request.sender] = true
-	    end
-	    if message.leaderboard_report then
-	      showing_leaderboard = true
-	      leaderboard_report = message.leaderboard_report
-	      for k, v in ipairs(leaderboard_report) do
-	        if v.is_you then
-	          my_rank = k
 	        end
-	      end
-	      leaderboard_first_idx_to_show = math.max((my_rank or 1) - 8, 1)
-	      leaderboard_last_idx_to_show = math.min(leaderboard_first_idx_to_show + 20, #leaderboard_report)
-	      leaderboard_string = build_viewable_leaderboard_string(leaderboard_report,
+            
+            if connectionUptime == 2 and not serverSupportsRanking then
+                login_status_message = "Login for ranked matches timed out.\nThis server probably doesn't support ranking.\n\nYou may continue unranked."
+                login_status_message_duration = 7
+	        end
+	    end
+        
+        for _, message in ipairs(this_frame_messages) do
+	        if message.choose_another_name and message.choose_another_name.used_names then
+	            return main_dumb_transition, {main_select_mode, "Error: name is taken :<\n\nIf you had just left the server,\nit may not have realized it yet, try joining again.\n\nThis can also happen if you have two\ninstances of Panel Attack open.\n\nPress Swap or Back to continue.", 60, 600}
+	        elseif message.choose_another_name and message.choose_another_name.reason then
+	            return main_dumb_transition, {main_select_mode, "Error: ".. message.choose_another_name.reason, 60}
+        end
+        
+	    if message.create_room or message.spectate_request_granted then
+	         global_initialize_room_msg = message
+	        character_select_mode = "2p_net_vs"
+	        return main_character_select
+        end
+        
+	    if message.unpaired then
+            unpaired_players = message.unpaired
+	        -- players who leave the unpaired list no longer have standing invitations to us.
+            local new_willing = {}
+            for _, player in ipairs(unpaired_players) do
+	            new_willing[player] = willing_players[player]
+	        end
+	        willing_players = new_willing
+        end
+        
+	    if message.spectatable then
+            spectatable_rooms = message.spectatable
+        end
+        
+	    if message.game_request then
+	        willing_players[message.game_request.sender] = true
+        end
+        
+	    if message.leaderboard_report then
+            showing_leaderboard = true
+            leaderboard_report = message.leaderboard_report
+            for k, v in ipairs(leaderboard_report) do
+	            if v.is_you then
+	                my_rank = k
+	            end
+	        end
+	        leaderboard_first_idx_to_show = math.max((my_rank or 1) - 8, 1)
+            leaderboard_last_idx_to_show = math.min(leaderboard_first_idx_to_show + 20, #leaderboard_report)
+            leaderboard_string = build_viewable_leaderboard_string(leaderboard_report,
 	        leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
 	    end
-	  end
-	  local to_print = ""
-	  local arrow = ""
-	  menu_options = {}
-	  for _, v in ipairs(unpaired_players) do
-	    if v ~= config.name then
-	      menu_options[#menu_options + 1] = v
 	    end
-	  end
-	  local lastPlayerIndex = #menu_options --the rest of the menu_options will be spectatable rooms, except the last two menu_options (leaderboard and back to main menu)
-	  for _, v in ipairs(spectatable_rooms) do
-	    menu_options[#menu_options + 1] = v
-	  end
-	  if showing_leaderboard then
-	    menu_options[#menu_options + 1] = "Hide Leaderboard"
-	  else
-	    menu_options[#menu_options + 1] = "Show Leaderboard"  -- the second to last item is "Leaderboard"
-	  end
-	  menu_options[#menu_options + 1] = "Back to main menu" -- the last item is "Back to the main menu"
-	  if active_back then
-	    active_idx = #menu_options
-	  elseif showing_leaderboard then
-	    active_idx = #menu_options - 1 --the position of the "hide leaderboard" menu item
-	  else
-	    while active_idx > #menu_options do
-	      print("active_idx > #menu_options.  Decrementing active_idx")
-	      active_idx = active_idx - 1
+        
+        local to_print = ""
+	    local arrow = ""
+        menu_options = {}
+        
+	    for _, v in ipairs(unpaired_players) do
+	        if v ~= config.name then
+	            menu_options[#menu_options + 1] = v
+	        end
+        end
+        
+	    local lastPlayerIndex = #menu_options --the rest of the menu_options will be spectatable rooms, except the last two menu_options (leaderboard and back to main menu)
+        
+        for _, v in ipairs(spectatable_rooms) do
+	        menu_options[#menu_options + 1] = v
 	    end
-	    active_name = menu_options[active_idx]
-	  end
-	  for i=1, #menu_options do
-	    if active_idx == i then
-	      arrow = arrow .. ">"
+        
+        if showing_leaderboard then
+	        menu_options[#menu_options + 1] = "Hide Leaderboard"
 	    else
-	      arrow = arrow .. "\n"
+	        menu_options[#menu_options + 1] = "Show Leaderboard"  -- the second to last item is "Leaderboard"
 	    end
-	    if i <= lastPlayerIndex then
-	      to_print = to_print .. "   " .. menu_options[i] ..
-	        (willing_players[menu_options[i]] and " (Wants to play with you :o)" or "") .. "\n"
-	    elseif i < #menu_options - 1 and menu_options[i].name then
-	      to_print = to_print .. "   spectate " .. menu_options[i].name .. " (".. menu_options[i].state .. ")\n" --printing room names 
-	    elseif i < #menu_options then
-	      to_print = to_print .. "   " .. menu_options[i] .. "\n"
-	    else
-	      to_print = to_print .. "   " .. menu_options[i]
-	    end
-	  end
-	  gprint(notice[#menu_options > 2], lobby_menu_x[showing_leaderboard], 250)
-	  gprint(arrow, lobby_menu_x[showing_leaderboard], 280)
-	  gprint(to_print, lobby_menu_x[showing_leaderboard], 280)
-	  if showing_leaderboard then
-	    gprint(leaderboard_string, 500, 160)
-	  end
-	  
-	  coroutine_wait()
-	  if menu_key_up(k) then
-	    if showing_leaderboard then
-	      if leaderboard_first_idx_to_show>1 then
-	        leaderboard_first_idx_to_show = leaderboard_first_idx_to_show - 1
-	        leaderboard_last_idx_to_show = leaderboard_last_idx_to_show - 1    
-	        leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
-	      end
-	    else
-	      active_idx = wrap(1, active_idx-1, #menu_options)
-	    end
-	  elseif menu_key_down(k) then
-	    if showing_leaderboard then
-	      if leaderboard_last_idx_to_show < #leaderboard_report then
-	        leaderboard_first_idx_to_show = leaderboard_first_idx_to_show + 1
-	        leaderboard_last_idx_to_show = leaderboard_last_idx_to_show + 1
-	        leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
-	      end
-	    else
-	      active_idx = wrap(1, active_idx+1, #menu_options)
-	    end
-	  elseif menu_key_enter(k) then
-	    spectator_list = {}
-	    spectators_string = ""
-	    if active_idx == #menu_options then
-	      return main_select_mode
-	    end
-	    if active_idx == #menu_options - 1 then
-	      if not showing_leaderboard then
-	        json_send({leaderboard_request=true})
-	      else
-	        showing_leaderboard = false --toggle it off
-	      end
-	    elseif active_idx <= lastPlayerIndex then
-	      my_name = config.name
-	      op_name = menu_options[active_idx]
-	      currently_spectating = false
-	      request_game(menu_options[active_idx])
-	    else
-	      my_name = menu_options[active_idx].a
-	      op_name = menu_options[active_idx].b
-	      currently_spectating = true
-	      room_number_last_spectated = menu_options[active_idx].roomNumber
-	      request_spectate(menu_options[active_idx].roomNumber)
-	    end
-	  elseif menu_key_escape(k) then
-	    if active_idx == #menu_options then
-	      return main_select_mode
+        
+        menu_options[#menu_options + 1] = "Back to main menu" -- the last item is "Back to the main menu"
+        
+        if active_back then
+	        active_idx = #menu_options
 	    elseif showing_leaderboard then
-	      showing_leaderboard = false
+	        active_idx = #menu_options - 1 --the position of the "hide leaderboard" menu item
 	    else
-	      active_idx = #menu_options
+	        while active_idx > #menu_options do
+	            print("active_idx > #menu_options.  Decrementing active_idx")
+	            active_idx = active_idx - 1
+	        end
+            
+            active_name = menu_options[active_idx]
+        end
+        
+	    for i=1, #menu_options do
+	        if active_idx == i then
+	            arrow = arrow .. ">"
+	        else
+	            arrow = arrow .. "\n"
+	        end
+            
+            if i <= lastPlayerIndex then
+	            to_print = to_print .. "   " .. menu_options[i] ..
+	                (willing_players[menu_options[i]] and " (Wants to play with you :o)" or "") .. "\n"
+	        elseif i < #menu_options - 1 and menu_options[i].name then
+	            to_print = to_print .. "   spectate " .. menu_options[i].name .. " (".. menu_options[i].state .. ")\n" --printing room names 
+	        elseif i < #menu_options then
+	            to_print = to_print .. "   " .. menu_options[i] .. "\n"
+	        else
+	            to_print = to_print .. "   " .. menu_options[i]
+	        end
+        end
+        
+        gprint(notice[#menu_options > 2], lobby_menu_x[showing_leaderboard], 250)
+        gprint(arrow, lobby_menu_x[showing_leaderboard], 280)
+        gprint(to_print, lobby_menu_x[showing_leaderboard], 280)
+        
+        if showing_leaderboard then
+	        gprint(leaderboard_string, 500, 160)
 	    end
-	  end
-	  active_back = active_idx == #menu_options
-	  if active_idx ~= prev_act_idx then
-	    print("#menu_options: "..#menu_options.."  idx_old: "..prev_act_idx.."  idx_new: "..active_idx.."  active_back: "..tostring(active_back))
-	    prev_act_idx = active_idx
-	  end
-	  do_messages()
+	  
+        coroutine_wait()
+        if menu_key_up(k) then
+	        if showing_leaderboard then
+	            if leaderboard_first_idx_to_show>1 then
+                    leaderboard_first_idx_to_show = leaderboard_first_idx_to_show - 1
+                    leaderboard_last_idx_to_show = leaderboard_last_idx_to_show - 1    
+                    leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, 
+                                    leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
+	            end
+	        else
+	            active_idx = wrap(1, active_idx-1, #menu_options)
+	        end
+	    elseif menu_key_down(k) then
+	        if showing_leaderboard then
+	            if leaderboard_last_idx_to_show < #leaderboard_report then
+                    leaderboard_first_idx_to_show = leaderboard_first_idx_to_show + 1
+                    leaderboard_last_idx_to_show = leaderboard_last_idx_to_show + 1
+                    leaderboard_string = build_viewable_leaderboard_string(leaderboard_report,
+                             leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
+	            end
+	        else
+	            active_idx = wrap(1, active_idx+1, #menu_options)
+	        end
+	    elseif menu_key_enter(k) then
+            spectator_list = {}
+            spectators_string = ""
+            if active_idx == #menu_options then
+	            return main_select_mode
+	        end
+	        if active_idx == #menu_options - 1 then
+	            if not showing_leaderboard then
+	            json_send({leaderboard_request=true})
+	        else
+	            showing_leaderboard = false --toggle it off
+	        end
+	    elseif active_idx <= lastPlayerIndex then
+            my_name = config.name
+            op_name = menu_options[active_idx]
+            currently_spectating = false
+            request_game(menu_options[active_idx])
+	    else
+            my_name = menu_options[active_idx].a
+            op_name = menu_options[active_idx].b
+            currently_spectating = true
+            room_number_last_spectated = menu_options[active_idx].roomNumber
+            request_spectate(menu_options[active_idx].roomNumber)
+	    end
+	    elseif menu_key_escape(k) then
+            if active_idx == #menu_options then
+                return main_select_mode
+            elseif showing_leaderboard then
+                showing_leaderboard = false
+            else
+                active_idx = #menu_options
+            end
+	    end
+        
+        active_back = active_idx == #menu_options
+        if active_idx ~= prev_act_idx then
+            print("#menu_options: "..#menu_options.."  idx_old: "
+            ..prev_act_idx.."  idx_new: "..active_idx.."  active_back: "..tostring(active_back))
+	        prev_act_idx = active_idx
+	    end
+        
+        do_messages()
 	end
 end
 
