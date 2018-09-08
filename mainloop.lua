@@ -395,529 +395,589 @@ end
 
 function main_character_select()
 	love.audio.stop()
-	local map = {}
+    local map = {}
+    
 	if character_select_mode == "2p_net_vs" then
-	  local opponent_connected = false
-	  local retries, retry_limit = 0, 500
-	  while not global_initialize_room_msg and retries < retry_limit do
-	    for _, message in ipairs(this_frame_messages) do
-	      if message.create_room or message.character_select or message.spectate_request_granted then
-	        global_initialize_room_msg = message
-	      end
-	    end
-	    gprint("Waiting for room initialization...", 300, 280)
-	    coroutine_wait()
-	    do_messages()
-	    retries = retries + 1
-	  end
-	  if room_number_last_spectated and retries >= retry_limit and currently_spectating then
-	    request_spectate(room_number_last_spectated)
-	    retries = 0
-	    while not global_initialize_room_msg and retries < retry_limit do
-	      for _, message in ipairs(this_frame_messages) do
-	        if message.create_room or message.character_select or message.spectate_request_granted then
-	          global_initialize_room_msg = message
-	        end
-	      end
-	      gprint("Lost connection.  Trying to rejoin...", 300, 280)
-	      coroutine_wait()
-	      do_messages()
-	      retries = retries + 1
-	    end
-	  end
-	  if not global_initialize_room_msg then
-	    return main_dumb_transition, {main_select_mode, "Failed to connect.\n\nReturning to main menu", 60, 300}
-	  end
-	  message = global_initialize_room_msg
-	  global_initialize_room_msg = nil
-	  if message.ratings then
-	      global_current_room_ratings = message.ratings
-	  end
-	  global_my_state = message.a_menu_state
-	  global_op_state = message.b_menu_state
-	  if message.your_player_number then
-	    my_player_number = message.your_player_number
-	  elseif currently_spectating then
-	    my_player_number = 1
-	  elseif my_player_number and my_player_number ~= 0 then
+        local opponent_connected = false
+        local retries, retry_limit = 0, 500
+        
+        while not global_initialize_room_msg and retries < retry_limit do
+            for _, message in ipairs(this_frame_messages) do
+                if message.create_room or message.character_select or message.spectate_request_granted then
+                global_initialize_room_msg = message
+                end
+            end
+
+            gprint("Waiting for room initialization...", 300, 280)
+            coroutine_wait()
+            do_messages()
+
+            retries = retries + 1
+        end
+        
+        if room_number_last_spectated and retries >= retry_limit and currently_spectating then
+            request_spectate(room_number_last_spectated)
+            retries = 0
+        while not global_initialize_room_msg and retries < retry_limit do
+            for _, message in ipairs(this_frame_messages) do
+                if message.create_room or message.character_select or message.spectate_request_granted then
+                    global_initialize_room_msg = message
+                end
+            end
+
+            gprint("Lost connection.  Trying to rejoin...", 300, 280)
+            coroutine_wait()
+            do_messages()
+
+            retries = retries + 1
+        end
+    end
+    
+    if not global_initialize_room_msg then
+        return main_dumb_transition, {main_select_mode, "Failed to connect.\n\nReturning to main menu", 60, 300}
+	end
+    
+    message = global_initialize_room_msg
+    global_initialize_room_msg = nil
+    if message.ratings then
+	    global_current_room_ratings = message.ratings
+	end
+    
+    global_my_state = message.a_menu_state
+    global_op_state = message.b_menu_state
+
+    if message.your_player_number then
+        my_player_number = message.your_player_number
+    elseif currently_spectating then
+        my_player_number = 1
+    elseif my_player_number and my_player_number ~= 0 then
 	    print("We assumed our player number is still " .. my_player_number)
-	  else
+    else
 	    error("We never heard from the server as to what player number we are")
 	    print("Error: The server never told us our player number.  Assuming it is 1")
 	    my_player_number = 1
-	  end
-	  if message.op_player_number then
+    end
+    
+    if message.op_player_number then
 	    op_player_number = message.op_player_number or op_player_number
-	  elseif currently_spectating then
+	elseif currently_spectating then
 	    op_player_number = 2
-	  elseif op_player_number and op_player_number ~= 0 then
+	elseif op_player_number and op_player_number ~= 0 then
 	    print("We assumed op player number is still " .. op_player_number)
-	  else
+	else
 	    error("We never heard from the server as to what player number we are")
 	    print("Error: The server never told us our player number.  Assuming it is 2")
 	    op_player_number = 2
-	  end
-	  if message.win_counts then
+    end
+    
+	if message.win_counts then
 	    update_win_counts(message.win_counts)
-	  end
-	  if message.replay_of_match_so_far then
+	end
+	if message.replay_of_match_so_far then
 	    replay_of_match_so_far = message.replay_of_match_so_far
-	  end
-	  if message.ranked then
+    end
+    
+	if message.ranked then
 	    matchType = "Ranked"
 	    match_type_message = ""
-	  else 
+	else 
 	    matchType = "Casual"
-	  end
-	  if currently_spectating then
+    end
+    
+	if currently_spectating then
 	    P1 = {panel_buffer="", gpanel_buffer=""}
 	    print("we reset P1 buffers at start of main_character_select()")
-	  end
-	  P2 = {
-	    panel_buffer="",
+	end
+	P2 = {
+        panel_buffer="",
 	    gpanel_buffer=""
-	  }
+        }
 	  print("we reset P2 buffers at start of main_character_select()")
-	  print("serverSupportsRanking: "..tostring(serverSupportsRanking))
-	  local cursor,op_cursor, coordenate_x, coordenate_y = nil, nil, nil
-	  if serverSupportsRanking then
-	    map = {
-	      {
-	        "match type desired",
-	        "match type desired",
-	        "match type desired",
-	        "match type desired",
-	        "level",
-	        "level",
-	        "ready"
-	      },
-	      {
-	        "random",
-	        "windy",
-	        "sherbet",
-	        "thiana",
-	        "ruby",
-	        "lip",
-	        "elias"
-	      },
-	      {
-	        "flare",
-	        "neris",
-	        "seren",
-	        "phoenix",
-	        "dragon",
-	        "thanatos",
-	        "cordelia"
-	      },
-	      {
-	        "lakitu",
-	        "bumpty",
-	        "poochy",
-	        "wiggler",
-	        "froggy",
-	        "blargg",
-	        "lungefish"
-	      },
-	      {
-	        "raphael",
-	        "yoshi",
-	        "hookbill",
-	        "navalpiranha",
-	        "kamek",
-	        "bowser",
-	        "leave"
-	      }
-	    }
-	  else
-	    map = {
-	      {
-	        "level",
-	        "level",
-	        "level",
-	        "level", 
-	        "level",
-	        "level",
-	        "ready"
-	      },
-	      {
-	        "random",
-	        "windy",
-	        "sherbet",
-	        "thiana",
-	        "ruby",
-	        "lip",
-	        "elias"
-	      },
-	      {
-	        "flare",
-	        "neris",
-	        "seren",
-	        "phoenix",
-	        "dragon",
-	        "thanatos",
-	        "cordelia"
-	      },
-	      {
-	        "lakitu",
-	        "bumpty",
-	        "poochy",
-	        "wiggler",
-	        "froggy",
-	        "blargg",
-	        "lungefish"
-	      },
-	      {
-	        "raphael",
-	        "yoshi",
-	        "hookbill",
-	        "navalpiranha",
-	        "kamek",
-	        "bowser",
-	        "leave"
-	      }
-	    }
-	  end       
-	end
+      print("serverSupportsRanking: "..tostring(serverSupportsRanking))
+      
+	local cursor,op_cursor, coordinate_x, coordinate_y = nil, nil, nil
+	    if serverSupportsRanking then
+            map = {
+                {
+                    "match type desired",
+                    "match type desired",
+                    "match type desired",
+                    "match type desired",
+                    "level",
+                    "level",
+                    "ready"
+                },
+                {
+                    "random",
+                    "windy",
+                    "sherbet",
+                    "thiana",
+                    "ruby",
+                    "lip",
+                    "elias"
+                },
+                {
+                    "flare",
+                    "neris",
+                    "seren",
+                    "phoenix",
+                    "dragon",
+                    "thanatos",
+                    "cordelia"
+                },
+                {
+                    "lakitu",
+                    "bumpty",
+                    "poochy",
+                    "wiggler",
+                    "froggy",
+                    "blargg",
+                    "lungefish"
+                },
+                {
+                    "raphael",
+                    "yoshi",
+                    "hookbill",
+                    "navalpiranha",
+                    "kamek",
+                    "bowser",
+                    "leave"
+                }
+            }
+	    else
+            map = {
+                {
+                    "level",
+                    "level",
+                    "level",
+                    "level", 
+                    "level",
+                    "level",
+                    "ready"
+                },
+                {
+                    "random",
+                    "windy",
+                    "sherbet",
+                    "thiana",
+                    "ruby",
+                    "lip",
+                    "elias"
+                },
+                {
+                    "flare",
+                    "neris",
+                    "seren",
+                    "phoenix",
+                    "dragon",
+                    "thanatos",
+                    "cordelia"
+                },
+                {
+                    "lakitu",
+                    "bumpty",
+                    "poochy",
+                    "wiggler",
+                    "froggy",
+                    "blargg",
+                    "lungefish"
+                },
+                {
+                    "raphael",
+                    "yoshi",
+                    "hookbill",
+                    "navalpiranha",
+                    "kamek",
+                    "bowser",
+                    "leave"
+                }
+            }
+        end       
+    end
+    
 	if character_select_mode == "1p_vs_yourself" then
-	  map = {
-	    {
-	      "level",
-	      "level",
-	      "level",
-	      "level",
-	      "level",
-	      "level",
-	      "ready"
-	    },
-	    {
-	      "random",
-	      "windy",
-	      "sherbet",
-	      "thiana",
-	      "ruby",
-	      "lip",
-	      "elias"
-	    },
-	    {
-	      "flare",
-	      "neris",
-	      "seren",
-	      "phoenix",
-	      "dragon",
-	      "thanatos",
-	      "cordelia"
-	    },
-	    {
-	      "lakitu",
-	      "bumpty",
-	      "poochy",
-	      "wiggler",
-	      "froggy",
-	      "blargg",
-	      "lungefish"
-	    },
-	    {
-	      "raphael",
-	      "yoshi",
-	      "hookbill",
-	      "navalpiranha",
-	      "kamek",
-	      "bowser",
-	      "leave"
-	    }
-	  }
-	end
+        map = {
+            {
+                "level",
+                "level",
+                "level",
+                "level",
+                "level",
+                "level",
+                "ready"
+            },
+            {
+                "random",
+                "windy",
+                "sherbet",
+                "thiana",
+                "ruby",
+                "lip",
+                "elias"
+            },
+            {
+                "flare",
+                "neris",
+                "seren",
+                "phoenix",
+                "dragon",
+                "thanatos",
+                "cordelia"
+            },
+            {
+                "lakitu",
+                "bumpty",
+                "poochy",
+                "wiggler",
+                "froggy",
+                "blargg",
+                "lungefish"
+            },
+            {
+                "raphael",
+                "yoshi",
+                "hookbill",
+                "navalpiranha",
+                "kamek",
+                "bowser",
+                "leave"
+            }
+        }
+    end
+    
 	local op_state = global_op_state or {character="lip", level=5, cursor="level", ready=false}
 	global_op_state = nil
-	cursor, op_cursor, coordenate_x, coordenate_y = {1, 1}, {1, 1}, 5, 7
+	cursor, op_cursor, coordinate_x, coordinate_y = {1, 1}, {1, 1}, 5, 7
 	local k = K[1]
-	local up, down, left, right = {-1, 0}, {1, 0}, {0, -1}, {0, 1}
+    local up, down, left, right = {-1, 0}, {1, 0}, {0, -1}, {0, 1}
+    
 	my_state = global_my_state or
-	  {character=config.character, level=config.level, cursor="level", ready=false}
+        {character=config.character, level=config.level, cursor="level", ready=false}
+        
 	global_my_state = nil
 	my_win_count = my_win_count or 0
 	local prev_state = shallowcpy(my_state)
-	op_win_count = op_win_count or 0
+    op_win_count = op_win_count or 0
+    
 	if character_select_mode == "2p_net_vs" then
-	  global_current_room_ratings = global_current_room_ratings or 
-	    {{new=0, old=0, difference=0}, {new=0, old=0, difference=0}}
-	  my_expected_win_ratio = (100*round(1/(1+10^
-	        ((global_current_room_ratings[op_player_number].new
-	            -global_current_room_ratings[my_player_number].new)
-	          /rating_spread_modifier))
-	        ,2))
-	  op_expected_win_ratio = (100*round(1/(1+10^
-	        ((global_current_room_ratings[my_player_number].new
-	            -global_current_room_ratings[op_player_number].new)
-	          /rating_spread_modifier))
-	        ,2))
-	end
+        global_current_room_ratings = global_current_room_ratings or 
+            {{new=0, old=0, difference=0}, {new=0, old=0, difference=0}}
+
+        my_expected_win_ratio = (100*round(1/(1+10^
+                ((global_current_room_ratings[op_player_number].new
+                    -global_current_room_ratings[my_player_number].new)
+                /rating_spread_modifier))
+                ,2))
+
+        op_expected_win_ratio = (100*round(1/(1+10^
+                ((global_current_room_ratings[my_player_number].new
+                    -global_current_room_ratings[op_player_number].new)
+                /rating_spread_modifier))
+                ,2))
+    end
+    
 	if character_select_mode == "2p_net_vs" then
-	  matchType = matchType or "Casual"
-	  if matchType == "" then
-	     matchType = "Casual" 
-	  end
+        matchType = matchType or "Casual"
+        if matchType == "" then
+            matchType = "Casual" 
+        end
 	end
-	match_type_message = match_type_message or ""
+    
+    match_type_message = match_type_message or ""
 	local selected = false
 	local active_str = "level"
 	local selectable = {level=true, ready=true}
 	local function move_cursor(direction)
-	  local dx, dy = unpack(direction)
-	  local can_x, can_y = wrap(1, cursor[1]+dx, coordenate_x), wrap(1, cursor[2]+dy, coordenate_y)
-	  while can_x ~= cursor[1] or can_y ~= cursor[2] do
-	    if map[can_x][can_y] and map[can_x][can_y] ~= map[cursor[1]][cursor[2]] then
-	      break
-	    end
-	    can_x, can_y = wrap(1, can_x+dx, coordenate_x), wrap(1, can_y+dy, coordenate_y)
-	  end
-	  cursor[1], cursor[2] = can_x,can_y
-	end
+        local dx, dy = unpack(direction)
+        local can_x, can_y = wrap(1, cursor[1]+dx, coordinate_x), wrap(1, cursor[2]+dy, coordinate_y)
+        
+        while can_x ~= cursor[1] or can_y ~= cursor[2] do
+            if map[can_x][can_y] and map[can_x][can_y] ~= map[cursor[1]][cursor[2]] then
+                break
+            end
+
+            can_x, can_y = wrap(1, can_x+dx, coordinate_x), wrap(1, can_y+dy, coordinate_y)
+        end
+        cursor[1], cursor[2] = can_x,can_y
+    end
+    
 	local function do_leave()
-	  my_win_count = 0
-	  op_win_count = 0
-	  write_char_sel_settings_to_file()
-	  json_send({leave_room=true})
-	end
+        my_win_count = 0
+        op_win_count = 0
+        write_char_sel_settings_to_file()
+        json_send({leave_room=true})
+    end
+    
 	local name_to_xy = {}
 	print("character_select_mode = " .. (character_select_mode or "nil"))
-	print("map[1][1] = "..(map[1][1] or "nil"))
-	for i=1, coordenate_x do
-	  for j=1, coordenate_y do
-	    if map[i][j] then
-	      name_to_xy[map[i][j]] = {i,j}
-	    end
-	  end
-	end
+    print("map[1][1] = "..(map[1][1] or "nil"))
+    
+	for i=1, coordinate_x do
+        for j=1, coordinate_y do
+            if map[i][j] then
+               name_to_xy[map[i][j]] = {i,j}
+            end
+        end
+    end
+    
 	local function draw_button(x, y, w, h, str)
-	  local menu_width = coordenate_y * 100
-	  local menu_height = coordenate_x * 80
-	  local spacing = 8
-	  local x_padding = math.floor((819-menu_width) / 2)
-	  local y_padding = math.floor((612-menu_height) / 2)
-	  set_color(unpack(colors.white))
-	  render_x = x_padding + (y - 1) * 100 + spacing
-	  render_y = y_padding+(x - 1) * 100 + spacing
-	  button_width = w * 100 - 2 * spacing
-	  button_height = h*100 - 2 * spacing
-	  grectangle("line", render_x, render_y, button_width, button_height)
-	  if IMG_character_icons[character_display_names_to_original_names[str]] then
-	    local orig_w, orig_h = IMG_character_icons[character_display_names_to_original_names[str]]:getDimensions()
-	    menu_draw(IMG_character_icons[character_display_names_to_original_names[str]],
-	      render_x, render_y, 0, button_width/orig_w, button_height/orig_h )
-	  end
-	  local y_add, x_add = 10, 30
-	  local pstr = str
-	  if str == "level" then
-	    if selected and active_str == "level" then
-	      pstr = pstr .. "\n" .. my_name .. "'s level: < " .. my_state.level .. " >"
-	    else
-	      pstr = pstr .. "\n" .. my_name .. "'s level: " .. my_state.level
-	    end
-	    if character_select_mode == "2p_net_vs" then
-	      pstr = pstr .. "\n" .. op_name .. "'s level: " .. op_state.level
-	    end
-	    y_add, x_add = 9, 180
-	  end
-	  if str == "match type desired" then
-	    local my_type_selection, op_type_selection = "[casual]  ranked", "[casual]  ranked"
-	    if my_state.ranked then
-	      my_type_selection = " casual  [ranked]"
-	    end
-	    if op_state.ranked then
-	      op_type_selection = " casual  [ranked]"
-	    end
-	    pstr = pstr .. "\n" .. my_name .. ": " .. my_type_selection .. "\n" .. 
-	      op_name .. ": " .. op_type_selection
-	    y_add, x_add = 9, 180
-	  end
+        local menu_width = coordinate_y * 100
+        local menu_height = coordinate_x * 80
+        local spacing = 8
+        local x_padding = math.floor((819-menu_width) / 2)
+        local y_padding = math.floor((612-menu_height) / 2)
 
-	  if my_state.cursor == str then
-	    pstr = pstr.."\n" .. my_name
-	  end
+        set_color(unpack(colors.white))
 
-	  if op_state and op_name and op_state.cursor == str then
-	    pstr = pstr .. "\n" .. op_name
-	  end
+        render_x = x_padding + (y - 1) * 100 + spacing
+        render_y = y_padding+(x - 1) * 100 + spacing
+        button_width = w * 100 - 2 * spacing
+        button_height = h*100 - 2 * spacing
+        grectangle("line", render_x, render_y, button_width, button_height)
 
-	  local cur_blink_frequency = 4
-	  local cur_pos_change_frequency = 8
-	  local player_num
-	  local draw_cur_this_frame = false
-	  local cursor_frame = 1
-	  if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs")
-	  and op_state and op_state.cursor and (op_state.cursor == str or op_state.cursor == character_display_names_to_original_names[str]) then
-	    player_num = 2
-	    if op_state.ready then
-	      if (math.floor(menu_clock/cur_blink_frequency)+player_num)% 2 + 1 == player_num then
-	        draw_cur_this_frame = true
-	        cursor_frame = 1
-	      else
-	        draw_cur_this_frame = false
-	      end
-	    else
-	      draw_cur_this_frame = true
-	      cursor_frame = (math.floor(menu_clock/cur_pos_change_frequency)+player_num) % 2 + 1
-	      cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
-	    end
+        if IMG_character_icons[character_display_names_to_original_names[str]] then
+            local orig_w, orig_h = IMG_character_icons[character_display_names_to_original_names[str]]:getDimensions()
+            menu_draw(IMG_character_icons[character_display_names_to_original_names[str]],
+            render_x, render_y, 0, button_width/orig_w, button_height/orig_h )
+        end
+
+        local y_add, x_add = 10, 30
+        local pstr = str
+        if str == "level" then
+            if selected and active_str == "level" then
+               pstr = pstr .. "\n" .. my_name .. "'s level: < " .. my_state.level .. " >"
+            else
+                pstr = pstr .. "\n" .. my_name .. "'s level: " .. my_state.level
+            end
+            if character_select_mode == "2p_net_vs" then
+                pstr = pstr .. "\n" .. op_name .. "'s level: " .. op_state.level
+            end
+	        y_add, x_add = 9, 180
+        end
+      
+        if str == "match type desired" then
+            local my_type_selection, op_type_selection = "[casual]  ranked", "[casual]  ranked"
+            if my_state.ranked then
+                my_type_selection = " casual  [ranked]"
+            end
+            
+            if op_state.ranked then
+                op_type_selection = " casual  [ranked]"
+            end
+            
+            pstr = pstr .. "\n" .. my_name .. ": " .. my_type_selection .. "\n" .. 
+            
+            op_name .. ": " .. op_type_selection
+            y_add, x_add = 9, 180
+        end
+
+        if my_state.cursor == str then
+            pstr = pstr.."\n" .. my_name
+        end
+
+        if op_state and op_name and op_state.cursor == str then
+            pstr = pstr .. "\n" .. op_name
+        end
+
+        local cur_blink_frequency = 4
+        local cur_pos_change_frequency = 8
+        local player_num
+        local draw_cur_this_frame = false
+        local cursor_frame = 1
+
+        if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs")
+        and op_state and op_state.cursor and
+         (op_state.cursor == str or op_state.cursor == character_display_names_to_original_names[str]) then
+            player_num = 2
+            if op_state.ready then
+                if (math.floor(menu_clock/cur_blink_frequency)+player_num)% 2 + 1 == player_num then
+                    draw_cur_this_frame = true
+                    cursor_frame = 1
+                else
+                    draw_cur_this_frame = false
+                end
+            else
+                draw_cur_this_frame = true
+                cursor_frame = (math.floor(menu_clock/cur_pos_change_frequency)+player_num) % 2 + 1
+                cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
+        end
+
 	    if draw_cur_this_frame then
-	      cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
-	      cur_img_left = IMG_char_sel_cursor_halves.left[player_num][cursor_frame]
-	      cur_img_right = IMG_char_sel_cursor_halves.right[player_num][cursor_frame]
-	      local cur_img_w, cur_img_h = cur_img:getDimensions()
-	      local cursor_scale = (button_height + (spacing * 2)) / cur_img_h
-	      menu_drawq(cur_img, cur_img_left, render_x - spacing, render_y-spacing, 0, cursor_scale , cursor_scale)
-	      menu_drawq(cur_img, cur_img_right,
+            cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
+            cur_img_left = IMG_char_sel_cursor_halves.left[player_num][cursor_frame]
+            cur_img_right = IMG_char_sel_cursor_halves.right[player_num][cursor_frame]
+
+            local cur_img_w, cur_img_h = cur_img:getDimensions()
+            local cursor_scale = (button_height + (spacing * 2)) / cur_img_h
+
+            menu_drawq(cur_img, cur_img_left, render_x - spacing, render_y-spacing, 0, cursor_scale , cursor_scale)
+            menu_drawq(cur_img, cur_img_right,
+            render_x + button_width + spacing - cur_img_w * cursor_scale / 2,
+            render_y - spacing, 0, cursor_scale, cursor_scale)
+	    end
+	    end
+        
+        if my_state and my_state.cursor and 
+        (my_state.cursor == str or my_state.cursor == character_display_names_to_original_names[str]) then
+	        player_num = 1
+	        if my_state.ready then
+	            if (math.floor(menu_clock / cur_blink_frequency) + player_num) % 2 + 1 == player_num then
+                    draw_cur_this_frame = true
+                    cursor_frame = 1
+	        else
+	            draw_cur_this_frame = false
+	        end
+	    else
+            draw_cur_this_frame = true
+            cursor_frame = (math.floor(menu_clock / cur_pos_change_frequency) + player_num) % 2 + 1
+            cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
+        end
+        
+	    if draw_cur_this_frame then
+            cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
+            cur_img_left = IMG_char_sel_cursor_halves.left[player_num][cursor_frame]
+            cur_img_right = IMG_char_sel_cursor_halves.right[player_num][cursor_frame]
+            local cur_img_w, cur_img_h = cur_img:getDimensions()
+            local cursor_scale = (button_height + (spacing * 2)) / cur_img_h
+            menu_drawq(cur_img, cur_img_left, render_x-spacing, render_y-spacing, 0, cursor_scale , cursor_scale)
+            menu_drawq(cur_img, cur_img_right,
 	        render_x + button_width + spacing - cur_img_w * cursor_scale / 2,
 	        render_y - spacing, 0, cursor_scale, cursor_scale)
 	    end
-	  end
-	  if my_state and my_state.cursor and (my_state.cursor == str or my_state.cursor == character_display_names_to_original_names[str]) then
-	    player_num = 1
-	    if my_state.ready then
-	      if (math.floor(menu_clock / cur_blink_frequency) + player_num) % 2 + 1 == player_num then
-	        draw_cur_this_frame = true
-	        cursor_frame = 1
-	      else
-	        draw_cur_this_frame = false
-	      end
-	    else
-	      draw_cur_this_frame = true
-	      cursor_frame = (math.floor(menu_clock / cur_pos_change_frequency) + player_num) % 2 + 1
-	      cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
 	    end
-	    if draw_cur_this_frame then
-	      cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
-	      cur_img_left = IMG_char_sel_cursor_halves.left[player_num][cursor_frame]
-	      cur_img_right = IMG_char_sel_cursor_halves.right[player_num][cursor_frame]
-	      local cur_img_w, cur_img_h = cur_img:getDimensions()
-	      local cursor_scale = (button_height + (spacing * 2)) / cur_img_h
-	      menu_drawq(cur_img, cur_img_left, render_x-spacing, render_y-spacing, 0, cursor_scale , cursor_scale)
-	      menu_drawq(cur_img, cur_img_right,
-	        render_x + button_width + spacing - cur_img_w * cursor_scale / 2,
-	        render_y - spacing, 0, cursor_scale, cursor_scale)
-	    end
-	  end
-	  gprint(pstr, render_x + 6, render_y + y_add)
+	    gprint(pstr, render_x + 6, render_y + y_add)
 	end
-	print("got to LOC before net_vs_room character select loop")
+    
+    print("got to LOC before net_vs_room character select loop")
 	menu_clock = 0
 	while true do
-	  menu_clock = menu_clock + 1
-	  if character_select_mode == "2p_net_vs" then
-	    for _, message in ipairs(this_frame_messages) do
-	      if message.win_counts then
-	        update_win_counts(message.win_counts)
-	      end
-	      if message.menu_state then
-	        if currently_spectating then
-	          if message.player_number == 2 then
-	            op_state = message.menu_state
-	          elseif message.player_number == 1 then
-	            my_state = message.menu_state
-	          end
-	        else
-	          op_state = message.menu_state
+	    menu_clock = menu_clock + 1
+	    if character_select_mode == "2p_net_vs" then
+	        for _, message in ipairs(this_frame_messages) do
+	            if message.win_counts then
+	                update_win_counts(message.win_counts)
+	            end
+	            if message.menu_state then
+	                if currently_spectating then
+	                    if message.player_number == 2 then
+	                        op_state = message.menu_state
+	                    elseif message.player_number == 1 then
+	                        my_state = message.menu_state
+	                    end
+	                else
+	                    op_state = message.menu_state
+	            end
 	        end
-	      end
-	      if message.ranked_match_approved then
-	        matchType = "Ranked"
-	        match_type_message = ""
-	      elseif message.ranked_match_denied then
-	        matchType = "Casual"
-	        match_type_message = "Not ranked. "
-	        if message.reasons then
-	          match_type_message = match_type_message .. (message.reasons[1] or "Reason unknown")
+            
+            if message.ranked_match_approved then
+                matchType = "Ranked"
+                match_type_message = ""
+	        elseif message.ranked_match_denied then
+                matchType = "Casual"
+                match_type_message = "Not ranked. "
+                if message.reasons then
+                    match_type_message = match_type_message .. (message.reasons[1] or "Reason unknown")
+                end
 	        end
-	      end
-	      if message.leave_room then
-	        my_win_count = 0
-	        op_win_count = 0
-	        write_char_sel_settings_to_file()
-	        return main_net_vs_lobby
-	      end
-	      if message.match_start or replay_of_match_so_far then
-	        local fake_P1 = P1
-	        print("currently_spectating: " .. tostring(currently_spectating))
-	        local fake_P2 = P2
-	        P1 = Stack(1, "vs", message.player_settings.level,
-	          message.player_settings.character, message.player_settings.player_number)
-	        P2 = Stack(2, "vs", message.opponent_settings.level,
-	          message.opponent_settings.character, message.opponent_settings.player_number)
-	        if currently_spectating then
-	          P1.panel_buffer = fake_P1.panel_buffer
-	          P1.gpanel_buffer = fake_P1.gpanel_buffer
+	        if message.leave_room then
+                my_win_count = 0
+                op_win_count = 0
+                write_char_sel_settings_to_file()
+                return main_net_vs_lobby
 	        end
-	        P2.panel_buffer = fake_P2.panel_buffer
-	        P2.gpanel_buffer = fake_P2.gpanel_buffer
-	        P1.garbage_target = P2
-	        P2.garbage_target = P1
-	        P2.pos_x = 172
-	        P2.score_x = 410
-	        replay.vs = {
-	          P = "",
-	          O = "",
-	          I = "",
-	          Q = "",
-	          R = "",
-	          in_buf = "",
-	          P1_level = P1.level,
-	          P2_level = P2.level,
-	          P1_name = my_name,
-	          P2_name = op_name,
-	          P1_char = P1.character,
-	          P2_char = P2.character,
-	          ranked = message.ranked
-	        }
-	        if currently_spectating and replay_of_match_so_far then --we joined a match in progress
-	          replay.vs = replay_of_match_so_far.vs
-	          P1.input_buffer = replay_of_match_so_far.vs.in_buf
-	          P1.panel_buffer = replay_of_match_so_far.vs.P
-	          P1.gpanel_buffer = replay_of_match_so_far.vs.Q
-	          P2.input_buffer = replay_of_match_so_far.vs.I
-	          P2.panel_buffer = replay_of_match_so_far.vs.O
-	          P2.gpanel_buffer = replay_of_match_so_far.vs.R
-	          if replay.vs.ranked then
-	            matchType = "Ranked"
-	            match_type_message = ""
-	          else 
-	            matchType = "Casual"
-	          end
-	          replay_of_match_so_far = nil
-	          P1.play_to_end = true  --this makes foreign_run run until caught up
-	          P2.play_to_end = true
-	        end
+            
+            if message.match_start or replay_of_match_so_far then
+                local fake_P1 = P1
+                print("currently_spectating: " .. tostring(currently_spectating))
+                local fake_P2 = P2
+                P1 = Stack(1, "vs", message.player_settings.level,
+                    message.player_settings.character, message.player_settings.player_number)
+                P2 = Stack(2, "vs", message.opponent_settings.level,
+                    message.opponent_settings.character, message.opponent_settings.player_number)
+                if currently_spectating then
+                    P1.panel_buffer = fake_P1.panel_buffer
+                    P1.gpanel_buffer = fake_P1.gpanel_buffer
+                end
+                
+                P2.panel_buffer = fake_P2.panel_buffer
+                P2.gpanel_buffer = fake_P2.gpanel_buffer
+                P1.garbage_target = P2
+                P2.garbage_target = P1
+                P2.pos_x = 172
+                P2.score_x = 410
+                replay.vs = {
+                    P = "",
+                    O = "",
+                    I = "",
+                    Q = "",
+                    R = "",
+                    in_buf = "",
+                    P1_level = P1.level,
+                    P2_level = P2.level,
+                    P1_name = my_name,
+                    P2_name = op_name,
+                    P1_char = P1.character,
+                    P2_char = P2.character,
+                    ranked = message.ranked
+                }
+	            if currently_spectating and replay_of_match_so_far then --we joined a match in progress
+                    replay.vs = replay_of_match_so_far.vs
+                    P1.input_buffer = replay_of_match_so_far.vs.in_buf
+                    P1.panel_buffer = replay_of_match_so_far.vs.P
+                    P1.gpanel_buffer = replay_of_match_so_far.vs.Q
+                    P2.input_buffer = replay_of_match_so_far.vs.I
+                    P2.panel_buffer = replay_of_match_so_far.vs.O
+                    P2.gpanel_buffer = replay_of_match_so_far.vs.R
+                    
+                    if replay.vs.ranked then
+	                    matchType = "Ranked"
+	                    match_type_message = ""
+	                else 
+	                    matchType = "Casual"
+                    end
+                    
+                    replay_of_match_so_far = nil
+                    P1.play_to_end = true  --this makes foreign_run run until caught up
+                    P2.play_to_end = true
+                end
+                
 	        if not currently_spectating then
 	            ask_for_gpanels("000000")
 	            ask_for_panels("000000")
 	        end
-	        to_print = "Game is starting!\n".."Level: "..P1.level.."\nOpponent's level: "..P2.level
-	        if P1.play_to_end or P2.play_to_end then
-	          to_print = "Joined a match in progress.\nCatching up..."
+            
+            to_print = "Game is starting!\n".."Level: "..P1.level.."\nOpponent's level: "..P2.level
+            
+            if P1.play_to_end or P2.play_to_end then
+	            to_print = "Joined a match in progress.\nCatching up..."
 	        end
 
 	        for i=1, 30 do
-	          gprint(to_print,300, 280)
-	          do_messages()
-	          coroutine_wait()
-	        end
+                gprint(to_print,300, 280)
+                do_messages()
+                coroutine_wait()
+            end
+            
 	        local game_start_timeout = 0
-	        while P1.panel_buffer == "" or P2.panel_buffer == ""
-	          or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
+            
+            while P1.panel_buffer == "" or P2.panel_buffer == ""
+	            or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
 	          --testing getting stuck here at "Game is starting"
-	          game_start_timeout = game_start_timeout + 1
-	          print("game_start_timeout = " .. game_start_timeout)
-	          print("P1.panel_buffer = " .. P1.panel_buffer)
-	          print("P2.panel_buffer = " .. P2.panel_buffer)
-	          print("P1.gpanel_buffer = " .. P1.gpanel_buffer)
-	          print("P2.gpanel_buffer = " .. P2.gpanel_buffer)
-	          gprint(to_print, 300, 280)
-	          do_messages()
-	          coroutine_wait()
-	          local LIMITTIMEOUT = 500
-	          if game_start_timeout > LIMITTIMEOUT then
-	            return main_dumb_transition, {main_select_mode, 
-	                            "game-is-starting bug diagnostic version 2\n\ngame start timed out.\n Please screenshot this and\npost it in #panel-attack-bugs-features"
+                game_start_timeout = game_start_timeout + 1
+                print("game_start_timeout = " .. game_start_timeout)
+                print("P1.panel_buffer = " .. P1.panel_buffer)
+                print("P2.panel_buffer = " .. P2.panel_buffer)
+                print("P1.gpanel_buffer = " .. P1.gpanel_buffer)
+                print("P2.gpanel_buffer = " .. P2.gpanel_buffer)
+                gprint(to_print, 300, 280)
+                do_messages()
+                coroutine_wait()
+                local LIMITTIMEOUT = 500
+
+	            if game_start_timeout > LIMITTIMEOUT then
+	                return main_dumb_transition, {main_select_mode, 
+                                "game-is-starting bug diagnostic version 2\n\ngame start timed out."
+                                .. "\n Please screenshot this and\npost it in #panel-attack-bugs-features"
 	                            .."\n".."message.match_start = "..(tostring(message.match_start) or "nil")
 	                            .."\n".."replay_of_match_so_far = "..(tostring(replay_of_match_so_far) or "nil")
 	                            .."\n".."P1.panel_buffer = "..P1.panel_buffer
@@ -925,163 +985,187 @@ function main_character_select()
 	                            .."\n".."P1.gpanel_buffer = "..P1.gpanel_buffer
 	                            .."\n".."P2.gpanel_buffer = "..P2.gpanel_buffer,
 	                            600}
-	          end
+	            end
 	        end
-	        P1:starting_state()
+            
+            P1:starting_state()
 	        P2:starting_state()
 	        return main_net_vs
-	      end
+	        end
 	    end
-	  end
-	  if serverSupportsRanking then
-	    draw_button(1, 1, 4, 1, "match type desired")
-	    draw_button(1, 5, 2, 1, "level")
-	  else
-	    draw_button(1, 1, 6, 1, "level")
-	  end
+        end
+
+	    if serverSupportsRanking then
+            draw_button(1, 1, 4, 1, "match type desired")
+            draw_button(1, 5, 2, 1, "level")
+	    else
+	        draw_button(1, 1, 6, 1, "level")
+	    end
 	  
-	  draw_button(1, 7, 1, 1, "ready")
-	  for i=2, coordenate_x do
-	    for j=1, coordenate_y do
-	      draw_button(i, j, 1, 1, character_display_names[map[i][j]] or map[i][j])
-	    end
-	  end
-	  local myRatingDifference = ""
-	  local opRatingDifference = ""
-	  if serverSupportsRanking then
-	    if global_current_room_ratings[my_player_number].difference >= 0 then
-	      myRatingDifference = "(+" .. global_current_room_ratings[my_player_number].difference .. ") "
-	    else
-	      myRatingDifference = "(" .. global_current_room_ratings[my_player_number].difference .. ") "
-	    end
-	    if global_current_room_ratings[op_player_number].difference >= 0 then
-	      opRatingDifference = "(+" .. global_current_room_ratings[op_player_number].difference .. ") "
-	    else
-	      opRatingDifference = "(" .. global_current_room_ratings[op_player_number].difference .. ") "
-	    end
-	  end
-	  local state = ""
-	  --my state - add to be displayed
-	  state = state .. my_name
-	  if serverSupportsRanking then
-	      state = state .. ":  Rating: " .. myRatingDifference .. global_current_room_ratings[my_player_number].new
-	  end
-	  if character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs" then
-	    state = state .. "  Wins: " .. my_win_count
-	  end
-	  if serverSupportsRanking or my_win_count + op_win_count > 0 then
-	    state = state .. "  Win Ratio:"
-	  end
-	  if my_win_count + op_win_count > 0 then
-	    state = state .. "  actual: " .. (100 * round(my_win_count/(op_win_count+my_win_count), 2)) .. "%"
-	  end
-	  if serverSupportsRanking then
-	    state = state .. "  expected: "
-	      ..my_expected_win_ratio .. "%"
-	  end
-	  state = state .. "  Char: " .. character_display_names[my_state.character]..
-	    "  Ready: " .. tostring(my_state.ready or false)
-	  --state = state.." "..json.encode(my_state).."\n"
-	  if op_state and op_name then
-	    state = state .. "\n"
-	    --op state - add to be displayed
-	    state = state .. op_name
+	    draw_button(1, 7, 1, 1, "ready")
+	    for i=2, coordinate_x do
+	        for j=1, coordinate_y do
+	            draw_button(i, j, 1, 1, character_display_names[map[i][j]] or map[i][j])
+	        end
+        end
+        
+        local myRatingDifference = ""
+        local opRatingDifference = ""
+        
+        if serverSupportsRanking then
+	        if global_current_room_ratings[my_player_number].difference >= 0 then
+	            myRatingDifference = "(+" .. global_current_room_ratings[my_player_number].difference .. ") "
+	        else
+	            myRatingDifference = "(" .. global_current_room_ratings[my_player_number].difference .. ") "
+	        end
+            if global_current_room_ratings[op_player_number].difference >= 0 then
+               opRatingDifference = "(+" .. global_current_room_ratings[op_player_number].difference .. ") "
+            else
+                opRatingDifference = "(" .. global_current_room_ratings[op_player_number].difference .. ") "
+	        end
+        end
+        
+        local state = ""
+        --my state - add to be displayed
+        state = state .. my_name
+
 	    if serverSupportsRanking then
-	        state = state .. ":  Rating: " .. opRatingDifference..
-	          global_current_room_ratings[op_player_number].new
-	    end
-	    state = state .. "  Wins: " .. op_win_count 
+	        state = state .. ":  Rating: " .. myRatingDifference .. global_current_room_ratings[my_player_number].new
+        end
+        
+	    if character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs" then
+	        state = state .. "  Wins: " .. my_win_count
+        end
+        
 	    if serverSupportsRanking or my_win_count + op_win_count > 0 then
-	      state = state .. "  Win Ratio:"
+	        state = state .. "  Win Ratio:"
 	    end
-	    if my_win_count + op_win_count > 0 then
-	      state = state .. "  actual: " .. (100*round(op_win_count/(op_win_count+my_win_count),2)) .. "%"
+        
+        if my_win_count + op_win_count > 0 then
+	        state = state .. "  actual: " .. (100 * round(my_win_count/(op_win_count+my_win_count), 2)) .. "%"
 	    end
-	    if serverSupportsRanking then
-	      state = state .. "  expected: " .. op_expected_win_ratio .. "%"
-	    end
-	    state = state.."  Char: " .. character_display_names[op_state.character] .. 
+        
+        if serverSupportsRanking then
+	        state = state .. "  expected: " .. my_expected_win_ratio .. "%"
+        end
+        
+	    state = state .. "  Char: " .. character_display_names[my_state.character]..
+	        "  Ready: " .. tostring(my_state.ready or false)
+	  --state = state.." "..json.encode(my_state).."\n"
+        
+        if op_state and op_name then
+	        state = state .. "\n"
+	        --op state - add to be displayed
+	        state = state .. op_name
+            if serverSupportsRanking then
+                state = state .. ":  Rating: " .. opRatingDifference..
+                   global_current_room_ratings[op_player_number].new
+            end
+            
+            state = state .. "  Wins: " .. op_win_count 
+            
+            if serverSupportsRanking or my_win_count + op_win_count > 0 then
+	            state = state .. "  Win Ratio:"
+            end
+            
+	        if my_win_count + op_win_count > 0 then
+	            state = state .. "  actual: " .. (100*round(op_win_count/(op_win_count+my_win_count),2)) .. "%"
+            end
+            
+	        if serverSupportsRanking then
+	            state = state .. "  expected: " .. op_expected_win_ratio .. "%"
+	        end
+            
+            state = state.."  Char: " .. character_display_names[op_state.character] .. 
 	      "  Ready: " .. tostring(op_state.ready or false)
 	    --state = state.." "..json.encode(op_state)
-	  end
-	  gprint(state, 50, 50)
-	  if character_select_mode == "2p_net_vs" then
-	    if not my_state.ranked and not op_state.ranked then
-	      match_type_message = ""
 	    end
+        gprint(state, 50, 50)
+        if character_select_mode == "2p_net_vs" then
+	        if not my_state.ranked and not op_state.ranked then
+	            match_type_message = ""
+	        end
 	    gprint(matchType, 375, 15)
 	    gprint(match_type_message, 100, 85)
-	  end
-	  coroutine_wait()
-	  if not currently_spectating then
-	      if menu_key_up(k) then
-	        if not selected then move_cursor(up) end
-	      elseif menu_key_down(k) then
-	        if not selected then move_cursor(down) end
-	      elseif menu_key_left(k) then
-	        if selected and active_str == "level" then
-	          config.level = bound(1, config.level - 1, 10)
-	        end
-	        if not selected then move_cursor(left) end
-	      elseif menu_key_right(k) then
-	        if selected and active_str == "level" then
-	          config.level = bound(1, config.level + 1, 10)
-	        end
+        end
+        
+	    coroutine_wait()
+	    if not currently_spectating then
+	        if menu_key_up(k) then
+	            if not selected then move_cursor(up) end
+	            elseif menu_key_down(k) then
+	                if not selected then move_cursor(down) end
+	                elseif menu_key_left(k) then
+	                    if selected and active_str == "level" then
+	                        config.level = bound(1, config.level - 1, 10)
+	                    end
+	                if not selected then move_cursor(left) end
+	                elseif menu_key_right(k) then
+	                    if selected and active_str == "level" then
+	                        config.level = bound(1, config.level + 1, 10)
+	            end
 	        if not selected then move_cursor(right) end
-	      elseif menu_key_enter(k) then
-	        if selectable[active_str] then
-	          selected = not selected
-	        elseif active_str == "leave" then
-	          if character_select_mode == "2p_net_vs" then
-	            do_leave()
-	          else
-	            return main_select_mode
-	          end
+	        elseif menu_key_enter(k) then
+	            if selectable[active_str] then
+	                selected = not selected
+	            elseif active_str == "leave" then
+	                if character_select_mode == "2p_net_vs" then
+	                    do_leave()
+	                else
+	                    return main_select_mode
+	            end
 	        elseif active_str == "random" then
-	          config.character = uniformly(characters)
+	            config.character = uniformly(characters)
 	        elseif active_str == "match type desired" then
-	          config.ranked = not config.ranked
+	            config.ranked = not config.ranked
 	        else
-	          config.character = active_str
-	          --When we select a character, move cursor to "ready"
-	          active_str = "ready"
-	          cursor = shallowcpy(name_to_xy["ready"])
+                config.character = active_str
+                --When we select a character, move cursor to "ready"
+                active_str = "ready"
+                cursor = shallowcpy(name_to_xy["ready"])
+            end
+            
+	        elseif menu_key_escape(k) then
+                if active_str == "leave" then
+                    if character_select_mode == "2p_net_vs" then
+                        do_leave()
+                    else
+                        return main_select_mode
+                    end
+                end
+                selected = false
+                cursor = shallowcpy(name_to_xy["leave"])
+            end
+            
+	        active_str = map[cursor[1]][cursor[2]]
+	        my_state = {character=config.character, level=config.level, cursor=active_str, ranked=config.ranked,
+                        ready=(selected and active_str=="ready")}
+            
+            if character_select_mode == "2p_net_vs" and not content_equal(my_state, prev_state) 
+                and not currently_spectating then
+	            json_send({menu_state=my_state})
 	        end
-	      elseif menu_key_escape(k) then
-	        if active_str == "leave" then
-	          if character_select_mode == "2p_net_vs" then
+            
+            prev_state = my_state
+	    else -- (we are are spectating)
+	        if menu_key_escape(k) then
 	            do_leave()
-	          else
-	            return main_select_mode
-	          end
+	            return main_net_vs_lobby
 	        end
-	        selected = false
-	        cursor = shallowcpy(name_to_xy["leave"])
-	      end
-	      active_str = map[cursor[1]][cursor[2]]
-	      my_state = {character=config.character, level=config.level, cursor=active_str, ranked=config.ranked,
-	                  ready=(selected and active_str=="ready")}
-	      if character_select_mode == "2p_net_vs" and not content_equal(my_state, prev_state) and not currently_spectating then
-	        json_send({menu_state=my_state})
-	      end
-	      prev_state = my_state
-	  else -- (we are are spectating)
-	      if menu_key_escape(k) then
-	        do_leave()
-	        return main_net_vs_lobby
-	      end
-	  end
-	  if my_state.ready and character_select_mode == "1p_vs_yourself" then
-	    P1 = Stack(1, "vs", my_state.level, my_state.character)
-	    P1.garbage_target = P1
-	    make_local_panels(P1, "000000")
-	    make_local_gpanels(P1, "000000")
-	    P1:starting_state()
-	    return main_dumb_transition, {main_local_vs_yourself, "Game is starting...", 30, 30}
-	  end
-	  if character_select_mode == "2p_net_vs" then 
-	    do_messages()
-	  end
+	    end
+        
+        if my_state.ready and character_select_mode == "1p_vs_yourself" then
+            P1 = Stack(1, "vs", my_state.level, my_state.character)
+            P1.garbage_target = P1
+            make_local_panels(P1, "000000")
+            make_local_gpanels(P1, "000000")
+            P1:starting_state()
+            return main_dumb_transition, {main_local_vs_yourself, "Game is starting...", 30, 30}
+	    end
+        
+        if character_select_mode == "2p_net_vs" then 
+	        do_messages()
+	    end
 	end
 end
 
