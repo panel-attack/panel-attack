@@ -1417,94 +1417,108 @@ end
 
 function update_win_counts(win_counts)
 	if (P1 and P1.player_number == 1) or currently_spectating then
-	  my_win_count = win_counts[1] or 0
-	  op_win_count = win_counts[2] or 0
+        my_win_count = win_counts[1] or 0
+        op_win_count = win_counts[2] or 0
 	elseif P1.player_number == 2 then
-	  my_win_count = win_counts[2] or 0
-	  op_win_count = win_counts[1] or 0
+        my_win_count = win_counts[2] or 0
+        op_win_count = win_counts[1] or 0
 	end
 end
 
 function spectator_list_string(list)
 	local str = ""
 	for k,v in ipairs(list) do
-	  str = str..v
-	  if k<#list then
-	    str = str.."\n"
-	  end
-	end
+	    str = str..v
+	    if k < #list then
+	        str = str.."\n"
+	    end
+    end
+    
 	if str ~= "" then
-	  str = "Spectator(s):\n"..str
-	end
+        str = "Spectator(s):\n"..str
+    end
+    
 	return str
 end
 
 function build_viewable_leaderboard_string(report, first_viewable_idx, last_viewable_idx)
 	str = "        Leaderboard\n      Rank    Rating   Player\n"
-	first_viewable_idx = math.max(first_viewable_idx,1)
+    
+    first_viewable_idx = math.max(first_viewable_idx,1)
 	last_viewable_idx = math.min(last_viewable_idx, #report)
-	for i=first_viewable_idx,last_viewable_idx do
-	  if report[i].is_you then
-	    str = str .. "You-> "
-	  else
-	    str = str .. "      "
-	  end
-	  str = str .. i .. "    " .. report[i].rating .. "    " .. report[i].user_name
-	  if i < #report then
-	    str = str .. "\n"
-	  end
-	end
+    
+    for i=first_viewable_idx,last_viewable_idx do
+	    if report[i].is_you then
+	        str = str .. "You-> "
+	    else
+	        str = str .. "      "
+	    end
+        
+        str = str .. i .. "    " .. report[i].rating .. "    " .. report[i].user_name
+        
+        if i < #report then
+	        str = str .. "\n"
+	    end
+    end
+    
 	return str
 end
 
 function main_net_vs_setup(ip)
 	if not config.name then
-	  return main_set_name
-	  else my_name = config.name
-	end
+	    return main_set_name
+	    else my_name = config.name
+    end
+    
 	P1, P1_level, P2_level, got_opponent = nil, nil, nil, nil
-	P2 = {panel_buffer="", gpanel_buffer=""}
+    P2 = {panel_buffer="", gpanel_buffer=""}
+    
 	gprint("Setting up connection...", 300, 280)
 	coroutine_wait()
-	network_init(ip)
+    network_init(ip)
+    
 	local timeout_counter = 0
 	while not connection_is_ready() do
-	  gprint("Connecting...", 300, 280)
-	  coroutine_wait()
-	  do_messages()
-	end
+        gprint("Connecting...", 300, 280)
+        coroutine_wait()
+        do_messages()
+    end
+    
 	connectedServerIp = ip
 	isLoggedIn = false
 	if true then return main_net_vs_lobby end
-	local my_level, to_print, fake_P2 = 5, nil, P2
+    
+    local my_level, to_print, fake_P2 = 5, nil, P2
 	local k = K[1]
 	while got_opponent == nil do
-	  gprint("Waiting for opponent...", 300, 280)
-	  coroutine_wait()
-	  do_messages()
-	end
+	    gprint("Waiting for opponent...", 300, 280)
+	    coroutine_wait()
+	    do_messages()
+    end
+    
 	while P1_level == nil or P2_level == nil do
-	  to_print = (P1_level and "L" or"Choose l") .. "evel: "..my_level..
-	      "\nOpponent's level: "..(P2_level or "???")
-	  gprint(to_print, 300, 280)
-	  coroutine_wait()
-	  do_messages()
-	  if P1_level then
-	  elseif menu_key_enter(k) then
-	    P1_level = my_level
-	    net_send("L"..(({[10]=0})[my_level] or my_level))
-	  elseif menu_key_up(k) or menu_key_right(k) then
-	    my_level = bound(1,my_level+1,10)
-	  elseif menu_key_down(k) or menu_key_left(k) then
-	    my_level = bound(1,my_level-1,10)
-	  end
-	end
-	P1 = Stack(1, "vs", P1_level)
-	P2 = Stack(2, "vs", P2_level)
-	if currently_spectating then
-	  P1.panel_buffer = fake_P1.panel_buffer
-	  P1.gpanel_buffer = fake_P1.gpanel_buffer
-	end
+	    to_print = (P1_level and "L" or"Choose l") .. "evel: "..my_level..
+	        "\nOpponent's level: "..(P2_level or "???")
+        gprint(to_print, 300, 280)
+        coroutine_wait()
+        do_messages()
+	    if P1_level then
+	        elseif menu_key_enter(k) then
+	            P1_level = my_level
+	            net_send("L"..(({[10]=0})[my_level] or my_level))
+	        elseif menu_key_up(k) or menu_key_right(k) then
+	            my_level = bound(1,my_level+1,10)
+	        elseif menu_key_down(k) or menu_key_left(k) then
+	            my_level = bound(1,my_level-1,10)
+	        end
+	    end
+        P1 = Stack(1, "vs", P1_level)
+        P2 = Stack(2, "vs", P2_level)
+        if currently_spectating then
+	        P1.panel_buffer = fake_P1.panel_buffer
+	        P1.gpanel_buffer = fake_P1.gpanel_buffer
+    end
+    
 	P2.panel_buffer = fake_P2.panel_buffer
 	P2.gpanel_buffer = fake_P2.gpanel_buffer
 	P1.garbage_target = P2
@@ -1514,28 +1528,33 @@ function main_net_vs_setup(ip)
 	replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
 	            P1_level=P1_level,P2_level=P2_level,
 	            ranked=false, P1_name=my_name, P2_name=op_name,
-	            P1_char=P1.character, P2_char=P2.character}
+                P1_char=P1.character, P2_char=P2.character}
+
 	ask_for_gpanels("000000")
-	ask_for_panels("000000")
+    ask_for_panels("000000")
+    
 	if not currently_spectating then
-	  to_print = "Level: "..my_level.."\nOpponent's level: "..(P2_level or "???")
+	    to_print = "Level: "..my_level.."\nOpponent's level: "..(P2_level or "???")
 	else
-	  to_print = "P1 Level: "..my_level.."\nP2 level: "..(P2_level or "???")
+	    to_print = "P1 Level: "..my_level.."\nP2 level: "..(P2_level or "???")
 	end
 
 	for i=1, 30 do
-	  gprint(to_print,300, 280)
-	  do_messages()
-	  coroutine_wait()
-	end
+        gprint(to_print,300, 280)
+        do_messages()
+        coroutine_wait()
+    end
+    
 	while P1.panel_buffer == "" or P2.panel_buffer == ""
-	  or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
-	  gprint(to_print,300, 280)
-	  do_messages()
-	  coroutine_wait()
-	end
+        or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
+        gprint(to_print,300, 280)
+        do_messages()
+        coroutine_wait()
+    end
+    
 	P1:starting_state()
-	P2:starting_state()
+    P2:starting_state()
+    
 	return main_net_vs
 end
 
@@ -1545,120 +1564,133 @@ function main_net_vs()
 	local end_text = nil
 	consuming_timesteps = true
 	local op_name_y = 40
-	if string.len(my_name) > 12 then
-	      op_name_y = 55
-	end
+    
+    if string.len(my_name) > 12 then
+	    op_name_y = 55
+    end
+    
 	while true do
-	  -- Uncomment this to cripple your game :D
-	  -- love.timer.sleep(0.030)
-	  for _,message in ipairs(this_frame_messages) do
-	    if message.leave_room then
-	      write_char_sel_settings_to_file()
-	      return main_net_vs_lobby
-	    end
-	  end
-	  gprint(my_name or "", 315, 40)
-	  gprint(op_name or "", 410, op_name_y)
-	  gprint("Wins: "..my_win_count, 315, 70)
-	  gprint("Wins: "..op_win_count, 410, 70)
-	  if not config.debug_mode then --this is printed in the same space as the debug details
-	    gprint(spectators_string, 315, 265)
-	  end
-	  if matchType == "Ranked" then
-	    if global_current_room_ratings[my_player_number] 
-	    and global_current_room_ratings[my_player_number].new then
-	      gprint("Rating: "..global_current_room_ratings[my_player_number].new, 315, 85)
-	    end
-	    if global_current_room_ratings[op_player_number] 
-	    and global_current_room_ratings[op_player_number].new then
-	      gprint("Rating: "..global_current_room_ratings[op_player_number].new, 410, 85)
-	    end
-	  end
-	  if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
-	    P1:render()
-	    P2:render()
-	    coroutine_wait()
-	    if currently_spectating and this_frame_keys["escape"] then
-	      print("spectator pressed escape during a game")
-	      my_win_count = 0
-	      op_win_count = 0
-	      json_send({leave_room=true})
-	      return main_net_vs_lobby
-	    end
-	    do_messages()
-	  end
-	  
-	  print(P1.CLOCK, P2.CLOCK)
-	  if (P1 and P1.play_to_end) or (P2 and P2.play_to_end) then
-	    if not P1.game_over then
-	      if currently_spectating then
-	        P1:foreign_run()
-	      else
-	        P1:local_run() 
-	      end
-	    end
-	  else
-	    run_function_as_60hz(function()
-	      if not P1.game_over then
-	        if currently_spectating then
-	            P1:foreign_run()
-	        else
-	          P1:local_run() 
+        -- Uncomment this to cripple your game :D
+        -- love.timer.sleep(0.030)
+        for _,message in ipairs(this_frame_messages) do
+	        if message.leave_room then
+	            write_char_sel_settings_to_file()
+	            return main_net_vs_lobby
 	        end
-	      end
-	    end)
-	  end
-	  if not P2.game_over then
-	    P2:foreign_run()
-	  end
-	  local outcome_claim = nil
-	  if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
-	    end_text = "Draw"
-	    outcome_claim = 0
-	  elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
-	    end_text = op_name.." Wins :("
-	    op_win_count = op_win_count + 1 -- leaving these in just in case used with an old server that doesn't keep score.  win_counts will get overwritten after this by the server anyway.
-	    outcome_claim = P2.player_number
-	  elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
-	    end_text = my_name.." Wins ^^"
-	    my_win_count = my_win_count + 1 -- leave this in
-	    outcome_claim = P1.player_number
+        end
+        
+        gprint(my_name or "", 315, 40)
+        gprint(op_name or "", 410, op_name_y)
+        gprint("Wins: "..my_win_count, 315, 70)
+        gprint("Wins: "..op_win_count, 410, 70)
+
+	    if not config.debug_mode then --this is printed in the same space as the debug details
+	        gprint(spectators_string, 315, 265)
+        end
+        
+	    if matchType == "Ranked" then
+	        if global_current_room_ratings[my_player_number] 
+	            and global_current_room_ratings[my_player_number].new then
+	            gprint("Rating: "..global_current_room_ratings[my_player_number].new, 315, 85)
+	        end
+	        if global_current_room_ratings[op_player_number] 
+	            and global_current_room_ratings[op_player_number].new then
+	            gprint("Rating: "..global_current_room_ratings[op_player_number].new, 410, 85)
+	        end
+        end
+        
+	    if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
+            P1:render()
+            P2:render()
+            coroutine_wait()
+	        if currently_spectating and this_frame_keys["escape"] then
+	            print("spectator pressed escape during a game")
+                my_win_count = 0
+                op_win_count = 0
+                json_send({leave_room=true})
+                return main_net_vs_lobby
+	        end
+	        do_messages()
+	    end
+	  
+        print(P1.CLOCK, P2.CLOCK)
+        if (P1 and P1.play_to_end) or (P2 and P2.play_to_end) then
+	        if not P1.game_over then
+	            if currently_spectating then
+	                P1:foreign_run()
+	            else
+	                P1:local_run() 
+	            end
+	        end
+	    else
+	        run_function_as_60hz(function()
+                if not P1.game_over then
+                    if currently_spectating then
+                        P1:foreign_run()
+                    else
+                        P1:local_run() 
+                    end
+                end
+	        end)
+	    end
+	    if not P2.game_over then
+	        P2:foreign_run()
+        end
+        
+        local outcome_claim = nil
+        if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
+            end_text = "Draw"
+            outcome_claim = 0
+	    elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
+	        end_text = op_name.." Wins :("
+            op_win_count = op_win_count + 1 -- leaving these in just in case used with an old server that doesn't keep score.  win_counts will get overwritten after this by the server anyway.
+            outcome_claim = P2.player_number
+	    elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
+            end_text = my_name.." Wins ^^"
+            my_win_count = my_win_count + 1 -- leave this in
+            outcome_claim = P1.player_number
 	    
-	  end
-	  if end_text then
-	    undo_stonermode()
-	    json_send({game_over=true, outcome=outcome_claim})
-	    local now = os.date("*t",to_UTC(os.time()))
-	    local sep = "/"
-	    local path = "replays"..sep.."v"..versionString..sep..string.format("%04d"..sep.."%02d"..sep.."%02d", now.year, now.month, now.day)
-	    local rep_a_name, rep_b_name = my_name, op_name
-	    --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
-	    if rep_b_name <  rep_a_name then
-	      path = path..sep..rep_b_name.."-vs-"..rep_a_name
-	    else
-	      path = path..sep..rep_a_name.."-vs-"..rep_b_name
 	    end
-	    local filename = "v"..versionString.."-"..string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec).."-"..rep_a_name.."-L"..P1.level.."-vs-"..rep_b_name.."-L"..P2.level
-	    if matchType and matchType ~= "" then
-	      filename = filename.."-"..matchType
+        
+        if end_text then
+            undo_stonermode()
+            json_send({game_over=true, outcome=outcome_claim})
+            local now = os.date("*t",to_UTC(os.time()))
+            local sep = "/"
+            local path = "replays"..sep.."v"..versionString..sep..string.format("%04d"..sep.."%02d"..sep.."%02d", now.year, now.month, now.day)
+            local rep_a_name, rep_b_name = my_name, op_name
+            --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
+	        if rep_b_name <  rep_a_name then
+	            path = path..sep..rep_b_name.."-vs-"..rep_a_name
+	        else
+	            path = path..sep..rep_a_name.."-vs-"..rep_b_name
+	        end
+            
+            local filename = "v"..versionString.."-"..string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec).."-"..rep_a_name.."-L"..P1.level.."-vs-"..rep_b_name.."-L"..P2.level
+            
+            if matchType and matchType ~= "" then
+	            filename = filename.."-"..matchType
+            end
+            
+	        if outcome_claim == 1 or outcome_claim == 2 then
+	            filename = filename.."-P"..outcome_claim.."wins"
+	        elseif outcome_claim == 0 then
+	            filename = filename.."-draw"
+	        end
+            
+            filename = filename..".txt"
+	        print("saving replay as "..path..sep..filename)
+            write_replay_file(path, filename)
+            print("also saving replay as replay.txt")
+            write_replay_file()
+            character_select_mode = "2p_net_vs"
+
+	        if currently_spectating then
+	            return main_dumb_transition, {main_character_select, end_text, 45, 45}
+	        else
+	            return main_dumb_transition, {main_character_select, end_text, 45, 180}
+	        end
 	    end
-	    if outcome_claim == 1 or outcome_claim == 2 then
-	      filename = filename.."-P"..outcome_claim.."wins"
-	    elseif outcome_claim == 0 then
-	      filename = filename.."-draw"
-	    end
-	    filename = filename..".txt"
-	    print("saving replay as "..path..sep..filename)
-	    write_replay_file(path, filename)
-	    print("also saving replay as replay.txt")
-	    write_replay_file()
-	    character_select_mode = "2p_net_vs"
-	    if currently_spectating then
-	      return main_dumb_transition, {main_character_select, end_text, 45, 45}
-	    else
-	      return main_dumb_transition, {main_character_select, end_text, 45, 180}
-	    end
-	  end
 	end
 end
 
@@ -1667,33 +1699,37 @@ main_local_vs_setup = multi_func(function()
 	local chosen, maybe = {}, {5,5}
 	local P1_level, P2_level = nil, nil
 	while chosen[1] == nil or chosen[2] == nil do
-	  to_print = (chosen[1] and "" or "Choose ") .. "P1 level: "..maybe[1].."\n"
-	      ..(chosen[2] and "" or "Choose ") .. "P2 level: "..(maybe[2])
-	  gprint(to_print, 300, 280)
-	  coroutine_wait()
-	  for i=1, 2 do
-	    local k=K[i]
-	    if menu_key_escape(k) then
-	      if chosen[i] then
-	        chosen[i] = nil
-	      else
-	        return main_select_mode
-	      end
-	    elseif menu_key_enter(k) then
-	      chosen[i] = maybe[i]
-	    elseif menu_key_up(k) or menu_key_right(k) then
-	      if not chosen[i] then
-	        maybe[i] = bound(1, maybe[i] + 1, 10)
-	      end
-	    elseif menu_key_down(k) or menu_key_left(k) then
-	      if not chosen[i] then
-	        maybe[i] = bound(1, maybe[i] - 1, 10)
-	      end
+	    to_print = (chosen[1] and "" or "Choose ") .. "P1 level: "..maybe[1].."\n"
+	        ..(chosen[2] and "" or "Choose ") .. "P2 level: "..(maybe[2])
+	    gprint(to_print, 300, 280)
+	    coroutine_wait()
+        
+        for i=1, 2 do
+            local k=K[i]
+            
+	        if menu_key_escape(k) then
+	            if chosen[i] then
+	                chosen[i] = nil
+	            else
+	                return main_select_mode
+	        end
+	        elseif menu_key_enter(k) then
+	            chosen[i] = maybe[i]
+	        elseif menu_key_up(k) or menu_key_right(k) then
+	            if not chosen[i] then
+	                maybe[i] = bound(1, maybe[i] + 1, 10)
+	            end
+	        elseif menu_key_down(k) or menu_key_left(k) then
+	            if not chosen[i] then
+	                maybe[i] = bound(1, maybe[i] - 1, 10)
+	            end
+	        end
 	    end
-	  end
-	end
+    end
+    
 	to_print = "P1 level: " .. maybe[1] .. "\nP2 level: " .. (maybe[2])
-	P1 = Stack(1, "vs", chosen[1])
+    
+    P1 = Stack(1, "vs", chosen[1])
 	P2 = Stack(2, "vs", chosen[2])
 	P1.garbage_target = P2
 	P2.garbage_target = P1
@@ -1708,11 +1744,13 @@ main_local_vs_setup = multi_func(function()
 	make_local_panels(P1, "000000")
 	make_local_gpanels(P1, "000000")
 	make_local_panels(P2, "000000")
-	make_local_gpanels(P2, "000000")
+    make_local_gpanels(P2, "000000")
+    
 	for i=1, 30 do
-	  gprint(to_print,300, 280)
-	  coroutine_wait()
-	end
+	    gprint(to_print,300, 280)
+	    coroutine_wait()
+    end
+    
 	P1:starting_state()
 	P2:starting_state()
 	return main_local_vs
@@ -1723,25 +1761,28 @@ function main_local_vs()
 	consuming_timesteps = true
 	local end_text = nil
 	while true do
-	  P1:render()
-	  P2:render()
-	  coroutine_wait()
-	  run_function_as_60hz(function()
-	      if not P1.game_over and not P2.game_over then
-	        P1:local_run()
-	        P2:local_run()
-	      end
-	    end)
-	  if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
-	    end_text = "Draw"
-	  elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
-	    end_text = "P2 wins ^^"
-	  elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
-	    end_text = "P1 wins ^^"
-	  end
-	  if end_text then
-	    return main_dumb_transition, {main_select_mode, end_text, 45}
-	  end
+        P1:render()
+        P2:render()
+        coroutine_wait()
+
+        run_function_as_60hz(function()
+	        if not P1.game_over and not P2.game_over then
+	            P1:local_run()
+	            P2:local_run()
+	        end
+        end)
+        
+	    if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
+	        end_text = "Draw"
+	    elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
+	        end_text = "P2 wins ^^"
+	    elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
+	        end_text = "P1 wins ^^"
+	    end
+        
+        if end_text then
+	        return main_dumb_transition, {main_select_mode, end_text, 45}
+	    end
 	end
 end
 
@@ -1756,25 +1797,29 @@ end
 function main_local_vs_yourself()
 	-- TODO: replay!
 	consuming_timesteps = true
-	local end_text = nil
+    local end_text = nil
+    
 	while true do
-	  P1:render()
-	  coroutine_wait()
-	  run_function_as_60hz(function()
-	      if not P1.game_over then
-	        P1:local_run()
-	      else 
-	        end_text = "Game Over"
-	      end
-	    end)
-	  if end_text then
-	    return main_dumb_transition, {main_character_select, end_text, 45}
-	  end
+	    P1:render()
+	    coroutine_wait()
+        
+        run_function_as_60hz(function()
+            if not P1.game_over then
+	            P1:local_run()
+	        else 
+	            end_text = "Game Over"
+	        end
+        end)
+        
+	    if end_text then
+	        return main_dumb_transition, {main_character_select, end_text, 45}
+	    end
 	end
 end
 
 function main_replay_vs()
-	local replay = replay.vs
+    local replay = replay.vs
+    
 	P1 = Stack(1, "vs", replay.P1_level or 5)
 	P2 = Stack(2, "vs", replay.P2_level or 5)
 	P1.ice = true
@@ -1794,80 +1839,92 @@ function main_replay_vs()
 	P2.character = replay.P2_char
 	my_name = replay.P1_name or "Player 1"
 	op_name = replay.P2_name or "Player 2"
-	if character_select_mode == "2p_net_vs" then
-	  if replay.ranked then
-	    matchType = "Ranked"
-	  else
-	    matchType = "Casual"
-	  end
+    
+    if character_select_mode == "2p_net_vs" then
+	    if replay.ranked then
+	        matchType = "Ranked"
+	    else
+	        matchType = "Casual"
+	    end
 	end
 
 	P1:starting_state()
 	P2:starting_state()
-	local end_text = nil
+    
+    local end_text = nil
 	local run = true
 	local op_name_y = 40
 	if string.len(my_name) > 12 then
-	  op_name_y = 55
+	    op_name_y = 55
 	end
-	while true do
-	  mouse_panel = nil
-	  gprint(my_name or "", 315, 40)
-	  gprint(op_name or "", 410, op_name_y)
-	  P1:render()
-	  P2:render()
-	  if mouse_panel then
-	    local str = "Panel info:\nrow: " .. mouse_panel[1] .. "\ncol: " .. mouse_panel[2]
-	    for k,v in spairs(mouse_panel[3]) do
-	      str = str .. "\n".. k .. ": " .. tostring(v)
+    
+    while true do
+        mouse_panel = nil
+        gprint(my_name or "", 315, 40)
+        gprint(op_name or "", 410, op_name_y)
+        P1:render()
+        P2:render()
+        
+        if mouse_panel then
+	        local str = "Panel info:\nrow: " .. mouse_panel[1] .. "\ncol: " .. mouse_panel[2]
+	        for k,v in spairs(mouse_panel[3]) do
+	            str = str .. "\n".. k .. ": " .. tostring(v)
+	        end
+	        gprint(str, 350, 400)
+        end
+        
+	    coroutine_wait()
+	    if this_frame_keys["escape"] then
+	        return main_select_mode
 	    end
-	    gprint(str, 350, 400)
-	  end
-	  coroutine_wait()
-	  if this_frame_keys["escape"] then
-	    return main_select_mode
-	  end
-	  if this_frame_keys["return"] then
-	    run = not run
-	  end
-	  if this_frame_keys["\\"] then
-	    run = false
-	  end
-	  if run or this_frame_keys["\\"] then
-	    if not P1.game_over then
-	      P1:foreign_run()
+        
+        if this_frame_keys["return"] then
+	        run = not run
 	    end
-	    if not P2.game_over then
-	      P2:foreign_run()
+      
+        if this_frame_keys["\\"] then
+	        run = false
 	    end
-	  end
-	  if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
-	    end_text = "Draw"
-	  elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
-	    if replay.P2_name and replay.P2_name ~= "anonymous" then
-	      end_text = replay.P2_name .. " wins"
-	    else
-	      end_text = "P2 wins"
+        
+        if run or this_frame_keys["\\"] then
+	        if not P1.game_over then
+	            P1:foreign_run()
+	        end
+	        if not P2.game_over then
+	            P2:foreign_run()
+	        end
+        end
+        
+	    if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
+	        end_text = "Draw"
+	    elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
+	        if replay.P2_name and replay.P2_name ~= "anonymous" then
+	            end_text = replay.P2_name .. " wins"
+	        else
+	        end_text = "P2 wins"
+	        end
+	    elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
+	        if replay.P1_name and replay.P1_name ~= "anonymous" then
+	            end_text = replay.P1_name.." wins"
+	        else
+	            end_text = "P1 wins"
+	        end
 	    end
-	  elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
-	    if replay.P1_name and replay.P1_name ~= "anonymous" then
-	      end_text = replay.P1_name.." wins"
-	    else
-	      end_text = "P1 wins"
+        
+        if end_text then
+	        return main_dumb_transition, {main_select_mode, end_text}
 	    end
-	  end
-	  if end_text then
-	    return main_dumb_transition, {main_select_mode, end_text}
-	  end
 	end
 end
 
 function main_replay_endless()
 	local replay = replay.endless
-	if replay == nil or replay.speed == nil then
-	  return main_dumb_transition,
-	    {main_select_mode, "I don't have an endless replay :("}
-	end
+    
+    if replay == nil or replay.speed == nil then
+	    return main_dumb_transition,
+	        {main_select_mode, "I don't have an endless replay :("}
+    end
+    
 	P1 = Stack(1, "endless", replay.speed, replay.difficulty)
 	P1.max_runs_per_frame = 1
 	P1.input_buffer = table.concat({replay.in_buf})
@@ -1876,25 +1933,29 @@ function main_replay_endless()
 	P1.speed = replay.speed
 	P1.difficulty = replay.difficulty
 	local run = true
-	while true do
-	  P1:render()
-	  coroutine_wait()
-	  if this_frame_keys["escape"] then
-	    return main_select_mode
-	  end
-	  if this_frame_keys["return"] then
-	    run = not run
-	  end
-	  if this_frame_keys["\\"] then
-	    run = false
-	  end
-	  if run or this_frame_keys["\\"] then
-	    if P1.game_over then
-	    -- TODO: proper game over.
-	      return main_dumb_transition, {main_select_mode, "You scored " .. P1.score}
+    
+    while true do
+	    P1:render()
+	    coroutine_wait()
+	    if this_frame_keys["escape"] then
+	        return main_select_mode
+        end
+        
+	    if this_frame_keys["return"] then
+	        run = not run
+        end
+        
+	    if this_frame_keys["\\"] then
+	        run = false
+        end
+        
+	    if run or this_frame_keys["\\"] then
+	        if P1.game_over then
+	        -- TODO: proper game over.
+	            return main_dumb_transition, {main_select_mode, "You scored " .. P1.score}
+	        end
+	        P1:foreign_run()
 	    end
-	    P1:foreign_run()
-	  end
 	end
 end
 
@@ -1903,43 +1964,48 @@ function main_replay_puzzle()
 	if replay.in_buf == nil or replay.in_buf == "" then
 	  return main_dumb_transition,
 	    {main_select_mode, "I don't have a puzzle replay :("}
-	end
+    end
+    
 	P1 = Stack(1, "puzzle")
 	P1.max_runs_per_frame = 1
 	P1.input_buffer = replay.in_buf
 	P1:set_puzzle_state(unpack(replay.puzzle))
 	local run = true
 	while true do
-	  mouse_panel = nil
-	  P1:render()
-	  if mouse_panel then
-	    local str = "Panel info:\nrow: "..mouse_panel[1].."\ncol: "..mouse_panel[2]
-	    for k,v in spairs(mouse_panel[3]) do
-	      str = str .. "\n" .. k .. ": " .. tostring(v)
+        mouse_panel = nil
+        P1:render()
+	    if mouse_panel then
+	        local str = "Panel info:\nrow: "..mouse_panel[1].."\ncol: "..mouse_panel[2]
+	            for k,v in spairs(mouse_panel[3]) do
+	                str = str .. "\n" .. k .. ": " .. tostring(v)
+	            end
+	        gprint(str, 350, 400)
 	    end
-	    gprint(str, 350, 400)
-	  end
-	  coroutine_wait()
-	  if this_frame_keys["escape"] then
-	    return main_select_mode
-	  end
-	  if this_frame_keys["return"] then
-	    run = not run
-	  end
-	  if this_frame_keys["\\"] then
-	    run = false
-	  end
-	  if run or this_frame_keys["\\"] then
-	    if P1.n_active_panels == 0 and
-	        P1.prev_active_panels == 0 then
-	      if P1:puzzle_done() then
-	        return main_dumb_transition, {main_select_mode, "You win!"}
-	      elseif P1.puzzle_moves == 0 then
-	        return main_dumb_transition, {main_select_mode, "You lose :("}
-	      end
+        
+        coroutine_wait()
+	    if this_frame_keys["escape"] then
+	        return main_select_mode
+        end
+        
+	    if this_frame_keys["return"] then
+	        run = not run
 	    end
-	    P1:foreign_run()
-	  end
+        
+        if this_frame_keys["\\"] then
+	        run = false
+	    end
+        
+        if run or this_frame_keys["\\"] then
+	        if P1.n_active_panels == 0 and
+	            P1.prev_active_panels == 0 then
+                if P1:puzzle_done() then
+                    return main_dumb_transition, {main_select_mode, "You win!"}
+                elseif P1.puzzle_moves == 0 then
+                    return main_dumb_transition, {main_select_mode, "You lose :("}
+                end
+	        end
+	        P1:foreign_run()
+	    end
 	end
 end
 
