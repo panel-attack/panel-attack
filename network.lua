@@ -124,7 +124,7 @@ local process_message = {
     end
 }
 
-function init_network(ip)
+function network_init(ip)
     TCP_sock = socket.tcp()
     TCP_sock:settimeout(7)
 
@@ -142,7 +142,7 @@ function init_network(ip)
               save_replays_publicly = config.save_replays_publicly})
 end
 
-function check_connection()
+function connection_is_ready()
     return got_H and #this_frame_messages > 0
 end
 
