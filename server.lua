@@ -1102,6 +1102,11 @@ read_players_file()
 read_deleted_players_file()
 leaderboard = Leaderboard("leaderboard")
 read_leaderboard_file()
+for k,v in pairs(playerbase.players) do
+  if leaderboard.players[k] then
+    leaderboard.players[k].user_name = v
+  end
+end
 write_leaderboard_file()
 print(os.time())
 --TODO: remove test print for leaderboard

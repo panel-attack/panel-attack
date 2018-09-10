@@ -63,10 +63,10 @@ function read_deleted_players_file() pcall(function()
 end) end
 
 function write_leaderboard_file() pcall(function()
-  -- local f = assert(io.open("leaderboard.txt", "w"))
-  -- io.output(f)
-  -- io.write(json.encode(leaderboard.players))
-  -- io.close(f)
+  local f = assert(io.open("leaderboard.txt", "w"))
+  io.output(f)
+  io.write(json.encode(leaderboard.players))
+  io.close(f)
   --now also write a CSV version of the file
   --local csv = "user_id,user_name,rating,placement_done,placement_matches,final_placement_rating,ranked_games_played,ranked_games_won"
   local leaderboard_table = {}
