@@ -49,6 +49,7 @@ function find_character_SFX(character, SFX_sound_name)
       local current_directory_has_combo_sound = check_supported_extensions(currentDirectory.."/"..character.."/combo")
       local other_requested_SFX = check_supported_extensions(currentDirectory.."/"..character.."/"..SFX_sound_name)
 
+      -- SFXSounName probably a misspelled global variable
       if SFXSounName == "chain" and current_directory_has_chain_sound then 
         if config.debug_mode then print("loaded "..SFX_sound_name.." for "..character) end
         return current_directory_has_chain_sound
@@ -171,12 +172,12 @@ function assert_requirements_met()
   end
 
 function stop_character_sounds(character)
-    local danger_music_intro_started = nil
-    local danger_music_intro_finished = nil
-    local danger_music_intro_playing = nil
-    local normal_music_intro_exists = nil
-    local normal_music_intro_started = nil
-    local normal_music_intro_finished = nil
+    danger_music_intro_started = nil
+    danger_music_intro_finished = nil
+    danger_music_intro_playing = nil
+    normal_music_intro_exists = nil
+    normal_music_intro_started = nil
+    normal_music_intro_finished = nil
   
     for characterSFX, sound in ipairs(allowed_SFX_character) do
         if sounds.SFX.characters[character][sound] then
