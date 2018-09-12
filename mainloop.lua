@@ -591,6 +591,9 @@ function main_character_select()
         if msg.ranked_match_approved then
           match_type = "Ranked"
           match_type_message = ""
+          if msg.caveats then
+            match_type_message = match_type_message..(msg.caveats[1] or "Reason unknown")
+          end
         elseif msg.ranked_match_denied then
           match_type = "Casual"
           match_type_message = "Not ranked. "

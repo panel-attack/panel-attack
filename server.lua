@@ -699,6 +699,8 @@ function Room.rating_adjustment_approved(self)
     end
     if not leaderboard.players[players[1].user_id].placement_done and not leaderboard.players[players[2].user_id].placement_done then
       reasons[#reasons+1] = "Neither player has finished enough placement matches against already ranked players"
+    elseif not (leaderboard.players[players[1].user_id].placement_done and leaderboard.players[players[2].user_id].placement_done) then
+      caveats[#caveats+1] = "Rating adjustments for these matches will be processed when newcomer finishes placement"
     end
     if not players[player_number].wants_ranked_match then
       reasons[#reasons+1] = players[player_number].name.." doesn't want ranked"
@@ -711,7 +713,7 @@ function Room.rating_adjustment_approved(self)
   if reasons[1] then
     return false, reasons
   else 
-    return true, reasons  
+    return true, caveats  
   end
 end
 
@@ -956,7 +958,7 @@ function Connection.J(self, message)
     if self.wants_ranked_match or self.opponent.wants_ranked_match then
       local ranked_match_approved, reasons = self.room:rating_adjustment_approved()
       if ranked_match_approved then
-        self.room:send({ranked_match_approved=true})
+        self.room:send({ranked_match_approved=true, caveats=reasons})
       else
         self.room:send({ranked_match_denied=true, reasons=reasons})
       end 
@@ -1108,6 +1110,10 @@ for k,v in pairs(playerbase.players) do
   end
 end
 write_leaderboard_file()
+print("Leagues")
+for k,v in ipairs(leagues) do
+  print(v.league..":  "..v.min_rating)
+end
 print(os.time())
 --TODO: remove test print for leaderboard
 print("playerbase: "..json.encode(playerbase.players))

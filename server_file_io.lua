@@ -63,10 +63,10 @@ function read_deleted_players_file() pcall(function()
 end) end
 
 function write_leaderboard_file() pcall(function()
-  local f = assert(io.open("leaderboard.txt", "w"))
-  io.output(f)
-  io.write(json.encode(leaderboard.players))
-  io.close(f)
+  -- local f = assert(io.open("leaderboard.txt", "w"))
+  -- io.output(f)
+  -- io.write(json.encode(leaderboard.players))
+  -- io.close(f)
   --now also write a CSV version of the file
   --local csv = "user_id,user_name,rating,placement_done,placement_matches,final_placement_rating,ranked_games_played,ranked_games_won"
   local leaderboard_table = {}
@@ -79,7 +79,7 @@ function write_leaderboard_file() pcall(function()
   csvfile.write('./leaderboard.csv', leaderboard_table)
 end) end
 
-function read_leaderboard_file() --[[pcall(function()]]
+function read_leaderboard_file() pcall(function()
   -- local f = assert(io.open("leaderboard.txt", "r"))
   -- io.input(f)
   -- leaderboard.players = json.decode(io.read("*all"))
@@ -95,12 +95,12 @@ function read_leaderboard_file() --[[pcall(function()]]
       if csv_table[row][col] == '' then
         csv_table[row][col] = nil
       end
-      --player with this user_id gets this property equal to the csv cell's value
+      --player with this user_id gets this property equal to the csv_table cell's value
       leaderboard.players[csv_table[row][1]][csv_table[1][col]] = csv_table[row][col]
     end
   end
 
-end--[[) end]]
+end) end
 
 function write_replay_file(replay, path, filename) pcall(function()
   print("about to open new replay file for writing")
