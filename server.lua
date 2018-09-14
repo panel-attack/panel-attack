@@ -697,9 +697,11 @@ function Room.rating_adjustment_approved(self)
     if not playerbase.players[players[player_number].user_id] or not players[player_number].logged_in or playerbase.deleted_players[players[player_number].user_id]then
       reasons[#reasons+1] = players[player_number].name.." didn't log in"
     end
-    if not leaderboard.players[players[1].user_id].placement_done and not leaderboard.players[players[2].user_id].placement_done then
+    if not (leaderboard.players[players[1].user_id] and leaderboard.players[players[1].user_id].placement_done) 
+      and not (leaderboard.players[players[2].user_id] and leaderboard.players[players[2].user_id].placement_done) then
       reasons[#reasons+1] = "Neither player has finished enough placement matches against already ranked players"
-    elseif not (leaderboard.players[players[1].user_id].placement_done and leaderboard.players[players[2].user_id].placement_done) then
+    elseif (leaderboard.players[players[1].user_id] and leaderboard.players[players[1].user_id].placement_done) 
+      or (leaderboard.players[players[2].user_id] and leaderboard.players[players[2].user_id].placement_done) then
       caveats[#caveats+1] = "Rating adjustments for these matches will be processed when newcomer finishes placement"
     end
     if not players[player_number].wants_ranked_match then
