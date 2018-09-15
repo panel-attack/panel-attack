@@ -24,7 +24,7 @@ function love.load()
     end
 
     read_key_file()
-    mainloop = coroutine.create(fmainloop)
+    mainloop = coroutine.create(load_game_resources)
 
 end
 
@@ -33,7 +33,13 @@ local last_y = 0
 local input_delta = 0.0
 local pointer_hidden = false
 
--- update screen
+function love.load()
+  math.randomseed(os.time())
+  for i=1,4 do math.random() end
+  read_key_file()
+  mainloop = coroutine.create(load_game_resources)
+end
+
 function love.update(dt)
 
     -- if mouse not change positivo
