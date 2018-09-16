@@ -692,6 +692,7 @@ function Room.rating_adjustment_approved(self)
   --returns whether both players in the room have game states such that rating adjustment should be approved
   local players = {self.a, self.b}
   local reasons = {}
+  local caveats = {}
   local prev_player_level = players[1].level
   for player_number = 1,2 do
     if not playerbase.players[players[player_number].user_id] or not players[player_number].logged_in or playerbase.deleted_players[players[player_number].user_id]then
@@ -700,9 +701,6 @@ function Room.rating_adjustment_approved(self)
     if not (leaderboard.players[players[1].user_id] and leaderboard.players[players[1].user_id].placement_done) 
       and not (leaderboard.players[players[2].user_id] and leaderboard.players[players[2].user_id].placement_done) then
       reasons[#reasons+1] = "Neither player has finished enough placement matches against already ranked players"
-    elseif (leaderboard.players[players[1].user_id] and leaderboard.players[players[1].user_id].placement_done) 
-      or (leaderboard.players[players[2].user_id] and leaderboard.players[players[2].user_id].placement_done) then
-      caveats[#caveats+1] = "Rating adjustments for these matches will be processed when newcomer finishes placement"
     end
     if not players[player_number].wants_ranked_match then
       reasons[#reasons+1] = players[player_number].name.." doesn't want ranked"
@@ -715,6 +713,12 @@ function Room.rating_adjustment_approved(self)
   if reasons[1] then
     return false, reasons
   else 
+    for player_number = 1,2 do
+      if (leaderboard.players[players[1].user_id] and leaderboard.players[players[1].user_id].placement_done) 
+        or (leaderboard.players[players[2].user_id] and leaderboard.players[players[2].user_id].placement_done) then
+        caveats[#caveats+1] = "Rating adjustments for these matches will be processed when newcomer finishes placement"
+      end
+    end
     return true, caveats  
   end
 end
@@ -1111,6 +1115,8 @@ for k,v in pairs(playerbase.players) do
     leaderboard.players[k].user_name = v
   end
 end
+print("leaderboard json:")
+print(json.encode(leaderboard.players))
 write_leaderboard_file()
 print("Leagues")
 for k,v in ipairs(leagues) do

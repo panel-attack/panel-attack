@@ -74,7 +74,7 @@ function write_leaderboard_file() pcall(function()
   
   for user_id,v in pairs(leaderboard.players) do
     leaderboard_table[#leaderboard_table+1] = 
-    {user_id, v.user_name,v.rating,v.placement_done,v.placement_matches,v.final_placement_rating,v.ranked_games_played,v.ranked_games_won}
+    {user_id, v.user_name,v.rating,tostring(v.placement_done or ""),v.placement_matches,v.final_placement_rating,v.ranked_games_played,v.ranked_games_won}
   end
   csvfile.write('./leaderboard.csv', leaderboard_table)
 end) end
@@ -86,8 +86,8 @@ function read_leaderboard_file() pcall(function()
   -- io.close(f)
   
   local csv_table = csvfile.read('./leaderboard.csv')
-  print("before csv_table for loops")
   for row=2,#csv_table do
+    csv_table[row][1] = tostring(csv_table[row][1])
     leaderboard.players[csv_table[row][1]] = {}
     for col=1, #csv_table[1] do
       --Note csv_table[row][1] will be the player's user_id
@@ -96,7 +96,15 @@ function read_leaderboard_file() pcall(function()
         csv_table[row][col] = nil
       end
       --player with this user_id gets this property equal to the csv_table cell's value
-      leaderboard.players[csv_table[row][1]][csv_table[1][col]] = csv_table[row][col]
+      if csv_table[1][col] == "user_name" then
+        leaderboard.players[csv_table[row][1]][csv_table[1][col]] = tostring(csv_table[row][col])
+      elseif csv_table[1][col] == "rating" then
+        leaderboard.players[csv_table[row][1]][csv_table[1][col]] = tonumber(csv_table[row][col])
+      elseif csv_table[1][col] == "placement_done" then
+        leaderboard.players[csv_table[row][1]][csv_table[1][col]] = csv_table[row][col] and true and string.lower(csv_table[row][col]) ~= "false"
+      else
+        leaderboard.players[csv_table[row][1]][csv_table[1][col]] = csv_table[row][col]
+      end
     end
   end
 
