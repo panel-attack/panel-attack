@@ -228,10 +228,10 @@ function make_local_gpanels(stack, prev_panels)
 end
 
 function Stack.send_controls(self)
-    local k = K[self.which]
-    local to_send = base64encode[
-    ((keys[k.raise1] or keys[k.raise2] or this_frame_keys[k.raise1]
-    or this_frame_keys[k.raise2]) and 32 or 0) +
+  local k = keyboard[self.which]
+  local to_send = base64encode[
+    ((keys[k.raise_faster1] or keys[k.raise_faster2] or this_frame_keys[k.raise_faster1]
+      or this_frame_keys[k.raise_faster2]) and 32 or 0) +
     ((this_frame_keys[k.swap1] or this_frame_keys[k.swap2]) and 16 or 0) +
     ((keys[k.up] or this_frame_keys[k.up]) and 8 or 0) +
     ((keys[k.down] or this_frame_keys[k.down]) and 4 or 0) +

@@ -223,7 +223,7 @@ do
         }
         }
 
-        local k = K[1]
+        local k = keyboard[1]
 
         while true do
             local to_print = ""
@@ -280,7 +280,7 @@ function select_speed_and_level_menu(next_func, ...)
     }
 
     local speed, difficulty, active_idx = 1, 1, 1
-    local k = K[1]
+    local k = keyboard[1]
     
     while true do
         local to_print, to_print2, arrow = "", "", ""
@@ -648,7 +648,7 @@ function main_character_select()
     local op_state = global_op_state or {character="lip", level=5, cursor="level", ready=false}
     global_op_state = nil
     cursor, op_cursor, coordinate_x, coordinate_y = {1, 1}, {1, 1}, 5, 7
-    local k = K[1]
+    local k = keyboard[1]
     local up, down, left, right = {-1, 0}, {1, 0}, {0, -1}, {0, 1}
     
     my_state = global_my_state or
@@ -1175,7 +1175,7 @@ function main_net_vs_lobby()
     local unpaired_players = {} -- list
     local willing_players = {} -- set
     local spectatable_rooms = {}
-    local k = K[1]
+    local k = keyboard[1]
     my_player_number = nil
     op_player_number = nil
     local notice = {
@@ -1489,7 +1489,7 @@ function main_net_vs_setup(ip)
     if true then return main_net_vs_lobby end
     
     local my_level, to_print, fake_P2 = 5, nil, P2
-    local k = K[1]
+    local k = keyboard[1]
     while got_opponent == nil do
         gprint("Waiting for opponent...", 300, 280)
         coroutine_wait()
@@ -1560,7 +1560,7 @@ end
 
 function main_net_vs()
     --STONER_MODE = true
-    local k = K[1]  --may help with spectators leaving games in progress
+    local k = keyboard[1]  --may help with spectators leaving games in progress
     local end_text = nil
     consuming_timesteps = true
     local op_name_y = 40
@@ -1695,7 +1695,7 @@ function main_net_vs()
 end
 
 main_local_vs_setup = multi_func(function()
-    local K = K
+    local K = keyboard
     local chosen, maybe = {}, {5,5}
     local P1_level, P2_level = nil, nil
     while chosen[1] == nil or chosen[2] == nil do
@@ -1705,7 +1705,7 @@ main_local_vs_setup = multi_func(function()
         coroutine_wait()
         
         for i=1, 2 do
-            local k=K[i]
+            local k=keyboard[i]
             
             if menu_key_escape(k) then
                 if chosen[i] then
@@ -2060,7 +2060,7 @@ do
     menu_options[#menu_options + 1] = {"Back", main_select_mode}
     function main_select_puzz()
         local active_idx = 1
-        local k = K[1]
+        local k = keyboard[1]
         while true do
             local to_print = ""
             local arrow = ""
@@ -2098,7 +2098,7 @@ end
 function main_config_input()
     local pretty_names = {"Up", "Down", "Left", "Right", "A", "B", "L", "R"}
     local menu_options, active_idx = {}, 1
-    local k = K[1]
+    local k = keyboard[1]
     local active_player = 1
     
     local function get_items()
@@ -2183,7 +2183,7 @@ end
 
 function main_options()
     local menu_options, active_idx = {}, 1
-    local k = K[1]
+    local k = keyboard[1]
     local selected, deselected_this_frame, adjust_active_value = false, false, false
     local function get_items()
     local save_replays_publicly_choices = {"with my name", "anonymously", "not at all"}
@@ -2526,7 +2526,7 @@ function main_dumb_transition(next_func, text, timemin, timemax)
     timemin = timemin or 0
     timemax = timemax or 3600
     local t = 0
-    local k = K[1]
+    local k = keyboard[1]
     while true do
       -- for _,message in ipairs(this_frame_messages) do
         -- if next_func == main_character_select then
