@@ -13,4 +13,6 @@ globals = {
 --
 ignore = {
     "631" -- Line is too long.
+    "111" -- setting non-standard global variable
+    "113" -- accessing undefined variable
 }
