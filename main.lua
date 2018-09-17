@@ -24,7 +24,7 @@ function love.load()
     end
 
     read_key_file()
-    mainloop = coroutine.create(fmainloop)
+    mainloop = coroutine.create(load_game_resources)
 
 end
 
