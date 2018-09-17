@@ -197,7 +197,7 @@ function ask_for_panels(prev_panels)
     end
 end
 
-function ask_for_gpanel(prev_panels)
+function ask_for_gpanels(prev_panels)
     if TCP_sock then
         send_net('Q'..tostring(P1.NCOLORS)..prev_panels)
     else
