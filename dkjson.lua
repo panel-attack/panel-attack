@@ -190,17 +190,25 @@ SOFTWARE.
 -- global dependencies:
 local pairs, type, tostring, tonumber, getmetatable, setmetatable =
       pairs, type, tostring, tonumber, getmetatable, setmetatable
+
 local error, require, pcall = error, require, pcall
+
+-- Use math objects
 local floor, huge = math.floor, math.huge
+
+-- Use string objects
 local strrep, gsub, strsub, strbyte, strchar, strfind, strlen, strformat =
       string.rep, string.gsub, string.sub, string.byte, string.char,
       string.find, string.len, string.format
+
+-- User table object
 local concat = table.concat
 
 if _VERSION == 'Lua 5.1' then
   local function noglobals (s,k,v) error ('global access: ' .. k, 2) end
   setfenv (1, setmetatable ({}, { __index = noglobals, __newindex = noglobals }))
 end
+
 local _ENV = nil -- blocking globals in Lua 5.2
 
 local json = { version = 'dkjson 2.1' }
@@ -216,6 +224,7 @@ json.null = setmetatable ({}, {
   __tojson = function () return 'null' end
 })
 
+-- Function to check if a table is an array.
 local function isarray (table)
   local max, count, arraylen = 0, 0, 0
   for key, value in pairs (table) do
@@ -240,10 +249,12 @@ local function isarray (table)
   return true, max
 end
 
+-- UTF-8 escape codes
 local escapecodes = {
   ["\""] = "\\\"", ["\\"] = "\\\\", ["\b"] = "\\b", ["\f"] = "\\f",
   ["\n"] = "\\n",  ["\r"] = "\\r",  ["\t"] = "\\t"
 }
+
 
 local function escapeutf8 (uchar)
   local value = escapecodes[uchar]
@@ -252,6 +263,7 @@ local function escapeutf8 (uchar)
   end
   local byte_1, byte_2, byte_3, byte_4 = strbyte (uchar, 1, 4)
   byte_1, byte_2, byte_3, byte_4 = byte_1 or 0, byte_2 or 0, byte_3 or 0, byte_4 or 0
+  -- Replace to UTF-8 codes
   if byte_1 <= 0x7f then
     value = byte_1
   elseif 0xc0 <= byte_1 and byte_1 <= 0xdf and byte_2 >= 0x80 then
@@ -288,6 +300,7 @@ end
 
 local function quotestring (value)
   -- based on the regexp "escapable" in https://github.com/douglascrockford/JSON-js
+  -- return string surrounded by quotes
   value = fsub (value, "[%z\1-\31\"\\\127]", escapeutf8)
   if strfind (value, "[\194\216\220\225\226\239]") then
     value = fsub (value, "\194[\128-\159\173]", escapeutf8)
@@ -303,6 +316,7 @@ local function quotestring (value)
 end
 json.quotestring = quotestring
 
+-- Add newline to string
 local function addnewline2 (level, buffer, buflen)
   buffer[buflen+1] = '\n'
   buffer[buflen+2] = strrep ('  ', level)
@@ -310,6 +324,7 @@ local function addnewline2 (level, buffer, buflen)
   return buflen
 end
 
+-- Add newline to string dealing with identation
 function json.addnewline (state)
   if state.indent then
     state.bufferlen = addnewline2 (state.level or 0,
