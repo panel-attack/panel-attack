@@ -689,7 +689,7 @@ void Render_Controller()
 
    if(key[Keyboard_Swap1])  TBlit(283,193,Graphics_Controller_ABXY,screen);
    if(key[Keyboard_Swap2])  TBlit(289,187,Graphics_Controller_ABXY,screen);
-   if(key[Keyboard_Raise1]) TBlit(240,165,Graphics_Controller_L,screen);
-   if(key[Keyboard_Raise2]) TBlit(278,165,Graphics_Controller_R,screen);
+   if(key[Keyboard_raise_faster1]) TBlit(240,165,Graphics_Controller_L,screen);
+   if(key[Keyboard_raise_faster2]) TBlit(278,165,Graphics_Controller_R,screen);
 
 }
