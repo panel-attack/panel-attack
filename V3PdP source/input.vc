@@ -20,8 +20,8 @@ int Keyboard_Left;
 int Keyboard_Right;
 int Keyboard_Swap1;
 int Keyboard_Swap2;
-int Keyboard_Raise1;
-int Keyboard_Raise2;
+int Keyboard_raise_faster1;
+int Keyboard_raise_faster2;
 
 
 void Controls()
@@ -32,7 +32,7 @@ void Controls()
       if(P1InputSource==INPUT_KEYBOARD)
       {
 
-         if(key[Keyboard_Raise1] || key[Keyboard_Raise2])
+         if(key[Keyboard_raise_faster1] || key[Keyboard_raise_faster2])
          {
             if(!P1PreventManualRaise)
             {
@@ -97,8 +97,8 @@ void Controls_SetDefaults()
 
    Keyboard_Swap1=SCAN_E;
    Keyboard_Swap2=SCAN_D;
-   Keyboard_Raise1=SCAN_Q;
-   Keyboard_Raise2=SCAN_W;
+   Keyboard_raise_faster1=SCAN_Q;
+   Keyboard_raise_faster2=SCAN_W;
 }
 
 

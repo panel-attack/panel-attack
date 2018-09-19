@@ -772,7 +772,6 @@ function Room.character_select(self)
 			end
 			
 			function Room.rating_adjustment_approved(self) 
-				--returns whether both players in the room have game states such that rating adjustment should be approved
 				local players = {self.a, self.b}
 				local reasons = {}
 				local previously_player_level = players[1].level
