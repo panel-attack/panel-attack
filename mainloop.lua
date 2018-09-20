@@ -1,3 +1,7 @@
+----------------------
+-- Implementation of main loop.
+-- copyright MIT
+-- @module mainloop.lua
 local coroutine_wait = coroutine.yield
 local coroutine_resume = coroutine.resume
 
@@ -12,6 +16,8 @@ local replay_of_match_so_far = nil
 local spectator_list = nil
 local debug_mode_text = {[true]="On", [false]="Off"}  
 
+
+--- Fuction load the game
 function load_game_resources()
     local func, arg = main_select_mode, nil
     replay = {}
@@ -37,8 +43,9 @@ function load_game_resources()
     end
 end
 
--- Wrapper for doing something at 60hz
+--- Wrapper for doing something at 60hz
 -- The rest of the stuff happens at whatever rate is convenient
+-- @param func fuction that run in 60hz
 function run_function_as_60hz(func)
     local frequency = 1 / 60
     for i=1, 4 do
@@ -51,10 +58,12 @@ function run_function_as_60hz(func)
     end
 end
 
--- Changes the behavior of menu_foo functions.
+--- Changes the behavior of menu_foo functions.
 -- In a menu that doesn't specifically pertain to multiple players,
 -- up, down, left, right should always work.  But in a multiplayer
 -- menu, those keys should definitely not move many cursors each.
+-- @param 
+-- @return 
 local multi = false
 function multi_func(func)
     return function(...)
@@ -69,16 +78,25 @@ end
 -- meanings, but should continue working the same way in menus.
 local menu_reserved_keys = {}
 
+
 function repeating_key(key)
     local key_time = keys[key]
     return this_frame_keys[key] or
-      (key_time and key_time > 25 and key_time % 3 ~= 0)
+        (key_time and key_time > 25 and key_time % 3 ~= 0)
 end
 
-function normal_key(key) 
-    return this_frame_keys[key] 
+--- Return a key in current frame
+-- @param key 
+-- @return 
+function normal_key(key)
+    return this_frame_keys[key]
 end
 
+--- 
+-- @param fixed
+-- @param configurable
+-- @param rept
+-- @return a fuction with 1 param 
 function menu_key_func(fixed, configurable, rept)
     local query = normal_key
     if rept then
@@ -260,6 +278,10 @@ do
     end
 end
 
+
+--- Fuction to select the speed and level of difficlties
+-- @param next_fuction Fuction that gonna be executed next
+-- @param ... Others fuctions
 function select_speed_and_level_menu(next_func, ...)
     local difficulties = {
         "Easy",
@@ -330,6 +352,9 @@ function select_speed_and_level_menu(next_func, ...)
     end
 end
 
+--- 
+-- @param 
+-- @return
 function main_endless(...)
     consuming_timesteps = true
     replay.endless = {}
@@ -352,7 +377,7 @@ function main_endless(...)
         P1:render()
         coroutine_wait()
         if P1.game_over then
-      -- TODO: proper game over.
+        -- TODO: proper game over.
             write_replay_file()
             return main_dumb_transition, {main_select_mode, "You scored " .. P1.score}
         end
@@ -367,6 +392,8 @@ function main_endless(...)
     end
 end
 
+--- 
+-- @param 
 function main_time_attack(...)
     consuming_timesteps = true
     P1 = Stack(1, "time", ...)
@@ -388,19 +415,26 @@ function main_time_attack(...)
     end
 end
 
+--- Change the select mode 
+-- @return fuction that runs selections to main character
 function main_net_vs_room()
     character_select_mode = "2p_net_vs"
     return main_character_select()
 end
 
+--- This fuctions does a lot of things, it sees if can establish connection
+-- if the connection is beeing maintained
+-- the menu to choose the character to each player
+-- the menu to choose the map
+-- and more
 function main_character_select()
     love.audio.stop()
     local map = {}
-    
+
     if character_select_mode == "2p_net_vs" then
         local opponent_connected = false
         local retries, retry_limit = 0, 500
-        
+
         while not global_initialize_room_msg and retries < retry_limit do
             for _, message in ipairs(this_frame_messages) do
                 if message.create_room or message.character_select or message.spectate_request_granted then
@@ -1169,6 +1203,8 @@ function main_character_select()
     end
 end
 
+--- Load the lobby screen
+-- @return the next screen or main menu
 function main_net_vs_lobby()
     local active_name, active_idx, active_back = "", 1
     local menu_options = nil
@@ -1183,9 +1219,9 @@ function main_net_vs_lobby()
         [false] = "You are all alone in the lobby :("}  
     local leaderboard_string = ""
     local my_rank = nil
-    
+
     love.audio.stop()
-    
+
     matchType = ""
     match_type_message = ""
     --attempt login
@@ -1193,7 +1229,7 @@ function main_net_vs_lobby()
     if not playerUsername then
         playerUsername = "need a new user id"
     end
-    
+
     json_send({login_request=true, user_id=playerUsername}) 
     local login_status_message = "   Logging in..."
     local login_status_message_duration = 2
@@ -1415,6 +1451,8 @@ function main_net_vs_lobby()
     end
 end
 
+--- Update the placar if someone win
+-- @param win_counts
 function update_win_counts(win_counts)
     if (P1 and P1.player_number == 1) or currently_spectating then
         my_win_count = win_counts[1] or 0
@@ -1425,6 +1463,9 @@ function update_win_counts(win_counts)
     end
 end
 
+--- Formats a string with the name of spectators
+-- @list list The nick of spectators
+-- @return string with all spectators formatted
 function spectator_list_string(list)
     local str = ""
     for k,v in ipairs(list) do
@@ -1441,6 +1482,11 @@ function spectator_list_string(list)
     return str
 end
 
+--- Formats a string with the rank of the players
+-- @param report all player in the rank
+-- @param first_viewble_idx first player in rank
+-- @param last_viewble_idx last player in rank
+-- @return string with the rank
 function build_viewable_leaderboard_string(report, first_viewable_idx, last_viewable_idx)
     str = "        Leaderboard\n      Rank    Rating   Player\n"
     
@@ -1464,10 +1510,14 @@ function build_viewable_leaderboard_string(report, first_viewable_idx, last_view
     return str
 end
 
+--- Try to establish connection with the opponent
+-- @param ip user ip
+-- @return function main_net_vs
 function main_net_vs_setup(ip)
     if not config.name then
         return main_set_name
-        else my_name = config.name
+    else 
+        my_name = config.name
     end
     
     P1, P1_level, P2_level, got_opponent = nil, nil, nil, nil
@@ -1476,7 +1526,7 @@ function main_net_vs_setup(ip)
     gprint("Setting up connection...", 300, 280)
     coroutine_wait()
     network_init(ip)
-    
+
     local timeout_counter = 0
     while not connection_is_ready() do
         gprint("Connecting...", 300, 280)
@@ -1558,17 +1608,19 @@ function main_net_vs_setup(ip)
     return main_net_vs
 end
 
+--- 
+-- @return screen that returns to lobby or next window.
 function main_net_vs()
     --STONER_MODE = true
     local k = keyboard[1]  --may help with spectators leaving games in progress
     local end_text = nil
     consuming_timesteps = true
     local op_name_y = 40
-    
+
     if string.len(my_name) > 12 then
         op_name_y = 55
     end
-    
+
     while true do
         -- Uncomment this to cripple your game :D
         -- love.timer.sleep(0.030)
@@ -1578,7 +1630,7 @@ function main_net_vs()
                 return main_net_vs_lobby
             end
         end
-        
+
         gprint(my_name or "", 315, 40)
         gprint(op_name or "", 410, op_name_y)
         gprint("Wins: "..my_win_count, 315, 70)
@@ -1694,6 +1746,9 @@ function main_net_vs()
     end
 end
 
+
+--- It declares a fuction and initiate a variable in the sabe instant
+-- This needs to be refactoring
 main_local_vs_setup = multi_func(function()
     local K = keyboard
     local chosen, maybe = {}, {5,5}
@@ -1726,7 +1781,7 @@ main_local_vs_setup = multi_func(function()
             end
         end
     end
-    
+
     to_print = "P1 level: " .. maybe[1] .. "\nP2 level: " .. (maybe[2])
     
     P1 = Stack(1, "vs", chosen[1])
@@ -1756,6 +1811,8 @@ main_local_vs_setup = multi_func(function()
     return main_local_vs
 end)
 
+--- Set a string with the player that win in the screen 
+-- @return function main_dumb_transition 
 function main_local_vs()
     -- TODO: replay!
     consuming_timesteps = true
@@ -1786,6 +1843,8 @@ function main_local_vs()
     end
 end
 
+--- Set the variables to enter in main_character_select 
+-- @return fuction main_caracter_select
 function main_local_vs_yourself_setup()
     my_name = config.name or "Player 1"
     op_name = nil
@@ -1794,15 +1853,17 @@ function main_local_vs_yourself_setup()
     return main_character_select
 end
 
+--- 
+-- @return fuction main_dumb_transition
 function main_local_vs_yourself()
     -- TODO: replay!
     consuming_timesteps = true
     local end_text = nil
-    
+
     while true do
         P1:render()
         coroutine_wait()
-        
+
         run_function_as_60hz(function()
             if not P1.game_over then
                 P1:local_run()
@@ -1810,13 +1871,16 @@ function main_local_vs_yourself()
                 end_text = "Game Over"
             end
         end)
-        
+
         if end_text then
             return main_dumb_transition, {main_character_select, end_text, 45}
         end
     end
 end
 
+
+--- 
+-- @return 
 function main_replay_vs()
     local replay = replay.vs
     
@@ -1917,6 +1981,9 @@ function main_replay_vs()
     end
 end
 
+
+--- 
+-- @return 
 function main_replay_endless()
     local replay = replay.endless
     
@@ -1959,6 +2026,8 @@ function main_replay_endless()
     end
 end
 
+--- 
+-- @return 
 function main_replay_puzzle()
     local replay = replay.puzzle
     if replay.in_buf == nil or replay.in_buf == "" then
@@ -2009,6 +2078,10 @@ function main_replay_puzzle()
     end
 end
 
+--- Load the puzzles
+-- Verify if its done right
+-- @param puzzles puzzles that are pre made
+-- @return fuction that runs the puzzles
 function make_main_puzzle(puzzles)
     local awesome_idx, ret = 1, nil
     function ret()
@@ -2095,6 +2168,8 @@ do
     end
 end
 
+--- Does a lot of stuff
+-- @return menu_options[active_idx][3], menu_options[active_idx][4] i dont fucking know what is this
 function main_config_input()
     local pretty_names = {"Up", "Down", "Left", "Right", "A", "B", "L", "R"}
     local menu_options, active_idx = {}, 1
@@ -2181,6 +2256,7 @@ function main_config_input()
     end
 end
 
+--- Does a lot of stuff
 function main_options()
     local menu_options, active_idx = {}, 1
     local k = keyboard[1]
@@ -2190,7 +2266,7 @@ function main_options()
 
     assets_dir_before_options_menu = config.assets_dir or default_assets_dir
     sounds_dir_before_options_menu = config.sounds_dir or default_sounds_dir
-    --make so we can get "anonymously" from save_replays_publicly_choices["anonymously"]
+    -- make so we can get "anonymously" from save_replays_publicly_choices["anonymously"]
     for k,v in ipairs(save_replays_publicly_choices) do
         save_replays_publicly_choices[v] = v
     end
@@ -2237,7 +2313,8 @@ function main_options()
         {"Back", "", nil, nil, nil, nil, false, main_select_mode}
     }
     end
-    
+
+    --- Format a string to print in screen
     local function print_stuff()
           local to_print, to_print2, arrow = "", "", ""
           for i=1,#menu_options do
@@ -2268,6 +2345,7 @@ function main_options()
         gprint(to_print2, 300, 280)
     end
 
+    --- 
     local function adjust_left()
         if menu_options[active_idx][3] == "numeric" then
             if menu_options[active_idx][2] > menu_options[active_idx][4] then --value > minimum
@@ -2286,6 +2364,7 @@ function main_options()
           end
     end
 
+    --- 
     local function adjust_right()
         if menu_options[active_idx][3] == "numeric" then
             if menu_options[active_idx][2] < menu_options[active_idx][5] then --value < maximum
@@ -2457,6 +2536,8 @@ function main_options()
     end
 end
 
+--- Exit the menu options to main screen
+-- @return fuction main_select_mode
 function exit_options_menu()
     gprint("writing config to file...", 300, 280)
     coroutine_wait()
@@ -2478,6 +2559,8 @@ function exit_options_menu()
     return main_select_mode
 end
 
+--- Player set his own nick
+-- @return funtion main_select_mode that returns to main screen
 function main_set_name()
     local name = ""
     while true do
@@ -2501,11 +2584,20 @@ function main_set_name()
     end
 end
 
+
+-- Turn to fullscreen mode
+-- @return fuction main_select_mode that returns to main menu
 function fullscreen()
     love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
     return main_select_mode
 end
 
+--- Wait some time until the min time is set and go to the next function
+-- @param next_func function that returns
+-- @param text text show in the screen
+-- @param timemin minimum time that the function wait to return next_func
+-- @param timemax maximum time that the fuction wait to return next_func
+-- @return next_fuction
 function main_dumb_transition(next_func, text, timemin, timemax)
     if P1 and P1.character then 
         stop_character_sounds(P1.character)
@@ -2563,6 +2655,7 @@ function main_dumb_transition(next_func, text, timemin, timemax)
     end
 end
 
+--- Write the configuration in the file
 function write_char_sel_settings_to_file()
     if not currently_spectating and my_state then
         gprint("saving character select settings...")
@@ -2576,6 +2669,7 @@ function write_char_sel_settings_to_file()
     end
 end
 
+--- Close the game
 function love.quit()
     closing = true
     write_char_sel_settings_to_file()
