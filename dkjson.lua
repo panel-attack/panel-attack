@@ -334,6 +334,7 @@ end
 
 local encode2 -- forward declaration
 
+-- Add pairs to JSON fields
 local function addpair (key, value, prev, indent, level, buffer, buflen, tables, globalorder)
   local keytype = type (key)
   if keytype ~= 'string' and keytype ~= 'number' then
@@ -351,6 +352,7 @@ local function addpair (key, value, prev, indent, level, buffer, buflen, tables,
   return encode2 (value, indent, level, buffer, buflen + 2, tables, globalorder)
 end
 
+-- encodes the values into JSON format
 encode2 = function (value, indent, level, buffer, buflen, tables, globalorder)
   local valtype = type (value)
   local valmeta = getmetatable (value)
@@ -466,6 +468,7 @@ encode2 = function (value, indent, level, buffer, buflen, tables, globalorder)
   return buflen
 end
 
+
 function json.encode (value, state)
   state = state or {}
   local oldbuffer = state.buffer
@@ -482,6 +485,7 @@ function json.encode (value, state)
   end
 end
 
+-- find position of given string
 local function loc (str, where)
   local line, pos, linepos = 1, 1, 1
   while true do
@@ -497,10 +501,12 @@ local function loc (str, where)
   return "line " .. line .. ", column " .. (where - linepos)
 end
 
+-- report unterminated message
 local function unterminated (str, what, where)
   return nil, strlen (str) + 1, "unterminated " .. what .. " at " .. loc (str, where)
 end
 
+-- scanwhite Lua function
 local function scanwhite (str, pos)
   while true do
     pos = strfind (str, '%S', pos)
@@ -514,11 +520,13 @@ local function scanwhite (str, pos)
   end
 end
 
+-- chars to be escaped in encoding
 local escapechars = {
   ["\""] = "\"", ["\\"] = "\\", ["/"] = "/", ["b"] = "\b", ["f"] = "\f",
   ["n"] = "\n", ["r"] = "\r", ["t"] = "\t"
 }
 
+-- deals with unichar codes
 local function unichar (value)
   if value < 0 then
     return nil
@@ -608,11 +616,6 @@ local function scantable (what, closechar, str, startpos, nullval, objectmeta, a
   local len = strlen (str)
   local tbl, n = {}, 0
   local pos = startpos + 1
-  if what == 'object' then
-    --setmetatable (tbl, objectmeta)
-  else
-    --setmetatable (tbl, arraymeta)
-  end
   while true do
     pos = scanwhite (str, pos)
     if not pos then return unterminated (str, what, startpos) end
