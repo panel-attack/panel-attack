@@ -424,16 +424,23 @@ function main_character_select()
   op_win_count = op_win_count or 0
   if character_select_mode == "2p_net_vs" then
     global_current_room_ratings = global_current_room_ratings or {{new=0,old=0,difference=0},{new=0,old=0,difference=0}}
-    my_expected_win_ratio = (100*round(1/(1+10^
-          ((global_current_room_ratings[op_player_number].new
-              -global_current_room_ratings[my_player_number].new)
-            /rating_spread_modifier))
-          ,2))
-    op_expected_win_ratio = (100*round(1/(1+10^
-          ((global_current_room_ratings[my_player_number].new
-              -global_current_room_ratings[op_player_number].new)
-            /rating_spread_modifier))
-          ,2))
+    my_expected_win_ratio = nil
+    op_expected_win_ratio = nil
+    if global_current_room_ratings[my_player_number].new
+    and global_current_room_ratings[my_player_number].new ~= 0
+    and global_current_room_ratings[op_player_number]
+    and global_current_room_ratings[op_player_number].new ~= 0 then
+      my_expected_win_ratio = (100*round(1/(1+10^
+            ((global_current_room_ratings[op_player_number].new
+                -global_current_room_ratings[my_player_number].new)
+              /rating_spread_modifier))
+            ,2))
+      op_expected_win_ratio = (100*round(1/(1+10^
+            ((global_current_room_ratings[my_player_number].new
+                -global_current_room_ratings[op_player_number].new)
+              /rating_spread_modifier))
+            ,2))
+    end
   end
   if character_select_mode == "2p_net_vs" then
     match_type = match_type or "Casual"
@@ -705,23 +712,32 @@ function main_character_select()
     end
     local my_rating_difference = ""
     local op_rating_difference = ""
-    if current_server_supports_ranking then
-      if global_current_room_ratings[my_player_number].difference >= 0 then
-        my_rating_difference = "(+"..global_current_room_ratings[my_player_number].difference..") "
-      else
-        my_rating_difference = "("..global_current_room_ratings[my_player_number].difference..") "
+    if current_server_supports_ranking and not global_current_room_ratings.placement_match_progress then
+      if global_current_room_ratings[my_player_number].difference then
+        if global_current_room_ratings[my_player_number].difference>= 0 then
+          my_rating_difference = "(+"..global_current_room_ratings[my_player_number].difference..") "
+        else
+          my_rating_difference = "("..global_current_room_ratings[my_player_number].difference..") "
+        end
       end
-      if global_current_room_ratings[op_player_number].difference >= 0 then
-        op_rating_difference = "(+"..global_current_room_ratings[op_player_number].difference..") "
-      else
-        op_rating_difference = "("..global_current_room_ratings[op_player_number].difference..") "
+      if global_current_room_ratings[op_player_number].difference then
+        if global_current_room_ratings[op_player_number].difference >= 0 then
+          op_rating_difference = "(+"..global_current_room_ratings[op_player_number].difference..") "
+        else
+          op_rating_difference = "("..global_current_room_ratings[op_player_number].difference..") "
+        end
       end
     end
     local state = ""
     --my state - add to be displayed
     state = state..my_name
-    if current_server_supports_ranking then
+    if current_server_supports_ranking and not global_current_room_ratings.placement_match_progress then
         state = state..":  Rating: "..my_rating_difference..global_current_room_ratings[my_player_number].new
+    elseif current_server_supports_ranking 
+    and global_current_room_ratings.placement_match_progress 
+    and global_current_room_ratings[my_player_number].new 
+    and global_current_room_ratings[my_player_number].new == 0 then
+      state = state..":  Progress: "..global_current_room_ratings.placement_match_progress
     end
     if character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs" then
       state = state.."  Wins: "..my_win_count
@@ -732,7 +748,7 @@ function main_character_select()
     if my_win_count + op_win_count > 0 then
       state = state.."  actual: "..(100*round(my_win_count/(op_win_count+my_win_count),2)).."%"
     end
-    if current_server_supports_ranking then
+    if current_server_supports_ranking and my_expected_win_ratio then
       state = state.."  expected: "
         ..my_expected_win_ratio.."%"
     end
@@ -752,7 +768,7 @@ function main_character_select()
       if my_win_count + op_win_count > 0 then
         state = state.."  actual: "..(100*round(op_win_count/(op_win_count+my_win_count),2)).."%"
       end
-      if current_server_supports_ranking then
+      if current_server_supports_ranking and op_expected_win_ratio then
         state = state.."  expected: "
           ..op_expected_win_ratio.."%"
       end
@@ -1205,11 +1221,21 @@ function main_net_vs()
     if match_type == "Ranked" then
       if global_current_room_ratings[my_player_number] 
       and global_current_room_ratings[my_player_number].new then
-        gprint("Rating: "..global_current_room_ratings[my_player_number].new, 315, 85)
+        local rating_to_print = "Rating: "
+        rating_to_print = rating_to_print..(global_current_room_ratings[my_player_number].league or "")
+        if global_current_room_ratings[my_player_number].new > 0 then
+          rating_to_print = rating_to_print.." "..global_current_room_ratings[my_player_number].new
+        end
+        gprint(rating_to_print, 315, 85)
       end
       if global_current_room_ratings[op_player_number] 
       and global_current_room_ratings[op_player_number].new then
-        gprint("Rating: "..global_current_room_ratings[op_player_number].new, 410, 85)
+        local op_rating_to_print = "Rating: "
+        op_rating_to_print = op_rating_to_print..(global_current_room_ratings[op_player_number].league or "")
+        if global_current_room_ratings[op_player_number].new > 0 then
+          op_rating_to_print = op_rating_to_print.." "..global_current_room_ratings[op_player_number].new
+        end
+        gprint(op_rating_to_print, 410, 85)
       end
     end
     if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then

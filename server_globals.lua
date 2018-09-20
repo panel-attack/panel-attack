@@ -5,7 +5,7 @@ panel_color_to_number = { ["A"]=1, ["B"]=2, ["C"]=3, ["D"]=4, ["E"]=5, ["F"]=6, 
                           ["1"]=1, ["2"]=2, ["3"]=3, ["4"]=4, ["5"]=5, ["6"]=6, ["7"]=7, ["8"]=8,
                           ["0"]=0}
 leagues = { {league="Newcomer",     min_rating = -1000},
-            {league="Bronze",       min_rating = 0},
+            {league="Bronze",       min_rating = 1},
             {league="Silver",       min_rating = 1240},
             {league="Gold",         min_rating = 1540},
             {league="Platinum",     min_rating = 1920},
