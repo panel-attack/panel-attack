@@ -24,7 +24,7 @@ end
 --- This function convert an arbitrary-length table of bits to a number decimal
 -- @param num_binary
 -- @return num_integer
-local function fromBinary(num_binary) 
+local function from_binary(num_binary) 
     local num_integer = 0
     for i=#num_binary, 1, -1 do
         num_integer = num_integer * 2 + num_binary[i]
@@ -63,7 +63,7 @@ function initialize_mt_generator(seed)
         while #num_binary > BITS_32 do
             table.remove(num_binary, 1)
         end
-        mersenne_twister[i] = fromBinary(num_binary)
+        mersenne_twister[i] = from_binary(num_binary)
     end
 end
 
