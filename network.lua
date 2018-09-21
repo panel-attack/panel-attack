@@ -303,17 +303,28 @@ function make_local_panels(stack, prev_panels)
     end
 end
 
+--- Create global panels using acutal state
+-- @function make_local_gpanels
+-- @param stack data structure
+-- @param prev_panels actual state of panels
+-- @return nil
 function make_local_gpanels(stack, prev_panels)
     ret = make_gpanels(stack.NCOLORS, prev_panels)
     stack.gpanel_buffer = stack.gpanel_buffer .. ret
     local replay = replay[P1.mode]
 
+    -- If local and global panels has updated save replay in buffer
     if replay and replay.gpan_buf then
         replay.gpan_buf = replay.gpan_buf .. ret
     end
 end
 
+--- Send stack of controls for replay mode
+-- @function STack.send_controls 
+-- @param self class method
+-- @return Base64 encoded data
 function Stack.send_controls(self)
+
   local k = keyboard[self.which]
   local to_send = base64encode[
     ((keys[k.raise_faster1] or keys[k.raise_faster2] or this_frame_keys[k.raise_faster1]
@@ -324,6 +335,7 @@ function Stack.send_controls(self)
     ((keys[k.left] or this_frame_keys[k.left]) and 2 or 0) +
     ((keys[k.right] or this_frame_keys[k.right]) and 1 or 0)+1]
 
+    -- load TCP_sock with invited query 
     if TCP_sock then
         send_net('I'..to_send)
     end
