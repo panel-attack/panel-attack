@@ -76,16 +76,16 @@ local function generate_mt()
     local PARAMETER_L = 0x7FFFFFFF
     local PARAMETER_M = 397 
     local PARAMETER_A = 0x9908B0DF
-	
+    -- Walks for every 623 cube numbers	
     for i=0, DIMENCIONAL_EQUIDISTRIBUTION do
         local bits = bit.band(mersenne_twister[i], PARAMETER_U)
         bits = bits + bit.band(mersenne_twister[(i+1)%PARAMETER_N], PARAMETER_L)
         mersenne_twister[i] = bit.bxor(mersenne_twister[(i+PARAMETER_M)%PARAMETER_N], bit.rshift(bits, 1))
         if bits % 2 == 1 then
             mersenne_twister[i] = bit.bxor(mersenne_twister[i], PARAMETER_A)
-        end
-    end
-end
+        end -- end if
+    end -- end for
+end -- end function
 
 
 --- This function get one number from the Mercenne Twister
@@ -211,6 +211,7 @@ local function randinit(flag)
     for i=1,4 do
         a,b,c,d,e,f,g,h = mix(a,b,c,d,e,f,g,h)
     end
+    -- Load random numbers into eight elements of the table(array in others lenguages) memory
     for i=1, NUM_TERMS, 8 do
         if flag then
             a = (a + sequence_results[i]) % (POSSIBLE_VALUES)
@@ -232,7 +233,8 @@ local function randinit(flag)
         memory[i+6] = g
         memory[i+7] = h
     end
-    
+    -- Load random numbers into eight elements of the table(array in others lenguages) memory. 
+    -- ... if "flag" is true
     if flag then
         for i=1, NUM_TERMS, 8 do
             a = (a + sequence_results[i]) % (POSSIBLE_VALUES)
@@ -264,12 +266,12 @@ end
 function generate_isaac(entropy)
     accumulator = 0
     previous_result = 0
-
+    -- Verify the length of entropy
     if entropy and #entropy >= NUM_TERMS then
         for i=1, NUM_TERMS do
             sequence_results[i] = entropy[i]
-        end
-    else
+        end -- end for
+    else -- end if
         print("2. seed_from_mt")
         seed_from_mt()
     end
@@ -277,9 +279,8 @@ function generate_isaac(entropy)
         memory[i] = 0
     end
     randinit(true)
-    isaac()
-    -- run isaac twice
     isaac() 
+    isaac() -- run isaac twice 
 end
 
 --- This function get a random number 
