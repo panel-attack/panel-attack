@@ -1,3 +1,8 @@
+------------
+--- Main Module
+--- Draw windown in screen and set up the game
+-- @module main 
+
 socket = require("socket")
 json = require("dkjson")
 require("util")
@@ -16,8 +21,13 @@ require("sound")
 require("timezones")
 require("gen_panels")
 
+--- This function create a routine and load the game
+-- @function love.load
+-- @param void
+-- @return void
 function love.load()
 
+    -- @fixme Test this
     math.randomseed(os.time())
     for i=1,4 do
         math.random()
@@ -28,21 +38,18 @@ function love.load()
 
 end
 
+
 local last_x = 0
 local last_y = 0
 local input_delta = 0.0
 local pointer_hidden = false
 
-function love.load()
-  math.randomseed(os.time())
-  for i=1,4 do math.random() end
-  read_key_file()
-  mainloop = coroutine.create(load_game_resources)
-end
-
+--- This function 
+-- @function love.update
+-- @param time since the last update
 function love.update(dt)
 
-    -- if mouse not change positivo
+    -- if mouse not change
     if love.mouse.getX() == last_x and love.mouse.getY() == last_y then
 
         if not pointer_hidden then
