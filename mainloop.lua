@@ -1,7 +1,7 @@
 ----------------------
--- Implementation of main loop.
--- copyright MIT
--- @module mainloop.lua
+-- Implementation of the game's main loop.
+-- @license MIT
+-- @module mainloop
 local coroutine_wait = coroutine.yield
 local coroutine_resume = coroutine.resume
 
@@ -17,24 +17,27 @@ local spectator_list = nil
 local debug_mode_text = {[true]="On", [false]="Off"}  
 
 
---- Fuction load the game
+--- Loads the game's resources
+-- @tparam nil
+-- @treturn nil
 function load_game_resources()
     local func, arg = main_select_mode, nil
     replay = {}
     config = {character="lip", level=5, name="defaultname", master_volume=100, SFX_volume=100, music_volume=100, debug_mode=false, save_replays_publicly = "with my name", assets_dir=default_assets_dir}
     gprint("Reading config file", 300, 280)
     coroutine_wait()
-    read_conf_file() -- TODO: stop making new config files
+    read_conf_file() --  @todo stop making new config files
     gprint("Reading replay file", 300, 280)
     coroutine_wait()
     read_replay_file()
     gprint("Loading graphics...", 300, 280)
     coroutine_wait()
-    graphics_init() -- load images and set up stuff
+    graphics_init() -- loads images and sets up graphical components
     gprint("Loading sounds... (this takes a few seconds)", 300, 280)
     coroutine_wait()
-    sound_init()
+    sound_init() -- loads sound components 
     
+    -- i literally have no idea why this loop is this way
     while true do
         leftover_time = 1 / 120
         consuming_timesteps = false
@@ -43,15 +46,15 @@ function load_game_resources()
     end
 end
 
---- Wrapper for doing something at 60hz
+--- Wraps a function and runs it at 60hz
 -- The rest of the stuff happens at whatever rate is convenient
--- @param func fuction that run in 60hz
+-- @param func The function to be wrapped
 function run_function_as_60hz(func)
     local frequency = 1 / 60
     for i=1, 4 do
         if leftover_time >= frequency then
             func()
-            key_counts()
+            key_counts() -- increments the number of times a key was pressed
             this_frame_keys = {}
             leftover_time = leftover_time - frequency
         end
@@ -62,7 +65,7 @@ end
 -- In a menu that doesn't specifically pertain to multiple players,
 -- up, down, left, right should always work.  But in a multiplayer
 -- menu, those keys should definitely not move many cursors each.
--- @param 
+-- @param func a function
 -- @return 
 local multi = false
 function multi_func(func)
@@ -85,17 +88,17 @@ function repeating_key(key)
         (key_time and key_time > 25 and key_time % 3 ~= 0)
 end
 
---- Return a key in current frame
+--- Return a key in current the frame
 -- @param key 
 -- @return 
 function normal_key(key)
     return this_frame_keys[key]
 end
 
---- 
--- @param fixed
--- @param configurable
--- @param rept
+--- Sets up a button in the keyboard regarding its fixed and configurable behaviour
+-- @param fixed table with the desired behaviour
+-- @param configurable table which the desired behaviour
+-- @param rept boolean tells if a button repeats(like pressing and holding)
 -- @return a fuction with 1 param 
 function menu_key_func(fixed, configurable, rept)
     local query = normal_key
@@ -127,26 +130,36 @@ function menu_key_func(fixed, configurable, rept)
     end
 end
 
+
+--- Up arrow key
 menu_key_up = menu_key_func(
       {"up"},
       {"up"},
       true
     )
+
+--- Down arrow key
 menu_key_down = menu_key_func(
       {"down"},
       {"down"},
       true
     )
+
+--- Left arrow key
 menu_key_left = menu_key_func(
       {"left"},
       {"left"},
       true
     )
+
+--- Right arrow key
 menu_key_right = menu_key_func(
       {"right"},
       {"right"},
       true
     )
+
+--- Enter key
 menu_key_enter = menu_key_func(
       {
         "return",
@@ -156,6 +169,8 @@ menu_key_enter = menu_key_func(
       {"swap1"},
       false
     )
+
+--- Esc key
 menu_key_escape = menu_key_func(
       {
         "escape",
@@ -165,8 +180,14 @@ menu_key_escape = menu_key_func(
       false
     )
 
+
+-- Loop containing the main menu's behaviour
 do
     local active_idx = 1
+
+    --- Responsible for displaying the game's main menu 
+    -- @tparam nil
+    -- @treturn nil
     function main_select_mode()
         love.audio.stop()
         close_socket()
@@ -177,6 +198,7 @@ do
         local serverSupportsRanking = false
         local matchType = ""
         local matchTypeMessage = ""
+        -- contains all menu options
         local menu_options = {
         {
             "1P endless",
@@ -243,6 +265,7 @@ do
 
         local k = keyboard[1]
 
+        -- displays a indicator when you are about to select a menu option
         while true do
             local to_print = ""
             local arrow = ""
@@ -281,7 +304,7 @@ end
 
 --- Fuction to select the speed and level of difficlties
 -- @param next_fuction Fuction that gonna be executed next
--- @param ... Others fuctions
+-- @param ... Other fuctions
 function select_speed_and_level_menu(next_func, ...)
     local difficulties = {
         "Easy",
@@ -352,9 +375,8 @@ function select_speed_and_level_menu(next_func, ...)
     end
 end
 
---- 
--- @param 
--- @return
+--- Runs Endless mode
+-- @return transition function, table containing info about the end of the game
 function main_endless(...)
     consuming_timesteps = true
     replay.endless = {}
@@ -377,7 +399,7 @@ function main_endless(...)
         P1:render()
         coroutine_wait()
         if P1.game_over then
-        -- TODO: proper game over.
+        --  @todo proper game over.
             write_replay_file()
             return main_dumb_transition, {main_select_mode, "You scored " .. P1.score}
         end
@@ -392,8 +414,7 @@ function main_endless(...)
     end
 end
 
---- 
--- @param 
+--- Runs Time Attack mode
 function main_time_attack(...)
     consuming_timesteps = true
     P1 = Stack(1, "time", ...)
@@ -404,7 +425,7 @@ function main_time_attack(...)
         P1:render()
         coroutine_wait()
         if P1.game_over or P1.CLOCK == 120 * 60 then
-      -- TODO: proper game over.
+      --  @todo proper game over.
             return main_dumb_transition, {main_select_mode, "You scored " .. P1.score}
         end
         
@@ -415,18 +436,20 @@ function main_time_attack(...)
     end
 end
 
---- Change the select mode 
+--- Changes select mode 
 -- @return fuction that runs selections to main character
 function main_net_vs_room()
     character_select_mode = "2p_net_vs"
     return main_character_select()
 end
 
---- This fuctions does a lot of things, it sees if can establish connection
+--- This fuction does a lot of things, it sees if it can establish connection
 -- if the connection is beeing maintained
--- the menu to choose the character to each player
--- the menu to choose the map
+-- the menu chooses the character to each player
+-- the menu chooses the map
 -- and more
+-- @tparam nil
+-- @treturn nil
 function main_character_select()
     love.audio.stop()
     local map = {}
@@ -452,21 +475,24 @@ function main_character_select()
         if room_number_last_spectated and retries >= retry_limit and currently_spectating then
             request_spectate(room_number_last_spectated)
             retries = 0
-        while not global_initialize_room_msg and retries < retry_limit do
-            for _, message in ipairs(this_frame_messages) do
-                if message.create_room or message.character_select or message.spectate_request_granted then
-                    global_initialize_room_msg = message
+        
+            -- runs if the player has lost connection
+            while not global_initialize_room_msg and retries < retry_limit do
+                for _, message in ipairs(this_frame_messages) do
+                    if message.create_room or message.character_select or message.spectate_request_granted then
+                        global_initialize_room_msg = message
+                    end
                 end
+
+                gprint("Lost connection.  Trying to rejoin...", 300, 280)
+                coroutine_wait()
+                do_messages()
+
+                retries = retries + 1
             end
-
-            gprint("Lost connection.  Trying to rejoin...", 300, 280)
-            coroutine_wait()
-            do_messages()
-
-            retries = retries + 1
         end
-    end
     
+    -- runs if connection has failed
     if not global_initialize_room_msg then
         return main_dumb_transition, {main_select_mode, "Failed to connect.\n\nReturning to main menu", 60, 300}
     end
@@ -735,6 +761,7 @@ function main_character_select()
         cursor[1], cursor[2] = can_x,can_y
     end
     
+    --- Leaves the room
     local function do_leave()
         my_win_count = 0
         op_win_count = 0
@@ -754,6 +781,8 @@ function main_character_select()
         end
     end
     
+    --- Draws buttons and other strings on the screen
+    -- @todo better documentation of this function
     local function draw_button(x, y, w, h, str)
         local menu_width = coordinate_y * 100
         local menu_height = coordinate_x * 80
@@ -994,6 +1023,7 @@ function main_character_select()
             
             local game_start_timeout = 0
             
+            -- start's the game for 2p mode
             while P1.panel_buffer == "" or P2.panel_buffer == ""
                 or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
               --testing getting stuck here at "Game is starting"
@@ -1029,6 +1059,7 @@ function main_character_select()
         end
         end
 
+        -- responsible for displaying the strings on the display
         if serverSupportsRanking then
             draw_button(1, 1, 4, 1, "match type desired")
             draw_button(1, 5, 2, 1, "level")
@@ -1138,6 +1169,7 @@ function main_character_select()
                         if selected and active_str == "level" then
                             config.level = bound(1, config.level + 1, 10)
                 end
+            -- handles keys input
             if not selected then move_cursor(right) end
             elseif menu_key_enter(k) then
                 if selectable[active_str] then
@@ -1224,12 +1256,14 @@ function main_net_vs_lobby()
 
     matchType = ""
     match_type_message = ""
-    --attempt login
+    -- loggin attempt
     read_user_id_file()
+
     if not playerUsername then
         playerUsername = "need a new user id"
     end
 
+    -- variables regarding a logged in player
     json_send({login_request=true, user_id=playerUsername}) 
     local login_status_message = "   Logging in..."
     local login_status_message_duration = 2
@@ -1238,6 +1272,8 @@ function main_net_vs_lobby()
     local showing_leaderboard = false
     local lobby_menu_x = {[true]=100, [false]=300} --will be used to make room in case the leaderboard should be shown.
     
+
+    -- handles user creation and login
     while true do
         if connectionUptime <= login_status_message_duration then
             gprint(login_status_message, lobby_menu_x[showing_leaderboard], 160)
@@ -1260,7 +1296,7 @@ function main_net_vs_lobby()
                 elseif message.login_denied then
                     serverSupportsRanking = true
                     login_denied = true
-                    --TODO: create a menu here to let the user choose "continue unranked" or "get a new user_id"
+                    -- @todo create a menu here to let the user choose "continue unranked" or "get a new user_id"
                     --login_status_message = "Login for ranked matches failed.\n"..message.reason.."\n\nYou may continue unranked,\nor delete your invalid user_id file to have a new one assigned."
                     login_status_message_duration = 10
                     return main_dumb_transition, {main_select_mode, "Error message received from the server:\n\n"..json.encode(message),60,600}
@@ -1335,6 +1371,8 @@ function main_net_vs_lobby()
             menu_options[#menu_options + 1] = v
         end
         
+        -- handles leaderboard options
+
         if showing_leaderboard then
             menu_options[#menu_options + 1] = "Hide Leaderboard"
         else
@@ -1451,8 +1489,9 @@ function main_net_vs_lobby()
     end
 end
 
---- Update the placar if someone win
+--- Update score if someone wins
 -- @param win_counts
+-- @treturn nil
 function update_win_counts(win_counts)
     if (P1 and P1.player_number == 1) or currently_spectating then
         my_win_count = win_counts[1] or 0
@@ -1747,8 +1786,8 @@ function main_net_vs()
 end
 
 
---- It declares a fuction and initiate a variable in the sabe instant
--- This needs to be refactoring
+--- It declares a fuction and initiate a variable in the same instant
+-- This needs refactoring
 main_local_vs_setup = multi_func(function()
     local K = keyboard
     local chosen, maybe = {}, {5,5}
@@ -1790,7 +1829,7 @@ main_local_vs_setup = multi_func(function()
     P2.garbage_target = P1
     P2.pos_x = 172
     P2.score_x = 410
-    -- TODO: this does not correctly implement starting configurations.
+    --  @todo this does not correctly implement starting configurations.
     -- Starting configurations should be identical for visible blocks, and
     -- they should not be completely flat.
     --
@@ -1812,9 +1851,11 @@ main_local_vs_setup = multi_func(function()
 end)
 
 --- Set a string with the player that win in the screen 
--- @return function main_dumb_transition 
+-- @tparam nil
+-- @treturn function
+-- @return end of game transition
 function main_local_vs()
-    -- TODO: replay!
+    --  @todo replay!
     consuming_timesteps = true
     local end_text = nil
     while true do
@@ -1844,6 +1885,8 @@ function main_local_vs()
 end
 
 --- Set the variables to enter in main_character_select 
+-- @tparam nil
+-- @treturn function
 -- @return fuction main_caracter_select
 function main_local_vs_yourself_setup()
     my_name = config.name or "Player 1"
@@ -1853,10 +1896,12 @@ function main_local_vs_yourself_setup()
     return main_character_select
 end
 
---- 
--- @return fuction main_dumb_transition
+--- Handles local vs yourself game mode
+-- @tparam nil
+-- @treturn function
+-- @return end of game transition
 function main_local_vs_yourself()
-    -- TODO: replay!
+    --  @todo replay!
     consuming_timesteps = true
     local end_text = nil
 
@@ -1982,8 +2027,10 @@ function main_replay_vs()
 end
 
 
---- 
--- @return 
+--- Handles Endless mode replays
+-- @tparam nil
+-- @treturn function
+-- @return end of game transition
 function main_replay_endless()
     local replay = replay.endless
     
@@ -2018,7 +2065,7 @@ function main_replay_endless()
         
         if run or this_frame_keys["\\"] then
             if P1.game_over then
-            -- TODO: proper game over.
+            --  @todo proper game over.
                 return main_dumb_transition, {main_select_mode, "You scored " .. P1.score}
             end
             P1:foreign_run()
@@ -2026,8 +2073,9 @@ function main_replay_endless()
     end
 end
 
---- 
--- @return 
+--- Handles the puzzle's replay option
+-- @tparam nil
+-- @treturn nil
 function main_replay_puzzle()
     local replay = replay.puzzle
     if replay.in_buf == nil or replay.in_buf == "" then
@@ -2123,6 +2171,7 @@ function make_main_puzzle(puzzles)
     return ret
 end
 
+-- displays the puzzle menu
 do
     local menu_options = {}
     
@@ -2168,7 +2217,8 @@ do
     end
 end
 
---- Does a lot of stuff
+--- Responsible for handling user input
+-- @tparam nil
 -- @return menu_options[active_idx][3], menu_options[active_idx][4] i dont fucking know what is this
 function main_config_input()
     local pretty_names = {"Up", "Down", "Left", "Right", "A", "B", "L", "R"}
@@ -2220,6 +2270,7 @@ function main_config_input()
         end
     end
 
+    -- handles key input in the menu
     while true do
         get_items()
         print_stuff()
@@ -2256,7 +2307,9 @@ function main_config_input()
     end
 end
 
---- Does a lot of stuff
+--- Responsible for managing the settings menu
+-- @tparam nil
+-- @treturn nil
 function main_options()
     local menu_options, active_idx = {}, 1
     local k = keyboard[1]
@@ -2292,6 +2345,7 @@ function main_options()
         print(v)
     end
     
+    --- Config menu options
     menu_options = {
         --options menu table reference:
         --{[1]"Option Name", [2]current or default value, [3]type, [4]min or bool value or choices_table,
@@ -2508,6 +2562,7 @@ function main_options()
                 recursive_copy("sounds/" .. default_sounds_dir, "sounds/Example folder structure")
             end  
             
+            -- puts custom sounds' readme in the screen
             local custom_sounds_readme = read_txt_file("Custom Sounds Readme.txt")
               while true do
                 gprint(custom_sounds_readme, 30, 150)      
@@ -2538,6 +2593,8 @@ end
 
 --- Exit the menu options to main screen
 -- @return fuction main_select_mode
+-- @tparam nil
+-- @treturn nil
 function exit_options_menu()
     gprint("writing config to file...", 300, 280)
     coroutine_wait()
@@ -2560,6 +2617,7 @@ function exit_options_menu()
 end
 
 --- Player set his own nick
+-- @tparam nil
 -- @return funtion main_select_mode that returns to main screen
 function main_set_name()
     local name = ""
@@ -2586,6 +2644,7 @@ end
 
 
 -- Turn to fullscreen mode
+-- @tparam nil
 -- @return fuction main_select_mode that returns to main menu
 function fullscreen()
     love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
@@ -2640,7 +2699,7 @@ function main_dumb_transition(next_func, text, timemin, timemax)
             -- global_current_room_ratings = message.ratings
           -- end
         -- end
-        -- --TODO: anything else we should be listening for during main_dumb_transition?
+        -- @todo anything else we should be listening for during main_dumb_transition?
       -- end
         gprint(text, 300, 280)
         coroutine_wait()
@@ -2656,6 +2715,8 @@ function main_dumb_transition(next_func, text, timemin, timemax)
 end
 
 --- Write the configuration in the file
+-- @tparam nil
+-- @treturn nil
 function write_char_sel_settings_to_file()
     if not currently_spectating and my_state then
         gprint("saving character select settings...")
@@ -2670,6 +2731,8 @@ function write_char_sel_settings_to_file()
 end
 
 --- Close the game
+-- @tparam nil
+-- @treturn nil
 function love.quit()
     closing = true
     write_char_sel_settings_to_file()
