@@ -1,14 +1,13 @@
--- KillaVanilla's RNG('s), composed of the Mersenne Twister RNG and the ISAAC algorithm.
+--------------
+--- Csprng Module
+--- Cryptographically secure pseudo-random number generator, is a pseudo-random number generator (PRNG) with properties that make it suitable for use in cryptography. Composed of the Mersenne Twister RGN and the ISAAC algorithm. The Mersenne Twister can be used as an RNG for non-cryptographic purposes.Here, we're using it to seed the ISAAC algorithm, which *can* be used for cryptographic purposes. 
+-- @module csprngk
 
--- Exposed functions:
--- initialize_mt_generator(seed) - Seed the Mersenne Twister RNG.
--- extract_mt() - Get a number from the Mersenne Twister RNG.
--- seed_from_mt(seed) - Seed the ISAAC RNG, optionally seeding the Mersenne Twister RNG beforehand.
--- generate_isaac() - Force a reseed.
--- cs_random(min, max) - Get a random number between min and max.
-
--- Helper functions:
-local function toBinary(num_integer) -- Convert from an integer to an arbitrary-length table of bits
+--- This function convert a number decimal to binary, keeping arbitrary-length table of bits
+-- @function to_binary
+-- @param num_integer
+-- @return num_binary
+local function to_binary(num_integer) 
     local num_binary = {}
     local copy_num_integer = num_integer
     local GREATER_HEX = 0x7FFFFFFF 
@@ -22,7 +21,10 @@ local function toBinary(num_integer) -- Convert from an integer to an arbitrary-
     return num_binary
 end
 
-local function fromBinary(num_binary) -- Convert from an arbitrary-length table of bits (from toBinary) to an integer
+--- This function convert an arbitrary-length table of bits to a number decimal
+-- @param num_binary
+-- @return num_integer
+local function fromBinary(num_binary) 
     local num_integer = 0
     for i=#num_binary, 1, -1 do
         num_integer = num_integer * 2 + num_binary[i]
@@ -30,33 +32,34 @@ local function fromBinary(num_binary) -- Convert from an arbitrary-length table 
     return num_integer
 end
 
--- ISAAC internal state:
+--- ISAAC Internal Variables
 local accumulator, previous_result = 0, 0
-local sequence_results = {} -- Acts as entropy/seed-in. Fill to sequence_results[256].
-local memory = {} -- Fill to memory[256]. Acts as output.
+-- Acts as entropy/seed-in. Fill to sequence_results[256].
+local sequence_results = {}
+-- Fill to memory[256]. Acts as output.
+local memory = {}
 
--- Mersenne Twister State:
-local mersenne_twister = {} -- Twister state
+--- Mersenne Twister Internal Variables:
+local mersenne_twister = {} 
 local index = 0
 
--- Other variables for the seeding mechanism
+--- Other variables and constants for the seeding mechanism
 POSSIBLE_VALUES = 2^32-1
 local mt_seeded = false
 local mt_seed = math.random(1, POSSIBLE_VALUES)
-
--- The Mersenne Twister can be used as an RNG for non-cryptographic purposes.
--- Here, we're using it to seed the ISAAC algorithm, which *can* be used for cryptographic purposes.
-
 DIMENCIONAL_EQUIDISTRIBUTION = 623
 BITS_30 = 30
 BITS_32 = 32
 
+--- This function seed the Mersenne Twister RNG.
+-- @param seed
+-- @return nil
 function initialize_mt_generator(seed)
     index = 0
     mersenne_twister[0] = seed
     for i=1, DIMENCIONAL_EQUIDISTRIBUTION do
         local state_succession = ( (1812433253 * bit.bxor(mersenne_twister[i-1], bit.rshift(mersenne_twister[i-1], BITS_30) ) )+i)
-        local num_binary = toBinary(state_succession)
+        local num_binary = to_binary(state_succession)
         while #num_binary > BITS_32 do
             table.remove(num_binary, 1)
         end
@@ -66,7 +69,10 @@ end
 
 PARAMETER_N = 624
 
-local function generate_mt() -- Restock the mersenne_twister with new random numbers.
+--- This function restock the variable mersenne_twister with new random numbers
+-- @param nil
+-- @return nil
+local function generate_mt() 
     local PARAMETER_U = 0x80000000
     local PARAMETER_L = 0x7FFFFFFF
     local PARAMETER_M = 397 
@@ -83,8 +89,10 @@ local function generate_mt() -- Restock the mersenne_twister with new random num
 end
 
 
-
-function extract_mt(min, max) -- Get one number from the Mersenne Twister.
+--- This function get one number from the Mercenne Twister
+-- @param min, max
+-- @return (mt_value % max)+min
+function extract_mt(min, max) 
     local SHIFT_B = 0x9D2C5680
     local SHIFT_C = 0xEFC60000
     local SHIFT_U = 11
@@ -109,12 +117,16 @@ end
 
 NUM_TERMS = 256
 
-function seed_from_mt(seed) -- seed ISAAC with numbers from the mersenne_twister:
+--- This function seed ISAAC algorithm with numbers from the variable mersenne_twister. Seed the ISAAC RNG, optionally seeding the Mersenne Twister RNG beforehand.
+-- @param seed
+-- @return nil
+function seed_from_mt(seed) 
     if seed then
         mt_seeded = false
         mt_seed = seed
     end
-    if not mt_seeded or (math.random(1, 100) == 50) then -- Always seed the first time around. Otherwise, seed approximately once per 100 times.
+    -- Always seed the first time around. Otherwise, seed approximately once per 100 times.
+    if not mt_seeded or (math.random(1, 100) == 50) then 
         initialize_mt_generator(mt_seed)
         mt_seeded = true
         mt_seed = extract_mt()
@@ -124,6 +136,9 @@ function seed_from_mt(seed) -- seed ISAAC with numbers from the mersenne_twister
     end
 end
 
+--- This function is used with eight integers that will contain traces of the key: designed to ensure array elements will not reflect key
+-- @param a,b,c,d,e,f,g,h
+-- @return a,b,c,d,e,f,g,h
 local function mix(a,b,c,d,e,f,g,h)
     a = a % (POSSIBLE_VALUES)
     b = b % (POSSIBLE_VALUES)
@@ -160,6 +175,9 @@ local function mix(a,b,c,d,e,f,g,h)
      return a,b,c,d,e,f,g,h
 end
 
+--- This function run ISAAC algorithm
+-- @param nil
+-- @return nil
 local function isaac()
     local copy_memory, memory_result = 0, 0
     for i=1, NUM_TERMS do
@@ -181,6 +199,9 @@ local function isaac()
     end
 end
 
+--- This function loads eight elements of the key into integers, runs the mix()function to randomize them, then loads them into eight elements of to array. Repeats until key is exhausted
+-- @param flag
+-- @return nil
 local function randinit(flag)
     local a,b,c,d,e,f,g,h = 0x9e3779b9,0x9e3779b9,0x9e3779b9,0x9e3779b9,0x9e3779b9,0x9e3779b9,0x9e3779b9,0x9e3779b9-- 0x9e3779b9 is the golden ratio
     accumulator = 0
@@ -236,6 +257,9 @@ local function randinit(flag)
     randcnt = NUM_TERMS
 end
 
+--- This function force a reseed
+-- @param entropy
+-- @return nil
 function generate_isaac(entropy)
     accumulator = 0
     previous_result = 0
@@ -253,10 +277,14 @@ function generate_isaac(entropy)
     end
     randinit(true)
     isaac()
-    isaac() -- run isaac twice
+    -- run isaac twice
+    isaac() 
 end
 
-local function getRandom()
+--- This function get a random number 
+-- @param nil
+-- @return table.remove(memory, 1)
+local function get_random()
     if #memory > 0 then
         return table.remove(memory, 1)
     else
@@ -266,6 +294,9 @@ local function getRandom()
     end
 end
 
+--- This function get a random number between min and max.
+-- @param min, max
+-- @return (get_random() % max) + min
 function cs_random(min, max)
     if not max then
         max = POSSIBLE_VALUES
@@ -273,5 +304,5 @@ function cs_random(min, max)
     if not min then
         min = 0
     end
-    return (getRandom() % max) + min
+    return (get_random() % max) + min
 end
