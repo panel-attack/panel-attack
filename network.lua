@@ -1,17 +1,38 @@
+-------------
+--- Network Module
+--- Handle sockets and connection of the game.
+-- @module network
+
+
+--- TCP socket
 local TCP_sock = nil
+
+--- Save data for socket
 local leftovers = ''
 
+--- Flush the TCP socket variable
+-- @function flush_socket
+-- @param nil
+-- @return nil
 function flush_socket()
     local success 
-    -- lol, if it returned successfully then that's bad!
+
+    -- @fixme Why ?
+    --- lol, if it returned successfully then that's bad!
     if not success then
         error('the connection closed unexpectedly')
     end
 
 	local data = TCP_sock:receive('*a')
+
+    --- save data in leftovers
     leftovers = leftovers .. data
 end
 
+--- Close the TCP socket global variable
+-- @function close_socket
+-- @param nil
+-- @return nil
 function close_socket()
     if TCP_sock then
         TCP_sock:close()
@@ -20,13 +41,20 @@ function close_socket()
     TCP_sock = nil
 end
 
+--- Parse each type of message to game state
+-- @function get_message
+-- @param nil
+-- @return nil
 function get_message()
+
     if string.len(leftovers) == 0 then
         return nil
     end
 
     local kind, gap, length = string.sub(leftovers,1,1), 0
     local byte = string.byte
+
+        -- @todo understand all of this lenght parse
     local type_to_length = {G=1, H=1, N=1, E=4, P=121, O=121, I=2, Q=121, 
 						R=121, L=2, U=2}
 
@@ -54,33 +82,54 @@ function get_message()
     return kind, devolution
 end
 
+--- queue of data in connection
 local lag_queue = Queue()
 
+--- Send a queue of data in socket
+-- @function send_net
+-- @param ...
+-- @return nil
 function send_net(...)
+
+    local MAX_BUFFER = 70
+
     if not STONER_MODE then
         TCP_sock:send(...)
     else
         lag_queue:push({...})
 
-        if lag_queue:len() == 70 then
+        -- trick for dont buffer
+        -- @todo refactor this
+        if lag_queue:len() == MAX_BUFFER then
             TCP_sock:send(unpack(lag_queue:pop()))
         end
     end
 end
 
+--- Maximum of 8 bit represetantion
 BITS_256 = 256
 
+--- Send json object using TCP socket
+-- @function send_json
+-- @param obj
+-- @return nil
 function send_json(obj)
+
     local json = json.encode(obj)
     local json_length = json:len()
     local floor = math.floor
     local char = string.char
     local prefix = 'J' .. char(floor(json_length/65536)) .. 
+
 		char(floor((json_length/BITS_256)%BITS_256)) .. char(json_length%BITS_256)
 
     send_net(prefix..json)
 end
 
+--- Clean queue sending all the data
+-- @function undo_stonermode
+-- @param nil
+-- @return nil
 function undo_stonermode()
     while lag_queue:len() ~= 0 do
         TCP_sock:send(unpack(lag_queue:pop()))
@@ -89,6 +138,8 @@ end
 
 local got_H = false
 
+--- map of functions
+--- @todo understand this
 local process_message = {
     L = function(s) P2_level = ({['0']=10})[s] or (s+0) end,
     --G=function(s) got_opponent = true end,
@@ -124,6 +175,11 @@ local process_message = {
     end
 }
 
+--- Config socket (set timeout, ip, port)
+-- @function network_init
+-- @param ip init interface with this ip
+-- @return nil
+-- @raise Failed to connect
 function network_init(ip)
     TCP_sock = socket.tcp()
     TCP_sock:settimeout(7)
@@ -135,6 +191,7 @@ function network_init(ip)
     TCP_sock:settimeout(0)
     got_H = false
     send_net('H'..VERSION)
+
     assert(config.name and config.level and config.character and 
            config.save_replays_publicly)
 
@@ -142,10 +199,18 @@ function network_init(ip)
               save_replays_publicly = config.save_replays_publicly})
 end
 
+--- Verify if connection is ready
+-- @function connection_is_ready
+-- @param nil
+-- @return nil
 function connection_is_ready()
     return got_H and #this_frame_messages > 0
 end
 
+--- Get messages and run connection
+-- @function do_messages
+-- @param nil
+-- @return nil
 function do_messages()
     flush_socket()
 
@@ -181,14 +246,26 @@ function do_messages()
     end
 end
 
+--- Request connection of the game
+-- @function request_game
+-- @param name of json 
+-- @return nil
 function request_game(name)
     send_json({game_request={sender=config.name, receiver=name}})
 end
 
+--- Request spectator from server
+-- @function request_spectate
+-- @param roomNr name of json
+-- @return nil
 function request_spectate(roomNr)
     send_json({spectate_request={sender=config.name, roomNumber = roomNr}})
 end
 
+--- Update panels data
+-- @function ask_for_panels
+-- @param prev_panels actual panels
+-- @return nil
 function ask_for_panels(prev_panels)
     if TCP_sock then
         send_net('P'..tostring(P1.NCOLORS)..prev_panels)
@@ -197,6 +274,10 @@ function ask_for_panels(prev_panels)
     end
 end
 
+--- Update global panels data
+-- @function ask_for_gpanels
+-- @param prev_panels actual panels state
+-- @return nil
 function ask_for_gpanels(prev_panels)
     if TCP_sock then
         send_net('Q'..tostring(P1.NCOLORS)..prev_panels)
@@ -205,6 +286,11 @@ function ask_for_gpanels(prev_panels)
     end
 end
 
+--- Create panels using actual state panels
+-- @function make_local_panels
+-- @param stack data structure 
+-- @param prev_panel actual state of panels
+-- @return nil
 function make_local_panels(stack, prev_panels)
     local ret = make_panels(stack.NCOLORS, prev_panels, stack)
 
