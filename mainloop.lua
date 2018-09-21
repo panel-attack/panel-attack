@@ -1,7 +1,8 @@
 ----------------------
--- Implementation of the game's main loop.
--- @license MIT
+-- Main Loop
+-- Contains all the functions responsible for the implementation of the game's main loop.
 -- @module mainloop
+
 local coroutine_wait = coroutine.yield
 local coroutine_resume = coroutine.resume
 
