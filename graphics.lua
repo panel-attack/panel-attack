@@ -843,7 +843,7 @@ void Render_Info_1P()
       {
         P1SpeedLVDigits[0]=P1StopTime/10;
         P1SpeedLVDigits[1]=P1StopTime%10;
-        GrabRegion(P1SpeedLVDigits[0]<<3,0,(P1SpeedLVDigits[0]<<3)+7,15, 0,0,Font_NumRed,P1SpeedLVDisplay);
+        GrabRegion(P1SpeedLVDiggits[0]<<3,0,(P1SpeedLVDigits[0]<<3)+7,15, 0,0,Font_NumRed,P1SpeedLVDisplay);
         GrabRegion(P1SpeedLVDigits[1]<<3,0,(P1SpeedLVDigits[1]<<3)+7,15, 8,0,Font_NumRed,P1SpeedLVDisplay);
       }
     }
