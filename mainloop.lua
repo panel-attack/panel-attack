@@ -712,7 +712,7 @@ function main_character_select()
     end
     local my_rating_difference = ""
     local op_rating_difference = ""
-    if current_server_supports_ranking and not global_current_room_ratings.placement_match_progress then
+    if current_server_supports_ranking and not global_current_room_ratings[my_player_number].placement_match_progress then
       if global_current_room_ratings[my_player_number].difference then
         if global_current_room_ratings[my_player_number].difference>= 0 then
           my_rating_difference = "(+"..global_current_room_ratings[my_player_number].difference..") "
@@ -731,13 +731,15 @@ function main_character_select()
     local state = ""
     --my state - add to be displayed
     state = state..my_name
-    if current_server_supports_ranking and not global_current_room_ratings.placement_match_progress then
-        state = state..":  Rating: "..my_rating_difference..global_current_room_ratings[my_player_number].new
-    elseif current_server_supports_ranking 
-    and global_current_room_ratings.placement_match_progress 
-    and global_current_room_ratings[my_player_number].new 
-    and global_current_room_ratings[my_player_number].new == 0 then
-      state = state..":  Progress: "..global_current_room_ratings.placement_match_progress
+    if current_server_supports_ranking then
+      state = state..":  Rating: "..(global_current_room_ratings[my_player_number].league or "")
+      if not global_current_room_ratings[my_player_number].placement_match_progress then
+        state = state.." "..my_rating_difference..global_current_room_ratings[my_player_number].new
+      elseif global_current_room_ratings[my_player_number].placement_match_progress 
+      and global_current_room_ratings[my_player_number].new 
+      and global_current_room_ratings[my_player_number].new == 0 then
+        state = state..":  Progress: "..global_current_room_ratings[my_player_number].placement_match_progress
+      end
     end
     if character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs" then
       state = state.."  Wins: "..my_win_count
@@ -753,14 +755,20 @@ function main_character_select()
         ..my_expected_win_ratio.."%"
     end
     state = state.."  Char: "..character_display_names[my_state.character].."  Ready: "..tostring(my_state.ready or false)
-    --state = state.." "..json.encode(my_state).."\n"
     if op_state and op_name then
       state = state.."\n"
       --op state - add to be displayed
       state = state..op_name
       if current_server_supports_ranking then
-          state = state..":  Rating: "..op_rating_difference..global_current_room_ratings[op_player_number].new
+      state = state..":  Rating: "..(global_current_room_ratings[op_player_number].league or "")
+      if not global_current_room_ratings[op_player_number].placement_match_progress then
+        state = state.." "..op_rating_difference..global_current_room_ratings[op_player_number].new
+      elseif global_current_room_ratings[op_player_number].placement_match_progress 
+      and global_current_room_ratings[op_player_number].new 
+      and global_current_room_ratings[op_player_number].new == 0 then
+        state = state..":  Progress: "..global_current_room_ratings[op_player_number].placement_match_progress
       end
+    end
       state = state.."  Wins: "..op_win_count 
       if current_server_supports_ranking or my_win_count + op_win_count > 0 then
         state = state.."  Win Ratio:"
@@ -1222,7 +1230,6 @@ function main_net_vs()
       if global_current_room_ratings[my_player_number] 
       and global_current_room_ratings[my_player_number].new then
         local rating_to_print = "Rating: "
-        rating_to_print = rating_to_print..(global_current_room_ratings[my_player_number].league or "")
         if global_current_room_ratings[my_player_number].new > 0 then
           rating_to_print = rating_to_print.." "..global_current_room_ratings[my_player_number].new
         end
@@ -1231,7 +1238,6 @@ function main_net_vs()
       if global_current_room_ratings[op_player_number] 
       and global_current_room_ratings[op_player_number].new then
         local op_rating_to_print = "Rating: "
-        op_rating_to_print = op_rating_to_print..(global_current_room_ratings[op_player_number].league or "")
         if global_current_room_ratings[op_player_number].new > 0 then
           op_rating_to_print = op_rating_to_print.." "..global_current_room_ratings[op_player_number].new
         end

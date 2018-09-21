@@ -171,8 +171,8 @@ Room = class(function(self, a, b)
     if b.user_id and leaderboard.players[b.user_id] and leaderboard.players[b.user_id].rating then
       b_rating = round(leaderboard.players[b.user_id].rating)
     end
-    self.ratings = {{old=a_rating or DEFAULT_RATING, new=a_rating or DEFAULT_RATING, difference=0},
-                    {old=b_rating or DEFAULT_RATING, new=b_rating or DEFAULT_RATING, difference=0}}
+    self.ratings = {{old=a_rating or 0, new=a_rating or 0, difference=0, league=get_league(a_rating or 0)},
+                    {old=b_rating or 0, new=b_rating or 0, difference=0, league=get_league(b_rating or 0)}}
   else
     self.win_counts = self.a.room.win_counts
     self.spectators = self.a.room.spectators
@@ -716,7 +716,7 @@ function Room.rating_adjustment_approved(self)
     for player_number = 1,2 do
       if (leaderboard.players[players[1].user_id] and leaderboard.players[players[1].user_id].placement_done) 
         or (leaderboard.players[players[2].user_id] and leaderboard.players[players[2].user_id].placement_done) then
-        caveats[#caveats+1] = "Note: Rating adjustments for these matches will be processed when the newcomer finishes placement"
+        caveats[#caveats+1] = "Note: Rating adjustments for these matches will be processed when the newcomer finishes placement."
         --TODO: only add that message once.
       end
     end
@@ -793,6 +793,9 @@ function adjust_ratings(room, winning_player_number)
           else
             print("Player "..player_number.." played ranked against an unranked opponent.  We'll process this match when his opponent has finished placement")
             room.ratings[player_number].placement_matches_played = leaderboard.players[players[player_number].user_id].ranked_games_played
+            room.ratings[player_number].new = leaderboard.players[players[player_number].user_id].rating
+            room.ratings[player_number].old = leaderboard.players[players[player_number].user_id].rating
+            room.ratings[player_number].difference = 0
           end
         else -- this player has not finished placement
           if leaderboard.players[players[player_number].opponent.user_id].placement_done then
@@ -817,6 +820,9 @@ function adjust_ratings(room, winning_player_number)
           else
             print("Neither player is done with placement.  We should not have gotten to this line of code")
           end
+            room.ratings[player_number].new = 0
+            room.ratings[player_number].old = 0
+            room.ratings[player_number].difference = 0
         end
         
         
@@ -844,24 +850,24 @@ function adjust_ratings(room, winning_player_number)
           for player_number = 1,2 do
             
             --round and calculate rating gain or loss (difference) to send to the clients
-            if leaderboard.players[room.players[player_number].user_id].placement_done
-              and leaderboard.players[room.players[player_number].opponent.user_id].placement_done then
+            if leaderboard.players[players[player_number].user_id].placement_done then
               room.ratings[player_number].old 
                 = round(room.ratings[player_number].old 
-                  or leaderboard.players[room.players[player_number].user_id].rating)
+                  or leaderboard.players[players[player_number].user_id].rating)
               room.ratings[player_number].new 
                 = round(room.ratings[player_number].new
-                  or leaderboard.players[room.players[player_number].user_id].rating)
+                  or leaderboard.players[players[player_number].user_id].rating)
               room.ratings[player_number].difference = room.ratings[player_number].new - room.ratings[player_number].old
             else
               room.ratings[player_number].old = 0
               room.ratings[player_number].new = 0
               room.ratings[player_number].difference = 0
+              room.ratings[player_number].placement_match_progress = placement_match_progress
             end
             room.ratings[player_number].league = get_league(room.ratings[player_number].new)
           end
-          msg = {rating_updates=true, ratings=room.ratings, placement_match_progress=placement_match_progress}
-          room:send(msg)
+          -- msg = {rating_updates=true, ratings=room.ratings, placement_match_progress=placement_match_progress}
+          -- room:send(msg)
       end
     else
       print("Not adjusting ratings.  "..reasons[1])
