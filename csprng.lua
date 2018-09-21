@@ -10,7 +10,7 @@
 local function to_binary(num_integer) 
     local num_binary = {}
     local copy_num_integer = num_integer
-    local GREATER_HEX = 0x7FFFFFFF 
+    local GREATER_HEX = 0x7FFFFFFF -- The bigger number in hexadecimal with a signal 
     while true do
         table.insert(num_binary, copy_num_integer % 2)
         copy_num_integer = bit.band(math.floor(copy_num_integer / 2), GREATER_HEX)
@@ -34,22 +34,20 @@ end
 
 --- ISAAC Internal Variables
 local accumulator, previous_result = 0, 0
--- Acts as entropy/seed-in. Fill to sequence_results[256].
-local sequence_results = {}
--- Fill to memory[256]. Acts as output.
-local memory = {}
+local sequence_results = {} -- Acts as entropy/seed-in. Fill to sequence_results[256].
+local memory = {} -- Fill to memory[256]. Acts as output.
 
 --- Mersenne Twister Internal Variables:
-local mersenne_twister = {} 
+local mersenne_twister = {} -- Mersenne twister table
 local index = 0
 
 --- Other variables and constants for the seeding mechanism
-POSSIBLE_VALUES = 2^32-1
-local mt_seeded = false
-local mt_seed = math.random(1, POSSIBLE_VALUES)
-DIMENCIONAL_EQUIDISTRIBUTION = 623
-BITS_30 = 30
-BITS_32 = 32
+POSSIBLE_VALUES = 2^32-1 -- Possible values in hexadecimal
+local mt_seeded = false -- Verify if mersenne twister was seeded
+local mt_seed = math.random(1, POSSIBLE_VALUES) 
+DIMENCIONAL_EQUIDISTRIBUTION = 623 -- Represent a cube that content 623 dimensions
+BITS_30 = 30 -- Represent 30 bits
+BITS_32 = 32 -- Represent 32 bits
 
 --- This function seed the Mersenne Twister RNG.
 -- @param seed
@@ -58,7 +56,7 @@ function initialize_mt_generator(seed)
     index = 0
     mersenne_twister[0] = seed
     for i=1, DIMENCIONAL_EQUIDISTRIBUTION do
-        local state_succession = ( (1812433253 * bit.bxor(mersenne_twister[i-1], bit.rshift(mersenne_twister[i-1], BITS_30) ) )+i)
+        local state_succession = ( (1812433253 * bit.bxor(mersenne_twister[i-1], bit.rshift(mersenne_twister[i-1], BITS_30) ) )+i) 
         local num_binary = to_binary(state_succession)
         while #num_binary > BITS_32 do
             table.remove(num_binary, 1)
@@ -73,6 +71,7 @@ PARAMETER_N = 624
 -- @param nil
 -- @return nil
 local function generate_mt() 
+    -- Exclusives mersenne twister parameters
     local PARAMETER_U = 0x80000000
     local PARAMETER_L = 0x7FFFFFFF
     local PARAMETER_M = 397 
@@ -90,9 +89,11 @@ end
 
 
 --- This function get one number from the Mercenne Twister
--- @param min, max
+-- @param min
+-- @param max
 -- @return (mt_value % max)+min
 function extract_mt(min, max) 
+    -- Exclusives mersenne twister parameters
     local SHIFT_B = 0x9D2C5680
     local SHIFT_C = 0xEFC60000
     local SHIFT_U = 11
@@ -115,7 +116,7 @@ function extract_mt(min, max)
     return (mt_value % max)+min
 end
 
-NUM_TERMS = 256
+NUM_TERMS = 256 -- Possibles terms
 
 --- This function seed ISAAC algorithm with numbers from the variable mersenne_twister. Seed the ISAAC RNG, optionally seeding the Mersenne Twister RNG beforehand.
 -- @param seed
@@ -203,7 +204,7 @@ end
 -- @param flag
 -- @return nil
 local function randinit(flag)
-    local a,b,c,d,e,f,g,h = 0x9e3779b9,0x9e3779b9,0x9e3779b9,0x9e3779b9,0x9e3779b9,0x9e3779b9,0x9e3779b9,0x9e3779b9-- 0x9e3779b9 is the golden ratio
+    local a,b,c,d,e,f,g,h = 0x9e3779b9,0x9e3779b9,0x9e3779b9,0x9e3779b9,0x9e3779b9,0x9e3779b9,0x9e3779b9,0x9e3779b9 -- 0x9e3779b9 is the golden ratio
     accumulator = 0
     previous_result = 0
 
@@ -295,7 +296,8 @@ local function get_random()
 end
 
 --- This function get a random number between min and max.
--- @param min, max
+-- @param min
+-- @param max
 -- @return (get_random() % max) + min
 function cs_random(min, max)
     if not max then
