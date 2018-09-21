@@ -1,3 +1,9 @@
+----------
+  --- Server module
+  --- Create and handle events in the server
+  -- @module server
+  -------------
+
 local socket = require("socket")
 require("class")
 json = require("dkjson")
@@ -558,6 +564,12 @@ function Connection.close(self)
   self.socket:close()
 end
 
+-- ####################################################################################
+
+--- checks if the most recent version is available
+-- @param self an object
+-- @param version number of the game's version
+-- @return nill
 function Connection.H(self, version)
   if version ~= VERSION then
     self:send("N")
@@ -566,6 +578,10 @@ function Connection.H(self, version)
   end
 end
 
+--- verify if there are 2 players in the room
+-- @param self an object
+-- @param message message to be sent
+-- @return nill
 function Connection.I(self, message)
   if self.opponent then
     self.opponent:send("I"..message)
@@ -579,8 +595,11 @@ function Connection.I(self, message)
   end
 end
 
+--- send a message to spectators
+-- @param self an object
+-- @param message message to be sent
+-- @return nill
 function Room.send_to_spectators(self, message)
-  --TODO: maybe try to do this in a different thread?
   for k,v in pairs(self.spectators) do
     if v then
       v:send(message)
@@ -588,6 +607,10 @@ function Room.send_to_spectators(self, message)
   end
 end
 
+--- send a message to players and spectators
+-- @param self an object
+-- @param message message to be sent
+-- @return nill
 function Room.send(self, message)
   if self.a then
     self.a:send(message)
@@ -598,15 +621,18 @@ function Room.send(self, message)
   self:send_to_spectators(message)
 end
 
+--- returns who is the winner of the match
+-- @param self an object
+-- @return boolean
 function Room.resolve_game_outcome(self)
-  --Note: return value is whether the outcome could be resolved
   if not self.game_outcome_reports[1] or not self.game_outcome_reports[2] then
     return false
   else
+    --- outcome is the player who is the winner or 0 if it's a tie
     local outcome = nil
+
     if self.game_outcome_reports[1] ~= self.game_outcome_reports[2] then
-        --if clients disagree, the server needs to decide the outcome, perhaps by watching a replay it had created during the game.
-        --for now though...
+        -- if clients disagree, the server needs to decide the outcome, perhaps by watching a replay it had created during the game.
         print("clients "..self.a.name.." and "..self.b.name.." disagree on their game outcome. So the server will decide.")
         outcome = 0
     else
@@ -680,6 +706,9 @@ function Room.resolve_game_outcome(self)
   end
 end
 
+--- return why both players can or cannot play
+-- @param self an object
+-- @return boolean, string
 function Room.rating_adjustment_approved(self)
   --returns whether both players in the room have game states such that rating adjustment should be approved
   local players = {self.a, self.b}
@@ -704,6 +733,10 @@ function Room.rating_adjustment_approved(self)
   end
 end
 
+--- balance the players rank to match players with similar skills
+-- @param room lobby
+-- @param winning_player_number player with better rank
+-- @return nill
 function adjust_ratings(room, winning_player_number)
     print("We'd be adjusting the rating of "..room.a.name.." and "..room.b.name..". Player "..winning_player_number.." wins!")
     local players = {room.a, room.b}
@@ -842,6 +875,10 @@ function Connection.Q(self, message)
   end
 end
 
+--- verify the connection and the configuration before the match
+-- @param self object
+-- @param message error message displayed
+-- @return nill
 function Connection.J(self, message)
   message = json.decode(message)
   local response
@@ -966,7 +1003,10 @@ function Connection.J(self, message)
   end
 end
 
--- TODO: this should not be O(n^2) lol
+--- verify the connection during the match
+-- @param self object
+-- @param data information shared between the players
+-- @return nill
 function Connection.data_received(self, data)
   self.last_read = time()
   if data:len() ~= 2 then
@@ -1029,6 +1069,8 @@ function Connection.read(self)
   end
 end
 
+--- handles creanting the lobby
+-- @return nill
 function broadcast_lobby()
   if lobby_changed then
     for _,v in pairs(connections) do
