@@ -1,5 +1,9 @@
+--- Sound module
+--- Handle sound effects, stage and charactes themes and volume of the game
+
 --  This function sets the volume of a single source or table of sources
 function set_volume(source, new_volume)
+    -- Conditional with debug purposes
     if config.debug_mode then print("set_volume called") end
     if type(source) == "table" then
       for _,volume in pairs(source) do
@@ -51,13 +55,13 @@ function find_character_SFX(character, SFX_sound_name)
       local current_directory_has_combo_sound = check_supported_extensions(currentDirectory.."/"..character.."/combo")
       local other_requested_SFX = check_supported_extensions(currentDirectory.."/"..character.."/"..SFX_sound_name)
 
+
+      -- Conditionals to check tha directories has specific sound effects
       -- SFXSounName probably a misspelled global variable
       if SFXSounName == "chain" and current_directory_has_chain_sound then 
         if config.debug_mode then print("loaded "..SFX_sound_name.." for "..character) end
         return current_directory_has_chain_sound
       end
-    
-    
       if SFX_sound_name == "combo" and current_directory_has_combo_sound then 
         if config.debug_mode then print("loaded "..SFX_sound_name.." for "..character) end
         return current_directory_has_combo_sound
@@ -93,6 +97,7 @@ function find_music(character, music_type)
     local found_source
     local character_theme_overrides_stage_theme = check_supported_extensions("sounds/"..sounds_dir.."/characters/"..character.."/normal_music")
   
+    -- Conditionals to select if the character sound theme needs to overrides the current stage sound theme  
     if character_theme_overrides_stage_theme then
       found_source = check_supported_extensions("sounds/"..sounds_dir.."/characters/"..character.."/"..music_type)
       if found_source then
@@ -176,6 +181,7 @@ function assert_requirements_met()
 
 -- This function stops all sounds related to characters
 function stop_character_sounds(character)
+    -- global variables
     danger_music_intro_started = nil
     danger_music_intro_finished = nil
     danger_music_intro_playing = nil
@@ -184,11 +190,13 @@ function stop_character_sounds(character)
     normal_music_intro_finished = nil
   
     for characterSFX, sound in ipairs(allowed_SFX_character) do
+        -- Conditional that get a sound effect and then stop it
         if sounds.SFX.characters[character][sound] then
             sounds.SFX.characters[character][sound]:stop()
         end
     end
     for characterMusic, musicType in ipairs(allowed_character_music) do
+        -- Conditional that get a character theme and then stop it
         if sounds.music.characters[character][musicType] then
             sounds.music.characters[character][musicType]:stop()
         end
