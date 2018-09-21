@@ -57,7 +57,7 @@ function get_message()
         -- @todo understand all of this lenght parse
     local type_to_length = {G=1, H=1, N=1, E=4, P=121, O=121, I=2, Q=121, 
 						R=121, L=2, U=2}
-
+    -- "J" represent json in code 
     if kind == 'J' then
         if string.len(leftovers) >= 4 then
             length = byte(string.sub(leftovers,2,2)) * 65536 +
@@ -71,7 +71,7 @@ function get_message()
     else
         length = type_to_length[kind] - 1
     end
-
+    -- Verify string length leftovers
     if length + gap + 1 > string.len(leftovers) then
         return nil
     end
@@ -115,8 +115,8 @@ BITS_256 = 256
 -- @return nil
 function send_json(obj)
 
-    local json = json.encode(obj)
-    local json_length = json:len()
+    local json = json.encode(obj) -- Recieve a object and encode to json
+    local json_length = json:len() -- Get json length
     local floor = math.floor
     local char = string.char
     local prefix = 'J' .. char(floor(json_length/65536)) .. 
@@ -160,12 +160,12 @@ local process_message = {
         local current_message = json.decode(s)
         this_frame_messages[#this_frame_messages+1] = current_message
         print('JSON LOL '..s)
-
+        -- current_message should be false, if not have error
         if not current_message then
             error('Error in network.lua process_message\nMessage: \''..
             (s or 'nil')..'\'\ncould not be decoded')
         end
-
+        -- Verify if exist spectators
         if current_message.spectators then
             spectator_list = current_message.spectators
             spectators_string = spectator_list_string(
@@ -183,7 +183,7 @@ local process_message = {
 function network_init(ip)
     TCP_sock = socket.tcp()
     TCP_sock:settimeout(7)
-
+    -- Verify TCP connection 
     if not TCP_sock:connect(ip,49569) then
         error('Failed to connect =(')
     end
@@ -325,7 +325,7 @@ end
 -- @return Base64 encoded data
 function Stack.send_controls(self)
 
-  local k = keyboard[self.which]
+  local k = keyboard[self.which] -- Represent keyboard 
   local to_send = base64encode[
     ((keys[k.raise_faster1] or keys[k.raise_faster2] or this_frame_keys[k.raise_faster1]
       or this_frame_keys[k.raise_faster2]) and 32 or 0) +
