@@ -23,8 +23,8 @@ require("gen_panels")
 
 --- This function create a routine and load the game
 -- @function love.load
--- @param void
--- @return void
+-- @param nil
+-- @return nil
 function love.load()
 
     -- @fixme Test this
@@ -44,9 +44,10 @@ local last_y = 0
 local input_delta = 0.0
 local pointer_hidden = false
 
---- This function 
+--- This function update the game state for each frame
 -- @function love.update
 -- @param time since the last update
+-- @return nil
 function love.update(dt)
 
     -- if mouse not change
