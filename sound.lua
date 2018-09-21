@@ -1,4 +1,4 @@
--- sets the volume of a single source or table of sources
+--  This function sets the volume of a single source or table of sources
 function set_volume(source, new_volume)
     if config.debug_mode then print("set_volume called") end
     if type(source) == "table" then
@@ -10,7 +10,7 @@ function set_volume(source, new_volume)
     end
 end
 
--- returns a new sound effect if it can be found, else returns nil
+-- This function returns a new sound effect if it can be found, else returns nil
 function find_sound(sound_name, directories_to_check)
     local found_source
     for search_SFX,directory in ipairs(directories_to_check) do
@@ -22,6 +22,7 @@ function find_sound(sound_name, directories_to_check)
     return nil
 end
 
+-- This function check directories that may have the desired sound effect
 function find_generic_SFX(SFX_sound_name)
     local DIRECTORIES_TO_CHECK = {
         "sounds/"..sounds_dir.."/SFX/",
@@ -30,6 +31,7 @@ function find_generic_SFX(SFX_sound_name)
     return find_sound(SFX_sound_name, DIRECTORIES_TO_CHECK)
 end
 
+-- This function search for sound effects and then match it with specific character
 function find_character_SFX(character, SFX_sound_name)
     local DIRECTORIES_TO_CHECK = {
         "sounds/"..sounds_dir.."/characters/",
@@ -85,7 +87,7 @@ function find_character_SFX(character, SFX_sound_name)
     return nil
 end
 
--- returns audio source based on character and music_type (normal_music, danger_music, normal_music_start, or danger_music_start)
+-- This function returns audio source based on character and music_type (normal_music, danger_music, normal_music_start, or danger_music_start)
 function find_music(character, music_type)
   
     local found_source
@@ -126,7 +128,7 @@ function find_music(character, music_type)
     return nil
 end
 
--- returns a source, or nil if it could not find a file
+-- This function returns a source, or nil if it could not find a file
 function check_supported_extensions(path_and_filename)
   
     SUPPORTED_SOUND_FORMAT = {".mp3",".ogg", ".it"}
@@ -143,8 +145,9 @@ function check_supported_extensions(path_and_filename)
     return nil
 end
 
+-- This function asserts that all required generic sound effects exists
 function assert_requirements_met()
-    -- assert we have all required generic sound effects
+
     local SFX_REQUIREMENTS =  {"cur_move", "swap", "fanfare1", "fanfare2", "fanfare3", "game_over"}
     local NUMBER_REQUIRED_GARBAGE_THUDS = 3
 
@@ -171,6 +174,7 @@ function assert_requirements_met()
     end
   end
 
+-- This function stops all sounds related to characters
 function stop_character_sounds(character)
     danger_music_intro_started = nil
     danger_music_intro_finished = nil
@@ -191,6 +195,7 @@ function stop_character_sounds(character)
     end
 end
 
+-- This function initializes the sounds and sets variables with sound effects used all over other functions in this file
 function sound_init()
     default_sounds_dir = "Stock PdP_TA"
     sounds_dir = config.sounds_dir or default_sounds_dir
