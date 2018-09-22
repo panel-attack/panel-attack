@@ -74,7 +74,7 @@ function write_leaderboard_file() pcall(function()
   
   for user_id,v in pairs(leaderboard.players) do
     leaderboard_table[#leaderboard_table+1] = 
-    {user_id, v.user_name,v.rating,tostring(v.placement_done or ""),v.placement_matches,v.final_placement_rating,v.ranked_games_played,v.ranked_games_won}
+    {user_id, v.user_name,v.rating,tostring(v.placement_done or ""),json.encode(v.placement_matches) or "",v.final_placement_rating,v.ranked_games_played,v.ranked_games_won}
   end
   csvfile.write('./leaderboard.csv', leaderboard_table)
 end) end
@@ -102,6 +102,8 @@ function read_leaderboard_file() pcall(function()
         leaderboard.players[csv_table[row][1]][csv_table[1][col]] = tonumber(csv_table[row][col])
       elseif csv_table[1][col] == "placement_done" then
         leaderboard.players[csv_table[row][1]][csv_table[1][col]] = csv_table[row][col] and true and string.lower(csv_table[row][col]) ~= "false"
+      elseif csv_table[1][col] == "placement_matches" then
+        leaderboard.players[csv_table[row][1]][csv_table[1][col]] = json.decode(csv_table[row][col])
       else
         leaderboard.players[csv_table[row][1]][csv_table[1][col]] = csv_table[row][col]
       end

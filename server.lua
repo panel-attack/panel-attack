@@ -811,6 +811,9 @@ function adjust_ratings(room, winning_player_number)
                 op_name=playerbase.players[players[player_number].opponent.user_id],
                 op_rating=leaderboard.players[players[player_number].opponent.user_id].rating,
                 outcome = Oa}
+            print("PRINTING LEADERBOARD:")
+            print(json.encode(leaderboard.players))
+            write_leaderboard_file()
             local process_them, reason = qualifies_for_placement(players[player_number].user_id)
             if process_them then
               process_placement_matches(players[player_number].user_id)
@@ -898,9 +901,10 @@ end
 
 function process_placement_matches(user_id)
   local rating = DEFAULT_RATING
+  local k = 20 -- adjusts max points gained or lost per match
   local placement_matches = leaderboard.players[user_id].placement_matches
   for i=1, #placement_matches do
-    rating = calculate_rating_adjustment(rating, placement_matches[i].op_rating, placement_matches[i].outcome, 50)
+    rating = calculate_rating_adjustment(rating, placement_matches[i].op_rating, placement_matches[i].outcome, k)
   end
   leaderboard.players[user_id].rating = rating
   leaderboard.players[user_id].final_placement_rating = rating
@@ -914,6 +918,7 @@ function process_placement_matches(user_id)
     leaderboard.players[placement_matches[i].op_user_id].rating = leaderboard.players[placement_matches[i].op_user_id].rating + op_rating_change
   end
   leaderboard.players[user_id].placement_done = true
+  write_leaderboard_file()
 end
 
 function get_league(rating)
