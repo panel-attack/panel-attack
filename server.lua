@@ -3,7 +3,7 @@
 --- Create and handle events in the server
 -- @module server
 
-
+-- required files and functions
 local socket = require("socket")
 require("class")
 require("stridx")
@@ -16,6 +16,20 @@ json = require("dkjson")
 local lua_file_system = require("lfs")
 local socket = require("socket")
 
+-- Tables
+local connections = {}
+local rooms = {}
+local name_to_index = {}
+local socket_to_index = {}
+local proposals = {}
+
+-- Constantes
+local TIMEOUT = 10
+local DEFAULT_RATING = 1500
+local NAME_LENGTH_LIMIT = 16
+local INDEX = 1
+local ROOM_NUMBER = 1
+local VERSION = "023"
 local byte = string.byte
 local pairs = pairs
 local lobby_changed = false
@@ -24,20 +38,8 @@ local floor = math.floor
 local CHARACTERSELECT = "character select" -- room states
 local PLAYING = "playing" -- room states
 
-local connections = {}
-local rooms = {}
-local name_to_index = {}
-local socket_to_index = {}
-local proposals = {}
-
--- constantes
-local TIMEOUT = 10
-local DEFAULT_RATING = 1500
-local NAME_LENGTH_LIMIT = 16
-local INDEX = 1
-local ROOM_NUMBER = 1
-local VERSION = "023"
-
+--- Set the state in lobby
+-- @return a table
 function lobby_state() 
 	local lobby_names = {}
 
@@ -55,6 +57,11 @@ function lobby_state()
 	return {unpaired = lobby_names, spectatable = spectatableRooms}
 end
 
+--- One player propose a match for another player
+-- @param sender player that propose
+-- @param receiver player that was challenged
+-- @param message
+-- @return nil
 function propose_game(sender, receiver, message) 
 	local sender_c, r_c = name_to_index[sender], name_to_index[receiver]
 
@@ -78,6 +85,9 @@ function propose_game(sender, receiver, message)
 	end
 end
 
+--- Clear the proposals for a new game
+-- @param name get the name of player
+-- @return nil
 function clear_proposals(name)
 	if proposals[name] then
 		for othername,_ in pairs(proposals[name]) do
@@ -88,6 +98,10 @@ function clear_proposals(name)
 	end
 end
 
+--- Create a new room 
+-- @param a first player
+-- @param b second player
+-- @return nil
 function create_room(a, b) 
 	lobby_changed = true
 	clear_proposals(a.name)
@@ -249,6 +263,9 @@ end
 		end
 	end
 	
+--- Checks if room is spectatable or not
+-- @param self an object
+-- @return string	
 	function Room.is_spectatable(self)
 		return self.a.state == "character select"
 	end
@@ -281,6 +298,9 @@ end
 		lobby_changed = true
 	end
 	
+--- Add list of spectators in the room
+-- @param self an object
+-- @return a list of spectator	
 	function Room.add_spectator_names(self) 
 		local spectator_list = {}
 
@@ -360,6 +380,10 @@ end
 		write_players_file()
 	end
 	
+--- Deletes a player from players list
+-- @param self an object
+-- @param user_id the id thats going to be deleted
+-- @return boolean	
 	function Playerbase.delete_player(self, user_id)
 		-- returns whether a player was deleted
 		if self.players[user_id] then
@@ -373,6 +397,8 @@ end
 		end
 	end
 	
+--- Generate a new user id
+-- @return a string 	
 	function generate_new_user_id() 
 		new_user_id = cs_random()
 		print("new_user_id: "..new_user_id)
@@ -385,7 +411,12 @@ end
 		s.name = name
 		s.players = {}
 	end)
-	
+
+--- Update the leaderboard with a new rating from an player
+-- @param self an object
+-- @param user_id username
+-- @param new_rating the new rating by user
+-- @return nil
 	function Leaderboard.update(self, user_id, new_rating) 
 		print("in Leaderboard.update")
 
@@ -401,6 +432,10 @@ end
 		print("done with Leaderboard.update")
 	end
 	
+--- Returns the leaderboard sorted from best to worse rating
+-- @param self an object
+-- @param user_id_of_requester
+-- @return array
 	function Leaderboard.get_report(self, user_id_of_requester) 
 		--returns the leaderboard as an array sorted from highest rating to lowest, 
 		--with usernames from playerbase.players instead of user_ids
@@ -493,6 +528,10 @@ end
 		end
 	end
 	
+--- Log in a new player
+-- @param self an object
+-- @param user_id a string with player's name
+-- @return 	
 	function Connection.login(self, user_id) 
 		--returns whether the login was successful
 		--print("Connection.login was called!")
@@ -543,6 +582,10 @@ end
 		return self.logged_in
 	end
 	
+--- Stops players to connect in the game server
+-- @param connection an object
+-- @param reason a string explaining why they cant connect
+-- @return nil
 	--TODO: revisit this to determine whether it is good.
 	function deny_login(connection, reason) 
 		local new_violation_count = 0
@@ -566,7 +609,10 @@ end
 		violation_count = ban_list[IP].violation_count})
 		print("login denied.  Reason:  "..reason)
 	end
-	
+
+--- Remove a player IP from ban list
+-- @param connection an object
+-- @return nil
 	function unban(connection) 
 		local IP, port = connection.socket:getsockname()
 
@@ -575,6 +621,9 @@ end
 		end
 	end
 	
+--- Check if player is banned from the game servers
+-- @param IP internet protocol
+-- @return boolean	
 	function is_banned(IP)
 		local is_banned = false
 
@@ -585,6 +634,9 @@ end
 		return is_banned
 	end
 	
+--- Check if opponent is connected
+-- @param self an object
+-- @return nil
 	function Connection.opponent_disconnected(self) 
 		self.opponent = nil
 		self.state = "lobby"
@@ -600,6 +652,9 @@ end
 		self:send(msg)
 	end
 	
+--- Setup all information for a new game
+-- @param self an object
+-- @return nil	
 	function Connection.setup_game(self)
 		local random_number = math.random
 
@@ -615,7 +670,10 @@ end
 		self.metal_col = nil
 		self.first_seven = nil
 	end
-	
+
+--- Closes the connection bettween players and room
+-- @param self an object
+-- @return nil
 	function Connection.close(self) 
 		if self.state == "lobby" then
 			lobby_changed = true
