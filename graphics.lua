@@ -10,8 +10,8 @@ local len_garbage = #garbage_bounce_table --length of lua garbage
 
 --- upload image file and returns drawn image
 -- @function load_img
--- @param image_path
--- @return draw_image 
+-- @param image_path image archive
+-- @return draw_image drawing image
 -- T11
 function load_img(image_path)
     local img
@@ -37,9 +37,9 @@ end
 --- receives an image and draws it
 -- @function draw 
 -- @param img 
--- @param x 
--- @param y
--- @param rot
+-- @param x position on the x_axis
+-- @param y position on the y_axis
+-- @param rot rotation
 -- @param x_scale
 -- @param y_scale 
 -- @return nil 
@@ -65,9 +65,9 @@ end
 --- draws the menu
 -- @function menu_draw 
 -- @param img 
--- @param x 
--- @param y
--- @param rot
+-- @param x position on the x_axis
+-- @param y position on the y_axis
+-- @param rot rotation
 -- @param x_scale
 -- @param y_scale 
 -- @return nil 
@@ -93,10 +93,10 @@ end
 --- draws the menu quad, the menu of right-cick
 -- @function menu_drawq 
 -- @param img 
--- @param quad
--- @param x 
--- @param y
--- @param rot
+-- @param quad quad panel
+-- @param x position on the x_axis
+-- @param y position on the y_axis
+-- @param rot rotation
 -- @param x_scale
 -- @param y_scale 
 -- @return nil 
@@ -124,30 +124,31 @@ end
 --- generates rectangles 
 -- @function grectangle 
 -- @param mode
--- @param x 
--- @param y
--- @param w 
--- @param h 
+-- @param x position on the x_axis
+-- @param y position on the y_axis
+-- @param width_rectangle 
+-- @param height_rectangle
 -- @return nil 
+-- T5
 -- T11
-function grectangle(mode, x, y, w, h)
+function grectangle(mode, x, y, width_rectangle, height_rectangle)
     gfx_q:push(
                 {love.graphics.rectangle,
                 {
                  mode,
                  x,
                  y,
-                 w,
-                 h
+                 width_rectangle,
+                 height_rectangle
                  }
                 })
 end
 
 --- print message on screen  
 -- @function gprint 
--- @param str
--- @param x 
--- @param y
+-- @param str message that will be printed
+-- @param x position on the x_axis
+-- @param y position on the y_axis
 -- @return nil 
 -- T11
 function gprint(str, x, y)
@@ -161,10 +162,12 @@ function gprint(str, x, y)
             })
 end
 
-local _r = 0
-local _g = 0
-local _b = 0
-local _a = 0
+-- current state of red, green, blue and alpha
+-- T13, T5
+local r_current = 0
+local g_current = 0
+local b_current = 0
+local a_current = 0
 local MAX_ALPHA
 
 --- equals the colors received if the first ones are equal to zero  
@@ -179,8 +182,8 @@ function set_color(r, g, b, a)
     a = a or MAX_ALPHA
 
     -- only do it if this color isn't the same as the previous one...
-    if _r ~= r or _g ~= g or _b ~= b or _a ~= a then
-        _r, _g, _b, _a = r, g, b, a
+    if r_current ~= r or g_current ~= g or b_current ~= b or a_current ~= a then
+        r_current, g_current, b_current, a_current = r, g, b, a
         gfx_q:push({love.graphics.setColor, {r, g, b, a}})
     end
 
@@ -292,13 +295,11 @@ function graphics_init()
          end
     end
 
-    character_display_names = {}
+    character_display_names = {} -- players names --T13
 
     for k, original_name in ipairs(characters) do
         name_txt_file = love.filesystem.newFile("assets/"..config.assets_dir.."/"..original_name.."/name.txt")
-        --print(original_name)
         open_success, err = name_txt_file:open("r")
-        --if err then print(err) end
         local display_name = name_txt_file:read(name_txt_file:getSize())
         if display_name then
             character_display_names[original_name] = display_name
@@ -364,7 +365,8 @@ end
 -- @return nil 
 -- T11
 function Stack.render(self)
-    local mouse_x,mouse_y
+    local mouse_x, mouse_y -- coordinates of mouse
+
     if config.debug_mode then
         mouse_x,mouse_y = love.mouse.getPosition()
         mouse_x = mouse_y / GFX_SCALE
@@ -407,7 +409,9 @@ function Stack.render(self)
                             end
                         else
                             local height, width = panel.height, panel.width
+                            -- highest possible height
                             local top_y = draw_y - (height-1) * 16
+                            -- verifies that the resulting height is odd, T13
                             local odd = ((height-(height%2))/2)%2==0
 
                             for i=0,height-1 do
@@ -539,8 +543,8 @@ function Stack.render(self)
 
         if self.mode == "time" then
             local time_left = 120 - self.CLOCK/60
-            local mins = floor(time_left/60)
-            local secs = floor(time_left%60)
+            local mins = floor(time_left/60) -- currents minutes --T13
+            local secs = floor(time_left%60) -- currents seconde
 
             gprint("Time: "..string.format("%01d:%02d",mins,secs), self.score_x, 160)
         elseif self.level then
