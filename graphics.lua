@@ -1,49 +1,19 @@
---int Font_NumRed;
---int Font_NumBlue;
+------------
+--- Graphics Module
+--- load the game graphic
+-- @module graphics 
 
---int P1ScoreDisplay;
---int P1ScoreRender;
---int P1ScoreDigits[5];
-
---int GameTimeDisplay;
---int GameTimeDisplayPosX;
---int GameTimeDisplayPosY;
---int GameTimeRender;
---int GameTimeDigits[7];
-
---int Graphics_Ready321;
-
---int P1SpeedLVDisplay;
---int P1SpeedLVRender;
---int P1SpeedLVDigits[3];
---int MrStopState;
---int MrStopTimer;
---int MrStopAni[25];
-
---int Graphics_level;
---int Graphics_MrStop[2];
---int Graphics_Difficulty[5];
-
---int NumConfettis;
---#define MAXCONFETTIS     8
-
---int Confettis[8][5];
---#define CONFETTI_TIMER   0
---#define CONFETTI_RADIUS  1
---#define CONFETTI_ANGLE   2
---#define CONFETTI_X       3
---#define CONFETTI_Y       4
---int ConfettiAni[48];
---int ConfettiBuf[6][2];
---#define CONFETTI_STARTTIMER   40
---#define CONFETTI_STARTRADIUS 150
 require("input")
+-- T13
+local ceil = math.ceil --rounding
+local len_garbage = #garbage_bounce_table --length of lua garbage
 
-local ceil = math.ceil
-local len_garbage = #garbage_bounce_table
-
+--- upload image file and returns drawn image
+-- @function load_img
+-- @param image_path
+-- @return draw_image 
+-- T11
 function load_img(image_path)
-
     local img
 
     if pcall(
@@ -58,21 +28,22 @@ function load_img(image_path)
         img = love.image.newImageData("assets/"..default_assets_dir.."/"..image_path)
     end
 
-    -- local w, h = img:getWidth(), img:getHeight()
-    -- local wp = math.pow(2, math.ceil(math.log(w)/math.log(2)))
-    -- local hp = math.pow(2, math.ceil(math.log(h)/math.log(2)))
-    -- if wp ~= w or hp ~= h then
-    -- local padded = love.image.newImageData(wp, hp)
-    -- padded:paste(img, 0, 0)
-    -- img = padded
-    -- end
-
     local draw_image = love.graphics.newImage(img)
     draw_image:setFilter("nearest","nearest")
 
     return draw_image
 end
 
+--- receives an image and draws it
+-- @function draw 
+-- @param img 
+-- @param x 
+-- @param y
+-- @param rot
+-- @param x_scale
+-- @param y_scale 
+-- @return nil 
+-- T11
 function draw(img, x, y, rot, x_scale, y_scale)
     rot = rot or 0
     x_scale = x_scale or 1
@@ -91,8 +62,17 @@ function draw(img, x, y, rot, x_scale, y_scale)
 
 end
 
+--- draws the menu
+-- @function menu_draw 
+-- @param img 
+-- @param x 
+-- @param y
+-- @param rot
+-- @param x_scale
+-- @param y_scale 
+-- @return nil 
+-- T11
 function menu_draw(img, x, y, rot, x_scale,y_scale)
-
     rot = rot or 0
     x_scale = x_scale or 1
     y_scale = y_scale or 1
@@ -110,6 +90,17 @@ function menu_draw(img, x, y, rot, x_scale,y_scale)
 
 end
 
+--- draws the menu quad, the menu of right-cick
+-- @function menu_drawq 
+-- @param img 
+-- @param quad
+-- @param x 
+-- @param y
+-- @param rot
+-- @param x_scale
+-- @param y_scale 
+-- @return nil 
+-- T11
 function menu_drawq(img, quad, x, y, rot, x_scale, y_scale)
     rot = rot or 0
     x_scale = x_scale or 1
@@ -130,6 +121,15 @@ function menu_drawq(img, quad, x, y, rot, x_scale, y_scale)
 
 end
 
+--- generates rectangles 
+-- @function grectangle 
+-- @param mode
+-- @param x 
+-- @param y
+-- @param w 
+-- @param h 
+-- @return nil 
+-- T11
 function grectangle(mode, x, y, w, h)
     gfx_q:push(
                 {love.graphics.rectangle,
@@ -143,6 +143,13 @@ function grectangle(mode, x, y, w, h)
                 })
 end
 
+--- print message on screen  
+-- @function gprint 
+-- @param str
+-- @param x 
+-- @param y
+-- @return nil 
+-- T11
 function gprint(str, x, y)
     gfx_q:push(
             {love.graphics.print,
@@ -160,8 +167,15 @@ local _b = 0
 local _a = 0
 local MAX_ALPHA
 
+--- equals the colors received if the first ones are equal to zero  
+-- @function set_color 
+-- @param r red
+-- @param g green
+-- @param b blue 
+-- @param a alpha 
+-- @return nil 
+-- T11
 function set_color(r, g, b, a)
-
     a = a or MAX_ALPHA
 
     -- only do it if this color isn't the same as the previous one...
@@ -174,21 +188,12 @@ end
 
 local floor = math.floor
 
+--- initiates the graphics of the game  
+-- @function graphics_init 
+-- @param nil
+-- @return nil 
+-- T11
 function graphics_init()
-    --Font_NumRed=LoadImage("graphics\Font_NumRed.bmp");
-    --Font_NumBlue=LoadImage("graphics\Font_NumBlue.bmp");
-
-
-    --GameTimeDisplay=NewImage(64,16);
-    --P1ScoreDisplay=NewImage(40,16);
-    --P1SpeedLVDisplay=NewImage(48,48);
-
-    --Graphics_Ready321=LoadImage("graphics\Ready321.bmp");
-    --Graphics_TIME=LoadImage("graphics\time.bmp");
-    --Graphics_level=LoadImage("graphics\level.bmp");
-    --for(a=0;a<2;a++) Graphics_MrStop[a]=LoadImage("graphics\MrStop"+str(a)+".bmp");
-    --for(a=0;a<5;a++) Graphics_Difficulty[a]=LoadImage("graphics\diffic"+str(a)+".bmp");
-
     IMG_panels = {}
     for i=1,8 do
         IMG_panels[i]={}
@@ -312,25 +317,13 @@ function graphics_init()
     for k,v in pairs(character_display_names) do
         character_display_names_to_original_names[v] = k
     end
-    --for(a=0;a<2;a++) MrStopAni[a]=5;
-    --for(a=2;a<5;a++) MrStopAni[a]=8;
-    --for(a=5;a<25;a++) MrStopAni[a]=16;
-
-    --[[file=FileOpen("graphics\timeslide.ani",FILE_READ);
-    for(a=1;a<65;a++)
-    {
-    TimeSlideAni[a] = FileReadByte(file);
-    }
-    FileClose(file);
-    file=FileOpen("graphics\confetti.ani",FILE_READ);
-    for(a=0;a<40;a++)
-    {
-    ConfettiAni[a] = FileReadByte(file);
-    }
-    FileClose(file);--]]
 end
 
-
+--- subscribe the method update_cards of Stack class for update the cards   
+-- @function Stack.update_cards 
+-- @param self object 
+-- @return nil 
+-- T11
 function Stack.update_cards(self)
 
     for i=self.card_q.first,self.card_q.last do
@@ -347,8 +340,12 @@ function Stack.update_cards(self)
 
 end
 
+--- subscribe the method draw_cards of Stack class for draw the cards  
+-- @function Stack.draw_cards 
+-- @param self object 
+-- @return nil 
+-- T11
 function Stack.draw_cards(self)
-
     for i=self.card_q.first,self.card_q.last do
         local card = self.card_q[i]
         if card_animation[card.frame] then
@@ -356,19 +353,17 @@ function Stack.draw_cards(self)
             local draw_y = (11-card.y) * 16 + self.pos_y + self.displacement
                 - card_animation[card.frame]
                 draw(IMG_cards[card.chain][card.n], draw_x, draw_y)
-            --    card.frame = card.frame + 1
-            --    if(card_animation[card.frame]==nil) then
-            --      self.card_q:pop()
-            --    end
-        else
-    --    card.frame = card.frame + 1
-        end
+         end
     end
 
 end
 
+--- subscribe the method render of Stack class for render  
+-- @function Stack.render 
+-- @param self object 
+-- @return nil 
+-- T11
 function Stack.render(self)
-
     local mouse_x,mouse_y
     if config.debug_mode then
         mouse_x,mouse_y = love.mouse.getPosition()
@@ -574,10 +569,7 @@ function Stack.render(self)
         end
 
         if config.debug_mode and self.input_state then
-            -- print(self.input_state)
-            -- print(base64decode[self.input_state])
             local iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
-            -- print(tostring(raise))
             local inputs_to_print = "inputs:"
 
             if iraise then
@@ -609,18 +601,19 @@ function Stack.render(self)
         if match_type then
             gprint(match_type, 375, 15)
         end
-        --gprint("Player"..self.player_number, self.score_x,265)
-        --gprint("Panel buffer: "..#self.panel_buffer, self.score_x, 190)
-        --[[local danger = {}
-        for i=1,6 do
-          danger[i] = self.panels[12][i]:dangerous()
-        end
-        gprint("Danger: "..table.concat(map(function(x) if x then return "1" else return "0" end end, danger)), self.score_x, 205)--]]
     end
     self:draw_cards()
     self:render_cursor()
 end
 
+--- scales letterbox 
+-- @function scale_letterbox     
+-- @param width 
+-- @param height 
+-- @param w_ratio width ratio
+-- @param h_ratio height ratio
+-- @return ratio_letterbox 
+-- T11
 function scale_letterbox(width, height, w_ratio, h_ratio)
     if height / h_ratio > width / w_ratio then
 
@@ -633,230 +626,12 @@ function scale_letterbox(width, height, w_ratio, h_ratio)
     return (width - scaled_width) / 2, 0, scaled_width, height
 end
 
---[[
-void EnqueueConfetti(int x, int y)
-{
-  int b, c;
-  if(NumConfettis==MAXCONFETTIS)
-  {
-    for(c=0;c<NumConfettis;c++)
-    {
-      for(b=0;b<5;b++) Confettis[c][b]=Confettis[c+1][b];
-    }
-    NumConfettis--;
-  }
-  Confettis[NumConfettis][CONFETTI_TIMER]=CONFETTI_STARTTIMER;
-  Confettis[NumConfettis][CONFETTI_RADIUS]=CONFETTI_STARTRADIUS;
-  Confettis[NumConfettis][CONFETTI_ANGLE]=0;
-  Confettis[NumConfettis][CONFETTI_X]=x;
-  Confettis[NumConfettis][CONFETTI_Y]=y;
-  NumConfettis++;
-}
-
-void Render_Confetti()
-{
-  int a, b, c;
-  int r, an, t;
-
-  for(a=0;a<NumConfettis;a++)
-  {
-    t=Confettis[a][CONFETTI_TIMER]-1;
-    r=Confettis[a][CONFETTI_RADIUS]-ConfettiAni[t];
-    an=Confettis[a][CONFETTI_ANGLE]-6;
-
-    ConfettiBuf[0][0]=(r*cos(an))>>16;
-    ConfettiBuf[0][1]=(r*sin(an))>>16;
-    ConfettiBuf[1][0]=(r*cos(an+60))>>16;
-    ConfettiBuf[1][1]=(r*sin(an+60))>>16;
-    ConfettiBuf[2][0]=(r*cos(an+120))>>16;
-    ConfettiBuf[2][1]=(r*sin(an+120))>>16;
-    for(c=0;c<3;c++)
-    {
-      ConfettiBuf[c+3][0]=0-ConfettiBuf[c][0];
-      ConfettiBuf[c+3][1]=0-ConfettiBuf[c][1];
-    }
-    for(c=0;c<6;c++)
-    {
-      ConfettiBuf[c][0]+=Confettis[a][CONFETTI_X];
-      ConfettiBuf[c][1]+=Confettis[a][CONFETTI_Y];
-
-      TBlit(ConfettiBuf[c][0],ConfettiBuf[c][1],Graphics_Confetti,screen);
-    }
-
-    if(!t)
-    {
-      for(c=a;c<NumConfettis;c++)
-      {
-        for(b=0;b<5;b++) Confettis[c][b]=Confettis[c+1][b];
-      }
-      NumConfettis--;
-      if(a~=(NumConfettis-1)) a--;
-    }
-    else
-    {
-      Confettis[a][CONFETTI_TIMER]=t;
-      Confettis[a][CONFETTI_RADIUS]=r;
-      Confettis[a][CONFETTI_ANGLE]=an;
-    }
-  }
-}--]]
-
+--- subscribe the method draw_cards of Stack class for render the cursor  
+-- @function Stack.render_cursor 
+-- @param self object 
+-- @return nil 
+-- T11
 function Stack.render_cursor(self)
     draw(IMG_cursor[(floor(self.CLOCK/16)%2)+1], (self.cur_col-1)*16+self.pos_x-4, (11-(self.cur_row))*16+self.pos_y-4+self.displacement)
 end
 
---[[void FadingPanels_1P(int draw_frame, int lightness)
-  int col, row, panel;
-  int drawpanel, draw_x, draw_y;
-
-  for(row=0;row<12;row++)
-  {
-    panel=row<<3;
-    for(col=0;col<6;col++)
-    {
-      drawpanel=P1StackPanels[panel];
-      if(drawpanel)
-      {
-        draw_x=self.pos_x+(col<<4);
-        draw_y=self.pos_y+self.displacement+(row<<4);
-        GrabRegion(draw_frame<<4,0,draw_frame<<4+15,15,draw_x,draw_y,
-          Graphics_Panels[drawpanel],screen);
-        if(lightness~=100)
-        {
-          SetLucent(lightness);
-          RectFill(draw_x,draw_y,draw_x+15,draw_y+15,0,screen);
-          SetLucent(0);
-        }
-      }
-      panel++;
-    }
-  }
-}--]]
-
-
---[[
-void Render_Info_1P()
-{
-  int col, something, draw_x;
-  if(GameTimeRender)
-  {
-    GameTimeRender=0;
-    something=GameTime;
-    GameTimeDigits[0]=something/36000;
-    something=something%36000;
-    GameTimeDigits[1]=something/3600;
-    something=something%3600;
-
-    GameTimeDigits[2]=something/600;
-    something=something%600;
-    GameTimeDigits[3]=something/60;
-    something=something%60;
-
-    GameTimeDigits[4]=10;
-    GameTimeDigits[5]=something/10;
-    GameTimeDigits[6]=something%10;
-
-    RectFill(0,0,64,16,rgb(255,0,255),GameTimeDisplay);
-
-    if(GameTimeDigits[0]) draw_x=0;
-    else draw_x=0-8;
-    something=0;
-    for(col=0;col<2;col++)
-    {  if(GameTimeDigits[col])
-      {  GrabRegion(GameTimeDigits[col]<<3,0,(GameTimeDigits[col]<<3)+7,15,draw_x,0,Font_NumRed,GameTimeDisplay);
-        something=1;
-      }
-      else
-      {  if(something) GrabRegion(GameTimeDigits[col]<<3,0,(GameTimeDigits[col]<<3)+7,15,draw_x,0,Font_NumRed,GameTimeDisplay);
-      }
-      draw_x+=8;
-    }
-    if(something) GrabRegion(80,0,87,15,draw_x,0,Font_NumRed,GameTimeDisplay);
-    draw_x+=8;
-    if(something || GameTimeDigits[2])
-      GrabRegion(GameTimeDigits[2]<<3,0,(GameTimeDigits[2]<<3)+7,15,draw_x,0,Font_NumRed,GameTimeDisplay);
-    draw_x+=8;
-    for(col=3;col<7;col++)
-    {  GrabRegion(GameTimeDigits[col]<<3,0,(GameTimeDigits[col]<<3)+7,15,draw_x,0,Font_NumRed,GameTimeDisplay);
-      draw_x+=8;
-    }
-  }
-
-  TBlit(48,39,GameTimeDisplay,screen);
-
-
-
-  if(P1ScoreRender)
-  {
-    P1ScoreRender=0;
-    something=P1Score;
-    P1ScoreDigits[0]=something/10000;
-    something=something%10000;
-    P1ScoreDigits[1]=something/1000;
-    something=something%1000;
-    P1ScoreDigits[2]=something/100;
-    something=something%100;
-    P1ScoreDigits[3]=something/10;
-    P1ScoreDigits[4]=something%10;
-
-    RectFill(0,0,40,16,rgb(255,0,255),P1ScoreDisplay);
-    draw_x=0;
-    something=0;
-    for(col=0;col<4;col++)
-    {
-      if(P1ScoreDigits[col])
-      {
-        GrabRegion(P1ScoreDigits[col]<<3,0,(P1ScoreDigits[col]<<3)+7,15,draw_x,0,Font_NumBlue,P1ScoreDisplay);
-        something=1;
-      }
-      else
-      {
-        if(something) GrabRegion(P1ScoreDigits[col]<<3,0,(P1ScoreDigits[col]<<3)+7,15,draw_x,0,Font_NumBlue,P1ScoreDisplay);
-      }
-      draw_x+=8;
-    }
-    col=4;
-    GrabRegion(P1ScoreDigits[col]<<3,0,(P1ScoreDigits[col]<<3)+7,15,draw_x,0,Font_NumBlue,P1ScoreDisplay);
-  }
-
-  TBlit(232,63,P1ScoreDisplay,screen);
-
-
-  if(P1StopTime)
-  {
-    MrStopTimer--;
-    if(MrStopTimer<=0)
-    {
-      MrStopTimer=MrStopAni[P1StopTime];
-      if(MrStopState) MrStopState=0;
-      else MrStopState=1;
-      P1SpeedLVRender=1;
-    }
-  }
-  if(P1SpeedLVRender)
-  {
-    RectFill(0,0,48,48,rgb(255,0,255),P1SpeedLVDisplay);
-    if(P1StopTime)
-    {
-      Blit(0,0,Graphics_MrStop[MrStopState],P1SpeedLVDisplay);
-      if(MrStopState)
-      {
-        P1SpeedLVDigits[0]=P1StopTime/10;
-        P1SpeedLVDigits[1]=P1StopTime%10;
-        GrabRegion(P1SpeedLVDiggits[0]<<3,0,(P1SpeedLVDigits[0]<<3)+7,15, 0,0,Font_NumRed,P1SpeedLVDisplay);
-        GrabRegion(P1SpeedLVDigits[1]<<3,0,(P1SpeedLVDigits[1]<<3)+7,15, 8,0,Font_NumRed,P1SpeedLVDisplay);
-      }
-    }
-    else
-    {
-      P1SpeedLVDigits[0]=P1SpeedLV/10;
-      P1SpeedLVDigits[1]=P1SpeedLV%10;
-      if(P1SpeedLVDigits[0]) GrabRegion(P1SpeedLVDigits[0]<<3,0,(P1SpeedLVDigits[0]<<3)+7,15, 32,2,Font_NumBlue,P1SpeedLVDisplay);
-      GrabRegion(P1SpeedLVDigits[1]<<3,0,(P1SpeedLVDigits[1]<<3)+7,15, 40,2,Font_NumBlue,P1SpeedLVDisplay);
-      Blit(1,25,Graphics_level,P1SpeedLVDisplay);
-      Blit(1,35,Graphics_Difficulty[P1DifficultyLV],P1SpeedLVDisplay);
-    }
-  }
-
-  TBlit(224,95,P1SpeedLVDisplay,screen);
-}--]]
