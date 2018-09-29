@@ -35,6 +35,8 @@ local name_to_idx = {}
 local socket_to_idx = {}
 local proposals = {}
 local playerbases = {}
+local loaded_placement_matches = {incomplete={},
+                                  complete={}}
 
 function lobby_state()
   local names = {}
@@ -801,19 +803,18 @@ function adjust_ratings(room, winning_player_number)
           if leaderboard.players[players[player_number].opponent.user_id].placement_done then
             print("Player "..player_number.." (unranked) just played a placement match against a ranked player.")
             print("Adding this match to the list of matches to be processed when player finishes placement")
-            if not leaderboard.players[players[player_number].user_id].placement_matches then
-              leaderboard.players[players[player_number].user_id].placement_matches = {}
-            end
-            local pm_count = #leaderboard.players[players[player_number].user_id].placement_matches
+            load_placement_matches(players[player_number].user_id)
+            local pm_count = #loaded_placement_matches.incomplete[players[player_number].user_id]
             
-            leaderboard.players[players[player_number].user_id].placement_matches[pm_count+1] = 
+            loaded_placement_matches.incomplete[players[player_number].user_id][pm_count+1] = 
               { op_user_id=players[player_number].opponent.user_id,
                 op_name=playerbase.players[players[player_number].opponent.user_id],
                 op_rating=leaderboard.players[players[player_number].opponent.user_id].rating,
                 outcome = Oa}
-            print("PRINTING LEADERBOARD:")
-            print(json.encode(leaderboard.players))
-            write_leaderboard_file()
+            print("PRINTING PLACEMENT MATCHES FOR USER")
+            print(json.encode(loaded_placement_matches.incomplete[players[player_number].user_id]))
+            write_user_placement_match_file(players[player_number].user_id,loaded_placement_matches.incomplete[players[player_number].user_id])
+            
             local process_them, reason = qualifies_for_placement(players[player_number].user_id)
             if process_them then
               process_placement_matches(players[player_number].user_id)
@@ -877,10 +878,29 @@ function adjust_ratings(room, winning_player_number)
     end
 end
 
+function load_placement_matches(user_id)
+  print("Requested loading placement matches for user_id:  "..(user_id or "nil"))
+  if not loaded_placement_matches.incomplete[user_id] then
+    local read_success, matches = read_user_placement_match_file(user_id)
+    if read_success then
+      loaded_placement_matches.incomplete[user_id] = matches or {}
+      print("loaded placement matches from file:")
+    else
+      loaded_placement_matches.incomplete[user_id] = {}
+      print("error reading file")
+    end
+    print(tostring(loaded_placement_matches.incomplete[user_id]))
+    print(json.encode(loaded_placement_matches.incomplete[user_id]))
+  else 
+    print("Didn't load placement matches from file. It is already loaded")
+  end
+end
+
 function qualifies_for_placement(user_id)
   local placement_match_count_requirement = 50
   --local placement_match_win_ratio_requirement = .2
-  local placement_matches_played = #leaderboard.players[user_id].placement_matches
+  load_placement_matches(user_id)
+  local placement_matches_played = #loaded_placement_matches.incomplete[user_id]
   if leaderboard.players[user_id].placement_done then 
     return false, "user is already placed"
   elseif placement_matches_played < placement_match_count_requirement then
@@ -889,7 +909,7 @@ function qualifies_for_placement(user_id)
     -- local win_ratio
     -- local win_count
     -- for i=1,placement_matches_played do
-      -- win_count = win_count + leaderboard.players[user_id].placement_matches[i].outcome
+      -- win_count = win_count + loaded_placement_matches.incomplete[user_id][i].outcome
     -- end
     -- win_ratio = win_count / placement_matches_played
     -- if win_ratio < placement_match_win_ratio_requirement then
@@ -902,7 +922,12 @@ end
 function process_placement_matches(user_id)
   local rating = DEFAULT_RATING
   local k = 20 -- adjusts max points gained or lost per match
-  local placement_matches = leaderboard.players[user_id].placement_matches
+  load_placement_matches(user_id)
+  local placement_matches = loaded_placement_matches.incomplete[user_id]
+  if #placement_matches < 1 then
+    print("Error: failed to process placement matches because we couldn't find any")
+    return
+  end
   for i=1, #placement_matches do
     rating = calculate_rating_adjustment(rating, placement_matches[i].op_rating, placement_matches[i].outcome, k)
   end
@@ -914,11 +939,17 @@ function process_placement_matches(user_id)
     else
       op_outcome = 0
     end
-    local op_rating_change = calculate_rating_adjustment(placement_matches[i].op_rating, leaderboard.players[op_user_id].final_placement_rating, op_outcome, 10) - placement_matches[i].op_rating
+    local op_rating_change = calculate_rating_adjustment(
+    placement_matches[i].op_rating,
+    leaderboard.players[user_id].final_placement_rating,
+    op_outcome, 10) - 
+    placement_matches[i].op_rating
     leaderboard.players[placement_matches[i].op_user_id].rating = leaderboard.players[placement_matches[i].op_user_id].rating + op_rating_change
   end
   leaderboard.players[user_id].placement_done = true
+  leaderboard.players[user_id].final_placement_rating = leaderboard.players[user_id].rating
   write_leaderboard_file()
+  move_user_placement_file_to_complete(user_id)
 end
 
 function get_league(rating)
@@ -1202,6 +1233,8 @@ end
 --]]
 
 local server_socket = socket.bind("*", 49569)
+local sep = package.config:sub(1, 1)
+print("sep: "..sep)
 playerbase = Playerbase("playerbase")
 read_players_file()
 read_deleted_players_file()

@@ -1,6 +1,10 @@
 local lfs = require("lfs")
 local csvfile = require("simplecsv")
 
+function os_rename(old_name, new_name)
+  os.rename(old_name, new_name)
+end
+
 function isFile(name)
     if type(name)~="string" then return false end
     if not isDir(name) then
@@ -68,16 +72,19 @@ function write_leaderboard_file() pcall(function()
   -- io.write(json.encode(leaderboard.players))
   -- io.close(f)
   --now also write a CSV version of the file
-  --local csv = "user_id,user_name,rating,placement_done,placement_matches,final_placement_rating,ranked_games_played,ranked_games_won"
+  --local csv = "user_id,user_name,rating,placement_done,final_placement_rating,ranked_games_played,ranked_games_won"
+  local sep = package.config:sub(1, 1)
   local leaderboard_table = {}
-  leaderboard_table[#leaderboard_table+1] = {"user_id","user_name","rating","placement_done","placement_matches","final_placement_rating","ranked_games_played","ranked_games_won"}
+  leaderboard_table[#leaderboard_table+1] = {"user_id","user_name","rating","placement_done","final_placement_rating","ranked_games_played","ranked_games_won"}
   
   for user_id,v in pairs(leaderboard.players) do
     leaderboard_table[#leaderboard_table+1] = 
-    {user_id, v.user_name,v.rating,tostring(v.placement_done or ""),json.encode(v.placement_matches) or "",v.final_placement_rating,v.ranked_games_played,v.ranked_games_won}
+    {user_id, v.user_name,v.rating,tostring(v.placement_done or ""),v.final_placement_rating,v.ranked_games_played,v.ranked_games_won}
   end
-  csvfile.write('./leaderboard.csv', leaderboard_table)
+  csvfile.write('.'..sep..'leaderboard.csv', leaderboard_table)
 end) end
+
+
 
 function read_leaderboard_file() pcall(function()
   -- local f = assert(io.open("leaderboard.txt", "r"))
@@ -102,8 +109,6 @@ function read_leaderboard_file() pcall(function()
         leaderboard.players[csv_table[row][1]][csv_table[1][col]] = tonumber(csv_table[row][col])
       elseif csv_table[1][col] == "placement_done" then
         leaderboard.players[csv_table[row][1]][csv_table[1][col]] = csv_table[row][col] and true and string.lower(csv_table[row][col]) ~= "false"
-      elseif csv_table[1][col] == "placement_matches" then
-        leaderboard.players[csv_table[row][1]][csv_table[1][col]] = json.decode(csv_table[row][col])
       else
         leaderboard.players[csv_table[row][1]][csv_table[1][col]] = csv_table[row][col]
       end
@@ -112,10 +117,69 @@ function read_leaderboard_file() pcall(function()
 
 end) end
 
+function read_user_placement_match_file(user_id) return pcall(function()
+  local sep = package.config:sub(1, 1)
+  local csv_table = csvfile.read('./placement_matches/incomplete/'..user_id..'.csv')
+  if not csv_table or #csv_table < 2 then
+    print("csv_table from read_user_placement_match_file was nil or <2 length")
+    return nil
+  else
+    print("csv_table from read_user_placement_match_file :")
+    print(json.encode(csv_table))
+  end
+  local ret = {}
+  for row=2,#csv_table do
+    csv_table[row][1] = tostring(csv_table[row][1]) --change the op_user_id to a string
+    ret[#ret+1] = {}
+    for col=1, #csv_table[1] do
+      --Note csv_table[row][1] will be the player's user_id
+      --csv_table[1][col] will be a property name such as "rating"
+      if csv_table[row][col] == '' then
+        csv_table[row][col] = nil
+      end
+      --player with this user_id gets this property equal to the csv_table cell's value
+      if csv_table[1][col] == "op_name" then
+        ret[#ret][csv_table[1][col]] = tostring(csv_table[row][col])
+      elseif csv_table[1][col] == "op_rating" then
+        ret[#ret][csv_table[1][col]] = tonumber(csv_table[row][col])
+      elseif csv_table[1][col] == "op_user_id" then
+        ret[#ret][csv_table[1][col]] = tostring(csv_table[row][col])
+      elseif csv_table[1][col] == "outcome" then
+        ret[#ret][csv_table[1][col]] = tonumber(csv_table[row][col])        
+      else
+        ret[#ret][csv_table[1][col]] = csv_table[row][col]
+      end
+    end
+  end
+  print("read_user_placement_match_file ret: ")
+  print(tostring(ret))
+  print(json.encode(ret))
+  return ret
+
+end) end
+
+function move_user_placement_file_to_complete(user_id)
+  local sep = package.config:sub(1, 1)
+  os.rename('placement_matches'..sep..'incomplete'..sep..user_id..'.csv','placement_matches'..sep..'complete'..sep..user_id..'.csv')
+end
+
+function write_user_placement_match_file(user_id, placement_matches) pcall(function()
+  local sep = package.config:sub(1, 1)
+  local pm_table = {}
+  pm_table[#pm_table+1] = {"op_user_id","op_name","op_rating","outcome"}
+  for k,v in ipairs(placement_matches) do
+    pm_table[#pm_table+1] = 
+    {v.op_user_id, v.op_name,v.op_rating, v.outcome}
+  end
+  mkDir('placement_matches'..sep..'incomplete')
+  csvfile.write('placement_matches'..sep..'incomplete'..sep..user_id..'.csv', pm_table)
+end) end
+
 function write_replay_file(replay, path, filename) pcall(function()
+  local sep = package.config:sub(1, 1)
   print("about to open new replay file for writing")
   mkDir(path)
-  local f = assert(io.open(path.."/"..filename, "w"))
+  local f = assert(io.open(path..sep..filename, "w"))
   print("past file open")
   io.output(f)
   io.write(json.encode(replay))
