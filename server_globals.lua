@@ -13,4 +13,4 @@ leagues = { {league="Newcomer",     min_rating = -1000},
             {league="Master",       min_rating = 2400},
             {league="Grandmaster",  min_rating = 2500}
           }
-                          
+PLACEMENT_MATCH_COUNT_REQUIREMENT = 50

@@ -774,11 +774,15 @@ function adjust_ratings(room, winning_player_number)
           print("Gave "..playerbase.players[players[player_number].user_id].." a new rating of "..DEFAULT_RATING)
         end
       end
-      
+      local placement_done = {}
+      for player_number = 1,2 do
+        placement_done[players[player_number].user_id] = leaderboard.players[players[player_number].user_id].placement_done
+
+      end
       for player_number = 1,2 do
         local k, Oa --max point change per match, actual outcome
         room.ratings[player_number] = {}
-        if leaderboard.players[players[player_number].user_id].placement_done == true then
+        if placement_done[players[player_number].user_id] == true then
           k = 10
         else
           k = 50
@@ -788,8 +792,8 @@ function adjust_ratings(room, winning_player_number)
         else
           Oa = 0
         end
-        if leaderboard.players[players[player_number].user_id].placement_done == true then
-          if leaderboard.players[players[player_number].opponent.user_id].placement_done then
+        if placement_done[players[player_number].user_id] then
+          if placement_done[players[player_number].opponent.user_id] then
             print("Player "..player_number.." played a non-placement ranked match.  Updating his rating now.")
             room.ratings[player_number].new = calculate_rating_adjustment(leaderboard.players[players[player_number].user_id].rating, leaderboard.players[players[player_number].opponent.user_id].rating, Oa, k)
           else
@@ -800,7 +804,7 @@ function adjust_ratings(room, winning_player_number)
             room.ratings[player_number].difference = 0
           end
         else -- this player has not finished placement
-          if leaderboard.players[players[player_number].opponent.user_id].placement_done then
+          if placement_done[players[player_number].opponent.user_id] then
             print("Player "..player_number.." (unranked) just played a placement match against a ranked player.")
             print("Adding this match to the list of matches to be processed when player finishes placement")
             load_placement_matches(players[player_number].user_id)
@@ -818,31 +822,37 @@ function adjust_ratings(room, winning_player_number)
             local process_them, reason = qualifies_for_placement(players[player_number].user_id)
             if process_them then
               process_placement_matches(players[player_number].user_id)
+              room.ratings[player_number].new = round(leaderboard.players[players[player_number].user_id].rating)
+              room.ratings[player_number].old = 0
+              room.ratings[player_number].difference = room.ratings[player_number].new - room.ratings[player_number].old
+              return
             else 
               placement_match_progress = reason
             end
           else
             print("Neither player is done with placement.  We should not have gotten to this line of code")
           end
+          if not process_them then
             room.ratings[player_number].new = 0
             room.ratings[player_number].old = 0
             room.ratings[player_number].difference = 0
+          end
         end
-        
-        
-    print("room.ratings["..player_number.."].new = "..(room.ratings[player_number].new or ""))
+        print("room.ratings["..player_number.."].new = "..(room.ratings[player_number].new or ""))
       end
       --check that both player's new room.ratings are numeric (and not nil)
-      for player_number = 1,2 do
-        if tonumber(room.ratings[player_number].new) then
-          print()
-          continue = true
-        else
-          print(players[player_number].name.."'s new rating wasn't calculated properly.  Not adjusting the rating for this match")
-          continue = false
+      if not process_them then
+        for player_number = 1,2 do
+          if tonumber(room.ratings[player_number].new) then
+            print()
+            continue = true
+          else
+            print(players[player_number].name.."'s new rating wasn't calculated properly.  Not adjusting the rating for this match")
+            continue = false
+          end
         end
       end
-      if continue then
+      if continue and not process_them then
           --now that both new room.ratings have been calculated properly, actually update the leaderboard
           for player_number = 1,2 do
             print(playerbase.players[players[player_number].user_id])
@@ -854,7 +864,7 @@ function adjust_ratings(room, winning_player_number)
           for player_number = 1,2 do
             
             --round and calculate rating gain or loss (difference) to send to the clients
-            if leaderboard.players[players[player_number].user_id].placement_done then
+            if placement_done[players[player_number].user_id] then
               room.ratings[player_number].old 
                 = round(room.ratings[player_number].old 
                   or leaderboard.players[players[player_number].user_id].rating)
@@ -897,14 +907,13 @@ function load_placement_matches(user_id)
 end
 
 function qualifies_for_placement(user_id)
-  local placement_match_count_requirement = 50
   --local placement_match_win_ratio_requirement = .2
   load_placement_matches(user_id)
   local placement_matches_played = #loaded_placement_matches.incomplete[user_id]
   if leaderboard.players[user_id].placement_done then 
     return false, "user is already placed"
-  elseif placement_matches_played < placement_match_count_requirement then
-    return false, placement_matches_played.."/"..placement_match_count_requirement.." placement matches played."
+  elseif placement_matches_played < PLACEMENT_MATCH_COUNT_REQUIREMENT then
+    return false, placement_matches_played.."/"..PLACEMENT_MATCH_COUNT_REQUIREMENT.." placement matches played."
   -- else
     -- local win_ratio
     -- local win_count
@@ -928,11 +937,24 @@ function process_placement_matches(user_id)
     print("Error: failed to process placement matches because we couldn't find any")
     return
   end
+  --Calculate newcomer's rating
   for i=1, #placement_matches do
+    print("Newcomer: "..leaderboard.players[user_id].rating.." "..placement_matches[i].op_name..": "..placement_matches[i].op_rating.." Outcome: "..placement_matches[i].outcome)
     rating = calculate_rating_adjustment(rating, placement_matches[i].op_rating, placement_matches[i].outcome, k)
+    print("New newcomer rating: "..rating)
   end
   leaderboard.players[user_id].rating = rating
+  --local win_ratio
+  local win_count = 0
+  for i=1,#loaded_placement_matches.incomplete[user_id] do
+    win_count = win_count + loaded_placement_matches.incomplete[user_id][i].outcome
+  end
+  leaderboard.players[user_id].ranked_games_played = #loaded_placement_matches.incomplete[user_id]
+  leaderboard.players[user_id].ranked_games_won = win_count
+  --win_ratio = win_count / placement_matches_played  -- TODO: perhaps record this
   leaderboard.players[user_id].final_placement_rating = rating
+  --Calculate changes to opponents ratings for placement matches won/lost
+  print("adjusting opponent rating(s) for these placement matches")
   for i=1, #placement_matches do
     if placement_matches[i].outcome == 0 then
       op_outcome = 1
@@ -947,7 +969,6 @@ function process_placement_matches(user_id)
     leaderboard.players[placement_matches[i].op_user_id].rating = leaderboard.players[placement_matches[i].op_user_id].rating + op_rating_change
   end
   leaderboard.players[user_id].placement_done = true
-  leaderboard.players[user_id].final_placement_rating = leaderboard.players[user_id].rating
   write_leaderboard_file()
   move_user_placement_file_to_complete(user_id)
 end
