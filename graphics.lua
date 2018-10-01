@@ -4,7 +4,6 @@
 -- @module graphics 
 
 require("input")
--- T13
 local ceil = math.ceil --rounding
 local len_garbage = #garbage_bounce_table --length of lua garbage
 
@@ -12,10 +11,10 @@ local len_garbage = #garbage_bounce_table --length of lua garbage
 -- @function load_img
 -- @param image_path image archive
 -- @return draw_image drawing image
--- T11
 function load_img(image_path)
     local img
 
+    -- if the path doesn't exist, creates the path 
     if pcall(
         function ()
             img = love.image.newImageData("assets/"..(config.assets_dir or default_assets_dir).."/"..image_path)
@@ -43,22 +42,21 @@ end
 -- @param x_scale
 -- @param y_scale 
 -- @return nil 
--- T11
 function draw(img, x, y, rot, x_scale, y_scale)
     rot = rot or 0
     x_scale = x_scale or 1
     y_scale = y_scale or 1
     gfx_q:push(
-                {love.graphics.draw,
-                {
-                 img,
-                 x*GFX_SCALE,
-                 y*GFX_SCALE,
-                 rot,
-                 x_scale*GFX_SCALE,
-                 y_scale*GFX_SCALE
-                }
-                })
+    {love.graphics.draw,
+    {
+        img,
+        x*GFX_SCALE,
+        y*GFX_SCALE,
+        rot,
+        x_scale*GFX_SCALE,
+        y_scale*GFX_SCALE
+    }
+})
 
 end
 
@@ -71,22 +69,21 @@ end
 -- @param x_scale
 -- @param y_scale 
 -- @return nil 
--- T11
 function menu_draw(img, x, y, rot, x_scale,y_scale)
     rot = rot or 0
     x_scale = x_scale or 1
     y_scale = y_scale or 1
     gfx_q:push(
-                {love.graphics.draw,
-                {
-                 img,
-                 x,
-                 y,
-                 rot,
-                 x_scale,
-                 y_scale
-                }
-                })
+    {love.graphics.draw,
+    {
+        img,
+        x,
+        y,
+        rot,
+        x_scale,
+        y_scale
+    }
+})
 
 end
 
@@ -100,24 +97,23 @@ end
 -- @param x_scale
 -- @param y_scale 
 -- @return nil 
--- T11
 function menu_drawq(img, quad, x, y, rot, x_scale, y_scale)
     rot = rot or 0
     x_scale = x_scale or 1
     y_scale = y_scale or 1
 
     gfx_q:push(
-                {love.graphics.draw,
-                {
-                 img,
-                 quad,
-                 x,
-                 y,
-                 rot,
-                 x_scale,
-                 y_scale
-                }
-                })
+    {love.graphics.draw,
+    {
+        img,
+        quad,
+        x,
+        y,
+        rot,
+        x_scale,
+        y_scale
+    }
+})
 
 end
 
@@ -129,19 +125,17 @@ end
 -- @param width_rectangle 
 -- @param height_rectangle
 -- @return nil 
--- T5
--- T11
 function grectangle(mode, x, y, width_rectangle, height_rectangle)
     gfx_q:push(
-                {love.graphics.rectangle,
-                {
-                 mode,
-                 x,
-                 y,
-                 width_rectangle,
-                 height_rectangle
-                 }
-                })
+    {love.graphics.rectangle,
+    {
+        mode,
+        x,
+        y,
+        width_rectangle,
+        height_rectangle
+    }
+})
 end
 
 --- print message on screen  
@@ -150,20 +144,18 @@ end
 -- @param x position on the x_axis
 -- @param y position on the y_axis
 -- @return nil 
--- T11
 function gprint(str, x, y)
     gfx_q:push(
-            {love.graphics.print,
-            {
-             str,
-             x,
-             y
-            }
-            })
+    {love.graphics.print,
+    {
+        str,
+        x,
+        y
+    }
+})
 end
 
 -- current state of red, green, blue and alpha
--- T13, T5
 local r_current = 0
 local g_current = 0
 local b_current = 0
@@ -177,11 +169,10 @@ local MAX_ALPHA
 -- @param b blue 
 -- @param a alpha 
 -- @return nil 
--- T11
 function set_color(r, g, b, a)
     a = a or MAX_ALPHA
 
-    -- only do it if this color isn't the same as the previous one...
+    -- only do it if this color isn't the same as the previous one
     if r_current ~= r or g_current ~= g or b_current ~= b or a_current ~= a then
         r_current, g_current, b_current, a_current = r, g, b, a
         gfx_q:push({love.graphics.setColor, {r, g, b, a}})
@@ -195,9 +186,9 @@ local floor = math.floor
 -- @function graphics_init 
 -- @param nil
 -- @return nil 
--- T11
 function graphics_init()
     IMG_panels = {}
+
     for i=1,8 do
         IMG_panels[i]={}
         for j=1,7 do
@@ -212,13 +203,14 @@ function graphics_init()
     end
 
     local g_parts = {
-                     "topleft", "botleft", "topright", "botright",
-                     "top", "bot", "left", "right", "face", "pop",
-                     "doubleface", "filler1", "filler2", "flash",
-                     "portrait"
-                    }
+        "topleft", "botleft", "topright", "botright",
+        "top", "bot", "left", "right", "face", "pop",
+        "doubleface", "filler1", "filler2", "flash",
+        "portrait"
+    }
 
     IMG_garbage = {}
+
     for _,key in ipairs(characters) do
 
         local imgs = {}
@@ -237,9 +229,9 @@ function graphics_init()
     IMG_metal_r = load_img("metalend1.png")
 
     IMG_cursor = {
-                  load_img("cur0.png"),
-                  load_img("cur1.png")
-                 }
+        load_img("cur0.png"),
+        load_img("cur1.png")
+    }
 
     IMG_frame = load_img("frame.png")
     IMG_wall = load_img("wall.png")
@@ -257,7 +249,7 @@ function graphics_init()
     end
 
     for i=14,99 do
-    IMG_cards[true][i] = load_img("chain00.png")
+        IMG_cards[true][i] = load_img("chain00.png")
     end
 
     IMG_character_icons = {}
@@ -268,10 +260,12 @@ function graphics_init()
 
     local MAX_SUPPORTED_PLAYERS = 2
     IMG_char_sel_cursors = {}
+
     for player_num=1,MAX_SUPPORTED_PLAYERS do
         IMG_char_sel_cursors[player_num] = {}
         for position_num=1,2 do
-            IMG_char_sel_cursors[player_num][position_num] = load_img("char_sel_cur_"..player_num.."P_pos"..position_num..".png")
+            IMG_char_sel_cursors[player_num][position_num] = load_img(
+                "char_sel_cur_"..player_num.."P_pos"..position_num..".png")
         end
     end
 
@@ -283,7 +277,8 @@ function graphics_init()
         for position_num=1,2 do
             local cur_width, cur_height = IMG_char_sel_cursors[player_num][position_num]:getDimensions()
             local half_width, half_height = cur_width/2, cur_height/2
-          IMG_char_sel_cursor_halves["left"][player_num][position_num] = love.graphics.newQuad(0,0,half_width,cur_height,cur_width, cur_height)
+            IMG_char_sel_cursor_halves["left"][player_num][position_num] =
+                love.graphics.newQuad(0,0,half_width,cur_height,cur_width, cur_height)
         end
 
         IMG_char_sel_cursor_halves.right[player_num] = {}
@@ -291,11 +286,12 @@ function graphics_init()
         for position_num=1,2 do
             local cur_width, cur_height = IMG_char_sel_cursors[player_num][position_num]:getDimensions()
             local half_width, half_height = cur_width/2, cur_height/2
-            IMG_char_sel_cursor_halves.right[player_num][position_num] = love.graphics.newQuad(half_width,0,half_width,cur_height,cur_width, cur_height)
-         end
+            IMG_char_sel_cursor_halves.right[player_num][position_num] = 
+                love.graphics.newQuad(half_width,0,half_width,cur_height,cur_width, cur_height)
+        end
     end
 
-    character_display_names = {} -- players names --T13
+    character_display_names = {} -- players names 
 
     for k, original_name in ipairs(characters) do
         name_txt_file = love.filesystem.newFile("assets/"..config.assets_dir.."/"..original_name.."/name.txt")
@@ -324,10 +320,9 @@ end
 -- @function Stack.update_cards 
 -- @param self object 
 -- @return nil 
--- T11
 function Stack.update_cards(self)
-
-    for i=self.card_q.first,self.card_q.last do
+    -- scrolls through all the cards and updates
+    for i = self.card_q.first,self.card_q.last do
         local card = self.card_q[i]
         if card_animation[card.frame] then
             card.frame = card.frame + 1
@@ -338,23 +333,21 @@ function Stack.update_cards(self)
             card.frame = card.frame + 1
         end
     end
-
 end
 
 --- subscribe the method draw_cards of Stack class for draw the cards  
 -- @function Stack.draw_cards 
 -- @param self object 
 -- @return nil 
--- T11
 function Stack.draw_cards(self)
     for i=self.card_q.first,self.card_q.last do
         local card = self.card_q[i]
         if card_animation[card.frame] then
             local draw_x = (card.x-1) * 16 + self.pos_x
             local draw_y = (11-card.y) * 16 + self.pos_y + self.displacement
-                - card_animation[card.frame]
-                draw(IMG_cards[card.chain][card.n], draw_x, draw_y)
-         end
+            - card_animation[card.frame]
+            draw(IMG_cards[card.chain][card.n], draw_x, draw_y)
+        end
     end
 
 end
@@ -363,7 +356,6 @@ end
 -- @function Stack.render 
 -- @param self object 
 -- @return nil 
--- T11
 function Stack.render(self)
     local mouse_x, mouse_y -- coordinates of mouse
 
@@ -382,8 +374,8 @@ function Stack.render(self)
     local shake_idx = #shake_arr - self.shake_time
     local shake = ceil((shake_arr[shake_idx] or 0) * 13)
 
-    for row=0,self.height do
-        for col=1,self.width do
+    for row = 0,self.height do
+        for col = 1,self.width do
 
             local panel = self.panels[row][col]
             local draw_x = (col-1) * 16 + self.pos_x
@@ -399,7 +391,7 @@ function Stack.render(self)
                     end
 
                     if panel.x_offset == 0 and panel.y_offset == 0 then
-                        -- draw the entire block!
+                        -- draw the entire block
                         if panel.metal then
                             draw(IMG_metal_l, draw_x, draw_y)
                             draw(IMG_metal_r, draw_x+16*(panel.width-1)+8,draw_y)
@@ -409,9 +401,9 @@ function Stack.render(self)
                             end
                         else
                             local height, width = panel.height, panel.width
-                            -- highest possible height
+                            -- highest possible height 
                             local top_y = draw_y - (height-1) * 16
-                            -- verifies that the resulting height is odd, T13
+                            -- verifies that the resulting height is odd, 
                             local odd = ((height-(height%2))/2)%2==0
 
                             for i=0,height-1 do
@@ -463,10 +455,10 @@ function Stack.render(self)
                             end
                         else
                             draw(imgs.flash, draw_x, draw_y)
-                         end
+                        end
                     end
 
-                    --this adds the drawing of state flags to garbage panels
+                    -- this adds the drawing of state flags to garbage panels 
                     if config.debug_mode then
                         gprint(panel.state, draw_x*3, draw_y*3)
                         if panel.match_anyway ~= nil then
@@ -536,14 +528,13 @@ function Stack.render(self)
         gprint("Moves: "..self.puzzle_moves, self.score_x, 100)
         gprint("Frame: "..self.CLOCK, self.score_x, 130)
     else
-
         gprint("Score: "..self.score, self.score_x, 100)
         gprint("Speed: "..self.speed, self.score_x, 130)
         gprint("Frame: "..self.CLOCK, self.score_x, 145)
 
         if self.mode == "time" then
             local time_left = 120 - self.CLOCK/60
-            local mins = floor(time_left/60) -- currents minutes --T13
+            local mins = floor(time_left/60) -- currents minutes 
             local secs = floor(time_left%60) -- currents seconde
 
             gprint("Time: "..string.format("%01d:%02d",mins,secs), self.score_x, 160)
@@ -617,7 +608,6 @@ end
 -- @param w_ratio width ratio
 -- @param h_ratio height ratio
 -- @return ratio_letterbox 
--- T11
 function scale_letterbox(width, height, w_ratio, h_ratio)
     if height / h_ratio > width / w_ratio then
 
@@ -634,7 +624,6 @@ end
 -- @function Stack.render_cursor 
 -- @param self object 
 -- @return nil 
--- T11
 function Stack.render_cursor(self)
     draw(IMG_cursor[(floor(self.CLOCK/16)%2)+1], (self.cur_col-1)*16+self.pos_x-4, (11-(self.cur_row))*16+self.pos_y-4+self.displacement)
 end
