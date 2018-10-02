@@ -426,6 +426,8 @@ function main_character_select()
     global_current_room_ratings = global_current_room_ratings or {{new=0,old=0,difference=0},{new=0,old=0,difference=0}}
     my_expected_win_ratio = nil
     op_expected_win_ratio = nil
+    print("my_player_number = "..my_player_number)
+    print("op_player_number = "..op_player_number)
     if global_current_room_ratings[my_player_number].new
     and global_current_room_ratings[my_player_number].new ~= 0
     and global_current_room_ratings[op_player_number]
@@ -599,7 +601,7 @@ function main_character_select()
           match_type = "Ranked"
           match_type_message = ""
           if msg.caveats then
-            match_type_message = match_type_message..(msg.caveats[1] or "Reason unknown")
+            match_type_message = match_type_message..(msg.caveats[1] or "")
           end
         elseif msg.ranked_match_denied then
           match_type = "Casual"
@@ -738,7 +740,7 @@ function main_character_select()
       elseif global_current_room_ratings[my_player_number].placement_match_progress 
       and global_current_room_ratings[my_player_number].new 
       and global_current_room_ratings[my_player_number].new == 0 then
-        state = state..":  Progress: "..global_current_room_ratings[my_player_number].placement_match_progress
+        state = state.." "..global_current_room_ratings[my_player_number].placement_match_progress
       end
     end
     if character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs" then
@@ -766,7 +768,7 @@ function main_character_select()
       elseif global_current_room_ratings[op_player_number].placement_match_progress 
       and global_current_room_ratings[op_player_number].new 
       and global_current_room_ratings[op_player_number].new == 0 then
-        state = state..":  Progress: "..global_current_room_ratings[op_player_number].placement_match_progress
+        state = state.." "..global_current_room_ratings[op_player_number].placement_match_progress
       end
     end
       state = state.."  Wins: "..op_win_count 
