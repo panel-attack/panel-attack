@@ -1328,6 +1328,7 @@ end
 initialize_mt_generator(csprng_seed)
 seed_from_mt(extract_mt())
 ban_list = {}
+move_user_placement_file_to_complete("2280669303")
 --timezone testing
 -- print("server_UTC_offset (in seconds) is "..tzoffset)
 -- print("that's "..(tzoffset/3600).." hours")
