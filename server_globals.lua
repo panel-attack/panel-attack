@@ -9,7 +9,7 @@ leagues = { {league="Newcomer",     min_rating = -1000},
             {league="Silver",       min_rating = 1240},
             {league="Gold",         min_rating = 1540},
             {league="Platinum",     min_rating = 1920},
-            {league="Daimond",      min_rating = 2160},
+            {league="Diamond",      min_rating = 2160},
             {league="Master",       min_rating = 2400},
             {league="Grandmaster",  min_rating = 2500}
           }

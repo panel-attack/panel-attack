@@ -29,13 +29,11 @@ function isDir(name)
 end
 
 function mkDir(path)
-  print("mkDir(path)")
   local sep, pStr = package.config:sub(1, 1), ""
   for dir in path:gmatch("[^" .. sep .. "]+") do
     pStr = pStr .. dir .. sep
     lfs.mkdir(pStr)
   end
-  print("got to the end of mkDir(path)")
 end
 
 function write_players_file() pcall(function()
@@ -158,28 +156,12 @@ function read_user_placement_match_file(user_id) return pcall(function()
 
 end) end
 
-function move_user_placement_file_to_complete(user_id) --pcall(function()
+function move_user_placement_file_to_complete(user_id) pcall(function()
   local sep = package.config:sub(1, 1)
-  print("about to move user's placement match file to completed")
-  
-  print("lfs.currentdir()"..lfs.currentdir())
-  local currentdir = lfs.currentdir()
-  --local moved, err = os.rename(currentdir..sep..'placement_matches'..sep..'incomplete'..sep..user_id..'.csv',currentdir..sep..'placement_matches'..sep..'complete'..sep..user_id..'.csv')
-  local moved, err = os.rename(currentdir:gsub("\\","/")..'/placement_matches/incomplete/'..user_id..'.csv',currentdir:gsub("\\","/")..'/placement_matches/complete/'..user_id..'.csv')
-  print("moved it")
-  print("error for move? "..tostring(err or "nil"))
-  
-  -- local source_file = lfs.newFile(source.."/"..name)
-  -- source_file:open("r")
-  -- local source_size = source_file:getSize()
-  -- temp = source_file:read(source_size)
-  -- source_file:close()
-  
-  -- local new_file = lfs.newFile(destination.."/"..name)
-  -- new_file:open("w")
-  -- local success, message =  new_file:write(temp, source_size)
-  -- new_file:close()
-end--) end
+  mkDir('./placement_matches/complete')
+  local moved, err = os.rename('./placement_matches/incomplete/'..user_id..'.csv','./placement_matches/complete/'..user_id..'.csv')
+
+end) end
 
 function write_user_placement_match_file(user_id, placement_matches) pcall(function()
   local sep = package.config:sub(1, 1)
