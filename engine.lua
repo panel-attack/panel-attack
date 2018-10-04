@@ -692,7 +692,7 @@ function Stack.PdP(self)
           panel.state = "landing"
           panel.timer = 12
           SFX_Land_Play=1;
- 
+
         -- if there's a panel below, this panel's gonna land
         -- unless the panel below is falling.
         elseif panels[row-1][col].color ~= 0 and
