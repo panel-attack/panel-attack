@@ -1,5 +1,9 @@
-local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
+-- Used to load and write data to files.
+-- Stores user configs and game states
 
+local sep = package.config:sub(1, 1) -- determines os directory separator (i.e. "/" or "\")
+
+-- write keys.txt file
 function write_key_file() pcall(function()
   local file = love.filesystem.newFile("keys.txt")
   file:open("w")
@@ -7,11 +11,13 @@ function write_key_file() pcall(function()
   file:close()
 end) end
 
+-- read keys.txt file
 function read_key_file() pcall(function()
   local K=K
   local file = love.filesystem.newFile("keys.txt")
   file:open("r")
   local teh_json = file:read(file:getSize())
+  -- load user config
   local user_conf = json.decode(teh_json)
   file:close()
   -- TODO: remove this later, it just converts the old format.
@@ -26,22 +32,26 @@ function read_key_file() pcall(function()
     K[k]=v
   end
 end) end
+
+-- read given txt file
 function read_txt_file(path_and_filename)
-  local s
+  local file_size
   pcall(function()
     local file = love.filesystem.newFile(path_and_filename)
     file:open("r")
-    s = file:read(file:getSize())
+    file_size= file:read(file:getSize())
     file:close()
   end)
-  if not s then
-    s = "Failed to read file"..path_and_filename
+  if not file_size then
+    file_size  = "Failed to read file"..path_and_filename
   else
-  s = s:gsub('\r\n?', '\n')
+    -- substitute multiple newlines for one newline
+    file_size = file_size:gsub('\r\n?', '\n')
   end
-  return s or "Failed to read file"
+  return file_size or "Failed to read file"
  end
 
+-- write configuration to JSON file
 function write_conf_file() pcall(function()
   local file = love.filesystem.newFile("conf.json")
   file:open("w")
@@ -49,6 +59,7 @@ function write_conf_file() pcall(function()
   file:close()
 end) end
 
+-- read configuration from JSON file
 function read_conf_file() pcall(function()
   local file = love.filesystem.newFile("conf.json")
   file:open("r")
@@ -59,6 +70,7 @@ function read_conf_file() pcall(function()
   file:close()
 end) end
 
+-- read replay file
 function read_replay_file() pcall(function()
   local file = love.filesystem.newFile("replay.txt")
   file:open("r")
@@ -70,6 +82,7 @@ function read_replay_file() pcall(function()
   end
 end) end
 
+-- write replay file to default path
 function write_replay_file() pcall(function()
   local file = love.filesystem.newFile("replay.txt")
   file:open("w")
@@ -77,6 +90,7 @@ function write_replay_file() pcall(function()
   file:close()
 end) end
 
+-- Override function to write replay file to specific path
 function write_replay_file(path, filename) pcall(function()
   love.filesystem.createDirectory(path)
   local file = love.filesystem.newFile(path.."/"..filename)
@@ -85,6 +99,7 @@ function write_replay_file(path, filename) pcall(function()
   file:close()
 end) end
 
+-- write user id file
 function write_user_id_file() pcall(function()
   love.filesystem.createDirectory("servers/"..connected_server_ip)
   local file = love.filesystem.newFile("servers/"..connected_server_ip.."/user_id.txt")
@@ -93,6 +108,7 @@ function write_user_id_file() pcall(function()
   file:close()
 end) end
 
+-- read user id file
 function read_user_id_file() pcall(function()
   local file = love.filesystem.newFile("servers/"..connected_server_ip.."/user_id.txt")
   file:open("r")
@@ -100,12 +116,14 @@ function read_user_id_file() pcall(function()
   file:close()
 end) end
 
+-- this function is never called
 function print_list(t)
   for i, v in ipairs(t) do
     print(v)
   end
 end
 
+-- copy recursively from files in source
 function recursive_copy(source, destination)
   local lfs = love.filesystem
   local names = lfs.getDirectoryItems(source)
@@ -114,26 +132,26 @@ function recursive_copy(source, destination)
     if lfs.isDirectory(source.."/"..name) then
       print("calling recursive_copy(source".."/"..name..", ".. destination.."/"..name..")")
       recursive_copy(source.."/"..name, destination.."/"..name)
-      
+
     elseif lfs.isFile(source.."/"..name) then
       if not lfs.isDirectory(destination) then
        love.filesystem.createDirectory(destination)
       end
       print("copying file:  "..source.."/"..name.." to "..destination.."/"..name)
-      
+
       local source_file = lfs.newFile(source.."/"..name)
       source_file:open("r")
       local source_size = source_file:getSize()
       temp = source_file:read(source_size)
       source_file:close()
-      
+
       local new_file = lfs.newFile(destination.."/"..name)
       new_file:open("w")
       local success, message =  new_file:write(temp, source_size)
       new_file:close()
-      
+
       print(message)
-    else 
+    else
       print("name:  "..name.." isn't a directory or file?")
     end
   end
