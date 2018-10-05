@@ -1,6 +1,11 @@
+-----------------------------------
+--- Globals module  
+--- Declaration of globals variables
+-- @module globals
+
 require("queue")
 
--- keyboard assignment vars
+-- declaration of variables related to the keyboard 
 keyboard = {
     {up="up", down="down", left="left", right="right",
      swap1="z", swap2="x", raise_faster1="c", raise_faster2="v"},
@@ -58,6 +63,7 @@ score_chain_TA = {
     1300, 1500, 1800, [0]=0
 }
 
+-- game graphics scale related to the panel 
 GFX_SCALE = 3
 
 card_animation = {
@@ -85,7 +91,7 @@ stop_time_danger = {600, 420, 240}
 difficulty_to_ncolors_endless = {5,6,6}
 difficulty_to_ncolors_1Ptime = {6,6,6}
 
--- Yes, 2 is slower than 1 and 50..99 are the same.
+-- value of the speed in each level 
 speed_to_rise_time = map(
     function(x)
         return x/16
@@ -103,13 +109,7 @@ speed_to_rise_time = map(
     }
 )
 
--- endless and 1P time attack use a speed system in which
--- speed increases based on the number of panels you clear.
--- For example, to get from speed 1 to speed 2, you must
--- clear 9 panels.
---
--- Values past 51 weren't measured because all the speeds
--- after that are the same anyway.
+-- number of panels you need to clear to increase speed in each level 
 panels_to_next_speed = {
     9, 12, 12, 12, 12, 12, 15, 15, 18, 18,
     24, 24, 24, 24, 24, 24, 21, 18, 18, 18,
@@ -168,6 +168,7 @@ for i=1,72 do
     combo_garbage[i] = combo_garbage[i] or combo_garbage[i-1]
 end
 
+-- characters availables to players 
 characters = {
     "lip", "windy", "sherbet", "thiana", "ruby",
     "elias", "flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia",
@@ -176,6 +177,8 @@ characters = {
     "navalpiranha", "kamek", "bowser"
 }
 
+--- stages related to each character 
+--- ... it changes the backgroud image and the sound for each choice
 stages = {
     lip = 'flower',
     windy = 'wind',
@@ -265,7 +268,7 @@ panel_color_to_number = {
     ["0"]=0
 }
 
---how many panels you have to pop to earn a metal panel in your next row.
+-- how many panels you have to pop to earn a metal panel in your next row. 
 level_to_metal_panel_frequency = {12, 14, 16, 19, 23, 26, 29, 33, 37, 41}
 
 -- win counters
