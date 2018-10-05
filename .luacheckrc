@@ -12,10 +12,12 @@ globals = {
 -- Warnings to ignore:
 --
 ignore = {
-    "631", -- Line is too long.
     "111", -- setting non-standard global variable
     "112", -- setting non-standard global variable
     "113", -- accessing undefined variable
     "211", -- accessing undefined variable
-    "213" -- accessing undefined variable
+    "213", -- accessing undefined variable
+    "612", -- line contains trailling whitespace
+    "614", -- trailling whitespace in a comment
+    "631"  -- Line is too long.
 }

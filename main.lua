@@ -1,3 +1,8 @@
+------------
+--- Main Module
+--- Draw windown in screen and set up the game
+-- @module main 
+
 socket = require("socket")
 json = require("dkjson")
 require("util")
@@ -16,8 +21,13 @@ require("sound")
 require("timezones")
 require("gen_panels")
 
+--- This function create a routine and load the game
+-- @function love.load
+-- @param nil
+-- @return nil
 function love.load()
 
+    -- @fixme Test this
     math.randomseed(os.time())
     for i=1,4 do
         math.random()
@@ -28,21 +38,24 @@ function love.load()
 
 end
 
+-- These variables represent x and y axis
+-- The values then between 0 and default_width and default_height
 local last_x = 0
 local last_y = 0
+
+-- vairation of arrow
 local input_delta = 0.0
+
+-- flag for hidden arrow
 local pointer_hidden = false
 
-function love.load()
-  math.randomseed(os.time())
-  for i=1,4 do math.random() end
-  read_key_file()
-  mainloop = coroutine.create(load_game_resources)
-end
-
+--- This function update the game state for each frame
+-- @function love.update
+-- @param time since the last update
+-- @return nil
 function love.update(dt)
 
-    -- if mouse not change positivo
+    -- Hidden arrow or make then visible
     if love.mouse.getX() == last_x and love.mouse.getY() == last_y then
 
         if not pointer_hidden then
@@ -54,7 +67,7 @@ function love.update(dt)
             end
         end
 
-    else --else
+    else 
         last_x = love.mouse.getX()
         last_y = love.mouse.getY()
         input_delta = 0.0
@@ -92,13 +105,22 @@ function love.update(dt)
 
 end
 
+-- count frames
 local N_FRAMES = 0
+
+-- Screen of the game
 local canvas = love.graphics.newCanvas(default_width, default_height)
 
+
+--- Write objects in canvas
+-- @function love.draw
+-- @param nil
+-- @return nil
 function love.draw()
 
     love.graphics.setCanvas(canvas)
 
+    -- Default background color for canvas
     local RED_VALUE = 28
     local GREEN_VALUE = 28
     local BLUE_VALUE = 28
@@ -110,6 +132,7 @@ function love.draw()
         gfx_q[i][1](unpack(gfx_q[i][2]))
     end
 
+    -- position of box for FPS information
     local X_AXIS_PRINT = 315
     local Y_AXIS_PRINT = 115
 
