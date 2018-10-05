@@ -202,7 +202,7 @@ local strrep, gsub, strsub, strbyte, strchar, strfind, strlen, strformat =
       string.find, string.len, string.format
 
 -- User table object
-local concat = table.concat
+local concat = assert(table.concat)
 
 if _VERSION == 'Lua 5.1' then
   local function noglobals (s,k,v) error ('global access: ' .. k, 2) end
@@ -227,7 +227,8 @@ json.null = setmetatable ({}, {
 -- Function to check if a table is an array.
 local function isarray (table)
   local max, count, arraylen = 0, 0, 0
-  for key, value in pairs (table) do
+  -- check if parameter is not null
+  for key, value in pairs (assert(table)) do
     if key == 'n' and type(value) == 'number' then
       arraylen = value
       if value > max then
@@ -246,6 +247,8 @@ local function isarray (table)
   if max > 10 and max > arraylen and max > count * 2 then
     return false -- don't create an array with too many holes
   end
+  -- Assert max return
+  assert(max)
   return true, max
 end
 
@@ -257,7 +260,7 @@ local escapecodes = {
 
 
 local function escapeutf8 (uchar)
-  local value = escapecodes[uchar]
+  local value = assert(escapecodes[uchar])
   if value then
     return value
   end
@@ -291,6 +294,10 @@ local function fsub (str, pattern, repl)
   -- gsub always builds a new string in a buffer, even when no match
   -- exists. First using find should be more efficient when most strings
   -- don't contain the pattern.
+  -- Assert parameters
+  assert(str)
+  assert(pattern)
+  assert(repl)
   if strfind (str, pattern) then
     return gsub (str, pattern, repl)
   else
@@ -312,8 +319,10 @@ local function quotestring (value)
     value = fsub (value, "\239\187\191", escapeutf8)
     value = fsub (value, "\239\191[\176\191]", escapeutf8)
   end
-  return "\"" .. value .. "\""
+  return "\"" .. assert(value) .. "\""
 end
+
+assert(quotestring)
 json.quotestring = quotestring
 
 -- Add newline to string
@@ -321,6 +330,7 @@ local function addnewline2 (level, buffer, buflen)
   buffer[buflen+1] = '\n'
   buffer[buflen+2] = strrep ('  ', level)
   buflen = buflen + 2
+  assert(buflen > 0, 'Buffer length = 0')
   return buflen
 end
 
@@ -328,7 +338,8 @@ end
 function json.addnewline (state)
   if state.indent then
     state.bufferlen = addnewline2 (state.level or 0,
-                           state.buffer, state.bufferlen or #(state.buffer))
+                                   state.buffer,
+				   state.bufferlen or #(state.buffer))
   end
 end
 
@@ -336,6 +347,7 @@ local encode2 -- forward declaration
 
 -- Add pairs to JSON fields
 local function addpair (key, value, prev, indent, level, buffer, buflen, tables, globalorder)
+  assert(key, "key not defined")
   local keytype = type (key)
   if keytype ~= 'string' and keytype ~= 'number' then
     return nil, "type '" .. keytype .. "' is not supported as a key by JSON."
@@ -347,6 +359,7 @@ local function addpair (key, value, prev, indent, level, buffer, buflen, tables,
   if indent then
     buflen = addnewline2 (level, buffer, buflen)
   end
+  assert(buffer)
   buffer[buflen+1] = quotestring (key)
   buffer[buflen+2] = ':'
   return encode2 (value, indent, level, buffer, buflen + 2, tables, globalorder)
@@ -354,6 +367,7 @@ end
 
 -- encodes the values into JSON format
 encode2 = function (value, indent, level, buffer, buflen, tables, globalorder)
+  assert(value)
   local valtype = type (value)
   local valmeta = getmetatable (value)
   valmeta = type (valmeta) == 'table' and valmeta -- only tables
@@ -463,24 +477,29 @@ encode2 = function (value, indent, level, buffer, buflen, tables, globalorder)
     end
     tables[value] = nil
   else
+    assert(valtype)
     return nil, "type '" .. valtype .. "' is not supported by JSON."
   end
+  assert(buflen)
   return buflen
 end
 
 
 function json.encode (value, state)
   state = state or {}
+  assert(value)
   local oldbuffer = state.buffer
   local buffer = oldbuffer or {}
   local ret, msg = encode2 (value, state.indent, state.level or 0,
-                   buffer, state.bufferlen or 0, state.tables or {}, state.keyorder)
+                            buffer, state.bufferlen or 0, state.tables or {},
+			    state.keyorder)
   if not ret then
     error (msg, 2)
   elseif oldbuffer then
     state.bufferlen = ret
     return true
   else
+    assert(buffer)
     return concat (buffer)
   end
 end
@@ -488,6 +507,8 @@ end
 -- find position of given string
 local function loc (str, where)
   local line, pos, linepos = 1, 1, 1
+  assert(str)
+  assert(where)
   while true do
     pos = strfind (str, '\n', pos, true)
     if pos and pos < where then
@@ -498,11 +519,15 @@ local function loc (str, where)
       break
     end
   end
+  assert(line)
+  assert((where - linepos) > 0)
   return "line " .. line .. ", column " .. (where - linepos)
 end
 
 -- report unterminated message
 local function unterminated (str, what, where)
+  assert(str)
+  assert(str)
   return nil, strlen (str) + 1, "unterminated " .. what .. " at " .. loc (str, where)
 end
 
@@ -821,4 +846,3 @@ end
 
 return json
 
--->
