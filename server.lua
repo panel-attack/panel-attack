@@ -1342,7 +1342,7 @@ while true do
 	if now ~= prev_now then
 		for _,v in pairs(connections) do
 			if n_ow - v.last_read > 10 then
-			_	v:close()
+				v:close()
 			elseif now - v.last_read > 1 then
 				v:send("ELOL")
 			end
