@@ -29,7 +29,7 @@ function read_key_file() pcall(function()
     user_conf = {new_conf, {}, {}, {}}
   end
   for k,v in ipairs(user_conf) do
-    K[k]=v
+    keyboard[k]=v
   end
 end) end
 
