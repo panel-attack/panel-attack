@@ -1695,7 +1695,7 @@ function main_net_vs()
 end
 
 main_local_vs_setup = multi_func(function()
-    local K = keyboard
+    local k = keyboard
     local chosen, maybe = {}, {5,5}
     local P1_level, P2_level = nil, nil
     while chosen[1] == nil or chosen[2] == nil do
@@ -2311,15 +2311,15 @@ function main_options()
         --get_items()
         print_stuff()
         coroutine_wait()
-        if menu_key_up(K[1]) and not selected then
+        if menu_key_up(keyboard[1]) and not selected then
             active_idx = wrap(1, active_idx-1, #menu_options)
-          elseif menu_key_down(K[1]) and not selected then
+          elseif menu_key_down(keyboard[1]) and not selected then
             active_idx = wrap(1, active_idx+1, #menu_options)
-          elseif menu_key_left(K[1]) and (selected or not menu_options[active_idx][7]) then --or not selectable
+          elseif menu_key_left(keyboard[1]) and (selected or not menu_options[active_idx][7]) then --or not selectable
             adjust_left()
-          elseif menu_key_right(K[1]) and (selected or not menu_options[active_idx][7]) then --or not selectable
+          elseif menu_key_right(keyboard[1]) and (selected or not menu_options[active_idx][7]) then --or not selectable
             adjust_right()
-          elseif menu_key_enter(K[1]) then
+          elseif menu_key_enter(keyboard[1]) then
             if menu_options[active_idx][7] then --is selectable
                   selected = not selected
               if not selected then
@@ -2333,7 +2333,7 @@ function main_options()
         elseif active_idx == #menu_options then
               return exit_options_menu
         end
-          elseif menu_key_escape(K[1]) then
+          elseif menu_key_escape(keyboard[1]) then
             if selected then
                   selected = not selected
                   deselected_this_frame = true
@@ -2415,7 +2415,7 @@ function main_options()
                 do_menu_function = false
                 coroutine_wait()
 
-                if menu_key_escape(K[1]) or menu_key_enter(K[1]) then
+                if menu_key_escape(keyboard[1]) or menu_key_enter(keyboard[1]) then
                       break;
                 end
               end
@@ -2434,7 +2434,7 @@ function main_options()
                 gprint(custom_sounds_readme, 30, 150)      
                 do_menu_function = false
                 coroutine_wait()
-                if menu_key_escape(K[1]) or menu_key_enter(K[1]) then
+                if menu_key_escape(keyboard[1]) or menu_key_enter(keyboard[1]) then
                     break;
                 end
               end
