@@ -2149,17 +2149,17 @@ function main_config_input()
         get_items()
         print_stuff()
         coroutine_wait()
-          if menu_key_up(K[1]) then
+          if menu_key_up(keyboard[1]) then
             active_idx = wrap(1, active_idx - 1, #menu_options)
-          elseif menu_key_down(K[1]) then
+          elseif menu_key_down(keyboard[1]) then
             active_idx = wrap(1, active_idx + 1, #menu_options)
-          elseif menu_key_left(K[1]) then
+          elseif menu_key_left(keyboard[1]) then
             active_player = wrap(1, active_player - 1, 2)
-            k=K[active_player]
-          elseif menu_key_right(K[1]) then
+            k=keyboard[active_player]
+          elseif menu_key_right(keyboard[1]) then
             active_player = wrap(1, active_player + 1, 2)
-            k=K[active_player]
-          elseif menu_key_enter(K[1]) then
+            k=keyboard[active_player]
+          elseif menu_key_enter(keyboard[1]) then
             if active_idx <= #key_names then
                   set_key(active_idx)
                   write_key_file()
@@ -2171,7 +2171,7 @@ function main_config_input()
             else
                   return menu_options[active_idx][3], menu_options[active_idx][4]
             end
-          elseif menu_key_escape(K[1]) then
+          elseif menu_key_escape(keyboard[1]) then
             if active_idx == #menu_options then
                   return menu_options[active_idx][3], menu_options[active_idx][4]
             else
