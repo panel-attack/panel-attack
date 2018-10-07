@@ -527,7 +527,8 @@ end
 -- report unterminated message
 local function unterminated (str, what, where)
   assert(str)
-  assert(str)
+  assert(what)
+  assert(where)
   return nil, strlen (str) + 1, "unterminated " .. what .. " at " .. loc (str, where)
 end
 
@@ -553,6 +554,7 @@ local escapechars = {
 
 -- deals with unichar codes
 local function unichar (value)
+  assert(type(value) == "number", "value must be a number")
   if value < 0 then
     return nil
   elseif value <= 0x007f then
@@ -575,6 +577,8 @@ local function unichar (value)
 end
 
 local function scanstring (str, pos)
+  assert(type(pos) == "number")
+  assert(str)
   local lastpos = pos + 1
   local buffer, n = {}, 0
   while true do
@@ -627,10 +631,14 @@ local function scanstring (str, pos)
     end
   end
   if n == 1 then
+    assert(buffer[1])
     return buffer[1], lastpos
   elseif n > 1 then
+    assert(buffer)
+    assert(lastpos)
     return concat (buffer), lastpos
   else
+    assert(lastpos)
     return '', lastpos
   end
 end
@@ -638,6 +646,7 @@ end
 local scanvalue -- forward declaration
 
 local function scantable (what, closechar, str, startpos, nullval, objectmeta, arraymeta)
+  assert(str)
   local len = strlen (str)
   local tbl, n = {}, 0
   local pos = startpos + 1
@@ -646,6 +655,8 @@ local function scantable (what, closechar, str, startpos, nullval, objectmeta, a
     if not pos then return unterminated (str, what, startpos) end
     local char = strsub (str, pos, pos)
     if char == closechar then
+      assert(tbl)
+      assert(pos)
       return tbl, pos + 1
     end
     local scan1, err
@@ -656,6 +667,7 @@ local function scantable (what, closechar, str, startpos, nullval, objectmeta, a
     char = strsub (str, pos, pos)
     if char == ':' then
       if scan1 == nil then
+	assert(pos)
         return nil, pos, "cannot use nil as table index (at " .. loc (str, pos) .. ")"
       end
       pos = scanwhite (str, pos + 1)
@@ -679,6 +691,7 @@ end
 
 scanvalue = function (str, pos, nullval, objectmeta, arraymeta)
   pos = pos or 1
+  assert(str)
   pos = scanwhite (str, pos)
   if not pos then
     return nil, strlen (str) + 1, 'no valid JSON value (reached the end)'
@@ -716,11 +729,16 @@ end
 function json.decode (str, pos, nullval, objectmeta, arraymeta)
   objectmeta = objectmeta or {__jsontype = 'object'}
   arraymeta = arraymeta or {__jsontype = 'array'}
+  assert(str)
+  assert(pos)
+  assert(objectmeta)
+  assert(arraymeta)
   return scanvalue (str, pos, nullval, objectmeta, arraymeta)
 end
 
 function json.use_lpeg ()
   local lpeg = require ('lpeg')
+  assert(lpeg)
   local pegmatch = lpeg.match
   local P, S, R, V = lpeg.P, lpeg.S, lpeg.R, lpeg.V
 
@@ -737,6 +755,7 @@ function json.use_lpeg ()
   local QuoteStr = lpeg.Cs (lpeg.Cc "\"" * (SpecialChars + 1)^0 * lpeg.Cc "\"")
 
   quotestring = function (str)
+    assert(str)
     return pegmatch (QuoteStr, str)
   end
   json.quotestring = quotestring
@@ -794,7 +813,9 @@ function json.use_lpeg ()
       nt = nt + 1
       t[nt] = obj
     until cont == 'last'
-    return pos,t-- setmetatable (t, state.arraymeta)
+    assert(pos)
+    assert(t)
+    return pos, t-- setmetatable (t, state.objectmeta)
   end
 
   local function parseobject (str, pos, nullval, state)
@@ -807,7 +828,9 @@ function json.use_lpeg ()
       pos = npos
       t[key] = obj
     until cont == 'last'
-    return pos,t-- setmetatable (t, state.objectmeta)
+    assert(pos)
+    assert(t)
+    return pos, t-- setmetatable (t, state.objectmeta)
   end
 
   local Array = P"[" * lpeg.Cmt (g.Carg(1) * lpeg.Carg(2), parsearray) * Space * (P"]" + Err "']' expected")
@@ -826,8 +849,12 @@ function json.use_lpeg ()
     }
     local obj, retpos = pegmatch (DecodeValue, str, pos, nullval, state)
     if state.msg then
+      assert(state.pos)
+      assert(state.msg)
       return nil, state.pos, state.msg
     else
+      assert(obj)
+      assert(retpos)
       return obj, retpos
     end
   end
@@ -836,7 +863,7 @@ function json.use_lpeg ()
   json.use_lpeg = function () return json end
 
   json.using_lpeg = true
-
+  assert(json)
   return json -- so you can get the module using json = require "dkjson".use_lpeg()
 end
 
@@ -844,5 +871,6 @@ if always_try_using_lpeg then
   pcall (json.use_lpeg)
 end
 
+assert(json)
 return json
 
