@@ -52,6 +52,7 @@ end
 -- @param func The function to be wrapped
 function run_function_as_60hz(func)
     local frequency = 1 / 60
+    assert(func, "Run fuction as 60hz param nil")
     for i=1, 4 do
         if leftover_time >= frequency then
             func()
@@ -70,6 +71,7 @@ end
 -- @return 
 local multi = false
 function multi_func(func)
+    assert(func, "Milti func param nil")
     return function(...)
         multi = true
         local res = {func(...)}
@@ -102,6 +104,8 @@ end
 -- @param rept boolean tells if a button repeats(like pressing and holding)
 -- @return a fuction with 1 param 
 function menu_key_func(fixed, configurable, rept)
+    assert(fixed, "Menu key func param fixed is nil")
+    assert(configurable, "Menu key func param configurable is nil")
     local query = normal_key
     if rept then
         query = repeating_key
@@ -307,6 +311,7 @@ end
 -- @param next_fuction Fuction that gonna be executed next
 -- @param ... Other fuctions
 function select_speed_and_level_menu(next_func, ...)
+    assert(next_func, "Select speed and level menu param is nil")
     local difficulties = {
         "Easy",
         "Normal",
@@ -754,6 +759,7 @@ function main_character_select()
     local active_str = "level"
     local selectable = {level=true, ready=true}
     local function move_cursor(direction)
+        assert(direction, "Move cursor param is nil")
         local dx, dy = unpack(direction)
         local can_x, can_y = wrap(1, cursor[1]+dx, coordinate_x), wrap(1, cursor[2]+dy, coordinate_y)
 
@@ -797,6 +803,11 @@ function main_character_select()
     -- @param str string
     -- @return next screen 
     local function draw_button(x, y, w, h, str)
+        assert(x, "Draw buttos param x is nil")
+        assert(y, "Draw buttos param y is nil")
+        assert(w, "Draw buttos param w is nil")
+        assert(h, "Draw buttos param h is nil")
+        assert(str, "Draw buttos param str is nil")
         local menu_width = coordinate_y * 100
         local menu_height = coordinate_x * 80
         local spacing = 8
@@ -1515,6 +1526,7 @@ end
 -- @param win_counts
 -- @treturn nil
 function update_win_counts(win_counts)
+    assert(win_counts, "Update win counts param is nil")
     if (P1 and P1.player_number == 1) or currently_spectating then
         my_win_count = win_counts[1] or 0
         op_win_count = win_counts[2] or 0
@@ -1528,6 +1540,7 @@ end
 -- @list list The nick of spectators
 -- @return string with all spectators formatted
 function spectator_list_string(list)
+    assert(list, "Spectator list string param is nil")
     local str = ""
     for k,v in ipairs(list) do
         str = str..v
@@ -1549,6 +1562,9 @@ end
 -- @param last_viewble_idx last player in rank
 -- @return string with the rank
 function build_viewable_leaderboard_string(report, first_viewable_idx, last_viewable_idx)
+    assert(report, "Build viewable leaderboard string param report is nil")
+    assert(first_viewable_idx, "Build viewable leaderboard string param first_viewable_idx is nil")
+    assert(last_viewable_idx, "Build viewable leaderboard string param last_viewable_idx is nil")
     str = "        Leaderboard\n      Rank    Rating   Player\n"
     
     first_viewable_idx = math.max(first_viewable_idx,1)
@@ -1575,6 +1591,7 @@ end
 -- @param ip user ip
 -- @return function main_net_vs
 function main_net_vs_setup(ip)
+    assert(ip, "Main net vs setup param is nil")
     if not config.name then
         return main_set_name
     else 
@@ -2156,6 +2173,7 @@ end
 -- @param puzzles puzzles that are pre made
 -- @return fuction that runs the puzzles
 function make_main_puzzle(puzzles)
+    assert(puzzles, "Make main puzzle param is nil")
     local awesome_idx, ret = 1, nil
     function ret()
         consuming_timesteps = true
@@ -2199,7 +2217,7 @@ end
 -- displays the puzzle menu
 do
     local menu_options = {}
-    
+
     for key,val in spairs(puzzle_sets) do
         menu_options[#menu_options + 1] = {key, make_main_puzzle(val)}
     end
@@ -2280,6 +2298,7 @@ function main_config_input()
     end
     
     local function set_key(idx)
+        assert(idx, "Set key param is nil")
         local brk = false
         while not brk do
             get_items()
@@ -2683,6 +2702,8 @@ end
 -- @param timemax maximum time that the fuction wait to return next_func
 -- @return next_fuction
 function main_dumb_transition(next_func, text, timemin, timemax)
+    assert(next_func, "Main dumb transition param next_func is nil")
+    assert(text, "Main dumb transition param text is nil")
     if P1 and P1.character then 
         stop_character_sounds(P1.character)
     end
