@@ -322,7 +322,6 @@ local function quotestring (value)
   return "\"" .. assert(value) .. "\""
 end
 
-assert(quotestring)
 json.quotestring = quotestring
 
 -- Add newline to string
@@ -871,6 +870,5 @@ if always_try_using_lpeg then
   pcall (json.use_lpeg)
 end
 
-assert(json)
 return json
 
