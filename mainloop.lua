@@ -284,11 +284,12 @@ do
 
             to_print = to_print .. "   " .. menu_options[i][1] .. "\n"
             end
-
+            
             gprint(arrow, 300, 280)
             gprint(to_print, 300, 280)
             coroutine_wait()
 
+            assert(k, "No key was passed")
             if menu_key_up(k) then
                 active_idx = wrap(1, active_idx - 1, #menu_options)
             elseif menu_key_down(k) then
@@ -352,7 +353,10 @@ function select_speed_and_level_menu(next_func, ...)
     gprint(to_print, 300, 280)
     gprint(to_print2, 300, 280)
     coroutine_wait()
-      
+
+    assert(speed ~= 0, "Speed cannot be zero.")
+    assert(difficulty ~= 0, "Difficulty cannot be zero.")
+
     if menu_key_up(k) then
         active_idx = wrap(1, active_idx - 1, #menu_options)
     elseif menu_key_down(k) then
@@ -758,7 +762,10 @@ function main_character_select()
     local selected = false
     local active_str = "level"
     local selectable = {level=true, ready=true}
+
     local function move_cursor(direction)
+        assert(map, "move_cursor:map is nil")
+        assert(cursor, "move_cursor:cursor is nil")
         assert(direction, "Move cursor param is nil")
         local dx, dy = unpack(direction)
         local can_x, can_y = wrap(1, cursor[1]+dx, coordinate_x), wrap(1, cursor[2]+dy, coordinate_y)
@@ -962,6 +969,7 @@ function main_character_select()
                 end
             end
             
+            assert(message, "message is null")
             if message.ranked_match_approved then
                 matchType = "Ranked"
                 match_type_message = ""
