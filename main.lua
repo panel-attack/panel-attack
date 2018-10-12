@@ -1,7 +1,7 @@
 ------------
 --- Main Module
 --- Draw windown in screen and set up the game
--- @module main 
+-- @module main
 
 socket = require("socket")
 json = require("dkjson")
@@ -27,13 +27,8 @@ require("gen_panels")
 -- @return nil
 function love.load()
 
-    -- @fixme Test this
-    math.randomseed(os.time())
-    for i=1,4 do
-        math.random()
-    end
-
     read_key_file()
+
     mainloop = coroutine.create(load_game_resources)
 
 end
@@ -43,7 +38,7 @@ end
 local last_x = 0
 local last_y = 0
 
--- vairation of arrow
+-- variation of arrow
 local input_delta = 0.0
 
 -- flag for hidden arrow
@@ -54,6 +49,9 @@ local pointer_hidden = false
 -- @param time since the last update
 -- @return nil
 function love.update(dt)
+
+    -- Verify if time has no negative values
+    assert(dt > 0, "Update screen interval is negative")
 
     -- Hidden arrow or make then visible
     if love.mouse.getX() == last_x and love.mouse.getY() == last_y then
@@ -67,7 +65,7 @@ function love.update(dt)
             end
         end
 
-    else 
+    else
         last_x = love.mouse.getX()
         last_y = love.mouse.getY()
         input_delta = 0.0
@@ -90,6 +88,9 @@ function love.update(dt)
 
     gfx_q:clear()
 
+    -- View if mainloop has no nil value
+    assert(mainloop ~= nil)
+
     local status, err = coroutine.resume(mainloop)
 
     if not status then
@@ -111,13 +112,14 @@ local N_FRAMES = 0
 -- Screen of the game
 local canvas = love.graphics.newCanvas(default_width, default_height)
 
-
 --- Write objects in canvas
 -- @function love.draw
 -- @param nil
 -- @return nil
 function love.draw()
 
+    -- Verify if type is correct
+    assert(type(canvas) == "userdata", "Canvas is not userdata")
     love.graphics.setCanvas(canvas)
 
     -- Default background color for canvas
@@ -128,8 +130,8 @@ function love.draw()
     love.graphics.setBackgroundColor(RED_VALUE, GREEN_VALUE, BLUE_VALUE)
     love.graphics.clear()
 
-    for i=gfx_q.first, gfx_q.last do
-        gfx_q[i][1](unpack(gfx_q[i][2]))
+    for index=gfx_q.first, gfx_q.last do
+        gfx_q[index][1](unpack(gfx_q[index][2]))
     end
 
     -- position of box for FPS information
@@ -138,6 +140,7 @@ function love.draw()
 
     love.graphics.print("FPS: "..love.timer.getFPS(), X_AXIS_PRINT, Y_AXIS_PRINT)
 
+    -- update number of frames
     N_FRAMES = N_FRAMES + 1
 
     love.graphics.setCanvas()
