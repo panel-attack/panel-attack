@@ -13,7 +13,8 @@ local len_garbage = #garbage_bounce_table --length of lua garbage
 -- @return draw_image drawing image
 function load_img(image_path)
     local img
-    assert(image_path) -- T17, T18 
+    assert(image_path)  
+    
     -- if the path doesn't exist, creates the path 
     if pcall(
         function ()
@@ -32,7 +33,7 @@ function load_img(image_path)
     local draw_image = love.graphics.newImage(img)
     draw_image:setFilter("nearest","nearest")
 
-    return draw_image
+    return assert(draw_image) 
 end
 
 --- receives an image and draws it
@@ -45,9 +46,9 @@ end
 -- @param y_scale 
 -- @return nil 
 function draw(img, x, y, rot, x_scale, y_scale)
-    assert(img) -- T17, T18
-    assert(x) -- T17, T18
-    assert(y) -- T17, T18
+    assert(img) 
+    assert(x) 
+    assert(y)
 
     rot = rot or 0
     x_scale = x_scale or 1
@@ -75,12 +76,12 @@ end
 -- @param y_scale 
 -- @return nil 
 function menu_draw(img, x, y, rot, x_scale,y_scale)
-    assert(img) -- T17, T18
-    assert(x) -- T17, T18
-    assert(y) -- T17, T18
-    assert(rot) -- T17, T18
-    assert(x_scale > 0, "x_scale can't be negative") -- T17, T18
-    assert(y_scale > 0, "y_scale can't be negative") -- T17, T18
+    assert(img) 
+    assert(x) 
+    assert(y)
+    assert(rot) 
+    assert(x_scale > 0, "x_scale can't be negative") 
+    assert(y_scale > 0, "y_scale can't be negative") 
 
     rot = rot or 0
     x_scale = x_scale or 1
@@ -110,13 +111,13 @@ end
 -- @param y_scale 
 -- @return nil 
 function menu_drawq(img, quad, x, y, rot, x_scale, y_scale)
-    assert(img) -- T17, T18
-    assert(quad) -- T17, T18
-    assert(x) -- T17, T18
-    assert(y) -- T17, T18
-    assert(rot) -- T17, T18
-    assert(x_scale > 0, "x_scale can't be negative") -- T17, T18
-    assert(y_scale > 0, "y_scale can't be negative") -- T17, T18
+    assert(img) 
+    assert(quad) 
+    assert(x) 
+    assert(y) 
+    assert(rot) 
+    assert(x_scale > 0, "x_scale can't be negative") 
+    assert(y_scale > 0, "y_scale can't be negative")
 
     rot = rot or 0
     x_scale = x_scale or 1
@@ -146,11 +147,11 @@ end
 -- @param height_rectangle
 -- @return nil 
 function grectangle(mode, x, y, width_rectangle, height_rectangle)
-    assert(mode) -- T17, T18
-    assert(x) -- T17, T18
-    assert(y) -- T17, T18
-    assert(width_rectangle > 0, "x_scale can't be negative") -- T17, T18
-    assert(height_rectangle > 0, "y_scale can't be negative") -- T17, T18
+    assert(mode) 
+    assert(x) 
+    assert(y) 
+    assert(width_rectangle > 0, "x_scale can't be negative") 
+    assert(height_rectangle > 0, "y_scale can't be negative")
 
     gfx_q:push(
     {love.graphics.rectangle,
@@ -171,7 +172,7 @@ end
 -- @param y position on the y_axis
 -- @return nil 
 function gprint(str, x, y)
-    assert(str) -- T17, T18
+    assert(str) 
     gfx_q:push(
     {love.graphics.print,
     {
@@ -197,9 +198,9 @@ local MAX_ALPHA
 -- @param a alpha 
 -- @return nil 
 function set_color(r, g, b, a)
-    assert(r) -- T17, T18
-    assert(g) -- T17, T18
-    assert(b) -- T17, T18
+    assert(r) 
+    assert(g) 
+    assert(b) 
     
     a = a or MAX_ALPHA
 
@@ -675,7 +676,7 @@ function scale_letterbox(width, height, w_ratio, h_ratio)
 
     local scaled_width = w_ratio * height / h_ratio
 
-    return (width - scaled_width) / 2, 0, scaled_width, height
+    return assert((width - scaled_width) / 2, 0, scaled_width, height) 
 end
 
 --- subscribe the method draw_cards of Stack class for render the cursor  
