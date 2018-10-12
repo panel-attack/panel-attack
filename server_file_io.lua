@@ -164,7 +164,7 @@ function write_replay_file(replay, path, filename)
     pcall(function()
         print('about to open new replay file for writing')
         make_dir(path)
-        local file = assert(io.open(path..'/'..filename, 'w')) 
+        local file = assert(io.open(path..'/'..filename, 'w')) -- T17, T18
         print('past file open')
         io.output(file)
         io.write(json.encode(replay))
@@ -178,16 +178,16 @@ end
 -- @return nil
 function read_csprng_seed_file()
     pcall(function()
-        local file = io.open('csprng_seed.txt', 'r') 
+        local file = assert(io.open('csprng_seed.txt', 'r') ) -- T17, T18
 
         if file then
-            io.input(file)
-            csprng_seed = io.read('*all')
+            assert(io.input(file)) -- T17, T18
+            csprng_seed = assert(io.read('*all')) -- T17, T18
             io.close(file)
         else
             print('csprng_seed.txt could not be read.  Writing a new ' .. 
                 'default (2000) csprng_seed.txt')
-            local new_file = io.open('csprng_seed.txt', 'w')
+            local new_file = assert(io.open('csprng_seed.txt', 'w')) -- T17, T18
             io.output(new_file)
             io.write('2000')
             io.close(new_file)
@@ -195,7 +195,7 @@ function read_csprng_seed_file()
         end
 
         if tonumber(csprng_seed) then
-            local temporary = tonumber(csprng_seed)
+            local temporary = assert(tonumber(csprng_seed)) -- T17, T18, T19
             csprng_seed = temporary
         else 
             print('ERROR: csprng_seed.txt content is not numeric. ' ..  
