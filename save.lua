@@ -35,6 +35,7 @@ end) end
 
 -- read given txt file
 function read_txt_file(path_and_filename)
+  assert(path_and_filename)
   local file_size
   pcall(function()
     local file = love.filesystem.newFile(path_and_filename)
@@ -92,6 +93,8 @@ end) end
 
 -- Override function to write replay file to specific path
 function write_replay_file(path, filename) pcall(function()
+  assert(path)
+  assert(filename)
   love.filesystem.createDirectory(path)
   local file = love.filesystem.newFile(path.."/"..filename)
   file:open("w")
@@ -118,6 +121,7 @@ end) end
 
 -- this function is never called
 function print_list(t)
+  assert(t)
   for i, v in ipairs(t) do
     print(v)
   end
@@ -125,6 +129,8 @@ end
 
 -- copy recursively from files in source
 function recursive_copy(source, destination)
+  assert(source)
+  assert(destination)
   local lfs = love.filesystem
   local names = lfs.getDirectoryItems(source)
   local temp
