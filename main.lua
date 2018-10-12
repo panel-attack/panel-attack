@@ -38,7 +38,7 @@ end
 local last_x = 0
 local last_y = 0
 
--- vairation of arrow
+-- variation of arrow
 local input_delta = 0.0
 
 -- flag for hidden arrow
@@ -51,7 +51,7 @@ local pointer_hidden = false
 function love.update(dt)
 
     -- Verify if time has no negative values
-    assert(dt > 0)
+    assert(dt > 0, "Update screen interval is negative")
 
     -- Hidden arrow or make then visible
     if love.mouse.getX() == last_x and love.mouse.getY() == last_y then
@@ -119,7 +119,7 @@ local canvas = love.graphics.newCanvas(default_width, default_height)
 function love.draw()
 
     -- Verify if type is correct
-    assert(type(canvas) == "userdata")
+    assert(type(canvas) == "userdata", "Canvas is not userdata")
     love.graphics.setCanvas(canvas)
 
     -- Default background color for canvas
