@@ -27,12 +27,6 @@ require("gen_panels")
 -- @return nil
 function love.load()
 
-    -- @fixme Test this
-    math.randomseed(os.time())
-    for i=1,4 do
-        math.random()
-    end
-
     read_key_file()
 
     mainloop = coroutine.create(load_game_resources)
