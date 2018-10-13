@@ -5,6 +5,8 @@ local random = math.random
 -- stuff should have first_seven, metal, vs_mode, metal_col, prev_metal_col
 function make_panels(ncolors, prev_panels, stuff)
   --print("make_panels("..ncolors..", "..prev_panels..", "..(stuff.first_seven or "")..")")
+  assert(type(ncolors) == 'number')
+  assert(prev_panels, 'Null prev_panels')
   local ret = prev_panels
   local rows_to_make = 20
   local rows_to_place_metal_locations = rows_to_make
@@ -64,7 +66,7 @@ function make_panels(ncolors, prev_panels, stuff)
           new_row = new_row..chr_from_ret
         end
       end
-    else 
+    else
       new_row = current_row_from_ret
     end
     new_ret = new_ret..new_row
@@ -91,10 +93,13 @@ function make_panels(ncolors, prev_panels, stuff)
     -- print("panels after cut_panels")
     -- print(ret)
   -- end
+  assert(ret)
   return string.sub(ret,7,-1)
 end
 
 function make_gpanels(ncolors, prev_panels)
+  assert(type(ncolors) == 'number')
+  assert(prev_panels)
   local ret = prev_panels
   for x=0,19 do
     for y=0,5 do
@@ -107,5 +112,6 @@ function make_gpanels(ncolors, prev_panels)
       ret = ret..color
     end
   end
+  assert(ret)
   return string.sub(ret,7,-1)
 end
