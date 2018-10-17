@@ -76,7 +76,9 @@ function clear_proposals(name)
   if proposals[name] then
     for othername,_ in pairs(proposals[name]) do
       proposals[name][othername] = nil
-      proposals[othername][name] = nil
+      if proposals[othername] then
+        proposals[othername][name] = nil
+      end
     end
     proposals[name] = nil
   end
