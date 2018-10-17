@@ -1258,7 +1258,8 @@ end
 function Connection.read(self)
   local junk, err, data = self.socket:receive("*a")
   if not err then
-    error("shitfuck")
+    error("shitfuck: err: "..(err or "nil"))
+    
   end
   if data and data:len() > 0 then
     self:data_received(data)
