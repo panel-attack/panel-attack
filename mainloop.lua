@@ -435,12 +435,12 @@ function main_character_select()
       my_expected_win_ratio = (100*round(1/(1+10^
             ((global_current_room_ratings[op_player_number].new
                 -global_current_room_ratings[my_player_number].new)
-              /rating_spread_modifier))
+              /RATING_SPREAD_MODIFIER))
             ,2))
       op_expected_win_ratio = (100*round(1/(1+10^
             ((global_current_room_ratings[my_player_number].new
                 -global_current_room_ratings[op_player_number].new)
-              /rating_spread_modifier))
+              /RATING_SPREAD_MODIFIER))
             ,2))
     end
   end

@@ -721,8 +721,13 @@ function Room.rating_adjustment_approved(self)
     and not (leaderboard.players[players[2].user_id] and leaderboard.players[players[2].user_id].placement_done) then
     reasons[#reasons+1] = "Neither player has finished enough placement matches against already ranked players"
   end
+  --don't let players too far apart in rating play ranked
+  if leaderboard.players[players[1].user_id] and leaderboard.players[players[2].user_id] 
+  and math.abs((leaderboard.players[players[1].user_id].rating or DEFAULT_RATING) - (leaderboard.players[players[2].user_id].rating or DEFAULT_RATING)) > RATING_SPREAD_MODIFIER * .9 then
+    reasons[#reasons+1] = "Players' ratings are too far apart"
+  end
   if players[1].level ~= players[2].level then
-    reasons[#reasons+1] = "levels don't match"
+    reasons[#reasons+1] = "Levels don't match"
   end
   for player_number = 1,2 do
     if not playerbase.players[players[player_number].user_id] or not players[player_number].logged_in or playerbase.deleted_players[players[player_number].user_id]then
@@ -748,8 +753,8 @@ end
 function calculate_rating_adjustment(Rc, Ro, Oa, k)
   --[[ --Algorithm we are implementing, per community member Bbforky:
       Formula for Calculating expected outcome:
-
-      Oe=1/(1+10^((Ro-Rc)/400)))
+      RATING_SPREAD_MODIFIER = 400
+      Oe=1/(1+10^((Ro-Rc)/RATING_SPREAD_MODIFIER)))
 
       Oe= Expected Outcome
       Ro= Current rating of opponent
@@ -767,11 +772,7 @@ function calculate_rating_adjustment(Rc, Ro, Oa, k)
     -- print(players[player_number].name.." Ranking: "..leaderboard.players[players[player_number].user_id].rating)
     -- print("vs")
     -- print(players[player_number].opponent.name.." Ranking: "..leaderboard.players[players[player_number].opponent.user_id].rating)
-    Oe = 1/(1+10^((Ro-Rc)/400))
-    -- print("Ro="..Ro)
-    -- print("Rc="..Rc)
-    -- print("Ro-Rc="..Ro-Rc)
-    -- print("1/(1+10^((Ro-Rc)/400))="..1/(1+10^((Ro-Rc)/400)))
+    Oe = 1/(1+10^((Ro-Rc)/RATING_SPREAD_MODIFIER))
     -- print("expected outcome: "..Oe)
     Rn = Rc + k*(Oa-Oe)
   return Rn
