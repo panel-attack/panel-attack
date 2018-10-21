@@ -21,6 +21,8 @@ local TIMEOUT = 10
 local CHARACTERSELECT = "character select" -- room states
 local PLAYING = "playing" -- room states
 local DEFAULT_RATING = 1600
+local RATING_SPREAD_MODIFIER = 400
+local PLACEMENT_MATCH_K = 50
 local NAME_LENGTH_LIMIT = 16
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
@@ -721,11 +723,26 @@ function Room.rating_adjustment_approved(self)
     and not (leaderboard.players[players[2].user_id] and leaderboard.players[players[2].user_id].placement_done) then
     reasons[#reasons+1] = "Neither player has finished enough placement matches against already ranked players"
   end
+  
   --don't let players too far apart in rating play ranked
-  if leaderboard.players[players[1].user_id] and leaderboard.players[players[2].user_id] 
-  and math.abs((leaderboard.players[players[1].user_id].rating or DEFAULT_RATING) - (leaderboard.players[players[2].user_id].rating or DEFAULT_RATING)) > RATING_SPREAD_MODIFIER * .9 then
+  local ratings = {}
+  for k,v in ipairs(players) do
+    if leaderboard.players[v.user_id] then
+      if not leaderboard.players[v.user_id].placement_done and leaderboard.players[v.user_id].placement_rating then
+        ratings[k] = leaderboard.players[v.user_id].placement_rating
+      elseif leaderboard.players[v.user_id].rating and leaderboard.players[v.user_id].rating ~= 0 then
+        ratings[k] = leaderboard.players[v.user_id].rating
+      else
+        ratings[k] = DEFAULT_RATING
+      end
+    else
+      ratings[k] = DEFAULT_RATING
+    end
+  end
+  if math.abs(ratings[1] - ratings[2]) > RATING_SPREAD_MODIFIER * .9 then
     reasons[#reasons+1] = "Players' ratings are too far apart"
   end
+  
   if players[1].level ~= players[2].level then
     reasons[#reasons+1] = "Levels don't match"
   end
@@ -839,6 +856,17 @@ function adjust_ratings(room, winning_player_number)
             print("PRINTING PLACEMENT MATCHES FOR USER")
             print(json.encode(loaded_placement_matches.incomplete[players[player_number].user_id]))
             write_user_placement_match_file(players[player_number].user_id,loaded_placement_matches.incomplete[players[player_number].user_id])
+            
+            --adjust newcomer's placement_rating
+            if not leaderboard.players[players[player_number].user_id] then
+              leaderboard.players[players[player_number].user_id] = {}
+            end
+            leaderboard.players[players[player_number].user_id].placement_rating = calculate_rating_adjustment(leaderboard.players[players[player_number].user_id].placement_rating or DEFAULT_RATING, leaderboard.players[players[player_number].opponent.user_id].rating, Oa, PLACEMENT_MATCH_K)
+            print("New newcomer rating: "..leaderboard.players[players[player_number].user_id].placement_rating)
+            leaderboard.players[players[player_number].user_id].ranked_games_played = (leaderboard.players[players[player_number].user_id].ranked_games_played or 0) + 1
+            if Oa == 1 then 
+              leaderboard.players[players[player_number].user_id].ranked_games_won = (leaderboard.players[players[player_number].user_id].ranked_games_won or 0) + 1
+            end
             
             local process_them, reason = qualifies_for_placement(players[player_number].user_id)
             if process_them then
@@ -978,6 +1006,8 @@ function process_placement_matches(user_id)
     print("Error: failed to process placement matches because we couldn't find any")
     return
   end
+  
+  --[[We are moving some of this code such that placement_rating for the newcomer is calculated as the placement matches are played, rather than at the end of placement.
   --Calculate newcomer's rating
   for i=1, #placement_matches do
     print("Newcomer: "..leaderboard.players[user_id].rating.." "..placement_matches[i].op_name..": "..placement_matches[i].op_rating.." Outcome: "..placement_matches[i].outcome)
@@ -994,7 +1024,14 @@ function process_placement_matches(user_id)
   leaderboard.players[user_id].ranked_games_played = #loaded_placement_matches.incomplete[user_id]
   leaderboard.players[user_id].ranked_games_won = win_count
   --win_ratio = win_count / placement_matches_played  -- TODO: perhaps record this
-  leaderboard.players[user_id].final_placement_rating = rating
+  leaderboard.players[user_id].placement_rating = rating
+  --]]
+  
+  --assign the current placement_rating as the newcomer's official rating.
+  leaderboard.players[user_id].rating = leaderboard.players[user_id].placement_rating
+  leaderboard.players[user_id].placement_done = true
+  print("FINAL PLACEMENT RATING for "..(playerbase.players[user_id] or "nil")..": "..leaderboard.players[user_id].rating or "nil")
+  
   --Calculate changes to opponents ratings for placement matches won/lost
   print("adjusting opponent rating(s) for these placement matches")
   for i=1, #placement_matches do
@@ -1005,7 +1042,7 @@ function process_placement_matches(user_id)
     end
     local op_rating_change = calculate_rating_adjustment(
     placement_matches[i].op_rating,
-    leaderboard.players[user_id].final_placement_rating,
+    leaderboard.players[user_id].placement_rating,
     op_outcome, 10) - 
     placement_matches[i].op_rating
     leaderboard.players[placement_matches[i].op_user_id].rating = leaderboard.players[placement_matches[i].op_user_id].rating + op_rating_change
@@ -1344,7 +1381,7 @@ ban_list = {}
 -- now = os.date("*t",to_UTC(server_start_time))
 -- local formatted_UTC_time = string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
 -- print("formatted UTC time: "..formatted_UTC_time)
-
+print("RATING_SPREAD_MODIFIER: "..(RATING_SPREAD_MODIFIER or "nil"))
 print("initialized!")
 -- print("get_timezone() output: "..get_timezone())
 -- print("get_timezone_offset(os.time()) output: "..get_timezone_offset(os.time()))

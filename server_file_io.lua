@@ -70,14 +70,14 @@ function write_leaderboard_file() pcall(function()
   -- io.write(json.encode(leaderboard.players))
   -- io.close(f)
   --now also write a CSV version of the file
-  --local csv = "user_id,user_name,rating,placement_done,final_placement_rating,ranked_games_played,ranked_games_won"
+  --local csv = "user_id,user_name,rating,placement_done,placement_rating,ranked_games_played,ranked_games_won"
   local sep = package.config:sub(1, 1)
   local leaderboard_table = {}
-  leaderboard_table[#leaderboard_table+1] = {"user_id","user_name","rating","placement_done","final_placement_rating","ranked_games_played","ranked_games_won"}
+  leaderboard_table[#leaderboard_table+1] = {"user_id","user_name","rating","placement_done","placement_rating","ranked_games_played","ranked_games_won"}
   
   for user_id,v in pairs(leaderboard.players) do
     leaderboard_table[#leaderboard_table+1] = 
-    {user_id, v.user_name,v.rating,tostring(v.placement_done or ""),v.final_placement_rating,v.ranked_games_played,v.ranked_games_won}
+    {user_id, v.user_name,v.rating,tostring(v.placement_done or ""),v.placement_rating,v.ranked_games_played,v.ranked_games_won}
   end
   csvfile.write('.'..sep..'leaderboard.csv', leaderboard_table)
 end) end
@@ -85,34 +85,37 @@ end) end
 
 
 function read_leaderboard_file() pcall(function()
-  -- local f = assert(io.open("leaderboard.txt", "r"))
-  -- io.input(f)
-  -- leaderboard.players = json.decode(io.read("*all"))
-  -- io.close(f)
-  
   local csv_table = csvfile.read('./leaderboard.csv')
-  for row=2,#csv_table do
-    csv_table[row][1] = tostring(csv_table[row][1])
-    leaderboard.players[csv_table[row][1]] = {}
-    for col=1, #csv_table[1] do
-      --Note csv_table[row][1] will be the player's user_id
-      --csv_table[1][col] will be a property name such as "rating"
-      if csv_table[row][col] == '' then
-        csv_table[row][col] = nil
-      end
-      --player with this user_id gets this property equal to the csv_table cell's value
-      if csv_table[1][col] == "user_name" then
-        leaderboard.players[csv_table[row][1]][csv_table[1][col]] = tostring(csv_table[row][col])
-      elseif csv_table[1][col] == "rating" then
-        leaderboard.players[csv_table[row][1]][csv_table[1][col]] = tonumber(csv_table[row][col])
-      elseif csv_table[1][col] == "placement_done" then
-        leaderboard.players[csv_table[row][1]][csv_table[1][col]] = csv_table[row][col] and true and string.lower(csv_table[row][col]) ~= "false"
-      else
-        leaderboard.players[csv_table[row][1]][csv_table[1][col]] = csv_table[row][col]
+  if csv_table[2] then
+    print("read leaderboard.csv")
+    for row=2,#csv_table do
+      csv_table[row][1] = tostring(csv_table[row][1])
+      leaderboard.players[csv_table[row][1]] = {}
+      for col=1, #csv_table[1] do
+        --Note csv_table[row][1] will be the player's user_id
+        --csv_table[1][col] will be a property name such as "rating"
+        if csv_table[row][col] == '' then
+          csv_table[row][col] = nil
+        end
+        --player with this user_id gets this property equal to the csv_table cell's value
+        if csv_table[1][col] == "user_name" then
+          leaderboard.players[csv_table[row][1]][csv_table[1][col]] = tostring(csv_table[row][col])
+        elseif csv_table[1][col] == "rating" then
+          leaderboard.players[csv_table[row][1]][csv_table[1][col]] = tonumber(csv_table[row][col])
+        elseif csv_table[1][col] == "placement_done" then
+          leaderboard.players[csv_table[row][1]][csv_table[1][col]] = csv_table[row][col] and true and string.lower(csv_table[row][col]) ~= "false"
+        else
+          leaderboard.players[csv_table[row][1]][csv_table[1][col]] = csv_table[row][col]
+        end
       end
     end
+  else
+    print("failed to read any data from leaderboard.csv, checking for a leaderboard.txt")
+    local f = assert(io.open("leaderboard.txt", "r"))
+    io.input(f)
+    leaderboard.players = json.decode(io.read("*all"))
+    io.close(f)
   end
-
 end) end
 
 function read_user_placement_match_file(user_id) return pcall(function()
