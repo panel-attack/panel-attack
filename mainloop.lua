@@ -636,7 +636,7 @@ function main_character_select()
                       P1_level=P1.level,P2_level=P2.level,
                       P1_name=my_name, P2_name=op_name,
                       P1_char=P1.character,P2_char=P2.character,
-                      ranked=msg.ranked}
+                      ranked=msg.ranked, do_countdown=true}
           if currently_spectating and replay_of_match_so_far then --we joined a match in progress
             replay.vs = replay_of_match_so_far.vs
             P1.input_buffer = replay_of_match_so_far.vs.in_buf
@@ -893,6 +893,7 @@ function main_net_vs_lobby()
   local prev_act_idx = active_idx
   local showing_leaderboard = false
   local lobby_menu_x = {[true]=100, [false]=300} --will be used to make room in case the leaderboard should be shown.
+  local sent_requests = {}
   while true do
       if connection_up_time <= login_status_message_duration then
         gprint(login_status_message, lobby_menu_x[showing_leaderboard], 160)
@@ -938,12 +939,16 @@ function main_net_vs_lobby()
       end
       if msg.unpaired then
         unpaired_players = msg.unpaired
-        -- players who leave the unpaired list no longer have standing invitations to us.
+        -- players who leave the unpaired list no longer have standing invitations to us.\
+        -- we also no longer have a standing invitation to them, so we'll remove them from sent_requests
         local new_willing = {}
+        local new_sent_requests = {}
         for _,player in ipairs(unpaired_players) do
           new_willing[player] = willing_players[player]
+          new_sent_requests[player] = sent_requests[player]
         end
         willing_players = new_willing
+        sent_requests = new_sent_requests
       end
       if msg.spectatable then
         spectatable_rooms = msg.spectatable
@@ -1000,7 +1005,7 @@ function main_net_vs_lobby()
         arrow = arrow .. "\n"
       end
       if i <= lastPlayerIndex then
-        to_print = to_print .. "   " .. items[i] .. (willing_players[items[i]] and " (Wants to play with you :o)" or "") .. "\n"
+        to_print = to_print .. "   " .. items[i] ..(sent_requests[items[i]] and " (Request sent)" or "").. (willing_players[items[i]] and " (Wants to play with you :o)" or "") .. "\n"
       elseif i < #items - 1 and items[i].name then
         to_print = to_print .. "   spectate " .. items[i].name .. " (".. items[i].state .. ")\n" --printing room names 
       elseif i < #items then
@@ -1053,6 +1058,7 @@ function main_net_vs_lobby()
         my_name = config.name
         op_name = items[active_idx]
         currently_spectating = false
+        sent_requests[op_name] = true
         request_game(items[active_idx])
       else
         my_name = items[active_idx].a
