@@ -9,7 +9,7 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_local_vs_yourself_setup, main_local_vs_yourself,
   main_options, exit_options_menu
 
-VERSION = "024"
+VERSION = "025"
 local PLAYING = "playing"  -- room states
 local CHARACTERSELECT = "character select" --room states
 local currently_spectating = false
@@ -142,7 +142,7 @@ do
         --{"2P vs online (USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)", main_net_vs_setup, {"18.188.43.50"}},
         --{"This test build is for offline-use only"--[["2P vs online at Jon's server"]], main_select_mode},
         --{"2P vs online at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
-        {"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
+        --{"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
         {"2P vs local game", main_local_vs_setup},
         {"Replay of 1P endless", main_replay_endless},
         {"Replay of 1P puzzle", main_replay_puzzle},
