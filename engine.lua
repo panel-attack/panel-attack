@@ -947,7 +947,9 @@ function Panel.clear(self)
 					self.game_over = true
 				end
 				self.has_risen = true
+				assert(self.has_risen)
 				self.displacement = self.displacement - 1
+				assert(self.displacement)
 				if self.displacement == 1 then
 					self.manual_raise = false
 					self.rise_timer = 1
@@ -957,9 +959,11 @@ function Panel.clear(self)
 					self.prevent_manual_raise = true
 				end
 				self.manual_raise_yet = true -- ehhhh
+				assert(self.manual_raise_yet)
 				self.stop_time = 0
 			elseif not self.manual_raise_yet then
 				self.manual_raise = false
+				assert(self.manual_raise)
 			end
 			-- if the stack is rise locked when you press the raise button,
 			-- the raising is cancelled
@@ -982,6 +986,7 @@ function Panel.clear(self)
 		for row=1,self.height do
 			for col=1,self.width do
 				local panel = panels[row][col]
+				assert(panel)
 				if (panel.garbage and panel.state ~= "normal") or
 				(panel.color ~= 0 and (panel:exclude_hover() or panel.state == "swapping") and not panel.garbage) or
 				panel.state == "swapping" then
@@ -991,6 +996,7 @@ function Panel.clear(self)
 		end
 		
 		local to_send = self.garbage_to_send[self.CLOCK]
+		
 		if to_send then
 			self.garbage_to_send[self.CLOCK] = nil
 			
@@ -1031,6 +1037,7 @@ function Panel.clear(self)
 		-- double-check panels_in_top_row
 		self.panels_in_top_row = false
 		local prow = panels[top_row]
+		assert(prow)
 		for idx=1,width do
 			if prow[idx]:dangerous() then
 				self.panels_in_top_row = true
@@ -1042,6 +1049,7 @@ function Panel.clear(self)
 			-- check if the next block in the garbage_q would fit anyway
 			-- ie. 3-wide garbage might fit if there are three empty spaces where it would spawn
 			garbage_fits_in_populated_top_row = true
+			assert(garbage_fits_in_populated_top_row)
 			local next_garbage_block_width, _height, _metal = unpack(self.garbage_q:peek())
 			local cols = self.garbage_cols[next_garbage_block_width]
 			local spawn_col = cols[cols.idx]
@@ -1198,6 +1206,7 @@ function Panel.clear(self)
 			end
 			
 			self.CLOCK = self.CLOCK + 1
+			assert(self.CLOCK)
 		end
 		
 		function winningPlayer()
