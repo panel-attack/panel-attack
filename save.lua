@@ -98,6 +98,40 @@ function read_user_id_file() pcall(function()
   file:close()
 end) end
 
+function write_puzzles() pcall(function()
+  love.filesystem.createDirectory("puzzles")
+  local file = love.filesystem.newFile("puzzles/stock (example).txt")
+  file:open("w")
+  file:write(json.encode(puzzle_sets))
+  file:close()
+end) end
+
+function read_puzzles() pcall(function()
+  -- if type(replay.in_buf) == "table" then
+    -- replay.in_buf=table.concat(replay.in_buf)
+  -- end
+  
+  puzzle_packs = love.filesystem.getDirectoryItems("puzzles") or {}
+  print("loading custom puzzles...")
+  for _,filename in pairs(puzzle_packs) do
+    print(filename)
+    if love.filesystem.isFile("puzzles/"..filename)
+    and filename ~= "stock (example).txt"
+    and filename ~= "README.txt" then
+      print("loading custom puzzle set: "..(filename or "nil"))
+      local current_set = {}
+      local file = love.filesystem.newFile("puzzles/"..filename)
+      file:open("r")
+      local teh_json = file:read(file:getSize())
+      current_set = json.decode(teh_json) or {}
+      for set_name, puzzle_set in pairs(current_set) do
+        puzzle_sets[set_name] = puzzle_set
+      end
+      print("loaded above set")
+    end    
+  end
+end) end
+
 function print_list(t)
   for i, v in ipairs(t) do
     print(v)
