@@ -1400,7 +1400,7 @@ function Stack.set_combo_garbage(self, n_combo, n_metal)
   end
   local combo_pieces = combo_garbage[n_combo]
   for i=1,#combo_pieces do
-    stuff_to_send[#stuff_to_send+1] = {combo_pieces[1], 1, false}
+    stuff_to_send[#stuff_to_send+1] = {combo_pieces[i], 1, false}
   end
   for k,v in pairs(self.garbage_to_send) do
     if type(k) == "number" then

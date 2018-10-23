@@ -9,7 +9,7 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_local_vs_yourself_setup, main_local_vs_yourself,
   main_options, exit_options_menu
 
-VERSION = "024"
+VERSION = "025"
 local PLAYING = "playing"  -- room states
 local CHARACTERSELECT = "character select" --room states
 local currently_spectating = false
@@ -312,7 +312,7 @@ function main_character_select()
   local map = {}
   if character_select_mode == "2p_net_vs" then
     local opponent_connected = false
-    local retries, retry_limit = 0, 500
+    local retries, retry_limit = 0, 250
     while not global_initialize_room_msg and retries < retry_limit do
       for _,msg in ipairs(this_frame_messages) do
         if msg.create_room or msg.character_select or msg.spectate_request_granted then
@@ -324,21 +324,21 @@ function main_character_select()
       do_messages()
       retries = retries + 1
     end
-    if room_number_last_spectated and retries >= retry_limit and currently_spectating then
-      request_spectate(room_number_last_spectated)
-      retries = 0
-      while not global_initialize_room_msg and retries < retry_limit do
-        for _,msg in ipairs(this_frame_messages) do
-          if msg.create_room or msg.character_select or msg.spectate_request_granted then
-            global_initialize_room_msg = msg
-          end
-        end
-        gprint("Lost connection.  Trying to rejoin...", 300, 280)
-        wait()
-        do_messages()
-        retries = retries + 1
-      end
-    end
+    -- if room_number_last_spectated and retries >= retry_limit and currently_spectating then
+      -- request_spectate(room_number_last_spectated)
+      -- retries = 0
+      -- while not global_initialize_room_msg and retries < retry_limit do
+        -- for _,msg in ipairs(this_frame_messages) do
+          -- if msg.create_room or msg.character_select or msg.spectate_request_granted then
+            -- global_initialize_room_msg = msg
+          -- end
+        -- end
+        -- gprint("Lost connection.  Trying to rejoin...", 300, 280)
+        -- wait()
+        -- do_messages()
+        -- retries = retries + 1
+      -- end
+    -- end
     if not global_initialize_room_msg then
       return main_dumb_transition, {main_select_mode, "Failed to connect.\n\nReturning to main menu", 60, 300}
     end
@@ -424,16 +424,25 @@ function main_character_select()
   op_win_count = op_win_count or 0
   if character_select_mode == "2p_net_vs" then
     global_current_room_ratings = global_current_room_ratings or {{new=0,old=0,difference=0},{new=0,old=0,difference=0}}
-    my_expected_win_ratio = (100*round(1/(1+10^
-          ((global_current_room_ratings[op_player_number].new
-              -global_current_room_ratings[my_player_number].new)
-            /rating_spread_modifier))
-          ,2))
-    op_expected_win_ratio = (100*round(1/(1+10^
-          ((global_current_room_ratings[my_player_number].new
-              -global_current_room_ratings[op_player_number].new)
-            /rating_spread_modifier))
-          ,2))
+    my_expected_win_ratio = nil
+    op_expected_win_ratio = nil
+    print("my_player_number = "..my_player_number)
+    print("op_player_number = "..op_player_number)
+    if global_current_room_ratings[my_player_number].new
+    and global_current_room_ratings[my_player_number].new ~= 0
+    and global_current_room_ratings[op_player_number]
+    and global_current_room_ratings[op_player_number].new ~= 0 then
+      my_expected_win_ratio = (100*round(1/(1+10^
+            ((global_current_room_ratings[op_player_number].new
+                -global_current_room_ratings[my_player_number].new)
+              /RATING_SPREAD_MODIFIER))
+            ,2))
+      op_expected_win_ratio = (100*round(1/(1+10^
+            ((global_current_room_ratings[my_player_number].new
+                -global_current_room_ratings[op_player_number].new)
+              /RATING_SPREAD_MODIFIER))
+            ,2))
+    end
   end
   if character_select_mode == "2p_net_vs" then
     match_type = match_type or "Casual"
@@ -591,6 +600,9 @@ function main_character_select()
         if msg.ranked_match_approved then
           match_type = "Ranked"
           match_type_message = ""
+          if msg.caveats then
+            match_type_message = match_type_message..(msg.caveats[1] or "")
+          end
         elseif msg.ranked_match_denied then
           match_type = "Casual"
           match_type_message = "Not ranked. "
@@ -624,7 +636,7 @@ function main_character_select()
                       P1_level=P1.level,P2_level=P2.level,
                       P1_name=my_name, P2_name=op_name,
                       P1_char=P1.character,P2_char=P2.character,
-                      ranked=msg.ranked}
+                      ranked=msg.ranked, do_countdown=true}
           if currently_spectating and replay_of_match_so_far then --we joined a match in progress
             replay.vs = replay_of_match_so_far.vs
             P1.input_buffer = replay_of_match_so_far.vs.in_buf
@@ -669,16 +681,16 @@ function main_character_select()
             gprint(to_print,300, 280)
             do_messages()
             wait()
-            if game_start_timeout > 500 then
+            if game_start_timeout > 250 then
               return main_dumb_transition, {main_select_mode, 
-                              "game-is-starting bug diagnostic version 2\n\ngame start timed out.\n Please screenshot this and\npost it in #panel-attack-bugs-features"
+                              "game start timed out.\n This is a known bug, but you may post it in #panel-attack-bugs-features \nif you'd like.\n"
                               .."\n".."msg.match_start = "..(tostring(msg.match_start) or "nil")
                               .."\n".."replay_of_match_so_far = "..(tostring(replay_of_match_so_far) or "nil")
                               .."\n".."P1.panel_buffer = "..P1.panel_buffer
                               .."\n".."P2.panel_buffer = "..P2.panel_buffer
                               .."\n".."P1.gpanel_buffer = "..P1.gpanel_buffer
                               .."\n".."P2.gpanel_buffer = "..P2.gpanel_buffer,
-                              600}
+                              180}
             end
           end
           P1:starting_state()
@@ -702,23 +714,34 @@ function main_character_select()
     end
     local my_rating_difference = ""
     local op_rating_difference = ""
-    if current_server_supports_ranking then
-      if global_current_room_ratings[my_player_number].difference >= 0 then
-        my_rating_difference = "(+"..global_current_room_ratings[my_player_number].difference..") "
-      else
-        my_rating_difference = "("..global_current_room_ratings[my_player_number].difference..") "
+    if current_server_supports_ranking and not global_current_room_ratings[my_player_number].placement_match_progress then
+      if global_current_room_ratings[my_player_number].difference then
+        if global_current_room_ratings[my_player_number].difference>= 0 then
+          my_rating_difference = "(+"..global_current_room_ratings[my_player_number].difference..") "
+        else
+          my_rating_difference = "("..global_current_room_ratings[my_player_number].difference..") "
+        end
       end
-      if global_current_room_ratings[op_player_number].difference >= 0 then
-        op_rating_difference = "(+"..global_current_room_ratings[op_player_number].difference..") "
-      else
-        op_rating_difference = "("..global_current_room_ratings[op_player_number].difference..") "
+      if global_current_room_ratings[op_player_number].difference then
+        if global_current_room_ratings[op_player_number].difference >= 0 then
+          op_rating_difference = "(+"..global_current_room_ratings[op_player_number].difference..") "
+        else
+          op_rating_difference = "("..global_current_room_ratings[op_player_number].difference..") "
+        end
       end
     end
     local state = ""
     --my state - add to be displayed
     state = state..my_name
     if current_server_supports_ranking then
-        state = state..":  Rating: "..my_rating_difference..global_current_room_ratings[my_player_number].new
+      state = state..":  Rating: "..(global_current_room_ratings[my_player_number].league or "")
+      if not global_current_room_ratings[my_player_number].placement_match_progress then
+        state = state.." "..my_rating_difference..global_current_room_ratings[my_player_number].new
+      elseif global_current_room_ratings[my_player_number].placement_match_progress 
+      and global_current_room_ratings[my_player_number].new 
+      and global_current_room_ratings[my_player_number].new == 0 then
+        state = state.." "..global_current_room_ratings[my_player_number].placement_match_progress
+      end
     end
     if character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs" then
       state = state.."  Wins: "..my_win_count
@@ -729,19 +752,25 @@ function main_character_select()
     if my_win_count + op_win_count > 0 then
       state = state.."  actual: "..(100*round(my_win_count/(op_win_count+my_win_count),2)).."%"
     end
-    if current_server_supports_ranking then
+    if current_server_supports_ranking and my_expected_win_ratio then
       state = state.."  expected: "
         ..my_expected_win_ratio.."%"
     end
     state = state.."  Char: "..character_display_names[my_state.character].."  Ready: "..tostring(my_state.ready or false)
-    --state = state.." "..json.encode(my_state).."\n"
     if op_state and op_name then
       state = state.."\n"
       --op state - add to be displayed
       state = state..op_name
       if current_server_supports_ranking then
-          state = state..":  Rating: "..op_rating_difference..global_current_room_ratings[op_player_number].new
+      state = state..":  Rating: "..(global_current_room_ratings[op_player_number].league or "")
+      if not global_current_room_ratings[op_player_number].placement_match_progress then
+        state = state.." "..op_rating_difference..global_current_room_ratings[op_player_number].new
+      elseif global_current_room_ratings[op_player_number].placement_match_progress 
+      and global_current_room_ratings[op_player_number].new 
+      and global_current_room_ratings[op_player_number].new == 0 then
+        state = state.." "..global_current_room_ratings[op_player_number].placement_match_progress
       end
+    end
       state = state.."  Wins: "..op_win_count 
       if current_server_supports_ranking or my_win_count + op_win_count > 0 then
         state = state.."  Win Ratio:"
@@ -749,7 +778,7 @@ function main_character_select()
       if my_win_count + op_win_count > 0 then
         state = state.."  actual: "..(100*round(op_win_count/(op_win_count+my_win_count),2)).."%"
       end
-      if current_server_supports_ranking then
+      if current_server_supports_ranking and op_expected_win_ratio then
         state = state.."  expected: "
           ..op_expected_win_ratio.."%"
       end
@@ -864,6 +893,7 @@ function main_net_vs_lobby()
   local prev_act_idx = active_idx
   local showing_leaderboard = false
   local lobby_menu_x = {[true]=100, [false]=300} --will be used to make room in case the leaderboard should be shown.
+  local sent_requests = {}
   while true do
       if connection_up_time <= login_status_message_duration then
         gprint(login_status_message, lobby_menu_x[showing_leaderboard], 160)
@@ -909,12 +939,16 @@ function main_net_vs_lobby()
       end
       if msg.unpaired then
         unpaired_players = msg.unpaired
-        -- players who leave the unpaired list no longer have standing invitations to us.
+        -- players who leave the unpaired list no longer have standing invitations to us.\
+        -- we also no longer have a standing invitation to them, so we'll remove them from sent_requests
         local new_willing = {}
+        local new_sent_requests = {}
         for _,player in ipairs(unpaired_players) do
           new_willing[player] = willing_players[player]
+          new_sent_requests[player] = sent_requests[player]
         end
         willing_players = new_willing
+        sent_requests = new_sent_requests
       end
       if msg.spectatable then
         spectatable_rooms = msg.spectatable
@@ -971,7 +1005,7 @@ function main_net_vs_lobby()
         arrow = arrow .. "\n"
       end
       if i <= lastPlayerIndex then
-        to_print = to_print .. "   " .. items[i] .. (willing_players[items[i]] and " (Wants to play with you :o)" or "") .. "\n"
+        to_print = to_print .. "   " .. items[i] ..(sent_requests[items[i]] and " (Request sent)" or "").. (willing_players[items[i]] and " (Wants to play with you :o)" or "") .. "\n"
       elseif i < #items - 1 and items[i].name then
         to_print = to_print .. "   spectate " .. items[i].name .. " (".. items[i].state .. ")\n" --printing room names 
       elseif i < #items then
@@ -1024,6 +1058,7 @@ function main_net_vs_lobby()
         my_name = config.name
         op_name = items[active_idx]
         currently_spectating = false
+        sent_requests[op_name] = true
         request_game(items[active_idx])
       else
         my_name = items[active_idx].a
@@ -1202,11 +1237,19 @@ function main_net_vs()
     if match_type == "Ranked" then
       if global_current_room_ratings[my_player_number] 
       and global_current_room_ratings[my_player_number].new then
-        gprint("Rating: "..global_current_room_ratings[my_player_number].new, 315, 85)
+        local rating_to_print = "Rating: "
+        if global_current_room_ratings[my_player_number].new > 0 then
+          rating_to_print = rating_to_print.." "..global_current_room_ratings[my_player_number].new
+        end
+        gprint(rating_to_print, 315, 85)
       end
       if global_current_room_ratings[op_player_number] 
       and global_current_room_ratings[op_player_number].new then
-        gprint("Rating: "..global_current_room_ratings[op_player_number].new, 410, 85)
+        local op_rating_to_print = "Rating: "
+        if global_current_room_ratings[op_player_number].new > 0 then
+          op_rating_to_print = op_rating_to_print.." "..global_current_room_ratings[op_player_number].new
+        end
+        gprint(op_rating_to_print, 410, 85)
       end
     end
     if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
