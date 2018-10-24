@@ -959,11 +959,9 @@ function Panel.clear(self)
 					self.prevent_manual_raise = true
 				end
 				self.manual_raise_yet = true -- ehhhh
-				assert(self.manual_raise_yet)
 				self.stop_time = 0
 			elseif not self.manual_raise_yet then
 				self.manual_raise = false
-				assert(self.manual_raise)
 			end
 			-- if the stack is rise locked when you press the raise button,
 			-- the raising is cancelled
@@ -1220,8 +1218,11 @@ function Panel.clear(self)
 		
 		function Stack.swap(self)
 			local panels = self.panels
+			assert(panels)
 			local row = self.cur_row
+			assert(row)
 			local col = self.cur_col
+			assert(col)
 			if self.puzzle_moves then
 				self.puzzle_moves = self.puzzle_moves - 1
 			end
@@ -1441,6 +1442,8 @@ function Panel.clear(self)
 						local q, garbage = Queue(), {}
 						local seen, seenm = {}, {}
 						local metal_count = 0
+						assert(type(is_chain) ~= "string")
+
 						
 						-- iterate over panel matrix
 						for col=1,self.width do
