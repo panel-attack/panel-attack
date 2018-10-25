@@ -291,6 +291,7 @@ function main_time_attack(...)
   consuming_timesteps = true
   P1 = Stack(1, "time", ...)
   make_local_panels(P1, "000000")
+  P1:starting_state()
   while true do
     P1:render()
     wait()
@@ -1559,6 +1560,7 @@ function main_replay_endless()
   P1.gpanel_buffer = replay.gpan_buf
   P1.speed = replay.speed
   P1.difficulty = replay.difficulty
+  P1:starting_state()
   local run = true
   while true do
     P1:render()
