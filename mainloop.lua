@@ -28,6 +28,9 @@ function fmainloop()
   local func, arg = main_select_mode, nil
   replay = {}
   config = {character="lip", level=5, name="defaultname", master_volume=100, SFX_volume=100, music_volume=100, debug_mode=false, ready_countdown_1P = true, save_replays_publicly = "with my name", assets_dir=default_assets_dir, sounds_dir=default_sounds_dir}
+  gprint("Copying Puzzles Readme")
+  wait()
+  copy_file("Custom Puzzles Readme.txt", "puzzles/README.txt")
   gprint("Reading config file", 300, 280)
   wait()
   read_conf_file() -- TODO: stop making new config files
@@ -1644,6 +1647,9 @@ function make_main_puzzle(puzzles)
     while true do
       P1:render()
       wait()
+      if this_frame_keys["escape"] then
+        return main_select_puzz
+      end
       if P1.n_active_panels == 0 and
           P1.prev_active_panels == 0 then
         if P1:puzzle_done() then
@@ -1674,7 +1680,8 @@ do
   end
   items[#items+1] = {"Back", main_select_mode}
   function main_select_puzz()
-    local active_idx = 1
+    love.audio.stop()
+    local active_idx = last_puzzle_idx or 1
     local k = K[1]
     while true do
       local to_print = ""
@@ -1687,14 +1694,17 @@ do
         end
         to_print = to_print .. "   " .. items[i][1] .. "\n"
       end
-      gprint(arrow, 300, 280)
-      gprint(to_print, 300, 280)
+      gprint("Puzzles:", 300, 20)
+      gprint("Note: you may place new custom puzzles in\n\n%appdata%\\Panel Attack\\puzzles\n\nSee the README and example puzzle set there\nfor instructions", 20, 500)
+      gprint(arrow, 400, 20)
+      gprint(to_print, 400, 20)
       wait()
       if menu_up(k) then
         active_idx = wrap(1, active_idx-1, #items)
       elseif menu_down(k) then
         active_idx = wrap(1, active_idx+1, #items)
       elseif menu_enter(k) then
+        last_puzzle_idx = active_idx
         return items[active_idx][2], items[active_idx][3]
       elseif menu_escape(k) then
         if active_idx == #items then
