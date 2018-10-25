@@ -138,6 +138,20 @@ function print_list(t)
   end
 end
 
+function copy_file(source, destination)
+  local lfs = love.filesystem
+  local source_file = lfs.newFile(source)
+  source_file:open("r")
+  local source_size = source_file:getSize()
+  temp = source_file:read(source_size)
+  source_file:close()
+
+  local new_file = lfs.newFile(destination)
+  new_file:open("w")
+  local success, message =  new_file:write(temp, source_size)
+  new_file:close()
+end
+
 function recursive_copy(source, destination)
   local lfs = love.filesystem
   local names = lfs.getDirectoryItems(source)
