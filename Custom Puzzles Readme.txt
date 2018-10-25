@@ -41,7 +41,7 @@ See the example file at the bottom of the guide for reference.
 About the numbers mapping out each puzzle now:
 
 Panel Attack reads the numbers that represent what each panel's color should be from right to left,
-filling the play field with panels starting at the bottom right row, from right to left, bottom to top.
+filling the play field with panels starting at the bottom right corner, from right to left, bottom to top.
 
 This allows us to lay out our text representation of the puzzle how it would look in the game, like this:
 
