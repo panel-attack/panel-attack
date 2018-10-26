@@ -597,10 +597,10 @@ end
 function Connection.I(self, message)
   if self.opponent then
     self.opponent:send("I"..message)
-    if self.player_number == 1 then
+    if self.player_number == 1 and self.room then
       self.room:send_to_spectators("U"..message)
       self.room.replay.vs.in_buf = self.room.replay.vs.in_buf..message
-    elseif self.player_number == 2 then
+    elseif self.player_number == 2 and self.room then
       self.room:send_to_spectators("I"..message)
       self.room.replay.vs.I = self.room.replay.vs.I..message
     end
@@ -873,6 +873,9 @@ function adjust_ratings(room, winning_player_number)
               local op_player_number = players[player_number].opponent.player_number
               print("op_player_number: "..op_player_number)
               room.ratings[player_number].old = 0
+              if not room.ratings[op_player_number] then
+                room.ratings[op_player_number] = {}
+              end
               room.ratings[op_player_number].old = round(leaderboard.players[players[op_player_number].user_id].rating)
               process_placement_matches(players[player_number].user_id)
               
@@ -1190,7 +1193,10 @@ function Connection.J(self, message)
     self.ready = message.menu_state.ready
     self.cursor = message.menu_state.cursor
     self.wants_ranked_match = message.menu_state.ranked
-    
+    print("about to check for rating_adjustment_approval for ")
+    print(self.name)
+    print("and")
+    print(self.opponent.name)
     if self.wants_ranked_match or self.opponent.wants_ranked_match then
       local ranked_match_approved, reasons = self.room:rating_adjustment_approved()
       if ranked_match_approved then
@@ -1217,6 +1223,10 @@ function Connection.J(self, message)
     else
       self.opponent:send(message)
       message.player_number = self.player_number
+      print("about to send match start to spectators of ")
+      print(self.name)
+      print("and")
+      print(self.opponent.name)
       self.room:send_to_spectators(message) -- TODO: may need to include in the message who is sending the message
     end
   elseif self.state == "playing" and message.game_over then
