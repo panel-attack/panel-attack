@@ -13,24 +13,27 @@ local len_garbage = #garbage_bounce_table --length of lua garbage
 -- @return draw_image drawing image
 function load_img(image_path)
     local img
-
+    assert(image_path)  
+    
     -- if the path doesn't exist, creates the path 
     if pcall(
         function ()
-            img = love.image.newImageData("assets/"..(config.assets_dir or default_assets_dir).."/"..image_path)
+            img = love.image.newImageData("assets/"..(config.assets_dir or
+                                            default_assets_dir).."/"..image_path)
         end) then
 
         if config.assets_dir and config.assets_dir ~= default_assets_dir then
             print("loaded custom asset: "..config.assets_dir.."/"..image_path)
         end
     else
-        img = love.image.newImageData("assets/"..default_assets_dir.."/"..image_path)
+        img = love.image.newImageData("assets/"..default_assets_dir.."/"..
+                                        image_path)
     end
 
     local draw_image = love.graphics.newImage(img)
     draw_image:setFilter("nearest","nearest")
 
-    return draw_image
+    return assert(draw_image) 
 end
 
 --- receives an image and draws it
@@ -43,6 +46,10 @@ end
 -- @param y_scale 
 -- @return nil 
 function draw(img, x, y, rot, x_scale, y_scale)
+    assert(img) 
+    assert(x) 
+    assert(y)
+
     rot = rot or 0
     x_scale = x_scale or 1
     y_scale = y_scale or 1
@@ -57,7 +64,6 @@ function draw(img, x, y, rot, x_scale, y_scale)
         y_scale*GFX_SCALE
     }
 })
-
 end
 
 --- draws the menu
@@ -70,6 +76,13 @@ end
 -- @param y_scale 
 -- @return nil 
 function menu_draw(img, x, y, rot, x_scale,y_scale)
+    assert(img) 
+    assert(x) 
+    assert(y)
+    assert(rot) 
+    assert(x_scale > 0, "x_scale can't be negative") 
+    assert(y_scale > 0, "y_scale can't be negative") 
+
     rot = rot or 0
     x_scale = x_scale or 1
     y_scale = y_scale or 1
@@ -98,6 +111,14 @@ end
 -- @param y_scale 
 -- @return nil 
 function menu_drawq(img, quad, x, y, rot, x_scale, y_scale)
+    assert(img) 
+    assert(quad) 
+    assert(x) 
+    assert(y) 
+    assert(rot) 
+    assert(x_scale > 0, "x_scale can't be negative") 
+    assert(y_scale > 0, "y_scale can't be negative")
+
     rot = rot or 0
     x_scale = x_scale or 1
     y_scale = y_scale or 1
@@ -126,6 +147,12 @@ end
 -- @param height_rectangle
 -- @return nil 
 function grectangle(mode, x, y, width_rectangle, height_rectangle)
+    assert(mode) 
+    assert(x) 
+    assert(y) 
+    assert(width_rectangle > 0, "x_scale can't be negative") 
+    assert(height_rectangle > 0, "y_scale can't be negative")
+
     gfx_q:push(
     {love.graphics.rectangle,
     {
@@ -145,6 +172,7 @@ end
 -- @param y position on the y_axis
 -- @return nil 
 function gprint(str, x, y)
+    assert(str) 
     gfx_q:push(
     {love.graphics.print,
     {
@@ -170,10 +198,15 @@ local MAX_ALPHA
 -- @param a alpha 
 -- @return nil 
 function set_color(r, g, b, a)
+    assert(r) 
+    assert(g) 
+    assert(b) 
+    
     a = a or MAX_ALPHA
 
     -- only do it if this color isn't the same as the previous one
-    if r_current ~= r or g_current ~= g or b_current ~= b or a_current ~= a then
+    if r_current ~= r or g_current ~= g or b_current ~= b or 
+        a_current ~= a then
         r_current, g_current, b_current, a_current = r, g, b, a
         gfx_q:push({love.graphics.setColor, {r, g, b, a}})
     end
@@ -241,11 +274,13 @@ function graphics_init()
     IMG_cards[false] = {}
 
     for i=4,66 do
-        IMG_cards[false][i] = load_img("combo"..tostring(floor(i/10))..tostring(i%10)..".png")
+        IMG_cards[false][i] = load_img("combo"..tostring(floor(i/10))..
+                                        tostring(i%10)..".png")
     end
 
     for i=2,13 do
-        IMG_cards[true][i] = load_img("chain"..tostring(floor(i/10))..tostring(i%10)..".png")
+        IMG_cards[true][i] = load_img("chain"..tostring(floor(i/10))..
+                                        tostring(i%10)..".png")
     end
 
     for i=14,99 do
@@ -278,7 +313,8 @@ function graphics_init()
             local cur_width, cur_height = IMG_char_sel_cursors[player_num][position_num]:getDimensions()
             local half_width, half_height = cur_width/2, cur_height/2
             IMG_char_sel_cursor_halves["left"][player_num][position_num] =
-                love.graphics.newQuad(0,0,half_width,cur_height,cur_width, cur_height)
+                love.graphics.newQuad(0,0,half_width,cur_height,cur_width, 
+                                        cur_height)
         end
 
         IMG_char_sel_cursor_halves.right[player_num] = {}
@@ -287,14 +323,16 @@ function graphics_init()
             local cur_width, cur_height = IMG_char_sel_cursors[player_num][position_num]:getDimensions()
             local half_width, half_height = cur_width/2, cur_height/2
             IMG_char_sel_cursor_halves.right[player_num][position_num] = 
-                love.graphics.newQuad(half_width,0,half_width,cur_height,cur_width, cur_height)
+                love.graphics.newQuad(half_width,0,half_width,cur_height,
+                                        cur_width, cur_height)
         end
     end
 
     character_display_names = {} -- players names 
 
     for k, original_name in ipairs(characters) do
-        name_txt_file = love.filesystem.newFile("assets/"..config.assets_dir.."/"..original_name.."/name.txt")
+        name_txt_file = love.filesystem.newFile("assets/"..config.assets_dir..
+                                               "/"..original_name.."/name.txt")
         open_success, err = name_txt_file:open("r")
         local display_name = name_txt_file:read(name_txt_file:getSize())
         if display_name then
@@ -321,6 +359,7 @@ end
 -- @param self object 
 -- @return nil 
 function Stack.update_cards(self)
+    assert(self)
     -- scrolls through all the cards and updates
     for i = self.card_q.first,self.card_q.last do
         local card = self.card_q[i]
@@ -340,6 +379,7 @@ end
 -- @param self object 
 -- @return nil 
 function Stack.draw_cards(self)
+    assert(self)
     for i=self.card_q.first,self.card_q.last do
         local card = self.card_q[i]
         if card_animation[card.frame] then
@@ -357,6 +397,7 @@ end
 -- @param self object 
 -- @return nil 
 function Stack.render(self)
+    assert(self)
     local mouse_x, mouse_y -- coordinates of mouse
 
     if config.debug_mode then
@@ -408,18 +449,23 @@ function Stack.render(self)
 
                             for i=0,height-1 do
                                 for j=1,width-1 do
-                                    draw((odd or height<3) and imgs.filler1 or imgs.filler2, draw_x+16*j-8, top_y+16*i) odd = not odd
+                                    draw((odd or height<3) and imgs.filler1 or 
+                                           imgs.filler2, draw_x+16*j-8, top_y+16*i) 
+                                    odd = not odd
                                 end
                             end
 
                             if height%2==1 then
-                                draw(imgs.face, draw_x+8*(width-1), top_y+16*((height-1)/2))
+                                draw(imgs.face, draw_x+8*(width-1), 
+                                        top_y+16*((height-1)/2))
                             else
-                                draw(imgs.doubleface, draw_x+8*(width-1), top_y+16*((height-2)/2))
+                                draw(imgs.doubleface, draw_x+8*(width-1), 
+                                        top_y+16*((height-2)/2))
                             end
 
                             draw(imgs.left, draw_x, top_y, 0, 1, height*16)
-                            draw(imgs.right, draw_x+16*(width-1)+8, top_y, 0, 1, height*16)
+                            draw(imgs.right, draw_x+16*(width-1)+8, top_y, 0, 
+                                    1, height*16)
                             draw(imgs.top, draw_x, top_y, 0, width*16)
                             draw(imgs.bot, draw_x, draw_y+14, 0, width*16)
                             draw(imgs.topleft, draw_x, top_y)
@@ -444,7 +490,8 @@ function Stack.render(self)
                                 end
                             elseif panel.y_offset == -1 then
                                 draw(IMG_panels[panel.color][
-                                garbage_bounce_table[panel.timer] or 1], draw_x, draw_y)
+                                garbage_bounce_table[panel.timer] or 1], 
+                                    draw_x, draw_y)
                             end
                         elseif flash_time % 2 == 1 then
                             if panel.metal then
@@ -462,12 +509,15 @@ function Stack.render(self)
                     if config.debug_mode then
                         gprint(panel.state, draw_x*3, draw_y*3)
                         if panel.match_anyway ~= nil then
-                            gprint(tostring(panel.match_anyway), draw_x*3, draw_y*3+10)
+                            gprint(tostring(panel.match_anyway), draw_x*3, 
+                                    draw_y*3+10)
                             if panel.debug_tag then
-                                gprint(tostring(panel.debug_tag), draw_x*3, draw_y*3+20)
+                                gprint(tostring(panel.debug_tag), 
+                                    draw_x*3, draw_y*3+20)
                             end
                         end
-                        gprint(panel.chaining and "chaining" or "nah", draw_x*3, draw_y*3+30)
+                        gprint(panel.chaining and "chaining" or "nah", 
+                                draw_x*3, draw_y*3+30)
                     end
                 else
                     if panel.state == "matched" then
@@ -494,7 +544,8 @@ function Stack.render(self)
                         draw_frame = 7
                     elseif self.danger_col[col] then
                         draw_frame = danger_bounce_table[
-                        wrap(1,self.danger_timer+1+floor((col-1)/2),#danger_bounce_table)]
+                        wrap(1,self.danger_timer+1+floor((col-1)/2),
+                                #danger_bounce_table)]
                     else
                         draw_frame = 1
                     end
@@ -504,19 +555,24 @@ function Stack.render(self)
                     if config.debug_mode then
                         gprint(panel.state, draw_x*3, draw_y*3)
                         if panel.match_anyway ~= nil then
-                            gprint(tostring(panel.match_anyway), draw_x*3, draw_y*3+10)
+                            gprint(tostring(panel.match_anyway), draw_x*3, 
+                                    draw_y*3+10)
                             if panel.debug_tag then
-                                gprint(tostring(panel.debug_tag), draw_x*3, draw_y*3+20)
+                                gprint(tostring(panel.debug_tag), draw_x*3,
+                                    draw_y*3+20)
                             end
                         end
-                        gprint(panel.chaining and "chaining" or "nah", draw_x*3, draw_y*3+30)
+                        gprint(panel.chaining and "chaining" or 
+                                "nah", draw_x*3, draw_y*3+30)
                     end
                 end
             end
 
-            if config.debug_mode and mx >= draw_x and mx < draw_x + 16 and my >= draw_y and my < draw_y + 16 then
+            if config.debug_mode and mx >= draw_x and mx < draw_x + 16 and 
+                    my >= draw_y and my < draw_y + 16 then
                 mouse_panel = {row, col, panel}
-                draw(IMG_panels[4][1], draw_x+16/3, draw_y+16/3, 0, 0.33333333, 0.3333333)
+                draw(IMG_panels[4][1], draw_x+16/3, draw_y+16/3, 0, 0.33333333,
+                        0.3333333)
             end
         end
     end
@@ -537,7 +593,8 @@ function Stack.render(self)
             local mins = floor(time_left/60) -- currents minutes 
             local secs = floor(time_left%60) -- currents seconde
 
-            gprint("Time: "..string.format("%01d:%02d",mins,secs), self.score_x, 160)
+            gprint("Time: "..string.format("%01d:%02d",mins,secs), 
+                    self.score_x, 160)
         elseif self.level then
             gprint("Level: "..self.level, self.score_x, 160)
         end
@@ -609,15 +666,17 @@ end
 -- @param h_ratio height ratio
 -- @return ratio_letterbox 
 function scale_letterbox(width, height, w_ratio, h_ratio)
-    if height / h_ratio > width / w_ratio then
+    assert(width > 0, "width can't be negative or zero")
+    assert(height > 0, "height can't be negative or zero")
 
+    if height / h_ratio > width / w_ratio then
         local scaled_height = h_ratio * width / w_ratio
         return 0, (height - scaled_height) / 2, width, scaled_height
     end
 
     local scaled_width = w_ratio * height / h_ratio
 
-    return (width - scaled_width) / 2, 0, scaled_width, height
+    return assert((width - scaled_width) / 2, 0, scaled_width, height) 
 end
 
 --- subscribe the method draw_cards of Stack class for render the cursor  
@@ -625,6 +684,7 @@ end
 -- @param self object 
 -- @return nil 
 function Stack.render_cursor(self)
-    draw(IMG_cursor[(floor(self.CLOCK/16)%2)+1], (self.cur_col-1)*16+self.pos_x-4, (11-(self.cur_row))*16+self.pos_y-4+self.displacement)
+    draw(IMG_cursor[(floor(self.CLOCK/16)%2)+1], (self.cur_col-1)*16+self.pos_x-4,
+            (11-(self.cur_row))*16+self.pos_y-4+self.displacement)
 end
 

@@ -9,16 +9,16 @@
 -- @return num_binary
 local function to_binary(num_integer) 
     local num_binary = {}
-    local copy_num_integer = num_integer
+    local copy_num_integer = assert(type(num_integer) == 'number', 'Not is a number')
     local GREATER_HEX = 0x7FFFFFFF -- The bigger number in hexadecimal with a signal 
     while true do
-        table.insert(num_binary, copy_num_integer % 2)
+        assert(table.insert(num_binary, copy_num_integer % 2), 'Not was possible insert a number')
         copy_num_integer = bit.band(math.floor(copy_num_integer / 2), GREATER_HEX)
         if copy_num_integer == 0 then
             break
         end
     end
-    return num_binary
+    return assert(num_binary)
 end
 
 --- This function convert an arbitrary-length table of bits to a number decimal
@@ -26,10 +26,10 @@ end
 -- @return num_integer
 local function from_binary(num_binary) 
     local num_integer = 0
-    for i=#num_binary, 1, -1 do
+    for i=#assert(type(num_binary) == 'number', 'Not is a number'), 1, -1 do
         num_integer = num_integer * 2 + num_binary[i]
     end
-    return num_integer
+    return assert(num_integer)
 end
 
 --- ISAAC Internal Variables
@@ -54,12 +54,12 @@ BITS_32 = 32 -- Represent 32 bits
 -- @return nil
 function initialize_mt_generator(seed)
     index = 0
-    mersenne_twister[0] = seed
+    mersenne_twister[0] = assert(seed)
     for i=1, DIMENCIONAL_EQUIDISTRIBUTION do
         local state_succession = ( (1812433253 * bit.bxor(mersenne_twister[i-1], bit.rshift(mersenne_twister[i-1], BITS_30) ) )+i) 
         local num_binary = to_binary(state_succession)
         while #num_binary > BITS_32 do
-            table.remove(num_binary, 1)
+            assert(table.remove(num_binary, 1), 'Not was possible remove a number')
         end
         mersenne_twister[i] = from_binary(num_binary)
     end
@@ -105,15 +105,15 @@ function extract_mt(min, max)
         generate_mt()
     end
     local mt_value = mersenne_twister[index]
-    min = min or 0
-    max = max or POSSIBLE_VALUES
+    min = assert(min or 0)
+    max = assert(max or POSSIBLE_VALUES)
     --print("Accessing: mersenne_twister["..index.."]...")
     mt_value = bit.bxor(mt_value, bit.rshift(mt_value, SHIFT_U) )
     mt_value = bit.bxor(mt_value, bit.band(bit.lshift(mt_value, SHIFT_S), SHIFT_B) )
     mt_value = bit.bxor(mt_value, bit.band(bit.lshift(mt_value, SHIFT_T), SHIFT_C) )
     mt_value = bit.bxor(mt_value, bit.rshift(mt_value, SHIFT_L) )
     index = (index+1) % PARAMETER_N
-    return (mt_value % max)+min
+    return assert((mt_value % max)+min)
 end
 
 NUM_TERMS = 256 -- Possibles terms
@@ -122,7 +122,7 @@ NUM_TERMS = 256 -- Possibles terms
 -- @param seed
 -- @return nil
 function seed_from_mt(seed) 
-    if seed then
+    if assert(seed) then
         mt_seeded = false
         mt_seed = seed
     end
@@ -141,14 +141,14 @@ end
 -- @param a,b,c,d,e,f,g,h
 -- @return a,b,c,d,e,f,g,h
 local function mix(a,b,c,d,e,f,g,h)
-    a = a % (POSSIBLE_VALUES)
-    b = b % (POSSIBLE_VALUES)
-    c = c % (POSSIBLE_VALUES)
-    d = d % (POSSIBLE_VALUES)
-    e = e % (POSSIBLE_VALUES)
-    f = f % (POSSIBLE_VALUES)
-    g = g % (POSSIBLE_VALUES)
-    h = h % (POSSIBLE_VALUES)
+    a = assert(type(a)=='number') % (POSSIBLE_VALUES)
+    b = assert(type(b)=='number') % (POSSIBLE_VALUES)
+    c = assert(type(c)=='number') % (POSSIBLE_VALUES)
+    d = assert(type(d)=='number') % (POSSIBLE_VALUES)
+    e = assert(type(e)=='number') % (POSSIBLE_VALUES)
+    f = assert(type(f)=='number') % (POSSIBLE_VALUES)
+    g = assert(type(g)=='number') % (POSSIBLE_VALUES)
+    h = assert(type(h)=='number') % (POSSIBLE_VALUES)
      a = bit.bxor(a, bit.lshift(b, 11))
      d = (d + a) % (POSSIBLE_VALUES)
      b = (b + c) % (POSSIBLE_VALUES)
@@ -173,7 +173,7 @@ local function mix(a,b,c,d,e,f,g,h)
      h = bit.bxor(h, bit.rshift(a, 9) )
      c = (c + h) % (POSSIBLE_VALUES)
      a = (a + b) % (POSSIBLE_VALUES)
-     return a,b,c,d,e,f,g,h
+     return assert(a),assert(b),assert(c),assert(d),assert(e),assert(f),assert(g),assert(h)
 end
 
 --- This function run ISAAC algorithm
@@ -213,7 +213,7 @@ local function randinit(flag)
     end
     -- Load random numbers into eight elements of the table(array in others lenguages) memory
     for i=1, NUM_TERMS, 8 do
-        if flag then
+        if assert(flag) then
             a = (a + sequence_results[i]) % (POSSIBLE_VALUES)
             b = (b + sequence_results[i+1]) % (POSSIBLE_VALUES)
             c = (c + sequence_results[i+2]) % (POSSIBLE_VALUES)
@@ -267,7 +267,7 @@ function generate_isaac(entropy)
     accumulator = 0
     previous_result = 0
     -- Verify the length of entropy
-    if entropy and #entropy >= NUM_TERMS then
+    if assert(entropy) and #entropy >= NUM_TERMS then
         for i=1, NUM_TERMS do
             sequence_results[i] = entropy[i]
         end -- end for
@@ -288,11 +288,11 @@ end
 -- @return table.remove(memory, 1)
 local function get_random()
     if #memory > 0 then
-        return table.remove(memory, 1)
+        return assert(table.remove(memory, 1), 'Not was possible remove')
     else
         print("generating_isaac")
         generate_isaac()
-        return table.remove(memory, 1)
+        return assert(table.remove(memory, 1), 'Not was possible remove')
     end
 end
 
@@ -301,11 +301,11 @@ end
 -- @param max
 -- @return (get_random() % max) + min
 function cs_random(min, max)
-    if not max then
+    if not assert(max) then
         max = POSSIBLE_VALUES
     end
-    if not min then
+    if not assert(min) then
         min = 0
     end
-    return (get_random() % max) + min
+    return assert((get_random() % max) + min)
 end
