@@ -597,6 +597,12 @@ end
 function Connection.I(self, message)
   if self.opponent then
     self.opponent:send("I"..message)
+    if not self.room then
+      print("ERROR:")
+      print(self.name)
+      print("doesn't have a room")
+      print("we are wondering if this disconnects spectators")
+    end
     if self.player_number == 1 and self.room then
       self.room:send_to_spectators("U"..message)
       self.room.replay.vs.in_buf = self.room.replay.vs.in_buf..message
