@@ -151,6 +151,9 @@ function start_match(a, b)
   lobby_changed = true
   a:setup_game()
   b:setup_game()
+  if not a.room then
+    print("ERROR: In start_match, Player A "..(a.name or "nil").." doesn't have a room\nCannot run setup_game() for spectators!")
+  end
   for k,v in pairs(a.room.spectators) do
     v:setup_game()
   end
@@ -161,7 +164,7 @@ Room = class(function(self, a, b)
   self.a = a --player a
   self.b = b --player b
   self.name = a.name.." vs "..b.name
-  if not self.a.room then
+  if not self.a.room or not self.b.room then
     self.roomNumber = ROOMNUMBER
     ROOMNUMBER = ROOMNUMBER + 1
     self.a.room = self
@@ -287,15 +290,18 @@ function Room.close(self)
     if self.a then
       self.a.player_number = 0
       self.a.state = "lobby"
+      print("In Room.close.  Setting room for Player A "..(v.name or "nil").." as nil")
       self.a.room = nil
     end
     if self.b then
       self.b.player_number = 0
       self.b.state = "lobby"
+      print("In Room.close.  Setting room for Player B "..(v.name or "nil").." as nil")
       self.b.room = nil
     end
     for k,v in pairs(self.spectators) do
       if v.room then
+      print("In Room.close.  Setting room for spectator "..(v.name or "nil").." as nil")
         v.room = nil
         v.state = "lobby"
       end
@@ -455,6 +461,7 @@ function Connection.send(self, stuff)
     print(unpack(foo))
   end
   if not foo[1] then
+    print("About to close connection for "..(self.name or "nil")..". During Connection.send, foo[1] was nil")
     self:close()
   end
 end
@@ -547,6 +554,7 @@ function Connection.opponent_disconnected(self)
   local msg = lobby_state()
   msg.leave_room = true
   if self.room then
+    print("about to close room for "..(self.name or "nil").." because opponent disconnected.")
     self.room:close()
   end
   self:send(msg)
@@ -570,6 +578,7 @@ function Connection.close(self)
     lobby_changed = true
   end
   if self.room and (self.room.a.name == self.name or self.room.b.name == self.name) then
+    print("about to close room for "..(self.name or "nil")..".  Connection.close was called")
     self.room:close()
   elseif self.room then
     self.room:remove_spectator(self)
@@ -598,7 +607,7 @@ function Connection.I(self, message)
   if self.opponent then
     self.opponent:send("I"..message)
     if not self.room then
-      print("ERROR:")
+      print("WARNING: missing room")
       print(self.name)
       print("doesn't have a room")
       print("we are wondering if this disconnects spectators")
@@ -1425,6 +1434,7 @@ while true do
   if now ~= prev_now then
     for _,v in pairs(connections) do
       if now - v.last_read > 10 then
+        print("about to close connection for "..(v.name or "nil")..". Connection timed out (>10 sec)")
         v:close()
       elseif now - v.last_read > 1 then
         v:send("ELOL")
