@@ -290,13 +290,13 @@ function Room.close(self)
     if self.a then
       self.a.player_number = 0
       self.a.state = "lobby"
-      print("In Room.close.  Setting room for Player A "..(v.name or "nil").." as nil")
+      print("In Room.close.  Setting room for Player A "..(a.name or "nil").." as nil")
       self.a.room = nil
     end
     if self.b then
       self.b.player_number = 0
       self.b.state = "lobby"
-      print("In Room.close.  Setting room for Player B "..(v.name or "nil").." as nil")
+      print("In Room.close.  Setting room for Player B "..(b.name or "nil").." as nil")
       self.b.room = nil
     end
     for k,v in pairs(self.spectators) do
@@ -462,6 +462,9 @@ function Connection.send(self, stuff)
   end
   if not foo[1] then
     print("About to close connection for "..(self.name or "nil")..". During Connection.send, foo[1] was nil")
+    print("foo:")
+    print(unpack(foo))
+    print("closing connection")
     self:close()
   end
 end
