@@ -474,7 +474,7 @@ function Stack.render(self)
       gprint(frames_to_time_string(P1.game_stopwatch, P1.mode == "endless"), 385, 25)
     end
     if not config.debug_mode then
-      gprint(join_community_msg or "", 330,560)
+      gprint(join_community_msg or "", 330, 560)
     end
     --gprint("Player"..self.player_number, self.score_x,265)
     --gprint("Panel buffer: "..#self.panel_buffer, self.score_x, 190)
