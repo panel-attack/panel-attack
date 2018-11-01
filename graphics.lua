@@ -473,6 +473,9 @@ function Stack.render(self)
     if P1 and P1.game_stopwatch and tonumber(P1.game_stopwatch) then 
       gprint(frames_to_time_string(P1.game_stopwatch, P1.mode == "endless"), 385, 25)
     end
+    if not config.debug_mode then
+      gprint(join_community_msg or "", 330,560)
+    end
     --gprint("Player"..self.player_number, self.score_x,265)
     --gprint("Panel buffer: "..#self.panel_buffer, self.score_x, 190)
     --[[local danger = {}
