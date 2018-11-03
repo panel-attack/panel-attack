@@ -80,7 +80,7 @@ local process_message = {
   --G=function(s) got_opponent = true end,
   H=function(s) got_H = true end,
   --N=function(s) error("Server told us to upgrade the game at burke.ro/panel.zip (for burke.ro server) or the TetrisAttackOnline Discord (for Jon's Server)") end,
-  N=function(s) error("PLEASE DOWNLOAD the latest version of the game from #welcome-getting-started at the TetrisAttackOnline Discord https://discord.gg/WeJuFst") end,
+  N=function(s) error("PLEASE DOWNLOAD the latest version of the game from #welcome-getting-started at the TetrisAttackOnline Discord https://discord.panelattack.com") end,
   P=function(s) P1.panel_buffer = P1.panel_buffer..s end,
   O=function(s) P2.panel_buffer = P2.panel_buffer..s end,
   U=function(s) P1.input_buffer = P1.input_buffer..s end,  -- used for P1's inputs when spectating.

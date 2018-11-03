@@ -1156,7 +1156,7 @@ function Stack.PdP(self)
     --check if the next block in the garbage_q would fit anyway
     --ie. 3-wide garbage might fit if there are three empty spaces where it would spawn
     garbage_fits_in_populated_top_row = true
-    local next_garbage_block_width, height, _metal, from_chain = unpack(self.garbage_q:peek())
+    local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
     local cols = self.garbage_cols[next_garbage_block_width]
     local spawn_col = cols[cols.idx]
     local spawn_row = #self.panels
@@ -1165,19 +1165,28 @@ function Stack.PdP(self)
         garbage_fits_in_populated_top_row = nil
       end
     end
+    local drop_it = 
+      (not self.panels_in_top_row or garbage_fits_in_populated_top_row)
+      and not self:has_falling_garbage()
+      and (
+        (from_chain and next_garbage_block_height > 1) or
+        (self.n_active_panels == 0 and
+        self.prev_active_panels == 0) 
+      )
+    if next_garbage_block_height and next_garbage_block_height > 1 then
+      print("Player: "..(self.which or "unknown"))
+      print("Garbage with height > 1 is next queued")
+      print("next_garbage_block_height: "..next_garbage_block_height)
+      print("drop_it: "..(tostring(drop_it) or "false"))
+      print("from_chain: "..(tostring(from_chain) or "false"))
+      print("self.n_active_panels :"..(self.n_active_panels or "nil"))
+      print("self.prev_active_panels :"..(self.prev_active_panels or "nil"))
+      print("")
+    end
+    if drop_it and self.garbage_q:len() > 0 then
+      self:drop_garbage(unpack(self.garbage_q:pop()))
+    end
   end
-  local drop_it = 
-    (not self.panels_in_top_row or garbage_fits_in_populated_top_row)
-    and not self:has_falling_garbage()
-    and (
-      (from_chain and height > 1) or
-      (self.n_active_panels == 0 and
-      self.prev_active_panels == 0) 
-    )
-  if drop_it and self.garbage_q:len() > 0 then
-    self:drop_garbage(unpack(self.garbage_q:pop()))
-  end
-  
   --Play Sounds / music
   if not music_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
   
