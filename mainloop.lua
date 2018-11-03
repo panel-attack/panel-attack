@@ -1024,6 +1024,7 @@ function main_net_vs_lobby()
     if showing_leaderboard then
       gprint(leaderboard_string, 500, 160)
     end
+    gprint(join_community_msg, 20, 560)
     
     wait()
     if menu_up(k) then

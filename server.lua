@@ -151,6 +151,9 @@ function start_match(a, b)
   lobby_changed = true
   a:setup_game()
   b:setup_game()
+  if not a.room then
+    print("ERROR: In start_match, Player A "..(a.name or "nil").." doesn't have a room\nCannot run setup_game() for spectators!")
+  end
   for k,v in pairs(a.room.spectators) do
     v:setup_game()
   end
@@ -161,7 +164,7 @@ Room = class(function(self, a, b)
   self.a = a --player a
   self.b = b --player b
   self.name = a.name.." vs "..b.name
-  if not self.a.room then
+  if not self.a.room or not self.b.room then
     self.roomNumber = ROOMNUMBER
     ROOMNUMBER = ROOMNUMBER + 1
     self.a.room = self
@@ -287,15 +290,18 @@ function Room.close(self)
     if self.a then
       self.a.player_number = 0
       self.a.state = "lobby"
+      print("In Room.close.  Setting room for Player A "..(self.a.name or "nil").." as nil")
       self.a.room = nil
     end
     if self.b then
       self.b.player_number = 0
       self.b.state = "lobby"
+      print("In Room.close.  Setting room for Player B "..(self.b.name or "nil").." as nil")
       self.b.room = nil
     end
     for k,v in pairs(self.spectators) do
       if v.room then
+      print("In Room.close.  Setting room for spectator "..(v.name or "nil").." as nil")
         v.room = nil
         v.state = "lobby"
       end
@@ -450,12 +456,30 @@ function Connection.send(self, stuff)
       print("sending non-json "..stuff)
     end
   end
-  local foo = {self.socket:send(stuff)}
-  if stuff[1] ~= "I" and stuff[1] ~= "U" then
-    print(unpack(foo))
+  local retry_count = 0
+  local times_to_retry = 5
+  local foo = {}
+  while not foo[1] and retry_count <= 5 do
+    if retry_count ~= 0 then
+      print("retry number: "..retry_count)
+    end
+    foo = {self.socket:send(stuff)}
+    if stuff[1] ~= "I" and stuff[1] ~= "U" then
+      print(unpack(foo))
+    end
+    if not foo[1] then
+      print("WARNING: Connection.send failed. will retry...")
+      retry_count = retry_count + 1
+    end
   end
   if not foo[1] then
+    print("About to close connection for "..(self.name or "nil")..". During Connection.send, foo[1] was nil after "..times_to_retry.." retries were attempted")
+    print("foo:")
+    print(unpack(foo))
+    print("closing connection")
     self:close()
+  elseif retry_count ~= 0 then
+    print("SUCCESS after retries: connection.send for "..(self.name or "nil").." took "..retry_count.." retries")
   end
 end
 
@@ -547,6 +571,7 @@ function Connection.opponent_disconnected(self)
   local msg = lobby_state()
   msg.leave_room = true
   if self.room then
+    print("about to close room for "..(self.name or "nil").." because opponent disconnected.")
     self.room:close()
   end
   self:send(msg)
@@ -570,6 +595,7 @@ function Connection.close(self)
     lobby_changed = true
   end
   if self.room and (self.room.a.name == self.name or self.room.b.name == self.name) then
+    print("about to close room for "..(self.name or "nil")..".  Connection.close was called")
     self.room:close()
   elseif self.room then
     self.room:remove_spectator(self)
@@ -597,10 +623,16 @@ end
 function Connection.I(self, message)
   if self.opponent then
     self.opponent:send("I"..message)
-    if self.player_number == 1 then
+    if not self.room then
+      print("WARNING: missing room")
+      print(self.name)
+      print("doesn't have a room")
+      print("we are wondering if this disconnects spectators")
+    end
+    if self.player_number == 1 and self.room then
       self.room:send_to_spectators("U"..message)
       self.room.replay.vs.in_buf = self.room.replay.vs.in_buf..message
-    elseif self.player_number == 2 then
+    elseif self.player_number == 2 and self.room then
       self.room:send_to_spectators("I"..message)
       self.room.replay.vs.I = self.room.replay.vs.I..message
     end
@@ -873,6 +905,9 @@ function adjust_ratings(room, winning_player_number)
               local op_player_number = players[player_number].opponent.player_number
               print("op_player_number: "..op_player_number)
               room.ratings[player_number].old = 0
+              if not room.ratings[op_player_number] then
+                room.ratings[op_player_number] = {}
+              end
               room.ratings[op_player_number].old = round(leaderboard.players[players[op_player_number].user_id].rating)
               process_placement_matches(players[player_number].user_id)
               
@@ -1190,7 +1225,10 @@ function Connection.J(self, message)
     self.ready = message.menu_state.ready
     self.cursor = message.menu_state.cursor
     self.wants_ranked_match = message.menu_state.ranked
-    
+    print("about to check for rating_adjustment_approval for ")
+    print(self.name)
+    print("and")
+    print(self.opponent.name)
     if self.wants_ranked_match or self.opponent.wants_ranked_match then
       local ranked_match_approved, reasons = self.room:rating_adjustment_approved()
       if ranked_match_approved then
@@ -1217,6 +1255,10 @@ function Connection.J(self, message)
     else
       self.opponent:send(message)
       message.player_number = self.player_number
+      print("about to send match start to spectators of ")
+      print(self.name)
+      print("and")
+      print(self.opponent.name)
       self.room:send_to_spectators(message) -- TODO: may need to include in the message who is sending the message
     end
   elseif self.state == "playing" and message.game_over then
@@ -1409,6 +1451,7 @@ while true do
   if now ~= prev_now then
     for _,v in pairs(connections) do
       if now - v.last_read > 10 then
+        print("about to close connection for "..(v.name or "nil")..". Connection timed out (>10 sec)")
         v:close()
       elseif now - v.last_read > 1 then
         v:send("ELOL")
