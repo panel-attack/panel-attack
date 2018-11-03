@@ -55,7 +55,7 @@ Stack = class(function(s, which, mode, speed, difficulty, player_number)
                       {1,2,idx=1},
                       {1,idx=1}}
     s.later_garbage = {}
-    s.garbage_q = Queue()
+    s.garbage_q = GarbageQueue()
     -- garbage_to_send[frame] is an array of garbage to send at frame.
     -- garbage_to_send.chain is an array of garbage to send when the chain ends.
     s.garbage_to_send = {}
@@ -292,6 +292,69 @@ end
 -- from_left
 -- dont_swap
 -- chaining
+
+GarbageQueue = class(function(s)
+  s.chain_garbage = Queue()
+  s.combo_garbage = {0,0,0,0,0,0} --index here represents width, and value represents how many of that width queued
+  s.metal = 0
+end)
+
+function GarbageQueue.push(self, garbage)
+  local width, height, metal, from_chain = unpack(garbage)
+  if metal then
+    self.metal = self.metal + 1
+  elseif from_chain or height > 1 then
+    if not from_chain then
+      print("ERROR: garbage with height > 1 was not marked as 'from_chain'")
+      print("adding it to the chain garbage queue anyway")
+    end
+    self.chain_garbage:push(garbage)
+  else
+    self.combo_garbage[width] = self.combo_garbage[width] + 1
+  end
+end
+
+function GarbageQueue.pop(self, just_peeking)
+  --check for any chain garbage, and return the first one (chronologically), if any
+  if self.chain_garbage:peek() then
+    if just_peeking then
+      return self.chain_garbage:peek()
+    else
+      return self.chain_garbage:pop()
+    end
+  end
+  --check for any combo garbage, and return the smallest one, if any
+  for k,v in ipairs(self.combo_garbage) do
+    if v > 0 then
+      if not just_peeking then
+        self.combo_garbage[k] = v - 1
+      end
+        --returning {width, height, is_metal, is_from_chain}
+      return {k, 1, false, false}
+    end
+  end
+  --check for any metal garbage, and return one if any
+  if self.metal > 0 then
+    if not just_peeking then
+      self.metal = self.metal - 1
+    end
+    return {6, 1, true, false}
+  end
+  return nil
+end
+
+function GarbageQueue.peek(self)
+  return self:pop(true) --(just peeking)
+end
+function GarbageQueue.len(self)
+  local ret = 0
+  ret = ret + self.chain_garbage:len()
+  for k,v in ipairs(self.combo_garbage) do
+    ret = ret + v
+  end
+  ret = ret + self.metal
+  return ret
+end
 
 do
   local exclude_hover_set = {matched=true, popping=true, popped=true,
@@ -1088,12 +1151,12 @@ function Stack.PdP(self)
     end
   end
   local garbage_fits_in_populated_top_row 
-  if self.garbage_q:len() > 0 and self.panels_in_top_row then
+  if self.garbage_q:len() > 0 then
     --even if there are some panels in the top row,
     --check if the next block in the garbage_q would fit anyway
     --ie. 3-wide garbage might fit if there are three empty spaces where it would spawn
     garbage_fits_in_populated_top_row = true
-    local next_garbage_block_width, _height, _metal = unpack(self.garbage_q:peek())
+    local next_garbage_block_width, height, _metal, from_chain = unpack(self.garbage_q:peek())
     local cols = self.garbage_cols[next_garbage_block_width]
     local spawn_col = cols[cols.idx]
     local spawn_row = #self.panels
@@ -1103,9 +1166,14 @@ function Stack.PdP(self)
       end
     end
   end
-  local drop_it = self.n_active_panels == 0 and
-      self.prev_active_panels == 0 and 
-      (not self.panels_in_top_row or garbage_fits_in_populated_top_row) and not self:has_falling_garbage()
+  local drop_it = 
+    (not self.panels_in_top_row or garbage_fits_in_populated_top_row)
+    and not self:has_falling_garbage()
+    and (
+      (from_chain and height > 1) or
+      (self.n_active_panels == 0 and
+      self.prev_active_panels == 0) 
+    )
   if drop_it and self.garbage_q:len() > 0 then
     self:drop_garbage(unpack(self.garbage_q:pop()))
   end
@@ -1396,11 +1464,11 @@ end
 function Stack.set_combo_garbage(self, n_combo, n_metal)
   local stuff_to_send = {}
   for i=3,n_metal do
-    stuff_to_send[#stuff_to_send+1] = {6, 1, true}
+    stuff_to_send[#stuff_to_send+1] = {6, 1, true, false}
   end
   local combo_pieces = combo_garbage[n_combo]
   for i=1,#combo_pieces do
-    stuff_to_send[#stuff_to_send+1] = {combo_pieces[i], 1, false}
+    stuff_to_send[#stuff_to_send+1] = {combo_pieces[i], 1, false, false}
   end
   for k,v in pairs(self.garbage_to_send) do
     if type(k) == "number" then
