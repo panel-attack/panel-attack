@@ -1173,16 +1173,6 @@ function Stack.PdP(self)
         (self.n_active_panels == 0 and
         self.prev_active_panels == 0) 
       )
-    if next_garbage_block_height and next_garbage_block_height > 1 then
-      print("Player: "..(self.which or "unknown"))
-      print("Garbage with height > 1 is next queued")
-      print("next_garbage_block_height: "..next_garbage_block_height)
-      print("drop_it: "..(tostring(drop_it) or "false"))
-      print("from_chain: "..(tostring(from_chain) or "false"))
-      print("self.n_active_panels :"..(self.n_active_panels or "nil"))
-      print("self.prev_active_panels :"..(self.prev_active_panels or "nil"))
-      print("")
-    end
     if drop_it and self.garbage_q:len() > 0 then
       self:drop_garbage(unpack(self.garbage_q:pop()))
     end

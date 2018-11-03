@@ -9,7 +9,7 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_local_vs_yourself_setup, main_local_vs_yourself,
   main_options, exit_options_menu
 
-VERSION = "025"
+VERSION = "026"
 local PLAYING = "playing"  -- room states
 local CHARACTERSELECT = "character select" --room states
 local currently_spectating = false
