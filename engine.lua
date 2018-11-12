@@ -817,6 +817,7 @@ function Stack.PdP(self)
         -- if it's on the bottom row, it should surely land
         if row == 1 then
           panel.state = "landing"
+          panel.chaining = nil
           panel.timer = 12
           SFX_Land_Play=1;
           
@@ -831,6 +832,7 @@ function Stack.PdP(self)
             self:set_hoverers(row,col,panels[row-1][col].timer,false,false)
           else
             panel.state = "landing"
+            panel.chaining = nil
             panel.timer = 12
           end
           SFX_Land_Play=1;
@@ -892,6 +894,7 @@ function Stack.PdP(self)
             -- for any longer!
             elseif panels[row-1][col].color ~= 0 then
               panel.state = "landing"
+              panel.chaining = nil
               panel.timer = 12
             else
               panel.state = "falling"
