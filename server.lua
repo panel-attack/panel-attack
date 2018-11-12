@@ -1380,7 +1380,7 @@ end
 end
 --]]
 
-local server_socket = socket.bind("*", 49569)
+local server_socket = socket.bind("*", 59569)
 local sep = package.config:sub(1, 1)
 print("sep: "..sep)
 playerbase = Playerbase("playerbase")
