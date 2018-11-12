@@ -663,7 +663,8 @@ function Stack.PdP(self)
   self.rise_lock = self.n_active_panels ~= 0 or
       self.prev_active_panels ~= 0 or
       self.shake_time ~= 0 or
-      self.do_countdown
+      self.do_countdown or 
+      self.do_swap
 
   -- Increase the speed if applicable
   if self.speed_times then
@@ -689,7 +690,7 @@ function Stack.PdP(self)
       and not self.rise_lock and self.mode ~= "puzzle" then
     if self.panels_in_top_row then
       self.health = self.health - 1
-      if self.health == 0 and self.shake_time == 0 then
+      if self.health < 1 and self.shake_time < 1 then
         self.game_over = true
       end
     else
