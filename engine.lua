@@ -1097,7 +1097,7 @@ function Stack.PdP(self)
     for col=1,self.width do
       local panel = panels[row][col]
       if (panel.garbage and panel.state ~= "normal") or
-         (panel.color ~= 0 and (panel:exclude_hover() or panel.state == "swapping") and not panel.garbage) or
+         (panel.color ~= 0 and panel.state ~= "landing" and (panel:exclude_hover() or panel.state == "swapping") and not panel.garbage) or
           panel.state == "swapping" then
         self.n_active_panels = self.n_active_panels + 1
       end
