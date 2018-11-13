@@ -800,6 +800,7 @@ function Stack.PdP(self)
               else SFX_GarbageThud_Play = panel.height
               end
               shake_time = max(shake_time, panel.shake_time, self.peak_shake_time or 0)
+              --a smaller garbage block landing should renew the largest of the previous blocks' shake times since our shake time was last zero.
               self.peak_shake_time = max(shake_time, self.peak_shake_time or 0)
               panel.shake_time = nil
             end
