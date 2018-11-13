@@ -238,6 +238,7 @@ function Stack.mkcpy(self, other)
   other.cur_row = self.cur_row
   other.cur_col = self.cur_col
   other.shake_time = self.shake_time
+  other.peak_shake_time = self.peak_shake_time
   other.card_q = deepcpy(self.card_q)
   other.do_countdown = self.do_countdown
   other.ready_y = self.ready_y
@@ -798,7 +799,8 @@ function Stack.PdP(self)
                 SFX_GarbageThud_Play = 3
               else SFX_GarbageThud_Play = panel.height
               end
-              shake_time = max(shake_time, panel.shake_time)
+              shake_time = max(shake_time, panel.shake_time, self.peak_shake_time or 0)
+              self.peak_shake_time = max(shake_time, self.peak_shake_time or 0)
               panel.shake_time = nil
             end
           end
@@ -978,6 +980,9 @@ function Stack.PdP(self)
   local prev_shake_time = self.shake_time
   self.shake_time = self.shake_time - 1
   self.shake_time = max(self.shake_time, shake_time)
+  if self.shake_time == 0 then
+    self.peak_shake_time = 0
+  end
 
 
   -- Phase 3. /////////////////////////////////////////////////////////////
