@@ -1118,7 +1118,7 @@ function Stack.PdP(self)
     -- if there's no chain, we can send it
     if self.chain_counter == 0 then
       if #to_send > 0 then
-        table.sort(to_send, function(a,b)
+        --[[table.sort(to_send, function(a,b)
             if a[4] or b[4] then
               return a[4] and not b[4]
             elseif a[3] or b[3] then
@@ -1126,7 +1126,7 @@ function Stack.PdP(self)
             else
               return a[1] < b[1]
             end
-          end)
+          end)--]]
         self:really_send(to_send)
       end
     elseif self.garbage_to_send.chain then
