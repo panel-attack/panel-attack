@@ -7,7 +7,8 @@
 local min, pairs, deepcpy = math.min, pairs, deepcpy
 local max = math.max
 local garbage_bounce_time = #garbage_bounce_table
-local GARBAGE_DELAY = 52
+local GARBAGE_DELAY = 60
+local GARBAGE_TRANSIT_TIME = 90
 local clone_pool = {}
 
 Stack = class(function(s, which, mode, speed, difficulty, player_number)
@@ -1484,7 +1485,7 @@ function Stack.set_combo_garbage(self, n_combo, n_metal)
       self.garbage_to_send[k]=nil
     end
   end
-  self.garbage_to_send[self.CLOCK+100] = stuff_to_send
+  self.garbage_to_send[self.CLOCK + GARBAGE_TRANSIT_TIME] = stuff_to_send
 end
 
 -- the chain is over!
