@@ -7,7 +7,8 @@
 local min, pairs, deepcpy = math.min, pairs, deepcpy
 local max = math.max
 local garbage_bounce_time = #garbage_bounce_table
-local GARBAGE_DELAY = 52
+local GARBAGE_DELAY = 60
+local GARBAGE_TRANSIT_TIME = 90
 local clone_pool = {}
 
 Stack = class(function(s, which, mode, speed, difficulty, player_number)
@@ -55,7 +56,7 @@ Stack = class(function(s, which, mode, speed, difficulty, player_number)
                       {1,2,idx=1},
                       {1,idx=1}}
     s.later_garbage = {}
-    s.garbage_q = Queue()
+    s.garbage_q = GarbageQueue()
     -- garbage_to_send[frame] is an array of garbage to send at frame.
     -- garbage_to_send.chain is an array of garbage to send when the chain ends.
     s.garbage_to_send = {}
@@ -238,6 +239,7 @@ function Stack.mkcpy(self, other)
   other.cur_row = self.cur_row
   other.cur_col = self.cur_col
   other.shake_time = self.shake_time
+  other.peak_shake_time = self.peak_shake_time
   other.card_q = deepcpy(self.card_q)
   other.do_countdown = self.do_countdown
   other.ready_y = self.ready_y
@@ -292,6 +294,120 @@ end
 -- from_left
 -- dont_swap
 -- chaining
+
+GarbageQueue = class(function(s)
+  s.chain_garbage = Queue()
+  s.combo_garbage = {0,0,0,0,0,0} --index here represents width, and value represents how many of that width queued
+  s.metal = 0
+end)
+
+function GarbageQueue.push(self, garbage)
+  local width, height, metal, from_chain = unpack(garbage)
+  if metal then
+    self.metal = self.metal + 1
+  elseif from_chain or height > 1 then
+    if not from_chain then
+      print("ERROR: garbage with height > 1 was not marked as 'from_chain'")
+      print("adding it to the chain garbage queue anyway")
+    end
+    self.chain_garbage:push(garbage)
+  else
+    self.combo_garbage[width] = self.combo_garbage[width] + 1
+  end
+end
+
+function GarbageQueue.pop(self, just_peeking)
+  --check for any chain garbage, and return the first one (chronologically), if any
+  if self.chain_garbage:peek() then
+    if just_peeking then
+      return self.chain_garbage:peek()
+    else
+      return self.chain_garbage:pop()
+    end
+  end
+  --check for any combo garbage, and return the smallest one, if any
+  for k,v in ipairs(self.combo_garbage) do
+    if v > 0 then
+      if not just_peeking then
+        self.combo_garbage[k] = v - 1
+      end
+        --returning {width, height, is_metal, is_from_chain}
+      return {k, 1, false, false}
+    end
+  end
+  --check for any metal garbage, and return one if any
+  if self.metal > 0 then
+    if not just_peeking then
+      self.metal = self.metal - 1
+    end
+    return {6, 1, true, false}
+  end
+  return nil
+end
+
+function GarbageQueue.peek(self)
+  return self:pop(true) --(just peeking)
+end
+function GarbageQueue.len(self)
+  local ret = 0
+  ret = ret + self.chain_garbage:len()
+  for k,v in ipairs(self.combo_garbage) do
+    ret = ret + v
+  end
+  ret = ret + self.metal
+  return ret
+end
+
+function GarbageQueue.grow_chain(self)
+-- TODO: this should increase the size of the first chain garbage by 1.
+-- This is used by the telegraph to increase the size of the chain garbage being built
+-- or add a 6-wide if there is not chain garbage yet in the queue
+end
+
+Telegraph = class(function(self, sender, recipient)
+  self.garbage_queue = new GarbageQueue()
+  self.stopper = { garbage_type, size, frame_to_release}
+  self.sender = sender
+  self.recipient = recipient
+end)
+
+function Telegraph.push(self, attack_type, attack_size)
+  self.stopper = {garbage_type=attack_type, attack_size, frame_to_release=self.stack.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY}
+  if attack_type == "chain" then
+    self.garbage_queue:grow_chain()
+  elseif attack_type == "combo" then
+    local garbage = {--[[TODO: pull this code from sharpobject's existing code for changing combos to garbage]]}
+    self.garbage_queue:push(garbage)
+  end
+end
+
+function Telegraph.pop_all_ready_garbage()
+  local ready_garbage = {}
+  if self.stopper and self.stopper.frame_to_release <= self.recipient.CLOCK then
+    self.stopper = nil
+  end
+  if not self.stopper then
+    local next_block = {}
+    local number_of_blocks = self.garbage_queue:len()
+    for i=1, number_of_blocks do 
+      ready_garbage[i] = self.garbage_queue:pop()
+    end
+    return ready_garbage
+  elseif self.stopper and self.stopper.garbage_type == "chain" then
+    return {} --waiting on sender chain to end
+  elseif self.stopper and self.stopper.garbage_type == "combo" and stopper.garbage then
+    local next_block_type = "combo"
+    local next_in_queue = self.garbage_queue:peek()
+    while not next_in_queue[4]--[[is_from_chain]] and next_in_queue[1]--[[width]] < self.stopper.size do
+      ready_garbage[#ready_garbage+1] = self.garbage_queue:pop()
+      next_in_queue = self.garbage_queue:peek()
+    end
+    return ready_garbage
+  end
+end
+function Telegraph.sender_chain_ended()
+  self.stopper = nil
+end
 
 do
   local exclude_hover_set = {matched=true, popping=true, popped=true,
@@ -600,7 +716,8 @@ function Stack.PdP(self)
   self.rise_lock = self.n_active_panels ~= 0 or
       self.prev_active_panels ~= 0 or
       self.shake_time ~= 0 or
-      self.do_countdown
+      self.do_countdown or 
+      self.do_swap
 
   -- Increase the speed if applicable
   if self.speed_times then
@@ -626,7 +743,7 @@ function Stack.PdP(self)
       and not self.rise_lock and self.mode ~= "puzzle" then
     if self.panels_in_top_row then
       self.health = self.health - 1
-      if self.health == 0 and self.shake_time == 0 then
+      if self.health < 1 and self.shake_time < 1 then
         self.game_over = true
       end
     else
@@ -734,7 +851,9 @@ function Stack.PdP(self)
                 SFX_GarbageThud_Play = 3
               else SFX_GarbageThud_Play = panel.height
               end
-              shake_time = max(shake_time, panel.shake_time)
+              shake_time = max(shake_time, panel.shake_time, self.peak_shake_time or 0)
+              --a smaller garbage block landing should renew the largest of the previous blocks' shake times since our shake time was last zero.
+              self.peak_shake_time = max(shake_time, self.peak_shake_time or 0)
               panel.shake_time = nil
             end
           end
@@ -914,6 +1033,9 @@ function Stack.PdP(self)
   local prev_shake_time = self.shake_time
   self.shake_time = self.shake_time - 1
   self.shake_time = max(self.shake_time, shake_time)
+  if self.shake_time == 0 then
+    self.peak_shake_time = 0
+  end
 
 
   -- Phase 3. /////////////////////////////////////////////////////////////
@@ -1034,7 +1156,7 @@ function Stack.PdP(self)
     for col=1,self.width do
       local panel = panels[row][col]
       if (panel.garbage and panel.state ~= "normal") or
-         (panel.color ~= 0 and (panel:exclude_hover() or panel.state == "swapping") and not panel.garbage) or
+         (panel.color ~= 0 and panel.state ~= "landing" and (panel:exclude_hover() or panel.state == "swapping") and not panel.garbage) or
           panel.state == "swapping" then
         self.n_active_panels = self.n_active_panels + 1
       end
@@ -1048,7 +1170,7 @@ function Stack.PdP(self)
     -- if there's no chain, we can send it
     if self.chain_counter == 0 then
       if #to_send > 0 then
-        table.sort(to_send, function(a,b)
+        --[[table.sort(to_send, function(a,b)
             if a[4] or b[4] then
               return a[4] and not b[4]
             elseif a[3] or b[3] then
@@ -1056,7 +1178,7 @@ function Stack.PdP(self)
             else
               return a[1] < b[1]
             end
-          end)
+          end)--]]
         self:really_send(to_send)
       end
     elseif self.garbage_to_send.chain then
@@ -1088,12 +1210,12 @@ function Stack.PdP(self)
     end
   end
   local garbage_fits_in_populated_top_row 
-  if self.garbage_q:len() > 0 and self.panels_in_top_row then
+  if self.garbage_q:len() > 0 then
     --even if there are some panels in the top row,
     --check if the next block in the garbage_q would fit anyway
     --ie. 3-wide garbage might fit if there are three empty spaces where it would spawn
     garbage_fits_in_populated_top_row = true
-    local next_garbage_block_width, _height, _metal = unpack(self.garbage_q:peek())
+    local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
     local cols = self.garbage_cols[next_garbage_block_width]
     local spawn_col = cols[cols.idx]
     local spawn_row = #self.panels
@@ -1102,14 +1224,18 @@ function Stack.PdP(self)
         garbage_fits_in_populated_top_row = nil
       end
     end
+    local drop_it = 
+      (not self.panels_in_top_row or garbage_fits_in_populated_top_row)
+      and not self:has_falling_garbage()
+      and (
+        (from_chain and next_garbage_block_height > 1) or
+        (self.n_active_panels == 0 and
+        self.prev_active_panels == 0) 
+      )
+    if drop_it and self.garbage_q:len() > 0 then
+      self:drop_garbage(unpack(self.garbage_q:pop()))
+    end
   end
-  local drop_it = self.n_active_panels == 0 and
-      self.prev_active_panels == 0 and 
-      (not self.panels_in_top_row or garbage_fits_in_populated_top_row) and not self:has_falling_garbage()
-  if drop_it and self.garbage_q:len() > 0 then
-    self:drop_garbage(unpack(self.garbage_q:pop()))
-  end
-  
   --Play Sounds / music
   if not music_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
   
@@ -1396,11 +1522,11 @@ end
 function Stack.set_combo_garbage(self, n_combo, n_metal)
   local stuff_to_send = {}
   for i=3,n_metal do
-    stuff_to_send[#stuff_to_send+1] = {6, 1, true}
+    stuff_to_send[#stuff_to_send+1] = {6, 1, true, false}
   end
   local combo_pieces = combo_garbage[n_combo]
   for i=1,#combo_pieces do
-    stuff_to_send[#stuff_to_send+1] = {combo_pieces[i], 1, false}
+    stuff_to_send[#stuff_to_send+1] = {combo_pieces[i], 1, false, false}
   end
   for k,v in pairs(self.garbage_to_send) do
     if type(k) == "number" then
@@ -1410,7 +1536,7 @@ function Stack.set_combo_garbage(self, n_combo, n_metal)
       self.garbage_to_send[k]=nil
     end
   end
-  self.garbage_to_send[self.CLOCK+100] = stuff_to_send
+  self.garbage_to_send[self.CLOCK + GARBAGE_TRANSIT_TIME] = stuff_to_send
 end
 
 -- the chain is over!
