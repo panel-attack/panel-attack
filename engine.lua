@@ -164,6 +164,7 @@ Stack = class(function(s, which, mode, speed, difficulty, player_number)
     s.shake_time = 0
 
     s.prev_states = {}
+    s.telegraph = Telegraph(s)
   end)
 
 function Stack.mkcpy(self, other)
@@ -364,11 +365,10 @@ function GarbageQueue.grow_chain(self)
 -- or add a 6-wide if there is not chain garbage yet in the queue
 end
 
-Telegraph = class(function(self, sender, recipient)
+Telegraph = class(function(self, sender)
   self.garbage_queue = new GarbageQueue()
   self.stopper = { garbage_type, size, frame_to_release}
   self.sender = sender
-  self.recipient = recipient
 end)
 
 function Telegraph.push(self, attack_type, attack_size)
@@ -381,9 +381,50 @@ function Telegraph.push(self, attack_type, attack_size)
   end
 end
 
-function Telegraph.pop_all_ready_garbage()
+function Telegraph.add_combo_garbage(self, n_combo, n_metal)
+  local stuff_to_send = {}
+  for i=3,n_metal do
+    stuff_to_send[#stuff_to_send+1] = {6, 1, true, false}
+  end
+  local combo_pieces = combo_garbage[n_combo]
+  for i=1,#combo_pieces do
+    stuff_to_send[#stuff_to_send+1] = {combo_pieces[i], 1, false, false}
+  end
+  for k,v in pairs(self.garbage_to_send) do
+    if type(k) == "number" then
+      for i=1,#v do
+        stuff_to_send[#stuff_to_send+1] = v[i]
+      end
+      self.garbage_to_send[k]=nil
+    end
+  end
+  self.garbage_queue:push(stuff_to_send)
+end
+
+function Telegraph.set_chain_garbage(self, n_chain)
+  local tab = self.garbage_to_send[self.CLOCK]
+  if not tab then
+    tab = {}
+    self.garbage_to_send[self.CLOCK] = tab
+  end
+  local to_add = self.garbage_to_send.chain
+  if to_add then
+    for i=1,#to_add do
+      tab[#tab+1] = to_add[i]
+    end
+    self.garbage_to_send.chain = nil
+  end
+  tab[#tab+1] = {6, n_chain-1, false, true}
+end
+
+function Telegraph.grow_chain(self)
+  self.garbage_queue:grow_chain()
+  --any other stuff the telegraph should do.. set a stopper?
+end
+
+function Telegraph.pop_all_ready_garbage(self)
   local ready_garbage = {}
-  if self.stopper and self.stopper.frame_to_release <= self.recipient.CLOCK then
+  if self.stopper and self.stopper.frame_to_release <= self.stack.garbage_target.CLOCK then
     self.stopper = nil
   end
   if not self.stopper then
@@ -405,8 +446,11 @@ function Telegraph.pop_all_ready_garbage()
     return ready_garbage
   end
 end
-function Telegraph.sender_chain_ended()
+
+function Telegraph.sender_chain_ended(self)
   self.stopper = nil
+  self.stopper.frame_to_release = self.sender.CLOCK + GARBAGE_TRANSIT_TIME
+  self.stopper.garbage_type = "chain"
 end
 
 do
@@ -1140,7 +1184,7 @@ function Stack.PdP(self)
 
   -- if at the end of the routine there are no chain panels, the chain ends.
   if self.chain_counter ~= 0 and self.n_chain_panels == 0 then
-    self:set_chain_garbage(self.chain_counter)
+    self.telegraph:sender_chain_ended()
     SFX_Fanfare_Play = self.chain_counter
     self.chain_counter=0
   end
@@ -1516,9 +1560,11 @@ function Stack.drop_garbage(self, width, height, metal)
   end
 end
 
+-- DEPRECATED. Replaced by Telegraph.add_combo_garbage
 -- prepare to send some garbage!
 -- also, delay any combo garbage that wasn't sent out yet
 -- and set it to be sent at the same time as this garbage.
+--[[
 function Stack.set_combo_garbage(self, n_combo, n_metal)
   local stuff_to_send = {}
   for i=3,n_metal do
@@ -1538,9 +1584,12 @@ function Stack.set_combo_garbage(self, n_combo, n_metal)
   end
   self.garbage_to_send[self.CLOCK + GARBAGE_TRANSIT_TIME] = stuff_to_send
 end
+]]
 
+--DEPRECATED.  Replaced by Telegraph.grow_chain() and Telegraph.sender_chain_ended()
 -- the chain is over!
 -- let's send it and the stuff waiting on it.
+--[[
 function Stack.set_chain_garbage(self, n_chain)
   local tab = self.garbage_to_send[self.CLOCK]
   if not tab then
@@ -1556,6 +1605,7 @@ function Stack.set_chain_garbage(self, n_chain)
   end
   tab[#tab+1] = {6, n_chain-1, false, true}
 end
+]]
 
 function Stack.really_send(self, to_send)
   if self.garbage_target then
@@ -1733,6 +1783,7 @@ function Stack.check_matches(self)
     else
       self.chain_counter = 2
     end
+    self.telegraph:grow_chain()
   end
 
   local pre_stop_time = self.FRAMECOUNT_MATCH +
@@ -1914,7 +1965,7 @@ function Stack.check_matches(self)
     elseif metal_count > 2 then
       SFX_Buddy_Play = "combo"
     end
-    self:set_combo_garbage(combo_size, metal_count)
+    self.telegraph:add_combo_garbage(combo_size, metal_count)
   end
 end
 
