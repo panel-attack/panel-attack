@@ -390,12 +390,12 @@ function Telegraph.add_combo_garbage(self, n_combo, n_metal)
   for i=1,#combo_pieces do
     stuff_to_send[#stuff_to_send+1] = {combo_pieces[i], 1, false, false}
   end
-  for k,v in pairs(self.garbage_to_send) do
+  for k,v in pairs(self.stack.garbage_to_send) do
     if type(k) == "number" then
       for i=1,#v do
         stuff_to_send[#stuff_to_send+1] = v[i]
       end
-      self.garbage_to_send[k]=nil
+      self.stack.garbage_to_send[k]=nil
     end
   end
   self.garbage_queue:push(stuff_to_send)
@@ -407,12 +407,12 @@ function Telegraph.set_chain_garbage(self, n_chain)
     tab = {}
     self.garbage_to_send[self.CLOCK] = tab
   end
-  local to_add = self.garbage_to_send.chain
+  local to_add = self.stack.garbage_to_send.chain
   if to_add then
     for i=1,#to_add do
       tab[#tab+1] = to_add[i]
     end
-    self.garbage_to_send.chain = nil
+    self.stack.garbage_to_send.chain = nil
   end
   tab[#tab+1] = {6, n_chain-1, false, true}
 end
@@ -1206,44 +1206,14 @@ function Stack.PdP(self)
       end
     end
   end
-
-  local to_send = self.garbage_to_send[self.CLOCK]
-  if to_send then
-    self.garbage_to_send[self.CLOCK] = nil
-
-    -- if there's no chain, we can send it
-    if self.chain_counter == 0 then
-      if #to_send > 0 then
-        --[[table.sort(to_send, function(a,b)
-            if a[4] or b[4] then
-              return a[4] and not b[4]
-            elseif a[3] or b[3] then
-              return b[3] and not a[3]
-            else
-              return a[1] < b[1]
-            end
-          end)--]]
-        self:really_send(to_send)
-      end
-    elseif self.garbage_to_send.chain then
-      local waiting_for_chain = self.garbage_to_send.chain
-      for i=1,#to_send do
-        waiting_for_chain[#waiting_for_chain+1] = to_send[i]
-      end
-    else
-      self.garbage_to_send.chain = to_send
+  if self.telegraph.stopper and self.stopper.frame_to_release = self.CLOCK then
+    
+    local to_send = self.telegraph.pop_all_ready_garbage()
+    if to_send[1] then
+      self:really_send(to_send)
     end
   end
-
   self:remove_extra_rows()
-
-  local garbage = self.later_garbage[self.CLOCK]
-  if garbage then
-    for i=1,#garbage do
-      self.garbage_q:push(garbage[i])
-    end
-  end
-  self.later_garbage[self.CLOCK-409] = nil
   
   --double-check panels_in_top_row
   self.panels_in_top_row = false
@@ -1609,7 +1579,7 @@ end
 
 function Stack.really_send(self, to_send)
   if self.garbage_target then
-    self.garbage_target:recv_garbage(self.CLOCK + GARBAGE_DELAY, to_send)
+    self.garbage_target:recv_garbage(self.CLOCK, to_send)
   end
 end
 
