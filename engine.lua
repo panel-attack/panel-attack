@@ -360,24 +360,30 @@ function GarbageQueue.len(self)
 end
 
 function GarbageQueue.grow_chain(self)
--- TODO: this should increase the size of the first chain garbage by 1.
+  if not self.chain_garbage:peek() then
+    self:push({6,1,false,true}) --a garbage block 6-wide, 1-tall, not metal, from_chain
+  else 
+    local width, height, metal, from_chain = unpack(self.chain_garbage:peek())
+    self.chain_garbage[self.chain_garbage.first] = {width, height + 1, false, from_chain}
+  end
 -- This is used by the telegraph to increase the size of the chain garbage being built
 -- or add a 6-wide if there is not chain garbage yet in the queue
 end
 
 Telegraph = class(function(self, sender)
   self.garbage_queue = new GarbageQueue()
-  self.stopper = { garbage_type, size, frame_to_release}
+  self.stoppers =  {chain = {}, combo = {}}--{ garbage_type, size, frame_to_release}
   self.sender = sender
 end)
 
-function Telegraph.push(self, attack_type, attack_size)
-  self.stopper = {garbage_type=attack_type, attack_size, frame_to_release=self.stack.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY}
+function Telegraph.push(self, attack_type, attack_size, metal_count)
+  if not metal_count then
+    metal_count = 0
+  end
   if attack_type == "chain" then
     self.garbage_queue:grow_chain()
   elseif attack_type == "combo" then
-    local garbage = {--[[TODO: pull this code from sharpobject's existing code for changing combos to garbage]]}
-    self.garbage_queue:push(garbage)
+    self:add_combo_garbage(attack_size, metal_count)
   end
 end
 
@@ -389,6 +395,7 @@ function Telegraph.add_combo_garbage(self, n_combo, n_metal)
   local combo_pieces = combo_garbage[n_combo]
   for i=1,#combo_pieces do
     stuff_to_send[#stuff_to_send+1] = {combo_pieces[i], 1, false, false}
+    self.stoppers["combo"][combo_pieces[i]] = self.stack.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
   end
   for k,v in pairs(self.stack.garbage_to_send) do
     if type(k) == "number" then
@@ -419,32 +426,48 @@ end
 
 function Telegraph.grow_chain(self)
   self.garbage_queue:grow_chain()
+  self.stoppers["chain"][#self.garbage_queue.chain_garbage] = self.stack.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
   --any other stuff the telegraph should do.. set a stopper?
 end
 
 function Telegraph.pop_all_ready_garbage(self)
   local ready_garbage = {}
-  if self.stopper and self.stopper.frame_to_release <= self.stack.garbage_target.CLOCK then
-    self.stopper = nil
-  end
-  if not self.stopper then
-    local next_block = {}
-    local number_of_blocks = self.garbage_queue:len()
-    for i=1, number_of_blocks do 
-      ready_garbage[i] = self.garbage_queue:pop()
+  local n_chain_stoppers, n_combo_stoppers = 0, 0
+  for chain_idx, chain_release_frame in pairs(self.stoppers["chain"]) do
+    --remove any chain stoppers that expire this frame,
+    if release_frame <= self.stack.CLOCK then
+      self.stoppers["chain"].chain_idx = nil
+    else
+      n_chain_stoppers = n_chain_stoppers + 1
     end
-    return ready_garbage
-  elseif self.stopper and self.stopper.garbage_type == "chain" then
-    return {} --waiting on sender chain to end
-  elseif self.stopper and self.stopper.garbage_type == "combo" and stopper.garbage then
-    local next_block_type = "combo"
-    local next_in_queue = self.garbage_queue:peek()
-    while not next_in_queue[4]--[[is_from_chain]] and next_in_queue[1]--[[width]] < self.stopper.size do
+  end
+  for combo_garbage_width, combo_release_frame in pairs(self.stoppers["combo"]) do
+    --remove any combo stoppers that expire this frame,
+    if combo_release_frame <= self.stack.CLOCK then
+      self.stoppers["chain"][combo_garbage_width] = nil
+    else 
+      n_combo_stoppers = n_combo_stoppers + 1
+    end
+  end
+
+  while self.garbage_queue.chain_garbage:peek() do
+    --TODO: check if we are chaining?
+    if not stoppers["chain"][1--[[TODO:correct this]]] then
       ready_garbage[#ready_garbage+1] = self.garbage_queue:pop()
-      next_in_queue = self.garbage_queue:peek()
+    else 
+      --there was a stopper here, stop and return.
+      return ready_garbage[i]
     end
-    return ready_garbage
   end
+  while self.garbage_queue.chain_garbage:peek() do
+    if not stoppers["combo"][1--[[TODO:correct this]]] then
+      ready_garbage[#ready_garbage+1] = self.garbage_queue:pop()
+    else 
+      --there was a stopper here, stop and return.
+      return ready_garbage[i]
+    end
+  end
+  return ready_garbage
 end
 
 function Telegraph.sender_chain_ended(self)
@@ -1753,7 +1776,7 @@ function Stack.check_matches(self)
     else
       self.chain_counter = 2
     end
-    self.telegraph:grow_chain()
+    self.telegraph:push("chain",self.chain_counter)
   end
 
   local pre_stop_time = self.FRAMECOUNT_MATCH +
@@ -1935,7 +1958,7 @@ function Stack.check_matches(self)
     elseif metal_count > 2 then
       SFX_Buddy_Play = "combo"
     end
-    self.telegraph:add_combo_garbage(combo_size, metal_count)
+    self.telegraph:push("combo", combo_size, metal_count)
   end
 end
 
