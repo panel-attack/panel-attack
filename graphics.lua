@@ -569,16 +569,18 @@ void Render_Confetti()
 }--]]
 
 function Stack.render_cursor(self)
+  local shake_idx = #shake_arr - self.shake_time
+  local shake = ceil((shake_arr[shake_idx] or 0) * 13)
   if self.countdown_timer then
     if self.CLOCK % 2 == 0 then
       draw(IMG_cursor[1],
         (self.cur_col-1)*16+self.pos_x-4,
-        (11-(self.cur_row))*16+self.pos_y-4+self.displacement)
+        (11-(self.cur_row))*16+self.pos_y-4+self.displacement-shake)
     end
   else
     draw(IMG_cursor[(floor(self.CLOCK/16)%2)+1],
       (self.cur_col-1)*16+self.pos_x-4,
-      (11-(self.cur_row))*16+self.pos_y-4+self.displacement)
+      (11-(self.cur_row))*16+self.pos_y-4+self.displacement-shake)
   end
 end
 
