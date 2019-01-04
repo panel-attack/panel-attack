@@ -304,17 +304,22 @@ end)
 
 function GarbageQueue.push(self, garbage)
   local width, height, metal, from_chain = unpack(garbage)
-  if metal then
-    self.metal = self.metal + 1
-  elseif from_chain or height > 1 then
-    if not from_chain then
-      print("ERROR: garbage with height > 1 was not marked as 'from_chain'")
-      print("adding it to the chain garbage queue anyway")
+  if width and height then
+    print("GarbageQueue.push" .. " TODO: Garbage details here")
+    if metal then
+      self.metal = self.metal + 1
+    elseif from_chain or height > 1 then
+      if not from_chain then
+        print("ERROR: garbage with height > 1 was not marked as 'from_chain'")
+        print("adding it to the chain garbage queue anyway")
+      end
+      self.chain_garbage:push(garbage)
+    else
+      self.combo_garbage[width] = self.combo_garbage[width] + 1
     end
-    self.chain_garbage:push(garbage)
-  else
-    self.combo_garbage[width] = self.combo_garbage[width] + 1
   end
+  print("after push, the queue is:")
+  print(self:to_string())
 end
 
 function GarbageQueue.pop(self, just_peeking)
@@ -346,9 +351,26 @@ function GarbageQueue.pop(self, just_peeking)
   return nil
 end
 
+function GarbageQueue.to_string(self)
+  local ret = "Combos:\n"
+  for i=6, 3, -1 do
+    ret = ret..i.."-wides: "..self.combo_garbage[i].."\n"
+  end
+    ret = ret.."Chains:\n"
+  if self.chain_garbage:peek() then
+    --list chain garbage last to first such that the one to fall first is at the bottom of the list (if any).
+    for i=self.chain_garbage:len(), 1, -1 do 
+      local width, height, metal, from_chain = unpack(self.chain_garbage)
+      ret = ret..i.."-tall\n"
+    end
+  end
+  return ret
+end
+
 function GarbageQueue.peek(self)
   return self:pop(true) --(just peeking)
 end
+
 function GarbageQueue.len(self)
   local ret = 0
   ret = ret + self.chain_garbage:len()
@@ -371,8 +393,10 @@ function GarbageQueue.grow_chain(self)
 end
 
 Telegraph = class(function(self, sender)
-  self.garbage_queue = new GarbageQueue()
+  self.garbage_queue = GarbageQueue()
   self.stoppers =  {chain = {}, combo = {}}--{ garbage_type, size, frame_to_release}
+  --note: keys for stoppers such as self.stoppers.chain[some_key]
+  --will be frame numbers that a stopper will expire, and values will be true or nil.  true if there is a stopper for that frame.
   self.sender = sender
 end)
 
@@ -388,6 +412,7 @@ function Telegraph.push(self, attack_type, attack_size, metal_count)
 end
 
 function Telegraph.add_combo_garbage(self, n_combo, n_metal)
+  print("Telegraph.add_combo_garbage "..(n_combo or "nil").." "..(n_metal or "nil"))
   local stuff_to_send = {}
   for i=3,n_metal do
     stuff_to_send[#stuff_to_send+1] = {6, 1, true, false}
@@ -395,17 +420,18 @@ function Telegraph.add_combo_garbage(self, n_combo, n_metal)
   local combo_pieces = combo_garbage[n_combo]
   for i=1,#combo_pieces do
     stuff_to_send[#stuff_to_send+1] = {combo_pieces[i], 1, false, false}
-    self.stoppers["combo"][combo_pieces[i]] = self.stack.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
+    self.stoppers["combo"][combo_pieces[i]] = self.sender.garbage_target.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
   end
-  for k,v in pairs(self.stack.garbage_to_send) do
+  for k,v in pairs(self.sender.garbage_to_send) do
     if type(k) == "number" then
       for i=1,#v do
         stuff_to_send[#stuff_to_send+1] = v[i]
       end
-      self.stack.garbage_to_send[k]=nil
+      self.sender.garbage_to_send[k]=nil
     end
   end
   self.garbage_queue:push(stuff_to_send)
+  
 end
 
 function Telegraph.set_chain_garbage(self, n_chain)
@@ -414,20 +440,20 @@ function Telegraph.set_chain_garbage(self, n_chain)
     tab = {}
     self.garbage_to_send[self.CLOCK] = tab
   end
-  local to_add = self.stack.garbage_to_send.chain
+  local to_add = self.sender.garbage_to_send.chain
   if to_add then
     for i=1,#to_add do
       tab[#tab+1] = to_add[i]
     end
-    self.stack.garbage_to_send.chain = nil
+    self.sender.garbage_to_send.chain = nil
   end
   tab[#tab+1] = {6, n_chain-1, false, true}
 end
 
 function Telegraph.grow_chain(self)
   self.garbage_queue:grow_chain()
-  self.stoppers["chain"][#self.garbage_queue.chain_garbage] = self.stack.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
-  --any other stuff the telegraph should do.. set a stopper?
+  self.stoppers["chain"][#self.garbage_queue.chain_garbage] = self.sender.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
+  
 end
 
 function Telegraph.pop_all_ready_garbage(self)
@@ -435,7 +461,7 @@ function Telegraph.pop_all_ready_garbage(self)
   local n_chain_stoppers, n_combo_stoppers = 0, 0
   for chain_idx, chain_release_frame in pairs(self.stoppers["chain"]) do
     --remove any chain stoppers that expire this frame,
-    if release_frame <= self.stack.CLOCK then
+    if release_frame <= self.sender.CLOCK then
       self.stoppers["chain"].chain_idx = nil
     else
       n_chain_stoppers = n_chain_stoppers + 1
@@ -443,7 +469,7 @@ function Telegraph.pop_all_ready_garbage(self)
   end
   for combo_garbage_width, combo_release_frame in pairs(self.stoppers["combo"]) do
     --remove any combo stoppers that expire this frame,
-    if combo_release_frame <= self.stack.CLOCK then
+    if combo_release_frame <= self.sender.CLOCK then
       self.stoppers["chain"][combo_garbage_width] = nil
     else 
       n_combo_stoppers = n_combo_stoppers + 1
@@ -452,7 +478,7 @@ function Telegraph.pop_all_ready_garbage(self)
 
   while self.garbage_queue.chain_garbage:peek() do
     --TODO: check if we are chaining?
-    if not stoppers["chain"][1--[[TODO:correct this]]] then
+    if not self.stoppers.chain[1--[[TODO:correct this]]] then
       ready_garbage[#ready_garbage+1] = self.garbage_queue:pop()
     else 
       --there was a stopper here, stop and return.
@@ -460,7 +486,7 @@ function Telegraph.pop_all_ready_garbage(self)
     end
   end
   while self.garbage_queue.chain_garbage:peek() do
-    if not stoppers["combo"][1--[[TODO:correct this]]] then
+    if not self.stoppers.combo[1--[[TODO:correct this]]] then
       ready_garbage[#ready_garbage+1] = self.garbage_queue:pop()
     else 
       --there was a stopper here, stop and return.
@@ -471,9 +497,12 @@ function Telegraph.pop_all_ready_garbage(self)
 end
 
 function Telegraph.sender_chain_ended(self)
-  self.stopper = nil
-  self.stopper.frame_to_release = self.sender.CLOCK + GARBAGE_TRANSIT_TIME
-  self.stopper.garbage_type = "chain"
+  for k,v in pairs(self.stoppers.chain) do
+    if (self.sender.CLOCK + GARBAGE_TRANSIT_TIME + GARBAGE_DELAY >= k) then
+      self.stoppers.chain[k] = nil
+    end
+  end
+
 end
 
 do
@@ -1229,12 +1258,33 @@ function Stack.PdP(self)
       end
     end
   end
-  if self.telegraph.stopper and self.stopper.frame_to_release = self.CLOCK then
-    
-    local to_send = self.telegraph.pop_all_ready_garbage()
-    if to_send[1] then
-      self:really_send(to_send)
+  local first_stopper = 0
+  local stopper_count = 0
+  for k,v in pairs(self.telegraph.stoppers.chain) do
+    if k >= self.CLOCK then
+      --stopper expires, remove it.
+      self.telegraph.stoppers.chain[k] = nil
+    else 
+      if k > first_stopper then
+      first_stopper = k
+      end
+      stopper_count = stopper_count + 1
     end
+  end
+  for k,v in pairs(self.telegraph.stoppers.combo) do
+    if k >= self.CLOCK then
+      --stopper expires, remove it.
+      self.telegraph.stoppers.combo[k] = nil
+    else 
+      if k > first_stopper then
+      first_stopper = k
+      end
+      stopper_count = stopper_count + 1
+    end
+  end
+  local to_send = self.telegraph:pop_all_ready_garbage()
+  if to_send[1] then
+    self:really_send(to_send)
   end
   self:remove_extra_rows()
   
