@@ -59,7 +59,7 @@ Stack = class(function(s, which, mode, speed, difficulty, player_number)
     s.garbage_q = GarbageQueue()
     -- garbage_to_send[frame] is an array of garbage to send at frame.
     -- garbage_to_send.chain is an array of garbage to send when the chain ends.
-    s.garbage_to_send = {}
+    --s.garbage_to_send = {}
     s.pos_x = 4   -- Position of the play area on the screen
     s.pos_y = 4
     s.score_x = 315
@@ -190,7 +190,8 @@ function Stack.mkcpy(self, other)
 
   end--]]
   other.garbage_q = deepcpy(self.garbage_q)
-  other.garbage_to_send = deepcpy(self.garbage_to_send)
+  --other.garbage_to_send = deepcpy(self.garbage_to_send)
+  other.telegraph = deepcpy(self.telegraph)
   other.input_state = self.input_state
   local height = self.height or other.height
   local width = self.width or other.width
@@ -303,19 +304,21 @@ GarbageQueue = class(function(s)
 end)
 
 function GarbageQueue.push(self, garbage)
-  local width, height, metal, from_chain = unpack(garbage)
-  if width and height then
-    print("GarbageQueue.push" .. " TODO: Garbage details here")
-    if metal then
-      self.metal = self.metal + 1
-    elseif from_chain or height > 1 then
-      if not from_chain then
-        print("ERROR: garbage with height > 1 was not marked as 'from_chain'")
-        print("adding it to the chain garbage queue anyway")
+  for k,v in pairs(garbage) do
+    local width, height, metal, from_chain = unpack(v)
+    if width and height then
+      print("GarbageQueue.push" .. " TODO: Garbage details here")
+      if metal then
+        self.metal = self.metal + 1
+      elseif from_chain or height > 1 then
+        if not from_chain then
+          print("ERROR: garbage with height > 1 was not marked as 'from_chain'")
+          print("adding it to the chain garbage queue anyway")
+        end
+        self.chain_garbage:push(v)
+      else
+        self.combo_garbage[width] = self.combo_garbage[width] + 1
       end
-      self.chain_garbage:push(garbage)
-    else
-      self.combo_garbage[width] = self.combo_garbage[width] + 1
     end
   end
   print("after push, the queue is:")
@@ -383,7 +386,7 @@ end
 
 function GarbageQueue.grow_chain(self)
   if not self.chain_garbage:peek() then
-    self:push({6,1,false,true}) --a garbage block 6-wide, 1-tall, not metal, from_chain
+    self:push({{6,1,false,true}}) --a garbage block 6-wide, 1-tall, not metal, from_chain
   else 
     local width, height, metal, from_chain = unpack(self.chain_garbage:peek())
     self.chain_garbage[self.chain_garbage.first] = {width, height + 1, false, from_chain}
@@ -420,49 +423,25 @@ function Telegraph.add_combo_garbage(self, n_combo, n_metal)
   local combo_pieces = combo_garbage[n_combo]
   for i=1,#combo_pieces do
     stuff_to_send[#stuff_to_send+1] = {combo_pieces[i], 1, false, false}
-    self.stoppers["combo"][combo_pieces[i]] = self.sender.garbage_target.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
-  end
-  for k,v in pairs(self.sender.garbage_to_send) do
-    if type(k) == "number" then
-      for i=1,#v do
-        stuff_to_send[#stuff_to_send+1] = v[i]
-      end
-      self.sender.garbage_to_send[k]=nil
-    end
+    self.stoppers.combo[combo_pieces[i]] = self.sender.garbage_target.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
   end
   self.garbage_queue:push(stuff_to_send)
   
 end
 
-function Telegraph.set_chain_garbage(self, n_chain)
-  local tab = self.garbage_to_send[self.CLOCK]
-  if not tab then
-    tab = {}
-    self.garbage_to_send[self.CLOCK] = tab
-  end
-  local to_add = self.sender.garbage_to_send.chain
-  if to_add then
-    for i=1,#to_add do
-      tab[#tab+1] = to_add[i]
-    end
-    self.sender.garbage_to_send.chain = nil
-  end
-  tab[#tab+1] = {6, n_chain-1, false, true}
-end
-
 function Telegraph.grow_chain(self)
   self.garbage_queue:grow_chain()
-  self.stoppers["chain"][#self.garbage_queue.chain_garbage] = self.sender.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
+  self.stoppers.chain[#self.garbage_queue.chain_garbage] = self.sender.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
   
 end
 
 function Telegraph.pop_all_ready_garbage(self)
   local ready_garbage = {}
   local n_chain_stoppers, n_combo_stoppers = 0, 0
-  for chain_idx, chain_release_frame in pairs(self.stoppers["chain"]) do
+  for chain_idx, chain_release_frame in pairs(self.stoppers.chain) do
     --remove any chain stoppers that expire this frame,
     if release_frame <= self.sender.CLOCK then
-      self.stoppers["chain"].chain_idx = nil
+      self.stoppers.chain.chain_idx = nil
     else
       n_chain_stoppers = n_chain_stoppers + 1
     end
@@ -470,7 +449,7 @@ function Telegraph.pop_all_ready_garbage(self)
   for combo_garbage_width, combo_release_frame in pairs(self.stoppers["combo"]) do
     --remove any combo stoppers that expire this frame,
     if combo_release_frame <= self.sender.CLOCK then
-      self.stoppers["chain"][combo_garbage_width] = nil
+      self.stoppers.chain[combo_garbage_width] = nil
     else 
       n_combo_stoppers = n_combo_stoppers + 1
     end
