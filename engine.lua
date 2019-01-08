@@ -388,8 +388,8 @@ function GarbageQueue.grow_chain(self)
   if not self.chain_garbage:peek() then
     self:push({{6,1,false,true}}) --a garbage block 6-wide, 1-tall, not metal, from_chain
   else 
-    local width, height, metal, from_chain = unpack(self.chain_garbage:peek())
-    self.chain_garbage[self.chain_garbage.first] = {width, height + 1, false, from_chain}
+    local width, height, metal, from_chain = unpack(self.chain_garbage.last)
+    self.chain_garbage.last = {width, height + 1, false, from_chain}
   end
 -- This is used by the telegraph to increase the size of the chain garbage being built
 -- or add a 6-wide if there is not chain garbage yet in the queue
