@@ -398,8 +398,10 @@ end
 Telegraph = class(function(self, sender)
   self.garbage_queue = GarbageQueue()
   self.stoppers =  {chain = {}, combo = {}}
+  
   --note: keys for stoppers such as self.stoppers.chain[some_key]
-  --will be frame numbers that a stopper will expire, and values will be true or nil.  true if there is a stopper for that frame.
+  --will be the frame the chain was earned and values will be the frame to send it , nil if still going).
+  
   --keys for self.stoppers.combo[some_key] will be garbage widths, and values will be frame_to_release
   self.sender = sender
 end)
@@ -432,17 +434,17 @@ end
 
 function Telegraph.grow_chain(self)
   self.garbage_queue:grow_chain()
-  self.stoppers.chain[#self.garbage_queue.chain_garbage] = self.sender.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
+  self.stoppers.chain[self.garbage_queue.chain_garbage:len()] = self.sender.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
   
 end
 
 function Telegraph.pop_all_ready_garbage(self)
   local ready_garbage = {}
   local n_chain_stoppers, n_combo_stoppers = 0, 0
-  for chain_release_frame, chain_idx in pairs(self.stoppers.chain) do
-    print 
+  for chain_release_frame, chain_idx in ipairs(self.stoppers.chain) do
+    
     --remove any chain stoppers that expire this frame,
-    if chain_release_frame <= self.sender.CLOCK then
+    if chain_earned_frame <= self.sender.CLOCK then
       self.stoppers.chain.chain_idx = nil
     else
       n_chain_stoppers = n_chain_stoppers + 1
@@ -459,7 +461,7 @@ function Telegraph.pop_all_ready_garbage(self)
 
   while self.garbage_queue.chain_garbage:peek() do
     --TODO: check if we are chaining?
-    if not self.stoppers.chain[1--[[TODO:correct this]]] then
+    if not self.stoppers.chain[1] then
       ready_garbage[#ready_garbage+1] = self.garbage_queue:pop()
     else 
       --there was a stopper here, stop and return.
@@ -467,12 +469,13 @@ function Telegraph.pop_all_ready_garbage(self)
     end
   end
   for combo_garbage_width=3,6 do
-    local n_blocks_of_this_width = self.garbage_queue.combo_garbage[i]
+    local n_blocks_of_this_width = self.garbage_queue.combo_garbage[combo_garbage_width]
     local frame_to_release = self.stoppers.combo[combo_garbage_width]
     if n_blocks_of_this_width > 0 then
       if not frame_to_release then
-      for i=1,n_blocks_of_this_width do
-        ready_garbage[#ready_garbage+1] = self.garbage_queue:pop()
+        for i=1,n_blocks_of_this_width do
+          ready_garbage[#ready_garbage+1] = self.garbage_queue:pop()
+        end
       end
     end
   end
@@ -1266,7 +1269,6 @@ function Stack.PdP(self)
       stopper_count = stopper_count + 1
     end
   end
-  print("about telegraph:pop_all_ready_garbage()")
   local to_send = self.telegraph:pop_all_ready_garbage()
   if to_send[1] then
     self:really_send(to_send)
@@ -1693,11 +1695,14 @@ function Stack.recv_garbage(self, time, to_recv)
       self.in_rollback = nil
     end
   end
+  --[[
   local garbage = self.later_garbage[time] or {}
   for i=1,#to_recv do
     garbage[#garbage+1] = to_recv[i]
   end
   self.later_garbage[time] = garbage
+  --]]
+  self.garbage_q:push(to_recv)
 end
 
 function Stack.check_matches(self)
