@@ -400,7 +400,7 @@ Telegraph = class(function(self, sender)
   self.stoppers =  {chain = {}, combo = {}}
   
   --note: keys for stoppers such as self.stoppers.chain[some_key]
-  --will be the frame the chain was earned and values will be the frame to send it , nil if still going).
+  --will be the garbage block's index in the queue , and value will be the frame the stopper expires).
   
   --keys for self.stoppers.combo[some_key] will be garbage widths, and values will be frame_to_release
   self.sender = sender
@@ -441,10 +441,10 @@ end
 function Telegraph.pop_all_ready_garbage(self)
   local ready_garbage = {}
   local n_chain_stoppers, n_combo_stoppers = 0, 0
-  for chain_release_frame, chain_idx in ipairs(self.stoppers.chain) do
+  for chain_idx, chain_release_frame in ipairs(self.stoppers.chain) do
     
     --remove any chain stoppers that expire this frame,
-    if chain_earned_frame <= self.sender.CLOCK then
+    if chain_release_frame <= self.sender.CLOCK then
       self.stoppers.chain.chain_idx = nil
     else
       n_chain_stoppers = n_chain_stoppers + 1
@@ -465,7 +465,7 @@ function Telegraph.pop_all_ready_garbage(self)
       ready_garbage[#ready_garbage+1] = self.garbage_queue:pop()
     else 
       --there was a stopper here, stop and return.
-      return ready_garbage[i]
+      return ready_garbage
     end
   end
   for combo_garbage_width=3,6 do
@@ -476,6 +476,9 @@ function Telegraph.pop_all_ready_garbage(self)
         for i=1,n_blocks_of_this_width do
           ready_garbage[#ready_garbage+1] = self.garbage_queue:pop()
         end
+      else 
+        --there was a stopper here, stop and return
+        return ready_garbage
       end
     end
   end
