@@ -56,7 +56,7 @@ Stack = class(function(s, which, mode, speed, difficulty, player_number)
                       {1,2,idx=1},
                       {1,idx=1}}
     s.later_garbage = {}
-    s.garbage_q = GarbageQueue()
+    s.garbage_q = GarbageQueue(s)
     -- garbage_to_send[frame] is an array of garbage to send at frame.
     -- garbage_to_send.chain is an array of garbage to send when the chain ends.
     --s.garbage_to_send = {}
@@ -297,7 +297,8 @@ end
 -- dont_swap
 -- chaining
 
-GarbageQueue = class(function(s)
+GarbageQueue = class(function(s, stack)
+  s.stack = stack
   s.chain_garbage = Queue()
   s.combo_garbage = {0,0,0,0,0,0} --index here represents width, and value represents how many of that width queued
   s.metal = 0
@@ -323,6 +324,8 @@ function GarbageQueue.push(self, garbage)
   end
   print("after push, the queue is:")
   print(self:to_string())
+  print(P1.CLOCK)
+  print("self.chain_garbage:len() = "..self.chain_garbage:len())
 end
 
 function GarbageQueue.pop(self, just_peeking)
@@ -331,6 +334,8 @@ function GarbageQueue.pop(self, just_peeking)
     if just_peeking then
       return self.chain_garbage:peek()
     else
+      print(P1.CLOCK)
+      print("popping garbage from queue")
       return self.chain_garbage:pop()
     end
   end
@@ -385,18 +390,20 @@ function GarbageQueue.len(self)
 end
 
 function GarbageQueue.grow_chain(self)
-  if not self.chain_garbage:peek() then
+  if self.stack.chain_counter == 2 then
     self:push({{6,1,false,true}}) --a garbage block 6-wide, 1-tall, not metal, from_chain
   else 
-    local width, height, metal, from_chain = unpack(self.chain_garbage.last)
-    self.chain_garbage.last = {width, height + 1, false, from_chain}
+    print(P1.CLOCK)
+    print("self.chain_garbage:len() = "..self.chain_garbage:len())
+    local width, height, metal, from_chain = unpack(self.chain_garbage[self.chain_garbage:len()])
+    self.chain_garbage[self.chain_garbage:len()] = {width, height + 1, false, from_chain}
   end
 -- This is used by the telegraph to increase the size of the chain garbage being built
 -- or add a 6-wide if there is not chain garbage yet in the queue
 end
 
 Telegraph = class(function(self, sender)
-  self.garbage_queue = GarbageQueue()
+  self.garbage_queue = GarbageQueue(sender)
   self.stoppers =  {chain = {}, combo = {}}
   
   --note: keys for stoppers such as self.stoppers.chain[some_key]
