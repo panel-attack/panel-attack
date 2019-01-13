@@ -335,7 +335,7 @@ function GarbageQueue.pop(self, just_peeking)
       return self.chain_garbage:peek()
     else
       print(P1.CLOCK)
-      print("popping garbage from queue")
+      print("popping chain garbage from queue")
       return self.chain_garbage:pop()
     end
   end
@@ -344,6 +344,7 @@ function GarbageQueue.pop(self, just_peeking)
     if v > 0 then
       if not just_peeking then
         self.combo_garbage[k] = v - 1
+        print("popping combo garbage from the queue")
       end
         --returning {width, height, is_metal, is_from_chain}
       return {k, 1, false, false}
@@ -353,6 +354,7 @@ function GarbageQueue.pop(self, just_peeking)
   if self.metal > 0 then
     if not just_peeking then
       self.metal = self.metal - 1
+      print("popping metal garbage from the queue")
     end
     return {6, 1, true, false}
   end
@@ -393,10 +395,15 @@ function GarbageQueue.grow_chain(self)
   if self.stack.chain_counter == 2 then
     self:push({{6,1,false,true}}) --a garbage block 6-wide, 1-tall, not metal, from_chain
   else 
+    print("in GarbageQueue.grow_chain")
     print(P1.CLOCK)
+    print("self.stack.chain_counter = "..(self.stack.chain_counter or "nil"))
     print("self.chain_garbage:len() = "..self.chain_garbage:len())
-    local width, height, metal, from_chain = unpack(self.chain_garbage[self.chain_garbage:len()])
-    self.chain_garbage[self.chain_garbage:len()] = {width, height + 1, false, from_chain}
+    print(self:to_string())
+    print("table_to_string(self.chain_garbage):")
+    print(table_to_string(self.chain_garbage))
+    local width, height, metal, from_chain = unpack(self.chain_garbage[self.chain_garbage.last])
+    self.chain_garbage:replace_last({width, height + 1, false, from_chain})
   end
 -- This is used by the telegraph to increase the size of the chain garbage being built
 -- or add a 6-wide if there is not chain garbage yet in the queue
@@ -418,7 +425,7 @@ function Telegraph.push(self, attack_type, attack_size, metal_count)
     metal_count = 0
   end
   if attack_type == "chain" then
-    self.garbage_queue:grow_chain()
+    self:grow_chain()
   elseif attack_type == "combo" then
     self:add_combo_garbage(attack_size, metal_count)
   end
@@ -442,17 +449,23 @@ end
 function Telegraph.grow_chain(self)
   self.garbage_queue:grow_chain()
   self.stoppers.chain[self.garbage_queue.chain_garbage:len()] = self.sender.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
+  print(self.sender.CLOCK)
+  print("in Telegraph.grow_chain")
+  print("table_to_string(self.stoppers.chain):")
+  print(table_to_string(self.stoppers.chain))
   
 end
 
 function Telegraph.pop_all_ready_garbage(self)
   local ready_garbage = {}
   local n_chain_stoppers, n_combo_stoppers = 0, 0
-  for chain_idx, chain_release_frame in ipairs(self.stoppers.chain) do
+  for chain_idx, chain_release_frame in pairs(self.stoppers.chain) do
     
     --remove any chain stoppers that expire this frame,
     if chain_release_frame <= self.sender.CLOCK then
-      self.stoppers.chain.chain_idx = nil
+      print("in Telegraph.pop_all_ready_garbage")
+      print("removing a stopper")
+      self.stoppers.chain[chain_idx] = nil
     else
       n_chain_stoppers = n_chain_stoppers + 1
     end
@@ -468,7 +481,12 @@ function Telegraph.pop_all_ready_garbage(self)
 
   while self.garbage_queue.chain_garbage:peek() do
     --TODO: check if we are chaining?
+    print("table_to_string(self.stoppers.chain):")
+    print(table_to_string(self.stoppers.chain))
     if not self.stoppers.chain[1] then
+      print("in Telegraph.pop_all_ready_garbage")
+      print("so there was not a stopper for the first chain now")
+      print("popping the first chain")
       ready_garbage[#ready_garbage+1] = self.garbage_queue:pop()
     else 
       --there was a stopper here, stop and return.
@@ -1255,19 +1273,21 @@ function Stack.PdP(self)
       end
     end
   end
+  --[[ --commenting this out because I think this all happens properly in telegraph:pop_all_ready_garbage() anyway
   local first_stopper = 0
   local stopper_count = 0
-  for k,v in pairs(self.telegraph.stoppers.chain) do
-    if k >= self.CLOCK then
+  for chain_idx, chain_release_frame in pairs(self.telegraph.stoppers.chain) do
+    if chain_release_frame >= self.CLOCK then
       --stopper expires, remove it.
-      self.telegraph.stoppers.chain[k] = nil
+      self.telegraph.stoppers.chain[chain_idx] = nil
     else 
-      if k > first_stopper then
-      first_stopper = k
+      if chain_idx > first_stopper then
+      first_stopper = chain_idx
       end
       stopper_count = stopper_count + 1
     end
   end
+  --TODO: double-check k and v below are used correctly
   for k,v in pairs(self.telegraph.stoppers.combo) do
     if k >= self.CLOCK then
       --stopper expires, remove it.
@@ -1279,6 +1299,7 @@ function Stack.PdP(self)
       stopper_count = stopper_count + 1
     end
   end
+  --]]
   local to_send = self.telegraph:pop_all_ready_garbage()
   if to_send[1] then
     self:really_send(to_send)

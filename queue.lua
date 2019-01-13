@@ -25,6 +25,14 @@ function Queue.pop(self)
   return ret
 end
 
+function Queue.replace_last(self, new_last)
+  if self.last == -1 then
+    self:push(new_last)
+  else
+    self[self.last] = new_last
+  end
+end
+
 function Queue.peek(self)
   return self[self.first]
 end
