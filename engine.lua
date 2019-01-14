@@ -369,10 +369,13 @@ function GarbageQueue.to_string(self)
     ret = ret.."Chains:\n"
   if self.chain_garbage:peek() then
     --list chain garbage last to first such that the one to fall first is at the bottom of the list (if any).
-    for i=self.chain_garbage:len(), 1, -1 do 
-      local width, height, metal, from_chain = unpack(self.chain_garbage)
-      ret = ret..i.."-tall\n"
+    for i=self.chain_garbage:len()-1, 1, -1 do 
+      print("in GarbageQueue.to_string. i="..i)
+      local width, height, metal, from_chain = unpack(self.chain_garbage[i])
+      ret = ret..height.."-tall\n"
     end
+    
+    --ret = ret..table_to_string(self.chain_garbage)
   end
   return ret
 end
@@ -392,8 +395,9 @@ function GarbageQueue.len(self)
 end
 
 function GarbageQueue.grow_chain(self)
-  if self.stack.chain_counter == 2 then
+  if not self.chain_in_progress then
     self:push({{6,1,false,true}}) --a garbage block 6-wide, 1-tall, not metal, from_chain
+    self.chain_in_progress = true
   else 
     print("in GarbageQueue.grow_chain")
     print(P1.CLOCK)
@@ -407,6 +411,10 @@ function GarbageQueue.grow_chain(self)
   end
 -- This is used by the telegraph to increase the size of the chain garbage being built
 -- or add a 6-wide if there is not chain garbage yet in the queue
+end
+
+function GarbageQueue.sender_chain_ended(self)
+  self.chain_in_progress = nil
 end
 
 Telegraph = class(function(self, sender)
@@ -448,7 +456,7 @@ end
 
 function Telegraph.grow_chain(self)
   self.garbage_queue:grow_chain()
-  self.stoppers.chain[self.garbage_queue.chain_garbage:len()] = self.sender.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
+  self.stoppers.chain[self.garbage_queue.chain_garbage.last] = self.sender.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
   print(self.sender.CLOCK)
   print("in Telegraph.grow_chain")
   print("table_to_string(self.stoppers.chain):")
@@ -478,12 +486,12 @@ function Telegraph.pop_all_ready_garbage(self)
       n_combo_stoppers = n_combo_stoppers + 1
     end
   end
-
+  print(P1.CLOCK)
+  print("table_to_string(self.stoppers.chain):-")
+  print(table_to_string(self.stoppers.chain))
+  
   while self.garbage_queue.chain_garbage:peek() do
-    --TODO: check if we are chaining?
-    print("table_to_string(self.stoppers.chain):")
-    print(table_to_string(self.stoppers.chain))
-    if not self.stoppers.chain[1] then
+    if not self.stoppers.chain[self.garbage_queue.chain_garbage.first] and not self.garbage_queue.chain_in_progress then
       print("in Telegraph.pop_all_ready_garbage")
       print("so there was not a stopper for the first chain now")
       print("popping the first chain")
@@ -512,12 +520,14 @@ function Telegraph.pop_all_ready_garbage(self)
 end
 
 function Telegraph.sender_chain_ended(self)
-  for k,v in pairs(self.stoppers.chain) do
-    if (self.sender.CLOCK + GARBAGE_TRANSIT_TIME + GARBAGE_DELAY >= k) then
-      self.stoppers.chain[k] = nil
+  --[[ --this bit is unneeded, I think
+  for chain_idx, chain_release_frame in pairs(self.stoppers.chain) do
+    if (self.sender.CLOCK + GARBAGE_TRANSIT_TIME + GARBAGE_DELAY >= chain_release_frame) then
+      self.stoppers.chain[chain_idx] = nil
     end
   end
-
+  --]]
+  self.garbage_queue:sender_chain_ended()
 end
 
 do
