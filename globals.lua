@@ -1,3 +1,5 @@
+require("queue")
+
 -- keyboard assignment vars
 K = {{up="up", down="down", left="left", right="right",
       swap1="z", swap2="x", raise1="c", raise2="v"},
@@ -8,7 +10,6 @@ keys = {}
 this_frame_keys = {}
 this_frame_unicodes = {}
 this_frame_messages = {}
-config = {character="lip", level=5, name="defaultname"}
 
 bounce_table = {1, 1, 1, 1,
                 2, 2, 2,
@@ -145,9 +146,9 @@ end
 
 characters = {"lip", "windy", "sherbet", "thiana", "ruby",
               "elias", "flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia", 
-			  "lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg",
-			  "lungefish", "raphael", "yoshi", "hookbill",
-			  "navalpiranha", "kamek", "bowser"}
+              "lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg",
+              "lungefish", "raphael", "yoshi", "hookbill",
+              "navalpiranha", "kamek", "bowser"}
 stages = {}
 stages["lip"] = "flower"
 stages["windy"] = "wind"
@@ -175,8 +176,6 @@ stages["hookbill"] = "cave"
 stages["navalpiranha"] = "cave"
 stages["kamek"] = "cave"
 stages["bowser"] = "king"
-
-DEBUG_MODE = nil
 
 shake_arr = {}
 
@@ -223,43 +222,22 @@ colors = {  red     = {220, 50,  47 },
             white   = {234, 234, 234},
             black   = {20,  20,  20 },
             dgray   = {28,  28,  28 }}
-			
+            
+panel_color_number_to_upper = {"A", "B", "C", "D", "E", "F", "G", "H",[0]="0"}
+panel_color_number_to_lower = {"a", "b", "c", "d", "e", "f", "g", "h",[0]="0"}
+panel_color_to_number = { ["A"]=1, ["B"]=2, ["C"]=3, ["D"]=4, ["E"]=5, ["F"]=6, ["G"]=7, ["H"]=8,
+                          ["a"]=1, ["b"]=2, ["c"]=3, ["d"]=4, ["e"]=5, ["f"]=6, ["g"]=7, ["h"]=8,
+                          ["1"]=1, ["2"]=2, ["3"]=3, ["4"]=4, ["5"]=5, ["6"]=6, ["7"]=7, ["8"]=8,
+                          ["0"]=0}
+                                
+--how many panels you have to pop to earn a metal panel in your next row.
+level_to_metal_panel_frequency = {12, 14, 16, 19, 23, 26, 29, 33, 37, 41}
+            
 -- win counters
 my_win_count = 0
 op_win_count = 0
 
---sounds: SFX, music
-SFX_Cur_Move = love.audio.newSource("sounds/SFX/06move.ogg", "static")
-SFX_Swap = love.audio.newSource("sounds/SFX/08swap.ogg", "static")
-SFX_Land = love.audio.newSource("sounds/SFX/12cLand.ogg", "static")
-SFX_Fanfare_Play = 0
-SFX_Fanfare1 = love.audio.newSource("sounds/SFX/F6Fanfare1.ogg", "static")
-SFX_Fanfare2 = love.audio.newSource("sounds/SFX/F7Fanfare2.ogg", "static")
-SFX_Fanfare3 = love.audio.newSource("sounds/SFX/F8Fanfare3.ogg", "static")
-SFX_GameOver = love.audio.newSource("sounds/SFX/0DGameOver.ogg", "static")
-SFX_GameOver_Play = 0
-SFX_GarbageThud = {}
-SFX_GarbageThud[1] = love.audio.newSource("sounds/SFX/Thud_1.ogg")
-SFX_GarbageThud[2] = love.audio.newSource("sounds/SFX/Thud_2.ogg")
-SFX_GarbageThud[3] = love.audio.newSource("sounds/SFX/Thud_3.ogg")
-SFX_GarbageThud_Play = 0
-character_SFX = {}
-for i,name in ipairs(characters) do
-	character_SFX[name] = love.audio.newSource("sounds/character_SFX/"..name..".ogg", "static")
-end
+default_assets_dir = "Stock PdP_TA"
+default_sounds_dir = "Stock PdP_TA"
 
-music_character_normal = {}
-for i,name in ipairs(characters) do
-	music_character_normal[name] = love.audio.newSource("sounds/Music/"..stages[name].."_normal.it")
-end
-music_character_danger = {}
-for i,name in ipairs(characters) do
-	music_character_danger[name] = love.audio.newSource("sounds/Music/"..stages[name].."_danger.it")
-end
-SFX_pops = {}
-for popLevel=1,4 do
-	SFX_pops[popLevel] = {}
-	for popIndex=1,10 do
-		SFX_pops[popLevel][popIndex] = love.audio.newSource("sounds/SFX/pop"..popLevel.."-"..popIndex..".ogg", "static")
-	end
-end
+join_community_msg = "  Join the community at\ndiscord.panelattack.com"

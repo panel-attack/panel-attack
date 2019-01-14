@@ -40,7 +40,7 @@ function get_message()
   else
     len = type_to_length[typ] - 1
   end
-  if len > string.len(leftovers) then
+  if len + gap + 1 > string.len(leftovers) then
     return nil
   end
   local ret = string.sub(leftovers,2+gap,len+gap+1)
@@ -79,7 +79,8 @@ local process_message = {
   L=function(s) P2_level = ({["0"]=10})[s] or (s+0) end,
   --G=function(s) got_opponent = true end,
   H=function(s) got_H = true end,
-  N=function(s) error("Server told us to upgrade the game at burke.ro/panel.zip or the TetrisAttackOnline Discord") end,
+  --N=function(s) error("Server told us to upgrade the game at burke.ro/panel.zip (for burke.ro server) or the TetrisAttackOnline Discord (for Jon's Server)") end,
+  N=function(s) error("PLEASE DOWNLOAD the latest version of the game from #welcome-getting-started at the TetrisAttackOnline Discord http://discord.panelattack.com") end,
   P=function(s) P1.panel_buffer = P1.panel_buffer..s end,
   O=function(s) P2.panel_buffer = P2.panel_buffer..s end,
   U=function(s) P1.input_buffer = P1.input_buffer..s end,  -- used for P1's inputs when spectating.
@@ -91,23 +92,27 @@ local process_message = {
     local current_message = json.decode(s)
     this_frame_messages[#this_frame_messages+1] = current_message
     print("JSON LOL "..s)
+    if not current_message then
+      error("Error in network.lua process_message\nMessage: \""..(s or "nil").."\"\ncould not be decoded")
+    end
     if current_message.spectators then
       spectator_list = current_message.spectators
-	  spectators_string = spectator_list_string(current_message.spectators)
+      spectators_string = spectator_list_string(current_message.spectators)
     end
   end}
 
 function network_init(ip)
   TCP_sock = socket.tcp()
   TCP_sock:settimeout(7)
-  if not TCP_sock:connect(ip,49569) then
+  if not TCP_sock:connect(ip,49569) then --for official server
+  --if not TCP_sock:connect(ip,59569) then --for beta server
     error("Failed to connect =(")
   end
   TCP_sock:settimeout(0)
   got_H = false
-  net_send("H020")
-  assert(config.name and config.level and config.character)
-  json_send({name=config.name, level=config.level, character=config.character})
+  net_send("H"..VERSION)
+  assert(config.name and config.level and config.character and config.save_replays_publicly)
+  json_send({name=config.name, level=config.level, character=config.character, save_replays_publicly = config.save_replays_publicly})
 end
 
 function connection_is_ready()
@@ -123,16 +128,16 @@ function do_messages()
         print("Got message "..typ.." "..data)
       end
       process_message[typ](data)
-	  if typ == "J" then
-		if this_frame_messages[#this_frame_messages].replay_of_match_so_far then
-		  --print("***BREAKING do_messages because received a replay")
-		  break  -- don't process any more messages this frame
-				   -- we need to initialize P1 and P2 before we do any I or U messages
-		end
-	  end
-	  if typ == "U" then
-	    typ = "in_buf"
-	  end
+      if typ == "J" then
+        if this_frame_messages[#this_frame_messages].replay_of_match_so_far then
+          --print("***BREAKING do_messages because received a replay")
+          break  -- don't process any more messages this frame
+                   -- we need to initialize P1 and P2 before we do any I or U messages
+        end
+      end
+      if typ == "U" then
+        typ = "in_buf"
+      end
       if P1 and P1.mode and replay[P1.mode][typ] then
         replay[P1.mode][typ]=replay[P1.mode][typ]..data
       end
@@ -168,44 +173,20 @@ end
 
 function make_local_panels(stack, prev_panels)
   local ncolors = stack.NCOLORS
-  local ret = prev_panels
-  for x=0,19 do
-    for y=0,5 do
-      local prevtwo = y>1 and string.sub(ret,-1,-1) == string.sub(ret,-2,-2)
-      local nogood = true
-      while nogood do
-        color = tostring(math.random(1,ncolors))
-        nogood = (prevtwo and color == string.sub(ret,-1,-1)) or
-          color == string.sub(ret,-6,-6)
-      end
-      ret = ret..color
-    end
-  end
-  stack.panel_buffer = stack.panel_buffer..string.sub(ret,7,-1)
+  local ret = make_panels(stack.NCOLORS, prev_panels, stack)
+  stack.panel_buffer = stack.panel_buffer..ret
   local replay = replay[P1.mode]
   if replay and replay.pan_buf then
-    replay.pan_buf = replay.pan_buf .. string.sub(ret,7,-1)
+    replay.pan_buf = replay.pan_buf .. ret
   end
 end
 
 function make_local_gpanels(stack, prev_panels)
-  local ncolors = stack.NCOLORS
-  local ret = prev_panels
-  for x=0,19 do
-    for y=0,5 do
-      local nogood = true
-      while nogood do
-        color = tostring(math.random(1,ncolors))
-        nogood = (y>0 and color == string.sub(ret,-1,-1)) or
-          color == string.sub(ret,-6,-6)
-      end
-      ret = ret..color
-    end
-  end
-  stack.gpanel_buffer = stack.gpanel_buffer..string.sub(ret,7,-1)
+  ret = make_gpanels(stack.NCOLORS, prev_panels)
+  stack.gpanel_buffer = stack.gpanel_buffer..ret
   local replay = replay[P1.mode]
   if replay and replay.gpan_buf then
-    replay.gpan_buf = replay.gpan_buf .. string.sub(ret,7,-1)
+    replay.gpan_buf = replay.gpan_buf .. ret
   end
 end
 

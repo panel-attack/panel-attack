@@ -37,22 +37,33 @@
 --int ConfettiBuf[6][2];
 --#define CONFETTI_STARTTIMER   40
 --#define CONFETTI_STARTRADIUS 150
+require("input")
+require("util")
 
 local floor = math.floor
 local ceil = math.ceil
 local garbage_match_time = #garbage_bounce_table
 
-function load_img(s)
-  s = love.image.newImageData(s)
-  local w, h = s:getWidth(), s:getHeight()
-  local wp = math.pow(2, math.ceil(math.log(w)/math.log(2)))
-  local hp = math.pow(2, math.ceil(math.log(h)/math.log(2)))
-  if wp ~= w or hp ~= h then
-    local padded = love.image.newImageData(wp, hp)
-    padded:paste(s, 0, 0)
-    s = padded
+function load_img(path_and_name)
+  local img
+  if pcall(function () 
+    img = love.image.newImageData("assets/"..(config.assets_dir or default_assets_dir).."/"..path_and_name)
+  end) then 
+    if config.assets_dir and config.assets_dir ~= default_assets_dir then
+      print("loaded custom asset: "..config.assets_dir.."/"..path_and_name)
+    end
+  else
+    img = love.image.newImageData("assets/"..default_assets_dir.."/"..path_and_name)
   end
-  local ret = love.graphics.newImage(s)
+  -- local w, h = img:getWidth(), img:getHeight()
+  -- local wp = math.pow(2, math.ceil(math.log(w)/math.log(2)))
+  -- local hp = math.pow(2, math.ceil(math.log(h)/math.log(2)))
+  -- if wp ~= w or hp ~= h then
+    -- local padded = love.image.newImageData(wp, hp)
+    -- padded:paste(img, 0, 0)
+    -- img = padded
+  -- end
+  local ret = love.graphics.newImage(img)
   ret:setFilter("nearest","nearest")
   return ret
 end
@@ -65,12 +76,29 @@ function draw(img, x, y, rot, x_scale,y_scale)
     rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
 end
 
+
 function drawQuad(img, quad, x, y, rot, x_scale,y_scale)
   rot = rot or 0
   x_scale = x_scale or 1
   y_scale = y_scale or 1
   gfx_q:push({love.graphics.draw, {img, quad, x*GFX_SCALE, y*GFX_SCALE,
     rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
+end
+
+function menu_draw(img, x, y, rot, x_scale,y_scale)
+  rot = rot or 0
+  x_scale = x_scale or 1
+  y_scale = y_scale or 1
+  gfx_q:push({love.graphics.draw, {img, x, y,
+    rot, x_scale, y_scale}})
+end
+
+function menu_drawq(img, quad, x, y, rot, x_scale,y_scale)
+  rot = rot or 0
+  x_scale = x_scale or 1
+  y_scale = y_scale or 1
+  gfx_q:push({love.graphics.draw, {img, quad, x, y,
+    rot, x_scale, y_scale}})
 end
 
 function grectangle(mode, x, y, w, h)
@@ -109,13 +137,13 @@ function graphics_init()
   for i=1,8 do
     IMG_panels[i]={}
     for j=1,7 do
-      IMG_panels[i][j]=load_img("assets/panel"..
+      IMG_panels[i][j]=load_img("panel"..
         tostring(i)..tostring(j)..".png")
     end
   end
   IMG_panels[9]={}
   for j=1,7 do
-    IMG_panels[9][j]=load_img("assets/panel00.png")
+    IMG_panels[9][j]=load_img("panel00.png")
   end
 
   local g_parts = {"topleft", "botleft", "topright", "botright",
@@ -160,37 +188,89 @@ function graphics_init()
     local imgs = {}
     IMG_garbage[key] = imgs
     for _,part in ipairs(g_parts) do
-      imgs[part] = load_img("assets/"..key.."/"..part..".png")
+      imgs[part] = load_img(""..key.."/"..part..".png")
     end
     IMG_particles[key] = load_img("assets/"..key.."/particles.png")
   end
 
-  IMG_metal_flash = load_img("assets/garbageflash.png")
-  IMG_metal = load_img("assets/metalmid.png")
-  IMG_metal_l = load_img("assets/metalend0.png")
-  IMG_metal_r = load_img("assets/metalend1.png")
+  IMG_metal_flash = load_img("garbageflash.png")
+  IMG_metal = load_img("metalmid.png")
+  IMG_metal_l = load_img("metalend0.png")
+  IMG_metal_r = load_img("metalend1.png")
 
-  IMG_cursor = {  load_img("assets/cur0.png"),
-          load_img("assets/cur1.png")}
+  IMG_ready = load_img("ready.png")
+  IMG_numbers = {}
+  for i=1,3 do
+    IMG_numbers[i] = load_img(i..".png")
+  end
+  IMG_cursor = {  load_img("cur0.png"),
+          load_img("cur1.png")}
 
-  IMG_frame = load_img("assets/frame.png")
-  IMG_wall = load_img("assets/wall.png")
+  IMG_frame = load_img("frame.png")
+  IMG_wall = load_img("wall.png")
 
   IMG_cards = {}
   IMG_cards[true] = {}
   IMG_cards[false] = {}
   for i=4,66 do
-    IMG_cards[false][i] = load_img("assets/combo"
+    IMG_cards[false][i] = load_img("combo"
       ..tostring(floor(i/10))..tostring(i%10)..".png")
   end
   for i=2,13 do
-    IMG_cards[true][i] = load_img("assets/chain"
+    IMG_cards[true][i] = load_img("chain"
       ..tostring(floor(i/10))..tostring(i%10)..".png")
   end
   for i=14,99 do
-    IMG_cards[true][i] = load_img("assets/chain00.png")
+    IMG_cards[true][i] = load_img("chain00.png")
   end
-
+  IMG_character_icons = {}
+  for k,name in ipairs(characters) do
+    IMG_character_icons[name] = load_img(""..name.."/icon.png")
+  end
+  local MAX_SUPPORTED_PLAYERS = 2
+  IMG_char_sel_cursors = {}
+  for player_num=1,MAX_SUPPORTED_PLAYERS do
+    IMG_char_sel_cursors[player_num] = {}
+    for position_num=1,2 do
+      IMG_char_sel_cursors[player_num][position_num] = load_img("char_sel_cur_"..player_num.."P_pos"..position_num..".png")
+    end
+  end
+  IMG_char_sel_cursor_halves = {left={}, right={}}
+  for player_num=1,MAX_SUPPORTED_PLAYERS do
+    IMG_char_sel_cursor_halves.left[player_num] = {}
+    for position_num=1,2 do
+      local cur_width, cur_height = IMG_char_sel_cursors[player_num][position_num]:getDimensions()
+      local half_width, half_height = cur_width/2, cur_height/2
+      IMG_char_sel_cursor_halves["left"][player_num][position_num] = love.graphics.newQuad(0,0,half_width,cur_height,cur_width, cur_height)
+    end
+    IMG_char_sel_cursor_halves.right[player_num] = {}
+    for position_num=1,2 do
+      local cur_width, cur_height = IMG_char_sel_cursors[player_num][position_num]:getDimensions()
+      local half_width, half_height = cur_width/2, cur_height/2
+      IMG_char_sel_cursor_halves.right[player_num][position_num] = love.graphics.newQuad(half_width,0,half_width,cur_height,cur_width, cur_height)
+    end
+  end
+  character_display_names = {}
+  for k, original_name in ipairs(characters) do
+    name_txt_file = love.filesystem.newFile("assets/"..config.assets_dir.."/"..original_name.."/name.txt")
+    --print(original_name)
+    open_success, err = name_txt_file:open("r")
+    --if err then print(err) end
+    local display_name = name_txt_file:read(name_txt_file:getSize())
+    if display_name then
+      character_display_names[original_name] = display_name
+    else
+      character_display_names[original_name] = original_name
+    end
+  end
+  print("character_display_names: ")
+  for k,v in pairs(character_display_names) do
+    print(k.." = "..v)
+  end
+  character_display_names_to_original_names = {}
+  for k,v in pairs(character_display_names) do
+    character_display_names_to_original_names[v] = k
+  end
   --for(a=0;a<2;a++) MrStopAni[a]=5;
   --for(a=2;a<5;a++) MrStopAni[a]=8;
   --for(a=5;a<25;a++) MrStopAni[a]=16;
@@ -243,7 +323,7 @@ end
 
 function Stack.render(self)
   local mx,my
-  if DEBUG_MODE then
+  if config.debug_mode then
     mx,my = love.mouse.getPosition()
     mx = mx / GFX_SCALE
     my = my / GFX_SCALE
@@ -326,8 +406,8 @@ function Stack.render(self)
               draw(imgs.flash, draw_x, draw_y)
             end
           end
-		  --this adds the drawing of state flags to garbage panels
-		  if DEBUG_MODE then
+          --this adds the drawing of state flags to garbage panels
+          if config.debug_mode then
             gprint(panel.state, draw_x*3, draw_y*3)
             if panel.match_anyway ~= nil then
               gprint(tostring(panel.match_anyway), draw_x*3, draw_y*3+10)
@@ -336,7 +416,7 @@ function Stack.render(self)
               end
             end
             gprint(panel.chaining and "chaining" or "nah", draw_x*3, draw_y*3+30)
-		  end
+          end
         else
           if panel.state == "matched" then
             local flash_time = self.FRAMECOUNT_MATCH - panel.timer
@@ -366,7 +446,7 @@ function Stack.render(self)
             draw_frame = 1
           end
           draw(IMG_panels[panel.color][draw_frame], draw_x, draw_y)
-          if DEBUG_MODE then
+          if config.debug_mode then
             gprint(panel.state, draw_x*3, draw_y*3)
             if panel.match_anyway ~= nil then
               gprint(tostring(panel.match_anyway), draw_x*3, draw_y*3+10)
@@ -378,7 +458,7 @@ function Stack.render(self)
           end
         end
       end
-      if DEBUG_MODE and mx >= draw_x and mx < draw_x + 16 and
+      if config.debug_mode and mx >= draw_x and mx < draw_x + 16 and
           my >= draw_y and my < draw_y + 16 then
         mouse_panel = {row, col, panel}
         draw(IMG_panels[4][1], draw_x+16/3, draw_y+16/3, 0, 0.33333333, 0.3333333)
@@ -395,9 +475,13 @@ function Stack.render(self)
     gprint("Speed: "..self.speed, self.score_x, 130)
     gprint("Frame: "..self.CLOCK, self.score_x, 145)
     if self.mode == "time" then
-      local time_left = 120 - self.CLOCK/60
-      local mins = floor(time_left/60)
-      local secs = floor(time_left%60)
+      local time_left = 120 - (self.game_stopwatch or 120)/60
+      local mins = math.floor(time_left/60)
+      local secs = math.ceil(time_left% 60)
+      if secs == 60 then 
+        secs = 0 
+        mins = mins+1
+      end
       gprint("Time: "..string.format("%01d:%02d",mins,secs), self.score_x, 160)
     elseif self.level then
       gprint("Level: "..self.level, self.score_x, 160)
@@ -406,10 +490,36 @@ function Stack.render(self)
     gprint("Shake: "..self.shake_time, self.score_x, 190)
     gprint("Stop: "..self.stop_time, self.score_x, 205)
     gprint("Pre stop: "..self.pre_stop_time, self.score_x, 220)
-	if DEBUG_MODE and self.danger then gprint("danger", self.score_x,235) end
-	if DEBUG_MODE and self.danger_music then gprint("danger music", self.score_x, 250) end
-	if match_type then gprint(match_type, 375, 15) end
-	--gprint("Player"..self.player_number, self.score_x,265)
+    if config.debug_mode and self.danger then gprint("danger", self.score_x,235) end
+    if config.debug_mode and self.danger_music then gprint("danger music", self.score_x, 250) end
+    if config.debug_mode then
+      gprint("cleared: "..(self.panels_cleared or 0), self.score_x, 265)
+    end
+    if config.debug_mode then
+      gprint("metal q: "..(self.metal_panels_queued or 0), self.score_x, 280)
+    end
+    if config.debug_mode and self.input_state then
+      -- print(self.input_state)
+      -- print(base64decode[self.input_state])
+      local iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
+      -- print(tostring(raise))
+      local inputs_to_print = "inputs:"
+      if iraise then inputs_to_print = inputs_to_print.."\nraise" end --◄▲▼►
+      if iswap then inputs_to_print = inputs_to_print.."\nswap" end
+      if iup then inputs_to_print = inputs_to_print.."\nup" end
+      if idown then inputs_to_print = inputs_to_print.."\ndown" end
+      if ileft then inputs_to_print = inputs_to_print.."\nleft" end
+      if iright then inputs_to_print = inputs_to_print.."\nright" end
+      gprint(inputs_to_print, self.score_x, 295)
+    end
+    if match_type then gprint(match_type, 375, 10) end
+    if P1 and P1.game_stopwatch and tonumber(P1.game_stopwatch) then 
+      gprint(frames_to_time_string(P1.game_stopwatch, P1.mode == "endless"), 385, 25)
+    end
+    if not config.debug_mode then
+      gprint(join_community_msg or "", 330, 560)
+    end
+    --gprint("Player"..self.player_number, self.score_x,265)
     --gprint("Panel buffer: "..#self.panel_buffer, self.score_x, 190)
     --[[local danger = {}
     for i=1,6 do
@@ -420,6 +530,9 @@ function Stack.render(self)
   self:draw_cards()
   self:render_cursor()
   self:render_gfx()
+  if self.do_countdown then
+    self:render_countdown()
+  end
 end
 
 function scale_letterbox(width, height, w_ratio, h_ratio)
@@ -500,9 +613,42 @@ void Render_Confetti()
 }--]]
 
 function Stack.render_cursor(self)
-  draw(IMG_cursor[(floor(self.CLOCK/16)%2)+1],
-    (self.cur_col-1)*16+self.pos_x-4,
-    (11-(self.cur_row))*16+self.pos_y-4+self.displacement)
+  if self.countdown_timer then
+    if self.CLOCK % 2 == 0 then
+      draw(IMG_cursor[1],
+        (self.cur_col-1)*16+self.pos_x-4,
+        (11-(self.cur_row))*16+self.pos_y-4+self.displacement)
+    end
+  else
+    draw(IMG_cursor[(floor(self.CLOCK/16)%2)+1],
+      (self.cur_col-1)*16+self.pos_x-4,
+      (11-(self.cur_row))*16+self.pos_y-4+self.displacement)
+  end
+end
+
+function Stack.render_countdown(self)
+  if self.do_countdown and self.countdown_CLOCK then
+    local ready_x = self.pos_x + 12
+    local initial_ready_y = self.pos_y 
+    local ready_y_drop_speed = 6
+    local countdown_x = self.pos_x + 40
+    local countdown_y = self.pos_y + 64
+    if self.countdown_CLOCK <= 8 then
+      local ready_y = initial_ready_y + (self.CLOCK - 1) * ready_y_drop_speed
+      draw(IMG_ready, ready_x, ready_y)
+      if self.countdown_CLOCK == 8 then
+        self.ready_y = ready_y
+      end
+    elseif self.countdown_CLOCK >= 9 and self.countdown_timer and self.countdown_timer > 0 then
+      if self.countdown_timer >= 100 then
+        draw(IMG_ready, ready_x, self.ready_y or initial_ready_y + 8 * 6)
+      end
+      local IMG_number_to_draw = IMG_numbers[math.ceil(self.countdown_timer / 60)]
+      if IMG_number_to_draw then
+        draw(IMG_number_to_draw, countdown_x, countdown_y)
+      end
+    end
+  end
 end
 
 function Stack.render_gfx(self)
