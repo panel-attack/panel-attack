@@ -529,7 +529,8 @@ function Stack.render(self)
   end
   self:draw_cards()
   self:render_cursor()
-  self:render_gfx()
+  --self:render_gfx()
+  self:render_telegraph()
   if self.do_countdown then
     self:render_countdown()
   end
@@ -657,6 +658,11 @@ function Stack.render_gfx(self)
   end
 end
 
+function Stack.render_telegraph(self)
+  for k, v in pairs(self.telegraph.attacks) do
+    
+  end
+end
 
 
 --[[void FadingPanels_1P(int draw_frame, int lightness)

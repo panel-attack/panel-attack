@@ -427,9 +427,10 @@ Telegraph = class(function(self, sender)
   
   --keys for self.stoppers.combo[some_key] will be garbage widths, and values will be frame_to_release
   self.sender = sender
+  self.attacks = Queue()
 end)
 
-function Telegraph.push(self, attack_type, attack_size, metal_count)
+function Telegraph.push(self, attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row)
   if not metal_count then
     metal_count = 0
   end
@@ -438,6 +439,7 @@ function Telegraph.push(self, attack_type, attack_size, metal_count)
   elseif attack_type == "combo" then
     self:add_combo_garbage(attack_size, metal_count)
   end
+  self.attacks:push({self.sender.CLOCK, attack_type, attack_size, attack_origin_col,attack_origin_row})
 end
 
 function Telegraph.add_combo_garbage(self, n_combo, n_metal)
@@ -1872,7 +1874,6 @@ function Stack.check_matches(self)
     else
       self.chain_counter = 2
     end
-    self.telegraph:push("chain",self.chain_counter)
   end
 
   local pre_stop_time = self.FRAMECOUNT_MATCH +
@@ -1971,6 +1972,7 @@ function Stack.check_matches(self)
       end
 
       self:enqueue_card(false, first_panel_col, first_panel_row, combo_size)
+      self.telegraph:push("combo", combo_size, metal_count,first_panel_col, first_panel_row)
       --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
       --          first_panel_row<<4+P1StackPosY+self.displacement-9);
       --TODO: this stuff ^
@@ -1981,6 +1983,7 @@ function Stack.check_matches(self)
           self.chain_counter)
       --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
       --          first_panel_row<<4+P1StackPosY+self.displacement-9);
+      self.telegraph:push("chain",self.chain_counter,first_panel_col, first_panel_row)
     end
     something = self.chain_counter
     if(score_mode == SCOREMODE_TA) then
@@ -2054,7 +2057,6 @@ function Stack.check_matches(self)
     elseif metal_count > 2 then
       SFX_Buddy_Play = "combo"
     end
-    self.telegraph:push("combo", combo_size, metal_count)
   end
 end
 
