@@ -154,7 +154,7 @@ function graphics_init()
   IMG_particles = {}
   particle_quads = {}
   
-  texture = load_img("assets/blargg/particles.png")
+  texture = load_img("lakitu/particles.png")
   local w = texture:getWidth()
   local h = texture:getHeight()
   local char_particles = {}
@@ -184,13 +184,13 @@ function graphics_init()
   particle_quads[23] = particle_quads[21]
   particle_quads[24] = particle_quads[21]
   
-  for _,key in ipairs(characters) do
+  for _,v in ipairs(characters) do
     local imgs = {}
-    IMG_garbage[key] = imgs
+    IMG_garbage[v] = imgs
     for _,part in ipairs(g_parts) do
-      imgs[part] = load_img(""..key.."/"..part..".png")
+      imgs[part] = load_img(""..v.."/"..part..".png")
     end
-    IMG_particles[key] = load_img("assets/"..key.."/particles.png")
+    IMG_particles[v] = load_img(""..v.."/particles.png")
   end
 
   IMG_metal_flash = load_img("garbageflash.png")
