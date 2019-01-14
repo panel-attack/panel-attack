@@ -369,7 +369,7 @@ function GarbageQueue.to_string(self)
     ret = ret.."Chains:\n"
   if self.chain_garbage:peek() then
     --list chain garbage last to first such that the one to fall first is at the bottom of the list (if any).
-    for i=self.chain_garbage:len()-1, 1, -1 do 
+    for i=self.chain_garbage:len()-1, 0, -1 do 
       print("in GarbageQueue.to_string. i="..i)
       local width, height, metal, from_chain = unpack(self.chain_garbage[i])
       ret = ret..height.."-tall\n"
@@ -448,7 +448,7 @@ function Telegraph.add_combo_garbage(self, n_combo, n_metal)
   local combo_pieces = combo_garbage[n_combo]
   for i=1,#combo_pieces do
     stuff_to_send[#stuff_to_send+1] = {combo_pieces[i], 1, false, false}
-    self.stoppers.combo[combo_pieces[i]] = self.sender.garbage_target.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
+    self.stoppers.combo[combo_pieces[i]] = self.sender.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
   end
   self.garbage_queue:push(stuff_to_send)
   
@@ -1705,13 +1705,18 @@ function Stack.recv_garbage(self, time, to_recv)
 
       -- The garbage that we send this time might (rarely) not be the same
       -- as the garbage we sent before.  Wipe out the garbage we sent before...
-      local first_wipe_time = time + GARBAGE_DELAY
-      local other_later_garbage = self.garbage_target.later_garbage
-      for k,v in pairs(other_later_garbage) do
-        if k >= first_wipe_time then
-          other_later_garbage[k] = nil
+      
+      --[[ --The way of doing this before Telegraph garbage system
+        local first_wipe_time = time + GARBAGE_DELAY
+        local other_later_garbage = self.garbage_target.later_garbage
+        for k,v in pairs(other_later_garbage) do
+          if k >= first_wipe_time then
+            other_later_garbage[k] = nil
+          end
         end
-      end
+      --]]
+      --TODO: adjust the garbage queue if needed.
+      
       -- and record the garbage that we send this time!
 
       -- We can do it like this because the sender of the garbage
