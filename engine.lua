@@ -164,6 +164,7 @@ Stack = class(function(s, which, mode, speed, difficulty, player_number)
     s.shake_time = 0
 
     s.prev_states = {}
+    s.gfx = {}
     s.telegraph = Telegraph(s)
   end)
 
@@ -703,7 +704,14 @@ local d_row = {up=1, down=-1, left=0, right=0}
 
 -- The engine routine.
 function Stack.PdP(self)
-
+  -- Update GFX items (and remove them if neccessary)
+  for key, gfx_item in pairs(self.gfx) do
+    gfx_item["age"] = gfx_item["age"] + 1
+    if gfx_item["age"] > 24 then
+      self.gfx[key] = nil
+    end
+  end
+  
   local panels = self.panels
   local width = self.width
   local height = self.height
@@ -925,9 +933,10 @@ function Stack.PdP(self)
       elseif panel.garbage then
         if panel.state == "matched" then
           panel.timer = panel.timer - 1
-          if panel.timer == panel.pop_time then
-          SFX_Garbage_Pop_Play = panel.pop_index
-          end
+		      if panel.timer == panel.pop_time then
+		        SFX_Garbage_Pop_Play = panel.pop_index
+            table.insert(self.gfx, {age=1, x=(col-2)*16+self.pos_x, y=(10-row)*16+self.pos_y+self.displacement})
+		      end
           if panel.timer == 0 then
             if panel.y_offset == -1 then
               local color, chaining = panel.color, panel.chaining
@@ -1116,6 +1125,7 @@ function Stack.PdP(self)
               panel.state = "popped"
               panel.timer = (panel.combo_size-panel.combo_index)
                   * self.FRAMECOUNT_POP
+
               self.panels_cleared = self.panels_cleared + 1
               if self.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
                 self.metal_panels_queued = self.metal_panels_queued + 1
@@ -1123,7 +1133,7 @@ function Stack.PdP(self)
               SFX_Pop_Play = 1
               self.poppedPanelIndex = panel.combo_index
             end
-            
+            table.insert(self.gfx, {age=1, x=(col-2)*16+self.pos_x, y=(10-row)*16+self.pos_y+self.displacement})
           elseif panel.state == "popped" then
             -- It's time for this panel
             -- to be gone forever :'(

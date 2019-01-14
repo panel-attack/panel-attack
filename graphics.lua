@@ -76,6 +76,15 @@ function draw(img, x, y, rot, x_scale,y_scale)
     rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
 end
 
+
+function drawQuad(img, quad, x, y, rot, x_scale,y_scale)
+  rot = rot or 0
+  x_scale = x_scale or 1
+  y_scale = y_scale or 1
+  gfx_q:push({love.graphics.draw, {img, quad, x*GFX_SCALE, y*GFX_SCALE,
+    rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
+end
+
 function menu_draw(img, x, y, rot, x_scale,y_scale)
   rot = rot or 0
   x_scale = x_scale or 1
@@ -142,12 +151,46 @@ function graphics_init()
                     "doubleface", "filler1", "filler2", "flash",
                     "portrait"}
   IMG_garbage = {}
+  IMG_particles = {}
+  particle_quads = {}
+  
+  texture = load_img("assets/blargg/particles.png")
+  local w = texture:getWidth()
+  local h = texture:getHeight()
+  local char_particles = {}
+    
+  particle_quads[1] = love.graphics.newQuad(0, 0, 48, 48, 256, 256)
+  particle_quads[2] = love.graphics.newQuad(48, 0, 48, 48, 256, 256)
+  particle_quads[3] = love.graphics.newQuad(96, 0, 48, 48, 256, 256)
+  particle_quads[4] = love.graphics.newQuad(144, 0, 48, 48, 256, 256)
+  particle_quads[5] = love.graphics.newQuad(0, 48, 48, 48, 256, 256)
+  particle_quads[6] = love.graphics.newQuad(48, 48, 48, 48, 256, 256)
+  particle_quads[7] = love.graphics.newQuad(96, 48, 48, 48, 256, 256)
+  particle_quads[8] = love.graphics.newQuad(144, 48, 48, 48, 256, 256)
+  particle_quads[9] = love.graphics.newQuad(0, 96, 48, 48, 256, 256)
+  particle_quads[10] = love.graphics.newQuad(48, 96, 48, 48, 256, 256)
+  particle_quads[11] = love.graphics.newQuad(96, 96, 48, 48, 256, 256)
+  particle_quads[12] = love.graphics.newQuad(144, 96, 48, 48, 256, 256)
+  particle_quads[13] = particle_quads[12]
+  particle_quads[14] = love.graphics.newQuad(0, 144, 48, 48, 256, 256)
+  particle_quads[15] = particle_quads[14]
+  particle_quads[16] = love.graphics.newQuad(48, 144, 48, 48, 256, 256)
+  particle_quads[17] = particle_quads[16]
+  particle_quads[18] = love.graphics.newQuad(96, 144, 48, 48, 256, 256)
+  particle_quads[19] = particle_quads[18]
+  particle_quads[20] = particle_quads[18]
+  particle_quads[21] = love.graphics.newQuad(144, 144, 48, 48, 256, 256)
+  particle_quads[22] = particle_quads[21]
+  particle_quads[23] = particle_quads[21]
+  particle_quads[24] = particle_quads[21]
+  
   for _,key in ipairs(characters) do
     local imgs = {}
     IMG_garbage[key] = imgs
     for _,part in ipairs(g_parts) do
       imgs[part] = load_img(""..key.."/"..part..".png")
     end
+    IMG_particles[key] = load_img("assets/"..key.."/particles.png")
   end
 
   IMG_metal_flash = load_img("garbageflash.png")
@@ -486,6 +529,7 @@ function Stack.render(self)
   end
   self:draw_cards()
   self:render_cursor()
+  self:render_gfx()
   if self.do_countdown then
     self:render_countdown()
   end
@@ -606,6 +650,14 @@ function Stack.render_countdown(self)
     end
   end
 end
+
+function Stack.render_gfx(self)
+  for key, gfx_item in pairs(self.gfx) do
+    drawQuad(IMG_particles[self.character], particle_quads[gfx_item["age"]], gfx_item["x"], gfx_item["y"])
+  end
+end
+
+
 
 --[[void FadingPanels_1P(int draw_frame, int lightness)
   int col, row, panel;
