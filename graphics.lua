@@ -183,7 +183,7 @@ function graphics_init()
   particle_quads[22] = particle_quads[21]
   particle_quads[23] = particle_quads[21]
   particle_quads[24] = particle_quads[21]
-  IMG_telegraph_garbage = {}
+  IMG_telegraph_garbage = {} --values will be accessed by IMG_telegraph_garbage[garbage_height][garbage_width]
   for _,v in ipairs(characters) do
     local imgs = {}
     IMG_garbage[v] = imgs
