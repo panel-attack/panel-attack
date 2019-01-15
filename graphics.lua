@@ -184,6 +184,7 @@ function graphics_init()
   particle_quads[23] = particle_quads[21]
   particle_quads[24] = particle_quads[21]
   IMG_telegraph_garbage = {} --values will be accessed by IMG_telegraph_garbage[garbage_height][garbage_width]
+  IMG_telegraph_attack = {}
   for _,v in ipairs(characters) do
     local imgs = {}
     IMG_garbage[v] = imgs
@@ -197,6 +198,7 @@ function graphics_init()
     for w=3,6 do
       IMG_telegraph_garbage[1][w] = load_img("".."telegraph/"..w.."-wide.png")
     end
+    IMG_telegraph_attack[v] = load_img(""..v.."/attack.png")
     IMG_particles[v] = load_img(""..v.."/particles.png")
   end
   IMG_telegraph_metal = load_img("telegraph/6-wide-metal.png")
@@ -667,9 +669,25 @@ function Stack.render_gfx(self)
 end
 
 function Stack.render_telegraph(self)
-  for k, v in pairs(self.telegraph.attacks) do
-    
+  for frame_earned, attacks_this_frame in pairs(self.telegraph.attacks) do
+    -- print("frame_earned:")
+    -- print(frame_earned)
+    -- print(#card_animation)
+    -- print(self.CLOCK)
+    -- print(GARBAGE_TRANSIT_TIME)
+    if self.CLOCK - frame_earned >= #card_animation and self.CLOCK - frame_earned <= GARBAGE_TRANSIT_TIME then
+      for _, attack in ipairs(attacks_this_frame) do
+        
+        local draw_x = (attack.origin_col-1) * 16 + self.pos_x
+        local draw_y = (11-attack.origin_row) * 16 + self.pos_y + self.displacement
+        --TODO: adjust draw_x and draw_y according to initial position, destination position, and self.CLOCK - frame_earned
+        print("DRAWING******")
+        print(draw_x..","..draw_y)
+        draw(IMG_telegraph_attack[self.character], draw_x, draw_y)
+      end
+    end
   end
+  --then draw the telegraph's garbage queue, leaving an empty space until such a time as the attack arrives (earned_frame-GARBAGE_TRANSIT_TIME)
 end
 
 

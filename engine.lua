@@ -7,8 +7,6 @@
 local min, pairs, deepcpy = math.min, pairs, deepcpy
 local max = math.max
 local garbage_bounce_time = #garbage_bounce_table
-local GARBAGE_DELAY = 60
-local GARBAGE_TRANSIT_TIME = 90
 local clone_pool = {}
 
 Stack = class(function(s, which, mode, speed, difficulty, player_number)
@@ -427,19 +425,27 @@ Telegraph = class(function(self, sender)
   
   --keys for self.stoppers.combo[some_key] will be garbage widths, and values will be frame_to_release
   self.sender = sender
-  self.attacks = Queue()
+  self.attacks = {}
 end)
 
 function Telegraph.push(self, attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row)
   if not metal_count then
     metal_count = 0
   end
+  local stuff_to_send
   if attack_type == "chain" then
     self:grow_chain()
+    stuff_to_send = {{6, self.sender.chain_counter-1,false, true}}
   elseif attack_type == "combo" then
-    self:add_combo_garbage(attack_size, metal_count)
+    -- get combo_garbage_widths, n_resulting_metal_garbage
+    stuff_to_send = self:add_combo_garbage(attack_size, metal_count)
   end
-  self.attacks:push({self.sender.CLOCK, attack_type, attack_size, attack_origin_col,attack_origin_row})
+  if not self.attacks[self.sender.CLOCK] then
+    self.attacks[self.sender.CLOCK] = {}
+  end
+  self.attacks[self.sender.CLOCK][#self.attacks[self.sender.CLOCK]+1] =
+  {frame_earned=self.sender.CLOCK, attack_type=attack_type, 
+  size=attack_size, origin_col=attack_origin_col, origin_row= attack_origin_row, stuff_to_send=stuff_to_send}
 end
 
 function Telegraph.add_combo_garbage(self, n_combo, n_metal)
@@ -454,6 +460,7 @@ function Telegraph.add_combo_garbage(self, n_combo, n_metal)
     self.stoppers.combo[combo_pieces[i]] = self.sender.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
   end
   self.garbage_queue:push(stuff_to_send)
+  return stuff_to_send
   
 end
 
@@ -489,9 +496,9 @@ function Telegraph.pop_all_ready_garbage(self)
       n_combo_stoppers = n_combo_stoppers + 1
     end
   end
-  print(P1.CLOCK)
-  print("table_to_string(self.stoppers.chain):-")
-  print(table_to_string(self.stoppers.chain))
+  -- print(P1.CLOCK)
+  -- print("table_to_string(self.stoppers.chain):-")
+  -- print(table_to_string(self.stoppers.chain))
   
   while self.garbage_queue.chain_garbage:peek() do
     if not self.stoppers.chain[self.garbage_queue.chain_garbage.first] and not self.garbage_queue.chain_in_progress then

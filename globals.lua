@@ -54,6 +54,9 @@ card_animation = {false,
    9, 10, 10, 10, 10, 10, 10, 10, 10, 10,
    10, 10, 10, 10, 10, 10, 11, 11, 11, 11,
    11}
+   
+GARBAGE_DELAY = 60
+GARBAGE_TRANSIT_TIME = 90
 
 gfx_q = Queue()
 
