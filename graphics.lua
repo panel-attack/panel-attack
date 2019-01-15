@@ -183,15 +183,23 @@ function graphics_init()
   particle_quads[22] = particle_quads[21]
   particle_quads[23] = particle_quads[21]
   particle_quads[24] = particle_quads[21]
-  
+  IMG_telegraph_garbage = {}
   for _,v in ipairs(characters) do
     local imgs = {}
     IMG_garbage[v] = imgs
     for _,part in ipairs(g_parts) do
       imgs[part] = load_img(""..v.."/"..part..".png")
     end
+    for h=1,14 do
+      IMG_telegraph_garbage[h] = {}
+      IMG_telegraph_garbage[h][6] = load_img("".."telegraph/"..h.."-tall.png")
+    end
+    for w=3,6 do
+      IMG_telegraph_garbage[1][w] = load_img("".."telegraph/"..w.."-wide.png")
+    end
     IMG_particles[v] = load_img(""..v.."/particles.png")
   end
+  IMG_telegraph_metal = load_img("telegraph/6-wide-metal.png")
 
   IMG_metal_flash = load_img("garbageflash.png")
   IMG_metal = load_img("metalmid.png")
