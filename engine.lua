@@ -1990,7 +1990,7 @@ function Stack.check_matches(self)
           self.chain_counter)
       --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
       --          first_panel_row<<4+P1StackPosY+self.displacement-9);
-      self.telegraph:push("chain",self.chain_counter,first_panel_col, first_panel_row)
+      self.telegraph:push("chain",self.chain_counter,0,first_panel_col, first_panel_row)
     end
     something = self.chain_counter
     if(score_mode == SCOREMODE_TA) then

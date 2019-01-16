@@ -54,7 +54,30 @@ card_animation = {false,
    9, 10, 10, 10, 10, 10, 10, 10, 10, 10,
    10, 10, 10, 10, 10, 10, 11, 11, 11, 11,
    11}
-   
+telegraph_attack_animation_speed = {
+    4,4,4,4,4,2,2,2,2,1,
+    1,1,1,.5,.5,.5,.5,1,1,1,
+    1,2,2,2,2,4,4,4,4,8}
+
+--the following are angles out of 64, 0 being right, 32 being left, 16 being down, and 48 being up.
+telegraph_attack_animation_angles = {}
+--[1] for attacks where the destination is right of the origin
+
+telegraph_attack_animation_angles[1] = {}
+for i=24,24+#telegraph_attack_animation_speed-1 do
+  telegraph_attack_animation_angles[1][#telegraph_attack_animation_angles[1]+1] = i%64
+end
+--[-1] for attacks where the destination is left of the origin
+telegraph_attack_animation_angles[-1] = {}
+local leftward_animation_angle = 8
+while #telegraph_attack_animation_angles[-1] < #telegraph_attack_animation_speed do
+  telegraph_attack_animation_angles[-1][#telegraph_attack_animation_angles[-1]+1] = leftward_animation_angle
+  leftward_animation_angle = leftward_animation_angle - 1
+  if leftward_animation_angle < 0 then
+    leftward_animation_angle = 64
+  end
+end
+ 
 GARBAGE_DELAY = 60
 GARBAGE_TRANSIT_TIME = 90
 

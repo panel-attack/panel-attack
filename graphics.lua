@@ -675,15 +675,40 @@ function Stack.render_telegraph(self)
     -- print(#card_animation)
     -- print(self.CLOCK)
     -- print(GARBAGE_TRANSIT_TIME)
-    if self.CLOCK - frame_earned >= #card_animation and self.CLOCK - frame_earned <= GARBAGE_TRANSIT_TIME then
-      for _, attack in ipairs(attacks_this_frame) do
+    local frames_since_earned = self.CLOCK - frame_earned
+    if frames_since_earned >= #card_animation and frames_since_earned <= GARBAGE_TRANSIT_TIME then
+      if frames_since_earned <= #card_animation then
+        --don't draw anything yet
+      elseif frames_since_earned < #card_animation + #telegraph_attack_animation_speed then
         
-        local draw_x = (attack.origin_col-1) * 16 + self.pos_x
-        local draw_y = (11-attack.origin_row) * 16 + self.pos_y + self.displacement
-        --TODO: adjust draw_x and draw_y according to initial position, destination position, and self.CLOCK - frame_earned
-        print("DRAWING******")
-        print(draw_x..","..draw_y)
-        draw(IMG_telegraph_attack[self.character], draw_x, draw_y)
+        for _, attack in ipairs(attacks_this_frame) do
+          for _k, garbage_block in (attack.stuff_to_send) do
+            if not garbage_block.x or not garbage_block.y then
+              garbage_block.x = (attack.origin_col-1) * 16 + self.pos_x
+              grabage_block.y = (11-attack.origin_row) * 16 + self.pos_y + self.displacement - card_animation[#card_animation]
+              local left_or_right = math.pow(garbage_block.destination_x - attack.origin_x, 0) --should give -1 for left, or 1 for right
+              for i=1, frames_since_earned - telegraph_attack_animation_speed do
+                --TOD0: run the following only once if the garbage_block already has and x and a y.
+                
+                --[[ use trigonometry to find the x and the y change, given the hypotenuse (telegraph_attack_animation_speed) and the angle we should be traveling (2*math.pi*telegraph_attack_animation_angles[left_or_right][frames_since_earned-#card_animation]/64)
+                
+                I think:              
+                change in y will be hypotenuse*sin angle
+                change in x will be hypotenuse*cos angle
+                --]]
+                
+                --garbage_block.x = garbage_block.x + 
+                --garbage_block.y = garbage_block.y +
+              end
+            end
+            local draw_x = (attack.origin_col-1) * 16 + self.pos_x
+            local draw_y = (11-attack.origin_row) * 16 + self.pos_y + self.displacement - card_animation[#card_animation]
+            --TODO: adjust draw_x and draw_y according to initial position, destination position, and self.CLOCK - frame_earned
+            print("DRAWING******")
+            print(draw_x..","..draw_y)
+            draw(IMG_telegraph_attack[self.character], draw_x, draw_y)
+          end
+        end
       end
     end
   end
