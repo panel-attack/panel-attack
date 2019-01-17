@@ -96,7 +96,7 @@ for k, animation in ipairs(leftward_or_rightward) do
     
     telegraph_attack_animation[animation][frame] = {}
     telegraph_attack_animation[animation][frame].dx = distance * math.cos(angle*2*math.pi)
-    telegraph_attack_animation[animation][frame].dy = -1*distance * math.sin(angle*2*math.pi)
+    telegraph_attack_animation[animation][frame].dy = distance * math.sin(angle*2*math.pi)
   end
 end
 print("table_to_string(telegraph_attack_animation):")
