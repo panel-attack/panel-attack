@@ -303,6 +303,15 @@ GarbageQueue = class(function(s, stack)
   s.metal = 0
 end)
 
+function GarbageQueue.mkcpy(self)
+  local other = GarbageQueue()
+  other.stack = self.stack
+  other.chain_garbage = deepcpy(self.chain_garbage)
+  other.combo_garbage = deepcpy(self.combo_garbage)
+  other.metal = self.metal
+  return other
+end
+
 function GarbageQueue.push(self, garbage)
   for k,v in pairs(garbage) do
     local width, height, metal, from_chain = unpack(v)
@@ -416,6 +425,32 @@ function GarbageQueue.sender_chain_ended(self)
   self.chain_in_progress = nil
 end
 
+--returns the index of the first garbage block matching the requested type and size, or where it would go if it was in the Garbage_Queue.
+  --note: the first index for our implemented Queue object is 0, not 1
+  --this will return 0 for the first index.
+function GarbageQueue.get_idx_of_garbage(self, garbage_width, garbage_height, is_metal, from_chain)
+  local copy = self:mkcpy()
+  local sorted_queue = {}
+  local idx = -1
+  local idx_found = false
+
+  local current_block = copy:pop()
+  while current_block and not idx_found do
+    idx = idx + 1
+    if from_chain and current_block[4]--[[from_chain]] and current_block[2]--[[height]] >= garbage_height then
+      idx_found = true
+    elseif not from_chain and not current_block[4]--[[from_chain]] and current_block[1]--[[width]] >= garbage_width then
+      idx_found = true
+    end
+    current_block = copy:pop()  
+  end
+  if idx == -1 then
+    idx = 0
+  end
+
+  return idx
+end
+
 Telegraph = class(function(self, sender)
   self.garbage_queue = GarbageQueue(sender)
   self.stoppers =  {chain = {}, combo = {}}
@@ -429,6 +464,7 @@ Telegraph = class(function(self, sender)
 end)
 
 function Telegraph.push(self, attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row)
+  local x_displacement 
   if not metal_count then
     metal_count = 0
   end

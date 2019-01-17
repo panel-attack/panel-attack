@@ -680,33 +680,31 @@ function Stack.render_telegraph(self)
       if frames_since_earned <= #card_animation then
         --don't draw anything yet
       elseif frames_since_earned < #card_animation + #telegraph_attack_animation_speed then
-        
         for _, attack in ipairs(attacks_this_frame) do
-          for _k, garbage_block in (attack.stuff_to_send) do
+          for _k, garbage_block in ipairs(attack.stuff_to_send) do
+            if not garbage_block.destination_x then 
+              print("ZZZZZZZ")
+              garbage_block.destination_x = self.garbage_target.pos_x + 24--[[width of each telegraph block]] * self.telegraph.garbage_queue:get_idx_of_garbage(unpack(garbage_block))
+            end
             if not garbage_block.x or not garbage_block.y then
               garbage_block.x = (attack.origin_col-1) * 16 + self.pos_x
-              grabage_block.y = (11-attack.origin_row) * 16 + self.pos_y + self.displacement - card_animation[#card_animation]
-              local left_or_right = math.pow(garbage_block.destination_x - attack.origin_x, 0) --should give -1 for left, or 1 for right
-              for i=1, frames_since_earned - telegraph_attack_animation_speed do
-                --TOD0: run the following only once if the garbage_block already has and x and a y.
-                
-                --[[ use trigonometry to find the x and the y change, given the hypotenuse (telegraph_attack_animation_speed) and the angle we should be traveling (2*math.pi*telegraph_attack_animation_angles[left_or_right][frames_since_earned-#card_animation]/64)
-                
-                I think:              
-                change in y will be hypotenuse*sin angle
-                change in x will be hypotenuse*cos angle
-                --]]
-                
-                --garbage_block.x = garbage_block.x + 
-                --garbage_block.y = garbage_block.y +
+              garbage_block.y = (11-attack.origin_row) * 16 + self.pos_y + self.displacement - card_animation[#card_animation]
+              garbage_block.origin_x = garbage_block.x
+              garbage_block.origin_y = garbage_block.y
+              garbage_block.direction = garbage_block.direction or math.pow(garbage_block.destination_x - garbage_block.origin_x, 0) --should give -1 for left, or 1 for right
+              
+              for frame=1, frames_since_earned - #card_animation do
+                print("YYYYYYYYYYYY")
+                garbage_block.x = garbage_block.x + telegraph_attack_animation[garbage_block.direction][frame].dx
+                garbage_block.y = garbage_block.y + telegraph_attack_animation[garbage_block.direction][frame].dy
               end
+            else
+              garbage_block.x = garbage_block.x + telegraph_attack_animation[garbage_block.direction][frames_since_earned-#card_animation].dx
+              garbage_block.y = garbage_block.y + telegraph_attack_animation[garbage_block.direction][frames_since_earned-#card_animation].dy
             end
-            local draw_x = (attack.origin_col-1) * 16 + self.pos_x
-            local draw_y = (11-attack.origin_row) * 16 + self.pos_y + self.displacement - card_animation[#card_animation]
-            --TODO: adjust draw_x and draw_y according to initial position, destination position, and self.CLOCK - frame_earned
-            print("DRAWING******")
-            print(draw_x..","..draw_y)
-            draw(IMG_telegraph_attack[self.character], draw_x, draw_y)
+            --print("DRAWING******")
+            --print(garbage_block.x..","..garbage_block.y)
+            draw(IMG_telegraph_attack[self.character], garbage_block.x, garbage_block.y)
           end
         end
       end
