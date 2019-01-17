@@ -181,6 +181,10 @@ function table_to_string(tab)
   return ret
 end
 
+function sign(x)
+  return (x<0 and -1) or 1
+end
+
 --Note: this round() doesn't work with negative numbers
 function round(positive_decimal_number, number_of_decimal_places)
   if not number_of_decimal_places then

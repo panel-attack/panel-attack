@@ -691,7 +691,7 @@ function Stack.render_telegraph(self)
               garbage_block.y = (11-attack.origin_row) * 16 + self.pos_y + self.displacement - card_animation[#card_animation]
               garbage_block.origin_x = garbage_block.x
               garbage_block.origin_y = garbage_block.y
-              garbage_block.direction = garbage_block.direction or math.pow(garbage_block.destination_x - garbage_block.origin_x, 0) --should give -1 for left, or 1 for right
+              garbage_block.direction = garbage_block.direction or sign(garbage_block.destination_x - garbage_block.origin_x) --should give -1 for left, or 1 for right
               
               for frame=1, frames_since_earned - #card_animation do
                 print("YYYYYYYYYYYY")
