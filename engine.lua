@@ -379,6 +379,9 @@ function GarbageQueue.to_string(self)
     --list chain garbage last to first such that the one to fall first is at the bottom of the list (if any).
     for i=self.chain_garbage:len()-1, 0, -1 do 
       print("in GarbageQueue.to_string. i="..i)
+      print("table_to_string(self.chain_garbage)")
+      print(table_to_string(self.chain_garbage))
+      --I've run into a bug where I think the following line errors if there is more than one chain_garbage in the queue... TODO: figure that out.
       local width, height, metal, from_chain = unpack(self.chain_garbage[i])
       ret = ret..height.."-tall\n"
     end

@@ -54,6 +54,11 @@ card_animation = {false,
    9, 10, 10, 10, 10, 10, 10, 10, 10, 10,
    10, 10, 10, 10, 10, 10, 11, 11, 11, 11,
    11}
+   
+TELEGRAPH_HEIGHT = 16
+TELEGRAPH_PADDING = 2 --vertical space between telegraph and stack
+TELEGRAPH_BLOCK_WIDTH = 24
+TELEGRAPH_ATTACK_MAX_SPEED = 8 --fastest an attack can travel toward the telegraph per frame
 telegraph_attack_animation_speed = {
     4,4,4,4,4,2,2,2,2,1,
     1,1,1,.5,.5,.5,.5,1,1,1,

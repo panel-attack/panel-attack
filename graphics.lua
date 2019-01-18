@@ -684,7 +684,7 @@ function Stack.render_telegraph(self)
           for _k, garbage_block in ipairs(attack.stuff_to_send) do
             if not garbage_block.destination_x then 
               print("ZZZZZZZ")
-              garbage_block.destination_x = self.garbage_target.pos_x + 24--[[width of each telegraph block]] * self.telegraph.garbage_queue:get_idx_of_garbage(unpack(garbage_block))
+              garbage_block.destination_x = self.garbage_target.pos_x + TELEGRAPH_BLOCK_WIDTH * self.telegraph.garbage_queue:get_idx_of_garbage(unpack(garbage_block))
             end
             if not garbage_block.x or not garbage_block.y then
               garbage_block.x = (attack.origin_col-1) * 16 + self.pos_x
@@ -707,6 +707,28 @@ function Stack.render_telegraph(self)
             draw(IMG_telegraph_attack[self.character], garbage_block.x, garbage_block.y)
           end
         end
+      elseif frames_since_earned > #card_animation + #telegraph_attack_animation_speed and frames_since_earned <GARBAGE_TRANSIT_TIME - 1 then 
+        --move toward destination as quickly as TELEGRAPH_ATTACK_MAX_SPEED frames per second
+        for _, attack in ipairs(attacks_this_frame) do
+          for _k, garbage_block in ipairs(attack.stuff_to_send) do
+            --update destination
+            garbage_block.destination_x = self.garbage_target.pos_x + TELEGRAPH_BLOCK_WIDTH * self.telegraph.garbage_queue:get_idx_of_garbage(unpack(garbage_block))
+            garbage_block.destination_y = garbage_block.destination_y or self.garbage_target.pos_y - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING 
+            
+            local distance_to_destination = math.sqrt(math.pow(garbage_block.x-garbage_block.destination_x,2)+math.pow(garbage_block.y-garbage_block.destination_y,2))
+            if distance_to_destination <= TELEGRAPH_ATTACK_MAX_SPEED then
+              --just move it to it's destination
+              garbage_block.x, garbage_block.y = garbage_block.destination_x, garbage_block.destination_y
+            else
+              garbage_block.x = garbage_block.x - (TELEGRAPH_ATTACK_MAX_SPEED*(garbage_block.x-garbage_block.destination_x))/distance_to_destination
+              garbage_block.y = garbage_block.y - (TELEGRAPH_ATTACK_MAX_SPEED*(garbage_block.y-garbage_block.destination_y))/distance_to_destination
+            end
+            print("distance: "..distance_to_destination)
+            draw(IMG_telegraph_attack[self.character], garbage_block.x, garbage_block.y)
+          end
+        end
+      elseif frames_since_earned == GARBAGE_TRANSIT_TIME then
+        --draw the attack image (not a garbage block yet) in the destination
       end
     end
   end
