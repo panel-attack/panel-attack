@@ -59,7 +59,7 @@ Stack = class(function(s, which, mode, speed, difficulty, player_number)
     -- garbage_to_send.chain is an array of garbage to send when the chain ends.
     --s.garbage_to_send = {}
     s.pos_x = 4   -- Position of the play area on the screen
-    s.pos_y = 4
+    s.pos_y = 28
     s.score_x = 315
     s.panel_buffer = ""
     s.gpanel_buffer = ""

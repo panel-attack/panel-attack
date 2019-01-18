@@ -488,8 +488,8 @@ function main_character_select()
     local menu_width = Y*100
     local menu_height = X*80
     local spacing = 8
-    local x_padding = math.floor((819-menu_width)/2)
-    local y_padding = math.floor((612-menu_height)/2)
+    local x_padding = math.floor((default_width-menu_width)/2)
+    local y_padding = math.floor((default_height-menu_height)/2)
     set_color(unpack(colors.white))
     render_x = x_padding+(y-1)*100+spacing
     render_y = y_padding+(x-1)*100+spacing

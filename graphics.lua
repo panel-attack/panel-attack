@@ -332,6 +332,7 @@ function Stack.draw_cards(self)
 end
 
 function Stack.render(self)
+  --love.graphics.setScissor((self.pos_x-4)*GFX_SCALE, (self.pos_y-4)*GFX_SCALE, IMG_frame:getWidth()*GFX_SCALE, IMG_frame:getHeight()*GFX_SCALE)
   local mx,my
   if config.debug_mode then
     mx,my = love.mouse.getPosition()
@@ -539,6 +540,7 @@ function Stack.render(self)
   end
   self:draw_cards()
   self:render_cursor()
+  --love.graphics.setScissor()
   --self:render_gfx()
   self:render_telegraph()
   if self.do_countdown then
