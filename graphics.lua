@@ -68,6 +68,14 @@ function load_img(path_and_name)
   return ret
 end
 
+function setScissor(x, y, width, height)
+  if x then
+    gfx_q:push({love.graphics.setScissor, {x*GFX_SCALE, y*GFX_SCALE, width*GFX_SCALE, height*GFX_SCALE}})
+  else
+    gfx_q:push({love.graphics.setScissor, {}})
+  end
+end
+
 function draw(img, x, y, rot, x_scale,y_scale)
   rot = rot or 0
   x_scale = x_scale or 1
@@ -332,7 +340,7 @@ function Stack.draw_cards(self)
 end
 
 function Stack.render(self)
-  --love.graphics.setScissor((self.pos_x-4)*GFX_SCALE, (self.pos_y-4)*GFX_SCALE, IMG_frame:getWidth()*GFX_SCALE, IMG_frame:getHeight()*GFX_SCALE)
+  setScissor(self.pos_x-4, self.pos_y-4, IMG_frame:getWidth(), IMG_frame:getHeight())
   local mx,my
   if config.debug_mode then
     mx,my = love.mouse.getPosition()
@@ -540,7 +548,7 @@ function Stack.render(self)
   end
   self:draw_cards()
   self:render_cursor()
-  --love.graphics.setScissor()
+  setScissor()
   --self:render_gfx()
   self:render_telegraph()
   if self.do_countdown then
