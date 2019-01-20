@@ -722,7 +722,7 @@ function Stack.render_telegraph(self)
         for _, attack in ipairs(attacks_this_frame) do
           for _k, garbage_block in ipairs(attack.stuff_to_send) do
             --update destination
-            garbage_block.frame_earned = frame_earned --this will be handy when we want to draw the telegraph garbage blocks
+            --garbage_block.frame_earned = frame_earned --this will be handy when we want to draw the telegraph garbage blocks
             garbage_block.destination_x = self.garbage_target.pos_x + TELEGRAPH_BLOCK_WIDTH * self.telegraph.garbage_queue:get_idx_of_garbage(unpack(garbage_block))
             garbage_block.destination_y = garbage_block.destination_y or self.garbage_target.pos_y - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING 
             
@@ -740,20 +740,19 @@ function Stack.render_telegraph(self)
         end
         --elseif frames_since_earned == GARBAGE_TRANSIT_TIME then
           --draw(IMG_telegraph_attack[self.character], garbage_block.desination_x, garbage_block.destination_y)
-        --then draw the telegraph's garbage queue, leaving an empty space until such a time as the attack arrives (earned_frame-GARBAGE_TRANSIT_TIME)
-        --[[telegraph_to_draw = self.telegraph.garbage_queue:mkcpy()
-        local current_block = telegraph_to_draw:pop()
-        local draw_x = self.pos_x
-        local draw_y = self.pos_y-4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
-        while current_block do
-          if current_block.frame_earned - self.CLOCK >= GARBAGE_TRANSIT_TIME then
-            draw(IMG_telegraph_garbage[current_block[2]--[[height]]][current_block[1]--[[width]]], draw_x, draw_y)
-          end
-          draw_x = draw_x + TELEGRAPH_BLOCK_WIDTH
-          current_block = telegraph_to_draw:pop()
-        end
-        --]]
       end
+    end
+    --then draw the telegraph's garbage queue, leaving an empty space until such a time as the attack arrives (earned_frame-GARBAGE_TRANSIT_TIME)
+    telegraph_to_draw = self.telegraph.garbage_queue:mkcpy()
+    local current_block = telegraph_to_draw:pop()
+    local draw_x = self.pos_x
+    local draw_y = self.pos_y-4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
+    while current_block do
+      if self.CLOCK - current_block.frame_earned >= GARBAGE_TRANSIT_TIME then
+        draw(IMG_telegraph_garbage[current_block[2]--[[height]]][current_block[1]--[[width]]], draw_x, draw_y)
+      end
+      draw_x = draw_x + TELEGRAPH_BLOCK_WIDTH
+      current_block = telegraph_to_draw:pop()
     end
   end
 

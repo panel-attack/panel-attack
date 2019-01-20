@@ -299,7 +299,7 @@ end
 GarbageQueue = class(function(s, stack)
   s.stack = stack
   s.chain_garbage = Queue()
-  s.combo_garbage = {0,0,0,0,0,0} --index here represents width, and value represents how many of that width queued
+  s.combo_garbage = {Queue(),Queue(),Queue(),Queue(),Queue(),Queue()} --index here represents width, and value represents how many of that width queued
   s.metal = 0
 end)
 
@@ -307,13 +307,16 @@ function GarbageQueue.mkcpy(self)
   local other = GarbageQueue()
   other.stack = self.stack
   other.chain_garbage = deepcpy(self.chain_garbage)
-  other.combo_garbage = deepcpy(self.combo_garbage)
+  for i=3, 6 do
+    other.combo_garbage[i] = deepcpy(self.combo_garbage[i])
+  end
   other.metal = self.metal
   return other
 end
 
 function GarbageQueue.push(self, garbage)
   for k,v in pairs(garbage) do
+    v.frame_earned = self.stack.CLOCK
     local width, height, metal, from_chain = unpack(v)
     if width and height then
       print("GarbageQueue.push" .. " TODO: Garbage details here")
@@ -326,7 +329,7 @@ function GarbageQueue.push(self, garbage)
         end
         self.chain_garbage:push(v)
       else
-        self.combo_garbage[width] = self.combo_garbage[width] + 1
+        self.combo_garbage[width]:push(v)
       end
     end
   end
@@ -342,20 +345,17 @@ function GarbageQueue.pop(self, just_peeking)
     if just_peeking then
       return self.chain_garbage:peek()
     else
-      print(P1.CLOCK)
-      print("popping chain garbage from queue")
       return self.chain_garbage:pop()
     end
   end
   --check for any combo garbage, and return the smallest one, if any
   for k,v in ipairs(self.combo_garbage) do
-    if v > 0 then
+    if v:peek() then
       if not just_peeking then
-        self.combo_garbage[k] = v - 1
-        print("popping combo garbage from the queue")
+        return v:pop()
       end
         --returning {width, height, is_metal, is_from_chain}
-      return {k, 1, false, false}
+      return v:peek()
     end
   end
   --check for any metal garbage, and return one if any
@@ -372,7 +372,7 @@ end
 function GarbageQueue.to_string(self)
   local ret = "Combos:\n"
   for i=6, 3, -1 do
-    ret = ret..i.."-wides: "..self.combo_garbage[i].."\n"
+    ret = ret..i.."-wides: "..self.combo_garbage[i]:len().."\n"
   end
     ret = ret.."Chains:\n"
   if self.chain_garbage:peek() then
@@ -399,7 +399,7 @@ function GarbageQueue.len(self)
   local ret = 0
   ret = ret + self.chain_garbage:len()
   for k,v in ipairs(self.combo_garbage) do
-    ret = ret + v
+    ret = ret + v:len()
   end
   ret = ret + self.metal
   return ret
@@ -551,7 +551,8 @@ function Telegraph.pop_all_ready_garbage(self)
     end
   end
   for combo_garbage_width=3,6 do
-    local n_blocks_of_this_width = self.garbage_queue.combo_garbage[combo_garbage_width]
+    local n_blocks_of_this_width = self.garbage_queue.combo_garbage[combo_garbage_width]:len()
+    
     local frame_to_release = self.stoppers.combo[combo_garbage_width]
     if n_blocks_of_this_width > 0 then
       if not frame_to_release then
