@@ -417,8 +417,10 @@ function GarbageQueue.grow_chain(self)
     print(self:to_string())
     print("table_to_string(self.chain_garbage):")
     print(table_to_string(self.chain_garbage))
-    local width, height, metal, from_chain = unpack(self.chain_garbage[self.chain_garbage.last])
-    self.chain_garbage:replace_last({width, height + 1, false, from_chain})
+    local garbage_block = self.chain_garbage[self.chain_garbage.last]
+    garbage_block[2]--[[height]] = garbage_block[2]--[[height]] + 1
+    garbage_block.frame_earned = self.stack.CLOCK
+    self.chain_garbage:replace_last(garbage_block)
   end
 -- This is used by the telegraph to increase the size of the chain garbage being built
 -- or add a 6-wide if there is not chain garbage yet in the queue
