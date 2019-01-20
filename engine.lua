@@ -300,7 +300,7 @@ GarbageQueue = class(function(s, stack)
   s.stack = stack
   s.chain_garbage = Queue()
   s.combo_garbage = {Queue(),Queue(),Queue(),Queue(),Queue(),Queue()} --index here represents width, and value represents how many of that width queued
-  s.metal = 0
+  s.metal = Queue()
 end)
 
 function GarbageQueue.mkcpy(self)
@@ -310,7 +310,7 @@ function GarbageQueue.mkcpy(self)
   for i=3, 6 do
     other.combo_garbage[i] = deepcpy(self.combo_garbage[i])
   end
-  other.metal = self.metal
+  other.metal = deepcpy(self.metal)
   return other
 end
 
@@ -321,7 +321,7 @@ function GarbageQueue.push(self, garbage)
     if width and height then
       print("GarbageQueue.push" .. " TODO: Garbage details here")
       if metal then
-        self.metal = self.metal + 1
+        self.metal:push(v)
       elseif from_chain or height > 1 then
         if not from_chain then
           print("ERROR: garbage with height > 1 was not marked as 'from_chain'")
@@ -359,12 +359,13 @@ function GarbageQueue.pop(self, just_peeking)
     end
   end
   --check for any metal garbage, and return one if any
-  if self.metal > 0 then
+  if self.metal:peek() then
     if not just_peeking then
-      self.metal = self.metal - 1
       print("popping metal garbage from the queue")
+      return self.metal:pop()
+    else
+      return self.metal:peek()
     end
-    return {6, 1, true, false}
   end
   return nil
 end
@@ -401,7 +402,7 @@ function GarbageQueue.len(self)
   for k,v in ipairs(self.combo_garbage) do
     ret = ret + v:len()
   end
-  ret = ret + self.metal
+  ret = ret + self.metal:len()
   return ret
 end
 
@@ -458,7 +459,7 @@ end
 
 Telegraph = class(function(self, sender)
   self.garbage_queue = GarbageQueue(sender)
-  self.stoppers =  {chain = {}, combo = {}}
+  self.stoppers =  {chain = {}, combo = {}, metal = nil}
   
   --note: keys for stoppers such as self.stoppers.chain[some_key]
   --will be the garbage block's index in the queue , and value will be the frame the stopper expires).
@@ -469,6 +470,7 @@ Telegraph = class(function(self, sender)
 end)
 
 function Telegraph.push(self, attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row)
+  print("telegraph.push")
   local x_displacement 
   if not metal_count then
     metal_count = 0
@@ -494,6 +496,7 @@ function Telegraph.add_combo_garbage(self, n_combo, n_metal)
   local stuff_to_send = {}
   for i=3,n_metal do
     stuff_to_send[#stuff_to_send+1] = {6, 1, true, false}
+    self.stoppers.metal = self.sender.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
   end
   local combo_pieces = combo_garbage[n_combo]
   for i=1,#combo_pieces do
@@ -537,6 +540,10 @@ function Telegraph.pop_all_ready_garbage(self)
       n_combo_stoppers = n_combo_stoppers + 1
     end
   end
+ --remove the metal stopper if it expires this frame
+ if self.stoppers.metal and self.stoppers.metal <= self.sender.CLOCK then
+   self.stoppers.metal = nil
+ end
   -- print(P1.CLOCK)
   -- print("table_to_string(self.stoppers.chain):-")
   -- print(table_to_string(self.stoppers.chain))
@@ -567,7 +574,10 @@ function Telegraph.pop_all_ready_garbage(self)
       end
     end
   end
-  
+  local frame_to_release_metal = self.stoppers.metal
+  while self.garbage_queue.metal:peek() and not self.stoppers.metal do
+      ready_garbage[#ready_garbage+1] = self.garbage_queue:pop()
+  end
   return ready_garbage
 end
 
@@ -2006,6 +2016,9 @@ function Stack.check_matches(self)
   end
 
   if(combo_size~=0) then
+    if metal_count == 3 and combo_size == 3 then
+      self.telegraph:push("combo", combo_size, metal_count,first_panel_col, first_panel_row)
+    end
     if(combo_size>3) then
       if(score_mode == SCOREMODE_TA) then
         if(combo_size > 30) then

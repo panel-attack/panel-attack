@@ -749,7 +749,11 @@ function Stack.render_telegraph(self)
     local draw_y = self.pos_y-4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
     while current_block do
       if self.CLOCK - current_block.frame_earned >= GARBAGE_TRANSIT_TIME then
-        draw(IMG_telegraph_garbage[current_block[2]--[[height]]][current_block[1]--[[width]]], draw_x, draw_y)
+        if not current_block[3]--[[is_metal]] then
+          draw(IMG_telegraph_garbage[current_block[2]--[[height]]][current_block[1]--[[width]]], draw_x, draw_y)
+        else
+          draw(IMG_telegraph_metal, draw_x, draw_y)
+        end
       end
       draw_x = draw_x + TELEGRAPH_BLOCK_WIDTH
       current_block = telegraph_to_draw:pop()
