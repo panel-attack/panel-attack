@@ -419,6 +419,7 @@ function GarbageQueue.grow_chain(self)
     print("table_to_string(self.chain_garbage):")
     print(table_to_string(self.chain_garbage))
     local garbage_block = self.chain_garbage[self.chain_garbage.last]
+    self.ghost_chain = garbage_block[2]
     garbage_block[2]--[[height]] = garbage_block[2]--[[height]] + 1
     garbage_block.frame_earned = self.stack.CLOCK
     self.chain_garbage:replace_last(garbage_block)
@@ -428,6 +429,7 @@ function GarbageQueue.grow_chain(self)
 end
 
 function GarbageQueue.sender_chain_ended(self)
+  self.ghost_chain = nil
   self.chain_in_progress = nil
 end
 

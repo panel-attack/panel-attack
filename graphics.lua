@@ -747,6 +747,9 @@ function Stack.render_telegraph(self)
     local current_block = telegraph_to_draw:pop()
     local draw_x = self.pos_x
     local draw_y = self.pos_y-4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
+    if self.telegraph.garbage_queue.ghost_chain then
+      draw(IMG_telegraph_garbage[self.telegraph.garbage_queue.ghost_chain][6], draw_x, draw_y)
+    end
     while current_block do
       if self.CLOCK - current_block.frame_earned >= GARBAGE_TRANSIT_TIME then
         if not current_block[3]--[[is_metal]] then
