@@ -345,7 +345,11 @@ function GarbageQueue.pop(self, just_peeking)
     if just_peeking then
       return self.chain_garbage:peek()
     else
-      return self.chain_garbage:pop()
+      local ret = self.chain_garbage:pop()
+      if not self.chain_garbage[self.chain_garbage.last] then
+        self.ghost_chain = nil
+      end
+      return ret
     end
   end
   --check for any combo garbage, and return the smallest one, if any
@@ -383,8 +387,10 @@ function GarbageQueue.to_string(self)
       print("table_to_string(self.chain_garbage)")
       print(table_to_string(self.chain_garbage))
       --I've run into a bug where I think the following line errors if there is more than one chain_garbage in the queue... TODO: figure that out.
-      local width, height, metal, from_chain = unpack(self.chain_garbage[i])
-      ret = ret..height.."-tall\n"
+      if self.chain_garbage[i] then
+        local width, height, metal, from_chain = unpack(self.chain_garbage[i])
+        ret = ret..height.."-tall\n"
+      end
     end
     
     --ret = ret..table_to_string(self.chain_garbage)
@@ -419,7 +425,6 @@ function GarbageQueue.grow_chain(self)
     print("table_to_string(self.chain_garbage):")
     print(table_to_string(self.chain_garbage))
     local garbage_block = self.chain_garbage[self.chain_garbage.last]
-    self.ghost_chain = garbage_block[2]
     garbage_block[2]--[[height]] = garbage_block[2]--[[height]] + 1
     garbage_block.frame_earned = self.stack.CLOCK
     self.chain_garbage:replace_last(garbage_block)
@@ -429,7 +434,6 @@ function GarbageQueue.grow_chain(self)
 end
 
 function GarbageQueue.sender_chain_ended(self)
-  self.ghost_chain = nil
   self.chain_in_progress = nil
 end
 
@@ -1334,7 +1338,9 @@ function Stack.PdP(self)
 
   -- if at the end of the routine there are no chain panels, the chain ends.
   if self.chain_counter ~= 0 and self.n_chain_panels == 0 then
-    self.telegraph:sender_chain_ended()
+    if self.mode == "vs" then
+      self.telegraph:sender_chain_ended()
+    end
     SFX_Fanfare_Play = self.chain_counter
     self.chain_counter=0
   end
@@ -1383,9 +1389,11 @@ function Stack.PdP(self)
     end
   end
   --]]
-  local to_send = self.telegraph:pop_all_ready_garbage()
-  if to_send[1] then
-    self:really_send(to_send)
+  if self.mode == "vs" then
+    local to_send = self.telegraph:pop_all_ready_garbage()
+    if to_send[1] then
+      self:really_send(to_send)
+    end
   end
   self:remove_extra_rows()
   
@@ -2018,7 +2026,7 @@ function Stack.check_matches(self)
   end
 
   if(combo_size~=0) then
-    if metal_count == 3 and combo_size == 3 then
+    if self.mode == "vs" and metal_count == 3 and combo_size == 3 then
       self.telegraph:push("combo", combo_size, metal_count,first_panel_col, first_panel_row)
     end
     if(combo_size>3) then
@@ -2036,7 +2044,9 @@ function Stack.check_matches(self)
       end
 
       self:enqueue_card(false, first_panel_col, first_panel_row, combo_size)
-      self.telegraph:push("combo", combo_size, metal_count,first_panel_col, first_panel_row)
+      if self.mode == "vs" then
+        self.telegraph:push("combo", combo_size, metal_count,first_panel_col, first_panel_row)
+      end
       --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
       --          first_panel_row<<4+P1StackPosY+self.displacement-9);
       --TODO: this stuff ^
@@ -2047,7 +2057,9 @@ function Stack.check_matches(self)
           self.chain_counter)
       --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
       --          first_panel_row<<4+P1StackPosY+self.displacement-9);
-      self.telegraph:push("chain",self.chain_counter,0,first_panel_col, first_panel_row)
+      if self.mode == "vs" then
+        self.telegraph:push("chain",self.chain_counter,0,first_panel_col, first_panel_row)
+      end
     end
     something = self.chain_counter
     if(score_mode == SCOREMODE_TA) then

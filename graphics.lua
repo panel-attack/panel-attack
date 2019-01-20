@@ -550,7 +550,9 @@ function Stack.render(self)
   self:render_cursor()
   setScissor()
   --self:render_gfx()
-  self:render_telegraph()
+  if self.mode == "vs" then
+    self:render_telegraph()
+  end
   if self.do_countdown then
     self:render_countdown()
   end
@@ -717,7 +719,7 @@ function Stack.render_telegraph(self)
             draw(IMG_telegraph_attack[self.character], garbage_block.x, garbage_block.y)
           end
         end
-      elseif frames_since_earned > #card_animation + #telegraph_attack_animation_speed and frames_since_earned <GARBAGE_TRANSIT_TIME - 1 then 
+      elseif frames_since_earned > #card_animation + #telegraph_attack_animation_speed and frames_since_earned < GARBAGE_TRANSIT_TIME - 1 then 
         --move toward destination as quickly as TELEGRAPH_ATTACK_MAX_SPEED frames per second
         for _, attack in ipairs(attacks_this_frame) do
           for _k, garbage_block in ipairs(attack.stuff_to_send) do
@@ -738,8 +740,16 @@ function Stack.render_telegraph(self)
             draw(IMG_telegraph_attack[self.character], garbage_block.x, garbage_block.y)
           end
         end
-        --elseif frames_since_earned == GARBAGE_TRANSIT_TIME then
-          --draw(IMG_telegraph_attack[self.character], garbage_block.desination_x, garbage_block.destination_y)
+      elseif frames_since_earned == GARBAGE_TRANSIT_TIME then
+        for _, attack in ipairs(attacks_this_frame) do
+          for _k, garbage_block in ipairs(attack.stuff_to_send) do
+            local last_chain_in_queue = self.telegraph.garbage_queue.chain_garbage[self.telegraph.garbage_queue.chain_garbage.last]
+            if garbage_block[4]--[[from_chain]] and last_chain_in_queue and garbage_block[2]--[[height]] == last_chain_in_queue[2]--[[height]] then
+              self.telegraph.garbage_queue.ghost_chain = garbage_block[2]--[[height]]
+            end
+              --draw(IMG_telegraph_attack[self.character], garbage_block.desination_x, garbage_block.destination_y)
+          end
+        end
       end
     end
     --then draw the telegraph's garbage queue, leaving an empty space until such a time as the attack arrives (earned_frame-GARBAGE_TRANSIT_TIME)
