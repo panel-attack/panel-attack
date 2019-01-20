@@ -1261,6 +1261,8 @@ function main_net_vs()
     if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
       P1:render()
       P2:render()
+      P1:render_telegraph()
+      P2:render_telegraph()
       wait()
       if currently_spectating and this_frame_keys["escape"] then
         print("spectator pressed escape during a game")
@@ -1409,6 +1411,8 @@ function main_local_vs()
   while true do
     P1:render()
     P2:render()
+    P1:render_telegraph()
+    P2:render_telegraph()
     wait()
     variable_step(function()
         if not P1.game_over and not P2.game_over then
@@ -1443,6 +1447,7 @@ function main_local_vs_yourself()
   local end_text = nil
   while true do
     P1:render()
+    P1:render_telegraph()
     wait()
     variable_step(function()
         if not P1.game_over then
@@ -1502,6 +1507,8 @@ function main_replay_vs()
     gprint(op_name or "", 410, op_name_y)
     P1:render()
     P2:render()
+    P1:render_telegraph()
+    P2:render_telegraph()
     if mouse_panel then
       local str = "Panel info:\nrow: "..mouse_panel[1].."\ncol: "..mouse_panel[2]
       for k,v in spairs(mouse_panel[3]) do
