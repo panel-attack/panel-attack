@@ -737,7 +737,6 @@ function Stack.render_telegraph(self)
               garbage_block.x = garbage_block.x - ((garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED)*(garbage_block.x-garbage_block.destination_x))/distance_to_destination
               garbage_block.y = garbage_block.y - ((garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED)*(garbage_block.y-garbage_block.destination_y))/distance_to_destination
             end
-            print("distance: "..distance_to_destination)
             draw(IMG_telegraph_attack[self.character], garbage_block.x, garbage_block.y)
           end
         end

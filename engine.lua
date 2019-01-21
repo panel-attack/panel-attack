@@ -164,6 +164,7 @@ Stack = class(function(s, which, mode, speed, difficulty, player_number)
     s.prev_states = {}
     s.gfx = {}
     s.telegraph = Telegraph(s)
+    s.unverified_garbage = {}
   end)
 
 function Stack.mkcpy(self, other)
@@ -188,9 +189,9 @@ function Stack.mkcpy(self, other)
   else
 
   end--]]
-  other.garbage_q = deepcpy(self.garbage_q)
+  other.garbage_q = self.garbage_q:mkcpy()
   --other.garbage_to_send = deepcpy(self.garbage_to_send)
-  other.telegraph = deepcpy(self.telegraph)
+  other.telegraph = self.telegraph:mkcpy()
   other.input_state = self.input_state
   local height = self.height or other.height
   local width = self.width or other.width
@@ -244,6 +245,7 @@ function Stack.mkcpy(self, other)
   other.card_q = deepcpy(self.card_q)
   other.do_countdown = self.do_countdown
   other.ready_y = self.ready_y
+  other.unverified_garbage = deepcpy(self.unverified_garbage)
   return other
 end
 
@@ -316,10 +318,10 @@ end
 
 function GarbageQueue.push(self, garbage)
   for k,v in pairs(garbage) do
-    v.frame_earned = self.stack.CLOCK
     local width, height, metal, from_chain = unpack(v)
     if width and height then
-      print("GarbageQueue.push" .. " TODO: Garbage details here")
+      print("GarbageQueue.push")
+      print("frame_earned: "..v.frame_earned)
       if metal then
         self.metal:push(v)
       elseif from_chain or height > 1 then
@@ -335,8 +337,7 @@ function GarbageQueue.push(self, garbage)
   end
   print("after push, the queue is:")
   print(self:to_string())
-  print(P1.CLOCK)
-  print("self.chain_garbage:len() = "..self.chain_garbage:len())
+
 end
 
 function GarbageQueue.pop(self, just_peeking)
@@ -412,9 +413,9 @@ function GarbageQueue.len(self)
   return ret
 end
 
-function GarbageQueue.grow_chain(self)
+function GarbageQueue.grow_chain(self,frame_earned)
   if not self.chain_in_progress then
-    self:push({{6,1,false,true}}) --a garbage block 6-wide, 1-tall, not metal, from_chain
+    self:push({{6,1,false,true, frame_earned=frame_earned}}) --a garbage block 6-wide, 1-tall, not metal, from_chain
     self.chain_in_progress = true
   else 
     print("in GarbageQueue.grow_chain")
@@ -426,7 +427,7 @@ function GarbageQueue.grow_chain(self)
     print(table_to_string(self.chain_garbage))
     local garbage_block = self.chain_garbage[self.chain_garbage.last]
     garbage_block[2]--[[height]] = garbage_block[2]--[[height]] + 1
-    garbage_block.frame_earned = self.stack.CLOCK
+    garbage_block.frame_earned = frame_earned
     self.chain_garbage:replace_last(garbage_block)
   end
 -- This is used by the telegraph to increase the size of the chain garbage being built
@@ -475,6 +476,15 @@ Telegraph = class(function(self, sender)
   self.attacks = {}
 end)
 
+function Telegraph.mkcpy(self)
+  local copy = Telegraph()
+  copy.garbage_queue = self.garbage_queue:mkcpy()
+  copy.stoppers = deepcpy(self.stoppers)
+  copy.sender = self.sender
+  copy.attacks = deepcpy(self.attacks)
+  return copy
+end
+
 function Telegraph.push(self, attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row)
   print("telegraph.push")
   local x_displacement 
@@ -483,7 +493,7 @@ function Telegraph.push(self, attack_type, attack_size, metal_count, attack_orig
   end
   local stuff_to_send
   if attack_type == "chain" then
-    self:grow_chain()
+    self:grow_chain(self.sender.CLOCK)
     stuff_to_send = {{6, self.sender.chain_counter-1,false, true}}
   elseif attack_type == "combo" then
     -- get combo_garbage_widths, n_resulting_metal_garbage
@@ -501,12 +511,12 @@ function Telegraph.add_combo_garbage(self, n_combo, n_metal)
   print("Telegraph.add_combo_garbage "..(n_combo or "nil").." "..(n_metal or "nil"))
   local stuff_to_send = {}
   for i=3,n_metal do
-    stuff_to_send[#stuff_to_send+1] = {6, 1, true, false}
+    stuff_to_send[#stuff_to_send+1] = {6, 1, true, false, frame_earned = self.sender.CLOCK}
     self.stoppers.metal = self.sender.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
   end
   local combo_pieces = combo_garbage[n_combo]
   for i=1,#combo_pieces do
-    stuff_to_send[#stuff_to_send+1] = {combo_pieces[i], 1, false, false}
+    stuff_to_send[#stuff_to_send+1] = {combo_pieces[i], 1, false, false, frame_earned = self.sender.CLOCK}
     self.stoppers.combo[combo_pieces[i]] = self.sender.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
   end
   self.garbage_queue:push(stuff_to_send)
@@ -514,8 +524,8 @@ function Telegraph.add_combo_garbage(self, n_combo, n_metal)
   
 end
 
-function Telegraph.grow_chain(self)
-  self.garbage_queue:grow_chain()
+function Telegraph.grow_chain(self, frame_earned)
+  self.garbage_queue:grow_chain(frame_earned)
   self.stoppers.chain[self.garbage_queue.chain_garbage.last] = self.sender.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
   print(self.sender.CLOCK)
   print("in Telegraph.grow_chain")
@@ -524,55 +534,68 @@ function Telegraph.grow_chain(self)
   
 end
 
-function Telegraph.pop_all_ready_garbage(self)
+--to see what's going to be ready at a given frame
+function Telegraph.peek_all_ready_garbage(self, frame)
+  return self:pop_all_ready_garbage(frame, true--[[just_peeking]])
+end
+
+function Telegraph.pop_all_ready_garbage(self, frame, just_peeking)
   local ready_garbage = {}
   local n_chain_stoppers, n_combo_stoppers = 0, 0
-  for chain_idx, chain_release_frame in pairs(self.stoppers.chain) do
+  local subject = self
+  local time_to_check = self.sender.CLOCK
+  if just_peeking then
+    subject = self:mkcpy()
+  end
+  if frame then
+    time_to_check = subject.sender.CLOCK
+  end
+  for chain_idx, chain_release_frame in pairs(subject.stoppers.chain) do
     
     --remove any chain stoppers that expire this frame,
-    if chain_release_frame <= self.sender.CLOCK then
+    if chain_release_frame <= time_to_check then
       print("in Telegraph.pop_all_ready_garbage")
       print("removing a stopper")
-      self.stoppers.chain[chain_idx] = nil
+      subject.stoppers.chain[chain_idx] = nil
     else
       n_chain_stoppers = n_chain_stoppers + 1
     end
   end
-  for combo_garbage_width, combo_release_frame in pairs(self.stoppers.combo) do
+  for combo_garbage_width, combo_release_frame in pairs(subject.stoppers.combo) do
     --remove any combo stoppers that expire this frame,
-    if combo_release_frame <= self.sender.CLOCK then
-      self.stoppers.combo[combo_garbage_width] = nil
+    if combo_release_frame <= time_to_check then
+      subject.stoppers.combo[combo_garbage_width] = nil
     else 
       n_combo_stoppers = n_combo_stoppers + 1
     end
   end
  --remove the metal stopper if it expires this frame
- if self.stoppers.metal and self.stoppers.metal <= self.sender.CLOCK then
-   self.stoppers.metal = nil
+ if subject.stoppers.metal and subject.stoppers.metal <= time_to_check then
+   subject.stoppers.metal = nil
  end
   -- print(P1.CLOCK)
-  -- print("table_to_string(self.stoppers.chain):-")
-  -- print(table_to_string(self.stoppers.chain))
+  -- print("table_to_string(subject.stoppers.chain):-")
+  -- print(table_to_string(subject.stoppers.chain))
   
-  while self.garbage_queue.chain_garbage:peek() do
-    if not self.stoppers.chain[self.garbage_queue.chain_garbage.first] and not self.garbage_queue.chain_in_progress then
+  while subject.garbage_queue.chain_garbage:peek() do
+    if not subject.stoppers.chain[subject.garbage_queue.chain_garbage.first] and not subject.garbage_queue.chain_in_progress then
       print("in Telegraph.pop_all_ready_garbage")
       print("so there was not a stopper for the first chain now")
       print("popping the first chain")
-      ready_garbage[#ready_garbage+1] = self.garbage_queue:pop()
+      ready_garbage[#ready_garbage+1] = subject.garbage_queue:pop()
     else 
       --there was a stopper here, stop and return.
       return ready_garbage
     end
   end
   for combo_garbage_width=3,6 do
-    local n_blocks_of_this_width = self.garbage_queue.combo_garbage[combo_garbage_width]:len()
+    local n_blocks_of_this_width = subject.garbage_queue.combo_garbage[combo_garbage_width]:len()
     
-    local frame_to_release = self.stoppers.combo[combo_garbage_width]
+    local frame_to_release = subject.stoppers.combo[combo_garbage_width]
     if n_blocks_of_this_width > 0 then
       if not frame_to_release then
         for i=1,n_blocks_of_this_width do
-          ready_garbage[#ready_garbage+1] = self.garbage_queue:pop()
+          ready_garbage[#ready_garbage+1] = subject.garbage_queue:pop()
         end
       else 
         --there was a stopper here, stop and return
@@ -580,9 +603,9 @@ function Telegraph.pop_all_ready_garbage(self)
       end
     end
   end
-  local frame_to_release_metal = self.stoppers.metal
-  while self.garbage_queue.metal:peek() and not self.stoppers.metal do
-      ready_garbage[#ready_garbage+1] = self.garbage_queue:pop()
+  local frame_to_release_metal = subject.stoppers.metal
+  while subject.garbage_queue.metal:peek() and not subject.stoppers.metal do
+      ready_garbage[#ready_garbage+1] = subject.garbage_queue:pop()
   end
   return ready_garbage
 end
@@ -1390,6 +1413,11 @@ function Stack.PdP(self)
   end
   --]]
   if self.mode == "vs" then
+    --we are assuming here our garbage_target also has us as a garbage_target.
+    --this may need to change if 4-player is implemented
+    if self.garbage_target.CLOCK < self.CLOCK then
+      self:speculate_garbage()
+    end
     local to_send = self.telegraph:pop_all_ready_garbage()
     if to_send[1] then
       self:really_send(to_send)
@@ -1765,61 +1793,109 @@ function Stack.really_send(self, to_send)
   end
 end
 
-function Stack.recv_garbage(self, time, to_recv)
-  if self.CLOCK > time then
-    local prev_states = self.prev_states
-    local next_self = prev_states[time+1]
-    while next_self and (next_self.prev_active_panels ~= 0 or
-        next_self.n_active_panels ~= 0) do
-      time = time + 1
-      next_self = prev_states[time+1]
-    end
-    if self.CLOCK - time > 200 then
-      error("Latency is too high :(")
-    else
-      local CLOCK = self.CLOCK
-      local old_self = prev_states[time]
-      --MAGICAL ROLLBACK!?!?
-      self.in_rollback = true
-      print("attempting magical rollback with difference = "..self.CLOCK-time..
-          " at time "..self.CLOCK)
+function Stack.speculate_garbage(self, sender)
+  self.unverified_garbage[self.CLOCK] = self.garbage_target.telegraph:peek_all_ready_garbage(self.CLOCK)
+  if self.which == 1 then
+    print("speculating garbage")
+  end
+  if self.unverified_garbage[self.CLOCK][1] then
+    print(json.encode(self.unverified_garbage[self.CLOCK]))
+    self.garbage_q:push(self.unverified_garbage[self.CLOCK])
+  end
+end
 
-      -- The garbage that we send this time might (rarely) not be the same
-      -- as the garbage we sent before.  Wipe out the garbage we sent before...
-      
-      --[[ --The way of doing this before Telegraph garbage system
-        local first_wipe_time = time + GARBAGE_DELAY
-        local other_later_garbage = self.garbage_target.later_garbage
-        for k,v in pairs(other_later_garbage) do
+function Stack.recv_garbage(self, time, to_recv)
+  
+  --if we can verify we used all the right garbage at the right times
+  --then we don't have to roll back
+  if json.encode(to_recv) == json.encode(self.unverified_garbage[time]) then
+    if self.which == 1 then
+      print("unverified garbage and received garbage match")
+    end
+    --great, it all matches. clear unverified_garbage[time] and do nothing.
+  else
+      if self.which == 1 then
+        print("They didn't match. checking if we need roll back")
+      end
+    --we may have to do a rollback
+    if self.CLOCK > time then
+      local prev_states = self.prev_states
+      local next_self = prev_states[time+1]
+      while next_self and (next_self.prev_active_panels ~= 0 or
+          next_self.n_active_panels ~= 0) do
+        time = time + 1
+        next_self = prev_states[time+1]
+      end
+      if self.CLOCK - time > 200 then
+        error("Latency is too high :(")
+      else
+        local CLOCK = self.CLOCK
+        local old_self = prev_states[time]
+        --MAGICAL ROLLBACK!?!?
+        self.in_rollback = true
+        print("attempting magical rollback with difference = "..self.CLOCK-time..
+            " at time "..self.CLOCK)
+        
+
+        -- The garbage that we send this time might (rarely) not be the same
+        -- as the garbage we sent before.  Wipe out the garbage we sent before...
+        
+        
+        --[[ --The way of doing this before Telegraph garbage system
+          local first_wipe_time = time + GARBAGE_DELAY
+          local other_later_garbage = self.garbage_target.later_garbage
+          for k,v in pairs(other_later_garbage) do
+            if k >= first_wipe_time then
+              other_later_garbage[k] = nil
+            end
+          end
+        --]]
+        --[[
+        --The way with the new Telegraph-based garbage system:
+        local first_wipe_time = time
+        for k,v in pairs(self.telegraph.attacks) do
           if k >= first_wipe_time then
-            other_later_garbage[k] = nil
+            self.telegraph.attacks[k] = nil
           end
         end
-      --]]
-      --TODO: adjust the garbage queue if needed.
-      
-      -- and record the garbage that we send this time!
+        --copy the garbage_queue to a temporary one
+        local temp_garbage_queue = self.telegraph.garbage_queue:mkcpy()
+        self.telegraph.garbage_queue = GarbageQueue() --fresh start
+        local current_block = temp_garbage_queue:pop()
+        while current_block do
+          --we'll not yet add anything back in that was earned after the time we are going back to.
+          if current_block.frame_earned < first_wipe_time then
+            self.telegraph.garbage_queue:push({current_block}, current_block.frame_earned)
+          end
+          current_block = temp_garbage_queue:pop()
+        end
+        ]]
+        
+        -- and record the garbage that we send this time!
 
-      -- We can do it like this because the sender of the garbage
-      -- and self.garbage_target are the same thing.
-      -- Since we're in this code at all, we know that self.garbage_target
-      -- is waaaaay behind us, so it couldn't possibly have processed
-      -- the garbage that we sent during the frames we're rolling back.
-      --
-      -- If a mode with >2 players is implemented, we can continue doing
-      -- the same thing as long as we keep all of the opponents'
-      -- stacks in sync.
+        -- We can do it like this because the sender of the garbage
+        -- and self.garbage_target are the same thing.
+        -- Since we're in this code at all, we know that self.garbage_target
+        -- is waaaaay behind us, so it couldn't possibly have processed
+        -- the garbage that we sent during the frames we're rolling back.
+        --
+        -- If a mode with >2 players is implemented, we can continue doing
+        -- the same thing as long as we keep all of the opponents'
+        -- stacks in sync.
 
-      self:fromcpy(prev_states[time])
-      self:recv_garbage(time, to_recv)
+        self:fromcpy(prev_states[time])
+        self.garbage_q:push(to_recv)
 
-      for t=time,CLOCK-1 do
-        self.input_state = prev_states[t].input_state
-        self:mkcpy(prev_states[t])
-        self:controls()
-        self:PdP()
+        for t=time,CLOCK-1 do
+          self.input_state = prev_states[t].input_state
+          self:mkcpy(prev_states[t])
+          self:controls()
+          self:PdP()
+        end
+        self.in_rollback = nil
       end
-      self.in_rollback = nil
+    else
+      self.garbage_q:push(to_recv)
     end
   end
   --[[
@@ -1829,7 +1905,6 @@ function Stack.recv_garbage(self, time, to_recv)
   end
   self.later_garbage[time] = garbage
   --]]
-  self.garbage_q:push(to_recv)
 end
 
 function Stack.check_matches(self)
