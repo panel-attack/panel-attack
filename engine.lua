@@ -1711,6 +1711,7 @@ end
 
 -- drops a width x height garbage.
 function Stack.drop_garbage(self, width, height, metal)
+  print("dropping garbage at frame "..self.CLOCK)
   local spawn_row = #self.panels
   for i=#self.panels+1,#self.panels+height+1 do
     self.panels[i] = {}
