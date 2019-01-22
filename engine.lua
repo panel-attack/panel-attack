@@ -246,6 +246,7 @@ function Stack.mkcpy(self, other)
   other.do_countdown = self.do_countdown
   other.ready_y = self.ready_y
   other.unverified_garbage = deepcpy(self.unverified_garbage)
+  other.next_speculation_time = self.next_speculation_time
   return other
 end
 
@@ -537,6 +538,12 @@ end
 --to see what's going to be ready at a given frame
 function Telegraph.peek_all_ready_garbage(self, frame)
   return self:pop_all_ready_garbage(frame, true--[[just_peeking]])
+end
+
+function Telegraph.soonest_stopper(self)
+  local ret
+  ret = self.stoppers.chain[1] or self.stoppers.combo[1] or self.stoppers.metal[1] or nil
+  return ret
 end
 
 function Telegraph.pop_all_ready_garbage(self, frame, just_peeking)
@@ -1415,8 +1422,11 @@ function Stack.PdP(self)
   if self.mode == "vs" then
     --we are assuming here our garbage_target also has us as a garbage_target.
     --this may need to change if 4-player is implemented
+    --maybe make a list of who is currently targeting us
     if self.garbage_target.CLOCK < self.CLOCK then
-      self:speculate_garbage()
+      if not (self.next_speculation_time and self.next_speculation_time > self.CLOCK) then
+        self:speculate_garbage()
+      end
     end
     local to_send = self.telegraph:pop_all_ready_garbage()
     if to_send[1] then
@@ -1795,13 +1805,28 @@ function Stack.really_send(self, to_send)
 end
 
 function Stack.speculate_garbage(self, sender)
-  self.unverified_garbage[self.CLOCK] = self.garbage_target.telegraph:peek_all_ready_garbage(self.CLOCK)
   if self.which == 1 then
     print("speculating garbage")
   end
-  if self.unverified_garbage[self.CLOCK][1] then
-    print(json.encode(self.unverified_garbage[self.CLOCK]))
-    self.garbage_q:push(self.unverified_garbage[self.CLOCK])
+  self.next_speculation_time = self.garbage_target.telegraph:soonest_stopper()
+  if self.next_speculation_time then
+    if self.which == 1 then
+      print("the soonest garbage might come is frame: "..self.next_speculation_time)
+    end
+  else
+    self.unverified_garbage[self.CLOCK] = self.garbage_target.telegraph:peek_all_ready_garbage(self.CLOCK)
+    if self.unverified_garbage[self.CLOCK][1] then
+      if self.which == 1 then
+        print("GARBAGE SPECULATED FOR THIS FRAME:")
+        print(self.CLOCK)
+        print(json.encode(self.unverified_garbage[self.CLOCK]))
+      end
+      self.garbage_q:push(self.unverified_garbage[self.CLOCK])
+    else
+      if self.which == 1 then
+        print("no garbage speculated")
+      end
+    end
   end
 end
 
