@@ -542,7 +542,7 @@ end
 
 function Telegraph.soonest_stopper(self)
   local ret
-  ret = self.stoppers.chain[1] or self.stoppers.combo[1] or self.stoppers.metal[1] or nil
+  ret = self.stoppers.chain[1] or self.stoppers.combo[1] or self.stoppers.metal or nil
   return ret
 end
 
@@ -592,7 +592,11 @@ function Telegraph.pop_all_ready_garbage(self, frame, just_peeking)
       ready_garbage[#ready_garbage+1] = subject.garbage_queue:pop()
     else 
       --there was a stopper here, stop and return.
-      return ready_garbage
+      if ready_garbage[1] then
+        return ready_garbage
+      else
+        return nil
+      end
     end
   end
   for combo_garbage_width=3,6 do
@@ -606,7 +610,11 @@ function Telegraph.pop_all_ready_garbage(self, frame, just_peeking)
         end
       else 
         --there was a stopper here, stop and return
-        return ready_garbage
+          if ready_garbage[1] then
+            return ready_garbage
+          else
+            return nil
+          end
       end
     end
   end
@@ -614,7 +622,11 @@ function Telegraph.pop_all_ready_garbage(self, frame, just_peeking)
   while subject.garbage_queue.metal:peek() and not subject.stoppers.metal do
       ready_garbage[#ready_garbage+1] = subject.garbage_queue:pop()
   end
-  return ready_garbage
+  if ready_garbage[1] then
+    return ready_garbage
+  else
+    return nil
+  end
 end
 
 function Telegraph.sender_chain_ended(self)
@@ -1429,7 +1441,7 @@ function Stack.PdP(self)
       end
     end
     local to_send = self.telegraph:pop_all_ready_garbage()
-    if to_send[1] then
+    if to_send and to_send[1] then
       self:really_send(to_send)
     end
   end
@@ -1815,7 +1827,7 @@ function Stack.speculate_garbage(self, sender)
     end
   else
     self.unverified_garbage[self.CLOCK] = self.garbage_target.telegraph:peek_all_ready_garbage(self.CLOCK)
-    if self.unverified_garbage[self.CLOCK][1] then
+    if self.unverified_garbage[self.CLOCK] and self.unverified_garbage[self.CLOCK][1] then
       if self.which == 1 then
         print("GARBAGE SPECULATED FOR THIS FRAME:")
         print(self.CLOCK)
@@ -1834,14 +1846,19 @@ function Stack.recv_garbage(self, time, to_recv)
   
   --if we can verify we used all the right garbage at the right times
   --then we don't have to roll back
-  if json.encode(to_recv) == json.encode(self.unverified_garbage[time]) then
+  local incoming_json = json.encode(to_recv)
+  local unverified_json = json.encode(self.unverified_garbage[time])
+  if incoming_json == unverified_json then
     if self.which == 1 then
-      print("unverified garbage and received garbage match")
+      print("unverified garbage and received garbage matched")
     end
     --great, it all matches. clear unverified_garbage[time] and do nothing.
   else
       if self.which == 1 then
-        print("They didn't match. checking if we need roll back")
+        print("incoming_json: "..incoming_json)
+        print("unverified_json: "..unverified_json)
+        print("all unverified:  "..json.encode(self.unverified_garbage))
+        print("They didn't match. checking if we need rollback")
       end
     --we may have to do a rollback
     if self.CLOCK > time then
