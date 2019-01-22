@@ -1822,17 +1822,17 @@ function Stack.speculate_garbage(self, sender)
   end
   self.next_speculation_time = self.garbage_target.telegraph:soonest_stopper()
   if self.next_speculation_time then
-    if self.which == 1 then
+    --if self.which == 1 then
       print("the soonest garbage might come is frame: "..self.next_speculation_time)
-    end
+    --end
   else
     self.unverified_garbage[self.CLOCK] = self.garbage_target.telegraph:peek_all_ready_garbage(self.CLOCK)
     if self.unverified_garbage[self.CLOCK] and self.unverified_garbage[self.CLOCK][1] then
-      if self.which == 1 then
+      --if self.which == 1 then
         print("GARBAGE SPECULATED FOR THIS FRAME:")
         print(self.CLOCK)
         print(json.encode(self.unverified_garbage[self.CLOCK]))
-      end
+      --end
       self.garbage_q:push(self.unverified_garbage[self.CLOCK])
     else
       if self.which == 1 then
