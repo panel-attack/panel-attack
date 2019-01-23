@@ -192,6 +192,9 @@ function Stack.mkcpy(self, other)
   other.garbage_q = self.garbage_q:mkcpy()
   --other.garbage_to_send = deepcpy(self.garbage_to_send)
   other.telegraph = self.telegraph:mkcpy()
+  if self.incoming_telegraph then
+    other.incoming_telegraph = self.incoming_telegraph:mkcpy()
+  end
   other.input_state = self.input_state
   local height = self.height or other.height
   local width = self.width or other.width
@@ -247,12 +250,44 @@ function Stack.mkcpy(self, other)
   other.ready_y = self.ready_y
   other.unverified_garbage = deepcpy(self.unverified_garbage)
   other.next_speculation_time = self.next_speculation_time
+  other.foreign = self.foreign
   return other
 end
 
 function Stack.fromcpy(self, other)
   Stack.mkcpy(other,self)
   self:remove_extra_rows()
+end
+
+function Stack.set_foreign(self, make_foreign)
+  if make_foreign then 
+    self.foreign = true
+    self.incoming_telegraph = nil
+  else
+    self.foreign = nil
+    if self.garbage_target and self.garbage_target ~= self then
+      --not playing vs-yourself
+      self.incoming_telegraph = Telegraph(s)
+      self.incoming_telegraph.pos_x = self.pos_x - 4
+      self.incoming_telegraph.pos_y = self.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
+    elseif self.garbage_target then
+      self.telegraph.pos_x = self.garbage_target.pos_x
+      self.telegraph.pos_y = self.garbage_target.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
+    end
+  end
+end
+
+function Stack.set_garbage_target(self, new_target)
+  self.garbage_target = new_target
+  self.telegraph.pos_x = new_target.pos_x - 4
+  self.telegraph.pos_y = new_target.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
+  --TODO: maybe, if the telegraph.pos_x is left of self.pos_x, set the telegraph to be drawn right to left.
+  if self.incoming_telegraph then
+    --our incoming telegraph will also get new attack pushes
+    --from our garbage_target's telegraph as they are pushed to it.
+    print("Player "..self.which.."'s incoming telegraph is subscribing to attacks pushes from Player "..self.garbage_target.which)
+    new_target.telegraph:subscribe(self.incoming_telegraph)
+  end
 end
 
 Panel = class(function(p)
@@ -314,6 +349,7 @@ function GarbageQueue.mkcpy(self)
     other.combo_garbage[i] = deepcpy(self.combo_garbage[i])
   end
   other.metal = deepcpy(self.metal)
+  other.ghost_chain = self.ghost_chain
   return other
 end
 
@@ -475,6 +511,7 @@ Telegraph = class(function(self, sender)
   --keys for self.stoppers.combo[some_key] will be garbage widths, and values will be frame_to_release
   self.sender = sender
   self.attacks = {}
+  self.subscribed_telegraphs = {}
 end)
 
 function Telegraph.mkcpy(self)
@@ -483,10 +520,13 @@ function Telegraph.mkcpy(self)
   copy.stoppers = deepcpy(self.stoppers)
   copy.sender = self.sender
   copy.attacks = deepcpy(self.attacks)
+  copy.pos_x = self.pos_x
+  copy.pos_y = self.pos_y
+  --copy.subscribed_telegraphs = {} --deepcpy(self.subscribed_telegraphs)
   return copy
 end
 
-function Telegraph.push(self, attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row)
+function Telegraph.push(self, attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned)
   print("telegraph.push")
   local x_displacement 
   if not metal_count then
@@ -494,41 +534,48 @@ function Telegraph.push(self, attack_type, attack_size, metal_count, attack_orig
   end
   local stuff_to_send
   if attack_type == "chain" then
-    self:grow_chain(self.sender.CLOCK)
+    self:grow_chain(frame_earned)
     stuff_to_send = {{6, self.sender.chain_counter-1,false, true}}
   elseif attack_type == "combo" then
     -- get combo_garbage_widths, n_resulting_metal_garbage
-    stuff_to_send = self:add_combo_garbage(attack_size, metal_count)
+    stuff_to_send = self:add_combo_garbage(attack_size, metal_count, frame_earned)
   end
-  if not self.attacks[self.sender.CLOCK] then
-    self.attacks[self.sender.CLOCK] = {}
+  if not self.attacks[frame_earned] then
+    self.attacks[frame_earned] = {}
   end
-  self.attacks[self.sender.CLOCK][#self.attacks[self.sender.CLOCK]+1] =
-  {frame_earned=self.sender.CLOCK, attack_type=attack_type, 
+  self.attacks[frame_earned][#self.attacks[frame_earned]+1] =
+  {frame_earned=frame_earned, attack_type=attack_type, 
   size=attack_size, origin_col=attack_origin_col, origin_row= attack_origin_row, stuff_to_send=stuff_to_send}
+  for k, v in pairs(self.subscribed_telegraphs) do 
+    v.push(self, attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned)
+  end
 end
 
-function Telegraph.add_combo_garbage(self, n_combo, n_metal)
+function Telegraph.add_combo_garbage(self, n_combo, n_metal, frame_earned)
   print("Telegraph.add_combo_garbage "..(n_combo or "nil").." "..(n_metal or "nil"))
   local stuff_to_send = {}
   for i=3,n_metal do
-    stuff_to_send[#stuff_to_send+1] = {6, 1, true, false, frame_earned = self.sender.CLOCK}
-    self.stoppers.metal = self.sender.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
+    stuff_to_send[#stuff_to_send+1] = {6, 1, true, false, frame_earned = frame_earned}
+    self.stoppers.metal = frame_earned+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
   end
   local combo_pieces = combo_garbage[n_combo]
   for i=1,#combo_pieces do
-    stuff_to_send[#stuff_to_send+1] = {combo_pieces[i], 1, false, false, frame_earned = self.sender.CLOCK}
-    self.stoppers.combo[combo_pieces[i]] = self.sender.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
+    stuff_to_send[#stuff_to_send+1] = {combo_pieces[i], 1, false, false, frame_earned = frame_earned}
+    self.stoppers.combo[combo_pieces[i]] = frame_earned+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
   end
   self.garbage_queue:push(stuff_to_send)
   return stuff_to_send
   
 end
 
+function Telegraph.subscribe(self, following_telegraph)
+  self.subscribed_telegraphs[#self.subcribed_telegraphs+1] = following_telegraph
+end
+
 function Telegraph.grow_chain(self, frame_earned)
   self.garbage_queue:grow_chain(frame_earned)
-  self.stoppers.chain[self.garbage_queue.chain_garbage.last] = self.sender.CLOCK+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
-  print(self.sender.CLOCK)
+  self.stoppers.chain[self.garbage_queue.chain_garbage.last] = frame_earned + GARBAGE_TRANSIT_TIME + GARBAGE_DELAY
+  print(frame_earned)
   print("in Telegraph.grow_chain")
   print("table_to_string(self.stoppers.chain):")
   print(table_to_string(self.stoppers.chain))
@@ -775,6 +822,7 @@ end
 
 --local_run is for the stack that belongs to this client.
 function Stack.local_run(self)
+  self:set_foreign(false)
   self:update_cards()
   self.input_state = self:send_controls()
   self:prep_rollback()
@@ -785,6 +833,7 @@ end
 
 --foreign_run is for a stack that belongs to another client.
 function Stack.foreign_run(self)
+  self:set_foreign(true)
   local times_to_run = min(string.len(self.input_buffer),
       self.max_runs_per_frame)
   if self.play_to_end then
@@ -1848,6 +1897,7 @@ end
 
 function Stack.recv_garbage(self, time, to_recv)
   
+  --[[
   --if we can verify we used all the right garbage at the right times
   --then we don't have to roll back
   local incoming_json = json.encode(to_recv)
@@ -1864,6 +1914,7 @@ function Stack.recv_garbage(self, time, to_recv)
         print("all unverified:  "..json.encode(self.unverified_garbage))
         print("They didn't match. checking if we need rollback")
       end
+      --]]
     --we may have to do a rollback
     if self.CLOCK > time then
       local prev_states = self.prev_states
@@ -1944,7 +1995,7 @@ function Stack.recv_garbage(self, time, to_recv)
     else
       self.garbage_q:push(to_recv)
     end
-  end
+  --end
   --[[
   local garbage = self.later_garbage[time] or {}
   for i=1,#to_recv do
@@ -2149,7 +2200,7 @@ function Stack.check_matches(self)
 
   if(combo_size~=0) then
     if self.mode == "vs" and metal_count == 3 and combo_size == 3 then
-      self.telegraph:push("combo", combo_size, metal_count,first_panel_col, first_panel_row)
+      self.telegraph:push("combo", combo_size, metal_count,first_panel_col, first_panel_row, self.CLOCK)
     end
     if(combo_size>3) then
       if(score_mode == SCOREMODE_TA) then
@@ -2167,7 +2218,7 @@ function Stack.check_matches(self)
 
       self:enqueue_card(false, first_panel_col, first_panel_row, combo_size)
       if self.mode == "vs" then
-        self.telegraph:push("combo", combo_size, metal_count,first_panel_col, first_panel_row)
+        self.telegraph:push("combo", combo_size, metal_count,first_panel_col, first_panel_row, self.CLOCK)
       end
       --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
       --          first_panel_row<<4+P1StackPosY+self.displacement-9);
@@ -2180,7 +2231,7 @@ function Stack.check_matches(self)
       --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
       --          first_panel_row<<4+P1StackPosY+self.displacement-9);
       if self.mode == "vs" then
-        self.telegraph:push("chain",self.chain_counter,0,first_panel_col, first_panel_row)
+        self.telegraph:push("chain",self.chain_counter,0,first_panel_col, first_panel_row, self.CLOCK)
       end
     end
     something = self.chain_counter

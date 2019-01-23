@@ -633,10 +633,10 @@ function main_character_select()
           end
           P2.panel_buffer = fake_P2.panel_buffer
           P2.gpanel_buffer = fake_P2.gpanel_buffer
-          P1.garbage_target = P2
-          P2.garbage_target = P1
           P2.pos_x = 172
           P2.score_x = 410
+          P1:set_garbage_target(P2)
+          P2:set_garbage_target(P1)
           replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
                       P1_level=P1.level,P2_level=P2.level,
                       P1_name=my_name, P2_name=op_name,
@@ -859,7 +859,7 @@ function main_character_select()
     end
     if my_state.ready and character_select_mode == "1p_vs_yourself" then
       P1 = Stack(1, "vs", my_state.level, my_state.character)
-      P1.garbage_target = P1
+      P1:set_garbage_target(P1)
       make_local_panels(P1, "000000")
       make_local_gpanels(P1, "000000")
       P1:starting_state()

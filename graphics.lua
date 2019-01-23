@@ -678,7 +678,23 @@ function Stack.render_gfx(self)
 end
 
 function Stack.render_telegraph(self)
-  for frame_earned, attacks_this_frame in pairs(self.telegraph.attacks) do
+  local telegraph_to_render 
+  
+  if self.foreign then
+    telegraph_to_render = self.garbage_target.telegraph
+    --telegraph_to_render.pos_x = telegraph_to_render.pos_x or self.pos_x - 4
+    --telegraph_to_render.pos_y = telegraph_to_render.pos_y --or self.pos_y - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING 
+  else
+    if self.garbage_target == self then
+      telegraph_to_render = self.telegraph
+    else
+      telegraph_to_render = self.incoming_telegraph
+    end
+    --telegraph_to_render.pos_x = telegraph_to_render.pos_x or self.pos_x - 4
+    --telegraph_to_render.pos_y = telegraph_to_render.pos_y or self.pos_y - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING 
+  end
+  local render_x = telegraph_to_render.pos_x
+  for frame_earned, attacks_this_frame in pairs(telegraph_to_render.attacks) do
     -- print("frame_earned:")
     -- print(frame_earned)
     -- print(#card_animation)
@@ -693,7 +709,7 @@ function Stack.render_telegraph(self)
           for _k, garbage_block in ipairs(attack.stuff_to_send) do
             if not garbage_block.destination_x then 
               print("ZZZZZZZ")
-              garbage_block.destination_x = self.garbage_target.pos_x + TELEGRAPH_BLOCK_WIDTH * self.telegraph.garbage_queue:get_idx_of_garbage(unpack(garbage_block))
+              garbage_block.destination_x = self.garbage_target.pos_x + TELEGRAPH_BLOCK_WIDTH * telegraph_to_render.garbage_queue:get_idx_of_garbage(unpack(garbage_block))
             end
             if not garbage_block.x or not garbage_block.y then
               garbage_block.x = (attack.origin_col-1) * 16 + self.pos_x
@@ -722,8 +738,8 @@ function Stack.render_telegraph(self)
           for _k, garbage_block in ipairs(attack.stuff_to_send) do
             --update destination
             --garbage_block.frame_earned = frame_earned --this will be handy when we want to draw the telegraph garbage blocks
-            garbage_block.destination_x = self.garbage_target.pos_x + TELEGRAPH_BLOCK_WIDTH * self.telegraph.garbage_queue:get_idx_of_garbage(unpack(garbage_block))
-            garbage_block.destination_y = garbage_block.destination_y or self.garbage_target.pos_y - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING 
+            garbage_block.destination_x = render_x + TELEGRAPH_BLOCK_WIDTH * telegraph_to_render.garbage_queue:get_idx_of_garbage(unpack(garbage_block))
+            garbage_block.destination_y = garbage_block.destination_y or telegraph_to_render.pos_y - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING 
             
             local distance_to_destination = math.sqrt(math.pow(garbage_block.x-garbage_block.destination_x,2)+math.pow(garbage_block.y-garbage_block.destination_y,2))
             if frames_since_earned == #card_animation + #telegraph_attack_animation_speed then
@@ -743,9 +759,10 @@ function Stack.render_telegraph(self)
       elseif frames_since_earned == GARBAGE_TRANSIT_TIME then
         for _, attack in ipairs(attacks_this_frame) do
           for _k, garbage_block in ipairs(attack.stuff_to_send) do
-            local last_chain_in_queue = self.telegraph.garbage_queue.chain_garbage[self.telegraph.garbage_queue.chain_garbage.last]
+            local last_chain_in_queue = telegraph_to_render.garbage_queue.chain_garbage[telegraph_to_render.garbage_queue.chain_garbage.last]
             if garbage_block[4]--[[from_chain]] and last_chain_in_queue and garbage_block[2]--[[height]] == last_chain_in_queue[2]--[[height]] then
-              self.telegraph.garbage_queue.ghost_chain = garbage_block[2]--[[height]]
+              print("setting ghost_chain")
+              telegraph_to_render.garbage_queue.ghost_chain = garbage_block[2]--[[height]]
             end
               --draw(IMG_telegraph_attack[self.character], garbage_block.desination_x, garbage_block.destination_y)
           end
@@ -753,14 +770,18 @@ function Stack.render_telegraph(self)
       end
     end
     --then draw the telegraph's garbage queue, leaving an empty space until such a time as the attack arrives (earned_frame-GARBAGE_TRANSIT_TIME)
-    telegraph_to_draw = self.telegraph.garbage_queue:mkcpy()
-    local current_block = telegraph_to_draw:pop()
-    local draw_x = self.garbage_target.pos_x
-    local draw_y = self.garbage_target.pos_y-4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
-    if self.telegraph.garbage_queue.ghost_chain then
-      draw(IMG_telegraph_garbage[self.telegraph.garbage_queue.ghost_chain][6], draw_x, draw_y)
+    -- print("BBBBBB")
+    -- print("telegraph_to_render.garbage_queue.ghost_chain: "..(telegraph_to_render.garbage_queue.ghost_chain or "nil"))
+    local g_queue_to_draw = telegraph_to_render.garbage_queue:mkcpy()
+    -- print("g_queue_to_draw.ghost_chain: "..(g_queue_to_draw.ghost_chain or "nil"))
+    local current_block = g_queue_to_draw:pop()
+    local draw_x = telegraph_to_render.pos_x
+    local draw_y = telegraph_to_render.pos_y
+    if telegraph_to_render.garbage_queue.ghost_chain then
+      draw(IMG_telegraph_garbage[telegraph_to_render.garbage_queue.ghost_chain][6], draw_x, draw_y)
     end
     while current_block do
+      --TODO: create a way to draw telegraphs from right to left
       if self.CLOCK - current_block.frame_earned >= GARBAGE_TRANSIT_TIME then
         if not current_block[3]--[[is_metal]] then
           draw(IMG_telegraph_garbage[current_block[2]--[[height]]][current_block[1]--[[width]]], draw_x, draw_y)
@@ -769,7 +790,7 @@ function Stack.render_telegraph(self)
         end
       end
       draw_x = draw_x + TELEGRAPH_BLOCK_WIDTH
-      current_block = telegraph_to_draw:pop()
+      current_block = g_queue_to_draw:pop()
     end
   end
 
