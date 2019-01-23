@@ -1827,6 +1827,10 @@ function Stack.speculate_garbage(self, sender)
     --end
   else
     self.unverified_garbage[self.CLOCK] = self.garbage_target.telegraph:peek_all_ready_garbage(self.CLOCK)
+    -- print("in stack.speculate_garbage")
+    -- print("self.CLOCK: "..self.CLOCK)
+    -- print("self.unverified_garbage[self.CLOCK]: ")
+    -- print(self.unverified_garbage[self.CLOCK] or "nil")
     if self.unverified_garbage[self.CLOCK] and self.unverified_garbage[self.CLOCK][1] then
       --if self.which == 1 then
         print("GARBAGE SPECULATED FOR THIS FRAME:")
