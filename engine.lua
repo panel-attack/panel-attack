@@ -265,15 +265,6 @@ function Stack.set_foreign(self, make_foreign)
     self.incoming_telegraph = nil
   else
     self.foreign = nil
-    if self.garbage_target and self.garbage_target ~= self then
-      --not playing vs-yourself
-      self.incoming_telegraph = Telegraph(s)
-      self.incoming_telegraph.pos_x = self.pos_x - 4
-      self.incoming_telegraph.pos_y = self.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
-    elseif self.garbage_target then
-      self.telegraph.pos_x = self.garbage_target.pos_x
-      self.telegraph.pos_y = self.garbage_target.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
-    end
   end
 end
 
@@ -282,7 +273,16 @@ function Stack.set_garbage_target(self, new_target)
   self.telegraph.pos_x = new_target.pos_x - 4
   self.telegraph.pos_y = new_target.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
   --TODO: maybe, if the telegraph.pos_x is left of self.pos_x, set the telegraph to be drawn right to left.
-  if self.incoming_telegraph then
+  if not self.foreign then
+    if self.garbage_target and self.garbage_target ~= self then
+      --not playing vs-yourself
+      self.incoming_telegraph = Telegraph(self.garbage_target)
+      self.incoming_telegraph.pos_x = self.pos_x - 4
+      self.incoming_telegraph.pos_y = self.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
+    elseif self.garbage_target then
+      self.telegraph.pos_x = self.garbage_target.pos_x
+      self.telegraph.pos_y = self.garbage_target.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
+    end
     --our incoming telegraph will also get new attack pushes
     --from our garbage_target's telegraph as they are pushed to it.
     print("Player "..self.which.."'s incoming telegraph is subscribing to attacks pushes from Player "..self.garbage_target.which)
@@ -354,27 +354,28 @@ function GarbageQueue.mkcpy(self)
 end
 
 function GarbageQueue.push(self, garbage)
-  for k,v in pairs(garbage) do
-    local width, height, metal, from_chain = unpack(v)
-    if width and height then
-      print("GarbageQueue.push")
-      print("frame_earned: "..v.frame_earned)
-      if metal then
-        self.metal:push(v)
-      elseif from_chain or height > 1 then
-        if not from_chain then
-          print("ERROR: garbage with height > 1 was not marked as 'from_chain'")
-          print("adding it to the chain garbage queue anyway")
+  if garbage then
+    for k,v in pairs(garbage) do
+      local width, height, metal, from_chain = unpack(v)
+      if width and height then
+        print("GarbageQueue.push")
+        print("frame_earned: "..v.frame_earned)
+        if metal then
+          self.metal:push(v)
+        elseif from_chain or height > 1 then
+          if not from_chain then
+            print("ERROR: garbage with height > 1 was not marked as 'from_chain'")
+            print("adding it to the chain garbage queue anyway")
+          end
+          self.chain_garbage:push(v)
+        else
+          self.combo_garbage[width]:push(v)
         end
-        self.chain_garbage:push(v)
-      else
-        self.combo_garbage[width]:push(v)
       end
     end
+    print("after push, the queue is:")
+    print(self:to_string())
   end
-  print("after push, the queue is:")
-  print(self:to_string())
-
 end
 
 function GarbageQueue.pop(self, just_peeking)
@@ -515,14 +516,16 @@ Telegraph = class(function(self, sender)
 end)
 
 function Telegraph.mkcpy(self)
-  local copy = Telegraph()
+  local copy = Telegraph(self.sender)
   copy.garbage_queue = self.garbage_queue:mkcpy()
   copy.stoppers = deepcpy(self.stoppers)
-  copy.sender = self.sender
   copy.attacks = deepcpy(self.attacks)
   copy.pos_x = self.pos_x
   copy.pos_y = self.pos_y
-  --copy.subscribed_telegraphs = {} --deepcpy(self.subscribed_telegraphs)
+  copy.subscribed_telegraphs = {}
+  for k, v in pairs(self.subscribed_telegraphs) do
+    copy.subscribed_telegraphs[k] = v
+  end
   return copy
 end
 
@@ -547,7 +550,8 @@ function Telegraph.push(self, attack_type, attack_size, metal_count, attack_orig
   {frame_earned=frame_earned, attack_type=attack_type, 
   size=attack_size, origin_col=attack_origin_col, origin_row= attack_origin_row, stuff_to_send=stuff_to_send}
   for k, v in pairs(self.subscribed_telegraphs) do 
-    v.push(self, attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned)
+    print("now also pushing to a subscribed telegraph")
+    v:push(attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned)
   end
 end
 
@@ -569,7 +573,7 @@ function Telegraph.add_combo_garbage(self, n_combo, n_metal, frame_earned)
 end
 
 function Telegraph.subscribe(self, following_telegraph)
-  self.subscribed_telegraphs[#self.subcribed_telegraphs+1] = following_telegraph
+  self.subscribed_telegraphs[#self.subscribed_telegraphs+1] = following_telegraph
 end
 
 function Telegraph.grow_chain(self, frame_earned)
@@ -822,7 +826,6 @@ end
 
 --local_run is for the stack that belongs to this client.
 function Stack.local_run(self)
-  self:set_foreign(false)
   self:update_cards()
   self.input_state = self:send_controls()
   self:prep_rollback()
@@ -833,7 +836,6 @@ end
 
 --foreign_run is for a stack that belongs to another client.
 function Stack.foreign_run(self)
-  self:set_foreign(true)
   local times_to_run = min(string.len(self.input_buffer),
       self.max_runs_per_frame)
   if self.play_to_end then
@@ -1484,11 +1486,11 @@ function Stack.PdP(self)
     --we are assuming here our garbage_target also has us as a garbage_target.
     --this may need to change if 4-player is implemented
     --maybe make a list of who is currently targeting us
-    if self.garbage_target.CLOCK < self.CLOCK then
-      if not (self.next_speculation_time and self.next_speculation_time > self.CLOCK) then
-        self:speculate_garbage()
-      end
-    end
+    -- if self.garbage_target.CLOCK < self.CLOCK then
+      -- if not (self.next_speculation_time and self.next_speculation_time > self.CLOCK) then
+    self:speculate_garbage()
+      --end
+    --end
     local to_send = self.telegraph:pop_all_ready_garbage()
     if to_send and to_send[1] then
       self:really_send(to_send)
@@ -1866,135 +1868,147 @@ function Stack.really_send(self, to_send)
 end
 
 function Stack.speculate_garbage(self, sender)
-  if self.which == 1 then
-    print("speculating garbage")
-  end
-  self.next_speculation_time = self.garbage_target.telegraph:soonest_stopper()
-  if self.next_speculation_time then
-    --if self.which == 1 then
-      print("the soonest garbage might come is frame: "..self.next_speculation_time)
-    --end
-  else
-    self.unverified_garbage[self.CLOCK] = self.garbage_target.telegraph:peek_all_ready_garbage(self.CLOCK)
-    -- print("in stack.speculate_garbage")
-    -- print("self.CLOCK: "..self.CLOCK)
-    -- print("self.unverified_garbage[self.CLOCK]: ")
-    -- print(self.unverified_garbage[self.CLOCK] or "nil")
-    if self.unverified_garbage[self.CLOCK] and self.unverified_garbage[self.CLOCK][1] then
+  if self.incoming_telegraph and not self.foreign then
+    -- if self.which == 1 then
+      -- print("speculating garbage")
+    -- end
+    --[[
+    self.next_speculation_time = self.garbage_target.telegraph:soonest_stopper()
+    if self.next_speculation_time then
       --if self.which == 1 then
-        print("GARBAGE SPECULATED FOR THIS FRAME:")
-        print(self.CLOCK)
-        print(json.encode(self.unverified_garbage[self.CLOCK]))
+        print("the soonest garbage might come is frame: "..self.next_speculation_time)
       --end
-      self.garbage_q:push(self.unverified_garbage[self.CLOCK])
     else
-      if self.which == 1 then
-        print("no garbage speculated")
+    --]]
+      local garbage_this_frame = self.incoming_telegraph:pop_all_ready_garbage()
+      self.unverified_garbage[self.CLOCK] = garbage_this_frame
+      self.garbage_q:push(garbage_this_frame)
+      -- print("in stack.speculate_garbage")
+      -- print("self.CLOCK: "..self.CLOCK)
+      -- print("self.unverified_garbage[self.CLOCK]: ")
+      -- print(self.unverified_garbage[self.CLOCK] or "nil")
+      --[[
+      if self.unverified_garbage[self.CLOCK] and self.unverified_garbage[self.CLOCK][1] then
+        --if self.which == 1 then
+          print("GARBAGE SPECULATED FOR THIS FRAME:")
+          print(self.CLOCK)
+          print(json.encode(self.unverified_garbage[self.CLOCK]))
+        --end
+        self.garbage_q:push(self.unverified_garbage[self.CLOCK])
+      else
+        if self.which == 1 then
+          print("no garbage speculated")
+        end
       end
     end
+    --]]
   end
 end
 
 function Stack.recv_garbage(self, time, to_recv)
   
-  --[[
   --if we can verify we used all the right garbage at the right times
   --then we don't have to roll back
-  local incoming_json = json.encode(to_recv)
-  local unverified_json = json.encode(self.unverified_garbage[time])
-  if incoming_json == unverified_json then
-    if self.which == 1 then
-      print("unverified garbage and received garbage matched")
-    end
-    --great, it all matches. clear unverified_garbage[time] and do nothing.
-  else
+  if self.incoming_telegraph then
+    local incoming_json = json.encode(to_recv)
+    local unverified_json = json.encode(self.unverified_garbage[time])
+    if incoming_json == unverified_json then
       if self.which == 1 then
-        print("incoming_json: "..incoming_json)
-        print("unverified_json: "..unverified_json)
-        print("all unverified:  "..json.encode(self.unverified_garbage))
-        print("They didn't match. checking if we need rollback")
+        print("unverified garbage and received garbage matched")
       end
-      --]]
-    --we may have to do a rollback
-    if self.CLOCK > time then
-      local prev_states = self.prev_states
-      local next_self = prev_states[time+1]
-      while next_self and (next_self.prev_active_panels ~= 0 or
-          next_self.n_active_panels ~= 0) do
-        time = time + 1
-        next_self = prev_states[time+1]
-      end
-      if self.CLOCK - time > 200 then
-        error("Latency is too high :(")
-      else
-        local CLOCK = self.CLOCK
-        local old_self = prev_states[time]
-        --MAGICAL ROLLBACK!?!?
-        self.in_rollback = true
-        print("attempting magical rollback with difference = "..self.CLOCK-time..
-            " at time "..self.CLOCK)
-        
+      --great, it all matches. clear unverified_garbage[time] and do nothing.
+    else
+        if self.which == 1 then
+          print("incoming_json: "..incoming_json)
+          print("unverified_json: "..unverified_json)
+          print("all unverified:  "..json.encode(self.unverified_garbage))
+          print("They didn't match. checking if we need rollback")
+        end
+        --]]
+      --we may have to do a rollback
+      if self.CLOCK > time then
+        local prev_states = self.prev_states
+        local next_self = prev_states[time+1]
+        while next_self and (next_self.prev_active_panels ~= 0 or
+            next_self.n_active_panels ~= 0) do
+          time = time + 1
+          next_self = prev_states[time+1]
+        end
+        if self.CLOCK - time > 200 then
+          error("Latency is too high :(")
+        else
+          local CLOCK = self.CLOCK
+          local old_self = prev_states[time]
+          --MAGICAL ROLLBACK!?!?
+          self.in_rollback = true
+          print("attempting magical rollback with difference = "..self.CLOCK-time..
+              " at time "..self.CLOCK)
+          
 
-        -- The garbage that we send this time might (rarely) not be the same
-        -- as the garbage we sent before.  Wipe out the garbage we sent before...
-        
-        
-        --[[ --The way of doing this before Telegraph garbage system
-          local first_wipe_time = time + GARBAGE_DELAY
-          local other_later_garbage = self.garbage_target.later_garbage
-          for k,v in pairs(other_later_garbage) do
+          -- The garbage that we send this time might (rarely) not be the same
+          -- as the garbage we sent before.  Wipe out the garbage we sent before...
+          
+          
+          --[[ --The way of doing this before Telegraph garbage system
+            local first_wipe_time = time + GARBAGE_DELAY
+            local other_later_garbage = self.garbage_target.later_garbage
+            for k,v in pairs(other_later_garbage) do
+              if k >= first_wipe_time then
+                other_later_garbage[k] = nil
+              end
+            end
+          --]]
+          --[[
+          --The way with the new Telegraph-based garbage system:
+          local first_wipe_time = time
+          for k,v in pairs(self.telegraph.attacks) do
             if k >= first_wipe_time then
-              other_later_garbage[k] = nil
+              self.telegraph.attacks[k] = nil
             end
           end
-        --]]
-        --[[
-        --The way with the new Telegraph-based garbage system:
-        local first_wipe_time = time
-        for k,v in pairs(self.telegraph.attacks) do
-          if k >= first_wipe_time then
-            self.telegraph.attacks[k] = nil
+          --copy the garbage_queue to a temporary one
+          local temp_garbage_queue = self.telegraph.garbage_queue:mkcpy()
+          self.telegraph.garbage_queue = GarbageQueue() --fresh start
+          local current_block = temp_garbage_queue:pop()
+          while current_block do
+            --we'll not yet add anything back in that was earned after the time we are going back to.
+            if current_block.frame_earned < first_wipe_time then
+              self.telegraph.garbage_queue:push({current_block}, current_block.frame_earned)
+            end
+            current_block = temp_garbage_queue:pop()
           end
-        end
-        --copy the garbage_queue to a temporary one
-        local temp_garbage_queue = self.telegraph.garbage_queue:mkcpy()
-        self.telegraph.garbage_queue = GarbageQueue() --fresh start
-        local current_block = temp_garbage_queue:pop()
-        while current_block do
-          --we'll not yet add anything back in that was earned after the time we are going back to.
-          if current_block.frame_earned < first_wipe_time then
-            self.telegraph.garbage_queue:push({current_block}, current_block.frame_earned)
+          ]]
+          
+          -- and record the garbage that we send this time!
+
+          -- We can do it like this because the sender of the garbage
+          -- and self.garbage_target are the same thing.
+          -- Since we're in this code at all, we know that self.garbage_target
+          -- is waaaaay behind us, so it couldn't possibly have processed
+          -- the garbage that we sent during the frames we're rolling back.
+          --
+          -- If a mode with >2 players is implemented, we can continue doing
+          -- the same thing as long as we keep all of the opponents'
+          -- stacks in sync.
+
+          self:fromcpy(prev_states[time])
+          self.garbage_q:push(to_recv)
+
+          for t=time,CLOCK-1 do
+            self.input_state = prev_states[t].input_state
+            self:mkcpy(prev_states[t])
+            self:controls()
+            self:PdP()
           end
-          current_block = temp_garbage_queue:pop()
+          self.in_rollback = nil
         end
-        ]]
-        
-        -- and record the garbage that we send this time!
-
-        -- We can do it like this because the sender of the garbage
-        -- and self.garbage_target are the same thing.
-        -- Since we're in this code at all, we know that self.garbage_target
-        -- is waaaaay behind us, so it couldn't possibly have processed
-        -- the garbage that we sent during the frames we're rolling back.
-        --
-        -- If a mode with >2 players is implemented, we can continue doing
-        -- the same thing as long as we keep all of the opponents'
-        -- stacks in sync.
-
-        self:fromcpy(prev_states[time])
+      else
         self.garbage_q:push(to_recv)
-
-        for t=time,CLOCK-1 do
-          self.input_state = prev_states[t].input_state
-          self:mkcpy(prev_states[t])
-          self:controls()
-          self:PdP()
-        end
-        self.in_rollback = nil
       end
-    else
-      self.garbage_q:push(to_recv)
     end
+  else -- we don't have an incoming telegraph
+    self.garbage_q:push(to_recv)
+  end
   --end
   --[[
   local garbage = self.later_garbage[time] or {}

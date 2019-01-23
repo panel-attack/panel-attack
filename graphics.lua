@@ -682,17 +682,14 @@ function Stack.render_telegraph(self)
   
   if self.foreign then
     telegraph_to_render = self.garbage_target.telegraph
-    --telegraph_to_render.pos_x = telegraph_to_render.pos_x or self.pos_x - 4
-    --telegraph_to_render.pos_y = telegraph_to_render.pos_y --or self.pos_y - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING 
   else
     if self.garbage_target == self then
       telegraph_to_render = self.telegraph
     else
       telegraph_to_render = self.incoming_telegraph
     end
-    --telegraph_to_render.pos_x = telegraph_to_render.pos_x or self.pos_x - 4
-    --telegraph_to_render.pos_y = telegraph_to_render.pos_y or self.pos_y - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING 
   end
+  --print("rendering telegraph for player "..self.which)
   local render_x = telegraph_to_render.pos_x
   for frame_earned, attacks_this_frame in pairs(telegraph_to_render.attacks) do
     -- print("frame_earned:")
@@ -712,8 +709,8 @@ function Stack.render_telegraph(self)
               garbage_block.destination_x = self.garbage_target.pos_x + TELEGRAPH_BLOCK_WIDTH * telegraph_to_render.garbage_queue:get_idx_of_garbage(unpack(garbage_block))
             end
             if not garbage_block.x or not garbage_block.y then
-              garbage_block.x = (attack.origin_col-1) * 16 + self.pos_x
-              garbage_block.y = (11-attack.origin_row) * 16 + self.pos_y + self.displacement - card_animation[#card_animation]
+              garbage_block.x = (attack.origin_col-1) * 16 +telegraph_to_render.sender.pos_x
+              garbage_block.y = (11-attack.origin_row) * 16 + telegraph_to_render.sender.pos_y + telegraph_to_render.sender.displacement - card_animation[#card_animation]
               garbage_block.origin_x = garbage_block.x
               garbage_block.origin_y = garbage_block.y
               garbage_block.direction = garbage_block.direction or sign(garbage_block.destination_x - garbage_block.origin_x) --should give -1 for left, or 1 for right

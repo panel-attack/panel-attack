@@ -262,6 +262,7 @@ function main_endless(...)
   replay.gpan_buf = ""
   replay.mode = "endless"
   P1 = Stack(1, "endless", ...)
+  P1:set_foreign(false)
   P1.do_countdown = config.ready_countdown_1P or false
   replay.do_countdown = P1.do_countdown or false
   replay.speed = P1.speed
@@ -860,6 +861,7 @@ function main_character_select()
     if my_state.ready and character_select_mode == "1p_vs_yourself" then
       P1 = Stack(1, "vs", my_state.level, my_state.character)
       P1:set_garbage_target(P1)
+      P1:set_foreign(false)
       make_local_panels(P1, "000000")
       make_local_gpanels(P1, "000000")
       P1:starting_state()
@@ -1180,13 +1182,17 @@ function main_net_vs_setup(ip)
   if currently_spectating then
     P1.panel_buffer = fake_P1.panel_buffer
     P1.gpanel_buffer = fake_P1.gpanel_buffer
+    P1:set_foreign(true)
+  else
+    P1:set_foreign(false)
   end
+  P2:set_foreign(true)
   P2.panel_buffer = fake_P2.panel_buffer
   P2.gpanel_buffer = fake_P2.gpanel_buffer
-  P1.garbage_target = P2
-  P2.garbage_target = P1
   P2.pos_x = 172
   P2.score_x = 410
+  P1:set_garbage_target(P2)
+  P2:set_garbage_target(P1)
   replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
               P1_level=P1_level,P2_level=P2_level,
               ranked=false, P1_name=my_name, P2_name=op_name,
@@ -1381,10 +1387,13 @@ main_local_vs_setup = multi_func(function()
   to_print = "P1 level: "..maybe[1].."\nP2 level: "..(maybe[2])
   P1 = Stack(1, "vs", chosen[1])
   P2 = Stack(2, "vs", chosen[2])
-  P1.garbage_target = P2
-  P2.garbage_target = P1
   P2.pos_x = 172
   P2.score_x = 410
+  P1:set_garbage_target(P2)
+  P2:set_garbage_target(P1)
+  P1:set_foreign(false)
+  P2:set_foreign(false)
+
   -- TODO: this does not correctly implement starting configurations.
   -- Starting configurations should be identical for visible blocks, and
   -- they should not be completely flat.
