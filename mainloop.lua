@@ -1395,17 +1395,12 @@ main_local_vs_setup = multi_func(function()
   P2 = Stack(2, "vs", chosen[2])
   P2.pos_x = 172
   P2.score_x = 410
-  P1:set_garbage_target(P2)
-  P2:set_garbage_target(P1)
   P1:set_foreign(false)
   P2:set_foreign(false)
+  P1:set_garbage_target(P2)
+  P2:set_garbage_target(P1)
 
-  -- TODO: this does not correctly implement starting configurations.
-  -- Starting configurations should be identical for visible blocks, and
-  -- they should not be completely flat.
-  --
-  -- In general the block-generation logic should be the same as the server's, so
-  -- maybe there should be only one implementation.
+
   make_local_panels(P1, "000000")
   make_local_gpanels(P1, "000000")
   make_local_panels(P2, "000000")

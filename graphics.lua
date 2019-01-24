@@ -681,12 +681,21 @@ function Stack.render_telegraph(self)
   local telegraph_to_render 
   
   if self.foreign then
+    --print("rendering foreign Player "..self.which.."'s self.garbage_target.telegraph")
     telegraph_to_render = self.garbage_target.telegraph
   else
     if self.garbage_target == self then
+      --print("rendering Player "..self.which.."'s self.telegraph")
       telegraph_to_render = self.telegraph
     else
+      --print("rendering Player "..self.which.."'s self.incoming_telegraph")
       telegraph_to_render = self.incoming_telegraph
+      if self.which == 2 then
+        print("\ntelegraph_stoppers: "..json.encode(telegraph_to_render.stoppers))
+        print("telegraph garbage queue:")
+        print(telegraph_to_render.garbage_queue:to_string())
+        print("telegraph g_q chain in progress: "..tostring(telegraph_to_render.garbage_queue.chain_in_progress))
+      end
     end
   end
   --print("rendering telegraph for player "..self.which)
@@ -706,7 +715,7 @@ function Stack.render_telegraph(self)
           for _k, garbage_block in ipairs(attack.stuff_to_send) do
             if not garbage_block.destination_x then 
               print("ZZZZZZZ")
-              garbage_block.destination_x = self.garbage_target.pos_x + TELEGRAPH_BLOCK_WIDTH * telegraph_to_render.garbage_queue:get_idx_of_garbage(unpack(garbage_block))
+              garbage_block.destination_x = telegraph_to_render.pos_x + TELEGRAPH_BLOCK_WIDTH * telegraph_to_render.garbage_queue:get_idx_of_garbage(unpack(garbage_block))
             end
             if not garbage_block.x or not garbage_block.y then
               garbage_block.x = (attack.origin_col-1) * 16 +telegraph_to_render.sender.pos_x
@@ -726,11 +735,11 @@ function Stack.render_telegraph(self)
             end
             --print("DRAWING******")
             --print(garbage_block.x..","..garbage_block.y)
-            draw(IMG_telegraph_attack[self.character], garbage_block.x, garbage_block.y)
+            draw(IMG_telegraph_attack[telegraph_to_render.sender.character], garbage_block.x, garbage_block.y)
           end
         end
       elseif frames_since_earned >= #card_animation + #telegraph_attack_animation_speed and frames_since_earned < GARBAGE_TRANSIT_TIME - 1 then 
-        --move toward destination as quickly as TELEGRAPH_ATTACK_MAX_SPEED frames per second
+        --move toward destination
         for _, attack in ipairs(attacks_this_frame) do
           for _k, garbage_block in ipairs(attack.stuff_to_send) do
             --update destination
