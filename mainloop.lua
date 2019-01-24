@@ -636,6 +636,12 @@ function main_character_select()
           P2.gpanel_buffer = fake_P2.gpanel_buffer
           P2.pos_x = 172
           P2.score_x = 410
+          if currently_spectating then
+            P1:set_foreign(true)
+          else
+            P1:set_foreign(false)
+          end
+          P2:set_foreign(true)
           P1:set_garbage_target(P2)
           P2:set_garbage_target(P1)
           replay.vs = {P="",O="",I="",Q="",R="",in_buf="",

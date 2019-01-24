@@ -606,7 +606,7 @@ function Telegraph.pop_all_ready_garbage(self, frame, just_peeking)
     subject = self:mkcpy()
   end
   if frame then
-    time_to_check = subject.sender.CLOCK
+    time_to_check = frame
   end
   for chain_idx, chain_release_frame in pairs(subject.stoppers.chain) do
     
@@ -1507,6 +1507,10 @@ function Stack.PdP(self)
     end
   end
   local garbage_fits_in_populated_top_row 
+  if self.later_garbage[self.CLOCK] then
+    self.garbage_q:push(self.later_garbage[self.CLOCK])
+    self.later_garbage[self.CLOCK] = nil
+  end
   if self.garbage_q:len() > 0 then
     --even if there are some panels in the top row,
     --check if the next block in the garbage_q would fit anyway
@@ -1880,9 +1884,11 @@ function Stack.speculate_garbage(self, sender)
       --end
     else
     --]]
-      local garbage_this_frame = self.incoming_telegraph:pop_all_ready_garbage()
+      local garbage_this_frame = self.incoming_telegraph:pop_all_ready_garbage(self.CLOCK)
       self.unverified_garbage[self.CLOCK] = garbage_this_frame
-      self.garbage_q:push(garbage_this_frame)
+      if not self.in_rollback then 
+        self.garbage_q:push(garbage_this_frame)
+      end
       -- print("in stack.speculate_garbage")
       -- print("self.CLOCK: "..self.CLOCK)
       -- print("self.unverified_garbage[self.CLOCK]: ")
@@ -1909,7 +1915,7 @@ function Stack.recv_garbage(self, time, to_recv)
   
   --if we can verify we used all the right garbage at the right times
   --then we don't have to roll back
-  if self.incoming_telegraph then
+  if self.incoming_telegraph and not self.foreign then
     local incoming_json = json.encode(to_recv)
     local unverified_json = json.encode(self.unverified_garbage[time])
     if incoming_json == unverified_json then
@@ -2003,20 +2009,16 @@ function Stack.recv_garbage(self, time, to_recv)
           self.in_rollback = nil
         end
       else
-        self.garbage_q:push(to_recv)
+        --self.garbage_q:push(to_recv)
       end
     end
   else -- we don't have an incoming telegraph
-    self.garbage_q:push(to_recv)
+    local garbage = self.later_garbage[time] or {}
+    for i=1,#to_recv do
+      garbage[#garbage+1] = to_recv[i]
+    end
+    self.later_garbage[time] = garbage
   end
-  --end
-  --[[
-  local garbage = self.later_garbage[time] or {}
-  for i=1,#to_recv do
-    garbage[#garbage+1] = to_recv[i]
-  end
-  self.later_garbage[time] = garbage
-  --]]
 end
 
 function Stack.check_matches(self)
