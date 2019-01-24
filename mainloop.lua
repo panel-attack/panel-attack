@@ -9,7 +9,7 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_local_vs_yourself_setup, main_local_vs_yourself,
   main_options, exit_options_menu
 
-VERSION = "030"
+VERSION = "031"
 local PLAYING = "playing"  -- room states
 local CHARACTERSELECT = "character select" --room states
 local currently_spectating = false
@@ -141,8 +141,8 @@ do
         {"1P time attack", main_select_speed_99, {main_time_attack}},
         {"1P vs yourself", main_local_vs_yourself_setup},
         --{"2P vs online at burke.ro", main_net_vs_setup, {"burke.ro"}},
-        {"2P vs online at Jon's server", main_net_vs_setup, {"18.188.43.50"}},
-        --{"2P vs online at betaserver.panelattack.com", main_net_vs_setup, {"betaserver.panelattack.com"}},
+        --{"2P vs online at Jon's server", main_net_vs_setup, {"18.188.43.50"}},
+        {"2P vs online at betaserver.panelattack.com", main_net_vs_setup, {"betaserver.panelattack.com"}},
         --{"2P vs online (USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)", main_net_vs_setup, {"18.188.43.50"}},
         --{"This test build is for offline-use only"--[["2P vs online at Jon's server"]], main_select_mode},
         --{"2P vs online at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},

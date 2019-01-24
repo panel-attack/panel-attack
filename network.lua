@@ -104,8 +104,8 @@ local process_message = {
 function network_init(ip)
   TCP_sock = socket.tcp()
   TCP_sock:settimeout(7)
-  if not TCP_sock:connect(ip,49569) then --for official server
-  --if not TCP_sock:connect(ip,59569) then --for beta server
+  --if not TCP_sock:connect(ip,49569) then --for official server
+  if not TCP_sock:connect(ip,59569) then --for beta server
     error("Failed to connect =(")
   end
   TCP_sock:settimeout(0)
