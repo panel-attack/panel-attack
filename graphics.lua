@@ -690,12 +690,12 @@ function Stack.render_telegraph(self)
     else
       --print("rendering Player "..self.which.."'s self.incoming_telegraph")
       telegraph_to_render = self.incoming_telegraph
-      if self.which == 2 then
-        print("\ntelegraph_stoppers: "..json.encode(telegraph_to_render.stoppers))
-        print("telegraph garbage queue:")
-        print(telegraph_to_render.garbage_queue:to_string())
-        print("telegraph g_q chain in progress: "..tostring(telegraph_to_render.garbage_queue.chain_in_progress))
-      end
+      -- if self.which == 2 then
+        -- print("\ntelegraph_stoppers: "..json.encode(telegraph_to_render.stoppers))
+        -- print("telegraph garbage queue:")
+        -- print(telegraph_to_render.garbage_queue:to_string())
+        -- print("telegraph g_q chain in progress: "..tostring(true and telegraph_to_render.sender.chains.current))
+      -- end
     end
   end
   --print("rendering telegraph for player "..self.which)

@@ -165,6 +165,8 @@ Stack = class(function(s, which, mode, speed, difficulty, player_number)
     s.gfx = {}
     s.telegraph = Telegraph(s)
     s.unverified_garbage = {}
+    s.combos = {}  --TODO: use these to show stats at the end of a game
+    s.chains = {}
   end)
 
 function Stack.mkcpy(self, other)
@@ -251,6 +253,8 @@ function Stack.mkcpy(self, other)
   other.unverified_garbage = deepcpy(self.unverified_garbage)
   other.next_speculation_time = self.next_speculation_time
   other.foreign = self.foreign
+  other.combos = deepcpy(self.combos)
+  other.chains = deepcpy(self.chains)
   return other
 end
 
@@ -339,7 +343,6 @@ GarbageQueue = class(function(s, sender)
   s.chain_garbage = Queue()
   s.combo_garbage = {Queue(),Queue(),Queue(),Queue(),Queue(),Queue()} --index here represents width, and value represents how many of that width queued
   s.metal = Queue()
-  s.chain_endings
 end)
 
 function GarbageQueue.mkcpy(self)
@@ -454,9 +457,13 @@ function GarbageQueue.len(self)
 end
 
 function GarbageQueue.grow_chain(self,frame_earned)
-  if not self.chain_in_progress then
+  print("in GarbageQueue.grow_chain")
+  print("frame_earned: "..(frame_earned or "nil"))
+  print("json.encode(self.sender.chains):")
+  print(json.encode(self.sender.chains))
+  if self.sender.chains[self.sender.chains.current].size == 2  then
     self:push({{6,1,false,true, frame_earned=frame_earned}}) --a garbage block 6-wide, 1-tall, not metal, from_chain
-    self.chain_in_progress = true
+    --self.chain_in_progress = true
   else 
     print("in GarbageQueue.grow_chain")
     print("self.sender.CLOCK:")
@@ -475,21 +482,9 @@ function GarbageQueue.grow_chain(self,frame_earned)
 -- or add a 6-wide if there is not chain garbage yet in the queue
 end
 
-function GarbageQueue.sender_chain_ended(self, frame_it_ended)
-  self.chain_garbage[self.chain_garbage.last].finalized = frame_it_ended
-end
-
-function GarbageQueue.get_chain_in_progress(self, frame)
-  local still_chaining = false
-  for k,v in pairs(self.chain_endings) do
-    if v > frame then
-      still_chaining = true
-      return still_chaining
-    else
-    end
-  end
-  return still_chaining
-end
+-- function GarbageQueue.sender_chain_ended(self)
+  -- self.chain_garbage[self.chain_garbage.last].finalized = 
+-- end
 
 --returns the index of the first garbage block matching the requested type and size, or where it would go if it was in the Garbage_Queue.
   --note: the first index for our implemented Queue object is 0, not 1
@@ -535,6 +530,7 @@ function Telegraph.mkcpy(self)
   copy.garbage_queue = self.garbage_queue:mkcpy()
   copy.stoppers = deepcpy(self.stoppers)
   copy.attacks = deepcpy(self.attacks)
+  copy.sender = self.sender
   copy.pos_x = self.pos_x
   copy.pos_y = self.pos_y
   copy.subscribed_telegraphs = {}
@@ -651,13 +647,19 @@ function Telegraph.pop_all_ready_garbage(self, frame, just_peeking)
   -- print(table_to_string(subject.stoppers.chain))
   
   while subject.garbage_queue.chain_garbage:peek() do
-    if not subject.stoppers.chain[subject.garbage_queue.chain_garbage.first] and not subject.garbage_queue.chain_in_progress then
+    -- print("in telegraph.pop_all_ready_garbage")
+    -- print("while subject.garbage_queue.chain_garbage:peek()")
+    -- print("subject.stoppers.chain[subject.garbage_queue.chain_garbage.first]:")
+    -- print(subject.stoppers.chain[subject.garbage_queue.chain_garbage.first])
+    -- print("subject.sender.chains.current:")
+    -- print(subject.sender.chains.current)
+    if not subject.stoppers.chain[subject.garbage_queue.chain_garbage.first] and not subject.sender.chains.current then
       print("in Telegraph.pop_all_ready_garbage")
-      print("so there was not a stopper for the first chain now")
+      --print("so there was not a stopper for the first chain now")
       print("popping the first chain")
       ready_garbage[#ready_garbage+1] = subject.garbage_queue:pop()
     else 
-      --there was a stopper here, stop and return.
+      --there was a stopper here or their chain is still going, stop and return.
       if ready_garbage[1] then
         return ready_garbage
       else
@@ -695,19 +697,21 @@ function Telegraph.pop_all_ready_garbage(self, frame, just_peeking)
   end
 end
 
+--[[
 function Telegraph.sender_chain_ended(self, frame_it_ended)
-  --[[ --this bit is unneeded, I think
+ --this bit is unneeded, I think
   for chain_idx, chain_release_frame in pairs(self.stoppers.chain) do
     if (self.sender.CLOCK + GARBAGE_TRANSIT_TIME + GARBAGE_DELAY >= chain_release_frame) then
       self.stoppers.chain[chain_idx] = nil
     end
   end
-  --]]
+
   self.garbage_queue:sender_chain_ended(frame_it_ended)
   for k, v in pairs(self.subscribed_telegraphs) do
     v.garbage_queue:sender_chain_ended(frame_it_ended)
   end
 end
+--]]
 
 do
   local exclude_hover_set = {matched=true, popping=true, popped=true,
@@ -1449,9 +1453,13 @@ function Stack.PdP(self)
 
   -- if at the end of the routine there are no chain panels, the chain ends.
   if self.chain_counter ~= 0 and self.n_chain_panels == 0 then
-    if self.mode == "vs" then
-      self.telegraph:sender_chain_ended()
-    end
+    self.chains[self.chains.current].finish = self.CLOCK
+    self.chains[self.chains.current].size = self.chain_counter
+    self.chains.last_complete = self.current --may or may not come in handy
+    self.chains.current = nil
+    -- if self.mode == "vs" then
+      -- self.telegraph:sender_chain_ended()
+    -- end
     SFX_Fanfare_Play = self.chain_counter
     self.chain_counter=0
   end
@@ -2265,6 +2273,7 @@ function Stack.check_matches(self)
   end
 
   if(combo_size~=0) then
+    self.combos[self.CLOCK] = combo_size
     if self.mode == "vs" and metal_count == 3 and combo_size == 3 then
       self.telegraph:push("combo", combo_size, metal_count,first_panel_col, first_panel_row, self.CLOCK)
     end
@@ -2292,6 +2301,12 @@ function Stack.check_matches(self)
       first_panel_row = first_panel_row + 1 -- offset chain cards
     end
     if(is_chain) then
+      if self.chain_counter == 2 then
+        self.chains.current = self.CLOCK
+        self.chains[self.CLOCK] = {start = self.CLOCK}  -- a bit redundant, but might come in handy, maybe, probably not.  The key is the same as .start.
+      end
+      self.chains[self.chains.current].size = self.chain_counter
+      
       self:enqueue_card(true, first_panel_col, first_panel_row,
           self.chain_counter)
       --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
