@@ -277,6 +277,7 @@ function Stack.set_garbage_target(self, new_target)
   self.telegraph.pos_x = new_target.pos_x - 4
   self.telegraph.pos_y = new_target.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
   --TODO: maybe, if the telegraph.pos_x is left of self.pos_x, set the telegraph to be drawn right to left.
+  --[[
   if not self.foreign then
     if self.garbage_target and self.garbage_target ~= self then
       --not playing vs-yourself
@@ -287,11 +288,13 @@ function Stack.set_garbage_target(self, new_target)
       self.telegraph.pos_x = self.garbage_target.pos_x
       self.telegraph.pos_y = self.garbage_target.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
     end
+
     --our incoming telegraph will also get new attack pushes
     --from our garbage_target's telegraph as they are pushed to it.
-    print("Player "..self.which.."'s incoming telegraph is subscribing to attacks pushes from Player "..self.garbage_target.which)
-    new_target.telegraph:subscribe(self.incoming_telegraph)
+    -- print("Player "..self.which.."'s incoming telegraph is subscribing to attacks pushes from Player "..self.garbage_target.which)
+    -- new_target.telegraph:subscribe(self.incoming_telegraph)
   end
+  --]]
 end
 
 Panel = class(function(p)

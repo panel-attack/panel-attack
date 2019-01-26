@@ -644,6 +644,8 @@ function main_character_select()
           P2:set_foreign(true)
           P1:set_garbage_target(P2)
           P2:set_garbage_target(P1)
+          P1.telegraph:subscribe(P2.incoming_telegraph)
+          P2.telegraph:subscribe(P1.incoming_telegraph)
           replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
                       P1_level=P1.level,P2_level=P2.level,
                       P1_name=my_name, P2_name=op_name,
@@ -866,8 +868,9 @@ function main_character_select()
     end
     if my_state.ready and character_select_mode == "1p_vs_yourself" then
       P1 = Stack(1, "vs", my_state.level, my_state.character)
-      P1:set_garbage_target(P1)
       P1:set_foreign(false)
+      P1:set_garbage_target(P1)
+      --P1.telegraph:subscribe(P1.incoming_telegraph)
       make_local_panels(P1, "000000")
       make_local_gpanels(P1, "000000")
       P1:starting_state()
@@ -1199,6 +1202,8 @@ function main_net_vs_setup(ip)
   P2.score_x = 410
   P1:set_garbage_target(P2)
   P2:set_garbage_target(P1)
+  P1.telegraph:subscribe(P2.incoming_telegraph)
+  P2.telegraph:subscribe(P1.incoming_telegraph)
   replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
               P1_level=P1_level,P2_level=P2_level,
               ranked=false, P1_name=my_name, P2_name=op_name,
@@ -1399,6 +1404,8 @@ main_local_vs_setup = multi_func(function()
   P2:set_foreign(false)
   P1:set_garbage_target(P2)
   P2:set_garbage_target(P1)
+  P1.telegraph:subscribe(P2.incoming_telegraph)
+  P2.telegraph:subscribe(P1.incoming_telegraph)
 
 
   make_local_panels(P1, "000000")
@@ -1479,10 +1486,10 @@ function main_replay_vs()
   P1.do_countdown = replay.do_countdown or false
   P2.do_countdown = replay.do_countdown or false
   P1.ice = true
-  P1.garbage_target = P2
-  P2.garbage_target = P1
   P2.pos_x = 172
   P2.score_x = 410
+  P1:set_garbage_target(P2)
+  P2:set_garbage_target(P1)
   P1.input_buffer = replay.in_buf
   P1.panel_buffer = replay.P
   P1.gpanel_buffer = replay.Q
