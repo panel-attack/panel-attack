@@ -2025,7 +2025,7 @@ function Stack.recv_garbage(self, time, to_recv)
         -- as the garbage we sent before.  Wipe out the garbage we sent before...
         
         
-        --[[ --The way of doing this before Telegraph garbage system
+        --The way of doing this before Telegraph garbage system
           local first_wipe_time = time + GARBAGE_DELAY
           local other_later_garbage = self.garbage_target.later_garbage
           for k,v in pairs(other_later_garbage) do
@@ -2033,7 +2033,7 @@ function Stack.recv_garbage(self, time, to_recv)
               other_later_garbage[k] = nil
             end
           end
-        --]]
+        
         --[[
         --The way with the new Telegraph-based garbage system:
         local first_wipe_time = time
