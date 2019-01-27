@@ -656,13 +656,30 @@ function Telegraph.pop_all_ready_garbage(self, frame, just_peeking)
     -- print(subject.stoppers.chain[subject.garbage_queue.chain_garbage.first])
     -- print("subject.sender.chains.current:")
     -- print(subject.sender.chains.current)
-    if not subject.stoppers.chain[subject.garbage_queue.chain_garbage.first] and not subject.sender.chains.current then
+    local sender_could_be_chaining = true
+    --see if we can determine whether the opponent could still be chaining
+    if subject.sender.CLOCK >= time_to_check then
+      if (not subject.sender.chains.current or (subject.sender.chains.current and subject.sender.chains.current > time_to_check)
+          and
+         ((subject.sender.chains.last_complete and subject.sender.chain.last_complete.finish <= time_to_check)
+           or not subject.sender.chains.last_complete --[[ie: they have not yet finished a chain this round]])) then
+        sender_could_be_chaining = false
+      end
+    end
+    if subject.sender.CLOCK < time_to_check and not subject.waiting_on_end_of_chain then
+      subject.waiting_on_end_of_chain = time_to_check
+    end
+    if not subject.stoppers.chain[subject.garbage_queue.chain_garbage.first] and not sender_could_be_chaining then
+    -- and 
+      -- ( (subject.sender.prev_states[time_to_check] and not subject.sender.prev_states[time_to_check].chains.current)
+         -- or 
+        -- (subject.sender.CLOCK >= time_to_check and not subject.sender.chains.current) ) then
       print("in Telegraph.pop_all_ready_garbage")
       --print("so there was not a stopper for the first chain now")
       print("popping the first chain")
       ready_garbage[#ready_garbage+1] = subject.garbage_queue:pop()
     else 
-      --there was a stopper here or their chain is still going, stop and return.
+      --there was a stopper here or their chain could still be going, stop and return.
       if ready_garbage[1] then
         return ready_garbage
       else
@@ -1458,7 +1475,7 @@ function Stack.PdP(self)
   if self.chain_counter ~= 0 and self.n_chain_panels == 0 then
     self.chains[self.chains.current].finish = self.CLOCK
     self.chains[self.chains.current].size = self.chain_counter
-    self.chains.last_complete = self.current --may or may not come in handy
+    self.chains.last_complete = self.current
     self.chains.current = nil
     -- if self.mode == "vs" then
       -- self.telegraph:sender_chain_ended()
@@ -1975,14 +1992,27 @@ function Stack.recv_garbage(self, time, to_recv)
     unverified_json = json.encode(self.unverified_garbage[time])
   end
   local incoming_matches_unverified = incoming_json == unverified_json
-
   if incoming_matches_unverified then
     --if self.which == 1 then
     print("unverified garbage and received garbage matched")
     --end
-    --great, it all matches. clear unverified_garbage[time] and to_recv and do nothing. This incoming garbage has already been handled
+    --clear unverified_garbage[time] and to_recv and do nothing. This incoming garbage has already been handled
     self.unverified_garbage[time] = nil
     to_recv = nil
+  end
+  
+  for k, v in pairs(self.unverified_garbage) do
+    incoming_matches_unverified = nil
+    print("ERROR: the following predicted garbage never came:\n"..json.encode(unverified_garbage))
+    print("Need to roll back")
+  end
+  
+  if --[[still]] incoming_matches_unverified then
+    --if self.which == 1 then
+    print("no other unverified_garbage")
+    --end
+    --great, it all matches. clear unverified_garbage[time] and to_recv and do nothing. This incoming garbage has already been handled
+
     print("we don't have to roll back because we predicted correctly")
   else 
     --if self.which == 1 then

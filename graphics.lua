@@ -698,10 +698,10 @@ function Stack.render_telegraph(self)
       -- end
     --end
   --end
-  print("\nrendering telegraph for player "..self.which)
-  if self.which == 1 then 
-    print(telegraph_to_render.garbage_queue:to_string())
-  end
+  -- print("\nrendering telegraph for player "..self.which)
+  -- if self.which == 1 then 
+    -- print(telegraph_to_render.garbage_queue:to_string())
+  -- end
   local render_x = telegraph_to_render.pos_x
   for frame_earned, attacks_this_frame in pairs(telegraph_to_render.attacks) do
     -- print("frame_earned:")
