@@ -1986,130 +1986,90 @@ function Stack.recv_garbage(self, time, to_recv)
   
   --if we can verify we used all the right garbage at the right times
   --then we don't have to roll back
-  local incoming_json = json.encode(to_recv)
-  local unverified_json = json.encode({{}})
-  if self.unverified_garbage and self.unverified_garbage[time] then
-    unverified_json = json.encode(self.unverified_garbage[time])
-  end
-  local incoming_matches_unverified = incoming_json == unverified_json
-  if incoming_matches_unverified then
-    --if self.which == 1 then
-    print("unverified garbage and received garbage matched")
-    --end
-    --clear unverified_garbage[time] and to_recv and do nothing. This incoming garbage has already been handled
-    self.unverified_garbage[time] = nil
-    to_recv = nil
-  end
   
-  for k, v in pairs(self.unverified_garbage) do
-    incoming_matches_unverified = nil
-    print("ERROR: the following predicted garbage never came:\n"..json.encode(unverified_garbage))
-    print("Need to roll back")
-  end
-  
-  if --[[still]] incoming_matches_unverified then
-    --if self.which == 1 then
-    print("no other unverified_garbage")
-    --end
-    --great, it all matches. clear unverified_garbage[time] and to_recv and do nothing. This incoming garbage has already been handled
+  if self.CLOCK > time then
+    --do a rollback
+    local prev_states = self.prev_states
+    local next_self = prev_states[time+1]
+    while next_self and (next_self.prev_active_panels ~= 0 or
+        next_self.n_active_panels ~= 0) do
+      time = time + 1
+      next_self = prev_states[time+1]
+    end
+    if self.CLOCK - time > 200 then
+      error("Latency is too high :(")
+    else
+      local CLOCK = self.CLOCK
+      local old_self = prev_states[time]
+      --MAGICAL ROLLBACK!?!?
+      self.in_rollback = true
+      print("attempting magical rollback with difference = "..self.CLOCK-time..
+          " at time "..self.CLOCK)
+      
 
-    print("we don't have to roll back because we predicted correctly")
-  else 
-    --if self.which == 1 then
-      print("incoming_json: "..incoming_json)
-      print("unverified_json: "..unverified_json)
-      print("all unverified:  "..json.encode(self.unverified_garbage))
-    --end
-    if self.CLOCK <= time then -- <= or < ? TODO
-      if incoming_matches_unverified then
-        print("we are behind and guessed correctly")
-      else
-        print("adding later_garbage for frame: "..time)
-        local garbage = self.later_garbage[time] or {}
-        for i=1,#to_recv do
-          garbage[#garbage+1] = to_recv[i]
-        end
-        self.later_garbage[time] = garbage
-      end
-    else -- self.CLOCK > time and we predicted wrong
-      --do a rollback
-      local prev_states = self.prev_states
-      local next_self = prev_states[time+1]
-      while next_self and (next_self.prev_active_panels ~= 0 or
-          next_self.n_active_panels ~= 0) do
-        time = time + 1
-        next_self = prev_states[time+1]
-      end
-      if self.CLOCK - time > 200 then
-        error("Latency is too high :(")
-      else
-        local CLOCK = self.CLOCK
-        local old_self = prev_states[time]
-        --MAGICAL ROLLBACK!?!?
-        self.in_rollback = true
-        print("attempting magical rollback with difference = "..self.CLOCK-time..
-            " at time "..self.CLOCK)
-        
-
-        -- The garbage that we send this time might (rarely) not be the same
-        -- as the garbage we sent before.  Wipe out the garbage we sent before...
-        
-        
-        --The way of doing this before Telegraph garbage system
-          local first_wipe_time = time + GARBAGE_DELAY
-          local other_later_garbage = self.garbage_target.later_garbage
-          for k,v in pairs(other_later_garbage) do
-            if k >= first_wipe_time then
-              other_later_garbage[k] = nil
-            end
-          end
-        
-        --[[
-        --The way with the new Telegraph-based garbage system:
-        local first_wipe_time = time
-        for k,v in pairs(self.telegraph.attacks) do
+      -- The garbage that we send this time might (rarely) not be the same
+      -- as the garbage we sent before.  Wipe out the garbage we sent before...
+      
+      
+      --The way of doing this before Telegraph garbage system
+        local first_wipe_time = time + GARBAGE_DELAY
+        local other_later_garbage = self.garbage_target.later_garbage
+        for k,v in pairs(other_later_garbage) do
           if k >= first_wipe_time then
-            self.telegraph.attacks[k] = nil
+            other_later_garbage[k] = nil
           end
         end
-        --copy the garbage_queue to a temporary one
-        local temp_garbage_queue = self.telegraph.garbage_queue:mkcpy()
-        self.telegraph.garbage_queue = GarbageQueue() --fresh start
-        local current_block = temp_garbage_queue:pop()
-        while current_block do
-          --we'll not yet add anything back in that was earned after the time we are going back to.
-          if current_block.frame_earned < first_wipe_time then
-            self.telegraph.garbage_queue:push({current_block}, current_block.frame_earned)
-          end
-          current_block = temp_garbage_queue:pop()
+      
+      --[[
+      --The way with the new Telegraph-based garbage system:
+      local first_wipe_time = time
+      for k,v in pairs(self.telegraph.attacks) do
+        if k >= first_wipe_time then
+          self.telegraph.attacks[k] = nil
         end
-        ]]
-        
-        -- and record the garbage that we send this time!
-
-        -- We can do it like this because the sender of the garbage
-        -- and self.garbage_target are the same thing.
-        -- Since we're in this code at all, we know that self.garbage_target
-        -- is waaaaay behind us, so it couldn't possibly have processed
-        -- the garbage that we sent during the frames we're rolling back.
-        --
-        -- If a mode with >2 players is implemented, we can continue doing
-        -- the same thing as long as we keep all of the opponents'
-        -- stacks in sync.
-
-        self:fromcpy(prev_states[time])
-        self.garbage_q:push(to_recv)
-
-        for t=time,CLOCK-1 do
-          self.input_state = prev_states[t].input_state
-          self:mkcpy(prev_states[t])
-          self:controls()
-          self:PdP()
-        end
-        self.in_rollback = nil
       end
+      --copy the garbage_queue to a temporary one
+      local temp_garbage_queue = self.telegraph.garbage_queue:mkcpy()
+      self.telegraph.garbage_queue = GarbageQueue() --fresh start
+      local current_block = temp_garbage_queue:pop()
+      while current_block do
+        --we'll not yet add anything back in that was earned after the time we are going back to.
+        if current_block.frame_earned < first_wipe_time then
+          self.telegraph.garbage_queue:push({current_block}, current_block.frame_earned)
+        end
+        current_block = temp_garbage_queue:pop()
+      end
+      ]]
+      
+      -- and record the garbage that we send this time!
+
+      -- We can do it like this because the sender of the garbage
+      -- and self.garbage_target are the same thing.
+      -- Since we're in this code at all, we know that self.garbage_target
+      -- is waaaaay behind us, so it couldn't possibly have processed
+      -- the garbage that we sent during the frames we're rolling back.
+      --
+      -- If a mode with >2 players is implemented, we can continue doing
+      -- the same thing as long as we keep all of the opponents'
+      -- stacks in sync.
+
+      self:fromcpy(prev_states[time])
+      self:recv_garbage(time, to_recv)
+
+      for t=time,CLOCK-1 do
+        self.input_state = prev_states[t].input_state
+        self:mkcpy(prev_states[t])
+        self:controls()
+        self:PdP()
+      end
+      self.in_rollback = nil
     end
   end
+  local garbage = self.later_garbage[time] or {}
+  for i=1,#to_recv do
+    garbage[#garbage+1] = to_recv[i]
+  end
+  self.later_garbage[time] = garbage
 end
 
 function Stack.check_matches(self)
