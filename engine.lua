@@ -255,6 +255,8 @@ function Stack.mkcpy(self, other)
   other.foreign = self.foreign
   other.combos = deepcpy(self.combos)
   other.chains = deepcpy(self.chains)
+  other.panel_buffer = self.panel_buffer
+  other.gpanel_buffer = self.gpanel_buffer
   return other
 end
 
@@ -1534,7 +1536,7 @@ function Stack.PdP(self)
     --maybe make a list of who is currently targeting us
     -- if self.garbage_target.CLOCK < self.CLOCK then
       -- if not (self.next_speculation_time and self.next_speculation_time > self.CLOCK) then
-    self:speculate_garbage()
+    --self:speculate_garbage()
       --end
     --end
     local to_send = self.telegraph:pop_all_ready_garbage()
