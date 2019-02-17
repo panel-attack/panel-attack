@@ -25,22 +25,19 @@ end
 local prev_ax = {}
 local axis_to_button = function(idx, value)
   local prev = prev_ax[idx] or 0
-  if value > .5 then
-    if prev < .5 then
-      love.keypressed("ja"..idx.."+")
-    end
-  elseif value < -.5 then
-    if prev > -.5 then
-      love.keypressed("ja"..idx.."-")
-    end
-  else
-    if prev > .5 then
-      love.keyreleased("ja"..idx.."+")
-    elseif prev < -.5 then
-      love.keyreleased("ja"..idx.."-")
-    end
-  end
   prev_ax[idx] = value
+  if value <= .5 and not (prev <= .5) then
+    love.keyreleased("ja"..idx.."+")
+  end
+  if value >= -.5 and not (prev >= -.5) then
+    love.keyreleased("ja"..idx.."-")
+  end
+  if value > .5 and not (prev > .5) then
+    love.keypressed("ja"..idx.."+")
+  end
+  if value < -.5 and not (prev < -.5) then
+    love.keypressed("ja"..idx.."-")
+  end
 end
 
 local prev_hat = {{},{}}
