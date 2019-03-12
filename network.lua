@@ -155,19 +155,19 @@ function request_spectate(roomNr)
   json_send({spectate_request = {sender=config.name, roomNumber = roomNr}})
 end
 
-function ask_for_panels(prev_panels)
+function ask_for_panels(prev_panels, stack)
   if TCP_sock then
     net_send("P"..tostring(P1.NCOLORS)..prev_panels)
   else
-    make_local_panels(P1, prev_panels)
+    make_local_panels(stack or P1, prev_panels)
   end
 end
 
-function ask_for_gpanels(prev_panels)
+function ask_for_gpanels(prev_panels, stack)
   if TCP_sock then
     net_send("Q"..tostring(P1.NCOLORS)..prev_panels)
   else
-    make_local_gpanels(P1, prev_panels)
+    make_local_gpanels(stack or P1, prev_panels)
   end
 end
 

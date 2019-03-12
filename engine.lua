@@ -2014,7 +2014,7 @@ function Stack.new_row(self)
   end
   self.panel_buffer = string.sub(self.panel_buffer,7)
   if string.len(self.panel_buffer) <= 10*self.width then
-    ask_for_panels(string.sub(self.panel_buffer,-6))
+    ask_for_panels(string.sub(self.panel_buffer,-6), self)
   end
   self.displacement = 16
 end
