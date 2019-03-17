@@ -102,7 +102,7 @@ end
 
 local _r, _g, _b, _a
 function set_color(r, g, b, a)
-  a = a or 255
+  a = a or 1
   -- only do it if this color isn't the same as the previous one...
   if _r~=r or _g~=g or _b~=b or _a~=a then
       _r,_g,_b,_a = r,g,b,a
