@@ -7,7 +7,7 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_replay_vs, main_local_vs_setup, main_local_vs, menu_key_func,
   multi_func, normal_key, main_set_name, main_character_select, main_net_vs_lobby,
   main_local_vs_yourself_setup, main_local_vs_yourself,
-  main_options, exit_options_menu
+  main_options, exit_options_menu, main_music_test
 
 VERSION = "030"
 local PLAYING = "playing"  -- room states
@@ -136,7 +136,8 @@ do
     current_server_supports_ranking = false
     match_type = ""
     match_type_message = ""
-    local items = {{"1P endless", main_select_speed_99, {main_endless}},
+    local items = {
+        {"1P endless", main_select_speed_99, {main_endless}},
         {"1P puzzle", main_select_puzz},
         {"1P time attack", main_select_speed_99, {main_time_attack}},
         {"1P vs yourself", main_local_vs_yourself_setup},
@@ -153,7 +154,9 @@ do
         {"Replay of 2P vs", main_replay_vs},
         {"Configure input", main_config_input},
         {"Set name", main_set_name},
-        {"Options", main_options}}
+        {"Options", main_options},
+        {"Music test", main_music_test}
+    }
     if love.graphics.getSupported("canvas") then
       items[#items+1] = {"Fullscreen (LAlt+Enter)", fullscreen}
     else
@@ -2090,6 +2093,49 @@ function main_set_name()
     for _,v in ipairs(this_frame_unicodes) do
       name = name .. v
     end
+  end
+end
+
+function main_music_test()
+  local index = 1
+  local selecting_music = true
+  local tracks = {}
+  for k, v in pairs(sounds.music.characters) do
+    tracks[#tracks+1] = {
+      name = k .. "_normal",
+      char = k,
+      type = "normal_music",
+      start = v.normal_music_start or zero_sound,
+      loop = v.normal_music
+    }
+    tracks[#tracks+1] = {
+      name = k .. "_danger",
+      char = k,
+      type = "danger_music",
+      start = v.danger_music_start or zero_sound,
+      loop = v.danger_music
+    }
+  end
+
+  -- debug scroll to music
+  while tracks[index].name ~= "lip_normal" do index = index + 1 end
+  -- initial song starts here
+  find_and_add_music(tracks[index].char, tracks[index].type)
+
+  while true do
+    wait()
+    if menu_left(K[1]) or menu_right(K[1]) or menu_escape(K[1]) then
+      stop_the_music()
+    end
+    if menu_left(K[1]) then  index = index - 1 end
+    if menu_right(K[1]) then index = index + 1 end
+    if index > #tracks then index = 1 end
+    if index < 1 then index = #tracks end
+    if menu_left(K[1]) or menu_right(K[1]) then
+      find_and_add_music(tracks[index].char, tracks[index].type)
+    end
+    gprint("Currently playing: " .. tracks[index].name,300, 280)
+    if menu_escape(K[1]) then return main_select_mode end
   end
 end
 
