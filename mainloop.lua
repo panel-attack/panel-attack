@@ -2105,7 +2105,6 @@ end
 
 function main_music_test()
   local index = 1
-  local selecting_music = true
   local tracks = {}
   for k, v in pairs(sounds.music.characters) do
     tracks[#tracks+1] = {
@@ -2141,7 +2140,7 @@ function main_music_test()
     if menu_left(K[1]) or menu_right(K[1]) then
       find_and_add_music(tracks[index].char, tracks[index].type)
     end
-    gprint("Currently playing: " .. tracks[index].name,300, 280)
+    gprint("Currently playing: " .. tracks[index].name .. (table.getn(currently_playing_tracks) == 1 and "\nPlaying the intro" or "\nPlaying main loop"),300, 280)
     if menu_escape(K[1]) then return main_select_mode end
   end
 end
