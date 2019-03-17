@@ -1252,15 +1252,17 @@ function Stack.PdP(self)
       end
 
     elseif (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
-      if current_music_is_casual then
+      if current_music_is_casual or table.getn(currently_playing_tracks) == 0 then
         print("Music is now critical")
+        if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
         stop_the_music()
         find_and_add_music(winningPlayer().character, "danger_music")
         current_music_is_casual = false
       end
     else --we should be playing normal_music or normal_music_start
-      if not current_music_is_casual then
+      if not current_music_is_casual or table.getn(currently_playing_tracks) == 0 then
         print("Music is now casual")
+        if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
         stop_the_music()
         find_and_add_music(winningPlayer().character, "normal_music")
         current_music_is_casual = true
@@ -1366,6 +1368,7 @@ function Stack.PdP(self)
     end
     if stop_sounds then
       love.audio.stop()
+      stop_the_music()
       stop_sounds = nil
     end
     if self.game_over or (self.garbage_target and self.garbage_target.game_over) then

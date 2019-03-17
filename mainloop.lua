@@ -129,6 +129,7 @@ do
   local active_idx = 1
   function main_select_mode()
     love.audio.stop()
+    stop_the_music()
     close_socket()
     logged_in = 0
     connection_up_time = 0
@@ -317,6 +318,7 @@ end
 
 function main_character_select()
   love.audio.stop()
+  stop_the_music()
   local map = {}
   if character_select_mode == "2p_net_vs" then
     local opponent_connected = false
@@ -887,6 +889,7 @@ function main_net_vs_lobby()
   local leaderboard_string = ""
   local my_rank
   love.audio.stop()
+  stop_the_music()
   match_type = ""
   match_type_message = ""
   --attempt login
@@ -1267,6 +1270,7 @@ function main_net_vs()
       wait()
       if currently_spectating and this_frame_keys["escape"] then
         print("spectator pressed escape during a game")
+        stop_the_music()
         my_win_count = 0
         op_win_count = 0
         json_send({leave_room=true})
@@ -1546,6 +1550,7 @@ function main_replay_vs()
       end
     end
     if end_text then
+
       return main_dumb_transition, {main_select_mode, end_text}
     end
   end
@@ -1688,6 +1693,7 @@ do
   items[#items+1] = {"Back", main_select_mode}
   function main_select_puzz()
     love.audio.stop()
+    stop_the_music()
     local active_idx = last_puzzle_idx or 1
     local k = K[1]
     while true do
@@ -2051,6 +2057,7 @@ function main_options()
       if items[active_idx][6] then --sound_source for this menu item exists 
         items[active_idx][6]:stop()
         love.audio.stop()
+        stop_the_music()
       end
       deselected_this_frame = false
     end
@@ -2154,6 +2161,7 @@ function main_dumb_transition(next_func, text, timemin, timemax)
     stop_character_sounds(P2.character)
   end
   love.audio.stop()
+  stop_the_music()
   if not SFX_mute and SFX_GameOver_Play == 1 then
     sounds.SFX.game_over:play()
   end

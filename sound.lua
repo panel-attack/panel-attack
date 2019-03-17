@@ -239,8 +239,9 @@ end
 music_t = {}
 currently_playing_tracks = {} -- needed because we clone the tracks below
 function stop_the_music()
-  for _, v in pairs(currently_playing_tracks) do
+  for k, v in pairs(currently_playing_tracks) do
     v:stop()
+    currently_playing_tracks[k] = nil
   end
   music_t = {}
 end
