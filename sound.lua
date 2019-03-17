@@ -155,12 +155,7 @@ function assert_requirements_met()
 end
 
 function stop_character_sounds(character)
-  danger_music_intro_started = nil
-  danger_music_intro_finished = nil
-  danger_music_intro_playing = nil
-  normal_music_intro_exists = nil
-  normal_music_intro_started = nil
-  normal_music_intro_finished = nil
+  music_t = {}
   for k, sound in ipairs(allowed_char_SFX) do
     if sounds.SFX.characters[character][sound] then
       sounds.SFX.characters[character][sound]:stop()
@@ -202,6 +197,7 @@ function sound_init()
       characters = {},
     }
   }
+  zero_sound = check_supported_extensions("zero_music")
   required_char_SFX = {"chain", "combo"}
   -- @CardsOfTheHeart says there are 4 chain sfx: --x2/x3, --x4, --x5 is x2/x3 with an echo effect, --x6+ is x4 with an echo effect
   allowed_char_SFX = {"chain", "combo", "combo_echo", "chain_echo", "chain2" ,"chain2_echo", "garbage_match"}
@@ -235,4 +231,32 @@ function sound_init()
   love.audio.setVolume(config.master_volume/100)
   set_volume(sounds.SFX, config.SFX_volume/100)
   set_volume(sounds.music, config.music_volume/100) 
+end
+
+
+-- New music engine stuff here
+
+music_t = {}
+currently_playing_tracks = {} -- needed because we clone the tracks below
+function stop_the_music()
+  for k, v in pairs(currently_playing_tracks) do
+    v:stop()
+    currently_playing_tracks[k] = nil
+  end
+  music_t = {}
+end
+
+function find_and_add_music(character, musicType)
+  local start_music = sounds.music.characters[character][musicType .. "_start"] or zero_sound
+  local loop_music = sounds.music.characters[character][musicType]
+  music_t[love.timer.getTime()] = make_music_t(
+          start_music
+  )
+  music_t[love.timer.getTime() + start_music:getDuration()] = make_music_t(
+          loop_music, true
+  )
+end
+
+function make_music_t(source, loop)
+    return {t = source:clone(), l = loop or false}
 end

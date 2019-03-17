@@ -7,7 +7,7 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_replay_vs, main_local_vs_setup, main_local_vs, menu_key_func,
   multi_func, normal_key, main_set_name, main_character_select, main_net_vs_lobby,
   main_local_vs_yourself_setup, main_local_vs_yourself,
-  main_options, exit_options_menu
+  main_options, exit_options_menu, main_music_test
 
 VERSION = "030"
 local PLAYING = "playing"  -- room states
@@ -129,6 +129,7 @@ do
   local active_idx = 1
   function main_select_mode()
     love.audio.stop()
+    stop_the_music()
     close_socket()
     logged_in = 0
     connection_up_time = 0
@@ -136,7 +137,8 @@ do
     current_server_supports_ranking = false
     match_type = ""
     match_type_message = ""
-    local items = {{"1P endless", main_select_speed_99, {main_endless}},
+    local items = {
+        {"1P endless", main_select_speed_99, {main_endless}},
         {"1P puzzle", main_select_puzz},
         {"1P time attack", main_select_speed_99, {main_time_attack}},
         {"1P vs yourself", main_local_vs_yourself_setup},
@@ -153,7 +155,9 @@ do
         {"Replay of 2P vs", main_replay_vs},
         {"Configure input", main_config_input},
         {"Set name", main_set_name},
-        {"Options", main_options}}
+        {"Options", main_options},
+        {"Music test", main_music_test}
+    }
     if love.graphics.getSupported("canvas") then
       items[#items+1] = {"Fullscreen (LAlt+Enter)", fullscreen}
     else
@@ -314,6 +318,7 @@ end
 
 function main_character_select()
   love.audio.stop()
+  stop_the_music()
   local map = {}
   if character_select_mode == "2p_net_vs" then
     local opponent_connected = false
@@ -884,6 +889,7 @@ function main_net_vs_lobby()
   local leaderboard_string = ""
   local my_rank
   love.audio.stop()
+  stop_the_music()
   match_type = ""
   match_type_message = ""
   --attempt login
@@ -1264,6 +1270,7 @@ function main_net_vs()
       wait()
       if currently_spectating and this_frame_keys["escape"] then
         print("spectator pressed escape during a game")
+        stop_the_music()
         my_win_count = 0
         op_win_count = 0
         json_send({leave_room=true})
@@ -1543,6 +1550,7 @@ function main_replay_vs()
       end
     end
     if end_text then
+
       return main_dumb_transition, {main_select_mode, end_text}
     end
   end
@@ -1685,6 +1693,7 @@ do
   items[#items+1] = {"Back", main_select_mode}
   function main_select_puzz()
     love.audio.stop()
+    stop_the_music()
     local active_idx = last_puzzle_idx or 1
     local k = K[1]
     while true do
@@ -2048,6 +2057,7 @@ function main_options()
       if items[active_idx][6] then --sound_source for this menu item exists 
         items[active_idx][6]:stop()
         love.audio.stop()
+        stop_the_music()
       end
       deselected_this_frame = false
     end
@@ -2093,6 +2103,49 @@ function main_set_name()
   end
 end
 
+function main_music_test()
+  local index = 1
+  local selecting_music = true
+  local tracks = {}
+  for k, v in pairs(sounds.music.characters) do
+    tracks[#tracks+1] = {
+      name = k .. "_normal",
+      char = k,
+      type = "normal_music",
+      start = v.normal_music_start or zero_sound,
+      loop = v.normal_music
+    }
+    tracks[#tracks+1] = {
+      name = k .. "_danger",
+      char = k,
+      type = "danger_music",
+      start = v.danger_music_start or zero_sound,
+      loop = v.danger_music
+    }
+  end
+
+  -- debug scroll to music
+  while tracks[index].name ~= "lip_normal" do index = index + 1 end
+  -- initial song starts here
+  find_and_add_music(tracks[index].char, tracks[index].type)
+
+  while true do
+    wait()
+    if menu_left(K[1]) or menu_right(K[1]) or menu_escape(K[1]) then
+      stop_the_music()
+    end
+    if menu_left(K[1]) then  index = index - 1 end
+    if menu_right(K[1]) then index = index + 1 end
+    if index > #tracks then index = 1 end
+    if index < 1 then index = #tracks end
+    if menu_left(K[1]) or menu_right(K[1]) then
+      find_and_add_music(tracks[index].char, tracks[index].type)
+    end
+    gprint("Currently playing: " .. tracks[index].name,300, 280)
+    if menu_escape(K[1]) then return main_select_mode end
+  end
+end
+
 function fullscreen()
   if love.graphics.getSupported("canvas") then
     love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
@@ -2108,6 +2161,7 @@ function main_dumb_transition(next_func, text, timemin, timemax)
     stop_character_sounds(P2.character)
   end
   love.audio.stop()
+  stop_the_music()
   if not SFX_mute and SFX_GameOver_Play == 1 then
     sounds.SFX.game_over:play()
   end
