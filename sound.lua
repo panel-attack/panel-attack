@@ -116,9 +116,9 @@ end
 --returns a source, or nil if it could not find a file
 function check_supported_extensions(path_and_filename)
   for k, extension in ipairs(supported_sound_formats) do
-    if love.filesystem.isFile(path_and_filename..extension) then
+    if love.filesystem.getInfo(path_and_filename..extension) then
       if string.find(path_and_filename, "music") then
-        return love.audio.newSource(path_and_filename..extension)
+        return love.audio.newSource(path_and_filename..extension, "stream")
       else
         return love.audio.newSource(path_and_filename..extension, "static")
       end

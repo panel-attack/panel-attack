@@ -18,7 +18,7 @@ require("gen_panels")
 
 local N_FRAMES = 0
 local canvas
-if love.graphics.isSupported("canvas") then
+if love.graphics.getSupported("canvas") then
   canvas = love.graphics.newCanvas(default_width, default_height)
 end
 local last_x = 0
@@ -74,24 +74,29 @@ function love.update(dt)
 end
 
 function love.draw()
-  if love.graphics.isSupported("canvas") then
+  font = love.graphics.newFont("assets/Oswald-Light.ttf", 15)
+  font:setLineHeight(0.66)
+  love.graphics.setFont(font)
+  if love.graphics.getSupported("canvas") then
+    love.graphics.setBlendMode("alpha", "alphamultiply")
     love.graphics.setCanvas(canvas)  
-    love.graphics.setBackgroundColor(28, 28, 28)
+    love.graphics.setBackgroundColor(0.1, 0.1, 0.1)
     love.graphics.clear()
   else
-    love.graphics.setColor(28, 28, 28)
+    love.graphics.setColor(0.1, 0.1, 0.1)
     love.graphics.rectangle("fill",-5,-5,900,900)
-    love.graphics.setColor(255, 255, 255)
+    love.graphics.setColor(1, 1, 1)
   end
   for i=gfx_q.first,gfx_q.last do
     gfx_q[i][1](unpack(gfx_q[i][2]))
   end
   love.graphics.print("FPS: "..love.timer.getFPS(),315,115)
   N_FRAMES = N_FRAMES + 1
-  if love.graphics.isSupported("canvas") then
+  if love.graphics.getSupported("canvas") then
     love.graphics.setCanvas()
-    love.graphics.clear()
+    love.graphics.clear(love.graphics.getBackgroundColor())
     x, y, w, h = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 4, 3)
+    love.graphics.setBlendMode("alpha","premultiplied")
     love.graphics.draw(canvas, x, y, 0, w / default_width, h / default_height)
   end
 end

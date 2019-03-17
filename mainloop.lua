@@ -154,7 +154,7 @@ do
         {"Configure input", main_config_input},
         {"Set name", main_set_name},
         {"Options", main_options}}
-    if love.graphics.isSupported("canvas") then
+    if love.graphics.getSupported("canvas") then
       items[#items+1] = {"Fullscreen (LAlt+Enter)", fullscreen}
     else
       items[#items+1] = {"Your graphics card doesn't support canvases for fullscreen", main_select_mode}
@@ -1815,14 +1815,14 @@ function main_options()
   local raw_assets_dir_list = love.filesystem.getDirectoryItems("assets")
   local asset_sets = {}
   for k,v in ipairs(raw_assets_dir_list) do
-    if love.filesystem.isDirectory("assets/"..v) and v ~= "Example folder structure" then
+    if love.filesystem.getInfo("assets/"..v) and v ~= "Example folder structure" then
       asset_sets[#asset_sets+1] = v
     end
   end
   local raw_sounds_dir_list = love.filesystem.getDirectoryItems("sounds")
   local sound_sets = {}
   for k,v in ipairs(raw_sounds_dir_list) do
-    if love.filesystem.isDirectory("sounds/"..v) and v ~= "Example folder structure" then
+    if love.filesystem.getInfo("sounds/"..v) and v ~= "Example folder structure" then
       sound_sets[#sound_sets+1] = v
     end
   end
@@ -2006,7 +2006,7 @@ function main_options()
     end
     if items[active_idx][3] == "function" and do_menu_function then
       if items[active_idx][1] == "About custom graphics" then
-        if not love.filesystem.isDirectory("assets/Example folder structure")then
+        if not love.filesystem.getInfo("assets/Example folder structure")then
           print("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.")
           gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
           wait()
@@ -2023,7 +2023,7 @@ function main_options()
         end
       end
       if items[active_idx][1] == "About custom sounds" then
-        if not love.filesystem.isDirectory("sounds/Example folder structure")then
+        if not love.filesystem.getInfo("sounds/Example folder structure")then
           print("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.")
           gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
           wait()
@@ -2094,7 +2094,7 @@ function main_set_name()
 end
 
 function fullscreen()
-  if love.graphics.isSupported("canvas") then
+  if love.graphics.getSupported("canvas") then
     love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
   end
   return main_select_mode

@@ -97,12 +97,17 @@ function grectangle(mode, x, y, w, h)
 end
 
 function gprint(str, x, y)
+  x = x or 0
+  y = y or 0
+  set_color(0, 0, 0, 1)
+  gfx_q:push({love.graphics.print, {str, x+1, y+1}})
+  set_color(1, 1, 1, 1)
   gfx_q:push({love.graphics.print, {str, x, y}})
 end
 
 local _r, _g, _b, _a
 function set_color(r, g, b, a)
-  a = a or 255
+  a = a or 1
   -- only do it if this color isn't the same as the previous one...
   if _r~=r or _g~=g or _b~=b or _a~=a then
       _r,_g,_b,_a = r,g,b,a
