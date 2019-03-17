@@ -75,6 +75,7 @@ end
 
 function love.draw()
   if love.graphics.getSupported("canvas") then
+    love.graphics.setBlendMode("alpha", "alphamultiply")
     love.graphics.setCanvas(canvas)  
     love.graphics.setBackgroundColor(0.1, 0.1, 0.1)
     love.graphics.clear()
@@ -92,6 +93,7 @@ function love.draw()
     love.graphics.setCanvas()
     love.graphics.clear(love.graphics.getBackgroundColor())
     x, y, w, h = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 4, 3)
+    love.graphics.setBlendMode("alpha","premultiplied")
     love.graphics.draw(canvas, x, y, 0, w / default_width, h / default_height)
   end
 end
