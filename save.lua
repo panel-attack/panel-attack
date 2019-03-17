@@ -115,7 +115,7 @@ function read_puzzles() pcall(function()
   print("loading custom puzzles...")
   for _,filename in pairs(puzzle_packs) do
     print(filename)
-    if love.filesystem.isFile("puzzles/"..filename)
+    if love.filesystem.getInfo("puzzles/"..filename)
     and filename ~= "stock (example).txt"
     and filename ~= "README.txt" then
       print("loading custom puzzle set: "..(filename or "nil"))

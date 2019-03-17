@@ -3,7 +3,7 @@ require("consts")
 function love.conf(t)
   t.title = "Panel Attack"
   t.author = "sharpobject@gmail.com"
-  t.url = "https://github.com/sharpobject/panel-attack"
+  t.url = "https://github.com/panel-attack/panel-attack"
   t.window.width = default_width
   t.window.height = default_height
   t.window.resizable = true
@@ -12,7 +12,7 @@ function love.conf(t)
   t.modules.sound = true
   t.modules.physics = false
   t.identity = "Panel Attack"
-  t.version = "0.9.0"
+  t.version = "11.2"
   t.release = false
   t.externalstorage = true
 
