@@ -1300,11 +1300,11 @@ function main_net_vs()
       end_text = "Draw"
       outcome_claim = 0
     elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
-      end_text = op_name.." Wins :("
+      end_text = op_name.." Wins" .. (currently_spectating and " " or " :(")
       op_win_count = op_win_count + 1 -- leaving these in just in case used with an old server that doesn't keep score.  win_counts will get overwritten after this by the server anyway.
       outcome_claim = P2.player_number
     elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
-      end_text = my_name.." Wins ^^"
+      end_text = my_name.." Wins" .. (currently_spectating and " " or " ^^")
       my_win_count = my_win_count + 1 -- leave this in
       outcome_claim = P1.player_number
       
