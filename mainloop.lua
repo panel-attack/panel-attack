@@ -2140,7 +2140,12 @@ function main_music_test()
     if menu_left(K[1]) or menu_right(K[1]) then
       find_and_add_music(tracks[index].char, tracks[index].type)
     end
-    gprint("Currently playing: " .. tracks[index].name .. (table.getn(currently_playing_tracks) == 1 and "\nPlaying the intro" or "\nPlaying main loop"),300, 280)
+    tp =  "Currently playing: " .. tracks[index].name
+    tp = tp .. (table.getn(currently_playing_tracks) == 1 and "\nPlaying the intro\n" or "\nPlaying main loop\n")
+    min_time = math.huge
+    for k, _ in pairs(music_t) do if k and k < min_time then min_time = k end end
+    tp = tp .. string.format("%d", min_time - love.timer.getTime() )
+    gprint(tp,300, 280)
     if menu_escape(K[1]) then return main_select_mode end
   end
 end
