@@ -97,6 +97,11 @@ function grectangle(mode, x, y, w, h)
 end
 
 function gprint(str, x, y)
+  x = x or 0
+  y = y or 0
+  set_color(0, 0, 0, 1)
+  gfx_q:push({love.graphics.print, {str, x+1, y+1}})
+  set_color(1, 1, 1, 1)
   gfx_q:push({love.graphics.print, {str, x, y}})
 end
 

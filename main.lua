@@ -74,6 +74,9 @@ function love.update(dt)
 end
 
 function love.draw()
+  font = love.graphics.newFont("assets/Oswald-Light.ttf", 15)
+  font:setLineHeight(0.66)
+  love.graphics.setFont(font)
   if love.graphics.getSupported("canvas") then
     love.graphics.setBlendMode("alpha", "alphamultiply")
     love.graphics.setCanvas(canvas)  
