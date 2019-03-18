@@ -697,14 +697,14 @@ function Stack.PdP(self)
   end
   if dangerous_falling_garbage then
     self.danger_music = prev_danger_music
-  else
-      prow = panels[self.height-2]
-      for idx=1,width do
-        if prow[idx]:dangerous() then
-          self.danger_music = true
-        end
-      end
   end
+  prow = panels[self.height-2]
+  for idx=1,width do
+    if prow[idx]:dangerous() then
+      self.danger_music = true
+    end
+  end
+
 
 
   if self.displacement == 0 and self.has_risen then
