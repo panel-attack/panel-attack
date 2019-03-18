@@ -444,7 +444,8 @@ do
   end
 
   function Panel.dangerous(self)
-    return self.color ~= 0 and (self.state ~= "falling" or not self.garbage)
+    -- return self.color ~= 0 and (self.state ~= "falling" or not self.garbage)
+      return self.color ~= 0 and (self.state ~= "falling" and self.garbage)
   end
 end
 
