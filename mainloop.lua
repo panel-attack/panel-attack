@@ -819,7 +819,7 @@ function main_character_select()
             selected = not selected
           elseif active_str == "leave" then
             if character_select_mode == "2p_net_vs" then
-              if not do_leave() then return main_net_vs_lobby end
+              if not do_leave() then return main_dumb_transition, {main_select_mode, "Error when leaving online"} end
             else
               return main_select_mode
             end
@@ -836,7 +836,7 @@ function main_character_select()
         elseif menu_escape(k) then
           if active_str == "leave" then
             if character_select_mode == "2p_net_vs" then
-              if not do_leave() then return main_net_vs_lobby end
+              if not do_leave() then return main_dumb_transition, {main_select_mode, "Error when leaving online"} end
             else
               return main_select_mode
             end
