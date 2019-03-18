@@ -7,6 +7,7 @@ local char = string.char
 local byte = string.byte
 
 function flush_socket()
+  if not TCP_sock then return end
   local junk,err,data = TCP_sock:receive('*a')
   -- lol, if it returned successfully then that's bad!
   if not err then
