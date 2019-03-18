@@ -2145,6 +2145,7 @@ function main_music_test()
     min_time = math.huge
     for k, _ in pairs(music_t) do if k and k < min_time then min_time = k end end
     tp = tp .. string.format("%d", min_time - love.timer.getTime() )
+    tp = tp .. "\n\n\n< and > to play navigate themes\nESC to leave"
     gprint(tp,300, 280)
     if menu_escape(K[1]) then return main_select_mode end
   end
