@@ -689,20 +689,15 @@ function Stack.PdP(self)
   for _, prow in pairs({panels[self.height], panels[self.height-1], panels[self.height-2]}) do
     for idx=1, width do
       if prow[idx].garbage and prow[idx].state == "falling" then
-        dangerous_falling_garbage = true
-        break
+          dangerous_falling_garbage = true
+      end
+      if prow[idx].color ~= 0 and prow[idx].state ~= "falling" or prow[idx]:dangerous() then
+        self.danger_music = true
       end
     end
-    if dangerous_falling_garbage then break end
   end
   if dangerous_falling_garbage then
-    self.danger_music = prev_danger_music
-  end
-  prow = panels[self.height-2]
-  for idx=1,width do
-    if prow[idx].color ~= 0 and prow[idx].state ~= "falling" or prow[idx]:dangerous() then
-      self.danger_music = true
-    end
+    self.danger_music = prev_danger_music or self.danger_music
   end
 
 
