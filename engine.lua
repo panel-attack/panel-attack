@@ -700,7 +700,7 @@ function Stack.PdP(self)
   end
   prow = panels[self.height-2]
   for idx=1,width do
-    if prow[idx]:dangerous() then
+    if prow[idx].color ~= 0 and not prow[idx].falling then
       self.danger_music = true
     end
   end
