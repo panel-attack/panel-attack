@@ -11,6 +11,7 @@ local GARBAGE_DELAY = 60
 local GARBAGE_TRANSIT_TIME = 90
 local clone_pool = {}
 local current_music_is_casual = false -- must be false so that casual music start playing
+local grace_timer = 100
 
 Stack = class(function(s, which, mode, speed, difficulty, player_number)
     s.character = uniformly(characters)
@@ -700,6 +701,7 @@ function Stack.PdP(self)
   if dangerous_falling_garbage then
     self.danger_music = prev_danger_music or self.danger_music
   end
+  if grace_timer > 0 then grace_timer = grace_timer - 1 end
 
 
 
@@ -1246,20 +1248,22 @@ function Stack.PdP(self)
       end
 
     elseif (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
-      if current_music_is_casual or table.getn(currently_playing_tracks) == 0 then
+      if (current_music_is_casual or table.getn(currently_playing_tracks) == 0) and grace_timer < 1 then
         print("Music is now critical")
         if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
         stop_the_music()
         find_and_add_music(winningPlayer().character, "danger_music")
         current_music_is_casual = false
+        grace_timer = 100
       end
     else --we should be playing normal_music or normal_music_start
-      if not current_music_is_casual or table.getn(currently_playing_tracks) == 0 then
+      if (not current_music_is_casual or table.getn(currently_playing_tracks) == 0) and grace_timer < 1 then
         print("Music is now casual")
         if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
         stop_the_music()
         find_and_add_music(winningPlayer().character, "normal_music")
         current_music_is_casual = true
+        grace_timer = 100
       end
     end
   end
