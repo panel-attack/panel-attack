@@ -701,6 +701,7 @@ function Stack.PdP(self)
   if dangerous_falling_garbage then
     self.danger_music = prev_danger_music or self.danger_music
   end
+  if self.shake_time > 0 and not prev_danger_music then self.danger_music = false end
   if grace_timer > 0 then grace_timer = grace_timer - 1 end
 
 
