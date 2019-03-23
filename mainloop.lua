@@ -3,7 +3,7 @@ local wait, resume = coroutine.yield, coroutine.resume
 local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_replay_endless, main_replay_puzzle, main_net_vs,
   main_config_input, main_dumb_transition, main_select_puzz,
-  menu_up, menu_down, menu_left, menu_right, menu_enter, menu_escape,
+  menu_up, menu_down, menu_left, menu_right, menu_enter, menu_escape, menu_backspace,
   main_replay_vs, main_local_vs_setup, main_local_vs, menu_key_func,
   multi_func, normal_key, main_set_name, main_character_select, main_net_vs_lobby,
   main_local_vs_yourself_setup, main_local_vs_yourself,
@@ -124,6 +124,7 @@ menu_left = menu_key_func({"left"}, {"left"}, true)
 menu_right = menu_key_func({"right"}, {"right"}, true)
 menu_enter = menu_key_func({"return","kenter","z"}, {"swap1"}, false)
 menu_escape = menu_key_func({"escape","x"}, {"swap2"}, false)
+menu_backspace = menu_key_func({"backspace"}, {"backspace"}, true)
 
 do
   local active_idx = 1
@@ -149,6 +150,7 @@ do
         --{"This test build is for offline-use only"--[["2P vs online at Jon's server"]], main_select_mode},
         --{"2P vs online at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
         --{"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
+        {"2P vs online at LittleEndu's server", main_net_vs_setup, {"51.15.207.223"}},
         {"2P vs local game", main_local_vs_setup},
         {"Replay of 1P endless", main_replay_endless},
         {"Replay of 1P puzzle", main_replay_puzzle},
@@ -195,6 +197,7 @@ do
     end
   end
 end
+
 
 function main_select_speed_99(next_func, ...)
   local difficulties = {"Easy", "Normal", "Hard"}
@@ -505,13 +508,13 @@ function main_character_select()
       local orig_w, orig_h = IMG_character_icons[character_display_names_to_original_names[str]]:getDimensions()
       menu_draw(IMG_character_icons[character_display_names_to_original_names[str]], render_x, render_y, 0, button_width/orig_w, button_height/orig_h )
     end
-    local y_add,x_add = 10,30
-    local pstr = str
+    local y_add,x_add = 5,30
+    local pstr = str:gsub("^%l", string.upper)
     if str == "level" then
       if selected and active_str == "level" then
-        pstr = pstr .. "\n"..my_name.."'s level: < "..my_state.level.." >"
+        pstr = my_name.."'s level: < "..my_state.level.." >"
       else
-        pstr = pstr .. "\n"..my_name.."'s level: "..my_state.level
+        pstr = my_name.."'s level: "..my_state.level
       end
       if character_select_mode == "2p_net_vs" then
         pstr = pstr .. "\n"..op_name.."'s level: "..op_state.level
@@ -526,7 +529,7 @@ function main_character_select()
       if op_state.ranked then
         op_type_selection = " casual  [ranked]"
       end
-      pstr = pstr .. "\n"..my_name..": "..my_type_selection.."\n"..op_name..": "..op_type_selection
+      pstr = my_name..": "..my_type_selection.."\n"..op_name..": "..op_type_selection
       y_add,x_add = 9,180
     end
     if my_state.cursor == str then pstr = pstr.."\n"..my_name end
@@ -2084,9 +2087,12 @@ function exit_options_menu()
 end
 
 function main_set_name()
-  local name = ""
+  local name = config.name or ""
   while true do
     local to_print = "Enter your name:\n"..name
+    if (love.timer.getTime()*3) % 2 > 1 then
+        to_print = to_print .. "|"
+    end
     gprint(to_print, 300, 280)
     wait()
     if this_frame_keys["escape"] then
@@ -2096,6 +2102,9 @@ function main_set_name()
       config.name = name
       write_conf_file()
       return main_select_mode
+    end
+    if menu_backspace(K[1]) then
+      name = string.sub(name, 1, #name-1)
     end
     for _,v in ipairs(this_frame_unicodes) do
       name = name .. v
