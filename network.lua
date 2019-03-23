@@ -5,7 +5,6 @@ local wait = coroutine.yield
 local floor = math.floor
 local char = string.char
 local byte = string.byte
-potential_room_inits = {}
 
 function flush_socket()
   if not TCP_sock then return end
@@ -102,9 +101,6 @@ local process_message = {
     if current_message.spectators then
       spectator_list = current_message.spectators
       spectators_string = spectator_list_string(current_message.spectators)
-    end
-    if current_message.create_room or current_message.character_select or current_message.spectate_request_granted then
-      table.insert(potential_room_inits, current_message)
     end
   end}
 
