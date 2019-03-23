@@ -319,10 +319,10 @@ function main_character_select()
     local opponent_connected = false
     local retries, retry_limit = 0, 250
     while not global_initialize_room_msg and retries < retry_limit do
-      for _,msg in ipairs(this_frame_messages) do
-        if msg.create_room or msg.character_select or msg.spectate_request_granted then
-          global_initialize_room_msg = msg
-        end
+      for _, msg in pairs(potential_room_inits) do
+          if msg.create_room or msg.character_select or msg.spectate_request_granted then
+              global_initialize_room_msg = msg
+          end
       end
       gprint("Waiting for room initialization...", 300, 280)
       wait()
@@ -349,6 +349,7 @@ function main_character_select()
     end
     msg = global_initialize_room_msg
     global_initialize_room_msg = nil
+    potential_room_inits = {}
     if msg.ratings then
         global_current_room_ratings = msg.ratings
     end
@@ -937,11 +938,6 @@ function main_net_vs_lobby()
       elseif msg.choose_another_name and msg.choose_another_name.reason then
         return main_dumb_transition, {main_select_mode, "Error: ".. msg.choose_another_name.reason, 60}
       end
-      if msg.create_room or msg.spectate_request_granted then
-        global_initialize_room_msg = msg
-        character_select_mode = "2p_net_vs"
-        return main_character_select
-      end
       if msg.unpaired then
         unpaired_players = msg.unpaired
         -- players who leave the unpaired list no longer have standing invitations to us.\
@@ -972,6 +968,13 @@ function main_net_vs_lobby()
         leaderboard_first_idx_to_show = math.max((my_rank or 1)-8,1)
         leaderboard_last_idx_to_show = math.min(leaderboard_first_idx_to_show + 20,#leaderboard_report)
         leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
+      end
+    end
+    for _, msg in pairs(potential_room_inits) do
+      if msg.create_room or msg.spectate_request_granted then
+        global_initialize_room_msg = msg
+        character_select_mode = "2p_net_vs"
+        return main_character_select
       end
     end
     local to_print = ""
