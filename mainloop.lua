@@ -508,7 +508,7 @@ function main_character_select()
       local orig_w, orig_h = IMG_character_icons[character_display_names_to_original_names[str]]:getDimensions()
       menu_draw(IMG_character_icons[character_display_names_to_original_names[str]], render_x, render_y, 0, button_width/orig_w, button_height/orig_h )
     end
-    local y_add,x_add = 5,30
+    local y_add,x_add = 10,30
     local pstr = str:gsub("^%l", string.upper)
     if str == "level" then
       if selected and active_str == "level" then
