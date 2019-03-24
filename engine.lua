@@ -700,11 +700,12 @@ function Stack.PdP(self)
     else
         --currently playing danger
         local toggle_back = true
-        prow = panels[self.height-3]
-        for idx=1, width do
-            if prow[idx].color ~= 0 then 
-                toggle_back = false
-                break
+        for _, prow in pairs({panels[self.height], panels[self.height-1], panels[self.height-2], panels[self.height-3]}) do
+            for idx=1, width do
+                if prow[idx].color ~= 0 then
+                    toggle_back = false
+                    break
+                end
             end
         end
         self.danger_music = not toggle_back
