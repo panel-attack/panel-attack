@@ -11,7 +11,6 @@ local GARBAGE_DELAY = 60
 local GARBAGE_TRANSIT_TIME = 90
 local clone_pool = {}
 local current_music_is_casual = false -- must be false so that casual music start playing
-local grace_timer = 100
 
 Stack = class(function(s, which, mode, speed, difficulty, player_number)
     s.character = uniformly(characters)
@@ -685,24 +684,32 @@ function Stack.PdP(self)
   end
 
   -- determine whether to play danger music
-  local prev_danger_music = self.danger_music
-  self.danger_music = false
-  local dangerous_falling_garbage = false
-  for _, prow in pairs({panels[self.height], panels[self.height-1], panels[self.height-2]}) do
-    for idx=1, width do
-      if prow[idx].garbage and prow[idx].state == "falling" then
-          dangerous_falling_garbage = true
-      end
-      if prow[idx].color ~= 0 and prow[idx].state ~= "falling" or prow[idx]:dangerous() then
-        self.danger_music = true
-      end
+    -- Changed this to play danger when something in top 3 rows
+    -- and to play casual when nothing in top 4 rows
+    if not self.danger_music then
+        -- currently playing casual
+        for _, prow in pairs({panels[self.height], panels[self.height-1], panels[self.height-2]}) do
+            for idx=1, width do
+                if prow[idx].color ~= 0 and prow[idx].state ~= "falling" or prow[idx]:dangerous() then
+                    self.danger_music = true
+                    break
+                end
+            end
+        end
+        if self.shake_time > 0 then self.danger_music = false end
+    else
+        --currently playing danger
+        local toggle_back = true
+        prow = panels[self.height-3]
+        for idx=1, width do
+            if prow[idx].color ~= 0 then 
+                toggle_back = false
+                break
+            end
+        end
+        self.danger_music = not toggle_back
     end
-  end
-  if dangerous_falling_garbage then
-    self.danger_music = prev_danger_music or self.danger_music
-  end
-  if self.shake_time > 0 and not prev_danger_music then self.danger_music = false end
-  if grace_timer > 0 then grace_timer = grace_timer - 1 end
+
 
 
 
@@ -1249,22 +1256,20 @@ function Stack.PdP(self)
       end
 
     elseif (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
-      if (current_music_is_casual or table.getn(currently_playing_tracks) == 0) and grace_timer < 1 then
+      if (current_music_is_casual or table.getn(currently_playing_tracks) == 0) then
         print("Music is now critical")
         if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
         stop_the_music()
         find_and_add_music(winningPlayer().character, "danger_music")
         current_music_is_casual = false
-        grace_timer = 100
       end
     else --we should be playing normal_music or normal_music_start
-      if (not current_music_is_casual or table.getn(currently_playing_tracks) == 0) and grace_timer < 1 then
+      if (not current_music_is_casual or table.getn(currently_playing_tracks) == 0) then
         print("Music is now casual")
         if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
         stop_the_music()
         find_and_add_music(winningPlayer().character, "normal_music")
         current_music_is_casual = true
-        grace_timer = 100
       end
     end
   end
