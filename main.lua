@@ -16,11 +16,8 @@ require("sound")
 require("timezones")
 require("gen_panels")
 
-local N_FRAMES = 0
-local canvas
-if love.graphics.getSupported("canvas") then
-  canvas = love.graphics.newCanvas(default_width, default_height)
-end
+local canvas = love.graphics.newCanvas(default_width, default_height)
+
 local last_x = 0
 local last_y = 0
 local input_delta = 0.0
@@ -61,7 +58,6 @@ function love.update(dt)
   if not consuming_timesteps then
     key_counts()
   end
-  gfx_q:clear()
   local status, err = coroutine.resume(mainloop)
   if not status then
     error(err..'\n'..debug.traceback(mainloop))
@@ -102,8 +98,8 @@ function love.draw()
   for i=gfx_q.first,gfx_q.last do
     gfx_q[i][1](unpack(gfx_q[i][2]))
   end
-  love.graphics.print("FPS: "..love.timer.getFPS(),315,115)
-  N_FRAMES = N_FRAMES + 1
+  gfx_q:clear()
+  love.graphics.print("FPS: "..love.timer.getFPS(),315,115) -- TODO: Make this a toggle
   if love.graphics.getSupported("canvas") then
     love.graphics.setCanvas()
     love.graphics.clear(love.graphics.getBackgroundColor())
