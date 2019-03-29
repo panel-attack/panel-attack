@@ -3,11 +3,11 @@ local wait, resume = coroutine.yield, coroutine.resume
 local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_replay_endless, main_replay_puzzle, main_net_vs,
   main_config_input, main_dumb_transition, main_select_puzz,
-  menu_up, menu_down, menu_left, menu_right, menu_enter, menu_escape,
+  menu_up, menu_down, menu_left, menu_right, menu_enter, menu_escape, menu_backspace,
   main_replay_vs, main_local_vs_setup, main_local_vs, menu_key_func,
   multi_func, normal_key, main_set_name, main_character_select, main_net_vs_lobby,
   main_local_vs_yourself_setup, main_local_vs_yourself,
-  main_options, exit_options_menu
+  main_options, exit_options_menu, main_music_test
 
 VERSION = "030"
 local PLAYING = "playing"  -- room states
@@ -124,12 +124,14 @@ menu_left = menu_key_func({"left"}, {"left"}, true)
 menu_right = menu_key_func({"right"}, {"right"}, true)
 menu_enter = menu_key_func({"return","kenter","z"}, {"swap1"}, false)
 menu_escape = menu_key_func({"escape","x"}, {"swap2"}, false)
+menu_backspace = menu_key_func({"backspace"}, {"backspace"}, true)
 
 do
   local active_idx = 1
   function main_select_mode()
     love.audio.stop()
     currently_spectating = false
+    stop_the_music()
     close_socket()
     logged_in = 0
     connection_up_time = 0
@@ -137,7 +139,8 @@ do
     current_server_supports_ranking = false
     match_type = ""
     match_type_message = ""
-    local items = {{"1P endless", main_select_speed_99, {main_endless}},
+    local items = {
+        {"1P endless", main_select_speed_99, {main_endless}},
         {"1P puzzle", main_select_puzz},
         {"1P time attack", main_select_speed_99, {main_time_attack}},
         {"1P vs yourself", main_local_vs_yourself_setup},
@@ -148,13 +151,16 @@ do
         --{"This test build is for offline-use only"--[["2P vs online at Jon's server"]], main_select_mode},
         --{"2P vs online at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
         --{"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
+        --{"2P vs online at LittleEndu's server", main_net_vs_setup, {"51.15.207.223"}},
         {"2P vs local game", main_local_vs_setup},
         {"Replay of 1P endless", main_replay_endless},
         {"Replay of 1P puzzle", main_replay_puzzle},
         {"Replay of 2P vs", main_replay_vs},
         {"Configure input", main_config_input},
         {"Set name", main_set_name},
-        {"Options", main_options}}
+        {"Options", main_options},
+        {"Music test", main_music_test}
+    }
     if love.graphics.getSupported("canvas") then
       items[#items+1] = {"Fullscreen (LAlt+Enter)", fullscreen}
     else
@@ -192,6 +198,7 @@ do
     end
   end
 end
+
 
 function main_select_speed_99(next_func, ...)
   local difficulties = {"Easy", "Normal", "Hard"}
@@ -315,6 +322,7 @@ end
 
 function main_character_select()
   love.audio.stop()
+  stop_the_music()
   local map = {}
   if character_select_mode == "2p_net_vs" then
     local opponent_connected = false
@@ -502,12 +510,12 @@ function main_character_select()
       menu_draw(IMG_character_icons[character_display_names_to_original_names[str]], render_x, render_y, 0, button_width/orig_w, button_height/orig_h )
     end
     local y_add,x_add = 10,30
-    local pstr = str
+    local pstr = str:gsub("^%l", string.upper)
     if str == "level" then
       if selected and active_str == "level" then
-        pstr = pstr .. "\n"..my_name.."'s level: < "..my_state.level.." >"
+        pstr = my_name.."'s level: < "..my_state.level.." >"
       else
-        pstr = pstr .. "\n"..my_name.."'s level: "..my_state.level
+        pstr = my_name.."'s level: "..my_state.level
       end
       if character_select_mode == "2p_net_vs" then
         pstr = pstr .. "\n"..op_name.."'s level: "..op_state.level
@@ -522,7 +530,7 @@ function main_character_select()
       if op_state.ranked then
         op_type_selection = " casual  [ranked]"
       end
-      pstr = pstr .. "\n"..my_name..": "..my_type_selection.."\n"..op_name..": "..op_type_selection
+      pstr = my_name..": "..my_type_selection.."\n"..op_name..": "..op_type_selection
       y_add,x_add = 9,180
     end
     if my_state.cursor == str then pstr = pstr.."\n"..my_name end
@@ -885,6 +893,7 @@ function main_net_vs_lobby()
   local leaderboard_string = ""
   local my_rank
   love.audio.stop()
+  stop_the_music()
   match_type = ""
   match_type_message = ""
   --attempt login
@@ -1265,6 +1274,7 @@ function main_net_vs()
       wait()
       if currently_spectating and this_frame_keys["escape"] then
         print("spectator pressed escape during a game")
+        stop_the_music()
         my_win_count = 0
         op_win_count = 0
         json_send({leave_room=true})
@@ -1301,11 +1311,11 @@ function main_net_vs()
       end_text = "Draw"
       outcome_claim = 0
     elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
-      end_text = op_name.." Wins :("
+      end_text = op_name.." Wins" .. (currently_spectating and " " or " :(")
       op_win_count = op_win_count + 1 -- leaving these in just in case used with an old server that doesn't keep score.  win_counts will get overwritten after this by the server anyway.
       outcome_claim = P2.player_number
     elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
-      end_text = my_name.." Wins ^^"
+      end_text = my_name.." Wins" .. (currently_spectating and " " or " ^^")
       my_win_count = my_win_count + 1 -- leave this in
       outcome_claim = P1.player_number
       
@@ -1545,6 +1555,7 @@ function main_replay_vs()
       end
     end
     if end_text then
+
       return main_dumb_transition, {main_select_mode, end_text}
     end
   end
@@ -1687,6 +1698,7 @@ do
   items[#items+1] = {"Back", main_select_mode}
   function main_select_puzz()
     love.audio.stop()
+    stop_the_music()
     local active_idx = last_puzzle_idx or 1
     local k = K[1]
     while true do
@@ -2050,6 +2062,7 @@ function main_options()
       if items[active_idx][6] then --sound_source for this menu item exists 
         items[active_idx][6]:stop()
         love.audio.stop()
+        stop_the_music()
       end
       deselected_this_frame = false
     end
@@ -2076,9 +2089,12 @@ function exit_options_menu()
 end
 
 function main_set_name()
-  local name = ""
+  local name = config.name or ""
   while true do
     local to_print = "Enter your name:\n"..name
+    if (love.timer.getTime()*3) % 2 > 1 then
+        to_print = to_print .. "|"
+    end
     gprint(to_print, 300, 280)
     wait()
     if this_frame_keys["escape"] then
@@ -2089,9 +2105,60 @@ function main_set_name()
       write_conf_file()
       return main_select_mode
     end
+    if menu_backspace(K[1]) then
+      name = string.sub(name, 1, #name-1)
+    end
     for _,v in ipairs(this_frame_unicodes) do
       name = name .. v
     end
+  end
+end
+
+function main_music_test()
+  local index = 1
+  local tracks = {}
+  for k, v in pairs(sounds.music.characters) do
+    tracks[#tracks+1] = {
+      name = k .. "_normal",
+      char = k,
+      type = "normal_music",
+      start = v.normal_music_start or zero_sound,
+      loop = v.normal_music
+    }
+    tracks[#tracks+1] = {
+      name = k .. "_danger",
+      char = k,
+      type = "danger_music",
+      start = v.danger_music_start or zero_sound,
+      loop = v.danger_music
+    }
+  end
+
+  -- debug scroll to music
+  while tracks[index].name ~= "lip_normal" do index = index + 1 end
+  -- initial song starts here
+  find_and_add_music(tracks[index].char, tracks[index].type)
+
+  while true do
+    wait()
+    if menu_left(K[1]) or menu_right(K[1]) or menu_escape(K[1]) then
+      stop_the_music()
+    end
+    if menu_left(K[1]) then  index = index - 1 end
+    if menu_right(K[1]) then index = index + 1 end
+    if index > #tracks then index = 1 end
+    if index < 1 then index = #tracks end
+    if menu_left(K[1]) or menu_right(K[1]) then
+      find_and_add_music(tracks[index].char, tracks[index].type)
+    end
+    tp =  "Currently playing: " .. tracks[index].name
+    tp = tp .. (table.getn(currently_playing_tracks) == 1 and "\nPlaying the intro\n" or "\nPlaying main loop\n")
+    min_time = math.huge
+    for k, _ in pairs(music_t) do if k and k < min_time then min_time = k end end
+    tp = tp .. string.format("%d", min_time - love.timer.getTime() )
+    tp = tp .. "\n\n\n< and > to play navigate themes\nESC to leave"
+    gprint(tp,300, 280)
+    if menu_escape(K[1]) then return main_select_mode end
   end
 end
 
@@ -2110,6 +2177,7 @@ function main_dumb_transition(next_func, text, timemin, timemax)
     stop_character_sounds(P2.character)
   end
   love.audio.stop()
+  stop_the_music()
   if not SFX_mute and SFX_GameOver_Play == 1 then
     sounds.SFX.game_over:play()
   end

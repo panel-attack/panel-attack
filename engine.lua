@@ -10,6 +10,7 @@ local garbage_bounce_time = #garbage_bounce_table
 local GARBAGE_DELAY = 60
 local GARBAGE_TRANSIT_TIME = 90
 local clone_pool = {}
+local current_music_is_casual = false -- must be false so that casual music start playing
 
 Stack = class(function(s, which, mode, speed, difficulty, player_number)
     s.character = uniformly(characters)
@@ -683,31 +684,36 @@ function Stack.PdP(self)
   end
 
   -- determine whether to play danger music
-  local prev_danger_music = self.danger_music
-  self.danger_music = false
-  local falling_garbage_in_top_two_rows = false
-  prow = panels[self.height]
-  for idx=1,width do
-    if prow[idx].garbage and prow[idx].state == "falling" then
-      falling_garbage_in_top_two_rows = true
-    end
-  end
-  prow = panels[self.height-1]
-  for idx=1,width do
-    if prow[idx].garbage and prow[idx].state == "falling" then
-      falling_garbage_in_top_two_rows = true
-    end
-  end
-  if falling_garbage_in_top_two_rows then
-    self.danger_music = prev_danger_music
-  else
-      prow = panels[self.height-2]
-      for idx=1,width do
-        if prow[idx]:dangerous() then
-          self.danger_music = true
+    -- Changed this to play danger when something in top 3 rows
+    -- and to play casual when nothing in top 4 rows
+    if not self.danger_music then
+        -- currently playing casual
+        for _, prow in pairs({panels[self.height], panels[self.height-1], panels[self.height-2]}) do
+            for idx=1, width do
+                if prow[idx].color ~= 0 and prow[idx].state ~= "falling" or prow[idx]:dangerous() then
+                    self.danger_music = true
+                    break
+                end
+            end
         end
-      end
-  end
+        if self.shake_time > 0 then self.danger_music = false end
+    else
+        --currently playing danger
+        local toggle_back = true
+        for _, prow in pairs({panels[self.height], panels[self.height-1], panels[self.height-2], panels[self.height-3]}) do
+            for idx=1, width do
+                if prow[idx].color ~= 0 then
+                    toggle_back = false
+                    break
+                end
+            end
+        end
+        self.danger_music = not toggle_back
+    end
+
+
+
+
   if self.displacement == 0 and self.has_risen then
     self.top_cur_row = self.height
     self:new_row()
@@ -1238,7 +1244,7 @@ function Stack.PdP(self)
   end
   --Play Sounds / music
   if not music_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
-  
+
     if self.do_countdown then 
       if SFX_Go_Play == 1 then
         sounds.SFX.go:stop()
@@ -1249,48 +1255,22 @@ function Stack.PdP(self)
         sounds.SFX.countdown:play()
         SFX_Go_Play=0
       end
-        
+
     elseif (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
-      if sounds.music.characters[winningPlayer().character].normal_music_start then
-        sounds.music.characters[winningPlayer().character].normal_music_start:stop()
-      end
-      sounds.music.characters[winningPlayer().character].normal_music:stop()
-      normal_music_intro_finished = nil
-      if sounds.music.characters[winningPlayer().character].danger_music_start and not danger_music_intro_finished then
-        if danger_music_intro_started and not sounds.music.characters[winningPlayer().character].danger_music_start:isPlaying() then
-          danger_music_intro_finished = true
-        else
-          sounds.music.characters[winningPlayer().character].danger_music_start:play()
-          danger_music_intro_started = true
-        end
-      end
-      if danger_music_intro_finished or not sounds.music.characters[winningPlayer().character].danger_music_start then
-        --danger music intro finished or doesn't exist
-        danger_music_intro_started = nil
-        sounds.music.characters[winningPlayer().character].danger_music:setLooping(true)
-        sounds.music.characters[winningPlayer().character].danger_music:play()
+      if (current_music_is_casual or table.getn(currently_playing_tracks) == 0) then
+        print("Music is now critical")
+        if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
+        stop_the_music()
+        find_and_add_music(winningPlayer().character, "danger_music")
+        current_music_is_casual = false
       end
     else --we should be playing normal_music or normal_music_start
-      if sounds.music.characters[winningPlayer().character].danger_music_start then
-        sounds.music.characters[winningPlayer().character].danger_music_start:stop()
-      end
-      sounds.music.characters[winningPlayer().character].danger_music:stop()
-      danger_music_intro_started = nil
-      danger_music_intro_finished = nil
-      danger_music_intro_playing = nil
-      if not normal_music_intro_started and not normal_music_intro_finished then
-        if sounds.music.characters[winningPlayer().character].normal_music_start then
-          sounds.music.characters[winningPlayer().character].normal_music_start:play()
-          normal_music_intro_exists = true
-          normal_music_intro_started = true
-        end
-      end
-      if normal_music_intro_finished or not sounds.music.characters[winningPlayer().character].normal_music_start or (normal_music_intro_started and not sounds.music.characters[winningPlayer().character].normal_music_start:isPlaying()) then
-        normal_music_intro_started = nil
-        normal_music_intro_finished = true
-        
-        sounds.music.characters[winningPlayer().character].normal_music:setLooping(true)
-        sounds.music.characters[winningPlayer().character].normal_music:play()
+      if (not current_music_is_casual or table.getn(currently_playing_tracks) == 0) then
+        print("Music is now casual")
+        if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
+        stop_the_music()
+        find_and_add_music(winningPlayer().character, "normal_music")
+        current_music_is_casual = true
       end
     end
   end
@@ -1393,6 +1373,7 @@ function Stack.PdP(self)
     end
     if stop_sounds then
       love.audio.stop()
+      stop_the_music()
       stop_sounds = nil
     end
     if self.game_over or (self.garbage_target and self.garbage_target.game_over) then
