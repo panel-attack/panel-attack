@@ -7,6 +7,7 @@ local char = string.char
 local byte = string.byte
 
 function flush_socket()
+  if not TCP_sock then return end
   local junk,err,data = TCP_sock:receive('*a')
   -- lol, if it returned successfully then that's bad!
   if not err then
@@ -50,6 +51,7 @@ end
 
 local lag_q = Queue()
 function net_send(...)
+  if not TCP_sock then return false end
   if not STONER_MODE then
     TCP_sock:send(...)
   else
@@ -58,13 +60,14 @@ function net_send(...)
       TCP_sock:send(unpack(lag_q:pop()))
     end
   end
+  return true
 end
 
 function json_send(obj)
   local json = json.encode(obj)
   local len = json:len()
   local prefix = "J"..char(floor(len/65536))..char(floor((len/256)%256))..char(len%256)
-  net_send(prefix..json)
+  return net_send(prefix..json)
 end
 
 function undo_stonermode()

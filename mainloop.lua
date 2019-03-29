@@ -130,6 +130,7 @@ do
   local active_idx = 1
   function main_select_mode()
     love.audio.stop()
+    currently_spectating = false
     stop_the_music()
     close_socket()
     logged_in = 0
@@ -480,7 +481,7 @@ function main_character_select()
     my_win_count = 0
     op_win_count = 0
     write_char_sel_settings_to_file()
-    json_send({leave_room=true})
+    return json_send({leave_room=true})
   end
   local name_to_xy = {}
   print("character_select_mode = "..(character_select_mode or "nil"))
@@ -827,7 +828,7 @@ function main_character_select()
             selected = not selected
           elseif active_str == "leave" then
             if character_select_mode == "2p_net_vs" then
-              do_leave()
+              if not do_leave() then return main_dumb_transition, {main_select_mode, "Error when leaving online"} end
             else
               return main_select_mode
             end
@@ -844,7 +845,7 @@ function main_character_select()
         elseif menu_escape(k) then
           if active_str == "leave" then
             if character_select_mode == "2p_net_vs" then
-              do_leave()
+              if not do_leave() then return main_dumb_transition, {main_select_mode, "Error when leaving online"} end
             else
               return main_select_mode
             end
@@ -1440,6 +1441,7 @@ function main_local_vs()
 end
 
 function main_local_vs_yourself_setup()
+  currently_spectating = false
   my_name = config.name or "Player 1"
   op_name = nil
   op_state = nil
