@@ -129,6 +129,7 @@ do
   local active_idx = 1
   function main_select_mode()
     love.audio.stop()
+    currently_spectating = false
     close_socket()
     logged_in = 0
     connection_up_time = 0
@@ -1430,6 +1431,7 @@ function main_local_vs()
 end
 
 function main_local_vs_yourself_setup()
+  currently_spectating = false
   my_name = config.name or "Player 1"
   op_name = nil
   op_state = nil
