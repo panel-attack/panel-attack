@@ -169,6 +169,37 @@ function deepcpy(tab)
   return ret
 end
 
+--Note: this round() doesn't work with negative numbers
+function round(positive_decimal_number, number_of_decimal_places)
+  if not number_of_decimal_places then
+    number_of_decimal_places = 0
+  end
+  return math.floor(positive_decimal_number*10^number_of_decimal_places+0.5)/10^number_of_decimal_places
+end
+
+function frames_to_time_string(frame_count, include_60ths_of_secs)
+  local hour_min_sep = ":"
+  local min_sec_sep = ":"
+  local sec_60th_sep = "'"
+  local ret = ""
+  if frame_count >= 216000 then 
+    --enough to include hours 
+    ret = ret..math.floor(frame_count / 216000)
+    --minutes with 2 digits (like 05 instead of 5)
+    ret = ret..hour_min_sep..string.format("%02d", math.floor(frame_count / 3600 % 3600))
+  else
+    --minutes with only one digit if only one digit if needed
+    ret = ret..math.floor(frame_count / 3600 % 3600)
+  end
+  --seconds
+  ret = ret..min_sec_sep..string.format("%02d", math.floor(frame_count / 60 % 60))
+  if include_60ths_of_secs then
+    --also include 60ths of a second
+    ret = ret..sec_60th_sep..string.format("%02d", frame_count % 60)
+  end
+  return ret
+end
+
 -- Not actually for encoding/decoding byte streams as base64.
 -- Rather, it's for encoding streams of 6-bit symbols in printable characters.
 base64encode = procat("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890+/")
@@ -182,4 +213,16 @@ for i=1,64 do
     val=val%bit
     bit=bit/2
   end
+end
+
+-- split the input string on some separator, returns table
+function split(inputstr, sep)
+    sep = sep or '%s'
+    local t = {}
+    for field, s in string.gmatch(inputstr, "([^" .. sep .. "]*)(" .. sep .. "?)") do
+        table.insert(t, field)
+        if s == "" then
+            return t
+        end
+    end
 end

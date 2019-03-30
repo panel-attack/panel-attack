@@ -1,0 +1,1 @@
+Note: if you can't get socket to work when trying to host a linux server, try putting all this socket.lua and socket folder into the folder where you are running server.lua.
