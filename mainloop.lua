@@ -28,12 +28,17 @@ function fmainloop()
   local func, arg = main_select_mode, nil
   replay = {}
   config = {character="lip", level=5, name="defaultname", master_volume=100, SFX_volume=100, music_volume=100, debug_mode=false, ready_countdown_1P = true, save_replays_publicly = "with my name", assets_dir=default_assets_dir, sounds_dir=default_sounds_dir}
-  gprint("Copying Puzzles Readme")
-  wait()
-  copy_file("Custom Puzzles Readme.txt", "puzzles/README.txt")
   gprint("Reading config file", 300, 280)
   wait()
   read_conf_file() -- TODO: stop making new config files
+  local x,y, display = love.window.getPosition()
+  love.window.setPosition(
+    config.window_x or x,
+    config.window_y or y,
+    config.display or display) 
+  gprint("Copying Puzzles Readme")
+  wait()
+  copy_file("Custom Puzzles Readme.txt", "puzzles/README.txt")
   gprint("Reading replay file", 300, 280)
   wait()
   read_replay_file()
@@ -2238,5 +2243,8 @@ end
 
 function love.quit()
   closing = true
+  config.window_x, config.window_y, config.display = love.window.getPosition()
+  write_conf_file()
   write_char_sel_settings_to_file()
+  
 end
