@@ -283,8 +283,9 @@ function Stack.render(self)
                   draw(imgs.pop, draw_x, draw_y, 0, 16/popped_w, 16/popped_h)
                 end
               elseif panel.y_offset == -1 then
+                local p_w, p_h = IMG_panels[panel.color][garbage_bounce_table[panel.timer] or 1]:getDimensions()
                 draw(IMG_panels[panel.color][
-                    garbage_bounce_table[panel.timer] or 1], draw_x, draw_y)
+                    garbage_bounce_table[panel.timer] or 1], draw_x, draw_y, 0, 16/p_w, 16/p_h)
               end
             elseif flash_time % 2 == 1 then
               if panel.metal then
