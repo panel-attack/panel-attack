@@ -1740,7 +1740,7 @@ function Stack.check_matches(self)
             gpan_row = string.sub(self.gpanel_buffer, 1, 6)
             self.gpanel_buffer = string.sub(self.gpanel_buffer,7)
             if string.len(self.gpanel_buffer) <= 10*self.width then
-              ask_for_gpanels(string.sub(self.panel_buffer,-6))
+              ask_for_gpanels(string.sub(self.panel_buffer,-6), self)
             end
           end
           panel.color = string.sub(gpan_row, col, col) + 0
