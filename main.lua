@@ -49,22 +49,13 @@ function love.update(dt)
       love.mouse.setVisible(true)
     end
   end
-  
-  
-  if consuming_timesteps then
-    leftover_time = leftover_time + dt
-  end
-  joystick_ax()
-  if not consuming_timesteps then
-    key_counts()
-  end
+
+
+  leftover_time = leftover_time + dt
+
   local status, err = coroutine.resume(mainloop)
   if not status then
     error(err..'\n'..debug.traceback(mainloop))
-  end
-  if not consuming_timesteps then
-    this_frame_keys = {}
-    this_frame_unicodes = {}
   end
   this_frame_messages = {}
 
