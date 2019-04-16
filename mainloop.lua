@@ -62,8 +62,8 @@ end
 function variable_step(f)
   for i=1,4 do
     if leftover_time >= 1/60 then
-      f()
       joystick_ax()
+      f()
       key_counts()
       this_frame_keys = {}
       this_frame_unicodes = {}
