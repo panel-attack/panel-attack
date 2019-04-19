@@ -1323,16 +1323,19 @@ function main_net_vs()
     end
 
     print(P1.CLOCK, P2.CLOCK)
-    variable_step(function()
-      if (P1 and P1.play_to_end) or (P2 and P2.play_to_end) then
-        if not P1.game_over then
-          if currently_spectating then
-            P1:foreign_run()
-          else
-            P1:local_run()
-          end
+    if (P1 and P1.play_to_end) or (P2 and P2.play_to_end) then
+      if not P1.game_over then
+        if currently_spectating then
+          P1:foreign_run()
+        else
+          P1:local_run()
         end
-      else
+      end
+      if not P2.game_over then
+        P2:foreign_run()
+      end
+    else
+      variable_step(function()
         if not P1.game_over then
           if currently_spectating then
               P1:foreign_run()
@@ -1340,11 +1343,12 @@ function main_net_vs()
             P1:local_run()
           end
         end
-      end
-      if not P2.game_over then
-        P2:foreign_run()
-      end
-    end)
+        if not P2.game_over then
+          P2:foreign_run()
+        end
+      end)
+    end
+
     local outcome_claim = nil
     if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
       end_text = "Draw"
