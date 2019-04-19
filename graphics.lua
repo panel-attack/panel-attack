@@ -6,9 +6,9 @@ local ceil = math.ceil
 
 function load_img(path_and_name)
   local img
-  if pcall(function () 
+  if pcall(function ()
     img = love.image.newImageData("assets/"..(config.assets_dir or default_assets_dir).."/"..path_and_name)
-  end) then 
+  end) then
     if config.assets_dir and config.assets_dir ~= default_assets_dir then
       print("loaded custom asset: "..config.assets_dir.."/"..path_and_name)
     end
@@ -205,11 +205,15 @@ function Stack.render(self)
     mx = mx / GFX_SCALE
     my = my / GFX_SCALE
   end
+  local portrait_w, portrait_h = IMG_garbage[self.character].portrait:getDimensions()
   if P1 == self then
-    draw(IMG_garbage[self.character].portrait, self.pos_x, self.pos_y)
+    draw(IMG_garbage[self.character].portrait, self.pos_x, self.pos_y, 0, 96/portrait_w, 192/portrait_h)
   else
-    draw(IMG_garbage[self.character].portrait, self.pos_x+96, self.pos_y, 0, -1)
+    draw(IMG_garbage[self.character].portrait, self.pos_x+96, self.pos_y, 0, (96/portrait_w)*-1, 192/portrait_h)
   end
+  local metal_w, metal_h = IMG_metal:getDimensions()
+  local metall_w, metall_h = IMG_metal_l:getDimensions()
+  local metalr_w, metalr_h = IMG_metal_r:getDimensions()
   local shake_idx = #shake_arr - self.shake_time
   local shake = ceil((shake_arr[shake_idx] or 0) * 13)
   for row=0,self.height do
@@ -227,60 +231,73 @@ function Stack.render(self)
           if panel.x_offset == 0 and panel.y_offset == 0 then
             -- draw the entire block!
             if panel.metal then
-              draw(IMG_metal_l, draw_x, draw_y)
-              draw(IMG_metal_r, draw_x+16*(panel.width-1)+8,draw_y)
+              draw(IMG_metal_l, draw_x, draw_y, 0, 8/metall_w, 16/metall_h)
+              draw(IMG_metal_r, draw_x+16*(panel.width-1)+8,draw_y, 0, 8/metalr_w, 16/metalr_h)
               for i=1,2*(panel.width-1) do
-                draw(IMG_metal, draw_x+8*i, draw_y)
+                draw(IMG_metal, draw_x+8*i, draw_y, 0, 8/metal_w, 16/metal_h)
               end
             else
               local height, width = panel.height, panel.width
               local top_y = draw_y - (height-1) * 16
               local use_1 = ((height-(height%2))/2)%2==0
+              local filler_w, filler_h = imgs.filler1:getDimensions()
               for i=0,height-1 do
                 for j=1,width-1 do
                   draw((use_1 or height<3) and imgs.filler1 or
-                    imgs.filler2, draw_x+16*j-8, top_y+16*i)
+                    imgs.filler2, draw_x+16*j-8, top_y+16*i, 0, 16/filler_w, 16/filler_h)
                   use_1 = not use_1
                 end
               end
               if height%2==1 then
-                draw(imgs.face, draw_x+8*(width-1), top_y+16*((height-1)/2))
+                local face_w, face_h = imgs.face:getDimensions()
+                draw(imgs.face, draw_x+8*(width-1), top_y+16*((height-1)/2), 0, 16/face_w, 16/face_h)
               else
-                draw(imgs.doubleface, draw_x+8*(width-1), top_y+16*((height-2)/2))
+                local face_w, face_h = imgs.doubleface:getDimensions()
+                draw(imgs.doubleface, draw_x+8*(width-1), top_y+16*((height-2)/2), 0, 16/face_w, 32/face_h)
               end
-              draw(imgs.left, draw_x, top_y, 0, 1, height*16)
-              draw(imgs.right, draw_x+16*(width-1)+8, top_y, 0, 1, height*16)
-              draw(imgs.top, draw_x, top_y, 0, width*16)
-              draw(imgs.bot, draw_x, draw_y+14, 0, width*16)
-              draw(imgs.topleft, draw_x, top_y)
-              draw(imgs.topright, draw_x+16*width-8, top_y)
-              draw(imgs.botleft, draw_x, draw_y+13)
-              draw(imgs.botright, draw_x+16*width-8, draw_y+13)
+              local corner_w, corner_h = imgs.topleft:getDimensions()
+              local lr_w, lr_h = imgs.left:getDimensions()
+              local topbottom_w, topbottom_h = imgs.top:getDimensions()
+              draw(imgs.left, draw_x, top_y, 0, 8/lr_w, (1/lr_h)*height*16)
+              draw(imgs.right, draw_x+16*(width-1)+8, top_y, 0, 8/lr_w, (1/lr_h)*height*16)
+              draw(imgs.top, draw_x, top_y, 0, (1/topbottom_w)*width*16, 2/topbottom_h)
+              draw(imgs.bot, draw_x, draw_y+14, 0, (1/topbottom_w)*width*16, 2/topbottom_h)
+              draw(imgs.topleft, draw_x, top_y, 0, 8/corner_w, 3/corner_h)
+              draw(imgs.topright, draw_x+16*width-8, top_y, 0, 8/corner_w, 3/corner_h)
+              draw(imgs.botleft, draw_x, draw_y+13, 0, 8/corner_w, 3/corner_h)
+              draw(imgs.botright, draw_x+16*width-8, draw_y+13, 0, 8/corner_w, 3/corner_h)
             end
           end
           if panel.state == "matched" then
             local flash_time = panel.initial_time - panel.timer
+
+
+            local flashed_w, flashed_h = IMG_metal_flash:getDimensions()
             if flash_time >= self.FRAMECOUNT_FLASH then
               if panel.timer > panel.pop_time then
                 if panel.metal then
-                  draw(IMG_metal_l, draw_x, draw_y)
-                  draw(IMG_metal_r, draw_x+8, draw_y)
+                  draw(IMG_metal_l, draw_x, draw_y, 0, 8/metall_w, 16/metall_h)
+                  draw(IMG_metal_r, draw_x+8, draw_y, 0, 8/metalr_w, 16/metalr_h)
                 else
-                  draw(imgs.pop, draw_x, draw_y)
+                  local popped_w, popped_h = imgs.pop:getDimensions()
+                  draw(imgs.pop, draw_x, draw_y, 0, 16/popped_w, 16/popped_h)
                 end
               elseif panel.y_offset == -1 then
+                local p_w, p_h = IMG_panels[panel.color][garbage_bounce_table[panel.timer] or 1]:getDimensions()
                 draw(IMG_panels[panel.color][
-                    garbage_bounce_table[panel.timer] or 1], draw_x, draw_y)
+                    garbage_bounce_table[panel.timer] or 1], draw_x, draw_y, 0, 16/p_w, 16/p_h)
               end
             elseif flash_time % 2 == 1 then
               if panel.metal then
-                draw(IMG_metal_l, draw_x, draw_y)
-                draw(IMG_metal_r, draw_x+8, draw_y)
+                draw(IMG_metal_l, draw_x, draw_y, 0, 8/metall_w, 16/metall_h)
+                draw(IMG_metal_r, draw_x+8, draw_y, 0, 8/metalr_w, 16/metalr_h)
               else
-                draw(imgs.pop, draw_x, draw_y)
+                local popped_w, popped_h = imgs.pop:getDimensions()
+                draw(imgs.pop, draw_x, draw_y, 0, 16/popped_w, 16/popped_h)
               end
             else
-              draw(imgs.flash, draw_x, draw_y)
+              local flashed_w, flashed_h = imgs.flash:getDimensions()
+              draw(imgs.flash, draw_x, draw_y, 0, 16/flashed_w, 16/flashed_h)
             end
           end
           --this adds the drawing of state flags to garbage panels
@@ -322,7 +339,8 @@ function Stack.render(self)
           else
             draw_frame = 1
           end
-          draw(IMG_panels[panel.color][draw_frame], draw_x, draw_y)
+          local panel_w, panel_h = IMG_panels[panel.color][draw_frame]:getDimensions()
+          draw(IMG_panels[panel.color][draw_frame], draw_x, draw_y, 0, 16/panel_w, 16/panel_h)
           if config.debug_mode then
             gprint(panel.state, draw_x*3, draw_y*3)
             if panel.match_anyway ~= nil then
@@ -355,8 +373,8 @@ function Stack.render(self)
       local time_left = 120 - (self.game_stopwatch or 120)/60
       local mins = math.floor(time_left/60)
       local secs = math.ceil(time_left% 60)
-      if secs == 60 then 
-        secs = 0 
+      if secs == 60 then
+        secs = 0
         mins = mins+1
       end
       gprint("Time: "..string.format("%01d:%02d",mins,secs), self.score_x, 160)
@@ -390,7 +408,7 @@ function Stack.render(self)
       gprint(inputs_to_print, self.score_x, 295)
     end
     if match_type then gprint(match_type, 375, 10) end
-    if P1 and P1.game_stopwatch and tonumber(P1.game_stopwatch) then 
+    if P1 and P1.game_stopwatch and tonumber(P1.game_stopwatch) then
       gprint(frames_to_time_string(P1.game_stopwatch, P1.mode == "endless"), 385, 25)
     end
     if not config.debug_mode then
@@ -432,7 +450,7 @@ end
 function Stack.render_countdown(self)
   if self.do_countdown and self.countdown_CLOCK then
     local ready_x = self.pos_x + 12
-    local initial_ready_y = self.pos_y 
+    local initial_ready_y = self.pos_y
     local ready_y_drop_speed = 6
     local countdown_x = self.pos_x + 40
     local countdown_y = self.pos_y + 64
