@@ -62,6 +62,7 @@ function love.update(dt)
   --Play music here
   for k, v in pairs(music_t) do
     if v and k - love.timer.getTime() < 0.007 then
+      v.t:stop()
       v.t:play()
       currently_playing_tracks[#currently_playing_tracks+1]=v.t
       if v.l then
