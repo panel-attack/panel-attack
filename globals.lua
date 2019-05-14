@@ -121,6 +121,8 @@ level_to_ncolors_vs            = {  5,  5,  5,  5,  5,  5,  5,  5,  6,  6}
 level_to_ncolors_time          = {  5,  5,  6,  6,  6,  6,  6,  6,  6,  6}
 -- How long panels will hover if not supported by anything, in frames.
 level_to_hover                 = { 12, 12, 11, 10,  9,  6,  5,  4,  3,  6}
+-- How long newly-transformed panels from garbage will hover before falling, in frames.
+level_to_garbage_panel_hover   = { 40, 35, 30, 25, 20, 15, 12,  9,  6,  3}
 -- How long panels flash for before popping, in frames.
 level_to_flash                 = { 44, 44, 42, 42, 38, 36, 34, 32, 30, 28}
 -- How long panels remain in their "face" frame before popping, in frames.
