@@ -685,7 +685,7 @@ function Stack.PdP(self)
 
   -- determine whether to play danger music
     -- Changed this to play danger when something in top 3 rows
-    -- and to play casual when nothing in top 4 rows
+    -- and to play casual when nothing in top 3 rows
     if not self.danger_music then
         -- currently playing casual
         for _, prow in pairs({panels[self.height], panels[self.height-1], panels[self.height-2]}) do
@@ -700,7 +700,7 @@ function Stack.PdP(self)
     else
         --currently playing danger
         local toggle_back = true
-        for _, prow in pairs({panels[self.height], panels[self.height-1], panels[self.height-2], panels[self.height-3]}) do
+        for _, prow in pairs({panels[self.height], panels[self.height-1], panels[self.height-2]}) do
             for idx=1, width do
                 if prow[idx].color ~= 0 then
                     toggle_back = false
