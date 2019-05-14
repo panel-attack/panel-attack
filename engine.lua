@@ -986,7 +986,7 @@ function Stack.PdP(self)
             if panel.combo_size == panel.combo_index then
               self.panels_cleared = self.panels_cleared + 1
               if self.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
-                self.metal_panels_queued = self.metal_panels_queued + 1
+                self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
               end
               SFX_Pop_Play = 1
               self.poppedPanelIndex = panel.combo_index
@@ -1003,7 +1003,7 @@ function Stack.PdP(self)
                   * self.FRAMECOUNT_POP
               self.panels_cleared = self.panels_cleared + 1
               if self.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
-                self.metal_panels_queued = self.metal_panels_queued + 1
+                self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
               end
               SFX_Pop_Play = 1
               self.poppedPanelIndex = panel.combo_index
