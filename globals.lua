@@ -16,8 +16,7 @@ bounce_table = {1, 1, 1, 1,
                 3, 3, 3,
                 4, 4, 4}
 
-garbage_bounce_table = {
-                        2, 2, 2,
+garbage_bounce_table = {2, 2, 2,
                         3, 3, 3,
                         4, 4, 4,
                         1, 1}

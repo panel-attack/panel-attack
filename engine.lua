@@ -462,6 +462,8 @@ function Panel.clear_flags(self)
   self.is_swapping_from_left = nil
   self.dont_swap = nil
   self.chaining = nil
+  -- Animation timer for "bounce" after falling from garbage.
+  self.fell_from_garbage = nil
   self.state = "normal"
 end
 
@@ -820,6 +822,7 @@ function Stack.PdP(self)
               panel:clear()
               panel.color, panel.chaining = color, chaining
               self:set_hoverers(row,col,self.FRAMECOUNT_GPHOVER,true,true)
+              panel.fell_from_garbage = 12
             else
               panel.state = "normal"
             end
@@ -1032,6 +1035,15 @@ function Stack.PdP(self)
             error("something terrible happened")
           end
         -- the timer-expiring action has completed
+        end
+      end
+      -- Advance the fell-from-garbage bounce timer, or clear it and stop animating if the panel isn't hovering or falling.
+      if cntinue then
+      elseif panel.fell_from_garbage then
+        if panel.state ~= "hovering" and panel.state ~= "falling" then
+          panel.fell_from_garbage = nil
+        else
+          panel.fell_from_garbage = panel.fell_from_garbage - 1
         end
       end
     end
