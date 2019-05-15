@@ -9,7 +9,7 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_local_vs_yourself_setup, main_local_vs_yourself,
   main_options, exit_options_menu, main_music_test
 
-VERSION = "030"
+VERSION = "037"
 local PLAYING = "playing"  -- room states
 local CHARACTERSELECT = "character select" --room states
 local currently_spectating = false
@@ -23,6 +23,7 @@ spectator_list = nil
 spectators_string = ""
 debug_mode_text = {[true]="On", [false]="Off"}
 ready_countdown_1P_text = {[true]="On", [false]="Off"}
+leftover_time = 0
 
 function fmainloop()
   local func, arg = main_select_mode, nil
@@ -61,9 +62,11 @@ end
 function variable_step(f)
   for i=1,4 do
     if leftover_time >= 1/60 then
+      joystick_ax()
       f()
       key_counts()
       this_frame_keys = {}
+      this_frame_unicodes = {}
       leftover_time = leftover_time - 1/60
     end
   end
@@ -188,18 +191,24 @@ do
       gprint(arrow, 300, 280)
       gprint(to_print, 300, 280)
       wait()
-      if menu_up(k) then
-        active_idx = wrap(1, active_idx-1, #items)
-      elseif menu_down(k) then
-        active_idx = wrap(1, active_idx+1, #items)
-      elseif menu_enter(k) then
-        return items[active_idx][2], items[active_idx][3]
-      elseif menu_escape(k) then
-        if active_idx == #items then
-          return items[active_idx][2], items[active_idx][3]
-        else
-          active_idx = #items
+      local ret = nil
+      variable_step(function()
+        if menu_up(k) then
+          active_idx = wrap(1, active_idx-1, #items)
+        elseif menu_down(k) then
+          active_idx = wrap(1, active_idx+1, #items)
+        elseif menu_enter(k) then
+          ret = {items[active_idx][2], items[active_idx][3]}
+        elseif menu_escape(k) then
+          if active_idx == #items then
+            ret = {items[active_idx][2], items[active_idx][3]}
+          else
+            active_idx = #items
+          end
         end
+      end)
+      if ret then
+        return unpack(ret)
       end
     end
   end
@@ -216,6 +225,8 @@ function main_select_speed_99(next_func, ...)
   difficulty = config.endless_difficulty or 1
   active_idx = 1
   local k = K[1]
+  local ret = nil
+  local next_func_args = {speed, difficulty, ...}
   while true do
     local to_print, to_print2, arrow = "", "", ""
     for i=1,#items do
@@ -232,37 +243,42 @@ function main_select_speed_99(next_func, ...)
     gprint(to_print, 300, 280)
     gprint(to_print2, 300, 280)
     wait()
-    if menu_up(k) then
-      active_idx = wrap(1, active_idx-1, #items)
-    elseif menu_down(k) then
-      active_idx = wrap(1, active_idx+1, #items)
-    elseif menu_right(k) then
-      if active_idx==1 then speed = bound(1,speed+1,99)
-      elseif active_idx==2 then difficulty = bound(1,difficulty+1,3) end
-    elseif menu_left(k) then
-      if active_idx==1 then speed = bound(1,speed-1,99)
-      elseif active_idx==2 then difficulty = bound(1,difficulty-1,3) end
-    elseif menu_enter(k) then
-      if active_idx == 3 then
-        if config.endless_speed ~= speed or config.endless_difficulty ~= difficulty then
-          config.endless_speed = speed
-          config.endless_difficulty = difficulty
-          gprint("saving settings...", 300,280)
-          wait()
-          write_conf_file()
+    variable_step(function()
+      if menu_up(k) then
+        active_idx = wrap(1, active_idx-1, #items)
+      elseif menu_down(k) then
+        active_idx = wrap(1, active_idx+1, #items)
+      elseif menu_right(k) then
+        if active_idx==1 then speed = bound(1,speed+1,99)
+        elseif active_idx==2 then difficulty = bound(1,difficulty+1,3) end
+      elseif menu_left(k) then
+        if active_idx==1 then speed = bound(1,speed-1,99)
+        elseif active_idx==2 then difficulty = bound(1,difficulty-1,3) end
+      elseif menu_enter(k) then
+        if active_idx == 3 then
+          if config.endless_speed ~= speed or config.endless_difficulty ~= difficulty then
+            config.endless_speed = speed
+            config.endless_difficulty = difficulty
+            gprint("saving settings...", 300,280)
+            wait()
+            write_conf_file()
+          end
+          ret = {items[active_idx][2], next_func_args}
+        elseif active_idx == 4 then
+          ret = {items[active_idx][2], items[active_idx][3]}
+        else
+          active_idx = wrap(1, active_idx + 1, #items)
         end
-        return items[active_idx][2], {speed, difficulty, ...}
-      elseif active_idx == 4 then
-        return items[active_idx][2], items[active_idx][3]
-      else
-        active_idx = wrap(1, active_idx + 1, #items)
+      elseif menu_escape(k) then
+        if active_idx == #items then
+          ret = {items[active_idx][2], items[active_idx][3]}
+        else
+          active_idx = #items
+        end
       end
-    elseif menu_escape(k) then
-      if active_idx == #items then
-        return items[active_idx][2], items[active_idx][3]
-      else
-        active_idx = #items
-      end
+    end)
+    if ret then
+      return unpack(ret)
     end
   end
 end
@@ -603,7 +619,6 @@ function main_character_select()
   print("got to LOC before net_vs_room character select loop")
   menu_clock = 0
   while true do
-    menu_clock = menu_clock + 1
     if character_select_mode == "2p_net_vs" then
       for _,msg in ipairs(this_frame_messages) do
         if msg.win_counts then
@@ -817,7 +832,10 @@ function main_character_select()
       gprint(match_type_message,100,85)
     end
     wait()
-    if not currently_spectating then
+    local ret = nil
+    variable_step(function()
+      menu_clock = menu_clock + 1
+      if not currently_spectating then
         if menu_up(k) then
           if not selected then move_cursor(up) end
         elseif menu_down(k) then
@@ -837,9 +855,11 @@ function main_character_select()
             selected = not selected
           elseif active_str == "leave" then
             if character_select_mode == "2p_net_vs" then
-              if not do_leave() then return main_dumb_transition, {main_select_mode, "Error when leaving online"} end
+              if not do_leave() then
+                ret = {main_dumb_transition, {main_select_mode, "Error when leaving online"}}
+              end
             else
-              return main_select_mode
+              ret = {main_select_mode}
             end
           elseif active_str == "random" then
             config.character = uniformly(characters)
@@ -854,9 +874,11 @@ function main_character_select()
         elseif menu_escape(k) then
           if active_str == "leave" then
             if character_select_mode == "2p_net_vs" then
-              if not do_leave() then return main_dumb_transition, {main_select_mode, "Error when leaving online"} end
+              if not do_leave() then
+                ret = {main_dumb_transition, {main_select_mode, "Error when leaving online"}}
+              end
             else
-              return main_select_mode
+              ret = {main_select_mode}
             end
           end
           selected = false
@@ -869,11 +891,15 @@ function main_character_select()
           json_send({menu_state=my_state})
         end
         prev_state = my_state
-    else -- (we are are spectating)
+      else -- (we are are spectating)
         if menu_escape(k) then
           do_leave()
-          return main_net_vs_lobby
+          ret = {main_net_vs_lobby}
         end
+      end
+    end)
+    if ret then
+      return unpack(ret)
     end
     if my_state.ready and character_select_mode == "1p_vs_yourself" then
       P1 = Stack(1, "vs", my_state.level, my_state.character)
@@ -1047,59 +1073,65 @@ function main_net_vs_lobby()
     gprint(join_community_msg, 20, 560)
 
     wait()
-    if menu_up(k) then
-      if showing_leaderboard then
-        if leaderboard_first_idx_to_show>1 then
-          leaderboard_first_idx_to_show = leaderboard_first_idx_to_show - 1
-          leaderboard_last_idx_to_show = leaderboard_last_idx_to_show - 1
-          leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
-        end
-      else
-        active_idx = wrap(1, active_idx-1, #items)
-      end
-    elseif menu_down(k) then
-      if showing_leaderboard then
-        if leaderboard_last_idx_to_show < #leaderboard_report then
-          leaderboard_first_idx_to_show = leaderboard_first_idx_to_show + 1
-          leaderboard_last_idx_to_show = leaderboard_last_idx_to_show + 1
-          leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
-        end
-      else
-        active_idx = wrap(1, active_idx+1, #items)
-      end
-    elseif menu_enter(k) then
-      spectator_list = {}
-      spectators_string = ""
-      if active_idx == #items then
-        return main_select_mode
-      end
-      if active_idx == #items - 1 then
-        if not showing_leaderboard then
-          json_send({leaderboard_request=true})
+    local ret = nil
+    variable_step(function()
+      if menu_up(k) then
+        if showing_leaderboard then
+          if leaderboard_first_idx_to_show>1 then
+            leaderboard_first_idx_to_show = leaderboard_first_idx_to_show - 1
+            leaderboard_last_idx_to_show = leaderboard_last_idx_to_show - 1
+            leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
+          end
         else
-          showing_leaderboard = false --toggle it off
+          active_idx = wrap(1, active_idx-1, #items)
         end
-      elseif active_idx <= lastPlayerIndex then
-        my_name = config.name
-        op_name = items[active_idx]
-        currently_spectating = false
-        sent_requests[op_name] = true
-        request_game(items[active_idx])
-      else
-        my_name = items[active_idx].a
-        op_name = items[active_idx].b
-        currently_spectating = true
-        room_number_last_spectated = items[active_idx].roomNumber
-        request_spectate(items[active_idx].roomNumber)
+      elseif menu_down(k) then
+        if showing_leaderboard then
+          if leaderboard_last_idx_to_show < #leaderboard_report then
+            leaderboard_first_idx_to_show = leaderboard_first_idx_to_show + 1
+            leaderboard_last_idx_to_show = leaderboard_last_idx_to_show + 1
+            leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
+          end
+        else
+          active_idx = wrap(1, active_idx+1, #items)
+        end
+      elseif menu_enter(k) then
+        spectator_list = {}
+        spectators_string = ""
+        if active_idx == #items then
+          ret = {main_select_mode}
+        end
+        if active_idx == #items - 1 then
+          if not showing_leaderboard then
+            json_send({leaderboard_request=true})
+          else
+            showing_leaderboard = false --toggle it off
+          end
+        elseif active_idx <= lastPlayerIndex then
+          my_name = config.name
+          op_name = items[active_idx]
+          currently_spectating = false
+          sent_requests[op_name] = true
+          request_game(items[active_idx])
+        else
+          my_name = items[active_idx].a
+          op_name = items[active_idx].b
+          currently_spectating = true
+          room_number_last_spectated = items[active_idx].roomNumber
+          request_spectate(items[active_idx].roomNumber)
+        end
+      elseif menu_escape(k) then
+        if active_idx == #items then
+          ret = {main_select_mode}
+        elseif showing_leaderboard then
+          showing_leaderboard = false
+        else
+          active_idx = #items
+        end
       end
-    elseif menu_escape(k) then
-      if active_idx == #items then
-        return main_select_mode
-      elseif showing_leaderboard then
-        showing_leaderboard = false
-      else
-        active_idx = #items
-      end
+    end)
+    if ret then
+      return unpack(ret)
     end
     active_back = active_idx == #items
     if active_idx ~= prev_act_idx then
@@ -1184,15 +1216,17 @@ function main_net_vs_setup(ip)
     gprint(to_print, 300, 280)
     wait()
     do_messages()
-    if P1_level then
-    elseif menu_enter(k) then
-      P1_level = my_level
-      net_send("L"..(({[10]=0})[my_level] or my_level))
-    elseif menu_up(k) or menu_right(k) then
-      my_level = bound(1,my_level+1,10)
-    elseif menu_down(k) or menu_left(k) then
-      my_level = bound(1,my_level-1,10)
-    end
+    variable_step(function()
+      if P1_level then
+      elseif menu_enter(k) then
+        P1_level = my_level
+        net_send("L"..(({[10]=0})[my_level] or my_level))
+      elseif menu_up(k) or menu_right(k) then
+        my_level = bound(1,my_level+1,10)
+      elseif menu_down(k) or menu_left(k) then
+        my_level = bound(1,my_level-1,10)
+      end
+    end)
   end
   P1 = Stack(1, "vs", P1_level)
   P2 = Stack(2, "vs", P2_level)
@@ -1302,6 +1336,9 @@ function main_net_vs()
           P1:local_run()
         end
       end
+      if not P2.game_over then
+        P2:foreign_run()
+      end
     else
       variable_step(function()
         if not P1.game_over then
@@ -1311,11 +1348,12 @@ function main_net_vs()
             P1:local_run()
           end
         end
+        if not P2.game_over then
+          P2:foreign_run()
+        end
       end)
     end
-    if not P2.game_over then
-      P2:foreign_run()
-    end
+
     local outcome_claim = nil
     if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
       end_text = "Draw"
@@ -1376,26 +1414,28 @@ main_local_vs_setup = multi_func(function()
         ..(chosen[2] and "" or "Choose ") .. "P2 level: "..(maybe[2])
     gprint(to_print, 300, 280)
     wait()
-    for i=1,2 do
-      local k=K[i]
-      if menu_escape(k) then
-        if chosen[i] then
-          chosen[i] = nil
-        else
-          return main_select_mode
-        end
-      elseif menu_enter(k) then
-        chosen[i] = maybe[i]
-      elseif menu_up(k) or menu_right(k) then
-        if not chosen[i] then
-          maybe[i] = bound(1,maybe[i]+1,10)
-        end
-      elseif menu_down(k) or menu_left(k) then
-        if not chosen[i] then
-          maybe[i] = bound(1,maybe[i]-1,10)
+    variable_step(function()
+      for i=1,2 do
+        local k=K[i]
+        if menu_escape(k) then
+          if chosen[i] then
+            chosen[i] = nil
+          else
+            return main_select_mode
+          end
+        elseif menu_enter(k) then
+          chosen[i] = maybe[i]
+        elseif menu_up(k) or menu_right(k) then
+          if not chosen[i] then
+            maybe[i] = bound(1,maybe[i]+1,10)
+          end
+        elseif menu_down(k) or menu_left(k) then
+          if not chosen[i] then
+            maybe[i] = bound(1,maybe[i]-1,10)
+          end
         end
       end
-    end
+    end)
   end
   to_print = "P1 level: "..maybe[1].."\nP2 level: "..(maybe[2])
   P1 = Stack(1, "vs", chosen[1])
@@ -1535,22 +1575,28 @@ function main_replay_vs()
       gprint(str, 350, 400)
     end
     wait()
-    if this_frame_keys["escape"] then
-      return main_select_mode
-    end
-    if this_frame_keys["return"] then
-      run = not run
-    end
-    if this_frame_keys["\\"] then
-      run = false
-    end
-    if run or this_frame_keys["\\"] then
-      if not P1.game_over then
-        P1:foreign_run()
+    local ret = nil
+    variable_step(function()
+      if this_frame_keys["escape"] then
+        ret = {main_select_mode}
       end
-      if not P2.game_over then
-        P2:foreign_run()
+      if this_frame_keys["return"] then
+        run = not run
       end
+      if this_frame_keys["\\"] then
+        run = false
+      end
+      if run or this_frame_keys["\\"] then
+        if not P1.game_over then
+          P1:foreign_run()
+        end
+        if not P2.game_over then
+          P2:foreign_run()
+        end
+      end
+    end)
+    if ret then
+      return unpack(ret)
     end
     if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
       end_text = "Draw"
@@ -1568,7 +1614,6 @@ function main_replay_vs()
       end
     end
     if end_text then
-
       return main_dumb_transition, {main_select_mode, end_text}
     end
   end
@@ -1594,22 +1639,28 @@ function main_replay_endless()
   while true do
     P1:render()
     wait()
-    if this_frame_keys["escape"] then
-      return main_select_mode
-    end
-    if this_frame_keys["return"] then
-      run = not run
-    end
-    if this_frame_keys["\\"] then
-      run = false
-    end
-    if run or this_frame_keys["\\"] then
-      if P1.game_over then
-      -- TODO: proper game over.
-        local end_text = "You scored "..P1.score.."\nin "..frames_to_time_string(P1.game_stopwatch, true)
-        return main_dumb_transition, {main_select_mode, end_text, 30}
+    local ret = nil
+    variable_step(function()
+      if this_frame_keys["escape"] then
+        ret = {main_select_mode}
       end
-      P1:foreign_run()
+      if this_frame_keys["return"] then
+        run = not run
+      end
+      if this_frame_keys["\\"] then
+        run = false
+      end
+      if run or this_frame_keys["\\"] then
+        if P1.game_over then
+        -- TODO: proper game over.
+          local end_text = "You scored "..P1.score.."\nin "..frames_to_time_string(P1.game_stopwatch, true)
+          ret = {main_dumb_transition, {main_select_mode, end_text, 30}}
+        end
+        P1:foreign_run()
+      end
+    end)
+    if ret then
+      return unpack(ret)
     end
   end
 end
@@ -1638,32 +1689,38 @@ function main_replay_puzzle()
       gprint(str, 350, 400)
     end
     wait()
-    if this_frame_keys["escape"] then
-      return main_select_mode
-    end
-    if this_frame_keys["return"] then
-      run = not run
-    end
-    if this_frame_keys["\\"] then
-      run = false
-    end
-    if run or this_frame_keys["\\"] then
-      if P1.n_active_panels == 0 and
-          P1.prev_active_panels == 0 then
-        if P1:puzzle_done() then
-          return main_dumb_transition, {main_select_mode, "You win!"}
-        elseif P1.puzzle_moves == 0 then
-          return main_dumb_transition, {main_select_mode, "You lose :("}
-        end
+    local ret = nil
+    variable_step(function()
+      if this_frame_keys["escape"] then
+        ret =  {main_select_mode}
       end
-      P1:foreign_run()
+      if this_frame_keys["return"] then
+        run = not run
+      end
+      if this_frame_keys["\\"] then
+        run = false
+      end
+      if run or this_frame_keys["\\"] then
+        if P1.n_active_panels == 0 and
+            P1.prev_active_panels == 0 then
+          if P1:puzzle_done() then
+            ret = {main_dumb_transition, {main_select_mode, "You win!"}}
+          elseif P1.puzzle_moves == 0 then
+            ret = {main_dumb_transition, {main_select_mode, "You lose :("}}
+          end
+        end
+        P1:foreign_run()
+      end
+    end)
+    if ret then
+      return unpack(ret)
     end
   end
 end
 
 function make_main_puzzle(puzzles)
-  local awesome_idx, ret = 1, nil
-  function ret()
+  local awesome_idx, next_func = 1, nil
+  function next_func()
     bg = IMG_stages[math.random(#IMG_stages)]
     consuming_timesteps = true
     replay.puzzle = {}
@@ -1680,30 +1737,37 @@ function make_main_puzzle(puzzles)
     while true do
       P1:render()
       wait()
-      if this_frame_keys["escape"] then
-        return main_select_puzz
-      end
-      if P1.n_active_panels == 0 and
-          P1.prev_active_panels == 0 then
-        if P1:puzzle_done() then
-          awesome_idx = (awesome_idx % #puzzles) + 1
-          write_replay_file()
-          if awesome_idx == 1 then
-            return main_dumb_transition, {main_select_puzz, "You win!", 30}
-          else
-            return main_dumb_transition, {ret, "You win!", 30}
-          end
-        elseif P1.puzzle_moves == 0 then
-          write_replay_file()
-          return main_dumb_transition, {main_select_puzz, "You lose :(", 30}
-        end
-      end
+      local ret = nil
       variable_step(function()
+        if this_frame_keys["escape"] then
+          ret = {main_select_puzz}
+        end
+        if P1.n_active_panels == 0 and
+            P1.prev_active_panels == 0 then
+          if P1:puzzle_done() then
+            awesome_idx = (awesome_idx % #puzzles) + 1
+            write_replay_file()
+            if awesome_idx == 1 then
+              ret = {main_dumb_transition, {main_select_puzz, "You win!", 30}}
+            else
+              ret = {main_dumb_transition, {ret, "You win!", 30}}
+            end
+          elseif P1.puzzle_moves == 0 then
+            write_replay_file()
+            ret = {main_dumb_transition, {main_select_puzz, "You lose :(", 30}}
+          end
+        end
         if P1.n_active_panels ~= 0 or P1.prev_active_panels ~= 0 or
-          P1.puzzle_moves ~= 0 then P1:local_run() end end)
+            P1.puzzle_moves ~= 0 then
+          P1:local_run()
+        end
+      end)
+      if ret then
+        return unpack(ret)
+      end
     end
   end
-  return ret
+  return next_func
 end
 
 do
@@ -1734,19 +1798,25 @@ do
       gprint(arrow, 400, 20)
       gprint(to_print, 400, 20)
       wait()
-      if menu_up(k) then
-        active_idx = wrap(1, active_idx-1, #items)
-      elseif menu_down(k) then
-        active_idx = wrap(1, active_idx+1, #items)
-      elseif menu_enter(k) then
-        last_puzzle_idx = active_idx
-        return items[active_idx][2], items[active_idx][3]
-      elseif menu_escape(k) then
-        if active_idx == #items then
-          return items[active_idx][2], items[active_idx][3]
-        else
-          active_idx = #items
+      local ret = nil
+      variable_step(function()
+        if menu_up(k) then
+          active_idx = wrap(1, active_idx-1, #items)
+        elseif menu_down(k) then
+          active_idx = wrap(1, active_idx+1, #items)
+        elseif menu_enter(k) then
+          last_puzzle_idx = active_idx
+          ret = {items[active_idx][2], items[active_idx][3]}
+        elseif menu_escape(k) then
+          if active_idx == #items then
+            ret = {items[active_idx][2], items[active_idx][3]}
+          else
+            active_idx = #items
+          end
         end
+      end)
+      if ret then
+        return unpack(ret)
       end
     end
   end
@@ -1780,59 +1850,109 @@ function main_config_input()
     gprint(to_print, 300, 280)
     gprint(to_print2, 300, 280)
   end
-  local function set_key(idx)
-    local brk = false
-    while not brk do
-      get_items()
-      items[idx][2] = "___"
-      print_stuff()
-      wait()
-      for key,val in pairs(this_frame_keys) do
-        if val then
-          k[key_names[idx]] = key
-          brk = true
-        end
-      end
-    end
-  end
+  local idxs_to_set = {}
   while true do
     get_items()
+    if #idxs_to_set > 0 then
+      items[idxs_to_set[1]][2] = "___"
+    end
     print_stuff()
     wait()
-    if menu_up(K[1]) then
-      active_idx = wrap(1, active_idx-1, #items)
-    elseif menu_down(K[1]) then
-      active_idx = wrap(1, active_idx+1, #items)
-    elseif menu_left(K[1]) then
-      active_player = wrap(1, active_player-1, 2)
-      k=K[active_player]
-    elseif menu_right(K[1]) then
-      active_player = wrap(1, active_player+1, 2)
-      k=K[active_player]
-    elseif menu_enter(K[1]) then
-      if active_idx <= #key_names then
-        set_key(active_idx)
-        write_key_file()
-      elseif active_idx == #key_names + 1 then
-        for i=1,8 do
-          set_key(i)
-          write_key_file()
+    local ret = nil
+    variable_step(function()
+      if #idxs_to_set > 0 then
+        local idx = idxs_to_set[1]
+        for key,val in pairs(this_frame_keys) do
+          if val then
+            k[key_names[idx]] = key
+            table.remove(idxs_to_set, 1)
+            if #idxs_to_set == 0 then
+              write_key_file()
+            end
+          end
         end
-      else
-        return items[active_idx][3], items[active_idx][4]
+      elseif menu_up(K[1]) then
+        active_idx = wrap(1, active_idx-1, #items)
+      elseif menu_down(K[1]) then
+        active_idx = wrap(1, active_idx+1, #items)
+      elseif menu_left(K[1]) then
+        active_player = wrap(1, active_player-1, 2)
+        k=K[active_player]
+      elseif menu_right(K[1]) then
+        active_player = wrap(1, active_player+1, 2)
+        k=K[active_player]
+      elseif menu_enter(K[1]) then
+        if active_idx <= #key_names then
+          idxs_to_set = {active_idx}
+        elseif active_idx == #key_names + 1 then
+          idxs_to_set = {1,2,3,4,5,6,7,8}
+        else
+          ret = {items[active_idx][3], items[active_idx][4]}
+        end
+      elseif menu_escape(K[1]) then
+        if active_idx == #items then
+          ret = {items[active_idx][3], items[active_idx][4]}
+        else
+          active_idx = #items
+        end
       end
-    elseif menu_escape(K[1]) then
-      if active_idx == #items then
-        return items[active_idx][3], items[active_idx][4]
-      else
-        active_idx = #items
-      end
+    end)
+    if ret then
+      return unpack(ret)
     end
   end
 end
 
-function main_options()
-  local items, active_idx = {}, 1
+function main_show_custom_graphics_readme(idx)
+  if not love.filesystem.getInfo("assets/Example folder structure")then
+    print("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.")
+    gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
+    wait()
+    recursive_copy("assets/"..default_assets_dir, "assets/Example folder structure")
+  end
+  local custom_graphics_readme = read_txt_file("Custom Graphics Readme.txt")
+  while true do
+    gprint(custom_graphics_readme, 100, 150)
+    do_menu_function = false
+    wait()
+    local ret = nil
+    variable_step(function()
+      if menu_escape(K[1]) or menu_enter(K[1]) then
+        ret = {main_options, {idx}}
+      end
+    end)
+    if ret then
+      return unpack(ret)
+    end
+  end
+end
+
+function main_show_custom_sounds_readme(idx)
+  if not love.filesystem.getInfo("sounds/Example folder structure")then
+    print("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.")
+    gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
+    wait()
+    recursive_copy("sounds/"..default_sounds_dir, "sounds/Example folder structure")
+  end
+  local custom_sounds_readme = read_txt_file("Custom Sounds Readme.txt")
+  while true do
+    gprint(custom_sounds_readme, 30, 150)
+    do_menu_function = false
+    wait()
+    local ret = nil
+    variable_step(function()
+      if menu_escape(K[1]) or menu_enter(K[1]) then
+        ret = {main_options, {idx}}
+      end
+    end)
+    if ret then
+      return unpack(ret)
+    end
+  end
+end
+
+function main_options(starting_idx)
+  local items, active_idx = {}, starting_idx or 1
   local k = K[1]
   local selected, deselected_this_frame, adjust_active_value = false, false, false
   local function get_items()
@@ -1874,9 +1994,9 @@ function main_options()
           or save_replays_publicly_choices["with my name"],
         "multiple choice", save_replays_publicly_choices},
       {"Graphics set", config.assets_dir or default_assets_dir, "multiple choice", asset_sets},
-      {"About custom graphics", "", "function", nil, nil, nil, nil, show_custom_graphics_readme},
+      {"About custom graphics", "", "function", nil, nil, nil, nil, main_show_custom_graphics_readme},
       {"Sounds set", config.sounds_dir or default_sounds_dir, "multiple choice", sound_sets},
-      {"About custom sounds", "", "function", nil, nil, nil, nil, show_custom_sounds_readme},
+      {"About custom sounds", "", "function", nil, nil, nil, nil, main_show_custom_sounds_readme},
       {"Ready countdown", ready_countdown_1P_text[config.ready_countdown_1P or false], "bool", true, nil, nil,false},
       {"Back", "", nil, nil, nil, nil, false, main_select_mode}
     }
@@ -1945,143 +2065,116 @@ function main_options()
     --get_items()
     print_stuff()
     wait()
-    if menu_up(K[1]) and not selected then
-      active_idx = wrap(1, active_idx-1, #items)
-    elseif menu_down(K[1]) and not selected then
-      active_idx = wrap(1, active_idx+1, #items)
-    elseif menu_left(K[1]) and (selected or not items[active_idx][7]) then --or not selectable
-      adjust_left()
-    elseif menu_right(K[1]) and (selected or not items[active_idx][7]) then --or not selectable
-      adjust_right()
-    elseif menu_enter(K[1]) then
-      if items[active_idx][7] then --is selectable
-        selected = not selected
-        if not selected then
-          deselected_this_frame = true
+    local ret = nil
+    variable_step(function()
+      if menu_up(K[1]) and not selected then
+        active_idx = wrap(1, active_idx-1, #items)
+      elseif menu_down(K[1]) and not selected then
+        active_idx = wrap(1, active_idx+1, #items)
+      elseif menu_left(K[1]) and (selected or not items[active_idx][7]) then --or not selectable
+        adjust_left()
+      elseif menu_right(K[1]) and (selected or not items[active_idx][7]) then --or not selectable
+        adjust_right()
+      elseif menu_enter(K[1]) then
+        if items[active_idx][7] then --is selectable
+          selected = not selected
+          if not selected then
+            deselected_this_frame = true
+            adjust_active_value = true
+          end
+        elseif items[active_idx][3] == "bool" or items[active_idx][3] == "multiple choice" then
           adjust_active_value = true
+        elseif items[active_idx][3] == "function" then
+          do_menu_function = true
+        elseif active_idx == #items then
+          ret = {exit_options_menu}
         end
-      elseif items[active_idx][3] == "bool" or items[active_idx][3] == "multiple choice" then
-        adjust_active_value = true
-      elseif items[active_idx][3] == "function" then
-        do_menu_function = true
-      elseif active_idx == #items then
-        return exit_options_menu
-      end
-    elseif menu_escape(K[1]) then
-      if selected then
-        selected = not selected
-        deselected_this_frame = true
-      elseif active_idx == #items then
-        return exit_options_menu
-      else
-        active_idx = #items
-      end
-    end
-    if adjust_active_value then
-      if items[active_idx][3] == "bool" then
-        if active_idx == 4 then
-          config.debug_mode = not config.debug_mode
-          items[active_idx][2] = debug_mode_text[config.debug_mode or false]
-        end
-        if items[active_idx][1] == "Ready countdown" then
-          config.ready_countdown_1P = not config.ready_countdown_1P
-          items[active_idx][2] = ready_countdown_1P_text[config.ready_countdown_1P]
-        end
-        --add any other bool config updates here
-      elseif items[active_idx][3] == "numeric" then
-        if config.master_volume ~= items[1][2] then
-          config.master_volume = items[1][2]
-          love.audio.setVolume(config.master_volume/100)
-        end
-        if config.SFX_volume ~= items[2][2] then --SFX volume should be updated
-          config.SFX_volume = items[2][2]
-          items[2][6]:setVolume(config.SFX_volume/100) --do just the one sound effect until we deselect
-        end
-        if active_idx == 2 and deselected_this_frame then --SFX Volume
-          set_volume(sounds.SFX, config.SFX_volume/100)
-        end
-        if config.music_volume ~= items[3][2] then --music volume should be updated
-          config.music_volume = items[3][2]
-          items[3][6]:setVolume(config.music_volume/100) --do just the one music source until we deselect
-        end
-        if active_idx == 3 and deselected_this_frame then --Music Volume
-          set_volume(sounds.music, config.music_volume/100)
-        end
-        --add any other numeric config updates here
-      elseif items[active_idx][3] == "multiple choice" then
-        local active_choice_num = 1
-        --find the key for the currently selected choice
-        for k,v in ipairs(items[active_idx][4]) do
-          if v == items[active_idx][2] then
-            active_choice_num = k
-          end
-        end
-        -- the next line of code means
-        -- current_choice_num = choices[wrap(1, next_choice_num, last_choice_num)]
-        if adjust_backwards then
-          items[active_idx][2] = items[active_idx][4][wrap(1,active_choice_num - 1, #items[active_idx][4])]
-          adjust_backwards = nil
+      elseif menu_escape(K[1]) then
+        if selected then
+          selected = not selected
+          deselected_this_frame = true
+        elseif active_idx == #items then
+          ret = {exit_options_menu}
         else
-          items[active_idx][2] = items[active_idx][4][wrap(1,active_choice_num + 1, #items[active_idx][4])]
+          active_idx = #items
         end
-        if active_idx == 5 then
-          config.save_replays_publicly = items[active_idx][2]
-        elseif active_idx == 6 then
-          config.assets_dir = items[active_idx][2]
-        elseif active_idx == 8 then
-          config.sounds_dir = items[active_idx][2]
-        end
-        --add any other multiple choice config updates here
       end
-      adjust_active_value = false
-    end
-    if items[active_idx][3] == "function" and do_menu_function then
-      if items[active_idx][1] == "About custom graphics" then
-        if not love.filesystem.getInfo("assets/Example folder structure")then
-          print("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.")
-          gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
-          wait()
-          recursive_copy("assets/"..default_assets_dir, "assets/Example folder structure")
-        end
-        local custom_graphics_readme = read_txt_file("Custom Graphics Readme.txt")
-        while true do
-          gprint(custom_graphics_readme, 100, 150)
-          do_menu_function = false
-          wait()
-          if menu_escape(K[1]) or menu_enter(K[1]) then
-            break;
+      if adjust_active_value and not ret then
+        if items[active_idx][3] == "bool" then
+          if active_idx == 4 then
+            config.debug_mode = not config.debug_mode
+            items[active_idx][2] = debug_mode_text[config.debug_mode or false]
           end
-        end
-      end
-      if items[active_idx][1] == "About custom sounds" then
-        if not love.filesystem.getInfo("sounds/Example folder structure")then
-          print("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.")
-          gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
-          wait()
-          recursive_copy("sounds/"..default_sounds_dir, "sounds/Example folder structure")
-        end
-        local custom_sounds_readme = read_txt_file("Custom Sounds Readme.txt")
-        while true do
-          gprint(custom_sounds_readme, 30, 150)
-          do_menu_function = false
-          wait()
-          if menu_escape(K[1]) or menu_enter(K[1]) then
-            break;
+          if items[active_idx][1] == "Ready countdown" then
+            config.ready_countdown_1P = not config.ready_countdown_1P
+            items[active_idx][2] = ready_countdown_1P_text[config.ready_countdown_1P]
           end
+          --add any other bool config updates here
+        elseif items[active_idx][3] == "numeric" then
+          if config.master_volume ~= items[1][2] then
+            config.master_volume = items[1][2]
+            love.audio.setVolume(config.master_volume/100)
+          end
+          if config.SFX_volume ~= items[2][2] then --SFX volume should be updated
+            config.SFX_volume = items[2][2]
+            items[2][6]:setVolume(config.SFX_volume/100) --do just the one sound effect until we deselect
+          end
+          if active_idx == 2 and deselected_this_frame then --SFX Volume
+            set_volume(sounds.SFX, config.SFX_volume/100)
+          end
+          if config.music_volume ~= items[3][2] then --music volume should be updated
+            config.music_volume = items[3][2]
+            items[3][6]:setVolume(config.music_volume/100) --do just the one music source until we deselect
+          end
+          if active_idx == 3 and deselected_this_frame then --Music Volume
+            set_volume(sounds.music, config.music_volume/100)
+          end
+          --add any other numeric config updates here
+        elseif items[active_idx][3] == "multiple choice" then
+          local active_choice_num = 1
+          --find the key for the currently selected choice
+          for k,v in ipairs(items[active_idx][4]) do
+            if v == items[active_idx][2] then
+              active_choice_num = k
+            end
+          end
+          -- the next line of code means
+          -- current_choice_num = choices[wrap(1, next_choice_num, last_choice_num)]
+          if adjust_backwards then
+            items[active_idx][2] = items[active_idx][4][wrap(1,active_choice_num - 1, #items[active_idx][4])]
+            adjust_backwards = nil
+          else
+            items[active_idx][2] = items[active_idx][4][wrap(1,active_choice_num + 1, #items[active_idx][4])]
+          end
+          if active_idx == 5 then
+            config.save_replays_publicly = items[active_idx][2]
+          elseif active_idx == 6 then
+            config.assets_dir = items[active_idx][2]
+          elseif active_idx == 8 then
+            config.sounds_dir = items[active_idx][2]
+          end
+          --add any other multiple choice config updates here
         end
+        adjust_active_value = false
       end
-    end
-    if selected and items[active_idx][9] and items[active_idx][6] and not items[active_idx][6]:isPlaying() then
-    --if selected and play_while_selected and sound source exists and it isn't playing
-      items[active_idx][6]:play()
-    end
-    if deselected_this_frame then
-      if items[active_idx][6] then --sound_source for this menu item exists
-        items[active_idx][6]:stop()
-        love.audio.stop()
-        stop_the_music()
+      if items[active_idx][3] == "function" and do_menu_function and not ret then
+        ret = {items[active_idx][8], {active_idx}}
       end
-      deselected_this_frame = false
+      if not ret and selected and items[active_idx][9] and items[active_idx][6] and not items[active_idx][6]:isPlaying() then
+      --if selected and play_while_selected and sound source exists and it isn't playing
+        items[active_idx][6]:play()
+      end
+      if not ret and deselected_this_frame then
+        if items[active_idx][6] then --sound_source for this menu item exists
+          items[active_idx][6]:stop()
+          love.audio.stop()
+          stop_the_music()
+        end
+        deselected_this_frame = false
+      end
+    end)
+    if ret then
+      return unpack(ret)
     end
   end
 end
@@ -2114,19 +2207,25 @@ function main_set_name()
     end
     gprint(to_print, 300, 280)
     wait()
-    if this_frame_keys["escape"] then
-      return main_select_mode
-    end
-    if this_frame_keys["return"] or this_frame_keys["kenter"] then
-      config.name = name
-      write_conf_file()
-      return main_select_mode
-    end
-    if menu_backspace(K[1]) then
-      name = string.sub(name, 1, #name-1)
-    end
-    for _,v in ipairs(this_frame_unicodes) do
-      name = name .. v
+    local ret = nil
+    variable_step(function()
+      if this_frame_keys["escape"] then
+        ret = {main_select_mode}
+      end
+      if this_frame_keys["return"] or this_frame_keys["kenter"] then
+        config.name = name
+        write_conf_file()
+        ret = {main_select_mode}
+      end
+      if menu_backspace(K[1]) then
+        name = string.sub(name, 1, #name-1)
+      end
+      for _,v in ipairs(this_frame_unicodes) do
+        name = name .. v
+      end
+    end)
+    if ret then
+      return unpack(ret)
     end
   end
 end
@@ -2157,17 +2256,6 @@ function main_music_test()
   find_and_add_music(tracks[index].char, tracks[index].type)
 
   while true do
-    wait()
-    if menu_left(K[1]) or menu_right(K[1]) or menu_escape(K[1]) then
-      stop_the_music()
-    end
-    if menu_left(K[1]) then  index = index - 1 end
-    if menu_right(K[1]) then index = index + 1 end
-    if index > #tracks then index = 1 end
-    if index < 1 then index = #tracks end
-    if menu_left(K[1]) or menu_right(K[1]) then
-      find_and_add_music(tracks[index].char, tracks[index].type)
-    end
     tp =  "Currently playing: " .. tracks[index].name
     tp = tp .. (table.getn(currently_playing_tracks) == 1 and "\nPlaying the intro\n" or "\nPlaying main loop\n")
     min_time = math.huge
@@ -2175,7 +2263,26 @@ function main_music_test()
     tp = tp .. string.format("%d", min_time - love.timer.getTime() )
     tp = tp .. "\n\n\n< and > to play navigate themes\nESC to leave"
     gprint(tp,300, 280)
-    if menu_escape(K[1]) then return main_select_mode end
+    wait()
+    local ret = nil
+    variable_step(function()
+      if menu_left(K[1]) or menu_right(K[1]) or menu_escape(K[1]) then
+        stop_the_music()
+      end
+      if menu_left(K[1]) then  index = index - 1 end
+      if menu_right(K[1]) then index = index + 1 end
+      if index > #tracks then index = 1 end
+      if index < 1 then index = #tracks end
+      if menu_left(K[1]) or menu_right(K[1]) then
+        find_and_add_music(tracks[index].char, tracks[index].type)
+      end
+      if menu_escape(K[1]) then
+        ret = {main_select_mode}
+      end
+    end)
+    if ret then
+      return unpack(ret)
+    end
   end
 end
 
@@ -2230,12 +2337,18 @@ function main_dumb_transition(next_func, text, timemin, timemax)
     -- end
     gprint(text, 300, 280)
     wait()
-    if t >= timemin and (t >=timemax or (menu_enter(k) or menu_escape(k))) then
-      return next_func
-    end
-    t = t + 1
-    if TCP_sock then
-    --  do_messages()
+    local ret = nil
+    variable_step(function()
+      if t >= timemin and (t >=timemax or (menu_enter(k) or menu_escape(k))) then
+        ret = {next_func}
+      end
+      t = t + 1
+      if TCP_sock then
+      --  do_messages()
+      end
+    end)
+    if ret then
+      return unpack(ret)
     end
   end
 end
@@ -2258,5 +2371,4 @@ function love.quit()
   config.window_x, config.window_y, config.display = love.window.getPosition()
   write_conf_file()
   write_char_sel_settings_to_file()
-
 end

@@ -51,26 +51,19 @@ function love.update(dt)
   end
 
 
-  if consuming_timesteps then
-    leftover_time = leftover_time + dt
-  end
-  joystick_ax()
-  if not consuming_timesteps then
-    key_counts()
-  end
+
+  leftover_time = leftover_time + dt
+
   local status, err = coroutine.resume(mainloop)
   if not status then
     error(err..'\n'..debug.traceback(mainloop))
-  end
-  if not consuming_timesteps then
-    this_frame_keys = {}
-    this_frame_unicodes = {}
   end
   this_frame_messages = {}
 
   --Play music here
   for k, v in pairs(music_t) do
     if v and k - love.timer.getTime() < 0.007 then
+      v.t:stop()
       v.t:play()
       currently_playing_tracks[#currently_playing_tracks+1]=v.t
       if v.l then
