@@ -283,9 +283,8 @@ function Stack.render(self)
                   draw(imgs.pop, draw_x, draw_y, 0, 16/popped_w, 16/popped_h)
                 end
               elseif panel.y_offset == -1 then
-                local p_w, p_h = IMG_panels[panel.color][garbage_bounce_table[panel.timer] or 1]:getDimensions()
-                draw(IMG_panels[panel.color][
-                    garbage_bounce_table[panel.timer] or 1], draw_x, draw_y, 0, 16/p_w, 16/p_h)
+                local p_w, p_h = IMG_panels[panel.color][1]:getDimensions()
+                draw(IMG_panels[panel.color][1], draw_x, draw_y, 0, 16/p_w, 16/p_h)
               end
             elseif flash_time % 2 == 1 then
               if panel.metal then
@@ -333,6 +332,8 @@ function Stack.render(self)
             end
           elseif panel.state == "dimmed" then
             draw_frame = 7
+          elseif panel.fell_from_garbage then
+            draw_frame = garbage_bounce_table[panel.fell_from_garbage] or 1
           elseif self.danger_col[col] then
             draw_frame = danger_bounce_table[
               wrap(1,self.danger_timer+1+floor((col-1)/2),#danger_bounce_table)]
