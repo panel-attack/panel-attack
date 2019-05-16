@@ -23,12 +23,36 @@ spectator_list = nil
 spectators_string = ""
 debug_mode_text = {[true]="On", [false]="Off"}
 ready_countdown_1P_text = {[true]="On", [false]="Off"}
+danger_music_changeback_delay_text = {[true]="On", [false]="Off"}
 leftover_time = 0
 
 function fmainloop()
   local func, arg = main_select_mode, nil
   replay = {}
-  config = {character="lip", level=5, name="defaultname", master_volume=100, SFX_volume=100, music_volume=100, debug_mode=false, ready_countdown_1P = true, save_replays_publicly = "with my name", assets_dir=default_assets_dir, sounds_dir=default_sounds_dir}
+  -- Default configuration values
+  config = {
+             -- Player character
+             character                     = "lip",
+             -- Level (2P modes / 1P vs yourself mode)
+             level                         = 5,
+             -- Player name
+             name                          = "defaultname",
+             -- Volume settings
+             master_volume                 = 100,
+             SFX_volume                    = 100,
+             music_volume                  = 100,
+             -- Debug mode flag
+             debug_mode                    = false,
+             -- Enable ready countdown flag
+             ready_countdown_1P            = true,
+             -- Change danger music back later flag
+             danger_music_changeback_delay = false,
+             -- Save replays setting
+             save_replays_publicly         = "with my name",
+             -- Default directories for graphics/sounds
+             assets_dir                    = default_assets_dir,
+             sounds_dir                    = default_sounds_dir
+           }
   gprint("Reading config file", 300, 280)
   wait()
   read_conf_file() -- TODO: stop making new config files
@@ -1986,6 +2010,7 @@ function main_options(starting_idx)
       {"Sounds set", config.sounds_dir or default_sounds_dir, "multiple choice", sound_sets},
       {"About custom sounds", "", "function", nil, nil, nil, nil, main_show_custom_sounds_readme},
       {"Ready countdown", ready_countdown_1P_text[config.ready_countdown_1P or false], "bool", true, nil, nil,false},
+      {"Danger music change-back delay", danger_music_changeback_delay_text[config.danger_music_changeback_delay or false], "bool", false, nil, nil, false},
       {"Back", "", nil, nil, nil, nil, false, main_select_mode}
     }
   end
@@ -1998,11 +2023,11 @@ function main_options(starting_idx)
         arrow = arrow .. "\n"
       end
       to_print = to_print .. "   " .. items[i][1] .. "\n"
-      to_print2 = to_print2 .. "                  "
+      to_print2 = to_print2 .. "                            "
       if active_idx == i and selected then
-        to_print2 = to_print2 .. "                < "
+        to_print2 = to_print2 .. "                          < "
       else
-        to_print2 = to_print2 .. "                  "
+        to_print2 = to_print2 .. "                            "
       end
       to_print2 = to_print2.. items[i][2]
       if active_idx == i and selected then
@@ -2010,9 +2035,9 @@ function main_options(starting_idx)
       end
       to_print2 = to_print2 .. "\n"
     end
-    gprint(arrow, 300, 280)
-    gprint(to_print, 300, 280)
-    gprint(to_print2, 300, 280)
+    gprint(arrow, 240, 280)
+    gprint(to_print, 240, 280)
+    gprint(to_print2, 240, 280)
   end
   local function adjust_left()
     if items[active_idx][3] == "numeric" then
@@ -2096,6 +2121,10 @@ function main_options(starting_idx)
           if items[active_idx][1] == "Ready countdown" then
             config.ready_countdown_1P = not config.ready_countdown_1P
             items[active_idx][2] = ready_countdown_1P_text[config.ready_countdown_1P]
+          end
+          if items[active_idx][1] == "Danger music change-back delay" then
+            config.danger_music_changeback_delay = not config.danger_music_changeback_delay
+            items[active_idx][2] = danger_music_changeback_delay_text[config.danger_music_changeback_delay]
           end
           --add any other bool config updates here
         elseif items[active_idx][3] == "numeric" then
