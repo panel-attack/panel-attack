@@ -30,18 +30,19 @@ Stack = class(function(s, which, mode, speed, difficulty, player_number)
       local level = speed or 5
       s.character = (type(difficulty) == "string") and difficulty or s.character
       s.level = level
-      speed = level_to_starting_speed[level]
-      --difficulty = level_to_difficulty[level]
-      s.speed_times = {15*60, idx=1, delta=15*60}
-      s.max_health = level_to_hang_time[level]
-      s.FRAMECOUNT_HOVER  = level_to_hover[s.level]
-      s.FRAMECOUNT_FLASH  = level_to_flash[s.level]
-      s.FRAMECOUNT_FACE   = level_to_face[s.level]
-      s.FRAMECOUNT_POP    = level_to_pop[s.level]
-      s.combo_constant    = level_to_combo_constant[s.level]
-      s.combo_coefficient = level_to_combo_coefficient[s.level]
-      s.chain_constant    = level_to_chain_constant[s.level]
-      s.chain_coefficient = level_to_chain_coefficient[s.level]
+      speed                = level_to_starting_speed[level]
+      --difficulty           = level_to_difficulty[level]
+      s.speed_times        = {15*60, idx=1, delta=15*60}
+      s.max_health         = level_to_hang_time[level]
+      s.FRAMECOUNT_HOVER   = level_to_hover[s.level]
+      s.FRAMECOUNT_GPHOVER = level_to_garbage_panel_hover[s.level]
+      s.FRAMECOUNT_FLASH   = level_to_flash[s.level]
+      s.FRAMECOUNT_FACE    = level_to_face[s.level]
+      s.FRAMECOUNT_POP     = level_to_pop[s.level]
+      s.combo_constant     = level_to_combo_constant[s.level]
+      s.combo_coefficient  = level_to_combo_coefficient[s.level]
+      s.chain_constant     = level_to_chain_constant[s.level]
+      s.chain_coefficient  = level_to_chain_coefficient[s.level]
       if s.mode == "2ptime" then
         s.NCOLORS = level_to_ncolors_time[level]
       else
@@ -461,6 +462,8 @@ function Panel.clear_flags(self)
   self.is_swapping_from_left = nil
   self.dont_swap = nil
   self.chaining = nil
+  -- Animation timer for "bounce" after falling from garbage.
+  self.fell_from_garbage = nil
   self.state = "normal"
 end
 
@@ -685,7 +688,7 @@ function Stack.PdP(self)
 
   -- determine whether to play danger music
     -- Changed this to play danger when something in top 3 rows
-    -- and to play casual when nothing in top 4 rows
+    -- and to play casual when nothing in top 3 or 4 rows
     if not self.danger_music then
         -- currently playing casual
         for _, prow in pairs({panels[self.height], panels[self.height-1], panels[self.height-2]}) do
@@ -700,7 +703,13 @@ function Stack.PdP(self)
     else
         --currently playing danger
         local toggle_back = true
-        for _, prow in pairs({panels[self.height], panels[self.height-1], panels[self.height-2], panels[self.height-3]}) do
+        -- Normally, change back if nothing is in the top 3 rows
+        local changeback_rows = {panels[self.height], panels[self.height-1], panels[self.height-2]}
+        -- But optionally, wait until nothing is in the fourth row
+        if (config.danger_music_changeback_delay) then
+          table.insert(changeback_rows, panels[self.height-3])
+        end
+        for _, prow in pairs(changeback_rows) do
             for idx=1, width do
                 if prow[idx].color ~= 0 then
                     toggle_back = false
@@ -818,7 +827,8 @@ function Stack.PdP(self)
               local color, chaining = panel.color, panel.chaining
               panel:clear()
               panel.color, panel.chaining = color, chaining
-              self:set_hoverers(row,col,5,true,true)
+              self:set_hoverers(row,col,self.FRAMECOUNT_GPHOVER,true,true)
+              panel.fell_from_garbage = 12
             else
               panel.state = "normal"
             end
@@ -986,7 +996,7 @@ function Stack.PdP(self)
             if panel.combo_size == panel.combo_index then
               self.panels_cleared = self.panels_cleared + 1
               if self.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
-                self.metal_panels_queued = self.metal_panels_queued + 1
+                self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
               end
               SFX_Pop_Play = 1
               self.poppedPanelIndex = panel.combo_index
@@ -1003,7 +1013,7 @@ function Stack.PdP(self)
                   * self.FRAMECOUNT_POP
               self.panels_cleared = self.panels_cleared + 1
               if self.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
-                self.metal_panels_queued = self.metal_panels_queued + 1
+                self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
               end
               SFX_Pop_Play = 1
               self.poppedPanelIndex = panel.combo_index
@@ -1031,6 +1041,15 @@ function Stack.PdP(self)
             error("something terrible happened")
           end
         -- the timer-expiring action has completed
+        end
+      end
+      -- Advance the fell-from-garbage bounce timer, or clear it and stop animating if the panel isn't hovering or falling.
+      if cntinue then
+      elseif panel.fell_from_garbage then
+        if panel.state ~= "hovering" and panel.state ~= "falling" then
+          panel.fell_from_garbage = nil
+        else
+          panel.fell_from_garbage = panel.fell_from_garbage - 1
         end
       end
     end
@@ -1718,7 +1737,7 @@ function Stack.check_matches(self)
 
   local pre_stop_time = self.FRAMECOUNT_MATCH +
       self.FRAMECOUNT_POP * (combo_size + garbage_size)
-  local garbage_match_time = self.FRAMECOUNT_MATCH + garbage_bounce_time +
+  local garbage_match_time = self.FRAMECOUNT_MATCH +
       self.FRAMECOUNT_POP * (combo_size + garbage_size)
   garbage_index=garbage_size-1
   combo_index=combo_size
@@ -1731,7 +1750,6 @@ function Stack.check_matches(self)
         panel.timer = garbage_match_time + 1
         panel.initial_time = garbage_match_time
         panel.pop_time = self.FRAMECOUNT_POP * garbage_index
-            + garbage_bounce_time
         panel.pop_index = min(max(garbage_size - garbage_index,1),10)
         panel.y_offset = panel.y_offset - 1
         panel.height = panel.height - 1

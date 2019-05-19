@@ -27,7 +27,7 @@ local NAME_LENGTH_LIMIT = 16
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
 
-local VERSION = "030"
+local VERSION = "037"
 local type_to_length = {H=4, E=4, F=4, P=8, I=2, L=2, Q=8, U=2}
 local INDEX = 1
 local connections = {}
@@ -488,7 +488,7 @@ function Connection.login(self, user_id)
   --print("Connection.login was called!")
   self.user_id = user_id
   self.logged_in = false
-  local IP_logging_in, port = self.socket:getsockname()
+  local IP_logging_in, port = self.socket:getpeername()
   print("New login attempt:  "..IP_logging_in..":"..port)
   if is_banned(IP_logging_in) then
     deny_login(self, "Awaiting ban timeout")
@@ -1340,8 +1340,7 @@ end
 function Connection.read(self)
   local junk, err, data = self.socket:receive("*a")
   if not err then
-    error("shitfuck: err: "..(err or "nil"))
-    
+    data = junk
   end
   if data and data:len() > 0 then
     self:data_received(data)

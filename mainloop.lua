@@ -9,7 +9,7 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_local_vs_yourself_setup, main_local_vs_yourself,
   main_options, exit_options_menu, main_music_test
 
-VERSION = "030"
+VERSION = "037"
 local PLAYING = "playing"  -- room states
 local CHARACTERSELECT = "character select" --room states
 local currently_spectating = false
@@ -23,12 +23,36 @@ spectator_list = nil
 spectators_string = ""
 debug_mode_text = {[true]="On", [false]="Off"}
 ready_countdown_1P_text = {[true]="On", [false]="Off"}
+danger_music_changeback_delay_text = {[true]="On", [false]="Off"}
 leftover_time = 0
 
 function fmainloop()
   local func, arg = main_select_mode, nil
   replay = {}
-  config = {character="lip", level=5, name="defaultname", master_volume=100, SFX_volume=100, music_volume=100, debug_mode=false, ready_countdown_1P = true, save_replays_publicly = "with my name", assets_dir=default_assets_dir, sounds_dir=default_sounds_dir}
+  -- Default configuration values
+  config = {
+             -- Player character
+             character                     = "lip",
+             -- Level (2P modes / 1P vs yourself mode)
+             level                         = 5,
+             -- Player name
+             name                          = "defaultname",
+             -- Volume settings
+             master_volume                 = 100,
+             SFX_volume                    = 100,
+             music_volume                  = 100,
+             -- Debug mode flag
+             debug_mode                    = false,
+             -- Enable ready countdown flag
+             ready_countdown_1P            = true,
+             -- Change danger music back later flag
+             danger_music_changeback_delay = false,
+             -- Save replays setting
+             save_replays_publicly         = "with my name",
+             -- Default directories for graphics/sounds
+             assets_dir                    = default_assets_dir,
+             sounds_dir                    = default_sounds_dir
+           }
   gprint("Reading config file", 300, 280)
   wait()
   read_conf_file() -- TODO: stop making new config files
@@ -141,6 +165,7 @@ do
     currently_spectating = false
     stop_the_music()
     close_socket()
+    bg = title
     logged_in = 0
     connection_up_time = 0
     connected_server_ip = ""
@@ -283,6 +308,7 @@ function main_select_speed_99(next_func, ...)
 end
 
 function main_endless(...)
+  bg = IMG_stages[math.random(#IMG_stages)]
   consuming_timesteps = true
   replay.endless = {}
   local replay=replay.endless
@@ -318,6 +344,7 @@ function main_endless(...)
 end
 
 function main_time_attack(...)
+  bg = IMG_stages[math.random(#IMG_stages)]
   consuming_timesteps = true
   P1 = Stack(1, "time", ...)
   make_local_panels(P1, "000000")
@@ -344,6 +371,7 @@ end
 function main_character_select()
   love.audio.stop()
   stop_the_music()
+  bg = charselect
   local map = {}
   if character_select_mode == "2p_net_vs" then
     local opponent_connected = false
@@ -1266,6 +1294,7 @@ end
 
 function main_net_vs()
   --STONER_MODE = true
+  bg = IMG_stages[math.random(#IMG_stages)]
   local k = K[1]  --may help with spectators leaving games in progress
   local end_text = nil
   consuming_timesteps = true
@@ -1460,6 +1489,7 @@ end)
 
 function main_local_vs()
   -- TODO: replay!
+  bg = IMG_stages[math.random(#IMG_stages)]
   consuming_timesteps = true
   local end_text = nil
   while true do
@@ -1496,6 +1526,7 @@ end
 
 function main_local_vs_yourself()
   -- TODO: replay!
+  bg = IMG_stages[math.random(#IMG_stages)]
   consuming_timesteps = true
   local end_text = nil
   while true do
@@ -1516,6 +1547,7 @@ end
 
 function main_replay_vs()
   local replay = replay.vs
+  bg = IMG_stages[math.random(#IMG_stages)]
   P1 = Stack(1, "vs", replay.P1_level or 5)
   P2 = Stack(2, "vs", replay.P2_level or 5)
   P1.do_countdown = replay.do_countdown or false
@@ -1612,6 +1644,7 @@ function main_replay_vs()
 end
 
 function main_replay_endless()
+  bg = IMG_stages[math.random(#IMG_stages)]
   local replay = replay.endless
   if replay == nil or replay.speed == nil then
     return main_dumb_transition,
@@ -1657,6 +1690,7 @@ function main_replay_endless()
 end
 
 function main_replay_puzzle()
+  bg = IMG_stages[math.random(#IMG_stages)]
   local replay = replay.puzzle
   if replay.in_buf == nil or replay.in_buf == "" then
     return main_dumb_transition,
@@ -1711,6 +1745,7 @@ end
 function make_main_puzzle(puzzles)
   local awesome_idx, next_func = 1, nil
   function next_func()
+    bg = IMG_stages[math.random(#IMG_stages)]
     consuming_timesteps = true
     replay.puzzle = {}
     local replay = replay.puzzle
@@ -1768,6 +1803,7 @@ do
   function main_select_puzz()
     love.audio.stop()
     stop_the_music()
+    bg = title
     local active_idx = last_puzzle_idx or 1
     local k = K[1]
     while true do
@@ -1986,6 +2022,7 @@ function main_options(starting_idx)
       {"Sounds set", config.sounds_dir or default_sounds_dir, "multiple choice", sound_sets},
       {"About custom sounds", "", "function", nil, nil, nil, nil, main_show_custom_sounds_readme},
       {"Ready countdown", ready_countdown_1P_text[config.ready_countdown_1P or false], "bool", true, nil, nil,false},
+      {"Danger music change-back delay", danger_music_changeback_delay_text[config.danger_music_changeback_delay or false], "bool", false, nil, nil, false},
       {"Back", "", nil, nil, nil, nil, false, main_select_mode}
     }
   end
@@ -1998,11 +2035,11 @@ function main_options(starting_idx)
         arrow = arrow .. "\n"
       end
       to_print = to_print .. "   " .. items[i][1] .. "\n"
-      to_print2 = to_print2 .. "                  "
+      to_print2 = to_print2 .. "                            "
       if active_idx == i and selected then
-        to_print2 = to_print2 .. "                < "
+        to_print2 = to_print2 .. "                          < "
       else
-        to_print2 = to_print2 .. "                  "
+        to_print2 = to_print2 .. "                            "
       end
       to_print2 = to_print2.. items[i][2]
       if active_idx == i and selected then
@@ -2010,9 +2047,9 @@ function main_options(starting_idx)
       end
       to_print2 = to_print2 .. "\n"
     end
-    gprint(arrow, 300, 280)
-    gprint(to_print, 300, 280)
-    gprint(to_print2, 300, 280)
+    gprint(arrow, 240, 280)
+    gprint(to_print, 240, 280)
+    gprint(to_print2, 240, 280)
   end
   local function adjust_left()
     if items[active_idx][3] == "numeric" then
@@ -2096,6 +2133,10 @@ function main_options(starting_idx)
           if items[active_idx][1] == "Ready countdown" then
             config.ready_countdown_1P = not config.ready_countdown_1P
             items[active_idx][2] = ready_countdown_1P_text[config.ready_countdown_1P]
+          end
+          if items[active_idx][1] == "Danger music change-back delay" then
+            config.danger_music_changeback_delay = not config.danger_music_changeback_delay
+            items[active_idx][2] = danger_music_changeback_delay_text[config.danger_music_changeback_delay]
           end
           --add any other bool config updates here
         elseif items[active_idx][3] == "numeric" then

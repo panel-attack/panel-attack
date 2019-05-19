@@ -51,6 +51,7 @@ function love.update(dt)
   end
 
 
+
   leftover_time = leftover_time + dt
 
   local status, err = coroutine.resume(mainloop)
@@ -62,6 +63,7 @@ function love.update(dt)
   --Play music here
   for k, v in pairs(music_t) do
     if v and k - love.timer.getTime() < 0.007 then
+      v.t:stop()
       v.t:play()
       currently_playing_tracks[#currently_playing_tracks+1]=v.t
       if v.l then
@@ -72,6 +74,7 @@ function love.update(dt)
   end
 end
 
+bg = load_img("menu/title.png")
 function love.draw()
   -- if not main_font then
     -- main_font = love.graphics.newFont("Oswald-Light.ttf", 15)
@@ -80,7 +83,7 @@ function love.draw()
   -- love.graphics.setFont(main_font)
   if love.graphics.getSupported("canvas") then
     love.graphics.setBlendMode("alpha", "alphamultiply")
-    love.graphics.setCanvas(canvas)  
+    love.graphics.setCanvas(canvas)
     love.graphics.setBackgroundColor(0.1, 0.1, 0.1)
     love.graphics.clear()
   else
@@ -99,5 +102,7 @@ function love.draw()
     x, y, w, h = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 4, 3)
     love.graphics.setBlendMode("alpha","premultiplied")
     love.graphics.draw(canvas, x, y, 0, w / default_width, h / default_height)
+    bgw, bgh = bg:getDimensions()
+    menu_draw(bg, 0, 0, 0, default_width/bgw, default_height/bgh)
   end
 end
