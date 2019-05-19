@@ -688,7 +688,7 @@ function Stack.PdP(self)
 
   -- determine whether to play danger music
     -- Changed this to play danger when something in top 3 rows
-    -- and to play casual when nothing in top 3 rows
+    -- and to play casual when nothing in top 3 or 4 rows
     if not self.danger_music then
         -- currently playing casual
         for _, prow in pairs({panels[self.height], panels[self.height-1], panels[self.height-2]}) do
@@ -703,7 +703,13 @@ function Stack.PdP(self)
     else
         --currently playing danger
         local toggle_back = true
-        for _, prow in pairs({panels[self.height], panels[self.height-1], panels[self.height-2]}) do
+        -- Normally, change back if nothing is in the top 3 rows
+        local changeback_rows = {panels[self.height], panels[self.height-1], panels[self.height-2]}
+        -- But optionally, wait until nothing is in the fourth row
+        if (config.danger_music_changeback_delay) then
+          table.insert(changeback_rows, panels[self.height-3])
+        end
+        for _, prow in pairs(changeback_rows) do
             for idx=1, width do
                 if prow[idx].color ~= 0 then
                     toggle_back = false
