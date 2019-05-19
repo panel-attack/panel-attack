@@ -141,6 +141,7 @@ do
     currently_spectating = false
     stop_the_music()
     close_socket()
+    bg = title
     logged_in = 0
     connection_up_time = 0
     connected_server_ip = ""
@@ -283,6 +284,7 @@ function main_select_speed_99(next_func, ...)
 end
 
 function main_endless(...)
+  bg = IMG_stages[math.random(#IMG_stages)]
   consuming_timesteps = true
   replay.endless = {}
   local replay=replay.endless
@@ -318,6 +320,7 @@ function main_endless(...)
 end
 
 function main_time_attack(...)
+  bg = IMG_stages[math.random(#IMG_stages)]
   consuming_timesteps = true
   P1 = Stack(1, "time", ...)
   make_local_panels(P1, "000000")
@@ -344,6 +347,7 @@ end
 function main_character_select()
   love.audio.stop()
   stop_the_music()
+  bg = charselect
   local map = {}
   if character_select_mode == "2p_net_vs" then
     local opponent_connected = false
@@ -1266,6 +1270,7 @@ end
 
 function main_net_vs()
   --STONER_MODE = true
+  bg = IMG_stages[math.random(#IMG_stages)]
   local k = K[1]  --may help with spectators leaving games in progress
   local end_text = nil
   consuming_timesteps = true
@@ -1460,6 +1465,7 @@ end)
 
 function main_local_vs()
   -- TODO: replay!
+  bg = IMG_stages[math.random(#IMG_stages)]
   consuming_timesteps = true
   local end_text = nil
   while true do
@@ -1496,6 +1502,7 @@ end
 
 function main_local_vs_yourself()
   -- TODO: replay!
+  bg = IMG_stages[math.random(#IMG_stages)]
   consuming_timesteps = true
   local end_text = nil
   while true do
@@ -1516,6 +1523,7 @@ end
 
 function main_replay_vs()
   local replay = replay.vs
+  bg = IMG_stages[math.random(#IMG_stages)]
   P1 = Stack(1, "vs", replay.P1_level or 5)
   P2 = Stack(2, "vs", replay.P2_level or 5)
   P1.do_countdown = replay.do_countdown or false
@@ -1612,6 +1620,7 @@ function main_replay_vs()
 end
 
 function main_replay_endless()
+  bg = IMG_stages[math.random(#IMG_stages)]
   local replay = replay.endless
   if replay == nil or replay.speed == nil then
     return main_dumb_transition,
@@ -1657,6 +1666,7 @@ function main_replay_endless()
 end
 
 function main_replay_puzzle()
+  bg = IMG_stages[math.random(#IMG_stages)]
   local replay = replay.puzzle
   if replay.in_buf == nil or replay.in_buf == "" then
     return main_dumb_transition,
@@ -1711,6 +1721,7 @@ end
 function make_main_puzzle(puzzles)
   local awesome_idx, next_func = 1, nil
   function next_func()
+    bg = IMG_stages[math.random(#IMG_stages)]
     consuming_timesteps = true
     replay.puzzle = {}
     local replay = replay.puzzle
@@ -1768,6 +1779,7 @@ do
   function main_select_puzz()
     love.audio.stop()
     stop_the_music()
+    bg = title
     local active_idx = last_puzzle_idx or 1
     local k = K[1]
     while true do
