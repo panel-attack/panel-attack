@@ -488,7 +488,7 @@ function Connection.login(self, user_id)
   --print("Connection.login was called!")
   self.user_id = user_id
   self.logged_in = false
-  local IP_logging_in, port = self.socket:getsockname()
+  local IP_logging_in, port = self.socket:getpeername()
   print("New login attempt:  "..IP_logging_in..":"..port)
   if is_banned(IP_logging_in) then
     deny_login(self, "Awaiting ban timeout")
