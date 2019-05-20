@@ -12,7 +12,7 @@ function love.conf(t)
   t.modules.sound = true
   t.modules.physics = false
   t.identity = "Panel Attack"
-  t.version = "11.2"
+  t.version = "11.3"
   t.release = false
   t.externalstorage = true
 
