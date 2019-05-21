@@ -1,3 +1,5 @@
+local utf8 = require("utf8")
+
 local wait, resume = coroutine.yield, coroutine.resume
 
 local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
@@ -2247,7 +2249,12 @@ function main_set_name()
         ret = {main_select_mode}
       end
       if menu_backspace(K[1]) then
-        name = string.sub(name, 1, #name-1)
+        -- Remove the last character.
+        -- This could be a UTF-8 character, so handle it properly.
+        local utf8offset = utf8.offset(name, -1)
+        if utf8offset then
+          name = string.sub(name, 1, utf8offset - 1)
+        end
       end
       for _,v in ipairs(this_frame_unicodes) do
         name = name .. v
