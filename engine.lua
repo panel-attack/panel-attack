@@ -558,8 +558,22 @@ end
 
 --foreign_run is for a stack that belongs to another client.
 function Stack.foreign_run(self)
-  local times_to_run = min(string.len(self.input_buffer),
-      self.max_runs_per_frame)
+  -- Decide how many frames of input we should run.
+  local times_to_run = 0
+  local buffer_len = string.len(self.input_buffer)
+
+  -- If we're way behind, run at max speed.
+  if buffer_len >= 15 then
+    times_to_run = self.max_runs_per_frame
+  -- When we're closer, run fewer per frame, so things are less choppy.
+  -- This might have a side effect of being a little farther behind on average,
+  -- since we don't always run at top speed until the buffer is empty.
+  elseif buffer_len >= 10 then
+    times_to_run = 2
+  elseif buffer_len >= 1 then
+    times_to_run = 1
+  end
+
   if self.play_to_end then
     if string.len(self.input_buffer) < 4 then
       self.play_to_end = nil
