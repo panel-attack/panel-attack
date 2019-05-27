@@ -11,9 +11,12 @@ function flush_socket()
   local junk,err,data = TCP_sock:receive('*a')
   -- lol, if it returned successfully then that's bad!
   if not err then
-    error("the connection closed unexpectedly")
+    -- Return false, so we know things went badly
+    return false
   end
   leftovers = leftovers..data
+  -- When done, return true, so we know things went okay
+  return true
 end
 
 function close_socket()
@@ -123,7 +126,11 @@ function connection_is_ready()
 end
 
 function do_messages()
-  flush_socket()
+  if not flush_socket() then
+    -- Something went wrong while receiving data.
+    -- Bail out and return.
+    return false
+  end
   while true do
     local typ, data = get_message()
     if typ then
@@ -148,6 +155,8 @@ function do_messages()
       break
     end
   end
+  -- Return true when finished successfully.
+  return true
 end
 
 function request_game(name)
