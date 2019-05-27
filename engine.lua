@@ -1052,7 +1052,12 @@ function Stack.PdP(self)
             -- if a timer runs out and the routine can't
             -- figure out what flag it is, tell brandon.
             -- No seriously, email him or something.
-            error("something terrible happened")
+            error("something terrible happened\n"
+              .. "panel.state was " .. tostring(panel.state) .. " when a timer expired?!\n"
+              .. "panel.is_swapping_from_left = " .. tostring(panel.is_swapping_from_left) .. "\n"
+              .. "panel.dont_swap = " .. tostring(panel.dont_swap) .. "\n"
+              .. "panel.chaining = " .. tostring(panel.chaining)
+              )
           end
         -- the timer-expiring action has completed
         end
