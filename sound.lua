@@ -6,7 +6,7 @@ function set_volume(source, new_volume)
     for _,v in pairs(source) do
       set_volume(v, new_volume)
     end
-  else
+  elseif type(source) == "string" then
     source:setVolume(new_volume)
   end
 end
@@ -137,11 +137,11 @@ function assert_requirements_met()
   for i=1, NUM_REQUIRED_GARBAGE_THUDS do
     assert(sounds.SFX.garbage_thud[i], "SFX garbage_thud "..i.."was not loaded")
   end
-    --assert we have the required SFX and music for each character
+  --assert we have the required SFX and music for each character
   for i,name in ipairs(characters) do
-    for k, sound in ipairs(required_char_SFX) do
-      assert(sounds.SFX.characters[name][sound], "Character SFX"..sound.." for "..name.." was not loaded.")
-    end
+    --assert for each required_char_SFX
+    assert(sounds.SFX.characters[name].others["chain"], "Character SFX chain for "..name.." was not loaded.")
+    assert(sounds.SFX.characters[name].combo_count ~= 0, "Character SFX combo for "..name.." was not loaded.")
     for k, music_type in ipairs(required_char_music) do
       assert(sounds.music.characters[name][music_type], music_type.." for "..name.." was not loaded.")
     end
@@ -156,16 +156,43 @@ end
 
 function stop_character_sounds(character)
   music_t = {}
-  for k, sound in ipairs(allowed_char_SFX) do
-    if sounds.SFX.characters[character][sound] then
-      sounds.SFX.characters[character][sound]:stop()
+
+  -- SFX
+  for k, sound_table in ipairs(sounds.SFX.characters[character]) do
+    if type(sound_table) == "table" then
+      for _,sound in pairs(sound_table) do
+        sound:stop()
+      end
     end
   end
+
+  -- music
   for k, music_type in ipairs(allowed_char_music) do
     if sounds.music.characters[character][music_type] then
       sounds.music.characters[character][music_type]:stop()
     end
   end
+end
+
+function init_variations_sfx(character, sfx_table, sfx_name, first_sound)
+  local sound = sfx_name..1
+  if first_sound then
+    -- "combo" in others will be stored in "combo1" in combos
+    sfx_table[sound] = first_sound
+    first_sound = nil
+  else
+    sfx_table[sound] = find_character_SFX(character, sound)
+  end
+
+  -- search for all variations
+  local sfx_count = 0
+  while sfx_table[sound] do
+    sfx_count = sfx_count+1
+    sound = sfx_name..(sfx_count+1)
+    sfx_table[sound] = find_character_SFX(character, sound)
+  end
+  -- print(character.." has "..sfx_count.." variation(s) of "..sfx_name)
+  return sfx_count
 end
 
 function sound_init()
@@ -200,21 +227,28 @@ function sound_init()
   zero_sound = check_supported_extensions("zero_music")
   required_char_SFX = {"chain", "combo"}
   -- @CardsOfTheHeart says there are 4 chain sfx: --x2/x3, --x4, --x5 is x2/x3 with an echo effect, --x6+ is x4 with an echo effect
+  -- combo sounds, on the other hand, can have multiple variations, hence combo, combo2, combo3 (...) and combo_echo, combo_echo2...
   allowed_char_SFX = {"chain", "combo", "combo_echo", "chain_echo", "chain2" ,"chain2_echo", "garbage_match"}
   required_char_music = {"normal_music", "danger_music"}
   allowed_char_music = {"normal_music", "danger_music", "normal_music_start", "danger_music_start"}
   for i,name in ipairs(characters) do
-    sounds.SFX.characters[name] = {}
+
+    -- SFX
+    sounds.SFX.characters[name] = { combos = {}, combo_count = 0, combo_echos = {}, combo_echo_count = 0, others = {} }
     for k, sound in ipairs(allowed_char_SFX) do
-      sounds.SFX.characters[name][sound] = find_character_SFX(name, sound)
-      if not sounds.SFX.characters[name][sound] then
+      sounds.SFX.characters[name].others[sound] = find_character_SFX(name, sound)
+      if not sounds.SFX.characters[name].others[sound] then
         if string.find(sound, "chain") then
-          sounds.SFX.characters[name][sound] = find_character_SFX(name, "chain")
+          sounds.SFX.characters[name].others[sound] = find_character_SFX(name, "chain")
         elseif string.find(sound, "combo") then 
-          sounds.SFX.characters[name][sound] = find_character_SFX(name, "combo")
+          sounds.SFX.characters[name].others[sound] = find_character_SFX(name, "combo")
         end
       end
     end
+    sounds.SFX.characters[name].combo_count = init_variations_sfx(name, sounds.SFX.characters[name].combos, "combo", sounds.SFX.characters[name].others["combo"])
+    sounds.SFX.characters[name].combo_echo_count = init_variations_sfx(name, sounds.SFX.characters[name].combo_echos, "combo_echo", sounds.SFX.characters[name].others["combo_echo"])
+
+    -- music
     sounds.music.characters[name] = {}
     for k, music_type in ipairs(allowed_char_music) do
       sounds.music.characters[name][music_type] = find_music(name, music_type)

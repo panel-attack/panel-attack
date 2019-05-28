@@ -15,11 +15,11 @@ About Sound Effects (SFX):
   "%appdata%/Panel Attack/sounds/[sound_pack_name_here]/[character_name_here]"
 -Note:  Providing just a "chain" or just a "combo" sound effect for a character is OK. It would 
   get used for all combos and chains.
--A character's combo sound effect should be named "combo"
+-A character's combo sound effect should be named "combo". You can add variations by adding more files: "combo2", "combo3"... They will be selected at random.
+-If you would like matching six metal blocks have a different sound effect, provide a "combo_echo" file. You can add variations by adding more files: "combo_echo2", "combo_echo3"... They will be selected at random.
 -Depending on the current chain length, the chain SFX file with the appopriate file name will be played:
     x2/3 plays "chain",  x4 plays "chain2", x5 plays "chain_echo", x6+ plays "chain2_echo"
 -If your character should make a sound when you clear garbage, include a sound file named "garbage_match"
--If you would like matching six metal blocks have a different sound effect, provide a "combo_echo" file.
 
 About Music:
 -Music files should be named "normal_music" and "danger_music"
