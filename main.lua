@@ -66,9 +66,10 @@ function love.update(dt)
       v.t:stop()
       v.t:play()
       currently_playing_tracks[#currently_playing_tracks+1]=v.t
-      if v.l then
-        music_t[love.timer.getTime() + v.t:getDuration()] = make_music_t(v.t, true)
-      end
+      -- Manual looping code
+      --if v.l then
+        --music_t[love.timer.getTime() + v.t:getDuration()] = make_music_t(v.t, true)
+      --end
       music_t[k] = nil
     end
   end
