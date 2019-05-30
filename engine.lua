@@ -1344,7 +1344,7 @@ function Stack.PdP(self)
         elseif sounds.SFX.characters[self.character].combos[SFX_Buddy_Play] then
           sounds.SFX.characters[self.character].combos[SFX_Buddy_Play]:play()
         elseif sounds.SFX.characters[self.character].combo_echos[SFX_Buddy_Play] then
-          sounds.SFX.characters[self.character].combos[SFX_Buddy_Play]:play()
+          sounds.SFX.characters[self.character].combo_echos[SFX_Buddy_Play]:play()
         end
         SFX_Buddy_Play=0
     end
