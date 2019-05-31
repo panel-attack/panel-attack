@@ -69,6 +69,7 @@ Stack = class(function(s, which, mode, speed, difficulty, player_number)
     s.gpanel_buffer = ""
     s.input_buffer = ""
     s.panels = {}
+    s.max_height = 0
     s.width = 6
     s.height = 12
     for i=0,s.height do
@@ -1242,6 +1243,13 @@ function Stack.PdP(self)
     for i=1,#garbage do
       self.garbage_q:push(garbage[i])
     end
+    --print(">>GARBAGE PUSH: ")
+--[[    for i=1,#garbage do
+      for j=1, #garbage[i] do
+        print(garbage[i][j])
+      end
+    end--]]
+
   end
   self.later_garbage[self.CLOCK-409] = nil
   
@@ -1533,6 +1541,11 @@ function Stack.drop_garbage(self, width, height, metal)
       end
     end
   end
+  self.max_height = #self.panels
+  if #self.panels >= 22 then
+    self.game_over = true
+    print("THE DEATH")
+  end
 end
 
 -- prepare to send some garbage!
@@ -1577,12 +1590,164 @@ function Stack.set_chain_garbage(self, n_chain)
 end
 
 function Stack.really_send(self, to_send)
+--[[  print()
+  print(">>>> GARBAGE SEND: ")
+  for i=1,#to_send do
+    for j=1, #to_send[i] do
+      print(to_send[i][j])
+    end
+  end
+
+  print("GARBAGE LATER: ")
+  for k,v in pairs(self.later_garbage) do
+    print(k..")")
+    for i=1,#v do
+      if v[i] then
+        for j=1, #v[i] do
+          print(v[i][j])
+        end
+      end
+    end
+  end--]]
+
+  local remove = {}
+
+  for i=1,#to_send do
+    --[COMBO]
+    if to_send[i][3] == false and to_send[i][4] == false then
+      local max_combo = 0
+      local max_k = nil
+      local max_a = nil
+
+
+      for k,v in pairs(self.later_garbage) do
+        for a=1,#v do
+          if v[a] and v[a][1] <= to_send[i][1] and v[a][1] > max_combo then
+            max_combo = v[a][1]
+            max_k = k
+            max_a = a
+          end
+        end
+      end
+
+      -- Remove combo and a combo eq or less in garbage
+      if max_a ~= nil then
+        --print("!SUB COMBO")
+        table.insert(remove, i)
+        self.later_garbage[max_k][max_a] = nil
+
+        if self.garbage_q.combo_garbage[max_combo] > 0 then
+          self.garbage_q.combo_garbage[max_combo] = self.garbage_q.combo_garbage[max_combo] - 1
+        end
+      end
+
+    --[CHAIN]
+    else
+      local h = to_send[i][2]
+
+
+      repeat
+
+        local max_chain = 0
+        local max_k = nil
+        local max_a = nil
+        for k,v in pairs(self.later_garbage) do
+          for a=1,#v do
+            if v[a] and v[a][1] == to_send[i][1] and v[a][2] > max_chain then
+              max_chain = v[a][2]
+              max_k = k
+              max_a = a
+            end
+          end
+        end
+
+        if max_a then
+          --print("!SUB CHAIN")
+          if max_chain > h then
+
+            local lgarb = self.later_garbage[max_k][max_a]
+            for j=1,self.garbage_q.chain_garbage:len() do
+              local garb = self.garbage_q.chain_garbage:get(j)
+
+              if garb then
+                local all_eq = true
+                for jj=1,#garb do
+                  if garb[jj] ~= lgarb[jj] then
+                    all_eq = false
+                    break
+                  end
+                end
+
+                if all_eq then
+                  garb[2] = max_chain - h
+                  io.write("garb + ")
+                  break
+                end
+              end
+            end
+
+            self.later_garbage[max_k][max_a][2] = max_chain - h
+            h = 0
+            print("change chain")
+
+          else
+            print("del chain")
+            print(self.garbage_q.chain_garbage:len())
+            local lgarb = self.later_garbage[max_k][max_a]
+            for j=1,self.garbage_q.chain_garbage:len() do
+              local garb = self.garbage_q.chain_garbage:get(j)
+              if garb then
+                local all_eq = true
+                for jj=1,#garb do
+                  if garb[jj] ~= lgarb[jj] then
+                    all_eq = false
+                    break
+                  end
+                end
+
+                if all_eq then
+                  self.garbage_q.chain_garbage:remove(j)
+                  break
+                end
+              end
+            end
+
+            h = h - max_chain
+            self.later_garbage[max_k][max_a] = nil
+
+          end
+        else
+          break
+        end
+
+      until h <= 0
+
+      if h <= 0 then
+        table.insert(remove, i)
+      else
+        to_send[i][2] = h
+      end
+
+    end
+  end
+
+  for i=1,#remove do
+    table.remove(to_send, remove[i])
+  end
+
+
   if self.garbage_target then
     self.garbage_target:recv_garbage(self.CLOCK + GARBAGE_DELAY, to_send)
   end
 end
 
 function Stack.recv_garbage(self, time, to_recv)
+  --print(">>GARBAGE RECV: ")
+--[[  for i=1,#to_recv do
+    for j=1, #to_recv[i] do
+      print(to_recv[i][j])
+    end
+  end--]]
   if self.CLOCK > time then
     local prev_states = self.prev_states
     local next_self = prev_states[time+1]
