@@ -1,3 +1,5 @@
+local utf8 = require("utf8")
+
 local wait, resume = coroutine.yield, coroutine.resume
 
 local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
@@ -384,7 +386,9 @@ function main_character_select()
       end
       gprint("Waiting for room initialization...", 300, 280)
       wait()
-      do_messages()
+      if not do_messages() then
+        return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+      end
       retries = retries + 1
     end
     -- if room_number_last_spectated and retries >= retry_limit and currently_spectating then
@@ -398,12 +402,14 @@ function main_character_select()
         -- end
         -- gprint("Lost connection.  Trying to rejoin...", 300, 280)
         -- wait()
-        -- do_messages()
+        -- if not do_messages() then
+        --   return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+        -- end
         -- retries = retries + 1
       -- end
     -- end
     if not global_initialize_room_msg then
-      return main_dumb_transition, {main_select_mode, "Failed to connect.\n\nReturning to main menu", 60, 300}
+      return main_dumb_transition, {main_select_mode, "Room initialization failed.\n\nReturning to main menu...", 60, 300}
     end
     msg = global_initialize_room_msg
     global_initialize_room_msg = nil
@@ -727,7 +733,9 @@ function main_character_select()
           end
           for i=1,30 do
             gprint(to_print,300, 280)
-            do_messages()
+            if not do_messages() then
+              return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+            end
             wait()
           end
           local game_start_timeout = 0
@@ -741,7 +749,9 @@ function main_character_select()
             print("P1.gpanel_buffer = "..P1.gpanel_buffer)
             print("P2.gpanel_buffer = "..P2.gpanel_buffer)
             gprint(to_print,300, 280)
-            do_messages()
+            if not do_messages() then
+              return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+            end
             wait()
             if game_start_timeout > 250 then
               return main_dumb_transition, {main_select_mode,
@@ -934,7 +944,9 @@ function main_character_select()
       return main_dumb_transition, {main_local_vs_yourself, "Game is starting...", 30, 30}
     end
     if character_select_mode == "2p_net_vs" then
-      do_messages()
+      if not do_messages() then
+        return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+      end
     end
   end
 end
@@ -1162,7 +1174,9 @@ function main_net_vs_lobby()
       print("#items: "..#items.."  idx_old: "..prev_act_idx.."  idx_new: "..active_idx.."  active_back: "..tostring(active_back))
       prev_act_idx = active_idx
     end
-    do_messages()
+    if not do_messages() then
+      return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+    end
   end
 end
 
@@ -1222,7 +1236,9 @@ function main_net_vs_setup(ip)
   while not connection_is_ready() do
     gprint("Connecting...", 300, 280)
     wait()
-    do_messages()
+    if not do_messages() then
+      return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+    end
   end
   connected_server_ip = ip
   logged_in = false
@@ -1232,14 +1248,18 @@ function main_net_vs_setup(ip)
   while got_opponent == nil do
     gprint("Waiting for opponent...", 300, 280)
     wait()
-    do_messages()
+    if not do_messages() then
+      return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+    end
   end
   while P1_level == nil or P2_level == nil do
     to_print = (P1_level and "L" or"Choose l") .. "evel: "..my_level..
         "\nOpponent's level: "..(P2_level or "???")
     gprint(to_print, 300, 280)
     wait()
-    do_messages()
+    if not do_messages() then
+      return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+    end
     variable_step(function()
       if P1_level then
       elseif menu_enter(k) then
@@ -1278,14 +1298,18 @@ function main_net_vs_setup(ip)
   end
   for i=1,30 do
     gprint(to_print,300, 280)
-    do_messages()
     wait()
+    if not do_messages() then
+      return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+    end
   end
   while P1.panel_buffer == "" or P2.panel_buffer == ""
     or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
     gprint(to_print,300, 280)
-    do_messages()
     wait()
+    if not do_messages() then
+      return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+    end
   end
   P1:starting_state()
   P2:starting_state()
@@ -1348,7 +1372,9 @@ function main_net_vs()
         json_send({leave_room=true})
         return main_net_vs_lobby
       end
-      do_messages()
+      if not do_messages() then
+        return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+      end
     end
 
     print(P1.CLOCK, P2.CLOCK)
@@ -2247,7 +2273,12 @@ function main_set_name()
         ret = {main_select_mode}
       end
       if menu_backspace(K[1]) then
-        name = string.sub(name, 1, #name-1)
+        -- Remove the last character.
+        -- This could be a UTF-8 character, so handle it properly.
+        local utf8offset = utf8.offset(name, -1)
+        if utf8offset then
+          name = string.sub(name, 1, utf8offset - 1)
+        end
       end
       for _,v in ipairs(this_frame_unicodes) do
         name = name .. v
@@ -2372,9 +2403,11 @@ function main_dumb_transition(next_func, text, timemin, timemax)
         ret = {next_func}
       end
       t = t + 1
-      if TCP_sock then
-      --  do_messages()
-      end
+      --if TCP_sock then
+      --  if not do_messages() then
+      --    -- do something? probably shouldn't drop back to the main menu transition since we're already here
+      --  end
+      --end
     end)
     if ret then
       return unpack(ret)
