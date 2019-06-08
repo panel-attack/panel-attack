@@ -1800,7 +1800,7 @@ function make_main_puzzle(puzzles)
             if awesome_idx == 1 then
               ret = {main_dumb_transition, {main_select_puzz, "You win!", 30}}
             else
-              ret = {main_dumb_transition, {ret, "You win!", 30}}
+              ret = {main_dumb_transition, {next_func, "You win!", 30}}
             end
           elseif P1.puzzle_moves == 0 then
             write_replay_file()
