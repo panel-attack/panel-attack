@@ -260,6 +260,15 @@ function sound_init()
     sounds.music.characters[name] = {}
     for k, music_type in ipairs(allowed_char_music) do
       sounds.music.characters[name][music_type] = find_music(name, music_type)
+      -- Set looping status for music.
+      -- Intros won't loop, but other parts should.
+      if sounds.music.characters[name][music_type] then
+        if not string.find(music_type, "start") then
+          sounds.music.characters[name][music_type]:setLooping(true)
+        else
+          sounds.music.characters[name][music_type]:setLooping(false)
+        end
+      end
     end
   end
   for popLevel=1,4 do

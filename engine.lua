@@ -558,8 +558,22 @@ end
 
 --foreign_run is for a stack that belongs to another client.
 function Stack.foreign_run(self)
-  local times_to_run = min(string.len(self.input_buffer),
-      self.max_runs_per_frame)
+  -- Decide how many frames of input we should run.
+  local times_to_run = 0
+  local buffer_len = string.len(self.input_buffer)
+
+  -- If we're way behind, run at max speed.
+  if buffer_len >= 15 then
+    times_to_run = self.max_runs_per_frame
+  -- When we're closer, run fewer per frame, so things are less choppy.
+  -- This might have a side effect of being a little farther behind on average,
+  -- since we don't always run at top speed until the buffer is empty.
+  elseif buffer_len >= 10 then
+    times_to_run = 2
+  elseif buffer_len >= 1 then
+    times_to_run = 1
+  end
+
   if self.play_to_end then
     if string.len(self.input_buffer) < 4 then
       self.play_to_end = nil
@@ -1038,7 +1052,12 @@ function Stack.PdP(self)
             -- if a timer runs out and the routine can't
             -- figure out what flag it is, tell brandon.
             -- No seriously, email him or something.
-            error("something terrible happened")
+            error("something terrible happened\n"
+              .. "panel.state was " .. tostring(panel.state) .. " when a timer expired?!\n"
+              .. "panel.is_swapping_from_left = " .. tostring(panel.is_swapping_from_left) .. "\n"
+              .. "panel.dont_swap = " .. tostring(panel.dont_swap) .. "\n"
+              .. "panel.chaining = " .. tostring(panel.chaining)
+              )
           end
         -- the timer-expiring action has completed
         end
