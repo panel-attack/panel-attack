@@ -195,6 +195,12 @@ function init_variations_sfx(character, sfx_table, sfx_name, first_sound)
   return sfx_count
 end
 
+function play_selection_sfx(character)
+  if sounds.SFX.characters[character].selection_count ~= 0 then
+    sounds.SFX.characters[character].selections["selection" .. math.random(sounds.SFX.characters[character].selection_count)]:play()
+  end
+end
+
 function sound_init()
   sounds_dir = config.sounds_dir or default_sounds_dir
   --sounds: SFX, music

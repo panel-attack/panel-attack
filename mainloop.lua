@@ -889,10 +889,12 @@ function main_character_select()
             end
           elseif active_str == "random" then
             config.character = uniformly(characters)
+            play_selection_sfx(config.character)
           elseif active_str == "match type desired" then
             config.ranked = not config.ranked
           else
             config.character = active_str
+            play_selection_sfx(config.character)
             --When we select a character, move cursor to "ready"
             active_str = "ready"
             cursor = shallowcpy(name_to_xy["ready"])

@@ -20,6 +20,8 @@ About Sound Effects (SFX):
 -Depending on the current chain length, the chain SFX file with the appopriate file name will be played:
     x2/3 plays "chain",  x4 plays "chain2", x5 plays "chain_echo", x6+ plays "chain2_echo"
 -If your character should make a sound when you clear garbage, include a sound file named "garbage_match"
+-You may add SFXs that play when selecting a character in the lobby. They should be named "selection", "selection2", "selection3"... They will be selected at random.
+-You may add SFXs that play when winning with a character (in a 2 player match). They should be named "win", "win2", "win3"... They will be selected at random.
 
 About Music:
 -Music files should be named "normal_music" and "danger_music"
