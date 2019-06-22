@@ -228,13 +228,13 @@ function sound_init()
   required_char_SFX = {"chain", "combo"}
   -- @CardsOfTheHeart says there are 4 chain sfx: --x2/x3, --x4, --x5 is x2/x3 with an echo effect, --x6+ is x4 with an echo effect
   -- combo sounds, on the other hand, can have multiple variations, hence combo, combo2, combo3 (...) and combo_echo, combo_echo2...
-  allowed_char_SFX = {"chain", "combo", "combo_echo", "chain_echo", "chain2" ,"chain2_echo", "garbage_match"}
+  allowed_char_SFX = {"chain", "combo", "combo_echo", "chain_echo", "chain2" ,"chain2_echo", "garbage_match", "selection", "win"}
   required_char_music = {"normal_music", "danger_music"}
   allowed_char_music = {"normal_music", "danger_music", "normal_music_start", "danger_music_start"}
   for i,name in ipairs(characters) do
 
     -- SFX
-    sounds.SFX.characters[name] = { combos = {}, combo_count = 0, combo_echos = {}, combo_echo_count = 0, others = {} }
+    sounds.SFX.characters[name] = { combos = {}, combo_count = 0, combo_echos = {}, combo_echo_count = 0, selections = {}, selection_count = 0, wins = {}, win_count = 0, others = {} }
     for k, sound in ipairs(allowed_char_SFX) do
       sounds.SFX.characters[name].others[sound] = find_character_SFX(name, sound)
       if not sounds.SFX.characters[name].others[sound] then
@@ -247,7 +247,9 @@ function sound_init()
     end
     sounds.SFX.characters[name].combo_count = init_variations_sfx(name, sounds.SFX.characters[name].combos, "combo", sounds.SFX.characters[name].others["combo"])
     sounds.SFX.characters[name].combo_echo_count = init_variations_sfx(name, sounds.SFX.characters[name].combo_echos, "combo_echo", sounds.SFX.characters[name].others["combo_echo"])
-
+    sounds.SFX.characters[name].selection_count = init_variations_sfx(name, sounds.SFX.characters[name].selections, "selection", sounds.SFX.characters[name].others["selection"])
+    sounds.SFX.characters[name].win_count = init_variations_sfx(name, sounds.SFX.characters[name].wins, "win", sounds.SFX.characters[name].others["win"])
+    
     -- music
     sounds.music.characters[name] = {}
     for k, music_type in ipairs(allowed_char_music) do

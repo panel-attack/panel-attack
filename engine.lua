@@ -1424,6 +1424,14 @@ function winningPlayer()
     end
 end
 
+function Stack.pick_win_sfx(self)
+  if sounds.SFX.characters[self.character].win_count ~= 0 then
+    return sounds.SFX.characters[self.character].wins["win" .. math.random(sounds.SFX.characters[self.character].win_count)]
+  else
+    return nil
+  end
+end
+
 function Stack.swap(self)
   local panels = self.panels
   local row = self.cur_row
