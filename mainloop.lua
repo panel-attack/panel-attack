@@ -124,7 +124,8 @@ end
 
 function normal_key(key) return this_frame_keys[key] end
 
-function menu_key_func(fixed, configurable, rept)
+function menu_key_func(fixed, configurable, rept, sound)
+  sound = sound or nil
   local query = normal_key
   if rept then
     query = repeating_key
@@ -148,16 +149,19 @@ function menu_key_func(fixed, configurable, rept)
             not menu_reserved_keys[keyname]
       end
     end
+    if res and sound ~= nil then
+      play_optional_sfx(sound())
+    end
     return res
   end
 end
 
-menu_up = menu_key_func({"up"}, {"up"}, true)
-menu_down = menu_key_func({"down"}, {"down"}, true)
-menu_left = menu_key_func({"left"}, {"left"}, true)
-menu_right = menu_key_func({"right"}, {"right"}, true)
-menu_enter = menu_key_func({"return","kenter","z"}, {"swap1"}, false)
-menu_escape = menu_key_func({"escape","x"}, {"swap2"}, false)
+menu_up = menu_key_func({"up"}, {"up"}, true, function() return sounds.SFX.menu_move end )
+menu_down = menu_key_func({"down"}, {"down"}, true, function() return sounds.SFX.menu_move end)
+menu_left = menu_key_func({"left"}, {"left"}, true, function() return sounds.SFX.menu_move end)
+menu_right = menu_key_func({"right"}, {"right"}, true, function() return sounds.SFX.menu_move end)
+menu_enter = menu_key_func({"return","kenter","z"}, {"swap1"}, false, function() return sounds.SFX.menu_validate end)
+menu_escape = menu_key_func({"escape","x"}, {"swap2"}, false, function() return sounds.SFX.menu_cancel end)
 menu_backspace = menu_key_func({"backspace"}, {"backspace"}, true)
 
 do

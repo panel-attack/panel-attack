@@ -195,8 +195,15 @@ function init_variations_sfx(character, sfx_table, sfx_name, first_sound)
   return sfx_count
 end
 
+function play_optional_sfx(sfx)
+  if not SFX_mute and sfx ~= nil then
+    sfx:stop()
+    sfx:play()
+  end
+end
+
 function play_selection_sfx(character)
-  if sounds.SFX.characters[character].selection_count ~= 0 then
+  if not SFX_mute and sounds.SFX.characters[character].selection_count ~= 0 then
     sounds.SFX.characters[character].selections["selection" .. math.random(sounds.SFX.characters[character].selection_count)]:play()
   end
 end
@@ -218,6 +225,9 @@ function sound_init()
       game_over = find_generic_SFX("gameover"),
       countdown = find_generic_SFX("countdown"),
       go = find_generic_SFX("go"),
+      menu_move = find_generic_SFX("menu_move"),
+      menu_validate = find_generic_SFX("menu_validate"),
+      menu_cancel = find_generic_SFX("menu_cancel"),
       garbage_thud = {
         find_generic_SFX("thud_1"),
         find_generic_SFX("thud_2"),
