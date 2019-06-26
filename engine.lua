@@ -1368,9 +1368,9 @@ function Stack.PdP(self)
         SFX_Buddy_Play=0
     end
     if SFX_garbage_match_play then
-      if sounds.SFX.characters[self.character]["garbage_match"] then
-        sounds.SFX.characters[self.character]["garbage_match"]:stop()
-        sounds.SFX.characters[self.character]["garbage_match"]:play()
+      if sounds.SFX.characters[self.character].others["garbage_match"] then
+        sounds.SFX.characters[self.character].others["garbage_match"]:stop()
+        sounds.SFX.characters[self.character].others["garbage_match"]:play()
       end
       SFX_garbage_match_play = nil
     end
