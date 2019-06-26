@@ -9,7 +9,7 @@ to help you remember which character it is [e.g. sounds/pokemon/characters/blarg
 About Sound Effects (aka SFX) [optional SFX are in parenthesis]:
 -Game SFX go in:  "%appdata%/Panel Attack/sounds/[sound_pack_name_here]/SFX" and file names should be:
   Game SFX: "countdown" "go" "move", "swap", "land", "game_over"  Fanfares: "fanfare1", "fanfare2", "fanfare3" 
-  Garbage Thuds: "thud_1", "thud_2", "thud_3"  Menu: ("menu_move", "menu_validate", "menu_cancel") 
+  Garbage Thuds: "thud_1", "thud_2", "thud_3"  Menu: "menu_move", "menu_validate", "menu_cancel"
   Panel pops: "pop1-1", "pop1-2", ..., "pop1-10", "pop2-1", ..., "pop2-10", ..., "pop4-10"
 -Character SFX go in:  "%appdata%/Panel Attack/sounds/[sound_pack_name_here]/[character_name_here]"
   *Note: providing just a "chain" or just a "combo" SFX is OK. It would get used for all combos and chains.
@@ -24,7 +24,7 @@ About Sound Effects (aka SFX) [optional SFX are in parenthesis]:
 About Music:
 -Music files should be named "normal_music" and "danger_music"
 -If your music has an intro, cut it from the main music file, and name it "normal_music_start" or "danger_music_start"
--The game looks for music in the following folders order:
+-The game looks for music in the following folders, in this order:
     1. "%appdata%/Panel Attack/sounds/[chosen sound pack]/characters/[character name]" (**use default character name!**)
     2. "%appdata%/Panel Attack/sounds/[chosen sound pack]/music/[stage name]"
     3. "[built-in sounds directory]/music/[stage name]"
