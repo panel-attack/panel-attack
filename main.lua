@@ -16,7 +16,7 @@ require("sound")
 require("timezones")
 require("gen_panels")
 
-local canvas = love.graphics.newCanvas(default_width, default_height)
+local canvas = love.graphics.newCanvas(canvas_width, canvas_height)
 
 local last_x = 0
 local last_y = 0
@@ -96,14 +96,14 @@ function love.draw()
     gfx_q[i][1](unpack(gfx_q[i][2]))
   end
   gfx_q:clear()
-  love.graphics.print("FPS: "..love.timer.getFPS(),315,115) -- TODO: Make this a toggle
+  love.graphics.print("FPS: "..love.timer.getFPS(),1,1) -- TODO: Make this a toggle
   if love.graphics.getSupported("canvas") then
     love.graphics.setCanvas()
     love.graphics.clear(love.graphics.getBackgroundColor())
     x, y, w, h = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 4, 3)
     love.graphics.setBlendMode("alpha","premultiplied")
-    love.graphics.draw(canvas, x, y, 0, w / default_width, h / default_height)
+    love.graphics.draw(canvas, x, y, 0, w / canvas_width, h / canvas_height)
     bgw, bgh = bg:getDimensions()
-    menu_draw(bg, 0, 0, 0, default_width/bgw, default_height/bgh)
+    menu_draw(bg, 0, 0, 0, canvas_width/bgw, canvas_height/bgh)
   end
 end

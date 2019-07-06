@@ -552,34 +552,83 @@ function main_character_select()
       end
     end
   end
-  local function draw_button(x,y,w,h,str)
+
+  local function draw_cursor(button_height, spacing, player_num,ready)
+    local cur_blink_frequency = 4
+    local cur_pos_change_frequency = 8
+    local draw_cur_this_frame = false
+    local cursor_frame = 1
+    if ready then
+      if (math.floor(menu_clock/cur_blink_frequency)+player_num)%2+1 == player_num then
+        draw_cur_this_frame = true
+      end
+    else
+      draw_cur_this_frame = true
+      cursor_frame = (math.floor(menu_clock/cur_pos_change_frequency)+player_num)%2+1
+    end
+    if draw_cur_this_frame then
+      local cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
+      local cur_img_left = IMG_char_sel_cursor_halves.left[player_num][cursor_frame]
+      local cur_img_right = IMG_char_sel_cursor_halves.right[player_num][cursor_frame]
+      local cur_img_w, cur_img_h = cur_img:getDimensions()
+      local cursor_scale = (button_height+(spacing*2))/cur_img_h
+      menu_drawq(cur_img, cur_img_left, render_x-spacing, render_y-spacing, 0, cursor_scale , cursor_scale)
+      menu_drawq(cur_img, cur_img_right, render_x+button_width+spacing-cur_img_w*cursor_scale/2, render_y-spacing, 0, cursor_scale, cursor_scale)
+    end
+  end
+
+  local function draw_button(x,y,w,h,str,halign,valign,no_rect)
+    no_rect = no_rect or false
+    halign = halign or "center"
+    valign = valign or "top"
     local menu_width = Y*100
     local menu_height = X*80
     local spacing = 8
-    local x_padding = math.floor((819-menu_width)/2)
-    local y_padding = math.floor((612-menu_height)/2)
+    local text_height = 13
+    local x_padding = math.floor((canvas_width-menu_width)/2)
+    local y_padding = math.floor((canvas_height-menu_height)/2)
     set_color(unpack(colors.white))
     render_x = x_padding+(y-1)*100+spacing
     render_y = y_padding+(x-1)*100+spacing
     button_width = w*100-2*spacing
     button_height = h*100-2*spacing
-    grectangle("line", render_x, render_y, button_width, button_height)
-    if IMG_character_icons[character_display_names_to_original_names[str]] then
-      local orig_w, orig_h = IMG_character_icons[character_display_names_to_original_names[str]]:getDimensions()
-      menu_draw(IMG_character_icons[character_display_names_to_original_names[str]], render_x, render_y, 0, button_width/orig_w, button_height/orig_h )
+    if no_rect ~= true then
+      grectangle("line", render_x, render_y, button_width, button_height)
     end
-    local y_add,x_add = 10,30
+    local character_to_display_name = str
+    if str == "P1" then
+      character_to_display_name = my_state.character
+    elseif str == "P2" then 
+      character_to_display_name = op_state.character
+    end
+    local width_for_alignment = button_width
+    local x_add,y_add = 0,0
+    if valign == "center" then
+      y_add = math.floor(0.5*button_height-0.5*text_height)-3
+    elseif valign == "bottom" then
+      y_add = math.floor(button_height-text_height)
+    end
+    if IMG_character_icons[character_display_names_to_original_names[character_to_display_name]] then
+      x_add = 0.025*button_width
+      width_for_alignment = 0.95*button_width
+      local orig_w, orig_h = IMG_character_icons[character_display_names_to_original_names[character_to_display_name]]:getDimensions()
+      local scale = button_width/math.max(orig_w,orig_h) -- keep image ratio
+      menu_drawf(IMG_character_icons[character_display_names_to_original_names[character_to_display_name]], render_x+0.5*button_width, render_y+0.5*button_height,"center","center", 0, scale, scale )
+    end
     local pstr = str:gsub("^%l", string.upper)
-    if str == "level" then
+    local function draw_player_state(state,player_number)
+      local level_str
       if selected and active_str == "level" then
-        pstr = my_name.."'s level: < "..my_state.level.." >"
+        level_str = "lvl < "..state.level.." >"
       else
-        pstr = my_name.."'s level: "..my_state.level
+        level_str = "lvl "..state.level
       end
-      if character_select_mode == "2p_net_vs" then
-        pstr = pstr .. "\n"..op_name.."'s level: "..op_state.level
+      if state.ready then
+        menu_drawf(IMG_ready, render_x+button_width*0.5, render_y+button_height*0.5, "center", "center" )
       end
-      y_add,x_add = 9,180
+      local scale = 0.25*button_width/math.max(IMG_players[player_number]:getWidth(),IMG_players[player_number]:getHeight()) -- keep image ratio
+      menu_drawf(IMG_players[player_number], render_x+1, render_y+button_height-1, "left", "bottom", 0, scale, scale )
+      gprintf(level_str, render_x, render_y+button_height-text_height,button_width,"right")
     end
     if str == "match type desired" then
       local my_type_selection, op_type_selection = "[casual]  ranked", "[casual]  ranked"
@@ -590,65 +639,24 @@ function main_character_select()
         op_type_selection = " casual  [ranked]"
       end
       pstr = my_name..": "..my_type_selection.."\n"..op_name..": "..op_type_selection
-      y_add,x_add = 9,180
+      y_add = math.floor(y_add-0.5*text_height)
+    elseif str == "P1" then
+      draw_player_state(my_state,1)
+      pstr = my_name
+    elseif str == "P2" then
+      draw_player_state(op_state,2)
+      pstr = op_name
     end
-    if my_state.cursor == str then pstr = pstr.."\n"..my_name end
-    if op_state and op_name and op_state.cursor == str then pstr = pstr.."\n"..op_name end
-    local cur_blink_frequency = 4
-    local cur_pos_change_frequency = 8
-    local player_num
-    local draw_cur_this_frame = false
-    local cursor_frame = 1
-    if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs")
-    and op_state and op_state.cursor and (op_state.cursor == str or op_state.cursor == character_display_names_to_original_names[str]) then
-      player_num = 2
-      if op_state.ready then
-        if (math.floor(menu_clock/cur_blink_frequency)+player_num)%2+1 == player_num then
-          draw_cur_this_frame = true
-          cursor_frame = 1
-        else
-          draw_cur_this_frame = false
-        end
-      else
-        draw_cur_this_frame = true
-        cursor_frame = (math.floor(menu_clock/cur_pos_change_frequency)+player_num)%2+1
-        cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
+    if x ~= 0 then
+      if my_state and my_state.cursor and (my_state.cursor == str or my_state.cursor == character_display_names_to_original_names[str]) then
+        draw_cursor(button_height, spacing, 1, my_state.ready)
       end
-      if draw_cur_this_frame then
-        cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
-        cur_img_left = IMG_char_sel_cursor_halves.left[player_num][cursor_frame]
-        cur_img_right = IMG_char_sel_cursor_halves.right[player_num][cursor_frame]
-        local cur_img_w, cur_img_h = cur_img:getDimensions()
-        local cursor_scale = (button_height+(spacing*2))/cur_img_h
-        menu_drawq(cur_img, cur_img_left, render_x-spacing, render_y-spacing, 0, cursor_scale , cursor_scale)
-        menu_drawq(cur_img, cur_img_right, render_x+button_width+spacing-cur_img_w*cursor_scale/2, render_y-spacing, 0, cursor_scale, cursor_scale)
+      if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs")
+      and op_state and op_state.cursor and (op_state.cursor == str or op_state.cursor == character_display_names_to_original_names[str]) then
+        draw_cursor(button_height, spacing, 2, op_state.ready)
       end
     end
-    if my_state and my_state.cursor and (my_state.cursor == str or my_state.cursor == character_display_names_to_original_names[str]) then
-      player_num = 1
-      if my_state.ready then
-        if (math.floor(menu_clock/cur_blink_frequency)+player_num)%2+1 == player_num then
-          draw_cur_this_frame = true
-          cursor_frame = 1
-        else
-          draw_cur_this_frame = false
-        end
-      else
-        draw_cur_this_frame = true
-        cursor_frame = (math.floor(menu_clock/cur_pos_change_frequency)+player_num)%2+1
-        cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
-      end
-      if draw_cur_this_frame then
-        cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
-        cur_img_left = IMG_char_sel_cursor_halves.left[player_num][cursor_frame]
-        cur_img_right = IMG_char_sel_cursor_halves.right[player_num][cursor_frame]
-        local cur_img_w, cur_img_h = cur_img:getDimensions()
-        local cursor_scale = (button_height+(spacing*2))/cur_img_h
-        menu_drawq(cur_img, cur_img_left, render_x-spacing, render_y-spacing, 0, cursor_scale , cursor_scale)
-        menu_drawq(cur_img, cur_img_right, render_x+button_width+spacing-cur_img_w*cursor_scale/2, render_y-spacing, 0, cursor_scale, cursor_scale)
-      end
-    end
-    gprint(pstr, render_x+6, render_y+y_add)
+    gprintf(pstr, render_x+x_add, render_y+y_add,width_for_alignment,halign)
   end
   print("got to LOC before net_vs_room character select loop")
   menu_clock = 0
@@ -776,16 +784,20 @@ function main_character_select()
       end
     end
     if current_server_supports_ranking then
-      draw_button(1,1,4,1,"match type desired")
-      draw_button(1,5,2,1,"level")
+      draw_button(1,1,4,1,"match type desired","center","center")
+      draw_button(1,5,2,1,"level","center","center")
     else
-      draw_button(1,1,6,1,"level")
+      draw_button(1,1,6,1,"level","center","center")
     end
 
-    draw_button(1,7,1,1,"ready")
+    draw_button(1,7,1,1,"ready","center","center")
     for i=2,X do
       for j=1,Y do
-        draw_button(i,j,1,1,character_display_names[map[i][j]] or map[i][j])
+        local valign = "top"
+        if map[i][j] == "leave" or map[i][j] == "random" then
+          valign = "center"
+        end
+        draw_button(i,j,1,1,character_display_names[map[i][j]] or map[i][j],"center",valign)
       end
     end
     local my_rating_difference = ""
@@ -806,68 +818,50 @@ function main_character_select()
         end
       end
     end
-    local state = ""
-    --my state - add to be displayed
-    state = state..my_name
-    if current_server_supports_ranking then
-      state = state..":  Rating: "..(global_current_room_ratings[my_player_number].league or "")
-      if not global_current_room_ratings[my_player_number].placement_match_progress then
-        state = state.." "..my_rating_difference..global_current_room_ratings[my_player_number].new
-      elseif global_current_room_ratings[my_player_number].placement_match_progress
-      and global_current_room_ratings[my_player_number].new
-      and global_current_room_ratings[my_player_number].new == 0 then
-        state = state.." "..global_current_room_ratings[my_player_number].placement_match_progress
-      end
-    end
-    if character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs" then
-      state = state.."  Wins: "..my_win_count
-    end
-    if current_server_supports_ranking or my_win_count + op_win_count > 0 then
-      state = state.."  Win Ratio:"
-    end
-    if my_win_count + op_win_count > 0 then
-      state = state.."  actual: "..(100*round(my_win_count/(op_win_count+my_win_count),2)).."%"
-    end
-    if current_server_supports_ranking and my_expected_win_ratio then
-      state = state.."  expected: "
-        ..my_expected_win_ratio.."%"
-    end
-    state = state.."  Char: "..character_display_names[my_state.character].."  Ready: "..tostring(my_state.ready or false)
-    if op_state and op_name then
-      state = state.."\n"
-      --op state - add to be displayed
-      state = state..op_name
+    local function get_player_state_str(player_number, rating_difference, win_count, op_win_count, expected_win_ratio)
+      local state = ""
       if current_server_supports_ranking then
-      state = state..":  Rating: "..(global_current_room_ratings[op_player_number].league or "")
-      if not global_current_room_ratings[op_player_number].placement_match_progress then
-        state = state.." "..op_rating_difference..global_current_room_ratings[op_player_number].new
-      elseif global_current_room_ratings[op_player_number].placement_match_progress
-      and global_current_room_ratings[op_player_number].new
-      and global_current_room_ratings[op_player_number].new == 0 then
-        state = state.." "..global_current_room_ratings[op_player_number].placement_match_progress
+        state = state.."Rating: "..(global_current_room_ratings[player_number].league or "")
+        if not global_current_room_ratings[player_number].placement_match_progress then
+          state = state.."\n"..rating_difference..global_current_room_ratings[player_number].new
+        elseif global_current_room_ratings[player_number].placement_match_progress
+        and global_current_room_ratings[player_number].new
+        and global_current_room_ratings[player_number].new == 0 then
+          state = state.."\n"..global_current_room_ratings[player_number].placement_match_progress
+        end
       end
+      if character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs" then
+        state = state.."\nWins: "..win_count
+      end
+      if (current_server_supports_ranking and expected_win_ratio) or win_count + op_win_count > 0 then
+        state = state.."\nWinrate:"
+        local need_line_return = false
+        if win_count + op_win_count > 0 then
+          state = state.." actual: "..(100*round(win_count/(op_win_count+win_count),2)).."%"
+          need_line_return = true
+        end
+        if current_server_supports_ranking and expected_win_ratio then
+          if need_line_return then
+            state = state.."\n        "
+          end
+          state = state.." expected: "..expected_win_ratio.."%"
+        end
+      end
+      return state
     end
-      state = state.."  Wins: "..op_win_count
-      if current_server_supports_ranking or my_win_count + op_win_count > 0 then
-        state = state.."  Win Ratio:"
-      end
-      if my_win_count + op_win_count > 0 then
-        state = state.."  actual: "..(100*round(op_win_count/(op_win_count+my_win_count),2)).."%"
-      end
-      if current_server_supports_ranking and op_expected_win_ratio then
-        state = state.."  expected: "
-          ..op_expected_win_ratio.."%"
-      end
-      state = state.."  Char: "..character_display_names[op_state.character].."  Ready: "..tostring(op_state.ready or false)
+    draw_button(0,1,1,1,"P1")
+    draw_button(0,2,2,1,get_player_state_str(my_player_number,my_rating_difference,my_win_count,op_win_count,my_expected_win_ratio),"left","top",true)
+    if op_state and op_name then
+      draw_button(0,5,1,1,"P2")
+      draw_button(0,6,2,1,get_player_state_str(op_player_number,op_rating_difference,op_win_count,my_win_count,op_expected_win_ratio),"left","top",true)
       --state = state.." "..json.encode(op_state)
     end
-    gprint(state, 50, 50)
     if character_select_mode == "2p_net_vs" then
       if not my_state.ranked and not op_state.ranked then
         match_type_message = ""
       end
       gprint(match_type, 375, 15)
-      gprint(match_type_message,100,85)
+      gprint(match_type_message,100,98)
     end
     wait()
     local ret = nil

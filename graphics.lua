@@ -45,6 +45,26 @@ function menu_draw(img, x, y, rot, x_scale,y_scale)
     rot, x_scale, y_scale}})
 end
 
+function menu_drawf(img, x, y, halign, valign, rot, x_scale, y_scale)
+  rot = rot or 0
+  x_scale = x_scale or 1
+  y_scale = y_scale or 1
+  halign = halign or "left"
+  if halign == "center" then
+    x = x - img:getWidth() * 0.5 * x_scale
+  elseif halign == "right" then
+    x = x - img:getWidth() * x_scale
+  end
+  valign = valign or "top"
+  if valign == "center" then
+    y = y - img:getHeight() * 0.5 * y_scale
+  elseif valign == "bottom" then
+    y = y - img:getHeight() * y_scale
+  end
+  gfx_q:push({love.graphics.draw, {img, x, y,
+    rot, x_scale, y_scale}})
+end
+
 function menu_drawq(img, quad, x, y, rot, x_scale,y_scale)
   rot = rot or 0
   x_scale = x_scale or 1
@@ -57,13 +77,36 @@ function grectangle(mode, x, y, w, h)
   gfx_q:push({love.graphics.rectangle, {mode, x, y, w, h}})
 end
 
-function gprint(str, x, y)
+function gprint(str, x, y, color, scale)
   x = x or 0
   y = y or 0
+  scale = scale or 1
+  color = color or nil
   set_color(0, 0, 0, 1)
-  gfx_q:push({love.graphics.print, {str, x+1, y+1}})
-  set_color(1, 1, 1, 1)
-  gfx_q:push({love.graphics.print, {str, x, y}})
+  gfx_q:push({love.graphics.print, {str, x+1, y+1, 0, scale}})
+  local r, g, b, a = 1,1,1,1
+  if color ~= nil then
+    r,g,b,a = unpack(color)
+  end
+  set_color(r,g,b,a)
+  gfx_q:push({love.graphics.print, {str, x, y, 0, scale}})
+end
+
+function gprintf(str, x, y, limit, halign, color, scale)
+  x = x or 0
+  y = y or 0
+  scale = scale or 1
+  color = color or nil
+  limit = limit or nil
+  halign = halign or "left"
+  set_color(0, 0, 0, 1)
+  gfx_q:push({love.graphics.printf, {str, x+1, y+1, limit, halign, 0, scale}})
+  local r, g, b, a = 1,1,1,1
+  if color ~= nil then
+    r,g,b,a = unpack(color)
+  end
+  set_color(r,g,b,a)
+  gfx_q:push({love.graphics.printf, {str, x, y, limit, halign, 0, scale}})
 end
 
 local _r, _g, _b, _a
@@ -137,6 +180,9 @@ function graphics_init()
   end
   IMG_cursor = {  load_img("cur0.png"),
           load_img("cur1.png")}
+
+  IMG_players = {  load_img("player_1.png"),
+          load_img("player_2.png")}
 
   IMG_frame = load_img("frame.png")
   IMG_wall = load_img("wall.png")
