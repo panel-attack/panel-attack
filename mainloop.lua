@@ -463,7 +463,7 @@ function main_character_select()
     P2 = {panel_buffer="", gpanel_buffer=""}
     print("we reset P2 buffers at start of main_character_select()")
     print("current_server_supports_ranking: "..tostring(current_server_supports_ranking))
-    local cursor,op_cursor,X,Y
+    
     if current_server_supports_ranking then
       map = {{"match type desired", "match type desired", "match type desired", "match type desired", "level", "level", "ready"},
              {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
@@ -478,19 +478,16 @@ function main_character_select()
              {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
     end
   end
-  if character_select_mode == "1p_vs_yourself" then
+  if character_select_mode == "2p_local_vs" or character_select_mode == "1p_vs_yourself" then
     map = {{"level", "level", "level", "level", "level", "level", "ready"},
            {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
            {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
            {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
            {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
   end
-  local op_state = global_op_state or {character="lip", level=5, cursor="level", ready=false}
+  local op_state = global_op_state or {character="lip", level=5, cursor="level", ready=false, ranked=false}
   global_op_state = nil
-  cursor,op_cursor,X,Y = {1,1},{1,1},5,7
-  local k = K[1]
-  local up,down,left,right = {-1,0}, {1,0}, {0,-1}, {0,1}
-  my_state = global_my_state or {character=config.character, level=config.level, cursor="level", ready=false}
+  my_state = global_my_state or {character=config.character, level=config.level, cursor="level", ready=false, ranked=config.ranked}
   global_my_state = nil
   my_win_count = my_win_count or 0
   local prev_state = shallowcpy(my_state)
@@ -516,35 +513,22 @@ function main_character_select()
               /RATING_SPREAD_MODIFIER))
             ,2))
     end
-  end
-  if character_select_mode == "2p_net_vs" then
     match_type = match_type or "Casual"
     if match_type == "" then match_type = "Casual" end
   end
   match_type_message = match_type_message or ""
-  local selected = false
-  local active_str = "level"
-  local selectable = {level=true, ready=true}
-  local function move_cursor(direction)
-    local dx,dy = unpack(direction)
-    local can_x,can_y = wrap(1, cursor[1]+dx, X), wrap(1, cursor[2]+dy, Y)
-    while can_x ~= cursor[1] or can_y ~= cursor[2] do
-      if map[can_x][can_y] and map[can_x][can_y] ~= map[cursor[1]][cursor[2]] then
-        break
-      end
-      can_x,can_y = wrap(1, can_x+dx, X), wrap(1, can_y+dy, Y)
-    end
-    cursor[1],cursor[2] = can_x,can_y
-  end
+  
   local function do_leave()
     my_win_count = 0
     op_win_count = 0
     write_char_sel_settings_to_file()
     return json_send({leave_room=true})
   end
+
   local name_to_xy = {}
   print("character_select_mode = "..(character_select_mode or "nil"))
   print("map[1][1] = "..(map[1][1] or "nil"))
+  local X,Y = 5,7
   for i=1,X do
     for j=1,Y do
       if map[i][j] then
@@ -618,7 +602,7 @@ function main_character_select()
     local pstr = str:gsub("^%l", string.upper)
     local function draw_player_state(state,player_number)
       local level_str
-      if selected and active_str == "level" then
+      if selected and state.cursor == "level" then
         level_str = "lvl < "..state.level.." >"
       else
         level_str = "lvl "..state.level
@@ -658,8 +642,11 @@ function main_character_select()
     end
     gprintf(pstr, render_x+x_add, render_y+y_add,width_for_alignment,halign)
   end
+
   print("got to LOC before net_vs_room character select loop")
   menu_clock = 0
+
+  local cursor_data = {{position={1,1},selected=false,state=my_state},{position={1,1},selected=false,state=op_state}}
   while true do
     if character_select_mode == "2p_net_vs" then
       for _,msg in ipairs(this_frame_messages) do
@@ -831,7 +818,10 @@ function main_character_select()
         end
       end
       if character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs" then
-        state = state.."\nWins: "..win_count
+        if current_server_supports_ranking then
+          state = state.."\n"
+        end
+        state = state.."Wins: "..win_count
       end
       if (current_server_supports_ranking and expected_win_ratio) or win_count + op_win_count > 0 then
         state = state.."\nWinrate:"
@@ -864,67 +854,99 @@ function main_character_select()
       gprint(match_type_message,100,98)
     end
     wait()
+
     local ret = nil
+
+    local function move_cursor(cursor_pos,direction)
+     local dx,dy = unpack(direction)
+      local can_x,can_y = wrap(1, cursor_pos[1]+dx, X), wrap(1, cursor_pos[2]+dy, Y)
+      while can_x ~= cursor_pos[1] or can_y ~= cursor_pos[2] do
+        if map[can_x][can_y] and map[can_x][can_y] ~= map[cursor_pos[1]][cursor_pos[2]] then
+          break
+        end
+        can_x,can_y = wrap(1, can_x+dx, X), wrap(1, can_y+dy, Y)
+      end
+      cursor_pos[1],cursor_pos[2] = can_x,can_y
+    end
+
     variable_step(function()
       menu_clock = menu_clock + 1
+      local up,down,left,right = {-1,0}, {1,0}, {0,-1}, {0,1}
+      local selectable = {level=true, ready=true}
       if not currently_spectating then
-        if menu_up(k) then
-          if not selected then move_cursor(up) end
-        elseif menu_down(k) then
-          if not selected then move_cursor(down) end
-        elseif menu_left(k) then
-          if selected and active_str == "level" then
-            config.level = bound(1, config.level-1, 10)
-          end
-          if not selected then move_cursor(left) end
-        elseif menu_right(k) then
-          if selected and active_str == "level" then
-            config.level = bound(1, config.level+1, 10)
-          end
-          if not selected then move_cursor(right) end
-        elseif menu_enter(k) then
-          if selectable[active_str] then
-            selected = not selected
-          elseif active_str == "leave" then
-            if character_select_mode == "2p_net_vs" then
-              if not do_leave() then
-                ret = {main_dumb_transition, {main_select_mode, "Error when leaving online"}}
-              end
-            else
-              ret = {main_select_mode}
-            end
-          elseif active_str == "random" then
-            config.character = uniformly(characters)
-            play_selection_sfx(config.character)
-          elseif active_str == "match type desired" then
-            config.ranked = not config.ranked
-          else
-            config.character = active_str
-            play_selection_sfx(config.character)
-            --When we select a character, move cursor to "ready"
-            active_str = "ready"
-            cursor = shallowcpy(name_to_xy["ready"])
-          end
-        elseif menu_escape(k) then
-          if active_str == "leave" then
-            if character_select_mode == "2p_net_vs" then
-              if not do_leave() then
-                ret = {main_dumb_transition, {main_select_mode, "Error when leaving online"}}
-              end
-            else
-              ret = {main_select_mode}
-            end
-          end
-          selected = false
-          cursor = shallowcpy(name_to_xy["leave"])
+        local KMax = 1
+        if character_select_mode == "2p_local_vs" then
+          KMax = 2
         end
-        active_str = map[cursor[1]][cursor[2]]
-        my_state = {character=config.character, level=config.level, cursor=active_str, ranked=config.ranked,
-                    ready=(selected and active_str=="ready")}
+        for i=1,KMax do
+          local k=K[i]
+          local cursor = cursor_data[i]
+          if menu_up(k) then
+            if not cursor.selected then move_cursor(cursor.position,up) end
+          elseif menu_down(k) then
+            if not cursor.selected then move_cursor(cursor.position,down) end
+          elseif menu_left(k) then
+            if cursor.selected and cursor.state.cursor == "level" then
+              cursor.state.level = bound(1, cursor.state.level-1, 10)
+            end
+            if not cursor.selected then move_cursor(cursor.position,left) end
+          elseif menu_right(k) then
+            if cursor.selected and cursor.state.cursor == "level" then
+              cursor.state.level = bound(1, cursor.state.level+1, 10)
+            end
+            if not cursor.selected then move_cursor(cursor.position,right) end
+          elseif menu_enter(k) then
+            if selectable[cursor.state.cursor] then
+              cursor.selected = not cursor.selected
+            elseif cursor.state.cursor == "leave" then
+              if character_select_mode == "2p_net_vs" then
+                if not do_leave() then
+                  ret = {main_dumb_transition, {main_select_mode, "Error when leaving online"}}
+                end
+              else
+                ret = {main_select_mode}
+              end
+            elseif cursor.state.cursor == "random" then
+              cursor.state.character = uniformly(characters)
+              play_selection_sfx(cursor.state.character)
+            elseif cursor.state.cursor == "match type desired" then
+              cursor.state.ranked = not cursor.state.ranked
+            else
+              cursor.state.character = cursor.state.cursor
+              play_selection_sfx(cursor.state.character)
+              --When we select a character, move cursor to "ready"
+              cursor.state.cursor = "ready"
+              cursor.position = shallowcpy(name_to_xy["ready"])
+            end
+          elseif menu_escape(k) then
+            if cursor.state.cursor == "leave" then
+              if character_select_mode == "2p_net_vs" then
+                if not do_leave() then
+                  ret = {main_dumb_transition, {main_select_mode, "Error when leaving online"}}
+                end
+              else
+                ret = {main_select_mode}
+              end
+            end
+            cursor.selected = false
+            cursor.position = shallowcpy(name_to_xy["leave"])
+          end
+          if cursor.state ~= nil then
+            cursor.state.cursor = map[cursor.position[1]][cursor.position[2]]
+            cursor.state.ready = cursor.selected and cursor.state.cursor=="ready"
+          end
+        end
+        -- update config
+        config.character = my_state.character
+        config.level = my_state.level
+        config.ranked = my_state.ranked
+        -- NOCOMMIT
+        --my_state = {character=config.character, level=config.level, cursor=active_str, ranked=config.ranked,
+        --             ready=(selected and active_str=="ready")}
         if character_select_mode == "2p_net_vs" and not content_equal(my_state, prev_state) and not currently_spectating then
           json_send({menu_state=my_state})
         end
-        prev_state = my_state
+        prev_state = shallowcpy(my_state)
       else -- (we are are spectating)
         if menu_escape(k) then
           do_leave()
@@ -942,8 +964,27 @@ function main_character_select()
       make_local_gpanels(P1, "000000")
       P1:starting_state()
       return main_dumb_transition, {main_local_vs_yourself, "Game is starting...", 30, 30}
-    end
-    if character_select_mode == "2p_net_vs" then
+    elseif my_state.ready and character_select_mode == "2p_local_vs" and op_state.ready then
+      P1 = Stack(1, "vs", my_state.level, my_state.character)
+      P2 = Stack(2, "vs", op_state.level, op_state.character)
+      P1.garbage_target = P2
+      P2.garbage_target = P1
+      P2.pos_x = 172
+      P2.score_x = 410
+      -- TODO: this does not correctly implement starting configurations.
+      -- Starting configurations should be identical for visible blocks, and
+      -- they should not be completely flat.
+      --
+      -- In general the block-generation logic should be the same as the server's, so
+      -- maybe there should be only one implementation.
+      make_local_panels(P1, "000000")
+      make_local_gpanels(P1, "000000")
+      make_local_panels(P2, "000000")
+      make_local_gpanels(P2, "000000")
+      P1:starting_state()
+      P2:starting_state()
+      return main_local_vs
+    elseif character_select_mode == "2p_net_vs" then
       if not do_messages() then
         return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
       end
@@ -1419,7 +1460,6 @@ function main_net_vs()
       end_text = my_name.." Wins" .. (currently_spectating and " " or " ^^")
       my_win_count = my_win_count + 1 -- leave this in
       outcome_claim = P1.player_number
-
     end
     if end_text then
       undo_stonermode()
@@ -1458,7 +1498,16 @@ function main_net_vs()
   end
 end
 
-main_local_vs_setup = multi_func(function()
+function main_local_vs_setup()
+  currently_spectating = false
+  my_name = config.name or "Player 1"
+  op_name = "Player 2"
+  op_state = nil
+  character_select_mode = "2p_local_vs"
+  return main_character_select
+end
+
+main_local_vs_setup_old = multi_func(function()
   local K = K
   local chosen, maybe = {}, {5,5}
   local P1_level, P2_level = nil, nil
@@ -1536,13 +1585,15 @@ function main_local_vs()
       end_text = "Draw"
     elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
       winSFX = P2:pick_win_sfx()
+      op_win_count = op_win_count + 1
       end_text = "P2 wins ^^"
     elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
       winSFX = P1:pick_win_sfx()
+      my_win_count = my_win_count + 1
       end_text = "P1 wins ^^"
     end
     if end_text then
-      return main_dumb_transition, {main_select_mode, end_text, 45, nil, winSFX}
+      return main_dumb_transition, {main_character_select, end_text, 45, nil, winSFX}
     end
   end
 end
