@@ -463,7 +463,7 @@ function main_character_select()
     P2 = {panel_buffer="", gpanel_buffer=""}
     print("we reset P2 buffers at start of main_character_select()")
     print("current_server_supports_ranking: "..tostring(current_server_supports_ranking))
-    
+
     if current_server_supports_ranking then
       map = {{"match type desired", "match type desired", "match type desired", "match type desired", "level", "level", "ready"},
              {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
@@ -517,7 +517,7 @@ function main_character_select()
     if match_type == "" then match_type = "Casual" end
   end
   match_type_message = match_type_message or ""
-  
+
   local function do_leave()
     my_win_count = 0
     op_win_count = 0
@@ -561,6 +561,8 @@ function main_character_select()
     end
   end
 
+  local cursor_data = {{position={1,1},selected=false,state=my_state},{position={1,1},selected=false,state=op_state}}
+
   local function draw_button(x,y,w,h,str,halign,valign,no_rect)
     no_rect = no_rect or false
     halign = halign or "center"
@@ -582,7 +584,7 @@ function main_character_select()
     local character_to_display_name = str
     if str == "P1" then
       character_to_display_name = my_state.character
-    elseif str == "P2" then 
+    elseif str == "P2" then
       character_to_display_name = op_state.character
     end
     local width_for_alignment = button_width
@@ -600,14 +602,14 @@ function main_character_select()
       menu_drawf(IMG_character_icons[character_display_names_to_original_names[character_to_display_name]], render_x+0.5*button_width, render_y+0.5*button_height,"center","center", 0, scale, scale )
     end
     local pstr = str:gsub("^%l", string.upper)
-    local function draw_player_state(state,player_number)
+    local function draw_player_state(cursor_data,player_number)
       local level_str
-      if selected and state.cursor == "level" then
-        level_str = "lvl < "..state.level.." >"
+      if cursor_data.selected and cursor_data.state.cursor == "level" then
+        level_str = "lvl < "..cursor_data.state.level.." >"
       else
-        level_str = "lvl "..state.level
+        level_str = "lvl "..cursor_data.state.level
       end
-      if state.ready then
+      if cursor_data.state.ready then
         menu_drawf(IMG_ready, render_x+button_width*0.5, render_y+button_height*0.5, "center", "center" )
       end
       local scale = 0.25*button_width/math.max(IMG_players[player_number]:getWidth(),IMG_players[player_number]:getHeight()) -- keep image ratio
@@ -625,10 +627,10 @@ function main_character_select()
       pstr = my_name..": "..my_type_selection.."\n"..op_name..": "..op_type_selection
       y_add = math.floor(y_add-0.5*text_height)
     elseif str == "P1" then
-      draw_player_state(my_state,1)
+      draw_player_state(cursor_data[1],1)
       pstr = my_name
     elseif str == "P2" then
-      draw_player_state(op_state,2)
+      draw_player_state(cursor_data[2],2)
       pstr = op_name
     end
     if x ~= 0 then
@@ -646,7 +648,6 @@ function main_character_select()
   print("got to LOC before net_vs_room character select loop")
   menu_clock = 0
 
-  local cursor_data = {{position={1,1},selected=false,state=my_state},{position={1,1},selected=false,state=op_state}}
   while true do
     if character_select_mode == "2p_net_vs" then
       for _,msg in ipairs(this_frame_messages) do
