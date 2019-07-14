@@ -489,9 +489,11 @@ function main_character_select()
            {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
            {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
   end
-  local op_state = global_op_state or {character="lip", level=5, blocks=config.blocks_dir, cursor="level", ready=false, ranked=false}
-  global_op_state = nil
-  my_state = global_my_state or {character=config.character, level=config.level, blocks=config.blocks_dir, cursor="level", ready=false, ranked=config.ranked}
+  local op_state = global_op_state or {character=config.character, level=config.level, blocks=config.blocks_dir, cursor="ready", ready=false, ranked=false}
+  if character_select_mode ~= "2p_local_vs" then
+    global_op_state = nil
+  end
+  my_state = global_my_state or {character=config.character, level=config.level, blocks=config.blocks_dir, cursor="ready", ready=false, ranked=config.ranked}
   global_my_state = nil
   my_win_count = my_win_count or 0
   local prev_state = shallowcpy(my_state)
@@ -1000,6 +1002,10 @@ function main_character_select()
         config.level = my_state.level
         config.ranked = my_state.ranked
         config.blocks_dir = my_state.blocks
+        if character_select_mode == "2p_local_vs" then
+          global_op_state = shallowcpy(op_state)
+          global_op_state.ready = false
+        end
         if character_select_mode == "2p_net_vs" and not content_equal(my_state, prev_state) and not currently_spectating then
           json_send({menu_state=my_state})
         end
