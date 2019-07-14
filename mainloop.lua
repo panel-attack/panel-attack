@@ -625,17 +625,18 @@ function main_character_select()
     end
 
     local function draw_blocks(cursor_data,player_number,y_padding)
-      local blocks_size = 0.25*button_height
-      local padding_x = 0.5*button_width - 2.5*blocks_size
+      local blocks_max_width = 0.25*button_height
+      local blocks_width = math.min(blocks_max_width,IMG_panels[cursor_data.state.blocks][1][1]:getWidth())
+      local padding_x = 0.5*button_width-3*blocks_width -- center them, not 3.5 mysteriously?
       if cursor_data.state.level >= 9 then
-        padding_x = padding_x - 0.5*blocks_size
+        padding_x = padding_x-0.5*blocks_width
       end
-      local blocks_width = math.min(blocks_size,IMG_panels[cursor_data.state.blocks][1][1]:getWidth())
       local blocks_scale = blocks_width/IMG_panels[cursor_data.state.blocks][1][1]:getWidth()
-      menu_drawf(IMG_players[player_number], render_x+padding_x-3, render_y+y_padding, "right", "center", 0, blocks_scale, blocks_scale )
+      menu_drawf(IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center", 0, blocks_scale, blocks_scale )
+      padding_x = padding_x + blocks_width
       for i=1,8 do
-        if i ~= 7 and ( i ~= 6 or cursor_data.state.level >= 9) then
-          menu_drawf(IMG_panels[cursor_data.state.blocks][i][1], render_x+padding_x, render_y+y_padding, "left", "center", 0, blocks_scale, blocks_scale )
+        if i ~= 7 and (i ~= 6 or cursor_data.state.level >= 9) then
+          menu_drawf(IMG_panels[cursor_data.state.blocks][i][1], render_x+padding_x, render_y+y_padding, "center", "center", 0, blocks_scale, blocks_scale )
           padding_x = padding_x + blocks_width
         end
       end

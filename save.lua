@@ -56,6 +56,15 @@ function read_conf_file() pcall(function()
   for k,v in pairs(json.decode(teh_json)) do
     config[k] = v
   end
+  if love.filesystem.getInfo("assets/"..config.assets_dir) == nil then
+    config.assets_dir = default_assets_dir
+  end
+  if love.filesystem.getInfo("blocks/"..config.blocks_dir) == nil then
+    config.blocks_dir = default_blocks_dir
+  end
+  if love.filesystem.getInfo("sounds/"..config.sounds_dir) == nil then
+    config.sounds_dir = default_sounds_dir
+  end
   file:close()
 end) end
 
