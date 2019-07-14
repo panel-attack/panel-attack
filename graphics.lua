@@ -4,17 +4,20 @@ require("util")
 local floor = math.floor
 local ceil = math.ceil
 
-function load_img(path_and_name)
+function load_img(path_and_name,path_to_dir,config_dir,default_dir)
+  path_to_dir = path_to_dir or "assets/"
+  default_dir = default_dir or default_assets_dir
   local img
   if pcall(function ()
-    img = love.image.newImageData("assets/"..(config.assets_dir or default_assets_dir).."/"..path_and_name)
+    config_dir = config_dir or config.assets_dir
+    img = love.image.newImageData(path_to_dir..(config_dir or default_dir).."/"..path_and_name)
   end) then
-    if config.assets_dir and config.assets_dir ~= default_assets_dir then
-      print("loaded custom asset: "..config.assets_dir.."/"..path_and_name)
+    if config_dir and config_dir ~= default_dir then
+      print("loaded custom asset: "..config_dir.."/"..path_and_name)
     end
   else
     if pcall(function ()
-      img = love.image.newImageData("assets/"..default_assets_dir.."/"..path_and_name)
+      img = love.image.newImageData(path_to_dir..default_dir.."/"..path_and_name)
     end) then
       print("loaded okay.")
     else
@@ -142,19 +145,6 @@ function graphics_init()
     end
   end
 
-  IMG_panels = {}
-  for i=1,8 do
-    IMG_panels[i]={}
-    for j=1,7 do
-      IMG_panels[i][j]=load_img("panel"..
-        tostring(i)..tostring(j)..".png")
-    end
-  end
-  IMG_panels[9]={}
-  for j=1,7 do
-    IMG_panels[9][j]=load_img("panel00.png")
-  end
-
   local g_parts = {"topleft", "botleft", "topright", "botright",
                     "top", "bot", "left", "right", "face", "pop",
                     "doubleface", "filler1", "filler2", "flash",
@@ -247,6 +237,39 @@ function graphics_init()
   for k,v in pairs(character_display_names) do
     character_display_names_to_original_names[v] = k
   end
+end
+
+function blocks_init()
+  IMG_panels = {}
+  IMG_panels_dirs = {}
+
+  local function load_block_dir(dir)
+    IMG_panels[dir] = {}
+    IMG_panels_dirs[#IMG_panels_dirs+1] = dir
+
+    for i=1,8 do
+      IMG_panels[dir][i] = {}
+      for j=1,7 do
+        IMG_panels[dir][i][j] = load_img("panel"..tostring(i)..tostring(j)..".png","blocks/",dir,default_blocks_dir)
+      end
+    end
+    IMG_panels[dir][9] = {}
+    for j=1,7 do
+      IMG_panels[dir][9][j] = load_img("panel00.png",dir,default_blocks_dir)
+    end
+  end
+
+  -- default ones
+  load_block_dir(default_blocks_dir)
+
+  -- custom ones
+  local raw_dir_list = love.filesystem.getDirectoryItems("blocks")
+  for k,v in ipairs(raw_dir_list) do
+    if love.filesystem.getInfo("blocks/"..v) and v ~= "Example folder structure" and v ~= default_blocks_dir then
+      load_block_dir(v)
+    end
+  end
+
 end
 
 function Stack.update_cards(self)
@@ -360,8 +383,8 @@ function Stack.render(self)
                   draw(imgs.pop, draw_x, draw_y, 0, 16/popped_w, 16/popped_h)
                 end
               elseif panel.y_offset == -1 then
-                local p_w, p_h = IMG_panels[panel.color][1]:getDimensions()
-                draw(IMG_panels[panel.color][1], draw_x, draw_y, 0, 16/p_w, 16/p_h)
+                local p_w, p_h = IMG_panels[self.blocks][panel.color][1]:getDimensions()
+                draw(IMG_panels[self.blocks][panel.color][1], draw_x, draw_y, 0, 16/p_w, 16/p_h)
               end
             elseif flash_time % 2 == 1 then
               if panel.metal then
@@ -417,8 +440,8 @@ function Stack.render(self)
           else
             draw_frame = 1
           end
-          local panel_w, panel_h = IMG_panels[panel.color][draw_frame]:getDimensions()
-          draw(IMG_panels[panel.color][draw_frame], draw_x, draw_y, 0, 16/panel_w, 16/panel_h)
+          local panel_w, panel_h = IMG_panels[self.blocks][panel.color][draw_frame]:getDimensions()
+          draw(IMG_panels[self.blocks][panel.color][draw_frame], draw_x, draw_y, 0, 16/panel_w, 16/panel_h)
           if config.debug_mode then
             gprint(panel.state, draw_x*3, draw_y*3)
             if panel.match_anyway ~= nil then
@@ -434,7 +457,7 @@ function Stack.render(self)
       if config.debug_mode and mx >= draw_x and mx < draw_x + 16 and
           my >= draw_y and my < draw_y + 16 then
         mouse_panel = {row, col, panel}
-        draw(IMG_panels[4][1], draw_x+16/3, draw_y+16/3, 0, 0.33333333, 0.3333333)
+        draw(IMG_panels[self.blocks][4][1], draw_x+16/3, draw_y+16/3, 0, 0.33333333, 0.3333333)
       end
     end
   end

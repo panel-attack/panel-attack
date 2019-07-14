@@ -107,7 +107,6 @@ function create_room(a, b)
   new_room.a:send(a_msg)
   new_room.b:send(b_msg)
   new_room:character_select()
-  
 end
 
 
@@ -121,7 +120,6 @@ function start_match(a, b)
       print("ERROR: player a still doesn't have player_number 1.")
     end
   end
-  
   local msg = {match_start = true, ranked = false,
                 player_settings = {character = a.character, level = a.level, player_number = a.player_number},
                 opponent_settings = {character = b.character, level = b.level, player_number = b.player_number}}
@@ -251,7 +249,6 @@ function Room.add_spectator(self, new_spectator_connection)
   new_spectator_connection.room = self
   self.spectators[#self.spectators+1] = new_spectator_connection
   print(new_spectator_connection.name .. " joined " .. self.name .. " as a spectator")
-  
   msg = {spectate_request_granted = true, spectate_request_rejected = false, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state(), win_counts=self.win_counts, match_start=replay_of_match_so_far~=nil, replay_of_match_so_far = self.replay, ranked = self:rating_adjustment_approved(),
                 player_settings = {character = self.a.character, level = self.a.level, player_number = self.a.player_number},
                 opponent_settings = {character = self.b.character, level = self.b.level, player_number = self.b.player_number}}
@@ -322,7 +319,7 @@ function roomNumberToRoom(roomNr)
   end
 end
 
---TODO: maybe support multiple playerbases 
+--TODO: maybe support multiple playerbases
 Playerbase = class(function (s, name)
   s.name = name
   s.players = {}--{["e2016ef09a0c7c2fa70a0fb5b99e9674"]="Bob",
@@ -381,7 +378,7 @@ function Leaderboard.update(self, user_id, new_rating, match_details)
 end
 
 function Leaderboard.get_report(self, user_id_of_requester)
---returns the leaderboard as an array sorted from highest rating to lowest, 
+--returns the leaderboard as an array sorted from highest rating to lowest,
 --with usernames from playerbase.players instead of user_ids
 --ie report[1] will give the highest rating player's user_name and how many points they have. Like this:
 --report[1] might return {user_name="Alice",rating=2250}
@@ -413,7 +410,7 @@ function Leaderboard.get_report(self, user_id_of_requester)
       end
     end
   end
-  for k,v in pairs(report) do 
+  for k,v in pairs(report) do
     v.rating = round(v.rating)
   end
   return report
@@ -437,8 +434,8 @@ Connection = class(function(s, socket)
 end)
 
 function Connection.menu_state(self)
-  state = {cursor=self.cursor, ready=self.ready, character=self.character, level=self.level, ranked=self.wants_ranked_match}
-  
+  state = {cursor=self.cursor, ready=self.ready, character=self.character, blocks=self.blocks, level=self.level, ranked=self.wants_ranked_match}
+
   return state
   --note: player_number here is the player_number of the connection as according to the server, not the "which" of any Stack
 end
@@ -543,7 +540,7 @@ function deny_login(connection, reason)
     end
     ban_list[IP].user_name = connection.name or ""
     ban_list[IP].reason = reason
-    connection:send({login_denied=true, reason=reason, 
+    connection:send({login_denied=true, reason=reason,
                     ban_duration=math.floor((ban_list[IP].unban_time-os.time())/60).."min"..((ban_list[IP].unban_time-os.time())%60).."sec",
                     violation_count = ban_list[IP].violation_count})
     print("login denied.  Reason:  "..reason)
@@ -707,7 +704,7 @@ function Room.resolve_game_outcome(self)
       end
       filename = filename..".txt"
       print("saving replay as "..path..sep..filename)
-      
+
       write_replay_file(self.replay, path, filename)
       --write_replay_file(self.replay, "replay.txt")
     else
@@ -747,15 +744,15 @@ function Room.rating_adjustment_approved(self)
   local caveats = {}
   local prev_player_level = players[1].level
   local both_players_are_placed = nil
-  if leaderboard.players[players[1].user_id] and leaderboard.players[players[1].user_id].placement_done 
+  if leaderboard.players[players[1].user_id] and leaderboard.players[players[1].user_id].placement_done
     and leaderboard.players[players[2].user_id] and leaderboard.players[players[2].user_id].placement_done then
     both_players_are_placed = true
     --both players are placed on the leaderboard.
-  elseif not (leaderboard.players[players[1].user_id] and leaderboard.players[players[1].user_id].placement_done) 
+  elseif not (leaderboard.players[players[1].user_id] and leaderboard.players[players[1].user_id].placement_done)
     and not (leaderboard.players[players[2].user_id] and leaderboard.players[players[2].user_id].placement_done) then
     reasons[#reasons+1] = "Neither player has finished enough placement matches against already ranked players"
   end
-  
+
   --don't let players too far apart in rating play ranked
   local ratings = {}
   for k,v in ipairs(players) do
@@ -774,7 +771,7 @@ function Room.rating_adjustment_approved(self)
   if math.abs(ratings[1] - ratings[2]) > RATING_SPREAD_MODIFIER * .9 then
     reasons[#reasons+1] = "Players' ratings are too far apart"
   end
-  
+
   if players[1].level ~= players[2].level then
     reasons[#reasons+1] = "Levels don't match"
   end
@@ -788,14 +785,14 @@ function Room.rating_adjustment_approved(self)
   end
   if reasons[1] then
     return false, reasons
-  else 
+  else
     if not both_players_are_placed
-      and 
-      ((leaderboard.players[players[1].user_id] and leaderboard.players[players[1].user_id].placement_done) 
+      and
+      ((leaderboard.players[players[1].user_id] and leaderboard.players[players[1].user_id].placement_done)
       or (leaderboard.players[players[2].user_id] and leaderboard.players[players[2].user_id].placement_done)) then
       caveats[#caveats+1] = "Note: Rating adjustments for these matches will be processed when the newcomer finishes placement."
     end
-    return true, caveats  
+    return true, caveats
   end
 end
 
@@ -838,7 +835,7 @@ function adjust_ratings(room, winning_player_number)
       room.ratings = {}
       for player_number = 1,2 do
         --if they aren't on the leaderboard yet, give them the default rating
-        if not leaderboard.players[players[player_number].user_id] or not leaderboard.players[players[player_number].user_id].rating then  
+        if not leaderboard.players[players[player_number].user_id] or not leaderboard.players[players[player_number].user_id].rating then
           leaderboard.players[players[player_number].user_id] = {user_name=playerbase.players[players[player_number].user_id], rating=DEFAULT_RATING}
           print("Gave "..playerbase.players[players[player_number].user_id].." a new rating of "..DEFAULT_RATING)
           write_leaderboard_file()
@@ -879,8 +876,8 @@ function adjust_ratings(room, winning_player_number)
             print("Adding this match to the list of matches to be processed when player finishes placement")
             load_placement_matches(players[player_number].user_id)
             local pm_count = #loaded_placement_matches.incomplete[players[player_number].user_id]
-            
-            loaded_placement_matches.incomplete[players[player_number].user_id][pm_count+1] = 
+
+            loaded_placement_matches.incomplete[players[player_number].user_id][pm_count+1] =
               { op_user_id=players[player_number].opponent.user_id,
                 op_name=playerbase.players[players[player_number].opponent.user_id],
                 op_rating=leaderboard.players[players[player_number].opponent.user_id].rating,
@@ -888,7 +885,7 @@ function adjust_ratings(room, winning_player_number)
             print("PRINTING PLACEMENT MATCHES FOR USER")
             print(json.encode(loaded_placement_matches.incomplete[players[player_number].user_id]))
             write_user_placement_match_file(players[player_number].user_id,loaded_placement_matches.incomplete[players[player_number].user_id])
-            
+
             --adjust newcomer's placement_rating
             if not leaderboard.players[players[player_number].user_id] then
               leaderboard.players[players[player_number].user_id] = {}
@@ -896,10 +893,10 @@ function adjust_ratings(room, winning_player_number)
             leaderboard.players[players[player_number].user_id].placement_rating = calculate_rating_adjustment(leaderboard.players[players[player_number].user_id].placement_rating or DEFAULT_RATING, leaderboard.players[players[player_number].opponent.user_id].rating, Oa, PLACEMENT_MATCH_K)
             print("New newcomer rating: "..leaderboard.players[players[player_number].user_id].placement_rating)
             leaderboard.players[players[player_number].user_id].ranked_games_played = (leaderboard.players[players[player_number].user_id].ranked_games_played or 0) + 1
-            if Oa == 1 then 
+            if Oa == 1 then
               leaderboard.players[players[player_number].user_id].ranked_games_won = (leaderboard.players[players[player_number].user_id].ranked_games_won or 0) + 1
             end
-            
+
             local process_them, reason = qualifies_for_placement(players[player_number].user_id)
             if process_them then
               local op_player_number = players[player_number].opponent.player_number
@@ -910,26 +907,26 @@ function adjust_ratings(room, winning_player_number)
               end
               room.ratings[op_player_number].old = round(leaderboard.players[players[op_player_number].user_id].rating)
               process_placement_matches(players[player_number].user_id)
-              
+
               room.ratings[player_number].new = round(leaderboard.players[players[player_number].user_id].rating)
-              
+
               room.ratings[player_number].difference = round(room.ratings[player_number].new - room.ratings[player_number].old)
               room.ratings[player_number].league = get_league(room.ratings[player_number].new)
-              
 
-              
-              room.ratings[op_player_number].new 
+
+
+              room.ratings[op_player_number].new
               = round(leaderboard.
               players
               [players
               [op_player_number]
               .user_id].
               rating)
-              
+
               room.ratings[op_player_number].difference = round(room.ratings[op_player_number].new - room.ratings[op_player_number].old)
               room.ratings[op_player_number].league = get_league(room.ratings[player_number].new)
               return
-            else 
+            else
               placement_match_progress = reason
             end
           else
@@ -966,13 +963,13 @@ function adjust_ratings(room, winning_player_number)
             print("New rating:"..leaderboard.players[players[player_number].user_id].rating)
           end
           for player_number = 1,2 do
-            
+
             --round and calculate rating gain or loss (difference) to send to the clients
             if placement_done[players[player_number].user_id] then
-              room.ratings[player_number].old 
-                = round(room.ratings[player_number].old 
+              room.ratings[player_number].old
+                = round(room.ratings[player_number].old
                   or leaderboard.players[players[player_number].user_id].rating)
-              room.ratings[player_number].new 
+              room.ratings[player_number].new
                 = round(room.ratings[player_number].new
                   or leaderboard.players[players[player_number].user_id].rating)
               room.ratings[player_number].difference = room.ratings[player_number].new - room.ratings[player_number].old
@@ -1005,7 +1002,7 @@ function load_placement_matches(user_id)
     end
     print(tostring(loaded_placement_matches.incomplete[user_id]))
     print(json.encode(loaded_placement_matches.incomplete[user_id]))
-  else 
+  else
     print("Didn't load placement matches from file. It is already loaded")
   end
 end
@@ -1014,7 +1011,7 @@ function qualifies_for_placement(user_id)
   --local placement_match_win_ratio_requirement = .2
   load_placement_matches(user_id)
   local placement_matches_played = #loaded_placement_matches.incomplete[user_id]
-  if leaderboard.players[user_id] and leaderboard.players[user_id].placement_done then 
+  if leaderboard.players[user_id] and leaderboard.players[user_id].placement_done then
     return false, "user is already placed"
   elseif placement_matches_played < PLACEMENT_MATCH_COUNT_REQUIREMENT then
     return false, placement_matches_played.."/"..PLACEMENT_MATCH_COUNT_REQUIREMENT.." placement matches played."
@@ -1041,7 +1038,7 @@ function process_placement_matches(user_id)
     print("Error: failed to process placement matches because we couldn't find any")
     return
   end
-  
+
   --[[We are moving some of this code such that placement_rating for the newcomer is calculated as the placement matches are played, rather than at the end of placement.
   --Calculate newcomer's rating
   for i=1, #placement_matches do
@@ -1061,12 +1058,12 @@ function process_placement_matches(user_id)
   --win_ratio = win_count / placement_matches_played  -- TODO: perhaps record this
   leaderboard.players[user_id].placement_rating = rating
   --]]
-  
+
   --assign the current placement_rating as the newcomer's official rating.
   leaderboard.players[user_id].rating = leaderboard.players[user_id].placement_rating
   leaderboard.players[user_id].placement_done = true
   print("FINAL PLACEMENT RATING for "..(playerbase.players[user_id] or "nil")..": "..leaderboard.players[user_id].rating or "nil")
-  
+
   --Calculate changes to opponents ratings for placement matches won/lost
   print("adjusting opponent rating(s) for these placement matches")
   for i=1, #placement_matches do
@@ -1078,7 +1075,7 @@ function process_placement_matches(user_id)
     local op_rating_change = calculate_rating_adjustment(
     placement_matches[i].op_rating,
     leaderboard.players[user_id].placement_rating,
-    op_outcome, 10) - 
+    op_outcome, 10) -
     placement_matches[i].op_rating
     leaderboard.players[placement_matches[i].op_user_id].rating = leaderboard.players[placement_matches[i].op_user_id].rating + op_rating_change
     leaderboard.players[placement_matches[i].op_user_id].ranked_games_played = (leaderboard.players[placement_matches[i].op_user_id].ranked_games_played or 0) + 1
@@ -1090,7 +1087,7 @@ function process_placement_matches(user_id)
 end
 
 function get_league(rating)
-  if not rating then 
+  if not rating then
     return leagues[1].league --("Newcomer")
   end
   for i=1, #leagues do
@@ -1114,7 +1111,7 @@ function Connection.P(self, message)
   if not ok_ncolors[message[1]] then return end
   local ncolors = 0 + message[1]
   local ret = make_panels(ncolors, string.sub(message, 2, 7), self)
-  if self.first_seven and self.opponent and 
+  if self.first_seven and self.opponent and
       ((self.level < 9 and self.opponent.level < 9) or
        (self.level >= 9 and self.opponent.level >= 9)) then
     self.opponent.first_seven = self.first_seven
@@ -1152,6 +1149,7 @@ end
 function Connection.J(self, message)
   message = json.decode(message)
   local response
+  self.blocks = default_blocks_dir
   if self.state == "needs_name" then
     if not message.name or message.name == "" then
       print("connection didn't send a name")
@@ -1180,6 +1178,10 @@ function Connection.J(self, message)
     else
       self.name = message.name
       self.character = message.character
+      if IMG_panels[message.blocks] ~= nil then
+        self.blocks = message.blocks
+      else
+        self.blocks = default_blocks_dir
       self.level = message.level
       self.save_replays_publicly = message.save_replays_publicly
       lobby_changed = true
@@ -1210,7 +1212,7 @@ function Connection.J(self, message)
       print("join allowed")
       print("adding "..self.name.." to room nr "..message.spectate_request.roomNumber)
       requestedRoom:add_spectator(self)
-      
+
     elseif requestedRoom and requestedRoom:state() == PLAYING then
       print("join-in-progress allowed")
       print("adding "..self.name.." to room nr "..message.spectate_request.roomNumber)
@@ -1224,6 +1226,10 @@ function Connection.J(self, message)
     self.character = message.menu_state.character
     self.ready = message.menu_state.ready
     self.cursor = message.menu_state.cursor
+    if IMG_panels[message.menu_state.blocks] ~= nil then
+      self.blocks = message.menu_state.blocks
+    else
+      self.blocks = default_blocks_dir
     self.wants_ranked_match = message.menu_state.ranked
     print("about to check for rating_adjustment_approval for ")
     print(self.name)
@@ -1232,15 +1238,15 @@ function Connection.J(self, message)
     if self.wants_ranked_match or self.opponent.wants_ranked_match then
       local ranked_match_approved, reasons = self.room:rating_adjustment_approved()
       if ranked_match_approved then
-        if not reasons[1] then 
+        if not reasons[1] then
           reasons = nil
         end
         self.room:send({ranked_match_approved=true, caveats=reasons})
       else
         self.room:send({ranked_match_denied=true, reasons=reasons})
-      end 
+      end
     end
-    
+
     if self.ready and self.opponent.ready then
         self.room.replay = {}
         self.room.replay.vs = {P="",O="",I="",Q="",R="",in_buf="",

@@ -12,9 +12,13 @@ local GARBAGE_TRANSIT_TIME = 90
 local clone_pool = {}
 local current_music_is_casual = false -- must be false so that casual music start playing
 
-Stack = class(function(s, which, mode, speed, difficulty, player_number)
+Stack = class(function(s, which, mode, blocks, speed, difficulty, player_number)
     s.character = uniformly(characters)
     s.max_health = 1
+    s.blocks = blocks or default_blocks_dir
+    if IMG_panels[blocks] == nil then
+      s.blocks = default_blocks_dir
+    end
     s.mode = mode or "endless"
     if mode ~= "puzzle" then
       s.do_first_row = true
