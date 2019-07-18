@@ -157,6 +157,15 @@ function graphics_init()
       imgs[part] = load_img(""..key.."/"..part..".png")
     end
   end
+  
+  IMG_levels = {}
+  IMG_levels_unfocus = {}
+  IMG_levels[1] = load_img("level1.png")
+  IMG_levels_unfocus[1] = nil -- meaningless by design
+  for i=2,10 do
+    IMG_levels[i] = load_img("level"..i..".png")
+    IMG_levels_unfocus[i] = load_img("level"..i.."unfocus.png")
+  end
 
   IMG_metal_flash = load_img("garbageflash.png")
   IMG_metal = load_img("metalmid.png")

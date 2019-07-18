@@ -121,8 +121,8 @@ function start_match(a, b)
     end
   end
   local msg = {match_start = true, ranked = false,
-                player_settings = {character = a.character, level = a.level, player_number = a.player_number},
-                opponent_settings = {character = b.character, level = b.level, player_number = b.player_number}}
+                player_settings = {character = a.character, level = a.level, blocks = a.blocks, player_number = a.player_number},
+                opponent_settings = {character = b.character, level = b.level, blocks = b.blocks, player_number = b.player_number}}
   local room_is_ranked, reasons = a.room:rating_adjustment_approved()
   if room_is_ranked then
     a.room.replay.vs.ranked=true

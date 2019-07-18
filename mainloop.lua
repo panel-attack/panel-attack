@@ -610,18 +610,13 @@ function main_character_select()
     local pstr = str:gsub("^%l", string.upper)
     
     local function draw_player_state(cursor_data,player_number)
-      local level_str
-      if cursor_data.selected and cursor_data.state.cursor == "level" then
-        level_str = "lvl < "..cursor_data.state.level.." >"
-      else
-        level_str = "lvl "..cursor_data.state.level
-      end
       if cursor_data.state.ready then
         menu_drawf(IMG_ready, render_x+button_width*0.5, render_y+button_height*0.5, "center", "center" )
       end
       local scale = 0.25*button_width/math.max(IMG_players[player_number]:getWidth(),IMG_players[player_number]:getHeight()) -- keep image ratio
       menu_drawf(IMG_players[player_number], render_x+1, render_y+button_height-1, "left", "bottom", 0, scale, scale )
-      gprintf(level_str, render_x, render_y+button_height-text_height,button_width,"right")
+      scale = 0.25*button_width/math.max(IMG_levels[cursor_data.state.level]:getWidth(),IMG_levels[cursor_data.state.level]:getHeight()) -- keep image ratio
+      menu_drawf(IMG_levels[cursor_data.state.level], render_x+button_width-1, render_y+button_height-1, "right", "bottom", 0, scale, scale )
     end
 
     local function draw_blocks(cursor_data,player_number,y_padding)
@@ -631,14 +626,56 @@ function main_character_select()
       if cursor_data.state.level >= 9 then
         padding_x = padding_x-0.5*blocks_width
       end
+      local is_selected = cursor_data.selected and cursor_data.state.cursor == "block_selection"
+      if is_selected then
+        padding_x = padding_x-blocks_width
+      end
       local blocks_scale = blocks_width/IMG_panels[cursor_data.state.blocks][1][1]:getWidth()
       menu_drawf(IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center", 0, blocks_scale, blocks_scale )
       padding_x = padding_x + blocks_width
+      if is_selected then
+        gprintf("<", render_x+padding_x-0.5*blocks_width, render_y+y_padding-0.5*text_height,blocks_width,"center")
+        padding_x = padding_x + blocks_width
+      end
       for i=1,8 do
         if i ~= 7 and (i ~= 6 or cursor_data.state.level >= 9) then
           menu_drawf(IMG_panels[cursor_data.state.blocks][i][1], render_x+padding_x, render_y+y_padding, "center", "center", 0, blocks_scale, blocks_scale )
           padding_x = padding_x + blocks_width
         end
+      end
+      if is_selected then
+        gprintf(">", render_x+padding_x-0.5*blocks_width, render_y+y_padding-0.5*text_height,blocks_width,"center")
+      end
+    end
+    
+    local function draw_levels(cursor_data,player_number,y_padding)
+      local level_max_width = 0.2*button_height
+      local level_width = math.min(level_max_width,IMG_levels[1]:getWidth())
+      local padding_x = 0.5*button_width-5*level_width
+      local is_selected = cursor_data.selected and cursor_data.state.cursor == "level"
+      if is_selected then
+        padding_x = padding_x-level_width
+      end
+      local level_scale = level_width/IMG_levels[1]:getWidth()
+      menu_drawf(IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center", 0, level_scale, level_scale )
+      padding_x = padding_x + level_width
+      if is_selected then
+        gprintf("<", render_x+padding_x-0.5*level_width, render_y+y_padding-0.5*text_height,level_width,"center")
+        padding_x = padding_x + level_width
+      end
+      menu_drawf(IMG_levels[1], render_x+padding_x, render_y+y_padding, "center", "center", 0, level_scale, level_scale )
+      padding_x = padding_x + level_width
+      for i=2,10 do
+        local use_unfocus = cursor_data.state.level < i
+        if use_unfocus then
+          menu_drawf(IMG_levels_unfocus[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, level_scale, level_scale )
+        else
+          menu_drawf(IMG_levels[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, level_scale, level_scale )
+        end
+        padding_x = padding_x + level_width
+      end
+      if is_selected then
+        gprintf(">", render_x+padding_x-0.5*level_width, render_y+y_padding-0.5*text_height,level_width,"center")
       end
     end
 
@@ -653,12 +690,19 @@ function main_character_select()
       pstr = my_name..": "..my_type_selection.."\n"..op_name..": "..op_type_selection
       y_add = math.floor(y_add-0.5*text_height)
     elseif str == "block_selection" then
-      pstr = ""
+      pstr = "Blocks"
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs") then
         draw_blocks(cursor_data[1],1,0.35*button_height)
         draw_blocks(cursor_data[2],2,0.65*button_height)
       else
         draw_blocks(cursor_data[1],1,0.5*button_height)
+      end
+    elseif str == "level" then
+      if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs") then
+        draw_levels(cursor_data[1],1,0.35*button_height)
+        draw_levels(cursor_data[2],2,0.65*button_height)
+      else
+        draw_levels(cursor_data[1],1,0.5*button_height)
       end
     elseif str == "P1" then
       draw_player_state(cursor_data[1],1)
@@ -805,15 +849,17 @@ function main_character_select()
         end
       end
     end
+    
     if current_server_supports_ranking then
       draw_button(1,1,2,1,"match type desired","center","center")
-      draw_button(1,3,1,1,"level","center","center")
+      draw_button(1,3,2,1,"level","center","top")
+      draw_button(1,5,2,1,"block_selection","center","top")
     else
-      draw_button(1,1,3,1,"level","center","center")
+      draw_button(1,1,3,1,"level","center","top")
+      draw_button(1,4,3,1,"block_selection","center","top")
     end
-
-    draw_button(1,4,3,1,"block_selection","center","center")
     draw_button(1,7,1,1,"ready","center","center")
+    
     for i=2,X do
       for j=1,Y do
         local valign = "top"
