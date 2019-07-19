@@ -23,9 +23,6 @@ leaderboard_report = nil
 replay_of_match_so_far = nil
 spectator_list = nil
 spectators_string = ""
-debug_mode_text = {[true]="On", [false]="Off"}
-ready_countdown_1P_text = {[true]="On", [false]="Off"}
-danger_music_changeback_delay_text = {[true]="On", [false]="Off"}
 leftover_time = 0
 
 function fmainloop()
@@ -45,13 +42,15 @@ function fmainloop()
              music_volume                  = 100,
              -- Debug mode flag
              debug_mode                    = false,
+             -- Show FPS in the top-left corner of the screen
+             show_fps                      = false,
              -- Enable ready countdown flag
              ready_countdown_1P            = true,
              -- Change danger music back later flag
              danger_music_changeback_delay = false,
              -- Save replays setting
              save_replays_publicly         = "with my name",
-             -- Default directories for graphics/sounds
+             -- Default directories for graphics/blocks/sounds
              assets_dir                    = default_assets_dir,
              blocks_dir                    = default_blocks_dir,
              sounds_dir                    = default_sounds_dir
@@ -247,7 +246,6 @@ do
     end
   end
 end
-
 
 function main_select_speed_99(next_func, ...)
   local difficulties = {"Easy", "Normal", "Hard"}
@@ -692,15 +690,15 @@ function main_character_select()
     elseif str == "block_selection" then
       pstr = "Blocks"
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs") then
-        draw_blocks(cursor_data[1],1,0.35*button_height)
-        draw_blocks(cursor_data[2],2,0.65*button_height)
+        draw_blocks(cursor_data[1],1,0.4*button_height)
+        draw_blocks(cursor_data[2],2,0.7*button_height)
       else
         draw_blocks(cursor_data[1],1,0.5*button_height)
       end
     elseif str == "level" then
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs") then
-        draw_levels(cursor_data[1],1,0.35*button_height)
-        draw_levels(cursor_data[2],2,0.65*button_height)
+        draw_levels(cursor_data[1],1,0.4*button_height)
+        draw_levels(cursor_data[2],2,0.7*button_height)
       else
         draw_levels(cursor_data[1],1,0.5*button_height)
       end
@@ -2175,8 +2173,11 @@ function main_options(starting_idx)
   local items, active_idx = {}, starting_idx or 1
   local k = K[1]
   local selected, deselected_this_frame, adjust_active_value = false, false, false
-  local function get_items()
   local save_replays_publicly_choices = {"with my name", "anonymously", "not at all"}
+  local show_fps_text = {[true]="Show", [false]="Hide"}
+  local debug_mode_text = {[true]="On", [false]="Off"}
+  local ready_countdown_1P_text = {[true]="On", [false]="Off"}
+  local danger_music_changeback_delay_text = {[true]="On", [false]="Off"}
   assets_dir_before_options_menu = config.assets_dir or default_assets_dir
   blocks_dir_before_options_menu = config.blocks_dir or default_blocks_dir
   sounds_dir_before_options_menu = config.sounds_dir or default_sounds_dir
@@ -2205,28 +2206,28 @@ function main_options(starting_idx)
   for k,v in ipairs(asset_sets) do
     print(v)
   end
-    items = {
+  items = {
     --options menu table reference:
     --{[1]"Option Name", [2]current or default value, [3]type, [4]min or bool value or choices_table,
     -- [5]max, [6]sound_source, [7]selectable, [8]next_func, [9]play_while selected}
-      {"Master Volume", config.master_volume or 100, "numeric", 0, 100, sounds.music.characters["lip"].normal_music, true, nil, true},
-      {"SFX Volume", config.SFX_volume or 100, "numeric", 0, 100, sounds.SFX.cur_move, true},
-      {"Music Volume", config.music_volume or 100, "numeric", 0, 100, sounds.music.characters["lip"].normal_music, true, nil, true},
-      {"Debug Mode", debug_mode_text[config.debug_mode or false], "bool", false, nil, nil,false},
-      {"Save replays publicly",
-        save_replays_publicly_choices[config.save_replays_publicly]
-          or save_replays_publicly_choices["with my name"],
-        "multiple choice", save_replays_publicly_choices},
-      {"Graphics set", config.assets_dir or default_assets_dir, "multiple choice", asset_sets},
-      {"Blocks set", config.blocks_dir or default_blocks_dir, "multiple choice", block_sets},
-      {"About custom graphics", "", "function", nil, nil, nil, nil, main_show_custom_graphics_readme},
-      {"Sounds set", config.sounds_dir or default_sounds_dir, "multiple choice", sound_sets},
-      {"About custom sounds", "", "function", nil, nil, nil, nil, main_show_custom_sounds_readme},
-      {"Ready countdown", ready_countdown_1P_text[config.ready_countdown_1P or false], "bool", true, nil, nil,false},
-      {"Danger music change-back delay", danger_music_changeback_delay_text[config.danger_music_changeback_delay or false], "bool", false, nil, nil, false},
-      {"Back", "", nil, nil, nil, nil, false, main_select_mode}
-    }
-  end
+    {"Master Volume", config.master_volume or 100, "numeric", 0, 100, sounds.music.characters["lip"].normal_music, true, nil, true},
+    {"SFX Volume", config.SFX_volume or 100, "numeric", 0, 100, sounds.SFX.cur_move, true},
+    {"Music Volume", config.music_volume or 100, "numeric", 0, 100, sounds.music.characters["lip"].normal_music, true, nil, true},
+    {"Debug Mode", debug_mode_text[config.debug_mode or false], "bool", false, nil, nil,false},
+    {"Save replays publicly",
+      save_replays_publicly_choices[config.save_replays_publicly]
+        or save_replays_publicly_choices["with my name"],
+      "multiple choice", save_replays_publicly_choices},
+    {"Graphics set", config.assets_dir or default_assets_dir, "multiple choice", asset_sets},
+    {"Blocks set", config.blocks_dir or default_blocks_dir, "multiple choice", block_sets},
+    {"About custom graphics", "", "function", nil, nil, nil, nil, main_show_custom_graphics_readme},
+    {"Sounds set", config.sounds_dir or default_sounds_dir, "multiple choice", sound_sets},
+    {"About custom sounds", "", "function", nil, nil, nil, nil, main_show_custom_sounds_readme},
+    {"Ready countdown", ready_countdown_1P_text[config.ready_countdown_1P or false], "bool", true, nil, nil,false},
+    {"Show FPS", show_fps_text[config.show_fps or false], "bool", true, nil, nil,false},
+    {"Danger music change-back delay", danger_music_changeback_delay_text[config.danger_music_changeback_delay or false], "bool", false, nil, nil, false},
+    {"Back", "", nil, nil, nil, nil, false, main_select_mode}
+  }
   local function print_stuff()
     local to_print, to_print2, arrow = "", "", ""
     for i=1,#items do
@@ -2285,10 +2286,8 @@ function main_options(starting_idx)
       items[active_idx][6]:play()
     end
   end
-  get_items()
   local do_menu_function = false
   while true do
-    --get_items()
     print_stuff()
     wait()
     local ret = nil
@@ -2334,10 +2333,12 @@ function main_options(starting_idx)
           if items[active_idx][1] == "Ready countdown" then
             config.ready_countdown_1P = not config.ready_countdown_1P
             items[active_idx][2] = ready_countdown_1P_text[config.ready_countdown_1P]
-          end
-          if items[active_idx][1] == "Danger music change-back delay" then
+          elseif items[active_idx][1] == "Danger music change-back delay" then
             config.danger_music_changeback_delay = not config.danger_music_changeback_delay
             items[active_idx][2] = danger_music_changeback_delay_text[config.danger_music_changeback_delay]
+          elseif items[active_idx][1] == "Show FPS" then
+            config.show_fps = not config.show_fps
+            items[active_idx][2] = show_fps_text[config.show_fps]
           end
           --add any other bool config updates here
         elseif items[active_idx][3] == "numeric" then

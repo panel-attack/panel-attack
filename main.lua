@@ -96,7 +96,9 @@ function love.draw()
     gfx_q[i][1](unpack(gfx_q[i][2]))
   end
   gfx_q:clear()
-  love.graphics.print("FPS: "..love.timer.getFPS(),1,1) -- TODO: Make this a toggle
+  if config ~= nil and config.show_fps then
+    love.graphics.print("FPS: "..love.timer.getFPS(),1,1)
+  end
   if love.graphics.getSupported("canvas") then
     love.graphics.setCanvas()
     love.graphics.clear(love.graphics.getBackgroundColor())
