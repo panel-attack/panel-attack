@@ -2174,7 +2174,7 @@ function main_options(starting_idx)
   local k = K[1]
   local selected, deselected_this_frame, adjust_active_value = false, false, false
   local save_replays_publicly_choices = {"with my name", "anonymously", "not at all"}
-  local show_fps_text = {[true]="Show", [false]="Hide"}
+  local show_fps_text = {[true]="On", [false]="Off"}
   local debug_mode_text = {[true]="On", [false]="Off"}
   local ready_countdown_1P_text = {[true]="On", [false]="Off"}
   local danger_music_changeback_delay_text = {[true]="On", [false]="Off"}
