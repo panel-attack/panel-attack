@@ -59,8 +59,8 @@ function read_conf_file() pcall(function()
   if love.filesystem.getInfo("assets/"..config.assets_dir) == nil then
     config.assets_dir = default_assets_dir
   end
-  if love.filesystem.getInfo("blocks/"..config.blocks_dir) == nil then
-    config.blocks_dir = default_blocks_dir
+  if love.filesystem.getInfo("panels/"..config.panels_dir) == nil then
+    config.panels_dir = default_panels_dir
   end
   if love.filesystem.getInfo("sounds/"..config.sounds_dir) == nil then
     config.sounds_dir = default_sounds_dir

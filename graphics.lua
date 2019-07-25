@@ -54,15 +54,15 @@ function menu_drawf(img, x, y, halign, valign, rot, x_scale, y_scale)
   y_scale = y_scale or 1
   halign = halign or "left"
   if halign == "center" then
-    x = x - img:getWidth() * 0.5 * x_scale
+    x = x - math.floor(img:getWidth() * 0.5 * x_scale)
   elseif halign == "right" then
-    x = x - img:getWidth() * x_scale
+    x = x - math.floor(img:getWidth() * x_scale)
   end
   valign = valign or "top"
   if valign == "center" then
-    y = y - img:getHeight() * 0.5 * y_scale
+    y = y - math.floor(img:getHeight() * 0.5 * y_scale)
   elseif valign == "bottom" then
-    y = y - img:getHeight() * y_scale
+    y = y - math.floor(img:getHeight() * y_scale)
   end
   gfx_q:push({love.graphics.draw, {img, x, y,
     rot, x_scale, y_scale}})
@@ -248,34 +248,34 @@ function graphics_init()
   end
 end
 
-function blocks_init()
+function panels_init()
   IMG_panels = {}
   IMG_panels_dirs = {}
 
-  local function load_block_dir(dir)
+  local function load_panels_dir(dir)
     IMG_panels[dir] = {}
     IMG_panels_dirs[#IMG_panels_dirs+1] = dir
 
     for i=1,8 do
       IMG_panels[dir][i] = {}
       for j=1,7 do
-        IMG_panels[dir][i][j] = load_img("panel"..tostring(i)..tostring(j)..".png","blocks/",dir,default_blocks_dir)
+        IMG_panels[dir][i][j] = load_img("panel"..tostring(i)..tostring(j)..".png","panels/",dir,default_panels_dir)
       end
     end
     IMG_panels[dir][9] = {}
     for j=1,7 do
-      IMG_panels[dir][9][j] = load_img("panel00.png",dir,default_blocks_dir)
+      IMG_panels[dir][9][j] = load_img("panel00.png",dir,default_panels_dir)
     end
   end
 
   -- default ones
-  load_block_dir(default_blocks_dir)
+  load_panels_dir(default_panels_dir)
 
   -- custom ones
-  local raw_dir_list = love.filesystem.getDirectoryItems("blocks")
+  local raw_dir_list = love.filesystem.getDirectoryItems("panels")
   for k,v in ipairs(raw_dir_list) do
-    if love.filesystem.getInfo("blocks/"..v) and v ~= "Example folder structure" and v ~= default_blocks_dir then
-      load_block_dir(v)
+    if love.filesystem.getInfo("panels/"..v) and v ~= "Example folder structure" and v ~= default_panels_dir then
+      load_panels_dir(v)
     end
   end
 
@@ -392,8 +392,8 @@ function Stack.render(self)
                   draw(imgs.pop, draw_x, draw_y, 0, 16/popped_w, 16/popped_h)
                 end
               elseif panel.y_offset == -1 then
-                local p_w, p_h = IMG_panels[self.blocks][panel.color][1]:getDimensions()
-                draw(IMG_panels[self.blocks][panel.color][1], draw_x, draw_y, 0, 16/p_w, 16/p_h)
+                local p_w, p_h = IMG_panels[self.panels_dir][panel.color][1]:getDimensions()
+                draw(IMG_panels[self.panels_dir][panel.color][1], draw_x, draw_y, 0, 16/p_w, 16/p_h)
               end
             elseif flash_time % 2 == 1 then
               if panel.metal then
@@ -449,8 +449,8 @@ function Stack.render(self)
           else
             draw_frame = 1
           end
-          local panel_w, panel_h = IMG_panels[self.blocks][panel.color][draw_frame]:getDimensions()
-          draw(IMG_panels[self.blocks][panel.color][draw_frame], draw_x, draw_y, 0, 16/panel_w, 16/panel_h)
+          local panel_w, panel_h = IMG_panels[self.panels_dir][panel.color][draw_frame]:getDimensions()
+          draw(IMG_panels[self.panels_dir][panel.color][draw_frame], draw_x, draw_y, 0, 16/panel_w, 16/panel_h)
           if config.debug_mode then
             gprint(panel.state, draw_x*3, draw_y*3)
             if panel.match_anyway ~= nil then
@@ -466,7 +466,7 @@ function Stack.render(self)
       if config.debug_mode and mx >= draw_x and mx < draw_x + 16 and
           my >= draw_y and my < draw_y + 16 then
         mouse_panel = {row, col, panel}
-        draw(IMG_panels[self.blocks][4][1], draw_x+16/3, draw_y+16/3, 0, 0.33333333, 0.3333333)
+        draw(IMG_panels[self.panels_dir][4][1], draw_x+16/3, draw_y+16/3, 0, 0.33333333, 0.3333333)
       end
     end
   end

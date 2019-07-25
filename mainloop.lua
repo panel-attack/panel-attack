@@ -50,9 +50,9 @@ function fmainloop()
              danger_music_changeback_delay = false,
              -- Save replays setting
              save_replays_publicly         = "with my name",
-             -- Default directories for graphics/blocks/sounds
+             -- Default directories for graphics/panels/sounds
              assets_dir                    = default_assets_dir,
-             blocks_dir                    = default_blocks_dir,
+             panels_dir                    = default_panels_dir,
              sounds_dir                    = default_sounds_dir
            }
   gprint("Reading config file", 300, 280)
@@ -72,9 +72,9 @@ function fmainloop()
   gprint("Loading graphics...", 300, 280)
   wait()
   graphics_init() -- load images and set up stuff
-  gprint("Loading blocks...", 300, 280)
+  gprint("Loading panels...", 300, 280)
   wait()
-  blocks_init() -- load blocks
+  panels_init() -- load panels
   gprint("Loading sounds... (this takes a few seconds)", 300, 280)
   wait()
   sound_init()
@@ -324,7 +324,7 @@ function main_endless(...)
   replay.in_buf = ""
   replay.gpan_buf = ""
   replay.mode = "endless"
-  P1 = Stack(1, "endless", config.blocks_dir, ...)
+  P1 = Stack(1, "endless", config.panels_dir, ...)
   P1.do_countdown = config.ready_countdown_1P or false
   replay.do_countdown = P1.do_countdown or false
   replay.speed = P1.speed
@@ -354,7 +354,7 @@ end
 function main_time_attack(...)
   bg = IMG_stages[math.random(#IMG_stages)]
   consuming_timesteps = true
-  P1 = Stack(1, "time", config.blocks_dir, ...)
+  P1 = Stack(1, "time", config.panels_dir, ...)
   make_local_panels(P1, "000000")
   P1:starting_state()
   while true do
@@ -467,13 +467,13 @@ function main_character_select()
     print("current_server_supports_ranking: "..tostring(current_server_supports_ranking))
 
     if current_server_supports_ranking then
-      map = {{"match type desired", "match type desired", "level", "block_selection", "block_selection", "block_selection", "ready"},
+      map = {{"match type desired", "match type desired", "level", "panels_selection", "panels_selection", "panels_selection", "ready"},
              {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
              {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
              {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
              {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
     else
-      map = {{"level", "level", "level", "block_selection", "block_selection", "block_selection", "ready"},
+      map = {{"level", "level", "level", "panels_selection", "panels_selection", "panels_selection", "ready"},
              {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
              {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
              {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
@@ -481,17 +481,17 @@ function main_character_select()
     end
   end
   if character_select_mode == "2p_local_vs" or character_select_mode == "1p_vs_yourself" then
-    map = {{"level", "level", "level", "block_selection", "block_selection", "block_selection", "ready"},
+    map = {{"level", "level", "level", "panels_selection", "panels_selection", "panels_selection", "ready"},
            {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
            {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
            {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
            {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
   end
-  local op_state = global_op_state or {character=config.character, level=config.level, blocks=config.blocks_dir, cursor="ready", ready=false, ranked=false}
+  local op_state = global_op_state or {character=config.character, level=config.level, panels_dir=config.panels_dir, cursor="ready", ready=false, ranked=false}
   if character_select_mode ~= "2p_local_vs" then
     global_op_state = nil
   end
-  my_state = global_my_state or {character=config.character, level=config.level, blocks=config.blocks_dir, cursor="ready", ready=false, ranked=config.ranked}
+  my_state = global_my_state or {character=config.character, level=config.level, panels_dir=config.panels_dir, cursor="ready", ready=false, ranked=config.ranked}
   global_my_state = nil
   my_win_count = my_win_count or 0
   local prev_state = shallowcpy(my_state)
@@ -617,32 +617,32 @@ function main_character_select()
       menu_drawf(IMG_levels[cursor_data.state.level], render_x+button_width-1, render_y+button_height-1, "right", "bottom", 0, scale, scale )
     end
 
-    local function draw_blocks(cursor_data,player_number,y_padding)
-      local blocks_max_width = 0.25*button_height
-      local blocks_width = math.min(blocks_max_width,IMG_panels[cursor_data.state.blocks][1][1]:getWidth())
-      local padding_x = 0.5*button_width-3*blocks_width -- center them, not 3.5 mysteriously?
+    local function draw_panels(cursor_data,player_number,y_padding)
+      local panels_max_width = 0.25*button_height
+      local panels_width = math.min(panels_max_width,IMG_panels[cursor_data.state.panels_dir][1][1]:getWidth())
+      local padding_x = 0.5*button_width-3*panels_width -- center them, not 3.5 mysteriously?
       if cursor_data.state.level >= 9 then
-        padding_x = padding_x-0.5*blocks_width
+        padding_x = padding_x-0.5*panels_width
       end
-      local is_selected = cursor_data.selected and cursor_data.state.cursor == "block_selection"
+      local is_selected = cursor_data.selected and cursor_data.state.cursor == "panels_selection"
       if is_selected then
-        padding_x = padding_x-blocks_width
+        padding_x = padding_x-panels_width
       end
-      local blocks_scale = blocks_width/IMG_panels[cursor_data.state.blocks][1][1]:getWidth()
-      menu_drawf(IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center", 0, blocks_scale, blocks_scale )
-      padding_x = padding_x + blocks_width
+      local panels_scale = panels_width/IMG_panels[cursor_data.state.panels_dir][1][1]:getWidth()
+      menu_drawf(IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center", 0, panels_scale, panels_scale )
+      padding_x = padding_x + panels_width
       if is_selected then
-        gprintf("<", render_x+padding_x-0.5*blocks_width, render_y+y_padding-0.5*text_height,blocks_width,"center")
-        padding_x = padding_x + blocks_width
+        gprintf("<", render_x+padding_x-0.5*panels_width, render_y+y_padding-0.5*text_height,panels_width,"center")
+        padding_x = padding_x + panels_width
       end
       for i=1,8 do
         if i ~= 7 and (i ~= 6 or cursor_data.state.level >= 9) then
-          menu_drawf(IMG_panels[cursor_data.state.blocks][i][1], render_x+padding_x, render_y+y_padding, "center", "center", 0, blocks_scale, blocks_scale )
-          padding_x = padding_x + blocks_width
+          menu_drawf(IMG_panels[cursor_data.state.panels_dir][i][1], render_x+padding_x, render_y+y_padding, "center", "center", 0, panels_scale, panels_scale )
+          padding_x = padding_x + panels_width
         end
       end
       if is_selected then
-        gprintf(">", render_x+padding_x-0.5*blocks_width, render_y+y_padding-0.5*text_height,blocks_width,"center")
+        gprintf(">", render_x+padding_x-0.5*panels_width, render_y+y_padding-0.5*text_height,panels_width,"center")
       end
     end
     
@@ -687,13 +687,13 @@ function main_character_select()
       end
       pstr = my_name..": "..my_type_selection.."\n"..op_name..": "..op_type_selection
       y_add = math.floor(y_add-0.5*text_height)
-    elseif str == "block_selection" then
+    elseif str == "panels_selection" then
       pstr = "Blocks"
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs") then
-        draw_blocks(cursor_data[1],1,0.4*button_height)
-        draw_blocks(cursor_data[2],2,0.7*button_height)
+        draw_panels(cursor_data[1],1,0.4*button_height)
+        draw_panels(cursor_data[2],2,0.7*button_height)
       else
-        draw_blocks(cursor_data[1],1,0.5*button_height)
+        draw_panels(cursor_data[1],1,0.5*button_height)
       end
     elseif str == "level" then
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs") then
@@ -764,8 +764,8 @@ function main_character_select()
           local fake_P1 = P1
           print("currently_spectating: "..tostring(currently_spectating))
           local fake_P2 = P2
-          P1 = Stack(1, "vs", msg.player_settings.blocks, msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
-          P2 = Stack(2, "vs", msg.opponent_settings.blocks, msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
+          P1 = Stack(1, "vs", msg.player_settings.panels_dir, msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
+          P2 = Stack(2, "vs", msg.opponent_settings.panels_dir, msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
           if currently_spectating then
             P1.panel_buffer = fake_P1.panel_buffer
             P1.gpanel_buffer = fake_P1.gpanel_buffer
@@ -851,10 +851,10 @@ function main_character_select()
     if current_server_supports_ranking then
       draw_button(1,1,2,1,"match type desired","center","center")
       draw_button(1,3,2,1,"level","center","top")
-      draw_button(1,5,2,1,"block_selection","center","top")
+      draw_button(1,5,2,1,"panels_selection","center","top")
     else
       draw_button(1,1,3,1,"level","center","top")
-      draw_button(1,4,3,1,"block_selection","center","top")
+      draw_button(1,4,3,1,"panels_selection","center","top")
     end
     draw_button(1,7,1,1,"ready","center","center")
     
@@ -949,10 +949,10 @@ function main_character_select()
       cursor_pos[1],cursor_pos[2] = can_x,can_y
     end
 
-    local function change_block_theme(block_theme,increment)
+    local function change_panels_dir(panels_dir,increment)
       local current = 0
       for k,v in ipairs(IMG_panels_dirs) do
-        if v == block_theme then
+        if v == panels_dir then
           current = k
           break
         end
@@ -964,13 +964,13 @@ function main_character_select()
             return v
         end
       end
-      return block_theme
+      return panels_dir
     end
 
     variable_step(function()
       menu_clock = menu_clock + 1
       local up,down,left,right = {-1,0}, {1,0}, {0,-1}, {0,1}
-      local selectable = {block_selection=true, level=true, ready=true}
+      local selectable = {panels_selection=true, level=true, ready=true}
       if not currently_spectating then
         local KMax = 1
         if character_select_mode == "2p_local_vs" then
@@ -987,8 +987,8 @@ function main_character_select()
             if cursor.selected then
               if cursor.state.cursor == "level" then
                 cursor.state.level = bound(1, cursor.state.level-1, 10)
-              elseif cursor.state.cursor == "block_selection" then
-                cursor.state.blocks = change_block_theme(cursor.state.blocks,-1)
+              elseif cursor.state.cursor == "panels_selection" then
+                cursor.state.panels_dir = change_panels_dir(cursor.state.panels_dir,-1)
               end
             end
             if not cursor.selected then move_cursor(cursor.position,left) end
@@ -996,8 +996,8 @@ function main_character_select()
             if cursor.selected then
               if cursor.state.cursor == "level" then
                 cursor.state.level = bound(1, cursor.state.level+1, 10)
-              elseif cursor.state.cursor == "block_selection" then
-                cursor.state.blocks = change_block_theme(cursor.state.blocks,1)
+              elseif cursor.state.cursor == "panels_selection" then
+                cursor.state.panels_dir = change_panels_dir(cursor.state.panels_dir,1)
               end
             end
             if not cursor.selected then move_cursor(cursor.position,right) end
@@ -1046,7 +1046,7 @@ function main_character_select()
         config.character = my_state.character
         config.level = my_state.level
         config.ranked = my_state.ranked
-        config.blocks_dir = my_state.blocks
+        config.panels_dir = my_state.panels_dir
         if character_select_mode == "2p_local_vs" then
           global_op_state = shallowcpy(op_state)
           global_op_state.ready = false
@@ -1066,15 +1066,15 @@ function main_character_select()
       return unpack(ret)
     end
     if my_state.ready and character_select_mode == "1p_vs_yourself" then
-      P1 = Stack(1, "vs", my_state.blocks, my_state.level, my_state.character)
+      P1 = Stack(1, "vs", my_state.panels_dir, my_state.level, my_state.character)
       P1.garbage_target = P1
       make_local_panels(P1, "000000")
       make_local_gpanels(P1, "000000")
       P1:starting_state()
       return main_dumb_transition, {main_local_vs_yourself, "Game is starting...", 30, 30}
     elseif my_state.ready and character_select_mode == "2p_local_vs" and op_state.ready then
-      P1 = Stack(1, "vs", my_state.blocks, my_state.level, my_state.character)
-      P2 = Stack(2, "vs", op_state.blocks, op_state.level, op_state.character)
+      P1 = Stack(1, "vs", my_state.panels_dir, my_state.level, my_state.character)
+      P2 = Stack(2, "vs", op_state.panels_dir, op_state.level, op_state.character)
       P1.garbage_target = P2
       P2.garbage_target = P1
       P2.pos_x = 172
@@ -1421,8 +1421,8 @@ function main_net_vs_setup(ip)
       end
     end)
   end
-  P1 = Stack(1, "vs", config.blocks_dir, P1_level)
-  P2 = Stack(2, "vs", config.blocks_dir, P2_level)
+  P1 = Stack(1, "vs", config.panels_dir, P1_level)
+  P2 = Stack(2, "vs", config.panels_dir, P2_level)
   if currently_spectating then
     P1.panel_buffer = fake_P1.panel_buffer
     P1.gpanel_buffer = fake_P1.gpanel_buffer
@@ -1648,8 +1648,8 @@ main_local_vs_setup_old = multi_func(function()
     end)
   end
   to_print = "P1 level: "..maybe[1].."\nP2 level: "..(maybe[2])
-  P1 = Stack(1, "vs", config.blocks_dir, chosen[1])
-  P2 = Stack(2, "vs", config.blocks_dir, chosen[2])
+  P1 = Stack(1, "vs", config.panels_dir, chosen[1])
+  P2 = Stack(2, "vs", config.panels_dir, chosen[2])
   P1.garbage_target = P2
   P2.garbage_target = P1
   P2.pos_x = 172
@@ -1739,8 +1739,8 @@ end
 function main_replay_vs()
   local replay = replay.vs
   bg = IMG_stages[math.random(#IMG_stages)]
-  P1 = Stack(1, "vs", config.blocks_dir, replay.P1_level or 5)
-  P2 = Stack(2, "vs", config.blocks_dir, replay.P2_level or 5)
+  P1 = Stack(1, "vs", config.panels_dir, replay.P1_level or 5)
+  P2 = Stack(2, "vs", config.panels_dir, replay.P2_level or 5)
   P1.do_countdown = replay.do_countdown or false
   P2.do_countdown = replay.do_countdown or false
   P1.ice = true
@@ -1844,7 +1844,7 @@ function main_replay_endless()
     return main_dumb_transition,
       {main_select_mode, "I don't have an endless replay :("}
   end
-  P1 = Stack(1, "endless", config.blocks_dir, replay.speed, replay.difficulty)
+  P1 = Stack(1, "endless", config.panels_dir, replay.speed, replay.difficulty)
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
   P1.input_buffer = table.concat({replay.in_buf})
@@ -1890,7 +1890,7 @@ function main_replay_puzzle()
     return main_dumb_transition,
       {main_select_mode, "I don't have a puzzle replay :("}
   end
-  P1 = Stack(1, "puzzle", config.blocks_dir)
+  P1 = Stack(1, "puzzle", config.panels_dir)
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
   P1.input_buffer = replay.in_buf
@@ -1943,7 +1943,7 @@ function make_main_puzzle(puzzles)
     consuming_timesteps = true
     replay.puzzle = {}
     local replay = replay.puzzle
-    P1 = Stack(1, "puzzle", config.blocks_dir)
+    P1 = Stack(1, "puzzle", config.panels_dir)
     P1.do_countdown = config.ready_countdown_1P or false
     local start_delay = 0
     if awesome_idx == nil then
@@ -2179,7 +2179,7 @@ function main_options(starting_idx)
   local ready_countdown_1P_text = {[true]="On", [false]="Off"}
   local danger_music_changeback_delay_text = {[true]="On", [false]="Off"}
   assets_dir_before_options_menu = config.assets_dir or default_assets_dir
-  blocks_dir_before_options_menu = config.blocks_dir or default_blocks_dir
+  panels_dir_before_options_menu = config.panels_dir or default_panels_dir
   sounds_dir_before_options_menu = config.sounds_dir or default_sounds_dir
   --make so we can get "anonymously" from save_replays_publicly_choices["anonymously"]
   for k,v in ipairs(save_replays_publicly_choices) do
@@ -2197,8 +2197,8 @@ function main_options(starting_idx)
 
   local asset_sets = {}
   get_dir_set(asset_sets,"assets")
-  local block_sets = {}
-  get_dir_set(block_sets,"blocks")
+  local panel_sets = {}
+  get_dir_set(panel_sets,"panels")
   local sound_sets = {}
   get_dir_set(sound_sets,"sounds")
 
@@ -2219,7 +2219,7 @@ function main_options(starting_idx)
         or save_replays_publicly_choices["with my name"],
       "multiple choice", save_replays_publicly_choices},
     {"Graphics set", config.assets_dir or default_assets_dir, "multiple choice", asset_sets},
-    {"Blocks set", config.blocks_dir or default_blocks_dir, "multiple choice", block_sets},
+    {"Blocks set", config.panels_dir or default_panels_dir, "multiple choice", panel_sets},
     {"About custom graphics", "", "function", nil, nil, nil, nil, main_show_custom_graphics_readme},
     {"Sounds set", config.sounds_dir or default_sounds_dir, "multiple choice", sound_sets},
     {"About custom sounds", "", "function", nil, nil, nil, nil, main_show_custom_sounds_readme},
@@ -2382,7 +2382,7 @@ function main_options(starting_idx)
           elseif active_idx == 6 then
             config.assets_dir = items[active_idx][2]
           elseif active_idx == 7 then
-            config.blocks_dir = items[active_idx][2]
+            config.panels_dir = items[active_idx][2]
           elseif active_idx == 9 then
             config.sounds_dir = items[active_idx][2]
           end
@@ -2423,12 +2423,12 @@ function exit_options_menu()
   end
   assets_dir_before_options_menu = nil
 
-  if config.blocks_dir ~= blocks_dir_before_options_menu then
-    gprint("reloading blocks...", 300, 305)
+  if config.panels_dir ~= panels_dir_before_options_menu then
+    gprint("reloading panels...", 300, 305)
     wait()
-    blocks_init()
+    panels_init()
   end
-  blocks_dir_before_options_menu = nil
+  panels_dir_before_options_menu = nil
 
   if config.sounds_dir ~= sounds_dir_before_options_menu then
     gprint("reloading sounds...", 300, 305)
