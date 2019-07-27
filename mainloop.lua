@@ -380,6 +380,17 @@ function main_character_select()
   love.audio.stop()
   stop_the_music()
   bg = charselect
+
+  print("character_select_mode = "..(character_select_mode or "nil"))
+
+  local function refresh_state_based_on_own_mods(state)
+    if state ~= nil then
+      if state.panels_dir == nil or IMG_panels[state.panels_dir] == nil then
+        state.panels_dir = default_panels_dir
+      end
+    end
+  end
+
   local map = {}
   if character_select_mode == "2p_net_vs" then
     local opponent_connected = false
@@ -422,8 +433,7 @@ function main_character_select()
     if msg.ratings then
         global_current_room_ratings = msg.ratings
     end
-    global_my_state = msg.a_menu_state
-    global_op_state = msg.b_menu_state
+
     if msg.your_player_number then
       my_player_number = msg.your_player_number
     elseif currently_spectating then
@@ -435,6 +445,7 @@ function main_character_select()
       print("Error: The server never told us our player number.  Assuming it is 1")
       my_player_number = 1
     end
+
     if msg.op_player_number then
       op_player_number = msg.op_player_number or op_player_number
     elseif currently_spectating then
@@ -446,6 +457,17 @@ function main_character_select()
       print("Error: The server never told us our player number.  Assuming it is 2")
       op_player_number = 2
     end
+
+    if my_player_number == 2 and msg.a_menu_state ~= nil and msg.b_menu_state ~= nil then
+      print("inverting the states to match player number!")
+      msg.a_menu_state, msg.b_menu_state = msg.b_menu_state, msg.a_menu_state
+    end
+
+    global_my_state = msg.a_menu_state
+    refresh_state_based_on_own_mods(global_my_state)
+    global_op_state = msg.b_menu_state
+    refresh_state_based_on_own_mods(global_op_state)
+
     if msg.win_counts then
       update_win_counts(msg.win_counts)
     end
@@ -467,7 +489,7 @@ function main_character_select()
     print("current_server_supports_ranking: "..tostring(current_server_supports_ranking))
 
     if current_server_supports_ranking then
-      map = {{"match type desired", "match type desired", "level", "panels_selection", "panels_selection", "panels_selection", "ready"},
+      map = {{"match type desired", "match type desired", "level", "level", "panels_selection", "panels_selection", "ready"},
              {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
              {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
              {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
@@ -487,15 +509,9 @@ function main_character_select()
            {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
            {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
   end
-  local op_state = global_op_state or {character=config.character, level=config.level, panels_dir=config.panels_dir, cursor="ready", ready=false, ranked=false}
-  if character_select_mode ~= "2p_local_vs" then
-    global_op_state = nil
-  end
-  my_state = global_my_state or {character=config.character, level=config.level, panels_dir=config.panels_dir, cursor="ready", ready=false, ranked=config.ranked}
-  global_my_state = nil
-  my_win_count = my_win_count or 0
-  local prev_state = shallowcpy(my_state)
+  
   op_win_count = op_win_count or 0
+
   if character_select_mode == "2p_net_vs" then
     global_current_room_ratings = global_current_room_ratings or {{new=0,old=0,difference=0},{new=0,old=0,difference=0}}
     my_expected_win_ratio = nil
@@ -520,6 +536,7 @@ function main_character_select()
     match_type = match_type or "Casual"
     if match_type == "" then match_type = "Casual" end
   end
+
   match_type_message = match_type_message or ""
 
   local function do_leave()
@@ -529,9 +546,8 @@ function main_character_select()
     return json_send({leave_room=true})
   end
 
+  -- be wary: name_to_xy is kinda buggy for larger blocks as they span multiple positions (we retain the last one)
   local name_to_xy = {}
-  print("character_select_mode = "..(character_select_mode or "nil"))
-  print("map[1][1] = "..(map[1][1] or "nil"))
   local X,Y = 5,7
   for i=1,X do
     for j=1,Y do
@@ -541,31 +557,25 @@ function main_character_select()
     end
   end
 
-  local function draw_cursor(button_height, spacing, player_num,ready)
-    local cur_blink_frequency = 4
-    local cur_pos_change_frequency = 8
-    local draw_cur_this_frame = false
-    local cursor_frame = 1
-    if ready then
-      if (math.floor(menu_clock/cur_blink_frequency)+player_num)%2+1 == player_num then
-        draw_cur_this_frame = true
-      end
-    else
-      draw_cur_this_frame = true
-      cursor_frame = (math.floor(menu_clock/cur_pos_change_frequency)+player_num)%2+1
+  my_win_count = my_win_count or 0
+
+  local cursor_data = {{position=shallowcpy(name_to_xy["ready"]),selected=false},{position=shallowcpy(name_to_xy["ready"]),selected=false}}
+  if global_my_state ~= nil then
+    cursor_data[1].state = shallowcpy(global_my_state)
+    global_my_state = nil
+  else
+    cursor_data[1].state = {character=config.character, level=config.level, panels_dir=config.panels_dir, cursor="ready", ready=false, ranked=config.ranked}
+  end
+  if global_op_state ~= nil then
+    cursor_data[2].state = shallowcpy(global_op_state)
+    if character_select_mode ~= "2p_local_vs" then
+      global_op_state = nil
     end
-    if draw_cur_this_frame then
-      local cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
-      local cur_img_left = IMG_char_sel_cursor_halves.left[player_num][cursor_frame]
-      local cur_img_right = IMG_char_sel_cursor_halves.right[player_num][cursor_frame]
-      local cur_img_w, cur_img_h = cur_img:getDimensions()
-      local cursor_scale = (button_height+(spacing*2))/cur_img_h
-      menu_drawq(cur_img, cur_img_left, render_x-spacing, render_y-spacing, 0, cursor_scale , cursor_scale)
-      menu_drawq(cur_img, cur_img_right, render_x+button_width+spacing-cur_img_w*cursor_scale/2, render_y-spacing, 0, cursor_scale, cursor_scale)
-    end
+  else
+    cursor_data[2].state = {character=config.character, level=config.level, panels_dir=config.panels_dir, cursor="ready", ready=false, ranked=false}
   end
 
-  local cursor_data = {{position={1,1},selected=false,state=my_state},{position={1,1},selected=false,state=op_state}}
+  local prev_state = shallowcpy(cursor_data[1].state)
 
   local function draw_button(x,y,w,h,str,halign,valign,no_rect)
     no_rect = no_rect or false
@@ -587,9 +597,9 @@ function main_character_select()
     end
     local character_to_display_name = str
     if str == "P1" then
-      character_to_display_name = my_state.character
+      character_to_display_name = cursor_data[1].state.character
     elseif str == "P2" then
-      character_to_display_name = op_state.character
+      character_to_display_name = cursor_data[2].state.character
     end
     local width_for_alignment = button_width
     local x_add,y_add = 0,0
@@ -606,6 +616,30 @@ function main_character_select()
       menu_drawf(IMG_character_icons[character_display_names_to_original_names[character_to_display_name]], render_x+0.5*button_width, render_y+0.5*button_height,"center","center", 0, scale, scale )
     end
     local pstr = str:gsub("^%l", string.upper)
+
+    local function draw_cursor(button_height, spacing, player_num,ready)
+      local cur_blink_frequency = 4
+      local cur_pos_change_frequency = 8
+      local draw_cur_this_frame = false
+      local cursor_frame = 1
+      if ready then
+        if (math.floor(menu_clock/cur_blink_frequency)+player_num)%2+1 == player_num then
+          draw_cur_this_frame = true
+        end
+      else
+        draw_cur_this_frame = true
+        cursor_frame = (math.floor(menu_clock/cur_pos_change_frequency)+player_num)%2+1
+      end
+      if draw_cur_this_frame then
+        local cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
+        local cur_img_left = IMG_char_sel_cursor_halves.left[player_num][cursor_frame]
+        local cur_img_right = IMG_char_sel_cursor_halves.right[player_num][cursor_frame]
+        local cur_img_w, cur_img_h = cur_img:getDimensions()
+        local cursor_scale = (button_height+(spacing*2))/cur_img_h
+        menu_drawq(cur_img, cur_img_left, render_x-spacing, render_y-spacing, 0, cursor_scale , cursor_scale)
+        menu_drawq(cur_img, cur_img_right, render_x+button_width+spacing-cur_img_w*cursor_scale/2, render_y-spacing, 0, cursor_scale, cursor_scale)
+      end
+    end
     
     local function draw_player_state(cursor_data,player_number)
       if cursor_data.state.ready then
@@ -679,16 +713,16 @@ function main_character_select()
 
     if str == "match type desired" then
       local my_type_selection, op_type_selection = "[casual]  ranked", "[casual]  ranked"
-      if my_state.ranked then
+      if cursor_data[1].state.ranked then
         my_type_selection = " casual  [ranked]"
       end
-      if op_state.ranked then
+      if cursor_data[2].state.ranked then
         op_type_selection = " casual  [ranked]"
       end
       pstr = my_name..": "..my_type_selection.."\n"..op_name..": "..op_type_selection
       y_add = math.floor(y_add-0.5*text_height)
     elseif str == "panels_selection" then
-      pstr = "Blocks"
+      pstr = "Panels"
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs") then
         draw_panels(cursor_data[1],1,0.4*button_height)
         draw_panels(cursor_data[2],2,0.7*button_height)
@@ -710,12 +744,12 @@ function main_character_select()
       pstr = op_name
     end
     if x ~= 0 then
-      if my_state and my_state.cursor and (my_state.cursor == str or my_state.cursor == character_display_names_to_original_names[str]) then
-        draw_cursor(button_height, spacing, 1, my_state.ready)
+      if cursor_data[1].state and cursor_data[1].state.cursor == str then
+        draw_cursor(button_height, spacing, 1, cursor_data[1].state.ready)
       end
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs")
-      and op_state and op_state.cursor and (op_state.cursor == str or op_state.cursor == character_display_names_to_original_names[str]) then
-        draw_cursor(button_height, spacing, 2, op_state.ready)
+      and cursor_data[2].state and cursor_data[2].state.cursor == str then
+        draw_cursor(button_height, spacing, 2, cursor_data[2].state.ready)
       end
     end
     gprintf(pstr, render_x+x_add, render_y+y_add,width_for_alignment,halign)
@@ -732,13 +766,13 @@ function main_character_select()
         end
         if msg.menu_state then
           if currently_spectating then
-            if msg.player_number == 2 then
-              op_state = msg.menu_state
-            elseif msg.player_number == 1 then
-              my_state = msg.menu_state
+            if msg.player_number == 1 or msg.player_number == 2 then
+              cursor_data[msg.player_number].state = msg.menu_state
+              refresh_state_based_on_own_mods(cursor_data[msg.player_number].state)
             end
           else
-            op_state = msg.menu_state
+            cursor_data[2].state = msg.menu_state
+            refresh_state_based_on_own_mods(cursor_data[2].state)
           end
         end
         if msg.ranked_match_approved then
@@ -921,13 +955,13 @@ function main_character_select()
     end
     draw_button(0,1,1,1,"P1")
     draw_button(0,2,2,1,get_player_state_str(my_player_number,my_rating_difference,my_win_count,op_win_count,my_expected_win_ratio),"left","top",true)
-    if op_state and op_name then
+    if cursor_data[1].state and op_name then
       draw_button(0,5,1,1,"P2")
       draw_button(0,6,2,1,get_player_state_str(op_player_number,op_rating_difference,op_win_count,my_win_count,op_expected_win_ratio),"left","top",true)
       --state = state.." "..json.encode(op_state)
     end
     if character_select_mode == "2p_net_vs" then
-      if not my_state.ranked and not op_state.ranked then
+      if not cursor_data[1].state.ranked and not cursor_data[2].state.ranked then
         match_type_message = ""
       end
       gprint(match_type, 375, 15)
@@ -1043,18 +1077,18 @@ function main_character_select()
           end
         end
         -- update config, does not redefine it
-        config.character = my_state.character
-        config.level = my_state.level
-        config.ranked = my_state.ranked
-        config.panels_dir = my_state.panels_dir
+        config.character = cursor_data[1].state.character
+        config.level = cursor_data[1].state.level
+        config.ranked = cursor_data[1].state.ranked
+        config.panels_dir = cursor_data[1].state.panels_dir
         if character_select_mode == "2p_local_vs" then
-          global_op_state = shallowcpy(op_state)
+          global_op_state = shallowcpy(cursor_data[2].state)
           global_op_state.ready = false
         end
-        if character_select_mode == "2p_net_vs" and not content_equal(my_state, prev_state) and not currently_spectating then
-          json_send({menu_state=my_state})
+        if character_select_mode == "2p_net_vs" and not content_equal(cursor_data[1].state, prev_state) and not currently_spectating then
+          json_send({menu_state=cursor_data[1].state})
         end
-        prev_state = shallowcpy(my_state)
+        prev_state = shallowcpy(cursor_data[1].state)
       else -- (we are are spectating)
         if menu_escape(k) then
           do_leave()
@@ -1065,16 +1099,16 @@ function main_character_select()
     if ret then
       return unpack(ret)
     end
-    if my_state.ready and character_select_mode == "1p_vs_yourself" then
-      P1 = Stack(1, "vs", my_state.panels_dir, my_state.level, my_state.character)
+    if cursor_data[1].state.ready and character_select_mode == "1p_vs_yourself" then
+      P1 = Stack(1, "vs", cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       P1.garbage_target = P1
       make_local_panels(P1, "000000")
       make_local_gpanels(P1, "000000")
       P1:starting_state()
       return main_dumb_transition, {main_local_vs_yourself, "Game is starting...", 30, 30}
-    elseif my_state.ready and character_select_mode == "2p_local_vs" and op_state.ready then
-      P1 = Stack(1, "vs", my_state.panels_dir, my_state.level, my_state.character)
-      P2 = Stack(2, "vs", op_state.panels_dir, op_state.level, op_state.character)
+    elseif cursor_data[1].state.ready and character_select_mode == "2p_local_vs" and cursor_data[2].state.ready then
+      P1 = Stack(1, "vs", cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+      P2 = Stack(2, "vs", cursor_data[2].state.panels_dir, cursor_data[2].state.level, cursor_data[2].state.character)
       P1.garbage_target = P2
       P2.garbage_target = P1
       P2.pos_x = 172

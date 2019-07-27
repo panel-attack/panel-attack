@@ -95,10 +95,12 @@ function create_room(a, b)
   a_msg.your_player_number = 1
   a_msg.op_player_number = 2
   a_msg.opponent = new_room.b.name
+  new_room.b.cursor = "ready"
   a_msg.menu_state = new_room.b:menu_state()
   b_msg.your_player_number = 2
   b_msg.op_player_number = 1
   b_msg.opponent = new_room.a.name
+  new_room.a.cursor = "ready"
   b_msg.menu_state = new_room.a:menu_state()
   a_msg.ratings = new_room.ratings
   b_msg.ratings = new_room.ratings
@@ -219,8 +221,8 @@ function Room.character_select(self)
     self.a.player_number = 1
     self.b.player_number = 2
   end
-  self.a.cursor = "level"
-  self.b.cursor = "level"
+  self.a.cursor = "ready"
+  self.b.cursor = "ready"
   self.a.ready = false
   self.b.ready = false
   self:send({character_select=true, create_room=true, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()})
@@ -435,7 +437,6 @@ end)
 
 function Connection.menu_state(self)
   state = {cursor=self.cursor, ready=self.ready, character=self.character, panels_dir=self.panels_dir, level=self.level, ranked=self.wants_ranked_match}
-
   return state
   --note: player_number here is the player_number of the connection as according to the server, not the "which" of any Stack
 end
@@ -1149,7 +1150,6 @@ end
 function Connection.J(self, message)
   message = json.decode(message)
   local response
-  self.panels_dir = default_panels_dir
   if self.state == "needs_name" then
     if not message.name or message.name == "" then
       print("connection didn't send a name")
@@ -1178,10 +1178,7 @@ function Connection.J(self, message)
     else
       self.name = message.name
       self.character = message.character
-      if IMG_panels[message.panels_dir] ~= nil then
-        self.panels_dir = message.panels_dir
-      else
-        self.panels_dir = default_panels_dir
+      self.panels_dir = message.panels_dir
       self.level = message.level
       self.save_replays_publicly = message.save_replays_publicly
       lobby_changed = true
@@ -1226,10 +1223,7 @@ function Connection.J(self, message)
     self.character = message.menu_state.character
     self.ready = message.menu_state.ready
     self.cursor = message.menu_state.cursor
-    if IMG_panels[message.menu_state.panels_dir] ~= nil then
-      self.panels_dir = message.menu_state.panels_dir
-    else
-      self.panels_dir = default_panels_dir
+    self.panels_dir = message.menu_state.panels_dir
     self.wants_ranked_match = message.menu_state.ranked
     print("about to check for rating_adjustment_approval for ")
     print(self.name)
