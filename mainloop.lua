@@ -711,16 +711,27 @@ function main_character_select()
       end
     end
 
+    local function draw_match_type(cursor_data,player_number,y_padding)
+      local padding_x = math.floor(0.5*button_width - IMG_players[player_number]:getWidth()*0.5 - 46)  -- ty GIMP; no way to know the size of the text?
+      menu_drawf(IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center" )
+      padding_x = padding_x+IMG_players[player_number]:getWidth()
+      local to_print
+      if cursor_data.state.ranked then
+        to_print = "casual [ranked]"
+      else
+        to_print = "[casual] ranked"
+      end
+      gprint(to_print, render_x+padding_x, render_y+y_padding-0.5*text_height-1)
+    end
+
     if str == "match type desired" then
-      local my_type_selection, op_type_selection = "[casual]  ranked", "[casual]  ranked"
-      if cursor_data[1].state.ranked then
-        my_type_selection = " casual  [ranked]"
+      pstr = "Mode"
+      if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs") then
+        draw_match_type(cursor_data[1],1,0.4*button_height)
+        draw_match_type(cursor_data[2],2,0.7*button_height)
+      else
+        draw_match_type(cursor_data[1],1,0.5*button_height)
       end
-      if cursor_data[2].state.ranked then
-        op_type_selection = " casual  [ranked]"
-      end
-      pstr = my_name..": "..my_type_selection.."\n"..op_name..": "..op_type_selection
-      y_add = math.floor(y_add-0.5*text_height)
     elseif str == "panels_selection" then
       pstr = "Panels"
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs") then
@@ -883,7 +894,7 @@ function main_character_select()
     end
     
     if current_server_supports_ranking then
-      draw_button(1,1,2,1,"match type desired","center","center")
+      draw_button(1,1,2,1,"match type desired","center","top")
       draw_button(1,3,2,1,"level","center","top")
       draw_button(1,5,2,1,"panels_selection","center","top")
     else
