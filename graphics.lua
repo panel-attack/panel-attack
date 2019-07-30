@@ -158,6 +158,7 @@ function graphics_init()
     end
   end
   
+  IMG_level_cursor = load_img("level_cursor.png")
   IMG_levels = {}
   IMG_levels_unfocus = {}
   IMG_levels[1] = load_img("level1.png")

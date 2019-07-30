@@ -695,14 +695,15 @@ function main_character_select()
         gprintf("<", render_x+padding_x-0.5*level_width, render_y+y_padding-0.5*text_height,level_width,"center")
         padding_x = padding_x + level_width
       end
-      menu_drawf(IMG_levels[1], render_x+padding_x, render_y+y_padding, "center", "center", 0, level_scale, level_scale )
-      padding_x = padding_x + level_width
-      for i=2,10 do
+      for i=1,10 do
         local use_unfocus = cursor_data.state.level < i
         if use_unfocus then
           menu_drawf(IMG_levels_unfocus[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, level_scale, level_scale )
         else
           menu_drawf(IMG_levels[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, level_scale, level_scale )
+        end
+        if i == cursor_data.state.level then
+          menu_drawf(IMG_level_cursor, render_x+padding_x, render_y+y_padding+IMG_levels[i]:getHeight()*0.5, "center", "top", 0, level_scale, level_scale )
         end
         padding_x = padding_x + level_width
       end
@@ -2168,10 +2169,13 @@ end
 
 function main_show_custom_graphics_readme(idx)
   if not love.filesystem.getInfo("assets/Example folder structure")then
-    print("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.")
-    gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
+    print("Hold on.  Copying example folders to make this easier...\n This make take a few seconds.")
+    gprint("Hold on.  Copying example folders to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
     wait()
     recursive_copy("assets/"..default_assets_dir, "assets/Example folder structure")
+    recursive_copy("panels_dir/"..default_panels_dir, "assets/Example folder structure")
+    -- add other defaults sets here so that anyone can update them if wanted
+    recursive_copy("panels_dir/libre", "assets/libre")
   end
   local custom_graphics_readme = read_txt_file("Custom Graphics Readme.txt")
   while true do
