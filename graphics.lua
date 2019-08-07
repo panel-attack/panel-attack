@@ -4,22 +4,21 @@ require("util")
 local floor = math.floor
 local ceil = math.ceil
 
-function load_img(path_and_name,path_to_dir,config_dir,default_dir)
-  path_to_dir = path_to_dir or "assets/"
-  default_dir = default_dir or default_assets_dir
+function load_img(path_and_name,config_dir,default_dir)
+  default_dir = default_dir or "assets/"..default_assets_dir
   local img
   if pcall(function ()
     config_dir = config_dir or config.assets_dir
-    img = love.image.newImageData(path_to_dir..(config_dir or default_dir).."/"..path_and_name)
+    img = love.image.newImageData((config_dir or default_dir).."/"..path_and_name)
   end) then
     if config_dir and config_dir ~= default_dir then
       print("loaded custom asset: "..config_dir.."/"..path_and_name)
     end
   else
     if pcall(function ()
-      img = love.image.newImageData(path_to_dir..default_dir.."/"..path_and_name)
+      img = love.image.newImageData(default_dir.."/"..path_and_name)
     end) then
-      print("loaded okay.")
+      print("loaded asset:"..default_dir.."/"..path_and_name)
     else
       img = nil
     end
@@ -253,30 +252,35 @@ function panels_init()
   IMG_panels = {}
   IMG_panels_dirs = {}
 
-  local function load_panels_dir(dir)
+  local function load_panels_dir(dir, full_dir, default_dir)
+    default_dir = default_dir or "panels/"..default_panels_dir
     IMG_panels[dir] = {}
     IMG_panels_dirs[#IMG_panels_dirs+1] = dir
 
     for i=1,8 do
       IMG_panels[dir][i] = {}
       for j=1,7 do
-        IMG_panels[dir][i][j] = load_img("panel"..tostring(i)..tostring(j)..".png","panels/",dir,default_panels_dir)
+        IMG_panels[dir][i][j] = load_img("panel"..tostring(i)..tostring(j)..".png",full_dir,default_dir)
       end
     end
     IMG_panels[dir][9] = {}
     for j=1,7 do
-      IMG_panels[dir][9][j] = load_img("panel00.png",dir,default_panels_dir)
+      IMG_panels[dir][9][j] = load_img("panel00.png",full_dir,default_dir)
     end
   end
 
-  -- default ones
-  load_panels_dir(default_panels_dir)
+  if config.use_panels_from_assets_folder then
+    load_panels_dir(config.assets_dir, "assets/"..config.assets_dir)
+  else
+    -- default ones
+    load_panels_dir(default_panels_dir, "panels/"..default_panels_dir)
 
-  -- custom ones
-  local raw_dir_list = love.filesystem.getDirectoryItems("panels")
-  for k,v in ipairs(raw_dir_list) do
-    if love.filesystem.getInfo("panels/"..v) and v ~= "Example folder structure" and v ~= default_panels_dir then
-      load_panels_dir(v)
+    -- custom ones
+    local raw_dir_list = love.filesystem.getDirectoryItems("panels")
+    for k,v in ipairs(raw_dir_list) do
+      if love.filesystem.getInfo("panels/"..v) and v ~= "Example folder structure" and v ~= default_panels_dir then
+        load_panels_dir(v, "panels/"..v)
+      end
     end
   end
 

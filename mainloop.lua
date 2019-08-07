@@ -52,8 +52,12 @@ function fmainloop()
              save_replays_publicly         = "with my name",
              -- Default directories for graphics/panels/sounds
              assets_dir                    = default_assets_dir,
-             panels_dir                    = default_panels_dir,
-             sounds_dir                    = default_sounds_dir
+             sounds_dir                    = default_sounds_dir,
+
+             panels_dir                    = default_assets_dir,
+             -- Retrocompatibility, please remove whenever possible, it's so ugly!
+             panels_dir_when_not_using_set_from_assets_folder = default_panels_dir,
+             use_panels_from_assets_folder  = true,
            }
   gprint("Reading config file", 300, 280)
   wait()
@@ -386,7 +390,7 @@ function main_character_select()
   local function refresh_state_based_on_own_mods(state)
     if state ~= nil then
       if state.panels_dir == nil or IMG_panels[state.panels_dir] == nil then
-        state.panels_dir = default_panels_dir
+        state.panels_dir = config.panels_dir
       end
     end
   end
@@ -1092,7 +1096,10 @@ function main_character_select()
         config.character = cursor_data[1].state.character
         config.level = cursor_data[1].state.level
         config.ranked = cursor_data[1].state.ranked
-        config.panels_dir = cursor_data[1].state.panels_dir
+        if config.use_panels_from_assets_folder == false then
+          config.panels_dir_when_not_using_set_from_assets_folder = cursor_data[1].state.panels_dir
+          config.panels = config.panels_dir_when_not_using_set_from_assets_folder
+        end
         if character_select_mode == "2p_local_vs" then
           global_op_state = shallowcpy(cursor_data[2].state)
           global_op_state.ready = false
@@ -2173,9 +2180,9 @@ function main_show_custom_graphics_readme(idx)
     gprint("Hold on.  Copying example folders to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
     wait()
     recursive_copy("assets/"..default_assets_dir, "assets/Example folder structure")
-    recursive_copy("panels_dir/"..default_panels_dir, "assets/Example folder structure")
+    recursive_copy("panels/"..default_panels_dir, "panels/Example folder structure")
     -- add other defaults sets here so that anyone can update them if wanted
-    recursive_copy("panels_dir/libre", "assets/libre")
+    recursive_copy("panels/libre", "panels/libre")
   end
   local custom_graphics_readme = read_txt_file("Custom Graphics Readme.txt")
   while true do
@@ -2223,13 +2230,11 @@ function main_options(starting_idx)
   local k = K[1]
   local selected, deselected_this_frame, adjust_active_value = false, false, false
   local save_replays_publicly_choices = {"with my name", "anonymously", "not at all"}
-  local show_fps_text = {[true]="On", [false]="Off"}
-  local debug_mode_text = {[true]="On", [false]="Off"}
-  local ready_countdown_1P_text = {[true]="On", [false]="Off"}
-  local danger_music_changeback_delay_text = {[true]="On", [false]="Off"}
-  assets_dir_before_options_menu = config.assets_dir or default_assets_dir
-  panels_dir_before_options_menu = config.panels_dir or default_panels_dir
-  sounds_dir_before_options_menu = config.sounds_dir or default_sounds_dir
+  local on_off_text = {[true]="On", [false]="Off"}
+  memory_before_options_menu = {  config.assets_dir or default_assets_dir, 
+                                  config.panels_dir_when_not_using_set_from_assets_folder or default_panels_dir, 
+                                  config.sounds_dir or default_sounds_dir, 
+                                  config.use_panels_from_assets_folder }
   --make so we can get "anonymously" from save_replays_publicly_choices["anonymously"]
   for k,v in ipairs(save_replays_publicly_choices) do
     save_replays_publicly_choices[v] = v
@@ -2262,19 +2267,20 @@ function main_options(starting_idx)
     {"Master Volume", config.master_volume or 100, "numeric", 0, 100, sounds.music.characters["lip"].normal_music, true, nil, true},
     {"SFX Volume", config.SFX_volume or 100, "numeric", 0, 100, sounds.SFX.cur_move, true},
     {"Music Volume", config.music_volume or 100, "numeric", 0, 100, sounds.music.characters["lip"].normal_music, true, nil, true},
-    {"Debug Mode", debug_mode_text[config.debug_mode or false], "bool", false, nil, nil,false},
+    {"Debug Mode", on_off_text[config.debug_mode or false], "bool", false, nil, nil,false},
     {"Save replays publicly",
       save_replays_publicly_choices[config.save_replays_publicly]
         or save_replays_publicly_choices["with my name"],
       "multiple choice", save_replays_publicly_choices},
     {"Graphics set", config.assets_dir or default_assets_dir, "multiple choice", asset_sets},
-    {"Panels set", config.panels_dir or default_panels_dir, "multiple choice", panel_sets},
+    {"Panels set", config.panels_dir_when_not_using_set_from_assets_folder or default_panels_dir, "multiple choice", panel_sets},
     {"About custom graphics", "", "function", nil, nil, nil, nil, main_show_custom_graphics_readme},
     {"Sounds set", config.sounds_dir or default_sounds_dir, "multiple choice", sound_sets},
     {"About custom sounds", "", "function", nil, nil, nil, nil, main_show_custom_sounds_readme},
-    {"Ready countdown", ready_countdown_1P_text[config.ready_countdown_1P or false], "bool", true, nil, nil,false},
-    {"Show FPS", show_fps_text[config.show_fps or false], "bool", true, nil, nil,false},
-    {"Danger music change-back delay", danger_music_changeback_delay_text[config.danger_music_changeback_delay or false], "bool", false, nil, nil, false},
+    {"Ready countdown", on_off_text[config.ready_countdown_1P or false], "bool", true, nil, nil,false},
+    {"Show FPS", on_off_text[config.show_fps or false], "bool", true, nil, nil,false},
+    {"Use panels from assets folder", on_off_text[config.use_panels_from_assets_folder], "bool", true, nil, nil,false},
+    {"Danger music change-back delay", on_off_text[config.danger_music_changeback_delay or false], "bool", false, nil, nil, false},
     {"Back", "", nil, nil, nil, nil, false, main_select_mode}
   }
   local function print_stuff()
@@ -2377,17 +2383,20 @@ function main_options(starting_idx)
         if items[active_idx][3] == "bool" then
           if active_idx == 4 then
             config.debug_mode = not config.debug_mode
-            items[active_idx][2] = debug_mode_text[config.debug_mode or false]
+            items[active_idx][2] = on_off_text[config.debug_mode or false]
           end
           if items[active_idx][1] == "Ready countdown" then
             config.ready_countdown_1P = not config.ready_countdown_1P
-            items[active_idx][2] = ready_countdown_1P_text[config.ready_countdown_1P]
-          elseif items[active_idx][1] == "Danger music change-back delay" then
-            config.danger_music_changeback_delay = not config.danger_music_changeback_delay
-            items[active_idx][2] = danger_music_changeback_delay_text[config.danger_music_changeback_delay]
+            items[active_idx][2] = on_off_text[config.ready_countdown_1P]
           elseif items[active_idx][1] == "Show FPS" then
             config.show_fps = not config.show_fps
-            items[active_idx][2] = show_fps_text[config.show_fps]
+            items[active_idx][2] = on_off_text[config.show_fps]
+          elseif items[active_idx][1] == "Use panels from assets folder" then
+            config.use_panels_from_assets_folder = not config.use_panels_from_assets_folder
+            items[active_idx][2] = on_off_text[config.use_panels_from_assets_folder]
+          elseif items[active_idx][1] == "Danger music change-back delay" then
+            config.danger_music_changeback_delay = not config.danger_music_changeback_delay
+            items[active_idx][2] = on_off_text[config.danger_music_changeback_delay]
           end
           --add any other bool config updates here
         elseif items[active_idx][3] == "numeric" then
@@ -2431,7 +2440,7 @@ function main_options(starting_idx)
           elseif active_idx == 6 then
             config.assets_dir = items[active_idx][2]
           elseif active_idx == 7 then
-            config.panels_dir = items[active_idx][2]
+            config.panels_dir_when_not_using_set_from_assets_folder = items[active_idx][2]
           elseif active_idx == 9 then
             config.sounds_dir = items[active_idx][2]
           end
@@ -2464,27 +2473,32 @@ end
 function exit_options_menu()
   gprint("writing config to file...", 300,280)
   wait()
+  if config.use_panels_from_assets_folder then
+    config.panels_dir = config.assets_dir
+  else
+    config.panels_dir = config.panels_dir_when_not_using_set_from_assets_folder
+  end
   write_conf_file()
-  if config.assets_dir ~= assets_dir_before_options_menu then
+  if config.assets_dir ~= memory_before_options_menu[1] then
     gprint("reloading graphics...", 300, 305)
     wait()
     graphics_init()
   end
-  assets_dir_before_options_menu = nil
-
-  if config.panels_dir ~= panels_dir_before_options_menu then
+  
+  if config.panels_dir_when_not_using_set_from_assets_folder ~= memory_before_options_menu[2] 
+  or config.use_panels_from_assets_folder ~= memory_before_options_menu[4]
+  or config.assets_dir ~= memory_before_options_menu[1] then
     gprint("reloading panels...", 300, 305)
     wait()
     panels_init()
   end
-  panels_dir_before_options_menu = nil
 
-  if config.sounds_dir ~= sounds_dir_before_options_menu then
+  if config.sounds_dir ~= memory_before_options_menu[3] then
     gprint("reloading sounds...", 300, 305)
     wait()
     sound_init()
   end
-  sounds_dir_before_options_menu = nil
+  memory_before_options_menu = nil
   return main_select_mode
 end
 

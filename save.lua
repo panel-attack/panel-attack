@@ -59,11 +59,19 @@ function read_conf_file() pcall(function()
   if love.filesystem.getInfo("assets/"..config.assets_dir) == nil then
     config.assets_dir = default_assets_dir
   end
-  if love.filesystem.getInfo("panels/"..config.panels_dir) == nil then
-    config.panels_dir = default_panels_dir
+  if love.filesystem.getInfo("panels/"..config.panels_dir_when_not_using_set_from_assets_folder) == nil then
+    config.panels_dir_when_not_using_set_from_assets_folder = default_panels_dir
   end
   if love.filesystem.getInfo("sounds/"..config.sounds_dir) == nil then
     config.sounds_dir = default_sounds_dir
+  end
+  if config.use_panels_from_assets_folder == nil then
+    config.use_panels_from_assets_folder = true
+  end
+  if config.use_panels_from_assets_folder then
+    config.panels_dir = config.assets_dir
+  else
+    config.panels_dir = config.panels_dir_when_not_using_set_from_assets_folder
   end
   file:close()
 end) end
