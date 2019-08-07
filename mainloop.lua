@@ -2268,7 +2268,7 @@ function main_options(starting_idx)
         or save_replays_publicly_choices["with my name"],
       "multiple choice", save_replays_publicly_choices},
     {"Graphics set", config.assets_dir or default_assets_dir, "multiple choice", asset_sets},
-    {"Blocks set", config.panels_dir or default_panels_dir, "multiple choice", panel_sets},
+    {"Panels set", config.panels_dir or default_panels_dir, "multiple choice", panel_sets},
     {"About custom graphics", "", "function", nil, nil, nil, nil, main_show_custom_graphics_readme},
     {"Sounds set", config.sounds_dir or default_sounds_dir, "multiple choice", sound_sets},
     {"About custom sounds", "", "function", nil, nil, nil, nil, main_show_custom_sounds_readme},
