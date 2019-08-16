@@ -513,7 +513,7 @@ function main_character_select()
            {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
            {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
   end
-  
+
   op_win_count = op_win_count or 0
 
   if character_select_mode == "2p_net_vs" then
@@ -601,9 +601,9 @@ function main_character_select()
     end
     local character_to_display_name = str
     if str == "P1" then
-      character_to_display_name = cursor_data[1].state.character
+      character_to_display_name = character_display_names[cursor_data[1].state.character]
     elseif str == "P2" then
-      character_to_display_name = cursor_data[2].state.character
+      character_to_display_name = character_display_names[cursor_data[2].state.character]
     end
     local width_for_alignment = button_width
     local x_add,y_add = 0,0
@@ -644,7 +644,7 @@ function main_character_select()
         menu_drawq(cur_img, cur_img_right, render_x+button_width+spacing-cur_img_w*cursor_scale/2, render_y-spacing, 0, cursor_scale, cursor_scale)
       end
     end
-    
+
     local function draw_player_state(cursor_data,player_number)
       if cursor_data.state.ready then
         menu_drawf(IMG_ready, render_x+button_width*0.5, render_y+button_height*0.5, "center", "center" )
@@ -683,7 +683,7 @@ function main_character_select()
         gprintf(">", render_x+padding_x-0.5*panels_width, render_y+y_padding-0.5*text_height,panels_width,"center")
       end
     end
-    
+
     local function draw_levels(cursor_data,player_number,y_padding)
       local level_max_width = 0.2*button_height
       local level_width = math.min(level_max_width,IMG_levels[1]:getWidth())
@@ -760,11 +760,11 @@ function main_character_select()
       pstr = op_name
     end
     if x ~= 0 then
-      if cursor_data[1].state and cursor_data[1].state.cursor == str then
+      if cursor_data[1].state and (cursor_data[1].state.cursor == str or character_display_names[cursor_data[1].state.cursor] == str) then
         draw_cursor(button_height, spacing, 1, cursor_data[1].state.ready)
       end
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs")
-      and cursor_data[2].state and cursor_data[2].state.cursor == str then
+      and cursor_data[2].state and (cursor_data[2].state.cursor == str or character_display_names[cursor_data[2].state.cursor] == str) then
         draw_cursor(button_height, spacing, 2, cursor_data[2].state.ready)
       end
     end
@@ -897,7 +897,7 @@ function main_character_select()
         end
       end
     end
-    
+
     if current_server_supports_ranking then
       draw_button(1,1,2,1,"match type desired","center","top")
       draw_button(1,3,2,1,"level","center","top")
@@ -907,7 +907,7 @@ function main_character_select()
       draw_button(1,4,3,1,"panels_selection","center","top")
     end
     draw_button(1,7,1,1,"ready","center","center")
-    
+
     for i=2,X do
       for j=1,Y do
         local valign = "top"
@@ -2231,9 +2231,9 @@ function main_options(starting_idx)
   local selected, deselected_this_frame, adjust_active_value = false, false, false
   local save_replays_publicly_choices = {"with my name", "anonymously", "not at all"}
   local on_off_text = {[true]="On", [false]="Off"}
-  memory_before_options_menu = {  config.assets_dir or default_assets_dir, 
-                                  config.panels_dir_when_not_using_set_from_assets_folder or default_panels_dir, 
-                                  config.sounds_dir or default_sounds_dir, 
+  memory_before_options_menu = {  config.assets_dir or default_assets_dir,
+                                  config.panels_dir_when_not_using_set_from_assets_folder or default_panels_dir,
+                                  config.sounds_dir or default_sounds_dir,
                                   config.use_panels_from_assets_folder }
   --make so we can get "anonymously" from save_replays_publicly_choices["anonymously"]
   for k,v in ipairs(save_replays_publicly_choices) do
@@ -2484,8 +2484,8 @@ function exit_options_menu()
     wait()
     graphics_init()
   end
-  
-  if config.panels_dir_when_not_using_set_from_assets_folder ~= memory_before_options_menu[2] 
+
+  if config.panels_dir_when_not_using_set_from_assets_folder ~= memory_before_options_menu[2]
   or config.use_panels_from_assets_folder ~= memory_before_options_menu[4]
   or config.assets_dir ~= memory_before_options_menu[1] then
     gprint("reloading panels...", 300, 305)

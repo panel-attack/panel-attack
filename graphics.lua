@@ -8,7 +8,7 @@ function load_img(path_and_name,config_dir,default_dir)
   default_dir = default_dir or "assets/"..default_assets_dir
   local img
   if pcall(function ()
-    config_dir = config_dir or config.assets_dir
+    config_dir = config_dir or "assets/"..config.assets_dir
     img = love.image.newImageData((config_dir or default_dir).."/"..path_and_name)
   end) then
     if config_dir and config_dir ~= default_dir then
@@ -156,7 +156,7 @@ function graphics_init()
       imgs[part] = load_img(""..key.."/"..part..".png")
     end
   end
-  
+
   IMG_level_cursor = load_img("level_cursor.png")
   IMG_levels = {}
   IMG_levels_unfocus = {}
