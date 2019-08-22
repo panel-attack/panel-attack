@@ -1098,7 +1098,7 @@ function main_character_select()
         config.ranked = cursor_data[1].state.ranked
         if config.use_panels_from_assets_folder == false then
           config.panels_dir_when_not_using_set_from_assets_folder = cursor_data[1].state.panels_dir
-          config.panels = config.panels_dir_when_not_using_set_from_assets_folder
+          config.panels_dir = config.panels_dir_when_not_using_set_from_assets_folder
         end
         if character_select_mode == "2p_local_vs" then
           global_op_state = shallowcpy(cursor_data[2].state)
@@ -1109,7 +1109,7 @@ function main_character_select()
         end
         prev_state = shallowcpy(cursor_data[1].state)
       else -- (we are are spectating)
-        if menu_escape(k) then
+        if menu_escape(K[1]) then
           do_leave()
           ret = {main_net_vs_lobby}
         end
