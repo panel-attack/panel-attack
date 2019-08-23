@@ -667,7 +667,7 @@ function main_character_select()
         padding_x = padding_x-panels_width
       end
       local panels_scale = panels_width/IMG_panels[cursor_data.state.panels_dir][1][1]:getWidth()
-      menu_drawf(IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center", 0, panels_scale, panels_scale )
+      menu_drawf(IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center" )
       padding_x = padding_x + panels_width
       if is_selected then
         gprintf("<", render_x+padding_x-0.5*panels_width, render_y+y_padding-0.5*text_height,panels_width,"center")
@@ -693,7 +693,7 @@ function main_character_select()
         padding_x = padding_x-level_width
       end
       local level_scale = level_width/IMG_levels[1]:getWidth()
-      menu_drawf(IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center", 0, level_scale, level_scale )
+      menu_drawf(IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center" )
       padding_x = padding_x + level_width
       if is_selected then
         gprintf("<", render_x+padding_x-0.5*level_width, render_y+y_padding-0.5*text_height,level_width,"center")
