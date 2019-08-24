@@ -9,9 +9,11 @@ Step by step instructions for using custom graphics (Windows example):
 
 2. Type "%appdata%" without quotes into the address bar and hit enter.
 
-3. See the folders: %appdata%\Panel Attack\assets\example folder structure 
-   and %appdata%\Panel Attack\panels\example folder structure
+3. See the folders: %appdata%\Panel Attack\assets\__Stock PdP_TA 
+   and %appdata%\Panel Attack\panels\__Stock PdP_TA
    for a reference of where your assets should go and what files should be named.
+   
+Note: folders starting with "__" will be ignored upon loading.
 
 4. Make a folder in your game saves directory like this:
    %appdata%\Panel Attack\assets\[your_set_name_here]

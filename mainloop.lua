@@ -2175,15 +2175,25 @@ function main_config_input()
 end
 
 function main_show_custom_graphics_readme(idx)
-  if not love.filesystem.getInfo("assets/Example folder structure")then
-    print("Hold on.  Copying example folders to make this easier...\n This make take a few seconds.")
-    gprint("Hold on.  Copying example folders to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
+  if not love.filesystem.getInfo("assets/"..prefix_of_ignored_dirs..default_assets_dir) then
+    print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
+    gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
     wait()
-    recursive_copy("assets/"..default_assets_dir, "assets/Example folder structure")
-    recursive_copy("panels/"..default_panels_dir, "panels/Example folder structure")
-    -- add other defaults sets here so that anyone can update them if wanted
-    recursive_copy("panels/libre", "panels/libre")
+    recursive_copy("assets/"..default_assets_dir, "assets/"..prefix_of_ignored_dirs..default_assets_dir)
   end
+
+  -- add other defaults panels sets here so that anyone can update them if wanted
+  local default_panels_dirs = { default_panels_dir, "libre" }
+  
+  for _,panels_dir in ipairs(default_panels_dirs) do
+    if not love.filesystem.getInfo("panels/"..prefix_of_ignored_dirs..panels_dir) then
+      print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
+      gprint("Hold on. Copying example folders to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
+      wait()
+      recursive_copy("panels/"..panels_dir, "panels/"..prefix_of_ignored_dirs..panels_dir)
+    end
+  end
+
   local custom_graphics_readme = read_txt_file("Custom Graphics Readme.txt")
   while true do
     gprint(custom_graphics_readme, 100, 150)
@@ -2202,11 +2212,11 @@ function main_show_custom_graphics_readme(idx)
 end
 
 function main_show_custom_sounds_readme(idx)
-  if not love.filesystem.getInfo("sounds/Example folder structure")then
+  if not love.filesystem.getInfo("sounds/"..prefix_of_ignored_dirs..default_sounds_dir)then
     print("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.")
     gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
     wait()
-    recursive_copy("sounds/"..default_sounds_dir, "sounds/Example folder structure")
+    recursive_copy("sounds/"..default_sounds_dir, "sounds/"..prefix_of_ignored_dirs..default_sounds_dir)
   end
   local custom_sounds_readme = read_txt_file("Custom Sounds Readme.txt")
   while true do
@@ -2243,7 +2253,8 @@ function main_options(starting_idx)
   local function get_dir_set(set,path)
     local raw_dir_list = love.filesystem.getDirectoryItems(path)
     for k,v in ipairs(raw_dir_list) do
-      if love.filesystem.getInfo(path.."/"..v) and v ~= "Example folder structure" then
+      local start_of_v = string.sub(v,0,string.len(prefix_of_ignored_dirs))
+      if love.filesystem.getInfo(path.."/"..v) and v ~= "Example folder structure" and start_of_v ~= prefix_of_ignored_dirs then
         set[#set+1] = v
       end
     end

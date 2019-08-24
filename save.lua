@@ -195,7 +195,9 @@ function recursive_copy(source, destination)
       local success, message =  new_file:write(temp, source_size)
       new_file:close()
       
-      print(message)
+      if not success then
+        print(message)
+      end
     else 
       print("name:  "..name.." isn't a directory or file?")
     end

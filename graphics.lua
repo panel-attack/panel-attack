@@ -278,7 +278,8 @@ function panels_init()
     -- custom ones
     local raw_dir_list = love.filesystem.getDirectoryItems("panels")
     for k,v in ipairs(raw_dir_list) do
-      if love.filesystem.getInfo("panels/"..v) and v ~= "Example folder structure" and v ~= default_panels_dir then
+      local start_of_v = string.sub(v,0,string.len(prefix_of_ignored_dirs))
+      if love.filesystem.getInfo("panels/"..v) and v ~= "Example folder structure" and v ~= default_panels_dir and start_of_v ~= prefix_of_ignored_dirs then
         load_panels_dir(v, "panels/"..v)
       end
     end
