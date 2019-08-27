@@ -4,19 +4,21 @@ require("util")
 local floor = math.floor
 local ceil = math.ceil
 
-function load_img(path_and_name)
+function load_img(path_and_name,config_dir,default_dir)
+  default_dir = default_dir or "assets/"..default_assets_dir
   local img
   if pcall(function ()
-    img = love.image.newImageData("assets/"..(config.assets_dir or default_assets_dir).."/"..path_and_name)
+    config_dir = config_dir or "assets/"..config.assets_dir
+    img = love.image.newImageData((config_dir or default_dir).."/"..path_and_name)
   end) then
-    if config.assets_dir and config.assets_dir ~= default_assets_dir then
-      print("loaded custom asset: "..config.assets_dir.."/"..path_and_name)
+    if config_dir and config_dir ~= default_dir then
+      print("loaded custom asset: "..config_dir.."/"..path_and_name)
     end
   else
     if pcall(function ()
-      img = love.image.newImageData("assets/"..default_assets_dir.."/"..path_and_name)
+      img = love.image.newImageData(default_dir.."/"..path_and_name)
     end) then
-      print("loaded okay.")
+      print("loaded asset:"..default_dir.."/"..path_and_name)
     else
       img = nil
     end
@@ -45,6 +47,26 @@ function menu_draw(img, x, y, rot, x_scale,y_scale)
     rot, x_scale, y_scale}})
 end
 
+function menu_drawf(img, x, y, halign, valign, rot, x_scale, y_scale)
+  rot = rot or 0
+  x_scale = x_scale or 1
+  y_scale = y_scale or 1
+  halign = halign or "left"
+  if halign == "center" then
+    x = x - math.floor(img:getWidth() * 0.5 * x_scale)
+  elseif halign == "right" then
+    x = x - math.floor(img:getWidth() * x_scale)
+  end
+  valign = valign or "top"
+  if valign == "center" then
+    y = y - math.floor(img:getHeight() * 0.5 * y_scale)
+  elseif valign == "bottom" then
+    y = y - math.floor(img:getHeight() * y_scale)
+  end
+  gfx_q:push({love.graphics.draw, {img, x, y,
+    rot, x_scale, y_scale}})
+end
+
 function menu_drawq(img, quad, x, y, rot, x_scale,y_scale)
   rot = rot or 0
   x_scale = x_scale or 1
@@ -57,13 +79,36 @@ function grectangle(mode, x, y, w, h)
   gfx_q:push({love.graphics.rectangle, {mode, x, y, w, h}})
 end
 
-function gprint(str, x, y)
+function gprint(str, x, y, color, scale)
   x = x or 0
   y = y or 0
+  scale = scale or 1
+  color = color or nil
   set_color(0, 0, 0, 1)
-  gfx_q:push({love.graphics.print, {str, x+1, y+1}})
-  set_color(1, 1, 1, 1)
-  gfx_q:push({love.graphics.print, {str, x, y}})
+  gfx_q:push({love.graphics.print, {str, x+1, y+1, 0, scale}})
+  local r, g, b, a = 1,1,1,1
+  if color ~= nil then
+    r,g,b,a = unpack(color)
+  end
+  set_color(r,g,b,a)
+  gfx_q:push({love.graphics.print, {str, x, y, 0, scale}})
+end
+
+function gprintf(str, x, y, limit, halign, color, scale)
+  x = x or 0
+  y = y or 0
+  scale = scale or 1
+  color = color or nil
+  limit = limit or nil
+  halign = halign or "left"
+  set_color(0, 0, 0, 1)
+  gfx_q:push({love.graphics.printf, {str, x+1, y+1, limit, halign, 0, scale}})
+  local r, g, b, a = 1,1,1,1
+  if color ~= nil then
+    r,g,b,a = unpack(color)
+  end
+  set_color(r,g,b,a)
+  gfx_q:push({love.graphics.printf, {str, x, y, limit, halign, 0, scale}})
 end
 
 local _r, _g, _b, _a
@@ -99,19 +144,6 @@ function graphics_init()
     end
   end
 
-  IMG_panels = {}
-  for i=1,8 do
-    IMG_panels[i]={}
-    for j=1,7 do
-      IMG_panels[i][j]=load_img("panel"..
-        tostring(i)..tostring(j)..".png")
-    end
-  end
-  IMG_panels[9]={}
-  for j=1,7 do
-    IMG_panels[9][j]=load_img("panel00.png")
-  end
-
   local g_parts = {"topleft", "botleft", "topright", "botright",
                     "top", "bot", "left", "right", "face", "pop",
                     "doubleface", "filler1", "filler2", "flash",
@@ -123,6 +155,16 @@ function graphics_init()
     for _,part in ipairs(g_parts) do
       imgs[part] = load_img(""..key.."/"..part..".png")
     end
+  end
+
+  IMG_level_cursor = load_img("level_cursor.png")
+  IMG_levels = {}
+  IMG_levels_unfocus = {}
+  IMG_levels[1] = load_img("level1.png")
+  IMG_levels_unfocus[1] = nil -- meaningless by design
+  for i=2,10 do
+    IMG_levels[i] = load_img("level"..i..".png")
+    IMG_levels_unfocus[i] = load_img("level"..i.."unfocus.png")
   end
 
   IMG_metal_flash = load_img("garbageflash.png")
@@ -137,6 +179,9 @@ function graphics_init()
   end
   IMG_cursor = {  load_img("cur0.png"),
           load_img("cur1.png")}
+
+  IMG_players = {  load_img("player_1.png"),
+          load_img("player_2.png")}
 
   IMG_frame = load_img("frame.png")
   IMG_wall = load_img("wall.png")
@@ -201,6 +246,45 @@ function graphics_init()
   for k,v in pairs(character_display_names) do
     character_display_names_to_original_names[v] = k
   end
+end
+
+function panels_init()
+  IMG_panels = {}
+  IMG_panels_dirs = {}
+
+  local function load_panels_dir(dir, full_dir, default_dir)
+    default_dir = default_dir or "panels/"..default_panels_dir
+    IMG_panels[dir] = {}
+    IMG_panels_dirs[#IMG_panels_dirs+1] = dir
+
+    for i=1,8 do
+      IMG_panels[dir][i] = {}
+      for j=1,7 do
+        IMG_panels[dir][i][j] = load_img("panel"..tostring(i)..tostring(j)..".png",full_dir,default_dir)
+      end
+    end
+    IMG_panels[dir][9] = {}
+    for j=1,7 do
+      IMG_panels[dir][9][j] = load_img("panel00.png",full_dir,default_dir)
+    end
+  end
+
+  if config.use_panels_from_assets_folder then
+    load_panels_dir(config.assets_dir, "assets/"..config.assets_dir)
+  else
+    -- default ones
+    load_panels_dir(default_panels_dir, "panels/"..default_panels_dir)
+
+    -- custom ones
+    local raw_dir_list = love.filesystem.getDirectoryItems("panels")
+    for k,v in ipairs(raw_dir_list) do
+      local start_of_v = string.sub(v,0,string.len(prefix_of_ignored_dirs))
+      if love.filesystem.getInfo("panels/"..v) and v ~= "Example folder structure" and v ~= default_panels_dir and start_of_v ~= prefix_of_ignored_dirs then
+        load_panels_dir(v, "panels/"..v)
+      end
+    end
+  end
+
 end
 
 function Stack.update_cards(self)
@@ -314,8 +398,8 @@ function Stack.render(self)
                   draw(imgs.pop, draw_x, draw_y, 0, 16/popped_w, 16/popped_h)
                 end
               elseif panel.y_offset == -1 then
-                local p_w, p_h = IMG_panels[panel.color][1]:getDimensions()
-                draw(IMG_panels[panel.color][1], draw_x, draw_y, 0, 16/p_w, 16/p_h)
+                local p_w, p_h = IMG_panels[self.panels_dir][panel.color][1]:getDimensions()
+                draw(IMG_panels[self.panels_dir][panel.color][1], draw_x, draw_y, 0, 16/p_w, 16/p_h)
               end
             elseif flash_time % 2 == 1 then
               if panel.metal then
@@ -371,8 +455,8 @@ function Stack.render(self)
           else
             draw_frame = 1
           end
-          local panel_w, panel_h = IMG_panels[panel.color][draw_frame]:getDimensions()
-          draw(IMG_panels[panel.color][draw_frame], draw_x, draw_y, 0, 16/panel_w, 16/panel_h)
+          local panel_w, panel_h = IMG_panels[self.panels_dir][panel.color][draw_frame]:getDimensions()
+          draw(IMG_panels[self.panels_dir][panel.color][draw_frame], draw_x, draw_y, 0, 16/panel_w, 16/panel_h)
           if config.debug_mode then
             gprint(panel.state, draw_x*3, draw_y*3)
             if panel.match_anyway ~= nil then
@@ -388,7 +472,7 @@ function Stack.render(self)
       if config.debug_mode and mx >= draw_x and mx < draw_x + 16 and
           my >= draw_y and my < draw_y + 16 then
         mouse_panel = {row, col, panel}
-        draw(IMG_panels[4][1], draw_x+16/3, draw_y+16/3, 0, 0.33333333, 0.3333333)
+        draw(IMG_panels[self.panels_dir][4][1], draw_x+16/3, draw_y+16/3, 0, 0.33333333, 0.3333333)
       end
     end
   end

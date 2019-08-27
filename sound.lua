@@ -1,12 +1,11 @@
 --sets the volume of a single source or table of sources
 supported_sound_formats = {".mp3",".ogg", ".it"}
 function set_volume(source, new_volume)
-  if config.debug_mode then print("set_volume called") end
   if type(source) == "table" then
     for _,v in pairs(source) do
       set_volume(v, new_volume)
     end
-  elseif type(source) == "string" then
+  elseif type(source) ~= "number" then
     source:setVolume(new_volume)
   end
 end

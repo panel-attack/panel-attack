@@ -16,7 +16,7 @@ require("sound")
 require("timezones")
 require("gen_panels")
 
-local canvas = love.graphics.newCanvas(default_width, default_height)
+local canvas = love.graphics.newCanvas(canvas_width, canvas_height)
 
 local last_x = 0
 local last_y = 0
@@ -89,21 +89,23 @@ function love.draw()
     love.graphics.clear()
   else
     love.graphics.setColor(0.1, 0.1, 0.1)
-    love.graphics.rectangle("fill",-5,-5,900,900)
+    love.graphics.rectangle("fill",0,0,canvas_width,canvas_height)
     love.graphics.setColor(1, 1, 1)
   end
   for i=gfx_q.first,gfx_q.last do
     gfx_q[i][1](unpack(gfx_q[i][2]))
   end
   gfx_q:clear()
-  love.graphics.print("FPS: "..love.timer.getFPS(),315,115) -- TODO: Make this a toggle
+  if config ~= nil and config.show_fps then
+    love.graphics.print("FPS: "..love.timer.getFPS(),1,1)
+  end
   if love.graphics.getSupported("canvas") then
     love.graphics.setCanvas()
     love.graphics.clear(love.graphics.getBackgroundColor())
     x, y, w, h = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 4, 3)
     love.graphics.setBlendMode("alpha","premultiplied")
-    love.graphics.draw(canvas, x, y, 0, w / default_width, h / default_height)
-    bgw, bgh = bg:getDimensions()
-    menu_draw(bg, 0, 0, 0, default_width/bgw, default_height/bgh)
+    love.graphics.draw(canvas, x, y, 0, w / canvas_width, h / canvas_height)
+    local scale = canvas_width/math.max(bg:getWidth(),bg:getHeight()) -- keep image ratio
+    menu_drawf(bg, canvas_width/2, canvas_height/2, "center", "center", 0, scale, scale )
   end
 end
