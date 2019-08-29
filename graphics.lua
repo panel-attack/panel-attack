@@ -167,11 +167,6 @@ function graphics_init()
     IMG_levels_unfocus[i] = load_img("level"..i.."unfocus.png")
   end
 
-  IMG_metal_flash = load_img("garbageflash.png")
-  IMG_metal = load_img("metalmid.png")
-  IMG_metal_l = load_img("metalend0.png")
-  IMG_metal_r = load_img("metalend1.png")
-
   IMG_ready = load_img("ready.png")
   IMG_numbers = {}
   for i=1,3 do
@@ -252,8 +247,11 @@ function panels_init()
   IMG_panels = {}
   IMG_panels_dirs = {}
 
+  IMG_metals = {}
+
   local function load_panels_dir(dir, full_dir, default_dir)
     default_dir = default_dir or "panels/"..default_panels_dir
+
     IMG_panels[dir] = {}
     IMG_panels_dirs[#IMG_panels_dirs+1] = dir
 
@@ -267,6 +265,11 @@ function panels_init()
     for j=1,7 do
       IMG_panels[dir][9][j] = load_img("panel00.png",full_dir,default_dir)
     end
+
+    IMG_metals[dir] = { left = load_img("metalend0.png",full_dir,default_dir), 
+                        mid = load_img("metalmid.png",full_dir,default_dir), 
+                        right = load_img("metalend1.png",full_dir,default_dir),
+                        flash = load_img("garbageflash.png",full_dir,default_dir) }
   end
 
   if config.use_panels_from_assets_folder then
@@ -326,9 +329,12 @@ function Stack.render(self)
   else
     draw(IMG_garbage[self.character].portrait, self.pos_x+96, self.pos_y, 0, (96/portrait_w)*-1, 192/portrait_h)
   end
-  local metal_w, metal_h = IMG_metal:getDimensions()
-  local metall_w, metall_h = IMG_metal_l:getDimensions()
-  local metalr_w, metalr_h = IMG_metal_r:getDimensions()
+
+  local metals = IMG_metals[self.garbage_target.panels_dir]
+  local metal_w, metal_h = metals.mid:getDimensions()
+  local metall_w, metall_h = metals.left:getDimensions()
+  local metalr_w, metalr_h = metals.right:getDimensions()
+
   local shake_idx = #shake_arr - self.shake_time
   local shake = ceil((shake_arr[shake_idx] or 0) * 13)
   for row=0,self.height do
@@ -339,17 +345,17 @@ function Stack.render(self)
       if panel.color ~= 0 and panel.state ~= "popped" then
         local draw_frame = 1
         if panel.garbage then
-          local imgs = {flash=IMG_metal_flash}
+          local imgs = {flash=metals.flash}
           if not panel.metal then
             imgs = IMG_garbage[self.garbage_target.character]
           end
           if panel.x_offset == 0 and panel.y_offset == 0 then
             -- draw the entire block!
             if panel.metal then
-              draw(IMG_metal_l, draw_x, draw_y, 0, 8/metall_w, 16/metall_h)
-              draw(IMG_metal_r, draw_x+16*(panel.width-1)+8,draw_y, 0, 8/metalr_w, 16/metalr_h)
+              draw(metals.left, draw_x, draw_y, 0, 8/metall_w, 16/metall_h)
+              draw(metals.right, draw_x+16*(panel.width-1)+8,draw_y, 0, 8/metalr_w, 16/metalr_h)
               for i=1,2*(panel.width-1) do
-                draw(IMG_metal, draw_x+8*i, draw_y, 0, 8/metal_w, 16/metal_h)
+                draw(metals.mid, draw_x+8*i, draw_y, 0, 8/metal_w, 16/metal_h)
               end
             else
               local height, width = panel.height, panel.width
@@ -385,14 +391,11 @@ function Stack.render(self)
           end
           if panel.state == "matched" then
             local flash_time = panel.initial_time - panel.timer
-
-
-            local flashed_w, flashed_h = IMG_metal_flash:getDimensions()
             if flash_time >= self.FRAMECOUNT_FLASH then
               if panel.timer > panel.pop_time then
                 if panel.metal then
-                  draw(IMG_metal_l, draw_x, draw_y, 0, 8/metall_w, 16/metall_h)
-                  draw(IMG_metal_r, draw_x+8, draw_y, 0, 8/metalr_w, 16/metalr_h)
+                  draw(metals.left, draw_x, draw_y, 0, 8/metall_w, 16/metall_h)
+                  draw(metals.right, draw_x+8, draw_y, 0, 8/metalr_w, 16/metalr_h)
                 else
                   local popped_w, popped_h = imgs.pop:getDimensions()
                   draw(imgs.pop, draw_x, draw_y, 0, 16/popped_w, 16/popped_h)
@@ -403,8 +406,8 @@ function Stack.render(self)
               end
             elseif flash_time % 2 == 1 then
               if panel.metal then
-                draw(IMG_metal_l, draw_x, draw_y, 0, 8/metall_w, 16/metall_h)
-                draw(IMG_metal_r, draw_x+8, draw_y, 0, 8/metalr_w, 16/metalr_h)
+                draw(metals.left, draw_x, draw_y, 0, 8/metall_w, 16/metall_h)
+                draw(metals.right, draw_x+8, draw_y, 0, 8/metalr_w, 16/metalr_h)
               else
                 local popped_w, popped_h = imgs.pop:getDimensions()
                 draw(imgs.pop, draw_x, draw_y, 0, 16/popped_w, 16/popped_h)
