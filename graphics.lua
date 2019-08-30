@@ -330,7 +330,12 @@ function Stack.render(self)
     draw(IMG_garbage[self.character].portrait, self.pos_x+96, self.pos_y, 0, (96/portrait_w)*-1, 192/portrait_h)
   end
 
-  local metals = IMG_metals[self.garbage_target.panels_dir]
+  local metals
+  if self.garbage_target then
+    metals = IMG_metals[self.garbage_target.panels_dir]
+  else
+    metals = IMG_metals[self.panels_dir]
+  end
   local metal_w, metal_h = metals.mid:getDimensions()
   local metall_w, metall_h = metals.left:getDimensions()
   local metalr_w, metalr_h = metals.right:getDimensions()
