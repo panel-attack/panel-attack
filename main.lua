@@ -102,7 +102,7 @@ function love.draw()
   if love.graphics.getSupported("canvas") then
     love.graphics.setCanvas()
     love.graphics.clear(love.graphics.getBackgroundColor())
-    x, y, w, h = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 4, 3)
+    x, y, w, h = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 16, 9)
     love.graphics.setBlendMode("alpha","premultiplied")
     love.graphics.draw(canvas, x, y, 0, w / canvas_width, h / canvas_height)
     local scale = canvas_width/math.max(bg:getWidth(),bg:getHeight()) -- keep image ratio

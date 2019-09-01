@@ -316,6 +316,19 @@ function Stack.draw_cards(self)
   end
 end
 
+function move_stack(stack, player_num)
+  local stack_padding_x_for_legacy_pos = ((canvas_width-legacy_canvas_width)/2)
+  if player_num == 1 then
+    stack.pos_x = 4 + stack_padding_x_for_legacy_pos/GFX_SCALE 
+    stack.score_x = 315 + stack_padding_x_for_legacy_pos
+  elseif player_num == 2 then
+    stack.pos_x = 172 + stack_padding_x_for_legacy_pos/GFX_SCALE 
+    stack.score_x = 410 + stack_padding_x_for_legacy_pos
+  end
+  stack.pos_y = 4 + (canvas_height-legacy_canvas_height)/GFX_SCALE
+  stack.score_y = 100 + (canvas_height-legacy_canvas_height)
+end
+
 function Stack.render(self)
   local mx,my
   if config.debug_mode then
@@ -487,12 +500,12 @@ function Stack.render(self)
   draw(IMG_frame, self.pos_x-4, self.pos_y-4)
   draw(IMG_wall, self.pos_x, self.pos_y - shake + self.height*16)
   if self.mode == "puzzle" then
-    gprint("Moves: "..self.puzzle_moves, self.score_x, 100)
-    gprint("Frame: "..self.CLOCK, self.score_x, 130)
+    gprint("Moves: "..self.puzzle_moves, self.score_x, self.score_y)
+    gprint("Frame: "..self.CLOCK, self.score_x, self.score_y+30)
   else
-    gprint("Score: "..self.score, self.score_x, 100)
-    gprint("Speed: "..self.speed, self.score_x, 130)
-    gprint("Frame: "..self.CLOCK, self.score_x, 145)
+    gprint("Score: "..self.score, self.score_x, self.score_y)
+    gprint("Speed: "..self.speed, self.score_x, self.score_y+30)
+    gprint("Frame: "..self.CLOCK, self.score_x, self.score_y+45)
     if self.mode == "time" then
       local time_left = 120 - (self.game_stopwatch or 120)/60
       local mins = math.floor(time_left/60)
@@ -501,21 +514,21 @@ function Stack.render(self)
         secs = 0
         mins = mins+1
       end
-      gprint("Time: "..string.format("%01d:%02d",mins,secs), self.score_x, 160)
+      gprint("Time: "..string.format("%01d:%02d",mins,secs), self.score_x, self.score_y+60)
     elseif self.level then
-      gprint("Level: "..self.level, self.score_x, 160)
+      gprint("Level: "..self.level, self.score_x, self.score_y+60)
     end
-    gprint("Health: "..self.health, self.score_x, 175)
-    gprint("Shake: "..self.shake_time, self.score_x, 190)
-    gprint("Stop: "..self.stop_time, self.score_x, 205)
-    gprint("Pre stop: "..self.pre_stop_time, self.score_x, 220)
-    if config.debug_mode and self.danger then gprint("danger", self.score_x,235) end
-    if config.debug_mode and self.danger_music then gprint("danger music", self.score_x, 250) end
+    gprint("Health: "..self.health, self.score_x, self.score_y+75)
+    gprint("Shake: "..self.shake_time, self.score_x, self.score_y+90)
+    gprint("Stop: "..self.stop_time, self.score_x, self.score_y+105)
+    gprint("Pre stop: "..self.pre_stop_time, self.score_x, self.score_y+120)
+    if config.debug_mode and self.danger then gprint("danger", self.score_x,self.score_y+135) end
+    if config.debug_mode and self.danger_music then gprint("danger music", self.score_x, self.score_y+150) end
     if config.debug_mode then
-      gprint("cleared: "..(self.panels_cleared or 0), self.score_x, 265)
+      gprint("cleared: "..(self.panels_cleared or 0), self.score_x, self.score_y+165)
     end
     if config.debug_mode then
-      gprint("metal q: "..(self.metal_panels_queued or 0), self.score_x, 280)
+      gprint("metal q: "..(self.metal_panels_queued or 0), self.score_x, self.score_y+180)
     end
     if config.debug_mode and self.input_state then
       -- print(self.input_state)
@@ -529,14 +542,15 @@ function Stack.render(self)
       if idown then inputs_to_print = inputs_to_print.."\ndown" end
       if ileft then inputs_to_print = inputs_to_print.."\nleft" end
       if iright then inputs_to_print = inputs_to_print.."\nright" end
-      gprint(inputs_to_print, self.score_x, 295)
+      gprint(inputs_to_print, self.score_x, self.score_y+195)
     end
-    if match_type then gprint(match_type, 375, 10) end
+    local main_infos_screen_pos = { x=375 + (canvas_width-legacy_canvas_width)/2, y=10 + (canvas_height-legacy_canvas_height) }
+    if match_type then gprint(match_type, main_infos_screen_pos.x, main_infos_screen_pos.y) end
     if P1 and P1.game_stopwatch and tonumber(P1.game_stopwatch) then
-      gprint(frames_to_time_string(P1.game_stopwatch, P1.mode == "endless"), 385, 25)
+      gprint(frames_to_time_string(P1.game_stopwatch, P1.mode == "endless"), main_infos_screen_pos.x+10, main_infos_screen_pos.y+5)
     end
     if not config.debug_mode then
-      gprint(join_community_msg or "", 330, 560)
+      gprint(join_community_msg or "", main_infos_screen_pos.x-45, main_infos_screen_pos.y+550)
     end
   end
   self:draw_cards()

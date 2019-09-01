@@ -25,6 +25,8 @@ spectator_list = nil
 spectators_string = ""
 leftover_time = 0
 
+local main_menu_screen_pos = { 300 + (canvas_width-legacy_canvas_width)/2, 280 + (canvas_height-legacy_canvas_height)/2 }
+
 function fmainloop()
   local func, arg = main_select_mode, nil
   replay = {}
@@ -59,7 +61,7 @@ function fmainloop()
              panels_dir_when_not_using_set_from_assets_folder = default_panels_dir,
              use_panels_from_assets_folder  = true,
            }
-  gprint("Reading config file", 300, 280)
+  gprint("Reading config file", unpack(main_menu_screen_pos))
   wait()
   read_conf_file() -- TODO: stop making new config files
   local x,y, display = love.window.getPosition()
@@ -70,16 +72,16 @@ function fmainloop()
   gprint("Copying Puzzles Readme")
   wait()
   copy_file("Custom Puzzles Readme.txt", "puzzles/README.txt")
-  gprint("Reading replay file", 300, 280)
+  gprint("Reading replay file", unpack(main_menu_screen_pos))
   wait()
   read_replay_file()
-  gprint("Loading graphics...", 300, 280)
+  gprint("Loading graphics...", unpack(main_menu_screen_pos))
   wait()
   graphics_init() -- load images and set up stuff
-  gprint("Loading panels...", 300, 280)
+  gprint("Loading panels...", unpack(main_menu_screen_pos))
   wait()
   panels_init() -- load panels
-  gprint("Loading sounds... (this takes a few seconds)", 300, 280)
+  gprint("Loading sounds... (this takes a few seconds)", unpack(main_menu_screen_pos))
   wait()
   sound_init()
   while true do
@@ -225,8 +227,8 @@ do
         end
         to_print = to_print .. "   " .. items[i][1] .. "\n"
       end
-      gprint(arrow, 300, 280)
-      gprint(to_print, 300, 280)
+      gprint(arrow, unpack(main_menu_screen_pos))
+      gprint(to_print, unpack(main_menu_screen_pos))
       wait()
       local ret = nil
       variable_step(function()
@@ -275,9 +277,9 @@ function main_select_speed_99(next_func, ...)
     end
     to_print2 = "                  " .. speed .. "\n                  "
       .. difficulties[difficulty]
-    gprint(arrow, 300, 280)
-    gprint(to_print, 300, 280)
-    gprint(to_print2, 300, 280)
+    gprint(arrow, unpack(main_menu_screen_pos))
+    gprint(to_print, unpack(main_menu_screen_pos))
+    gprint(to_print2, unpack(main_menu_screen_pos))
     wait()
     variable_step(function()
       if menu_up(k) then
@@ -405,7 +407,7 @@ function main_character_select()
           global_initialize_room_msg = msg
         end
       end
-      gprint("Waiting for room initialization...", 300, 280)
+      gprint("Waiting for room initialization...", unpack(main_menu_screen_pos))
       wait()
       if not do_messages() then
         return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
@@ -421,7 +423,7 @@ function main_character_select()
             -- global_initialize_room_msg = msg
           -- end
         -- end
-        -- gprint("Lost connection.  Trying to rejoin...", 300, 280)
+        -- gprint("Lost connection.  Trying to rejoin...", unpack(main_menu_screen_pos))
         -- wait()
         -- if not do_messages() then
         --   return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
@@ -824,8 +826,7 @@ function main_character_select()
           P2.gpanel_buffer = fake_P2.gpanel_buffer
           P1.garbage_target = P2
           P2.garbage_target = P1
-          P2.pos_x = 172
-          P2.score_x = 410
+          move_stack(P2,2)
           replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
                       P1_level=P1.level,P2_level=P2.level,
                       P1_name=my_name, P2_name=op_name,
@@ -858,7 +859,7 @@ function main_character_select()
             to_print = "Joined a match in progress.\nCatching up..."
           end
           for i=1,30 do
-            gprint(to_print,300, 280)
+            gprint(to_print,unpack(main_menu_screen_pos))
             if not do_messages() then
               return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
             end
@@ -874,7 +875,7 @@ function main_character_select()
             print("P2.panel_buffer = "..P2.panel_buffer)
             print("P1.gpanel_buffer = "..P1.gpanel_buffer)
             print("P2.gpanel_buffer = "..P2.gpanel_buffer)
-            gprint(to_print,300, 280)
+            gprint(to_print,unpack(main_menu_screen_pos))
             if not do_messages() then
               return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
             end
@@ -1130,8 +1131,7 @@ function main_character_select()
       P2 = Stack(2, "vs", cursor_data[2].state.panels_dir, cursor_data[2].state.level, cursor_data[2].state.character)
       P1.garbage_target = P2
       P2.garbage_target = P1
-      P2.pos_x = 172
-      P2.score_x = 410
+      move_stack(P2,2)
       -- TODO: this does not correctly implement starting configurations.
       -- Starting configurations should be identical for visible blocks, and
       -- they should not be completely flat.
@@ -1431,12 +1431,12 @@ function main_net_vs_setup(ip)
   end
   P1, P1_level, P2_level, got_opponent = nil
   P2 = {panel_buffer="", gpanel_buffer=""}
-  gprint("Setting up connection...", 300, 280)
+  gprint("Setting up connection...", unpack(main_menu_screen_pos))
   wait()
   network_init(ip)
   local timeout_counter = 0
   while not connection_is_ready() do
-    gprint("Connecting...", 300, 280)
+    gprint("Connecting...", unpack(main_menu_screen_pos))
     wait()
     if not do_messages() then
       return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
@@ -1448,7 +1448,7 @@ function main_net_vs_setup(ip)
   local my_level, to_print, fake_P2 = 5, nil, P2
   local k = K[1]
   while got_opponent == nil do
-    gprint("Waiting for opponent...", 300, 280)
+    gprint("Waiting for opponent...", unpack(main_menu_screen_pos))
     wait()
     if not do_messages() then
       return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
@@ -1457,7 +1457,7 @@ function main_net_vs_setup(ip)
   while P1_level == nil or P2_level == nil do
     to_print = (P1_level and "L" or"Choose l") .. "evel: "..my_level..
         "\nOpponent's level: "..(P2_level or "???")
-    gprint(to_print, 300, 280)
+    gprint(to_print, unpack(main_menu_screen_pos))
     wait()
     if not do_messages() then
       return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
@@ -1484,8 +1484,7 @@ function main_net_vs_setup(ip)
   P2.gpanel_buffer = fake_P2.gpanel_buffer
   P1.garbage_target = P2
   P2.garbage_target = P1
-  P2.pos_x = 172
-  P2.score_x = 410
+  move_stack(P2,2)
   replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
               P1_level=P1_level,P2_level=P2_level,
               ranked=false, P1_name=my_name, P2_name=op_name,
@@ -1499,7 +1498,7 @@ function main_net_vs_setup(ip)
     to_print = "P1 Level: "..my_level.."\nP2 level: "..(P2_level or "???")
   end
   for i=1,30 do
-    gprint(to_print,300, 280)
+    gprint(to_print,unpack(main_menu_screen_pos))
     wait()
     if not do_messages() then
       return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
@@ -1507,7 +1506,7 @@ function main_net_vs_setup(ip)
   end
   while P1.panel_buffer == "" or P2.panel_buffer == ""
     or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
-    gprint(to_print,300, 280)
+    gprint(to_print,unpack(main_menu_screen_pos))
     wait()
     if not do_messages() then
       return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
@@ -1675,7 +1674,7 @@ main_local_vs_setup_old = multi_func(function()
   while chosen[1] == nil or chosen[2] == nil do
     to_print = (chosen[1] and "" or "Choose ") .. "P1 level: "..maybe[1].."\n"
         ..(chosen[2] and "" or "Choose ") .. "P2 level: "..(maybe[2])
-    gprint(to_print, 300, 280)
+    gprint(to_print, unpack(main_menu_screen_pos))
     wait()
     variable_step(function()
       for i=1,2 do
@@ -1705,8 +1704,7 @@ main_local_vs_setup_old = multi_func(function()
   P2 = Stack(2, "vs", config.panels_dir, chosen[2])
   P1.garbage_target = P2
   P2.garbage_target = P1
-  P2.pos_x = 172
-  P2.score_x = 410
+  move_stack(P2,2)
   -- TODO: this does not correctly implement starting configurations.
   -- Starting configurations should be identical for visible blocks, and
   -- they should not be completely flat.
@@ -1718,7 +1716,7 @@ main_local_vs_setup_old = multi_func(function()
   make_local_panels(P2, "000000")
   make_local_gpanels(P2, "000000")
   for i=1,30 do
-    gprint(to_print,300, 280)
+    gprint(to_print,unpack(main_menu_screen_pos))
     wait()
   end
   P1:starting_state()
@@ -1799,8 +1797,7 @@ function main_replay_vs()
   P1.ice = true
   P1.garbage_target = P2
   P2.garbage_target = P1
-  P2.pos_x = 172
-  P2.score_x = 410
+  move_stack(P2,2)
   P1.input_buffer = replay.in_buf
   P1.panel_buffer = replay.P
   P1.gpanel_buffer = replay.Q
@@ -2117,9 +2114,9 @@ function main_config_input()
       to_print = to_print .. "   " .. items[i][1] .. "\n"
       to_print2 = to_print2 .. "                  " .. items[i][2] .. "\n"
     end
-    gprint(arrow, 300, 280)
-    gprint(to_print, 300, 280)
-    gprint(to_print2, 300, 280)
+    gprint(arrow, unpack(main_menu_screen_pos))
+    gprint(to_print, unpack(main_menu_screen_pos))
+    gprint(to_print2, unpack(main_menu_screen_pos))
   end
   local idxs_to_set = {}
   while true do
@@ -2315,9 +2312,11 @@ function main_options(starting_idx)
       end
       to_print2 = to_print2 .. "\n"
     end
-    gprint(arrow, 240, 280)
-    gprint(to_print, 240, 280)
-    gprint(to_print2, 240, 280)
+    local x,y = unpack(main_menu_screen_pos)
+    x = x - 60 --options menu is 'lefter' than main_menu
+    gprint(arrow, x, y)
+    gprint(to_print, x, y)
+    gprint(to_print2, x, y)
   end
   local function adjust_left()
     if items[active_idx][3] == "numeric" then
@@ -2482,7 +2481,7 @@ function main_options(starting_idx)
 end
 
 function exit_options_menu()
-  gprint("writing config to file...", 300,280)
+  gprint("writing config to file...", unpack(main_menu_screen_pos))
   wait()
   if config.use_panels_from_assets_folder then
     config.panels_dir = config.assets_dir
@@ -2491,7 +2490,7 @@ function exit_options_menu()
   end
   write_conf_file()
   if config.assets_dir ~= memory_before_options_menu[1] then
-    gprint("reloading graphics...", 300, 305)
+    gprint("reloading graphics...", unpack(main_menu_screen_pos))
     wait()
     graphics_init()
   end
@@ -2499,13 +2498,13 @@ function exit_options_menu()
   if config.panels_dir_when_not_using_set_from_assets_folder ~= memory_before_options_menu[2]
   or config.use_panels_from_assets_folder ~= memory_before_options_menu[4]
   or config.assets_dir ~= memory_before_options_menu[1] then
-    gprint("reloading panels...", 300, 305)
+    gprint("reloading panels...", unpack(main_menu_screen_pos))
     wait()
     panels_init()
   end
 
   if config.sounds_dir ~= memory_before_options_menu[3] then
-    gprint("reloading sounds...", 300, 305)
+    gprint("reloading sounds...", unpack(main_menu_screen_pos))
     wait()
     sound_init()
   end
@@ -2520,7 +2519,7 @@ function main_set_name()
     if (love.timer.getTime()*3) % 2 > 1 then
         to_print = to_print .. "|"
     end
-    gprint(to_print, 300, 280)
+    gprint(to_print, unpack(main_menu_screen_pos))
     wait()
     local ret = nil
     variable_step(function()
@@ -2582,7 +2581,7 @@ function main_music_test()
     for k, _ in pairs(music_t) do if k and k < min_time then min_time = k end end
     tp = tp .. string.format("%d", min_time - love.timer.getTime() )
     tp = tp .. "\n\n\n< and > to play navigate themes\nESC to leave"
-    gprint(tp,300, 280)
+    gprint(tp,unpack(main_menu_screen_pos))
     wait()
     local ret = nil
     variable_step(function()
@@ -2660,7 +2659,7 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
       -- end
       -- --TODO: anything else we should be listening for during main_dumb_transition?
     -- end
-    gprint(text, 300, 280)
+    gprint(text, unpack(main_menu_screen_pos))
     wait()
     local ret = nil
     variable_step(function()
