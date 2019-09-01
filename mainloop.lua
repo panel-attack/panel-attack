@@ -36,6 +36,8 @@ function fmainloop()
              character                     = "lip",
              -- Level (2P modes / 1P vs yourself mode)
              level                         = 5,
+             endless_speed                 = 1,
+             endless_difficulty            = 1,
              -- Player name
              name                          = "defaultname",
              -- Volume settings
@@ -259,12 +261,11 @@ function main_select_speed_99(next_func, ...)
                 {"Difficulty"},
                 {"Go!", next_func},
                 {"Back", main_select_mode}}
-  speed = config.endless_speed or 1
-  difficulty = config.endless_difficulty or 1
-  active_idx = 1
+  local speed = config.endless_speed or 1
+  local difficulty = config.endless_difficulty or 1
+  local active_idx = 1
   local k = K[1]
   local ret = nil
-  local next_func_args = {speed, difficulty, ...}
   while true do
     local to_print, to_print2, arrow = "", "", ""
     for i=1,#items do
@@ -301,7 +302,7 @@ function main_select_speed_99(next_func, ...)
             wait()
             write_conf_file()
           end
-          ret = {items[active_idx][2], next_func_args}
+          ret = {items[active_idx][2], {speed, difficulty}}
         elseif active_idx == 4 then
           ret = {items[active_idx][2], items[active_idx][3]}
         else
@@ -953,19 +954,19 @@ function main_character_select()
           state = state.."\n"
         end
         state = state.."Wins: "..win_count
-      end
-      if (current_server_supports_ranking and expected_win_ratio) or win_count + op_win_count > 0 then
-        state = state.."\nWinrate:"
-        local need_line_return = false
-        if win_count + op_win_count > 0 then
-          state = state.." actual: "..(100*round(win_count/(op_win_count+win_count),2)).."%"
-          need_line_return = true
-        end
-        if current_server_supports_ranking and expected_win_ratio then
-          if need_line_return then
-            state = state.."\n        "
+        if (current_server_supports_ranking and expected_win_ratio) or win_count + op_win_count > 0 then
+          state = state.."\nWinrate:"
+          local need_line_return = false
+          if win_count + op_win_count > 0 then
+            state = state.." actual: "..(100*round(win_count/(op_win_count+win_count),2)).."%"
+            need_line_return = true
           end
-          state = state.." expected: "..expected_win_ratio.."%"
+          if current_server_supports_ranking and expected_win_ratio then
+            if need_line_return then
+              state = state.."\n        "
+            end
+            state = state.." expected: "..expected_win_ratio.."%"
+          end
         end
       end
       return state
