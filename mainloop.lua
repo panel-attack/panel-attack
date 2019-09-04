@@ -1181,11 +1181,12 @@ function main_net_vs_lobby()
   local login_denied = false
   local prev_act_idx = active_idx
   local showing_leaderboard = false
-  local lobby_menu_x = {[true]=100, [false]=300} --will be used to make room in case the leaderboard should be shown.
+  local lobby_menu_x = {[true]=main_menu_screen_pos[1]-200, [false]=main_menu_screen_pos[1]} --will be used to make room in case the leaderboard should be shown.
+  local lobby_menu_y = main_menu_screen_pos[2]-120
   local sent_requests = {}
   while true do
       if connection_up_time <= login_status_message_duration then
-        gprint(login_status_message, lobby_menu_x[showing_leaderboard], 160)
+        gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y)
         for _,msg in ipairs(this_frame_messages) do
             if msg.login_successful then
               current_server_supports_ranking = true
@@ -1303,13 +1304,13 @@ function main_net_vs_lobby()
         to_print = to_print .. "   " .. items[i]
       end
     end
-    gprint(notice[#items > 2], lobby_menu_x[showing_leaderboard], 250)
-    gprint(arrow, lobby_menu_x[showing_leaderboard], 280)
-    gprint(to_print, lobby_menu_x[showing_leaderboard], 280)
+    gprint(notice[#items > 2], lobby_menu_x[showing_leaderboard], lobby_menu_y+90)
+    gprint(arrow, lobby_menu_x[showing_leaderboard], lobby_menu_y+120)
+    gprint(to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y+120)
     if showing_leaderboard then
-      gprint(leaderboard_string, 500, 160)
+      gprint(leaderboard_string, lobby_menu_x[showing_leaderboard]+400, lobby_menu_y)
     end
-    gprint(join_community_msg, 20, 560)
+    gprint(join_community_msg, main_menu_screen_pos[1]+30, main_menu_screen_pos[2]+280)
 
     wait()
     local ret = nil
