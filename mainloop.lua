@@ -1938,7 +1938,7 @@ end
 function main_replay_puzzle()
   bg = IMG_stages[math.random(#IMG_stages)]
   local replay = replay.puzzle
-  if replay.in_buf == nil or replay.in_buf == "" then
+  if not replay or replay.in_buf == nil or replay.in_buf == "" then
     return main_dumb_transition,
       {main_select_mode, "I don't have a puzzle replay :("}
   end
