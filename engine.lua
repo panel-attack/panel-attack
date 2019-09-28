@@ -2024,13 +2024,13 @@ end
 
 function Stack.recv_garbage(self, time, to_recv)
   
-  --if we can verify we used all the right garbage at the right times
+  --[[if we can verify we used all the right garbage at the right times
   --then we don't have to roll back
-  local incoming_json = json.encode(to_recv)
+ -- [ local incoming_json = json.encode(to_recv)
   local unverified_json = json.encode({{}})
   if self.unverified_garbage and self.unverified_garbage[time] then
     unverified_json = json.encode(self.unverified_garbage[time])
-  end
+  end 
   local incoming_matches_unverified = incoming_json == unverified_json
   if incoming_matches_unverified then
     --if self.which == 1 then
@@ -2047,7 +2047,7 @@ function Stack.recv_garbage(self, time, to_recv)
     print("Need to roll back")
   end
   
-  if --[[still]] incoming_matches_unverified then
+  if --[[still incoming_matches_unverified then
     --if self.which == 1 then
     print("no other unverified_garbage")
     --end
@@ -2072,7 +2072,8 @@ function Stack.recv_garbage(self, time, to_recv)
         self.later_garbage[time] = garbage
       end
     else -- self.CLOCK > time and we predicted wrong
-      --do a rollback
+      --do a rollback ]]]
+   if self.CLOCK > time then
       local prev_states = self.prev_states
       local next_self = prev_states[time+1]
       while next_self and (next_self.prev_active_panels ~= 0 or
@@ -2149,7 +2150,11 @@ function Stack.recv_garbage(self, time, to_recv)
         self.in_rollback = nil
       end
     end
-  end
+    local garbage = self.later_garbage [time] or {}
+    for i=1,#to_recv do
+	garbage[#garbage+1] = to_recv[i]
+    end
+    self.later_garbage[time] = garbage
 end
 
 function Stack.check_matches(self)
