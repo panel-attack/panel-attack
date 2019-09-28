@@ -298,7 +298,7 @@ function main_select_speed_99(next_func, ...)
           if config.endless_speed ~= speed or config.endless_difficulty ~= difficulty then
             config.endless_speed = speed
             config.endless_difficulty = difficulty
-            gprint("saving settings...", 300,280)
+            gprint("saving settings...", unpack(main_menu_screen_pos))
             wait()
             write_conf_file()
           end
@@ -982,8 +982,8 @@ function main_character_select()
       if not cursor_data[1].state.ranked and not cursor_data[2].state.ranked then
         match_type_message = ""
       end
-      gprint(match_type, 375, 15)
-      gprint(match_type_message,100,98)
+      gprintf(match_type, 0, 15, canvas_width, "center")
+      gprintf(match_type_message, 0, 30, canvas_width, "center")
     end
     wait()
 
@@ -1538,10 +1538,10 @@ function main_net_vs()
         return main_net_vs_lobby
       end
     end
-    gprint(my_name or "", 315, 40)
-    gprint(op_name or "", 410, op_name_y)
-    gprint("Wins: "..my_win_count, 315, 70)
-    gprint("Wins: "..op_win_count, 410, 70)
+
+    local name_and_score = { (my_name or "").."\nWins: "..my_win_count, (op_name or "").."\nWins: "..op_win_count}
+    gprint(name_and_score[1], P1.score_x, P1.score_y-48)
+    gprint(name_and_score[2], P2.score_x, P2.score_y-48)
     if not config.debug_mode then --this is printed in the same space as the debug details
       gprint(spectators_string, 315, 265)
     end
@@ -1576,7 +1576,7 @@ function main_net_vs()
         return main_net_vs_lobby
       end
       if not do_messages() then
-        return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+        return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", unpack(main_menu_screen_pos)}
       end
     end
 
@@ -1824,14 +1824,10 @@ function main_replay_vs()
   P2:starting_state()
   local end_text = nil
   local run = true
-  local op_name_y = 40
-  if string.len(my_name) > 12 then
-    op_name_y = 55
-  end
   while true do
     mouse_panel = nil
-    gprint(my_name or "", 315, 40)
-    gprint(op_name or "", 410, op_name_y)
+    gprint(my_name or "", P1.score_x, P1.score_y-28)
+    gprint(op_name or "", P2.score_x, P2.score_y-28)
     P1:render()
     P2:render()
     if mouse_panel then
@@ -2063,10 +2059,10 @@ do
         end
         to_print = to_print .. "   " .. items[i][1] .. "\n"
       end
-      gprint("Puzzles:", 300, 20)
-      gprint("Note: you may place new custom puzzles in\n\n%appdata%\\Panel Attack\\puzzles\n\nSee the README and example puzzle set there\nfor instructions", 20, 500)
-      gprint(arrow, 400, 20)
-      gprint(to_print, 400, 20)
+      gprint("Puzzles:", unpack(main_menu_screen_pos) )
+      gprint("Note: you may place new custom puzzles in\n\n%appdata%\\Panel Attack\\puzzles\n\nSee the README and example puzzle set there\nfor instructions", main_menu_screen_pos[1]-280, main_menu_screen_pos[2]+220)
+      gprint(arrow, main_menu_screen_pos[1]+100, main_menu_screen_pos[2])
+      gprint(to_print, main_menu_screen_pos[1]+100, main_menu_screen_pos[2])
       wait()
       local ret = nil
       variable_step(function()
@@ -2196,6 +2192,7 @@ function main_show_custom_graphics_readme(idx)
   local custom_graphics_readme = read_txt_file("Custom Graphics Readme.txt")
   while true do
     gprint(custom_graphics_readme, 100, 150)
+    testpencel()
     do_menu_function = false
     wait()
     local ret = nil
