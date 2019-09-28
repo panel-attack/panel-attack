@@ -56,6 +56,23 @@ function read_conf_file() pcall(function()
   for k,v in pairs(json.decode(teh_json)) do
     config[k] = v
   end
+  if love.filesystem.getInfo("assets/"..config.assets_dir) == nil then
+    config.assets_dir = default_assets_dir
+  end
+  if love.filesystem.getInfo("panels/"..config.panels_dir_when_not_using_set_from_assets_folder) == nil then
+    config.panels_dir_when_not_using_set_from_assets_folder = default_panels_dir
+  end
+  if love.filesystem.getInfo("sounds/"..config.sounds_dir) == nil then
+    config.sounds_dir = default_sounds_dir
+  end
+  if config.use_panels_from_assets_folder == nil then
+    config.use_panels_from_assets_folder = true
+  end
+  if config.use_panels_from_assets_folder then
+    config.panels_dir = config.assets_dir
+  else
+    config.panels_dir = config.panels_dir_when_not_using_set_from_assets_folder
+  end
   file:close()
 end) end
 
@@ -115,7 +132,7 @@ function read_puzzles() pcall(function()
   print("loading custom puzzles...")
   for _,filename in pairs(puzzle_packs) do
     print(filename)
-    if love.filesystem.isFile("puzzles/"..filename)
+    if love.filesystem.getInfo("puzzles/"..filename)
     and filename ~= "stock (example).txt"
     and filename ~= "README.txt" then
       print("loading custom puzzle set: "..(filename or "nil"))
@@ -178,7 +195,9 @@ function recursive_copy(source, destination)
       local success, message =  new_file:write(temp, source_size)
       new_file:close()
       
-      print(message)
+      if not success then
+        print(message)
+      end
     else 
       print("name:  "..name.." isn't a directory or file?")
     end

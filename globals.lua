@@ -16,8 +16,7 @@ bounce_table = {1, 1, 1, 1,
                 3, 3, 3,
                 4, 4, 4}
 
-garbage_bounce_table = {
-                        2, 2, 2,
+garbage_bounce_table = {2, 2, 2,
                         3, 3, 3,
                         4, 4, 4,
                         1, 1}
@@ -112,6 +111,7 @@ GARBAGE_TRANSIT_TIME = 90
 
 gfx_q = Queue()
 
+
 FC_HOVER = {12,  9,  6}
 -- TODO: delete FC_MATCH?
 --FC_MATCH = {61, 49, 37}
@@ -163,20 +163,38 @@ panels_to_next_speed =
 -- A level is a speed, a difficulty, and an amount of time
 -- that can be spent at the top of the screen without dying.
 -- level also determines the number of colors
-level_to_starting_speed    = {  1,  5,  9, 13, 17, 21, 25, 29, 27, 32}
 --level_to_difficulty        = {  1,  1,  2,  2,  2,  2,  2,  3,  3,  3}
-level_to_hang_time         = {121,100, 80, 65, 50, 40, 30, 20, 10,  1}
-level_to_ncolors_vs        = {  5,  5,  5,  5,  5,  5,  5,  5,  6,  6}
-level_to_ncolors_time      = {  5,  5,  6,  6,  6,  6,  6,  6,  6,  6}
-level_to_hover             = { 12, 12, 11, 10,  9,  6,  5,  4,  3,  6}
-level_to_pop               = {  9,  9,  8,  8,  8,  8,  8,  7,  7,  7}
-level_to_flash             = { 44, 44, 42, 42, 38, 36, 34, 32, 30, 28}
-level_to_face              = { 15, 14, 14, 13, 12, 11, 10, 10,  9,  8}
-level_to_combo_constant    = {-20,-16,-12, -8, -3,  2,  7, 12, 17, 22}
-level_to_combo_coefficient = { 20, 18, 16, 14, 12, 10,  8,  6,  4,  2}
-level_to_chain_constant    = { 80, 77, 74, 71, 68, 65, 62, 60, 58, 56}
-level_to_chain_coefficient = { 20, 18, 16, 14, 12, 10,  8,  6,  4,  2}
 
+-- What speed level you start on.
+level_to_starting_speed        = {  1,  5,  9, 13, 17, 21, 25, 29, 27, 32}
+-- How long you can spend at the top of the screen without dying, in frames ("Health").
+level_to_hang_time             = {121,101, 81, 66, 51, 41, 31, 21, 11,  1}
+-- How many colors of panels can spawn in VS mode, not including metal panels.
+level_to_ncolors_vs            = {  5,  5,  5,  5,  5,  5,  5,  5,  6,  6}
+-- How many colors of panels can spawn in time trial mode.
+level_to_ncolors_time          = {  5,  5,  6,  6,  6,  6,  6,  6,  6,  6}
+-- How long panels will hover if not supported by anything, in frames.
+level_to_hover                 = { 12, 12, 11, 10,  9,  6,  5,  4,  3,  6}
+-- How long newly-transformed panels from garbage will hover before falling, in frames.
+level_to_garbage_panel_hover   = { 41, 36, 31, 26, 21, 16, 13, 10,  7,  4}
+-- How long panels flash for before popping, in frames.
+level_to_flash                 = { 44, 44, 42, 42, 38, 36, 34, 32, 30, 28}
+-- How long panels remain in their "face" frame before popping, in frames.
+-- (They actually stay in their face frame for five frames longer than the numbers in this table for some reason...
+--  This makes timings accurate with Tetris Attack / Panel de Pon SFC.)
+level_to_face                  = { 20, 18, 17, 16, 15, 14, 13, 12, 11, 10}
+-- How long panels take to pop after finishing their "face" frame, in frames.
+level_to_pop                   = {  9,  9,  8,  8,  8,  8,  8,  7,  7,  7}
+-- How long the stack stops when you clear combos, in frames.
+level_to_combo_constant        = {-20,-16,-12, -8, -3,  2,  7, 12, 17, 22}
+level_to_combo_coefficient     = { 20, 18, 16, 14, 12, 10,  8,  6,  4,  2}
+-- How long the stack stops when you clear chains, in frames.
+level_to_chain_constant        = { 80, 77, 74, 71, 68, 65, 62, 60, 58, 56}
+level_to_chain_coefficient     = { 20, 18, 16, 14, 12, 10,  8,  6,  4,  2}
+-- How many panels you have to pop to earn a metal panel in your next row.
+level_to_metal_panel_frequency = { 12, 14, 16, 19, 23, 26, 29, 33, 37, 41}
+-- How many panels you can have at most in your metal panel queue.
+level_to_metal_panel_cap       = { 21, 18, 18, 15, 15, 12,  9,  6,  6,  3}
 
 
 -- Stage clear seems to use a variant of vs mode's speed system,
@@ -268,15 +286,15 @@ for i=25,1000 do
   garbage_to_shake_time[i] = garbage_to_shake_time[i-1]
 end
 
-colors = {  red     = {220, 50,  47 },
-            orange  = {255, 140, 0  },
-            green   = {80,  169, 0  },
-            purple  = {168, 128, 192},
-            blue    = {38,  139, 210},
-            pink    = {211, 68,  134},
-            white   = {234, 234, 234},
-            black   = {20,  20,  20 },
-            dgray   = {28,  28,  28 }}
+colors = {  red     = {220/255, 50/255,  47/255 },
+            orange  = {255/255, 140/255, 0/255  },
+            green   = {80/255,  169/255, 0/255  },
+            purple  = {168/255, 128/255, 192/255},
+            blue    = {38/255,  139/255, 210/255},
+            pink    = {211/255, 68/255,  134/255},
+            white   = {234/255, 234/255, 234/255},
+            black   = {20/255,  20/255,  20/255 },
+            dgray   = {28/255,  28/255,  28/255 }}
             
 panel_color_number_to_upper = {"A", "B", "C", "D", "E", "F", "G", "H",[0]="0"}
 panel_color_number_to_lower = {"a", "b", "c", "d", "e", "f", "g", "h",[0]="0"}
@@ -285,14 +303,14 @@ panel_color_to_number = { ["A"]=1, ["B"]=2, ["C"]=3, ["D"]=4, ["E"]=5, ["F"]=6, 
                           ["1"]=1, ["2"]=2, ["3"]=3, ["4"]=4, ["5"]=5, ["6"]=6, ["7"]=7, ["8"]=8,
                           ["0"]=0}
                                 
---how many panels you have to pop to earn a metal panel in your next row.
-level_to_metal_panel_frequency = {12, 14, 16, 19, 23, 26, 29, 33, 37, 41}
             
 -- win counters
 my_win_count = 0
 op_win_count = 0
 
 default_assets_dir = "Stock PdP_TA"
+default_panels_dir = "Stock PdP_TA"
 default_sounds_dir = "Stock PdP_TA"
 
 join_community_msg = "  Join the community at\ndiscord.panelattack.com"
+

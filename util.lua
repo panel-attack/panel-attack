@@ -230,3 +230,15 @@ for i=1,64 do
     bit=bit/2
   end
 end
+
+-- split the input string on some separator, returns table
+function split(inputstr, sep)
+    sep = sep or '%s'
+    local t = {}
+    for field, s in string.gmatch(inputstr, "([^" .. sep .. "]*)(" .. sep .. "?)") do
+        table.insert(t, field)
+        if s == "" then
+            return t
+        end
+    end
+end

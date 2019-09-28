@@ -25,22 +25,19 @@ end
 local prev_ax = {}
 local axis_to_button = function(idx, value)
   local prev = prev_ax[idx] or 0
-  if value > .5 then
-    if prev < .5 then
-      love.keypressed("ja"..idx.."+")
-    end
-  elseif value < -.5 then
-    if prev > -.5 then
-      love.keypressed("ja"..idx.."-")
-    end
-  else
-    if prev > .5 then
-      love.keyreleased("ja"..idx.."+")
-    elseif prev < -.5 then
-      love.keyreleased("ja"..idx.."-")
-    end
-  end
   prev_ax[idx] = value
+  if value <= .5 and not (prev <= .5) then
+    love.keyreleased("ja"..idx.."+")
+  end
+  if value >= -.5 and not (prev >= -.5) then
+    love.keyreleased("ja"..idx.."-")
+  end
+  if value > .5 and not (prev > .5) then
+    love.keypressed("ja"..idx.."+")
+  end
+  if value < -.5 and not (prev < -.5) then
+    love.keypressed("ja"..idx.."-")
+  end
 end
 
 local prev_hat = {{},{}}
@@ -89,8 +86,8 @@ function joystick_ax()
   end
 end
 
-function love.keypressed(key, rep)
-  if key == "return" and not rep and love.keyboard.isDown("lalt") and love.graphics.isSupported("canvas") then
+function love.keypressed(key, scancode, rep)
+  if key == "return" and not rep and love.keyboard.isDown("lalt") and love.graphics.getSupported("canvas") then
     love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
     return
   end
