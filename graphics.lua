@@ -99,7 +99,7 @@ function gprintf(str, x, y, limit, halign, color, scale)
   y = y or 0
   scale = scale or 1
   color = color or nil
-  limit = limit or nil
+  limit = limit or canvas_width
   halign = halign or "left"
   set_color(0, 0, 0, 1)
   gfx_q:push({love.graphics.printf, {str, x+1, y+1, limit, halign, 0, scale}})
@@ -353,12 +353,6 @@ function Stack.render(self)
   gfx_q:push({love.graphics.setStencilTest, {"greater", 0}})
 
   -- draw inside stack's frame canvas
-  local mx,my
-  if config.debug_mode then
-    mx,my = love.mouse.getPosition()
-    mx = mx / GFX_SCALE
-    my = my / GFX_SCALE
-  end
   local portrait_w, portrait_h = IMG_garbage[self.character].portrait:getDimensions()
   if P1 == self then
     draw(IMG_garbage[self.character].portrait, 4, 4, 0, 96/portrait_w, 192/portrait_h)
@@ -493,11 +487,6 @@ function Stack.render(self)
           draw(IMG_panels[self.panels_dir][panel.color][draw_frame], draw_x, draw_y, 0, 16/panel_w, 16/panel_h)
         end
       end
-      if config.debug_mode and mx >= draw_x and mx < draw_x + 16 and
-          my >= draw_y and my < draw_y + 16 then
-        mouse_panel = {row, col, panel}
-        draw(IMG_panels[self.panels_dir][4][1], draw_x+16, draw_y+16)
-      end
     end
   end
   draw(IMG_frame)
@@ -515,6 +504,7 @@ function Stack.render(self)
   gfx_q:push({love.graphics.draw, {self.canvas, (self.pos_x-4)*GFX_SCALE, (self.pos_y-4)*GFX_SCALE, 0, GFX_SCALE, GFX_SCALE }})
 
   if config.debug_mode then
+    local mx, my = love.mouse.getPosition()
     for row=0,self.height do
       for col=1,self.width do
         local panel = self.panels[row][col]
@@ -529,6 +519,10 @@ function Stack.render(self)
             end
           end
           gprint(panel.chaining and "chaining" or "nah", draw_x, draw_y+30)
+        end
+        if mx >= draw_x and mx < draw_x + 16*GFX_SCALE and my >= draw_y and my < draw_y + 16*GFX_SCALE then
+          debug_mouse_panel = {row, col, panel}
+          draw(IMG_panels[self.panels_dir][9][1], draw_x+16, draw_y+16)
         end
       end
     end

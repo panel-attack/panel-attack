@@ -1789,6 +1789,16 @@ function main_local_vs_yourself()
   end
 end
 
+local function draw_debug_mouse_panel()
+  if debug_mouse_panel then
+    local str = "Panel info:\nrow: "..debug_mouse_panel[1].."\ncol: "..debug_mouse_panel[2]
+    for k,v in spairs(debug_mouse_panel[3]) do
+      str = str .. "\n".. k .. ": "..tostring(v)
+    end
+    gprintf(str, 10, 10)
+  end
+end
+
 function main_replay_vs()
   local replay = replay.vs
   bg = IMG_stages[math.random(#IMG_stages)]
@@ -1825,18 +1835,12 @@ function main_replay_vs()
   local end_text = nil
   local run = true
   while true do
-    mouse_panel = nil
+    debug_mouse_panel = nil
     gprint(my_name or "", P1.score_x, P1.score_y-28)
     gprint(op_name or "", P2.score_x, P2.score_y-28)
     P1:render()
     P2:render()
-    if mouse_panel then
-      local str = "Panel info:\nrow: "..mouse_panel[1].."\ncol: "..mouse_panel[2]
-      for k,v in spairs(mouse_panel[3]) do
-        str = str .. "\n".. k .. ": "..tostring(v)
-      end
-      gprint(str, 350, 400)
-    end
+    draw_debug_mouse_panel()
     wait()
     local ret = nil
     variable_step(function()
@@ -1945,15 +1949,9 @@ function main_replay_puzzle()
   P1:set_puzzle_state(unpack(replay.puzzle))
   local run = true
   while true do
-    mouse_panel = nil
+    debug_mouse_panel = nil
     P1:render()
-    if mouse_panel then
-      local str = "Panel info:\nrow: "..mouse_panel[1].."\ncol: "..mouse_panel[2]
-      for k,v in spairs(mouse_panel[3]) do
-        str = str .. "\n".. k .. ": "..tostring(v)
-      end
-      gprint(str, 350, 400)
-    end
+    draw_debug_mouse_panel()
     wait()
     local ret = nil
     variable_step(function()
