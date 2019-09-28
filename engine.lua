@@ -30,6 +30,10 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
         s.NCOLORS = difficulty_to_ncolors_1Ptime[difficulty]
     end
 
+    -- frame.png dimensions
+    s.canvas = love.graphics.newCanvas(104,204)
+    s.canvas:setFilter("nearest","nearest")
+
     if s.mode == "2ptime" or s.mode == "vs" then
       local level = speed or 5
       s.character = (type(difficulty) == "string") and difficulty or s.character

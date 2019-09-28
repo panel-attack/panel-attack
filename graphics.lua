@@ -35,8 +35,8 @@ function draw(img, x, y, rot, x_scale,y_scale)
   rot = rot or 0
   x_scale = x_scale or 1
   y_scale = y_scale or 1
-  gfx_q:push({love.graphics.draw, {img, x*GFX_SCALE, y*GFX_SCALE,
-    rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
+  gfx_q:push({love.graphics.draw, {img, x, y,
+    rot, x_scale, y_scale}})
 end
 
 function menu_draw(img, x, y, rot, x_scale,y_scale)
@@ -308,8 +308,8 @@ function Stack.draw_cards(self)
   for i=self.card_q.first,self.card_q.last do
     local card = self.card_q[i]
     if card_animation[card.frame] then
-      local draw_x = (card.x-1) * 16 + self.pos_x
-      local draw_y = (11-card.y) * 16 + self.pos_y + self.displacement
+      local draw_x = 4 + (card.x-1) * 16
+      local draw_y = 4 + (11-card.y) * 16 + self.displacement
           - card_animation[card.frame]
       draw(IMG_cards[card.chain][card.n], draw_x, draw_y)
     end
@@ -328,8 +328,31 @@ function move_stack(stack, player_num)
   stack.pos_y = 4 + (canvas_height-legacy_canvas_height)/GFX_SCALE
   stack.score_y = 100 + (canvas_height-legacy_canvas_height)
 end
+ 
+local mask_shader = love.graphics.newShader[[
+   vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
+      if (Texel(texture, texture_coords).rgb == vec3(0.0)) {
+         // a discarded pixel wont be applied as the stencil.
+         discard;
+      }
+      return vec4(1.0);
+   }
+]]
 
 function Stack.render(self)
+  local function frame_mask(x_pos, y_pos)
+    love.graphics.setShader(mask_shader)
+    love.graphics.setBackgroundColor(1,1,1)
+    love.graphics.rectangle( "fill", 0,0,104,204)
+    love.graphics.setShader()
+  end
+
+  gfx_q:push({love.graphics.setCanvas, {{self.canvas, stencil=true}}})
+  gfx_q:push({love.graphics.clear, {}})
+  gfx_q:push({love.graphics.stencil, {frame_mask, "replace", 1}})
+  gfx_q:push({love.graphics.setStencilTest, {"greater", 0}})
+
+  -- draw inside stack's frame canvas
   local mx,my
   if config.debug_mode then
     mx,my = love.mouse.getPosition()
@@ -338,9 +361,9 @@ function Stack.render(self)
   end
   local portrait_w, portrait_h = IMG_garbage[self.character].portrait:getDimensions()
   if P1 == self then
-    draw(IMG_garbage[self.character].portrait, self.pos_x, self.pos_y, 0, 96/portrait_w, 192/portrait_h)
+    draw(IMG_garbage[self.character].portrait, 4, 4, 0, 96/portrait_w, 192/portrait_h)
   else
-    draw(IMG_garbage[self.character].portrait, self.pos_x+96, self.pos_y, 0, (96/portrait_w)*-1, 192/portrait_h)
+    draw(IMG_garbage[self.character].portrait, 100, 4, 0, (96/portrait_w)*-1, 192/portrait_h)
   end
 
   local metals
@@ -355,11 +378,12 @@ function Stack.render(self)
 
   local shake_idx = #shake_arr - self.shake_time
   local shake = ceil((shake_arr[shake_idx] or 0) * 13)
+
   for row=0,self.height do
     for col=1,self.width do
       local panel = self.panels[row][col]
-      local draw_x = (col-1) * 16 + self.pos_x
-      local draw_y = (11-(row)) * 16 + self.pos_y + self.displacement - shake
+      local draw_x = 4 + (col-1) * 16
+      local draw_y = 4 + (11-(row)) * 16 + self.displacement - shake
       if panel.color ~= 0 and panel.state ~= "popped" then
         local draw_frame = 1
         if panel.garbage then
@@ -435,17 +459,6 @@ function Stack.render(self)
               draw(imgs.flash, draw_x, draw_y, 0, 16/flashed_w, 16/flashed_h)
             end
           end
-          --this adds the drawing of state flags to garbage panels
-          if config.debug_mode then
-            gprint(panel.state, draw_x*3, draw_y*3)
-            if panel.match_anyway ~= nil then
-              gprint(tostring(panel.match_anyway), draw_x*3, draw_y*3+10)
-              if panel.debug_tag then
-                gprint(tostring(panel.debug_tag), draw_x*3, draw_y*3+20)
-              end
-            end
-            gprint(panel.chaining and "chaining" or "nah", draw_x*3, draw_y*3+30)
-          end
         else
           if panel.state == "matched" then
             local flash_time = self.FRAMECOUNT_MATCH - panel.timer
@@ -478,27 +491,50 @@ function Stack.render(self)
           end
           local panel_w, panel_h = IMG_panels[self.panels_dir][panel.color][draw_frame]:getDimensions()
           draw(IMG_panels[self.panels_dir][panel.color][draw_frame], draw_x, draw_y, 0, 16/panel_w, 16/panel_h)
-          if config.debug_mode then
-            gprint(panel.state, draw_x*3, draw_y*3)
-            if panel.match_anyway ~= nil then
-              gprint(tostring(panel.match_anyway), draw_x*3, draw_y*3+10)
-              if panel.debug_tag then
-                gprint(tostring(panel.debug_tag), draw_x*3, draw_y*3+20)
-              end
-            end
-            gprint(panel.chaining and "chaining" or "nah", draw_x*3, draw_y*3+30)
-          end
         end
       end
       if config.debug_mode and mx >= draw_x and mx < draw_x + 16 and
           my >= draw_y and my < draw_y + 16 then
         mouse_panel = {row, col, panel}
-        draw(IMG_panels[self.panels_dir][4][1], draw_x+16/3, draw_y+16/3, 0, 0.33333333, 0.3333333)
+        draw(IMG_panels[self.panels_dir][4][1], draw_x+16, draw_y+16)
       end
     end
   end
-  draw(IMG_frame, self.pos_x-4, self.pos_y-4)
-  draw(IMG_wall, self.pos_x, self.pos_y - shake + self.height*16)
+  draw(IMG_frame)
+  draw(IMG_wall, 4, 4 - shake + self.height*16)
+
+  self:draw_cards()
+  self:render_cursor()
+  if self.do_countdown then
+    self:render_countdown()
+  end
+  -- ends here
+
+  gfx_q:push({love.graphics.setStencilTest, {}})
+  gfx_q:push({love.graphics.setCanvas, {global_canvas}})
+  gfx_q:push({love.graphics.draw, {self.canvas, (self.pos_x-4)*GFX_SCALE, (self.pos_y-4)*GFX_SCALE, 0, GFX_SCALE, GFX_SCALE }})
+
+  if config.debug_mode then
+    for row=0,self.height do
+      for col=1,self.width do
+        local panel = self.panels[row][col]
+        local draw_x = (self.pos_x + (col-1) * 16)*GFX_SCALE
+        local draw_y = (self.pos_y + (11-(row)) * 16 + self.displacement - shake)*GFX_SCALE
+        if panel.color ~= 0 and panel.state ~= "popped" then
+          gprint(panel.state, draw_x, draw_y)
+          if panel.match_anyway ~= nil then
+            gprint(tostring(panel.match_anyway), draw_x, draw_y+10)
+            if panel.debug_tag then
+              gprint(tostring(panel.debug_tag), draw_x, draw_y+20)
+            end
+          end
+          gprint(panel.chaining and "chaining" or "nah", draw_x, draw_y+30)
+        end
+      end
+    end
+  end
+
+  -- draw outside of stack's frame canvas
   if self.mode == "puzzle" then
     gprint("Moves: "..self.puzzle_moves, self.score_x, self.score_y)
     gprint("Frame: "..self.CLOCK, self.score_x, self.score_y+30)
@@ -553,11 +589,7 @@ function Stack.render(self)
       gprint(join_community_msg or "", main_infos_screen_pos.x-45, main_infos_screen_pos.y+550)
     end
   end
-  self:draw_cards()
-  self:render_cursor()
-  if self.do_countdown then
-    self:render_countdown()
-  end
+  -- ends here
 end
 
 function scale_letterbox(width, height, w_ratio, h_ratio)
@@ -575,23 +607,23 @@ function Stack.render_cursor(self)
   if self.countdown_timer then
     if self.CLOCK % 2 == 0 then
       draw(IMG_cursor[1],
-        (self.cur_col-1)*16+self.pos_x-4,
-        (11-(self.cur_row))*16+self.pos_y-4+self.displacement-shake)
+        (self.cur_col-1)*16,
+        (11-(self.cur_row))*16+self.displacement-shake)
     end
   else
     draw(IMG_cursor[(floor(self.CLOCK/16)%2)+1],
-      (self.cur_col-1)*16+self.pos_x-4,
-      (11-(self.cur_row))*16+self.pos_y-4+self.displacement-shake)
+      (self.cur_col-1)*16,
+      (11-(self.cur_row))*16+self.displacement-shake)
   end
 end
 
 function Stack.render_countdown(self)
   if self.do_countdown and self.countdown_CLOCK then
-    local ready_x = self.pos_x + 12
-    local initial_ready_y = self.pos_y
+    local ready_x = 16
+    local initial_ready_y = 4
     local ready_y_drop_speed = 6
-    local countdown_x = self.pos_x + 40
-    local countdown_y = self.pos_y + 64
+    local countdown_x = 44
+    local countdown_y = 68
     if self.countdown_CLOCK <= 8 then
       local ready_y = initial_ready_y + (self.CLOCK - 1) * ready_y_drop_speed
       draw(IMG_ready, ready_x, ready_y)
@@ -609,4 +641,3 @@ function Stack.render_countdown(self)
     end
   end
 end
-
