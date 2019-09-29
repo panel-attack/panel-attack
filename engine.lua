@@ -1953,7 +1953,7 @@ end
 
 function Stack.really_send(self, to_send)
   if self.garbage_target then
-    self.garbage_target:recv_garbage(self.CLOCK, to_send)
+    self.garbage_target:recv_garbage(self.CLOCK + GARBAGE_DELAY, to_send)
   end
 end
 
@@ -2071,8 +2071,9 @@ function Stack.recv_garbage(self, time, to_recv)
         end
         self.later_garbage[time] = garbage
       end
-    else -- self.CLOCK > time and we predicted wrong
+    elseif -- self.CLOCK > time and we predicted wrong
       --do a rollback
+      self.CLOCK > time then
       local prev_states = self.prev_states
       local next_self = prev_states[time+1]
       while next_self and (next_self.prev_active_panels ~= 0 or
@@ -2138,7 +2139,7 @@ function Stack.recv_garbage(self, time, to_recv)
         -- stacks in sync.
 
         self:fromcpy(prev_states[time])
-        self.garbage_q:push(to_recv)
+        self.garbage_q:push(time,to_recv)
 
         for t=time,CLOCK-1 do
           self.input_state = prev_states[t].input_state
