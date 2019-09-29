@@ -16,7 +16,7 @@ require("sound")
 require("timezones")
 require("gen_panels")
 
-local canvas = love.graphics.newCanvas(canvas_width, canvas_height)
+global_canvas = love.graphics.newCanvas(canvas_width, canvas_height)
 
 local last_x = 0
 local last_y = 0
@@ -82,16 +82,12 @@ function love.draw()
   -- end
   -- main_font:setLineHeight(0.66)
   -- love.graphics.setFont(main_font)
-  if love.graphics.getSupported("canvas") then
-    love.graphics.setBlendMode("alpha", "alphamultiply")
-    love.graphics.setCanvas(canvas)
-    love.graphics.setBackgroundColor(0.1, 0.1, 0.1)
-    love.graphics.clear()
-  else
-    love.graphics.setColor(0.1, 0.1, 0.1)
-    love.graphics.rectangle("fill",0,0,canvas_width,canvas_height)
-    love.graphics.setColor(1, 1, 1)
-  end
+  love.graphics.getFont():setFilter("nearest", "nearest")
+  love.graphics.setBlendMode("alpha", "alphamultiply")
+  love.graphics.setCanvas(global_canvas)
+  love.graphics.setBackgroundColor(0.1, 0.1, 0.1)
+  love.graphics.clear()
+
   for i=gfx_q.first,gfx_q.last do
     gfx_q[i][1](unpack(gfx_q[i][2]))
   end
@@ -99,13 +95,12 @@ function love.draw()
   if config ~= nil and config.show_fps then
     love.graphics.print("FPS: "..love.timer.getFPS(),1,1)
   end
-  if love.graphics.getSupported("canvas") then
-    love.graphics.setCanvas()
-    love.graphics.clear(love.graphics.getBackgroundColor())
-    x, y, w, h = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 4, 3)
-    love.graphics.setBlendMode("alpha","premultiplied")
-    love.graphics.draw(canvas, x, y, 0, w / canvas_width, h / canvas_height)
-    local scale = canvas_width/math.max(bg:getWidth(),bg:getHeight()) -- keep image ratio
-    menu_drawf(bg, canvas_width/2, canvas_height/2, "center", "center", 0, scale, scale )
-  end
+
+  love.graphics.setCanvas()
+  love.graphics.clear(love.graphics.getBackgroundColor())
+  x, y, w, h = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 16, 9)
+  love.graphics.setBlendMode("alpha","premultiplied")
+  love.graphics.draw(global_canvas, x, y, 0, w / canvas_width, h / canvas_height)
+  local scale = canvas_width/math.max(bg:getWidth(),bg:getHeight()) -- keep image ratio
+  menu_drawf(bg, canvas_width/2, canvas_height/2, "center", "center", 0, scale, scale )
 end
