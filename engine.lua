@@ -2024,55 +2024,6 @@ end
 
 function Stack.recv_garbage(self, time, to_recv)
   
-  --[[if we can verify we used all the right garbage at the right times
-  --then we don't have to roll back
- -- [ local incoming_json = json.encode(to_recv)
-  local unverified_json = json.encode({{}})
-  if self.unverified_garbage and self.unverified_garbage[time] then
-    unverified_json = json.encode(self.unverified_garbage[time])
-  end 
-  local incoming_matches_unverified = incoming_json == unverified_json
-  if incoming_matches_unverified then
-    --if self.which == 1 then
-    print("unverified garbage and received garbage matched")
-    --end
-    --clear unverified_garbage[time] and to_recv and do nothing. This incoming garbage has already been handled
-    self.unverified_garbage[time] = nil
-    to_recv = nil
-  end
-  
-  for k, v in pairs(self.unverified_garbage) do
-    incoming_matches_unverified = nil
-    print("ERROR: the following predicted garbage never came:\n"..json.encode(unverified_garbage))
-    print("Need to roll back")
-  end
-  
-  if --[[still incoming_matches_unverified then
-    --if self.which == 1 then
-    print("no other unverified_garbage")
-    --end
-    --great, it all matches. clear unverified_garbage[time] and to_recv and do nothing. This incoming garbage has already been handled
-
-    print("we don't have to roll back because we predicted correctly")
-  else 
-    --if self.which == 1 then
-      print("incoming_json: "..incoming_json)
-      print("unverified_json: "..unverified_json)
-      print("all unverified:  "..json.encode(self.unverified_garbage))
-    --end
-    if self.CLOCK <= time then -- <= or < ? TODO
-      if incoming_matches_unverified then
-        print("we are behind and guessed correctly")
-      else
-        print("adding later_garbage for frame: "..time)
-        local garbage = self.later_garbage[time] or {}
-        for i=1,#to_recv do
-          garbage[#garbage+1] = to_recv[i]
-        end
-        self.later_garbage[time] = garbage
-      end
-    else -- self.CLOCK > time and we predicted wrong
-      --do a rollback ]]]
    if self.CLOCK > time then
       local prev_states = self.prev_states
       local next_self = prev_states[time+1]
