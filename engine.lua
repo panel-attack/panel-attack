@@ -31,7 +31,7 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     end
 
     -- frame.png dimensions
-    s.canvas = love.graphics.newCanvas(104,204)
+    s.canvas = love.graphics.newCanvas(104*GFX_SCALE,204*GFX_SCALE)
     s.canvas:setFilter("nearest","nearest")
 
     if s.mode == "2ptime" or s.mode == "vs" then

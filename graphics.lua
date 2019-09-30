@@ -35,8 +35,8 @@ function draw(img, x, y, rot, x_scale,y_scale)
   rot = rot or 0
   x_scale = x_scale or 1
   y_scale = y_scale or 1
-  gfx_q:push({love.graphics.draw, {img, x, y,
-    rot, x_scale, y_scale}})
+  gfx_q:push({love.graphics.draw, {img, x*GFX_SCALE, y*GFX_SCALE,
+    rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
 end
 
 function menu_draw(img, x, y, rot, x_scale,y_scale)
@@ -343,10 +343,11 @@ function Stack.render(self)
   local function frame_mask(x_pos, y_pos)
     love.graphics.setShader(mask_shader)
     love.graphics.setBackgroundColor(1,1,1)
-    love.graphics.rectangle( "fill", 0,0,104,204)
+    local canvas_w, canvas_h = self.canvas:getDimensions()
+    love.graphics.rectangle( "fill", 0,0,canvas_w,canvas_h)
     love.graphics.setBackgroundColor(unpack(global_background_color))
     love.graphics.setShader()
-  end
+  end  
 
   gfx_q:push({love.graphics.setCanvas, {{self.canvas, stencil=true}}})
   gfx_q:push({love.graphics.clear, {}})
@@ -490,7 +491,7 @@ function Stack.render(self)
       end
     end
   end
-  draw(IMG_frame)
+  draw(IMG_frame,0,0)
   draw(IMG_wall, 4, 4 - shake + self.height*16)
 
   self:draw_cards()
@@ -502,7 +503,7 @@ function Stack.render(self)
 
   gfx_q:push({love.graphics.setStencilTest, {}})
   gfx_q:push({love.graphics.setCanvas, {global_canvas}})
-  gfx_q:push({love.graphics.draw, {self.canvas, (self.pos_x-4)*GFX_SCALE, (self.pos_y-4)*GFX_SCALE, 0, GFX_SCALE, GFX_SCALE }})
+  gfx_q:push({love.graphics.draw, {self.canvas, (self.pos_x-4)*GFX_SCALE, (self.pos_y-4)*GFX_SCALE }})
 
   if config.debug_mode then
     local mx, my = love.mouse.getPosition()
