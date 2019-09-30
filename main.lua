@@ -85,7 +85,7 @@ function love.draw()
   love.graphics.getFont():setFilter("nearest", "nearest")
   love.graphics.setBlendMode("alpha", "alphamultiply")
   love.graphics.setCanvas(global_canvas)
-  love.graphics.setBackgroundColor(0.1, 0.1, 0.1)
+  love.graphics.setBackgroundColor(unpack(global_background_color))
   love.graphics.clear()
 
   for i=gfx_q.first,gfx_q.last do

@@ -344,6 +344,7 @@ function Stack.render(self)
     love.graphics.setShader(mask_shader)
     love.graphics.setBackgroundColor(1,1,1)
     love.graphics.rectangle( "fill", 0,0,104,204)
+    love.graphics.setBackgroundColor(unpack(global_background_color))
     love.graphics.setShader()
   end
 
