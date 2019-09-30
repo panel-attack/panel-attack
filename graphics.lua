@@ -578,7 +578,7 @@ function Stack.render(self)
     local main_infos_screen_pos = { x=375 + (canvas_width-legacy_canvas_width)/2, y=10 + (canvas_height-legacy_canvas_height) }
     if match_type then gprint(match_type, main_infos_screen_pos.x, main_infos_screen_pos.y) end
     if P1 and P1.game_stopwatch and tonumber(P1.game_stopwatch) then
-      gprint(frames_to_time_string(P1.game_stopwatch, P1.mode == "endless"), main_infos_screen_pos.x+10, main_infos_screen_pos.y+5)
+      gprint(frames_to_time_string(P1.game_stopwatch, P1.mode == "endless"), main_infos_screen_pos.x+10, main_infos_screen_pos.y+16)
     end
     if not config.debug_mode then
       gprint(join_community_msg or "", main_infos_screen_pos.x-45, main_infos_screen_pos.y+550)
