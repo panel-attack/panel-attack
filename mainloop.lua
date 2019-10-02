@@ -1543,7 +1543,7 @@ function main_net_vs()
     gprint(name_and_score[1], P1.score_x, P1.score_y-48)
     gprint(name_and_score[2], P2.score_x, P2.score_y-48)
     if not config.debug_mode then --this is printed in the same space as the debug details
-      gprint(spectators_string, 315, 265)
+      gprint(spectators_string, P1.score_x, P1.score_y+177)
     end
     if match_type == "Ranked" then
       if global_current_room_ratings[my_player_number]
@@ -1552,7 +1552,7 @@ function main_net_vs()
         if global_current_room_ratings[my_player_number].new > 0 then
           rating_to_print = rating_to_print.." "..global_current_room_ratings[my_player_number].new
         end
-        gprint(rating_to_print, 315, 85)
+        gprint(rating_to_print, P1.score_x, P1.score_y-16)
       end
       if global_current_room_ratings[op_player_number]
       and global_current_room_ratings[op_player_number].new then
@@ -1560,7 +1560,7 @@ function main_net_vs()
         if global_current_room_ratings[op_player_number].new > 0 then
           op_rating_to_print = op_rating_to_print.." "..global_current_room_ratings[op_player_number].new
         end
-        gprint(op_rating_to_print, 410, 85)
+        gprint(op_rating_to_print, P2.score_x, P2.score_y-16)
       end
     end
     if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
