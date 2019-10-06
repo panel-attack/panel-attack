@@ -128,6 +128,11 @@ end
 
 IMG_stagecount = 1
 function graphics_init()
+  for _,character in pairs(characters) do
+    character:other_data_init()
+    character:graphics_init()
+  end
+
   title = load_img("menu/title.png")
   charselect = load_img("menu/charselect.png")
   IMG_stages = {}
@@ -141,19 +146,6 @@ function graphics_init()
       break
     else
       IMG_stagecount=IMG_stagecount+1
-    end
-  end
-
-  local g_parts = {"topleft", "botleft", "topright", "botright",
-                    "top", "bot", "left", "right", "face", "pop",
-                    "doubleface", "filler1", "filler2", "flash",
-                    "portrait"}
-  IMG_garbage = {}
-  for _,key in ipairs(characters) do
-    local imgs = {}
-    IMG_garbage[key] = imgs
-    for _,part in ipairs(g_parts) do
-      imgs[part] = load_img(""..key.."/"..part..".png")
     end
   end
 
@@ -195,10 +187,6 @@ function graphics_init()
   for i=14,99 do
     IMG_cards[true][i] = load_img("chain00.png")
   end
-  IMG_character_icons = {}
-  for _, name in ipairs(characters) do
-    IMG_character_icons[name] = load_img(""..name.."/icon.png")
-  end
   local MAX_SUPPORTED_PLAYERS = 2
   IMG_char_sel_cursors = {}
   for player_num=1,MAX_SUPPORTED_PLAYERS do
@@ -221,25 +209,6 @@ function graphics_init()
       local half_width, half_height = cur_width/2, cur_height/2
       IMG_char_sel_cursor_halves.right[player_num][position_num] = love.graphics.newQuad(half_width,0,half_width,cur_height,cur_width, cur_height)
     end
-  end
-  character_display_names = {}
-  for _, original_name in ipairs(characters) do
-    name_txt_file = love.filesystem.newFile("assets/"..config.assets_dir.."/"..original_name.."/name.txt")
-    open_success, err = name_txt_file:open("r")
-    local display_name = name_txt_file:read(name_txt_file:getSize())
-    if display_name then
-      character_display_names[original_name] = display_name
-    else
-      character_display_names[original_name] = original_name
-    end
-  end
-  print("character_display_names: ")
-  for k,v in pairs(character_display_names) do
-    print(k.." = "..v)
-  end
-  character_display_names_to_original_names = {}
-  for k,v in pairs(character_display_names) do
-    character_display_names_to_original_names[v] = k
   end
 end
 
@@ -355,11 +324,11 @@ function Stack.render(self)
   gfx_q:push({love.graphics.setStencilTest, {"greater", 0}})
 
   -- draw inside stack's frame canvas
-  local portrait_w, portrait_h = IMG_garbage[self.character].portrait:getDimensions()
+  local portrait_w, portrait_h = characters[self.character].images["portrait"]:getDimensions()
   if P1 == self then
-    draw(IMG_garbage[self.character].portrait, 4, 4, 0, 96/portrait_w, 192/portrait_h)
+    draw(characters[self.character].images["portrait"], 4, 4, 0, 96/portrait_w, 192/portrait_h)
   else
-    draw(IMG_garbage[self.character].portrait, 100, 4, 0, (96/portrait_w)*-1, 192/portrait_h)
+    draw(characters[self.character].images["portrait"], 100, 4, 0, (96/portrait_w)*-1, 192/portrait_h)
   end
 
   local metals
@@ -385,7 +354,7 @@ function Stack.render(self)
         if panel.garbage then
           local imgs = {flash=metals.flash}
           if not panel.metal then
-            imgs = IMG_garbage[self.garbage_target.character]
+            imgs = characters[self.garbage_target.character].images
           end
           if panel.x_offset == 0 and panel.y_offset == 0 then
             -- draw the entire block!

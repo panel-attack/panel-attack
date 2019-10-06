@@ -602,11 +602,11 @@ function main_character_select()
     if no_rect ~= true then
       grectangle("line", render_x, render_y, button_width, button_height)
     end
-    local character_to_display_name = str
+    local character = characters[str]
     if str == "P1" then
-      character_to_display_name = character_display_names[cursor_data[1].state.character]
+      character = characters[cursor_data[1].state.character]
     elseif str == "P2" then
-      character_to_display_name = character_display_names[cursor_data[2].state.character]
+      character = characters[cursor_data[2].state.character]
     end
     local width_for_alignment = button_width
     local x_add,y_add = 0,0
@@ -615,14 +615,13 @@ function main_character_select()
     elseif valign == "bottom" then
       y_add = math.floor(button_height-text_height)
     end
-    if IMG_character_icons[character_display_names_to_original_names[character_to_display_name]] then
+    if character and character.images["icon"] then
       x_add = 0.025*button_width
       width_for_alignment = 0.95*button_width
-      local orig_w, orig_h = IMG_character_icons[character_display_names_to_original_names[character_to_display_name]]:getDimensions()
+      local orig_w, orig_h = character.images["icon"]:getDimensions()
       local scale = button_width/math.max(orig_w,orig_h) -- keep image ratio
-      menu_drawf(IMG_character_icons[character_display_names_to_original_names[character_to_display_name]], render_x+0.5*button_width, render_y+0.5*button_height,"center","center", 0, scale, scale )
+      menu_drawf(character.images["icon"], render_x+0.5*button_width, render_y+0.5*button_height,"center","center", 0, scale, scale )
     end
-    local pstr = str:gsub("^%l", string.upper)
 
     local function draw_cursor(button_height, spacing, player_num,ready)
       local cur_blink_frequency = 4
@@ -732,6 +731,7 @@ function main_character_select()
       gprint(to_print, render_x+padding_x, render_y+y_padding-0.5*text_height-1)
     end
 
+    local pstr
     if str == "match type desired" then
       pstr = "Mode"
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs") then
@@ -749,6 +749,7 @@ function main_character_select()
         draw_panels(cursor_data[1],1,0.5*button_height)
       end
     elseif str == "level" then
+      pstr = "Level"
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs") then
         draw_levels(cursor_data[1],1,0.4*button_height)
         draw_levels(cursor_data[2],2,0.7*button_height)
@@ -761,13 +762,17 @@ function main_character_select()
     elseif str == "P2" then
       draw_player_state(cursor_data[2],2)
       pstr = op_name
+    elseif character then
+      pstr = character.display_name
+    else
+      pstr = str:gsub("^%l", string.upper)
     end
     if x ~= 0 then
-      if cursor_data[1].state and (cursor_data[1].state.cursor == str or character_display_names[cursor_data[1].state.cursor] == str) then
+      if cursor_data[1].state and cursor_data[1].state.cursor == str then
         draw_cursor(button_height, spacing, 1, cursor_data[1].state.ready)
       end
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs")
-      and cursor_data[2].state and (cursor_data[2].state.cursor == str or character_display_names[cursor_data[2].state.cursor] == str) then
+      and cursor_data[2].state and cursor_data[2].state.cursor == str then
         draw_cursor(button_height, spacing, 2, cursor_data[2].state.ready)
       end
     end
@@ -916,7 +921,7 @@ function main_character_select()
         if map[i][j] == "leave" or map[i][j] == "random" then
           valign = "center"
         end
-        draw_button(i,j,1,1,character_display_names[map[i][j]] or map[i][j],"center",valign)
+        draw_button(i,j,1,1,map[i][j],"center",valign)
       end
     end
     local my_rating_difference = ""
@@ -1065,13 +1070,13 @@ function main_character_select()
                 ret = {main_select_mode}
               end
             elseif cursor.state.cursor == "random" then
-              cursor.state.character = uniformly(characters)
-              play_selection_sfx(cursor.state.character)
+              cursor.state.character = uniformly(character_ids)
+              characters[cursor.state.character]:play_selection_sfx()
             elseif cursor.state.cursor == "match type desired" then
               cursor.state.ranked = not cursor.state.ranked
             else
               cursor.state.character = cursor.state.cursor
-              play_selection_sfx(cursor.state.character)
+              characters[cursor.state.character]:play_selection_sfx()
               --When we select a character, move cursor to "ready"
               cursor.state.cursor = "ready"
               cursor.position = shallowcpy(name_to_xy["ready"])
@@ -2415,15 +2420,9 @@ function main_options(starting_idx)
             config.SFX_volume = items[2][2]
             items[2][6]:setVolume(config.SFX_volume/100) --do just the one sound effect until we deselect
           end
-          if active_idx == 2 and deselected_this_frame then --SFX Volume
-            set_volume(sounds.SFX, config.SFX_volume/100)
-          end
           if config.music_volume ~= items[3][2] then --music volume should be updated
             config.music_volume = items[3][2]
             items[3][6]:setVolume(config.music_volume/100) --do just the one music source until we deselect
-          end
-          if active_idx == 3 and deselected_this_frame then --Music Volume
-            set_volume(sounds.music, config.music_volume/100)
           end
           --add any other numeric config updates here
         elseif items[active_idx][3] == "multiple choice" then
@@ -2504,6 +2503,8 @@ function exit_options_menu()
     gprint("reloading sounds...", unpack(main_menu_screen_pos))
     wait()
     sound_init()
+  else
+    apply_config_volume()
   end
   memory_before_options_menu = nil
   return main_select_mode
@@ -2611,10 +2612,10 @@ end
 
 function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
   if P1 and P1.character then
-    stop_character_sounds(P1.character)
+    characters[P1.character]:stop_sounds()
   end
   if P2 and P2.character then
-    stop_character_sounds(P2.character)
+    characters[P2.character]:stop_sounds()
   end
   love.audio.stop()
   stop_the_music()
