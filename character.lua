@@ -78,10 +78,15 @@ function Character.other_data_init(self)
 end
 
 function Character.graphics_init(self)
-  self.images = {}
-  for _,image_name in ipairs(character_images) do
-    self.images[image_name] = load_img(self.id.."/"..image_name..".png")
+  local dir_to_check = "assets/"..config.assets_dir
+  if love.filesystem.getInfo("characters/"..self.id) then
+    dir_to_check = "characters"
   end
+  self.images = {}
+  for k,image_name in ipairs(character_images) do
+    self.images[image_name] = load_img(self.id.."/"..image_name..".png",dir_to_check)
+  end
+
 end
 
 local function find_character_SFX(character_id, SFX_name)

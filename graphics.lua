@@ -11,7 +11,7 @@ function load_img(path_and_name,config_dir,default_dir)
     config_dir = config_dir or "assets/"..config.assets_dir
     img = love.image.newImageData((config_dir or default_dir).."/"..path_and_name)
   end) then
-    if config_dir and config_dir ~= default_dir then
+    if config_dir and config_dir ~= default_dir and config_dir ~= "characters" then
       print("loaded custom asset: "..config_dir.."/"..path_and_name)
     end
   else
