@@ -397,7 +397,7 @@ function main_character_select()
       end
     end
   end
-
+  -- map is composed of special values prefixed by __ and character ids
   local map = {}
   if character_select_mode == "2p_net_vs" then
     local opponent_connected = false
@@ -496,25 +496,25 @@ function main_character_select()
     print("current_server_supports_ranking: "..tostring(current_server_supports_ranking))
 
     if current_server_supports_ranking then
-      map = {{"match type desired", "match type desired", "level", "level", "panels_selection", "panels_selection", "ready"},
-             {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
+      map = {{"__Mode", "__Mode", "__Level", "__Level", "__Panels", "__Panels", "__Ready"},
+             {"__Random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
              {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
              {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
-             {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
+             {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "__Leave"}}
     else
-      map = {{"level", "level", "level", "panels_selection", "panels_selection", "panels_selection", "ready"},
-             {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
+      map = {{"__Level", "__Level", "__Level", "__Panels", "__Panels", "__Panels", "__Ready"},
+             {"__Random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
              {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
              {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
-             {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
+             {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "__Leave"}}
     end
   end
   if character_select_mode == "2p_local_vs" or character_select_mode == "1p_vs_yourself" then
-    map = {{"level", "level", "level", "panels_selection", "panels_selection", "panels_selection", "ready"},
-           {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
+    map = {{"__Level", "__Level", "__Level", "__Panels", "__Panels", "__Panels", "__Ready"},
+           {"__Random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
            {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
            {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
-           {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
+           {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "__Leave"}}
   end
 
   op_win_count = op_win_count or 0
@@ -566,12 +566,12 @@ function main_character_select()
 
   my_win_count = my_win_count or 0
 
-  local cursor_data = {{position=shallowcpy(name_to_xy["ready"]),selected=false},{position=shallowcpy(name_to_xy["ready"]),selected=false}}
+  local cursor_data = {{position=shallowcpy(name_to_xy["__Ready"]),selected=false},{position=shallowcpy(name_to_xy["__Ready"]),selected=false}}
   if global_my_state ~= nil then
     cursor_data[1].state = shallowcpy(global_my_state)
     global_my_state = nil
   else
-    cursor_data[1].state = {character=config.character, level=config.level, panels_dir=config.panels_dir, cursor="ready", ready=false, ranked=config.ranked}
+    cursor_data[1].state = {character=config.character, level=config.level, panels_dir=config.panels_dir, cursor="__Ready", ready=false, ranked=config.ranked}
   end
   if global_op_state ~= nil then
     cursor_data[2].state = shallowcpy(global_op_state)
@@ -579,13 +579,13 @@ function main_character_select()
       global_op_state = nil
     end
   else
-    cursor_data[2].state = {character=config.character, level=config.level, panels_dir=config.panels_dir, cursor="ready", ready=false, ranked=false}
+    cursor_data[2].state = {character=config.character, level=config.level, panels_dir=config.panels_dir, cursor="__Ready", ready=false, ranked=false}
   end
 
   local prev_state = shallowcpy(cursor_data[1].state)
 
   local function draw_button(x,y,w,h,str,halign,valign,no_rect)
-    no_rect = no_rect or false
+    no_rect = no_rect or str == "__Empty"
     halign = halign or "center"
     valign = valign or "top"
     local menu_width = Y*100
@@ -599,7 +599,7 @@ function main_character_select()
     render_y = y_padding+(x-1)*100+spacing
     button_width = w*100-2*spacing
     button_height = h*100-2*spacing
-    if no_rect ~= true then
+    if no_rect == false then
       grectangle("line", render_x, render_y, button_width, button_height)
     end
     local character = characters[str]
@@ -664,7 +664,7 @@ function main_character_select()
       if cursor_data.state.level >= 9 then
         padding_x = padding_x-0.5*panels_width
       end
-      local is_selected = cursor_data.selected and cursor_data.state.cursor == "panels_selection"
+      local is_selected = cursor_data.selected and cursor_data.state.cursor == "__Panels"
       if is_selected then
         padding_x = padding_x-panels_width
       end
@@ -690,7 +690,7 @@ function main_character_select()
       local level_max_width = 0.2*button_height
       local level_width = math.min(level_max_width,IMG_levels[1]:getWidth())
       local padding_x = 0.5*button_width-5*level_width
-      local is_selected = cursor_data.selected and cursor_data.state.cursor == "level"
+      local is_selected = cursor_data.selected and cursor_data.state.cursor == "__Level"
       if is_selected then
         padding_x = padding_x-level_width
       end
@@ -732,24 +732,24 @@ function main_character_select()
     end
 
     local pstr
-    if str == "match type desired" then
-      pstr = "Mode"
+    if string.sub(str, 1, 2) == "__" then
+      pstr = string.sub(str, 3)
+    end
+    if str == "__Mode" then
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs") then
         draw_match_type(cursor_data[1],1,0.4*button_height)
         draw_match_type(cursor_data[2],2,0.7*button_height)
       else
         draw_match_type(cursor_data[1],1,0.5*button_height)
       end
-    elseif str == "panels_selection" then
-      pstr = "Panels"
+    elseif str == "__Panels" then
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs") then
         draw_panels(cursor_data[1],1,0.4*button_height)
         draw_panels(cursor_data[2],2,0.7*button_height)
       else
         draw_panels(cursor_data[1],1,0.5*button_height)
       end
-    elseif str == "level" then
-      pstr = "Level"
+    elseif str == "__Level" then
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs") then
         draw_levels(cursor_data[1],1,0.4*button_height)
         draw_levels(cursor_data[2],2,0.7*button_height)
@@ -764,19 +764,22 @@ function main_character_select()
       pstr = op_name
     elseif character then
       pstr = character.display_name
-    else
+    elseif string.sub(str, 1, 2) ~= "__" then
       pstr = str:gsub("^%l", string.upper)
     end
     if x ~= 0 then
-      if cursor_data[1].state and cursor_data[1].state.cursor == str then
+      if cursor_data[1].state and cursor_data[1].state.cursor == str 
+        and ( str ~= "__Empty" or ( cursor_data[1].position[1] == x and cursor_data[1].position[2] == y ) ) then
         draw_cursor(button_height, spacing, 1, cursor_data[1].state.ready)
       end
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs")
-      and cursor_data[2].state and cursor_data[2].state.cursor == str then
+        and ( str ~= "__Empty" or ( cursor_data[2].position[1] == x and cursor_data[2].position[2] == y ) ) then
         draw_cursor(button_height, spacing, 2, cursor_data[2].state.ready)
       end
     end
-    gprintf(pstr, render_x+x_add, render_y+y_add,width_for_alignment,halign)
+    if str ~= "__Empty" then
+      gprintf(pstr, render_x+x_add, render_y+y_add,width_for_alignment,halign)
+    end
   end
 
   print("got to LOC before net_vs_room character select loop")
@@ -905,20 +908,21 @@ function main_character_select()
       end
     end
 
+    -- those values span multiple 'map blocks'
     if current_server_supports_ranking then
-      draw_button(1,1,2,1,"match type desired","center","top")
-      draw_button(1,3,2,1,"level","center","top")
-      draw_button(1,5,2,1,"panels_selection","center","top")
+      draw_button(1,1,2,1,"__Mode","center","top")
+      draw_button(1,3,2,1,"__Level","center","top")
+      draw_button(1,5,2,1,"__Panels","center","top")
     else
-      draw_button(1,1,3,1,"level","center","top")
-      draw_button(1,4,3,1,"panels_selection","center","top")
+      draw_button(1,1,3,1,"__Level","center","top")
+      draw_button(1,4,3,1,"__Panels","center","top")
     end
-    draw_button(1,7,1,1,"ready","center","center")
+    draw_button(1,7,1,1,"__Ready","center","center")
 
     for i=2,X do
       for j=1,Y do
         local valign = "top"
-        if map[i][j] == "leave" or map[i][j] == "random" then
+        if map[i][j] == "__Leave" or map[i][j] == "__Random" then
           valign = "center"
         end
         draw_button(i,j,1,1,map[i][j],"center",valign)
@@ -1042,18 +1046,18 @@ function main_character_select()
             if not cursor.selected then move_cursor(cursor.position,down) end
           elseif menu_left(k) then
             if cursor.selected then
-              if cursor.state.cursor == "level" then
+              if cursor.state.cursor == "__Level" then
                 cursor.state.level = bound(1, cursor.state.level-1, 10)
-              elseif cursor.state.cursor == "panels_selection" then
+              elseif cursor.state.cursor == "__Panels" then
                 cursor.state.panels_dir = change_panels_dir(cursor.state.panels_dir,-1)
               end
             end
             if not cursor.selected then move_cursor(cursor.position,left) end
           elseif menu_right(k) then
             if cursor.selected then
-              if cursor.state.cursor == "level" then
+              if cursor.state.cursor == "__Level" then
                 cursor.state.level = bound(1, cursor.state.level+1, 10)
-              elseif cursor.state.cursor == "panels_selection" then
+              elseif cursor.state.cursor == "__Panels" then
                 cursor.state.panels_dir = change_panels_dir(cursor.state.panels_dir,1)
               end
             end
@@ -1061,7 +1065,7 @@ function main_character_select()
           elseif menu_enter(k) then
             if selectable[cursor.state.cursor] then
               cursor.selected = not cursor.selected
-            elseif cursor.state.cursor == "leave" then
+            elseif cursor.state.cursor == "__Leave" then
               if character_select_mode == "2p_net_vs" then
                 if not do_leave() then
                   ret = {main_dumb_transition, {main_select_mode, "Error when leaving online"}}
@@ -1069,20 +1073,20 @@ function main_character_select()
               else
                 ret = {main_select_mode}
               end
-            elseif cursor.state.cursor == "random" then
+            elseif cursor.state.cursor == "__Random" then
               cursor.state.character = uniformly(character_ids)
               characters[cursor.state.character]:play_selection_sfx()
-            elseif cursor.state.cursor == "match type desired" then
+            elseif cursor.state.cursor == "__Mode" then
               cursor.state.ranked = not cursor.state.ranked
             else
               cursor.state.character = cursor.state.cursor
               characters[cursor.state.character]:play_selection_sfx()
-              --When we select a character, move cursor to "ready"
-              cursor.state.cursor = "ready"
-              cursor.position = shallowcpy(name_to_xy["ready"])
+              --When we select a character, move cursor to "__Ready"
+              cursor.state.cursor = "__Ready"
+              cursor.position = shallowcpy(name_to_xy["__Ready"])
             end
           elseif menu_escape(k) then
-            if cursor.state.cursor == "leave" then
+            if cursor.state.cursor == "__Leave" then
               if character_select_mode == "2p_net_vs" then
                 if not do_leave() then
                   ret = {main_dumb_transition, {main_select_mode, "Error when leaving online"}}
@@ -1092,11 +1096,11 @@ function main_character_select()
               end
             end
             cursor.selected = false
-            cursor.position = shallowcpy(name_to_xy["leave"])
+            cursor.position = shallowcpy(name_to_xy["__Leave"])
           end
           if cursor.state ~= nil then
             cursor.state.cursor = map[cursor.position[1]][cursor.position[2]]
-            cursor.state.ready = cursor.selected and cursor.state.cursor=="ready"
+            cursor.state.ready = cursor.selected and cursor.state.cursor=="__Ready"
           end
         end
         -- update config, does not redefine it
