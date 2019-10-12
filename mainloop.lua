@@ -173,6 +173,8 @@ menu_left = menu_key_func({"left"}, {"left"}, true, function() return sounds.SFX
 menu_right = menu_key_func({"right"}, {"right"}, true, function() return sounds.SFX.menu_move end)
 menu_enter = menu_key_func({"return","kenter","z"}, {"swap1"}, false, function() return sounds.SFX.menu_validate end)
 menu_escape = menu_key_func({"escape","x"}, {"swap2"}, false, function() return sounds.SFX.menu_cancel end)
+menu_prev_page = menu_key_func({"pageup"}, {"raise1"}, true, function() return sounds.SFX.menu_move end)
+menu_next_page = menu_key_func({"pagedown"}, {"raise2"}, true, function() return sounds.SFX.menu_move end)
 menu_backspace = menu_key_func({"backspace"}, {"backspace"}, true)
 
 do
@@ -383,6 +385,39 @@ function main_net_vs_room()
   return main_character_select()
 end
 
+-- fills the provided map based on the provided template and return the amount of pages. __Empty values will be replaced by characters_ids
+local function fill_map(template_map,map)
+  local X,Y = 5,7
+  local character_id_index = 1
+  local pages_amount = 0
+  while true do
+    -- new page handling
+    print("create a page")
+    pages_amount = pages_amount+1
+    map[pages_amount] = deepcpy(template_map)
+
+    if pages_amount == 3 then
+      return pages_amount
+    end
+
+    -- go through the page and replace __Empty with character_ids
+    for i=1,X do
+      for j=1,Y do
+        if map[pages_amount][i][j] == "__Empty" then
+          map[pages_amount][i][j] = character_ids[character_id_index]
+          character_id_index = character_id_index+1
+          -- end case: no more character_ids to add
+          if character_id_index == #character_ids+1 then
+          print("filled "..#character_ids.." characters across "..pages_amount.." page(s)")
+            return pages_amount
+          end
+        end
+      end
+    end
+  end
+  return pages_amount
+end
+
 function main_character_select()
   love.audio.stop()
   stop_the_music()
@@ -398,7 +433,9 @@ function main_character_select()
     end
   end
   -- map is composed of special values prefixed by __ and character ids
+  local template_map = {}
   local map = {}
+  local current_page = 1
   if character_select_mode == "2p_net_vs" then
     local opponent_connected = false
     local retries, retry_limit = 0, 250
@@ -496,26 +533,28 @@ function main_character_select()
     print("current_server_supports_ranking: "..tostring(current_server_supports_ranking))
 
     if current_server_supports_ranking then
-      map = {{"__Mode", "__Mode", "__Level", "__Level", "__Panels", "__Panels", "__Ready"},
-             {"__Random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
-             {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
-             {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
-             {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "__Leave"}}
+      template_map = {{"__Mode", "__Mode", "__Level", "__Level", "__Panels", "__Panels", "__Ready"},
+             {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}}
     else
-      map = {{"__Level", "__Level", "__Level", "__Panels", "__Panels", "__Panels", "__Ready"},
-             {"__Random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
-             {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
-             {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
-             {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "__Leave"}}
+      template_map = {{"__Level", "__Level", "__Level", "__Panels", "__Panels", "__Panels", "__Ready"},
+             {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}}
     end
   end
   if character_select_mode == "2p_local_vs" or character_select_mode == "1p_vs_yourself" then
-    map = {{"__Level", "__Level", "__Level", "__Panels", "__Panels", "__Panels", "__Ready"},
-           {"__Random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
-           {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
-           {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
-           {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "__Leave"}}
+    template_map = {{"__Level", "__Level", "__Level", "__Panels", "__Panels", "__Panels", "__Ready"},
+             {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}}
   end
+
+  local pages_amount = fill_map(template_map, map)
 
   op_win_count = op_win_count or 0
 
@@ -553,20 +592,23 @@ function main_character_select()
     return json_send({leave_room=true})
   end
 
-  -- be wary: name_to_xy is kinda buggy for larger blocks as they span multiple positions (we retain the last one)
-  local name_to_xy = {}
+  -- be wary: name_to_xy_per_page is kinda buggy for larger blocks as they span multiple positions (we retain the last one), and is completely broken with __Empty
+  local name_to_xy_per_page = {}
   local X,Y = 5,7
-  for i=1,X do
-    for j=1,Y do
-      if map[i][j] then
-        name_to_xy[map[i][j]] = {i,j}
+  for p=1,pages_amount do
+    name_to_xy_per_page[p] = {}
+    for i=1,X do
+      for j=1,Y do
+        if map[p][i][j] then
+          name_to_xy_per_page[p][map[p][i][j]] = {i,j}
+        end
       end
     end
   end
 
   my_win_count = my_win_count or 0
 
-  local cursor_data = {{position=shallowcpy(name_to_xy["__Ready"]),selected=false},{position=shallowcpy(name_to_xy["__Ready"]),selected=false}}
+  local cursor_data = {{position=shallowcpy(name_to_xy_per_page[current_page]["__Ready"]),selected=false},{position=shallowcpy(name_to_xy_per_page[current_page]["__Ready"]),selected=false}}
   if global_my_state ~= nil then
     cursor_data[1].state = shallowcpy(global_my_state)
     global_my_state = nil
@@ -922,10 +964,10 @@ function main_character_select()
     for i=2,X do
       for j=1,Y do
         local valign = "top"
-        if map[i][j] == "__Leave" or map[i][j] == "__Random" then
+        if map[current_page][i][j] == "__Leave" or map[current_page][i][j] == "__Random" then
           valign = "center"
         end
-        draw_button(i,j,1,1,map[i][j],"center",valign)
+        draw_button(i,j,1,1,map[current_page][i][j],"center",valign)
       end
     end
     local my_rating_difference = ""
@@ -1002,7 +1044,8 @@ function main_character_select()
      local dx,dy = unpack(direction)
       local can_x,can_y = wrap(1, cursor_pos[1]+dx, X), wrap(1, cursor_pos[2]+dy, Y)
       while can_x ~= cursor_pos[1] or can_y ~= cursor_pos[2] do
-        if map[can_x][can_y] and map[can_x][can_y] ~= map[cursor_pos[1]][cursor_pos[2]] then
+        if map[current_page][can_x][can_y] and ( map[current_page][can_x][can_y] ~= map[current_page][cursor_pos[1]][cursor_pos[2]] or 
+          map[current_page][can_x][can_y] == "__Empty" ) then
           break
         end
         can_x,can_y = wrap(1, can_x+dx, X), wrap(1, can_y+dy, Y)
@@ -1040,7 +1083,11 @@ function main_character_select()
         for i=1,KMax do
           local k=K[i]
           local cursor = cursor_data[i]
-          if menu_up(k) then
+          if menu_prev_page(k) then
+            if not cursor.selected then current_page = bound(1, current_page-1, pages_amount) end
+          elseif menu_next_page(k) then
+            if not cursor.selected then current_page = bound(1, current_page+1, pages_amount) end
+          elseif menu_up(k) then
             if not cursor.selected then move_cursor(cursor.position,up) end
           elseif menu_down(k) then
             if not cursor.selected then move_cursor(cursor.position,down) end
@@ -1078,12 +1125,12 @@ function main_character_select()
               characters[cursor.state.character]:play_selection_sfx()
             elseif cursor.state.cursor == "__Mode" then
               cursor.state.ranked = not cursor.state.ranked
-            else
+            elseif cursor.state.cursor ~= "__Empty" then
               cursor.state.character = cursor.state.cursor
               characters[cursor.state.character]:play_selection_sfx()
               --When we select a character, move cursor to "__Ready"
               cursor.state.cursor = "__Ready"
-              cursor.position = shallowcpy(name_to_xy["__Ready"])
+              cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"])
             end
           elseif menu_escape(k) then
             if cursor.state.cursor == "__Leave" then
@@ -1096,10 +1143,10 @@ function main_character_select()
               end
             end
             cursor.selected = false
-            cursor.position = shallowcpy(name_to_xy["__Leave"])
+            cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Leave"])
           end
           if cursor.state ~= nil then
-            cursor.state.cursor = map[cursor.position[1]][cursor.position[2]]
+            cursor.state.cursor = map[current_page][cursor.position[1]][cursor.position[2]]
             cursor.state.ready = cursor.selected and cursor.state.cursor=="__Ready"
           end
         end
@@ -2278,9 +2325,9 @@ function main_options(starting_idx)
     --options menu table reference:
     --{[1]"Option Name", [2]current or default value, [3]type, [4]min or bool value or choices_table,
     -- [5]max, [6]sound_source, [7]selectable, [8]next_func, [9]play_while selected}
-    {"Master Volume", config.master_volume or 100, "numeric", 0, 100, sounds.music.characters["lip"].normal_music, true, nil, true},
+    {"Master Volume", config.master_volume or 100, "numeric", 0, 100, characters["lip"].musics.normal_music, true, nil, true},
     {"SFX Volume", config.SFX_volume or 100, "numeric", 0, 100, sounds.SFX.cur_move, true},
-    {"Music Volume", config.music_volume or 100, "numeric", 0, 100, sounds.music.characters["lip"].normal_music, true, nil, true},
+    {"Music Volume", config.music_volume or 100, "numeric", 0, 100, characters["lip"].musics.normal_music, true, nil, true},
     {"Debug Mode", on_off_text[config.debug_mode or false], "bool", false, nil, nil,false},
     {"Save replays publicly",
       save_replays_publicly_choices[config.save_replays_publicly]
