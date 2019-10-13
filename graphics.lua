@@ -128,13 +128,6 @@ end
 
 IMG_stagecount = 1
 function graphics_init()
-  characters_init()
-  
-  for _,character in pairs(characters) do
-    character:other_data_init()
-    character:graphics_init()
-  end
-
   title = load_img("menu/title.png")
   charselect = load_img("menu/charselect.png")
   IMG_stages = {}

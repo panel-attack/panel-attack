@@ -258,6 +258,7 @@ function characters_init()
   characters = {} -- holds all characters, most of them will not be fully loaded
   characters_ids = {} -- holds all characters ids
   characters_ids_for_current_theme = {} -- holds characters ids for the current theme, those characters will appear in the lobby
+  characters_ids_by_display_names = {} -- holds keys to array of character ids holding that name
 
   if config.use_default_characters then
     -- retrocompatibility with older versions and mods
@@ -266,32 +267,46 @@ function characters_init()
     for i=1,#characters_ids do
       characters[characters_ids[i]] = Character(characters_ids[i])
     end
-    return
-  end
-
-  local raw_dir_list = love.filesystem.getDirectoryItems("characters")
-  for _,v in ipairs(raw_dir_list) do
-    local start_of_v = string.sub(v,0,string.len(prefix_of_ignored_dirs))
-    if love.filesystem.getInfo("characters/"..v) and start_of_v ~= prefix_of_ignored_dirs then
-      characters[v] = Character(v)
-      characters_ids[#characters_ids+1] = v
+  else
+    -- new system with characters belonging to their own folder and characters.txt detailing current characters
+    local raw_dir_list = love.filesystem.getDirectoryItems("characters")
+    for _,v in ipairs(raw_dir_list) do
+      local start_of_v = string.sub(v,0,string.len(prefix_of_ignored_dirs))
+      if love.filesystem.getInfo("characters/"..v) and start_of_v ~= prefix_of_ignored_dirs then
+        characters[v] = Character(v)
+        characters_ids[#characters_ids+1] = v
+      end
     end
-  end
 
-  if love.filesystem.getInfo("assets/"..config.assets_dir.."/characters.txt") then
-    for line in love.filesystem.lines(current_dir.."/characters.txt") do
-      if love.filesystem.getInfo("characters/"..line) then
-        -- found at least a valid character in a characters.txt file
-        if characters[line] then
-          characters_ids_for_current_theme[#characters_ids_for_current_theme+1] = line
-          print("found a valid character:"..characters_ids_for_current_theme[#characters_ids_for_current_theme])
+    if love.filesystem.getInfo("assets/"..config.assets_dir.."/characters.txt") then
+      for line in love.filesystem.lines(current_dir.."/characters.txt") do
+        if love.filesystem.getInfo("characters/"..line) then
+          -- found at least a valid character in a characters.txt file
+          if characters[line] then
+            characters_ids_for_current_theme[#characters_ids_for_current_theme+1] = line
+            print("found a valid character:"..characters_ids_for_current_theme[#characters_ids_for_current_theme])
+          end
         end
       end
     end
+
+    if #characters_ids_for_current_theme == 0 then
+      -- all characters case
+      characters_ids_for_current_theme = deepcpy(characters_ids)
+    end
   end
 
-  if #characters_ids_for_current_theme == 0 then
-    -- all characters case
-    characters_ids_for_current_theme = deepcpy(characters_ids)
+  -- actual init for all characters
+  for _,character in pairs(characters) do
+    character:other_data_init()
+    character:graphics_init()
+    character:sound_init()
+    character:assert_requirements_met()
+
+    if characters_ids_by_display_names[character.display_name] then
+      characters_ids_by_display_names[character.display_name][#characters_ids_by_display_names[character.display_name]+1] = character.id
+    else
+      characters_ids_by_display_names[character.display_name] = { character.id }
+    end
   end
 end

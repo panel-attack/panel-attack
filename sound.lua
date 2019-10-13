@@ -69,11 +69,6 @@ function assert_requirements_met()
           assert(sounds.SFX.pops[popLevel][popIndex], "SFX pop"..popLevel.."-"..popIndex.." was not loaded")
       end
   end
-
-  --assert we have the required SFX and music for each character
-  for _,character in pairs(characters) do
-    character:assert_requirements_met()
-  end
 end
 
 function play_optional_sfx(sfx)
@@ -119,10 +114,6 @@ function sound_init()
     for popIndex=1,10 do
       sounds.SFX.pops[popLevel][popIndex] = find_generic_SFX("pop"..popLevel.."-"..popIndex)
     end
-  end
-
-  for _,character in pairs(characters) do
-    character:sound_init()
   end
   
   assert_requirements_met()

@@ -80,6 +80,9 @@ function fmainloop()
   gprint("Reading replay file", unpack(main_menu_screen_pos))
   wait()
   read_replay_file()
+  gprint("Loading characters...", unpack(main_menu_screen_pos))
+  wait()
+  characters_init() -- load images and set up stuff
   gprint("Loading graphics...", unpack(main_menu_screen_pos))
   wait()
   graphics_init() -- load images and set up stuff
@@ -2541,6 +2544,15 @@ function exit_options_menu()
     config.panels_dir = config.panels_dir_when_not_using_set_from_assets_folder
   end
   write_conf_file()
+
+  if config.assets_dir ~= memory_before_options_menu[1] 
+    or config.use_default_characters ~= memory_before_options_menu[5]
+    or config.sounds_dir ~= memory_before_options_menu[3] then
+    gprint("reloading characters...", unpack(main_menu_screen_pos))
+    wait()
+    characters_init()
+  end
+
   if config.assets_dir ~= memory_before_options_menu[1] or config.use_default_characters ~= memory_before_options_menu[5] then
     gprint("reloading graphics...", unpack(main_menu_screen_pos))
     wait()
