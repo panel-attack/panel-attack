@@ -31,19 +31,6 @@ Character = class(function(s, id)
     s.musics = {}
   end)
 
-characters = {lip=Character("lip"), windy=Character("windy"), sherbet=Character("sherbet"), thiana=Character("thiana"), ruby=Character("ruby"),
-              elias=Character("elias"), flare=Character("flare"), neris=Character("neris"), seren=Character("seren"), phoenix=Character("phoenix"), 
-              dragon=Character("dragon"), thanatos=Character("thanatos"), cordelia=Character("cordelia"), lakitu=Character("lakitu"), 
-              bumpty=Character("bumpty"), poochy=Character("poochy"), wiggler=Character("wiggler"), froggy=Character("froggy"), blargg=Character("blargg"),
-              lungefish=Character("lungefish"), raphael=Character("raphael"), yoshi=Character("yoshi"), hookbill=Character("hookbill"),
-              navalpiranha=Character("navalpiranha"), kamek=Character("kamek"), bowser=Character("bowser")}
-character_ids = {"lip", "windy", "sherbet", "thiana", "ruby",
-              "elias", "flare", "neris", "seren", "phoenix", 
-              "dragon", "thanatos", "cordelia",  "lakitu", 
-              "bumpty", "poochy", "wiggler", "froggy", "blargg",
-              "lungefish", "raphael", "yoshi", "hookbill",
-              "navalpiranha", "kamek", "bowser"}
-
 function Character.other_data_init(self)
   local dirs_to_check = { "characters/",
                         "assets/"..config.assets_dir.."/",
@@ -257,5 +244,54 @@ end
 function Character.play_selection_sfx(self)
   if not SFX_mute and self.sounds.selection_count ~= 0 then
     self.sounds.selections["selection" .. math.random(self.sounds.selection_count)]:play()
+  end
+end
+
+local default_characters_ids = {"lip", "windy", "sherbet", "thiana", "ruby",
+              "elias", "flare", "neris", "seren", "phoenix", 
+              "dragon", "thanatos", "cordelia",  "lakitu", 
+              "bumpty", "poochy", "wiggler", "froggy", "blargg",
+              "lungefish", "raphael", "yoshi", "hookbill",
+              "navalpiranha", "kamek", "bowser"}
+
+function characters_init()
+  characters = {} -- holds all characters, most of them will not be fully loaded
+  characters_ids = {} -- holds all characters ids
+  characters_ids_for_current_theme = {} -- holds characters ids for the current theme, those characters will appear in the lobby
+
+  if config.use_default_characters then
+    -- retrocompatibility with older versions and mods
+    characters_ids = deepcpy(default_characters_ids)
+    characters_ids_for_current_theme = deepcpy(default_characters_ids)
+    for i=1,#characters_ids do
+      characters[characters_ids[i]] = Character(characters_ids[i])
+    end
+    return
+  end
+
+  local raw_dir_list = love.filesystem.getDirectoryItems("characters")
+  for _,v in ipairs(raw_dir_list) do
+    local start_of_v = string.sub(v,0,string.len(prefix_of_ignored_dirs))
+    if love.filesystem.getInfo("characters/"..v) and start_of_v ~= prefix_of_ignored_dirs then
+      characters[v] = Character(v)
+      characters_ids[#characters_ids+1] = v
+    end
+  end
+
+  if love.filesystem.getInfo("assets/"..config.assets_dir.."/characters.txt") then
+    for line in love.filesystem.lines(current_dir.."/characters.txt") do
+      if love.filesystem.getInfo("characters/"..line) then
+        -- found at least a valid character in a characters.txt file
+        if characters[line] then
+          characters_ids_for_current_theme[#characters_ids_for_current_theme+1] = line
+          print("found a valid character:"..characters_ids_for_current_theme[#characters_ids_for_current_theme])
+        end
+      end
+    end
+  end
+
+  if #characters_ids_for_current_theme == 0 then
+    -- all characters case
+    characters_ids_for_current_theme = deepcpy(characters_ids)
   end
 end

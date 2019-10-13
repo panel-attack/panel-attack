@@ -13,7 +13,7 @@ local clone_pool = {}
 local current_music_is_casual = false -- must be false so that casual music start playing
 
 Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_number)
-    s.character = uniformly(character_ids)
+    s.character = uniformly(characters_ids_for_current_theme)
     s.max_health = 1
     s.panels_dir = panels_dir or config.panels_dir
     if IMG_panels[panels_dir] == nil then

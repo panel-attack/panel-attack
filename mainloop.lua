@@ -61,7 +61,10 @@ function fmainloop()
              panels_dir                    = default_assets_dir,
              -- Retrocompatibility, please remove whenever possible, it's so ugly!
              panels_dir_when_not_using_set_from_assets_folder = default_panels_dir,
-             use_panels_from_assets_folder  = true,
+             use_panels_from_assets_folder = true,
+
+             -- Retrocompatibility
+             use_default_characters        = true,
            }
   gprint("Reading config file", unpack(main_menu_screen_pos))
   wait()
@@ -385,37 +388,31 @@ function main_net_vs_room()
   return main_character_select()
 end
 
--- fills the provided map based on the provided template and return the amount of pages. __Empty values will be replaced by characters_ids
+-- fills the provided map based on the provided template and return the amount of pages. __Empty values will be replaced by character_ids
 local function fill_map(template_map,map)
   local X,Y = 5,7
-  local character_id_index = 1
   local pages_amount = 0
+  local character_id_index = 1
   while true do
     -- new page handling
-    print("create a page")
     pages_amount = pages_amount+1
     map[pages_amount] = deepcpy(template_map)
 
-    if pages_amount == 3 then
-      return pages_amount
-    end
-
-    -- go through the page and replace __Empty with character_ids
+    -- go through the page and replace __Empty with characters_ids_for_current_theme
     for i=1,X do
       for j=1,Y do
         if map[pages_amount][i][j] == "__Empty" then
-          map[pages_amount][i][j] = character_ids[character_id_index]
+          map[pages_amount][i][j] = characters_ids_for_current_theme[character_id_index]
           character_id_index = character_id_index+1
-          -- end case: no more character_ids to add
-          if character_id_index == #character_ids+1 then
-          print("filled "..#character_ids.." characters across "..pages_amount.." page(s)")
+          -- end case: no more characters_ids_for_current_theme to add
+          if character_id_index == #characters_ids_for_current_theme+1 then
+            print("filled "..#characters_ids_for_current_theme.." characters across "..pages_amount.." page(s)")
             return pages_amount
           end
         end
       end
     end
   end
-  return pages_amount
 end
 
 function main_character_select()
@@ -1036,6 +1033,9 @@ function main_character_select()
       gprintf(match_type, 0, 15, canvas_width, "center")
       gprintf(match_type_message, 0, 30, canvas_width, "center")
     end
+    if pages_amount ~= 1 then
+      gprintf("Page "..current_page.."/"..pages_amount, 0, 660, canvas_width, "center")
+    end
     wait()
 
     local ret = nil
@@ -1121,7 +1121,7 @@ function main_character_select()
                 ret = {main_select_mode}
               end
             elseif cursor.state.cursor == "__Random" then
-              cursor.state.character = uniformly(character_ids)
+              cursor.state.character = uniformly(characters_ids_for_current_theme)
               characters[cursor.state.character]:play_selection_sfx()
             elseif cursor.state.cursor == "__Mode" then
               cursor.state.ranked = not cursor.state.ranked
@@ -2294,7 +2294,8 @@ function main_options(starting_idx)
   memory_before_options_menu = {  config.assets_dir or default_assets_dir,
                                   config.panels_dir_when_not_using_set_from_assets_folder or default_panels_dir,
                                   config.sounds_dir or default_sounds_dir,
-                                  config.use_panels_from_assets_folder }
+                                  config.use_panels_from_assets_folder,
+                                  config.use_default_characters }
   --make so we can get "anonymously" from save_replays_publicly_choices["anonymously"]
   for k,v in ipairs(save_replays_publicly_choices) do
     save_replays_publicly_choices[v] = v
@@ -2341,6 +2342,7 @@ function main_options(starting_idx)
     {"Ready countdown", on_off_text[config.ready_countdown_1P or false], "bool", true, nil, nil,false},
     {"Show FPS", on_off_text[config.show_fps or false], "bool", true, nil, nil,false},
     {"Use panels from assets folder", on_off_text[config.use_panels_from_assets_folder], "bool", true, nil, nil,false},
+    {"Use default characters", on_off_text[config.use_default_characters], "bool", true, nil, nil,false},
     {"Danger music change-back delay", on_off_text[config.danger_music_changeback_delay or false], "bool", false, nil, nil, false},
     {"Back", "", nil, nil, nil, nil, false, main_select_mode}
   }
@@ -2457,6 +2459,9 @@ function main_options(starting_idx)
           elseif items[active_idx][1] == "Use panels from assets folder" then
             config.use_panels_from_assets_folder = not config.use_panels_from_assets_folder
             items[active_idx][2] = on_off_text[config.use_panels_from_assets_folder]
+          elseif items[active_idx][1] == "Use default characters" then
+            config.use_default_characters = not config.use_default_characters
+            items[active_idx][2] = on_off_text[config.use_default_characters]
           elseif items[active_idx][1] == "Danger music change-back delay" then
             config.danger_music_changeback_delay = not config.danger_music_changeback_delay
             items[active_idx][2] = on_off_text[config.danger_music_changeback_delay]
@@ -2536,7 +2541,7 @@ function exit_options_menu()
     config.panels_dir = config.panels_dir_when_not_using_set_from_assets_folder
   end
   write_conf_file()
-  if config.assets_dir ~= memory_before_options_menu[1] then
+  if config.assets_dir ~= memory_before_options_menu[1] or config.use_default_characters ~= memory_before_options_menu[5] then
     gprint("reloading graphics...", unpack(main_menu_screen_pos))
     wait()
     graphics_init()

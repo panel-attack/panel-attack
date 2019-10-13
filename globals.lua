@@ -163,7 +163,8 @@ for i=1,72 do
 end
 
 characters = {} -- initialized in character.lua
-character_ids = {} -- initialized in character.lua
+characters_ids = {} -- initialized in character.lua
+characters_ids_for_current_theme = {} -- initialized in character.lua
 
 shake_arr = {}
 

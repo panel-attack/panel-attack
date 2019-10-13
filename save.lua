@@ -73,6 +73,9 @@ function read_conf_file() pcall(function()
   else
     config.panels_dir = config.panels_dir_when_not_using_set_from_assets_folder
   end
+  if config.use_default_characters == nil then
+    config.use_default_characters = true
+  end
   file:close()
 end) end
 
