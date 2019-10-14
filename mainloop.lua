@@ -2257,8 +2257,7 @@ function main_show_custom_graphics_readme(idx)
 
   local custom_graphics_readme = read_txt_file("Custom Graphics Readme.txt")
   while true do
-    gprint(custom_graphics_readme, 100, 150)
-    testpencel()
+    gprint(custom_graphics_readme, 15, 15)
     do_menu_function = false
     wait()
     local ret = nil
@@ -2282,7 +2281,41 @@ function main_show_custom_sounds_readme(idx)
   end
   local custom_sounds_readme = read_txt_file("Custom Sounds Readme.txt")
   while true do
-    gprint(custom_sounds_readme, 30, 150)
+    gprint(custom_sounds_readme, 15, 15)
+    do_menu_function = false
+    wait()
+    local ret = nil
+    variable_step(function()
+      if menu_escape(K[1]) or menu_enter(K[1]) then
+        ret = {main_options, {idx}}
+      end
+    end)
+    if ret then
+      return unpack(ret)
+    end
+  end
+end
+
+function main_show_custom_characters_readme(idx)
+  local default_characters_ids = {"lip", "windy", "sherbet", "thiana", "ruby",
+              "elias", "flare", "neris", "seren", "phoenix", 
+              "dragon", "thanatos", "cordelia",  "lakitu", 
+              "bumpty", "poochy", "wiggler", "froggy", "blargg",
+              "lungefish", "raphael", "yoshi", "hookbill",
+              "navalpiranha", "kamek", "bowser"}
+
+  for _,current_character in ipairs(default_characters_ids) do
+    if not love.filesystem.getInfo("characters/"..prefix_of_ignored_dirs..current_character) then
+      print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
+      gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
+      wait()
+      recursive_copy("characters/"..current_character, "characters/"..prefix_of_ignored_dirs..current_character)
+    end
+  end
+
+  local custom_characters_readme = read_txt_file("Custom Characters Readme.txt")
+  while true do
+    gprint(custom_characters_readme, 15, 15)
     do_menu_function = false
     wait()
     local ret = nil
@@ -2356,6 +2389,7 @@ function main_options(starting_idx)
     {"Use panels from assets folder", on_off_text[config.use_panels_from_assets_folder], "bool", true, nil, nil,false},
     {"Use default characters", on_off_text[config.use_default_characters], "bool", true, nil, nil,false},
     {"Danger music change-back delay", on_off_text[config.danger_music_changeback_delay or false], "bool", false, nil, nil, false},
+    {"About custom characters", "", "function", nil, nil, nil, nil, main_show_custom_characters_readme},
     {"Back", "", nil, nil, nil, nil, false, main_select_mode}
   }
   local function print_stuff()
