@@ -247,13 +247,6 @@ function Character.play_selection_sfx(self)
   end
 end
 
-local default_characters_ids = {"lip", "windy", "sherbet", "thiana", "ruby",
-              "elias", "flare", "neris", "seren", "phoenix", 
-              "dragon", "thanatos", "cordelia",  "lakitu", 
-              "bumpty", "poochy", "wiggler", "froggy", "blargg",
-              "lungefish", "raphael", "yoshi", "hookbill",
-              "navalpiranha", "kamek", "bowser"}
-
 function characters_init()
   characters = {} -- holds all characters, most of them will not be fully loaded
   characters_ids = {} -- holds all characters ids
@@ -279,7 +272,7 @@ function characters_init()
     end
 
     if love.filesystem.getInfo("assets/"..config.assets_dir.."/characters.txt") then
-      for line in love.filesystem.lines(current_dir.."/characters.txt") do
+      for line in love.filesystem.lines("assets/"..config.assets_dir.."/characters.txt") do
         if love.filesystem.getInfo("characters/"..line) then
           -- found at least a valid character in a characters.txt file
           if characters[line] then

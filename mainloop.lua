@@ -430,6 +430,13 @@ function main_character_select()
       if state.panels_dir == nil or IMG_panels[state.panels_dir] == nil then
         state.panels_dir = config.panels_dir
       end
+      if characters[state.character] == nil then
+        if state.character_display_name and characters_ids_by_display_names[state.character_display_name] then
+          state.character = characters_ids_by_display_names[state.character_display_name][1]
+        else
+          state.character = uniformly(characters_ids_for_current_theme)
+        end
+      end
     end
   end
   -- map is composed of special values prefixed by __ and character ids
@@ -613,7 +620,7 @@ function main_character_select()
     cursor_data[1].state = shallowcpy(global_my_state)
     global_my_state = nil
   else
-    cursor_data[1].state = {character=config.character, level=config.level, panels_dir=config.panels_dir, cursor="__Ready", ready=false, ranked=config.ranked}
+    cursor_data[1].state = {character=config.character, character_display_name=characters[config.character].display_name, level=config.level, panels_dir=config.panels_dir, cursor="__Ready", ready=false, ranked=config.ranked}
   end
   if global_op_state ~= nil then
     cursor_data[2].state = shallowcpy(global_op_state)
@@ -621,7 +628,7 @@ function main_character_select()
       global_op_state = nil
     end
   else
-    cursor_data[2].state = {character=config.character, level=config.level, panels_dir=config.panels_dir, cursor="__Ready", ready=false, ranked=false}
+    cursor_data[2].state = {character=config.character, character_display_name=characters[config.character].display_name, level=config.level, panels_dir=config.panels_dir, cursor="__Ready", ready=false, ranked=false}
   end
 
   local prev_state = shallowcpy(cursor_data[1].state)
@@ -815,6 +822,7 @@ function main_character_select()
         draw_cursor(button_height, spacing, 1, cursor_data[1].state.ready)
       end
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs")
+        and cursor_data[2].state and cursor_data[2].state.cursor == str
         and ( str ~= "__Empty" or ( cursor_data[2].position[1] == x and cursor_data[2].position[2] == y ) ) then
         draw_cursor(button_height, spacing, 2, cursor_data[2].state.ready)
       end
@@ -1130,6 +1138,7 @@ function main_character_select()
               cursor.state.ranked = not cursor.state.ranked
             elseif cursor.state.cursor ~= "__Empty" then
               cursor.state.character = cursor.state.cursor
+              cursor.state.character_display_name = characters[cursor.state.character].display_name
               characters[cursor.state.character]:play_selection_sfx()
               --When we select a character, move cursor to "__Ready"
               cursor.state.cursor = "__Ready"

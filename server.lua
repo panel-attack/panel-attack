@@ -436,7 +436,7 @@ Connection = class(function(s, socket)
 end)
 
 function Connection.menu_state(self)
-  state = {cursor=self.cursor, ready=self.ready, character=self.character, panels_dir=self.panels_dir, level=self.level, ranked=self.wants_ranked_match}
+  state = {cursor=self.cursor, ready=self.ready, character=self.character, character_display_name=self.character_display_name, panels_dir=self.panels_dir, level=self.level, ranked=self.wants_ranked_match}
   return state
   --note: player_number here is the player_number of the connection as according to the server, not the "which" of any Stack
 end
@@ -1178,6 +1178,7 @@ function Connection.J(self, message)
     else
       self.name = message.name
       self.character = message.character
+      self.character_display_name = message.character_display_name
       self.panels_dir = message.panels_dir
       self.level = message.level
       self.save_replays_publicly = message.save_replays_publicly
@@ -1221,6 +1222,7 @@ function Connection.J(self, message)
   elseif self.state == "character select" and message.menu_state then
     self.level = message.menu_state.level
     self.character = message.menu_state.character
+    self.character_display_name = message.menu_state.character_display_name
     self.ready = message.menu_state.ready
     self.cursor = message.menu_state.cursor
     self.panels_dir = message.menu_state.panels_dir
