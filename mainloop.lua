@@ -1085,7 +1085,7 @@ function main_character_select()
     variable_step(function()
       menu_clock = menu_clock + 1
       local up,down,left,right = {-1,0}, {1,0}, {0,-1}, {0,1}
-      local selectable = {panels_selection=true, level=true, ready=true}
+      local selectable = {__Panels=true, __Level=true, __Ready=true}
       if not currently_spectating then
         local KMax = 1
         if character_select_mode == "2p_local_vs" then
