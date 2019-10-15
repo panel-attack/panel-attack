@@ -60,7 +60,7 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
                       {1,2,idx=1},
                       {1,idx=1}}
     s.later_garbage = {}
-    s.garbage_q = GarbageQueue(s)
+    s.garbage_q = GarbageQueue()
     -- garbage_to_send[frame] is an array of garbage to send at frame.
     -- garbage_to_send.chain is an array of garbage to send when the chain ends.
     --s.garbage_to_send = {}
@@ -2140,6 +2140,8 @@ function Stack.recv_garbage(self, time, to_recv)
 
         self:fromcpy(prev_states[time])
         self.garbage_q:push(time,to_recv)
+	or
+	self:recv_garbage(time, to_recv)
 
         for t=time,CLOCK-1 do
           self.input_state = prev_states[t].input_state
@@ -2150,7 +2152,11 @@ function Stack.recv_garbage(self, time, to_recv)
         self.in_rollback = nil
       end
     end
+    local garbage = self.later_garbage[time] or {}
+  for i=1,#to_recv do
+    garbage[#garbage+1] = to_recv[i]
   end
+  self.later_garbage[time] = garbage
 end
 
 function Stack.check_matches(self)
