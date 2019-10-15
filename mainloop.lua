@@ -2589,7 +2589,8 @@ function exit_options_menu()
     characters_init()
   end
 
-  if config.assets_dir ~= memory_before_options_menu[1] or config.use_default_characters ~= memory_before_options_menu[5] then
+  if config.assets_dir ~= memory_before_options_menu[1] 
+    or config.use_default_characters ~= memory_before_options_menu[5] then
     gprint("reloading graphics...", unpack(main_menu_screen_pos))
     wait()
     graphics_init()
@@ -2603,7 +2604,8 @@ function exit_options_menu()
     panels_init()
   end
 
-  if config.sounds_dir ~= memory_before_options_menu[3] then
+  if config.sounds_dir ~= memory_before_options_menu[3] 
+    or config.use_default_characters ~= memory_before_options_menu[5] then
     gprint("reloading sounds...", unpack(main_menu_screen_pos))
     wait()
     sound_init()

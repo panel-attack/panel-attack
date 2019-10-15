@@ -35,7 +35,7 @@ function Character.other_data_init(self)
   local dirs_to_check = { "characters/",
                         "assets/"..config.assets_dir.."/",
                         "assets/"..default_assets_dir.."/"}
-  if config.use_default_characters then
+  if config.use_default_characters and character_id ~= default_character_id then
     dirs_to_check = { "assets/"..config.assets_dir.."/",
                       "assets/"..default_assets_dir.."/"}
   end
@@ -70,7 +70,7 @@ end
 function Character.graphics_init(self)
   self.images = {}
 
-  if config.use_default_characters then
+  if config.use_default_characters and character_id ~= default_character_id then
     for _,image_name in ipairs(character_images) do
       self.images[image_name] = load_img(self.id.."/"..image_name..".png")
     end
@@ -87,7 +87,7 @@ local function find_character_SFX(character_id, SFX_name)
   local dirs_to_check = { "characters/",
                           "sounds/"..config.sounds_dir.."/characters/",
                           "sounds/"..default_sounds_dir.."/characters/"}
-  if config.use_default_characters then
+  if config.use_default_characters and character_id ~= default_character_id then
     dirs_to_check = { "sounds/"..config.sounds_dir.."/characters/",
                       "sounds/"..default_sounds_dir.."/characters/"}
   end
@@ -137,7 +137,7 @@ local function find_music(character_id, music_type)
   local dirs_to_check = { "",
                         "sounds/"..config.sounds_dir.."/",
                         "sounds/"..default_sounds_dir.."/"}
-  if config.use_default_characters then
+  if config.use_default_characters and character_id ~= default_character_id then
     dirs_to_check = { "sounds/"..config.sounds_dir.."/",
                       "sounds/"..default_sounds_dir.."/"}
   end
@@ -314,7 +314,7 @@ function characters_init()
     characters[default_character_id] = Character(default_character_id)
   end
 
-  -- init default first, it is used as a fallback
+  -- init default first, it is used as a fallback, we initialize it with our newest strategy
   characters[default_character_id]:init()
 
   -- actual init for all characters (default is initialized twice but that's okay, it's cheap enough)
