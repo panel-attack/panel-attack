@@ -6,14 +6,13 @@ local ceil = math.ceil
 
 function load_img(path_and_name,config_dir,default_dir)
   default_dir = default_dir or "assets/"..default_assets_dir
+
   local img
   if pcall(function ()
     config_dir = config_dir or "assets/"..config.assets_dir
-    img = love.image.newImageData((config_dir or default_dir).."/"..path_and_name)
+    img = love.image.newImageData(config_dir.."/"..path_and_name)
   end) then
-    if config_dir and config_dir ~= default_dir and config_dir ~= "characters" then
-      print("loaded custom asset: "..config_dir.."/"..path_and_name)
-    end
+    print("loaded asset: "..config_dir.."/"..path_and_name)
   else
     if pcall(function ()
       img = love.image.newImageData(default_dir.."/"..path_and_name)
@@ -23,9 +22,11 @@ function load_img(path_and_name,config_dir,default_dir)
       img = nil
     end
   end
+
   if img == nil then
     return nil
   end
+
   local ret = love.graphics.newImage(img)
   ret:setFilter("nearest","nearest")
   return ret

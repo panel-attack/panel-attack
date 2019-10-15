@@ -2297,13 +2297,6 @@ function main_show_custom_sounds_readme(idx)
 end
 
 function main_show_custom_characters_readme(idx)
-  local default_characters_ids = {"lip", "windy", "sherbet", "thiana", "ruby",
-              "elias", "flare", "neris", "seren", "phoenix", 
-              "dragon", "thanatos", "cordelia",  "lakitu", 
-              "bumpty", "poochy", "wiggler", "froggy", "blargg",
-              "lungefish", "raphael", "yoshi", "hookbill",
-              "navalpiranha", "kamek", "bowser"}
-
   for _,current_character in ipairs(default_characters_ids) do
     if not love.filesystem.getInfo("characters/"..prefix_of_ignored_dirs..current_character) then
       print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")

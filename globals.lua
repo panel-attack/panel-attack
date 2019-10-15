@@ -167,6 +167,14 @@ characters_ids = {} -- initialized in character.lua
 characters_ids_for_current_theme = {} -- initialized in character.lua
 characters_ids_by_display_names = {} -- initialized in character.lua
 
+default_characters_ids = {"lip", "windy", "sherbet", "thiana", "ruby",
+              "elias", "flare", "neris", "seren", "phoenix", 
+              "dragon", "thanatos", "cordelia",  "lakitu", 
+              "bumpty", "poochy", "wiggler", "froggy", "blargg",
+              "lungefish", "raphael", "yoshi", "hookbill",
+              "navalpiranha", "kamek", "bowser"}
+default_character_id = "__default"
+
 shake_arr = {}
 
 local shake_idx = -6

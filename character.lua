@@ -35,7 +35,10 @@ function Character.other_data_init(self)
   local dirs_to_check = { "characters/",
                         "assets/"..config.assets_dir.."/",
                         "assets/"..default_assets_dir.."/"}
-
+  if config.use_default_characters then
+    dirs_to_check = { "assets/"..config.assets_dir.."/",
+                      "assets/"..default_assets_dir.."/"}
+  end
   self.display_name = self.id
   self.favorite_stage = default_stages[self.id]
 
@@ -65,13 +68,17 @@ function Character.other_data_init(self)
 end
 
 function Character.graphics_init(self)
-  local dir_to_check = "assets/"..config.assets_dir
-  if love.filesystem.getInfo("characters/"..self.id) then
-    dir_to_check = "characters"
-  end
   self.images = {}
-  for k,image_name in ipairs(character_images) do
-    self.images[image_name] = load_img(self.id.."/"..image_name..".png",dir_to_check)
+
+  if config.use_default_characters then
+    for _,image_name in ipairs(character_images) do
+      self.images[image_name] = load_img(self.id.."/"..image_name..".png")
+    end
+  else
+    local dir_to_check = "characters"
+    for _,image_name in ipairs(character_images) do
+      self.images[image_name] = load_img(image_name..".png","characters/"..self.id, "characters/__default")
+    end
   end
 
 end
@@ -80,6 +87,10 @@ local function find_character_SFX(character_id, SFX_name)
   local dirs_to_check = { "characters/",
                           "sounds/"..config.sounds_dir.."/characters/",
                           "sounds/"..default_sounds_dir.."/characters/"}
+  if config.use_default_characters then
+    dirs_to_check = { "sounds/"..config.sounds_dir.."/characters/",
+                      "sounds/"..default_sounds_dir.."/characters/"}
+  end
   for _,current_dir in ipairs(dirs_to_check) do
     --Note: if there is a chain or a combo, but not the other, return the same SFX for either inquiry.
     --This way, we can always depend on a character having a combo and a chain SFX.
@@ -117,43 +128,47 @@ local function find_character_SFX(character_id, SFX_name)
     --keep looking
     end
   end
-  --if not found in above directories:
-  return nil
+  --if not found in above directories: fallback
+  return characters[default_character_id].sounds[SFX_name]
 end
 
 --returns audio source based on character and music_type (normal_music, danger_music, normal_music_start, or danger_music_start)
-local function find_music(character, music_type)
+local function find_music(character_id, music_type)
   local dirs_to_check = { "",
                         "sounds/"..config.sounds_dir.."/",
                         "sounds/"..default_sounds_dir.."/"}
+  if config.use_default_characters then
+    dirs_to_check = { "sounds/"..config.sounds_dir.."/",
+                      "sounds/"..default_sounds_dir.."/"}
+  end
   for k,current_dir in ipairs(dirs_to_check) do
-    local path = current_dir.."characters/"..character
+    local path = current_dir.."characters/"..character_id
     local character_dir_overrides = any_supported_extension(path.."/normal_music")
     if character_dir_overrides then -- character has control over their musics, no fallback allowed!
       local found_source = get_from_supported_extensions(path.."/"..music_type, true)
       if found_source then
-        if config.debug_mode then print("In "..path.." directory, found "..music_type.." for "..character) end
+        if config.debug_mode then print("In "..path.." directory, found "..music_type.." for "..character_id) end
       else
-        if config.debug_mode then print("In "..path.." directory, did not find "..music_type.." for "..character) end
+        if config.debug_mode then print("In "..path.." directory, did not find "..music_type.." for "..character_id) end
       end
       return found_source
     elseif k > 1 then -- ignore this case for root directory
-      if characters[character].favorite_stage then
-        local path = current_dir.."music/"..characters[character].favorite_stage
+      if characters[character_id].favorite_stage then
+        local path = current_dir.."music/"..characters[character_id].favorite_stage
         stage_dir_overrides = any_supported_extension(path.."/normal_music")
         if stage_dir_overrides then
           local found_source = get_from_supported_extensions(path.."/"..music_type, true)
           if found_source then
-            if config.debug_mode then print("In "..path.."directory, found "..music_type.." for "..character) end
+            if config.debug_mode then print("In "..path.."directory, found "..music_type.." for "..character_id) end
           else
-            if config.debug_mode then print("In "..path.." directory, did not find "..music_type.." for "..character) end
+            if config.debug_mode then print("In "..path.." directory, did not find "..music_type.." for "..character_id) end
           end
           return found_source
         end
       end
     end
   end
-  return nil
+  return characters[default_character_id].musics[music_type]
 end
 
 local function init_variations_sfx(character_id, sfx_table, sfx_name, first_sound)
@@ -247,6 +262,13 @@ function Character.play_selection_sfx(self)
   end
 end
 
+function Character.init(self)
+  self:other_data_init()
+  self:graphics_init()
+  self:sound_init()
+  self:assert_requirements_met()
+end
+
 function characters_init()
   characters = {} -- holds all characters, most of them will not be fully loaded
   characters_ids = {} -- holds all characters ids
@@ -256,9 +278,10 @@ function characters_init()
   if config.use_default_characters then
     -- retrocompatibility with older versions and mods
     characters_ids = deepcpy(default_characters_ids)
+    characters_ids[#characters_ids+1] = default_character_id;
     characters_ids_for_current_theme = deepcpy(default_characters_ids)
-    for i=1,#characters_ids do
-      characters[characters_ids[i]] = Character(characters_ids[i])
+    for _,character_id in ipairs(characters_ids) do
+      characters[character_id] = Character(character_id)
     end
   else
     -- new system with characters belonging to their own folder and characters.txt detailing current characters
@@ -287,19 +310,26 @@ function characters_init()
       -- all characters case
       characters_ids_for_current_theme = deepcpy(characters_ids)
     end
+    characters_ids[#characters_ids+1] = default_character_id;
+    characters[default_character_id] = Character(default_character_id)
   end
 
-  -- actual init for all characters
+  -- init default first, it is used as a fallback
+  characters[default_character_id]:init()
+
+  -- actual init for all characters (default is initialized twice but that's okay, it's cheap enough)
   for _,character in pairs(characters) do
-    character:other_data_init()
-    character:graphics_init()
-    character:sound_init()
-    character:assert_requirements_met()
+    character:init()
 
     if characters_ids_by_display_names[character.display_name] then
       characters_ids_by_display_names[character.display_name][#characters_ids_by_display_names[character.display_name]+1] = character.id
     else
       characters_ids_by_display_names[character.display_name] = { character.id }
     end
+  end
+
+  -- fix config character if it's missing
+  if not config.character or not characters[config.character] then
+    config.character = uniformly(characters_ids_for_current_theme)
   end
 end

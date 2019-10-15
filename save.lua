@@ -76,9 +76,6 @@ function read_conf_file() pcall(function()
   if config.use_default_characters == nil then
     config.use_default_characters = true
   end
-  if love.filesystem.getInfo("characters/"..config.character) == nil and not config.use_default_characters then
-    config.characters = "lip"
-  end
   file:close()
 end) end
 
