@@ -60,7 +60,7 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
                       {1,2,idx=1},
                       {1,idx=1}}
     s.later_garbage = {}
-    s.garbage_q = GarbageQueue(s)
+    s.garbage_q = GarbageQueue()
     -- garbage_to_send[frame] is an array of garbage to send at frame.
     -- garbage_to_send.chain is an array of garbage to send when the chain ends.
     --s.garbage_to_send = {}
@@ -580,12 +580,12 @@ function Telegraph.add_combo_garbage(self, n_combo, n_metal, frame_earned)
   local stuff_to_send = {}
   for i=3,n_metal do
     stuff_to_send[#stuff_to_send+1] = {6, 1, true, false, frame_earned = frame_earned}
-    self.stoppers.metal = frame_earned+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
+    self.stoppers.metal = frame_earned+GARBAGE_TRANSIT_TIME+10
   end
   local combo_pieces = combo_garbage[n_combo]
   for i=1,#combo_pieces do
     stuff_to_send[#stuff_to_send+1] = {combo_pieces[i], 1, false, false, frame_earned = frame_earned}
-    self.stoppers.combo[combo_pieces[i]] = frame_earned+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
+    self.stoppers.combo[combo_pieces[i]] = frame_earned+GARBAGE_TRANSIT_TIME+10
   end
   self.garbage_queue:push(stuff_to_send)
   return stuff_to_send
@@ -598,7 +598,7 @@ end
 
 function Telegraph.grow_chain(self, frame_earned)
   self.garbage_queue:grow_chain(frame_earned)
-  self.stoppers.chain[self.garbage_queue.chain_garbage.last] = frame_earned + GARBAGE_TRANSIT_TIME + GARBAGE_DELAY
+  self.stoppers.chain[self.garbage_queue.chain_garbage.last] = frame_earned + GARBAGE_TRANSIT_TIME + 10
   print(frame_earned)
   print("in Telegraph.grow_chain")
   print("table_to_string(self.stoppers.chain):")
@@ -1953,7 +1953,7 @@ end
 
 function Stack.really_send(self, to_send)
   if self.garbage_target then
-    self.garbage_target:recv_garbage(self.CLOCK, to_send)
+    self.garbage_target:recv_garbage(self.CLOCK + GARBAGE_DELAY, to_send)
   end
 end
 
@@ -2023,56 +2023,8 @@ function Stack.speculate_garbage(self)
 end
 
 function Stack.recv_garbage(self, time, to_recv)
-  
-  --if we can verify we used all the right garbage at the right times
-  --then we don't have to roll back
-  local incoming_json = json.encode(to_recv)
-  local unverified_json = json.encode({{}})
-  if self.unverified_garbage and self.unverified_garbage[time] then
-    unverified_json = json.encode(self.unverified_garbage[time])
-  end
-  local incoming_matches_unverified = incoming_json == unverified_json
-  if incoming_matches_unverified then
-    --if self.which == 1 then
-    print("unverified garbage and received garbage matched")
-    --end
-    --clear unverified_garbage[time] and to_recv and do nothing. This incoming garbage has already been handled
-    self.unverified_garbage[time] = nil
-    to_recv = nil
-  end
-  
-  for k, v in pairs(self.unverified_garbage) do
-    incoming_matches_unverified = nil
-    print("ERROR: the following predicted garbage never came:\n"..json.encode(unverified_garbage))
-    print("Need to roll back")
-  end
-  
-  if --[[still]] incoming_matches_unverified then
-    --if self.which == 1 then
-    print("no other unverified_garbage")
-    --end
-    --great, it all matches. clear unverified_garbage[time] and to_recv and do nothing. This incoming garbage has already been handled
-
-    print("we don't have to roll back because we predicted correctly")
-  else 
-    --if self.which == 1 then
-      print("incoming_json: "..incoming_json)
-      print("unverified_json: "..unverified_json)
-      print("all unverified:  "..json.encode(self.unverified_garbage))
-    --end
-    if self.CLOCK <= time then -- <= or < ? TODO
-      if incoming_matches_unverified then
-        print("we are behind and guessed correctly")
-      else
-        print("adding later_garbage for frame: "..time)
-        local garbage = self.later_garbage[time] or {}
-        for i=1,#to_recv do
-          garbage[#garbage+1] = to_recv[i]
-        end
-        self.later_garbage[time] = garbage
-      end
-    else -- self.CLOCK > time and we predicted wrong
-      --do a rollback
+    
+    if self.CLOCK > time then
       local prev_states = self.prev_states
       local next_self = prev_states[time+1]
       while next_self and (next_self.prev_active_panels ~= 0 or
@@ -2139,6 +2091,7 @@ function Stack.recv_garbage(self, time, to_recv)
 
         self:fromcpy(prev_states[time])
         self.garbage_q:push(to_recv)
+		self:recv_garbage(time, to_recv)
 
         for t=time,CLOCK-1 do
           self.input_state = prev_states[t].input_state
@@ -2148,8 +2101,12 @@ function Stack.recv_garbage(self, time, to_recv)
         end
         self.in_rollback = nil
       end
-    end
-  end
+    end 
+	local garbage = self.later_garbage[time] or {}
+	for i=1,#to_recv do
+		garbage[#garbage+1] = to_recv[i]
+	end
+	self.later_garbage[time] = garbage  
 end
 
 function Stack.check_matches(self)
