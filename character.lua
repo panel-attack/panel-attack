@@ -32,10 +32,8 @@ Character = class(function(s, id)
   end)
 
 function Character.other_data_init(self)
-  local dirs_to_check = { "characters/",
-                        "assets/"..config.assets_dir.."/",
-                        "assets/"..default_assets_dir.."/"}
-  if config.use_default_characters and character_id ~= default_character_id then
+  local dirs_to_check = { "characters/" }
+  if config.use_default_characters and self.id ~= default_character_id then
     dirs_to_check = { "assets/"..config.assets_dir.."/",
                       "assets/"..default_assets_dir.."/"}
   end
@@ -70,12 +68,11 @@ end
 function Character.graphics_init(self)
   self.images = {}
 
-  if config.use_default_characters and character_id ~= default_character_id then
+  if config.use_default_characters and self.id ~= default_character_id then
     for _,image_name in ipairs(character_images) do
       self.images[image_name] = load_img(self.id.."/"..image_name..".png")
     end
   else
-    local dir_to_check = "characters"
     for _,image_name in ipairs(character_images) do
       self.images[image_name] = load_img(image_name..".png","characters/"..self.id, "characters/__default")
     end
@@ -83,10 +80,9 @@ function Character.graphics_init(self)
 
 end
 
-local function find_character_SFX(character_id, SFX_name)
-  local dirs_to_check = { "characters/",
-                          "sounds/"..config.sounds_dir.."/characters/",
-                          "sounds/"..default_sounds_dir.."/characters/"}
+local function find_character_SFX(character_id, SFX_name,fallback)
+  fallback = fallback or nil
+  local dirs_to_check = { "characters/" }
   if config.use_default_characters and character_id ~= default_character_id then
     dirs_to_check = { "sounds/"..config.sounds_dir.."/characters/",
                       "sounds/"..default_sounds_dir.."/characters/"}
@@ -129,14 +125,12 @@ local function find_character_SFX(character_id, SFX_name)
     end
   end
   --if not found in above directories: fallback
-  return characters[default_character_id].sounds[SFX_name]
+  return fallback
 end
 
 --returns audio source based on character and music_type (normal_music, danger_music, normal_music_start, or danger_music_start)
 local function find_music(character_id, music_type)
-  local dirs_to_check = { "",
-                        "sounds/"..config.sounds_dir.."/",
-                        "sounds/"..default_sounds_dir.."/"}
+  local dirs_to_check = { "" }
   if config.use_default_characters and character_id ~= default_character_id then
     dirs_to_check = { "sounds/"..config.sounds_dir.."/",
                       "sounds/"..default_sounds_dir.."/"}
@@ -197,8 +191,9 @@ function Character.sound_init(self)
   -- SFX
   self.sounds = { combos = {}, combo_count = 0, combo_echos = {}, combo_echo_count = 0, selections = {}, selection_count = 0, wins = {}, win_count = 0, others = {} }
   for _, sound in ipairs(allowed_char_SFX) do
-    self.sounds.others[sound] = find_character_SFX(self.id, sound)
+    self.sounds.others[sound] = find_character_SFX(self.id, sound, characters[default_character_id].sounds.others[sound])
     if not self.sounds.others[sound] then
+      print("could not find "..sound.." for "..self.id)
       if string.find(sound, "chain") then
         self.sounds.others[sound] = find_character_SFX(self.id, "chain")
       elseif string.find(sound, "combo") then 
@@ -263,6 +258,7 @@ function Character.play_selection_sfx(self)
 end
 
 function Character.init(self)
+  print("initializing "..self.id)
   self:other_data_init()
   self:graphics_init()
   self:sound_init()
@@ -296,6 +292,7 @@ function characters_init()
 
     if love.filesystem.getInfo("assets/"..config.assets_dir.."/characters.txt") then
       for line in love.filesystem.lines("assets/"..config.assets_dir.."/characters.txt") do
+        line = trim(line) -- remove whitespace
         if love.filesystem.getInfo("characters/"..line) then
           -- found at least a valid character in a characters.txt file
           if characters[line] then
