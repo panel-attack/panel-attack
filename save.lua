@@ -50,10 +50,20 @@ function write_conf_file() pcall(function()
 end) end
 
 function has_any_custom_character() 
+  local function belong_to_characters_ids(character_id)
+    for _,v in pairs(default_characters_ids) do
+      if v == character_id then
+        return true
+      end
+    end
+    return false
+  end
+  
   local raw_dir_list = love.filesystem.getDirectoryItems("characters")
   for _,v in ipairs(raw_dir_list) do
     local start_of_v = string.sub(v,0,string.len(prefix_of_ignored_dirs))
-    if start_of_v ~= prefix_of_ignored_dirs and not default_characters_ids[v] then
+    if start_of_v ~= prefix_of_ignored_dirs and not belong_to_characters_ids(v) then
+      print("detected a custom character! "..v)
       return true
     end
   end
@@ -86,12 +96,13 @@ function read_conf_file() pcall(function()
   end
   if love.filesystem.getInfo("assets/"..config.assets_dir.."/lip") 
     and not has_any_custom_character() then
+    print("retrocompatibility applied!")
     config.use_default_characters = true
   end
 
   -- do stuff regarding version compatibility here, before we patch it
-  config.version = VERSION
 
+  config.version = VERSION
   file:close()
 end) end
 
