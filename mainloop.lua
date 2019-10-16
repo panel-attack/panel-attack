@@ -65,7 +65,7 @@ function fmainloop()
              use_panels_from_assets_folder = true,
 
              -- Retrocompatibility
-             use_default_characters        = true,
+             use_default_characters        = false,
            }
   gprint("Reading config file", unpack(main_menu_screen_pos))
   wait()
