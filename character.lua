@@ -303,10 +303,28 @@ function characters_init()
       end
     end
 
-    if #characters_ids_for_current_theme == 0 then
-      -- all characters case
-      characters_ids_for_current_theme = deepcpy(characters_ids)
+    local function has_exactly_all_default_ids()
+      if #characters_ids ~= #default_characters_ids then
+        return false
+      end
+      for _,id in ipairs(default_characters_ids) do
+        if not characters[id] then
+          return false
+        end
+      end
+      return true
     end
+  
+    -- all characters case
+    if #characters_ids_for_current_theme == 0 then
+      -- kinda retrocompatibility stuff: order the characters as the legacy order if they are exactly the default ones
+      if has_exactly_all_default_ids() then
+        characters_ids_for_current_theme = shallowcpy(default_characters_ids)
+      else
+        characters_ids_for_current_theme = shallowcpy(characters_ids)
+      end
+    end
+
     characters_ids[#characters_ids+1] = default_character_id;
     characters[default_character_id] = Character(default_character_id)
   end
