@@ -11,7 +11,6 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_local_vs_yourself_setup, main_local_vs_yourself,
   main_options, exit_options_menu, main_music_test
 
-VERSION = "037"
 local PLAYING = "playing"  -- room states
 local CHARACTERSELECT = "character select" --room states
 local currently_spectating = false
@@ -32,6 +31,8 @@ function fmainloop()
   replay = {}
   -- Default configuration values
   config = {
+             -- The lastly used version
+             version                       = VERSION
              -- Player character
              character                     = "lip",
              -- Level (2P modes / 1P vs yourself mode)

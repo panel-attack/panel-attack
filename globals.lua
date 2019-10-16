@@ -1,5 +1,7 @@
 require("queue")
 
+VERSION = "037"
+
 -- keyboard assignment vars
 K = {{up="up", down="down", left="left", right="right",
       swap1="z", swap2="x", raise1="c", raise2="v"},
