@@ -32,7 +32,7 @@ function fmainloop()
   -- Default configuration values
   config = {
              -- The lastly used version
-             version                       = VERSION
+             version                       = VERSION,
              -- Player character
              character                     = "lip",
              -- Level (2P modes / 1P vs yourself mode)
