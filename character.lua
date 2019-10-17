@@ -35,7 +35,8 @@ function Character.other_data_init(self)
   local dirs_to_check = { "characters/" }
   if config.use_default_characters and self.id ~= default_character_id then
     dirs_to_check = { "assets/"..config.assets_dir.."/",
-                      "assets/"..default_assets_dir.."/"}
+                      "assets/"..default_assets_dir.."/",
+                      "characters/"}
   end
   self.display_name = self.id
   self.favorite_stage = default_stages[self.id]
@@ -71,6 +72,9 @@ function Character.graphics_init(self)
   if config.use_default_characters and self.id ~= default_character_id then
     for _,image_name in ipairs(character_images) do
       self.images[image_name] = load_img(self.id.."/"..image_name..".png")
+      if not self.images[image_name] then
+        self.images[image_name] = load_img(image_name..".png","characters/"..self.id, "characters/__default")
+      end
     end
   else
     for _,image_name in ipairs(character_images) do
@@ -85,7 +89,8 @@ local function find_character_SFX(character_id, SFX_name,fallback)
   local dirs_to_check = { "characters/" }
   if config.use_default_characters and character_id ~= default_character_id then
     dirs_to_check = { "sounds/"..config.sounds_dir.."/characters/",
-                      "sounds/"..default_sounds_dir.."/characters/"}
+                      "sounds/"..default_sounds_dir.."/characters/",
+                      ""}
   end
   for _,current_dir in ipairs(dirs_to_check) do
     --Note: if there is a chain or a combo, but not the other, return the same SFX for either inquiry.
@@ -130,38 +135,29 @@ end
 
 --returns audio source based on character and music_type (normal_music, danger_music, normal_music_start, or danger_music_start)
 local function find_music(character_id, music_type)
-  local dirs_to_check = { "" }
+  local dirs_to_check = { "",
+                          "sounds/"..default_sounds_dir.."/" }
   if config.use_default_characters and character_id ~= default_character_id then
     dirs_to_check = { "sounds/"..config.sounds_dir.."/",
-                      "sounds/"..default_sounds_dir.."/"}
+                      "sounds/"..default_sounds_dir.."/",
+                      ""}
   end
-  for k,current_dir in ipairs(dirs_to_check) do
+  for _,current_dir in ipairs(dirs_to_check) do
     local path = current_dir.."characters/"..character_id
-    local character_dir_overrides = any_supported_extension(path.."/normal_music")
-    if character_dir_overrides then -- character has control over their musics, no fallback allowed!
+    if any_supported_extension(path.."/normal_music") then -- character has control over their musics, no fallback allowed!
       local found_source = get_from_supported_extensions(path.."/"..music_type, true)
-      if found_source then
-        if config.debug_mode then print("In "..path.." directory, found "..music_type.." for "..character_id) end
-      else
-        if config.debug_mode then print("In "..path.." directory, did not find "..music_type.." for "..character_id) end
-      end
+      if config.debug_mode then print("In "..path.." directory, "..(found_source and "" or "did not").." found "..music_type.." for "..character_id) end
       return found_source
-    elseif k > 1 then -- ignore this case for root directory
-      if characters[character_id].favorite_stage then
-        local path = current_dir.."music/"..characters[character_id].favorite_stage
-        stage_dir_overrides = any_supported_extension(path.."/normal_music")
-        if stage_dir_overrides then
-          local found_source = get_from_supported_extensions(path.."/"..music_type, true)
-          if found_source then
-            if config.debug_mode then print("In "..path.."directory, found "..music_type.." for "..character_id) end
-          else
-            if config.debug_mode then print("In "..path.." directory, did not find "..music_type.." for "..character_id) end
-          end
-          return found_source
-        end
+    elseif characters[character_id].favorite_stage then
+      local path = (current_dir~="" and current_dir or "sounds/"..config.sounds_dir.."/").."music/"..characters[character_id].favorite_stage
+      if any_supported_extension(path.."/normal_music") then
+        local found_source = get_from_supported_extensions(path.."/"..music_type, true)
+        if config.debug_mode then print("In "..path.." directory, "..(found_source and "" or "did not").." found "..music_type.." for "..character_id) end
+        return found_source
       end
     end
   end
+  
   return characters[default_character_id].musics[music_type]
 end
 
