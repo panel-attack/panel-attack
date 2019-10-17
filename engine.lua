@@ -122,7 +122,7 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
 
     s.NCOLORS = s.NCOLORS or 5
     s.score = 0         -- der skore
-    s.chain_counter = 0   -- how high is the current chain?
+    s.chain_counter = 0   -- how high is the current chain
 
     s.panels_in_top_row = false -- boolean, for losing the game
     s.danger = s.danger or false  -- boolean, panels in the top row (danger)
@@ -174,6 +174,8 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     s.shake_time = 0
 
     s.prev_states = {}
+
+    s.enable_analytics = false
   end)
 
 function Stack.mkcpy(self, other)
@@ -1194,6 +1196,9 @@ function Stack.PdP(self)
   if self.chain_counter ~= 0 and self.n_chain_panels == 0 then
     self:set_chain_garbage(self.chain_counter)
     SFX_Fanfare_Play = self.chain_counter
+    if self.enable_analytics then
+      analytics_register_chain(self.chain_counter)
+    end
     self.chain_counter=0
   end
 
@@ -1859,6 +1864,9 @@ function Stack.check_matches(self)
   end
 
   if(combo_size~=0) then
+    if self.enable_analytics then
+      analytics_register_destroyed_panels(combo_size)
+    end
     if(combo_size>3) then
       if(score_mode == SCOREMODE_TA) then
         if(combo_size > 30) then

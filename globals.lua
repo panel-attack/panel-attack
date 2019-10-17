@@ -240,4 +240,3 @@ default_panels_dir = "Stock PdP_TA"
 default_sounds_dir = "Stock PdP_TA"
 
 join_community_msg = "  Join the community at\ndiscord.panelattack.com"
-

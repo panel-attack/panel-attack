@@ -53,6 +53,8 @@ function fmainloop()
              ready_countdown_1P            = true,
              -- Change danger music back later flag
              danger_music_changeback_delay = false,
+             -- analytics
+             enable_analytics              = false,
              -- Save replays setting
              save_replays_publicly         = "with my name",
              -- Default directories for graphics/panels/sounds
@@ -81,7 +83,7 @@ function fmainloop()
   gprint("Reading replay file", unpack(main_menu_screen_pos))
   wait()
   read_replay_file()
-  gprint("Loading characters...", unpack(main_menu_screen_pos))
+  gprint("Loading characters... (this takes a few seconds)", unpack(main_menu_screen_pos))
   wait()
   characters_init() -- load images and set up stuff
   gprint("Loading graphics...", unpack(main_menu_screen_pos))
@@ -90,9 +92,12 @@ function fmainloop()
   gprint("Loading panels...", unpack(main_menu_screen_pos))
   wait()
   panels_init() -- load panels
-  gprint("Loading sounds... (this takes a few seconds)", unpack(main_menu_screen_pos))
+  gprint("Loading sounds...", unpack(main_menu_screen_pos))
   wait()
   sound_init()
+  gprint("Loading analytics...", unpack(main_menu_screen_pos))
+  wait()
+  analytics_init()
   while true do
     leftover_time = 1/120
     consuming_timesteps = false
@@ -342,6 +347,7 @@ function main_endless(...)
   replay.mode = "endless"
   P1 = Stack(1, "endless", config.panels_dir, ...)
   P1.do_countdown = config.ready_countdown_1P or false
+  P1.enable_analytics = true
   replay.do_countdown = P1.do_countdown or false
   replay.speed = P1.speed
   replay.difficulty = P1.difficulty
@@ -355,7 +361,8 @@ function main_endless(...)
     -- TODO: proper game over.
       write_replay_file()
       local end_text = "You scored "..P1.score.."\nin "..frames_to_time_string(P1.game_stopwatch, true)
-        return main_dumb_transition, {main_select_mode, end_text, 60}
+      analytics_game_ends()
+      return main_dumb_transition, {main_select_mode, end_text, 60}
     end
     variable_step(function() P1:local_run() end)
     --groundhogday mode
@@ -371,6 +378,7 @@ function main_time_attack(...)
   bg = IMG_stages[math.random(#IMG_stages)]
   consuming_timesteps = true
   P1 = Stack(1, "time", config.panels_dir, ...)
+  P1.enable_analytics = true
   make_local_panels(P1, "000000")
   P1:starting_state()
   while true do
@@ -379,7 +387,8 @@ function main_time_attack(...)
     if P1.game_over or (P1.game_stopwatch and P1.game_stopwatch == 120*60) then
     -- TODO: proper game over.
       local end_text = "You scored "..P1.score.."\nin "..frames_to_time_string(P1.game_stopwatch)
-        return main_dumb_transition, {main_select_mode, end_text, 30}
+      analytics_game_ends()
+      return main_dumb_transition, {main_select_mode, end_text, 30}
     end
     variable_step(function()
       if (not P1.game_over)  and P1.game_stopwatch and P1.game_stopwatch < 120 * 60 then
@@ -877,6 +886,7 @@ function main_character_select()
           print("currently_spectating: "..tostring(currently_spectating))
           local fake_P2 = P2
           P1 = Stack(1, "vs", msg.player_settings.panels_dir, msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
+          P1.enable_analytics = true
           P2 = Stack(2, "vs", msg.opponent_settings.panels_dir, msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
           if currently_spectating then
             P1.panel_buffer = fake_P1.panel_buffer
@@ -1191,6 +1201,7 @@ function main_character_select()
     end
     if cursor_data[1].state.ready and character_select_mode == "1p_vs_yourself" then
       P1 = Stack(1, "vs", cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+      P1.enable_analytics = true
       P1.garbage_target = P1
       make_local_panels(P1, "000000")
       make_local_gpanels(P1, "000000")
@@ -1198,6 +1209,7 @@ function main_character_select()
       return main_dumb_transition, {main_local_vs_yourself, "Game is starting...", 30, 30}
     elseif cursor_data[1].state.ready and character_select_mode == "2p_local_vs" and cursor_data[2].state.ready then
       P1 = Stack(1, "vs", cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+      P1.enable_analytics = true
       P2 = Stack(2, "vs", cursor_data[2].state.panels_dir, cursor_data[2].state.level, cursor_data[2].state.character)
       P1.garbage_target = P2
       P2.garbage_target = P1
@@ -1550,6 +1562,8 @@ function main_net_vs_setup(ip)
   if currently_spectating then
     P1.panel_buffer = fake_P1.panel_buffer
     P1.gpanel_buffer = fake_P1.gpanel_buffer
+  else
+    P1.enable_analytics = true
   end
   P2.panel_buffer = fake_P2.panel_buffer
   P2.gpanel_buffer = fake_P2.gpanel_buffer
@@ -1693,6 +1707,7 @@ function main_net_vs()
       outcome_claim = P1.player_number
     end
     if end_text then
+      analytics_game_ends()
       undo_stonermode()
       json_send({game_over=true, outcome=outcome_claim})
       local now = os.date("*t",to_UTC(os.time()))
@@ -1738,63 +1753,6 @@ function main_local_vs_setup()
   return main_character_select
 end
 
-main_local_vs_setup_old = multi_func(function()
-  local K = K
-  local chosen, maybe = {}, {5,5}
-  local P1_level, P2_level = nil, nil
-  while chosen[1] == nil or chosen[2] == nil do
-    to_print = (chosen[1] and "" or "Choose ") .. "P1 level: "..maybe[1].."\n"
-        ..(chosen[2] and "" or "Choose ") .. "P2 level: "..(maybe[2])
-    gprint(to_print, unpack(main_menu_screen_pos))
-    wait()
-    variable_step(function()
-      for i=1,2 do
-        local k=K[i]
-        if menu_escape(k) then
-          if chosen[i] then
-            chosen[i] = nil
-          else
-            return main_select_mode
-          end
-        elseif menu_enter(k) then
-          chosen[i] = maybe[i]
-        elseif menu_up(k) or menu_right(k) then
-          if not chosen[i] then
-            maybe[i] = bound(1,maybe[i]+1,10)
-          end
-        elseif menu_down(k) or menu_left(k) then
-          if not chosen[i] then
-            maybe[i] = bound(1,maybe[i]-1,10)
-          end
-        end
-      end
-    end)
-  end
-  to_print = "P1 level: "..maybe[1].."\nP2 level: "..(maybe[2])
-  P1 = Stack(1, "vs", config.panels_dir, chosen[1])
-  P2 = Stack(2, "vs", config.panels_dir, chosen[2])
-  P1.garbage_target = P2
-  P2.garbage_target = P1
-  move_stack(P2,2)
-  -- TODO: this does not correctly implement starting configurations.
-  -- Starting configurations should be identical for visible blocks, and
-  -- they should not be completely flat.
-  --
-  -- In general the block-generation logic should be the same as the server's, so
-  -- maybe there should be only one implementation.
-  make_local_panels(P1, "000000")
-  make_local_gpanels(P1, "000000")
-  make_local_panels(P2, "000000")
-  make_local_gpanels(P2, "000000")
-  for i=1,30 do
-    gprint(to_print,unpack(main_menu_screen_pos))
-    wait()
-  end
-  P1:starting_state()
-  P2:starting_state()
-  return main_local_vs
-end)
-
 function main_local_vs()
   -- TODO: replay!
   bg = IMG_stages[math.random(#IMG_stages)]
@@ -1823,6 +1781,7 @@ function main_local_vs()
       end_text = "P1 wins ^^"
     end
     if end_text then
+      analytics_game_ends()
       return main_dumb_transition, {main_character_select, end_text, 45, nil, winSFX}
     end
   end
@@ -1853,6 +1812,7 @@ function main_local_vs_yourself()
         end
       end)
     if end_text then
+      analytics_game_ends()
       return main_dumb_transition, {main_character_select, end_text, 45}
     end
   end
@@ -2334,7 +2294,8 @@ function main_options(starting_idx)
                                   config.panels_dir_when_not_using_set_from_assets_folder or default_panels_dir,
                                   config.sounds_dir or default_sounds_dir,
                                   config.use_panels_from_assets_folder,
-                                  config.use_default_characters }
+                                  config.use_default_characters,
+                                  config.enable_analytics }
   --make so we can get "anonymously" from save_replays_publicly_choices["anonymously"]
   for k,v in ipairs(save_replays_publicly_choices) do
     save_replays_publicly_choices[v] = v
@@ -2384,6 +2345,7 @@ function main_options(starting_idx)
     {"Use default characters", on_off_text[config.use_default_characters], "bool", true, nil, nil,false},
     {"Danger music change-back delay", on_off_text[config.danger_music_changeback_delay or false], "bool", false, nil, nil, false},
     {"About custom characters", "", "function", nil, nil, nil, nil, main_show_custom_characters_readme},
+    {"Enable analytics", on_off_text[config.enable_analytics or false], "bool", false, nil, nil, false},
     {"Back", "", nil, nil, nil, nil, false, main_select_mode}
   }
   local function print_stuff()
@@ -2505,6 +2467,9 @@ function main_options(starting_idx)
           elseif items[active_idx][1] == "Danger music change-back delay" then
             config.danger_music_changeback_delay = not config.danger_music_changeback_delay
             items[active_idx][2] = on_off_text[config.danger_music_changeback_delay]
+          elseif items[active_idx][1] == "Enable analytics" then
+            config.enable_analytics = not config.enable_analytics
+            items[active_idx][2] = on_off_text[config.enable_analytics]
           end
           --add any other bool config updates here
         elseif items[active_idx][3] == "numeric" then
@@ -2613,6 +2578,14 @@ function exit_options_menu()
   else
     apply_config_volume()
   end
+
+  if config.enable_analytics ~= memory_before_options_menu[6] then
+    print("loading analytics...")
+    gprint("loading analytics...", unpack(main_menu_screen_pos))
+    wait()
+    analytics_init()
+  end
+
   memory_before_options_menu = nil
   return main_select_mode
 end

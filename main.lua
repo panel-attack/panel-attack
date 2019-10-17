@@ -5,6 +5,7 @@ require("class")
 require("queue")
 require("globals")
 require("character") -- after globals!
+require("analytics")
 require("save")
 require("engine")
 require("graphics")
