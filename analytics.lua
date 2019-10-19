@@ -76,6 +76,37 @@ local function output_pretty_analytics()
   file:close()
 end
 
+function analytics_draw_next_to_stack(x,y)  
+  if not config.enable_analytics then
+    return
+  end
+
+  gprint("Panels destroyed: "..analytics.last_game.destroyed_panels, x, y)
+  y = y+15
+
+  local ycombo = y
+  for i=2,13 do
+    local chain_amount = analytics.last_game.reached_chains[i] or 0
+    gprint("c"..i..": "..chain_amount, x, y)
+    y = y+15
+  end
+  --computing chain ? count
+  local chain_above_13 = 0
+  for i=13,#analytics.last_game.reached_chains do
+    if analytics.last_game.reached_chains[i] then
+      chain_above_13 = chain_above_13 + analytics.last_game.reached_chains[i]
+    end
+  end
+  gprint("c?: "..chain_above_13, x, y)
+
+  local xcombo = x + 50
+  for i=4,15 do
+    local combo_amount = analytics.last_game.used_combos[i] or 0
+    gprint("x"..i..": "..combo_amount, xcombo, ycombo)
+    ycombo = ycombo+15
+  end
+end
+
 function write_analytics_files()
   if not config.enable_analytics then
     return

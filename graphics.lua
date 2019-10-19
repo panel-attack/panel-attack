@@ -550,6 +550,8 @@ function Stack.render(self)
       gprint(join_community_msg or "", main_infos_screen_pos.x-45, main_infos_screen_pos.y+550)
     end
   end
+  analytics_draw_next_to_stack(self.score_x,self.score_y+150)
+
   -- ends here
 end
 
