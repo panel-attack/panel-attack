@@ -25,7 +25,7 @@ analytics = {
                }
            }
 
-function analytics_init()
+function analytics_init() pcall(function()
   if not config.enable_analytics then
     return
   end
@@ -42,9 +42,9 @@ function analytics_init()
 
   analytics.version = analytics_version
   file:close()
-end
+end) end
 
-local function output_pretty_analytics()
+local function output_pretty_analytics() pcall(function()
   if not config.enable_analytics then
     return
   end
@@ -74,7 +74,7 @@ local function output_pretty_analytics()
   file:open("w")
   file:write(text)
   file:close()
-end
+end) end
 
 function analytics_draw_next_to_stack(x,y)  
   if not config.enable_analytics then
@@ -107,7 +107,7 @@ function analytics_draw_next_to_stack(x,y)
   end
 end
 
-function write_analytics_files()
+function write_analytics_files() pcall(function()
   if not config.enable_analytics then
     return
   end
@@ -118,7 +118,7 @@ function write_analytics_files()
   file:close()
 
   output_pretty_analytics()
-end
+end) end
 
 function analytics_register_destroyed_panels(amount)
   if not config.enable_analytics then
