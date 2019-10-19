@@ -123,8 +123,8 @@ function start_match(a, b)
     end
   end
   local msg = {match_start = true, ranked = false,
-                player_settings = {character = a.character, level = a.level, panels_dir = a.panels_dir, player_number = a.player_number},
-                opponent_settings = {character = b.character, level = b.level, panels_dir = b.panels_dir, player_number = b.player_number}}
+                player_settings = {character = a.character, character_display_name=a.character_display_name, level = a.level, panels_dir = a.panels_dir, player_number = a.player_number},
+                opponent_settings = {character = b.character, character_display_name=b.character_display_name, level = b.level, panels_dir = b.panels_dir, player_number = b.player_number}}
   local room_is_ranked, reasons = a.room:rating_adjustment_approved()
   if room_is_ranked then
     a.room.replay.vs.ranked=true
@@ -252,8 +252,8 @@ function Room.add_spectator(self, new_spectator_connection)
   self.spectators[#self.spectators+1] = new_spectator_connection
   print(new_spectator_connection.name .. " joined " .. self.name .. " as a spectator")
   msg = {spectate_request_granted = true, spectate_request_rejected = false, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state(), win_counts=self.win_counts, match_start=replay_of_match_so_far~=nil, replay_of_match_so_far = self.replay, ranked = self:rating_adjustment_approved(),
-                player_settings = {character = self.a.character, level = self.a.level, player_number = self.a.player_number},
-                opponent_settings = {character = self.b.character, level = self.b.level, player_number = self.b.player_number}}
+                player_settings = {character = self.a.character, character_display_name=self.a.character_display_name, level = self.a.level, player_number = self.a.player_number},
+                opponent_settings = {character = self.b.character, character_display_name=self.b.character_display_name, level = self.b.level, player_number = self.b.player_number}}
   new_spectator_connection:send(msg)
   msg = {spectators=self:spectator_names()}
   print("sending spectator list: "..json.encode(msg))

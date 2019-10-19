@@ -214,7 +214,7 @@ do
         --{"2P vs online (USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)", main_net_vs_setup, {"18.188.43.50"}},
         --{"This test build is for offline-use only"--[["2P vs online at Jon's server"]], main_select_mode},
         --{"2P vs online at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
-        --{"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
+        {"2P vs online at localhost (development-use only)", main_net_vs_setup, {"192.168.1.11"}},
         --{"2P vs online at LittleEndu's server", main_net_vs_setup, {"51.15.207.223"}},
         {"2P vs local game", main_local_vs_setup},
         {"Replay of 1P endless", main_replay_endless},
@@ -435,16 +435,16 @@ function main_character_select()
 
   print("character_select_mode = "..(character_select_mode or "nil"))
 
-  local function refresh_state_based_on_own_mods(state)
-    if state ~= nil then
-      if state.panels_dir == nil or IMG_panels[state.panels_dir] == nil then
-        state.panels_dir = config.panels_dir
+  local function refresh_based_on_own_mods(refreshed)
+    if refreshed ~= nil then
+      if refreshed.panels_dir == nil or IMG_panels[refreshed.panels_dir] == nil then
+        refreshed.panels_dir = config.panels_dir
       end
-      if characters[state.character] == nil then
-        if state.character_display_name and characters_ids_by_display_names[state.character_display_name] then
-          state.character = characters_ids_by_display_names[state.character_display_name][1]
+      if characters[refreshed.character] == nil then
+        if refreshed.character_display_name and characters_ids_by_display_names[refreshed.character_display_name] then
+          refreshed.character = characters_ids_by_display_names[refreshed.character_display_name][1]
         else
-          state.character = uniformly(characters_ids_for_current_theme)
+          refreshed.character = uniformly(characters_ids_for_current_theme)
         end
       end
     end
@@ -525,9 +525,9 @@ function main_character_select()
     end
 
     global_my_state = msg.a_menu_state
-    refresh_state_based_on_own_mods(global_my_state)
+    refresh_based_on_own_mods(global_my_state)
     global_op_state = msg.b_menu_state
-    refresh_state_based_on_own_mods(global_op_state)
+    refresh_based_on_own_mods(global_op_state)
 
     if msg.win_counts then
       update_win_counts(msg.win_counts)
@@ -855,11 +855,11 @@ function main_character_select()
           if currently_spectating then
             if msg.player_number == 1 or msg.player_number == 2 then
               cursor_data[msg.player_number].state = msg.menu_state
-              refresh_state_based_on_own_mods(cursor_data[msg.player_number].state)
+              refresh_based_on_own_mods(cursor_data[msg.player_number].state)
             end
           else
             cursor_data[2].state = msg.menu_state
-            refresh_state_based_on_own_mods(cursor_data[2].state)
+            refresh_based_on_own_mods(cursor_data[2].state)
           end
         end
         if msg.ranked_match_approved then
@@ -882,9 +882,10 @@ function main_character_select()
           return main_net_vs_lobby
         end
         if msg.match_start or replay_of_match_so_far then
-          local fake_P1 = P1
           print("currently_spectating: "..tostring(currently_spectating))
+          local fake_P1 = P1
           local fake_P2 = P2
+          refresh_based_on_own_mods(msg.opponent_settings)
           P1 = Stack(1, "vs", msg.player_settings.panels_dir, msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
           P1.enable_analytics = true
           P2 = Stack(2, "vs", msg.opponent_settings.panels_dir, msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
@@ -1663,7 +1664,7 @@ function main_net_vs()
       end
     end
 
-    print(P1.CLOCK, P2.CLOCK)
+    --print(P1.CLOCK, P2.CLOCK)
     if (P1 and P1.play_to_end) or (P2 and P2.play_to_end) then
       if not P1.game_over then
         if currently_spectating then
