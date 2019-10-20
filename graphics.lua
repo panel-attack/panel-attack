@@ -4,6 +4,31 @@ require("util")
 local floor = math.floor
 local ceil = math.ceil
 
+local shake_arr = {}
+
+local shake_idx = -6
+for i=14,6,-1 do
+  local x = -math.pi
+  local step = math.pi * 2 / i
+  for j=1,i do
+    shake_arr[shake_idx] = (1 + math.cos(x))/2
+    x = x + step
+    shake_idx = shake_idx + 1
+  end
+end
+
+print("#shake arr "..#shake_arr)
+
+-- 1 -> 1
+-- #shake -> 0
+local shake_step = 1/(#shake_arr - 1)
+local shake_mult = 1
+for i=1,#shake_arr do
+  shake_arr[i] = shake_arr[i] * shake_mult
+  print(shake_arr[i])
+  shake_mult = shake_mult - shake_step
+end
+
 function load_img(path_and_name,config_dir,default_dir)
   default_dir = default_dir or "assets/"..default_assets_dir
 
@@ -156,6 +181,7 @@ function graphics_init()
   end
 
   IMG_ready = load_img("ready.png")
+  IMG_loading = load_img("loading.png")
   IMG_numbers = {}
   for i=1,3 do
     IMG_numbers[i] = load_img(i..".png")

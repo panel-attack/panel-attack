@@ -1,28 +1,4 @@
-supported_sound_formats = { ".mp3",".ogg", ".it" }
-
---sets the volume of a single source or table of sources
-function set_volume(source, new_volume)
-  if type(source) == "table" then
-    for _,v in pairs(source) do
-      set_volume(v, new_volume)
-    end
-  elseif type(source) ~= "number" then
-    source:setVolume(new_volume)
-  end
-end
-
--- returns a new sound effect if it can be found, else returns nil
-local function find_sound(sound_name, dirs_to_check, streamed)
-  streamed = streamed or false
-  local found_source
-  for k,dir in ipairs(dirs_to_check) do
-    found_source = get_from_supported_extensions(dir..sound_name,streamed)
-    if found_source then
-      return found_source
-    end
-  end
-  return nil
-end
+require("sound_util")
 
 local function find_generic_SFX(SFX_name)
   local dirs_to_check = {"sounds/"..config.sounds_dir.."/SFX/",
@@ -30,35 +6,11 @@ local function find_generic_SFX(SFX_name)
   return find_sound(SFX_name, dirs_to_check)
 end
 
---returns a source, or nil if it could not find a file
-function get_from_supported_extensions(path_and_filename,streamed)
-  for k, extension in ipairs(supported_sound_formats) do
-    if love.filesystem.getInfo(path_and_filename..extension) then
-      if streamed then
-        return love.audio.newSource(path_and_filename..extension, "stream")
-      else
-        return love.audio.newSource(path_and_filename..extension, "static")
-      end
-    end
-  end
-  return nil
-end
-
---check whether a sound file exists
-function any_supported_extension(path_and_filename)
-  for k, extension in ipairs(supported_sound_formats) do
-    if love.filesystem.getInfo(path_and_filename..extension) then
-      return true
-    end
-  end
-  return false
-end
-
-function assert_requirements_met()
+local function assert_requirements_met()
   --assert we have all required generic sound effects
   local SFX_requirements =  {"cur_move", "swap", "fanfare1", "fanfare2", "fanfare3", "game_over", "countdown", "go"}
   for k,v in ipairs(SFX_requirements) do
-    assert(sounds.SFX[v], "SFX \""..v.."\"was not loaded")
+    assert(sounds.SFX[v], "SFX \""..v.."\" was not loaded")
   end
   local NUM_REQUIRED_GARBAGE_THUDS = 3
   for i=1, NUM_REQUIRED_GARBAGE_THUDS do
@@ -68,13 +20,6 @@ function assert_requirements_met()
       for popIndex=1,10 do
           assert(sounds.SFX.pops[popLevel][popIndex], "SFX pop"..popLevel.."-"..popIndex.." was not loaded")
       end
-  end
-end
-
-function play_optional_sfx(sfx)
-  if not SFX_mute and sfx ~= nil then
-    sfx:stop()
-    sfx:play()
   end
 end
 
@@ -130,6 +75,13 @@ function apply_config_volume()
   end
 end
 
+function play_optional_sfx(sfx)
+  if not SFX_mute and sfx ~= nil then
+    sfx:stop()
+    sfx:play()
+  end
+end
+
 -- New music engine stuff here
 music_t = {}
 currently_playing_tracks = {} -- needed because we clone the tracks below
@@ -141,9 +93,9 @@ function stop_the_music()
   music_t = {}
 end
 
-function find_and_add_music(character_id, musicType)
-  local start_music = characters[character_id].musics[musicType .. "_start"] or zero_sound
-  local loop_music = characters[character_id].musics[musicType]
+function find_and_add_music(character_id, music_type)
+  local start_music = characters[character_id].musics[music_type .. "_start"] or zero_sound
+  local loop_music = characters[character_id].musics[music_type]
   music_t[love.timer.getTime()] = make_music_t(
           start_music
   )

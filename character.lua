@@ -1,19 +1,25 @@
+require("character_loader")
+
   -- Stuff defined in this file:
   --  . the data structure that store a character's data
 local min, pairs, deepcpy = math.min, pairs, deepcpy
 local max = math.max
 
-local character_images = {"topleft", "botleft", "topright", "botright",
+local basic_character_images = { "icon" }
+local other_character_images = {"topleft", "botleft", "topright", "botright",
                   "top", "bot", "left", "right", "face", "pop",
                   "doubleface", "filler1", "filler2", "flash",
-                  "portrait", "icon"}
+                  "portrait"}
 
 local required_char_SFX = {"chain", "combo"}
+local required_char_music = {"normal_music", "danger_music"}
+
   -- @CardsOfTheHeart says there are 4 chain sfx: --x2/x3, --x4, --x5 is x2/x3 with an echo effect, --x6+ is x4 with an echo effect
   -- combo sounds, on the other hand, can have multiple variations, hence combo, combo2, combo3 (...) and combo_echo, combo_echo2...
-local allowed_char_SFX = {"chain", "combo", "combo_echo", "chain_echo", "chain2" ,"chain2_echo", "garbage_match", "selection", "win"}
-local required_char_music = {"normal_music", "danger_music"}
-local allowed_char_music = {"normal_music", "danger_music", "normal_music_start", "danger_music_start"}
+local basic_characters_sfx = {"selection"}
+local other_characters_sfx = {"chain", "combo", "combo_echo", "chain_echo", "chain2" ,"chain2_echo", "garbage_match", "win"}
+local basic_characters_musics = {}
+local other_characters_musics = {"normal_music", "danger_music", "normal_music_start", "danger_music_start"}
 
 local default_stages = {lip="flower", windy="wind", sherbet="ice", thiana="forest", ruby="jewel",
                         elias="water", flare="fire", neris="sea", seren="moon", phoenix="cave", 
@@ -27,7 +33,7 @@ Character = class(function(s, id)
     s.display_name = id -- string | display name of the character
     s.favorite_stage = default_stages[id] -- string | id of the character, is also the name of its folder
     s.images = {}
-    s.sounds = {}
+    s.sounds = { combos = {}, combo_count = 0, combo_echos = {}, combo_echo_count = 0, selections = {}, selection_count = 0, wins = {}, win_count = 0, others = {} }
     s.musics = {}
   end)
 
@@ -64,24 +70,6 @@ function Character.other_data_init(self)
     end
   end
   print( self.id..(self.id ~= self.display_name and (", aka "..self.display_name..", ") or " ")..(self.favorite_stage and ("likes to play in stage "..self.favorite_stage) or "would play anywhere"))
-end
-
-function Character.graphics_init(self)
-  self.images = {}
-
-  if config.use_default_characters and self.id ~= default_character_id then
-    for _,image_name in ipairs(character_images) do
-      self.images[image_name] = load_img(self.id.."/"..image_name..".png")
-      if not self.images[image_name] then
-        self.images[image_name] = load_img(image_name..".png","characters/"..self.id, "characters/__default")
-      end
-    end
-  else
-    for _,image_name in ipairs(character_images) do
-      self.images[image_name] = load_img(image_name..".png","characters/"..self.id, "characters/__default")
-    end
-  end
-
 end
 
 local function find_character_SFX(character_id, SFX_name,fallback)
@@ -133,7 +121,6 @@ local function find_character_SFX(character_id, SFX_name,fallback)
   return fallback
 end
 
---returns audio source based on character and music_type (normal_music, danger_music, normal_music_start, or danger_music_start)
 local function find_music(character_id, music_type)
   local dirs_to_check = { "",
                           "sounds/"..default_sounds_dir.."/" }
@@ -182,43 +169,6 @@ local function init_variations_sfx(character_id, sfx_table, sfx_name, first_soun
   return sfx_count
 end
 
-
-function Character.sound_init(self)
-  -- SFX
-  self.sounds = { combos = {}, combo_count = 0, combo_echos = {}, combo_echo_count = 0, selections = {}, selection_count = 0, wins = {}, win_count = 0, others = {} }
-  for _, sound in ipairs(allowed_char_SFX) do
-    self.sounds.others[sound] = find_character_SFX(self.id, sound, characters[default_character_id].sounds.others[sound])
-    if not self.sounds.others[sound] then
-      print("could not find "..sound.." for "..self.id)
-      if string.find(sound, "chain") then
-        self.sounds.others[sound] = find_character_SFX(self.id, "chain")
-      elseif string.find(sound, "combo") then 
-        self.sounds.others[sound] = find_character_SFX(self.id, "combo")
-      end
-    end
-  end
-
-  self.sounds.combo_count = init_variations_sfx(self.id, self.sounds.combos, "combo", self.sounds.others["combo"])
-  self.sounds.combo_echo_count = init_variations_sfx(self.id, self.sounds.combo_echos, "combo_echo", self.sounds.others["combo_echo"])
-  self.sounds.selection_count = init_variations_sfx(self.id, self.sounds.selections, "selection", self.sounds.others["selection"])
-  self.sounds.win_count = init_variations_sfx(self.id, self.sounds.wins, "win", self.sounds.others["win"])
-  
-  -- music
-  self.musics = {}
-  for _, music_type in ipairs(allowed_char_music) do
-    self.musics[music_type] = find_music(self.id, music_type)
-    -- Set looping status for music.
-    -- Intros won't loop, but other parts should.
-    if self.musics[music_type] then
-      if not string.find(music_type, "start") then
-        self.musics[music_type]:setLooping(true)
-      else
-        self.musics[music_type]:setLooping(false)
-      end
-    end
-  end
-end
-
 function Character.assert_requirements_met(self)
   assert(self.sounds.others["chain"], "Character SFX chain for "..self.id.." was not loaded.")
   assert(self.sounds.combo_count ~= 0, "Character SFX combo for "..self.id.." was not loaded.")
@@ -231,7 +181,7 @@ function Character.stop_sounds(self)
   music_t = {}
 
   -- SFX
-  for k, sound_table in ipairs(self.sounds) do
+  for _, sound_table in ipairs(self.sounds) do
     if type(sound_table) == "table" then
       for _,sound in pairs(sound_table) do
         sound:stop()
@@ -240,9 +190,9 @@ function Character.stop_sounds(self)
   end
 
   -- music
-  for k, music_type in ipairs(allowed_char_music) do
-    if self.musics[music_type] then
-      self.musics[music_type]:stop()
+  for _, music in ipairs(self.musics) do
+    if self.musics[music] then
+      self.musics[music]:stop()
     end
   end
 end
@@ -252,13 +202,23 @@ function Character.play_selection_sfx(self)
     self.sounds.selections["selection" .. math.random(self.sounds.selection_count)]:play()
   end
 end
-
-function Character.init(self)
-  print("initializing "..self.id)
+function Character.preload(self)
+  print("preloading "..self.id)
   self:other_data_init()
-  self:graphics_init()
-  self:sound_init()
+  self:graphics_init(false)
+  self:sound_init(false)
+end
+
+function Character.load(self)
+  print("initializing "..self.id)
+  self:graphics_init(true)
+  self:sound_init(true)
   self:assert_requirements_met()
+end
+
+function Character.unload(self)
+  self:graphics_uninit()
+  self:sound_uninit()
 end
 
 function characters_init()
@@ -325,12 +285,13 @@ function characters_init()
     characters[default_character_id] = Character(default_character_id)
   end
 
-  -- init default first, it is used as a fallback, we initialize it with our newest strategy
-  characters[default_character_id]:init()
-
-  -- actual init for all characters (default is initialized twice but that's okay, it's cheap enough)
+  -- init default first, as it is used as a fallback we initialize it fully
+  characters[default_character_id]:preload()
+  characters[default_character_id]:load()
+  
+  -- actual init for all characters (default is initialized twice but that's 'okay', it's cheap enough)
   for _,character in pairs(characters) do
-    character:init()
+    character:preload()
 
     if characters_ids_by_display_names[character.display_name] then
       characters_ids_by_display_names[character.display_name][#characters_ids_by_display_names[character.display_name]+1] = character.id
@@ -342,5 +303,92 @@ function characters_init()
   -- fix config character if it's missing
   if not config.character or not characters[config.character] then
     config.character = uniformly(characters_ids_for_current_theme)
+  end
+
+  character_loader_load(config.character)
+  character_loader_wait()
+end
+
+function Character.graphics_init(self,full)
+  local character_images = full and other_character_images or basic_character_images
+  if config.use_default_characters and self.id ~= default_character_id then
+    for _,image_name in ipairs(character_images) do
+      self.images[image_name] = load_img(self.id.."/"..image_name..".png")
+      if not self.images[image_name] then
+        self.images[image_name] = load_img(image_name..".png","characters/"..self.id, "characters/__default")
+      end
+      coroutine.yield()
+    end
+  else
+    for _,image_name in ipairs(character_images) do
+      self.images[image_name] = load_img(image_name..".png","characters/"..self.id, "characters/__default")
+      coroutine.yield()
+    end
+  end
+end
+
+function Character.graphics_uninit(self)
+  for _,image_name in ipairs(other_character_images) do
+    self.images[image_name] = nil
+  end
+end
+
+function Character.sound_init(self,full)
+  -- SFX
+  local character_sfx = full and other_characters_sfx or basic_characters_sfx
+  for _, sound in ipairs(character_sfx) do
+    self.sounds.others[sound] = find_character_SFX(self.id, sound, characters[default_character_id].sounds.others[sound])
+    if not self.sounds.others[sound] then
+      print("could not find "..sound.." for "..self.id)
+      if string.find(sound, "chain") then
+        self.sounds.others[sound] = find_character_SFX(self.id, "chain")
+      elseif string.find(sound, "combo") then 
+        self.sounds.others[sound] = find_character_SFX(self.id, "combo")
+      end
+    end
+    coroutine.yield()
+  end
+
+  if not full then
+    self.sounds.selection_count = init_variations_sfx(self.id, self.sounds.selections, "selection", self.sounds.others["selection"])
+    coroutine.yield()
+  else
+    self.sounds.combo_count = init_variations_sfx(self.id, self.sounds.combos, "combo", self.sounds.others["combo"])
+    coroutine.yield()
+    self.sounds.combo_echo_count = init_variations_sfx(self.id, self.sounds.combo_echos, "combo_echo", self.sounds.others["combo_echo"])
+    coroutine.yield()
+    self.sounds.win_count = init_variations_sfx(self.id, self.sounds.wins, "win", self.sounds.others["win"])
+    coroutine.yield()
+  end
+
+  -- music
+  local character_musics = full and other_characters_musics or basic_characters_musics
+  for _, music in ipairs(character_musics) do
+    self.musics[music] = find_music(self.id, music)
+    -- Set looping status for music.
+    -- Intros won't loop, but other parts should.
+    if self.musics[music] then
+      if not string.find(music, "start") then
+        self.musics[music]:setLooping(true)
+      else
+        self.musics[music]:setLooping(false)
+      end
+    end
+    coroutine.yield()
+  end
+end
+
+function Character.sound_uninit(self)
+  -- SFX
+  for _,sound in ipairs(other_characters_sfx) do
+    self.sounds.others[sound] = nil
+  end
+  self.sounds.combo_count = 0
+  self.sounds.combo_echo_count = 0
+  self.sounds.win_count = 0
+
+  -- music
+  for _,music in ipairs(other_characters_musics) do
+    self.musics[music] = nil
   end
 end

@@ -83,7 +83,7 @@ function fmainloop()
   gprint("Reading replay file", unpack(main_menu_screen_pos))
   wait()
   read_replay_file()
-  gprint("Loading characters... (this takes a few seconds)", unpack(main_menu_screen_pos))
+  gprint("Preloading characters...", unpack(main_menu_screen_pos))
   wait()
   characters_init() -- load images and set up stuff
   gprint("Loading graphics...", unpack(main_menu_screen_pos))
@@ -433,7 +433,23 @@ function main_character_select()
   stop_the_music()
   bg = charselect
 
+  local function add_client_data(state)
+    state.loaded = fully_loaded_characters[state.character]
+    state.wants_ready = state.ready
+    state.ready = state.wants_ready and state.loaded
+  end
+
+  local function refresh_loaded_and_ready(state_1,state_2)
+    state_1.loaded = fully_loaded_characters[state_1.character]
+    state_2.loaded = fully_loaded_characters[state_2.character]
+    state_1.ready = state_1.wants_ready and state_1.loaded and state_2.loaded
+    state_2.ready = state_2.wants_ready and state_1.loaded and state_2.loaded
+  end
+
   print("character_select_mode = "..(character_select_mode or "nil"))
+
+  local fallback_when_missing = uniformly(characters_ids_for_current_theme)
+  character_loader_load(fallback_when_missing)
 
   local function refresh_based_on_own_mods(refreshed)
     if refreshed ~= nil then
@@ -444,7 +460,7 @@ function main_character_select()
         if refreshed.character_display_name and characters_ids_by_display_names[refreshed.character_display_name] then
           refreshed.character = characters_ids_by_display_names[refreshed.character_display_name][1]
         else
-          refreshed.character = uniformly(characters_ids_for_current_theme)
+          refreshed.character = fallback_when_missing
         end
       end
     end
@@ -640,6 +656,8 @@ function main_character_select()
   else
     cursor_data[2].state = {character=config.character, character_display_name=characters[config.character].display_name, level=config.level, panels_dir=config.panels_dir, cursor="__Ready", ready=false, ranked=false}
   end
+  add_client_data(cursor_data[1].state)
+  add_client_data(cursor_data[2].state)
 
   local prev_state = shallowcpy(cursor_data[1].state)
 
@@ -709,6 +727,8 @@ function main_character_select()
     local function draw_player_state(cursor_data,player_number)
       if cursor_data.state.ready then
         menu_drawf(IMG_ready, render_x+button_width*0.5, render_y+button_height*0.5, "center", "center" )
+      elseif cursor_data.state.wants_ready and not cursor_data.state.ready then
+        menu_drawf(IMG_loading, render_x+button_width*0.5, render_y+button_height*0.5, "center", "center" )
       end
       local scale = 0.25*button_width/math.max(IMG_players[player_number]:getWidth(),IMG_players[player_number]:getHeight()) -- keep image ratio
       menu_drawf(IMG_players[player_number], render_x+1, render_y+button_height-1, "left", "bottom", 0, scale, scale )
@@ -856,11 +876,14 @@ function main_character_select()
             if msg.player_number == 1 or msg.player_number == 2 then
               cursor_data[msg.player_number].state = msg.menu_state
               refresh_based_on_own_mods(cursor_data[msg.player_number].state)
+              character_loader_load(cursor_data[msg.player_number].state.character)
             end
           else
             cursor_data[2].state = msg.menu_state
             refresh_based_on_own_mods(cursor_data[2].state)
+            character_loader_load(cursor_data[2].state.character)
           end
+          refresh_loaded_and_ready(cursor_data[1],cursor_data[2])
         end
         if msg.ranked_match_approved then
           match_type = "Ranked"
@@ -886,6 +909,8 @@ function main_character_select()
           local fake_P1 = P1
           local fake_P2 = P2
           refresh_based_on_own_mods(msg.opponent_settings)
+          assert(fully_loaded_characters[msg.opponent_settings.character] and fully_loaded_characters[msg.player_settings.character], 
+            "Characters "..msg.player_settings.character.." and "..msg.opponent_settings.character.. "have not been loaded")
           P1 = Stack(1, "vs", msg.player_settings.panels_dir, msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
           P1.enable_analytics = true
           P2 = Stack(2, "vs", msg.opponent_settings.panels_dir, msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
@@ -1096,6 +1121,10 @@ function main_character_select()
 
     variable_step(function()
       menu_clock = menu_clock + 1
+
+      character_loader_update()
+      refresh_loaded_and_ready(cursor_data[1].state,cursor_data[2].state)
+
       local up,down,left,right = {-1,0}, {1,0}, {0,-1}, {0,1}
       local selectable = {__Panels=true, __Level=true, __Ready=true}
       if not currently_spectating then
@@ -1133,7 +1162,10 @@ function main_character_select()
             end
             if not cursor.selected then move_cursor(cursor.position,right) end
           elseif menu_enter(k) then
-            if selectable[cursor.state.cursor] then
+            if cursor.state.cursor == "__Ready" then
+              --character_loader_wait() -- NOCOMMIT
+              cursor.selected = not cursor.selected
+            elseif selectable[cursor.state.cursor] then
               cursor.selected = not cursor.selected
             elseif cursor.state.cursor == "__Leave" then
               if character_select_mode == "2p_net_vs" then
@@ -1146,12 +1178,14 @@ function main_character_select()
             elseif cursor.state.cursor == "__Random" then
               cursor.state.character = uniformly(characters_ids_for_current_theme)
               characters[cursor.state.character]:play_selection_sfx()
+              character_loader_load(cursor.state.character)
             elseif cursor.state.cursor == "__Mode" then
               cursor.state.ranked = not cursor.state.ranked
             elseif cursor.state.cursor ~= "__Empty" then
               cursor.state.character = cursor.state.cursor
               cursor.state.character_display_name = characters[cursor.state.character].display_name
               characters[cursor.state.character]:play_selection_sfx()
+              character_loader_load(cursor.state.character)
               --When we select a character, move cursor to "__Ready"
               cursor.state.cursor = "__Ready"
               cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"])
@@ -1171,7 +1205,7 @@ function main_character_select()
           end
           if cursor.state ~= nil then
             cursor.state.cursor = map[current_page][cursor.position[1]][cursor.position[2]]
-            cursor.state.ready = cursor.selected and cursor.state.cursor=="__Ready"
+            cursor.state.wants_ready = cursor.selected and cursor.state.cursor=="__Ready"
           end
         end
         -- update config, does not redefine it
@@ -1184,6 +1218,7 @@ function main_character_select()
         end
         if character_select_mode == "2p_local_vs" then
           global_op_state = shallowcpy(cursor_data[2].state)
+          global_op_state.wants_ready = false
           global_op_state.ready = false
         end
         if character_select_mode == "2p_net_vs" and not content_equal(cursor_data[1].state, prev_state) and not currently_spectating then
@@ -1528,79 +1563,8 @@ function main_net_vs_setup(ip)
   end
   connected_server_ip = ip
   logged_in = false
-  if true then return main_net_vs_lobby end
-  local my_level, to_print, fake_P2 = 5, nil, P2
-  local k = K[1]
-  while got_opponent == nil do
-    gprint("Waiting for opponent...", unpack(main_menu_screen_pos))
-    wait()
-    if not do_messages() then
-      return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
-    end
-  end
-  while P1_level == nil or P2_level == nil do
-    to_print = (P1_level and "L" or"Choose l") .. "evel: "..my_level..
-        "\nOpponent's level: "..(P2_level or "???")
-    gprint(to_print, unpack(main_menu_screen_pos))
-    wait()
-    if not do_messages() then
-      return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
-    end
-    variable_step(function()
-      if P1_level then
-      elseif menu_enter(k) then
-        P1_level = my_level
-        net_send("L"..(({[10]=0})[my_level] or my_level))
-      elseif menu_up(k) or menu_right(k) then
-        my_level = bound(1,my_level+1,10)
-      elseif menu_down(k) or menu_left(k) then
-        my_level = bound(1,my_level-1,10)
-      end
-    end)
-  end
-  P1 = Stack(1, "vs", config.panels_dir, P1_level)
-  P2 = Stack(2, "vs", config.panels_dir, P2_level)
-  if currently_spectating then
-    P1.panel_buffer = fake_P1.panel_buffer
-    P1.gpanel_buffer = fake_P1.gpanel_buffer
-  else
-    P1.enable_analytics = true
-  end
-  P2.panel_buffer = fake_P2.panel_buffer
-  P2.gpanel_buffer = fake_P2.gpanel_buffer
-  P1.garbage_target = P2
-  P2.garbage_target = P1
-  move_stack(P2,2)
-  replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
-              P1_level=P1_level,P2_level=P2_level,
-              ranked=false, P1_name=my_name, P2_name=op_name,
-              P1_char=P1.character, P2_char=P2.character,
-              do_countdown = true}
-  ask_for_gpanels("000000")
-  ask_for_panels("000000")
-  if not currently_spectating then
-    to_print = "Level: "..my_level.."\nOpponent's level: "..(P2_level or "???")
-  else
-    to_print = "P1 Level: "..my_level.."\nP2 level: "..(P2_level or "???")
-  end
-  for i=1,30 do
-    gprint(to_print,unpack(main_menu_screen_pos))
-    wait()
-    if not do_messages() then
-      return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
-    end
-  end
-  while P1.panel_buffer == "" or P2.panel_buffer == ""
-    or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
-    gprint(to_print,unpack(main_menu_screen_pos))
-    wait()
-    if not do_messages() then
-      return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
-    end
-  end
-  P1:starting_state()
-  P2:starting_state()
-  return main_net_vs
+  
+  return main_net_vs_lobby
 end
 
 function main_net_vs()
