@@ -736,7 +736,7 @@ function main_character_select()
         menu_drawf(IMG_loading, render_x+button_width*0.5, render_y+button_height*0.5, "center", "center" )
       elseif cursor_data.state.wants_ready then
         menu_drawf(IMG_ready, render_x+button_width*0.5, render_y+button_height*0.5, "center", "center" )
-      else
+      end
       local scale = 0.25*button_width/math.max(IMG_players[player_number]:getWidth(),IMG_players[player_number]:getHeight()) -- keep image ratio
       menu_drawf(IMG_players[player_number], render_x+1, render_y+button_height-1, "left", "bottom", 0, scale, scale )
       scale = 0.25*button_width/math.max(IMG_levels[cursor_data.state.level]:getWidth(),IMG_levels[cursor_data.state.level]:getHeight()) -- keep image ratio
