@@ -215,7 +215,7 @@ do
         --{"2P vs online (USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)", main_net_vs_setup, {"18.188.43.50"}},
         --{"This test build is for offline-use only"--[["2P vs online at Jon's server"]], main_select_mode},
         --{"2P vs online at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
-        {"2P vs online at localhost (development-use only)", main_net_vs_setup, {"192.168.1.11"}},
+        --{"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
         --{"2P vs online at LittleEndu's server", main_net_vs_setup, {"51.15.207.223"}},
         {"2P vs local game", main_local_vs_setup},
         {"Replay of 1P endless", main_replay_endless},
@@ -732,11 +732,11 @@ function main_character_select()
     end
 
     local function draw_player_state(cursor_data,player_number)
-      if cursor_data.state.ready then
-        menu_drawf(IMG_ready, render_x+button_width*0.5, render_y+button_height*0.5, "center", "center" )
-      elseif not fully_loaded_characters[cursor_data.state.character] then
+      if not fully_loaded_characters[cursor_data.state.character] then
         menu_drawf(IMG_loading, render_x+button_width*0.5, render_y+button_height*0.5, "center", "center" )
-      end
+      elseif cursor_data.state.wants_ready then
+        menu_drawf(IMG_ready, render_x+button_width*0.5, render_y+button_height*0.5, "center", "center" )
+      else
       local scale = 0.25*button_width/math.max(IMG_players[player_number]:getWidth(),IMG_players[player_number]:getHeight()) -- keep image ratio
       menu_drawf(IMG_players[player_number], render_x+1, render_y+button_height-1, "left", "bottom", 0, scale, scale )
       scale = 0.25*button_width/math.max(IMG_levels[cursor_data.state.level]:getWidth(),IMG_levels[cursor_data.state.level]:getHeight()) -- keep image ratio
