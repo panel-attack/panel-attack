@@ -9,7 +9,7 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_replay_vs, main_local_vs_setup, main_local_vs, menu_key_func,
   multi_func, normal_key, main_set_name, main_character_select, main_net_vs_lobby,
   main_local_vs_yourself_setup, main_local_vs_yourself,
-  main_options, exit_options_menu, main_music_test
+  main_options, exit_options_menu, main_music_test, exit_game
 
 local PLAYING = "playing"  -- room states
 local CHARACTERSELECT = "character select" --room states
@@ -195,6 +195,7 @@ do
     love.audio.stop()
     currently_spectating = false
     stop_the_music()
+    character_loader_clear()
     close_socket()
     bg = title
     logged_in = 0
@@ -214,7 +215,7 @@ do
         --{"2P vs online (USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)", main_net_vs_setup, {"18.188.43.50"}},
         --{"This test build is for offline-use only"--[["2P vs online at Jon's server"]], main_select_mode},
         --{"2P vs online at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
-        --{"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
+        {"2P vs online at localhost (development-use only)", main_net_vs_setup, {"192.168.1.11"}},
         --{"2P vs online at LittleEndu's server", main_net_vs_setup, {"51.15.207.223"}},
         {"2P vs local game", main_local_vs_setup},
         {"Replay of 1P endless", main_replay_endless},
@@ -230,7 +231,7 @@ do
     else
       items[#items+1] = {"Your graphics card doesn't support canvases for fullscreen", main_select_mode}
     end
-    items[#items+1] = {"Quit", os.exit}
+    items[#items+1] = {"Quit", exit_game }
     local k = K[1]
     while true do
       local to_print = ""
@@ -436,20 +437,23 @@ function main_character_select()
   local function add_client_data(state)
     state.loaded = fully_loaded_characters[state.character]
     state.wants_ready = state.ready
-    state.ready = state.wants_ready and state.loaded
   end
 
   local function refresh_loaded_and_ready(state_1,state_2)
     state_1.loaded = fully_loaded_characters[state_1.character]
     state_2.loaded = fully_loaded_characters[state_2.character]
-    state_1.ready = state_1.wants_ready and state_1.loaded and state_2.loaded
-    state_2.ready = state_2.wants_ready and state_1.loaded and state_2.loaded
+    
+    if character_select_mode == "2p_net_vs" then
+      state_1.ready = state_1.wants_ready and state_1.loaded and state_2.loaded
+    else
+      state_1.ready = state_1.wants_ready and state_1.loaded
+      state_2.ready = state_2.wants_ready and state_2.loaded
+    end
   end
 
   print("character_select_mode = "..(character_select_mode or "nil"))
 
-  local fallback_when_missing = uniformly(characters_ids_for_current_theme)
-  character_loader_load(fallback_when_missing)
+  local fallback_when_missing = nil
 
   local function refresh_based_on_own_mods(refreshed)
     if refreshed ~= nil then
@@ -460,6 +464,9 @@ function main_character_select()
         if refreshed.character_display_name and characters_ids_by_display_names[refreshed.character_display_name] then
           refreshed.character = characters_ids_by_display_names[refreshed.character_display_name][1]
         else
+          if not fallback_when_missing then
+            fallback_when_missing = uniformly(characters_ids_for_current_theme)
+          end
           refreshed.character = fallback_when_missing
         end
       end
@@ -621,7 +628,6 @@ function main_character_select()
   local function do_leave()
     my_win_count = 0
     op_win_count = 0
-    write_char_sel_settings_to_file()
     return json_send({leave_room=true})
   end
 
@@ -658,6 +664,7 @@ function main_character_select()
   end
   add_client_data(cursor_data[1].state)
   add_client_data(cursor_data[2].state)
+  refresh_loaded_and_ready(cursor_data[1].state, cursor_data[2].state)
 
   local prev_state = shallowcpy(cursor_data[1].state)
 
@@ -727,7 +734,7 @@ function main_character_select()
     local function draw_player_state(cursor_data,player_number)
       if cursor_data.state.ready then
         menu_drawf(IMG_ready, render_x+button_width*0.5, render_y+button_height*0.5, "center", "center" )
-      elseif cursor_data.state.wants_ready and not cursor_data.state.ready then
+      elseif not fully_loaded_characters[cursor_data.state.character] then
         menu_drawf(IMG_loading, render_x+button_width*0.5, render_y+button_height*0.5, "center", "center" )
       end
       local scale = 0.25*button_width/math.max(IMG_players[player_number]:getWidth(),IMG_players[player_number]:getHeight()) -- keep image ratio
@@ -874,6 +881,7 @@ function main_character_select()
         if msg.menu_state then
           if currently_spectating then
             if msg.player_number == 1 or msg.player_number == 2 then
+              print("received: "..msg.menu_state.panels_dir)
               cursor_data[msg.player_number].state = msg.menu_state
               refresh_based_on_own_mods(cursor_data[msg.player_number].state)
               character_loader_load(cursor_data[msg.player_number].state.character)
@@ -901,7 +909,6 @@ function main_character_select()
         if msg.leave_room then
           my_win_count = 0
           op_win_count = 0
-          write_char_sel_settings_to_file()
           return main_net_vs_lobby
         end
         if msg.match_start or replay_of_match_so_far then
@@ -1162,10 +1169,7 @@ function main_character_select()
             end
             if not cursor.selected then move_cursor(cursor.position,right) end
           elseif menu_enter(k) then
-            if cursor.state.cursor == "__Ready" then
-              --character_loader_wait() -- NOCOMMIT
-              cursor.selected = not cursor.selected
-            elseif selectable[cursor.state.cursor] then
+            if selectable[cursor.state.cursor] then
               cursor.selected = not cursor.selected
             elseif cursor.state.cursor == "__Leave" then
               if character_select_mode == "2p_net_vs" then
@@ -1216,15 +1220,17 @@ function main_character_select()
           config.panels_dir_when_not_using_set_from_assets_folder = cursor_data[1].state.panels_dir
           config.panels_dir = config.panels_dir_when_not_using_set_from_assets_folder
         end
-        if character_select_mode == "2p_local_vs" then
+
+        if character_select_mode == "2p_local_vs" then -- this is registered for future entering of the lobby
           global_op_state = shallowcpy(cursor_data[2].state)
           global_op_state.wants_ready = false
-          global_op_state.ready = false
         end
+
         if character_select_mode == "2p_net_vs" and not content_equal(cursor_data[1].state, prev_state) and not currently_spectating then
           json_send({menu_state=cursor_data[1].state})
         end
         prev_state = shallowcpy(cursor_data[1].state)
+
       else -- (we are are spectating)
         if menu_escape(K[1]) then
           do_leave()
@@ -1582,7 +1588,6 @@ function main_net_vs()
     -- love.timer.sleep(0.030)
     for _,msg in ipairs(this_frame_messages) do
       if msg.leave_room then
-        write_char_sel_settings_to_file()
         return main_net_vs_lobby
       end
     end
@@ -2722,22 +2727,13 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
   end
 end
 
-function write_char_sel_settings_to_file()
-  if not currently_spectating and my_state then
-    gprint("saving character select settings...")
-    if not closing then
-      wait()
-    end
-    config.character = my_state.character
-    config.level = my_state.level
-    config.ranked = my_state.ranked
-    write_conf_file()
-  end
+function exit_game(...)
+ love.event.quit()
+ return main_select_mode
 end
 
 function love.quit()
-  closing = true
+  love.audio.stop()
   config.window_x, config.window_y, config.display = love.window.getPosition()
   write_conf_file()
-  write_char_sel_settings_to_file()
 end

@@ -63,7 +63,6 @@ function has_any_custom_character()
   for _,v in ipairs(raw_dir_list) do
     local start_of_v = string.sub(v,0,string.len(prefix_of_ignored_dirs))
     if start_of_v ~= prefix_of_ignored_dirs and not belong_to_characters_ids(v) then
-      print("detected a custom character! "..v)
       return true
     end
   end

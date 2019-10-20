@@ -42,3 +42,13 @@ function character_loader_wait()
     end
   end
 end
+
+function character_loader_clear()
+  for character_name,loaded in pairs(fully_loaded_characters) do
+    if loaded and character_name ~= config.character then
+      characters[character_name]:unload()
+    end
+  end
+  fully_loaded_characters = {}
+  fully_loaded_characters[config.character] = true
+end
