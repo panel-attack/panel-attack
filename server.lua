@@ -95,12 +95,12 @@ function create_room(a, b)
   a_msg.your_player_number = 1
   a_msg.op_player_number = 2
   a_msg.opponent = new_room.b.name
-  new_room.b.cursor = "ready"
+  new_room.b.cursor = "__Ready"
   a_msg.menu_state = new_room.b:menu_state()
   b_msg.your_player_number = 2
   b_msg.op_player_number = 1
   b_msg.opponent = new_room.a.name
-  new_room.a.cursor = "ready"
+  new_room.a.cursor = "__Ready"
   b_msg.menu_state = new_room.a:menu_state()
   a_msg.ratings = new_room.ratings
   b_msg.ratings = new_room.ratings
@@ -221,8 +221,8 @@ function Room.character_select(self)
     self.a.player_number = 1
     self.b.player_number = 2
   end
-  self.a.cursor = "ready"
-  self.b.cursor = "ready"
+  self.a.cursor = "__Ready"
+  self.b.cursor = "__Ready"
   self.a.ready = false
   self.b.ready = false
   self:send({character_select=true, create_room=true, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()})

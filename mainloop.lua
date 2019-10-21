@@ -429,10 +429,31 @@ local function fill_map(template_map,map)
   end
 end
 
+fallback_when_missing = nil
+
+local function refresh_based_on_own_mods(refreshed)
+  if refreshed ~= nil then
+    if refreshed.panels_dir == nil or IMG_panels[refreshed.panels_dir] == nil then
+      refreshed.panels_dir = config.panels_dir
+    end
+    if characters[refreshed.character] == nil then
+      if refreshed.character_display_name and characters_ids_by_display_names[refreshed.character_display_name] then
+        refreshed.character = characters_ids_by_display_names[refreshed.character_display_name][1]
+      else
+        if not fallback_when_missing then
+          fallback_when_missing = uniformly(characters_ids_for_current_theme)
+        end
+        refreshed.character = fallback_when_missing
+      end
+    end
+  end
+end
+
 function main_character_select()
   love.audio.stop()
   stop_the_music()
   bg = charselect
+  fallback_when_missing = nil
 
   local function add_client_data(state)
     state.loaded = fully_loaded_characters[state.character]
@@ -453,25 +474,7 @@ function main_character_select()
 
   print("character_select_mode = "..(character_select_mode or "nil"))
 
-  local fallback_when_missing = nil
 
-  local function refresh_based_on_own_mods(refreshed)
-    if refreshed ~= nil then
-      if refreshed.panels_dir == nil or IMG_panels[refreshed.panels_dir] == nil then
-        refreshed.panels_dir = config.panels_dir
-      end
-      if characters[refreshed.character] == nil then
-        if refreshed.character_display_name and characters_ids_by_display_names[refreshed.character_display_name] then
-          refreshed.character = characters_ids_by_display_names[refreshed.character_display_name][1]
-        else
-          if not fallback_when_missing then
-            fallback_when_missing = uniformly(characters_ids_for_current_theme)
-          end
-          refreshed.character = fallback_when_missing
-        end
-      end
-    end
-  end
   -- map is composed of special values prefixed by __ and character ids
   local template_map = {}
   local map = {}
@@ -1800,6 +1803,10 @@ end
 
 function main_replay_vs()
   local replay = replay.vs
+  if replay == nil then
+    return main_dumb_transition, {main_select_mode, "I don't have a vs replay :("}
+  end
+  fallback_when_missing = nil
   bg = IMG_stages[math.random(#IMG_stages)]
   P1 = Stack(1, "vs", config.panels_dir, replay.P1_level or 5)
   P2 = Stack(2, "vs", config.panels_dir, replay.P2_level or 5)
@@ -1819,6 +1826,11 @@ function main_replay_vs()
   P2.max_runs_per_frame = 1
   P1.character = replay.P1_char
   P2.character = replay.P2_char
+  refresh_based_on_own_mods(P1)
+  refresh_based_on_own_mods(P2)
+  character_loader_load(P1.character)
+  character_loader_load(P2.character)
+  character_loader_wait()
   my_name = replay.P1_name or "Player 1"
   op_name = replay.P2_name or "Player 2"
   if character_select_mode == "2p_net_vs" then
