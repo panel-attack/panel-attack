@@ -2235,6 +2235,7 @@ function main_options(starting_idx)
   local selected, deselected_this_frame, adjust_active_value = false, false, false
   local save_replays_publicly_choices = {"with my name", "anonymously", "not at all"}
   local on_off_text = {[true]="On", [false]="Off"}
+  local name, version, vendor, device = love.graphics.getRendererInfo()
   memory_before_options_menu = {  config.assets_dir or default_assets_dir,
                                   config.panels_dir_when_not_using_set_from_assets_folder or default_panels_dir,
                                   config.sounds_dir or default_sounds_dir,
@@ -2289,6 +2290,7 @@ function main_options(starting_idx)
     {"Back", "", nil, nil, nil, nil, false, main_select_mode}
   }
   local function print_stuff()
+    gprint("graphics card:  "..(device or "nil"), 100, 0)
     local to_print, to_print2, arrow = "", "", ""
     for i=1,#items do
       if active_idx == i then
