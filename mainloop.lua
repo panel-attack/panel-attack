@@ -660,7 +660,7 @@ function main_character_select()
   if global_op_state ~= nil then
     cursor_data[2].state = shallowcpy(global_op_state)
     if character_select_mode ~= "2p_local_vs" then
-      global_op_state = nil
+      global_op_state = nil -- retains state of the second player, also: don't unload its character when going back and forth
     end
   else
     cursor_data[2].state = {character=config.character, character_display_name=characters[config.character].display_name, level=config.level, panels_dir=config.panels_dir, cursor="__Ready", ready=false, ranked=false}

@@ -23,3 +23,6 @@ fully_loaded_characters = {}
 -- win counters
 my_win_count = 0
 op_win_count = 0
+
+global_my_state = nil
+global_op_state = nil

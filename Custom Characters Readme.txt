@@ -31,7 +31,7 @@ Note: The following extensions are supported for all sound files: .mp3, .ogg, .i
 - Six metal blocks combo: ("combo_echo", ("combo_echo2", "combo_echo3"...)) [selected at random if more than one]
 - Chain: depending on the current chain length, the appopriate sound file will be played:
     x2/3 plays "chain",  x4 plays ("chain2"), x5 plays ("chain_echo"), x6+ plays ("chain2_echo")
-- Clear garbage: ("garbage_match")
+- Clear garbage: ("garbage_match" (,"garbage_match2", "garbage_match3"...))  [selected at random if more than one]
 - Selection: ("selection", ("selection2", "selection3"...)) [selected at random if more than one]
 - Win: ("win"(, "win2", "win3"...)) [selected at random if more than one]
 

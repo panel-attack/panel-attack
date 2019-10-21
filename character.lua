@@ -12,7 +12,7 @@ local other_character_images = {"topleft", "botleft", "topright", "botright",
                   "portrait"}
 
 local required_char_SFX = {"chain", "combo"}
-local required_char_music = {"normal_music", "danger_music"}
+local required_char_music = {"normal_music"}
 
   -- @CardsOfTheHeart says there are 4 chain sfx: --x2/x3, --x4, --x5 is x2/x3 with an echo effect, --x6+ is x4 with an echo effect
   -- combo sounds, on the other hand, can have multiple variations, hence combo, combo2, combo3 (...) and combo_echo, combo_echo2...
@@ -33,7 +33,7 @@ Character = class(function(s, id)
     s.display_name = id -- string | display name of the character
     s.favorite_stage = default_stages[id] -- string | id of the character, is also the name of its folder
     s.images = {}
-    s.sounds = { combos = {}, combo_count = 0, combo_echos = {}, combo_echo_count = 0, selections = {}, selection_count = 0, wins = {}, win_count = 0, others = {} }
+    s.sounds = { combos = {}, combo_echos = {}, selections = {}, wins = {}, garbage_matches = {}, others = {} }
     s.musics = {}
   end)
 
@@ -148,30 +148,34 @@ local function find_music(character_id, music_type)
   return characters[default_character_id].musics[music_type]
 end
 
-local function init_variations_sfx(character_id, sfx_table, sfx_name, first_sound)
-  local sound = sfx_name..1
+local function init_variations_sfx(character_id, sfx_array, sfx_name, first_sound)
+  local sound_name = sfx_name..1
   if first_sound then
     -- "combo" in others will be stored in "combo1" in combos
-    sfx_table[sound] = first_sound
+    sfx_array[1] = first_sound
     first_sound = nil
   else
-    sfx_table[sound] = find_character_SFX(character_id, sound)
+    local sound = find_character_SFX(character_id, sound_name)
+    if sound then
+      sfx_array[1] = sound
+    end
   end
 
   -- search for all variations
-  local sfx_count = 0
-  while sfx_table[sound] do
+  local sfx_count = 1
+  while sfx_array[sfx_count] do
     sfx_count = sfx_count+1
-    sound = sfx_name..(sfx_count+1)
-    sfx_table[sound] = find_character_SFX(character_id, sound)
+    sound_name = sfx_name..sfx_count
+    local sound = find_character_SFX(character_id, sound_name)
+    if sound then
+      sfx_array[sfx_count] = sound
+    end
   end
-  -- print(character.." has "..sfx_count.." variation(s) of "..sfx_name)
-  return sfx_count
 end
 
 function Character.assert_requirements_met(self)
   assert(self.sounds.others["chain"], "Character SFX chain for "..self.id.." was not loaded.")
-  assert(self.sounds.combo_count ~= 0, "Character SFX combo for "..self.id.." was not loaded.")
+  assert(#self.sounds.combos ~= 0, "Character SFX combo for "..self.id.." was not loaded.")
   for k, music_type in ipairs(required_char_music) do
     assert(self.musics[music_type], music_type.." for "..self.id.." was not loaded.")
   end
@@ -198,10 +202,11 @@ function Character.stop_sounds(self)
 end
 
 function Character.play_selection_sfx(self)
-  if not SFX_mute and self.sounds.selection_count ~= 0 then
-    self.sounds.selections["selection" .. math.random(self.sounds.selection_count)]:play()
+  if not SFX_mute and #self.sounds.selections ~= 0 then
+    self.sounds.selections[math.random(#self.sounds.selections)]:play()
   end
 end
+
 function Character.preload(self)
   print("preloading "..self.id)
   self:other_data_init()
@@ -350,14 +355,16 @@ function Character.sound_init(self,full)
   end
 
   if not full then
-    self.sounds.selection_count = init_variations_sfx(self.id, self.sounds.selections, "selection", self.sounds.others["selection"])
+    init_variations_sfx(self.id, self.sounds.selections, "selection", self.sounds.others["selection"])
     coroutine.yield()
   else
-    self.sounds.combo_count = init_variations_sfx(self.id, self.sounds.combos, "combo", self.sounds.others["combo"])
+    init_variations_sfx(self.id, self.sounds.combos, "combo", self.sounds.others["combo"])
     coroutine.yield()
-    self.sounds.combo_echo_count = init_variations_sfx(self.id, self.sounds.combo_echos, "combo_echo", self.sounds.others["combo_echo"])
+    init_variations_sfx(self.id, self.sounds.combo_echos, "combo_echo", self.sounds.others["combo_echo"])
     coroutine.yield()
-    self.sounds.win_count = init_variations_sfx(self.id, self.sounds.wins, "win", self.sounds.others["win"])
+    init_variations_sfx(self.id, self.sounds.wins, "win", self.sounds.others["win"])
+    coroutine.yield()
+    init_variations_sfx(self.id, self.sounds.garbage_matches, "garbage_match", self.sounds.others["garbage_match"])
     coroutine.yield()
   end
 
@@ -383,9 +390,6 @@ function Character.sound_uninit(self)
   for _,sound in ipairs(other_characters_sfx) do
     self.sounds.others[sound] = nil
   end
-  self.sounds.combo_count = 0
-  self.sounds.combo_echo_count = 0
-  self.sounds.win_count = 0
 
   -- music
   for _,music in ipairs(other_characters_musics) do
