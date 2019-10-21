@@ -37,6 +37,9 @@ function analytics_init() pcall(function()
   for k,v in pairs(json.decode(teh_json)) do
     analytics[k] = v
   end
+  
+  analytics.last_game = { destroyed_panels = 0, reached_chains = {}, used_combos = {} }
+  analytics.last_game.destroyed_panels = 0
 
   -- do stuff regarding version compatibility here, before we patch it
 
