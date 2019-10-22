@@ -2309,9 +2309,9 @@ function main_options(starting_idx)
     --options menu table reference:
     --{[1]"Option Name", [2]current or default value, [3]type, [4]min or bool value or choices_table,
     -- [5]max, [6]sound_source, [7]selectable, [8]next_func, [9]play_while selected}
-    {"Master Volume", config.master_volume or 100, "numeric", 0, 100, characters["lip"].musics.normal_music, true, nil, true},
+    {"Master Volume", config.master_volume or 100, "numeric", 0, 100, characters[config.character].musics.normal_music, true, nil, true},
     {"SFX Volume", config.SFX_volume or 100, "numeric", 0, 100, sounds.SFX.cur_move, true},
-    {"Music Volume", config.music_volume or 100, "numeric", 0, 100, characters["lip"].musics.normal_music, true, nil, true},
+    {"Music Volume", config.music_volume or 100, "numeric", 0, 100, characters[config.character].musics.normal_music, true, nil, true},
     {"Debug Mode", on_off_text[config.debug_mode or false], "bool", false, nil, nil,false},
     {"Save replays publicly",
       save_replays_publicly_choices[config.save_replays_publicly]
