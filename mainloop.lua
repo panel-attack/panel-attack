@@ -456,13 +456,13 @@ function main_character_select()
   fallback_when_missing = nil
 
   local function add_client_data(state)
-    state.loaded = fully_loaded_characters[state.character]
+    state.loaded = characters[state.character] and characters[state.character].fully_loaded
     state.wants_ready = state.ready
   end
 
   local function refresh_loaded_and_ready(state_1,state_2)
-    state_1.loaded = fully_loaded_characters[state_1.character]
-    state_2.loaded = fully_loaded_characters[state_2.character]
+    state_1.loaded = characters[state_1.character] and characters[state_1.character].fully_loaded
+    state_2.loaded = characters[state_2.character] and characters[state_2.character].fully_loaded
     
     if character_select_mode == "2p_net_vs" then
       state_1.ready = state_1.wants_ready and state_1.loaded and state_2.loaded
@@ -735,7 +735,7 @@ function main_character_select()
     end
 
     local function draw_player_state(cursor_data,player_number)
-      if not fully_loaded_characters[cursor_data.state.character] then
+      if characters[cursor_data.state.character] and not characters[cursor_data.state.character].fully_loaded then
         menu_drawf(IMG_loading, render_x+button_width*0.5, render_y+button_height*0.5, "center", "center" )
       elseif cursor_data.state.wants_ready then
         menu_drawf(IMG_ready, render_x+button_width*0.5, render_y+button_height*0.5, "center", "center" )
@@ -884,7 +884,6 @@ function main_character_select()
         if msg.menu_state then
           if currently_spectating then
             if msg.player_number == 1 or msg.player_number == 2 then
-              print("received: "..msg.menu_state.panels_dir)
               cursor_data[msg.player_number].state = msg.menu_state
               refresh_based_on_own_mods(cursor_data[msg.player_number].state)
               character_loader_load(cursor_data[msg.player_number].state.character)
@@ -919,10 +918,12 @@ function main_character_select()
           local fake_P1 = P1
           local fake_P2 = P2
           refresh_based_on_own_mods(msg.opponent_settings)
-          assert(fully_loaded_characters[msg.opponent_settings.character] and fully_loaded_characters[msg.player_settings.character], 
-            "Characters "..msg.player_settings.character.." and "..msg.opponent_settings.character.. "have not been loaded")
+          -- mainly for spectator mode, those characters have already been loaded otherwise
+          character_loader_load(msg.player_settings.character)
+          character_loader_load(msg.opponent_settings.character)
+          character_loader_wait()
           P1 = Stack(1, "vs", msg.player_settings.panels_dir, msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
-          P1.enable_analytics = true
+          P1.enable_analytics = not currently_spectating and not replay_of_match_so_far
           P2 = Stack(2, "vs", msg.opponent_settings.panels_dir, msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
           if currently_spectating then
             P1.panel_buffer = fake_P1.panel_buffer

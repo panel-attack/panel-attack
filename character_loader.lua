@@ -6,14 +6,14 @@ local loading_queue = Queue()
 local loading_character = nil
 
 function character_loader_load(character_id)
-  if not fully_loaded_characters[character_id] then
+  if characters[character_id] and not characters[character_id].fully_loaded then
     loading_queue:push(character_id)
   end
 end
 
 -- return true if there is still data to load
 function character_loader_update()
-  if not loaded_character and loading_queue:len() > 0 then
+  if not loading_character and loading_queue:len() > 0 then
     local character_name = loading_queue:pop()
     loading_character = { character_name, coroutine.create( function()
       characters[character_name]:load()
@@ -25,7 +25,6 @@ function character_loader_update()
       coroutine.resume(loading_character[2])
       return true
     elseif coroutine.status(loading_character[2]) == "dead" then
-      fully_loaded_characters[loading_character[1]] = true
       loading_character = nil
       return loading_queue:len() > 0
       -- TODO: unload characters if too much data have been loaded (be careful not to release currently-used characters)
@@ -45,12 +44,9 @@ end
 
 function character_loader_clear()
   local p2_local_character = global_op_state and global_op_state.character or nil
-  for character_name,loaded in pairs(fully_loaded_characters) do
-    if loaded and character_name ~= config.character and character_name ~= p2_local_character then
-      characters[character_name]:unload()
+  for character_id,character in pairs(characters) do
+    if character.fully_loaded and character_id ~= default_character_id and character_id ~= config.character and character_id ~= p2_local_character then
+      character:unload()
     end
   end
-  fully_loaded_characters = {}
-  fully_loaded_characters[config.character] = true
-  if p2_local_character then fully_loaded_characters[p2_local_character] = true end
 end

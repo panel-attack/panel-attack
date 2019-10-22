@@ -35,6 +35,7 @@ Character = class(function(s, id)
     s.images = {}
     s.sounds = { combos = {}, combo_echos = {}, selections = {}, wins = {}, garbage_matches = {}, others = {} }
     s.musics = {}
+    s.fully_loaded = false
   end)
 
 function Character.other_data_init(self)
@@ -78,7 +79,7 @@ local function find_character_SFX(character_id, SFX_name,fallback)
   if config.use_default_characters and character_id ~= default_character_id then
     dirs_to_check = { "sounds/"..config.sounds_dir.."/characters/",
                       "sounds/"..default_sounds_dir.."/characters/",
-                      ""}
+                      "characters/"}
   end
   for _,current_dir in ipairs(dirs_to_check) do
     --Note: if there is a chain or a combo, but not the other, return the same SFX for either inquiry.
@@ -215,15 +216,20 @@ function Character.preload(self)
 end
 
 function Character.load(self)
-  print("initializing "..self.id)
+  print("loading "..self.id)
   self:graphics_init(true)
   self:sound_init(true)
   self:assert_requirements_met()
+  self.fully_loaded = true
+  print("loaded "..self.id)
 end
 
 function Character.unload(self)
+  print("unloading "..self.id)
   self:graphics_uninit()
   self:sound_uninit()
+  self.fully_loaded = false
+  print("unloaded "..self.id)
 end
 
 function characters_init()
@@ -390,6 +396,10 @@ function Character.sound_uninit(self)
   for _,sound in ipairs(other_characters_sfx) do
     self.sounds.others[sound] = nil
   end
+  self.sounds.combos = {}
+  self.sounds.combo_echos = {}
+  self.sounds.wins = {}
+  self.sounds.garbage_matches = {}
 
   -- music
   for _,music in ipairs(other_characters_musics) do
