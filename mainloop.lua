@@ -429,7 +429,7 @@ local function fill_map(template_map,map)
   end
 end
 
-fallback_when_missing = nil
+local fallback_when_missing = nil
 
 local function refresh_based_on_own_mods(refreshed)
   if refreshed ~= nil then
@@ -448,6 +448,8 @@ local function refresh_based_on_own_mods(refreshed)
     end
   end
 end
+
+local current_page = 1
 
 function main_character_select()
   love.audio.stop()
@@ -478,7 +480,6 @@ function main_character_select()
   -- map is composed of special values prefixed by __ and character ids
   local template_map = {}
   local map = {}
-  local current_page = 1
   if character_select_mode == "2p_net_vs" then
     local opponent_connected = false
     local retries, retry_limit = 0, 250
@@ -598,6 +599,9 @@ function main_character_select()
   end
 
   local pages_amount = fill_map(template_map, map)
+  if current_page > pages_amount then
+    current_page = 1
+  end
 
   op_win_count = op_win_count or 0
 
