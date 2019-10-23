@@ -431,7 +431,8 @@ end
 
 local fallback_when_missing = nil
 
-local function refresh_based_on_own_mods(refreshed)
+local function refresh_based_on_own_mods(refreshed,ask_change_fallback)
+  ask_change_fallback = ask_change_fallback or false
   if refreshed ~= nil then
     if refreshed.panels_dir == nil or IMG_panels[refreshed.panels_dir] == nil then
       refreshed.panels_dir = config.panels_dir
@@ -440,7 +441,7 @@ local function refresh_based_on_own_mods(refreshed)
       if refreshed.character_display_name and characters_ids_by_display_names[refreshed.character_display_name] then
         refreshed.character = characters_ids_by_display_names[refreshed.character_display_name][1]
       else
-        if not fallback_when_missing then
+        if not fallback_when_missing or ask_change_fallback then
           fallback_when_missing = uniformly(characters_ids_for_current_theme)
         end
         refreshed.character = fallback_when_missing
@@ -922,6 +923,7 @@ function main_character_select()
           local fake_P1 = P1
           local fake_P2 = P2
           refresh_based_on_own_mods(msg.opponent_settings)
+          refresh_based_on_own_mods(msg.player_settings, true)
           -- mainly for spectator mode, those characters have already been loaded otherwise
           character_loader_load(msg.player_settings.character)
           character_loader_load(msg.opponent_settings.character)
@@ -1832,7 +1834,7 @@ function main_replay_vs()
   P1.character = replay.P1_char
   P2.character = replay.P2_char
   refresh_based_on_own_mods(P1)
-  refresh_based_on_own_mods(P2)
+  refresh_based_on_own_mods(P2, true)
   character_loader_load(P1.character)
   character_loader_load(P2.character)
   character_loader_wait()
