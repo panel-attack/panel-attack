@@ -211,14 +211,14 @@ end
 function Character.preload(self)
   print("preloading "..self.id)
   self:other_data_init()
-  self:graphics_init(false)
-  self:sound_init(false)
+  self:graphics_init(false,false)
+  self:sound_init(false,false)
 end
 
-function Character.load(self)
+function Character.load(self,instant)
   print("loading "..self.id)
-  self:graphics_init(true)
-  self:sound_init(true)
+  self:graphics_init(true,(not instant))
+  self:sound_init(true,(not instant))
   self:assert_requirements_met()
   self.fully_loaded = true
   print("loaded "..self.id)
@@ -298,7 +298,7 @@ function characters_init()
 
   -- init default first, as it is used as a fallback we initialize it fully
   characters[default_character_id]:preload()
-  characters[default_character_id]:load()
+  characters[default_character_id]:load(true)
   
   -- actual init for all characters (default is initialized twice but that's 'okay', it's cheap enough)
   for _,character in pairs(characters) do
@@ -320,7 +320,7 @@ function characters_init()
   character_loader_wait()
 end
 
-function Character.graphics_init(self,full)
+function Character.graphics_init(self,full,yields)
   local character_images = full and other_character_images or basic_character_images
   if config.use_default_characters and self.id ~= default_character_id then
     for _,image_name in ipairs(character_images) do
@@ -328,12 +328,12 @@ function Character.graphics_init(self,full)
       if not self.images[image_name] then
         self.images[image_name] = load_img(image_name..".png","characters/"..self.id, "characters/__default")
       end
-      coroutine.yield()
+      if yields then coroutine.yield() end
     end
   else
     for _,image_name in ipairs(character_images) do
       self.images[image_name] = load_img(image_name..".png","characters/"..self.id, "characters/__default")
-      coroutine.yield()
+      if yields then coroutine.yield() end
     end
   end
 end
@@ -344,7 +344,7 @@ function Character.graphics_uninit(self)
   end
 end
 
-function Character.sound_init(self,full)
+function Character.sound_init(self,full,yields)
   -- SFX
   local character_sfx = full and other_characters_sfx or basic_characters_sfx
   for _, sound in ipairs(character_sfx) do
@@ -357,21 +357,21 @@ function Character.sound_init(self,full)
         self.sounds.others[sound] = find_character_SFX(self.id, "combo")
       end
     end
-    coroutine.yield()
+    if yields then coroutine.yield() end
   end
 
   if not full then
     init_variations_sfx(self.id, self.sounds.selections, "selection", self.sounds.others["selection"])
-    coroutine.yield()
+    if yields then coroutine.yield() end
   else
     init_variations_sfx(self.id, self.sounds.combos, "combo", self.sounds.others["combo"])
-    coroutine.yield()
+    if yields then coroutine.yield() end
     init_variations_sfx(self.id, self.sounds.combo_echos, "combo_echo", self.sounds.others["combo_echo"])
-    coroutine.yield()
+    if yields then coroutine.yield() end
     init_variations_sfx(self.id, self.sounds.wins, "win", self.sounds.others["win"])
-    coroutine.yield()
+    if yields then coroutine.yield() end
     init_variations_sfx(self.id, self.sounds.garbage_matches, "garbage_match", self.sounds.others["garbage_match"])
-    coroutine.yield()
+    if yields then coroutine.yield() end
   end
 
   -- music
@@ -387,7 +387,7 @@ function Character.sound_init(self,full)
         self.musics[music]:setLooping(false)
       end
     end
-    coroutine.yield()
+    if yields then coroutine.yield() end
   end
 end
 

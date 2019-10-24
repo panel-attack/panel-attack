@@ -11,12 +11,14 @@ function character_loader_load(character_id)
   end
 end
 
+local instant_load_enabled = false
+
 -- return true if there is still data to load
 function character_loader_update()
   if not loading_character and loading_queue:len() > 0 then
     local character_name = loading_queue:pop()
     loading_character = { character_name, coroutine.create( function()
-      characters[character_name]:load()
+      characters[character_name]:load(instant_load_enabled)
     end) }
   end
 
@@ -35,11 +37,13 @@ function character_loader_update()
 end
 
 function character_loader_wait()
+  instant_load_enabled = true
   while true do
     if not character_loader_update() then
       break
     end
   end
+  instant_load_enabled = false
 end
 
 function character_loader_clear()
