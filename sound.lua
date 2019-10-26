@@ -71,7 +71,7 @@ function apply_config_volume()
   set_volume(sounds.music, config.music_volume/100)
   for _,character in pairs(characters) do
     set_volume(character.sounds, config.SFX_volume/100)
-    set_volume(character.musics, config.SFX_volume/100)
+    set_volume(character.musics, config.music_volume/100)
   end
 end
 
