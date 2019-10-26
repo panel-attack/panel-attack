@@ -577,7 +577,7 @@ function Stack.render(self)
     end
   end
   if self.enable_analytics then
-    analytics_draw_next_to_stack(self.score_x,self.score_y+150)
+    analytics_draw(self.score_x-460,self.score_y)
   end
   -- ends here
 end

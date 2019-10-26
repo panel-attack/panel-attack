@@ -2617,27 +2617,38 @@ function main_set_name()
 end
 
 function main_music_test()
-  local index = 1
-  local tracks = {}
-  for k, v in pairs(sounds.music.characters) do
-    tracks[#tracks+1] = {
-      name = k .. "_normal",
-      char = k,
-      type = "normal_music",
-      start = v.normal_music_start or zero_sound,
-      loop = v.normal_music
-    }
-    tracks[#tracks+1] = {
-      name = k .. "_danger",
-      char = k,
-      type = "danger_music",
-      start = v.danger_music_start or zero_sound,
-      loop = v.danger_music
-    }
+  gprint("Loading required sounds... (this may take a while)", unpack(main_menu_screen_pos))
+  wait()
+  -- loads music for characters that are not fully loaded
+  for _,character_id in ipairs(characters_ids_for_current_theme) do
+    if not characters[character_id].fully_loaded then
+      characters[character_id]:sound_init(true,false)
+    end
   end
 
-  -- debug scroll to music
-  while tracks[index].name ~= "lip_normal" do index = index + 1 end
+  local index = 1
+  local tracks = {}
+
+  for _,character_id in ipairs(characters_ids_for_current_theme) do
+    local character = characters[character_id]
+    tracks[#tracks+1] = {
+      name = character.display_name .. ": normal_music",
+      char = character_id,
+      type = "normal_music",
+      start = character.musics.normal_music_start or zero_sound,
+      loop = character.musics.normal_music
+    }
+    if character.musics.danger_music then
+      tracks[#tracks+1] = {
+        name = character.display_name .. ": danger_music",
+        char = character_id,
+        type = "danger_music",
+        start = character.musics.danger_music_start or zero_sound,
+        loop = character.musics.danger_music
+      }
+    end
+  end
+
   -- initial song starts here
   find_and_add_music(tracks[index].char, tracks[index].type)
 
@@ -2663,6 +2674,14 @@ function main_music_test()
         find_and_add_music(tracks[index].char, tracks[index].type)
       end
       if menu_escape(K[1]) then
+
+        -- unloads music for characters that are not fully loaded (it has been loaded when entering this submenu)
+        for _,character_id in ipairs(characters_ids_for_current_theme) do
+          if not characters[character_id].fully_loaded then
+            characters[character_id]:sound_uninit()
+          end
+        end
+
         ret = {main_select_mode}
       end
     end)
