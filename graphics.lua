@@ -417,7 +417,6 @@ function Stack.render(self)
     gprint("Shake: "..self.shake_time, self.score_x, 190)
     gprint("Stop: "..self.stop_time, self.score_x, 205)
     gprint("Pre stop: "..self.pre_stop_time, self.score_x, 220)
-    gprint("DEATH: "..(self.max_height).."/22", self.score_x, 240)
     if config.debug_mode and self.danger then gprint("danger", self.score_x,235) end
     if config.debug_mode and self.danger_music then gprint("danger music", self.score_x, 250) end
     if config.debug_mode then

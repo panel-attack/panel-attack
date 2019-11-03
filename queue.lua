@@ -10,58 +10,27 @@ function Queue.push(self, value)
 end
 
 function Queue.pop(self)
-  local ret = nil
-  local first = nil
-  repeat
-    first = self.first
-    if first > self.last then
-      error("q is empty")
-    end
-    ret = self[first]
-    self[first] = nil
-    if self.first == self.last then
-      self.first = 0
-      self.last = -1
-    else
-      self.first = first + 1
-    end
-  until (ret ~= nil)
-
+  local first = self.first
+  if first > self.last then
+    error("q is empty")
+  end
+  local ret = self[first]
+  self[first] = nil
+  if self.first == self.last then
+    self.first = 0
+    self.last = -1
+  else
+    self.first = first + 1
+  end
   return ret
-end
-
-function Queue.get(self, i)
-  return self[self.first + i - 1]
-end
-
-function Queue.remove(self, i)
-  self[self.first + i - 1] = nil
 end
 
 function Queue.peek(self)
-  if self.last == -1 then
-    return self[first]
-  else
-    local ret
-    local f = self.first
-    repeat
-      ret = self[f]
-      f = f + 1
-    until ret ~= nil
-    return ret
-  end
+  return self[self.first]
 end
 
 function Queue.len(self)
-  local ret = 0
-
-  for i=1,(self.last - self.first + 1) do
-    if self[self.first + i - 1] ~= nil then
-      ret = ret + 1
-    end
-  end
-
-  return ret
+  return self.last - self.first + 1
 end
 
 function Queue.clear(self)
