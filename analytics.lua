@@ -44,9 +44,9 @@ end
 local function compute_above_13(analytic)
   --computing chain ? count
   local chain_above_13 = 0
-  for i=14,#analytic.reached_chains do
-    if analytic.reached_chains[i] then
-      chain_above_13 = chain_above_13 + analytic.reached_chains[i]
+  for k,v in pairs(analytic.reached_chains) do
+    if k > 13 then
+      chain_above_13 = chain_above_13 + v
     end
   end
   return chain_above_13
@@ -193,6 +193,8 @@ function analytics_register_chain(size)
     return
   end
 
+  local max_size = math.min(size, 13)
+
   local analytics_filters = { analytics.last_game, analytics.overall }
   for _,analytic in pairs(analytics_filters) do
     if not analytic.reached_chains[size] then
@@ -201,7 +203,7 @@ function analytics_register_chain(size)
       analytic.reached_chains[size] = analytic.reached_chains[size]+1
     end
     size = math.min(size, 13)
-    analytic.sent_garbage_lines = analytic.sent_garbage_lines + (size-1)
+    analytic.sent_garbage_lines = analytic.sent_garbage_lines + (max_size-1)
   end
 end
 
