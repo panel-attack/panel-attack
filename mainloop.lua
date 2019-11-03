@@ -35,6 +35,8 @@ function fmainloop()
              version                       = VERSION,
              -- Player character
              character                     = "lip",
+             -- Player character
+             stage                         = "cave", -- NOCOMMIT: do update the conf based on new VERSION
              -- Level (2P modes / 1P vs yourself mode)
              level                         = 5,
              endless_speed                 = 1,
@@ -85,7 +87,10 @@ function fmainloop()
   read_replay_file()
   gprint("Preloading characters...", unpack(main_menu_screen_pos))
   wait()
-  characters_init() -- load images and set up stuff
+  characters_init()
+  gprint("Preloading stages...", unpack(main_menu_screen_pos))
+  wait()
+  stages_init()
   gprint("Loading graphics...", unpack(main_menu_screen_pos))
   wait()
   graphics_init() -- load images and set up stuff
@@ -584,7 +589,7 @@ function main_character_select()
              {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
              {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}}
     else
-      template_map = {{"__Level", "__Level", "__Level", "__Panels", "__Panels", "__Panels", "__Ready"},
+      template_map = {{"__Level", "__Level", "__Stage", "__Stage", "__Panels", "__Panels", "__Ready"},
              {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
              {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
              {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
@@ -592,7 +597,7 @@ function main_character_select()
     end
   end
   if character_select_mode == "2p_local_vs" or character_select_mode == "1p_vs_yourself" then
-    template_map = {{"__Level", "__Level", "__Level", "__Panels", "__Panels", "__Panels", "__Ready"},
+    template_map = {{"__Level", "__Level", "__Stage", "__Stage", "__Panels", "__Panels", "__Ready"},
              {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
              {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
              {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
@@ -660,7 +665,7 @@ function main_character_select()
     cursor_data[1].state = shallowcpy(global_my_state)
     global_my_state = nil
   else
-    cursor_data[1].state = {character=config.character, character_display_name=characters[config.character].display_name, level=config.level, panels_dir=config.panels_dir, cursor="__Ready", ready=false, ranked=config.ranked}
+    cursor_data[1].state = {stage=config.stage, character=config.character, character_display_name=characters[config.character].display_name, level=config.level, panels_dir=config.panels_dir, cursor="__Ready", ready=false, ranked=config.ranked}
   end
   if global_op_state ~= nil then
     cursor_data[2].state = shallowcpy(global_op_state)
@@ -668,7 +673,7 @@ function main_character_select()
       global_op_state = nil -- retains state of the second player, also: don't unload its character when going back and forth
     end
   else
-    cursor_data[2].state = {character=config.character, character_display_name=characters[config.character].display_name, level=config.level, panels_dir=config.panels_dir, cursor="__Ready", ready=false, ranked=false}
+    cursor_data[2].state = {stage=config.stage, character=config.character, character_display_name=characters[config.character].display_name, level=config.level, panels_dir=config.panels_dir, cursor="__Ready", ready=false, ranked=false}
   end
   add_client_data(cursor_data[1].state)
   add_client_data(cursor_data[2].state)
@@ -825,6 +830,28 @@ function main_character_select()
       gprint(to_print, render_x+padding_x, render_y+y_padding-0.5*text_height-1)
     end
 
+    local function draw_stage(cursor_data,player_number,x_padding)
+      local stage_dimensions = { 66, 36 }
+      local y_padding = 0.5*button_height
+      local player_count = ( character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs" ) and 2 or 1
+      local padding_x = x_padding-0.5*stage_dimensions[1]
+      local is_selected = cursor_data.selected and cursor_data.state.cursor == "__Stage"
+      menu_drawf(IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center" )
+      padding_x = padding_x + IMG_players[player_number]:getWidth()
+      if is_selected then
+        gprintf("<", render_x+padding_x-5, render_y+y_padding-0.5*text_height,10,"center")
+        padding_x = padding_x+10
+      end
+
+      local scale_x = stage_dimensions[1]/stages[cursor_data.state.stage].images.thumbnail:getWidth()
+      local scale_y = stage_dimensions[2]/stages[cursor_data.state.stage].images.thumbnail:getHeight()
+      menu_drawf(stages[cursor_data.state.stage].images.thumbnail, render_x+padding_x, render_y+y_padding, "center", "center", 0, scale_x, scale_y )
+
+      if is_selected then
+        gprintf(">", render_x+padding_x-5, render_y+y_padding-0.5*text_height,10,"center")
+      end
+    end
+
     local pstr
     if string.sub(str, 1, 2) == "__" then
       pstr = string.sub(str, 3)
@@ -842,6 +869,13 @@ function main_character_select()
         draw_panels(cursor_data[2],2,0.7*button_height)
       else
         draw_panels(cursor_data[1],1,0.5*button_height)
+      end
+    elseif str == "__Stage" then
+      if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs") then
+        draw_stage(cursor_data[1],1,0.3*button_width)
+        draw_stage(cursor_data[2],2,0.7*button_width)
+      else
+        draw_stage(cursor_data[1],1,0.5*button_width)
       end
     elseif str == "__Level" then
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs") then
@@ -1018,8 +1052,9 @@ function main_character_select()
       draw_button(1,3,2,1,"__Level","center","top")
       draw_button(1,5,2,1,"__Panels","center","top")
     else
-      draw_button(1,1,3,1,"__Level","center","top")
-      draw_button(1,4,3,1,"__Panels","center","top")
+      draw_button(1,1,2,1,"__Level","center","top")
+      draw_button(1,3,2,1,"__Stage","center","top")
+      draw_button(1,5,2,1,"__Panels","center","top")
     end
     draw_button(1,7,1,1,"__Ready","center","center")
 
@@ -1143,7 +1178,7 @@ function main_character_select()
       refresh_loaded_and_ready(cursor_data[1].state,cursor_data[2].state)
 
       local up,down,left,right = {-1,0}, {1,0}, {0,-1}, {0,1}
-      local selectable = {__Panels=true, __Level=true, __Ready=true}
+      local selectable = {__Stage=true,__Panels=true, __Level=true, __Ready=true}
       if not currently_spectating then
         local KMax = 1
         if character_select_mode == "2p_local_vs" then

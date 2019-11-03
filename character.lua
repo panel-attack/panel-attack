@@ -146,7 +146,7 @@ local function find_music(character_id, music_type)
     end
   end
   
-  return characters[default_character_id].musics[music_type]
+  return zero_sound
 end
 
 local function init_variations_sfx(character_id, sfx_array, sfx_name, first_sound)
