@@ -17,7 +17,7 @@ local required_char_music = {"normal_music"}
   -- @CardsOfTheHeart says there are 4 chain sfx: --x2/x3, --x4, --x5 is x2/x3 with an echo effect, --x6+ is x4 with an echo effect
   -- combo sounds, on the other hand, can have multiple variations, hence combo, combo2, combo3 (...) and combo_echo, combo_echo2...
 local basic_characters_sfx = {"selection"}
-local other_characters_sfx = {"chain", "combo", "combo_echo", "chain_echo", "chain2" ,"chain2_echo", "garbage_match", "win"}
+local other_characters_sfx = {"chain", "combo", "combo_echo", "chain_echo", "chain2" ,"chain2_echo", "garbage_match", "win", "taunt_up", "taunt_down"}
 local basic_characters_musics = {}
 local other_characters_musics = {"normal_music", "danger_music", "normal_music_start", "danger_music_start"}
 
@@ -33,7 +33,7 @@ Character = class(function(s, id)
     s.display_name = id -- string | display name of the character
     s.favorite_stage = default_stages[id] -- string | id of the character, is also the name of its folder
     s.images = {}
-    s.sounds = { combos = {}, combo_echos = {}, selections = {}, wins = {}, garbage_matches = {}, others = {} }
+    s.sounds = { combos = {}, combo_echos = {}, selections = {}, wins = {}, garbage_matches = {}, taunt_ups = {}, taunt_downs = {}, others = {} }
     s.musics = {}
     s.fully_loaded = false
   end)
@@ -371,6 +371,11 @@ function Character.sound_init(self,full,yields)
     init_variations_sfx(self.id, self.sounds.wins, "win", self.sounds.others["win"])
     if yields then coroutine.yield() end
     init_variations_sfx(self.id, self.sounds.garbage_matches, "garbage_match", self.sounds.others["garbage_match"])
+    if yields then coroutine.yield() end
+    -- those two are maxed at 10 since this is a server requirement
+    init_variations_sfx(self.id, self.sounds.taunt_downs, "taunt_down", self.sounds.others["taunt_down"])
+    if yields then coroutine.yield() end
+    init_variations_sfx(self.id, self.sounds.taunt_ups, "taunt_up", self.sounds.others["taunt_up"])
     if yields then coroutine.yield() end
   end
 

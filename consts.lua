@@ -31,7 +31,7 @@ default_characters_ids = {"lip", "windy", "sherbet", "thiana", "ruby",
 default_character_id = "__default"
 
 key_names = {"up", "down", "left", "right", "swap1",
-  "swap2", "raise1", "raise2"}
+  "swap2", "taunt_up", "taunt_down", "raise1", "raise2"}
 
 bounce_table = {1, 1, 1, 1,
                 2, 2, 2,

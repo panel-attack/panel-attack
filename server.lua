@@ -1103,7 +1103,6 @@ end
 function Connection.F(self, message)
 end
 
-
 local ok_ncolors = {}
 for i=2,7 do
   ok_ncolors[i..""] = true
@@ -1186,6 +1185,10 @@ function Connection.J(self, message)
       self.state = "lobby"
       name_to_idx[self.name] = self.index
     end
+  elseif message.taunt then
+    message.player_number = self.player_number
+    self.opponent:send(message)
+    self.room:send_to_spectators(message)
   elseif message.login_request then
     self:login(message.user_id)
   elseif self.state == "lobby" and message.game_request then

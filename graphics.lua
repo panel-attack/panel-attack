@@ -553,7 +553,7 @@ function Stack.render(self)
     if config.debug_mode then
       gprint("metal q: "..(self.metal_panels_queued or 0), self.score_x, self.score_y+180)
     end
-    if config.debug_mode and self.input_state then
+    if config.debug_mode and (self.input_state or self.taunt_up or self.taunt_down) then
       -- print(self.input_state)
       -- print(base64decode[self.input_state])
       local iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
@@ -565,6 +565,8 @@ function Stack.render(self)
       if idown then inputs_to_print = inputs_to_print.."\ndown" end
       if ileft then inputs_to_print = inputs_to_print.."\nleft" end
       if iright then inputs_to_print = inputs_to_print.."\nright" end
+      if self.taunt_down then inputs_to_print = inputs_to_print.."\ntaunt_down" end
+      if self.taunt_up then inputs_to_print = inputs_to_print.."\ntaunt_up" end
       gprint(inputs_to_print, self.score_x, self.score_y+195)
     end
     local main_infos_screen_pos = { x=375 + (canvas_width-legacy_canvas_width)/2, y=10 + (canvas_height-legacy_canvas_height) }

@@ -3,7 +3,7 @@ require("queue")
 
 -- keyboard assignment vars
 K = {{up="up", down="down", left="left", right="right",
-      swap1="z", swap2="x", raise1="c", raise2="v"},
+      swap1="z", swap2="x", taunt_up="y", taunt_down="u", raise1="c", raise2="v"},
       {},{},{}}
 keys = {}
 this_frame_keys = {}
