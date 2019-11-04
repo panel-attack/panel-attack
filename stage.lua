@@ -1,3 +1,5 @@
+require("stage_loader")
+
   -- Stuff defined in this file:
   --  . the data structure that store a stage's data
 
@@ -97,6 +99,11 @@ function stages_init()
   -- all stages case
   if #stages_ids_for_current_theme == 0 then
     stages_ids_for_current_theme = shallowcpy(stages_ids)
+  end
+
+  -- fix config stage if it's missing
+  if not config.stage or not stages[config.stage] then
+    config.stage = uniformly(stages_ids_for_current_theme)
   end
   
   -- actual init for all stages

@@ -47,8 +47,9 @@ function stage_loader_wait()
 end
 
 function stage_loader_clear()
+  local p2_local_stage = global_op_state and global_op_state.stage or nil
   for stage_id,stage in pairs(stages) do
-    if stage.fully_loaded then
+    if stage.fully_loaded and stage_id ~= config.stage and stage_id ~= p2_local_stage then
       stage:unload()
     end
   end

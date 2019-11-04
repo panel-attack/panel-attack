@@ -173,23 +173,9 @@ function file_exists(name)
    if f~=nil then io.close(f) return true else return false end
 end
 
-IMG_stagecount = 1
 function graphics_init()
   title = load_img("menu/title.png")
   charselect = load_img("menu/charselect.png")
-  IMG_stages = {}
-
-  IMG_stagecount = 1
-  i = 0
-  while i > -1 do
-    IMG_stages[IMG_stagecount] = load_img("stages/"..tostring(IMG_stagecount)..".png")
-    if IMG_stages[IMG_stagecount] == nil then
-      i=-1
-      break
-    else
-      IMG_stagecount=IMG_stagecount+1
-    end
-  end
 
   IMG_level_cursor = load_img("level_cursor.png")
   IMG_levels = {}
@@ -212,6 +198,8 @@ function graphics_init()
 
   IMG_players = {  load_img("player_1.png"),
           load_img("player_2.png")}
+
+  IMG_random_stage = load_img("random_stage.png")
 
   IMG_frame = load_img("frame.png")
   IMG_wall = load_img("wall.png")

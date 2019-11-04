@@ -342,8 +342,15 @@ function main_select_speed_99(next_func, ...)
   end
 end
 
+local function pick_random_stage()
+  local stage_id = stages_ids_for_current_theme[math.random(#stages_ids_for_current_theme)]
+  stage_loader_load(stage_id)
+  stage_loader_wait()
+  bg = stages[stage_id].images.background
+end
+
 function main_endless(...)
-  bg = IMG_stages[math.random(#IMG_stages)]
+  pick_random_stage()
   consuming_timesteps = true
   replay.endless = {}
   local replay=replay.endless
@@ -381,7 +388,7 @@ function main_endless(...)
 end
 
 function main_time_attack(...)
-  bg = IMG_stages[math.random(#IMG_stages)]
+  pick_random_stage()
   consuming_timesteps = true
   P1 = Stack(1, "time", config.panels_dir, ...)
   P1.enable_analytics = true
@@ -665,7 +672,12 @@ function main_character_select()
     cursor_data[1].state = shallowcpy(global_my_state)
     global_my_state = nil
   else
-    cursor_data[1].state = {stage=config.stage, character=config.character, character_display_name=characters[config.character].display_name, level=config.level, panels_dir=config.panels_dir, cursor="__Ready", ready=false, ranked=config.ranked}
+    cursor_data[1].state = {stage=config.stage, stage_is_random=config.stage==random_stage_special_value, character=config.character, character_display_name=characters[config.character].display_name, level=config.level, panels_dir=config.panels_dir, cursor="__Ready", ready=false, ranked=config.ranked}
+    if cursor_data[1].state.stage_is_random then
+      cursor_data[1].state.stage = uniformly(stages_ids_for_current_theme)
+    end
+    print("stage to load is "..cursor_data[1].state.stage) -- NOCOMMIT
+    stage_loader_load(cursor_data[1].state.stage)
   end
   if global_op_state ~= nil then
     cursor_data[2].state = shallowcpy(global_op_state)
@@ -673,7 +685,11 @@ function main_character_select()
       global_op_state = nil -- retains state of the second player, also: don't unload its character when going back and forth
     end
   else
-    cursor_data[2].state = {stage=config.stage, character=config.character, character_display_name=characters[config.character].display_name, level=config.level, panels_dir=config.panels_dir, cursor="__Ready", ready=false, ranked=false}
+    cursor_data[2].state = {stage=config.stage, stage_is_random=config.stage==random_stage_special_value, character=config.character, character_display_name=characters[config.character].display_name, level=config.level, panels_dir=config.panels_dir, cursor="__Ready", ready=false, ranked=false}
+    if cursor_data[2].state.stage_is_random then
+      cursor_data[2].state.stage = uniformly(stages_ids_for_current_theme)
+    end
+    stage_loader_load(cursor_data[2].state.stage)
   end
   add_client_data(cursor_data[1].state)
   add_client_data(cursor_data[2].state)
@@ -832,27 +848,31 @@ function main_character_select()
 
     local function draw_stage(cursor_data,player_number,x_padding)
       local stage_dimensions = { 48, 27 }
-      local y_padding = 0.5*button_height
-      local padding_x = x_padding-0.5*stage_dimensions[1]-5
+      local y_padding = math.floor(0.6*button_height)
+      local padding_x = math.floor(x_padding-0.5*stage_dimensions[1])
       local is_selected = cursor_data.selected and cursor_data.state.cursor == "__Stage"
       if is_selected then
-        padding_x = padding_x - 10
-      end
-      menu_drawf(IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center" )
-      padding_x = padding_x + IMG_players[player_number]:getWidth()
-      if is_selected then
-        gprintf("<", render_x+padding_x-5, render_y+y_padding-0.5*text_height,10,"center")
-        padding_x = padding_x+10
+        gprintf("<", render_x+padding_x-13, math.floor(render_y+y_padding-0.5*text_height),10,"center")
       end
 
-      local scale_x = stage_dimensions[1]/stages[cursor_data.state.stage].images.thumbnail:getWidth()
-      local scale_y = stage_dimensions[2]/stages[cursor_data.state.stage].images.thumbnail:getHeight()
-      menu_drawf(stages[cursor_data.state.stage].images.thumbnail, render_x+padding_x, render_y+y_padding, "left", "center", 0, scale_x, scale_y )
-      gprintf(stages[cursor_data.state.stage].display_name, render_x+padding_x, render_y+y_padding+stage_dimensions[2]*0.5-0.5*text_height,stage_dimensions[1],"center")
+      local thumbnail = cursor_data.state.stage_is_random and IMG_random_stage or stages[cursor_data.state.stage].images.thumbnail
+      local scale_x = stage_dimensions[1]/thumbnail:getWidth()
+      local scale_y = stage_dimensions[2]/thumbnail:getHeight()
+
+      -- background for thumbnail
+      grectangle("line", render_x+padding_x, math.floor(render_y+y_padding-stage_dimensions[2]*0.5), stage_dimensions[1], stage_dimensions[2])
+      -- thumbnail
+      menu_drawf(thumbnail, render_x+padding_x, render_y+y_padding-1, "left", "center", 0, scale_x, scale_y )
+      -- player image
+      menu_drawf(IMG_players[player_number], math.floor(render_x+padding_x+stage_dimensions[1]*0.5), math.floor(render_y+y_padding-stage_dimensions[2]*0.5-10), "center", "center" )
+      -- display name
+      local display_name = cursor_data.state.stage_is_random and "???" or stages[cursor_data.state.stage].display_name
+      gprintf(display_name, render_x+padding_x-2, math.floor(render_y+y_padding+stage_dimensions[2]*0.5),stage_dimensions[1]+4,"center")
+
       padding_x = padding_x+stage_dimensions[1]
 
       if is_selected then
-        gprintf(">", render_x+padding_x+5, render_y+y_padding-0.5*text_height,10,"center")
+        gprintf(">", render_x+padding_x+3, math.floor(render_y+y_padding-0.5*text_height),10,"center")
       end
     end
 
@@ -876,8 +896,8 @@ function main_character_select()
       end
     elseif str == "__Stage" then
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs") then
-        draw_stage(cursor_data[1],1,0.3*button_width)
-        draw_stage(cursor_data[2],2,0.7*button_width)
+        draw_stage(cursor_data[1],1,0.25*button_width)
+        draw_stage(cursor_data[2],2,0.75*button_width)
       else
         draw_stage(cursor_data[1],1,0.5*button_width)
       end
@@ -1175,35 +1195,41 @@ function main_character_select()
       return panels_dir
     end
 
-    local function change_stage(stage,increment)
+    local function change_stage(state,increment)
+      -- random_stage_special_value is placed at the end and is 'replaced' by a random pick and stage_is_random=true
       local current = nil
       for k,v in ipairs(stages_ids_for_current_theme) do
-        if v == stage then
+        if v == state.stage then
           current = k
           break
         end
       end
-      if current == nil then -- NOCOMMIT
-        current = 0
+      if state.stage == random_stage_special_value or state.stage_is_random then
+        current = #stages_ids_for_current_theme+1
       end
-      local dir_count = #stages_ids_for_current_theme
+      if current == nil then
+        return
+      end
+      local dir_count = #stages_ids_for_current_theme + 1
       local new_stage_idx = ((current - 1 + increment) % dir_count) + 1
-      for k,v in ipairs(stages_ids_for_current_theme) do
-        if k == new_stage_idx then
-            return v
-        end
+      if new_stage_idx <= #stages_ids_for_current_theme then
+        state.stage_is_random = false
+        state.stage = stages_ids_for_current_theme[new_stage_idx]
+      else
+        state.stage_is_random = true
+        state.stage = uniformly(stages_ids_for_current_theme)
       end
-      return stage
     end
 
     variable_step(function()
       menu_clock = menu_clock + 1
 
       character_loader_update()
+      stage_loader_update()
       refresh_loaded_and_ready(cursor_data[1].state,cursor_data[2].state)
 
       local up,down,left,right = {-1,0}, {1,0}, {0,-1}, {0,1}
-      local selectable = {__Stage=true,__Panels=true, __Level=true, __Ready=true}
+      local selectable = {__Stage=true, __Panels=true, __Level=true, __Ready=true}
       if not currently_spectating then
         local KMax = 1
         if character_select_mode == "2p_local_vs" then
@@ -1227,7 +1253,7 @@ function main_character_select()
               elseif cursor.state.cursor == "__Panels" then
                 cursor.state.panels_dir = change_panels_dir(cursor.state.panels_dir,-1)
               elseif cursor.state.cursor == "__Stage" then
-                cursor.state.stage = change_stage(cursor.state.stage,-1)
+                change_stage(cursor.state,-1)
               end
             end
             if not cursor.selected then move_cursor(cursor.position,left) end
@@ -1238,12 +1264,16 @@ function main_character_select()
               elseif cursor.state.cursor == "__Panels" then
                 cursor.state.panels_dir = change_panels_dir(cursor.state.panels_dir,1)
               elseif cursor.state.cursor == "__Stage" then
-                cursor.state.stage = change_stage(cursor.state.stage,1)
+                change_stage(cursor.state,1)
               end
             end
             if not cursor.selected then move_cursor(cursor.position,right) end
           elseif menu_enter(k) then
             if selectable[cursor.state.cursor] then
+              if cursor.selected and cursor.state.cursor == "__Stage" then
+                -- load stage even if hidden!
+                stage_loader_load(cursor.state.stage)
+              end
               cursor.selected = not cursor.selected
             elseif cursor.state.cursor == "__Leave" then
               if character_select_mode == "2p_net_vs" then
@@ -1288,6 +1318,7 @@ function main_character_select()
         end
         -- update config, does not redefine it
         config.character = cursor_data[1].state.character
+        config.stage = cursor_data[1].state.stage_is_random and random_stage_special_value or cursor_data[1].state.stage
         config.level = cursor_data[1].state.level
         config.ranked = cursor_data[1].state.ranked
         if config.use_panels_from_assets_folder == false then
@@ -1297,6 +1328,7 @@ function main_character_select()
 
         if character_select_mode == "2p_local_vs" then -- this is registered for future entering of the lobby
           global_op_state = shallowcpy(cursor_data[2].state)
+          global_op_state.stage = global_op_state.stage_is_random and random_stage_special_value or global_op_state.stage
           global_op_state.wants_ready = false
         end
 
@@ -1649,7 +1681,9 @@ end
 
 function main_net_vs()
   --STONER_MODE = true
-  bg = IMG_stages[math.random(#IMG_stages)]
+  if currently_spectating then
+    pick_random_stage()
+  end
   local k = K[1]  --may help with spectators leaving games in progress
   local end_text = nil
   consuming_timesteps = true
@@ -1799,7 +1833,6 @@ end
 
 function main_local_vs()
   -- TODO: replay!
-  bg = IMG_stages[math.random(#IMG_stages)]
   consuming_timesteps = true
   local end_text = nil
   while true do
@@ -1842,7 +1875,6 @@ end
 
 function main_local_vs_yourself()
   -- TODO: replay!
-  bg = IMG_stages[math.random(#IMG_stages)]
   consuming_timesteps = true
   local end_text = nil
   while true do
@@ -1877,8 +1909,8 @@ function main_replay_vs()
   if replay == nil then
     return main_dumb_transition, {main_select_mode, "I don't have a vs replay :("}
   end
+  pick_random_stage()
   fallback_when_missing = nil
-  bg = IMG_stages[math.random(#IMG_stages)]
   P1 = Stack(1, "vs", config.panels_dir, replay.P1_level or 5)
   P2 = Stack(2, "vs", config.panels_dir, replay.P2_level or 5)
   P1.do_countdown = replay.do_countdown or false
@@ -1972,12 +2004,12 @@ function main_replay_vs()
 end
 
 function main_replay_endless()
-  bg = IMG_stages[math.random(#IMG_stages)]
   local replay = replay.endless
   if replay == nil or replay.speed == nil then
     return main_dumb_transition,
       {main_select_mode, "I don't have an endless replay :("}
   end
+  pick_random_stage()
   P1 = Stack(1, "endless", config.panels_dir, replay.speed, replay.difficulty)
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
@@ -2018,12 +2050,12 @@ function main_replay_endless()
 end
 
 function main_replay_puzzle()
-  bg = IMG_stages[math.random(#IMG_stages)]
   local replay = replay.puzzle
   if not replay or replay.in_buf == nil or replay.in_buf == "" then
     return main_dumb_transition,
       {main_select_mode, "I don't have a puzzle replay :("}
   end
+  pick_random_stage()
   P1 = Stack(1, "puzzle", config.panels_dir)
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
@@ -2067,7 +2099,7 @@ end
 function make_main_puzzle(puzzles)
   local awesome_idx, next_func = 1, nil
   function next_func()
-    bg = IMG_stages[math.random(#IMG_stages)]
+    pick_random_stage()
     consuming_timesteps = true
     replay.puzzle = {}
     local replay = replay.puzzle

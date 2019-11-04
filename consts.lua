@@ -30,6 +30,8 @@ default_characters_ids = {"lip", "windy", "sherbet", "thiana", "ruby",
 
 default_character_id = "__default"
 
+random_stage_special_value = "__StageRandom"
+
 key_names = {"up", "down", "left", "right", "swap1",
   "swap2", "raise1", "raise2"}
 
