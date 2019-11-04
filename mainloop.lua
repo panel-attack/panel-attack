@@ -79,6 +79,9 @@ function fmainloop()
   read_replay_file()
   gprint("Loading graphics...", unpack(main_menu_screen_pos))
   wait()
+  localization_init()
+  --love.event.quit()
+  wait()
   graphics_init() -- load images and set up stuff
   gprint("Loading panels...", unpack(main_menu_screen_pos))
   wait()
@@ -190,33 +193,33 @@ do
     match_type = ""
     match_type_message = ""
     local items = {
-        {"1P endless", main_select_speed_99, {main_endless}},
-        {"1P puzzle", main_select_puzz},
-        {"1P time attack", main_select_speed_99, {main_time_attack}},
-        {"1P vs yourself", main_local_vs_yourself_setup},
+        {loc("mm_1_endless"), main_select_speed_99, {main_endless}},
+        {loc("mm_1_puzzle"), main_select_puzz},
+        {loc("mm_1_time"), main_select_speed_99, {main_time_attack}},
+        {loc("mm_1_vs"), main_local_vs_yourself_setup},
         --{"2P vs online at burke.ro", main_net_vs_setup, {"burke.ro"}},
-        {"2P vs online at Jon's server", main_net_vs_setup, {"18.188.43.50"}},
+        {loc("mm_2_vs_online", "Jon's server"), main_net_vs_setup, {"18.188.43.50"}},
         --{"2P vs online at betaserver.panelattack.com", main_net_vs_setup, {"betaserver.panelattack.com"}},
         --{"2P vs online (USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)", main_net_vs_setup, {"18.188.43.50"}},
         --{"This test build is for offline-use only"--[["2P vs online at Jon's server"]], main_select_mode},
         --{"2P vs online at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
         --{"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
         --{"2P vs online at LittleEndu's server", main_net_vs_setup, {"51.15.207.223"}},
-        {"2P vs local game", main_local_vs_setup},
-        {"Replay of 1P endless", main_replay_endless},
-        {"Replay of 1P puzzle", main_replay_puzzle},
-        {"Replay of 2P vs", main_replay_vs},
-        {"Configure input", main_config_input},
-        {"Set name", main_set_name},
-        {"Options", main_options},
-        {"Music test", main_music_test}
+        {loc("mm_2_vs_local"), main_local_vs_setup},
+        {loc("mm_replay", loc("mm_1_endless")), main_replay_endless},
+        {loc("mm_replay", loc("mm_1_puzzle")), main_replay_puzzle},
+        {loc("mm_replay", loc("mm_1_vs")), main_replay_vs},
+        {loc("mm_configure"), main_config_input},
+        {loc("mm_set_name"), main_set_name},
+        {loc("mm_options"), main_options},
+        {loc("mm_music_test"), main_music_test}
     }
     if love.graphics.getSupported("canvas") then
-      items[#items+1] = {"Fullscreen (LAlt+Enter)", fullscreen}
+      items[#items+1] = {loc("mm_fullscreen", "(LAlt+Enter)"), fullscreen}
     else
-      items[#items+1] = {"Your graphics card doesn't support canvases for fullscreen", main_select_mode}
+      items[#items+1] = {loc("mm_no_support_fullscreen"), main_select_mode}
     end
-    items[#items+1] = {"Quit", os.exit}
+    items[#items+1] = {loc("mm_quit"), os.exit}
     local k = K[1]
     while true do
       local to_print = ""
