@@ -114,7 +114,10 @@ end
 function Stage.graphics_init(self,full,yields)
   local stage_images = full and other_images or basic_images
   for _,image_name in ipairs(stage_images) do
-    self.images[image_name] = load_img(image_name..".png","stages/"..self.id, "stages/__default")
+    self.images[image_name] = get_img_from_supported_extensions("stages/"..self.id.."/"..image_name)
+    if not self.images[image_name] then
+      self.images[image_name] = simple_load_img( "stages/__default/"..image_name..".png" )
+    end
     if yields then coroutine.yield() end
   end
 end

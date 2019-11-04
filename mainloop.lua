@@ -831,11 +831,13 @@ function main_character_select()
     end
 
     local function draw_stage(cursor_data,player_number,x_padding)
-      local stage_dimensions = { 66, 36 }
+      local stage_dimensions = { 48, 27 }
       local y_padding = 0.5*button_height
-      local player_count = ( character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs" ) and 2 or 1
-      local padding_x = x_padding-0.5*stage_dimensions[1]
+      local padding_x = x_padding-0.5*stage_dimensions[1]-5
       local is_selected = cursor_data.selected and cursor_data.state.cursor == "__Stage"
+      if is_selected then
+        padding_x = padding_x - 10
+      end
       menu_drawf(IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center" )
       padding_x = padding_x + IMG_players[player_number]:getWidth()
       if is_selected then
@@ -845,10 +847,12 @@ function main_character_select()
 
       local scale_x = stage_dimensions[1]/stages[cursor_data.state.stage].images.thumbnail:getWidth()
       local scale_y = stage_dimensions[2]/stages[cursor_data.state.stage].images.thumbnail:getHeight()
-      menu_drawf(stages[cursor_data.state.stage].images.thumbnail, render_x+padding_x, render_y+y_padding, "center", "center", 0, scale_x, scale_y )
+      menu_drawf(stages[cursor_data.state.stage].images.thumbnail, render_x+padding_x, render_y+y_padding, "left", "center", 0, scale_x, scale_y )
+      gprintf(stages[cursor_data.state.stage].display_name, render_x+padding_x, render_y+y_padding+stage_dimensions[2]*0.5-0.5*text_height,stage_dimensions[1],"center")
+      padding_x = padding_x+stage_dimensions[1]
 
       if is_selected then
-        gprintf(">", render_x+padding_x-5, render_y+y_padding-0.5*text_height,10,"center")
+        gprintf(">", render_x+padding_x+5, render_y+y_padding-0.5*text_height,10,"center")
       end
     end
 
@@ -1171,6 +1175,27 @@ function main_character_select()
       return panels_dir
     end
 
+    local function change_stage(stage,increment)
+      local current = nil
+      for k,v in ipairs(stages_ids_for_current_theme) do
+        if v == stage then
+          current = k
+          break
+        end
+      end
+      if current == nil then -- NOCOMMIT
+        current = 0
+      end
+      local dir_count = #stages_ids_for_current_theme
+      local new_stage_idx = ((current - 1 + increment) % dir_count) + 1
+      for k,v in ipairs(stages_ids_for_current_theme) do
+        if k == new_stage_idx then
+            return v
+        end
+      end
+      return stage
+    end
+
     variable_step(function()
       menu_clock = menu_clock + 1
 
@@ -1201,6 +1226,8 @@ function main_character_select()
                 cursor.state.level = bound(1, cursor.state.level-1, 10)
               elseif cursor.state.cursor == "__Panels" then
                 cursor.state.panels_dir = change_panels_dir(cursor.state.panels_dir,-1)
+              elseif cursor.state.cursor == "__Stage" then
+                cursor.state.stage = change_stage(cursor.state.stage,-1)
               end
             end
             if not cursor.selected then move_cursor(cursor.position,left) end
@@ -1210,6 +1237,8 @@ function main_character_select()
                 cursor.state.level = bound(1, cursor.state.level+1, 10)
               elseif cursor.state.cursor == "__Panels" then
                 cursor.state.panels_dir = change_panels_dir(cursor.state.panels_dir,1)
+              elseif cursor.state.cursor == "__Stage" then
+                cursor.state.stage = change_stage(cursor.state.stage,1)
               end
             end
             if not cursor.selected then move_cursor(cursor.position,right) end

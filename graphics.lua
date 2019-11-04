@@ -29,6 +29,27 @@ for i=1,#shake_arr do
   shake_mult = shake_mult - shake_step
 end
 
+function simple_load_img(path_and_name)
+  local img = love.image.newImageData(path_and_name)
+  if img == nil then
+    return nil
+  end
+  print("loaded asset: "..path_and_name)
+  local ret = love.graphics.newImage(img)
+  ret:setFilter("nearest","nearest")
+  return ret
+end
+
+function get_img_from_supported_extensions(path_and_name)
+  local supported_img_formats = { ".jpg", ".png" }
+  for k, extension in ipairs(supported_img_formats) do
+    if love.filesystem.getInfo(path_and_name..extension) then
+      return simple_load_img(path_and_name..extension)
+    end
+  end
+  return nil
+end
+
 function load_img(path_and_name,config_dir,default_dir)
   default_dir = default_dir or "assets/"..default_assets_dir
 
