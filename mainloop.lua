@@ -201,6 +201,7 @@ do
     currently_spectating = false
     stop_the_music()
     character_loader_clear()
+    stage_loader_clear()
     close_socket()
     bg = title
     logged_in = 0
@@ -471,13 +472,13 @@ function main_character_select()
   fallback_when_missing = nil
 
   local function add_client_data(state)
-    state.loaded = characters[state.character] and characters[state.character].fully_loaded
+    state.loaded = characters[state.character] and characters[state.character].fully_loaded and stages[state.stage].fully_loaded
     state.wants_ready = state.ready
   end
 
   local function refresh_loaded_and_ready(state_1,state_2)
-    state_1.loaded = characters[state_1.character] and characters[state_1.character].fully_loaded
-    state_2.loaded = characters[state_2.character] and characters[state_2.character].fully_loaded
+    state_1.loaded = characters[state_1.character] and characters[state_1.character].fully_loaded and stages[state_1.stage].fully_loaded
+    state_2.loaded = characters[state_2.character] and characters[state_2.character].fully_loaded and stages[state_2.stage].fully_loaded
     
     if character_select_mode == "2p_net_vs" then
       state_1.ready = state_1.wants_ready and state_1.loaded and state_2.loaded
@@ -1207,8 +1208,8 @@ function main_character_select()
       if state.stage == random_stage_special_value or state.stage_is_random then
         current = #stages_ids_for_current_theme+1
       end
-      if current == nil then
-        return
+      if current == nil then -- stage belonged to another set of stages, it's no more in the list
+        current = 0
       end
       local dir_count = #stages_ids_for_current_theme + 1
       local new_stage_idx = ((current - 1 + increment) % dir_count) + 1
