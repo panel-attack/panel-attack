@@ -1340,28 +1340,34 @@ function Stack.PdP(self)
         SFX_Go_Play=0
       end
     
-    elseif (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
-      if (current_music_is_casual or table.getn(currently_playing_tracks) == 0) 
-        and characters[winningPlayer().character].musics["danger_music"] then -- disabled when danger_music is unspecified
-        print("Music is now critical")
-        if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
-        stop_the_music()
-        find_and_add_music(winningPlayer().character, "danger_music")
-        current_music_is_casual = false
-      elseif table.getn(currently_playing_tracks) == 0 then
-        print("Music is now casual")
-        if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
-        stop_the_music()
-        find_and_add_music(winningPlayer().character, "normal_music")
-        current_music_is_casual = true
+    else
+      local musics_to_use = (config.use_music_from == "stage") and stages[current_stage].musics or characters[winningPlayer().character].musics
+      if not musics_to_use["normal_music"] then -- use the other one as fallback
+        musics_to_use = (config.use_music_from ~= "stage") and stages[current_stage].musics or characters[winningPlayer().character].musics
       end
-    else --we should be playing normal_music or normal_music_start
-      if (not current_music_is_casual or table.getn(currently_playing_tracks) == 0) then
-        print("Music is now casual")
-        if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
-        stop_the_music()
-        find_and_add_music(winningPlayer().character, "normal_music")
-        current_music_is_casual = true
+      if (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
+        if (current_music_is_casual or table.getn(currently_playing_tracks) == 0) 
+          and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
+          print("Music is now critical")
+          if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
+          stop_the_music()
+          find_and_add_music(musics_to_use, "danger_music")
+          current_music_is_casual = false
+        elseif table.getn(currently_playing_tracks) == 0 then
+          print("Music is now casual")
+          if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
+          stop_the_music()
+          find_and_add_music(musics_to_use, "normal_music")
+          current_music_is_casual = true
+        end
+      else --we should be playing normal_music or normal_music_start
+        if (not current_music_is_casual or table.getn(currently_playing_tracks) == 0) then
+          print("Music is now casual")
+          if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
+          stop_the_music()
+          find_and_add_music(musics_to_use, "normal_music")
+          current_music_is_casual = true
+        end
       end
     end
   end

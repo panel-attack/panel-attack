@@ -93,9 +93,9 @@ function stop_the_music()
   music_t = {}
 end
 
-function find_and_add_music(character_id, music_type)
-  local start_music = characters[character_id].musics[music_type .. "_start"] or zero_sound
-  local loop_music = characters[character_id].musics[music_type]
+function find_and_add_music(musics, music_type)
+  local start_music = musics[music_type .. "_start"] or zero_sound
+  local loop_music = musics[music_type]
   music_t[love.timer.getTime()] = make_music_t(
           start_music
   )

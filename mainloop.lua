@@ -35,8 +35,10 @@ function fmainloop()
              version                       = VERSION,
              -- Player character
              character                     = "lip",
-             -- Player character
-             stage                         = "cave", -- NOCOMMIT: do update the conf based on new VERSION
+             --¨Previously selected stage
+             stage                         = random_stage_special_value,
+             -- Retrocompatibility
+             use_music_from                = "stage",
              -- Level (2P modes / 1P vs yourself mode)
              level                         = 5,
              endless_speed                 = 1,
@@ -343,11 +345,15 @@ function main_select_speed_99(next_func, ...)
   end
 end
 
-local function pick_random_stage()
-  local stage_id = stages_ids_for_current_theme[math.random(#stages_ids_for_current_theme)]
-  stage_loader_load(stage_id)
+local function use_current_stage()
+  stage_loader_load(current_stage)
   stage_loader_wait()
-  bg = stages[stage_id].images.background
+  bg = stages[current_stage].images.background
+end
+
+local function pick_random_stage()
+  current_stage = uniformly(stages_ids_for_current_theme)
+  use_current_stage()
 end
 
 function main_endless(...)
@@ -677,7 +683,6 @@ function main_character_select()
     if cursor_data[1].state.stage_is_random then
       cursor_data[1].state.stage = uniformly(stages_ids_for_current_theme)
     end
-    print("stage to load is "..cursor_data[1].state.stage) -- NOCOMMIT
     stage_loader_load(cursor_data[1].state.stage)
   end
   if global_op_state ~= nil then
@@ -1354,6 +1359,9 @@ function main_character_select()
       P1.garbage_target = P1
       make_local_panels(P1, "000000")
       make_local_gpanels(P1, "000000")
+      current_stage = cursor_data[1].state.stage
+      stage_loader_load(current_stage)
+      stage_loader_wait()
       P1:starting_state()
       return main_dumb_transition, {main_local_vs_yourself, "Game is starting...", 30, 30}
     elseif cursor_data[1].state.ready and character_select_mode == "2p_local_vs" and cursor_data[2].state.ready then
@@ -1362,6 +1370,9 @@ function main_character_select()
       P2 = Stack(2, "vs", cursor_data[2].state.panels_dir, cursor_data[2].state.level, cursor_data[2].state.character)
       P1.garbage_target = P2
       P2.garbage_target = P1
+      current_stage = cursor_data[math.random(1,2)].state.stage
+      stage_loader_load(current_stage)
+      stage_loader_wait()
       move_stack(P2,2)
       -- TODO: this does not correctly implement starting configurations.
       -- Starting configurations should be identical for visible blocks, and
@@ -1684,6 +1695,8 @@ function main_net_vs()
   --STONER_MODE = true
   if currently_spectating then
     pick_random_stage()
+  else
+    use_current_stage()
   end
   local k = K[1]  --may help with spectators leaving games in progress
   local end_text = nil
@@ -1834,6 +1847,7 @@ end
 
 function main_local_vs()
   -- TODO: replay!
+  use_current_stage()
   consuming_timesteps = true
   local end_text = nil
   while true do
@@ -1876,6 +1890,7 @@ end
 
 function main_local_vs_yourself()
   -- TODO: replay!
+  use_current_stage()
   consuming_timesteps = true
   local end_text = nil
   while true do

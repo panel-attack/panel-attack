@@ -102,7 +102,7 @@ function stages_init()
   end
 
   -- fix config stage if it's missing
-  if not config.stage or not stages[config.stage] then
+  if not config.stage or ( config.stage ~= random_stage_special_value and not stages[config.stage] ) then
     config.stage = uniformly(stages_ids_for_current_theme)
   end
   

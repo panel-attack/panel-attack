@@ -24,6 +24,8 @@ stages_ids = {} -- initialized in stage.lua
 stages_ids_for_current_theme = {} -- initialized in stage.lua
 stages_ids_by_display_names = {} -- initialized in stage.lua
 
+current_stage = nil
+
 -- win counters
 my_win_count = 0
 op_win_count = 0
