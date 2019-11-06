@@ -95,12 +95,12 @@ function create_room(a, b)
   a_msg.your_player_number = 1
   a_msg.op_player_number = 2
   a_msg.opponent = new_room.b.name
-  new_room.b.cursor = "ready"
+  new_room.b.cursor = "__Ready"
   a_msg.menu_state = new_room.b:menu_state()
   b_msg.your_player_number = 2
   b_msg.op_player_number = 1
   b_msg.opponent = new_room.a.name
-  new_room.a.cursor = "ready"
+  new_room.a.cursor = "__Ready"
   b_msg.menu_state = new_room.a:menu_state()
   a_msg.ratings = new_room.ratings
   b_msg.ratings = new_room.ratings
@@ -123,8 +123,8 @@ function start_match(a, b)
     end
   end
   local msg = {match_start = true, ranked = false,
-                player_settings = {character = a.character, level = a.level, panels_dir = a.panels_dir, player_number = a.player_number},
-                opponent_settings = {character = b.character, level = b.level, panels_dir = b.panels_dir, player_number = b.player_number}}
+                player_settings = {character = a.character, character_display_name=a.character_display_name, level = a.level, panels_dir = a.panels_dir, player_number = a.player_number},
+                opponent_settings = {character = b.character, character_display_name=b.character_display_name, level = b.level, panels_dir = b.panels_dir, player_number = b.player_number}}
   local room_is_ranked, reasons = a.room:rating_adjustment_approved()
   if room_is_ranked then
     a.room.replay.vs.ranked=true
@@ -221,8 +221,8 @@ function Room.character_select(self)
     self.a.player_number = 1
     self.b.player_number = 2
   end
-  self.a.cursor = "ready"
-  self.b.cursor = "ready"
+  self.a.cursor = "__Ready"
+  self.b.cursor = "__Ready"
   self.a.ready = false
   self.b.ready = false
   self:send({character_select=true, create_room=true, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()})
@@ -252,8 +252,8 @@ function Room.add_spectator(self, new_spectator_connection)
   self.spectators[#self.spectators+1] = new_spectator_connection
   print(new_spectator_connection.name .. " joined " .. self.name .. " as a spectator")
   msg = {spectate_request_granted = true, spectate_request_rejected = false, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state(), win_counts=self.win_counts, match_start=replay_of_match_so_far~=nil, replay_of_match_so_far = self.replay, ranked = self:rating_adjustment_approved(),
-                player_settings = {character = self.a.character, level = self.a.level, player_number = self.a.player_number},
-                opponent_settings = {character = self.b.character, level = self.b.level, player_number = self.b.player_number}}
+                player_settings = {character = self.a.character, character_display_name=self.a.character_display_name, level = self.a.level, player_number = self.a.player_number},
+                opponent_settings = {character = self.b.character, character_display_name=self.b.character_display_name, level = self.b.level, player_number = self.b.player_number}}
   new_spectator_connection:send(msg)
   msg = {spectators=self:spectator_names()}
   print("sending spectator list: "..json.encode(msg))
@@ -436,7 +436,7 @@ Connection = class(function(s, socket)
 end)
 
 function Connection.menu_state(self)
-  state = {cursor=self.cursor, ready=self.ready, character=self.character, panels_dir=self.panels_dir, level=self.level, ranked=self.wants_ranked_match}
+  state = {cursor=self.cursor, ready=self.ready, character=self.character, character_display_name=self.character_display_name, panels_dir=self.panels_dir, level=self.level, ranked=self.wants_ranked_match}
   return state
   --note: player_number here is the player_number of the connection as according to the server, not the "which" of any Stack
 end
@@ -1178,6 +1178,7 @@ function Connection.J(self, message)
     else
       self.name = message.name
       self.character = message.character
+      self.character_display_name = message.character_display_name
       self.panels_dir = message.panels_dir
       self.level = message.level
       self.save_replays_publicly = message.save_replays_publicly
@@ -1221,6 +1222,7 @@ function Connection.J(self, message)
   elseif self.state == "character select" and message.menu_state then
     self.level = message.menu_state.level
     self.character = message.menu_state.character
+    self.character_display_name = message.menu_state.character_display_name
     self.ready = message.menu_state.ready
     self.cursor = message.menu_state.cursor
     self.panels_dir = message.menu_state.panels_dir

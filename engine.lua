@@ -13,7 +13,7 @@ local clone_pool = {}
 local current_music_is_casual = false -- must be false so that casual music start playing
 
 Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_number)
-    s.character = uniformly(characters)
+    s.character = config.character
     s.max_health = 1
     s.panels_dir = panels_dir or config.panels_dir
     if IMG_panels[panels_dir] == nil then
@@ -122,7 +122,7 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
 
     s.NCOLORS = s.NCOLORS or 5
     s.score = 0         -- der skore
-    s.chain_counter = 0   -- how high is the current chain?
+    s.chain_counter = 0   -- how high is the current chain
 
     s.panels_in_top_row = false -- boolean, for losing the game
     s.danger = s.danger or false  -- boolean, panels in the top row (danger)
@@ -164,6 +164,7 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     s.metal_panels_queued = s.metal_panels_queued or 0
     s.lastPopLevelPlayed = s.lastPopLevelPlayed or 1
     s.lastPopIndexPlayed = s.lastPopIndexPlayed or 1
+    s.combo_chain_play = nil
     s.game_over = false
 
     s.card_q = Queue()
@@ -174,6 +175,8 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     s.shake_time = 0
 
     s.prev_states = {}
+
+    s.enable_analytics = false
   end)
 
 function Stack.mkcpy(self, other)
@@ -491,7 +494,7 @@ function Stack.set_puzzle_state(self, pstr, n_turns)
     end
   end
   self.puzzle_moves = n_turns  
-  stop_character_sounds(self.character)
+  characters[self.character]:stop_sounds()
 end
 
 function Stack.puzzle_done(self)
@@ -543,7 +546,7 @@ function Stack.starting_state(self, n)
       self.cur_row = self.cur_row-1
     end
   end
-  stop_character_sounds(self.character)
+  characters[self.character]:stop_sounds()
 end
 
 function Stack.prep_first_row(self)
@@ -551,6 +554,38 @@ function Stack.prep_first_row(self)
     self.do_first_row = nil
     self:new_row()
     self.cur_row = self.cur_row-1
+  end
+end
+
+function Stack.controls(self)
+  local new_dir = nil
+  local sdata = self.input_state
+  local raise, swap, up, down, left, right = unpack(base64decode[sdata])
+  if (raise) and (not self.prevent_manual_raise) then
+    self.manual_raise = true
+    self.manual_raise_yet = false
+  end
+
+  self.swap_1 = swap
+  self.swap_2 = swap
+
+  if up then
+    new_dir = "up"
+  elseif down then
+    new_dir = "down"
+  elseif left then
+    new_dir = "left"
+  elseif right then
+    new_dir = "right"
+  end
+
+  if new_dir == self.cur_dir then
+    if self.cur_timer ~= self.cur_wait_time then
+      self.cur_timer = self.cur_timer + 1
+    end
+  else
+    self.cur_dir = new_dir
+    self.cur_timer = 0
   end
 end
 
@@ -1194,6 +1229,9 @@ function Stack.PdP(self)
   if self.chain_counter ~= 0 and self.n_chain_panels == 0 then
     self:set_chain_garbage(self.chain_counter)
     SFX_Fanfare_Play = self.chain_counter
+    if self.enable_analytics then
+      analytics_register_chain(self.chain_counter)
+    end
     self.chain_counter=0
   end
 
@@ -1301,14 +1339,21 @@ function Stack.PdP(self)
         sounds.SFX.countdown:play()
         SFX_Go_Play=0
       end
-
+    
     elseif (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
-      if (current_music_is_casual or table.getn(currently_playing_tracks) == 0) then
+      if (current_music_is_casual or table.getn(currently_playing_tracks) == 0) 
+        and characters[winningPlayer().character].musics["danger_music"] then -- disabled when danger_music is unspecified
         print("Music is now critical")
         if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
         stop_the_music()
         find_and_add_music(winningPlayer().character, "danger_music")
         current_music_is_casual = false
+      elseif table.getn(currently_playing_tracks) == 0 then
+        print("Music is now casual")
+        if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
+        stop_the_music()
+        find_and_add_music(winningPlayer().character, "normal_music")
+        current_music_is_casual = true
       end
     else --we should be playing normal_music or normal_music_start
       if (not current_music_is_casual or table.getn(currently_playing_tracks) == 0) then
@@ -1353,32 +1398,28 @@ function Stack.PdP(self)
         end
         SFX_Go_Play=0
     end
-    if SFX_Buddy_Play and SFX_Buddy_Play ~= 0 then
+    if self.combo_chain_play then
         sounds.SFX.land:stop()
         sounds.SFX.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        for _,v in pairs(sounds.SFX.characters[self.character].combos) do
+        for _,v in pairs(characters[self.character].sounds.combos) do
           v:stop()
         end
-        for _,v in pairs(sounds.SFX.characters[self.character].combo_echos) do
+        for _,v in pairs(characters[self.character].sounds.combo_echos) do
           v:stop()
         end
-        sounds.SFX.characters[self.character].others["chain"]:stop()
-        sounds.SFX.characters[self.character].others["chain2"]:stop()
-        sounds.SFX.characters[self.character].others["chain_echo"]:stop()
-        sounds.SFX.characters[self.character].others["chain2_echo"]:stop()
-        if sounds.SFX.characters[self.character].others[SFX_Buddy_Play] then
-          sounds.SFX.characters[self.character].others[SFX_Buddy_Play]:play()
-        elseif sounds.SFX.characters[self.character].combos[SFX_Buddy_Play] then
-          sounds.SFX.characters[self.character].combos[SFX_Buddy_Play]:play()
-        elseif sounds.SFX.characters[self.character].combo_echos[SFX_Buddy_Play] then
-          sounds.SFX.characters[self.character].combo_echos[SFX_Buddy_Play]:play()
-        end
-        SFX_Buddy_Play=0
+        characters[self.character].sounds.others["chain"]:stop()
+        characters[self.character].sounds.others["chain2"]:stop()
+        characters[self.character].sounds.others["chain_echo"]:stop()
+        characters[self.character].sounds.others["chain2_echo"]:stop()
+        self.combo_chain_play[1][self.combo_chain_play[2]]:play()
+        self.combo_chain_play = nil
     end
     if SFX_garbage_match_play then
-      if sounds.SFX.characters[self.character].others["garbage_match"] then
-        sounds.SFX.characters[self.character].others["garbage_match"]:stop()
-        sounds.SFX.characters[self.character].others["garbage_match"]:play()
+      for _,v in pairs(characters[self.character].sounds.garbage_matches) do
+        v:stop()
+      end
+      if #characters[self.character].sounds.garbage_matches ~= 0 then
+        characters[self.character].sounds.garbage_matches[math.random(#characters[self.character].sounds.garbage_matches)]:play()
       end
       SFX_garbage_match_play = nil
     end
@@ -1443,17 +1484,16 @@ function Stack.PdP(self)
 end
 
 function winningPlayer()
-    if not P2 then
-        return P1
-    elseif op_win_count > my_win_count then
-        return P2
-    else return P1
-    end
+  if not P2 or my_win_count >= op_win_count then
+    return P1
+  else
+    return P2
+  end
 end
 
 function Stack.pick_win_sfx(self)
-  if sounds.SFX.characters[self.character].win_count ~= 0 then
-    return sounds.SFX.characters[self.character].wins["win" .. math.random(sounds.SFX.characters[self.character].win_count)]
+  if #characters[self.character].sounds.wins ~= 0 then
+    return characters[self.character].sounds.wins[math.random(#characters[self.character].sounds.wins)]
   else
     return nil
   end
@@ -1859,6 +1899,9 @@ function Stack.check_matches(self)
   end
 
   if(combo_size~=0) then
+    if self.enable_analytics then
+      analytics_register_destroyed_panels(combo_size)
+    end
     if(combo_size>3) then
       if(score_mode == SCOREMODE_TA) then
         if(combo_size > 30) then
@@ -1932,17 +1975,16 @@ function Stack.check_matches(self)
       if is_chain then
         local length = min(self.chain_counter, 13)
         if length < 4 then 
-          SFX_Buddy_Play = "chain"
+          self.combo_chain_play = { characters[self.character].sounds.others, "chain" }
         elseif length == 4 then
-          SFX_Buddy_Play = "chain2"
+          self.combo_chain_play = { characters[self.character].sounds.others, "chain2" }
         elseif length == 5 then
-          SFX_Buddy_Play = "chain_echo"
+          self.combo_chain_play = { characters[self.character].sounds.others, "chain_echo" }
         elseif length >= 6 then
-          SFX_Buddy_Play = "chain2_echo"
+          self.combo_chain_play = { characters[self.character].sounds.others, "chain2_echo" }
         end
       elseif combo_size > 3 then
-        local combo_index = math.random(sounds.SFX.characters[self.character].combo_count)
-        SFX_Buddy_Play = "combo" .. combo_index
+        self.combo_chain_play = { characters[self.character].sounds.combos, math.random(#characters[self.character].sounds.combos) }
       end
       SFX_Land_Play=0
     end
@@ -1954,11 +1996,9 @@ function Stack.check_matches(self)
     --self.score_render=1;
     --Nope.
     if metal_count > 5 then
-      local combo_index = math.random(sounds.SFX.characters[self.character].combo_echo_count)
-      SFX_Buddy_Play = "combo_echo" .. combo_index
+      self.combo_chain_play = { characters[self.character].sounds.combo_echos, math.random(#characters[self.character].sounds.combo_echos) }
     elseif metal_count > 2 then
-      local combo_index = math.random(sounds.SFX.characters[self.character].combo_count)
-      SFX_Buddy_Play = "combo" .. combo_index
+      self.combo_chain_play = { characters[self.character].sounds.combos, math.random(#characters[self.character].sounds.combos) }
     end
     self:set_combo_garbage(combo_size, metal_count)
   end

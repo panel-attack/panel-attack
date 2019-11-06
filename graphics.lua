@@ -4,16 +4,40 @@ require("util")
 local floor = math.floor
 local ceil = math.ceil
 
+local shake_arr = {}
+
+local shake_idx = -6
+for i=14,6,-1 do
+  local x = -math.pi
+  local step = math.pi * 2 / i
+  for j=1,i do
+    shake_arr[shake_idx] = (1 + math.cos(x))/2
+    x = x + step
+    shake_idx = shake_idx + 1
+  end
+end
+
+print("#shake arr "..#shake_arr)
+
+-- 1 -> 1
+-- #shake -> 0
+local shake_step = 1/(#shake_arr - 1)
+local shake_mult = 1
+for i=1,#shake_arr do
+  shake_arr[i] = shake_arr[i] * shake_mult
+  print(shake_arr[i])
+  shake_mult = shake_mult - shake_step
+end
+
 function load_img(path_and_name,config_dir,default_dir)
   default_dir = default_dir or "assets/"..default_assets_dir
+
   local img
   if pcall(function ()
     config_dir = config_dir or "assets/"..config.assets_dir
-    img = love.image.newImageData((config_dir or default_dir).."/"..path_and_name)
+    img = love.image.newImageData(config_dir.."/"..path_and_name)
   end) then
-    if config_dir and config_dir ~= default_dir then
-      print("loaded custom asset: "..config_dir.."/"..path_and_name)
-    end
+    print("loaded asset: "..config_dir.."/"..path_and_name)
   else
     if pcall(function ()
       img = love.image.newImageData(default_dir.."/"..path_and_name)
@@ -23,9 +47,11 @@ function load_img(path_and_name,config_dir,default_dir)
       img = nil
     end
   end
+
   if img == nil then
     return nil
   end
+
   local ret = love.graphics.newImage(img)
   ret:setFilter("nearest","nearest")
   return ret
@@ -144,19 +170,6 @@ function graphics_init()
     end
   end
 
-  local g_parts = {"topleft", "botleft", "topright", "botright",
-                    "top", "bot", "left", "right", "face", "pop",
-                    "doubleface", "filler1", "filler2", "flash",
-                    "portrait"}
-  IMG_garbage = {}
-  for _,key in ipairs(characters) do
-    local imgs = {}
-    IMG_garbage[key] = imgs
-    for _,part in ipairs(g_parts) do
-      imgs[part] = load_img(""..key.."/"..part..".png")
-    end
-  end
-
   IMG_level_cursor = load_img("level_cursor.png")
   IMG_levels = {}
   IMG_levels_unfocus = {}
@@ -168,6 +181,7 @@ function graphics_init()
   end
 
   IMG_ready = load_img("ready.png")
+  IMG_loading = load_img("loading.png")
   IMG_numbers = {}
   for i=1,3 do
     IMG_numbers[i] = load_img(i..".png")
@@ -195,10 +209,6 @@ function graphics_init()
   for i=14,99 do
     IMG_cards[true][i] = load_img("chain00.png")
   end
-  IMG_character_icons = {}
-  for _, name in ipairs(characters) do
-    IMG_character_icons[name] = load_img(""..name.."/icon.png")
-  end
   local MAX_SUPPORTED_PLAYERS = 2
   IMG_char_sel_cursors = {}
   for player_num=1,MAX_SUPPORTED_PLAYERS do
@@ -221,25 +231,6 @@ function graphics_init()
       local half_width, half_height = cur_width/2, cur_height/2
       IMG_char_sel_cursor_halves.right[player_num][position_num] = love.graphics.newQuad(half_width,0,half_width,cur_height,cur_width, cur_height)
     end
-  end
-  character_display_names = {}
-  for _, original_name in ipairs(characters) do
-    name_txt_file = love.filesystem.newFile("assets/"..config.assets_dir.."/"..original_name.."/name.txt")
-    open_success, err = name_txt_file:open("r")
-    local display_name = name_txt_file:read(name_txt_file:getSize())
-    if display_name then
-      character_display_names[original_name] = display_name
-    else
-      character_display_names[original_name] = original_name
-    end
-  end
-  print("character_display_names: ")
-  for k,v in pairs(character_display_names) do
-    print(k.." = "..v)
-  end
-  character_display_names_to_original_names = {}
-  for k,v in pairs(character_display_names) do
-    character_display_names_to_original_names[v] = k
   end
 end
 
@@ -355,11 +346,11 @@ function Stack.render(self)
   gfx_q:push({love.graphics.setStencilTest, {"greater", 0}})
 
   -- draw inside stack's frame canvas
-  local portrait_w, portrait_h = IMG_garbage[self.character].portrait:getDimensions()
+  local portrait_w, portrait_h = characters[self.character].images["portrait"]:getDimensions()
   if P1 == self then
-    draw(IMG_garbage[self.character].portrait, 4, 4, 0, 96/portrait_w, 192/portrait_h)
+    draw(characters[self.character].images["portrait"], 4, 4, 0, 96/portrait_w, 192/portrait_h)
   else
-    draw(IMG_garbage[self.character].portrait, 100, 4, 0, (96/portrait_w)*-1, 192/portrait_h)
+    draw(characters[self.character].images["portrait"], 100, 4, 0, (96/portrait_w)*-1, 192/portrait_h)
   end
 
   local metals
@@ -385,7 +376,7 @@ function Stack.render(self)
         if panel.garbage then
           local imgs = {flash=metals.flash}
           if not panel.metal then
-            imgs = IMG_garbage[self.garbage_target.character]
+            imgs = characters[self.garbage_target.character].images
           end
           if panel.x_offset == 0 and panel.y_offset == 0 then
             -- draw the entire block!
@@ -584,6 +575,9 @@ function Stack.render(self)
     if not config.debug_mode then
       gprint(join_community_msg or "", main_infos_screen_pos.x-45, main_infos_screen_pos.y+550)
     end
+  end
+  if self.enable_analytics then
+    analytics_draw(self.score_x-460,self.score_y)
   end
   -- ends here
 end

@@ -110,35 +110,3 @@ function key_counts()
     keys[key] = value + 1
   end
 end
-
-function Stack.controls(self)
-  local new_dir = nil
-  local sdata = self.input_state
-  local raise, swap, up, down, left, right = unpack(base64decode[sdata])
-  if (raise) and (not self.prevent_manual_raise) then
-    self.manual_raise = true
-    self.manual_raise_yet = false
-  end
-
-  self.swap_1 = swap
-  self.swap_2 = swap
-
-  if up then
-    new_dir = "up"
-  elseif down then
-    new_dir = "down"
-  elseif left then
-    new_dir = "left"
-  elseif right then
-    new_dir = "right"
-  end
-
-  if new_dir == self.cur_dir then
-    if self.cur_timer ~= self.cur_wait_time then
-      self.cur_timer = self.cur_timer + 1
-    end
-  else
-    self.cur_dir = new_dir
-    self.cur_timer = 0
-  end
-end
