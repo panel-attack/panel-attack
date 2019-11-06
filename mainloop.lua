@@ -496,9 +496,13 @@ function main_character_select()
 
   print("character_select_mode = "..(character_select_mode or "nil"))
 
-
   -- map is composed of special values prefixed by __ and character ids
-  local template_map = {}
+  local prefix_of_special_value = "__"
+  local template_map = {{"__Level", "__Level", "__Level", "__Panels", "__Panels", "__Panels", "__Ready"},
+             {"__Stage", "__Stage", "__Stage", "__Reserved", "__Reserved", "__Reserved", "__Random"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}}
   local map = {}
   if character_select_mode == "2p_net_vs" then
     local opponent_connected = false
@@ -597,25 +601,12 @@ function main_character_select()
     print("current_server_supports_ranking: "..tostring(current_server_supports_ranking))
 
     if current_server_supports_ranking then
-      template_map = {{"__Mode", "__Mode", "__Level", "__Level", "__Panels", "__Panels", "__Ready"},
-             {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}}
-    else
-      template_map = {{"__Level", "__Level", "__Stage", "__Stage", "__Panels", "__Panels", "__Ready"},
-             {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+      template_map = {{"__Level", "__Level", "__Level", "__Panels", "__Panels", "__Panels", "__Ready"},
+             {"__Stage", "__Stage", "__Stage", "__Mode", "__Mode", "__Mode", "__Random"},
              {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
              {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
              {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}}
     end
-  end
-  if character_select_mode == "2p_local_vs" or character_select_mode == "1p_vs_yourself" then
-    template_map = {{"__Level", "__Level", "__Stage", "__Stage", "__Panels", "__Panels", "__Ready"},
-             {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}}
   end
 
   local pages_amount = fill_map(template_map, map)
@@ -704,7 +695,7 @@ function main_character_select()
   local prev_state = shallowcpy(cursor_data[1].state)
 
   local function draw_button(x,y,w,h,str,halign,valign,no_rect)
-    no_rect = no_rect or str == "__Empty"
+    no_rect = no_rect or str == "__Empty" or str == "__Reserved"
     halign = halign or "center"
     valign = valign or "top"
     local menu_width = Y*100
@@ -927,16 +918,16 @@ function main_character_select()
     end
     if x ~= 0 then
       if cursor_data[1].state and cursor_data[1].state.cursor == str 
-        and ( str ~= "__Empty" or ( cursor_data[1].position[1] == x and cursor_data[1].position[2] == y ) ) then
+        and ( (str ~= "__Empty" and str ~= "__Reserved") or ( cursor_data[1].position[1] == x and cursor_data[1].position[2] == y ) ) then
         draw_cursor(button_height, spacing, 1, cursor_data[1].state.ready)
       end
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs")
         and cursor_data[2].state and cursor_data[2].state.cursor == str
-        and ( str ~= "__Empty" or ( cursor_data[2].position[1] == x and cursor_data[2].position[2] == y ) ) then
+        and ( (str ~= "__Empty" and str ~= "__Reserved") or ( cursor_data[2].position[1] == x and cursor_data[2].position[2] == y ) ) then
         draw_cursor(button_height, spacing, 2, cursor_data[2].state.ready)
       end
     end
-    if str ~= "__Empty" then
+    if str ~= "__Empty" and str ~= "__Reserved" then
       gprintf(pstr, render_x+x_add, render_y+y_add,width_for_alignment,halign)
     end
   end
@@ -944,7 +935,39 @@ function main_character_select()
   print("got to LOC before net_vs_room character select loop")
   menu_clock = 0
 
+  local v_align_center = { __Ready=true, __Random=true, __Leave=true }
+  local is_special_value = { __Leave=true, __Level=true, __Panels=true, __Ready=true, __Stage=true, __Mode=true, __Random=true }
+
   while true do
+    -- draw the buttons, handle horizontal spans
+    for i=1,X do
+      for j=1,Y do
+        local value = map[current_page][i][j]
+        local span_width = 1
+        if is_special_value[value] then
+          if j == 1 or map[current_page][i][j-1] ~= value then
+            -- detect how many blocks the special value spans
+            if j ~= Y then
+              for u=j+1,Y do
+                if map[current_page][i][u] == value then
+                  span_width = span_width + 1
+                else
+                  break
+                end
+              end
+            end
+          else
+            -- has already been drawn 
+            span_width = 0
+          end
+        end
+
+        if span_width ~= 0 then
+          draw_button(i,j,span_width,1,value,"center", v_align_center[value] and "center" or "top" )
+        end
+      end
+    end
+
     if character_select_mode == "2p_net_vs" then
       for _,msg in ipairs(this_frame_messages) do
         if msg.win_counts then
@@ -1076,27 +1099,6 @@ function main_character_select()
       end
     end
 
-    -- those values span multiple 'map blocks'
-    if current_server_supports_ranking then
-      draw_button(1,1,2,1,"__Mode","center","top")
-      draw_button(1,3,2,1,"__Level","center","top")
-      draw_button(1,5,2,1,"__Panels","center","top")
-    else
-      draw_button(1,1,2,1,"__Level","center","top")
-      draw_button(1,3,2,1,"__Stage","center","top")
-      draw_button(1,5,2,1,"__Panels","center","top")
-    end
-    draw_button(1,7,1,1,"__Ready","center","center")
-
-    for i=2,X do
-      for j=1,Y do
-        local valign = "top"
-        if map[current_page][i][j] == "__Leave" or map[current_page][i][j] == "__Random" then
-          valign = "center"
-        end
-        draw_button(i,j,1,1,map[current_page][i][j],"center",valign)
-      end
-    end
     local my_rating_difference = ""
     local op_rating_difference = ""
     if current_server_supports_ranking and not global_current_room_ratings[my_player_number].placement_match_progress then
@@ -1175,7 +1177,7 @@ function main_character_select()
       local can_x,can_y = wrap(1, cursor_pos[1]+dx, X), wrap(1, cursor_pos[2]+dy, Y)
       while can_x ~= cursor_pos[1] or can_y ~= cursor_pos[2] do
         if map[current_page][can_x][can_y] and ( map[current_page][can_x][can_y] ~= map[current_page][cursor_pos[1]][cursor_pos[2]] or 
-          map[current_page][can_x][can_y] == "__Empty" ) then
+          map[current_page][can_x][can_y] == "__Empty" or map[current_page][can_x][can_y] == "__Reserved" ) then
           break
         end
         can_x,can_y = wrap(1, can_x+dx, X), wrap(1, can_y+dy, Y)
@@ -1295,7 +1297,7 @@ function main_character_select()
               character_loader_load(cursor.state.character)
             elseif cursor.state.cursor == "__Mode" then
               cursor.state.ranked = not cursor.state.ranked
-            elseif cursor.state.cursor ~= "__Empty" then
+            elseif ( cursor.state.cursor ~= "__Empty" and cursor.state.cursor ~= "__Reserved" ) then
               cursor.state.character = cursor.state.cursor
               cursor.state.character_display_name = characters[cursor.state.character].display_name
               characters[cursor.state.character]:play_selection_sfx()
