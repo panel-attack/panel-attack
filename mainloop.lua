@@ -448,22 +448,33 @@ local function fill_map(template_map,map)
   end
 end
 
-local fallback_when_missing = nil
+local fallback_when_missing = { nil, nil }
 
 local function refresh_based_on_own_mods(refreshed,ask_change_fallback)
   ask_change_fallback = ask_change_fallback or false
   if refreshed ~= nil then
+    -- panels
     if refreshed.panels_dir == nil or IMG_panels[refreshed.panels_dir] == nil then
       refreshed.panels_dir = config.panels_dir
     end
+
+    -- stage
+    if refreshed.stage == nil or stages[refreshed.stage] == nil then
+      if not fallback_when_missing[1] or ask_change_fallback then
+        fallback_when_missing[1] = uniformly(stages_ids_for_current_theme)
+      end
+      refreshed.stage = fallback_when_missing[1]
+    end
+
+    -- character
     if characters[refreshed.character] == nil then
       if refreshed.character_display_name and characters_ids_by_display_names[refreshed.character_display_name] then
         refreshed.character = characters_ids_by_display_names[refreshed.character_display_name][1]
       else
-        if not fallback_when_missing or ask_change_fallback then
-          fallback_when_missing = uniformly(characters_ids_for_current_theme)
+        if not fallback_when_missing[2] or ask_change_fallback then
+          fallback_when_missing[2] = uniformly(characters_ids_for_current_theme)
         end
-        refreshed.character = fallback_when_missing
+        refreshed.character = fallback_when_missing[2]
       end
     end
   end
@@ -475,7 +486,7 @@ function main_character_select()
   love.audio.stop()
   stop_the_music()
   bg = charselect
-  fallback_when_missing = nil
+  fallback_when_missing = { nil, nil }
 
   local function add_client_data(state)
     state.loaded = characters[state.character] and characters[state.character].fully_loaded and stages[state.stage].fully_loaded
@@ -978,11 +989,13 @@ function main_character_select()
               cursor_data[msg.player_number].state = msg.menu_state
               refresh_based_on_own_mods(cursor_data[msg.player_number].state)
               character_loader_load(cursor_data[msg.player_number].state.character)
+              stage_loader_load(cursor_data[msg.player_number].state.stage)
             end
           else
             cursor_data[2].state = msg.menu_state
             refresh_based_on_own_mods(cursor_data[2].state)
             character_loader_load(cursor_data[2].state.character)
+            stage_loader_load(cursor_data[2].state.stage)
           end
           refresh_loaded_and_ready(cursor_data[1],cursor_data[2])
         end
@@ -1013,7 +1026,9 @@ function main_character_select()
           -- mainly for spectator mode, those characters have already been loaded otherwise
           character_loader_load(msg.player_settings.character)
           character_loader_load(msg.opponent_settings.character)
+          stage_loader_load(msg.stage)
           character_loader_wait()
+          stage_loader_wait()
           P1 = Stack(1, "vs", msg.player_settings.panels_dir, msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
           P1.enable_analytics = not currently_spectating and not replay_of_match_so_far
           P2 = Stack(2, "vs", msg.opponent_settings.panels_dir, msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
@@ -1927,7 +1942,7 @@ function main_replay_vs()
     return main_dumb_transition, {main_select_mode, "I don't have a vs replay :("}
   end
   pick_random_stage()
-  fallback_when_missing = nil
+  fallback_when_missing = { nil, nil }
   P1 = Stack(1, "vs", config.panels_dir, replay.P1_level or 5)
   P2 = Stack(2, "vs", config.panels_dir, replay.P2_level or 5)
   P1.do_countdown = replay.do_countdown or false

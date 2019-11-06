@@ -122,7 +122,9 @@ function start_match(a, b)
       print("ERROR: player a still doesn't have player_number 1.")
     end
   end
-  local msg = {match_start = true, ranked = false,
+
+  a.room.stage = math.random(1,2)==1 and a.stage or b.stage
+  local msg = {match_start = true, ranked = false, stage=a.room.stage
                 player_settings = {character = a.character, character_display_name=a.character_display_name, level = a.level, panels_dir = a.panels_dir, player_number = a.player_number},
                 opponent_settings = {character = b.character, character_display_name=b.character_display_name, level = b.level, panels_dir = b.panels_dir, player_number = b.player_number}}
   local room_is_ranked, reasons = a.room:rating_adjustment_approved()
@@ -163,6 +165,7 @@ Room = class(function(self, a, b)
   --TODO: it would be nice to call players a and b something more like self.players[1] and self.players[2]
   self.a = a --player a
   self.b = b --player b
+  self.stage = nil
   self.name = a.name.." vs "..b.name
   if not self.a.room or not self.b.room then
     self.roomNumber = ROOMNUMBER
@@ -251,7 +254,7 @@ function Room.add_spectator(self, new_spectator_connection)
   new_spectator_connection.room = self
   self.spectators[#self.spectators+1] = new_spectator_connection
   print(new_spectator_connection.name .. " joined " .. self.name .. " as a spectator")
-  msg = {spectate_request_granted = true, spectate_request_rejected = false, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state(), win_counts=self.win_counts, match_start=replay_of_match_so_far~=nil, replay_of_match_so_far = self.replay, ranked = self:rating_adjustment_approved(),
+  msg = {spectate_request_granted = true, spectate_request_rejected = false, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state(), win_counts=self.win_counts, match_start=replay_of_match_so_far~=nil, stage=self.stage, replay_of_match_so_far = self.replay, ranked = self:rating_adjustment_approved(),
                 player_settings = {character = self.a.character, character_display_name=self.a.character_display_name, level = self.a.level, player_number = self.a.player_number},
                 opponent_settings = {character = self.b.character, character_display_name=self.b.character_display_name, level = self.b.level, player_number = self.b.player_number}}
   new_spectator_connection:send(msg)
@@ -436,7 +439,7 @@ Connection = class(function(s, socket)
 end)
 
 function Connection.menu_state(self)
-  state = {cursor=self.cursor, ready=self.ready, character=self.character, character_display_name=self.character_display_name, panels_dir=self.panels_dir, level=self.level, ranked=self.wants_ranked_match}
+  state = {cursor=self.cursor, stage=self.stage, stage_is_random=self.stage_is_random, ready=self.ready, character=self.character, character_display_name=self.character_display_name, panels_dir=self.panels_dir, level=self.level, ranked=self.wants_ranked_match}
   return state
   --note: player_number here is the player_number of the connection as according to the server, not the "which" of any Stack
 end
@@ -1223,6 +1226,8 @@ function Connection.J(self, message)
     self.level = message.menu_state.level
     self.character = message.menu_state.character
     self.character_display_name = message.menu_state.character_display_name
+    self.stage = message.menu_state.stage
+    self.stage_is_random = message.menu_state.stage_is_random
     self.ready = message.menu_state.ready
     self.cursor = message.menu_state.cursor
     self.panels_dir = message.menu_state.panels_dir
