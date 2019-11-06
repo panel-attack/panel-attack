@@ -344,6 +344,11 @@ function Character.graphics_uninit(self)
   end
 end
 
+function Character.apply_config_volume(self)
+  set_volume(self.sounds, config.SFX_volume/100)
+  set_volume(self.musics, config.music_volume/100)
+end
+
 function Character.sound_init(self,full,yields)
   -- SFX
   local character_sfx = full and other_characters_sfx or basic_characters_sfx
@@ -389,6 +394,8 @@ function Character.sound_init(self,full,yields)
     end
     if yields then coroutine.yield() end
   end
+
+  self:apply_config_volume()
 end
 
 function Character.sound_uninit(self)
