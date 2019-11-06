@@ -5,8 +5,12 @@ require("stage_loader")
 
 local basic_images = {"thumbnail"}
 local other_images = {"background"}
+local defaulted_images = { thumbnail=true, background=true } -- those images will be defaulted if missing
 local basic_musics = {}
 local other_musics = {"normal_music", "danger_music", "normal_music_start", "danger_music_start"}
+local defaulted_musics = { normal_music=true } -- those musics will be defaulted if missing
+
+local default_stage = nil -- holds default assets fallbacks
 
 Stage = class(function(s, full_path, folder_name)
     s.path = full_path -- string | path to the stage folder content
@@ -19,7 +23,7 @@ Stage = class(function(s, full_path, folder_name)
 
 function Stage.id_init(self)
   local read_data = {}
-  local config_file, err = love.filesystem.newFile(self.path.."/stage.json", "r")
+  local config_file, err = love.filesystem.newFile(self.path.."/config.json", "r")
   if config_file then
     local teh_json = config_file:read(config_file:getSize())
     for k,v in pairs(json.decode(teh_json)) do
@@ -28,7 +32,6 @@ function Stage.id_init(self)
   end
 
   if read_data.id then
-    print("an id was found for "..self.path)
     self.id = read_data.id
   end
 end
@@ -36,7 +39,7 @@ end
 function Stage.other_data_init(self)
   -- read stage.json
   local read_data = {}
-  local config_file, err = love.filesystem.newFile(self.path.."/stage.json", "r")
+  local config_file, err = love.filesystem.newFile(self.path.."/config.json", "r")
   if config_file then
     local teh_json = config_file:read(config_file:getSize())
     for k,v in pairs(json.decode(teh_json)) do
@@ -52,9 +55,6 @@ function Stage.other_data_init(self)
   end
 
   print( self.id..(self.id ~= self.display_name and (", aka "..self.display_name..", ") or " ").."is a playable stage")
-end
-
-function Stage.assert_requirements_met(self)
 end
 
 function Stage.stop_sounds(self)
@@ -77,7 +77,6 @@ function Stage.load(self,instant)
   print("loading "..self.id)
   self:graphics_init(true,(not instant))
   self:sound_init(true,(not instant))
-  self:assert_requirements_met()
   self.fully_loaded = true
   print("loaded "..self.id)
 end
@@ -122,6 +121,7 @@ function stages_init()
   stages_ids = {} -- holds all stages ids
   stages_ids_for_current_theme = {} -- holds stages ids for the current theme, those stages will appear in the selection
   stages_ids_by_display_names = {} -- holds keys to array of stages ids holding that name
+  default_stage = nil
 
   add_stages_from_dir_rec("stages")
 
@@ -149,6 +149,10 @@ function stages_init()
   end
   
   -- actual init for all stages
+  default_stage = Stage("stages/__default", "__default")
+  default_stage:preload()
+  default_stage:load(true)
+
   for _,stage in pairs(stages) do
     stage:preload()
 
@@ -163,9 +167,9 @@ end
 function Stage.graphics_init(self,full,yields)
   local stage_images = full and other_images or basic_images
   for _,image_name in ipairs(stage_images) do
-    self.images[image_name] = get_img_from_supported_extensions("stages/"..self.id.."/"..image_name)
-    if not self.images[image_name] then
-      self.images[image_name] = simple_load_img( "stages/__default/"..image_name..".png" )
+    self.images[image_name] = get_img_from_supported_extensions(self.path.."/"..image_name)
+    if not self.images[image_name] and defaulted_images[image_name] then
+      self.images[image_name] = default_stage.images[image_name]
     end
     if yields then coroutine.yield() end
   end
@@ -173,28 +177,20 @@ end
 
 function Stage.graphics_uninit(self)
   for _,image_name in ipairs(other_images) do
-    self.images[image_name] = nil
+    if self.images[image_name] ~= default_stage[image_name] then
+      self.images[image_name] = nil
+    end
   end
 end
 
-local function find_music(stage_id, music_type)
-  local dirs_to_check = { "stages/",
-                          "sounds/"..default_sounds_dir.."/music/" }
-  for _,current_dir in ipairs(dirs_to_check) do
-    local path = current_dir..stage_id
-    local music = get_from_supported_extensions(path.."/"..music_type, true)
-    if music then
-      return music
-    end
-  end
-  return zero_sound
+function Stage.apply_config_volume(self)
+  set_volume(self.musics, config.music_volume/100)
 end
 
 function Stage.sound_init(self,full,yields)
-  -- music
   local stage_musics = full and other_musics or basic_musics
   for _, music in ipairs(stage_musics) do
-    self.musics[music] = find_music(self.id, music)
+    self.musics[music] = get_from_supported_extensions(self.path.."/"..music, true)
     -- Set looping status for music.
     -- Intros won't loop, but other parts should.
     if self.musics[music] then
@@ -204,8 +200,14 @@ function Stage.sound_init(self,full,yields)
         self.musics[music]:setLooping(false)
       end
     end
+    if not self.musics[music] and defaulted_musics[music] then
+      self.musics[music] = default_stage.musics[music]
+    end
+
     if yields then coroutine.yield() end
   end
+  
+  self:apply_config_volume()
 end
 
 function Stage.sound_uninit(self)

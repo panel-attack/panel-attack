@@ -73,6 +73,9 @@ function apply_config_volume()
     set_volume(character.sounds, config.SFX_volume/100)
     set_volume(character.musics, config.music_volume/100)
   end
+  for _,stage in pairs(stages) do
+    stage:apply_config_volume()
+  end
 end
 
 function play_optional_sfx(sfx)

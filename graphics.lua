@@ -17,8 +17,6 @@ for i=14,6,-1 do
   end
 end
 
-print("#shake arr "..#shake_arr)
-
 -- 1 -> 1
 -- #shake -> 0
 local shake_step = 1/(#shake_arr - 1)
@@ -42,7 +40,7 @@ end
 
 function get_img_from_supported_extensions(path_and_name)
   local supported_img_formats = { ".jpg", ".png" }
-  for k, extension in ipairs(supported_img_formats) do
+  for _, extension in ipairs(supported_img_formats) do
     if love.filesystem.getInfo(path_and_name..extension) then
       return simple_load_img(path_and_name..extension)
     end
