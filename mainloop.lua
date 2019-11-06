@@ -191,6 +191,7 @@ do
     connected_server_ip = ""
     current_server_supports_ranking = false
     match_type = ""
+  
     match_type_message = ""
     local items = {
         {loc("mm_1_endless"), main_select_speed_99, {main_endless}},
@@ -260,10 +261,14 @@ end
 
 function main_select_speed_99(next_func, ...)
   local difficulties = {"Easy", "Normal", "Hard"}
+  local loc_difficulties = { loc("easy"), loc("normal"), loc("hard") }
+
   local items = {{"Speed"},
                 {"Difficulty"},
                 {"Go!", next_func},
                 {"Back", main_select_mode}}
+  local loc_items = {loc("speed"), loc("difficulty"), loc("go_"), loc("back")}
+
   local speed = config.endless_speed or 1
   local difficulty = config.endless_difficulty or 1
   local active_idx = 1
@@ -277,10 +282,10 @@ function main_select_speed_99(next_func, ...)
       else
         arrow = arrow .. "\n"
       end
-      to_print = to_print .. "   " .. items[i][1] .. "\n"
+      to_print = to_print .. "   " .. loc_items[i] .. "\n"
     end
     to_print2 = "                  " .. speed .. "\n                  "
-      .. difficulties[difficulty]
+      .. loc_difficulties[difficulty]
     gprint(arrow, unpack(main_menu_screen_pos))
     gprint(to_print, unpack(main_menu_screen_pos))
     gprint(to_print2, unpack(main_menu_screen_pos))
@@ -372,7 +377,7 @@ function main_time_attack(...)
     wait()
     if P1.game_over or (P1.game_stopwatch and P1.game_stopwatch == 120*60) then
     -- TODO: proper game over.
-      local end_text = "You scored "..P1.score.."\nin "..frames_to_time_string(P1.game_stopwatch)
+      local end_text = loc("ta_score", P1.score.."\n").." "..frames_to_time_string(P1.game_stopwatch)
         return main_dumb_transition, {main_select_mode, end_text, 30}
     end
     variable_step(function()
@@ -411,10 +416,10 @@ function main_character_select()
           global_initialize_room_msg = msg
         end
       end
-      gprint("Waiting for room initialization...", unpack(main_menu_screen_pos))
+      gprint(loc("ss_init"), unpack(main_menu_screen_pos))
       wait()
       if not do_messages() then
-        return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+        return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
       end
       retries = retries + 1
     end
@@ -436,7 +441,7 @@ function main_character_select()
       -- end
     -- end
     if not global_initialize_room_msg then
-      return main_dumb_transition, {main_select_mode, "Room initialization failed.\n\nReturning to main menu...", 60, 300}
+      return main_dumb_transition, {main_select_mode, loc("ss_init_fail").."\n\n"..loc("ss_return"), 60, 300}
     end
     msg = global_initialize_room_msg
     global_initialize_room_msg = nil
@@ -545,6 +550,10 @@ function main_character_select()
     end
     match_type = match_type or "Casual"
     if match_type == "" then match_type = "Casual" end
+
+    if match_type == "Casual" then
+    elseif match_type == "Ranked" then
+    end
   end
 
   match_type_message = match_type_message or ""
@@ -2193,7 +2202,6 @@ function main_show_custom_graphics_readme(idx)
   local custom_graphics_readme = read_txt_file("Custom Graphics Readme.txt")
   while true do
     gprint(custom_graphics_readme, 100, 150)
-    testpencel()
     do_menu_function = false
     wait()
     local ret = nil

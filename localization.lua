@@ -1,4 +1,4 @@
-local FILE_NAME = "PanelAttack Localization File - Feuille 1.tsv"
+local FILENAME = "PanelAttack Localization File - Feuille 1.tsv"
 
 local loc_map = {}
 local loc_langs = {}
@@ -6,8 +6,8 @@ local loc_lang_index = 2
 
 function localization_init()
 	local first_line = true
-	if love.filesystem.getInfo(FILE_NAME) then
-			for line in love.filesystem.lines(FILE_NAME) do
+	if love.filesystem.getInfo(FILENAME) then
+			for line in love.filesystem.lines(FILENAME) do
 
 				if first_line then
 					for m in string.gmatch(line, "(	[^	]+)") do
