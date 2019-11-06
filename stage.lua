@@ -8,24 +8,47 @@ local other_images = {"background"}
 local basic_musics = {}
 local other_musics = {"normal_music", "danger_music", "normal_music_start", "danger_music_start"}
 
-Stage = class(function(s, id)
-    s.id = id -- string | id of the stage, is also the name of its folder
-    s.display_name = id -- string | display name of the stage
+Stage = class(function(s, full_path, folder_name)
+    s.path = full_path -- string | path to the stage folder content
+    s.id = folder_name -- string | id of the stage, is also the name of its folder by default, may change in id_init
+    s.display_name = s.id -- string | display name of the stage
     s.images = {}
     s.musics = {}
     s.fully_loaded = false
   end)
 
+function Stage.id_init(self)
+  local read_data = {}
+  local config_file, err = love.filesystem.newFile(self.path.."/stage.json", "r")
+  if config_file then
+    local teh_json = config_file:read(config_file:getSize())
+    for k,v in pairs(json.decode(teh_json)) do
+      read_data[k] = v
+    end
+  end
+
+  if read_data.id then
+    print("an id was found for "..self.path)
+    self.id = read_data.id
+  end
+end
+
 function Stage.other_data_init(self)
-  self.display_name = self.id
+  -- read stage.json
+  local read_data = {}
+  local config_file, err = love.filesystem.newFile(self.path.."/stage.json", "r")
+  if config_file then
+    local teh_json = config_file:read(config_file:getSize())
+    for k,v in pairs(json.decode(teh_json)) do
+      read_data[k] = v
+    end
+  end
+
+  -- id has already been handled! DO NOT handle id here!
 
   -- display name
-  local txt_file, err = love.filesystem.newFile("stages/"..self.id.."/name.txt", "r")
-  if txt_file then
-    local display_name = txt_file:read(txt_file:getSize())
-    if display_name then
-      self.display_name = display_name
-    end
+  if read_data.name then
+    self.display_name = read_data.name
   end
 
   print( self.id..(self.id ~= self.display_name and (", aka "..self.display_name..", ") or " ").."is a playable stage")
@@ -67,21 +90,40 @@ function Stage.unload(self)
   print("unloaded "..self.id)
 end
 
+local function add_stages_from_dir_rec(path)
+  local lfs = love.filesystem
+  local raw_dir_list = lfs.getDirectoryItems(path)
+  for i,v in ipairs(raw_dir_list) do
+    local start_of_v = string.sub(v,0,string.len(prefix_of_ignored_dirs))
+    if start_of_v ~= prefix_of_ignored_dirs then
+      local current_path = path.."/"..v
+      if lfs.isDirectory(current_path) then
+        -- call recursively: facade folder
+        add_stages_from_dir_rec(current_path)
+
+        -- init stage: 'real' folder
+        local stage = Stage(current_path,v)
+        stage:id_init()
+
+        if stages[stage.id] ~= nil then
+          print(current_path.." has been ignored since a stage with this id has already been found")
+        else
+          stages[stage.id] = stage
+          stages_ids[#stages_ids+1] = stage.id
+          print(current_path.." has been added to the stage list!")
+        end
+      end
+    end
+  end
+end
+
 function stages_init()
   stages = {} -- holds all stages, most of them will not be fully loaded
   stages_ids = {} -- holds all stages ids
   stages_ids_for_current_theme = {} -- holds stages ids for the current theme, those stages will appear in the selection
   stages_ids_by_display_names = {} -- holds keys to array of stages ids holding that name
 
-  -- new system with characters belonging to their own folder and characters.txt detailing current characters
-  local raw_dir_list = love.filesystem.getDirectoryItems("stages")
-  for _,v in ipairs(raw_dir_list) do
-    local start_of_v = string.sub(v,0,string.len(prefix_of_ignored_dirs))
-    if start_of_v ~= prefix_of_ignored_dirs then
-      stages[v] = Stage(v)
-      stages_ids[#stages_ids+1] = v
-    end
-  end
+  add_stages_from_dir_rec("stages")
 
   if love.filesystem.getInfo("assets/"..config.assets_dir.."/stages.txt") then
     for line in love.filesystem.lines("assets/"..config.assets_dir.."/stages.txt") do
