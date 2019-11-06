@@ -423,7 +423,7 @@ end
 
 -- fills the provided map based on the provided template and return the amount of pages. __Empty values will be replaced by character_ids
 local function fill_map(template_map,map)
-  local X,Y = 5,7
+  local X,Y = 5,9
   local pages_amount = 0
   local character_id_index = 1
   while true do
@@ -497,12 +497,11 @@ function main_character_select()
   print("character_select_mode = "..(character_select_mode or "nil"))
 
   -- map is composed of special values prefixed by __ and character ids
-  local prefix_of_special_value = "__"
-  local template_map = {{"__Level", "__Level", "__Level", "__Panels", "__Panels", "__Panels", "__Ready"},
-             {"__Stage", "__Stage", "__Stage", "__Reserved", "__Reserved", "__Reserved", "__Random"},
-             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}}
+  local template_map = {{"__Panels", "__Panels", "__Stage", "__Stage", "__Stage", "__Level", "__Level", "__Level", "__Ready"},
+             {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}}
   local map = {}
   if character_select_mode == "2p_net_vs" then
     local opponent_connected = false
@@ -601,11 +600,11 @@ function main_character_select()
     print("current_server_supports_ranking: "..tostring(current_server_supports_ranking))
 
     if current_server_supports_ranking then
-      template_map = {{"__Level", "__Level", "__Level", "__Panels", "__Panels", "__Panels", "__Ready"},
-             {"__Stage", "__Stage", "__Stage", "__Mode", "__Mode", "__Mode", "__Random"},
-             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}}
+      template_map = {{"__Panels", "__Panels", "__Mode", "__Mode", "__Stage", "__Stage", "__Level", "__Level", "__Ready"},
+             {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}}
     end
   end
 
@@ -651,7 +650,7 @@ function main_character_select()
 
   -- be wary: name_to_xy_per_page is kinda buggy for larger blocks as they span multiple positions (we retain the last one), and is completely broken with __Empty
   local name_to_xy_per_page = {}
-  local X,Y = 5,7
+  local X,Y = 5,9
   for p=1,pages_amount do
     name_to_xy_per_page[p] = {}
     for i=1,X do
@@ -1154,8 +1153,8 @@ function main_character_select()
     draw_button(0,1,1,1,"P1")
     draw_button(0,2,2,1,get_player_state_str(my_player_number,my_rating_difference,my_win_count,op_win_count,my_expected_win_ratio),"left","top",true)
     if cursor_data[1].state and op_name then
-      draw_button(0,5,1,1,"P2")
-      draw_button(0,6,2,1,get_player_state_str(op_player_number,op_rating_difference,op_win_count,my_win_count,op_expected_win_ratio),"left","top",true)
+      draw_button(0,7,1,1,"P2")
+      draw_button(0,8,2,1,get_player_state_str(op_player_number,op_rating_difference,op_win_count,my_win_count,op_expected_win_ratio),"left","top",true)
       --state = state.." "..json.encode(op_state)
     end
     if character_select_mode == "2p_net_vs" then
