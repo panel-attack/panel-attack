@@ -125,8 +125,8 @@ function stages_init()
 
   add_stages_from_dir_rec("stages")
 
-  if love.filesystem.getInfo(config.theme.."/stages.txt") then
-    for line in love.filesystem.lines(config.theme.."/stages.txt") do
+  if love.filesystem.getInfo("themes/"..config.theme.."/stages.txt") then
+    for line in love.filesystem.lines("themes/"..config.theme.."/stages.txt") do
       line = trim(line) -- remove whitespace
       if love.filesystem.getInfo("stages/"..line) then
         -- found at least a valid stage in a stages.txt file

@@ -225,8 +225,8 @@ function characters_init()
       end
     end
 
-    if love.filesystem.getInfo(config.theme.."/characters.txt") then
-      for line in love.filesystem.lines(config.theme.."/characters.txt") do
+    if love.filesystem.getInfo("themes/"..config.theme.."/characters.txt") then
+      for line in love.filesystem.lines("themes/"..config.theme.."/characters.txt") do
         line = trim(line) -- remove whitespace
         if love.filesystem.getInfo("characters/"..line) then
           -- found at least a valid character in a characters.txt file

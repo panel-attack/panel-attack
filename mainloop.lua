@@ -2269,8 +2269,8 @@ function main_config_input()
   end
 end
 
-function main_show_custom_graphics_readme(idx)
-  if not love.filesystem.getInfo("themes/"..prefix_of_ignored_dirs..default_assets_dir) then
+function main_show_custom_themes_readme(idx)
+  if not love.filesystem.getInfo("themes/"..prefix_of_ignored_dirs..default_theme_dir) then
     print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
     gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
     wait()
@@ -2370,7 +2370,6 @@ function main_options(starting_idx)
   local use_music_from_choices = {"stage", "characters"}
   local on_off_text = {[true]="On", [false]="Off"}
   memory_before_options_menu = { theme=config.theme,
-                                panels=config.panels,
                                 enable_analytics=config.enable_analytics,
                                 use_music_from=config.use_music_from }
   --make so we can get "anonymously" from save_replays_publicly_choices["anonymously"]
@@ -2406,15 +2405,14 @@ function main_options(starting_idx)
     {"Debug Mode", on_off_text[config.debug_mode or false], "bool", false, nil, nil,false},
     {"Save replays publicly", save_replays_publicly_choices[config.save_replays_publicly] or save_replays_publicly_choices["with my name"], "multiple choice", save_replays_publicly_choices},
     {"Theme", config.theme or default_theme_dir, "multiple choice", themes_set},
-    {"Panels", config.panels or default_panels_dir, "multiple choice", panel_sets},
-    {"About custom themes", "", "function", nil, nil, nil, nil, main_show_custom_graphics_readme},
-    {"About custom characters", "", "function", nil, nil, nil, nil, main_show_custom_characters_readme},
-    {"About custom stages", "", "function", nil, nil, nil, nil, main_show_custom_stages_readme},
     {"Ready countdown", on_off_text[config.ready_countdown_1P or false], "bool", true, nil, nil,false},
     {"Show FPS", on_off_text[config.show_fps or false], "bool", true, nil, nil,false},
     {"Danger music change-back delay", on_off_text[config.danger_music_changeback_delay or false], "bool", false, nil, nil, false},
     {"Enable analytics", on_off_text[config.enable_analytics or false], "bool", false, nil, nil, false},
     {"Use music from", use_music_from_choices[config.use_music_from] or use_music_from_choices["stage"], "multiple choice", use_music_from_choices},
+    {"About custom themes", "", "function", nil, nil, nil, nil, main_show_custom_themes_readme},
+    {"About custom characters", "", "function", nil, nil, nil, nil, main_show_custom_characters_readme},
+    {"About custom stages", "", "function", nil, nil, nil, nil, main_show_custom_stages_readme},
     {"Back", "", nil, nil, nil, nil, false, main_select_mode}
   }
   local function print_stuff()
@@ -2569,8 +2567,6 @@ function main_options(starting_idx)
             config.save_replays_publicly = items[active_idx][2]
           elseif items[active_idx][1] == "Theme" then
             config.theme = items[active_idx][2]
-          elseif items[active_idx][1] == "Panels" then
-            config.panels = items[active_idx][2]
           elseif items[active_idx][1] == "Use music from" then
             config.use_music_from = items[active_idx][2]
           end
@@ -2604,7 +2600,6 @@ function exit_options_menu()
   gprint("writing config to file...", unpack(main_menu_screen_pos))
   wait()
     memory_before_options_menu = { theme=config.theme,
-                                panels=config.panels,
                                 enable_analytics=config.enable_analytics,
                                 use_music_from=config.use_music_from }
 

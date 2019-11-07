@@ -2,12 +2,10 @@ require("graphics_util")
 require("sound_util")
 
 local function load_theme_img(name)
-  print("loading "..name)
   local img = load_img_from_supported_extensions("themes/"..config.theme.."/"..name)
   if not img then
     img = load_img_from_supported_extensions("themes/"..default_theme_dir.."/"..name)
   end
-  print("loaded "..(img and "ok" or "ko"))
   return img
 end
 
