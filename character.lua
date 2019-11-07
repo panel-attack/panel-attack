@@ -1,9 +1,6 @@
 require("character_loader")
 
-  -- Stuff defined in this file:
-  --  . the data structure that store a character's data
-local min, pairs, deepcpy = math.min, pairs, deepcpy
-local max = math.max
+  -- Stuff defined in this file: the data structure that store a character's data
 
 local basic_character_images = { "icon" }
 local other_character_images = {"topleft", "botleft", "topright", "botright",
@@ -40,11 +37,6 @@ Character = class(function(s, id)
 
 function Character.other_data_init(self)
   local dirs_to_check = { "characters/" }
-  if config.use_default_characters and self.id ~= default_character_id then
-    dirs_to_check = { "assets/"..config.assets_dir.."/",
-                      "assets/"..default_assets_dir.."/",
-                      "characters/"}
-  end
   self.display_name = self.id
   self.favorite_stage = default_stages[self.id]
 
@@ -76,11 +68,6 @@ end
 local function find_character_SFX(character_id, SFX_name,fallback)
   fallback = fallback or nil
   local dirs_to_check = { "characters/" }
-  if config.use_default_characters and character_id ~= default_character_id then
-    dirs_to_check = { "sounds/"..config.sounds_dir.."/characters/",
-                      "sounds/"..default_sounds_dir.."/characters/",
-                      "characters/"}
-  end
   for _,current_dir in ipairs(dirs_to_check) do
     --Note: if there is a chain or a combo, but not the other, return the same SFX for either inquiry.
     --This way, we can always depend on a character having a combo and a chain SFX.
@@ -123,29 +110,12 @@ local function find_character_SFX(character_id, SFX_name,fallback)
 end
 
 local function find_music(character_id, music_type)
-  local dirs_to_check = { "",
-                          "sounds/"..default_sounds_dir.."/" }
-  if config.use_default_characters and character_id ~= default_character_id then
-    dirs_to_check = { "sounds/"..config.sounds_dir.."/",
-                      "sounds/"..default_sounds_dir.."/",
-                      ""}
+  local path = "characters/"..character_id
+  if any_supported_extension(path.."/normal_music") then -- character has control over their musics, no fallback allowed!
+    local found_source = get_from_supported_extensions(path.."/"..music_type, true)
+    if config.debug_mode then print("In "..path.." directory, "..(found_source and "" or "did not").." found "..music_type.." for "..character_id) end
+    return found_source
   end
-  for _,current_dir in ipairs(dirs_to_check) do
-    local path = current_dir.."characters/"..character_id
-    if any_supported_extension(path.."/normal_music") then -- character has control over their musics, no fallback allowed!
-      local found_source = get_from_supported_extensions(path.."/"..music_type, true)
-      if config.debug_mode then print("In "..path.." directory, "..(found_source and "" or "did not").." found "..music_type.." for "..character_id) end
-      return found_source
-    elseif characters[character_id].favorite_stage then
-      local path = (current_dir~="" and current_dir or "sounds/"..config.sounds_dir.."/").."music/"..characters[character_id].favorite_stage
-      if any_supported_extension(path.."/normal_music") then
-        local found_source = get_from_supported_extensions(path.."/"..music_type, true)
-        if config.debug_mode then print("In "..path.." directory, "..(found_source and "" or "did not").." found "..music_type.." for "..character_id) end
-        return found_source
-      end
-    end
-  end
-  
   return zero_sound
 end
 
@@ -183,8 +153,6 @@ function Character.assert_requirements_met(self)
 end
 
 function Character.stop_sounds(self)
-  music_t = {}
-
   -- SFX
   for _, sound_table in ipairs(self.sounds) do
     if type(sound_table) == "table" then
@@ -257,8 +225,8 @@ function characters_init()
       end
     end
 
-    if love.filesystem.getInfo("assets/"..config.assets_dir.."/characters.txt") then
-      for line in love.filesystem.lines("assets/"..config.assets_dir.."/characters.txt") do
+    if love.filesystem.getInfo(config.theme.."/characters.txt") then
+      for line in love.filesystem.lines(config.theme.."/characters.txt") do
         line = trim(line) -- remove whitespace
         if love.filesystem.getInfo("characters/"..line) then
           -- found at least a valid character in a characters.txt file
@@ -322,19 +290,12 @@ end
 
 function Character.graphics_init(self,full,yields)
   local character_images = full and other_character_images or basic_character_images
-  if config.use_default_characters and self.id ~= default_character_id then
-    for _,image_name in ipairs(character_images) do
-      self.images[image_name] = load_img(self.id.."/"..image_name..".png")
-      if not self.images[image_name] then
-        self.images[image_name] = load_img(image_name..".png","characters/"..self.id, "characters/__default")
-      end
-      if yields then coroutine.yield() end
+  for _,image_name in ipairs(character_images) do
+    self.images[image_name] = load_img_from_supported_extensions("characters/"..self.id.."/"..image_name)
+    if not self.images[image_name] then
+      self.images[image_name] = load_img_from_supported_extensions("characters/__default/"..image_name)
     end
-  else
-    for _,image_name in ipairs(character_images) do
-      self.images[image_name] = load_img(image_name..".png","characters/"..self.id, "characters/__default")
-      if yields then coroutine.yield() end
-    end
+    if yields then coroutine.yield() end
   end
 end
 

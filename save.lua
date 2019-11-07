@@ -76,27 +76,12 @@ function read_conf_file() pcall(function()
   for k,v in pairs(json.decode(teh_json)) do
     config[k] = v
   end
-  if love.filesystem.getInfo("assets/"..config.assets_dir) == nil then
-    config.assets_dir = default_assets_dir
+  
+  if love.filesystem.getInfo("themes/"..config.theme) == nil then
+    config.theme = default_theme_dir
   end
-  if love.filesystem.getInfo("panels/"..config.panels_dir_when_not_using_set_from_assets_folder) == nil then
-    config.panels_dir_when_not_using_set_from_assets_folder = default_panels_dir
-  end
-  if love.filesystem.getInfo("sounds/"..config.sounds_dir) == nil then
-    config.sounds_dir = default_sounds_dir
-  end
-  if config.use_panels_from_assets_folder == nil then
-    config.use_panels_from_assets_folder = true
-  end
-  if config.use_panels_from_assets_folder then
-    config.panels_dir = config.assets_dir
-  else
-    config.panels_dir = config.panels_dir_when_not_using_set_from_assets_folder
-  end
-  if love.filesystem.getInfo("assets/"..config.assets_dir.."/lip") 
-    and not has_any_custom_character() then
-    print("retrocompatibility applied!")
-    config.use_default_characters = true
+  if love.filesystem.getInfo("panels/"..config.panels) == nil then
+    config.panels = default_panels_dir
   end
 
   -- do stuff regarding version compatibility here, before we patch it

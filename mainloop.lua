@@ -1,3 +1,5 @@
+require("panels")
+require("theme")
 local utf8 = require("utf8")
 
 local wait, resume = coroutine.yield, coroutine.resume
@@ -29,50 +31,6 @@ local main_menu_screen_pos = { 300 + (canvas_width-legacy_canvas_width)/2, 280 +
 function fmainloop()
   local func, arg = main_select_mode, nil
   replay = {}
-  -- Default configuration values
-  config = {
-             -- The lastly used version
-             version                       = VERSION,
-             -- Player character
-             character                     = "lip",
-             --¨Previously selected stage
-             stage                         = random_stage_special_value,
-             -- Retrocompatibility
-             use_music_from                = "stage",
-             -- Level (2P modes / 1P vs yourself mode)
-             level                         = 5,
-             endless_speed                 = 1,
-             endless_difficulty            = 1,
-             -- Player name
-             name                          = "defaultname",
-             -- Volume settings
-             master_volume                 = 100,
-             SFX_volume                    = 100,
-             music_volume                  = 100,
-             -- Debug mode flag
-             debug_mode                    = false,
-             -- Show FPS in the top-left corner of the screen
-             show_fps                      = false,
-             -- Enable ready countdown flag
-             ready_countdown_1P            = true,
-             -- Change danger music back later flag
-             danger_music_changeback_delay = false,
-             -- analytics
-             enable_analytics              = false,
-             -- Save replays setting
-             save_replays_publicly         = "with my name",
-             -- Default directories for graphics/panels/sounds
-             assets_dir                    = default_assets_dir,
-             sounds_dir                    = default_sounds_dir,
-
-             panels_dir                    = default_assets_dir,
-             -- Retrocompatibility, please remove whenever possible, it's so ugly!
-             panels_dir_when_not_using_set_from_assets_folder = default_panels_dir,
-             use_panels_from_assets_folder = true,
-
-             -- Retrocompatibility
-             use_default_characters        = false,
-           }
   gprint("Reading config file", unpack(main_menu_screen_pos))
   wait()
   read_conf_file() -- TODO: stop making new config files
@@ -87,24 +45,22 @@ function fmainloop()
   gprint("Reading replay file", unpack(main_menu_screen_pos))
   wait()
   read_replay_file()
+  gprint("Loading theme...", unpack(main_menu_screen_pos))
+  wait()
+  theme_init()
   gprint("Preloading characters...", unpack(main_menu_screen_pos))
   wait()
   characters_init()
   gprint("Preloading stages...", unpack(main_menu_screen_pos))
   wait()
   stages_init()
-  gprint("Loading graphics...", unpack(main_menu_screen_pos))
-  wait()
-  graphics_init() -- load images and set up stuff
   gprint("Loading panels...", unpack(main_menu_screen_pos))
   wait()
   panels_init() -- load panels
-  gprint("Loading sounds...", unpack(main_menu_screen_pos))
-  wait()
-  sound_init()
   gprint("Loading analytics...", unpack(main_menu_screen_pos))
   wait()
   analytics_init()
+  apply_config_volume()
   while true do
     leftover_time = 1/120
     consuming_timesteps = false
@@ -186,14 +142,14 @@ function menu_key_func(fixed, configurable, rept, sound)
   end
 end
 
-menu_up = menu_key_func({"up"}, {"up"}, true, function() return sounds.SFX.menu_move end )
-menu_down = menu_key_func({"down"}, {"down"}, true, function() return sounds.SFX.menu_move end)
-menu_left = menu_key_func({"left"}, {"left"}, true, function() return sounds.SFX.menu_move end)
-menu_right = menu_key_func({"right"}, {"right"}, true, function() return sounds.SFX.menu_move end)
-menu_enter = menu_key_func({"return","kenter","z"}, {"swap1"}, false, function() return sounds.SFX.menu_validate end)
-menu_escape = menu_key_func({"escape","x"}, {"swap2"}, false, function() return sounds.SFX.menu_cancel end)
-menu_prev_page = menu_key_func({"pageup"}, {"raise1"}, true, function() return sounds.SFX.menu_move end)
-menu_next_page = menu_key_func({"pagedown"}, {"raise2"}, true, function() return sounds.SFX.menu_move end)
+menu_up = menu_key_func({"up"}, {"up"}, true, function() return sounds.menu_move end )
+menu_down = menu_key_func({"down"}, {"down"}, true, function() return sounds.menu_move end)
+menu_left = menu_key_func({"left"}, {"left"}, true, function() return sounds.menu_move end)
+menu_right = menu_key_func({"right"}, {"right"}, true, function() return sounds.menu_move end)
+menu_enter = menu_key_func({"return","kenter","z"}, {"swap1"}, false, function() return sounds.menu_validate end)
+menu_escape = menu_key_func({"escape","x"}, {"swap2"}, false, function() return sounds.menu_cancel end)
+menu_prev_page = menu_key_func({"pageup"}, {"raise1"}, true, function() return sounds.menu_move end)
+menu_next_page = menu_key_func({"pagedown"}, {"raise2"}, true, function() return sounds.menu_move end)
 menu_backspace = menu_key_func({"backspace"}, {"backspace"}, true)
 
 do
@@ -2314,15 +2270,15 @@ function main_config_input()
 end
 
 function main_show_custom_graphics_readme(idx)
-  if not love.filesystem.getInfo("assets/"..prefix_of_ignored_dirs..default_assets_dir) then
+  if not love.filesystem.getInfo("themes/"..prefix_of_ignored_dirs..default_assets_dir) then
     print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
     gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
     wait()
-    recursive_copy("assets/"..default_assets_dir, "assets/"..prefix_of_ignored_dirs..default_assets_dir)
+    recursive_copy("themes/"..default_theme_dir, "themes/"..prefix_of_ignored_dirs..default_theme_dir)
   end
 
   -- add other defaults panels sets here so that anyone can update them if wanted
-  local default_panels_dirs = { default_panels_dir, "libre" }
+  local default_panels_dirs = { default_panels_dir }
   
   for _,panels_dir in ipairs(default_panels_dirs) do
     if not love.filesystem.getInfo("panels/"..prefix_of_ignored_dirs..panels_dir) then
@@ -2336,30 +2292,6 @@ function main_show_custom_graphics_readme(idx)
   local custom_graphics_readme = read_txt_file("Custom Graphics Readme.txt")
   while true do
     gprint(custom_graphics_readme, 15, 15)
-    do_menu_function = false
-    wait()
-    local ret = nil
-    variable_step(function()
-      if menu_escape(K[1]) or menu_enter(K[1]) then
-        ret = {main_options, {idx}}
-      end
-    end)
-    if ret then
-      return unpack(ret)
-    end
-  end
-end
-
-function main_show_custom_sounds_readme(idx)
-  if not love.filesystem.getInfo("sounds/"..prefix_of_ignored_dirs..default_sounds_dir)then
-    print("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.")
-    gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
-    wait()
-    recursive_copy("sounds/"..default_sounds_dir, "sounds/"..prefix_of_ignored_dirs..default_sounds_dir)
-  end
-  local custom_sounds_readme = read_txt_file("Custom Sounds Readme.txt")
-  while true do
-    gprint(custom_sounds_readme, 15, 15)
     do_menu_function = false
     wait()
     local ret = nil
@@ -2428,6 +2360,8 @@ function main_show_custom_characters_readme(idx)
   end
 end
 
+local memory_before_options_menu = nil
+
 function main_options(starting_idx)
   local items, active_idx = {}, starting_idx or 1
   local k = K[1]
@@ -2435,13 +2369,10 @@ function main_options(starting_idx)
   local save_replays_publicly_choices = {"with my name", "anonymously", "not at all"}
   local use_music_from_choices = {"stage", "characters"}
   local on_off_text = {[true]="On", [false]="Off"}
-  memory_before_options_menu = {  config.assets_dir or default_assets_dir,
-                                  config.panels_dir_when_not_using_set_from_assets_folder or default_panels_dir,
-                                  config.sounds_dir or default_sounds_dir,
-                                  config.use_panels_from_assets_folder,
-                                  config.use_default_characters,
-                                  config.enable_analytics,
-                                  config.use_music_from or "stage" }
+  memory_before_options_menu = { theme=config.theme,
+                                panels=config.panels,
+                                enable_analytics=config.enable_analytics,
+                                use_music_from=config.use_music_from }
   --make so we can get "anonymously" from save_replays_publicly_choices["anonymously"]
   for k,v in ipairs(save_replays_publicly_choices) do
     save_replays_publicly_choices[v] = v
@@ -2454,49 +2385,36 @@ function main_options(starting_idx)
     local raw_dir_list = love.filesystem.getDirectoryItems(path)
     for k,v in ipairs(raw_dir_list) do
       local start_of_v = string.sub(v,0,string.len(prefix_of_ignored_dirs))
-      if love.filesystem.getInfo(path.."/"..v) and v ~= "Example folder structure" and start_of_v ~= prefix_of_ignored_dirs then
+      if love.filesystem.getInfo(path.."/"..v) and start_of_v ~= prefix_of_ignored_dirs then
         set[#set+1] = v
       end
     end
   end
 
-  local asset_sets = {}
-  get_dir_set(asset_sets,"assets")
-  local panel_sets = {}
-  get_dir_set(panel_sets,"panels")
-  local sound_sets = {}
-  get_dir_set(sound_sets,"sounds")
+  local themes_set = {}
+  get_dir_set(themes_set,"themes")
+  local panels_set = {}
+  get_dir_set(panels_set,"panels")
 
-  print("asset_sets:")
-  for k,v in ipairs(asset_sets) do
-    print(v)
-  end
   items = {
     --options menu table reference:
     --{[1]"Option Name", [2]current or default value, [3]type, [4]min or bool value or choices_table,
     -- [5]max, [6]sound_source, [7]selectable, [8]next_func, [9]play_while selected}
     {"Master Volume", config.master_volume or 100, "numeric", 0, 100, characters[config.character].musics.normal_music, true, nil, true},
-    {"SFX Volume", config.SFX_volume or 100, "numeric", 0, 100, sounds.SFX.cur_move, true},
+    {"SFX Volume", config.SFX_volume or 100, "numeric", 0, 100, sounds.cur_move, true},
     {"Music Volume", config.music_volume or 100, "numeric", 0, 100, characters[config.character].musics.normal_music, true, nil, true},
     {"Debug Mode", on_off_text[config.debug_mode or false], "bool", false, nil, nil,false},
-    {"Save replays publicly",
-      save_replays_publicly_choices[config.save_replays_publicly]
-        or save_replays_publicly_choices["with my name"],
-      "multiple choice", save_replays_publicly_choices},
-    {"Graphics set", config.assets_dir or default_assets_dir, "multiple choice", asset_sets},
-    {"Panels set", config.panels_dir_when_not_using_set_from_assets_folder or default_panels_dir, "multiple choice", panel_sets},
-    {"About custom graphics", "", "function", nil, nil, nil, nil, main_show_custom_graphics_readme},
-    {"Sounds set", config.sounds_dir or default_sounds_dir, "multiple choice", sound_sets},
-    {"About custom sounds", "", "function", nil, nil, nil, nil, main_show_custom_sounds_readme},
+    {"Save replays publicly", save_replays_publicly_choices[config.save_replays_publicly] or save_replays_publicly_choices["with my name"], "multiple choice", save_replays_publicly_choices},
+    {"Theme", config.theme or default_theme_dir, "multiple choice", themes_set},
+    {"Panels", config.panels or default_panels_dir, "multiple choice", panel_sets},
+    {"About custom themes", "", "function", nil, nil, nil, nil, main_show_custom_graphics_readme},
+    {"About custom characters", "", "function", nil, nil, nil, nil, main_show_custom_characters_readme},
+    {"About custom stages", "", "function", nil, nil, nil, nil, main_show_custom_stages_readme},
     {"Ready countdown", on_off_text[config.ready_countdown_1P or false], "bool", true, nil, nil,false},
     {"Show FPS", on_off_text[config.show_fps or false], "bool", true, nil, nil,false},
-    {"Use panels from assets folder", on_off_text[config.use_panels_from_assets_folder], "bool", true, nil, nil,false},
-    {"Use default characters", on_off_text[config.use_default_characters], "bool", true, nil, nil,false},
     {"Danger music change-back delay", on_off_text[config.danger_music_changeback_delay or false], "bool", false, nil, nil, false},
-    {"About custom characters", "", "function", nil, nil, nil, nil, main_show_custom_characters_readme},
     {"Enable analytics", on_off_text[config.enable_analytics or false], "bool", false, nil, nil, false},
     {"Use music from", use_music_from_choices[config.use_music_from] or use_music_from_choices["stage"], "multiple choice", use_music_from_choices},
-    {"About custom stages", "", "function", nil, nil, nil, nil, main_show_custom_stages_readme},
     {"Back", "", nil, nil, nil, nil, false, main_select_mode}
   }
   local function print_stuff()
@@ -2609,12 +2527,6 @@ function main_options(starting_idx)
           elseif items[active_idx][1] == "Show FPS" then
             config.show_fps = not config.show_fps
             items[active_idx][2] = on_off_text[config.show_fps]
-          elseif items[active_idx][1] == "Use panels from assets folder" then
-            config.use_panels_from_assets_folder = not config.use_panels_from_assets_folder
-            items[active_idx][2] = on_off_text[config.use_panels_from_assets_folder]
-          elseif items[active_idx][1] == "Use default characters" then
-            config.use_default_characters = not config.use_default_characters
-            items[active_idx][2] = on_off_text[config.use_default_characters]
           elseif items[active_idx][1] == "Danger music change-back delay" then
             config.danger_music_changeback_delay = not config.danger_music_changeback_delay
             items[active_idx][2] = on_off_text[config.danger_music_changeback_delay]
@@ -2653,15 +2565,13 @@ function main_options(starting_idx)
           else
             items[active_idx][2] = items[active_idx][4][wrap(1,active_choice_num + 1, #items[active_idx][4])]
           end
-          if active_idx == 5 then
+          if items[active_idx][1] == "Save replays publicly" then
             config.save_replays_publicly = items[active_idx][2]
-          elseif active_idx == 6 then
-            config.assets_dir = items[active_idx][2]
-          elseif active_idx == 7 then
-            config.panels_dir_when_not_using_set_from_assets_folder = items[active_idx][2]
-          elseif active_idx == 9 then
-            config.sounds_dir = items[active_idx][2]
-          elseif active_idx == 18 then
+          elseif items[active_idx][1] == "Theme" then
+            config.theme = items[active_idx][2]
+          elseif items[active_idx][1] == "Panels" then
+            config.panels = items[active_idx][2]
+          elseif items[active_idx][1] == "Use music from" then
             config.use_music_from = items[active_idx][2]
           end
           --add any other multiple choice config updates here
@@ -2693,59 +2603,39 @@ end
 function exit_options_menu()
   gprint("writing config to file...", unpack(main_menu_screen_pos))
   wait()
-  if config.use_panels_from_assets_folder then
-    config.panels_dir = config.assets_dir
-  else
-    config.panels_dir = config.panels_dir_when_not_using_set_from_assets_folder
-  end
+    memory_before_options_menu = { theme=config.theme,
+                                panels=config.panels,
+                                enable_analytics=config.enable_analytics,
+                                use_music_from=config.use_music_from }
+
   write_conf_file()
 
-  if config.assets_dir ~= memory_before_options_menu[1] 
-    or config.use_default_characters ~= memory_before_options_menu[5]
-    or config.sounds_dir ~= memory_before_options_menu[3]
-    or config.use_music_from ~= memory_before_options_menu[7] then
+  if config.theme ~= memory_before_options_menu.theme then
+    gprint("reloading theme...", unpack(main_menu_screen_pos))
+    wait()
+    theme_init()
+  end
+
+  if config.theme ~= memory_before_options_menu.theme 
+    or config.use_music_from ~= memory_before_options_menu.use_music_from then
     gprint("reloading characters...", unpack(main_menu_screen_pos))
     wait()
     characters_init()
   end
 
-  if config.use_music_from ~= memory_before_options_menu[7] then
+  if config.use_music_from ~= memory_before_options_menu.use_music_from then
     gprint("reloading stages...", unpack(main_menu_screen_pos))
     wait()
     stages_init()
   end
 
-  if config.assets_dir ~= memory_before_options_menu[1] 
-    or config.use_default_characters ~= memory_before_options_menu[5] then
-    gprint("reloading graphics...", unpack(main_menu_screen_pos))
-    wait()
-    graphics_init()
-  end
-
-  if config.panels_dir_when_not_using_set_from_assets_folder ~= memory_before_options_menu[2]
-  or config.use_panels_from_assets_folder ~= memory_before_options_menu[4]
-  or config.assets_dir ~= memory_before_options_menu[1] then
-    gprint("reloading panels...", unpack(main_menu_screen_pos))
-    wait()
-    panels_init()
-  end
-
-  if config.sounds_dir ~= memory_before_options_menu[3] 
-    or config.use_default_characters ~= memory_before_options_menu[5]
-    or config.use_music_from ~= memory_before_options_menu[7] then
-    gprint("reloading sounds...", unpack(main_menu_screen_pos))
-    wait()
-    sound_init()
-  else
-    apply_config_volume()
-  end
-
-  if config.enable_analytics ~= memory_before_options_menu[6] then
-    print("loading analytics...")
-    gprint("loading analytics...", unpack(main_menu_screen_pos))
+  if config.enable_analytics ~= memory_before_options_menu.enable_analytics then
+    gprint("reloading analytics...", unpack(main_menu_screen_pos))
     wait()
     analytics_init()
   end
+
+  apply_config_volume()
 
   memory_before_options_menu = nil
   return main_select_mode
@@ -2789,7 +2679,7 @@ function main_set_name()
 end
 
 function main_music_test()
-  gprint("Loading required sounds... (this may take a while)", unpack(main_menu_screen_pos))
+  gprint("Loading required sounds.. (this may take a while)", unpack(main_menu_screen_pos))
   wait()
   -- loads music for characters that are not fully loaded
   for _,character_id in ipairs(characters_ids_for_current_theme) do
@@ -2884,7 +2774,7 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
     if winnerSFX ~= nil then
       winnerSFX:play()
     elseif SFX_GameOver_Play == 1 then
-      sounds.SFX.game_over:play()
+      sounds.game_over:play()
     end
   end
   SFX_GameOver_Play = 0

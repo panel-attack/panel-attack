@@ -1331,12 +1331,12 @@ function Stack.PdP(self)
 
     if self.do_countdown then 
       if SFX_Go_Play == 1 then
-        sounds.SFX.go:stop()
-        sounds.SFX.go:play()
+        sounds.go:stop()
+        sounds.go:play()
         SFX_Go_Play=0
       elseif SFX_Countdown_Play == 1 then
-        sounds.SFX.countdown:stop()
-        sounds.SFX.countdown:play()
+        sounds.countdown:stop()
+        sounds.countdown:play()
         SFX_Go_Play=0
       end
     
@@ -1373,40 +1373,40 @@ function Stack.PdP(self)
   end
   if not SFX_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
     if SFX_Swap_Play == 1 then
-        sounds.SFX.swap:stop()
-        sounds.SFX.swap:play()
+        sounds.swap:stop()
+        sounds.swap:play()
         SFX_Swap_Play=0
     end
     if SFX_Cur_Move_Play == 1 then
-        if not (self.mode == "vs" and sounds.SFX.swap:isPlaying())
+        if not (self.mode == "vs" and sounds.swap:isPlaying())
         and not self.do_countdown then
-            sounds.SFX.cur_move:stop()
-            sounds.SFX.cur_move:play()
+            sounds.cur_move:stop()
+            sounds.cur_move:play()
         end
         SFX_Cur_Move_Play=0
     end
     if SFX_Land_Play == 1 then
-        sounds.SFX.land:stop()
-        sounds.SFX.land:play()
+        sounds.land:stop()
+        sounds.land:play()
         SFX_Land_Play=0
     end
     if SFX_Countdown_Play == 1 then
         if self.which == 1 then
-            sounds.SFX.countdown:stop()
-            sounds.SFX.countdown:play()
+            sounds.countdown:stop()
+            sounds.countdown:play()
         end
         SFX_Countdown_Play=0
     end
     if SFX_Go_Play == 1 then
         if self.which == 1 then
-            sounds.SFX.go:stop()
-            sounds.SFX.go:play()
+            sounds.go:stop()
+            sounds.go:play()
         end
         SFX_Go_Play=0
     end
     if self.combo_chain_play then
-        sounds.SFX.land:stop()
-        sounds.SFX.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        sounds.land:stop()
+        sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         for _,v in pairs(characters[self.character].sounds.combos) do
           v:stop()
         end
@@ -1432,27 +1432,27 @@ function Stack.PdP(self)
     if SFX_Fanfare_Play == 0 then
     --do nothing
     elseif SFX_Fanfare_Play >= 6 then
-        sounds.SFX.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        sounds.SFX.fanfare3:play()
+        sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        sounds.fanfare3:play()
     elseif SFX_Fanfare_Play >= 5 then
-        sounds.SFX.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        sounds.SFX.fanfare2:play()
+        sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        sounds.fanfare2:play()
     elseif SFX_Fanfare_Play >= 4 then
-        sounds.SFX.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        sounds.SFX.fanfare1:play()
+        sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        sounds.fanfare1:play()
     end
     SFX_Fanfare_Play=0
     if SFX_GarbageThud_Play >= 1 and SFX_GarbageThud_Play <= 3 then
         local interrupted_thud = nil
         for i=1,3 do
-            if sounds.SFX.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
-                sounds.SFX.garbage_thud[i]:stop()
+            if sounds.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
+                sounds.garbage_thud[i]:stop()
                 interrupted_thud = i
             end
         end
         if interrupted_thud and interrupted_thud > SFX_GarbageThud_Play then
-            sounds.SFX.garbage_thud[interrupted_thud]:play()
-        else sounds.SFX.garbage_thud[SFX_GarbageThud_Play]:play()
+            sounds.garbage_thud[interrupted_thud]:play()
+        else sounds.garbage_thud[SFX_GarbageThud_Play]:play()
         end
         SFX_GarbageThud_Play = 0
     end
@@ -1465,9 +1465,9 @@ function Stack.PdP(self)
             popIndex = min(self.poppedPanelIndex,10)
         end
         --stop the previous pop sound
-        sounds.SFX.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         --play the appropriate pop sound
-        sounds.SFX.pops[popLevel][popIndex]:play()
+        sounds.pops[popLevel][popIndex]:play()
         self.lastPopLevelPlayed = popLevel
         self.lastPopIndexPlayed = popIndex
         SFX_Pop_Play = nil

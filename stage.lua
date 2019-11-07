@@ -125,8 +125,8 @@ function stages_init()
 
   add_stages_from_dir_rec("stages")
 
-  if love.filesystem.getInfo("assets/"..config.assets_dir.."/stages.txt") then
-    for line in love.filesystem.lines("assets/"..config.assets_dir.."/stages.txt") do
+  if love.filesystem.getInfo(config.theme.."/stages.txt") then
+    for line in love.filesystem.lines(config.theme.."/stages.txt") do
       line = trim(line) -- remove whitespace
       if love.filesystem.getInfo("stages/"..line) then
         -- found at least a valid stage in a stages.txt file
@@ -167,7 +167,7 @@ end
 function Stage.graphics_init(self,full,yields)
   local stage_images = full and other_images or basic_images
   for _,image_name in ipairs(stage_images) do
-    self.images[image_name] = get_img_from_supported_extensions(self.path.."/"..image_name)
+    self.images[image_name] = load_img_from_supported_extensions(self.path.."/"..image_name)
     if not self.images[image_name] and defaulted_images[image_name] then
       self.images[image_name] = default_stage.images[image_name]
     end

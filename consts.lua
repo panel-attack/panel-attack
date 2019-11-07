@@ -15,9 +15,8 @@ RATING_SPREAD_MODIFIER = 400
 
 prefix_of_ignored_dirs = "__"
 
-default_assets_dir = "Stock PdP_TA"
-default_panels_dir = "Stock PdP_TA"
-default_sounds_dir = "Stock PdP_TA"
+default_theme_dir = "Panel Attack"
+default_panels_dir = "Panel Attack"
 
 join_community_msg = "  Join the community at\ndiscord.panelattack.com"
 

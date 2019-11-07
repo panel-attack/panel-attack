@@ -53,8 +53,6 @@ function love.update(dt)
     end
   end
 
-
-
   leftover_time = leftover_time + dt
 
   local status, err = coroutine.resume(mainloop)
@@ -78,7 +76,6 @@ function love.update(dt)
   end
 end
 
-bg = load_img("menu/title.png")
 function love.draw()
   -- if not main_font then
     -- main_font = love.graphics.newFont("Oswald-Light.ttf", 15)
