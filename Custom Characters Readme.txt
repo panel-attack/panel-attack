@@ -34,6 +34,7 @@ Note: The following extensions are supported for all sound files: .mp3, .ogg, .i
 - Clear garbage: ("garbage_match" (,"garbage_match2", "garbage_match3"...))  [selected at random if more than one]
 - Selection: ("selection", ("selection2", "selection3"...)) [selected at random if more than one]
 - Win: ("win"(, "win2", "win3"...)) [selected at random if more than one]
+- Taunts: ("taunt_up"(, "taunt_up2", "taunt_up3"...)) and ("taunt_down"(, "taunt_down2", "taunt_down3"...)) [selected at random if more than one]
 
 Note: providing just a "chain" or just a "combo" SFX is OK. It would get used for all combos and chains.
 
