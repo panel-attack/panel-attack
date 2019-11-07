@@ -1,8 +1,8 @@
 require("graphics_util")
 
 function panels_init()
-  local function load_panel_img(name)
-    local img = load_img_from_supported_extensions("panels/"..config.panels.."/"..name)
+  local function load_panel_img(dir,name)
+    local img = load_img_from_supported_extensions("panels/"..dir.."/"..name)
     if not img then
       img = load_img_from_supported_extensions("panels/"..default_panels_dir.."/"..name)
     end
@@ -10,24 +10,25 @@ function panels_init()
   end
 
   local function load_panels_dir(dir)
+    print("load panel dir: ".. dir)
     IMG_panels[dir] = {}
     IMG_panels_dirs[#IMG_panels_dirs+1] = dir
 
     for i=1,8 do
       IMG_panels[dir][i] = {}
       for j=1,7 do
-        IMG_panels[dir][i][j] = load_panel_img("panel"..tostring(i)..tostring(j).."")
+        IMG_panels[dir][i][j] = load_panel_img(dir,"panel"..tostring(i)..tostring(j).."")
       end
     end
     IMG_panels[dir][9] = {}
     for j=1,7 do
-      IMG_panels[dir][9][j] = load_panel_img("panel00")
+      IMG_panels[dir][9][j] = load_panel_img(dir,"panel00")
     end
 
-    IMG_metals[dir] = { left = load_panel_img("metalend0"), 
-                        mid = load_panel_img("metalmid"), 
-                        right = load_panel_img("metalend1"),
-                        flash = load_panel_img("garbageflash") }
+    IMG_metals[dir] = { left = load_panel_img(dir,"metalend0"), 
+                        mid = load_panel_img(dir,"metalmid"), 
+                        right = load_panel_img(dir,"metalend1"),
+                        flash = load_panel_img(dir,"garbageflash") }
   end
 
   IMG_panels = {}
@@ -38,7 +39,7 @@ function panels_init()
   for k,v in ipairs(raw_dir_list) do
     local start_of_v = string.sub(v,0,string.len(prefix_of_ignored_dirs))
     if love.filesystem.getInfo("panels/"..v) and start_of_v ~= prefix_of_ignored_dirs then
-      load_panels_dir(v, "panels/"..v)
+      load_panels_dir(v)
     end
   end
 end
