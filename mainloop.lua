@@ -873,8 +873,8 @@ function main_character_select()
       -- player image
       menu_drawf(IMG_players[player_number], math.floor(render_x+padding_x+stage_dimensions[1]*0.5), math.floor(render_y+y_padding-stage_dimensions[2]*0.5-10), "center", "center" )
       -- display name
-      local display_name = cursor_data.state.stage_is_random and "???" or stages[cursor_data.state.stage].display_name
-      gprintf(display_name, render_x+padding_x-2, math.floor(render_y+y_padding+stage_dimensions[2]*0.5),stage_dimensions[1]+4,"center")
+      local display_name = cursor_data.state.stage_is_random and "Random" or stages[cursor_data.state.stage].display_name
+      gprintf(display_name, render_x+padding_x-16, math.floor(render_y+y_padding+stage_dimensions[2]*0.5),stage_dimensions[1]+32,"center",nil,1,small_font)
 
       padding_x = padding_x+stage_dimensions[1]
 
@@ -2374,6 +2374,33 @@ function main_show_custom_sounds_readme(idx)
   end
 end
 
+function main_show_custom_stages_readme(idx)
+  for _,current_stage in ipairs(default_stages_ids) do
+    if not love.filesystem.getInfo("stages/"..prefix_of_ignored_dirs..current_stage) then
+      print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
+      gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
+      wait()
+      recursive_copy("stages/"..current_stage, "stages/"..prefix_of_ignored_dirs..current_stage)
+    end
+  end
+
+  local readme = read_txt_file("Custom Stages Readme.txt")
+  while true do
+    gprint(readme, 15, 15)
+    do_menu_function = false
+    wait()
+    local ret = nil
+    variable_step(function()
+      if menu_escape(K[1]) or menu_enter(K[1]) then
+        ret = {main_options, {idx}}
+      end
+    end)
+    if ret then
+      return unpack(ret)
+    end
+  end
+end
+
 function main_show_custom_characters_readme(idx)
   for _,current_character in ipairs(default_characters_ids) do
     if not love.filesystem.getInfo("characters/"..prefix_of_ignored_dirs..current_character) then
@@ -2406,16 +2433,21 @@ function main_options(starting_idx)
   local k = K[1]
   local selected, deselected_this_frame, adjust_active_value = false, false, false
   local save_replays_publicly_choices = {"with my name", "anonymously", "not at all"}
+  local use_music_from_choices = {"stage", "characters"}
   local on_off_text = {[true]="On", [false]="Off"}
   memory_before_options_menu = {  config.assets_dir or default_assets_dir,
                                   config.panels_dir_when_not_using_set_from_assets_folder or default_panels_dir,
                                   config.sounds_dir or default_sounds_dir,
                                   config.use_panels_from_assets_folder,
                                   config.use_default_characters,
-                                  config.enable_analytics }
+                                  config.enable_analytics,
+                                  config.use_music_from or "stage" }
   --make so we can get "anonymously" from save_replays_publicly_choices["anonymously"]
   for k,v in ipairs(save_replays_publicly_choices) do
     save_replays_publicly_choices[v] = v
+  end
+  for k,v in ipairs(use_music_from_choices) do
+    use_music_from_choices[v] = v
   end
 
   local function get_dir_set(set,path)
@@ -2463,6 +2495,8 @@ function main_options(starting_idx)
     {"Danger music change-back delay", on_off_text[config.danger_music_changeback_delay or false], "bool", false, nil, nil, false},
     {"About custom characters", "", "function", nil, nil, nil, nil, main_show_custom_characters_readme},
     {"Enable analytics", on_off_text[config.enable_analytics or false], "bool", false, nil, nil, false},
+    {"Use music from", use_music_from_choices[config.use_music_from] or use_music_from_choices["stage"], "multiple choice", use_music_from_choices},
+    {"About custom stages", "", "function", nil, nil, nil, nil, main_show_custom_stages_readme},
     {"Back", "", nil, nil, nil, nil, false, main_select_mode}
   }
   local function print_stuff()
@@ -2627,6 +2661,8 @@ function main_options(starting_idx)
             config.panels_dir_when_not_using_set_from_assets_folder = items[active_idx][2]
           elseif active_idx == 9 then
             config.sounds_dir = items[active_idx][2]
+          elseif active_idx == 18 then
+            config.use_music_from = items[active_idx][2]
           end
           --add any other multiple choice config updates here
         end
@@ -2666,10 +2702,17 @@ function exit_options_menu()
 
   if config.assets_dir ~= memory_before_options_menu[1] 
     or config.use_default_characters ~= memory_before_options_menu[5]
-    or config.sounds_dir ~= memory_before_options_menu[3] then
+    or config.sounds_dir ~= memory_before_options_menu[3]
+    or config.use_music_from ~= memory_before_options_menu[7] then
     gprint("reloading characters...", unpack(main_menu_screen_pos))
     wait()
     characters_init()
+  end
+
+  if config.use_music_from ~= memory_before_options_menu[7] then
+    gprint("reloading stages...", unpack(main_menu_screen_pos))
+    wait()
+    stages_init()
   end
 
   if config.assets_dir ~= memory_before_options_menu[1] 
@@ -2688,7 +2731,8 @@ function exit_options_menu()
   end
 
   if config.sounds_dir ~= memory_before_options_menu[3] 
-    or config.use_default_characters ~= memory_before_options_menu[5] then
+    or config.use_default_characters ~= memory_before_options_menu[5]
+    or config.use_music_from ~= memory_before_options_menu[7] then
     gprint("reloading sounds...", unpack(main_menu_screen_pos))
     wait()
     sound_init()

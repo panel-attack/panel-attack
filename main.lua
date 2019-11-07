@@ -85,7 +85,6 @@ function love.draw()
   -- end
   -- main_font:setLineHeight(0.66)
   -- love.graphics.setFont(main_font)
-  love.graphics.getFont():setFilter("nearest", "nearest")
   love.graphics.setBlendMode("alpha", "alphamultiply")
   love.graphics.setCanvas(global_canvas)
   love.graphics.setBackgroundColor(unpack(global_background_color))

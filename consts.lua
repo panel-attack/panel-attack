@@ -30,6 +30,9 @@ default_characters_ids = {"lip", "windy", "sherbet", "thiana", "ruby",
 
 default_character_id = "__default"
 
+default_stages_ids = {"cave", "fire", "flower", "forest", "ice",
+              "jewel", "king", "moon", "sea", "water", "wind" }
+
 random_stage_special_value = "__StageRandom"
 
 key_names = {"up", "down", "left", "right", "swap1",

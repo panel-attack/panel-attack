@@ -139,14 +139,20 @@ function gprint(str, x, y, color, scale)
   gfx_q:push({love.graphics.print, {str, x, y, 0, scale}})
 end
 
-function gprintf(str, x, y, limit, halign, color, scale)
+function set_font(font)
+  gfx_q:push({love.graphics.setFont, {font}})
+  end
+
+function gprintf(str, x, y, limit, halign, color, scale, font)
   x = x or 0
   y = y or 0
   scale = scale or 1
   color = color or nil
   limit = limit or canvas_width
+  font = font or nil
   halign = halign or "left"
   set_color(0, 0, 0, 1)
+  if font then set_font(font) end
   gfx_q:push({love.graphics.printf, {str, x+1, y+1, limit, halign, 0, scale}})
   local r, g, b, a = 1,1,1,1
   if color ~= nil then
@@ -154,6 +160,7 @@ function gprintf(str, x, y, limit, halign, color, scale)
   end
   set_color(r,g,b,a)
   gfx_q:push({love.graphics.printf, {str, x, y, limit, halign, 0, scale}})
+  if font then set_font(main_font) end
 end
 
 local _r, _g, _b, _a

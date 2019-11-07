@@ -32,3 +32,8 @@ op_win_count = 0
 
 global_my_state = nil
 global_op_state = nil
+
+main_font = love.graphics.getFont()
+main_font:setFilter("nearest", "nearest")
+small_font = love.graphics.newFont(9)
+small_font:setFilter("nearest", "nearest")
