@@ -33,6 +33,8 @@ function fmainloop()
   config = {
              -- The lastly used version
              version                       = VERSION,
+             -- Lang used for localization
+             language_code                 = "EN",
              -- Player character
              character                     = "lip",
              -- Level (2P modes / 1P vs yourself mode)
@@ -65,7 +67,6 @@ function fmainloop()
              -- Retrocompatibility, please remove whenever possible, it's so ugly!
              panels_dir_when_not_using_set_from_assets_folder = default_panels_dir,
              use_panels_from_assets_folder = true,
-
              -- Retrocompatibility
              use_default_characters        = false,
            }
@@ -88,7 +89,7 @@ function fmainloop()
   characters_init() -- load images and set up stuff
   gprint("Loading graphics...", unpack(main_menu_screen_pos))
   wait()
-  localization_init()
+  Localization.init(localization)
   --love.event.quit()
   wait()
   graphics_init() -- load images and set up stuff
@@ -101,6 +102,9 @@ function fmainloop()
   gprint("Loading analytics...", unpack(main_menu_screen_pos))
   wait()
   analytics_init()
+
+  join_community_msg = loc("join_community").."\ndiscord.panelattack.com"
+
   while true do
     leftover_time = 1/120
     consuming_timesteps = false
@@ -369,7 +373,7 @@ function main_endless(...)
     if P1.game_over then
     -- TODO: proper game over.
       write_replay_file()
-      local end_text = "You scored "..P1.score.."\nin "..frames_to_time_string(P1.game_stopwatch, true)
+      local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
       analytics_game_ends()
       return main_dumb_transition, {main_select_mode, end_text, 60}
     end
@@ -395,7 +399,7 @@ function main_time_attack(...)
     wait()
     if P1.game_over or (P1.game_stopwatch and P1.game_stopwatch == 120*60) then
     -- TODO: proper game over.
-      local end_text = loc("ta_score", P1.score.."\n").." "..frames_to_time_string(P1.game_stopwatch)
+      local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch))
       analytics_game_ends()
       return main_dumb_transition, {main_select_mode, end_text, 30}
     end
@@ -830,9 +834,9 @@ function main_character_select()
       padding_x = padding_x+IMG_players[player_number]:getWidth()
       local to_print
       if cursor_data.state.ranked then
-        to_print = "casual [ranked]"
+        to_print = loc("ss_casual").." ["..loc("ss_ranked").."]"
       else
-        to_print = "[casual] ranked"
+        to_print = "["..loc("ss_casual").."] "..loc("ss_ranked")
       end
       gprint(to_print, render_x+padding_x, render_y+y_padding-0.5*text_height-1)
     end
@@ -885,7 +889,9 @@ function main_character_select()
       end
     end
     if str ~= "__Empty" then
-      gprintf(pstr, render_x+x_add, render_y+y_add,width_for_alignment,halign)
+      local loc_str = {Level= loc("level"), Panels=loc("panels"), Ready=loc("ready"), Random=loc("random"), Leave=loc("leave")}
+      local to_p = loc_str[pstr]
+      gprintf(to_p == nil and pstr or to_p, render_x+x_add, render_y+y_add,width_for_alignment,halign)
     end
   end
 
@@ -920,9 +926,9 @@ function main_character_select()
           end
         elseif msg.ranked_match_denied then
           match_type = "Casual"
-          match_type_message = "Not ranked. "
+          match_type_message = loc("ss_not_ranked").." "
           if msg.reasons then
-            match_type_message = match_type_message..(msg.reasons[1] or "Reason unknown")
+            match_type_message = match_type_message..(msg.reasons[1] or loc("ss_err_no_reason"))
           end
         end
         if msg.leave_room then
@@ -979,14 +985,14 @@ function main_character_select()
               ask_for_gpanels("000000")
               ask_for_panels("000000")
           end
-          to_print = "Game is starting!\n".."Level: "..P1.level.."\nOpponent's level: "..P2.level
+          to_print = loc("pl_game_start").."\n"..loc("level")..": "..P1.level.."\n"..loc("opponent_level")..": "..P2.level
           if P1.play_to_end or P2.play_to_end then
-            to_print = "Joined a match in progress.\nCatching up..."
+            to_print = loc("pl_spectate_join")
           end
           for i=1,30 do
             gprint(to_print,unpack(main_menu_screen_pos))
             if not do_messages() then
-              return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+              return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
             end
             wait()
           end
@@ -1002,12 +1008,12 @@ function main_character_select()
             print("P2.gpanel_buffer = "..P2.gpanel_buffer)
             gprint(to_print,unpack(main_menu_screen_pos))
             if not do_messages() then
-              return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+              return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
             end
             wait()
             if game_start_timeout > 250 then
               return main_dumb_transition, {main_select_mode,
-                              "game start timed out.\n This is a known bug, but you may post it in #panel-attack-bugs-features \nif you'd like.\n"
+                              loc("pl_time_out").."\n"
                               .."\n".."msg.match_start = "..(tostring(msg.match_start) or "nil")
                               .."\n".."replay_of_match_so_far = "..(tostring(replay_of_match_so_far) or "nil")
                               .."\n".."P1.panel_buffer = "..P1.panel_buffer
@@ -1065,7 +1071,7 @@ function main_character_select()
     local function get_player_state_str(player_number, rating_difference, win_count, op_win_count, expected_win_ratio)
       local state = ""
       if current_server_supports_ranking then
-        state = state.."Rating: "..(global_current_room_ratings[player_number].league or "")
+        state = state..loc("ss_rating")..": "..(global_current_room_ratings[player_number].league or "")
         if not global_current_room_ratings[player_number].placement_match_progress then
           state = state.."\n"..rating_difference..global_current_room_ratings[player_number].new
         elseif global_current_room_ratings[player_number].placement_match_progress
@@ -1078,19 +1084,19 @@ function main_character_select()
         if current_server_supports_ranking then
           state = state.."\n"
         end
-        state = state.."Wins: "..win_count
+        state = state..loc("ss_wins")..": "..win_count
         if (current_server_supports_ranking and expected_win_ratio) or win_count + op_win_count > 0 then
-          state = state.."\nWinrate:"
+          state = state.."\n"..loc("ss_winrate")..":"
           local need_line_return = false
           if win_count + op_win_count > 0 then
-            state = state.." actual: "..(100*round(win_count/(op_win_count+win_count),2)).."%"
+            state = state.." "..loc("ss_current_rating")..": "..(100*round(win_count/(op_win_count+win_count),2)).."%"
             need_line_return = true
           end
           if current_server_supports_ranking and expected_win_ratio then
             if need_line_return then
               state = state.."\n        "
             end
-            state = state.." expected: "..expected_win_ratio.."%"
+            state = state.." "..loc("ss_expected_rating")..": "..expected_win_ratio.."%"
           end
         end
       end
@@ -1107,11 +1113,17 @@ function main_character_select()
       if not cursor_data[1].state.ranked and not cursor_data[2].state.ranked then
         match_type_message = ""
       end
-      gprintf(match_type, 0, 15, canvas_width, "center")
+      local match_type_str = ""
+      if match_type == "Casual" then
+        match_type_str = loc("ss_casual")
+      elseif match_type == "Ranked" then
+        match_type_str = loc("ss_ranked")
+      end
+      gprintf(match_type_str, 0, 15, canvas_width, "center")
       gprintf(match_type_message, 0, 30, canvas_width, "center")
     end
     if pages_amount ~= 1 then
-      gprintf("Page "..current_page.."/"..pages_amount, 0, 660, canvas_width, "center")
+      gprintf(loc("page").." "..current_page.."/"..pages_amount, 0, 660, canvas_width, "center")
     end
     wait()
 
@@ -1196,7 +1208,7 @@ function main_character_select()
             elseif cursor.state.cursor == "__Leave" then
               if character_select_mode == "2p_net_vs" then
                 if not do_leave() then
-                  ret = {main_dumb_transition, {main_select_mode, "Error when leaving online"}}
+                  ret = {main_dumb_transition, {main_select_mode, loc("ss_error_leave")}}
                 end
               else
                 ret = {main_select_mode}
@@ -1220,7 +1232,7 @@ function main_character_select()
             if cursor.state.cursor == "__Leave" then
               if character_select_mode == "2p_net_vs" then
                 if not do_leave() then
-                  ret = {main_dumb_transition, {main_select_mode, "Error when leaving online"}}
+                  ret = {main_dumb_transition, {main_select_mode, loc("ss_error_leave")}}
                 end
               else
                 ret = {main_select_mode}
@@ -1270,7 +1282,7 @@ function main_character_select()
       make_local_panels(P1, "000000")
       make_local_gpanels(P1, "000000")
       P1:starting_state()
-      return main_dumb_transition, {main_local_vs_yourself, "Game is starting...", 30, 30}
+      return main_dumb_transition, {main_local_vs_yourself, loc("pl_game_start"), 30, 30}
     elseif cursor_data[1].state.ready and character_select_mode == "2p_local_vs" and cursor_data[2].state.ready then
       P1 = Stack(1, "vs", cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       P1.enable_analytics = true
@@ -1293,7 +1305,7 @@ function main_character_select()
       return main_local_vs
     elseif character_select_mode == "2p_net_vs" then
       if not do_messages() then
-        return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+        return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
       end
     end
   end
@@ -1308,7 +1320,7 @@ function main_net_vs_lobby()
   local k = K[1]
   my_player_number = nil
   op_player_number = nil
-  local notice = {[true]="Select a player name to ask for a match.", [false]="You are all alone in the lobby :("}
+  local notice = {[true]=loc("lb_select_player"), [false]=loc("lb_alone")}
   local leaderboard_string = ""
   local my_rank
   love.audio.stop()
@@ -1318,10 +1330,10 @@ function main_net_vs_lobby()
   --attempt login
   read_user_id_file()
   if not my_user_id then
-    my_user_id = "need a new user id"
+    my_user_id = loc("lb_new_id")
   end
   json_send({login_request=true, user_id=my_user_id})
-  local login_status_message = "   Logging in..."
+  local login_status_message = "   "..loc("lb_login")
   local login_status_message_duration = 2
   local login_denied = false
   local prev_act_idx = active_idx
@@ -1340,12 +1352,12 @@ function main_net_vs_lobby()
                 my_user_id = msg.new_user_id
                 print("about to write user id file")
                 write_user_id_file()
-                login_status_message = "Welcome, new user: "..my_name
+                login_status_message = loc("lb_user_new", my_name)
               elseif msg.name_changed then
-                login_status_message = "Welcome, your username has been updated. \n\nOld name:  \""..msg.old_name.."\"\n\nNew name:  \""..msg.new_name.."\""
+                login_status_message = loc("lb_user_update", msg.old_name, msg.new_name)
                 login_status_message_duration = 5
               else
-                login_status_message = "Welcome back, "..my_name
+                login_status_message = loc("lb_welcome_back", my_name)
               end
             elseif msg.login_denied then
                 current_server_supports_ranking = true
@@ -1353,17 +1365,17 @@ function main_net_vs_lobby()
                 --TODO: create a menu here to let the user choose "continue unranked" or "get a new user_id"
                 --login_status_message = "Login for ranked matches failed.\n"..msg.reason.."\n\nYou may continue unranked,\nor delete your invalid user_id file to have a new one assigned."
                 login_status_message_duration = 10
-                return main_dumb_transition, {main_select_mode, "Error message received from the server:\n\n"..json.encode(msg),60,600}
+                return main_dumb_transition, {main_select_mode, loc("lb_error_msg").."\n\n"..json.encode(msg),60,600}
             end
         end
         if connection_up_time == 2 and not current_server_supports_ranking then
-                login_status_message = "Login for ranked matches timed out.\nThis server probably doesn't support ranking.\n\nYou may continue unranked."
+                login_status_message = loc("lb_login_timeout")
                 login_status_message_duration = 7
         end
       end
     for _,msg in ipairs(this_frame_messages) do
       if msg.choose_another_name and msg.choose_another_name.used_names then
-        return main_dumb_transition, {main_select_mode, "Error: name is taken :<\n\nIf you had just left the server,\nit may not have realized it yet, try joining again.\n\nThis can also happen if you have two\ninstances of Panel Attack open.\n\nPress Swap or Back to continue.", 60, 600}
+        return main_dumb_transition, {main_select_mode, loc("lb_used_name"), 60, 600}
       elseif msg.choose_another_name and msg.choose_another_name.reason then
         return main_dumb_transition, {main_select_mode, "Error: ".. msg.choose_another_name.reason, 60}
       end
@@ -1417,11 +1429,11 @@ function main_net_vs_lobby()
       items[#items+1] = v
     end
     if showing_leaderboard then
-      items[#items+1] = "Hide Leaderboard"
+      items[#items+1] = loc("lb_show_board")
     else
-      items[#items+1] = "Show Leaderboard"  -- the second to last item is "Leaderboard"
+      items[#items+1] = loc("lb_hide_board")  -- the second to last item is "Leaderboard"
     end
-    items[#items+1] = "Back to main menu" -- the last item is "Back to the main menu"
+    items[#items+1] = loc("lb_back") -- the last item is "Back to the main menu"
     if active_back then
       active_idx = #items
     elseif showing_leaderboard then
@@ -1440,9 +1452,9 @@ function main_net_vs_lobby()
         arrow = arrow .. "\n"
       end
       if i <= lastPlayerIndex then
-        to_print = to_print .. "   " .. items[i] ..(sent_requests[items[i]] and " (Request sent)" or "").. (willing_players[items[i]] and " (Wants to play with you :o)" or "") .. "\n"
+        to_print = to_print .. "   " .. items[i] ..(sent_requests[items[i]] and " "..loc("lb_request") or "").. (willing_players[items[i]] and " "..loc("lb_received") or "") .. "\n"
       elseif i < #items - 1 and items[i].name then
-        to_print = to_print .. "   spectate " .. items[i].name .. " (".. items[i].state .. ")\n" --printing room names
+        to_print = to_print .. "   "..loc("lb_spectate").." " .. items[i].name .. " (".. items[i].state .. ")\n" --printing room names
       elseif i < #items then
         to_print = to_print .. "   " .. items[i] .. "\n"
       else
@@ -1524,7 +1536,7 @@ function main_net_vs_lobby()
       prev_act_idx = active_idx
     end
     if not do_messages() then
-      return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+      return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
     end
   end
 end
@@ -1548,18 +1560,18 @@ function spectator_list_string(list)
     end
   end
   if str ~= "" then
-    str = "Spectator(s):\n"..str
+    str = loc("pl_spectators").."\n"..str
   end
   return str
 end
 
 function build_viewable_leaderboard_string(report, first_viewable_idx, last_viewable_idx)
-  str = "        Leaderboard\n      Rank    Rating   Player\n"
+  str = loc("lb_header_board").."\n"
   first_viewable_idx = math.max(first_viewable_idx,1)
   last_viewable_idx = math.min(last_viewable_idx, #report)
   for i=first_viewable_idx,last_viewable_idx do
     if report[i].is_you then
-      str = str.."You-> "
+      str = str..loc("lb_you").."-> "
     else
       str = str.."      "
     end
@@ -1578,15 +1590,15 @@ function main_net_vs_setup(ip)
   end
   P1, P1_level, P2_level, got_opponent = nil
   P2 = {panel_buffer="", gpanel_buffer=""}
-  gprint("Setting up connection...", unpack(main_menu_screen_pos))
+  gprint(loc("lb_set_connect"), unpack(main_menu_screen_pos))
   wait()
   network_init(ip)
   local timeout_counter = 0
   while not connection_is_ready() do
-    gprint("Connecting...", unpack(main_menu_screen_pos))
+    gprint(loc("lb_connecting"), unpack(main_menu_screen_pos))
     wait()
     if not do_messages() then
-      return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+      return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
     end
   end
   connected_server_ip = ip
@@ -1614,7 +1626,7 @@ function main_net_vs()
       end
     end
 
-    local name_and_score = { (my_name or "").."\nWins: "..my_win_count, (op_name or "").."\nWins: "..op_win_count}
+    local name_and_score = { (my_name or "").."\n"..loc("ss_wins")..": "..my_win_count, (op_name or "").."\n"..loc("ss_wins")..": "..op_win_count}
     gprint(name_and_score[1], P1.score_x, P1.score_y-48)
     gprint(name_and_score[2], P2.score_x, P2.score_y-48)
     if not config.debug_mode then --this is printed in the same space as the debug details
@@ -1623,7 +1635,7 @@ function main_net_vs()
     if match_type == "Ranked" then
       if global_current_room_ratings[my_player_number]
       and global_current_room_ratings[my_player_number].new then
-        local rating_to_print = "Rating: "
+        local rating_to_print = loc("ss_rating")..": "
         if global_current_room_ratings[my_player_number].new > 0 then
           rating_to_print = rating_to_print.." "..global_current_room_ratings[my_player_number].new
         end
@@ -1631,7 +1643,7 @@ function main_net_vs()
       end
       if global_current_room_ratings[op_player_number]
       and global_current_room_ratings[op_player_number].new then
-        local op_rating_to_print = "Rating: "
+        local op_rating_to_print = loc("ss_rating")..": "
         if global_current_room_ratings[op_player_number].new > 0 then
           op_rating_to_print = op_rating_to_print.." "..global_current_room_ratings[op_player_number].new
         end
@@ -1651,7 +1663,7 @@ function main_net_vs()
         return main_net_vs_lobby
       end
       if not do_messages() then
-        return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", unpack(main_menu_screen_pos)}
+        return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), unpack(main_menu_screen_pos)}
       end
     end
 
@@ -1685,16 +1697,16 @@ function main_net_vs()
     local outcome_claim = nil
     local winSFX = nil
     if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
-      end_text = "Draw"
+      end_text = loc("ss_draw")
       outcome_claim = 0
     elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
       winSFX = P2:pick_win_sfx()
-      end_text = op_name.." Wins" .. (currently_spectating and " " or " :(")
+      end_text = op_name.." "..loc("ss_wins") .. (currently_spectating and " " or " :(")
       op_win_count = op_win_count + 1 -- leaving these in just in case used with an old server that doesn't keep score.  win_counts will get overwritten after this by the server anyway.
       outcome_claim = P2.player_number
     elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
       winSFX = P1:pick_win_sfx()
-      end_text = my_name.." Wins" .. (currently_spectating and " " or " ^^")
+      end_text = my_name.." "..loc("ss_wins") .. (currently_spectating and " " or " ^^")
       my_win_count = my_win_count + 1 -- leave this in
       outcome_claim = P1.player_number
     end
@@ -1762,15 +1774,15 @@ function main_local_vs()
       end)
     local winSFX = nil
     if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
-      end_text = "Draw"
+      end_text = loc("ss_draw")
     elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
       winSFX = P2:pick_win_sfx()
       op_win_count = op_win_count + 1
-      end_text = "P2 wins ^^"
+      end_text = loc("pl_2_win")
     elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
       winSFX = P1:pick_win_sfx()
       my_win_count = my_win_count + 1
-      end_text = "P1 wins ^^"
+      end_text = loc("pl_1_win")
     end
     if end_text then
       analytics_game_ends()
@@ -1781,7 +1793,7 @@ end
 
 function main_local_vs_yourself_setup()
   currently_spectating = false
-  my_name = config.name or "Player 1"
+  my_name = config.name or loc("ss_p1")
   op_name = nil
   op_state = nil
   character_select_mode = "1p_vs_yourself"
@@ -1800,7 +1812,7 @@ function main_local_vs_yourself()
         if not P1.game_over then
           P1:local_run()
         else
-          end_text = "Game Over"
+          end_text = loc("pl_gameover")
         end
       end)
     if end_text then
@@ -1812,7 +1824,7 @@ end
 
 local function draw_debug_mouse_panel()
   if debug_mouse_panel then
-    local str = "Panel info:\nrow: "..debug_mouse_panel[1].."\ncol: "..debug_mouse_panel[2]
+    local str = loc("pl_panel_info", debug_mouse_panel[1], debug_mouse_panel[2])
     for k,v in spairs(debug_mouse_panel[3]) do
       str = str .. "\n".. k .. ": "..tostring(v)
     end
@@ -1823,12 +1835,12 @@ end
 function main_replay_vs()
   local replay = replay.vs
   if replay == nil then
-    return main_dumb_transition, {main_select_mode, "I don't have a vs replay :("}
+    return main_dumb_transition, {main_select_mode, loc("rp_no_replay")}
   end
   fallback_when_missing = nil
   bg = IMG_stages[math.random(#IMG_stages)]
-  P1 = Stack(1, "vs", config.panels_dir, replay.P1_level or 5)
-  P2 = Stack(2, "vs", config.panels_dir, replay.P2_level or 5)
+  P1 = Stack(1, loc("vs"), config.panels_dir, replay.P1_level or 5)
+  P2 = Stack(2, loc("vs"), config.panels_dir, replay.P2_level or 5)
   P1.do_countdown = replay.do_countdown or false
   P2.do_countdown = replay.do_countdown or false
   P1.ice = true
@@ -1850,8 +1862,8 @@ function main_replay_vs()
   character_loader_load(P1.character)
   character_loader_load(P2.character)
   character_loader_wait()
-  my_name = replay.P1_name or "Player 1"
-  op_name = replay.P2_name or "Player 2"
+  my_name = replay.P1_name or loc("ss_p1")
+  op_name = replay.P2_name or loc("ss_p2")
   if character_select_mode == "2p_net_vs" then
     if replay.ranked then
       match_type = "Ranked"
@@ -1897,20 +1909,20 @@ function main_replay_vs()
     end
     local winSFX = nil
     if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
-      end_text = "Draw"
+      end_text = loc("ss_draw")
     elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
       winSFX = P2:pick_win_sfx()
-      if replay.P2_name and replay.P2_name ~= "anonymous" then
-        end_text = replay.P2_name.." wins"
+      if replay.P2_name and replay.P2_name ~= loc("ss_anonymous") then
+        end_text = loc("ss_p_wins", replay.P2_name)
       else
-        end_text = "P2 wins"
+        end_text = loc("pl_2_win")
       end
     elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
       winSFX = P1:pick_win_sfx()
-      if replay.P1_name and replay.P1_name ~= "anonymous" then
-        end_text = replay.P1_name.." wins"
+      if replay.P1_name and replay.P1_name ~= loc("ss_anonymous") then
+        end_text = loc("ss_p_wins", replay.P1_name)
       else
-        end_text = "P1 wins"
+        end_text = loc("pl_1_win")
       end
     end
     if end_text then
@@ -1924,9 +1936,9 @@ function main_replay_endless()
   local replay = replay.endless
   if replay == nil or replay.speed == nil then
     return main_dumb_transition,
-      {main_select_mode, "I don't have an endless replay :("}
+      {main_select_mode, loc("rp_no_endless")}
   end
-  P1 = Stack(1, "endless", config.panels_dir, replay.speed, replay.difficulty)
+  P1 = Stack(1, loc("rp_endless"), config.panels_dir, replay.speed, replay.difficulty)
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
   P1.input_buffer = table.concat({replay.in_buf})
@@ -1953,7 +1965,7 @@ function main_replay_endless()
       if run or this_frame_keys["\\"] then
         if P1.game_over then
         -- TODO: proper game over.
-          local end_text = "You scored "..P1.score.."\nin "..frames_to_time_string(P1.game_stopwatch, true)
+          local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
           ret = {main_dumb_transition, {main_select_mode, end_text, 30}}
         end
         P1:foreign_run()
@@ -1970,7 +1982,7 @@ function main_replay_puzzle()
   local replay = replay.puzzle
   if not replay or replay.in_buf == nil or replay.in_buf == "" then
     return main_dumb_transition,
-      {main_select_mode, "I don't have a puzzle replay :("}
+      {main_select_mode, loc("rp_no_puzzle")}
   end
   P1 = Stack(1, "puzzle", config.panels_dir)
   P1.do_countdown = replay.do_countdown or false
@@ -1998,9 +2010,9 @@ function main_replay_puzzle()
         if P1.n_active_panels == 0 and
             P1.prev_active_panels == 0 then
           if P1:puzzle_done() then
-            ret = {main_dumb_transition, {main_select_mode, "You win!"}}
+            ret = {main_dumb_transition, {main_select_mode, loc("pl_you_win")}}
           elseif P1.puzzle_moves == 0 then
-            ret = {main_dumb_transition, {main_select_mode, "You lose :("}}
+            ret = {main_dumb_transition, {main_select_mode, loc("pl_you_lose")}}
           end
         end
         P1:foreign_run()
@@ -2042,13 +2054,13 @@ function make_main_puzzle(puzzles)
             awesome_idx = (awesome_idx % #puzzles) + 1
             write_replay_file()
             if awesome_idx == 1 then
-              ret = {main_dumb_transition, {main_select_puzz, "You win!", 30}}
+              ret = {main_dumb_transition, {main_select_puzz, loc("pl_you_win"), 30}}
             else
-              ret = {main_dumb_transition, {next_func, "You win!", 30}}
+              ret = {main_dumb_transition, {next_func, loc("pl_you_win"), 30}}
             end
           elseif P1.puzzle_moves == 0 then
             write_replay_file()
-            ret = {main_dumb_transition, {main_select_puzz, "You lose :(", 30}}
+            ret = {main_dumb_transition, {main_select_puzz, loc("pl_you_lose"), 30}}
           end
         end
         if P1.n_active_panels ~= 0 or P1.prev_active_panels ~= 0 or
@@ -2069,7 +2081,7 @@ do
   for key,val in spairs(puzzle_sets) do
     items[#items+1] = {key, make_main_puzzle(val)}
   end
-  items[#items+1] = {"Back", main_select_mode}
+  items[#items+1] = {loc("back"), main_select_mode}
   function main_select_puzz()
     love.audio.stop()
     stop_the_music()
@@ -2088,7 +2100,7 @@ do
         to_print = to_print .. "   " .. items[i][1] .. "\n"
       end
       gprint("Puzzles:", unpack(main_menu_screen_pos) )
-      gprint("Note: you may place new custom puzzles in\n\n%appdata%\\Panel Attack\\puzzles\n\nSee the README and example puzzle set there\nfor instructions", main_menu_screen_pos[1]-280, main_menu_screen_pos[2]+220)
+      gprint(loc("pz_info"), main_menu_screen_pos[1]-280, main_menu_screen_pos[2]+220)
       gprint(arrow, main_menu_screen_pos[1]+100, main_menu_screen_pos[2])
       gprint(to_print, main_menu_screen_pos[1]+100, main_menu_screen_pos[2])
       wait()
@@ -2117,17 +2129,17 @@ do
 end
 
 function main_config_input()
-  local pretty_names = {"Up", "Down", "Left", "Right", "A", "B", "L", "R"}
+  local pretty_names = {loc("up"), loc("down"), loc("left"), loc("right"), "A", "B", "L", "R"}
   local items, active_idx = {}, 1
   local k = K[1]
   local active_player = 1
   local function get_items()
-    items = {[0]={"Player ", ""..active_player}}
+    items = {[0]={loc("player").. " ", ""..active_player}}
     for i=1,#key_names do
-      items[#items+1] = {pretty_names[i], k[key_names[i]] or "none"}
+      items[#items+1] = {pretty_names[i], k[key_names[i]] or loc("cf_none")}
     end
-    items[#items+1] = {"Set all keys", ""}
-    items[#items+1] = {"Back", "", main_select_mode}
+    items[#items+1] = {loc("cf_all_keys"), ""}
+    items[#items+1] = {loc("back"), "", main_select_mode}
   end
   local function print_stuff()
     local to_print, to_print2, arrow = "", "", ""
@@ -2200,7 +2212,7 @@ end
 function main_show_custom_graphics_readme(idx)
   if not love.filesystem.getInfo("assets/"..prefix_of_ignored_dirs..default_assets_dir) then
     print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
-    gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
+    gprint(loc("op_copy_files"), 280, 280)
     wait()
     recursive_copy("assets/"..default_assets_dir, "assets/"..prefix_of_ignored_dirs..default_assets_dir)
   end
@@ -2211,7 +2223,7 @@ function main_show_custom_graphics_readme(idx)
   for _,panels_dir in ipairs(default_panels_dirs) do
     if not love.filesystem.getInfo("panels/"..prefix_of_ignored_dirs..panels_dir) then
       print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
-      gprint("Hold on. Copying example folders to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
+      gprint(loc("op_copy_files"), 280, 280)
       wait()
       recursive_copy("panels/"..panels_dir, "panels/"..prefix_of_ignored_dirs..panels_dir)
     end
@@ -2237,7 +2249,8 @@ end
 function main_show_custom_sounds_readme(idx)
   if not love.filesystem.getInfo("sounds/"..prefix_of_ignored_dirs..default_sounds_dir)then
     print("Hold on.  Copying an example folder to make this easier...\n This make take a few seconds.")
-    gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
+    gprint(
+      loc("op_copy_files"), 280, 280)
     wait()
     recursive_copy("sounds/"..default_sounds_dir, "sounds/"..prefix_of_ignored_dirs..default_sounds_dir)
   end
@@ -2262,7 +2275,8 @@ function main_show_custom_characters_readme(idx)
   for _,current_character in ipairs(default_characters_ids) do
     if not love.filesystem.getInfo("characters/"..prefix_of_ignored_dirs..current_character) then
       print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
-      gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
+      gprint(
+        loc("op_copy_files"), 280, 280)
       wait()
       recursive_copy("characters/"..current_character, "characters/"..prefix_of_ignored_dirs..current_character)
     end
@@ -2324,6 +2338,8 @@ function main_options(starting_idx)
   for k,v in ipairs(asset_sets) do
     print(v)
   end
+
+
   items = {
     --options menu table reference:
     --{[1]"Option Name", [2]current or default value, [3]type, [4]min or bool value or choices_table,
@@ -2348,8 +2364,32 @@ function main_options(starting_idx)
     {"Danger music change-back delay", on_off_text[config.danger_music_changeback_delay or false], "bool", false, nil, nil, false},
     {"About custom characters", "", "function", nil, nil, nil, nil, main_show_custom_characters_readme},
     {"Enable analytics", on_off_text[config.enable_analytics or false], "bool", false, nil, nil, false},
+    {"Language", localization:get_language(), "multiple choice", select(1, localization:get_list_codes_langs())},
     {"Back", "", nil, nil, nil, nil, false, main_select_mode}
   }
+
+  local loc_items = {
+    loc("op_vol"),
+    loc("op_vol_sfx"),
+    loc("op_vol_music"),
+    loc("op_debug"),
+    loc("op_replay_public"),
+    loc("op_graphic"),
+    loc("op_panels"),
+    loc("op_about_graphics"),
+    loc("op_sonds"),
+    loc("op_about_sounds"),
+    loc("op_countdown"),
+    loc("op_fps"),
+    loc("op_use_assets"),
+    loc("op_default_char"),
+    loc("op_music_delay"),
+    loc("op_about_chars"),
+    loc("op_analytics"),
+    loc("op_language"),
+    loc("back"),
+  }
+
   local function print_stuff()
     gprint("graphics card:  "..(device or "nil"), 100, 0)
     local to_print, to_print2, arrow = "", "", ""
@@ -2359,8 +2399,14 @@ function main_options(starting_idx)
       else
         arrow = arrow .. "\n"
       end
-      to_print = to_print .. "   " .. items[i][1] .. "\n"
-      to_print2 = to_print2 .. "                            "
+      local s
+      if i > #loc_items then
+        s = "#loc_items["..i.."]"
+      else
+        s = loc_items[i]
+      end
+      to_print = to_print .. "   " .. s .. "\n"
+      to_print2 = to_print2 .. "                                                                  "
       if active_idx == i and selected then
         to_print2 = to_print2 .. "                          < "
       else
@@ -2513,6 +2559,8 @@ function main_options(starting_idx)
             config.panels_dir_when_not_using_set_from_assets_folder = items[active_idx][2]
           elseif active_idx == 9 then
             config.sounds_dir = items[active_idx][2]
+          elseif active_idx == 18 then
+            localization:set_language(items[active_idx][2])
           end
           --add any other multiple choice config updates here
         end
@@ -2541,7 +2589,7 @@ function main_options(starting_idx)
 end
 
 function exit_options_menu()
-  gprint("writing config to file...", unpack(main_menu_screen_pos))
+  gprint(loc("op_save"), unpack(main_menu_screen_pos))
   wait()
   if config.use_panels_from_assets_folder then
     config.panels_dir = config.assets_dir
@@ -2553,14 +2601,14 @@ function exit_options_menu()
   if config.assets_dir ~= memory_before_options_menu[1] 
     or config.use_default_characters ~= memory_before_options_menu[5]
     or config.sounds_dir ~= memory_before_options_menu[3] then
-    gprint("reloading characters...", unpack(main_menu_screen_pos))
+    gprint(loc("op_reload_chars"), unpack(main_menu_screen_pos))
     wait()
     characters_init()
   end
 
   if config.assets_dir ~= memory_before_options_menu[1] 
     or config.use_default_characters ~= memory_before_options_menu[5] then
-    gprint("reloading graphics...", unpack(main_menu_screen_pos))
+    gprint(loc("op_reload_graphics"), unpack(main_menu_screen_pos))
     wait()
     graphics_init()
   end
@@ -2568,14 +2616,14 @@ function exit_options_menu()
   if config.panels_dir_when_not_using_set_from_assets_folder ~= memory_before_options_menu[2]
   or config.use_panels_from_assets_folder ~= memory_before_options_menu[4]
   or config.assets_dir ~= memory_before_options_menu[1] then
-    gprint("reloading panels...", unpack(main_menu_screen_pos))
+    gprint(loc("op_reload_panels"), unpack(main_menu_screen_pos))
     wait()
     panels_init()
   end
 
   if config.sounds_dir ~= memory_before_options_menu[3] 
     or config.use_default_characters ~= memory_before_options_menu[5] then
-    gprint("reloading sounds...", unpack(main_menu_screen_pos))
+    gprint(loc("op_reload_sounds"), unpack(main_menu_screen_pos))
     wait()
     sound_init()
   else
@@ -2583,8 +2631,8 @@ function exit_options_menu()
   end
 
   if config.enable_analytics ~= memory_before_options_menu[6] then
-    print("loading analytics...")
-    gprint("loading analytics...", unpack(main_menu_screen_pos))
+    print("reloading analytics...")
+    gprint(loc("op_reload_analytics"), unpack(main_menu_screen_pos))
     wait()
     analytics_init()
   end
@@ -2596,7 +2644,7 @@ end
 function main_set_name()
   local name = config.name or ""
   while true do
-    local to_print = "Enter your name:\n"..name
+    local to_print = loc("op_enter_name").."\n"..name
     if (love.timer.getTime()*3) % 2 > 1 then
         to_print = to_print .. "|"
     end
@@ -2631,7 +2679,7 @@ function main_set_name()
 end
 
 function main_music_test()
-  gprint("Loading required sounds... (this may take a while)", unpack(main_menu_screen_pos))
+  gprint(loc("op_music_load"), unpack(main_menu_screen_pos))
   wait()
   -- loads music for characters that are not fully loaded
   for _,character_id in ipairs(characters_ids_for_current_theme) do
@@ -2667,12 +2715,12 @@ function main_music_test()
   find_and_add_music(tracks[index].char, tracks[index].type)
 
   while true do
-    tp =  "Currently playing: " .. tracks[index].name
-    tp = tp .. (table.getn(currently_playing_tracks) == 1 and "\nPlaying the intro\n" or "\nPlaying main loop\n")
+    tp =  loc("op_music_current") .. tracks[index].name
+    tp = tp .. (table.getn(currently_playing_tracks) == 1 and "\n"..loc("op_music_intro").."\n" or "\n"..loc("op_music_loop").."\n")
     min_time = math.huge
     for k, _ in pairs(music_t) do if k and k < min_time then min_time = k end end
     tp = tp .. string.format("%d", min_time - love.timer.getTime() )
-    tp = tp .. "\n\n\n< and > to play navigate themes\nESC to leave"
+    tp = tp .. "\n\n\n"..loc("op_music_nav", "<", ">", "ESC")
     gprint(tp,unpack(main_menu_screen_pos))
     wait()
     local ret = nil

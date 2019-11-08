@@ -19,8 +19,6 @@ default_assets_dir = "Stock PdP_TA"
 default_panels_dir = "Stock PdP_TA"
 default_sounds_dir = "Stock PdP_TA"
 
-join_community_msg = "  Join the community at\ndiscord.panelattack.com"
-
 default_characters_ids = {"lip", "windy", "sherbet", "thiana", "ruby",
               "elias", "flare", "neris", "seren", "phoenix", 
               "dragon", "thanatos", "cordelia",  "lakitu", 
