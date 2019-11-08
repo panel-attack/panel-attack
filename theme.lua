@@ -9,20 +9,21 @@ local function load_theme_img(name)
   return img
 end
 
-bg = load_theme_img("menu/title")
+bg = load_theme_img("background/main")
 
 local function graphics_init()
-  title = load_theme_img("menu/title")
-  charselect = load_theme_img("menu/charselect")
+  title = load_theme_img("background/main")
+  charselect = load_theme_img("background/select_screen")
+  IMG_menu_readme = load_theme_img("background/readme")
 
-  IMG_level_cursor = load_theme_img("level_cursor")
+  IMG_level_cursor = load_theme_img("level/level_cursor")
   IMG_levels = {}
   IMG_levels_unfocus = {}
-  IMG_levels[1] = load_theme_img("level1")
+  IMG_levels[1] = load_theme_img("level/level1")
   IMG_levels_unfocus[1] = nil -- meaningless by design
   for i=2,10 do
-    IMG_levels[i] = load_theme_img("level"..i.."")
-    IMG_levels_unfocus[i] = load_theme_img("level"..i.."unfocus")
+    IMG_levels[i] = load_theme_img("level/level"..i.."")
+    IMG_levels_unfocus[i] = load_theme_img("level/level"..i.."unfocus")
   end
 
   IMG_ready = load_theme_img("ready")
@@ -31,11 +32,6 @@ local function graphics_init()
   for i=1,3 do
     IMG_numbers[i] = load_theme_img(i.."")
   end
-  IMG_cursor = {  load_theme_img("cur0"),
-          load_theme_img("cur1")}
-
-  IMG_players = {  load_theme_img("player_1"),
-          load_theme_img("player_2")}
 
   IMG_random_stage = load_theme_img("random_stage")
 
@@ -46,26 +42,32 @@ local function graphics_init()
   IMG_cards[true] = {}
   IMG_cards[false] = {}
   for i=4,66 do
-    IMG_cards[false][i] = load_theme_img("combo"
+    IMG_cards[false][i] = load_theme_img("combo/combo"
       ..tostring(math.floor(i/10))..tostring(i%10).."")
   end
   for i=2,13 do
-    IMG_cards[true][i] = load_theme_img("chain"
+    IMG_cards[true][i] = load_theme_img("chain/chain"
       ..tostring(math.floor(i/10))..tostring(i%10).."")
   end
 
-  IMG_cards[true][14] = load_theme_img("chain00")
+  IMG_cards[true][14] = load_theme_img("chain/chain00")
   for i=15,99 do
     IMG_cards[true][i] = IMG_cards[true][14]
   end
+
   local MAX_SUPPORTED_PLAYERS = 2
   IMG_char_sel_cursors = {}
+  IMG_players = {}
+  IMG_cursor = {}
   for player_num=1,MAX_SUPPORTED_PLAYERS do
+    IMG_players[player_num] = load_theme_img("p"..player_num)
+    IMG_cursor[player_num] = load_theme_img("p"..player_num.."_cursor")
     IMG_char_sel_cursors[player_num] = {}
     for position_num=1,2 do
-      IMG_char_sel_cursors[player_num][position_num] = load_theme_img("char_sel_cur_"..player_num.."P_pos"..position_num.."")
+      IMG_char_sel_cursors[player_num][position_num] = load_theme_img("p"..player_num.."_select_screen_cursor"..position_num)
     end
   end
+
   IMG_char_sel_cursor_halves = {left={}, right={}}
   for player_num=1,MAX_SUPPORTED_PLAYERS do
     IMG_char_sel_cursor_halves.left[player_num] = {}

@@ -41,7 +41,7 @@ function fmainloop()
     config.display or display)
   gprint("Copying Puzzles Readme")
   wait()
-  copy_file("Custom Puzzles Readme.txt", "puzzles/README.txt")
+  copy_file("readme_puzzles.txt", "puzzles/README.txt")
   gprint("Reading replay file", unpack(main_menu_screen_pos))
   wait()
   read_replay_file()
@@ -2267,6 +2267,8 @@ function main_config_input()
 end
 
 function main_show_custom_themes_readme(idx)
+  bg = IMG_menu_readme
+
   if not love.filesystem.getInfo("themes/"..prefix_of_ignored_dirs..default_theme_dir) then
     print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
     gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
@@ -2286,9 +2288,9 @@ function main_show_custom_themes_readme(idx)
     end
   end
 
-  local custom_graphics_readme = read_txt_file("Custom Graphics Readme.txt")
+  local readme = read_txt_file("readme_themes.txt")
   while true do
-    gprint(custom_graphics_readme, 15, 15)
+    gprint(readme, 15, 15)
     do_menu_function = false
     wait()
     local ret = nil
@@ -2304,6 +2306,8 @@ function main_show_custom_themes_readme(idx)
 end
 
 function main_show_custom_stages_readme(idx)
+  bg = IMG_menu_readme
+
   for _,current_stage in ipairs(default_stages_ids) do
     if not love.filesystem.getInfo("stages/"..prefix_of_ignored_dirs..current_stage) then
       print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
@@ -2313,7 +2317,7 @@ function main_show_custom_stages_readme(idx)
     end
   end
 
-  local readme = read_txt_file("Custom Stages Readme.txt")
+  local readme = read_txt_file("readme_stages.txt")
   while true do
     gprint(readme, 15, 15)
     do_menu_function = false
@@ -2331,6 +2335,8 @@ function main_show_custom_stages_readme(idx)
 end
 
 function main_show_custom_characters_readme(idx)
+  bg = IMG_menu_readme
+  
   for _,current_character in ipairs(default_characters_ids) do
     if not love.filesystem.getInfo("characters/"..prefix_of_ignored_dirs..current_character) then
       print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
@@ -2340,9 +2346,9 @@ function main_show_custom_characters_readme(idx)
     end
   end
 
-  local custom_characters_readme = read_txt_file("Custom Characters Readme.txt")
+  local readme = read_txt_file("readme_characters.txt")
   while true do
-    gprint(custom_characters_readme, 15, 15)
+    gprint(readme, 15, 15)
     do_menu_function = false
     wait()
     local ret = nil
@@ -2360,6 +2366,7 @@ end
 local memory_before_options_menu = nil
 
 function main_options(starting_idx)
+  bg = title
   local items, active_idx = {}, starting_idx or 1
   local k = K[1]
   local selected, deselected_this_frame, adjust_active_value = false, false, false
