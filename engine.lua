@@ -15,9 +15,9 @@ local current_music_is_casual = false -- must be false so that casual music star
 Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_number)
     s.character = config.character
     s.max_health = 1
-    s.panels_dir = panels_dir or config.panels_dir
+    s.panels_dir = panels_dir or config.panels
     if IMG_panels[panels_dir] == nil then
-      s.panels_dir = config.panels_dir
+      s.panels_dir = config.panels
     end
     s.mode = mode or "endless"
     if mode ~= "puzzle" then

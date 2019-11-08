@@ -53,8 +53,6 @@ function Stage.other_data_init(self)
   if read_data.name then
     self.display_name = read_data.name
   end
-
-  print( self.id..(self.id ~= self.display_name and (", aka "..self.display_name..", ") or " ").."is a playable stage")
 end
 
 function Stage.stop_sounds(self)
@@ -148,7 +146,7 @@ function stages_init()
     config.stage = uniformly(stages_ids_for_current_theme)
   end
   
-  -- actual init for all stages
+  -- actual init for all stages, starting with the default one
   default_stage = Stage("stages/__default", "__default")
   default_stage:preload()
   default_stage:load(true)
@@ -177,9 +175,7 @@ end
 
 function Stage.graphics_uninit(self)
   for _,image_name in ipairs(other_images) do
-    if self.images[image_name] ~= default_stage[image_name] then
-      self.images[image_name] = nil
-    end
+    self.images[image_name] = nil
   end
 end
 
@@ -190,7 +186,7 @@ end
 function Stage.sound_init(self,full,yields)
   local stage_musics = full and other_musics or basic_musics
   for _, music in ipairs(stage_musics) do
-    self.musics[music] = get_from_supported_extensions(self.path.."/"..music, true)
+    self.musics[music] = load_sound_from_supported_extensions(self.path.."/"..music, true)
     -- Set looping status for music.
     -- Intros won't loop, but other parts should.
     if self.musics[music] then
@@ -199,8 +195,7 @@ function Stage.sound_init(self,full,yields)
       else
         self.musics[music]:setLooping(false)
       end
-    end
-    if not self.musics[music] and defaulted_musics[music] then
+    elseif not self.musics[music] and defaulted_musics[music] then
       self.musics[music] = default_stage.musics[music]
     end
 

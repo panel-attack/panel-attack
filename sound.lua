@@ -4,8 +4,7 @@ function apply_config_volume()
   love.audio.setVolume(config.master_volume/100)
   set_volume(sounds, config.SFX_volume/100)
   for _,character in pairs(characters) do
-    set_volume(character.sounds, config.SFX_volume/100)
-    set_volume(character.musics, config.music_volume/100)
+    character:apply_config_volume()
   end
   for _,stage in pairs(stages) do
     stage:apply_config_volume()

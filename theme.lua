@@ -115,7 +115,7 @@ local function sound_init()
       },
       pops = {}
   }
-  zero_sound = get_from_supported_extensions("zero_music")
+  zero_sound = load_sound_from_supported_extensions("zero_music")
   
   for popLevel=1,4 do
     sounds.pops[popLevel] = {}

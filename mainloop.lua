@@ -321,7 +321,7 @@ function main_endless(...)
   replay.in_buf = ""
   replay.gpan_buf = ""
   replay.mode = "endless"
-  P1 = Stack(1, "endless", config.panels_dir, ...)
+  P1 = Stack(1, "endless", config.panels, ...)
   P1.do_countdown = config.ready_countdown_1P or false
   P1.enable_analytics = true
   replay.do_countdown = P1.do_countdown or false
@@ -353,7 +353,7 @@ end
 function main_time_attack(...)
   pick_random_stage()
   consuming_timesteps = true
-  P1 = Stack(1, "time", config.panels_dir, ...)
+  P1 = Stack(1, "time", config.panels, ...)
   P1.enable_analytics = true
   make_local_panels(P1, "000000")
   P1:starting_state()
@@ -411,7 +411,7 @@ local function refresh_based_on_own_mods(refreshed,ask_change_fallback)
   if refreshed ~= nil then
     -- panels
     if refreshed.panels_dir == nil or IMG_panels[refreshed.panels_dir] == nil then
-      refreshed.panels_dir = config.panels_dir
+      refreshed.panels_dir = config.panels
     end
 
     -- stage
@@ -636,7 +636,7 @@ function main_character_select()
     cursor_data[1].state = shallowcpy(global_my_state)
     global_my_state = nil
   else
-    cursor_data[1].state = {stage=config.stage, stage_is_random=config.stage==random_stage_special_value, character=config.character, character_display_name=characters[config.character].display_name, level=config.level, panels_dir=config.panels_dir, cursor="__Ready", ready=false, ranked=config.ranked}
+    cursor_data[1].state = {stage=config.stage, stage_is_random=config.stage==random_stage_special_value, character=config.character, character_display_name=characters[config.character].display_name, level=config.level, panels_dir=config.panels, cursor="__Ready", ready=false, ranked=config.ranked}
     if cursor_data[1].state.stage_is_random then
       cursor_data[1].state.stage = uniformly(stages_ids_for_current_theme)
     end
@@ -648,7 +648,7 @@ function main_character_select()
       global_op_state = nil -- retains state of the second player, also: don't unload its character when going back and forth
     end
   else
-    cursor_data[2].state = {stage=config.stage, stage_is_random=config.stage==random_stage_special_value, character=config.character, character_display_name=characters[config.character].display_name, level=config.level, panels_dir=config.panels_dir, cursor="__Ready", ready=false, ranked=false}
+    cursor_data[2].state = {stage=config.stage, stage_is_random=config.stage==random_stage_special_value, character=config.character, character_display_name=characters[config.character].display_name, level=config.level, panels_dir=config.panels, cursor="__Ready", ready=false, ranked=false}
     if cursor_data[2].state.stage_is_random then
       cursor_data[2].state.stage = uniformly(stages_ids_for_current_theme)
     end
@@ -1299,10 +1299,7 @@ function main_character_select()
         config.stage = cursor_data[1].state.stage_is_random and random_stage_special_value or cursor_data[1].state.stage
         config.level = cursor_data[1].state.level
         config.ranked = cursor_data[1].state.ranked
-        if config.use_panels_from_assets_folder == false then
-          config.panels_dir_when_not_using_set_from_assets_folder = cursor_data[1].state.panels_dir
-          config.panels_dir = config.panels_dir_when_not_using_set_from_assets_folder
-        end
+        config.panels = cursor_data[1].state.panels_dir
 
         if character_select_mode == "2p_local_vs" then -- this is registered for future entering of the lobby
           global_op_state = shallowcpy(cursor_data[2].state)
@@ -1899,8 +1896,8 @@ function main_replay_vs()
   end
   pick_random_stage()
   fallback_when_missing = { nil, nil }
-  P1 = Stack(1, "vs", config.panels_dir, replay.P1_level or 5)
-  P2 = Stack(2, "vs", config.panels_dir, replay.P2_level or 5)
+  P1 = Stack(1, "vs", config.panels, replay.P1_level or 5)
+  P2 = Stack(2, "vs", config.panels, replay.P2_level or 5)
   P1.do_countdown = replay.do_countdown or false
   P2.do_countdown = replay.do_countdown or false
   P1.ice = true
@@ -1998,7 +1995,7 @@ function main_replay_endless()
       {main_select_mode, "I don't have an endless replay :("}
   end
   pick_random_stage()
-  P1 = Stack(1, "endless", config.panels_dir, replay.speed, replay.difficulty)
+  P1 = Stack(1, "endless", config.panels, replay.speed, replay.difficulty)
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
   P1.input_buffer = table.concat({replay.in_buf})
@@ -2044,7 +2041,7 @@ function main_replay_puzzle()
       {main_select_mode, "I don't have a puzzle replay :("}
   end
   pick_random_stage()
-  P1 = Stack(1, "puzzle", config.panels_dir)
+  P1 = Stack(1, "puzzle", config.panels)
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
   P1.input_buffer = replay.in_buf
@@ -2091,7 +2088,7 @@ function make_main_puzzle(puzzles)
     consuming_timesteps = true
     replay.puzzle = {}
     local replay = replay.puzzle
-    P1 = Stack(1, "puzzle", config.panels_dir)
+    P1 = Stack(1, "puzzle", config.panels)
     P1.do_countdown = config.ready_countdown_1P or false
     local start_delay = 0
     if awesome_idx == nil then
