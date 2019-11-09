@@ -138,7 +138,6 @@ function Theme.sound_init(self)
   -- music
   self.musics = {}
   for _, music in ipairs(musics) do
-    print("entering loading musics for stage! ".. music)
     self.musics[music] = load_sound_from_supported_extensions("themes/"..config.theme.."/music/"..music, true)
     if self.musics[music] then
       self.musics[music]:setLooping(true)
@@ -148,10 +147,16 @@ function Theme.sound_init(self)
   self:apply_config_volume()
 end
 
+function Theme.load(self, id)
+  print("loading theme "..id)
+  self:graphics_init()
+  self:sound_init()
+  print("loaded theme "..id)
+end
+
 function theme_init()
   -- only one theme at a time for now, but we may decide to allow different themes in the future
   themes = {}
   themes[config.theme] = Theme()
-  themes[config.theme]:graphics_init()
-  themes[config.theme]:sound_init()
+  themes[config.theme]:load(config.theme)
 end
