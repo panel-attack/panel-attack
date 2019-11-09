@@ -35,7 +35,7 @@ default_stages_ids = {"cave", "fire", "flower", "forest", "ice",
 random_stage_special_value = "__StageRandom"
 
 key_names = {"up", "down", "left", "right", "swap1",
-  "swap2", "raise1", "raise2"}
+  "swap2", "taunt_up", "taunt_down", "raise1", "raise2"}
 
 bounce_table = {1, 1, 1, 1,
                 2, 2, 2,

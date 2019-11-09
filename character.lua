@@ -12,7 +12,7 @@ local defaulted_images = { icon=true, topleft=true, botleft=true, topright=true,
                   doubleface=true, filler1=true, filler2=true, flash=true,
                   portrait=true } -- those images will be defaulted if missing
 local basic_sfx = {"selection"}
-local other_sfx = {"chain", "combo", "combo_echo", "chain_echo", "chain2" ,"chain2_echo", "garbage_match", "win"}
+local other_sfx = {"chain", "combo", "combo_echo", "chain_echo", "chain2" ,"chain2_echo", "garbage_match", "win", "taunt_up", "taunt_down"}
 local defaulted_sfxs = {} -- those musics will be defaulted if missing
 local basic_musics = {}
 local other_musics = {"normal_music", "danger_music", "normal_music_start", "danger_music_start"}
@@ -25,7 +25,7 @@ Character = class(function(self, full_path, folder_name)
     self.id = folder_name -- string | id of the character, is also the name of its folder by default, may change in id_init
     self.display_name = self.id -- string | display name of the stage
     self.images = {}
-    self.sounds = { combos = {}, combo_echos = {}, selections = {}, wins = {}, garbage_matches = {}, others = {} }
+    self.sounds = { combos = {}, combo_echos = {}, selections = {}, wins = {}, garbage_matches = {}, taunt_ups = {}, taunt_downs = {}, others = {} }
     self.musics = {}
     self.fully_loaded = false
   end)
@@ -269,6 +269,11 @@ function Character.sound_init(self,full,yields)
     self:init_sfx_variants(self.sounds.wins, "win")
     if yields then coroutine.yield() end
     self:init_sfx_variants(self.sounds.garbage_matches, "garbage_match")
+    if yields then coroutine.yield() end
+    -- those two are maxed at 10 since this is a server requirement
+    init_variations_sfx(self.id, self.sounds.taunt_downs, "taunt_down", self.sounds.others["taunt_down"])
+    if yields then coroutine.yield() end
+    init_variations_sfx(self.id, self.sounds.taunt_ups, "taunt_up", self.sounds.others["taunt_up"])
     if yields then coroutine.yield() end
   end
 

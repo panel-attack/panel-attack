@@ -1692,7 +1692,25 @@ function main_net_vs()
     -- Uncomment this to cripple your game :D
     -- love.timer.sleep(0.030)
     for _,msg in ipairs(this_frame_messages) do
-      if msg.leave_room then
+      if msg.taunt then
+        local taunts = nil
+        -- P1.character and P2.character are supposed to be already filtered with current mods, taunts may differ though!
+        if msg.player_number == my_player_number then
+          taunts = characters[P1.character].sounds[msg.type]
+        elseif msg.player_number == op_player_number then
+          taunts = characters[P2.character].sounds[msg.type]
+        end
+        if taunts then
+          for _,t in ipairs(taunts) do
+            t:stop()
+          end
+          if msg.index <= #taunts then
+            taunts[msg.index]:play()
+          elseif #taunts ~= 0 then
+            taunts[math.random(#taunts)]:play()
+          end
+        end
+      elseif msg.leave_room then
         return main_net_vs_lobby
       end
     end
@@ -2204,7 +2222,7 @@ do
 end
 
 function main_config_input()
-  local pretty_names = {"Up", "Down", "Left", "Right", "A", "B", "L", "R"}
+  local pretty_names = {"Up", "Down", "Left", "Right", "A", "B", "X", "Y", "L", "R"}
   local items, active_idx = {}, 1
   local k = K[1]
   local active_player = 1

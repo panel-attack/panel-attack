@@ -150,6 +150,11 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     s.swap_1 = false   -- attempt to initiate a swap on this frame
     s.swap_2 = false
 
+    s.taunt_up = nil -- will hold an index
+    s.taunt_down = nil -- will hold an index
+    s.wait_for_not_taunting = nil -- will hold either "taunt_up" or "taunt_down"
+    s.taunt_queue = Queue()
+
     s.cur_wait_time = 25   -- number of ticks to wait before the cursor begins
                -- to move quickly... it's based on P1CurSensitivity
     s.cur_timer = 0   -- number of ticks for which a new direction's been pressed
@@ -262,6 +267,20 @@ end
 function Stack.fromcpy(self, other)
   Stack.mkcpy(other,self)
   self:remove_extra_rows()
+end
+
+local MAX_TAUNT_PER_10_SEC = 4
+
+function Stack.can_taunt(self)
+  return self.taunt_queue:len() < MAX_TAUNT_PER_10_SEC or self.taunt_queue:peek() + 10 < love.timer.getTime()
+end
+
+function Stack.taunt(self,taunt_type)
+  while self.taunt_queue:len() >= MAX_TAUNT_PER_10_SEC do
+    self.taunt_queue:pop()
+  end
+  self.taunt_queue:push(love.timer.getTime())
+  self.wait_for_not_taunting = taunt_type -- to avoid taunting multiple times with the same input
 end
 
 Panel = class(function(p)
@@ -1146,10 +1165,26 @@ function Stack.PdP(self)
   else
     self.cur_row = bound(1, self.cur_row, self.top_cur_row)
   end
+
   if self.cur_timer ~= self.cur_wait_time then
     self.cur_timer = self.cur_timer + 1
-    
-    
+  end
+
+  -- TAUNTING
+  if self.taunt_up ~= nil then
+    for _,t in ipairs(characters[self.character].sounds.taunt_ups) do
+      t:stop()
+    end
+    characters[self.character].sounds.taunt_ups[self.taunt_up]:play()
+    self:taunt("taunt_up")
+    self.taunt_up = nil
+  elseif self.taunt_down ~= nil then
+    for _,t in ipairs(characters[self.character].sounds.taunt_downs) do
+      t:stop()
+    end
+    characters[self.character].sounds.taunt_downs[self.taunt_down]:play()
+    self:taunt("taunt_down")
+    self.taunt_down = nil
   end
 
   -- SWAPPING
