@@ -12,7 +12,7 @@ Note: folders starting with "__" will be ignored upon loading. You may choose to
 
 4. Place assets, sounds and txt files in that folder with the proper names to add your data. Exhaustive list below.
 
-~~~~ Exhaustive list of a character folder data! ~~~~
+~~~~ Exhaustive list of a theme folder data! ~~~~
 
 Note: non-optional data that are missing will automatically get replaced by default ones so they are kinda optional in that sense
 

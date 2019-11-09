@@ -2294,18 +2294,6 @@ function main_show_custom_themes_readme(idx)
     recursive_copy("themes/"..default_theme_dir, "themes/"..prefix_of_ignored_dirs..default_theme_dir)
   end
 
-  -- add other defaults panels sets here so that anyone can update them if wanted
-  local default_panels_dirs = { default_panels_dir }
-  
-  for _,panels_dir in ipairs(default_panels_dirs) do
-    if not love.filesystem.getInfo("panels/"..prefix_of_ignored_dirs..panels_dir) then
-      print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
-      gprint("Hold on. Copying example folders to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
-      wait()
-      recursive_copy("panels/"..panels_dir, "panels/"..prefix_of_ignored_dirs..panels_dir)
-    end
-  end
-
   local readme = read_txt_file("readme_themes.txt")
   while true do
     gprint(readme, 15, 15)
@@ -2381,6 +2369,38 @@ function main_show_custom_characters_readme(idx)
   end
 end
 
+function main_show_custom_panels_readme(idx)
+  bg = themes[config.theme].images.bg_readme
+
+ -- add other defaults panels sets here so that anyone can update them if wanted
+  local default_panels_dirs = { default_panels_dir }
+  
+  for _,panels_dir in ipairs(default_panels_dirs) do
+    if not love.filesystem.getInfo("panels/"..prefix_of_ignored_dirs..panels_dir) then
+      print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
+      gprint("Hold on. Copying example folders to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
+      wait()
+      recursive_copy("panels/"..panels_dir, "panels/"..prefix_of_ignored_dirs..panels_dir)
+    end
+  end
+
+  local readme = read_txt_file("readme_panels.txt")
+  while true do
+    gprint(readme, 15, 15)
+    do_menu_function = false
+    wait()
+    local ret = nil
+    variable_step(function()
+      if menu_escape(K[1]) or menu_enter(K[1]) then
+        ret = {main_options, {idx}}
+      end
+    end)
+    if ret then
+      return unpack(ret)
+    end
+  end
+end
+
 local memory_before_options_menu = nil
 
 function main_options(starting_idx)
@@ -2435,6 +2455,7 @@ function main_options(starting_idx)
     {"About custom themes", "", "function", nil, nil, nil, nil, main_show_custom_themes_readme},
     {"About custom characters", "", "function", nil, nil, nil, nil, main_show_custom_characters_readme},
     {"About custom stages", "", "function", nil, nil, nil, nil, main_show_custom_stages_readme},
+    {"About custom panels", "", "function", nil, nil, nil, nil, main_show_custom_panels_readme},
     {"Back", "", nil, nil, nil, nil, false, main_select_mode}
   }
   local function print_stuff()
