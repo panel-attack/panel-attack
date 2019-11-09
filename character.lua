@@ -292,7 +292,6 @@ function Character.sound_init(self,full,yields)
   end
   
   self:apply_config_volume()
-
 end
 
 function Character.sound_uninit(self)
