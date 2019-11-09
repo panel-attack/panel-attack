@@ -124,7 +124,7 @@ function start_match(a, b)
   end
 
   a.room.stage = math.random(1,2)==1 and a.stage or b.stage
-  local msg = {match_start = true, ranked = false, stage=a.room.stage
+  local msg = {match_start = true, ranked = false, stage=a.room.stage,
                 player_settings = {character = a.character, character_display_name=a.character_display_name, level = a.level, panels_dir = a.panels_dir, player_number = a.player_number},
                 opponent_settings = {character = b.character, character_display_name=b.character_display_name, level = b.level, panels_dir = b.panels_dir, player_number = b.player_number}}
   local room_is_ranked, reasons = a.room:rating_adjustment_approved()

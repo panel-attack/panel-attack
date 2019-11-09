@@ -447,7 +447,9 @@ function main_character_select()
   elseif themes[config.theme].musics.main then
     find_and_add_music(themes[config.theme].musics, "main")
   end
+
   bg = themes[config.theme].images.bg_select_screen
+
   fallback_when_missing = { nil, nil }
 
   local function add_client_data(state)
@@ -466,8 +468,6 @@ function main_character_select()
       state_2.ready = state_2.wants_ready and state_2.loaded
     end
   end
-
-  print("character_select_mode = "..(character_select_mode or "nil"))
 
   -- map is composed of special values prefixed by __ and character ids
   local template_map = {{"__Panels", "__Panels", "__Stage", "__Stage", "__Stage", "__Level", "__Level", "__Level", "__Ready"},
@@ -659,8 +659,9 @@ function main_character_select()
     if cursor_data[2].state.stage_is_random then
       cursor_data[2].state.stage = uniformly(stages_ids_for_current_theme)
     end
-    stage_loader_load(cursor_data[2].state.stage)
   end
+  character_loader_load(cursor_data[2].state.character)
+  stage_loader_load(cursor_data[2].state.stage)
   add_client_data(cursor_data[1].state)
   add_client_data(cursor_data[2].state)
   refresh_loaded_and_ready(cursor_data[1].state, cursor_data[2].state)
@@ -987,9 +988,11 @@ function main_character_select()
           local fake_P2 = P2
           refresh_based_on_own_mods(msg.opponent_settings)
           refresh_based_on_own_mods(msg.player_settings, true)
+          refresh_based_on_own_mods(msg) -- for stage only, other data are meaningless to us
           -- mainly for spectator mode, those characters have already been loaded otherwise
           character_loader_load(msg.player_settings.character)
           character_loader_load(msg.opponent_settings.character)
+          current_stage = msg.stage
           stage_loader_load(msg.stage)
           character_loader_wait()
           stage_loader_wait()
@@ -1072,7 +1075,7 @@ function main_character_select()
           end
           P1:starting_state()
           P2:starting_state()
-          return main_net_vs
+          return main_dumb_transition, {main_net_vs, "", 0, 0}
         end
       end
     end
@@ -1321,7 +1324,7 @@ function main_character_select()
         end
         prev_state = shallowcpy(cursor_data[1].state)
 
-      else -- (we are are spectating)
+      else -- (we are spectating)
         if menu_escape(K[1]) then
           do_leave()
           ret = {main_net_vs_lobby}
@@ -1377,6 +1380,7 @@ function main_net_vs_lobby()
   if themes[config.theme].musics.main then
     find_and_add_music(themes[config.theme].musics, "main")
   end
+  bg = themes[config.theme].images.bg_main
   local active_name, active_idx, active_back = "", 1
   local items
   local unpaired_players = {} -- list
@@ -1672,10 +1676,10 @@ end
 
 function main_net_vs()
   --STONER_MODE = true
-  if currently_spectating then
-    pick_random_stage()
-  else
+  if current_stage then
     use_current_stage()
+  else
+    pick_random_stage()
   end
   local k = K[1]  --may help with spectators leaving games in progress
   local end_text = nil
@@ -2322,12 +2326,12 @@ end
 function main_show_custom_stages_readme(idx)
   bg = themes[config.theme].images.bg_readme
 
-  for _,current_stage in ipairs(default_stages_ids) do
-    if not love.filesystem.getInfo("stages/"..prefix_of_ignored_dirs..current_stage) then
+  for _,stage in ipairs(default_stages_ids) do
+    if not love.filesystem.getInfo("stages/"..prefix_of_ignored_dirs..stage) then
       print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
       gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
       wait()
-      recursive_copy("stages/"..current_stage, "stages/"..prefix_of_ignored_dirs..current_stage)
+      recursive_copy("stages/"..stage, "stages/"..prefix_of_ignored_dirs..stage)
     end
   end
 
