@@ -1349,13 +1349,11 @@ function Stack.PdP(self)
         if (current_music_is_casual or table.getn(currently_playing_tracks) == 0) 
           and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
           print("Music is now critical")
-          if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
           stop_the_music()
           find_and_add_music(musics_to_use, "danger_music")
           current_music_is_casual = false
         elseif table.getn(currently_playing_tracks) == 0 then
           print("Music is now casual")
-          if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
           stop_the_music()
           find_and_add_music(musics_to_use, "normal_music")
           current_music_is_casual = true
@@ -1363,7 +1361,6 @@ function Stack.PdP(self)
       else --we should be playing normal_music or normal_music_start
         if (not current_music_is_casual or table.getn(currently_playing_tracks) == 0) then
           print("Music is now casual")
-          if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
           stop_the_music()
           find_and_add_music(musics_to_use, "normal_music")
           current_music_is_casual = true

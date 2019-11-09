@@ -155,9 +155,7 @@ menu_backspace = menu_key_func({"backspace"}, {"backspace"}, true)
 do
   local active_idx = 1
   function main_select_mode()
-    love.audio.stop()
     currently_spectating = false
-    stop_the_music()
     if themes[config.theme].musics["main"] then
       find_and_add_music(themes[config.theme].musics, "main")
     end
@@ -284,6 +282,7 @@ function main_select_speed_99(next_func, ...)
             wait()
             write_conf_file()
           end
+          stop_the_music()
           ret = {items[active_idx][2], {speed, difficulty}}
         elseif active_idx == 4 then
           ret = {items[active_idx][2], items[active_idx][3]}
@@ -341,7 +340,7 @@ function main_endless(...)
       write_replay_file()
       local end_text = "You scored "..P1.score.."\nin "..frames_to_time_string(P1.game_stopwatch, true)
       analytics_game_ends()
-      return main_dumb_transition, {main_select_mode, end_text, 60}
+      return main_dumb_transition, {main_select_mode, end_text, 0, -1, P1:pick_win_sfx()}
     end
     variable_step(function() P1:local_run() end)
     --groundhogday mode
@@ -367,7 +366,7 @@ function main_time_attack(...)
     -- TODO: proper game over.
       local end_text = "You scored "..P1.score.."\nin "..frames_to_time_string(P1.game_stopwatch)
       analytics_game_ends()
-      return main_dumb_transition, {main_select_mode, end_text, 30}
+      return main_dumb_transition, {main_select_mode, end_text, 30, -1, P1:pick_win_sfx()}
     end
     variable_step(function()
       if (not P1.game_over)  and P1.game_stopwatch and P1.game_stopwatch < 120 * 60 then
@@ -442,9 +441,8 @@ end
 local current_page = 1
 
 function main_character_select()
-  love.audio.stop()
-  stop_the_music()
   if themes[config.theme].musics.select_screen then
+    stop_the_music()
     find_and_add_music(themes[config.theme].musics, "select_screen")
   elseif themes[config.theme].musics.main then
     find_and_add_music(themes[config.theme].musics, "main")
@@ -618,6 +616,7 @@ function main_character_select()
   match_type_message = match_type_message or ""
 
   local function do_leave()
+    stop_the_music()
     my_win_count = 0
     op_win_count = 0
     return json_send({leave_room=true})
@@ -977,6 +976,7 @@ function main_character_select()
           end
         end
         if msg.leave_room then
+          stop_the_music()
           my_win_count = 0
           op_win_count = 0
           return main_net_vs_lobby
@@ -1207,6 +1207,19 @@ function main_character_select()
       end
     end
 
+    local function on_quit()
+      if themes[config.theme].musics.select_screen then
+        stop_the_music()
+      end
+      if character_select_mode == "2p_net_vs" then
+        if not do_leave() then
+          ret = {main_dumb_transition, {main_select_mode, "Error when leaving online", 60, 300}}
+        end
+      else
+        ret = {main_select_mode}
+      end
+    end 
+
     variable_step(function()
       menu_clock = menu_clock + 1
 
@@ -1262,13 +1275,7 @@ function main_character_select()
               end
               cursor.selected = not cursor.selected
             elseif cursor.state.cursor == "__Leave" then
-              if character_select_mode == "2p_net_vs" then
-                if not do_leave() then
-                  ret = {main_dumb_transition, {main_select_mode, "Error when leaving online"}}
-                end
-              else
-                ret = {main_select_mode}
-              end
+              on_quit()
             elseif cursor.state.cursor == "__Random" then
               cursor.state.character = uniformly(characters_ids_for_current_theme)
               characters[cursor.state.character]:play_selection_sfx()
@@ -1286,13 +1293,7 @@ function main_character_select()
             end
           elseif menu_escape(k) then
             if cursor.state.cursor == "__Leave" then
-              if character_select_mode == "2p_net_vs" then
-                if not do_leave() then
-                  ret = {main_dumb_transition, {main_select_mode, "Error when leaving online"}}
-                end
-              else
-                ret = {main_select_mode}
-              end
+              on_quit()
             end
             cursor.selected = false
             cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Leave"])
@@ -1340,7 +1341,7 @@ function main_character_select()
       stage_loader_load(current_stage)
       stage_loader_wait()
       P1:starting_state()
-      return main_dumb_transition, {main_local_vs_yourself, "Game is starting...", 30, 30}
+      return main_dumb_transition, {main_local_vs_yourself, "", 0, 0}
     elseif cursor_data[1].state.ready and character_select_mode == "2p_local_vs" and cursor_data[2].state.ready then
       P1 = Stack(1, "vs", cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       P1.enable_analytics = true
@@ -1363,7 +1364,7 @@ function main_character_select()
       make_local_gpanels(P2, "000000")
       P1:starting_state()
       P2:starting_state()
-      return main_local_vs
+      return main_dumb_transition, {main_local_vs, "", 0, 0}
     elseif character_select_mode == "2p_net_vs" then
       if not do_messages() then
         return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
@@ -1373,6 +1374,9 @@ function main_character_select()
 end
 
 function main_net_vs_lobby()
+  if themes[config.theme].musics.main then
+    find_and_add_music(themes[config.theme].musics, "main")
+  end
   local active_name, active_idx, active_back = "", 1
   local items
   local unpaired_players = {} -- list
@@ -1384,8 +1388,6 @@ function main_net_vs_lobby()
   local notice = {[true]="Select a player name to ask for a match.", [false]="You are all alone in the lobby :("}
   local leaderboard_string = ""
   local my_rank
-  love.audio.stop()
-  stop_the_music()
   match_type = ""
   match_type_message = ""
   --attempt login
@@ -1438,7 +1440,7 @@ function main_net_vs_lobby()
       if msg.choose_another_name and msg.choose_another_name.used_names then
         return main_dumb_transition, {main_select_mode, "Error: name is taken :<\n\nIf you had just left the server,\nit may not have realized it yet, try joining again.\n\nThis can also happen if you have two\ninstances of Panel Attack open.\n\nPress Swap or Back to continue.", 60, 600}
       elseif msg.choose_another_name and msg.choose_another_name.reason then
-        return main_dumb_transition, {main_select_mode, "Error: ".. msg.choose_another_name.reason, 60}
+        return main_dumb_transition, {main_select_mode, "Error: ".. msg.choose_another_name.reason, 60, 300}
       end
       if msg.create_room or msg.spectate_request_granted then
         global_initialize_room_msg = msg
@@ -1721,14 +1723,13 @@ function main_net_vs()
       wait()
       if currently_spectating and this_frame_keys["escape"] then
         print("spectator pressed escape during a game")
-        stop_the_music()
         my_win_count = 0
         op_win_count = 0
         json_send({leave_room=true})
-        return main_net_vs_lobby
+        return main_dumb_transition, {main_net_vs_lobby, "", 0, 0}
       end
       if not do_messages() then
-        return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", unpack(main_menu_screen_pos)}
+        return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
       end
     end
 
@@ -1805,9 +1806,9 @@ function main_net_vs()
       write_replay_file()
       character_select_mode = "2p_net_vs"
       if currently_spectating then
-        return main_dumb_transition, {main_character_select, end_text, 45, 45, winSFX}
+        return main_dumb_transition, {main_character_select, end_text, 30, 30, winSFX}
       else
-        return main_dumb_transition, {main_character_select, end_text, 45, 180, winSFX}
+        return main_dumb_transition, {main_character_select, end_text, 30, 180, winSFX}
       end
     end
   end
@@ -1843,15 +1844,15 @@ function main_local_vs()
     elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
       winSFX = P2:pick_win_sfx()
       op_win_count = op_win_count + 1
-      end_text = "P2 wins ^^"
+      end_text = "P2 wins"
     elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
       winSFX = P1:pick_win_sfx()
       my_win_count = my_win_count + 1
-      end_text = "P1 wins ^^"
+      end_text = "P1 wins"
     end
     if end_text then
       analytics_game_ends()
-      return main_dumb_transition, {main_character_select, end_text, 45, nil, winSFX}
+      return main_dumb_transition, {main_character_select, end_text, 45, -1, winSFX}
     end
   end
 end
@@ -1882,7 +1883,7 @@ function main_local_vs_yourself()
       end)
     if end_text then
       analytics_game_ends()
-      return main_dumb_transition, {main_character_select, end_text, 45}
+      return main_dumb_transition, {main_character_select, end_text, 45, -1, P1:pick_win_sfx()}
     end
   end
 end
@@ -1900,8 +1901,9 @@ end
 function main_replay_vs()
   local replay = replay.vs
   if replay == nil then
-    return main_dumb_transition, {main_select_mode, "I don't have a vs replay :("}
+    return main_dumb_transition, {main_select_mode, "I don't have a vs replay :(", 0, -1}
   end
+  stop_the_music()
   pick_random_stage()
   fallback_when_missing = { nil, nil }
   P1 = Stack(1, "vs", config.panels, replay.P1_level or 5)
@@ -1991,7 +1993,7 @@ function main_replay_vs()
       end
     end
     if end_text then
-      return main_dumb_transition, {main_select_mode, end_text, nil, nil, winSFX}
+      return main_dumb_transition, {main_select_mode, end_text, 0, -1, winSFX}
     end
   end
 end
@@ -2000,8 +2002,9 @@ function main_replay_endless()
   local replay = replay.endless
   if replay == nil or replay.speed == nil then
     return main_dumb_transition,
-      {main_select_mode, "I don't have an endless replay :("}
+      {main_select_mode, "I don't have an endless replay :(", 0, -1}
   end
+  stop_the_music()
   pick_random_stage()
   P1 = Stack(1, "endless", config.panels, replay.speed, replay.difficulty)
   P1.do_countdown = replay.do_countdown or false
@@ -2031,7 +2034,7 @@ function main_replay_endless()
         if P1.game_over then
         -- TODO: proper game over.
           local end_text = "You scored "..P1.score.."\nin "..frames_to_time_string(P1.game_stopwatch, true)
-          ret = {main_dumb_transition, {main_select_mode, end_text, 30}}
+          ret = {main_dumb_transition, {main_select_mode, end_text, 30, -1, P1:pick_win_sfx()}}
         end
         P1:foreign_run()
       end
@@ -2045,9 +2048,9 @@ end
 function main_replay_puzzle()
   local replay = replay.puzzle
   if not replay or replay.in_buf == nil or replay.in_buf == "" then
-    return main_dumb_transition,
-      {main_select_mode, "I don't have a puzzle replay :("}
+    return main_dumb_transition, {main_select_mode, "I don't have a puzzle replay :(", 0, -1}
   end
+  stop_the_music()
   pick_random_stage()
   P1 = Stack(1, "puzzle", config.panels)
   P1.do_countdown = replay.do_countdown or false
@@ -2063,7 +2066,7 @@ function main_replay_puzzle()
     local ret = nil
     variable_step(function()
       if this_frame_keys["escape"] then
-        ret =  {main_select_mode}
+        ret =  {main_dumb_transition, {main_select_mode, "", 0, 0}}
       end
       if this_frame_keys["return"] then
         run = not run
@@ -2075,9 +2078,9 @@ function main_replay_puzzle()
         if P1.n_active_panels == 0 and
             P1.prev_active_panels == 0 then
           if P1:puzzle_done() then
-            ret = {main_dumb_transition, {main_select_mode, "You win!"}}
+            ret = {main_dumb_transition, {main_select_mode, "You win!", 30, -1, P1:pick_win_sfx()}}
           elseif P1.puzzle_moves == 0 then
-            ret = {main_dumb_transition, {main_select_mode, "You lose :("}}
+            ret = {main_dumb_transition, {main_select_mode, "You lose :(", 30, -1}}
           end
         end
         P1:foreign_run()
@@ -2092,6 +2095,7 @@ end
 function make_main_puzzle(puzzles)
   local awesome_idx, next_func = 1, nil
   function next_func()
+    stop_the_music()
     pick_random_stage()
     consuming_timesteps = true
     replay.puzzle = {}
@@ -2111,26 +2115,27 @@ function make_main_puzzle(puzzles)
       local ret = nil
       variable_step(function()
         if this_frame_keys["escape"] then
-          ret = {main_select_puzz}
-        end
-        if P1.n_active_panels == 0 and
-            P1.prev_active_panels == 0 then
-          if P1:puzzle_done() then
-            awesome_idx = (awesome_idx % #puzzles) + 1
-            write_replay_file()
-            if awesome_idx == 1 then
-              ret = {main_dumb_transition, {main_select_puzz, "You win!", 30}}
-            else
-              ret = {main_dumb_transition, {next_func, "You win!", 30}}
+          ret = {main_dumb_transition, {main_select_puzz, "Waiting for your input! yay", 0, 0}}
+        else
+          if P1.n_active_panels == 0 and
+              P1.prev_active_panels == 0 then
+            if P1:puzzle_done() then
+              awesome_idx = (awesome_idx % #puzzles) + 1
+              write_replay_file()
+              if awesome_idx == 1 then
+                ret = {main_dumb_transition, {main_select_puzz, "You win!", 30, -1, P1:pick_win_sfx()}}
+              else
+                ret = {main_dumb_transition, {next_func, "You win!", 30, -1, P1:pick_win_sfx()}}
+              end
+            elseif P1.puzzle_moves == 0 then
+              write_replay_file()
+              ret = {main_dumb_transition, {main_select_puzz, "You lose :(", 30, -1}}
             end
-          elseif P1.puzzle_moves == 0 then
-            write_replay_file()
-            ret = {main_dumb_transition, {main_select_puzz, "You lose :(", 30}}
           end
-        end
-        if P1.n_active_panels ~= 0 or P1.prev_active_panels ~= 0 or
-            P1.puzzle_moves ~= 0 then
-          P1:local_run()
+          if P1.n_active_panels ~= 0 or P1.prev_active_panels ~= 0 or
+              P1.puzzle_moves ~= 0 then
+            P1:local_run()
+          end
         end
       end)
       if ret then
@@ -2148,8 +2153,9 @@ do
   end
   items[#items+1] = {"Back", main_select_mode}
   function main_select_puzz()
-    love.audio.stop()
-    stop_the_music()
+    if themes[config.theme].musics.main then
+      find_and_add_music(themes[config.theme].musics, "main")
+    end
     bg = themes[config.theme].images.bg_main
     local active_idx = last_puzzle_idx or 1
     local k = K[1]
@@ -2596,8 +2602,6 @@ function main_options(starting_idx)
       if not ret and deselected_this_frame then
         if items[active_idx][6] then --sound_source for this menu item exists
           items[active_idx][6]:stop()
-          love.audio.stop()
-          stop_the_music()
         end
         deselected_this_frame = false
       end
@@ -2788,37 +2792,15 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
 
   text = text or ""
   timemin = timemin or 0
-  timemax = timemax or 3600
+  timemax = timemax or -1 -- negative values means the user needs to press enter/escape to continue
   local t = 0
   local k = K[1]
   while true do
-    -- for _,msg in ipairs(this_frame_messages) do
-      -- if next_func == main_character_select then
-        -- if msg.menu_state then
-          -- if currently_spectating then
-            -- if msg.menu_state.player_number == 1 then
-              -- global_my_state = msg.menu_state
-            -- elseif msg.menu_state.player_number == 2 then
-              -- global_op_state = msg.menu_state
-            -- end
-          -- else
-            -- global_op_state = msg.menu_state
-          -- end
-        -- end
-        -- if msg.win_counts then
-          -- update_win_counts(msg.win_counts)
-        -- end
-        -- if msg.rating_updates then
-          -- global_current_room_ratings = msg.ratings
-        -- end
-      -- end
-      -- --TODO: anything else we should be listening for during main_dumb_transition?
-    -- end
     gprint(text, unpack(main_menu_screen_pos))
     wait()
     local ret = nil
     variable_step(function()
-      if t >= timemin and (t >=timemax or (menu_enter(k) or menu_escape(k))) then
+      if t >= timemin and ( (t >=timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) then
         ret = {next_func}
       end
       t = t + 1

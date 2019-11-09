@@ -143,9 +143,6 @@ function Theme.sound_init(self)
     if self.musics[music] then
       self.musics[music]:setLooping(true)
     end
-    if not self.musics[music] and music == "select_screen" then
-      self.musics[music] = self.musics["main"]
-    end
   end
 
   self:apply_config_volume()

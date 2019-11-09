@@ -23,7 +23,7 @@ local shake_step = 1/(#shake_arr - 1)
 local shake_mult = 1
 for i=1,#shake_arr do
   shake_arr[i] = shake_arr[i] * shake_mult
-  print(shake_arr[i])
+  -- print(shake_arr[i])
   shake_mult = shake_mult - shake_step
 end
 
