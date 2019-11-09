@@ -271,9 +271,9 @@ function Character.sound_init(self,full,yields)
     self:init_sfx_variants(self.sounds.garbage_matches, "garbage_match")
     if yields then coroutine.yield() end
     -- those two are maxed at 10 since this is a server requirement
-    init_variations_sfx(self.id, self.sounds.taunt_downs, "taunt_down", self.sounds.others["taunt_down"])
+    self:init_sfx_variants(self.sounds.taunt_downs, "taunt_down")
     if yields then coroutine.yield() end
-    init_variations_sfx(self.id, self.sounds.taunt_ups, "taunt_up", self.sounds.others["taunt_up"])
+    self:init_sfx_variants(self.sounds.taunt_ups, "taunt_up")
     if yields then coroutine.yield() end
   end
 
