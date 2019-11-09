@@ -142,14 +142,14 @@ function menu_key_func(fixed, configurable, rept, sound)
   end
 end
 
-menu_up = menu_key_func({"up"}, {"up"}, true, function() return sounds.menu_move end )
-menu_down = menu_key_func({"down"}, {"down"}, true, function() return sounds.menu_move end)
-menu_left = menu_key_func({"left"}, {"left"}, true, function() return sounds.menu_move end)
-menu_right = menu_key_func({"right"}, {"right"}, true, function() return sounds.menu_move end)
-menu_enter = menu_key_func({"return","kenter","z"}, {"swap1"}, false, function() return sounds.menu_validate end)
-menu_escape = menu_key_func({"escape","x"}, {"swap2"}, false, function() return sounds.menu_cancel end)
-menu_prev_page = menu_key_func({"pageup"}, {"raise1"}, true, function() return sounds.menu_move end)
-menu_next_page = menu_key_func({"pagedown"}, {"raise2"}, true, function() return sounds.menu_move end)
+menu_up = menu_key_func({"up"}, {"up"}, true, function() return themes[config.theme].sounds.menu_move end )
+menu_down = menu_key_func({"down"}, {"down"}, true, function() return themes[config.theme].sounds.menu_move end)
+menu_left = menu_key_func({"left"}, {"left"}, true, function() return themes[config.theme].sounds.menu_move end)
+menu_right = menu_key_func({"right"}, {"right"}, true, function() return themes[config.theme].sounds.menu_move end)
+menu_enter = menu_key_func({"return","kenter","z"}, {"swap1"}, false, function() return themes[config.theme].sounds.menu_validate end)
+menu_escape = menu_key_func({"escape","x"}, {"swap2"}, false, function() return themes[config.theme].sounds.menu_cancel end)
+menu_prev_page = menu_key_func({"pageup"}, {"raise1"}, true, function() return themes[config.theme].sounds.menu_move end)
+menu_next_page = menu_key_func({"pagedown"}, {"raise2"}, true, function() return themes[config.theme].sounds.menu_move end)
 menu_backspace = menu_key_func({"backspace"}, {"backspace"}, true)
 
 do
@@ -158,10 +158,13 @@ do
     love.audio.stop()
     currently_spectating = false
     stop_the_music()
+    if themes[config.theme].musics["main"] then
+      find_and_add_music(themes[config.theme].musics, "main")
+    end
     character_loader_clear()
     stage_loader_clear()
     close_socket()
-    bg = title
+    bg = themes[config.theme].images.bg_main
     logged_in = 0
     connection_up_time = 0
     connected_server_ip = ""
@@ -410,7 +413,7 @@ local function refresh_based_on_own_mods(refreshed,ask_change_fallback)
   ask_change_fallback = ask_change_fallback or false
   if refreshed ~= nil then
     -- panels
-    if refreshed.panels_dir == nil or IMG_panels[refreshed.panels_dir] == nil then
+    if refreshed.panels_dir == nil or panels[refreshed.panels_dir] == nil then
       refreshed.panels_dir = config.panels
     end
 
@@ -441,7 +444,12 @@ local current_page = 1
 function main_character_select()
   love.audio.stop()
   stop_the_music()
-  bg = charselect
+  if themes[config.theme].musics.select_screen then
+    find_and_add_music(themes[config.theme].musics, "select_screen")
+  elseif themes[config.theme].musics.main then
+    find_and_add_music(themes[config.theme].musics, "main")
+  end
+  bg = themes[config.theme].images.bg_select_screen
   fallback_when_missing = { nil, nil }
 
   local function add_client_data(state)
@@ -713,9 +721,9 @@ function main_character_select()
         cursor_frame = (math.floor(menu_clock/cur_pos_change_frequency)+player_num)%2+1
       end
       if draw_cur_this_frame then
-        local cur_img = IMG_char_sel_cursors[player_num][cursor_frame]
-        local cur_img_left = IMG_char_sel_cursor_halves.left[player_num][cursor_frame]
-        local cur_img_right = IMG_char_sel_cursor_halves.right[player_num][cursor_frame]
+        local cur_img = themes[config.theme].images.IMG_char_sel_cursors[player_num][cursor_frame]
+        local cur_img_left = themes[config.theme].images.IMG_char_sel_cursor_halves.left[player_num][cursor_frame]
+        local cur_img_right = themes[config.theme].images.IMG_char_sel_cursor_halves.right[player_num][cursor_frame]
         local cur_img_w, cur_img_h = cur_img:getDimensions()
         local cursor_scale = (button_height+(spacing*2))/cur_img_h
         menu_drawq(cur_img, cur_img_left, render_x-spacing, render_y-spacing, 0, cursor_scale , cursor_scale)
@@ -725,19 +733,19 @@ function main_character_select()
 
     local function draw_player_state(cursor_data,player_number)
       if characters[cursor_data.state.character] and not characters[cursor_data.state.character].fully_loaded then
-        menu_drawf(IMG_loading, render_x+button_width*0.5, render_y+button_height*0.5, "center", "center" )
+        menu_drawf(themes[config.theme].images.IMG_loading, render_x+button_width*0.5, render_y+button_height*0.5, "center", "center" )
       elseif cursor_data.state.wants_ready then
-        menu_drawf(IMG_ready, render_x+button_width*0.5, render_y+button_height*0.5, "center", "center" )
+        menu_drawf(themes[config.theme].images.IMG_ready, render_x+button_width*0.5, render_y+button_height*0.5, "center", "center" )
       end
-      local scale = 0.25*button_width/math.max(IMG_players[player_number]:getWidth(),IMG_players[player_number]:getHeight()) -- keep image ratio
-      menu_drawf(IMG_players[player_number], render_x+1, render_y+button_height-1, "left", "bottom", 0, scale, scale )
-      scale = 0.25*button_width/math.max(IMG_levels[cursor_data.state.level]:getWidth(),IMG_levels[cursor_data.state.level]:getHeight()) -- keep image ratio
-      menu_drawf(IMG_levels[cursor_data.state.level], render_x+button_width-1, render_y+button_height-1, "right", "bottom", 0, scale, scale )
+      local scale = 0.25*button_width/math.max(themes[config.theme].images.IMG_players[player_number]:getWidth(),themes[config.theme].images.IMG_players[player_number]:getHeight()) -- keep image ratio
+      menu_drawf(themes[config.theme].images.IMG_players[player_number], render_x+1, render_y+button_height-1, "left", "bottom", 0, scale, scale )
+      scale = 0.25*button_width/math.max(themes[config.theme].images.IMG_levels[cursor_data.state.level]:getWidth(),themes[config.theme].images.IMG_levels[cursor_data.state.level]:getHeight()) -- keep image ratio
+      menu_drawf(themes[config.theme].images.IMG_levels[cursor_data.state.level], render_x+button_width-1, render_y+button_height-1, "right", "bottom", 0, scale, scale )
     end
 
     local function draw_panels(cursor_data,player_number,y_padding)
       local panels_max_width = 0.25*button_height
-      local panels_width = math.min(panels_max_width,IMG_panels[cursor_data.state.panels_dir][1][1]:getWidth())
+      local panels_width = math.min(panels_max_width,panels[cursor_data.state.panels_dir].images.classic[1][1]:getWidth())
       local padding_x = 0.5*button_width-3*panels_width -- center them, not 3.5 mysteriously?
       if cursor_data.state.level >= 9 then
         padding_x = padding_x-0.5*panels_width
@@ -746,8 +754,8 @@ function main_character_select()
       if is_selected then
         padding_x = padding_x-panels_width
       end
-      local panels_scale = panels_width/IMG_panels[cursor_data.state.panels_dir][1][1]:getWidth()
-      menu_drawf(IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center" )
+      local panels_scale = panels_width/panels[cursor_data.state.panels_dir].images.classic[1][1]:getWidth()
+      menu_drawf(themes[config.theme].images.IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center" )
       padding_x = padding_x + panels_width
       if is_selected then
         gprintf("<", render_x+padding_x-0.5*panels_width, render_y+y_padding-0.5*text_height,panels_width,"center")
@@ -755,7 +763,7 @@ function main_character_select()
       end
       for i=1,8 do
         if i ~= 7 and (i ~= 6 or cursor_data.state.level >= 9) then
-          menu_drawf(IMG_panels[cursor_data.state.panels_dir][i][1], render_x+padding_x, render_y+y_padding, "center", "center", 0, panels_scale, panels_scale )
+          menu_drawf(panels[cursor_data.state.panels_dir].images.classic[i][1], render_x+padding_x, render_y+y_padding, "center", "center", 0, panels_scale, panels_scale )
           padding_x = padding_x + panels_width
         end
       end
@@ -766,14 +774,14 @@ function main_character_select()
 
     local function draw_levels(cursor_data,player_number,y_padding)
       local level_max_width = 0.2*button_height
-      local level_width = math.min(level_max_width,IMG_levels[1]:getWidth())
+      local level_width = math.min(level_max_width,themes[config.theme].images.IMG_levels[1]:getWidth())
       local padding_x = 0.5*button_width-5*level_width
       local is_selected = cursor_data.selected and cursor_data.state.cursor == "__Level"
       if is_selected then
         padding_x = padding_x-level_width
       end
-      local level_scale = level_width/IMG_levels[1]:getWidth()
-      menu_drawf(IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center" )
+      local level_scale = level_width/themes[config.theme].images.IMG_levels[1]:getWidth()
+      menu_drawf(themes[config.theme].images.IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center" )
       padding_x = padding_x + level_width
       if is_selected then
         gprintf("<", render_x+padding_x-0.5*level_width, render_y+y_padding-0.5*text_height,level_width,"center")
@@ -782,12 +790,12 @@ function main_character_select()
       for i=1,10 do
         local use_unfocus = cursor_data.state.level < i
         if use_unfocus then
-          menu_drawf(IMG_levels_unfocus[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, level_scale, level_scale )
+          menu_drawf(themes[config.theme].images.IMG_levels_unfocus[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, level_scale, level_scale )
         else
-          menu_drawf(IMG_levels[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, level_scale, level_scale )
+          menu_drawf(themes[config.theme].images.IMG_levels[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, level_scale, level_scale )
         end
         if i == cursor_data.state.level then
-          menu_drawf(IMG_level_cursor, render_x+padding_x, render_y+y_padding+IMG_levels[i]:getHeight()*0.5, "center", "top", 0, level_scale, level_scale )
+          menu_drawf(themes[config.theme].images.IMG_level_cursor, render_x+padding_x, render_y+y_padding+themes[config.theme].images.IMG_levels[i]:getHeight()*0.5, "center", "top", 0, level_scale, level_scale )
         end
         padding_x = padding_x + level_width
       end
@@ -797,9 +805,9 @@ function main_character_select()
     end
 
     local function draw_match_type(cursor_data,player_number,y_padding)
-      local padding_x = math.floor(0.5*button_width - IMG_players[player_number]:getWidth()*0.5 - 46)  -- ty GIMP; no way to know the size of the text?
-      menu_drawf(IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center" )
-      padding_x = padding_x+IMG_players[player_number]:getWidth()
+      local padding_x = math.floor(0.5*button_width - themes[config.theme].images.IMG_players[player_number]:getWidth()*0.5 - 46)  -- ty GIMP; no way to know the size of the text?
+      menu_drawf(themes[config.theme].images.IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center" )
+      padding_x = padding_x+themes[config.theme].images.IMG_players[player_number]:getWidth()
       local to_print
       if cursor_data.state.ranked then
         to_print = "casual [ranked]"
@@ -818,7 +826,7 @@ function main_character_select()
         gprintf("<", render_x+padding_x-13, math.floor(render_y+y_padding-0.5*text_height),10,"center")
       end
 
-      local thumbnail = cursor_data.state.stage_is_random and IMG_random_stage or stages[cursor_data.state.stage].images.thumbnail
+      local thumbnail = cursor_data.state.stage_is_random and themes[config.theme].images.IMG_random_stage or stages[cursor_data.state.stage].images.thumbnail
       local scale_x = stage_dimensions[1]/thumbnail:getWidth()
       local scale_y = stage_dimensions[2]/thumbnail:getHeight()
 
@@ -827,7 +835,7 @@ function main_character_select()
       -- thumbnail
       menu_drawf(thumbnail, render_x+padding_x, render_y+y_padding-1, "left", "center", 0, scale_x, scale_y )
       -- player image
-      menu_drawf(IMG_players[player_number], math.floor(render_x+padding_x+stage_dimensions[1]*0.5), math.floor(render_y+y_padding-stage_dimensions[2]*0.5-10), "center", "center" )
+      menu_drawf(themes[config.theme].images.IMG_players[player_number], math.floor(render_x+padding_x+stage_dimensions[1]*0.5), math.floor(render_y+y_padding-stage_dimensions[2]*0.5-10), "center", "center" )
       -- display name
       local display_name = cursor_data.state.stage_is_random and "Random" or stages[cursor_data.state.stage].display_name
       gprintf(display_name, render_x+padding_x-16, math.floor(render_y+y_padding+stage_dimensions[2]*0.5),stage_dimensions[1]+32,"center",nil,1,small_font)
@@ -1157,15 +1165,15 @@ function main_character_select()
 
     local function change_panels_dir(panels_dir,increment)
       local current = 0
-      for k,v in ipairs(IMG_panels_dirs) do
+      for k,v in ipairs(panels_ids) do
         if v == panels_dir then
           current = k
           break
         end
       end
-      local dir_count = #IMG_panels_dirs
+      local dir_count = #panels_ids
       local new_theme_idx = ((current - 1 + increment) % dir_count) + 1
-      for k,v in ipairs(IMG_panels_dirs) do
+      for k,v in ipairs(panels_ids) do
         if k == new_theme_idx then
             return v
         end
@@ -2142,7 +2150,7 @@ do
   function main_select_puzz()
     love.audio.stop()
     stop_the_music()
-    bg = title
+    bg = themes[config.theme].images.bg_main
     local active_idx = last_puzzle_idx or 1
     local k = K[1]
     while true do
@@ -2267,7 +2275,7 @@ function main_config_input()
 end
 
 function main_show_custom_themes_readme(idx)
-  bg = IMG_menu_readme
+  bg = themes[config.theme].images.bg_readme
 
   if not love.filesystem.getInfo("themes/"..prefix_of_ignored_dirs..default_theme_dir) then
     print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
@@ -2306,7 +2314,7 @@ function main_show_custom_themes_readme(idx)
 end
 
 function main_show_custom_stages_readme(idx)
-  bg = IMG_menu_readme
+  bg = themes[config.theme].images.bg_readme
 
   for _,current_stage in ipairs(default_stages_ids) do
     if not love.filesystem.getInfo("stages/"..prefix_of_ignored_dirs..current_stage) then
@@ -2335,7 +2343,7 @@ function main_show_custom_stages_readme(idx)
 end
 
 function main_show_custom_characters_readme(idx)
-  bg = IMG_menu_readme
+  bg = themes[config.theme].images.bg_readme
   
   for _,current_character in ipairs(default_characters_ids) do
     if not love.filesystem.getInfo("characters/"..prefix_of_ignored_dirs..current_character) then
@@ -2366,7 +2374,7 @@ end
 local memory_before_options_menu = nil
 
 function main_options(starting_idx)
-  bg = title
+  bg = themes[config.theme].images.bg_main
   local items, active_idx = {}, starting_idx or 1
   local k = K[1]
   local selected, deselected_this_frame, adjust_active_value = false, false, false
@@ -2404,7 +2412,7 @@ function main_options(starting_idx)
     --{[1]"Option Name", [2]current or default value, [3]type, [4]min or bool value or choices_table,
     -- [5]max, [6]sound_source, [7]selectable, [8]next_func, [9]play_while selected}
     {"Master Volume", config.master_volume or 100, "numeric", 0, 100, characters[config.character].musics.normal_music, true, nil, true},
-    {"SFX Volume", config.SFX_volume or 100, "numeric", 0, 100, sounds.cur_move, true},
+    {"SFX Volume", config.SFX_volume or 100, "numeric", 0, 100, themes[config.theme].sounds.cur_move, true},
     {"Music Volume", config.music_volume or 100, "numeric", 0, 100, characters[config.character].musics.normal_music, true, nil, true},
     {"Debug Mode", on_off_text[config.debug_mode or false], "bool", false, nil, nil,false},
     {"Save replays publicly", save_replays_publicly_choices[config.save_replays_publicly] or save_replays_publicly_choices["with my name"], "multiple choice", save_replays_publicly_choices},
@@ -2773,7 +2781,7 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
     if winnerSFX ~= nil then
       winnerSFX:play()
     elseif SFX_GameOver_Play == 1 then
-      sounds.game_over:play()
+      themes[config.theme].sounds.game_over:play()
     end
   end
   SFX_GameOver_Play = 0

@@ -2,7 +2,7 @@ require("sound_util")
 
 function apply_config_volume()
   love.audio.setVolume(config.master_volume/100)
-  set_volume(sounds, config.SFX_volume/100)
+  themes[config.theme]:apply_config_volume()
   for _,character in pairs(characters) do
     character:apply_config_volume()
   end
@@ -30,6 +30,7 @@ function stop_the_music()
 end
 
 function find_and_add_music(musics, music_type)
+  print("music "..music_type.." is now playing")
   local start_music = musics[music_type .. "_start"] or zero_sound
   local loop_music = musics[music_type]
   music_t[love.timer.getTime()] = make_music_t(

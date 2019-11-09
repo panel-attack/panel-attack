@@ -48,7 +48,7 @@ function Stack.draw_cards(self)
       local draw_x = 4 + (card.x-1) * 16
       local draw_y = 4 + (11-card.y) * 16 + self.displacement
           - card_animation[card.frame]
-      draw(IMG_cards[card.chain][card.n], draw_x, draw_y)
+      draw(themes[config.theme].images.IMG_cards[card.chain][card.n], draw_x, draw_y)
     end
   end
 end
@@ -101,9 +101,9 @@ function Stack.render(self)
 
   local metals
   if self.garbage_target then
-    metals = IMG_metals[self.garbage_target.panels_dir]
+    metals = panels[self.garbage_target.panels_dir].images.metals
   else
-    metals = IMG_metals[self.panels_dir]
+    metals = panels[self.panels_dir].images.metals
   end
   local metal_w, metal_h = metals.mid:getDimensions()
   local metall_w, metall_h = metals.left:getDimensions()
@@ -176,8 +176,8 @@ function Stack.render(self)
                   draw(imgs.pop, draw_x, draw_y, 0, 16/popped_w, 16/popped_h)
                 end
               elseif panel.y_offset == -1 then
-                local p_w, p_h = IMG_panels[self.panels_dir][panel.color][1]:getDimensions()
-                draw(IMG_panels[self.panels_dir][panel.color][1], draw_x, draw_y, 0, 16/p_w, 16/p_h)
+                local p_w, p_h = panels[self.panels_dir].images.classic[panel.color][1]:getDimensions()
+                draw(panels[self.panels_dir].images.classic[panel.color][1], draw_x, draw_y, 0, 16/p_w, 16/p_h)
               end
             elseif flash_time % 2 == 1 then
               if panel.metal then
@@ -222,14 +222,14 @@ function Stack.render(self)
           else
             draw_frame = 1
           end
-          local panel_w, panel_h = IMG_panels[self.panels_dir][panel.color][draw_frame]:getDimensions()
-          draw(IMG_panels[self.panels_dir][panel.color][draw_frame], draw_x, draw_y, 0, 16/panel_w, 16/panel_h)
+          local panel_w, panel_h = panels[self.panels_dir].images.classic[panel.color][draw_frame]:getDimensions()
+          draw(panels[self.panels_dir].images.classic[panel.color][draw_frame], draw_x, draw_y, 0, 16/panel_w, 16/panel_h)
         end
       end
     end
   end
-  draw(IMG_frame,0,0)
-  draw(IMG_wall, 4, 4 - shake + self.height*16)
+  draw(themes[config.theme].images.IMG_frame,0,0)
+  draw(themes[config.theme].images.IMG_wall, 4, 4 - shake + self.height*16)
 
   self:draw_cards()
   self:render_cursor()
@@ -261,7 +261,7 @@ function Stack.render(self)
         end
         if mx >= draw_x and mx < draw_x + 16*GFX_SCALE and my >= draw_y and my < draw_y + 16*GFX_SCALE then
           debug_mouse_panel = {row, col, panel}
-          draw(IMG_panels[self.panels_dir][9][1], draw_x+16, draw_y+16)
+          draw(panels[self.panels_dir].images.classic[9][1], draw_x+16, draw_y+16)
         end
       end
     end
@@ -342,12 +342,12 @@ function Stack.render_cursor(self)
   local shake = ceil((shake_arr[shake_idx] or 0) * 13)
   if self.countdown_timer then
     if self.CLOCK % 2 == 0 then
-      draw(IMG_cursor[1],
+      draw(themes[config.theme].images.IMG_cursor[1],
         (self.cur_col-1)*16,
         (11-(self.cur_row))*16+self.displacement-shake)
     end
   else
-    draw(IMG_cursor[(floor(self.CLOCK/16)%2)+1],
+    draw(themes[config.theme].images.IMG_cursor[(floor(self.CLOCK/16)%2)+1],
       (self.cur_col-1)*16,
       (11-(self.cur_row))*16+self.displacement-shake)
   end
@@ -362,15 +362,15 @@ function Stack.render_countdown(self)
     local countdown_y = 68
     if self.countdown_CLOCK <= 8 then
       local ready_y = initial_ready_y + (self.CLOCK - 1) * ready_y_drop_speed
-      draw(IMG_ready, ready_x, ready_y)
+      draw(themes[config.theme].images.IMG_ready, ready_x, ready_y)
       if self.countdown_CLOCK == 8 then
         self.ready_y = ready_y
       end
     elseif self.countdown_CLOCK >= 9 and self.countdown_timer and self.countdown_timer > 0 then
       if self.countdown_timer >= 100 then
-        draw(IMG_ready, ready_x, self.ready_y or initial_ready_y + 8 * 6)
+        draw(themes[config.theme].images.IMG_ready, ready_x, self.ready_y or initial_ready_y + 8 * 6)
       end
-      local IMG_number_to_draw = IMG_numbers[math.ceil(self.countdown_timer / 60)]
+      local IMG_number_to_draw = themes[config.theme].images.IMG_numbers[math.ceil(self.countdown_timer / 60)]
       if IMG_number_to_draw then
         draw(IMG_number_to_draw, countdown_x, countdown_y)
       end

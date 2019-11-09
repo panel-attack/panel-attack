@@ -89,26 +89,26 @@ function Character.play_selection_sfx(self)
 end
 
 function Character.preload(self)
-  print("preloading "..self.id)
+  print("preloading character "..self.id)
   self:other_data_init()
   self:graphics_init(false,false)
   self:sound_init(false,false)
 end
 
 function Character.load(self,instant)
-  print("loading "..self.id)
+  print("loading character "..self.id)
   self:graphics_init(true,(not instant))
   self:sound_init(true,(not instant))
   self.fully_loaded = true
-  print("loaded "..self.id)
+  print("loaded character "..self.id)
 end
 
 function Character.unload(self)
-  print("unloading "..self.id)
+  print("unloading character "..self.id)
   self:graphics_uninit()
   self:sound_uninit()
   self.fully_loaded = false
-  print("unloaded "..self.id)
+  print("unloaded character "..self.id)
 end
 
 local function add_characters_from_dir_rec(path)
@@ -131,7 +131,7 @@ local function add_characters_from_dir_rec(path)
         else
           characters[character.id] = character
           characters_ids[#characters_ids+1] = character.id
-          print(current_path.." has been added to the character list!")
+          -- print(current_path.." has been added to the character list!")
         end
       end
     end
@@ -153,7 +153,6 @@ function characters_init()
         -- found at least a valid character in a characters.txt file
         if characters[line] then
           characters_ids_for_current_theme[#characters_ids_for_current_theme+1] = line
-          print("found a valid character:"..characters_ids_for_current_theme[#characters_ids_for_current_theme])
         end
       end
     end

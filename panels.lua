@@ -1,45 +1,94 @@
 require("graphics_util")
 
+Panels = class(function(self, full_path, folder_name)
+    self.path = full_path -- string | path to the panels folder content
+    self.id = folder_name -- string | id of the panel set, is also the name of its folder by default, may change in id_init
+    self.images = {}
+  end)
+
+function Panels.id_init(self)
+  local read_data = {}
+  local config_file, err = love.filesystem.newFile(self.path.."/config.json", "r")
+  if config_file then
+    local teh_json = config_file:read(config_file:getSize())
+    for k,v in pairs(json.decode(teh_json)) do
+      read_data[k] = v
+    end
+  end
+
+  if read_data.id then
+    self.id = read_data.id
+  end
+end
+
+local function add_panels_from_dir_rec(path)
+  local lfs = love.filesystem
+  local raw_dir_list = lfs.getDirectoryItems(path)
+  for i,v in ipairs(raw_dir_list) do
+    local start_of_v = string.sub(v,0,string.len(prefix_of_ignored_dirs))
+    if start_of_v ~= prefix_of_ignored_dirs then
+      local current_path = path.."/"..v
+      if lfs.isDirectory(current_path) then
+        -- call recursively: facade folder
+        add_panels_from_dir_rec(current_path)
+
+        -- init stage: 'real' folder
+        local panel_set = Panels(current_path,v)
+        panel_set:id_init()
+
+        if panels[panel_set.id] ~= nil then
+          print(current_path.." has been ignored since a panel set with this id has already been found")
+        else
+          panels[panel_set.id] = panel_set
+          panels_ids[#panels_ids+1] = panel_set.id
+          -- print(current_path.." has been added to the character list!")
+        end
+      end
+    end
+  end
+end
+
 function panels_init()
-  local function load_panel_img(dir,name)
-    local img = load_img_from_supported_extensions("panels/"..dir.."/"..name)
+  panels = {} -- holds all panels, all of them will be fully loaded
+  panels_ids = {} -- holds all panels ids
+
+  add_panels_from_dir_rec("panels")
+
+  -- fix config panel set if it's missing
+  if not config.panels or not panels[config.panels] then
+    config.panels = uniformly(panels_ids)
+  end
+
+  for _,panel in pairs(panels) do
+    panel:load()
+  end
+end
+
+function Panels.load(self)
+  print("loading panels "..self.id)
+
+  local function load_panel_img(name)
+    local img = load_img_from_supported_extensions(self.path.."/"..name)
     if not img then
       img = load_img_from_supported_extensions("panels/"..default_panels_dir.."/"..name)
     end
     return img
   end
 
-  local function load_panels_dir(dir)
-    print("load panel dir: ".. dir)
-    IMG_panels[dir] = {}
-    IMG_panels_dirs[#IMG_panels_dirs+1] = dir
-
-    for i=1,8 do
-      IMG_panels[dir][i] = {}
-      for j=1,7 do
-        IMG_panels[dir][i][j] = load_panel_img(dir,"panel"..tostring(i)..tostring(j).."")
-      end
-    end
-    IMG_panels[dir][9] = {}
+  self.images.classic = {}
+  for i=1,8 do
+    self.images.classic[i] = {}
     for j=1,7 do
-      IMG_panels[dir][9][j] = load_panel_img(dir,"panel00")
-    end
-
-    IMG_metals[dir] = { left = load_panel_img(dir,"metalend0"), 
-                        mid = load_panel_img(dir,"metalmid"), 
-                        right = load_panel_img(dir,"metalend1"),
-                        flash = load_panel_img(dir,"garbageflash") }
-  end
-
-  IMG_panels = {}
-  IMG_panels_dirs = {}
-  IMG_metals = {}
-
-  local raw_dir_list = love.filesystem.getDirectoryItems("panels")
-  for k,v in ipairs(raw_dir_list) do
-    local start_of_v = string.sub(v,0,string.len(prefix_of_ignored_dirs))
-    if love.filesystem.getInfo("panels/"..v) and start_of_v ~= prefix_of_ignored_dirs then
-      load_panels_dir(v)
+      self.images.classic[i][j] = load_panel_img("panel"..tostring(i)..tostring(j))
     end
   end
+  self.images.classic[9] = {}
+  for j=1,7 do
+    self.images.classic[9][j] = load_panel_img("panel00")
+  end
+
+  self.images.metals = { left = load_panel_img("metalend0"), 
+                        mid = load_panel_img("metalmid"), 
+                        right = load_panel_img("metalend1"),
+                        flash = load_panel_img("garbageflash") }
 end

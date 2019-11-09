@@ -1,5 +1,6 @@
 require("consts")
 require("queue")
+require("sound_util")
 
 -- keyboard assignment vars
 K = {{up="up", down="down", left="left", right="right",
@@ -14,6 +15,8 @@ score_mode = SCOREMODE_TA
 
 gfx_q = Queue()
 
+themes = {} -- initialized in theme.lua
+
 characters = {} -- initialized in character.lua
 characters_ids = {} -- initialized in character.lua
 characters_ids_for_current_theme = {} -- initialized in character.lua
@@ -24,11 +27,19 @@ stages_ids = {} -- initialized in stage.lua
 stages_ids_for_current_theme = {} -- initialized in stage.lua
 stages_ids_by_display_names = {} -- initialized in stage.lua
 
+panels = {} -- initialized in panel_set.lua
+panels_ids = {} -- initialized in panel_set.lua
+
 current_stage = nil
 
 -- win counters
 my_win_count = 0
 op_win_count = 0
+
+-- sfx play
+SFX_Fanfare_Play = 0
+SFX_GarbageThud_Play = 0
+SFX_GameOver_Play = 0
 
 global_my_state = nil
 global_op_state = nil
@@ -37,6 +48,7 @@ main_font = love.graphics.getFont()
 main_font:setFilter("nearest", "nearest")
 small_font = love.graphics.newFont(9)
 small_font:setFilter("nearest", "nearest")
+zero_sound = load_sound_from_supported_extensions("zero_music")
 
   -- Default configuration values
 config = {
@@ -44,7 +56,7 @@ config = {
 	version                       = VERSION,
 
 	theme                         = default_theme_dir,
-	panels                        = default_panels_dir,
+	panel_set                     = default_panels_dir,
 	character                     = "lip",
 	stage                         = random_stage_special_value,
 

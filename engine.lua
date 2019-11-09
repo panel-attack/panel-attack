@@ -16,7 +16,7 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     s.character = config.character
     s.max_health = 1
     s.panels_dir = panels_dir or config.panels
-    if IMG_panels[panels_dir] == nil then
+    if not panels[panels_dir] then
       s.panels_dir = config.panels
     end
     s.mode = mode or "endless"
@@ -1331,12 +1331,12 @@ function Stack.PdP(self)
 
     if self.do_countdown then 
       if SFX_Go_Play == 1 then
-        sounds.go:stop()
-        sounds.go:play()
+        themes[config.theme].sounds.go:stop()
+        themes[config.theme].sounds.go:play()
         SFX_Go_Play=0
       elseif SFX_Countdown_Play == 1 then
-        sounds.countdown:stop()
-        sounds.countdown:play()
+        themes[config.theme].sounds.countdown:stop()
+        themes[config.theme].sounds.countdown:play()
         SFX_Go_Play=0
       end
     
@@ -1373,40 +1373,40 @@ function Stack.PdP(self)
   end
   if not SFX_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
     if SFX_Swap_Play == 1 then
-        sounds.swap:stop()
-        sounds.swap:play()
+        themes[config.theme].sounds.swap:stop()
+        themes[config.theme].sounds.swap:play()
         SFX_Swap_Play=0
     end
     if SFX_Cur_Move_Play == 1 then
-        if not (self.mode == "vs" and sounds.swap:isPlaying())
+        if not (self.mode == "vs" and themes[config.theme].sounds.swap:isPlaying())
         and not self.do_countdown then
-            sounds.cur_move:stop()
-            sounds.cur_move:play()
+            themes[config.theme].sounds.cur_move:stop()
+            themes[config.theme].sounds.cur_move:play()
         end
         SFX_Cur_Move_Play=0
     end
     if SFX_Land_Play == 1 then
-        sounds.land:stop()
-        sounds.land:play()
+        themes[config.theme].sounds.land:stop()
+        themes[config.theme].sounds.land:play()
         SFX_Land_Play=0
     end
     if SFX_Countdown_Play == 1 then
         if self.which == 1 then
-            sounds.countdown:stop()
-            sounds.countdown:play()
+            themes[config.theme].sounds.countdown:stop()
+            themes[config.theme].sounds.countdown:play()
         end
         SFX_Countdown_Play=0
     end
     if SFX_Go_Play == 1 then
         if self.which == 1 then
-            sounds.go:stop()
-            sounds.go:play()
+            themes[config.theme].sounds.go:stop()
+            themes[config.theme].sounds.go:play()
         end
         SFX_Go_Play=0
     end
     if self.combo_chain_play then
-        sounds.land:stop()
-        sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        themes[config.theme].sounds.land:stop()
+        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         for _,v in pairs(characters[self.character].sounds.combos) do
           v:stop()
         end
@@ -1432,27 +1432,27 @@ function Stack.PdP(self)
     if SFX_Fanfare_Play == 0 then
     --do nothing
     elseif SFX_Fanfare_Play >= 6 then
-        sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        sounds.fanfare3:play()
+        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        themes[config.theme].sounds.fanfare3:play()
     elseif SFX_Fanfare_Play >= 5 then
-        sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        sounds.fanfare2:play()
+        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        themes[config.theme].sounds.fanfare2:play()
     elseif SFX_Fanfare_Play >= 4 then
-        sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        sounds.fanfare1:play()
+        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        themes[config.theme].sounds.fanfare1:play()
     end
     SFX_Fanfare_Play=0
     if SFX_GarbageThud_Play >= 1 and SFX_GarbageThud_Play <= 3 then
         local interrupted_thud = nil
         for i=1,3 do
-            if sounds.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
-                sounds.garbage_thud[i]:stop()
+            if themes[config.theme].sounds.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
+                themes[config.theme].sounds.garbage_thud[i]:stop()
                 interrupted_thud = i
             end
         end
         if interrupted_thud and interrupted_thud > SFX_GarbageThud_Play then
-            sounds.garbage_thud[interrupted_thud]:play()
-        else sounds.garbage_thud[SFX_GarbageThud_Play]:play()
+            themes[config.theme].sounds.garbage_thud[interrupted_thud]:play()
+        else themes[config.theme].sounds.garbage_thud[SFX_GarbageThud_Play]:play()
         end
         SFX_GarbageThud_Play = 0
     end
@@ -1465,9 +1465,9 @@ function Stack.PdP(self)
             popIndex = min(self.poppedPanelIndex,10)
         end
         --stop the previous pop sound
-        sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         --play the appropriate pop sound
-        sounds.pops[popLevel][popIndex]:play()
+        themes[config.theme].sounds.pops[popLevel][popIndex]:play()
         self.lastPopLevelPlayed = popLevel
         self.lastPopIndexPlayed = popIndex
         SFX_Pop_Play = nil

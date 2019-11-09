@@ -5,7 +5,7 @@ local function load_img(path_and_name)
   if img == nil then
     return nil
   end
-  print("loaded asset: "..path_and_name)
+  -- print("loaded asset: "..path_and_name)
   local ret = love.graphics.newImage(img)
   ret:setFilter("nearest","nearest")
   return ret

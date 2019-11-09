@@ -31,10 +31,11 @@ Note: non-optional data that are missing will automatically get replaced by defa
 - "frame", "wall": layout ingame
 - "random_stage": thumbnail for random stage selection
 
-~~ [.mp3, .ogg, .it] ~~
+~~ [.mp3, .ogg, .it] optional sounds are in parenthesis ~~
 
 - "countdown", "go", "move", "swap", "land", "game_over": game sfx
 - "fanfare1", "fanfare2", "fanfare3": fanfare
 - "thud_1", "thud_2", "thud_3": garbage thuds
 - "menu_move", "menu_validate", "menu_cancel": menu
 - "pop1-1", "pop1-2", ..., "pop1-10", "pop2-1", ..., "pop2-10", ..., "pop4-10": panel pops
+- ("music/main"), ("music/select_screen"): musics that will be used in those menus, "main" will be used as fallback if "select_screen" is missing

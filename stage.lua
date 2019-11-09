@@ -65,26 +65,26 @@ function Stage.stop_sounds(self)
 end
 
 function Stage.preload(self)
-  print("preloading "..self.id)
+  print("preloading stage "..self.id)
   self:other_data_init()
   self:graphics_init(false,false)
   self:sound_init(false,false)
 end
 
 function Stage.load(self,instant)
-  print("loading "..self.id)
+  print("loading stage "..self.id)
   self:graphics_init(true,(not instant))
   self:sound_init(true,(not instant))
   self.fully_loaded = true
-  print("loaded "..self.id)
+  print("loaded stage "..self.id)
 end
 
 function Stage.unload(self)
-  print("unloading "..self.id)
+  print("unloading stage "..self.id)
   self:graphics_uninit()
   self:sound_uninit()
   self.fully_loaded = false
-  print("unloaded "..self.id)
+  print("unloaded stage "..self.id)
 end
 
 local function add_stages_from_dir_rec(path)
@@ -107,7 +107,7 @@ local function add_stages_from_dir_rec(path)
         else
           stages[stage.id] = stage
           stages_ids[#stages_ids+1] = stage.id
-          print(current_path.." has been added to the stage list!")
+          -- print(current_path.." has been added to the stage list!")
         end
       end
     end
@@ -130,7 +130,6 @@ function stages_init()
         -- found at least a valid stage in a stages.txt file
         if stages[line] then
           stages_ids_for_current_theme[#stages_ids_for_current_theme+1] = line
-          print("found a valid stage:"..stages_ids_for_current_theme[#stages_ids_for_current_theme])
         end
       end
     end
