@@ -41,8 +41,8 @@ Note: providing a specific, long enough id is a very good idea so that people re
 - ("selection", ("selection2", "selection3"...)): upon selection [selected at random if more than one]
 - ("win"(, "win2", "win3"...)): upon winning in 2P [selected at random if more than one]
 - ("taunt_up"(, "taunt_up2", "taunt_up3"...)), ("taunt_down"(, "taunt_down2", "taunt_down3"...)): upon taunting with either inputs [selected at random if more than one]
-- normal_music: music that will be played while playing with this character if the option use_music_from's value is characters and your character gets picked
-- (danger_music): music that will be used when a player is in danger (top of the screen) if the option use_music_from's value is characters and your character gets picked
+- "normal_music": music that will be played while playing with this character if the option use_music_from's value is characters and your character gets picked
+- ("danger_music"): music that will be used when a player is in danger (top of the screen) if the option use_music_from's value is characters and your character gets picked
 
 Note: providing just a "chain" or just a "combo" SFX is OK. It would get used for all combos and chains.
 

@@ -164,7 +164,7 @@ function characters_init()
   end
 
   -- fix config character if it's missing
-  if not config.character or not characters[config.character] then
+  if not config.character or ( config.character ~= random_character_special_value and not characters[config.character] ) then
     config.character = uniformly(characters_ids_for_current_theme)
   end
 
@@ -183,8 +183,10 @@ function characters_init()
     end
   end
 
-  character_loader_load(config.character)
-  character_loader_wait()
+  if config.character ~= random_character_special_value then
+    character_loader_load(config.character)
+    character_loader_wait()
+  end
 end
 
 function Character.graphics_init(self,full,yields)

@@ -116,8 +116,13 @@ function network_init(ip)
   TCP_sock:settimeout(0)
   got_H = false
   net_send("H"..VERSION)
-  assert(config.name and config.level and config.panels and config.character and config.save_replays_publicly)
-  json_send({name=config.name, level=config.level, panels_dir=config.panels, character=config.character, character_display_name=characters[config.character].display_name, save_replays_publicly = config.save_replays_publicly})
+  assert(config.name and config.save_replays_publicly)
+  local sent_json = {name=config.name, level=config.level, panels_dir=config.panels, 
+  character=config.character, character_is_random=config.character==random_character_special_value,
+  stage=config.stage, stage_is_random=config.stage==random_stage_special_value, 
+  save_replays_publicly=config.save_replays_publicly}
+  sent_json.character_display_name = sent_json.character_is_random and "" or characters[config.character].display_name 
+  json_send(sent_json)
 end
 
 function connection_is_ready()

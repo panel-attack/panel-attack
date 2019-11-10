@@ -29,7 +29,7 @@ Note: non-optional data that are missing will automatically get replaced by defa
 - "p1", "p1_cursor", "p1_select_screen_cursor1", "p1_select_screen_cursor2": cursors for player 1, change p1 by p2 for those of player 2
 - "ready", "loading": displayed when a player is ready or loading something in the select screen
 - "frame", "wall": layout ingame
-- "random_stage": thumbnail for random stage selection
+- "random_stage", "random_character": thumbnail and icon for random stage and random character
 
 ~~ [.mp3, .ogg, .it] optional sounds are in parenthesis ~~
 

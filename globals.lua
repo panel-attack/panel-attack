@@ -44,7 +44,7 @@ SFX_GameOver_Play = 0
 global_my_state = nil
 global_op_state = nil
 
-main_font = love.graphics.getFont()
+main_font = love.graphics.getFont() -- default size is 12
 main_font:setFilter("nearest", "nearest")
 small_font = love.graphics.newFont(9)
 small_font:setFilter("nearest", "nearest")
@@ -57,7 +57,7 @@ config = {
 
 	theme                         = default_theme_dir,
 	panel_set                     = default_panels_dir,
-	character                     = "lip",
+	character                     = random_character_special_value,
 	stage                         = random_stage_special_value,
 
 	use_music_from                = "stage",

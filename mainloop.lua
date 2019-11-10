@@ -180,7 +180,7 @@ do
         --{"2P vs online (USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)", main_net_vs_setup, {"18.188.43.50"}},
         --{"This test build is for offline-use only"--[["2P vs online at Jon's server"]], main_select_mode},
         --{"2P vs online at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
-        --{"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
+        {"2P vs online at localhost (development-use only)", main_net_vs_setup, {"192.168.1.11"}},
         --{"2P vs online at LittleEndu's server", main_net_vs_setup, {"51.15.207.223"}},
         {"2P vs local game", main_local_vs_setup},
         {"Replay of 1P endless", main_replay_endless},
@@ -314,6 +314,14 @@ local function pick_random_stage()
   use_current_stage()
 end
 
+function Stack.wait_for_random_character(self)
+  if self.character == random_character_special_value then
+    self.character = uniformly(characters_ids_for_current_theme)
+    character_loader_load(self.character)
+    character_loader_wait()
+  end
+end
+
 function main_endless(...)
   pick_random_stage()
   consuming_timesteps = true
@@ -324,6 +332,7 @@ function main_endless(...)
   replay.gpan_buf = ""
   replay.mode = "endless"
   P1 = Stack(1, "endless", config.panels, ...)
+  P1:wait_for_random_character()
   P1.do_countdown = config.ready_countdown_1P or false
   P1.enable_analytics = true
   replay.do_countdown = P1.do_countdown or false
@@ -356,6 +365,7 @@ function main_time_attack(...)
   pick_random_stage()
   consuming_timesteps = true
   P1 = Stack(1, "time", config.panels, ...)
+  P1:wait_for_random_character()
   P1.enable_analytics = true
   make_local_panels(P1, "000000")
   P1:starting_state()
@@ -459,13 +469,17 @@ function main_character_select()
 
   local function refresh_loaded_and_ready(state_1,state_2)
     state_1.loaded = characters[state_1.character] and characters[state_1.character].fully_loaded and stages[state_1.stage].fully_loaded
-    state_2.loaded = characters[state_2.character] and characters[state_2.character].fully_loaded and stages[state_2.stage].fully_loaded
+    if state_2 then
+      state_2.loaded = characters[state_2.character] and characters[state_2.character].fully_loaded and stages[state_2.stage].fully_loaded
+    end
     
     if character_select_mode == "2p_net_vs" then
       state_1.ready = state_1.wants_ready and state_1.loaded and state_2.loaded
     else
       state_1.ready = state_1.wants_ready and state_1.loaded
-      state_2.ready = state_2.wants_ready and state_2.loaded
+      if state_2 then
+        state_2.ready = state_2.wants_ready and state_2.loaded
+      end
     end
   end
 
@@ -639,32 +653,48 @@ function main_character_select()
   my_win_count = my_win_count or 0
 
   local cursor_data = {{position=shallowcpy(name_to_xy_per_page[current_page]["__Ready"]),selected=false},{position=shallowcpy(name_to_xy_per_page[current_page]["__Ready"]),selected=false}}
+  
+  -- our data (first player in local)
   if global_my_state ~= nil then
     cursor_data[1].state = shallowcpy(global_my_state)
     global_my_state = nil
   else
-    cursor_data[1].state = {stage=config.stage, stage_is_random=config.stage==random_stage_special_value, character=config.character, character_display_name=characters[config.character].display_name, level=config.level, panels_dir=config.panels, cursor="__Ready", ready=false, ranked=config.ranked}
-    if cursor_data[1].state.stage_is_random then
-      cursor_data[1].state.stage = uniformly(stages_ids_for_current_theme)
-    end
-    stage_loader_load(cursor_data[1].state.stage)
+    cursor_data[1].state = {stage=config.stage, stage_is_random=config.stage==random_stage_special_value, character=config.character, character_is_random=config.character==random_character_special_value, level=config.level, panels_dir=config.panels, cursor="__Ready", ready=false, ranked=config.ranked}
   end
-  if global_op_state ~= nil then
-    cursor_data[2].state = shallowcpy(global_op_state)
-    if character_select_mode ~= "2p_local_vs" then
-      global_op_state = nil -- retains state of the second player, also: don't unload its character when going back and forth
-    end
-  else
-    cursor_data[2].state = {stage=config.stage, stage_is_random=config.stage==random_stage_special_value, character=config.character, character_display_name=characters[config.character].display_name, level=config.level, panels_dir=config.panels, cursor="__Ready", ready=false, ranked=false}
-    if cursor_data[2].state.stage_is_random then
-      cursor_data[2].state.stage = uniformly(stages_ids_for_current_theme)
-    end
+
+  if cursor_data[1].state.character_is_random then
+    cursor_data[1].state.character = uniformly(characters_ids_for_current_theme)
+    character_loader_load(cursor_data[1].state.character)
   end
-  character_loader_load(cursor_data[2].state.character)
-  stage_loader_load(cursor_data[2].state.stage)
+  cursor_data[1].state.character_display_name = characters[cursor_data[1].state.character].display_name
+  if cursor_data[1].state.stage_is_random then
+    cursor_data[1].state.stage = uniformly(stages_ids_for_current_theme)
+  end
+
+  stage_loader_load(cursor_data[1].state.stage)
   add_client_data(cursor_data[1].state)
-  add_client_data(cursor_data[2].state)
-  refresh_loaded_and_ready(cursor_data[1].state, cursor_data[2].state)
+
+  if character_select_mode ~= "1p_vs_yourself" then
+    if global_op_state ~= nil then
+      cursor_data[2].state = shallowcpy(global_op_state)
+      if character_select_mode ~= "2p_local_vs" then
+        global_op_state = nil -- retains state of the second player, also: don't unload its character when going back and forth
+      end
+    else
+      cursor_data[2].state = {stage=config.stage, stage_is_random=config.stage==random_stage_special_value, character=config.character, character_is_random=config.character==random_character_special_value, level=config.level, panels_dir=config.panels, cursor="__Ready", ready=false, ranked=false}
+      if cursor_data[2].state.character_is_random then
+        cursor_data[2].state.character = uniformly(characters_ids_for_current_theme)
+      end
+      cursor_data[2].state.character_display_name = characters[cursor_data[2].state.character].display_name
+      if cursor_data[2].state.stage_is_random then
+        cursor_data[2].state.stage = uniformly(stages_ids_for_current_theme)
+      end
+    end
+    character_loader_load(cursor_data[2].state.character)
+    stage_loader_load(cursor_data[2].state.stage)
+    add_client_data(cursor_data[2].state)
+  end
+  refresh_loaded_and_ready(cursor_data[1].state, cursor_data[2] and cursor_data[2].state or nil)
 
   local prev_state = shallowcpy(cursor_data[1].state)
 
@@ -688,9 +718,9 @@ function main_character_select()
     end
     local character = characters[str]
     if str == "P1" then
-      character = characters[cursor_data[1].state.character]
+      character = cursor_data[1].state.character_is_random and random_character_special_value or characters[cursor_data[1].state.character]
     elseif str == "P2" then
-      character = characters[cursor_data[2].state.character]
+      character = cursor_data[2].state.character_is_random and random_character_special_value or characters[cursor_data[2].state.character]
     end
     local width_for_alignment = button_width
     local x_add,y_add = 0,0
@@ -699,12 +729,13 @@ function main_character_select()
     elseif valign == "bottom" then
       y_add = math.floor(button_height-text_height)
     end
-    if character and character.images["icon"] then
+    if character and ( character == random_character_special_value or character.images["icon"] ) then
       x_add = 0.025*button_width
       width_for_alignment = 0.95*button_width
-      local orig_w, orig_h = character.images["icon"]:getDimensions()
+      local icon_to_use = character == random_character_special_value and themes[config.theme].images.IMG_random_character or character.images["icon"]
+      local orig_w, orig_h = icon_to_use:getDimensions()
       local scale = button_width/math.max(orig_w,orig_h) -- keep image ratio
-      menu_drawf(character.images["icon"], render_x+0.5*button_width, render_y+0.5*button_height,"center","center", 0, scale, scale )
+      menu_drawf(icon_to_use, render_x+0.5*button_width, render_y+0.5*button_height,"center","center", 0, scale, scale )
     end
 
     local function draw_cursor(button_height, spacing, player_num,ready)
@@ -977,10 +1008,9 @@ function main_character_select()
           end
         end
         if msg.leave_room then
-          stop_the_music()
           my_win_count = 0
           op_win_count = 0
-          return main_net_vs_lobby
+          return main_dumb_transition, {main_net_vs_lobby, "", 0, 0}
         end
         if msg.match_start or replay_of_match_so_far then
           print("currently_spectating: "..tostring(currently_spectating))
@@ -1228,7 +1258,7 @@ function main_character_select()
 
       character_loader_update()
       stage_loader_update()
-      refresh_loaded_and_ready(cursor_data[1].state,cursor_data[2].state)
+      refresh_loaded_and_ready(cursor_data[1].state,cursor_data[2] and cursor_data[2].state or nil)
 
       local up,down,left,right = {-1,0}, {1,0}, {0,-1}, {0,1}
       local selectable = {__Stage=true, __Panels=true, __Level=true, __Ready=true}
@@ -1280,12 +1310,16 @@ function main_character_select()
             elseif cursor.state.cursor == "__Leave" then
               on_quit()
             elseif cursor.state.cursor == "__Random" then
+              cursor.state.character_is_random = true
               cursor.state.character = uniformly(characters_ids_for_current_theme)
-              characters[cursor.state.character]:play_selection_sfx()
+              cursor.state.character_display_name = characters[cursor.state.character].display_name
               character_loader_load(cursor.state.character)
+              cursor.state.cursor = "__Ready"
+              cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"])
             elseif cursor.state.cursor == "__Mode" then
               cursor.state.ranked = not cursor.state.ranked
             elseif ( cursor.state.cursor ~= "__Empty" and cursor.state.cursor ~= "__Reserved" ) then
+              cursor.state.character_is_random = false
               cursor.state.character = cursor.state.cursor
               cursor.state.character_display_name = characters[cursor.state.character].display_name
               characters[cursor.state.character]:play_selection_sfx()
@@ -1307,7 +1341,7 @@ function main_character_select()
           end
         end
         -- update config, does not redefine it
-        config.character = cursor_data[1].state.character
+        config.character = cursor_data[1].state.character_is_random and random_character_special_value or cursor_data[1].state.character
         config.stage = cursor_data[1].state.stage_is_random and random_stage_special_value or cursor_data[1].state.stage
         config.level = cursor_data[1].state.level
         config.ranked = cursor_data[1].state.ranked
@@ -1381,6 +1415,8 @@ function main_net_vs_lobby()
     find_and_add_music(themes[config.theme].musics, "main")
   end
   bg = themes[config.theme].images.bg_main
+  character_loader_clear()
+  stage_loader_clear()
   local active_name, active_idx, active_back = "", 1
   local items
   local unpaired_players = {} -- list
@@ -1409,37 +1445,37 @@ function main_net_vs_lobby()
   local lobby_menu_y = main_menu_screen_pos[2]-120
   local sent_requests = {}
   while true do
-      if connection_up_time <= login_status_message_duration then
-        gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y)
-        for _,msg in ipairs(this_frame_messages) do
-            if msg.login_successful then
-              current_server_supports_ranking = true
-              logged_in = true
-              if msg.new_user_id then
-                my_user_id = msg.new_user_id
-                print("about to write user id file")
-                write_user_id_file()
-                login_status_message = "Welcome, new user: "..my_name
-              elseif msg.name_changed then
-                login_status_message = "Welcome, your username has been updated. \n\nOld name:  \""..msg.old_name.."\"\n\nNew name:  \""..msg.new_name.."\""
-                login_status_message_duration = 5
-              else
-                login_status_message = "Welcome back, "..my_name
-              end
-            elseif msg.login_denied then
-                current_server_supports_ranking = true
-                login_denied = true
-                --TODO: create a menu here to let the user choose "continue unranked" or "get a new user_id"
-                --login_status_message = "Login for ranked matches failed.\n"..msg.reason.."\n\nYou may continue unranked,\nor delete your invalid user_id file to have a new one assigned."
-                login_status_message_duration = 10
-                return main_dumb_transition, {main_select_mode, "Error message received from the server:\n\n"..json.encode(msg),60,600}
-            end
-        end
-        if connection_up_time == 2 and not current_server_supports_ranking then
-                login_status_message = "Login for ranked matches timed out.\nThis server probably doesn't support ranking.\n\nYou may continue unranked."
-                login_status_message_duration = 7
+    if connection_up_time <= login_status_message_duration then
+      gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y)
+      for _,msg in ipairs(this_frame_messages) do
+        if msg.login_successful then
+          current_server_supports_ranking = true
+          logged_in = true
+          if msg.new_user_id then
+            my_user_id = msg.new_user_id
+            print("about to write user id file")
+            write_user_id_file()
+            login_status_message = "Welcome, new user: "..my_name
+          elseif msg.name_changed then
+            login_status_message = "Welcome, your username has been updated. \n\nOld name:  \""..msg.old_name.."\"\n\nNew name:  \""..msg.new_name.."\""
+            login_status_message_duration = 5
+          else
+            login_status_message = "Welcome back, "..my_name
+          end
+        elseif msg.login_denied then
+            current_server_supports_ranking = true
+            login_denied = true
+            --TODO: create a menu here to let the user choose "continue unranked" or "get a new user_id"
+            --login_status_message = "Login for ranked matches failed.\n"..msg.reason.."\n\nYou may continue unranked,\nor delete your invalid user_id file to have a new one assigned."
+            login_status_message_duration = 10
+            return main_dumb_transition, {main_select_mode, "Error message received from the server:\n\n"..json.encode(msg),60,600}
         end
       end
+      if connection_up_time == 2 and not current_server_supports_ranking then
+              login_status_message = "Login for ranked matches timed out.\nThis server probably doesn't support ranking.\n\nYou may continue unranked."
+              login_status_message_duration = 7
+      end
+    end
     for _,msg in ipairs(this_frame_messages) do
       if msg.choose_another_name and msg.choose_another_name.used_names then
         return main_dumb_transition, {main_select_mode, "Error: name is taken :<\n\nIf you had just left the server,\nit may not have realized it yet, try joining again.\n\nThis can also happen if you have two\ninstances of Panel Attack open.\n\nPress Swap or Back to continue.", 60, 600}
@@ -1711,7 +1747,9 @@ function main_net_vs()
           end
         end
       elseif msg.leave_room then
-        return main_net_vs_lobby
+        my_win_count = 0
+        op_win_count = 0
+        return main_dumb_transition, {main_net_vs_lobby, "", 0, 0}
       end
     end
 
@@ -2029,6 +2067,7 @@ function main_replay_endless()
   stop_the_music()
   pick_random_stage()
   P1 = Stack(1, "endless", config.panels, replay.speed, replay.difficulty)
+  P1:wait_for_random_character()
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
   P1.input_buffer = table.concat({replay.in_buf})
@@ -2075,6 +2114,7 @@ function main_replay_puzzle()
   stop_the_music()
   pick_random_stage()
   P1 = Stack(1, "puzzle", config.panels)
+  P1:wait_for_random_character()
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
   P1.input_buffer = replay.in_buf
@@ -2123,6 +2163,7 @@ function make_main_puzzle(puzzles)
     replay.puzzle = {}
     local replay = replay.puzzle
     P1 = Stack(1, "puzzle", config.panels)
+    P1:wait_for_random_character()
     P1.do_countdown = config.ready_countdown_1P or false
     local start_delay = 0
     if awesome_idx == nil then
@@ -2455,13 +2496,37 @@ function main_options(starting_idx)
   local panels_set = {}
   get_dir_set(panels_set,"panels")
 
+  local normal_music_for_sound_option = nil
+  local function update_normal_music_for_sound_volume_option()
+    if config.use_music_from == "stage" then
+      local stage_id = config.stage
+      if stage_id == random_stage_special_value then
+        stage_id = uniformly(stages_ids_for_current_theme)
+      end
+      stage_loader_load(stage_id)
+      stage_loader_wait()
+      normal_music_for_sound_option = stages[stage_id].musics.normal_music
+    else
+      if config.character == random_character_special_value then
+        local random_id = uniformly(characters_ids_for_current_theme)
+        character_loader_load(random_id)
+        character_loader_wait()
+        normal_music_for_sound_option = characters[random_id].musics.normal_music
+      else
+        -- config.character should already be loaded!
+        normal_music_for_sound_option = characters[config.character].musics.normal_music
+      end
+    end
+  end
+  update_normal_music_for_sound_volume_option()
+
   items = {
     --options menu table reference:
     --{[1]"Option Name", [2]current or default value, [3]type, [4]min or bool value or choices_table,
     -- [5]max, [6]sound_source, [7]selectable, [8]next_func, [9]play_while selected}
-    {"Master Volume", config.master_volume, "numeric", 0, 100, characters[config.character].musics.normal_music, true, nil, true},
+    {"Master Volume", config.master_volume, "numeric", 0, 100, normal_music_for_sound_option, true, nil, true},
     {"SFX Volume", config.SFX_volume, "numeric", 0, 100, themes[config.theme].sounds.cur_move, true},
-    {"Music Volume", config.music_volume, "numeric", 0, 100, characters[config.character].musics.normal_music, true, nil, true},
+    {"Music Volume", config.music_volume, "numeric", 0, 100, normal_music_for_sound_option, true, nil, true},
     {"Debug Mode", on_off_text[config.debug_mode], "bool", false, nil, nil,false},
     {"Save replays publicly", save_replays_publicly_choices[config.save_replays_publicly] or save_replays_publicly_choices["with my name"], "multiple choice", save_replays_publicly_choices},
     {"Theme", config.theme, "multiple choice", themes_set},
@@ -2631,6 +2696,9 @@ function main_options(starting_idx)
             memory_before_options_menu.theme = items[active_idx][2]
           elseif items[active_idx][1] == "Use music from" then
             config.use_music_from = items[active_idx][2]
+            update_normal_music_for_sound_volume_option()
+            items[1][6] = normal_music_for_sound_option
+            items[3][6] = normal_music_for_sound_option
           end
           --add any other multiple choice config updates here
         end
@@ -2698,6 +2766,7 @@ function exit_options_menu()
   apply_config_volume()
 
   memory_before_options_menu = nil
+  normal_music_for_sound_option = nil
   return main_select_mode
 end
 

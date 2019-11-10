@@ -1,7 +1,7 @@
 require("graphics_util")
 require("sound_util")
 
-local musics = {"main", "select_screen"}-- main BEFORE select_screen!
+local musics = {"main", "select_screen"}
 
 local function load_theme_img(name)
   local img = load_img_from_supported_extensions("themes/"..config.theme.."/"..name)
@@ -43,6 +43,7 @@ function Theme.graphics_init(self)
   end
 
   self.images.IMG_random_stage = load_theme_img("random_stage")
+  self.images.IMG_random_character = load_theme_img("random_character")
 
   self.images.IMG_frame = load_theme_img("frame")
   self.images.IMG_wall = load_theme_img("wall")
