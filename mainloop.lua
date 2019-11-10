@@ -704,6 +704,14 @@ function main_character_select()
       cursor_data[2].state = shallowcpy(global_op_state)
       if character_select_mode ~= "2p_local_vs" then
         global_op_state = nil -- retains state of the second player, also: don't unload its character when going back and forth
+      else
+        if cursor_data[2].state.character_is_random then
+          cursor_data[2].state.character = uniformly(characters_ids_for_current_theme)
+        end
+        cursor_data[2].state.character_display_name = characters[cursor_data[2].state.character].display_name
+        if cursor_data[2].state.stage_is_random then
+          cursor_data[2].state.stage = uniformly(stages_ids_for_current_theme)
+        end
       end
     else
       cursor_data[2].state = {stage=config.stage, stage_is_random=config.stage==random_stage_special_value, character=config.character, character_is_random=config.character==random_character_special_value, level=config.level, panels_dir=config.panels, cursor="__Ready", ready=false, ranked=false}
