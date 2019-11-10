@@ -427,7 +427,7 @@ local function refresh_based_on_own_mods(refreshed,ask_change_fallback)
     end
 
     -- stage
-    if refreshed.stage == nil or stages[refreshed.stage] == nil then
+    if refreshed.stage == nil or ( refreshed.stage ~= random_stage_special_value and stages[refreshed.stage] == nil ) then
       if not fallback_when_missing[1] or ask_change_fallback then
         fallback_when_missing[1] = uniformly(stages_ids_for_current_theme)
       end
@@ -435,7 +435,7 @@ local function refresh_based_on_own_mods(refreshed,ask_change_fallback)
     end
 
     -- character
-    if characters[refreshed.character] == nil then
+    if refreshed.character == nil or ( refreshed.character ~= random_character_special_value and characters[refreshed.character] == nil ) then
       if refreshed.character_display_name and characters_ids_by_display_names[refreshed.character_display_name] then
         refreshed.character = characters_ids_by_display_names[refreshed.character_display_name][1]
       else
@@ -690,8 +690,12 @@ function main_character_select()
         cursor_data[2].state.stage = uniformly(stages_ids_for_current_theme)
       end
     end
-    character_loader_load(cursor_data[2].state.character)
-    stage_loader_load(cursor_data[2].state.stage)
+    if cursor_data[2].state.character ~= random_character_special_value then -- while playing online, we'll wait for them to send us the new pick
+      character_loader_load(cursor_data[2].state.character)
+    end
+    if cursor_data[2].state.stage ~= random_stage_special_value then -- while playing online, we'll wait for them to send us the new pick
+      stage_loader_load(cursor_data[2].state.stage)
+    end
     add_client_data(cursor_data[2].state)
   end
   refresh_loaded_and_ready(cursor_data[1].state, cursor_data[2] and cursor_data[2].state or nil)
@@ -1635,7 +1639,6 @@ function main_net_vs_lobby()
     end
     active_back = active_idx == #items
     if active_idx ~= prev_act_idx then
-      print("#items: "..#items.."  idx_old: "..prev_act_idx.."  idx_new: "..active_idx.."  active_back: "..tostring(active_back))
       prev_act_idx = active_idx
     end
     if not do_messages() then
