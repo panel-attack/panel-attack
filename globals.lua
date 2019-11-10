@@ -4,7 +4,7 @@ require("sound_util")
 
 -- keyboard assignment vars
 K = {{up="up", down="down", left="left", right="right",
-      swap1="z", swap2="x", taunt_up="y", taunt_down="u", raise1="c", raise2="v"},
+      swap1="z", swap2="x", taunt_up="y", taunt_down="u", raise1="c", raise2="v", pause="p"},
       {},{},{}}
 keys = {}
 this_frame_keys = {}
@@ -25,7 +25,6 @@ characters_ids_by_display_names = {} -- initialized in character.lua
 stages = {} -- initialized in stage.lua
 stages_ids = {} -- initialized in stage.lua
 stages_ids_for_current_theme = {} -- initialized in stage.lua
-stages_ids_by_display_names = {} -- initialized in stage.lua
 
 panels = {} -- initialized in panel_set.lua
 panels_ids = {} -- initialized in panel_set.lua
@@ -44,6 +43,11 @@ SFX_GameOver_Play = 0
 global_my_state = nil
 global_op_state = nil
 
+-- game can be paused while playing on local
+game_is_paused = false
+
+large_font = love.graphics.newFont(22)
+large_font:setFilter("nearest", "nearest")
 main_font = love.graphics.getFont() -- default size is 12
 main_font:setFilter("nearest", "nearest")
 small_font = love.graphics.newFont(9)

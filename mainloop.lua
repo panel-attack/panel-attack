@@ -25,8 +25,7 @@ replay_of_match_so_far = nil
 spectator_list = nil
 spectators_string = ""
 leftover_time = 0
-
-local main_menu_screen_pos = { 300 + (canvas_width-legacy_canvas_width)/2, 280 + (canvas_height-legacy_canvas_height)/2 }
+main_menu_screen_pos = { 300 + (canvas_width-legacy_canvas_width)/2, 280 + (canvas_height-legacy_canvas_height)/2 }
 
 function fmainloop()
   local func, arg = main_select_mode, nil
@@ -322,6 +321,24 @@ function Stack.wait_for_random_character(self)
   end
 end
 
+function Stack.handle_pause(self)
+  local k = K[self.which]
+
+  if self.wait_for_not_pausing then
+    if not keys[k.pause] and not this_frame_keys[k.pause] then
+      self.wait_for_not_pausing = false
+    else
+     return
+    end
+  end
+
+  if keys[k.pause] or this_frame_keys[k.pause] then
+    game_is_paused = not game_is_paused
+    self.wait_for_not_pausing = true
+  end
+
+end
+
 function main_endless(...)
   pick_random_stage()
   consuming_timesteps = true
@@ -343,6 +360,7 @@ function main_endless(...)
   P1:starting_state()
   while true do
     P1:render()
+    draw_pause()
     wait()
     if P1.game_over then
     -- TODO: proper game over.
@@ -351,7 +369,10 @@ function main_endless(...)
       analytics_game_ends()
       return main_dumb_transition, {main_select_mode, end_text, 0, -1, P1:pick_win_sfx()}
     end
-    variable_step(function() P1:local_run() end)
+    variable_step(function() 
+      P1:local_run() 
+      P1:handle_pause() 
+    end)
     --groundhogday mode
     --[[if P1.CLOCK == 1001 then
       local prev_states = P1.prev_states
@@ -371,6 +392,7 @@ function main_time_attack(...)
   P1:starting_state()
   while true do
     P1:render()
+    draw_pause()
     wait()
     if P1.game_over or (P1.game_stopwatch and P1.game_stopwatch == 120*60) then
     -- TODO: proper game over.
@@ -379,8 +401,11 @@ function main_time_attack(...)
       return main_dumb_transition, {main_select_mode, end_text, 30, -1, P1:pick_win_sfx()}
     end
     variable_step(function()
-      if (not P1.game_over)  and P1.game_stopwatch and P1.game_stopwatch < 120 * 60 then
-        P1:local_run() end end)
+      if not P1.game_over and P1.game_stopwatch and P1.game_stopwatch < 120 * 60 then
+        P1:local_run() 
+        P1:handle_pause()
+      end 
+    end)
   end
 end
 
@@ -1894,11 +1919,14 @@ function main_local_vs()
   while true do
     P1:render()
     P2:render()
+    draw_pause()
     wait()
     variable_step(function()
         if not P1.game_over and not P2.game_over then
           P1:local_run()
           P2:local_run()
+          P1:handle_pause()
+          P2:handle_pause()
         end
       end)
     local winSFX = nil
@@ -1936,10 +1964,12 @@ function main_local_vs_yourself()
   local end_text = nil
   while true do
     P1:render()
+    draw_pause()
     wait()
     variable_step(function()
         if not P1.game_over then
           P1:local_run()
+          P1:handle_pause()
         else
           end_text = "Game Over"
         end
@@ -2012,6 +2042,7 @@ function main_replay_vs()
     gprint(op_name or "", P2.score_x, P2.score_y-28)
     P1:render()
     P2:render()
+    draw_pause()
     draw_debug_mouse_panel()
     wait()
     local ret = nil
@@ -2028,6 +2059,7 @@ function main_replay_vs()
       if run or this_frame_keys["\\"] then
         if not P1.game_over then
           P1:foreign_run()
+          P1:handle_pause()
         end
         if not P2.game_over then
           P2:foreign_run()
@@ -2082,6 +2114,7 @@ function main_replay_endless()
   local run = true
   while true do
     P1:render()
+    draw_pause()
     wait()
     local ret = nil
     variable_step(function()
@@ -2101,6 +2134,7 @@ function main_replay_endless()
           ret = {main_dumb_transition, {main_select_mode, end_text, 30, -1, P1:pick_win_sfx()}}
         end
         P1:foreign_run()
+        P1:handle_pause()
       end
     end)
     if ret then
@@ -2177,10 +2211,12 @@ function make_main_puzzle(puzzles)
     replay.in_buf = ""
     while true do
       P1:render()
+      draw_pause()
       wait()
       local ret = nil
       variable_step(function()
         if this_frame_keys["escape"] then
+          game_is_paused = false
           ret = {main_dumb_transition, {main_select_puzz, "Waiting for your input! yay", 0, 0}}
         else
           if P1.n_active_panels == 0 and
@@ -2201,6 +2237,7 @@ function make_main_puzzle(puzzles)
           if P1.n_active_panels ~= 0 or P1.prev_active_panels ~= 0 or
               P1.puzzle_moves ~= 0 then
             P1:local_run()
+            P1:handle_pause()
           end
         end
       end)
@@ -2266,7 +2303,7 @@ do
 end
 
 function main_config_input()
-  local pretty_names = {"Up", "Down", "Left", "Right", "A", "B", "X", "Y", "L", "R"}
+  local pretty_names = {"Up", "Down", "Left", "Right", "A", "B", "X", "Y", "L", "R", "Start"}
   local items, active_idx = {}, 1
   local k = K[1]
   local active_player = 1

@@ -118,7 +118,6 @@ function stages_init()
   stages = {} -- holds all stages, most of them will not be fully loaded
   stages_ids = {} -- holds all stages ids
   stages_ids_for_current_theme = {} -- holds stages ids for the current theme, those stages will appear in the selection
-  stages_ids_by_display_names = {} -- holds keys to array of stages ids holding that name
   default_stage = nil
 
   add_stages_from_dir_rec("stages")
@@ -152,12 +151,6 @@ function stages_init()
 
   for _,stage in pairs(stages) do
     stage:preload()
-
-    if stages_ids_by_display_names[stage.display_name] then
-      stages_ids_by_display_names[stage.display_name][#stages_ids_by_display_names[stage.display_name]+1] = stage.id
-    else
-      stages_ids_by_display_names[stage.display_name] = { stage.id }
-    end
   end
 end
 

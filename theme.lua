@@ -25,6 +25,8 @@ function Theme.graphics_init(self)
   self.images.bg_select_screen = load_theme_img("background/select_screen")
   self.images.bg_readme = load_theme_img("background/readme")
 
+  self.images.pause = load_theme_img("pause")
+
   self.images.IMG_level_cursor = load_theme_img("level/level_cursor")
   self.images.IMG_levels = {}
   self.images.IMG_levels_unfocus = {}

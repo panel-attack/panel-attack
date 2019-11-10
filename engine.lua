@@ -153,6 +153,7 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     s.taunt_up = nil -- will hold an index
     s.taunt_down = nil -- will hold an index
     s.wait_for_not_taunting = nil -- will hold either "taunt_up" or "taunt_down"
+    s.wait_for_not_pausing = false -- wait for end of input
     s.taunt_queue = Queue()
 
     s.cur_wait_time = 25   -- number of ticks to wait before the cursor begins
@@ -610,12 +611,14 @@ end
 
 --local_run is for the stack that belongs to this client.
 function Stack.local_run(self)
-  self:update_cards()
-  self.input_state = self:send_controls()
-  self:prep_rollback()
-  self:controls()
-  self:prep_first_row()
-  self:PdP()
+  if not game_is_paused then
+    self:update_cards()
+    self.input_state = self:send_controls()
+    self:prep_rollback()
+    self:controls()
+    self:prep_first_row()
+    self:PdP()
+  end
 end
 
 --foreign_run is for a stack that belongs to another client.
