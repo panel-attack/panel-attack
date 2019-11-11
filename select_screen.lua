@@ -33,7 +33,7 @@ local function fill_map(template_map,map)
   end
 end
 
-local function refresh_based_on_own_mods(refreshed,ask_change_fallback)
+function refresh_based_on_own_mods(refreshed,ask_change_fallback)
   ask_change_fallback = ask_change_fallback or false
   if refreshed ~= nil then
     -- panels

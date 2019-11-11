@@ -954,7 +954,7 @@ function main_replay_vs()
     local ret = nil
     variable_step(function()
       if this_frame_keys["escape"] then
-        ret = {main_select_mode}
+        ret = {main_dumb_transition, {main_select_mode, "", 0, 0}}
       end
       if this_frame_keys["return"] then
         run = not run
@@ -1025,7 +1025,7 @@ function main_replay_endless()
     local ret = nil
     variable_step(function()
       if this_frame_keys["escape"] then
-        ret = {main_select_mode}
+        ret = {main_dumb_transition, {main_select_mode, "", 0, 0}}
       end
       if this_frame_keys["return"] then
         run = not run
@@ -1066,6 +1066,7 @@ function main_replay_puzzle()
   while true do
     debug_mouse_panel = nil
     P1:render()
+    draw_pause()
     draw_debug_mouse_panel()
     wait()
     local ret = nil
@@ -1089,6 +1090,7 @@ function main_replay_puzzle()
           end
         end
         P1:foreign_run()
+        P1:handle_pause()
       end
     end)
     if ret then
@@ -1122,7 +1124,6 @@ function make_main_puzzle(puzzles)
       local ret = nil
       variable_step(function()
         if this_frame_keys["escape"] then
-          game_is_paused = false
           ret = {main_dumb_transition, {main_select_puzz, "Waiting for your input! yay", 0, 0}}
         else
           if P1.n_active_panels == 0 and
@@ -1417,6 +1418,7 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
   end
   love.audio.stop()
   stop_the_music()
+  game_is_paused = false
   winnerSFX = winnerSFX or nil
   if not SFX_mute then
     if winnerSFX ~= nil then

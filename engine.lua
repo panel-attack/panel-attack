@@ -611,18 +611,24 @@ end
 
 --local_run is for the stack that belongs to this client.
 function Stack.local_run(self)
-  if not game_is_paused then
-    self:update_cards()
-    self.input_state = self:send_controls()
-    self:prep_rollback()
-    self:controls()
-    self:prep_first_row()
-    self:PdP()
+  if game_is_paused then
+    return
   end
+
+  self:update_cards()
+  self.input_state = self:send_controls()
+  self:prep_rollback()
+  self:controls()
+  self:prep_first_row()
+  self:PdP()
 end
 
 --foreign_run is for a stack that belongs to another client.
 function Stack.foreign_run(self)
+  if game_is_paused then -- foreign_run in replays!
+    return
+  end
+  
   -- Decide how many frames of input we should run.
   local times_to_run = 0
   local buffer_len = string.len(self.input_buffer)
