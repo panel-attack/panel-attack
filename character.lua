@@ -118,7 +118,7 @@ local function add_characters_from_dir_rec(path)
     local start_of_v = string.sub(v,0,string.len(prefix_of_ignored_dirs))
     if start_of_v ~= prefix_of_ignored_dirs then
       local current_path = path.."/"..v
-      if lfs.isDirectory(current_path) then
+      if lfs.getInfo(current_path) and lfs.getInfo(current_path).type == "directory" then
         -- call recursively: facade folder
         add_characters_from_dir_rec(current_path)
 

@@ -237,6 +237,7 @@ function options.main(starting_idx)
     {"Theme", config.theme, "multiple choice", themes_set},
     {"Ready countdown", on_off_text[config.ready_countdown_1P], "bool", true, nil, nil,false},
     {"Show FPS", on_off_text[config.show_fps], "bool", true, nil, nil,false},
+    {"Show ingame infos", on_off_text[config.show_ingame_infos], "bool", true, nil, nil,false},
     {"Danger music change-back delay", on_off_text[config.danger_music_changeback_delay], "bool", false, nil, nil, false},
     {"Enable analytics", on_off_text[config.enable_analytics], "bool", false, nil, nil, false},
     {"Use music from", use_music_from_choices[config.use_music_from], "multiple choice", use_music_from_choices},
@@ -356,6 +357,9 @@ function options.main(starting_idx)
           elseif items[active_idx][1] == "Show FPS" then
             config.show_fps = not config.show_fps
             items[active_idx][2] = on_off_text[config.show_fps]
+            elseif items[active_idx][1] == "Show ingame infos" then
+            config.show_ingame_infos = not config.show_ingame_infos
+            items[active_idx][2] = on_off_text[config.show_ingame_infos]
           elseif items[active_idx][1] == "Danger music change-back delay" then
             config.danger_music_changeback_delay = not config.danger_music_changeback_delay
             items[active_idx][2] = on_off_text[config.danger_music_changeback_delay]

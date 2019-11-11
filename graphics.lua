@@ -270,34 +270,38 @@ function Stack.render(self)
   -- draw outside of stack's frame canvas
   if self.mode == "puzzle" then
     gprint("Moves: "..self.puzzle_moves, self.score_x, self.score_y)
-    gprint("Frame: "..self.CLOCK, self.score_x, self.score_y+30)
+    if config.show_ingame_infos then
+      gprint("Frame: "..self.CLOCK, self.score_x, self.score_y+30)
+    end
   else
-    gprint("Score: "..self.score, self.score_x, self.score_y)
-    gprint("Speed: "..self.speed, self.score_x, self.score_y+30)
-    gprint("Frame: "..self.CLOCK, self.score_x, self.score_y+45)
-    if self.mode == "time" then
-      local time_left = 120 - (self.game_stopwatch or 120)/60
-      local mins = math.floor(time_left/60)
-      local secs = math.ceil(time_left% 60)
-      if secs == 60 then
-        secs = 0
-        mins = mins+1
+    if config.show_ingame_infos then
+      gprint("Score: "..self.score, self.score_x, self.score_y)
+      gprint("Speed: "..self.speed, self.score_x, self.score_y+30)
+      gprint("Frame: "..self.CLOCK, self.score_x, self.score_y+45)
+      if self.mode == "time" then
+        local time_left = 120 - (self.game_stopwatch or 120)/60
+        local mins = math.floor(time_left/60)
+        local secs = math.ceil(time_left% 60)
+        if secs == 60 then
+          secs = 0
+          mins = mins+1
+        end
+        gprint("Time: "..string.format("%01d:%02d",mins,secs), self.score_x, self.score_y+60)
+      elseif self.level then
+        gprint("Level: "..self.level, self.score_x, self.score_y+60)
       end
-      gprint("Time: "..string.format("%01d:%02d",mins,secs), self.score_x, self.score_y+60)
-    elseif self.level then
-      gprint("Level: "..self.level, self.score_x, self.score_y+60)
-    end
-    gprint("Health: "..self.health, self.score_x, self.score_y+75)
-    gprint("Shake: "..self.shake_time, self.score_x, self.score_y+90)
-    gprint("Stop: "..self.stop_time, self.score_x, self.score_y+105)
-    gprint("Pre stop: "..self.pre_stop_time, self.score_x, self.score_y+120)
-    if config.debug_mode and self.danger then gprint("danger", self.score_x,self.score_y+135) end
-    if config.debug_mode and self.danger_music then gprint("danger music", self.score_x, self.score_y+150) end
-    if config.debug_mode then
-      gprint("cleared: "..(self.panels_cleared or 0), self.score_x, self.score_y+165)
-    end
-    if config.debug_mode then
-      gprint("metal q: "..(self.metal_panels_queued or 0), self.score_x, self.score_y+180)
+      gprint("Health: "..self.health, self.score_x, self.score_y+75)
+      gprint("Shake: "..self.shake_time, self.score_x, self.score_y+90)
+      gprint("Stop: "..self.stop_time, self.score_x, self.score_y+105)
+      gprint("Pre stop: "..self.pre_stop_time, self.score_x, self.score_y+120)
+      if config.debug_mode and self.danger then gprint("danger", self.score_x,self.score_y+135) end
+      if config.debug_mode and self.danger_music then gprint("danger music", self.score_x, self.score_y+150) end
+      if config.debug_mode then
+        gprint("cleared: "..(self.panels_cleared or 0), self.score_x, self.score_y+165)
+      end
+      if config.debug_mode then
+        gprint("metal q: "..(self.metal_panels_queued or 0), self.score_x, self.score_y+180)
+      end
     end
     if config.debug_mode and (self.input_state or self.taunt_up or self.taunt_down) then
       -- print(self.input_state)

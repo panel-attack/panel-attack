@@ -165,13 +165,15 @@ function recursive_copy(source, destination)
   local names = lfs.getDirectoryItems(source)
   local temp
   for i, name in ipairs(names) do
-    if lfs.isDirectory(source.."/"..name) then
+    local info = lfs.getInfo(source.."/"..name) and info.type == "directory" 
+    if info and info.type == "directory" then
       print("calling recursive_copy(source".."/"..name..", ".. destination.."/"..name..")")
       recursive_copy(source.."/"..name, destination.."/"..name)
       
-    elseif lfs.isFile(source.."/"..name) then
-      if not lfs.isDirectory(destination) then
-       love.filesystem.createDirectory(destination)
+    elseif info and info.type == "file" then
+      local destination_info = lfs.getInfo(destination)
+      if not destination_info or destination_info.type ~= "directory" then
+        love.filesystem.createDirectory(destination)
       end
       print("copying file:  "..source.."/"..name.." to "..destination.."/"..name)
       

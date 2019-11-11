@@ -79,6 +79,8 @@ config = {
 	debug_mode                    = false,
 	-- Show FPS in the top-left corner of the screen
 	show_fps                      = false,
+	-- Show ingame infos while playing the game
+	show_ingame_infos		 	  = false,
 	-- Enable ready countdown flag
 	ready_countdown_1P            = true,
 	-- Change danger music back later flag
