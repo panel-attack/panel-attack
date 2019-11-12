@@ -1,4 +1,4 @@
-local FILENAME = "localization.tsv"
+local FILENAME = "localization.csv"
 
 Localization = class(function(self)
 	self.map = {}
@@ -29,35 +29,128 @@ function Localization.set_language(self, lang_code)
 end
 
 function Localization.init(self)
+
+	local function csv_line(line, acc)
+		local function trim(a, b)
+			if line:sub(a, a) == '"' then
+				a = a+1
+			end
+
+			if line:sub(b, b) == '"' then
+				b = b-1
+			end
+
+			return line:sub(a, b)
+		end
+
+		local tokens = {}
+		local leftover = nil
+		local cur = 1
+		local stop_cur = 1
+		local escape = (acc ~= nil)
+		local ch
+
+		while cur <= line:len() do
+			ch = line:sub(cur, cur)
+
+			if ch == '"' then
+				if line:sub(cur+1, cur+1) == '"' then
+					cur = cur + 1
+				else
+					escape = not escape
+				end
+			elseif not escape and ch == ',' then
+				tokens[#tokens+1] = trim(stop_cur, cur-1)
+
+				if acc then
+					tokens[#tokens] = acc..tokens[#tokens]
+					acc = nil
+				end
+
+				tokens[#tokens] = tokens[#tokens]:gsub('""', '"')
+				
+				stop_cur = cur + 1
+			end
+
+			cur = cur + 1
+
+--[[			print("== CHAR")
+			if acc then
+				print("acc "..acc)
+			end
+			print(ch)
+			if escape then
+				print("esc")
+			end--]]
+		end
+
+		if escape then
+			if not acc then
+				leftover = line:sub(stop_cur+1, cur)
+			else
+				leftover = acc..line:sub(stop_cur, cur)
+			end
+				leftover = leftover.."\n"
+		else
+			tokens[#tokens+1] = trim(stop_cur, cur)
+		end
+--[[
+		print("==CSV_LINE ")
+		for i, v in ipairs(tokens) do print(v) end
+		
+		if leftover then
+			print("> "..leftover)
+		end
+		print("==")--]]
+
+		return tokens, leftover
+	end
+
 	self.init = true
 	local num_line = 1
+	local tokens, leftover
+	local i = 1
+	local key = nil
 	if love.filesystem.getInfo(FILENAME) then
 		for line in love.filesystem.lines(FILENAME) do
 
 			if num_line == 1 then
-				for m in string.gmatch(line, "	([^	 ]+)") do
-					self.codes[#self.codes+1] = m
-					self.map[m] = {}
+				tokens = csv_line(line)
+				for i, v in ipairs(tokens) do
+					if i > 1 and v:gsub("%s", ""):len() > 0 then
+						self.codes[#self.codes+1] = v
+						self.map[v] = {}
+					end
 				end
 
 			elseif num_line == 2 then
-				for m in string.gmatch(line, "	([^	 ]+)") do
-					self.langs[#self.langs+1] = m
+				tokens = csv_line(line)
+				for i, v in ipairs(tokens) do
+					if i > 1 then
+						self.langs[#self.langs+1] = v
+					end
 				end
 
 			else
-				local i = 1
-				local key = nil
-				for m in string.gmatch(line, "([^	]+)") do
+				tokens, leftover = csv_line(line, leftover)
+				for _, v in ipairs(tokens) do
 					if not key then
-						key = m
+						key = v
+						if key == "" or key:match("%s+") then
+							break
+						end
 					else
-						self.map[self.codes[i]][key] = m
+						self.map[self.codes[i]][key] = v
 						i = i+1
 					end
 					if i > #self.codes then
 						break
 					end
+				end
+
+				if not leftover then
+					i = 1
+					key = nil
 				end
 			end
 
@@ -72,7 +165,6 @@ function Localization.init(self)
 		end--]]
 
 	end
-
 	self:set_language(config.language_code)
 end
 

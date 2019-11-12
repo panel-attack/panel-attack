@@ -1,0 +1,204 @@
+CODE,EN,FR,PT,
+LANG,English,Français,Portugues, 
+back,Back,Retour, , 
+difficulty,Difficulty,Difficulté, , 
+easy,Easy,Facile, , 
+hard,Hard,Difficile, , 
+level,Level,Niveau, , 
+normal,Normal,Normal, , 
+speed,Speed,Vitesse, , 
+vs,vs,vs, , 
+up,Up,Haut, , 
+down,Down,Bas, , 
+left,Left,Gauche, , 
+right,Right,Droite, , 
+player,Player,Joueur, , 
+page,Page,Page,,
+panels,Panels,Blocs,,
+ready,Ready,Prêt,,
+random,Random,Aléatoire,,
+leave,Leave,Quitter,,
+go_,Go!,Commencer, ,
+join_community,Join the community at,Rejoignez la communauté sur, ,
+,,,,
+cf_all_keys,Set all keys,Définir toutes les touches, ,
+cf_none,none,rien, ,
+lb_alone,You are all alone in the lobby :(,Vous êtes seul dans le salon :(, ,
+lb_back,Back to main menu,Revenir au menu principal, ,
+lb_connecting,Connecting...,Connexion en cours..., ,
+lb_error_msg,Error message received from the server:,Message d'erreur du serveur : , ,
+lb_header_board,"        Leaderboard
+      Rank    Rating   Player","        Classement
+      Rang    Score   Joueur", ,
+lb_hide_board,Show Leaderboard,Afficher le classement, ,
+lb_login,Logging in...,Indentification..., ,
+lb_login_timeout,"Login for ranked matches timed out.
+This server probably doesn't support ranking.
+
+You may continue unranked.","Délai de connexion à la partie classée dépassé
+Ce serveur ne gère peut être pas les parties classées
+
+Vous pouvez continuer en normal.", ,
+lb_new_id,need a new user id,besoin d'un nouvel identifiant utilisateur, ,
+lb_received,(Wants to play with you :o),(Vous invite à jouer :o), ,
+lb_request,(Request sent),(Demande envoyée), ,
+lb_select_player,Select a player name to ask for a match.,Selectionnez un joueur avec qui jouer., ,
+lb_set_connect,Setting up connection...,Préparation..., ,
+lb_show_board,Hide Leaderboard,Cacher le classement, ,
+lb_spectate,spectate,regarder, ,
+lb_used_name,"Error: name is taken :<
+
+If you had just left the server,
+it may not have realized it yet, try joining again.
+
+This can also happen if you have two
+instances of Panel Attack open.
+Press Swap or Back to continue.","Erreur : ce pseudo est déjà pris :<
+
+Si vous venez de quitter le serveur,
+il n'est peut être pas encore à jour, réessayez.
+
+Cela peut aussi arriver si vous avez
+lancer deux instances du jeu.
+
+Appuyer sur Valider ou Retour pour continuer.", ,
+lb_user_new,"Welcome, new user: %1","Bienvenue, nouvel utilisateur : %1", ,
+lb_user_update,"Welcome, your username has been updated. 
+
+Old name:  ""%1""
+
+New name:  ""%2""","Bienvenue, votre pseudo a été mis à jour.
+
+Ancien:  ""%1""
+
+Nouveau:  ""%2""", ,
+lb_welcome_back,"Welcome back, %1","Vous êtes de retour, %1", ,
+lb_you,You,Vous, ,
+mm_1_endless,1P endless,1J infini, ,
+mm_1_puzzle,1P puzzle,1J puzzle, ,
+mm_1_time,1P time attack,1J contre la montre, ,
+mm_1_vs,1P vs yourself,1J vs soi-même, ,
+mm_2_vs_local,2P vs local game,2J vs en local, ,
+mm_2_vs_online,2P vs online %1,2J vs en ligne %1, ,
+mm_configure,Configure input,Configurer les touches, ,
+mm_fullscreen,Fullscreen %1,Plein Ecran %1, ,
+mm_music_test,Music test,Music test, ,
+mm_no_support_fullscreen,Your graphics card doesn't support canvases for fullscreen,Votre carte graphique ne supporte pas le plein écran, ,
+mm_options,Options,Options, ,
+mm_quit,Quit,Quitter, ,
+mm_replay,Replay of %1,Replay de %1, ,
+mm_set_name,Set name,Changer pseudo, ,
+nt_ver_err,PLEASE DOWNLOAD the latest version of the game from #welcome-getting-started at the TetrisAttackOnline Discord http://discord.panelattack.com,VOUS DEVEZ TELECHARGER la dernière version du jeu sur le discord TetrisAttackOnline http://discord.panelattack.com dans #welcome-getting-started, ,
+op_about_chars,About custom characters,Instructions pour les personnages personnalisés, ,
+op_about_graphics,About custom graphics,Instructions pour les graphismes personnaliés, ,
+op_about_sounds,About custom sounds,Instructions pour les sons personnaliés, ,
+op_analytics,Enable analytics,Activer les statistiques, ,
+op_copy_files,"Hold on.  Copying an example folder to make this easier...
+
+This may take a few seconds or maybe even a minute or two.
+
+Don't worry if the window goes inactive or ""not responding""","Veuillez patientez, nous copions les fichiers exemples.
+
+Cette opération peut quelques secondes à 2 min.
+
+La fenêtre peut devenir inactive et ne plus répondre.", ,
+op_countdown,Ready countdown,Compte à rebours avant une partie, ,
+op_debug,Debug Mode,Mode Debug, ,
+op_default_char,Use default characters,Utiliser les personnages par défaut, ,
+op_enter_name,Enter your name:,Entrez votre pseudo :, ,
+op_fps,Show FPS,Afficher les FPS, ,
+op_graphic,Graphics set,Graphismes personnalisés, ,
+op_language,Language,Langue, ,
+op_music_current,Currently playing: ,Music actuel : , ,
+op_music_delay,Danger music change-back delay,Délai du changement de la musique en mode danger, ,
+op_music_intro,Playing the intro,Joue l'intro, ,
+op_music_load,Loading required sounds... (this may take a while),Chargement des sons nécessaires... (cela peut prendre un certain temps), ,
+op_music_loop,Playing main loop,Joue la boucle, ,
+op_music_nav,"%1 and %2 to navigate songs
+%3 to leave","%1 et %2 pour naviguer entre les musiques
+%3 pour quitter", ,
+op_panels,Panels set,Blocs personnalisés, ,
+op_reload_analytics,reloading analytics...,rechargement des statistiques..., ,
+op_reload_chars,reloading characters...,rechargement des personnages..., ,
+op_reload_graphics,reloading graphics...,rechargement des graphismes..., ,
+op_reload_panels,reloading panels...,rechargement des blocs..., ,
+op_reload_sounds,reloading sounds...,rechargement des sons..., ,
+op_replay_public,Save replays publicly,Sauvegarder les replays publiquement, ,
+op_save,writing config to file...,sauvegarde de la configuration..., ,
+op_sonds,Sounds set,Sons personnalisés, ,
+op_use_assets,Use panels from assets folder,Utiliser les blocs du dossier graphisme, ,
+op_vol,Master Volume,Volume Global, ,
+op_vol_music,Music Volume,Volume Musique, ,
+op_vol_sfx,SFX Volume,Volume Effets, ,
+opponent_level,Opponent's level,Niveau adverse, ,
+pl_1_win,P1 wins ^^,J1 gagne ^^, ,
+pl_2_win,P2 wins ^^,J2 gagne ^^, ,
+pl_cleared,cleared: %1,détruit : %1,,
+pl_frame,Frame: %1,Frame : %1,,
+pl_frame,Frame: %1,Frame : %1,,
+pl_game_start,Game is starting!,La partie va commencer !, ,
+pl_gameover,Game Over,Terminé, ,
+pl_health,Health: %1,Vie : %1,,
+pl_level,Level: %1,Niveau : %1,,
+pl_metal,metal q: %1,blocs métal : %1,,
+pl_moves,Moves: %1,Déplacements : %1,,
+pl_panel_info,"Panel info:
+row: %1
+col: %2","Info grille :
+ligne: %1
+colonne: %2", ,
+pl_pre_stop,Pre stop: %1,Déali pré stop : %1,,
+pl_score,Score: %1,Score : %1,,
+pl_shake,Shake: %1,Délai secousse : %1,,
+pl_spectate_join,"Joined a match in progress.
+Catching up...","Chargement du match en cours.
+Synchronisation...", ,
+pl_spectators,Spectator(s):,Spectateurs(s) :, ,
+pl_speed,Speed: %1,Vitesse : %1,,
+pl_stop,Stop: %1,Délai stop : %1,,
+pl_time,Time: %1,Temps : %1,,
+pl_time_out,"game start timed out.
+This is a known bug, but you may post it in #panel-attack-bugs-features
+if you'd like.","Le chargement de la partie a pris trop de temps.
+Ceci est un bug connu, mais vous pouvez le signaler sur notre discord sur :
+#panel-attack-bugs-features", ,
+pl_you_lose,You lose :(,Vous avez perdu :(, ,
+pl_you_win,You win!,Vous avez gagné !, ,
+pz_info,"Note: you may place new custom puzzles in
+
+%appdata%\Panel Attack\puzzles
+
+See the README and example puzzle set there
+for instructions","Note: vous pouvez placer des puzzles personnalisés dans :
+
+%appdata%\Panel Attack\puzzles
+
+Lisez le fichier README, et alle voir les exemples.", ,
+pz_puzzles,Puzzles:,Puzzles :, ,
+rp_endless,endless,infini, ,
+rp_no_endless,I don't have an endless replay :(,Je n'ai pas de replay infini :(, ,
+rp_no_puzzle,I don't have a puzzle replay :(,Je n'ai pas de replay puzzle :(, ,
+rp_no_replay,I don't have a vs replay :(,Je n'ai pas de replay :(, ,
+rp_score,"You scored %1
+in %2","Vous avez fait %1
+en %2", ,
+ss_anonymous,anonymous,anonyme, ,
+ss_casual,Casual,Normal, ,
+ss_current_rating,current,courant, ,
+ss_disconnect,Disconnected from server.,Vous êtes deconnecté du serveur., ,
+ss_draw,Draw,Egalité, ,
+ss_err_no_reason,Reason unknown,Erreur inconnue, ,
+ss_error_leave,Error when leaving online,Erreur en quittant le serveur, ,
+ss_expected_rating,expected,attendu, ,
+ss_init,Waiting for room initialization...,En attente de la création de la salle..., ,
+ss_init_fail,Room initialization failed.,Problème lors de la création de la salle., ,
+ss_not_ranked,Not ranked.,Non classé., ,
+ss_p_wins,%1 wins,%1 gagne, ,
+ss_p1,Player 1,Joueur 1, ,
+ss_p2,Player 2,Joueur 2, ,
+ss_ranked,Ranked,Classé, ,
+ss_rating,Rating,Classement, ,
+ss_return,Returning to main menu...,Retour au menu principal..., ,
+ss_winrate,Winrate,Taux de victoire, ,
+ss_wins,Wins,Victoires, ,
+ta_score,You scored %1 in,Vous avez fait %1 en, ,
