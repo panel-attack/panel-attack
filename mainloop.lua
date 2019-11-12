@@ -1380,6 +1380,7 @@ function main_net_vs_lobby()
         return main_dumb_transition, {main_select_mode, "Error: ".. msg.choose_another_name.reason, 60}
       end
       if msg.create_room or msg.spectate_request_granted then
+        love.window.requestAttention()
         global_initialize_room_msg = msg
         character_select_mode = "2p_net_vs"
         return main_character_select
@@ -1402,6 +1403,7 @@ function main_net_vs_lobby()
       end
       if msg.game_request then
         willing_players[msg.game_request.sender] = true
+        love.window.requestAttention()
       end
       if msg.leaderboard_report then
         showing_leaderboard = true
