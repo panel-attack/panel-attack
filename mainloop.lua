@@ -112,7 +112,7 @@ do
         --{"2P vs online (USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)", main_net_vs_setup, {"18.188.43.50"}},
         --{"This test build is for offline-use only"--[["2P vs online at Jon's server"]], main_select_mode},
         --{"2P vs online at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
-        {"2P vs online at localhost (development-use only)", main_net_vs_setup, {"192.168.1.11"}},
+        --{"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
         --{"2P vs online at LittleEndu's server", main_net_vs_setup, {"51.15.207.223"}},
         {"2P vs local game", main_local_vs_setup},
         {"Replay of 1P endless", main_replay_endless},
