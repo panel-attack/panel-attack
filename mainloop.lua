@@ -1429,9 +1429,9 @@ function main_net_vs_lobby()
       items[#items+1] = v
     end
     if showing_leaderboard then
-      items[#items+1] = loc("lb_show_board")
+      items[#items+1] = loc("lb_hide_board")
     else
-      items[#items+1] = loc("lb_hide_board")  -- the second to last item is "Leaderboard"
+      items[#items+1] = loc("lb_show_board")  -- the second to last item is "Leaderboard"
     end
     items[#items+1] = loc("lb_back") -- the last item is "Back to the main menu"
     if active_back then
@@ -2136,9 +2136,9 @@ function main_config_input()
   local function get_items()
     items = {[0]={loc("player").. " ", ""..active_player}}
     for i=1,#key_names do
-      items[#items+1] = {pretty_names[i], k[key_names[i]] or loc("cf_none")}
+      items[#items+1] = {pretty_names[i], k[key_names[i]] or loc("op_none")}
     end
-    items[#items+1] = {loc("cf_all_keys"), ""}
+    items[#items+1] = {loc("op_all_keys"), ""}
     items[#items+1] = {loc("back"), "", main_select_mode}
   end
   local function print_stuff()
