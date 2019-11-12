@@ -26,6 +26,13 @@ function Localization.set_language(self, lang_code)
 		end
 	end
 	config.language_code = self.codes[self.lang_index]
+
+	if config.language_code == "JP" then
+		PA_FONT = love.graphics.newFont("rounded-mgenplus.ttf")
+	else
+		PA_FONT = love.graphics.newFont()
+	end
+	love.graphics.setFont(PA_FONT)
 end
 
 function Localization.init(self)
@@ -68,7 +75,7 @@ function Localization.init(self)
 				end
 
 				tokens[#tokens] = tokens[#tokens]:gsub('""', '"')
-				
+
 				stop_cur = cur + 1
 			end
 
@@ -140,7 +147,9 @@ function Localization.init(self)
 							break
 						end
 					else
-						self.map[self.codes[i]][key] = v
+						if v ~= "" and not v:match("^%s+$") then
+							self.map[self.codes[i]][key] = v
+						end
 						i = i+1
 					end
 					if i > #self.codes then

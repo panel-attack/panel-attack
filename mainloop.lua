@@ -87,10 +87,10 @@ function fmainloop()
   gprint("Preloading characters...", unpack(main_menu_screen_pos))
   wait()
   characters_init() -- load images and set up stuff
-  gprint("Loading graphics...", unpack(main_menu_screen_pos))
+  gprint("Loading localization...", unpack(main_menu_screen_pos))
   wait()
   Localization.init(localization)
-  --love.event.quit()
+  gprint("Loading graphics...", unpack(main_menu_screen_pos))
   wait()
   graphics_init() -- load images and set up stuff
   gprint("Loading panels...", unpack(main_menu_screen_pos))
