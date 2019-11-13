@@ -112,10 +112,10 @@ function select_screen.main()
           global_initialize_room_msg = msg
         end
       end
-      gprint("Waiting for room initialization...", unpack(main_menu_screen_pos))
+      gprint(loc("ss_init"), unpack(main_menu_screen_pos))
       wait()
       if not do_messages() then
-        return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+        return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
       end
       retries = retries + 1
     end
@@ -137,7 +137,7 @@ function select_screen.main()
       -- end
     -- end
     if not global_initialize_room_msg then
-      return main_dumb_transition, {main_select_mode, "Room initialization failed.\n\nReturning to main menu...", 60, 300}
+      return main_dumb_transition, {main_select_mode, loc("ss_init_fail").."\n\n"..loc("ss_return"), 60, 300}
     end
     msg = global_initialize_room_msg
     global_initialize_room_msg = nil
@@ -466,9 +466,9 @@ function select_screen.main()
       padding_x = padding_x+themes[config.theme].images.IMG_players[player_number]:getWidth()
       local to_print
       if cursor_data.state.ranked then
-        to_print = "casual [ranked]"
+        to_print = loc("ss_casual").." ["..loc("ss_ranked").."]"
       else
-        to_print = "[casual] ranked"
+        to_print = "["..loc("ss_casual").."] "..loc("ss_ranked")
       end
       gprint(to_print, render_x+padding_x, render_y+y_padding-0.5*text_height-1)
     end
@@ -558,7 +558,9 @@ function select_screen.main()
       end
     end
     if str ~= "__Empty" and str ~= "__Reserved" then
-      gprintf(pstr, render_x+x_add, render_y+y_add,width_for_alignment,halign)
+      local loc_str = {Level= loc("level"), Panels=loc("panels"), Ready=loc("ready"), Random=loc("random"), Leave=loc("leave")}
+      local to_p = loc_str[pstr]
+      gprintf( not to_p and pstr or to_p, render_x+x_add, render_y+y_add,width_for_alignment,halign)
     end
   end
 
@@ -627,9 +629,9 @@ function select_screen.main()
           end
         elseif msg.ranked_match_denied then
           match_type = "Casual"
-          match_type_message = "Not ranked. "
+          match_type_message = loc("ss_not_ranked")
           if msg.reasons then
-            match_type_message = match_type_message..(msg.reasons[1] or "Reason unknown")
+            match_type_message = match_type_message..(msg.reasons[1] or loc("ss_err_no_reason"))
           end
         end
         if msg.leave_room then
@@ -690,14 +692,14 @@ function select_screen.main()
               ask_for_gpanels("000000")
               ask_for_panels("000000")
           end
-          to_print = "Game is starting!\n".."Level: "..P1.level.."\nOpponent's level: "..P2.level
+          to_print = loc("pl_game_start").."\n"..loc("level")..": "..P1.level.."\n"..loc("opponent_level")..": "..P2.level
           if P1.play_to_end or P2.play_to_end then
-            to_print = "Joined a match in progress.\nCatching up..."
+            to_print = loc("pl_spectate_join")
           end
           for i=1,30 do
             gprint(to_print,unpack(main_menu_screen_pos))
             if not do_messages() then
-              return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+              return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
             end
             wait()
           end
@@ -713,12 +715,12 @@ function select_screen.main()
             print("P2.gpanel_buffer = "..P2.gpanel_buffer)
             gprint(to_print,unpack(main_menu_screen_pos))
             if not do_messages() then
-              return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+              return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
             end
             wait()
             if game_start_timeout > 250 then
               return main_dumb_transition, {main_select_mode,
-                              "game start timed out.\n This is a known bug, but you may post it in #panel-attack-bugs-features \nif you'd like.\n"
+                              loc("pl_time_out").."\n"
                               .."\n".."msg.match_start = "..(tostring(msg.match_start) or "nil")
                               .."\n".."replay_of_match_so_far = "..(tostring(replay_of_match_so_far) or "nil")
                               .."\n".."P1.panel_buffer = "..P1.panel_buffer
@@ -756,7 +758,7 @@ function select_screen.main()
     local function get_player_state_str(player_number, rating_difference, win_count, op_win_count, expected_win_ratio)
       local state = ""
       if current_server_supports_ranking then
-        state = state.."Rating: "..(global_current_room_ratings[player_number].league or "")
+        state = state..loc("ss_rating").." "..(global_current_room_ratings[player_number].league or "")
         if not global_current_room_ratings[player_number].placement_match_progress then
           state = state.."\n"..rating_difference..global_current_room_ratings[player_number].new
         elseif global_current_room_ratings[player_number].placement_match_progress
@@ -769,19 +771,19 @@ function select_screen.main()
         if current_server_supports_ranking then
           state = state.."\n"
         end
-        state = state.."Wins: "..win_count
+        state = state..loc("ss_wins").." "..win_count
         if (current_server_supports_ranking and expected_win_ratio) or win_count + op_win_count > 0 then
-          state = state.."\nWinrate:"
+          state = state.."\n"..loc("ss_winrate")..":"
           local need_line_return = false
           if win_count + op_win_count > 0 then
-            state = state.." actual: "..(100*round(win_count/(op_win_count+win_count),2)).."%"
+            state = state.." "..loc("ss_current_rating").." "..(100*round(win_count/(op_win_count+win_count),2)).."%"
             need_line_return = true
           end
           if current_server_supports_ranking and expected_win_ratio then
             if need_line_return then
               state = state.."\n        "
             end
-            state = state.." expected: "..expected_win_ratio.."%"
+            state = state.." "..loc("ss_expected_rating").." "..expected_win_ratio.."%"
           end
         end
       end
@@ -798,11 +800,17 @@ function select_screen.main()
       if not cursor_data[1].state.ranked and not cursor_data[2].state.ranked then
         match_type_message = ""
       end
-      gprintf(match_type, 0, 15, canvas_width, "center")
+      local match_type_str = ""
+      if match_type == "Casual" then
+        match_type_str = loc("ss_casual")
+      elseif match_type == "Ranked" then
+        match_type_str = loc("ss_ranked")
+      end
+      gprintf(match_type_str, 0, 15, canvas_width, "center")
       gprintf(match_type_message, 0, 30, canvas_width, "center")
     end
     if pages_amount ~= 1 then
-      gprintf("Page "..current_page.."/"..pages_amount, 0, 660, canvas_width, "center")
+      gprintf(loc("page").." "..current_page.."/"..pages_amount, 0, 660, canvas_width, "center")
     end
     wait()
 
@@ -871,7 +879,7 @@ function select_screen.main()
       end
       if select_screen.character_select_mode == "2p_net_vs" then
         if not do_leave() then
-          ret = {main_dumb_transition, {main_select_mode, "Error when leaving online", 60, 300}}
+          ret = {main_dumb_transition, {main_select_mode, loc("ss_error_leave"), 60, 300}}
         end
       else
         ret = {main_select_mode}
@@ -1029,7 +1037,7 @@ function select_screen.main()
       return main_dumb_transition, {main_local_vs, "", 0, 0}
     elseif select_screen.character_select_mode == "2p_net_vs" then
       if not do_messages() then
-        return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
+        return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
       end
     end
   end
