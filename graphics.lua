@@ -269,15 +269,15 @@ function Stack.render(self)
 
   -- draw outside of stack's frame canvas
   if self.mode == "puzzle" then
-    gprint("Moves: "..self.puzzle_moves, self.score_x, self.score_y)
+    gprint(loc("pl_moves", self.puzzle_moves), self.score_x, self.score_y)
     if config.show_ingame_infos then
-      gprint("Frame: "..self.CLOCK, self.score_x, self.score_y+30)
+      gprint(loc("pl_frame", self.CLOCK), self.score_x, self.score_y+30)
     end
   else
     if config.show_ingame_infos then
-      gprint("Score: "..self.score, self.score_x, self.score_y)
-      gprint("Speed: "..self.speed, self.score_x, self.score_y+30)
-      gprint("Frame: "..self.CLOCK, self.score_x, self.score_y+45)
+      gprint(loc("pl_score", self.score), self.score_x, self.score_y)
+      gprint(loc("pl_speed", self.speed), self.score_x, self.score_y+30)
+      gprint(loc("pl_frame", self.CLOCK), self.score_x, self.score_y+45)
       if self.mode == "time" then
         local time_left = 120 - (self.game_stopwatch or 120)/60
         local mins = math.floor(time_left/60)
@@ -286,38 +286,38 @@ function Stack.render(self)
           secs = 0
           mins = mins+1
         end
-        gprint("Time: "..string.format("%01d:%02d",mins,secs), self.score_x, self.score_y+60)
+        gprint(loc("pl_time", string.format("%01d:%02d",mins,secs)), self.score_x, self.score_y+60)
       elseif self.level then
-        gprint("Level: "..self.level, self.score_x, self.score_y+60)
+        gprint(loc("pl_level", self.level), self.score_x, self.score_y+60)
       end
-      gprint("Health: "..self.health, self.score_x, self.score_y+75)
-      gprint("Shake: "..self.shake_time, self.score_x, self.score_y+90)
-      gprint("Stop: "..self.stop_time, self.score_x, self.score_y+105)
-      gprint("Pre stop: "..self.pre_stop_time, self.score_x, self.score_y+120)
+      gprint(loc("pl_health", self.health), self.score_x, self.score_y+75)
+      gprint(loc("pl_shake", self.shake_time), self.score_x, self.score_y+90)
+      gprint(loc("pl_stop", self.stop_time), self.score_x, self.score_y+105)
+      gprint(loc("pl_pre_stop", self.pre_stop_time), self.score_x, self.score_y+120)
       if config.debug_mode and self.danger then gprint("danger", self.score_x,self.score_y+135) end
       if config.debug_mode and self.danger_music then gprint("danger music", self.score_x, self.score_y+150) end
       if config.debug_mode then
-        gprint("cleared: "..(self.panels_cleared or 0), self.score_x, self.score_y+165)
+        gprint(loc("pl_cleared", (self.panels_cleared or 0)), self.score_x, self.score_y+165)
       end
       if config.debug_mode then
-        gprint("metal q: "..(self.metal_panels_queued or 0), self.score_x, self.score_y+180)
+        gprint(loc("pl_metal", (self.metal_panels_queued or 0)), self.score_x, self.score_y+180)
       end
-    end
-    if config.debug_mode and (self.input_state or self.taunt_up or self.taunt_down) then
-      -- print(self.input_state)
-      -- print(base64decode[self.input_state])
-      local iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
-      -- print(tostring(raise))
-      local inputs_to_print = "inputs:"
-      if iraise then inputs_to_print = inputs_to_print.."\nraise" end --◄▲▼►
-      if iswap then inputs_to_print = inputs_to_print.."\nswap" end
-      if iup then inputs_to_print = inputs_to_print.."\nup" end
-      if idown then inputs_to_print = inputs_to_print.."\ndown" end
-      if ileft then inputs_to_print = inputs_to_print.."\nleft" end
-      if iright then inputs_to_print = inputs_to_print.."\nright" end
-      if self.taunt_down then inputs_to_print = inputs_to_print.."\ntaunt_down" end
-      if self.taunt_up then inputs_to_print = inputs_to_print.."\ntaunt_up" end
-      gprint(inputs_to_print, self.score_x, self.score_y+195)
+      if config.debug_mode and (self.input_state or self.taunt_up or self.taunt_down) then
+        -- print(self.input_state)
+        -- print(base64decode[self.input_state])
+        local iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
+        -- print(tostring(raise))
+        local inputs_to_print = "inputs:"
+        if iraise then inputs_to_print = inputs_to_print.."\nraise" end --◄▲▼►
+        if iswap then inputs_to_print = inputs_to_print.."\nswap" end
+        if iup then inputs_to_print = inputs_to_print.."\nup" end
+        if idown then inputs_to_print = inputs_to_print.."\ndown" end
+        if ileft then inputs_to_print = inputs_to_print.."\nleft" end
+        if iright then inputs_to_print = inputs_to_print.."\nright" end
+        if self.taunt_down then inputs_to_print = inputs_to_print.."\ntaunt_down" end
+        if self.taunt_up then inputs_to_print = inputs_to_print.."\ntaunt_up" end
+        gprint(inputs_to_print, self.score_x, self.score_y+195)
+      end
     end
     local main_infos_screen_pos = { x=375 + (canvas_width-legacy_canvas_width)/2, y=10 + (canvas_height-legacy_canvas_height) }
     if match_type then gprint(match_type, main_infos_screen_pos.x, main_infos_screen_pos.y) end

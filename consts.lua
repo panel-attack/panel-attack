@@ -18,8 +18,6 @@ prefix_of_ignored_dirs = "__"
 default_theme_dir = "Panel Attack"
 default_panels_dir = "Panel Attack"
 
-join_community_msg = "  Join the community at\ndiscord.panelattack.com"
-
 default_characters_ids = {"lip", "windy", "sherbet", "thiana", "ruby",
               "elias", "flare", "neris", "seren", "phoenix", 
               "dragon", "thanatos", "cordelia",  "lakitu", 

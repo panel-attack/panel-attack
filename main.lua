@@ -10,6 +10,7 @@ require("stage") -- after globals!
 require("analytics")
 require("save")
 require("engine")
+require("localization")
 require("graphics")
 require("input")
 require("network")
