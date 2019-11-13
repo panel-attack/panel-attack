@@ -28,7 +28,7 @@ function Localization.set_language(self, lang_code)
 	config.language_code = self.codes[self.lang_index]
 
 	if config.language_code == "JP" then
-		PA_FONT = love.graphics.newFont("rounded-mgenplus.ttf")
+		PA_FONT = love.graphics.newFont("jp.ttf", 14)
 	else
 		PA_FONT = love.graphics.newFont()
 	end
