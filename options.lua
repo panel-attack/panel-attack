@@ -228,24 +228,24 @@ function options.main(starting_idx)
     --options menu table reference:
     --{[1]"Option Name", [2] loc key, [3]current or default value, [4]type, [5]min or bool value or choices_table,
     -- [6]max, [7]sound_source, [8]selectable, [9]next_func, [10]play_while selected}
-    {"Language", loc("op_language"), localization:get_language(), "multiple choice", select(1, localization:get_list_codes_langs())},
-    {"Master Volume", loc("op_vol"), config.master_volume, "numeric", 0, 100, normal_music_for_sound_option, true, nil, true},
-    {"SFX Volume", loc("op_vol_sfx"), config.SFX_volume, "numeric", 0, 100, themes[config.theme].sounds.cur_move, true},
-    {"Music Volume", loc("op_vol_music"), config.music_volume, "numeric", 0, 100, normal_music_for_sound_option, true, nil, true},
-    {"Debug Mode", loc("op_debug"), on_off_text[config.debug_mode], "bool", false, nil, nil,false},
-    {"Save replays publicly", loc("op_replay_public"), save_replays_publicly_choices[config.save_replays_publicly] or save_replays_publicly_choices["with my name"], "multiple choice", save_replays_publicly_choices},
-    {"Theme", loc("op_theme"), config.theme, "multiple choice", themes_set},
-    {"Ready countdown", loc("op_countdown"), on_off_text[config.ready_countdown_1P], "bool", true, nil, nil,false},
-    {"Show FPS", loc("op_fps"), on_off_text[config.show_fps], "bool", true, nil, nil,false},
-    {"Show ingame infos", loc("op_ingame_infos"), on_off_text[config.show_ingame_infos], "bool", true, nil, nil,false},
-    {"Danger music change-back delay", loc("op_music_delay"), on_off_text[config.danger_music_changeback_delay], "bool", false, nil, nil, false},
-    {"Enable analytics", loc("op_analytics"), on_off_text[config.enable_analytics], "bool", false, nil, nil, false},
-    {"Use music from", loc("op_use_music_from"), use_music_from_choices[config.use_music_from], "multiple choice", use_music_from_choices},
-    {"About custom themes", loc("op_about_themes"), "", "function", nil, nil, nil, nil, main_show_custom_themes_readme},
-    {"About custom characters", loc("op_about_characters"), "", "function", nil, nil, nil, nil, main_show_custom_characters_readme},
-    {"About custom stages", loc("op_about_stages"), "", "function", nil, nil, nil, nil, main_show_custom_stages_readme},
-    {"About custom panels", loc("op_about_panels"), "", "function", nil, nil, nil, nil, main_show_custom_panels_readme},
-    {"Back", loc("back"), "", nil, nil, nil, nil, false, main_select_mode}
+    {"Language", "op_language", localization:get_language(), "multiple choice", select(1, localization:get_list_codes_langs())},
+    {"Master Volume", "op_vol", config.master_volume, "numeric", 0, 100, normal_music_for_sound_option, true, nil, true},
+    {"SFX Volume", "op_vol_sfx", config.SFX_volume, "numeric", 0, 100, themes[config.theme].sounds.cur_move, true},
+    {"Music Volume", "op_vol_music", config.music_volume, "numeric", 0, 100, normal_music_for_sound_option, true, nil, true},
+    {"Debug Mode", "op_debug", on_off_text[config.debug_mode], "bool", false, nil, nil,false},
+    {"Save replays publicly", "op_replay_public", save_replays_publicly_choices[config.save_replays_publicly] or save_replays_publicly_choices["with my name"], "multiple choice", save_replays_publicly_choices},
+    {"Theme", "op_theme", config.theme, "multiple choice", themes_set},
+    {"Ready countdown", "op_countdown", on_off_text[config.ready_countdown_1P], "bool", true, nil, nil,false},
+    {"Show FPS", "op_fps", on_off_text[config.show_fps], "bool", true, nil, nil,false},
+    {"Show ingame infos", "op_ingame_infos", on_off_text[config.show_ingame_infos], "bool", true, nil, nil,false},
+    {"Danger music change-back delay", "op_music_delay", on_off_text[config.danger_music_changeback_delay], "bool", false, nil, nil, false},
+    {"Enable analytics", "op_analytics", on_off_text[config.enable_analytics], "bool", false, nil, nil, false},
+    {"Use music from", "op_use_music_from", use_music_from_choices[config.use_music_from], "multiple choice", use_music_from_choices},
+    {"About custom themes", "op_about_themes", "", "function", nil, nil, nil, nil, main_show_custom_themes_readme},
+    {"About custom characters", "op_about_characters", "", "function", nil, nil, nil, nil, main_show_custom_characters_readme},
+    {"About custom stages", "op_about_stages", "", "function", nil, nil, nil, nil, main_show_custom_stages_readme},
+    {"About custom panels", "op_about_panels", "", "function", nil, nil, nil, nil, main_show_custom_panels_readme},
+    {"Back", "back", "", nil, nil, nil, nil, false, main_select_mode}
   }
   local function print_stuff()
     local to_print, to_print2, arrow = "", "", ""
@@ -255,12 +255,12 @@ function options.main(starting_idx)
       else
         arrow = arrow .. "\n"
       end
-      to_print = to_print .. "   " .. items[i][2] .. "\n"
-      to_print2 = to_print2 .. "                            "
+      to_print = to_print .. "   " .. loc(items[i][2]) .. "\n"
+      to_print2 = to_print2 .. "                                                                    "
       if active_idx == i and selected then
-        to_print2 = to_print2 .. "                          < "
+        to_print2 = to_print2 .. "                < "
       else
-        to_print2 = to_print2 .. "                            "
+        to_print2 = to_print2 .. "                  "
       end
       to_print2 = to_print2.. items[i][3]
       if active_idx == i and selected then
