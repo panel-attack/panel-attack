@@ -430,6 +430,7 @@ function main_net_vs_lobby()
       if msg.create_room or msg.spectate_request_granted then
         global_initialize_room_msg = msg
         select_screen.character_select_mode = "2p_net_vs"
+        love.window.requestAttention()
         return select_screen.main
       end
       if msg.unpaired then
@@ -450,6 +451,7 @@ function main_net_vs_lobby()
       end
       if msg.game_request then
         willing_players[msg.game_request.sender] = true
+        love.window.requestAttention()
       end
       if msg.leaderboard_report then
         showing_leaderboard = true
