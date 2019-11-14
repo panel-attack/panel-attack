@@ -46,19 +46,17 @@ global_op_state = nil
 -- game can be paused while playing on local
 game_is_paused = false
 
-large_font = love.graphics.newFont(22)
-large_font:setFilter("nearest", "nearest")
-main_font = love.graphics.getFont() -- default size is 12
-main_font:setFilter("nearest", "nearest")
-small_font = love.graphics.newFont(9)
-small_font:setFilter("nearest", "nearest")
+large_font = 10 -- large font base+10
+small_font = -3 -- small font base-3
+
+
 zero_sound = load_sound_from_supported_extensions("zero_music")
 
   -- Default configuration values
 config = {
 	-- The lastly used version
 	version                       = VERSION,
-	
+
 	 -- Lang used for localization
 	 language_code                 = "EN",
 

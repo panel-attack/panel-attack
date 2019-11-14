@@ -493,7 +493,7 @@ function select_screen.main()
       -- player image
       menu_drawf(themes[config.theme].images.IMG_players[player_number], math.floor(render_x+padding_x+stage_dimensions[1]*0.5), math.floor(render_y+y_padding-stage_dimensions[2]*0.5-10), "center", "center" )
       -- display name
-      local display_name = cursor_data.state.stage_is_random and "Random" or stages[cursor_data.state.stage].display_name
+      local display_name = cursor_data.state.stage_is_random and loc("random") or stages[cursor_data.state.stage].display_name
       gprintf(display_name, render_x+padding_x-16, math.floor(render_y+y_padding+stage_dimensions[2]*0.5),stage_dimensions[1]+32,"center",nil,1,small_font)
 
       padding_x = padding_x+stage_dimensions[1]

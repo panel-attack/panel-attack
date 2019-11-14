@@ -84,20 +84,56 @@ function gprint(str, x, y, color, scale)
   gfx_q:push({love.graphics.print, {str, x, y, 0, scale}})
 end
 
+-- font file to use
+local font_file = nil
+local font_size = 12
+local font_cache = {}
+
+function set_global_font(filepath, size)
+  font_cache = {}
+  font_file = filepath
+  font_size = size
+  local f
+  if font_file then
+    f = love.graphics.newFont(font_file, font_size)
+  else
+    f = love.graphics.newFont(font_size)
+  end
+  f:setFilter("nearest", "nearest")
+  love.graphics.setFont(f)
+end
+
+local function get_font_delta(with_delta_size)
+  local font_size = font_size + with_delta_size
+  local f = font_cache[font_size]
+  if not f then
+    if font_file then
+      f = love.graphics.newFont(font_file, font_size)
+    else
+      f = love.graphics.newFont(font_size)
+    end
+    font_cache[font_size] = f
+  end
+  return f
+end
+
 function set_font(font)
   gfx_q:push({love.graphics.setFont, {font}})
   end
 
-function gprintf(str, x, y, limit, halign, color, scale, font)
+function gprintf(str, x, y, limit, halign, color, scale, font_delta_size)
   x = x or 0
   y = y or 0
   scale = scale or 1
   color = color or nil
   limit = limit or canvas_width
-  font = font or nil
+  font_delta_size = font_delta_size or 0
   halign = halign or "left"
   set_color(0, 0, 0, 1)
-  if font then set_font(font) end
+  local old_font = love.graphics.getFont()
+  if font_delta_size ~= 0 then
+    set_font(get_font_delta(font_delta_size)) 
+  end
   gfx_q:push({love.graphics.printf, {str, x+1, y+1, limit, halign, 0, scale}})
   local r, g, b, a = 1,1,1,1
   if color ~= nil then
@@ -105,7 +141,7 @@ function gprintf(str, x, y, limit, halign, color, scale, font)
   end
   set_color(r,g,b,a)
   gfx_q:push({love.graphics.printf, {str, x, y, limit, halign, 0, scale}})
-  if font then set_font(main_font) end
+  if font_delta_size ~= 0 then set_font(old_font) end
 end
 
 local _r, _g, _b, _a
