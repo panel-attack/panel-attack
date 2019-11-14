@@ -388,6 +388,6 @@ function draw_pause()
   if game_is_paused then
     draw(themes[config.theme].images.pause,0,0)
     gprintf("Pause", 0, 330, canvas_width, "center",nil,1,large_font)
-    gprintf("Press start again to resume", 0, 360, canvas_width, "center",nil,1,main_font)
+    gprintf("Press start again to resume", 0, 360, canvas_width, "center",nil,1)
   end
 end

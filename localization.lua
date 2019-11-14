@@ -28,11 +28,11 @@ function Localization.set_language(self, lang_code)
 	config.language_code = self.codes[self.lang_index]
 
 	if config.language_code == "JP" then
-		PA_FONT = love.graphics.newFont("jp.ttf", 14)
+		set_global_font("jp.ttf", 14)
 	else
-		PA_FONT = love.graphics.newFont()
+		set_global_font(nil, 12)
 	end
-	love.graphics.setFont(PA_FONT)
+
 end
 
 function Localization.init(self)
