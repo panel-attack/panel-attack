@@ -9,9 +9,8 @@ local main_select_mode, main_endless, make_main_puzzle, main_net_vs_setup,
   main_replay_vs, main_local_vs_setup, main_local_vs, menu_key_func,
   multi_func, normal_key, main_set_name, main_character_select, main_net_vs_lobby,
   main_local_vs_yourself_setup, main_local_vs_yourself,
-  main_options, exit_options_menu, main_music_test
+  main_options, exit_options_menu, main_music_test, exit_game
 
-VERSION = "037"
 local PLAYING = "playing"  -- room states
 local CHARACTERSELECT = "character select" --room states
 local currently_spectating = false
@@ -32,6 +31,8 @@ function fmainloop()
   replay = {}
   -- Default configuration values
   config = {
+             -- The lastly used version
+             version                       = VERSION,
              -- Player character
              character                     = "lip",
              -- Level (2P modes / 1P vs yourself mode)
@@ -52,6 +53,8 @@ function fmainloop()
              ready_countdown_1P            = true,
              -- Change danger music back later flag
              danger_music_changeback_delay = false,
+             -- analytics
+             enable_analytics              = false,
              -- Save replays setting
              save_replays_publicly         = "with my name",
              -- Default directories for graphics/panels/sounds
@@ -61,7 +64,10 @@ function fmainloop()
              panels_dir                    = default_assets_dir,
              -- Retrocompatibility, please remove whenever possible, it's so ugly!
              panels_dir_when_not_using_set_from_assets_folder = default_panels_dir,
-             use_panels_from_assets_folder  = true,
+             use_panels_from_assets_folder = true,
+
+             -- Retrocompatibility
+             use_default_characters        = false,
            }
   gprint("Reading config file", unpack(main_menu_screen_pos))
   wait()
@@ -77,15 +83,21 @@ function fmainloop()
   gprint("Reading replay file", unpack(main_menu_screen_pos))
   wait()
   read_replay_file()
+  gprint("Preloading characters...", unpack(main_menu_screen_pos))
+  wait()
+  characters_init() -- load images and set up stuff
   gprint("Loading graphics...", unpack(main_menu_screen_pos))
   wait()
   graphics_init() -- load images and set up stuff
   gprint("Loading panels...", unpack(main_menu_screen_pos))
   wait()
   panels_init() -- load panels
-  gprint("Loading sounds... (this takes a few seconds)", unpack(main_menu_screen_pos))
+  gprint("Loading sounds...", unpack(main_menu_screen_pos))
   wait()
   sound_init()
+  gprint("Loading analytics...", unpack(main_menu_screen_pos))
+  wait()
+  analytics_init()
   while true do
     leftover_time = 1/120
     consuming_timesteps = false
@@ -173,6 +185,8 @@ menu_left = menu_key_func({"left"}, {"left"}, true, function() return sounds.SFX
 menu_right = menu_key_func({"right"}, {"right"}, true, function() return sounds.SFX.menu_move end)
 menu_enter = menu_key_func({"return","kenter","z"}, {"swap1"}, false, function() return sounds.SFX.menu_validate end)
 menu_escape = menu_key_func({"escape","x"}, {"swap2"}, false, function() return sounds.SFX.menu_cancel end)
+menu_prev_page = menu_key_func({"pageup"}, {"raise1"}, true, function() return sounds.SFX.menu_move end)
+menu_next_page = menu_key_func({"pagedown"}, {"raise2"}, true, function() return sounds.SFX.menu_move end)
 menu_backspace = menu_key_func({"backspace"}, {"backspace"}, true)
 
 do
@@ -181,6 +195,7 @@ do
     love.audio.stop()
     currently_spectating = false
     stop_the_music()
+    character_loader_clear()
     close_socket()
     bg = title
     logged_in = 0
@@ -216,7 +231,7 @@ do
     else
       items[#items+1] = {"Your graphics card doesn't support canvases for fullscreen", main_select_mode}
     end
-    items[#items+1] = {"Quit", os.exit}
+    items[#items+1] = {"Quit", exit_game }
     local k = K[1]
     while true do
       local to_print = ""
@@ -333,6 +348,7 @@ function main_endless(...)
   replay.mode = "endless"
   P1 = Stack(1, "endless", config.panels_dir, ...)
   P1.do_countdown = config.ready_countdown_1P or false
+  P1.enable_analytics = true
   replay.do_countdown = P1.do_countdown or false
   replay.speed = P1.speed
   replay.difficulty = P1.difficulty
@@ -346,7 +362,8 @@ function main_endless(...)
     -- TODO: proper game over.
       write_replay_file()
       local end_text = "You scored "..P1.score.."\nin "..frames_to_time_string(P1.game_stopwatch, true)
-        return main_dumb_transition, {main_select_mode, end_text, 60}
+      analytics_game_ends()
+      return main_dumb_transition, {main_select_mode, end_text, 60}
     end
     variable_step(function() P1:local_run() end)
     --groundhogday mode
@@ -362,6 +379,7 @@ function main_time_attack(...)
   bg = IMG_stages[math.random(#IMG_stages)]
   consuming_timesteps = true
   P1 = Stack(1, "time", config.panels_dir, ...)
+  P1.enable_analytics = true
   make_local_panels(P1, "000000")
   P1:starting_state()
   while true do
@@ -370,7 +388,8 @@ function main_time_attack(...)
     if P1.game_over or (P1.game_stopwatch and P1.game_stopwatch == 120*60) then
     -- TODO: proper game over.
       local end_text = "You scored "..P1.score.."\nin "..frames_to_time_string(P1.game_stopwatch)
-        return main_dumb_transition, {main_select_mode, end_text, 30}
+      analytics_game_ends()
+      return main_dumb_transition, {main_select_mode, end_text, 30}
     end
     variable_step(function()
       if (not P1.game_over)  and P1.game_stopwatch and P1.game_stopwatch < 120 * 60 then
@@ -383,21 +402,84 @@ function main_net_vs_room()
   return main_character_select()
 end
 
+-- fills the provided map based on the provided template and return the amount of pages. __Empty values will be replaced by character_ids
+local function fill_map(template_map,map)
+  local X,Y = 5,7
+  local pages_amount = 0
+  local character_id_index = 1
+  while true do
+    -- new page handling
+    pages_amount = pages_amount+1
+    map[pages_amount] = deepcpy(template_map)
+
+    -- go through the page and replace __Empty with characters_ids_for_current_theme
+    for i=1,X do
+      for j=1,Y do
+        if map[pages_amount][i][j] == "__Empty" then
+          map[pages_amount][i][j] = characters_ids_for_current_theme[character_id_index]
+          character_id_index = character_id_index+1
+          -- end case: no more characters_ids_for_current_theme to add
+          if character_id_index == #characters_ids_for_current_theme+1 then
+            print("filled "..#characters_ids_for_current_theme.." characters across "..pages_amount.." page(s)")
+            return pages_amount
+          end
+        end
+      end
+    end
+  end
+end
+
+local fallback_when_missing = nil
+
+local function refresh_based_on_own_mods(refreshed,ask_change_fallback)
+  ask_change_fallback = ask_change_fallback or false
+  if refreshed ~= nil then
+    if refreshed.panels_dir == nil or IMG_panels[refreshed.panels_dir] == nil then
+      refreshed.panels_dir = config.panels_dir
+    end
+    if characters[refreshed.character] == nil then
+      if refreshed.character_display_name and characters_ids_by_display_names[refreshed.character_display_name] then
+        refreshed.character = characters_ids_by_display_names[refreshed.character_display_name][1]
+      else
+        if not fallback_when_missing or ask_change_fallback then
+          fallback_when_missing = uniformly(characters_ids_for_current_theme)
+        end
+        refreshed.character = fallback_when_missing
+      end
+    end
+  end
+end
+
+local current_page = 1
+
 function main_character_select()
   love.audio.stop()
   stop_the_music()
   bg = charselect
+  fallback_when_missing = nil
 
-  print("character_select_mode = "..(character_select_mode or "nil"))
+  local function add_client_data(state)
+    state.loaded = characters[state.character] and characters[state.character].fully_loaded
+    state.wants_ready = state.ready
+  end
 
-  local function refresh_state_based_on_own_mods(state)
-    if state ~= nil then
-      if state.panels_dir == nil or IMG_panels[state.panels_dir] == nil then
-        state.panels_dir = config.panels_dir
-      end
+  local function refresh_loaded_and_ready(state_1,state_2)
+    state_1.loaded = characters[state_1.character] and characters[state_1.character].fully_loaded
+    state_2.loaded = characters[state_2.character] and characters[state_2.character].fully_loaded
+    
+    if character_select_mode == "2p_net_vs" then
+      state_1.ready = state_1.wants_ready and state_1.loaded and state_2.loaded
+    else
+      state_1.ready = state_1.wants_ready and state_1.loaded
+      state_2.ready = state_2.wants_ready and state_2.loaded
     end
   end
 
+  print("character_select_mode = "..(character_select_mode or "nil"))
+
+
+  -- map is composed of special values prefixed by __ and character ids
+  local template_map = {}
   local map = {}
   if character_select_mode == "2p_net_vs" then
     local opponent_connected = false
@@ -471,9 +553,9 @@ function main_character_select()
     end
 
     global_my_state = msg.a_menu_state
-    refresh_state_based_on_own_mods(global_my_state)
+    refresh_based_on_own_mods(global_my_state)
     global_op_state = msg.b_menu_state
-    refresh_state_based_on_own_mods(global_op_state)
+    refresh_based_on_own_mods(global_op_state)
 
     if msg.win_counts then
       update_win_counts(msg.win_counts)
@@ -496,25 +578,30 @@ function main_character_select()
     print("current_server_supports_ranking: "..tostring(current_server_supports_ranking))
 
     if current_server_supports_ranking then
-      map = {{"match type desired", "match type desired", "level", "level", "panels_selection", "panels_selection", "ready"},
-             {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
-             {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
-             {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
-             {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
+      template_map = {{"__Mode", "__Mode", "__Level", "__Level", "__Panels", "__Panels", "__Ready"},
+             {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}}
     else
-      map = {{"level", "level", "level", "panels_selection", "panels_selection", "panels_selection", "ready"},
-             {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
-             {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
-             {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
-             {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
+      template_map = {{"__Level", "__Level", "__Level", "__Panels", "__Panels", "__Panels", "__Ready"},
+             {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}}
     end
   end
   if character_select_mode == "2p_local_vs" or character_select_mode == "1p_vs_yourself" then
-    map = {{"level", "level", "level", "panels_selection", "panels_selection", "panels_selection", "ready"},
-           {"random", "windy", "sherbet", "thiana", "ruby", "lip", "elias"},
-           {"flare", "neris", "seren", "phoenix", "dragon", "thanatos", "cordelia"},
-           {"lakitu", "bumpty", "poochy", "wiggler", "froggy", "blargg", "lungefish"},
-           {"raphael", "yoshi", "hookbill", "navalpiranha", "kamek", "bowser", "leave"}}
+    template_map = {{"__Level", "__Level", "__Level", "__Panels", "__Panels", "__Panels", "__Ready"},
+             {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+             {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}}
+  end
+
+  local pages_amount = fill_map(template_map, map)
+  if current_page > pages_amount then
+    current_page = 1
   end
 
   op_win_count = op_win_count or 0
@@ -549,43 +636,48 @@ function main_character_select()
   local function do_leave()
     my_win_count = 0
     op_win_count = 0
-    write_char_sel_settings_to_file()
     return json_send({leave_room=true})
   end
 
-  -- be wary: name_to_xy is kinda buggy for larger blocks as they span multiple positions (we retain the last one)
-  local name_to_xy = {}
+  -- be wary: name_to_xy_per_page is kinda buggy for larger blocks as they span multiple positions (we retain the last one), and is completely broken with __Empty
+  local name_to_xy_per_page = {}
   local X,Y = 5,7
-  for i=1,X do
-    for j=1,Y do
-      if map[i][j] then
-        name_to_xy[map[i][j]] = {i,j}
+  for p=1,pages_amount do
+    name_to_xy_per_page[p] = {}
+    for i=1,X do
+      for j=1,Y do
+        if map[p][i][j] then
+          name_to_xy_per_page[p][map[p][i][j]] = {i,j}
+        end
       end
     end
   end
 
   my_win_count = my_win_count or 0
 
-  local cursor_data = {{position=shallowcpy(name_to_xy["ready"]),selected=false},{position=shallowcpy(name_to_xy["ready"]),selected=false}}
+  local cursor_data = {{position=shallowcpy(name_to_xy_per_page[current_page]["__Ready"]),selected=false},{position=shallowcpy(name_to_xy_per_page[current_page]["__Ready"]),selected=false}}
   if global_my_state ~= nil then
     cursor_data[1].state = shallowcpy(global_my_state)
     global_my_state = nil
   else
-    cursor_data[1].state = {character=config.character, level=config.level, panels_dir=config.panels_dir, cursor="ready", ready=false, ranked=config.ranked}
+    cursor_data[1].state = {character=config.character, character_display_name=characters[config.character].display_name, level=config.level, panels_dir=config.panels_dir, cursor="__Ready", ready=false, ranked=config.ranked}
   end
   if global_op_state ~= nil then
     cursor_data[2].state = shallowcpy(global_op_state)
     if character_select_mode ~= "2p_local_vs" then
-      global_op_state = nil
+      global_op_state = nil -- retains state of the second player, also: don't unload its character when going back and forth
     end
   else
-    cursor_data[2].state = {character=config.character, level=config.level, panels_dir=config.panels_dir, cursor="ready", ready=false, ranked=false}
+    cursor_data[2].state = {character=config.character, character_display_name=characters[config.character].display_name, level=config.level, panels_dir=config.panels_dir, cursor="__Ready", ready=false, ranked=false}
   end
+  add_client_data(cursor_data[1].state)
+  add_client_data(cursor_data[2].state)
+  refresh_loaded_and_ready(cursor_data[1].state, cursor_data[2].state)
 
   local prev_state = shallowcpy(cursor_data[1].state)
 
   local function draw_button(x,y,w,h,str,halign,valign,no_rect)
-    no_rect = no_rect or false
+    no_rect = no_rect or str == "__Empty"
     halign = halign or "center"
     valign = valign or "top"
     local menu_width = Y*100
@@ -599,14 +691,14 @@ function main_character_select()
     render_y = y_padding+(x-1)*100+spacing
     button_width = w*100-2*spacing
     button_height = h*100-2*spacing
-    if no_rect ~= true then
+    if no_rect == false then
       grectangle("line", render_x, render_y, button_width, button_height)
     end
-    local character_to_display_name = str
+    local character = characters[str]
     if str == "P1" then
-      character_to_display_name = character_display_names[cursor_data[1].state.character]
+      character = characters[cursor_data[1].state.character]
     elseif str == "P2" then
-      character_to_display_name = character_display_names[cursor_data[2].state.character]
+      character = characters[cursor_data[2].state.character]
     end
     local width_for_alignment = button_width
     local x_add,y_add = 0,0
@@ -615,14 +707,13 @@ function main_character_select()
     elseif valign == "bottom" then
       y_add = math.floor(button_height-text_height)
     end
-    if IMG_character_icons[character_display_names_to_original_names[character_to_display_name]] then
+    if character and character.images["icon"] then
       x_add = 0.025*button_width
       width_for_alignment = 0.95*button_width
-      local orig_w, orig_h = IMG_character_icons[character_display_names_to_original_names[character_to_display_name]]:getDimensions()
+      local orig_w, orig_h = character.images["icon"]:getDimensions()
       local scale = button_width/math.max(orig_w,orig_h) -- keep image ratio
-      menu_drawf(IMG_character_icons[character_display_names_to_original_names[character_to_display_name]], render_x+0.5*button_width, render_y+0.5*button_height,"center","center", 0, scale, scale )
+      menu_drawf(character.images["icon"], render_x+0.5*button_width, render_y+0.5*button_height,"center","center", 0, scale, scale )
     end
-    local pstr = str:gsub("^%l", string.upper)
 
     local function draw_cursor(button_height, spacing, player_num,ready)
       local cur_blink_frequency = 4
@@ -649,7 +740,9 @@ function main_character_select()
     end
 
     local function draw_player_state(cursor_data,player_number)
-      if cursor_data.state.ready then
+      if characters[cursor_data.state.character] and not characters[cursor_data.state.character].fully_loaded then
+        menu_drawf(IMG_loading, render_x+button_width*0.5, render_y+button_height*0.5, "center", "center" )
+      elseif cursor_data.state.wants_ready then
         menu_drawf(IMG_ready, render_x+button_width*0.5, render_y+button_height*0.5, "center", "center" )
       end
       local scale = 0.25*button_width/math.max(IMG_players[player_number]:getWidth(),IMG_players[player_number]:getHeight()) -- keep image ratio
@@ -665,7 +758,7 @@ function main_character_select()
       if cursor_data.state.level >= 9 then
         padding_x = padding_x-0.5*panels_width
       end
-      local is_selected = cursor_data.selected and cursor_data.state.cursor == "panels_selection"
+      local is_selected = cursor_data.selected and cursor_data.state.cursor == "__Panels"
       if is_selected then
         padding_x = padding_x-panels_width
       end
@@ -691,7 +784,7 @@ function main_character_select()
       local level_max_width = 0.2*button_height
       local level_width = math.min(level_max_width,IMG_levels[1]:getWidth())
       local padding_x = 0.5*button_width-5*level_width
-      local is_selected = cursor_data.selected and cursor_data.state.cursor == "level"
+      local is_selected = cursor_data.selected and cursor_data.state.cursor == "__Level"
       if is_selected then
         padding_x = padding_x-level_width
       end
@@ -732,23 +825,25 @@ function main_character_select()
       gprint(to_print, render_x+padding_x, render_y+y_padding-0.5*text_height-1)
     end
 
-    if str == "match type desired" then
-      pstr = "Mode"
+    local pstr
+    if string.sub(str, 1, 2) == "__" then
+      pstr = string.sub(str, 3)
+    end
+    if str == "__Mode" then
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs") then
         draw_match_type(cursor_data[1],1,0.4*button_height)
         draw_match_type(cursor_data[2],2,0.7*button_height)
       else
         draw_match_type(cursor_data[1],1,0.5*button_height)
       end
-    elseif str == "panels_selection" then
-      pstr = "Panels"
+    elseif str == "__Panels" then
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs") then
         draw_panels(cursor_data[1],1,0.4*button_height)
         draw_panels(cursor_data[2],2,0.7*button_height)
       else
         draw_panels(cursor_data[1],1,0.5*button_height)
       end
-    elseif str == "level" then
+    elseif str == "__Level" then
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs") then
         draw_levels(cursor_data[1],1,0.4*button_height)
         draw_levels(cursor_data[2],2,0.7*button_height)
@@ -761,17 +856,25 @@ function main_character_select()
     elseif str == "P2" then
       draw_player_state(cursor_data[2],2)
       pstr = op_name
+    elseif character then
+      pstr = character.display_name
+    elseif string.sub(str, 1, 2) ~= "__" then
+      pstr = str:gsub("^%l", string.upper)
     end
     if x ~= 0 then
-      if cursor_data[1].state and (cursor_data[1].state.cursor == str or character_display_names[cursor_data[1].state.cursor] == str) then
+      if cursor_data[1].state and cursor_data[1].state.cursor == str 
+        and ( str ~= "__Empty" or ( cursor_data[1].position[1] == x and cursor_data[1].position[2] == y ) ) then
         draw_cursor(button_height, spacing, 1, cursor_data[1].state.ready)
       end
       if (character_select_mode == "2p_net_vs" or character_select_mode == "2p_local_vs")
-      and cursor_data[2].state and (cursor_data[2].state.cursor == str or character_display_names[cursor_data[2].state.cursor] == str) then
+        and cursor_data[2].state and cursor_data[2].state.cursor == str
+        and ( str ~= "__Empty" or ( cursor_data[2].position[1] == x and cursor_data[2].position[2] == y ) ) then
         draw_cursor(button_height, spacing, 2, cursor_data[2].state.ready)
       end
     end
-    gprintf(pstr, render_x+x_add, render_y+y_add,width_for_alignment,halign)
+    if str ~= "__Empty" then
+      gprintf(pstr, render_x+x_add, render_y+y_add,width_for_alignment,halign)
+    end
   end
 
   print("got to LOC before net_vs_room character select loop")
@@ -787,12 +890,15 @@ function main_character_select()
           if currently_spectating then
             if msg.player_number == 1 or msg.player_number == 2 then
               cursor_data[msg.player_number].state = msg.menu_state
-              refresh_state_based_on_own_mods(cursor_data[msg.player_number].state)
+              refresh_based_on_own_mods(cursor_data[msg.player_number].state)
+              character_loader_load(cursor_data[msg.player_number].state.character)
             end
           else
             cursor_data[2].state = msg.menu_state
-            refresh_state_based_on_own_mods(cursor_data[2].state)
+            refresh_based_on_own_mods(cursor_data[2].state)
+            character_loader_load(cursor_data[2].state.character)
           end
+          refresh_loaded_and_ready(cursor_data[1],cursor_data[2])
         end
         if msg.ranked_match_approved then
           match_type = "Ranked"
@@ -810,14 +916,20 @@ function main_character_select()
         if msg.leave_room then
           my_win_count = 0
           op_win_count = 0
-          write_char_sel_settings_to_file()
           return main_net_vs_lobby
         end
         if msg.match_start or replay_of_match_so_far then
-          local fake_P1 = P1
           print("currently_spectating: "..tostring(currently_spectating))
+          local fake_P1 = P1
           local fake_P2 = P2
+          refresh_based_on_own_mods(msg.opponent_settings)
+          refresh_based_on_own_mods(msg.player_settings, true)
+          -- mainly for spectator mode, those characters have already been loaded otherwise
+          character_loader_load(msg.player_settings.character)
+          character_loader_load(msg.opponent_settings.character)
+          character_loader_wait()
           P1 = Stack(1, "vs", msg.player_settings.panels_dir, msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
+          P1.enable_analytics = not currently_spectating and not replay_of_match_so_far
           P2 = Stack(2, "vs", msg.opponent_settings.panels_dir, msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
           if currently_spectating then
             P1.panel_buffer = fake_P1.panel_buffer
@@ -900,23 +1012,24 @@ function main_character_select()
       end
     end
 
+    -- those values span multiple 'map blocks'
     if current_server_supports_ranking then
-      draw_button(1,1,2,1,"match type desired","center","top")
-      draw_button(1,3,2,1,"level","center","top")
-      draw_button(1,5,2,1,"panels_selection","center","top")
+      draw_button(1,1,2,1,"__Mode","center","top")
+      draw_button(1,3,2,1,"__Level","center","top")
+      draw_button(1,5,2,1,"__Panels","center","top")
     else
-      draw_button(1,1,3,1,"level","center","top")
-      draw_button(1,4,3,1,"panels_selection","center","top")
+      draw_button(1,1,3,1,"__Level","center","top")
+      draw_button(1,4,3,1,"__Panels","center","top")
     end
-    draw_button(1,7,1,1,"ready","center","center")
+    draw_button(1,7,1,1,"__Ready","center","center")
 
     for i=2,X do
       for j=1,Y do
         local valign = "top"
-        if map[i][j] == "leave" or map[i][j] == "random" then
+        if map[current_page][i][j] == "__Leave" or map[current_page][i][j] == "__Random" then
           valign = "center"
         end
-        draw_button(i,j,1,1,character_display_names[map[i][j]] or map[i][j],"center",valign)
+        draw_button(i,j,1,1,map[current_page][i][j],"center",valign)
       end
     end
     local my_rating_difference = ""
@@ -985,6 +1098,9 @@ function main_character_select()
       gprintf(match_type, 0, 15, canvas_width, "center")
       gprintf(match_type_message, 0, 30, canvas_width, "center")
     end
+    if pages_amount ~= 1 then
+      gprintf("Page "..current_page.."/"..pages_amount, 0, 660, canvas_width, "center")
+    end
     wait()
 
     local ret = nil
@@ -993,7 +1109,8 @@ function main_character_select()
      local dx,dy = unpack(direction)
       local can_x,can_y = wrap(1, cursor_pos[1]+dx, X), wrap(1, cursor_pos[2]+dy, Y)
       while can_x ~= cursor_pos[1] or can_y ~= cursor_pos[2] do
-        if map[can_x][can_y] and map[can_x][can_y] ~= map[cursor_pos[1]][cursor_pos[2]] then
+        if map[current_page][can_x][can_y] and ( map[current_page][can_x][can_y] ~= map[current_page][cursor_pos[1]][cursor_pos[2]] or 
+          map[current_page][can_x][can_y] == "__Empty" ) then
           break
         end
         can_x,can_y = wrap(1, can_x+dx, X), wrap(1, can_y+dy, Y)
@@ -1021,8 +1138,12 @@ function main_character_select()
 
     variable_step(function()
       menu_clock = menu_clock + 1
+
+      character_loader_update()
+      refresh_loaded_and_ready(cursor_data[1].state,cursor_data[2].state)
+
       local up,down,left,right = {-1,0}, {1,0}, {0,-1}, {0,1}
-      local selectable = {panels_selection=true, level=true, ready=true}
+      local selectable = {__Panels=true, __Level=true, __Ready=true}
       if not currently_spectating then
         local KMax = 1
         if character_select_mode == "2p_local_vs" then
@@ -1031,24 +1152,28 @@ function main_character_select()
         for i=1,KMax do
           local k=K[i]
           local cursor = cursor_data[i]
-          if menu_up(k) then
+          if menu_prev_page(k) then
+            if not cursor.selected then current_page = bound(1, current_page-1, pages_amount) end
+          elseif menu_next_page(k) then
+            if not cursor.selected then current_page = bound(1, current_page+1, pages_amount) end
+          elseif menu_up(k) then
             if not cursor.selected then move_cursor(cursor.position,up) end
           elseif menu_down(k) then
             if not cursor.selected then move_cursor(cursor.position,down) end
           elseif menu_left(k) then
             if cursor.selected then
-              if cursor.state.cursor == "level" then
+              if cursor.state.cursor == "__Level" then
                 cursor.state.level = bound(1, cursor.state.level-1, 10)
-              elseif cursor.state.cursor == "panels_selection" then
+              elseif cursor.state.cursor == "__Panels" then
                 cursor.state.panels_dir = change_panels_dir(cursor.state.panels_dir,-1)
               end
             end
             if not cursor.selected then move_cursor(cursor.position,left) end
           elseif menu_right(k) then
             if cursor.selected then
-              if cursor.state.cursor == "level" then
+              if cursor.state.cursor == "__Level" then
                 cursor.state.level = bound(1, cursor.state.level+1, 10)
-              elseif cursor.state.cursor == "panels_selection" then
+              elseif cursor.state.cursor == "__Panels" then
                 cursor.state.panels_dir = change_panels_dir(cursor.state.panels_dir,1)
               end
             end
@@ -1056,7 +1181,7 @@ function main_character_select()
           elseif menu_enter(k) then
             if selectable[cursor.state.cursor] then
               cursor.selected = not cursor.selected
-            elseif cursor.state.cursor == "leave" then
+            elseif cursor.state.cursor == "__Leave" then
               if character_select_mode == "2p_net_vs" then
                 if not do_leave() then
                   ret = {main_dumb_transition, {main_select_mode, "Error when leaving online"}}
@@ -1064,20 +1189,23 @@ function main_character_select()
               else
                 ret = {main_select_mode}
               end
-            elseif cursor.state.cursor == "random" then
-              cursor.state.character = uniformly(characters)
-              play_selection_sfx(cursor.state.character)
-            elseif cursor.state.cursor == "match type desired" then
+            elseif cursor.state.cursor == "__Random" then
+              cursor.state.character = uniformly(characters_ids_for_current_theme)
+              characters[cursor.state.character]:play_selection_sfx()
+              character_loader_load(cursor.state.character)
+            elseif cursor.state.cursor == "__Mode" then
               cursor.state.ranked = not cursor.state.ranked
-            else
+            elseif cursor.state.cursor ~= "__Empty" then
               cursor.state.character = cursor.state.cursor
-              play_selection_sfx(cursor.state.character)
-              --When we select a character, move cursor to "ready"
-              cursor.state.cursor = "ready"
-              cursor.position = shallowcpy(name_to_xy["ready"])
+              cursor.state.character_display_name = characters[cursor.state.character].display_name
+              characters[cursor.state.character]:play_selection_sfx()
+              character_loader_load(cursor.state.character)
+              --When we select a character, move cursor to "__Ready"
+              cursor.state.cursor = "__Ready"
+              cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"])
             end
           elseif menu_escape(k) then
-            if cursor.state.cursor == "leave" then
+            if cursor.state.cursor == "__Leave" then
               if character_select_mode == "2p_net_vs" then
                 if not do_leave() then
                   ret = {main_dumb_transition, {main_select_mode, "Error when leaving online"}}
@@ -1087,11 +1215,11 @@ function main_character_select()
               end
             end
             cursor.selected = false
-            cursor.position = shallowcpy(name_to_xy["leave"])
+            cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Leave"])
           end
           if cursor.state ~= nil then
-            cursor.state.cursor = map[cursor.position[1]][cursor.position[2]]
-            cursor.state.ready = cursor.selected and cursor.state.cursor=="ready"
+            cursor.state.cursor = map[current_page][cursor.position[1]][cursor.position[2]]
+            cursor.state.wants_ready = cursor.selected and cursor.state.cursor=="__Ready"
           end
         end
         -- update config, does not redefine it
@@ -1102,14 +1230,17 @@ function main_character_select()
           config.panels_dir_when_not_using_set_from_assets_folder = cursor_data[1].state.panels_dir
           config.panels_dir = config.panels_dir_when_not_using_set_from_assets_folder
         end
-        if character_select_mode == "2p_local_vs" then
+
+        if character_select_mode == "2p_local_vs" then -- this is registered for future entering of the lobby
           global_op_state = shallowcpy(cursor_data[2].state)
-          global_op_state.ready = false
+          global_op_state.wants_ready = false
         end
+
         if character_select_mode == "2p_net_vs" and not content_equal(cursor_data[1].state, prev_state) and not currently_spectating then
           json_send({menu_state=cursor_data[1].state})
         end
         prev_state = shallowcpy(cursor_data[1].state)
+
       else -- (we are are spectating)
         if menu_escape(K[1]) then
           do_leave()
@@ -1122,6 +1253,7 @@ function main_character_select()
     end
     if cursor_data[1].state.ready and character_select_mode == "1p_vs_yourself" then
       P1 = Stack(1, "vs", cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+      P1.enable_analytics = true
       P1.garbage_target = P1
       make_local_panels(P1, "000000")
       make_local_gpanels(P1, "000000")
@@ -1129,6 +1261,7 @@ function main_character_select()
       return main_dumb_transition, {main_local_vs_yourself, "Game is starting...", 30, 30}
     elseif cursor_data[1].state.ready and character_select_mode == "2p_local_vs" and cursor_data[2].state.ready then
       P1 = Stack(1, "vs", cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+      P1.enable_analytics = true
       P2 = Stack(2, "vs", cursor_data[2].state.panels_dir, cursor_data[2].state.level, cursor_data[2].state.character)
       P1.garbage_target = P2
       P2.garbage_target = P1
@@ -1446,77 +1579,8 @@ function main_net_vs_setup(ip)
   end
   connected_server_ip = ip
   logged_in = false
-  if true then return main_net_vs_lobby end
-  local my_level, to_print, fake_P2 = 5, nil, P2
-  local k = K[1]
-  while got_opponent == nil do
-    gprint("Waiting for opponent...", unpack(main_menu_screen_pos))
-    wait()
-    if not do_messages() then
-      return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
-    end
-  end
-  while P1_level == nil or P2_level == nil do
-    to_print = (P1_level and "L" or"Choose l") .. "evel: "..my_level..
-        "\nOpponent's level: "..(P2_level or "???")
-    gprint(to_print, unpack(main_menu_screen_pos))
-    wait()
-    if not do_messages() then
-      return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
-    end
-    variable_step(function()
-      if P1_level then
-      elseif menu_enter(k) then
-        P1_level = my_level
-        net_send("L"..(({[10]=0})[my_level] or my_level))
-      elseif menu_up(k) or menu_right(k) then
-        my_level = bound(1,my_level+1,10)
-      elseif menu_down(k) or menu_left(k) then
-        my_level = bound(1,my_level-1,10)
-      end
-    end)
-  end
-  P1 = Stack(1, "vs", config.panels_dir, P1_level)
-  P2 = Stack(2, "vs", config.panels_dir, P2_level)
-  if currently_spectating then
-    P1.panel_buffer = fake_P1.panel_buffer
-    P1.gpanel_buffer = fake_P1.gpanel_buffer
-  end
-  P2.panel_buffer = fake_P2.panel_buffer
-  P2.gpanel_buffer = fake_P2.gpanel_buffer
-  P1.garbage_target = P2
-  P2.garbage_target = P1
-  move_stack(P2,2)
-  replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
-              P1_level=P1_level,P2_level=P2_level,
-              ranked=false, P1_name=my_name, P2_name=op_name,
-              P1_char=P1.character, P2_char=P2.character,
-              do_countdown = true}
-  ask_for_gpanels("000000")
-  ask_for_panels("000000")
-  if not currently_spectating then
-    to_print = "Level: "..my_level.."\nOpponent's level: "..(P2_level or "???")
-  else
-    to_print = "P1 Level: "..my_level.."\nP2 level: "..(P2_level or "???")
-  end
-  for i=1,30 do
-    gprint(to_print,unpack(main_menu_screen_pos))
-    wait()
-    if not do_messages() then
-      return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
-    end
-  end
-  while P1.panel_buffer == "" or P2.panel_buffer == ""
-    or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
-    gprint(to_print,unpack(main_menu_screen_pos))
-    wait()
-    if not do_messages() then
-      return main_dumb_transition, {main_select_mode, "Disconnected from server.\n\nReturning to main menu...", 60, 300}
-    end
-  end
-  P1:starting_state()
-  P2:starting_state()
-  return main_net_vs
+  
+  return main_net_vs_lobby
 end
 
 function main_net_vs()
@@ -1534,7 +1598,6 @@ function main_net_vs()
     -- love.timer.sleep(0.030)
     for _,msg in ipairs(this_frame_messages) do
       if msg.leave_room then
-        write_char_sel_settings_to_file()
         return main_net_vs_lobby
       end
     end
@@ -1580,7 +1643,7 @@ function main_net_vs()
       end
     end
 
-    print(P1.CLOCK, P2.CLOCK)
+    --print(P1.CLOCK, P2.CLOCK)
     if (P1 and P1.play_to_end) or (P2 and P2.play_to_end) then
       if not P1.game_over then
         if currently_spectating then
@@ -1624,6 +1687,7 @@ function main_net_vs()
       outcome_claim = P1.player_number
     end
     if end_text then
+      analytics_game_ends()
       undo_stonermode()
       json_send({game_over=true, outcome=outcome_claim})
       local now = os.date("*t",to_UTC(os.time()))
@@ -1669,63 +1733,6 @@ function main_local_vs_setup()
   return main_character_select
 end
 
-main_local_vs_setup_old = multi_func(function()
-  local K = K
-  local chosen, maybe = {}, {5,5}
-  local P1_level, P2_level = nil, nil
-  while chosen[1] == nil or chosen[2] == nil do
-    to_print = (chosen[1] and "" or "Choose ") .. "P1 level: "..maybe[1].."\n"
-        ..(chosen[2] and "" or "Choose ") .. "P2 level: "..(maybe[2])
-    gprint(to_print, unpack(main_menu_screen_pos))
-    wait()
-    variable_step(function()
-      for i=1,2 do
-        local k=K[i]
-        if menu_escape(k) then
-          if chosen[i] then
-            chosen[i] = nil
-          else
-            return main_select_mode
-          end
-        elseif menu_enter(k) then
-          chosen[i] = maybe[i]
-        elseif menu_up(k) or menu_right(k) then
-          if not chosen[i] then
-            maybe[i] = bound(1,maybe[i]+1,10)
-          end
-        elseif menu_down(k) or menu_left(k) then
-          if not chosen[i] then
-            maybe[i] = bound(1,maybe[i]-1,10)
-          end
-        end
-      end
-    end)
-  end
-  to_print = "P1 level: "..maybe[1].."\nP2 level: "..(maybe[2])
-  P1 = Stack(1, "vs", config.panels_dir, chosen[1])
-  P2 = Stack(2, "vs", config.panels_dir, chosen[2])
-  P1.garbage_target = P2
-  P2.garbage_target = P1
-  move_stack(P2,2)
-  -- TODO: this does not correctly implement starting configurations.
-  -- Starting configurations should be identical for visible blocks, and
-  -- they should not be completely flat.
-  --
-  -- In general the block-generation logic should be the same as the server's, so
-  -- maybe there should be only one implementation.
-  make_local_panels(P1, "000000")
-  make_local_gpanels(P1, "000000")
-  make_local_panels(P2, "000000")
-  make_local_gpanels(P2, "000000")
-  for i=1,30 do
-    gprint(to_print,unpack(main_menu_screen_pos))
-    wait()
-  end
-  P1:starting_state()
-  P2:starting_state()
-  return main_local_vs
-end)
-
 function main_local_vs()
   -- TODO: replay!
   bg = IMG_stages[math.random(#IMG_stages)]
@@ -1754,6 +1761,7 @@ function main_local_vs()
       end_text = "P1 wins ^^"
     end
     if end_text then
+      analytics_game_ends()
       return main_dumb_transition, {main_character_select, end_text, 45, nil, winSFX}
     end
   end
@@ -1784,6 +1792,7 @@ function main_local_vs_yourself()
         end
       end)
     if end_text then
+      analytics_game_ends()
       return main_dumb_transition, {main_character_select, end_text, 45}
     end
   end
@@ -1801,6 +1810,10 @@ end
 
 function main_replay_vs()
   local replay = replay.vs
+  if replay == nil then
+    return main_dumb_transition, {main_select_mode, "I don't have a vs replay :("}
+  end
+  fallback_when_missing = nil
   bg = IMG_stages[math.random(#IMG_stages)]
   P1 = Stack(1, "vs", config.panels_dir, replay.P1_level or 5)
   P2 = Stack(2, "vs", config.panels_dir, replay.P2_level or 5)
@@ -1820,6 +1833,11 @@ function main_replay_vs()
   P2.max_runs_per_frame = 1
   P1.character = replay.P1_char
   P2.character = replay.P2_char
+  refresh_based_on_own_mods(P1)
+  refresh_based_on_own_mods(P2, true)
+  character_loader_load(P1.character)
+  character_loader_load(P2.character)
+  character_loader_wait()
   my_name = replay.P1_name or "Player 1"
   op_name = replay.P2_name or "Player 2"
   if character_select_mode == "2p_net_vs" then
@@ -2189,8 +2207,7 @@ function main_show_custom_graphics_readme(idx)
 
   local custom_graphics_readme = read_txt_file("Custom Graphics Readme.txt")
   while true do
-    gprint(custom_graphics_readme, 100, 150)
-    testpencel()
+    gprint(custom_graphics_readme, 15, 15)
     do_menu_function = false
     wait()
     local ret = nil
@@ -2214,7 +2231,34 @@ function main_show_custom_sounds_readme(idx)
   end
   local custom_sounds_readme = read_txt_file("Custom Sounds Readme.txt")
   while true do
-    gprint(custom_sounds_readme, 30, 150)
+    gprint(custom_sounds_readme, 15, 15)
+    do_menu_function = false
+    wait()
+    local ret = nil
+    variable_step(function()
+      if menu_escape(K[1]) or menu_enter(K[1]) then
+        ret = {main_options, {idx}}
+      end
+    end)
+    if ret then
+      return unpack(ret)
+    end
+  end
+end
+
+function main_show_custom_characters_readme(idx)
+  for _,current_character in ipairs(default_characters_ids) do
+    if not love.filesystem.getInfo("characters/"..prefix_of_ignored_dirs..current_character) then
+      print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
+      gprint("Hold on.  Copying an example folder to make this easier...\n\nThis may take a few seconds or maybe even a minute or two.\n\nDon't worry if the window goes inactive or \"not responding\"", 280, 280)
+      wait()
+      recursive_copy("characters/"..current_character, "characters/"..prefix_of_ignored_dirs..current_character)
+    end
+  end
+
+  local custom_characters_readme = read_txt_file("Custom Characters Readme.txt")
+  while true do
+    gprint(custom_characters_readme, 15, 15)
     do_menu_function = false
     wait()
     local ret = nil
@@ -2239,7 +2283,9 @@ function main_options(starting_idx)
   memory_before_options_menu = {  config.assets_dir or default_assets_dir,
                                   config.panels_dir_when_not_using_set_from_assets_folder or default_panels_dir,
                                   config.sounds_dir or default_sounds_dir,
-                                  config.use_panels_from_assets_folder }
+                                  config.use_panels_from_assets_folder,
+                                  config.use_default_characters,
+                                  config.enable_analytics }
   --make so we can get "anonymously" from save_replays_publicly_choices["anonymously"]
   for k,v in ipairs(save_replays_publicly_choices) do
     save_replays_publicly_choices[v] = v
@@ -2270,9 +2316,9 @@ function main_options(starting_idx)
     --options menu table reference:
     --{[1]"Option Name", [2]current or default value, [3]type, [4]min or bool value or choices_table,
     -- [5]max, [6]sound_source, [7]selectable, [8]next_func, [9]play_while selected}
-    {"Master Volume", config.master_volume or 100, "numeric", 0, 100, sounds.music.characters["lip"].normal_music, true, nil, true},
+    {"Master Volume", config.master_volume or 100, "numeric", 0, 100, characters[config.character].musics.normal_music, true, nil, true},
     {"SFX Volume", config.SFX_volume or 100, "numeric", 0, 100, sounds.SFX.cur_move, true},
-    {"Music Volume", config.music_volume or 100, "numeric", 0, 100, sounds.music.characters["lip"].normal_music, true, nil, true},
+    {"Music Volume", config.music_volume or 100, "numeric", 0, 100, characters[config.character].musics.normal_music, true, nil, true},
     {"Debug Mode", on_off_text[config.debug_mode or false], "bool", false, nil, nil,false},
     {"Save replays publicly",
       save_replays_publicly_choices[config.save_replays_publicly]
@@ -2286,7 +2332,10 @@ function main_options(starting_idx)
     {"Ready countdown", on_off_text[config.ready_countdown_1P or false], "bool", true, nil, nil,false},
     {"Show FPS", on_off_text[config.show_fps or false], "bool", true, nil, nil,false},
     {"Use panels from assets folder", on_off_text[config.use_panels_from_assets_folder], "bool", true, nil, nil,false},
+    {"Use default characters", on_off_text[config.use_default_characters], "bool", true, nil, nil,false},
     {"Danger music change-back delay", on_off_text[config.danger_music_changeback_delay or false], "bool", false, nil, nil, false},
+    {"About custom characters", "", "function", nil, nil, nil, nil, main_show_custom_characters_readme},
+    {"Enable analytics", on_off_text[config.enable_analytics or false], "bool", false, nil, nil, false},
     {"Back", "", nil, nil, nil, nil, false, main_select_mode}
   }
   local function print_stuff()
@@ -2403,9 +2452,15 @@ function main_options(starting_idx)
           elseif items[active_idx][1] == "Use panels from assets folder" then
             config.use_panels_from_assets_folder = not config.use_panels_from_assets_folder
             items[active_idx][2] = on_off_text[config.use_panels_from_assets_folder]
+          elseif items[active_idx][1] == "Use default characters" then
+            config.use_default_characters = not config.use_default_characters
+            items[active_idx][2] = on_off_text[config.use_default_characters]
           elseif items[active_idx][1] == "Danger music change-back delay" then
             config.danger_music_changeback_delay = not config.danger_music_changeback_delay
             items[active_idx][2] = on_off_text[config.danger_music_changeback_delay]
+          elseif items[active_idx][1] == "Enable analytics" then
+            config.enable_analytics = not config.enable_analytics
+            items[active_idx][2] = on_off_text[config.enable_analytics]
           end
           --add any other bool config updates here
         elseif items[active_idx][3] == "numeric" then
@@ -2417,15 +2472,9 @@ function main_options(starting_idx)
             config.SFX_volume = items[2][2]
             items[2][6]:setVolume(config.SFX_volume/100) --do just the one sound effect until we deselect
           end
-          if active_idx == 2 and deselected_this_frame then --SFX Volume
-            set_volume(sounds.SFX, config.SFX_volume/100)
-          end
           if config.music_volume ~= items[3][2] then --music volume should be updated
             config.music_volume = items[3][2]
             items[3][6]:setVolume(config.music_volume/100) --do just the one music source until we deselect
-          end
-          if active_idx == 3 and deselected_this_frame then --Music Volume
-            set_volume(sounds.music, config.music_volume/100)
           end
           --add any other numeric config updates here
         elseif items[active_idx][3] == "multiple choice" then
@@ -2488,7 +2537,17 @@ function exit_options_menu()
     config.panels_dir = config.panels_dir_when_not_using_set_from_assets_folder
   end
   write_conf_file()
-  if config.assets_dir ~= memory_before_options_menu[1] then
+
+  if config.assets_dir ~= memory_before_options_menu[1] 
+    or config.use_default_characters ~= memory_before_options_menu[5]
+    or config.sounds_dir ~= memory_before_options_menu[3] then
+    gprint("reloading characters...", unpack(main_menu_screen_pos))
+    wait()
+    characters_init()
+  end
+
+  if config.assets_dir ~= memory_before_options_menu[1] 
+    or config.use_default_characters ~= memory_before_options_menu[5] then
     gprint("reloading graphics...", unpack(main_menu_screen_pos))
     wait()
     graphics_init()
@@ -2502,11 +2561,22 @@ function exit_options_menu()
     panels_init()
   end
 
-  if config.sounds_dir ~= memory_before_options_menu[3] then
+  if config.sounds_dir ~= memory_before_options_menu[3] 
+    or config.use_default_characters ~= memory_before_options_menu[5] then
     gprint("reloading sounds...", unpack(main_menu_screen_pos))
     wait()
     sound_init()
+  else
+    apply_config_volume()
   end
+
+  if config.enable_analytics ~= memory_before_options_menu[6] then
+    print("loading analytics...")
+    gprint("loading analytics...", unpack(main_menu_screen_pos))
+    wait()
+    analytics_init()
+  end
+
   memory_before_options_menu = nil
   return main_select_mode
 end
@@ -2549,27 +2619,38 @@ function main_set_name()
 end
 
 function main_music_test()
-  local index = 1
-  local tracks = {}
-  for k, v in pairs(sounds.music.characters) do
-    tracks[#tracks+1] = {
-      name = k .. "_normal",
-      char = k,
-      type = "normal_music",
-      start = v.normal_music_start or zero_sound,
-      loop = v.normal_music
-    }
-    tracks[#tracks+1] = {
-      name = k .. "_danger",
-      char = k,
-      type = "danger_music",
-      start = v.danger_music_start or zero_sound,
-      loop = v.danger_music
-    }
+  gprint("Loading required sounds... (this may take a while)", unpack(main_menu_screen_pos))
+  wait()
+  -- loads music for characters that are not fully loaded
+  for _,character_id in ipairs(characters_ids_for_current_theme) do
+    if not characters[character_id].fully_loaded then
+      characters[character_id]:sound_init(true,false)
+    end
   end
 
-  -- debug scroll to music
-  while tracks[index].name ~= "lip_normal" do index = index + 1 end
+  local index = 1
+  local tracks = {}
+
+  for _,character_id in ipairs(characters_ids_for_current_theme) do
+    local character = characters[character_id]
+    tracks[#tracks+1] = {
+      name = character.display_name .. ": normal_music",
+      char = character_id,
+      type = "normal_music",
+      start = character.musics.normal_music_start or zero_sound,
+      loop = character.musics.normal_music
+    }
+    if character.musics.danger_music then
+      tracks[#tracks+1] = {
+        name = character.display_name .. ": danger_music",
+        char = character_id,
+        type = "danger_music",
+        start = character.musics.danger_music_start or zero_sound,
+        loop = character.musics.danger_music
+      }
+    end
+  end
+
   -- initial song starts here
   find_and_add_music(tracks[index].char, tracks[index].type)
 
@@ -2595,6 +2676,14 @@ function main_music_test()
         find_and_add_music(tracks[index].char, tracks[index].type)
       end
       if menu_escape(K[1]) then
+
+        -- unloads music for characters that are not fully loaded (it has been loaded when entering this submenu)
+        for _,character_id in ipairs(characters_ids_for_current_theme) do
+          if not characters[character_id].fully_loaded then
+            characters[character_id]:sound_uninit()
+          end
+        end
+
         ret = {main_select_mode}
       end
     end)
@@ -2613,10 +2702,10 @@ end
 
 function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
   if P1 and P1.character then
-    stop_character_sounds(P1.character)
+    characters[P1.character]:stop_sounds()
   end
   if P2 and P2.character then
-    stop_character_sounds(P2.character)
+    characters[P2.character]:stop_sounds()
   end
   love.audio.stop()
   stop_the_music()
@@ -2678,22 +2767,13 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
   end
 end
 
-function write_char_sel_settings_to_file()
-  if not currently_spectating and my_state then
-    gprint("saving character select settings...")
-    if not closing then
-      wait()
-    end
-    config.character = my_state.character
-    config.level = my_state.level
-    config.ranked = my_state.ranked
-    write_conf_file()
-  end
+function exit_game(...)
+ love.event.quit()
+ return main_select_mode
 end
 
 function love.quit()
-  closing = true
+  love.audio.stop()
   config.window_x, config.window_y, config.display = love.window.getPosition()
   write_conf_file()
-  write_char_sel_settings_to_file()
 end
