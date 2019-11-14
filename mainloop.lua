@@ -34,6 +34,9 @@ function fmainloop()
   gprint("Reading config file", unpack(main_menu_screen_pos))
   wait()
   read_conf_file() -- TODO: stop making new config files
+  gprint("Loading localization...", unpack(main_menu_screen_pos))
+  wait()
+  Localization.init(localization)
   local x,y, display = love.window.getPosition()
   love.window.setPosition(
     config.window_x or x,
@@ -54,18 +57,13 @@ function fmainloop()
   gprint("Preloading stages...", unpack(main_menu_screen_pos))
   wait()
   stages_init()
-  gprint("Loading localization...", unpack(main_menu_screen_pos))
-  wait()
-  Localization.init(localization)
   gprint("Loading panels...", unpack(main_menu_screen_pos))
   wait()
   panels_init() -- load panels
   gprint("Loading analytics...", unpack(main_menu_screen_pos))
   wait()
   analytics_init()
-  apply_config_volume()
-  -- NOCOMMIT
-  join_community_msg = loc("join_community").."\ndiscord.panelattack.com"
+  apply_config_volume()  
   while true do
     leftover_time = 1/120
     consuming_timesteps = false

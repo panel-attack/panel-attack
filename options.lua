@@ -172,18 +172,24 @@ function options.main(starting_idx)
   local items, active_idx = {}, starting_idx or 1
   local k = K[1]
   local selected, deselected_this_frame, adjust_active_value = false, false, false
-  local save_replays_publicly_choices = {"with my name", "anonymously", "not at all"}
-  local use_music_from_choices = {"stage", "characters"}
-  local on_off_text = {[true]="On", [false]="Off"}
+  local save_replays_publicly_choices = {{"with my name", "op_replay_public_name"}, {"anonymously", "op_replay_public_anonymously"}, {"not at all", "op_replay_public_none"}}
+  local use_music_from_choices = {{"stage","op_use_music_from_stages"}, {"characters","op_use_music_from_characters"}}
+  local on_off_text = {[true]={"On","op_on"}, [false]={"Off","op_off"}}
+  local langs = select(1, localization:get_list_codes_langs())
+  local language_choices = {}
+  for k,v in ipairs(langs) do
+    language_choices[k] = {v, "op_language_name"}
+  end
+
   memory_before_options_menu = { theme=config.theme,--this one is actually updated with the menu and change upon leaving, be careful!
                                 enable_analytics=config.enable_analytics,
                                 use_music_from=config.use_music_from }
-  --make so we can get "anonymously" from save_replays_publicly_choices["anonymously"]
+
   for k,v in ipairs(save_replays_publicly_choices) do
-    save_replays_publicly_choices[v] = v
+    save_replays_publicly_choices[v[1]] = v
   end
   for k,v in ipairs(use_music_from_choices) do
-    use_music_from_choices[v] = v
+    use_music_from_choices[v[1]] = v
   end
 
   local function get_dir_set(set,path)
@@ -191,15 +197,13 @@ function options.main(starting_idx)
     for k,v in ipairs(raw_dir_list) do
       local start_of_v = string.sub(v,0,string.len(prefix_of_ignored_dirs))
       if love.filesystem.getInfo(path.."/"..v) and start_of_v ~= prefix_of_ignored_dirs then
-        set[#set+1] = v
+        set[#set+1] = {v, nil}
       end
     end
   end
 
   local themes_set = {}
   get_dir_set(themes_set,"themes")
-  local panels_set = {}
-  get_dir_set(panels_set,"panels")
 
   local normal_music_for_sound_option = nil
   local function update_normal_music_for_sound_volume_option()
@@ -226,15 +230,16 @@ function options.main(starting_idx)
   update_normal_music_for_sound_volume_option()
   items = {
     --options menu table reference:
-    --{[1]"Option Name", [2] loc key, [3]current or default value, [4]type, [5]min or bool value or choices_table,
+    --{[1]"Option Name", [2] loc key, [3]current or default value, [4]type, [5]min or bool value or choices_table (composed of {value, loc_key}),
     -- [6]max, [7]sound_source, [8]selectable, [9]next_func, [10]play_while selected}
-    {"Language", "op_language", localization:get_language(), "multiple choice", select(1, localization:get_list_codes_langs())},
+    {"Language", "op_language", {localization:get_language(), "op_language_name"}, "multiple choice", language_choices},
     {"Master Volume", "op_vol", config.master_volume, "numeric", 0, 100, normal_music_for_sound_option, true, nil, true},
     {"SFX Volume", "op_vol_sfx", config.SFX_volume, "numeric", 0, 100, themes[config.theme].sounds.cur_move, true},
     {"Music Volume", "op_vol_music", config.music_volume, "numeric", 0, 100, normal_music_for_sound_option, true, nil, true},
     {"Debug Mode", "op_debug", on_off_text[config.debug_mode], "bool", false, nil, nil,false},
-    {"Save replays publicly", "op_replay_public", save_replays_publicly_choices[config.save_replays_publicly] or save_replays_publicly_choices["with my name"], "multiple choice", save_replays_publicly_choices},
-    {"Theme", "op_theme", config.theme, "multiple choice", themes_set},
+    {"Save replays publicly", "op_replay_public", save_replays_publicly_choices[config.save_replays_publicly] 
+      or save_replays_publicly_choices["with my name"], "multiple choice", save_replays_publicly_choices},
+    {"Theme", "op_theme", {config.theme, nil}, "multiple choice", themes_set},
     {"Ready countdown", "op_countdown", on_off_text[config.ready_countdown_1P], "bool", true, nil, nil,false},
     {"Show FPS", "op_fps", on_off_text[config.show_fps], "bool", true, nil, nil,false},
     {"Show ingame infos", "op_ingame_infos", on_off_text[config.show_ingame_infos], "bool", true, nil, nil,false},
@@ -262,7 +267,11 @@ function options.main(starting_idx)
       else
         to_print2 = to_print2 .. "                  "
       end
-      to_print2 = to_print2.. items[i][3]
+      if items[i][4] == "multiple choice" or items[i][4] == "bool" then
+        to_print2 = to_print2.. (items[i][3][2] and loc(items[i][3][2]) or items[i][3][1])
+      else
+        to_print2 = to_print2..items[i][3]
+      end
       if active_idx == i and selected then
         to_print2 = to_print2 .. " >"
       end
@@ -357,7 +366,10 @@ function options.main(starting_idx)
           elseif items[active_idx][1] == "Show FPS" then
             config.show_fps = not config.show_fps
             items[active_idx][3] = on_off_text[config.show_fps]
-            elseif items[active_idx][1] == "Show ingame infos" then
+            elseif items[active_idx][1] == "Debug Mode" then
+            config.debug_mode = not config.debug_mode
+            items[active_idx][3] = on_off_text[config.debug_mode]
+          elseif items[active_idx][1] == "Show ingame infos" then
             config.show_ingame_infos = not config.show_ingame_infos
             items[active_idx][3] = on_off_text[config.show_ingame_infos]
           elseif items[active_idx][1] == "Danger music change-back delay" then
@@ -399,17 +411,17 @@ function options.main(starting_idx)
             items[active_idx][3] = items[active_idx][5][wrap(1,active_choice_num + 1, #items[active_idx][5])]
           end
           if items[active_idx][1] == "Save replays publicly" then
-            config.save_replays_publicly = items[active_idx][3]
+            config.save_replays_publicly = items[active_idx][3][1]
           -- don't change config.theme directly here as it is used while being in this menu! instead we change it upon leaving
           elseif items[active_idx][1] == "Theme" then
-            memory_before_options_menu.theme = items[active_idx][3]
+            memory_before_options_menu.theme = items[active_idx][3][1]
           elseif items[active_idx][1] == "Use music from" then
-            config.use_music_from = items[active_idx][3]
+            config.use_music_from = items[active_idx][3][1]
             update_normal_music_for_sound_volume_option()
             items[2][7] = normal_music_for_sound_option
             items[4][7] = normal_music_for_sound_option
           elseif items[active_idx][1] == "Language" then
-            localization:set_language(items[active_idx][3])
+            localization:set_language(items[active_idx][3][1])
           end
           --add any other multiple choice config updates here
         end
