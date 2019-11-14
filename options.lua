@@ -175,10 +175,9 @@ function options.main(starting_idx)
   local save_replays_publicly_choices = {{"with my name", "op_replay_public_name"}, {"anonymously", "op_replay_public_anonymously"}, {"not at all", "op_replay_public_none"}}
   local use_music_from_choices = {{"stage","op_use_music_from_stages"}, {"characters","op_use_music_from_characters"}}
   local on_off_text = {[true]={"On","op_on"}, [false]={"Off","op_off"}}
-  local langs = select(1, localization:get_list_codes_langs())
   local language_choices = {}
-  for k,v in ipairs(langs) do
-    language_choices[k] = {v, "op_language_name"}
+  for k,v in ipairs(localization:get_list_codes()) do
+    language_choices[k] = {v, "LANG"}
   end
 
   memory_before_options_menu = { theme=config.theme,--this one is actually updated with the menu and change upon leaving, be careful!
@@ -232,7 +231,7 @@ function options.main(starting_idx)
     --options menu table reference:
     --{[1]"Option Name", [2] loc key, [3]current or default value, [4]type, [5]min or bool value or choices_table (composed of {value, loc_key}),
     -- [6]max, [7]sound_source, [8]selectable, [9]next_func, [10]play_while selected}
-    {"Language", "op_language", {localization:get_language(), "op_language_name"}, "multiple choice", language_choices},
+    {"Language", "op_language", {localization:get_language(), "LANG"}, "multiple choice", language_choices},
     {"Master Volume", "op_vol", config.master_volume, "numeric", 0, 100, normal_music_for_sound_option, true, nil, true},
     {"SFX Volume", "op_vol_sfx", config.SFX_volume, "numeric", 0, 100, themes[config.theme].sounds.cur_move, true},
     {"Music Volume", "op_vol_music", config.music_volume, "numeric", 0, 100, normal_music_for_sound_option, true, nil, true},

@@ -42,25 +42,25 @@ function fmainloop()
     config.window_x or x,
     config.window_y or y,
     config.display or display)
-  gprint("Copying Puzzles Readme")
+  gprint(loc("ld_puzzles"), unpack(main_menu_screen_pos))
   wait()
   copy_file("readme_puzzles.txt", "puzzles/README.txt")
-  gprint("Reading replay file", unpack(main_menu_screen_pos))
+  gprint(loc("ld_replay"), unpack(main_menu_screen_pos))
   wait()
   read_replay_file()
-  gprint("Loading theme...", unpack(main_menu_screen_pos))
+  gprint(loc("ld_theme"), unpack(main_menu_screen_pos))
   wait()
   theme_init()
-  gprint("Preloading characters...", unpack(main_menu_screen_pos))
+  gprint(loc("ld_characters"), unpack(main_menu_screen_pos))
   wait()
   characters_init()
-  gprint("Preloading stages...", unpack(main_menu_screen_pos))
+  gprint(loc("ld_stages"), unpack(main_menu_screen_pos))
   wait()
   stages_init()
-  gprint("Loading panels...", unpack(main_menu_screen_pos))
+  gprint(loc("ld_panels"), unpack(main_menu_screen_pos))
   wait()
   panels_init() -- load panels
-  gprint("Loading analytics...", unpack(main_menu_screen_pos))
+  gprint(loc("ld_analytics"), unpack(main_menu_screen_pos))
   wait()
   analytics_init()
   apply_config_volume()  
@@ -1189,7 +1189,7 @@ do
         end
         to_print = to_print .. "   " .. items[i][1] .. "\n"
       end
-      gprint("Puzzles:", unpack(main_menu_screen_pos) )
+      gprint(loc("pz_puzzles"), unpack(main_menu_screen_pos) )
       gprint(loc("pz_info"), main_menu_screen_pos[1]-280, main_menu_screen_pos[2]+220)
       gprint(arrow, main_menu_screen_pos[1]+100, main_menu_screen_pos[2])
       gprint(to_print, main_menu_screen_pos[1]+100, main_menu_screen_pos[2])
@@ -1219,7 +1219,7 @@ do
 end
 
 function main_config_input()
-  local pretty_names = {loc("up"), loc("down"), loc("left"), loc("right"), "A", "B", "L", "R", loc("start")}
+  local pretty_names = {loc("up"), loc("down"), loc("left"), loc("right"), "A", "B", "X", "Y", "L", "R", loc("start")}
   local items, active_idx = {}, 1
   local k = K[1]
   local active_player = 1
@@ -1281,7 +1281,7 @@ function main_config_input()
         if active_idx <= #key_names then
           idxs_to_set = {active_idx}
         elseif active_idx == #key_names + 1 then
-          idxs_to_set = {1,2,3,4,5,6,7,8}
+          idxs_to_set = {1,2,3,4,5,6,7,8,9,10,11}
         else
           ret = {items[active_idx][3], items[active_idx][4]}
         end
@@ -1339,10 +1339,15 @@ end
 function main_music_test()
   gprint(loc("op_music_load"), unpack(main_menu_screen_pos))
   wait()
-  -- loads music for characters that are not fully loaded
+  -- load music for characters/stages that are not fully loaded
   for _,character_id in ipairs(characters_ids_for_current_theme) do
     if not characters[character_id].fully_loaded then
       characters[character_id]:sound_init(true,false)
+    end
+  end
+  for _,stage_id in ipairs(stages_ids_for_current_theme) do
+    if not stages[stage_id].fully_loaded then -- we perform the same although currently no stage are being loaded at this point
+      stages[stage_id]:sound_init(true,false)
     end
   end
 
@@ -1352,25 +1357,48 @@ function main_music_test()
   for _,character_id in ipairs(characters_ids_for_current_theme) do
     local character = characters[character_id]
     tracks[#tracks+1] = {
+      is_character = true,
       name = character.display_name .. ": normal_music",
-      char = character_id,
+      id = character_id,
       type = "normal_music",
       start = character.musics.normal_music_start or zero_sound,
       loop = character.musics.normal_music
     }
     if character.musics.danger_music then
       tracks[#tracks+1] = {
+        is_character = true,
         name = character.display_name .. ": danger_music",
-        char = character_id,
+        id = character_id,
         type = "danger_music",
         start = character.musics.danger_music_start or zero_sound,
         loop = character.musics.danger_music
       }
     end
   end
+  for _,stage_id in ipairs(stages_ids_for_current_theme) do
+    local stage = stages[stage_id]
+    tracks[#tracks+1] = {
+      is_character = false,
+      name = stage.display_name .. ": normal_music",
+      id = stage_id,
+      type = "normal_music",
+      start = stage.musics.normal_music_start or zero_sound,
+      loop = stage.musics.normal_music
+    }
+    if stage.musics.danger_music then
+      tracks[#tracks+1] = {
+        is_character = false,
+        name = stage.display_name .. ": danger_music",
+        id = stage_id,
+        type = "danger_music",
+        start = stage.musics.danger_music_start or zero_sound,
+        loop = stage.musics.danger_music
+      }
+    end
+  end
 
   -- initial song starts here
-  find_and_add_music(tracks[index].char, tracks[index].type)
+  find_and_add_music(tracks[index].is_character and characters[tracks[index].id].musics or stages[tracks[index].id].musics, tracks[index].type)
 
   while true do
     tp =  loc("op_music_current") .. tracks[index].name
@@ -1391,14 +1419,19 @@ function main_music_test()
       if index > #tracks then index = 1 end
       if index < 1 then index = #tracks end
       if menu_left(K[1]) or menu_right(K[1]) then
-        find_and_add_music(tracks[index].char, tracks[index].type)
+        find_and_add_music(tracks[index].is_character and characters[tracks[index].id].musics or stages[tracks[index].id].musics, tracks[index].type)
       end
-      if menu_escape(K[1]) then
 
-        -- unloads music for characters that are not fully loaded (it has been loaded when entering this submenu)
+      if menu_escape(K[1]) then
+        -- unloads music for characters/stages that are not fully loaded (they have been loaded when entering this submenu)
         for _,character_id in ipairs(characters_ids_for_current_theme) do
           if not characters[character_id].fully_loaded then
             characters[character_id]:sound_uninit()
+          end
+        end
+        for _,stage_id in ipairs(stages_ids_for_current_theme) do
+          if not stages[stage_id].fully_loaded then
+            stages[stage_id]:sound_uninit()
           end
         end
 

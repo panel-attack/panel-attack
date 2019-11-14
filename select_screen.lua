@@ -558,7 +558,7 @@ function select_screen.main()
       end
     end
     if str ~= "__Empty" and str ~= "__Reserved" then
-      local loc_str = {Level= loc("level"), Panels=loc("panels"), Ready=loc("ready"), Random=loc("random"), Leave=loc("leave")}
+      local loc_str = {Level= loc("level"), Mode=loc("mode"), Stage=loc("stage"), Panels=loc("panels"), Ready=loc("ready"), Random=loc("random"), Leave=loc("leave")}
       local to_p = loc_str[pstr]
       gprintf( not to_p and pstr or to_p, render_x+x_add, render_y+y_add,width_for_alignment,halign)
     end
