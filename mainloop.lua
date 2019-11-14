@@ -34,6 +34,9 @@ function fmainloop()
   gprint("Reading config file", unpack(main_menu_screen_pos))
   wait()
   read_conf_file() -- TODO: stop making new config files
+  gprint("Loading localization...", unpack(main_menu_screen_pos))
+  wait()
+  Localization.init(localization)
   local x,y, display = love.window.getPosition()
   love.window.setPosition(
     config.window_x or x,
@@ -54,9 +57,6 @@ function fmainloop()
   gprint("Preloading stages...", unpack(main_menu_screen_pos))
   wait()
   stages_init()
-  gprint("Loading localization...", unpack(main_menu_screen_pos))
-  wait()
-  Localization.init(localization)
   gprint("Loading panels...", unpack(main_menu_screen_pos))
   wait()
   panels_init() -- load panels

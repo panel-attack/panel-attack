@@ -239,7 +239,7 @@ function options.main(starting_idx)
     {"Debug Mode", "op_debug", on_off_text[config.debug_mode], "bool", false, nil, nil,false},
     {"Save replays publicly", "op_replay_public", save_replays_publicly_choices[config.save_replays_publicly] 
       or save_replays_publicly_choices["with my name"], "multiple choice", save_replays_publicly_choices},
-    {"Theme", "op_theme", {config.theme, "op_theme"}, "multiple choice", themes_set},
+    {"Theme", "op_theme", {config.theme, nil}, "multiple choice", themes_set},
     {"Ready countdown", "op_countdown", on_off_text[config.ready_countdown_1P], "bool", true, nil, nil,false},
     {"Show FPS", "op_fps", on_off_text[config.show_fps], "bool", true, nil, nil,false},
     {"Show ingame infos", "op_ingame_infos", on_off_text[config.show_ingame_infos], "bool", true, nil, nil,false},
