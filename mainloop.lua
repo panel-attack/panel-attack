@@ -63,9 +63,7 @@ function fmainloop()
   gprint("Loading analytics...", unpack(main_menu_screen_pos))
   wait()
   analytics_init()
-  apply_config_volume()
-  -- NOCOMMIT
-  join_community_msg = loc("join_community").."\ndiscord.panelattack.com"
+  apply_config_volume()  
   while true do
     leftover_time = 1/120
     consuming_timesteps = false

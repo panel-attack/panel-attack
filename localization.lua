@@ -175,17 +175,20 @@ function Localization.init(self)
 
 	end
 	self:set_language(config.language_code)
+	
+	join_community_msg = loc("join_community").."\ndiscord.panelattack.com"
 end
 
 function loc(text_key, ...)
 	local self = localization
 	local code = self.codes[1]
+
 	if self.codes[self.lang_index] and self.map[self.codes[self.lang_index]] then
 		code = self.codes[self.lang_index]
 	end
 
 	local ret = nil
-	if self.init then
+	if self.init and type(code) == "string" then
 		ret = self.map[code][text_key]
 	end
 
