@@ -380,16 +380,16 @@ function options.main(starting_idx)
           end
           --add any other bool config updates here
         elseif items[active_idx][4] == "numeric" then
-          if config.master_volume ~= items[1][3] then
-            config.master_volume = items[1][3]
+          if config.master_volume ~= items[2][3] then
+            config.master_volume = items[2][3]
             love.audio.setVolume(config.master_volume/100)
           end
-          if config.SFX_volume ~= items[2][3] then --SFX volume should be updated
-            config.SFX_volume = items[2][3]
+          if config.SFX_volume ~= items[3][3] then --SFX volume should be updated
+            config.SFX_volume = items[3][3]
             items[3][7]:setVolume(config.SFX_volume/100) --do just the one sound effect until we deselect
           end
-          if config.music_volume ~= items[3][3] then --music volume should be updated
-            config.music_volume = items[3][3]
+          if config.music_volume ~= items[4][3] then --music volume should be updated
+            config.music_volume = items[4][3]
             items[4][7]:setVolume(config.music_volume/100) --do just the one music source until we deselect
           end
           --add any other numeric config updates here
