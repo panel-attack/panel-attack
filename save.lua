@@ -165,7 +165,7 @@ function recursive_copy(source, destination)
   local names = lfs.getDirectoryItems(source)
   local temp
   for i, name in ipairs(names) do
-    local info = lfs.getInfo(source.."/"..name) and info.type == "directory" 
+    local info = lfs.getInfo(source.."/"..name)
     if info and info.type == "directory" then
       print("calling recursive_copy(source".."/"..name..", ".. destination.."/"..name..")")
       recursive_copy(source.."/"..name, destination.."/"..name)

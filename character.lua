@@ -22,7 +22,7 @@ local default_character = nil -- holds default assets fallbacks
 
 Character = class(function(self, full_path, folder_name)
     self.path = full_path -- string | path to the character folder content
-    self.id = folder_name -- string | id of the character, is also the name of its folder by default, may change in id_init
+    self.id = folder_name -- string | id of the character, specified in config.json
     self.display_name = self.id -- string | display name of the stage
     self.images = {}
     self.sounds = { combos = {}, combo_echos = {}, selections = {}, wins = {}, garbage_matches = {}, taunt_ups = {}, taunt_downs = {}, others = {} }
@@ -42,7 +42,10 @@ function Character.id_init(self)
 
   if read_data.id then
     self.id = read_data.id
+    return true
   end
+
+  return false
 end
 
 function Character.other_data_init(self)
@@ -55,7 +58,7 @@ function Character.other_data_init(self)
       read_data[k] = v
     end
   end
-
+  
   -- id has already been handled! DO NOT handle id here!
 
   -- display name
@@ -124,14 +127,16 @@ local function add_characters_from_dir_rec(path)
 
         -- init stage: 'real' folder
         local character = Character(current_path,v)
-        character:id_init()
+        local success = character:id_init()
 
-        if characters[character.id] ~= nil then
-          print(current_path.." has been ignored since a character with this id has already been found")
-        else
-          characters[character.id] = character
-          characters_ids[#characters_ids+1] = character.id
-          -- print(current_path.." has been added to the character list!")
+        if success then
+          if characters[character.id] ~= nil then
+            print(current_path.." has been ignored since a character with this id has already been found")
+          else
+            characters[character.id] = character
+            characters_ids[#characters_ids+1] = character.id
+            -- print(current_path.." has been added to the character list!")
+          end
         end
       end
     end

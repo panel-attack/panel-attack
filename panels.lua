@@ -18,7 +18,10 @@ function Panels.id_init(self)
 
   if read_data.id then
     self.id = read_data.id
+    return true
   end
+
+  return false
 end
 
 local function add_panels_from_dir_rec(path)
@@ -34,14 +37,16 @@ local function add_panels_from_dir_rec(path)
 
         -- init stage: 'real' folder
         local panel_set = Panels(current_path,v)
-        panel_set:id_init()
+        local success = panel_set:id_init()
 
-        if panels[panel_set.id] ~= nil then
-          print(current_path.." has been ignored since a panel set with this id has already been found")
-        else
-          panels[panel_set.id] = panel_set
-          panels_ids[#panels_ids+1] = panel_set.id
-          -- print(current_path.." has been added to the character list!")
+        if success then
+          if panels[panel_set.id] ~= nil then
+            print(current_path.." has been ignored since a panel set with this id has already been found")
+          else
+            panels[panel_set.id] = panel_set
+            panels_ids[#panels_ids+1] = panel_set.id
+            -- print(current_path.." has been added to the character list!")
+          end
         end
       end
     end

@@ -218,10 +218,10 @@ function Stack.handle_input_taunt(self)
     end
   end
 
-  if taunt_keys.taunt_up and self:can_taunt() then
+  if taunt_keys.taunt_up and self:can_taunt() and #characters[self.character].sounds.taunt_ups > 0 then
     self.taunt_up = math.random(#characters[self.character].sounds.taunt_ups)
     if TCP_sock then json_send({taunt=true,type="taunt_ups",index=self.taunt_up}) end
-  elseif taunt_keys.taunt_down and self:can_taunt() then
+  elseif taunt_keys.taunt_down and self:can_taunt() and #characters[self.character].sounds.taunt_downs > 0 then
     self.taunt_down = math.random(#characters[self.character].sounds.taunt_downs)
     if TCP_sock then json_send({taunt=true,type="taunt_downs",index=self.taunt_down}) end
   end

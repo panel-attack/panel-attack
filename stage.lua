@@ -14,7 +14,7 @@ local default_stage = nil -- holds default assets fallbacks
 
 Stage = class(function(s, full_path, folder_name)
     s.path = full_path -- string | path to the stage folder content
-    s.id = folder_name -- string | id of the stage, is also the name of its folder by default, may change in id_init
+    s.id = folder_name -- string | id of the stage, specified in config.json
     s.display_name = s.id -- string | display name of the stage
     s.images = {}
     s.musics = {}
@@ -33,7 +33,10 @@ function Stage.id_init(self)
 
   if read_data.id then
     self.id = read_data.id
+    return true
   end
+
+  return false
 end
 
 function Stage.other_data_init(self)
@@ -100,14 +103,16 @@ local function add_stages_from_dir_rec(path)
 
         -- init stage: 'real' folder
         local stage = Stage(current_path,v)
-        stage:id_init()
+        local success = stage:id_init()
 
-        if stages[stage.id] ~= nil then
-          print(current_path.." has been ignored since a stage with this id has already been found")
-        else
-          stages[stage.id] = stage
-          stages_ids[#stages_ids+1] = stage.id
-          -- print(current_path.." has been added to the stage list!")
+        if success then
+          if stages[stage.id] ~= nil then
+            print(current_path.." has been ignored since a stage with this id has already been found")
+          else
+            stages[stage.id] = stage
+            stages_ids[#stages_ids+1] = stage.id
+            -- print(current_path.." has been added to the stage list!")
+          end
         end
       end
     end
