@@ -35,6 +35,8 @@ function fmainloop()
              version                       = VERSION,
              -- Player character
              character                     = "lip",
+             -- Vsync
+             vsync                         = true,
              -- Level (2P modes / 1P vs yourself mode)
              level                         = 5,
              endless_speed                 = 1,
@@ -2321,6 +2323,7 @@ function main_options(starting_idx)
     {"Master Volume", config.master_volume or 100, "numeric", 0, 100, characters[config.character].musics.normal_music, true, nil, true},
     {"SFX Volume", config.SFX_volume or 100, "numeric", 0, 100, sounds.SFX.cur_move, true},
     {"Music Volume", config.music_volume or 100, "numeric", 0, 100, characters[config.character].musics.normal_music, true, nil, true},
+    {"Vsync", on_off_text[config.vsync], "bool", false, nil, nil,false},
     {"Debug Mode", on_off_text[config.debug_mode or false], "bool", false, nil, nil,false},
     {"Save replays publicly",
       save_replays_publicly_choices[config.save_replays_publicly]
@@ -2448,6 +2451,10 @@ function main_options(starting_idx)
           if items[active_idx][1] == "Ready countdown" then
             config.ready_countdown_1P = not config.ready_countdown_1P
             items[active_idx][2] = on_off_text[config.ready_countdown_1P]
+          elseif items[active_idx][1] == "Vsync" then
+            config.vsync = not config.vsync
+            items[active_idx][2] = on_off_text[config.vsync]
+            love.window.setVSync(config.vsync and 1 or 0)
           elseif items[active_idx][1] == "Show FPS" then
             config.show_fps = not config.show_fps
             items[active_idx][2] = on_off_text[config.show_fps]
