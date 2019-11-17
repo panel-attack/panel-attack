@@ -474,12 +474,15 @@ function select_screen.main()
     end
 
     local function draw_stage(cursor_data,player_number,x_padding)
-      local stage_dimensions = { 48, 27 }
-      local y_padding = math.floor(0.6*button_height)
+      local stage_dimensions = { 80, 45 }
+      local y_padding = math.floor(0.5*button_height)
       local padding_x = math.floor(x_padding-0.5*stage_dimensions[1])
       local is_selected = cursor_data.selected and cursor_data.state.cursor == "__Stage"
       if is_selected then
-        gprintf("<", render_x+padding_x-13, math.floor(render_y+y_padding-0.5*text_height),10,"center")
+        local arrow_pos = select_screen.character_select_mode == "2p_net_vs"
+          and { math.floor(render_x+x_padding-20), math.floor(render_y+y_padding-stage_dimensions[2]*0.5-15) }
+          or { math.floor(render_x+padding_x-13), math.floor(render_y+y_padding+0.25*text_height) }
+        gprintf("<", arrow_pos[1], arrow_pos[2],10,"center")
       end
 
       local thumbnail = cursor_data.state.stage_is_random and themes[config.theme].images.IMG_random_stage or stages[cursor_data.state.stage].images.thumbnail
@@ -491,15 +494,21 @@ function select_screen.main()
       -- thumbnail
       menu_drawf(thumbnail, render_x+padding_x, render_y+y_padding-1, "left", "center", 0, scale_x, scale_y )
       -- player image
-      menu_drawf(themes[config.theme].images.IMG_players[player_number], math.floor(render_x+padding_x+stage_dimensions[1]*0.5), math.floor(render_y+y_padding-stage_dimensions[2]*0.5-10), "center", "center" )
+      local player_icon_pos = select_screen.character_select_mode == "2p_net_vs"
+        and { math.floor(render_x+padding_x+stage_dimensions[1]*0.5), math.floor(render_y+y_padding-stage_dimensions[2]*0.5-7) }
+        or { math.floor(render_x+padding_x-10), math.floor(render_y+y_padding-stage_dimensions[2]*0.25) }
+      menu_drawf(themes[config.theme].images.IMG_players[player_number], player_icon_pos[1], player_icon_pos[2], "center", "center" )
       -- display name
       local display_name = cursor_data.state.stage_is_random and loc("random") or stages[cursor_data.state.stage].display_name
-      gprintf(display_name, render_x+padding_x-16, math.floor(render_y+y_padding+stage_dimensions[2]*0.5),stage_dimensions[1]+32,"center",nil,1,small_font)
+      gprintf(display_name, render_x+padding_x, math.floor(render_y+y_padding+stage_dimensions[2]*0.5),stage_dimensions[1],"center",nil,1,small_font)
 
       padding_x = padding_x+stage_dimensions[1]
 
       if is_selected then
-        gprintf(">", render_x+padding_x+3, math.floor(render_y+y_padding-0.5*text_height),10,"center")
+        local arrow_pos = select_screen.character_select_mode == "2p_net_vs"
+          and { math.floor(render_x+x_padding+11), math.floor(render_y+y_padding-stage_dimensions[2]*0.5-15) }
+          or { math.floor(render_x+padding_x+3), math.floor(render_y+y_padding+0.25*text_height) }
+        gprintf(">", arrow_pos[1], arrow_pos[2], 10,"center")
       end
     end
 

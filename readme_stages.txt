@@ -33,8 +33,8 @@ e.g. "mystage_myname"
 
 ~~ [.png, .jpg] ~~
 
-- "background": background for your stage, to be displayed while playing
-- "thumbnail": thumbnail, to be displayed in the select screen
+- "background": background for your stage, to be displayed while playing, should be 1280x720 px
+- "thumbnail": thumbnail, to be displayed in the select screen, should be 80x45 px
 
 ~~ [.mp3, .ogg, .it] optional sounds are in parenthesis ~~
 
