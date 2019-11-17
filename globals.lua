@@ -65,6 +65,8 @@ config = {
 	character                     = random_character_special_value,
 	stage                         = random_stage_special_value,
 
+	vsync						  = true,
+
 	use_music_from                = "stage",
 	-- Level (2P modes / 1P vs yourself mode)
 	level                         = 5,

@@ -229,27 +229,28 @@ function options.main(starting_idx)
   update_normal_music_for_sound_volume_option()
   items = {
     --options menu table reference:
-    --{[1]"Option Name", [2] loc key, [3]current or default value, [4]type, [5]min or bool value or choices_table (composed of {value, loc_key}),
+    --{[1] option id, [2] loc key, [3]current or default value, [4]type, [5]min or bool value or choices_table (composed of {value, loc_key}),
     -- [6]max, [7]sound_source, [8]selectable, [9]next_func, [10]play_while selected}
-    {"Language", "op_language", {localization:get_language(), "LANG"}, "multiple choice", language_choices},
-    {"Master Volume", "op_vol", config.master_volume, "numeric", 0, 100, normal_music_for_sound_option, true, nil, true},
-    {"SFX Volume", "op_vol_sfx", config.SFX_volume, "numeric", 0, 100, themes[config.theme].sounds.cur_move, true},
-    {"Music Volume", "op_vol_music", config.music_volume, "numeric", 0, 100, normal_music_for_sound_option, true, nil, true},
-    {"Debug Mode", "op_debug", on_off_text[config.debug_mode], "bool", false, nil, nil,false},
-    {"Save replays publicly", "op_replay_public", save_replays_publicly_choices[config.save_replays_publicly] 
+    {"language", "op_language", {localization:get_language(), "LANG"}, "multiple choice", language_choices},
+    {"master_volume", "op_vol", config.master_volume, "numeric", 0, 100, normal_music_for_sound_option, true, nil, true},
+    {"sfx_volume", "op_vol_sfx", config.SFX_volume, "numeric", 0, 100, themes[config.theme].sounds.cur_move, true},
+    {"music_volume", "op_vol_music", config.music_volume, "numeric", 0, 100, normal_music_for_sound_option, true, nil, true},
+    {"vsync", "op_vsync", on_off_text[config.vsync], "bool", true, nil, nil,false},
+    {"debug", "op_debug", on_off_text[config.debug_mode], "bool", false, nil, nil,false},
+    {"replays", "op_replay_public", save_replays_publicly_choices[config.save_replays_publicly] 
       or save_replays_publicly_choices["with my name"], "multiple choice", save_replays_publicly_choices},
-    {"Theme", "op_theme", {config.theme, nil}, "multiple choice", themes_set},
-    {"Ready countdown", "op_countdown", on_off_text[config.ready_countdown_1P], "bool", true, nil, nil,false},
-    {"Show FPS", "op_fps", on_off_text[config.show_fps], "bool", true, nil, nil,false},
-    {"Show ingame infos", "op_ingame_infos", on_off_text[config.show_ingame_infos], "bool", true, nil, nil,false},
-    {"Danger music change-back delay", "op_music_delay", on_off_text[config.danger_music_changeback_delay], "bool", false, nil, nil, false},
-    {"Enable analytics", "op_analytics", on_off_text[config.enable_analytics], "bool", false, nil, nil, false},
-    {"Use music from", "op_use_music_from", use_music_from_choices[config.use_music_from], "multiple choice", use_music_from_choices},
-    {"About custom themes", "op_about_themes", "", "function", nil, nil, nil, nil, main_show_custom_themes_readme},
-    {"About custom characters", "op_about_characters", "", "function", nil, nil, nil, nil, main_show_custom_characters_readme},
-    {"About custom stages", "op_about_stages", "", "function", nil, nil, nil, nil, main_show_custom_stages_readme},
-    {"About custom panels", "op_about_panels", "", "function", nil, nil, nil, nil, main_show_custom_panels_readme},
-    {"Back", "back", "", nil, nil, nil, nil, false, main_select_mode}
+    {"theme", "op_theme", {config.theme, nil}, "multiple choice", themes_set},
+    {"countdown", "op_countdown", on_off_text[config.ready_countdown_1P], "bool", true, nil, nil,false},
+    {"fps", "op_fps", on_off_text[config.show_fps], "bool", true, nil, nil,false},
+    {"infos", "op_ingame_infos", on_off_text[config.show_ingame_infos], "bool", true, nil, nil,false},
+    {"music_delay", "op_music_delay", on_off_text[config.danger_music_changeback_delay], "bool", false, nil, nil, false},
+    {"analytics", "op_analytics", on_off_text[config.enable_analytics], "bool", false, nil, nil, false},
+    {"music_from", "op_use_music_from", use_music_from_choices[config.use_music_from], "multiple choice", use_music_from_choices},
+    {"about_themes", "op_about_themes", "", "function", nil, nil, nil, nil, main_show_custom_themes_readme},
+    {"about_chars", "op_about_characters", "", "function", nil, nil, nil, nil, main_show_custom_characters_readme},
+    {"about_stages", "op_about_stages", "", "function", nil, nil, nil, nil, main_show_custom_stages_readme},
+    {"about_panels", "op_about_panels", "", "function", nil, nil, nil, nil, main_show_custom_panels_readme},
+    {"back", "back", "", nil, nil, nil, nil, false, main_select_mode}
   }
   local function print_stuff()
     local to_print, to_print2, arrow = "", "", ""
@@ -359,22 +360,26 @@ function options.main(starting_idx)
             config.debug_mode = not config.debug_mode
             items[active_idx][3] = on_off_text[config.debug_mode or false]
           end
-          if items[active_idx][1] == "Ready countdown" then
+          if items[active_idx][1] == "countdown" then
             config.ready_countdown_1P = not config.ready_countdown_1P
             items[active_idx][3] = on_off_text[config.ready_countdown_1P]
-          elseif items[active_idx][1] == "Show FPS" then
+          elseif items[active_idx][1] == "vsync" then
+            config.vsync = not config.vsync
+            items[active_idx][3] = on_off_text[config.vsync]
+            love.window.setVSync( config.vsync and 1 or 0 )
+          elseif items[active_idx][1] == "fps" then
             config.show_fps = not config.show_fps
             items[active_idx][3] = on_off_text[config.show_fps]
-            elseif items[active_idx][1] == "Debug Mode" then
+          elseif items[active_idx][1] == "debug" then
             config.debug_mode = not config.debug_mode
             items[active_idx][3] = on_off_text[config.debug_mode]
-          elseif items[active_idx][1] == "Show ingame infos" then
+          elseif items[active_idx][1] == "infos" then
             config.show_ingame_infos = not config.show_ingame_infos
             items[active_idx][3] = on_off_text[config.show_ingame_infos]
-          elseif items[active_idx][1] == "Danger music change-back delay" then
+          elseif items[active_idx][1] == "music_delay" then
             config.danger_music_changeback_delay = not config.danger_music_changeback_delay
             items[active_idx][3] = on_off_text[config.danger_music_changeback_delay]
-          elseif items[active_idx][1] == "Enable analytics" then
+          elseif items[active_idx][1] == "analytics" then
             config.enable_analytics = not config.enable_analytics
             items[active_idx][3] = on_off_text[config.enable_analytics]
           end
@@ -409,17 +414,17 @@ function options.main(starting_idx)
           else
             items[active_idx][3] = items[active_idx][5][wrap(1,active_choice_num + 1, #items[active_idx][5])]
           end
-          if items[active_idx][1] == "Save replays publicly" then
+          if items[active_idx][1] == "replays" then
             config.save_replays_publicly = items[active_idx][3][1]
           -- don't change config.theme directly here as it is used while being in this menu! instead we change it upon leaving
-          elseif items[active_idx][1] == "Theme" then
+          elseif items[active_idx][1] == "theme" then
             memory_before_options_menu.theme = items[active_idx][3][1]
-          elseif items[active_idx][1] == "Use music from" then
+          elseif items[active_idx][1] == "music_from" then
             config.use_music_from = items[active_idx][3][1]
             update_normal_music_for_sound_volume_option()
             items[2][7] = normal_music_for_sound_option
             items[4][7] = normal_music_for_sound_option
-          elseif items[active_idx][1] == "Language" then
+          elseif items[active_idx][1] == "language" then
             localization:set_language(items[active_idx][3][1])
           end
           --add any other multiple choice config updates here

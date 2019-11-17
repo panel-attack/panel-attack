@@ -61,6 +61,8 @@ function read_conf_file() pcall(function()
     config.theme = default_theme_dir
   end
 
+  love.window.setVSync( config.vsync and 1 or 0 )
+
   -- do stuff regarding version compatibility here, before we patch it
 
   config.version = VERSION
