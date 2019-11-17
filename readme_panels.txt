@@ -6,9 +6,9 @@ Step by step instructions (Windows example):
 
 2. Look at the folders starting with "__" located in: %appdata%\Panel Attack\panels\ for a reference of where your files should go and how they should be named.
    
-Note: folders starting with "__" will be ignored upon loading. You may choose to remove those "__" to mod the default characters
+Note: folders starting with "__" will be ignored upon loading. You may choose to remove those "__" to mod the default panels
 
-3. Create a folder with your panels. By default the name of the folder will be the id of your panels. This behavior is kinda unwanted though. Prefer the use of config.json below.
+3. Create a folder with your panels. The name of this folder is different from your panels id and is kinda meaningless (see config.json below).
 
 4. Place assets and json file in that folder with the proper names to add your data. Exhaustive list below.
 
@@ -21,7 +21,7 @@ Note: non-optional data that are missing will automatically get replaced by defa
 ~~ [.json] ~~
 
 - "config": this file holds data for the configuration of your panel set. The inside should look like that:
-	- id: unique identifier of this panel set, this id should be specific (see note). 
+	- id: unique identifier of this panel set, this id should be specific (see note). [IF MISSING YOUR PANELS WILL BE IGNORED!]
 
 Note: providing a specific, long enough id is a very good idea so that people renaming your mods folders still get properly match with other users regarding your mods. e.g. "mypanels_myname"
 

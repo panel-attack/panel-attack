@@ -10,7 +10,7 @@ Note: folders starting with "__" will be ignored upon loading. You may choose to
 
 Note: inner folders are also supported.
 
-3. Create a folder with your stage. By default the name of the folder will be the id of your stage. This behavior is kinda unwanted though. Prefer the use of config.json below.
+3. Create a folder with your stage. The name of this folder is different from your stage id and is kinda meaningless (see config.json below).
 
 Note: while playing online, stages will be looked up by id, meaning you'll get to see your opponent's stages as long as you have one with the same id
 
@@ -26,7 +26,7 @@ Note: non-optional data that are missing will automatically get replaced by defa
 
 - "config": this file holds data for the configuration of your stage. The inside should look like that:
 	- name: display name of this stage, this value will be displayed in the select screen
-	- id: unique identifier of this stage, this id should be specific (see note). 
+	- id: unique identifier of this stage, this id should be specific (see note). [IF MISSING YOUR STAGE WILL BE IGNORED!] 
 
 Note: providing a specific, long enough id is a very good idea so that people renaming your mods folders still get properly match with other users regarding your mods
 e.g. "mystage_myname"

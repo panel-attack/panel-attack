@@ -8,7 +8,7 @@ Step by step instructions (Windows example):
    
 Note: folders starting with "__" will be ignored upon loading. You may choose to remove those "__" to mod the default characters
 
-3. Create a folder with your character. By default the name of the folder will be the id of your character. This behavior is kinda unwanted though. Prefer the use of config.json below.
+3. Create a folder with your character. The name of this folder is different from your character id and is kinda meaningless (see config.json below).
 
 4. Place assets, sounds and json file in that folder with the proper names to add your data. Exhaustive list below.
 
@@ -20,9 +20,9 @@ Note: non-optional data that are missing will automatically get replaced by defa
 
 ~~ [.json] ~~
 
-- "config": this file holds data for the configuration of your stage. The inside should look like that:
-	- name: display name of this stage, this value will be displayed in the lobby and will also serve as a fallback when trying to match your opponent's character
-	- id: unique identifier of this stage, this id should be specific (see note). 
+- "config": this file holds data for the configuration of your character. The inside should look like that:
+	- name: display name of this character, this value will be displayed in the lobby and will also serve as a fallback when trying to match your opponent's character
+	- id: unique identifier of this character, this id should be specific (see note). [IF MISSING YOUR CHARACTER WILL BE IGNORED!]
 
 Note: providing a specific, long enough id is a very good idea so that people renaming your mods folders still get properly match with other users regarding your mods. e.g. "mycharacter_myname"
 
