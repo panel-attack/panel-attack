@@ -141,17 +141,17 @@ local function exit_options_menu()
     end
   end
 
-  if config.theme ~= memory_before_options_menu.theme 
-    or config.use_music_from ~= memory_before_options_menu.use_music_from then
-    gprint(loc("op_reload_characters"), unpack(main_menu_screen_pos))
-    wait()
-    characters_init()
-  end
-
-  if config.use_music_from ~= memory_before_options_menu.use_music_from then
+  -- stages before characters since they are part of their loading
+  if config.theme ~= memory_before_options_menu.theme then
     gprint(loc("op_reload_stages"), unpack(main_menu_screen_pos))
     wait()
     stages_init()
+  end
+
+  if config.theme ~= memory_before_options_menu.theme then
+    gprint(loc("op_reload_characters"), unpack(main_menu_screen_pos))
+    wait()
+    characters_init()
   end
 
   if config.enable_analytics ~= memory_before_options_menu.enable_analytics then
@@ -181,8 +181,7 @@ function options.main(starting_idx)
   end
 
   memory_before_options_menu = { theme=config.theme,--this one is actually updated with the menu and change upon leaving, be careful!
-                                enable_analytics=config.enable_analytics,
-                                use_music_from=config.use_music_from }
+                                enable_analytics=config.enable_analytics }
 
   for k,v in ipairs(save_replays_publicly_choices) do
     save_replays_publicly_choices[v[1]] = v

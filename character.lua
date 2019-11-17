@@ -24,6 +24,8 @@ Character = class(function(self, full_path, folder_name)
     self.path = full_path -- string | path to the character folder content
     self.id = folder_name -- string | id of the character, specified in config.json
     self.display_name = self.id -- string | display name of the stage
+    self.stage = nil -- string | stage that get selected upon doing the super selection of that character
+    self.panels = nil -- string | panels that get selected upon doing the super selection of that character
     self.images = {}
     self.sounds = { combos = {}, combo_echos = {}, selections = {}, wins = {}, garbage_matches = {}, taunt_ups = {}, taunt_downs = {}, others = {} }
     self.musics = {}
@@ -64,6 +66,14 @@ function Character.other_data_init(self)
   -- display name
   if read_data.name then
     self.display_name = read_data.name
+  end
+  -- associated stage
+  if read_data.stage and stages[read_data.stage] then
+    self.stage = read_data.stage
+  end
+  -- associated panel
+  if read_data.panels and panels[read_data.panels] then
+    self.panels = read_data.panels
   end
 end
 
