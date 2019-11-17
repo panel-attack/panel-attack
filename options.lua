@@ -356,11 +356,10 @@ function options.main(starting_idx)
       end
       if adjust_active_value and not ret then
         if items[active_idx][4] == "bool" then
-          if active_idx == 4 then
+          if items[active_idx][1] == "debug" then
             config.debug_mode = not config.debug_mode
-            items[active_idx][3] = on_off_text[config.debug_mode or false]
-          end
-          if items[active_idx][1] == "countdown" then
+            items[active_idx][3] = on_off_text[config.debug_mode]
+          elseif items[active_idx][1] == "countdown" then
             config.ready_countdown_1P = not config.ready_countdown_1P
             items[active_idx][3] = on_off_text[config.ready_countdown_1P]
           elseif items[active_idx][1] == "vsync" then

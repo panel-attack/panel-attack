@@ -7,12 +7,12 @@ local utf8 = require("utf8")
 local wait, resume = coroutine.yield, coroutine.resume
 
 local main_endless, make_main_puzzle, main_net_vs_setup,
-  main_replay_endless, main_replay_puzzle, main_net_vs,
+  main_replay_endless, main_replay_puzzle,
   main_config_input, main_select_puzz,
   main_replay_vs, main_local_vs_setup,
   main_set_name, main_local_vs_yourself_setup,
   main_options, main_music_test, exit_game
--- main_select_mode, main_dumb_transition, main_net_vs_lobby, main_local_vs_yourself, main_local_vs are not local since they are also used elsewhere
+-- main_select_mode, main_dumb_transition, main_net_vs, main_net_vs_lobby, main_local_vs_yourself, main_local_vs are not local since they are also used elsewhere
 
 local PLAYING = "playing"  -- room states
 local CHARACTERSELECT = "character select" --room states
