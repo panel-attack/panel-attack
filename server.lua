@@ -276,7 +276,6 @@ function Room.remove_spectator(self, connection)
       print(connection.name .. " left " .. self.name .. " as a spectator")
       self.spectators[k] = nil
       lobby_changed = true
-      connection:send(lobby_state())
     end
   end
   msg = {spectators=self:spectator_names()}
@@ -308,9 +307,7 @@ function Room.close(self)
     if rooms[self.roomNumber] then
         rooms[self.roomNumber] = nil
     end
-    local msg = lobby_state()
-    msg.leave_room = true
-    self:send_to_spectators(msg)
+    self:send_to_spectators({leave_room = true})
 end
 
 function roomNumberToRoom(roomNr)
@@ -522,6 +519,11 @@ function Connection.login(self, user_id)
   else
     deny_login(self, "Unknown")
   end
+
+  if self.logged_in then
+    self:send(lobby_state())
+  end
+
   return self.logged_in
 end
 
@@ -566,13 +568,11 @@ function Connection.opponent_disconnected(self)
   self.opponent = nil
   self.state = "lobby"
   lobby_changed = true
-  local msg = lobby_state()
-  msg.leave_room = true
   if self.room then
     print("about to close room for "..(self.name or "nil").." because opponent disconnected.")
     self.room:close()
   end
-  self:send(msg)
+  self:send({leave_room = true})
 end
 
 function Connection.setup_game(self)
