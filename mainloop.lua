@@ -785,17 +785,16 @@ function main_character_select()
     local function draw_levels(cursor_data,player_number,y_padding)
       local level_max_width = 0.2*button_height
       local level_width = math.min(level_max_width,IMG_levels[1]:getWidth())
-      local padding_x = 0.5*button_width-5*level_width
+      local padding_x = 0.5*button_width-6*level_width
       local is_selected = cursor_data.selected and cursor_data.state.cursor == "__Level"
       if is_selected then
         padding_x = padding_x-level_width
       end
       local level_scale = level_width/IMG_levels[1]:getWidth()
       menu_drawf(IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center" )
-      padding_x = padding_x + level_width
 	    local ex_scaling = level_width/IMG_levels[11]:getWidth()
       menu_drawf(IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center")
-      padding_x = padding_x + level_width -- [[Thank you Eole!]]
+      padding_x = padding_x + level_width + 1 -- [[Thank you Eole!]]
       if is_selected then
         gprintf("<", render_x+padding_x-0.5*level_width, render_y+y_padding-0.5*text_height,level_width,"center")
         padding_x = padding_x + level_width
@@ -813,7 +812,7 @@ function main_character_select()
 	      menu_drawf(IMG_levels[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, ex_scaling, ex_scaling)	  
 	    end]]
         end 
-        padding_x = padding_x + level_width	
+        padding_x = padding_x + level_width + 1
           --[[if i == 11 then
 	     padding_x = padding_x + 16
          end]]	
