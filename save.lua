@@ -49,26 +49,6 @@ function write_conf_file() pcall(function()
   file:close()
 end) end
 
-function has_any_custom_character() 
-  local function belong_to_characters_ids(character_id)
-    for _,v in pairs(default_characters_ids) do
-      if v == character_id then
-        return true
-      end
-    end
-    return false
-  end
-  
-  local raw_dir_list = love.filesystem.getDirectoryItems("characters")
-  for _,v in ipairs(raw_dir_list) do
-    local start_of_v = string.sub(v,0,string.len(prefix_of_ignored_dirs))
-    if start_of_v ~= prefix_of_ignored_dirs and not belong_to_characters_ids(v) then
-      return true
-    end
-  end
-  return false
-end
-
 function read_conf_file() pcall(function()
   local file = love.filesystem.newFile("conf.json")
   file:open("r")
@@ -76,28 +56,12 @@ function read_conf_file() pcall(function()
   for k,v in pairs(json.decode(teh_json)) do
     config[k] = v
   end
-  if love.filesystem.getInfo("assets/"..config.assets_dir) == nil then
-    config.assets_dir = default_assets_dir
+  
+  if love.filesystem.getInfo("themes/"..config.theme) == nil then
+    config.theme = default_theme_dir
   end
-  if love.filesystem.getInfo("panels/"..config.panels_dir_when_not_using_set_from_assets_folder) == nil then
-    config.panels_dir_when_not_using_set_from_assets_folder = default_panels_dir
-  end
-  if love.filesystem.getInfo("sounds/"..config.sounds_dir) == nil then
-    config.sounds_dir = default_sounds_dir
-  end
-  if config.use_panels_from_assets_folder == nil then
-    config.use_panels_from_assets_folder = true
-  end
-  if config.use_panels_from_assets_folder then
-    config.panels_dir = config.assets_dir
-  else
-    config.panels_dir = config.panels_dir_when_not_using_set_from_assets_folder
-  end
-  if love.filesystem.getInfo("assets/"..config.assets_dir.."/lip") 
-    and not has_any_custom_character() then
-    print("retrocompatibility applied!")
-    config.use_default_characters = true
-  end
+
+  love.window.setVSync( config.vsync and 1 or 0 )
 
   -- do stuff regarding version compatibility here, before we patch it
 
@@ -203,13 +167,15 @@ function recursive_copy(source, destination)
   local names = lfs.getDirectoryItems(source)
   local temp
   for i, name in ipairs(names) do
-    if lfs.isDirectory(source.."/"..name) then
+    local info = lfs.getInfo(source.."/"..name)
+    if info and info.type == "directory" then
       print("calling recursive_copy(source".."/"..name..", ".. destination.."/"..name..")")
       recursive_copy(source.."/"..name, destination.."/"..name)
       
-    elseif lfs.isFile(source.."/"..name) then
-      if not lfs.isDirectory(destination) then
-       love.filesystem.createDirectory(destination)
+    elseif info and info.type == "file" then
+      local destination_info = lfs.getInfo(destination)
+      if not destination_info or destination_info.type ~= "directory" then
+        love.filesystem.createDirectory(destination)
       end
       print("copying file:  "..source.."/"..name.." to "..destination.."/"..name)
       

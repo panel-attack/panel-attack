@@ -10,12 +10,16 @@ end)
 
 localization = Localization()
 
-function Localization.get_list_codes_langs(self)
-	return self.codes, self.langs
+function Localization.get_list_codes(self)
+	return self.codes
 end
 
 function Localization.get_language(self)
 	return self.codes[self.lang_index]
+end
+
+function Localization.refresh_global_strings(self)
+	join_community_msg = loc("join_community").."\ndiscord.panelattack.com"
 end
 
 function Localization.set_language(self, lang_code)
@@ -28,11 +32,12 @@ function Localization.set_language(self, lang_code)
 	config.language_code = self.codes[self.lang_index]
 
 	if config.language_code == "JP" then
-		PA_FONT = love.graphics.newFont("jp.ttf", 14)
+		set_global_font("jp.ttf", 14)
 	else
-		PA_FONT = love.graphics.newFont()
+		set_global_font(nil, 12)
 	end
-	love.graphics.setFont(PA_FONT)
+
+	self:refresh_global_strings()
 end
 
 function Localization.init(self)
@@ -129,24 +134,19 @@ function Localization.init(self)
 						self.map[v] = {}
 					end
 				end
-
-			elseif num_line == 2 then
-				tokens = csv_line(line)
-				for i, v in ipairs(tokens) do
-					if i > 1 then
-						self.langs[#self.langs+1] = v
-					end
-				end
-
 			else
 				tokens, leftover = csv_line(line, leftover)
 				for _, v in ipairs(tokens) do
+
 					if not key then
 						key = v
 						if key == "" or key:match("%s+") then
 							break
 						end
 					else
+						if num_line == 2 then
+							self.langs[#self.langs+1] = v
+						end
 						if v ~= "" and not v:match("^%s+$") then
 							self.map[self.codes[i]][key] = v
 						end
@@ -180,12 +180,13 @@ end
 function loc(text_key, ...)
 	local self = localization
 	local code = self.codes[1]
+
 	if self.codes[self.lang_index] and self.map[self.codes[self.lang_index]] then
 		code = self.codes[self.lang_index]
 	end
 
 	local ret = nil
-	if self.init then
+	if self.init and type(code) == "string" then
 		ret = self.map[code][text_key]
 	end
 

@@ -97,7 +97,6 @@ local process_message = {
   J=function(s)
     local current_message = json.decode(s)
     this_frame_messages[#this_frame_messages+1] = current_message
-    print("JSON LOL "..s)
     if not current_message then
       error("Error in network.lua process_message\nMessage: \""..(s or "nil").."\"\ncould not be decoded")
     end
@@ -110,15 +109,20 @@ local process_message = {
 function network_init(ip)
   TCP_sock = socket.tcp()
   TCP_sock:settimeout(7)
-  if not TCP_sock:connect(ip,49569) then --for official server
-  --if not TCP_sock:connect(ip,59569) then --for beta server
+  --if not TCP_sock:connect(ip,49569) then --for official server
+  if not TCP_sock:connect(ip,59569) then --for beta server
     error("Failed to connect =(")
   end
   TCP_sock:settimeout(0)
   got_H = false
   net_send("H"..VERSION)
-  assert(config.name and config.level and config.panels_dir and config.character and config.save_replays_publicly)
-  json_send({name=config.name, level=config.level, panels_dir=config.panels_dir, character=config.character, character_display_name=characters[config.character].display_name, save_replays_publicly = config.save_replays_publicly})
+  assert(config.name and config.save_replays_publicly)
+  local sent_json = {name=config.name, level=config.level, panels_dir=config.panels, 
+  character=config.character, character_is_random=config.character==random_character_special_value,
+  stage=config.stage, stage_is_random=config.stage==random_stage_special_value, 
+  save_replays_publicly=config.save_replays_publicly}
+  sent_json.character_display_name = sent_json.character_is_random and "" or characters[config.character].display_name 
+  json_send(sent_json)
 end
 
 function connection_is_ready()
@@ -134,7 +138,7 @@ function do_messages()
   while true do
     local typ, data = get_message()
     if typ then
-      if typ ~= "I" and typ ~= "U" then
+      if typ ~= "I" and typ ~= "U" and typ ~= "E" then
         print("Got message "..typ.." "..data)
       end
       process_message[typ](data)
@@ -202,6 +206,27 @@ function make_local_gpanels(stack, prev_panels)
   end
 end
 
+function Stack.handle_input_taunt(self)
+  local k = K[self.which]
+  local taunt_keys = { taunt_up = (keys[k.taunt_up] or this_frame_keys[k.taunt_up]), taunt_down = (keys[k.taunt_down] or this_frame_keys[k.taunt_down]) }
+
+  if self.wait_for_not_taunting ~= nil then
+    if not taunt_keys[self.wait_for_not_taunting] then
+      self.wait_for_not_taunting = nil
+    else
+     return
+    end
+  end
+
+  if taunt_keys.taunt_up and self:can_taunt() and #characters[self.character].sounds.taunt_ups > 0 then
+    self.taunt_up = math.random(#characters[self.character].sounds.taunt_ups)
+    if TCP_sock then json_send({taunt=true,type="taunt_ups",index=self.taunt_up}) end
+  elseif taunt_keys.taunt_down and self:can_taunt() and #characters[self.character].sounds.taunt_downs > 0 then
+    self.taunt_down = math.random(#characters[self.character].sounds.taunt_downs)
+    if TCP_sock then json_send({taunt=true,type="taunt_downs",index=self.taunt_down}) end
+  end
+end
+
 function Stack.send_controls(self)
   local k = K[self.which]
   local to_send = base64encode[
@@ -212,9 +237,13 @@ function Stack.send_controls(self)
     ((keys[k.down] or this_frame_keys[k.down]) and 4 or 0) +
     ((keys[k.left] or this_frame_keys[k.left]) and 2 or 0) +
     ((keys[k.right] or this_frame_keys[k.right]) and 1 or 0)+1]
+  
   if TCP_sock then
     net_send("I"..to_send)
   end
+
+  self:handle_input_taunt()
+
   local replay = replay[self.mode]
   if replay and replay.in_buf then
     replay.in_buf = replay.in_buf .. to_send
