@@ -1183,11 +1183,10 @@ function main_character_select()
           elseif menu_left(k) then
             if cursor.selected then
               if cursor.state.cursor == "__Level" then
-                cursor.state.level = bound(1, cursor.state.level-1, 11)
-              end    
-              if cursor.state.level >= 11 and cursor.state.ranked then
-		cursor.state.ranked = false
-              end    
+                cursor.state.level = bound(1, cursor.state.level-1, 11)   
+                if cursor.state.level >= 11 and cursor.state.ranked then
+                  cursor.state.ranked = false
+                end
               elseif cursor.state.cursor == "__Panels" then
                 cursor.state.panels_dir = change_panels_dir(cursor.state.panels_dir,-1)
               end
@@ -1197,10 +1196,9 @@ function main_character_select()
             if cursor.selected then
               if cursor.state.cursor == "__Level" then
                 cursor.state.level = bound(1, cursor.state.level+1, 11)
-              end  
-              if cursor.state.level >= 11 and cursor.state.ranked then
-		cursor.state.ranked = false
-              end  
+                if cursor.state.level >= 11 and cursor.state.ranked then
+                  cursor.state.ranked = false
+                end
               elseif cursor.state.cursor == "__Panels" then
                 cursor.state.panels_dir = change_panels_dir(cursor.state.panels_dir,1)
               end
