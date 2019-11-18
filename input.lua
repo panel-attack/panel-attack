@@ -173,6 +173,7 @@ menu_up = menu_key_func({"up"}, {"up"}, true, function() return themes[config.th
 menu_down = menu_key_func({"down"}, {"down"}, true, function() return themes[config.theme].sounds.menu_move end)
 menu_left = menu_key_func({"left"}, {"left"}, true, function() return themes[config.theme].sounds.menu_move end)
 menu_right = menu_key_func({"right"}, {"right"}, true, function() return themes[config.theme].sounds.menu_move end)
+menu_super_select = menu_key_func({"y","u"}, {"taunt_up","taunt_down"}, false, function() return themes[config.theme].sounds.menu_validate end)
 menu_enter = menu_key_func({"return","kenter","z"}, {"swap1"}, false, function() return themes[config.theme].sounds.menu_validate end)
 menu_escape = menu_key_func({"escape","x"}, {"swap2"}, false, function() return themes[config.theme].sounds.menu_cancel end)
 menu_prev_page = menu_key_func({"pageup"}, {"raise1"}, true, function() return themes[config.theme].sounds.menu_move end)

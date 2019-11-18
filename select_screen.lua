@@ -354,13 +354,23 @@ function select_screen.main()
     elseif valign == "bottom" then
       y_add = math.floor(button_height-text_height)
     end
-    if character and ( character == random_character_special_value or character.images["icon"] ) then
+    if character then
       x_add = 0.025*button_width
       width_for_alignment = 0.95*button_width
       local icon_to_use = character == random_character_special_value and themes[config.theme].images.IMG_random_character or character.images["icon"]
       local orig_w, orig_h = icon_to_use:getDimensions()
       local scale = button_width/math.max(orig_w,orig_h) -- keep image ratio
       menu_drawf(icon_to_use, render_x+0.5*button_width, render_y+0.5*button_height,"center","center", 0, scale, scale )
+      if str ~= "P1" and str ~= "P2" then
+        if character.stage then
+          local orig_w, orig_h = stages[character.stage].images.thumbnail:getDimensions()
+          menu_drawf(stages[character.stage].images.thumbnail, render_x+10, render_y+button_height-7,"center","center", 0, 16/orig_w, 9/orig_h )
+        end
+        if character.panels then
+          local orig_w, orig_h = panels[character.panels].images.classic[1][1]:getDimensions()
+          menu_drawf(panels[character.panels].images.classic[1][1], render_x+7, character.stage and render_y+button_height-19 or render_y+button_height-6,"center","center", 0, 12/orig_w, 12/orig_h )
+        end
+      end
     end
 
     local function draw_cursor(button_height, spacing, player_num,ready)
@@ -942,6 +952,25 @@ function select_screen.main()
               end
             end
             if not cursor.selected then move_cursor(cursor.position,right) end
+          elseif menu_super_select(k) then
+            if ( cursor.state.cursor ~= "__Empty" and cursor.state.cursor ~= "__Reserved" ) then
+              cursor.state.character_is_random = false
+              cursor.state.character = cursor.state.cursor
+              cursor.state.character_display_name = characters[cursor.state.character].display_name
+              local character = characters[cursor.state.character]
+              character:play_selection_sfx()
+              character_loader_load(cursor.state.character)
+              if character.stage then
+                cursor.state.stage = character.stage
+                cursor.state.stage_is_random = false
+              end
+              if character.panels then
+                cursor.state.panels_dir = character.panels
+              end
+              --When we select a character, move cursor to "__Ready"
+              cursor.state.cursor = "__Ready"
+              cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"])
+            end
           elseif menu_enter(k) then
             if selectable[cursor.state.cursor] then
               if cursor.selected and cursor.state.cursor == "__Stage" then
