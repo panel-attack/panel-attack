@@ -905,6 +905,47 @@ function select_screen.main()
       end
     end 
 
+    local function on_select(cursor,super)
+      local selectable = {__Stage=true, __Panels=true, __Level=true, __Ready=true}
+      if selectable[cursor.state.cursor] then
+        if cursor.selected and cursor.state.cursor == "__Stage" then
+          -- load stage even if hidden!
+          stage_loader_load(cursor.state.stage)
+        end
+        cursor.selected = not cursor.selected
+      elseif cursor.state.cursor == "__Leave" then
+        on_quit()
+      elseif cursor.state.cursor == "__Random" then
+        cursor.state.character_is_random = true
+        cursor.state.character = uniformly(characters_ids_for_current_theme)
+        cursor.state.character_display_name = characters[cursor.state.character].display_name
+        character_loader_load(cursor.state.character)
+        cursor.state.cursor = "__Ready"
+        cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"])
+      elseif cursor.state.cursor == "__Mode" then
+        cursor.state.ranked = not cursor.state.ranked
+      elseif ( cursor.state.cursor ~= "__Empty" and cursor.state.cursor ~= "__Reserved" ) then
+        cursor.state.character_is_random = false
+        cursor.state.character = cursor.state.cursor
+        cursor.state.character_display_name = characters[cursor.state.character].display_name
+        local character = characters[cursor.state.character]
+        character:play_selection_sfx()
+        character_loader_load(cursor.state.character)
+        if super then
+          if character.stage then
+            cursor.state.stage = character.stage
+            cursor.state.stage_is_random = false
+          end
+          if character.panels then
+            cursor.state.panels_dir = character.panels
+          end
+        end
+        --When we select a character, move cursor to "__Ready"
+        cursor.state.cursor = "__Ready"
+        cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"])
+      end
+    end
+
     variable_step(function()
       menu_clock = menu_clock + 1
 
@@ -913,7 +954,6 @@ function select_screen.main()
       refresh_loaded_and_ready(cursor_data[1].state,cursor_data[2] and cursor_data[2].state or nil)
 
       local up,down,left,right = {-1,0}, {1,0}, {0,-1}, {0,1}
-      local selectable = {__Stage=true, __Panels=true, __Level=true, __Ready=true}
       if not currently_spectating then
         local KMax = 1
         if select_screen.character_select_mode == "2p_local_vs" then
@@ -953,69 +993,9 @@ function select_screen.main()
             end
             if not cursor.selected then move_cursor(cursor.position,right) end
           elseif menu_super_select(k) then
-            if selectable[cursor.state.cursor] then
-              if cursor.selected and cursor.state.cursor == "__Stage" then
-                -- load stage even if hidden!
-                stage_loader_load(cursor.state.stage)
-              end
-              cursor.selected = not cursor.selected
-            elseif cursor.state.cursor == "__Leave" then
-              on_quit()
-            elseif cursor.state.cursor == "__Random" then
-              cursor.state.character_is_random = true
-              cursor.state.character = uniformly(characters_ids_for_current_theme)
-              cursor.state.character_display_name = characters[cursor.state.character].display_name
-              character_loader_load(cursor.state.character)
-              cursor.state.cursor = "__Ready"
-              cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"])
-            elseif cursor.state.cursor == "__Mode" then
-              cursor.state.ranked = not cursor.state.ranked
-            elseif ( cursor.state.cursor ~= "__Empty" and cursor.state.cursor ~= "__Reserved" ) then
-              cursor.state.character_is_random = false
-              cursor.state.character = cursor.state.cursor
-              cursor.state.character_display_name = characters[cursor.state.character].display_name
-              local character = characters[cursor.state.character]
-              character:play_selection_sfx()
-              character_loader_load(cursor.state.character)
-              if character.stage then
-                cursor.state.stage = character.stage
-                cursor.state.stage_is_random = false
-              end
-              if character.panels then
-                cursor.state.panels_dir = character.panels
-              end
-              --When we select a character, move cursor to "__Ready"
-              cursor.state.cursor = "__Ready"
-              cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"])
-            end
+            on_select(cursor, true)
           elseif menu_enter(k) then
-            if selectable[cursor.state.cursor] then
-              if cursor.selected and cursor.state.cursor == "__Stage" then
-                -- load stage even if hidden!
-                stage_loader_load(cursor.state.stage)
-              end
-              cursor.selected = not cursor.selected
-            elseif cursor.state.cursor == "__Leave" then
-              on_quit()
-            elseif cursor.state.cursor == "__Random" then
-              cursor.state.character_is_random = true
-              cursor.state.character = uniformly(characters_ids_for_current_theme)
-              cursor.state.character_display_name = characters[cursor.state.character].display_name
-              character_loader_load(cursor.state.character)
-              cursor.state.cursor = "__Ready"
-              cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"])
-            elseif cursor.state.cursor == "__Mode" then
-              cursor.state.ranked = not cursor.state.ranked
-            elseif ( cursor.state.cursor ~= "__Empty" and cursor.state.cursor ~= "__Reserved" ) then
-              cursor.state.character_is_random = false
-              cursor.state.character = cursor.state.cursor
-              cursor.state.character_display_name = characters[cursor.state.character].display_name
-              characters[cursor.state.character]:play_selection_sfx()
-              character_loader_load(cursor.state.character)
-              --When we select a character, move cursor to "__Ready"
-              cursor.state.cursor = "__Ready"
-              cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"])
-            end
+            on_select(cursor, false)
           elseif menu_escape(k) then
             if cursor.state.cursor == "__Leave" then
               on_quit()
