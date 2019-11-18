@@ -76,18 +76,18 @@ card_animation = {false,
    11}
 
 
-FC_HOVER = {12,  9,  6}
+FC_HOVER = {12,  9,  6, 2}
 -- TODO: delete FC_MATCH?
 --FC_MATCH = {61, 49, 37}
-FC_FLASH = {44, 36, 22}
-FC_FACE  = {17, 13, 15} -- idk this is just MATCH-FLASH
-FC_POP   = { 9,  8,  7}
-stop_time_combo =  {120, 120, 120}
-stop_time_chain =  {300, 180, 120}
-stop_time_danger = {600, 420, 240}
+FC_FLASH = {44, 36, 22, 14}
+FC_FACE  = {17, 13, 15, 8} -- idk this is just MATCH-FLASH
+FC_POP   = { 9,  8,  7, 6}
+stop_time_combo =  {120, 120, 120, 90}
+stop_time_chain =  {300, 180, 120, 90}
+stop_time_danger = {600, 420, 240, 180}
 
-difficulty_to_ncolors_endless = {5,6,6}
-difficulty_to_ncolors_1Ptime = {6,6,6}
+difficulty_to_ncolors_endless = {5,6,6,6}
+difficulty_to_ncolors_1Ptime = {6,6,6,6}
 
 -- Yes, 2 is slower than 1 and 50..99 are the same.
 speed_to_rise_time = map(function(x) return x/16 end,
@@ -130,35 +130,35 @@ panels_to_next_speed =
 --level_to_difficulty        = {  1,  1,  2,  2,  2,  2,  2,  3,  3,  3}
 
 -- What speed level you start on.
-level_to_starting_speed        = {  1,  5,  9, 13, 17, 21, 25, 29, 27, 32}
+level_to_starting_speed        = {  1,  5,  9, 13, 17, 21, 25, 29, 27, 32, 99}
 -- How long you can spend at the top of the screen without dying, in frames ("Health").
-level_to_hang_time             = {121,101, 81, 66, 51, 41, 31, 21, 11,  1}
+level_to_hang_time             = {121,101, 81, 66, 51, 41, 31, 21, 11,  1, 0.25}
 -- How many colors of panels can spawn in VS mode, not including metal panels.
-level_to_ncolors_vs            = {  5,  5,  5,  5,  5,  5,  5,  5,  6,  6}
+level_to_ncolors_vs            = {  5,  5,  5,  5,  5,  5,  5,  5,  6,  6, 6}
 -- How many colors of panels can spawn in time trial mode.
-level_to_ncolors_time          = {  5,  5,  6,  6,  6,  6,  6,  6,  6,  6}
+level_to_ncolors_time          = {  5,  5,  6,  6,  6,  6,  6,  6,  6,  6, 6}
 -- How long panels will hover if not supported by anything, in frames.
-level_to_hover                 = { 12, 12, 11, 10,  9,  6,  5,  4,  3,  6}
+level_to_hover                 = { 12, 12, 11, 10,  9,  6,  5,  4,  3,  6, 2}
 -- How long newly-transformed panels from garbage will hover before falling, in frames.
-level_to_garbage_panel_hover   = { 41, 36, 31, 26, 21, 16, 13, 10,  7,  4}
+level_to_garbage_panel_hover   = { 41, 36, 31, 26, 21, 16, 13, 10,  7,  4, 2}
 -- How long panels flash for before popping, in frames.
-level_to_flash                 = { 44, 44, 42, 42, 38, 36, 34, 32, 30, 28}
+level_to_flash                 = { 44, 44, 42, 42, 38, 36, 34, 32, 30, 28, 14}
 -- How long panels remain in their "face" frame before popping, in frames.
 -- (They actually stay in their face frame for five frames longer than the numbers in this table for some reason...
 --  This makes timings accurate with Tetris Attack / Panel de Pon SFC.)
-level_to_face                  = { 20, 18, 17, 16, 15, 14, 13, 12, 11, 10}
+level_to_face                  = { 20, 18, 17, 16, 15, 14, 13, 12, 11, 10, 8}
 -- How long panels take to pop after finishing their "face" frame, in frames.
-level_to_pop                   = {  9,  9,  8,  8,  8,  8,  8,  7,  7,  7}
+level_to_pop                   = {  9,  9,  8,  8,  8,  8,  8,  7,  7,  7, 6}
 -- How long the stack stops when you clear combos, in frames.
-level_to_combo_constant        = {-20,-16,-12, -8, -3,  2,  7, 12, 17, 22}
-level_to_combo_coefficient     = { 20, 18, 16, 14, 12, 10,  8,  6,  4,  2}
+level_to_combo_constant        = {-20,-16,-12, -8, -3,  2,  7, 12, 17, 22, 30}
+level_to_combo_coefficient     = { 20, 18, 16, 14, 12, 10,  8,  6,  4,  2, 1}
 -- How long the stack stops when you clear chains, in frames.
-level_to_chain_constant        = { 80, 77, 74, 71, 68, 65, 62, 60, 58, 56}
-level_to_chain_coefficient     = { 20, 18, 16, 14, 12, 10,  8,  6,  4,  2}
+level_to_chain_constant        = { 80, 77, 74, 71, 68, 65, 62, 60, 58, 56, 50}
+level_to_chain_coefficient     = { 20, 18, 16, 14, 12, 10,  8,  6,  4,  2, 1}
 -- How many panels you have to pop to earn a metal panel in your next row.
-level_to_metal_panel_frequency = { 12, 14, 16, 19, 23, 26, 29, 33, 37, 41}
+level_to_metal_panel_frequency = { 12, 14, 16, 19, 23, 26, 29, 33, 37, 41, 18}
 -- How many panels you can have at most in your metal panel queue.
-level_to_metal_panel_cap       = { 21, 18, 18, 15, 15, 12,  9,  6,  6,  3 }
+level_to_metal_panel_cap       = { 21, 18, 18, 15, 15, 12,  9,  6,  6,  3, 3}
 
 -- Stage clear seems to use a variant of vs mode's speed system,
 -- except that the amount of time between increases is not constant.
