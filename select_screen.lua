@@ -953,7 +953,24 @@ function select_screen.main()
             end
             if not cursor.selected then move_cursor(cursor.position,right) end
           elseif menu_super_select(k) then
-            if ( cursor.state.cursor ~= "__Empty" and cursor.state.cursor ~= "__Reserved" ) then
+            if selectable[cursor.state.cursor] then
+              if cursor.selected and cursor.state.cursor == "__Stage" then
+                -- load stage even if hidden!
+                stage_loader_load(cursor.state.stage)
+              end
+              cursor.selected = not cursor.selected
+            elseif cursor.state.cursor == "__Leave" then
+              on_quit()
+            elseif cursor.state.cursor == "__Random" then
+              cursor.state.character_is_random = true
+              cursor.state.character = uniformly(characters_ids_for_current_theme)
+              cursor.state.character_display_name = characters[cursor.state.character].display_name
+              character_loader_load(cursor.state.character)
+              cursor.state.cursor = "__Ready"
+              cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"])
+            elseif cursor.state.cursor == "__Mode" then
+              cursor.state.ranked = not cursor.state.ranked
+            elseif ( cursor.state.cursor ~= "__Empty" and cursor.state.cursor ~= "__Reserved" ) then
               cursor.state.character_is_random = false
               cursor.state.character = cursor.state.cursor
               cursor.state.character_display_name = characters[cursor.state.character].display_name
