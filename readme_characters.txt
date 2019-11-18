@@ -1,6 +1,4 @@
-Adding/modding characters:
-
-Step by step instructions (Windows example):
+Adding/modding characters: step by step instructions (Windows example):
 
 1. Press the Windows key then type "%appdata%" without quotes and hit enter.
 
@@ -23,6 +21,8 @@ Note: non-optional data that are missing will automatically get replaced by defa
 - "config": this file holds data for the configuration of your character. The inside should look like that:
 	- name: display name of this character, this value will be displayed in the lobby and will also serve as a fallback when trying to match your opponent's character
 	- id: unique identifier of this character, this id should be specific (see note). [IF MISSING YOUR CHARACTER WILL BE IGNORED!]
+	- stage: optional, this specifies which stage to use when 'super selecting' this character
+	- panels: optional, this specifies which panels to use when 'super selecting' this character
 
 Note: providing a specific, long enough id is a very good idea so that people renaming your mods folders still get properly match with other users regarding your mods. e.g. "mycharacter_myname"
 
