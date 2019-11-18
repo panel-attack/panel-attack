@@ -273,7 +273,7 @@ do
 end
 
 function main_select_speed_99(next_func, ...)
-  local difficulties = {"Easy", "Normal", "Hard"}
+  local difficulties = {"Easy", "Normal", "Hard", "EX Mode"}
   local items = {{"Speed"},
                 {"Difficulty"},
                 {"Go!", next_func},
@@ -306,10 +306,10 @@ function main_select_speed_99(next_func, ...)
         active_idx = wrap(1, active_idx+1, #items)
       elseif menu_right(k) then
         if active_idx==1 then speed = bound(1,speed+1,99)
-        elseif active_idx==2 then difficulty = bound(1,difficulty+1,3) end
+        elseif active_idx==2 then difficulty = bound(1,difficulty+1,4) end
       elseif menu_left(k) then
         if active_idx==1 then speed = bound(1,speed-1,99)
-        elseif active_idx==2 then difficulty = bound(1,difficulty-1,3) end
+        elseif active_idx==2 then difficulty = bound(1,difficulty-1,4) end
       elseif menu_enter(k) then
         if active_idx == 3 then
           if config.endless_speed ~= speed or config.endless_difficulty ~= difficulty then
@@ -793,21 +793,30 @@ function main_character_select()
       local level_scale = level_width/IMG_levels[1]:getWidth()
       menu_drawf(IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center" )
       padding_x = padding_x + level_width
+	    local ex_scaling = level_width/IMG_levels[11]:getWidth()
+      menu_drawf(IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center")
+      padding_x = padding_x + level_width -- [[Thank you Eole!]]
       if is_selected then
         gprintf("<", render_x+padding_x-0.5*level_width, render_y+y_padding-0.5*text_height,level_width,"center")
         padding_x = padding_x + level_width
       end
-      for i=1,10 do
+      for i=1,11 do
         local use_unfocus = cursor_data.state.level < i
         if use_unfocus then
-          menu_drawf(IMG_levels_unfocus[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, level_scale, level_scale )
+          menu_drawf(IMG_levels_unfocus[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, (i == 11 and ex_scaling or level_scale), (i == 11 and ex_scaling or level_scale))
+            --[[if i >= 11 then
+		      menu_drawf(IMG_levels_unfocus[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, ex_scaling, ex_scaling)
+            end]]	  
         else
-          menu_drawf(IMG_levels[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, level_scale, level_scale )
-        end
-        if i == cursor_data.state.level then
-          menu_drawf(IMG_level_cursor, render_x+padding_x, render_y+y_padding+IMG_levels[i]:getHeight()*0.5, "center", "top", 0, level_scale, level_scale )
-        end
-        padding_x = padding_x + level_width
+          menu_drawf(IMG_levels[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, (i == 11 and ex_scaling or level_scale), (i == 11 and ex_scaling or level_scale))
+		        --[[if i >= 11 then
+		        menu_drawf(IMG_levels[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, ex_scaling, ex_scaling)	  
+		      end]]
+        end 
+        padding_x = padding_x + level_width	
+		      --[[if i == 11 then
+		      padding_x = padding_x + 16
+		    end]]	
       end
       if is_selected then
         gprintf(">", render_x+padding_x-0.5*level_width, render_y+y_padding-0.5*text_height,level_width,"center")
@@ -824,6 +833,9 @@ function main_character_select()
       else
         to_print = "[casual] ranked"
       end
+      if cursor_data.state.level >= 11 then
+		    to_print = "[EX Mode]"
+	    end
       gprint(to_print, render_x+padding_x, render_y+y_padding-0.5*text_height-1)
     end
 
@@ -914,6 +926,12 @@ function main_character_select()
           if msg.reasons then
             match_type_message = match_type_message..(msg.reasons[1] or "Reason unknown")
           end
+        --[[elseif msg.ranked_match_denied and cursor_data.state.level >= 11 then
+		      match_type = "Casual"
+		      match_type_message = "EX Mode Activated "
+			      if msg.reasons then
+			      match_type_message = match_type_message..(msg.reasons[1] or "Reason unknown")
+		      end]]
         end
         if msg.leave_room then
           my_win_count = 0
@@ -1165,7 +1183,11 @@ function main_character_select()
           elseif menu_left(k) then
             if cursor.selected then
               if cursor.state.cursor == "__Level" then
-                cursor.state.level = bound(1, cursor.state.level-1, 10)
+                cursor.state.level = bound(1, cursor.state.level-1, 11)
+              end    
+              if cursor.state.level >= 11 and cursor.state.ranked then
+				        cursor.state.ranked = false
+              end    
               elseif cursor.state.cursor == "__Panels" then
                 cursor.state.panels_dir = change_panels_dir(cursor.state.panels_dir,-1)
               end
@@ -1174,7 +1196,11 @@ function main_character_select()
           elseif menu_right(k) then
             if cursor.selected then
               if cursor.state.cursor == "__Level" then
-                cursor.state.level = bound(1, cursor.state.level+1, 10)
+                cursor.state.level = bound(1, cursor.state.level+1, 11)
+              end  
+              if cursor.state.level >= 11 and cursor.state.ranked then
+				        cursor.state.ranked = false
+              end  
               elseif cursor.state.cursor == "__Panels" then
                 cursor.state.panels_dir = change_panels_dir(cursor.state.panels_dir,1)
               end
@@ -1196,7 +1222,9 @@ function main_character_select()
               characters[cursor.state.character]:play_selection_sfx()
               character_loader_load(cursor.state.character)
             elseif cursor.state.cursor == "__Mode" then
-              cursor.state.ranked = not cursor.state.ranked
+              if cursor.state.level < 11 then
+					      cursor.state.ranked = not cursor.state.ranked
+              end	
             elseif cursor.state.cursor ~= "__Empty" then
               cursor.state.character = cursor.state.cursor
               cursor.state.character_display_name = characters[cursor.state.character].display_name
