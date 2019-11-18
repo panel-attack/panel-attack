@@ -805,18 +805,18 @@ function main_character_select()
         if use_unfocus then
           menu_drawf(IMG_levels_unfocus[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, (i == 11 and ex_scaling or level_scale), (i == 11 and ex_scaling or level_scale))
             --[[if i >= 11 then
-		      menu_drawf(IMG_levels_unfocus[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, ex_scaling, ex_scaling)
-            end]]	  
+	      menu_drawf(IMG_levels_unfocus[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, ex_scaling, ex_scaling)
+           end]]	  
         else
           menu_drawf(IMG_levels[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, (i == 11 and ex_scaling or level_scale), (i == 11 and ex_scaling or level_scale))
-		        --[[if i >= 11 then
-		        menu_drawf(IMG_levels[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, ex_scaling, ex_scaling)	  
-		      end]]
+            --[[if i >= 11 then
+	      menu_drawf(IMG_levels[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, ex_scaling, ex_scaling)	  
+	    end]]
         end 
         padding_x = padding_x + level_width	
-		      --[[if i == 11 then
-		      padding_x = padding_x + 16
-		    end]]	
+          --[[if i == 11 then
+	     padding_x = padding_x + 16
+         end]]	
       end
       if is_selected then
         gprintf(">", render_x+padding_x-0.5*level_width, render_y+y_padding-0.5*text_height,level_width,"center")
@@ -834,8 +834,8 @@ function main_character_select()
         to_print = "[casual] ranked"
       end
       if cursor_data.state.level >= 11 then
-		    to_print = "[EX Mode]"
-	    end
+        to_print = "[EX Mode]"
+      end
       gprint(to_print, render_x+padding_x, render_y+y_padding-0.5*text_height-1)
     end
 
@@ -927,11 +927,11 @@ function main_character_select()
             match_type_message = match_type_message..(msg.reasons[1] or "Reason unknown")
           end
         --[[elseif msg.ranked_match_denied and cursor_data.state.level >= 11 then
-		      match_type = "Casual"
-		      match_type_message = "EX Mode Activated "
-			      if msg.reasons then
-			      match_type_message = match_type_message..(msg.reasons[1] or "Reason unknown")
-		      end]]
+	  match_type = "Casual"
+	  match_type_message = "EX Mode Activated "
+	    if msg.reasons then
+	  match_type_message = match_type_message..(msg.reasons[1] or "Reason unknown")
+	  end]]
         end
         if msg.leave_room then
           my_win_count = 0
@@ -1186,7 +1186,7 @@ function main_character_select()
                 cursor.state.level = bound(1, cursor.state.level-1, 11)
               end    
               if cursor.state.level >= 11 and cursor.state.ranked then
-				        cursor.state.ranked = false
+		cursor.state.ranked = false
               end    
               elseif cursor.state.cursor == "__Panels" then
                 cursor.state.panels_dir = change_panels_dir(cursor.state.panels_dir,-1)
@@ -1199,7 +1199,7 @@ function main_character_select()
                 cursor.state.level = bound(1, cursor.state.level+1, 11)
               end  
               if cursor.state.level >= 11 and cursor.state.ranked then
-				        cursor.state.ranked = false
+		cursor.state.ranked = false
               end  
               elseif cursor.state.cursor == "__Panels" then
                 cursor.state.panels_dir = change_panels_dir(cursor.state.panels_dir,1)
@@ -1223,7 +1223,7 @@ function main_character_select()
               character_loader_load(cursor.state.character)
             elseif cursor.state.cursor == "__Mode" then
               if cursor.state.level < 11 then
-					      cursor.state.ranked = not cursor.state.ranked
+		cursor.state.ranked = not cursor.state.ranked
               end	
             elseif cursor.state.cursor ~= "__Empty" then
               cursor.state.character = cursor.state.cursor
