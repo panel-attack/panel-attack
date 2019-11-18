@@ -13,19 +13,19 @@ up,Up,Haut,Cima,上,Arriba,
 down,Down,Bas,Baixo,下,Abajo, 
 left,Left,Gauche,Esquerda,左,Izquierda, 
 right,Right,Droite,Direita,右,Derecha, 
-start,Start,Start,Start,START,Start,
+start,Start,Start,Começar,START,Start,
 player,Player,Joueur,Jogador,プレイヤー,Jugador, 
 page,Page,Page,Página,ページ,Página, 
 panels,Panels,"Panels
 ",Painéis,パネル,Paneles, 
-stage,Stage,Terrain,,,Escenario,
-mode,Mode,Mode,,,Modo,
+stage,Stage,Terrain,Fase,ステージ,Escenario,
+mode,Mode,Mode,Modo,モード,Modo,
 ready,Ready,Prêt,Pronto,READY,Listo, 
 random,Random,Aléatoire,Aleatória,ランダム,Aleatorio, 
 leave,Leave,Quitter,Sair,もどる,Salir, 
-pause,Pause,Pause,,,Pausa,
+pause,Pause,Pause,Pausa,ポーズ,Pausa,
 go_,Go!,Commencer,Vai!,GO!,Comenzar!, 
-join_community,Join the community at,Rejoignez la communauté sur,Participe da comunidade em,でコミュニティに参加する,Únete a la comunidad en, 
+join_community,Join the community at,Rejoignez la communauté sur,Participe da comunidade em,でコミュニティに参加する,Únete a nuestra comunidad en, 
 lb_alone,You are all alone in the lobby :(,Vous êtes seul dans le salon :(,Você está sozinho no lobby :(,だれもロビーにいません。(´・ω・`),No hay nadie en el salón :(, 
 lb_back,Back to main menu,Revenir au menu principal,Voltar ao menu principal,メインメニューに戻る,Volver al menú principal, 
 lb_connecting,Connecting...,Connexion en cours...,Conectando,接続中...,Conectando, 
@@ -58,7 +58,7 @@ lb_new_id,need a new user id,besoin d'un nouvel identifiant utilisateur,precisa 
 lb_received,(wants to play with you :o),(vous invite à jouer :o),(quer jogar com você: o),（対戦を申し込まれました！（・o・））,(quiere jugar contigo :o), 
 lb_request,(request sent),(demande envoyée),(solicitação enviada),（対戦申請中）,(petición enviada), 
 lb_select_player,Select a player name to ask for a match.,Selectionnez un joueur avec qui jouer.,Selecione um nome de jogador para solicitar uma partida.,プレイヤー名を選択して試合を申し込んで下さい。,Selecciona el nombre de un jugador para enviarle solicitud de partida., 
-lb_set_connect,Setting up connection...,Préparation de la connexion...,Configurando conexão ...,接続しています…,Estableciendo conexión..., 
+lb_set_connect,Setting up connection...,Préparation de la connexion...,Estabelecendo conexão ...,接続しています…,Estableciendo conexión..., 
 lb_hide_board,Hide Leaderboard,Cacher le classement,Ocultar Placar de Liderança,リーダーボードを非表示,Ocultar Tabla de Puntuación, 
 lb_spectate,spectate,regarder,assistir,観戦する,espectar, 
 lb_used_name,"Error: name is taken :<
@@ -76,7 +76,7 @@ il n'est peut être pas encore à jour, réessayez.
 Cela peut aussi arriver si vous avez
 lancé deux instances du jeu.
 
-Appuyer sur Valider ou Retour pour continuer.","Erro: o nome já usado: <
+Appuyer sur Valider ou Retour pour continuer.","Erro: o nome já usado :<
 
 Se você acabou de sair do servidor,
 talvez não tenha percebido, tente entrar novamente.
@@ -124,13 +124,13 @@ Nombre antiguo: ""%1""
 Nombre nuevo: ""%2"" ", 
 lb_welcome_back,"Welcome back, %1","Vous êtes de retour, %1","Bem-vindo de volta, %1",おかえりなさい、%1,"Bienvenido de vuelta, %1", 
 lb_you,You,Vous,Você,あなた,Tú, 
-ld_puzzles,Copying puzzles readme...,Copie du fichier readme des puzzles...,,,"Copiando el archivo ""readme"" de puzzles ",
-ld_replay,Loading replays...,Chargement des replays...,,,Cargando repeticiones...,
-ld_theme,Loading theme...,Chargement du thème...,,,Cargando tema...,
-ld_characters,Preloading characters...,Préchargement des personnages...,,,Pre-cargando personajes...,
-ld_stages,Preloading stages...,Préchargement des terrains...,,,Pre-cargando escenarios...,
-ld_panels,Loading panels...,Chargement des blocs...,,,Cargando paneles...,
-ld_analytics,Loading analytics...,Chargement des statistiques...,,,Cargando estadísticas....,
+ld_puzzles,Copying puzzles readme...,Copie du fichier readme des puzzles...,Copiando quebra-cabeças do leia-me,,"Copiando el archivo ""readme"" de puzzles ",
+ld_replay,Loading replays...,Chargement des replays...,Carregando replays,,Cargando repeticiones...,
+ld_theme,Loading theme...,Chargement du thème...,Carregando temas,,Cargando tema...,
+ld_characters,Preloading characters...,Préchargement des personnages...,Pré-recarregando personagens,,Pre-cargando personajes...,
+ld_stages,Preloading stages...,Préchargement des terrains...,Pré-recarregando fases,,Pre-cargando escenarios...,
+ld_panels,Loading panels...,Chargement des blocs...,Carregando painéis,,Cargando paneles...,
+ld_analytics,Loading analytics...,Chargement des statistiques...,Carregando estatísticas,,Cargando estadísticas....,
 mm_1_endless,1P endless,1J infini,1P sem fim,1P　エンドレス,1J interminable, 
 mm_1_puzzle,1P puzzle,1J puzzle,Quebra-cabeça 1P,1P　パズル,1J Puzzle, 
 mm_1_time,1P time attack,1J contre la montre,1P time attack,1P　スコアアタック,1J Contrareloj, 
@@ -147,8 +147,8 @@ mm_replay,Replay of %1,Replay de %1,Reprodução de%1,%1のリプレイ,Ver repe
 mm_set_name,Set name,Changer pseudo,Nome do conjunto,名前設定,Definir nombre, 
 nt_ver_err,PLEASE DOWNLOAD the latest version of the game from #welcome-getting-started at the TetrisAttackOnline Discord http://discord.panelattack.com,S'IL VOUS PLAIT TELECHARGER la dernière version du jeu sur le discord TetrisAttackOnline http://discord.panelattack.com dans #welcome-getting-started,FAÇA O DOWNLOAD da versão mais recente do jogo em # Welcome-Getting-Started no TetrisAttackOnline Discord http://discord.panelattack.com,TetrisAttackOnline Discord http://discord.panelattack.com で、ゲームの最新バージョンを＃welcome-getting-startedからダウンロードして下さい。,POR FAVOR DESCARGA la última version del juego en #welcome-getting-started En el servidor de discord de TetrisAttackOnline:http://discord.panelattack.com, 
 op_none,none,rien,Nenhum,無し,Nada, 
-op_on,On,On,,,On,
-op_off,Off,Off,,,Off,
+op_on,On,On,Ligado,ON,On,
+op_off,Off,Off,Desligado,OFF,Off,
 op_all_keys,Set all keys,Définir toutes les touches,Definir todas os botões,すべてのキーを設定する,Definir todas las teclas, 
 op_about_characters,About custom characters,À propos des personnages personnalisés,Sobre caracteres personalizados,カスタムキャラクターについて,Acerca de personajes personalizados, 
 op_about_themes,About custom themes,À propos des thèmes personnalisés,Sobre temas personalizados,カスタムテーマについて,Acerca de temas personalizados,
@@ -184,11 +184,11 @@ op_default_char,Use default characters,Utiliser les personnages par défaut,Use 
 op_enter_name,Enter your name:,Entrez votre pseudo :,Digite seu nome:,名前を入力して下さい：,Ingresa tu nombre:, 
 op_fps,Show FPS,Afficher les FPS,Mostrar FPS,FPS表示,Mostrar FPS (cuadros por segundo), 
 op_language,Language,Langue,Idioma,言語,Idioma, 
-op_theme,Theme,Thème,Tema,テーマ,,
-op_ingame_infos,Show informations during gameplay,Afficher les données pendant la partie,Mostrar informações durante partida,プレイ中情報表示,,
-op_use_music_from,Use music from,Utiliser les musiques des,Utilizar música de ,使用音楽,,
-op_use_music_from_stages,stage,terrains,,,escenarios,
-op_use_music_from_characters,characters,personnages,,,personajes,
+op_theme,Theme,Thème,Tema,テーマ,Tema,
+op_ingame_infos,Show informations during gameplay,Afficher les données pendant la partie,Mostrar informações durante partida,プレイ中情報表示,Mostrar información durante la partida,
+op_use_music_from,Use music from,Utiliser les musiques des,Utilizar música de ,使用音楽,Usar música desde,
+op_use_music_from_stages,stage,terrains,Fase,ステージ,escenario,
+op_use_music_from_characters,characters,personnages,Personagens,キャラクター,personajes,
 op_music_current,Currently playing: ,Music actuel : ,Jogando neste momento:,現在再生中：,Música actual:, 
 op_music_delay,Danger music change-back delay,Délai du changement de la musique en mode danger,Atraso na troca de músicas perigosas,ピンチ音楽チェンジバック遅延,Retrasar cambio de melodía de peligro, 
 op_music_intro,Playing the intro,Joue l'intro,Reproduzindo introdução,イントロ表示,Reproduciendo la intro, 
@@ -206,17 +206,17 @@ op_reload_characters,reloading characters...,rechargement des personnages...,rec
 op_reload_stages,reloading stages...,rechargement des terrains...,recarregando estágios...,ステージを再読み込みしています…,recargando escenarios...,
 op_reload_theme,reloading theme...,rechargement du thème...,recarregando tema...,テーマを再読み込みしています…,recargando temas...,
 op_replay_public,Save replays publicly,Sauvegarder les replays publiquement,Salvar replays publicamente,リプレイを,Grabar repeticiones públicamente, 
-op_replay_public_name,With my name,Avec mon pseudo,,,Con mi nombre,
-op_replay_public_anonymously,Anonymously,Anonymement,,,Anónimamente,
-op_replay_public_none,No,Non,,,No,
+op_replay_public_name,With my name,Avec mon pseudo,Com meu nome,,Con mi nombre,
+op_replay_public_anonymously,Anonymously,Anonymement,Anonimamente,,Anónimamente,
+op_replay_public_none,No,Non,Não,,No,
 op_save,writing config to file...,sauvegarde de la configuration...,escrevendo configuração no arquivo ...,ファイルに設定を書き込んでいます...,Escribiendo configuración al archivo..., 
 op_sonds,Sounds theme,Thème des sons,Configurações de sons,サウンドセット,Set de sonidos, 
 op_vol,Master Volume,Volume Global,Volume principal,マスターボリューム,Volumen principal, 
 op_vol_music,Music Volume,Volume Musique,Volume da música,音楽ボリューム,Volumen de música, 
 op_vol_sfx,SFX Volume,Volume Effets,Volume SFX,SFXボリューム,Volumen de sonido, 
-op_vsync,VSync,VSync,,,,
+op_vsync,V-Sync,V-Sync,Sincronia vertical,垂直同期,Sincronización Vertical (V-Sync),
 opponent_level,Opponent's level,Niveau adverse,Nível do oponente,相手のレベル,Nivel del oponente, 
-pl_pause_help,Press Start again to resume,Appuyer sur Start pour continuer,,,"Presiona ""Start"" para resumir",
+pl_pause_help,Press Start again to resume,Appuyer sur Start pour continuer,Pressione Começar novamente para continuar,再開するにはもう一度スタートボタン押してください。,"Presiona ""Start"" para resumir",
 pl_1_win,P1 wins ^^,J1 gagne ^^,P1 vence ^^,1Pの勝ち！ ＾＾,J1 gana ^^, 
 pl_2_win,P2 wins ^^,J2 gagne ^^,P2 vence ^^,2Pの勝ち！ ＾＾,J2 gana ^^, 
 pl_cleared,cleared: %1,détruit : %1,limpo: %1,消したパネル：%1,despejado: %1, 
@@ -243,7 +243,7 @@ pl_score,Score: %1,Score : %1,Pontuação: %1,スコア：%1,Puntaje: %1,
 pl_shake,Shake: %1,Délai secousse : %1,Tremor: %1,床揺れ：%1,Sacudida: %1, 
 pl_spectate_join,"Joined a match in progress.
 Catching up...","Chargement du match en cours.
-Synchronisation...","Entrou em uma partida em andamento.
+Synchronisation...","Entrou em partida em andamento.
 Sincronizando...","進行中の試合に参加しました。
 キャッチアップ...","Te uniste a una partida en progreso.
 Sincronizando...", 
@@ -256,7 +256,7 @@ This is a known bug, but you may post it in #panel-attack-bugs-features
 if you'd like.","Le chargement de la partie a pris trop de temps.
 Ceci est un bug connu, mais vous pouvez le signaler sur notre discord sur :
 #panel-attack-bugs-features","o início do jogo expirou.
-Este é um bug conhecido, mas você pode publicá-lo em # panel-attack-bugs-features
+Este é um bug conhecido, mas você pode publicá-lo em #panel-attack-bugs-features
 se você quiser. ","ゲームの開始がタイムアウトしました。
 これは既知のバグですが、＃panel-attack-bugs-featuresに報告してもいいです。","se agotó el tiempo para empezar la partida.
 Este es un bug conocido, pero puedes postearlo en #panel-attack-bugs-features
@@ -274,7 +274,7 @@ for instructions","Note: vous pouvez placer des puzzles personnalisés dans :
 
 Lisez le fichier README, et alle voir les exemples.","Nota: você pode colocar novos quebra-cabeças personalizados em
 
-% appdata% \ Panel Attack \ quebra-cabeças
+%appdata%\Panel Attack\puzzles
 
 Veja o README e o exemplo de quebra-cabeça definido lá
 para instruções ","注：新しいカスタムパズルを
@@ -287,7 +287,7 @@ para instruções ","注：新しいカスタムパズルを
 
 Revisa el archivo README y el set de puzzle de ejemplo en su correspondiente carpeta
 para más infomación", 
-pz_puzzles,Puzzles:,Puzzles :,Enigmas:,パズル：,Puzzles:, 
+pz_puzzles,Puzzles:,Puzzles :,Quebra-cabeças:,パズル：,Puzzles:, 
 rp_endless,endless,infini,sem fim,エンドレス,Interminable, 
 rp_no_endless,I don't have an endless replay :(,Je n'ai pas de replay infini :(,Não tenho um replay sem fim :(,エンドレスのリプレイはありません -_-,No encuentro ningún archivo de repetición del modo interminable :(, 
 rp_no_puzzle,I don't have a puzzle replay :(,Je n'ai pas de replay puzzle :(,Não tenho um replay de quebra-cabeça :(,パズルのリプレイはありません -_-,No encuentro ningún archivo de repetición del modo puzzle :(, 
