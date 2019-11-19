@@ -379,7 +379,7 @@ function main_net_vs_lobby()
   --attempt login
   read_user_id_file()
   if not my_user_id then
-    my_user_id = loc("lb_new_id")
+    my_user_id = "need a new user id"
   end
   json_send({login_request=true, user_id=my_user_id})
   local login_status_message = "   "..loc("lb_login")

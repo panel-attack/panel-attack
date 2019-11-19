@@ -302,7 +302,6 @@ function Room.close(self)
       v.room = nil
       v.state = "lobby"
     end
-
   end
   if rooms[self.roomNumber] then
     rooms[self.roomNumber] = nil
