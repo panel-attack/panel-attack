@@ -172,8 +172,8 @@ function options.main(starting_idx)
   local items, active_idx = {}, starting_idx or 1
   local k = K[1]
   local selected, deselected_this_frame, adjust_active_value = false, false, false
-  local save_replays_publicly_choices = {{"with my name", "op_replay_public_name"}, {"anonymously", "op_replay_public_anonymously"}, {"not at all", "op_replay_public_none"}}
-  local use_music_from_choices = {{"stage","op_use_music_from_stages"}, {"characters","op_use_music_from_characters"}}
+  local save_replays_publicly_choices = {{"with my name", "op_replay_public_with_name"}, {"anonymously", "op_replay_public_anonymously"}, {"not at all", "op_replay_public_no"}}
+  local use_music_from_choices = {{"stage","stages"}, {"characters","characters"}}
   local on_off_text = {[true]={"On","op_on"}, [false]={"Off","op_off"}}
   local language_choices = {}
   for k,v in ipairs(localization:get_list_codes()) do

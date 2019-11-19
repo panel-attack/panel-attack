@@ -111,18 +111,18 @@ do
         {loc("mm_1_puzzle"), main_select_puzz},
         {loc("mm_1_time"), main_select_speed_99, {main_time_attack}},
         {loc("mm_1_vs"), main_local_vs_yourself_setup},
-        --{"2P vs online at burke.ro", main_net_vs_setup, {"burke.ro"}},
+        --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
         --{loc("mm_2_vs_online", "Jon's server"), main_net_vs_setup, {"18.188.43.50"}},
-        {"2P vs online at betaserver.panelattack.com", main_net_vs_setup, {"betaserver.panelattack.com"}},
-        --{"2P vs online (USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)", main_net_vs_setup, {"18.188.43.50"}},
-        --{"This test build is for offline-use only"--[["2P vs online at Jon's server"]], main_select_mode},
-        --{"2P vs online at domi1819.xyz (Europe, beta for spectating and ranking)", main_net_vs_setup, {"domi1819.xyz"}},
-        --{"2P vs online at localhost (development-use only)", main_net_vs_setup, {"localhost"}},
-        --{"2P vs online at LittleEndu's server", main_net_vs_setup, {"51.15.207.223"}},
+        {loc("mm_2_vs_online", "betaserver.panelattack.com"), main_net_vs_setup, {"betaserver.panelattack.com"}},
+        --{loc("mm_2_vs_online", "(USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)"), main_net_vs_setup, {"18.188.43.50"}},
+        --{loc("mm_2_vs_online", "This test build is for offline-use only"), main_select_mode},
+        --{loc("mm_2_vs_online", "domi1819.xyz"), main_net_vs_setup, {"domi1819.xyz"}},
+        --{loc("mm_2_vs_online", "(development-use only)"), main_net_vs_setup, {"localhost"}},
+        --{loc("mm_2_vs_online", "LittleEndu's server"), main_net_vs_setup, {"51.15.207.223"}},
         {loc("mm_2_vs_local"), main_local_vs_setup},
-        {loc("mm_replay", loc("mm_1_endless")), main_replay_endless},
-        {loc("mm_replay", loc("mm_1_puzzle")), main_replay_puzzle},
-        {loc("mm_replay", loc("mm_1_vs")), main_replay_vs},
+        {loc("mm_replay_of", loc("mm_1_endless")), main_replay_endless},
+        {loc("mm_replay_of", loc("mm_1_puzzle")), main_replay_puzzle},
+        {loc("mm_replay_of", loc("mm_1_vs")), main_replay_vs},
         {loc("mm_configure"), main_config_input},
         {loc("mm_set_name"), main_set_name},
         {loc("mm_options"), options.main},
@@ -869,7 +869,7 @@ end
 
 function main_local_vs_yourself_setup()
   currently_spectating = false
-  my_name = config.name or loc("ss_p1")
+  my_name = config.name or loc("player_n", "1")
   op_name = nil
   op_state = nil
   select_screen.character_select_mode = "1p_vs_yourself"
@@ -941,8 +941,8 @@ function main_replay_vs()
   character_loader_load(P1.character)
   character_loader_load(P2.character)
   character_loader_wait()
-  my_name = replay.P1_name or loc("ss_p1")
-  op_name = replay.P2_name or loc("ss_p2")
+  my_name = replay.P1_name or loc("player_n", "1")
+  op_name = replay.P2_name or loc("player_n", "2")
   if replay.ranked then
     match_type = "Ranked"
   else
@@ -991,14 +991,14 @@ function main_replay_vs()
       end_text = loc("ss_draw")
     elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
       winSFX = P2:pick_win_sfx()
-      if replay.P2_name and replay.P2_name ~= loc("ss_anonymous") then
+      if replay.P2_name and replay.P2_name ~= "anonymous" then
         end_text = loc("ss_p_wins", replay.P2_name)
       else
         end_text = loc("pl_2_win")
       end
     elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
       winSFX = P1:pick_win_sfx()
-      if replay.P1_name and replay.P1_name ~= loc("ss_anonymous") then
+      if replay.P1_name and replay.P1_name ~= "anonymous" then
         end_text = loc("ss_p_wins", replay.P1_name)
       else
         end_text = loc("pl_1_win")
@@ -1171,7 +1171,7 @@ do
   for key,val in spairs(puzzle_sets) do
     items[#items+1] = {key, make_main_puzzle(val)}
   end
-  items[#items+1] = {loc("back"), main_select_mode}
+  items[#items+1] = {"back", main_select_mode}
   function main_select_puzz()
     if themes[config.theme].musics.main then
       find_and_add_music(themes[config.theme].musics, "main")
@@ -1188,7 +1188,8 @@ do
         else
           arrow = arrow .. "\n"
         end
-        to_print = to_print .. "   " .. items[i][1] .. "\n"
+        local loc_item = (items[i][1] == "back") and loc("back") or items[i][1]
+        to_print = to_print .. "   " .. loc_item .. "\n"
       end
       gprint(loc("pz_puzzles"), unpack(main_menu_screen_pos) )
       gprint(loc("pz_info"), main_menu_screen_pos[1]-280, main_menu_screen_pos[2]+220)
