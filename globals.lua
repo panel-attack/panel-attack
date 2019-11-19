@@ -58,7 +58,7 @@ config = {
 	version                       = VERSION,
 
 	 -- Lang used for localization
-	 language_code                 = "EN",
+	language_code                 = "EN",
 
 	theme                         = default_theme_dir,
 	panel_set                     = default_panels_dir,

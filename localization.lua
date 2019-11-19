@@ -85,17 +85,8 @@ function Localization.init(self)
 			end
 
 			cur = cur + 1
-
---[[			print("== CHAR")
-			if acc then
-				print("acc "..acc)
-			end
-			print(ch)
-			if escape then
-				print("esc")
-			end--]]
 		end
-
+		
 		if escape then
 			if not acc then
 				leftover = line:sub(stop_cur+1, cur)
@@ -106,15 +97,6 @@ function Localization.init(self)
 		else
 			tokens[#tokens+1] = trim(stop_cur, cur)
 		end
---[[
-		print("==CSV_LINE ")
-		for i, v in ipairs(tokens) do print(v) end
-		
-		if leftover then
-			print("> "..leftover)
-		end
-		print("==")--]]
-
 		return tokens, leftover
 	end
 

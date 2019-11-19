@@ -49,23 +49,64 @@ function write_conf_file() pcall(function()
   file:close()
 end) end
 
+local use_music_from_values = { stages=true, characters=true }
+local save_replays_values = { ["with my name"]=true, anonymously=true, ["not at all"]=true }
+
 function read_conf_file() pcall(function()
+  -- config current values are defined in globals.lua, 
+  -- we consider those values are currently in config
+
   local file = love.filesystem.newFile("conf.json")
   file:open("r")
+  local read_data = {}
   local teh_json = file:read(file:getSize())
   for k,v in pairs(json.decode(teh_json)) do
-    config[k] = v
+    read_data[k] = v
   end
+
+  -- do stuff using read_data.version for retrocompatibility here
   
-  if love.filesystem.getInfo("themes/"..config.theme) == nil then
-    config.theme = default_theme_dir
+  if type(read_data.theme) == "string" and love.filesystem.getInfo("themes/"..read_data.theme) then
+    config.theme = read_data.theme
   end
 
-  love.window.setVSync( config.vsync and 1 or 0 )
+  -- language_code, panel_set, character and stage are patched later on by their own subsystems, we store their values in config for now!
+  if type(read_data.language_code) == "string" then config.language_code = read_data.language_code end
+  if type(read_data.panel_set) == "string" then config.panel_set = read_data.panel_set end
+  if type(read_data.character) == "string" then config.character = read_data.character end
+  if type(read_data.stage) == "string" then config.stage = read_data.stage end
 
-  -- do stuff regarding version compatibility here, before we patch it
+  if type(read_data.vsync) == "boolean" then config.vsync = read_data.vsync end
 
-  config.version = VERSION
+  if type(read_data.use_music_from) == "string" and use_music_from_values[read_data.use_music_from] then 
+    config.use_music_from = read_data.use_music_from 
+  end
+
+  if type(read_data.level) == "number" then config.level = bound(1,read_data.level,10) end
+  if type(read_data.endless_speed) == "number" then config.endless_speed = bound(1,read_data.endless_speed,99) end
+  if type(read_data.endless_difficulty) == "number" then config.endless_difficulty = bound(1,read_data.endless_difficulty,3) end
+
+  if type(read_data.name) == "string" then config.name = read_data.name end
+
+  if type(read_data.master_volume) == "number" then config.master_volume = bound(0,read_data.master_volume,100) end
+  if type(read_data.SFX_volume) == "number" then config.SFX_volume = bound(0,read_data.SFX_volume,100) end
+  if type(read_data.music_volume) == "number" then config.music_volume = bound(0,read_data.music_volume,100) end
+
+  if type(read_data.debug_mode) == "boolean" then config.debug_mode = read_data.debug_mode end
+  if type(read_data.show_fps) == "boolean" then config.show_fps = read_data.show_fps end
+  if type(read_data.show_ingame_infos) == "boolean" then config.show_ingame_infos = read_data.show_ingame_infos end
+  if type(read_data.ready_countdown_1P) == "boolean" then config.ready_countdown_1P = read_data.ready_countdown_1P end
+  if type(read_data.danger_music_changeback_delay) == "boolean" then config.danger_music_changeback_delay = read_data.danger_music_changeback_delay end
+  if type(read_data.enable_analytics) == "boolean" then config.enable_analytics = read_data.enable_analytics end
+
+  if type(read_data.save_replays_publicly) == "string" and save_replays_values[read_data.save_replays_publicly] then 
+    config.save_replays_publicly = read_data.save_replays_publicly 
+  end
+
+  if type(read_data.window_x) == "number" then config.window_x = read_data.window_x end
+  if type(read_data.window_y) == "number" then config.window_y = read_data.window_y end
+  if type(read_data.display) == "number" then config.display = read_data.display end
+
   file:close()
 end) end
 

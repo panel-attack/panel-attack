@@ -33,15 +33,13 @@ function fmainloop()
   replay = {}
   gprint("Reading config file", unpack(main_menu_screen_pos))
   wait()
-  read_conf_file() -- TODO: stop making new config files
+  read_conf_file()
+  local x, y, display = love.window.getPosition()
+  love.window.setPosition( config.window_x or x, config.window_y or y, config.display or display )
+  love.window.setVSync( config.vsync and 1 or 0 )
   gprint("Loading localization...", unpack(main_menu_screen_pos))
   wait()
   Localization.init(localization)
-  local x,y, display = love.window.getPosition()
-  love.window.setPosition(
-    config.window_x or x,
-    config.window_y or y,
-    config.display or display)
   gprint(loc("ld_puzzles"), unpack(main_menu_screen_pos))
   wait()
   copy_file("readme_puzzles.txt", "puzzles/README.txt")
