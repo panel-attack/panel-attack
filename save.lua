@@ -49,7 +49,7 @@ function write_conf_file() pcall(function()
   file:close()
 end) end
 
-local use_music_from_values = { stages=true, characters=true }
+local use_music_from_values = { stage=true, often_stage=true, either=true, often_characters=true, characters=true }
 local save_replays_values = { ["with my name"]=true, anonymously=true, ["not at all"]=true }
 
 function read_conf_file() pcall(function()

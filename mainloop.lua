@@ -253,6 +253,20 @@ local function pick_random_stage()
   use_current_stage()
 end
 
+local function pick_use_music_from()
+  if config.use_music_from == "stage" or config.use_music_from == "characters" then
+    return
+  end
+  local percent = math.random(1,4)
+  if config.use_music_from == "either" then
+    current_use_music_from = percent <= 2 and "stage" or "characters"
+  elseif config.use_music_from == "often_stage" then
+    current_use_music_from = percent == 1 and "characters" or "stage"
+  else
+    current_use_music_from = percent == 1 and "stage" or "characters"
+  end
+end
+
 function Stack.wait_for_random_character(self)
   if self.character == random_character_special_value then
     self.character = uniformly(characters_ids_for_current_theme)
@@ -281,6 +295,7 @@ end
 
 function main_endless(...)
   pick_random_stage()
+  pick_use_music_from()
   consuming_timesteps = true
   replay.endless = {}
   local replay=replay.endless
@@ -327,6 +342,7 @@ end
 
 function main_time_attack(...)
   pick_random_stage()
+  pick_use_music_from()
   consuming_timesteps = true
   P1 = Stack(1, "time", config.panels, ...)
   P1:wait_for_random_character()
@@ -670,6 +686,7 @@ function main_net_vs()
   else
     pick_random_stage()
   end
+  pick_use_music_from()
   local k = K[1]  --may help with spectators leaving games in progress
   local end_text = nil
   consuming_timesteps = true
@@ -839,6 +856,7 @@ end
 function main_local_vs()
   -- TODO: replay!
   use_current_stage()
+  pick_use_music_from()
   consuming_timesteps = true
   local end_text = nil
   while true do
@@ -888,6 +906,7 @@ end
 function main_local_vs_yourself()
   -- TODO: replay!
   use_current_stage()
+  pick_use_music_from()
   consuming_timesteps = true
   local end_text = nil
   while true do
@@ -929,6 +948,7 @@ function main_replay_vs()
   end
   stop_the_music()
   pick_random_stage()
+  pick_use_music_from()
   select_screen.fallback_when_missing = { nil, nil }
   P1 = Stack(1, "vs", config.panels, replay.P1_level or 5)
   P2 = Stack(2, "vs", config.panels, replay.P2_level or 5)
@@ -1031,6 +1051,7 @@ function main_replay_endless()
   end
   stop_the_music()
   pick_random_stage()
+  pick_use_music_from()
   P1 = Stack(1, "endless", config.panels, replay.speed, replay.difficulty)
   P1:wait_for_random_character()
   P1.do_countdown = replay.do_countdown or false
@@ -1082,6 +1103,7 @@ function main_replay_puzzle()
   end
   stop_the_music()
   pick_random_stage()
+  pick_use_music_from()
   P1 = Stack(1, "puzzle", config.panels)
   P1:wait_for_random_character()
   P1.do_countdown = replay.do_countdown or false
@@ -1132,6 +1154,7 @@ function make_main_puzzle(puzzles)
   function next_func()
     stop_the_music()
     pick_random_stage()
+    pick_use_music_from()
     consuming_timesteps = true
     replay.puzzle = {}
     local replay = replay.puzzle
