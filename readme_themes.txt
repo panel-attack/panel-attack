@@ -37,5 +37,6 @@ Note: non-optional data that are missing will automatically get replaced by defa
 - "fanfare1", "fanfare2", "fanfare3": fanfare
 - "thud_1", "thud_2", "thud_3": garbage thuds
 - "menu_move", "menu_validate", "menu_cancel": menu
+- "notification": will play upon receiving a request or a request's answer while playing online
 - "pop1-1", "pop1-2", ..., "pop1-10", "pop2-1", ..., "pop2-10", ..., "pop4-10": panel pops
 - ("music/main"), ("music/select_screen"): musics that will be used in those menus, "main" will be used as fallback if "select_screen" is missing

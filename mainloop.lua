@@ -299,8 +299,11 @@ function main_endless(...)
   make_local_gpanels(P1, "000000")
   P1:starting_state()
   while true do
-    P1:render()
-    draw_pause()
+    if game_is_paused then
+      draw_pause()
+    else
+      P1:render()
+    end
     wait()
     if P1.game_over then
     -- TODO: proper game over.
@@ -331,8 +334,11 @@ function main_time_attack(...)
   make_local_panels(P1, "000000")
   P1:starting_state()
   while true do
-    P1:render()
-    draw_pause()
+    if game_is_paused then
+      draw_pause()
+    else
+      P1:render()
+    end
     wait()
     if P1.game_over or (P1.game_stopwatch and P1.game_stopwatch == 120*60) then
     -- TODO: proper game over.
@@ -430,6 +436,7 @@ function main_net_vs_lobby()
         global_initialize_room_msg = msg
         select_screen.character_select_mode = "2p_net_vs"
         love.window.requestAttention()
+        play_optional_sfx(themes[config.theme].sounds.notification)
         return select_screen.main
       end
       if msg.unpaired then
@@ -451,6 +458,7 @@ function main_net_vs_lobby()
       if msg.game_request then
         willing_players[msg.game_request.sender] = true
         love.window.requestAttention()
+        play_optional_sfx(themes[config.theme].sounds.notification)
       end
       if msg.leaderboard_report then
         showing_leaderboard = true
@@ -726,7 +734,7 @@ function main_net_vs()
       P1:render()
       P2:render()
       wait()
-      if currently_spectating and this_frame_keys["escape"] then
+      if currently_spectating and menu_escape(K[1]) then
         print("spectator pressed escape during a game")
         my_win_count = 0
         op_win_count = 0
@@ -834,9 +842,12 @@ function main_local_vs()
   consuming_timesteps = true
   local end_text = nil
   while true do
-    P1:render()
-    P2:render()
-    draw_pause()
+    if game_is_paused then
+      draw_pause()
+    else
+      P1:render()
+      P2:render()
+    end
     wait()
     variable_step(function()
         if not P1.game_over and not P2.game_over then
@@ -880,8 +891,11 @@ function main_local_vs_yourself()
   consuming_timesteps = true
   local end_text = nil
   while true do
-    P1:render()
-    draw_pause()
+    if game_is_paused then
+      draw_pause()
+    else
+      P1:render()
+    end
     wait()
     variable_step(function()
         if not P1.game_over then
@@ -957,15 +971,17 @@ function main_replay_vs()
     gprint(op_name or "", P2.score_x, P2.score_y-28)
     P1:render()
     P2:render()
-    draw_pause()
     draw_debug_mouse_panel()
+    if game_is_paused then
+      draw_pause()
+    end
     wait()
     local ret = nil
     variable_step(function()
-      if this_frame_keys["escape"] then
+      if menu_escape(K[1]) then
         ret = {main_dumb_transition, {main_select_mode, "", 0, 0}}
       end
-      if this_frame_keys["return"] then
+      if menu_enter(K[1]) then
         run = not run
       end
       if this_frame_keys["\\"] then
@@ -1028,14 +1044,16 @@ function main_replay_endless()
   local run = true
   while true do
     P1:render()
-    draw_pause()
+    if game_is_paused then
+      draw_pause()
+    end
     wait()
     local ret = nil
     variable_step(function()
-      if this_frame_keys["escape"] then
+      if menu_escape(K[1]) then
         ret = {main_dumb_transition, {main_select_mode, "", 0, 0}}
       end
-      if this_frame_keys["return"] then
+      if menu_enter(K[1]) then
         run = not run
       end
       if this_frame_keys["\\"] then
@@ -1074,15 +1092,17 @@ function main_replay_puzzle()
   while true do
     debug_mouse_panel = nil
     P1:render()
-    draw_pause()
     draw_debug_mouse_panel()
+    if game_is_paused then
+      draw_pause()
+    end
     wait()
     local ret = nil
     variable_step(function()
-      if this_frame_keys["escape"] then
+      if menu_escape(K[1]) then
         ret =  {main_dumb_transition, {main_select_mode, "", 0, 0}}
       end
-      if this_frame_keys["return"] then
+      if menu_enter(K[1]) then
         run = not run
       end
       if this_frame_keys["\\"] then
@@ -1126,8 +1146,11 @@ function make_main_puzzle(puzzles)
     replay.puzzle = puzzles[awesome_idx]
     replay.in_buf = ""
     while true do
-      P1:render()
-      draw_pause()
+      if game_is_paused then
+        draw_pause()
+      else
+        P1:render()
+      end
       wait()
       local ret = nil
       variable_step(function()
