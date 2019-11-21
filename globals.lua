@@ -58,7 +58,7 @@ config = {
 	version                       = VERSION,
 
 	 -- Lang used for localization
-	 language_code                 = "EN",
+	language_code                 = "EN",
 
 	theme                         = default_theme_dir,
 	panel_set                     = default_panels_dir,
@@ -93,3 +93,5 @@ config = {
 	-- Save replays setting
 	save_replays_publicly         = "with my name",
 }
+
+current_use_music_from = "stage" -- either "stage" or "characters", no other values!

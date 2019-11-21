@@ -1385,9 +1385,9 @@ function Stack.PdP(self)
       end
     
     else
-      local musics_to_use = (config.use_music_from == "stage") and stages[current_stage].musics or characters[winningPlayer().character].musics
+      local musics_to_use = (current_use_music_from == "stage") and stages[current_stage].musics or characters[winningPlayer().character].musics
       if not musics_to_use["normal_music"] then -- use the other one as fallback
-        musics_to_use = (config.use_music_from ~= "stage") and stages[current_stage].musics or characters[winningPlayer().character].musics
+        musics_to_use = (current_use_music_from ~= "stage") and stages[current_stage].musics or characters[winningPlayer().character].musics
       end
       if (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
         if (current_music_is_casual or table.getn(currently_playing_tracks) == 0) 

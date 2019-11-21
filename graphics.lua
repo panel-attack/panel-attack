@@ -385,9 +385,7 @@ function Stack.render_countdown(self)
 end
 
 function draw_pause()
-  if game_is_paused then
-    draw(themes[config.theme].images.pause,0,0)
-    gprintf(loc("pause"), 0, 330, canvas_width, "center",nil,1,large_font)
-    gprintf(loc("pl_pause_help"), 0, 360, canvas_width, "center",nil,1)
-  end
+  draw(themes[config.theme].images.pause,0,0)
+  gprintf(loc("pause"), 0, 330, canvas_width, "center",nil,1,large_font)
+  gprintf(loc("pl_pause_help"), 0, 360, canvas_width, "center",nil,1)
 end

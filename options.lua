@@ -173,7 +173,7 @@ function options.main(starting_idx)
   local k = K[1]
   local selected, deselected_this_frame, adjust_active_value = false, false, false
   local save_replays_publicly_choices = {{"with my name", "op_replay_public_with_name"}, {"anonymously", "op_replay_public_anonymously"}, {"not at all", "op_replay_public_no"}}
-  local use_music_from_choices = {{"stage","stages"}, {"characters","characters"}}
+  local use_music_from_choices = {{"stage","op_only_stage"}, {"often_stage","op_often_stage"}, {"either","op_stage_characters"}, {"often_characters", "op_often_characters"}, {"characters","op_only_characters"}}
   local on_off_text = {[true]={"On","op_on"}, [false]={"Off","op_off"}}
   local language_choices = {}
   for k,v in ipairs(localization:get_list_codes()) do

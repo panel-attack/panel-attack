@@ -123,6 +123,7 @@ function Theme.sound_init(self)
       menu_move = load_theme_sfx("menu_move"),
       menu_validate = load_theme_sfx("menu_validate"),
       menu_cancel = load_theme_sfx("menu_cancel"),
+      notification = load_theme_sfx("notification"),
       garbage_thud = {
         load_theme_sfx("thud_1"),
         load_theme_sfx("thud_2"),

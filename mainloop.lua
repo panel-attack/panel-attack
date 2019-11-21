@@ -33,15 +33,13 @@ function fmainloop()
   replay = {}
   gprint("Reading config file", unpack(main_menu_screen_pos))
   wait()
-  read_conf_file() -- TODO: stop making new config files
+  read_conf_file()
+  local x, y, display = love.window.getPosition()
+  love.window.setPosition( config.window_x or x, config.window_y or y, config.display or display )
+  love.window.setVSync( config.vsync and 1 or 0 )
   gprint("Loading localization...", unpack(main_menu_screen_pos))
   wait()
   Localization.init(localization)
-  local x,y, display = love.window.getPosition()
-  love.window.setPosition(
-    config.window_x or x,
-    config.window_y or y,
-    config.display or display)
   gprint(loc("ld_puzzles"), unpack(main_menu_screen_pos))
   wait()
   copy_file("readme_puzzles.txt", "puzzles/README.txt")
@@ -255,6 +253,20 @@ local function pick_random_stage()
   use_current_stage()
 end
 
+local function pick_use_music_from()
+  if config.use_music_from == "stage" or config.use_music_from == "characters" then
+    return
+  end
+  local percent = math.random(1,4)
+  if config.use_music_from == "either" then
+    current_use_music_from = percent <= 2 and "stage" or "characters"
+  elseif config.use_music_from == "often_stage" then
+    current_use_music_from = percent == 1 and "characters" or "stage"
+  else
+    current_use_music_from = percent == 1 and "stage" or "characters"
+  end
+end
+
 function Stack.wait_for_random_character(self)
   if self.character == random_character_special_value then
     self.character = uniformly(characters_ids_for_current_theme)
@@ -283,6 +295,7 @@ end
 
 function main_endless(...)
   pick_random_stage()
+  pick_use_music_from()
   consuming_timesteps = true
   replay.endless = {}
   local replay=replay.endless
@@ -301,8 +314,11 @@ function main_endless(...)
   make_local_gpanels(P1, "000000")
   P1:starting_state()
   while true do
-    P1:render()
-    draw_pause()
+    if game_is_paused then
+      draw_pause()
+    else
+      P1:render()
+    end
     wait()
     if P1.game_over then
     -- TODO: proper game over.
@@ -326,6 +342,7 @@ end
 
 function main_time_attack(...)
   pick_random_stage()
+  pick_use_music_from()
   consuming_timesteps = true
   P1 = Stack(1, "time", config.panels, ...)
   P1:wait_for_random_character()
@@ -333,8 +350,11 @@ function main_time_attack(...)
   make_local_panels(P1, "000000")
   P1:starting_state()
   while true do
-    P1:render()
-    draw_pause()
+    if game_is_paused then
+      draw_pause()
+    else
+      P1:render()
+    end
     wait()
     if P1.game_over or (P1.game_stopwatch and P1.game_stopwatch == 120*60) then
     -- TODO: proper game over.
@@ -432,6 +452,7 @@ function main_net_vs_lobby()
         global_initialize_room_msg = msg
         select_screen.character_select_mode = "2p_net_vs"
         love.window.requestAttention()
+        play_optional_sfx(themes[config.theme].sounds.notification)
         return select_screen.main
       end
       if msg.unpaired then
@@ -453,6 +474,7 @@ function main_net_vs_lobby()
       if msg.game_request then
         willing_players[msg.game_request.sender] = true
         love.window.requestAttention()
+        play_optional_sfx(themes[config.theme].sounds.notification)
       end
       if msg.leaderboard_report then
         showing_leaderboard = true
@@ -664,6 +686,7 @@ function main_net_vs()
   else
     pick_random_stage()
   end
+  pick_use_music_from()
   local k = K[1]  --may help with spectators leaving games in progress
   local end_text = nil
   consuming_timesteps = true
@@ -728,7 +751,7 @@ function main_net_vs()
       P1:render()
       P2:render()
       wait()
-      if currently_spectating and this_frame_keys["escape"] then
+      if currently_spectating and menu_escape(K[1]) then
         print("spectator pressed escape during a game")
         my_win_count = 0
         op_win_count = 0
@@ -833,12 +856,16 @@ end
 function main_local_vs()
   -- TODO: replay!
   use_current_stage()
+  pick_use_music_from()
   consuming_timesteps = true
   local end_text = nil
   while true do
-    P1:render()
-    P2:render()
-    draw_pause()
+    if game_is_paused then
+      draw_pause()
+    else
+      P1:render()
+      P2:render()
+    end
     wait()
     variable_step(function()
         if not P1.game_over and not P2.game_over then
@@ -879,11 +906,15 @@ end
 function main_local_vs_yourself()
   -- TODO: replay!
   use_current_stage()
+  pick_use_music_from()
   consuming_timesteps = true
   local end_text = nil
   while true do
-    P1:render()
-    draw_pause()
+    if game_is_paused then
+      draw_pause()
+    else
+      P1:render()
+    end
     wait()
     variable_step(function()
         if not P1.game_over then
@@ -917,6 +948,7 @@ function main_replay_vs()
   end
   stop_the_music()
   pick_random_stage()
+  pick_use_music_from()
   select_screen.fallback_when_missing = { nil, nil }
   P1 = Stack(1, "vs", config.panels, replay.P1_level or 5)
   P2 = Stack(2, "vs", config.panels, replay.P2_level or 5)
@@ -959,15 +991,17 @@ function main_replay_vs()
     gprint(op_name or "", P2.score_x, P2.score_y-28)
     P1:render()
     P2:render()
-    draw_pause()
     draw_debug_mouse_panel()
+    if game_is_paused then
+      draw_pause()
+    end
     wait()
     local ret = nil
     variable_step(function()
-      if this_frame_keys["escape"] then
+      if menu_escape(K[1]) then
         ret = {main_dumb_transition, {main_select_mode, "", 0, 0}}
       end
-      if this_frame_keys["return"] then
+      if menu_enter(K[1]) then
         run = not run
       end
       if this_frame_keys["\\"] then
@@ -1017,6 +1051,7 @@ function main_replay_endless()
   end
   stop_the_music()
   pick_random_stage()
+  pick_use_music_from()
   P1 = Stack(1, "endless", config.panels, replay.speed, replay.difficulty)
   P1:wait_for_random_character()
   P1.do_countdown = replay.do_countdown or false
@@ -1030,14 +1065,16 @@ function main_replay_endless()
   local run = true
   while true do
     P1:render()
-    draw_pause()
+    if game_is_paused then
+      draw_pause()
+    end
     wait()
     local ret = nil
     variable_step(function()
-      if this_frame_keys["escape"] then
+      if menu_escape(K[1]) then
         ret = {main_dumb_transition, {main_select_mode, "", 0, 0}}
       end
-      if this_frame_keys["return"] then
+      if menu_enter(K[1]) then
         run = not run
       end
       if this_frame_keys["\\"] then
@@ -1066,6 +1103,7 @@ function main_replay_puzzle()
   end
   stop_the_music()
   pick_random_stage()
+  pick_use_music_from()
   P1 = Stack(1, "puzzle", config.panels)
   P1:wait_for_random_character()
   P1.do_countdown = replay.do_countdown or false
@@ -1076,15 +1114,17 @@ function main_replay_puzzle()
   while true do
     debug_mouse_panel = nil
     P1:render()
-    draw_pause()
     draw_debug_mouse_panel()
+    if game_is_paused then
+      draw_pause()
+    end
     wait()
     local ret = nil
     variable_step(function()
-      if this_frame_keys["escape"] then
+      if menu_escape(K[1]) then
         ret =  {main_dumb_transition, {main_select_mode, "", 0, 0}}
       end
-      if this_frame_keys["return"] then
+      if menu_enter(K[1]) then
         run = not run
       end
       if this_frame_keys["\\"] then
@@ -1114,6 +1154,7 @@ function make_main_puzzle(puzzles)
   function next_func()
     stop_the_music()
     pick_random_stage()
+    pick_use_music_from()
     consuming_timesteps = true
     replay.puzzle = {}
     local replay = replay.puzzle
@@ -1128,8 +1169,11 @@ function make_main_puzzle(puzzles)
     replay.puzzle = puzzles[awesome_idx]
     replay.in_buf = ""
     while true do
-      P1:render()
-      draw_pause()
+      if game_is_paused then
+        draw_pause()
+      else
+        P1:render()
+      end
       wait()
       local ret = nil
       variable_step(function()
