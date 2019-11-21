@@ -67,7 +67,7 @@ config = {
 
 	vsync						  = true,
 
-	use_music_from                = "stage",
+	use_music_from                = "either",
 	-- Level (2P modes / 1P vs yourself mode)
 	level                         = 5,
 	endless_speed                 = 1,
