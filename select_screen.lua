@@ -76,14 +76,14 @@ function select_screen.main()
   select_screen.fallback_when_missing = { nil, nil }
 
   local function add_client_data(state)
-    state.loaded = characters[state.character] and characters[state.character].fully_loaded and stages[state.stage].fully_loaded
+    state.loaded = characters[state.character] and characters[state.character].fully_loaded and stages[state.stage] and stages[state.stage].fully_loaded
     state.wants_ready = state.ready
   end
 
   local function refresh_loaded_and_ready(state_1,state_2)
-    state_1.loaded = characters[state_1.character] and characters[state_1.character].fully_loaded and stages[state_1.stage].fully_loaded
+    state_1.loaded = characters[state_1.character] and characters[state_1.character].fully_loaded and stages[state_1.stage] and stages[state_1.stage].fully_loaded
     if state_2 then
-      state_2.loaded = characters[state_2.character] and characters[state_2.character].fully_loaded and stages[state_2.stage].fully_loaded
+      state_2.loaded = characters[state_2.character] and characters[state_2.character].fully_loaded and stages[state_2.stage] and stages[state_2.stage].fully_loaded
     end
     
     if select_screen.character_select_mode == "2p_net_vs" then
