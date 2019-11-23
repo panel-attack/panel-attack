@@ -7,17 +7,25 @@ ServerQueue = class(function(self, capacity)
   self.empties = 0
   end)
 
-function ServerQueue.print(self)
-  print("QUEUE")
+function ServerQueue.to_string(self)
+  ret = "QUEUE: "
   for k,v in pairs(self.data) do
-    print("=====================")
-    print(k)
+    ret = ret.."\n"..k..": {"
     for a,b in pairs(v) do
-      print(";")
-      print(a)
-      print(b)
+      ret = ret..a..", "
     end
-    print("=====================")
+    ret = ret.."}"
+  end
+
+  return ret
+end
+
+function ServerQueue.test_expiration(self, msg)
+  print("TEST")
+  print(os.time())
+  print(msg._expiration)
+  if os.time() > msg._expiration then
+    error("Network error: message has an expired timestamp\n"..self:to_string())
   end
 end
 
@@ -25,6 +33,7 @@ end
 function ServerQueue.push(self, msg)
   local last = self.last + 1
   self.last = last
+  msg._expiration = os.time() + 5 -- add an expiration date of 5s
   self.data[last] = msg
   if self:size() > self.capacity then
     local first = self.first
@@ -40,15 +49,17 @@ function ServerQueue.pop(self)
   local ret = nil
 
   while ret == nil do
-    ret = self.data[first]
-    self.data[first] = nil
     if first >= self.last then
       first = 0
       self.last = -1
       break
     else 
+      ret = self.data[first]
+      self.data[first] = nil
       if ret == nil then
         self.empties = self.empties - 1
+      else
+        self:test_expiration(ret)
       end
       first = first + 1
     end
@@ -75,6 +86,7 @@ function ServerQueue.pop_next_with(self, ...)
         if msg[select(j, ...)] ~= nil then
           self:remove(i)
           --print("POP "..select(j, ...))
+          self:test_expiration(msg)
           return msg
         end
       end
@@ -99,6 +111,7 @@ function ServerQueue.pop_all_with(self, ...)
           if msg[select(j, ...)] ~= nil then
             ret[#ret+1] = msg
             --print("POP "..select(j, ...))
+            self:test_expiration(msg)
             self:remove(i)
             break
           end
