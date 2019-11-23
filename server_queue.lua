@@ -31,7 +31,7 @@ function ServerQueue.push(self, msg)
     self.data[first] = nil
     self.first = first + 1
   end
-  self:print()
+  --self:print()
 end
 
 -- pop oldest server message in queue
@@ -74,7 +74,7 @@ function ServerQueue.pop_next_with(self, ...)
       for j=1,select('#', ...) do
         if msg[select(j, ...)] ~= nil then
           self:remove(i)
-          print("POP "..select(j, ...))
+          --print("POP "..select(j, ...))
           return msg
         end
       end
@@ -98,7 +98,7 @@ function ServerQueue.pop_all_with(self, ...)
         for j=1,select('#', ...) do
           if msg[select(j, ...)] ~= nil then
             ret[#ret+1] = msg
-            print("POP "..select(j, ...))
+            --print("POP "..select(j, ...))
             self:remove(i)
             break
           end
