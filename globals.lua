@@ -28,8 +28,8 @@ stages = {} -- initialized in stage.lua
 stages_ids = {} -- initialized in stage.lua
 stages_ids_for_current_theme = {} -- initialized in stage.lua
 
-panels = {} -- initialized in panel_set.lua
-panels_ids = {} -- initialized in panel_set.lua
+panels = {} -- initialized in panels.lua
+panels_ids = {} -- initialized in panels.lua
 
 current_stage = nil
 
@@ -63,13 +63,13 @@ config = {
 	language_code                 = "EN",
 
 	theme                         = default_theme_dir,
-	panel_set                     = default_panels_dir,
+	panels                     	  = default_panels_dir,
 	character                     = random_character_special_value,
 	stage                         = random_stage_special_value,
 
 	vsync						  = true,
 
-	use_music_from                = "stage",
+	use_music_from                = "either",
 	-- Level (2P modes / 1P vs yourself mode)
 	level                         = 5,
 	endless_speed                 = 1,
