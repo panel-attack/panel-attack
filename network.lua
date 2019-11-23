@@ -103,7 +103,10 @@ local process_message = {
     if current_message.spectators then
       spectator_list = current_message.spectators
       spectators_string = spectator_list_string(current_message.spectators)
+      return
     end
+
+    server_queue:push(current_message)
   end}
 
 function network_init(ip)

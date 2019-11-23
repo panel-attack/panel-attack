@@ -1,5 +1,6 @@
 require("consts")
 require("queue")
+require("server_queue")
 require("sound_util")
 
 -- keyboard assignment vars
@@ -10,6 +11,7 @@ keys = {}
 this_frame_keys = {}
 this_frame_unicodes = {}
 this_frame_messages = {}
+server_queue = ServerQueue(20)
 
 score_mode = SCOREMODE_TA
 

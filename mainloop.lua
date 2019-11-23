@@ -16,7 +16,7 @@ local main_endless, make_main_puzzle, main_net_vs_setup,
 
 local PLAYING = "playing"  -- room states
 local CHARACTERSELECT = "character select" --room states
-local currently_spectating = false
+currently_spectating = false
 connection_up_time = 0
 logged_in = 0
 connected_server_ip = nil
@@ -401,7 +401,6 @@ function main_net_vs_lobby()
   if not my_user_id then
     my_user_id = "need a new user id"
   end
-  json_send({login_request=true, user_id=my_user_id})
   local login_status_message = "   "..loc("lb_login")
   local login_status_message_duration = 2
   local login_denied = false
@@ -410,10 +409,14 @@ function main_net_vs_lobby()
   local lobby_menu_x = {[true]=main_menu_screen_pos[1]-200, [false]=main_menu_screen_pos[1]} --will be used to make room in case the leaderboard should be shown.
   local lobby_menu_y = main_menu_screen_pos[2]-120
   local sent_requests = {}
+  if connection_up_time <= login_status_message_duration then
+    json_send({login_request=true, user_id=my_user_id})
+  end
   while true do
     if connection_up_time <= login_status_message_duration then
       gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y)
-      for _,msg in ipairs(this_frame_messages) do
+      local messages = server_queue:pop_all_with("login_successful", "login_denied")
+      for _,msg in ipairs(messages) do
         if msg.login_successful then
           current_server_supports_ranking = true
           logged_in = true
@@ -442,7 +445,8 @@ function main_net_vs_lobby()
               login_status_message_duration = 7
       end
     end
-    for _,msg in ipairs(this_frame_messages) do
+    local messages = server_queue:pop_all_with("choose_another_name", "create_room", "unpaired", "game_request", "leaderboard_report", "spectate_request_granted")
+    for _,msg in ipairs(messages) do
       if msg.choose_another_name and msg.choose_another_name.used_names then
         return main_dumb_transition, {main_select_mode, loc("lb_used_name"), 60, 600}
       elseif msg.choose_another_name and msg.choose_another_name.reason then
@@ -467,9 +471,9 @@ function main_net_vs_lobby()
         end
         willing_players = new_willing
         sent_requests = new_sent_requests
-      end
-      if msg.spectatable then
-        spectatable_rooms = msg.spectatable
+        if msg.spectatable then
+          spectatable_rooms = msg.spectatable
+        end
       end
       if msg.game_request then
         willing_players[msg.game_request.sender] = true
@@ -697,7 +701,8 @@ function main_net_vs()
   while true do
     -- Uncomment this to cripple your game :D
     -- love.timer.sleep(0.030)
-    for _,msg in ipairs(this_frame_messages) do
+    local messages = server_queue:pop_all_with("taunt", "leave_room")
+    for _,msg in ipairs(messages) do
       if msg.taunt then
         local taunts = nil
         -- P1.character and P2.character are supposed to be already filtered with current mods, taunts may differ though!

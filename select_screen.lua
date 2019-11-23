@@ -76,14 +76,14 @@ function select_screen.main()
   select_screen.fallback_when_missing = { nil, nil }
 
   local function add_client_data(state)
-    state.loaded = characters[state.character] and characters[state.character].fully_loaded and stages[state.stage].fully_loaded
+    state.loaded = characters[state.character] and characters[state.character].fully_loaded and stages[state.stage] and stages[state.stage].fully_loaded
     state.wants_ready = state.ready
   end
 
   local function refresh_loaded_and_ready(state_1,state_2)
-    state_1.loaded = characters[state_1.character] and characters[state_1.character].fully_loaded and stages[state_1.stage].fully_loaded
+    state_1.loaded = characters[state_1.character] and characters[state_1.character].fully_loaded and stages[state_1.stage] and stages[state_1.stage].fully_loaded
     if state_2 then
-      state_2.loaded = characters[state_2.character] and characters[state_2.character].fully_loaded and stages[state_2.stage].fully_loaded
+      state_2.loaded = characters[state_2.character] and characters[state_2.character].fully_loaded and stages[state_2.stage] and stages[state_2.stage].fully_loaded
     end
     
     if select_screen.character_select_mode == "2p_net_vs" then
@@ -107,10 +107,9 @@ function select_screen.main()
     local opponent_connected = false
     local retries, retry_limit = 0, 250
     while not global_initialize_room_msg and retries < retry_limit do
-      for _,msg in ipairs(this_frame_messages) do
-        if msg.create_room or msg.character_select or msg.spectate_request_granted then
-          global_initialize_room_msg = msg
-        end
+      local msg = server_queue:pop_next_with("create_room", "character_select", "spectate_request_granted")
+      if msg then
+        global_initialize_room_msg = msg
       end
       gprint(loc("ss_init"), unpack(main_menu_screen_pos))
       wait()
@@ -140,7 +139,6 @@ function select_screen.main()
       return main_dumb_transition, {main_select_mode, loc("ss_init_fail").."\n\n"..loc("ss_return"), 60, 300}
     end
     msg = global_initialize_room_msg
-    global_initialize_room_msg = nil
     if msg.ratings then
         global_current_room_ratings = msg.ratings
     end
@@ -620,7 +618,12 @@ function select_screen.main()
     end
 
     if select_screen.character_select_mode == "2p_net_vs" then
-      for _,msg in ipairs(this_frame_messages) do
+      local messages = server_queue:pop_all_with("win_counts", "menu_state", "ranked_match_approved", "leave_room", "match_start", "ranked_match_denied")
+      if global_initialize_room_msg then
+        messages[#messages+1] = global_initialize_room_msg
+        global_initialize_room_msg = nil
+      end
+      for _,msg in ipairs(messages) do
         if msg.win_counts then
           update_win_counts(msg.win_counts)
         end

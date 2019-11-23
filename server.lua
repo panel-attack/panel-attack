@@ -95,20 +95,26 @@ function create_room(a, b)
   a_msg.your_player_number = 1
   a_msg.op_player_number = 2
   a_msg.opponent = new_room.b.name
+  b_msg.opponent = new_room.a.name
   new_room.b.cursor = "__Ready"
-  a_msg.menu_state = new_room.b:menu_state()
+  new_room.a.cursor = "__Ready"
   b_msg.your_player_number = 2
   b_msg.op_player_number = 1
-  b_msg.opponent = new_room.a.name
-  new_room.a.cursor = "__Ready"
-  b_msg.menu_state = new_room.a:menu_state()
-  a_msg.ratings = new_room.ratings
-  b_msg.ratings = new_room.ratings
+  a_msg.a_menu_state = new_room.a:menu_state()
+  a_msg.b_menu_state = new_room.b:menu_state()
+  b_msg.b_menu_state = new_room.b:menu_state()
+  b_msg.a_menu_state = new_room.a:menu_state()
   new_room.a.opponent = new_room.b
   new_room.b.opponent = new_room.a
+
+  new_room:prepare_character_select()
+  a_msg.ratings = new_room.ratings
+  b_msg.ratings = new_room.ratings
+  a_msg.rating_updates = true
+  b_msg.rating_updates = true
+
   new_room.a:send(a_msg)
   new_room.b:send(b_msg)
-  new_room:character_select()
 end
 
 
@@ -209,6 +215,11 @@ Room = class(function(self, a, b)
 end)
 
 function Room.character_select(self)
+  self:prepare_character_select()
+  self:send({character_select=true, create_room=true, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()})
+end
+
+function Room.prepare_character_select(self)
   print("Called Server.lua Room.character_select")
   self.a.state = "character select"
   self.b.state = "character select"
@@ -228,7 +239,6 @@ function Room.character_select(self)
   self.b.cursor = "__Ready"
   self.a.ready = false
   self.b.ready = false
-  self:send({character_select=true, create_room=true, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()})
   -- local msg = {spectate_request_granted = true, spectate_request_rejected = false, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()}
   -- for k,v in ipairs(self.spectators) do
     -- self.spectators[k]:send(msg)
