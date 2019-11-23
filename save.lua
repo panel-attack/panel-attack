@@ -70,9 +70,9 @@ function read_conf_file() pcall(function()
     config.theme = read_data.theme
   end
 
-  -- language_code, panel_set, character and stage are patched later on by their own subsystems, we store their values in config for now!
+  -- language_code, panels, character and stage are patched later on by their own subsystems, we store their values in config for now!
   if type(read_data.language_code) == "string" then config.language_code = read_data.language_code end
-  if type(read_data.panel_set) == "string" then config.panel_set = read_data.panel_set end
+  if type(read_data.panels) == "string" then config.panels = read_data.panels end
   if type(read_data.character) == "string" then config.character = read_data.character end
   if type(read_data.stage) == "string" then config.stage = read_data.stage end
 
