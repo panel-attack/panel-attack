@@ -31,6 +31,7 @@ main_menu_screen_pos = { 300 + (canvas_width-legacy_canvas_width)/2, 280 + (canv
 function fmainloop()
   local func, arg = main_select_mode, nil
   replay = {}
+
   gprint("Reading config file", unpack(main_menu_screen_pos))
   wait()
   read_conf_file()
