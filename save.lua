@@ -102,7 +102,6 @@ function read_conf_file() pcall(function()
   if type(read_data.save_replays_publicly) == "string" and save_replays_values[read_data.save_replays_publicly] then 
     config.save_replays_publicly = read_data.save_replays_publicly 
   end
-  love.window.setVSync(config.vsync and 1 or 0)
 
   if type(read_data.window_x) == "number" then config.window_x = read_data.window_x end
   if type(read_data.window_y) == "number" then config.window_y = read_data.window_y end
