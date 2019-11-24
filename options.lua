@@ -224,6 +224,10 @@ function options.main(starting_idx)
         normal_music_for_sound_option = characters[config.character].musics.normal_music
       end
     end
+
+    if not normal_music_for_sound_option then -- avoid crashes!
+      normal_music_for_sound_option = zero_sound
+    end
   end
   update_normal_music_for_sound_volume_option()
   items = {
