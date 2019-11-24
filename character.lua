@@ -164,11 +164,9 @@ function characters_init()
   if love.filesystem.getInfo("themes/"..config.theme.."/characters.txt") then
     for line in love.filesystem.lines("themes/"..config.theme.."/characters.txt") do
       line = trim(line) -- remove whitespace
-      if love.filesystem.getInfo("characters/"..line) then
-        -- found at least a valid character in a characters.txt file
-        if characters[line] then
-          characters_ids_for_current_theme[#characters_ids_for_current_theme+1] = line
-        end
+      if characters[line] then
+        -- found at least a valid stage in a characters.txt file
+        characters_ids_for_current_theme[#characters_ids_for_current_theme+1] = line
       end
     end
   end

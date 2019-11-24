@@ -130,11 +130,9 @@ function stages_init()
   if love.filesystem.getInfo("themes/"..config.theme.."/stages.txt") then
     for line in love.filesystem.lines("themes/"..config.theme.."/stages.txt") do
       line = trim(line) -- remove whitespace
-      if love.filesystem.getInfo("stages/"..line) then
-        -- found at least a valid stage in a stages.txt file
-        if stages[line] then
-          stages_ids_for_current_theme[#stages_ids_for_current_theme+1] = line
-        end
+      -- found at least a valid stage in a stages.txt file
+      if stages[line] then
+        stages_ids_for_current_theme[#stages_ids_for_current_theme+1] = line
       end
     end
   end
