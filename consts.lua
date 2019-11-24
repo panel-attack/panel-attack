@@ -14,7 +14,7 @@ mouse_pointer_timeout = 1.5 --seconds
 RATING_SPREAD_MODIFIER = 400
 
 super_selection_duration = 30 -- frames (reminder: 60 frames per sec)
-super_selection_enable_ratio = 0.2 -- ratio at which super enable is considered started (cancelling it won't validate a character)
+super_selection_enable_ratio = 0.3 -- ratio at which super enable is considered started (cancelling it won't validate a character)
 assert(super_selection_enable_ratio<1.0,"")
 
 prefix_of_ignored_dirs = "__"
