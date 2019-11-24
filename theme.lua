@@ -39,6 +39,7 @@ function Theme.graphics_init(self)
 
   self.images.IMG_ready = load_theme_img("ready")
   self.images.IMG_loading = load_theme_img("loading")
+  self.images.IMG_super = load_theme_img("super")
   self.images.IMG_numbers = {}
   for i=1,3 do
     self.images.IMG_numbers[i] = load_theme_img(i.."")

@@ -27,7 +27,7 @@ Note: non-optional data that are missing will automatically get replaced by defa
 - "chain/chain00", "chain/chain02", ... "chain/chain19", "combo/combo04", ..., "combo/combo66": chains and combo counter
 - "1", "2", "3": countdown
 - "p1", "p1_cursor", "p1_select_screen_cursor1", "p1_select_screen_cursor2": cursors for player 1, change p1 by p2 for those of player 2
-- "ready", "loading": displayed when a player is ready or loading something in the select screen
+- "ready", "loading", "super": displayed when a player is ready, loading, or super selecting something in the select screen
 - "frame", "wall": layout ingame
 - "random_stage", "random_character": thumbnail and icon for random stage and random character
 

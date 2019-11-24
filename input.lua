@@ -1,3 +1,5 @@
+require("util")
+
 local jpexists, jpname, jrname
 for k,v in pairs(love.handlers) do
   if k=="jp" then
@@ -102,6 +104,7 @@ function love.textinput(text)
 end
 
 function love.keyreleased(key, unicode)
+  this_frame_released_keys[key] = keys[key] -- retains state in this_frame_released_keys
   keys[key] = nil
 end
 
@@ -131,34 +134,35 @@ end
 
 local function repeating_key(key)
   local key_time = keys[key]
-  return this_frame_keys[key] or
-    (key_time and key_time > 25 and key_time % 3 ~= 0)
+  return this_frame_keys[key] or (key_time and key_time > 25 and key_time % 3 ~= 0)
 end
 
 local function normal_key(key) return this_frame_keys[key] end
 
-local function menu_key_func(fixed, configurable, rept, sound)
+local function released_key_before_time(key, time) 
+  return this_frame_released_keys[key] and this_frame_released_keys[key] < time
+end
+
+local function released_key_after_time(key, time)  
+  return this_frame_released_keys[key] and this_frame_released_keys[key] >= time
+end
+
+local function menu_key_func(fixed, configurable, query, sound, ...)
   sound = sound or nil
-  local query = normal_key
-  if rept then
-    query = repeating_key
-  end
-  for i=1,#fixed do
-    menu_reserved_keys[#menu_reserved_keys+1] = fixed[i]
-  end
+  local other_args = ...
   return function(k)
     local res = false
     if multi then
       for i=1,#configurable do
-        res = res or query(k[configurable[i]])
+        res = res or query(k[configurable[i]], other_args)
       end
     else
       for i=1,#fixed do
-        res = res or query(fixed[i])
+        res = res or query(fixed[i], other_args)
       end
       for i=1,#configurable do
         local keyname = k[configurable[i]]
-        res = res or query(keyname) and
+        res = res or query(keyname, other_args) and
             not menu_reserved_keys[keyname]
       end
     end
@@ -169,13 +173,41 @@ local function menu_key_func(fixed, configurable, rept, sound)
   end
 end
 
-menu_up = menu_key_func({"up"}, {"up"}, true, function() return themes[config.theme].sounds.menu_move end )
-menu_down = menu_key_func({"down"}, {"down"}, true, function() return themes[config.theme].sounds.menu_move end)
-menu_left = menu_key_func({"left"}, {"left"}, true, function() return themes[config.theme].sounds.menu_move end)
-menu_right = menu_key_func({"right"}, {"right"}, true, function() return themes[config.theme].sounds.menu_move end)
-menu_super_select = menu_key_func({"y","u"}, {"taunt_up","taunt_down"}, false, function() return themes[config.theme].sounds.menu_validate end)
-menu_enter = menu_key_func({"return","kenter","z"}, {"swap1"}, false, function() return themes[config.theme].sounds.menu_validate end)
-menu_escape = menu_key_func({"escape","x"}, {"swap2"}, false, function() return themes[config.theme].sounds.menu_cancel end)
-menu_prev_page = menu_key_func({"pageup"}, {"raise1"}, true, function() return themes[config.theme].sounds.menu_move end)
-menu_next_page = menu_key_func({"pagedown"}, {"raise2"}, true, function() return themes[config.theme].sounds.menu_move end)
-menu_backspace = menu_key_func({"backspace"}, {"backspace"}, true)
+local function get_pressed_ratio(key,time)
+  return keys[key] and keys[key]/time or (this_frame_released_keys[key] and this_frame_released_keys[key]/time or 0)
+end
+
+local function get_being_pressed_for_duration_ratio(fixed, configurable, time)
+  return function(k)
+    local res = 0
+    if multi then
+      for i=1,#configurable do
+        res = math.max(get_pressed_ratio(k[configurable[i]], time),res)
+      end
+    else
+      for i=1,#fixed do
+        res = math.max(get_pressed_ratio(fixed[i], time),res)
+      end
+      for i=1,#configurable do
+        local keyname = k[configurable[i]]
+        if not menu_reserved_keys[keyname] then
+          res = math.max(get_pressed_ratio(k[configurable[i]], time),res)
+        end
+      end
+    end
+    return bound(0,res,1)
+  end
+end
+
+menu_reserved_keys = {"up", "down", "left", "right", "escape","x", "pageup", "pagedown", "backspace", "return","kenter","z"}
+menu_up = menu_key_func({"up"}, {"up"}, repeating_key, function() return themes[config.theme].sounds.menu_move end )
+menu_down = menu_key_func({"down"}, {"down"}, repeating_key, function() return themes[config.theme].sounds.menu_move end)
+menu_left = menu_key_func({"left"}, {"left"}, repeating_key, function() return themes[config.theme].sounds.menu_move end)
+menu_right = menu_key_func({"right"}, {"right"}, repeating_key, function() return themes[config.theme].sounds.menu_move end)
+menu_escape = menu_key_func({"escape","x"}, {"swap2"}, normal_key, function() return themes[config.theme].sounds.menu_cancel end)
+menu_prev_page = menu_key_func({"pageup"}, {"raise1"}, repeating_key, function() return themes[config.theme].sounds.menu_move end)
+menu_next_page = menu_key_func({"pagedown"}, {"raise2"}, repeating_key, function() return themes[config.theme].sounds.menu_move end)
+menu_backspace = menu_key_func({"backspace"}, {"backspace"}, repeating_key)
+menu_long_enter = menu_key_func({"return","kenter","z"}, {"swap1"}, released_key_after_time, function() return themes[config.theme].sounds.menu_validate end, super_selection_duration)
+menu_enter = menu_key_func({"return","kenter","z"}, {"swap1"}, released_key_before_time, function() return themes[config.theme].sounds.menu_validate end, super_selection_duration)
+menu_pressing_enter = get_being_pressed_for_duration_ratio({"return","kenter","z"}, {"swap1"}, super_selection_duration)

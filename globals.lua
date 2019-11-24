@@ -9,6 +9,7 @@ K = {{up="up", down="down", left="left", right="right",
       {},{},{}}
 keys = {}
 this_frame_keys = {}
+this_frame_released_keys = {}
 this_frame_unicodes = {}
 this_frame_messages = {}
 server_queue = ServerQueue(20)

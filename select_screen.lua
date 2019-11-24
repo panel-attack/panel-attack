@@ -263,7 +263,7 @@ function select_screen.main()
 
   my_win_count = my_win_count or 0
 
-  local cursor_data = {{position=shallowcpy(name_to_xy_per_page[current_page]["__Ready"]),selected=false},{position=shallowcpy(name_to_xy_per_page[current_page]["__Ready"]),selected=false}}
+  local cursor_data = {{position=shallowcpy(name_to_xy_per_page[current_page]["__Ready"]),can_super_select=false,selected=false},{position=shallowcpy(name_to_xy_per_page[current_page]["__Ready"]),can_super_select=false,selected=false}}
   
   -- our data (first player in local)
   if global_my_state ~= nil then
@@ -321,6 +321,23 @@ function select_screen.main()
 
   local prev_state = shallowcpy(cursor_data[1].state)
 
+  local super_select_pixelcode = [[
+      uniform float percent;
+      vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
+      {
+          vec4 c = Texel(tex, texture_coords) * color;
+          if( texture_coords.x < percent )
+          {
+            return c;
+          }
+          float ret = (c.x+c.y+c.z)/3.0;
+          return vec4(ret, ret, ret, c.a);
+      }
+  ]]
+ 
+  -- one per player, should we put them into cursor_data even though it's meaningless?
+  local super_select_shaders = { love.graphics.newShader(super_select_pixelcode), love.graphics.newShader(super_select_pixelcode) }
+
   local function draw_button(x,y,w,h,str,halign,valign,no_rect)
     no_rect = no_rect or str == "__Empty" or str == "__Reserved"
     halign = halign or "center"
@@ -368,6 +385,16 @@ function select_screen.main()
           local orig_w, orig_h = panels[character.panels].images.classic[1][1]:getDimensions()
           menu_drawf(panels[character.panels].images.classic[1][1], render_x+7, character.stage and render_y+button_height-19 or render_y+button_height-6,"center","center", 0, 12/orig_w, 12/orig_h )
         end
+      end
+    end
+
+    local function draw_super_select(player_num)
+      local ratio = menu_pressing_enter(K[player_num])
+      if ratio > super_selection_enable_ratio then
+        super_select_shaders[player_num]:send("percent", linear_smooth(ratio,super_selection_enable_ratio,1.0))
+        set_shader(super_select_shaders[player_num])
+        menu_drawf(themes[config.theme].images.IMG_super, render_x+button_width*0.5, render_y+button_height*0.5, "center", "center" )
+        set_shader()
       end
     end
 
@@ -567,11 +594,17 @@ function select_screen.main()
       if cursor_data[1].state and cursor_data[1].state.cursor == str 
         and ( (str ~= "__Empty" and str ~= "__Reserved") or ( cursor_data[1].position[1] == x and cursor_data[1].position[2] == y ) ) then
         draw_cursor(button_height, spacing, 1, cursor_data[1].state.ready)
+        if cursor_data[1].can_super_select then
+          draw_super_select(1)
+        end
       end
       if (select_screen.character_select_mode == "2p_net_vs" or select_screen.character_select_mode == "2p_local_vs")
         and cursor_data[2].state and cursor_data[2].state.cursor == str
         and ( (str ~= "__Empty" and str ~= "__Reserved") or ( cursor_data[2].position[1] == x and cursor_data[2].position[2] == y ) ) then
         draw_cursor(button_height, spacing, 2, cursor_data[2].state.ready)
+        if cursor_data[2].can_super_select then
+          draw_super_select(2)
+        end
       end
     end
     if str ~= "__Empty" and str ~= "__Reserved" then
@@ -838,8 +871,9 @@ function select_screen.main()
 
     local ret = nil
 
-    local function move_cursor(cursor_pos,direction)
-     local dx,dy = unpack(direction)
+    local function move_cursor(cursor,direction)
+      local cursor_pos = cursor.position
+      local dx,dy = unpack(direction)
       local can_x,can_y = wrap(1, cursor_pos[1]+dx, X), wrap(1, cursor_pos[2]+dy, Y)
       while can_x ~= cursor_pos[1] or can_y ~= cursor_pos[2] do
         if map[current_page][can_x][can_y] and ( map[current_page][can_x][can_y] ~= map[current_page][cursor_pos[1]][cursor_pos[2]] or 
@@ -849,6 +883,8 @@ function select_screen.main()
         can_x,can_y = wrap(1, can_x+dx, X), wrap(1, can_y+dy, Y)
       end
       cursor_pos[1],cursor_pos[2] = can_x,can_y
+      local character = characters[map[current_page][can_x][can_y]]
+      cursor.can_super_select = character and ( character.stage or character.panels )
     end
 
     local function change_panels_dir(panels_dir,increment)
@@ -925,6 +961,7 @@ function select_screen.main()
         character_loader_load(cursor.state.character)
         cursor.state.cursor = "__Ready"
         cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"])
+        cursor.can_super_select = false
       elseif cursor.state.cursor == "__Mode" then
         cursor.state.ranked = not cursor.state.ranked
       elseif ( cursor.state.cursor ~= "__Empty" and cursor.state.cursor ~= "__Reserved" ) then
@@ -946,6 +983,7 @@ function select_screen.main()
         --When we select a character, move cursor to "__Ready"
         cursor.state.cursor = "__Ready"
         cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"])
+        cursor.can_super_select = false
       end
     end
 
@@ -970,9 +1008,9 @@ function select_screen.main()
           elseif menu_next_page(k) then
             if not cursor.selected then current_page = bound(1, current_page+1, pages_amount) end
           elseif menu_up(k) then
-            if not cursor.selected then move_cursor(cursor.position,up) end
+            if not cursor.selected then move_cursor(cursor,up) end
           elseif menu_down(k) then
-            if not cursor.selected then move_cursor(cursor.position,down) end
+            if not cursor.selected then move_cursor(cursor,down) end
           elseif menu_left(k) then
             if cursor.selected then
               if cursor.state.cursor == "__Level" then
@@ -983,7 +1021,7 @@ function select_screen.main()
                 change_stage(cursor.state,-1)
               end
             end
-            if not cursor.selected then move_cursor(cursor.position,left) end
+            if not cursor.selected then move_cursor(cursor,left) end
           elseif menu_right(k) then
             if cursor.selected then
               if cursor.state.cursor == "__Level" then
@@ -994,10 +1032,10 @@ function select_screen.main()
                 change_stage(cursor.state,1)
               end
             end
-            if not cursor.selected then move_cursor(cursor.position,right) end
-          elseif menu_super_select(k) then
+            if not cursor.selected then move_cursor(cursor,right) end
+          elseif menu_long_enter(k) then
             on_select(cursor, true)
-          elseif menu_enter(k) then
+          elseif menu_enter(k) and (not cursor.can_super_select or menu_pressing_enter(k) < super_selection_enable_ratio) then
             on_select(cursor, false)
           elseif menu_escape(k) then
             if cursor.state.cursor == "__Leave" then
@@ -1005,6 +1043,7 @@ function select_screen.main()
             end
             cursor.selected = false
             cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Leave"])
+            cursor.can_super_select = false
           end
           if cursor.state ~= nil then
             cursor.state.cursor = map[current_page][cursor.position[1]][cursor.position[2]]

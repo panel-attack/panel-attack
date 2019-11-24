@@ -119,7 +119,11 @@ end
 
 function set_font(font)
   gfx_q:push({love.graphics.setFont, {font}})
-  end
+end
+
+function set_shader(shader)
+  gfx_q:push({love.graphics.setShader, {shader}})
+end
 
 function gprintf(str, x, y, limit, halign, color, scale, font_delta_size)
   x = x or 0

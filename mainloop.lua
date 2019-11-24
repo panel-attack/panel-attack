@@ -81,6 +81,7 @@ function variable_step(f)
       f()
       key_counts()
       this_frame_keys = {}
+      this_frame_released_keys = {}
       this_frame_unicodes = {}
       leftover_time = leftover_time - 1/60
     end
