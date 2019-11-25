@@ -257,6 +257,7 @@ end
 
 local function pick_use_music_from()
   if config.use_music_from == "stage" or config.use_music_from == "characters" then
+    current_use_music_from = config.use_music_from
     return
   end
   local percent = math.random(1,4)
