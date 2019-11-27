@@ -1,11 +1,6 @@
 require("consts")
 require("queue")
 
-game_version = ''
-if love.filesystem.getInfo('updater/.version') then
-  game_version = love.filesystem.read('updater/.version'):gsub("panel%-", ""):gsub("%.love", "")
-end
-
 -- keyboard assignment vars
 K = {{up="up", down="down", left="left", right="right",
       swap1="z", swap2="x", raise1="c", raise2="v"},
