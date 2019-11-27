@@ -3,11 +3,6 @@ require("queue")
 require("server_queue")
 require("sound_util")
 
-game_version = ''
-if love.filesystem.getInfo('updater/.version') then
-  game_version = love.filesystem.read('updater/.version'):gsub("panel%-", ""):gsub("%.love", "")
-end
-
 -- keyboard assignment vars
 K = {{up="up", down="down", left="left", right="right",
       swap1="z", swap2="x", taunt_up="y", taunt_down="u", raise1="c", raise2="v", pause="p"},

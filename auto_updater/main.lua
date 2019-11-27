@@ -1,13 +1,19 @@
 local http = require("socket.http")
+
 -- CONSTANTS
 http.TIMEOUT = 1
-local CHECK_INTERVAL = 0 * 60 * 60 -- seconds
-local PATH = "updater/"
+local CHECK_INTERVAL = 10 * 60 -- 10mins in seconds
+local UPDATER_NAME = "panel-beta" -- you should name the distributed zip the same as this 
+-- use a different name for the different versions of the updater
+-- ex: "panel" for the release, "panel-beta" for the main beta, "panel-exmode" for testing the EX Mode
+
+-- PATHS
+local PATH = "updater/"..UPDATER_NAME.."/"
 local TIMESTAMP_FILE = PATH..".timestamp"
 local VERSION_FILE = PATH..".version"
-local EMBEDDED_FILE = PATH.."embedded.love"
 
 -- GLOBALS
+UPDATER_GAME_VERSION = nil
 local local_version = love.filesystem.read(VERSION_FILE)
 local last_timestamp = love.filesystem.read(TIMESTAMP_FILE)
 local top_version = nil
@@ -26,7 +32,7 @@ if not love.filesystem.getInfo(PATH.."config.lua") then love.filesystem.write(PA
 require("updater_config")
 local config = updater_config
 package.loaded["updater_config"] = nil
-require("updater.config")
+require("updater."..UPDATER_NAME..".config")
 if type(updater_config) == "table" then
 	for k,v in pairs(updater_config) do
 	  if type(v) == type(config[k]) then
@@ -135,6 +141,7 @@ end
 
 function start_game(file)
   if not love.filesystem.mount(PATH..file, '') then error("Could not mount game file: "..file) end
+  UPDATER_GAME_VERSION = file:gsub("^panel%-", ""):gsub("%.love", "")
   package.loaded.main = nil
   package.loaded.conf = nil
   love.conf = nil
