@@ -234,26 +234,27 @@ function options.main(starting_idx)
     --options menu table reference:
     --{[1] option id, [2] loc key, [3]current or default value, [4]type, [5]min or bool value or choices_table (composed of {value, loc_key}),
     -- [6]max, [7]sound_source, [8]selectable, [9]next_func, [10]play_while selected}
-    {"language", "op_language", {localization:get_language(), "LANG"}, "multiple choice", language_choices},
-    {"master_volume", "op_vol", config.master_volume, "numeric", 0, 100, normal_music_for_sound_option, true, nil, true},
-    {"sfx_volume", "op_vol_sfx", config.SFX_volume, "numeric", 0, 100, themes[config.theme].sounds.cur_move, true},
-    {"music_volume", "op_vol_music", config.music_volume, "numeric", 0, 100, normal_music_for_sound_option, true, nil, true},
-    {"vsync", "op_vsync", on_off_text[config.vsync], "bool", true, nil, nil,false},
-    {"debug", "op_debug", on_off_text[config.debug_mode], "bool", false, nil, nil,false},
-    {"replays", "op_replay_public", save_replays_publicly_choices[config.save_replays_publicly] 
+    --[[1]]{"language", "op_language", {localization:get_language(), "LANG"}, "multiple choice", language_choices},
+    --[[2]]{"master_volume", "op_vol", config.master_volume, "numeric", 0, 100, normal_music_for_sound_option, true, nil, true},
+    --[[3]]{"sfx_volume", "op_vol_sfx", config.SFX_volume, "numeric", 0, 100, themes[config.theme].sounds.cur_move, true},
+    --[[4]]{"music_volume", "op_vol_music", config.music_volume, "numeric", 0, 100, normal_music_for_sound_option, true, nil, true},
+    --[[5]]{"vsync", "op_vsync", on_off_text[config.vsync], "bool", true, nil, nil,false},
+    --[[6]]{"debug", "op_debug", on_off_text[config.debug_mode], "bool", false, nil, nil,false},
+    --[[7]]{"replays", "op_replay_public", save_replays_publicly_choices[config.save_replays_publicly] 
       or save_replays_publicly_choices["with my name"], "multiple choice", save_replays_publicly_choices},
-    {"theme", "op_theme", {config.theme, nil}, "multiple choice", themes_set},
-    {"countdown", "op_countdown", on_off_text[config.ready_countdown_1P], "bool", true, nil, nil,false},
-    {"fps", "op_fps", on_off_text[config.show_fps], "bool", true, nil, nil,false},
-    {"infos", "op_ingame_infos", on_off_text[config.show_ingame_infos], "bool", true, nil, nil,false},
-    {"music_delay", "op_music_delay", on_off_text[config.danger_music_changeback_delay], "bool", false, nil, nil, false},
-    {"analytics", "op_analytics", on_off_text[config.enable_analytics], "bool", false, nil, nil, false},
-    {"music_from", "op_use_music_from", use_music_from_choices[config.use_music_from], "multiple choice", use_music_from_choices},
-    {"about_themes", "op_about_themes", "", "function", nil, nil, nil, nil, main_show_custom_themes_readme},
-    {"about_chars", "op_about_characters", "", "function", nil, nil, nil, nil, main_show_custom_characters_readme},
-    {"about_stages", "op_about_stages", "", "function", nil, nil, nil, nil, main_show_custom_stages_readme},
-    {"about_panels", "op_about_panels", "", "function", nil, nil, nil, nil, main_show_custom_panels_readme},
-    {"back", "back", "", nil, nil, nil, nil, false, main_select_mode}
+    --[[8]]{"theme", "op_theme", {config.theme, nil}, "multiple choice", themes_set},
+    --[[9]]{"countdown", "op_countdown", on_off_text[config.ready_countdown_1P], "bool", true, nil, nil,false},
+    --[[10]]{"fps", "op_fps", on_off_text[config.show_fps], "bool", true, nil, nil,false},
+    --[[11]]{"infos", "op_ingame_infos", on_off_text[config.show_ingame_infos], "bool", true, nil, nil,false},
+    --[[12]]{"music_delay", "op_music_delay", on_off_text[config.danger_music_changeback_delay], "bool", false, nil, nil, false},
+    --[[13]]{"analytics", "op_analytics", on_off_text[config.enable_analytics], "bool", false, nil, nil, false},
+    --[[14]]{"input_repeat_delay", "op_input_delay", config.input_repeat_delay, "numeric", 1, 50, nil, true},
+    --[[15]]{"music_from", "op_use_music_from", use_music_from_choices[config.use_music_from], "multiple choice", use_music_from_choices},
+    --[[16]]{"about_themes", "op_about_themes", "", "function", nil, nil, nil, nil, main_show_custom_themes_readme},
+    --[[17]]{"about_chars", "op_about_characters", "", "function", nil, nil, nil, nil, main_show_custom_characters_readme},
+    --[[18]]{"about_stages", "op_about_stages", "", "function", nil, nil, nil, nil, main_show_custom_stages_readme},
+    --[[19]]{"about_panels", "op_about_panels", "", "function", nil, nil, nil, nil, main_show_custom_panels_readme},
+    --[[20]]{"back", "back", "", nil, nil, nil, nil, false, main_select_mode}
   }
   local function print_stuff()
     local to_print, to_print2, arrow = "", "", ""
@@ -398,6 +399,9 @@ function options.main(starting_idx)
           if config.music_volume ~= items[4][3] then --music volume should be updated
             config.music_volume = items[4][3]
             items[4][7]:setVolume(config.music_volume/100) --do just the one music source until we deselect
+          end
+          if config.input_repeat_delay ~= items[14][3] then --music volume should be updated
+            config.input_repeat_delay = items[14][3]
           end
           --add any other numeric config updates here
         elseif items[active_idx][4] == "multiple choice" then

@@ -156,7 +156,7 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     s.wait_for_not_pausing = false -- wait for end of input
     s.taunt_queue = Queue()
 
-    s.cur_wait_time = 25   -- number of ticks to wait before the cursor begins
+    s.cur_wait_time = config.input_repeat_delay   -- number of ticks to wait before the cursor begins
                -- to move quickly... it's based on P1CurSensitivity
     s.cur_timer = 0   -- number of ticks for which a new direction's been pressed
     s.cur_dir = nil     -- the direction pressed
