@@ -1395,13 +1395,13 @@ function Stack.PdP(self)
           stop_the_music()
           find_and_add_music(musics_to_use, "danger_music")
           current_music_is_casual = false
-        elseif table.getn(currently_playing_tracks) == 0 then
+        elseif table.getn(currently_playing_tracks) == 0 and musics_to_use["normal_music"] then
           stop_the_music()
           find_and_add_music(musics_to_use, "normal_music")
           current_music_is_casual = true
         end
       else --we should be playing normal_music or normal_music_start
-        if (not current_music_is_casual or table.getn(currently_playing_tracks) == 0) then
+        if (not current_music_is_casual or table.getn(currently_playing_tracks) == 0) and musics_to_use["normal_music"] then
           stop_the_music()
           find_and_add_music(musics_to_use, "normal_music")
           current_music_is_casual = true

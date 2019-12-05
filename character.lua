@@ -13,10 +13,10 @@ local defaulted_images = { icon=true, topleft=true, botleft=true, topright=true,
                   portrait=true } -- those images will be defaulted if missing
 local basic_sfx = {"selection"}
 local other_sfx = {"chain", "combo", "combo_echo", "chain_echo", "chain2" ,"chain2_echo", "garbage_match", "win", "taunt_up", "taunt_down"}
-local defaulted_sfxs = {} -- those musics will be defaulted if missing
+local defaulted_sfxs = {} -- those sfxs will be defaulted if missing
 local basic_musics = {}
 local other_musics = {"normal_music", "danger_music", "normal_music_start", "danger_music_start"}
-local defaulted_musics = { normal_music=true } -- those musics will be defaulted if missing
+local defaulted_musics = {} -- those musics will be defaulted if missing
 
 local default_character = nil -- holds default assets fallbacks
 
@@ -268,7 +268,7 @@ function Character.sound_init(self,full,yields)
       end
     end
     if not self.sounds.others[sfx] and defaulted_sfxs[sfx] then
-      self.sounds.others[sfx] = default_character.sounds.others[sfx]
+      self.sounds.others[sfx] = default_character.sounds.others[sfx] or zero_sound
     end
     if yields then coroutine.yield() end
   end
@@ -305,7 +305,7 @@ function Character.sound_init(self,full,yields)
         self.musics[music]:setLooping(false)
       end
     elseif not self.musics[music] and defaulted_musics[music] then
-      self.musics[music] = default_character.musics[music]
+      self.musics[music] = default_character.musics[music] or zero_sound
     end
 
     if yields then coroutine.yield() end

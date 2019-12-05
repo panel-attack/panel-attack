@@ -1410,14 +1410,16 @@ function main_music_test()
 
   for _,character_id in ipairs(characters_ids_for_current_theme) do
     local character = characters[character_id]
-    tracks[#tracks+1] = {
-      is_character = true,
-      name = character.display_name .. ": normal_music",
-      id = character_id,
-      type = "normal_music",
-      start = character.musics.normal_music_start or zero_sound,
-      loop = character.musics.normal_music
-    }
+    if character.musics.normal_music then
+      tracks[#tracks+1] = {
+        is_character = true,
+        name = character.display_name .. ": normal_music",
+        id = character_id,
+        type = "normal_music",
+        start = character.musics.normal_music_start or zero_sound,
+        loop = character.musics.normal_music
+      }
+    end
     if character.musics.danger_music then
       tracks[#tracks+1] = {
         is_character = true,
@@ -1431,14 +1433,16 @@ function main_music_test()
   end
   for _,stage_id in ipairs(stages_ids_for_current_theme) do
     local stage = stages[stage_id]
-    tracks[#tracks+1] = {
-      is_character = false,
-      name = stage.display_name .. ": normal_music",
-      id = stage_id,
-      type = "normal_music",
-      start = stage.musics.normal_music_start or zero_sound,
-      loop = stage.musics.normal_music
-    }
+    if stage.musics.normal_music then
+      tracks[#tracks+1] = {
+        is_character = false,
+        name = stage.display_name .. ": normal_music",
+        id = stage_id,
+        type = "normal_music",
+        start = stage.musics.normal_music_start or zero_sound,
+        loop = stage.musics.normal_music
+      }
+    end
     if stage.musics.danger_music then
       tracks[#tracks+1] = {
         is_character = false,
