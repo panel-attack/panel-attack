@@ -2,7 +2,7 @@ local http = require("socket.http")
 
 -- CONSTANTS
 http.TIMEOUT = 1
-local CHECK_INTERVAL = 10 * 60 -- 10mins in seconds
+local CHECK_INTERVAL = 0 * 60 -- * 60 to convert seconds to minutes
 local UPDATER_NAME = "panel-beta" -- you should name the distributed zip the same as this 
 -- use a different name for the different versions of the updater
 -- ex: "panel" for the release, "panel-beta" for the main beta, "panel-exmode" for testing the EX Mode
