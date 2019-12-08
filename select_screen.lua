@@ -709,7 +709,7 @@ function select_screen.main()
           character_loader_wait()
           stage_loader_wait()
           P1 = Stack(1, "vs", msg.player_settings.panels_dir, msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
-          P1.cur_wait_time = default_input_repeat_delay
+          P1.cur_wait_time = default_input_repeat_delay  -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
           P1.enable_analytics = not currently_spectating and not replay_of_match_so_far
           P2 = Stack(2, "vs", msg.opponent_settings.panels_dir, msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
           if currently_spectating then
