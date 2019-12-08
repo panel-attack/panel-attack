@@ -27,7 +27,7 @@ local NAME_LENGTH_LIMIT = 16
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
 
-local VERSION = "037"
+local VERSION = "039"
 local type_to_length = {H=4, E=4, F=4, P=8, I=2, L=2, Q=8, U=2}
 local INDEX = 1
 local connections = {}
@@ -49,9 +49,9 @@ function lobby_state()
   end
   local spectatableRooms = {}
   for _,v in pairs(rooms) do
-      spectatableRooms[#spectatableRooms+1] = {roomNumber = v.roomNumber, name = v.name , a = v.a.name, b = v.b.name, state = v:state()}
+    spectatableRooms[#spectatableRooms+1] = {roomNumber=v.roomNumber, name=v.name , a=v.a.name, b=v.b.name, state=v:state()}
   end
-  return {unpaired = names, spectatable = spectatableRooms}
+  return {unpaired = names, spectatable=spectatableRooms}
 end
 
 function propose_game(sender, receiver, message)
@@ -95,20 +95,26 @@ function create_room(a, b)
   a_msg.your_player_number = 1
   a_msg.op_player_number = 2
   a_msg.opponent = new_room.b.name
+  b_msg.opponent = new_room.a.name
   new_room.b.cursor = "__Ready"
-  a_msg.menu_state = new_room.b:menu_state()
+  new_room.a.cursor = "__Ready"
   b_msg.your_player_number = 2
   b_msg.op_player_number = 1
-  b_msg.opponent = new_room.a.name
-  new_room.a.cursor = "__Ready"
-  b_msg.menu_state = new_room.a:menu_state()
-  a_msg.ratings = new_room.ratings
-  b_msg.ratings = new_room.ratings
+  a_msg.a_menu_state = new_room.a:menu_state()
+  a_msg.b_menu_state = new_room.b:menu_state()
+  b_msg.b_menu_state = new_room.b:menu_state()
+  b_msg.a_menu_state = new_room.a:menu_state()
   new_room.a.opponent = new_room.b
   new_room.b.opponent = new_room.a
+
+  new_room:prepare_character_select()
+  a_msg.ratings = new_room.ratings
+  b_msg.ratings = new_room.ratings
+  a_msg.rating_updates = true
+  b_msg.rating_updates = true
+
   new_room.a:send(a_msg)
   new_room.b:send(b_msg)
-  new_room:character_select()
 end
 
 
@@ -122,7 +128,9 @@ function start_match(a, b)
       print("ERROR: player a still doesn't have player_number 1.")
     end
   end
-  local msg = {match_start = true, ranked = false,
+
+  a.room.stage = math.random(1,2)==1 and a.stage or b.stage
+  local msg = {match_start = true, ranked = false, stage=a.room.stage,
                 player_settings = {character = a.character, character_display_name=a.character_display_name, level = a.level, panels_dir = a.panels_dir, player_number = a.player_number},
                 opponent_settings = {character = b.character, character_display_name=b.character_display_name, level = b.level, panels_dir = b.panels_dir, player_number = b.player_number}}
   local room_is_ranked, reasons = a.room:rating_adjustment_approved()
@@ -163,6 +171,7 @@ Room = class(function(self, a, b)
   --TODO: it would be nice to call players a and b something more like self.players[1] and self.players[2]
   self.a = a --player a
   self.b = b --player b
+  self.stage = nil
   self.name = a.name.." vs "..b.name
   if not self.a.room or not self.b.room then
     self.roomNumber = ROOMNUMBER
@@ -206,6 +215,11 @@ Room = class(function(self, a, b)
 end)
 
 function Room.character_select(self)
+  self:prepare_character_select()
+  self:send({character_select=true, create_room=true, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()})
+end
+
+function Room.prepare_character_select(self)
   print("Called Server.lua Room.character_select")
   self.a.state = "character select"
   self.b.state = "character select"
@@ -225,7 +239,6 @@ function Room.character_select(self)
   self.b.cursor = "__Ready"
   self.a.ready = false
   self.b.ready = false
-  self:send({character_select=true, create_room=true, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()})
   -- local msg = {spectate_request_granted = true, spectate_request_rejected = false, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()}
   -- for k,v in ipairs(self.spectators) do
     -- self.spectators[k]:send(msg)
@@ -251,7 +264,7 @@ function Room.add_spectator(self, new_spectator_connection)
   new_spectator_connection.room = self
   self.spectators[#self.spectators+1] = new_spectator_connection
   print(new_spectator_connection.name .. " joined " .. self.name .. " as a spectator")
-  msg = {spectate_request_granted = true, spectate_request_rejected = false, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state(), win_counts=self.win_counts, match_start=replay_of_match_so_far~=nil, replay_of_match_so_far = self.replay, ranked = self:rating_adjustment_approved(),
+  msg = {spectate_request_granted = true, spectate_request_rejected = false, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state(), win_counts=self.win_counts, match_start=replay_of_match_so_far~=nil, stage=self.stage, replay_of_match_so_far = self.replay, ranked = self:rating_adjustment_approved(),
                 player_settings = {character = self.a.character, character_display_name=self.a.character_display_name, level = self.a.level, player_number = self.a.player_number},
                 opponent_settings = {character = self.b.character, character_display_name=self.b.character_display_name, level = self.b.level, player_number = self.b.player_number}}
   new_spectator_connection:send(msg)
@@ -276,7 +289,6 @@ function Room.remove_spectator(self, connection)
       print(connection.name .. " left " .. self.name .. " as a spectator")
       self.spectators[k] = nil
       lobby_changed = true
-      connection:send(lobby_state())
     end
   end
   msg = {spectators=self:spectator_names()}
@@ -285,32 +297,26 @@ function Room.remove_spectator(self, connection)
 end
 
 function Room.close(self)
-    --TODO: notify spectators that the room has closed.
-    if self.a then
-      self.a.player_number = 0
-      self.a.state = "lobby"
-      print("In Room.close.  Setting room for Player A "..(self.a.name or "nil").." as nil")
-      self.a.room = nil
+  if self.a then
+    self.a.player_number = 0
+    self.a.state = "lobby"
+    self.a.room = nil
+  end
+  if self.b then
+    self.b.player_number = 0
+    self.b.state = "lobby"
+    self.b.room = nil
+  end
+  for k,v in pairs(self.spectators) do
+    if v.room then
+      v.room = nil
+      v.state = "lobby"
     end
-    if self.b then
-      self.b.player_number = 0
-      self.b.state = "lobby"
-      print("In Room.close.  Setting room for Player B "..(self.b.name or "nil").." as nil")
-      self.b.room = nil
-    end
-    for k,v in pairs(self.spectators) do
-      if v.room then
-      print("In Room.close.  Setting room for spectator "..(v.name or "nil").." as nil")
-        v.room = nil
-        v.state = "lobby"
-      end
-    end
-    if rooms[self.roomNumber] then
-        rooms[self.roomNumber] = nil
-    end
-    local msg = lobby_state()
-    msg.leave_room = true
-    self:send_to_spectators(msg)
+  end
+  if rooms[self.roomNumber] then
+    rooms[self.roomNumber] = nil
+  end
+  self:send_to_spectators({leave_room = true})
 end
 
 function roomNumberToRoom(roomNr)
@@ -436,7 +442,7 @@ Connection = class(function(s, socket)
 end)
 
 function Connection.menu_state(self)
-  state = {cursor=self.cursor, ready=self.ready, character=self.character, character_display_name=self.character_display_name, panels_dir=self.panels_dir, level=self.level, ranked=self.wants_ranked_match}
+  state = {cursor=self.cursor, stage=self.stage, stage_is_random=self.stage_is_random, ready=self.ready, character=self.character, character_is_random=self.character_is_random, character_display_name=self.character_display_name, panels_dir=self.panels_dir, level=self.level, ranked=self.wants_ranked_match}
   return state
   --note: player_number here is the player_number of the connection as according to the server, not the "which" of any Stack
 end
@@ -446,11 +452,11 @@ function Connection.send(self, stuff)
     local json = json.encode(stuff)
     local len = json:len()
     local prefix = "J"..char(floor(len/65536))..char(floor((len/256)%256))..char(len%256)
-    print(byte(prefix[1]), byte(prefix[2]), byte(prefix[3]), byte(prefix[4]))
+    --print(byte(prefix[1]), byte(prefix[2]), byte(prefix[3]), byte(prefix[4]))
     print("sending json "..json)
     stuff = prefix..json
   else
-    if stuff[1] ~= "I" and stuff[1] ~= "U" then
+    if stuff[1] ~= "I" and stuff[1] ~= "U" and stuff[1] ~= "E" then
       print("sending non-json "..stuff)
     end
   end
@@ -458,11 +464,8 @@ function Connection.send(self, stuff)
   local times_to_retry = 5
   local foo = {}
   while not foo[1] and retry_count <= 5 do
-    if retry_count ~= 0 then
-      print("retry number: "..retry_count)
-    end
     foo = {self.socket:send(stuff)}
-    if stuff[1] ~= "I" and stuff[1] ~= "U" then
+    if stuff[1] ~= "I" and stuff[1] ~= "U" and stuff[1] ~= "E" then
       print(unpack(foo))
     end
     if not foo[1] then
@@ -471,13 +474,8 @@ function Connection.send(self, stuff)
     end
   end
   if not foo[1] then
-    print("About to close connection for "..(self.name or "nil")..". During Connection.send, foo[1] was nil after "..times_to_retry.." retries were attempted")
-    print("foo:")
-    print(unpack(foo))
-    print("closing connection")
+    print("Closing connection for "..(self.name or "nil")..". During Connection.send, foo[1] was nil after "..times_to_retry.." retries were attempted")
     self:close()
-  elseif retry_count ~= 0 then
-    print("SUCCESS after retries: connection.send for "..(self.name or "nil").." took "..retry_count.." retries")
   end
 end
 
@@ -522,6 +520,11 @@ function Connection.login(self, user_id)
   else
     deny_login(self, "Unknown")
   end
+
+  if self.logged_in then
+    self:send(lobby_state())
+  end
+
   return self.logged_in
 end
 
@@ -566,13 +569,11 @@ function Connection.opponent_disconnected(self)
   self.opponent = nil
   self.state = "lobby"
   lobby_changed = true
-  local msg = lobby_state()
-  msg.leave_room = true
   if self.room then
-    print("about to close room for "..(self.name or "nil").." because opponent disconnected.")
+    print("Closing room for "..(self.name or "nil").." because opponent disconnected.")
     self.room:close()
   end
-  self:send(msg)
+  self:send({leave_room = true})
 end
 
 function Connection.setup_game(self)
@@ -1103,7 +1104,6 @@ end
 function Connection.F(self, message)
 end
 
-
 local ok_ncolors = {}
 for i=2,7 do
   ok_ncolors[i..""] = true
@@ -1178,7 +1178,10 @@ function Connection.J(self, message)
     else
       self.name = message.name
       self.character = message.character
+      self.character_is_random = message.character_is_random
       self.character_display_name = message.character_display_name
+      self.stage = message.stage
+      self.stage_is_random = message.stage_is_random
       self.panels_dir = message.panels_dir
       self.level = message.level
       self.save_replays_publicly = message.save_replays_publicly
@@ -1186,6 +1189,10 @@ function Connection.J(self, message)
       self.state = "lobby"
       name_to_idx[self.name] = self.index
     end
+  elseif message.taunt then
+    message.player_number = self.player_number
+    self.opponent:send(message)
+    self.room:send_to_spectators(message)
   elseif message.login_request then
     self:login(message.user_id)
   elseif self.state == "lobby" and message.game_request then
@@ -1222,7 +1229,10 @@ function Connection.J(self, message)
   elseif self.state == "character select" and message.menu_state then
     self.level = message.menu_state.level
     self.character = message.menu_state.character
+    self.character_is_random = message.menu_state.character_is_random
     self.character_display_name = message.menu_state.character_display_name
+    self.stage = message.menu_state.stage
+    self.stage_is_random = message.menu_state.stage_is_random
     self.ready = message.menu_state.ready
     self.cursor = message.menu_state.cursor
     self.panels_dir = message.menu_state.panels_dir
@@ -1257,10 +1267,7 @@ function Connection.J(self, message)
     else
       self.opponent:send(message)
       message.player_number = self.player_number
-      print("about to send match start to spectators of ")
-      print(self.name)
-      print("and")
-      print(self.opponent.name)
+      print("about to send match start to spectators of "..(self.name or "nil").. " and "..(self.opponent.name or "nil"))
       self.room:send_to_spectators(message) -- TODO: may need to include in the message who is sending the message
     end
   elseif self.state == "playing" and message.game_over then
@@ -1281,6 +1288,10 @@ function Connection.J(self, message)
         v:opponent_disconnected()
       end
     end
+    --[[local msg = lobby_state()
+    msg.leave_room = true
+    self:send(msg)
+    op:send(msg)--]]
   elseif (self.state == "spectating") and message.leave_room then
     self.room:remove_spectator(self)
   end
@@ -1289,7 +1300,7 @@ end
 -- TODO: this should not be O(n^2) lol
 function Connection.data_received(self, data)
   self.last_read = time()
-  if data:len() ~= 2 then
+  if data:len() ~= 2 and data[1] ~= "F" then
     print("got raw data "..data)
   end
   data = self.leftovers .. data
@@ -1313,7 +1324,7 @@ function Connection.data_received(self, data)
       end))
       data = data:sub(msg_len+5)
     else
-      if msg_type ~= "I" then
+      if msg_type ~= "I" and msg_type ~= "F" then
         print("using non-J type "..msg_type)
       end
       total_len = type_to_length[msg_type]
@@ -1329,7 +1340,7 @@ function Connection.data_received(self, data)
       res = {pcall(function()
         self[msg_type](self, data:sub(2,total_len))
       end)}
-      if msg_type ~= "I" or not res[1] then
+      if ( msg_type ~= "I" and msg_type ~= "F" ) or not res[1] then
         print("got message "..msg_type.." "..data:sub(2,total_len))
         print("Pcall results for "..msg_type..": ", unpack(res))
       end
@@ -1381,8 +1392,8 @@ end
 end
 --]]
 
-local server_socket = socket.bind("*", 49569) --for official server
---local server_socket = socket.bind("*", 59569) --for beta server
+--local server_socket = socket.bind("*", 49569) --for official server
+local server_socket = socket.bind("*", 59569) --for beta server
 local sep = package.config:sub(1, 1)
 print("sep: "..sep)
 playerbase = Playerbase("playerbase")

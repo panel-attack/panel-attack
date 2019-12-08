@@ -15,9 +15,9 @@ local current_music_is_casual = false -- must be false so that casual music star
 Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_number)
     s.character = config.character
     s.max_health = 1
-    s.panels_dir = panels_dir or config.panels_dir
-    if IMG_panels[panels_dir] == nil then
-      s.panels_dir = config.panels_dir
+    s.panels_dir = panels_dir or config.panels
+    if not panels[panels_dir] then
+      s.panels_dir = config.panels
     end
     s.mode = mode or "endless"
     if mode ~= "puzzle" then
@@ -150,6 +150,12 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     s.swap_1 = false   -- attempt to initiate a swap on this frame
     s.swap_2 = false
 
+    s.taunt_up = nil -- will hold an index
+    s.taunt_down = nil -- will hold an index
+    s.wait_for_not_taunting = nil -- will hold either "taunt_up" or "taunt_down"
+    s.wait_for_not_pausing = false -- wait for end of input
+    s.taunt_queue = Queue()
+
     s.cur_wait_time = 25   -- number of ticks to wait before the cursor begins
                -- to move quickly... it's based on P1CurSensitivity
     s.cur_timer = 0   -- number of ticks for which a new direction's been pressed
@@ -262,6 +268,20 @@ end
 function Stack.fromcpy(self, other)
   Stack.mkcpy(other,self)
   self:remove_extra_rows()
+end
+
+local MAX_TAUNT_PER_10_SEC = 4
+
+function Stack.can_taunt(self)
+  return self.taunt_queue:len() < MAX_TAUNT_PER_10_SEC or self.taunt_queue:peek() + 10 < love.timer.getTime()
+end
+
+function Stack.taunt(self,taunt_type)
+  while self.taunt_queue:len() >= MAX_TAUNT_PER_10_SEC do
+    self.taunt_queue:pop()
+  end
+  self.taunt_queue:push(love.timer.getTime())
+  self.wait_for_not_taunting = taunt_type -- to avoid taunting multiple times with the same input
 end
 
 Panel = class(function(p)
@@ -591,6 +611,10 @@ end
 
 --local_run is for the stack that belongs to this client.
 function Stack.local_run(self)
+  if game_is_paused then
+    return
+  end
+
   self:update_cards()
   self.input_state = self:send_controls()
   self:prep_rollback()
@@ -601,6 +625,10 @@ end
 
 --foreign_run is for a stack that belongs to another client.
 function Stack.foreign_run(self)
+  if game_is_paused then -- foreign_run in replays!
+    return
+  end
+  
   -- Decide how many frames of input we should run.
   local times_to_run = 0
   local buffer_len = string.len(self.input_buffer)
@@ -1146,10 +1174,26 @@ function Stack.PdP(self)
   else
     self.cur_row = bound(1, self.cur_row, self.top_cur_row)
   end
+
   if self.cur_timer ~= self.cur_wait_time then
     self.cur_timer = self.cur_timer + 1
-    
-    
+  end
+
+  -- TAUNTING
+  if self.taunt_up ~= nil then
+    for _,t in ipairs(characters[self.character].sounds.taunt_ups) do
+      t:stop()
+    end
+    characters[self.character].sounds.taunt_ups[self.taunt_up]:play()
+    self:taunt("taunt_up")
+    self.taunt_up = nil
+  elseif self.taunt_down ~= nil then
+    for _,t in ipairs(characters[self.character].sounds.taunt_downs) do
+      t:stop()
+    end
+    characters[self.character].sounds.taunt_downs[self.taunt_down]:play()
+    self:taunt("taunt_down")
+    self.taunt_down = nil
   end
 
   -- SWAPPING
@@ -1331,76 +1375,76 @@ function Stack.PdP(self)
 
     if self.do_countdown then 
       if SFX_Go_Play == 1 then
-        sounds.SFX.go:stop()
-        sounds.SFX.go:play()
+        themes[config.theme].sounds.go:stop()
+        themes[config.theme].sounds.go:play()
         SFX_Go_Play=0
       elseif SFX_Countdown_Play == 1 then
-        sounds.SFX.countdown:stop()
-        sounds.SFX.countdown:play()
+        themes[config.theme].sounds.countdown:stop()
+        themes[config.theme].sounds.countdown:play()
         SFX_Go_Play=0
       end
     
-    elseif (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
-      if (current_music_is_casual or table.getn(currently_playing_tracks) == 0) 
-        and characters[winningPlayer().character].musics["danger_music"] then -- disabled when danger_music is unspecified
-        print("Music is now critical")
-        if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
-        stop_the_music()
-        find_and_add_music(winningPlayer().character, "danger_music")
-        current_music_is_casual = false
-      elseif table.getn(currently_playing_tracks) == 0 then
-        print("Music is now casual")
-        if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
-        stop_the_music()
-        find_and_add_music(winningPlayer().character, "normal_music")
-        current_music_is_casual = true
+    else
+      local musics_to_use = (current_use_music_from == "stage") and stages[current_stage].musics or characters[winningPlayer().character].musics
+      if not musics_to_use["normal_music"] then -- use the other one as fallback
+        musics_to_use = (current_use_music_from ~= "stage") and stages[current_stage].musics or characters[winningPlayer().character].musics
       end
-    else --we should be playing normal_music or normal_music_start
-      if (not current_music_is_casual or table.getn(currently_playing_tracks) == 0) then
-        print("Music is now casual")
-        if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
-        stop_the_music()
-        find_and_add_music(winningPlayer().character, "normal_music")
-        current_music_is_casual = true
+      if (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
+        if (current_music_is_casual or table.getn(currently_playing_tracks) == 0) 
+          and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
+          stop_the_music()
+          find_and_add_music(musics_to_use, "danger_music")
+          current_music_is_casual = false
+        elseif table.getn(currently_playing_tracks) == 0 and musics_to_use["normal_music"] then
+          stop_the_music()
+          find_and_add_music(musics_to_use, "normal_music")
+          current_music_is_casual = true
+        end
+      else --we should be playing normal_music or normal_music_start
+        if (not current_music_is_casual or table.getn(currently_playing_tracks) == 0) and musics_to_use["normal_music"] then
+          stop_the_music()
+          find_and_add_music(musics_to_use, "normal_music")
+          current_music_is_casual = true
+        end
       end
     end
   end
   if not SFX_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
     if SFX_Swap_Play == 1 then
-        sounds.SFX.swap:stop()
-        sounds.SFX.swap:play()
+        themes[config.theme].sounds.swap:stop()
+        themes[config.theme].sounds.swap:play()
         SFX_Swap_Play=0
     end
     if SFX_Cur_Move_Play == 1 then
-        if not (self.mode == "vs" and sounds.SFX.swap:isPlaying())
+        if not (self.mode == "vs" and themes[config.theme].sounds.swap:isPlaying())
         and not self.do_countdown then
-            sounds.SFX.cur_move:stop()
-            sounds.SFX.cur_move:play()
+            themes[config.theme].sounds.cur_move:stop()
+            themes[config.theme].sounds.cur_move:play()
         end
         SFX_Cur_Move_Play=0
     end
     if SFX_Land_Play == 1 then
-        sounds.SFX.land:stop()
-        sounds.SFX.land:play()
+        themes[config.theme].sounds.land:stop()
+        themes[config.theme].sounds.land:play()
         SFX_Land_Play=0
     end
     if SFX_Countdown_Play == 1 then
         if self.which == 1 then
-            sounds.SFX.countdown:stop()
-            sounds.SFX.countdown:play()
+            themes[config.theme].sounds.countdown:stop()
+            themes[config.theme].sounds.countdown:play()
         end
         SFX_Countdown_Play=0
     end
     if SFX_Go_Play == 1 then
         if self.which == 1 then
-            sounds.SFX.go:stop()
-            sounds.SFX.go:play()
+            themes[config.theme].sounds.go:stop()
+            themes[config.theme].sounds.go:play()
         end
         SFX_Go_Play=0
     end
     if self.combo_chain_play then
-        sounds.SFX.land:stop()
-        sounds.SFX.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        themes[config.theme].sounds.land:stop()
+        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         for _,v in pairs(characters[self.character].sounds.combos) do
           v:stop()
         end
@@ -1426,27 +1470,27 @@ function Stack.PdP(self)
     if SFX_Fanfare_Play == 0 then
     --do nothing
     elseif SFX_Fanfare_Play >= 6 then
-        sounds.SFX.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        sounds.SFX.fanfare3:play()
+        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        themes[config.theme].sounds.fanfare3:play()
     elseif SFX_Fanfare_Play >= 5 then
-        sounds.SFX.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        sounds.SFX.fanfare2:play()
+        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        themes[config.theme].sounds.fanfare2:play()
     elseif SFX_Fanfare_Play >= 4 then
-        sounds.SFX.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        sounds.SFX.fanfare1:play()
+        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        themes[config.theme].sounds.fanfare1:play()
     end
     SFX_Fanfare_Play=0
     if SFX_GarbageThud_Play >= 1 and SFX_GarbageThud_Play <= 3 then
         local interrupted_thud = nil
         for i=1,3 do
-            if sounds.SFX.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
-                sounds.SFX.garbage_thud[i]:stop()
+            if themes[config.theme].sounds.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
+                themes[config.theme].sounds.garbage_thud[i]:stop()
                 interrupted_thud = i
             end
         end
         if interrupted_thud and interrupted_thud > SFX_GarbageThud_Play then
-            sounds.SFX.garbage_thud[interrupted_thud]:play()
-        else sounds.SFX.garbage_thud[SFX_GarbageThud_Play]:play()
+            themes[config.theme].sounds.garbage_thud[interrupted_thud]:play()
+        else themes[config.theme].sounds.garbage_thud[SFX_GarbageThud_Play]:play()
         end
         SFX_GarbageThud_Play = 0
     end
@@ -1459,9 +1503,9 @@ function Stack.PdP(self)
             popIndex = min(self.poppedPanelIndex,10)
         end
         --stop the previous pop sound
-        sounds.SFX.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         --play the appropriate pop sound
-        sounds.SFX.pops[popLevel][popIndex]:play()
+        themes[config.theme].sounds.pops[popLevel][popIndex]:play()
         self.lastPopLevelPlayed = popLevel
         self.lastPopIndexPlayed = popIndex
         SFX_Pop_Play = nil

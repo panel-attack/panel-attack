@@ -16,7 +16,7 @@ function find_sound(sound_name, dirs_to_check, streamed)
   streamed = streamed or false
   local found_source
   for k,dir in ipairs(dirs_to_check) do
-    found_source = get_from_supported_extensions(dir..sound_name,streamed)
+    found_source = load_sound_from_supported_extensions(dir..sound_name,streamed)
     if found_source then
       return found_source
     end
@@ -25,25 +25,11 @@ function find_sound(sound_name, dirs_to_check, streamed)
 end
 
 --returns a source, or nil if it could not find a file
-function get_from_supported_extensions(path_and_filename,streamed)
+function load_sound_from_supported_extensions(path_and_filename,streamed)
   for k, extension in ipairs(supported_sound_formats) do
     if love.filesystem.getInfo(path_and_filename..extension) then
-      if streamed then
-        return love.audio.newSource(path_and_filename..extension, "stream")
-      else
-        return love.audio.newSource(path_and_filename..extension, "static")
-      end
+      return love.audio.newSource(path_and_filename..extension, streamed and "stream" or "static")
     end
   end
   return nil
-end
-
---check whether a sound file exists
-function any_supported_extension(path_and_filename)
-  for k, extension in ipairs(supported_sound_formats) do
-    if love.filesystem.getInfo(path_and_filename..extension) then
-      return true
-    end
-  end
-  return false
 end

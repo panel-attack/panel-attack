@@ -1,7 +1,7 @@
 require("util")
 
 -- The values in this file are constants (except in this file perhaps) and are expected never to change during the game, not to be confused with globals!
-VERSION = "037"
+VERSION = "039"
 
 canvas_width = 1280
 canvas_height = 720
@@ -13,13 +13,14 @@ global_background_color = { 0.1, 0.1, 0.1 }
 mouse_pointer_timeout = 1.5 --seconds
 RATING_SPREAD_MODIFIER = 400
 
+super_selection_duration = 30 -- frames (reminder: 60 frames per sec)
+super_selection_enable_ratio = 0.3 -- ratio at which super enable is considered started (cancelling it won't validate a character)
+assert(super_selection_enable_ratio<1.0,"")
+
 prefix_of_ignored_dirs = "__"
 
-default_assets_dir = "Stock PdP_TA"
-default_panels_dir = "Stock PdP_TA"
-default_sounds_dir = "Stock PdP_TA"
-
-join_community_msg = "  Join the community at\ndiscord.panelattack.com"
+default_theme_dir = "Panel Attack"
+default_panels_dir = "Panel Attack"
 
 default_characters_ids = {"lip", "windy", "sherbet", "thiana", "ruby",
               "elias", "flare", "neris", "seren", "phoenix", 
@@ -28,10 +29,14 @@ default_characters_ids = {"lip", "windy", "sherbet", "thiana", "ruby",
               "lungefish", "raphael", "yoshi", "hookbill",
               "navalpiranha", "kamek", "bowser"}
 
-default_character_id = "__default"
+default_stages_ids = {"cave", "fire", "flower", "forest", "ice",
+              "jewel", "king", "moon", "sea", "water", "wind" }
+
+random_stage_special_value = "__RandomStage"
+random_character_special_value = "__RandomCharacter"
 
 key_names = {"up", "down", "left", "right", "swap1",
-  "swap2", "raise1", "raise2"}
+  "swap2", "taunt_up", "taunt_down", "raise1", "raise2", "pause"}
 
 bounce_table = {1, 1, 1, 1,
                 2, 2, 2,

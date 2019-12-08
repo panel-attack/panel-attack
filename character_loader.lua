@@ -49,7 +49,7 @@ end
 function character_loader_clear()
   local p2_local_character = global_op_state and global_op_state.character or nil
   for character_id,character in pairs(characters) do
-    if character.fully_loaded and character_id ~= default_character_id and character_id ~= config.character and character_id ~= p2_local_character then
+    if character.fully_loaded and character_id ~= config.character and character_id ~= p2_local_character then
       character:unload()
     end
   end
