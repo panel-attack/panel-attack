@@ -134,7 +134,7 @@ end
 
 local function repeating_key(key)
   local key_time = keys[key]
-  return this_frame_keys[key] or (key_time and key_time > 25 and key_time % 3 ~= 0)
+  return this_frame_keys[key] or (key_time and key_time > default_input_repeat_delay and key_time % 2 == 0) -- menues key repeat delay 20 frames then every 2 frames
 end
 
 local function normal_key(key) return this_frame_keys[key] end

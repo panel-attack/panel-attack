@@ -52,6 +52,7 @@ game_is_paused = false
 large_font = 10 -- large font base+10
 small_font = -3 -- small font base-3
 
+default_input_repeat_delay = 20
 
 zero_sound = load_sound_from_supported_extensions("zero_music")
 
@@ -86,11 +87,12 @@ config = {
 	-- Show FPS in the top-left corner of the screen
 	show_fps                      = false,
 	-- Show ingame infos while playing the game
-	show_ingame_infos		 	  = false,
+	show_ingame_infos             = false,
 	-- Enable ready countdown flag
 	ready_countdown_1P            = true,
 	-- Change danger music back later flag
 	danger_music_changeback_delay = false,
+  input_repeat_delay            = default_input_repeat_delay,
 	-- analytics
 	enable_analytics              = false,
 	-- Save replays setting
