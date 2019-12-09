@@ -3,7 +3,7 @@ local http = require("socket.http")
 -- CONSTANTS
 http.TIMEOUT = 1
 local CHECK_INTERVAL = 0 * 60 -- * 60 to convert seconds to minutes
-local UPDATER_NAME = "panel-beta" -- you should name the distributed zip the same as this 
+local UPDATER_NAME = "panel-beta" -- you should name the distributed auto updater zip the same as this
 -- use a different name for the different versions of the updater
 -- ex: "panel" for the release, "panel-beta" for the main beta, "panel-exmode" for testing the EX Mode
 
@@ -55,13 +55,15 @@ function love.load()
   end
 
   -- Check for a version online
-  if body then
-    local all_versions = {}
+  local all_versions = {}
 
+  if body then
     for w in body:gmatch('<a href="([/%w_-]+)%.love">') do
       all_versions[#all_versions+1] = w:gsub("^/[/%w_-]+/", "")
     end
+  end
 
+  if #all_versions > 0 then
     sort_versions(all_versions)
     for i=1,#all_versions do
       all_versions[i] = all_versions[i]..'.love'
@@ -75,7 +77,6 @@ function love.load()
           break
         end
       end
-
       if top_version == nil then
         local err = 'Could not find online version: "'..config.force_version..'" (force_version)\nAvailable versions are:\n'
         for i, v in ipairs(all_versions) do err = err..v.."\n" end
@@ -98,7 +99,7 @@ function love.load()
   -- Check for a version locally
   elseif local_version and love.filesystem.getInfo(PATH..local_version) then
     if config.force_version ~= "" and config.force_version ~= local_version then
-        error('Could not find local version: "'..config.force_version..'" (force_version)\nPlease connect to the internet to download it.')
+        error('Could not find local version: "'..config.force_version..'" (force_version)\nPlease connect to the internet and restart the game.')
     end
     start_game(local_version)
 
@@ -106,7 +107,15 @@ function love.load()
   else
     display_message("Could not connect to the internet.\nCopying embedded version...\n")
     copy_embedded = true
-    top_version = "panel.love"
+    for i, v in ipairs(love.filesystem.getDirectoryItems("")) do
+      if v:match('%.love$') then
+        top_version = v
+        break
+      end
+    end
+    if top_version == nil then
+      error('Could not find an embedded version of the game\nPlease connect to the internet and restart the game.')
+    end
   end
 end
 
@@ -118,7 +127,7 @@ function love.update(dt)
   end
 
   if copy_embedded then
-    love.filesystem.write(PATH..top_version, love.filesystem.read(PATH.."embedded.love"))
+    love.filesystem.write(PATH..top_version, love.filesystem.read(top_version))
     change_current_version(top_version, local_version)
     start_game(top_version)
 
