@@ -148,6 +148,9 @@ do
       end
       gprint(arrow, unpack(main_menu_screen_pos))
       gprint(to_print, unpack(main_menu_screen_pos))
+      if UPDATER_GAME_VERSION then
+        gprintf("version: "..UPDATER_GAME_VERSION, -2, 705, canvas_width, "right")
+      end
       wait()
       local ret = nil
       variable_step(function()
