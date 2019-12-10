@@ -122,7 +122,7 @@ do
         {loc("mm_2_vs_local"), main_local_vs_setup},
         {loc("mm_replay_of", loc("mm_1_endless")), main_replay_endless},
         {loc("mm_replay_of", loc("mm_1_puzzle")), main_replay_puzzle},
-        {loc("mm_replay_of", loc("mm_1_vs")), main_replay_vs},
+        {loc("mm_replay_of", loc("mm_2_vs")), main_replay_vs},
         {loc("mm_configure"), main_config_input},
         {loc("mm_set_name"), main_set_name},
         {loc("mm_options"), options.main},
