@@ -742,14 +742,18 @@ function Room.rating_adjustment_approved(self)
   local caveats = {}
   local prev_player_level = players[1].level
   local both_players_are_placed = nil
-  if PLACEMENT_MATCHES_ENABLED
-    and leaderboard.players[players[1].user_id] and leaderboard.players[players[1].user_id].placement_done
-    and leaderboard.players[players[2].user_id] and leaderboard.players[players[2].user_id].placement_done then
-    both_players_are_placed = true
+  
+  if PLACEMENT_MATCHES_ENABLED then
+    if leaderboard.players[players[1].user_id] and leaderboard.players[players[1].user_id].placement_done
+      and leaderboard.players[players[2].user_id] and leaderboard.players[players[2].user_id].placement_done then
+      both_players_are_placed = true
     --both players are placed on the leaderboard.
-  elseif not (leaderboard.players[players[1].user_id] and leaderboard.players[players[1].user_id].placement_done)
-    and not (leaderboard.players[players[2].user_id] and leaderboard.players[players[2].user_id].placement_done) then
-    reasons[#reasons+1] = "Neither player has finished enough placement matches against already ranked players"
+    elseif not (leaderboard.players[players[1].user_id] and leaderboard.players[players[1].user_id].placement_done)
+      and not (leaderboard.players[players[2].user_id] and leaderboard.players[players[2].user_id].placement_done) then
+      reasons[#reasons+1] = "Neither player has finished enough placement matches against already ranked players"
+    end
+  else
+    both_players_are_placed = true
   end
 
   --don't let players too far apart in rating play ranked
@@ -1013,7 +1017,9 @@ function qualifies_for_placement(user_id)
   --local placement_match_win_ratio_requirement = .2
   load_placement_matches(user_id)
   local placement_matches_played = #loaded_placement_matches.incomplete[user_id]
-  if leaderboard.players[user_id] and leaderboard.players[user_id].placement_done then
+  if not PLACEMENT_MATCHES_ENABLED then 
+    return false, ""
+  elseif (leaderboard.players[user_id] and leaderboard.players[user_id].placement_done) then
     return false, "user is already placed"
   elseif placement_matches_played < PLACEMENT_MATCH_COUNT_REQUIREMENT then
     return false, placement_matches_played.."/"..PLACEMENT_MATCH_COUNT_REQUIREMENT.." placement matches played."
