@@ -20,10 +20,6 @@ local floor = math.floor
 local TIMEOUT = 10
 local CHARACTERSELECT = "character select" -- room states
 local PLAYING = "playing" -- room states
-local DEFAULT_RATING = 1600
-local RATING_SPREAD_MODIFIER = 400
-local PLACEMENT_MATCH_K = 50
-local NAME_LENGTH_LIMIT = 16
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
 
@@ -746,7 +742,8 @@ function Room.rating_adjustment_approved(self)
   local caveats = {}
   local prev_player_level = players[1].level
   local both_players_are_placed = nil
-  if leaderboard.players[players[1].user_id] and leaderboard.players[players[1].user_id].placement_done
+  if PLACEMENT_MATCHES_ENABLED
+    and leaderboard.players[players[1].user_id] and leaderboard.players[players[1].user_id].placement_done
     and leaderboard.players[players[2].user_id] and leaderboard.players[players[2].user_id].placement_done then
     both_players_are_placed = true
     --both players are placed on the leaderboard.
@@ -770,7 +767,7 @@ function Room.rating_adjustment_approved(self)
       ratings[k] = DEFAULT_RATING
     end
   end
-  if math.abs(ratings[1] - ratings[2]) > RATING_SPREAD_MODIFIER * .9 then
+  if math.abs(ratings[1] - ratings[2]) > RATING_SPREAD_MODIFIER * ALLOWABLE_RATING_SPREAD_MULITPLIER then
     reasons[#reasons+1] = "Players' ratings are too far apart"
   end
 
@@ -788,7 +785,7 @@ function Room.rating_adjustment_approved(self)
   if reasons[1] then
     return false, reasons
   else
-    if not both_players_are_placed
+    if PLACEMENT_MATCHES_ENABLED and not both_players_are_placed
       and
       ((leaderboard.players[players[1].user_id] and leaderboard.players[players[1].user_id].placement_done)
       or (leaderboard.players[players[2].user_id] and leaderboard.players[players[2].user_id].placement_done)) then
@@ -840,6 +837,9 @@ function adjust_ratings(room, winning_player_number)
         if not leaderboard.players[players[player_number].user_id] or not leaderboard.players[players[player_number].user_id].rating then
           leaderboard.players[players[player_number].user_id] = {user_name=playerbase.players[players[player_number].user_id], rating=DEFAULT_RATING}
           print("Gave "..playerbase.players[players[player_number].user_id].." a new rating of "..DEFAULT_RATING)
+          if not PLACEMENT_MATCHES_ENABLED then
+            leaderboard.players[players[player_number].user_id].placement_done = true
+          end
           write_leaderboard_file()
         end
       end
