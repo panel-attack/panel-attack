@@ -4,8 +4,8 @@ function love.conf(t)
   t.title = "Panel Attack"
   t.author = "sharpobject@gmail.com"
   t.url = "https://github.com/panel-attack/panel-attack"
-  t.window.width = default_width
-  t.window.height = default_height
+  t.window.width = canvas_width
+  t.window.height = canvas_height
   t.window.resizable = true
   t.modules.audio = true
   t.modules.mouse = true

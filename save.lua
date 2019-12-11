@@ -49,13 +49,65 @@ function write_conf_file() pcall(function()
   file:close()
 end) end
 
+local use_music_from_values = { stage=true, often_stage=true, either=true, often_characters=true, characters=true }
+local save_replays_values = { ["with my name"]=true, anonymously=true, ["not at all"]=true }
+
 function read_conf_file() pcall(function()
+  -- config current values are defined in globals.lua, 
+  -- we consider those values are currently in config
+
   local file = love.filesystem.newFile("conf.json")
   file:open("r")
+  local read_data = {}
   local teh_json = file:read(file:getSize())
   for k,v in pairs(json.decode(teh_json)) do
-    config[k] = v
+    read_data[k] = v
   end
+
+  -- do stuff using read_data.version for retrocompatibility here
+  
+  if type(read_data.theme) == "string" and love.filesystem.getInfo("themes/"..read_data.theme) then
+    config.theme = read_data.theme
+  end
+
+  -- language_code, panels, character and stage are patched later on by their own subsystems, we store their values in config for now!
+  if type(read_data.language_code) == "string" then config.language_code = read_data.language_code end
+  if type(read_data.panels) == "string" then config.panels = read_data.panels end
+  if type(read_data.character) == "string" then config.character = read_data.character end
+  if type(read_data.stage) == "string" then config.stage = read_data.stage end
+
+  if type(read_data.vsync) == "boolean" then config.vsync = read_data.vsync end
+
+  if type(read_data.use_music_from) == "string" and use_music_from_values[read_data.use_music_from] then 
+    config.use_music_from = read_data.use_music_from 
+  end
+
+  if type(read_data.level) == "number" then config.level = bound(1,read_data.level,10) end
+  if type(read_data.endless_speed) == "number" then config.endless_speed = bound(1,read_data.endless_speed,99) end
+  if type(read_data.endless_difficulty) == "number" then config.endless_difficulty = bound(1,read_data.endless_difficulty,3) end
+
+  if type(read_data.name) == "string" then config.name = read_data.name end
+
+  if type(read_data.master_volume) == "number" then config.master_volume = bound(0,read_data.master_volume,100) end
+  if type(read_data.SFX_volume) == "number" then config.SFX_volume = bound(0,read_data.SFX_volume,100) end
+  if type(read_data.music_volume) == "number" then config.music_volume = bound(0,read_data.music_volume,100) end
+  if type(read_data.input_repeat_delay) == "number" then config.input_repeat_delay = bound(1,read_data.input_repeat_delay,50) end
+
+  if type(read_data.debug_mode) == "boolean" then config.debug_mode = read_data.debug_mode end
+  if type(read_data.show_fps) == "boolean" then config.show_fps = read_data.show_fps end
+  if type(read_data.show_ingame_infos) == "boolean" then config.show_ingame_infos = read_data.show_ingame_infos end
+  if type(read_data.ready_countdown_1P) == "boolean" then config.ready_countdown_1P = read_data.ready_countdown_1P end
+  if type(read_data.danger_music_changeback_delay) == "boolean" then config.danger_music_changeback_delay = read_data.danger_music_changeback_delay end
+  if type(read_data.enable_analytics) == "boolean" then config.enable_analytics = read_data.enable_analytics end
+
+  if type(read_data.save_replays_publicly) == "string" and save_replays_values[read_data.save_replays_publicly] then 
+    config.save_replays_publicly = read_data.save_replays_publicly 
+  end
+
+  if type(read_data.window_x) == "number" then config.window_x = read_data.window_x end
+  if type(read_data.window_y) == "number" then config.window_y = read_data.window_y end
+  if type(read_data.display) == "number" then config.display = read_data.display end
+
   file:close()
 end) end
 
@@ -157,13 +209,15 @@ function recursive_copy(source, destination)
   local names = lfs.getDirectoryItems(source)
   local temp
   for i, name in ipairs(names) do
-    if lfs.isDirectory(source.."/"..name) then
+    local info = lfs.getInfo(source.."/"..name)
+    if info and info.type == "directory" then
       print("calling recursive_copy(source".."/"..name..", ".. destination.."/"..name..")")
       recursive_copy(source.."/"..name, destination.."/"..name)
       
-    elseif lfs.isFile(source.."/"..name) then
-      if not lfs.isDirectory(destination) then
-       love.filesystem.createDirectory(destination)
+    elseif info and info.type == "file" then
+      local destination_info = lfs.getInfo(destination)
+      if not destination_info or destination_info.type ~= "directory" then
+        love.filesystem.createDirectory(destination)
       end
       print("copying file:  "..source.."/"..name.." to "..destination.."/"..name)
       
@@ -178,7 +232,9 @@ function recursive_copy(source, destination)
       local success, message =  new_file:write(temp, source_size)
       new_file:close()
       
-      print(message)
+      if not success then
+        print(message)
+      end
     else 
       print("name:  "..name.." isn't a directory or file?")
     end
