@@ -712,6 +712,7 @@ function select_screen.main()
           P1.cur_wait_time = default_input_repeat_delay  -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
           P1.enable_analytics = not currently_spectating and not replay_of_match_so_far
           P2 = Stack(2, "vs", msg.opponent_settings.panels_dir, msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
+          P2.cur_wait_time = default_input_repeat_delay  -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
           if currently_spectating then
             P1.panel_buffer = fake_P1.panel_buffer
             P1.gpanel_buffer = fake_P1.gpanel_buffer
@@ -725,6 +726,7 @@ function select_screen.main()
                       P1_level=P1.level,P2_level=P2.level,
                       P1_name=my_name, P2_name=op_name,
                       P1_char=P1.character,P2_char=P2.character,
+                      P1_cur_wait_time=P1.cur_wait_time, P2_cur_wait_time=P2.cur_wait_time,
                       ranked=msg.ranked, do_countdown=true}
           if currently_spectating and replay_of_match_so_far then --we joined a match in progress
             replay.vs = replay_of_match_so_far.vs

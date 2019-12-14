@@ -316,6 +316,7 @@ function main_endless(...)
   replay.do_countdown = P1.do_countdown or false
   replay.speed = P1.speed
   replay.difficulty = P1.difficulty
+  replay.cur_wait_time = P1.cur_wait_time or default_input_repeat_delay
   make_local_panels(P1, "000000")
   make_local_gpanels(P1, "000000")
   P1:starting_state()
@@ -979,6 +980,8 @@ function main_replay_vs()
   P2.max_runs_per_frame = 1
   P1.character = replay.P1_char
   P2.character = replay.P2_char
+  P1.cur_wait_time = replay.P1_cur_wait_time or default_input_repeat_delay
+  P2.cur_wait_time = replay.P2_cur_wait_time or default_input_repeat_delay
   refresh_based_on_own_mods(P1)
   refresh_based_on_own_mods(P2, true)
   character_loader_load(P1.character)
@@ -1072,6 +1075,7 @@ function main_replay_endless()
   P1.gpanel_buffer = replay.gpan_buf
   P1.speed = replay.speed
   P1.difficulty = replay.difficulty
+  P1.cur_wait_time = replay.cur_wait_time or default_input_repeat_delay
   P1:starting_state()
   local run = true
   while true do
@@ -1120,6 +1124,7 @@ function main_replay_puzzle()
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
   P1.input_buffer = replay.in_buf
+  P1.cur_wait_time = replay.cur_wait_time or default_input_repeat_delay
   P1:set_puzzle_state(unpack(replay.puzzle))
   local run = true
   while true do
@@ -1177,6 +1182,7 @@ function make_main_puzzle(puzzles)
       awesome_idx = math.random(#puzzles)
     end
     P1:set_puzzle_state(unpack(puzzles[awesome_idx]))
+    replay.cur_wait_time = P1.cur_wait_time or default_input_repeat_delay
     replay.puzzle = puzzles[awesome_idx]
     replay.in_buf = ""
     while true do
