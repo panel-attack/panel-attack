@@ -25,6 +25,8 @@ GameUpdater = class(function(self, name)
 
     self.version_file = self.path..".version"
     self.local_version = love.filesystem.read(self.version_file)
+    self.timestamp_file = self.path..".timestamp"
+    self.check_timestamp = love.filesystem.read(self.timestamp_file)
 
     self.has_local_version = false
     if self.local_version and love.filesystem.getInfo(self.path..self.local_version) then
@@ -37,7 +39,7 @@ GameUpdater = class(function(self, name)
 function GameUpdater.async_download_available_versions(self, timeout, max_size)
   if self.thread and self.thread:isRunning() then error ("GameUpdater: a thread is already running") end
   self.thread = love.thread.newThread("game_updater_thread.lua")
-  self.thread:start("download_available_versions", self.config.server_url, timeout, max_size)
+  self.thread:start("download_available_versions", self.config.server_url, timeout, max_size, self.timestamp_file)
   return love.thread.getChannel('download_available_versions')
 end
 
@@ -47,6 +49,15 @@ function GameUpdater.async_download_file(self, filename)
   self.thread = love.thread.newThread("game_updater_thread.lua")
   self.thread:start("download_file", self.config.server_url.."/"..filename, self.path..filename)
   return love.thread.getChannel('download_file')
+end
+
+function GameUpdater.async_download_latest_version(self)
+  if not self.config.auto_update then return end
+
+  if self.thread and self.thread:isRunning() then error ("GameUpdater: a thread is already running") end
+  self.thread = love.thread.newThread("game_updater_thread.lua")
+  self.thread:start("download_lastest_version", self.config.server_url, self.path, self.version_file)
+  return love.thread.getChannel('download_lastest_version')
 end
 
 function GameUpdater.get_version(self)
@@ -60,9 +71,6 @@ end
 function GameUpdater.change_version(self, filename)
   if filename and love.filesystem.getInfo(self.path..filename) then
     love.filesystem.write(self.version_file, filename)
-    if self.local_version and self.local_version ~= filename and love.filesystem.getInfo(self.path..self.local_version) then
-      love.filesystem.remove(self.path..self.local_version)
-    end
     return true
   end
   return false

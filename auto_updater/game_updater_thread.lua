@@ -1,9 +1,9 @@
 local socket = require("socket")
 local http = require("socket.http")
+require("love.timer")
 
-local fname = select(1, ...)
 
-function thread_async_download_available_versions(server_url, timeout, max_size)
+function download_available_versions(server_url, timeout, max_size, timestamp_file)
   local body = ""
   local all_versions = {}
 
@@ -35,22 +35,52 @@ function thread_async_download_available_versions(server_url, timeout, max_size)
     for i=1,#all_versions do
       all_versions[i] = all_versions[i]..'.love'
     end
+
+    if timestamp_file then
+      love.filesystem.write(timestamp_file, os.time())
+    end
   end
 
-  love.thread.getChannel(fname):push(all_versions)
+  love.thread.getChannel("download_available_versions"):push(all_versions)
 end
 
-function thread_async_download_file(server_url, local_path)
-  local body = http.request(server_url)
-  love.filesystem.write(local_path, body)
+function download_file(server_filepath, local_filepath)
+  local body = http.request(server_filepath)
+  love.filesystem.write(local_filepath, body)
 
-  love.thread.getChannel(fname):push(true)
+  love.thread.getChannel("download_file"):push(true)
 end
+
+function download_lastest_version(server_url, local_path, version_file)
+  download_available_versions(server_url, nil, nil)
+  local versions = nil
+  while versions == nil do
+    versions = love.thread.getChannel("download_available_versions"):pop()
+    love.timer.sleep(0.2)
+  end
+  if #versions > 0 then
+    download_file(server_url.."/"..versions[1], local_path..versions[1])
+    local downloaded = nil
+    while downloaded == nil do
+      downloaded = love.thread.getChannel("download_file"):pop()
+      love.timer.sleep(0.2)
+    end
+
+    if downloaded then
+      love.filesystem.write(version_file, versions[1])
+      love.thread.getChannel("download_lastest_version"):push(true)
+      return
+    end
+  end
+  love.thread.getChannel("download_lastest_version"):push(false)
+end
+
 
 local ftable = { 
-  download_available_versions= thread_async_download_available_versions,
-  download_file= thread_async_download_file,
+  download_available_versions= download_available_versions,
+  download_file= download_file,
+  download_lastest_version= download_lastest_version,
 
 }
 
-ftable[fname](select(2, ...))
+ftable[select(1, ...)](select(2, ...))

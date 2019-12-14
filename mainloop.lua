@@ -27,6 +27,8 @@ spectator_list = nil
 spectators_string = ""
 leftover_time = 0
 main_menu_screen_pos = { 300 + (canvas_width-legacy_canvas_width)/2, 280 + (canvas_height-legacy_canvas_height)/2 }
+wait_game_update = nil
+has_game_update = false
 
 function fmainloop()
   local func, arg = main_select_mode, nil
@@ -63,7 +65,12 @@ function fmainloop()
   gprint(loc("ld_analytics"), unpack(main_menu_screen_pos))
   wait()
   analytics_init()
-  apply_config_volume()  
+  apply_config_volume()
+
+  if UPDATER_CHECK_UPDATE_INGAME then
+    wait_game_update = GAME_UPDATER:async_download_latest_version()
+  end
+
   while true do
     leftover_time = 1/120
     consuming_timesteps = false
@@ -148,9 +155,22 @@ do
       end
       gprint(arrow, unpack(main_menu_screen_pos))
       gprint(to_print, unpack(main_menu_screen_pos))
+
+      if wait_game_update ~= nil then
+        has_game_update = wait_game_update:pop()
+        if has_game_update ~= nil and has_game_update then
+          wait_game_update = nil
+          UPDATER_GAME_VERSION = "NEW VERSION FOUND! RESTART THE GAME!"
+        end
+      end
+
       if UPDATER_GAME_VERSION then
         gprintf("version: "..UPDATER_GAME_VERSION, -2, 705, canvas_width, "right")
+        if has_game_update then
+          menu_draw(panels[config.panels].images.classic[1][1], 1262, 685)
+        end
       end
+
       wait()
       local ret = nil
       variable_step(function()

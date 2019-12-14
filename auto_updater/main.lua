@@ -1,7 +1,5 @@
 require("game_updater")
 
---[[local tt = os.clock()--]]
-
 -- CONSTANTS
 local CHECK_INTERVAL = 6 * 3600 -- * 6 hours hours to seconds
 local UPDATER_NAME = "panel-beta" -- you should name the distributed auto updater zip the same as this
@@ -11,13 +9,12 @@ local TIMEOUT = 0.4 -- 500ms for the tcp socket to respond
 local MAX_REQ_SIZE = 100000 -- 100kB
 
 -- GLOBALS
-UPDATER_GAME_VERSION = nil
 GAME_UPDATER = GameUpdater(UPDATER_NAME)
+UPDATER_GAME_VERSION = nil
+UPDATER_CHECK_UPDATE_INGAME = (GAME_UPDATER.config.force_version == "")
 
 -- VARS
 local path = GAME_UPDATER.path
-local timestamp_file = path..".timestamp"
-local last_timestamp = love.filesystem.read(timestamp_file)
 local local_version = GAME_UPDATER:get_version()
 local top_version = nil
 local messages = ""
@@ -27,10 +24,16 @@ local wait_all_versions = nil
 local wait_download = nil
 
 function love.load()
+  -- Cleanup old love files
+  for i, v in ipairs(love.filesystem.getDirectoryItems(path)) do
+    if v ~= local_version and v:match('%.love$') then
+      love.filesystem.remove(path..v)
+    end
+  end
   -- should we check for an update?
   if GAME_UPDATER.config.auto_update and not (
-    last_timestamp ~= nil 
-    and os.time() < last_timestamp + CHECK_INTERVAL 
+    GAME_UPDATER.check_timestamp ~= nil 
+    and os.time() < GAME_UPDATER.check_timestamp + CHECK_INTERVAL 
     and local_version
     and (GAME_UPDATER.config.force_version == "" or GAME_UPDATER.config.force_version == local_version)) then
 
@@ -54,8 +57,6 @@ function love.update(dt)
 
   if next_step == "check_versions" and wait_all_versions == nil or all_versions ~= nil then
     if all_versions and #all_versions > 0 then
---[[      print("req")
-      print(os.clock() - tt)--]]
       top_version = nil
       if GAME_UPDATER.config.force_version ~= "" then
         for i, v in ipairs(all_versions) do
@@ -74,7 +75,7 @@ function love.update(dt)
         top_version = all_versions[1]
       end
 
-      love.filesystem.write(timestamp_file, os.time())
+      UPDATER_CHECK_UPDATE_INGAME = false
 
       if top_version == local_version then
         start_game(local_version)
@@ -131,8 +132,6 @@ function start_game(file)
   package.loaded.main = nil
   package.loaded.conf = nil
   love.conf = nil
---[[  print("mount")
-  print(os.clock() - tt)--]]
   love.init()
   love.load(args)
 end
