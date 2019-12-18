@@ -278,18 +278,20 @@ function Stack.render(self)
       gprint(loc("pl_score", self.score), self.score_x, self.score_y)
       gprint(loc("pl_speed", self.speed), self.score_x, self.score_y+30)
       gprint(loc("pl_frame", self.CLOCK), self.score_x, self.score_y+45)
-      if self.mode == "time" then
-        local time_left = 120 - (self.game_stopwatch or 120)/60
-        local mins = math.floor(time_left/60)
-        local secs = math.ceil(time_left% 60)
-        if secs == 60 then
-          secs = 0
-          mins = mins+1
-        end
-        gprint(loc("pl_time", string.format("%01d:%02d",mins,secs)), self.score_x, self.score_y+60)
-      elseif self.level then
-        gprint(loc("pl_level", self.level), self.score_x, self.score_y+60)
+    end
+    if self.mode == "time" then
+      local time_left = 120 - (self.game_stopwatch or 120)/60
+      local mins = math.floor(time_left/60)
+      local secs = math.ceil(time_left% 60)
+      if secs == 60 then
+        secs = 0
+        mins = mins+1
       end
+      gprint(loc("pl_time", string.format("%01d:%02d",mins,secs)), self.score_x, self.score_y+60)
+    elseif self.level then
+      gprint(loc("pl_level", self.level), self.score_x, self.score_y+60)
+    end
+    if config.show_ingame_infos then
       gprint(loc("pl_health", self.health), self.score_x, self.score_y+75)
       gprint(loc("pl_shake", self.shake_time), self.score_x, self.score_y+90)
       gprint(loc("pl_stop", self.stop_time), self.score_x, self.score_y+105)
