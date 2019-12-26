@@ -632,6 +632,7 @@ function main_net_vs_lobby()
       end
     end)
     if ret then
+      json_send({logout=true})
       return unpack(ret)
     end
     active_back = active_idx == #items

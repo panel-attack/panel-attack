@@ -1201,6 +1201,8 @@ function Connection.J(self, message)
     self.room:send_to_spectators(message)
   elseif message.login_request then
     self:login(message.user_id)
+  elseif message.logout then
+    self:close()
   elseif self.state == "lobby" and message.game_request then
     if message.game_request.sender == self.name then
       propose_game(message.game_request.sender, message.game_request.receiver, message)
