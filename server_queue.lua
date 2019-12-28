@@ -21,9 +21,6 @@ function ServerQueue.to_string(self)
 end
 
 function ServerQueue.test_expiration(self, msg)
-  print("TEST")
-  print(os.time())
-  print(msg._expiration)
   if os.time() > msg._expiration then
     error("Network error: message has an expired timestamp\n"..self:to_string())
   end
@@ -40,7 +37,6 @@ function ServerQueue.push(self, msg)
     self.data[first] = nil
     self.first = first + 1
   end
-  --self:print()
 end
 
 -- pop oldest server message in queue
@@ -71,7 +67,7 @@ function ServerQueue.pop(self)
   return ret
 end
 
--- pop first element found with a message containing specified keys...
+-- pop first element found with a message containing any specified keys...
 function ServerQueue.pop_next_with(self, ...)
   if self.first > self.last then
     return
@@ -84,9 +80,8 @@ function ServerQueue.pop_next_with(self, ...)
       still_empty = false
       for j=1,select('#', ...) do
         if msg[select(j, ...)] ~= nil then
-          self:remove(i)
-          --print("POP "..select(j, ...))
           self:test_expiration(msg)
+          self:remove(i)
           return msg
         end
       end
@@ -97,7 +92,7 @@ function ServerQueue.pop_next_with(self, ...)
   end
 end
 
--- pop all messages containing specified keys...
+-- pop all messages containing any specified keys...
 function ServerQueue.pop_all_with(self, ...)
   local ret = {}
 
@@ -110,7 +105,6 @@ function ServerQueue.pop_all_with(self, ...)
         for j=1,select('#', ...) do
           if msg[select(j, ...)] ~= nil then
             ret[#ret+1] = msg
-            --print("POP "..select(j, ...))
             self:test_expiration(msg)
             self:remove(i)
             break
