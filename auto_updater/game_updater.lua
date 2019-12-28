@@ -35,29 +35,26 @@ GameUpdater = class(function(self, name)
 
   end)
 
--- returns thread channel [async returns sorted list of all versions available on the server]
-function GameUpdater.async_download_available_versions(self, timeout, max_size)
+function GameUpdater.async(self, function_name, ...)
   if self.thread and self.thread:isRunning() then error ("GameUpdater: a thread is already running") end
   self.thread = love.thread.newThread("game_updater_thread.lua")
-  self.thread:start("download_available_versions", self.config.server_url, timeout, max_size, self.timestamp_file)
-  return love.thread.getChannel('download_available_versions')
+  self.thread:start(function_name, ...)
+  return love.thread.getChannel(function_name)
+end
+
+-- returns thread channel [async returns sorted list of all versions available on the server]
+function GameUpdater.async_download_available_versions(self, timeout, max_size)
+  return self:async("download_available_versions", self.config.server_url, timeout, max_size, self.timestamp_file)
 end
 
 -- returns thread channel [async returns bool download success]
 function GameUpdater.async_download_file(self, filename)
-  if self.thread and self.thread:isRunning() then error ("GameUpdater: a thread is already running") end
-  self.thread = love.thread.newThread("game_updater_thread.lua")
-  self.thread:start("download_file", self.config.server_url.."/"..filename, self.path..filename)
-  return love.thread.getChannel('download_file')
+  return self:async("download_file", self.config.server_url.."/"..filename, self.path..filename)
 end
 
 function GameUpdater.async_download_latest_version(self)
   if not self.config.auto_update then return end
-
-  if self.thread and self.thread:isRunning() then error ("GameUpdater: a thread is already running") end
-  self.thread = love.thread.newThread("game_updater_thread.lua")
-  self.thread:start("download_lastest_version", self.config.server_url, self.path, self.version_file)
-  return love.thread.getChannel('download_lastest_version')
+  return self:async("download_lastest_version", self.config.server_url, self.path, self.version_file, self.local_version)
 end
 
 function GameUpdater.get_version(self)

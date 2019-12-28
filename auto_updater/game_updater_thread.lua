@@ -51,14 +51,14 @@ function download_file(server_filepath, local_filepath)
   love.thread.getChannel("download_file"):push(true)
 end
 
-function download_lastest_version(server_url, local_path, version_file)
+function download_lastest_version(server_url, local_path, version_file, local_version)
   download_available_versions(server_url, nil, nil)
   local versions = nil
   while versions == nil do
     versions = love.thread.getChannel("download_available_versions"):pop()
     love.timer.sleep(0.2)
   end
-  if #versions > 0 then
+  if #versions > 0 and versions[1] ~= local_version then
     download_file(server_url.."/"..versions[1], local_path..versions[1])
     local downloaded = nil
     while downloaded == nil do
