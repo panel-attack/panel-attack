@@ -12,7 +12,7 @@ end
 function Queue.pop(self)
   local first = self.first
   if first > self.last then
-    error("q is empty")
+    error("Queue is empty")
   end
   local ret = self[first]
   self[first] = nil

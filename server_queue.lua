@@ -22,7 +22,7 @@ end
 
 function ServerQueue.test_expiration(self, msg)
   if os.time() > msg._expiration then
-    error("Network error: message has an expired timestamp\n"..self:to_string())
+    error(loc("nt_queue_expired", self:to_string()))
   end
 end
 
