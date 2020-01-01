@@ -69,6 +69,8 @@ config = {
 	character                     = random_character_special_value,
 	stage                         = random_stage_special_value,
 
+	ranked 						  = true,
+
 	vsync						  = true,
 
 	use_music_from                = "either",
@@ -92,7 +94,7 @@ config = {
 	ready_countdown_1P            = true,
 	-- Change danger music back later flag
 	danger_music_changeback_delay = false,
-  input_repeat_delay            = default_input_repeat_delay,
+  	input_repeat_delay            = default_input_repeat_delay,
 	-- analytics
 	enable_analytics              = false,
 	-- Save replays setting

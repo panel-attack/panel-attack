@@ -76,6 +76,8 @@ function read_conf_file() pcall(function()
   if type(read_data.character) == "string" then config.character = read_data.character end
   if type(read_data.stage) == "string" then config.stage = read_data.stage end
 
+  if type(read_data.ranked) == "boolean" then config.ranked = read_data.ranked end
+
   if type(read_data.vsync) == "boolean" then config.vsync = read_data.vsync end
 
   if type(read_data.use_music_from) == "string" and use_music_from_values[read_data.use_music_from] then 

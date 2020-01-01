@@ -1191,6 +1191,7 @@ function Connection.J(self, message)
       self.panels_dir = message.panels_dir
       self.level = message.level
       self.save_replays_publicly = message.save_replays_publicly
+      self.wants_ranked_match = message.ranked
       lobby_changed = true
       self.state = "lobby"
       name_to_idx[self.name] = self.index
