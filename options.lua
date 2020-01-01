@@ -93,7 +93,7 @@ local function main_show_custom_panels_readme(idx)
   bg = themes[config.theme].images.bg_readme
 
  -- add other defaults panels sets here so that anyone can update them if wanted
-  local default_panels_dirs = { default_panels_dir }
+  local default_panels_dirs = { default_panels_dir, "pdp_ta" }
   
   for _,panels_dir in ipairs(default_panels_dirs) do
     if not love.filesystem.getInfo("panels/"..prefix_of_ignored_dirs..panels_dir) then
