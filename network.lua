@@ -98,7 +98,7 @@ local process_message = {
     local current_message = json.decode(s)
     this_frame_messages[#this_frame_messages+1] = current_message
     if not current_message then
-      error("Error in network.lua process_message\nMessage: \""..(s or "nil").."\"\ncould not be decoded")
+      error(loc("nt_msg_err", (s or "nil")))
     end
     if current_message.spectators then
       spectator_list = current_message.spectators
@@ -114,7 +114,7 @@ function network_init(ip)
   TCP_sock:settimeout(7)
   --if not TCP_sock:connect(ip,49569) then --for official server
   if not TCP_sock:connect(ip,59569) then --for beta server
-    error("Failed to connect =(")
+    error(loc("nt_conn_timeout"))
   end
   TCP_sock:settimeout(0)
   got_H = false

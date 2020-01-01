@@ -150,7 +150,7 @@ function select_screen.main()
     elseif my_player_number and my_player_number ~= 0 then
       print("We assumed our player number is still "..my_player_number)
     else
-      error("We never heard from the server as to what player number we are")
+      error(loc("nt_player_err"))
       print("Error: The server never told us our player number.  Assuming it is 1")
       my_player_number = 1
     end
