@@ -1694,7 +1694,7 @@ function main_net_vs()
       end
     end
 
-    local name_and_score = { (my_name or "").."\n"..loc("ss_wins")..": "..my_win_count, (op_name or "").."\n"..loc("ss_wins")..": "..op_win_count}
+    local name_and_score = { (my_name or "").."\n"..loc("ss_wins").." "..my_win_count, (op_name or "").."\n"..loc("ss_wins").." "..op_win_count}
     gprint(name_and_score[1], P1.score_x, P1.score_y-48)
     gprint(name_and_score[2], P2.score_x, P2.score_y-48)
     if not config.debug_mode then --this is printed in the same space as the debug details
@@ -1703,7 +1703,7 @@ function main_net_vs()
     if match_type == "Ranked" then
       if global_current_room_ratings[my_player_number]
       and global_current_room_ratings[my_player_number].new then
-        local rating_to_print = loc("ss_rating")..": "
+        local rating_to_print = loc("ss_rating").."\n"
         if global_current_room_ratings[my_player_number].new > 0 then
           rating_to_print = rating_to_print.." "..global_current_room_ratings[my_player_number].new
         end
@@ -1711,7 +1711,7 @@ function main_net_vs()
       end
       if global_current_room_ratings[op_player_number]
       and global_current_room_ratings[op_player_number].new then
-        local op_rating_to_print = loc("ss_rating")..": "
+        local op_rating_to_print = loc("ss_rating").."\n"
         if global_current_room_ratings[op_player_number].new > 0 then
           op_rating_to_print = op_rating_to_print.." "..global_current_room_ratings[op_player_number].new
         end

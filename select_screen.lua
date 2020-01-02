@@ -831,17 +831,17 @@ function select_screen.main()
         end
         state = state..loc("ss_wins").." "..win_count
         if (current_server_supports_ranking and expected_win_ratio) or win_count + op_win_count > 0 then
-          state = state.."\n"..loc("ss_winrate")..":"
+          state = state.."\n"..loc("ss_winrate").."\n"
           local need_line_return = false
           if win_count + op_win_count > 0 then
-            state = state.." "..loc("ss_current_rating").." "..(100*round(win_count/(op_win_count+win_count),2)).."%"
+            state = state.."    "..loc("ss_current_rating").." "..(100*round(win_count/(op_win_count+win_count),2)).."%"
             need_line_return = true
           end
           if current_server_supports_ranking and expected_win_ratio then
             if need_line_return then
-              state = state.."\n        "
+              state = state.."\n"
             end
-            state = state.." "..loc("ss_expected_rating").." "..expected_win_ratio.."%"
+            state = state.."    "..loc("ss_expected_rating").." "..expected_win_ratio.."%"
           end
         end
       end
