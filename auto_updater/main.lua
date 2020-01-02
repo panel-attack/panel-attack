@@ -2,7 +2,7 @@ require("game_updater")
 
 -- CONSTANTS
 local CHECK_INTERVAL = 6 * 3600 -- * 6 hours hours to seconds
-local UPDATER_NAME = "panel-beta" -- you should name the distributed auto updater zip the same as this
+local UPDATER_NAME = "panel" -- you should name the distributed auto updater zip the same as this
 -- use a different name for the different versions of the updater
 -- ex: "panel" for the release, "panel-beta" for the main beta, "panel-exmode" for testing the EX Mode
 local TIMEOUT = 0.4 -- 500ms for the tcp socket to respond
