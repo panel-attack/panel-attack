@@ -11,6 +11,10 @@ function bound(a, b, c)
   else return b end
 end
 
+function linear_smooth(value, min, max)
+  return (value - min)/(max-min)
+end
+
 -- mods b so a<=b<=c
 function wrap(a, b, c)
   return (b-a)%(c-a+1)+a

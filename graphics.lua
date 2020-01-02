@@ -17,15 +17,13 @@ for i=14,6,-1 do
   end
 end
 
-print("#shake arr "..#shake_arr)
-
 -- 1 -> 1
 -- #shake -> 0
 local shake_step = 1/(#shake_arr - 1)
 local shake_mult = 1
 for i=1,#shake_arr do
   shake_arr[i] = shake_arr[i] * shake_mult
-  print(shake_arr[i])
+  -- print(shake_arr[i])
   shake_mult = shake_mult - shake_step
 end
 
@@ -302,7 +300,7 @@ function Stack.draw_cards(self)
       local draw_x = 4 + (card.x-1) * 16
       local draw_y = 4 + (11-card.y) * 16 + self.displacement
           - card_animation[card.frame]
-      draw(IMG_cards[card.chain][card.n], draw_x, draw_y)
+      draw(themes[config.theme].images.IMG_cards[card.chain][card.n], draw_x, draw_y)
     end
   end
 end
@@ -355,9 +353,9 @@ function Stack.render(self)
 
   local metals
   if self.garbage_target then
-    metals = IMG_metals[self.garbage_target.panels_dir]
+    metals = panels[self.garbage_target.panels_dir].images.metals
   else
-    metals = IMG_metals[self.panels_dir]
+    metals = panels[self.panels_dir].images.metals
   end
   local metal_w, metal_h = metals.mid:getDimensions()
   local metall_w, metall_h = metals.left:getDimensions()
@@ -430,8 +428,8 @@ function Stack.render(self)
                   draw(imgs.pop, draw_x, draw_y, 0, 16/popped_w, 16/popped_h)
                 end
               elseif panel.y_offset == -1 then
-                local p_w, p_h = IMG_panels[self.panels_dir][panel.color][1]:getDimensions()
-                draw(IMG_panels[self.panels_dir][panel.color][1], draw_x, draw_y, 0, 16/p_w, 16/p_h)
+                local p_w, p_h = panels[self.panels_dir].images.classic[panel.color][1]:getDimensions()
+                draw(panels[self.panels_dir].images.classic[panel.color][1], draw_x, draw_y, 0, 16/p_w, 16/p_h)
               end
             elseif flash_time % 2 == 1 then
               if panel.metal then
@@ -476,14 +474,14 @@ function Stack.render(self)
           else
             draw_frame = 1
           end
-          local panel_w, panel_h = IMG_panels[self.panels_dir][panel.color][draw_frame]:getDimensions()
-          draw(IMG_panels[self.panels_dir][panel.color][draw_frame], draw_x, draw_y, 0, 16/panel_w, 16/panel_h)
+          local panel_w, panel_h = panels[self.panels_dir].images.classic[panel.color][draw_frame]:getDimensions()
+          draw(panels[self.panels_dir].images.classic[panel.color][draw_frame], draw_x, draw_y, 0, 16/panel_w, 16/panel_h)
         end
       end
     end
   end
-  draw(IMG_frame,0,0)
-  draw(IMG_wall, 4, 4 - shake + self.height*16)
+  draw(themes[config.theme].images.IMG_frame,0,0)
+  draw(themes[config.theme].images.IMG_wall, 4, 4 - shake + self.height*16)
 
   self:draw_cards()
   self:render_cursor()
@@ -515,7 +513,7 @@ function Stack.render(self)
         end
         if mx >= draw_x and mx < draw_x + 16*GFX_SCALE and my >= draw_y and my < draw_y + 16*GFX_SCALE then
           debug_mouse_panel = {row, col, panel}
-          draw(IMG_panels[self.panels_dir][9][1], draw_x+16, draw_y+16)
+          draw(panels[self.panels_dir].images.classic[9][1], draw_x+16, draw_y+16)
         end
       end
     end
@@ -523,12 +521,16 @@ function Stack.render(self)
 
   -- draw outside of stack's frame canvas
   if self.mode == "puzzle" then
-    gprint("Moves: "..self.puzzle_moves, self.score_x, self.score_y)
-    gprint("Frame: "..self.CLOCK, self.score_x, self.score_y+30)
+    gprint(loc("pl_moves", self.puzzle_moves), self.score_x, self.score_y)
+    if config.show_ingame_infos then
+      gprint(loc("pl_frame", self.CLOCK), self.score_x, self.score_y+30)
+    end
   else
-    gprint("Score: "..self.score, self.score_x, self.score_y)
-    gprint("Speed: "..self.speed, self.score_x, self.score_y+30)
-    gprint("Frame: "..self.CLOCK, self.score_x, self.score_y+45)
+    if config.show_ingame_infos then
+      gprint(loc("pl_score", self.score), self.score_x, self.score_y)
+      gprint(loc("pl_speed", self.speed), self.score_x, self.score_y+30)
+      gprint(loc("pl_frame", self.CLOCK), self.score_x, self.score_y+45)
+    end
     if self.mode == "time" then
       local time_left = 120 - (self.game_stopwatch or 120)/60
       local mins = math.floor(time_left/60)
@@ -537,35 +539,39 @@ function Stack.render(self)
         secs = 0
         mins = mins+1
       end
-      gprint("Time: "..string.format("%01d:%02d",mins,secs), self.score_x, self.score_y+60)
+      gprint(loc("pl_time", string.format("%01d:%02d",mins,secs)), self.score_x, self.score_y+60)
     elseif self.level then
-      gprint("Level: "..self.level, self.score_x, self.score_y+60)
+      gprint(loc("pl_level", self.level), self.score_x, self.score_y+60)
     end
-    gprint("Health: "..self.health, self.score_x, self.score_y+75)
-    gprint("Shake: "..self.shake_time, self.score_x, self.score_y+90)
-    gprint("Stop: "..self.stop_time, self.score_x, self.score_y+105)
-    gprint("Pre stop: "..self.pre_stop_time, self.score_x, self.score_y+120)
-    if config.debug_mode and self.danger then gprint("danger", self.score_x,self.score_y+135) end
-    if config.debug_mode and self.danger_music then gprint("danger music", self.score_x, self.score_y+150) end
-    if config.debug_mode then
-      gprint("cleared: "..(self.panels_cleared or 0), self.score_x, self.score_y+165)
-    end
-    if config.debug_mode then
-      gprint("metal q: "..(self.metal_panels_queued or 0), self.score_x, self.score_y+180)
-    end
-    if config.debug_mode and self.input_state then
-      -- print(self.input_state)
-      -- print(base64decode[self.input_state])
-      local iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
-      -- print(tostring(raise))
-      local inputs_to_print = "inputs:"
-      if iraise then inputs_to_print = inputs_to_print.."\nraise" end --◄▲▼►
-      if iswap then inputs_to_print = inputs_to_print.."\nswap" end
-      if iup then inputs_to_print = inputs_to_print.."\nup" end
-      if idown then inputs_to_print = inputs_to_print.."\ndown" end
-      if ileft then inputs_to_print = inputs_to_print.."\nleft" end
-      if iright then inputs_to_print = inputs_to_print.."\nright" end
-      gprint(inputs_to_print, self.score_x, self.score_y+195)
+    if config.show_ingame_infos then
+      gprint(loc("pl_health", self.health), self.score_x, self.score_y+75)
+      gprint(loc("pl_shake", self.shake_time), self.score_x, self.score_y+90)
+      gprint(loc("pl_stop", self.stop_time), self.score_x, self.score_y+105)
+      gprint(loc("pl_pre_stop", self.pre_stop_time), self.score_x, self.score_y+120)
+      if config.debug_mode and self.danger then gprint("danger", self.score_x,self.score_y+135) end
+      if config.debug_mode and self.danger_music then gprint("danger music", self.score_x, self.score_y+150) end
+      if config.debug_mode then
+        gprint(loc("pl_cleared", (self.panels_cleared or 0)), self.score_x, self.score_y+165)
+      end
+      if config.debug_mode then
+        gprint(loc("pl_metal", (self.metal_panels_queued or 0)), self.score_x, self.score_y+180)
+      end
+      if config.debug_mode and (self.input_state or self.taunt_up or self.taunt_down) then
+        -- print(self.input_state)
+        -- print(base64decode[self.input_state])
+        local iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
+        -- print(tostring(raise))
+        local inputs_to_print = "inputs:"
+        if iraise then inputs_to_print = inputs_to_print.."\nraise" end --◄▲▼►
+        if iswap then inputs_to_print = inputs_to_print.."\nswap" end
+        if iup then inputs_to_print = inputs_to_print.."\nup" end
+        if idown then inputs_to_print = inputs_to_print.."\ndown" end
+        if ileft then inputs_to_print = inputs_to_print.."\nleft" end
+        if iright then inputs_to_print = inputs_to_print.."\nright" end
+        if self.taunt_down then inputs_to_print = inputs_to_print.."\ntaunt_down" end
+        if self.taunt_up then inputs_to_print = inputs_to_print.."\ntaunt_up" end
+        gprint(inputs_to_print, self.score_x, self.score_y+195)
+      end
     end
     local main_infos_screen_pos = { x=375 + (canvas_width-legacy_canvas_width)/2, y=10 + (canvas_height-legacy_canvas_height) }
     if match_type then gprint(match_type, main_infos_screen_pos.x, main_infos_screen_pos.y) end
@@ -596,12 +602,12 @@ function Stack.render_cursor(self)
   local shake = ceil((shake_arr[shake_idx] or 0) * 13)
   if self.countdown_timer then
     if self.CLOCK % 2 == 0 then
-      draw(IMG_cursor[1],
+      draw(themes[config.theme].images.IMG_cursor[1],
         (self.cur_col-1)*16,
         (11-(self.cur_row))*16+self.displacement-shake)
     end
   else
-    draw(IMG_cursor[(floor(self.CLOCK/16)%2)+1],
+    draw(themes[config.theme].images.IMG_cursor[(floor(self.CLOCK/16)%2)+1],
       (self.cur_col-1)*16,
       (11-(self.cur_row))*16+self.displacement-shake)
   end
@@ -616,18 +622,24 @@ function Stack.render_countdown(self)
     local countdown_y = 68
     if self.countdown_CLOCK <= 8 then
       local ready_y = initial_ready_y + (self.CLOCK - 1) * ready_y_drop_speed
-      draw(IMG_ready, ready_x, ready_y)
+      draw(themes[config.theme].images.IMG_ready, ready_x, ready_y)
       if self.countdown_CLOCK == 8 then
         self.ready_y = ready_y
       end
     elseif self.countdown_CLOCK >= 9 and self.countdown_timer and self.countdown_timer > 0 then
       if self.countdown_timer >= 100 then
-        draw(IMG_ready, ready_x, self.ready_y or initial_ready_y + 8 * 6)
+        draw(themes[config.theme].images.IMG_ready, ready_x, self.ready_y or initial_ready_y + 8 * 6)
       end
-      local IMG_number_to_draw = IMG_numbers[math.ceil(self.countdown_timer / 60)]
+      local IMG_number_to_draw = themes[config.theme].images.IMG_numbers[math.ceil(self.countdown_timer / 60)]
       if IMG_number_to_draw then
         draw(IMG_number_to_draw, countdown_x, countdown_y)
       end
     end
   end
 end
+function draw_pause()
+  draw(themes[config.theme].images.pause,0,0)
+  gprintf(loc("pause"), 0, 330, canvas_width, "center",nil,1,large_font)
+  gprintf(loc("pl_pause_help"), 0, 360, canvas_width, "center",nil,1)
+end
+
