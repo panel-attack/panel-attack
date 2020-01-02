@@ -79,6 +79,9 @@ function love.update(dt)
 
       if top_version == local_version then
         start_game(local_version)
+      elseif local_version == nil and top_version == get_embedded_version() then
+        display_message("Copying embedded version...\n")
+        next_step = "copy_embedded"
       else
         display_message("A new version of the game has been found:\n"..top_version.."\nDowloading...\n")
         wait_download = GAME_UPDATER:async_download_file(top_version)
@@ -96,12 +99,8 @@ function love.update(dt)
     else
       display_message("Could not connect to the internet.\nCopying embedded version...\n")
       next_step = "copy_embedded"
-      for i, v in ipairs(love.filesystem.getDirectoryItems("")) do
-        if v:match('%.love$') then
-          top_version = v
-          break
-        end
-      end
+      top_version = get_embedded_version()
+      
       if top_version == nil then
         error('Could not find an embedded version of the game\nPlease connect to the internet and restart the game.')
       end
@@ -140,4 +139,11 @@ function display_message(txt)
   if not love.window.isOpen() then love.window.setMode(800, 600) end
   messages = messages..txt
   wait_messages = 10
+end
+
+function get_embedded_version()
+  for i, v in ipairs(love.filesystem.getDirectoryItems("")) do
+    if v:match('%.love$') then return v end
+  end
+  return nil
 end
