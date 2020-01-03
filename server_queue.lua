@@ -22,8 +22,10 @@ end
 
 function ServerQueue.test_expiration(self, msg)
   if os.time() > msg._expiration then
-    error(loc("nt_queue_expired", self:to_string()))
+    warning("ServerQueue: a message has expired\n"..self:to_string())
+    return false
   end
+  return true
 end
 
 -- push a server message in queue
@@ -55,7 +57,10 @@ function ServerQueue.pop(self)
       if ret == nil then
         self.empties = self.empties - 1
       else
-        self:test_expiration(ret)
+        if not self:test_expiration(ret) then
+          self:remove(first)
+          ret = nil
+        end
       end
       first = first + 1
     end
@@ -80,9 +85,10 @@ function ServerQueue.pop_next_with(self, ...)
       still_empty = false
       for j=1,select('#', ...) do
         if msg[select(j, ...)] ~= nil then
-          self:test_expiration(msg)
           self:remove(i)
-          return msg
+          if self:test_expiration(msg) then
+            return msg
+          end
         end
       end
     elseif still_empty then
@@ -105,9 +111,10 @@ function ServerQueue.pop_all_with(self, ...)
         for j=1,select('#', ...) do
           if msg[select(j, ...)] ~= nil then
             ret[#ret+1] = msg
-            self:test_expiration(msg)
             self:remove(i)
-            break
+            if self:test_expiration(msg) then
+              break
+            end
           end
         end
       elseif still_empty then

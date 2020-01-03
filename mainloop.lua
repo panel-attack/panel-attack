@@ -67,7 +67,7 @@ function fmainloop()
   analytics_init()
   apply_config_volume()
 
-  if UPDATER_CHECK_UPDATE_INGAME then
+  if GAME_UPDATER_CHECK_UPDATE_INGAME then
     wait_game_update = GAME_UPDATER:async_download_latest_version()
   end
 
@@ -160,12 +160,12 @@ do
         has_game_update = wait_game_update:pop()
         if has_game_update ~= nil and has_game_update then
           wait_game_update = nil
-          UPDATER_GAME_VERSION = "NEW VERSION FOUND! RESTART THE GAME!"
+          GAME_UPDATER_GAME_VERSION = "NEW VERSION FOUND! RESTART THE GAME!"
         end
       end
 
-      if UPDATER_GAME_VERSION then
-        gprintf("version: "..UPDATER_GAME_VERSION, -2, 705, canvas_width, "right")
+      if GAME_UPDATER_GAME_VERSION then
+        gprintf("version: "..GAME_UPDATER_GAME_VERSION, -2, 705, canvas_width, "right")
         if has_game_update then
           menu_draw(panels[config.panels].images.classic[1][1], 1262, 685)
         end
