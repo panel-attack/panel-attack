@@ -10,8 +10,8 @@ local MAX_REQ_SIZE = 100000 -- 100kB
 
 -- GLOBALS
 GAME_UPDATER = GameUpdater(UPDATER_NAME)
-UPDATER_GAME_VERSION = nil
-UPDATER_CHECK_UPDATE_INGAME = (GAME_UPDATER.config.force_version == "")
+GAME_UPDATER_GAME_VERSION = nil
+GAME_UPDATER_CHECK_UPDATE_INGAME = (GAME_UPDATER.config.force_version == "")
 
 -- VARS
 local path = GAME_UPDATER.path
@@ -75,7 +75,7 @@ function love.update(dt)
         top_version = all_versions[1]
       end
 
-      UPDATER_CHECK_UPDATE_INGAME = false
+      GAME_UPDATER_CHECK_UPDATE_INGAME = false
 
       if top_version == local_version then
         start_game(local_version)
@@ -127,7 +127,7 @@ end
 
 function start_game(file)
   if not love.filesystem.mount(path..file, '') then error("Could not mount game file: "..file) end
-  UPDATER_GAME_VERSION = file:gsub("^panel%-", ""):gsub("%.love", "")
+  GAME_UPDATER_GAME_VERSION = file:gsub("^panel%-", ""):gsub("%.love", "")
   package.loaded.main = nil
   package.loaded.conf = nil
   love.conf = nil

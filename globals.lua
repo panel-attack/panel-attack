@@ -102,3 +102,20 @@ config = {
 }
 
 current_use_music_from = "stage" -- either "stage" or "characters", no other values!
+
+is_first_warning = true
+function warning(msg)
+	err = "=================================================================\n["..os.date("%x %X").."]\nError: "..msg..debug.traceback("").."\n"
+	love.filesystem.append("warnings.txt", err)
+	if is_first_warning then
+		is_first_warning = false
+		local loc_warning = "You've had a bug. Please report this on Discord with file:"
+		if loc ~= nil then
+			local str = loc("warning_msg")
+			if str:sub(1, 1) ~= "#" then
+				loc_warning = str
+			end
+		end
+		love.window.showMessageBox("Warning", loc_warning.."\n%appdata%\\Panel Attack\\warnings.txt")
+	end
+end
