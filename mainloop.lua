@@ -426,7 +426,7 @@ local fallback_when_missing = nil
 local function refresh_based_on_own_mods(refreshed,ask_change_fallback)
   ask_change_fallback = ask_change_fallback or false
   if refreshed ~= nil then
-    if refreshed.panels_dir == nil or IMG_panels[refreshed.panels_dir] == nil then
+    if refreshed.panels_dir == nil or panels[refreshed.panels_dir] == nil then
       refreshed.panels_dir = config.panels_dir
     end
     if characters[refreshed.character] == nil then
