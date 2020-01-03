@@ -1768,12 +1768,12 @@ function main_net_vs()
       outcome_claim = 0
     elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
       winSFX = P2:pick_win_sfx()
-      end_text = op_name.." "..loc("ss_wins") .. (currently_spectating and " " or " :(")
+      end_text = loc("ss_p_wins", op_name)
       op_win_count = op_win_count + 1 -- leaving these in just in case used with an old server that doesn't keep score.  win_counts will get overwritten after this by the server anyway.
       outcome_claim = P2.player_number
     elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
       winSFX = P1:pick_win_sfx()
-      end_text = my_name.." "..loc("ss_wins") .. (currently_spectating and " " or " ^^")
+      end_text = loc("ss_p_wins", my_name)
       my_win_count = my_win_count + 1 -- leave this in
       outcome_claim = P1.player_number
     end
