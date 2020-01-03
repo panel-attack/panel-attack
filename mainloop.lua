@@ -66,6 +66,11 @@ function fmainloop()
   wait()
   analytics_init()
   apply_config_volume()
+  -- create folders in appdata for those who don't have them already
+  love.filesystem.createDirectory("characters")
+  love.filesystem.createDirectory("panels")
+  love.filesystem.createDirectory("themes")
+  love.filesystem.createDirectory("stages")
 
   if UPDATER_CHECK_UPDATE_INGAME then
     wait_game_update = GAME_UPDATER:async_download_latest_version()
