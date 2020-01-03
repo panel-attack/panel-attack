@@ -78,7 +78,6 @@ function fmainloop()
 
   while true do
     leftover_time = 1/120
-    consuming_timesteps = false
     func,arg = func(unpack(arg or {}))
     collectgarbage("collect")
   end
@@ -327,7 +326,6 @@ end
 function main_endless(...)
   pick_random_stage()
   pick_use_music_from()
-  consuming_timesteps = true
   replay.endless = {}
   local replay=replay.endless
   replay.pan_buf = ""
@@ -375,7 +373,6 @@ end
 function main_time_attack(...)
   pick_random_stage()
   pick_use_music_from()
-  consuming_timesteps = true
   P1 = Stack(1, "time", config.panels, ...)
   P1:wait_for_random_character()
   P1.enable_analytics = true
@@ -726,7 +723,6 @@ function main_net_vs()
   pick_use_music_from()
   local k = K[1]  --may help with spectators leaving games in progress
   local end_text = nil
-  consuming_timesteps = true
   local op_name_y = 40
   if string.len(my_name) > 12 then
         op_name_y = 55
@@ -895,7 +891,6 @@ function main_local_vs()
   -- TODO: replay!
   use_current_stage()
   pick_use_music_from()
-  consuming_timesteps = true
   local end_text = nil
   while true do
     if game_is_paused then
@@ -945,7 +940,6 @@ function main_local_vs_yourself()
   -- TODO: replay!
   use_current_stage()
   pick_use_music_from()
-  consuming_timesteps = true
   local end_text = nil
   while true do
     if game_is_paused then
@@ -1197,7 +1191,6 @@ function make_main_puzzle(puzzles)
     stop_the_music()
     pick_random_stage()
     pick_use_music_from()
-    consuming_timesteps = true
     replay.puzzle = {}
     local replay = replay.puzzle
     P1 = Stack(1, "puzzle", config.panels)
@@ -1366,12 +1359,14 @@ function main_config_input()
       elseif menu_right(K[1]) then
         active_player = wrap(1, active_player+1, 2)
         k=K[active_player]
-      elseif menu_enter(K[1]) then
+      elseif menu_enter_one_press(K[1]) then
         if active_idx <= #key_names then
           idxs_to_set = {active_idx}
         elseif active_idx == #key_names + 1 then
           idxs_to_set = {1,2,3,4,5,6,7,8,9,10,11}
-        else
+        end
+      elseif menu_enter(K[1]) then
+        if active_idx > #key_names + 1 then
           ret = {items[active_idx][3], items[active_idx][4]}
         end
       elseif menu_escape(K[1]) then
