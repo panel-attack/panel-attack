@@ -210,4 +210,5 @@ menu_next_page = menu_key_func({"pagedown"}, {"raise2"}, repeating_key, function
 menu_backspace = menu_key_func({"backspace"}, {"backspace"}, repeating_key)
 menu_long_enter = menu_key_func({"return","kenter","z"}, {"swap1"}, released_key_after_time, function() return themes[config.theme].sounds.menu_validate end, super_selection_duration)
 menu_enter = menu_key_func({"return","kenter","z"}, {"swap1"}, released_key_before_time, function() return themes[config.theme].sounds.menu_validate end, super_selection_duration)
+menu_enter_one_press = menu_key_func({"return","kenter","z"}, {"swap1"}, normal_key, function() return themes[config.theme].sounds.menu_validate end, super_selection_duration)
 menu_pressing_enter = get_being_pressed_for_duration_ratio({"return","kenter","z"}, {"swap1"}, super_selection_duration)
