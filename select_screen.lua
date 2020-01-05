@@ -977,6 +977,7 @@ function select_screen.main()
         if super then
           if character.stage then
             cursor.state.stage = character.stage
+            stage_loader_load(cursor.state.stage)
             cursor.state.stage_is_random = false
           end
           if character.panels then
