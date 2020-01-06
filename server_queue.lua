@@ -20,9 +20,13 @@ function ServerQueue.to_string(self)
   return ret
 end
 
-function ServerQueue.test_expiration(self, msg)
+function ServerQueue.has_expired(self, msg)
   if os.time() > msg._expiration then
-    warning("ServerQueue: a message has expired\n"..self:to_string())
+    str = "ServerQueue: a message has expired ("..(os.time() - msg._expiration)..")\n"
+    for k, v in pairs(msg) do
+      str = str..k..", "
+    end
+    warning(str.."\n"..self:to_string())
     return false
   end
   return true
@@ -57,7 +61,7 @@ function ServerQueue.pop(self)
       if ret == nil then
         self.empties = self.empties - 1
       else
-        if not self:test_expiration(ret) then
+        if self:has_expired(ret) then
           self:remove(first)
           ret = nil
         end
@@ -85,8 +89,9 @@ function ServerQueue.pop_next_with(self, ...)
       still_empty = false
       for j=1,select('#', ...) do
         if msg[select(j, ...)] ~= nil then
+          --print("POP "..select(j, ...))
           self:remove(i)
-          if self:test_expiration(msg) then
+          if not self:has_expired(msg) then
             return msg
           end
         end
@@ -110,9 +115,10 @@ function ServerQueue.pop_all_with(self, ...)
         still_empty = false
         for j=1,select('#', ...) do
           if msg[select(j, ...)] ~= nil then
+            --print("POP "..select(j, ...))
             ret[#ret+1] = msg
             self:remove(i)
-            if self:test_expiration(msg) then
+            if not self:has_expired(msg) then
               break
             end
           end
