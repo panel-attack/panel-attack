@@ -510,7 +510,7 @@ function main_character_select()
       -- end
     -- end
     if not global_initialize_room_msg then
-      return main_dumb_transition, {main_select_mode, "Room initialization failed.\n\nReturning to main menu...", 60, 300}
+      return main_dumb_transition, {main_select_mode, "Room2 initialization failed.\n\nReturning to main menu...", 60, 300}
     end
     msg = global_initialize_room_msg
     global_initialize_room_msg = nil
@@ -1589,7 +1589,7 @@ function update_win_counts(win_counts)
   if (P1 and P1.player_number == 1) or currently_spectating then
     my_win_count = win_counts[1] or 0
     op_win_count = win_counts[2] or 0
-  elseif P1.player_number == 2 then
+  elseif P1 and P1.player_number == 2 then
     my_win_count = win_counts[2] or 0
     op_win_count = win_counts[1] or 0
   end

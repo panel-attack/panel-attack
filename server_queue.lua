@@ -27,9 +27,9 @@ function ServerQueue.has_expired(self, msg)
       str = str..k..", "
     end
     warning(str.."\n"..self:to_string())
-    return false
+    return true
   end
-  return true
+  return false
 end
 
 -- push a server message in queue
