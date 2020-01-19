@@ -774,7 +774,16 @@ function Room.rating_adjustment_approved(self)
   if math.abs(ratings[1] - ratings[2]) > RATING_SPREAD_MODIFIER * ALLOWABLE_RATING_SPREAD_MULITPLIER then
     reasons[#reasons+1] = "Players' ratings are too far apart"
   end
-
+  
+  local player_level_out_of_bounds_for_ranked = false
+  for i=1,2 do --we'll change 2 here when more players are allowed.
+    if (players[i].level < MIN_LEVEL_FOR_RANKED or players[i].level > MAX_LEVEL_FOR_RANKED) then
+      player_level_out_of_bounds_for_ranked = true
+    end
+  end
+  if player_level_out_of_bounds_for_ranked then
+    reasons[#reasons+1] = "Only levels between "..MIN_LEVEL_FOR_RANKED.." and "..MAX_LEVEL_FOR_RANKED.." are allowed for ranked play."
+  end
   if players[1].level ~= players[2].level then
     reasons[#reasons+1] = "Levels don't match"
   end
