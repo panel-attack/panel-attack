@@ -478,7 +478,7 @@ function select_screen.main()
         gprintf("<", render_x+padding_x-0.5*level_width, render_y+y_padding-0.5*text_height,level_width,"center")
         padding_x = padding_x + level_width
       end
-      for i=1,10 do
+      for i=1,#level_to_starting_speed do --which should equal the number of levels in the game
         local use_unfocus = cursor_data.state.level < i
         if use_unfocus then
           menu_drawf(themes[config.theme].images.IMG_levels_unfocus[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, level_scale, level_scale )
@@ -1018,7 +1018,7 @@ function select_screen.main()
           elseif menu_left(k) then
             if cursor.selected then
               if cursor.state.cursor == "__Level" then
-                cursor.state.level = bound(1, cursor.state.level-1, 10)
+                cursor.state.level = bound(1, cursor.state.level-1, #level_to_starting_speed) --which should equal the number of levels in the game
               elseif cursor.state.cursor == "__Panels" then
                 cursor.state.panels_dir = change_panels_dir(cursor.state.panels_dir,-1)
               elseif cursor.state.cursor == "__Stage" then
@@ -1029,7 +1029,7 @@ function select_screen.main()
           elseif menu_right(k) then
             if cursor.selected then
               if cursor.state.cursor == "__Level" then
-                cursor.state.level = bound(1, cursor.state.level+1, 10)
+                cursor.state.level = bound(1, cursor.state.level+1, #level_to_starting_speed) --which should equal the number of levels in the game
               elseif cursor.state.cursor == "__Panels" then
                 cursor.state.panels_dir = change_panels_dir(cursor.state.panels_dir,1)
               elseif cursor.state.cursor == "__Stage" then
