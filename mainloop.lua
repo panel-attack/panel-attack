@@ -130,6 +130,7 @@ do
         --{loc("mm_2_vs_online", "domi1819.xyz"), main_net_vs_setup, {"domi1819.xyz"}},
         --{loc("mm_2_vs_online", "(development-use only)"), main_net_vs_setup, {"localhost"}},
         --{loc("mm_2_vs_online", "LittleEndu's server"), main_net_vs_setup, {"51.15.207.223"}},
+        {loc("mm_2_vs_online", "server for ranked Ex Mode"), main_net_vs_setup, {"exserver.panelattack.com",49568}},
         {loc("mm_2_vs_local"), main_local_vs_setup},
         {loc("mm_replay_of", loc("mm_1_endless")), main_replay_endless},
         {loc("mm_replay_of", loc("mm_1_puzzle")), main_replay_puzzle},
@@ -689,7 +690,7 @@ function build_viewable_leaderboard_string(report, first_viewable_idx, last_view
   return str
 end
 
-function main_net_vs_setup(ip)
+function main_net_vs_setup(ip, network_port)
   if not config.name then
     return main_set_name
     else my_name = config.name
@@ -698,7 +699,7 @@ function main_net_vs_setup(ip)
   P2 = {panel_buffer="", gpanel_buffer=""}
   gprint(loc("lb_set_connect"), unpack(main_menu_screen_pos))
   wait()
-  network_init(ip)
+  network_init(ip, network_port)
   local timeout_counter = 0
   while not connection_is_ready() do
     gprint(loc("lb_connecting"), unpack(main_menu_screen_pos))

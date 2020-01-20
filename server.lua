@@ -1410,7 +1410,7 @@ end
 end
 --]]
 
-local server_socket = socket.bind("*", 49569) --for official server
+local server_socket = socket.bind("*", SERVER_PORT or 49569) --for official server
 --local server_socket = socket.bind("*", 59569) --for beta server
 local sep = package.config:sub(1, 1)
 print("sep: "..sep)
