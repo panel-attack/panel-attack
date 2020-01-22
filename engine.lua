@@ -812,12 +812,15 @@ function Stack.PdP(self)
     self.top_cur_row = self.height
     self:new_row()
   end
-
+  self.prev_rise_lock = self.rise_lock
   self.rise_lock = self.n_active_panels ~= 0 or
       self.prev_active_panels ~= 0 or
       self.shake_time ~= 0 or
       self.do_countdown or 
       self.do_swap
+  if self.prev_rise_lock and not self.rise_lock then
+    self.prevent_manual_raise = false
+  end
 
   -- Increase the speed if applicable
   if self.speed_times then
