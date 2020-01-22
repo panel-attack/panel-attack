@@ -684,7 +684,7 @@ function select_screen.main()
           end
         elseif msg.ranked_match_denied then
           match_type = "Casual"
-          match_type_message = loc("ss_not_ranked")
+          match_type_message = (loc("ss_not_ranked") or "").."  "
           if msg.reasons then
             match_type_message = match_type_message..(msg.reasons[1] or loc("ss_err_no_reason"))
           end
