@@ -261,6 +261,11 @@ function Character.sound_init(self,full,yields)
         self.sounds.others[sfx] = load_sound_from_supported_extensions(self.path.."/chain", false)
       elseif sfx == "chain" then 
         self.sounds.others[sfx] = load_sound_from_supported_extensions(self.path.."/combo", false)
+      elseif sfx == "combo_echo" then 
+        self.sounds.others[sfx] = load_sound_from_supported_extensions(self.path.."/combo", false)
+        if not self.sounds.others[sfx] then
+          self.sounds.others[sfx] = load_sound_from_supported_extensions(self.path.."/chain", false)
+        end
       elseif string.find(sfx, "chain") then
         self.sounds.others[sfx] = load_sound_from_supported_extensions(self.path.."/chain", false)
       elseif string.find(sfx, "combo") then 
