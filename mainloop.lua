@@ -1,5 +1,6 @@
 require("panels")
 require("theme")
+require("click_menu")
 local select_screen = require("select_screen")
 local options = require("options")
 local utf8 = require("utf8")
@@ -29,6 +30,8 @@ leftover_time = 0
 main_menu_screen_pos = { 300 + (canvas_width-legacy_canvas_width)/2, 280 + (canvas_height-legacy_canvas_height)/2 }
 wait_game_update = nil
 has_game_update = false
+local arrow_padding = 12
+
 
 function fmainloop()
   local func, arg = main_select_mode, nil
@@ -147,19 +150,22 @@ do
     end
     items[#items+1] = {loc("mm_quit"), exit_game }
     local k = K[1]
+    local print_x, print_y = unpack(main_menu_screen_pos)
+    menu_buttons = {}
+    local font = love.graphics.getFont()
+    for i=1,#items do
+        menu_buttons[i] = {}
+        menu_buttons[i].text = love.graphics.newText(menu_font, items[i][1])
+        menu_buttons[i].x = print_x
+        menu_buttons[i].y = print_y
+        print_y = print_y + menu_buttons[i].text:getHeight()
+    end
     while true do
-      local to_print = ""
-      local arrow = ""
-      for i=1,#items do
-        if active_idx == i then
-          arrow = arrow .. ">"
-        else
-          arrow = arrow .. "\n"
-        end
-        to_print = to_print .. "   " .. items[i][1] .. "\n"
+      local arrow = ">"
+      for i=1,#menu_buttons do
+        menu_draw(menu_buttons[i].text, menu_buttons[i].x, menu_buttons[i].y)
       end
-      gprint(arrow, unpack(main_menu_screen_pos))
-      gprint(to_print, unpack(main_menu_screen_pos))
+      gprint(arrow, menu_buttons[active_idx].x - arrow_padding, menu_buttons[active_idx].y)
 
       if wait_game_update ~= nil then
         has_game_update = wait_game_update:pop()
@@ -195,6 +201,12 @@ do
       end)
       if ret then
         return unpack(ret)
+      end
+      if menu_item_idx_clicked then
+        active_idx = menu_item_idx_clicked
+        menu_item_idx_clicked = nil
+        menu_buttons = {}
+        return items[active_idx][2], items[active_idx][3]
       end
     end
   end
@@ -512,6 +524,7 @@ function main_net_vs_lobby()
       end
       if msg.leaderboard_report then
         showing_leaderboard = true
+        
         leaderboard_report = msg.leaderboard_report
         for k,v in ipairs(leaderboard_report) do
           if v.is_you then
@@ -523,12 +536,15 @@ function main_net_vs_lobby()
         leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
       end
     end
+    local print_x, print_y = unpack(main_menu_screen_pos)
     local to_print = ""
     local arrow = ""
     items = {}
+    menu_buttons = {}
     for _,v in ipairs(unpaired_players) do
       if v ~= config.name then
         items[#items+1] = v
+        menu_buttons[#menu_buttons+1] = {text=love.graphics.newText(), x=lobby_menu_x[showing_leaderboard]}
       end
     end
     local lastPlayerIndex = #items --the rest of the items will be spectatable rooms, except the last two items (leaderboard and back to main menu)
