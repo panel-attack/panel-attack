@@ -150,22 +150,16 @@ do
     end
     items[#items+1] = {loc("mm_quit"), exit_game }
     local k = K[1]
-    local print_x, print_y = unpack(main_menu_screen_pos)
-    menu_buttons = {}
-    local font = love.graphics.getFont()
+    local menu_x, menu_y = unpack(main_menu_screen_pos)
+    local main_menu = Click_menu(nil, menu_x, menu_y)
     for i=1,#items do
-        menu_buttons[i] = {}
-        menu_buttons[i].text = love.graphics.newText(menu_font, items[i][1])
-        menu_buttons[i].x = print_x
-        menu_buttons[i].y = print_y
-        print_y = print_y + menu_buttons[i].text:getHeight()
+        main_menu:add_button(items[i][1])
     end
     while true do
       local arrow = ">"
-      for i=1,#menu_buttons do
-        menu_draw(menu_buttons[i].text, menu_buttons[i].x, menu_buttons[i].y)
-      end
-      gprint(arrow, menu_buttons[active_idx].x - arrow_padding, menu_buttons[active_idx].y)
+      main_menu:draw()
+      --TODO: find a new way to indicate which menu item is active, probably built into click_menu.lua.
+      gprint(arrow, main_menu.buttons[main_menu.active_idx].x - arrow_padding, main_menu.buttons[main_menu.active_idx].y)
 
       if wait_game_update ~= nil then
         has_game_update = wait_game_update:pop()
@@ -202,10 +196,10 @@ do
       if ret then
         return unpack(ret)
       end
-      if menu_item_idx_clicked then
-        active_idx = menu_item_idx_clicked
-        menu_item_idx_clicked = nil
-        menu_buttons = {}
+      if main_menu.idx_clicked then
+        active_idx = main_menu.idx_clicked
+        main_menu.idx_clicked = nil
+        main_menu.remove_self()
         return items[active_idx][2], items[active_idx][3]
       end
     end
@@ -488,7 +482,10 @@ function main_net_vs_lobby()
       end
     end
     local messages = server_queue:pop_all_with("choose_another_name", "create_room", "unpaired", "game_request", "leaderboard_report", "spectate_request_granted")
+    local updated = false
+    local lobby_menu = Click_menu()
     for _,msg in ipairs(messages) do
+      updated = true
       if msg.choose_another_name and msg.choose_another_name.used_names then
         return main_dumb_transition, {main_select_mode, loc("lb_used_name"), 60, 600}
       elseif msg.choose_another_name and msg.choose_another_name.reason then
@@ -540,49 +537,55 @@ function main_net_vs_lobby()
     local to_print = ""
     local arrow = ""
     items = {}
-    menu_buttons = {}
-    for _,v in ipairs(unpaired_players) do
-      if v ~= config.name then
+    
+    if updated then
+      lobby_menu:remove_self()
+      
+      for _,v in ipairs(unpaired_players) do
+        if v ~= config.name then
+          items[#items+1] = v
+        end
+      end
+      local lastPlayerIndex = #items --the rest of the items will be spectatable rooms, except the last two items (leaderboard and back to main menu)
+      for _,v in ipairs(spectatable_rooms) do
         items[#items+1] = v
-        menu_buttons[#menu_buttons+1] = {text=love.graphics.newText(), x=lobby_menu_x[showing_leaderboard]}
       end
-    end
-    local lastPlayerIndex = #items --the rest of the items will be spectatable rooms, except the last two items (leaderboard and back to main menu)
-    for _,v in ipairs(spectatable_rooms) do
-      items[#items+1] = v
-    end
-    if showing_leaderboard then
-      items[#items+1] = loc("lb_hide_board")
-    else
-      items[#items+1] = loc("lb_show_board")  -- the second to last item is "Leaderboard"
-    end
-    items[#items+1] = loc("lb_back") -- the last item is "Back to the main menu"
-    if active_back then
-      active_idx = #items
-    elseif showing_leaderboard then
-      active_idx = #items - 1 --the position of the "hide leaderboard" menu item
-    else
-      while active_idx > #items do
-        print("active_idx > #items.  Decrementing active_idx")
-        active_idx = active_idx - 1
-      end
-      active_name = items[active_idx]
-    end
-    for i=1,#items do
-      if active_idx == i then
-        arrow = arrow .. ">"
+      if showing_leaderboard then
+        items[#items+1] = loc("lb_hide_board")
       else
-        arrow = arrow .. "\n"
+        items[#items+1] = loc("lb_show_board")  -- the second to last item is "Leaderboard"
       end
-      if i <= lastPlayerIndex then
-        to_print = to_print .. "   " .. items[i] ..(sent_requests[items[i]] and " "..loc("lb_request") or "").. (willing_players[items[i]] and " "..loc("lb_received") or "") .. "\n"
-      elseif i < #items - 1 and items[i].name then
-        to_print = to_print .. "   "..loc("lb_spectate").." " .. items[i].name .. " (".. items[i].state .. ")\n" --printing room names
-      elseif i < #items then
-        to_print = to_print .. "   " .. items[i] .. "\n"
+      items[#items+1] = loc("lb_back") -- the last item is "Back to the main menu"
+      
+      if active_back then
+        active_idx = #items
+      elseif showing_leaderboard then
+        active_idx = #items - 1 --the position of the "hide leaderboard" menu item
       else
-        to_print = to_print .. "   " .. items[i]
+        while active_idx > #items do
+          print("active_idx > #items.  Decrementing active_idx")
+          active_idx = active_idx - 1
+        end
+        active_name = items[active_idx]
       end
+      local items_to_print = {}
+      for i=1,#items do
+        if active_idx == i then
+          arrow = arrow .. ">"
+        else
+          arrow = arrow .. "\n"
+        end
+        if i <= lastPlayerIndex then
+          items_to_print[#items_to_print+1] = items[i] ..(sent_requests[items[i]] and " "..loc("lb_request") or "").. (willing_players[items[i]] and " "..loc("lb_received") or "")
+        elseif i < #items - 1 and items[i].name then
+          items_to_print[#items_to_print+1] = loc("lb_spectate").." " .. items[i].name .. " (".. items[i].state .. ")" --printing room names
+        elseif i < #items then
+          items_to_print[#items_to_print+1] = items[i]
+        else
+          items_to_print[#items_to_print+1] = items[i]
+        end
+      end
+    lobby_menu = Click_menu(items_to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y)
     end
     gprint(notice[#items > 2], lobby_menu_x[showing_leaderboard], lobby_menu_y+90)
     gprint(arrow, lobby_menu_x[showing_leaderboard], lobby_menu_y+120)
@@ -591,7 +594,7 @@ function main_net_vs_lobby()
       gprint(leaderboard_string, lobby_menu_x[showing_leaderboard]+400, lobby_menu_y)
     end
     gprint(join_community_msg, main_menu_screen_pos[1]+30, main_menu_screen_pos[2]+280)
-
+    lobby_menu:draw()
     wait()
     local ret = nil
     variable_step(function()
