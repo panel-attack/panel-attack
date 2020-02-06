@@ -95,9 +95,6 @@ function click_or_tap(x, y, touchpress)
     if menu.active then
       menu.idx_selected = nil
       for i=1, #menu.buttons do
-        print("checking menu button")
-        print(menu:get_button_width(i))
-        print(menu:get_button_height(i))
         if y >= menu.y + menu.buttons[i].y and y <= menu.y + menu.buttons[i].y + menu:get_button_height(i) and
         x >= menu.x + menu.buttons[i].x and x <= menu.x + menu.buttons[i].x + menu:get_button_width(i) then
           print("pressed menu item "..i)
@@ -110,7 +107,9 @@ function click_or_tap(x, y, touchpress)
 end
 
 function love.mousepressed(x,y)
-  click_or_tap(x, y, nil)
+  local window_w, window_h = love.graphics:getDimensions()
+  local global_canvas_w, global_canvas_h = global_canvas:getDimensions()
+  click_or_tap((x-(window_w-global_canvas_w)/2)*canvas_width/window_w, (y-(window_h-global_canvas_h)/2)*canvas_height/window_h, nil)
 end
 
 function love.touchpressed(id, x, y, dx, dy, pressure)
