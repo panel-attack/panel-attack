@@ -2,6 +2,7 @@ require("graphics_util")
 
 menu_font = love.graphics.getFont()
 click_menus = {}
+last_active_idx = 1
 
 Click_menu = class(function(self, list, x, y, padding, active_idx, has_outline, background)
     self.x = x or 0
@@ -17,10 +18,14 @@ Click_menu = class(function(self, list, x, y, padding, active_idx, has_outline, 
         self:add_button(list[i])
       end
     end
+    self.arrow = ">"
+    self.arrow_padding = 12
     self.active = true
     self.visible = true
     click_menus[#click_menus+1] = self
     self.active_idx = active_idx or 1
+    self.id = #click_menus
+    last_active_idx = self.active_idx
   end)
 
 function Click_menu.add_button(self, string_text, x, y, w, h)  
@@ -51,11 +56,8 @@ function Click_menu.get_button_height(self, idx)
 end
 
 function Click_menu.remove_self(self)
-  for k,v in pairs(click_menus) do
-    if v == self then
-      click_menus[k] = nil
-    end
-  end
+  last_active_idx = self.active_idx
+  click_menus[self.id] = nil
 end
 
 function Click_menu.draw(self)
@@ -76,6 +78,9 @@ function Click_menu.draw(self)
       end
       menu_draw(self.buttons[i].text, self.x + self.buttons[i].x, self.y + self.buttons[i].y)
     end
+    if self.active_idx and self.buttons[1] then
+      gprint(self.arrow or ">", self.x + self.buttons[self.active_idx].x - self.arrow_padding, self.y +self.buttons[self.active_idx].y)
+    end
   end
 end
 
@@ -84,11 +89,11 @@ function Click_menu.move(self, x, y)
   self.y = y or 0
 end
 
-function love.mousepressed(x,y)
+function click_or_tap(x, y, touchpress)
   print(x..","..y)
   for k,menu in pairs(click_menus) do
     if menu.active then
-      menu.idx_clicked = nil
+      menu.idx_selected = nil
       for i=1, #menu.buttons do
         print("checking menu button")
         print(menu:get_button_width(i))
@@ -96,10 +101,20 @@ function love.mousepressed(x,y)
         if y >= menu.y + menu.buttons[i].y and y <= menu.y + menu.buttons[i].y + menu:get_button_height(i) and
         x >= menu.x + menu.buttons[i].x and x <= menu.x + menu.buttons[i].x + menu:get_button_width(i) then
           print("pressed menu item "..i)
-          menu.idx_clicked = i
+          menu.idx_selected = i
+          last_active_idx = menu_idx_selected
         end
       end
     end
   end
 end
+
+function love.mousepressed(x,y)
+  click_or_tap(x, y, nil)
+end
+
+function love.touchpressed(id, x, y, dx, dy, pressure)
+  click_or_tap(x, y, {id=id, x=x, y=y, dx=dx, dy=dy, pressure=pressure})
+end
+
 

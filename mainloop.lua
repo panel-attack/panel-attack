@@ -103,7 +103,6 @@ function variable_step(f)
 end
 
 do
-  local active_idx = 1
   function main_select_mode()
     currently_spectating = false
     if themes[config.theme].musics["main"] then
@@ -156,11 +155,7 @@ do
         main_menu:add_button(items[i][1])
     end
     while true do
-      local arrow = ">"
       main_menu:draw()
-      --TODO: find a new way to indicate which menu item is active, probably built into click_menu.lua.
-      gprint(arrow, main_menu.buttons[main_menu.active_idx].x - arrow_padding, main_menu.buttons[main_menu.active_idx].y)
-
       if wait_game_update ~= nil then
         has_game_update = wait_game_update:pop()
         if has_game_update ~= nil and has_game_update then
@@ -180,26 +175,26 @@ do
       local ret = nil
       variable_step(function()
         if menu_up(k) then
-          active_idx = wrap(1, active_idx-1, #items)
+          main_menu.active_idx = wrap(1, main_menu.active_idx-1, #items)
         elseif menu_down(k) then
-          active_idx = wrap(1, active_idx+1, #items)
+          main_menu.active_idx = wrap(1, main_menu.active_idx+1, #items)
         elseif menu_enter(k) then
-          ret = {items[active_idx][2], items[active_idx][3]}
+          ret = {items[main_menu.active_idx][2], items[main_menu.active_idx][3]}
         elseif menu_escape(k) then
-          if active_idx == #items then
-            ret = {items[active_idx][2], items[active_idx][3]}
+          if main_menu.active_idx == #items then
+            ret = {items[main_menu.active_idx][2], items[main_menu.active_idx][3]}
           else
-            active_idx = #items
+            main_menu.active_idx = #items
           end
         end
       end)
       if ret then
         return unpack(ret)
       end
-      if main_menu.idx_clicked then
-        active_idx = main_menu.idx_clicked
-        main_menu.idx_clicked = nil
-        main_menu.remove_self()
+      if main_menu.idx_selected then
+        local active_idx = main_menu.idx_selected
+        main_menu.idx_selected = nil
+        main_menu:remove_self()
         return items[active_idx][2], items[active_idx][3]
       end
     end
@@ -443,14 +438,18 @@ function main_net_vs_lobby()
   local prev_act_idx = active_idx
   local showing_leaderboard = false
   local lobby_menu_x = {[true]=main_menu_screen_pos[1]-200, [false]=main_menu_screen_pos[1]} --will be used to make room in case the leaderboard should be shown.
-  local lobby_menu_y = main_menu_screen_pos[2]-120
+  local lobby_menu_y = main_menu_screen_pos[2]
   local sent_requests = {}
   if connection_up_time <= login_status_message_duration then
     json_send({login_request=true, user_id=my_user_id})
   end
+  local lobby_menu = Click_menu()
+  local items = {}
+  local lastPlayerIndex = 0
+  local updated = false
   while true do
     if connection_up_time <= login_status_message_duration then
-      gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y)
+      gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y-120)
       local messages = server_queue:pop_all_with("login_successful", "login_denied")
       for _,msg in ipairs(messages) do
         if msg.login_successful then
@@ -482,10 +481,9 @@ function main_net_vs_lobby()
       end
     end
     local messages = server_queue:pop_all_with("choose_another_name", "create_room", "unpaired", "game_request", "leaderboard_report", "spectate_request_granted")
-    local updated = false
-    local lobby_menu = Click_menu()
     for _,msg in ipairs(messages) do
       updated = true
+      items = {}
       if msg.choose_another_name and msg.choose_another_name.used_names then
         return main_dumb_transition, {main_select_mode, loc("lb_used_name"), 60, 600}
       elseif msg.choose_another_name and msg.choose_another_name.reason then
@@ -536,17 +534,18 @@ function main_net_vs_lobby()
     local print_x, print_y = unpack(main_menu_screen_pos)
     local to_print = ""
     local arrow = ""
-    items = {}
     
     if updated then
       lobby_menu:remove_self()
-      
+      lobby_menu = Click_menu()
+      lobby_menu.active_idx = last_active_idx
+      items = {}
       for _,v in ipairs(unpaired_players) do
         if v ~= config.name then
           items[#items+1] = v
         end
       end
-      local lastPlayerIndex = #items --the rest of the items will be spectatable rooms, except the last two items (leaderboard and back to main menu)
+      lastPlayerIndex = #items --the rest of the items will be spectatable rooms, except the last two items (leaderboard and back to main menu)
       for _,v in ipairs(spectatable_rooms) do
         items[#items+1] = v
       end
@@ -558,43 +557,39 @@ function main_net_vs_lobby()
       items[#items+1] = loc("lb_back") -- the last item is "Back to the main menu"
       
       if active_back then
-        active_idx = #items
+        lobby_menu.active_idx = #items
       elseif showing_leaderboard then
-        active_idx = #items - 1 --the position of the "hide leaderboard" menu item
+        lobby_menu.active_idx = #items - 1 --the position of the "hide leaderboard" menu item
       else
-        while active_idx > #items do
-          print("active_idx > #items.  Decrementing active_idx")
-          active_idx = active_idx - 1
+        while lobby_menu.active_idx > #items do
+          lobby_menu.active_idx = lobby_menu.active_idx - 1
         end
-        active_name = items[active_idx]
+        active_name = items[lobby_menu.active_idx]
       end
       local items_to_print = {}
       for i=1,#items do
-        if active_idx == i then
-          arrow = arrow .. ">"
-        else
-          arrow = arrow .. "\n"
-        end
         if i <= lastPlayerIndex then
-          items_to_print[#items_to_print+1] = items[i] ..(sent_requests[items[i]] and " "..loc("lb_request") or "").. (willing_players[items[i]] and " "..loc("lb_received") or "")
+          items_to_print[i] = items[i] ..(sent_requests[items[i]] and " "..loc("lb_request") or "").. (willing_players[items[i]] and " "..loc("lb_received") or "")
         elseif i < #items - 1 and items[i].name then
-          items_to_print[#items_to_print+1] = loc("lb_spectate").." " .. items[i].name .. " (".. items[i].state .. ")" --printing room names
+          items_to_print[i] = loc("lb_spectate").." " .. items[i].name .. " (".. items[i].state .. ")" --printing room names
         elseif i < #items then
-          items_to_print[#items_to_print+1] = items[i]
+          items_to_print[i] = items[i]
         else
-          items_to_print[#items_to_print+1] = items[i]
+          items_to_print[i] = items[i]
         end
       end
     lobby_menu = Click_menu(items_to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y)
+    lobby_menu.active_idx = last_active_idx
     end
-    gprint(notice[#items > 2], lobby_menu_x[showing_leaderboard], lobby_menu_y+90)
-    gprint(arrow, lobby_menu_x[showing_leaderboard], lobby_menu_y+120)
-    gprint(to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y+120)
+    gprint(notice[#items > 2], lobby_menu_x[showing_leaderboard], lobby_menu_y-30)
+    gprint(arrow, lobby_menu_x[showing_leaderboard], lobby_menu_y)
+    gprint(to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y)
     if showing_leaderboard then
-      gprint(leaderboard_string, lobby_menu_x[showing_leaderboard]+400, lobby_menu_y)
+      gprint(leaderboard_string, lobby_menu_x[showing_leaderboard]+400, lobby_menu_y - 120)
     end
     gprint(join_community_msg, main_menu_screen_pos[1]+30, main_menu_screen_pos[2]+280)
     lobby_menu:draw()
+    updated = false
     wait()
     local ret = nil
     variable_step(function()
@@ -606,7 +601,7 @@ function main_net_vs_lobby()
             leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
           end
         else
-          active_idx = wrap(1, active_idx-1, #items)
+          lobby_menu.active_idx = wrap(1, lobby_menu.active_idx-1, #items)
         end
       elseif menu_down(k) then
         if showing_leaderboard then
@@ -616,40 +611,44 @@ function main_net_vs_lobby()
             leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
           end
         else
-          active_idx = wrap(1, active_idx+1, #items)
+          lobby_menu.active_idx = wrap(1, lobby_menu.active_idx+1, #items)
         end
-      elseif menu_enter(k) then
+      elseif menu_enter(k) or lobby_menu.idx_selected then
+        updated = true
+        lobby_menu.active_idx = lobby_menu.idx_selected
+        lobby_menu.idx_selected = nil
         spectator_list = {}
         spectators_string = ""
-        if active_idx == #items then
+        if lobby_menu.active_idx == #items then
           ret = {main_select_mode}
         end
-        if active_idx == #items - 1 then
+        if lobby_menu.active_idx == #items - 1 then
           if not showing_leaderboard then
             json_send({leaderboard_request=true})
           else
             showing_leaderboard = false --toggle it off
+            lobby_menu:move(lobby_menu_x[showing_leaderboard], lobby_menu_y)
           end
-        elseif active_idx <= lastPlayerIndex then
+        elseif lobby_menu.active_idx <= lastPlayerIndex then
           my_name = config.name
-          op_name = items[active_idx]
+          op_name = items[lobby_menu.active_idx]
           currently_spectating = false
           sent_requests[op_name] = true
-          request_game(items[active_idx])
+          request_game(items[lobby_menu.active_idx])
         else
-          my_name = items[active_idx].a
-          op_name = items[active_idx].b
+          my_name = items[lobby_menu.active_idx].a
+          op_name = items[lobby_menu.active_idx].b
           currently_spectating = true
-          room_number_last_spectated = items[active_idx].roomNumber
-          request_spectate(items[active_idx].roomNumber)
+          room_number_last_spectated = items[lobby_menu.active_idx].roomNumber
+          request_spectate(items[lobby_menu.active_idx].roomNumber)
         end
       elseif menu_escape(k) then
-        if active_idx == #items then
+        if lobby_menu.active_idx == #items then
           ret = {main_select_mode}
         elseif showing_leaderboard then
           showing_leaderboard = false
         else
-          active_idx = #items
+          lobby_menu.active_idx = #items
         end
       end
     end)
@@ -657,9 +656,9 @@ function main_net_vs_lobby()
       json_send({logout=true})
       return unpack(ret)
     end
-    active_back = active_idx == #items
-    if active_idx ~= prev_act_idx then
-      prev_act_idx = active_idx
+    active_back = lobby_menu.active_idx == #items
+    if lobby_menu.active_idx ~= prev_act_idx then
+      prev_act_idx = lobby_menu.active_idx
     end
     if not do_messages() then
       return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
