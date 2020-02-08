@@ -1404,6 +1404,7 @@ end
 
 function main_set_name()
   local name = config.name or ""
+  love.keyboard.setTextInput(true)
   while true do
     local to_print = loc("op_enter_name").."\n"..name
     if (love.timer.getTime()*3) % 2 > 1 then
@@ -1434,9 +1435,11 @@ function main_set_name()
       end
     end)
     if ret then
+      love.keyboard.setTextInput(false)
       return unpack(ret)
     end
   end
+
 end
 
 function main_music_test()
