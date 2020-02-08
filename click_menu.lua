@@ -110,8 +110,8 @@ end
 function transform_coordinates(x,y)
   local lbx, lby, lbw, lbh = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 16, 9)
   local scale = canvas_width/math.max(bg:getWidth(),bg:getHeight())
-    return  (x-lbx)/scale*canvas_width/lbw,
-            (y-lby)/scale*canvas_height/lbh
+  return  (x-lbx)/scale*canvas_width/lbw,
+          (y-lby)/scale*canvas_height/lbh
 end
 
 function love.mousepressed(x,y)

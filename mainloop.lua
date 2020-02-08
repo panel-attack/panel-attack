@@ -151,6 +151,7 @@ do
     local k = K[1]
     local menu_x, menu_y = unpack(main_menu_screen_pos)
     local main_menu = Click_menu(nil, menu_x, menu_y)
+    main_menu.padding = 8
     for i=1,#items do
         main_menu:add_button(items[i][1])
     end
@@ -537,8 +538,6 @@ function main_net_vs_lobby()
     
     if updated then
       lobby_menu:remove_self()
-      lobby_menu = Click_menu()
-      lobby_menu.active_idx = last_active_idx
       items = {}
       for _,v in ipairs(unpaired_players) do
         if v ~= config.name then
@@ -578,7 +577,7 @@ function main_net_vs_lobby()
           items_to_print[i] = items[i]
         end
       end
-    lobby_menu = Click_menu(items_to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y)
+    lobby_menu = Click_menu(items_to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y, 8)
     lobby_menu.active_idx = last_active_idx
     end
     gprint(notice[#items > 2], lobby_menu_x[showing_leaderboard], lobby_menu_y-30)
