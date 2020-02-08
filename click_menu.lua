@@ -90,6 +90,7 @@ function Click_menu.move(self, x, y)
 end
 
 function click_or_tap(x, y, touchpress)
+  
   print(x..","..y)
   for k,menu in pairs(click_menus) do
     if menu.active then
@@ -106,14 +107,20 @@ function click_or_tap(x, y, touchpress)
   end
 end
 
+function transform_coordinates(x,y)
+  local lbx, lby, lbw, lbh = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 16, 9)
+  local scale = canvas_width/math.max(bg:getWidth(),bg:getHeight())
+    return  (x-lbx)/scale*canvas_width/lbw,
+            (y-lby)/scale*canvas_height/lbh
+end
+
 function love.mousepressed(x,y)
-  local window_w, window_h = love.graphics:getDimensions()
-  local global_canvas_w, global_canvas_h = global_canvas:getDimensions()
-  click_or_tap((x-(window_w-global_canvas_w)/2)*canvas_width/window_w, (y-(window_h-global_canvas_h)/2)*canvas_height/window_h, nil)
+  click_or_tap(transform_coordinates(x,y))
 end
 
 function love.touchpressed(id, x, y, dx, dy, pressure)
-  click_or_tap(x, y, {id=id, x=x, y=y, dx=dx, dy=dy, pressure=pressure})
+  local _x, _y = transform_coordinates(x,y)
+  click_or_tap(_x, _y, {id=id, x=_x, y=_y, dx=dx, dy=dy, pressure=pressure})
 end
 
 
