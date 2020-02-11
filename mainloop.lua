@@ -613,7 +613,7 @@ function main_net_vs_lobby()
         end
       elseif menu_enter(k) or lobby_menu.idx_selected then
         updated = true
-        lobby_menu.active_idx = lobby_menu.idx_selected
+        lobby_menu.active_idx = lobby_menu.idx_selected or lobby_menu.active_idx
         lobby_menu.idx_selected = nil
         spectator_list = {}
         spectators_string = ""
