@@ -787,6 +787,7 @@ function select_screen.main()
                               .."\n".."P2.gpanel_buffer = "..P2.gpanel_buffer,
                               180}
             end
+          love.timer.sleep(0.017)
           end
           P1:starting_state()
           P2:starting_state()
