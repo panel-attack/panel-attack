@@ -554,17 +554,6 @@ function main_net_vs_lobby()
         items[#items+1] = loc("lb_show_board")  -- the second to last item is "Leaderboard"
       end
       items[#items+1] = loc("lb_back") -- the last item is "Back to the main menu"
-      
-      if active_back then
-        lobby_menu.active_idx = #items
-      elseif showing_leaderboard then
-        lobby_menu.active_idx = #items - 1 --the position of the "hide leaderboard" menu item
-      else
-        while lobby_menu.active_idx > #items do
-          lobby_menu.active_idx = lobby_menu.active_idx - 1
-        end
-        active_name = items[lobby_menu.active_idx]
-      end
       local items_to_print = {}
       for i=1,#items do
         if i <= lastPlayerIndex then
@@ -577,8 +566,18 @@ function main_net_vs_lobby()
           items_to_print[i] = items[i]
         end
       end
-    lobby_menu = Click_menu(items_to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y, 8)
-    lobby_menu.active_idx = last_active_idx
+      lobby_menu = Click_menu(items_to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y, 8)
+      lobby_menu.active_idx = last_active_idx
+      if active_back then
+        lobby_menu.active_idx = #items
+      elseif showing_leaderboard then
+        lobby_menu.active_idx = #items - 1 --the position of the "hide leaderboard" menu item
+      else
+        while lobby_menu.active_idx > #items do
+          lobby_menu.active_idx = lobby_menu.active_idx - 1
+        end
+        active_name = items[lobby_menu.active_idx]
+      end
     end
     gprint(notice[#items > 2], lobby_menu_x[showing_leaderboard], lobby_menu_y-30)
     gprint(arrow, lobby_menu_x[showing_leaderboard], lobby_menu_y)
