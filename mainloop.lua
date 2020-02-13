@@ -1318,7 +1318,8 @@ end
 
 function main_config_input()
   local pretty_names = {loc("up"), loc("down"), loc("left"), loc("right"), "A", "B", "X", "Y", "L", "R", loc("start")}
-  local items, active_idx = {}, 1
+  local input_menu = Click_menu(nil, unpack(main_menu_screen_pos), 0, 1, false, 2)
+  local items = {}
   local k = K[1]
   local active_player = 1
   local function get_items()
@@ -1332,11 +1333,6 @@ function main_config_input()
   local function print_stuff()
     local to_print, to_print2, arrow = "", "", ""
     for i=0,#items do
-      if active_idx == i then
-        arrow = arrow .. ">"
-      else
-        arrow = arrow .. "\n"
-      end
       to_print = to_print .. "   " .. items[i][1] .. "\n"
       to_print2 = to_print2 .. "                  " .. items[i][2] .. "\n"
     end
@@ -1366,9 +1362,9 @@ function main_config_input()
           end
         end
       elseif menu_up(K[1]) then
-        active_idx = wrap(1, active_idx-1, #items)
+        input_menu.active_idx = wrap(1, input_menu.active_idx-1, #items)
       elseif menu_down(K[1]) then
-        active_idx = wrap(1, active_idx+1, #items)
+        input_menu.active_idx = wrap(1, input_menu.active_idx+1, #items)
       elseif menu_left(K[1]) then
         active_player = wrap(1, active_player-1, 2)
         k=K[active_player]
@@ -1376,20 +1372,20 @@ function main_config_input()
         active_player = wrap(1, active_player+1, 2)
         k=K[active_player]
       elseif menu_enter_one_press(K[1]) then
-        if active_idx <= #key_names then
-          idxs_to_set = {active_idx}
-        elseif active_idx == #key_names + 1 then
+        if input_menu.active_idx <= #key_names then
+          idxs_to_set = {input_menu.active_idx}
+        elseif input_menu.active_idx == #key_names + 1 then
           idxs_to_set = {1,2,3,4,5,6,7,8,9,10,11}
         end
       elseif menu_enter(K[1]) then
-        if active_idx > #key_names + 1 then
-          ret = {items[active_idx][3], items[active_idx][4]}
+        if input_menu.active_idx > #key_names + 1 then
+          ret = {items[input_menu.active_idx][3], items[input_menu.active_idx][4]}
         end
       elseif menu_escape(K[1]) then
-        if active_idx == #items then
-          ret = {items[active_idx][3], items[active_idx][4]}
+        if input_menu.active_idx == #items then
+          ret = {items[input_menu.active_idx][3], items[input_menu.active_idx][4]}
         else
-          active_idx = #items
+          input_menu.active_idx = #items
         end
       end
     end)

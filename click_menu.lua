@@ -29,11 +29,11 @@ Click_menu = class(function(self, list, x, y, padding, active_idx, buttons_outli
     last_active_idx = self.active_idx
   end)
 
-function Click_menu.add_button(self, string_text, x, y, w, h, outlined, button_padding)  
+function Click_menu.add_button(self, string_text, x, y, w, h, outlined, button_padding, current_setting)  
 -- x and y are optional. by default will add underneath existing menu buttons
 -- w and h are optional. by default, button width will be the width of the text
-  self.w = w
-  self.h = h
+  self.w = w or 0
+  self.h = h or 0
   self.buttons[#self.buttons+1] = 
     {
       text=love.graphics.newText(menu_font, string_text),
@@ -41,12 +41,18 @@ function Click_menu.add_button(self, string_text, x, y, w, h, outlined, button_p
       y=y,
       w=w,
       h=h,
-      outlined=self.buttons_outlined or outlined
+      outlined=self.buttons_outlined or outlined,
+      current_setting = current_setting
       }
+  if self.buttons[#self.buttons].current_setting then
+    self.buttons[#self.buttons].current_setting = love.graphics.newText(menu_font, self.buttons[#self.buttons].current_setting)
+  end
   if not self.buttons[#self.buttons].y then
     self.buttons[#self.buttons].y = self.new_item_y
     self.new_item_y = self.new_item_y + self:get_button_height(#self.buttons)+self.padding
   end
+  self:resize_to_fit()
+
 end
 
 function Click_menu.get_button_width(self, idx)
@@ -60,6 +66,24 @@ end
 function Click_menu.remove_self(self)
   last_active_idx = self.active_idx
   click_menus[self.id] = nil
+end
+
+function Click_menu.set_current_setting(self, idx, new_setting)
+  if self.buttons[idx] then
+    self.buttons[idx].current_setting = love.graphics.newText(menu_font, new_setting)
+  end
+end
+
+function Click_menu.resize_to_fit(self)
+  for k,v in pairs(self.buttons) do 
+    self.current_setting_x = math.max(self.current_setting_x or 0, self:get_button_width(k) + 2*(self.button_padding or 0))
+    local potential_width = self:get_button_width(#self.buttons) + 2*(self.padding or 0)
+    if self.buttons[k].current_setting then
+      potential_width = potential_width + 2*(self.padding or 0)
+    end
+    self.w = math.max(self.w , potential_width)
+    self.current_setting_x = math.max(self.current_setting_x or 0, self.buttons[#self.buttons].text:getWidth()+(button_padding or self.button_padding or 0))
+  end
 end
 
 function Click_menu.draw(self)
@@ -81,10 +105,14 @@ function Click_menu.draw(self)
         grectangle("line", self.x + self.buttons[i].x, self.y + self.buttons[i].y, self:get_button_width(i), self:get_button_height(i))
       end
       menu_draw(self.buttons[i].text, self.x + self.buttons[i].x + self.button_padding, self.y + self.buttons[i].y + self.button_padding)
+      if self.buttons[i].current_setting then
+        menu_draw(self.buttons[i].current_setting, self.current_setting_x or 0, self.y + self.buttons[i].y + self.button_padding)
+      end
     end
     if self.active_idx and self.buttons[1] then
       gprint(self.arrow or ">", self.x + self.buttons[self.active_idx].x - self.arrow_padding, self.y +self.button_padding + self.buttons[self.active_idx].y)
     end
+    
   end
 end
 
