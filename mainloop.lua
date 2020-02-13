@@ -27,7 +27,7 @@ replay_of_match_so_far = nil
 spectator_list = nil
 spectators_string = ""
 leftover_time = 0
-main_menu_screen_pos = { 300 + (canvas_width-legacy_canvas_width)/2, 280 + (canvas_height-legacy_canvas_height)/2 }
+main_menu_screen_pos = { 300 + (canvas_width-legacy_canvas_width)/2, 220 + (canvas_height-legacy_canvas_height)/2 }
 wait_game_update = nil
 has_game_update = false
 local arrow_padding = 12
@@ -150,8 +150,7 @@ do
     items[#items+1] = {loc("mm_quit"), exit_game }
     local k = K[1]
     local menu_x, menu_y = unpack(main_menu_screen_pos)
-    local main_menu = Click_menu(nil, menu_x, menu_y)
-    main_menu.padding = 8
+    local main_menu = Click_menu(nil, menu_x, menu_y, 8, 1, true, 2)
     for i=1,#items do
         main_menu:add_button(items[i][1])
     end
@@ -439,7 +438,7 @@ function main_net_vs_lobby()
   local prev_act_idx = active_idx
   local showing_leaderboard = false
   local lobby_menu_x = {[true]=main_menu_screen_pos[1]-200, [false]=main_menu_screen_pos[1]} --will be used to make room in case the leaderboard should be shown.
-  local lobby_menu_y = main_menu_screen_pos[2]
+  local lobby_menu_y = main_menu_screen_pos[2] + 50
   local sent_requests = {}
   if connection_up_time <= login_status_message_duration then
     json_send({login_request=true, user_id=my_user_id})

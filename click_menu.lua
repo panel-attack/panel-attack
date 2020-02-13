@@ -4,18 +4,19 @@ menu_font = love.graphics.getFont()
 click_menus = {}
 last_active_idx = 1
 
-Click_menu = class(function(self, list, x, y, padding, active_idx, has_outline, background)
+Click_menu = class(function(self, list, x, y, padding, active_idx, buttons_outlined, button_padding,background)
     self.x = x or 0
     self.y = y or 0
     self.new_item_y = 0
     self.buttons = {}
     self.padding = padding or 0
-    self.outline = has_outline
+    self.buttons_outlined = buttons_outlined
+    self.button_padding = button_padding or 0
     self.background = background
     self.new_item_y = 0
     if list then
       for i=1,#list or 0 do
-        self:add_button(list[i])
+        self:add_button(list[i], nil, nil, nil, nil, self.buttons_outlined)
       end
     end
     self.arrow = ">"
@@ -28,7 +29,7 @@ Click_menu = class(function(self, list, x, y, padding, active_idx, has_outline, 
     last_active_idx = self.active_idx
   end)
 
-function Click_menu.add_button(self, string_text, x, y, w, h)  
+function Click_menu.add_button(self, string_text, x, y, w, h, outlined, button_padding)  
 -- x and y are optional. by default will add underneath existing menu buttons
 -- w and h are optional. by default, button width will be the width of the text
   self.w = w
@@ -39,20 +40,21 @@ function Click_menu.add_button(self, string_text, x, y, w, h)
       x=x or 0,
       y=y,
       w=w,
-      h=h
+      h=h,
+      outlined=self.buttons_outlined or outlined
       }
   if not self.buttons[#self.buttons].y then
     self.buttons[#self.buttons].y = self.new_item_y
-    self.new_item_y = self.new_item_y + self.buttons[#self.buttons].text:getHeight()+self.padding
+    self.new_item_y = self.new_item_y + self:get_button_height(#self.buttons)+self.padding
   end
 end
 
 function Click_menu.get_button_width(self, idx)
-  return self.buttons[idx].w or self.buttons[idx].text:getWidth()
+  return self.buttons[idx].w or self.buttons[idx].text:getWidth()+2*self.button_padding
 end
 
 function Click_menu.get_button_height(self, idx)
-  return self.buttons[idx].h or self.buttons[idx].text:getHeight()
+  return self.buttons[idx].h or self.buttons[idx].text:getHeight()+2*self.button_padding
 end
 
 function Click_menu.remove_self(self)
@@ -65,21 +67,23 @@ function Click_menu.draw(self)
     if self.background then
       menu_drawf(self.background, self.x , self.y)
     end
+    
     if self.outline then
-      grectangle("line", self.x + self.buttons[i].x, self.y + self.buttons[i].y, self.get_button_width(self,i), button_height)
+      --TO DO whole menu outline, maybe
+      --grectangle("line", self.x + self.buttons[i].x, self.y + self.buttons[i].y, self.get_button_width(self,i), button_height)
     end
     
     for i=1,#self.buttons do
       if self.buttons[i].background then
         menu_drawf(self.buttons[i].background, self.x + self.buttons[i].x, self.y + self.buttons[i].y)
       end
-      if self.buttons[i].outline then
+      if self.buttons[i].outlined then
         grectangle("line", self.x + self.buttons[i].x, self.y + self.buttons[i].y, self:get_button_width(i), self:get_button_height(i))
       end
-      menu_draw(self.buttons[i].text, self.x + self.buttons[i].x, self.y + self.buttons[i].y)
+      menu_draw(self.buttons[i].text, self.x + self.buttons[i].x + self.button_padding, self.y + self.buttons[i].y + self.button_padding)
     end
     if self.active_idx and self.buttons[1] then
-      gprint(self.arrow or ">", self.x + self.buttons[self.active_idx].x - self.arrow_padding, self.y +self.buttons[self.active_idx].y)
+      gprint(self.arrow or ">", self.x + self.buttons[self.active_idx].x - self.arrow_padding, self.y +self.button_padding + self.buttons[self.active_idx].y)
     end
   end
 end
