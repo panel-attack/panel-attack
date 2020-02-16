@@ -34,7 +34,7 @@ end
 local function main_show_custom_stages_readme(idx)
   bg = themes[config.theme].images.bg_readme
 
-  for _,stage in ipairs(default_stages_ids) do
+  for _,stage in ipairs(default_stages_folders) do
     if not love.filesystem.getInfo("stages/"..prefix_of_ignored_dirs..stage) then
       print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
       gprint(loc("op_copy_files"), 280, 280)
@@ -63,12 +63,12 @@ end
 local function main_show_custom_characters_readme(idx)
   bg = themes[config.theme].images.bg_readme
   
-  for _,current_character in ipairs(default_characters_ids) do
+  for _,current_character in ipairs(default_characters_folders) do
     if not love.filesystem.getInfo("characters/"..prefix_of_ignored_dirs..current_character) then
       print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
       gprint(loc("op_copy_files"), 280, 280)
       wait()
-      recursive_copy("characters/"..current_character, "characters/"..prefix_of_ignored_dirs..current_character)
+      recursive_copy("default_characters/"..current_character, "characters/"..prefix_of_ignored_dirs..current_character)
     end
   end
 

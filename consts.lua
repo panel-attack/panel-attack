@@ -22,14 +22,14 @@ prefix_of_ignored_dirs = "__"
 default_theme_dir = "Panel Attack"
 default_panels_dir = "Panel Attack"
 
-default_characters_ids = {"lip", "windy", "sherbet", "thiana", "ruby",
+default_characters_folders = {"lip", "windy", "sherbet", "thiana", "ruby",
               "elias", "flare", "neris", "seren", "phoenix", 
               "dragon", "thanatos", "cordelia",  "lakitu", 
               "bumpty", "poochy", "wiggler", "froggy", "blargg",
               "lungefish", "raphael", "yoshi", "hookbill",
               "navalpiranha", "kamek", "bowser"}
 
-default_stages_ids = {"cave", "fire", "flower", "forest", "ice",
+default_stages_folders = {"cave", "fire", "flower", "forest", "ice",
               "jewel", "king", "moon", "sea", "water", "wind" }
 
 random_stage_special_value = "__RandomStage"
