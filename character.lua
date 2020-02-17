@@ -125,6 +125,7 @@ function Character.unload(self)
 end
 
 local function add_characters_from_dir_rec(path)
+  local amount_of_characters = 0
   local lfs = love.filesystem
   local raw_dir_list = lfs.getDirectoryItems(path)
   for i,v in ipairs(raw_dir_list) do
@@ -133,7 +134,7 @@ local function add_characters_from_dir_rec(path)
       local current_path = path.."/"..v
       if lfs.getInfo(current_path) and lfs.getInfo(current_path).type == "directory" then
         -- call recursively: facade folder
-        add_characters_from_dir_rec(current_path)
+        amount_of_characters = amount_of_characters + add_characters_from_dir_rec(current_path)
 
         -- init stage: 'real' folder
         local character = Character(current_path,v)
@@ -145,12 +146,14 @@ local function add_characters_from_dir_rec(path)
           else
             characters[character.id] = character
             characters_ids[#characters_ids+1] = character.id
+            amount_of_characters = amount_of_characters + 1
             -- print(current_path.." has been added to the character list!")
           end
         end
       end
     end
   end
+  return amount_of_characters
 end
 
 function characters_init()
@@ -159,7 +162,12 @@ function characters_init()
   characters_ids_for_current_theme = {} -- holds characters ids for the current theme, those characters will appear in the lobby
   characters_ids_by_display_names = {} -- holds keys to array of character ids holding that name
 
-  add_characters_from_dir_rec("characters")
+  local amount_of_characters = add_characters_from_dir_rec("characters")
+
+  if amount_of_characters == 0 then
+    recursive_copy("default_characters", "characters")
+    add_characters_from_dir_rec("characters")
+  end
 
   if love.filesystem.getInfo("themes/"..config.theme.."/characters.txt") then
     for line in love.filesystem.lines("themes/"..config.theme.."/characters.txt") do
@@ -181,7 +189,7 @@ function characters_init()
     config.character = uniformly(characters_ids_for_current_theme)
   end
 
-  -- actual init for all stages, starting with the default one
+  -- actual init for all characters, starting with the default one
   default_character = Character("characters/__default", "__default")
   default_character:preload()
   default_character:load(true)

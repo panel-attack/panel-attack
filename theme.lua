@@ -1,7 +1,7 @@
 require("graphics_util")
 require("sound_util")
 
-local musics = {"main", "select_screen"}
+local musics = {"main", "select_screen", "main_start", "select_screen_start"}
 
 local function load_theme_img(name)
   local img = load_img_from_supported_extensions("themes/"..config.theme.."/"..name)
