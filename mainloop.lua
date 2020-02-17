@@ -1491,6 +1491,10 @@ function main_music_test()
     end
   end
 
+  -- stop main music
+  love.audio.stop()
+  stop_the_music()
+
   -- initial song starts here
   find_and_add_music(tracks[index].is_character and characters[tracks[index].id].musics or stages[tracks[index].id].musics, tracks[index].type)
 
