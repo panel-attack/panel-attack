@@ -109,7 +109,8 @@ do
     character_loader_clear()
     stage_loader_clear()
     close_socket()
-    bg = themes[config.theme].images.bg_main
+    background = themes[config.theme].images.bg_main
+    reset_filters()
     logged_in = 0
     connection_up_time = 0
     connected_server_ip = ""
@@ -275,7 +276,9 @@ end
 local function use_current_stage()
   stage_loader_load(current_stage)
   stage_loader_wait()
-  bg = stages[current_stage].images.background
+  background = stages[current_stage].images.background
+  background_overlay = themes[config.theme].images.bg_overlay
+  foreground_overlay = themes[config.theme].images.fg_overlay
 end
 
 local function pick_random_stage()
@@ -410,7 +413,8 @@ function main_net_vs_lobby()
   if themes[config.theme].musics.main then
     find_and_add_music(themes[config.theme].musics, "main")
   end
-  bg = themes[config.theme].images.bg_main
+  background = themes[config.theme].images.bg_main
+  reset_filters()
   character_loader_clear()
   stage_loader_clear()
   local active_name, active_idx, active_back = "", 1
@@ -1257,7 +1261,8 @@ do
     if themes[config.theme].musics.main then
       find_and_add_music(themes[config.theme].musics, "main")
     end
-    bg = themes[config.theme].images.bg_main
+    background = themes[config.theme].images.bg_main
+    reset_filters()
     local active_idx = last_puzzle_idx or 1
     local k = K[1]
     while true do
@@ -1549,6 +1554,7 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
   end
   love.audio.stop()
   stop_the_music()
+  reset_filters()
   game_is_paused = false
   winnerSFX = winnerSFX or nil
   if not SFX_mute then

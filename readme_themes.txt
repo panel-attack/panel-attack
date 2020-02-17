@@ -24,6 +24,7 @@ Note: non-optional data that are missing will automatically get replaced by defa
 ~~ [.png, .jpg] ~~
 
 - "background/main", "background/select_screen", "background/readme": backgrounds used in the menus
+- ("background/bg_overlay"), ("background/fg_overlay"): overlays: the first one is on top of the stage's background while the other one is up front
 - "chain/chain00", "chain/chain02", ... "chain/chain19", "combo/combo04", ..., "combo/combo66": chains and combo counter
 - "1", "2", "3": countdown
 - "p1", "p1_cursor", "p1_select_screen_cursor1", "p1_select_screen_cursor2": cursors for player 1, change p1 by p2 for those of player 2
