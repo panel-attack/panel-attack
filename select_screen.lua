@@ -467,7 +467,7 @@ function select_screen.main()
     local function draw_levels(cursor_data,player_number,y_padding)
       local level_max_width = 0.2*button_height
       local level_width = math.min(level_max_width,themes[config.theme].images.IMG_levels[1]:getWidth())
-      local padding_x = 0.5*button_width-5*level_width
+      local padding_x = math.floor(0.5*button_width-5.5*level_width)
       local is_selected = cursor_data.selected and cursor_data.state.cursor == "__Level"
       if is_selected then
         padding_x = padding_x-level_width
@@ -480,6 +480,8 @@ function select_screen.main()
         padding_x = padding_x + level_width
       end
       for i=1,#level_to_starting_speed do --which should equal the number of levels in the game
+        local additional_padding = math.floor(0.5*(themes[config.theme].images.IMG_levels[i]:getWidth()-level_width))
+        padding_x = padding_x + additional_padding
         local use_unfocus = cursor_data.state.level < i
         if use_unfocus then
           menu_drawf(themes[config.theme].images.IMG_levels_unfocus[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, level_scale, level_scale )
@@ -489,7 +491,7 @@ function select_screen.main()
         if i == cursor_data.state.level then
           menu_drawf(themes[config.theme].images.IMG_level_cursor, render_x+padding_x, render_y+y_padding+themes[config.theme].images.IMG_levels[i]:getHeight()*0.5, "center", "top", 0, level_scale, level_scale )
         end
-        padding_x = padding_x + level_width
+        padding_x = padding_x + level_width + additional_padding
       end
       if is_selected then
         gprintf(">", render_x+padding_x-0.5*level_width, render_y+y_padding-0.5*text_height,level_width,"center")
