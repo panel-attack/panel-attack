@@ -950,6 +950,7 @@ function select_screen.main()
     end 
 
     local function on_select(cursor,super)
+      local noisy = false
       local selectable = {__Stage=true, __Panels=true, __Level=true, __Ready=true}
       if selectable[cursor.state.cursor] then
         if cursor.selected and cursor.state.cursor == "__Stage" then
@@ -974,7 +975,7 @@ function select_screen.main()
         cursor.state.character = cursor.state.cursor
         cursor.state.character_display_name = characters[cursor.state.character].display_name
         local character = characters[cursor.state.character]
-        character:play_selection_sfx()
+        noisy = character:play_selection_sfx()
         character_loader_load(cursor.state.character)
         if super then
           if character.stage then
@@ -991,6 +992,7 @@ function select_screen.main()
         cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"])
         cursor.can_super_select = false
       end
+      return noisy
     end
 
     variable_step(function()
@@ -1039,17 +1041,26 @@ function select_screen.main()
               end
             end
             if not cursor.selected then move_cursor(cursor,right) end
-          elseif menu_long_enter(k) then
-            on_select(cursor, true)
-          elseif menu_enter(k) and (not cursor.can_super_select or menu_pressing_enter(k) < super_selection_enable_ratio) then
-            on_select(cursor, false)
-          elseif menu_escape(k) then
-            if cursor.state.cursor == "__Leave" then
-              on_quit()
+          else
+            -- code below is bit hard to read: basically we are storing the default sfx callbacks until it's needed (or not!) based on the on_select method
+            local long_enter, long_enter_callback = menu_long_enter(k, true)
+            local normal_enter, normal_enter_callback = menu_enter(k, true)
+            if long_enter then
+              if not on_select(cursor, true) then
+                long_enter_callback()
+              end
+            elseif normal_enter and (not cursor.can_super_select or menu_pressing_enter(k) < super_selection_enable_ratio) then
+              if not on_select(cursor, false) then
+                normal_enter_callback()
+              end
+            elseif menu_escape(k) then
+              if cursor.state.cursor == "__Leave" then
+                on_quit()
+              end
+              cursor.selected = false
+              cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Leave"])
+              cursor.can_super_select = false
             end
-            cursor.selected = false
-            cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Leave"])
-            cursor.can_super_select = false
           end
           if cursor.state ~= nil then
             cursor.state.cursor = map[current_page][cursor.position[1]][cursor.position[2]]

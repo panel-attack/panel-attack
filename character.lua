@@ -98,7 +98,9 @@ end
 function Character.play_selection_sfx(self)
   if not SFX_mute and #self.sounds.selections ~= 0 then
     self.sounds.selections[math.random(#self.sounds.selections)]:play()
+    return true
   end
+  return false
 end
 
 function Character.preload(self)

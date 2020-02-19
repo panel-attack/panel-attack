@@ -150,7 +150,8 @@ end
 local function menu_key_func(fixed, configurable, query, sound, ...)
   sound = sound or nil
   local other_args = ...
-  return function(k)
+  return function(k, silent)
+    silent = silent or false
     local res = false
     if multi then
       for i=1,#configurable do
@@ -166,10 +167,15 @@ local function menu_key_func(fixed, configurable, query, sound, ...)
             not menu_reserved_keys[keyname]
       end
     end
-    if res and sound ~= nil then
-      play_optional_sfx(sound())
+    local sfx_callback = function()
+      if sound ~= nil then
+        play_optional_sfx(sound())
+      end
     end
-    return res
+    if res and not silent then
+      sfx_callback()
+    end
+    return res, sfx_callback
   end
 end
 
