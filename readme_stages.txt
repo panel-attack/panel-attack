@@ -36,7 +36,7 @@ e.g. "mystage_myname"
 - "background": background for your stage, to be displayed while playing, should be 1280x720 px
 - "thumbnail": thumbnail, to be displayed in the select screen, should be 80x45 px
 
-~~ [.mp3, .ogg, .it] optional sounds are in parenthesis ~~
+~~ [.mp3, .ogg, .wav, .it, .flac] optional sounds are in parenthesis ~~
 
 - "normal_music": music that will be played while playing on this stage if the option use_music_from's value is stage
 - ("danger_music"): music that will be used when a player is in danger (top of the screen) if the option use_music_from's value is stage

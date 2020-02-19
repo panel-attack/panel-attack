@@ -32,7 +32,7 @@ Note: non-optional data that are missing will automatically get replaced by defa
 - "frame", "wall": layout ingame
 - "random_stage", "random_character": thumbnail and icon for random stage and random character
 
-~~ [.mp3, .ogg, .it] optional sounds are in parenthesis ~~
+~~ [.mp3, .ogg, .wav, .it, .flac] optional sounds are in parenthesis ~~
 
 - "countdown", "go", "move", "swap", "land", "game_over": game sfx
 - "fanfare1", "fanfare2", "fanfare3": fanfare

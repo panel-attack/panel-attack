@@ -31,7 +31,7 @@ Note: providing a specific, long enough id is a very good idea so that people re
 - "topleft", "botleft", "topright", "botright", "top", "bot", "left", "right", "face", "pop", "doubleface", "filler1", "filler2", "flash": assets for garbages
 - "portrait", "icon": display of your character ingame and in the lobby
 
-~~ [.mp3, .ogg, .it] optional sounds are in parenthesis ~~
+~~ [.mp3, .ogg, .it, .wav, .flac] optional sounds are in parenthesis ~~
 
 - "combo" (,"combo2", "combo3"...): combo [selected at random if more than one]
 - ("combo_echo", ("combo_echo2", "combo_echo3"...)): xix metal blocks combo  [selected at random if more than one]
