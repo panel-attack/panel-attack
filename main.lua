@@ -71,6 +71,11 @@ function love.draw()
   -- end
   -- main_font:setLineHeight(0.66)
   -- love.graphics.setFont(main_font)
+  if foreground_overlay then
+    local scale = canvas_width/math.max(foreground_overlay:getWidth(),foreground_overlay:getHeight()) -- keep image ratio
+    menu_drawf(foreground_overlay, canvas_width/2, canvas_height/2, "center", "center", 0, scale, scale )
+  end
+
   love.graphics.setBlendMode("alpha", "alphamultiply")
   love.graphics.setCanvas(global_canvas)
   love.graphics.setBackgroundColor(unpack(global_background_color))
@@ -89,6 +94,12 @@ function love.draw()
   x, y, w, h = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 16, 9)
   love.graphics.setBlendMode("alpha","premultiplied")
   love.graphics.draw(global_canvas, x, y, 0, w / canvas_width, h / canvas_height)
-  local scale = canvas_width/math.max(bg:getWidth(),bg:getHeight()) -- keep image ratio
-  menu_drawf(bg, canvas_width/2, canvas_height/2, "center", "center", 0, scale, scale )
+
+  -- draw background and its overlay
+  local scale = canvas_width/math.max(background:getWidth(),background:getHeight()) -- keep image ratio
+  menu_drawf(background, canvas_width/2, canvas_height/2, "center", "center", 0, scale, scale )
+  if background_overlay then
+    local scale = canvas_width/math.max(background_overlay:getWidth(),background_overlay:getHeight()) -- keep image ratio
+    menu_drawf(background_overlay, canvas_width/2, canvas_height/2, "center", "center", 0, scale, scale )
+  end
 end

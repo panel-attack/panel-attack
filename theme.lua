@@ -17,13 +17,16 @@ Theme = class(function(self)
     self.musics = {}
   end)
 
-bg = load_theme_img("background/main")
+background = load_theme_img("background/main")
 
 function Theme.graphics_init(self)
   self.images = {}
   self.images.bg_main = load_theme_img("background/main")
   self.images.bg_select_screen = load_theme_img("background/select_screen")
   self.images.bg_readme = load_theme_img("background/readme")
+
+  self.images.bg_overlay = load_theme_img("background/bg_overlay")
+  self.images.fg_overlay = load_theme_img("background/fg_overlay")
 
   self.images.pause = load_theme_img("pause")
 

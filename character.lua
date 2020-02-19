@@ -165,7 +165,7 @@ function characters_init()
   local amount_of_characters = add_characters_from_dir_rec("characters")
 
   if amount_of_characters == 0 then
-    recursive_copy("default_characters", "characters")
+    recursive_copy("default_data/characters", "characters")
     add_characters_from_dir_rec("characters")
   end
 

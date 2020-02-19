@@ -5,7 +5,8 @@ local wait = coroutine.yield
 local memory_before_options_menu = nil
 
 local function main_show_custom_themes_readme(idx)
-  bg = themes[config.theme].images.bg_readme
+  background = themes[config.theme].images.bg_readme
+  reset_filters()
 
   if not love.filesystem.getInfo("themes/"..prefix_of_ignored_dirs..default_theme_dir) then
     print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
@@ -32,14 +33,16 @@ local function main_show_custom_themes_readme(idx)
 end
 
 local function main_show_custom_stages_readme(idx)
-  bg = themes[config.theme].images.bg_readme
+  background = themes[config.theme].images.bg_readme
+  reset_filters()
 
-  for _,stage in ipairs(default_stages_folders) do
+  local default_stages_list = love.filesystem.getDirectoryItems("default_data/stages")
+  for _,stage in ipairs(default_stages_list) do
     if not love.filesystem.getInfo("stages/"..prefix_of_ignored_dirs..stage) then
       print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
       gprint(loc("op_copy_files"), 280, 280)
       wait()
-      recursive_copy("stages/"..stage, "stages/"..prefix_of_ignored_dirs..stage)
+      recursive_copy("default_data/stages/"..stage, "stages/"..prefix_of_ignored_dirs..stage)
     end
   end
 
@@ -61,14 +64,16 @@ local function main_show_custom_stages_readme(idx)
 end
 
 local function main_show_custom_characters_readme(idx)
-  bg = themes[config.theme].images.bg_readme
-  
-  for _,current_character in ipairs(default_characters_folders) do
+  background = themes[config.theme].images.bg_readme
+  reset_filters()
+
+  local default_characters_list = love.filesystem.getDirectoryItems("default_data/characters")
+  for _,current_character in ipairs(default_characters_list) do
     if not love.filesystem.getInfo("characters/"..prefix_of_ignored_dirs..current_character) then
       print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
       gprint(loc("op_copy_files"), 280, 280)
       wait()
-      recursive_copy("default_characters/"..current_character, "characters/"..prefix_of_ignored_dirs..current_character)
+      recursive_copy("default_data/characters/"..current_character, "characters/"..prefix_of_ignored_dirs..current_character)
     end
   end
 
@@ -90,7 +95,8 @@ local function main_show_custom_characters_readme(idx)
 end
 
 local function main_show_custom_panels_readme(idx)
-  bg = themes[config.theme].images.bg_readme
+  background = themes[config.theme].images.bg_readme
+  reset_filters()
 
  -- add other defaults panels sets here so that anyone can update them if wanted
   local default_panels_dirs = { default_panels_dir, "pdp_ta" }
@@ -168,7 +174,9 @@ local function exit_options_menu()
 end
 
 function options.main(starting_idx)
-  bg = themes[config.theme].images.bg_main
+  background = themes[config.theme].images.bg_main
+  reset_filters()
+
   local items, active_idx = {}, starting_idx or 1
   local k = K[1]
   local selected, deselected_this_frame, adjust_active_value = false, false, false

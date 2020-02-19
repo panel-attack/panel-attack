@@ -91,6 +91,7 @@ function Stage.unload(self)
 end
 
 local function add_stages_from_dir_rec(path)
+  local amount_stages = 0
   local lfs = love.filesystem
   local raw_dir_list = lfs.getDirectoryItems(path)
   for i,v in ipairs(raw_dir_list) do
@@ -99,7 +100,7 @@ local function add_stages_from_dir_rec(path)
       local current_path = path.."/"..v
       if lfs.getInfo(current_path) and lfs.getInfo(current_path).type == "directory" then
         -- call recursively: facade folder
-        add_stages_from_dir_rec(current_path)
+        amount_stages = amount_stages + add_stages_from_dir_rec(current_path)
 
         -- init stage: 'real' folder
         local stage = Stage(current_path,v)
@@ -111,12 +112,14 @@ local function add_stages_from_dir_rec(path)
           else
             stages[stage.id] = stage
             stages_ids[#stages_ids+1] = stage.id
+            amount_stages = amount_stages + 1
             -- print(current_path.." has been added to the stage list!")
           end
         end
       end
     end
   end
+  return amount_stages
 end
 
 function stages_init()
@@ -125,7 +128,12 @@ function stages_init()
   stages_ids_for_current_theme = {} -- holds stages ids for the current theme, those stages will appear in the selection
   default_stage = nil
 
-  add_stages_from_dir_rec("stages")
+  local amount_stages = add_stages_from_dir_rec("stages")
+
+  if amount_stages == 0 then
+    recursive_copy("default_data/stages", "stages")
+    add_stages_from_dir_rec("stages")
+  end
 
   if love.filesystem.getInfo("themes/"..config.theme.."/stages.txt") then
     for line in love.filesystem.lines("themes/"..config.theme.."/stages.txt") do
