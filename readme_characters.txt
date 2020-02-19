@@ -31,13 +31,14 @@ Note: providing a specific, long enough id is a very good idea so that people re
 - "topleft", "botleft", "topright", "botright", "top", "bot", "left", "right", "face", "pop", "doubleface", "filler1", "filler2", "flash": assets for garbages
 - "portrait", "icon": display of your character ingame and in the lobby
 
-~~ [.mp3, .ogg, .it, .wav, .flac] optional sounds are in parenthesis ~~
+~~ [.mp3, .ogg, .wav, .it, .flac] optional sounds are in parenthesis ~~
 
 - "combo" (,"combo2", "combo3"...): combo [selected at random if more than one]
 - ("combo_echo", ("combo_echo2", "combo_echo3"...)): xix metal blocks combo  [selected at random if more than one]
 - Chain: depending on the current chain length, the appopriate sound file will be played:
     x2/3 plays "chain",  x4 plays "chain2", x5 plays "chain_echo", x6+ plays "chain2_echo"
 - ("garbage_match" (,"garbage_match2", "garbage_match3"...)): played when clearing garbage [selected at random if more than one]
+- ("garbage_land" (,"garbage_land2", "garbage_land3"...)): played when garbage lands on your side [selected at random if more than one]
 - ("selection", ("selection2", "selection3"...)): upon selection [selected at random if more than one]
 - ("win"(, "win2", "win3"...)): upon winning in 2P [selected at random if more than one]
 - ("taunt_up"(, "taunt_up2", "taunt_up3"...)), ("taunt_down"(, "taunt_down2", "taunt_down3"...)): upon taunting with either inputs [selected at random if more than one]
