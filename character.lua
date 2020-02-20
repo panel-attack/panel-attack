@@ -12,7 +12,7 @@ local defaulted_images = { icon=true, topleft=true, botleft=true, topright=true,
                   doubleface=true, filler1=true, filler2=true, flash=true,
                   portrait=true } -- those images will be defaulted if missing
 local basic_sfx = {"selection"}
-local other_sfx = {"chain", "combo", "combo_echo", "chain_echo", "chain2" ,"chain2_echo", "garbage_match", "win", "taunt_up", "taunt_down"}
+local other_sfx = {"chain", "combo", "combo_echo", "chain_echo", "chain2" ,"chain2_echo", "garbage_match", "garbage_land", "win", "taunt_up", "taunt_down"}
 local defaulted_sfxs = {} -- those sfxs will be defaulted if missing
 local basic_musics = {}
 local other_musics = {"normal_music", "danger_music", "normal_music_start", "danger_music_start"}
@@ -27,7 +27,7 @@ Character = class(function(self, full_path, folder_name)
     self.stage = nil -- string | stage that get selected upon doing the super selection of that character
     self.panels = nil -- string | panels that get selected upon doing the super selection of that character
     self.images = {}
-    self.sounds = { combos = {}, combo_echos = {}, selections = {}, wins = {}, garbage_matches = {}, taunt_ups = {}, taunt_downs = {}, others = {} }
+    self.sounds = { combos = {}, combo_echos = {}, selections = {}, wins = {}, garbage_matches = {}, garbage_lands = {}, taunt_ups = {}, taunt_downs = {}, others = {} }
     self.musics = {}
     self.fully_loaded = false
   end)
@@ -98,7 +98,9 @@ end
 function Character.play_selection_sfx(self)
   if not SFX_mute and #self.sounds.selections ~= 0 then
     self.sounds.selections[math.random(#self.sounds.selections)]:play()
+    return true
   end
+  return false
 end
 
 function Character.preload(self)
@@ -298,7 +300,8 @@ function Character.sound_init(self,full,yields)
     if yields then coroutine.yield() end
     self:init_sfx_variants(self.sounds.garbage_matches, "garbage_match")
     if yields then coroutine.yield() end
-    -- those two are maxed at 10 since this is a server requirement
+    self:init_sfx_variants(self.sounds.garbage_lands, "garbage_land")
+    if yields then coroutine.yield() end
     self:init_sfx_variants(self.sounds.taunt_downs, "taunt_down")
     if yields then coroutine.yield() end
     self:init_sfx_variants(self.sounds.taunt_ups, "taunt_up")
@@ -336,6 +339,7 @@ function Character.sound_uninit(self)
   self.sounds.combo_echos = {}
   self.sounds.wins = {}
   self.sounds.garbage_matches = {}
+  self.sounds.garbage_lands = {}
 
   -- music
   for _,music in ipairs(other_musics) do

@@ -467,7 +467,7 @@ function select_screen.main()
     local function draw_levels(cursor_data,player_number,y_padding)
       local level_max_width = 0.2*button_height
       local level_width = math.min(level_max_width,themes[config.theme].images.IMG_levels[1]:getWidth())
-      local padding_x = 0.5*button_width-5*level_width
+      local padding_x = math.floor(0.5*button_width-5.5*level_width)
       local is_selected = cursor_data.selected and cursor_data.state.cursor == "__Level"
       if is_selected then
         padding_x = padding_x-level_width
@@ -480,6 +480,8 @@ function select_screen.main()
         padding_x = padding_x + level_width
       end
       for i=1,#level_to_starting_speed do --which should equal the number of levels in the game
+        local additional_padding = math.floor(0.5*(themes[config.theme].images.IMG_levels[i]:getWidth()-level_width))
+        padding_x = padding_x + additional_padding
         local use_unfocus = cursor_data.state.level < i
         if use_unfocus then
           menu_drawf(themes[config.theme].images.IMG_levels_unfocus[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, level_scale, level_scale )
@@ -489,7 +491,7 @@ function select_screen.main()
         if i == cursor_data.state.level then
           menu_drawf(themes[config.theme].images.IMG_level_cursor, render_x+padding_x, render_y+y_padding+themes[config.theme].images.IMG_levels[i]:getHeight()*0.5, "center", "top", 0, level_scale, level_scale )
         end
-        padding_x = padding_x + level_width
+        padding_x = padding_x + level_width + additional_padding
       end
       if is_selected then
         gprintf(">", render_x+padding_x-0.5*level_width, render_y+y_padding-0.5*text_height,level_width,"center")
@@ -950,6 +952,7 @@ function select_screen.main()
     end 
 
     local function on_select(cursor,super)
+      local noisy = false
       local selectable = {__Stage=true, __Panels=true, __Level=true, __Ready=true}
       if selectable[cursor.state.cursor] then
         if cursor.selected and cursor.state.cursor == "__Stage" then
@@ -974,7 +977,7 @@ function select_screen.main()
         cursor.state.character = cursor.state.cursor
         cursor.state.character_display_name = characters[cursor.state.character].display_name
         local character = characters[cursor.state.character]
-        character:play_selection_sfx()
+        noisy = character:play_selection_sfx()
         character_loader_load(cursor.state.character)
         if super then
           if character.stage then
@@ -991,6 +994,7 @@ function select_screen.main()
         cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"])
         cursor.can_super_select = false
       end
+      return noisy
     end
 
     variable_step(function()
@@ -1039,17 +1043,26 @@ function select_screen.main()
               end
             end
             if not cursor.selected then move_cursor(cursor,right) end
-          elseif menu_long_enter(k) then
-            on_select(cursor, true)
-          elseif menu_enter(k) and (not cursor.can_super_select or menu_pressing_enter(k) < super_selection_enable_ratio) then
-            on_select(cursor, false)
-          elseif menu_escape(k) then
-            if cursor.state.cursor == "__Leave" then
-              on_quit()
+          else
+            -- code below is bit hard to read: basically we are storing the default sfx callbacks until it's needed (or not!) based on the on_select method
+            local long_enter, long_enter_callback = menu_long_enter(k, true)
+            local normal_enter, normal_enter_callback = menu_enter(k, true)
+            if long_enter then
+              if not on_select(cursor, true) then
+                long_enter_callback()
+              end
+            elseif normal_enter and (not cursor.can_super_select or menu_pressing_enter(k) < super_selection_enable_ratio) then
+              if not on_select(cursor, false) then
+                normal_enter_callback()
+              end
+            elseif menu_escape(k) then
+              if cursor.state.cursor == "__Leave" then
+                on_quit()
+              end
+              cursor.selected = false
+              cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Leave"])
+              cursor.can_super_select = false
             end
-            cursor.selected = false
-            cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Leave"])
-            cursor.can_super_select = false
           end
           if cursor.state ~= nil then
             cursor.state.cursor = map[current_page][cursor.position[1]][cursor.position[2]]

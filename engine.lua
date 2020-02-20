@@ -172,6 +172,8 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     s.lastPopIndexPlayed = s.lastPopIndexPlayed or 1
     s.combo_chain_play = nil
     s.game_over = false
+    s.sfx_land = false
+    s.sfx_garbage_thud = 0
 
     s.card_q = Queue()
 
@@ -952,8 +954,8 @@ function Stack.PdP(self)
           if panel.shake_time and panel.state == "normal" then
             if row <= self.height then
               if panel.height > 3 then
-                SFX_GarbageThud_Play = 3
-              else SFX_GarbageThud_Play = panel.height
+                self.sfx_garbage_thud = 3
+              else self.sfx_garbage_thud = panel.height
               end
               shake_time = max(shake_time, panel.shake_time, self.peak_shake_time or 0)
               --a smaller garbage block landing should renew the largest of the previous blocks' shake times since our shake time was last zero.
@@ -978,7 +980,7 @@ function Stack.PdP(self)
         if row == 1 then
           panel.state = "landing"
           panel.timer = 12
-          SFX_Land_Play=1;
+          self.sfx_land = true
           
         -- if there's a panel below, this panel's gonna land
         -- unless the panel below is falling.
@@ -993,7 +995,7 @@ function Stack.PdP(self)
             panel.state = "landing"
             panel.timer = 12
           end
-          SFX_Land_Play=1;
+          self.sfx_land = true
         else
           panels[row-1][col], panels[row][col] =
             panels[row][col], panels[row-1][col]
@@ -1426,10 +1428,10 @@ function Stack.PdP(self)
         end
         SFX_Cur_Move_Play=0
     end
-    if SFX_Land_Play == 1 then
-        themes[config.theme].sounds.land:stop()
-        themes[config.theme].sounds.land:play()
-        SFX_Land_Play=0
+    if self.sfx_land then
+      themes[config.theme].sounds.land:stop()
+      themes[config.theme].sounds.land:play()
+      self.sfx_land = false
     end
     if SFX_Countdown_Play == 1 then
         if self.which == 1 then
@@ -1483,7 +1485,7 @@ function Stack.PdP(self)
         themes[config.theme].sounds.fanfare1:play()
     end
     SFX_Fanfare_Play=0
-    if SFX_GarbageThud_Play >= 1 and SFX_GarbageThud_Play <= 3 then
+    if self.sfx_garbage_thud >= 1 and self.sfx_garbage_thud <= 3 then
         local interrupted_thud = nil
         for i=1,3 do
             if themes[config.theme].sounds.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
@@ -1491,11 +1493,18 @@ function Stack.PdP(self)
                 interrupted_thud = i
             end
         end
-        if interrupted_thud and interrupted_thud > SFX_GarbageThud_Play then
-            themes[config.theme].sounds.garbage_thud[interrupted_thud]:play()
-        else themes[config.theme].sounds.garbage_thud[SFX_GarbageThud_Play]:play()
+        if interrupted_thud and interrupted_thud > self.sfx_garbage_thud then
+          themes[config.theme].sounds.garbage_thud[interrupted_thud]:play()
+        else 
+          themes[config.theme].sounds.garbage_thud[self.sfx_garbage_thud]:play()
         end
-        SFX_GarbageThud_Play = 0
+        if #characters[self.character].sounds.garbage_lands ~= 0 and interrupted_thud == nil then
+          for _,v in pairs(characters[self.character].sounds.garbage_lands) do
+            v:stop()
+          end
+          characters[self.character].sounds.garbage_lands[math.random(#characters[self.character].sounds.garbage_lands)]:play()
+        end
+        self.sfx_garbage_thud = 0
     end
     if SFX_Pop_Play or SFX_Garbage_Pop_Play then
         local popLevel = min(max(self.chain_counter,1),4)
@@ -2033,7 +2042,7 @@ function Stack.check_matches(self)
       elseif combo_size > 3 then
         self.combo_chain_play = { characters[self.character].sounds.combos, math.random(#characters[self.character].sounds.combos) }
       end
-      SFX_Land_Play=0
+      self.sfx_land = false
     end
     --if garbage_size > 0 then
       self.pre_stop_time = max(self.pre_stop_time, pre_stop_time)

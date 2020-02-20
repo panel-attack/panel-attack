@@ -1,4 +1,4 @@
-local supported_sound_formats = { ".mp3",".ogg", ".it" }
+local supported_sound_formats = { ".mp3", ".ogg", ".wav", ".it", ".flac" }
 
 --sets the volume of a single source or table of sources
 function set_volume(source, new_volume)
