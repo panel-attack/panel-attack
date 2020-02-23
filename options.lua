@@ -217,6 +217,9 @@ function options.main(starting_idx)
       local stage_id = config.stage
       if stage_id == random_stage_special_value then
         stage_id = uniformly(stages_ids_for_current_theme)
+        if stages[stage_id]:is_bundle() then -- may pick a bundle
+          stage_id = uniformly(stages[stage_id].sub_stages)
+        end
       end
       stage_loader_load(stage_id)
       stage_loader_wait()

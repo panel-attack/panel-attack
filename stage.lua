@@ -129,7 +129,7 @@ local function fill_stages_ids()
       local copy_of_sub_stages = shallowcpy(stage.sub_stages)
       stage.sub_stages = {}
       for _,sub_stage in ipairs(copy_of_sub_stages) do
-        if stages[sub_stage] then
+        if stages[sub_stage] and #stages[sub_stage].sub_stages == 0 then -- inner bundles are prohibited
           stage.sub_stages[#stage.sub_stages+1] = sub_stage
           print(stage.id.." has "..sub_stage.." as part of its substages.")
         end

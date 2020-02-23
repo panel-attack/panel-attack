@@ -63,6 +63,19 @@ function refresh_based_on_own_mods(refreshed,ask_change_fallback)
   end
 end
 
+local function resolve_stage_random(state)
+  if state.stage_is_random ~= nil then
+    if state.stage_is_random == random_stage_special_value then
+      state.stage = uniformly(stages_ids_for_current_theme)
+      if stages[state.stage]:is_bundle() then
+        state.stage = uniformly(stages[state.stage].sub_stages)
+      end
+    else
+      state.stage = uniformly(stages[state.stage_is_random].sub_stages)
+    end
+  end
+end
+
 function select_screen.main()
   if themes[config.theme].musics.select_screen then
     stop_the_music()
@@ -271,7 +284,7 @@ function select_screen.main()
     cursor_data[1].state = shallowcpy(global_my_state)
     global_my_state = nil
   else
-    cursor_data[1].state = {stage=config.stage, stage_is_random=config.stage==random_stage_special_value, character=config.character, character_is_random=config.character==random_character_special_value, level=config.level, panels_dir=config.panels, cursor="__Ready", ready=false, ranked=config.ranked}
+    cursor_data[1].state = {stage=config.stage, stage_is_random=( (config.stage==random_stage_special_value or stages[config.stage]:is_bundle()) and config.stage or nil ), character=config.character, character_is_random=config.character==random_character_special_value, level=config.level, panels_dir=config.panels, cursor="__Ready", ready=false, ranked=config.ranked}
   end
 
   if cursor_data[1].state.character_is_random then
@@ -279,9 +292,7 @@ function select_screen.main()
     character_loader_load(cursor_data[1].state.character)
   end
   cursor_data[1].state.character_display_name = characters[cursor_data[1].state.character].display_name
-  if cursor_data[1].state.stage_is_random then
-    cursor_data[1].state.stage = uniformly(stages_ids_for_current_theme)
-  end
+  resolve_stage_random(cursor_data[1].state)
 
   stage_loader_load(cursor_data[1].state.stage)
   add_client_data(cursor_data[1].state)
@@ -296,24 +307,20 @@ function select_screen.main()
           cursor_data[2].state.character = uniformly(characters_ids_for_current_theme)
         end
         cursor_data[2].state.character_display_name = characters[cursor_data[2].state.character].display_name
-        if cursor_data[2].state.stage_is_random then
-          cursor_data[2].state.stage = uniformly(stages_ids_for_current_theme)
-        end
+        resolve_stage_random(cursor_data[2].state)
       end
     else
-      cursor_data[2].state = {stage=config.stage, stage_is_random=config.stage==random_stage_special_value, character=config.character, character_is_random=config.character==random_character_special_value, level=config.level, panels_dir=config.panels, cursor="__Ready", ready=false, ranked=false}
+      cursor_data[2].state = {stage=config.stage, stage_is_random=( (config.stage==random_stage_special_value or stages[config.stage]:is_bundle()) and config.stage or nil ), character=config.character, character_is_random=config.character==random_character_special_value, level=config.level, panels_dir=config.panels, cursor="__Ready", ready=false, ranked=false}
       if cursor_data[2].state.character_is_random then
         cursor_data[2].state.character = uniformly(characters_ids_for_current_theme)
       end
       cursor_data[2].state.character_display_name = characters[cursor_data[2].state.character].display_name
-      if cursor_data[2].state.stage_is_random then
-        cursor_data[2].state.stage = uniformly(stages_ids_for_current_theme)
-      end
+      resolve_stage_random(cursor_data[2].state)
     end
     if cursor_data[2].state.character ~= random_character_special_value then -- while playing online, we'll wait for them to send us the new pick
       character_loader_load(cursor_data[2].state.character)
     end
-    if cursor_data[2].state.stage ~= random_stage_special_value then -- while playing online, we'll wait for them to send us the new pick
+    if cursor_data[2].state.stage ~= random_stage_special_value and not stages[cursor_data[2].state.stage]:is_bundle() then -- while playing online, we'll wait for them to send us the new pick
       stage_loader_load(cursor_data[2].state.stage)
     end
     add_client_data(cursor_data[2].state)
@@ -526,12 +533,12 @@ function select_screen.main()
       grectangle("line", render_x+padding_x, math.floor(render_y+y_padding-stage_dimensions[2]*0.5), stage_dimensions[1], stage_dimensions[2])
         
       -- thumbnail or composed thumbnail (for bundles without thumbnails)
-      if cursor_data.state.stage_is_random or stages[cursor_data.state.stage].images.thumbnail then
-        local thumbnail = cursor_data.state.stage_is_random and themes[config.theme].images.IMG_random_stage or stages[cursor_data.state.stage].images.thumbnail
+      if cursor_data.state.stage_is_random == random_stage_special_value or ( not cursor_data.state.stage_is_random and stages[cursor_data.state.stage].images.thumbnail ) then
+        local thumbnail = cursor_data.state.stage_is_random == random_stage_special_value and themes[config.theme].images.IMG_random_stage or stages[cursor_data.state.stage].images.thumbnail
         menu_drawf(thumbnail, render_x+padding_x, render_y+y_padding-1, "left", "center", 0, stage_dimensions[1]/thumbnail:getWidth(), stage_dimensions[2]/thumbnail:getHeight() )
-      elseif stages[cursor_data.state.stage]:is_bundle() then
+      elseif cursor_data.state.stage_is_random and stages[cursor_data.state.stage_is_random]:is_bundle() then
         local half_stage_dimensions = { math.floor(stage_dimensions[1]*0.5), math.floor(stage_dimensions[2]*0.5) }
-        local sub_stages = stages[cursor_data.state.stage].sub_stages
+        local sub_stages = stages[cursor_data.state.stage_is_random].sub_stages
         local sub_stages_count = math.min(4, #sub_stages) -- between 2 and 4 (inclusive), by design
 
         local thumbnail_1 = stages[sub_stages[1]].images.thumbnail
@@ -559,7 +566,14 @@ function select_screen.main()
         or { math.floor(render_x+padding_x-10), math.floor(render_y+y_padding-stage_dimensions[2]*0.25) }
       menu_drawf(themes[config.theme].images.IMG_players[player_number], player_icon_pos[1], player_icon_pos[2], "center", "center" )
       -- display name
-      local display_name = cursor_data.state.stage_is_random and loc("random") or stages[cursor_data.state.stage].display_name
+      local display_name = nil
+      if cursor_data.state.stage_is_random == random_stage_special_value then
+        display_name = loc("random")
+      elseif cursor_data.state.stage_is_random then
+        display_name = stages[cursor_data.state.stage_is_random].display_name
+      else
+        display_name = stages[cursor_data.state.stage].display_name
+      end
       gprintf(display_name, render_x+padding_x, math.floor(render_y+y_padding+stage_dimensions[2]*0.5),stage_dimensions[1],"center",nil,1,small_font)
 
       padding_x = padding_x+stage_dimensions[1]
@@ -935,15 +949,16 @@ function select_screen.main()
     end
 
     local function change_stage(state,increment)
-      -- random_stage_special_value is placed at the end and is 'replaced' by a random pick and stage_is_random=true
+      -- random_stage_special_value is placed at the end of the list and is 'replaced' by a random pick and stage_is_random=true
       local current = nil
       for k,v in ipairs(stages_ids_for_current_theme) do
-        if v == state.stage then
+        if ( not state.stage_is_random and v == state.stage ) 
+        or ( state.stage_is_random and v == state.stage_is_random ) then
           current = k
           break
         end
       end
-      if state.stage == random_stage_special_value or state.stage_is_random then
+      if state.stage == nil or state.stage_is_random == random_stage_special_value then
         current = #stages_ids_for_current_theme+1
       end
       if current == nil then -- stage belonged to another set of stages, it's no more in the list
@@ -952,12 +967,22 @@ function select_screen.main()
       local dir_count = #stages_ids_for_current_theme + 1
       local new_stage_idx = ((current - 1 + increment) % dir_count) + 1
       if new_stage_idx <= #stages_ids_for_current_theme then
-        state.stage_is_random = false
-        state.stage = stages_ids_for_current_theme[new_stage_idx]
+        local new_stage = stages_ids_for_current_theme[new_stage_idx]
+        if stages[new_stage]:is_bundle() then
+          state.stage_is_random = new_stage
+          state.stage = uniformly(stages[new_stage].sub_stages) 
+        else
+          state.stage_is_random = nil
+          state.stage = new_stage
+        end
       else
-        state.stage_is_random = true
+        state.stage_is_random = random_stage_special_value
         state.stage = uniformly(stages_ids_for_current_theme)
+        if stages[state.stage]:is_bundle() then -- may pick a bundle!
+          state.stage = uniformly(stages[state.stage].sub_stages)
+        end
       end
+      print("stage and stage_is_random: "..state.stage.." / "..(state.stage_is_random or "nil"))
     end
 
     local function on_quit()
@@ -1093,14 +1118,14 @@ function select_screen.main()
         end
         -- update config, does not redefine it
         config.character = cursor_data[1].state.character_is_random and random_character_special_value or cursor_data[1].state.character
-        config.stage = cursor_data[1].state.stage_is_random and random_stage_special_value or cursor_data[1].state.stage
+        config.stage = cursor_data[1].state.stage_is_random and cursor_data[1].state.stage_is_random or cursor_data[1].state.stage
         config.level = cursor_data[1].state.level
         config.ranked = cursor_data[1].state.ranked
         config.panels = cursor_data[1].state.panels_dir
 
         if select_screen.character_select_mode == "2p_local_vs" then -- this is registered for future entering of the lobby
           global_op_state = shallowcpy(cursor_data[2].state)
-          global_op_state.stage = global_op_state.stage_is_random and random_stage_special_value or global_op_state.stage
+          global_op_state.stage = global_op_state.stage_is_random and global_op_state.stage_is_random or global_op_state.stage
           global_op_state.wants_ready = false
         end
 
