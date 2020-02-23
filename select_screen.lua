@@ -522,15 +522,37 @@ function select_screen.main()
           or { math.floor(render_x+padding_x-13), math.floor(render_y+y_padding+0.25*text_height) }
         gprintf("<", arrow_pos[1], arrow_pos[2],10,"center")
       end
-
-      local thumbnail = cursor_data.state.stage_is_random and themes[config.theme].images.IMG_random_stage or stages[cursor_data.state.stage].images.thumbnail
-      local scale_x = stage_dimensions[1]/thumbnail:getWidth()
-      local scale_y = stage_dimensions[2]/thumbnail:getHeight()
-
       -- background for thumbnail
       grectangle("line", render_x+padding_x, math.floor(render_y+y_padding-stage_dimensions[2]*0.5), stage_dimensions[1], stage_dimensions[2])
-      -- thumbnail
-      menu_drawf(thumbnail, render_x+padding_x, render_y+y_padding-1, "left", "center", 0, scale_x, scale_y )
+        
+      -- thumbnail or composed thumbnail (for bundles without thumbnails)
+      if cursor_data.state.stage_is_random or stages[cursor_data.state.stage].images.thumbnail then
+        local thumbnail = cursor_data.state.stage_is_random and themes[config.theme].images.IMG_random_stage or stages[cursor_data.state.stage].images.thumbnail
+        menu_drawf(thumbnail, render_x+padding_x, render_y+y_padding-1, "left", "center", 0, stage_dimensions[1]/thumbnail:getWidth(), stage_dimensions[2]/thumbnail:getHeight() )
+      elseif stages[cursor_data.state.stage]:is_bundle() then
+        local half_stage_dimensions = { math.floor(stage_dimensions[1]*0.5), math.floor(stage_dimensions[2]*0.5) }
+        local sub_stages = stages[cursor_data.state.stage].sub_stages
+        local sub_stages_count = math.min(4, #sub_stages) -- between 2 and 4 (inclusive), by design
+
+        local thumbnail_1 = stages[sub_stages[1]].images.thumbnail
+        local thumb_y_padding = math.floor(half_stage_dimensions[2]*0.5)
+        local thumb_1_and_2_y_padding = sub_stages_count >= 3 and -thumb_y_padding or 0
+        menu_drawf(thumbnail_1, render_x+padding_x, render_y+y_padding-1+thumb_1_and_2_y_padding, "left", "center", 0, half_stage_dimensions[1]/thumbnail_1:getWidth(), half_stage_dimensions[2]/thumbnail_1:getHeight() )
+        
+        local thumbnail_2 = stages[sub_stages[2]].images.thumbnail
+        menu_drawf(thumbnail_2, render_x+padding_x+half_stage_dimensions[1], render_y+y_padding-1+thumb_1_and_2_y_padding, "left", "center", 0, half_stage_dimensions[1]/thumbnail_2:getWidth(), half_stage_dimensions[2]/thumbnail_2:getHeight() )
+
+        if sub_stages_count >= 3 then
+          local thumbnail_3 = stages[sub_stages[3]].images.thumbnail
+          local thumb_3_x_padding = sub_stages_count == 3 and math.floor(half_stage_dimensions[1]*0.5) or 0
+          menu_drawf(thumbnail_3, render_x+padding_x+thumb_3_x_padding, render_y+y_padding-1+thumb_y_padding, "left", "center", 0, half_stage_dimensions[1]/thumbnail_3:getWidth(), half_stage_dimensions[2]/thumbnail_3:getHeight() )
+        end
+        if sub_stages_count == 4 then
+          local thumbnail_4 = stages[sub_stages[4]].images.thumbnail
+          menu_drawf(thumbnail_4, render_x+padding_x+half_stage_dimensions[1], render_y+y_padding-1+thumb_y_padding, "left", "center", 0, half_stage_dimensions[1]/thumbnail_4:getWidth(), half_stage_dimensions[2]/thumbnail_4:getHeight() )
+        end
+      end
+
       -- player image
       local player_icon_pos = select_screen.character_select_mode == "2p_net_vs"
         and { math.floor(render_x+padding_x+stage_dimensions[1]*0.5), math.floor(render_y+y_padding-stage_dimensions[2]*0.5-7) }

@@ -16,6 +16,7 @@ Stage = class(function(s, full_path, folder_name)
     s.path = full_path -- string | path to the stage folder content
     s.id = folder_name -- string | id of the stage, specified in config.json
     s.display_name = s.id -- string | display name of the stage
+    s.sub_stages = {} -- stringS | either empty or with two elements at least; holds the sub stages IDs for bundle stages
     s.images = {}
     s.musics = {}
     s.fully_loaded = false
@@ -33,6 +34,9 @@ function Stage.id_init(self)
 
   if read_data.id then
     self.id = read_data.id
+    if read_data.sub_stages then
+      self.sub_stages = read_data.sub_stages
+    end
     return true
   end
 
@@ -91,7 +95,6 @@ function Stage.unload(self)
 end
 
 local function add_stages_from_dir_rec(path)
-  local amount_stages = 0
   local lfs = love.filesystem
   local raw_dir_list = lfs.getDirectoryItems(path)
   for i,v in ipairs(raw_dir_list) do
@@ -100,7 +103,7 @@ local function add_stages_from_dir_rec(path)
       local current_path = path.."/"..v
       if lfs.getInfo(current_path) and lfs.getInfo(current_path).type == "directory" then
         -- call recursively: facade folder
-        amount_stages = amount_stages + add_stages_from_dir_rec(current_path)
+        add_stages_from_dir_rec(current_path)
 
         -- init stage: 'real' folder
         local stage = Stage(current_path,v)
@@ -111,15 +114,44 @@ local function add_stages_from_dir_rec(path)
             print(current_path.." has been ignored since a stage with this id has already been found")
           else
             stages[stage.id] = stage
-            stages_ids[#stages_ids+1] = stage.id
-            amount_stages = amount_stages + 1
-            -- print(current_path.." has been added to the stage list!")
           end
         end
       end
     end
   end
-  return amount_stages
+end
+
+local function fill_stages_ids()
+  -- check validity of bundle stages
+  local invalid_stages = {}
+  for key,stage in pairs(stages) do
+    if #stage.sub_stages > 0 then -- bundle stage (needs to be filtered if invalid)
+      local copy_of_sub_stages = shallowcpy(stage.sub_stages)
+      stage.sub_stages = {}
+      for _,sub_stage in ipairs(copy_of_sub_stages) do
+        if stages[sub_stage] then
+          stage.sub_stages[#stage.sub_stages+1] = sub_stage
+          print(stage.id.." has "..sub_stage.." as part of its substages.")
+        end
+      end
+
+      if #stage.sub_stages < 2 then
+        invalid_stages[#invalid_stages+1] = key -- stage is invalid
+        print(stage.id.." (bundle) is being ignored since it's invalid!")
+      else
+        stages_ids[#stages_ids+1] = stage.id
+        print(stage.id.." (bundle) has been added to the stage list!")
+      end
+    else -- normal stage
+      stages_ids[#stages_ids+1] = stage.id
+      print(stage.id.." has been added to the stage list!")
+    end
+  end
+
+  -- stages are removed outside of the loop since erasing while iterating isn't working
+  for _,invalid_stage in pairs(invalid_stages) do
+    stages[invalid_stage] = nil
+  end
 end
 
 function stages_init()
@@ -128,11 +160,13 @@ function stages_init()
   stages_ids_for_current_theme = {} -- holds stages ids for the current theme, those stages will appear in the selection
   default_stage = nil
 
-  local amount_stages = add_stages_from_dir_rec("stages")
+  add_stages_from_dir_rec("stages")
+  fill_stages_ids()
 
-  if amount_stages == 0 then
+  if #stages_ids == 0 then
     recursive_copy("default_data/stages", "stages")
     add_stages_from_dir_rec("stages")
+    fill_stages_ids()
   end
 
   if love.filesystem.getInfo("themes/"..config.theme.."/stages.txt") then
@@ -165,11 +199,15 @@ function stages_init()
   end
 end
 
+function Stage.is_bundle(self)
+  return #self.sub_stages > 1
+end
+
 function Stage.graphics_init(self,full,yields)
   local stage_images = full and other_images or basic_images
   for _,image_name in ipairs(stage_images) do
     self.images[image_name] = load_img_from_supported_extensions(self.path.."/"..image_name)
-    if not self.images[image_name] and defaulted_images[image_name] then
+    if not self.images[image_name] and defaulted_images[image_name] and not self:is_bundle() then
       self.images[image_name] = default_stage.images[image_name]
     end
     if yields then coroutine.yield() end
@@ -187,6 +225,9 @@ function Stage.apply_config_volume(self)
 end
 
 function Stage.sound_init(self,full,yields)
+  if self:is_bundle() then
+    return
+  end
   local stage_musics = full and other_musics or basic_musics
   for _, music in ipairs(stage_musics) do
     self.musics[music] = load_sound_from_supported_extensions(self.path.."/"..music, true)
