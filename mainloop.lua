@@ -283,6 +283,9 @@ end
 
 local function pick_random_stage()
   current_stage = uniformly(stages_ids_for_current_theme)
+  if stages[current_stage]:is_bundle() then -- may pick a bundle!
+    current_stage = uniformly(stages[current_stage].sub_stages)
+  end
   use_current_stage()
 end
 

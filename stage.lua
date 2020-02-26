@@ -186,7 +186,7 @@ function stages_init()
 
   -- fix config stage if it's missing
   if not config.stage or ( config.stage ~= random_stage_special_value and not stages[config.stage] ) then
-    config.stage = uniformly(stages_ids_for_current_theme)
+    config.stage = uniformly(stages_ids_for_current_theme) -- it's legal to pick a bundle here, no need to go further
   end
   
   -- actual init for all stages, starting with the default one

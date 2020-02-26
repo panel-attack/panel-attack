@@ -45,6 +45,9 @@ function refresh_based_on_own_mods(refreshed,ask_change_fallback)
     if refreshed.stage == nil or ( refreshed.stage ~= random_stage_special_value and stages[refreshed.stage] == nil ) then
       if not select_screen.fallback_when_missing[1] or ask_change_fallback then
         select_screen.fallback_when_missing[1] = uniformly(stages_ids_for_current_theme)
+        if stages[select_screen.fallback_when_missing[1]]:is_bundle() then -- may pick a bundle!
+          select_screen.fallback_when_missing[1] = uniformly(stages[select_screen.fallback_when_missing[1]].sub_stages)
+        end
       end
       refreshed.stage = select_screen.fallback_when_missing[1]
     end
@@ -533,8 +536,10 @@ function select_screen.main()
       grectangle("line", render_x+padding_x, math.floor(render_y+y_padding-stage_dimensions[2]*0.5), stage_dimensions[1], stage_dimensions[2])
         
       -- thumbnail or composed thumbnail (for bundles without thumbnails)
-      if cursor_data.state.stage_is_random == random_stage_special_value or ( not cursor_data.state.stage_is_random and stages[cursor_data.state.stage].images.thumbnail ) then
-        local thumbnail = cursor_data.state.stage_is_random == random_stage_special_value and themes[config.theme].images.IMG_random_stage or stages[cursor_data.state.stage].images.thumbnail
+      if cursor_data.state.stage_is_random == random_stage_special_value 
+        or ( cursor_data.state.stage_is_random and not stages[cursor_data.state.stage_is_random] ) 
+        or ( not cursor_data.state.stage_is_random and stages[cursor_data.state.stage].images.thumbnail ) then
+        local thumbnail = cursor_data.state.stage_is_random and themes[config.theme].images.IMG_random_stage or stages[cursor_data.state.stage].images.thumbnail
         menu_drawf(thumbnail, render_x+padding_x, render_y+y_padding-1, "left", "center", 0, stage_dimensions[1]/thumbnail:getWidth(), stage_dimensions[2]/thumbnail:getHeight() )
       elseif cursor_data.state.stage_is_random and stages[cursor_data.state.stage_is_random]:is_bundle() then
         local half_stage_dimensions = { math.floor(stage_dimensions[1]*0.5), math.floor(stage_dimensions[2]*0.5) }
@@ -567,7 +572,8 @@ function select_screen.main()
       menu_drawf(themes[config.theme].images.IMG_players[player_number], player_icon_pos[1], player_icon_pos[2], "center", "center" )
       -- display name
       local display_name = nil
-      if cursor_data.state.stage_is_random == random_stage_special_value then
+      if cursor_data.state.stage_is_random == random_stage_special_value 
+        or ( cursor_data.state.stage_is_random and not stages[cursor_data.state.stage_is_random] ) then
         display_name = loc("random")
       elseif cursor_data.state.stage_is_random then
         display_name = stages[cursor_data.state.stage_is_random].display_name
