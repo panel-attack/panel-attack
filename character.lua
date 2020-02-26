@@ -26,6 +26,7 @@ Character = class(function(self, full_path, folder_name)
     self.display_name = self.id -- string | display name of the stage
     self.stage = nil -- string | stage that get selected upon doing the super selection of that character
     self.panels = nil -- string | panels that get selected upon doing the super selection of that character
+    self.sub_characters = {} -- stringS | either empty or with two elements at least; holds the sub characters IDs for bundle characters
     self.images = {}
     self.sounds = { combos = {}, combo_echos = {}, selections = {}, wins = {}, garbage_matches = {}, garbage_lands = {}, taunt_ups = {}, taunt_downs = {}, others = {} }
     self.musics = {}
@@ -44,6 +45,9 @@ function Character.id_init(self)
 
   if read_data.id then
     self.id = read_data.id
+    if read_data.sub_ids then
+      self.sub_characters = read_data.sub_ids
+    end
     return true
   end
 
@@ -68,7 +72,7 @@ function Character.other_data_init(self)
     self.display_name = read_data.name
   end
   -- associated stage
-  if read_data.stage and stages[read_data.stage] then
+  if read_data.stage and stages[read_data.stage] and not stages[read_data.stage]:is_bundle() then
     self.stage = read_data.stage
   end
   -- associated panel
@@ -127,7 +131,6 @@ function Character.unload(self)
 end
 
 local function add_characters_from_dir_rec(path)
-  local amount_of_characters = 0
   local lfs = love.filesystem
   local raw_dir_list = lfs.getDirectoryItems(path)
   for i,v in ipairs(raw_dir_list) do
@@ -136,7 +139,7 @@ local function add_characters_from_dir_rec(path)
       local current_path = path.."/"..v
       if lfs.getInfo(current_path) and lfs.getInfo(current_path).type == "directory" then
         -- call recursively: facade folder
-        amount_of_characters = amount_of_characters + add_characters_from_dir_rec(current_path)
+        add_characters_from_dir_rec(current_path)
 
         -- init stage: 'real' folder
         local character = Character(current_path,v)
@@ -147,15 +150,45 @@ local function add_characters_from_dir_rec(path)
             print(current_path.." has been ignored since a character with this id has already been found")
           else
             characters[character.id] = character
-            characters_ids[#characters_ids+1] = character.id
-            amount_of_characters = amount_of_characters + 1
             -- print(current_path.." has been added to the character list!")
           end
         end
       end
     end
   end
-  return amount_of_characters
+end
+
+local function fill_characters_ids()
+  -- check validity of bundle characters
+  local invalid = {}
+  for key,character in pairs(characters) do
+    if #character.sub_characters > 0 then -- bundle character (needs to be filtered if invalid)
+      local copy_of_sub_characters = shallowcpy(character.sub_characters)
+      character.sub_characters = {}
+      for _,sub_character in ipairs(copy_of_sub_characters) do
+        if characters[sub_character] and #characters[sub_character].sub_characters == 0 then -- inner bundles are prohibited
+          character.sub_characters[#character.sub_characters+1] = sub_character
+          print(character.id.." has "..sub_character.." as part of its subcharacters.")
+        end
+      end
+
+      if #character.sub_characters < 2 then
+        invalid[#invalid+1] = key -- character is invalid
+        print(character.id.." (bundle) is being ignored since it's invalid!")
+      else
+        characters_ids[#characters_ids+1] = character.id
+        print(character.id.." (bundle) has been added to the character list!")
+      end
+    else -- normal character
+      characters_ids[#characters_ids+1] = character.id
+      print(character.id.." has been added to the character list!")
+    end
+  end
+
+  -- characters are removed outside of the loop since erasing while iterating isn't working
+  for _,invalid_character in pairs(invalid) do
+    characters[invalid_character] = nil
+  end
 end
 
 function characters_init()
@@ -164,18 +197,20 @@ function characters_init()
   characters_ids_for_current_theme = {} -- holds characters ids for the current theme, those characters will appear in the lobby
   characters_ids_by_display_names = {} -- holds keys to array of character ids holding that name
 
-  local amount_of_characters = add_characters_from_dir_rec("characters")
+  add_characters_from_dir_rec("characters")
+  fill_characters_ids()
 
-  if amount_of_characters == 0 then
+  if #characters_ids == 0 then
     recursive_copy("default_data/characters", "characters")
     add_characters_from_dir_rec("characters")
+    fill_characters_ids()
   end
 
   if love.filesystem.getInfo("themes/"..config.theme.."/characters.txt") then
     for line in love.filesystem.lines("themes/"..config.theme.."/characters.txt") do
       line = trim(line) -- remove whitespace
       if characters[line] then
-        -- found at least a valid stage in a characters.txt file
+        -- found at least a valid character in a characters.txt file
         characters_ids_for_current_theme[#characters_ids_for_current_theme+1] = line
       end
     end
@@ -212,11 +247,15 @@ function characters_init()
   end
 end
 
+function Character.is_bundle(self)
+  return #self.sub_characters > 1
+end
+
 function Character.graphics_init(self,full,yields)
   local character_images = full and other_images or basic_images
   for _,image_name in ipairs(character_images) do
     self.images[image_name] = load_img_from_supported_extensions(self.path.."/"..image_name)
-    if not self.images[image_name] and defaulted_images[image_name] then
+    if not self.images[image_name] and defaulted_images[image_name] and not self:is_bundle() then
       self.images[image_name] = default_character.images[image_name]
     end
     if yields then coroutine.yield() end
@@ -282,7 +321,7 @@ function Character.sound_init(self,full,yields)
         self.sounds.others[sfx] = load_sound_from_supported_extensions(self.path.."/combo", false)
       end
     end
-    if not self.sounds.others[sfx] and defaulted_sfxs[sfx] then
+    if not self.sounds.others[sfx] and defaulted_sfxs[sfx] and not self:is_bundle() then
       self.sounds.others[sfx] = default_character.sounds.others[sfx] or zero_sound
     end
     if yields then coroutine.yield() end
@@ -291,7 +330,7 @@ function Character.sound_init(self,full,yields)
   if not full then
     self:init_sfx_variants(self.sounds.selections, "selection")
     if yields then coroutine.yield() end
-  else
+  elseif not self:is_bundle() then
     self:init_sfx_variants(self.sounds.combos, "combo")
     if yields then coroutine.yield() end
     self:init_sfx_variants(self.sounds.combo_echos, "combo_echo")
@@ -320,7 +359,7 @@ function Character.sound_init(self,full,yields)
       else
         self.musics[music]:setLooping(false)
       end
-    elseif not self.musics[music] and defaulted_musics[music] then
+    elseif not self.musics[music] and defaulted_musics[music] and not self:is_bundle() then
       self.musics[music] = default_character.musics[music] or zero_sound
     end
 

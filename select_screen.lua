@@ -380,21 +380,50 @@ function select_screen.main()
     elseif valign == "bottom" then
       y_add = math.floor(button_height-text_height)
     end
-    if character then
-      x_add = 0.025*button_width
-      width_for_alignment = 0.95*button_width
-      local icon_to_use = character == random_character_special_value and themes[config.theme].images.IMG_random_character or character.images["icon"]
-      local orig_w, orig_h = icon_to_use:getDimensions()
-      local scale = button_width/math.max(orig_w,orig_h) -- keep image ratio
-      menu_drawf(icon_to_use, render_x+0.5*button_width, render_y+0.5*button_height,"center","center", 0, scale, scale )
-      if str ~= "P1" and str ~= "P2" then
-        if character.stage then
-          local orig_w, orig_h = stages[character.stage].images.thumbnail:getDimensions()
-          menu_drawf(stages[character.stage].images.thumbnail, render_x+10, render_y+button_height-7,"center","center", 0, 16/orig_w, 9/orig_h )
+
+    local function draw_character(character)
+      -- draw character icon with its super selection or bundle character icon 
+      if character == random_character_special_value
+        or not character:is_bundle() 
+        or character.images.icon then
+        local icon_to_use = character == random_character_special_value and themes[config.theme].images.IMG_random_character or character.images.icon
+        local orig_w, orig_h = icon_to_use:getDimensions()
+        local scale = button_width/math.max(orig_w,orig_h) -- keep image ratio
+        menu_drawf(icon_to_use, render_x+0.5*button_width, render_y+0.5*button_height,"center","center", 0, scale, scale )
+        if str ~= "P1" and str ~= "P2" then
+          if character.stage then
+            local orig_w, orig_h = stages[character.stage].images.thumbnail:getDimensions()
+            menu_drawf(stages[character.stage].images.thumbnail, render_x+10, render_y+button_height-7,"center","center", 0, 16/orig_w, 9/orig_h )
+          end
+          if character.panels then
+            local orig_w, orig_h = panels[character.panels].images.classic[1][1]:getDimensions()
+            menu_drawf(panels[character.panels].images.classic[1][1], render_x+7, character.stage and render_y+button_height-19 or render_y+button_height-6,"center","center", 0, 12/orig_w, 12/orig_h )
+          end
         end
-        if character.panels then
-          local orig_w, orig_h = panels[character.panels].images.classic[1][1]:getDimensions()
-          menu_drawf(panels[character.panels].images.classic[1][1], render_x+7, character.stage and render_y+button_height-19 or render_y+button_height-6,"center","center", 0, 12/orig_w, 12/orig_h )
+      elseif character:is_bundle() then -- draw bundle character generated thumbnails
+        local sub_characters = character.sub_characters
+        local sub_characters_count = math.min(4, #sub_characters) -- between 2 and 4 (inclusive), by design
+
+        local thumbnail_1 = characters[sub_characters[1]].images.icon
+        local thumb_y_padding = 0.25*button_height
+        local thumb_1_and_2_y_padding = sub_characters_count >= 3 and -thumb_y_padding or 0
+        local scale_1 = button_width*0.5/math.max(thumbnail_1:getWidth(), thumbnail_1:getHeight())
+        menu_drawf(thumbnail_1, render_x+0.25*button_width, render_y+0.5*button_height+thumb_1_and_2_y_padding, "center", "center", 0, scale_1, scale_1 )
+        
+        local thumbnail_2 = characters[sub_characters[2]].images.icon
+        local scale_2 = button_width*0.5/math.max(thumbnail_2:getWidth(), thumbnail_2:getHeight())
+        menu_drawf(thumbnail_2, render_x+0.75*button_width, render_y+0.5*button_height+thumb_1_and_2_y_padding, "center", "center", 0, scale_2, scale_2 )
+
+        if sub_characters_count >= 3 then
+          local thumbnail_3 = characters[sub_characters[3]].images.icon
+          local scale_3 = button_width*0.5/math.max(thumbnail_3:getWidth(), thumbnail_3:getHeight())
+          local thumb_3_x_padding = sub_characters_count == 3 and 0.25*button_width or 0
+          menu_drawf(thumbnail_3, render_x+0.25*button_width+thumb_3_x_padding, render_y+0.75*button_height, "center", "center", 0, scale_3, scale_3 )
+        end
+        if sub_characters_count == 4 then
+          local thumbnail_4 = characters[sub_characters[4]].images.icon
+          local scale_4 = button_width*0.5/math.max(thumbnail_4:getWidth(), thumbnail_4:getHeight())
+          menu_drawf(thumbnail_4, render_x+0.75*button_width, render_y+0.75*button_height, "center", "center", 0, scale_4, scale_4 )
         end
       end
     end
@@ -590,6 +619,12 @@ function select_screen.main()
           or { math.floor(render_x+padding_x+3), math.floor(render_y+y_padding+0.25*text_height) }
         gprintf(">", arrow_pos[1], arrow_pos[2], 10,"center")
       end
+    end
+
+    if character then
+      x_add = 0.025*button_width
+      width_for_alignment = 0.95*button_width
+      draw_character(character)
     end
 
     local pstr
