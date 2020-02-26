@@ -34,8 +34,8 @@ function Stage.id_init(self)
 
   if read_data.id then
     self.id = read_data.id
-    if read_data.sub_stages then
-      self.sub_stages = read_data.sub_stages
+    if read_data.sub_ids then
+      self.sub_stages = read_data.sub_ids
     end
     return true
   end
