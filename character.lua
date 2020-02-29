@@ -241,7 +241,7 @@ function characters_init()
     end
   end
 
-  if config.character ~= random_character_special_value then
+  if config.character ~= random_character_special_value and not characters[config.character]:is_bundle() then
     character_loader_load(config.character)
     character_loader_wait()
   end

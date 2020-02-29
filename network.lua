@@ -121,7 +121,7 @@ function network_init(ip, network_port)
   net_send("H"..VERSION)
   assert(config.name and config.save_replays_publicly)
   local sent_json = {name=config.name, level=config.level, panels_dir=config.panels, 
-  character=config.character, character_is_random=config.character==random_character_special_value,
+  character=config.character, character_is_random=( ( config.character==random_character_special_value or characters[config.character]:is_bundle()) and config.character or nil ),
   stage=config.stage, ranked=config.ranked, stage_is_random=( (config.stage==random_stage_special_value or stages[config.stage]:is_bundle()) and config.stage or nil ), 
   save_replays_publicly=config.save_replays_publicly}
   sent_json.character_display_name = sent_json.character_is_random and "" or characters[config.character].display_name 

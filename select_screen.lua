@@ -33,7 +33,23 @@ local function fill_map(template_map,map)
   end
 end
 
+local function patch_is_random(refreshed) -- retrocompatibility
+  if refreshed ~= nil then
+    if refreshed.stage_is_random == true then
+      refreshed.stage_is_random = random_stage_special_value
+    elseif refreshed.stage_is_random == false then
+      refreshed.stage_is_random = nil
+    end
+    if refreshed.character_is_random == true then
+      refreshed.character_is_random = random_character_special_value
+    elseif refreshed.character_is_random == false then
+      refreshed.character_is_random = nil
+    end
+  end
+end
+
 function refresh_based_on_own_mods(refreshed,ask_change_fallback)
+  patch_is_random(refreshed)
   ask_change_fallback = ask_change_fallback or false
   if refreshed ~= nil then
     -- panels
@@ -54,16 +70,35 @@ function refresh_based_on_own_mods(refreshed,ask_change_fallback)
 
     -- character
     if refreshed.character == nil or ( refreshed.character ~= random_character_special_value and characters[refreshed.character] == nil ) then
-      if refreshed.character_display_name and characters_ids_by_display_names[refreshed.character_display_name] then
+      if refreshed.character_display_name and characters_ids_by_display_names[refreshed.character_display_name]
+        and not characters_ids_by_display_names[refreshed.character_display_name]:is_bundle() then
         refreshed.character = characters_ids_by_display_names[refreshed.character_display_name][1]
       else
         if not select_screen.fallback_when_missing[2] or ask_change_fallback then
           select_screen.fallback_when_missing[2] = uniformly(characters_ids_for_current_theme)
+          if characters[select_screen.fallback_when_missing[2]]:is_bundle() then -- may pick a bundle
+            select_screen.fallback_when_missing[2] = uniformly(characters[select_screen.fallback_when_missing[2]].sub_characters)
+          end
         end
         refreshed.character = select_screen.fallback_when_missing[2]
       end
     end
   end
+end
+
+local function resolve_character_random(state)
+  if state.character_is_random ~= nil then
+    if state.character_is_random == random_character_special_value then
+      state.character = uniformly(characters_ids_for_current_theme)
+      if characters[state.character]:is_bundle() then -- may pick a bundle
+        state.character = uniformly(characters[state.character].sub_characters)
+      end
+    else
+      state.character = uniformly(characters[state.character_is_random].sub_characters)
+    end
+    return true
+  end
+  return false
 end
 
 local function resolve_stage_random(state)
@@ -287,17 +322,18 @@ function select_screen.main()
     cursor_data[1].state = shallowcpy(global_my_state)
     global_my_state = nil
   else
-    cursor_data[1].state = {stage=config.stage, stage_is_random=( (config.stage==random_stage_special_value or stages[config.stage]:is_bundle()) and config.stage or nil ), character=config.character, character_is_random=config.character==random_character_special_value, level=config.level, panels_dir=config.panels, cursor="__Ready", ready=false, ranked=config.ranked}
+    cursor_data[1].state = {stage=config.stage, stage_is_random=( (config.stage==random_stage_special_value or stages[config.stage]:is_bundle()) and config.stage or nil ), 
+    character=config.character, character_is_random=( ( config.character==random_character_special_value or characters[config.character]:is_bundle()) and config.character or nil ), level=config.level, panels_dir=config.panels, cursor="__Ready", ready=false, ranked=config.ranked}
   end
 
-  if cursor_data[1].state.character_is_random then
-    cursor_data[1].state.character = uniformly(characters_ids_for_current_theme)
+  if resolve_character_random(cursor_data[1].state) then
     character_loader_load(cursor_data[1].state.character)
   end
   cursor_data[1].state.character_display_name = characters[cursor_data[1].state.character].display_name
-  resolve_stage_random(cursor_data[1].state)
 
+  resolve_stage_random(cursor_data[1].state)
   stage_loader_load(cursor_data[1].state.stage)
+
   add_client_data(cursor_data[1].state)
 
   if select_screen.character_select_mode ~= "1p_vs_yourself" then
@@ -306,21 +342,18 @@ function select_screen.main()
       if select_screen.character_select_mode ~= "2p_local_vs" then
         global_op_state = nil -- retains state of the second player, also: don't unload its character when going back and forth
       else
-        if cursor_data[2].state.character_is_random then
-          cursor_data[2].state.character = uniformly(characters_ids_for_current_theme)
-        end
+        resolve_character_random(cursor_data[2].state)
         cursor_data[2].state.character_display_name = characters[cursor_data[2].state.character].display_name
         resolve_stage_random(cursor_data[2].state)
       end
     else
-      cursor_data[2].state = {stage=config.stage, stage_is_random=( (config.stage==random_stage_special_value or stages[config.stage]:is_bundle()) and config.stage or nil ), character=config.character, character_is_random=config.character==random_character_special_value, level=config.level, panels_dir=config.panels, cursor="__Ready", ready=false, ranked=false}
-      if cursor_data[2].state.character_is_random then
-        cursor_data[2].state.character = uniformly(characters_ids_for_current_theme)
-      end
+      cursor_data[2].state = {stage=config.stage, stage_is_random=( (config.stage==random_stage_special_value or stages[config.stage]:is_bundle()) and config.stage or nil ),
+       character=config.character, character_is_random=( ( config.character==random_character_special_value or characters[config.character]:is_bundle()) and config.character or nil ), level=config.level, panels_dir=config.panels, cursor="__Ready", ready=false, ranked=false}
+      resolve_character_random(cursor_data[2].state)
       cursor_data[2].state.character_display_name = characters[cursor_data[2].state.character].display_name
       resolve_stage_random(cursor_data[2].state)
     end
-    if cursor_data[2].state.character ~= random_character_special_value then -- while playing online, we'll wait for them to send us the new pick
+    if cursor_data[2].state.character ~= random_character_special_value and not characters[cursor_data[2].state.character]:is_bundle() then -- while playing online, we'll wait for them to send us the new pick
       character_loader_load(cursor_data[2].state.character)
     end
     if cursor_data[2].state.stage ~= random_stage_special_value and not stages[cursor_data[2].state.stage]:is_bundle() then -- while playing online, we'll wait for them to send us the new pick
@@ -369,9 +402,25 @@ function select_screen.main()
     end
     local character = characters[str]
     if str == "P1" then
-      character = cursor_data[1].state.character_is_random and random_character_special_value or characters[cursor_data[1].state.character]
+      if cursor_data[1].state.character_is_random then
+        if cursor_data[1].state.character_is_random == random_character_special_value then
+          character = random_character_special_value
+        else
+          character = characters[cursor_data[1].state.character_is_random]
+        end
+      else
+        character = characters[cursor_data[1].state.character]
+      end
     elseif str == "P2" then
-      character = cursor_data[2].state.character_is_random and random_character_special_value or characters[cursor_data[2].state.character]
+      if cursor_data[2].state.character_is_random then
+        if cursor_data[2].state.character_is_random == random_character_special_value then
+          character = random_character_special_value
+        else
+          character = characters[cursor_data[2].state.character_is_random]
+        end
+      else
+        character = characters[cursor_data[2].state.character]
+      end
     end
     local width_for_alignment = button_width
     local x_add,y_add = 0,0
@@ -384,7 +433,7 @@ function select_screen.main()
     local function draw_character(character)
       -- draw character icon with its super selection or bundle character icon 
       if character == random_character_special_value
-        or not character:is_bundle() 
+        or not character:is_bundle()
         or character.images.icon then
         local icon_to_use = character == random_character_special_value and themes[config.theme].images.IMG_random_character or character.images.icon
         local orig_w, orig_h = icon_to_use:getDimensions()
@@ -400,7 +449,7 @@ function select_screen.main()
             menu_drawf(panels[character.panels].images.classic[1][1], render_x+7, character.stage and render_y+button_height-19 or render_y+button_height-6,"center","center", 0, 12/orig_w, 12/orig_h )
           end
         end
-      elseif character:is_bundle() then -- draw bundle character generated thumbnails
+      elseif character and character:is_bundle() then -- draw bundle character generated thumbnails
         local sub_characters = character.sub_characters
         local sub_characters_count = math.min(4, #sub_characters) -- between 2 and 4 (inclusive), by design
 
@@ -664,10 +713,10 @@ function select_screen.main()
       pstr = my_name
     elseif str == "P2" then
       draw_player_state(cursor_data[2],2)
-      pstr = op_name
-    elseif character then
+      pstr = op_name    
+    elseif character and character ~= random_character_special_value then
       pstr = character.display_name
-    elseif string.sub(str, 1, 2) ~= "__" then
+    elseif string.sub(str, 1, 2) ~= "__" then -- catch random_character_special_value case
       pstr = str:gsub("^%l", string.upper)
     end
     if x ~= 0 then
@@ -1051,8 +1100,11 @@ function select_screen.main()
       elseif cursor.state.cursor == "__Leave" then
         on_quit()
       elseif cursor.state.cursor == "__Random" then
-        cursor.state.character_is_random = true
+        cursor.state.character_is_random = random_character_special_value
         cursor.state.character = uniformly(characters_ids_for_current_theme)
+        if characters[cursor.state.character]:is_bundle() then -- may pick a bundle
+          cursor.state.character = uniformly(characters[cursor.state.character].sub_characters)
+        end
         cursor.state.character_display_name = characters[cursor.state.character].display_name
         character_loader_load(cursor.state.character)
         cursor.state.cursor = "__Ready"
@@ -1061,11 +1113,17 @@ function select_screen.main()
       elseif cursor.state.cursor == "__Mode" then
         cursor.state.ranked = not cursor.state.ranked
       elseif ( cursor.state.cursor ~= "__Empty" and cursor.state.cursor ~= "__Reserved" ) then
-        cursor.state.character_is_random = false
+        cursor.state.character_is_random = nil
         cursor.state.character = cursor.state.cursor
+        if characters[cursor.state.character]:is_bundle() then -- may pick a bundle
+          cursor.state.character_is_random = cursor.state.character
+          cursor.state.character = uniformly(characters[cursor.state.character_is_random].sub_characters)
+        end
         cursor.state.character_display_name = characters[cursor.state.character].display_name
         local character = characters[cursor.state.character]
-        noisy = character:play_selection_sfx()
+        if not cursor.state.character_is_random then
+          noisy = character:play_selection_sfx()
+        end
         character_loader_load(cursor.state.character)
         if super then
           if character.stage then
@@ -1158,7 +1216,7 @@ function select_screen.main()
           end
         end
         -- update config, does not redefine it
-        config.character = cursor_data[1].state.character_is_random and random_character_special_value or cursor_data[1].state.character
+        config.character = cursor_data[1].state.character_is_random and cursor_data[1].state.character_is_random or cursor_data[1].state.character
         config.stage = cursor_data[1].state.stage_is_random and cursor_data[1].state.stage_is_random or cursor_data[1].state.stage
         config.level = cursor_data[1].state.level
         config.ranked = cursor_data[1].state.ranked
@@ -1166,6 +1224,7 @@ function select_screen.main()
 
         if select_screen.character_select_mode == "2p_local_vs" then -- this is registered for future entering of the lobby
           global_op_state = shallowcpy(cursor_data[2].state)
+          global_op_state.character = global_op_state.character_is_random and global_op_state.character_is_random or global_op_state.character
           global_op_state.stage = global_op_state.stage_is_random and global_op_state.stage_is_random or global_op_state.stage
           global_op_state.wants_ready = false
         end

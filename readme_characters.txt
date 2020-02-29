@@ -23,6 +23,7 @@ Note: non-optional data that are missing will automatically get replaced by defa
 	- id: unique identifier of this character, this id should be specific (see note). [IF MISSING YOUR CHARACTER WILL BE IGNORED!]
 	- stage: optional, this specifies which stage to use when 'super selecting' this character
 	- panels: optional, this specifies which panels to use when 'super selecting' this character
+	- (sub_ids): identifiers for other characters, this allows you to define a character bundle that encompasses multiple other characters (picked at random)
 
 Note: providing a specific, long enough id is a very good idea so that people renaming your mods folders still get properly match with other users regarding your mods. e.g. "mycharacter_myname"
 
@@ -46,5 +47,4 @@ Note: providing a specific, long enough id is a very good idea so that people re
 - ("danger_music"): music that will be used when a player is in danger (top of the screen) if the option use_music_from's value is characters and your character gets picked
 
 Note: providing just a "chain" or just a "combo" SFX is OK. It would get used for all combos and chains.
-
 Note: if your music has an intro, cut it from the main music file, and name it "normal_music_start" or "danger_music_start"

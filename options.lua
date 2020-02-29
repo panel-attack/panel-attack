@@ -220,6 +220,8 @@ function options.main(starting_idx)
         if stages[stage_id]:is_bundle() then -- may pick a bundle
           stage_id = uniformly(stages[stage_id].sub_stages)
         end
+      elseif stages[stage_id]:is_bundle() then -- may pick a bundle
+        stage_id = uniformly(stages[stage_id].sub_stages)
       end
       stage_loader_load(stage_id)
       stage_loader_wait()
