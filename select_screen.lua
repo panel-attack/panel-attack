@@ -1123,6 +1123,8 @@ function select_screen.main()
         local character = characters[cursor.state.character]
         if not cursor.state.character_is_random then
           noisy = character:play_selection_sfx()
+        elseif characters[cursor.state.character_is_random] then
+          noisy = characters[cursor.state.character_is_random]:play_selection_sfx()
         end
         character_loader_load(cursor.state.character)
         if super then
