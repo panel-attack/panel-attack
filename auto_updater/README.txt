@@ -1,5 +1,5 @@
 Here is the process to publish the auto_updater: 
-- configure CHECK_INTERVAL and UPDATER_NAME in main.lua
+- configure UPDATER_NAME in main.lua
 - configure updater_config.lua with the server_url
 - copy the last version of the game here in this folder "any-name.love"
 - make the exe auto_updater, publish with a name like "panel.zip" or "panel-beta.zip", ...

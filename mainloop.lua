@@ -1,18 +1,18 @@
 require("panels")
 require("theme")
 local select_screen = require("select_screen")
+local replay_browser = require("replay_browser")
 local options = require("options")
 local utf8 = require("utf8")
 
 local wait, resume = coroutine.yield, coroutine.resume
 
 local main_endless, make_main_puzzle, main_net_vs_setup,
-  main_replay_endless, main_replay_puzzle,
   main_config_input, main_select_puzz,
-  main_replay_vs, main_local_vs_setup,
-  main_set_name, main_local_vs_yourself_setup,
-  main_options, main_music_test, exit_game
--- main_select_mode, main_dumb_transition, main_net_vs, main_net_vs_lobby, main_local_vs_yourself, main_local_vs are not local since they are also used elsewhere
+  main_local_vs_setup, main_set_name, main_local_vs_yourself_setup,
+  main_options, main_music_test, 
+  main_replay_browser, exit_game
+-- main_select_mode, main_dumb_transition, main_net_vs, main_net_vs_lobby, main_local_vs_yourself, main_local_vs, main_replay_endless, main_replay_puzzle, main_replay_vs are not local since they are also used elsewhere
 
 local PLAYING = "playing"  -- room states
 local CHARACTERSELECT = "character select" --room states
@@ -133,9 +133,10 @@ do
         --{loc("mm_2_vs_online", "LittleEndu's server"), main_net_vs_setup, {"51.15.207.223"}},
         {loc("mm_2_vs_online", "server for ranked Ex Mode"), main_net_vs_setup, {"exserver.panelattack.com",49568}},
         {loc("mm_2_vs_local"), main_local_vs_setup},
-        {loc("mm_replay_of", loc("mm_1_endless")), main_replay_endless},
-        {loc("mm_replay_of", loc("mm_1_puzzle")), main_replay_puzzle},
-        {loc("mm_replay_of", loc("mm_2_vs")), main_replay_vs},
+        --{loc("mm_replay_of", loc("mm_1_endless")), main_replay_endless},
+        --{loc("mm_replay_of", loc("mm_1_puzzle")), main_replay_puzzle},
+        --{loc("mm_replay_of", loc("mm_2_vs")), main_replay_vs},
+        {loc("mm_replay_browser"), replay_browser.main},
         {loc("mm_configure"), main_config_input},
         {loc("mm_set_name"), main_set_name},
         {loc("mm_options"), options.main},
