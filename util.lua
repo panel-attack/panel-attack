@@ -234,3 +234,10 @@ end
 function trim(s)
    return (s:gsub("^%s*(.-)%s*$", "%1"))
 end
+
+function get_directory_contents(path)
+  local path    = (path and path or "")
+  local results = love.filesystem.getDirectoryItems(path)
+
+  return results
+end
