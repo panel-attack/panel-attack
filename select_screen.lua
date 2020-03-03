@@ -616,8 +616,14 @@ function select_screen.main()
       -- thumbnail or composed thumbnail (for bundles without thumbnails)
       if cursor_data.state.stage_is_random == random_stage_special_value 
         or ( cursor_data.state.stage_is_random and not stages[cursor_data.state.stage_is_random] ) 
+        or ( cursor_data.state.stage_is_random and stages[cursor_data.state.stage_is_random] and stages[cursor_data.state.stage_is_random].images.thumbnail ) 
         or ( not cursor_data.state.stage_is_random and stages[cursor_data.state.stage].images.thumbnail ) then
-        local thumbnail = cursor_data.state.stage_is_random and themes[config.theme].images.IMG_random_stage or stages[cursor_data.state.stage].images.thumbnail
+        local thumbnail = themes[config.theme].images.IMG_random_stage
+        if cursor_data.state.stage_is_random and stages[cursor_data.state.stage_is_random] and stages[cursor_data.state.stage_is_random].images.thumbnail then
+          thumbnail = stages[cursor_data.state.stage_is_random].images.thumbnail
+        elseif not cursor_data.state.stage_is_random and stages[cursor_data.state.stage].images.thumbnail then
+          thumbnail = stages[cursor_data.state.stage].images.thumbnail
+        end
         menu_drawf(thumbnail, render_x+padding_x, render_y+y_padding-1, "left", "center", 0, stage_dimensions[1]/thumbnail:getWidth(), stage_dimensions[2]/thumbnail:getHeight() )
       elseif cursor_data.state.stage_is_random and stages[cursor_data.state.stage_is_random]:is_bundle() then
         local half_stage_dimensions = { math.floor(stage_dimensions[1]*0.5), math.floor(stage_dimensions[2]*0.5) }

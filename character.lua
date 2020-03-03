@@ -150,6 +150,7 @@ local function add_characters_from_dir_rec(path)
             print(current_path.." has been ignored since a character with this id has already been found")
           else
             characters[character.id] = character
+            characters_ids[#characters_ids+1] = character.id
             -- print(current_path.." has been added to the character list!")
           end
         end
@@ -161,7 +162,10 @@ end
 local function fill_characters_ids()
   -- check validity of bundle characters
   local invalid = {}
-  for key,character in pairs(characters) do
+  local copy_of_characters_ids = shallowcpy(characters_ids)
+  characters_ids = {} -- clean up
+  for _,character_id in ipairs(copy_of_characters_ids) do
+    local character = characters[character_id]
     if #character.sub_characters > 0 then -- bundle character (needs to be filtered if invalid)
       local copy_of_sub_characters = shallowcpy(character.sub_characters)
       character.sub_characters = {}
@@ -173,14 +177,14 @@ local function fill_characters_ids()
       end
 
       if #character.sub_characters < 2 then
-        invalid[#invalid+1] = key -- character is invalid
+        invalid[#invalid+1] = character_id -- character is invalid
         print(character.id.." (bundle) is being ignored since it's invalid!")
       else
-        characters_ids[#characters_ids+1] = character.id
+        characters_ids[#characters_ids+1] = character_id
         print(character.id.." (bundle) has been added to the character list!")
       end
     else -- normal character
-      characters_ids[#characters_ids+1] = character.id
+      characters_ids[#characters_ids+1] = character_id
       print(character.id.." has been added to the character list!")
     end
   end

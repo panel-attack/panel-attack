@@ -114,6 +114,7 @@ local function add_stages_from_dir_rec(path)
             print(current_path.." has been ignored since a stage with this id has already been found")
           else
             stages[stage.id] = stage
+            stages_ids[#stages_ids+1] = stage.id
           end
         end
       end
@@ -124,7 +125,10 @@ end
 local function fill_stages_ids()
   -- check validity of bundle stages
   local invalid_stages = {}
-  for key,stage in pairs(stages) do
+  local copy_of_stages_ids = shallowcpy(stages_ids)
+  stages_ids = {} -- clean up
+  for _,stage_id in ipairs(copy_of_stages_ids) do
+    local stage = stages[stage_id]
     if #stage.sub_stages > 0 then -- bundle stage (needs to be filtered if invalid)
       local copy_of_sub_stages = shallowcpy(stage.sub_stages)
       stage.sub_stages = {}
@@ -136,14 +140,14 @@ local function fill_stages_ids()
       end
 
       if #stage.sub_stages < 2 then
-        invalid_stages[#invalid_stages+1] = key -- stage is invalid
+        invalid_stages[#invalid_stages+1] = stage_id -- stage is invalid
         print(stage.id.." (bundle) is being ignored since it's invalid!")
       else
-        stages_ids[#stages_ids+1] = stage.id
+        stages_ids[#stages_ids+1] = stage_id
         print(stage.id.." (bundle) has been added to the stage list!")
       end
     else -- normal stage
-      stages_ids[#stages_ids+1] = stage.id
+      stages_ids[#stages_ids+1] = stage_id
       print(stage.id.." has been added to the stage list!")
     end
   end
