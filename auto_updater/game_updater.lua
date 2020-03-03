@@ -43,8 +43,8 @@ function GameUpdater.async(self, function_name, ...)
 end
 
 -- returns thread channel [async returns sorted list of all versions available on the server]
-function GameUpdater.async_download_available_versions(self, timeout, max_size)
-  return self:async("download_available_versions", self.config.server_url, timeout, max_size, self.timestamp_file)
+function GameUpdater.async_download_available_versions(self, max_size)
+  return self:async("download_available_versions", self.config.server_url, self.config.launch_check_timeout, max_size, self.timestamp_file)
 end
 
 -- returns thread channel [async returns bool download success]

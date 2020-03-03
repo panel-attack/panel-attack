@@ -49,6 +49,9 @@ SFX_GameOver_Play = 0
 global_my_state = nil
 global_op_state = nil
 
+-- Warning messages
+display_warning_message = false
+
 -- game can be paused while playing on local
 game_is_paused = false
 
@@ -72,9 +75,9 @@ config = {
 	character                     = random_character_special_value,
 	stage                         = random_stage_special_value,
 
-	ranked 						  = true,
+	ranked                        = true,
 
-	vsync						  = true,
+	vsync                         = true,
 
 	use_music_from                = "either",
 	-- Level (2P modes / 1P vs yourself mode)
@@ -106,12 +109,11 @@ config = {
 
 current_use_music_from = "stage" -- either "stage" or "characters", no other values!
 
-is_first_warning = true
 function warning(msg)
 	err = "=================================================================\n["..os.date("%x %X").."]\nError: "..msg..debug.traceback("").."\n"
 	love.filesystem.append("warnings.txt", err)
-	if is_first_warning then
-		is_first_warning = false
+	if display_warning_message then
+		display_warning_message = false
 		local loc_warning = "You've had a bug. Please report this on Discord with file:"
 		if loc ~= nil then
 			local str = loc("warning_msg")
