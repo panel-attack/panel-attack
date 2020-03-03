@@ -20,9 +20,10 @@ Stage = class(function(s, full_path, folder_name)
     s.images = {}
     s.musics = {}
     s.fully_loaded = false
+    s.is_visible = true
   end)
 
-function Stage.id_init(self)
+function Stage.json_init(self)
   local read_data = {}
   local config_file, err = love.filesystem.newFile(self.path.."/config.json", "r")
   if config_file then
@@ -37,29 +38,20 @@ function Stage.id_init(self)
     if read_data.sub_ids then
       self.sub_stages = read_data.sub_ids
     end
+
+    -- display name
+    if read_data.name ~= nil then
+      self.display_name = read_data.name
+    end
+    -- is visible
+    if read_data.visible ~= nil then
+      self.is_visible = read_data.visible
+    end
+
     return true
   end
 
   return false
-end
-
-function Stage.other_data_init(self)
-  -- read stage.json
-  local read_data = {}
-  local config_file, err = love.filesystem.newFile(self.path.."/config.json", "r")
-  if config_file then
-    local teh_json = config_file:read(config_file:getSize())
-    for k,v in pairs(json.decode(teh_json)) do
-      read_data[k] = v
-    end
-  end
-
-  -- id has already been handled! DO NOT handle id here!
-
-  -- display name
-  if read_data.name then
-    self.display_name = read_data.name
-  end
 end
 
 function Stage.stop_sounds(self)
@@ -73,7 +65,6 @@ end
 
 function Stage.preload(self)
   print("preloading stage "..self.id)
-  self:other_data_init()
   self:graphics_init(false,false)
   self:sound_init(false,false)
 end
@@ -107,7 +98,7 @@ local function add_stages_from_dir_rec(path)
 
         -- init stage: 'real' folder
         local stage = Stage(current_path,v)
-        local success = stage:id_init()
+        local success = stage:json_init()
 
         if success then
           if stages[stage.id] ~= nil then
@@ -179,6 +170,12 @@ function stages_init()
       -- found at least a valid stage in a stages.txt file
       if stages[line] then
         stages_ids_for_current_theme[#stages_ids_for_current_theme+1] = line
+      end
+    end
+  else
+    for _,stage_id in ipairs(stages_ids) do
+      if stages[stage_id].is_visible then
+        stages_ids_for_current_theme[#stages_ids_for_current_theme+1] = stage_id
       end
     end
   end
