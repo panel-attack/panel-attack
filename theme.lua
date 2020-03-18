@@ -148,7 +148,11 @@ function Theme.sound_init(self)
   for _, music in ipairs(musics) do
     self.musics[music] = load_sound_from_supported_extensions("themes/"..config.theme.."/music/"..music, true)
     if self.musics[music] then
-      self.musics[music]:setLooping(true)
+      if not string.find(music, "start") then
+        self.musics[music]:setLooping(true)
+      else
+        self.musics[music]:setLooping(false)
+      end
     end
   end
 
