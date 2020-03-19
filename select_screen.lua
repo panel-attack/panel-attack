@@ -71,7 +71,7 @@ function refresh_based_on_own_mods(refreshed,ask_change_fallback)
     -- character
     if refreshed.character == nil or ( refreshed.character ~= random_character_special_value and characters[refreshed.character] == nil ) then
       if refreshed.character_display_name and characters_ids_by_display_names[refreshed.character_display_name]
-        and not characters_ids_by_display_names[refreshed.character_display_name]:is_bundle() then
+        and not characters[characters_ids_by_display_names[refreshed.character_display_name][1]]:is_bundle() then
         refreshed.character = characters_ids_by_display_names[refreshed.character_display_name][1]
       else
         if not select_screen.fallback_when_missing[2] or ask_change_fallback then
