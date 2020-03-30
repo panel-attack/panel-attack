@@ -28,6 +28,7 @@ Note: non-optional data that are missing will automatically get replaced by defa
 	- name: display name of this stage, this value will be displayed in the select screen
 	- id: unique identifier of this stage, this id should be specific (see note). [IF MISSING YOUR STAGE WILL BE IGNORED!] 
 	- (sub_ids): identifiers for other stages, this allows you to define a stage bundle that encompasses multiple other stages (picked at random)
+	- (visible): true/false, make it so the stage is automatically hidden in the select screen (useful for stage bundles)
 
 Note: providing a specific, long enough id is a very good idea so that people renaming your mods folders still get properly match with other users regarding your mods
 e.g. "mystage_myname"
