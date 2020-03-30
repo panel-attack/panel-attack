@@ -31,9 +31,10 @@ Character = class(function(self, full_path, folder_name)
     self.sounds = { combos = {}, combo_echos = {}, selections = {}, wins = {}, garbage_matches = {}, garbage_lands = {}, taunt_ups = {}, taunt_downs = {}, others = {} }
     self.musics = {}
     self.fully_loaded = false
+    self.is_visible = true
   end)
 
-function Character.id_init(self)
+function Character.json_init(self)
   local read_data = {}
   local config_file, err = love.filesystem.newFile(self.path.."/config.json", "r")
   if config_file then
@@ -76,33 +77,6 @@ function Character.id_init(self)
   return false
 end
 
-function Character.other_data_init(self)
-  -- read .json
-  local read_data = {}
-  local config_file, err = love.filesystem.newFile(self.path.."/config.json", "r")
-  if config_file then
-    local teh_json = config_file:read(config_file:getSize())
-    for k,v in pairs(json.decode(teh_json)) do
-      read_data[k] = v
-    end
-  end
-  
-  -- id has already been handled! DO NOT handle id here!
-
-  -- display name
-  if read_data.name then
-    self.display_name = read_data.name
-  end
-  -- associated stage
-  if read_data.stage and stages[read_data.stage] and not stages[read_data.stage]:is_bundle() then
-    self.stage = read_data.stage
-  end
-  -- associated panel
-  if read_data.panels and panels[read_data.panels] then
-    self.panels = read_data.panels
-  end
-end
-
 function Character.stop_sounds(self)
   -- SFX
   for _, sound_table in ipairs(self.sounds) do
@@ -131,7 +105,6 @@ end
 
 function Character.preload(self)
   print("preloading character "..self.id)
-  self:other_data_init()
   self:graphics_init(false,false)
   self:sound_init(false,false)
 end
@@ -165,7 +138,7 @@ local function add_characters_from_dir_rec(path)
 
         -- init stage: 'real' folder
         local character = Character(current_path,v)
-        local success = character:id_init()
+        local success = character:json_init()
 
         if success then
           if characters[character.id] ~= nil then
@@ -238,6 +211,12 @@ function characters_init()
       if characters[line] then
         -- found at least a valid character in a characters.txt file
         characters_ids_for_current_theme[#characters_ids_for_current_theme+1] = line
+      end
+    end
+  else
+    for _,character_id in ipairs(characters_ids) do
+      if characters[character_id].is_visible then
+        characters_ids_for_current_theme[#characters_ids_for_current_theme+1] = character_id
       end
     end
   end
