@@ -228,8 +228,13 @@ function Stack.render(self)
       end
     end
   end
-  draw(themes[config.theme].images.IMG_frame,0,0)
-  draw(themes[config.theme].images.IMG_wall, 4, 4 - shake + self.height*16)
+  if P1 == self then
+	draw(themes[config.theme].images.IMG_frame1P,0,0)
+	draw(themes[config.theme].images.IMG_wall1P, 4, 4 - shake + self.height*16)
+  else
+	draw(themes[config.theme].images.IMG_frame2P,0,0)
+	draw(themes[config.theme].images.IMG_wall2P, 4, 4 - shake + self.height*16)
+  end
 
   self:draw_cards()
   self:render_cursor()

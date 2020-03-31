@@ -51,9 +51,28 @@ function Theme.graphics_init(self)
   self.images.IMG_random_stage = load_theme_img("random_stage")
   self.images.IMG_random_character = load_theme_img("random_character")
 
-  self.images.IMG_frame = load_theme_img("frame")
-  self.images.IMG_wall = load_theme_img("wall")
-
+  --play field frames, plus the wall at the bottom.
+  self.images.IMG_frame1P = load_theme_img("frame/frame1P")
+  self.images.IMG_wall1P = load_theme_img("frame/wall1P")
+  self.images.IMG_frame2P = load_theme_img("frame/frame2P")
+  self.images.IMG_wall2P = load_theme_img("frame/wall2P")
+  --the game currently only supports 2 players, but since 3P+ support is on the "to-do-eventually" list, include assets for more players
+  --special thanks to TheWolfBunny on DeviantArt for 3P+ frame and wall sprites
+  self.images.IMG_frame3P = load_theme_img("frame/frame3P")
+  self.images.IMG_wall3P = load_theme_img("frame/wall3P")
+  self.images.IMG_frame4P = load_theme_img("frame/frame4P")
+  self.images.IMG_wall4P = load_theme_img("frame/wall4P")
+  --5P-8P might be overkill, but just imagine...
+  --self.images.IMG_frame5P = load_theme_img("frame/frame5P")
+  --self.images.IMG_wall5P = load_theme_img("frame/wall5P")
+  --self.images.IMG_frame6P = load_theme_img("frame/frame6P")
+  --self.images.IMG_wall6P = load_theme_img("frame/wall6P")
+  --self.images.IMG_frame7P = load_theme_img("frame/frame7P")
+  --self.images.IMG_wall7P = load_theme_img("frame/wall7P")
+  --self.images.IMG_frame8P = load_theme_img("frame/frame8P")
+  --self.images.IMG_wall8P = load_theme_img("frame/wall8P")
+  
+  
   self.images.IMG_cards = {}
   self.images.IMG_cards[true] = {}
   self.images.IMG_cards[false] = {}
