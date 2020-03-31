@@ -33,19 +33,23 @@ function Stage.json_init(self)
     end
   end
 
-  if read_data.id then
+  if read_data.id and type(read_data.id) == "string" then
     self.id = read_data.id
-    if read_data.sub_ids then
+    
+    -- sub ids for bundles
+    if read_data.sub_ids and type(read_data.sub_ids) == "table"then
       self.sub_stages = read_data.sub_ids
     end
-
+    
     -- display name
-    if read_data.name ~= nil then
+    if read_data.name and type(read_data.name) == "string" then
       self.display_name = read_data.name
     end
     -- is visible
-    if read_data.visible ~= nil then
+    if read_data.visible ~= nil and type(read_data.visible) == "boolean" then
       self.is_visible = read_data.visible
+    elseif read_data.visible and type(read_data.visible) == "string" then
+      self.is_visible = read_data.visible=="true"
     end
 
     return true

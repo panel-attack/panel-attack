@@ -2,9 +2,8 @@ Adding/modding characters: step by step instructions (Windows example):
 
 1. Press the Windows key then type "%appdata%" without quotes and hit enter.
 
-2. Look at the folders starting with "__" located in: %appdata%\Panel Attack\characters\ for a reference of where your files should go and how they should be named.
-   
-Note: folders starting with "__" will be ignored upon loading. You may choose to remove those "__" to mod the default characters
+2. Look at the folders starting with "__" located in: %appdata%\Panel Attack\characters\ for a reference of where your files should go and how they should be named. 
+   Folders starting with "__" will be ignored upon loading. You may choose to remove those "__" to mod the default characters
 
 3. Create a folder with your character. The name of this folder is different from your character id and is kinda meaningless (see config.json below).
 
@@ -24,6 +23,7 @@ Note: non-optional data that are missing will automatically get replaced by defa
 	- stage: optional, this specifies which stage to use when 'super selecting' this character
 	- panels: optional, this specifies which panels to use when 'super selecting' this character
 	- (sub_ids): identifiers for other characters, this allows you to define a character bundle that encompasses multiple other characters (picked at random)
+	- (visible): true/false, make it so the character is automatically hidden in the select screen (useful for character bundles)
 
 Note: providing a specific, long enough id is a very good idea so that people renaming your mods folders still get properly match with other users regarding your mods. e.g. "mycharacter_myname"
 
