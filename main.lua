@@ -7,7 +7,6 @@ require("queue")
 require("globals")
 require("character") -- after globals!
 require("stage") -- after globals!
-require("analytics")
 require("save")
 require("engine")
 require("localization")

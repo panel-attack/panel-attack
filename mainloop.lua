@@ -4,6 +4,7 @@ local select_screen = require("select_screen")
 local replay_browser = require("replay_browser")
 local options = require("options")
 local utf8 = require("utf8")
+local analytics = require("analytics")
 
 local wait, resume = coroutine.yield, coroutine.resume
 
@@ -64,7 +65,7 @@ function fmainloop()
   characters_init()
   gprint(loc("ld_analytics"), unpack(main_menu_screen_pos))
   wait()
-  analytics_init()
+  analytics.init()
   apply_config_volume()
   -- create folders in appdata for those who don't have them already
   love.filesystem.createDirectory("characters")
@@ -362,7 +363,7 @@ function main_endless(...)
     -- TODO: proper game over.
       write_replay_file()
       local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
-      analytics_game_ends()
+      analytics.game_ends()
       return main_dumb_transition, {main_select_mode, end_text, 0, -1, P1:pick_win_sfx()}
     end
     variable_step(function() 
@@ -396,7 +397,7 @@ function main_time_attack(...)
     if P1.game_over or (P1.game_stopwatch and P1.game_stopwatch == 120*60) then
     -- TODO: proper game over.
       local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch))
-      analytics_game_ends()
+      analytics.game_ends()
       return main_dumb_transition, {main_select_mode, end_text, 30, -1, P1:pick_win_sfx()}
     end
     variable_step(function()
@@ -850,7 +851,7 @@ function main_net_vs()
       outcome_claim = P1.player_number
     end
     if end_text then
-      analytics_game_ends()
+      analytics.game_ends()
       undo_stonermode()
       json_send({game_over=true, outcome=outcome_claim})
       local now = os.date("*t",to_UTC(os.time()))
@@ -930,7 +931,7 @@ function main_local_vs()
       end_text = loc("pl_1_win")
     end
     if end_text then
-      analytics_game_ends()
+      analytics.game_ends()
       return main_dumb_transition, {select_screen.main, end_text, 45, -1, winSFX}
     end
   end
@@ -966,7 +967,7 @@ function main_local_vs_yourself()
         end
       end)
     if end_text then
-      analytics_game_ends()
+      analytics.game_ends()
       return main_dumb_transition, {select_screen.main, end_text, 45, -1, P1:pick_win_sfx()}
     end
   end
