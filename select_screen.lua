@@ -39,11 +39,15 @@ local function patch_is_random(refreshed) -- retrocompatibility
       refreshed.stage_is_random = random_stage_special_value
     elseif refreshed.stage_is_random == false then
       refreshed.stage_is_random = nil
+    elseif refreshed.stage_is_random ~= random_stage_special_value and stages[refreshed.stage_is_random] == nil then
+      refreshed.stage_is_random = random_stage_special_value
     end
     if refreshed.character_is_random == true then
       refreshed.character_is_random = random_character_special_value
     elseif refreshed.character_is_random == false then
       refreshed.character_is_random = nil
+    elseif refreshed.character_is_random ~= random_character_special_value and stages[refreshed.character_is_random] == nil then
+      refreshed.character_is_random = random_character_special_value
     end
   end
 end

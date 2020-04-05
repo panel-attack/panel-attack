@@ -1,3 +1,5 @@
+local analytics = require("analytics")
+
   -- Stuff defined in this file:
   --  . the data structures that store the configuration of
   --    the stack of panels
@@ -1175,6 +1177,9 @@ function Stack.PdP(self)
     (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and
     (self.cur_row ~= prev_row or self.cur_col ~= prev_col))    then
         SFX_Cur_Move_Play=1 
+        if self.enable_analytics then
+          analytics.register_move()
+        end
     end
   else
     self.cur_row = bound(1, self.cur_row, self.top_cur_row)
@@ -1244,6 +1249,9 @@ function Stack.PdP(self)
 
     if do_swap then
       self.do_swap = true
+      if self.enable_analytics then
+        analytics.register_swap()
+      end
     end
     self.swap_1 = false
     self.swap_2 = false
@@ -1279,7 +1287,7 @@ function Stack.PdP(self)
     self:set_chain_garbage(self.chain_counter)
     SFX_Fanfare_Play = self.chain_counter
     if self.enable_analytics then
-      analytics_register_chain(self.chain_counter)
+      analytics.register_chain(self.chain_counter)
     end
     self.chain_counter=0
   end
@@ -1956,7 +1964,7 @@ function Stack.check_matches(self)
 
   if(combo_size~=0) then
     if self.enable_analytics then
-      analytics_register_destroyed_panels(combo_size)
+      analytics.register_destroyed_panels(combo_size)
     end
     if(combo_size>3) then
       if(score_mode == SCOREMODE_TA) then

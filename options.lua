@@ -1,5 +1,6 @@
 local options = {}
 
+local analytics = require("analytics")
 local wait = coroutine.yield
 
 local memory_before_options_menu = nil
@@ -163,7 +164,7 @@ local function exit_options_menu()
   if config.enable_analytics ~= memory_before_options_menu.enable_analytics then
     gprint(loc("op_reload_analytics"), unpack(main_menu_screen_pos))
     wait()
-    analytics_init()
+    analytics.init()
   end
 
   apply_config_volume()
