@@ -194,6 +194,8 @@ colors = {  red     = {220/255, 50/255,  47/255 },
             white   = {234/255, 234/255, 234/255},
             black   = {20/255,  20/255,  20/255 },
             dgray   = {28/255,  28/255,  28/255 }}
+
+e_chain_or_combo = { combo=0, chain=1 }
             
 panel_color_number_to_upper = {"A", "B", "C", "D", "E", "F", "G", "H",[0]="0"}
 panel_color_number_to_lower = {"a", "b", "c", "d", "e", "f", "g", "h",[0]="0"}

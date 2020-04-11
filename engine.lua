@@ -1458,17 +1458,7 @@ function Stack.PdP(self)
     if self.combo_chain_play then
         themes[config.theme].sounds.land:stop()
         themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        for _,v in pairs(characters[self.character].sounds.combos) do
-          v:stop()
-        end
-        for _,v in pairs(characters[self.character].sounds.combo_echos) do
-          v:stop()
-        end
-        characters[self.character].sounds.others["chain"]:stop()
-        characters[self.character].sounds.others["chain2"]:stop()
-        characters[self.character].sounds.others["chain_echo"]:stop()
-        characters[self.character].sounds.others["chain2_echo"]:stop()
-        self.combo_chain_play[1][self.combo_chain_play[2]]:play()
+        characters[self.character]:play_combo_chain_sfx(self.combo_chain_play)
         self.combo_chain_play = nil
     end
     if SFX_garbage_match_play then
@@ -2037,18 +2027,9 @@ function Stack.check_matches(self)
       --TODO: Mr Stop ^
       -- @CardsOfTheHeart says there are 4 chain sfx: --x2/x3, --x4, --x5 is x2/x3 with an echo effect, --x6+ is x4 with an echo effect
       if is_chain then
-        local length = min(self.chain_counter, 13)
-        if length < 4 then 
-          self.combo_chain_play = { characters[self.character].sounds.others, "chain" }
-        elseif length == 4 then
-          self.combo_chain_play = { characters[self.character].sounds.others, "chain2" }
-        elseif length == 5 then
-          self.combo_chain_play = { characters[self.character].sounds.others, "chain_echo" }
-        elseif length >= 6 then
-          self.combo_chain_play = { characters[self.character].sounds.others, "chain2_echo" }
-        end
+        self.combo_chain_play = { e_chain_or_combo.chain, self.chain_counter }
       elseif combo_size > 3 then
-        self.combo_chain_play = { characters[self.character].sounds.combos, math.random(#characters[self.character].sounds.combos) }
+        self.combo_chain_play = { e_chain_or_combo.combo, "combos" }
       end
       self.sfx_land = false
     end
@@ -2060,9 +2041,9 @@ function Stack.check_matches(self)
     --self.score_render=1;
     --Nope.
     if metal_count > 5 then
-      self.combo_chain_play = { characters[self.character].sounds.combo_echos, math.random(#characters[self.character].sounds.combo_echos) }
+      self.combo_chain_play = { e_chain_or_combo.combo, "combo_echos" }
     elseif metal_count > 2 then
-      self.combo_chain_play = { characters[self.character].sounds.combos, math.random(#characters[self.character].sounds.combos) }
+      self.combo_chain_play = { e_chain_or_combo.combo, "combos" }
     end
     self:set_combo_garbage(combo_size, metal_count)
   end
