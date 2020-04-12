@@ -1365,10 +1365,12 @@ function Stack.PdP(self)
     local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
     local cols = self.garbage_cols[next_garbage_block_width]
     local spawn_col = cols[cols.idx]
-    local spawn_row = #self.panels
-    for idx=spawn_col, spawn_col+next_garbage_block_width-1 do
-      if prow[idx]:dangerous() then 
-        garbage_fits_in_populated_top_row = nil
+    local spawn_row = #self.panels + 1
+    for row_idx = top_row, spawn_row - 1 do
+      for col_idx = spawn_col, spawn_col + next_garbage_block_width - 1 do
+        if panels[row_idx][col_idx]:dangerous() then
+          garbage_fits_in_populated_top_row = nil
+        end
       end
     end
     local drop_it = 
@@ -1625,13 +1627,16 @@ end
 
 -- drops a width x height garbage.
 function Stack.drop_garbage(self, width, height, metal)
-  local spawn_row = #self.panels
-  for i=#self.panels+1,#self.panels+height+1 do
+  print("Dropping garbage...")
+  print("Width " .. tostring(width) .. " Height " .. tostring(height) .. " Metal " .. tostring(metal))
+  local spawn_row = #self.panels + 1
+  for i = spawn_row, spawn_row + height do
     self.panels[i] = {}
     for j=1,self.width do
       self.panels[i][j] = Panel()
     end
   end
+  print("New Stack size = " .. tostring(#self.panels))
   local cols = self.garbage_cols[width]
   local spawn_col = cols[cols.idx]
   cols.idx = wrap(1, cols.idx+1, #cols)
