@@ -81,7 +81,7 @@ function love.update(dt)
         display_message("Copying embedded version...\n")
         next_step = "copy_embedded"
       else
-        display_message("A new version of the game has been found:\n"..top_version.."\nDowloading...\n")
+        display_message("A new version of the game has been found:\n"..top_version.."\nDownloading...\n")
         wait_download = GAME_UPDATER:async_download_file(top_version)
         next_step = "download_game"
       end
