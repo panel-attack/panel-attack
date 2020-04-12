@@ -25,6 +25,7 @@ Note: non-optional data that are missing will automatically get replaced by defa
 
 - "background/main", "background/select_screen", "background/readme": backgrounds used in the menus
 - ("background/bg_overlay"), ("background/fg_overlay"): overlays: the first one is on top of the stage's background while the other one is up front
+- "pause": overlay during the pause
 - "chain/chain00", "chain/chain02", ... "chain/chain19", "combo/combo04", ..., "combo/combo66": chains and combo counter
 - "1", "2", "3": countdown
 - "p1", "p1_cursor", "p1_select_screen_cursor1", "p1_select_screen_cursor2": cursors for player 1, change p1 by p2 for those of player 2
@@ -34,11 +35,11 @@ Note: non-optional data that are missing will automatically get replaced by defa
 
 ~~ [.mp3, .ogg, .wav, .it, .flac] optional sounds are in parenthesis ~~
 
-- "countdown", "go", "move", "swap", "land", "game_over": game sfx
-- "fanfare1", "fanfare2", "fanfare3": fanfare
-- "thud_1", "thud_2", "thud_3": garbage thuds
-- "menu_move", "menu_validate", "menu_cancel": menu
-- "notification": will play upon receiving a request or a request's answer while playing online
-- "pop1-1", "pop1-2", ..., "pop1-10", "pop2-1", ..., "pop2-10", ..., "pop4-10": panel pops
+- "sfx/countdown", "sfx/go", "sfx/move", "sfx/swap", "sfx/land", "sfx/gameover": game sfx
+- "sfx/fanfare1", "sfx/fanfare2", "sfx/fanfare3": fanfare
+- "sfx/thud_1", "sfx/thud_2", "sfx/thud_3": garbage thuds
+- "sfx/menu_move", "sfx/menu_validate", "sfx/menu_cancel": menu
+- "sfx/notification": will play upon receiving a request or a request's answer while playing online
+- "sfx/pop1-1", "sfx/pop1-2", ..., "sfx/pop1-10", "sfx/pop2-1", ..., "sfx/pop2-10", ..., "sfx/pop4-10": panel pops
 - ("music/main", ("music/main_start")), ("music/select_screen", ("music/select_screen_start")): musics that will be used in those menus, "main" will be used as fallback if "select_screen" is missing. 
 "_start"s are played before the normal versions, once.

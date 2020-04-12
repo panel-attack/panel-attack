@@ -20,6 +20,8 @@ local defaulted_musics = {} -- those musics will be defaulted if missing
 
 local default_character = nil -- holds default assets fallbacks
 
+local e_chain_style = { classic=0, per_chain=1 }
+
 Character = class(function(self, full_path, folder_name)
     self.path = full_path -- string | path to the character folder content
     self.id = folder_name -- string | id of the character, specified in config.json
@@ -28,10 +30,11 @@ Character = class(function(self, full_path, folder_name)
     self.panels = nil -- string | panels that get selected upon doing the super selection of that character
     self.sub_characters = {} -- stringS | either empty or with two elements at least; holds the sub characters IDs for bundle characters
     self.images = {}
-    self.sounds = { combos = {}, combo_echos = {}, selections = {}, wins = {}, garbage_matches = {}, garbage_lands = {}, taunt_ups = {}, taunt_downs = {}, others = {} }
+    self.sounds = { combos = {}, combo_echos = {}, chains = {}, selections = {}, wins = {}, garbage_matches = {}, garbage_lands = {}, taunt_ups = {}, taunt_downs = {}, others = {} }
     self.musics = {}
     self.fully_loaded = false
     self.is_visible = true
+    self.chain_style = e_chain_style.classic
   end)
 
 function Character.json_init(self)
@@ -60,6 +63,11 @@ function Character.json_init(self)
       self.is_visible = read_data.visible
     elseif read_data.visible and type(read_data.visible) == "string" then
       self.is_visible = read_data.visible=="true"
+    end
+
+    -- chain_style
+    if read_data.chain_style and type(read_data.name) == "string" then
+      self.chain_style = read_data.chain_style=="per_chain" and e_chain_style.per_chain or e_chain_style.classic
     end
 
     -- associated stage
@@ -101,6 +109,55 @@ function Character.play_selection_sfx(self)
     return true
   end
   return false
+end
+
+function Character.play_combo_chain_sfx(self,chain_combo)
+  if not SFX_mute then
+    -- stop previous sounds if any
+    for _,v in pairs(self.sounds.combos) do
+      v:stop()
+    end
+    for _,v in pairs(self.sounds.combo_echos) do
+      v:stop()
+    end
+    if self.chain_style == e_chain_style.classic then
+      self.sounds.others["chain"]:stop()
+      self.sounds.others["chain2"]:stop()
+      self.sounds.others["chain_echo"]:stop()
+      self.sounds.others["chain2_echo"]:stop()
+    else --elseif self.chain_style == e_chain_style.per_chain then
+      for _,v in pairs(self.sounds.chains) do
+        for _,w in pairs(v) do
+          w:stop()
+        end
+      end
+    end
+
+    -- play combos or chains
+    if chain_combo[1] == e_chain_or_combo.combo then
+      -- either combos or combo_echos
+      self.sounds[chain_combo[2]][math.random(#self.sounds[chain_combo[2]])]:play()
+    else --elseif chain_combo[1] == e_chain_or_combo.chain then 
+      local length = chain_combo[2]
+      if self.chain_style == e_chain_style.classic then
+        if length < 4 then 
+          self.sounds.others["chain"]:play()
+        elseif length == 4 then
+          self.sounds.others["chain2"]:play()
+        elseif length == 5 then
+          self.sounds.others["chain_echo"]:play()
+        elseif length >= 6 then
+          self.sounds.others["chain2_echo"]:play()
+        end
+      else --elseif self.chain_style == e_chain_style.per_chain then
+        length = math.min(length, 2)
+        if length > 13 then
+          length = 0
+        end
+        self.sounds.chains[length][math.random(#self.sounds.chains[length])]:play()
+      end
+    end
+  end
 end
 
 function Character.preload(self)
@@ -273,14 +330,22 @@ function Character.graphics_uninit(self)
   end
 end
 
-function Character.init_sfx_variants(self, sfx_array, sfx_name)
-  local sound_name = sfx_name..1
+function Character.init_sfx_variants(self, sfx_array, sfx_name, sfx_suffix_at_higher_count)
+  sfx_suffix_at_higher_count = sfx_suffix_at_higher_count or ""
+
+  -- be careful is we are to support chain2X sfx since chain21 will be found and used for chain2 (unwanted behavior), might be a future bug!
+  local sound_name = sfx_name..sfx_suffix_at_higher_count..1
   if self.sounds.others[sfx_name] then
-    -- "combo" in others will be stored in "combo1" in combos and others will be freed from it
+    -- "combo" in others will be stored in 'combos' and 'others' will be freed from it
     sfx_array[1] = self.sounds.others[sfx_name]
     self.sounds.others[sfx_name] = nil
-  else
+  elseif sfx_suffix_at_higher_count == "" then
     local sound = load_sound_from_supported_extensions(self.path.."/"..sound_name, false)
+    if sound then
+      sfx_array[1] = sound
+    end
+  else
+    local sound = load_sound_from_supported_extensions(self.path.."/"..sfx_name, false)
     if sound then
       sfx_array[1] = sound
     end
@@ -290,7 +355,7 @@ function Character.init_sfx_variants(self, sfx_array, sfx_name)
   local sfx_count = 1
   while sfx_array[sfx_count] do
     sfx_count = sfx_count+1
-    sound_name = sfx_name..sfx_count
+    sound_name = sfx_name..sfx_suffix_at_higher_count..sfx_count
     local sound = load_sound_from_supported_extensions(self.path.."/"..sound_name, false)
     if sound then
       sfx_array[sfx_count] = sound
@@ -336,6 +401,34 @@ function Character.sound_init(self,full,yields)
     self:init_sfx_variants(self.sounds.selections, "selection")
     if yields then coroutine.yield() end
   elseif not self:is_bundle() then
+    if self.chain_style == e_chain_style.per_chain then
+      -- actual init of sounds
+      for i=2,13 do
+        self.sounds.chains[i] = {}
+        self:init_sfx_variants(self.sounds.chains[i], "chain"..i, "_")
+        if #self.sounds.chains[i] ~= 0 then
+          print("chain"..i.." has "..#self.sounds.chains[i].." variant(s)")
+        end
+      end
+        self.sounds.chains[0] = {}
+      self:init_sfx_variants(self.sounds.chains[0], "chain0", "_")
+      -- make it so every values in the chain array point to a properly filled arrays of sfx (last index used as fallback)
+      if #self.sounds.chains[2] == 0 then
+        self.sounds.chains[2][1] = self.sounds.others["chain"]
+      end
+      local last_filled_chains = 2
+      for i=3,13 do
+        if #self.sounds.chains[i] == 0 then
+          self.sounds.chains[i] = self.sounds.chains[last_filled_chains] -- points to the same array, not an actual copy
+        else
+          last_filled_chains = i
+        end
+      end
+      if #self.sounds.chains[0] == 0 then
+        self.sounds.chains[0] = self.sounds.chains[last_filled_chains]
+      end
+      if yields then coroutine.yield() end
+    end
     self:init_sfx_variants(self.sounds.combos, "combo")
     if yields then coroutine.yield() end
     self:init_sfx_variants(self.sounds.combo_echos, "combo_echo")
