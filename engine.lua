@@ -81,7 +81,8 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     s.panels = {}
     s.width = 6
     s.height = 12
-    for i=0,s.height do
+    -- Garbage spawns 3 rows above the playfield, so make sure there are enough rows generated for it.
+    for i=0,s.height+3 do
       s.panels[i] = {}
       for j=1,s.width do
         s.panels[i][j] = Panel()
@@ -294,7 +295,7 @@ Panel = class(function(p)
 
 function Panel.clear(self)
     -- color 0 is an empty panel.
-    -- colors 1-7 are normal colors, 8 is [!].
+    -- colors 1-7 are normal colors, 8 is [!], 9 is garbage.
     self.color = 0
     -- A panel's timer indicates for how many more frames it will:
     --  . be swapping
@@ -481,7 +482,7 @@ do
   end
 
   function Panel.dangerous(self)
-    return self.color ~= 0 and (self.state ~= "falling" or not self.garbage)
+    return self.color ~= 0 and not (self.state == "falling" and self.garbage)
   end
 end
 
@@ -1347,35 +1348,29 @@ function Stack.PdP(self)
     end
   end
   self.later_garbage[self.CLOCK-409] = nil
-  
-  --double-check panels_in_top_row
+
+  -- Check for panels at or above the top.
   self.panels_in_top_row = false
-  local prow = panels[top_row]
-  for idx=1,width do
-    if prow[idx]:dangerous() then
+  -- If any dangerous panels are in the top row, garbage should not fall.
+  for col_idx = 1, width do
+    if panels[top_row][col_idx]:dangerous() then
       self.panels_in_top_row = true
     end
   end
-  local garbage_fits_in_populated_top_row 
-  if self.garbage_q:len() > 0 then
-    --even if there are some panels in the top row,
-    --check if the next block in the garbage_q would fit anyway
-    --ie. 3-wide garbage might fit if there are three empty spaces where it would spawn
-    garbage_fits_in_populated_top_row = true
-    local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
-    local cols = self.garbage_cols[next_garbage_block_width]
-    local spawn_col = cols[cols.idx]
-    local spawn_row = #self.panels + 1
-    for row_idx = top_row, spawn_row - 1 do
-      for col_idx = spawn_col, spawn_col + next_garbage_block_width - 1 do
-        if panels[row_idx][col_idx]:dangerous() then
-          garbage_fits_in_populated_top_row = nil
-        end
+  -- If any panels (dangerous or not) are in rows above the top row, garbage should not fall.
+  for row_idx = top_row + 1, #self.panels do
+    for col_idx = 1, width do
+      if panels[row_idx][col_idx].color ~= 0 then
+        self.panels_in_top_row = true
       end
     end
+  end
+
+  if self.garbage_q:len() > 0 then
+    local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
     local drop_it = 
-      (not self.panels_in_top_row or garbage_fits_in_populated_top_row)
-      and not self:has_falling_garbage()
+      not self.panels_in_top_row
+      --and not self:has_falling_garbage()
       and (
         (from_chain and next_garbage_block_height > 1) or
         (self.n_active_panels == 0 and
@@ -1627,16 +1622,36 @@ end
 
 -- drops a width x height garbage.
 function Stack.drop_garbage(self, width, height, metal)
-  print("Dropping garbage...")
-  print("Width " .. tostring(width) .. " Height " .. tostring(height) .. " Metal " .. tostring(metal))
-  local spawn_row = #self.panels + 1
-  for i = spawn_row, spawn_row + height do
-    self.panels[i] = {}
-    for j=1,self.width do
-      self.panels[i][j] = Panel()
+  local spawn_row = self.height + 3
+
+  -- Do one last check for panels in the way.
+  for i = spawn_row, #self.panels do
+    if self.panels[i] then
+      for j = 1, self.width do
+        if self.panels[i][j] then
+          if self.panels[i][j].color ~= 0 then
+            print("Aborting garbage drop: panel found at row " .. tostring(i) .. " column " .. tostring(j))
+            return false
+          end
+        end
+      end
     end
   end
+
+  print("Dropping garbage...")
+  print("spawn_row = " .. tostring(spawn_row))
+  print("Width " .. tostring(width) .. " Height " .. tostring(height) .. " Metal " .. tostring(metal))
+  for i = self.height + 1, spawn_row + height - 1 do
+    if not self.panels[i] then
+      self.panels[i] = {}
+      for j = 1, self.width do
+        self.panels[i][j] = Panel()
+      end
+    end
+  end
+
   print("New Stack size = " .. tostring(#self.panels))
+
   local cols = self.garbage_cols[width]
   local spawn_col = cols[cols.idx]
   cols.idx = wrap(1, cols.idx+1, #cols)
