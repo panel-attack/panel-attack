@@ -66,7 +66,7 @@ function Character.json_init(self)
     end
 
     -- chain_style
-    if read_data.chain_style and type(read_data.name) == "string" then
+    if read_data.chain_style and type(read_data.chain_style) == "string" then
       self.chain_style = read_data.chain_style=="per_chain" and e_chain_style.per_chain or e_chain_style.classic
     end
 
@@ -150,7 +150,7 @@ function Character.play_combo_chain_sfx(self,chain_combo)
           self.sounds.others["chain2_echo"]:play()
         end
       else --elseif self.chain_style == e_chain_style.per_chain then
-        length = math.min(length, 2)
+        length = math.max(length, 2)
         if length > 13 then
           length = 0
         end
