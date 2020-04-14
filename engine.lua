@@ -81,8 +81,7 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     s.panels = {}
     s.width = 6
     s.height = 12
-    -- Garbage spawns 3 rows above the playfield, so make sure there are enough rows generated for it.
-    for i=0,s.height+3 do
+    for i=0,s.height do
       s.panels[i] = {}
       for j=1,s.width do
         s.panels[i][j] = Panel()
@@ -1638,9 +1637,6 @@ function Stack.drop_garbage(self, width, height, metal)
     end
   end
 
-  print("Dropping garbage...")
-  print("spawn_row = " .. tostring(spawn_row))
-  print("Width " .. tostring(width) .. " Height " .. tostring(height) .. " Metal " .. tostring(metal))
   for i = self.height + 1, spawn_row + height - 1 do
     if not self.panels[i] then
       self.panels[i] = {}
@@ -1649,8 +1645,6 @@ function Stack.drop_garbage(self, width, height, metal)
       end
     end
   end
-
-  print("New Stack size = " .. tostring(#self.panels))
 
   local cols = self.garbage_cols[width]
   local spawn_col = cols[cols.idx]
