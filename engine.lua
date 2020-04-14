@@ -1369,14 +1369,15 @@ function Stack.PdP(self)
     local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
     local drop_it = 
       not self.panels_in_top_row
-      --and not self:has_falling_garbage()
       and (
         (from_chain and next_garbage_block_height > 1) or
         (self.n_active_panels == 0 and
         self.prev_active_panels == 0) 
       )
     if drop_it and self.garbage_q:len() > 0 then
-      self:drop_garbage(unpack(self.garbage_q:pop()))
+      if self:drop_garbage(unpack(self.garbage_q:peek())) then
+        self.garbage_q:pop()
+      end
     end
   end
   --Play Sounds / music
@@ -1666,6 +1667,8 @@ function Stack.drop_garbage(self, width, height, metal)
       end
     end
   end
+
+  return true
 end
 
 -- prepare to send some garbage!
@@ -1784,8 +1787,6 @@ function Stack.check_matches(self)
   local first_panel_col = 0
   local combo_index, garbage_index = 0, 0
   local combo_size, garbage_size = 0, 0
-  local something = 0
-  local whatever = 0
   local panels = self.panels
   local q, garbage = Queue(), {}
   local seen, seenm = {}, {}
@@ -1996,12 +1997,12 @@ function Stack.check_matches(self)
       --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
       --          first_panel_row<<4+P1StackPosY+self.displacement-9);
     end
-    something = self.chain_counter
+    local chain_bonus = self.chain_counter
     if(score_mode == SCOREMODE_TA) then
       if(self.chain_counter>13) then
-        something=0
+        chain_bonus = 0
       end
-      self.score = self.score + score_chain_TA[something]
+      self.score = self.score + score_chain_TA[chain_bonus]
     end
     if((combo_size>3) or is_chain) then
       local stop_time
