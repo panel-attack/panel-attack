@@ -294,7 +294,7 @@ Panel = class(function(p)
 
 function Panel.clear(self)
     -- color 0 is an empty panel.
-    -- colors 1-7 are normal colors, 8 is [!].
+    -- colors 1-7 are normal colors, 8 is [!], 9 is garbage.
     self.color = 0
     -- A panel's timer indicates for how many more frames it will:
     --  . be swapping
@@ -481,7 +481,7 @@ do
   end
 
   function Panel.dangerous(self)
-    return self.color ~= 0 and (self.state ~= "falling" or not self.garbage)
+    return self.color ~= 0 and not (self.state == "falling" and self.garbage)
   end
 end
 
@@ -1347,40 +1347,37 @@ function Stack.PdP(self)
     end
   end
   self.later_garbage[self.CLOCK-409] = nil
-  
-  --double-check panels_in_top_row
+
+  -- Check for panels at or above the top.
   self.panels_in_top_row = false
-  local prow = panels[top_row]
-  for idx=1,width do
-    if prow[idx]:dangerous() then
+  -- If any dangerous panels are in the top row, garbage should not fall.
+  for col_idx = 1, width do
+    if panels[top_row][col_idx]:dangerous() then
       self.panels_in_top_row = true
     end
   end
-  local garbage_fits_in_populated_top_row 
-  if self.garbage_q:len() > 0 then
-    --even if there are some panels in the top row,
-    --check if the next block in the garbage_q would fit anyway
-    --ie. 3-wide garbage might fit if there are three empty spaces where it would spawn
-    garbage_fits_in_populated_top_row = true
-    local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
-    local cols = self.garbage_cols[next_garbage_block_width]
-    local spawn_col = cols[cols.idx]
-    local spawn_row = #self.panels
-    for idx=spawn_col, spawn_col+next_garbage_block_width-1 do
-      if prow[idx]:dangerous() then 
-        garbage_fits_in_populated_top_row = nil
+  -- If any panels (dangerous or not) are in rows above the top row, garbage should not fall.
+  for row_idx = top_row + 1, #self.panels do
+    for col_idx = 1, width do
+      if panels[row_idx][col_idx].color ~= 0 then
+        self.panels_in_top_row = true
       end
     end
+  end
+
+  if self.garbage_q:len() > 0 then
+    local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
     local drop_it = 
-      (not self.panels_in_top_row or garbage_fits_in_populated_top_row)
-      and not self:has_falling_garbage()
+      not self.panels_in_top_row
       and (
         (from_chain and next_garbage_block_height > 1) or
         (self.n_active_panels == 0 and
         self.prev_active_panels == 0) 
       )
     if drop_it and self.garbage_q:len() > 0 then
-      self:drop_garbage(unpack(self.garbage_q:pop()))
+      if self:drop_garbage(unpack(self.garbage_q:peek())) then
+        self.garbage_q:pop()
+      end
     end
   end
   --Play Sounds / music
@@ -1625,13 +1622,31 @@ end
 
 -- drops a width x height garbage.
 function Stack.drop_garbage(self, width, height, metal)
-  local spawn_row = #self.panels
-  for i=#self.panels+1,#self.panels+height+1 do
-    self.panels[i] = {}
-    for j=1,self.width do
-      self.panels[i][j] = Panel()
+  local spawn_row = self.height + 3
+
+  -- Do one last check for panels in the way.
+  for i = spawn_row, #self.panels do
+    if self.panels[i] then
+      for j = 1, self.width do
+        if self.panels[i][j] then
+          if self.panels[i][j].color ~= 0 then
+            print("Aborting garbage drop: panel found at row " .. tostring(i) .. " column " .. tostring(j))
+            return false
+          end
+        end
+      end
     end
   end
+
+  for i = self.height + 1, spawn_row + height - 1 do
+    if not self.panels[i] then
+      self.panels[i] = {}
+      for j = 1, self.width do
+        self.panels[i][j] = Panel()
+      end
+    end
+  end
+
   local cols = self.garbage_cols[width]
   local spawn_col = cols[cols.idx]
   cols.idx = wrap(1, cols.idx+1, #cols)
@@ -1652,6 +1667,8 @@ function Stack.drop_garbage(self, width, height, metal)
       end
     end
   end
+
+  return true
 end
 
 -- prepare to send some garbage!
@@ -1770,8 +1787,6 @@ function Stack.check_matches(self)
   local first_panel_col = 0
   local combo_index, garbage_index = 0, 0
   local combo_size, garbage_size = 0, 0
-  local something = 0
-  local whatever = 0
   local panels = self.panels
   local q, garbage = Queue(), {}
   local seen, seenm = {}, {}
@@ -1982,12 +1997,12 @@ function Stack.check_matches(self)
       --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
       --          first_panel_row<<4+P1StackPosY+self.displacement-9);
     end
-    something = self.chain_counter
+    local chain_bonus = self.chain_counter
     if(score_mode == SCOREMODE_TA) then
       if(self.chain_counter>13) then
-        something=0
+        chain_bonus = 0
       end
-      self.score = self.score + score_chain_TA[something]
+      self.score = self.score + score_chain_TA[chain_bonus]
     end
     if((combo_size>3) or is_chain) then
       local stop_time
