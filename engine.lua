@@ -1369,6 +1369,7 @@ function Stack.PdP(self)
     local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
     local drop_it = 
       not self.panels_in_top_row
+      and not self:has_falling_garbage()
       and (
         (from_chain and next_garbage_block_height > 1) or
         (self.n_active_panels == 0 and
@@ -1622,7 +1623,7 @@ end
 
 -- drops a width x height garbage.
 function Stack.drop_garbage(self, width, height, metal)
-  local spawn_row = self.height + 3
+  local spawn_row = self.height + 1
 
   -- Do one last check for panels in the way.
   for i = spawn_row, #self.panels do
@@ -1637,6 +1638,8 @@ function Stack.drop_garbage(self, width, height, metal)
       end
     end
   end
+
+  print(string.format("Dropping garbage on player %d - height %d  width %d  %s", self.player_number, height, width, metal and "Metal" or ""))
 
   for i = self.height + 1, spawn_row + height - 1 do
     if not self.panels[i] then
