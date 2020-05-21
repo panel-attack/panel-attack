@@ -1382,7 +1382,7 @@ function Stack.PdP(self)
     end
   end
   --Play Sounds / music
-  if not music_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
+  if not music_mute and not game_is_paused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
 
     if self.do_countdown then 
       if SFX_Go_Play == 1 then

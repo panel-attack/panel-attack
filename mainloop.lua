@@ -328,6 +328,10 @@ function Stack.handle_pause(self)
   if keys[k.pause] or this_frame_keys[k.pause] then
     game_is_paused = not game_is_paused
     self.wait_for_not_pausing = true
+
+    if game_is_paused then
+      stop_the_music()
+    end
   end
 
 end
