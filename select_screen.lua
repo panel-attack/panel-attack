@@ -566,6 +566,8 @@ function select_screen.main()
       end
       local level_scale = level_width/themes[config.theme].images.IMG_levels[1]:getWidth()
       menu_drawf(themes[config.theme].images.IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center" )
+      local ex_scaling = level_width/themes[config.theme].images.IMG_levels[11]:getWidth()
+      menu_drawf(themes[config.theme].images.IMG_players[player_number], render_x+padding_x, render_y+y_padding, "center", "center" )
       padding_x = padding_x + level_width
       if is_selected then
         gprintf("<", render_x+padding_x-0.5*level_width, render_y+y_padding-0.5*text_height,level_width,"center")
@@ -576,12 +578,12 @@ function select_screen.main()
         padding_x = padding_x + additional_padding
         local use_unfocus = cursor_data.state.level < i
         if use_unfocus then
-          menu_drawf(themes[config.theme].images.IMG_levels_unfocus[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, level_scale, level_scale )
+          menu_drawf(themes[config.theme].images.IMG_levels_unfocus[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, (i == 11 and ex_scaling or level_scale), (i == 11 and ex_scaling or level_scale) )
         else
-          menu_drawf(themes[config.theme].images.IMG_levels[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, level_scale, level_scale )
+          menu_drawf(themes[config.theme].images.IMG_levels[i], render_x+padding_x, render_y+y_padding, "center", "center", 0, (i == 11 and ex_scaling or level_scale), (i == 11 and ex_scaling or level_scale) )
         end
         if i == cursor_data.state.level then
-          menu_drawf(themes[config.theme].images.IMG_level_cursor, render_x+padding_x, render_y+y_padding+themes[config.theme].images.IMG_levels[i]:getHeight()*0.5, "center", "top", 0, level_scale, level_scale )
+          menu_drawf(themes[config.theme].images.IMG_level_cursor, render_x+padding_x, render_y+y_padding+themes[config.theme].images.IMG_levels[i]:getHeight()*0.5, "center", "top", 0, (i == 11 and ex_scaling or level_scale), (i == 11 and ex_scaling or level_scale) )
         end
         padding_x = padding_x + level_width + additional_padding
       end
