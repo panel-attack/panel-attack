@@ -839,7 +839,7 @@ function Stack.PdP(self)
       end
     end
   elseif self.panels_to_speedup <= 0 then
-    self.speed = self.speed + 1
+    self.speed = min(self.speed + 1, 99)
     self.panels_to_speedup = self.panels_to_speedup +
       panels_to_next_speed[self.speed]
     self.FRAMECOUNT_RISE = speed_to_rise_time[self.speed]
