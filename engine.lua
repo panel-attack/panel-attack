@@ -831,6 +831,7 @@ function Stack.PdP(self)
     local time = self.speed_times[self.speed_times.idx]
     if self.CLOCK == time then
       self.speed = min(self.speed + 1, 99)
+      self.FRAMECOUNT_RISE = speed_to_rise_time[self.speed]
       if self.speed_times.idx ~= #self.speed_times then
         self.speed_times.idx = self.speed_times.idx + 1
       else
