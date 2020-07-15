@@ -3,6 +3,21 @@ require("sound_util")
 
 local musics = {"main", "select_screen", "main_start", "select_screen_start"}
 
+-- from https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
+local flags =
+{
+"cn", -- China
+"de", -- Germany
+"es", -- Spain
+"fr", -- France
+"gb", -- United Kingdom of Great Britain and Northern Ireland
+"in", -- India
+"it", -- Italy
+"jp", -- Japan
+"pt", -- Portugal
+"us", -- United States of America
+}
+
 local function load_theme_img(name)
   local img = load_img_from_supported_extensions("themes/"..config.theme.."/"..name)
   if not img then
@@ -21,6 +36,12 @@ background = load_theme_img("background/main")
 
 function Theme.graphics_init(self)
   self.images = {}
+
+  self.images.flags = {}
+  for _, flag in ipairs(flags) do
+    self.images.flags[flag] = load_theme_img("flags/"..flag)
+  end
+
   self.images.bg_main = load_theme_img("background/main")
   self.images.bg_select_screen = load_theme_img("background/select_screen")
   self.images.bg_readme = load_theme_img("background/readme")

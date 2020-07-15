@@ -21,6 +21,7 @@ Note: non-optional data that are missing will automatically get replaced by defa
 	- (sub_ids): identifiers for other characters, this allows you to define a character bundle that encompasses multiple other characters (picked at random)
 	- (visible): true/false, make it so the character is automatically hidden in the select screen (useful for character bundles)
 	- (chain_style): "classic"/"per_chain", change the way the chain sfx are being used (classic mode refers to PPL style while per_chain is puyo puyo)
+	- (flag): a flag may be displayed in the select screen based on that parameter, values are lowercase versions of the country codes from https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2, not all flags are available. 
 
 Note: providing a specific, long enough id is a very good idea so that people renaming your mods folders still get properly match with other users regarding your mods. e.g. "mycharacter_myname"
 
