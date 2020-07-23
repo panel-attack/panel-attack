@@ -479,6 +479,16 @@ function select_screen.main()
           menu_drawf(thumbnail_4, render_x+0.75*button_width, render_y+0.75*button_height, "center", "center", 0, scale_4, scale_4 )
         end
       end
+
+      -- draw flag in the bottom-right corner
+      if character and character ~= random_character_special_value and character.flag then
+        local flag_icon = themes[config.theme].images.flags[character.flag]
+        if flag_icon then
+          local orig_w, orig_h = flag_icon:getDimensions()
+          local scale = 0.2*button_width/orig_w -- keep image ratio
+          menu_drawf(flag_icon, render_x+button_width-1, render_y+button_height-1,"right","bottom", 0, scale, scale )
+        end
+      end
     end
 
     local function draw_super_select(player_num)

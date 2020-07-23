@@ -32,6 +32,7 @@ Character = class(function(self, full_path, folder_name)
     self.images = {}
     self.sounds = { combos = {}, combo_echos = {}, chains = {}, selections = {}, wins = {}, garbage_matches = {}, garbage_lands = {}, taunt_ups = {}, taunt_downs = {}, others = {} }
     self.musics = {}
+    self.flag = nil -- string | flag to be displayed in the select screen
     self.fully_loaded = false
     self.is_visible = true
     self.chain_style = e_chain_style.classic
@@ -77,6 +78,11 @@ function Character.json_init(self)
     -- associated panel
     if read_data.panels and type(read_data.panels) == "string" and panels[read_data.panels] then
       self.panels = read_data.panels
+    end
+
+    -- flag
+    if read_data.flag and type(read_data.flag) == "string" then
+      self.flag = read_data.flag
     end
     
     return true
