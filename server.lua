@@ -23,7 +23,7 @@ local PLAYING = "playing" -- room states
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
 
-local VERSION = "044"
+local VERSION = "045"
 local type_to_length = {H=4, E=4, F=4, P=8, I=2, L=2, Q=8, U=2}
 local INDEX = 1
 local connections = {}
