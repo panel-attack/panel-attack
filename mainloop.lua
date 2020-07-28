@@ -309,9 +309,11 @@ end
 function Stack.wait_for_random_character(self)
   if self.character == random_character_special_value then
     self.character = uniformly(characters_ids_for_current_theme)
-    character_loader_load(self.character)
-    character_loader_wait()
+  elseif characters[self.character]:is_bundle() then -- may have picked a bundle
+    self.character = uniformly(characters[self.character].sub_characters)
   end
+  character_loader_load(self.character)
+  character_loader_wait()
 end
 
 function Stack.handle_pause(self)
