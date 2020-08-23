@@ -27,6 +27,8 @@ Note: non-optional data that are missing will automatically get replaced by defa
 - "config": this file holds data for the configuration of your stage. The inside should look like that:
 	- name: display name of this stage, this value will be displayed in the select screen
 	- id: unique identifier of this stage, this id should be specific (see note). [IF MISSING YOUR STAGE WILL BE IGNORED!] 
+	- (sub_ids): identifiers for other stages, this allows you to define a stage bundle that encompasses multiple other stages (picked at random)
+	- (visible): true/false, make it so the stage is automatically hidden in the select screen (useful for stage bundles)
 
 Note: providing a specific, long enough id is a very good idea so that people renaming your mods folders still get properly match with other users regarding your mods
 e.g. "mystage_myname"
@@ -36,7 +38,7 @@ e.g. "mystage_myname"
 - "background": background for your stage, to be displayed while playing, should be 1280x720 px
 - "thumbnail": thumbnail, to be displayed in the select screen, should be 80x45 px
 
-~~ [.mp3, .ogg, .it] optional sounds are in parenthesis ~~
+~~ [.mp3, .ogg, .wav, .it, .flac] optional sounds are in parenthesis ~~
 
 - "normal_music": music that will be played while playing on this stage if the option use_music_from's value is stage
 - ("danger_music"): music that will be used when a player is in danger (top of the screen) if the option use_music_from's value is stage

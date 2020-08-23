@@ -1,5 +1,6 @@
 require("input")
 require("util")
+local analytics = require("analytics")
 
 local floor = math.floor
 local ceil = math.ceil
@@ -228,8 +229,13 @@ function Stack.render(self)
       end
     end
   end
-  draw(themes[config.theme].images.IMG_frame,0,0)
-  draw(themes[config.theme].images.IMG_wall, 4, 4 - shake + self.height*16)
+  if P1 == self then
+	draw(themes[config.theme].images.IMG_frame1P,0,0)
+	draw(themes[config.theme].images.IMG_wall1P, 4, 4 - shake + self.height*16)
+  else
+	draw(themes[config.theme].images.IMG_frame2P,0,0)
+	draw(themes[config.theme].images.IMG_wall2P, 4, 4 - shake + self.height*16)
+  end
 
   self:draw_cards()
   self:render_cursor()
@@ -331,7 +337,7 @@ function Stack.render(self)
     end
   end
   if self.enable_analytics then
-    analytics_draw(self.score_x-460,self.score_y)
+    analytics.draw(self.score_x-460,self.score_y)
   end
   -- ends here
 end

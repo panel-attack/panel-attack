@@ -2,18 +2,19 @@ require("panels")
 require("theme")
 require("click_menu")
 local select_screen = require("select_screen")
+local replay_browser = require("replay_browser")
 local options = require("options")
 local utf8 = require("utf8")
+local analytics = require("analytics")
 
 local wait, resume = coroutine.yield, coroutine.resume
 
 local main_endless, make_main_puzzle, main_net_vs_setup,
-  main_replay_endless, main_replay_puzzle,
   main_config_input, main_select_puzz,
-  main_replay_vs, main_local_vs_setup,
-  main_set_name, main_local_vs_yourself_setup,
-  main_options, main_music_test, exit_game
--- main_select_mode, main_dumb_transition, main_net_vs, main_net_vs_lobby, main_local_vs_yourself, main_local_vs are not local since they are also used elsewhere
+  main_local_vs_setup, main_set_name, main_local_vs_yourself_setup,
+  main_options, main_music_test, 
+  main_replay_browser, exit_game
+-- main_select_mode, main_dumb_transition, main_net_vs, main_net_vs_lobby, main_local_vs_yourself, main_local_vs, main_replay_endless, main_replay_puzzle, main_replay_vs are not local since they are also used elsewhere
 
 local PLAYING = "playing"  -- room states
 local CHARACTERSELECT = "character select" --room states
@@ -67,7 +68,7 @@ function fmainloop()
   characters_init()
   gprint(loc("ld_analytics"), unpack(main_menu_screen_pos))
   wait()
-  analytics_init()
+  analytics.init()
   apply_config_volume()
   -- create folders in appdata for those who don't have them already
   love.filesystem.createDirectory("characters")
@@ -111,7 +112,8 @@ do
     character_loader_clear()
     stage_loader_clear()
     close_socket()
-    bg = themes[config.theme].images.bg_main
+    background = themes[config.theme].images.bg_main
+    reset_filters()
     logged_in = 0
     connection_up_time = 0
     connected_server_ip = ""
@@ -134,9 +136,10 @@ do
         --{loc("mm_2_vs_online", "LittleEndu's server"), main_net_vs_setup, {"51.15.207.223"}},
         {loc("mm_2_vs_online", "server for ranked Ex Mode"), main_net_vs_setup, {"exserver.panelattack.com",49568}},
         {loc("mm_2_vs_local"), main_local_vs_setup},
-        {loc("mm_replay_of", loc("mm_1_endless")), main_replay_endless},
-        {loc("mm_replay_of", loc("mm_1_puzzle")), main_replay_puzzle},
-        {loc("mm_replay_of", loc("mm_2_vs")), main_replay_vs},
+        --{loc("mm_replay_of", loc("mm_1_endless")), main_replay_endless},
+        --{loc("mm_replay_of", loc("mm_1_puzzle")), main_replay_puzzle},
+        --{loc("mm_replay_of", loc("mm_2_vs")), main_replay_vs},
+        {loc("mm_replay_browser"), replay_browser.main},
         {loc("mm_configure"), main_config_input},
         {loc("mm_set_name"), main_set_name},
         {loc("mm_options"), options.main},
@@ -276,11 +279,16 @@ end
 local function use_current_stage()
   stage_loader_load(current_stage)
   stage_loader_wait()
-  bg = stages[current_stage].images.background
+  background = stages[current_stage].images.background
+  background_overlay = themes[config.theme].images.bg_overlay
+  foreground_overlay = themes[config.theme].images.fg_overlay
 end
 
 local function pick_random_stage()
   current_stage = uniformly(stages_ids_for_current_theme)
+  if stages[current_stage]:is_bundle() then -- may pick a bundle!
+    current_stage = uniformly(stages[current_stage].sub_stages)
+  end
   use_current_stage()
 end
 
@@ -302,9 +310,11 @@ end
 function Stack.wait_for_random_character(self)
   if self.character == random_character_special_value then
     self.character = uniformly(characters_ids_for_current_theme)
-    character_loader_load(self.character)
-    character_loader_wait()
+  elseif characters[self.character]:is_bundle() then -- may have picked a bundle
+    self.character = uniformly(characters[self.character].sub_characters)
   end
+  character_loader_load(self.character)
+  character_loader_wait()
 end
 
 function Stack.handle_pause(self)
@@ -321,6 +331,10 @@ function Stack.handle_pause(self)
   if keys[k.pause] or this_frame_keys[k.pause] then
     game_is_paused = not game_is_paused
     self.wait_for_not_pausing = true
+
+    if game_is_paused then
+      stop_the_music()
+    end
   end
 
 end
@@ -356,7 +370,7 @@ function main_endless(...)
     -- TODO: proper game over.
       write_replay_file()
       local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
-      analytics_game_ends()
+      analytics.game_ends()
       return main_dumb_transition, {main_select_mode, end_text, 0, -1, P1:pick_win_sfx()}
     end
     variable_step(function() 
@@ -390,7 +404,7 @@ function main_time_attack(...)
     if P1.game_over or (P1.game_stopwatch and P1.game_stopwatch == 120*60) then
     -- TODO: proper game over.
       local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch))
-      analytics_game_ends()
+      analytics.game_ends()
       return main_dumb_transition, {main_select_mode, end_text, 30, -1, P1:pick_win_sfx()}
     end
     variable_step(function()
@@ -411,7 +425,8 @@ function main_net_vs_lobby()
   if themes[config.theme].musics.main then
     find_and_add_music(themes[config.theme].musics, "main")
   end
-  bg = themes[config.theme].images.bg_main
+  background = themes[config.theme].images.bg_main
+  reset_filters()
   character_loader_clear()
   stage_loader_clear()
   local active_name, active_idx, active_back = "", 1
@@ -857,7 +872,7 @@ function main_net_vs()
       outcome_claim = P1.player_number
     end
     if end_text then
-      analytics_game_ends()
+      analytics.game_ends()
       undo_stonermode()
       json_send({game_over=true, outcome=outcome_claim})
       local now = os.date("*t",to_UTC(os.time()))
@@ -937,7 +952,7 @@ function main_local_vs()
       end_text = loc("pl_1_win")
     end
     if end_text then
-      analytics_game_ends()
+      analytics.game_ends()
       return main_dumb_transition, {select_screen.main, end_text, 45, -1, winSFX}
     end
   end
@@ -973,7 +988,7 @@ function main_local_vs_yourself()
         end
       end)
     if end_text then
-      analytics_game_ends()
+      analytics.game_ends()
       return main_dumb_transition, {select_screen.main, end_text, 45, -1, P1:pick_win_sfx()}
     end
   end
@@ -1272,7 +1287,8 @@ do
     if themes[config.theme].musics.main then
       find_and_add_music(themes[config.theme].musics, "main")
     end
-    bg = themes[config.theme].images.bg_main
+    background = themes[config.theme].images.bg_main
+    reset_filters()
     local active_idx = last_puzzle_idx or 1
     local k = K[1]
     while true do
@@ -1500,6 +1516,10 @@ function main_music_test()
     end
   end
 
+  -- stop main music
+  love.audio.stop()
+  stop_the_music()
+
   -- initial song starts here
   find_and_add_music(tracks[index].is_character and characters[tracks[index].id].musics or stages[tracks[index].id].musics, tracks[index].type)
 
@@ -1563,6 +1583,7 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
   end
   love.audio.stop()
   stop_the_music()
+  reset_filters()
   game_is_paused = false
   winnerSFX = winnerSFX or nil
   if not SFX_mute then

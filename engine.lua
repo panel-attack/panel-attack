@@ -1,3 +1,5 @@
+local analytics = require("analytics")
+
   -- Stuff defined in this file:
   --  . the data structures that store the configuration of
   --    the stack of panels
@@ -172,6 +174,8 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     s.lastPopIndexPlayed = s.lastPopIndexPlayed or 1
     s.combo_chain_play = nil
     s.game_over = false
+    s.sfx_land = false
+    s.sfx_garbage_thud = 0
 
     s.card_q = Queue()
 
@@ -290,7 +294,7 @@ Panel = class(function(p)
 
 function Panel.clear(self)
     -- color 0 is an empty panel.
-    -- colors 1-7 are normal colors, 8 is [!].
+    -- colors 1-7 are normal colors, 8 is [!], 9 is garbage.
     self.color = 0
     -- A panel's timer indicates for how many more frames it will:
     --  . be swapping
@@ -477,7 +481,7 @@ do
   end
 
   function Panel.dangerous(self)
-    return self.color ~= 0 and (self.state ~= "falling" or not self.garbage)
+    return self.color ~= 0 and not (self.state == "falling" and self.garbage)
   end
 end
 
@@ -827,6 +831,7 @@ function Stack.PdP(self)
     local time = self.speed_times[self.speed_times.idx]
     if self.CLOCK == time then
       self.speed = min(self.speed + 1, 99)
+      self.FRAMECOUNT_RISE = speed_to_rise_time[self.speed]
       if self.speed_times.idx ~= #self.speed_times then
         self.speed_times.idx = self.speed_times.idx + 1
       else
@@ -834,7 +839,7 @@ function Stack.PdP(self)
       end
     end
   elseif self.panels_to_speedup <= 0 then
-    self.speed = self.speed + 1
+    self.speed = min(self.speed + 1, 99)
     self.panels_to_speedup = self.panels_to_speedup +
       panels_to_next_speed[self.speed]
     self.FRAMECOUNT_RISE = speed_to_rise_time[self.speed]
@@ -952,8 +957,8 @@ function Stack.PdP(self)
           if panel.shake_time and panel.state == "normal" then
             if row <= self.height then
               if panel.height > 3 then
-                SFX_GarbageThud_Play = 3
-              else SFX_GarbageThud_Play = panel.height
+                self.sfx_garbage_thud = 3
+              else self.sfx_garbage_thud = panel.height
               end
               shake_time = max(shake_time, panel.shake_time, self.peak_shake_time or 0)
               --a smaller garbage block landing should renew the largest of the previous blocks' shake times since our shake time was last zero.
@@ -978,7 +983,7 @@ function Stack.PdP(self)
         if row == 1 then
           panel.state = "landing"
           panel.timer = 12
-          SFX_Land_Play=1;
+          self.sfx_land = true
           
         -- if there's a panel below, this panel's gonna land
         -- unless the panel below is falling.
@@ -993,7 +998,7 @@ function Stack.PdP(self)
             panel.state = "landing"
             panel.timer = 12
           end
-          SFX_Land_Play=1;
+          self.sfx_land = true
         else
           panels[row-1][col], panels[row][col] =
             panels[row][col], panels[row-1][col]
@@ -1173,6 +1178,9 @@ function Stack.PdP(self)
     (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and
     (self.cur_row ~= prev_row or self.cur_col ~= prev_col))    then
         SFX_Cur_Move_Play=1 
+        if self.enable_analytics then
+          analytics.register_move()
+        end
     end
   else
     self.cur_row = bound(1, self.cur_row, self.top_cur_row)
@@ -1242,6 +1250,9 @@ function Stack.PdP(self)
 
     if do_swap then
       self.do_swap = true
+      if self.enable_analytics then
+        analytics.register_swap()
+      end
     end
     self.swap_1 = false
     self.swap_2 = false
@@ -1277,7 +1288,7 @@ function Stack.PdP(self)
     self:set_chain_garbage(self.chain_counter)
     SFX_Fanfare_Play = self.chain_counter
     if self.enable_analytics then
-      analytics_register_chain(self.chain_counter)
+      analytics.register_chain(self.chain_counter)
     end
     self.chain_counter=0
   end
@@ -1337,32 +1348,28 @@ function Stack.PdP(self)
     end
   end
   self.later_garbage[self.CLOCK-409] = nil
-  
-  --double-check panels_in_top_row
+
+  -- Check for panels at or above the top.
   self.panels_in_top_row = false
-  local prow = panels[top_row]
-  for idx=1,width do
-    if prow[idx]:dangerous() then
+  -- If any dangerous panels are in the top row, garbage should not fall.
+  for col_idx = 1, width do
+    if panels[top_row][col_idx]:dangerous() then
       self.panels_in_top_row = true
     end
   end
-  local garbage_fits_in_populated_top_row 
-  if self.garbage_q:len() > 0 then
-    --even if there are some panels in the top row,
-    --check if the next block in the garbage_q would fit anyway
-    --ie. 3-wide garbage might fit if there are three empty spaces where it would spawn
-    garbage_fits_in_populated_top_row = true
-    local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
-    local cols = self.garbage_cols[next_garbage_block_width]
-    local spawn_col = cols[cols.idx]
-    local spawn_row = #self.panels
-    for idx=spawn_col, spawn_col+next_garbage_block_width-1 do
-      if prow[idx]:dangerous() then 
-        garbage_fits_in_populated_top_row = nil
+  -- If any panels (dangerous or not) are in rows above the top row, garbage should not fall.
+  for row_idx = top_row + 1, #self.panels do
+    for col_idx = 1, width do
+      if panels[row_idx][col_idx].color ~= 0 then
+        self.panels_in_top_row = true
       end
     end
+  end
+
+  if self.garbage_q:len() > 0 then
+    local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
     local drop_it = 
-      (not self.panels_in_top_row or garbage_fits_in_populated_top_row)
+      not self.panels_in_top_row
       and not self:has_falling_garbage()
       and (
         (from_chain and next_garbage_block_height > 1) or
@@ -1370,11 +1377,13 @@ function Stack.PdP(self)
         self.prev_active_panels == 0) 
       )
     if drop_it and self.garbage_q:len() > 0 then
-      self:drop_garbage(unpack(self.garbage_q:pop()))
+      if self:drop_garbage(unpack(self.garbage_q:peek())) then
+        self.garbage_q:pop()
+      end
     end
   end
   --Play Sounds / music
-  if not music_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
+  if not music_mute and not game_is_paused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
 
     if self.do_countdown then 
       if SFX_Go_Play == 1 then
@@ -1426,10 +1435,10 @@ function Stack.PdP(self)
         end
         SFX_Cur_Move_Play=0
     end
-    if SFX_Land_Play == 1 then
-        themes[config.theme].sounds.land:stop()
-        themes[config.theme].sounds.land:play()
-        SFX_Land_Play=0
+    if self.sfx_land then
+      themes[config.theme].sounds.land:stop()
+      themes[config.theme].sounds.land:play()
+      self.sfx_land = false
     end
     if SFX_Countdown_Play == 1 then
         if self.which == 1 then
@@ -1448,17 +1457,7 @@ function Stack.PdP(self)
     if self.combo_chain_play then
         themes[config.theme].sounds.land:stop()
         themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        for _,v in pairs(characters[self.character].sounds.combos) do
-          v:stop()
-        end
-        for _,v in pairs(characters[self.character].sounds.combo_echos) do
-          v:stop()
-        end
-        characters[self.character].sounds.others["chain"]:stop()
-        characters[self.character].sounds.others["chain2"]:stop()
-        characters[self.character].sounds.others["chain_echo"]:stop()
-        characters[self.character].sounds.others["chain2_echo"]:stop()
-        self.combo_chain_play[1][self.combo_chain_play[2]]:play()
+        characters[self.character]:play_combo_chain_sfx(self.combo_chain_play)
         self.combo_chain_play = nil
     end
     if SFX_garbage_match_play then
@@ -1483,7 +1482,7 @@ function Stack.PdP(self)
         themes[config.theme].sounds.fanfare1:play()
     end
     SFX_Fanfare_Play=0
-    if SFX_GarbageThud_Play >= 1 and SFX_GarbageThud_Play <= 3 then
+    if self.sfx_garbage_thud >= 1 and self.sfx_garbage_thud <= 3 then
         local interrupted_thud = nil
         for i=1,3 do
             if themes[config.theme].sounds.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
@@ -1491,11 +1490,18 @@ function Stack.PdP(self)
                 interrupted_thud = i
             end
         end
-        if interrupted_thud and interrupted_thud > SFX_GarbageThud_Play then
-            themes[config.theme].sounds.garbage_thud[interrupted_thud]:play()
-        else themes[config.theme].sounds.garbage_thud[SFX_GarbageThud_Play]:play()
+        if interrupted_thud and interrupted_thud > self.sfx_garbage_thud then
+          themes[config.theme].sounds.garbage_thud[interrupted_thud]:play()
+        else 
+          themes[config.theme].sounds.garbage_thud[self.sfx_garbage_thud]:play()
         end
-        SFX_GarbageThud_Play = 0
+        if #characters[self.character].sounds.garbage_lands ~= 0 and interrupted_thud == nil then
+          for _,v in pairs(characters[self.character].sounds.garbage_lands) do
+            v:stop()
+          end
+          characters[self.character].sounds.garbage_lands[math.random(#characters[self.character].sounds.garbage_lands)]:play()
+        end
+        self.sfx_garbage_thud = 0
     end
     if SFX_Pop_Play or SFX_Garbage_Pop_Play then
         local popLevel = min(max(self.chain_counter,1),4)
@@ -1618,13 +1624,33 @@ end
 
 -- drops a width x height garbage.
 function Stack.drop_garbage(self, width, height, metal)
-  local spawn_row = #self.panels
-  for i=#self.panels+1,#self.panels+height+1 do
-    self.panels[i] = {}
-    for j=1,self.width do
-      self.panels[i][j] = Panel()
+  local spawn_row = self.height + 1
+
+  -- Do one last check for panels in the way.
+  for i = spawn_row, #self.panels do
+    if self.panels[i] then
+      for j = 1, self.width do
+        if self.panels[i][j] then
+          if self.panels[i][j].color ~= 0 then
+            print("Aborting garbage drop: panel found at row " .. tostring(i) .. " column " .. tostring(j))
+            return false
+          end
+        end
+      end
     end
   end
+
+  print(string.format("Dropping garbage on player %d - height %d  width %d  %s", self.player_number, height, width, metal and "Metal" or ""))
+
+  for i = self.height + 1, spawn_row + height - 1 do
+    if not self.panels[i] then
+      self.panels[i] = {}
+      for j = 1, self.width do
+        self.panels[i][j] = Panel()
+      end
+    end
+  end
+
   local cols = self.garbage_cols[width]
   local spawn_col = cols[cols.idx]
   cols.idx = wrap(1, cols.idx+1, #cols)
@@ -1645,6 +1671,8 @@ function Stack.drop_garbage(self, width, height, metal)
       end
     end
   end
+
+  return true
 end
 
 -- prepare to send some garbage!
@@ -1763,8 +1791,6 @@ function Stack.check_matches(self)
   local first_panel_col = 0
   local combo_index, garbage_index = 0, 0
   local combo_size, garbage_size = 0, 0
-  local something = 0
-  local whatever = 0
   local panels = self.panels
   local q, garbage = Queue(), {}
   local seen, seenm = {}, {}
@@ -1947,7 +1973,7 @@ function Stack.check_matches(self)
 
   if(combo_size~=0) then
     if self.enable_analytics then
-      analytics_register_destroyed_panels(combo_size)
+      analytics.register_destroyed_panels(combo_size)
     end
     if(combo_size>3) then
       if(score_mode == SCOREMODE_TA) then
@@ -1975,12 +2001,12 @@ function Stack.check_matches(self)
       --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
       --          first_panel_row<<4+P1StackPosY+self.displacement-9);
     end
-    something = self.chain_counter
+    local chain_bonus = self.chain_counter
     if(score_mode == SCOREMODE_TA) then
       if(self.chain_counter>13) then
-        something=0
+        chain_bonus = 0
       end
-      self.score = self.score + score_chain_TA[something]
+      self.score = self.score + score_chain_TA[chain_bonus]
     end
     if((combo_size>3) or is_chain) then
       local stop_time
@@ -2020,20 +2046,11 @@ function Stack.check_matches(self)
       --TODO: Mr Stop ^
       -- @CardsOfTheHeart says there are 4 chain sfx: --x2/x3, --x4, --x5 is x2/x3 with an echo effect, --x6+ is x4 with an echo effect
       if is_chain then
-        local length = min(self.chain_counter, 13)
-        if length < 4 then 
-          self.combo_chain_play = { characters[self.character].sounds.others, "chain" }
-        elseif length == 4 then
-          self.combo_chain_play = { characters[self.character].sounds.others, "chain2" }
-        elseif length == 5 then
-          self.combo_chain_play = { characters[self.character].sounds.others, "chain_echo" }
-        elseif length >= 6 then
-          self.combo_chain_play = { characters[self.character].sounds.others, "chain2_echo" }
-        end
+        self.combo_chain_play = { e_chain_or_combo.chain, self.chain_counter }
       elseif combo_size > 3 then
-        self.combo_chain_play = { characters[self.character].sounds.combos, math.random(#characters[self.character].sounds.combos) }
+        self.combo_chain_play = { e_chain_or_combo.combo, "combos" }
       end
-      SFX_Land_Play=0
+      self.sfx_land = false
     end
     --if garbage_size > 0 then
       self.pre_stop_time = max(self.pre_stop_time, pre_stop_time)
@@ -2043,9 +2060,9 @@ function Stack.check_matches(self)
     --self.score_render=1;
     --Nope.
     if metal_count > 5 then
-      self.combo_chain_play = { characters[self.character].sounds.combo_echos, math.random(#characters[self.character].sounds.combo_echos) }
+      self.combo_chain_play = { e_chain_or_combo.combo, "combo_echos" }
     elseif metal_count > 2 then
-      self.combo_chain_play = { characters[self.character].sounds.combos, math.random(#characters[self.character].sounds.combos) }
+      self.combo_chain_play = { e_chain_or_combo.combo, "combos" }
     end
     self:set_combo_garbage(combo_size, metal_count)
   end

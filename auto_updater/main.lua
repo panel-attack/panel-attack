@@ -1,11 +1,9 @@
 require("game_updater")
 
 -- CONSTANTS
-local CHECK_INTERVAL = 6 * 3600 -- * 6 hours hours to seconds
 local UPDATER_NAME = "panel" -- you should name the distributed auto updater zip the same as this
 -- use a different name for the different versions of the updater
 -- ex: "panel" for the release, "panel-beta" for the main beta, "panel-exmode" for testing the EX Mode
-local TIMEOUT = 0.4 -- 500ms for the tcp socket to respond
 local MAX_REQ_SIZE = 100000 -- 100kB
 
 -- GLOBALS
@@ -33,12 +31,12 @@ function love.load()
   -- should we check for an update?
   if GAME_UPDATER.config.auto_update and not (
     GAME_UPDATER.check_timestamp ~= nil 
-    and os.time() < GAME_UPDATER.check_timestamp + CHECK_INTERVAL 
+    and os.time() < GAME_UPDATER.check_timestamp + GAME_UPDATER.config.launch_check_interval 
     and local_version
     and (GAME_UPDATER.config.force_version == "" or GAME_UPDATER.config.force_version == local_version)) then
 
     -- Check for a version online
-    wait_all_versions = GAME_UPDATER:async_download_available_versions(TIMEOUT, MAX_REQ_SIZE)
+    wait_all_versions = GAME_UPDATER:async_download_available_versions(MAX_REQ_SIZE)
   end
 
   next_step = "check_versions"
@@ -83,7 +81,7 @@ function love.update(dt)
         display_message("Copying embedded version...\n")
         next_step = "copy_embedded"
       else
-        display_message("A new version of the game has been found:\n"..top_version.."\nDowloading...\n")
+        display_message("A new version of the game has been found:\n"..top_version.."\nDownloading...\n")
         wait_download = GAME_UPDATER:async_download_file(top_version)
         next_step = "download_game"
       end

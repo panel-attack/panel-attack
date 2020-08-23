@@ -51,6 +51,9 @@ function find_and_add_music(musics, music_type)
   print("music "..music_type.." is now playing")
   local start_music = musics[music_type .. "_start"] or zero_sound
   local loop_music = musics[music_type]
+  if loop_music:isPlaying() or start_music:isPlaying() then
+    return
+  end 
   music_t[love.timer.getTime()] = make_music_t(
           start_music
   )
