@@ -1334,7 +1334,8 @@ end
 
 function main_config_input()
   local pretty_names = {loc("up"), loc("down"), loc("left"), loc("right"), "A", "B", "X", "Y", "L", "R", loc("start")}
-  local input_menu = Click_menu(nil, unpack(main_menu_screen_pos), 0, 1, false, 2)
+  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  local input_menu = Click_menu(nil, menu_x, menu_y, 8, 1, true, 2)
   local items = {}
   local k = K[1]
   local active_player = 1
@@ -1346,21 +1347,23 @@ function main_config_input()
     items[#items+1] = {loc("op_all_keys"), ""}
     items[#items+1] = {loc("back"), "", main_select_mode}
   end
+  get_items()
+  for i=1,#items do
+    input_menu:add_button(items[i][1])
+    input_menu:set_button_setting(i, items[i][2])
+  end
   local function print_stuff()
-    local to_print, to_print2, arrow = "", "", ""
-    for i=0,#items do
-      to_print = to_print .. "   " .. items[i][1] .. "\n"
-      to_print2 = to_print2 .. "                  " .. items[i][2] .. "\n"
-    end
-    gprint(arrow, unpack(main_menu_screen_pos))
-    gprint(to_print, unpack(main_menu_screen_pos))
-    gprint(to_print2, unpack(main_menu_screen_pos))
+    input_menu:draw()
   end
   local idxs_to_set = {}
   while true do
     get_items()
+    for i=1,#items do
+      input_menu:set_button_setting(i, items[i][2])
+    end
     if #idxs_to_set > 0 then
       items[idxs_to_set[1]][2] = "___"
+      input_menu:set_button_setting(idxs_to_set[1], "___")
     end
     print_stuff()
     wait()
@@ -1376,6 +1379,17 @@ function main_config_input()
               write_key_file()
             end
           end
+        end
+      elseif input_menu.idx_selected then
+        print("config menu had an idx_selected")
+        input_menu.active_idx = input_menu.idx_selected
+        input_menu.idx_selected = nil
+        if input_menu.active_idx <= #key_names then
+          idxs_to_set = {input_menu.active_idx}
+        elseif input_menu.active_idx == #key_names + 1 then
+          idxs_to_set = {1,2,3,4,5,6,7,8,9,10,11}
+        elseif input_menu.active_idx == #items then 
+          ret = {items[input_menu.active_idx][3], items[input_menu.active_idx][4]}
         end
       elseif menu_up(K[1]) then
         input_menu.active_idx = wrap(1, input_menu.active_idx-1, #items)

@@ -55,6 +55,10 @@ function Click_menu.add_button(self, string_text, x, y, w, h, outlined, button_p
 
 end
 
+function Click_menu.set_button_setting(self, button_idx, new_setting)
+  self.buttons[button_idx].current_setting = love.graphics.newText(menu_font, new_setting)
+end
+
 function Click_menu.get_button_width(self, idx)
   return self.buttons[idx].w or self.buttons[idx].text:getWidth()+2*self.button_padding
 end
@@ -106,11 +110,16 @@ function Click_menu.draw(self)
       end
       menu_draw(self.buttons[i].text, self.x + self.buttons[i].x + self.button_padding, self.y + self.buttons[i].y + self.button_padding)
       if self.buttons[i].current_setting then
-        menu_draw(self.buttons[i].current_setting, self.current_setting_x or 0, self.y + self.buttons[i].y + self.button_padding)
+        menu_draw(self.buttons[i].current_setting, self.x + self.current_setting_x or 0, self.y + self.buttons[i].y + self.button_padding)
       end
     end
     if self.active_idx and self.buttons[1] then
-      gprint(self.arrow or ">", self.x + self.buttons[self.active_idx].x - self.arrow_padding, self.y +self.button_padding + self.buttons[self.active_idx].y)
+      gprint(self.arrow or ">",
+      self.x + 
+      self.buttons[self.active_idx].x 
+      - self.arrow_padding, 
+      self.y +self.button_padding +
+      self.buttons[self.active_idx].y)
     end
     
   end
