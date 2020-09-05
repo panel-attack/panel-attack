@@ -149,6 +149,7 @@ function read_user_id_file() pcall(function()
   local file = love.filesystem.newFile("servers/"..connected_server_ip.."/user_id.txt")
   file:open("r")
   my_user_id = file:read()
+  my_user_id = my_user_id:match("^%s*(.-)%s*$")
   file:close()
 end) end
 
