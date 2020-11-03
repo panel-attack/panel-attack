@@ -1094,6 +1094,9 @@ function Stack.PdP(self)
               SFX_Pop_Play = 1
               self.poppedPanelIndex = panel.combo_index
               panel.color=0;
+              if self.panels_to_speedup then
+                self.panels_to_speedup = self.panels_to_speedup - 1
+              end
               if(panel.chaining) then
                 self.n_chain_panels = self.n_chain_panels - 1
               end
