@@ -353,11 +353,11 @@ end
 function main_endless(...)
   pick_random_stage()
   pick_use_music_from()
+  replay = {}
   replay.endless = {}
   local replay=replay.endless
   replay.pan_buf = ""
   replay.in_buf = ""
-  replay.gpan_buf = ""
   replay.mode = "endless"
   P1 = Stack(1, "endless", config.panels, ...)
   P1:wait_for_random_character()
@@ -379,7 +379,17 @@ function main_endless(...)
     wait()
     if P1.game_over then
     -- TODO: proper game over.
+      local now = os.date("*t",to_UTC(os.time()))
+      local sep = "/"
+      local path = "replays"..sep.."v"..VERSION..sep..string.format("%04d"..sep.."%02d"..sep.."%02d", now.year, now.month, now.day)
+      path = path..sep.."endless"
+      local filename = "v"..VERSION.."-"..string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec).."-".."endless"
+      filename = filename..".txt"
+      print("saving replay as "..path..sep..filename)
+      write_replay_file(path, filename)
+      print("also saving replay as replay.txt")
       write_replay_file()
+
       local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
       analytics.game_ends()
       return main_dumb_transition, {main_select_mode, end_text, 0, -1, P1:pick_win_sfx()}
@@ -1159,6 +1169,7 @@ function main_replay_endless()
   P1 = Stack(1, "endless", config.panels, replay.speed, replay.difficulty)
   P1:wait_for_random_character()
   P1.do_countdown = replay.do_countdown or false
+  P1.enable_analytics = true
   P1.max_runs_per_frame = 1
   P1.input_buffer = table.concat({replay.in_buf})
   P1.panel_buffer = replay.pan_buf

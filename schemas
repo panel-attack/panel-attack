@@ -1,0 +1,81 @@
+== Old ==
+
+Online VS
+{
+	"vs": {
+		"do_countdown": boolean,
+		"I": string,
+		"in_buf": string,
+		"O": string,
+		"P": string,
+		"P1_char": string,
+		"P1_cur_wait_time": number,
+		"P1_level": number,
+		"P1_name": string,
+		"P2_char": string,
+		"P2_cur_wait_time": number,
+		"P2_level": number,
+		"P2_name": string,
+		"Q": string,
+		"R": string,
+		"ranked": boolean
+	}
+}
+
+== New ==
+Do we need do_countdown?
+Do we need cur_wait_time?
+
+Online Vs
+{
+	"do_countdown": boolean,
+	"P1": {
+		"char": string,
+		"cur_wait_time": string,
+		"gpan_buf": string,
+		"in_buf": string,
+		"level": number,
+		"name": string,
+		"pan_buf": string,
+	},
+	"P2": {
+		"char": string,
+		"cur_wait_time": string,
+		"gpan_buf": string,
+		"in_buf": string,
+		"level": number,
+		"name": string,
+		"pan_buf": string,
+	},
+	"ranked": boolean,
+	"type": string,
+}
+
+Endless
+{
+	"do_countdown": boolean,
+	"P1": {
+		"char": string,
+		"cur_wait_time": string,
+		"gpan_buf": string,
+		"in_buf": string,
+		"level": number,
+		"name": string,
+		"pan_buf": string,
+	},
+}
+
+Time Attack
+{
+	
+}
+
+Vs Yourself
+{
+	
+}
+
+Local 2p Vs
+{
+	
+}
