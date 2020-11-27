@@ -14,7 +14,9 @@ local playground, main_endless, make_main_puzzle, main_net_vs_setup,
   main_local_vs_setup, main_set_name, main_local_vs_yourself_setup,
   main_options, main_music_test, 
   main_replay_browser, exit_game
--- main_select_mode, main_dumb_transition, main_net_vs, main_net_vs_lobby, main_local_vs_yourself, main_local_vs, main_replay_endless, main_replay_puzzle, main_replay_vs are not local since they are also used elsewhere
+-- main_select_mode, main_dumb_transition, main_net_vs, main_net_vs_lobby, main_local_vs_yourself, main_local_vs,
+-- main_replay_endless, main_replay_time_attack, main_replay_puzzle, main_replay_vs are not local since they are also
+-- used elsewhere
 
 local PLAYING = "playing"  -- room states
 local CHARACTERSELECT = "character select" --room states
@@ -410,9 +412,19 @@ end
 function main_time_attack(...)
   pick_random_stage()
   pick_use_music_from()
+  replay = {}
+  replay.time = {}
+  local replay=replay.time
+  replay.pan_buf = ""
+  replay.in_buf = ""
+  replay.mode = "time"
   P1 = Stack(1, "time", config.panels, ...)
   P1:wait_for_random_character()
   P1.enable_analytics = true
+  replay.do_countdown = P1.do_countdown or false
+  replay.speed = P1.speed
+  replay.difficulty = P1.difficulty
+  replay.cur_wait_time = P1.cur_wait_time or default_input_repeat_delay
   make_local_panels(P1, "000000")
   P1:starting_state()
   while true do
@@ -424,6 +436,17 @@ function main_time_attack(...)
     wait()
     if P1.game_over or (P1.game_stopwatch and P1.game_stopwatch == 120*60) then
     -- TODO: proper game over.
+      local now = os.date("*t",to_UTC(os.time()))
+      local sep = "/"
+      local path = "replays"..sep.."v"..VERSION..sep..string.format("%04d"..sep.."%02d"..sep.."%02d", now.year, now.month, now.day)
+      path = path..sep.."timeattack"
+      local filename = "v"..VERSION.."-"..string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec).."-".."timeattack"
+      filename = filename..".txt"
+      print("saving replay as "..path..sep..filename)
+      write_replay_file(path, filename)
+      print("also saving replay as replay.txt")
+      write_replay_file()
+
       local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch))
       analytics.game_ends()
       return main_dumb_transition, {main_select_mode, end_text, 30, -1, P1:pick_win_sfx()}
@@ -1200,6 +1223,62 @@ function main_replay_endless()
         if P1.game_over then
         -- TODO: proper game over.
           local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
+          analytics.game_ends()
+          ret = {main_dumb_transition, {main_select_mode, end_text, 30, -1, P1:pick_win_sfx()}}
+        end
+        P1:foreign_run()
+        P1:handle_pause()
+      end
+    end)
+    if ret then
+      return unpack(ret)
+    end
+  end
+end
+
+function main_replay_time_attack()
+  local replay = replay.time
+  if replay == nil or replay.speed == nil then
+    return main_dumb_transition, {main_select_mode, loc("rp_no_time_trial"), 0, -1}
+  end
+  stop_the_music()
+  pick_random_stage()
+  pick_use_music_from()
+  P1 = Stack(1, "time", config.panels, replay.speed, replay.difficulty)
+  P1:wait_for_random_character()
+  P1.do_countdown = replay.do_countdown or false
+  P1.enable_analytics = true
+  P1.max_runs_per_frame = 1
+  P1.input_buffer = table.concat({replay.in_buf})
+  P1.panel_buffer = replay.pan_buf
+  P1.gpanel_buffer = replay.gpan_buf
+  P1.speed = replay.speed
+  P1.difficulty = replay.difficulty
+  P1.cur_wait_time = replay.cur_wait_time or default_input_repeat_delay
+  P1:starting_state()
+  local run = true
+  while true do
+    P1:render()
+    if game_is_paused then
+      draw_pause()
+    end
+    wait()
+    local ret = nil
+    variable_step(function()
+      if menu_escape(K[1]) then
+        ret = {main_dumb_transition, {main_select_mode, "", 0, 0}}
+      end
+      if menu_enter(K[1]) then
+        run = not run
+      end
+      if this_frame_keys["\\"] then
+        run = false
+      end
+      if run or this_frame_keys["\\"] then
+        if P1.game_over or (P1.game_stopwatch and P1.game_stopwatch == 120*60) then
+        -- TODO: proper game over.
+          local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
+          analytics.game_ends()
           ret = {main_dumb_transition, {main_select_mode, end_text, 30, -1, P1:pick_win_sfx()}}
         end
         P1:foreign_run()

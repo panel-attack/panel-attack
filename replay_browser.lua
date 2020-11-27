@@ -177,6 +177,15 @@ function replay_browser.main()
 
         next_func = main_replay_endless
 
+
+      elseif replay.time then
+        gprint(loc("rp_browser_info_time_trial"), replay_browser.menu_x + 220, replay_browser.menu_y + 20)
+
+        gprint(loc("rp_browser_info_speed", replay.time.speed), replay_browser.menu_x + 150, replay_browser.menu_y + 50)
+        gprint(loc("rp_browser_info_difficulty", replay.time.difficulty), replay_browser.menu_x + 150, replay_browser.menu_y + 65)
+
+        next_func = main_replay_time_attack
+
       elseif replay.puzzle then
         gprint(loc("rp_browser_info_puzzle"), replay_browser.menu_x + 220, replay_browser.menu_y + 20)
 
