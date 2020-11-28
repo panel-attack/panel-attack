@@ -873,6 +873,7 @@ function select_screen.main()
           P1.garbage_target = P2
           P2.garbage_target = P1
           move_stack(P2,2)
+          replay = {}
           replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
                       P1_level=P1.level,P2_level=P2.level,
                       P1_name=my_name, P2_name=op_name,
@@ -1272,6 +1273,13 @@ function select_screen.main()
       P1 = Stack(1, "vs", cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       P1.enable_analytics = true
       P1.garbage_target = P1
+
+      replay = {}
+      replay.vs = {pan_buf="",gpan_buf="",in_buf="",P1_level=P1.level,
+                  P1_name=my_name,P1_char=P1.character,
+                  P1_cur_wait_time=P1.cur_wait_time,
+                  do_countdown=true}
+
       make_local_panels(P1, "000000")
       make_local_gpanels(P1, "000000")
       current_stage = cursor_data[1].state.stage

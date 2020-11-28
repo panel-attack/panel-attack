@@ -1040,7 +1040,6 @@ function main_local_vs_yourself_setup()
 end
 
 function main_local_vs_yourself()
-  -- TODO: replay!
   use_current_stage()
   pick_use_music_from()
   local end_text = nil
@@ -1060,6 +1059,18 @@ function main_local_vs_yourself()
         end
       end)
     if end_text then
+      local now = os.date("*t",to_UTC(os.time()))
+      local sep = "/"
+      local path = "replays"..sep.."v"..VERSION..sep..string.format("%04d"..sep.."%02d"..sep.."%02d", now.year, now.month, now.day)
+      local rep_a_name, rep_b_name = my_name, op_name
+      path = path..sep.."vs-yourself"
+      local filename = "v"..VERSION.."-"..string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec).."-".."vs-yourself"
+      filename = filename..".txt"
+      print("saving replay as "..path..sep..filename)
+      write_replay_file(path, filename)
+      print("also saving replay as replay.txt")
+      write_replay_file()
+
       analytics.game_ends()
       return main_dumb_transition, {select_screen.main, end_text, 45, -1, P1:pick_win_sfx()}
     end
@@ -1085,33 +1096,46 @@ function main_replay_vs()
   pick_random_stage()
   pick_use_music_from()
   select_screen.fallback_when_missing = { nil, nil }
+
   P1 = Stack(1, "vs", config.panels, replay.P1_level or 5)
-  P2 = Stack(2, "vs", config.panels, replay.P2_level or 5)
   P1.do_countdown = replay.do_countdown or false
-  P2.do_countdown = replay.do_countdown or false
   P1.ice = true
-  P1.garbage_target = P2
-  P2.garbage_target = P1
-  move_stack(P2,2)
   P1.input_buffer = replay.in_buf
-  P1.panel_buffer = replay.P
-  P1.gpanel_buffer = replay.Q
-  P2.input_buffer = replay.I
-  P2.panel_buffer = replay.O
-  P2.gpanel_buffer = replay.R
+  P1.panel_buffer = replay.P or replay.pan_buf
+  P1.gpanel_buffer = replay.Q or replay.gpan_buf
   P1.max_runs_per_frame = 1
-  P2.max_runs_per_frame = 1
   P1.character = replay.P1_char
-  P2.character = replay.P2_char
   P1.cur_wait_time = replay.P1_cur_wait_time or default_input_repeat_delay
-  P2.cur_wait_time = replay.P2_cur_wait_time or default_input_repeat_delay
   refresh_based_on_own_mods(P1)
-  refresh_based_on_own_mods(P2, true)
   character_loader_load(P1.character)
-  character_loader_load(P2.character)
+
+  if replay.I ~= nil and replay.O ~= nil and replay.R ~= nil then
+    P2 = Stack(2, "vs", config.panels, replay.P2_level or 5)
+    P2.do_countdown = replay.do_countdown or false
+    P2.garbage_target = P1
+    move_stack(P2,2)
+    P2.input_buffer = replay.I
+    P2.panel_buffer = replay.O
+    P2.gpanel_buffer = replay.R
+    P2.max_runs_per_frame = 1
+    P2.character = replay.P2_char
+    P2.cur_wait_time = replay.P2_cur_wait_time or default_input_repeat_delay
+    refresh_based_on_own_mods(P2, true)
+    character_loader_load(P2.character)
+
+    P1.garbage_target = P2
+  else
+    P1.enable_analytics = true
+    P1.garbage_target = P1
+  end
+
   character_loader_wait()
+
   my_name = replay.P1_name or loc("player_n", "1")
-  op_name = replay.P2_name or loc("player_n", "2")
+  if P2 ~= nil then
+    op_name = replay.P2_name or loc("player_n", "2")
+  end
+
   if replay.ranked then
     match_type = "Ranked"
   else
@@ -1119,15 +1143,24 @@ function main_replay_vs()
   end
 
   P1:starting_state()
-  P2:starting_state()
+  if P2 ~= nil then
+    P2:starting_state()
+  end
+
   local end_text = nil
   local run = true
   while true do
     debug_mouse_panel = nil
     gprint(my_name or "", P1.score_x, P1.score_y-28)
-    gprint(op_name or "", P2.score_x, P2.score_y-28)
+    if P2 ~= nil then
+      gprint(op_name or "", P2.score_x, P2.score_y-28)
+    end
+
     P1:render()
-    P2:render()
+    if P2 ~= nil then
+      P2:render()
+    end
+
     draw_debug_mouse_panel()
     if game_is_paused then
       draw_pause()
@@ -1149,7 +1182,7 @@ function main_replay_vs()
           P1:foreign_run()
           P1:handle_pause()
         end
-        if not P2.game_over then
+        if P2 ~= nil and not P2.game_over then
           P2:foreign_run()
         end
       end
@@ -1158,21 +1191,29 @@ function main_replay_vs()
       return unpack(ret)
     end
     local winSFX = nil
-    if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
-      end_text = loc("ss_draw")
-    elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
-      winSFX = P2:pick_win_sfx()
-      if replay.P2_name and replay.P2_name ~= "anonymous" then
-        end_text = loc("ss_p_wins", replay.P2_name)
-      else
-        end_text = loc("pl_2_win")
+    if P2 ~= nil then
+      if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
+        end_text = loc("ss_draw")
+      elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
+        winSFX = P2:pick_win_sfx()
+        if replay.P2_name and replay.P2_name ~= "anonymous" then
+          end_text = loc("ss_p_wins", replay.P2_name)
+        else
+          end_text = loc("pl_2_win")
+        end
+      elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
+        winSFX = P1:pick_win_sfx()
+        if replay.P1_name and replay.P1_name ~= "anonymous" then
+          end_text = loc("ss_p_wins", replay.P1_name)
+        else
+          end_text = loc("pl_1_win")
+        end
       end
-    elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
-      winSFX = P1:pick_win_sfx()
-      if replay.P1_name and replay.P1_name ~= "anonymous" then
-        end_text = loc("ss_p_wins", replay.P1_name)
-      else
-        end_text = loc("pl_1_win")
+    else
+      if P1.game_over then
+        end_text = loc("pl_gameover")
+        winSFX = P1:pick_win_sfx()
+        analytics.game_ends()
       end
     end
     if end_text then
