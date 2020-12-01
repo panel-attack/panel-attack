@@ -197,6 +197,8 @@ function make_local_panels(stack, prev_panels)
   local replay = replay[P1.mode]
   if replay and replay.pan_buf then
     replay.pan_buf = replay.pan_buf .. ret
+  elseif replay and replay["P"..stack.player_number] and replay["P"..stack.player_number].pan_buf then
+    replay["P"..stack.player_number].pan_buf = replay["P"..stack.player_number].pan_buf .. ret
   end
 end
 
@@ -206,6 +208,8 @@ function make_local_gpanels(stack, prev_panels)
   local replay = replay[P1.mode]
   if replay and replay.gpan_buf then
     replay.gpan_buf = replay.gpan_buf .. ret
+  elseif replay and replay["P"..stack.player_number] and replay["P"..stack.player_number].gpan_buf then
+    replay["P"..stack.player_number].gpan_buf = replay["P"..stack.player_number].gpan_buf .. ret
   end
 end
 
@@ -250,6 +254,8 @@ function Stack.send_controls(self)
   local replay = replay[self.mode]
   if replay and replay.in_buf then
     replay.in_buf = replay.in_buf .. to_send
+  elseif replay and replay["P"..self.player_number] and replay["P"..self.player_number].in_buf then
+    replay["P"..self.player_number].in_buf = replay["P"..self.player_number].in_buf .. to_send
   end
   return to_send
 end

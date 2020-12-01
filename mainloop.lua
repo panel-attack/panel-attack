@@ -991,7 +991,6 @@ function main_local_vs_setup()
 end
 
 function main_local_vs()
-  -- TODO: replay!
   use_current_stage()
   pick_use_music_from()
   local end_text = nil
@@ -1024,6 +1023,22 @@ function main_local_vs()
       end_text = loc("pl_1_win")
     end
     if end_text then
+      local now = os.date("*t",to_UTC(os.time()))
+      local sep = "/"
+      local path = "replays"..sep.."v"..VERSION..sep..string.format("%04d"..sep.."%02d"..sep.."%02d", now.year, now.month, now.day)
+      path = path.."/local-vs"
+      local filename = "v"..VERSION.."-"..string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec).."-".."local-vs"
+      if outcome_claim == 1 or outcome_claim == 2 then
+        filename = filename.."-P"..outcome_claim.."wins"
+      elseif outcome_claim == 0 then
+        filename = filename.."-draw"
+      end
+      filename = filename..".txt"
+      print("saving replay as "..path..sep..filename)
+      write_replay_file(path, filename)
+      print("also saving replay as replay.txt")
+      write_replay_file()
+
       analytics.game_ends()
       return main_dumb_transition, {select_screen.main, end_text, 45, -1, winSFX}
     end
@@ -1100,23 +1115,23 @@ function main_replay_vs()
   P1 = Stack(1, "vs", config.panels, replay.P1_level or 5)
   P1.do_countdown = replay.do_countdown or false
   P1.ice = true
-  P1.input_buffer = replay.in_buf
-  P1.panel_buffer = replay.P or replay.pan_buf
-  P1.gpanel_buffer = replay.Q or replay.gpan_buf
+  P1.input_buffer = replay.in_buf or replay.P1.in_buf
+  P1.panel_buffer = replay.P or replay.pan_buf or replay.P1.pan_buf
+  P1.gpanel_buffer = replay.Q or replay.gpan_buf or replay.P1.gpan_buf
   P1.max_runs_per_frame = 1
   P1.character = replay.P1_char
   P1.cur_wait_time = replay.P1_cur_wait_time or default_input_repeat_delay
   refresh_based_on_own_mods(P1)
   character_loader_load(P1.character)
 
-  if replay.I ~= nil and replay.O ~= nil and replay.R ~= nil then
+  if (replay.I ~= nil and replay.O ~= nil and replay.R ~= nil) or (replay.P1 ~= nil and replay.P2 ~= nil) then
     P2 = Stack(2, "vs", config.panels, replay.P2_level or 5)
     P2.do_countdown = replay.do_countdown or false
     P2.garbage_target = P1
     move_stack(P2,2)
-    P2.input_buffer = replay.I
-    P2.panel_buffer = replay.O
-    P2.gpanel_buffer = replay.R
+    P2.input_buffer = replay.I or replay.P2.in_buf
+    P2.panel_buffer = replay.O or replay.P2.pan_buf
+    P2.gpanel_buffer = replay.R or replay.P2.gpan_buf
     P2.max_runs_per_frame = 1
     P2.character = replay.P2_char
     P2.cur_wait_time = replay.P2_cur_wait_time or default_input_repeat_delay

@@ -1303,6 +1303,15 @@ function select_screen.main()
       --
       -- In general the block-generation logic should be the same as the server's, so
       -- maybe there should be only one implementation.
+
+      replay = {}
+      replay.vs = {P1={pan_buf="",gpan_buf="",in_buf=""},
+                  P2={pan_buf="",gpan_buf="",in_buf=""},
+                  P1_level=P1.level,P2_level=P2.level,
+                  P1_char=P1.character,P2_char=P2.character,
+                  P1_cur_wait_time=P1.cur_wait_time, P2_cur_wait_time=P2.cur_wait_time,
+                  do_countdown=true}
+
       make_local_panels(P1, "000000")
       make_local_gpanels(P1, "000000")
       make_local_panels(P2, "000000")

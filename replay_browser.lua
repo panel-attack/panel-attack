@@ -151,7 +151,7 @@ function replay_browser.main()
       gprint(replay_browser.filename, replay_browser.menu_x - 150, replay_browser.menu_y - 40 + replay_browser.menu_h)
 
       if replay.vs then
-        if replay.I ~= nil and replay.O ~= nil and replay.R ~= nil then
+        if replay.vs.I ~= nil and replay.vs.O ~= nil and replay.vs.R ~= nil then
           gprint(loc("rp_browser_info_2p_vs"), replay_browser.menu_x + 220, replay_browser.menu_y + 20)
 
           gprint(loc("rp_browser_info_1p"), replay_browser.menu_x, replay_browser.menu_y + 50)
@@ -167,6 +167,16 @@ function replay_browser.main()
           if replay.vs.ranked then
             gprint(loc("rp_browser_info_ranked"), replay_browser.menu_x + 200, replay_browser.menu_y + 120)
           end
+        elseif replay.vs.P1 ~= nil and replay.vs.P2 ~= nil then
+          gprint(loc("rp_browser_info_2p_vs"), replay_browser.menu_x + 220, replay_browser.menu_y + 20)
+
+          gprint(loc("rp_browser_info_1p"), replay_browser.menu_x, replay_browser.menu_y + 50)
+          gprint(loc("rp_browser_info_level", replay.vs.P1_level), replay_browser.menu_x, replay_browser.menu_y + 65)
+          gprint(loc("rp_browser_info_character", replay.vs.P1_char), replay_browser.menu_x, replay_browser.menu_y + 80)
+
+          gprint(loc("rp_browser_info_2p"), replay_browser.menu_x + 300, replay_browser.menu_y + 50)
+          gprint(loc("rp_browser_info_level", replay.vs.P2_level), replay_browser.menu_x + 300, replay_browser.menu_y + 65)
+          gprint(loc("rp_browser_info_character", replay.vs.P2_char), replay_browser.menu_x + 300, replay_browser.menu_y + 80)
         else
           gprint(loc("rp_browser_info_1p_vs"), replay_browser.menu_x + 220, replay_browser.menu_y + 20)
 
