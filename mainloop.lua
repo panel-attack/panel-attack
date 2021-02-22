@@ -374,24 +374,24 @@ function main_endless(...)
       return main_dumb_transition, {main_select_mode, end_text, 0, -1, P1:pick_win_sfx()}
     end
     variable_step(function()
-		if game_is_paused and menu_escape(K[1]) then
-			write_replay_file()
-			local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
-			analytics.game_ends()
-			ret = {main_dumb_transition, {main_select_mode, end_text, 0, -1, P1:pick_win_sfx()}}
-	    else
-			P1:local_run() 
-			P1:handle_pause()
-        end	  
-    end)
+    if game_is_paused and menu_escape(K[1]) then
+      write_replay_file()
+      local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
+      analytics.game_ends()
+      ret = {main_dumb_transition, {main_select_mode, end_text, 0, -1, P1:pick_win_sfx()}}
+    else
+      P1:local_run() 
+      P1:handle_pause()
+    end	  
+  end)
     --groundhogday mode
     --[[if P1.CLOCK == 1001 then
       local prev_states = P1.prev_states
       P1 = prev_states[600]
       P1.prev_states = prev_states
     end--]]
-	if ret then
-      return unpack(ret)
+   if ret then
+     return unpack(ret)
     end
   end
 end
@@ -420,17 +420,17 @@ function main_time_attack(...)
     end
     variable_step(function()
       if not P1.game_over or (P1.game_stopwatch and P1.game_stopwatch < 120 * 60) then
-			P1:local_run() 
-			P1:handle_pause()
-		end	
-	  --local P1.quit()
-	    if game_is_paused and menu_escape(K[1]) then
-			local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch))
-			analytics.game_ends()
-			ret = {main_dumb_transition, {main_select_mode, end_text, 30, -1, P1:pick_win_sfx()}}	
-		end	
-      end)
-	if ret then
+	P1:local_run() 
+	P1:handle_pause()
+    end	
+      --local P1.quit()
+      if game_is_paused and menu_escape(K[1]) then
+	local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch))
+	analytics.game_ends()
+	ret = {main_dumb_transition, {main_select_mode, end_text, 30, -1, P1:pick_win_sfx()}}	
+      end	
+    end)
+    if ret then
       return unpack(ret)
     end
   end
@@ -994,10 +994,10 @@ function main_local_vs_yourself()
           end_text = loc("pl_gameover")
         end
         if game_is_paused and menu_escape(K[1]) then
-			    local end_text = loc("pl_gameover")
-			    analytics.game_ends()
-			    ret = {main_dumb_transition, {select_screen.main, end_text, 0, -1, P1:pick_win_sfx()}}	
-		    end
+	  local end_text = loc("pl_gameover")
+	  analytics.game_ends()
+	  ret = {main_dumb_transition, {select_screen.main, end_text, 0, -1, P1:pick_win_sfx()}}	
+        end
       end)
     if end_text then
       analytics.game_ends()
