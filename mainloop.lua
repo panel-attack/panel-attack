@@ -429,13 +429,7 @@ function main_time_attack(...)
 			analytics.game_ends()
 			ret = {main_dumb_transition, {main_select_mode, end_text, 30, -1, P1:pick_win_sfx()}}	
 		end	
-    end)
-    --groundhogday mode
-    --[[if P1.CLOCK == 1001 then
-      local prev_states = P1.prev_states
-      P1 = prev_states[600]
-      P1.prev_states = prev_states
-    end--]]
+      end)
 	if ret then
       return unpack(ret)
     end
