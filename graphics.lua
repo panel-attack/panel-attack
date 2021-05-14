@@ -54,6 +54,38 @@ function Stack.draw_cards(self)
   end
 end
 
+function Stack.update_popfxs(self)
+  for i=self.pop_q.first,self.pop_q.last do
+    local popfx = self.pop_q[i]
+    if popfx_animation[popfx.frame] then
+      popfx.frame = popfx.frame + 1
+      if(popfx_animation[popfx.frame]==nil) then
+        self.pop_q:pop()
+      end
+    else
+      popfx.frame = popfx.frame + 1
+    end
+  end
+end
+
+function Stack.draw_popfxs(self)
+  particle_atlas = characters[self.character].images["attack"]
+  particle = love.graphics.newQuad(16, 0, 16, 16, particle_atlas:getDimensions())
+  for i=self.pop_q.first,self.pop_q.last do
+    local popfx = self.pop_q[i]
+    local draw_x = 4 + (popfx.x-1) * 16
+    local draw_y = 4 + (11-popfx.y) * 16 + self.displacement
+    if popfx_animation[popfx.frame] then
+      frame = popfx_animation[popfx.frame]
+      particle:setViewport(frame[2]*16, 0, 16, 16, particle_atlas:getDimensions())
+      qdraw(particle_atlas, particle, draw_x-4-frame[1], draw_y-4-frame[1], 0, 1, 1)
+      qdraw(particle_atlas, particle, draw_x+20+frame[1], draw_y-4-frame[1], 0, -1, 1)
+      qdraw(particle_atlas, particle, draw_x-4-frame[1], draw_y+20+frame[1], 0, 1, -1)
+      qdraw(particle_atlas, particle, draw_x+20+frame[1], draw_y+20+frame[1], 0, -1, -1)
+    end
+  end
+end
+
 function move_stack(stack, player_num)
   local stack_padding_x_for_legacy_pos = ((canvas_width-legacy_canvas_width)/2)
   if player_num == 1 then
@@ -205,6 +237,7 @@ function Stack.render(self)
             end
           elseif panel.state == "popping" then
             draw_frame = 6
+            --draw(characters[self.character].images["attack"], draw_x, draw_y, 0, 2, 2)
           elseif panel.state == "landing" then
             draw_frame = bounce_table[panel.timer + 1]
           elseif panel.state == "swapping" then
@@ -237,6 +270,7 @@ function Stack.render(self)
 	draw(themes[config.theme].images.IMG_wall2P, 4, 4 - shake + self.height*16)
   end
 
+  self:draw_popfxs()
   self:draw_cards()
   self:render_cursor()
   if self.do_countdown then
@@ -396,4 +430,3 @@ function draw_pause()
   gprintf(loc("pause"), 0, 330, canvas_width, "center",nil,1,large_font)
   gprintf(loc("pl_pause_help"), 0, 360, canvas_width, "center",nil,1)
 end
-

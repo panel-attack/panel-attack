@@ -8,7 +8,7 @@ local analytics = require("analytics")
 
 local wait, resume = coroutine.yield, coroutine.resume
 
-local main_endless, make_main_puzzle, main_net_vs_setup,
+local playground, main_endless, make_main_puzzle, main_net_vs_setup,
   main_config_input, main_select_puzz,
   main_local_vs_setup, main_set_name, main_local_vs_yourself_setup,
   main_options, main_music_test, 
@@ -120,6 +120,7 @@ do
   
     match_type_message = ""
     local items = {
+        {"playground", main_select_speed_99, {playground}},
         {loc("mm_1_endless"), main_select_speed_99, {main_endless}},
         {loc("mm_1_puzzle"), main_select_puzz},
         {loc("mm_1_time"), main_select_speed_99, {main_time_attack}},
@@ -336,6 +337,53 @@ function Stack.handle_pause(self)
     end
   end
 
+end
+
+function playground(...)
+  pick_random_stage()
+  pick_use_music_from()
+  replay.endless = {}
+  local replay=replay.endless
+  replay.pan_buf = ""
+  replay.in_buf = ""
+  replay.gpan_buf = ""
+  replay.mode = "endless"
+  P1 = Stack(1, "endless", config.panels, ...)
+  P1:wait_for_random_character()
+  P1.do_countdown = config.ready_countdown_1P or false
+  P1.enable_analytics = true
+  replay.do_countdown = P1.do_countdown or false
+  replay.speed = P1.speed
+  replay.difficulty = P1.difficulty
+  replay.cur_wait_time = P1.cur_wait_time or default_input_repeat_delay
+  make_local_panels(P1, "000000")
+  make_local_gpanels(P1, "000000")
+  P1:starting_state()
+  while true do
+    if game_is_paused then
+      draw_pause()
+    else
+      P1:render()
+    end
+    wait()
+    if P1.game_over then
+    -- TODO: proper game over.
+      write_replay_file()
+      local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
+      analytics.game_ends()
+      return main_dumb_transition, {main_select_mode, end_text, 0, -1, P1:pick_win_sfx()}
+    end
+    variable_step(function() 
+      P1:local_run() 
+      P1:handle_pause() 
+    end)
+    --groundhogday mode
+    --[[if P1.CLOCK == 1001 then
+      local prev_states = P1.prev_states
+      P1 = prev_states[600]
+      P1.prev_states = prev_states
+    end--]]
+  end
 end
 
 function main_endless(...)

@@ -179,6 +179,8 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
 
     s.card_q = Queue()
 
+    s.pop_q = Queue()
+
     s.which = which or 1 -- Pk.which == k
     s.player_number = player_number or s.which --player number according to the multiplayer server, for game outcome reporting
     
@@ -619,6 +621,7 @@ function Stack.local_run(self)
     return
   end
 
+  self:update_popfxs()
   self:update_cards()
   self.input_state = self:send_controls()
   self:prep_rollback()
@@ -668,6 +671,10 @@ end
 
 function Stack.enqueue_card(self, chain, x, y, n)
   self.card_q:push({frame=1, chain=chain, x=x, y=y, n=n})
+end
+
+function Stack.enqueue_popfx(self, x, y)
+  self.pop_q:push({frame=1, x=x, y=y})
 end
 
 local d_col = {up=0, down=0, left=-1, right=1}
@@ -1076,6 +1083,14 @@ function Stack.PdP(self)
             panel.state = "popping"
             panel.timer = panel.combo_index*self.FRAMECOUNT_POP
           elseif panel.state == "popping" then
+            print("POP")
+            self:enqueue_popfx(col, row)
+            --[[
+            for key, value in pairs(panels[row][col]) do
+              print(key, " -- ", value)
+            end
+            print("=======")
+            ]]
             self.score = self.score + 10;
             -- self.score_render=1;
             -- TODO: What is self.score_render?
