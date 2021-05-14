@@ -120,7 +120,7 @@ do
   
     match_type_message = ""
     local items = {
-        {"playground", main_select_speed_99, {playground}},
+        --{"playground", main_select_speed_99, {playground}},
         {loc("mm_1_endless"), main_select_speed_99, {main_endless}},
         {loc("mm_1_puzzle"), main_select_puzz},
         {loc("mm_1_time"), main_select_speed_99, {main_time_attack}},

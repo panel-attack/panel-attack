@@ -127,7 +127,7 @@ function Stack.render(self)
   -- draw inside stack's frame canvas
   local portrait_w, portrait_h = characters[self.character].images["portrait"]:getDimensions()
   if P1 == self then
-    draw(characters[self.character].images["portrait"], 4, 4, 0, 96/portrait_w, 192/portrait_h)
+    draw(characters[self.character].images["portrait"], 4, 4, 0, 96/portrait_w, 192/portrait_h, 0.3, 0.3, 0.3)
   else
     draw(characters[self.character].images["portrait"], 100, 4, 0, (96/portrait_w)*-1, 192/portrait_h)
   end
