@@ -659,6 +659,7 @@ function Stack.foreign_run(self)
     end
   end
   for i=1,times_to_run do
+    self:update_popfxs()
     self:update_cards()
     self.input_state = string.sub(self.input_buffer,1,1)
     self:prep_rollback()
@@ -1083,14 +1084,8 @@ function Stack.PdP(self)
             panel.state = "popping"
             panel.timer = panel.combo_index*self.FRAMECOUNT_POP
           elseif panel.state == "popping" then
-            print("POP")
+            --print("POP")
             self:enqueue_popfx(col, row)
-            --[[
-            for key, value in pairs(panels[row][col]) do
-              print(key, " -- ", value)
-            end
-            print("=======")
-            ]]
             self.score = self.score + 10;
             -- self.score_render=1;
             -- TODO: What is self.score_render?
