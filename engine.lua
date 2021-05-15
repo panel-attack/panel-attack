@@ -921,6 +921,7 @@ function Stack.PdP(self)
         if panel.state == "matched" then
           panel.timer = panel.timer - 1
           if panel.timer == panel.pop_time then
+          self:enqueue_popfx(col, row)
           SFX_Garbage_Pop_Play = panel.pop_index
           end
           if panel.timer == 0 then
