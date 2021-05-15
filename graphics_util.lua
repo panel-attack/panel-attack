@@ -74,7 +74,7 @@ function menu_drawq(img, quad, x, y, rot, x_scale,y_scale)
 end
 
 function grectangle(mode, x, y, w, h)
-  gfx_q:push({love.graphics.rectangle, {mode, x, y, w, h}})
+  gfx_q:push({love.graphics.rectangle, {mode, x*GFX_SCALE, y*GFX_SCALE, w*GFX_SCALE, h*GFX_SCALE}})
 end
 
 function gprint(str, x, y, color, scale)

@@ -18,6 +18,8 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     s.character = config.character
     s.max_health = 1
     s.panels_dir = panels_dir or config.panels
+    s.fadeTimer = 0
+    s.portraitFade = 0
     if not panels[panels_dir] then
       s.panels_dir = config.panels
     end
