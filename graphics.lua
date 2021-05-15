@@ -130,8 +130,11 @@ function Stack.render(self)
   if self.do_countdown == false then
     self.portraitFade = 0.7
   else
-    if self.fadeTimer < 1 then self.fadeTimer = self.fadeTimer + 0.03 end
-    if self.fadeTimer >= 1 and self.portraitFade < 0.7 then self.portraitFade = self.portraitFade + 0.02 end
+    if self.countdown_CLOCK then
+      if self.countdown_CLOCK > 50  and self.countdown_CLOCK < 80 then
+        self.portraitFade = (self.countdown_CLOCK-50)/40
+      end
+    end
   end
   if P1 == self then
     draw(characters[self.character].images["portrait"], 4, 4, 0, 96/portrait_w, 192/portrait_h)
