@@ -70,18 +70,19 @@ end
 
 function Stack.draw_popfxs(self)
   particle_atlas = characters[self.character].images["attack"]
-  particle = love.graphics.newQuad(16, 0, 16, 16, particle_atlas:getDimensions())
+  frameDimension = particle_atlas:getWidth()/9
+  particle = love.graphics.newQuad(frameDimension, 0, frameDimension, frameDimension, particle_atlas:getDimensions())
   for i=self.pop_q.first,self.pop_q.last do
     local popfx = self.pop_q[i]
     local draw_x = 4 + (popfx.x-1) * 16
     local draw_y = 4 + (11-popfx.y) * 16 + self.displacement
     if popfx_animation[popfx.frame] then
       frame = popfx_animation[popfx.frame]
-      particle:setViewport(frame[2]*16, 0, 16, 16, particle_atlas:getDimensions())
-      qdraw(particle_atlas, particle, draw_x-4-frame[1], draw_y-4-frame[1], 0, 1, 1)
-      qdraw(particle_atlas, particle, draw_x+20+frame[1], draw_y-4-frame[1], 0, -1, 1)
-      qdraw(particle_atlas, particle, draw_x-4-frame[1], draw_y+20+frame[1], 0, 1, -1)
-      qdraw(particle_atlas, particle, draw_x+20+frame[1], draw_y+20+frame[1], 0, -1, -1)
+      particle:setViewport(frame[2]*frameDimension, 0, frameDimension, frameDimension, particle_atlas:getDimensions())
+      qdraw(particle_atlas, particle, draw_x-4-frame[1], draw_y-4-frame[1], 0, 16/frameDimension, 16/frameDimension)
+      qdraw(particle_atlas, particle, draw_x+20+frame[1], draw_y-4-frame[1], 0, -16/frameDimension, 16/frameDimension)
+      qdraw(particle_atlas, particle, draw_x-4-frame[1], draw_y+20+frame[1], 0, 16/frameDimension, -16/frameDimension)
+      qdraw(particle_atlas, particle, draw_x+20+frame[1], draw_y+20+frame[1], 0, -16/frameDimension, -16/frameDimension)
     end
   end
 end
@@ -118,6 +119,11 @@ function Stack.render(self)
     love.graphics.setBackgroundColor(unpack(global_background_color))
     love.graphics.setShader()
   end  
+
+  if self.testvar == false then
+    print("DO YOU FEELING IT MR KRAB?!!")
+    self.testvar = true
+  end
 
   gfx_q:push({love.graphics.setCanvas, {{self.canvas, stencil=true}}})
   gfx_q:push({love.graphics.clear, {}})
