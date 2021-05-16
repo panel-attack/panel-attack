@@ -339,55 +339,6 @@ function Stack.handle_pause(self)
 
 end
 
-function playground(...)
-  pick_random_stage()
-  pick_use_music_from()
-  replay.endless = {}
-  local replay=replay.endless
-  replay.pan_buf = ""
-  replay.in_buf = ""
-  replay.gpan_buf = ""
-  replay.mode = "endless"
-  P1 = Stack(1, "endless", config.panels, ...)
-  P1:wait_for_random_character()
-  P1.do_countdown = config.ready_countdown_1P or false
-  P1.draw_popfx = config.popfx or false
-  P1.enable_analytics = true
-  replay.do_countdown = P1.do_countdown or false
-  replay.draw_popfx = P1.draw_popfx or false
-  replay.speed = P1.speed
-  replay.difficulty = P1.difficulty
-  replay.cur_wait_time = P1.cur_wait_time or default_input_repeat_delay
-  make_local_panels(P1, "000000")
-  make_local_gpanels(P1, "000000")
-  P1:starting_state()
-  while true do
-    if game_is_paused then
-      draw_pause()
-    else
-      P1:render()
-    end
-    wait()
-    if P1.game_over then
-    -- TODO: proper game over.
-      write_replay_file()
-      local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
-      analytics.game_ends()
-      return main_dumb_transition, {main_select_mode, end_text, 0, -1, P1:pick_win_sfx()}
-    end
-    variable_step(function() 
-      P1:local_run() 
-      P1:handle_pause() 
-    end)
-    --groundhogday mode
-    --[[if P1.CLOCK == 1001 then
-      local prev_states = P1.prev_states
-      P1 = prev_states[600]
-      P1.prev_states = prev_states
-    end--]]
-  end
-end
-
 function main_endless(...)
   pick_random_stage()
   pick_use_music_from()
@@ -400,10 +351,8 @@ function main_endless(...)
   P1 = Stack(1, "endless", config.panels, ...)
   P1:wait_for_random_character()
   P1.do_countdown = config.ready_countdown_1P or false
-  P1.draw_popfx = config.popfx or true
   P1.enable_analytics = true
   replay.do_countdown = P1.do_countdown or false
-  replay.draw_popfx = P1.draw_popfx or false
   replay.speed = P1.speed
   replay.difficulty = P1.difficulty
   replay.cur_wait_time = P1.cur_wait_time or default_input_repeat_delay
@@ -1054,8 +1003,6 @@ function main_replay_vs()
   P2 = Stack(2, "vs", config.panels, replay.P2_level or 5)
   P1.do_countdown = replay.do_countdown or false
   P2.do_countdown = replay.do_countdown or false
-  P1.draw_popfx = replay.draw_popfx or false
-  P2.draw_popfx = replay.draw_popfx or false
   P1.ice = true
   P1.garbage_target = P2
   P2.garbage_target = P1
@@ -1159,7 +1106,6 @@ function main_replay_endless()
   P1 = Stack(1, "endless", config.panels, replay.speed, replay.difficulty)
   P1:wait_for_random_character()
   P1.do_countdown = replay.do_countdown or false
-  P1.draw_popfx = replay.draw_popfx or false
   P1.max_runs_per_frame = 1
   P1.input_buffer = table.concat({replay.in_buf})
   P1.panel_buffer = replay.pan_buf
@@ -1213,7 +1159,6 @@ function main_replay_puzzle()
   P1 = Stack(1, "puzzle", config.panels)
   P1:wait_for_random_character()
   P1.do_countdown = replay.do_countdown or false
-  P1.draw_popfx = replay.draw_popfx or false
   P1.max_runs_per_frame = 1
   P1.input_buffer = replay.in_buf
   P1.cur_wait_time = replay.cur_wait_time or default_input_repeat_delay
@@ -1268,7 +1213,6 @@ function make_main_puzzle(puzzles)
     P1 = Stack(1, "puzzle", config.panels)
     P1:wait_for_random_character()
     P1.do_countdown = config.ready_countdown_1P or false
-    P1.draw_popfx = config.popfx or false
     local start_delay = 0
     if awesome_idx == nil then
       awesome_idx = math.random(#puzzles)
