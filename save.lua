@@ -94,6 +94,7 @@ function read_conf_file() pcall(function()
   if type(read_data.SFX_volume) == "number" then config.SFX_volume = bound(0,read_data.SFX_volume,100) end
   if type(read_data.music_volume) == "number" then config.music_volume = bound(0,read_data.music_volume,100) end
   if type(read_data.input_repeat_delay) == "number" then config.input_repeat_delay = bound(1,read_data.input_repeat_delay,50) end
+  if type(read_data.portrait_darkness) == "number" then config.portrait_darkness = bound(0,read_data.portrait_darkness,100) end
 
   if type(read_data.debug_mode) == "boolean" then config.debug_mode = read_data.debug_mode end
   if type(read_data.show_fps) == "boolean" then config.show_fps = read_data.show_fps end

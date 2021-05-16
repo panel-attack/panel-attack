@@ -1017,7 +1017,7 @@ function main_local_vs_yourself()
           P1:local_run()
           P1:handle_pause()
         else
-          end_text = loc("pl_gameover")
+          end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch))
         end
       end)
     if end_text then

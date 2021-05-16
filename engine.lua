@@ -18,7 +18,6 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     s.character = config.character
     s.max_health = 1
     s.panels_dir = panels_dir or config.panels
-    s.fadeTimer = 0
     s.portraitFade = 0
     if not panels[panels_dir] then
       s.panels_dir = config.panels
@@ -676,8 +675,13 @@ function Stack.enqueue_card(self, chain, x, y, n)
   self.card_q:push({frame=1, chain=chain, x=x, y=y, n=n})
 end
 
-function Stack.enqueue_popfx(self, x, y)
-  self.pop_q:push({frame=1, x=x, y=y})
+function Stack.enqueue_popfx(self, x, y, popsize)
+  atlas = characters[self.character].images["attack"]
+  frameDimension = atlas:getWidth()/9
+  particle = love.graphics.newQuad(frameDimension, 0, frameDimension, frameDimension, atlas:getDimensions())
+  bigParticle = love.graphics.newQuad(0, 0, frameDimension, frameDimension, atlas:getDimensions())
+  poptype = "small"
+  self.pop_q:push({frame=1,atlas = atlas, frameDimension = frameDimension, particle = particle, bigParticle = bigParticle, bigTimer = 0, popsize = popsize, x=x, y=y})
 end
 
 local d_col = {up=0, down=0, left=-1, right=1}
@@ -1088,7 +1092,11 @@ function Stack.PdP(self)
             panel.timer = panel.combo_index*self.FRAMECOUNT_POP
           elseif panel.state == "popping" then
             --print("POP")
-            self:enqueue_popfx(col, row)
+            popsize = "small"
+            if (panel.combo_size > 6) or self.chain_counter > 1 then popsize = "normal" end
+            if self.chain_counter > 2 then popsize = "big" end
+            if self.chain_counter > 3 then popsize = "giant" end
+            self:enqueue_popfx(col, row, popsize)
             self.score = self.score + 10;
             -- self.score_render=1;
             -- TODO: What is self.score_render?

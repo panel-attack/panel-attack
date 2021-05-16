@@ -60,6 +60,8 @@ function Stack.update_popfxs(self)
     if popfx_animation[popfx.frame] then
       popfx.frame = popfx.frame + 1
       if(popfx_animation[popfx.frame]==nil) then
+        popfx.particle:release()
+        popfx.bigParticle:release()
         self.pop_q:pop()
       end
     else
@@ -69,20 +71,62 @@ function Stack.update_popfxs(self)
 end
 
 function Stack.draw_popfxs(self)
-  particle_atlas = characters[self.character].images["attack"]
-  frameDimension = particle_atlas:getWidth()/9
-  particle = love.graphics.newQuad(frameDimension, 0, frameDimension, frameDimension, particle_atlas:getDimensions())
   for i=self.pop_q.first,self.pop_q.last do
     local popfx = self.pop_q[i]
     local draw_x = 4 + (popfx.x-1) * 16
     local draw_y = 4 + (11-popfx.y) * 16 + self.displacement
+    particle_atlas = popfx.atlas
+    particle = popfx.particle
+    frameDimension = popfx.frameDimension
     if popfx_animation[popfx.frame] then
       frame = popfx_animation[popfx.frame]
       particle:setViewport(frame[2]*frameDimension, 0, frameDimension, frameDimension, particle_atlas:getDimensions())
-      qdraw(particle_atlas, particle, draw_x-4-frame[1], draw_y-4-frame[1], 0, 16/frameDimension, 16/frameDimension)
-      qdraw(particle_atlas, particle, draw_x+20+frame[1], draw_y-4-frame[1], 0, -16/frameDimension, 16/frameDimension)
-      qdraw(particle_atlas, particle, draw_x-4-frame[1], draw_y+20+frame[1], 0, 16/frameDimension, -16/frameDimension)
-      qdraw(particle_atlas, particle, draw_x+20+frame[1], draw_y+20+frame[1], 0, -16/frameDimension, -16/frameDimension)
+      positions = {
+        -- four corner
+        {x = draw_x-frame[1], y = draw_y-frame[1]},
+        {x = draw_x+15+frame[1], y = draw_y-frame[1]},
+        {x = draw_x-frame[1], y = draw_y+15+frame[1]},
+        {x = draw_x+15+frame[1], y = draw_y+15+frame[1]},
+        -- top and bottom
+        {x = draw_x+8, y = draw_y-10-(frame[1]*2)},
+        {x = draw_x+8, y = draw_y+20+(frame[1]*2)},
+        -- left and right
+        {x = draw_x-10-(frame[1]*2), y = draw_y+8},
+        {x = draw_x+20+(frame[1]*2), y = draw_y+8}
+      }
+
+      randomMax = 0
+
+      if popsize == "normal" then randomMax = 4 end
+      if popsize == "big" then randomMax = 6 end
+      if popsize == "giant" then randomMax = 8 end
+      if popsize ~= "small" and popfx.bigTimer == 0 then
+        big_position = math.random(randomMax)
+        --big_position = math.random(2)
+        popfx.bigTimer = 2
+      end
+      popfx.bigTimer = popfx.bigTimer - 1
+
+      -- four corner
+      if big_position ~= 1 then qdraw(particle_atlas, particle, positions[1].x, positions[1].y, 0, 16/frameDimension, 16/frameDimension, frameDimension/2, frameDimension/2) end
+      if big_position ~= 2 then qdraw(particle_atlas, particle, positions[2].x, positions[2].y, 0, -16/frameDimension, 16/frameDimension, frameDimension/2, frameDimension/2) end
+      if big_position ~= 3 then qdraw(particle_atlas, particle, positions[3].x, positions[3].y, 0, 16/frameDimension, -16/frameDimension, frameDimension/2, frameDimension/2) end
+      if big_position ~= 4 then qdraw(particle_atlas, particle, positions[4].x, positions[4].y, 0, -16/frameDimension, -16/frameDimension, frameDimension/2, frameDimension/2) end
+      -- top and bottom
+      if popfx.popsize == "big" or popfx.popsize == "giant" then
+        if big_position ~= 5 then qdraw(particle_atlas, particle, positions[5].x, positions[5].y, math.rad(45), 16/frameDimension, 16/frameDimension) end
+        if big_position ~= 6 then qdraw(particle_atlas, particle, positions[6].x, positions[6].y, math.rad(-135), 16/frameDimension, 16/frameDimension) end
+      end
+      -- left and right
+      if popfx.popsize == "giant" then
+        if big_position ~= 7 then qdraw(particle_atlas, particle, positions[7].x, positions[7].y, math.rad(-45), 16/frameDimension, 16/frameDimension) end
+        if big_position ~= 8 then qdraw(particle_atlas, particle, positions[8].x, positions[8].y, math.rad(135), 16/frameDimension, 16/frameDimension) end
+      end
+      --big particle
+      if popsize ~= "small" then
+        qdraw(particle_atlas, popfx.bigParticle, 
+        positions[big_position].x, positions[big_position].y, 0, 16/frameDimension, 16/frameDimension, frameDimension/2, frameDimension/2)
+      end
     end
   end
 end
@@ -128,11 +172,11 @@ function Stack.render(self)
   -- draw inside stack's frame canvas
   local portrait_w, portrait_h = characters[self.character].images["portrait"]:getDimensions()
   if self.do_countdown == false then
-    self.portraitFade = 0.7
+    self.portraitFade = 0.3
   else
     if self.countdown_CLOCK then
       if self.countdown_CLOCK > 50  and self.countdown_CLOCK < 80 then
-        self.portraitFade = (self.countdown_CLOCK-50)/40
+        self.portraitFade = ((config.portrait_darkness/100)/79)*self.countdown_CLOCK
       end
     end
   end
