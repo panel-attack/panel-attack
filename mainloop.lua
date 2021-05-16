@@ -351,8 +351,10 @@ function playground(...)
   P1 = Stack(1, "endless", config.panels, ...)
   P1:wait_for_random_character()
   P1.do_countdown = config.ready_countdown_1P or false
+  P1.draw_popfx = config.popfx or false
   P1.enable_analytics = true
   replay.do_countdown = P1.do_countdown or false
+  replay.draw_popfx = P1.draw_popfx or false
   replay.speed = P1.speed
   replay.difficulty = P1.difficulty
   replay.cur_wait_time = P1.cur_wait_time or default_input_repeat_delay
@@ -398,8 +400,10 @@ function main_endless(...)
   P1 = Stack(1, "endless", config.panels, ...)
   P1:wait_for_random_character()
   P1.do_countdown = config.ready_countdown_1P or false
+  P1.draw_popfx = config.popfx or true
   P1.enable_analytics = true
   replay.do_countdown = P1.do_countdown or false
+  replay.draw_popfx = P1.draw_popfx or false
   replay.speed = P1.speed
   replay.difficulty = P1.difficulty
   replay.cur_wait_time = P1.cur_wait_time or default_input_repeat_delay
@@ -1050,6 +1054,8 @@ function main_replay_vs()
   P2 = Stack(2, "vs", config.panels, replay.P2_level or 5)
   P1.do_countdown = replay.do_countdown or false
   P2.do_countdown = replay.do_countdown or false
+  P1.draw_popfx = replay.draw_popfx or false
+  P2.draw_popfx = replay.draw_popfx or false
   P1.ice = true
   P1.garbage_target = P2
   P2.garbage_target = P1
@@ -1153,6 +1159,7 @@ function main_replay_endless()
   P1 = Stack(1, "endless", config.panels, replay.speed, replay.difficulty)
   P1:wait_for_random_character()
   P1.do_countdown = replay.do_countdown or false
+  P1.draw_popfx = replay.draw_popfx or false
   P1.max_runs_per_frame = 1
   P1.input_buffer = table.concat({replay.in_buf})
   P1.panel_buffer = replay.pan_buf
@@ -1206,6 +1213,7 @@ function main_replay_puzzle()
   P1 = Stack(1, "puzzle", config.panels)
   P1:wait_for_random_character()
   P1.do_countdown = replay.do_countdown or false
+  P1.draw_popfx = replay.draw_popfx or false
   P1.max_runs_per_frame = 1
   P1.input_buffer = replay.in_buf
   P1.cur_wait_time = replay.cur_wait_time or default_input_repeat_delay
@@ -1260,6 +1268,7 @@ function make_main_puzzle(puzzles)
     P1 = Stack(1, "puzzle", config.panels)
     P1:wait_for_random_character()
     P1.do_countdown = config.ready_countdown_1P or false
+    P1.draw_popfx = config.popfx or false
     local start_delay = 0
     if awesome_idx == nil then
       awesome_idx = math.random(#puzzles)

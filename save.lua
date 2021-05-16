@@ -102,6 +102,7 @@ function read_conf_file() pcall(function()
   if type(read_data.ready_countdown_1P) == "boolean" then config.ready_countdown_1P = read_data.ready_countdown_1P end
   if type(read_data.danger_music_changeback_delay) == "boolean" then config.danger_music_changeback_delay = read_data.danger_music_changeback_delay end
   if type(read_data.enable_analytics) == "boolean" then config.enable_analytics = read_data.enable_analytics end
+  if type(read_data.popfx) == "boolean" then config.popfx = read_data.popfx end
 
   if type(read_data.save_replays_publicly) == "string" and save_replays_values[read_data.save_replays_publicly] then 
     config.save_replays_publicly = read_data.save_replays_publicly 

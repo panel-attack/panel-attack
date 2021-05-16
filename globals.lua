@@ -107,6 +107,7 @@ config = {
 	-- Save replays setting
 	save_replays_publicly         = "with my name",
 	portrait_darkness             = default_portrait_darkness,
+	popfx                         = true,
 }
 
 current_use_music_from = "stage" -- either "stage" or "characters", no other values!

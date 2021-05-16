@@ -81,7 +81,7 @@ card_animation = {false,
    11}
 
 -- The popping particle animation. First number is how far the particles go, second is wich frame to show from the spritesheet
- popfx_animation = {{1, 1}, {5, 1}, {8, 1}, {9, 1},
+ popfx_animation = {{1, 1}, {4, 1}, {7, 1}, {8, 1},
     {9, 1}, {9, 1}, {10, 1}, {10, 2}, {10, 2}, {10, 3},
     {10, 3}, {10, 4}, {10, 4}, {10, 5}, {10, 5}, {10, 6}, {10, 6}, {10, 7}, {10, 7}, {10, 8}, {10, 8}, {10, 8}}
 

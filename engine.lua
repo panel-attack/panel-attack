@@ -92,6 +92,7 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     s.CLOCK = 0
     s.game_stopwatch = 0
     s.do_countdown = true
+    s.draw_popfx = true
     s.max_runs_per_frame = 3
 
     s.displacement = 16
@@ -268,6 +269,7 @@ function Stack.mkcpy(self, other)
   other.peak_shake_time = self.peak_shake_time
   other.card_q = deepcpy(self.card_q)
   other.do_countdown = self.do_countdown
+  other.draw_popfx = self.draw_popfx
   other.ready_y = self.ready_y
   return other
 end
@@ -914,6 +916,7 @@ function Stack.PdP(self)
   local skip_col = 0
   local fallen_garbage = 0
   local shake_time = 0
+  popsize = "small"
   for row=1,#panels do
     for col=1,width do
       local cntinue = false
@@ -927,8 +930,8 @@ function Stack.PdP(self)
         if panel.state == "matched" then
           panel.timer = panel.timer - 1
           if panel.timer == panel.pop_time then
-          self:enqueue_popfx(col, row)
-          SFX_Garbage_Pop_Play = panel.pop_index
+            if self.draw_popfx == true then self:enqueue_popfx(col, row, popsize) end
+            SFX_Garbage_Pop_Play = panel.pop_index
           end
           if panel.timer == 0 then
             if panel.y_offset == -1 then
@@ -1092,11 +1095,10 @@ function Stack.PdP(self)
             panel.timer = panel.combo_index*self.FRAMECOUNT_POP
           elseif panel.state == "popping" then
             --print("POP")
-            popsize = "small"
             if (panel.combo_size > 6) or self.chain_counter > 1 then popsize = "normal" end
             if self.chain_counter > 2 then popsize = "big" end
             if self.chain_counter > 3 then popsize = "giant" end
-            self:enqueue_popfx(col, row, popsize)
+            if self.draw_popfx == true then self:enqueue_popfx(col, row, popsize) end
             self.score = self.score + 10;
             -- self.score_render=1;
             -- TODO: What is self.score_render?
