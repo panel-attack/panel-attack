@@ -36,6 +36,7 @@ Character = class(function(self, full_path, folder_name)
     self.fully_loaded = false
     self.is_visible = true
     self.chain_style = e_chain_style.classic
+    self.popfx_rotation = false
   end)
 
 function Character.json_init(self)
@@ -69,6 +70,10 @@ function Character.json_init(self)
     -- chain_style
     if read_data.chain_style and type(read_data.chain_style) == "string" then
       self.chain_style = read_data.chain_style=="per_chain" and e_chain_style.per_chain or e_chain_style.classic
+    end
+
+    if read_data.popfx_rotation and type(read_data.popfx_rotation) == "boolean" then
+      self.popfx_rotation = read_data.popfx_rotation
     end
 
     -- associated stage

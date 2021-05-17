@@ -88,12 +88,25 @@ function Stack.draw_popfxs(self)
         {x = draw_x-frame[1], y = draw_y+15+frame[1]},
         {x = draw_x+15+frame[1], y = draw_y+15+frame[1]},
         -- top and bottom
-        {x = draw_x+8, y = draw_y-10-(frame[1]*2)},
-        {x = draw_x+8, y = draw_y+20+(frame[1]*2)},
+        {x = draw_x+8, y = draw_y-6-(frame[1]*2)},
+        {x = draw_x+8, y = draw_y+24+(frame[1]*2)},
         -- left and right
         {x = draw_x-10-(frame[1]*2), y = draw_y+8},
         {x = draw_x+20+(frame[1]*2), y = draw_y+8}
       }
+
+      print(characters[self.character].popfx_rotation)
+      if characters[self.character].popfx_rotation == true then
+        topRot = {math.rad(45), 16/frameDimension, 16/frameDimension}
+        bottomRot = {math.rad(-135), 16/frameDimension, 16/frameDimension}
+        leftRot = {math.rad(-45), 16/frameDimension, 16/frameDimension}
+        rightRot = {math.rad(135), 16/frameDimension, 16/frameDimension,}
+      else
+        topRot = {0, 16/frameDimension, 16/frameDimension}
+        bottomRot = {0, 16/frameDimension, -16/frameDimension}
+        leftRot = {0, 16/frameDimension, 16/frameDimension}
+        rightRot = {0, -16/frameDimension, 16/frameDimension,}
+      end
 
       randomMax = 0
 
@@ -114,13 +127,13 @@ function Stack.draw_popfxs(self)
       if big_position ~= 4 then qdraw(particle_atlas, particle, positions[4].x, positions[4].y, 0, -16/frameDimension, -16/frameDimension, frameDimension/2, frameDimension/2) end
       -- top and bottom
       if popfx.popsize == "big" or popfx.popsize == "giant" then
-        if big_position ~= 5 then qdraw(particle_atlas, particle, positions[5].x, positions[5].y, 0, 16/frameDimension, 16/frameDimension) end
-        if big_position ~= 6 then qdraw(particle_atlas, particle, positions[6].x, positions[6].y, 0, 16/frameDimension, -16/frameDimension) end
+        if big_position ~= 5 then qdraw(particle_atlas, particle, positions[5].x, positions[5].y, topRot[1], topRot[2], topRot[3], 16/frameDimension, 16/frameDimension, frameDimension/2, frameDimension/2) end
+        if big_position ~= 6 then qdraw(particle_atlas, particle, positions[6].x, positions[6].y, bottomRot[1], bottomRot[2], bottomRot[3], frameDimension/2, frameDimension/2) end
       end
       -- left and right
       if popfx.popsize == "giant" then
-        if big_position ~= 7 then qdraw(particle_atlas, particle, positions[7].x, positions[7].y, 0, 16/frameDimension, 16/frameDimension) end
-        if big_position ~= 8 then qdraw(particle_atlas, particle, positions[8].x, positions[8].y, 0, -16/frameDimension, 16/frameDimension) end
+        if big_position ~= 7 then qdraw(particle_atlas, particle, positions[7].x, positions[7].y, leftRot[1], leftRot[2], leftRot[3], 16/frameDimension, 16/frameDimension, frameDimension/2, frameDimension/2) end
+        if big_position ~= 8 then qdraw(particle_atlas, particle, positions[8].x, positions[8].y, rightRot[1], rightRot[2], rightRot[3], frameDimension/2, frameDimension/2) end
       end
       --big particle
       --[[
