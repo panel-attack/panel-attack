@@ -54,6 +54,98 @@ function Stack.draw_cards(self)
   end
 end
 
+function Stack.update_popfxs(self)
+  for i=self.pop_q.first,self.pop_q.last do
+    local popfx = self.pop_q[i]
+    if popfx_animation[popfx.frame] then
+      popfx.frame = popfx.frame + 1
+      if(popfx_animation[popfx.frame]==nil) then
+        popfx.particle:release()
+        popfx.bigParticle:release()
+        self.pop_q:pop()
+      end
+    else
+      popfx.frame = popfx.frame + 1
+    end
+  end
+end
+
+function Stack.draw_popfxs(self)
+  for i=self.pop_q.first,self.pop_q.last do
+    local popfx = self.pop_q[i]
+    local draw_x = 4 + (popfx.x-1) * 16
+    local draw_y = 4 + (11-popfx.y) * 16 + self.displacement
+    particle_atlas = popfx.atlas
+    particle = popfx.particle
+    frameDimension = popfx.frameDimension
+    if popfx_animation[popfx.frame] then
+      frame = popfx_animation[popfx.frame]
+      particle:setViewport(frame[2]*frameDimension, 0, frameDimension, frameDimension, particle_atlas:getDimensions())
+      positions = {
+        -- four corner
+        {x = draw_x-frame[1], y = draw_y-frame[1]},
+        {x = draw_x+15+frame[1], y = draw_y-frame[1]},
+        {x = draw_x-frame[1], y = draw_y+15+frame[1]},
+        {x = draw_x+15+frame[1], y = draw_y+15+frame[1]},
+        -- top and bottom
+        {x = draw_x+8, y = draw_y-6-(frame[1]*2)},
+        {x = draw_x+8, y = draw_y+24+(frame[1]*2)},
+        -- left and right
+        {x = draw_x-10-(frame[1]*2), y = draw_y+8},
+        {x = draw_x+20+(frame[1]*2), y = draw_y+8}
+      }
+
+      print(characters[self.character].popfx_rotation)
+      if characters[self.character].popfx_rotation == true then
+        topRot = {math.rad(45), 16/frameDimension, 16/frameDimension}
+        bottomRot = {math.rad(-135), 16/frameDimension, 16/frameDimension}
+        leftRot = {math.rad(-45), 16/frameDimension, 16/frameDimension}
+        rightRot = {math.rad(135), 16/frameDimension, 16/frameDimension,}
+      else
+        topRot = {0, 16/frameDimension, 16/frameDimension}
+        bottomRot = {0, 16/frameDimension, -16/frameDimension}
+        leftRot = {0, 16/frameDimension, 16/frameDimension}
+        rightRot = {0, -16/frameDimension, 16/frameDimension,}
+      end
+
+      randomMax = 0
+
+      if popsize == "normal" then randomMax = 4 end
+      if popsize == "big" then randomMax = 6 end
+      if popsize == "giant" then randomMax = 8 end
+      if popsize ~= "small" and popfx.bigTimer == 0 then
+        big_position = math.random(randomMax)
+        big_position = 0
+        popfx.bigTimer = 2
+      end
+      popfx.bigTimer = popfx.bigTimer - 1
+
+      -- four corner
+      if big_position ~= 1 then qdraw(particle_atlas, particle, positions[1].x, positions[1].y, 0, 16/frameDimension, 16/frameDimension, frameDimension/2, frameDimension/2) end
+      if big_position ~= 2 then qdraw(particle_atlas, particle, positions[2].x, positions[2].y, 0, -16/frameDimension, 16/frameDimension, frameDimension/2, frameDimension/2) end
+      if big_position ~= 3 then qdraw(particle_atlas, particle, positions[3].x, positions[3].y, 0, 16/frameDimension, -16/frameDimension, frameDimension/2, frameDimension/2) end
+      if big_position ~= 4 then qdraw(particle_atlas, particle, positions[4].x, positions[4].y, 0, -16/frameDimension, -16/frameDimension, frameDimension/2, frameDimension/2) end
+      -- top and bottom
+      if popfx.popsize == "big" or popfx.popsize == "giant" then
+        if big_position ~= 5 then qdraw(particle_atlas, particle, positions[5].x, positions[5].y, topRot[1], topRot[2], topRot[3], 16/frameDimension, 16/frameDimension, frameDimension/2, frameDimension/2) end
+        if big_position ~= 6 then qdraw(particle_atlas, particle, positions[6].x, positions[6].y, bottomRot[1], bottomRot[2], bottomRot[3], frameDimension/2, frameDimension/2) end
+      end
+      -- left and right
+      if popfx.popsize == "giant" then
+        if big_position ~= 7 then qdraw(particle_atlas, particle, positions[7].x, positions[7].y, leftRot[1], leftRot[2], leftRot[3], 16/frameDimension, 16/frameDimension, frameDimension/2, frameDimension/2) end
+        if big_position ~= 8 then qdraw(particle_atlas, particle, positions[8].x, positions[8].y, rightRot[1], rightRot[2], rightRot[3], frameDimension/2, frameDimension/2) end
+      end
+      --big particle
+      --[[
+      if popsize ~= "small" then
+        qdraw(particle_atlas, popfx.bigParticle, 
+        positions[big_position].x, positions[big_position].y, 0, 16/frameDimension, 16/frameDimension, frameDimension/2, frameDimension/2)
+      end
+    ]]
+    end
+  end
+end
+
 function move_stack(stack, player_num)
   local stack_padding_x_for_legacy_pos = ((canvas_width-legacy_canvas_width)/2)
   if player_num == 1 then
@@ -94,10 +186,21 @@ function Stack.render(self)
 
   -- draw inside stack's frame canvas
   local portrait_w, portrait_h = characters[self.character].images["portrait"]:getDimensions()
+  if self.do_countdown == false then
+    self.portraitFade = 0.3
+  else
+    if self.countdown_CLOCK then
+      if self.countdown_CLOCK > 50  and self.countdown_CLOCK < 80 then
+        self.portraitFade = ((config.portrait_darkness/100)/79)*self.countdown_CLOCK
+      end
+    end
+  end
   if P1 == self then
     draw(characters[self.character].images["portrait"], 4, 4, 0, 96/portrait_w, 192/portrait_h)
+    grectangle_color("fill", 4*GFX_SCALE, 4*GFX_SCALE, portrait_w*GFX_SCALE, portrait_h*GFX_SCALE, 0, 0, 0, self.portraitFade)
   else
     draw(characters[self.character].images["portrait"], 100, 4, 0, (96/portrait_w)*-1, 192/portrait_h)
+    grectangle_color("fill", 4*GFX_SCALE, 4*GFX_SCALE, portrait_w*GFX_SCALE, portrait_h*GFX_SCALE, 0, 0, 0, self.portraitFade)
   end
 
   local metals
@@ -205,6 +308,7 @@ function Stack.render(self)
             end
           elseif panel.state == "popping" then
             draw_frame = 6
+            --draw(characters[self.character].images["attack"], draw_x, draw_y, 0, 2, 2)
           elseif panel.state == "landing" then
             draw_frame = bounce_table[panel.timer + 1]
           elseif panel.state == "swapping" then
@@ -237,6 +341,7 @@ function Stack.render(self)
 	draw(themes[config.theme].images.IMG_wall2P, 4, 4 - shake + self.height*16)
   end
 
+  self:draw_popfxs()
   self:draw_cards()
   self:render_cursor()
   if self.do_countdown then
@@ -396,4 +501,3 @@ function draw_pause()
   gprintf(loc("pause"), 0, 330, canvas_width, "center",nil,1,large_font)
   gprintf(loc("pl_pause_help"), 0, 360, canvas_width, "center",nil,1)
 end
-

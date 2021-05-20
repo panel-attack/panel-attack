@@ -6,11 +6,11 @@ local basic_images = { "icon" }
 local other_images = {"topleft", "botleft", "topright", "botright",
                   "top", "bot", "left", "right", "face", "pop",
                   "doubleface", "filler1", "filler2", "flash",
-                  "portrait"}
+                  "portrait", "attack"}
 local defaulted_images = { icon=true, topleft=true, botleft=true, topright=true, botright=true,
                   top=true, bot=true, left=true, right=true, face=true, pop=true,
                   doubleface=true, filler1=true, filler2=true, flash=true,
-                  portrait=true } -- those images will be defaulted if missing
+                  portrait=true, attack=true} -- those images will be defaulted if missing
 local basic_sfx = {"selection"}
 local other_sfx = {"chain", "combo", "combo_echo", "chain_echo", "chain2" ,"chain2_echo", "garbage_match", "garbage_land", "win", "taunt_up", "taunt_down"}
 local defaulted_sfxs = {} -- those sfxs will be defaulted if missing
@@ -36,6 +36,7 @@ Character = class(function(self, full_path, folder_name)
     self.fully_loaded = false
     self.is_visible = true
     self.chain_style = e_chain_style.classic
+    self.popfx_rotation = false
   end)
 
 function Character.json_init(self)
@@ -69,6 +70,10 @@ function Character.json_init(self)
     -- chain_style
     if read_data.chain_style and type(read_data.chain_style) == "string" then
       self.chain_style = read_data.chain_style=="per_chain" and e_chain_style.per_chain or e_chain_style.classic
+    end
+
+    if read_data.popfx_rotation and type(read_data.popfx_rotation) == "boolean" then
+      self.popfx_rotation = read_data.popfx_rotation
     end
 
     -- associated stage
@@ -322,9 +327,11 @@ end
 function Character.graphics_init(self,full,yields)
   local character_images = full and other_images or basic_images
   for _,image_name in ipairs(character_images) do
+    print(image_name)
     self.images[image_name] = load_img_from_supported_extensions(self.path.."/"..image_name)
     if not self.images[image_name] and defaulted_images[image_name] and not self:is_bundle() then
       self.images[image_name] = default_character.images[image_name]
+      print("MISSING!")
     end
     if yields then coroutine.yield() end
   end

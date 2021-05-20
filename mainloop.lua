@@ -9,7 +9,7 @@ local analytics = require("analytics")
 
 local wait, resume = coroutine.yield, coroutine.resume
 
-local main_endless, make_main_puzzle, main_net_vs_setup,
+local playground, main_endless, make_main_puzzle, main_net_vs_setup,
   main_config_input, main_select_puzz,
   main_local_vs_setup, main_set_name, main_local_vs_yourself_setup,
   main_options, main_music_test, 
@@ -122,6 +122,7 @@ do
   
     match_type_message = ""
     local items = {
+        --{"playground", main_select_speed_99, {playground}},
         {loc("mm_1_endless"), main_select_speed_99, {main_endless}},
         {loc("mm_1_puzzle"), main_select_puzz},
         {loc("mm_1_time"), main_select_speed_99, {main_time_attack}},
@@ -984,7 +985,7 @@ function main_local_vs_yourself()
           P1:local_run()
           P1:handle_pause()
         else
-          end_text = loc("pl_gameover")
+          end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch))
         end
       end)
     if end_text then

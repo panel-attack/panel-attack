@@ -21,12 +21,22 @@ function load_img_from_supported_extensions(path_and_name)
   return nil
 end
 
-function draw(img, x, y, rot, x_scale,y_scale)
+function draw(img, x, y, rot, x_scale, y_scale)
   rot = rot or 0
   x_scale = x_scale or 1
   y_scale = y_scale or 1
   gfx_q:push({love.graphics.draw, {img, x*GFX_SCALE, y*GFX_SCALE,
-    rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
+  rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
+end
+
+function qdraw(img, quad, x, y, rot, x_scale, y_scale, x_offset, y_offset)
+  rot = rot or 0
+  x_scale = x_scale or 1
+  y_scale = y_scale or 1
+  x_offset = x_offset or 0
+  y_offset = y_offset or 0
+  gfx_q:push({love.graphics.draw, {img, quad, x*GFX_SCALE, y*GFX_SCALE,
+    rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE, x_offset, y_offset}})
 end
 
 function menu_draw(img, x, y, rot, x_scale,y_scale)
@@ -67,6 +77,13 @@ end
 
 function grectangle(mode, x, y, w, h)
   gfx_q:push({love.graphics.rectangle, {mode, x, y, w, h}})
+end
+
+function grectangle_color(mode, x, y, w, h, r, g, b, a)
+  a = a or 1
+  gfx_q:push({love.graphics.setColor, {r, g, b, a}})
+  gfx_q:push({love.graphics.rectangle, {mode, x, y, w, h}})
+  gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
 end
 
 function gprint(str, x, y, color, scale)
