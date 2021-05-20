@@ -676,12 +676,20 @@ function Stack.enqueue_card(self, chain, x, y, n)
 end
 
 function Stack.enqueue_popfx(self, x, y, popsize)
-  atlas = characters[self.character].images["attack"]
-  frameDimension = atlas:getWidth()/9
-  particle = love.graphics.newQuad(frameDimension, 0, frameDimension, frameDimension, atlas:getDimensions())
-  bigParticle = love.graphics.newQuad(0, 0, frameDimension, frameDimension, atlas:getDimensions())
+  if characters[self.character].images["burst"] then
+    burstAtlas = characters[self.character].images["burst"]
+    burstFrameDimension = burstAtlas:getWidth()/9
+    burstParticle = love.graphics.newQuad(burstFrameDimension, 0, burstFrameDimension, burstFrameDimension, burstAtlas:getDimensions())
+    bigParticle = love.graphics.newQuad(0, 0, burstFrameDimension, burstFrameDimension, burstAtlas:getDimensions())
+  end
+  if characters[self.character].images["fade"] then
+    fadeAtlas = characters[self.character].images["fade"]
+    fadeFrameDimension = fadeAtlas:getWidth()/9
+    fadeParticle = love.graphics.newQuad(fadeFrameDimension, 0, fadeFrameDimension, fadeFrameDimension, fadeAtlas:getDimensions())
+  end
   poptype = "small"
-  self.pop_q:push({frame=1,atlas = atlas, frameDimension = frameDimension, particle = particle, bigParticle = bigParticle, bigTimer = 0, popsize = popsize, x=x, y=y})
+  self.pop_q:push({frame=1, burstAtlas = burstAtlas, burstFrameDimension = burstFrameDimension, burstParticle = burstParticle,
+  fadeAtlas = fadeAtlas, fadeFrameDimension = fadeFrameDimension, fadeParticle = fadeParticle, bigParticle = bigParticle, bigTimer = 0, popsize = popsize, x=x, y=y})
 end
 
 local d_col = {up=0, down=0, left=-1, right=1}
