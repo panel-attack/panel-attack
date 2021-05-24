@@ -20,7 +20,7 @@ assert(super_selection_enable_ratio<1.0,"")
 prefix_of_ignored_dirs = "__"
 
 default_theme_dir = "Panel Attack"
-default_panels_dir = "Panel Attack"
+default_panels_dir = "Panels HD - Basic"
 
 default_characters_folders = {"lip", "windy", "sherbet", "thiana", "ruby",
               "elias", "flare", "neris", "seren", "phoenix", 
