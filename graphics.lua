@@ -34,6 +34,7 @@ function Stack.update_cards(self)
     if card_animation[card.frame] then
       card.frame = card.frame + 1
       if(card_animation[card.frame]==nil) then
+        card.burstParticle:release()
         self.card_q:pop()
       end
     else
@@ -46,9 +47,20 @@ function Stack.draw_cards(self)
   for i=self.card_q.first,self.card_q.last do
     local card = self.card_q[i]
     if card_animation[card.frame] then
-      local draw_x = 4 + (card.x-1) * 16
-      local draw_y = 4 + (11-card.y) * 16 + self.displacement
+      local draw_x = (self.pos_x) + (card.x-1) * 16
+      local draw_y = (self.pos_y) + (11-card.y) * 16 + self.displacement
           - card_animation[card.frame]
+      burstFrameDimension = card.burstAtlas:getWidth()/9
+      -- draw cardfx
+      if card.frame <= 21 then radius = 200 - (card.frame * 7.2) end
+      if card.frame > 21 and card.frame <= 30 then radius = 100 - (card.frame * 3) end
+      if card.frame > 30 then radius = 30 - (card.frame * 0.6) end
+      for i=1, 6, 1 do
+        local cardfx_x = draw_x + math.cos(math.rad((i*60)+(card.frame*5)))*radius
+        local cardfx_y = draw_y + math.sin(math.rad((i*60)+(card.frame*5)))*radius
+        qdraw(card.burstAtlas, card.burstParticle, cardfx_x, cardfx_y, 0, 16/burstFrameDimension, 16/burstFrameDimension)
+      end
+      -- draw card
       draw(themes[config.theme].images.IMG_cards[card.chain][card.n], draw_x, draw_y)
     end
   end
@@ -76,8 +88,8 @@ end
 function Stack.draw_popfxs(self)
   for i=self.pop_q.first,self.pop_q.last do
     local popfx = self.pop_q[i]
-    local draw_x = 4 + (popfx.x-1) * 16
-    local draw_y = 4 + (11-popfx.y) * 16 + self.displacement
+    local draw_x = (self.pos_x) + (popfx.x-1) * 16
+    local draw_y = (self.pos_y)  + (11-popfx.y) * 16 + self.displacement
     local burstScale = characters[self.character].popfx_burstScale
     local fadeScale = characters[self.character].popfx_fadeScale
     local burstParticle_atlas = popfx.burstAtlas
@@ -361,18 +373,19 @@ function Stack.render(self)
 	draw(themes[config.theme].images.IMG_wall2P, 4, 4 - shake + self.height*16)
   end
 
-  self:draw_popfxs()
-  self:draw_cards()
   self:render_cursor()
   if self.do_countdown then
     self:render_countdown()
   end
   -- ends here
-
+  
   gfx_q:push({love.graphics.setStencilTest, {}})
   gfx_q:push({love.graphics.setCanvas, {global_canvas}})
   gfx_q:push({love.graphics.draw, {self.canvas, (self.pos_x-4)*GFX_SCALE, (self.pos_y-4)*GFX_SCALE }})
-
+  
+  self:draw_popfxs()
+  self:draw_cards()
+  
   if config.debug_mode then
     local mx, my = love.mouse.getPosition()
     for row=0,self.height do

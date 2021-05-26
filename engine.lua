@@ -672,7 +672,10 @@ function Stack.foreign_run(self)
 end
 
 function Stack.enqueue_card(self, chain, x, y, n)
-  self.card_q:push({frame=1, chain=chain, x=x, y=y, n=n})
+  card_burstAtlas = characters[self.character].images["burst"]
+  card_burstFrameDimension = card_burstAtlas:getWidth()/9
+  card_burstParticle = love.graphics.newQuad(card_burstFrameDimension, 0, card_burstFrameDimension, card_burstFrameDimension, card_burstAtlas:getDimensions())
+  self.card_q:push({frame=1, chain=chain, x=x, y=y, n=n, burstAtlas = card_burstAtlas, burstParticle = card_burstParticle})
 end
 
 function Stack.enqueue_popfx(self, x, y, popsize)
@@ -1218,7 +1221,6 @@ function Stack.PdP(self)
   if self.cur_timer ~= self.cur_wait_time then
     self.cur_timer = self.cur_timer + 1
   end
-
   -- TAUNTING
   if self.taunt_up ~= nil then
     for _,t in ipairs(characters[self.character].sounds.taunt_ups) do
