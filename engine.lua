@@ -672,10 +672,15 @@ function Stack.foreign_run(self)
 end
 
 function Stack.enqueue_card(self, chain, x, y, n)
-  card_burstAtlas = characters[self.character].images["burst"]
-  card_burstFrameDimension = card_burstAtlas:getWidth()/9
-  card_burstParticle = love.graphics.newQuad(card_burstFrameDimension, 0, card_burstFrameDimension, card_burstFrameDimension, card_burstAtlas:getDimensions())
+  card_burstAtlas = nil
+  card_burstParticle = nil
+  if config.popfx == true then
+    card_burstAtlas = characters[self.character].images["burst"]
+    card_burstFrameDimension = card_burstAtlas:getWidth()/9
+    card_burstParticle = love.graphics.newQuad(card_burstFrameDimension, 0, card_burstFrameDimension, card_burstFrameDimension, card_burstAtlas:getDimensions())
+  end
   self.card_q:push({frame=1, chain=chain, x=x, y=y, n=n, burstAtlas = card_burstAtlas, burstParticle = card_burstParticle})
+  
 end
 
 function Stack.enqueue_popfx(self, x, y, popsize)

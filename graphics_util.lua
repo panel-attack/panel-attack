@@ -29,6 +29,78 @@ function draw(img, x, y, rot, x_scale, y_scale)
   rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
 end
 
+function draw_number(number, atlas, frameCount, quads, x, y, scale, x_scale, y_scale, align)
+  x_scale = x_scale or 1
+  y_scale = y_scale or 1
+  align = align or "left"
+
+  width = atlas:getWidth()
+  height = atlas:getHeight()
+  numberWidth = atlas:getWidth()/frameCount
+  numberHeight = atlas:getHeight()
+  while #quads < #tostring(number) do
+    table.insert(quads, love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height))
+  end
+
+  for i = 1, #tostring(number), 1 do
+    local c = tostring(number):sub(i,i)
+    quads[i]:setViewport(tonumber(c)*numberWidth, 0, numberWidth, numberHeight, width, height)
+    if align == "left" then
+      gfx_q:push({love.graphics.draw, {atlas, quads[i], ((x+(i*(13*scale)))-(13*scale)), y,
+        0, x_scale, y_scale}})
+    end
+    if align == "center" then
+      gfx_q:push({love.graphics.draw, {atlas, quads[i], (x+((i-(#tostring(number)/2))*(13*scale))), y,
+        0, x_scale, y_scale}})
+    end
+    if align == "right" then
+      gfx_q:push({love.graphics.draw, {atlas, quads[i], (x+((i-#tostring(number))*(13*scale))), y,
+        0, x_scale, y_scale}})
+    end
+  end
+
+end
+
+function draw_time(time, quads, x, y, x_scale, y_scale)
+  x_scale = x_scale or 1
+  y_scale = y_scale or 1
+
+  if #quads == 0 then
+    width = themes[config.theme].images.IMG_timeNumber_atlas:getWidth()
+    height = themes[config.theme].images.IMG_timeNumber_atlas:getHeight()
+    numberWidth = themes[config.theme].images.timeNumberWidth
+    numberHeight = themes[config.theme].images.timeNumberHeight
+    quads =
+    {
+      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
+      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
+      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
+      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
+      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
+      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
+      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
+      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
+      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
+      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
+      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height)
+    }
+
+    symbolEnum = {[":"]=10, ["'"]=11}
+    for i = 1, #time, 1 do
+      local c = time:sub(i,i)
+
+      if c ~= ":" and c ~= "'" then
+        quads[i]:setViewport(tonumber(c)*numberWidth, 0, numberWidth, numberHeight, width, height)
+      else
+        quads[i]:setViewport(symbolEnum[c]*numberWidth, 0, numberWidth, numberHeight, width, height)
+      end
+      gfx_q:push({love.graphics.draw, {themes[config.theme].images.IMG_timeNumber_atlas, quads[i], ((x+(i*(20*themes[config.theme].time_Scale)))-(20*themes[config.theme].time_Scale))+((7-#time)*10), y,
+          0, x_scale, y_scale}})
+    end
+
+  end
+end
+
 function qdraw(img, quad, x, y, rot, x_scale, y_scale, x_offset, y_offset)
   rot = rot or 0
   x_scale = x_scale or 1

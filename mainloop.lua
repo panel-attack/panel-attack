@@ -31,6 +31,9 @@ main_menu_screen_pos = { 300 + (canvas_width-legacy_canvas_width)/2, 280 + (canv
 wait_game_update = nil
 has_game_update = false
 
+P1_win_quads = {}
+P2_win_quads = {}
+
 function fmainloop()
   local func, arg = main_select_mode, nil
   replay = {}
@@ -775,10 +778,19 @@ function main_net_vs()
     end
 
     local name_and_score = { (my_name or "").."\n"..loc("ss_wins").." "..my_win_count, (op_name or "").."\n"..loc("ss_wins").." "..op_win_count}
-    gprint(name_and_score[1], P1.score_x, P1.score_y-48)
-    gprint(name_and_score[2], P2.score_x, P2.score_y-48)
+    gprint((my_name or ""), P1.score_x+themes[config.theme].name_Pos[1], P1.score_y+themes[config.theme].winLabel_Pos[2])
+    gprint((op_name or ""), P2.score_x+themes[config.theme].winLabel_Pos[1], P2.score_y+themes[config.theme].winLabel_Pos[2])
+    draw(themes[config.theme].images.IMG_wins, (P1.score_x+themes[config.theme].winLabel_Pos[1])/GFX_SCALE, (P1.score_y+themes[config.theme].winLabel_Pos[2])/GFX_SCALE, 0,
+      (60/themes[config.theme].images.IMG_wins:getWidth()*themes[config.theme].winLabel_Scale)/GFX_SCALE, (28/themes[config.theme].images.IMG_wins:getHeight()*themes[config.theme].winLabel_Scale)/GFX_SCALE)
+    draw_number(my_win_count, themes[config.theme].images.IMG_timeNumber_atlas, 12, P1_win_quads, P1.score_x+themes[config.theme].win_Pos[1], P1.score_y+themes[config.theme].win_Pos[2], themes[config.theme].win_Scale,
+      20/themes[config.theme].images.timeNumberWidth*themes[config.theme].time_Scale, 26/themes[config.theme].images.timeNumberHeight*themes[config.theme].time_Scale, "center")
+
+    draw(themes[config.theme].images.IMG_wins, (P2.score_x+themes[config.theme].winLabel_Pos[1])/GFX_SCALE, (P2.score_y+themes[config.theme].winLabel_Pos[2])/GFX_SCALE, 0,
+      (60/themes[config.theme].images.IMG_wins:getWidth()*themes[config.theme].winLabel_Scale)/GFX_SCALE, (28/themes[config.theme].images.IMG_wins:getHeight()*themes[config.theme].winLabel_Scale)/GFX_SCALE)
+    draw_number(op_win_count, themes[config.theme].images.IMG_timeNumber_atlas, 12, P2_win_quads, P2.score_x+themes[config.theme].win_Pos[1], P2.score_y+themes[config.theme].win_Pos[2], themes[config.theme].win_Scale,
+      20/themes[config.theme].images.timeNumberWidth*themes[config.theme].time_Scale, 26/themes[config.theme].images.timeNumberHeight*themes[config.theme].time_Scale, "center")
     if not config.debug_mode then --this is printed in the same space as the debug details
-      gprint(spectators_string, P1.score_x, P1.score_y+177)
+      gprint(spectators_string, P1.score_x, P1.score_y+220)
     end
     if match_type == "Ranked" then
       if global_current_room_ratings[my_player_number]
