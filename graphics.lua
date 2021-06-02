@@ -425,7 +425,7 @@ function Stack.render(self)
     draw(themes[config.theme].images.IMG_moves, (self.score_x+themes[config.theme].moveLabel_Pos[1])/GFX_SCALE, (self.score_y+themes[config.theme].moveLabel_Pos[2])/GFX_SCALE, 0,
       (90/themes[config.theme].images.IMG_moves:getWidth()*themes[config.theme].moveLabel_Scale)/GFX_SCALE, (21/themes[config.theme].images.IMG_moves:getHeight()*themes[config.theme].moveLabel_Scale)/GFX_SCALE)
     draw_number(self.puzzle_moves, themes[config.theme].images.IMG_number_atlas, 10, move_quads, self.score_x+themes[config.theme].move_Pos[1], self.score_y+themes[config.theme].move_Pos[2], themes[config.theme].move_Scale,
-      (30/themes[config.theme].images.numberWidth*themes[config.theme].move_Scale), (38/themes[config.theme].images.numberHeight*themes[config.theme].move_Scale))
+      (30/themes[config.theme].images.numberWidth*themes[config.theme].move_Scale), (38/themes[config.theme].images.numberHeight*themes[config.theme].move_Scale), "center")
     if config.show_ingame_infos then
       --gprint(loc("pl_frame", self.CLOCK), self.score_x, self.score_y+30)
     end

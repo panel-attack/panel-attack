@@ -46,7 +46,7 @@ Theme = class(function(self)
     self.score_Scale = 1.3
     self.speedLabel_Pos = {12, 43}
     self.speedLabel_Scale = 1
-    self.speed_Pos = {23, 59}
+    self.speed_Pos = {23, 60}
     self.speed_Scale = 1.35
     self.levelLabel_Pos = {5, 89}
     self.levelLabel_Scale = 1.02
@@ -57,6 +57,10 @@ Theme = class(function(self)
     self.win_Pos = {25, 180}
     self.win_Scale = 1
     self.name_Pos = {20, -30}
+    self.ratingLabel_Pos = {5, 220}
+    self.ratingLabel_Scale = 1
+    self.rating_Pos = {30, 240}
+    self.rating_Scale = 1
   end)
 
 background = load_theme_img("background/main")
@@ -96,6 +100,10 @@ function Theme.graphics_init(self)
     self.images.IMG_numbers[i] = load_theme_img(i.."")
   end
 
+  self.images.burst = load_theme_img("burst")
+
+  self.images.fade = load_theme_img("fade")
+
   self.images.IMG_number_atlas = load_theme_img("numbers")
   self.images.numberWidth = self.images.IMG_number_atlas:getWidth()/10
   self.images.numberHeight = self.images.IMG_number_atlas:getHeight()
@@ -123,6 +131,8 @@ function Theme.graphics_init(self)
   self.images.IMG_casual = load_theme_img("casual")
 
   self.images.IMG_ranked = load_theme_img("ranked")
+
+  self.images.IMG_rating = load_theme_img("rating")
 
   self.images.IMG_random_stage = load_theme_img("random_stage")
   self.images.IMG_random_character = load_theme_img("random_character")
@@ -400,6 +410,25 @@ function Theme.json_init(self)
       self.name_Pos = read_data.name_Pos
     end
 
+  -- Ratin label position
+  if read_data.ratingLabel_Pos and type(read_data.ratingLabel_Pos) == "table" then
+    self.ratingLabel_Pos = read_data.ratingLabel_Pos
+  end
+
+  -- Rating label scale
+  if read_data.ratingLabel_Scale and type(read_data.ratingLabel_Scale) == "number" then
+    self.ratingLabel_Scale = read_data.ratingLabel_Scale
+  end
+
+  -- Rating position
+  if read_data.rating_Pos and type(read_data.rating_Pos) == "table" then
+    self.rating_Pos = read_data.rating_Pos
+  end
+
+  -- Rating scale
+  if read_data.rating_Scale and type(read_data.rating_Scale) == "number" then
+    self.rating_Scale = read_data.rating_Scale
+  end
 end
 
 function Theme.load(self, id)

@@ -10,7 +10,7 @@ local other_images = {"topleft", "botleft", "topright", "botright",
 local defaulted_images = { icon=true, topleft=true, botleft=true, topright=true, botright=true,
                   top=true, bot=true, left=true, right=true, face=true, pop=true,
                   doubleface=true, filler1=true, filler2=true, flash=true,
-                  portrait=true, burst=true} -- those images will be defaulted if missing
+                  portrait=true, burst=true, fade=true} -- those images will be defaulted if missing
 local basic_sfx = {"selection"}
 local other_sfx = {"chain", "combo", "combo_echo", "chain_echo", "chain2" ,"chain2_echo", "garbage_match", "garbage_land", "win", "taunt_up", "taunt_down"}
 local defaulted_sfxs = {} -- those sfxs will be defaulted if missing
@@ -349,7 +349,11 @@ function Character.graphics_init(self,full,yields)
     print(image_name)
     self.images[image_name] = load_img_from_supported_extensions(self.path.."/"..image_name)
     if not self.images[image_name] and defaulted_images[image_name] and not self:is_bundle() then
-      self.images[image_name] = default_character.images[image_name]
+      if image_name == "burst" or image_name == "fade" then
+        self.images[image_name] = themes[config.theme].images[image_name]
+      else
+        self.images[image_name] = default_character.images[image_name]
+      end
       print("MISSING!")
     end
     if yields then coroutine.yield() end
