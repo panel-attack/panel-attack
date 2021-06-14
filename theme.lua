@@ -31,36 +31,63 @@ Theme = class(function(self)
     self.sounds = {}
     self.musics = {}
     self.matchtypeLabel_Pos = {-40, -30}
-    self.matchtypeLabel_Scale = 1
+    self.matchtypeLabel_Scale = 3
     self.timeLabel_Pos = {0, 10}
-    self.timeLabel_Scale = 1
+    self.timeLabel_Scale = 2
     self.time_Pos = {-40, 25}
     self.time_Scale = 1
-    self.moveLabel_Pos = {0, 0}
-    self.moveLabel_Scale = 1
-    self.move_Pos = {30, 30}
-    self.move_Scale = 1
-    self.scoreLabel_Pos = {5, -1}
-    self.scoreLabel_Scale = 1
-    self.score_Pos = {24, 15}
-    self.score_Scale = 1.3
-    self.speedLabel_Pos = {12, 43}
-    self.speedLabel_Scale = 1
-    self.speed_Pos = {23, 60}
-    self.speed_Scale = 1.35
-    self.levelLabel_Pos = {5, 89}
-    self.levelLabel_Scale = 1.02
-    self.level_Pos = {30, 105}
-    self.level_Scale = 1
-    self.winLabel_Pos = {13, 150}
-    self.winLabel_Scale = 1
-    self.win_Pos = {25, 180}
-    self.win_Scale = 1
     self.name_Pos = {20, -30}
+    self.moveLabel_Pos = {0, 0}
+    self.moveLabel_Scale = 2
+    self.move_Pos = {20, 35}
+    self.move_Scale = 1
+    self.scoreLabel_Pos = {102, 25}
+    self.scoreLabel_Scale = 2
+    self.score_Pos = {108, 31}
+    self.score_Scale = 1.31
+    self.speedLabel_Pos = {104, 42}
+    self.speedLabel_Scale = 2
+    self.speed_Pos = {108, 48}
+    self.speed_Scale = 1.35
+    self.levelLabel_Pos = {101, 59}
+    self.levelLabel_Scale = 2
+    self.level_Pos = {110, 65}
+    self.level_Scale = 1
+    self.winLabel_Pos = {0, 150}
+    self.winLabel_Scale = 2
+    self.win_Pos = {60, 150}
+    self.win_Scale = 1
     self.ratingLabel_Pos = {5, 220}
-    self.ratingLabel_Scale = 1
-    self.rating_Pos = {30, 240}
+    self.ratingLabel_Scale = 2
+    self.rating_Pos = {40, 240}
     self.rating_Scale = 1
+    self.spectators_Pos = {0, 280}
+    self.healthbar_frame_Pos = {-20, -4}
+    self.healthbar_frame_Scale = 3
+    self.healthbar_Pos = {-16, 0}
+    self.healthbar_Scale = 1
+    self.healthbar_Rotate = 0
+    self.prestop_frame_Pos = {100, 90}
+    self.prestop_frame_Scale = 1
+    self.prestop_bar_Pos = {110, 97}
+    self.prestop_bar_Scale = 1
+    self.prestop_bar_Rotate = 0
+    self.prestop_Pos = {120, 105}
+    self.prestop_Scale = 1
+    self.stop_frame_Pos = {100, 120}
+    self.stop_frame_Scale = 1
+    self.stop_bar_Pos = {110, 127}
+    self.stop_bar_Scale = 1
+    self.stop_bar_Rotate = 0
+    self.stop_Pos = {120, 135}
+    self.stop_Scale = 1
+    self.shake_frame_Pos = {100, 150}
+    self.shake_frame_Scale = 1
+    self.shake_bar_Pos = {110, 157}
+    self.shake_bar_Scale = 1
+    self.shake_bar_Rotate = 0
+    self.shake_Pos = {120, 165}
+    self.shake_Scale = 1
   end)
 
 background = load_theme_img("background/main")
@@ -136,6 +163,18 @@ function Theme.graphics_init(self)
 
   self.images.IMG_random_stage = load_theme_img("random_stage")
   self.images.IMG_random_character = load_theme_img("random_character")
+
+  self.images.IMG_healthbar_frame = load_theme_img("healthbar_frame")
+  self.images.IMG_healthbar = load_theme_img("healthbar")
+
+  self.images.IMG_prestop_frame = load_theme_img("prestop_frame")
+  self.images.IMG_prestop_bar = load_theme_img("prestop_bar")
+
+  self.images.IMG_stop_frame = load_theme_img("stop_frame")
+  self.images.IMG_stop_bar = load_theme_img("stop_bar")
+
+  self.images.IMG_shake_frame = load_theme_img("shake_frame")
+  self.images.IMG_shake_bar = load_theme_img("shake_bar")
 
   --play field frames, plus the wall at the bottom.
   self.images.IMG_frame1P = load_theme_img("frame/frame1P")
@@ -429,7 +468,144 @@ function Theme.json_init(self)
   if read_data.rating_Scale and type(read_data.rating_Scale) == "number" then
     self.rating_Scale = read_data.rating_Scale
   end
+
+  -- Spectators position
+  if read_data.spectators_Pos and type(read_data.spectators_Pos) == "table" then
+    self.spectators_Pos = read_data.spectators_Pos
+  end
+
+    -- Healthbar frame position
+    if read_data.healthbar_frame_Pos and type(read_data.healthbar_frame_Pos) == "table" then
+      self.healthbar_frame_Pos = read_data.healthbar_frame_Pos
+    end
+
+    -- Healthbar frame scale
+    if read_data.healthbar_frame_Scale and type(read_data.healthbar_frame_Scale) == "number" then
+      self.healthbar_frame_Scale = read_data.healthbar_frame_Scale
+    end
+
+    -- Healthbar position
+    if read_data.healthbar_Pos and type(read_data.healthbar_Pos) == "table" then
+      self.healthbar_Pos = read_data.healthbar_Pos
+    end
+
+    -- Healthbar scale
+    if read_data.healthbar_Scale and type(read_data.healthbar_Scale) == "number" then
+      self.healthbar_Scale = read_data.healthbar_Scale
+    end
+
+    -- Healthbar Rotate
+    if read_data.healthbar_Rotate and type(read_data.healthbar_Rotate) == "number" then
+      self.healthbar_Rotate = read_data.healthbar_Rotate
+    end
+
+    -- Prestop frame position
+    if read_data.prestop_frame_Pos and type(read_data.prestop_frame_Pos) == "table" then
+      self.prestop_frame_Pos = read_data.prestop_frame_Pos
+    end
+
+    -- Prestop frame scale
+    if read_data.prestop_frame_Scale and type(read_data.prestop_frame_Scale) == "number" then
+      self.prestop_frame_Scale = read_data.prestop_frame_Scale
+    end
+
+    -- Prestop bar position
+    if read_data.prestop_bar_Pos and type(read_data.prestop_bar_Pos) == "table" then
+      self.prestop_bar_Pos = read_data.prestop_bar_Pos
+    end
+
+    -- Prestop bar scale
+    if read_data.prestop_bar_Scale and type(read_data.prestop_bar_Scale) == "number" then
+      self.prestop_bar_Scale = read_data.prestop_bar_Scale
+    end
+
+    -- Prestop bar Rotate
+    if read_data.prestop_bar_Rotate and type(read_data.prestop_bar_Rotate) == "number" then
+      self.prestop_bar_Rotate = read_data.prestop_bar_Rotate
+    end
+
+    -- Prestop position
+    if read_data.prestop_Pos and type(read_data.prestop_Pos) == "table" then
+      self.prestop_Pos = read_data.prestop_Pos
+    end
+
+    -- Prestop scale
+    if read_data.prestop_Scale and type(read_data.prestop_Scale) == "number" then
+      self.prestop_Scale = read_data.prestop_Scale
+    end
+
+    -- Stop frame position
+    if read_data.stop_frame_Pos and type(read_data.stop_frame_Pos) == "table" then
+      self.stop_frame_Pos = read_data.stop_frame_Pos
+    end
+
+    -- Stop frame scale
+    if read_data.stop_frame_Scale and type(read_data.stop_frame_Scale) == "number" then
+      self.stop_frame_Scale = read_data.stop_frame_Scale
+    end
+
+    -- Stop bar position
+    if read_data.stop_bar_Pos and type(read_data.stop_bar_Pos) == "table" then
+      self.stop_bar_Pos = read_data.stop_bar_Pos
+    end
+
+    -- Stop bar scale
+    if read_data.stop_bar_Scale and type(read_data.stop_bar_Scale) == "number" then
+      self.stop_bar_Scale = read_data.stop_bar_Scale
+    end
+
+    -- Stop bar Rotate
+    if read_data.stop_bar_Rotate and type(read_data.stop_bar_Rotate) == "number" then
+      self.stop_bar_Rotate = read_data.stop_bar_Rotate
+    end
+
+    -- Stop position
+    if read_data.stop_Pos and type(read_data.stop_Pos) == "table" then
+      self.stop_Pos = read_data.stop_Pos
+    end
+
+    -- Stop scale
+    if read_data.stop_Scale and type(read_data.stop_Scale) == "number" then
+      self.stop_Scale = read_data.stop_Scale
+    end
+
+    -- Shake frame position
+    if read_data.shake_frame_Pos and type(read_data.shake_frame_Pos) == "table" then
+      self.shake_frame_Pos = read_data.shake_frame_Pos
+    end
+
+    -- Shake frame scale
+    if read_data.shake_frame_Scale and type(read_data.shake_frame_Scale) == "number" then
+      self.shake_frame_Scale = read_data.shake_frame_Scale
+    end
+
+    -- Shake bar position
+    if read_data.shake_bar_Pos and type(read_data.shake_bar_Pos) == "table" then
+      self.shake_bar_Pos = read_data.shake_bar_Pos
+    end
+
+    -- Shake bar scale
+    if read_data.shake_bar_Scale and type(read_data.shake_bar_Scale) == "number" then
+      self.shake_bar_Scale = read_data.shake_bar_Scale
+    end
+
+    -- Shake bar Rotate
+    if read_data.shake_bar_Rotate and type(read_data.shake_bar_Rotate) == "number" then
+      self.shake_bar_Rotate = read_data.shake_bar_Rotate
+    end
+
+    -- Shake position
+    if read_data.shake_Pos and type(read_data.shake_Pos) == "table" then
+      self.shake_Pos = read_data.shake_Pos
+    end
+
+    -- Shake scale
+    if read_data.shake_Scale and type(read_data.shake_Scale) == "number" then
+      self.shake_Scale = read_data.shake_Scale
+    end
+
 end
+
 
 function Theme.load(self, id)
   print("loading theme "..id)

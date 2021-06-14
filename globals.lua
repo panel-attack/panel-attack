@@ -108,6 +108,7 @@ config = {
 	save_replays_publicly         = "with my name",
 	portrait_darkness             = default_portrait_darkness,
 	popfx                         = true,
+	cardfx_scale                  = 100,
 }
 
 current_use_music_from = "stage" -- either "stage" or "characters", no other values!
