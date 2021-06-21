@@ -37,7 +37,7 @@ Character = class(function(self, full_path, folder_name)
     self.is_visible = true
     self.chain_style = e_chain_style.classic
     self.popfx_style = "burst"
-    self.popfx_burstrotate = false
+    self.popfx_burstRotate = false
     self.popfx_burstScale = 1
     self.popfx_fadeScale = 1
   end)
@@ -75,9 +75,9 @@ function Character.json_init(self)
       self.chain_style = read_data.chain_style=="per_chain" and e_chain_style.per_chain or e_chain_style.classic
     end
 
-     --popfx_burstrotate
-     if read_data.popfx_burstrotate and type(read_data.popfx_burstrotate) == "boolean" then
-      self.popfx_burstrotate = read_data.popfx_burstrotate
+     --popfx_burstRotate
+     if read_data.popfx_burstRotate and type(read_data.popfx_burstRotate) == "boolean" then
+      self.popfx_burstRrotate = read_data.popfx_burstRotate
     end
 
     --popfx_type

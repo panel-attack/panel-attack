@@ -794,7 +794,7 @@ function main_net_vs()
       20/themes[config.theme].images.timeNumberWidth*themes[config.theme].time_Scale, 26/themes[config.theme].images.timeNumberHeight*themes[config.theme].time_Scale, "center")
 
     if not config.debug_mode then --this is printed in the same space as the debug details
-      gprint(spectators_string, P1.score_x+themes[config.theme].spectators_Pos[1], P1.score_y+themes[config.theme].spectators_Pos[2])
+      gprint(spectators_string, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
     end
     if match_type == "Ranked" then
       if global_current_room_ratings[my_player_number]
@@ -804,10 +804,10 @@ function main_net_vs()
           rating_to_print = global_current_room_ratings[my_player_number].new
         end
         --gprint(rating_to_print, P1.score_x, P1.score_y-30)
-        draw_label(themes[config.theme].images.IMG_rating, (P1.score_x+themes[config.theme].ratingLabel_Pos[1])/GFX_SCALE, (P1.score_y+themes[config.theme].ratingLabel_Pos[2])/GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
+        draw_label(themes[config.theme].images.IMG_rating_1P, (P1.score_x+themes[config.theme].ratingLabel_Pos[1])/GFX_SCALE, (P1.score_y+themes[config.theme].ratingLabel_Pos[2])/GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
         if rating_to_print ~= nil then
-          draw_number(rating_to_print, themes[config.theme].images.IMG_number_atlas, 10, P1_rating_quads, P1.score_x+themes[config.theme].rating_Pos[1], P1.score_y+themes[config.theme].rating_Pos[2],
-            themes[config.theme].rating_Scale, (15/themes[config.theme].images.numberWidth*themes[config.theme].rating_Scale), (19/themes[config.theme].images.numberHeight*themes[config.theme].rating_Scale), "center")
+          draw_number(rating_to_print, themes[config.theme].images.IMG_number_atlas_1P, 10, P1_rating_quads, P1.score_x+themes[config.theme].rating_Pos[1], P1.score_y+themes[config.theme].rating_Pos[2],
+            themes[config.theme].rating_Scale, (15/themes[config.theme].images.numberWidth_1P*themes[config.theme].rating_Scale), (19/themes[config.theme].images.numberHeight_1P*themes[config.theme].rating_Scale), "center")
         end
       end
       if global_current_room_ratings[op_player_number]
@@ -817,10 +817,10 @@ function main_net_vs()
           op_rating_to_print = global_current_room_ratings[op_player_number].new
         end
         --gprint(op_rating_to_print, P2.score_x, P2.score_y-30)
-        draw_label(themes[config.theme].images.IMG_rating, (P2.score_x+themes[config.theme].ratingLabel_Pos[1])/GFX_SCALE, (P2.score_y+themes[config.theme].ratingLabel_Pos[2])/GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
+        draw_label(themes[config.theme].images.IMG_rating_2P, (P2.score_x+themes[config.theme].ratingLabel_Pos[1])/GFX_SCALE, (P2.score_y+themes[config.theme].ratingLabel_Pos[2])/GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
         if op_rating_to_print ~= nil then
-          draw_number(op_rating_to_print, themes[config.theme].images.IMG_number_atlas, 10, P2_rating_quads, P2.score_x+themes[config.theme].rating_Pos[1], P2.score_y+themes[config.theme].rating_Pos[2],
-            themes[config.theme].rating_Scale, (15/themes[config.theme].images.numberWidth*themes[config.theme].rating_Scale), (19/themes[config.theme].images.numberHeight*themes[config.theme].rating_Scale), "center")
+          draw_number(op_rating_to_print, themes[config.theme].images.IMG_number_atlas_2P, 10, P2_rating_quads, P2.score_x+themes[config.theme].rating_Pos[1], P2.score_y+themes[config.theme].rating_Pos[2],
+            themes[config.theme].rating_Scale, (15/themes[config.theme].images.numberWidth_2P*themes[config.theme].rating_Scale), (19/themes[config.theme].images.numberHeight_2P*themes[config.theme].rating_Scale), "center")
         end
       end
     end

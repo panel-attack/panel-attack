@@ -58,6 +58,7 @@ function draw_number(number, atlas, frameCount, quads, x, y, scale, x_scale, y_s
 
   for i = 1, #tostring(number), 1 do
     local c = tostring(number):sub(i,i)
+    if c == nil then return end
     quads[i]:setViewport(tonumber(c)*numberWidth, 0, numberWidth, numberHeight, width, height)
     if align == "left" then
       gfx_q:push({love.graphics.draw, {atlas, quads[i], ((x+(i*(13*scale)))-(13*scale)), y,

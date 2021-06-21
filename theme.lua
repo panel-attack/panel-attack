@@ -37,7 +37,7 @@ Theme = class(function(self)
     self.time_Pos = {-40, 25}
     self.time_Scale = 1
     self.name_Pos = {20, -30}
-    self.moveLabel_Pos = {0, 0}
+    self.moveLabel_Pos = {465, 170}
     self.moveLabel_Scale = 2
     self.move_Pos = {20, 35}
     self.move_Scale = 1
@@ -53,41 +53,45 @@ Theme = class(function(self)
     self.levelLabel_Scale = 2
     self.level_Pos = {110, 65}
     self.level_Scale = 1
-    self.winLabel_Pos = {0, 150}
+    self.winLabel_Pos = {10, 230}
     self.winLabel_Scale = 2
-    self.win_Pos = {60, 150}
+    self.win_Pos = {20, 260}
     self.win_Scale = 1
-    self.ratingLabel_Pos = {5, 220}
+    self.ratingLabel_Pos = {5, 180}
     self.ratingLabel_Scale = 2
-    self.rating_Pos = {40, 240}
+    self.rating_Pos = {25, 200}
     self.rating_Scale = 1
-    self.spectators_Pos = {0, 280}
+    self.spectators_Pos = {10, 400}
     self.healthbar_frame_Pos = {-20, -4}
     self.healthbar_frame_Scale = 3
-    self.healthbar_Pos = {-16, 0}
+    self.healthbar_Pos = {-16, 60}
     self.healthbar_Scale = 1
     self.healthbar_Rotate = 0
-    self.prestop_frame_Pos = {100, 90}
+    self.prestop_frame_Pos = {100, 1190}
     self.prestop_frame_Scale = 1
-    self.prestop_bar_Pos = {110, 97}
+    self.prestop_bar_Pos = {110, 1197}
     self.prestop_bar_Scale = 1
     self.prestop_bar_Rotate = 0
-    self.prestop_Pos = {120, 105}
+    self.prestop_Pos = {120, 1105}
     self.prestop_Scale = 1
-    self.stop_frame_Pos = {100, 120}
+    self.stop_frame_Pos = {100, 130}
     self.stop_frame_Scale = 1
-    self.stop_bar_Pos = {110, 127}
+    self.stop_bar_Pos = {106, 137}
     self.stop_bar_Scale = 1
     self.stop_bar_Rotate = 0
-    self.stop_Pos = {120, 135}
+    self.stop_Pos = {106, 161}
     self.stop_Scale = 1
-    self.shake_frame_Pos = {100, 150}
+    self.shake_frame_Pos = {100, 1150}
     self.shake_frame_Scale = 1
-    self.shake_bar_Pos = {110, 157}
+    self.shake_bar_Pos = {110, 1157}
     self.shake_bar_Scale = 1
     self.shake_bar_Rotate = 0
-    self.shake_Pos = {120, 165}
+    self.shake_Pos = {120, 1165}
     self.shake_Scale = 1
+    self.multibar_frame_Pos = {100, 1100}
+    self.multibar_frame_Scale = 1
+    self.multibar_Pos = {106, 1148}
+    self.multibar_Scale = 1
   end)
 
 background = load_theme_img("background/main")
@@ -131,9 +135,12 @@ function Theme.graphics_init(self)
 
   self.images.fade = load_theme_img("fade")
 
-  self.images.IMG_number_atlas = load_theme_img("numbers")
-  self.images.numberWidth = self.images.IMG_number_atlas:getWidth()/10
-  self.images.numberHeight = self.images.IMG_number_atlas:getHeight()
+  self.images.IMG_number_atlas_1P = load_theme_img("numbers_1P")
+  self.images.numberWidth_1P = self.images.IMG_number_atlas_1P:getWidth()/10
+  self.images.numberHeight_1P = self.images.IMG_number_atlas_1P:getHeight()
+  self.images.IMG_number_atlas_2P = load_theme_img("numbers_2P")
+  self.images.numberWidth_2P = self.images.IMG_number_atlas_2P:getWidth()/10
+  self.images.numberHeight_2P = self.images.IMG_number_atlas_2P:getHeight()
 
   self.images.IMG_time = load_theme_img("time")
 
@@ -143,28 +150,36 @@ function Theme.graphics_init(self)
 
   self.images.IMG_moves = load_theme_img("moves")
 
-  self.images.IMG_score = load_theme_img("score")
+  self.images.IMG_score_1P = load_theme_img("score_1P")
+  self.images.IMG_score_2P = load_theme_img("score_2P")
 
-  self.images.IMG_speed = load_theme_img("speed")
+  self.images.IMG_speed_1P = load_theme_img("speed_1P")
+  self.images.IMG_speed_2P = load_theme_img("speed_2P")
 
-  self.images.IMG_level = load_theme_img("level")
+  self.images.IMG_level_1P = load_theme_img("level_1P")
+  self.images.IMG_level_2P = load_theme_img("level_2P")
 
   self.images.IMG_wins = load_theme_img("wins")
 
-  self.images.IMG_levelNumber_atlas = load_theme_img("level_numbers")
-  self.images.levelNumberWidth = self.images.IMG_levelNumber_atlas:getWidth()/11
-  self.images.levelNumberHeight = self.images.IMG_levelNumber_atlas:getHeight()
+  self.images.IMG_levelNumber_atlas_1P = load_theme_img("level_numbers_1P")
+  self.images.levelNumberWidth_1P = self.images.IMG_levelNumber_atlas_1P:getWidth()/11
+  self.images.levelNumberHeight_1P = self.images.IMG_levelNumber_atlas_1P:getHeight()
+  self.images.IMG_levelNumber_atlas_2P = load_theme_img("level_numbers_2P")
+  self.images.levelNumberWidth_2P = self.images.IMG_levelNumber_atlas_2P:getWidth()/11
+  self.images.levelNumberHeight_2P = self.images.IMG_levelNumber_atlas_2P:getHeight()
 
   self.images.IMG_casual = load_theme_img("casual")
 
   self.images.IMG_ranked = load_theme_img("ranked")
 
-  self.images.IMG_rating = load_theme_img("rating")
+  self.images.IMG_rating_1P= load_theme_img("rating_1P")
+  self.images.IMG_rating_2P = load_theme_img("rating_2P")
 
   self.images.IMG_random_stage = load_theme_img("random_stage")
   self.images.IMG_random_character = load_theme_img("random_character")
 
-  self.images.IMG_healthbar_frame = load_theme_img("healthbar_frame")
+  self.images.IMG_healthbar_frame_1P = load_theme_img("healthbar_frame_1P")
+  self.images.IMG_healthbar_frame_2P = load_theme_img("healthbar_frame_2P")
   self.images.IMG_healthbar = load_theme_img("healthbar")
 
   self.images.IMG_prestop_frame = load_theme_img("prestop_frame")
@@ -175,6 +190,12 @@ function Theme.graphics_init(self)
 
   self.images.IMG_shake_frame = load_theme_img("shake_frame")
   self.images.IMG_shake_bar = load_theme_img("shake_bar")
+
+  self.images.IMG_multibar_frame = load_theme_img("multibar_frame")
+  self.images.IMG_multibar_prestop_bar = load_theme_img("multibar_prestop_bar")
+  self.images.IMG_multibar_stop_bar = load_theme_img("multibar_stop_bar")
+  self.images.IMG_multibar_shake_bar = load_theme_img("multibar_shake_bar")
+
 
   --play field frames, plus the wall at the bottom.
   self.images.IMG_frame1P = load_theme_img("frame/frame1P")
@@ -602,6 +623,26 @@ function Theme.json_init(self)
     -- Shake scale
     if read_data.shake_Scale and type(read_data.shake_Scale) == "number" then
       self.shake_Scale = read_data.shake_Scale
+    end
+
+    -- Multibar frame position
+    if read_data.multibar_frame_Pos and type(read_data.multibar_frame_Pos) == "table" then
+      self.multibar_frame_Pos = read_data.multibar_frame_Pos
+    end
+
+    -- Multibar frame scale
+    if read_data.multibar_frame_Scale and type(read_data.multibar_frame_Scale) == "number" then
+      self.multibar_frame_Scale = read_data.multibar_frame_Scale
+    end
+
+    -- Multibar position
+    if read_data.multibar_Pos and type(read_data.multibar_Pos) == "table" then
+      self.multibar_Pos = read_data.multibar_Pos
+    end
+
+    -- Multibar scale
+    if read_data.multibar_Scale and type(read_data.multibar_Scale) == "number" then
+      self.multibar_Scale = read_data.multibar_Scale
     end
 
 end
