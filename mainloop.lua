@@ -805,7 +805,7 @@ function main_net_vs()
         end
         --gprint(rating_to_print, P1.score_x, P1.score_y-30)
         draw_label(themes[config.theme].images.IMG_rating_1P, (P1.score_x+themes[config.theme].ratingLabel_Pos[1])/GFX_SCALE, (P1.score_y+themes[config.theme].ratingLabel_Pos[2])/GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
-        if rating_to_print ~= nil then
+        if type(rating_to_print) == "number" then
           draw_number(rating_to_print, themes[config.theme].images.IMG_number_atlas_1P, 10, P1_rating_quads, P1.score_x+themes[config.theme].rating_Pos[1], P1.score_y+themes[config.theme].rating_Pos[2],
             themes[config.theme].rating_Scale, (15/themes[config.theme].images.numberWidth_1P*themes[config.theme].rating_Scale), (19/themes[config.theme].images.numberHeight_1P*themes[config.theme].rating_Scale), "center")
         end
@@ -818,7 +818,7 @@ function main_net_vs()
         end
         --gprint(op_rating_to_print, P2.score_x, P2.score_y-30)
         draw_label(themes[config.theme].images.IMG_rating_2P, (P2.score_x+themes[config.theme].ratingLabel_Pos[1])/GFX_SCALE, (P2.score_y+themes[config.theme].ratingLabel_Pos[2])/GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
-        if op_rating_to_print ~= nil then
+        if type(op_rating_to_print) == "number" then
           draw_number(op_rating_to_print, themes[config.theme].images.IMG_number_atlas_2P, 10, P2_rating_quads, P2.score_x+themes[config.theme].rating_Pos[1], P2.score_y+themes[config.theme].rating_Pos[2],
             themes[config.theme].rating_Scale, (15/themes[config.theme].images.numberWidth_2P*themes[config.theme].rating_Scale), (19/themes[config.theme].images.numberHeight_2P*themes[config.theme].rating_Scale), "center")
         end
