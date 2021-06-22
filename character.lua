@@ -6,11 +6,11 @@ local basic_images = { "icon" }
 local other_images = {"topleft", "botleft", "topright", "botright",
                   "top", "bot", "left", "right", "face", "pop",
                   "doubleface", "filler1", "filler2", "flash",
-                  "portrait"}
+                  "portrait", "burst", "fade"}
 local defaulted_images = { icon=true, topleft=true, botleft=true, topright=true, botright=true,
                   top=true, bot=true, left=true, right=true, face=true, pop=true,
                   doubleface=true, filler1=true, filler2=true, flash=true,
-                  portrait=true } -- those images will be defaulted if missing
+                  portrait=true, burst=true, fade=true} -- those images will be defaulted if missing
 local basic_sfx = {"selection"}
 local other_sfx = {"chain", "combo", "combo_echo", "chain_echo", "chain2" ,"chain2_echo", "garbage_match", "garbage_land", "win", "taunt_up", "taunt_down"}
 local defaulted_sfxs = {} -- those sfxs will be defaulted if missing
@@ -36,6 +36,10 @@ Character = class(function(self, full_path, folder_name)
     self.fully_loaded = false
     self.is_visible = true
     self.chain_style = e_chain_style.classic
+    self.popfx_style = "burst"
+    self.popfx_burstRotate = false
+    self.popfx_burstScale = 1
+    self.popfx_fadeScale = 1
   end)
 
 function Character.json_init(self)
@@ -69,6 +73,26 @@ function Character.json_init(self)
     -- chain_style
     if read_data.chain_style and type(read_data.chain_style) == "string" then
       self.chain_style = read_data.chain_style=="per_chain" and e_chain_style.per_chain or e_chain_style.classic
+    end
+
+     --popfx_burstRotate
+     if read_data.popfx_burstRotate and type(read_data.popfx_burstRotate) == "boolean" then
+      self.popfx_burstRrotate = read_data.popfx_burstRotate
+    end
+
+    --popfx_type
+    if read_data.popfx_style and type(read_data.popfx_style) == "string" then
+      self.popfx_style = read_data.popfx_style
+    end
+
+    --popfx_burstScale
+    if read_data.popfx_burstScale and type(read_data.popfx_burstScale) == "number" then
+      self.popfx_burstScale = read_data.popfx_burstScale
+    end
+
+    --popfx_fadeScale
+    if read_data.popfx_fadeScale and type(read_data.popfx_fadeScale) == "number" then
+      self.popfx_fadeScale = read_data.popfx_fadeScale
     end
 
     -- associated stage
@@ -322,9 +346,15 @@ end
 function Character.graphics_init(self,full,yields)
   local character_images = full and other_images or basic_images
   for _,image_name in ipairs(character_images) do
+    print(image_name)
     self.images[image_name] = load_img_from_supported_extensions(self.path.."/"..image_name)
     if not self.images[image_name] and defaulted_images[image_name] and not self:is_bundle() then
-      self.images[image_name] = default_character.images[image_name]
+      if image_name == "burst" or image_name == "fade" then
+        self.images[image_name] = themes[config.theme].images[image_name]
+      else
+        self.images[image_name] = default_character.images[image_name]
+      end
+      print("MISSING!")
     end
     if yields then coroutine.yield() end
   end

@@ -22,6 +22,10 @@ Note: non-optional data that are missing will automatically get replaced by defa
 	- (visible): true/false, make it so the character is automatically hidden in the select screen (useful for character bundles)
 	- (chain_style): "classic"/"per_chain", change the way the chain sfx are being used (classic mode refers to PPL style while per_chain is puyo puyo)
 	- (flag): a flag may be displayed in the select screen based on that parameter, values are lowercase versions of the country codes from https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2, not all flags are available. 
+	- (popfx_style): The style of popfx to use, options: "burst"(default), "fade", "fadeburst"
+	- (popfx_rotation): If this option set to true, the burst popfx up, down, left, and right particles gonna rotate to point to the direciton they moving. Default is false.
+	- (burst_scale): The scale of the burst popfx, default is 1, 2 means twice the size, 0.5 half the size, etc.
+	- (fade_scale): The scale of the fade popfx, default is 1, 2 means twice the size, 0.5 half the size, etc.
 
 Note: providing a specific, long enough id is a very good idea so that people renaming your mods folders still get properly match with other users regarding your mods. e.g. "mycharacter_myname"
 
@@ -29,6 +33,8 @@ Note: providing a specific, long enough id is a very good idea so that people re
 
 - "topleft", "botleft", "topright", "botright", "top", "bot", "left", "right", "face", "pop", "doubleface", "filler1", "filler2", "flash": assets for garbages
 - "portrait", "icon": display of your character ingame and in the lobby
+- "burst": The image used for burst popfx. The image should be 9 equal sized frame in a row, first frame is the particle fly trough the screen, 2 to 9 frames are burst animation
+- "fade": The image used for fade popfx. The image should be 9 equal sized frame in a row, first frame is the particle fly trough the screen (if popfx_style is fade), 2 to 9 frames are burst animation
 
 ~~ [.mp3, .ogg, .wav, .it, .flac] optional sounds are in parenthesis ~~
 

@@ -80,6 +80,12 @@ card_animation = {false,
    10, 10, 10, 10, 10, 10, 11, 11, 11, 11,
    11}
 
+-- The popping particle animation. First number is how far the particles go, second is wich frame to show from the spritesheet
+ popfx_burst_animation = {{1, 1}, {4, 1}, {7, 1}, {8, 1},
+    {9, 1}, {9, 1}, {10, 1}, {10, 2}, {10, 2}, {10, 3},
+    {10, 3}, {10, 4}, {10, 4}, {10, 5}, {10, 5}, {10, 6}, {10, 6}, {10, 7}, {10, 7}, {10, 8}, {10, 8}, {10, 8}}
+
+  popfx_fade_animation = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8}
 
 FC_HOVER = {12,  9,  6, 3}
 -- TODO: delete FC_MATCH?

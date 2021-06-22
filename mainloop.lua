@@ -8,7 +8,7 @@ local analytics = require("analytics")
 
 local wait, resume = coroutine.yield, coroutine.resume
 
-local main_endless, make_main_puzzle, main_net_vs_setup,
+local playground, main_endless, make_main_puzzle, main_net_vs_setup,
   main_config_input, main_select_puzz,
   main_local_vs_setup, main_set_name, main_local_vs_yourself_setup,
   main_options, main_music_test, 
@@ -30,6 +30,14 @@ leftover_time = 0
 main_menu_screen_pos = { 300 + (canvas_width-legacy_canvas_width)/2, 280 + (canvas_height-legacy_canvas_height)/2 }
 wait_game_update = nil
 has_game_update = false
+
+P1_win_quads = {}
+P1_rating_quads = {}
+P1_health_quad = {}
+
+P2_rating_quads = {}
+P2_win_quads = {}
+P2_health_quad = {}
 
 function fmainloop()
   local func, arg = main_select_mode, nil
@@ -120,6 +128,7 @@ do
   
     match_type_message = ""
     local items = {
+        --{"playground", main_select_speed_99, {playground}},
         {loc("mm_1_endless"), main_select_speed_99, {main_endless}},
         {loc("mm_1_puzzle"), main_select_puzz},
         {loc("mm_1_time"), main_select_speed_99, {main_time_attack}},
@@ -774,27 +783,45 @@ function main_net_vs()
     end
 
     local name_and_score = { (my_name or "").."\n"..loc("ss_wins").." "..my_win_count, (op_name or "").."\n"..loc("ss_wins").." "..op_win_count}
-    gprint(name_and_score[1], P1.score_x, P1.score_y-48)
-    gprint(name_and_score[2], P2.score_x, P2.score_y-48)
+    gprint((my_name or ""), P1.score_x+themes[config.theme].name_Pos[1], P1.score_y+themes[config.theme].name_Pos[2])
+    gprint((op_name or ""), P2.score_x+themes[config.theme].name_Pos[1], P2.score_y+themes[config.theme].name_Pos[2])
+    draw_label(themes[config.theme].images.IMG_wins, (P1.score_x+themes[config.theme].winLabel_Pos[1])/GFX_SCALE, (P1.score_y+themes[config.theme].winLabel_Pos[2])/GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
+    draw_number(my_win_count, themes[config.theme].images.IMG_timeNumber_atlas, 12, P1_win_quads, P1.score_x+themes[config.theme].win_Pos[1], P1.score_y+themes[config.theme].win_Pos[2], themes[config.theme].win_Scale,
+      20/themes[config.theme].images.timeNumberWidth*themes[config.theme].time_Scale, 26/themes[config.theme].images.timeNumberHeight*themes[config.theme].time_Scale, "center")
+
+    draw_label(themes[config.theme].images.IMG_wins, (P2.score_x+themes[config.theme].winLabel_Pos[1])/GFX_SCALE, (P2.score_y+themes[config.theme].winLabel_Pos[2])/GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
+    draw_number(op_win_count, themes[config.theme].images.IMG_timeNumber_atlas, 12, P2_win_quads, P2.score_x+themes[config.theme].win_Pos[1], P2.score_y+themes[config.theme].win_Pos[2], themes[config.theme].win_Scale,
+      20/themes[config.theme].images.timeNumberWidth*themes[config.theme].time_Scale, 26/themes[config.theme].images.timeNumberHeight*themes[config.theme].time_Scale, "center")
+
     if not config.debug_mode then --this is printed in the same space as the debug details
-      gprint(spectators_string, P1.score_x, P1.score_y+177)
+      gprint(spectators_string, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
     end
     if match_type == "Ranked" then
       if global_current_room_ratings[my_player_number]
       and global_current_room_ratings[my_player_number].new then
         local rating_to_print = loc("ss_rating").."\n"
         if global_current_room_ratings[my_player_number].new > 0 then
-          rating_to_print = rating_to_print.." "..global_current_room_ratings[my_player_number].new
+          rating_to_print = global_current_room_ratings[my_player_number].new
         end
-        gprint(rating_to_print, P1.score_x, P1.score_y-16)
+        --gprint(rating_to_print, P1.score_x, P1.score_y-30)
+        draw_label(themes[config.theme].images.IMG_rating_1P, (P1.score_x+themes[config.theme].ratingLabel_Pos[1])/GFX_SCALE, (P1.score_y+themes[config.theme].ratingLabel_Pos[2])/GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
+        if type(rating_to_print) == "number" then
+          draw_number(rating_to_print, themes[config.theme].images.IMG_number_atlas_1P, 10, P1_rating_quads, P1.score_x+themes[config.theme].rating_Pos[1], P1.score_y+themes[config.theme].rating_Pos[2],
+            themes[config.theme].rating_Scale, (15/themes[config.theme].images.numberWidth_1P*themes[config.theme].rating_Scale), (19/themes[config.theme].images.numberHeight_1P*themes[config.theme].rating_Scale), "center")
+        end
       end
       if global_current_room_ratings[op_player_number]
       and global_current_room_ratings[op_player_number].new then
         local op_rating_to_print = loc("ss_rating").."\n"
         if global_current_room_ratings[op_player_number].new > 0 then
-          op_rating_to_print = op_rating_to_print.." "..global_current_room_ratings[op_player_number].new
+          op_rating_to_print = global_current_room_ratings[op_player_number].new
         end
-        gprint(op_rating_to_print, P2.score_x, P2.score_y-16)
+        --gprint(op_rating_to_print, P2.score_x, P2.score_y-30)
+        draw_label(themes[config.theme].images.IMG_rating_2P, (P2.score_x+themes[config.theme].ratingLabel_Pos[1])/GFX_SCALE, (P2.score_y+themes[config.theme].ratingLabel_Pos[2])/GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
+        if type(op_rating_to_print) == "number" then
+          draw_number(op_rating_to_print, themes[config.theme].images.IMG_number_atlas_2P, 10, P2_rating_quads, P2.score_x+themes[config.theme].rating_Pos[1], P2.score_y+themes[config.theme].rating_Pos[2],
+            themes[config.theme].rating_Scale, (15/themes[config.theme].images.numberWidth_2P*themes[config.theme].rating_Scale), (19/themes[config.theme].images.numberHeight_2P*themes[config.theme].rating_Scale), "center")
+        end
       end
     end
     if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
@@ -969,7 +996,7 @@ function main_local_vs_yourself()
           P1:local_run()
           P1:handle_pause()
         else
-          end_text = loc("pl_gameover")
+          end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch))
         end
       end)
     if end_text then

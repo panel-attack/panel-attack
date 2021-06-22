@@ -59,6 +59,7 @@ large_font = 10 -- large font base+10
 small_font = -3 -- small font base-3
 
 default_input_repeat_delay = 20
+default_portrait_darkness = 70
 
 zero_sound = load_sound_from_supported_extensions("zero_music")
 
@@ -105,6 +106,9 @@ config = {
 	enable_analytics              = false,
 	-- Save replays setting
 	save_replays_publicly         = "with my name",
+	portrait_darkness             = default_portrait_darkness,
+	popfx                         = true,
+	cardfx_scale                  = 100,
 }
 
 current_use_music_from = "stage" -- either "stage" or "characters", no other values!
