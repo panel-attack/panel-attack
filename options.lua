@@ -265,12 +265,13 @@ function options.main(starting_idx)
     --[[14]]{"input_repeat_delay", "op_input_delay", config.input_repeat_delay, "numeric", 1, 50, nil, true},
     --[[15]]{"portrait_darkness", "op_portrait_darkness", config.portrait_darkness, "numeric", 0, 100, nil, true},
     --[[16]]{"popfx", "op_popfx", on_off_text[config.popfx], "bool", true, nil, nil, false},
-    --[[17]]{"music_from", "op_use_music_from", use_music_from_choices[config.use_music_from], "multiple choice", use_music_from_choices},
-    --[[18]]{"about_themes", "op_about_themes", "", "function", nil, nil, nil, nil, main_show_custom_themes_readme},
-    --[[19]]{"about_chars", "op_about_characters", "", "function", nil, nil, nil, nil, main_show_custom_characters_readme},
-    --[[20]]{"about_stages", "op_about_stages", "", "function", nil, nil, nil, nil, main_show_custom_stages_readme},
-    --[[21]]{"about_panels", "op_about_panels", "", "function", nil, nil, nil, nil, main_show_custom_panels_readme},
-    --[[22]]{"back", "back", "", nil, nil, nil, nil, false, main_select_mode}
+    --[[17]]{"cardfx_scale", "op_cardfx_scale", config.cardfx_scale, "numeric", 1, 200, nil, true},
+    --[[18]]{"music_from", "op_use_music_from", use_music_from_choices[config.use_music_from], "multiple choice", use_music_from_choices},
+    --[[19]]{"about_themes", "op_about_themes", "", "function", nil, nil, nil, nil, main_show_custom_themes_readme},
+    --[[20]]{"about_chars", "op_about_characters", "", "function", nil, nil, nil, nil, main_show_custom_characters_readme},
+    --[[21]]{"about_stages", "op_about_stages", "", "function", nil, nil, nil, nil, main_show_custom_stages_readme},
+    --[[22]]{"about_panels", "op_about_panels", "", "function", nil, nil, nil, nil, main_show_custom_panels_readme},
+    --[[23]]{"back", "back", "", nil, nil, nil, nil, false, main_select_mode}
   }
   local function print_stuff()
     local to_print, to_print2, arrow = "", "", ""
@@ -424,6 +425,9 @@ function options.main(starting_idx)
           end
           if config.portrait_darkness ~= items[15][3] then 
             config.portrait_darkness = items[15][3]
+          end
+          if config.cardfx_scale ~= items[17][3] then 
+            config.cardfx_scale = items[17][3]
           end
           --add any other numeric config updates here
         elseif items[active_idx][4] == "multiple choice" then
