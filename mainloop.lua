@@ -1641,8 +1641,9 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
   timemax = timemax or -1 -- negative values means the user needs to press enter/escape to continue
   local t = 0
   local k = K[1]
+  local font = love.graphics.getFont()
   while true do
-    gprint(text, unpack(main_menu_screen_pos))
+    gprint(text, (canvas_width-font:getWidth(text))/2, (canvas_height-font:getHeight(text))/2)
     wait()
     local ret = nil
     variable_step(function()
