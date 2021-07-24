@@ -375,7 +375,6 @@ function main_endless(...)
       P1:render()
     end
     wait()
-    local ret = nil
     if P1.game_over then
     -- TODO: proper game over.
       write_replay_file()
@@ -383,26 +382,16 @@ function main_endless(...)
       analytics.game_ends()
       return main_dumb_transition, {main_select_mode, end_text, 0, -1, P1:pick_win_sfx()}
     end
-    variable_step(function()
-    if game_is_paused and menu_escape(K[1]) then
-      write_replay_file()
-      local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
-      analytics.game_ends()
-      ret = {main_dumb_transition, {main_select_mode, end_text, 0, -1, P1:pick_win_sfx()}}
-    else
+    variable_step(function() 
       P1:local_run() 
-      P1:handle_pause()
-    end	  
-  end)
+      P1:handle_pause() 
+    end)
     --groundhogday mode
     --[[if P1.CLOCK == 1001 then
       local prev_states = P1.prev_states
       P1 = prev_states[600]
       P1.prev_states = prev_states
     end--]]
-   if ret then
-     return unpack(ret)
-    end
   end
 end
 
@@ -421,7 +410,6 @@ function main_time_attack(...)
       P1:render()
     end
     wait()
-    local ret = nil
     if P1.game_over or (P1.game_stopwatch and P1.game_stopwatch == 120*60) then
     -- TODO: proper game over.
       local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch))
@@ -429,20 +417,11 @@ function main_time_attack(...)
       return main_dumb_transition, {main_select_mode, end_text, 30, -1, P1:pick_win_sfx()}
     end
     variable_step(function()
-      if not P1.game_over or (P1.game_stopwatch and P1.game_stopwatch < 120 * 60) then
-	P1:local_run() 
-	P1:handle_pause()
-    end	
-      --local P1.quit()
-      if game_is_paused and menu_escape(K[1]) then
-	local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch))
-	analytics.game_ends()
-	ret = {main_dumb_transition, {main_select_mode, end_text, 30, -1, P1:pick_win_sfx()}}	
-      end	
+      if not P1.game_over and P1.game_stopwatch and P1.game_stopwatch < 120 * 60 then
+        P1:local_run() 
+        P1:handle_pause()
+      end 
     end)
-    if ret then
-      return unpack(ret)
-    end
   end
 end
 
@@ -1027,7 +1006,6 @@ function main_local_vs_yourself()
       P1:render()
     end
     wait()
-    ret = nil
     variable_step(function()
         if not P1.game_over then
           P1:local_run()
@@ -1035,18 +1013,10 @@ function main_local_vs_yourself()
         else
           end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch))
         end
-        if game_is_paused and menu_escape(K[1]) then
-	  local end_text = loc("pl_gameover")
-	  analytics.game_ends()
-	  ret = {main_dumb_transition, {select_screen.main, end_text, 0, -1, P1:pick_win_sfx()}}	
-        end
       end)
     if end_text then
       analytics.game_ends()
       return main_dumb_transition, {select_screen.main, end_text, 45, -1, P1:pick_win_sfx()}
-    end
-    if ret then
-      return unpack(ret)
     end
   end
 end
