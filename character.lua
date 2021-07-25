@@ -6,7 +6,7 @@ local basic_images = { "icon" }
 local other_images = {"topleft", "botleft", "topright", "botright",
                   "top", "bot", "left", "right", "face", "pop",
                   "doubleface", "filler1", "filler2", "flash",
-                  "portrait", "burst", "fade"}
+                  "portrait", "burst", "fade","attack"}
 local defaulted_images = { icon=true, topleft=true, botleft=true, topright=true, botright=true,
                   top=true, bot=true, left=true, right=true, face=true, pop=true,
                   doubleface=true, filler1=true, filler2=true, flash=true,

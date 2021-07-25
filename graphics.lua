@@ -53,13 +53,14 @@ function graphics_init()
                     "portrait"}
   IMG_garbage = {}
   IMG_particles = {}
-  particle_quads = {}
+  --particle_quads = {}
   
   texture = load_img("lakitu/particles.png")
   local w = texture:getWidth()
   local h = texture:getHeight()
-  local char_particles = {}
-    
+  --local char_particles = {}
+  
+--[[  
   particle_quads[1] = love.graphics.newQuad(0, 0, 48, 48, 256, 256)
   particle_quads[2] = love.graphics.newQuad(48, 0, 48, 48, 256, 256)
   particle_quads[3] = love.graphics.newQuad(96, 0, 48, 48, 256, 256)
@@ -84,6 +85,7 @@ function graphics_init()
   particle_quads[22] = particle_quads[21]
   particle_quads[23] = particle_quads[21]
   particle_quads[24] = particle_quads[21]
+--]]
   IMG_telegraph_garbage = {} --values will be accessed by IMG_telegraph_garbage[garbage_height][garbage_width]
   IMG_telegraph_attack = {}
   for _,v in ipairs(characters) do
