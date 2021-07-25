@@ -5,56 +5,6 @@ local analytics = require("analytics")
 local floor = math.floor
 local ceil = math.ceil
 
-function setScissor(x, y, width, height)
-  if x then
-    gfx_q:push({love.graphics.setScissor, {x*GFX_SCALE, y*GFX_SCALE, width*GFX_SCALE, height*GFX_SCALE}})
-  else
-    gfx_q:push({love.graphics.setScissor, {}})
-  end
-end
-
-function draw(img, x, y, rot, x_scale,y_scale)
-  rot = rot or 0
-  x_scale = x_scale or 1
-  y_scale = y_scale or 1
-  gfx_q:push({love.graphics.draw, {img, x*GFX_SCALE, y*GFX_SCALE,
-    rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
-end
-
-
-function drawQuad(img, quad, x, y, rot, x_scale,y_scale)
-  rot = rot or 0
-  x_scale = x_scale or 1
-  y_scale = y_scale or 1
-  gfx_q:push({love.graphics.draw, {img, quad, x*GFX_SCALE, y*GFX_SCALE,
-    rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
-end
-
-function menu_draw(img, x, y, rot, x_scale,y_scale)
-  rot = rot or 0
-  x_scale = x_scale or 1
-  y_scale = y_scale or 1
-  gfx_q:push({love.graphics.draw, {img, x, y,
-    rot, x_scale, y_scale}})
-end
-
-function menu_drawf(img, x, y, halign, valign, rot, x_scale, y_scale)
-  rot = rot or 0
-  x_scale = x_scale or 1
-  y_scale = y_scale or 1
-  halign = halign or "left"
-  if halign == "center" then
-    x = x - math.floor(img:getWidth() * 0.5 * x_scale)
-  elseif halign == "right" then
-    x = x - math.floor(img:getWidth() * x_scale)
-  end
-  valign = valign or "top"
-  if valign == "center" then
-    y = y - math.floor(img:getHeight() * 0.5 * y_scale)
-  elseif valign == "bottom" then
-    y = y - math.floor(img:getHeight() * y_scale)
-  end
-end
 
 local shake_arr = {}
 
@@ -69,43 +19,6 @@ for i=14,6,-1 do
   end
 end
 
-
-function grectangle(mode, x, y, w, h)
-  gfx_q:push({love.graphics.rectangle, {mode, x, y, w, h}})
-end
-
-function gprint(str, x, y, color, scale)
-  x = x or 0
-  y = y or 0
-  scale = scale or 1
-  color = color or nil
-  set_color(0, 0, 0, 1)
-  gfx_q:push({love.graphics.print, {str, x+1, y+1, 0, scale}})
-  local r, g, b, a = 1,1,1,1
-  if color ~= nil then
-    r,g,b,a = unpack(color)
-  end
-  set_color(r,g,b,a)
-  gfx_q:push({love.graphics.print, {str, x, y, 0, scale}})
-end
-
-function gprintf(str, x, y, limit, halign, color, scale)
-  x = x or 0
-  y = y or 0
-  scale = scale or 1
-  color = color or nil
-  limit = limit or nil
-  halign = halign or "left"
-  set_color(0, 0, 0, 1)
-  gfx_q:push({love.graphics.printf, {str, x+1, y+1, limit, halign, 0, scale}})
-  local r, g, b, a = 1,1,1,1
-  if color ~= nil then
-    r,g,b,a = unpack(color)
-  end
-  set_color(r,g,b,a)
-  gfx_q:push({love.graphics.printf, {str, x, y, limit, halign, 0, scale}})
-end
-
 local _r, _g, _b, _a
 function set_color(r, g, b, a)
   a = a or 1
@@ -114,11 +27,6 @@ function set_color(r, g, b, a)
       _r,_g,_b,_a = r,g,b,a
       gfx_q:push({love.graphics.setColor, {r, g, b, a}})
   end
-end
-
-function file_exists(name)
-   local f=io.open(name,"r")
-   if f~=nil then io.close(f) return true else return false end
 end
 
 IMG_stagecount = 1
@@ -524,7 +432,8 @@ local mask_shader = love.graphics.newShader[[
 
 function Stack.render(self)
 
-  setScissor(self.pos_x-100, self.pos_y-4, IMG_frame:getWidth()+300, IMG_frame:getHeight())
+  --setScissor(self.pos_x-100, self.pos_y-4, IMG_frame:getWidth()+300, IMG_frame:getHeight())
+  --I anticipate needing to put this back if garbage starts drawing above the frame
   local mx,my
   if config.debug_mode then
     mx,my = love.mouse.getPosition()
