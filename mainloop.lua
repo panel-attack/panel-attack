@@ -136,8 +136,8 @@ do
         {loc("mm_1_time"), main_select_speed_99, {main_time_attack}},
         {loc("mm_1_vs"), main_local_vs_yourself_setup},
         --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
-        {loc("mm_2_vs_online", "Jon's server"), main_net_vs_setup, {"18.188.43.50"}},
-        --{loc("mm_2_vs_online", "betaserver.panelattack.com"), main_net_vs_setup, {"betaserver.panelattack.com"}},
+        --{loc("mm_2_vs_online", "Jon's server"), main_net_vs_setup, {"18.188.43.50"}},
+        {loc("mm_2_vs_online", "betaserver.panelattack.com"), main_net_vs_setup, {"betaserver.panelattack.com"}},
         --{loc("mm_2_vs_online", "(USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)"), main_net_vs_setup, {"18.188.43.50"}},
         --{loc("mm_2_vs_online", "This test build is for offline-use only"), main_select_mode},
         --{loc("mm_2_vs_online", "domi1819.xyz"), main_net_vs_setup, {"domi1819.xyz"}},
@@ -357,6 +357,7 @@ function main_endless(...)
   replay.in_buf = ""
   replay.gpan_buf = ""
   replay.mode = "endless"
+  P1:set_foreign(false)
   P1 = Stack(1, "endless", config.panels, ...)
   P1:wait_for_random_character()
   P1.do_countdown = config.ready_countdown_1P or false
@@ -842,6 +843,8 @@ function main_net_vs()
     if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
       P1:render()
       P2:render()
+      P1:render_telegraph()
+      P2:render_telegraph()
       wait()
       if currently_spectating and menu_escape(K[1]) then
         print("spectator pressed escape during a game")
@@ -956,6 +959,8 @@ function main_local_vs()
     else
       P1:render()
       P2:render()
+      P1:render_telegraph()
+      P2:render_telegraph()
     end
     wait()
     variable_step(function()
@@ -1000,10 +1005,12 @@ function main_local_vs_yourself()
   pick_use_music_from()
   local end_text = nil
   while true do
+
     if game_is_paused then
       draw_pause()
     else
       P1:render()
+      P1:render_telegraph()
     end
     wait()
     variable_step(function()
@@ -1045,8 +1052,8 @@ function main_replay_vs()
   P1.do_countdown = replay.do_countdown or false
   P2.do_countdown = replay.do_countdown or false
   P1.ice = true
-  P1.garbage_target = P2
-  P2.garbage_target = P1
+  P1:set_garbage_target(P2)
+  P2:set_garbage_target(P1)
   move_stack(P2,2)
   P1.input_buffer = replay.in_buf
   P1.panel_buffer = replay.P
@@ -1083,6 +1090,8 @@ function main_replay_vs()
     gprint(op_name or "", P2.score_x, P2.score_y-28)
     P1:render()
     P2:render()
+    P1:render_telegraph()
+    P2:render_telegraph()
     draw_debug_mouse_panel()
     if game_is_paused then
       draw_pause()

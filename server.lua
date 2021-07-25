@@ -23,7 +23,8 @@ local PLAYING = "playing" -- room states
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
 
-local VERSION = "045"
+
+local VERSION = "046"
 local type_to_length = {H=4, E=4, F=4, P=8, I=2, L=2, Q=8, U=2}
 local INDEX = 1
 local connections = {}
@@ -1410,8 +1411,9 @@ end
 end
 --]]
 
-local server_socket = socket.bind("*", SERVER_PORT or 49569) --for official server
---local server_socket = socket.bind("*", 59569) --for beta server
+--local server_socket = socket.bind("*", 49569) --for official server
+local server_socket = socket.bind("*", 59569) --for beta server
+
 local sep = package.config:sub(1, 1)
 print("sep: "..sep)
 playerbase = Playerbase("playerbase")
