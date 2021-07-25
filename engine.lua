@@ -73,7 +73,7 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
 
     s.garbage_to_send = {}
 
-    move_stack(s,1)
+    --move_stack(s,1) --not sure what this is for, commenting it out for now, since it doesn't seem to be defined anywhere.
     
 
     s.panel_buffer = ""
@@ -1759,6 +1759,9 @@ function Stack.PdP(self)
     for idx=spawn_col, spawn_col+next_garbage_block_width-1 do
       if prow[idx]:dangerous() then 
         garbage_fits_in_populated_top_row = nil
+      end
+    end
+  end
   -- If any panels (dangerous or not) are in rows above the top row, garbage should not fall.
   for row_idx = top_row + 1, #self.panels do
     for col_idx = 1, width do

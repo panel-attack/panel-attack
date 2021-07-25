@@ -1271,7 +1271,7 @@ function select_screen.main()
     if cursor_data[1].state.ready and select_screen.character_select_mode == "1p_vs_yourself" then
       P1 = Stack(1, "vs", cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       P1.enable_analytics = true
-      P1.garbage_target = P1
+      P1:set_garbage_target(P1)
       make_local_panels(P1, "000000")
       make_local_gpanels(P1, "000000")
       current_stage = cursor_data[1].state.stage

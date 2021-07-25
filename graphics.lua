@@ -556,6 +556,7 @@ function Stack.render(self)
     mx,my = love.mouse.getPosition()
     mx = mx / GFX_SCALE
     my = my / GFX_SCALE
+  end
 
   local function frame_mask(x_pos, y_pos)
     love.graphics.setShader(mask_shader)
@@ -588,12 +589,13 @@ function Stack.render(self)
   prestop_quads = {}
   stop_quads = {}
   shake_quads = {}
-multi_prestopQuad = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_multibar_prestop_bar:getWidth(), themes[config.theme].images.IMG_multibar_prestop_bar:getHeight(), 
+  multi_prestopQuad = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_multibar_prestop_bar:getWidth(), themes[config.theme].images.IMG_multibar_prestop_bar:getHeight(), 
   themes[config.theme].images.IMG_multibar_prestop_bar:getWidth(), themes[config.theme].images.IMG_multibar_prestop_bar:getHeight())
-multi_stopQuad = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_multibar_stop_bar:getWidth(), themes[config.theme].images.IMG_multibar_stop_bar:getHeight(), 
+  multi_stopQuad = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_multibar_stop_bar:getWidth(), themes[config.theme].images.IMG_multibar_stop_bar:getHeight(), 
   themes[config.theme].images.IMG_multibar_stop_bar:getWidth(), themes[config.theme].images.IMG_multibar_stop_bar:getHeight())
-multi_shakeQuad = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight(), 
+  multi_shakeQuad = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight(), 
   themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight())
+end
 
   -- draw inside stack's frame canvas
   local portrait_w, portrait_h = characters[self.character].images["portrait"]:getDimensions()
