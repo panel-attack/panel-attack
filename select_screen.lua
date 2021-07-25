@@ -870,9 +870,21 @@ function select_screen.main()
           end
           P2.panel_buffer = fake_P2.panel_buffer
           P2.gpanel_buffer = fake_P2.gpanel_buffer
-          P1.garbage_target = P2
-          P2.garbage_target = P1
-          move_stack(P2,2)
+          P1.set_garbage_target(P2)
+          P2.set_garbage_target(P1)
+          --move_stack(P2,2)
+          P2.pos_x = 172
+          P2.score_x = 410
+          if currently_spectating then
+            P1:set_foreign(true)
+          else
+            P1:set_foreign(false)
+          end
+          P2:set_foreign(true)
+          P1:set_garbage_target(P2)
+          P2:set_garbage_target(P1)
+          P1.telegraph:subscribe(P2.incoming_telegraph)
+          P2.telegraph:subscribe(P1.incoming_telegraph)
           replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
                       P1_level=P1.level,P2_level=P2.level,
                       P1_name=my_name, P2_name=op_name,
@@ -1271,7 +1283,9 @@ function select_screen.main()
     if cursor_data[1].state.ready and select_screen.character_select_mode == "1p_vs_yourself" then
       P1 = Stack(1, "vs", cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       P1.enable_analytics = true
+      P1:set_foreign(false)
       P1:set_garbage_target(P1)
+      --P1.telegraph:subscribe(P1.incoming_telegraph)
       make_local_panels(P1, "000000")
       make_local_gpanels(P1, "000000")
       current_stage = cursor_data[1].state.stage
@@ -1283,14 +1297,14 @@ function select_screen.main()
       P1 = Stack(1, "vs", cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       P1.enable_analytics = true
       P2 = Stack(2, "vs", cursor_data[2].state.panels_dir, cursor_data[2].state.level, cursor_data[2].state.character)
-      P1.garbage_target = P2
-      P2.garbage_target = P1
+      P2.pos_x = 172
+      P2.score_x = 410
       P1:set_foreign(false)
       P2:set_foreign(false)
       P1:set_garbage_target(P2)
       P2:set_garbage_target(P1)
-      P1.telegraph:subscribe(P2.incoming_telegraph)
-      P2.telegraph:subscribe(P1.incoming_telegraph)
+      --P1.telegraph:subscribe(P2.incoming_telegraph)
+      --P2.telegraph:subscribe(P1.incoming_telegraph)
       current_stage = cursor_data[math.random(1,2)].state.stage
       stage_loader_load(current_stage)
       stage_loader_wait()
