@@ -5,33 +5,6 @@ local analytics = require("analytics")
 local floor = math.floor
 local ceil = math.ceil
 
-function load_img(path_and_name,config_dir,default_dir)
-  default_dir = default_dir or "assets/"..default_assets_dir
-  local img
-  if pcall(function ()
-    config_dir = config_dir or "assets/"..config.assets_dir
-    img = love.image.newImageData((config_dir or default_dir).."/"..path_and_name)
-  end) then
-    if config_dir and config_dir ~= default_dir then
-      print("loaded custom asset: "..config_dir.."/"..path_and_name)
-    end
-  else
-    if pcall(function ()
-      img = love.image.newImageData(default_dir.."/"..path_and_name)
-    end) then
-      print("loaded asset:"..default_dir.."/"..path_and_name)
-    else
-      img = nil
-    end
-  end
-  if img == nil then
-    return nil
-  end
-  local ret = love.graphics.newImage(img)
-  ret:setFilter("nearest","nearest")
-  return ret
-end
-
 function setScissor(x, y, width, height)
   if x then
     gfx_q:push({love.graphics.setScissor, {x*GFX_SCALE, y*GFX_SCALE, width*GFX_SCALE, height*GFX_SCALE}})
@@ -354,14 +327,15 @@ function panels_init()
     end
   end
 
--- 1 -> 1
--- #shake -> 0
-local shake_step = 1/(#shake_arr - 1)
-local shake_mult = 1
-for i=1,#shake_arr do
-  shake_arr[i] = shake_arr[i] * shake_mult
-  -- print(shake_arr[i])
-  shake_mult = shake_mult - shake_step
+  -- 1 -> 1
+  -- #shake -> 0
+  local shake_step = 1/(#shake_arr - 1)
+  local shake_mult = 1
+  for i=1,#shake_arr do
+    shake_arr[i] = shake_arr[i] * shake_mult
+    -- print(shake_arr[i])
+    shake_mult = shake_mult - shake_step
+  end
 end
 
 function Stack.update_cards(self)
@@ -595,7 +569,6 @@ function Stack.render(self)
   themes[config.theme].images.IMG_multibar_stop_bar:getWidth(), themes[config.theme].images.IMG_multibar_stop_bar:getHeight())
   multi_shakeQuad = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight(), 
   themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight())
-end
 
   -- draw inside stack's frame canvas
   local portrait_w, portrait_h = characters[self.character].images["portrait"]:getDimensions()
