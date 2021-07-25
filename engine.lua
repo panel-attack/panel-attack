@@ -1,3 +1,5 @@
+local analytics = require("analytics")
+
   -- Stuff defined in this file:
   --  . the data structures that store the configuration of
   --    the stack of panels
@@ -11,11 +13,12 @@ local clone_pool = {}
 local current_music_is_casual = false -- must be false so that casual music start playing
 
 Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_number)
-    s.character = uniformly(characters)
+    s.character = config.character
     s.max_health = 1
-    s.panels_dir = panels_dir or config.panels_dir
-    if IMG_panels[panels_dir] == nil then
-      s.panels_dir = config.panels_dir
+    s.panels_dir = panels_dir or config.panels
+    s.portraitFade = 0
+    if not panels[panels_dir] then
+      s.panels_dir = config.panels
     end
     s.mode = mode or "endless"
     if mode ~= "puzzle" then
@@ -27,6 +30,10 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     if s.mode == "time" then
         s.NCOLORS = difficulty_to_ncolors_1Ptime[difficulty]
     end
+
+    -- frame.png dimensions
+    s.canvas = love.graphics.newCanvas(104*GFX_SCALE,204*GFX_SCALE)
+    s.canvas:setFilter("nearest","nearest")
 
     if s.mode == "2ptime" or s.mode == "vs" then
       local level = speed or 5
@@ -63,10 +70,12 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     s.garbage_q = GarbageQueue(s)
     -- garbage_to_send[frame] is an array of garbage to send at frame.
     -- garbage_to_send.chain is an array of garbage to send when the chain ends.
-    --s.garbage_to_send = {}
-    s.pos_x = 4   -- Position of the play area on the screen
-    s.pos_y = 28
-    s.score_x = 315
+
+    s.garbage_to_send = {}
+
+    move_stack(s,1)
+    
+
     s.panel_buffer = ""
     s.gpanel_buffer = ""
     s.input_buffer = ""
@@ -116,7 +125,7 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
 
     s.NCOLORS = s.NCOLORS or 5
     s.score = 0         -- der skore
-    s.chain_counter = 0   -- how high is the current chain?
+    s.chain_counter = 0   -- how high is the current chain
 
     s.panels_in_top_row = false -- boolean, for losing the game
     s.danger = s.danger or false  -- boolean, panels in the top row (danger)
@@ -144,7 +153,13 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     s.swap_1 = false   -- attempt to initiate a swap on this frame
     s.swap_2 = false
 
-    s.cur_wait_time = 25   -- number of ticks to wait before the cursor begins
+    s.taunt_up = nil -- will hold an index
+    s.taunt_down = nil -- will hold an index
+    s.wait_for_not_taunting = nil -- will hold either "taunt_up" or "taunt_down"
+    s.wait_for_not_pausing = false -- wait for end of input
+    s.taunt_queue = Queue()
+
+    s.cur_wait_time = config.input_repeat_delay   -- number of ticks to wait before the cursor begins
                -- to move quickly... it's based on P1CurSensitivity
     s.cur_timer = 0   -- number of ticks for which a new direction's been pressed
     s.cur_dir = nil     -- the direction pressed
@@ -158,9 +173,14 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     s.metal_panels_queued = s.metal_panels_queued or 0
     s.lastPopLevelPlayed = s.lastPopLevelPlayed or 1
     s.lastPopIndexPlayed = s.lastPopIndexPlayed or 1
+    s.combo_chain_play = nil
     s.game_over = false
+    s.sfx_land = false
+    s.sfx_garbage_thud = 0
 
     s.card_q = Queue()
+
+    s.pop_q = Queue()
 
     s.which = which or 1 -- Pk.which == k
     s.player_number = player_number or s.which --player number according to the multiplayer server, for game outcome reporting
@@ -168,11 +188,13 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     s.shake_time = 0
 
     s.prev_states = {}
+
     s.gfx = {}
     s.telegraph = Telegraph(s)
     s.unverified_garbage = {}
     s.combos = {}  --TODO: use these to show stats at the end of a game
     s.chains = {}
+    s.enable_analytics = false
   end)
 
 function Stack.mkcpy(self, other)
@@ -269,6 +291,7 @@ function Stack.fromcpy(self, other)
   self:remove_extra_rows()
 end
 
+
 function Stack.set_foreign(self, make_foreign)
   if make_foreign then 
     self.foreign = true
@@ -303,13 +326,27 @@ function Stack.set_garbage_target(self, new_target)
   --]]
 end
 
+local MAX_TAUNT_PER_10_SEC = 4
+
+function Stack.can_taunt(self)
+  return self.taunt_queue:len() < MAX_TAUNT_PER_10_SEC or self.taunt_queue:peek() + 10 < love.timer.getTime()
+end
+
+function Stack.taunt(self,taunt_type)
+  while self.taunt_queue:len() >= MAX_TAUNT_PER_10_SEC do
+    self.taunt_queue:pop()
+  end
+  self.taunt_queue:push(love.timer.getTime())
+  self.wait_for_not_taunting = taunt_type -- to avoid taunting multiple times with the same input
+end
+
 Panel = class(function(p)
     p:clear()
   end)
 
 function Panel.clear(self)
     -- color 0 is an empty panel.
-    -- colors 1-7 are normal colors, 8 is [!].
+    -- colors 1-7 are normal colors, 8 is [!], 9 is garbage.
     self.color = 0
     -- A panel's timer indicates for how many more frames it will:
     --  . be swapping
@@ -774,7 +811,7 @@ do
   end
 
   function Panel.dangerous(self)
-    return self.color ~= 0 and (self.state ~= "falling" or not self.garbage)
+    return self.color ~= 0 and not (self.state == "falling" and self.garbage)
   end
 end
 
@@ -811,7 +848,7 @@ function Stack.set_puzzle_state(self, pstr, n_turns)
     end
   end
   self.puzzle_moves = n_turns  
-  stop_character_sounds(self.character)
+  characters[self.character]:stop_sounds()
 end
 
 function Stack.puzzle_done(self)
@@ -863,7 +900,7 @@ function Stack.starting_state(self, n)
       self.cur_row = self.cur_row-1
     end
   end
-  stop_character_sounds(self.character)
+  characters[self.character]:stop_sounds()
 end
 
 function Stack.prep_first_row(self)
@@ -874,8 +911,45 @@ function Stack.prep_first_row(self)
   end
 end
 
+function Stack.controls(self)
+  local new_dir = nil
+  local sdata = self.input_state
+  local raise, swap, up, down, left, right = unpack(base64decode[sdata])
+  if (raise) and (not self.prevent_manual_raise) then
+    self.manual_raise = true
+    self.manual_raise_yet = false
+  end
+
+  self.swap_1 = swap
+  self.swap_2 = swap
+
+  if up then
+    new_dir = "up"
+  elseif down then
+    new_dir = "down"
+  elseif left then
+    new_dir = "left"
+  elseif right then
+    new_dir = "right"
+  end
+
+  if new_dir == self.cur_dir then
+    if self.cur_timer ~= self.cur_wait_time then
+      self.cur_timer = self.cur_timer + 1
+    end
+  else
+    self.cur_dir = new_dir
+    self.cur_timer = 0
+  end
+end
+
 --local_run is for the stack that belongs to this client.
 function Stack.local_run(self)
+  if game_is_paused then
+    return
+  end
+
+  self:update_popfxs()
   self:update_cards()
   self.input_state = self:send_controls()
   self:prep_rollback()
@@ -886,6 +960,10 @@ end
 
 --foreign_run is for a stack that belongs to another client.
 function Stack.foreign_run(self)
+  if game_is_paused then -- foreign_run in replays!
+    return
+  end
+  
   -- Decide how many frames of input we should run.
   local times_to_run = 0
   local buffer_len = string.len(self.input_buffer)
@@ -909,6 +987,7 @@ function Stack.foreign_run(self)
     end
   end
   for i=1,times_to_run do
+    self:update_popfxs()
     self:update_cards()
     self.input_state = string.sub(self.input_buffer,1,1)
     self:prep_rollback()
@@ -920,7 +999,32 @@ function Stack.foreign_run(self)
 end
 
 function Stack.enqueue_card(self, chain, x, y, n)
-  self.card_q:push({frame=1, chain=chain, x=x, y=y, n=n})
+  card_burstAtlas = nil
+  card_burstParticle = nil
+  if config.popfx == true then
+    card_burstAtlas = characters[self.character].images["burst"]
+    card_burstFrameDimension = card_burstAtlas:getWidth()/9
+    card_burstParticle = love.graphics.newQuad(card_burstFrameDimension, 0, card_burstFrameDimension, card_burstFrameDimension, card_burstAtlas:getDimensions())
+  end
+  self.card_q:push({frame=1, chain=chain, x=x, y=y, n=n, burstAtlas = card_burstAtlas, burstParticle = card_burstParticle})
+  
+end
+
+function Stack.enqueue_popfx(self, x, y, popsize)
+  if characters[self.character].images["burst"] then
+    burstAtlas = characters[self.character].images["burst"]
+    burstFrameDimension = burstAtlas:getWidth()/9
+    burstParticle = love.graphics.newQuad(burstFrameDimension, 0, burstFrameDimension, burstFrameDimension, burstAtlas:getDimensions())
+    bigParticle = love.graphics.newQuad(0, 0, burstFrameDimension, burstFrameDimension, burstAtlas:getDimensions())
+  end
+  if characters[self.character].images["fade"] then
+    fadeAtlas = characters[self.character].images["fade"]
+    fadeFrameDimension = fadeAtlas:getWidth()/9
+    fadeParticle = love.graphics.newQuad(fadeFrameDimension, 0, fadeFrameDimension, fadeFrameDimension, fadeAtlas:getDimensions())
+  end
+  poptype = "small"
+  self.pop_q:push({frame=1, burstAtlas = burstAtlas, burstFrameDimension = burstFrameDimension, burstParticle = burstParticle,
+  fadeAtlas = fadeAtlas, fadeFrameDimension = fadeFrameDimension, fadeParticle = fadeParticle, bigParticle = bigParticle, bigTimer = 0, popsize = popsize, x=x, y=y})
 end
 
 local d_col = {up=0, down=0, left=-1, right=1}
@@ -1076,18 +1180,22 @@ function Stack.PdP(self)
     self.top_cur_row = self.height
     self:new_row()
   end
-
+  self.prev_rise_lock = self.rise_lock
   self.rise_lock = self.n_active_panels ~= 0 or
       self.prev_active_panels ~= 0 or
       self.shake_time ~= 0 or
       self.do_countdown or 
       self.do_swap
+  if self.prev_rise_lock and not self.rise_lock then
+    self.prevent_manual_raise = false
+  end
 
   -- Increase the speed if applicable
   if self.speed_times then
     local time = self.speed_times[self.speed_times.idx]
     if self.CLOCK == time then
       self.speed = min(self.speed + 1, 99)
+      self.FRAMECOUNT_RISE = speed_to_rise_time[self.speed]
       if self.speed_times.idx ~= #self.speed_times then
         self.speed_times.idx = self.speed_times.idx + 1
       else
@@ -1095,7 +1203,7 @@ function Stack.PdP(self)
       end
     end
   elseif self.panels_to_speedup <= 0 then
-    self.speed = self.speed + 1
+    self.speed = min(self.speed + 1, 99)
     self.panels_to_speedup = self.panels_to_speedup +
       panels_to_next_speed[self.speed]
     self.FRAMECOUNT_RISE = speed_to_rise_time[self.speed]
@@ -1156,6 +1264,7 @@ function Stack.PdP(self)
   local skip_col = 0
   local fallen_garbage = 0
   local shake_time = 0
+  popsize = "small"
   for row=1,#panels do
     for col=1,width do
       local cntinue = false
@@ -1168,10 +1277,12 @@ function Stack.PdP(self)
       elseif panel.garbage then
         if panel.state == "matched" then
           panel.timer = panel.timer - 1
-		      if panel.timer == panel.pop_time then
-		        SFX_Garbage_Pop_Play = panel.pop_index
-            table.insert(self.gfx, {age=1, x=(col-2)*16+self.pos_x, y=(10-row)*16+self.pos_y+self.displacement})
-		      end
+
+          if panel.timer == panel.pop_time then
+            if config.popfx == true then self:enqueue_popfx(col, row, popsize) end
+            SFX_Garbage_Pop_Play = panel.pop_index
+          end
+
           if panel.timer == 0 then
             if panel.y_offset == -1 then
               local color, chaining = panel.color, panel.chaining
@@ -1214,8 +1325,8 @@ function Stack.PdP(self)
           if panel.shake_time and panel.state == "normal" then
             if row <= self.height then
               if panel.height > 3 then
-                SFX_GarbageThud_Play = 3
-              else SFX_GarbageThud_Play = panel.height
+                self.sfx_garbage_thud = 3
+              else self.sfx_garbage_thud = panel.height
               end
               shake_time = max(shake_time, panel.shake_time, self.peak_shake_time or 0)
               --a smaller garbage block landing should renew the largest of the previous blocks' shake times since our shake time was last zero.
@@ -1240,7 +1351,7 @@ function Stack.PdP(self)
         if row == 1 then
           panel.state = "landing"
           panel.timer = 12
-          SFX_Land_Play=1;
+          self.sfx_land = true
           
         -- if there's a panel below, this panel's gonna land
         -- unless the panel below is falling.
@@ -1255,7 +1366,7 @@ function Stack.PdP(self)
             panel.state = "landing"
             panel.timer = 12
           end
-          SFX_Land_Play=1;
+          self.sfx_land = true
         else
           panels[row-1][col], panels[row][col] =
             panels[row][col], panels[row-1][col]
@@ -1333,6 +1444,11 @@ function Stack.PdP(self)
             panel.state = "popping"
             panel.timer = panel.combo_index*self.FRAMECOUNT_POP
           elseif panel.state == "popping" then
+            --print("POP")
+            if (panel.combo_size > 6) or self.chain_counter > 1 then popsize = "normal" end
+            if self.chain_counter > 2 then popsize = "big" end
+            if self.chain_counter > 3 then popsize = "giant" end
+            if config.popfx == true then self:enqueue_popfx(col, row, popsize) end
             self.score = self.score + 10;
             -- self.score_render=1;
             -- TODO: What is self.score_render?
@@ -1436,14 +1552,32 @@ function Stack.PdP(self)
     (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and
     (self.cur_row ~= prev_row or self.cur_col ~= prev_col))    then
         SFX_Cur_Move_Play=1 
+        if self.enable_analytics then
+          analytics.register_move()
+        end
     end
   else
     self.cur_row = bound(1, self.cur_row, self.top_cur_row)
   end
+
   if self.cur_timer ~= self.cur_wait_time then
     self.cur_timer = self.cur_timer + 1
-    
-    
+  end
+  -- TAUNTING
+  if self.taunt_up ~= nil then
+    for _,t in ipairs(characters[self.character].sounds.taunt_ups) do
+      t:stop()
+    end
+    characters[self.character].sounds.taunt_ups[self.taunt_up]:play()
+    self:taunt("taunt_up")
+    self.taunt_up = nil
+  elseif self.taunt_down ~= nil then
+    for _,t in ipairs(characters[self.character].sounds.taunt_downs) do
+      t:stop()
+    end
+    characters[self.character].sounds.taunt_downs[self.taunt_down]:play()
+    self:taunt("taunt_down")
+    self.taunt_down = nil
   end
 
   -- SWAPPING
@@ -1489,6 +1623,9 @@ function Stack.PdP(self)
 
     if do_swap then
       self.do_swap = true
+      if self.enable_analytics then
+        analytics.register_swap()
+      end
     end
     self.swap_1 = false
     self.swap_2 = false
@@ -1529,6 +1666,9 @@ function Stack.PdP(self)
       -- self.telegraph:sender_chain_ended()
     -- end
     SFX_Fanfare_Play = self.chain_counter
+    if self.enable_analytics then
+      analytics.register_chain(self.chain_counter)
+    end
     self.chain_counter=0
   end
 
@@ -1590,13 +1730,15 @@ function Stack.PdP(self)
       self:really_send(to_send)
     end
   end
+
   self:remove_extra_rows()
   
   --double-check panels_in_top_row
+
   self.panels_in_top_row = false
-  local prow = panels[top_row]
-  for idx=1,width do
-    if prow[idx]:dangerous() then
+  -- If any dangerous panels are in the top row, garbage should not fall.
+  for col_idx = 1, width do
+    if panels[top_row][col_idx]:dangerous() then
       self.panels_in_top_row = true
     end
   end
@@ -1617,10 +1759,20 @@ function Stack.PdP(self)
     for idx=spawn_col, spawn_col+next_garbage_block_width-1 do
       if prow[idx]:dangerous() then 
         garbage_fits_in_populated_top_row = nil
+  -- If any panels (dangerous or not) are in rows above the top row, garbage should not fall.
+  for row_idx = top_row + 1, #self.panels do
+    for col_idx = 1, width do
+      if panels[row_idx][col_idx].color ~= 0 then
+        self.panels_in_top_row = true
+
       end
     end
+  end
+
+  if self.garbage_q:len() > 0 then
+    local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
     local drop_it = 
-      (not self.panels_in_top_row or garbage_fits_in_populated_top_row)
+      not self.panels_in_top_row
       and not self:has_falling_garbage()
       and (
         (from_chain and next_garbage_block_height > 1) or
@@ -1628,129 +1780,131 @@ function Stack.PdP(self)
         self.prev_active_panels == 0) 
       )
     if drop_it and self.garbage_q:len() > 0 then
-      self:drop_garbage(unpack(self.garbage_q:pop()))
+      if self:drop_garbage(unpack(self.garbage_q:peek())) then
+        self.garbage_q:pop()
+      end
     end
   end
   --Play Sounds / music
-  if not music_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
+  if not music_mute and not game_is_paused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
 
     if self.do_countdown then 
       if SFX_Go_Play == 1 then
-        sounds.SFX.go:stop()
-        sounds.SFX.go:play()
+        themes[config.theme].sounds.go:stop()
+        themes[config.theme].sounds.go:play()
         SFX_Go_Play=0
       elseif SFX_Countdown_Play == 1 then
-        sounds.SFX.countdown:stop()
-        sounds.SFX.countdown:play()
+        themes[config.theme].sounds.countdown:stop()
+        themes[config.theme].sounds.countdown:play()
         SFX_Go_Play=0
       end
-
-    elseif (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
-      if (current_music_is_casual or table.getn(currently_playing_tracks) == 0) then
-        print("Music is now critical")
-        if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
-        stop_the_music()
-        find_and_add_music(winningPlayer().character, "danger_music")
-        current_music_is_casual = false
+    
+    else
+      local musics_to_use = (current_use_music_from == "stage") and stages[current_stage].musics or characters[winningPlayer().character].musics
+      if not musics_to_use["normal_music"] then -- use the other one as fallback
+        musics_to_use = (current_use_music_from ~= "stage") and stages[current_stage].musics or characters[winningPlayer().character].musics
       end
-    else --we should be playing normal_music or normal_music_start
-      if (not current_music_is_casual or table.getn(currently_playing_tracks) == 0) then
-        print("Music is now casual")
-        if table.getn(currently_playing_tracks) == 0 then print("There were no sounds playing") end
-        stop_the_music()
-        find_and_add_music(winningPlayer().character, "normal_music")
-        current_music_is_casual = true
+      if (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
+        if (current_music_is_casual or table.getn(currently_playing_tracks) == 0) 
+          and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
+          stop_the_music()
+          find_and_add_music(musics_to_use, "danger_music")
+          current_music_is_casual = false
+        elseif table.getn(currently_playing_tracks) == 0 and musics_to_use["normal_music"] then
+          stop_the_music()
+          find_and_add_music(musics_to_use, "normal_music")
+          current_music_is_casual = true
+        end
+      else --we should be playing normal_music or normal_music_start
+        if (not current_music_is_casual or table.getn(currently_playing_tracks) == 0) and musics_to_use["normal_music"] then
+          stop_the_music()
+          find_and_add_music(musics_to_use, "normal_music")
+          current_music_is_casual = true
+        end
       end
     end
   end
   if not SFX_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
     if SFX_Swap_Play == 1 then
-        sounds.SFX.swap:stop()
-        sounds.SFX.swap:play()
+        themes[config.theme].sounds.swap:stop()
+        themes[config.theme].sounds.swap:play()
         SFX_Swap_Play=0
     end
     if SFX_Cur_Move_Play == 1 then
-        if not (self.mode == "vs" and sounds.SFX.swap:isPlaying())
+        if not (self.mode == "vs" and themes[config.theme].sounds.swap:isPlaying())
         and not self.do_countdown then
-            sounds.SFX.cur_move:stop()
-            sounds.SFX.cur_move:play()
+            themes[config.theme].sounds.cur_move:stop()
+            themes[config.theme].sounds.cur_move:play()
         end
         SFX_Cur_Move_Play=0
     end
-    if SFX_Land_Play == 1 then
-        sounds.SFX.land:stop()
-        sounds.SFX.land:play()
-        SFX_Land_Play=0
+    if self.sfx_land then
+      themes[config.theme].sounds.land:stop()
+      themes[config.theme].sounds.land:play()
+      self.sfx_land = false
     end
     if SFX_Countdown_Play == 1 then
         if self.which == 1 then
-            sounds.SFX.countdown:stop()
-            sounds.SFX.countdown:play()
+            themes[config.theme].sounds.countdown:stop()
+            themes[config.theme].sounds.countdown:play()
         end
         SFX_Countdown_Play=0
     end
     if SFX_Go_Play == 1 then
         if self.which == 1 then
-            sounds.SFX.go:stop()
-            sounds.SFX.go:play()
+            themes[config.theme].sounds.go:stop()
+            themes[config.theme].sounds.go:play()
         end
         SFX_Go_Play=0
     end
-    if SFX_Buddy_Play and SFX_Buddy_Play ~= 0 then
-        sounds.SFX.land:stop()
-        sounds.SFX.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        for _,v in pairs(sounds.SFX.characters[self.character].combos) do
-          v:stop()
-        end
-        for _,v in pairs(sounds.SFX.characters[self.character].combo_echos) do
-          v:stop()
-        end
-        sounds.SFX.characters[self.character].others["chain"]:stop()
-        sounds.SFX.characters[self.character].others["chain2"]:stop()
-        sounds.SFX.characters[self.character].others["chain_echo"]:stop()
-        sounds.SFX.characters[self.character].others["chain2_echo"]:stop()
-        if sounds.SFX.characters[self.character].others[SFX_Buddy_Play] then
-          sounds.SFX.characters[self.character].others[SFX_Buddy_Play]:play()
-        elseif sounds.SFX.characters[self.character].combos[SFX_Buddy_Play] then
-          sounds.SFX.characters[self.character].combos[SFX_Buddy_Play]:play()
-        elseif sounds.SFX.characters[self.character].combo_echos[SFX_Buddy_Play] then
-          sounds.SFX.characters[self.character].combo_echos[SFX_Buddy_Play]:play()
-        end
-        SFX_Buddy_Play=0
+    if self.combo_chain_play then
+        themes[config.theme].sounds.land:stop()
+        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        characters[self.character]:play_combo_chain_sfx(self.combo_chain_play)
+        self.combo_chain_play = nil
     end
     if SFX_garbage_match_play then
-      if sounds.SFX.characters[self.character].others["garbage_match"] then
-        sounds.SFX.characters[self.character].others["garbage_match"]:stop()
-        sounds.SFX.characters[self.character].others["garbage_match"]:play()
+      for _,v in pairs(characters[self.character].sounds.garbage_matches) do
+        v:stop()
+      end
+      if #characters[self.character].sounds.garbage_matches ~= 0 then
+        characters[self.character].sounds.garbage_matches[math.random(#characters[self.character].sounds.garbage_matches)]:play()
       end
       SFX_garbage_match_play = nil
     end
     if SFX_Fanfare_Play == 0 then
     --do nothing
     elseif SFX_Fanfare_Play >= 6 then
-        sounds.SFX.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        sounds.SFX.fanfare3:play()
+        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        themes[config.theme].sounds.fanfare3:play()
     elseif SFX_Fanfare_Play >= 5 then
-        sounds.SFX.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        sounds.SFX.fanfare2:play()
+        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        themes[config.theme].sounds.fanfare2:play()
     elseif SFX_Fanfare_Play >= 4 then
-        sounds.SFX.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        sounds.SFX.fanfare1:play()
+        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        themes[config.theme].sounds.fanfare1:play()
     end
     SFX_Fanfare_Play=0
-    if SFX_GarbageThud_Play >= 1 and SFX_GarbageThud_Play <= 3 then
+    if self.sfx_garbage_thud >= 1 and self.sfx_garbage_thud <= 3 then
         local interrupted_thud = nil
         for i=1,3 do
-            if sounds.SFX.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
-                sounds.SFX.garbage_thud[i]:stop()
+            if themes[config.theme].sounds.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
+                themes[config.theme].sounds.garbage_thud[i]:stop()
                 interrupted_thud = i
             end
         end
-        if interrupted_thud and interrupted_thud > SFX_GarbageThud_Play then
-            sounds.SFX.garbage_thud[interrupted_thud]:play()
-        else sounds.SFX.garbage_thud[SFX_GarbageThud_Play]:play()
+        if interrupted_thud and interrupted_thud > self.sfx_garbage_thud then
+          themes[config.theme].sounds.garbage_thud[interrupted_thud]:play()
+        else 
+          themes[config.theme].sounds.garbage_thud[self.sfx_garbage_thud]:play()
         end
-        SFX_GarbageThud_Play = 0
+        if #characters[self.character].sounds.garbage_lands ~= 0 and interrupted_thud == nil then
+          for _,v in pairs(characters[self.character].sounds.garbage_lands) do
+            v:stop()
+          end
+          characters[self.character].sounds.garbage_lands[math.random(#characters[self.character].sounds.garbage_lands)]:play()
+        end
+        self.sfx_garbage_thud = 0
     end
     if SFX_Pop_Play or SFX_Garbage_Pop_Play then
         local popLevel = min(max(self.chain_counter,1),4)
@@ -1761,9 +1915,9 @@ function Stack.PdP(self)
             popIndex = min(self.poppedPanelIndex,10)
         end
         --stop the previous pop sound
-        sounds.SFX.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         --play the appropriate pop sound
-        sounds.SFX.pops[popLevel][popIndex]:play()
+        themes[config.theme].sounds.pops[popLevel][popIndex]:play()
         self.lastPopLevelPlayed = popLevel
         self.lastPopIndexPlayed = popIndex
         SFX_Pop_Play = nil
@@ -1786,17 +1940,16 @@ function Stack.PdP(self)
 end
 
 function winningPlayer()
-    if not P2 then
-        return P1
-    elseif op_win_count > my_win_count then
-        return P2
-    else return P1
-    end
+  if not P2 or my_win_count >= op_win_count then
+    return P1
+  else
+    return P2
+  end
 end
 
 function Stack.pick_win_sfx(self)
-  if sounds.SFX.characters[self.character].win_count ~= 0 then
-    return sounds.SFX.characters[self.character].wins["win" .. math.random(sounds.SFX.characters[self.character].win_count)]
+  if #characters[self.character].sounds.wins ~= 0 then
+    return characters[self.character].sounds.wins[math.random(#characters[self.character].sounds.wins)]
   else
     return nil
   end
@@ -1874,14 +2027,35 @@ end
 
 -- drops a width x height garbage.
 function Stack.drop_garbage(self, width, height, metal)
+
   print("dropping garbage at frame "..self.CLOCK)
-  local spawn_row = #self.panels
-  for i=#self.panels+1,#self.panels+height+1 do
-    self.panels[i] = {}
-    for j=1,self.width do
-      self.panels[i][j] = Panel()
+  local spawn_row = self.height + 1
+
+  -- Do one last check for panels in the way.
+  for i = spawn_row, #self.panels do
+    if self.panels[i] then
+      for j = 1, self.width do
+        if self.panels[i][j] then
+          if self.panels[i][j].color ~= 0 then
+            print("Aborting garbage drop: panel found at row " .. tostring(i) .. " column " .. tostring(j))
+            return false
+          end
+        end
+      end
     end
   end
+
+  print(string.format("Dropping garbage on player %d - height %d  width %d  %s", self.player_number, height, width, metal and "Metal" or ""))
+
+  for i = self.height + 1, spawn_row + height - 1 do
+    if not self.panels[i] then
+      self.panels[i] = {}
+      for j = 1, self.width do
+        self.panels[i][j] = Panel()
+      end
+    end
+  end
+
   local cols = self.garbage_cols[width]
   local spawn_col = cols[cols.idx]
   cols.idx = wrap(1, cols.idx+1, #cols)
@@ -1902,6 +2076,8 @@ function Stack.drop_garbage(self, width, height, metal)
       end
     end
   end
+
+  return true
 end
 
 -- DEPRECATED. Replaced by Telegraph.add_combo_garbage
@@ -2162,8 +2338,6 @@ function Stack.check_matches(self)
   local first_panel_col = 0
   local combo_index, garbage_index = 0, 0
   local combo_size, garbage_size = 0, 0
-  local something = 0
-  local whatever = 0
   local panels = self.panels
   local q, garbage = Queue(), {}
   local seen, seenm = {}, {}
@@ -2345,9 +2519,14 @@ function Stack.check_matches(self)
   end
 
   if(combo_size~=0) then
+
     self.combos[self.CLOCK] = combo_size
     if self.mode == "vs" and metal_count == 3 and combo_size == 3 then
       self.telegraph:push("combo", combo_size, metal_count,first_panel_col, first_panel_row, self.CLOCK)
+    end
+
+    if self.enable_analytics then
+      analytics.register_destroyed_panels(combo_size)
     end
     if(combo_size>3) then
       if(score_mode == SCOREMODE_TA) then
@@ -2387,12 +2566,12 @@ function Stack.check_matches(self)
         self.telegraph:push("chain",self.chain_counter,0,first_panel_col, first_panel_row, self.CLOCK)
       end
     end
-    something = self.chain_counter
+    local chain_bonus = self.chain_counter
     if(score_mode == SCOREMODE_TA) then
       if(self.chain_counter>13) then
-        something=0
+        chain_bonus = 0
       end
-      self.score = self.score + score_chain_TA[something]
+      self.score = self.score + score_chain_TA[chain_bonus]
     end
     if((combo_size>3) or is_chain) then
       local stop_time
@@ -2432,21 +2611,11 @@ function Stack.check_matches(self)
       --TODO: Mr Stop ^
       -- @CardsOfTheHeart says there are 4 chain sfx: --x2/x3, --x4, --x5 is x2/x3 with an echo effect, --x6+ is x4 with an echo effect
       if is_chain then
-        local length = min(self.chain_counter, 13)
-        if length < 4 then 
-          SFX_Buddy_Play = "chain"
-        elseif length == 4 then
-          SFX_Buddy_Play = "chain2"
-        elseif length == 5 then
-          SFX_Buddy_Play = "chain_echo"
-        elseif length >= 6 then
-          SFX_Buddy_Play = "chain2_echo"
-        end
+        self.combo_chain_play = { e_chain_or_combo.chain, self.chain_counter }
       elseif combo_size > 3 then
-        local combo_index = math.random(sounds.SFX.characters[self.character].combo_count)
-        SFX_Buddy_Play = "combo" .. combo_index
+        self.combo_chain_play = { e_chain_or_combo.combo, "combos" }
       end
-      SFX_Land_Play=0
+      self.sfx_land = false
     end
     --if garbage_size > 0 then
       self.pre_stop_time = max(self.pre_stop_time, pre_stop_time)
@@ -2456,11 +2625,9 @@ function Stack.check_matches(self)
     --self.score_render=1;
     --Nope.
     if metal_count > 5 then
-      local combo_index = math.random(sounds.SFX.characters[self.character].combo_echo_count)
-      SFX_Buddy_Play = "combo_echo" .. combo_index
+      self.combo_chain_play = { e_chain_or_combo.combo, "combo_echos" }
     elseif metal_count > 2 then
-      local combo_index = math.random(sounds.SFX.characters[self.character].combo_count)
-      SFX_Buddy_Play = "combo" .. combo_index
+      self.combo_chain_play = { e_chain_or_combo.combo, "combos" }
     end
   end
 end

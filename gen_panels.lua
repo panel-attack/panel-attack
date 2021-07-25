@@ -4,7 +4,7 @@ local random = math.random
 
 -- stuff should have first_seven, metal, vs_mode, metal_col, prev_metal_col
 function make_panels(ncolors, prev_panels, stuff)
-  --print("make_panels("..ncolors..", "..prev_panels..", "..(stuff.first_seven or "")..")")
+  print("make_panels("..ncolors..", "..prev_panels..", "..(stuff.first_seven or "")..")")
   local ret = prev_panels
   local rows_to_make = 20
   local rows_to_place_metal_locations = rows_to_make
@@ -41,7 +41,7 @@ function make_panels(ncolors, prev_panels, stuff)
   local prev_row
   for i=2,rows_to_place_metal_locations+1 do
     current_row_from_ret =  string.sub(ret,(i-1)*row_width+1, (i-1)*row_width+row_width)
-    --print("current_row_from_ret: "..current_row_from_ret)
+    print("current_row_from_ret: "..current_row_from_ret)
     if tonumber(current_row_from_ret) then --doesn't already have letters in it for metal panel locations
       prev_row = string.sub(new_ret,0-row_width,-1)
       local first, second --locations of potential metal panels

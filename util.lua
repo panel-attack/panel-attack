@@ -11,6 +11,10 @@ function bound(a, b, c)
   else return b end
 end
 
+function linear_smooth(value, min, max)
+  return (value - min)/(max-min)
+end
+
 -- mods b so a<=b<=c
 function wrap(a, b, c)
   return (b-a)%(c-a+1)+a
@@ -241,4 +245,15 @@ function split(inputstr, sep)
             return t
         end
     end
+end
+
+function trim(s)
+   return (s:gsub("^%s*(.-)%s*$", "%1"))
+end
+
+function get_directory_contents(path)
+  local path    = (path and path or "")
+  local results = love.filesystem.getDirectoryItems(path)
+
+  return results
 end

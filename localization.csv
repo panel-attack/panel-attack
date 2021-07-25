@@ -1,0 +1,389 @@
+CODE,EN,FR,PT,JP,ES,GE,IT
+LANG,English,Français,Português,日本語,Español,Deutsch,Italiano
+back,Back,Retour,Voltar,もどる,Volver,Zurück,Indietro
+difficulty,Difficulty,Difficulté,Dificuldade,難易度,Dificultad,Schwierigkeitsgrad,Difficoltà
+easy,Easy,Facile,Fácil,EASY,Fácil,Leicht,Facile
+hard,Hard,Difficile,Difícil,HARD,Difícil,Schwer,Difficile
+level,Level,Niveau,Nível,Lv,Nivel,Level,Livello
+normal,Normal,Normal,Normal,NORMAL,Normal,Normal,Normale
+speed,Speed,Vitesse,Velocidade,スピード,Velocidad,Geschwindigkeit,Velocità
+vs,"vs
+",vs,vs,対,vs,vs,vs
+up,Up,Haut,Cima,上,Arriba,Hoch,Su
+down,Down,Bas,Baixo,下,Abajo,runter,Giù
+left,Left,Gauche,Esquerda,左,Izquierda,links,Sinistra
+right,Right,Droite,Direita,右,Derecha,rechts,Destra
+start,Start,Start,Começar,START,Empezar,Start,Avvio
+player,Player,Joueur,Jogador,プレイヤー,Jugador,Spieler,Giocatore
+player_n,Player %1,Joueur %1,Jogador %1,プレイヤー%1,Jugador %1,Spieler %1,Giocatore %1
+page,Page,Page,Página,ページ,Página,Seite,Pagina
+panels,Panels,"Panels
+",Painéis,パネル,Paneles,Feld,Tessere
+stage,Stage,Terrain,Cenário,ステージ,Escenario,Bühne,Scenario
+mode,Mode,Mode,Modo,モード,Modo,Modus,Modalità
+ready,Ready,Prêt,Pronto,READY,Listo,Bereit,Pronto
+random,Random,Aléatoire,Aleatório,ランダム,Aleatorio,Zufall,Casuale
+leave,Leave,Quitter,Sair,もどる,Salir,Verlassen,Esci
+pause,Pause,Pause,Pausa,ポーズ,Pausa,Pause,Pausa
+go_,Go!,Commencer,Vai!,GO!,¡Comenzar!,Los!,Via!
+anonymous,Anonymous,Anonyme,Anônimo,匿名,Anónimo,Anonym,Anonimo
+stages,stages,terrains,Cenários,ステージ,escenarios,Bühnen,Scenario
+characters,characters,personnages,Personagens,キャラクター,personajes,Charaktere,Personaggi
+join_community,  Join the community at,Rejoignez la communauté sur,Participe da comunidade em,コミュニティに参加しよう,Únete a nuestra comunidad en,Tritt unserer community bei unter,Unisciti alla community su
+warning_msg,You've had a bug. Please report this on Discord with file:,"Vous venez de rencontrer un problème.
+S'il vous plaît, signalez le sur Discord avec le fichier :","Você encontrou um problema. Por favor, reporte no Discord o arquivo em anexo:",You've had a bug. Please report this on Discord with file:,"Hubo un problema. Por favor, reporta esto en Discord con el siguiente archivo:",Ein Bug ist aufgetreten. Bitte melde diesen in unserem Discord mit der Datei:,"Hai riscontrato un bug. Per favore, segnalalo su Discord con il file: "
+,,,,,,,
+lb_alone,You are all alone in the lobby :(,Vous êtes seul dans le salon :(,Você está sozinho(a) no lobby :(,だれもロビーにいません。(´・ω・`),No hay nadie en el salón :(,Du bist ganz alleine in der Lobby :<,Sei tutto solo nella lobby :(
+lb_back,Back to main menu,Revenir au menu principal,Voltar ao menu principal,メインメニューに戻る,Volver al menú principal,Zurück zum Hauptmenü,Torna al menù principale
+lb_connecting,Connecting...,Connexion en cours...,Conectando...,接続中...,Conectando,Verbinde...,Connessione...
+lb_error_msg,Error message received from the server:,Message d'erreur du serveur : ,Mensagem de erro recebida do servidor:,サーバーから受信したエラーメッセージ：,Mensaje de error recibido del servidor:,Fehlernachricht vom Server erhalten.,Messaggio d'errore ricevuto dal server:
+lb_header_board,"        Leaderboard
+      Rank    Rating   Player","        Classement
+      Rang    Score   Joueur","       Placar de Classificação
+      Classificação Pontuação Jogador ","        リーダーボード
+      順位　レート　プレイヤー","       Clasificación
+      Rango  Puntaje　Jugador", ,"        Classifica
+      Posizione    Punteggio   Giocatore"
+lb_show_board,Show Leaderboard,Afficher le classement,Mostrar Placar de Classificação,リーダーボードを表示,Mostrar Tabla de Puntuación, ,Mostra la classifica
+lb_login,Logging in...,Identification...,Iniciando sessão ...,ログインしています...,Iniciando Sesión, ,Accesso in corso...
+lb_login_timeout,"Login for ranked matches timed out.
+This server probably doesn't support ranking.
+
+You may continue unranked.","Délai de connexion à la partie classée dépassé.
+Ce serveur ne gère peut être pas les parties classées.
+
+Vous pouvez continuer en non classé.","O tempo de acesso à partidas ranqueadas expirou.
+Este servidor provavelmente não suporta partidas ranqueadas.
+
+Você pode continuar em partidas não ranqueadas. ","レートマッチのログインがタイムアウトしました。
+このサーバーはおそらくランキングをサポートしていません。
+
+ランクなしで続行できます。","Se ha agotado el tiempo de espera para iniciar sesión
+Es posible que el servidor no soporte partidas clasificatorias.
+
+Solamente puedes jugar partidas normales (unranked).", ,"L'accesso alle partite classificate è scaduto.
+Questo server probabilmente non supporta le partite classificate. 
+
+Puoi continuare a giocare in modalità non clasificata."
+lb_new_id,need a new user id,besoin d'un nouvel identifiant utilisateur,necessário novo ID de usuário,新しいユーザーIDが必要です,Se necesita un nuevo ID de usuario, ,Necessario nuovo ID utente.
+lb_received,(wants to play with you :o),(vous invite à jouer :o),(quer jogar com você :o),（対戦を申し込まれました！（・o・））,(quiere jugar contigo :o),,(vuole giocare con te :o)
+lb_request,(request sent),(demande envoyée),(solicitação enviada),（対戦申請中）,(petición enviada), ,(richiesta inviata)
+lb_select_player,Select a player name to ask for a match.,Selectionnez un joueur avec qui jouer.,Selecione um nome de jogador para solicitar uma partida.,プレイヤー名を選択して試合を申し込んで下さい。,Selecciona el nombre de un jugador para enviarle solicitud de partida., ,Seleziona il nome di un giocatore con cui giocare.
+lb_set_connect,Setting up connection...,Préparation de la connexion...,Estabelecendo conexão...,接続しています…,Estableciendo conexión..., ,Stabilendo la connessione...
+lb_hide_board,Hide Leaderboard,Cacher le classement,Ocultar Placar de Classificação,リーダーボードを非表示,Ocultar Tabla de Puntuación, ,Nascondi la classifica
+lb_spectate,spectate,regarder,assistir,観戦する,espectar, ,Assisti
+lb_used_name,"Error: name is taken :<
+
+If you had just left the server,
+it may not have realized it yet, try joining again.
+
+This can also happen if you have two
+instances of Panel Attack open.
+Press Swap or Back to continue.","Erreur : ce pseudo est déjà pris :<
+
+Si vous venez de quitter le serveur,
+il n'est peut être pas encore à jour, réessayez.
+
+Cela peut aussi arriver si vous avez
+lancé deux instances du jeu.
+
+Appuyer sur Valider ou Retour pour continuer.","Erro: Apelido já utilizado :<
+
+Se você acabou de sair do servidor,
+talvez não tenha reparado, tente entrar novamente.
+
+Isso também pode acontecer se você tiver duas
+instâncias do Panel Attack abertas.
+Pressione Trocar ou Voltar para continuar. ","エラー：名前が既に使用されています　・へ・
+
+サーバーを離れたばかりの場合、
+まだ気付いていない可能性があります。
+もう一度参加してみて下さい。
+
+これは、
+Panel Attackが同時に2回起動されている場合発生する可能性もあります。
+
+入れ替えボタン、またはもどるボタンを押して下さい。","Error：El nombre ya está siendo usado :<
+
+Si te fuiste del servidor,
+puede que este no se haya dado cuenta, intenta unirte de nuevo.
+
+Esto también puede ocurrir si tienes dos
+Instancias abiertas del juego.
+Pulsa ""Cambiar"" o ""Volver"" para continuar.", ,"Errore: nome già in uso :<
+
+Se hai appena lasciato il server,
+questo potrebbe non averlo ancora realizzato, prova ad accedere di nuovo.
+
+Questo può anche succedere se hai 
+due istanze di Panel Attack aperte.
+Premi ""Swap"" o Indietro per continuare.
+"
+lb_user_new,"Welcome, new user: %1","Bienvenue, nouvel utilisateur : %1","Bem-vindo(a), novo usuário(a): %1",ようこそ、新しいユーザー： %1,Bienvenido: nuevo usuario %1, ,"Benvenuto, nuovo utente: %1"
+lb_user_update,"Welcome, your username has been updated. 
+
+Old name:  ""%1""
+
+New name:  ""%2""","Bienvenue, votre pseudo a été mis à jour.
+
+Ancien:  ""%1""
+
+Nouveau:  ""%2""","Bem-vindo(a), seu apelido foi atualizado.
+
+Nome antigo: ""%1""
+
+Novo nome: ""%2"" ","ようこそ、ユーザー名が更新されました。
+
+以前のユーザー名： ""%1""
+
+新しいユーザー名： ""%2"" ","Bienvenido, tu nombre de usuario fue actualizado.
+
+Nombre antiguo: ""%1""
+
+Nombre nuevo: ""%2"" ", ,"Benvenuto, il tuo nome utente è stato aggiornato.
+
+Vecchio nome: ""%1""
+
+Nuovo nome: ""%2"""
+lb_welcome_back,"Welcome back, %1","Vous êtes de retour, %1","Bem-vindo(a) de volta, %1",おかえりなさい、%1,"Bienvenido de vuelta, %1", ,"Bentornato, %1"
+lb_you,You,Vous,Você,あなた,Tú, ,Tu
+ld_puzzles,Copying puzzles readme...,Copie du fichier readme des puzzles...,Cópia dos quebra-cabeças no leia-me,パズルのREADMEをコピーしています...,"Copiando el archivo ""readme"" de puzzles ",,Copia dell'archivio readme dei puzzle...
+ld_replay,Loading replays...,Chargement des replays...,Carregando replays,リプレイを読み込みしています…,Cargando repeticiones...,,Caricamento dei replay...
+ld_theme,Loading theme...,Chargement du thème...,Carregando temas,テーマを読み込みしています…,Cargando tema...,,Caricamento dei temi...
+ld_characters,Preloading characters...,Préchargement des personnages...,Pré-carregando personagens,キャラクターを読み込みしています…,Pre-cargando personajes...,,Pre-caricamento dei personaggi...
+ld_stages,Preloading stages...,Préchargement des terrains...,Pré-carregando cenários...,ステージを読み込みしています…,Pre-cargando escenarios...,,Pre-caricamento degli scenari...
+ld_panels,Loading panels...,Chargement des blocs...,Carregando painéis...,パネルを読み込みしています…,Cargando paneles...,,Caricamento delle tessere...
+ld_analytics,Loading analytics...,Chargement des statistiques...,Carregando estatísticas...,分析を読み込みしています…,Cargando estadísticas....,,Caricamento delle statistiche...
+mm_1_endless,1P endless,1J infini,1J infinito,1P　エンドレス,1J interminable, ,1P infinito
+mm_1_puzzle,1P puzzle,1J puzzle,1J quebra-cabeça,1P　パズル,1J Puzzle, ,1P puzzle
+mm_1_time,1P time attack,1J contre la montre,1J contra o tempo,1P　スコアアタック,1J Contrareloj, ,1P a tempo
+mm_1_vs,1P vs yourself,1J vs soi-même,1J vs você mesmo,1P　じぶんとのたたかい,1J vs Tú, ,1P vs te stesso
+mm_2_vs_local,2P vs local game,2J vs en local,2J vs jogo local,2P　ローカルVS,2J vs partida local, ,2P vs in locale
+mm_2_vs_online,2P vs online %1,2J vs en ligne %1,2J vs online %1,2P　オンラインVS %1,2J vs partida en línea %1, ,2P vs online %1
+mm_2_vs,2P vs,2J vs,2J vs,2P　VS,2J vs,,2P vs
+mm_configure,Configure input,Configurer les touches,Configurar teclas,コンフィグ設定,Configurar teclas, ,Configura i tasti
+mm_fullscreen,Fullscreen %1,Plein Écran %1,Tela cheia %1,フルスクリーン %1,Pantalla completa %1, ,Schermo inteto 1%
+mm_music_test,Music test,Musique test,Teste de música,サウンドテスト,Prueba de música, ,Testa la musica
+mm_no_support_fullscreen,Your graphics card doesn't support canvases for fullscreen,Votre carte graphique ne supporte pas le plein écran,Sua placa de vídeo não suporta tela cheia,グラフィックカードはフルスクリーンのキャンバスをサポートしていません,Tu tarjeta gráfica no soporta bordes en pantalla completa., ,La tua scheda grafica non supporta la modalità schermo intero.
+mm_options,Options,Options,Opções,オプション,Opciones, ,Opzioni
+mm_quit,Quit,Quitter,Sair,おわる,Salir, ,Esci
+mm_replay_of,Replay of %1,Replay de %1,Replay de %1,%1のリプレイ,Ver repetición de %1, ,Replay di 1%
+mm_set_name,Set name,Changer de pseudo,Trocar apelido,名前設定,Definir nombre, ,Imposta il nome
+nt_ver_err,PLEASE DOWNLOAD the latest version of the game from #welcome-getting-started at the TetrisAttackOnline Discord http://discord.panelattack.com,S'IL VOUS PLAIT TELECHARGER la dernière version du jeu sur le discord TetrisAttackOnline http://discord.panelattack.com dans #welcome-getting-started,FAÇA O DOWNLOAD da versão mais recente do jogo em # Welcome-Getting-Started no TetrisAttackOnline Discord http://discord.panelattack.com,TetrisAttackOnline Discord http://discord.panelattack.com で、ゲームの最新バージョンを＃welcome-getting-startedからダウンロードして下さい。,POR FAVOR DESCARGA la última version del juego en #welcome-getting-started En el servidor de discord de TetrisAttackOnline:http://discord.panelattack.com, ,"Per favore, scarica l'ultima versione del gioco da #welcome-getting-started sul server Discord TetrisAttackOnline http://discord.panelattack.com"
+nt_conn_timeout,Failed to connect to the server.,Impossible de se connecter au serveur.,Falha ao conectar o servidor.,Failed to connect to the server.,Error al conectarse al servidor.,,Errore di connessione al server.
+nt_msg_err,"Network error, message could not be decoded: ""%1""","Erreur réseau, le message ne peut pas être décodé: ""%1""","Erro de conexão, a mensagem não pôde ser codificada: ""%1""","Network error, message could not be decoded: ""%1""","Error de red, el mensaje no pudo ser decodificado: ""%1""",,"Errore di network, il messaggio non può essere decodificato: ""%1"""
+nt_player_err,Server did not send number of players.,Le serveur n'a pas envoyé le nombre de joueurs.,O servidor não emitiu nº de jogadores.,Server did not send number of players.,El servidor no envio la cantidad de jugadores.,,Il server non ha inviato il numero di giocatori.
+op_none,none,rien,Nenhum,無し,Nada, ,Niente
+op_on,On,On,Ativ.,ON,On,,On
+op_off,Off,Off,Desat.,OFF,Off,,Off
+op_all_keys,Set all keys,Définir toutes les touches,Definir todas as teclas,すべてのキーを設定する,Definir todas las teclas, ,Imposta tutti i tasti
+op_about_characters,About custom characters,À propos des personnages personnalisés,Sobre personagens personalizados,カスタムキャラクターについて,Acerca de personajes personalizados, ,A propostio dei personaggi personalizzabili
+op_about_themes,About custom themes,À propos des thèmes personnalisés,Sobre temas personalizados,カスタムテーマについて,Acerca de temas personalizados,,A proposito dei temi personalizzabili
+op_about_stages,About custom stages,À propos des terrains personnalisés,Sobre cenários personalizados,カスタムステージについて,Acerca de escenarios personalizados,,A proposito degli scenari personalizzabili
+op_about_panels,About custom panels,À propos des blocs personnalisés,Sobre painéis personalizados,カスタムパネルについて,Acerca de paneles personalizados,,A propostio delle tessere personalizzabili
+op_analytics,Enable analytics,Activer les statistiques,Ativar estatísticas,分析を有効にする,Habilitar estadísticas, ,Attiva statistiche
+op_copy_files,"Hold on.  Copying an example folder to make this easier...
+
+This may take a few seconds or maybe even a minute or two.
+
+Don't worry if the window goes inactive or ""not responding""","Veuillez patientez, nous copions les fichiers exemples.
+
+Cette opération peut prendre quelques secondes à 2 min.
+
+La fenêtre peut devenir inactive et ne plus répondre.","Um momento. Criando uma pasta modelo para facilitar isso...
+
+Isto pode levar alguns segundos ou talvez até um minuto ou dois.
+
+Não se preocupe se a janela ficar inativa ou ""não está respondendo"" ","しばらくお待ちください。
+これを簡単にするためにサンプルフォルダをコピーしています...
+
+これには数秒、場合によっては1〜2分かかる場合があります。
+
+ウィンドウが非アクティブになったり、
+応答しない""ことを心配する必要はありません","Un momento. Copiando la carpeta de ejemplo para hacerlo más facil...
+
+Esto tomará algunos segundos o quizás un minuto o dos.
+
+No te preocupes si la ventana se pone inactiva, se bloquea o ""No responde""", ,"Un momento. Copia di una cartella d'esempio per rendere il tutto più facile...
+
+Ci potrebbe volere qualche secondo, o forse anche un minuto o due.
+
+Non preoccuparti se la finestra diventa inattiva o ""non risponde""."
+op_countdown,Ready countdown,Compte à rebours avant une partie,Contagem regressiva pronta,READYカウントダウン,Cuenta regresiva lista, ,Pronto per il conto alla rovescia
+op_debug,Debug Mode,Mode Debug,Modo de Depuração,デバッグモード,Modo Depuración, ,Modalità Debug
+op_default_char,Use default characters,Utiliser les personnages par défaut,Usar personagens padrão,デフォルトのキャラクターを使用する,Usar personajes por defecto., ,Usa i personaggi di base
+op_enter_name,Enter your name:,Entrez votre pseudo :,Digite seu apelido:,名前を入力して下さい：,Ingresa tu nombre:, ,Inserisci il tuo nome:
+op_fps,Show FPS,Afficher les FPS,Mostrar FPS,FPS表示,Mostrar FPS (cuadros por segundo), ,Mostra FPS (frame al secondo)
+op_language,Language,Langue,Idioma,言語,Idioma, ,Lingua
+op_theme,Theme,Thème,Tema,テーマ,Tema,,Tema
+op_ingame_infos,Show informations during gameplay,Afficher les données pendant la partie,Mostrar informações durante partida,プレイ中情報表示,Mostrar información durante la partida,,Mostra informazioni nel corso della partita
+op_use_music_from,Use music from,Utiliser les musiques des,Utilizar música de ,使用音楽,Usar música desde,,Usa musica da
+op_only_stage,Stage 100% | Character 0%,Terrain 100% | Personnage 0%,Cenário 100% | Personagens 0%,ステージ 100% | キャラクター  0%,Escenario 100% | Personaje 0%,,Scenario 100% | Personaggio 0%
+op_often_stage,Stage 75% | Character 25%,Terrain 75% | Personnage 25%,Cenário 75% | Personagens 25%,ステージ 75% | キャラクター  25%,Escenario 75% | Personaje 25%,,Scenario 75% | Personaggio 25%
+op_stage_characters,Stage 50% | Character 50%,Terrain 50% | Personnage 50%,Cenário 50% | Personagens 50%,ステージ 50% | キャラクター  50%,Escenario 50% | Personaje 50%,,Scenario 50% | Personaggio 50%
+op_often_characters,Stage 25% | Character 75%,Terrain 25% | Personnage 75%,Cenário 25% | Personagens 75%,ステージ 25% | キャラクター  75%,Escenario 25% | Personaje 75%,,Scenario 25% | Personaggio 75%
+op_only_characters,Stage 0% | Character 100%,Terrain 0% | Personnage 100%,Cenário 0% | Personagens 100%,ステージ 0% | キャラクター  100%,Escenario 0% | Personaje 100%,,Scenario 0% | Personaggio 100%
+op_music_current,Currently playing: ,Music actuel : ,Reproduzindo agora:,現在再生中：,Música actual:, ,Musica in riproduzone:
+op_music_delay,Danger music change-back delay,Délai du changement de la musique en mode danger,Atraso na mudança de música de perigo,ピンチ音楽チェンジバック遅延,Retrasar cambio de melodía de peligro, ,Ritardo del cambiamento della musica di pericolo
+op_music_intro,Playing the intro,Joue l'intro,Reproduzindo introdução,イントロ表示,Reproduciendo la intro, ,Riproduci la intro
+op_music_load,Loading required sounds... (this may take a while),Chargement des sons nécessaires... (cela peut prendre un certain temps),Carregando sons necessários ... (isso pode demorar um pouco),必要なサウンドを読み込んでいます...（時間がかかるかもしれません）,Cargando los sonidos requeridos...(esto tomará un momento), ,Caricamento dei suoni necessari (ci potrebbe volere un po'...)
+op_music_loop,Playing main loop,Joue la boucle,Reproduzindo loop principal,メインループを再生しています,Reproduciendo bucle principal, ,Riproduzione del loop principale
+op_music_nav,"%1 and %2 to navigate songs
+%3 to leave","%1 et %2 pour naviguer entre les musiques
+%3 pour quitter","%1 e %2 para navegar pelas músicas
+%3 para sair ","%1と%2で曲を選択
+%3で戻る","%1 y %2 para navegar entre melodías
+%3 para salir", ,"%1 e %2 per navigare tra le canzoni
+%3 per uscire"
+op_panels,Panels set,Choisir les blocs,Definir painéis,パネルセット,Set de paneles, ,Scelta delle tessere
+op_reload_analytics,reloading analytics...,rechargement des statistiques...,recarregando estatísticas...,分析を再読み込みしています...,Recargando estadísticas..., ,Ricaricamento delle statistiche...
+op_reload_characters,reloading characters...,rechargement des personnages...,recarregando personagens...,キャラクターを再読み込みしています...,Recargando personajes..., ,Ricaricamento dei personaggi...
+op_reload_stages,reloading stages...,rechargement des terrains...,recarregando cenários...,ステージを再読み込みしています…,recargando escenarios...,,Ricarimento degli scenari...
+op_reload_theme,reloading theme...,rechargement du thème...,recarregando tema...,テーマを再読み込みしています…,recargando temas...,,Ricaricamento dei temi...
+op_replay_public,Save replays publicly,Sauvegarder les replays publiquement,Salvar replays publicamente,リプレイを,Grabar repeticiones públicamente, ,Salva i replay pubblicamente
+op_replay_public_no,No,Non,Não,公開しない,No,,No
+op_replay_public_anonymously,Anonymously,Anonymement,Anônimo,無名で公開する,Anónimamente,,Anonimamente
+op_replay_public_with_name,With my name,Avec mon pseudo,Com meu apelido,名前付きで公開する,Con mi nombre,,Con il mio nome
+op_save,writing config to file...,sauvegarde de la configuration...,salvando configuração no arquivo...,ファイルに設定を書き込んでいます...,Escribiendo configuración al archivo..., ,Salvataggio delle configurazioni su file...
+op_sonds,Sounds theme,Thème des sons,Tema dos sons,サウンドセット,Set de sonidos, ,Tema dei suoni
+op_vol,Master Volume,Volume Global,Vol principal,マスターボリューム,Volumen principal, ,Volume principale
+op_vol_music,Music Volume,Volume Musique,Vol da música,音楽ボリューム,Volumen de música, ,Volume della musica
+op_vol_sfx,SFX Volume,Volume Effets,Vol Efeitos Esp.,SFXボリューム,Volumen de sonido, ,Volume SFX
+op_vsync,V-Sync,V-Sync,V-Sync,垂直同期,Sincronización Vertical (V-Sync),,V-Sync
+op_input_delay,Key repeat delay (offline only),Délai de répétition des touches,Atraso na repetição das teclas,DAS　（オフライン専用）,Retraso de repetición de las teclas (Solo fuera de línea),,Ritardo della ripetizione dell'input (solo offline)
+opponent_level,Opponent's level,Niveau adverse,Nível do oponente,相手のレベル,Nivel del oponente, ,Livello dell'avversario
+pl_pause_help,Press Start again to resume,Appuyer sur Start pour continuer,Pressione Começar novamente para continuar,再開するにはもう一度スタートボタン押してください。,"Presiona ""Start"" para resumir",,"Premi ""Start"" di nuovo per riprendere"
+pl_1_win,P1 wins ^^,J1 gagne ^^,J1 vence ^^,1Pの勝ち！ ＾＾,J1 gana ^^, ,P1 vince ^^
+pl_2_win,P2 wins ^^,J2 gagne ^^,J2 vence ^^,2Pの勝ち！ ＾＾,J2 gana ^^, ,P2 vince ^^
+pl_cleared,cleared: %1,détruit : %1,destruido: %1,消したパネル：%1,despejado: %1, ,Completato: %1
+pl_frame,Frame: %1,Frame : %1,Frame: %1,フレーム：%1,Cuadro: %1, ,Frame: %1
+pl_game_start,Game is starting!,La partie va commencer !,A partida está começando!,ゲームが始まります！,¡La partida va a comenzar!, ,Il gioco sta per inziare!
+pl_gameover,Game Over,Terminé,Fim de jogo,ゲームオーバー,Fin del juego, ,Gioco finito
+pl_health,Health: %1,Vie : %1,Vida: %1,猶予：%1,Salud: %1, ,Vita: %1
+pl_level,Level: %1,Niveau : %1,Nível %1,レベル：%1,Nivel: %1, ,Livello: %1
+pl_metal,metal q: %1,blocs métal : %1,blocos de metal q: %1,金属q：%1,blq. de metal: %1, ,Blocchi di metallo: %1
+pl_moves,Moves: %1,Déplacements : %1,Movimentos: %1,手数：%1,Movimientos: %1, ,Movimenti: %1
+pl_panel_info,"Panel info:
+row: %1
+col: %2","Info grille :
+ligne: %1
+colonne: %2","Info do painel:
+linha: %1
+coluna: %2 ","パネル情報：
+行：%1
+col：%2 ","Info. panel:
+fila: %1
+col: %2", ,"Informazioni sulle tessere
+riga: %1
+colonna: %2"
+pl_pre_stop,Pre stop: %1,Délai pré stop : %1,Atraso ante-parada: %1,ストップ前：%1,Detención pre. :%1, ,Pre stop: %1
+pl_score,Score: %1,Score : %1,Pontuação: %1,スコア：%1,Puntaje: %1, ,Punteggio: %1
+pl_shake,Shake: %1,Délai secousse : %1,Tremor: %1,床揺れ：%1,Sacudida: %1, ,Scossa: %1
+pl_spectate_join,"Joined a match in progress.
+Catching up...","Chargement du match en cours.
+Synchronisation...","Entrou em partida em andamento.
+Sincronizando...","進行中の試合に参加しました。
+キャッチアップ...","Te uniste a una partida en progreso.
+Sincronizando...", ,"Caricamento di una partita in corso.
+Sincronizzazione..."
+pl_spectators,Spectator(s):,Spectateurs(s) :,Espectador(es):,観客：,Espectador(es)：, ,Spettatori:
+pl_speed,Speed: %1,Vitesse : %1,Velocidade: %1,速度：%1,Velocidad: %1, ,Velocità: %1
+pl_stop,Stop: %1,Délai stop : %1,Parada: %1,ストップ：%1,Detención: %1, ,Stop: %1
+pl_time,Time: %1,Temps : %1,Tempo: %1,時間：%1,Tiempo: %1, ,Tempo: %1
+pl_time_out,"game start timed out.
+This is a known bug, but you may post it in #panel-attack-bugs-features
+if you'd like.","Le chargement de la partie a pris trop de temps.
+Ceci est un bug connu, mais vous pouvez le signaler sur notre discord sur :
+#panel-attack-bugs-features","Tempo esgotado para partida começar.
+Este é um bug conhecido, mas você pode postar em #panel-attack-bugs-features
+se quiser. ","ゲームの開始がタイムアウトしました。
+これは既知のバグですが、＃panel-attack-bugs-featuresに報告してもいいです。","se agotó el tiempo para empezar la partida.
+Este es un bug conocido, pero si queres puedes postearlo en #panel-attack-bugs-features", ,"Il caricamento della partita ha richiesto troppo tempo.
+Questo è un bug gà noto, ma puoi postarlo su #panel-attack-bugs-features
+se ti va."
+pl_you_lose,You lose :(,Vous avez perdu :(,Você perdeu :(,あなたの負け・・・。 -_-,Has perdido :(, ,Hai perso :(
+pl_you_win,You win!,Vous avez gagné !,Você venceu!,あなたの勝ち！！＾＾,¡Has ganado!, ,Hai vinto!
+pz_info,"Note: you may place new custom puzzles in
+
+%appdata%\Panel Attack\puzzles
+
+See the README and example puzzle set there
+for instructions","Note: vous pouvez placer des puzzles personnalisés dans :
+
+%appdata%\Panel Attack\puzzles
+
+Lisez le fichier README, et alle voir les exemples.","Nota: você pode alocar novos quebra-cabeças personalizados em
+
+%appdata%\Panel Attack\puzzles
+
+Leia o README e o exemplo de quebra-cabeça definido lá
+para instruções ","注：新しいカスタムパズルを
+
+%appdata%\Panel Attack\puzzles　において下さい
+
+使い方についてREADMEとサンプルパズルをご覧ください","Nota: Puedes añadir puzzles personalizados en
+
+%appdata%\Panel Attack\puzzles
+
+Revisa el archivo README y el set de puzzles de ejemplo en su correspondiente carpeta
+para más infomación.", ,"Nota: puoi inserire nuovi puzzle in:
+
+%appdata%\Panel Attack\puzzles
+
+Leggi il README e guarda i puzzle d'esempio che si trovano lì per avere istruzioni."
+pz_puzzles,Puzzles:,Puzzles :,Quebra-cabeças:,パズル：,Puzzles:, ,Puzzles:
+rp_endless,endless,infini,Infinito,エンドレス,Interminable, ,infinito
+rp_no_endless,I don't have an endless replay :(,Je n'ai pas de replay infini :(,Não possuo replay sem fim :(,エンドレスのリプレイはありません -_-,No encuentro ninguna repetición del modo Interminable :(, ,Non ho un replay della modalità infinito :(
+rp_no_puzzle,I don't have a puzzle replay :(,Je n'ai pas de replay puzzle :(,Não possuo replay de quebra-cabeça :(,パズルのリプレイはありません -_-,No encuentro ninguna repetición del modo Puzzle :(, ,Non ho un replay della modalità puzzle :(
+rp_no_replay,I don't have a vs replay :(,Je n'ai pas de replay :(,Não possuo replay vs :(,VSリプレイはありません -_-,No encuentro ninguna repetición del modo VS :(, ,Non ho un replay della modalità vs :(
+rp_score,"You scored %1
+in %2","Vous avez fait %1
+en %2","Você pontuou %1
+em %2","スコア　%1
+時間　　%2","Obtuviste %1 puntos
+en %2", ,"Il tuo punteggio è %1
+in 2%"
+ss_casual,Casual,Normal,Casual,カジュアル,Casual, ,Normale
+ss_current_rating,current:,courant :,atual:,現在：,Actual:, ,corrente:
+ss_disconnect,Disconnected from server.,Vous êtes deconnecté du serveur.,Desconectado do servidor.,サーバーから切断しました。,Desconectado del servidor., ,Disconnesso dal server.
+ss_draw,Draw,Egalité,Empate,引き分け,Empate, ,Pareggio
+ss_err_no_reason,Reason unknown,Erreur inconnue,Motivo desconhecido,理由不明,Razón desconocida, ,Ragione sconosciuta
+ss_error_leave,Error when leaving online,Erreur en quittant le serveur,Erro ao sair do servidor,オンラインを離れる際のエラー,Error al salir de en línea, ,Errore nell'uscita dal server
+ss_expected_rating,expected:,attendu :,expectativa:,予想：,Esperado:, ,atteso:
+ss_init,Waiting for room initialization...,En attente de la création de la salle...,Aguardando inicialização da sala...,ルームの初期化を待っています...,Esperando la inicialización de la sala., ,Attesa per l'inizializzazione della stanza...
+ss_init_fail,Room initialization failed.,Problème lors de la création de la salle.,Falha na inicialização da sala.,ルームの初期化に失敗しました。,Falló la inicialización de la sala., ,Inizializzazione della stanza fallita.
+ss_not_ranked,Not ranked.,Non classé.,Casual,ランク付けされていません。,Sin clasificar., ,Non classificato.
+ss_p_wins,%1 wins,%1 gagne,%1 vence,%1の勝ち,%1 Gana, ,%1 vince
+ss_ranked,Ranked,Classé,Ranqueada,ランクマッチ,Clasificado, ,Classificato
+ss_rating,Rating:,Classement :,Classificação:,レート：,Clasificación:, ,Classificazione:
+ss_return,Returning to main menu...,Retour au menu principal...,Voltar ao menu principal...,メインメニューに戻ります...,Regresando al menú principal..., ,Ritorno al menù principale...
+ss_winrate,Winrate:,Taux de victoire :,Taxa de vitórias:,勝率：,Racha de victorias:, ,Rateo delle vittorie:
+ss_wins,Wins:,Victoires :,Vitórias:,勝ち：,Gana:, ,Vittorie:
+ss_ex_mode,EX Mode,EX Mode,Modo EX,EXモード,Modo EX, ,Modalità EX
+rp_browser_header,~ Replay Browser ~,~ Bibliothèque des replays ~,~ Navegador de Replays ~,,~ Explorador de Repeticiones ~,,~ Navigatore Replay ~
+rp_browser_info_header,~ Replay Information ~,~ Information des replays ~,~ Informações de Replays ~,,~ Información de la repetición ~,,~ Informazioni Replay ~
+rp_browser_current_dir,Current directory: %1,Dossier actuel : %1,Pasta atual: %1,,Directorio actual: %1,,Elenco corrente: %1
+rp_browser_up,up,monter,acima,,volver,,su
+rp_browser_root,root,racine,raiz,,raíz,,sorgente
+rp_browser_more,more,plus,mais,,más,,altro
+rp_browser_info_2p_vs,2P VS,2J VS,2J VS,,2J VS,,2P VS
+rp_browser_info_1p_vs,VS Yourself,VS soi-même,VS Você mesmo,,VS Tú,,VS Te stesso
+rp_browser_info_1p,1P,1J,1J,,1J,,1P
+rp_browser_info_2p,2P,2J,2J,,2J,,2P
+rp_browser_info_name,Name: %1,Nom : %1,Apelido %1,,Nombre: %1,,Nome: 1%
+rp_browser_info_level,Level: %1,Niveau : %1,Nível: %1,,Nivel: %1,,Livello: 1%
+rp_browser_info_character,Character: %1,Personnage : %1,Personagem: 1%,,Personaje: %1,,Personaggio: 1%
+rp_browser_info_casual,Casual Match,Match Normal,Partida Casual,,Partida Casual,,Partita Normale
+rp_browser_info_ranked,Ranked Match,Match Classé,Partida Ranqueada,,Partida Clasificatoria,,Partita Classificata
+rp_browser_info_endless,Endless,Infini,Infinito,,Interminable,,Infinito
+rp_browser_info_time_trial,Time Trial,Contre la montre,Contra o Tempo,,Contrareloj,,A Tempo
+rp_browser_info_speed,Speed: %1,Vitesse : %1,Velocidade: %1,,Velocidad: %1,,Velocità: 1%
+rp_browser_info_difficulty,Difficulty: %1,Difficulté : %1,Dificuldade: %1,,Dificultad: %1,,Difficoltà: 1%
+rp_browser_info_puzzle,Puzzle,Puzzle,Quebra-Cabeça,,Puzzle,,Puzzle
+rp_browser_watch,"Press A/Confirm to view this replay, or B/Cancel to exit.","Appuyer sur A pour voir le replay, ou B pour quitter.",Pressione A/Confirme para ver este replay ou B/Cancelar para sair,,"Presiona A/Confirmar para ver esta repetición, o B/Cancelar para salir.",,"Premi A/Conferma per vedere questo replay, o B/Annulla per uscire."
+rp_browser_no_info,No information available...,Pas d'informations disponibles...,Sem informações disponíveis...,,Sin información disponible...,,Nessuna informazione disponibile...
+rp_browser_error_unknown_replay_type,Unknown replay type,Type de replay inconnu,Motivo do tipo desconhecido,,Tipo de repetición desconocida.,,Tipo di replay sconosciuto.
+rp_browser_error_loading,Error loading replay: %1,Erreur au chargement du replay : %1,Erro ao carregar replay: %1,,Error cargando la repetición: %1,,Errore nel caricamento del replay: 1%
+rp_browser_error_unknown_filetype,Unknown filetype %1. (%2),Type de fichier inconnu %1. (%2),Tipo de arquivo desconhecido %1. (%2),,Formato de archivo desconocido %1. (%2),,Tipo di file sconosciuto %1. (%2)
+rp_browser_error_file_not_found,File not found! (%1),Fichier introuvable ! (%1),Arquivo não encontrado! (%1),,¡No se encontró el archivo! (%1),,File non trovato! (%1)
+mm_replay_browser,Replay Browser,Bibliothèque des replays,Navegador de Replays,,,,Navigatore Replay
