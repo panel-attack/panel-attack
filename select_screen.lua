@@ -872,9 +872,7 @@ function select_screen.main()
           P2.gpanel_buffer = fake_P2.gpanel_buffer
           P1.set_garbage_target(P2)
           P2.set_garbage_target(P1)
-          --move_stack(P2,2)
-          P2.pos_x = 172
-          P2.score_x = 410
+          move_stack(P2,2)
           if currently_spectating then
             P1:set_foreign(true)
           else
@@ -1297,18 +1295,17 @@ function select_screen.main()
       P1 = Stack(1, "vs", cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       P1.enable_analytics = true
       P2 = Stack(2, "vs", cursor_data[2].state.panels_dir, cursor_data[2].state.level, cursor_data[2].state.character)
-      P2.pos_x = 172
       P2.score_x = 410
-      P1:set_foreign(false)
-      P2:set_foreign(false)
-      P1:set_garbage_target(P2)
-      P2:set_garbage_target(P1)
       --P1.telegraph:subscribe(P2.incoming_telegraph)
       --P2.telegraph:subscribe(P1.incoming_telegraph)
       current_stage = cursor_data[math.random(1,2)].state.stage
       stage_loader_load(current_stage)
       stage_loader_wait()
       move_stack(P2,2)
+      P1:set_foreign(false)
+      P2:set_foreign(false)
+      P1:set_garbage_target(P2)
+      P2:set_garbage_target(P1)
       -- TODO: this does not correctly implement starting configurations.
       -- Starting configurations should be identical for visible blocks, and
       -- they should not be completely flat.

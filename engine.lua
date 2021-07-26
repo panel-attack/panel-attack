@@ -73,15 +73,13 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
 
     s.garbage_to_send = {}
 
-    --move_stack(s,1) --not sure what this is for, commenting it out for now, since it doesn't seem to be defined anywhere.
+    move_stack(s,1)
     
 
     s.panel_buffer = ""
     s.gpanel_buffer = ""
     s.input_buffer = ""
     s.panels = {}
-    s.pos_x = 4   -- Position of the play area on the screen
-    s.pos_y = 28
     s.width = 6
     s.height = 12
     for i=0,s.height do
