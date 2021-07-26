@@ -46,21 +46,16 @@ function graphics_init()
       IMG_stagecount=IMG_stagecount+1
     end
   end
-
-  local g_parts = {"topleft", "botleft", "topright", "botright",
-                    "top", "bot", "left", "right", "face", "pop",
-                    "doubleface", "filler1", "filler2", "flash",
-                    "portrait"}
-  IMG_garbage = {}
+--[[   
   IMG_particles = {}
-  --particle_quads = {}
+  particle_quads = {}
   
   texture = load_img("lakitu/particles.png")
   local w = texture:getWidth()
   local h = texture:getHeight()
-  --local char_particles = {}
+  local char_particles = {}
   
---[[  
+
   particle_quads[1] = love.graphics.newQuad(0, 0, 48, 48, 256, 256)
   particle_quads[2] = love.graphics.newQuad(48, 0, 48, 48, 256, 256)
   particle_quads[3] = love.graphics.newQuad(96, 0, 48, 48, 256, 256)
@@ -102,7 +97,7 @@ function graphics_init()
       IMG_telegraph_garbage[1][w] = load_img("".."telegraph/"..w.."-wide.png")
     end
     IMG_telegraph_attack[v] = load_img(""..v.."/attack.png")
-    IMG_particles[v] = load_img(""..v.."/particles.png")
+    --IMG_particles[v] = load_img(""..v.."/particles.png")
   end
   IMG_telegraph_metal = load_img("telegraph/6-wide-metal.png")
 
@@ -910,11 +905,11 @@ end
 
 
 
-function Stack.render_gfx(self)
-  for key, gfx_item in pairs(self.gfx) do
-    drawQuad(IMG_particles[self.character], particle_quads[gfx_item["age"]], gfx_item["x"], gfx_item["y"])
-  end
-end
+-- function Stack.render_gfx(self)
+  -- for key, gfx_item in pairs(self.gfx) do
+    -- drawQuad(IMG_particles[self.character], particle_quads[gfx_item["age"]], gfx_item["x"], gfx_item["y"])
+  -- end
+-- end
 
 function Stack.render_telegraph(self)
   local telegraph_to_render 
