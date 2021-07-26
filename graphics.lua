@@ -81,24 +81,24 @@ function graphics_init()
   particle_quads[23] = particle_quads[21]
   particle_quads[24] = particle_quads[21]
 --]]
-  IMG_telegraph_garbage = {} --values will be accessed by IMG_telegraph_garbage[garbage_height][garbage_width]
-  IMG_telegraph_attack = {}
-  for _,v in ipairs(characters) do
-    local imgs = {}
-    IMG_garbage[v] = imgs
-    for _,part in ipairs(g_parts) do
-      imgs[part] = load_img(""..v.."/"..part..".png")
-    end
-    for h=1,14 do
-      IMG_telegraph_garbage[h] = {}
-      IMG_telegraph_garbage[h][6] = load_img("".."telegraph/"..h.."-tall.png")
-    end
-    for w=3,6 do
-      IMG_telegraph_garbage[1][w] = load_img("".."telegraph/"..w.."-wide.png")
-    end
-    IMG_telegraph_attack[v] = load_img(""..v.."/attack.png")
-    --IMG_particles[v] = load_img(""..v.."/particles.png")
-  end
+  --IMG_telegraph_garbage = {} --values will be accessed by IMG_telegraph_garbage[garbage_height][garbage_width]
+  --IMG_telegraph_attack = {}
+  -- for _,v in ipairs(characters) do
+    -- local imgs = {}
+    -- IMG_garbage[v] = imgs
+    -- --for _,part in ipairs(g_parts) do
+    -- --  imgs[part] = load_img(""..v.."/"..part..".png")
+    -- --end
+    -- -- for h=1,14 do
+      -- -- IMG_telegraph_garbage[h] = {}
+      -- -- IMG_telegraph_garbage[h][6] = load_img("".."telegraph/"..h.."-tall.png")
+    -- -- end
+    -- -- for w=3,6 do
+      -- -- IMG_telegraph_garbage[1][w] = load_img("".."telegraph/"..w.."-wide.png")
+    -- -- end
+    -- --IMG_telegraph_attack[v] = load_img(""..v.."/attack.png")
+    -- --IMG_particles[v] = load_img(""..v.."/particles.png")
+  -- end
   IMG_telegraph_metal = load_img("telegraph/6-wide-metal.png")
 
   IMG_level_cursor = load_img("level_cursor.png")
@@ -966,7 +966,8 @@ function Stack.render_telegraph(self)
             end
             --print("DRAWING******")
             --print(garbage_block.x..","..garbage_block.y)
-            draw(IMG_telegraph_attack[telegraph_to_render.sender.character], garbage_block.x, garbage_block.y)
+            draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y)
+            --draw(IMG_telegraph_attack[telegraph_to_render.sender.character], garbage_block.x, garbage_block.y)
           end
         end
       elseif frames_since_earned >= #card_animation + #telegraph_attack_animation_speed and frames_since_earned < GARBAGE_TRANSIT_TIME - 1 then 
@@ -993,7 +994,7 @@ function Stack.render_telegraph(self)
             if self.which == 1 then
               print("rendering P1's telegraph's attack animation")
             end
-            draw(IMG_telegraph_attack[telegraph_to_render.sender.character], garbage_block.x, garbage_block.y)
+            draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y)
           end
         end
       elseif frames_since_earned == GARBAGE_TRANSIT_TIME then
@@ -1018,15 +1019,15 @@ function Stack.render_telegraph(self)
     local draw_x = telegraph_to_render.pos_x
     local draw_y = telegraph_to_render.pos_y
     if telegraph_to_render.garbage_queue.ghost_chain then
-      draw(IMG_telegraph_garbage[telegraph_to_render.garbage_queue.ghost_chain][6], draw_x, draw_y)
+      draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images[telegraph_to_render.garbage_queue.ghost_chain][6], draw_x, draw_y)
     end
     while current_block do
       --TODO: create a way to draw telegraphs from right to left
       if self.CLOCK - current_block.frame_earned >= GARBAGE_TRANSIT_TIME then
         if not current_block[3]--[[is_metal]] then
-          draw(IMG_telegraph_garbage[current_block[2]--[[height]]][current_block[1]--[[width]]], draw_x, draw_y)
+          draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images[current_block[2]--[[height]]][current_block[1]--[[width]]], draw_x, draw_y)
         else
-          draw(IMG_telegraph_metal, draw_x, draw_y)
+          draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images["metal"], draw_x, draw_y)
         end
       end
       draw_x = draw_x + TELEGRAPH_BLOCK_WIDTH
