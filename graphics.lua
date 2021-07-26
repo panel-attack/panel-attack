@@ -839,13 +839,7 @@ function Stack.render(self)
       gprint(join_community_msg or "", main_infos_screen_pos.x-45, main_infos_screen_pos.y+550)
     end
   end
-  self:draw_cards()
-  self:render_cursor()
-  setScissor()
-  --self:render_gfx()
-  if self.do_countdown then
-    self:render_countdown()
-  end
+
   if self.enable_analytics then
     analytics.draw(self.score_x-500,self.score_y)
 
