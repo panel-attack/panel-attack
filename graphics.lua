@@ -938,10 +938,11 @@ function Stack.render_telegraph(self)
     -- print(self.CLOCK)
     -- print(GARBAGE_TRANSIT_TIME)
     local frames_since_earned = self.CLOCK - frame_earned
-    if frames_since_earned >= #card_animation and frames_since_earned <= GARBAGE_TRANSIT_TIME then
+    if frames_since_earned <= GARBAGE_TRANSIT_TIME then
       if frames_since_earned <= #card_animation then
-        --don't draw anything yet
-      elseif frames_since_earned < #card_animation + #telegraph_attack_animation_speed then
+        --don't draw anything yet, card animation is still in progress.
+      elseif frames_since_earned <= #card_animation + #telegraph_attack_animation_speed then
+        --draw telegraph attack animation, little loop down and to the side of origin.
         for _, attack in ipairs(attacks_this_frame) do
           for _k, garbage_block in ipairs(attack.stuff_to_send) do
             if not garbage_block.destination_x then 
@@ -970,7 +971,7 @@ function Stack.render_telegraph(self)
             --draw(IMG_telegraph_attack[telegraph_to_render.sender.character], garbage_block.x, garbage_block.y)
           end
         end
-      elseif frames_since_earned >= #card_animation + #telegraph_attack_animation_speed and frames_since_earned < GARBAGE_TRANSIT_TIME - 1 then 
+      elseif frames_since_earned < GARBAGE_TRANSIT_TIME then 
         --move toward destination
         for _, attack in ipairs(attacks_this_frame) do
           for _k, garbage_block in ipairs(attack.stuff_to_send) do
@@ -991,16 +992,18 @@ function Stack.render_telegraph(self)
               garbage_block.x = garbage_block.x - ((garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED)*(garbage_block.x-garbage_block.destination_x))/distance_to_destination
               garbage_block.y = garbage_block.y - ((garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED)*(garbage_block.y-garbage_block.destination_y))/distance_to_destination
             end
-            if self.which == 1 then
-              print("rendering P1's telegraph's attack animation")
-            end
+            -- if self.which == 1 then
+              -- print("rendering P1's telegraph's attack animation")
+            -- end
             draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y)
           end
         end
       elseif frames_since_earned == GARBAGE_TRANSIT_TIME then
+      --arrived at target
         for _, attack in ipairs(attacks_this_frame) do
           for _k, garbage_block in ipairs(attack.stuff_to_send) do
             local last_chain_in_queue = telegraph_to_render.garbage_queue.chain_garbage[telegraph_to_render.garbage_queue.chain_garbage.last]
+            print("telegraph_to_render.garbage_queue.chain_garbage.last: "..telegraph_to_render.garbage_queue.chain_garbage.last)
             if garbage_block[4]--[[from_chain]] and last_chain_in_queue and garbage_block[2]--[[height]] == last_chain_in_queue[2]--[[height]] then
               print("setting ghost_chain")
               telegraph_to_render.garbage_queue.ghost_chain = garbage_block[2]--[[height]]

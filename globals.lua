@@ -20,6 +20,7 @@ TELEGRAPH_HEIGHT = 16
 TELEGRAPH_PADDING = 2 --vertical space between telegraph and stack
 TELEGRAPH_BLOCK_WIDTH = 24
 TELEGRAPH_ATTACK_MAX_SPEED = 8 --fastest an attack can travel toward the telegraph per frame
+--The telegraph_attack_animation below refers the little loop shape attacks make before they start traveling toward the target.
 telegraph_attack_animation_speed = {
     4,4,4,4,4,2,2,2,2,1,
     1,1,1,.5,.5,.5,.5,1,1,1,
