@@ -1367,7 +1367,7 @@ function main_config_input()
   local k = K[1]
   local active_player = 1
   local function get_items()
-    items = {[0]={loc("player").. " ", ""..active_player}}
+    items = {[1]={loc("player").. " ", ""..active_player}}
     for i=1,#key_names do
       items[#items+1] = {pretty_names[i], k[key_names[i]] or loc("op_none")}
     end
@@ -1400,7 +1400,7 @@ function main_config_input()
         local idx = idxs_to_set[1]
         for key,val in pairs(this_frame_keys) do
           if val then
-            k[key_names[idx]] = key
+            k[key_names[idx-1]] = key
             table.remove(idxs_to_set, 1)
             if #idxs_to_set == 0 then
               write_key_file()
@@ -1411,10 +1411,13 @@ function main_config_input()
         print("config menu had an idx_selected")
         input_menu.active_idx = input_menu.idx_selected
         input_menu.idx_selected = nil
-        if input_menu.active_idx <= #key_names then
+        if input_menu.active_idx == 1 then
+          active_player = wrap(1, active_player+1, 2)
+          k=K[active_player]
+        elseif input_menu.active_idx <= #key_names + 1 then
           idxs_to_set = {input_menu.active_idx}
-        elseif input_menu.active_idx == #key_names + 1 then
-          idxs_to_set = {1,2,3,4,5,6,7,8,9,10,11}
+        elseif input_menu.active_idx == #key_names + 2 then
+          idxs_to_set = {2,3,4,5,6,7,8,9,10,11,12}
         elseif input_menu.active_idx == #items then 
           ret = {items[input_menu.active_idx][3], items[input_menu.active_idx][4]}
         end
@@ -1429,13 +1432,16 @@ function main_config_input()
         active_player = wrap(1, active_player+1, 2)
         k=K[active_player]
       elseif menu_enter_one_press(K[1]) then
-        if input_menu.active_idx <= #key_names then
+        if input_menu.active_idx == 1 then
+          active_player = wrap(1, active_player+1, 2)
+          k=K[active_player]
+        elseif input_menu.active_idx <= #key_names + 1 then
           idxs_to_set = {input_menu.active_idx}
-        elseif input_menu.active_idx == #key_names + 1 then
-          idxs_to_set = {1,2,3,4,5,6,7,8,9,10,11}
+        elseif input_menu.active_idx == #key_names + 2 then
+          idxs_to_set = {2,3,4,5,6,7,8,9,10,11,12}
         end
       elseif menu_enter(K[1]) then
-        if input_menu.active_idx > #key_names + 1 then
+        if input_menu.active_idx > #items - 1 --[['Set all' or 'back']] then
           ret = {items[input_menu.active_idx][3], items[input_menu.active_idx][4]}
         end
       elseif menu_escape(K[1]) then
