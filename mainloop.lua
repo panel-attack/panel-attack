@@ -162,7 +162,7 @@ do
     items[#items+1] = {loc("mm_quit"), exit_game }
     local k = K[1]
     local menu_x, menu_y = unpack(main_menu_screen_pos)
-    local main_menu = Click_menu(nil, menu_x, menu_y, 8, 1, true, 2)
+    local main_menu = Click_menu(nil, menu_x, menu_y, math.huge, love.graphics.getHeight()-menu_y-90, 8, 1, true, 2)
     for i=1,#items do
         main_menu:add_button(items[i][1])
     end
@@ -571,6 +571,9 @@ function main_net_vs_lobby()
       for _,v in ipairs(spectatable_rooms) do
         items[#items+1] = v
       end
+      for i=1,20 do  --for testing lobby scrolling, remove this when it's implemented successfully.
+        items[#items+1] = "dummy entry "..i
+      end
       if showing_leaderboard then
         items[#items+1] = loc("lb_hide_board")
       else
@@ -589,7 +592,8 @@ function main_net_vs_lobby()
           items_to_print[i] = items[i]
         end
       end
-      lobby_menu = Click_menu(items_to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y, 8)
+      
+      lobby_menu = Click_menu(items_to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y, math.huge, love.graphics.getHeight() - lobby_menu_y - 90, 8)
       lobby_menu.active_idx = last_active_idx
       if active_back then
         lobby_menu.active_idx = #items
@@ -608,7 +612,7 @@ function main_net_vs_lobby()
     if showing_leaderboard then
       gprint(leaderboard_string, lobby_menu_x[showing_leaderboard]+400, lobby_menu_y - 120)
     end
-    gprint(join_community_msg, main_menu_screen_pos[1]+30, main_menu_screen_pos[2]+280)
+    gprint(join_community_msg, main_menu_screen_pos[1]+30, love.graphics.getHeight() - 50)
     lobby_menu:draw()
     updated = false
     wait()
@@ -1362,7 +1366,7 @@ end
 function main_config_input()
   local pretty_names = {loc("up"), loc("down"), loc("left"), loc("right"), "A", "B", "X", "Y", "L", "R", loc("start")}
   local menu_x, menu_y = unpack(main_menu_screen_pos)
-  local input_menu = Click_menu(nil, menu_x, menu_y, 8, 1, true, 2)
+  local input_menu = Click_menu(nil, menu_x, menu_y, math.huge, love.graphics.getHeight() - menu_y - 90, 8, 1, true, 2)
   local items = {}
   local k = K[1]
   local active_player = 1
