@@ -96,6 +96,20 @@ function Click_menu.remove_self(self)
   click_menus[self.id] = nil
 end
 
+function Click_menu.set_active_idx(self, idx)
+  self.active_idx = idx
+  local top_visible_button_before = self.top_visible_button
+  if self.top_visible_button < self.active_idx - self.button_limit then
+    self.top_visible_button = self.active_idx - self.button_limit
+  end
+  if self.active_idx <= self.top_visible_button then
+    self.top_visible_button = math.max(self.top_visible_button, 1) - 1
+  end
+  if self.top_visible_button ~= top_visible_button_before then
+    self:layout_buttons()
+  end
+end
+
 function Click_menu.set_current_setting(self, idx, new_setting)
   if self.buttons[idx] then
     self.buttons[idx].current_setting = love.graphics.newText(menu_font, new_setting)
@@ -121,18 +135,19 @@ function Click_menu.layout_buttons(self)
   for i=1,#self.buttons do
     if i < self.top_visible_button then
       self.buttons[i].visible = false
-    elseif i < self.top_visible_button + self.button_limit then
+    elseif i <= self.top_visible_button + self.button_limit then
       self.buttons[i].visible = true
-      self.buttons[i].x = self.x + self.button_padding
-      self.buttons[i].y = self.y + self.new_item_y or 0
+      self.buttons[i].x = self.button_padding
+      self.buttons[i].y = self.new_item_y or 0
       self.new_item_y = self.new_item_y + self:get_button_height(i)+self.padding
-      if self.buttons[i+1] and (self.new_item_y + self:get_button_height(i+1)) then
+      if self.buttons[i+1] and (self.new_item_y + self:get_button_height(i+1) < self.height) then
         self.button_limit = self.button_limit + 1
       end
     else --button doesn't fit
-      self.button[i].visible = false
+      self.buttons[i].visible = false
     end
   end
+  print("button_limit after layout: "..self.button_limit)
       
 end
 
@@ -146,15 +161,17 @@ function Click_menu.draw(self)
       --grectangle("line", self.x + self.buttons[i].x, self.y + self.buttons[i].y, self.get_button_width(self,i), button_height)
     end
     for i=1,#self.buttons do
-      if self.buttons[i].background then
-        menu_drawf(self.buttons[i].background, self.x + self.buttons[i].x, self.y + self.buttons[i].y)
-      end
-      if self.buttons[i].outlined then
-        grectangle("line", self.x + self.buttons[i].x, self.y + self.buttons[i].y, self:get_button_width(i), self:get_button_height(i))
-      end
-      menu_draw(self.buttons[i].text, self.x + self.buttons[i].x + self.button_padding, self.y + self.buttons[i].y + self.button_padding)
-      if self.buttons[i].current_setting then
-        menu_draw(self.buttons[i].current_setting, self.x + self.current_setting_x or 0, self.y + self.buttons[i].y + self.button_padding)
+      if self.buttons[i].visible then  
+        if self.buttons[i].background then
+          menu_drawf(self.buttons[i].background, self.x + self.buttons[i].x, self.y + self.buttons[i].y)
+        end
+        if self.buttons[i].outlined then
+          grectangle("line", self.x + self.buttons[i].x, self.y + self.buttons[i].y, self:get_button_width(i), self:get_button_height(i))
+        end
+        menu_draw(self.buttons[i].text, self.x + self.buttons[i].x + self.button_padding, self.y + self.buttons[i].y + self.button_padding)
+        if self.buttons[i].current_setting then
+          menu_draw(self.buttons[i].current_setting, self.x + self.current_setting_x or 0, self.y + self.buttons[i].y + self.button_padding)
+        end
       end
     end
     --TO DO: Draw fixed buttons
