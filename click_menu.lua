@@ -7,8 +7,8 @@ last_active_idx = 1
 Click_menu = class(function(self, list, x, y, width, height, padding, active_idx, buttons_outlined, button_padding,background)
     self.x = x or 0
     self.y = y or 0
-    self.width = width or math.huge --width not used yet for scrolling
-    self.height = height or math.huge  --scrolling does care about height
+    self.width = width or love.graphics.getWidth()-self.x - 30 --width not used yet for scrolling
+    self.height = height or love.graphics.getHeight()-self.y - 30 --scrolling does care about height
     self.new_item_y = 0
     self.buttons = {}
     self.padding = padding or 0
@@ -30,6 +30,33 @@ Click_menu = class(function(self, list, x, y, width, height, padding, active_idx
     self.id = #click_menus
     last_active_idx = self.active_idx
     self.top_visible_button = 1
+    
+    self.menu_controls = 
+    {
+      up = 
+      {
+        text = love.graphics.newText(menu_font, "^"),
+        x=self.width - 30,
+        y=10,
+        w=30,
+        h=30,
+        outlined=true,
+        visible=true
+      },
+      down = 
+      {
+        text = love.graphics.newText(menu_font, "v"),
+        x=self.width - 30,
+        y=80,
+        w=30,
+        h=30,
+        outlined=true,
+        visible=true
+      }
+    }
+        
+        
+        
     self:layout_buttons()
   end)
 
@@ -167,6 +194,7 @@ function Click_menu.draw(self)
       --TO DO whole menu outline, maybe
       --grectangle("line", self.x + self.buttons[i].x, self.y + self.buttons[i].y, self.get_button_width(self,i), button_height)
     end
+    --draw buttons (not including fixed buttons, or menu controls)
     for i=1,#self.buttons do
       if self.buttons[i].visible then  
         if self.buttons[i].background then
@@ -178,6 +206,21 @@ function Click_menu.draw(self)
         menu_draw(self.buttons[i].text, self.x + self.buttons[i].x + self.button_padding, self.y + self.buttons[i].y + self.button_padding)
         if self.buttons[i].current_setting then
           menu_draw(self.buttons[i].current_setting, self.x + self.current_setting_x or 0, self.y + self.buttons[i].y + self.button_padding)
+        end
+      end
+    end
+    --draw menu controls (up and down scrolling buttons, so far)
+    for k, control in pairs(self.menu_controls) do
+      if control.visible then  
+        if control.background then
+          menu_drawf(control.background, self.x + control.x, self.y + control.y)
+        end
+        if control.outlined then
+          grectangle("line", self.x + control.x, self.y + control.y, control.w, control.h)
+        end
+        menu_draw(control.text, self.x + control.x + self.button_padding, self.y + control.y + self.button_padding)
+        if control.current_setting then
+          menu_draw(control.current_setting, self.x + self.current_setting_x or 0, self.y + control.y + self.button_padding)
         end
       end
     end
@@ -201,7 +244,7 @@ end
 function click_or_tap(x, y, touchpress)
   
   print(x..","..y)
-  for k,menu in pairs(click_menus) do
+  for menu_name,menu in pairs(click_menus) do
     if menu.active then
       menu.idx_selected = nil
       for i=1, #menu.buttons do
@@ -210,6 +253,14 @@ function click_or_tap(x, y, touchpress)
           print("pressed menu item "..i)
           menu.idx_selected = i
           last_active_idx = menu_idx_selected
+        end
+      end
+      for control_name, control in pairs(menu.menu_controls) do
+        if control.visible then
+          if y >= menu.y + control.y and y <= menu.y + control.y+ control.h and
+          x >= menu.x + control.x and x <= menu.x + control.x + control.w then
+            print(menu_name.."'s "..control_name.." was clicked or tapped")
+          end
         end
       end
     end
