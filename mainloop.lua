@@ -560,6 +560,7 @@ function main_net_vs_lobby()
     local arrow = ""
     
     if updated then
+      local last_lobby_menu_active_idx = lobby_menu.active_idx
       lobby_menu:remove_self()
       items = {}
       for _,v in ipairs(unpaired_players) do
@@ -593,7 +594,7 @@ function main_net_vs_lobby()
         end
       end
       
-      lobby_menu = Click_menu(items_to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y, math.huge, love.graphics.getHeight() - lobby_menu_y - 90, 8)
+      lobby_menu = Click_menu(items_to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y, math.huge, love.graphics.getHeight() - lobby_menu_y - 90, 8, last_lobby_menu_active_idx)
       lobby_menu:set_active_idx(last_active_idx)
       if active_back then
         lobby_menu:set_active_idx(#items)
