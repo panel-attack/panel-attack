@@ -8,6 +8,7 @@ Click_menu = class(function(self, list, x, y, width, height, padding, active_idx
     self.x = x or 0
     self.y = y or 0
     self.width = width or love.graphics.getWidth()-self.x - 30 --width not used yet for scrolling
+    print("menu width at creation was "..self.width)
     self.height = height or love.graphics.getHeight()-self.y - 30 --scrolling does care about height
     self.new_item_y = 0
     self.buttons = {}
@@ -125,14 +126,13 @@ function Click_menu.remove_self(self)
 end
 
 function Click_menu.set_active_idx(self, idx)
+  idx = wrap(1,idx,#self.buttons)
   self.active_idx = idx
-  print("in set_active_idx, self.active_idx: "..self.active_idx)
   local top_visible_button_before = self.top_visible_button
   if self.active_idx <= self.top_visible_button then
     self.top_visible_button = math.max(self.active_idx, 1)
   end
   if self.top_visible_button < self.active_idx - self.button_limit then
-    print("in set_active_idx, self.button_limit: "..self.button_limit)
     self.top_visible_button = math.max(self.active_idx - self.button_limit, 1)
   end
   if self.top_visible_button ~= top_visible_button_before then
@@ -259,7 +259,21 @@ function click_or_tap(x, y, touchpress)
         if control.visible then
           if y >= menu.y + control.y and y <= menu.y + control.y+ control.h and
           x >= menu.x + control.x and x <= menu.x + control.x + control.w then
-            print(menu_name.."'s "..control_name.." was clicked or tapped")
+            --print(menu_name.."'s "..control_name.." was clicked or tapped")
+            this_frame_keys[control_name] = true
+            
+            --this method moves the menu's index, but doesn't let you move the leaderboard up/down
+            -- if control_name == "up" then
+              -- -- menu:set_active_idx(menu.active_idx - 1)
+            -- elseif control_name == "down" then
+              -- menu:set_active_idx(menu.active_idx + 1)
+            -- end
+            
+            
+            --attempt at getting repeat of the key to work (didn't work)
+            --love:keypressed(control_name, control_name, repeating_key(control_name))
+            
+            
           end
         end
       end
