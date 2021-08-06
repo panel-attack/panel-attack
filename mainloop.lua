@@ -113,6 +113,7 @@ end
 
 do
   function main_select_mode()
+    click_menus = {}
     currently_spectating = false
     if themes[config.theme].musics["main"] then
       find_and_add_music(themes[config.theme].musics, "main")
@@ -163,6 +164,7 @@ do
     local k = K[1]
     local menu_x, menu_y = unpack(main_menu_screen_pos)
     local main_menu = Click_menu(nil, menu_x, menu_y, nil, love.graphics.getHeight()-menu_y-90, 8, 1, true, 2)
+    main_menu:show_controls(false)
     for i=1,#items do
         main_menu:add_button(items[i][1])
     end
@@ -543,7 +545,7 @@ function main_net_vs_lobby()
       end
       if msg.leaderboard_report then
         showing_leaderboard = true
-        
+        lobby_menu:show_controls(true)
         leaderboard_report = msg.leaderboard_report
         for k,v in ipairs(leaderboard_report) do
           if v.is_you then
@@ -572,7 +574,7 @@ function main_net_vs_lobby()
       for _,v in ipairs(spectatable_rooms) do
         items[#items+1] = v
       end
-      for i=1,20 do  --for testing lobby scrolling, remove this when it's implemented successfully.
+      for i=1,10 do  --for testing lobby scrolling, remove this when it's implemented successfully.
         items[#items+1] = "dummy entry "..i
       end
       if showing_leaderboard then
@@ -595,6 +597,7 @@ function main_net_vs_lobby()
       end
       
       lobby_menu = Click_menu(items_to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y, nil, love.graphics.getHeight() - lobby_menu_y - 90, 8, last_lobby_menu_active_idx)
+      lobby_menu:show_controls(false)
       lobby_menu:set_active_idx(last_active_idx)
       if active_back then
         lobby_menu:set_active_idx(#items)
@@ -653,6 +656,7 @@ function main_net_vs_lobby()
             json_send({leaderboard_request=true})
           else
             showing_leaderboard = false --toggle it off
+            lobby_menu:show_controls(false)
             lobby_menu:move(lobby_menu_x[showing_leaderboard], lobby_menu_y)
           end
         elseif lobby_menu.active_idx <= lastPlayerIndex then
@@ -673,6 +677,8 @@ function main_net_vs_lobby()
           ret = {main_select_mode}
         elseif showing_leaderboard then
           showing_leaderboard = false
+          lobby_menu:show_controls(#lobby_menu.buttons > lobby_menu.button_limit)
+          lobby_menu:move(lobby_menu_x[showing_leaderboard], lobby_menu_y)
         else
           lobby_menu:set_active_idx(#items)
         end

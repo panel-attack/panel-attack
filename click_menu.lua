@@ -11,27 +11,6 @@ Click_menu = class(function(self, list, x, y, width, height, padding, active_idx
     print("menu width at creation was "..self.width)
     self.height = height or love.graphics.getHeight()-self.y - 30 --scrolling does care about height
     self.new_item_y = 0
-    self.buttons = {}
-    self.padding = padding or 0
-    self.buttons_outlined = buttons_outlined
-    self.button_padding = button_padding or 0
-    self.background = background
-    self.new_item_y = 0
-    if list then
-      for i=1,#list or 0 do
-        self:add_button(list[i], nil, nil, nil, nil, self.buttons_outlined)
-      end
-    end
-    self.arrow = ">"
-    self.arrow_padding = 12
-    self.active = true
-    self.visible = true
-    click_menus[#click_menus+1] = self
-    self.active_idx = active_idx or 1
-    self.id = #click_menus
-    last_active_idx = self.active_idx
-    self.top_visible_button = 1
-    
     self.menu_controls = 
     {
       up = 
@@ -55,6 +34,26 @@ Click_menu = class(function(self, list, x, y, width, height, padding, active_idx
         visible=true
       }
     }
+    self.buttons = {}
+    self.padding = padding or 0
+    self.buttons_outlined = buttons_outlined
+    self.button_padding = button_padding or 0
+    self.background = background
+    self.new_item_y = 0
+    if list then
+      for i=1,#list or 0 do
+        self:add_button(list[i], nil, nil, nil, nil, self.buttons_outlined)
+      end
+    end
+    self.arrow = ">"
+    self.arrow_padding = 12
+    self.active = true
+    self.visible = true
+    click_menus[#click_menus+1] = self
+    self.active_idx = active_idx or 1
+    self.id = #click_menus
+    last_active_idx = self.active_idx
+    self.top_visible_button = 1
         
         
         
@@ -164,7 +163,7 @@ function Click_menu.layout_buttons(self)
   print("top_visible_button before "..(self.top_visible_button or "nil"))
 
   self.new_item_y = self.padding or 0
-  self.button_limit = 1 --this will increase as there is room for more buttons.
+  self.button_limit = 2 --this will increase as there is room for more buttons.
   self.top_visible_button = self.top_visible_button or 1
   for i=1,#self.buttons do
     if i < self.top_visible_button then
@@ -181,8 +180,23 @@ function Click_menu.layout_buttons(self)
       self.buttons[i].visible = false
     end
   end
+  if #self.buttons > self.button_limit then
+    self:show_controls(true)
+  end
   print("button_limit after layout: "..self.button_limit)
       
+end
+
+function Click_menu.show_controls(self, bool)
+  if bool or #self.buttons > self.button_limit then
+    for k,v in pairs(self.menu_controls) do
+      self.menu_controls[k].visible = true
+    end
+  else
+    for k,v in pairs(self.menu_controls) do
+      self.menu_controls[k].visible = false
+    end
+  end
 end
 
 function Click_menu.draw(self)
