@@ -21,7 +21,7 @@ Click_menu = class(function(self, list, x, y, width, height, padding, active_idx
         w=30,
         h=30,
         outlined=true,
-        visible=true
+        visible=false
       },
       down = 
       {
@@ -31,7 +31,7 @@ Click_menu = class(function(self, list, x, y, width, height, padding, active_idx
         w=30,
         h=30,
         outlined=true,
-        visible=true
+        visible=false
       }
     }
     self.buttons = {}
@@ -127,14 +127,15 @@ end
 function Click_menu.set_active_idx(self, idx)
   idx = wrap(1,idx,#self.buttons)
   self.active_idx = idx
+  print("setting menu active_idx: "..self.active_idx)
   local top_visible_button_before = self.top_visible_button
-  if self.active_idx <= self.top_visible_button then
+  if self.active_idx < self.top_visible_button then
     self.top_visible_button = math.max(self.active_idx, 1)
   end
-  if self.top_visible_button < self.active_idx - self.button_limit then
+  if self.active_idx > self.top_visible_button + self.button_limit then
     self.top_visible_button = math.max(self.active_idx - self.button_limit, 1)
   end
-  if self.top_visible_button ~= top_visible_button_before then
+  if self.top_visible_button ~= top_visible_button_before or not self.buttons[idx].visible then
     --self:layout_buttons()
   end
   self:layout_buttons()
@@ -160,29 +161,46 @@ end
 
 function Click_menu.layout_buttons(self)
   print("layout_buttons:")
-  print("top_visible_button before "..(self.top_visible_button or "nil"))
+  
 
   self.new_item_y = self.padding or 0
-  self.button_limit = 2 --this will increase as there is room for more buttons.
   self.top_visible_button = self.top_visible_button or 1
+  self.active_idx = self.active_idx or 1
+  if self.active_idx < self.top_visible_button then
+    self.top_visible_button = math.max(self.active_idx, 1)
+  end
+  if self.active_idx >= self.top_visible_button + (self.button_limit or 0) then
+    self.top_visible_button = math.max(self.active_idx - (self.button_limit or 0) + 1, 1)
+  end
+  --reset button limit so it can be recalculated.
+  self.button_limit = 0 --this will increase as there is room for more buttons.
+  local menu_is_full = false
   for i=1,#self.buttons do
+    print("placing button: "..i)
     if i < self.top_visible_button then
+      print("it's above top_visible_button")
       self.buttons[i].visible = false
-    elseif i <= self.top_visible_button + self.button_limit then
+    elseif not menu_is_full and self.new_item_y + self:get_button_height(i) < self.height then
+      print("it fits")
       self.buttons[i].visible = true
       self.buttons[i].x = self.button_padding
       self.buttons[i].y = self.new_item_y or 0
       self.new_item_y = self.new_item_y + self:get_button_height(i)+self.padding
-      if self.buttons[i+1] and (self.new_item_y + self:get_button_height(i+1) < self.height) then
-        self.button_limit = self.button_limit + 1
-      end
+      self.button_limit = self.button_limit + 1
+      print("button_limit: "..self.button_limit)
     else --button doesn't fit
+      print("it doesn't fit")
+      print("self.new_item_y + self:get_button_height(i): "..self.new_item_y + self:get_button_height(i))
+      print("self.height: "..self.height)
+      menu_is_full = true
       self.buttons[i].visible = false
     end
   end
   if #self.buttons > self.button_limit then
     self:show_controls(true)
   end
+  print("top_visible_button "..(self.top_visible_button or "nil"))
+  print("active_idx: ".. self.active_idx)
   print("button_limit after layout: "..self.button_limit)
       
 end

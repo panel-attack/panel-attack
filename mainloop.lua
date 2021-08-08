@@ -163,8 +163,7 @@ do
     items[#items+1] = {loc("mm_quit"), exit_game }
     local k = K[1]
     local menu_x, menu_y = unpack(main_menu_screen_pos)
-    local main_menu = Click_menu(nil, menu_x, menu_y, nil, love.graphics.getHeight()-menu_y-90, 8, 1, true, 2)
-    main_menu:show_controls(false)
+    local main_menu = Click_menu(nil, menu_x, menu_y, nil, love.graphics.getHeight()-menu_y-80, 8, 1, true, 2)
     for i=1,#items do
         main_menu:add_button(items[i][1])
     end
@@ -574,7 +573,7 @@ function main_net_vs_lobby()
       for _,v in ipairs(spectatable_rooms) do
         items[#items+1] = v
       end
-      for i=1,10 do  --for testing lobby scrolling, remove this when it's implemented successfully.
+      for i=1,11 do  --for testing lobby scrolling, remove this when it's implemented successfully.
         items[#items+1] = "dummy entry "..i
       end
       if showing_leaderboard then
@@ -597,7 +596,6 @@ function main_net_vs_lobby()
       end
       
       lobby_menu = Click_menu(items_to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y, nil, love.graphics.getHeight() - lobby_menu_y - 90, 8, last_lobby_menu_active_idx)
-      lobby_menu:show_controls(false)
       lobby_menu:set_active_idx(last_active_idx)
       if active_back then
         lobby_menu:set_active_idx(#items)
