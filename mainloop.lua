@@ -1371,7 +1371,7 @@ end
 function main_config_input()
   local pretty_names = {loc("up"), loc("down"), loc("left"), loc("right"), "A", "B", "X", "Y", "L", "R", loc("start")}
   local menu_x, menu_y = unpack(main_menu_screen_pos)
-  local input_menu = Click_menu(nil, menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 90, 8, 1, true, 2)
+  local input_menu = Click_menu(nil, menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 80, 8, 1, true, 2)
   local items = {}
   local k = K[1]
   local active_player = 1
