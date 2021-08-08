@@ -8,7 +8,6 @@ Click_menu = class(function(self, list, x, y, width, height, padding, active_idx
     self.x = x or 0
     self.y = y or 0
     self.width = width or love.graphics.getWidth()-self.x - 30 --width not used yet for scrolling
-    print("menu width at creation was "..self.width)
     self.height = height or love.graphics.getHeight()-self.y - 30 --scrolling does care about height
     self.new_item_y = 0
     self.menu_controls = 
@@ -66,7 +65,6 @@ function Click_menu.add_button(self, string_text, x, y, w, h, outlined, button_p
   self.w = w or 0
   self.h = h or 0
   if x or y then
-    print("adding fixed button: "..string_text)
     self.fixed_buttons[#self.fixed_buttons] = 
     {
       text=love.graphics.newText(menu_font, string_text),
@@ -78,7 +76,6 @@ function Click_menu.add_button(self, string_text, x, y, w, h, outlined, button_p
       current_setting = current_setting
     }
   else 
-    print("adding button: "..string_text)
     self.buttons[#self.buttons+1] = 
     {
       text=love.graphics.newText(menu_font, string_text),
@@ -127,7 +124,6 @@ end
 function Click_menu.set_active_idx(self, idx)
   idx = wrap(1,idx,#self.buttons)
   self.active_idx = idx
-  print("setting menu active_idx: "..self.active_idx)
   local top_visible_button_before = self.top_visible_button
   if self.active_idx < self.top_visible_button then
     self.top_visible_button = math.max(self.active_idx, 1)
@@ -159,9 +155,6 @@ function Click_menu.resize_to_fit(self)
 end
 
 function Click_menu.layout_buttons(self)
-  print("layout_buttons:")
-  
-
   self.new_item_y = self.padding or 0
   self.top_visible_button = self.top_visible_button or 1
   self.active_idx = self.active_idx or 1
@@ -177,12 +170,9 @@ function Click_menu.layout_buttons(self)
   self.button_limit = 0 --this will increase as there is room for more buttons.
   local menu_is_full = false
   for i=1,#self.buttons do
-    print("placing button: "..i)
     if i < self.top_visible_button then
-      print("it's above top_visible_button")
       self.buttons[i].visible = false
     elseif not menu_is_full and self.new_item_y + self:get_button_height(i) < self.height then
-      print("it fits")
       self.buttons[i].visible = true
       self.buttons[i].x = self.button_padding
       self.buttons[i].y = self.new_item_y or 0
@@ -190,22 +180,15 @@ function Click_menu.layout_buttons(self)
       self.button_limit = self.button_limit + 1
       print("button_limit: "..self.button_limit)
     else --button doesn't fit
-      print("it doesn't fit")
-      print("self.new_item_y + self:get_button_height(i): "..self.new_item_y + self:get_button_height(i))
-      print("self.height: "..self.height)
       menu_is_full = true
       self.buttons[i].visible = false
     end
   end
   if #self.buttons > self.button_limit then
-    print("menu has enough buttons to need menu controls")
     self:show_controls(true)
   else
     self:show_controls(false)
   end
-  print("top_visible_button "..(self.top_visible_button or "nil"))
-  print("active_idx: ".. self.active_idx)
-  print("button_limit after layout: "..self.button_limit)
       
 end
 
@@ -286,7 +269,6 @@ function click_or_tap(x, y, touchpress)
       for i=1, #menu.buttons do
         if y >= menu.y + menu.buttons[i].y and y <= menu.y + menu.buttons[i].y + menu:get_button_height(i) and
         x >= menu.x + menu.buttons[i].x and x <= menu.x + menu.buttons[i].x + menu:get_button_width(i) then
-          print("pressed menu item "..i)
           menu.idx_selected = i
           last_active_idx = menu_idx_selected
         end
