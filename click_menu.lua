@@ -136,9 +136,8 @@ function Click_menu.set_active_idx(self, idx)
     self.top_visible_button = math.max(self.active_idx - self.button_limit, 1)
   end
   if self.top_visible_button ~= top_visible_button_before or not self.buttons[idx].visible then
-    --self:layout_buttons()
+    self:layout_buttons()
   end
-  self:layout_buttons()
 end
 
 function Click_menu.set_current_setting(self, idx, new_setting)
@@ -166,11 +165,13 @@ function Click_menu.layout_buttons(self)
   self.new_item_y = self.padding or 0
   self.top_visible_button = self.top_visible_button or 1
   self.active_idx = self.active_idx or 1
+  self.button_limit = math.min(self.button_limit or 1, #self.buttons)
+  --scroll up or down if not showing the active button
   if self.active_idx < self.top_visible_button then
     self.top_visible_button = math.max(self.active_idx, 1)
   end
-  if self.active_idx >= self.top_visible_button + (self.button_limit or 0) then
-    self.top_visible_button = math.max(self.active_idx - (self.button_limit or 0) + 1, 1)
+  if self.active_idx >= self.top_visible_button + self.button_limit then
+    self.top_visible_button = math.max(self.active_idx - self.button_limit + 1, 1)
   end
   --reset button limit so it can be recalculated.
   self.button_limit = 0 --this will increase as there is room for more buttons.
@@ -197,7 +198,10 @@ function Click_menu.layout_buttons(self)
     end
   end
   if #self.buttons > self.button_limit then
+    print("menu has enough buttons to need menu controls")
     self:show_controls(true)
+  else
+    self:show_controls(false)
   end
   print("top_visible_button "..(self.top_visible_button or "nil"))
   print("active_idx: ".. self.active_idx)
