@@ -573,9 +573,6 @@ function main_net_vs_lobby()
       for _,v in ipairs(spectatable_rooms) do
         items[#items+1] = v
       end
-      for i=1,11 do  --for testing lobby scrolling, remove this when it's implemented successfully.
-        items[#items+1] = "dummy entry "..i
-      end
       if showing_leaderboard then
         items[#items+1] = loc("lb_hide_board")
       else

@@ -178,7 +178,6 @@ function Click_menu.layout_buttons(self)
       self.buttons[i].y = self.new_item_y or 0
       self.new_item_y = self.new_item_y + self:get_button_height(i)+self.padding
       self.button_limit = self.button_limit + 1
-      print("button_limit: "..self.button_limit)
     else --button doesn't fit
       menu_is_full = true
       self.buttons[i].visible = false
