@@ -59,10 +59,10 @@ function draw_number(number, atlas, frameCount, quads, x, y, scale, x_scale, y_s
   align = align or "left"
   mirror = mirror or 0
   
-  width = atlas:getWidth()
-  height = atlas:getHeight()
-  numberWidth = atlas:getWidth()/frameCount
-  numberHeight = atlas:getHeight()
+  local width = atlas:getWidth()
+  local height = atlas:getHeight()
+  local numberWidth = atlas:getWidth()/frameCount
+  local numberHeight = atlas:getHeight()
   
   x = x - (numberWidth*GFX_SCALE*scale)*mirror
 
