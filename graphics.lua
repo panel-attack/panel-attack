@@ -1004,11 +1004,10 @@ function Stack.render_telegraph(self)
           for _k, garbage_block in ipairs(attack.stuff_to_send) do
             local last_chain_in_queue = telegraph_to_render.garbage_queue.chain_garbage[telegraph_to_render.garbage_queue.chain_garbage.last]
             print("telegraph_to_render.garbage_queue.chain_garbage.last: "..telegraph_to_render.garbage_queue.chain_garbage.last)
-            if garbage_block[4]--[[from_chain]] and last_chain_in_queue and garbage_block[2]--[[height]] == last_chain_in_queue[2]--[[height]] then
+            if garbage_block[4]--[[from_chain]] then
               print("setting ghost_chain")
-              telegraph_to_render.garbage_queue.ghost_chain = garbage_block[2]--[[height]]
+              telegraph_to_render.garbage_queue.ghost_chain = (telegraph_to_render.garbage_queue.ghost_chain or 0) + 1
             end
-              --draw(IMG_telegraph_attack[self.character], garbage_block.desination_x, garbage_block.destination_y)
           end
         end
       end
@@ -1017,13 +1016,11 @@ function Stack.render_telegraph(self)
     -- print("BBBBBB")
     -- print("telegraph_to_render.garbage_queue.ghost_chain: "..(telegraph_to_render.garbage_queue.ghost_chain or "nil"))
     local g_queue_to_draw = telegraph_to_render.garbage_queue:mkcpy()
-    -- print("g_queue_to_draw.ghost_chain: "..(g_queue_to_draw.ghost_chain or "nil"))
+    --print("g_queue_to_draw.ghost_chain: "..(g_queue_to_draw.ghost_chain or "nil"))
     local current_block = g_queue_to_draw:pop()
     local draw_x = telegraph_to_render.pos_x
     local draw_y = telegraph_to_render.pos_y
-    if telegraph_to_render.garbage_queue.ghost_chain then
-      draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images[telegraph_to_render.garbage_queue.ghost_chain][6], draw_x, draw_y)
-    end
+
     while current_block do
       --TODO: create a way to draw telegraphs from right to left
       if self.CLOCK - current_block.frame_earned >= GARBAGE_TRANSIT_TIME then
@@ -1036,6 +1033,10 @@ function Stack.render_telegraph(self)
       draw_x = draw_x + TELEGRAPH_BLOCK_WIDTH
       current_block = g_queue_to_draw:pop()
     end
+  end
+  if telegraph_to_render.garbage_queue.ghost_chain then
+    print("SHOULD BE DRAWING GHOST_CHAIN - SIZE: "..telegraph_to_render.garbage_queue.ghost_chain)
+    draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images[telegraph_to_render.garbage_queue.ghost_chain][6], telegraph_to_render.pos_x, telegraph_to_render.pos_y)
   end
 
 end
