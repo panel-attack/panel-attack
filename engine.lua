@@ -418,6 +418,7 @@ function GarbageQueue.push(self, garbage)
             print("adding it to the chain garbage queue anyway")
           end
           self.chain_garbage:push(v)
+          self.ghost_chain = nil
         else
           self.combo_garbage[width]:push(v)
         end
