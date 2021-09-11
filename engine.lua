@@ -2196,7 +2196,7 @@ function Stack.handle_copy(self)
 
     local macClipboardHandle = io.popen("pbcopy","w")
     macClipboardHandle:write(puzzleString)
-    macClipboardHandle.close()
+    macClipboardHandle:close()
 
     local winClipboardHandle = io.popen("clip","w")
     winClipboardHandle:write(puzzleString)
