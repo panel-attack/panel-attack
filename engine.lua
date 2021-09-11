@@ -2188,7 +2188,6 @@ end
   end
 end--]]
 
-
 function Stack.handle_copy(self)
   print_list(keys)
   print_list(this_frame_keys)
@@ -2206,11 +2205,10 @@ function Stack.handle_copy(self)
 end
 
 function Stack.toPuzzleString(self)
-  local panels = self.panels
   local panelString = ""
-  for i=#panels,1,-1 do
-      for j=1,#panels[1] do
-          panelString = panelString.. (tostring(panels[i][j].color))
+  for i=#self.panels,1,-1 do
+      for j=1,#self.panels[1] do
+          panelString = panelString .. (tostring(self.panels[i][j].color))
       end
   end
   return panelString
