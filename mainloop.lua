@@ -836,6 +836,7 @@ function main_net_vs()
           else
             P1:local_run()
           end
+          P1:handle_copy()
         end
         if not P2.game_over then
           P2:foreign_run()
