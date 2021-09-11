@@ -2194,26 +2194,24 @@ function Stack.handle_copy(self)
   print_list(this_frame_keys)
   if (keys["lctrl"] or keys["rctrl"]) and this_frame_keys["c"] then
     local puzzleString = self:toPuzzleString()
+
     local macClipboardHandle = io.popen("pbcopy","w")
     macClipboardHandle:write(puzzleString)
     macClipboardHandle.close()
+
     local winClipboardHandle = io.popen("clip","w")
     winClipboardHandle:write(puzzleString)
     winClipboardHandle:close()
-
-    
   end
 end
 
 function Stack.toPuzzleString(self)
-  if self then
-    local panels = self.panels
-    local panelString = ""
-    for i=#panels,1,-1 do
-        for j=1,#panels[1] do
-            panelString = panelString.. (tostring(panels[i][j].color))
-        end
-    end
-    return panelString
+  local panels = self.panels
+  local panelString = ""
+  for i=#panels,1,-1 do
+      for j=1,#panels[1] do
+          panelString = panelString.. (tostring(panels[i][j].color))
+      end
   end
+  return panelString
 end
