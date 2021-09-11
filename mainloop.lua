@@ -372,9 +372,10 @@ function main_endless(...)
       analytics.game_ends()
       return main_dumb_transition, {main_select_mode, end_text, 0, -1, P1:pick_win_sfx()}
     end
-    variable_step(function() 
-      P1:local_run() 
-      P1:handle_pause() 
+    variable_step(function()
+      P1:local_run()
+      P1:handle_pause()
+      P1:handle_copy()
     end)
     --groundhogday mode
     --[[if P1.CLOCK == 1001 then
@@ -408,9 +409,10 @@ function main_time_attack(...)
     end
     variable_step(function()
       if not P1.game_over and P1.game_stopwatch and P1.game_stopwatch < 120 * 60 then
-        P1:local_run() 
+        P1:local_run()
         P1:handle_pause()
-      end 
+        P1:handle_copy()
+      end
     end)
   end
 end
@@ -821,6 +823,7 @@ function main_net_vs()
         else
           P1:local_run()
         end
+        P1:handle_copy()
       end
       if not P2.game_over then
         P2:foreign_run()
@@ -922,6 +925,7 @@ function main_local_vs()
           P2:local_run()
           P1:handle_pause()
           P2:handle_pause()
+          P1:handle_copy()
         end
       end)
     local winSFX = nil
@@ -968,6 +972,7 @@ function main_local_vs_yourself()
         if not P1.game_over then
           P1:local_run()
           P1:handle_pause()
+          P1:handle_copy()
         else
           end_text = loc("pl_gameover")
         end
@@ -1061,6 +1066,7 @@ function main_replay_vs()
         if not P1.game_over then
           P1:foreign_run()
           P1:handle_pause()
+          P1:handle_copy()
         end
         if not P2.game_over then
           P2:foreign_run()
@@ -1139,6 +1145,7 @@ function main_replay_endless()
         end
         P1:foreign_run()
         P1:handle_pause()
+        P1:handle_copy()
       end
     end)
     if ret then
@@ -1193,6 +1200,7 @@ function main_replay_puzzle()
         end
         P1:foreign_run()
         P1:handle_pause()
+        P1:handle_copy()
       end
     end)
     if ret then
@@ -1251,6 +1259,7 @@ function make_main_puzzle(puzzles)
               P1.puzzle_moves ~= 0 then
             P1:local_run()
             P1:handle_pause()
+            P1:handle_copy()
           end
         end
       end)
