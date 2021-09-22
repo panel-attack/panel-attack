@@ -1006,10 +1006,10 @@ function main_replay_vs()
   P1.garbage_target = P2
   P2.garbage_target = P1
   move_stack(P2,2)
-  P1.input_buffer = replay.in_buf
+  P1.input_buffer = uncompressInputStr(replay.in_buf)
   P1.panel_buffer = replay.P
   P1.gpanel_buffer = replay.Q
-  P2.input_buffer = replay.I
+  P2.input_buffer = uncompressInputStr(replay.I)
   P2.panel_buffer = replay.O
   P2.gpanel_buffer = replay.R
   P1.max_runs_per_frame = 1
@@ -1243,6 +1243,7 @@ function make_main_puzzle(puzzles)
                 ret = {main_dumb_transition, {next_func, loc("pl_you_win"), 30, -1, P1:pick_win_sfx()}}
               end
             elseif P1.puzzle_moves == 0 then
+              
               write_replay_file()
               ret = {main_dumb_transition, {main_select_puzz, loc("pl_you_lose"), 30, -1}}
             end

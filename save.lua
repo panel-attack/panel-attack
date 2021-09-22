@@ -133,6 +133,28 @@ function write_replay_file(path, filename) pcall(function()
     file = love.filesystem.newFile("replay.txt")
   end
   file:open("w")
+  print("Writing to Replay File")
+  if replay.puzzle~=nil then
+    replay.puzzle.in_buf=compressInputStr(replay.puzzle.in_buf)
+    print("Compressed puzzle in_buf")
+    print(replay.puzzle.in_buf)
+  else
+    print("No Puzzle")
+  end
+  if replay.endless~=nil then
+    replay.endless.in_buf=compressInputStr(replay.endless.in_buf)
+    print("Compressed endless in_buf")
+    print(replay.endless.in_buf)
+  else
+    print("No Endless")
+  end
+  if replay.vs~=nil then
+    replay.vs.I=compressInputStr(replay.vs.I)
+    replay.vs.in_buf=compressInputStr(replay.vs.in_buf)
+    print("Compressed vs I/in_buf")
+  else
+  print("No vs")
+  end
   file:write(json.encode(replay))
   file:close()
 end) end
