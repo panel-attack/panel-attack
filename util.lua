@@ -244,7 +244,6 @@ end
 
 
 function compressInputStr (inStr)
-
     if string.match(inStr,"%d+") then
       return inStr
     else
@@ -268,13 +267,10 @@ end
 
 
 function uncompressInputStr (compressedStr)
-    
     if string.match(compressedStr,"%a%a") then
-        
       return compressedStr
     else
     local ucStr=""
-      
       for w in string.gmatch(compressedStr, "%a%d+") do
         local inputChar = string.match(w,"%a")
         ucStr=ucStr..string.rep(inputChar,string.match(w,"%d+"))
