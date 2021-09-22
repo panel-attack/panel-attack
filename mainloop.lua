@@ -1243,7 +1243,6 @@ function make_main_puzzle(puzzles)
                 ret = {main_dumb_transition, {next_func, loc("pl_you_win"), 30, -1, P1:pick_win_sfx()}}
               end
             elseif P1.puzzle_moves == 0 then
-              
               write_replay_file()
               ret = {main_dumb_transition, {main_select_puzz, loc("pl_you_lose"), 30, -1}}
             end
