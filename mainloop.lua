@@ -359,9 +359,11 @@ function main_endless(...)
   replay.gpan_buf = ""
   replay.mode = "endless"
   P1 = Stack(1, "endless", config.panels, ...)
+  P1.is_local = true
   P1:wait_for_random_character()
   P1.do_countdown = config.ready_countdown_1P or false
   P1.enable_analytics = true
+  P2 = nil
   replay.do_countdown = P1.do_countdown or false
   replay.speed = P1.speed
   replay.difficulty = P1.difficulty
@@ -381,10 +383,10 @@ function main_endless(...)
       write_replay_file()
       local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
       analytics.game_ends()
-      return main_dumb_transition, {main_select_mode, end_text, 0, -1, P1:pick_win_sfx()}
+      return game_over_transition, {main_select_mode, end_text, P1:pick_win_sfx()}
     end
     variable_step(function() 
-      P1:local_run() 
+      P1:run() 
       P1:handle_pause() 
     end)
     --groundhogday mode
@@ -400,10 +402,12 @@ function main_time_attack(...)
   pick_random_stage()
   pick_use_music_from()
   P1 = Stack(1, "time", config.panels, ...)
+  P1.is_local = true
   P1:wait_for_random_character()
   P1.enable_analytics = true
   make_local_panels(P1, "000000")
   P1:starting_state()
+  P2 = nil
   while true do
     if game_is_paused then
       draw_pause()
@@ -411,15 +415,15 @@ function main_time_attack(...)
       P1:render()
     end
     wait()
-    if P1.game_over or (P1.game_stopwatch and P1.game_stopwatch == 120*60) then
+    if P1.game_over or (P1.game_stopwatch and P1.game_stopwatch >= time_attack_time*60) then
     -- TODO: proper game over.
       local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch))
       analytics.game_ends()
-      return main_dumb_transition, {main_select_mode, end_text, 30, -1, P1:pick_win_sfx()}
+      return game_over_transition, {main_select_mode, end_text, P1:pick_win_sfx()}
     end
     variable_step(function()
-      if not P1.game_over and P1.game_stopwatch and P1.game_stopwatch < 120 * 60 then
-        P1:local_run() 
+      if not P1.game_over and P1.game_stopwatch and P1.game_stopwatch < time_attack_time * 60 then
+        P1:run() 
         P1:handle_pause()
       end 
     end)
@@ -768,7 +772,6 @@ function main_net_vs()
   end
   pick_use_music_from()
   local k = K[1]  --may help with spectators leaving games in progress
-  local end_text = nil
   local op_name_y = 40
   if string.len(my_name) > 12 then
         op_name_y = 55
@@ -863,46 +866,34 @@ function main_net_vs()
 
     --print(P1.CLOCK, P2.CLOCK)
     if (P1 and P1.play_to_end) or (P2 and P2.play_to_end) then
-      if not P1.game_over then
-        if currently_spectating then
-          P1:foreign_run()
-        else
-          P1:local_run()
-        end
-      end
-      if not P2.game_over then
-        P2:foreign_run()
-      end
+      P1:run()
+      P2:run()
     else
       variable_step(function()
-        if not P1.game_over then
-          if currently_spectating then
-              P1:foreign_run()
-          else
-            P1:local_run()
-          end
-        end
-        if not P2.game_over then
-          P2:foreign_run()
-        end
+        P1:run()
+        P2:run()
       end)
     end
 
     local outcome_claim = nil
     local winSFX = nil
-    if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
-      end_text = loc("ss_draw")
-      outcome_claim = 0
-    elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
-      winSFX = P2:pick_win_sfx()
-      end_text = loc("ss_p_wins", op_name)
-      op_win_count = op_win_count + 1 -- leaving these in just in case used with an old server that doesn't keep score.  win_counts will get overwritten after this by the server anyway.
-      outcome_claim = P2.player_number
-    elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
-      winSFX = P1:pick_win_sfx()
-      end_text = loc("ss_p_wins", my_name)
-      my_win_count = my_win_count + 1 -- leave this in
-      outcome_claim = P1.player_number
+    local end_text = nil
+    -- We can't call it until someone has lost and everyone has played up to that point in time.
+    if GAME_ENDED_CLOCK > 0 and P1.CLOCK >= GAME_ENDED_CLOCK and P2.CLOCK >= GAME_ENDED_CLOCK then
+      if P1.game_over_clock == GAME_ENDED_CLOCK and P2.game_over_clock == GAME_ENDED_CLOCK then
+        end_text = loc("ss_draw")
+        outcome_claim = 0
+      elseif P1.game_over_clock == GAME_ENDED_CLOCK then
+        winSFX = P2:pick_win_sfx()
+        end_text = loc("ss_p_wins", op_name)
+        op_win_count = op_win_count + 1 -- leaving these in just in case used with an old server that doesn't keep score.  win_counts will get overwritten after this by the server anyway.
+        outcome_claim = P2.player_number
+      elseif P2.game_over_clock == GAME_ENDED_CLOCK then
+        winSFX = P1:pick_win_sfx()
+        end_text = loc("ss_p_wins", my_name)
+        my_win_count = my_win_count + 1 -- leave this in
+        outcome_claim = P1.player_number
+      end
     end
     if end_text then
       analytics.game_ends()
@@ -934,9 +925,9 @@ function main_net_vs()
       write_replay_file()
       select_screen.character_select_mode = "2p_net_vs"
       if currently_spectating then
-        return main_dumb_transition, {select_screen.main, end_text, 30, 30, winSFX}
+        return game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}
       else
-        return main_dumb_transition, {select_screen.main, end_text, 30, 180, winSFX}
+        return game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}
       end
     end
   end
@@ -965,28 +956,34 @@ function main_local_vs()
     end
     wait()
     variable_step(function()
-        if not P1.game_over and not P2.game_over then
-          P1:local_run()
-          P2:local_run()
-          P1:handle_pause()
-          P2:handle_pause()
-        end
+        P1:run()
+        P2:run()
+        P1:handle_pause()
+        P2:handle_pause()
       end)
+
+    --TODO: refactor this so it isn't duplicated
     local winSFX = nil
-    if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
-      end_text = loc("ss_draw")
-    elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
-      winSFX = P2:pick_win_sfx()
-      op_win_count = op_win_count + 1
-      end_text = loc("pl_2_win")
-    elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
-      winSFX = P1:pick_win_sfx()
-      my_win_count = my_win_count + 1
-      end_text = loc("pl_1_win")
+    local end_text = nil
+    -- We can't call it until someone has lost and everyone has played up to that point in time.
+    if GAME_ENDED_CLOCK > 0 and P1.CLOCK >= GAME_ENDED_CLOCK and P2.CLOCK >= GAME_ENDED_CLOCK then
+      if P1.game_over_clock == GAME_ENDED_CLOCK and P2.game_over_clock == GAME_ENDED_CLOCK then
+        end_text = loc("ss_draw")
+        outcome_claim = 0
+      elseif P1.game_over_clock == GAME_ENDED_CLOCK then
+        winSFX = P2:pick_win_sfx()
+        end_text = loc("pl_2_win", op_name)
+        op_win_count = op_win_count + 1 
+      elseif P2.game_over_clock == GAME_ENDED_CLOCK then
+        winSFX = P1:pick_win_sfx()
+        end_text = loc("pl_1_win", my_name)
+        my_win_count = my_win_count + 1
+      end
     end
+    
     if end_text then
       analytics.game_ends()
-      return main_dumb_transition, {select_screen.main, end_text, 45, -1, winSFX}
+      return game_over_transition, {select_screen.main, end_text, winSFX}
     end
   end
 end
@@ -1014,7 +1011,7 @@ function main_local_vs_yourself()
     wait()
     variable_step(function()
         if not P1.game_over then
-          P1:local_run()
+          P1:run()
           P1:handle_pause()
         else
           end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch))
@@ -1022,7 +1019,7 @@ function main_local_vs_yourself()
       end)
     if end_text then
       analytics.game_ends()
-      return main_dumb_transition, {select_screen.main, end_text, 45, -1, P1:pick_win_sfx()}
+      return game_over_transition, {select_screen.main, end_text, P1:pick_win_sfx()}
     end
   end
 end
@@ -1047,7 +1044,9 @@ function main_replay_vs()
   pick_use_music_from()
   select_screen.fallback_when_missing = { nil, nil }
   P1 = Stack(1, "vs", config.panels, replay.P1_level or 5)
+  P1.is_local = false
   P2 = Stack(2, "vs", config.panels, replay.P2_level or 5)
+  P2.is_local = false
   P1.do_countdown = replay.do_countdown or false
   P2.do_countdown = replay.do_countdown or false
   P1.ice = true
@@ -1106,38 +1105,42 @@ function main_replay_vs()
         run = false
       end
       if run or this_frame_keys["\\"] then
-        if not P1.game_over then
-          P1:foreign_run()
-          P1:handle_pause()
-        end
-        if not P2.game_over then
-          P2:foreign_run()
-        end
+        P1:run()
+        P1:handle_pause()
+        P2:run()
       end
     end)
     if ret then
       return unpack(ret)
     end
     local winSFX = nil
-    if P1.game_over and P2.game_over and P1.CLOCK == P2.CLOCK then
-      end_text = loc("ss_draw")
-    elseif P1.game_over and P1.CLOCK <= P2.CLOCK then
-      winSFX = P2:pick_win_sfx()
-      if replay.P2_name and replay.P2_name ~= "anonymous" then
-        end_text = loc("ss_p_wins", replay.P2_name)
-      else
-        end_text = loc("pl_2_win")
-      end
-    elseif P2.game_over and P2.CLOCK <= P1.CLOCK then
-      winSFX = P1:pick_win_sfx()
-      if replay.P1_name and replay.P1_name ~= "anonymous" then
-        end_text = loc("ss_p_wins", replay.P1_name)
-      else
-        end_text = loc("pl_1_win")
+
+    --TODO: refactor this so it isn't duplicated
+    local winSFX = nil
+    local end_text = nil
+    -- We can't call it until someone has lost and everyone has played up to that point in time.
+    if GAME_ENDED_CLOCK > 0 and P1.CLOCK >= GAME_ENDED_CLOCK and P2.CLOCK >= GAME_ENDED_CLOCK then
+      if P1.game_over_clock == GAME_ENDED_CLOCK and P2.game_over_clock == GAME_ENDED_CLOCK then
+        end_text = loc("ss_draw")
+      elseif P1.game_over_clock == GAME_ENDED_CLOCK then
+        winSFX = P2:pick_win_sfx()
+        if replay.P2_name and replay.P2_name ~= "anonymous" then
+          end_text = loc("ss_p_wins", replay.P2_name)
+        else
+          end_text = loc("pl_2_win")
+        end
+      elseif P2.game_over_clock == GAME_ENDED_CLOCK then
+        winSFX = P1:pick_win_sfx()
+        if replay.P1_name and replay.P1_name ~= "anonymous" then
+          end_text = loc("ss_p_wins", replay.P1_name)
+        else
+          end_text = loc("pl_1_win")
+        end
       end
     end
+
     if end_text then
-      return main_dumb_transition, {main_select_mode, end_text, 0, -1, winSFX}
+      return game_over_transition, {main_select_mode, end_text, 0, -1, winSFX}
     end
   end
 end
@@ -1151,6 +1154,7 @@ function main_replay_endless()
   pick_random_stage()
   pick_use_music_from()
   P1 = Stack(1, "endless", config.panels, replay.speed, replay.difficulty)
+  P1.is_local = false
   P1:wait_for_random_character()
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
@@ -1161,6 +1165,7 @@ function main_replay_endless()
   P1.difficulty = replay.difficulty
   P1.cur_wait_time = replay.cur_wait_time or default_input_repeat_delay
   P1:starting_state()
+  P2 = nil
   local run = true
   while true do
     P1:render()
@@ -1183,9 +1188,9 @@ function main_replay_endless()
         if P1.game_over then
         -- TODO: proper game over.
           local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
-          ret = {main_dumb_transition, {main_select_mode, end_text, 30, -1, P1:pick_win_sfx()}}
+          ret = {game_over_transition, {main_select_mode, end_text, P1:pick_win_sfx()}}
         end
-        P1:foreign_run()
+        P1:run()
         P1:handle_pause()
       end
     end)
@@ -1204,12 +1209,14 @@ function main_replay_puzzle()
   pick_random_stage()
   pick_use_music_from()
   P1 = Stack(1, "puzzle", config.panels)
+  P1.is_local = false
   P1:wait_for_random_character()
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
   P1.input_buffer = replay.in_buf
   P1.cur_wait_time = replay.cur_wait_time or default_input_repeat_delay
   P1:set_puzzle_state(unpack(replay.puzzle))
+  P2 = nil
   local run = true
   while true do
     debug_mouse_panel = nil
@@ -1239,7 +1246,7 @@ function main_replay_puzzle()
             ret = {main_dumb_transition, {main_select_mode, loc("pl_you_lose"), 30, -1}}
           end
         end
-        P1:foreign_run()
+        P1:run()
         P1:handle_pause()
       end
     end)
@@ -1258,8 +1265,10 @@ function make_main_puzzle(puzzles)
     replay.puzzle = {}
     local replay = replay.puzzle
     P1 = Stack(1, "puzzle", config.panels)
+    P1.is_local = true
     P1:wait_for_random_character()
     P1.do_countdown = config.ready_countdown_1P or false
+    P2 = nil
     local start_delay = 0
     if awesome_idx == nil then
       awesome_idx = math.random(#puzzles)
@@ -1297,7 +1306,7 @@ function make_main_puzzle(puzzles)
           end
           if P1.n_active_panels ~= 0 or P1.prev_active_panels ~= 0 or
               P1.puzzle_moves ~= 0 then
-            P1:local_run()
+            P1:run()
             P1:handle_pause()
           end
         end
@@ -1628,26 +1637,10 @@ function fullscreen()
 end
 
 function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
-  if P1 and P1.character then
-    characters[P1.character]:stop_sounds()
-  end
-  if P2 and P2.character then
-    characters[P2.character]:stop_sounds()
-  end
-  love.audio.stop()
-  stop_the_music()
-  reset_filters()
-  game_is_paused = false
-  winnerSFX = winnerSFX or nil
-  if not SFX_mute then
-    if winnerSFX ~= nil then
-      winnerSFX:play()
-    elseif SFX_GameOver_Play == 1 then
-      themes[config.theme].sounds.game_over:play()
-    end
-  end
-  SFX_GameOver_Play = 0
+  common_transition_actions()
+  
 
+  reset_filters()
   text = text or ""
   timemin = timemin or 0
   timemax = timemax or -1 -- negative values means the user needs to press enter/escape to continue
@@ -1659,6 +1652,74 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
     wait()
     local ret = nil
     variable_step(function()
+      if t >= timemin and ( (t >=timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) then
+        ret = {next_func}
+      end
+      t = t + 1
+      --if TCP_sock then
+      --  if not do_messages() then
+      --    -- do something? probably shouldn't drop back to the main menu transition since we're already here
+      --  end
+      --end
+    end)
+    if ret then
+      return unpack(ret)
+    end
+  end
+end
+
+function common_transition_actions()
+  if P1 and P1.character then
+    characters[P1.character]:stop_sounds()
+  end
+  if P2 and P2.character then
+    characters[P2.character]:stop_sounds()
+  end
+  love.audio.stop()
+  stop_the_music()
+  game_is_paused = false
+  winnerSFX = winnerSFX or nil
+  if not SFX_mute then
+    if winnerSFX ~= nil then
+      winnerSFX:play()
+    elseif SFX_GameOver_Play == 1 then
+      themes[config.theme].sounds.game_over:play()
+    end
+  end
+  SFX_GameOver_Play = 0
+end
+
+function game_over_transition(next_func, text, winnerSFX, timemax)
+  common_transition_actions()
+
+  timemax = timemax or -1 -- negative values means the user needs to press enter/escape to continue
+  text = text or ""
+  button_text = loc("continue_button")
+  button_text = button_text or ""
+
+  timemin = 90
+
+  local t = 0
+  local k = K[1]
+  local font = love.graphics.getFont()
+  while true do
+    if P1 then
+      P1:render()
+    end
+    if P2 then
+      P2:render()
+    end
+    gprint(text, (canvas_width-font:getWidth(text))/2, (canvas_height-font:getHeight(text))/2)
+    gprint(button_text, (canvas_width-font:getWidth(button_text))/2, ((canvas_height-font:getHeight(button_text))/2) + 30)
+    wait()
+    local ret = nil
+    variable_step(function()
+      if P1 then
+        P1:run()
+      end
+      if P2 then
+        P2:run()
+      end
       if t >= timemin and ( (t >=timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) then
         ret = {next_func}
       end
