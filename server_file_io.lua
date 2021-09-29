@@ -73,13 +73,17 @@ function write_leaderboard_file() pcall(function()
   --local csv = "user_id,user_name,rating,placement_done,placement_rating,ranked_games_played,ranked_games_won"
   local sep = package.config:sub(1, 1)
   local leaderboard_table = {}
+  local public_leaderboard_table = {}
   leaderboard_table[#leaderboard_table+1] = {"user_id","user_name","rating","placement_done","placement_rating","ranked_games_played","ranked_games_won"}
-  
+  public_leaderboard_table[#public_leaderboard_table+1] = {"user_name","rating","ranked_games_played"} --excluding ranked_games_won for now because it doesn't track properly, and user_id because they are secret.
   for user_id,v in pairs(leaderboard.players) do
     leaderboard_table[#leaderboard_table+1] = 
     {user_id, v.user_name,v.rating,tostring(v.placement_done or ""),v.placement_rating,v.ranked_games_played,v.ranked_games_won}
+    public_leaderboard_table[#public_leaderboard_table+1] = 
+    {v.user_name,v.rating,v.ranked_games_played}
   end
   csvfile.write('.'..sep..'leaderboard.csv', leaderboard_table)
+  csvfile.write('.'..sep..'ftp'..sep..'PA_public_leaderboard.csv', public_leaderboard_table)
 end) end
 
 
