@@ -1175,6 +1175,8 @@ function Stack.PdP(self)
               -- Any panels sitting on top of it
               -- hover and are flagged as CHAINING
               self:set_hoverers(row+1,col,self.FRAMECOUNT_HOVER+1,true,false,true, "popped")
+            elseif panel.state == "dead" then
+              -- Nothing to do here, the player lost.
             else
               -- what the heck.
               -- if a timer runs out and the routine can't
