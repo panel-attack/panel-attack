@@ -365,7 +365,7 @@ function main_endless(...)
       P1:render()
     end
     wait()
-    if P1.game_over then
+    if P1.game_over or this_frame_keys["escape"] then
     -- TODO: proper game over.
       write_replay_file()
       local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
