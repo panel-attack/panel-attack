@@ -411,7 +411,7 @@ multi_shakeQuad = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_mu
 	draw(themes[config.theme].images.IMG_wall2P, 4, 4 - shake + self.height*16)
   end
 
-  if GAME_ENDED_CLOCK == 0 or self.CLOCK <= GAME_ENDED_CLOCK then
+  if self:game_ended() == false then
     self:render_cursor()
   end
 

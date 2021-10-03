@@ -34,6 +34,11 @@ function update_music()
   end
 end
 
+function stop_all_audio()
+  love.audio.stop()
+  stop_the_music()
+end
+
 function stop_the_music()
   print("musics have been stopped")
   for k, v in pairs(currently_playing_tracks) do
@@ -41,6 +46,14 @@ function stop_the_music()
     currently_playing_tracks[k] = nil
   end
   music_t = {}
+end
+
+function set_music_fade_percentage(percentage)
+  --print(debug.traceback(""))
+  --print(percentage * config.music_volume / 100)
+  for k, v in pairs(currently_playing_tracks) do
+    v:setVolume(percentage * config.music_volume / 100)
+  end
 end
 
 local function make_music_t(source, loop)

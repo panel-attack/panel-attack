@@ -1579,8 +1579,7 @@ function main_music_test()
   end
 
   -- stop main music
-  love.audio.stop()
-  stop_the_music()
+  stop_all_audio()
 
   -- initial song starts here
   find_and_add_music(tracks[index].is_character and characters[tracks[index].id].musics or stages[tracks[index].id].musics, tracks[index].type)
@@ -1637,7 +1636,25 @@ function fullscreen()
 end
 
 function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
-  common_transition_actions()
+  if P1 and P1.character then
+    characters[P1.character]:stop_sounds()
+  end
+  if P2 and P2.character then
+    characters[P2.character]:stop_sounds()
+  end
+  game_is_paused = false
+  stop_all_audio()
+  winnerSFX = winnerSFX or nil
+  if not SFX_mute then
+    -- TODO: somehow winnerSFX can be 0 instead of nil
+    if winnerSFX ~= nil and winnerSFX ~= 0 then
+      winnerSFX:play()
+    elseif SFX_GameOver_Play == 1 then
+      print(debug.traceback(""))
+      themes[config.theme].sounds.game_over:play()
+    end
+  end
+  SFX_GameOver_Play = 0
   
 
   reset_filters()
@@ -1668,40 +1685,25 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
   end
 end
 
-function common_transition_actions()
-  if P1 and P1.character then
-    characters[P1.character]:stop_sounds()
-  end
-  if P2 and P2.character then
-    characters[P2.character]:stop_sounds()
-  end
-  love.audio.stop()
-  stop_the_music()
-  game_is_paused = false
-  winnerSFX = winnerSFX or nil
-  if not SFX_mute then
-    if winnerSFX ~= nil then
-      winnerSFX:play()
-    elseif SFX_GameOver_Play == 1 then
-      themes[config.theme].sounds.game_over:play()
-    end
-  end
-  SFX_GameOver_Play = 0
-end
-
 function game_over_transition(next_func, text, winnerSFX, timemax)
-  common_transition_actions()
+  game_is_paused = false
 
   timemax = timemax or -1 -- negative values means the user needs to press enter/escape to continue
   text = text or ""
   button_text = loc("continue_button")
   button_text = button_text or ""
 
-  timemin = 90
+  timemin = 60
 
   local t = 0
   local k = K[1]
   local font = love.graphics.getFont()
+
+  if SFX_GameOver_Play == 1 then
+      themes[config.theme].sounds.game_over:play()
+      SFX_GameOver_Play = 0
+  end
+
   while true do
     if P1 then
       P1:render()
@@ -1714,6 +1716,29 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
     wait()
     local ret = nil
     variable_step(function()
+
+      -- Fade the music out over time
+      local fadeMusicLength = 3 * 60
+      if t <= fadeMusicLength then
+        set_music_fade_percentage((fadeMusicLength-t)/fadeMusicLength)
+      else
+        stop_the_music()
+        set_music_fade_percentage(1) -- reset the music back to normal config volume
+      end
+
+      -- Play the winner sound effect after a delay
+      winnerSFX = winnerSFX or nil
+      if not SFX_mute then
+        local winnerTime = 60
+        if t >= winnerTime then
+          -- TODO: somehow winnerSFX can be 0 instead of nil
+          if winnerSFX ~= nil and winnerSFX ~= 0 then
+            print(winnerSFX)
+            winnerSFX:play()
+          end
+        end
+      end
+      
       if P1 then
         P1:run()
       end
@@ -1721,14 +1746,12 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
         P2:run()
       end
       if t >= timemin and ( (t >=timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) then
+        stop_all_audio()
+        set_music_fade_percentage(1) -- reset the music back to normal config volume
+        SFX_GameOver_Play = 0
         ret = {next_func}
       end
       t = t + 1
-      --if TCP_sock then
-      --  if not do_messages() then
-      --    -- do something? probably shouldn't drop back to the main menu transition since we're already here
-      --  end
-      --end
     end)
     if ret then
       return unpack(ret)

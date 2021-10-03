@@ -631,7 +631,7 @@ function Stack.run(self)
   -- game over effects.
   local times_to_run = 1
   if self.is_local == false then
-    if GAME_ENDED_CLOCK == 0 or self.CLOCK <= GAME_ENDED_CLOCK then
+    if self:game_ended() == false then
       times_to_run = 0
     end
 
@@ -667,7 +667,7 @@ function Stack.run(self)
       else 
         -- Set input state to no input?
       end
-    elseif GAME_ENDED_CLOCK == 0 or self.CLOCK <= GAME_ENDED_CLOCK then
+    elseif self:game_ended() == false then
       self.input_state = self:send_controls()
     end
     self:prep_rollback()
@@ -716,8 +716,7 @@ local d_row = {up=1, down=-1, left=0, right=0}
 function Stack.PdP(self)
 
   -- Don't run the main logic if the player has simulated past one of the game overs or the time attack time
-  if (GAME_ENDED_CLOCK == 0 or self.CLOCK <= GAME_ENDED_CLOCK) and (self.mode ~= "time" or (self.game_stopwatch and self.game_stopwatch < time_attack_time*60)) then
-
+  if self:game_ended() == false then
     local panels = self.panels
     local width = self.width
     local height = self.height
@@ -1433,45 +1432,49 @@ function Stack.PdP(self)
       end
     end
     
-    --Play Sounds / music
+    -- Update Music
     if not music_mute and not game_is_paused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
 
-      if self.do_countdown then 
-        if SFX_Go_Play == 1 then
-          themes[config.theme].sounds.go:stop()
-          themes[config.theme].sounds.go:play()
-          SFX_Go_Play=0
-        elseif SFX_Countdown_Play == 1 then
-          themes[config.theme].sounds.countdown:stop()
-          themes[config.theme].sounds.countdown:play()
-          SFX_Go_Play=0
-        end
-      
-      else
-        local musics_to_use = (current_use_music_from == "stage") and stages[current_stage].musics or characters[winningPlayer().character].musics
-        if not musics_to_use["normal_music"] then -- use the other one as fallback
-          musics_to_use = (current_use_music_from ~= "stage") and stages[current_stage].musics or characters[winningPlayer().character].musics
-        end
-        if (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
-          if (current_music_is_casual or table.getn(currently_playing_tracks) == 0) 
-            and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
-            stop_the_music()
-            find_and_add_music(musics_to_use, "danger_music")
-            current_music_is_casual = false
-          elseif table.getn(currently_playing_tracks) == 0 and musics_to_use["normal_music"] then
-            stop_the_music()
-            find_and_add_music(musics_to_use, "normal_music")
-            current_music_is_casual = true
+      if self:game_ended() == false then 
+        if self.do_countdown then 
+          if SFX_Go_Play == 1 then
+            themes[config.theme].sounds.go:stop()
+            themes[config.theme].sounds.go:play()
+            SFX_Go_Play=0
+          elseif SFX_Countdown_Play == 1 then
+            themes[config.theme].sounds.countdown:stop()
+            themes[config.theme].sounds.countdown:play()
+            SFX_Go_Play=0
           end
-        else --we should be playing normal_music or normal_music_start
-          if (not current_music_is_casual or table.getn(currently_playing_tracks) == 0) and musics_to_use["normal_music"] then
-            stop_the_music()
-            find_and_add_music(musics_to_use, "normal_music")
-            current_music_is_casual = true
+        
+        else
+          local musics_to_use = (current_use_music_from == "stage") and stages[current_stage].musics or characters[winningPlayer().character].musics
+          if not musics_to_use["normal_music"] then -- use the other one as fallback
+            musics_to_use = (current_use_music_from ~= "stage") and stages[current_stage].musics or characters[winningPlayer().character].musics
+          end
+          if (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
+            if (current_music_is_casual or table.getn(currently_playing_tracks) == 0) 
+              and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
+              stop_the_music()
+              find_and_add_music(musics_to_use, "danger_music")
+              current_music_is_casual = false
+            elseif table.getn(currently_playing_tracks) == 0 and musics_to_use["normal_music"] then
+              stop_the_music()
+              find_and_add_music(musics_to_use, "normal_music")
+              current_music_is_casual = true
+            end
+          else --we should be playing normal_music or normal_music_start
+            if (not current_music_is_casual or table.getn(currently_playing_tracks) == 0) and musics_to_use["normal_music"] then
+              stop_the_music()
+              find_and_add_music(musics_to_use, "normal_music")
+              current_music_is_casual = true
+            end
           end
         end
       end
     end
+
+    -- Update Sound FX
     if not SFX_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
       if SFX_Swap_Play == 1 then
           themes[config.theme].sounds.swap:stop()
@@ -1572,8 +1575,7 @@ function Stack.PdP(self)
           SFX_Garbage_Pop_Play = nil
       end
       if stop_sounds then
-        love.audio.stop()
-        stop_the_music()
+        stop_all_audio()
         stop_sounds = nil
       end
       if self.game_over or (self.garbage_target and self.garbage_target.game_over) then
@@ -1586,6 +1588,24 @@ function Stack.PdP(self)
       self.game_stopwatch = (self.game_stopwatch or -1) + 1
     end
   end
+end
+
+
+function Stack.game_ended(self)
+  local result = false 
+  if GAME_ENDED_CLOCK > 0 and self.CLOCK > GAME_ENDED_CLOCK then
+    result = true
+  end
+
+  if self.mode == "time" then
+    if self.game_stopwatch then
+      if self.game_stopwatch > time_attack_time*60 then
+        result = true
+      end
+    end
+  end
+
+  return result
 end
 
 function Stack.set_game_over(self)
