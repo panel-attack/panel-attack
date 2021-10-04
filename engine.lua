@@ -18,6 +18,7 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     s.character = config.character
     s.max_health = 1
     s.panels_dir = panels_dir or config.panels
+    s.portraitFade = 0
     if not panels[panels_dir] then
       s.panels_dir = config.panels
     end
@@ -178,6 +179,8 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     s.sfx_garbage_thud = 0
 
     s.card_q = Queue()
+
+    s.pop_q = Queue()
 
     s.which = which or 1 -- Pk.which == k
     s.player_number = player_number or s.which --player number according to the multiplayer server, for game outcome reporting
@@ -619,6 +622,7 @@ function Stack.local_run(self)
     return
   end
 
+  self:update_popfxs()
   self:update_cards()
   self.input_state = self:send_controls()
   self:prep_rollback()
@@ -656,6 +660,7 @@ function Stack.foreign_run(self)
     end
   end
   for i=1,times_to_run do
+    self:update_popfxs()
     self:update_cards()
     self.input_state = string.sub(self.input_buffer,1,1)
     self:prep_rollback()
@@ -667,7 +672,32 @@ function Stack.foreign_run(self)
 end
 
 function Stack.enqueue_card(self, chain, x, y, n)
-  self.card_q:push({frame=1, chain=chain, x=x, y=y, n=n})
+  card_burstAtlas = nil
+  card_burstParticle = nil
+  if config.popfx == true then
+    card_burstAtlas = characters[self.character].images["burst"]
+    card_burstFrameDimension = card_burstAtlas:getWidth()/9
+    card_burstParticle = love.graphics.newQuad(card_burstFrameDimension, 0, card_burstFrameDimension, card_burstFrameDimension, card_burstAtlas:getDimensions())
+  end
+  self.card_q:push({frame=1, chain=chain, x=x, y=y, n=n, burstAtlas = card_burstAtlas, burstParticle = card_burstParticle})
+  
+end
+
+function Stack.enqueue_popfx(self, x, y, popsize)
+  if characters[self.character].images["burst"] then
+    burstAtlas = characters[self.character].images["burst"]
+    burstFrameDimension = burstAtlas:getWidth()/9
+    burstParticle = love.graphics.newQuad(burstFrameDimension, 0, burstFrameDimension, burstFrameDimension, burstAtlas:getDimensions())
+    bigParticle = love.graphics.newQuad(0, 0, burstFrameDimension, burstFrameDimension, burstAtlas:getDimensions())
+  end
+  if characters[self.character].images["fade"] then
+    fadeAtlas = characters[self.character].images["fade"]
+    fadeFrameDimension = fadeAtlas:getWidth()/9
+    fadeParticle = love.graphics.newQuad(fadeFrameDimension, 0, fadeFrameDimension, fadeFrameDimension, fadeAtlas:getDimensions())
+  end
+  poptype = "small"
+  self.pop_q:push({frame=1, burstAtlas = burstAtlas, burstFrameDimension = burstFrameDimension, burstParticle = burstParticle,
+  fadeAtlas = fadeAtlas, fadeFrameDimension = fadeFrameDimension, fadeParticle = fadeParticle, bigParticle = bigParticle, bigTimer = 0, popsize = popsize, x=x, y=y})
 end
 
 local d_col = {up=0, down=0, left=-1, right=1}
@@ -900,6 +930,7 @@ function Stack.PdP(self)
   local skip_col = 0
   local fallen_garbage = 0
   local shake_time = 0
+  popsize = "small"
   for row=1,#panels do
     for col=1,width do
       local cntinue = false
@@ -913,7 +944,8 @@ function Stack.PdP(self)
         if panel.state == "matched" then
           panel.timer = panel.timer - 1
           if panel.timer == panel.pop_time then
-          SFX_Garbage_Pop_Play = panel.pop_index
+            if config.popfx == true then self:enqueue_popfx(col, row, popsize) end
+            SFX_Garbage_Pop_Play = panel.pop_index
           end
           if panel.timer == 0 then
             if panel.y_offset == -1 then
@@ -1076,6 +1108,11 @@ function Stack.PdP(self)
             panel.state = "popping"
             panel.timer = panel.combo_index*self.FRAMECOUNT_POP
           elseif panel.state == "popping" then
+            --print("POP")
+            if (panel.combo_size > 6) or self.chain_counter > 1 then popsize = "normal" end
+            if self.chain_counter > 2 then popsize = "big" end
+            if self.chain_counter > 3 then popsize = "giant" end
+            if config.popfx == true then self:enqueue_popfx(col, row, popsize) end
             self.score = self.score + 10;
             -- self.score_render=1;
             -- TODO: What is self.score_render?
@@ -1189,7 +1226,6 @@ function Stack.PdP(self)
   if self.cur_timer ~= self.cur_wait_time then
     self.cur_timer = self.cur_timer + 1
   end
-
   -- TAUNTING
   if self.taunt_up ~= nil then
     for _,t in ipairs(characters[self.character].sounds.taunt_ups) do
