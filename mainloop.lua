@@ -1740,6 +1740,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
           if winnerSFX ~= nil and winnerSFX ~= 0 then
             print(winnerSFX)
             winnerSFX:play()
+            winnerSFX = nil;
           end
         end
       end
