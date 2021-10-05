@@ -1728,8 +1728,8 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
         set_music_fade_percentage((fadeMusicLength-t)/fadeMusicLength)
       else
         if t == fadeMusicLength + 1 then
-          stop_the_music()
           set_music_fade_percentage(1) -- reset the music back to normal config volume
+          stop_all_audio()
         end
       end
 
@@ -1754,8 +1754,8 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
         P2:run()
       end
       if t >= timemin and ( (t >=timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) then
-        stop_all_audio()
         set_music_fade_percentage(1) -- reset the music back to normal config volume
+        stop_all_audio()
         SFX_GameOver_Play = 0
         ret = {next_func}
       end
