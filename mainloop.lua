@@ -710,8 +710,8 @@ function main_net_vs_setup(ip, network_port)
     return main_set_name
     else my_name = config.name
   end
-  if config.name == "defaultname" then
-    if main_set_name() == {main_select_mode} then
+  while config.name == "defaultname" do
+    if main_set_name() == {main_select_mode} and config.name ~= "defaultname" then
       return main_net_vs_setup
     end 
   end
