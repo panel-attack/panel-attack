@@ -930,7 +930,7 @@ function main_net_vs()
       write_replay_file()
       select_screen.character_select_mode = "2p_net_vs"
       if currently_spectating then
-        return game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}
+        return game_over_transition, {select_screen.main, end_text, winSFX, 1}
       else
         return game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}
       end
