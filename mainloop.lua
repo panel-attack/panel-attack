@@ -1727,8 +1727,10 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
       if t <= fadeMusicLength then
         set_music_fade_percentage((fadeMusicLength-t)/fadeMusicLength)
       else
-        stop_the_music()
-        set_music_fade_percentage(1) -- reset the music back to normal config volume
+        if t == fadeMusicLength + 1 then
+          stop_the_music()
+          set_music_fade_percentage(1) -- reset the music back to normal config volume
+        end
       end
 
       -- Play the winner sound effect after a delay
