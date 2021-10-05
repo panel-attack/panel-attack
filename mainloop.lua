@@ -1027,7 +1027,7 @@ function main_local_vs_yourself()
       P1:render()
     end
     wait()
-    Local ret = nil
+    local ret = nil
     variable_step(function()
         if not P1.game_over then
           P1:local_run()
