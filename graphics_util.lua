@@ -21,12 +21,115 @@ function load_img_from_supported_extensions(path_and_name)
   return nil
 end
 
-function draw(img, x, y, rot, x_scale,y_scale)
+function draw(img, x, y, rot, x_scale, y_scale)
   rot = rot or 0
   x_scale = x_scale or 1
   y_scale = y_scale or 1
   gfx_q:push({love.graphics.draw, {img, x*GFX_SCALE, y*GFX_SCALE,
-    rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
+  rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
+end
+
+function draw_label(img, x, y, rot, scale, mirror)
+  rot = rot or 0
+  mirror = mirror or 0
+  x = x - (img:getWidth()/GFX_SCALE*scale)*mirror
+  gfx_q:push({love.graphics.draw, {img, x*GFX_SCALE, y*GFX_SCALE,
+  rot, scale, scale}})
+end
+
+function draw_number(number, atlas, frameCount, quads, x, y, scale, x_scale, y_scale, align, mirror)
+  x_scale = x_scale or 1
+  y_scale = y_scale or 1
+  align = align or "left"
+  mirror = mirror or 0
+  
+  local width = atlas:getWidth()
+  local height = atlas:getHeight()
+  local numberWidth = atlas:getWidth()/frameCount
+  local numberHeight = atlas:getHeight()
+  
+  x = x - (numberWidth*GFX_SCALE*scale)*mirror
+
+  if number == nil or atlas == nil or numberHeight == nil or numberWidth == nil then return end
+
+  while #quads < #tostring(number) do
+    table.insert(quads, love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height))
+  end
+
+  for i = 1, #tostring(number), 1 do
+    local c = tostring(number):sub(i,i)
+    if c == nil then return end
+    quads[i]:setViewport(tonumber(c)*numberWidth, 0, numberWidth, numberHeight, width, height)
+    if align == "left" then
+      gfx_q:push({love.graphics.draw, {atlas, quads[i], ((x+(i*(13*scale)))-(13*scale)), y,
+        0, x_scale, y_scale}})
+    end
+    if align == "center" then
+      gfx_q:push({love.graphics.draw, {atlas, quads[i], (x+((i-(#tostring(number)/2))*(13*scale))), y,
+        0, x_scale, y_scale}})
+    end
+    if align == "right" then
+      gfx_q:push({love.graphics.draw, {atlas, quads[i], (x+((i-#tostring(number))*(13*scale))), y,
+        0, x_scale, y_scale}})
+    end
+  end
+
+end
+
+function draw_time(time, quads, x, y, x_scale, y_scale)
+  x_scale = x_scale or 1
+  y_scale = y_scale or 1
+
+  if #quads == 0 then
+    width = themes[config.theme].images.IMG_timeNumber_atlas:getWidth()
+    height = themes[config.theme].images.IMG_timeNumber_atlas:getHeight()
+    numberWidth = themes[config.theme].images.timeNumberWidth
+    numberHeight = themes[config.theme].images.timeNumberHeight
+    quads =
+    {
+      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
+      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
+      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
+      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
+      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
+      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
+      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
+      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
+      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
+      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
+      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height)
+    }
+
+    symbolEnum = {[":"]=10, ["'"]=11}
+    for i = 1, #time, 1 do
+      local c = time:sub(i,i)
+
+      if c ~= ":" and c ~= "'" then
+        quads[i]:setViewport(tonumber(c)*numberWidth, 0, numberWidth, numberHeight, width, height)
+      else
+        quads[i]:setViewport(symbolEnum[c]*numberWidth, 0, numberWidth, numberHeight, width, height)
+      end
+      gfx_q:push({love.graphics.draw, {themes[config.theme].images.IMG_timeNumber_atlas, quads[i], ((x+(i*(20*themes[config.theme].time_Scale)))-(20*themes[config.theme].time_Scale))+((7-#time)*10), y,
+          0, x_scale, y_scale}})
+    end
+
+  end
+end
+
+function qdraw(img, quad, x, y, rot, x_scale, y_scale, x_offset, y_offset, mirror)
+  rot = rot or 0
+  x_scale = x_scale or 1
+  y_scale = y_scale or 1
+  x_offset = x_offset or 0
+  y_offset = y_offset or 0
+  mirror = mirror or 0
+
+  qX, qY, qW, qH = quad:getViewport()
+  if mirror == 1 then
+    x = x - (qW*x_scale)
+  end
+  gfx_q:push({love.graphics.draw, {img, quad, x*GFX_SCALE, y*GFX_SCALE,
+    rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE, x_offset, y_offset}})
 end
 
 function menu_draw(img, x, y, rot, x_scale,y_scale)
@@ -67,6 +170,13 @@ end
 
 function grectangle(mode, x, y, w, h)
   gfx_q:push({love.graphics.rectangle, {mode, x, y, w, h}})
+end
+
+function grectangle_color(mode, x, y, w, h, r, g, b, a)
+  a = a or 1
+  gfx_q:push({love.graphics.setColor, {r, g, b, a}})
+  gfx_q:push({love.graphics.rectangle, {mode, x*GFX_SCALE, y*GFX_SCALE, w*GFX_SCALE, h*GFX_SCALE}})
+  gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
 end
 
 function gprint(str, x, y, color, scale)

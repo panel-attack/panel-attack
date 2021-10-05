@@ -94,6 +94,8 @@ function read_conf_file() pcall(function()
   if type(read_data.SFX_volume) == "number" then config.SFX_volume = bound(0,read_data.SFX_volume,100) end
   if type(read_data.music_volume) == "number" then config.music_volume = bound(0,read_data.music_volume,100) end
   if type(read_data.input_repeat_delay) == "number" then config.input_repeat_delay = bound(1,read_data.input_repeat_delay,50) end
+  if type(read_data.portrait_darkness) == "number" then config.portrait_darkness = bound(0,read_data.portrait_darkness,100) end
+  if type(read_data.cardfx_scale) == "number" then config.cardfx_scale = bound(1,read_data.cardfx_scale,200) end
 
   if type(read_data.debug_mode) == "boolean" then config.debug_mode = read_data.debug_mode end
   if type(read_data.show_fps) == "boolean" then config.show_fps = read_data.show_fps end
@@ -101,6 +103,7 @@ function read_conf_file() pcall(function()
   if type(read_data.ready_countdown_1P) == "boolean" then config.ready_countdown_1P = read_data.ready_countdown_1P end
   if type(read_data.danger_music_changeback_delay) == "boolean" then config.danger_music_changeback_delay = read_data.danger_music_changeback_delay end
   if type(read_data.enable_analytics) == "boolean" then config.enable_analytics = read_data.enable_analytics end
+  if type(read_data.popfx) == "boolean" then config.popfx = read_data.popfx end
 
   if type(read_data.save_replays_publicly) == "string" and save_replays_values[read_data.save_replays_publicly] then 
     config.save_replays_publicly = read_data.save_replays_publicly 

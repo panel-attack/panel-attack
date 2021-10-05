@@ -30,6 +30,68 @@ Theme = class(function(self)
     self.images = {}
     self.sounds = {}
     self.musics = {}
+    self.matchtypeLabel_Pos = {-40, -30}
+    self.matchtypeLabel_Scale = 3
+    self.timeLabel_Pos = {0, 10}
+    self.timeLabel_Scale = 2
+    self.time_Pos = {-40, 25}
+    self.time_Scale = 1
+    self.name_Pos = {20, -30}
+    self.moveLabel_Pos = {465, 170}
+    self.moveLabel_Scale = 2
+    self.move_Pos = {20, 35}
+    self.move_Scale = 1
+    self.scoreLabel_Pos = {102, 25}
+    self.scoreLabel_Scale = 2
+    self.score_Pos = {108, 31}
+    self.score_Scale = 1.31
+    self.speedLabel_Pos = {104, 42}
+    self.speedLabel_Scale = 2
+    self.speed_Pos = {108, 48}
+    self.speed_Scale = 1.35
+    self.levelLabel_Pos = {101, 59}
+    self.levelLabel_Scale = 2
+    self.level_Pos = {110, 65}
+    self.level_Scale = 1
+    self.winLabel_Pos = {10, 230}
+    self.winLabel_Scale = 2
+    self.win_Pos = {20, 260}
+    self.win_Scale = 1
+    self.ratingLabel_Pos = {5, 180}
+    self.ratingLabel_Scale = 2
+    self.rating_Pos = {25, 200}
+    self.rating_Scale = 1
+    self.spectators_Pos = {10, 400}
+    self.healthbar_frame_Pos = {-20, -4}
+    self.healthbar_frame_Scale = 3
+    self.healthbar_Pos = {-16, 0}
+    self.healthbar_Scale = 1
+    self.healthbar_Rotate = 0
+    self.prestop_frame_Pos = {100, 1190}
+    self.prestop_frame_Scale = 1
+    self.prestop_bar_Pos = {110, 1197}
+    self.prestop_bar_Scale = 1
+    self.prestop_bar_Rotate = 0
+    self.prestop_Pos = {120, 1105}
+    self.prestop_Scale = 1
+    self.stop_frame_Pos = {100, 130}
+    self.stop_frame_Scale = 1
+    self.stop_bar_Pos = {106, 137}
+    self.stop_bar_Scale = 1
+    self.stop_bar_Rotate = 0
+    self.stop_Pos = {106, 161}
+    self.stop_Scale = 1
+    self.shake_frame_Pos = {100, 1150}
+    self.shake_frame_Scale = 1
+    self.shake_bar_Pos = {110, 1157}
+    self.shake_bar_Scale = 1
+    self.shake_bar_Rotate = 0
+    self.shake_Pos = {120, 1165}
+    self.shake_Scale = 1
+    self.multibar_frame_Pos = {100, 1100}
+    self.multibar_frame_Scale = 1
+    self.multibar_Pos = {106, 1148}
+    self.multibar_Scale = 1
   end)
 
 background = load_theme_img("background/main")
@@ -69,8 +131,71 @@ function Theme.graphics_init(self)
     self.images.IMG_numbers[i] = load_theme_img(i.."")
   end
 
+  self.images.burst = load_theme_img("burst")
+
+  self.images.fade = load_theme_img("fade")
+
+  self.images.IMG_number_atlas_1P = load_theme_img("numbers_1P")
+  self.images.numberWidth_1P = self.images.IMG_number_atlas_1P:getWidth()/10
+  self.images.numberHeight_1P = self.images.IMG_number_atlas_1P:getHeight()
+  self.images.IMG_number_atlas_2P = load_theme_img("numbers_2P")
+  self.images.numberWidth_2P = self.images.IMG_number_atlas_2P:getWidth()/10
+  self.images.numberHeight_2P = self.images.IMG_number_atlas_2P:getHeight()
+
+  self.images.IMG_time = load_theme_img("time")
+
+  self.images.IMG_timeNumber_atlas = load_theme_img("time_numbers")
+  self.images.timeNumberWidth = self.images.IMG_timeNumber_atlas:getWidth()/12
+  self.images.timeNumberHeight = self.images.IMG_timeNumber_atlas:getHeight()
+
+  self.images.IMG_moves = load_theme_img("moves")
+
+  self.images.IMG_score_1P = load_theme_img("score_1P")
+  self.images.IMG_score_2P = load_theme_img("score_2P")
+
+  self.images.IMG_speed_1P = load_theme_img("speed_1P")
+  self.images.IMG_speed_2P = load_theme_img("speed_2P")
+
+  self.images.IMG_level_1P = load_theme_img("level_1P")
+  self.images.IMG_level_2P = load_theme_img("level_2P")
+
+  self.images.IMG_wins = load_theme_img("wins")
+
+  self.images.IMG_levelNumber_atlas_1P = load_theme_img("level_numbers_1P")
+  self.images.levelNumberWidth_1P = self.images.IMG_levelNumber_atlas_1P:getWidth()/11
+  self.images.levelNumberHeight_1P = self.images.IMG_levelNumber_atlas_1P:getHeight()
+  self.images.IMG_levelNumber_atlas_2P = load_theme_img("level_numbers_2P")
+  self.images.levelNumberWidth_2P = self.images.IMG_levelNumber_atlas_2P:getWidth()/11
+  self.images.levelNumberHeight_2P = self.images.IMG_levelNumber_atlas_2P:getHeight()
+
+  self.images.IMG_casual = load_theme_img("casual")
+
+  self.images.IMG_ranked = load_theme_img("ranked")
+
+  self.images.IMG_rating_1P= load_theme_img("rating_1P")
+  self.images.IMG_rating_2P = load_theme_img("rating_2P")
+
   self.images.IMG_random_stage = load_theme_img("random_stage")
   self.images.IMG_random_character = load_theme_img("random_character")
+
+  self.images.IMG_healthbar_frame_1P = load_theme_img("healthbar_frame_1P")
+  self.images.IMG_healthbar_frame_2P = load_theme_img("healthbar_frame_2P")
+  self.images.IMG_healthbar = load_theme_img("healthbar")
+
+  self.images.IMG_prestop_frame = load_theme_img("prestop_frame")
+  self.images.IMG_prestop_bar = load_theme_img("prestop_bar")
+
+  self.images.IMG_stop_frame = load_theme_img("stop_frame")
+  self.images.IMG_stop_bar = load_theme_img("stop_bar")
+
+  self.images.IMG_shake_frame = load_theme_img("shake_frame")
+  self.images.IMG_shake_bar = load_theme_img("shake_bar")
+
+  self.images.IMG_multibar_frame = load_theme_img("multibar_frame")
+  self.images.IMG_multibar_prestop_bar = load_theme_img("multibar_prestop_bar")
+  self.images.IMG_multibar_stop_bar = load_theme_img("multibar_stop_bar")
+  self.images.IMG_multibar_shake_bar = load_theme_img("multibar_shake_bar")
+
 
   --play field frames, plus the wall at the bottom.
   self.images.IMG_frame1P = load_theme_img("frame/frame1P")
@@ -199,10 +324,335 @@ function Theme.sound_init(self)
   self:apply_config_volume()
 end
 
+function Theme.json_init(self)
+  local read_data = {}
+  local config_file, err = love.filesystem.newFile("themes/"..config.theme.."/config.json", "r")
+  if config_file then
+    local teh_json = config_file:read(config_file:getSize())
+    for k,v in pairs(json.decode(teh_json)) do
+      read_data[k] = v
+    end
+  end
+
+
+  -- Matchtype label position
+  if read_data.matchtypeLabel_Pos and type(read_data.matchtypeLabel_Pos) == "table" then
+    self.matchtypeLabel_Pos = read_data.matchtypeLabel_Pos
+  end
+
+  -- Matchtype label scale
+  if read_data.matchtypeLabel_Scale and type(read_data.matchtypeLabel_Scale) == "number" then
+    self.matchtypeLabel_Scale = read_data.matchtypeLabel_Scale
+  end
+
+  -- Time label position
+  if read_data.timeLabel_Pos and type(read_data.timeLabel_Pos) == "table" then
+    self.timeLabel_Pos = read_data.timeLabel_Pos
+  end
+
+  -- Time label scale
+  if read_data.timeLabel_Scale and type(read_data.timeLabel_Scale) == "number" then
+    self.timeLabel_Scale = read_data.timeLabel_Scale
+  end
+
+  -- Time position
+  if read_data.time_Pos and type(read_data.time_Pos) == "table" then
+    self.time_Pos = read_data.time_Pos
+  end
+
+  -- Time scale
+  if read_data.time_Scale and type(read_data.time_Scale) == "number" then
+    self.time_Scale = read_data.time_Scale
+  end
+
+  -- Move label position
+  if read_data.moveLabel_Pos and type(read_data.moveLabel_Pos) == "table" then
+    self.moveLabel_Pos = read_data.moveLabel_Pos
+  end
+
+  -- Move label scale
+  if read_data.moveLabel_Scale and type(read_data.moveLabel_Scale) == "number" then
+    self.moveLabel_Scale = read_data.moveLabel_Scale
+  end
+
+  -- Move position
+  if read_data.move_Pos and type(read_data.move_Pos) == "table" then
+    self.move_Pos = read_data.move_Pos
+  end
+
+  -- Move scale
+  if read_data.move_Scale and type(read_data.move_Scale) == "number" then
+    self.move_Scale = read_data.move_Scale
+  end
+
+  -- Score label position
+  if read_data.scoreLabel_Pos and type(read_data.scoreLabel_Pos) == "table" then
+    self.scoreLabel_Pos = read_data.scoreLabel_Pos
+  end
+
+  -- Score label scale
+  if read_data.scoreLabel_Scale and type(read_data.scoreLabel_Scale) == "number" then
+    self.scoreLabel_Scale = read_data.scoreLabel_Scale
+  end
+
+  -- Score position
+  if read_data.score_Pos and type(read_data.score_Pos) == "table" then
+    self.score_Pos = read_data.score_Pos
+  end
+
+  -- Score scale
+  if read_data.score_Scale and type(read_data.score_Scale) == "number" then
+    self.score_Scale = read_data.score_Scale
+  end
+
+  -- Speed label position
+  if read_data.speedLabel_Pos and type(read_data.speedLabel_Pos) == "table" then
+    self.speedLabel_Pos = read_data.speedLabel_Pos
+  end
+
+  -- Speed label scale
+  if read_data.speedLabel_Scale and type(read_data.speedLabel_Scale) == "number" then
+    self.speedLabel_Scale = read_data.speedLabel_Scale
+  end
+
+  -- Speed position
+  if read_data.speed_Pos and type(read_data.speed_Pos) == "table" then
+    self.speed_Pos = read_data.speed_Pos
+  end
+
+  -- Speed scale
+  if read_data.speed_Scale and type(read_data.speed_Scale) == "number" then
+    self.speed_Scale = read_data.speed_Scale
+  end
+
+  -- Level label position
+  if read_data.levelLabel_Pos and type(read_data.levelLabel_Pos) == "table" then
+    self.levelLabel_Pos = read_data.levelLabel_Pos
+  end
+
+  -- Level label scale
+  if read_data.levelLabel_Scale and type(read_data.levelLabel_Scale) == "number" then
+    self.levelLabel_Scale = read_data.levelLabel_Scale
+  end
+
+  -- Level position
+  if read_data.level_Pos and type(read_data.level_Pos) == "table" then
+    self.level_Pos = read_data.level_Pos
+  end
+
+  -- Level scale
+  if read_data.level_Scale and type(read_data.level_Scale) == "number" then
+    self.level_Scale = read_data.level_Scale
+  end
+
+  -- Wins label position
+  if read_data.winLabel_Pos and type(read_data.winLabel_Pos) == "table" then
+    self.winLabel_Pos = read_data.winLabel_Pos
+  end
+
+  -- Wins label scale
+  if read_data.winLabel_Scale and type(read_data.winLabel_Scale) == "number" then
+    self.winLabel_Scale = read_data.winLabel_Scale
+  end
+
+  -- Wins position
+  if read_data.win_Pos and type(read_data.win_Pos) == "table" then
+    self.win_Pos = read_data.win_Pos
+  end
+
+  -- Wins scale
+  if read_data.win_Scale and type(read_data.win_Scale) == "number" then
+    self.win_Scale = read_data.win_Scale
+  end
+
+    -- Name position
+    if read_data.name_Pos and type(read_data.name_Pos) == "table" then
+      self.name_Pos = read_data.name_Pos
+    end
+
+  -- Ratin label position
+  if read_data.ratingLabel_Pos and type(read_data.ratingLabel_Pos) == "table" then
+    self.ratingLabel_Pos = read_data.ratingLabel_Pos
+  end
+
+  -- Rating label scale
+  if read_data.ratingLabel_Scale and type(read_data.ratingLabel_Scale) == "number" then
+    self.ratingLabel_Scale = read_data.ratingLabel_Scale
+  end
+
+  -- Rating position
+  if read_data.rating_Pos and type(read_data.rating_Pos) == "table" then
+    self.rating_Pos = read_data.rating_Pos
+  end
+
+  -- Rating scale
+  if read_data.rating_Scale and type(read_data.rating_Scale) == "number" then
+    self.rating_Scale = read_data.rating_Scale
+  end
+
+  -- Spectators position
+  if read_data.spectators_Pos and type(read_data.spectators_Pos) == "table" then
+    self.spectators_Pos = read_data.spectators_Pos
+  end
+
+    -- Healthbar frame position
+    if read_data.healthbar_frame_Pos and type(read_data.healthbar_frame_Pos) == "table" then
+      self.healthbar_frame_Pos = read_data.healthbar_frame_Pos
+    end
+
+    -- Healthbar frame scale
+    if read_data.healthbar_frame_Scale and type(read_data.healthbar_frame_Scale) == "number" then
+      self.healthbar_frame_Scale = read_data.healthbar_frame_Scale
+    end
+
+    -- Healthbar position
+    if read_data.healthbar_Pos and type(read_data.healthbar_Pos) == "table" then
+      self.healthbar_Pos = read_data.healthbar_Pos
+    end
+
+    -- Healthbar scale
+    if read_data.healthbar_Scale and type(read_data.healthbar_Scale) == "number" then
+      self.healthbar_Scale = read_data.healthbar_Scale
+    end
+
+    -- Healthbar Rotate
+    if read_data.healthbar_Rotate and type(read_data.healthbar_Rotate) == "number" then
+      self.healthbar_Rotate = read_data.healthbar_Rotate
+    end
+
+    -- Prestop frame position
+    if read_data.prestop_frame_Pos and type(read_data.prestop_frame_Pos) == "table" then
+      self.prestop_frame_Pos = read_data.prestop_frame_Pos
+    end
+
+    -- Prestop frame scale
+    if read_data.prestop_frame_Scale and type(read_data.prestop_frame_Scale) == "number" then
+      self.prestop_frame_Scale = read_data.prestop_frame_Scale
+    end
+
+    -- Prestop bar position
+    if read_data.prestop_bar_Pos and type(read_data.prestop_bar_Pos) == "table" then
+      self.prestop_bar_Pos = read_data.prestop_bar_Pos
+    end
+
+    -- Prestop bar scale
+    if read_data.prestop_bar_Scale and type(read_data.prestop_bar_Scale) == "number" then
+      self.prestop_bar_Scale = read_data.prestop_bar_Scale
+    end
+
+    -- Prestop bar Rotate
+    if read_data.prestop_bar_Rotate and type(read_data.prestop_bar_Rotate) == "number" then
+      self.prestop_bar_Rotate = read_data.prestop_bar_Rotate
+    end
+
+    -- Prestop position
+    if read_data.prestop_Pos and type(read_data.prestop_Pos) == "table" then
+      self.prestop_Pos = read_data.prestop_Pos
+    end
+
+    -- Prestop scale
+    if read_data.prestop_Scale and type(read_data.prestop_Scale) == "number" then
+      self.prestop_Scale = read_data.prestop_Scale
+    end
+
+    -- Stop frame position
+    if read_data.stop_frame_Pos and type(read_data.stop_frame_Pos) == "table" then
+      self.stop_frame_Pos = read_data.stop_frame_Pos
+    end
+
+    -- Stop frame scale
+    if read_data.stop_frame_Scale and type(read_data.stop_frame_Scale) == "number" then
+      self.stop_frame_Scale = read_data.stop_frame_Scale
+    end
+
+    -- Stop bar position
+    if read_data.stop_bar_Pos and type(read_data.stop_bar_Pos) == "table" then
+      self.stop_bar_Pos = read_data.stop_bar_Pos
+    end
+
+    -- Stop bar scale
+    if read_data.stop_bar_Scale and type(read_data.stop_bar_Scale) == "number" then
+      self.stop_bar_Scale = read_data.stop_bar_Scale
+    end
+
+    -- Stop bar Rotate
+    if read_data.stop_bar_Rotate and type(read_data.stop_bar_Rotate) == "number" then
+      self.stop_bar_Rotate = read_data.stop_bar_Rotate
+    end
+
+    -- Stop position
+    if read_data.stop_Pos and type(read_data.stop_Pos) == "table" then
+      self.stop_Pos = read_data.stop_Pos
+    end
+
+    -- Stop scale
+    if read_data.stop_Scale and type(read_data.stop_Scale) == "number" then
+      self.stop_Scale = read_data.stop_Scale
+    end
+
+    -- Shake frame position
+    if read_data.shake_frame_Pos and type(read_data.shake_frame_Pos) == "table" then
+      self.shake_frame_Pos = read_data.shake_frame_Pos
+    end
+
+    -- Shake frame scale
+    if read_data.shake_frame_Scale and type(read_data.shake_frame_Scale) == "number" then
+      self.shake_frame_Scale = read_data.shake_frame_Scale
+    end
+
+    -- Shake bar position
+    if read_data.shake_bar_Pos and type(read_data.shake_bar_Pos) == "table" then
+      self.shake_bar_Pos = read_data.shake_bar_Pos
+    end
+
+    -- Shake bar scale
+    if read_data.shake_bar_Scale and type(read_data.shake_bar_Scale) == "number" then
+      self.shake_bar_Scale = read_data.shake_bar_Scale
+    end
+
+    -- Shake bar Rotate
+    if read_data.shake_bar_Rotate and type(read_data.shake_bar_Rotate) == "number" then
+      self.shake_bar_Rotate = read_data.shake_bar_Rotate
+    end
+
+    -- Shake position
+    if read_data.shake_Pos and type(read_data.shake_Pos) == "table" then
+      self.shake_Pos = read_data.shake_Pos
+    end
+
+    -- Shake scale
+    if read_data.shake_Scale and type(read_data.shake_Scale) == "number" then
+      self.shake_Scale = read_data.shake_Scale
+    end
+
+    -- Multibar frame position
+    if read_data.multibar_frame_Pos and type(read_data.multibar_frame_Pos) == "table" then
+      self.multibar_frame_Pos = read_data.multibar_frame_Pos
+    end
+
+    -- Multibar frame scale
+    if read_data.multibar_frame_Scale and type(read_data.multibar_frame_Scale) == "number" then
+      self.multibar_frame_Scale = read_data.multibar_frame_Scale
+    end
+
+    -- Multibar position
+    if read_data.multibar_Pos and type(read_data.multibar_Pos) == "table" then
+      self.multibar_Pos = read_data.multibar_Pos
+    end
+
+    -- Multibar scale
+    if read_data.multibar_Scale and type(read_data.multibar_Scale) == "number" then
+      self.multibar_Scale = read_data.multibar_Scale
+    end
+
+end
+
+
 function Theme.load(self, id)
   print("loading theme "..id)
   self:graphics_init()
   self:sound_init()
+  self:json_init()
   print("loaded theme "..id)
 end
 
