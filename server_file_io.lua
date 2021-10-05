@@ -184,6 +184,13 @@ end) end
 
 function write_replay_file(replay, path, filename) pcall(function()
   local sep = package.config:sub(1, 1)
+  if replay.vs~=nil then
+    replay.vs.I=compressInputStr(replay.vs.I)
+    replay.vs.in_buf=compressInputStr(replay.vs.in_buf)
+    print("Compressed vs I/in_buf")
+  else
+  print("No vs")
+  end
   print("about to open new replay file for writing")
   mkDir(path)
   local f = assert(io.open(path..sep..filename, "w"))
