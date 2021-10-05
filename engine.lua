@@ -91,6 +91,7 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
 
     s.CLOCK = 0
     s.game_stopwatch = 0
+    s.game_stopwatch_running = false
     s.do_countdown = true
     s.max_runs_per_frame = 3
 
@@ -174,7 +175,9 @@ Stack = class(function(s, which, mode, panels_dir, speed, difficulty, player_num
     s.lastPopLevelPlayed = s.lastPopLevelPlayed or 1
     s.lastPopIndexPlayed = s.lastPopIndexPlayed or 1
     s.combo_chain_play = nil
-    s.game_over = false
+    s.game_over = false -- only set if this player got a game over
+    s.game_over_clock = 0 -- only set if game_over is true, the exact clock frame the player lost
+    GAME_ENDED_CLOCK = 0 -- 0 if no one has lost, otherwise the minimum clock time of those that lost
     s.sfx_land = false
     s.sfx_garbage_thud = 0
 
@@ -584,6 +587,7 @@ function Stack.prep_first_row(self)
   end
 end
 
+-- Takes the control input from input_state and sets up the engine to start using it.
 function Stack.controls(self)
   local new_dir = nil
   local sdata = self.input_state
@@ -616,58 +620,63 @@ function Stack.controls(self)
   end
 end
 
---local_run is for the stack that belongs to this client.
-function Stack.local_run(self)
+function Stack.run(self)
   if game_is_paused then
     return
   end
 
-  self:update_popfxs()
-  self:update_cards()
-  self.input_state = self:send_controls()
-  self:prep_rollback()
-  self:controls()
-  self:prep_first_row()
-  self:PdP()
-end
+  -- Normally we want to run 1 frame, but if we are a replay or from a net game, 
+  -- we want to possibly run a lot frames to catch up, or 0 if there is nothing to simulate.
+  -- However, if we are a reaply or net game, we still want to run after game over to show
+  -- game over effects.
+  local times_to_run = 1
+  if self.is_local == false then
+    if self:game_ended() == false then
+      times_to_run = 0
+    end
 
---foreign_run is for a stack that belongs to another client.
-function Stack.foreign_run(self)
-  if game_is_paused then -- foreign_run in replays!
-    return
-  end
-  
-  -- Decide how many frames of input we should run.
-  local times_to_run = 0
-  local buffer_len = string.len(self.input_buffer)
+    -- Decide how many frames of input we should run.
+    local buffer_len = string.len(self.input_buffer)
 
-  -- If we're way behind, run at max speed.
-  if buffer_len >= 15 then
-    times_to_run = self.max_runs_per_frame
-  -- When we're closer, run fewer per frame, so things are less choppy.
-  -- This might have a side effect of being a little farther behind on average,
-  -- since we don't always run at top speed until the buffer is empty.
-  elseif buffer_len >= 10 then
-    times_to_run = 2
-  elseif buffer_len >= 1 then
-    times_to_run = 1
-  end
+    -- If we're way behind, run at max speed.
+    if buffer_len >= 15 then
+      times_to_run = self.max_runs_per_frame
+    -- When we're closer, run fewer per frame, so things are less choppy.
+    -- This might have a side effect of being a little farther behind on average,
+    -- since we don't always run at top speed until the buffer is empty.
+    elseif buffer_len >= 10 then
+      times_to_run = 2
+    elseif buffer_len >= 1 then
+      times_to_run = 1
+    end
 
-  if self.play_to_end then
-    if string.len(self.input_buffer) < 4 then
-      self.play_to_end = nil
-      stop_sounds = true
+    if self.play_to_end then
+      if string.len(self.input_buffer) < 4 then
+        self.play_to_end = nil
+        stop_sounds = true
+      end
     end
   end
+
   for i=1,times_to_run do
     self:update_popfxs()
     self:update_cards()
-    self.input_state = string.sub(self.input_buffer,1,1)
+    if self.is_local == false then
+      if self.input_buffer and string.len(self.input_buffer) > 0 then
+        self.input_state = string.sub(self.input_buffer,1,1)
+      else 
+        -- Set input state to no input?
+      end
+    elseif self:game_ended() == false then
+      self.input_state = self:send_controls()
+    end
     self:prep_rollback()
     self:controls()
     self:prep_first_row()
     self:PdP()
-    self.input_buffer = string.sub(self.input_buffer,2)
+    if self.is_local == false and self.input_buffer and string.len(self.input_buffer) > 0 then
+      self.input_buffer = string.sub(self.input_buffer,2)
+    end
   end
 end
 
@@ -706,869 +715,918 @@ local d_row = {up=1, down=-1, left=0, right=0}
 -- The engine routine.
 function Stack.PdP(self)
 
-  local panels = self.panels
-  local width = self.width
-  local height = self.height
-  local prow = nil
-  local panel = nil
-  local swapped_this_frame = nil
-  self.game_stopwatch_running = true
-  if self.do_countdown then
-    self.game_stopwatch_running = nil
-    self.rise_lock = true
-    if not self.countdown_cursor_state then
-      self.countdown_CLOCK = self.CLOCK
-      self.starting_cur_row = self.cur_row
-      self.starting_cur_col = self.cur_col
-      self.cur_row = self.height
-      self.cur_col = self.width-1
-      self.countdown_cursor_state = "ready_falling"
-      self.countdown_cur_speed = 4 --one move every this many frames
-      self.cursor_lock = true      
-    end
-    if self.countdown_CLOCK == 8 then
-      self.countdown_cursor_state = "moving_down"
-      self.countdown_timer = 180 --3 seconds at 60 fps
-    elseif self.countdown_cursor_state == "moving_down" then
-      --move down
-      if self.cur_row == self.starting_cur_row then
-        self.countdown_cursor_state = "moving_left"
-      elseif self.CLOCK % self.countdown_cur_speed == 0 then
-        self.cur_row = self.cur_row - 1
+  -- Don't run the main logic if the player has simulated past one of the game overs or the time attack time
+  if self:game_ended() == false then
+    local panels = self.panels
+    local width = self.width
+    local height = self.height
+    local prow = nil
+    local panel = nil
+    local swapped_this_frame = nil
+    if self.do_countdown then
+      self.game_stopwatch_running = false
+      self.rise_lock = true
+      if not self.countdown_cursor_state then
+        self.countdown_CLOCK = self.CLOCK
+        self.starting_cur_row = self.cur_row
+        self.starting_cur_col = self.cur_col
+        self.cur_row = self.height
+        self.cur_col = self.width-1
+        self.countdown_cursor_state = "ready_falling"
+        self.countdown_cur_speed = 4 --one move every this many frames
+        self.cursor_lock = true      
       end
-    elseif self.countdown_cursor_state == "moving_left" then
-      --move left
-      if self.cur_col == self.starting_cur_col then
-        self.countdown_cursor_state = "ready"
-        self.cursor_lock = nil
-      elseif self.CLOCK % self.countdown_cur_speed == 0 then
-        self.cur_col = self.cur_col - 1
-      end
-    end
-    if self.countdown_timer then
-      if self.countdown_timer == 0 then 
-        --we are done counting down
-        self.do_countdown = nil
-        self.countdown_timer = nil
-        self.starting_cur_row = nil
-        self.starting_cur_col = nil
-        self.countdown_CLOCK = nil
-        if self.which == 1 then
-          SFX_Go_Play=1
+      if self.countdown_CLOCK == 8 then
+        self.countdown_cursor_state = "moving_down"
+        self.countdown_timer = 180 --3 seconds at 60 fps
+      elseif self.countdown_cursor_state == "moving_down" then
+        --move down
+        if self.cur_row == self.starting_cur_row then
+          self.countdown_cursor_state = "moving_left"
+        elseif self.CLOCK % self.countdown_cur_speed == 0 then
+          self.cur_row = self.cur_row - 1
         end
-      elseif self.countdown_timer and self.countdown_timer % 60 == 0 and self.which == 1 then
-        --play beep for timer dropping to next second in 3-2-1 countdown
-        if self.which == 1 then
-          SFX_Countdown_Play=1
+      elseif self.countdown_cursor_state == "moving_left" then
+        --move left
+        if self.cur_col == self.starting_cur_col then
+          self.countdown_cursor_state = "ready"
+          self.cursor_lock = nil
+        elseif self.CLOCK % self.countdown_cur_speed == 0 then
+          self.cur_col = self.cur_col - 1
         end
       end
       if self.countdown_timer then
-        self.countdown_timer = self.countdown_timer - 1
-      end
-    end
-    if self.countdown_CLOCK then
-      self.countdown_CLOCK = self.countdown_CLOCK + 1
-    end
-  end
-  
-  if self.pre_stop_time ~= 0 then
-    self.pre_stop_time = self.pre_stop_time - 1
-  elseif self.stop_time ~= 0 then
-    self.stop_time = self.stop_time - 1
-  end
-
-  self.panels_in_top_row = false
-  local top_row = self.height--self.displacement%16==0 and self.height or self.height-1
-  prow = panels[top_row]
-  for idx=1,width do
-    if prow[idx]:dangerous() then
-      self.panels_in_top_row = true
-    end
-  end
-
-  -- calculate which columns should bounce
-  local prev_danger = self.danger
-  self.danger = false
-  prow = panels[self.height-1]
-  for idx=1,width do
-    if prow[idx]:dangerous() then
-      self.danger = true
-      self.danger_col[idx] = true
-    else
-      self.danger_col[idx] = false
-    end
-  end
-  if self.danger and self.stop_time == 0 then
-    self.danger_timer = self.danger_timer - 1
-    if self.danger_timer<0 then
-      self.danger_timer=17
-    end
-  end
-
-  -- determine whether to play danger music
-    -- Changed this to play danger when something in top 3 rows
-    -- and to play casual when nothing in top 3 or 4 rows
-    if not self.danger_music then
-        -- currently playing casual
-        for _, prow in pairs({panels[self.height], panels[self.height-1], panels[self.height-2]}) do
-            for idx=1, width do
-                if prow[idx].color ~= 0 and prow[idx].state ~= "falling" or prow[idx]:dangerous() then
-                    self.danger_music = true
-                    break
-                end
-            end
-        end
-        if self.shake_time > 0 then self.danger_music = false end
-    else
-        --currently playing danger
-        local toggle_back = true
-        -- Normally, change back if nothing is in the top 3 rows
-        local changeback_rows = {panels[self.height], panels[self.height-1], panels[self.height-2]}
-        -- But optionally, wait until nothing is in the fourth row
-        if (config.danger_music_changeback_delay) then
-          table.insert(changeback_rows, panels[self.height-3])
-        end
-        for _, prow in pairs(changeback_rows) do
-            for idx=1, width do
-                if prow[idx].color ~= 0 then
-                    toggle_back = false
-                    break
-                end
-            end
-        end
-        self.danger_music = not toggle_back
-    end
-
-
-
-
-  if self.displacement == 0 and self.has_risen then
-    self.top_cur_row = self.height
-    self:new_row()
-  end
-  self.prev_rise_lock = self.rise_lock
-  self.rise_lock = self.n_active_panels ~= 0 or
-      self.prev_active_panels ~= 0 or
-      self.shake_time ~= 0 or
-      self.do_countdown or 
-      self.do_swap
-  if self.prev_rise_lock and not self.rise_lock then
-    self.prevent_manual_raise = false
-  end
-
-  -- Increase the speed if applicable
-  if self.speed_times then
-    local time = self.speed_times[self.speed_times.idx]
-    if self.CLOCK == time then
-      self.speed = min(self.speed + 1, 99)
-      self.FRAMECOUNT_RISE = speed_to_rise_time[self.speed]
-      if self.speed_times.idx ~= #self.speed_times then
-        self.speed_times.idx = self.speed_times.idx + 1
-      else
-        self.speed_times[self.speed_times.idx] = time + self.speed_times.delta
-      end
-    end
-  elseif self.panels_to_speedup <= 0 then
-    self.speed = min(self.speed + 1, 99)
-    self.panels_to_speedup = self.panels_to_speedup +
-      panels_to_next_speed[self.speed]
-    self.FRAMECOUNT_RISE = speed_to_rise_time[self.speed]
-  end
-
-  -- Phase 0 //////////////////////////////////////////////////////////////
-  -- Stack automatic rising
-  if self.speed ~= 0 and not self.manual_raise and self.stop_time == 0
-      and not self.rise_lock and self.mode ~= "puzzle" then
-    if self.panels_in_top_row then
-      self.health = self.health - 1
-      if self.health < 1 and self.shake_time < 1 then
-        self.game_over = true
-      end
-    else
-      self.rise_timer = self.rise_timer - 1
-      if self.rise_timer <= 0 then  -- try to rise
-        self.displacement = self.displacement - 1
-        if self.displacement == 0 then
-          self.prevent_manual_raise = false
-          self.top_cur_row = self.height
-          self:new_row()
-        end
-        self.rise_timer = self.rise_timer + self.FRAMECOUNT_RISE
-      end
-    end
-  end
-
-  if not self.panels_in_top_row then
-    self.health = self.max_health
-  end
-
-  if self.displacement % 16 ~= 0 then
-    self.top_cur_row = self.height - 1
-  end
-
-  -- Begin the swap we input last frame.
-  if self.do_swap then
-    self:swap()
-    swapped_this_frame = true
-    self.do_swap = nil
-  end
-
-  -- Look for matches.
-  self:check_matches()
-  -- Clean up the value we're using to match newly hovering panels
-  -- This is pretty dirty :(
-  for row=1,#panels do
-    for col=1,width do
-      panels[row][col].match_anyway = nil
-    end
-  end
-
-
-  -- Phase 2. /////////////////////////////////////////////////////////////
-  -- Timer-expiring actions + falling
-  local propogate_fall = {false,false,false,false,false,false}
-  local skip_col = 0
-  local fallen_garbage = 0
-  local shake_time = 0
-  popsize = "small"
-  for row=1,#panels do
-    for col=1,width do
-      local cntinue = false
-      if skip_col > 0 then
-        skip_col = skip_col - 1
-        cntinue=true
-      end
-      panel = panels[row][col]
-      if cntinue then
-      elseif panel.garbage then
-        if panel.state == "matched" then
-          panel.timer = panel.timer - 1
-          if panel.timer == panel.pop_time then
-            if config.popfx == true then self:enqueue_popfx(col, row, popsize) end
-            SFX_Garbage_Pop_Play = panel.pop_index
+        if self.countdown_timer == 0 then 
+          --we are done counting down
+          self.do_countdown = nil
+          self.countdown_timer = nil
+          self.starting_cur_row = nil
+          self.starting_cur_col = nil
+          self.countdown_CLOCK = nil
+          self.game_stopwatch_running = true
+          if self.which == 1 then
+            SFX_Go_Play=1
           end
-          if panel.timer == 0 then
-            if panel.y_offset == -1 then
-              local color, chaining = panel.color, panel.chaining
-              panel:clear()
-              panel.color, panel.chaining = color, chaining
-              self:set_hoverers(row,col,self.FRAMECOUNT_GPHOVER,true,true)
-              panel.fell_from_garbage = 12
-            else
-              panel.state = "normal"
-            end
-          end
-        -- try to fall
-        elseif (panel.state=="normal" or panel.state=="falling") then
-          if panel.x_offset==0 then
-            local prow = panels[row-1]
-            local supported = false
-            if panel.y_offset == 0 then
-              for i=col,col+panel.width-1 do
-                supported = supported or prow[i]:support_garbage()
-              end
-            else
-              supported = not propogate_fall[col]
-            end
-            if supported then
-              for x=col,col-1+panel.width do
-                panels[row][x].state = "normal"
-                propogate_fall[x] = false
-              end
-            else
-              skip_col = panel.width-1
-              for x=col,col-1+panel.width do
-                panels[row-1][x]:clear()
-                propogate_fall[x] = true
-                panels[row][x].state = "falling"
-                panels[row-1][x], panels[row][x] =
-                  panels[row][x], panels[row-1][x]
-              end
-            end
-          end
-          if panel.shake_time and panel.state == "normal" then
-            if row <= self.height then
-              if panel.height > 3 then
-                self.sfx_garbage_thud = 3
-              else self.sfx_garbage_thud = panel.height
-              end
-              shake_time = max(shake_time, panel.shake_time, self.peak_shake_time or 0)
-              --a smaller garbage block landing should renew the largest of the previous blocks' shake times since our shake time was last zero.
-              self.peak_shake_time = max(shake_time, self.peak_shake_time or 0)
-              panel.shake_time = nil
-            end
+        elseif self.countdown_timer and self.countdown_timer % 60 == 0 and self.which == 1 then
+          --play beep for timer dropping to next second in 3-2-1 countdown
+          if self.which == 1 then
+            SFX_Countdown_Play=1
           end
         end
-        cntinue = true
-      end
-      if propogate_fall[col] and not cntinue then
-        if panel:block_garbage_fall() then
-          propogate_fall[col] = false
-        else
-          panel.state = "falling"
-          panel.timer = 0
+        if self.countdown_timer then
+          self.countdown_timer = self.countdown_timer - 1
         end
       end
-      if cntinue then
-      elseif panel.state == "falling" then
-        -- if it's on the bottom row, it should surely land
-        if row == 1 then
-          panel.state = "landing"
-          panel.timer = 12
-          self.sfx_land = true
-          
-        -- if there's a panel below, this panel's gonna land
-        -- unless the panel below is falling.
-        elseif panels[row-1][col].color ~= 0 and
-            panels[row-1][col].state ~= "falling" then
-          -- if it lands on a hovering panel, it inherits
-          -- that panel's hover time.
-          if panels[row-1][col].state == "hovering" then
-            panel.state = "normal"
-            self:set_hoverers(row,col,panels[row-1][col].timer,false,false)
-          else
-            panel.state = "landing"
-            panel.timer = 12
-          end
-          self.sfx_land = true
-        else
-          panels[row-1][col], panels[row][col] =
-            panels[row][col], panels[row-1][col]
-          panels[row][col]:clear()
-        end
-      elseif panel:has_flags() and panel.timer~=0 then
-        panel.timer = panel.timer - 1
-        if panel.timer == 0 then
-          if panel.state=="swapping" then
-            -- a swap has completed here.
-            panel.state = "normal"
-            panel.dont_swap = nil
-            local from_left = panel.is_swapping_from_left
-            panel.is_swapping_from_left = nil
-            -- Now there are a few cases where some hovering must
-            -- be done.
-            if panel.color ~= 0 then
-              if row~=1 then
-                if panels[row-1][col].color == 0 then
-                  self:set_hoverers(row,col,
-                      self.FRAMECOUNT_HOVER,false,true,false)
-                  -- if there is no panel beneath this panel
-                  -- it will begin to hover.
-                  -- CRAZY BUG EMULATION:
-                  -- the space it was swapping from hovers too
-                  if from_left then
-                    if panels[row][col-1].state == "falling" then
-                      self:set_hoverers(row,col-1,
-                          self.FRAMECOUNT_HOVER,false,true)
-                    end
-                  else
-                    if panels[row][col+1].state == "falling" then
-                      self:set_hoverers(row,col+1,
-                          self.FRAMECOUNT_HOVER+1,false,false)
-                    end
-                  end
-                elseif panels[row-1][col].state
-                    == "hovering" then
-                  -- swap may have landed on a hover
-                  self:set_hoverers(row,col,
-                      self.FRAMECOUNT_HOVER,false,true,
-                      panels[row-1][col].match_anyway, "inherited")
-                end
-              end
-            else
-              -- an empty space finished swapping...
-              -- panels above it hover
-              self:set_hoverers(row+1,col,
-                  self.FRAMECOUNT_HOVER+1,false,false,false,"empty")
-            end
-          elseif panel.state == "hovering" then
-            if panels[row-1][col].state == "hovering" then
-              panel.timer = panels[row-1][col].timer
-            -- This panel is no longer hovering.
-            -- it will now fall without sitting around
-            -- for any longer!
-            elseif panels[row-1][col].color ~= 0 then
-              panel.state = "landing"
-              panel.timer = 12
-            else
-              panel.state = "falling"
-              panels[row][col], panels[row-1][col] =
-                panels[row-1][col], panels[row][col]
-              panel.timer = 0
-              -- Not sure if needed:
-              panels[row][col]:clear_flags()
-            end
-          elseif panel.state == "landing" then
-            panel.state = "normal"
-          elseif panel.state == "matched" then
-            -- This panel's match just finished the whole
-            -- flashing and looking distressed thing.
-            -- It is given a pop time based on its place
-            -- in the match.
-            panel.state = "popping"
-            panel.timer = panel.combo_index*self.FRAMECOUNT_POP
-          elseif panel.state == "popping" then
-            --print("POP")
-            if (panel.combo_size > 6) or self.chain_counter > 1 then popsize = "normal" end
-            if self.chain_counter > 2 then popsize = "big" end
-            if self.chain_counter > 3 then popsize = "giant" end
-            if config.popfx == true then self:enqueue_popfx(col, row, popsize) end
-            self.score = self.score + 10;
-            -- self.score_render=1;
-            -- TODO: What is self.score_render?
-            -- this panel just popped
-            -- Now it's invisible, but sits and waits
-            -- for the last panel in the combo to pop
-            -- before actually being removed.
-
-            -- If it is the last panel to pop,
-            -- it should be removed immediately!
-            if panel.combo_size == panel.combo_index then
-              self.panels_cleared = self.panels_cleared + 1
-              if self.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
-                self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
-              end
-              SFX_Pop_Play = 1
-              self.poppedPanelIndex = panel.combo_index
-              panel.color=0;
-              if(panel.chaining) then
-                self.n_chain_panels = self.n_chain_panels - 1
-              end
-              panel:clear_flags()
-              self:set_hoverers(row+1,col,
-                  self.FRAMECOUNT_HOVER+1,true,false,true, "combo")
-            else
-              panel.state = "popped"
-              panel.timer = (panel.combo_size-panel.combo_index)
-                  * self.FRAMECOUNT_POP
-              self.panels_cleared = self.panels_cleared + 1
-              if self.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
-                self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
-              end
-              SFX_Pop_Play = 1
-              self.poppedPanelIndex = panel.combo_index
-            end
-            
-          elseif panel.state == "popped" then
-            -- It's time for this panel
-            -- to be gone forever :'(
-            if self.panels_to_speedup then
-              self.panels_to_speedup = self.panels_to_speedup - 1
-            end
-            if panel.chaining then
-              self.n_chain_panels = self.n_chain_panels - 1
-            end
-            panel.color = 0
-            panel:clear_flags()
-            -- Any panels sitting on top of it
-            -- hover and are flagged as CHAINING
-            self:set_hoverers(row+1,col,self.FRAMECOUNT_HOVER+1,true,false,true, "popped")
-          else
-            -- what the heck.
-            -- if a timer runs out and the routine can't
-            -- figure out what flag it is, tell brandon.
-            -- No seriously, email him or something.
-            error("something terrible happened\n"
-              .. "panel.state was " .. tostring(panel.state) .. " when a timer expired?!\n"
-              .. "panel.is_swapping_from_left = " .. tostring(panel.is_swapping_from_left) .. "\n"
-              .. "panel.dont_swap = " .. tostring(panel.dont_swap) .. "\n"
-              .. "panel.chaining = " .. tostring(panel.chaining)
-              )
-          end
-        -- the timer-expiring action has completed
-        end
-      end
-      -- Advance the fell-from-garbage bounce timer, or clear it and stop animating if the panel isn't hovering or falling.
-      if cntinue then
-      elseif panel.fell_from_garbage then
-        if panel.state ~= "hovering" and panel.state ~= "falling" then
-          panel.fell_from_garbage = nil
-        else
-          panel.fell_from_garbage = panel.fell_from_garbage - 1
-        end
+      if self.countdown_CLOCK then
+        self.countdown_CLOCK = self.countdown_CLOCK + 1
       end
     end
-  end
-  
-  local prev_shake_time = self.shake_time
-  self.shake_time = self.shake_time - 1
-  self.shake_time = max(self.shake_time, shake_time)
-  if self.shake_time == 0 then
-    self.peak_shake_time = 0
-  end
-
-
-  -- Phase 3. /////////////////////////////////////////////////////////////
-  -- Actions performed according to player input
-
-  -- CURSOR MOVEMENT
-  self.move_sound = true
-  if self.cur_dir and (self.cur_timer == 0 or
-    self.cur_timer == self.cur_wait_time) and not self.cursor_lock then
-    local prev_row = self.cur_row
-    local prev_col = self.cur_col
-    self.cur_row = bound(1, self.cur_row + d_row[self.cur_dir],
-            self.top_cur_row)
-    self.cur_col = bound(1, self.cur_col + d_col[self.cur_dir],
-            width - 1)
-    if(self.move_sound and 
-    (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and
-    (self.cur_row ~= prev_row or self.cur_col ~= prev_col))    then
-        SFX_Cur_Move_Play=1 
-        if self.enable_analytics then
-          analytics.register_move()
-        end
-    end
-  else
-    self.cur_row = bound(1, self.cur_row, self.top_cur_row)
-  end
-
-  if self.cur_timer ~= self.cur_wait_time then
-    self.cur_timer = self.cur_timer + 1
-  end
-  -- TAUNTING
-  if self.taunt_up ~= nil then
-    for _,t in ipairs(characters[self.character].sounds.taunt_ups) do
-      t:stop()
-    end
-    characters[self.character].sounds.taunt_ups[self.taunt_up]:play()
-    self:taunt("taunt_up")
-    self.taunt_up = nil
-  elseif self.taunt_down ~= nil then
-    for _,t in ipairs(characters[self.character].sounds.taunt_downs) do
-      t:stop()
-    end
-    characters[self.character].sounds.taunt_downs[self.taunt_down]:play()
-    self:taunt("taunt_down")
-    self.taunt_down = nil
-  end
-
-  -- SWAPPING
-  if (self.swap_1 or self.swap_2) and not swapped_this_frame then
-    local row = self.cur_row
-    local col = self.cur_col
-    -- in order for a swap to occur, one of the two panels in
-    -- the cursor must not be a non-panel.
-    local do_swap = (panels[row][col].color ~= 0 or
-              panels[row][col+1].color ~= 0) and
-    -- also, both spaces must be swappable.
-      (not panels[row][col]:exclude_swap()) and
-      (not panels[row][col+1]:exclude_swap()) and
-    -- also, neither space above us can be hovering.
-      (self.cur_row == #panels or (panels[row+1][col].state ~=
-        "hovering" and panels[row+1][col+1].state ~=
-        "hovering")) and
-    --also, we can't swap if the game countdown isn't finished
-      not self.do_countdown and
-    --also, don't swap on the first frame
-      not (self.CLOCK and self.CLOCK <= 1)
-    -- If you have two pieces stacked vertically, you can't move
-    -- both of them to the right or left by swapping with empty space.
-    -- TODO: This might be wrong if something lands on a swapping panel?
-    if panels[row][col].color == 0 or panels[row][col+1].color == 0 then
-      do_swap = do_swap and not (self.cur_row ~= self.height and
-        (panels[row+1][col].state == "swapping" and
-          panels[row+1][col+1].state == "swapping") and
-        (panels[row+1][col].color == 0 or
-          panels[row+1][col+1].color == 0) and
-        (panels[row+1][col].color ~= 0 or
-          panels[row+1][col+1].color ~= 0))
-      do_swap = do_swap and not (self.cur_row ~= 1 and
-        (panels[row-1][col].state == "swapping" and
-          panels[row-1][col+1].state == "swapping") and
-        (panels[row-1][col].color == 0 or
-          panels[row-1][col+1].color == 0) and
-        (panels[row-1][col].color ~= 0 or
-          panels[row-1][col+1].color ~= 0))
+    
+    if self.pre_stop_time ~= 0 then
+      self.pre_stop_time = self.pre_stop_time - 1
+    elseif self.stop_time ~= 0 then
+      self.stop_time = self.stop_time - 1
     end
 
-    do_swap = do_swap and (self.puzzle_moves == nil or self.puzzle_moves > 0)
-
-    if do_swap then
-      self.do_swap = true
-      if self.enable_analytics then
-        analytics.register_swap()
-      end
-    end
-    self.swap_1 = false
-    self.swap_2 = false
-  end
-
-  -- MANUAL STACK RAISING
-  if self.manual_raise and self.mode ~= "puzzle" then
-    if not self.rise_lock then
-      if self.panels_in_top_row then
-        self.game_over = true
-      end
-      self.has_risen = true
-      self.displacement = self.displacement - 1
-      if self.displacement == 1 then
-        self.manual_raise = false
-        self.rise_timer = 1
-        if not self.prevent_manual_raise then
-          self.score = self.score + 1
-        end
-        self.prevent_manual_raise = true
-      end
-      self.manual_raise_yet = true  --ehhhh
-      self.stop_time = 0
-    elseif not self.manual_raise_yet then
-      self.manual_raise = false
-    end
-    -- if the stack is rise locked when you press the raise button,
-    -- the raising is cancelled
-  end
-
-  -- if at the end of the routine there are no chain panels, the chain ends.
-  if self.chain_counter ~= 0 and self.n_chain_panels == 0 then
-    self:set_chain_garbage(self.chain_counter)
-    SFX_Fanfare_Play = self.chain_counter
-    if self.enable_analytics then
-      analytics.register_chain(self.chain_counter)
-    end
-    self.chain_counter=0
-  end
-
-  if(self.score>99999) then
-    self.score=99999
-    -- lol owned
-  end
-
-  self.prev_active_panels = self.n_active_panels
-  self.n_active_panels = 0
-  for row=1,self.height do
-    for col=1,self.width do
-      local panel = panels[row][col]
-      if (panel.garbage and panel.state ~= "normal") or
-         (panel.color ~= 0 and panel.state ~= "landing" and (panel:exclude_hover() or panel.state == "swapping") and not panel.garbage) or
-          panel.state == "swapping" then
-        self.n_active_panels = self.n_active_panels + 1
-      end
-    end
-  end
-
-  local to_send = self.garbage_to_send[self.CLOCK]
-  if to_send then
-    self.garbage_to_send[self.CLOCK] = nil
-
-    -- if there's no chain, we can send it
-    if self.chain_counter == 0 then
-      if #to_send > 0 then
-        --[[table.sort(to_send, function(a,b)
-            if a[4] or b[4] then
-              return a[4] and not b[4]
-            elseif a[3] or b[3] then
-              return b[3] and not a[3]
-            else
-              return a[1] < b[1]
-            end
-          end)--]]
-        self:really_send(to_send)
-      end
-    elseif self.garbage_to_send.chain then
-      local waiting_for_chain = self.garbage_to_send.chain
-      for i=1,#to_send do
-        waiting_for_chain[#waiting_for_chain+1] = to_send[i]
-      end
-    else
-      self.garbage_to_send.chain = to_send
-    end
-  end
-
-  self:remove_extra_rows()
-
-  local garbage = self.later_garbage[self.CLOCK]
-  if garbage then
-    for i=1,#garbage do
-      self.garbage_q:push(garbage[i])
-    end
-  end
-  self.later_garbage[self.CLOCK-409] = nil
-
-  -- Check for panels at or above the top.
-  self.panels_in_top_row = false
-  -- If any dangerous panels are in the top row, garbage should not fall.
-  for col_idx = 1, width do
-    if panels[top_row][col_idx]:dangerous() then
-      self.panels_in_top_row = true
-    end
-  end
-  -- If any panels (dangerous or not) are in rows above the top row, garbage should not fall.
-  for row_idx = top_row + 1, #self.panels do
-    for col_idx = 1, width do
-      if panels[row_idx][col_idx].color ~= 0 then
+    self.panels_in_top_row = false
+    local top_row = self.height--self.displacement%16==0 and self.height or self.height-1
+    prow = panels[top_row]
+    for idx=1,width do
+      if prow[idx]:dangerous() then
         self.panels_in_top_row = true
       end
     end
-  end
 
-  if self.garbage_q:len() > 0 then
-    local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
-    local drop_it = 
-      not self.panels_in_top_row
-      and not self:has_falling_garbage()
-      and (
-        (from_chain and next_garbage_block_height > 1) or
-        (self.n_active_panels == 0 and
-        self.prev_active_panels == 0) 
-      )
-    if drop_it and self.garbage_q:len() > 0 then
-      if self:drop_garbage(unpack(self.garbage_q:peek())) then
-        self.garbage_q:pop()
+    -- calculate which columns should bounce
+    local prev_danger = self.danger
+    self.danger = false
+    prow = panels[self.height-1]
+    for idx=1,width do
+      if prow[idx]:dangerous() then
+        self.danger = true
+        self.danger_col[idx] = true
+      else
+        self.danger_col[idx] = false
       end
     end
-  end
-  --Play Sounds / music
-  if not music_mute and not game_is_paused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
-
-    if self.do_countdown then 
-      if SFX_Go_Play == 1 then
-        themes[config.theme].sounds.go:stop()
-        themes[config.theme].sounds.go:play()
-        SFX_Go_Play=0
-      elseif SFX_Countdown_Play == 1 then
-        themes[config.theme].sounds.countdown:stop()
-        themes[config.theme].sounds.countdown:play()
-        SFX_Go_Play=0
+    if self.danger and self.stop_time == 0 then
+      self.danger_timer = self.danger_timer - 1
+      if self.danger_timer<0 then
+        self.danger_timer=17
       end
+    end
+
+    -- determine whether to play danger music
+      -- Changed this to play danger when something in top 3 rows
+      -- and to play casual when nothing in top 3 or 4 rows
+      if not self.danger_music then
+          -- currently playing casual
+          for _, prow in pairs({panels[self.height], panels[self.height-1], panels[self.height-2]}) do
+              for idx=1, width do
+                  if prow[idx].color ~= 0 and prow[idx].state ~= "falling" or prow[idx]:dangerous() then
+                      self.danger_music = true
+                      break
+                  end
+              end
+          end
+          if self.shake_time > 0 then self.danger_music = false end
+      else
+          --currently playing danger
+          local toggle_back = true
+          -- Normally, change back if nothing is in the top 3 rows
+          local changeback_rows = {panels[self.height], panels[self.height-1], panels[self.height-2]}
+          -- But optionally, wait until nothing is in the fourth row
+          if (config.danger_music_changeback_delay) then
+            table.insert(changeback_rows, panels[self.height-3])
+          end
+          for _, prow in pairs(changeback_rows) do
+              for idx=1, width do
+                  if prow[idx].color ~= 0 then
+                      toggle_back = false
+                      break
+                  end
+              end
+          end
+          self.danger_music = not toggle_back
+      end
+
+
+
+
+    if self.displacement == 0 and self.has_risen then
+      self.top_cur_row = self.height
+      self:new_row()
+    end
+    self.prev_rise_lock = self.rise_lock
+    self.rise_lock = self.n_active_panels ~= 0 or
+        self.prev_active_panels ~= 0 or
+        self.shake_time ~= 0 or
+        self.do_countdown or 
+        self.do_swap
+    if self.prev_rise_lock and not self.rise_lock then
+      self.prevent_manual_raise = false
+    end
+
+    -- Increase the speed if applicable
+    if self.speed_times then
+      local time = self.speed_times[self.speed_times.idx]
+      if self.CLOCK == time then
+        self.speed = min(self.speed + 1, 99)
+        self.FRAMECOUNT_RISE = speed_to_rise_time[self.speed]
+        if self.speed_times.idx ~= #self.speed_times then
+          self.speed_times.idx = self.speed_times.idx + 1
+        else
+          self.speed_times[self.speed_times.idx] = time + self.speed_times.delta
+        end
+      end
+    elseif self.panels_to_speedup <= 0 then
+      self.speed = min(self.speed + 1, 99)
+      self.panels_to_speedup = self.panels_to_speedup +
+        panels_to_next_speed[self.speed]
+      self.FRAMECOUNT_RISE = speed_to_rise_time[self.speed]
+    end
+
+    -- Phase 0 //////////////////////////////////////////////////////////////
+    -- Stack automatic rising
+    if self.speed ~= 0 and not self.manual_raise and self.stop_time == 0
+        and not self.rise_lock and self.mode ~= "puzzle" then
+      if self.panels_in_top_row then
+        self.health = self.health - 1
+        if self.health < 1 and self.shake_time < 1 then
+          self:set_game_over()
+        end
+      else
+        self.rise_timer = self.rise_timer - 1
+        if self.rise_timer <= 0 then  -- try to rise
+          self.displacement = self.displacement - 1
+          if self.displacement == 0 then
+            self.prevent_manual_raise = false
+            self.top_cur_row = self.height
+            self:new_row()
+          end
+          self.rise_timer = self.rise_timer + self.FRAMECOUNT_RISE
+        end
+      end
+    end
+
+    if not self.panels_in_top_row then
+      self.health = self.max_health
+    end
+
+    if self.displacement % 16 ~= 0 then
+      self.top_cur_row = self.height - 1
+    end
+
+    -- Begin the swap we input last frame.
+    if self.do_swap then
+      self:swap()
+      swapped_this_frame = true
+      self.do_swap = nil
+    end
+
+    -- Look for matches.
+    self:check_matches()
+    -- Clean up the value we're using to match newly hovering panels
+    -- This is pretty dirty :(
+    for row=1,#panels do
+      for col=1,width do
+        panels[row][col].match_anyway = nil
+      end
+    end
+
+
+    -- Phase 2. /////////////////////////////////////////////////////////////
+    -- Timer-expiring actions + falling
+    local propogate_fall = {false,false,false,false,false,false}
+    local skip_col = 0
+    local fallen_garbage = 0
+    local shake_time = 0
+    popsize = "small"
+    for row=1,#panels do
+      for col=1,width do
+        local cntinue = false
+        if skip_col > 0 then
+          skip_col = skip_col - 1
+          cntinue=true
+        end
+        panel = panels[row][col]
+        if cntinue then
+        elseif panel.garbage then
+          if panel.state == "matched" then
+            panel.timer = panel.timer - 1
+            if panel.timer == panel.pop_time then
+              if config.popfx == true then self:enqueue_popfx(col, row, popsize) end
+              SFX_Garbage_Pop_Play = panel.pop_index
+            end
+            if panel.timer == 0 then
+              if panel.y_offset == -1 then
+                local color, chaining = panel.color, panel.chaining
+                panel:clear()
+                panel.color, panel.chaining = color, chaining
+                self:set_hoverers(row,col,self.FRAMECOUNT_GPHOVER,true,true)
+                panel.fell_from_garbage = 12
+              else
+                panel.state = "normal"
+              end
+            end
+          -- try to fall
+          elseif (panel.state=="normal" or panel.state=="falling") then
+            if panel.x_offset==0 then
+              local prow = panels[row-1]
+              local supported = false
+              if panel.y_offset == 0 then
+                for i=col,col+panel.width-1 do
+                  supported = supported or prow[i]:support_garbage()
+                end
+              else
+                supported = not propogate_fall[col]
+              end
+              if supported then
+                for x=col,col-1+panel.width do
+                  panels[row][x].state = "normal"
+                  propogate_fall[x] = false
+                end
+              else
+                skip_col = panel.width-1
+                for x=col,col-1+panel.width do
+                  panels[row-1][x]:clear()
+                  propogate_fall[x] = true
+                  panels[row][x].state = "falling"
+                  panels[row-1][x], panels[row][x] =
+                    panels[row][x], panels[row-1][x]
+                end
+              end
+            end
+            if panel.shake_time and panel.state == "normal" then
+              if row <= self.height then
+                if panel.height > 3 then
+                  self.sfx_garbage_thud = 3
+                else self.sfx_garbage_thud = panel.height
+                end
+                shake_time = max(shake_time, panel.shake_time, self.peak_shake_time or 0)
+                --a smaller garbage block landing should renew the largest of the previous blocks' shake times since our shake time was last zero.
+                self.peak_shake_time = max(shake_time, self.peak_shake_time or 0)
+                panel.shake_time = nil
+              end
+            end
+          end
+          cntinue = true
+        end
+        if propogate_fall[col] and not cntinue then
+          if panel:block_garbage_fall() then
+            propogate_fall[col] = false
+          else
+            panel.state = "falling"
+            panel.timer = 0
+          end
+        end
+        if cntinue then
+        elseif panel.state == "falling" then
+          -- if it's on the bottom row, it should surely land
+          if row == 1 then
+            panel.state = "landing"
+            panel.timer = 12
+            self.sfx_land = true
+            
+          -- if there's a panel below, this panel's gonna land
+          -- unless the panel below is falling.
+          elseif panels[row-1][col].color ~= 0 and
+              panels[row-1][col].state ~= "falling" then
+            -- if it lands on a hovering panel, it inherits
+            -- that panel's hover time.
+            if panels[row-1][col].state == "hovering" then
+              panel.state = "normal"
+              self:set_hoverers(row,col,panels[row-1][col].timer,false,false)
+            else
+              panel.state = "landing"
+              panel.timer = 12
+            end
+            self.sfx_land = true
+          else
+            panels[row-1][col], panels[row][col] =
+              panels[row][col], panels[row-1][col]
+            panels[row][col]:clear()
+          end
+        elseif panel:has_flags() and panel.timer~=0 then
+          panel.timer = panel.timer - 1
+          if panel.timer == 0 then
+            if panel.state=="swapping" then
+              -- a swap has completed here.
+              panel.state = "normal"
+              panel.dont_swap = nil
+              local from_left = panel.is_swapping_from_left
+              panel.is_swapping_from_left = nil
+              -- Now there are a few cases where some hovering must
+              -- be done.
+              if panel.color ~= 0 then
+                if row~=1 then
+                  if panels[row-1][col].color == 0 then
+                    self:set_hoverers(row,col,
+                        self.FRAMECOUNT_HOVER,false,true,false)
+                    -- if there is no panel beneath this panel
+                    -- it will begin to hover.
+                    -- CRAZY BUG EMULATION:
+                    -- the space it was swapping from hovers too
+                    if from_left then
+                      if panels[row][col-1].state == "falling" then
+                        self:set_hoverers(row,col-1,
+                            self.FRAMECOUNT_HOVER,false,true)
+                      end
+                    else
+                      if panels[row][col+1].state == "falling" then
+                        self:set_hoverers(row,col+1,
+                            self.FRAMECOUNT_HOVER+1,false,false)
+                      end
+                    end
+                  elseif panels[row-1][col].state
+                      == "hovering" then
+                    -- swap may have landed on a hover
+                    self:set_hoverers(row,col,
+                        self.FRAMECOUNT_HOVER,false,true,
+                        panels[row-1][col].match_anyway, "inherited")
+                  end
+                end
+              else
+                -- an empty space finished swapping...
+                -- panels above it hover
+                self:set_hoverers(row+1,col,
+                    self.FRAMECOUNT_HOVER+1,false,false,false,"empty")
+              end
+            elseif panel.state == "hovering" then
+              if panels[row-1][col].state == "hovering" then
+                panel.timer = panels[row-1][col].timer
+              -- This panel is no longer hovering.
+              -- it will now fall without sitting around
+              -- for any longer!
+              elseif panels[row-1][col].color ~= 0 then
+                panel.state = "landing"
+                panel.timer = 12
+              else
+                panel.state = "falling"
+                panels[row][col], panels[row-1][col] =
+                  panels[row-1][col], panels[row][col]
+                panel.timer = 0
+                -- Not sure if needed:
+                panels[row][col]:clear_flags()
+              end
+            elseif panel.state == "landing" then
+              panel.state = "normal"
+            elseif panel.state == "matched" then
+              -- This panel's match just finished the whole
+              -- flashing and looking distressed thing.
+              -- It is given a pop time based on its place
+              -- in the match.
+              panel.state = "popping"
+              panel.timer = panel.combo_index*self.FRAMECOUNT_POP
+            elseif panel.state == "popping" then
+              --print("POP")
+              if (panel.combo_size > 6) or self.chain_counter > 1 then popsize = "normal" end
+              if self.chain_counter > 2 then popsize = "big" end
+              if self.chain_counter > 3 then popsize = "giant" end
+              if config.popfx == true then self:enqueue_popfx(col, row, popsize) end
+              self.score = self.score + 10;
+              -- self.score_render=1;
+              -- TODO: What is self.score_render?
+              -- this panel just popped
+              -- Now it's invisible, but sits and waits
+              -- for the last panel in the combo to pop
+              -- before actually being removed.
+
+              -- If it is the last panel to pop,
+              -- it should be removed immediately!
+              if panel.combo_size == panel.combo_index then
+                self.panels_cleared = self.panels_cleared + 1
+                if self.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
+                  self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
+                end
+                SFX_Pop_Play = 1
+                self.poppedPanelIndex = panel.combo_index
+                panel.color=0;
+                if(panel.chaining) then
+                  self.n_chain_panels = self.n_chain_panels - 1
+                end
+                panel:clear_flags()
+                self:set_hoverers(row+1,col,
+                    self.FRAMECOUNT_HOVER+1,true,false,true, "combo")
+              else
+                panel.state = "popped"
+                panel.timer = (panel.combo_size-panel.combo_index)
+                    * self.FRAMECOUNT_POP
+                self.panels_cleared = self.panels_cleared + 1
+                if self.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
+                  self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
+                end
+                SFX_Pop_Play = 1
+                self.poppedPanelIndex = panel.combo_index
+              end
+              
+            elseif panel.state == "popped" then
+              -- It's time for this panel
+              -- to be gone forever :'(
+              if self.panels_to_speedup then
+                self.panels_to_speedup = self.panels_to_speedup - 1
+              end
+              if panel.chaining then
+                self.n_chain_panels = self.n_chain_panels - 1
+              end
+              panel.color = 0
+              panel:clear_flags()
+              -- Any panels sitting on top of it
+              -- hover and are flagged as CHAINING
+              self:set_hoverers(row+1,col,self.FRAMECOUNT_HOVER+1,true,false,true, "popped")
+            elseif panel.state == "dead" then
+              -- Nothing to do here, the player lost.
+            else
+              -- what the heck.
+              -- if a timer runs out and the routine can't
+              -- figure out what flag it is, tell brandon.
+              -- No seriously, email him or something.
+              error("something terrible happened\n"
+                .. "panel.state was " .. tostring(panel.state) .. " when a timer expired?!\n"
+                .. "panel.is_swapping_from_left = " .. tostring(panel.is_swapping_from_left) .. "\n"
+                .. "panel.dont_swap = " .. tostring(panel.dont_swap) .. "\n"
+                .. "panel.chaining = " .. tostring(panel.chaining)
+                )
+            end
+          -- the timer-expiring action has completed
+          end
+        end
+        -- Advance the fell-from-garbage bounce timer, or clear it and stop animating if the panel isn't hovering or falling.
+        if cntinue then
+        elseif panel.fell_from_garbage then
+          if panel.state ~= "hovering" and panel.state ~= "falling" then
+            panel.fell_from_garbage = nil
+          else
+            panel.fell_from_garbage = panel.fell_from_garbage - 1
+          end
+        end
+      end
+    end
     
+    local prev_shake_time = self.shake_time
+    self.shake_time = self.shake_time - 1
+    self.shake_time = max(self.shake_time, shake_time)
+    if self.shake_time == 0 then
+      self.peak_shake_time = 0
+    end
+
+
+    -- Phase 3. /////////////////////////////////////////////////////////////
+    -- Actions performed according to player input
+
+    -- CURSOR MOVEMENT
+    self.move_sound = true
+    if self.cur_dir and (self.cur_timer == 0 or
+      self.cur_timer == self.cur_wait_time) and not self.cursor_lock then
+      local prev_row = self.cur_row
+      local prev_col = self.cur_col
+      self.cur_row = bound(1, self.cur_row + d_row[self.cur_dir],
+              self.top_cur_row)
+      self.cur_col = bound(1, self.cur_col + d_col[self.cur_dir],
+              width - 1)
+      if(self.move_sound and 
+      (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and
+      (self.cur_row ~= prev_row or self.cur_col ~= prev_col))    then
+          SFX_Cur_Move_Play=1 
+          if self.enable_analytics then
+            analytics.register_move()
+          end
+      end
     else
-      local musics_to_use = (current_use_music_from == "stage") and stages[current_stage].musics or characters[winningPlayer().character].musics
-      if not musics_to_use["normal_music"] then -- use the other one as fallback
-        musics_to_use = (current_use_music_from ~= "stage") and stages[current_stage].musics or characters[winningPlayer().character].musics
+      self.cur_row = bound(1, self.cur_row, self.top_cur_row)
+    end
+
+    if self.cur_timer ~= self.cur_wait_time then
+      self.cur_timer = self.cur_timer + 1
+    end
+    -- TAUNTING
+    if self.taunt_up ~= nil then
+      for _,t in ipairs(characters[self.character].sounds.taunt_ups) do
+        t:stop()
       end
-      if (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
-        if (current_music_is_casual or table.getn(currently_playing_tracks) == 0) 
-          and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
-          stop_the_music()
-          find_and_add_music(musics_to_use, "danger_music")
-          current_music_is_casual = false
-        elseif table.getn(currently_playing_tracks) == 0 and musics_to_use["normal_music"] then
-          stop_the_music()
-          find_and_add_music(musics_to_use, "normal_music")
-          current_music_is_casual = true
+      characters[self.character].sounds.taunt_ups[self.taunt_up]:play()
+      self:taunt("taunt_up")
+      self.taunt_up = nil
+    elseif self.taunt_down ~= nil then
+      for _,t in ipairs(characters[self.character].sounds.taunt_downs) do
+        t:stop()
+      end
+      characters[self.character].sounds.taunt_downs[self.taunt_down]:play()
+      self:taunt("taunt_down")
+      self.taunt_down = nil
+    end
+
+    -- SWAPPING
+    if (self.swap_1 or self.swap_2) and not swapped_this_frame then
+      local row = self.cur_row
+      local col = self.cur_col
+      -- in order for a swap to occur, one of the two panels in
+      -- the cursor must not be a non-panel.
+      local do_swap = (panels[row][col].color ~= 0 or
+                panels[row][col+1].color ~= 0) and
+      -- also, both spaces must be swappable.
+        (not panels[row][col]:exclude_swap()) and
+        (not panels[row][col+1]:exclude_swap()) and
+      -- also, neither space above us can be hovering.
+        (self.cur_row == #panels or (panels[row+1][col].state ~=
+          "hovering" and panels[row+1][col+1].state ~=
+          "hovering")) and
+      --also, we can't swap if the game countdown isn't finished
+        not self.do_countdown and
+      --also, don't swap on the first frame
+        not (self.CLOCK and self.CLOCK <= 1)
+      -- If you have two pieces stacked vertically, you can't move
+      -- both of them to the right or left by swapping with empty space.
+      -- TODO: This might be wrong if something lands on a swapping panel?
+      if panels[row][col].color == 0 or panels[row][col+1].color == 0 then
+        do_swap = do_swap and not (self.cur_row ~= self.height and
+          (panels[row+1][col].state == "swapping" and
+            panels[row+1][col+1].state == "swapping") and
+          (panels[row+1][col].color == 0 or
+            panels[row+1][col+1].color == 0) and
+          (panels[row+1][col].color ~= 0 or
+            panels[row+1][col+1].color ~= 0))
+        do_swap = do_swap and not (self.cur_row ~= 1 and
+          (panels[row-1][col].state == "swapping" and
+            panels[row-1][col+1].state == "swapping") and
+          (panels[row-1][col].color == 0 or
+            panels[row-1][col+1].color == 0) and
+          (panels[row-1][col].color ~= 0 or
+            panels[row-1][col+1].color ~= 0))
+      end
+
+      do_swap = do_swap and (self.puzzle_moves == nil or self.puzzle_moves > 0)
+
+      if do_swap then
+        self.do_swap = true
+        if self.enable_analytics then
+          analytics.register_swap()
         end
-      else --we should be playing normal_music or normal_music_start
-        if (not current_music_is_casual or table.getn(currently_playing_tracks) == 0) and musics_to_use["normal_music"] then
-          stop_the_music()
-          find_and_add_music(musics_to_use, "normal_music")
-          current_music_is_casual = true
+      end
+      self.swap_1 = false
+      self.swap_2 = false
+    end
+
+    -- MANUAL STACK RAISING
+    if self.manual_raise and self.mode ~= "puzzle" then
+      if not self.rise_lock then
+        if self.panels_in_top_row then
+          self:set_game_over()
+        end
+        self.has_risen = true
+        self.displacement = self.displacement - 1
+        if self.displacement == 1 then
+          self.manual_raise = false
+          self.rise_timer = 1
+          if not self.prevent_manual_raise then
+            self.score = self.score + 1
+          end
+          self.prevent_manual_raise = true
+        end
+        self.manual_raise_yet = true  --ehhhh
+        self.stop_time = 0
+      elseif not self.manual_raise_yet then
+        self.manual_raise = false
+      end
+      -- if the stack is rise locked when you press the raise button,
+      -- the raising is cancelled
+    end
+
+    -- if at the end of the routine there are no chain panels, the chain ends.
+    if self.chain_counter ~= 0 and self.n_chain_panels == 0 then
+      self:set_chain_garbage(self.chain_counter)
+      SFX_Fanfare_Play = self.chain_counter
+      if self.enable_analytics then
+        analytics.register_chain(self.chain_counter)
+      end
+      self.chain_counter=0
+    end
+
+    if(self.score>99999) then
+      self.score=99999
+      -- lol owned
+    end
+
+    self.prev_active_panels = self.n_active_panels
+    self.n_active_panels = 0
+    for row=1,self.height do
+      for col=1,self.width do
+        local panel = panels[row][col]
+        if (panel.garbage and panel.state ~= "normal") or
+          (panel.color ~= 0 and panel.state ~= "landing" and (panel:exclude_hover() or panel.state == "swapping") and not panel.garbage) or
+            panel.state == "swapping" then
+          self.n_active_panels = self.n_active_panels + 1
         end
       end
     end
-  end
-  if not SFX_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
-    if SFX_Swap_Play == 1 then
-        themes[config.theme].sounds.swap:stop()
-        themes[config.theme].sounds.swap:play()
-        SFX_Swap_Play=0
-    end
-    if SFX_Cur_Move_Play == 1 then
-        if not (self.mode == "vs" and themes[config.theme].sounds.swap:isPlaying())
-        and not self.do_countdown then
-            themes[config.theme].sounds.cur_move:stop()
-            themes[config.theme].sounds.cur_move:play()
+
+    local to_send = self.garbage_to_send[self.CLOCK]
+    if to_send then
+      self.garbage_to_send[self.CLOCK] = nil
+
+      -- if there's no chain, we can send it
+      if self.chain_counter == 0 then
+        if #to_send > 0 then
+          --[[table.sort(to_send, function(a,b)
+              if a[4] or b[4] then
+                return a[4] and not b[4]
+              elseif a[3] or b[3] then
+                return b[3] and not a[3]
+              else
+                return a[1] < b[1]
+              end
+            end)--]]
+          self:really_send(to_send)
         end
-        SFX_Cur_Move_Play=0
-    end
-    if self.sfx_land then
-      themes[config.theme].sounds.land:stop()
-      themes[config.theme].sounds.land:play()
-      self.sfx_land = false
-    end
-    if SFX_Countdown_Play == 1 then
-        if self.which == 1 then
-            themes[config.theme].sounds.countdown:stop()
-            themes[config.theme].sounds.countdown:play()
+      elseif self.garbage_to_send.chain then
+        local waiting_for_chain = self.garbage_to_send.chain
+        for i=1,#to_send do
+          waiting_for_chain[#waiting_for_chain+1] = to_send[i]
         end
-        SFX_Countdown_Play=0
+      else
+        self.garbage_to_send.chain = to_send
+      end
     end
-    if SFX_Go_Play == 1 then
-        if self.which == 1 then
+
+    self:remove_extra_rows()
+
+    local garbage = self.later_garbage[self.CLOCK]
+    if garbage then
+      for i=1,#garbage do
+        self.garbage_q:push(garbage[i])
+      end
+    end
+    self.later_garbage[self.CLOCK-409] = nil
+
+    -- Check for panels at or above the top.
+    self.panels_in_top_row = false
+    -- If any dangerous panels are in the top row, garbage should not fall.
+    for col_idx = 1, width do
+      if panels[top_row][col_idx]:dangerous() then
+        self.panels_in_top_row = true
+      end
+    end
+    -- If any panels (dangerous or not) are in rows above the top row, garbage should not fall.
+    for row_idx = top_row + 1, #self.panels do
+      for col_idx = 1, width do
+        if panels[row_idx][col_idx].color ~= 0 then
+          self.panels_in_top_row = true
+        end
+      end
+    end
+
+    if self.garbage_q:len() > 0 then
+      local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
+      local drop_it = 
+        not self.panels_in_top_row
+        and not self:has_falling_garbage()
+        and (
+          (from_chain and next_garbage_block_height > 1) or
+          (self.n_active_panels == 0 and
+          self.prev_active_panels == 0) 
+        )
+      if drop_it and self.garbage_q:len() > 0 then
+        if self:drop_garbage(unpack(self.garbage_q:peek())) then
+          self.garbage_q:pop()
+        end
+      end
+    end
+    
+    -- Update Music
+    if not music_mute and not game_is_paused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
+
+      if self:game_ended() == false then 
+        if self.do_countdown then 
+          if SFX_Go_Play == 1 then
             themes[config.theme].sounds.go:stop()
             themes[config.theme].sounds.go:play()
-        end
-        SFX_Go_Play=0
-    end
-    if self.combo_chain_play then
-        themes[config.theme].sounds.land:stop()
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        characters[self.character]:play_combo_chain_sfx(self.combo_chain_play)
-        self.combo_chain_play = nil
-    end
-    if SFX_garbage_match_play then
-      for _,v in pairs(characters[self.character].sounds.garbage_matches) do
-        v:stop()
-      end
-      if #characters[self.character].sounds.garbage_matches ~= 0 then
-        characters[self.character].sounds.garbage_matches[math.random(#characters[self.character].sounds.garbage_matches)]:play()
-      end
-      SFX_garbage_match_play = nil
-    end
-    if SFX_Fanfare_Play == 0 then
-    --do nothing
-    elseif SFX_Fanfare_Play >= 6 then
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        themes[config.theme].sounds.fanfare3:play()
-    elseif SFX_Fanfare_Play >= 5 then
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        themes[config.theme].sounds.fanfare2:play()
-    elseif SFX_Fanfare_Play >= 4 then
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        themes[config.theme].sounds.fanfare1:play()
-    end
-    SFX_Fanfare_Play=0
-    if self.sfx_garbage_thud >= 1 and self.sfx_garbage_thud <= 3 then
-        local interrupted_thud = nil
-        for i=1,3 do
-            if themes[config.theme].sounds.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
-                themes[config.theme].sounds.garbage_thud[i]:stop()
-                interrupted_thud = i
-            end
-        end
-        if interrupted_thud and interrupted_thud > self.sfx_garbage_thud then
-          themes[config.theme].sounds.garbage_thud[interrupted_thud]:play()
-        else 
-          themes[config.theme].sounds.garbage_thud[self.sfx_garbage_thud]:play()
-        end
-        if #characters[self.character].sounds.garbage_lands ~= 0 and interrupted_thud == nil then
-          for _,v in pairs(characters[self.character].sounds.garbage_lands) do
-            v:stop()
+            SFX_Go_Play=0
+          elseif SFX_Countdown_Play == 1 then
+            themes[config.theme].sounds.countdown:stop()
+            themes[config.theme].sounds.countdown:play()
+            SFX_Go_Play=0
           end
-          characters[self.character].sounds.garbage_lands[math.random(#characters[self.character].sounds.garbage_lands)]:play()
-        end
-        self.sfx_garbage_thud = 0
-    end
-    if SFX_Pop_Play or SFX_Garbage_Pop_Play then
-        local popLevel = min(max(self.chain_counter,1),4)
-        local popIndex = 1
-        if SFX_Garbage_Pop_Play then
-            popIndex = SFX_Garbage_Pop_Play
+        
         else
-            popIndex = min(self.poppedPanelIndex,10)
+          local musics_to_use = (current_use_music_from == "stage") and stages[current_stage].musics or characters[winningPlayer().character].musics
+          if not musics_to_use["normal_music"] then -- use the other one as fallback
+            musics_to_use = (current_use_music_from ~= "stage") and stages[current_stage].musics or characters[winningPlayer().character].musics
+          end
+          if (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
+            if (current_music_is_casual or table.getn(currently_playing_tracks) == 0) 
+              and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
+              stop_the_music()
+              find_and_add_music(musics_to_use, "danger_music")
+              current_music_is_casual = false
+            elseif table.getn(currently_playing_tracks) == 0 and musics_to_use["normal_music"] then
+              stop_the_music()
+              find_and_add_music(musics_to_use, "normal_music")
+              current_music_is_casual = true
+            end
+          else --we should be playing normal_music or normal_music_start
+            if (not current_music_is_casual or table.getn(currently_playing_tracks) == 0) and musics_to_use["normal_music"] then
+              stop_the_music()
+              find_and_add_music(musics_to_use, "normal_music")
+              current_music_is_casual = true
+            end
+          end
         end
-        --stop the previous pop sound
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        --play the appropriate pop sound
-        themes[config.theme].sounds.pops[popLevel][popIndex]:play()
-        self.lastPopLevelPlayed = popLevel
-        self.lastPopIndexPlayed = popIndex
-        SFX_Pop_Play = nil
-        SFX_Garbage_Pop_Play = nil
+      end
     end
-    if stop_sounds then
-      love.audio.stop()
-      stop_the_music()
-      stop_sounds = nil
+
+    -- Update Sound FX
+    if not SFX_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
+      if SFX_Swap_Play == 1 then
+          themes[config.theme].sounds.swap:stop()
+          themes[config.theme].sounds.swap:play()
+          SFX_Swap_Play=0
+      end
+      if SFX_Cur_Move_Play == 1 then
+          if not (self.mode == "vs" and themes[config.theme].sounds.swap:isPlaying())
+          and not self.do_countdown then
+              themes[config.theme].sounds.cur_move:stop()
+              themes[config.theme].sounds.cur_move:play()
+          end
+          SFX_Cur_Move_Play=0
+      end
+      if self.sfx_land then
+        themes[config.theme].sounds.land:stop()
+        themes[config.theme].sounds.land:play()
+        self.sfx_land = false
+      end
+      if SFX_Countdown_Play == 1 then
+          if self.which == 1 then
+              themes[config.theme].sounds.countdown:stop()
+              themes[config.theme].sounds.countdown:play()
+          end
+          SFX_Countdown_Play=0
+      end
+      if SFX_Go_Play == 1 then
+          if self.which == 1 then
+              themes[config.theme].sounds.go:stop()
+              themes[config.theme].sounds.go:play()
+          end
+          SFX_Go_Play=0
+      end
+      if self.combo_chain_play then
+          themes[config.theme].sounds.land:stop()
+          themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+          characters[self.character]:play_combo_chain_sfx(self.combo_chain_play)
+          self.combo_chain_play = nil
+      end
+      if SFX_garbage_match_play then
+        for _,v in pairs(characters[self.character].sounds.garbage_matches) do
+          v:stop()
+        end
+        if #characters[self.character].sounds.garbage_matches ~= 0 then
+          characters[self.character].sounds.garbage_matches[math.random(#characters[self.character].sounds.garbage_matches)]:play()
+        end
+        SFX_garbage_match_play = nil
+      end
+      if SFX_Fanfare_Play == 0 then
+      --do nothing
+      elseif SFX_Fanfare_Play >= 6 then
+          themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+          themes[config.theme].sounds.fanfare3:play()
+      elseif SFX_Fanfare_Play >= 5 then
+          themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+          themes[config.theme].sounds.fanfare2:play()
+      elseif SFX_Fanfare_Play >= 4 then
+          themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+          themes[config.theme].sounds.fanfare1:play()
+      end
+      SFX_Fanfare_Play=0
+      if self.sfx_garbage_thud >= 1 and self.sfx_garbage_thud <= 3 then
+          local interrupted_thud = nil
+          for i=1,3 do
+              if themes[config.theme].sounds.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
+                  themes[config.theme].sounds.garbage_thud[i]:stop()
+                  interrupted_thud = i
+              end
+          end
+          if interrupted_thud and interrupted_thud > self.sfx_garbage_thud then
+            themes[config.theme].sounds.garbage_thud[interrupted_thud]:play()
+          else 
+            themes[config.theme].sounds.garbage_thud[self.sfx_garbage_thud]:play()
+          end
+          if #characters[self.character].sounds.garbage_lands ~= 0 and interrupted_thud == nil then
+            for _,v in pairs(characters[self.character].sounds.garbage_lands) do
+              v:stop()
+            end
+            characters[self.character].sounds.garbage_lands[math.random(#characters[self.character].sounds.garbage_lands)]:play()
+          end
+          self.sfx_garbage_thud = 0
+      end
+      if SFX_Pop_Play or SFX_Garbage_Pop_Play then
+          local popLevel = min(max(self.chain_counter,1),4)
+          local popIndex = 1
+          if SFX_Garbage_Pop_Play then
+              popIndex = SFX_Garbage_Pop_Play
+          else
+              popIndex = min(self.poppedPanelIndex,10)
+          end
+          --stop the previous pop sound
+          themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+          --play the appropriate pop sound
+          themes[config.theme].sounds.pops[popLevel][popIndex]:play()
+          self.lastPopLevelPlayed = popLevel
+          self.lastPopIndexPlayed = popIndex
+          SFX_Pop_Play = nil
+          SFX_Garbage_Pop_Play = nil
+      end
+      if stop_sounds then
+        stop_all_audio()
+        stop_sounds = nil
+      end
+      if self.game_over or (self.garbage_target and self.garbage_target.game_over) then
+          SFX_GameOver_Play = 1
+      end
     end
-    if self.game_over or (self.garbage_target and self.garbage_target.game_over) then
-        SFX_GameOver_Play = 1
+
+    self.CLOCK = self.CLOCK + 1
+    if self.game_stopwatch_running and GAME_ENDED_CLOCK == 0 then
+      self.game_stopwatch = (self.game_stopwatch or -1) + 1
+    end
+  end
+end
+
+
+function Stack.game_ended(self)
+  local result = false 
+  if GAME_ENDED_CLOCK > 0 and self.CLOCK > GAME_ENDED_CLOCK then
+    result = true
+  end
+
+  if self.mode == "time" then
+    if self.game_stopwatch then
+      if self.game_stopwatch > time_attack_time*60 then
+        result = true
+      end
     end
   end
 
-  self.CLOCK = self.CLOCK + 1
-  if self.game_stopwatch_running then
-    self.game_stopwatch = (self.game_stopwatch or -1) + 1
+  return result
+end
+
+function Stack.set_game_over(self)
+  self.game_over = true
+  self.game_over_clock = self.CLOCK
+
+  if GAME_ENDED_CLOCK == 0 or self.CLOCK <= GAME_ENDED_CLOCK then
+    GAME_ENDED_CLOCK = self.CLOCK
+  end
+
+  local popsize = "small"
+  local panels = self.panels
+  local width = self.width
+  for row=1,#panels do
+    for col=1,width do
+      local panel = panels[row][col]
+      panel.state = "dead"
+      if row == #panels then
+        self:enqueue_popfx(col, row, popsize)
+      end
+    end
   end
 end
 

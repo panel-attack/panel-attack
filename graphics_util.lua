@@ -100,11 +100,11 @@ function draw_time(time, quads, x, y, x_scale, y_scale)
       love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height)
     }
 
-    symbolEnum = {[":"]=10, ["'"]=11}
+    symbolEnum = {[":"]=10, ["'"]=11, ["-"]=13}
     for i = 1, #time, 1 do
       local c = time:sub(i,i)
 
-      if c ~= ":" and c ~= "'" then
+      if c ~= ":" and c ~= "'" and c ~= "-" then
         quads[i]:setViewport(tonumber(c)*numberWidth, 0, numberWidth, numberHeight, width, height)
       else
         quads[i]:setViewport(symbolEnum[c]*numberWidth, 0, numberWidth, numberHeight, width, height)

@@ -385,6 +385,8 @@ multi_shakeQuad = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_mu
             else
               draw_x = draw_x + panel.timer * 4
             end
+          elseif panel.state == "dead" then
+            draw_frame = 6
           elseif panel.state == "dimmed" then
             draw_frame = 7
           elseif panel.fell_from_garbage then
@@ -409,7 +411,10 @@ multi_shakeQuad = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_mu
 	draw(themes[config.theme].images.IMG_wall2P, 4, 4 - shake + self.height*16)
   end
 
-  self:render_cursor()
+  if self:game_ended() == false then
+    self:render_cursor()
+  end
+
   if self.do_countdown then
     self:render_countdown()
   end
@@ -470,7 +475,10 @@ multi_shakeQuad = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_mu
     end
     local main_infos_screen_pos = { x=375 + (canvas_width-legacy_canvas_width)/2, y=10 + (canvas_height-legacy_canvas_height) }
     if self.mode == "time" then
-      local time_left = 120 - (self.game_stopwatch or 120)/60
+      local time_left = time_attack_time - ((self.game_stopwatch or (time_attack_time*60))/60) -- time left in seconds
+      if time_left < 0 then
+        time_left = 0
+      end
       local mins = math.floor(time_left/60)
       local secs = math.ceil(time_left% 60)
       if secs == 60 then
