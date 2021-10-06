@@ -930,7 +930,7 @@ function main_net_vs()
       write_replay_file()
       select_screen.character_select_mode = "2p_net_vs"
       if currently_spectating then
-        return game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}
+        return game_over_transition, {select_screen.main, end_text, winSFX, 1}
       else
         return game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}
       end
@@ -1727,8 +1727,10 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
       if t <= fadeMusicLength then
         set_music_fade_percentage((fadeMusicLength-t)/fadeMusicLength)
       else
-        stop_the_music()
-        set_music_fade_percentage(1) -- reset the music back to normal config volume
+        if t == fadeMusicLength + 1 then
+          set_music_fade_percentage(1) -- reset the music back to normal config volume
+          stop_all_audio()
+        end
       end
 
       -- Play the winner sound effect after a delay
@@ -1740,6 +1742,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
           if winnerSFX ~= nil and winnerSFX ~= 0 then
             print(winnerSFX)
             winnerSFX:play()
+            winnerSFX = nil;
           end
         end
       end
@@ -1751,8 +1754,8 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
         P2:run()
       end
       if t >= timemin and ( (t >=timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) then
-        stop_all_audio()
         set_music_fade_percentage(1) -- reset the music back to normal config volume
+        stop_all_audio()
         SFX_GameOver_Play = 0
         ret = {next_func}
       end
