@@ -48,6 +48,7 @@ function fmainloop()
   read_conf_file()
   local x, y, display = love.window.getPosition()
   love.window.setPosition( config.window_x or x, config.window_y or y, config.display or display )
+  love.window.setFullscreen(config.fullscreen or false)
   love.window.setVSync( config.vsync and 1 or 0 )
   gprint("Loading localization...", unpack(main_menu_screen_pos))
   wait()
@@ -1641,6 +1642,11 @@ end
 
 function love.quit()
   love.audio.stop()
-  config.window_x, config.window_y, config.display = love.window.getPosition()
+  if love.window.getFullscreen() == true then
+    null, null, config.display = love.window.getPosition()
+  else
+    config.window_x, config.window_y, config.display = love.window.getPosition()
+  end
+  config.fullscreen = love.window.getFullscreen()
   write_conf_file()
 end
