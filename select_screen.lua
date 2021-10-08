@@ -879,6 +879,7 @@ function select_screen.main()
           P1.garbage_target = P2
           P2.garbage_target = P1
           move_stack(P2,2)
+          replay = {}
           replay.vs = {P="",O="",I="",Q="",R="",in_buf="",
                       P1_level=P1.level,P2_level=P2.level,
                       P1_name=my_name, P2_name=op_name,

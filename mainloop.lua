@@ -352,8 +352,9 @@ end
 function main_endless(...)
   pick_random_stage()
   pick_use_music_from()
+  replay = {}
   replay.endless = {}
-  local replay=replay.endless
+  local replay = replay.endless
   replay.pan_buf = ""
   replay.in_buf = ""
   replay.gpan_buf = ""
@@ -379,10 +380,16 @@ function main_endless(...)
     end
     wait()
     if P1.game_over then
-    -- TODO: proper game over.
+      local now = os.date("*t",to_UTC(os.time()))
+      local sep = "/"
+      local path = "replays"..sep.."v"..VERSION..sep..string.format("%04d"..sep.."%02d"..sep.."%02d", now.year, now.month, now.day)
+        path = path..sep.."Endless"
+      local filename = "v"..VERSION.."-"..string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec).."-Spd"..P1.speed.."-Dif"..P1.difficulty .."-"..config.name.."-endless"
+      filename = filename..".txt"
       write_replay_file()
+      write_replay_file(path, filename)
       local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
-      
+
       return game_over_transition, {main_select_mode, end_text, P1:pick_win_sfx()}
     end
     variable_step(function() 
@@ -763,7 +770,6 @@ function main_net_vs_setup(ip, network_port)
   end
   connected_server_ip = ip
   logged_in = false
-  
   return main_net_vs_lobby
 end
 
@@ -922,10 +928,11 @@ function main_net_vs()
         filename = filename.."-draw"
       end
       filename = filename..".txt"
+      write_replay_file()
       print("saving replay as "..path..sep..filename)
       write_replay_file(path, filename)
-      print("also saving replay as replay.txt")
-      write_replay_file()
+      
+      
       select_screen.character_select_mode = "2p_net_vs"
       if currently_spectating then
         return game_over_transition, {select_screen.main, end_text, winSFX, 1}
@@ -1263,6 +1270,7 @@ function make_main_puzzle(puzzles)
     stop_the_music()
     pick_random_stage()
     pick_use_music_from()
+    replay = {}
     replay.puzzle = {}
     local replay = replay.puzzle
     P1 = Stack(1, "puzzle", config.panels)
@@ -1294,14 +1302,28 @@ function make_main_puzzle(puzzles)
               P1.prev_active_panels == 0 then
             if P1:puzzle_done() then
               awesome_idx = (awesome_idx % #puzzles) + 1
+              local now = os.date("*t",to_UTC(os.time()))
+              local sep = "/"
+              local path = "replays"..sep.."v"..VERSION..sep..string.format("%04d"..sep.."%02d"..sep.."%02d", now.year, now.month, now.day)
+              path = path..sep.."Puzzles"
+              local filename = "v"..VERSION.."-"..string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec).."-"..config.name.."-Successful".."-Puzzle"
+              filename = filename..".txt"
               write_replay_file()
+              write_replay_file(path,filename)
               if awesome_idx == 1 then
                 ret = {main_dumb_transition, {main_select_puzz, loc("pl_you_win"), 30, -1, P1:pick_win_sfx()}}
               else
                 ret = {main_dumb_transition, {next_func, loc("pl_you_win"), 30, -1, P1:pick_win_sfx()}}
               end
             elseif P1.puzzle_moves == 0 then
-              write_replay_file()
+                local now = os.date("*t",to_UTC(os.time()))
+                local sep = "/"
+                local path = "replays"..sep.."v"..VERSION..sep..string.format("%04d"..sep.."%02d"..sep.."%02d", now.year, now.month, now.day)
+                path = path..sep.."Puzzles"
+                local filename = "v"..VERSION.."-"..string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec).."-"..config.name.."-Failed".."-Puzzle"
+                filename = filename..".txt"
+                write_replay_file()
+                write_replay_file(path,filename)
               ret = {main_dumb_transition, {main_select_puzz, loc("pl_you_lose"), 30, -1}}
             end
           end
