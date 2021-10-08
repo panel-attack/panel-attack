@@ -382,7 +382,7 @@ function main_endless(...)
     -- TODO: proper game over.
       write_replay_file()
       local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
-      analytics.game_ends()
+      
       return game_over_transition, {main_select_mode, end_text, P1:pick_win_sfx()}
     end
     variable_step(function() 
@@ -418,7 +418,6 @@ function main_time_attack(...)
     if P1.game_over or (P1.game_stopwatch and P1.game_stopwatch >= time_attack_time*60) then
     -- TODO: proper game over.
       local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch))
-      analytics.game_ends()
       return game_over_transition, {main_select_mode, end_text, P1:pick_win_sfx()}
     end
     variable_step(function()
@@ -901,7 +900,6 @@ function main_net_vs()
       end
     end
     if end_text then
-      analytics.game_ends()
       undo_stonermode()
       json_send({game_over=true, outcome=outcome_claim})
       local now = os.date("*t",to_UTC(os.time()))
@@ -987,7 +985,6 @@ function main_local_vs()
     end
     
     if end_text then
-      analytics.game_ends()
       return game_over_transition, {select_screen.main, end_text, winSFX}
     end
   end
@@ -1023,7 +1020,6 @@ function main_local_vs_yourself()
         end
       end)
     if end_text then
-      analytics.game_ends()
       return game_over_transition, {select_screen.main, end_text, P1:pick_win_sfx()}
     end
   end
@@ -1757,6 +1753,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
         set_music_fade_percentage(1) -- reset the music back to normal config volume
         stop_all_audio()
         SFX_GameOver_Play = 0
+        analytics.game_ends()
         ret = {next_func}
       end
       t = t + 1
