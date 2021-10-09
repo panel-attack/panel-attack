@@ -148,6 +148,8 @@ function Theme.graphics_init(self)
   self.images.timeNumberWidth = self.images.IMG_timeNumber_atlas:getWidth()/12
   self.images.timeNumberHeight = self.images.IMG_timeNumber_atlas:getHeight()
 
+  self.images.IMG_pixelFont_atlas = load_theme_img("pixel_font_yellow")
+
   self.images.IMG_moves = load_theme_img("moves")
 
   self.images.IMG_score_1P = load_theme_img("score_1P")

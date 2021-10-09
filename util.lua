@@ -4,6 +4,13 @@ local type, setmetatable, getmetatable =
       type, setmetatable, getmetatable
 local random = math.random
 
+-- returns the number of entries in a table
+function tableLength(T)
+  local count = 0
+  for _ in pairs(T) do count = count + 1 end
+  return count
+end
+
 -- bounds b so a<=b<=c
 function bound(a, b, c)
   if b<a then return a

@@ -1,6 +1,7 @@
 require("panels")
 require("theme")
 require("click_menu")
+require("scores")
 local select_screen = require("select_screen")
 local replay_browser = require("replay_browser")
 local options = require("options")
@@ -49,6 +50,8 @@ function fmainloop()
   gprint("Reading config file", unpack(main_menu_screen_pos))
   wait()
   read_conf_file()
+  print("Reading scores file")
+  read_score_file()
   local x, y, display = love.window.getPosition()
   love.window.setPosition( config.window_x or x, config.window_y or y, config.display or display )
   love.window.setFullscreen(config.fullscreen or false)
@@ -380,7 +383,7 @@ function main_endless(...)
       P1:render()
     end
     wait()
-    if P1.game_over then
+    if P1:game_ended() then
       local now = os.date("*t",to_UTC(os.time()))
       local sep = "/"
       local path = "replays"..sep.."v"..VERSION..sep..string.format("%04d"..sep.."%02d"..sep.."%02d", now.year, now.month, now.day)
@@ -389,9 +392,8 @@ function main_endless(...)
       filename = filename..".txt"
       write_replay_file()
       write_replay_file(path, filename)
-      local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
 
-      return game_over_transition, {main_select_mode, end_text, P1:pick_win_sfx()}
+      return game_over_transition, {main_select_mode, nil, P1:pick_win_sfx()}
     end
     variable_step(function() 
       P1:run() 
@@ -423,13 +425,11 @@ function main_time_attack(...)
       P1:render()
     end
     wait()
-    if P1.game_over or (P1.game_stopwatch and P1.game_stopwatch >= time_attack_time*60) then
-    -- TODO: proper game over.
-      local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch))
-      return game_over_transition, {main_select_mode, end_text, P1:pick_win_sfx()}
+    if P1:game_ended() then
+      return game_over_transition, {main_select_mode, nil, P1:pick_win_sfx()}
     end
     variable_step(function()
-      if not P1.game_over and P1.game_stopwatch and P1.game_stopwatch < time_attack_time * 60 then
+      if P1:game_ended() == false then
         P1:run() 
         P1:handle_pause()
       end 
@@ -1011,7 +1011,6 @@ function main_local_vs_yourself()
   -- TODO: replay!
   use_current_stage()
   pick_use_music_from()
-  local end_text = nil
   while true do
     if game_is_paused then
       draw_pause()
@@ -1020,15 +1019,19 @@ function main_local_vs_yourself()
     end
     wait()
     variable_step(function()
-        if not P1.game_over then
+        if P1:game_ended() == false then
           P1:run()
           P1:handle_pause()
-        else
-          end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch))
         end
       end)
-    if end_text then
-      return game_over_transition, {select_screen.main, end_text, P1:pick_win_sfx()}
+    if P1:game_ended() then
+      player1Scores.vsSelf["last"][P1.level] = P1.score
+      if player1Scores.vsSelf["record"][P1.level] < P1.score then
+        player1Scores.vsSelf["record"][P1.level] = P1.score
+      end
+      write_score_file()
+
+      return game_over_transition, {select_screen.main, nil, P1:pick_win_sfx()}
     end
   end
 end
@@ -1194,10 +1197,8 @@ function main_replay_endless()
         run = false
       end
       if run or this_frame_keys["\\"] then
-        if P1.game_over then
-        -- TODO: proper game over.
-          local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
-          ret = {game_over_transition, {main_select_mode, end_text, P1:pick_win_sfx()}}
+        if P1:game_ended() then
+          ret = {game_over_transition, {main_select_mode, nil, P1:pick_win_sfx()}}
         end
         P1:run()
         P1:handle_pause()
