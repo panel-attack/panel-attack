@@ -112,7 +112,6 @@ function read_conf_file() pcall(function()
   if type(read_data.window_x) == "number" then config.window_x = read_data.window_x end
   if type(read_data.window_y) == "number" then config.window_y = read_data.window_y end
   if type(read_data.display) == "number" then config.display = read_data.display end
-  if type(read_data.fullscreen) == "boolean" then config.fullscreen = read_data.fullscreen end
 
   file:close()
 end) end
