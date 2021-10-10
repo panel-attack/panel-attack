@@ -486,7 +486,7 @@ function main_net_vs_lobby()
   while true do
     if connection_up_time <= login_status_message_duration then
       gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y-120)
-      local messages = server_queue:pop_all_with("login_successful", "login_denied")
+      local messages = server_message_queue:pop_all_with("login_successful", "login_denied")
       for _,msg in ipairs(messages) do
         if msg.login_successful then
           current_server_supports_ranking = true
@@ -516,7 +516,7 @@ function main_net_vs_lobby()
               login_status_message_duration = 7
       end
     end
-    local messages = server_queue:pop_all_with("choose_another_name", "create_room", "unpaired", "game_request", "leaderboard_report", "spectate_request_granted")
+    local messages = server_message_queue:pop_all_with("choose_another_name", "create_room", "unpaired", "game_request", "leaderboard_report", "spectate_request_granted")
     for _,msg in ipairs(messages) do
       updated = true
       items = {}
@@ -775,6 +775,7 @@ function main_net_vs_setup(ip, network_port)
 end
 
 function main_net_vs()
+  --Uncomment below to induce lag
   --STONER_MODE = true
   if current_stage then
     use_current_stage()
@@ -790,7 +791,7 @@ function main_net_vs()
   while true do
     -- Uncomment this to cripple your game :D
     -- love.timer.sleep(0.030)
-    local messages = server_queue:pop_all_with("taunt", "leave_room")
+    local messages = server_message_queue:pop_all_with("taunt", "leave_room")
     for _,msg in ipairs(messages) do
       if msg.taunt then
         local taunts = nil

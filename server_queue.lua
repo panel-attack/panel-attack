@@ -42,6 +42,8 @@ function ServerQueue.push(self, msg)
     local first = self.first
     self.data[first] = nil
     self.first = first + 1
+  else
+    print("Queue out of room, dropping front entry")
   end
 end
 

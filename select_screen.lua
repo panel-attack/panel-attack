@@ -163,7 +163,7 @@ function select_screen.main()
     local opponent_connected = false
     local retries, retry_limit = 0, 250
     while not global_initialize_room_msg and retries < retry_limit do
-      local msg = server_queue:pop_next_with("create_room", "character_select", "spectate_request_granted")
+      local msg = server_message_queue:pop_next_with("create_room", "character_select", "spectate_request_granted")
       if msg then
         global_initialize_room_msg = msg
       end
@@ -815,7 +815,8 @@ function select_screen.main()
     end
 
     if select_screen.character_select_mode == "2p_net_vs" then
-      local messages = server_queue:pop_all_with("win_counts", "menu_state", "ranked_match_approved", "leave_room", "match_start", "ranked_match_denied")
+      
+      local messages = server_message_queue:pop_all_with("win_counts", "menu_state", "ranked_match_approved", "leave_room", "match_start", "ranked_match_denied")
       if global_initialize_room_msg then
         messages[#messages+1] = global_initialize_room_msg
         global_initialize_room_msg = nil

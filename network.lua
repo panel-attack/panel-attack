@@ -26,30 +26,31 @@ function close_socket()
   TCP_sock = nil
 end
 
+-- Returns the next message in the queue, or nil if none / error
 function get_message()
   if string.len(leftovers) == 0 then
     return nil
   end
-  local typ, gap, len = string.sub(leftovers,1,1), 0
-  if typ == "J" then
+  local type, gap, len = string.sub(leftovers,1,1), 0
+  if type == "J" then
     if string.len(leftovers) >= 4 then
       len = byte(string.sub(leftovers,2,2)) * 65536 +
             byte(string.sub(leftovers,3,3)) * 256 +
             byte(string.sub(leftovers,4,4))
-      print("json message has length "..len)
+      --print("json message has length "..len)
       gap = 3
     else
       return nil
     end
   else
-    len = type_to_length[typ] - 1
+    len = type_to_length[type] - 1
   end
   if len + gap + 1 > string.len(leftovers) then
     return nil
   end
   local ret = string.sub(leftovers,2+gap,len+gap+1)
   leftovers = string.sub(leftovers,len+gap+2)
-  return typ, ret
+  return type, ret
 end
 
 local lag_q = Queue()
@@ -132,6 +133,8 @@ function connection_is_ready()
   return got_H and #this_frame_messages > 0
 end
 
+-- Processes messages that came in from the server
+-- Returns false if the connection is broken.
 function do_messages()
   if not flush_socket() then
     -- Something went wrong while receiving data.
