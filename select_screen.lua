@@ -246,11 +246,11 @@ function select_screen.main()
       match_type = "Casual"
     end
     if currently_spectating then
-      P1 = {panel_buffer="", gpanel_buffer=""}
-      print("we reset P1 buffers at start of main_character_select()")
+      P1 = nil
+      print("we reset P1 at start of main_character_select()")
     end
-    P2 = {panel_buffer="", gpanel_buffer=""}
-    print("we reset P2 buffers at start of main_character_select()")
+    P2 = nil
+    print("we reset P2 at start of main_character_select()")
     print("current_server_supports_ranking: "..tostring(current_server_supports_ranking))
 
     if current_server_supports_ranking then
@@ -861,14 +861,18 @@ function select_screen.main()
         end
         if msg.match_start or replay_of_match_so_far then
           print("currently_spectating: "..tostring(currently_spectating))
-          local fake_P1 = P1
-          local fake_P2 = P2
+          local fake_P1 = {panel_buffer="", gpanel_buffer=""}
+          local fake_P2 = {panel_buffer="", gpanel_buffer=""}
           refresh_based_on_own_mods(msg.opponent_settings)
           refresh_based_on_own_mods(msg.player_settings, true)
           refresh_based_on_own_mods(msg) -- for stage only, other data are meaningless to us
           -- mainly for spectator mode, those characters have already been loaded otherwise
-          character_loader_load(msg.player_settings.character)
-          character_loader_load(msg.opponent_settings.character)
+          if msg.player_settings ~= nil then
+            character_loader_load(msg.player_settings.character)
+          end
+          if msg.opponent_settings ~= nil then
+            character_loader_load(msg.opponent_settings.character)
+          end
           current_stage = msg.stage
           stage_loader_load(msg.stage)
           character_loader_wait()

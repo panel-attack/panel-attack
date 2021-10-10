@@ -82,24 +82,27 @@ end
 
 local got_H = false
 
-local process_message = {
-  L=function(s) P2_level = ({["0"]=10})[s] or (s+0) end,
-  --G=function(s) got_opponent = true end,
-  H=function(s) got_H = true end,
-  --N=function(s) error("Server told us to upgrade the game at burke.ro/panel.zip (for burke.ro server) or the TetrisAttackOnline Discord (for Jon's Server)") end,
-  N=function(s) error(loc("nt_ver_err")) end,
-  P=function(s) P1.panel_buffer = P1.panel_buffer..s end,
-  O=function(s) P2.panel_buffer = P2.panel_buffer..s end,
-  U=function(s) P1.input_buffer = P1.input_buffer..s end,  -- used for P1's inputs when spectating.
-  I=function(s) P2.input_buffer = P2.input_buffer..s end,
-  Q=function(s) P1.gpanel_buffer = P1.gpanel_buffer..s end,
-  R=function(s) P2.gpanel_buffer = P2.gpanel_buffer..s end,
-  E=function(s) net_send("F"..s) connection_up_time = connection_up_time +1 end,  --connection_up_time counts "E" messages, not seconds
-  J=function(s)
-    local current_message = json.decode(s)
+function process_message(type, data)
+  if type ~= "I" and type ~= "U" and type ~= "E" then
+    print("Got message "..type.." "..data)
+  end
+
+  if type == "P" or
+     type == "O" or
+     type == "U" or
+     type == "I" or
+     type == "Q" or
+     type == "R" then
+    process_data_message(type, data)
+  elseif type == "L" then P2_level = ({["0"]=10})[data] or (data+0)
+  elseif type == "H" then got_H = true
+  elseif type == "N" then error(loc("nt_ver_err"))
+  elseif type == "E" then net_send("F"..data) connection_up_time = connection_up_time +1  --connection_up_time counts "E" messages, not seconds
+  elseif type == "J" then 
+    local current_message = json.decode(data)
     this_frame_messages[#this_frame_messages+1] = current_message
     if not current_message then
-      error(loc("nt_msg_err", (s or "nil")))
+      error(loc("nt_msg_err", (data or "nil")))
     end
     if current_message.spectators then
       spectator_list = current_message.spectators
@@ -107,8 +110,51 @@ local process_message = {
       return
     end
 
-    server_queue:push(current_message)
-  end}
+    server_message_queue:push(current_message)
+  end
+end
+
+function should_process_data_message()
+  local result = false
+
+  if P1 and P2 then
+    if P1:game_ended() == false or P2:game_ended() == false then
+      result = true
+    end
+  end
+
+  return result
+end
+
+function process_old_data_messages()
+  if should_process_data_message() then
+    local dataMessage = server_data_queue:pop()
+    while dataMessage ~= nil do
+      print("xxxx processing old data xxxx")
+      process_data_message(dataMessage.type, dataMessage.data)
+      dataMessage = server_data_queue:pop()
+    end
+  end 
+end
+
+
+function process_data_message(type, data)
+  if should_process_data_message() then
+    if     type == "P" then P1.panel_buffer = P1.panel_buffer..data
+    elseif type == "O" then P2.panel_buffer = P2.panel_buffer..data
+    elseif type == "U" then P1.input_buffer = P1.input_buffer..data
+    elseif type == "I" then P2.input_buffer = P2.input_buffer..data
+    elseif type == "Q" then P1.gpanel_buffer = P1.gpanel_buffer..data
+    elseif type == "R" then P2.gpanel_buffer = P2.gpanel_buffer..data
+    end
+  else
+    local dataMessage = {}
+    dataMessage.type = type
+    dataMessage.data = data
+    print("******* delaying data *******")
+    server_data_queue:push(dataMessage)
+  end
+end
 
 function network_init(ip, network_port)
   TCP_sock = socket.tcp()
@@ -142,24 +188,22 @@ function do_messages()
     return false
   end
   while true do
-    local typ, data = get_message()
-    if typ then
-      if typ ~= "I" and typ ~= "U" and typ ~= "E" then
-        print("Got message "..typ.." "..data)
-      end
-      process_message[typ](data)
-      if typ == "J" then
+    local type, data = get_message()
+    if type then
+      process_old_data_messages()
+      process_message(type, data)
+      if type == "J" then
         if this_frame_messages[#this_frame_messages].replay_of_match_so_far then
-          --print("***BREAKING do_messages because received a replay")
+          print("***BREAKING do_messages because received a replay")
           break  -- don't process any more messages this frame
                    -- we need to initialize P1 and P2 before we do any I or U messages
         end
       end
-      if typ == "U" then
-        typ = "in_buf"
+      if type == "U" then
+        type = "in_buf"
       end
-      if P1 and P1.mode and replay[P1.mode][typ] then
-        replay[P1.mode][typ]=replay[P1.mode][typ]..data
+      if P1 and P1.mode and replay[P1.mode][type] then
+        replay[P1.mode][type]=replay[P1.mode][type]..data
       end
     else
       break

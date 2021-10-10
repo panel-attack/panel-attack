@@ -937,7 +937,7 @@ function main_net_vs()
       
       select_screen.character_select_mode = "2p_net_vs"
       if currently_spectating then
-        return game_over_transition, {select_screen.main, end_text, winSFX, 1}
+        return game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}
       else
         return game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}
       end

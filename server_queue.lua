@@ -36,7 +36,7 @@ end
 function ServerQueue.push(self, msg)
   local last = self.last + 1
   self.last = last
-  msg._expiration = os.time() + 5 -- add an expiration date of 5s
+  msg._expiration = os.time() + 50 -- add an expiration date of 50s
   self.data[last] = msg
   if self:size() > self.capacity then
     local first = self.first
