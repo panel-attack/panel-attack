@@ -929,7 +929,7 @@ function main_net_vs()
       write_replay_file()
       select_screen.character_select_mode = "2p_net_vs"
       if currently_spectating then
-        return main_dumb_transition, {select_screen.main, end_text, 30, 30, winSFX}
+        return game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}
       else
         return game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}
       end
@@ -1718,7 +1718,6 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
     wait()
     local ret = nil
     variable_step(function()
-
       -- Fade the music out over time
       local fadeMusicLength = 3 * 60
       if t <= fadeMusicLength then
@@ -1750,7 +1749,15 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
       if P2 then
         P2:run()
       end
-      if t >= timemin and ( (t >=timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) then
+      
+      local match_started = false -- Whether a message has been sent that indicates a match has started
+      for _,msg in ipairs(this_frame_messages) do
+        if msg.match_start or replay_of_match_so_far then
+          match_started = true
+        end
+      end
+
+      if t >= timemin and ( (t >=timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) or match_started then
         set_music_fade_percentage(1) -- reset the music back to normal config volume
         stop_all_audio()
         SFX_GameOver_Play = 0
