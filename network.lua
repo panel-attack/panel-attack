@@ -82,6 +82,14 @@ end
 
 local got_H = false
 
+function printNetworkMessageForType(type)
+  local result = false
+  if type ~= "I" and type ~= "U" then
+    result = true
+  end
+  return result
+end
+
 function queue_message(type, data)
   if type == "P" or
      type == "O" or
@@ -91,6 +99,9 @@ function queue_message(type, data)
      type == "R" then
     local dataMessage = {}
     dataMessage[type] = data
+    if printNetworkMessageForType(type) then
+      print("Queuing: " .. type .. " with data:" .. data)
+    end
     server_message_queue:push(dataMessage)
   elseif type == "L" then P2_level = ({["0"]=10})[data] or (data+0)
   elseif type == "H" then got_H = true
@@ -107,7 +118,9 @@ function queue_message(type, data)
       spectators_string = spectator_list_string(current_message.spectators)
       return
     end
-
+    if printNetworkMessageForType(type) then
+      print("Queuing: " .. type .. " with data:" .. dump(current_message))
+    end
     server_message_queue:push(current_message)
   end
 end
@@ -116,7 +129,12 @@ function process_all_data_messages()
   local messages = server_message_queue:pop_all_with("P", "O", "U", "I", "Q", "R")
   for _,msg in ipairs(messages) do
     for type,data in pairs(msg) do
-      process_data_message(type, data)
+      if type ~= "_expiration" then
+        if printNetworkMessageForType(type) then
+          print("Processing: " .. type .. " with data:" .. data)
+        end
+        process_data_message(type, data)
+      end
     end
   end
 end

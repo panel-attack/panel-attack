@@ -11,6 +11,27 @@ function ServerQueue.to_string(self)
   return "QUEUE: " .. dump(self)
 end
 
+
+function ServerQueue.to_short_string(self)
+  local returnString = ""
+
+  if self.first <= self.last then
+    local still_empty = true
+    for i=self.first,self.last do
+      local msg = self.data[i]
+      if msg ~= nil then
+        for type,data in pairs(msg) do
+          if type ~= "_expiration" then
+            returnString = returnString .. type
+          end
+        end
+      end
+    end
+  end
+
+  return returnString
+end
+
 function ServerQueue.has_expired(self, msg)
   if os.time() > msg._expiration then
     str = "ServerQueue: a message has expired ("..(os.time() - msg._expiration)..")\n"
@@ -31,8 +52,8 @@ function ServerQueue.push(self, msg)
   self.data[last] = msg
   if self:size() > self.capacity then
     local first = self.first
-    print("Queue out of room, dropping front entry:")
-    --print(self:to_string())
+    local str = "ServerQueue: the queue ran out of room\n"
+    warning(str.."\n"..self:to_string())
     self.data[first] = nil
     self.first = first + 1
   end

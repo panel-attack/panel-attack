@@ -119,6 +119,7 @@ current_use_music_from = "stage" -- either "stage" or "characters", no other val
 function warning(msg)
 	err = "=================================================================\n["..os.date("%x %X").."]\nError: "..msg..debug.traceback("").."\n"
 	love.filesystem.append("warnings.txt", err)
+	print(err)
 	if display_warning_message then
 		display_warning_message = false
 		local loc_warning = "You've had a bug. Please report this on Discord with file:"

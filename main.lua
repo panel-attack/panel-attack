@@ -59,6 +59,10 @@ function love.update(dt)
   if not status then
     error(err..'\n'..debug.traceback(mainloop))
   end
+  if server_message_queue and server_message_queue:size() > 0 then
+
+    print("Queue Size: " .. server_message_queue:size() .. " Data:" .. server_message_queue:to_short_string())
+  end
   this_frame_messages = {}
 
   update_music()
