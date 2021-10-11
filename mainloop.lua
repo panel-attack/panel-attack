@@ -1749,8 +1749,9 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
       if P2 then
         P2:run()
       end
-      
-      local match_started = false -- Whether a message has been sent that indicates a match has started
+
+      local match_started = false -- Whether a message has been sent that indicates a match has started'
+      do_messages()
       for _,msg in ipairs(this_frame_messages) do
         if msg.match_start or replay_of_match_so_far then
           match_started = true
