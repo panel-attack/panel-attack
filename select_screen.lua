@@ -160,6 +160,10 @@ function select_screen.main()
              {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}}
   local map = {}
   if select_screen.character_select_mode == "2p_net_vs" then
+    P1 = nil
+    P2 = nil
+    print("Reseting player stacks")
+
     local opponent_connected = false
     local retries, retry_limit = 0, 250
     while not global_initialize_room_msg and retries < retry_limit do
@@ -245,12 +249,7 @@ function select_screen.main()
     else
       match_type = "Casual"
     end
-    if currently_spectating then
-      P1 = nil
-      print("we reset P1 at start of main_character_select()")
-    end
-    P2 = nil
-    print("we reset P2 at start of main_character_select()")
+
     print("current_server_supports_ranking: "..tostring(current_server_supports_ranking))
 
     if current_server_supports_ranking then
@@ -935,6 +934,7 @@ function select_screen.main()
             if not do_messages() then
               return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
             end
+            process_all_data_messages()
             wait()
           end
           local game_start_timeout = 0
@@ -951,6 +951,7 @@ function select_screen.main()
             if not do_messages() then
               return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
             end
+            process_all_data_messages()
             wait()
             if game_start_timeout > 250 then
               return main_dumb_transition, {main_select_mode,

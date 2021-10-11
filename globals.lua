@@ -12,8 +12,8 @@ this_frame_keys = {}
 this_frame_released_keys = {}
 this_frame_unicodes = {}
 this_frame_messages = {}
-server_message_queue = ServerQueue(2000)
-server_data_queue = ServerQueue(2000)
+
+server_message_queue = ServerQueue(SERVER_QUEUE_CAPACITY)
 
 score_mode = SCOREMODE_TA
 

@@ -8,16 +8,7 @@ ServerQueue = class(function(self, capacity)
   end)
 
 function ServerQueue.to_string(self)
-  ret = "QUEUE: "
-  for k,v in pairs(self.data) do
-    ret = ret.."\n"..k..": {"
-    for a,b in pairs(v) do
-      ret = ret..a..", "
-    end
-    ret = ret.."}"
-  end
-
-  return ret
+  return "QUEUE: " .. dump(self)
 end
 
 function ServerQueue.has_expired(self, msg)
@@ -36,14 +27,14 @@ end
 function ServerQueue.push(self, msg)
   local last = self.last + 1
   self.last = last
-  msg._expiration = os.time() + 50 -- add an expiration date of 50s
+  msg._expiration = os.time() + SERVER_QUEUE_EXPIRATION_LENGTH -- add an expiration date in seconds
   self.data[last] = msg
   if self:size() > self.capacity then
     local first = self.first
+    print("Queue out of room, dropping front entry:")
+    --print(self:to_string())
     self.data[first] = nil
     self.first = first + 1
-  else
-    print("Queue out of room, dropping front entry")
   end
 end
 
