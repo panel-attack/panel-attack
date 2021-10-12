@@ -456,6 +456,7 @@ function main_net_vs_lobby()
   local willing_players = {} -- set
   local spectatable_rooms = {}
   local k = K[1]
+  server_queue = ServerQueue(SERVER_QUEUE_CAPACITY)
   my_player_number = nil
   op_player_number = nil
   local notice = {[true]=loc("lb_select_player"), [false]=loc("lb_alone")}
@@ -775,6 +776,7 @@ function main_net_vs_setup(ip, network_port)
 end
 
 function main_net_vs()
+  --Uncomment below to induce lag
   --STONER_MODE = true
   if current_stage then
     use_current_stage()
@@ -863,17 +865,19 @@ function main_net_vs()
       P1:render()
       P2:render()
       wait()
-      if currently_spectating and menu_escape(K[1]) then
-        print("spectator pressed escape during a game")
-        my_win_count = 0
-        op_win_count = 0
-        json_send({leave_room=true})
-        return main_dumb_transition, {main_net_vs_lobby, "", 0, 0}
-      end
-      if not do_messages() then
-        return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
-      end
     end
+
+    if currently_spectating and menu_escape(K[1]) then
+      print("spectator pressed escape during a game")
+      my_win_count = 0
+      op_win_count = 0
+      json_send({leave_room=true})
+      return main_dumb_transition, {main_net_vs_lobby, "", 0, 0}
+    end
+    if not do_messages() then
+      return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
+    end
+    process_all_data_messages()
 
     --print(P1.CLOCK, P2.CLOCK)
     if (P1 and P1.play_to_end) or (P2 and P2.play_to_end) then
@@ -936,7 +940,7 @@ function main_net_vs()
       
       select_screen.character_select_mode = "2p_net_vs"
       if currently_spectating then
-        return game_over_transition, {select_screen.main, end_text, winSFX, 1}
+        return game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}
       else
         return game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}
       end
@@ -1697,7 +1701,7 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
         ret = {next_func}
       end
       t = t + 1
-      --if TCP_sock then
+      --if network_connected() then
       --  if not do_messages() then
       --    -- do something? probably shouldn't drop back to the main menu transition since we're already here
       --  end
@@ -1772,7 +1776,21 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
       if P2 then
         P2:run()
       end
-      if t >= timemin and ( (t >=timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) then
+
+      if network_connected() then
+        do_messages() -- recieve messages so we know if the next game is in the queue
+      end
+      
+      local new_match_started = false -- Whether a message has been sent that indicates a match has started
+      if this_frame_messages then
+        for _,msg in ipairs(this_frame_messages) do
+          if msg.match_start or replay_of_match_so_far then
+            new_match_started = true
+          end
+        end
+      end
+
+      if t >= timemin and ( (t >=timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) or new_match_started then
         set_music_fade_percentage(1) -- reset the music back to normal config volume
         stop_all_audio()
         SFX_GameOver_Play = 0

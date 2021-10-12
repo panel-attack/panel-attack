@@ -6,6 +6,10 @@ local floor = math.floor
 local char = string.char
 local byte = string.byte
 
+function network_connected()
+  return TCP_sock ~= nil
+end
+
 function flush_socket()
   if not TCP_sock then return end
   local junk,err,data = TCP_sock:receive('*a')
@@ -26,30 +30,31 @@ function close_socket()
   TCP_sock = nil
 end
 
+-- Returns the next message in the queue, or nil if none / error
 function get_message()
   if string.len(leftovers) == 0 then
     return nil
   end
-  local typ, gap, len = string.sub(leftovers,1,1), 0
-  if typ == "J" then
+  local type, gap, len = string.sub(leftovers,1,1), 0
+  if type == "J" then
     if string.len(leftovers) >= 4 then
       len = byte(string.sub(leftovers,2,2)) * 65536 +
             byte(string.sub(leftovers,3,3)) * 256 +
             byte(string.sub(leftovers,4,4))
-      print("json message has length "..len)
+      --print("json message has length "..len)
       gap = 3
     else
       return nil
     end
   else
-    len = type_to_length[typ] - 1
+    len = type_to_length[type] - 1
   end
   if len + gap + 1 > string.len(leftovers) then
     return nil
   end
   local ret = string.sub(leftovers,2+gap,len+gap+1)
   leftovers = string.sub(leftovers,len+gap+2)
-  return typ, ret
+  return type, ret
 end
 
 local lag_q = Queue()
@@ -81,33 +86,72 @@ end
 
 local got_H = false
 
-local process_message = {
-  L=function(s) P2_level = ({["0"]=10})[s] or (s+0) end,
-  --G=function(s) got_opponent = true end,
-  H=function(s) got_H = true end,
-  --N=function(s) error("Server told us to upgrade the game at burke.ro/panel.zip (for burke.ro server) or the TetrisAttackOnline Discord (for Jon's Server)") end,
-  N=function(s) error(loc("nt_ver_err")) end,
-  P=function(s) P1.panel_buffer = P1.panel_buffer..s end,
-  O=function(s) P2.panel_buffer = P2.panel_buffer..s end,
-  U=function(s) P1.input_buffer = P1.input_buffer..s end,  -- used for P1's inputs when spectating.
-  I=function(s) P2.input_buffer = P2.input_buffer..s end,
-  Q=function(s) P1.gpanel_buffer = P1.gpanel_buffer..s end,
-  R=function(s) P2.gpanel_buffer = P2.gpanel_buffer..s end,
-  E=function(s) net_send("F"..s) connection_up_time = connection_up_time +1 end,  --connection_up_time counts "E" messages, not seconds
-  J=function(s)
-    local current_message = json.decode(s)
+function printNetworkMessageForType(type)
+  local result = false
+  if type ~= "I" and type ~= "U" then
+    result = true
+  end
+  return result
+end
+
+function queue_message(type, data)
+  if type == "P" or
+     type == "O" or
+     type == "U" or
+     type == "I" or
+     type == "Q" or
+     type == "R" then
+    local dataMessage = {}
+    dataMessage[type] = data
+    if printNetworkMessageForType(type) then
+      print("Queuing: " .. type .. " with data:" .. data)
+    end
+    server_queue:push(dataMessage)
+  elseif type == "L" then P2_level = ({["0"]=10})[data] or (data+0)
+  elseif type == "H" then got_H = true
+  elseif type == "N" then error(loc("nt_ver_err"))
+  elseif type == "E" then net_send("F"..data) connection_up_time = connection_up_time +1  --connection_up_time counts "E" messages, not seconds
+  elseif type == "J" then 
+    local current_message = json.decode(data)
     this_frame_messages[#this_frame_messages+1] = current_message
     if not current_message then
-      error(loc("nt_msg_err", (s or "nil")))
+      error(loc("nt_msg_err", (data or "nil")))
     end
     if current_message.spectators then
       spectator_list = current_message.spectators
       spectators_string = spectator_list_string(current_message.spectators)
       return
     end
-
+    if printNetworkMessageForType(type) then
+      print("Queuing: " .. type .. " with data:" .. dump(current_message))
+    end
     server_queue:push(current_message)
-  end}
+  end
+end
+
+function process_all_data_messages()
+  local messages = server_queue:pop_all_with("P", "O", "U", "I", "Q", "R")
+  for _,msg in ipairs(messages) do
+    for type,data in pairs(msg) do
+      if type ~= "_expiration" then
+        if printNetworkMessageForType(type) then
+          print("Processing: " .. type .. " with data:" .. data)
+        end
+        process_data_message(type, data)
+      end
+    end
+  end
+end
+
+function process_data_message(type, data)
+  if     type == "P" then P1.panel_buffer = P1.panel_buffer..data
+  elseif type == "O" then P2.panel_buffer = P2.panel_buffer..data
+  elseif type == "U" then P1.input_buffer = P1.input_buffer..data
+  elseif type == "I" then P2.input_buffer = P2.input_buffer..data
+  elseif type == "Q" then P1.gpanel_buffer = P1.gpanel_buffer..data
+  elseif type == "R" then P2.gpanel_buffer = P2.gpanel_buffer..data
+  end
+end
 
 function network_init(ip, network_port)
   TCP_sock = socket.tcp()
@@ -132,6 +176,8 @@ function connection_is_ready()
   return got_H and #this_frame_messages > 0
 end
 
+-- Processes messages that came in from the server
+-- Returns false if the connection is broken.
 function do_messages()
   if not flush_socket() then
     -- Something went wrong while receiving data.
@@ -139,24 +185,14 @@ function do_messages()
     return false
   end
   while true do
-    local typ, data = get_message()
-    if typ then
-      if typ ~= "I" and typ ~= "U" and typ ~= "E" then
-        print("Got message "..typ.." "..data)
+    local type, data = get_message()
+    if type then
+      queue_message(type, data)
+      if type == "U" then
+        type = "in_buf"
       end
-      process_message[typ](data)
-      if typ == "J" then
-        if this_frame_messages[#this_frame_messages].replay_of_match_so_far then
-          --print("***BREAKING do_messages because received a replay")
-          break  -- don't process any more messages this frame
-                   -- we need to initialize P1 and P2 before we do any I or U messages
-        end
-      end
-      if typ == "U" then
-        typ = "in_buf"
-      end
-      if P1 and P1.mode and replay[P1.mode][typ] then
-        replay[P1.mode][typ]=replay[P1.mode][typ]..data
+      if P1 and P1.mode and replay[P1.mode][type] then
+        replay[P1.mode][type]=replay[P1.mode][type]..data
       end
     else
       break
