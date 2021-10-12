@@ -1062,10 +1062,10 @@ function main_replay_vs()
   P1.garbage_target = P2
   P2.garbage_target = P1
   move_stack(P2,2)
-  P1.input_buffer = replay.in_buf
+  P1.input_buffer = uncompress_input_string(replay.in_buf)
   P1.panel_buffer = replay.P
   P1.gpanel_buffer = replay.Q
-  P2.input_buffer = replay.I
+  P2.input_buffer = uncompress_input_string(replay.I)
   P2.panel_buffer = replay.O
   P2.gpanel_buffer = replay.R
   P1.max_runs_per_frame = 1
@@ -1167,7 +1167,7 @@ function main_replay_endless()
   P1:wait_for_random_character()
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
-  P1.input_buffer = table.concat({replay.in_buf})
+  P1.input_buffer = table.concat({uncompress_input_string(replay.in_buf)})
   P1.panel_buffer = replay.pan_buf
   P1.gpanel_buffer = replay.gpan_buf
   P1.speed = replay.speed
@@ -1222,7 +1222,7 @@ function main_replay_puzzle()
   P1:wait_for_random_character()
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
-  P1.input_buffer = replay.in_buf
+  P1.input_buffer = uncompress_input_string(replay.in_buf)
   P1.cur_wait_time = replay.cur_wait_time or default_input_repeat_delay
   P1:set_puzzle_state(unpack(replay.puzzle))
   P2 = nil
