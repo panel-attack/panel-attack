@@ -13,7 +13,7 @@ Inputs are mapped to binary values.
 
 There are 64 legal case-sensitive characters that can be put in a Replay, which are:
 
-"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890+/"
+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890+/
 
 Using math, you can figure out what inputs go to each character by adding them together. These characters follow an index order, so consider them 0-63. 
 
