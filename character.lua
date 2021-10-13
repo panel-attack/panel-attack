@@ -346,7 +346,7 @@ end
 function Character.graphics_init(self,full,yields)
   local character_images = full and other_images or basic_images
   for _,image_name in ipairs(character_images) do
-    print(image_name)
+    --print(image_name)
     self.images[image_name] = load_img_from_supported_extensions(self.path.."/"..image_name)
     if not self.images[image_name] and defaulted_images[image_name] and not self:is_bundle() then
       if image_name == "burst" or image_name == "fade" then
@@ -354,7 +354,7 @@ function Character.graphics_init(self,full,yields)
       else
         self.images[image_name] = default_character.images[image_name]
       end
-      print("MISSING!")
+      --print("MISSING!")
     end
     if yields then coroutine.yield() end
   end

@@ -8,16 +8,28 @@ ServerQueue = class(function(self, capacity)
   end)
 
 function ServerQueue.to_string(self)
-  ret = "QUEUE: "
-  for k,v in pairs(self.data) do
-    ret = ret.."\n"..k..": {"
-    for a,b in pairs(v) do
-      ret = ret..a..", "
+  return "QUEUE: " .. dump(self)
+end
+
+
+function ServerQueue.to_short_string(self)
+  local returnString = ""
+
+  if self.first <= self.last then
+    local still_empty = true
+    for i=self.first,self.last do
+      local msg = self.data[i]
+      if msg ~= nil then
+        for type,data in pairs(msg) do
+          if type ~= "_expiration" then
+            returnString = returnString .. type .. " "
+          end
+        end
+      end
     end
-    ret = ret.."}"
   end
 
-  return ret
+  return returnString
 end
 
 function ServerQueue.has_expired(self, msg)
@@ -36,10 +48,12 @@ end
 function ServerQueue.push(self, msg)
   local last = self.last + 1
   self.last = last
-  msg._expiration = os.time() + 5 -- add an expiration date of 5s
+  msg._expiration = os.time() + SERVER_QUEUE_EXPIRATION_LENGTH -- add an expiration date in seconds
   self.data[last] = msg
   if self:size() > self.capacity then
     local first = self.first
+    local str = "ServerQueue: the queue ran out of room\n"
+    warning(str.."\n"..self:to_string())
     self.data[first] = nil
     self.first = first + 1
   end

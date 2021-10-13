@@ -42,6 +42,33 @@ function read_txt_file(path_and_filename)
   return s or "Failed to read file"
  end
 
+function read_score_file() pcall(function()
+
+  local file = love.filesystem.newFile("scores.json")
+  file:open("r")
+  local read_data = {}
+  local teh_json = file:read(file:getSize())
+  for k,v in pairs(json.decode(teh_json)) do
+    read_data[k] = v
+  end
+
+  -- do stuff using read_data.version for retrocompatibility here
+
+  --if type(read_data.vs1PRecord) == "number" then player1Scores.vs1PRecord = read_data.vs1PRecord end
+  --if type(read_data.vs1PCurrent) == "number" then player1Scores.vs1PCurrent = read_data.vs1PCurrent end
+
+  player1Scores = read_data
+
+  file:close()
+end) end
+
+function write_score_file() pcall(function()
+  local file = love.filesystem.newFile("scores.json")
+  file:open("w")
+  file:write(json.encode(player1Scores))
+  file:close()
+end) end
+
 function write_conf_file() pcall(function()
   local file = love.filesystem.newFile("conf.json")
   file:open("w")
@@ -112,6 +139,7 @@ function read_conf_file() pcall(function()
   if type(read_data.window_x) == "number" then config.window_x = read_data.window_x end
   if type(read_data.window_y) == "number" then config.window_y = read_data.window_y end
   if type(read_data.display) == "number" then config.display = read_data.display end
+  if type(read_data.fullscreen) == "boolean" then config.fullscreen = read_data.fullscreen end
 
   file:close()
 end) end

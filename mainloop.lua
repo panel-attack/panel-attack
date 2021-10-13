@@ -1,6 +1,7 @@
 require("panels")
 require("theme")
 require("click_menu")
+require("scores")
 local select_screen = require("select_screen")
 local replay_browser = require("replay_browser")
 local options = require("options")
@@ -49,8 +50,11 @@ function fmainloop()
   gprint("Reading config file", unpack(main_menu_screen_pos))
   wait()
   read_conf_file()
+  print("Reading scores file")
+  read_score_file()
   local x, y, display = love.window.getPosition()
   love.window.setPosition( config.window_x or x, config.window_y or y, config.display or display )
+  love.window.setFullscreen(config.fullscreen or false)
   love.window.setVSync( config.vsync and 1 or 0 )
   gprint("Loading localization...", unpack(main_menu_screen_pos))
   wait()
@@ -379,7 +383,7 @@ function main_endless(...)
       P1:render()
     end
     wait()
-    if P1.game_over then
+    if P1:game_ended() then
       local now = os.date("*t",to_UTC(os.time()))
       local sep = "/"
       local path = "replays"..sep.."v"..VERSION..sep..string.format("%04d"..sep.."%02d"..sep.."%02d", now.year, now.month, now.day)
@@ -388,9 +392,8 @@ function main_endless(...)
       filename = filename..".txt"
       write_replay_file()
       write_replay_file(path, filename)
-      local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
 
-      return game_over_transition, {main_select_mode, end_text, P1:pick_win_sfx()}
+      return game_over_transition, {main_select_mode, nil, P1:pick_win_sfx()}
     end
     variable_step(function() 
       P1:run() 
@@ -422,13 +425,11 @@ function main_time_attack(...)
       P1:render()
     end
     wait()
-    if P1.game_over or (P1.game_stopwatch and P1.game_stopwatch >= time_attack_time*60) then
-    -- TODO: proper game over.
-      local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch))
-      return game_over_transition, {main_select_mode, end_text, P1:pick_win_sfx()}
+    if P1:game_ended() then
+      return game_over_transition, {main_select_mode, nil, P1:pick_win_sfx()}
     end
     variable_step(function()
-      if not P1.game_over and P1.game_stopwatch and P1.game_stopwatch < time_attack_time * 60 then
+      if P1:game_ended() == false then
         P1:run() 
         P1:handle_pause()
       end 
@@ -455,6 +456,7 @@ function main_net_vs_lobby()
   local willing_players = {} -- set
   local spectatable_rooms = {}
   local k = K[1]
+  server_queue = ServerQueue(SERVER_QUEUE_CAPACITY)
   my_player_number = nil
   op_player_number = nil
   local notice = {[true]=loc("lb_select_player"), [false]=loc("lb_alone")}
@@ -774,6 +776,7 @@ function main_net_vs_setup(ip, network_port)
 end
 
 function main_net_vs()
+  --Uncomment below to induce lag
   --STONER_MODE = true
   if current_stage then
     use_current_stage()
@@ -862,17 +865,19 @@ function main_net_vs()
       P1:render()
       P2:render()
       wait()
-      if currently_spectating and menu_escape(K[1]) then
-        print("spectator pressed escape during a game")
-        my_win_count = 0
-        op_win_count = 0
-        json_send({leave_room=true})
-        return main_dumb_transition, {main_net_vs_lobby, "", 0, 0}
-      end
-      if not do_messages() then
-        return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
-      end
     end
+
+    if currently_spectating and menu_escape(K[1]) then
+      print("spectator pressed escape during a game")
+      my_win_count = 0
+      op_win_count = 0
+      json_send({leave_room=true})
+      return main_dumb_transition, {main_net_vs_lobby, "", 0, 0}
+    end
+    if not do_messages() then
+      return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
+    end
+    process_all_data_messages()
 
     --print(P1.CLOCK, P2.CLOCK)
     if (P1 and P1.play_to_end) or (P2 and P2.play_to_end) then
@@ -935,7 +940,7 @@ function main_net_vs()
       
       select_screen.character_select_mode = "2p_net_vs"
       if currently_spectating then
-        return game_over_transition, {select_screen.main, end_text, winSFX, 1}
+        return game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}
       else
         return game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}
       end
@@ -1010,7 +1015,6 @@ function main_local_vs_yourself()
   -- TODO: replay!
   use_current_stage()
   pick_use_music_from()
-  local end_text = nil
   while true do
     if game_is_paused then
       draw_pause()
@@ -1019,15 +1023,19 @@ function main_local_vs_yourself()
     end
     wait()
     variable_step(function()
-        if not P1.game_over then
+        if P1:game_ended() == false then
           P1:run()
           P1:handle_pause()
-        else
-          end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch))
         end
       end)
-    if end_text then
-      return game_over_transition, {select_screen.main, end_text, P1:pick_win_sfx()}
+    if P1:game_ended() then
+      player1Scores.vsSelf["last"][P1.level] = P1.score
+      if player1Scores.vsSelf["record"][P1.level] < P1.score then
+        player1Scores.vsSelf["record"][P1.level] = P1.score
+      end
+      write_score_file()
+
+      return game_over_transition, {select_screen.main, nil, P1:pick_win_sfx()}
     end
   end
 end
@@ -1193,8 +1201,7 @@ function main_replay_endless()
         run = false
       end
       if run or this_frame_keys["\\"] then
-        if P1.game_over then
-        -- TODO: proper game over.
+        if P1:game_ended() then
           local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
           ret = {game_over_transition, {replay_browser.main, end_text, P1:pick_win_sfx()}}
         end
@@ -1696,7 +1703,7 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
         ret = {next_func}
       end
       t = t + 1
-      --if TCP_sock then
+      --if network_connected() then
       --  if not do_messages() then
       --    -- do something? probably shouldn't drop back to the main menu transition since we're already here
       --  end
@@ -1771,7 +1778,21 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
       if P2 then
         P2:run()
       end
-      if t >= timemin and ( (t >=timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) then
+
+      if network_connected() then
+        do_messages() -- recieve messages so we know if the next game is in the queue
+      end
+      
+      local new_match_started = false -- Whether a message has been sent that indicates a match has started
+      if this_frame_messages then
+        for _,msg in ipairs(this_frame_messages) do
+          if msg.match_start or replay_of_match_so_far then
+            new_match_started = true
+          end
+        end
+      end
+
+      if t >= timemin and ( (t >=timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) or new_match_started then
         set_music_fade_percentage(1) -- reset the music back to normal config volume
         stop_all_audio()
         SFX_GameOver_Play = 0
@@ -1793,8 +1814,13 @@ end
 
 function love.quit()
   love.audio.stop()
-  config.window_x, config.window_y, config.display = love.window.getPosition()
-  config.window_x = math.max(config.window_x, 0)
-  config.window_y = math.max(config.window_y, 30) --don't let 'y' be zero, or the title bar will not be visible on next launch.
+  if love.window.getFullscreen() == true then
+    null, null, config.display = love.window.getPosition()
+  else
+    config.window_x, config.window_y, config.display = love.window.getPosition()
+    config.window_x = math.max(config.window_x, 0)
+    config.window_y = math.max(config.window_y, 30) --don't let 'y' be zero, or the title bar will not be visible on next launch.
+  end
+  config.fullscreen = love.window.getFullscreen()
   write_conf_file()
 end
