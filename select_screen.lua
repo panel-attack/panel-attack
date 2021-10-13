@@ -932,7 +932,7 @@ function select_screen.main()
             if not do_messages() then
               return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
             end
-            process_all_data_messages() --this one runs while client is catching up with a game.
+            process_all_data_messages()
             wait()
           end
           local game_start_timeout = 0
