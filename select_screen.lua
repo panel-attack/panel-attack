@@ -771,7 +771,20 @@ function select_screen.main()
   local v_align_center = { __Ready=true, __Random=true, __Leave=true }
   local is_special_value = { __Leave=true, __Level=true, __Panels=true, __Ready=true, __Stage=true, __Mode=true, __Random=true }
 
+  --draw
   while true do
+
+    if select_screen.character_select_mode == "1p_vs_yourself" then
+      local xPosition1 = 196
+      local xPosition2 = 320
+      local yPosition = 24
+      local atlasHeight = themes[config.theme].images.IMG_number_atlas_1P:getHeight()
+      draw_pixel_font("last score", themes[config.theme].images.IMG_pixelFont_atlas, standard_pixel_font_map(), xPosition1, yPosition, 0.5, 1.0)
+      draw_number(player1Scores.vsSelf["last"][cursor_data[1].state.level], themes[config.theme].images.IMG_number_atlas_1P, 10, {}, xPosition1, yPosition + atlasHeight + 4, 1)
+      draw_pixel_font("record score", themes[config.theme].images.IMG_pixelFont_atlas, standard_pixel_font_map(), xPosition2, yPosition, 0.5, 1.0)
+      draw_number(player1Scores.vsSelf["record"][cursor_data[1].state.level], themes[config.theme].images.IMG_number_atlas_1P, 10, {}, xPosition2, yPosition + atlasHeight + 4, 1)
+    end
+    
     -- draw the buttons, handle horizontal spans
     for i=1,X do
       for j=1,Y do
