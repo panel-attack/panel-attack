@@ -195,7 +195,7 @@ function analytics.draw(x,y)
   local xcombo = x + 50
   for i=4,15 do
     local combo_amount = analytics_data.last_game.used_combos[i] or 0
-    gprint("c"..i..": "..combo_amount, xcombo, ycombo)
+    gprint("+"..i..": "..combo_amount, xcombo, ycombo)
     ycombo = ycombo+15
   end
 end

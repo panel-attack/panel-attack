@@ -42,6 +42,33 @@ function read_txt_file(path_and_filename)
   return s or "Failed to read file"
  end
 
+function read_score_file() pcall(function()
+
+  local file = love.filesystem.newFile("scores.json")
+  file:open("r")
+  local read_data = {}
+  local teh_json = file:read(file:getSize())
+  for k,v in pairs(json.decode(teh_json)) do
+    read_data[k] = v
+  end
+
+  -- do stuff using read_data.version for retrocompatibility here
+
+  --if type(read_data.vs1PRecord) == "number" then player1Scores.vs1PRecord = read_data.vs1PRecord end
+  --if type(read_data.vs1PCurrent) == "number" then player1Scores.vs1PCurrent = read_data.vs1PCurrent end
+
+  player1Scores = read_data
+
+  file:close()
+end) end
+
+function write_score_file() pcall(function()
+  local file = love.filesystem.newFile("scores.json")
+  file:open("w")
+  file:write(json.encode(player1Scores))
+  file:close()
+end) end
+
 function write_conf_file() pcall(function()
   local file = love.filesystem.newFile("conf.json")
   file:open("w")
@@ -133,6 +160,7 @@ function write_replay_file(path, filename) pcall(function()
   if path and filename then
     love.filesystem.createDirectory(path)
     file = love.filesystem.newFile(path.."/"..filename)
+    set_replay_browser_path(path)
   else
     file = love.filesystem.newFile("replay.txt")
   end

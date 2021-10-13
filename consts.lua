@@ -10,6 +10,9 @@ legacy_canvas_height = 612
 
 global_background_color = { 0.1, 0.1, 0.1 }
 
+SERVER_QUEUE_CAPACITY = 2000 -- max entries in the network queue
+SERVER_QUEUE_EXPIRATION_LENGTH = 30 -- time in seconds
+
 mouse_pointer_timeout = 1.5 --seconds
 RATING_SPREAD_MODIFIER = 400
 

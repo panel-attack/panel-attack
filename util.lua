@@ -2,6 +2,13 @@ local sort, pairs, select, unpack, error = table.sort, pairs, select, unpack, er
 local type, setmetatable, getmetatable = type, setmetatable, getmetatable
 local random = math.random
 
+-- returns the number of entries in a table
+function tableLength(T)
+  local count = 0
+  for _ in pairs(T) do count = count + 1 end
+  return count
+end
+
 -- bounds b so a<=b<=c
 function bound(a, b, c)
   if b < a then
@@ -279,3 +286,17 @@ function uncompress_input_string(compressedStr)
     return ucStr
   end
 end
+
+function dump(o)
+  if type(o) == 'table' then
+     local s = '{ '
+     for k,v in pairs(o) do
+        if type(k) ~= 'number' then k = '"'..k..'"' end
+        s = s .. '['..k..'] = ' .. dump(v) .. ','
+     end
+     return s .. '} '
+  else
+     return tostring(o)
+  end
+end
+

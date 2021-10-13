@@ -215,4 +215,9 @@ function replay_browser.main()
 
 end
 
+function set_replay_browser_path(path)
+  local new_path = string.sub(path, (string.len(replay_browser.base_path) + 1)).."/"
+  replay_browser.current_path = new_path
+end
+
 return replay_browser
