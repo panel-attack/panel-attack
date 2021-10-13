@@ -12,8 +12,7 @@ this_frame_keys = {}
 this_frame_released_keys = {}
 this_frame_unicodes = {}
 this_frame_messages = {}
-
-server_queue = ServerQueue(SERVER_QUEUE_CAPACITY)
+server_queue = ServerQueue(20)
 
 score_mode = SCOREMODE_TA
 
@@ -119,7 +118,6 @@ current_use_music_from = "stage" -- either "stage" or "characters", no other val
 function warning(msg)
 	err = "=================================================================\n["..os.date("%x %X").."]\nError: "..msg..debug.traceback("").."\n"
 	love.filesystem.append("warnings.txt", err)
-	print(err)
 	if display_warning_message then
 		display_warning_message = false
 		local loc_warning = "You've had a bug. Please report this on Discord with file:"
