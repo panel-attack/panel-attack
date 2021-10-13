@@ -702,6 +702,7 @@ function main_net_vs_lobby()
     if not do_messages() then
       return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
     end
+    process_all_data_messages() -- This runs for the lobby.
   end
 end
 
