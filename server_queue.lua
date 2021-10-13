@@ -1,26 +1,30 @@
-ServerQueue = class(function(self, capacity)
-  if not capacity then error("ServerQueue: you need to specify a capacity") end
-  self.capacity = capacity
-  self.data = {}
-  self.first = 0
-  self.last  = -1
-  self.empties = 0
-  end)
+ServerQueue =
+  class(
+  function(self, capacity)
+    if not capacity then
+      error("ServerQueue: you need to specify a capacity")
+    end
+    self.capacity = capacity
+    self.data = {}
+    self.first = 0
+    self.last = -1
+    self.empties = 0
+  end
+)
 
 function ServerQueue.to_string(self)
   return "QUEUE: " .. dump(self)
 end
-
 
 function ServerQueue.to_short_string(self)
   local returnString = ""
 
   if self.first <= self.last then
     local still_empty = true
-    for i=self.first,self.last do
+    for i = self.first, self.last do
       local msg = self.data[i]
       if msg ~= nil then
-        for type,data in pairs(msg) do
+        for type, data in pairs(msg) do
           if type ~= "_expiration" then
             returnString = returnString .. type .. " "
           end
@@ -34,11 +38,11 @@ end
 
 function ServerQueue.has_expired(self, msg)
   if os.time() > msg._expiration then
-    str = "ServerQueue: a message has expired ("..(os.time() - msg._expiration)..")\n"
+    str = "ServerQueue: a message has expired (" .. (os.time() - msg._expiration) .. ")\n"
     for k, v in pairs(msg) do
-      str = str..k..", "
+      str = str .. k .. ", "
     end
-    warning(str.."\n"..self:to_string())
+    warning(str .. "\n" .. self:to_string())
     return true
   end
   return false
@@ -53,7 +57,7 @@ function ServerQueue.push(self, msg)
   if self:size() > self.capacity then
     local first = self.first
     local str = "ServerQueue: the queue ran out of room\n"
-    warning(str.."\n"..self:to_string())
+    warning(str .. "\n" .. self:to_string())
     self.data[first] = nil
     self.first = first + 1
   end
@@ -69,7 +73,7 @@ function ServerQueue.pop(self)
       first = 0
       self.last = -1
       break
-    else 
+    else
       ret = self.data[first]
       self.data[first] = nil
       if ret == nil then
@@ -97,11 +101,11 @@ function ServerQueue.pop_next_with(self, ...)
   end
 
   local still_empty = true
-  for i=self.first,self.last do
+  for i = self.first, self.last do
     local msg = self.data[i]
     if msg ~= nil then
       still_empty = false
-      for j=1,select('#', ...) do
+      for j = 1, select("#", ...) do
         if msg[select(j, ...)] ~= nil then
           --print("POP "..select(j, ...))
           self:remove(i)
@@ -123,14 +127,14 @@ function ServerQueue.pop_all_with(self, ...)
 
   if self.first <= self.last then
     local still_empty = true
-    for i=self.first,self.last do
+    for i = self.first, self.last do
       local msg = self.data[i]
       if msg ~= nil then
         still_empty = false
-        for j=1,select('#', ...) do
+        for j = 1, select("#", ...) do
           if msg[select(j, ...)] ~= nil then
             --print("POP "..select(j, ...))
-            ret[#ret+1] = msg
+            ret[#ret + 1] = msg
             self:remove(i)
             if not self:has_expired(msg) then
               break
@@ -174,8 +178,8 @@ end
 
 function ServerQueue.clear(self)
   if self.first >= self.last then
-    for i=self.first,self.last do
-      self.data[i]=nil
+    for i = self.first, self.last do
+      self.data[i] = nil
     end
   end
   self.first = 0

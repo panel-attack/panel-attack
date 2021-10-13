@@ -1,5 +1,6 @@
-
-Scores = class(function(self)
+Scores =
+  class(
+  function(self)
     self.vsSelf = {}
     self.vsSelf["record"] = {}
     self.vsSelf["last"] = {}
@@ -7,6 +8,7 @@ Scores = class(function(self)
       self.vsSelf["record"][i] = 0
       self.vsSelf["last"][i] = 0
     end
-  end)
+  end
+)
 
 player1Scores = Scores()

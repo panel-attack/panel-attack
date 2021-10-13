@@ -17,9 +17,14 @@ local instant_load_enabled = false
 function character_loader_update()
   if not loading_character and loading_queue:len() > 0 then
     local character_name = loading_queue:pop()
-    loading_character = { character_name, coroutine.create( function()
-      characters[character_name]:load(instant_load_enabled)
-    end) }
+    loading_character = {
+      character_name,
+      coroutine.create(
+        function()
+          characters[character_name]:load(instant_load_enabled)
+        end
+      )
+    }
   end
 
   if loading_character then
@@ -29,7 +34,7 @@ function character_loader_update()
     elseif coroutine.status(loading_character[2]) == "dead" then
       loading_character = nil
       return loading_queue:len() > 0
-      -- TODO: unload characters if too much data have been loaded (be careful not to release currently-used characters)
+    -- TODO: unload characters if too much data have been loaded (be careful not to release currently-used characters)
     end
   end
 
@@ -48,7 +53,7 @@ end
 
 function character_loader_clear()
   local p2_local_character = global_op_state and global_op_state.character or nil
-  for character_id,character in pairs(characters) do
+  for character_id, character in pairs(characters) do
     if character.fully_loaded and character_id ~= config.character and character_id ~= p2_local_character then
       character:unload()
     end
