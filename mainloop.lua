@@ -940,6 +940,7 @@ function main_net_vs()
       
       
       select_screen.character_select_mode = "2p_net_vs"
+      process_all_data_messages()
       if currently_spectating then
         return game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}
       else
@@ -1782,6 +1783,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
 
       if network_connected() then
         do_messages() -- recieve messages so we know if the next game is in the queue
+        process_all_data_messages() --clean up any extra inputs from the last game
       end
       
       local new_match_started = false -- Whether a message has been sent that indicates a match has started
