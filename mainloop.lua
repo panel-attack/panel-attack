@@ -1783,7 +1783,6 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
 
       if network_connected() then
         do_messages() -- recieve messages so we know if the next game is in the queue
-        process_all_data_messages() --clean up any extra inputs from the last game
       end
       
       local new_match_started = false -- Whether a message has been sent that indicates a match has started
@@ -1793,6 +1792,10 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
             new_match_started = true
           end
         end
+      end
+      
+      if not new_match_started then
+        process_all_data_messages() --clean up any extra inputs from the last game
       end
 
       if t >= timemin and ( (t >=timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) or new_match_started then
