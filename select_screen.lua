@@ -160,6 +160,12 @@ function select_screen.main()
              {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}}
   local map = {}
   if select_screen.character_select_mode == "2p_net_vs" then
+    P1 = nil
+    P2 = nil
+    -- Clear all old data messages from the previous game
+    server_queue:pop_all_with("P", "O", "U", "I", "Q", "R")
+    print("Reseting player stacks")
+
     local opponent_connected = false
     local retries, retry_limit = 0, 250
     while not global_initialize_room_msg and retries < retry_limit do
@@ -192,6 +198,7 @@ function select_screen.main()
       -- end
     -- end
     if not global_initialize_room_msg then
+      warning(loc("ss_init_fail").."\n")
       return main_dumb_transition, {main_select_mode, loc("ss_init_fail").."\n\n"..loc("ss_return"), 60, 300}
     end
     msg = global_initialize_room_msg
@@ -245,12 +252,7 @@ function select_screen.main()
     else
       match_type = "Casual"
     end
-    if currently_spectating then
-      P1 = {panel_buffer="", gpanel_buffer=""}
-      print("we reset P1 buffers at start of main_character_select()")
-    end
-    P2 = {panel_buffer="", gpanel_buffer=""}
-    print("we reset P2 buffers at start of main_character_select()")
+
     print("current_server_supports_ranking: "..tostring(current_server_supports_ranking))
 
     if current_server_supports_ranking then
@@ -771,7 +773,20 @@ function select_screen.main()
   local v_align_center = { __Ready=true, __Random=true, __Leave=true }
   local is_special_value = { __Leave=true, __Level=true, __Panels=true, __Ready=true, __Stage=true, __Mode=true, __Random=true }
 
+  --draw
   while true do
+
+    if select_screen.character_select_mode == "1p_vs_yourself" then
+      local xPosition1 = 196
+      local xPosition2 = 320
+      local yPosition = 24
+      local atlasHeight = themes[config.theme].images.IMG_number_atlas_1P:getHeight()
+      draw_pixel_font("last score", themes[config.theme].images.IMG_pixelFont_atlas, standard_pixel_font_map(), xPosition1, yPosition, 0.5, 1.0)
+      draw_number(player1Scores.vsSelf["last"][cursor_data[1].state.level], themes[config.theme].images.IMG_number_atlas_1P, 10, {}, xPosition1, yPosition + atlasHeight + 4, 1)
+      draw_pixel_font("record score", themes[config.theme].images.IMG_pixelFont_atlas, standard_pixel_font_map(), xPosition2, yPosition, 0.5, 1.0)
+      draw_number(player1Scores.vsSelf["record"][cursor_data[1].state.level], themes[config.theme].images.IMG_number_atlas_1P, 10, {}, xPosition2, yPosition + atlasHeight + 4, 1)
+    end
+    
     -- draw the buttons, handle horizontal spans
     for i=1,X do
       for j=1,Y do
@@ -845,10 +860,10 @@ function select_screen.main()
           op_win_count = 0
           return main_dumb_transition, {main_net_vs_lobby, "", 0, 0}
         end
-        if msg.match_start or replay_of_match_so_far then
+        if (msg.match_start or replay_of_match_so_far) and msg.player_settings and msg.opponent_settings then
           print("currently_spectating: "..tostring(currently_spectating))
-          local fake_P1 = P1
-          local fake_P2 = P2
+          local fake_P1 = {panel_buffer="", gpanel_buffer=""}
+          local fake_P2 = {panel_buffer="", gpanel_buffer=""}
           refresh_based_on_own_mods(msg.opponent_settings)
           refresh_based_on_own_mods(msg.player_settings, true)
           refresh_based_on_own_mods(msg) -- for stage only, other data are meaningless to us
@@ -917,6 +932,7 @@ function select_screen.main()
             if not do_messages() then
               return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
             end
+            process_all_data_messages()
             wait()
           end
           local game_start_timeout = 0
@@ -933,8 +949,10 @@ function select_screen.main()
             if not do_messages() then
               return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
             end
+            process_all_data_messages()
             wait()
             if game_start_timeout > 250 then
+              warning(loc("pl_time_out").."\n")
               return main_dumb_transition, {main_select_mode,
                               loc("pl_time_out").."\n"
                               .."\n".."msg.match_start = "..(tostring(msg.match_start) or "nil")

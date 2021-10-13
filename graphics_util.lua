@@ -116,6 +116,80 @@ function draw_time(time, quads, x, y, x_scale, y_scale)
   end
 end
 
+function standard_pixel_font_map()
+
+  -- Special Characters
+  local fontMap = {["&"]=36, ["?"]=37, ["!"]=38, ["%"]=39, ["*"]=40}
+
+  --0-9 = 0-9
+  for i = 0, 9, 1 do
+    fontMap[tostring(i)] = i
+  end
+
+  --10-35 = A-Z
+  for i = 10, 35, 1 do
+    local characterString = string.char(97+(i-10))
+    fontMap[characterString] = i
+    --print(characterString .. " = " .. fontMap[characterString])
+  end
+
+  return fontMap
+end
+
+-- Draws the given string with the given pixel font image atlas
+function draw_pixel_font(string, atlas, font_map, x, y, x_scale, y_scale, align, mirror)
+  x_scale = x_scale or 1
+  y_scale = y_scale or 1
+  align = align or "left"
+  mirror = mirror or 0
+  font_map = font_map or standard_pixel_font_map()
+
+  local atlasFrameCount = tableLength(font_map)
+  local atlasWidth = atlas:getWidth()
+  local atlasHeight = atlas:getHeight()
+  local characterWidth = atlasWidth/atlasFrameCount
+  local characterHeight = atlasHeight
+  local characterSpacing = 2 -- 3 -- 7 for time
+  local characterDistance = characterWidth + characterSpacing
+
+  x = x - (characterWidth*GFX_SCALE*x_scale)*mirror
+
+  if string == nil or atlas == nil or atlasFrameCount == nil or characterWidth == nil or characterHeight == nil then
+    print("Error initalizing draw pixel font")
+    return 
+  end
+
+  local quads = {}
+
+  while #quads < #string do
+    table.insert(quads, love.graphics.newQuad(0, 0, characterWidth, characterHeight, atlasWidth, atlasHeight))
+  end
+
+  for i = 1, #string, 1 do
+    local c = string:sub(i,i)
+    if c == nil or c == " " then
+      goto continue
+    end
+
+    local frameNumber = font_map[c]
+
+    -- Select the portion of the atlas that is the current character
+    quads[i]:setViewport(frameNumber*characterWidth, 0, characterWidth, characterHeight, atlasWidth, atlasHeight)
+
+    local characterX = ((x+(i*(characterDistance*x_scale)))-(characterDistance*x_scale))
+    if align == "center" then
+      characterX = (x+((i-(#string/2))*(characterDistance*x_scale)))
+    elseif align == "right" then
+      characterX = (x+((i-#string)*(characterDistance*x_scale)))
+    end
+
+    -- Render it at the proper digit location
+    gfx_q:push({love.graphics.draw, {atlas, quads[i], characterX, y, 0, x_scale, y_scale}})
+    ::continue::
+  end
+
+end
+
 function qdraw(img, quad, x, y, rot, x_scale, y_scale, x_offset, y_offset, mirror)
   rot = rot or 0
   x_scale = x_scale or 1
