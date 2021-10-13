@@ -40,7 +40,7 @@ function stop_all_audio()
 end
 
 function stop_the_music()
-  print("musics have been stopped")
+  --print("musics have been stopped")
   for k, v in pairs(currently_playing_tracks) do
     v:stop()
     currently_playing_tracks[k] = nil
