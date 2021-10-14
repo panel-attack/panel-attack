@@ -160,7 +160,6 @@ function write_replay_file(path, filename) pcall(function()
   if path and filename then
     love.filesystem.createDirectory(path)
     file = love.filesystem.newFile(path.."/"..filename)
-    set_replay_browser_path(path)
   else
     file = love.filesystem.newFile("replay.txt")
   end

@@ -1112,7 +1112,7 @@ function main_replay_vs()
     local ret = nil
     variable_step(function()
       if menu_escape(K[1]) then
-        ret = {main_dumb_transition, {replay_browser.main, "", 0, 0}}
+        ret = {main_dumb_transition, {main_select_mode, "", 0, 0}}
       end
       if menu_enter(K[1]) then
         run = not run
@@ -1202,8 +1202,7 @@ function main_replay_endless()
       end
       if run or this_frame_keys["\\"] then
         if P1:game_ended() then
-          local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
-          ret = {game_over_transition, {replay_browser.main, end_text, P1:pick_win_sfx()}}
+          ret = {game_over_transition, {main_select_mode, nil, P1:pick_win_sfx()}}
         end
         P1:run()
         P1:handle_pause()
@@ -1256,9 +1255,9 @@ function main_replay_puzzle()
         if P1.n_active_panels == 0 and
             P1.prev_active_panels == 0 then
           if P1:puzzle_done() then
-            ret = {main_dumb_transition, {replay_browser.main, loc("pl_you_win"), 30, -1, P1:pick_win_sfx()}}
+            ret = {main_dumb_transition, {main_select_mode, loc("pl_you_win"), 30, -1, P1:pick_win_sfx()}}
           elseif P1.puzzle_moves == 0 then
-            ret = {main_dumb_transition, {replay_browser.main, loc("pl_you_lose"), 30, -1}}
+            ret = {main_dumb_transition, {main_select_mode, loc("pl_you_lose"), 30, -1}}
           end
         end
         P1:run()
