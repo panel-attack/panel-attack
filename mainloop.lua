@@ -1783,15 +1783,13 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
 
       if network_connected() then
         do_messages() -- recieve messages so we know if the next game is in the queue
+        drop_old_data_messages()
       end
-      
       local new_match_started = false -- Whether a message has been sent that indicates a match has started
       if this_frame_messages then
         for _,msg in ipairs(this_frame_messages) do
           if msg.match_start or replay_of_match_so_far then
             new_match_started = true
-          else
-            drop_old_data_messages()
           end
         end
       end
