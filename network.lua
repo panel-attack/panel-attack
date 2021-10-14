@@ -129,6 +129,31 @@ function queue_message(type, data)
   end
 end
 
+function drop_old_data_messages()
+  while true do
+    local message = server_queue:top()
+    if not message then
+      break
+    end
+
+    if not message["P"] and
+       not message["O"] and
+       not message["U"] and
+       not message["I"] and
+       not message["Q"] and
+       not message["R"] then
+      break -- Found a "J" message. Stop. Future data is for next game
+    else
+      local msg = server_queue:pop() -- old data, drop it
+      for type,data in pairs(msg) do
+        if type ~= "_expiration" then
+          print("Dropping: " .. type)
+        end
+      end
+    end
+  end
+end
+
 function process_all_data_messages()
   local messages = server_queue:pop_all_with("P", "O", "U", "I", "Q", "R")
   for _,msg in ipairs(messages) do

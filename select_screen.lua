@@ -162,8 +162,7 @@ function select_screen.main()
   if select_screen.character_select_mode == "2p_net_vs" then
     P1 = nil
     P2 = nil
-    -- Clear all old data messages from the previous game
-    server_queue:pop_all_with("P", "O", "U", "I", "Q", "R")
+    drop_old_data_messages() -- Starting a new game, clear all old data messages from the previous game
     print("Reseting player stacks")
 
     local opponent_connected = false
@@ -932,7 +931,7 @@ function select_screen.main()
             if not do_messages() then
               return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
             end
-            process_all_data_messages()
+            process_all_data_messages() -- process data to get initial panel stacks setup
             wait()
           end
           local game_start_timeout = 0
@@ -949,7 +948,7 @@ function select_screen.main()
             if not do_messages() then
               return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
             end
-            process_all_data_messages()
+            process_all_data_messages() -- process data to get initial panel stacks setup
             wait()
             if game_start_timeout > 250 then
               warning(loc("pl_time_out").."\n")
