@@ -144,12 +144,7 @@ function drop_old_data_messages()
        not message["R"] then
       break -- Found a "J" message. Stop. Future data is for next game
     else
-      local msg = server_queue:pop() -- old data, drop it
-      for type,data in pairs(msg) do
-        if type ~= "_expiration" then
-          print("Dropping: " .. type)
-        end
-      end
+      server_queue:pop() -- old data, drop it
     end
   end
 end
