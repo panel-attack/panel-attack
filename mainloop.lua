@@ -713,6 +713,7 @@ function main_net_vs_lobby()
     if not do_messages() then
       return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
     end
+    drop_old_data_messages() -- We are in the lobby, we shouldn't have any game data messages
   end
 end
 
@@ -883,7 +884,7 @@ function main_net_vs()
     if not do_messages() then
       return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
     end
-    process_all_data_messages()
+    process_all_data_messages() -- main game play processing
 
     --print(P1.CLOCK, P2.CLOCK)
     if (P1 and P1.play_to_end) or (P2 and P2.play_to_end) then
