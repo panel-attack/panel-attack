@@ -94,13 +94,32 @@ function printNetworkMessageForType(type)
   return result
 end
 
+function drop_old_data_messages()
+  while true do
+    local message = server_queue:top()
+    if not message then
+      break
+    end
+    if not message["P"] and
+       not message["O"] and
+       not message["U"] and
+       not message["I"] and
+       not message["Q"] and
+       not message["R"] then
+      break -- Found a "J" message. Stop. Future data is for next game
+    else
+      server_queue:pop() -- old data, drop it
+    end
+  end
+end
+
+-- Returns true if the type is game data
+function is_game_data_type(type)
+  return string.match(type, "[POUIQR]")
+end
+
 function queue_message(type, data)
-  if type == "P" or
-     type == "O" or
-     type == "U" or
-     type == "I" or
-     type == "Q" or
-     type == "R" then
+  if is_game_data_type(type) then
     local dataMessage = {}
     dataMessage[type] = data
     if printNetworkMessageForType(type) then
@@ -129,8 +148,18 @@ function queue_message(type, data)
   end
 end
 
+local function process_data_message(type, data)
+  if     type == "P" then P1.panel_buffer = P1.panel_buffer..data
+  elseif type == "O" then P2.panel_buffer = P2.panel_buffer..data
+  elseif type == "U" then P1.input_buffer = P1.input_buffer..data
+  elseif type == "I" then P2.input_buffer = P2.input_buffer..data
+  elseif type == "Q" then P1.gpanel_buffer = P1.gpanel_buffer..data
+  elseif type == "R" then P2.gpanel_buffer = P2.gpanel_buffer..data
+  end
+end
+
 function process_all_data_messages()
-  local messages = server_queue:pop_all_with("P", "O", "U", "I", "Q", "R")
+  local messages = server_queue:pop_all_with(SERVER_GAME_DATA_KEYS)
   for _,msg in ipairs(messages) do
     for type,data in pairs(msg) do
       if type ~= "_expiration" then
@@ -143,15 +172,7 @@ function process_all_data_messages()
   end
 end
 
-function process_data_message(type, data)
-  if     type == "P" then P1.panel_buffer = P1.panel_buffer..data
-  elseif type == "O" then P2.panel_buffer = P2.panel_buffer..data
-  elseif type == "U" then P1.input_buffer = P1.input_buffer..data
-  elseif type == "I" then P2.input_buffer = P2.input_buffer..data
-  elseif type == "Q" then P1.gpanel_buffer = P1.gpanel_buffer..data
-  elseif type == "R" then P2.gpanel_buffer = P2.gpanel_buffer..data
-  end
-end
+
 
 function network_init(ip, network_port)
   TCP_sock = socket.tcp()

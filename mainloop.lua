@@ -484,6 +484,7 @@ function main_net_vs_lobby()
   local items = {}
   local lastPlayerIndex = 0
   local updated = false
+  drop_old_data_messages()
   while true do
     if connection_up_time <= login_status_message_duration then
       gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y-120)
@@ -1790,12 +1791,10 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
         for _,msg in ipairs(this_frame_messages) do
           if msg.match_start or replay_of_match_so_far then
             new_match_started = true
+          else
+            drop_old_data_messages()
           end
         end
-      end
-      
-      if not new_match_started then
-        process_all_data_messages() --clean up any extra inputs from the last game
       end
 
       if t >= timemin and ( (t >=timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) or new_match_started then

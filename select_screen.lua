@@ -163,7 +163,7 @@ function select_screen.main()
     P1 = nil
     P2 = nil
     -- Clear all old data messages from the previous game
-    server_queue:pop_all_with("P", "O", "U", "I", "Q", "R")
+    server_queue:pop_all_with(SERVER_GAME_DATA_KEYS)
     print("Reseting player stacks")
 
     local opponent_connected = false
