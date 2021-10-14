@@ -484,7 +484,6 @@ function main_net_vs_lobby()
   local items = {}
   local lastPlayerIndex = 0
   local updated = false
-  drop_old_data_messages()
   while true do
     if connection_up_time <= login_status_message_duration then
       gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y-120)
@@ -703,7 +702,7 @@ function main_net_vs_lobby()
     if not do_messages() then
       return main_dumb_transition, {main_select_mode, loc("ss_disconnect").."\n\n"..loc("ss_return"), 60, 300}
     end
-    process_all_data_messages() -- This runs for the lobby.
+    drop_old_data_messages()
   end
 end
 

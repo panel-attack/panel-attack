@@ -148,7 +148,7 @@ function queue_message(type, data)
   end
 end
 
-function process_data_message(type, data)
+local function process_data_message(type, data)
   if     type == "P" then P1.panel_buffer = P1.panel_buffer..data
   elseif type == "O" then P2.panel_buffer = P2.panel_buffer..data
   elseif type == "U" then P1.input_buffer = P1.input_buffer..data
