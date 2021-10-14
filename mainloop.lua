@@ -14,12 +14,12 @@ local playground, main_endless, make_main_puzzle, main_net_vs_setup, main_config
 -- main_select_mode, main_dumb_transition, main_net_vs, main_net_vs_lobby, main_local_vs_yourself, main_local_vs, main_replay_endless, main_replay_puzzle, main_replay_vs are not local since they are also used elsewhere
 
 local PLAYING = "playing" -- room states
-local CHARACTERSELECT = "character select" --room states
-currently_spectating = false
-connection_up_time = 0
+local CHARACTERSELECT = "character select" -- room states
+currently_spectating = false -- whether or not you are spectating a game
+connection_up_time = 0 -- connection_up_time counts "E" messages, not seconds
 logged_in = 0
-connected_server_ip = nil
-my_user_id = nil
+connected_server_ip = nil -- the ip address of the server you are connected to
+my_user_id = nil -- your user id
 leaderboard_report = nil
 replay_of_match_so_far = nil
 spectator_list = nil
@@ -41,7 +41,7 @@ P2_health_quad = {}
 function fmainloop()
   local func, arg = main_select_mode, nil
   replay = {}
-
+  -- loading various assets into the game
   gprint("Reading config file", unpack(main_menu_screen_pos))
   wait()
   read_conf_file()
@@ -83,6 +83,7 @@ function fmainloop()
   love.filesystem.createDirectory("themes")
   love.filesystem.createDirectory("stages")
 
+  --check for game updates
   if GAME_UPDATER_CHECK_UPDATE_INGAME then
     wait_game_update = GAME_UPDATER:async_download_latest_version()
   end
@@ -154,11 +155,13 @@ do
       {loc("mm_options"), options.main},
       {loc("mm_music_test"), main_music_test}
     }
+    -- if canvas is supported, add fullscreen item
     if love.graphics.getSupported("canvas") then
       items[#items + 1] = {loc("mm_fullscreen", "(LAlt+Enter)"), fullscreen}
     else
       items[#items + 1] = {loc("mm_no_support_fullscreen"), main_select_mode}
     end
+    -- add quit item
     items[#items + 1] = {loc("mm_quit"), exit_game}
     local k = K[1]
     local menu_x, menu_y = unpack(main_menu_screen_pos)
@@ -187,13 +190,13 @@ do
       local ret = nil
       variable_step(
         function()
-          if menu_up(k) then
+          if menu_up(k) then -- move cursor up 
             main_menu:set_active_idx(wrap(1, main_menu.active_idx - 1, #items))
-          elseif menu_down(k) then
+          elseif menu_down(k) then -- move cursor down
             main_menu:set_active_idx(wrap(1, main_menu.active_idx + 1, #items))
-          elseif menu_enter(k) then
+          elseif menu_enter(k) then -- run currently selected function
             ret = {items[main_menu.active_idx][2], items[main_menu.active_idx][3]}
-          elseif menu_escape(k) then
+          elseif menu_escape(k) then -- jump to the last item on list, if already there, run it (quit game)
             if main_menu.active_idx == #items then
               ret = {items[main_menu.active_idx][2], items[main_menu.active_idx][3]}
             else
@@ -249,23 +252,23 @@ function main_select_speed_99(next_func, ...)
     wait()
     variable_step(
       function()
-        if menu_up(k) then
+        if menu_up(k) then -- move the cursor up one item
           active_idx = wrap(1, active_idx - 1, #items)
-        elseif menu_down(k) then
+        elseif menu_down(k) then -- move the cursor down one item
           active_idx = wrap(1, active_idx + 1, #items)
-        elseif menu_right(k) then
-          if active_idx == 1 then
+        elseif menu_right(k) then 
+          if active_idx == 1 then -- increase speed by 1
             speed = bound(1, speed + 1, 99)
-          elseif active_idx == 2 then
+          elseif active_idx == 2 then -- increase difficulty by 1
             difficulty = bound(1, difficulty + 1, 4)
           end
         elseif menu_left(k) then
-          if active_idx == 1 then
+          if active_idx == 1 then -- decrease speed by 1
             speed = bound(1, speed - 1, 99)
-          elseif active_idx == 2 then
+          elseif active_idx == 2 then -- decrease difficulty by 1
             difficulty = bound(1, difficulty - 1, 4)
           end
-        elseif menu_enter(k) then
+        elseif menu_enter(k) then -- selection is "Go!", execute next function with settings
           if active_idx == 3 then
             if config.endless_speed ~= speed or config.endless_difficulty ~= difficulty then
               config.endless_speed = speed
