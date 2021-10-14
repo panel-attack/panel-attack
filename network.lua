@@ -148,7 +148,7 @@ function queue_message(type, data)
   end
 end
 
-local function process_data_message(type, data)
+function process_data_message(type, data)
   if     type == "P" then P1.panel_buffer = P1.panel_buffer..data
   elseif type == "O" then P2.panel_buffer = P2.panel_buffer..data
   elseif type == "U" then P1.input_buffer = P1.input_buffer..data
@@ -159,7 +159,7 @@ local function process_data_message(type, data)
 end
 
 function process_all_data_messages()
-  local messages = server_queue:pop_all_with(SERVER_GAME_DATA_KEYS)
+  local messages = server_queue:pop_all_with("P", "O", "U", "I", "Q", "R")
   for _,msg in ipairs(messages) do
     for type,data in pairs(msg) do
       if type ~= "_expiration" then
