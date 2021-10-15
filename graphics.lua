@@ -7,6 +7,7 @@ local ceil = math.ceil
 
 local shake_arr = {}
 
+-- Setup the shake_arr data used for rendering the stack shake animation
 local shake_idx = -6
 for i = 14, 6, -1 do
   local x = -math.pi
@@ -28,6 +29,7 @@ for i = 1, #shake_arr do
   shake_mult = shake_mult - shake_step
 end
 
+-- Update all the card frames used for doing the card animation
 function Stack.update_cards(self)
   for i = self.card_q.first, self.card_q.last do
     local card = self.card_q[i]
@@ -45,6 +47,7 @@ function Stack.update_cards(self)
   end
 end
 
+-- Render the card animations used to show "bursts" when a combo or chain happens
 function Stack.draw_cards(self)
   for i = self.card_q.first, self.card_q.last do
     local card = self.card_q[i]
@@ -75,6 +78,7 @@ function Stack.draw_cards(self)
   end
 end
 
+-- Update all the pop animations
 function Stack.update_popfxs(self)
   for i = self.pop_q.first, self.pop_q.last do
     local popfx = self.pop_q[i]
@@ -104,6 +108,7 @@ function Stack.update_popfxs(self)
   end
 end
 
+-- Draw the pop animations that happen when matches are made
 function Stack.draw_popfxs(self)
   for i = self.pop_q.first, self.pop_q.last do
     local popfx = self.pop_q[i]
@@ -219,6 +224,7 @@ function Stack.draw_popfxs(self)
   end
 end
 
+-- Positions the stack draw position for the given player
 function move_stack(stack, player_num)
   local stack_padding_x_for_legacy_pos = ((canvas_width - legacy_canvas_width) / 2)
   if player_num == 1 then
@@ -251,6 +257,7 @@ local mask_shader = love.graphics.newShader [[
    }
 ]]
 
+-- Renders the player's stack on screen
 function Stack.render(self)
   local function frame_mask(x_pos, y_pos)
     love.graphics.setShader(mask_shader)
@@ -285,6 +292,8 @@ function Stack.render(self)
 
   -- draw inside stack's frame canvas
   local portrait_w, portrait_h = characters[self.character].images["portrait"]:getDimensions()
+
+  -- Draw the portrait (with fade and inversion if needed)
   if self.do_countdown == false then
     self.portraitFade = 0.3
   else
@@ -317,6 +326,7 @@ function Stack.render(self)
   local shake_idx = #shake_arr - self.shake_time
   local shake = ceil((shake_arr[shake_idx] or 0) * 13)
 
+  -- Draw all the panels
   for row = 0, self.height do
     for col = 1, self.width do
       local panel = self.panels[row][col]
@@ -433,6 +443,8 @@ function Stack.render(self)
       end
     end
   end
+
+  -- Draw the frames and wall at the bottom
   if P1 == self then
     draw(themes[config.theme].images.IMG_frame1P, 0, 0)
     draw(themes[config.theme].images.IMG_wall1P, 4, 4 - shake + self.height * 16)
@@ -441,10 +453,12 @@ function Stack.render(self)
     draw(themes[config.theme].images.IMG_wall2P, 4, 4 - shake + self.height * 16)
   end
 
+  -- Draw the cursor
   if self:game_ended() == false then
     self:render_cursor()
   end
 
+  -- Draw the countdown timer
   if self.do_countdown then
     self:render_countdown()
   end
@@ -457,6 +471,7 @@ function Stack.render(self)
   self:draw_popfxs()
   self:draw_cards()
 
+  -- Draw debug graphics if set
   if config.debug_mode then
     local mx, my = love.mouse.getPosition()
     for row = 0, self.height do
@@ -491,6 +506,7 @@ function Stack.render(self)
     --gprint(loc("pl_frame", self.CLOCK), self.score_x, self.score_y+30)
     end
   else
+    -- Draw the "extra" game info
     if config.show_ingame_infos then
       --gprint(loc("pl_score", self.score), self.score_x, self.score_y-40)
       draw_label(themes[config.theme].images["IMG_score" .. self.id], self.origin_x + (themes[config.theme].scoreLabel_Pos[1] * self.mirror_x), self.pos_y + themes[config.theme].scoreLabel_Pos[2], 0, themes[config.theme].scoreLabel_Scale, self.multiplication)
@@ -501,6 +517,8 @@ function Stack.render(self)
     --gprint(loc("pl_frame", self.CLOCK), self.score_x, self.score_y+100)
     end
     local main_infos_screen_pos = {x = 375 + (canvas_width - legacy_canvas_width) / 2, y = 10 + (canvas_height - legacy_canvas_height)}
+
+    -- Draw the timer for time attack
     if self.mode == "time" then
       local time_left = time_attack_time - ((self.game_stopwatch or (time_attack_time * 60)) / 60) -- time left in seconds
       if time_left < 0 then
@@ -515,6 +533,7 @@ function Stack.render(self)
       --gprint(loc("pl_time", string.format("%01d:%02d",mins,secs)), self.score_x, self.score_y+60)
       draw_label(themes[config.theme].images.IMG_time, (main_infos_screen_pos.x + themes[config.theme].timeLabel_Pos[1]) / GFX_SCALE, (main_infos_screen_pos.y + themes[config.theme].timeLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].timeLabel_Scale)
       draw_time(string.format("%01d:%02d", mins, secs), time_quads, main_infos_screen_pos.x + themes[config.theme].time_Pos[1], main_infos_screen_pos.y + themes[config.theme].time_Pos[2], 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale)
+    -- Draw the current difficulty level
     elseif self.level then
       --gprint(loc("pl_level", self.level), self.score_x, self.score_y+70)
       draw_label(themes[config.theme].images["IMG_level" .. self.id], self.origin_x + themes[config.theme].levelLabel_Pos[1] * self.mirror_x, self.pos_y + themes[config.theme].levelLabel_Pos[2], 0, themes[config.theme].levelLabel_Scale, self.multiplication)
@@ -523,6 +542,7 @@ function Stack.render(self)
       level_quad:setViewport(tonumber(self.level - 1) * (level_atlas:getWidth() / 11), 0, level_atlas:getWidth() / 11, level_atlas:getHeight(), level_atlas:getDimensions())
       qdraw(level_atlas, level_quad, (self.origin_x + themes[config.theme].level_Pos[1] * self.mirror_x), (self.pos_y + themes[config.theme].level_Pos[2]), 0, (28 / themes[config.theme].images["levelNumberWidth" .. self.id] * themes[config.theme].level_Scale) / GFX_SCALE, (26 / themes[config.theme].images["levelNumberHeight" .. self.id] * themes[config.theme].level_Scale / GFX_SCALE), 0, 0, self.multiplication)
     end
+    -- Draw the stop time and healthbars
     if config.show_ingame_infos then
       --gprint(loc("pl_health", self.health), self.score_x, self.score_y-40)
       --(self.pos_x-4)*GFX_SCALE, (self.pos_y-4)*GFX_SCALE
@@ -686,22 +706,28 @@ function Stack.render(self)
         20/themes[config.theme].images.timeNumberWidth*themes[config.theme].time_Scale, 26/themes[config.theme].images.timeNumberHeight*themes[config.theme].time_Scale, "center")
       ]]
     end
+
+    -- Draw the time for non time attack modes
     if P1 and P1.game_stopwatch and tonumber(P1.game_stopwatch) and self.mode ~= "time" then
       --gprint(frames_to_time_string(P1.game_stopwatch, P1.mode == "endless"), main_infos_screen_pos.x+10, main_infos_screen_pos.y+6)
       draw_label(themes[config.theme].images.IMG_time, (main_infos_screen_pos.x + themes[config.theme].timeLabel_Pos[1]) / GFX_SCALE, (main_infos_screen_pos.y + themes[config.theme].timeLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].timeLabel_Scale)
       draw_time(frames_to_time_string(P1.game_stopwatch, P1.mode == "endless"), time_quads, main_infos_screen_pos.x + themes[config.theme].time_Pos[1], main_infos_screen_pos.y + themes[config.theme].time_Pos[2], 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale)
     end
 
+    -- Draw the community message
     if not config.debug_mode then
       gprint(join_community_msg or "", main_infos_screen_pos.x - 45, main_infos_screen_pos.y + 550)
     end
   end
+
+  -- Draw the analytics data
   if self.enable_analytics then
     analytics.draw(self.score_x - 500, self.score_y)
   end
   -- ends here
 end
 
+-- Calculates the proper dimensions to not stretch the game for various sizes
 function scale_letterbox(width, height, w_ratio, h_ratio)
   if height / h_ratio > width / w_ratio then
     local scaled_height = h_ratio * width / w_ratio
@@ -711,6 +737,7 @@ function scale_letterbox(width, height, w_ratio, h_ratio)
   return (width - scaled_width) / 2, 0, scaled_width, height
 end
 
+-- Draw the stacks cursor
 function Stack.render_cursor(self)
   local shake_idx = #shake_arr - self.shake_time
   local shake = ceil((shake_arr[shake_idx] or 0) * 13)
@@ -723,6 +750,7 @@ function Stack.render_cursor(self)
   end
 end
 
+-- Draw the stacks countdown timer
 function Stack.render_countdown(self)
   if self.do_countdown and self.countdown_CLOCK then
     local ready_x = 16
@@ -747,6 +775,8 @@ function Stack.render_countdown(self)
     end
   end
 end
+
+-- Draw the pause menu
 function draw_pause()
   draw(themes[config.theme].images.pause, 0, 0)
   gprintf(loc("pause"), 0, 330, canvas_width, "center", nil, 1, large_font)
