@@ -33,6 +33,7 @@ local function fill_map(template_map, map)
   end
 end
 
+-- Randomizes the settings if they are set to random
 local function patch_is_random(refreshed) -- retrocompatibility
   if refreshed ~= nil then
     if refreshed.stage_is_random == true then
@@ -52,6 +53,7 @@ local function patch_is_random(refreshed) -- retrocompatibility
   end
 end
 
+-- Grabs character / panel / stage settings based on our own mods if they are not set
 function refresh_based_on_own_mods(refreshed, ask_change_fallback)
   patch_is_random(refreshed)
   ask_change_fallback = ask_change_fallback or false
@@ -89,6 +91,7 @@ function refresh_based_on_own_mods(refreshed, ask_change_fallback)
   end
 end
 
+-- Resolve the current character if it is random
 local function resolve_character_random(state)
   if state.character_is_random ~= nil then
     if state.character_is_random == random_character_special_value then
@@ -104,6 +107,7 @@ local function resolve_character_random(state)
   return false
 end
 
+-- Resolve the current stage if it is random
 local function resolve_stage_random(state)
   if state.stage_is_random ~= nil then
     if state.stage_is_random == random_stage_special_value then
@@ -118,7 +122,6 @@ local function resolve_stage_random(state)
 end
 
 -- The main screen for selecting characters and settings for a match
--- cool
 function select_screen.main()
   if themes[config.theme].musics.select_screen then
     stop_the_music()
@@ -132,11 +135,13 @@ function select_screen.main()
 
   select_screen.fallback_when_missing = {nil, nil}
 
+  -- Makes sure all the client data is up to date and ready
   local function add_client_data(state)
     state.loaded = characters[state.character] and characters[state.character].fully_loaded and stages[state.stage] and stages[state.stage].fully_loaded
     state.wants_ready = state.ready
   end
 
+  -- Updates the loaded and ready state for both states
   local function refresh_loaded_and_ready(state_1, state_2)
     state_1.loaded = characters[state_1.character] and characters[state_1.character].fully_loaded and stages[state_1.stage] and stages[state_1.stage].fully_loaded
     if state_2 then
@@ -162,12 +167,15 @@ function select_screen.main()
     {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}
   }
   local map = {}
+
+  -- Setup settings for Main Character Select for 2 Player over Network
   if select_screen.character_select_mode == "2p_net_vs" then
     P1 = nil
     P2 = nil
     drop_old_data_messages() -- Starting a new game, clear all old data messages from the previous game
     print("Reseting player stacks")
 
+    -- Wait till we have the room setup messages from the server
     local opponent_connected = false
     local retries, retry_limit = 0, 250
     while not global_initialize_room_msg and retries < retry_limit do
@@ -199,6 +207,8 @@ function select_screen.main()
     -- retries = retries + 1
     -- end
     -- end
+
+    -- If we never got the room setup message, bail
     if not global_initialize_room_msg then
       warning(loc("ss_init_fail") .. "\n")
       return main_dumb_transition, {main_select_mode, loc("ss_init_fail") .. "\n\n" .. loc("ss_return"), 60, 300}
@@ -275,6 +285,7 @@ function select_screen.main()
 
   op_win_count = op_win_count or 0
 
+  -- Setup win ratios and match type for 2p vs net
   if select_screen.character_select_mode == "2p_net_vs" then
     global_current_room_ratings = global_current_room_ratings or {{new = 0, old = 0, difference = 0}, {new = 0, old = 0, difference = 0}}
     my_expected_win_ratio = nil
@@ -293,6 +304,7 @@ function select_screen.main()
 
   match_type_message = match_type_message or ""
 
+  -- Leaves the 2p vs match room
   local function do_leave()
     stop_the_music()
     my_win_count = 0
@@ -346,6 +358,7 @@ function select_screen.main()
 
   add_client_data(cursor_data[1].state)
 
+  -- Setup the 2nd players state
   if select_screen.character_select_mode ~= "1p_vs_yourself" then
     if global_op_state ~= nil then
       cursor_data[2].state = shallowcpy(global_op_state)
@@ -384,6 +397,7 @@ function select_screen.main()
 
   local prev_state = shallowcpy(cursor_data[1].state)
 
+  -- function for rendering the flashing selection
   local super_select_pixelcode = [[
       uniform float percent;
       vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
@@ -401,6 +415,14 @@ function select_screen.main()
   -- one per player, should we put them into cursor_data even though it's meaningless?
   local super_select_shaders = {love.graphics.newShader(super_select_pixelcode), love.graphics.newShader(super_select_pixelcode)}
 
+  -- Draws a button for the select screen.
+  -- x grid position to draw in
+  -- y grid position to draw in
+  -- w number of grids wide
+  -- h number of grids high
+  -- str the type of button to draw
+  -- halign, valign alignment
+  -- set no_rect to false to hide the border
   local function draw_button(x, y, w, h, str, halign, valign, no_rect)
     no_rect = no_rect or str == "__Empty" or str == "__Reserved"
     halign = halign or "center"
@@ -449,6 +471,7 @@ function select_screen.main()
       y_add = math.floor(button_height - text_height)
     end
 
+    -- Draw the character icon at the current button using globals *gross*
     local function draw_character(character)
       -- draw character icon with its super selection or bundle character icon
       if character == random_character_special_value or not character:is_bundle() or character.images.icon then
@@ -504,6 +527,7 @@ function select_screen.main()
       end
     end
 
+    -- Draws the players "flashing ready" effect on their current cursor
     local function draw_super_select(player_num)
       local ratio = menu_pressing_enter(K[player_num])
       if ratio > super_selection_enable_ratio then
@@ -514,6 +538,7 @@ function select_screen.main()
       end
     end
 
+    -- Draw the base cursor for the player
     local function draw_cursor(button_height, spacing, player_num, ready)
       local cur_blink_frequency = 4
       local cur_pos_change_frequency = 8
@@ -538,6 +563,7 @@ function select_screen.main()
       end
     end
 
+    -- Draw the players current character, player number etc
     local function draw_player_state(cursor_data, player_number)
       if characters[cursor_data.state.character] and not characters[cursor_data.state.character].fully_loaded then
         menu_drawf(themes[config.theme].images.IMG_loading, render_x + button_width * 0.5, render_y + button_height * 0.5, "center", "center")
@@ -550,6 +576,7 @@ function select_screen.main()
       menu_drawf(themes[config.theme].images.IMG_levels[cursor_data.state.level], render_x + button_width - 1, render_y + button_height - 1, "right", "bottom", 0, scale, scale)
     end
 
+    -- Draw the panel selection UI
     local function draw_panels(cursor_data, player_number, y_padding)
       local panels_max_width = 0.25 * button_height
       local panels_width = math.min(panels_max_width, panels[cursor_data.state.panels_dir].images.classic[1][1]:getWidth())
@@ -579,6 +606,7 @@ function select_screen.main()
       end
     end
 
+    -- Draw the difficulty level selection UI
     local function draw_levels(cursor_data, player_number, y_padding)
       local level_max_width = 0.2 * button_height
       local level_width = math.min(level_max_width, themes[config.theme].images.IMG_levels[1]:getWidth())
@@ -615,6 +643,7 @@ function select_screen.main()
       end
     end
 
+    -- Draw the Casual/Ranked selection UI
     local function draw_match_type(cursor_data, player_number, y_padding)
       local padding_x = math.floor(0.5 * button_width - themes[config.theme].images.IMG_players[player_number]:getWidth() * 0.5 - 46) -- ty GIMP; no way to know the size of the text?
       menu_drawf(themes[config.theme].images.IMG_players[player_number], render_x + padding_x, render_y + y_padding, "center", "center")
@@ -628,6 +657,7 @@ function select_screen.main()
       gprint(to_print, render_x + padding_x, render_y + y_padding - 0.5 * text_height - 1)
     end
 
+    -- Draw the stage select UI
     local function draw_stage(cursor_data, player_number, x_padding)
       local stage_dimensions = {80, 45}
       local y_padding = math.floor(0.5 * button_height)
@@ -701,6 +731,7 @@ function select_screen.main()
       draw_character(character)
     end
 
+    -- Based on the string type, render the right type of button
     local pstr
     if string.sub(str, 1, 2) == "__" then
       pstr = string.sub(str, 3)
@@ -771,8 +802,10 @@ function select_screen.main()
   local v_align_center = {__Ready = true, __Random = true, __Leave = true}
   local is_special_value = {__Leave = true, __Level = true, __Panels = true, __Ready = true, __Stage = true, __Mode = true, __Random = true}
 
-  --draw
+  -- Main loop for running the select screen and drawing
   while true do
+
+    -- Draw the current score and record
     if select_screen.character_select_mode == "1p_vs_yourself" then
       local xPosition1 = 196
       local xPosition2 = 320
@@ -784,7 +817,7 @@ function select_screen.main()
       draw_number(player1Scores.vsSelf["record"][cursor_data[1].state.level], themes[config.theme].images.IMG_number_atlas_1P, 10, {}, xPosition2, yPosition + atlasHeight + 4, 1)
     end
 
-    -- draw the buttons, handle horizontal spans
+    -- Go through the grid, drawing the buttons, handling horizontal spans
     for i = 1, X do
       for j = 1, Y do
         local value = map[current_page][i][j]
@@ -813,6 +846,7 @@ function select_screen.main()
       end
     end
 
+    -- Handle network messages for 2p vs net
     if select_screen.character_select_mode == "2p_net_vs" then
       local messages = server_queue:pop_all_with("win_counts", "menu_state", "ranked_match_approved", "leave_room", "match_start", "ranked_match_denied")
       if global_initialize_room_msg then
@@ -936,6 +970,8 @@ function select_screen.main()
           if P1.play_to_end or P2.play_to_end then
             to_print = loc("pl_spectate_join")
           end
+
+          -- For a short time, show the game start / spectate message
           for i = 1, 30 do
             gprint(to_print, unpack(main_menu_screen_pos))
             if not do_messages() then
@@ -944,9 +980,10 @@ function select_screen.main()
             process_all_data_messages() -- process data to get initial panel stacks setup
             wait()
           end
+
+          -- Wait for all the game start data to come in before moving to the game screen
           local game_start_timeout = 0
           while P1.panel_buffer == "" or P2.panel_buffer == "" or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
-            --testing getting stuck here at "Game is starting"
             game_start_timeout = game_start_timeout + 1
             print("game_start_timeout = " .. game_start_timeout)
             print("P1.panel_buffer = " .. P1.panel_buffer)
@@ -969,6 +1006,8 @@ function select_screen.main()
             end
             love.timer.sleep(0.017)
           end
+
+          -- Proceed to the game screen and start the game
           P1:starting_state()
           P2:starting_state()
           return main_dumb_transition, {main_net_vs, "", 0, 0}
@@ -976,6 +1015,7 @@ function select_screen.main()
       end
     end
 
+    -- Calculate the rating difference
     local my_rating_difference = ""
     local op_rating_difference = ""
     if current_server_supports_ranking and not global_current_room_ratings[my_player_number].placement_match_progress then
@@ -994,6 +1034,8 @@ function select_screen.main()
         end
       end
     end
+
+    -- Returns a string with the players rating, win rate, and expected rating
     local function get_player_state_str(player_number, rating_difference, win_count, op_win_count, expected_win_ratio)
       local state = ""
       if current_server_supports_ranking then
@@ -1026,6 +1068,8 @@ function select_screen.main()
       end
       return state
     end
+
+    -- Draw the player information buttons
     draw_button(0, 1, 1, 1, "P1")
     draw_button(0, 2, 2, 1, get_player_state_str(my_player_number, my_rating_difference, my_win_count, op_win_count, my_expected_win_ratio), "left", "top", true)
     if cursor_data[1].state and op_name then
@@ -1033,6 +1077,8 @@ function select_screen.main()
       draw_button(0, 8, 2, 1, get_player_state_str(op_player_number, op_rating_difference, op_win_count, my_win_count, op_expected_win_ratio), "left", "top", true)
     --state = state.." "..json.encode(op_state)
     end
+
+    -- Draw the current match type result
     if select_screen.character_select_mode == "2p_net_vs" then
       if not cursor_data[1].state.ranked and not cursor_data[2].state.ranked then
         match_type_message = ""
@@ -1046,6 +1092,8 @@ function select_screen.main()
       gprintf(match_type_str, 0, 15, canvas_width, "center")
       gprintf(match_type_message, 0, 30, canvas_width, "center")
     end
+
+    -- Draw an indicator that there are more character pages
     if pages_amount ~= 1 then
       gprintf(loc("page") .. " " .. current_page .. "/" .. pages_amount, 0, 660, canvas_width, "center")
     end
@@ -1053,6 +1101,7 @@ function select_screen.main()
 
     local ret = nil
 
+    -- Moves the given cursor in the given direction
     local function move_cursor(cursor, direction)
       local cursor_pos = cursor.position
       local dx, dy = unpack(direction)
@@ -1068,6 +1117,7 @@ function select_screen.main()
       cursor.can_super_select = character and (character.stage or character.panels)
     end
 
+    -- Returns the panel dir for the given increment 
     local function change_panels_dir(panels_dir, increment)
       local current = 0
       for k, v in ipairs(panels_ids) do
@@ -1086,6 +1136,7 @@ function select_screen.main()
       return panels_dir
     end
 
+    -- Sets the state object to a new stage based on the increment
     local function change_stage(state, increment)
       -- random_stage_special_value is placed at the end of the list and is 'replaced' by a random pick and stage_is_random=true
       local current = nil
@@ -1122,11 +1173,13 @@ function select_screen.main()
       print("stage and stage_is_random: " .. state.stage .. " / " .. (state.stage_is_random or "nil"))
     end
 
+    -- Function to tell the select screen to exit
     local function on_quit()
       if themes[config.theme].musics.select_screen then
         stop_the_music()
       end
       if select_screen.character_select_mode == "2p_net_vs" then
+        -- Tell the server we want to leave, once it disconnects us we will actually leave
         if not do_leave() then
           ret = {main_dumb_transition, {main_select_mode, loc("ss_error_leave"), 60, 300}}
         end
@@ -1135,6 +1188,8 @@ function select_screen.main()
       end
     end
 
+    -- Function to know what to do when you press select on your current cursor
+    -- returns true if a sound should be played
     local function on_select(cursor, super)
       local noisy = false
       local selectable = {__Stage = true, __Panels = true, __Level = true, __Ready = true}
@@ -1200,6 +1255,7 @@ function select_screen.main()
         stage_loader_update()
         refresh_loaded_and_ready(cursor_data[1].state, cursor_data[2] and cursor_data[2].state or nil)
 
+        -- Handle input
         local up, down, left, right = {-1, 0}, {1, 0}, {0, -1}, {0, 1}
         if not currently_spectating then
           local KMax = 1
@@ -1303,9 +1359,12 @@ function select_screen.main()
         end
       end
     )
+
     if ret then
       return unpack(ret)
     end
+
+    -- Handle one player vs game setup
     if cursor_data[1].state.ready and select_screen.character_select_mode == "1p_vs_yourself" then
       P1 = Stack(1, "vs", cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       P1.is_local = true
@@ -1319,6 +1378,7 @@ function select_screen.main()
       stage_loader_wait()
       P1:starting_state()
       return main_dumb_transition, {main_local_vs_yourself, "", 0, 0}
+    -- Handle two player vs game setup
     elseif cursor_data[1].state.ready and select_screen.character_select_mode == "2p_local_vs" and cursor_data[2].state.ready then
       P1 = Stack(1, "vs", cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       P1.is_local = true
@@ -1344,6 +1404,8 @@ function select_screen.main()
       P1:starting_state()
       P2:starting_state()
       return main_dumb_transition, {main_local_vs, "", 0, 0}
+
+    -- Fetch the next network messages for 2p vs. When we get a start message we will transition there.
     elseif select_screen.character_select_mode == "2p_net_vs" then
       if not do_messages() then
         return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
