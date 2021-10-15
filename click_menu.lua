@@ -1,9 +1,11 @@
 require("graphics_util")
 
 menu_font = love.graphics.getFont()
-click_menus = {}
-last_active_idx = 1
+click_menus = {} -- All click menus currently showing in the game
+last_active_idx = 1 -- The last index selected in the current menu TODO: Delete this
 
+-- A series of buttons with text strings that can be clicked or use input to navigate
+-- Buttons are laid out vertically and scroll buttons are added if not all options fit.
 Click_menu =
   class(
   function(self, list, x, y, width, height, padding, active_idx, buttons_outlined, button_padding, background)
@@ -48,7 +50,7 @@ Click_menu =
     self.active = true
     self.visible = true
     click_menus[#click_menus + 1] = self
-    self.active_idx = active_idx or 1
+    self.active_idx = active_idx or 1 -- the currently selected button
     self.id = #click_menus
     last_active_idx = self.active_idx
     self.top_visible_button = 1
@@ -57,6 +59,7 @@ Click_menu =
   end
 )
 
+-- Adds a button to the menu with the given text and settings
 function Click_menu.add_button(self, string_text, x, y, w, h, outlined, button_padding, current_setting)
   -- x and y are optional. by default will add underneath existing menu buttons
   -- w and h are optional. by default, button width will be the width of the text
@@ -91,18 +94,22 @@ function Click_menu.add_button(self, string_text, x, y, w, h, outlined, button_p
   self:layout_buttons()
 end
 
+-- Sets the button at the given index's string
 function Click_menu.set_button_setting(self, button_idx, new_setting)
   self.buttons[button_idx].current_setting = love.graphics.newText(menu_font, new_setting)
 end
 
+-- Sets the button at the given index's visibility
 function Click_menu.set_button_visibility(self, idx, visible)
   self.buttons[idx].visible = visible
 end
 
+-- Gets the button at the given index's width including padding
 function Click_menu.get_button_width(self, idx)
   return self.buttons[idx].w or self.buttons[idx].text:getWidth() + 2 * self.button_padding
 end
 
+-- Gets the button at the given index's height including padding
 function Click_menu.get_button_height(self, idx)
   if self.buttons and self.buttons[idx] then
     return self.buttons[idx].h or self.buttons[idx].text:getHeight() + 2 * self.button_padding
@@ -111,11 +118,13 @@ function Click_menu.get_button_height(self, idx)
   end
 end
 
+-- Removes this menu from the list of menus
 function Click_menu.remove_self(self)
   last_active_idx = self.active_idx
   click_menus[self.id] = nil
 end
 
+-- Sets the current selected button and scrolls to it if needed
 function Click_menu.set_active_idx(self, idx)
   idx = wrap(1, idx, #self.buttons)
   self.active_idx = idx
@@ -131,12 +140,15 @@ function Click_menu.set_active_idx(self, idx)
   end
 end
 
+-- Sets the button at the given index's string
+-- TODO: Delete, this is unused
 function Click_menu.set_current_setting(self, idx, new_setting)
   if self.buttons[idx] then
     self.buttons[idx].current_setting = love.graphics.newText(menu_font, new_setting)
   end
 end
 
+-- Repositions in the x direction so the menu doesn't go off the screen
 function Click_menu.resize_to_fit(self)
   for k, v in pairs(self.buttons) do
     self.current_setting_x = math.max(self.current_setting_x or 0, self:get_button_width(k) + 2 * (self.button_padding or 0))
@@ -149,6 +161,7 @@ function Click_menu.resize_to_fit(self)
   end
 end
 
+-- Positions the buttons, scrolls, and makes sure the scroll buttons are visible if needed
 function Click_menu.layout_buttons(self)
   self.new_item_y = self.padding or 0
   self.top_visible_button = self.top_visible_button or 1
@@ -185,6 +198,7 @@ function Click_menu.layout_buttons(self)
   end
 end
 
+-- Sets the visibility of the scroll controls
 function Click_menu.show_controls(self, bool)
   if bool or #self.buttons > self.button_limit then
     for k, v in pairs(self.menu_controls) do
@@ -197,6 +211,7 @@ function Click_menu.show_controls(self, bool)
   end
 end
 
+-- Draws the menu
 function Click_menu.draw(self)
   if self.visible then
     if self.background then
@@ -243,11 +258,13 @@ function Click_menu.draw(self)
   end
 end
 
+-- Moves the menu to the given location
 function Click_menu.move(self, x, y)
   self.x = x or 0
   self.y = y or 0
 end
 
+-- Handles taps or clicks on the menu
 function click_or_tap(x, y, touchpress)
   print(x .. "," .. y)
   for menu_name, menu in pairs(click_menus) do
@@ -256,7 +273,7 @@ function click_or_tap(x, y, touchpress)
       for i = 1, #menu.buttons do
         if y >= menu.y + menu.buttons[i].y and y <= menu.y + menu.buttons[i].y + menu:get_button_height(i) and x >= menu.x + menu.buttons[i].x and x <= menu.x + menu.buttons[i].x + menu:get_button_width(i) then
           menu.idx_selected = i
-          last_active_idx = menu_idx_selected
+          last_active_idx = menu_idx_selected --TODO this isn't even set...
         end
       end
       for control_name, control in pairs(menu.menu_controls) do
@@ -281,16 +298,19 @@ function click_or_tap(x, y, touchpress)
   end
 end
 
+-- Transform from window coordinates to game coordinates
 function transform_coordinates(x, y)
   local lbx, lby, lbw, lbh = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 16, 9)
   local scale = canvas_width / math.max(background:getWidth(), background:getHeight())
   return (x - lbx) / scale * canvas_width / lbw, (y - lby) / scale * canvas_height / lbh
 end
 
+-- Handle a mouse press
 function love.mousepressed(x, y)
   click_or_tap(transform_coordinates(x, y))
 end
 
+-- Handle a touch press
 function love.touchpressed(id, x, y, dx, dy, pressure)
   local _x, _y = transform_coordinates(x, y)
   click_or_tap(_x, _y, {id = id, x = _x, y = _y, dx = dx, dy = dy, pressure = pressure})
