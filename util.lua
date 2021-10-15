@@ -255,40 +255,6 @@ function get_directory_contents(path)
   return results
 end
 
-function compress_input_string(inStr)
-  if string.match(inStr, "%d+") then
-    return inStr
-  else
-    local compressedStr = ""
-    local buff = inStr:sub(1, 1)
-    local outStr, nextChar = inStr:sub(1, 1)
-    for pos = 2, #inStr do
-      nextChar = inStr:sub(pos, pos)
-      if nextChar ~= outStr:sub(#outStr, #outStr) then
-        compressedStr = compressedStr .. buff:sub(1, 1) .. string.len(buff)
-        buff = ""
-      end
-      buff = buff .. inStr:sub(pos, pos)
-      outStr = outStr .. nextChar
-    end
-    compressedStr = compressedStr .. buff:sub(1, 1) .. string.len(buff)
-    return compressedStr
-  end
-end
-
-function uncompress_input_string(compressedStr)
-  if string.match(compressedStr, "%a%a") then
-    return compressedStr
-  else
-    local ucStr = ""
-    for w in string.gmatch(compressedStr, "%a%d+") do
-      local inputChar = string.match(w, "%a")
-      ucStr = ucStr .. string.rep(inputChar, string.match(w, "%d+"))
-    end
-    return ucStr
-  end
-end
-
 function dump(o)
   if type(o) == "table" then
     local s = "{ "

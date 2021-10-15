@@ -32,7 +32,7 @@ For example, let's say that a player is inputting both down and right at the sam
 8/h/H = Metal
 9/i/I = Debug
 
-"Q" and "R" represent P1's and P2's garbage panels, respectively. They are always given in batches of 120. Every character represents a block, but they are used by garbage blocks to decide what panels to turn into when they are broken.
+"Q" and "R" represent P1's and P2's garbage panels, respectively. They are always given in batches of 120. Every character represents a panel, but they are used by garbage blocks to decide what panels to turn into when they are broken.
 
 For example, if a garbage block that is 4 blocks wide is broken, the blocks will turn into the first 4 characters. Let's say that the starting characters are "4312". When the garbage block converts into panels, the first block will turn yellow (4), the second into cyan (3), the third into red (1), and fourth into green (2).
 

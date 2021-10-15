@@ -190,7 +190,7 @@ do
       local ret = nil
       variable_step(
         function()
-          if menu_up(k) then -- move cursor up 
+          if menu_up(k) then -- move cursor up
             main_menu:set_active_idx(wrap(1, main_menu.active_idx - 1, #items))
           elseif menu_down(k) then -- move cursor down
             main_menu:set_active_idx(wrap(1, main_menu.active_idx + 1, #items))
@@ -256,7 +256,7 @@ function main_select_speed_99(next_func, ...)
           active_idx = wrap(1, active_idx - 1, #items)
         elseif menu_down(k) then -- move the cursor down one item
           active_idx = wrap(1, active_idx + 1, #items)
-        elseif menu_right(k) then 
+        elseif menu_right(k) then
           if active_idx == 1 then -- increase speed by 1
             speed = bound(1, speed + 1, 99)
           elseif active_idx == 2 then -- increase difficulty by 1
@@ -729,7 +729,7 @@ function update_win_counts(win_counts)
     op_win_count = win_counts[1] or 0
   end
 end
-
+-- list of spectators
 function spectator_list_string(list)
   local str = ""
   for k, v in ipairs(list) do
@@ -743,7 +743,7 @@ function spectator_list_string(list)
   end
   return str
 end
-
+-- creates a leaderboard string that is sorted by rank
 function build_viewable_leaderboard_string(report, first_viewable_idx, last_viewable_idx)
   str = loc("lb_header_board") .. "\n"
   first_viewable_idx = math.max(first_viewable_idx, 1)
@@ -761,7 +761,7 @@ function build_viewable_leaderboard_string(report, first_viewable_idx, last_view
   end
   return str
 end
-
+-- connects to the server using the given ip address and network port
 function main_net_vs_setup(ip, network_port)
   if not config.name then
     return main_set_name
@@ -791,6 +791,7 @@ function main_net_vs_setup(ip, network_port)
   return main_net_vs_lobby
 end
 
+-- online match
 function main_net_vs()
   --Uncomment below to induce lag
   --STONER_MODE = true
@@ -810,7 +811,7 @@ function main_net_vs()
     -- love.timer.sleep(0.030)
     local messages = server_queue:pop_all_with("taunt", "leave_room")
     for _, msg in ipairs(messages) do
-      if msg.taunt then
+      if msg.taunt then -- send taunts
         local taunts = nil
         -- P1.character and P2.character are supposed to be already filtered with current mods, taunts may differ though!
         if msg.player_number == my_player_number then
@@ -828,7 +829,7 @@ function main_net_vs()
             taunts[math.random(#taunts)]:play()
           end
         end
-      elseif msg.leave_room then
+      elseif msg.leave_room then --reset win counts and go back to lobby
         my_win_count = 0
         op_win_count = 0
         return main_dumb_transition, {main_net_vs_lobby, "", 0, 0}
@@ -907,15 +908,15 @@ function main_net_vs()
     local end_text = nil
     -- We can't call it until someone has lost and everyone has played up to that point in time.
     if GAME_ENDED_CLOCK > 0 and P1.CLOCK >= GAME_ENDED_CLOCK and P2.CLOCK >= GAME_ENDED_CLOCK then
-      if P1.game_over_clock == GAME_ENDED_CLOCK and P2.game_over_clock == GAME_ENDED_CLOCK then
+      if P1.game_over_clock == GAME_ENDED_CLOCK and P2.game_over_clock == GAME_ENDED_CLOCK then -- draw
         end_text = loc("ss_draw")
         outcome_claim = 0
-      elseif P1.game_over_clock == GAME_ENDED_CLOCK then
+      elseif P1.game_over_clock == GAME_ENDED_CLOCK then -- opponent wins
         winSFX = P2:pick_win_sfx()
         end_text = loc("ss_p_wins", op_name)
         op_win_count = op_win_count + 1 -- leaving these in just in case used with an old server that doesn't keep score.  win_counts will get overwritten after this by the server anyway.
         outcome_claim = P2.player_number
-      elseif P2.game_over_clock == GAME_ENDED_CLOCK then
+      elseif P2.game_over_clock == GAME_ENDED_CLOCK then -- client wins
         winSFX = P1:pick_win_sfx()
         end_text = loc("ss_p_wins", my_name)
         my_win_count = my_win_count + 1 -- leave this in
@@ -1084,10 +1085,10 @@ function main_replay_vs()
   P1.garbage_target = P2
   P2.garbage_target = P1
   move_stack(P2, 2)
-  P1.input_buffer = uncompress_input_string(replay.in_buf)
+  P1.input_buffer = replay.in_buf
   P1.panel_buffer = replay.P
   P1.gpanel_buffer = replay.Q
-  P2.input_buffer = uncompress_input_string(replay.I)
+  P2.input_buffer = replay.I
   P2.panel_buffer = replay.O
   P2.gpanel_buffer = replay.R
   P1.max_runs_per_frame = 1
@@ -1191,7 +1192,7 @@ function main_replay_endless()
   P1:wait_for_random_character()
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
-  P1.input_buffer = table.concat({uncompress_input_string(replay.in_buf)})
+  P1.input_buffer = table.concat({replay.in_buf})
   P1.panel_buffer = replay.pan_buf
   P1.gpanel_buffer = replay.gpan_buf
   P1.speed = replay.speed
@@ -1247,7 +1248,7 @@ function main_replay_puzzle()
   P1:wait_for_random_character()
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
-  P1.input_buffer = uncompress_input_string(replay.in_buf)
+  P1.input_buffer = replay.in_buf
   P1.cur_wait_time = replay.cur_wait_time or default_input_repeat_delay
   P1:set_puzzle_state(unpack(replay.puzzle))
   P2 = nil
