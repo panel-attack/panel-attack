@@ -118,6 +118,7 @@ local function resolve_stage_random(state)
 end
 
 -- The main screen for selecting characters and settings for a match
+-- cool
 function select_screen.main()
   if themes[config.theme].musics.select_screen then
     stop_the_music()
