@@ -1,3 +1,8 @@
+
+-- Tracks a queue data structure.
+-- Also provides a capacity and drops messages with an error if that capacity is exceeded.
+-- Also provides a time expiration for messages
+-- Values are tracked via incrementing ID keys, when something is nilled it is tracked as an "empty"
 ServerQueue =
   class(
   function(self, capacity)

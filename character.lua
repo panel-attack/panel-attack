@@ -175,6 +175,7 @@ function Character.play_selection_sfx(self)
   return false
 end
 
+-- Stops old combo / chaing sounds and plays the appropriate chain or combo sound
 function Character.play_combo_chain_sfx(self, chain_combo)
   if not SFX_mute then
     -- stop previous sounds if any
@@ -230,6 +231,7 @@ function Character.preload(self)
   self:sound_init(false, false)
 end
 
+-- Loads all the sounds and graphics
 function Character.load(self, instant)
   print("loading character " .. self.id)
   self:graphics_init(true, (not instant))
@@ -238,6 +240,7 @@ function Character.load(self, instant)
   print("loaded character " .. self.id)
 end
 
+-- Unloads the sounds and graphics
 function Character.unload(self)
   print("unloading character " .. self.id)
   self:graphics_uninit()
@@ -246,6 +249,7 @@ function Character.unload(self)
   print("unloaded character " .. self.id)
 end
 
+-- Adds all the characters recursively in a folder to the global characters variable
 local function add_characters_from_dir_rec(path)
   local lfs = love.filesystem
   local raw_dir_list = lfs.getDirectoryItems(path)
@@ -275,6 +279,7 @@ local function add_characters_from_dir_rec(path)
   end
 end
 
+-- Loads all character IDs into the characters_ids global
 local function fill_characters_ids()
   -- check validity of bundle characters
   local invalid = {}
@@ -311,6 +316,7 @@ local function fill_characters_ids()
   end
 end
 
+-- Initializes the characters globals with data
 function characters_init()
   characters = {} -- holds all characters, most of them will not be fully loaded
   characters_ids = {} -- holds all characters ids

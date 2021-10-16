@@ -1,6 +1,8 @@
 local TCP_sock = nil
+
+-- Expected length for each message type
 local type_to_length = {G = 1, H = 1, N = 1, E = 4, P = 121, O = 121, I = 2, Q = 121, R = 121, L = 2, U = 2}
-local leftovers = ""
+local leftovers = "" -- Everything currently in the data queue
 local wait = coroutine.yield
 local floor = math.floor
 local char = string.char
@@ -10,6 +12,8 @@ function network_connected()
   return TCP_sock ~= nil
 end
 
+-- Grabs data from the socket
+-- returns false if something went wrong
 function flush_socket()
   if not TCP_sock then
     return
@@ -57,7 +61,9 @@ function get_message()
   return type, ret
 end
 
-local lag_q = Queue()
+local lag_q = Queue() -- only used for debugging
+
+-- send the given message through
 function net_send(...)
   if not TCP_sock then
     return false
@@ -73,6 +79,7 @@ function net_send(...)
   return true
 end
 
+-- Send a json message with the "J" type
 function json_send(obj)
   local json = json.encode(obj)
   local len = json:len()
@@ -80,6 +87,7 @@ function json_send(obj)
   return net_send(prefix .. json)
 end
 
+-- Cleans up "stonermode" used for testing laggy sends
 function undo_stonermode()
   while lag_q:len() ~= 0 do
     TCP_sock:send(unpack(lag_q:pop()))
@@ -88,6 +96,7 @@ end
 
 local got_H = false
 
+-- Logs the network message if needed
 function printNetworkMessageForType(type)
   local result = false
   if type ~= "I" and type ~= "U" then
@@ -96,10 +105,13 @@ function printNetworkMessageForType(type)
   return result
 end
 
+-- returns if the type is one of the "game data" types
+-- types that handle panels or player input
 function is_game_data_type(type)
   return string.match(type, "[POUIQR]")
 end
 
+-- Adds the message to the network queue or processes it immediately in a couple cases
 function queue_message(type, data)
   if is_game_data_type(type) then
     local dataMessage = {}
@@ -135,6 +147,7 @@ function queue_message(type, data)
   end
 end
 
+-- Drops all "game data" messages prior to the next server "J" message.
 function drop_old_data_messages()
   while true do
     local message = server_queue:top()
@@ -150,6 +163,7 @@ function drop_old_data_messages()
   end
 end
 
+-- Handler for the various "game data" message types
 local function process_data_message(type, data)
   if type == "P" then
     P1.panel_buffer = P1.panel_buffer .. data
@@ -166,6 +180,7 @@ local function process_data_message(type, data)
   end
 end
 
+-- Process all game data messages in the queue
 function process_all_data_messages()
   local messages = server_queue:pop_all_with("P", "O", "U", "I", "Q", "R")
   for _, msg in ipairs(messages) do
@@ -180,6 +195,7 @@ function process_all_data_messages()
   end
 end
 
+-- setup the network connection on the given IP and port
 function network_init(ip, network_port)
   TCP_sock = socket.tcp()
   TCP_sock:settimeout(7)

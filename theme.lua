@@ -26,6 +26,7 @@ local function load_theme_img(name)
   return img
 end
 
+-- Represents the current styles and images to apply to the game UI
 Theme =
   class(
   function(self)

@@ -22,6 +22,7 @@ function bound(a, b, c)
   end
 end
 
+-- returns the percentage of value between min and max
 function linear_smooth(value, min, max)
   return (value - min) / (max - min)
 end
@@ -49,6 +50,7 @@ function map_dict(func, tab)
   return ret
 end
 
+-- applies the function to each item in tab and replaces
 function map_inplace(func, tab)
   for i = 1, #tab do
     tab[i] = func(tab[i])
@@ -56,6 +58,7 @@ function map_inplace(func, tab)
   return tab
 end
 
+-- applies the function to each item in tab and replaces
 function map_dict_inplace(func, tab)
   for key, val in pairs(tab) do
     tab[key] = func(val)
@@ -80,10 +83,13 @@ function reduce(func, tab, ...)
   return value
 end
 
+-- TODO delete
 function car(tab)
   return tab[1]
 end
+
 -- This sucks lol
+-- TODO delete
 function cdr(tab)
   return {select(2, unpack(tab))}
 end
@@ -113,10 +119,12 @@ function spairs(tab)
   end
 end
 
+-- Randomly grabs a value from t
 function uniformly(t)
   return t[random(#t)]
 end
 
+-- Returns true if a and b have equal content
 function content_equal(a, b)
   if type(a) ~= "table" or type(b) ~= "table" then
     return a == b
@@ -148,6 +156,7 @@ function deep_content_equal(a, b)
   return true
 end
 
+-- copy the table one key deep
 function shallowcpy(tab)
   local ret = {}
   for k, v in pairs(tab) do
@@ -177,6 +186,7 @@ function real_deepcpy(tab)
   return setmetatable(ret, getmetatable(tab))
 end
 
+-- copys the full variable deeply
 function deepcpy(tab)
   if type(tab) ~= "table" then
     return tab
@@ -194,6 +204,7 @@ function round(positive_decimal_number, number_of_decimal_places)
   return math.floor(positive_decimal_number * 10 ^ number_of_decimal_places + 0.5) / 10 ^ number_of_decimal_places
 end
 
+-- Returns a time string for the number of frames
 function frames_to_time_string(frame_count, include_60ths_of_secs)
   local hour_min_sep = ":"
   local min_sec_sep = ":"
@@ -244,10 +255,12 @@ function split(inputstr, sep)
   end
 end
 
+-- Remove white space from the ends of a string
 function trim(s)
   return (s:gsub("^%s*(.-)%s*$", "%1"))
 end
 
+-- Gets all the contents of a directory
 function get_directory_contents(path)
   local path = (path and path or "")
   local results = love.filesystem.getDirectoryItems(path)
@@ -255,6 +268,7 @@ function get_directory_contents(path)
   return results
 end
 
+-- returns a human readable string for the variable
 function dump(o)
   if type(o) == "table" then
     local s = "{ "

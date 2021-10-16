@@ -1,3 +1,4 @@
+-- Holds on the current scores and records for game modes
 Scores =
   class(
   function(self)

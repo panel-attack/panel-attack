@@ -5,6 +5,7 @@ local loading_queue = Queue()
 
 local loading_character = nil
 
+-- queues a character to be loaded
 function character_loader_load(character_id)
   if characters[character_id] and not characters[character_id].fully_loaded then
     loading_queue:push(character_id)
@@ -41,6 +42,7 @@ function character_loader_update()
   return false
 end
 
+-- Waits for all characters to be loaded
 function character_loader_wait()
   instant_load_enabled = true
   while true do
@@ -51,6 +53,7 @@ function character_loader_wait()
   instant_load_enabled = false
 end
 
+-- Unloads all characters not in use by config or player 2
 function character_loader_clear()
   local p2_local_character = global_op_state and global_op_state.character or nil
   for character_id, character in pairs(characters) do
