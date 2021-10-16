@@ -1,5 +1,7 @@
+-- TODO rename
 local FILENAME = "localization.csv"
 
+-- Holds all the data for localizing the game
 Localization =
   class(
   function(self)
@@ -106,6 +108,7 @@ function Localization.init(self)
   local tokens, leftover
   local i = 1
   local key = nil
+  -- Process all the localization strings
   if love.filesystem.getInfo(FILENAME) then
     for line in love.filesystem.lines(FILENAME) do
       if num_line == 1 then
@@ -157,6 +160,7 @@ function Localization.init(self)
   self:set_language(config.language_code)
 end
 
+-- Gets the localized string for a loc key
 function loc(text_key, ...)
   local self = localization
   local code = self.codes[self.lang_index]

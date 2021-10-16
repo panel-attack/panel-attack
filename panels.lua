@@ -1,5 +1,7 @@
 require("graphics_util")
 
+-- The class representing the panel image data
+-- Not to be confused with "Panel" which is one individual panel in the game stack model
 Panels =
   class(
   function(self, full_path, folder_name)
@@ -27,6 +29,7 @@ function Panels.id_init(self)
   return false
 end
 
+-- Recursively load all panel images from the given directory
 local function add_panels_from_dir_rec(path)
   local lfs = love.filesystem
   local raw_dir_list = lfs.getDirectoryItems(path)

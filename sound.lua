@@ -1,5 +1,6 @@
 require("sound_util")
 
+-- Sets the volumes based on the current player configuration settings
 function apply_config_volume()
   love.audio.setVolume(config.master_volume / 100)
   themes[config.theme]:apply_config_volume()
@@ -11,6 +12,7 @@ function apply_config_volume()
   end
 end
 
+-- Play the sound if sounds aren't muted
 function play_optional_sfx(sfx)
   if not SFX_mute and sfx ~= nil then
     sfx:stop()
@@ -22,6 +24,7 @@ end
 music_t = {}
 currently_playing_tracks = {} -- needed because we clone the tracks below
 
+-- Takes all queued music and starts playing it
 function update_music()
   for k, v in pairs(music_t) do
     if v and k - love.timer.getTime() < 0.007 then
@@ -34,11 +37,13 @@ function update_music()
   end
 end
 
+-- Stop all audio and music
 function stop_all_audio()
   love.audio.stop()
   stop_the_music()
 end
 
+-- Stop just music files
 function stop_the_music()
   --print("musics have been stopped")
   for k, v in pairs(currently_playing_tracks) do
@@ -48,6 +53,7 @@ function stop_the_music()
   music_t = {}
 end
 
+-- Set all the playing music files to the given percentage from their normal config volume
 function set_music_fade_percentage(percentage)
   --print(debug.traceback(""))
   --print(percentage * config.music_volume / 100)
@@ -60,6 +66,7 @@ local function make_music_t(source, loop)
   return {t = source, l = loop or false}
 end
 
+-- Finds the given music file and adds it to the queue
 function find_and_add_music(musics, music_type)
   print("music " .. music_type .. " is now playing")
   local start_music = musics[music_type .. "_start"] or zero_sound
