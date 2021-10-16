@@ -14,6 +14,7 @@ local GARBAGE_TRANSIT_TIME = 90
 local clone_pool = {}
 local current_music_is_casual = false -- must be false so that casual music start playing
 
+-- Represents the full panel stack for one player
 Stack =
   class(
   function(s, which, mode, panels_dir, speed, difficulty, player_number)
@@ -298,6 +299,7 @@ function Stack.taunt(self, taunt_type)
   self.wait_for_not_taunting = taunt_type -- to avoid taunting multiple times with the same input
 end
 
+-- Represents an individual panel in the stack
 Panel =
   class(
   function(p)
@@ -305,6 +307,7 @@ Panel =
   end
 )
 
+-- Sets all variables to the default settings
 function Panel.clear(self)
   -- color 0 is an empty panel.
   -- colors 1-7 are normal colors, 8 is [!], 9 is garbage.
@@ -401,6 +404,7 @@ end
 function GarbageQueue.peek(self)
   return self:pop(true) --(just peeking)
 end
+
 function GarbageQueue.len(self)
   local ret = 0
   ret = ret + self.chain_garbage:len()
@@ -462,6 +466,7 @@ function Telegraph.pop_all_ready_garbage()
     return ready_garbage
   end
 end
+
 function Telegraph.sender_chain_ended()
   self.stopper = nil
 end
@@ -585,8 +590,8 @@ function Stack.has_falling_garbage(self)
   return false
 end
 
+-- Saves state in backups in case its needed for rollback
 function Stack.prep_rollback(self)
-  -- Do stuff for rollback.
   local prev_states = self.prev_states
   -- prev_states will not exist if we're doing a rollback right now
   if prev_states then
@@ -601,6 +606,7 @@ function Stack.prep_rollback(self)
   end
 end
 
+-- Setup the stack at a new starting state
 function Stack.starting_state(self, n)
   if self.do_first_row then
     self.do_first_row = nil
@@ -653,6 +659,7 @@ function Stack.controls(self)
   end
 end
 
+-- Update everything for the stack based on inputs. Will update many times if needed to catch up.
 function Stack.run(self)
   if game_is_paused then
     return
@@ -713,6 +720,7 @@ function Stack.run(self)
   end
 end
 
+-- Enqueue a card animation
 function Stack.enqueue_card(self, chain, x, y, n)
   card_burstAtlas = nil
   card_burstParticle = nil
@@ -724,6 +732,7 @@ function Stack.enqueue_card(self, chain, x, y, n)
   self.card_q:push({frame = 1, chain = chain, x = x, y = y, n = n, burstAtlas = card_burstAtlas, burstParticle = card_burstParticle})
 end
 
+-- Enqueue a pop animation
 function Stack.enqueue_popfx(self, x, y, popsize)
   if characters[self.character].images["burst"] then
     burstAtlas = characters[self.character].images["burst"]
@@ -758,7 +767,7 @@ end
 local d_col = {up = 0, down = 0, left = -1, right = 1}
 local d_row = {up = 1, down = -1, left = 0, right = 0}
 
--- The engine routine.
+-- One run of the engine routine.
 function Stack.PdP(self)
   -- Don't run the main logic if the player has simulated past one of the game overs or the time attack time
   if self:game_ended() == false then
@@ -1582,6 +1591,7 @@ function Stack.PdP(self)
   end
 end
 
+-- Returns true if the stack is simulated past the end of the match.
 function Stack.game_ended(self)
   local result = false
   if GAME_ENDED_CLOCK > 0 and self.CLOCK > GAME_ENDED_CLOCK then
@@ -1599,6 +1609,8 @@ function Stack.game_ended(self)
   return result
 end
 
+-- Sets the current stack as "lost" will update the match too if they lost first.
+-- Also begins drawing game over effects
 function Stack.set_game_over(self)
   self.game_over = true
   self.game_over_clock = self.CLOCK
@@ -1621,6 +1633,9 @@ function Stack.set_game_over(self)
   end
 end
 
+-- Returns the player with more win count.
+-- TODO probably shouldn't be in stack.
+-- TODO handle ties?
 function winningPlayer()
   if not P2 or my_win_count >= op_win_count then
     return P1
@@ -1629,6 +1644,7 @@ function winningPlayer()
   end
 end
 
+-- Randomly returns a win sound if the character has one
 function Stack.pick_win_sfx(self)
   if #characters[self.character].sounds.wins ~= 0 then
     return characters[self.character].sounds.wins[math.random(#characters[self.character].sounds.wins)]
@@ -1637,6 +1653,7 @@ function Stack.pick_win_sfx(self)
   end
 end
 
+-- Swaps panels at the current cursor location
 function Stack.swap(self)
   local panels = self.panels
   local row = self.cur_row
@@ -1685,6 +1702,7 @@ function Stack.swap(self)
   end
 end
 
+-- Removes unneeded rows
 function Stack.remove_extra_rows(self)
   local panels = self.panels
   local width = self.width
@@ -1796,12 +1814,15 @@ function Stack.set_chain_garbage(self, n_chain)
   tab[#tab + 1] = {6, n_chain - 1, false, true}
 end
 
+-- actually sends the garbage
+-- TODO rename
 function Stack.really_send(self, to_send)
   if self.garbage_target then
     self.garbage_target:recv_garbage(self.CLOCK + GARBAGE_DELAY, to_send)
   end
 end
 
+-- Receives garbage on to the stack, rewinding the stack and simulating it again if needed.
 function Stack.recv_garbage(self, time, to_recv)
   if self.CLOCK > time then
     local prev_states = self.prev_states
@@ -1845,7 +1866,7 @@ function Stack.recv_garbage(self, time, to_recv)
 
       for t = time, CLOCK - 1 do
         self.input_state = prev_states[t].input_state
-        self:mkcpy(prev_states[t])
+        self:mkcpy(prev_states[t]) -- copy self into prev_states t
         self:controls()
         self:PdP()
       end
@@ -1859,6 +1880,7 @@ function Stack.recv_garbage(self, time, to_recv)
   self.later_garbage[time] = garbage
 end
 
+-- Goes through whole stack checking for matches and updating chains etc based on matches.
 function Stack.check_matches(self)
   local row = 0
   local col = 0
@@ -2140,6 +2162,7 @@ function Stack.check_matches(self)
   end
 end
 
+-- Sets the hovering state on the appropriate panels
 function Stack.set_hoverers(self, row, col, hover_time, add_chaining, extra_tick, match_anyway, debug_tag)
   assert(type(match_anyway) ~= "string")
   -- the extra_tick flag is for use during Phase 1&2,
@@ -2182,6 +2205,7 @@ function Stack.set_hoverers(self, row, col, hover_time, add_chaining, extra_tick
   end
 end
 
+-- Adds a new row to the play field
 function Stack.new_row(self)
   local panels = self.panels
   -- move cursor up
