@@ -105,15 +105,9 @@ function printNetworkMessageForType(type)
   return result
 end
 
--- returns if the type is one of the "game data" types
--- types that handle panels or player input
-function is_game_data_type(type)
-  return string.match(type, "[POUIQR]")
-end
-
 -- Adds the message to the network queue or processes it immediately in a couple cases
 function queue_message(type, data)
-  if is_game_data_type(type) then
+  if type == "P" or type == "O" or type == "U" or type == "I" or type == "Q" or type == "R" then
     local dataMessage = {}
     dataMessage[type] = data
     if printNetworkMessageForType(type) then
@@ -163,23 +157,6 @@ function drop_old_data_messages()
   end
 end
 
--- Handler for the various "game data" message types
-local function process_data_message(type, data)
-  if type == "P" then
-    P1.panel_buffer = P1.panel_buffer .. data
-  elseif type == "O" then
-    P2.panel_buffer = P2.panel_buffer .. data
-  elseif type == "U" then
-    P1.input_buffer = P1.input_buffer .. data
-  elseif type == "I" then
-    P2.input_buffer = P2.input_buffer .. data
-  elseif type == "Q" then
-    P1.gpanel_buffer = P1.gpanel_buffer .. data
-  elseif type == "R" then
-    P2.gpanel_buffer = P2.gpanel_buffer .. data
-  end
-end
-
 -- Process all game data messages in the queue
 function process_all_data_messages()
   local messages = server_queue:pop_all_with("P", "O", "U", "I", "Q", "R")
@@ -192,6 +169,23 @@ function process_all_data_messages()
         process_data_message(type, data)
       end
     end
+  end
+end
+
+-- Handler for the various "game data" message types
+function process_data_message(type, data)
+  if type == "P" then
+    P1.panel_buffer = P1.panel_buffer .. data
+  elseif type == "O" then
+    P2.panel_buffer = P2.panel_buffer .. data
+  elseif type == "U" then
+    P1.input_buffer = P1.input_buffer .. data
+  elseif type == "I" then
+    P2.input_buffer = P2.input_buffer .. data
+  elseif type == "Q" then
+    P1.gpanel_buffer = P1.gpanel_buffer .. data
+  elseif type == "R" then
+    P2.gpanel_buffer = P2.gpanel_buffer .. data
   end
 end
 
