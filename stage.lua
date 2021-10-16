@@ -18,9 +18,9 @@ Stage =
     s.path = full_path -- string | path to the stage folder content
     s.id = folder_name -- string | id of the stage, specified in config.json
     s.display_name = s.id -- string | display name of the stage
-    s.sub_stages = {} -- stringS | either empty or with two elements at least; holds the sub stages IDs for bundle stages
-    s.images = {}
-    s.musics = {}
+    s.sub_stages = {} -- string | either empty or with two elements at least; holds the sub stages IDs for bundle stages
+    s.images = {} -- images 
+    s.musics = {} -- music
     s.fully_loaded = false
     s.is_visible = true
   end
@@ -61,6 +61,7 @@ function Stage.json_init(self)
   return false
 end
 
+-- stops stage sounds
 function Stage.stop_sounds(self)
   -- music
   for _, music in ipairs(self.musics) do
@@ -70,12 +71,14 @@ function Stage.stop_sounds(self)
   end
 end
 
+-- preemptively loads a stage
 function Stage.preload(self)
   print("preloading stage " .. self.id)
   self:graphics_init(false, false)
   self:sound_init(false, false)
 end
 
+-- loads a stage
 function Stage.load(self, instant)
   print("loading stage " .. self.id)
   self:graphics_init(true, (not instant))
@@ -84,6 +87,7 @@ function Stage.load(self, instant)
   print("loaded stage " .. self.id)
 end
 
+-- unloads a stage
 function Stage.unload(self)
   print("unloading stage " .. self.id)
   self:graphics_uninit()
@@ -92,6 +96,7 @@ function Stage.unload(self)
   print("unloaded stage " .. self.id)
 end
 
+-- adds stages from the path given
 local function add_stages_from_dir_rec(path)
   local lfs = love.filesystem
   local raw_dir_list = lfs.getDirectoryItems(path)
@@ -120,6 +125,7 @@ local function add_stages_from_dir_rec(path)
   end
 end
 
+-- get stage bundles
 local function fill_stages_ids()
   -- check validity of bundle stages
   local invalid_stages = {}
@@ -156,6 +162,7 @@ local function fill_stages_ids()
   end
 end
 
+-- initializes the stage class
 function stages_init()
   stages = {} -- holds all stages, most of them will not be fully loaded
   stages_ids = {} -- holds all stages ids
@@ -207,10 +214,12 @@ function stages_init()
   end
 end
 
+-- whether or not a stage is part of a bundle or not
 function Stage.is_bundle(self)
   return #self.sub_stages > 1
 end
 
+-- initalizes stage graphics
 function Stage.graphics_init(self, full, yields)
   local stage_images = full and other_images or basic_images
   for _, image_name in ipairs(stage_images) do
@@ -224,16 +233,19 @@ function Stage.graphics_init(self, full, yields)
   end
 end
 
+-- uninits stage graphics
 function Stage.graphics_uninit(self)
   for _, image_name in ipairs(other_images) do
     self.images[image_name] = nil
   end
 end
 
+-- applies the current configuration volume to a stage
 function Stage.apply_config_volume(self)
   set_volume(self.musics, config.music_volume / 100)
 end
 
+-- initializes stage music
 function Stage.sound_init(self, full, yields)
   if self:is_bundle() then
     return
@@ -261,6 +273,7 @@ function Stage.sound_init(self, full, yields)
   self:apply_config_volume()
 end
 
+-- uninits stage music
 function Stage.sound_uninit(self)
   -- music
   for _, music in ipairs(other_musics) do

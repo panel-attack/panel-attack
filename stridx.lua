@@ -13,6 +13,7 @@ stringmt.__index = function(t, k)
   return stringmt_idx[k]
 end
 
+-- splits a string into a table using the given seperator
 function string:split(sep)
   local sep, fields = sep or " ", {}
   local pattern = string.format("([^%s]+)", sep)

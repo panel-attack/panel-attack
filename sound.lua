@@ -1,5 +1,5 @@
 require("sound_util")
-
+-- sets the configuration volume
 function apply_config_volume()
   love.audio.setVolume(config.master_volume / 100)
   themes[config.theme]:apply_config_volume()
@@ -10,7 +10,7 @@ function apply_config_volume()
     stage:apply_config_volume()
   end
 end
-
+-- plays sfx
 function play_optional_sfx(sfx)
   if not SFX_mute and sfx ~= nil then
     sfx:stop()
@@ -33,12 +33,12 @@ function update_music()
     end
   end
 end
-
+-- stops all audio playing
 function stop_all_audio()
   love.audio.stop()
   stop_the_music()
 end
-
+-- stops all songs currently playing
 function stop_the_music()
   --print("musics have been stopped")
   for k, v in pairs(currently_playing_tracks) do
@@ -47,7 +47,7 @@ function stop_the_music()
   end
   music_t = {}
 end
-
+-- sets the volume for use of fading out music over time
 function set_music_fade_percentage(percentage)
   --print(debug.traceback(""))
   --print(percentage * config.music_volume / 100)
@@ -55,11 +55,12 @@ function set_music_fade_percentage(percentage)
     v:setVolume(percentage * config.music_volume / 100)
   end
 end
-
+-- creates a music track
 local function make_music_t(source, loop)
   return {t = source, l = loop or false}
 end
 
+-- locates a song of the specified type and adds it
 function find_and_add_music(musics, music_type)
   print("music " .. music_type .. " is now playing")
   local start_music = musics[music_type .. "_start"] or zero_sound

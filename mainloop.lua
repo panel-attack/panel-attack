@@ -21,7 +21,7 @@ logged_in = 0
 connected_server_ip = nil -- the ip address of the server you are connected to
 my_user_id = nil -- your user id
 leaderboard_report = nil
-replay_of_match_so_far = nil
+replay_of_match_so_far = nil -- current replay of spectatable replay
 spectator_list = nil
 spectators_string = ""
 leftover_time = 0
@@ -40,6 +40,7 @@ P2_health_quad = {}
 
 function fmainloop()
   local func, arg = main_select_mode, nil
+  -- clear replay contents
   replay = {}
   -- loading various assets into the game
   gprint("Reading config file", unpack(main_menu_screen_pos))
@@ -229,7 +230,7 @@ function main_select_speed_99(next_func, ...)
     {"Back", main_select_mode}
   }
   local loc_items = {loc("speed"), loc("difficulty"), loc("go_"), loc("back")}
-
+  -- stack rise speed
   local speed = config.endless_speed or 1
   local difficulty = config.endless_difficulty or 1
   local active_idx = 1
@@ -835,7 +836,7 @@ function main_net_vs()
         return main_dumb_transition, {main_net_vs_lobby, "", 0, 0}
       end
     end
-
+    --draw graphics
     local name_and_score = {(my_name or "") .. "\n" .. loc("ss_wins") .. " " .. my_win_count, (op_name or "") .. "\n" .. loc("ss_wins") .. " " .. op_win_count}
     gprint((my_name or ""), P1.score_x + themes[config.theme].name_Pos[1], P1.score_y + themes[config.theme].name_Pos[2])
     gprint((op_name or ""), P2.score_x + themes[config.theme].name_Pos[1], P2.score_y + themes[config.theme].name_Pos[2])
@@ -872,6 +873,7 @@ function main_net_vs()
         end
       end
     end
+    -- don't spend time rendering when catching up to a current match in replays
     if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
       P1:render()
       P2:render()
@@ -951,7 +953,7 @@ function main_net_vs()
       write_replay_file(path, filename)
 
       select_screen.character_select_mode = "2p_net_vs"
-      if currently_spectating then
+      if currently_spectating then --transition to game over.
         return game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}
       else
         return game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}
@@ -960,6 +962,7 @@ function main_net_vs()
   end
 end
 
+-- sets up globals for local vs
 function main_local_vs_setup()
   currently_spectating = false
   my_name = config.name or "Player 1"
@@ -969,6 +972,7 @@ function main_local_vs_setup()
   return select_screen.main
 end
 
+-- local 2pvs mode
 function main_local_vs()
   -- TODO: replay!
   use_current_stage()
@@ -1016,6 +1020,7 @@ function main_local_vs()
   end
 end
 
+-- sets up globals for vs yourself
 function main_local_vs_yourself_setup()
   currently_spectating = false
   my_name = config.name or loc("player_n", "1")
@@ -1025,6 +1030,7 @@ function main_local_vs_yourself_setup()
   return select_screen.main
 end
 
+-- 1vs against yourself
 function main_local_vs_yourself()
   -- TODO: replay!
   use_current_stage()
@@ -1056,6 +1062,7 @@ function main_local_vs_yourself()
   end
 end
 
+-- shows debug info for mouse hover
 local function draw_debug_mouse_panel()
   if debug_mouse_panel then
     local str = loc("pl_panel_info", debug_mouse_panel[1], debug_mouse_panel[2])
@@ -1066,6 +1073,7 @@ local function draw_debug_mouse_panel()
   end
 end
 
+-- replay for 2pvs match
 function main_replay_vs()
   local replay = replay.vs
   if replay == nil then
@@ -1179,6 +1187,7 @@ function main_replay_vs()
   end
 end
 
+-- replay endless game
 function main_replay_endless()
   local replay = replay.endless
   if replay == nil or replay.speed == nil then
@@ -1235,6 +1244,7 @@ function main_replay_endless()
   end
 end
 
+-- replay for endless game
 function main_replay_puzzle()
   local replay = replay.puzzle
   if not replay or replay.in_buf == nil or replay.in_buf == "" then
@@ -1291,14 +1301,16 @@ function main_replay_puzzle()
     end
   end
 end
-
+-- creates a puzzle game
 function make_main_puzzle(puzzles)
   local awesome_idx, next_func = 1, nil
   function next_func()
     stop_the_music()
     pick_random_stage()
     pick_use_music_from()
+    -- clear replay contents
     replay = {}
+    -- instantiate a puzzle replay
     replay.puzzle = {}
     local replay = replay.puzzle
     P1 = Stack(1, "puzzle", config.panels)
@@ -1328,7 +1340,7 @@ function make_main_puzzle(puzzles)
             ret = {main_dumb_transition, {main_select_puzz, "", 0, 0}}
           else
             if P1.n_active_panels == 0 and P1.prev_active_panels == 0 then
-              if P1:puzzle_done() then
+              if P1:puzzle_done() then -- writes successful puzzle replay and ends game
                 awesome_idx = (awesome_idx % #puzzles) + 1
                 local now = os.date("*t", to_UTC(os.time()))
                 local sep = "/"
@@ -1343,7 +1355,7 @@ function make_main_puzzle(puzzles)
                 else
                   ret = {main_dumb_transition, {next_func, loc("pl_you_win"), 30, -1, P1:pick_win_sfx()}}
                 end
-              elseif P1.puzzle_moves == 0 then
+              elseif P1.puzzle_moves == 0 then -- writes failed puzzle replay and returns to menu
                 local now = os.date("*t", to_UTC(os.time()))
                 local sep = "/"
                 local path = "replays" .. sep .. "v" .. VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
@@ -1427,6 +1439,7 @@ do
   end
 end
 
+-- menu for configuring inputs
 function main_config_input()
   local pretty_names = {loc("up"), loc("down"), loc("left"), loc("right"), "A", "B", "X", "Y", "L", "R", loc("start")}
   local menu_x, menu_y = unpack(main_menu_screen_pos)
@@ -1528,9 +1541,10 @@ function main_config_input()
   end
 end
 
+-- menu for setting the username
 function main_set_name()
   local name = config.name or ""
-  love.keyboard.setTextInput(true)
+  love.keyboard.setTextInput(true) -- enables user to type
   while true do
     local to_print = loc("op_enter_name") .. "\n" .. name
     if (love.timer.getTime() * 3) % 2 > 1 then
@@ -1569,6 +1583,7 @@ function main_set_name()
   end
 end
 
+-- opens up music test menue
 function main_music_test()
   gprint(loc("op_music_load"), unpack(main_menu_screen_pos))
   wait()
@@ -1698,6 +1713,7 @@ function main_music_test()
   end
 end
 
+-- toggles fullscreen
 function fullscreen()
   if love.graphics.getSupported("canvas") then
     love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
@@ -1705,6 +1721,7 @@ function fullscreen()
   return main_select_mode
 end
 
+-- dumb transition that shows a black screen
 function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
   if P1 and P1.character then
     characters[P1.character]:stop_sounds()
@@ -1755,18 +1772,18 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
     end
   end
 end
-
+-- show game over screen, last frame of gameplay
 function game_over_transition(next_func, text, winnerSFX, timemax)
   game_is_paused = false
-
+  
   timemax = timemax or -1 -- negative values means the user needs to press enter/escape to continue
   text = text or ""
   button_text = loc("continue_button")
   button_text = button_text or ""
 
-  timemin = 60
+  timemin = 60 -- the minimum amount of frames the game over screen will be displayed for
 
-  local t = 0
+  local t = 0 -- the amount of frames that have passed since the game over screen was displayed
   local k = K[1]
   local font = love.graphics.getFont()
 
@@ -1805,7 +1822,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
           local winnerTime = 60
           if t >= winnerTime then
             -- TODO: somehow winnerSFX can be 0 instead of nil
-            if winnerSFX ~= nil and winnerSFX ~= 0 then
+            if winnerSFX ~= nil and winnerSFX ~= 0 then -- play winnerSFX then nil it so it doesn't loop
               print(winnerSFX)
               winnerSFX:play()
               winnerSFX = nil
@@ -1827,12 +1844,13 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
         local new_match_started = false -- Whether a message has been sent that indicates a match has started
         if this_frame_messages then
           for _, msg in ipairs(this_frame_messages) do
+            -- if a new match has started flag the match started variable
             if msg.match_start or replay_of_match_so_far then
               new_match_started = true
             end
           end
         end
-
+        -- if conditions are met, leave the game over screen
         if t >= timemin and ((t >= timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) or new_match_started then
           set_music_fade_percentage(1) -- reset the music back to normal config volume
           stop_all_audio()
@@ -1849,11 +1867,12 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
   end
 end
 
+-- quits the game
 function exit_game(...)
   love.event.quit()
   return main_select_mode
 end
-
+-- quit handling
 function love.quit()
   love.audio.stop()
   if love.window.getFullscreen() == true then

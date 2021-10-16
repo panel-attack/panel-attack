@@ -1,7 +1,7 @@
 require("graphics_util")
 require("sound_util")
 
-local musics = {"main", "select_screen", "main_start", "select_screen_start"}
+local musics = {"main", "select_screen", "main_start", "select_screen_start"} -- the music used in a theme
 
 -- from https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
 local flags = {
@@ -17,6 +17,7 @@ local flags = {
   "us" -- United States of America
 }
 
+-- loads the image of the given name
 local function load_theme_img(name)
   local img = load_img_from_supported_extensions("themes/" .. config.theme .. "/" .. name)
   if not img then
@@ -28,71 +29,71 @@ end
 Theme =
   class(
   function(self)
-    self.images = {}
-    self.sounds = {}
-    self.musics = {}
-    self.matchtypeLabel_Pos = {-40, -30}
-    self.matchtypeLabel_Scale = 3
-    self.timeLabel_Pos = {0, 10}
-    self.timeLabel_Scale = 2
-    self.time_Pos = {-40, 25}
-    self.time_Scale = 1
-    self.name_Pos = {20, -30}
-    self.moveLabel_Pos = {465, 170}
-    self.moveLabel_Scale = 2
-    self.move_Pos = {20, 35}
-    self.move_Scale = 1
-    self.scoreLabel_Pos = {102, 25}
-    self.scoreLabel_Scale = 2
-    self.score_Pos = {108, 31}
-    self.score_Scale = 1.31
-    self.speedLabel_Pos = {104, 42}
-    self.speedLabel_Scale = 2
-    self.speed_Pos = {108, 48}
-    self.speed_Scale = 1.35
-    self.levelLabel_Pos = {101, 59}
-    self.levelLabel_Scale = 2
-    self.level_Pos = {110, 65}
-    self.level_Scale = 1
-    self.winLabel_Pos = {10, 230}
-    self.winLabel_Scale = 2
-    self.win_Pos = {20, 260}
-    self.win_Scale = 1
-    self.ratingLabel_Pos = {5, 180}
-    self.ratingLabel_Scale = 2
-    self.rating_Pos = {25, 200}
-    self.rating_Scale = 1
-    self.spectators_Pos = {10, 400}
-    self.healthbar_frame_Pos = {-20, -4}
-    self.healthbar_frame_Scale = 3
-    self.healthbar_Pos = {-16, 0}
-    self.healthbar_Scale = 1
-    self.healthbar_Rotate = 0
-    self.prestop_frame_Pos = {100, 1190}
-    self.prestop_frame_Scale = 1
-    self.prestop_bar_Pos = {110, 1197}
-    self.prestop_bar_Scale = 1
-    self.prestop_bar_Rotate = 0
-    self.prestop_Pos = {120, 1105}
-    self.prestop_Scale = 1
-    self.stop_frame_Pos = {100, 130}
-    self.stop_frame_Scale = 1
-    self.stop_bar_Pos = {106, 137}
-    self.stop_bar_Scale = 1
-    self.stop_bar_Rotate = 0
-    self.stop_Pos = {106, 161}
-    self.stop_Scale = 1
-    self.shake_frame_Pos = {100, 1150}
-    self.shake_frame_Scale = 1
-    self.shake_bar_Pos = {110, 1157}
-    self.shake_bar_Scale = 1
-    self.shake_bar_Rotate = 0
-    self.shake_Pos = {120, 1165}
-    self.shake_Scale = 1
-    self.multibar_frame_Pos = {100, 1100}
-    self.multibar_frame_Scale = 1
-    self.multibar_Pos = {106, 1148}
-    self.multibar_Scale = 1
+    self.images = {} -- theme images
+    self.sounds = {} -- theme sfx
+    self.musics = {} -- theme music
+    self.matchtypeLabel_Pos = {-40, -30} -- the position of the "match type" label
+    self.matchtypeLabel_Scale = 3 -- the scale size of the "match type" lavel
+    self.timeLabel_Pos = {0, 10} -- the position of the timer label
+    self.timeLabel_Scale = 2 -- the scale size of the timer label
+    self.time_Pos = {-40, 25} -- the position of the timer
+    self.time_Scale = 1 -- the scale size of the timer
+    self.name_Pos = {20, -30} -- the position of the name
+    self.moveLabel_Pos = {465, 170} -- the position of the move label
+    self.moveLabel_Scale = 2 -- the scale size of the move label
+    self.move_Pos = {20, 35} -- the position of the move
+    self.move_Scale = 1 -- the scale size of the move
+    self.scoreLabel_Pos = {102, 25} -- the position of the score label
+    self.scoreLabel_Scale = 2 -- the scale size of the score label
+    self.score_Pos = {108, 31} -- the position of the score
+    self.score_Scale = 1.31 -- the scale size of the score
+    self.speedLabel_Pos = {104, 42} -- the position of the speed label
+    self.speedLabel_Scale = 2 -- the scale size of the speed label
+    self.speed_Pos = {108, 48} -- the position of the speed
+    self.speed_Scale = 1.35 -- the scale size of the speed
+    self.levelLabel_Pos = {101, 59} -- the position of the level label
+    self.levelLabel_Scale = 2 -- the scale size of the level label
+    self.level_Pos = {110, 65} -- the position of the level
+    self.level_Scale = 1 -- the scale size of the level
+    self.winLabel_Pos = {10, 230} -- the position of the win label
+    self.winLabel_Scale = 2 -- the scale size of the win label
+    self.win_Pos = {20, 260} -- the position of the win counter
+    self.win_Scale = 1 -- the scale size of the win counter
+    self.ratingLabel_Pos = {5, 180} -- the position of the rating label
+    self.ratingLabel_Scale = 2 -- the scale size of the rating label
+    self.rating_Pos = {25, 200} -- the position of the rating value
+    self.rating_Scale = 1 -- the scale size of the rating value
+    self.spectators_Pos = {10, 400} -- the position of the spectator list
+    self.healthbar_frame_Pos = {-20, -4} -- the position of the healthbar frame
+    self.healthbar_frame_Scale = 3 -- the scale size of the healtbar frame
+    self.healthbar_Pos = {-16, 0} -- the position of the healthbar
+    self.healthbar_Scale = 1 -- the scale size of the healthbar
+    self.healthbar_Rotate = 0 -- the rotation of the healthbar
+    self.prestop_frame_Pos = {100, 1190} -- the position of the prestop frame
+    self.prestop_frame_Scale = 1 -- the scale size of the prestop frame
+    self.prestop_bar_Pos = {110, 1197} -- the position of the prestop bar
+    self.prestop_bar_Scale = 1 -- the scale size of the prestop bar
+    self.prestop_bar_Rotate = 0 -- the rotation of the prestop bar
+    self.prestop_Pos = {120, 1105} -- the position of the prestop
+    self.prestop_Scale = 1 -- the scale size of the prestop
+    self.stop_frame_Pos = {100, 130} -- the position of the stop bar frame
+    self.stop_frame_Scale = 1 -- the scale size of the stop bar frame
+    self.stop_bar_Pos = {106, 137} -- the position of the stop bar
+    self.stop_bar_Scale = 1 -- the scale size of the stop bar
+    self.stop_bar_Rotate = 0 -- the rotation of the stop bar
+    self.stop_Pos = {106, 161} -- the position of the stop
+    self.stop_Scale = 1 -- the scale size of the stop
+    self.shake_frame_Pos = {100, 1150} -- the position of the shake bar frame
+    self.shake_frame_Scale = 1 -- the scale size of the shake bar frame
+    self.shake_bar_Pos = {110, 1157} -- the position of the shake bar
+    self.shake_bar_Scale = 1 -- the scale size of the shake bar
+    self.shake_bar_Rotate = 0 -- the rotation of the shake bar
+    self.shake_Pos = {120, 1165} -- the position of the shake
+    self.shake_Scale = 1 -- the scale size of the shake
+    self.multibar_frame_Pos = {100, 1100} -- the position of the multibar frame
+    self.multibar_frame_Scale = 1 -- the scale size of the multibar
+    self.multibar_Pos = {106, 1148} -- the position of the multibar
+    self.multibar_Scale = 1 -- the scale size of the multibar
   end
 )
 
@@ -266,11 +267,13 @@ function Theme.graphics_init(self)
   end
 end
 
+-- applies the config volume to the theme
 function Theme.apply_config_volume(self)
   set_volume(self.sounds, config.SFX_volume / 100)
   set_volume(self.musics, config.music_volume / 100)
 end
 
+-- initializes the theme sounds
 function Theme.sound_init(self)
   local function load_theme_sfx(SFX_name)
     local dirs_to_check = {
@@ -326,6 +329,7 @@ function Theme.sound_init(self)
   self:apply_config_volume()
 end
 
+-- initializes theme using the json settings
 function Theme.json_init(self)
   local read_data = {}
   local config_file, err = love.filesystem.newFile("themes/" .. config.theme .. "/config.json", "r")
@@ -647,6 +651,7 @@ function Theme.json_init(self)
   end
 end
 
+-- loads a theme into the game
 function Theme.load(self, id)
   print("loading theme " .. id)
   self:graphics_init()
@@ -655,6 +660,7 @@ function Theme.load(self, id)
   print("loaded theme " .. id)
 end
 
+-- initializes a theme
 function theme_init()
   -- only one theme at a time for now, but we may decide to allow different themes in the future
   themes = {}

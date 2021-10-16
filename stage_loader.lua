@@ -1,10 +1,11 @@
 require("queue")
 require("globals")
 
-local loading_queue = Queue()
+local loading_queue = Queue() -- stages to load
 
-local loading_stage = nil
+local loading_stage = nil -- currently loading stage
 
+-- loads the stages of the specified id
 function stage_loader_load(stage_id)
   if stages[stage_id] and not stages[stage_id].fully_loaded then
     loading_queue:push(stage_id)
@@ -41,6 +42,7 @@ function stage_loader_update()
   return false
 end
 
+-- waits on loading stages
 function stage_loader_wait()
   instant_load_enabled = true
   while true do
@@ -51,6 +53,7 @@ function stage_loader_wait()
   instant_load_enabled = false
 end
 
+-- unloads stages
 function stage_loader_clear()
   local p2_local_stage = global_op_state and global_op_state.stage or nil
   for stage_id, stage in pairs(stages) do
