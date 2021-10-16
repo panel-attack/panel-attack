@@ -14,7 +14,7 @@ SERVER_QUEUE_CAPACITY = 2000 -- max entries in the network queue
 SERVER_QUEUE_EXPIRATION_LENGTH = 30 -- time in seconds
 
 mouse_pointer_timeout = 1.5 --seconds
-RATING_SPREAD_MODIFIER = 400
+RATING_SPREAD_MODIFIER = 400 -- rating players must be within to play ranked
 
 super_selection_duration = 30 -- frames (reminder: 60 frames per sec)
 super_selection_enable_ratio = 0.3 -- ratio at which super enable is considered started (cancelling it won't validate a character)
@@ -41,16 +41,19 @@ random_character_special_value = "__RandomCharacter"
 key_names = {"up", "down", "left", "right", "swap1",
   "swap2", "taunt_up", "taunt_down", "raise1", "raise2", "pause"}
 
+-- frames to use for bounce animation
 bounce_table = {1, 1, 1, 1,
                 2, 2, 2,
                 3, 3, 3,
                 4, 4, 4}
 
+-- frames to use for garbage bounce animation
 garbage_bounce_table = {2, 2, 2,
                         3, 3, 3,
                         4, 4, 4,
                         1, 1}
 
+-- frames to use for in danger animation
 danger_bounce_table = {1, 1, 1,
                        2, 2, 2,
                        3, 3, 3,
@@ -59,7 +62,7 @@ danger_bounce_table = {1, 1, 1,
                        4, 4, 4}
 
 SCOREMODE_TA    = 1
-SCOREMODE_PDP64 = 2
+SCOREMODE_PDP64 = 2 -- currently not used
 
 -- score lookup tables
 score_combo_PdP64 = {} --size 40
@@ -76,6 +79,7 @@ score_chain_TA = {  0,   50,   80,  150,  300,
 
 GFX_SCALE = 3
 
+-- frames to use for the card animation
 card_animation = {false,
    -1, 0, 1, 2, 3, 4, 4, 5, 5, 6,
    6, 7, 7, 8, 8, 8, 9, 9, 9, 9,
@@ -83,7 +87,7 @@ card_animation = {false,
    10, 10, 10, 10, 10, 10, 11, 11, 11, 11,
    11}
 
--- The popping particle animation. First number is how far the particles go, second is wich frame to show from the spritesheet
+-- The popping particle animation. First number is how far the particles go, second is which frame to show from the spritesheet
  popfx_burst_animation = {{1, 1}, {4, 1}, {7, 1}, {8, 1},
     {9, 1}, {9, 1}, {10, 1}, {10, 2}, {10, 2}, {10, 3},
     {10, 3}, {10, 4}, {10, 4}, {10, 5}, {10, 5}, {10, 6}, {10, 6}, {10, 7}, {10, 7}, {10, 8}, {10, 8}, {10, 8}}
