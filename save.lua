@@ -1,5 +1,8 @@
+-- the save.lua file contains the read/write functions
+
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
+-- writes to the "keys.txt" file
 function write_key_file()
   pcall(
     function()
@@ -10,7 +13,7 @@ function write_key_file()
     end
   )
 end
-
+-- reads the "keys.txt" file
 function read_key_file()
   pcall(
     function()
@@ -34,6 +37,8 @@ function read_key_file()
     end
   )
 end
+
+-- reads the .txt file of the given path and filename
 function read_txt_file(path_and_filename)
   local s
   pcall(
@@ -52,6 +57,7 @@ function read_txt_file(path_and_filename)
   return s or "Failed to read file"
 end
 
+-- reads the "scores.json" file
 function read_score_file()
   pcall(
     function()
@@ -75,6 +81,7 @@ function read_score_file()
   )
 end
 
+-- writes to the "scores.json" file
 function write_score_file()
   pcall(
     function()
@@ -86,6 +93,7 @@ function write_score_file()
   )
 end
 
+-- writes to the "conf.json" file
 function write_conf_file()
   pcall(
     function()
@@ -100,6 +108,7 @@ end
 local use_music_from_values = {stage = true, often_stage = true, either = true, often_characters = true, characters = true}
 local save_replays_values = {["with my name"] = true, anonymously = true, ["not at all"] = true}
 
+-- reads the "conf.json" file
 function read_conf_file()
   pcall(
     function()
@@ -223,6 +232,7 @@ function read_conf_file()
   )
 end
 
+-- reads the "replay.txt" file
 function read_replay_file()
   pcall(
     function()
@@ -238,6 +248,7 @@ function read_replay_file()
   )
 end
 
+-- writes a replay file of the given path and filename
 function write_replay_file(path, filename)
   pcall(
     function()
@@ -256,6 +267,7 @@ function write_replay_file(path, filename)
   )
 end
 
+-- writes to the "user_id.txt" file of the directory of the connected ip
 function write_user_id_file()
   pcall(
     function()
@@ -268,6 +280,7 @@ function write_user_id_file()
   )
 end
 
+-- reads the "user_id.txt" file of the directory of the connected ip
 function read_user_id_file()
   pcall(
     function()
@@ -280,6 +293,7 @@ function read_user_id_file()
   )
 end
 
+-- writes the stock puzzles
 function write_puzzles()
   pcall(
     function()
@@ -292,6 +306,7 @@ function write_puzzles()
   )
 end
 
+-- reads the selected puzzle file
 function read_puzzles()
   pcall(
     function()
@@ -326,6 +341,7 @@ function print_list(t)
   end
 end
 
+-- copies a file from the given source to the given destination
 function copy_file(source, destination)
   local lfs = love.filesystem
   local source_file = lfs.newFile(source)
@@ -340,6 +356,7 @@ function copy_file(source, destination)
   new_file:close()
 end
 
+-- copies a file from the given source to the given destination
 function recursive_copy(source, destination)
   local lfs = love.filesystem
   local names = lfs.getDirectoryItems(source)
