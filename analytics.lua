@@ -4,24 +4,8 @@ local analytics_version = 3
 
 local analytic_data_cap = 999999 -- prevents overflow
 
-local analytics_data = {
-  -- The lastly used version
-  version = analytics_version,
-  last_game = {
-    -- the amount of destroyed panels
-    destroyed_panels = 0,
-    -- the amount of sent garbage
-    sent_garbage_lines = 0,
-    -- the amount of times the cursor was moved
-    move_count = 0,
-    -- the amount of times the panels were swapped
-    swap_count = 0,
-    -- 1 to 12, then 13+, 1 is obviously meaningless
-    reached_chains = {},
-    -- 1 to 40, 1 to 3 being meaningless
-    used_combos = {}
-  },
-  overall = {
+local function create_blank_data()
+  return {
     -- the amount of destroyed panels
     destroyed_panels = 0,
     -- the amount of sent garbage
@@ -35,6 +19,22 @@ local analytics_data = {
     -- 1 to 40, 1 to 3 being meaningless
     used_combos = {}
   }
+end
+
+-- The class representing one set of analytics data
+AnalyticsInstance =
+  class(
+  function(self, save_to_overall)
+    self.save_to_overall = save_to_overall -- whether this data should count towards the overall
+    self.data = create_blank_data()
+  end
+)
+
+local analytics_data = {
+  -- The lastly used version
+  version = analytics_version,
+  last_game = create_blank_data(),
+  overall = create_blank_data()
 }
 
 local function analytic_clear(analytic)
@@ -82,10 +82,6 @@ end
 function analytics.init()
   pcall(
     function()
-      if not config.enable_analytics then
-        return
-      end
-
       local read_data = {}
       local analytics_file, err = love.filesystem.newFile("analytics.json", "r")
       if analytics_file then
@@ -124,7 +120,7 @@ function analytics.init()
       end
 
       analytics_data.version = analytics_version
-      file:close()
+      analytics_file:close()
     end
   )
 end
@@ -168,36 +164,36 @@ local function output_pretty_analytics()
   )
 end
 
-function analytics.draw(x, y)
+function AnalyticsInstance.draw(self, x, y)
   if not config.enable_analytics then
     return
   end
 
-  gprint("Panels destroyed: " .. analytics_data.last_game.destroyed_panels, x, y)
+  gprint("Panels destroyed: " .. self.data.destroyed_panels, x, y)
   y = y + 15
 
-  gprint("Sent garbage lines: " .. analytics_data.last_game.sent_garbage_lines, x, y)
+  gprint("Sent garbage lines: " .. self.data.sent_garbage_lines, x, y)
   y = y + 15
 
-  gprint("Moved " .. analytics_data.last_game.move_count .. " times", x, y)
+  gprint("Moved " .. self.data.move_count .. " times", x, y)
   y = y + 15
 
-  gprint("Swapped " .. analytics_data.last_game.swap_count .. " times", x, y)
+  gprint("Swapped " .. self.data.swap_count .. " times", x, y)
   y = y + 15
 
   local ycombo = y
   for i = 2, 13 do
-    local chain_amount = analytics_data.last_game.reached_chains[i] or 0
+    local chain_amount = self.data.reached_chains[i] or 0
     gprint("x" .. i .. ": " .. chain_amount, x, y)
     y = y + 15
   end
 
-  local chain_above_13 = compute_above_13(analytics_data.last_game)
+  local chain_above_13 = compute_above_13(self.data)
   gprint("x?: " .. chain_above_13, x, y)
 
   local xcombo = x + 50
   for i = 4, 15 do
-    local combo_amount = analytics_data.last_game.used_combos[i] or 0
+    local combo_amount = self.data.used_combos[i] or 0
     gprint("+" .. i .. ": " .. combo_amount, xcombo, ycombo)
     ycombo = ycombo + 15
   end
@@ -220,12 +216,18 @@ local function write_analytics_files()
   )
 end
 
-function analytics.register_destroyed_panels(amount)
-  if not config.enable_analytics then
-    return
+function AnalyticsInstance.data_update_list(self)
+  local data_update_list = {self.data}
+
+  if self.save_to_overall then
+    table.insert(data_update_list, analytics_data.overall)
   end
 
-  local analytics_filters = {analytics_data.last_game, analytics_data.overall}
+  return data_update_list
+end
+
+function AnalyticsInstance.register_destroyed_panels(self, amount)
+  local analytics_filters = self:data_update_list()
   for _, analytic in pairs(analytics_filters) do
     analytic.destroyed_panels = analytic.destroyed_panels + amount
     if amount > 3 then
@@ -239,14 +241,10 @@ function analytics.register_destroyed_panels(amount)
   end
 end
 
-function analytics.register_chain(size)
-  if not config.enable_analytics then
-    return
-  end
-
+function AnalyticsInstance.register_chain(self, size)
   local max_size = math.min(size, 13)
 
-  local analytics_filters = {analytics_data.last_game, analytics_data.overall}
+  local analytics_filters = self:data_update_list()
   for _, analytic in pairs(analytics_filters) do
     if not analytic.reached_chains[size] then
       analytic.reached_chains[size] = 1
@@ -258,34 +256,28 @@ function analytics.register_chain(size)
   end
 end
 
-function analytics.register_swap()
-  if not config.enable_analytics then
-    return
-  end
-
-  local analytics_filters = {analytics_data.last_game, analytics_data.overall}
+function AnalyticsInstance.register_swap(self)
+  local analytics_filters = self:data_update_list()
   for _, analytic in pairs(analytics_filters) do
     analytic.swap_count = math.min(analytic.swap_count + 1, analytic_data_cap)
   end
 end
 
-function analytics.register_move()
-  if not config.enable_analytics then
-    return
-  end
-
-  local analytics_filters = {analytics_data.last_game, analytics_data.overall}
+function AnalyticsInstance.register_move(self)
+  local analytics_filters = self:data_update_list()
   for _, analytic in pairs(analytics_filters) do
     analytic.move_count = math.min(analytic.move_count + 1, analytic_data_cap)
   end
 end
 
-function analytics.game_ends()
-  if not config.enable_analytics then
-    return
+function analytics.game_ends(analytic)
+  if analytic then
+    analytics_data.last_game = analytic.data
+  end
+  if config.enable_analytics then
+    write_analytics_files()
   end
 
-  write_analytics_files()
   analytic_clear(analytics_data.last_game)
 end
 

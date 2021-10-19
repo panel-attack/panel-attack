@@ -19,6 +19,9 @@ require("sound")
 require("timezones")
 require("gen_panels")
 
+GAME = require("game")
+GAME.scores = require("scores")
+
 global_canvas = love.graphics.newCanvas(canvas_width, canvas_height)
 
 local last_x = 0
@@ -100,8 +103,9 @@ function love.draw()
     love.graphics.print("FPS: " .. love.timer.getFPS(), 1, 1)
   end
 
-  love.graphics.setCanvas()
-  love.graphics.clear(love.graphics.getBackgroundColor())
+  love.graphics.setCanvas() -- render everything thats been added
+  love.graphics.clear(love.graphics.getBackgroundColor()) -- clear in preperation for the next render
+  
   x, y, w, h = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 16, 9)
   love.graphics.setBlendMode("alpha", "premultiplied")
   love.graphics.draw(global_canvas, x, y, 0, w / canvas_width, h / canvas_height)

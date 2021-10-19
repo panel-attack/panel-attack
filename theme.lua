@@ -152,7 +152,9 @@ function Theme.graphics_init(self)
   self.images.timeNumberWidth = self.images.IMG_timeNumber_atlas:getWidth() / 12
   self.images.timeNumberHeight = self.images.IMG_timeNumber_atlas:getHeight()
 
-  self.images.IMG_pixelFont_atlas = load_theme_img("pixel_font_yellow")
+  self.images.IMG_pixelFont_blue_atlas = load_theme_img("pixel_font_blue")
+  self.images.IMG_pixelFont_grey_atlas = load_theme_img("pixel_font_grey")
+  self.images.IMG_pixelFont_yellow_atlas = load_theme_img("pixel_font_yellow")
 
   self.images.IMG_moves = load_theme_img("moves")
 

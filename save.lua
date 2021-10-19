@@ -57,42 +57,6 @@ function read_txt_file(path_and_filename)
   return s or "Failed to read file"
 end
 
--- reads the "scores.json" file
-function read_score_file()
-  pcall(
-    function()
-      local file = love.filesystem.newFile("scores.json")
-      file:open("r")
-      local read_data = {}
-      local teh_json = file:read(file:getSize())
-      for k, v in pairs(json.decode(teh_json)) do
-        read_data[k] = v
-      end
-
-      -- do stuff using read_data.version for retrocompatibility here
-
-      --if type(read_data.vs1PRecord) == "number" then player1Scores.vs1PRecord = read_data.vs1PRecord end
-      --if type(read_data.vs1PCurrent) == "number" then player1Scores.vs1PCurrent = read_data.vs1PCurrent end
-
-      player1Scores = read_data
-
-      file:close()
-    end
-  )
-end
-
--- writes to the "scores.json" file
-function write_score_file()
-  pcall(
-    function()
-      local file = love.filesystem.newFile("scores.json")
-      file:open("w")
-      file:write(json.encode(player1Scores))
-      file:close()
-    end
-  )
-end
-
 -- writes to the "conf.json" file
 function write_conf_file()
   pcall(
