@@ -159,7 +159,7 @@ do
     items[#items + 1] = {loc("mm_quit"), exit_game}
     local k = K[1]
     local menu_x, menu_y = unpack(main_menu_screen_pos)
-    local main_menu = Click_menu(nil, menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 20, 1)
+    local main_menu = Click_menu(menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 20, 1)
     for i = 1, #items do
       main_menu:add_button(items[i][1])
     end
@@ -666,7 +666,10 @@ function main_net_vs_lobby()
         end
       end
 
-      lobby_menu = Click_menu(items_to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y, nil, love.graphics.getHeight() - lobby_menu_y - 90, last_lobby_menu_active_idx)
+      lobby_menu = Click_menu(lobby_menu_x[showing_leaderboard], lobby_menu_y, nil, love.graphics.getHeight() - lobby_menu_y - 90, last_lobby_menu_active_idx)
+      for i = 1, #items_to_print do
+        lobby_menu:add_button(items_to_print[i])
+      end
       lobby_menu:set_active_idx(last_lobby_menu_active_idx)
       if active_back then
         lobby_menu:set_active_idx(#items)
@@ -1507,7 +1510,7 @@ end
 function main_config_input()
   local pretty_names = {loc("up"), loc("down"), loc("left"), loc("right"), "A", "B", "X", "Y", "L", "R", loc("start")}
   local menu_x, menu_y = unpack(main_menu_screen_pos)
-  local input_menu = Click_menu(nil, menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 80, 1)
+  local input_menu = Click_menu(menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 80, 1)
   local items = {}
   local k = K[1]
   local active_player = 1

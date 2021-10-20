@@ -7,7 +7,7 @@ click_menus = {} -- All click menus currently showing in the game
 -- Buttons are laid out vertically and scroll buttons are added if not all options fit.
 Click_menu =
   class(
-  function(self, list, x, y, width, height, active_idx)
+  function(self, x, y, width, height, active_idx)
     self.x = x or 0
     self.y = y or 0
     self.width = width or (love.graphics.getWidth() - self.x - 30) --width not used yet for scrolling
@@ -39,11 +39,6 @@ Click_menu =
     self.button_padding = 4
     self.background = nil
     self.new_item_y = 0
-    if list then
-      for i = 1, #list or 0 do
-        self:add_button(list[i])
-      end
-    end
     self.arrow = ">"
     self.arrow_padding = 12
     self.active = true
@@ -56,23 +51,6 @@ Click_menu =
     self:layout_buttons()
   end
 )
-
-function Click_menu.add_fixed_button(self, string_text, w, h)
-  -- w and h are optional. by default, button width will be the width of the text
-  w = w or 0
-  h = h or 0
-  self.width = math.max(self.width, w)
-  self.height = math.max(self.height, h)
-
-  self.fixed_buttons[#self.fixed_buttons] = {
-    text = love.graphics.newText(menu_font, string_text),
-    x = x,
-    y = y,
-    w = w,
-    h = h,
-    outlined = self.buttons_outlined
-  }
-end
 
 function Click_menu.add_button(self, string_text)
   self.buttons[#self.buttons + 1] = {
@@ -218,7 +196,7 @@ function Click_menu.draw(self)
     --TO DO whole menu outline, maybe
     --grectangle("line", self.x + self.buttons[i].x, self.y + self.buttons[i].y, self.get_button_width(self,i), button_height)
     end
-    --draw buttons (not including fixed buttons, or menu controls)
+    --draw buttons (not including menu controls)
     for i = 1, #self.buttons do
       if self.buttons[i].visible then
         local buttonX = self.x + self.buttons[i].x
@@ -258,7 +236,6 @@ function Click_menu.draw(self)
         end
       end
     end
-    --TO DO: Draw fixed buttons
     if self.active_idx and self.buttons[1] then
       gprint(self.arrow or ">", self.x + self.buttons[self.active_idx].x - self.arrow_padding, self.y + self.button_padding + self.buttons[self.active_idx].y)
     end
