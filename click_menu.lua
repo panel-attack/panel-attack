@@ -2,7 +2,6 @@ require("graphics_util")
 
 menu_font = love.graphics.getFont()
 click_menus = {} -- All click menus currently showing in the game
-last_active_idx = 1 -- The last index selected in the current menu TODO: Delete this
 
 -- A series of buttons with text strings that can be clicked or use input to navigate
 -- Buttons are laid out vertically and scroll buttons are added if not all options fit.
@@ -52,7 +51,6 @@ Click_menu =
     click_menus[#click_menus + 1] = self
     self.active_idx = active_idx or 1 -- the currently selected button
     self.id = #click_menus
-    last_active_idx = self.active_idx
     self.top_visible_button = 1
 
     self:layout_buttons()
@@ -120,7 +118,6 @@ end
 
 -- Removes this menu from the list of menus
 function Click_menu.remove_self(self)
-  last_active_idx = self.active_idx
   click_menus[self.id] = nil
 end
 
@@ -232,12 +229,12 @@ function Click_menu.draw(self)
           menu_drawf(self.buttons[i].background, buttonX, buttonY)
         else
           local grey = 0.3
-          local alpha = 0.5
+          local alpha = 0.7
           grectangle_color("fill", buttonX / GFX_SCALE, buttonY / GFX_SCALE, width / GFX_SCALE, height / GFX_SCALE, grey, grey, grey, alpha)
         end
         if self.buttons[i].outlined then
           local grey = 0.5
-          local alpha = 0.5
+          local alpha = 0.7
           grectangle_color("line", buttonX / GFX_SCALE, buttonY / GFX_SCALE, width / GFX_SCALE, height / GFX_SCALE, grey, grey, grey, alpha)
         end
         menu_draw(self.buttons[i].text, buttonX + self.button_padding, buttonY + self.button_padding)
@@ -283,7 +280,6 @@ function click_or_tap(x, y, touchpress)
       for i = 1, #menu.buttons do
         if y >= menu.y + menu.buttons[i].y and y <= menu.y + menu.buttons[i].y + menu:get_button_height(i) and x >= menu.x + menu.buttons[i].x and x <= menu.x + menu.buttons[i].x + menu:get_button_width(i) then
           menu.idx_selected = i
-          last_active_idx = menu_idx_selected --TODO this isn't even set...
         end
       end
       for control_name, control in pairs(menu.menu_controls) do

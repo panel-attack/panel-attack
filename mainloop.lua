@@ -537,7 +537,7 @@ function main_net_vs_lobby()
   if connection_up_time <= login_status_message_duration then
     json_send({login_request = true, user_id = my_user_id})
   end
-  local lobby_menu = Click_menu()
+  local lobby_menu = nil
   local items = {}
   local lastPlayerIndex = 0
   local updated = false
@@ -613,7 +613,9 @@ function main_net_vs_lobby()
       end
       if msg.leaderboard_report then
         showing_leaderboard = true
-        lobby_menu:show_controls(true)
+        if lobby_menu then
+          lobby_menu:show_controls(true)
+        end
         leaderboard_report = msg.leaderboard_report
         for k, v in ipairs(leaderboard_report) do
           if v.is_you then
@@ -630,8 +632,11 @@ function main_net_vs_lobby()
     local arrow = ""
 
     if updated then
-      local last_lobby_menu_active_idx = lobby_menu.active_idx
-      lobby_menu:remove_self()
+      local last_lobby_menu_active_idx = 1
+      if lobby_menu then
+        last_lobby_menu_active_idx = lobby_menu.active_idx
+        lobby_menu:remove_self()
+      end
       items = {}
       for _, v in ipairs(unpaired_players) do
         if v ~= config.name then
@@ -662,7 +667,7 @@ function main_net_vs_lobby()
       end
 
       lobby_menu = Click_menu(items_to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y, nil, love.graphics.getHeight() - lobby_menu_y - 90, last_lobby_menu_active_idx)
-      lobby_menu:set_active_idx(last_active_idx)
+      lobby_menu:set_active_idx(last_lobby_menu_active_idx)
       if active_back then
         lobby_menu:set_active_idx(#items)
       elseif showing_leaderboard then
@@ -681,7 +686,9 @@ function main_net_vs_lobby()
       gprint(leaderboard_string, lobby_menu_x[showing_leaderboard] + 400, lobby_menu_y - 120)
     end
     gprint(join_community_msg, main_menu_screen_pos[1] + 30, love.graphics.getHeight() - 50)
-    lobby_menu:draw()
+    if lobby_menu then
+      lobby_menu:draw()
+    end
     updated = false
     wait()
     local ret = nil
@@ -695,7 +702,9 @@ function main_net_vs_lobby()
               leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
             end
           else
-            lobby_menu:set_active_idx(wrap(1, lobby_menu.active_idx - 1, #items))
+            if lobby_menu then
+              lobby_menu:set_active_idx(wrap(1, lobby_menu.active_idx - 1, #items))
+            end
           end
         elseif menu_down(k) then
           if showing_leaderboard then
@@ -705,9 +714,11 @@ function main_net_vs_lobby()
               leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
             end
           else
-            lobby_menu:set_active_idx(wrap(1, lobby_menu.active_idx + 1, #items))
+            if lobby_menu then
+              lobby_menu:set_active_idx(wrap(1, lobby_menu.active_idx + 1, #items))
+            end
           end
-        elseif menu_enter(k) or lobby_menu.idx_selected then
+        elseif lobby_menu and (menu_enter(k) or lobby_menu.idx_selected) then
           updated = true
           lobby_menu:set_active_idx(lobby_menu.idx_selected or lobby_menu.active_idx)
           lobby_menu.idx_selected = nil
@@ -738,14 +749,18 @@ function main_net_vs_lobby()
             request_spectate(items[lobby_menu.active_idx].roomNumber)
           end
         elseif menu_escape(k) then
-          if lobby_menu.active_idx == #items then
-            ret = {main_select_mode}
-          elseif showing_leaderboard then
-            showing_leaderboard = false
-            lobby_menu:show_controls(#lobby_menu.buttons > lobby_menu.button_limit)
-            lobby_menu:move(lobby_menu_x[showing_leaderboard], lobby_menu_y)
+          if lobby_menu then 
+            if lobby_menu.active_idx == #items then
+              ret = {main_select_mode}
+            elseif showing_leaderboard then
+              showing_leaderboard = false
+              lobby_menu:show_controls(#lobby_menu.buttons > lobby_menu.button_limit)
+              lobby_menu:move(lobby_menu_x[showing_leaderboard], lobby_menu_y)
+            else
+              lobby_menu:set_active_idx(#items)
+            end
           else
-            lobby_menu:set_active_idx(#items)
+            ret = {main_select_mode}
           end
         end
       end
@@ -754,9 +769,11 @@ function main_net_vs_lobby()
       json_send({logout = true})
       return unpack(ret)
     end
-    active_back = lobby_menu.active_idx == #items
-    if lobby_menu.active_idx ~= prev_act_idx then
-      prev_act_idx = lobby_menu.active_idx
+    if lobby_menu then
+      active_back = lobby_menu.active_idx == #items
+      if lobby_menu.active_idx ~= prev_act_idx then
+        prev_act_idx = lobby_menu.active_idx
+      end
     end
     if not do_messages() then
       return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
