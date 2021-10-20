@@ -10,7 +10,7 @@ local analytics = require("analytics")
 
 local wait, resume = coroutine.yield, coroutine.resume
 
-local main_endless, make_main_puzzle, main_net_vs_setup, main_config_input, main_select_puzz, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, main_options, main_music_test, main_replay_browser, exit_game
+local main_endless, make_main_puzzle, main_net_vs_setup, main_config_input, main_select_puzz, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, main_options, main_replay_browser, exit_game
 -- main_select_mode, main_dumb_transition, main_net_vs, main_net_vs_lobby, main_local_vs_yourself, main_local_vs, main_replay_endless, main_replay_puzzle, main_replay_vs are not local since they are also used elsewhere
 
 local PLAYING = "playing" -- room states
@@ -25,7 +25,7 @@ replay_of_match_so_far = nil -- current replay of spectatable replay
 spectator_list = nil
 spectators_string = ""
 leftover_time = 0
-main_menu_screen_pos = {300 + (canvas_width - legacy_canvas_width) / 2, 220 + (canvas_height - legacy_canvas_height) / 2}
+main_menu_screen_pos = {300 + (canvas_width - legacy_canvas_width) / 2, 195 + (canvas_height - legacy_canvas_height) / 2}
 wait_game_update = nil
 has_game_update = false
 local arrow_padding = 12
@@ -147,8 +147,7 @@ do
       {loc("mm_replay_browser"), replay_browser.main},
       {loc("mm_configure"), main_config_input},
       {loc("mm_set_name"), main_set_name},
-      {loc("mm_options"), options.main},
-      {loc("mm_music_test"), main_music_test}
+      {loc("mm_options"), options.main}
     }
     -- if canvas is supported, add fullscreen item
     if love.graphics.getSupported("canvas") then
@@ -160,7 +159,7 @@ do
     items[#items + 1] = {loc("mm_quit"), exit_game}
     local k = K[1]
     local menu_x, menu_y = unpack(main_menu_screen_pos)
-    local main_menu = Click_menu(nil, menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 80, 8, 1, true, 2)
+    local main_menu = Click_menu(nil, menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 20, 1)
     for i = 1, #items do
       main_menu:add_button(items[i][1])
     end
@@ -662,7 +661,7 @@ function main_net_vs_lobby()
         end
       end
 
-      lobby_menu = Click_menu(items_to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y, nil, love.graphics.getHeight() - lobby_menu_y - 90, 8, last_lobby_menu_active_idx)
+      lobby_menu = Click_menu(items_to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y, nil, love.graphics.getHeight() - lobby_menu_y - 90, last_lobby_menu_active_idx)
       lobby_menu:set_active_idx(last_active_idx)
       if active_back then
         lobby_menu:set_active_idx(#items)
@@ -1491,7 +1490,7 @@ end
 function main_config_input()
   local pretty_names = {loc("up"), loc("down"), loc("left"), loc("right"), "A", "B", "X", "Y", "L", "R", loc("start")}
   local menu_x, menu_y = unpack(main_menu_screen_pos)
-  local input_menu = Click_menu(nil, menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 80, 8, 1, true, 2)
+  local input_menu = Click_menu(nil, menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 80, 1)
   local items = {}
   local k = K[1]
   local active_player = 1

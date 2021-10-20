@@ -27,6 +27,10 @@ AnalyticsInstance =
   function(self, save_to_overall)
     self.save_to_overall = save_to_overall -- whether this data should count towards the overall
     self.data = create_blank_data()
+    
+    -- temporary
+    self.lastGPM = 0
+    self.lastAPM = 0
   end
 )
 
@@ -164,41 +168,6 @@ local function output_pretty_analytics()
   )
 end
 
-function AnalyticsInstance.draw(self, x, y)
-  if not config.enable_analytics then
-    return
-  end
-
-  gprint("Panels destroyed: " .. self.data.destroyed_panels, x, y)
-  y = y + 15
-
-  gprint("Sent garbage lines: " .. self.data.sent_garbage_lines, x, y)
-  y = y + 15
-
-  gprint("Moved " .. self.data.move_count .. " times", x, y)
-  y = y + 15
-
-  gprint("Swapped " .. self.data.swap_count .. " times", x, y)
-  y = y + 15
-
-  local ycombo = y
-  for i = 2, 13 do
-    local chain_amount = self.data.reached_chains[i] or 0
-    gprint("x" .. i .. ": " .. chain_amount, x, y)
-    y = y + 15
-  end
-
-  local chain_above_13 = compute_above_13(self.data)
-  gprint("x?: " .. chain_above_13, x, y)
-
-  local xcombo = x + 50
-  for i = 4, 15 do
-    local combo_amount = self.data.used_combos[i] or 0
-    gprint("+" .. i .. ": " .. combo_amount, xcombo, ycombo)
-    ycombo = ycombo + 15
-  end
-end
-
 local function write_analytics_files()
   pcall(
     function()
@@ -214,6 +183,10 @@ local function write_analytics_files()
       output_pretty_analytics()
     end
   )
+end
+
+function AnalyticsInstance.compute_above_13(self)
+  return compute_above_13(self.data)
 end
 
 function AnalyticsInstance.data_update_list(self)

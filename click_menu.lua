@@ -8,11 +8,11 @@ last_active_idx = 1 -- The last index selected in the current menu TODO: Delete 
 -- Buttons are laid out vertically and scroll buttons are added if not all options fit.
 Click_menu =
   class(
-  function(self, list, x, y, width, height, padding, active_idx, buttons_outlined, button_padding, background)
+  function(self, list, x, y, width, height, active_idx)
     self.x = x or 0
     self.y = y or 0
-    self.width = width or love.graphics.getWidth() - self.x - 30 --width not used yet for scrolling
-    self.height = height or love.graphics.getHeight() - self.y - 30 --scrolling does care about height
+    self.width = width or (love.graphics.getWidth() - self.x - 30) --width not used yet for scrolling
+    self.height = height or (love.graphics.getHeight() - self.y - 30) --scrolling does care about height
     self.new_item_y = 0
     self.menu_controls = {
       up = {
@@ -35,14 +35,14 @@ Click_menu =
       }
     }
     self.buttons = {}
-    self.padding = padding or 0
-    self.buttons_outlined = buttons_outlined
-    self.button_padding = button_padding or 0
-    self.background = background
+    self.padding = 12
+    self.buttons_outlined = 1
+    self.button_padding = 4
+    self.background = nil
     self.new_item_y = 0
     if list then
       for i = 1, #list or 0 do
-        self:add_button(list[i], nil, nil, nil, nil, self.buttons_outlined)
+        self:add_button(list[i])
       end
     end
     self.arrow = ">"
@@ -59,42 +59,42 @@ Click_menu =
   end
 )
 
--- Adds a button to the menu with the given text and settings
-function Click_menu.add_button(self, string_text, x, y, w, h, outlined, button_padding, current_setting)
-  -- x and y are optional. by default will add underneath existing menu buttons
+function Click_menu.add_fixed_button(self, string_text, w, h)
   -- w and h are optional. by default, button width will be the width of the text
-  self.w = w or 0
-  self.h = h or 0
-  if x or y then
-    self.fixed_buttons[#self.fixed_buttons] = {
-      text = love.graphics.newText(menu_font, string_text),
-      x = x or 0,
-      y = y or 0,
-      w = w,
-      h = h,
-      outlined = self.buttons_outlined or outlined,
-      current_setting = current_setting
-    }
-  else
-    self.buttons[#self.buttons + 1] = {
-      text = love.graphics.newText(menu_font, string_text),
-      x = x or 0,
-      y = y or 0,
-      w = w,
-      h = h,
-      outlined = self.buttons_outlined or outlined,
-      current_setting = current_setting
-    }
-    if self.buttons[#self.buttons].current_setting then
-      self.buttons[#self.buttons].current_setting = love.graphics.newText(menu_font, self.buttons[#self.buttons].current_setting)
-    end
-    self.buttons[#self.buttons].y = self.new_item_y or 0
+  w = w or 0
+  h = h or 0
+  self.width = math.max(self.width, w)
+  self.height = math.max(self.height, h)
+
+  self.fixed_buttons[#self.fixed_buttons] = {
+    text = love.graphics.newText(menu_font, string_text),
+    x = x,
+    y = y,
+    w = w,
+    h = h,
+    outlined = self.buttons_outlined
+  }
+end
+
+function Click_menu.add_button(self, string_text)
+  self.buttons[#self.buttons + 1] = {
+    text = love.graphics.newText(menu_font, string_text),
+    x = x or 0,
+    y = y or 0,
+    w = nil,
+    h = nil,
+    outlined = self.buttons_outlined
+  }
+  if self.buttons[#self.buttons].current_setting then
+    self.buttons[#self.buttons].current_setting = love.graphics.newText(menu_font, self.buttons[#self.buttons].current_setting)
   end
+  self.buttons[#self.buttons].y = self.new_item_y or 0
+
   self:resize_to_fit()
   self:layout_buttons()
 end
 
--- Sets the button at the given index's string
+-- Sets a drawable to render to the right of the menu text
 function Click_menu.set_button_setting(self, button_idx, new_setting)
   self.buttons[button_idx].current_setting = love.graphics.newText(menu_font, new_setting)
 end
@@ -152,18 +152,18 @@ end
 function Click_menu.resize_to_fit(self)
   for k, v in pairs(self.buttons) do
     self.current_setting_x = math.max(self.current_setting_x or 0, self:get_button_width(k) + 2 * (self.button_padding or 0))
-    local potential_width = self:get_button_width(#self.buttons) + 2 * (self.padding or 0)
+    local potential_width = self:get_button_width(#self.buttons) + 2 * self.padding
     if self.buttons[k].current_setting then
-      potential_width = potential_width + 2 * (self.padding or 0)
+      potential_width = potential_width + 2 * self.padding
     end
-    self.w = math.max(self.w, potential_width)
-    self.current_setting_x = math.max(self.current_setting_x or 0, self.buttons[#self.buttons].text:getWidth() + (button_padding or self.button_padding or 0))
+    self.width = math.max(self.width, potential_width)
+    self.current_setting_x = math.max(self.current_setting_x or 0, self.buttons[#self.buttons].text:getWidth() + (self.button_padding))
   end
 end
 
 -- Positions the buttons, scrolls, and makes sure the scroll buttons are visible if needed
 function Click_menu.layout_buttons(self)
-  self.new_item_y = self.padding or 0
+  self.new_item_y = self.padding
   self.top_visible_button = self.top_visible_button or 1
   self.active_idx = self.active_idx or 1
   self.button_limit = math.min(self.button_limit or 1, #self.buttons)
@@ -180,7 +180,7 @@ function Click_menu.layout_buttons(self)
   for i = 1, #self.buttons do
     if i < self.top_visible_button then
       self.buttons[i].visible = false
-    elseif not menu_is_full and self.new_item_y + self:get_button_height(i) < self.height then
+    elseif not menu_is_full and (self.new_item_y + self:get_button_height(i) < self.height) then
       self.buttons[i].visible = true
       self.buttons[i].x = self.button_padding
       self.buttons[i].y = self.new_item_y or 0
@@ -224,15 +224,25 @@ function Click_menu.draw(self)
     --draw buttons (not including fixed buttons, or menu controls)
     for i = 1, #self.buttons do
       if self.buttons[i].visible then
+        local buttonX = self.x + self.buttons[i].x
+        local buttonY = self.y + self.buttons[i].y
+        local width = self:get_button_width(i)
+        local height = self:get_button_height(i)
         if self.buttons[i].background then
-          menu_drawf(self.buttons[i].background, self.x + self.buttons[i].x, self.y + self.buttons[i].y)
+          menu_drawf(self.buttons[i].background, buttonX, buttonY)
+        else
+          local grey = 0.3
+          local alpha = 0.5
+          grectangle_color("fill", buttonX / GFX_SCALE, buttonY / GFX_SCALE, width / GFX_SCALE, height / GFX_SCALE, grey, grey, grey, alpha)
         end
         if self.buttons[i].outlined then
-          grectangle("line", self.x + self.buttons[i].x, self.y + self.buttons[i].y, self:get_button_width(i), self:get_button_height(i))
+          local grey = 0.5
+          local alpha = 0.5
+          grectangle_color("line", buttonX / GFX_SCALE, buttonY / GFX_SCALE, width / GFX_SCALE, height / GFX_SCALE, grey, grey, grey, alpha)
         end
-        menu_draw(self.buttons[i].text, self.x + self.buttons[i].x + self.button_padding, self.y + self.buttons[i].y + self.button_padding)
+        menu_draw(self.buttons[i].text, buttonX + self.button_padding, buttonY + self.button_padding)
         if self.buttons[i].current_setting then
-          menu_draw(self.buttons[i].current_setting, self.x + self.current_setting_x or 0, self.y + self.buttons[i].y + self.button_padding)
+          menu_draw(self.buttons[i].current_setting, self.x + (self.current_setting_x or 0), buttonY + self.button_padding)
         end
       end
     end
@@ -247,7 +257,7 @@ function Click_menu.draw(self)
         end
         menu_draw(control.text, self.x + control.x + self.button_padding, self.y + control.y + self.button_padding)
         if control.current_setting then
-          menu_draw(control.current_setting, self.x + self.current_setting_x or 0, self.y + control.y + self.button_padding)
+          menu_draw(control.current_setting, self.x + (self.current_setting_x or 0), self.y + control.y + self.button_padding)
         end
       end
     end

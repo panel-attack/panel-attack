@@ -287,7 +287,8 @@ function options.main(starting_idx)
     --[[20]] {"about_chars", "op_about_characters", "", "function", nil, nil, nil, nil, main_show_custom_characters_readme},
     --[[21]] {"about_stages", "op_about_stages", "", "function", nil, nil, nil, nil, main_show_custom_stages_readme},
     --[[22]] {"about_panels", "op_about_panels", "", "function", nil, nil, nil, nil, main_show_custom_panels_readme},
-    --[[23]] {"back", "back", "", nil, nil, nil, nil, false, main_select_mode}
+    --[[23]] {"Music test", "mm_music_test", "", "function", nil, nil, nil, nil, main_music_test},
+    --[[24]] {"back", "back", "", nil, nil, nil, nil, false, main_select_mode},
   }
   local function print_stuff()
     local to_print, to_print2, arrow = "", "", ""
