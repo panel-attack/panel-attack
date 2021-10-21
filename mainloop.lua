@@ -1125,6 +1125,7 @@ function main_replay_vs()
   P2:starting_state()
   local end_text = nil
   local run = true
+  local advanceFrameFlag
   while true do
     debug_mouse_panel = nil
     gprint(my_name or "", P1.score_x, P1.score_y - 28)
@@ -1145,6 +1146,16 @@ function main_replay_vs()
         if menu_enter(K[1]) then
           run = not run
         end
+        if keys["right"] and run then
+          P1.max_runs_per_frame = 2
+          P2.max_runs_per_frame = 2
+        elseif this_frame_keys["right"] and not run then
+          advanceFrameFlag = true
+          run = true
+        else
+          P1.max_runs_per_frame = 1
+          P2.max_runs_per_frame = 1
+        end
         if this_frame_keys["\\"] then
           run = false
         end
@@ -1152,6 +1163,10 @@ function main_replay_vs()
           P1:run()
           P1:handle_pause()
           P2:run()
+        end
+        if advanceFrameFlag then
+          advanceFrameFlag = false
+          run = false
         end
       end
     )
@@ -1192,6 +1207,7 @@ end
 
 -- replay endless game
 function main_replay_endless()
+  local k = K[1]
   local replay = replay.endless
   if replay == nil or replay.speed == nil then
     return main_dumb_transition, {main_select_mode, loc("rp_no_endless"), 0, -1}
@@ -1213,8 +1229,10 @@ function main_replay_endless()
   P1:starting_state()
   P2 = nil
   local run = true
+  local advanceFrameFlag = false
   while true do
     P1:render()
+    print(json.encode(keys))
     if game_is_paused then
       draw_pause()
     end
@@ -1228,6 +1246,14 @@ function main_replay_endless()
         if menu_enter(K[1]) then
           run = not run
         end
+        if keys["right"] and run then
+          P1.max_runs_per_frame = 2
+        elseif this_frame_keys["right"] and not run then
+          advanceFrameFlag = true
+          run = true
+        else
+          P1.max_runs_per_frame = 1
+        end
         if this_frame_keys["\\"] then
           run = false
         end
@@ -1238,6 +1264,10 @@ function main_replay_endless()
           end
           P1:run()
           P1:handle_pause()
+          if advanceFrameFlag then
+            advanceFrameFlag = false
+            run = false
+          end
         end
       end
     )
@@ -1266,6 +1296,7 @@ function main_replay_puzzle()
   P1:set_puzzle_state(unpack(replay.puzzle))
   P2 = nil
   local run = true
+  local advanceFrameFlag = false
   while true do
     debug_mouse_panel = nil
     P1:render()
@@ -1283,6 +1314,14 @@ function main_replay_puzzle()
         if menu_enter(K[1]) then
           run = not run
         end
+        if keys["right"] and run then
+          P1.max_runs_per_frame = 2
+        elseif this_frame_keys["right"] and not run then
+          advanceFrameFlag = true
+          run = true
+        else
+          P1.max_runs_per_frame = 1
+        end
         if this_frame_keys["\\"] then
           run = false
         end
@@ -1296,6 +1335,10 @@ function main_replay_puzzle()
           end
           P1:run()
           P1:handle_pause()
+          if advanceFrameFlag then
+            advanceFrameFlag = false
+            run = false
+          end
         end
       end
     )
