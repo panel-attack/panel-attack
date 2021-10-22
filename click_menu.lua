@@ -52,7 +52,7 @@ Click_menu =
   end
 )
 
-function Click_menu.add_button(self, string_text, selectFunction, escapeFunction)
+function Click_menu.add_button(self, string_text, selectFunction, escapeFunction, leftFunction, rightFunction)
   self.buttons[#self.buttons + 1] = {
     text = love.graphics.newText(menu_font, string_text),
     stringText = string_text,
@@ -62,7 +62,9 @@ function Click_menu.add_button(self, string_text, selectFunction, escapeFunction
     h = nil,
     outlined = self.buttons_outlined,
     selectFunction = selectFunction,
-    escapeFunction = escapeFunction
+    escapeFunction = escapeFunction,
+    leftFunction = leftFunction,
+    rightFunction = rightFunction
   }
   self.buttons[#self.buttons].y = self.new_item_y or 0
 
@@ -121,14 +123,6 @@ function Click_menu.set_active_idx(self, idx)
   end
 end
 
--- Sets the button at the given index's string
--- TODO: Delete, this is unused
-function Click_menu.set_current_setting(self, idx, new_setting)
-  if self.buttons[idx] then
-    self.buttons[idx].current_setting = love.graphics.newText(menu_font, new_setting)
-  end
-end
-
 -- Repositions in the x direction so the menu doesn't go off the screen
 function Click_menu.resize_to_fit(self)
   for k, v in pairs(self.buttons) do
@@ -144,9 +138,6 @@ end
 
 -- Positions the buttons, scrolls, and makes sure the scroll buttons are visible if needed
 function Click_menu.layout_buttons(self)
-  if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
-    require("lldebugger").start()
-  end
   self.new_item_y = self.padding
   self.top_visible_button = self.top_visible_button or 1
   self.active_idx = self.active_idx or 1
@@ -215,18 +206,17 @@ function Click_menu.update(self)
       if self.buttons[self.active_idx].escapeFunction then
         self.buttons[self.active_idx].escapeFunction()
       end
+    elseif menu_left(K[1]) then
+      if self.buttons[self.active_idx].leftFunction then
+        self.buttons[self.active_idx].leftFunction()
+      end
+    elseif menu_right(K[1]) then
+      if self.buttons[self.active_idx].rightFunction then
+        self.buttons[self.active_idx].rightFunction()
+      end
     end
   end
 end
-
---[[ TODO left and right
-         elseif menu_left(K[1]) then
-active_player = wrap(1, active_player - 1, 2)
-k = K[active_player]
-elseif menu_right(K[1]) then
-active_player = wrap(1, active_player + 1, 2)
-k = K[active_player]
-]]
 
 -- Draws the menu
 function Click_menu.draw(self)

@@ -59,6 +59,15 @@ local function main_config_input()
     return clickMenu
   end
 
+--[[ TODO left and right
+         elseif menu_left(K[1]) then
+active_player = wrap(1, active_player - 1, 2)
+k = K[active_player]
+elseif menu_right(K[1]) then
+active_player = wrap(1, active_player + 1, 2)
+k = K[active_player]
+]]
+
   input_menu = createInputMenu(active_player)
 
   while true do

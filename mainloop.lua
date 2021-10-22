@@ -214,26 +214,76 @@ function main_timeattack_setup()
   return unpack({main_select_speed_99, {main_time_attack}})
 end
 
-function main_select_speed_99(next_func, ...)
+function main_select_speed_99(next_func)
   -- stack rise speed
   local speed = config.endless_speed or 1
   local difficulty = config.endless_difficulty or 1
   local active_idx = 1
   local k = K[1]
   local ret = nil
+  local loc_difficulties = {loc("easy"), loc("normal"), loc("hard"), "EX Mode"} -- TODO: localize "EX Mode"
 
   background = themes[config.theme].images.bg_main
 
-  local difficulties = {"Easy", "Normal", "Hard", "EX Mode"}
-  local loc_difficulties = {loc("easy"), loc("normal"), loc("hard"), "EX Mode"} -- TODO: localize "EX Mode"
+  local gameSettingsMenu
 
-  local items = {
-    {"Speed"},
-    {"Difficulty"},
-    {"Go!", next_func},
-    {"Back", main_select_mode}
-  }
-  local loc_items = {loc("speed"), loc("difficulty"), loc("go_"), loc("back")}
+  local function goEscape()
+    gameSettingsMenu:set_active_idx(#gameSettingsMenu.buttons)
+  end
+
+  local function exitSettings()
+    ret = {main_select_mode}
+  end
+
+  local function updateMenuSpeed()
+    gameSettingsMenu:set_button_setting(1, speed)
+  end
+
+  local function updateMenuDifficulty()
+    gameSettingsMenu:set_button_setting(2, loc_difficulties[difficulty])
+  end
+  
+  local function increaseSpeed()
+    speed = bound(1, speed + 1, 99)
+    updateMenuSpeed()
+  end
+
+  local function increaseDifficulty()
+    difficulty = bound(1, difficulty + 1, 4)
+    updateMenuDifficulty()
+  end
+
+  local function decreaseSpeed()
+    speed = bound(1, speed - 1, 99)
+    updateMenuSpeed()
+  end
+
+  local function decreaseDifficulty()
+    difficulty = bound(1, difficulty - 1, 4)
+    updateMenuDifficulty()
+  end
+    
+  local function startGame()
+    if config.endless_speed ~= speed or config.endless_difficulty ~= difficulty then
+      config.endless_speed = speed
+      config.endless_difficulty = difficulty
+      gprint("saving settings...", unpack(main_menu_screen_pos))
+      wait()
+      write_conf_file()
+    end
+    stop_the_music()
+    ret = {next_func, {speed, difficulty}}
+  end
+
+  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  menu_y = menu_y + 70
+  gameSettingsMenu = Click_menu(menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 20, 1)
+  gameSettingsMenu:add_button(loc("speed"), increaseSpeed, goEscape, decreaseSpeed, increaseSpeed)
+  gameSettingsMenu:add_button(loc("difficulty"), increaseDifficulty, goEscape, decreaseDifficulty, increaseDifficulty)
+  gameSettingsMenu:add_button(loc("go_"), startGame, goEscape)
+  gameSettingsMenu:add_button(loc("back"), exitSettings, exitSettings)
+  updateMenuSpeed()
+  updateMenuDifficulty()
 
   while true do
     -- Draw the current score and record
@@ -257,67 +307,15 @@ function main_select_speed_99(next_func, ...)
     draw_pixel_font("record",     themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition, 0.5, 1.0)
     draw_pixel_font(record,       themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition + 24, 0.5, 1.0)
 
-    yPosition = yPosition + 50
-
-    local to_print, to_print2, arrow = "", "", ""
-    for i = 1, #items do
-      if active_idx == i then
-        arrow = arrow .. ">"
-      else
-        arrow = arrow .. "\n"
-      end
-      to_print = to_print .. "   " .. loc_items[i] .. "\n"
-    end
-    to_print2 = "                  " .. speed .. "\n                  " .. loc_difficulties[difficulty]
-
-    gprint(arrow, xPosition1, yPosition)
-    gprint(to_print, xPosition1, yPosition)
-    gprint(to_print2, xPosition1, yPosition)
+    gameSettingsMenu:draw()
 
     wait()
     variable_step(
       function()
-        if menu_up(k) then -- move the cursor up one item
-          active_idx = wrap(1, active_idx - 1, #items)
-        elseif menu_down(k) then -- move the cursor down one item
-          active_idx = wrap(1, active_idx + 1, #items)
-        elseif menu_right(k) then
-          if active_idx == 1 then -- increase speed by 1
-            speed = bound(1, speed + 1, 99)
-          elseif active_idx == 2 then -- increase difficulty by 1
-            difficulty = bound(1, difficulty + 1, 4)
-          end
-        elseif menu_left(k) then
-          if active_idx == 1 then -- decrease speed by 1
-            speed = bound(1, speed - 1, 99)
-          elseif active_idx == 2 then -- decrease difficulty by 1
-            difficulty = bound(1, difficulty - 1, 4)
-          end
-        elseif menu_enter(k) then -- selection is "Go!", execute next function with settings
-          if active_idx == 3 then
-            if config.endless_speed ~= speed or config.endless_difficulty ~= difficulty then
-              config.endless_speed = speed
-              config.endless_difficulty = difficulty
-              gprint("saving settings...", unpack(main_menu_screen_pos))
-              wait()
-              write_conf_file()
-            end
-            stop_the_music()
-            ret = {items[active_idx][2], {speed, difficulty}}
-          elseif active_idx == 4 then
-            ret = {items[active_idx][2], items[active_idx][3]}
-          else
-            active_idx = wrap(1, active_idx + 1, #items)
-          end
-        elseif menu_escape(k) then
-          if active_idx == #items then
-            ret = {items[active_idx][2], items[active_idx][3]}
-          else
-            active_idx = #items
-          end
-        end
+        gameSettingsMenu:update()
       end
     )
+
     if ret then
       return unpack(ret)
     end
