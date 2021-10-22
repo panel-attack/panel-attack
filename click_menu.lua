@@ -52,25 +52,31 @@ Click_menu =
   end
 )
 
-function Click_menu.add_button(self, string_text)
+function Click_menu.add_button(self, string_text, selectFunction, escapeFunction)
   self.buttons[#self.buttons + 1] = {
     text = love.graphics.newText(menu_font, string_text),
-    x = x or 0,
-    y = y or 0,
+    stringText = string_text,
+    x = 0,
+    y = 0,
     w = nil,
     h = nil,
-    outlined = self.buttons_outlined
+    outlined = self.buttons_outlined,
+    selectFunction = selectFunction,
+    escapeFunction = escapeFunction
   }
-  if self.buttons[#self.buttons].current_setting then
-    self.buttons[#self.buttons].current_setting = love.graphics.newText(menu_font, self.buttons[#self.buttons].current_setting)
-  end
   self.buttons[#self.buttons].y = self.new_item_y or 0
 
   self:resize_to_fit()
   self:layout_buttons()
 end
 
--- Sets a drawable to render to the right of the menu text
+-- Sets the string for the menu text
+function Click_menu.set_button_text(self, button_idx, string)
+  self.buttons[button_idx].text = love.graphics.newText(menu_font, string)
+end
+
+
+-- Sets the string to render to the right of the menu text
 function Click_menu.set_button_setting(self, button_idx, new_setting)
   self.buttons[button_idx].current_setting = love.graphics.newText(menu_font, new_setting)
 end
@@ -138,10 +144,13 @@ end
 
 -- Positions the buttons, scrolls, and makes sure the scroll buttons are visible if needed
 function Click_menu.layout_buttons(self)
+  if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
+    require("lldebugger").start()
+  end
   self.new_item_y = self.padding
   self.top_visible_button = self.top_visible_button or 1
   self.active_idx = self.active_idx or 1
-  self.button_limit = math.min(self.button_limit or 1, #self.buttons)
+  self.button_limit = math.max(1, math.min(self.button_limit or 1, #self.buttons))
   --scroll up or down if not showing the active button
   if self.active_idx < self.top_visible_button then
     self.top_visible_button = math.max(self.active_idx, 1)
@@ -185,6 +194,39 @@ function Click_menu.show_controls(self, bool)
     end
   end
 end
+
+function Click_menu.selectButton(self, buttonIndex)
+  self:set_active_idx(buttonIndex)
+  self.buttons[self.active_idx].selectFunction()
+end
+
+-- Responds to input
+function Click_menu.update(self)
+  if self.visible then
+    if menu_up(K[1]) then
+      self:set_active_idx(wrap(1, self.active_idx - 1, #self.buttons))
+    elseif menu_down(K[1]) then
+      self:set_active_idx(wrap(1, self.active_idx + 1, #self.buttons))
+    elseif menu_enter_one_press(K[1]) then
+      if self.buttons[self.active_idx].selectFunction then
+        self:selectButton(self.active_idx)
+      end
+    elseif menu_escape(K[1]) then
+      if self.buttons[self.active_idx].escapeFunction then
+        self.buttons[self.active_idx].escapeFunction()
+      end
+    end
+  end
+end
+
+--[[ TODO left and right
+         elseif menu_left(K[1]) then
+active_player = wrap(1, active_player - 1, 2)
+k = K[active_player]
+elseif menu_right(K[1]) then
+active_player = wrap(1, active_player + 1, 2)
+k = K[active_player]
+]]
 
 -- Draws the menu
 function Click_menu.draw(self)
@@ -257,6 +299,7 @@ function click_or_tap(x, y, touchpress)
       for i = 1, #menu.buttons do
         if y >= menu.y + menu.buttons[i].y and y <= menu.y + menu.buttons[i].y + menu:get_button_height(i) and x >= menu.x + menu.buttons[i].x and x <= menu.x + menu.buttons[i].x + menu:get_button_width(i) then
           menu.idx_selected = i
+          menu:selectButton(menu.idx_selected)
         end
       end
       for control_name, control in pairs(menu.menu_controls) do
