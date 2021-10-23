@@ -224,6 +224,13 @@ function write_replay_file(replay, path, filename)
       print("about to open new replay file for writing")
       mkDir(path)
       local f = assert(io.open(path .. sep .. filename, "w"))
+      if replay.vs then
+        replay.vs.I = compress_input_string(replay.vs.I)
+        replay.vs.in_buf = compress_input_string(replay.vs.in_buf)
+        print("Compressed vs I/in_buf")
+      else
+        print("No vs")
+      end
       print("past file open")
       io.output(f)
       io.write(json.encode(replay))

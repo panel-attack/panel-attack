@@ -261,6 +261,28 @@ function write_replay_file(path, filename)
         file = love.filesystem.newFile("replay.txt")
       end
       file:open("w")
+      print("Writing to Replay File")
+      if replay.puzzle then
+        replay.puzzle.in_buf = compress_input_string(replay.puzzle.in_buf)
+        print("Compressed puzzle in_buf")
+        print(replay.puzzle.in_buf)
+      else
+        print("No Puzzle")
+      end
+      if replay.endless then
+        replay.endless.in_buf = compress_input_string(replay.endless.in_buf)
+        print("Compressed endless in_buf")
+        print(replay.endless.in_buf)
+      else
+        print("No Endless")
+      end
+      if replay.vs then
+        replay.vs.I = compress_input_string(replay.vs.I)
+        replay.vs.in_buf = compress_input_string(replay.vs.in_buf)
+        print("Compressed vs I/in_buf")
+      else
+        print("No vs")
+      end
       file:write(json.encode(replay))
       file:close()
     end
