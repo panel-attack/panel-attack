@@ -47,6 +47,7 @@ Click_menu =
     self.active_idx = active_idx or 1 -- the currently selected button
     self.id = #click_menus
     self.top_visible_button = 1
+    self.clock = 1
 
     self:layout_buttons()
   end
@@ -196,6 +197,8 @@ end
 
 -- Responds to input
 function Click_menu.update(self)
+  self.clock = self.clock + 1
+
   if self.visible then
     if menu_up(K[1]) then
       self:set_active_idx(wrap(1, self.active_idx - 1, #self.buttons))
@@ -256,6 +259,7 @@ function Click_menu.draw(self)
         end
       end
     end
+
     --draw menu controls (up and down scrolling buttons, so far)
     for k, control in pairs(self.menu_controls) do
       if control.visible then
@@ -271,8 +275,13 @@ function Click_menu.draw(self)
         end
       end
     end
+
+    --draw arrow
     if self.active_idx and self.buttons[1] then
-      gprint(self.arrow or ">", self.x + self.buttons[self.active_idx].x - self.arrow_padding, self.y + self.button_padding + self.buttons[self.active_idx].y)
+      local animationX = (math.cos(math.rad(self.clock * 6)) * 5) - 9
+      local xPosition = self.x + self.buttons[self.active_idx].x - self.arrow_padding + animationX
+      local yPosition = self.y + self.button_padding + self.buttons[self.active_idx].y - 3
+      gprintf(self.arrow or ">", xPosition+1, yPosition+1, 100, "left", nil, nil, 2)
     end
   end
 end
