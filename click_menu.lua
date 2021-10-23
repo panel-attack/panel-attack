@@ -147,10 +147,6 @@ function Click_menu.layout_buttons(self)
   else
     self.button_limit = 0
   end
-  
-  if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
-    require("lldebugger").start()
-  end
   --scroll up or down if not showing the active button
   if self.active_idx < self.top_visible_button then
     self.top_visible_button = math.max(self.active_idx, 1)

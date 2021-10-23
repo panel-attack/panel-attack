@@ -666,6 +666,7 @@ function main_net_vs_lobby()
           currently_spectating = false
           sent_requests[op_name] = true
           request_game(opponentName)
+          updated = true
         end
       end
         
@@ -709,7 +710,7 @@ function main_net_vs_lobby()
           for i = 1, #lobby_menu.buttons do
             if #oldLobbyMenu.buttons >= i then
               if lobby_menu.buttons[i].stringText == oldLobbyMenu.buttons[i].stringText then
-                lobby_menu.set_active_idx(i)
+                lobby_menu:set_active_idx(i)
                 break
               end
             end
