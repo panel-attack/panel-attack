@@ -21,6 +21,8 @@ function load_img_from_supported_extensions(path_and_name)
   return nil
 end
 
+-- Draws an image at the given spot
+-- TODO rename
 function draw(img, x, y, rot, x_scale, y_scale)
   rot = rot or 0
   x_scale = x_scale or 1
@@ -29,6 +31,8 @@ function draw(img, x, y, rot, x_scale, y_scale)
   rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
 end
 
+-- Draws a label image at the given spot.
+-- TODO consolidate with above
 function draw_label(img, x, y, rot, scale, mirror)
   rot = rot or 0
   mirror = mirror or 0
@@ -37,6 +41,8 @@ function draw_label(img, x, y, rot, scale, mirror)
   rot, scale, scale}})
 end
 
+-- Draws a number via a font image
+-- TODO consolidate with draw_pixel_font which should encompass all this API
 function draw_number(number, atlas, frameCount, quads, x, y, scale, x_scale, y_scale, align, mirror)
   x_scale = x_scale or 1
   y_scale = y_scale or 1
@@ -76,6 +82,8 @@ function draw_number(number, atlas, frameCount, quads, x, y, scale, x_scale, y_s
 
 end
 
+-- Draws a time using a pixel font
+-- TODO consolidate with draw_pixel_font which should encompass all this API
 function draw_time(time, quads, x, y, x_scale, y_scale)
   x_scale = x_scale or 1
   y_scale = y_scale or 1
@@ -116,6 +124,8 @@ function draw_time(time, quads, x, y, x_scale, y_scale)
   end
 end
 
+-- Returns the pixel font map for the pixel fonts that contain numbers and letters
+-- a font map is a dictionary of a character mapped to the column number in the pixel font image
 function standard_pixel_font_map()
 
   -- Special Characters
@@ -137,6 +147,10 @@ function standard_pixel_font_map()
 end
 
 -- Draws the given string with the given pixel font image atlas
+-- string - the string to draw
+-- TODO support both upper and lower case
+-- atlas - the image to use as the pixel font
+-- font map - a dictionary of a character mapped to the column number in the pixel font image
 function draw_pixel_font(string, atlas, font_map, x, y, x_scale, y_scale, align, mirror)
   x_scale = x_scale or 1
   y_scale = y_scale or 1
@@ -190,6 +204,7 @@ function draw_pixel_font(string, atlas, font_map, x, y, x_scale, y_scale, align,
 
 end
 
+-- Draws an image at the given position, using the quad for the viewport
 function qdraw(img, quad, x, y, rot, x_scale, y_scale, x_offset, y_offset, mirror)
   rot = rot or 0
   x_scale = x_scale or 1
@@ -242,10 +257,12 @@ function menu_drawq(img, quad, x, y, rot, x_scale,y_scale)
     rot, x_scale, y_scale}})
 end
 
+-- Draws a rectangle at the given coordinates
 function grectangle(mode, x, y, w, h)
   gfx_q:push({love.graphics.rectangle, {mode, x, y, w, h}})
 end
 
+-- Draws a colored rectangle at the given coordinates
 function grectangle_color(mode, x, y, w, h, r, g, b, a)
   a = a or 1
   gfx_q:push({love.graphics.setColor, {r, g, b, a}})
@@ -253,6 +270,7 @@ function grectangle_color(mode, x, y, w, h, r, g, b, a)
   gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
 end
 
+-- Draws text at the given spot
 function gprint(str, x, y, color, scale)
   x = x or 0
   y = y or 0
@@ -287,6 +305,7 @@ function set_global_font(filepath, size)
   love.graphics.setFont(f)
 end
 
+-- Creates a new font based on the current font and a delta
 local function get_font_delta(with_delta_size)
   local font_size = font_size + with_delta_size
   local f = font_cache[font_size]
@@ -309,6 +328,7 @@ function set_shader(shader)
   gfx_q:push({love.graphics.setShader, {shader}})
 end
 
+-- Draws a font with a given font delta from the standard font
 function gprintf(str, x, y, limit, halign, color, scale, font_delta_size)
   x = x or 0
   y = y or 0
@@ -342,6 +362,7 @@ function set_color(r, g, b, a)
   end
 end
 
+-- TODO this should be in a util file
 function file_exists(name)
    local f=io.open(name,"r")
    if f~=nil then io.close(f) return true else return false end

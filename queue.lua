@@ -1,7 +1,13 @@
-Queue = class(function(q)
+
+-- A class representing a Queue data structure where you typically put new data on the front and take data off the back.
+-- TODO consolidate with ServerQueue
+Queue =
+  class(
+  function(q)
     q.first = 0
-    q.last  = -1
-  end)
+    q.last = -1
+  end
+)
 
 function Queue.push(self, value)
   local last = self.last + 1
@@ -34,8 +40,8 @@ function Queue.len(self)
 end
 
 function Queue.clear(self)
-  for i=self.first,self.last do
-    self[i]=nil
+  for i = self.first, self.last do
+    self[i] = nil
   end
   self.first = 0
   self.last = -1
