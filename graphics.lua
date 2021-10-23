@@ -739,22 +739,24 @@ function Stack.drawAnalyticData(self, analytic, x, y)
   local nextIconIncrement = 30
   local column2Distance = 70
 
-  local chainComboScale = 0.5
   local fontIncrement = 8
+  local iconSize = 8
+  local icon_width
+  local icon_height
 
   -- Background
   grectangle_color("fill", x / GFX_SCALE - backgroundPadding, y / GFX_SCALE - backgroundPadding, 160/GFX_SCALE, 600/GFX_SCALE, 0, 0, 0, 0.5)
 
   -- Panels cleared
-  local panelScale = 0.15
-  draw(panels[self.panels_dir].images.classic[1][6], x / GFX_SCALE, y / GFX_SCALE, 0, panelScale, panelScale)
+  icon_width, icon_height = panels[self.panels_dir].images.classic[1][6]:getDimensions()
+  draw(panels[self.panels_dir].images.classic[1][6], x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
   gprintf(analytic.data.destroyed_panels, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
 
   y = y + nextIconIncrement
 
   -- Garbage sent
-  local garbageScale = 0.45
-  draw(characters[self.character].images.face, x / GFX_SCALE, y / GFX_SCALE, 0, garbageScale, garbageScale)
+  icon_width, icon_height = characters[self.character].images.face:getDimensions()
+  draw(characters[self.character].images.face, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
   gprintf(analytic.data.sent_garbage_lines, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
 
   y = y + nextIconIncrement
@@ -771,15 +773,16 @@ function Stack.drawAnalyticData(self, analytic, x, y)
   y = y + nextIconIncrement
 
   -- Moves
-  local cursorScale = 0.18
-  draw(themes[config.theme].images.IMG_cursor[1], x / GFX_SCALE, (y + 5) / GFX_SCALE, 0, cursorScale, cursorScale)
+  icon_width, icon_height = themes[config.theme].images.IMG_cursor[1]:getDimensions()
+  draw(themes[config.theme].images.IMG_cursor[1], x / GFX_SCALE, (y + 5) / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
   gprintf(analytic.data.move_count, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
 
   y = y + nextIconIncrement
 
   -- Swaps
   if themes[config.theme].images.IMG_swap then
-    draw(themes[config.theme].images.IMG_swap, x / GFX_SCALE, y / GFX_SCALE, 0, panelScale, panelScale)
+    icon_width, icon_height = themes[config.theme].images.IMG_swap:getDimensions()
+    draw(themes[config.theme].images.IMG_swap, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
   end
   gprintf(analytic.data.swap_count, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
 
@@ -793,7 +796,8 @@ function Stack.drawAnalyticData(self, analytic, x, y)
     end
   end
   if themes[config.theme].images.IMG_aps then
-    draw(themes[config.theme].images.IMG_aps, x / GFX_SCALE, y / GFX_SCALE, 0, panelScale, panelScale)
+    icon_width, icon_height = themes[config.theme].images.IMG_aps:getDimensions()
+    draw(themes[config.theme].images.IMG_aps, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
   end
   gprintf(analytic.lastAPM .. "/m", x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
 
@@ -820,9 +824,10 @@ function Stack.drawAnalyticData(self, analytic, x, y)
   end
 
   -- Draw the chain images
+  icon_width, icon_height = themes[config.theme].images.IMG_cards[true][2]:getDimensions()
   for i = 2, #chainData do
     local chain_amount = chainData[i] or 0
-    draw(themes[config.theme].images.IMG_cards[true][i], x / GFX_SCALE, y / GFX_SCALE, 0, chainComboScale, chainComboScale)
+    draw(themes[config.theme].images.IMG_cards[true][i], x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
     gprintf(chain_amount, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
 
     y = y + nextIconIncrement
@@ -845,10 +850,11 @@ function Stack.drawAnalyticData(self, analytic, x, y)
   end
 
   -- Draw the combo images
+  icon_width, icon_height = themes[config.theme].images.IMG_cards[false][4]:getDimensions()
   local xCombo = x + column2Distance
   for i = 4, #comboData do
     local combo_amount = comboData[i] or 0
-    draw(themes[config.theme].images.IMG_cards[false][i], xCombo / GFX_SCALE, yCombo / GFX_SCALE, 0, chainComboScale, chainComboScale)
+    draw(themes[config.theme].images.IMG_cards[false][i], xCombo / GFX_SCALE, yCombo / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
     gprintf(combo_amount, xCombo + iconToTextSpacing, yCombo + 0, canvas_width, "left", nil, 1, fontIncrement)
 
     yCombo = yCombo + nextIconIncrement
