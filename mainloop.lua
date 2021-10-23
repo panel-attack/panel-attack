@@ -30,6 +30,7 @@ main_menu_screen_pos = {300 + (canvas_width - legacy_canvas_width) / 2, 195 + (c
 wait_game_update = nil
 has_game_update = false
 local arrow_padding = 12
+local main_menu_last_index = 1
 
 P1_win_quads = {}
 P1_rating_quads = {}
@@ -138,7 +139,8 @@ do
     end
   
     local function selectFunction(myFunction, args)
-      local function constructedFunction() 
+      local function constructedFunction()
+        main_menu_last_index = main_menu.active_idx
         main_menu:remove_self()
         ret = {myFunction, args}
       end
@@ -167,7 +169,7 @@ do
       {loc("mm_options"), options.main}
     }
 
-    main_menu = Click_menu(menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 20, 1)
+    main_menu = Click_menu(menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 20, main_menu_last_index)
     for i = 1, #items do
       main_menu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
     end
@@ -663,7 +665,7 @@ function main_net_vs_lobby()
           op_name = opponentName
           currently_spectating = false
           sent_requests[op_name] = true
-          request_game(items[lobby_menu.active_idx])
+          request_game(opponentName)
         end
       end
         
@@ -1420,6 +1422,9 @@ function make_main_puzzle(puzzles)
             if P1.n_active_panels ~= 0 or P1.prev_active_panels ~= 0 or P1.puzzle_moves ~= 0 then
               P1:run()
               P1:handle_pause()
+              if menu_escape_game(K[1]) then
+                ret = {main_dumb_transition, {main_endless_setup, "", 0, 0}}
+              end
             end
           end
         end

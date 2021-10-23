@@ -116,7 +116,7 @@ function Click_menu.set_active_idx(self, idx)
     self.top_visible_button = math.max(self.active_idx, 1)
   end
   if self.active_idx > self.top_visible_button + self.button_limit then
-    self.top_visible_button = math.max(self.active_idx - self.button_limit, 1)
+    self.top_visible_button = math.min(math.max(self.active_idx - self.button_limit, 1), #self.buttons)
   end
   if self.top_visible_button ~= top_visible_button_before or not self.buttons[idx].visible then
     self:layout_buttons()
@@ -141,31 +141,38 @@ function Click_menu.layout_buttons(self)
   self.new_item_y = self.padding
   self.top_visible_button = self.top_visible_button or 1
   self.active_idx = self.active_idx or 1
-  self.button_limit = math.max(1, math.min(self.button_limit or 1, #self.buttons))
+
+  if #self.buttons > 0 then
+    self.button_limit = math.floor(self.height / (self:get_button_height(1) + self.padding))
+  else
+    self.button_limit = 0
+  end
+  
+  if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
+    require("lldebugger").start()
+  end
   --scroll up or down if not showing the active button
   if self.active_idx < self.top_visible_button then
     self.top_visible_button = math.max(self.active_idx, 1)
   end
   if self.active_idx >= self.top_visible_button + self.button_limit then
-    self.top_visible_button = math.max(self.active_idx - self.button_limit + 1, 1)
+    self.top_visible_button = math.min(math.max(self.active_idx - self.button_limit, 1), #self.buttons)
   end
-  --reset button limit so it can be recalculated.
-  self.button_limit = 0 --this will increase as there is room for more buttons.
   local menu_is_full = false
   for i = 1, #self.buttons do
     if i < self.top_visible_button then
       self.buttons[i].visible = false
-    elseif not menu_is_full and (self.new_item_y + self:get_button_height(i) < self.height) then
+    elseif i < self.top_visible_button + self.button_limit then
       self.buttons[i].visible = true
       self.buttons[i].x = self.button_padding
       self.buttons[i].y = self.new_item_y or 0
       self.new_item_y = self.new_item_y + self:get_button_height(i) + self.padding
-      self.button_limit = self.button_limit + 1
     else --button doesn't fit
       menu_is_full = true
       self.buttons[i].visible = false
     end
   end
+
   if #self.buttons > self.button_limit then
     self:show_controls(true)
   else
@@ -198,7 +205,7 @@ function Click_menu.update(self)
       self:set_active_idx(wrap(1, self.active_idx - 1, #self.buttons))
     elseif menu_down(K[1]) then
       self:set_active_idx(wrap(1, self.active_idx + 1, #self.buttons))
-    elseif menu_enter_one_press(K[1]) then
+    elseif menu_enter(K[1]) then
       if self.buttons[self.active_idx].selectFunction then
         self:selectButton(self.active_idx)
       end
