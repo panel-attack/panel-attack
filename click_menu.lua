@@ -34,9 +34,10 @@ Click_menu =
       }
     }
     self.buttons = {}
-    self.padding = 12
     self.buttons_outlined = 1
-    self.button_padding = 4
+    self.padding = 2 -- the padding around the entire menu
+    self.button_padding = 4 -- the padding around one particular button
+    self.padding_between_buttons = 8 -- the vertical padding between two buttons
     self.background = nil
     self.new_item_y = 0
     self.arrow = ">"
@@ -103,9 +104,28 @@ function Click_menu.get_button_height(self, idx)
   end
 end
 
+-- Gets the button at the given index's current setting width including padding
+function Click_menu.get_button_setting_width(self, idx)
+  local result = 0
+  if self.buttons[idx].current_setting then
+    result = self.buttons[idx].current_setting:getWidth() + 2 * self.button_padding
+  end
+  return result
+end
+
 -- Removes this menu from the list of menus
 function Click_menu.remove_self(self)
   click_menus[self.id] = nil
+end
+
+-- PRIVATE
+-- Recalculates top_visible_button
+function Click_menu.update_top_button(self)
+  if self.active_idx < self.top_visible_button then
+    self.top_visible_button = math.max(self.active_idx, 1)
+  elseif self.active_idx > self.top_visible_button + self.button_limit - 1 then
+    self.top_visible_button = math.max(math.min(self.active_idx - (self.button_limit - 1), #self.buttons), 1)
+  end
 end
 
 -- Sets the current selected button and scrolls to it if needed
@@ -113,12 +133,7 @@ function Click_menu.set_active_idx(self, idx)
   idx = wrap(1, idx, #self.buttons)
   self.active_idx = idx
   local top_visible_button_before = self.top_visible_button
-  if self.active_idx < self.top_visible_button then
-    self.top_visible_button = math.max(self.active_idx, 1)
-  end
-  if self.active_idx > self.top_visible_button + self.button_limit then
-    self.top_visible_button = math.min(math.max(self.active_idx - self.button_limit, 1), #self.buttons)
-  end
+  self:update_top_button()
   if self.top_visible_button ~= top_visible_button_before or not self.buttons[idx].visible then
     self:layout_buttons()
   end
@@ -140,30 +155,31 @@ end
 -- Positions the buttons, scrolls, and makes sure the scroll buttons are visible if needed
 function Click_menu.layout_buttons(self)
   self.new_item_y = self.padding
-  self.top_visible_button = self.top_visible_button or 1
   self.active_idx = self.active_idx or 1
 
+  if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
+    require("lldebugger").start()
+  end
+  
+  self.button_limit = 1
   if #self.buttons > 0 then
-    self.button_limit = math.floor(self.height / (self:get_button_height(1) + self.padding))
-  else
-    self.button_limit = 0
+    local firstButtonHeight = self:get_button_height(1) + (2 * self.padding)
+    local eachExtraButtonHeight = self:get_button_height(1) + self.padding_between_buttons
+    self.button_limit = self.button_limit + math.floor((self.height - firstButtonHeight) / eachExtraButtonHeight)
   end
+
   --scroll up or down if not showing the active button
-  if self.active_idx < self.top_visible_button then
-    self.top_visible_button = math.max(self.active_idx, 1)
-  end
-  if self.active_idx >= self.top_visible_button + self.button_limit then
-    self.top_visible_button = math.min(math.max(self.active_idx - self.button_limit, 1), #self.buttons)
-  end
+  self:update_top_button()
+
   local menu_is_full = false
   for i = 1, #self.buttons do
     if i < self.top_visible_button then
       self.buttons[i].visible = false
     elseif i < self.top_visible_button + self.button_limit then
       self.buttons[i].visible = true
-      self.buttons[i].x = self.button_padding
-      self.buttons[i].y = self.new_item_y or 0
-      self.new_item_y = self.new_item_y + self:get_button_height(i) + self.padding
+      self.buttons[i].x = self.padding
+      self.buttons[i].y = self.new_item_y
+      self.new_item_y = self.new_item_y + self:get_button_height(i) + self.padding_between_buttons
     else --button doesn't fit
       menu_is_full = true
       self.buttons[i].visible = false
@@ -195,15 +211,23 @@ function Click_menu.selectButton(self, buttonIndex)
   self.buttons[self.active_idx].selectFunction()
 end
 
+function Click_menu.selectPreviousIndex(self)
+  self:set_active_idx(wrap(1, self.active_idx - 1, #self.buttons))
+end
+
+function Click_menu.selectNextIndex(self)
+  self:set_active_idx(wrap(1, self.active_idx + 1, #self.buttons))
+end
+
 -- Responds to input
 function Click_menu.update(self)
   self.clock = self.clock + 1
 
   if self.visible then
     if menu_up(K[1]) then
-      self:set_active_idx(wrap(1, self.active_idx - 1, #self.buttons))
+      self:selectPreviousIndex()
     elseif menu_down(K[1]) then
-      self:set_active_idx(wrap(1, self.active_idx + 1, #self.buttons))
+      self:selectNextIndex()
     elseif menu_enter(K[1]) then
       if self.buttons[self.active_idx].selectFunction then
         self:selectButton(self.active_idx)
@@ -239,6 +263,8 @@ function Click_menu.draw(self)
       if self.buttons[i].visible then
         local buttonX = self.x + self.buttons[i].x
         local buttonY = self.y + self.buttons[i].y
+        local buttonSettingX = self.x + (self.current_setting_x or 0)
+        local buttonTextY = buttonY + self.button_padding
         local width = self:get_button_width(i)
         local height = self:get_button_height(i)
         if self.buttons[i].background then
@@ -247,15 +273,20 @@ function Click_menu.draw(self)
           local grey = 0.3
           local alpha = 0.7
           grectangle_color("fill", buttonX / GFX_SCALE, buttonY / GFX_SCALE, width / GFX_SCALE, height / GFX_SCALE, grey, grey, grey, alpha)
+
+          if self.buttons[i].current_setting then
+            local currentSettingWidth = self:get_button_setting_width(i)
+            grectangle_color("fill", buttonSettingX / GFX_SCALE, buttonY / GFX_SCALE, currentSettingWidth / GFX_SCALE, height / GFX_SCALE, grey, grey, grey, alpha)
+          end
         end
         if self.buttons[i].outlined then
           local grey = 0.5
           local alpha = 0.7
           grectangle_color("line", buttonX / GFX_SCALE, buttonY / GFX_SCALE, width / GFX_SCALE, height / GFX_SCALE, grey, grey, grey, alpha)
         end
-        menu_draw(self.buttons[i].text, buttonX + self.button_padding, buttonY + self.button_padding)
+        menu_draw(self.buttons[i].text, buttonX + self.button_padding, buttonTextY)
         if self.buttons[i].current_setting then
-          menu_draw(self.buttons[i].current_setting, self.x + (self.current_setting_x or 0), buttonY + self.button_padding)
+          menu_draw(self.buttons[i].current_setting, buttonSettingX + self.button_padding, buttonTextY)
         end
       end
     end

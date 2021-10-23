@@ -169,7 +169,7 @@ do
       {loc("mm_options"), options.main}
     }
 
-    main_menu = Click_menu(menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 20, main_menu_last_index)
+    main_menu = Click_menu(menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 10, main_menu_last_index)
     for i = 1, #items do
       main_menu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
     end
@@ -277,11 +277,15 @@ function main_select_speed_99(next_func)
     ret = {next_func, {speed, difficulty}}
   end
 
+  local function nextMenu()
+    gameSettingsMenu:selectNextIndex()
+  end
+
   local menu_x, menu_y = unpack(main_menu_screen_pos)
   menu_y = menu_y + 70
-  gameSettingsMenu = Click_menu(menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 20, 1)
-  gameSettingsMenu:add_button(loc("speed"), increaseSpeed, goEscape, decreaseSpeed, increaseSpeed)
-  gameSettingsMenu:add_button(loc("difficulty"), increaseDifficulty, goEscape, decreaseDifficulty, increaseDifficulty)
+  gameSettingsMenu = Click_menu(menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 10, 1)
+  gameSettingsMenu:add_button(loc("speed"), nextMenu, goEscape, decreaseSpeed, increaseSpeed)
+  gameSettingsMenu:add_button(loc("difficulty"), nextMenu, goEscape, decreaseDifficulty, increaseDifficulty)
   gameSettingsMenu:add_button(loc("go_"), startGame, goEscape)
   gameSettingsMenu:add_button(loc("back"), exitSettings, exitSettings)
   updateMenuSpeed()
@@ -1424,7 +1428,7 @@ function make_main_puzzle(puzzles)
               P1:run()
               P1:handle_pause()
               if menu_escape_game(K[1]) then
-                ret = {main_dumb_transition, {main_endless_setup, "", 0, 0}}
+                ret = {main_dumb_transition, {main_select_puzz, "", 0, 0}}
               end
             end
           end

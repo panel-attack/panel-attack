@@ -44,7 +44,7 @@ local function main_config_input()
   end
 
   function createInputMenu(player)
-    local clickMenu = Click_menu(menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 80, 1)
+    local clickMenu = Click_menu(menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 10, 1)
     clickMenu:add_button(loc("player") .. " ", incrementPlayer, goEscape)
     clickMenu:set_button_setting(#clickMenu.buttons, active_player)
     for i = 1, #key_names do
@@ -52,9 +52,7 @@ local function main_config_input()
       clickMenu:set_button_setting(#clickMenu.buttons, k[key_names[i]] or loc("op_none"))
     end
     clickMenu:add_button(loc("op_all_keys") .. " ", selectAllKeys, goEscape)
-    clickMenu:set_button_setting(#clickMenu.buttons, "")
     clickMenu:add_button(loc("back") .. " ", mainMenu, mainMenu)
-    clickMenu:set_button_setting(#clickMenu.buttons, "")
 
     return clickMenu
   end
