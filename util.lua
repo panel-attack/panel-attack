@@ -249,41 +249,41 @@ end
 function get_directory_contents(path)
   local path = (path and path or "")
   local results = love.filesystem.getDirectoryItems(path)
-
   return results
 end
 
-function compress_input_string(inStr)
-  if string.match(inStr, "%d+") then
-    return inStr
+function compress_input_string(inputs)
+  if string.match(inputs, "%d+") then
+    -- Detected a digit in the inputs, the inputs are already compressed.
+    return inputs
   else
-    local compressedStr = ""
-    local buff = inStr:sub(1, 1)
-    local outStr, nextChar = inStr:sub(1, 1)
-    for pos = 2, #inStr do
-      nextChar = inStr:sub(pos, pos)
-      if nextChar ~= outStr:sub(#outStr, #outStr) then
-        compressedStr = compressedStr .. buff:sub(1, 1) .. string.len(buff)
+    local compressed_inputs = ""
+    local buff = inputs:sub(1, 1)
+    local out_str, next_char = inputs:sub(1, 1)
+    for pos = 2, #inputs do
+      next_char = inputs:sub(pos, pos)
+      if next_char ~= out_str:sub(#out_str, #out_str) then
+        compressed_inputs = compressed_inputs .. buff:sub(1, 1) .. string.len(buff)
         buff = ""
       end
-      buff = buff .. inStr:sub(pos, pos)
-      outStr = outStr .. nextChar
+      buff = buff .. inputs:sub(pos, pos)
+      out_str = out_str .. next_char
     end
-    compressedStr = compressedStr .. buff:sub(1, 1) .. string.len(buff)
-    return compressedStr
+    compressed_inputs = compressed_inputs .. buff:sub(1, 1) .. string.len(buff)
+    return compressed_inputs
   end
 end
 
-function uncompress_input_string(compressedStr)
-  if string.match(compressedStr, "%a%a") then
-    return compressedStr
+function uncompress_input_string(inputs)
+  if string.match(inputs, "%a%a") then
+    -- Detected two consecutive letters in the inputs, the inputs are not compressed.
+    return inputs
   else
-    local ucStr = ""
-    for w in string.gmatch(compressedStr, "%a%d+") do
-      local inputChar = string.match(w, "%a")
-      ucStr = ucStr .. string.rep(inputChar, string.match(w, "%d+"))
+    local uncompressed_inputs = ""
+    for w in string.gmatch(inputs, "%a%d+") do
+      uncompressed_inputs = uncompressed_inputs .. string.rep(w:sub(1, 1), string.match(w, "%d+"))
     end
-    return ucStr
+    return uncompressed_inputs
   end
 end
 
