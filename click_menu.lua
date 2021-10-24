@@ -156,11 +156,6 @@ end
 function Click_menu.layout_buttons(self)
   self.new_item_y = self.padding
   self.active_idx = self.active_idx or 1
-
-  if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
-    require("lldebugger").start()
-  end
-  
   self.button_limit = 1
   if #self.buttons > 0 then
     local firstButtonHeight = self:get_button_height(1) + (2 * self.padding)
