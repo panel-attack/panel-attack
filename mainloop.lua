@@ -534,7 +534,7 @@ function main_net_vs_lobby()
   local lobby_menu = nil
   local items = {}
   local lastPlayerIndex = 0
-  local updated = false
+  local updated = true -- need update when first entering
   local ret = nil
 
   while true do

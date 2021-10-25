@@ -218,6 +218,10 @@ end
 function Click_menu.update(self)
   self.clock = self.clock + 1
 
+  if GAME.focused == false then
+    return
+  end
+  
   if self.visible then
     if menu_up(K[1]) then
       self:selectPreviousIndex()

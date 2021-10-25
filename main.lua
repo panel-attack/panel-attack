@@ -39,6 +39,10 @@ function love.load()
   mainloop = coroutine.create(fmainloop)
 end
 
+function love.focus(f)
+  GAME.focused = f
+end
+
 -- Called every few fractions of a second to update the game
 -- dt is the amount of time in seconds that has passed.
 function love.update(dt)
