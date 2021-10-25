@@ -508,7 +508,6 @@ function main_net_vs_lobby()
   local willing_players = {} -- set
   local spectatable_rooms = {}
   local k = K[1]
-  server_queue = ServerQueue(SERVER_QUEUE_CAPACITY)
   my_player_number = nil
   op_player_number = nil
   local notice = {[true] = loc("lb_select_player"), [false] = loc("lb_alone")}
@@ -830,6 +829,7 @@ function main_net_vs_setup(ip, network_port)
   end
   P1, P1_level, P2_level, got_opponent = nil
   P2 = {panel_buffer = "", gpanel_buffer = ""}
+  server_queue = ServerQueue(SERVER_QUEUE_CAPACITY)
   gprint(loc("lb_set_connect"), unpack(main_menu_screen_pos))
   wait()
   network_init(ip, network_port)
@@ -887,7 +887,7 @@ function main_net_vs()
       elseif msg.leave_room then --reset win counts and go back to lobby
         my_win_count = 0
         op_win_count = 0
-        return main_dumb_transition, {main_net_vs_lobby, "", 0, 0}
+        return main_dumb_transition, {main_net_vs_lobby, "", 0, 0} -- someone left the game, quit to lobby
       end
     end
     --draw graphics
@@ -939,7 +939,7 @@ function main_net_vs()
       my_win_count = 0
       op_win_count = 0
       json_send({leave_room = true})
-      return main_dumb_transition, {main_net_vs_lobby, "", 0, 0}
+      return main_dumb_transition, {main_net_vs_lobby, "", 0, 0} -- spectator leaving the match
     end
     if not do_messages() then
       return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}

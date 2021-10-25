@@ -890,7 +890,7 @@ function select_screen.main()
         if msg.leave_room then
           my_win_count = 0
           op_win_count = 0
-          return main_dumb_transition, {main_net_vs_lobby, "", 0, 0}
+          return main_dumb_transition, {main_net_vs_lobby, "", 0, 0} -- opponent left the select screen
         end
         if (msg.match_start or replay_of_match_so_far) and msg.player_settings and msg.opponent_settings then
           print("currently_spectating: " .. tostring(currently_spectating))
@@ -1353,7 +1353,7 @@ function select_screen.main()
         else -- (we are spectating)
           if menu_escape(K[1]) then
             do_leave()
-            ret = {main_net_vs_lobby}
+            ret = {main_net_vs_lobby} -- we left the select screen as a spectator
           end
         end
       end
