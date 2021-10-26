@@ -268,7 +268,7 @@ function get_directory_contents(path)
 end
 
 function compress_input_string(inputs)
-  if string.match(inputs, "%d+") then
+  if inputs:match("%(%d+%)") then
     -- Detected a digit in the inputs, the inputs are already compressed.
     return inputs
   else
@@ -278,38 +278,53 @@ function compress_input_string(inputs)
     for pos = 2, #inputs do
       next_char = inputs:sub(pos, pos)
       if next_char ~= out_str:sub(#out_str, #out_str) then
-        compressed_inputs = compressed_inputs .. buff:sub(1, 1) .. string.len(buff)
+        if buff:match("%d+") then
+          compressed_inputs = compressed_inputs .. "(" .. buff .. ")"
+        else
+          compressed_inputs = compressed_inputs .. buff:sub(1, 1) .. buff:len()
+        end
         buff = ""
       end
       buff = buff .. inputs:sub(pos, pos)
       out_str = out_str .. next_char
     end
-    compressed_inputs = compressed_inputs .. buff:sub(1, 1) .. string.len(buff)
+    if buff:match("%d+") then
+      compressed_inputs = compressed_inputs .. "(" .. buff .. ")"
+    else
+      compressed_inputs = compressed_inputs .. buff:sub(1, 1) .. buff:len()
+    end
+    compressed_inputs = compressed_inputs:gsub("%)%(", "")
     return compressed_inputs
   end
 end
-
+--TODO get the last two chars
 function uncompress_input_string(inputs)
-  if string.match(inputs, "%a%a") then
+  if inputs:match("[%a%+%/][%a%+%/]") then
     -- Detected two consecutive letters in the inputs, the inputs are not compressed.
     return inputs
   else
     local uncompressed_inputs = ""
-    for w in string.gmatch(inputs, "%a%d+") do
-      uncompressed_inputs = uncompressed_inputs .. string.rep(w:sub(1, 1), string.match(w, "%d+"))
+    for w in inputs:gmatch("[%a%+%/]%d+%(?%d*%)?") do
+      uncompressed_inputs = uncompressed_inputs .. string.rep(w:sub(1, 1), w:match("%d+"))
+      input_value = w:match("%(%d+%)")
+      if input_value then
+        uncompressed_inputs = uncompressed_inputs .. input_value:match("%d+")
+      end
     end
     return uncompressed_inputs
   end
 end
 
 function dump(o)
-  if type(o) == 'table' then
-     local s = '{ '
-     for k,v in pairs(o) do
-        if type(k) ~= 'number' then k = '"'..k..'"' end
-        s = s .. '['..k..'] = ' .. dump(v) .. ','
-     end
-     return s .. '} '
+  if type(o) == "table" then
+    local s = "{ "
+    for k, v in pairs(o) do
+      if type(k) ~= "number" then
+        k = '"' .. k .. '"'
+      end
+      s = s .. "[" .. k .. "] = " .. dump(v) .. ","
+    end
+    return s .. "} "
   else
     return tostring(o)
   end
