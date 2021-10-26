@@ -297,7 +297,7 @@ function compress_input_string(inputs)
     return compressed_inputs
   end
 end
---TODO get the last two chars
+
 function uncompress_input_string(inputs)
   if inputs:match("[%a%+%/][%a%+%/]") then
     -- Detected two consecutive letters in the inputs, the inputs are not compressed.
