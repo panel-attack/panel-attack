@@ -268,7 +268,7 @@ function get_directory_contents(path)
 end
 
 function compress_input_string(inputs)
-  if inputs:match("%(%d+%)") then
+  if inputs:match("%(%d+%)") or not inputs:match("[%a%+%/][%a%+%/]") then
     -- Detected a digit in the inputs, the inputs are already compressed.
     return inputs
   else
