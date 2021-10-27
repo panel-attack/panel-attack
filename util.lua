@@ -269,7 +269,7 @@ end
 
 function compress_input_string(inputs)
   if inputs:match("%(%d+%)") or not inputs:match("[%a%+%/][%a%+%/]") then
-    -- Detected a digit in the inputs, the inputs are already compressed.
+    -- Detected a digit enclosed in parentheses in the inputs, the inputs are already compressed.
     return inputs
   else
     local compressed_inputs = ""
@@ -300,7 +300,7 @@ end
 
 function uncompress_input_string(inputs)
   if inputs:match("[%a%+%/][%a%+%/]") then
-    -- Detected two consecutive letters in the inputs, the inputs are not compressed.
+    -- Detected two consecutive letters or symbols in the inputs, the inputs are not compressed.
     return inputs
   else
     local uncompressed_inputs = ""
