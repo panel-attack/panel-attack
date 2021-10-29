@@ -490,11 +490,6 @@ function main_time_attack(...)
   end
 end
 
-function main_net_vs_room()
-  select_screen.character_select_mode = "2p_net_vs"
-  return select_screen.main()
-end
-
 function main_net_vs_lobby()
   if themes[config.theme].musics.main then
     find_and_add_music(themes[config.theme].musics, "main")
@@ -774,29 +769,6 @@ function main_net_vs_lobby()
   end
 end
 
-function update_win_counts(win_counts)
-  if (P1 and P1.player_number == 1) or currently_spectating then
-    my_win_count = win_counts[1] or 0
-    op_win_count = win_counts[2] or 0
-  elseif P1 and P1.player_number == 2 then
-    my_win_count = win_counts[2] or 0
-    op_win_count = win_counts[1] or 0
-  end
-end
--- list of spectators
-function spectator_list_string(list)
-  local str = ""
-  for k, v in ipairs(list) do
-    str = str .. v
-    if k < #list then
-      str = str .. "\n"
-    end
-  end
-  if str ~= "" then
-    str = loc("pl_spectators") .. "\n" .. str
-  end
-  return str
-end
 -- creates a leaderboard string that is sorted by rank
 function build_viewable_leaderboard_string(report, first_viewable_idx, last_viewable_idx)
   str = loc("lb_header_board") .. "\n"

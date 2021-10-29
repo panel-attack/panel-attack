@@ -105,6 +105,21 @@ function printNetworkMessageForType(type)
   return result
 end
 
+-- list of spectators
+function spectator_list_string(list)
+  local str = ""
+  for k, v in ipairs(list) do
+    str = str .. v
+    if k < #list then
+      str = str .. "\n"
+    end
+  end
+  if str ~= "" then
+    str = loc("pl_spectators") .. "\n" .. str
+  end
+  return str
+end
+
 -- Adds the message to the network queue or processes it immediately in a couple cases
 function queue_message(type, data)
   if type == "P" or type == "O" or type == "U" or type == "I" or type == "Q" or type == "R" then

@@ -121,6 +121,16 @@ local function resolve_stage_random(state)
   end
 end
 
+function update_win_counts(win_counts)
+  if (P1 and P1.player_number == 1) or currently_spectating then
+    my_win_count = win_counts[1] or 0
+    op_win_count = win_counts[2] or 0
+  elseif P1 and P1.player_number == 2 then
+    my_win_count = win_counts[2] or 0
+    op_win_count = win_counts[1] or 0
+  end
+end
+
 -- The main screen for selecting characters and settings for a match
 function select_screen.main()
   if themes[config.theme].musics.select_screen then
