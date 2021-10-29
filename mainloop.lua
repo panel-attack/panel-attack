@@ -11,7 +11,7 @@ local main_config_input = require("config_inputs")
 
 local wait, resume = coroutine.yield, coroutine.resume
 
-local main_endless, make_main_puzzle, main_net_vs_setup, main_select_puzz, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, main_options, main_replay_browser, exit_game
+local main_endless, make_main_puzzle, main_net_vs_setup, main_select_puzz, main_local_vs_computer_setup, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, main_options, main_replay_browser, exit_game
 -- main_select_mode, main_dumb_transition, main_net_vs, main_net_vs_lobby, main_local_vs_yourself, main_local_vs, main_replay_endless, main_replay_puzzle, main_replay_vs are not local since they are also used elsewhere
 
 local PLAYING = "playing" -- room states
@@ -162,6 +162,7 @@ do
       --{loc("mm_2_vs_online", "(development-use only)"), main_net_vs_setup, {"localhost"}},
       --{loc("mm_2_vs_online", "LittleEndu's server"), main_net_vs_setup, {"51.15.207.223"}},
       {loc("mm_2_vs_online", "server for ranked Ex Mode"), main_net_vs_setup, {"exserver.panelattack.com", 49568}},
+      {"Vs Computer", main_local_vs_computer_setup},
       {loc("mm_2_vs_local"), main_local_vs_setup},
       {loc("mm_replay_browser"), replay_browser.main},
       {loc("mm_configure"), main_config_input},
@@ -995,6 +996,16 @@ function main_local_vs_setup()
   op_name = "Player 2"
   op_state = nil
   select_screen.character_select_mode = "2p_local_vs"
+  return select_screen.main
+end
+
+-- sets up globals for local vs computer
+function main_local_vs_computer_setup()
+  currently_spectating = false
+  my_name = config.name or "Player 1"
+  op_name = "Computer"
+  op_state = nil
+  select_screen.character_select_mode = "2p_local_computer_vs"
   return select_screen.main
 end
 

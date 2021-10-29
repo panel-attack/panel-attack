@@ -25,6 +25,7 @@ Stack =
     s.panels_dir = panels_dir or config.panels
     s.portraitFade = 0
     s.is_local = is_local
+    s.computer = nil
     if not panels[panels_dir] then
       s.panels_dir = config.panels
     end
@@ -40,8 +41,10 @@ Stack =
     end
 
     -- frame.png dimensions
-    s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE)
-    s.canvas:setFilter("nearest", "nearest")
+    if s.computer == nil then
+      s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE)
+      s.canvas:setFilter("nearest", "nearest")
+    end
 
     if s.match.mode == "2ptime" or s.match.mode == "vs" then
       local level = speed or 5
@@ -212,6 +215,7 @@ function Stack.mkcpy(self, other)
       clone_pool[#clone_pool] = nil
     end
   end
+  other.computer = self.computer
   other.do_swap = self.do_swap
   other.speed = self.speed
   other.health = self.health
@@ -663,52 +667,61 @@ function Stack.controls(self)
 end
 
 -- Update everything for the stack based on inputs. Will update many times if needed to catch up.
-function Stack.run(self)
+function Stack.run(self, timesToRun)
   if game_is_paused then
     return
   end
 
-  -- Normally we want to run 1 frame, but if we are a replay or from a net game,
-  -- we want to possibly run a lot frames to catch up, or 0 if there is nothing to simulate.
-  -- However, if we are a reaply or net game, we still want to run after game over to show
-  -- game over effects.
-  local times_to_run = 1
-  if self.is_local == false then
-    if self:game_ended() == false then
-      times_to_run = 0
+  if self.computer then
+    local nextInput = self.computer:run(self)
+    if nextInput then
+      self.input_buffer = self.input_buffer .. nextInput
     end
+  end
 
-    -- Decide how many frames of input we should run.
-    local buffer_len = string.len(self.input_buffer)
+  if timesToRun == nil then
+    -- Normally we want to run 1 frame, but if we are a replay or from a net game,
+    -- we want to possibly run a lot frames to catch up, or 0 if there is nothing to simulate.
+    -- However, if we are a reaply or net game, we still want to run after game over to show
+    -- game over effects.
+    timesToRun = 1
+    if self.is_local == false then
+      if self:game_ended() == false then
+        timesToRun = 0
+      end
 
-    -- If we're way behind, run at max speed.
-    if buffer_len >= 15 then
-      -- When we're closer, run fewer per frame, so things are less choppy.
-      -- This might have a side effect of being a little farther behind on average,
-      -- since we don't always run at top speed until the buffer is empty.
-      times_to_run = self.max_runs_per_frame
-    elseif buffer_len >= 10 then
-      times_to_run = 2
-    elseif buffer_len >= 1 then
-      times_to_run = 1
-    end
+      -- Decide how many frames of input we should run.
+      local buffer_len = string.len(self.input_buffer)
 
-    if self.play_to_end then
-      if string.len(self.input_buffer) < 4 then
-        self.play_to_end = nil
-        stop_sounds = true
+      -- If we're way behind, run at max speed.
+      if buffer_len >= 15 then
+        -- When we're closer, run fewer per frame, so things are less choppy.
+        -- This might have a side effect of being a little farther behind on average,
+        -- since we don't always run at top speed until the buffer is empty.
+        timesToRun = self.max_runs_per_frame
+      elseif buffer_len >= 10 then
+        timesToRun = 2
+      elseif buffer_len >= 1 then
+        timesToRun = 1
+      end
+
+      if self.play_to_end then
+        if string.len(self.input_buffer) < 4 then
+          self.play_to_end = nil
+          stop_sounds = true
+        end
       end
     end
   end
 
-  for i = 1, times_to_run do
+  for i = 1, timesToRun do
     self:update_popfxs()
     self:update_cards()
     if self.is_local == false then
       if self.input_buffer and string.len(self.input_buffer) > 0 then
         self.input_state = string.sub(self.input_buffer, 1, 1)
       else
-        -- Set input state to no input?
+        break
       end
     elseif self:game_ended() == false then
       self.input_state = self:send_controls()
@@ -725,6 +738,10 @@ end
 
 -- Enqueue a card animation
 function Stack.enqueue_card(self, chain, x, y, n)
+  if self.canvas == nil then
+    return
+  end
+
   card_burstAtlas = nil
   card_burstParticle = nil
   if config.popfx == true then
@@ -737,6 +754,10 @@ end
 
 -- Enqueue a pop animation
 function Stack.enqueue_popfx(self, x, y, popsize)
+  if self.canvas == nil then
+    return
+  end
+
   if characters[self.character].images["burst"] then
     burstAtlas = characters[self.character].images["burst"]
     burstFrameDimension = burstAtlas:getWidth() / 9

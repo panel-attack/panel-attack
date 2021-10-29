@@ -30,6 +30,10 @@ end
 
 -- Update all the card frames used for doing the card animation
 function Stack.update_cards(self)
+  if self.canvas == nil then
+    return
+  end
+
   for i = self.card_q.first, self.card_q.last do
     local card = self.card_q[i]
     if card_animation[card.frame] then
@@ -79,6 +83,10 @@ end
 
 -- Update all the pop animations
 function Stack.update_popfxs(self)
+  if self.canvas == nil then
+    return
+  end
+  
   for i = self.pop_q.first, self.pop_q.last do
     local popfx = self.pop_q[i]
     if characters[self.character].popfx_style == "burst" or characters[self.character].popfx_style == "fadeburst" then
@@ -258,6 +266,10 @@ local mask_shader = love.graphics.newShader [[
 
 -- Renders the player's stack on screen
 function Stack.render(self)
+  if self.canvas == nil then
+    return
+  end
+
   local function frame_mask(x_pos, y_pos)
     love.graphics.setShader(mask_shader)
     love.graphics.setBackgroundColor(1, 1, 1)
