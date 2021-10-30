@@ -672,7 +672,7 @@ function Stack.run(self, timesToRun)
     return
   end
 
-  if self.computer then
+  if self.computer and self:game_ended() == false then
     local nextInput = self.computer:getInput(self)
     if nextInput then
       self.input_buffer = self.input_buffer .. nextInput

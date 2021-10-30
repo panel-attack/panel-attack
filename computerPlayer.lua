@@ -3,19 +3,19 @@ require("engine")
 local cpuConfigs = {
   ["Hard"] =
   {
-    log = false,
+    log = 0,
     profiled = false,
     inputSpeed = 4
   },
   ["Dev"] =
   {
-    log = true,
+    log = 2,
     profiled = false,
     inputSpeed = 15
   },
   ["DevSlow"] =
   {
-    log = true,
+    log = 2,
     profiled = false,
     inputSpeed = 60
   }
@@ -66,8 +66,9 @@ function ComputerPlayer.isMovement(self, input)
 end
 
 -- a glorified print that can be turned on/off via the cpu configuration
-function ComputerPlayer.cpuLog(self, ...)
-  if self.config.log then
+-- high level means very detailed logging
+function ComputerPlayer.cpuLog(self, level, ...)
+  if self.config.log >= level then
       print(...)
   end
 end
@@ -83,7 +84,7 @@ function ComputerPlayer.getInput(self, stack)
   local inputBuffer = ""
 
   if stack.CLOCK % self.config.inputSpeed == 0 then
-    self:cpuLog("Computer Running at Clock: " .. stack.CLOCK)
+    self:cpuLog(2, "Computer Running at Clock: " .. stack.CLOCK)
     
     local bestAction = nil
     local bestEvaluation = -10000
@@ -111,7 +112,7 @@ function ComputerPlayer.getInput(self, stack)
   end
 
   if inputBuffer ~= "" then
-    self:cpuLog("executing input " .. inputBuffer)
+    self:cpuLog(3, "executing input " .. inputBuffer)
   end
   return inputBuffer
 end
@@ -123,6 +124,11 @@ function ComputerPlayer.allActions(self, stack)
   actions[#actions + 1] = rightInput .. waitInput .. swapInput
   actions[#actions + 1] = downInput  .. waitInput .. swapInput
   actions[#actions + 1] = leftInput  .. waitInput .. swapInput
+
+  actions[#actions + 1] = leftInput  .. waitInput .. downInput .. waitInput .. swapInput
+  actions[#actions + 1] = leftInput  .. waitInput .. upInput .. waitInput .. swapInput
+  actions[#actions + 1] = rightInput  .. waitInput .. downInput .. waitInput .. swapInput
+  actions[#actions + 1] = rightInput  .. waitInput .. upInput .. waitInput .. swapInput
 
   return actions
 end
@@ -139,8 +145,7 @@ end
 
 function ComputerPlayer.evaluateAction(self, oldStack, action)
 
-  --TODO: copy shallow some of these vars
-  local stack = deepcopy(oldStack, {prev_states=true, computer=true, garbage_target=true, canvas=true})
+  local stack = deepcopy(oldStack, {computer=true, garbage_target=true}, {prev_states=true, computer=true, garbage_target=true, canvas=true})
 
   stack.input_buffer = stack.input_buffer .. action
   stack.input_buffer = stack.input_buffer .. self:idleAction(10)
@@ -150,7 +155,7 @@ function ComputerPlayer.evaluateAction(self, oldStack, action)
 
   if stack:game_ended() then
     result = -1000
-    --self:cpuLog("avoiding game over")
+    self:cpuLog(4, "avoiding game over")
   end
 
   local cursorRow = stack.cur_row
@@ -161,7 +166,7 @@ function ComputerPlayer.evaluateAction(self, oldStack, action)
       local rightPanel = stack.panels[cursorRow][cursorColumn+1]
       if leftPanel.color == 0 or leftPanel.garbage then
         if leftPanel.garbage or rightPanel.garbage or rightPanel.color == 0 then
-          --self:cpuLog("avoiding empty")
+          self:cpuLog(4, "avoiding empty")
           result = result - 100 -- avoid cursor positions that do nothing
         end
       end
@@ -172,13 +177,13 @@ function ComputerPlayer.evaluateAction(self, oldStack, action)
     for row = 1, stack.height do
       if stack.panels[row][col].state == "matched" then
         result = result + 10
-        self:cpuLog("Computer: " .. stack.CLOCK .. " preferring matches")
+        self:cpuLog(4, "Computer: " .. stack.CLOCK .. " preferring matches")
       end
     end
   end
 
   if self.chain_counter and self.chain_counter > 0 then
-    self:cpuLog("Computer: " .. stack.CLOCK .. " found chain!")
+    self:cpuLog(2, "Computer: " .. stack.CLOCK .. " found chain!")
     result = result + (10000 * self.chain_counter)
   end
 

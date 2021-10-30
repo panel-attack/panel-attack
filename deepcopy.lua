@@ -1,7 +1,7 @@
 --local copyCount
 
 -- Save copied tables in `copies`, indexed by original table.
-function p_deepcopy(orig, keysToIgnore, copies)
+function p_deepcopy(orig, keysToShallowCopy, keysToIgnore, copies)
     copies = copies or {}
     local orig_type = type(orig)
     local copy
@@ -14,12 +14,16 @@ function p_deepcopy(orig, keysToIgnore, copies)
             for orig_key, orig_value in next, orig, nil do
                 if keysToIgnore == nil or keysToIgnore[orig_key] == nil then
                     if type(orig_key) == "table" then
-                        orig_key = p_deepcopy(orig_key, copies)
+                        if keysToShallowCopy == nil or keysToShallowCopy[orig_key] == nil then
+                            orig_key = p_deepcopy(orig_key, copies)
+                        end
                     end
                     if type(orig_value) == "table" then
                         --local previousCount = copyCount
 
-                        orig_value = p_deepcopy(orig_value, copies)
+                        if keysToShallowCopy == nil or keysToShallowCopy[orig_key] == nil then
+                            orig_value = p_deepcopy(orig_value, copies)
+                        end
 
                         --if copyCount > previousCount + 100 then
                         --    print("deep: " .. copyCount - previousCount .. " - " .. orig_key)
@@ -40,9 +44,9 @@ function p_deepcopy(orig, keysToIgnore, copies)
 end
 
 -- Save copied tables in `copies`, indexed by original table.
-function deepcopy(orig, keysToIgnore, copies)
+function deepcopy(orig, keysToShallowCopy, keysToIgnore, copies)
     --copyCount = 0
-    local result = p_deepcopy(orig, keysToIgnore, copies)
+    local result = p_deepcopy(orig, keysToShallowCopy, keysToIgnore, copies)
 
     --print("deep copy finished: " .. copyCount)
     return result
