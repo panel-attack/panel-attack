@@ -18,7 +18,7 @@ require("mainloop")
 require("sound")
 require("timezones")
 require("gen_panels")
-require("computer")
+require("computerPlayer")
 require("profiler")
 require("deepcopy")
 

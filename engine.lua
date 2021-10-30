@@ -673,7 +673,7 @@ function Stack.run(self, timesToRun)
   end
 
   if self.computer then
-    local nextInput = self.computer:run(self)
+    local nextInput = self.computer:getInput(self)
     if nextInput then
       self.input_buffer = self.input_buffer .. nextInput
     end

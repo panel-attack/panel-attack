@@ -286,7 +286,6 @@ function ask_for_gpanels(prev_panels, stack)
 end
 
 function make_local_panels(stack, prev_panels)
-  local ncolors = stack.NCOLORS
   local ret = make_panels(stack.NCOLORS, prev_panels, stack)
   stack.panel_buffer = stack.panel_buffer .. ret
   local replay = replay[P1.match.mode]
