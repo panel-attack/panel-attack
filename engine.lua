@@ -187,7 +187,6 @@ Stack =
     s.combo_chain_play = nil
     s.game_over = false -- only set if this player got a game over
     s.game_over_clock = 0 -- only set if game_over is true, the exact clock frame the player lost
-    GAME_ENDED_CLOCK = 0 -- 0 if no one has lost, otherwise the minimum clock time of those that lost
     s.sfx_land = false
     s.sfx_garbage_thud = 0
 
@@ -677,6 +676,7 @@ function Stack.run(self, timesToRun)
     if nextInput then
       self.input_buffer = self.input_buffer .. nextInput
     end
+    timesToRun = 1
   end
 
   if timesToRun == nil then
@@ -842,12 +842,12 @@ function Stack.PdP(self)
           self.starting_cur_col = nil
           self.countdown_CLOCK = nil
           self.game_stopwatch_running = true
-          if self.which == 1 then
+          if self.which == 1 and self.canvas ~= nil then
             SFX_Go_Play = 1
           end
         elseif self.countdown_timer and self.countdown_timer % 60 == 0 and self.which == 1 then
           --play beep for timer dropping to next second in 3-2-1 countdown
-          if self.which == 1 then
+          if self.which == 1 and self.canvas ~= nil then
             SFX_Countdown_Play = 1
           end
         end
@@ -1294,20 +1294,22 @@ function Stack.PdP(self)
       self.cur_timer = self.cur_timer + 1
     end
     -- TAUNTING
-    if self.taunt_up ~= nil then
-      for _, t in ipairs(characters[self.character].sounds.taunt_ups) do
-        t:stop()
+    if self.canvas ~= nil then
+      if self.taunt_up ~= nil then
+        for _, t in ipairs(characters[self.character].sounds.taunt_ups) do
+          t:stop()
+        end
+        characters[self.character].sounds.taunt_ups[self.taunt_up]:play()
+        self:taunt("taunt_up")
+        self.taunt_up = nil
+      elseif self.taunt_down ~= nil then
+        for _, t in ipairs(characters[self.character].sounds.taunt_downs) do
+          t:stop()
+        end
+        characters[self.character].sounds.taunt_downs[self.taunt_down]:play()
+        self:taunt("taunt_down")
+        self.taunt_down = nil
       end
-      characters[self.character].sounds.taunt_ups[self.taunt_up]:play()
-      self:taunt("taunt_up")
-      self.taunt_up = nil
-    elseif self.taunt_down ~= nil then
-      for _, t in ipairs(characters[self.character].sounds.taunt_downs) do
-        t:stop()
-      end
-      characters[self.character].sounds.taunt_downs[self.taunt_down]:play()
-      self:taunt("taunt_down")
-      self.taunt_down = nil
     end
 
     -- SWAPPING
@@ -1457,7 +1459,7 @@ function Stack.PdP(self)
 
     -- Update Music
     if not music_mute and not game_is_paused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
-      if self:game_ended() == false then
+      if self:game_ended() == false and self.canvas ~= nil then
         if self.do_countdown then
           if SFX_Go_Play == 1 then
             themes[config.theme].sounds.go:stop()
@@ -1495,7 +1497,7 @@ function Stack.PdP(self)
     end
 
     -- Update Sound FX
-    if not SFX_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
+    if not SFX_mute and self.canvas ~= nil and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
       if SFX_Swap_Play == 1 then
         themes[config.theme].sounds.swap:stop()
         themes[config.theme].sounds.swap:play()
@@ -1603,7 +1605,7 @@ function Stack.PdP(self)
     end
 
     self.CLOCK = self.CLOCK + 1
-    if self.game_stopwatch_running and GAME_ENDED_CLOCK == 0 then
+    if self.game_stopwatch_running and self.match.gameEndedClock == 0 then
       self.game_stopwatch = (self.game_stopwatch or -1) + 1
     end
   end
@@ -1612,7 +1614,7 @@ end
 -- Returns true if the stack is simulated past the end of the match.
 function Stack.game_ended(self)
   local result = false
-  if GAME_ENDED_CLOCK > 0 and self.CLOCK > GAME_ENDED_CLOCK then
+  if self.match.gameEndedClock > 0 and self.CLOCK > self.match.gameEndedClock then
     result = true
   end
 
@@ -1627,25 +1629,48 @@ function Stack.game_ended(self)
   return result
 end
 
+-- Returns 1 if this player won, 0 for draw, and -1 for loss, nil if no result yet
+function Stack.gameResult(self)
+  
+  -- We can't call it until someone has lost and everyone has played up to that point in time.
+  local otherPlayer = self.garbage_target
+  if self.match.gameEndedClock > 0 and self.CLOCK >= self.match.gameEndedClock and otherPlayer.CLOCK >= self.match.gameEndedClock then
+    if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
+      require("lldebugger").start()
+    end
+    if self.game_over_clock == self.match.gameEndedClock and otherPlayer.game_over_clock == self.match.gameEndedClock then
+      return 0
+    elseif self.game_over_clock == self.match.gameEndedClock then
+      return -1
+    elseif otherPlayer.game_over_clock == self.match.gameEndedClock then
+      return 1
+    end
+  end
+
+  return nil
+end
+
 -- Sets the current stack as "lost" will update the match too if they lost first.
 -- Also begins drawing game over effects
 function Stack.set_game_over(self)
   self.game_over = true
   self.game_over_clock = self.CLOCK
 
-  if GAME_ENDED_CLOCK == 0 or self.CLOCK <= GAME_ENDED_CLOCK then
-    GAME_ENDED_CLOCK = self.CLOCK
+  if self.match.gameEndedClock == 0 or self.CLOCK <= self.match.gameEndedClock then
+    self.match.gameEndedClock = self.CLOCK
   end
 
-  local popsize = "small"
-  local panels = self.panels
-  local width = self.width
-  for row = 1, #panels do
-    for col = 1, width do
-      local panel = panels[row][col]
-      panel.state = "dead"
-      if row == #panels then
-        self:enqueue_popfx(col, row, popsize)
+  if self.canvas then 
+    local popsize = "small"
+    local panels = self.panels
+    local width = self.width
+    for row = 1, #panels do
+      for col = 1, width do
+        local panel = panels[row][col]
+        panel.state = "dead"
+        if row == #panels then
+          self:enqueue_popfx(col, row, popsize)
+        end
       end
     end
   end
@@ -1756,7 +1781,9 @@ function Stack.drop_garbage(self, width, height, metal)
     end
   end
 
-  print(string.format("Dropping garbage on player %d - height %d  width %d  %s", self.player_number, height, width, metal and "Metal" or ""))
+  if self.canvas ~= nil then
+    print(string.format("Dropping garbage on player %d - height %d  width %d  %s", self.player_number, height, width, metal and "Metal" or ""))
+  end
 
   for i = self.height + 1, spawn_row + height - 1 do
     if not self.panels[i] then
@@ -1842,7 +1869,7 @@ end
 
 -- Receives garbage on to the stack, rewinding the stack and simulating it again if needed.
 function Stack.recv_garbage(self, time, to_recv)
-  if self.CLOCK > time then
+  if self.CLOCK > time and self.prev_states then --TODO
     local prev_states = self.prev_states
     local next_self = prev_states[time + 1]
     while next_self and (next_self.prev_active_panels ~= 0 or next_self.n_active_panels ~= 0) do

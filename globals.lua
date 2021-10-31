@@ -38,8 +38,6 @@ current_stage = nil
 background_overlay = nil
 foreground_overlay = nil
 
-GAME_ENDED_CLOCK = 0
-
 -- win counters
 my_win_count = 0
 op_win_count = 0

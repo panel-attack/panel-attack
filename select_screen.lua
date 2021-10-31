@@ -922,8 +922,10 @@ function select_screen.main()
             is_local = false
           end
           P1 = Stack(1, GAME.match, is_local, msg.player_settings.panels_dir, msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
+          GAME.match.P1 = P1
           P1.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
           P2 = Stack(2, GAME.match, false, msg.opponent_settings.panels_dir, msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
+          GAME.match.P2 = P2
           P2.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
           if currently_spectating then
             P1.panel_buffer = fake_P1.panel_buffer
@@ -1377,6 +1379,7 @@ function select_screen.main()
     if cursor_data[1].state.ready and select_screen.character_select_mode == "1p_vs_yourself" then
       GAME.match = Match("vs")
       P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+      GAME.match.P1 = P1
       P1.garbage_target = P1
       P2 = nil
       make_local_panels(P1, "000000")
@@ -1389,9 +1392,11 @@ function select_screen.main()
     -- Handle Vs Computer Setup
     elseif cursor_data[1].state.ready and select_screen.character_select_mode == "2p_local_computer_vs" then
       GAME.match = Match("vs")
-      P1 = Stack(1, GAME.match, false, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
-      P1.computer = ComputerPlayer()
-      P2 = Stack(2, GAME.match, false, cursor_data[2].state.panels_dir, cursor_data[2].state.level, cursor_data[2].state.character)
+      P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+      GAME.match.P1 = P1
+      --P1.computer = ComputerPlayer()
+      P2 = Stack(2, GAME.match, false, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+      GAME.match.P2 = P2
       P2.computer = ComputerPlayer()
       P1.garbage_target = P2
       P2.garbage_target = P1
@@ -1416,7 +1421,9 @@ function select_screen.main()
     elseif cursor_data[1].state.ready and select_screen.character_select_mode == "2p_local_vs" and cursor_data[2].state.ready then
       GAME.match = Match("vs")
       P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+      GAME.match.P1 = P1
       P2 = Stack(2, GAME.match, true, cursor_data[2].state.panels_dir, cursor_data[2].state.level, cursor_data[2].state.character)
+      GAME.match.P2 = P2
       P1.garbage_target = P2
       P2.garbage_target = P1
       current_stage = cursor_data[math.random(1, 2)].state.stage

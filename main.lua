@@ -19,7 +19,6 @@ require("sound")
 require("timezones")
 require("gen_panels")
 require("computerPlayer")
-require("profiler")
 require("deepcopy")
 
 GAME = require("game")
