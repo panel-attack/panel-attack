@@ -1,10 +1,11 @@
 require("engine")
 require("profiler")
 
-local MONTE_CARLO_RUN_COUNT = 5
-local MAX_CURSOR_MOVE_DISTANCE = 3
-local CURSOR_MOVE_WAIT_TIME = 5
+local MONTE_CARLO_RUN_COUNT = 1
+local MAX_CURSOR_MOVE_DISTANCE = 20
+local CURSOR_MOVE_WAIT_TIME = 2
 local PROFILE_TIME = 800
+local MAX_CLOCK_PLAYOUT = 10
 
 local cpuConfigs = {
   ["Hard"] =
@@ -33,7 +34,7 @@ local cpuConfigs = {
   }
 }
 
-local active_cpuConfig = cpuConfigs["DevSlow"]
+local active_cpuConfig = cpuConfigs["Hard"]
 
 CPUConfig = class(function(self, actualConfig)
   self.log = actualConfig["log"]
@@ -220,25 +221,24 @@ end
 
 function ComputerPlayer.heuristicValueForStack(self, stack)
 
-  local result = math.random() / 100 -- small amount of randomness
+  local result = math.random() / 10000000 -- small amount of randomness
 
   local gameResult = stack:gameResult()
   if gameResult and gameResult ~= 0 then
-    result = result + (100000 * gameResult)
-    self:cpuLog(3, "game over!")
+    result = result + (gameResult / 10)
   end
 
-  result = result + (stack.stop_time * 20000)
-  result = result + (stack.pre_stop_time * 2000)
+  result = result + (stack.stop_time  / 100)
+  result = result + (stack.pre_stop_time / 10000)
 
   if self:rowEmpty(stack, 3) then
-    result = result - 100
+    result = result + (-1 / 100000)
     self:cpuLog(3, "Computer: " .. stack.CLOCK .. " low panel count")
   end
 
   for index = 8, 12, 1 do
     if self:rowEmpty(stack, index) == false then
-      result = result - 100
+      result = result + (-1 / 100000)
       self:cpuLog(3, "Computer: " .. stack.CLOCK .. " near top out")
     end
   end
@@ -246,7 +246,7 @@ function ComputerPlayer.heuristicValueForStack(self, stack)
   return result
 end
 
-function ComputerPlayer.playoutValueForStack(self, stack)
+function ComputerPlayer.playoutValueForStack(self, stack, maxClock)
 
   while stack.CLOCK + #stack.input_buffer <= stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer do
     local randomAction = uniformly(self:allActions(stack))
@@ -281,18 +281,22 @@ function ComputerPlayer.playoutValueForStack(self, stack)
     return gameResult
   end
 
-  self:cpuLog(7, "Deeper..." .. stack.CLOCK)
-  local innerValue = self:playoutValueForStack(stack)
-  return innerValue
+  if stack.CLOCK < maxClock then
+    self:cpuLog(7, "Deeper..." .. stack.CLOCK)
+    local innerValue = self:playoutValueForStack(stack, maxClock)
+    return innerValue
+  end
+
+  return self:heuristicValueForStack(stack)
 end
 
-function ComputerPlayer.monteCarloValueForStack(self, stack, n)
+function ComputerPlayer.monteCarloValueForStack(self, stack, maxClock, n)
   
   n = n or MONTE_CARLO_RUN_COUNT
   local sum = 0
   for index = 1, n do
     local copiedStack = self:copyMatch(stack)
-    local value = self:playoutValueForStack(copiedStack)
+    local value = self:playoutValueForStack(copiedStack, maxClock)
     sum = sum + value
   end
   sum = sum / n
@@ -300,7 +304,7 @@ function ComputerPlayer.monteCarloValueForStack(self, stack, n)
 end
 
 function ComputerPlayer.bestAction(self, stack, maxClock)
-  maxClock = maxClock or stack.CLOCK + 30
+  maxClock = maxClock or stack.CLOCK + MAX_CLOCK_PLAYOUT
   --self:cpuLog(2, "maxClock " .. maxClock )
 
   local bestAction = nil
@@ -312,7 +316,7 @@ function ComputerPlayer.bestAction(self, stack, maxClock)
 
     self:addAction(simulatedStack, action)
 
-    local evaluation = self:monteCarloValueForStack(simulatedStack)
+    local evaluation = self:monteCarloValueForStack(simulatedStack, maxClock)
     --local evaluation = self:heuristicValueForStack(simulatedStack)
     --local result = self:bestAction(simulatedStack, maxClock)
     
