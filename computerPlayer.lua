@@ -1,6 +1,11 @@
 require("engine")
 require("profiler")
 
+local MONTE_CARLO_RUN_COUNT = 5
+local MAX_CURSOR_MOVE_DISTANCE = 3
+local CURSOR_MOVE_WAIT_TIME = 5
+local PROFILE_TIME = 800
+
 local cpuConfigs = {
   ["Hard"] =
   {
@@ -17,18 +22,18 @@ local cpuConfigs = {
   ["Dev"] =
   {
     log = 3,
-    profiled = true,
+    profiled = false,
     inputSpeed = 15
   },
   ["DevSlow"] =
   {
     log = 6,
-    profiled = false,
+    profiled = true,
     inputSpeed = 60
   }
 }
 
-local active_cpuConfig = cpuConfigs["Hard"]
+local active_cpuConfig = cpuConfigs["DevSlow"]
 
 CPUConfig = class(function(self, actualConfig)
   self.log = actualConfig["log"]
@@ -37,6 +42,9 @@ CPUConfig = class(function(self, actualConfig)
 end)
 
 ComputerPlayer = class(function(self)
+  if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
+    require("lldebugger").start()
+  end
   if active_cpuConfig then
       print("cpu config successfully loaded")
       self.config = CPUConfig(active_cpuConfig)
@@ -97,28 +105,18 @@ function ComputerPlayer.getInput(self, stack)
   local inputBuffer = ""
 
   if stack.CLOCK - self.lastInputTime > self.config.inputSpeed then
-    self:cpuLog(2, "Computer Calculating at Clock: " .. stack.CLOCK)
+    self:cpuLog(2, "Computer " .. stack.which .. " Calculating at Clock: " .. stack.CLOCK)
     
-    local bestAction = nil
-    local bestEvaluation = -10000
-    local actions = self:allActions(stack)
-    for idx = 1, #actions do
-      local action = actions[idx]
-      local evaluation = self:evaluateAction(stack, action)
-      if evaluation > bestEvaluation then
-        bestAction = action
-        bestEvaluation = evaluation
-      end
-    end
+    local results = self:bestAction(stack)
 
-    inputBuffer = bestAction
+    inputBuffer = results[1]
     self.lastInputTime = stack.CLOCK
-    self:cpuLog(4, "executing input " .. inputBuffer)
+    self:cpuLog(4, "Best Action: " .. inputBuffer)
   else
     inputBuffer = waitInput
   end
 
-  if self.profiler and stack.CLOCK > 1000 then
+  if self.profiler and stack.CLOCK > PROFILE_TIME then
     self.profiler:stop()
     local outfile = io.open( "profile.txt", "w+" )
     self.profiler:report( outfile )
@@ -137,42 +135,21 @@ function ComputerPlayer.allActions(self, stack)
 
   actions[#actions + 1] = raiseInput
 
+  -- actions[#actions + 1] = swapInput
+
   local cursorRow = stack.cur_row
   local cursorColumn = stack.cur_col
-  for column = 1, 6, 1 do
-    for row = 1, 12, 1 do
-      if math.abs(row - cursorRow) + math.abs(column - cursorColumn) < 5 then
+  for column = 1, stack.width - 1, 1 do
+    for row = 1, stack.height, 1 do
+      local distance = math.abs(row - cursorRow) + math.abs(column - cursorColumn)
+      if distance > 0 and distance <= MAX_CURSOR_MOVE_DISTANCE and stack:canSwap(row, column) then
         actions[#actions + 1] = self:moveToRowColumnAction(stack, row, column) .. swapInput
       end
     end
   end
 
-  -- actions[#actions + 1] = upInput .. waitInput .. swapInput
-  -- actions[#actions + 1] = rightInput .. waitInput .. swapInput
-  -- actions[#actions + 1] = downInput  .. waitInput .. swapInput
-  -- actions[#actions + 1] = leftInput  .. waitInput .. swapInput
-
-  -- --diagonal
-  -- actions[#actions + 1] = leftInput  .. waitInput .. downInput .. waitInput .. swapInput
-  -- actions[#actions + 1] = leftInput  .. waitInput .. upInput .. waitInput .. swapInput
-  -- actions[#actions + 1] = rightInput  .. waitInput .. downInput .. waitInput .. swapInput
-  -- actions[#actions + 1] = rightInput  .. waitInput .. upInput .. waitInput .. swapInput
-
-  -- --two straight
-  -- actions[#actions + 1] = leftInput  .. waitInput .. leftInput .. waitInput .. swapInput
-  -- actions[#actions + 1] = rightInput  .. waitInput .. rightInput .. waitInput .. swapInput
-  -- actions[#actions + 1] = downInput  .. waitInput .. downInput .. waitInput .. swapInput
-  -- actions[#actions + 1] = upInput  .. waitInput .. upInput .. waitInput .. swapInput
-
-  -- --two diagonal
-  -- actions[#actions + 1] = leftInput  .. waitInput .. downInput .. waitInput .. leftInput  .. waitInput .. downInput .. waitInput .. swapInput
-  -- actions[#actions + 1] = leftInput  .. waitInput .. upInput .. waitInput .. leftInput  .. waitInput .. upInput .. waitInput .. swapInput
-  -- actions[#actions + 1] = rightInput  .. waitInput .. downInput .. waitInput .. rightInput  .. waitInput .. downInput .. waitInput .. swapInput
-  -- actions[#actions + 1] = rightInput  .. waitInput .. upInput .. waitInput .. rightInput  .. waitInput .. upInput .. waitInput .. swapInput
-
   return actions
 end
-
 
 function ComputerPlayer.idleAction(self, idleCount)
   local result = ""
@@ -183,7 +160,6 @@ function ComputerPlayer.idleAction(self, idleCount)
   return result
 end
 
-
 function ComputerPlayer.moveToRowColumnAction(self, stack, row, column)
 
   local cursorRow = stack.cur_row
@@ -192,31 +168,15 @@ function ComputerPlayer.moveToRowColumnAction(self, stack, row, column)
   local result = ""
 
   if cursorColumn > column then
-    for index = cursorColumn, column, -1 do
-      result = result .. leftInput .. waitInput
-      result = result .. waitInput .. waitInput .. waitInput .. waitInput .. waitInput .. waitInput
-    end
-  end
-
-  if cursorColumn < column then
-    for index = cursorColumn, column, 1 do
-      result = result .. rightInput .. waitInput
-      result = result .. waitInput .. waitInput .. waitInput .. waitInput .. waitInput .. waitInput
-    end
+    result = result .. string.rep(leftInput .. string.rep(waitInput, CURSOR_MOVE_WAIT_TIME), cursorColumn - column)
+  elseif cursorColumn < column then
+    result = result .. string.rep(rightInput .. string.rep(waitInput, CURSOR_MOVE_WAIT_TIME), column - cursorColumn)
   end
 
   if cursorRow > row then
-    for index = cursorRow, row, -1 do
-      result = result .. downInput .. waitInput
-      result = result .. waitInput .. waitInput .. waitInput .. waitInput .. waitInput .. waitInput
-    end
-  end
-
-  if cursorRow < row then
-    for index = cursorRow, row, 1 do
-      result = result .. upInput .. waitInput
-      result = result .. waitInput .. waitInput .. waitInput .. waitInput .. waitInput .. waitInput
-    end
+    result = result .. string.rep(downInput .. string.rep(waitInput, CURSOR_MOVE_WAIT_TIME), cursorRow - row)
+  elseif cursorRow < row then
+    result = result .. string.rep(upInput .. string.rep(waitInput, CURSOR_MOVE_WAIT_TIME), row - cursorRow)
   end
 
   return result
@@ -233,7 +193,7 @@ function ComputerPlayer.rowEmpty(self, stack, row)
   return allBlank
 end
 
-function ComputerPlayer.evaluateAction(self, oldStack, action)
+function ComputerPlayer.copyMatch(self, oldStack)
 
   -- TODO pass in match
   local match = deepcopy(oldStack.match, nil, {P1=true, P2=true})
@@ -251,49 +211,22 @@ function ComputerPlayer.evaluateAction(self, oldStack, action)
   stack.match = match
   otherStack.match = match
 
-  local targetTime = 50
-  if #action > targetTime then
-    error("action too big: " .. #action)
-  end
-  local idleTime = targetTime - #action
+  return stack
+end
+
+function ComputerPlayer.addAction(self, stack, action)
   stack.input_buffer = stack.input_buffer .. action
-  stack.input_buffer = stack.input_buffer .. self:idleAction(idleTime)
-  stack.garbage_target.input_buffer = stack.garbage_target.input_buffer .. self:idleAction(targetTime)
+end
 
-  stack:run(#stack.input_buffer)
-  stack.garbage_target:run(#stack.garbage_target.input_buffer)
-
-  local cursorRow = stack.cur_row
-  local cursorColumn = stack.cur_col
-  if cursorRow and cursorColumn and stack.width and stack.height then
-    if stack.width >= cursorColumn and stack.height >= cursorRow then
-      local leftPanel = stack.panels[cursorRow][cursorColumn]
-      local rightPanel = stack.panels[cursorRow][cursorColumn+1]
-      if leftPanel.color == 0 or leftPanel.garbage then
-        if leftPanel.garbage or rightPanel.garbage or rightPanel.color == 0 then
-          self:cpuLog(4, "avoiding empty")
-          return -10000 -- avoid cursor positions that do nothing
-        end
-      end
-    end
-  end
+function ComputerPlayer.heuristicValueForStack(self, stack)
 
   local result = math.random() / 100 -- small amount of randomness
 
   local gameResult = stack:gameResult()
   if gameResult and gameResult ~= 0 then
-    result = result - (100000 * gameResult)
+    result = result + (100000 * gameResult)
     self:cpuLog(3, "game over!")
   end
-
-  -- for col = 1, stack.width do
-  --   for row = 1, stack.height do
-  --     if stack.panels[row][col].state == "matched" then
-  --       result = result + 10
-  --       self:cpuLog(3, "Computer: " .. stack.CLOCK .. " preferring matches")
-  --     end
-  --   end
-  -- end
 
   result = result + (stack.stop_time * 20000)
   result = result + (stack.pre_stop_time * 2000)
@@ -310,30 +243,86 @@ function ComputerPlayer.evaluateAction(self, oldStack, action)
     end
   end
 
-  for index = 1, 50, 50 do
-    stack.input_buffer = stack.input_buffer .. self:idleAction(1)
-    stack.garbage_target.input_buffer = stack.garbage_target.input_buffer .. self:idleAction(1)
-    stack:run(#stack.input_buffer)
-    stack.garbage_target:run(#stack.input_buffer)
+  return result
+end
 
-    result = result + (stack.stop_time * 20000)
-    result = result + (stack.pre_stop_time * 20)
+function ComputerPlayer.playoutValueForStack(self, stack)
 
-    local gameResult = stack:gameResult()
-    if gameResult and gameResult ~= 0 then
-      result = result + (100000 * gameResult)
-      break
-    end
+  while stack.CLOCK + #stack.input_buffer <= stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer do
+    local randomAction = uniformly(self:allActions(stack))
+    self:addAction(stack, randomAction)
+  end 
 
-    -- for k, v in pairs(stack.garbage_to_send) do
-    --   if #v > 0 then
-    --     self:cpuLog(3, "Computer: " .. stack.CLOCK .. " found garbage to send!")
-    --     result = result + 10000
-    --   end
-    -- end
+  while stack.CLOCK + #stack.input_buffer >= stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer do
+    local randomAction2 = uniformly(self:allActions(stack.garbage_target))
+    self:addAction(stack.garbage_target, randomAction2)
+  end 
+
+  --local runAmount = math.min(#stack.input_buffer, #stack.garbage_target.input_buffer)
+  local goal = math.min(stack.CLOCK + #stack.input_buffer, stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer)
+  stack:run(goal - stack.CLOCK)
+  stack.garbage_target:run(goal - stack.garbage_target.CLOCK)
+
+  if stack:game_ended() == false and stack.CLOCK ~= goal then
+    error("us goal wrong")
+  end
+  if stack.garbage_target:game_ended() == false and stack.garbage_target.CLOCK ~= goal then
+    error("opponent goal wrong")
   end
 
-  self:cpuLog(2, "Computer - Action " .. action .. " Value: " .. result)
+  local gameResult = stack:gameResult()
+  if gameResult then
+    -- if gameResult == 1 then
+    --   gameResult = gameResult - (stack.CLOCK / 1000)
+    -- end
+    -- if gameResult == -1 then
+    --   gameResult = gameResult + (stack.CLOCK / 1000)
+    -- end
+    return gameResult
+  end
 
-  return result
+  self:cpuLog(7, "Deeper..." .. stack.CLOCK)
+  local innerValue = self:playoutValueForStack(stack)
+  return innerValue
+end
+
+function ComputerPlayer.monteCarloValueForStack(self, stack, n)
+  
+  n = n or MONTE_CARLO_RUN_COUNT
+  local sum = 0
+  for index = 1, n do
+    local copiedStack = self:copyMatch(stack)
+    local value = self:playoutValueForStack(copiedStack)
+    sum = sum + value
+  end
+  sum = sum / n
+  return sum
+end
+
+function ComputerPlayer.bestAction(self, stack, maxClock)
+  maxClock = maxClock or stack.CLOCK + 30
+  --self:cpuLog(2, "maxClock " .. maxClock )
+
+  local bestAction = nil
+  local bestEvaluation = -100000
+  local actions = self:allActions(stack)
+  for idx = 1, #actions do
+    local action = actions[idx]
+    local simulatedStack = self:copyMatch(stack)
+
+    self:addAction(simulatedStack, action)
+
+    local evaluation = self:monteCarloValueForStack(simulatedStack)
+    --local evaluation = self:heuristicValueForStack(simulatedStack)
+    --local result = self:bestAction(simulatedStack, maxClock)
+    
+    self:cpuLog(2, "Computer - Action " .. action .. " Value: " .. evaluation)
+    if bestAction == nil or evaluation > bestEvaluation then
+      bestAction = action
+      bestEvaluation = evaluation
+    end
+  end
+
+  self:cpuLog(2, "Computer - done, best " .. bestAction .. " Value: " .. bestEvaluation)
+  return {bestAction, bestEvaluation}
 end

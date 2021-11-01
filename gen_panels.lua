@@ -4,7 +4,7 @@ local random = math.random
 
 -- stuff should have first_seven, metal, vs_mode, metal_col, prev_metal_col
 function make_panels(ncolors, prev_panels, stuff)
-  print("make_panels(" .. ncolors .. ", " .. prev_panels .. ", " .. (stuff.first_seven or "") .. ")")
+  --print("make_panels(" .. ncolors .. ", " .. prev_panels .. ", " .. (stuff.first_seven or "") .. ")")
   local ret = prev_panels
   local rows_to_make = 20
   local rows_to_place_metal_locations = rows_to_make

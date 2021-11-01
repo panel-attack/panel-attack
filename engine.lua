@@ -1314,26 +1314,7 @@ function Stack.PdP(self)
 
     -- SWAPPING
     if (self.swap_1 or self.swap_2) and not swapped_this_frame then
-      local row = self.cur_row
-      local col = self.cur_col
-      -- in order for a swap to occur, one of the two panels in
-      -- the cursor must not be a non-panel.
-      local do_swap =
-        (panels[row][col].color ~= 0 or panels[row][col + 1].color ~= 0) and -- also, both spaces must be swappable.
-        (not panels[row][col]:exclude_swap()) and
-        (not panels[row][col + 1]:exclude_swap()) and -- also, neither space above us can be hovering.
-        (self.cur_row == #panels or (panels[row + 1][col].state ~= "hovering" and panels[row + 1][col + 1].state ~= "hovering")) and --also, we can't swap if the game countdown isn't finished
-        not self.do_countdown and --also, don't swap on the first frame
-        not (self.CLOCK and self.CLOCK <= 1)
-      -- If you have two pieces stacked vertically, you can't move
-      -- both of them to the right or left by swapping with empty space.
-      -- TODO: This might be wrong if something lands on a swapping panel?
-      if panels[row][col].color == 0 or panels[row][col + 1].color == 0 then
-        do_swap = do_swap and not (self.cur_row ~= self.height and (panels[row + 1][col].state == "swapping" and panels[row + 1][col + 1].state == "swapping") and (panels[row + 1][col].color == 0 or panels[row + 1][col + 1].color == 0) and (panels[row + 1][col].color ~= 0 or panels[row + 1][col + 1].color ~= 0))
-        do_swap = do_swap and not (self.cur_row ~= 1 and (panels[row - 1][col].state == "swapping" and panels[row - 1][col + 1].state == "swapping") and (panels[row - 1][col].color == 0 or panels[row - 1][col + 1].color == 0) and (panels[row - 1][col].color ~= 0 or panels[row - 1][col + 1].color ~= 0))
-      end
-
-      do_swap = do_swap and (self.puzzle_moves == nil or self.puzzle_moves > 0)
+      local do_swap = self:canSwap(self.cur_row, self.cur_col)
 
       if do_swap then
         self.do_swap = true
@@ -1635,9 +1616,6 @@ function Stack.gameResult(self)
   -- We can't call it until someone has lost and everyone has played up to that point in time.
   local otherPlayer = self.garbage_target
   if self.match.gameEndedClock > 0 and self.CLOCK >= self.match.gameEndedClock and otherPlayer.CLOCK >= self.match.gameEndedClock then
-    if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
-      require("lldebugger").start()
-    end
     if self.game_over_clock == self.match.gameEndedClock and otherPlayer.game_over_clock == self.match.gameEndedClock then
       return 0
     elseif self.game_over_clock == self.match.gameEndedClock then
@@ -1696,6 +1674,32 @@ function Stack.pick_win_sfx(self)
   end
 end
 
+function Stack.canSwap(self, row, column)
+  local panels = self.panels
+  local width = self.width
+  local height = self.height
+  -- in order for a swap to occur, one of the two panels in
+  -- the cursor must not be a non-panel.
+  local do_swap =
+    (panels[row][column].color ~= 0 or panels[row][column + 1].color ~= 0) and -- also, both spaces must be swappable.
+    (not panels[row][column]:exclude_swap()) and
+    (not panels[row][column + 1]:exclude_swap()) and -- also, neither space above us can be hovering.
+    (row == #panels or (panels[row + 1][column].state ~= "hovering" and panels[row + 1][column + 1].state ~= "hovering")) and --also, we can't swap if the game countdown isn't finished
+    not self.do_countdown and --also, don't swap on the first frame
+    not (self.CLOCK and self.CLOCK <= 1)
+  -- If you have two pieces stacked vertically, you can't move
+  -- both of them to the right or left by swapping with empty space.
+  -- TODO: This might be wrong if something lands on a swapping panel?
+  if panels[row][column].color == 0 or panels[row][column + 1].color == 0 then
+    do_swap = do_swap and not (row ~= self.height and (panels[row + 1][column].state == "swapping" and panels[row + 1][column + 1].state == "swapping") and (panels[row + 1][column].color == 0 or panels[row + 1][column + 1].color == 0) and (panels[row + 1][column].color ~= 0 or panels[row + 1][column + 1].color ~= 0))
+    do_swap = do_swap and not (row ~= 1 and (panels[row - 1][column].state == "swapping" and panels[row - 1][column + 1].state == "swapping") and (panels[row - 1][column].color == 0 or panels[row - 1][column + 1].color == 0) and (panels[row - 1][column].color ~= 0 or panels[row - 1][column + 1].color ~= 0))
+  end
+
+  do_swap = do_swap and (self.puzzle_moves == nil or self.puzzle_moves > 0)
+
+  return do_swap
+end
+
 -- Swaps panels at the current cursor location
 function Stack.swap(self)
   local panels = self.panels
@@ -1718,7 +1722,9 @@ function Stack.swap(self)
   panels[row][col].timer = 4
   panels[row][col + 1].timer = 4
 
-  SFX_Swap_Play = 1
+  if self.canvas ~= nil then
+    SFX_Swap_Play = 1
+  end
 
   -- If you're swapping a panel into a position
   -- above an empty space or above a falling piece
