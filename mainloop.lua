@@ -123,6 +123,7 @@ do
     stage_loader_clear()
     close_socket()
     GAME.backgroundImage = themes[config.theme].images.bg_main
+    GAME.battleRoom = nil
     reset_filters()
     logged_in = 0
     connection_up_time = 0
@@ -507,6 +508,7 @@ function main_net_vs_lobby()
     find_and_add_music(themes[config.theme].musics, "main")
   end
   GAME.backgroundImage = themes[config.theme].images.bg_main
+  GAME.battleRoom = nil
   reset_filters()
   character_loader_clear()
   stage_loader_clear()
@@ -587,6 +589,7 @@ function main_net_vs_lobby()
       end
       if msg.create_room or msg.spectate_request_granted then
         global_initialize_room_msg = msg
+        GAME.battleRoom = BattleRoom()
         select_screen.character_select_mode = "2p_net_vs"
         love.window.requestAttention()
         play_optional_sfx(themes[config.theme].sounds.notification)
@@ -685,7 +688,6 @@ function main_net_vs_lobby()
           my_name = room.a
           op_name = room.b
           currently_spectating = true
-          room_number_last_spectated = room.roomNumber
           request_spectate(room.roomNumber)
         end
       end
@@ -781,15 +783,6 @@ function main_net_vs_lobby()
   end
 end
 
-function update_win_counts(win_counts)
-  if (P1 and P1.player_number == 1) or currently_spectating then
-    my_win_count = win_counts[1] or 0
-    op_win_count = win_counts[2] or 0
-  elseif P1 and P1.player_number == 2 then
-    my_win_count = win_counts[2] or 0
-    op_win_count = win_counts[1] or 0
-  end
-end
 -- list of spectators
 function spectator_list_string(list)
   local str = ""
@@ -892,20 +885,17 @@ function main_net_vs()
           end
         end
       elseif msg.leave_room then --reset win counts and go back to lobby
-        my_win_count = 0
-        op_win_count = 0
         return main_dumb_transition, {main_net_vs_lobby, "", 0, 0} -- someone left the game, quit to lobby
       end
     end
     --draw graphics
-    local name_and_score = {(my_name or "") .. "\n" .. loc("ss_wins") .. " " .. my_win_count, (op_name or "") .. "\n" .. loc("ss_wins") .. " " .. op_win_count}
     gprint((my_name or ""), P1.score_x + themes[config.theme].name_Pos[1], P1.score_y + themes[config.theme].name_Pos[2])
     gprint((op_name or ""), P2.score_x + themes[config.theme].name_Pos[1], P2.score_y + themes[config.theme].name_Pos[2])
     draw_label(themes[config.theme].images.IMG_wins, (P1.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
-    draw_number(my_win_count, themes[config.theme].images.IMG_timeNumber_atlas, 12, P1_win_quads, P1.score_x + themes[config.theme].win_Pos[1], P1.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale, "center")
+    draw_number(GAME.battleRoom.playerWinCounts[P1.player_number], themes[config.theme].images.IMG_timeNumber_atlas, 12, P1_win_quads, P1.score_x + themes[config.theme].win_Pos[1], P1.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale, "center")
 
     draw_label(themes[config.theme].images.IMG_wins, (P2.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P2.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
-    draw_number(op_win_count, themes[config.theme].images.IMG_timeNumber_atlas, 12, P2_win_quads, P2.score_x + themes[config.theme].win_Pos[1], P2.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale, "center")
+    draw_number(GAME.battleRoom.playerWinCounts[P2.player_number], themes[config.theme].images.IMG_timeNumber_atlas, 12, P2_win_quads, P2.score_x + themes[config.theme].win_Pos[1], P2.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale, "center")
 
     if not config.debug_mode then --this is printed in the same space as the debug details
       gprint(spectators_string, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
@@ -943,8 +933,6 @@ function main_net_vs()
 
     if currently_spectating and menu_escape(K[1]) then
       print("spectator pressed escape during a game")
-      my_win_count = 0
-      op_win_count = 0
       json_send({leave_room = true})
       return main_dumb_transition, {main_net_vs_lobby, "", 0, 0} -- spectator leaving the match
     end
@@ -977,12 +965,12 @@ function main_net_vs()
       elseif P1.game_over_clock == GAME_ENDED_CLOCK then -- opponent wins
         winSFX = P2:pick_win_sfx()
         end_text = loc("ss_p_wins", op_name)
-        op_win_count = op_win_count + 1 -- leaving these in just in case used with an old server that doesn't keep score.  win_counts will get overwritten after this by the server anyway.
+        GAME.battleRoom.playerWinCounts[P2.player_number] = GAME.battleRoom.playerWinCounts[P2.player_number] + 1 -- leaving these in just in case used with an old server that doesn't keep score.  win_counts will get overwritten after this by the server anyway.
         outcome_claim = P2.player_number
       elseif P2.game_over_clock == GAME_ENDED_CLOCK then -- client wins
         winSFX = P1:pick_win_sfx()
         end_text = loc("ss_p_wins", my_name)
-        my_win_count = my_win_count + 1 -- leave this in
+        GAME.battleRoom.playerWinCounts[P1.player_number] = GAME.battleRoom.playerWinCounts[P1.player_number] + 1 -- leave this in
         outcome_claim = P1.player_number
       end
     end
@@ -1067,11 +1055,11 @@ function main_local_vs()
       elseif P1.game_over_clock == GAME_ENDED_CLOCK then
         winSFX = P2:pick_win_sfx()
         end_text = loc("pl_2_win", op_name)
-        op_win_count = op_win_count + 1
+        GAME.battleRoom.playerWinCounts[P2.player_number] = GAME.battleRoom.playerWinCounts[P2.player_number] + 1
       elseif P2.game_over_clock == GAME_ENDED_CLOCK then
         winSFX = P1:pick_win_sfx()
         end_text = loc("pl_1_win", my_name)
-        my_win_count = my_win_count + 1
+        GAME.battleRoom.playerWinCounts[P1.player_number] = GAME.battleRoom.playerWinCounts[P1.player_number] + 1
       end
     end
 
@@ -1083,6 +1071,7 @@ end
 
 -- sets up globals for vs yourself
 function main_local_vs_yourself_setup()
+  GAME.battleRoom = BattleRoom()
   currently_spectating = false
   my_name = config.name or loc("player_n", "1")
   op_name = nil

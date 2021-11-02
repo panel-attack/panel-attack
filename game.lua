@@ -5,7 +5,8 @@ Game =
   class(
   function(self)
     self.scores = require("scores")
-    self.match = nil -- the current match going on or nil if inbetween games
+    self.match = nil -- Match - the current match going on or nil if inbetween games
+    self.battleRoom = nil -- BattleRoom - the current room being used for battles
     self.focused = true -- if the window is focused
     self.backgroundImage = nil -- the background image for the game, should always be set to something with the proper dimensions
   end
