@@ -130,7 +130,7 @@ function select_screen.main()
     find_and_add_music(themes[config.theme].musics, "main")
   end
 
-  background = themes[config.theme].images.bg_select_screen
+  GAME.backgroundImage = themes[config.theme].images.bg_select_screen
   reset_filters()
 
   select_screen.fallback_when_missing = {nil, nil}

@@ -371,6 +371,6 @@ function file_exists(name)
 end
 
 function reset_filters()
-  background_overlay = nil
-  foreground_overlay = nil
+  GAME.background_overlay = nil
+  GAME.foreground_overlay = nil
 end

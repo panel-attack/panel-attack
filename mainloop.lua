@@ -122,7 +122,7 @@ do
     character_loader_clear()
     stage_loader_clear()
     close_socket()
-    background = themes[config.theme].images.bg_main
+    GAME.backgroundImage = themes[config.theme].images.bg_main
     reset_filters()
     logged_in = 0
     connection_up_time = 0
@@ -225,7 +225,7 @@ function main_select_speed_99(next_func)
   local ret = nil
   local loc_difficulties = {loc("easy"), loc("normal"), loc("hard"), "EX Mode"} -- TODO: localize "EX Mode"
 
-  background = themes[config.theme].images.bg_main
+  GAME.backgroundImage = themes[config.theme].images.bg_main
   reset_filters()
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")
@@ -335,9 +335,9 @@ end
 local function use_current_stage()
   stage_loader_load(current_stage)
   stage_loader_wait()
-  background = stages[current_stage].images.background
-  background_overlay = themes[config.theme].images.bg_overlay
-  foreground_overlay = themes[config.theme].images.fg_overlay
+  GAME.backgroundImage = stages[current_stage].images.background
+  GAME.background_overlay = themes[config.theme].images.bg_overlay
+  GAME.foreground_overlay = themes[config.theme].images.fg_overlay
 end
 
 local function pick_random_stage()
@@ -506,7 +506,7 @@ function main_net_vs_lobby()
   if themes[config.theme].musics.main then
     find_and_add_music(themes[config.theme].musics, "main")
   end
-  background = themes[config.theme].images.bg_main
+  GAME.backgroundImage = themes[config.theme].images.bg_main
   reset_filters()
   character_loader_clear()
   stage_loader_clear()
@@ -1459,7 +1459,7 @@ do
     if themes[config.theme].musics.main then
       find_and_add_music(themes[config.theme].musics, "main")
     end
-    background = themes[config.theme].images.bg_main
+    GAME.backgroundImage = themes[config.theme].images.bg_main
     reset_filters()
     local active_idx = last_puzzle_idx or 1
     local k = K[1]

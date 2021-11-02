@@ -35,9 +35,6 @@ panels_ids = {} -- initialized in panels.lua
 
 current_stage = nil
 
-background_overlay = nil
-foreground_overlay = nil
-
 GAME_ENDED_CLOCK = 0
 
 -- win counters
