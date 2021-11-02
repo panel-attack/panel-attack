@@ -98,6 +98,7 @@ end
 
 -- Wrapper for doing something at 60hz
 -- The rest of the stuff happens at whatever rate is convenient
+-- Note there should only be one of these in the current loop as it handles key input ect.
 function variable_step(f)
   for i = 1, 4 do
     if leftover_time >= 1 / 60 then

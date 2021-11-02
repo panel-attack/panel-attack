@@ -43,9 +43,6 @@ CPUConfig = class(function(self, actualConfig)
 end)
 
 ComputerPlayer = class(function(self)
-  if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
-    require("lldebugger").start()
-  end
   if active_cpuConfig then
       print("cpu config successfully loaded")
       self.config = CPUConfig(active_cpuConfig)
