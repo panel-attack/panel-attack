@@ -226,7 +226,11 @@ function main_select_speed_99(next_func)
   local loc_difficulties = {loc("easy"), loc("normal"), loc("hard"), "EX Mode"} -- TODO: localize "EX Mode"
 
   background = themes[config.theme].images.bg_main
-
+  reset_filters()
+  if themes[config.theme].musics["main"] then
+    find_and_add_music(themes[config.theme].musics, "main")
+  end
+  
   local gameSettingsMenu
 
   local function goEscape()
@@ -386,6 +390,9 @@ function Stack.handle_pause(self)
 
     if game_is_paused then
       stop_the_music()
+      reset_filters()
+    else
+      use_current_stage()
     end
   end
 end
@@ -1777,8 +1784,8 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
           set_music_fade_percentage((fadeMusicLength - t) / fadeMusicLength)
         else
           if t == fadeMusicLength + 1 then
+            stop_the_music()
             set_music_fade_percentage(1) -- reset the music back to normal config volume
-            stop_all_audio()
           end
         end
 
