@@ -1841,17 +1841,17 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
           do_messages() -- recieve messages so we know if the next game is in the queue
         end
 
-        local new_match_started = false -- Whether a message has been sent that indicates a match has started
+        local left_select_menu = false -- Whether a message has been sent that indicates a match has started or the room has closed
         if this_frame_messages then
           for _, msg in ipairs(this_frame_messages) do
-            -- if a new match has started flag the match started variable
-            if msg.match_start or replay_of_match_so_far then
-              new_match_started = true
+            -- if a new match has started or the room is being closed, flag the left select menu variavle
+            if msg.match_start or replay_of_match_so_far or msg.leave_room then
+              left_select_menu = true
             end
           end
         end
         -- if conditions are met, leave the game over screen
-        if t >= timemin and ((t >= timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) or new_match_started then
+        if t >= timemin and ((t >= timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) or left_select_menu then
           set_music_fade_percentage(1) -- reset the music back to normal config volume
           stop_all_audio()
           SFX_GameOver_Play = 0
