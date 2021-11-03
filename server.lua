@@ -91,6 +91,8 @@ function create_room(a, b)
   lobby_changed = true
   clear_proposals(a.name)
   clear_proposals(b.name)
+  a.room = nil
+  b.room = nil
   local new_room = Room(a, b)
   local a_msg, b_msg = {create_room = true}, {create_room = true}
   a_msg.your_player_number = 1
