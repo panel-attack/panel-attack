@@ -1,11 +1,20 @@
 require("engine")
 require("profiler")
+PriorityQueue = dofile("priority_queue.lua")
 
 local MONTE_CARLO_RUN_COUNT = 1
-local MAX_CURSOR_MOVE_DISTANCE = 20
+local MAX_CURSOR_MOVE_DISTANCE = 5
 local CURSOR_MOVE_WAIT_TIME = 2
 local PROFILE_TIME = 800
 local MAX_CLOCK_PLAYOUT = 10
+local EXPAND_COUNT = 3
+
+local HEURISTIC_GAME_OVER_WEIGHT = 1000000
+local HEURISTIC_STOP_TIME_WEIGHT = 1000
+local HEURISTIC_PRE_STOP_TIME_WEIGHT = 50
+local HEURISTIC_NEAR_TOP_OUT_WEIGHT = 12
+local HEURISTIC_LOW_PANEL_COUNT_WEIGHT = 10
+local HEURISTIC_RANDOM_WEIGHT = 1
 
 local cpuConfigs = {
   ["Hard"] =
@@ -34,7 +43,7 @@ local cpuConfigs = {
   }
 }
 
-local active_cpuConfig = cpuConfigs["Hard"]
+local active_cpuConfig = cpuConfigs["Dev"]
 
 CPUConfig = class(function(self, actualConfig)
   self.log = actualConfig["log"]
@@ -105,14 +114,17 @@ function ComputerPlayer.getInput(self, stack)
   if stack.CLOCK - self.lastInputTime > self.config.inputSpeed then
     self:cpuLog(2, "Computer " .. stack.which .. " Calculating at Clock: " .. stack.CLOCK)
     
-    local results = self:bestAction(stack)
+    --local results = self:bestAction(stack)
+    local results = self:treeSearch(stack)
 
     inputBuffer = results[1]
     self.lastInputTime = stack.CLOCK
     self:cpuLog(4, "Best Action: " .. inputBuffer)
+    assert(inputBuffer and inputBuffer ~= "", "no result action")
   else
     inputBuffer = waitInput
   end
+
 
   if self.profiler and stack.CLOCK > PROFILE_TIME then
     self.profiler:stop()
@@ -141,7 +153,7 @@ function ComputerPlayer.allActions(self, stack)
     for row = 1, stack.height, 1 do
       local distance = math.abs(row - cursorRow) + math.abs(column - cursorColumn)
       if distance > 0 and distance <= MAX_CURSOR_MOVE_DISTANCE and stack:canSwap(row, column) then
-        actions[#actions + 1] = self:moveToRowColumnAction(stack, row, column) .. swapInput
+        actions[#actions + 1] = self:moveToRowColumnAction(stack, row, column) .. swapInput .. waitInput
       end
     end
   end
@@ -218,43 +230,50 @@ end
 
 function ComputerPlayer.heuristicValueForStack(self, stack)
 
-  local result = math.random() / 10000000 -- small amount of randomness
+  local result = math.random() * HEURISTIC_RANDOM_WEIGHT -- small amount of randomness
 
   local gameResult = stack:gameResult()
   if gameResult and gameResult ~= 0 then
-    result = result + (gameResult / 10)
+    result = gameResult * HEURISTIC_GAME_OVER_WEIGHT
+  elseif stack:game_ended() ~= stack.garbage_target:game_ended() then
+    error("Stacks differ in game over")
+  elseif stack.CLOCK ~= stack.garbage_target.CLOCK then
+    error("Stacks not simulated equal")
   end
 
-  result = result + (stack.stop_time  / 100)
-  result = result + (stack.pre_stop_time / 10000)
+  if stack.pre_stop_time > 0 then
+    self:cpuLog(6, "stop time: " .. stack.pre_stop_time)
+    result = result + (stack.pre_stop_time * HEURISTIC_PRE_STOP_TIME_WEIGHT)
+  end
+
+  if stack.pre_stop_time > 0 then
+    self:cpuLog(6, "pre_stop_time: " .. stack.pre_stop_time)
+    result = result + (stack.pre_stop_time * HEURISTIC_STOP_TIME_WEIGHT)
+  end
+
 
   if self:rowEmpty(stack, 3) then
-    result = result + (-1 / 100000)
+    result = result + HEURISTIC_LOW_PANEL_COUNT_WEIGHT
     self:cpuLog(3, "Computer: " .. stack.CLOCK .. " low panel count")
   end
 
   for index = 8, 12, 1 do
     if self:rowEmpty(stack, index) == false then
-      result = result + (-1 / 100000)
-      self:cpuLog(3, "Computer: " .. stack.CLOCK .. " near top out")
+      result = result + HEURISTIC_NEAR_TOP_OUT_WEIGHT
+      self:cpuLog(4, "Computer: " .. stack.CLOCK .. " near top out")
     end
   end
 
   return result
 end
 
-function ComputerPlayer.playoutValueForStack(self, stack, maxClock)
+function ComputerPlayer.heuristicValueForIdleFilledStack(self, stack)
+  self:fillIdleActions(stack)
+  self:simulateTillEqual(stack)
+  return self:heuristicValueForStack(stack)
+end
 
-  while stack.CLOCK + #stack.input_buffer <= stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer do
-    local randomAction = uniformly(self:allActions(stack))
-    self:addAction(stack, randomAction)
-  end 
-
-  while stack.CLOCK + #stack.input_buffer >= stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer do
-    local randomAction2 = uniformly(self:allActions(stack.garbage_target))
-    self:addAction(stack.garbage_target, randomAction2)
-  end 
-
+function ComputerPlayer.simulateTillEqual(self, stack)
   --local runAmount = math.min(#stack.input_buffer, #stack.garbage_target.input_buffer)
   local goal = math.min(stack.CLOCK + #stack.input_buffer, stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer)
   stack:run(goal - stack.CLOCK)
@@ -266,6 +285,36 @@ function ComputerPlayer.playoutValueForStack(self, stack, maxClock)
   if stack.garbage_target:game_ended() == false and stack.garbage_target.CLOCK ~= goal then
     error("opponent goal wrong")
   end
+end
+
+function ComputerPlayer.fillIdleActions(self, stack)
+  while stack.CLOCK + #stack.input_buffer < stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer do
+    local count = stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer - stack.CLOCK + #stack.input_buffer
+    self:addAction(stack, self:idleAction(count))
+  end 
+
+  while stack.CLOCK + #stack.input_buffer > stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer do
+    local count = stack.CLOCK + #stack.input_buffer - stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer
+    self:addAction(stack.garbage_target, self:idleAction(count))
+  end 
+end
+
+function ComputerPlayer.fillRandomActions(self, stack)
+  while stack.CLOCK + #stack.input_buffer <= stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer do
+    local randomAction = uniformly(self:allActions(stack))
+    self:addAction(stack, randomAction)
+  end 
+
+  while stack.CLOCK + #stack.input_buffer >= stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer do
+    local randomAction2 = uniformly(self:allActions(stack.garbage_target))
+    self:addAction(stack.garbage_target, randomAction2)
+  end 
+end
+
+function ComputerPlayer.playoutValueForStack(self, stack, maxClock)
+
+  self:fillRandomActions(stack)
+  self:simulateTillEqual(stack)
 
   local gameResult = stack:gameResult()
   if gameResult then
@@ -300,7 +349,7 @@ function ComputerPlayer.monteCarloValueForStack(self, stack, maxClock, n)
   return sum
 end
 
-function ComputerPlayer.bestAction(self, stack, maxClock)
+function ComputerPlayer.bestAction(self, stack, maxClock, depthAllowed)
   maxClock = maxClock or stack.CLOCK + MAX_CLOCK_PLAYOUT
   --self:cpuLog(2, "maxClock " .. maxClock )
 
@@ -313,9 +362,18 @@ function ComputerPlayer.bestAction(self, stack, maxClock)
 
     self:addAction(simulatedStack, action)
 
-    local evaluation = self:monteCarloValueForStack(simulatedStack, maxClock)
-    --local evaluation = self:heuristicValueForStack(simulatedStack)
-    --local result = self:bestAction(simulatedStack, maxClock)
+    local evaluation
+    if (depthAllowed and depthAllowed <= 0) or (maxClock and stack.CLOCK + #stack.input_buffer > maxClock) then
+      self:fillIdleActions(simulatedStack)
+      evaluation = self:heuristicValueForStack(simulatedStack)
+    else
+      if depthAllowed then
+        depthAllowed = depthAllowed - 1
+      end
+      local result = self:bestAction(simulatedStack, maxClock, depthAllowed)
+      --evaluation = self:monteCarloValueForStack(simulatedStack, maxClock, depthAllowed)
+    end
+
     
     self:cpuLog(2, "Computer - Action " .. action .. " Value: " .. evaluation)
     if bestAction == nil or evaluation > bestEvaluation then
@@ -323,6 +381,55 @@ function ComputerPlayer.bestAction(self, stack, maxClock)
       bestEvaluation = evaluation
     end
   end
+
+  self:cpuLog(2, "Computer - done, best " .. bestAction .. " Value: " .. bestEvaluation)
+  return {bestAction, bestEvaluation}
+end
+
+function ComputerPlayer.treeSearch(self, stack)
+
+  stack = self:copyMatch(stack)
+
+  local resultQueue = PriorityQueue()
+  local unexpandedQueue = PriorityQueue()
+
+  local baseValue = self:heuristicValueForIdleFilledStack(stack)
+  unexpandedQueue:put({stack=stack, actions="", value=baseValue}, baseValue)
+
+  local expandCount = 0
+  while unexpandedQueue:size() > 0 and expandCount < EXPAND_COUNT do
+    expandCount = expandCount + 1
+
+    local expand = unexpandedQueue:pop()
+
+    local gameResult = expand.stack:gameResult()
+
+    if gameResult == nil then
+      local actions = self:allActions(expand.stack)
+
+      self:cpuLog(4, "expanding " .. #actions)
+      for idx = 1, #actions do
+        local action = actions[idx]
+        local simulatedStack = self:copyMatch(expand.stack)
+        self:addAction(simulatedStack, action)
+        local totalActions = expand.actions .. action
+        local value = self:heuristicValueForIdleFilledStack(simulatedStack) --kinda side effecty
+        if value > 0 then
+          self:cpuLog(4, "Computer - found " .. value .. "  totalActions: " .. totalActions .. " clock: " .. simulatedStack.CLOCK)
+        end
+        unexpandedQueue:put({stack=simulatedStack, actions=totalActions, value=value}, -value)
+      end
+    end
+  
+    if #expand.actions > 0 then
+      resultQueue:put(expand, -expand.value)
+    end
+  end
+
+  assert(resultQueue:size() > 0, "no results in queue")
+  local result = resultQueue:pop()
+  local bestAction = result.actions
+  local bestEvaluation = result.value
 
   self:cpuLog(2, "Computer - done, best " .. bestAction .. " Value: " .. bestEvaluation)
   return {bestAction, bestEvaluation}

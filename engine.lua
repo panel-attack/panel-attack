@@ -676,6 +676,7 @@ function Stack.run(self, timesToRun)
     if nextInput then
       self.input_buffer = self.input_buffer .. nextInput
     end
+    assert(#self.input_buffer > 0, "Should have input from computer")
     timesToRun = 1
   end
 

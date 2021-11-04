@@ -1,3 +1,11 @@
+local launch_type = arg[2]
+if launch_type == "test" or launch_type == "debug" then
+    require "lldebugger"
+
+    if launch_type == "debug" then
+        lldebugger.start()
+    end
+end
 socket = require("socket")
 json = require("dkjson")
 require("util")
@@ -33,9 +41,6 @@ local pointer_hidden = false
 
 -- Called at the beginning to load the game
 function love.load()
-  if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
-    require("lldebugger").start()
-  end
   math.randomseed(os.time())
   for i = 1, 4 do
     math.random()

@@ -1019,6 +1019,7 @@ function main_local_vs()
       function()
         P1:run()
         P2:run()
+        assert((P1.CLOCK == P2.CLOCK) or GAME.match:matchOutcome(), "should run at same speed: " .. P1.CLOCK .. " - " .. P2.CLOCK)
         P1:handle_pause()
         P2:handle_pause()
       end
