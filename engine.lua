@@ -1936,7 +1936,7 @@ end
 function Stack.check_matches(self)
 
   local panels = self.panels
-  
+
   for col = 1, self.width do
     for row = 1, self.height do
       panels[row][col].matching = nil
@@ -1999,7 +1999,11 @@ function Stack.check_matches(self)
   while floodQueue:len() ~= 0 do
     local y, x, normal, metal = unpack(floodQueue:pop())
     local panel = panels[y][x]
+
+    -- We found a new panel we haven't handled yet that we should
     if ((panel.garbage and panel.state == "normal") or panel.matching) and ((normal and not seen[panel]) or (metal and not seenm[panel])) then
+
+      -- We matched a new garbage
       if ((metal and panel.metal) or (normal and not panel.metal)) and panel.garbage and not garbage[panel] then
         garbage[panel] = true
         SFX_garbage_match_play = true
