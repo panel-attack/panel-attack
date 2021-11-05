@@ -5,7 +5,7 @@ PriorityQueue = dofile("priority_queue.lua")
 local MONTE_CARLO_RUN_COUNT = 1
 local MAX_CURSOR_MOVE_DISTANCE = 5
 local CURSOR_MOVE_WAIT_TIME = 2
-local PROFILE_TIME = 800
+local PROFILE_TIME = 400
 local MAX_CLOCK_PLAYOUT = 10
 local EXPAND_COUNT = 3
 
@@ -15,6 +15,7 @@ local HEURISTIC_PRE_STOP_TIME_WEIGHT = 50
 local HEURISTIC_NEAR_TOP_OUT_WEIGHT = 12
 local HEURISTIC_LOW_PANEL_COUNT_WEIGHT = 10
 local HEURISTIC_RANDOM_WEIGHT = 1
+local MAX_THINK_TIME = 1 / 1000
 
 local cpuConfigs = {
   ["Hard"] =
@@ -29,11 +30,17 @@ local cpuConfigs = {
     profiled = false,
     inputSpeed = 15
   },
+  ["Easy"] =
+  {
+    log = 0,
+    profiled = false,
+    inputSpeed = 60
+  },
   ["Dev"] =
   {
     log = 3,
-    profiled = false,
-    inputSpeed = 15
+    profiled = true,
+    inputSpeed = 160
   },
   ["DevSlow"] =
   {
@@ -55,7 +62,8 @@ ComputerPlayer = class(function(self)
   if active_cpuConfig then
       print("cpu config successfully loaded")
       self.config = CPUConfig(active_cpuConfig)
-      self.lastInputTime = 0
+      self.targetInputTime = nil
+      self.thinkRoutine = coroutine.create(self.think)
   else
       error("cpu config is nil")
   end
@@ -98,33 +106,43 @@ end
 
 function ComputerPlayer.getInput(self, stack)
   local result
-  if self.config.profiled and self.profiler == nil and stack.which == 1 then
+  if self.config.profiled and self.profiler == nil and stack.which == 2 then
 
     self.profiler = newProfiler()
     self.profiler:start()
   end
 
-  if #stack.input_buffer > 0 then
-    self.lastInputTime = stack.CLOCK
-    return nil
+  if self.targetInputTime == nil and #stack.input_buffer == 0 then
+    self.targetInputTime = stack.CLOCK + self.config.inputSpeed
+    local idleCount = self.config.inputSpeed - 1
+    self:initThink(stack, idleCount)
   end
 
-  local inputBuffer = ""
 
-  if stack.CLOCK - self.lastInputTime > self.config.inputSpeed then
-    self:cpuLog(2, "Computer " .. stack.which .. " Calculating at Clock: " .. stack.CLOCK)
-    
-    --local results = self:bestAction(stack)
-    local results = self:treeSearch(stack)
+  local inputBuffer = nil
+  if #stack.input_buffer == 0 then
+    if self.targetInputTime then
+      coroutine.resume(self.thinkRoutine, self)
 
-    inputBuffer = results[1]
-    self.lastInputTime = stack.CLOCK
-    self:cpuLog(4, "Best Action: " .. inputBuffer)
-    assert(inputBuffer and inputBuffer ~= "", "no result action")
+      if self.targetInputTime == stack.CLOCK then
+        local results = self:currentResult()
+        inputBuffer = results[1]
+        assert(inputBuffer and inputBuffer ~= "", "no result action")
+        self.targetInputTime = nil
+        self:clearThink()
+
+        self:cpuLog(2, "Computer " .. stack.which .. " inputting " .. inputBuffer .. " at Clock: " .. stack.CLOCK .. " with value " .. results[2])
+      else
+        self:cpuLog(2, "Computer thinking with idle")
+        inputBuffer = waitInput
+      end
+    else 
+      self:cpuLog(2, "Computer waiting with idle")
+      inputBuffer = waitInput
+    end
   else
-    inputBuffer = waitInput
+    self:cpuLog(2, "Computer already has input")
   end
-
 
   if self.profiler and stack.CLOCK > PROFILE_TIME then
     self.profiler:stop()
@@ -273,6 +291,10 @@ function ComputerPlayer.heuristicValueForIdleFilledStack(self, stack)
   return self:heuristicValueForStack(stack)
 end
 
+function ComputerPlayer.simulateAllInputs(self, stack)
+  stack:run(#stack.input_buffer)
+end
+
 function ComputerPlayer.simulateTillEqual(self, stack)
   --local runAmount = math.min(#stack.input_buffer, #stack.garbage_target.input_buffer)
   local goal = math.min(stack.CLOCK + #stack.input_buffer, stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer)
@@ -386,48 +408,74 @@ function ComputerPlayer.bestAction(self, stack, maxClock, depthAllowed)
   return {bestAction, bestEvaluation}
 end
 
-function ComputerPlayer.treeSearch(self, stack)
+function ComputerPlayer.think(self)
 
-  stack = self:copyMatch(stack)
+  -- Never terminate the coroutine
+  while true do
+    --local startTime = os.clock()
 
-  local resultQueue = PriorityQueue()
-  local unexpandedQueue = PriorityQueue()
+    while self.unexpandedQueue:size() > 0 do
+      local expand = self.unexpandedQueue:pop()
 
-  local baseValue = self:heuristicValueForIdleFilledStack(stack)
-  unexpandedQueue:put({stack=stack, actions="", value=baseValue}, baseValue)
+      local gameResult = expand.stack:gameResult()
 
-  local expandCount = 0
-  while unexpandedQueue:size() > 0 and expandCount < EXPAND_COUNT do
-    expandCount = expandCount + 1
+      if gameResult == nil then
+        local actions = self:allActions(expand.stack)
 
-    local expand = unexpandedQueue:pop()
-
-    local gameResult = expand.stack:gameResult()
-
-    if gameResult == nil then
-      local actions = self:allActions(expand.stack)
-
-      self:cpuLog(4, "expanding " .. #actions)
-      for idx = 1, #actions do
-        local action = actions[idx]
-        local simulatedStack = self:copyMatch(expand.stack)
-        self:addAction(simulatedStack, action)
-        local totalActions = expand.actions .. action
-        local value = self:heuristicValueForIdleFilledStack(simulatedStack) --kinda side effecty
-        if value > 0 then
-          self:cpuLog(4, "Computer - found " .. value .. "  totalActions: " .. totalActions .. " clock: " .. simulatedStack.CLOCK)
+        self:cpuLog(4, "expanding " .. #actions)
+        for idx = 1, #actions do
+          local action = actions[idx]
+          local simulatedStack = self:copyMatch(expand.stack)
+          self:addAction(simulatedStack, action)
+          local totalActions = expand.actions .. action
+          local value = self:heuristicValueForIdleFilledStack(simulatedStack) --kinda side effecty
+          if value > 0 then
+            self:cpuLog(4, "Computer - found " .. value .. "  totalActions: " .. totalActions .. " clock: " .. simulatedStack.CLOCK)
+          end
+          self.unexpandedQueue:put({stack=simulatedStack, actions=totalActions, value=value}, -value)
         end
-        unexpandedQueue:put({stack=simulatedStack, actions=totalActions, value=value}, -value)
       end
+    
+      -- Don't allow the empty start state to be a valid result
+      if #expand.actions > 0 then
+        self.resultQueue:put(expand, -expand.value)
+      end
+
+      -- If we spent enough time, pause
+      -- local currentTime = os.clock()
+      -- local timeSpent = currentTime - startTime
+      -- self:cpuLog(3, "Computer - timeSpent " .. timeSpent)
+      -- if timeSpent > MAX_THINK_TIME then
+        break
+      --end
     end
-  
-    if #expand.actions > 0 then
-      resultQueue:put(expand, -expand.value)
-    end
+
+    coroutine.yield()
   end
 
-  assert(resultQueue:size() > 0, "no results in queue")
-  local result = resultQueue:pop()
+end
+
+function ComputerPlayer.initThink(self, stack, idleCount)
+
+  self.resultQueue = PriorityQueue()
+  self.unexpandedQueue = PriorityQueue()
+
+  stack = self:copyMatch(stack)
+  self:addAction(stack, self:idleAction(idleCount))
+
+  local baseValue = self:heuristicValueForIdleFilledStack(stack)
+  self.unexpandedQueue:put({stack=stack, actions="", value=baseValue}, baseValue)
+
+end
+
+function ComputerPlayer.clearThink(self)
+  self.resultQueue = PriorityQueue()
+  self.unexpandedQueue = PriorityQueue()
+end
+
+function ComputerPlayer.currentResult(self) 
+  assert(self.resultQueue:size() > 0, "no results in queue")
+  local result = self.resultQueue:pop()
   local bestAction = result.actions
   local bestEvaluation = result.value
 
