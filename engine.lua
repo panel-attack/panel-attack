@@ -1934,26 +1934,18 @@ end
 
 -- Goes through whole stack checking for matches and updating chains etc based on matches.
 function Stack.check_matches(self)
-  local row = 0
-  local col = 0
-  local count = 0
-  local old_color = 0
-  local is_chain = false
-  local first_panel_row = 0
-  local first_panel_col = 0
-  local combo_index, garbage_index = 0, 0
-  local combo_size, garbage_size = 0, 0
-  local panels = self.panels
-  local q, garbage = Queue(), {}
-  local seen, seenm = {}, {}
-  local metal_count = 0
 
+  local panels = self.panels
+  
   for col = 1, self.width do
     for row = 1, self.height do
       panels[row][col].matching = nil
     end
   end
 
+  local is_chain = false
+  local combo_size = 0
+  local floodQueue = Queue()
   for row = 1, self.height do
     for col = 1, self.width do
       if
@@ -1974,7 +1966,7 @@ function Stack.check_matches(self)
           end
           is_chain = is_chain or panel.chaining
         end
-        q:push({row, col, true, true})
+        floodQueue:push({row, col, true, true})
       end
       if
         col ~= 1 and col ~= self.width and --check horiz match centered here.
@@ -1994,15 +1986,18 @@ function Stack.check_matches(self)
           end
           is_chain = is_chain or panel.chaining
         end
-        q:push({row, col, true, true})
+        floodQueue:push({row, col, true, true})
       end
     end
   end
 
   -- This is basically two flood fills at the same time.
   -- One for clearing normal garbage, one for metal.
-  while q:len() ~= 0 do
-    local y, x, normal, metal = unpack(q:pop())
+  local garbage = {}
+  local seen, seenm = {}, {}
+  local garbage_size = 0
+  while floodQueue:len() ~= 0 do
+    local y, x, normal, metal = unpack(floodQueue:pop())
     local panel = panels[y][x]
     if ((panel.garbage and panel.state == "normal") or panel.matching) and ((normal and not seen[panel]) or (metal and not seenm[panel])) then
       if ((metal and panel.metal) or (normal and not panel.metal)) and panel.garbage and not garbage[panel] then
@@ -2020,16 +2015,16 @@ function Stack.check_matches(self)
       end
       if normal or metal then
         if y ~= 1 then
-          q:push({y - 1, x, normal, metal})
+          floodQueue:push({y - 1, x, normal, metal})
         end
         if y ~= #panels then
-          q:push({y + 1, x, normal, metal})
+          floodQueue:push({y + 1, x, normal, metal})
         end
         if x ~= 1 then
-          q:push({y, x - 1, normal, metal})
+          floodQueue:push({y, x - 1, normal, metal})
         end
         if x ~= self.width then
-          q:push({y, x + 1, normal, metal})
+          floodQueue:push({y, x + 1, normal, metal})
         end
       end
     end
@@ -2043,10 +2038,13 @@ function Stack.check_matches(self)
     end
   end
 
+  local first_panel_row = 0
+  local first_panel_col = 0
+  local metal_count = 0
   local pre_stop_time = self.FRAMECOUNT_MATCH + self.FRAMECOUNT_POP * (combo_size + garbage_size)
   local garbage_match_time = self.FRAMECOUNT_MATCH + self.FRAMECOUNT_POP * (combo_size + garbage_size)
-  garbage_index = garbage_size - 1
-  combo_index = combo_size
+  local garbage_index = garbage_size - 1
+  local combo_index = combo_size
   for row = 1, #panels do
     local gpan_row = nil
     for col = self.width, 1, -1 do
