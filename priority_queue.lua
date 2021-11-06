@@ -23,32 +23,13 @@ License: zlib
 
 local floor = math.floor
 
-
-local PriorityQueue = {}
-PriorityQueue.__index = PriorityQueue
-
-setmetatable(
-    PriorityQueue,
-    {
-        __call = function (self)
-            setmetatable({}, self)
-            self:initialize()
-            return self
-        end
-    }
-)
-
-
-function PriorityQueue:initialize()
-    --[[  Initialization.
-
-    Example:
-        PriorityQueue = require("priority_queue")
-        pq = PriorityQueue()
-    ]]--
+PriorityQueue =
+  class(
+  function(self)
     self.heap = {}
     self.current_size = 0
-end
+  end
+)
 
 function PriorityQueue:empty()
     return self.current_size == 0
@@ -124,5 +105,3 @@ function PriorityQueue:pop()
     self:sink()
     return retval
 end
-
-return PriorityQueue

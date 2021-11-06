@@ -1,28 +1,30 @@
 require("engine")
 require("profiler")
-PriorityQueue = dofile("priority_queue.lua")
+require("priority_queue")
 
 local MONTE_CARLO_RUN_COUNT = 1
-local MAX_CURSOR_MOVE_DISTANCE = 5
+local MAX_CURSOR_MOVE_DISTANCE = 2
 local CURSOR_MOVE_WAIT_TIME = 2
 local PROFILE_TIME = 400
 local MAX_CLOCK_PLAYOUT = 10
 local EXPAND_COUNT = 3
+local MAX_THINK_TIME = 1 / 150
 
 local HEURISTIC_GAME_OVER_WEIGHT = 1000000
 local HEURISTIC_STOP_TIME_WEIGHT = 1000
-local HEURISTIC_PRE_STOP_TIME_WEIGHT = 50
-local HEURISTIC_NEAR_TOP_OUT_WEIGHT = 12
-local HEURISTIC_LOW_PANEL_COUNT_WEIGHT = 10
-local HEURISTIC_RANDOM_WEIGHT = 1
-local MAX_THINK_TIME = 1 / 1000
+local HEURISTIC_PRE_STOP_TIME_WEIGHT = 100
+local HEURISTIC_NEAR_TOP_OUT_WEIGHT = -12
+local HEURISTIC_LOW_PANEL_COUNT_WEIGHT = -10
+local HEURISTIC_RANDOM_WEIGHT = 0.1
+local HEURISTIC_CLOCK_WEIGHT = -0.01
+
 
 local cpuConfigs = {
   ["Hard"] =
   {
     log = 0,
     profiled = false,
-    inputSpeed = 10
+    inputSpeed = 20
   },
   ["Medium"] =
   {
@@ -39,8 +41,8 @@ local cpuConfigs = {
   ["Dev"] =
   {
     log = 3,
-    profiled = true,
-    inputSpeed = 160
+    profiled = false,
+    inputSpeed = 20
   },
   ["DevSlow"] =
   {
@@ -50,7 +52,7 @@ local cpuConfigs = {
   }
 }
 
-local active_cpuConfig = cpuConfigs["Dev"]
+local active_cpuConfig = cpuConfigs["Hard"]
 
 CPUConfig = class(function(self, actualConfig)
   self.log = actualConfig["log"]
@@ -107,7 +109,10 @@ end
 function ComputerPlayer.getInput(self, stack)
   local result
   if self.config.profiled and self.profiler == nil and stack.which == 2 then
-
+    local launch_type = arg[2]
+    if launch_type == "test" or launch_type == "debug" then
+      error("Can't profile while debugging")
+    end
     self.profiler = newProfiler()
     self.profiler:start()
   end
@@ -122,7 +127,11 @@ function ComputerPlayer.getInput(self, stack)
   local inputBuffer = nil
   if #stack.input_buffer == 0 then
     if self.targetInputTime then
-      coroutine.resume(self.thinkRoutine, self)
+
+      local status, err = coroutine.resume(self.thinkRoutine, self)
+      if not status then
+        error(err .. "\n" .. debug.traceback(mainloop))
+      end
 
       if self.targetInputTime == stack.CLOCK then
         local results = self:currentResult()
@@ -133,15 +142,15 @@ function ComputerPlayer.getInput(self, stack)
 
         self:cpuLog(2, "Computer " .. stack.which .. " inputting " .. inputBuffer .. " at Clock: " .. stack.CLOCK .. " with value " .. results[2])
       else
-        self:cpuLog(2, "Computer thinking with idle")
+        self:cpuLog(4, "Computer thinking with idle")
         inputBuffer = waitInput
       end
     else 
-      self:cpuLog(2, "Computer waiting with idle")
+      self:cpuLog(4, "Computer waiting with idle")
       inputBuffer = waitInput
     end
   else
-    self:cpuLog(2, "Computer already has input")
+    self:cpuLog(4, "Computer already has input")
   end
 
   if self.profiler and stack.CLOCK > PROFILE_TIME then
@@ -159,19 +168,24 @@ end
 function ComputerPlayer.allActions(self, stack)
   local actions = {}
 
-  actions[#actions + 1] = waitInput
+  --actions[#actions + 1] = waitInput
 
-  actions[#actions + 1] = raiseInput
+  --actions[#actions + 1] = raiseInput
 
-  -- actions[#actions + 1] = swapInput
+  --actions[#actions + 1] = swapInput .. waitInput
 
   local cursorRow = stack.cur_row
   local cursorColumn = stack.cur_col
   for column = 1, stack.width - 1, 1 do
     for row = 1, stack.height, 1 do
       local distance = math.abs(row - cursorRow) + math.abs(column - cursorColumn)
-      if distance > 0 and distance <= MAX_CURSOR_MOVE_DISTANCE and stack:canSwap(row, column) then
-        actions[#actions + 1] = self:moveToRowColumnAction(stack, row, column) .. swapInput .. waitInput
+      if distance > 0 and distance <= MAX_CURSOR_MOVE_DISTANCE then
+        if stack:canSwap(row, column) then
+          if stack.panels[row][column].color ~= stack.panels[row][column + 1].color then
+            -- We wait one frame after swapping because thats when the swap actually happens
+            actions[#actions + 1] = self:moveToRowColumnAction(stack, row, column) .. swapInput .. waitInput
+          end
+        end
       end
     end
   end
@@ -227,6 +241,7 @@ function ComputerPlayer.copyMatch(self, oldStack)
   local match = deepcopy(oldStack.match, nil, {P1=true, P2=true})
   local stack = deepcopy(oldStack, nil, {garbage_target=true, prev_states=true, canvas=true, computer=true, match=true})
   local otherStack = deepcopy(oldStack.garbage_target, nil, {garbage_target=true, prev_states=true, canvas=true, computer=true, match=true})
+  otherStack.is_local = false
   stack.garbage_target = otherStack
   otherStack.garbage_target = stack
   if stack.which == 1 then
@@ -259,14 +274,14 @@ function ComputerPlayer.heuristicValueForStack(self, stack)
     error("Stacks not simulated equal")
   end
 
-  if stack.pre_stop_time > 0 then
-    self:cpuLog(6, "stop time: " .. stack.pre_stop_time)
-    result = result + (stack.pre_stop_time * HEURISTIC_PRE_STOP_TIME_WEIGHT)
+  if stack.stop_time > 0 then
+    self:cpuLog(2, "stop time: " .. stack.stop_time)
+    result = result + (stack.pre_stop_time * HEURISTIC_STOP_TIME_WEIGHT)
   end
 
   if stack.pre_stop_time > 0 then
     self:cpuLog(6, "pre_stop_time: " .. stack.pre_stop_time)
-    result = result + (stack.pre_stop_time * HEURISTIC_STOP_TIME_WEIGHT)
+    result = result + (stack.pre_stop_time * HEURISTIC_PRE_STOP_TIME_WEIGHT)
   end
 
 
@@ -281,6 +296,8 @@ function ComputerPlayer.heuristicValueForStack(self, stack)
       self:cpuLog(4, "Computer: " .. stack.CLOCK .. " near top out")
     end
   end
+
+  result = result + (stack.CLOCK * HEURISTIC_CLOCK_WEIGHT)
 
   return result
 end
@@ -311,12 +328,12 @@ end
 
 function ComputerPlayer.fillIdleActions(self, stack)
   while stack.CLOCK + #stack.input_buffer < stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer do
-    local count = stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer - stack.CLOCK + #stack.input_buffer
+    local count = (stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer) - (stack.CLOCK + #stack.input_buffer)
     self:addAction(stack, self:idleAction(count))
   end 
 
   while stack.CLOCK + #stack.input_buffer > stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer do
-    local count = stack.CLOCK + #stack.input_buffer - stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer
+    local count = (stack.CLOCK + #stack.input_buffer) - (stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer)
     self:addAction(stack.garbage_target, self:idleAction(count))
   end 
 end
@@ -412,7 +429,7 @@ function ComputerPlayer.think(self)
 
   -- Never terminate the coroutine
   while true do
-    --local startTime = os.clock()
+    local startTime = os.clock()
 
     while self.unexpandedQueue:size() > 0 do
       local expand = self.unexpandedQueue:pop()
@@ -442,12 +459,12 @@ function ComputerPlayer.think(self)
       end
 
       -- If we spent enough time, pause
-      -- local currentTime = os.clock()
-      -- local timeSpent = currentTime - startTime
-      -- self:cpuLog(3, "Computer - timeSpent " .. timeSpent)
-      -- if timeSpent > MAX_THINK_TIME then
+      local currentTime = os.clock()
+      local timeSpent = currentTime - startTime
+      self:cpuLog(4, "Computer - timeSpent " .. round(timeSpent, 4) .. " " .. self.unexpandedQueue:size() .. " / " .. self.resultQueue:size() .. "act:" .. expand.actions .. " v " .. expand.value)
+      if timeSpent > MAX_THINK_TIME then
         break
-      --end
+      end
     end
 
     coroutine.yield()
@@ -474,11 +491,15 @@ function ComputerPlayer.clearThink(self)
 end
 
 function ComputerPlayer.currentResult(self) 
-  assert(self.resultQueue:size() > 0, "no results in queue")
-  local result = self.resultQueue:pop()
-  local bestAction = result.actions
-  local bestEvaluation = result.value
+  if self.resultQueue:size() > 0 then
+    local result = self.resultQueue:pop()
+    local bestAction = result.actions
+    local bestEvaluation = result.value
 
-  self:cpuLog(2, "Computer - done, best " .. bestAction .. " Value: " .. bestEvaluation)
-  return {bestAction, bestEvaluation}
+    self:cpuLog(2, "Computer - done, best " .. bestAction .. " Value: " .. bestEvaluation)
+    return {bestAction, bestEvaluation}
+  else
+    self:cpuLog(2, "Computer - done, nothing found, idling ")
+    return {waitInput, 0}
+  end
 end
