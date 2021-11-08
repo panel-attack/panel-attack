@@ -7,10 +7,11 @@ local replay_browser = require("replay_browser")
 local options = require("options")
 local utf8 = require("utf8")
 local analytics = require("analytics")
+local main_config_input = require("config_inputs")
 
 local wait, resume = coroutine.yield, coroutine.resume
 
-local main_endless, make_main_puzzle, main_net_vs_setup, main_config_input, main_select_puzz, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, main_options, main_music_test, main_replay_browser, exit_game
+local main_endless, make_main_puzzle, main_net_vs_setup, main_select_puzz, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, main_options, main_replay_browser, exit_game
 -- main_select_mode, main_dumb_transition, main_net_vs, main_net_vs_lobby, main_local_vs_yourself, main_local_vs, main_replay_endless, main_replay_puzzle, main_replay_vs are not local since they are also used elsewhere
 
 local PLAYING = "playing" -- room states
@@ -25,10 +26,11 @@ replay_of_match_so_far = nil -- current replay of spectatable replay
 spectator_list = nil
 spectators_string = ""
 leftover_time = 0
-main_menu_screen_pos = {300 + (canvas_width - legacy_canvas_width) / 2, 220 + (canvas_height - legacy_canvas_height) / 2}
+main_menu_screen_pos = {300 + (canvas_width - legacy_canvas_width) / 2, 195 + (canvas_height - legacy_canvas_height) / 2}
 wait_game_update = nil
 has_game_update = false
 local arrow_padding = 12
+local main_menu_last_index = 1
 
 P1_win_quads = {}
 P1_rating_quads = {}
@@ -127,6 +129,23 @@ do
     connected_server_ip = ""
     current_server_supports_ranking = false
     match_type = ""
+    local k = K[1]
+    local menu_x, menu_y = unpack(main_menu_screen_pos)
+    local main_menu
+    local ret = nil
+    
+    local function goEscape()
+      main_menu:set_active_idx(#main_menu.buttons)
+    end
+  
+    local function selectFunction(myFunction, args)
+      local function constructedFunction()
+        main_menu_last_index = main_menu.active_idx
+        main_menu:remove_self()
+        ret = {myFunction, args}
+      end
+      return constructedFunction
+    end
 
     match_type_message = ""
     local items = {
@@ -147,23 +166,16 @@ do
       {loc("mm_replay_browser"), replay_browser.main},
       {loc("mm_configure"), main_config_input},
       {loc("mm_set_name"), main_set_name},
-      {loc("mm_options"), options.main},
-      {loc("mm_music_test"), main_music_test}
+      {loc("mm_options"), options.main}
     }
-    -- if canvas is supported, add fullscreen item
-    if love.graphics.getSupported("canvas") then
-      items[#items + 1] = {loc("mm_fullscreen", "(LAlt+Enter)"), fullscreen}
-    else
-      items[#items + 1] = {loc("mm_no_support_fullscreen"), main_select_mode}
-    end
-    -- add quit item
-    items[#items + 1] = {loc("mm_quit"), exit_game}
-    local k = K[1]
-    local menu_x, menu_y = unpack(main_menu_screen_pos)
-    local main_menu = Click_menu(nil, menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 80, 8, 1, true, 2)
+
+    main_menu = Click_menu(menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 10, main_menu_last_index)
     for i = 1, #items do
-      main_menu:add_button(items[i][1])
+      main_menu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
     end
+    main_menu:add_button(loc("mm_fullscreen", "(LAlt+Enter)"), fullscreen, goEscape)
+    main_menu:add_button(loc("mm_quit"), exit_game, exit_game)
+
     while true do
       main_menu:draw()
       if wait_game_update ~= nil then
@@ -182,32 +194,13 @@ do
       end
 
       wait()
-      local ret = nil
       variable_step(
-        function()
-          if menu_up(k) then -- move cursor up
-            main_menu:set_active_idx(wrap(1, main_menu.active_idx - 1, #items))
-          elseif menu_down(k) then -- move cursor down
-            main_menu:set_active_idx(wrap(1, main_menu.active_idx + 1, #items))
-          elseif menu_enter(k) then -- run currently selected function
-            ret = {items[main_menu.active_idx][2], items[main_menu.active_idx][3]}
-          elseif menu_escape(k) then -- jump to the last item on list, if already there, run it (quit game)
-            if main_menu.active_idx == #items then
-              ret = {items[main_menu.active_idx][2], items[main_menu.active_idx][3]}
-            else
-              main_menu:set_active_idx(#items)
-            end
-          end
+        function()          
+          main_menu:update()
         end
       )
       if ret then
         return unpack(ret)
-      end
-      if main_menu.idx_selected then
-        local active_idx = main_menu.idx_selected
-        main_menu.idx_selected = nil
-        main_menu:remove_self()
-        return items[active_idx][2], items[active_idx][3]
       end
     end
   end
@@ -223,26 +216,84 @@ function main_timeattack_setup()
   return unpack({main_select_speed_99, {main_time_attack}})
 end
 
-function main_select_speed_99(next_func, ...)
+function main_select_speed_99(next_func)
   -- stack rise speed
   local speed = config.endless_speed or 1
   local difficulty = config.endless_difficulty or 1
   local active_idx = 1
   local k = K[1]
   local ret = nil
-
-  background = themes[config.theme].images.bg_main
-
-  local difficulties = {"Easy", "Normal", "Hard", "EX Mode"}
   local loc_difficulties = {loc("easy"), loc("normal"), loc("hard"), "EX Mode"} -- TODO: localize "EX Mode"
 
-  local items = {
-    {"Speed"},
-    {"Difficulty"},
-    {"Go!", next_func},
-    {"Back", main_select_mode}
-  }
-  local loc_items = {loc("speed"), loc("difficulty"), loc("go_"), loc("back")}
+  background = themes[config.theme].images.bg_main
+  reset_filters()
+  if themes[config.theme].musics["main"] then
+    find_and_add_music(themes[config.theme].musics, "main")
+  end
+  
+  local gameSettingsMenu
+
+  local function goEscape()
+    gameSettingsMenu:set_active_idx(#gameSettingsMenu.buttons)
+  end
+
+  local function exitSettings()
+    ret = {main_select_mode}
+  end
+
+  local function updateMenuSpeed()
+    gameSettingsMenu:set_button_setting(1, speed)
+  end
+
+  local function updateMenuDifficulty()
+    gameSettingsMenu:set_button_setting(2, loc_difficulties[difficulty])
+  end
+  
+  local function increaseSpeed()
+    speed = bound(1, speed + 1, 99)
+    updateMenuSpeed()
+  end
+
+  local function increaseDifficulty()
+    difficulty = bound(1, difficulty + 1, 4)
+    updateMenuDifficulty()
+  end
+
+  local function decreaseSpeed()
+    speed = bound(1, speed - 1, 99)
+    updateMenuSpeed()
+  end
+
+  local function decreaseDifficulty()
+    difficulty = bound(1, difficulty - 1, 4)
+    updateMenuDifficulty()
+  end
+    
+  local function startGame()
+    if config.endless_speed ~= speed or config.endless_difficulty ~= difficulty then
+      config.endless_speed = speed
+      config.endless_difficulty = difficulty
+      gprint("saving settings...", unpack(main_menu_screen_pos))
+      wait()
+      write_conf_file()
+    end
+    stop_the_music()
+    ret = {next_func, {speed, difficulty}}
+  end
+
+  local function nextMenu()
+    gameSettingsMenu:selectNextIndex()
+  end
+
+  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  menu_y = menu_y + 70
+  gameSettingsMenu = Click_menu(menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 10, 1)
+  gameSettingsMenu:add_button(loc("speed"), nextMenu, goEscape, decreaseSpeed, increaseSpeed)
+  gameSettingsMenu:add_button(loc("difficulty"), nextMenu, goEscape, decreaseDifficulty, increaseDifficulty)
+  gameSettingsMenu:add_button(loc("go_"), startGame, goEscape)
+  gameSettingsMenu:add_button(loc("back"), exitSettings, exitSettings)
+  updateMenuSpeed()
+  updateMenuDifficulty()
 
   while true do
     -- Draw the current score and record
@@ -266,67 +317,15 @@ function main_select_speed_99(next_func, ...)
     draw_pixel_font("record",     themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition, 0.5, 1.0)
     draw_pixel_font(record,       themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition + 24, 0.5, 1.0)
 
-    yPosition = yPosition + 50
-
-    local to_print, to_print2, arrow = "", "", ""
-    for i = 1, #items do
-      if active_idx == i then
-        arrow = arrow .. ">"
-      else
-        arrow = arrow .. "\n"
-      end
-      to_print = to_print .. "   " .. loc_items[i] .. "\n"
-    end
-    to_print2 = "                  " .. speed .. "\n                  " .. loc_difficulties[difficulty]
-
-    gprint(arrow, xPosition1, yPosition)
-    gprint(to_print, xPosition1, yPosition)
-    gprint(to_print2, xPosition1, yPosition)
+    gameSettingsMenu:draw()
 
     wait()
     variable_step(
       function()
-        if menu_up(k) then -- move the cursor up one item
-          active_idx = wrap(1, active_idx - 1, #items)
-        elseif menu_down(k) then -- move the cursor down one item
-          active_idx = wrap(1, active_idx + 1, #items)
-        elseif menu_right(k) then
-          if active_idx == 1 then -- increase speed by 1
-            speed = bound(1, speed + 1, 99)
-          elseif active_idx == 2 then -- increase difficulty by 1
-            difficulty = bound(1, difficulty + 1, 4)
-          end
-        elseif menu_left(k) then
-          if active_idx == 1 then -- decrease speed by 1
-            speed = bound(1, speed - 1, 99)
-          elseif active_idx == 2 then -- decrease difficulty by 1
-            difficulty = bound(1, difficulty - 1, 4)
-          end
-        elseif menu_enter(k) then -- selection is "Go!", execute next function with settings
-          if active_idx == 3 then
-            if config.endless_speed ~= speed or config.endless_difficulty ~= difficulty then
-              config.endless_speed = speed
-              config.endless_difficulty = difficulty
-              gprint("saving settings...", unpack(main_menu_screen_pos))
-              wait()
-              write_conf_file()
-            end
-            stop_the_music()
-            ret = {items[active_idx][2], {speed, difficulty}}
-          elseif active_idx == 4 then
-            ret = {items[active_idx][2], items[active_idx][3]}
-          else
-            active_idx = wrap(1, active_idx + 1, #items)
-          end
-        elseif menu_escape(k) then
-          if active_idx == #items then
-            ret = {items[active_idx][2], items[active_idx][3]}
-          else
-            active_idx = #items
-          end
-        end
+        gameSettingsMenu:update()
       end
     )
+
     if ret then
       return unpack(ret)
     end
@@ -391,6 +390,9 @@ function Stack.handle_pause(self)
 
     if game_is_paused then
       stop_the_music()
+      reset_filters()
+    else
+      use_current_stage()
     end
   end
 end
@@ -508,13 +510,11 @@ function main_net_vs_lobby()
   reset_filters()
   character_loader_clear()
   stage_loader_clear()
-  local active_name, active_idx, active_back = "", 1
   local items
   local unpaired_players = {} -- list
   local willing_players = {} -- set
   local spectatable_rooms = {}
   local k = K[1]
-  server_queue = ServerQueue(SERVER_QUEUE_CAPACITY)
   my_player_number = nil
   op_player_number = nil
   local notice = {[true] = loc("lb_select_player"), [false] = loc("lb_alone")}
@@ -530,7 +530,6 @@ function main_net_vs_lobby()
   local login_status_message = "   " .. loc("lb_login")
   local login_status_message_duration = 2
   local login_denied = false
-  local prev_act_idx = active_idx
   local showing_leaderboard = false
   local lobby_menu_x = {[true] = main_menu_screen_pos[1] - 200, [false] = main_menu_screen_pos[1]} --will be used to make room in case the leaderboard should be shown.
   local lobby_menu_y = main_menu_screen_pos[2] + 50
@@ -538,10 +537,12 @@ function main_net_vs_lobby()
   if connection_up_time <= login_status_message_duration then
     json_send({login_request = true, user_id = my_user_id})
   end
-  local lobby_menu = Click_menu()
+  local lobby_menu = nil
   local items = {}
   local lastPlayerIndex = 0
-  local updated = false
+  local updated = true -- need update when first entering
+  local ret = nil
+
   while true do
     if connection_up_time <= login_status_message_duration then
       gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y - 120)
@@ -614,7 +615,9 @@ function main_net_vs_lobby()
       end
       if msg.leaderboard_report then
         showing_leaderboard = true
-        lobby_menu:show_controls(true)
+        if lobby_menu then
+          lobby_menu:show_controls(true)
+        end
         leaderboard_report = msg.leaderboard_report
         for k, v in ipairs(leaderboard_report) do
           if v.is_you then
@@ -630,134 +633,146 @@ function main_net_vs_lobby()
     local to_print = ""
     local arrow = ""
 
+    local function toggleLeaderboard()
+      updated = true
+      if not showing_leaderboard then
+        json_send({leaderboard_request = true})
+        --lobby_menu:set_button_text(#lobby_menu.buttons - 1, loc("lb_hide_board"))
+      else
+        --lobby_menu:set_button_text(#lobby_menu.buttons - 1, loc("lb_show_board"))
+        showing_leaderboard = false
+        lobby_menu:move(lobby_menu_x[showing_leaderboard], lobby_menu_y)
+      end
+    end
+
+    -- If we got an update to the lobby, refresh the menu
     if updated then
-      local last_lobby_menu_active_idx = lobby_menu.active_idx
-      lobby_menu:remove_self()
-      items = {}
-      for _, v in ipairs(unpaired_players) do
-        if v ~= config.name then
-          items[#items + 1] = v
+      local oldLobbyMenu = nil
+      if lobby_menu then
+        oldLobbyMenu = lobby_menu
+        lobby_menu:remove_self()
+        lobby_menu = nil
+      end
+
+      local function commonSelectLobby()
+        updated = true
+        spectator_list = {}
+        spectators_string = ""
+      end
+
+      local function goEscape()
+        lobby_menu:set_active_idx(#lobby_menu.buttons)
+      end
+
+      local function exitLobby()
+        commonSelectLobby()
+        ret = {main_select_mode}
+      end
+
+      local function requestGameFunction(opponentName)
+        return function ()
+          my_name = config.name
+          op_name = opponentName
+          currently_spectating = false
+          sent_requests[op_name] = true
+          request_game(opponentName)
+          updated = true
         end
       end
-      lastPlayerIndex = #items --the rest of the items will be spectatable rooms, except the last two items (leaderboard and back to main menu)
-      for _, v in ipairs(spectatable_rooms) do
-        items[#items + 1] = v
-      end
-      if showing_leaderboard then
-        items[#items + 1] = loc("lb_hide_board")
-      else
-        items[#items + 1] = loc("lb_show_board") -- the second to last item is "Leaderboard"
-      end
-      items[#items + 1] = loc("lb_back") -- the last item is "Back to the main menu"
-      local items_to_print = {}
-      for i = 1, #items do
-        if i <= lastPlayerIndex then
-          items_to_print[i] = items[i] .. (sent_requests[items[i]] and " " .. loc("lb_request") or "") .. (willing_players[items[i]] and " " .. loc("lb_received") or "")
-        elseif i < #items - 1 and items[i].name then
-          items_to_print[i] = loc("lb_spectate") .. " " .. items[i].name .. " (" .. items[i].state .. ")" --printing room names
-        elseif i < #items then
-          items_to_print[i] = items[i]
-        else
-          items_to_print[i] = items[i]
+        
+      local function requestSpectateFunction(room)
+        return function ()
+          my_name = room.a
+          op_name = room.b
+          currently_spectating = true
+          room_number_last_spectated = room.roomNumber
+          request_spectate(room.roomNumber)
         end
       end
 
-      lobby_menu = Click_menu(items_to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y, nil, love.graphics.getHeight() - lobby_menu_y - 90, 8, last_lobby_menu_active_idx)
-      lobby_menu:set_active_idx(last_active_idx)
-      if active_back then
-        lobby_menu:set_active_idx(#items)
-      elseif showing_leaderboard then
-        lobby_menu:set_active_idx(#items - 1) --the position of the "hide leaderboard" menu item
-      else
-        while lobby_menu.active_idx > #items do
-          lobby_menu:set_active_idx(lobby_menu.active_idx - 1)
+      lobby_menu = Click_menu(lobby_menu_x[showing_leaderboard], lobby_menu_y, nil, love.graphics.getHeight() - lobby_menu_y - 10, 1)
+      for _, v in ipairs(unpaired_players) do
+        if v ~= config.name then
+          local unmatchedPlayer = v .. (sent_requests[v] and " " .. loc("lb_request") or "") .. (willing_players[v] and " " .. loc("lb_received") or "")
+          lobby_menu:add_button(unmatchedPlayer, requestGameFunction(v), goEscape)
         end
-        active_name = items[lobby_menu.active_idx]
+      end
+      for _, room in ipairs(spectatable_rooms) do
+        if room.name then
+          local roomName = loc("lb_spectate") .. " " .. room.name .. " (" .. room.state .. ")" --printing room names
+          lobby_menu:add_button(roomName, requestSpectateFunction(room), goEscape)
+        end
+      end
+      if showing_leaderboard then
+        lobby_menu:add_button(loc("lb_hide_board"), toggleLeaderboard, toggleLeaderboard)
+      else
+        lobby_menu:add_button(loc("lb_show_board"), toggleLeaderboard, goEscape)
+      end
+      lobby_menu:add_button(loc("lb_back"), exitLobby, exitLobby)
+
+      -- Restore the lobby selection
+      if oldLobbyMenu then
+        if oldLobbyMenu.active_idx == #oldLobbyMenu.buttons then
+          lobby_menu:set_active_idx(#lobby_menu.buttons)
+        elseif oldLobbyMenu.active_idx == #oldLobbyMenu.buttons - 1 and #lobby_menu.buttons >= 2 then
+          lobby_menu:set_active_idx(#lobby_menu.buttons - 1) --the position of the "hide leaderboard" menu item
+        else
+          for i = 1, #lobby_menu.buttons do
+            if #oldLobbyMenu.buttons >= i then
+              if lobby_menu.buttons[i].stringText == oldLobbyMenu.buttons[i].stringText then
+                lobby_menu:set_active_idx(i)
+                break
+              end
+            end
+          end
+        end
+
+        oldLobbyMenu = nil
       end
     end
-    gprint(notice[#items > 2], lobby_menu_x[showing_leaderboard], lobby_menu_y - 30)
-    gprint(arrow, lobby_menu_x[showing_leaderboard], lobby_menu_y)
-    gprint(to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y)
-    if showing_leaderboard then
-      gprint(leaderboard_string, lobby_menu_x[showing_leaderboard] + 400, lobby_menu_y - 120)
+
+    if lobby_menu then
+      gprint(notice[#lobby_menu.buttons > 2], lobby_menu_x[showing_leaderboard], lobby_menu_y - 30)
+      gprint(arrow, lobby_menu_x[showing_leaderboard], lobby_menu_y)
+      gprint(to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y)
+      if showing_leaderboard then
+        gprint(leaderboard_string, lobby_menu_x[showing_leaderboard] + 400, lobby_menu_y - 120)
+      end
+      gprint(join_community_msg, main_menu_screen_pos[1] + 30, love.graphics.getHeight() - 50)
+      lobby_menu:draw()
     end
-    gprint(join_community_msg, main_menu_screen_pos[1] + 30, love.graphics.getHeight() - 50)
-    lobby_menu:draw()
     updated = false
     wait()
-    local ret = nil
     variable_step(
       function()
-        if menu_up(k) then
-          if showing_leaderboard then
-            if leaderboard_first_idx_to_show > 1 then
-              leaderboard_first_idx_to_show = leaderboard_first_idx_to_show - 1
-              leaderboard_last_idx_to_show = leaderboard_last_idx_to_show - 1
-              leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
+        if showing_leaderboard then
+          if menu_up(k) then
+            if showing_leaderboard then
+              if leaderboard_first_idx_to_show > 1 then
+                leaderboard_first_idx_to_show = leaderboard_first_idx_to_show - 1
+                leaderboard_last_idx_to_show = leaderboard_last_idx_to_show - 1
+                leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
+              end
             end
-          else
-            lobby_menu:set_active_idx(wrap(1, lobby_menu.active_idx - 1, #items))
-          end
-        elseif menu_down(k) then
-          if showing_leaderboard then
-            if leaderboard_last_idx_to_show < #leaderboard_report then
-              leaderboard_first_idx_to_show = leaderboard_first_idx_to_show + 1
-              leaderboard_last_idx_to_show = leaderboard_last_idx_to_show + 1
-              leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
+          elseif menu_down(k) then
+            if showing_leaderboard then
+              if leaderboard_last_idx_to_show < #leaderboard_report then
+                leaderboard_first_idx_to_show = leaderboard_first_idx_to_show + 1
+                leaderboard_last_idx_to_show = leaderboard_last_idx_to_show + 1
+                leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
+              end
             end
-          else
-            lobby_menu:set_active_idx(wrap(1, lobby_menu.active_idx + 1, #items))
+          elseif menu_escape(k) or menu_enter(k) then
+            toggleLeaderboard()
           end
-        elseif menu_enter(k) or lobby_menu.idx_selected then
-          updated = true
-          lobby_menu:set_active_idx(lobby_menu.idx_selected or lobby_menu.active_idx)
-          lobby_menu.idx_selected = nil
-          spectator_list = {}
-          spectators_string = ""
-          if lobby_menu.active_idx == #items then
-            ret = {main_select_mode}
-          end
-          if lobby_menu.active_idx == #items - 1 then
-            if not showing_leaderboard then
-              json_send({leaderboard_request = true})
-            else
-              showing_leaderboard = false --toggle it off
-              lobby_menu:show_controls(false)
-              lobby_menu:move(lobby_menu_x[showing_leaderboard], lobby_menu_y)
-            end
-          elseif lobby_menu.active_idx <= lastPlayerIndex then
-            my_name = config.name
-            op_name = items[lobby_menu.active_idx]
-            currently_spectating = false
-            sent_requests[op_name] = true
-            request_game(items[lobby_menu.active_idx])
-          else
-            my_name = items[lobby_menu.active_idx].a
-            op_name = items[lobby_menu.active_idx].b
-            currently_spectating = true
-            room_number_last_spectated = items[lobby_menu.active_idx].roomNumber
-            request_spectate(items[lobby_menu.active_idx].roomNumber)
-          end
-        elseif menu_escape(k) then
-          if lobby_menu.active_idx == #items then
-            ret = {main_select_mode}
-          elseif showing_leaderboard then
-            showing_leaderboard = false
-            lobby_menu:show_controls(#lobby_menu.buttons > lobby_menu.button_limit)
-            lobby_menu:move(lobby_menu_x[showing_leaderboard], lobby_menu_y)
-          else
-            lobby_menu:set_active_idx(#items)
-          end
+        elseif lobby_menu then
+          lobby_menu:update()
         end
       end
     )
     if ret then
       json_send({logout = true})
       return unpack(ret)
-    end
-    active_back = lobby_menu.active_idx == #items
-    if lobby_menu.active_idx ~= prev_act_idx then
-      prev_act_idx = lobby_menu.active_idx
     end
     if not do_messages() then
       return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
@@ -824,6 +839,7 @@ function main_net_vs_setup(ip, network_port)
   end
   P1, P1_level, P2_level, got_opponent = nil
   P2 = {panel_buffer = "", gpanel_buffer = ""}
+  server_queue = ServerQueue(SERVER_QUEUE_CAPACITY)
   gprint(loc("lb_set_connect"), unpack(main_menu_screen_pos))
   wait()
   network_init(ip, network_port)
@@ -881,7 +897,7 @@ function main_net_vs()
       elseif msg.leave_room then --reset win counts and go back to lobby
         my_win_count = 0
         op_win_count = 0
-        return main_dumb_transition, {main_net_vs_lobby, "", 0, 0}
+        return main_dumb_transition, {main_net_vs_lobby, "", 0, 0} -- someone left the game, quit to lobby
       end
     end
     --draw graphics
@@ -933,7 +949,7 @@ function main_net_vs()
       my_win_count = 0
       op_win_count = 0
       json_send({leave_room = true})
-      return main_dumb_transition, {main_net_vs_lobby, "", 0, 0}
+      return main_dumb_transition, {main_net_vs_lobby, "", 0, 0} -- spectator leaving the match
     end
     if not do_messages() then
       return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
@@ -1421,6 +1437,9 @@ function make_main_puzzle(puzzles)
             if P1.n_active_panels ~= 0 or P1.prev_active_panels ~= 0 or P1.puzzle_moves ~= 0 then
               P1:run()
               P1:handle_pause()
+              if menu_escape_game(K[1]) then
+                ret = {main_dumb_transition, {main_select_puzz, "", 0, 0}}
+              end
             end
           end
         end
@@ -1490,107 +1509,6 @@ do
   end
 end
 
--- menu for configuring inputs
-function main_config_input()
-  local pretty_names = {loc("up"), loc("down"), loc("left"), loc("right"), "A", "B", "X", "Y", "L", "R", loc("start")}
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
-  local input_menu = Click_menu(nil, menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 80, 8, 1, true, 2)
-  local items = {}
-  local k = K[1]
-  local active_player = 1
-  local function get_items()
-    items = {[1] = {loc("player") .. " ", "" .. active_player}}
-    for i = 1, #key_names do
-      items[#items + 1] = {pretty_names[i], k[key_names[i]] or loc("op_none")}
-    end
-    items[#items + 1] = {loc("op_all_keys"), ""}
-    items[#items + 1] = {loc("back"), "", main_select_mode}
-  end
-  get_items()
-  for i = 1, #items do
-    input_menu:add_button(items[i][1])
-    input_menu:set_button_setting(i, items[i][2])
-  end
-  local function print_stuff()
-    input_menu:draw()
-  end
-  local idxs_to_set = {}
-  while true do
-    get_items()
-    for i = 1, #items do
-      input_menu:set_button_setting(i, items[i][2])
-    end
-    if #idxs_to_set > 0 then
-      items[idxs_to_set[1]][2] = "___"
-      input_menu:set_button_setting(idxs_to_set[1], "___")
-    end
-    print_stuff()
-    wait()
-    local ret = nil
-    variable_step(
-      function()
-        if #idxs_to_set > 0 then
-          local idx = idxs_to_set[1]
-          for key, val in pairs(this_frame_keys) do
-            if val then
-              k[key_names[idx - 1]] = key
-              table.remove(idxs_to_set, 1)
-              if #idxs_to_set == 0 then
-                write_key_file()
-              end
-            end
-          end
-        elseif input_menu.idx_selected then
-          print("config menu had an idx_selected")
-          input_menu:set_active_idx(input_menu.idx_selected)
-          input_menu.idx_selected = nil
-          if input_menu.active_idx == 1 then
-            active_player = wrap(1, active_player + 1, 2)
-            k = K[active_player]
-          elseif input_menu.active_idx <= #key_names + 1 then
-            idxs_to_set = {input_menu.active_idx}
-          elseif input_menu.active_idx == #key_names + 2 then
-            idxs_to_set = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
-          elseif input_menu.active_idx == #items then
-            ret = {items[input_menu.active_idx][3], items[input_menu.active_idx][4]}
-          end
-        elseif menu_up(K[1]) then
-          input_menu:set_active_idx(wrap(1, input_menu.active_idx - 1, #items))
-        elseif menu_down(K[1]) then
-          input_menu:set_active_idx(wrap(1, input_menu.active_idx + 1, #items))
-        elseif menu_left(K[1]) then
-          active_player = wrap(1, active_player - 1, 2)
-          k = K[active_player]
-        elseif menu_right(K[1]) then
-          active_player = wrap(1, active_player + 1, 2)
-          k = K[active_player]
-        elseif menu_enter_one_press(K[1]) then
-          if input_menu.active_idx == 1 then
-            active_player = wrap(1, active_player + 1, 2)
-            k = K[active_player]
-          elseif input_menu.active_idx <= #key_names + 1 then
-            idxs_to_set = {input_menu.active_idx}
-          elseif input_menu.active_idx == #key_names + 2 then
-            idxs_to_set = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
-          end
-        elseif menu_enter(K[1]) then
-          if input_menu.active_idx > #items - 1 --[['Set all' or 'back']] then
-            ret = {items[input_menu.active_idx][3], items[input_menu.active_idx][4]}
-          end
-        elseif menu_escape(K[1]) then
-          if input_menu.active_idx == #items then
-            ret = {items[input_menu.active_idx][3], items[input_menu.active_idx][4]}
-          else
-            input_menu:set_active_idx(#items)
-          end
-        end
-      end
-    )
-    if ret then
-      return unpack(ret)
-    end
-  end
-end
 
 -- menu for setting the username
 function main_set_name()
@@ -1766,9 +1684,7 @@ end
 
 -- toggles fullscreen
 function fullscreen()
-  if love.graphics.getSupported("canvas") then
-    love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
-  end
+  love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
   return main_select_mode
 end
 
@@ -1871,8 +1787,8 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
           set_music_fade_percentage((fadeMusicLength - t) / fadeMusicLength)
         else
           if t == fadeMusicLength + 1 then
+            stop_the_music()
             set_music_fade_percentage(1) -- reset the music back to normal config volume
-            stop_all_audio()
           end
         end
 

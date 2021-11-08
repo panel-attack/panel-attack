@@ -281,7 +281,7 @@ function make_local_panels(stack, prev_panels)
 end
 
 function make_local_gpanels(stack, prev_panels)
-  ret = make_gpanels(stack.NCOLORS, prev_panels)
+  local ret = make_gpanels(stack.NCOLORS, prev_panels)
   stack.gpanel_buffer = stack.gpanel_buffer .. ret
   local replay = replay[P1.match.mode]
   if replay and replay.gpan_buf then

@@ -271,6 +271,7 @@ function grectangle_color(mode, x, y, w, h, r, g, b, a)
 end
 
 -- Draws text at the given spot
+-- TODO: Using color is broken...
 function gprint(str, x, y, color, scale)
   x = x or 0
   y = y or 0
@@ -329,6 +330,7 @@ function set_shader(shader)
 end
 
 -- Draws a font with a given font delta from the standard font
+-- TODO: Using color is broken...
 function gprintf(str, x, y, limit, halign, color, scale, font_delta_size)
   x = x or 0
   y = y or 0

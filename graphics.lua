@@ -725,9 +725,140 @@ function Stack.render(self)
     if self == P2 then
       xPosition = xPosition + 990
     end
-    self.analytic:draw(xPosition, self.score_y)
+    self:drawAnalyticData(self.analytic, xPosition, self.score_y - 81)
   end
   -- ends here
+end
+
+
+function Stack.drawAnalyticData(self, analytic, x, y)
+
+  local backgroundPadding = 6
+  local textYPadding = 18
+  local iconToTextSpacing = 30
+  local nextIconIncrement = 30
+  local column2Distance = 70
+
+  local fontIncrement = 8
+  local iconSize = 8
+  local icon_width
+  local icon_height
+
+  -- Background
+  grectangle_color("fill", x / GFX_SCALE - backgroundPadding, y / GFX_SCALE - backgroundPadding, 160/GFX_SCALE, 600/GFX_SCALE, 0, 0, 0, 0.5)
+
+  -- Panels cleared
+  icon_width, icon_height = panels[self.panels_dir].images.classic[1][6]:getDimensions()
+  draw(panels[self.panels_dir].images.classic[1][6], x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+  gprintf(analytic.data.destroyed_panels, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
+
+  y = y + nextIconIncrement
+
+  -- Garbage sent
+  icon_width, icon_height = characters[self.character].images.face:getDimensions()
+  draw(characters[self.character].images.face, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+  gprintf(analytic.data.sent_garbage_lines, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
+
+  y = y + nextIconIncrement
+
+  -- GPM
+  if math.fmod(self.CLOCK, 60) == 0 then
+    if self.CLOCK > 0 and (analytic.data.sent_garbage_lines > 0) then
+      local garbagePerMinute = analytic.data.sent_garbage_lines / (self.CLOCK / 60 / 60)
+      analytic.lastGPM = string.format("%0.1f", round(garbagePerMinute, 1))
+    end
+  end
+  gprintf(analytic.lastGPM .. "/m", x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
+
+  y = y + nextIconIncrement
+
+  -- Moves
+  icon_width, icon_height = themes[config.theme].images.IMG_cursor[1]:getDimensions()
+  draw(themes[config.theme].images.IMG_cursor[1], x / GFX_SCALE, (y + 5) / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+  gprintf(analytic.data.move_count, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
+
+  y = y + nextIconIncrement
+
+  -- Swaps
+  if themes[config.theme].images.IMG_swap then
+    icon_width, icon_height = themes[config.theme].images.IMG_swap:getDimensions()
+    draw(themes[config.theme].images.IMG_swap, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+  end
+  gprintf(analytic.data.swap_count, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
+
+  y = y + nextIconIncrement
+
+  -- APM
+  if math.fmod(self.CLOCK, 60) == 0 then
+    if self.CLOCK > 0 and (analytic.data.swap_count + analytic.data.move_count > 0) then
+      local actionsPerMinute = (analytic.data.swap_count + analytic.data.move_count) / (self.CLOCK / 60 / 60)
+      analytic.lastAPM = string.format("%0.0f", round(actionsPerMinute, 0))
+    end
+  end
+  if themes[config.theme].images.IMG_aps then
+    icon_width, icon_height = themes[config.theme].images.IMG_aps:getDimensions()
+    draw(themes[config.theme].images.IMG_aps, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+  end
+  gprintf(analytic.lastAPM .. "/m", x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
+
+  y = y + nextIconIncrement
+
+  local yCombo = y
+
+  -- Clean up the chain data so we only show chains up to the highest chain the user has done
+  local chainData = shallowcpy(analytic.data.reached_chains)
+  local chain_above_13 = analytic:compute_above_13()
+
+  for i = 2, 13, 1 do
+    if not chainData[i] then
+      chainData[i] = 0
+    end
+  end
+  table.insert(chainData, chain_above_13)
+  for i = #chainData, 0, -1 do
+    if chainData[i] and chainData[i] == 0 then
+      chainData[i] = nil
+    else
+      break
+    end
+  end
+
+  -- Draw the chain images
+  icon_width, icon_height = themes[config.theme].images.IMG_cards[true][2]:getDimensions()
+  for i = 2, #chainData do
+    local chain_amount = chainData[i] or 0
+    draw(themes[config.theme].images.IMG_cards[true][i], x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+    gprintf(chain_amount, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
+
+    y = y + nextIconIncrement
+  end
+
+  -- Clean up the combo data so we only show combos up to the highest combo the user has done
+  local comboData = shallowcpy(analytic.data.used_combos)
+
+  for i = 4, 15, 1 do
+    if not comboData[i] then
+      comboData[i] = 0
+    end
+  end
+  for i = #comboData, 0, -1 do
+    if comboData[i] and comboData[i] == 0 then
+      comboData[i] = nil
+    else
+      break
+    end
+  end
+
+  -- Draw the combo images
+  icon_width, icon_height = themes[config.theme].images.IMG_cards[false][4]:getDimensions()
+  local xCombo = x + column2Distance
+  for i = 4, #comboData do
+    local combo_amount = comboData[i] or 0
+    draw(themes[config.theme].images.IMG_cards[false][i], xCombo / GFX_SCALE, yCombo / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+    gprintf(combo_amount, xCombo + iconToTextSpacing, yCombo + 0, canvas_width, "left", nil, 1, fontIncrement)
+
+    yCombo = yCombo + nextIconIncrement
+  end
 end
 
 -- Calculates the proper dimensions to not stretch the game for various sizes

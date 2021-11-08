@@ -6,6 +6,7 @@ Game =
   function(self)
     self.scores = require("scores")
     self.match = nil
+    self.focused = true
   end
 )
 
