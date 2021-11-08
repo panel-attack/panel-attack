@@ -793,6 +793,10 @@ function Room.rating_adjustment_approved(self)
   else
     both_players_are_placed = true
   end
+  -- don't let players use the same account
+  if players[1].user_id == players[2].user_id then
+    reasons[#reasons + 1] = "Players cannot use the same account"
+  end
 
   --don't let players too far apart in rating play ranked
   local ratings = {}
