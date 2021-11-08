@@ -867,8 +867,13 @@ function Stack.PdP(self)
         self.danger_col[idx] = false
       end
     end
-    if self.danger and self.stop_time == 0 then
-      self.danger_timer = self.danger_timer - 1
+    if self.danger then
+      if self.panels_in_top_row and self.speed ~= 0 and self.match.mode ~= "puzzle" then
+        -- Player has topped out, panels hold the "flattened" frame
+        self.danger_timer = 15
+      elseif self.stop_time == 0 then
+        self.danger_timer = self.danger_timer - 1
+      end
       if self.danger_timer < 0 then
         self.danger_timer = 17
       end
