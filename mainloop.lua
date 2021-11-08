@@ -794,13 +794,16 @@ function build_viewable_leaderboard_string(report, first_viewable_idx, last_view
   str = loc("lb_header_board") .. "\n"
   first_viewable_idx = math.max(first_viewable_idx, 1)
   last_viewable_idx = math.min(last_viewable_idx, #report)
+
   for i = first_viewable_idx, last_viewable_idx do
+    rating_spacing = "     " .. string.rep("  ", (3 - string.len(i)))
+    name_spacing = "     " .. string.rep("  ", (4 - string.len(report[i].rating)))
     if report[i].is_you then
       str = str .. loc("lb_you") .. "-> "
     else
       str = str .. "      "
     end
-    str = str .. i .. "    " .. report[i].rating .. "    " .. report[i].user_name
+    str = str .. i .. rating_spacing .. report[i].rating .. name_spacing .. report[i].user_name
     if i < #report then
       str = str .. "\n"
     end
@@ -1832,7 +1835,7 @@ end
 -- show game over screen, last frame of gameplay
 function game_over_transition(next_func, text, winnerSFX, timemax)
   game_is_paused = false
-  
+
   timemax = timemax or -1 -- negative values means the user needs to press enter/escape to continue
   text = text or ""
   button_text = loc("continue_button")
