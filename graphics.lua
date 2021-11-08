@@ -1,6 +1,5 @@
 require("input")
 require("util")
-local analytics = require("analytics")
 
 local floor = math.floor
 local ceil = math.ceil
@@ -498,7 +497,7 @@ function Stack.render(self)
   end
 
   -- draw outside of stack's frame canvas
-  if self.mode == "puzzle" then
+  if self.match.mode == "puzzle" then
     --gprint(loc("pl_moves", self.puzzle_moves), self.score_x, self.score_y)
     draw_label(themes[config.theme].images.IMG_moves, (self.origin_x + themes[config.theme].moveLabel_Pos[1]) / GFX_SCALE, (self.pos_y + themes[config.theme].moveLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].moveLabel_Scale)
     draw_number(self.puzzle_moves, themes[config.theme].images.IMG_number_atlas_1P, 10, move_quads, self.score_x + themes[config.theme].move_Pos[1], self.score_y + themes[config.theme].move_Pos[2], themes[config.theme].move_Scale, (30 / themes[config.theme].images.numberWidth_1P * themes[config.theme].move_Scale), (38 / themes[config.theme].images.numberHeight_1P * themes[config.theme].move_Scale), "center", self.multiplication)
@@ -519,7 +518,7 @@ function Stack.render(self)
     local main_infos_screen_pos = {x = 375 + (canvas_width - legacy_canvas_width) / 2, y = 10 + (canvas_height - legacy_canvas_height)}
 
     -- Draw the timer for time attack
-    if self.mode == "time" then
+    if self.match.mode == "time" then
       local time_left = time_attack_time - ((self.game_stopwatch or (time_attack_time * 60)) / 60) -- time left in seconds
       if time_left < 0 then
         time_left = 0
@@ -708,10 +707,10 @@ function Stack.render(self)
     end
 
     -- Draw the time for non time attack modes
-    if P1 and P1.game_stopwatch and tonumber(P1.game_stopwatch) and self.mode ~= "time" then
-      --gprint(frames_to_time_string(P1.game_stopwatch, P1.mode == "endless"), main_infos_screen_pos.x+10, main_infos_screen_pos.y+6)
+    if P1 and P1.game_stopwatch and tonumber(P1.game_stopwatch) and self.match.mode ~= "time" then
+      --gprint(frames_to_time_string(P1.game_stopwatch, P1.match.mode == "endless"), main_infos_screen_pos.x+10, main_infos_screen_pos.y+6)
       draw_label(themes[config.theme].images.IMG_time, (main_infos_screen_pos.x + themes[config.theme].timeLabel_Pos[1]) / GFX_SCALE, (main_infos_screen_pos.y + themes[config.theme].timeLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].timeLabel_Scale)
-      draw_time(frames_to_time_string(P1.game_stopwatch, P1.mode == "endless"), time_quads, main_infos_screen_pos.x + themes[config.theme].time_Pos[1], main_infos_screen_pos.y + themes[config.theme].time_Pos[2], 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale)
+      draw_time(frames_to_time_string(P1.game_stopwatch, self.match.mode == "endless"), time_quads, main_infos_screen_pos.x + themes[config.theme].time_Pos[1], main_infos_screen_pos.y + themes[config.theme].time_Pos[2], 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale)
     end
 
     -- Draw the community message
@@ -721,8 +720,12 @@ function Stack.render(self)
   end
 
   -- Draw the analytics data
-  if self.enable_analytics then
-    analytics.draw(self.score_x - 500, self.score_y)
+  if config.enable_analytics then
+    local xPosition = self.score_x - 512
+    if self == P2 then
+      xPosition = xPosition + 990
+    end
+    self.analytic:draw(xPosition, self.score_y)
   end
   -- ends here
 end

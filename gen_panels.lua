@@ -17,7 +17,7 @@ function make_panels(ncolors, prev_panels, stuff)
     if stuff.first_seven then
       ret = stuff.first_seven
       rows_to_make = rows_to_make - 7
-    elseif stuff.vs_mode or stuff.mode == "vs" or stuff.mode == "endless" or stuff.mode == "time" then
+    elseif stuff.vs_mode or stuff.match.mode == "vs" or stuff.match.mode == "endless" or stuff.match.mode == "time" then
       cut_panels = true
     end
   end
@@ -27,7 +27,7 @@ function make_panels(ncolors, prev_panels, stuff)
       local nogood, color = true
       while nogood do
         color = (y == stuff.metal_col) and 8 or tostring(math.random(1, ncolors))
-        nogood = (prevtwo and color == string.sub(ret, -1, -1)) or color == string.sub(ret, -6, -6) or (y > 0 and color == string.sub(ret, -1, -1) and (stuff.vs_mode or stuff.mode == "vs") and stuff.level > 7)
+        nogood = (prevtwo and color == string.sub(ret, -1, -1)) or color == string.sub(ret, -6, -6) or (y > 0 and color == string.sub(ret, -1, -1) and (stuff.vs_mode or stuff.match.mode == "vs") and stuff.level > 7)
       end
       ret = ret .. color
     end

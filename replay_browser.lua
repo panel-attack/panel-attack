@@ -106,6 +106,8 @@ function replay_browser.main()
   replay_browser.state = "browser"
   replay_browser_update()
 
+  background = themes[config.theme].images.bg_main
+
   coroutine.yield()
 
   while true do

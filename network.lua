@@ -235,8 +235,8 @@ function do_messages()
       if type == "U" then
         type = "in_buf"
       end
-      if P1 and P1.mode and replay[P1.mode][type] then
-        replay[P1.mode][type] = replay[P1.mode][type] .. data
+      if P1 and P1.match.mode and replay[P1.match.mode][type] then
+        replay[P1.match.mode][type] = replay[P1.match.mode][type] .. data
       end
     else
       break
@@ -274,7 +274,7 @@ function make_local_panels(stack, prev_panels)
   local ncolors = stack.NCOLORS
   local ret = make_panels(stack.NCOLORS, prev_panels, stack)
   stack.panel_buffer = stack.panel_buffer .. ret
-  local replay = replay[P1.mode]
+  local replay = replay[P1.match.mode]
   if replay and replay.pan_buf then
     replay.pan_buf = replay.pan_buf .. ret
   end
@@ -283,7 +283,7 @@ end
 function make_local_gpanels(stack, prev_panels)
   ret = make_gpanels(stack.NCOLORS, prev_panels)
   stack.gpanel_buffer = stack.gpanel_buffer .. ret
-  local replay = replay[P1.mode]
+  local replay = replay[P1.match.mode]
   if replay and replay.gpan_buf then
     replay.gpan_buf = replay.gpan_buf .. ret
   end
@@ -324,7 +324,7 @@ function Stack.send_controls(self)
 
   self:handle_input_taunt()
 
-  local replay = replay[self.mode]
+  local replay = replay[self.match.mode]
   if replay and replay.in_buf then
     replay.in_buf = replay.in_buf .. to_send
   end

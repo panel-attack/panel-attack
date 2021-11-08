@@ -129,7 +129,7 @@ end
 function standard_pixel_font_map()
 
   -- Special Characters
-  local fontMap = {["&"]=36, ["?"]=37, ["!"]=38, ["%"]=39, ["*"]=40}
+  local fontMap = {["&"]=36, ["?"]=37, ["!"]=38, ["%"]=39, ["*"]=40, ["."]=41}
 
   --0-9 = 0-9
   for i = 0, 9, 1 do

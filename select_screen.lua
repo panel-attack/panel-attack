@@ -810,11 +810,12 @@ function select_screen.main()
       local xPosition1 = 196
       local xPosition2 = 320
       local yPosition = 24
-      local atlasHeight = themes[config.theme].images.IMG_number_atlas_1P:getHeight()
-      draw_pixel_font("last score", themes[config.theme].images.IMG_pixelFont_atlas, standard_pixel_font_map(), xPosition1, yPosition, 0.5, 1.0)
-      draw_number(player1Scores.vsSelf["last"][cursor_data[1].state.level], themes[config.theme].images.IMG_number_atlas_1P, 10, {}, xPosition1, yPosition + atlasHeight + 4, 1)
-      draw_pixel_font("record score", themes[config.theme].images.IMG_pixelFont_atlas, standard_pixel_font_map(), xPosition2, yPosition, 0.5, 1.0)
-      draw_number(player1Scores.vsSelf["record"][cursor_data[1].state.level], themes[config.theme].images.IMG_number_atlas_1P, 10, {}, xPosition2, yPosition + atlasHeight + 4, 1)
+      local lastScore = tostring(GAME.scores:lastVsScoreForLevel(cursor_data[1].state.level))
+      local record = tostring(GAME.scores:recordVsScoreForLevel(cursor_data[1].state.level))
+      draw_pixel_font("last lines", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition, 0.5, 1.0)
+      draw_pixel_font(lastScore,    themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition + 24, 0.5, 1.0)
+      draw_pixel_font("record",     themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition, 0.5, 1.0)
+      draw_pixel_font(record,       themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition + 24, 0.5, 1.0)
     end
 
     -- Go through the grid, drawing the buttons, handling horizontal spans
@@ -905,16 +906,14 @@ function select_screen.main()
           stage_loader_load(msg.stage)
           character_loader_wait()
           stage_loader_wait()
-          P1 = Stack(1, "vs", msg.player_settings.panels_dir, msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
+          GAME.match = Match("vs")
+          local is_local = true
           if currently_spectating then
-            P1.is_local = false
-          else
-            P1.is_local = true
+            is_local = false
           end
+          P1 = Stack(1, GAME.match, is_local, msg.player_settings.panels_dir, msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
           P1.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
-          P1.enable_analytics = not currently_spectating and not replay_of_match_so_far
-          P2 = Stack(2, "vs", msg.opponent_settings.panels_dir, msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
-          P2.is_local = false
+          P2 = Stack(2, GAME.match, false, msg.opponent_settings.panels_dir, msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
           P2.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
           if currently_spectating then
             P1.panel_buffer = fake_P1.panel_buffer
@@ -1366,9 +1365,8 @@ function select_screen.main()
 
     -- Handle one player vs game setup
     if cursor_data[1].state.ready and select_screen.character_select_mode == "1p_vs_yourself" then
-      P1 = Stack(1, "vs", cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
-      P1.is_local = true
-      P1.enable_analytics = true
+      GAME.match = Match("vs")
+      P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       P1.garbage_target = P1
       P2 = nil
       make_local_panels(P1, "000000")
@@ -1380,11 +1378,9 @@ function select_screen.main()
       return main_dumb_transition, {main_local_vs_yourself, "", 0, 0}
     -- Handle two player vs game setup
     elseif cursor_data[1].state.ready and select_screen.character_select_mode == "2p_local_vs" and cursor_data[2].state.ready then
-      P1 = Stack(1, "vs", cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
-      P1.is_local = true
-      P1.enable_analytics = true
-      P2 = Stack(2, "vs", cursor_data[2].state.panels_dir, cursor_data[2].state.level, cursor_data[2].state.character)
-      P2.is_local = true
+      GAME.match = Match("vs")
+      P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+      P2 = Stack(2, GAME.match, true, cursor_data[2].state.panels_dir, cursor_data[2].state.level, cursor_data[2].state.character)
       P1.garbage_target = P2
       P2.garbage_target = P1
       current_stage = cursor_data[math.random(1, 2)].state.stage
