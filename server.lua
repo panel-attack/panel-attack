@@ -743,7 +743,13 @@ function Room.resolve_game_outcome(self)
       end
       filename = filename .. ".txt"
       print("saving replay as " .. path .. sep .. filename)
-
+      if self.replay.vs then
+        self.replay.vs.I = compress_input_string(self.replay.vs.I)
+        self.replay.vs.in_buf = compress_input_string(self.replay.vs.in_buf)
+        print("Compressed vs I/in_buf")
+      else
+        print("No vs")
+      end
       write_replay_file(self.replay, path, filename)
     else
       print("replay not saved because a player didn't want it saved")
