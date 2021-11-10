@@ -1036,7 +1036,9 @@ function Stack.PdP(self)
               if config.popfx == true then
                 self:enqueue_popfx(col, row, popsize)
               end
-              SFX_Garbage_Pop_Play = panel.pop_index
+              if self.canvas ~= nil then
+                SFX_Garbage_Pop_Play = panel.pop_index
+              end
             end
             if panel.timer == 0 then
               if panel.y_offset == -1 then
@@ -1215,7 +1217,9 @@ function Stack.PdP(self)
                 if self.match.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
                   self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
                 end
-                SFX_Pop_Play = 1
+                if self.canvas ~= nil then
+                  SFX_Pop_Play = 1
+                end
                 self.poppedPanelIndex = panel.combo_index
                 panel.color = 0
                 if (panel.chaining) then
@@ -1230,7 +1234,9 @@ function Stack.PdP(self)
                 if self.match.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
                   self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
                 end
-                SFX_Pop_Play = 1
+                if self.canvas ~= nil then
+                  SFX_Pop_Play = 1
+                end
                 self.poppedPanelIndex = panel.combo_index
               end
             elseif panel.state == "popped" then
@@ -1289,7 +1295,9 @@ function Stack.PdP(self)
       self.cur_row = bound(1, self.cur_row + d_row[self.cur_dir], self.top_cur_row)
       self.cur_col = bound(1, self.cur_col + d_col[self.cur_dir], width - 1)
       if (self.move_sound and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and (self.cur_row ~= prev_row or self.cur_col ~= prev_col)) then
-        SFX_Cur_Move_Play = 1
+        if self.canvas ~= nil then
+          SFX_Cur_Move_Play = 1
+        end
         if self.cur_timer ~= self.cur_wait_time then
           self.analytic:register_move()
         end
@@ -1360,7 +1368,9 @@ function Stack.PdP(self)
     -- if at the end of the routine there are no chain panels, the chain ends.
     if self.chain_counter ~= 0 and self.n_chain_panels == 0 then
       self:set_chain_garbage(self.chain_counter)
-      SFX_Fanfare_Play = self.chain_counter
+      if self.canvas ~= nil then
+        SFX_Fanfare_Play = self.chain_counter
+      end
       self.analytic:register_chain(self.chain_counter)
       self.chain_counter = 0
     end
@@ -1589,7 +1599,9 @@ function Stack.PdP(self)
         stop_sounds = nil
       end
       if self.game_over or (self.garbage_target and self.garbage_target.game_over) then
-        SFX_GameOver_Play = 1
+        if self.canvas ~= nil then
+          SFX_GameOver_Play = 1
+        end
       end
     end
 
@@ -2002,7 +2014,9 @@ function Stack.check_matches(self)
       -- We matched a new garbage
       if ((metal and panel.metal) or (normal and not panel.metal)) and panel.garbage and not garbage[panel] then
         garbage[panel] = true
-        SFX_garbage_match_play = true
+        if self.canvas ~= nil then
+          SFX_garbage_match_play = true
+        end
         if y <= self.height then
           garbage_size = garbage_size + 1
         end
