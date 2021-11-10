@@ -1062,10 +1062,12 @@ function select_screen.main()
 
     -- Draw the player information buttons
     draw_button(0, 1, 1, 1, "P1")
-    draw_button(0, 2, 2, 1, get_player_state_str(my_player_number, my_rating_difference, GAME.battleRoom.playerWinCounts[my_player_number], op_win_count, my_expected_win_ratio), "left", "top", true)
+    assert(GAME.battleRoom, "need battle room")
+    assert(my_player_number and (my_player_number == 1 or my_player_number == 2), "need number")
+    draw_button(0, 2, 2, 1, get_player_state_str(my_player_number, my_rating_difference, GAME.battleRoom.playerWinCounts[my_player_number], GAME.battleRoom.playerWinCounts[op_player_number], my_expected_win_ratio), "left", "top", true)
     if cursor_data[1].state and op_name then
       draw_button(0, 7, 1, 1, "P2")
-      draw_button(0, 8, 2, 1, get_player_state_str(op_player_number, op_rating_difference, op_win_count, GAME.battleRoom.playerWinCounts[op_player_number], op_expected_win_ratio), "left", "top", true)
+      draw_button(0, 8, 2, 1, get_player_state_str(op_player_number, op_rating_difference, GAME.battleRoom.playerWinCounts[op_player_number], GAME.battleRoom.playerWinCounts[my_player_number], op_expected_win_ratio), "left", "top", true)
     --state = state.." "..json.encode(op_state)
     end
 

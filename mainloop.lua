@@ -991,10 +991,13 @@ end
 
 -- sets up globals for local vs
 function main_local_vs_setup()
+  GAME.battleRoom = BattleRoom()
   currently_spectating = false
   my_name = config.name or "Player 1"
   op_name = "Player 2"
   op_state = nil
+  my_player_number = 1
+  op_player_number = 2
   select_screen.character_select_mode = "2p_local_vs"
   return select_screen.main
 end
