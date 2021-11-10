@@ -7,6 +7,7 @@ Game =
     self.scores = require("scores")
     self.match = nil
     self.focused = true
+    self.droppedFrames = 0
   end
 )
 
