@@ -1787,8 +1787,8 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
           set_music_fade_percentage((fadeMusicLength - t) / fadeMusicLength)
         else
           if t == fadeMusicLength + 1 then
-            stop_the_music()
             set_music_fade_percentage(1) -- reset the music back to normal config volume
+            stop_the_music()
           end
         end
 
