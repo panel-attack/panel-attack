@@ -237,7 +237,7 @@ function select_screen.main()
     refresh_based_on_own_mods(global_op_state)
 
     if msg.win_counts then
-      GAME.battleRoom.updateWinCounts(msg.win_counts)
+      GAME.battleRoom:updateWinCounts(msg.win_counts)
     end
 
     if msg.replay_of_match_so_far then
@@ -838,7 +838,7 @@ function select_screen.main()
       end
       for _, msg in ipairs(messages) do
         if msg.win_counts then
-          GAME.battleRoom.updateWinCounts(msg.win_counts)
+          GAME.battleRoom:updateWinCounts(msg.win_counts)
         end
         if msg.menu_state then
           if currently_spectating then

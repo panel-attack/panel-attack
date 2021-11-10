@@ -1439,9 +1439,7 @@ function Stack.PdP(self)
           self.garbage_q:pop()
         end
       end
-    end
-
-    dump(GAME.battleRoom.playerWinCounts)
+    end 
 
     -- Update Music
     if not music_mute and not game_is_paused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
