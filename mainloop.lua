@@ -228,7 +228,11 @@ function main_select_speed_99(next_func)
   local loc_difficulties = {loc("easy"), loc("normal"), loc("hard"), "EX Mode"} -- TODO: localize "EX Mode"
 
   background = themes[config.theme].images.bg_main
-
+  reset_filters()
+  if themes[config.theme].musics["main"] then
+    find_and_add_music(themes[config.theme].musics, "main")
+  end
+  
   local gameSettingsMenu
 
   local function goEscape()
@@ -388,6 +392,9 @@ function Stack.handle_pause(self)
 
     if game_is_paused then
       stop_the_music()
+      reset_filters()
+    else
+      use_current_stage()
     end
   end
 end
@@ -778,13 +785,16 @@ function build_viewable_leaderboard_string(report, first_viewable_idx, last_view
   str = loc("lb_header_board") .. "\n"
   first_viewable_idx = math.max(first_viewable_idx, 1)
   last_viewable_idx = math.min(last_viewable_idx, #report)
+
   for i = first_viewable_idx, last_viewable_idx do
+    rating_spacing = "     " .. string.rep("  ", (3 - string.len(i)))
+    name_spacing = "     " .. string.rep("  ", (4 - string.len(report[i].rating)))
     if report[i].is_you then
       str = str .. loc("lb_you") .. "-> "
     else
       str = str .. "      "
     end
-    str = str .. i .. "    " .. report[i].rating .. "    " .. report[i].user_name
+    str = str .. i .. rating_spacing .. report[i].rating .. name_spacing .. report[i].user_name
     if i < #report then
       str = str .. "\n"
     end
@@ -1118,10 +1128,10 @@ function main_replay_vs()
   P1.garbage_target = P2
   P2.garbage_target = P1
   move_stack(P2, 2)
-  P1.input_buffer = replay.in_buf
+  P1.input_buffer = uncompress_input_string(replay.in_buf)
   P1.panel_buffer = replay.P
   P1.gpanel_buffer = replay.Q
-  P2.input_buffer = replay.I
+  P2.input_buffer = uncompress_input_string(replay.I)
   P2.panel_buffer = replay.O
   P2.gpanel_buffer = replay.R
   P1.max_runs_per_frame = 1
@@ -1209,7 +1219,7 @@ function main_replay_endless()
   P1:wait_for_random_character()
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
-  P1.input_buffer = table.concat({replay.in_buf})
+  P1.input_buffer = table.concat({uncompress_input_string(replay.in_buf)})
   P1.panel_buffer = replay.pan_buf
   P1.gpanel_buffer = replay.gpan_buf
   P1.speed = replay.speed
@@ -1268,7 +1278,7 @@ function main_replay_puzzle()
   P1:wait_for_random_character()
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
-  P1.input_buffer = replay.in_buf
+  P1.input_buffer = uncompress_input_string(replay.in_buf)
   P1.cur_wait_time = replay.cur_wait_time or default_input_repeat_delay
   P1:set_puzzle_state(unpack(replay.puzzle))
   P2 = nil
@@ -1695,7 +1705,7 @@ end
 -- show game over screen, last frame of gameplay
 function game_over_transition(next_func, text, winnerSFX, timemax)
   game_is_paused = false
-  
+
   timemax = timemax or -1 -- negative values means the user needs to press enter/escape to continue
   text = text or ""
   button_text = loc("continue_button")
@@ -1731,8 +1741,8 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
           set_music_fade_percentage((fadeMusicLength - t) / fadeMusicLength)
         else
           if t == fadeMusicLength + 1 then
+            stop_the_music()
             set_music_fade_percentage(1) -- reset the music back to normal config volume
-            stop_all_audio()
           end
         end
 
@@ -1761,18 +1771,18 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
           do_messages() -- recieve messages so we know if the next game is in the queue
         end
 
-        local new_match_started = false -- Whether a message has been sent that indicates a match has started
+        local left_select_menu = false -- Whether a message has been sent that indicates a match has started or the room has closed
         if this_frame_messages then
           for _, msg in ipairs(this_frame_messages) do
-            -- if a new match has started flag the match started variable
-            if msg.match_start or replay_of_match_so_far then
-              new_match_started = true
+            -- if a new match has started or the room is being closed, flag the left select menu variavle
+            if msg.match_start or replay_of_match_so_far or msg.leave_room then
+              left_select_menu = true
             end
           end
         end
 
         -- if conditions are met, leave the game over screen
-        if t >= timemin and ((t >= timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) or new_match_started then
+        if t >= timemin and ((t >= timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) or left_select_menu then
           set_music_fade_percentage(1) -- reset the music back to normal config volume
           stop_all_audio()
           SFX_GameOver_Play = 0
