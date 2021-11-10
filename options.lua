@@ -6,7 +6,7 @@ local wait = coroutine.yield
 local memory_before_options_menu = nil
 
 local function main_show_custom_themes_readme(idx)
-  background = themes[config.theme].images.bg_readme
+  GAME.backgroundImage = themes[config.theme].images.bg_readme
   reset_filters()
 
   if not love.filesystem.getInfo("themes/" .. prefix_of_ignored_dirs .. default_theme_dir) then
@@ -36,7 +36,7 @@ local function main_show_custom_themes_readme(idx)
 end
 
 local function main_show_custom_stages_readme(idx)
-  background = themes[config.theme].images.bg_readme
+  GAME.backgroundImage = themes[config.theme].images.bg_readme
   reset_filters()
 
   local default_stages_list = love.filesystem.getDirectoryItems("default_data/stages")
@@ -69,7 +69,7 @@ local function main_show_custom_stages_readme(idx)
 end
 
 local function main_show_custom_characters_readme(idx)
-  background = themes[config.theme].images.bg_readme
+  GAME.backgroundImage = themes[config.theme].images.bg_readme
   reset_filters()
 
   local default_characters_list = love.filesystem.getDirectoryItems("default_data/characters")
@@ -102,7 +102,7 @@ local function main_show_custom_characters_readme(idx)
 end
 
 local function main_show_custom_panels_readme(idx)
-  background = themes[config.theme].images.bg_readme
+  GAME.backgroundImage = themes[config.theme].images.bg_readme
   reset_filters()
 
   -- add other defaults panels sets here so that anyone can update them if wanted
@@ -183,7 +183,7 @@ local function exit_options_menu()
 end
 
 function options.main(starting_idx)
-  background = themes[config.theme].images.bg_main
+  GAME.backgroundImage = themes[config.theme].images.bg_main
   reset_filters()
 
   local items, active_idx = {}, starting_idx or 1

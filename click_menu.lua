@@ -359,7 +359,7 @@ end
 -- Transform from window coordinates to game coordinates
 function transform_coordinates(x, y)
   local lbx, lby, lbw, lbh = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 16, 9)
-  local scale = canvas_width / math.max(background:getWidth(), background:getHeight())
+  local scale = canvas_width / math.max(GAME.backgroundImage:getWidth(), GAME.backgroundImage:getHeight())
   return (x - lbx) / scale * canvas_width / lbw, (y - lby) / scale * canvas_height / lbh
 end
 

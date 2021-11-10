@@ -35,12 +35,7 @@ panels_ids = {} -- initialized in panels.lua
 
 current_stage = nil
 
-background_overlay = nil
-foreground_overlay = nil
-
--- win counters
-my_win_count = 0
-op_win_count = 0
+GAME_ENDED_CLOCK = 0
 
 -- sfx play
 SFX_Fanfare_Play = 0

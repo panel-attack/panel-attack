@@ -25,12 +25,14 @@ function Match.matchOutcome(self)
   elseif gameResult == -1 then -- opponent wins
     results["winSFX"] = self.P2:pick_win_sfx()
     results["end_text"] =  loc("ss_p_wins", op_name)
-    op_win_count = op_win_count + 1 -- win_counts will get overwritten by the server in net games
+    -- win_counts will get overwritten by the server in net games
+    GAME.battleRoom.playerWinCounts[P2.player_number] = GAME.battleRoom.playerWinCounts[P2.player_number] + 1
     results["outcome_claim"] = P2.player_number
   elseif P2.game_over_clock == self.gameEndedClock then -- client wins
     results["winSFX"] = self.P1:pick_win_sfx()
     results["end_text"] =  loc("ss_p_wins", my_name)
-    my_win_count = my_win_count + 1 -- win_counts will get overwritten by the server in net games
+    -- win_counts will get overwritten by the server in net games
+    GAME.battleRoom.playerWinCounts[P1.player_number] = GAME.battleRoom.playerWinCounts[P1.player_number] + 1
     results["outcome_claim"] = P1.player_number
   else
     error("No win result")
