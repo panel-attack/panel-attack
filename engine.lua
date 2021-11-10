@@ -1268,7 +1268,9 @@ function Stack.PdP(self)
       self.cur_col = bound(1, self.cur_col + d_col[self.cur_dir], width - 1)
       if (self.move_sound and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and (self.cur_row ~= prev_row or self.cur_col ~= prev_col)) then
         SFX_Cur_Move_Play = 1
-        self.analytic:register_move()
+        if self.cur_timer ~= self.cur_wait_time then
+          self.analytic:register_move()
+        end
       end
     else
       self.cur_row = bound(1, self.cur_row, self.top_cur_row)
