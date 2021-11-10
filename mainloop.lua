@@ -154,7 +154,7 @@ do
       {loc("mm_1_time"), main_timeattack_setup},
       {loc("mm_1_vs"), main_local_vs_yourself_setup},
       --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
-      {loc("mm_2_vs_online", "Jon's server"), main_net_vs_setup, {"18.188.43.50"}},
+      {loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "betaserver.panelattack.com"), main_net_vs_setup, {"betaserver.panelattack.com"}},
       --{loc("mm_2_vs_online", "(USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)"), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "This test build is for offline-use only"), main_select_mode},
