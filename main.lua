@@ -1,8 +1,10 @@
+require("class")
 socket = require("socket")
 json = require("dkjson")
+GAME = require("game")
+require("BattleRoom")
 require("util")
 require("consts")
-require("class")
 require("queue")
 require("globals")
 require("character") -- after globals!
@@ -19,7 +21,6 @@ require("sound")
 require("timezones")
 require("gen_panels")
 
-GAME = require("game")
 GAME.scores = require("scores")
 
 global_canvas = love.graphics.newCanvas(canvas_width, canvas_height)
@@ -31,6 +32,9 @@ local pointer_hidden = false
 
 -- Called at the beginning to load the game
 function love.load()
+  if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
+    require("lldebugger").start()
+  end
   math.randomseed(os.time())
   for i = 1, 4 do
     math.random()
@@ -86,9 +90,9 @@ function love.draw()
   -- end
   -- main_font:setLineHeight(0.66)
   -- love.graphics.setFont(main_font)
-  if foreground_overlay then
-    local scale = canvas_width / math.max(foreground_overlay:getWidth(), foreground_overlay:getHeight()) -- keep image ratio
-    menu_drawf(foreground_overlay, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
+  if GAME.foreground_overlay then
+    local scale = canvas_width / math.max(GAME.foreground_overlay:getWidth(), GAME.foreground_overlay:getHeight()) -- keep image ratio
+    menu_drawf(GAME.foreground_overlay, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
   end
 
   -- Clear the screen
@@ -115,10 +119,10 @@ function love.draw()
   love.graphics.draw(global_canvas, x, y, 0, w / canvas_width, h / canvas_height)
 
   -- draw background and its overlay
-  local scale = canvas_width / math.max(background:getWidth(), background:getHeight()) -- keep image ratio
-  menu_drawf(background, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
-  if background_overlay then
-    local scale = canvas_width / math.max(background_overlay:getWidth(), background_overlay:getHeight()) -- keep image ratio
-    menu_drawf(background_overlay, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
+  local scale = canvas_width / math.max(GAME.backgroundImage:getWidth(), GAME.backgroundImage:getHeight()) -- keep image ratio
+  menu_drawf(GAME.backgroundImage, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
+  if GAME.background_overlay then
+    local scale = canvas_width / math.max(GAME.background_overlay:getWidth(), GAME.background_overlay:getHeight()) -- keep image ratio
+    menu_drawf(GAME.background_overlay, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
   end
 end

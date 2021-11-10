@@ -98,7 +98,7 @@ Theme =
   end
 )
 
-background = load_theme_img("background/main")
+GAME.backgroundImage = load_theme_img("background/main")
 
 function Theme.graphics_init(self)
   self.images = {}
