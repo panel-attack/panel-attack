@@ -743,7 +743,13 @@ function Room.resolve_game_outcome(self)
       end
       filename = filename .. ".txt"
       print("saving replay as " .. path .. sep .. filename)
-
+      if self.replay.vs then
+        self.replay.vs.I = compress_input_string(self.replay.vs.I)
+        self.replay.vs.in_buf = compress_input_string(self.replay.vs.in_buf)
+        print("Compressed vs I/in_buf")
+      else
+        print("No vs")
+      end
       write_replay_file(self.replay, path, filename)
     else
       print("replay not saved because a player didn't want it saved")
@@ -792,6 +798,10 @@ function Room.rating_adjustment_approved(self)
     end
   else
     both_players_are_placed = true
+  end
+  -- don't let players use the same account
+  if players[1].user_id == players[2].user_id then
+    reasons[#reasons + 1] = "Players cannot use the same account"
   end
 
   --don't let players too far apart in rating play ranked
@@ -1190,8 +1200,13 @@ function Connection.J(self, message)
       self:send(response)
       return
     elseif string.lower(message.name) == "anonymous" then
-      print('connection tried to use name"anonymous"')
+      print('connection tried to use name "anonymous"')
       response = {choose_another_name = {reason = 'Username cannot be "anonymous"'}}
+      self:send(response)
+      return
+    elseif string.lower(message.name:match("d+e+f+a+u+l+t+n+a+m+e?")) then
+      print('connection tried to use name "defaultname", or a variation of it')
+      response = {choose_another_name = {reason = 'Username cannot be "defaultname" or a variation of it'}}
       self:send(response)
       return
     elseif name_to_idx[message.name] then
