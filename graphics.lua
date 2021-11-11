@@ -618,18 +618,18 @@ function Stack.render(self)
 
       -- Multibar
 
-      if self.maxShake > 0 then
-        multi_shake_bar = self.shake_time * (themes[config.theme].images.IMG_multibar_shake_bar:getHeight() / self.maxShake)
+      if self.maxShake > 0 and self.shake_time >= self.pre_stop_time + self.stop_time then
+        multi_shake_bar = self.shake_time * (themes[config.theme].images.IMG_multibar_shake_bar:getHeight() / self.maxShake) * 3
       else
         multi_shake_bar = 0
       end
-      if self.maxStop > 0 then
-        multi_stop_bar = self.stop_time * (themes[config.theme].images.IMG_multibar_stop_bar:getHeight() / self.maxStop)
+      if self.maxStop > 0 and self.shake_time < self.pre_stop_time + self.stop_time then
+        multi_stop_bar = self.stop_time * (themes[config.theme].images.IMG_multibar_stop_bar:getHeight() / self.maxStop) * 1.5
       else
         multi_stop_bar = 0
       end
-      if self.maxPrestop > 0 then
-        multi_prestop_bar = self.pre_stop_time * (themes[config.theme].images.IMG_multibar_prestop_bar:getHeight() / self.maxPrestop)
+      if self.maxPrestop > 0 and self.shake_time < self.pre_stop_time + self.stop_time then
+        multi_prestop_bar = self.pre_stop_time * (themes[config.theme].images.IMG_multibar_prestop_bar:getHeight() / self.maxPrestop) * 1.5
       else
         multi_prestop_bar = 0
       end
