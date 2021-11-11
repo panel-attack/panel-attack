@@ -108,7 +108,12 @@ function variable_step(f)
       this_frame_keys = {}
       this_frame_released_keys = {}
       this_frame_unicodes = {}
+
       leftover_time = leftover_time - 1 / 60
+      if leftover_time >= 1 / 60 then
+        GAME.droppedFrames = GAME.droppedFrames + 1
+        print("Dropped Frame, total is: " .. GAME.droppedFrames)
+      end
     end
   end
 end
@@ -156,7 +161,7 @@ do
       {loc("mm_1_time"), main_timeattack_setup},
       {loc("mm_1_vs"), main_local_vs_yourself_setup},
       --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
-      {loc("mm_2_vs_online", "Jon's server"), main_net_vs_setup, {"18.188.43.50"}},
+      {loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "betaserver.panelattack.com"), main_net_vs_setup, {"betaserver.panelattack.com"}},
       --{loc("mm_2_vs_online", "(USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)"), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "This test build is for offline-use only"), main_select_mode},
@@ -423,11 +428,7 @@ function main_endless(...)
   make_local_gpanels(P1, "000000")
   P1:starting_state()
   while true do
-    if game_is_paused then
-      draw_pause()
-    else
-      P1:render()
-    end
+    GAME.match:render()
     wait()
     local ret = nil
     if P1:game_ended() then
@@ -474,11 +475,7 @@ function main_time_attack(...)
   P1:starting_state()
   P2 = nil
   while true do
-    if game_is_paused then
-      draw_pause()
-    else
-      P1:render()
-    end
+    GAME.match:render()
     wait()
     local ret = nil
     if P1:game_ended() then
@@ -914,8 +911,7 @@ function main_net_vs()
     end
     -- don't spend time rendering when catching up to a current match in replays
     if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
-      P1:render()
-      P2:render()
+      GAME.match:render()
       wait()
     end
 
@@ -1022,12 +1018,7 @@ function main_local_vs()
   pick_use_music_from()
   local end_text = nil
   while true do
-    if game_is_paused then
-      draw_pause()
-    else
-      P1:render()
-      P2:render()
-    end
+    GAME.match:render()
     wait()
     variable_step(
       function()
@@ -1072,11 +1063,7 @@ function main_local_vs_yourself()
   use_current_stage()
   pick_use_music_from()
   while true do
-    if game_is_paused then
-      draw_pause()
-    else
-      P1:render()
-    end
+    GAME.match:render()
     wait()
     local ret = nil
     variable_step(
@@ -1165,12 +1152,8 @@ function main_replay_vs()
     debug_mouse_panel = nil
     gprint(my_name or "", P1.score_x, P1.score_y - 28)
     gprint(op_name or "", P2.score_x, P2.score_y - 28)
-    P1:render()
-    P2:render()
+    GAME.match:render()
     draw_debug_mouse_panel()
-    if game_is_paused then
-      draw_pause()
-    end
     wait()
     local ret = nil
     variable_step(
@@ -1234,10 +1217,7 @@ function main_replay_endless()
   P2 = nil
   local run = true
   while true do
-    P1:render()
-    if game_is_paused then
-      draw_pause()
-    end
+    GAME.match:render()
     wait()
     local ret = nil
     variable_step(
@@ -1290,11 +1270,8 @@ function main_replay_puzzle()
   local run = true
   while true do
     debug_mouse_panel = nil
-    P1:render()
+    GAME.match:render()
     draw_debug_mouse_panel()
-    if game_is_paused then
-      draw_pause()
-    end
     wait()
     local ret = nil
     variable_step(
@@ -1353,11 +1330,7 @@ function make_main_puzzle(puzzles)
     replay.puzzle = puzzles[awesome_idx]
     replay.in_buf = ""
     while true do
-      if game_is_paused then
-        draw_pause()
-      else
-        P1:render()
-      end
+      GAME.match:render()
       wait()
       local ret = nil
       variable_step(
@@ -1728,12 +1701,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
   end
 
   while true do
-    if P1 then
-      P1:render()
-    end
-    if P2 then
-      P2:render()
-    end
+    GAME.match:render()
     gprint(text, (canvas_width - font:getWidth(text)) / 2, (canvas_height - font:getHeight(text)) / 2)
     gprint(button_text, (canvas_width - font:getWidth(button_text)) / 2, ((canvas_height - font:getHeight(button_text)) / 2) + 30)
     wait()
@@ -1746,8 +1714,8 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
           set_music_fade_percentage((fadeMusicLength - t) / fadeMusicLength)
         else
           if t == fadeMusicLength + 1 then
-            stop_the_music()
             set_music_fade_percentage(1) -- reset the music back to normal config volume
+            stop_the_music()
           end
         end
 
