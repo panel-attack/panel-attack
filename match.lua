@@ -13,7 +13,7 @@ Match =
 
 function Match.render(self)
 
-  if GAME.droppedFrames > 10 then
+  if GAME.droppedFrames > 10 and config.show_fps then
     gprint("Dropped Frames: " .. GAME.droppedFrames, 1, 12)
   end
 
