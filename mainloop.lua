@@ -1081,6 +1081,7 @@ function main_local_vs_yourself_setup()
   currently_spectating = false
   my_name = config.name or loc("player_n", "1")
   op_name = nil
+  my_player_number = 1
   op_state = nil
   select_screen.character_select_mode = "1p_vs_yourself"
   return select_screen.main
