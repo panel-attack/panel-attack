@@ -111,7 +111,9 @@ function variable_step(f)
       leftover_time = leftover_time - 1 / 60
       if leftover_time >= 1 / 60 then
         GAME.droppedFrames = GAME.droppedFrames + 1
-        print("Dropped Frame, total is: " .. GAME.droppedFrames)
+        if GAME.match then
+          print("Dropped Frame, total is: " .. GAME.droppedFrames)
+        end
       end
     end
   end

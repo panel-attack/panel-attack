@@ -226,7 +226,9 @@ function Theme.graphics_init(self)
   --self.images.IMG_wall8P = load_theme_img("frame/wall8P")
 
   self.images.IMG_swap = load_theme_img("swap")
-  self.images.IMG_aps = load_theme_img("aps")
+  self.images.IMG_apm = load_theme_img("apm")
+  self.images.IMG_gpm = load_theme_img("GPM")
+  self.images.IMG_cursorCount = load_theme_img("CursorCount")
 
   self.images.IMG_cards = {}
   self.images.IMG_cards[true] = {}
