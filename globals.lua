@@ -13,7 +13,7 @@ this_frame_released_keys = {}
 this_frame_unicodes = {}
 this_frame_messages = {}
 
-server_queue = ServerQueue(SERVER_QUEUE_CAPACITY)
+server_queue = ServerQueue()
 
 score_mode = SCOREMODE_TA
 

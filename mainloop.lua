@@ -84,6 +84,9 @@ function fmainloop()
   love.filesystem.createDirectory("themes")
   love.filesystem.createDirectory("stages")
 
+  -- Run all unit tests now that we have everything loaded
+  require("ServerQueueTests")
+  
   --check for game updates
   if GAME_UPDATER_CHECK_UPDATE_INGAME then
     wait_game_update = GAME_UPDATER:async_download_latest_version()
@@ -848,7 +851,7 @@ function main_net_vs_setup(ip, network_port)
   end
   P1, P1_level, P2_level, got_opponent = nil
   P2 = {panel_buffer = "", gpanel_buffer = ""}
-  server_queue = ServerQueue(SERVER_QUEUE_CAPACITY)
+  server_queue = ServerQueue()
   gprint(loc("lb_set_connect"), unpack(main_menu_screen_pos))
   wait()
   network_init(ip, network_port)
