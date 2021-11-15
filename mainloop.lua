@@ -922,30 +922,7 @@ function main_net_vs()
     if not config.debug_mode then --this is printed in the same space as the debug details
       gprint(spectators_string, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
     end
-    if match_type == "Ranked" then
-      if global_current_room_ratings[my_player_number] and global_current_room_ratings[my_player_number].new then
-        local rating_to_print = loc("ss_rating") .. "\n"
-        if global_current_room_ratings[my_player_number].new > 0 then
-          rating_to_print = global_current_room_ratings[my_player_number].new
-        end
-        --gprint(rating_to_print, P1.score_x, P1.score_y-30)
-        draw_label(themes[config.theme].images.IMG_rating_1P, (P1.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
-        if type(rating_to_print) == "number" then
-          draw_number(rating_to_print, themes[config.theme].images.IMG_number_atlas_1P, 10, P1_rating_quads, P1.score_x + themes[config.theme].rating_Pos[1], P1.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, (15 / themes[config.theme].images.numberWidth_1P * themes[config.theme].rating_Scale), (19 / themes[config.theme].images.numberHeight_1P * themes[config.theme].rating_Scale), "center")
-        end
-      end
-      if global_current_room_ratings[op_player_number] and global_current_room_ratings[op_player_number].new then
-        local op_rating_to_print = loc("ss_rating") .. "\n"
-        if global_current_room_ratings[op_player_number].new > 0 then
-          op_rating_to_print = global_current_room_ratings[op_player_number].new
-        end
-        --gprint(op_rating_to_print, P2.score_x, P2.score_y-30)
-        draw_label(themes[config.theme].images.IMG_rating_2P, (P2.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (P2.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
-        if type(op_rating_to_print) == "number" then
-          draw_number(op_rating_to_print, themes[config.theme].images.IMG_number_atlas_2P, 10, P2_rating_quads, P2.score_x + themes[config.theme].rating_Pos[1], P2.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, (15 / themes[config.theme].images.numberWidth_2P * themes[config.theme].rating_Scale), (19 / themes[config.theme].images.numberHeight_2P * themes[config.theme].rating_Scale), "center")
-        end
-      end
-    end
+    
     -- don't spend time rendering when catching up to a current match in replays
     if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
       GAME.match:render()
@@ -1131,17 +1108,6 @@ function main_local_vs_yourself()
   end
 end
 
--- shows debug info for mouse hover
-local function draw_debug_mouse_panel()
-  if debug_mouse_panel then
-    local str = loc("pl_panel_info", debug_mouse_panel[1], debug_mouse_panel[2])
-    for k, v in spairs(debug_mouse_panel[3]) do
-      str = str .. "\n" .. k .. ": " .. tostring(v)
-    end
-    gprintf(str, 10, 10)
-  end
-end
-
 -- replay for 2pvs match
 function main_replay_vs()
   local replay = replay.vs
@@ -1152,7 +1118,8 @@ function main_replay_vs()
   pick_random_stage()
   pick_use_music_from()
   select_screen.fallback_when_missing = {nil, nil}
-  GAME.match = Match("vs")
+  GAME.battleRoom = BattleRoom()
+  GAME.match = Match("vs", GAME.battleRoom)
   P1 = Stack(1, GAME.match, false, config.panels, replay.P1_level or 5)
   P2 = Stack(2, GAME.match, false, config.panels, replay.P2_level or 5)
   P1.do_countdown = replay.do_countdown or false
@@ -1191,11 +1158,7 @@ function main_replay_vs()
   local end_text = nil
   local run = true
   while true do
-    debug_mouse_panel = nil
-    gprint(my_name or "", P1.score_x, P1.score_y - 28)
-    gprint(op_name or "", P2.score_x, P2.score_y - 28)
     GAME.match:render()
-    draw_debug_mouse_panel()
     wait()
     local ret = nil
     variable_step(
@@ -1326,9 +1289,7 @@ function main_replay_puzzle()
   P2 = nil
   local run = true
   while true do
-    debug_mouse_panel = nil
     GAME.match:render()
-    draw_debug_mouse_panel()
     wait()
     local ret = nil
     variable_step(
@@ -1715,7 +1676,7 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
   local k = K[1]
   local font = love.graphics.getFont()
   while true do
-    gprint(text, (canvas_width - font:getWidth(text)) / 2, (canvas_height - font:getHeight(text)) / 2)
+    gprint(text, (canvas_width - font:getWidth(text)) / 2, (canvas_height - font:getHeight()) / 2)
     wait()
     local ret = nil
     variable_step(
@@ -1758,8 +1719,8 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
 
   while true do
     GAME.match:render()
-    gprint(text, (canvas_width - font:getWidth(text)) / 2, (canvas_height - font:getHeight(text)) / 2)
-    gprint(button_text, (canvas_width - font:getWidth(button_text)) / 2, ((canvas_height - font:getHeight(button_text)) / 2) + 30)
+    gprint(text, (canvas_width - font:getWidth(text)) / 2, (canvas_height - font:getHeight()) / 2)
+    gprint(button_text, (canvas_width - font:getWidth(button_text)) / 2, ((canvas_height - font:getHeight()) / 2) + 30)
     wait()
     local ret = nil
     variable_step(

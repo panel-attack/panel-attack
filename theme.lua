@@ -483,7 +483,7 @@ function Theme.json_init(self)
     self.name_Pos = read_data.name_Pos
   end
 
-  -- Ratin label position
+  -- Rating label position
   if read_data.ratingLabel_Pos and type(read_data.ratingLabel_Pos) == "table" then
     self.ratingLabel_Pos = read_data.ratingLabel_Pos
   end
