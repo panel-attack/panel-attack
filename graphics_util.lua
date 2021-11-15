@@ -3,7 +3,7 @@ require("consts")
 local function load_img(path_and_name)
   print(path_and_name)
   local img = nil
-  pcall(
+  local status = pcall(
     function()
       img = love.image.newImageData(path_and_name)
     end
