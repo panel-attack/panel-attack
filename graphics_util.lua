@@ -8,6 +8,9 @@ local function load_img(path_and_name)
       img = love.image.newImageData(path_and_name)
     end
   )
+  if not status then
+    print("Error loading " .. path_and_name)
+  end
   if img == nil then
     return nil
   end
