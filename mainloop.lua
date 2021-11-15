@@ -697,7 +697,7 @@ function main_net_vs_lobby()
       local function playerRatingString(playerName)
         local rating = ""
         if playerRatingMap and playerRatingMap[playerName] then
-          rating =  " (" .. playerRatingMap[playerName] .. ") "
+          rating =  " (" .. playerRatingMap[playerName] .. ")"
         end
         return rating
       end
