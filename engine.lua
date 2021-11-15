@@ -1439,7 +1439,7 @@ function Stack.PdP(self)
           self.garbage_q:pop()
         end
       end
-    end
+    end 
 
     -- Update Music
     if not music_mute and not game_is_paused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
@@ -1455,9 +1455,13 @@ function Stack.PdP(self)
             SFX_Go_Play = 0
           end
         else
-          local musics_to_use = (current_use_music_from == "stage") and stages[current_stage].musics or characters[winningPlayer().character].musics
+          local winningPlayer = P1
+          if GAME.battleRoom then
+            winningPlayer = GAME.battleRoom:winningPlayer(P1, P2)
+          end
+          local musics_to_use = (current_use_music_from == "stage") and stages[current_stage].musics or characters[winningPlayer.character].musics
           if not musics_to_use["normal_music"] then -- use the other one as fallback
-            musics_to_use = (current_use_music_from ~= "stage") and stages[current_stage].musics or characters[winningPlayer().character].musics
+            musics_to_use = (current_use_music_from ~= "stage") and stages[current_stage].musics or characters[winningPlayer.character].musics
           end
           if (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
             if (current_music_is_casual or table.getn(currently_playing_tracks) == 0) and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
@@ -1634,17 +1638,6 @@ function Stack.set_game_over(self)
         self:enqueue_popfx(col, row, popsize)
       end
     end
-  end
-end
-
--- Returns the player with more win count.
--- TODO probably shouldn't be in stack.
--- TODO handle ties?
-function winningPlayer()
-  if not P2 or my_win_count >= op_win_count then
-    return P1
-  else
-    return P2
   end
 end
 
