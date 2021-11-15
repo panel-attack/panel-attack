@@ -72,7 +72,10 @@ function Stack.draw_cards(self)
         end
       end
       -- draw card
-      draw(themes[config.theme].images.IMG_cards[card.chain][card.n], draw_x, draw_y)
+      local iconSize = 48 / GFX_SCALE
+      local cardImage = themes[config.theme].images.IMG_cards[card.chain][card.n]
+      local icon_width, icon_height = cardImage:getDimensions()
+      draw(cardImage, draw_x, draw_y, 0, iconSize / icon_width, iconSize / icon_height)
     end
   end
 end
