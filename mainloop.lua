@@ -544,6 +544,9 @@ function main_net_vs_lobby()
   local updated = true -- need update when first entering
   local ret = nil
 
+  local playerRatingMap = nil
+  json_send({leaderboard_request = true}) -- Request the leaderboard so we can show ratings
+
   while true do
     if connection_up_time <= login_status_message_duration then
       gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y - 120)
@@ -616,12 +619,13 @@ function main_net_vs_lobby()
         play_optional_sfx(themes[config.theme].sounds.notification)
       end
       if msg.leaderboard_report then
-        showing_leaderboard = true
+        playerRatingMap = {}
         if lobby_menu then
           lobby_menu:show_controls(true)
         end
         leaderboard_report = msg.leaderboard_report
         for k, v in ipairs(leaderboard_report) do
+          playerRatingMap[v.user_name] = v.rating
           if v.is_you then
             my_rank = k
           end
@@ -638,6 +642,7 @@ function main_net_vs_lobby()
     local function toggleLeaderboard()
       updated = true
       if not showing_leaderboard then
+        showing_leaderboard = true
         json_send({leaderboard_request = true})
         --lobby_menu:set_button_text(#lobby_menu.buttons - 1, loc("lb_hide_board"))
       else
@@ -691,16 +696,25 @@ function main_net_vs_lobby()
         end
       end
 
+      local function playerRatingString(playerName)
+        local rating = ""
+        if playerRatingMap and playerRatingMap[playerName] then
+          rating =  " (" .. playerRatingMap[playerName] .. ")"
+        end
+        return rating
+      end
+
       lobby_menu = Click_menu(lobby_menu_x[showing_leaderboard], lobby_menu_y, nil, love.graphics.getHeight() - lobby_menu_y - 10, 1)
       for _, v in ipairs(unpaired_players) do
         if v ~= config.name then
-          local unmatchedPlayer = v .. (sent_requests[v] and " " .. loc("lb_request") or "") .. (willing_players[v] and " " .. loc("lb_received") or "")
+          local unmatchedPlayer = v .. playerRatingString(v) .. (sent_requests[v] and " " .. loc("lb_request") or "") .. (willing_players[v] and " " .. loc("lb_received") or "")
           lobby_menu:add_button(unmatchedPlayer, requestGameFunction(v), goEscape)
         end
       end
       for _, room in ipairs(spectatable_rooms) do
         if room.name then
-          local roomName = loc("lb_spectate") .. " " .. room.name .. " (" .. room.state .. ")" --printing room names
+          local roomName = loc("lb_spectate") .. " " .. room.a .. playerRatingString(room.a) .. " vs " .. room.b .. playerRatingString(room.b) .. " (" .. room.state .. ")"
+          --local roomName = loc("lb_spectate") .. " " .. room.name .. " (" .. room.state .. ")" --printing room names
           lobby_menu:add_button(roomName, requestSpectateFunction(room), goEscape)
         end
       end
@@ -718,14 +732,17 @@ function main_net_vs_lobby()
         elseif oldLobbyMenu.active_idx == #oldLobbyMenu.buttons - 1 and #lobby_menu.buttons >= 2 then
           lobby_menu:set_active_idx(#lobby_menu.buttons - 1) --the position of the "hide leaderboard" menu item
         else
+          local desiredIndex = bound(1, oldLobbyMenu.active_idx, #lobby_menu.buttons)
+          local previousText = oldLobbyMenu.buttons[oldLobbyMenu.active_idx].stringText
           for i = 1, #lobby_menu.buttons do
             if #oldLobbyMenu.buttons >= i then
-              if lobby_menu.buttons[i].stringText == oldLobbyMenu.buttons[i].stringText then
-                lobby_menu:set_active_idx(i)
+              if lobby_menu.buttons[i].stringText == previousText then
+                desiredIndex = i
                 break
               end
             end
           end
+          lobby_menu:set_active_idx(desiredIndex)
         end
 
         oldLobbyMenu = nil
