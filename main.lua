@@ -32,9 +32,6 @@ local pointer_hidden = false
 
 -- Called at the beginning to load the game
 function love.load()
-  if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
-    require("lldebugger").start()
-  end
   math.randomseed(os.time())
   for i = 1, 4 do
     math.random()
