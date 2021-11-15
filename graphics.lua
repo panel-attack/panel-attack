@@ -72,7 +72,10 @@ function Stack.draw_cards(self)
         end
       end
       -- draw card
-      draw(themes[config.theme].images.IMG_cards[card.chain][card.n], draw_x, draw_y)
+      local iconSize = 48 / GFX_SCALE
+      local cardImage = themes[config.theme].images.IMG_cards[card.chain][card.n]
+      local icon_width, icon_height = cardImage:getDimensions()
+      draw(cardImage, draw_x, draw_y, 0, iconSize / icon_width, iconSize / icon_height)
     end
   end
 end
@@ -826,10 +829,10 @@ function Stack.drawAnalyticData(self, analytic, x, y)
   end
 
   -- Draw the chain images
-  icon_width, icon_height = themes[config.theme].images.IMG_cards[true][2]:getDimensions()
   for i = 2, 14 do
     local chain_amount = chainData[i]
     if chain_amount and chain_amount > 0 then
+      icon_width, icon_height = themes[config.theme].images.IMG_cards[true][i]:getDimensions()
       draw(themes[config.theme].images.IMG_cards[true][i], x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
       gprintf(chain_amount, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
       y = y + nextIconIncrement
@@ -853,10 +856,10 @@ function Stack.drawAnalyticData(self, analytic, x, y)
   end
 
   -- Draw the combo images
-  icon_width, icon_height = themes[config.theme].images.IMG_cards[false][4]:getDimensions()
   local xCombo = x + column2Distance
   for i, combo_amount in pairs(comboData) do
     if combo_amount and combo_amount > 0 then
+      icon_width, icon_height = themes[config.theme].images.IMG_cards[false][i]:getDimensions()
       draw(themes[config.theme].images.IMG_cards[false][i], xCombo / GFX_SCALE, yCombo / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
       gprintf(combo_amount, xCombo + iconToTextSpacing, yCombo + 0, canvas_width, "left", nil, 1, fontIncrement)
       yCombo = yCombo + nextIconIncrement
