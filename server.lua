@@ -163,13 +163,14 @@ function start_match(a, b)
   end
 end
 
-Room = class(function(self, a, b)
-  --TODO: it would be nice to call players a and b something more like self.players[1] and self.players[2]
-  self.a = a --player a
-  self.b = b --player b
-  self.stage = nil
-  self.name = a.name.." vs "..b.name
-  if not self.a.room or not self.b.room then
+Room =
+  class(
+  function(self, a, b)
+    --TODO: it would be nice to call players a and b something more like self.players[1] and self.players[2]
+    self.a = a --player a
+    self.b = b --player b
+    self.stage = nil
+    self.name = a.name .. " vs " .. b.name
     self.roomNumber = ROOMNUMBER
     ROOMNUMBER = ROOMNUMBER + 1
     self.a.room = self
@@ -199,16 +200,15 @@ Room = class(function(self, a, b)
       end
     end
 
-    self.ratings = {{old=a_rating or 0, new=a_rating or 0, difference=0, league=get_league(a_rating or 0), placement_match_progress=a_placement_match_progress},
-                    {old=b_rating or 0, new=b_rating or 0, difference=0, league=get_league(b_rating or 0), placement_match_progress=b_placement_match_progress}}
-  else
-    self.win_counts = self.a.room.win_counts
-    self.spectators = self.a.room.spectators
-    self.roomNumber = self.a.room.roomNumber
+    self.ratings = {
+      {old = a_rating or 0, new = a_rating or 0, difference = 0, league = get_league(a_rating or 0), placement_match_progress = a_placement_match_progress},
+      {old = b_rating or 0, new = b_rating or 0, difference = 0, league = get_league(b_rating or 0), placement_match_progress = b_placement_match_progress}
+    }
+
+    self.game_outcome_reports = {}
+    rooms[self.roomNumber] = self
   end
-  self.game_outcome_reports = {}
-  rooms[self.roomNumber] = self
-end)
+)
 
 function Room.character_select(self)
   self:prepare_character_select()
@@ -284,6 +284,7 @@ function Room.remove_spectator(self, connection)
       self.spectators[k].state = "lobby"
       print(connection.name .. " left " .. self.name .. " as a spectator")
       self.spectators[k] = nil
+      connection.room = nil
       lobby_changed = true
     end
   end
