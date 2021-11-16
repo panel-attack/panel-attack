@@ -886,7 +886,7 @@ function select_screen.main()
           stage_loader_load(msg.stage)
           character_loader_wait()
           stage_loader_wait()
-          GAME.match = Match("vs")
+          GAME.match = Match("vs", GAME.battleRoom)
           local is_local = true
           if currently_spectating then
             is_local = false
@@ -1347,7 +1347,7 @@ function select_screen.main()
 
     -- Handle one player vs game setup
     if cursor_data[1].state.ready and select_screen.character_select_mode == "1p_vs_yourself" then
-      GAME.match = Match("vs")
+      GAME.match = Match("vs", GAME.battleRoom)
       P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       P1.garbage_target = P1
       P2 = nil
@@ -1360,7 +1360,7 @@ function select_screen.main()
       return main_dumb_transition, {main_local_vs_yourself, "", 0, 0}
     -- Handle two player vs game setup
     elseif cursor_data[1].state.ready and select_screen.character_select_mode == "2p_local_vs" and cursor_data[2].state.ready then
-      GAME.match = Match("vs")
+      GAME.match = Match("vs", GAME.battleRoom)
       P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       P2 = Stack(2, GAME.match, true, cursor_data[2].state.panels_dir, cursor_data[2].state.level, cursor_data[2].state.character)
       P1.garbage_target = P2

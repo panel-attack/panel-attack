@@ -492,7 +492,7 @@ function Stack.render(self)
           gprint(panel.chaining and "chaining" or "nah", draw_x, draw_y + 30)
         end
         if mx >= draw_x and mx < draw_x + 16 * GFX_SCALE and my >= draw_y and my < draw_y + 16 * GFX_SCALE then
-          debug_mouse_panel = {row, col, panel}
+          GAME.debug_mouse_panel = {row, col, panel}
           draw(panels[self.panels_dir].images.classic[9][1], draw_x + 16, draw_y + 16)
         end
       end
