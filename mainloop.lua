@@ -1207,8 +1207,10 @@ function main_replay_vs()
         end
       end
     end
-
+    
     if end_text then
+      print(stats_string)
+      stats_string = ""
       return game_over_transition, {main_select_mode, end_text, 0, -1, winSFX}
     end
   end

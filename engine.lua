@@ -14,11 +14,12 @@ local GARBAGE_TRANSIT_TIME = 90
 local clone_pool = {}
 local current_music_is_casual = false -- must be false so that casual music start playing
 
+stats_string = "" -- for testing purposes, will be converted to a table or something
+
 -- Represents the full panel stack for one player
 Stack =
   class(
   function(s, which, match, is_local, panels_dir, speed, difficulty, player_number)
-
     s.match = match
     s.character = config.character
     s.max_health = 1
@@ -1357,6 +1358,9 @@ function Stack.PdP(self)
       self:set_chain_garbage(self.chain_counter)
       SFX_Fanfare_Play = self.chain_counter
       self.analytic:register_chain(self.chain_counter)
+      if self.which == 2 then
+        stats_string = stats_string .. self.CLOCK .. ", x" .. self.chain_counter .. "\n"
+      end
       self.chain_counter = 0
     end
 
@@ -1439,7 +1443,7 @@ function Stack.PdP(self)
           self.garbage_q:pop()
         end
       end
-    end 
+    end
 
     -- Update Music
     if not music_mute and not game_is_paused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
@@ -2067,6 +2071,9 @@ function Stack.check_matches(self)
   if (combo_size ~= 0) then
     self.analytic:register_destroyed_panels(combo_size)
     if (combo_size > 3) then
+      if self.which == 2 then
+        stats_string = stats_string .. self.CLOCK .. ", +" .. combo_size .. "\n"
+      end
       if (score_mode == SCOREMODE_TA) then
         if (combo_size > 30) then
           combo_size = 30
@@ -2255,6 +2262,17 @@ function Stack.new_row(self)
     ask_for_panels(string.sub(self.panel_buffer, -6), self)
   end
   self.displacement = 16
+end
+
+-- gets the current stack on screen converted to a string
+function Stack.get_current_stack_string(self) 
+  local panelString = ""
+  for i = #self.panels, 1, -1 do
+    for j = 1, #self.panels[1] do
+      panelString = panelString .. (tostring(self.panels[i][j].color))
+    end
+  end
+  return panelString
 end
 
 --[[function quiet_cursor_movement()
