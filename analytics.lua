@@ -198,7 +198,7 @@ function AnalyticsInstance.data_update_list(self)
 
   return data_update_list
 end
--- counts destroyed panels
+
 function AnalyticsInstance.register_destroyed_panels(self, amount)
   local analytics_filters = self:data_update_list()
   for _, analytic in pairs(analytics_filters) do
@@ -214,7 +214,6 @@ function AnalyticsInstance.register_destroyed_panels(self, amount)
   end
 end
 
--- updates the chains used
 function AnalyticsInstance.register_chain(self, size)
   local max_size = math.min(size, 13)
 
@@ -230,7 +229,6 @@ function AnalyticsInstance.register_chain(self, size)
   end
 end
 
--- increments the swap counter
 function AnalyticsInstance.register_swap(self)
   local analytics_filters = self:data_update_list()
   for _, analytic in pairs(analytics_filters) do
@@ -238,7 +236,6 @@ function AnalyticsInstance.register_swap(self)
   end
 end
 
--- increments the move counter
 function AnalyticsInstance.register_move(self)
   local analytics_filters = self:data_update_list()
   for _, analytic in pairs(analytics_filters) do
