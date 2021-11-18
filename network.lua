@@ -111,7 +111,7 @@ function queue_message(type, data)
     local dataMessage = {}
     dataMessage[type] = data
     if printNetworkMessageForType(type) then
-      print("Queuing: " .. type .. " with data:" .. data)
+      --print("Queuing: " .. type .. " with data:" .. data)
     end
     server_queue:push(dataMessage)
   elseif type == "L" then
@@ -135,7 +135,7 @@ function queue_message(type, data)
       return
     end
     if printNetworkMessageForType(type) then
-      print("Queuing: " .. type .. " with data:" .. dump(current_message))
+      --print("Queuing: " .. type .. " with data:" .. dump(current_message))
     end
     server_queue:push(current_message)
   end
