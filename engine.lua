@@ -1357,9 +1357,7 @@ function Stack.PdP(self)
       self:set_chain_garbage(self.chain_counter)
       SFX_Fanfare_Play = self.chain_counter
       self.analytic:register_chain(self.chain_counter)
-      if self.which == 1 then
         self.stats_data[self.CLOCK] = {attack = "chain", size = self.chain_counter, stack_string = self:get_current_stack_string()}
-      end
       self.chain_counter = 0
     end
 
@@ -2071,9 +2069,7 @@ function Stack.check_matches(self)
   if (combo_size ~= 0) then
     self.analytic:register_destroyed_panels(combo_size)
     if (combo_size > 3) then
-      if self.which == 1 then
         self.stats_data[self.CLOCK] = {attack = "combo", size = combo_size, stack_string = self:get_current_stack_string()}
-      end
       if (score_mode == SCOREMODE_TA) then
         if (combo_size > 30) then
           combo_size = 30
