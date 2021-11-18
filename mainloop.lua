@@ -729,7 +729,8 @@ function main_net_vs_lobby()
       lobby_menu:add_button(loc("lb_back"), exitLobby, exitLobby)
 
       -- Restore the lobby selection
-      if oldLobbyMenu then
+      -- (If the lobby only had 2 buttons it was before we got lobby info so don't restore the selection)
+      if oldLobbyMenu and #oldLobbyMenu.buttons > 2 then
         if oldLobbyMenu.active_idx == #oldLobbyMenu.buttons then
           lobby_menu:set_active_idx(#lobby_menu.buttons)
         elseif oldLobbyMenu.active_idx == #oldLobbyMenu.buttons - 1 and #lobby_menu.buttons >= 2 then
