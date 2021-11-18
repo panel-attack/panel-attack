@@ -14,8 +14,6 @@ local GARBAGE_TRANSIT_TIME = 90
 local clone_pool = {}
 local current_music_is_casual = false -- must be false so that casual music start playing
 
-stats_string = "" -- for testing purposes, will be converted to a table or something
-
 -- Represents the full panel stack for one player
 Stack =
   class(
@@ -201,6 +199,7 @@ Stack =
     s.prev_states = {}
 
     s.analytic = AnalyticsInstance(s.is_local)
+    s.stats_data = {}
   end
 )
 
@@ -1358,8 +1357,8 @@ function Stack.PdP(self)
       self:set_chain_garbage(self.chain_counter)
       SFX_Fanfare_Play = self.chain_counter
       self.analytic:register_chain(self.chain_counter)
-      if self.which == 2 then
-        stats_string = stats_string .. self.CLOCK .. ", x" .. self.chain_counter .. "\n"
+      if self.which == 1 then
+        self.stats_data[self.CLOCK] = {attack = "chain", size = self.chain_counter, stack_string = self:get_current_stack_string()}
       end
       self.chain_counter = 0
     end
@@ -1592,6 +1591,7 @@ function Stack.PdP(self)
         stop_sounds = nil
       end
       if self.game_over or (self.garbage_target and self.garbage_target.game_over) then
+        print(json.encode(self.stats_data))
         SFX_GameOver_Play = 1
       end
     end
@@ -2071,8 +2071,8 @@ function Stack.check_matches(self)
   if (combo_size ~= 0) then
     self.analytic:register_destroyed_panels(combo_size)
     if (combo_size > 3) then
-      if self.which == 2 then
-        stats_string = stats_string .. self.CLOCK .. ", +" .. combo_size .. "\n"
+      if self.which == 1 then
+        self.stats_data[self.CLOCK] = {attack = "combo", size = combo_size, stack_string = self:get_current_stack_string()}
       end
       if (score_mode == SCOREMODE_TA) then
         if (combo_size > 30) then
@@ -2265,7 +2265,7 @@ function Stack.new_row(self)
 end
 
 -- gets the current stack on screen converted to a string
-function Stack.get_current_stack_string(self) 
+function Stack.get_current_stack_string(self)
   local panelString = ""
   for i = #self.panels, 1, -1 do
     for j = 1, #self.panels[1] do
