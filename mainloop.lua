@@ -854,7 +854,9 @@ function main_net_vs_setup(ip, network_port)
   server_queue = ServerQueue()
   gprint(loc("lb_set_connect"), unpack(main_menu_screen_pos))
   wait()
-  network_init(ip, network_port)
+  if not network_init(ip, network_port) then
+    return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
+  end
   local timeout_counter = 0
   while not connection_is_ready() do
     gprint(loc("lb_connecting"), unpack(main_menu_screen_pos))
