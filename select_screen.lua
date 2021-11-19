@@ -1373,7 +1373,7 @@ function select_screen.main()
       return main_dumb_transition, {main_local_vs_yourself, "", 0, 0}
     -- Handle Vs Computer Setup
     elseif cursor_data[1].state.ready and select_screen.character_select_mode == "2p_local_computer_vs" then
-      GAME.match = Match("vs")
+      GAME.match = Match("vs", GAME.battleRoom)
       if true then --both computers
         P1 = Stack(1, GAME.match, false, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
         P1.computer = ComputerPlayer("Hard")
