@@ -76,7 +76,10 @@ function Stack.draw_cards(self)
         end
       end
       -- draw card
-      draw(themes[config.theme].images.IMG_cards[card.chain][card.n], draw_x, draw_y)
+      local iconSize = 48 / GFX_SCALE
+      local cardImage = themes[config.theme].images.IMG_cards[card.chain][card.n]
+      local icon_width, icon_height = cardImage:getDimensions()
+      draw(cardImage, draw_x, draw_y, 0, iconSize / icon_width, iconSize / icon_height)
     end
   end
 end
@@ -501,7 +504,7 @@ function Stack.render(self)
           gprint(panel.chaining and "chaining" or "nah", draw_x, draw_y + 30)
         end
         if mx >= draw_x and mx < draw_x + 16 * GFX_SCALE and my >= draw_y and my < draw_y + 16 * GFX_SCALE then
-          debug_mouse_panel = {row, col, panel}
+          GAME.debug_mouse_panel = {row, col, panel}
           draw(panels[self.panels_dir].images.classic[9][1], draw_x + 16, draw_y + 16)
         end
       end
@@ -787,13 +790,15 @@ function Stack.drawAnalyticData(self, analytic, x, y)
       analytic.lastGPM = string.format("%0.1f", round(garbagePerMinute, 1))
     end
   end
-  gprintf(analytic.lastGPM .. "/m", x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
+  icon_width, icon_height = themes[config.theme].images.IMG_gpm:getDimensions()
+  draw(themes[config.theme].images.IMG_gpm, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+  gprintf(analytic.lastGPM .. "/m", x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)  
 
   y = y + nextIconIncrement
 
   -- Moves
-  icon_width, icon_height = themes[config.theme].images.IMG_cursor[1]:getDimensions()
-  draw(themes[config.theme].images.IMG_cursor[1], x / GFX_SCALE, (y + 5) / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+  icon_width, icon_height = themes[config.theme].images.IMG_cursorCount:getDimensions()
+  draw(themes[config.theme].images.IMG_cursorCount, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
   gprintf(analytic.data.move_count, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
 
   y = y + nextIconIncrement
@@ -814,9 +819,9 @@ function Stack.drawAnalyticData(self, analytic, x, y)
       analytic.lastAPM = string.format("%0.0f", round(actionsPerMinute, 0))
     end
   end
-  if themes[config.theme].images.IMG_aps then
-    icon_width, icon_height = themes[config.theme].images.IMG_aps:getDimensions()
-    draw(themes[config.theme].images.IMG_aps, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+  if themes[config.theme].images.IMG_apm then
+    icon_width, icon_height = themes[config.theme].images.IMG_apm:getDimensions()
+    draw(themes[config.theme].images.IMG_apm, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
   end
   gprintf(analytic.lastAPM .. "/m", x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
 
@@ -843,13 +848,14 @@ function Stack.drawAnalyticData(self, analytic, x, y)
   end
 
   -- Draw the chain images
-  icon_width, icon_height = themes[config.theme].images.IMG_cards[true][2]:getDimensions()
-  for i = 2, #chainData do
-    local chain_amount = chainData[i] or 0
-    draw(themes[config.theme].images.IMG_cards[true][i], x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-    gprintf(chain_amount, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
-
-    y = y + nextIconIncrement
+  for i = 2, 14 do
+    local chain_amount = chainData[i]
+    if chain_amount and chain_amount > 0 then
+      icon_width, icon_height = themes[config.theme].images.IMG_cards[true][i]:getDimensions()
+      draw(themes[config.theme].images.IMG_cards[true][i], x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+      gprintf(chain_amount, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
+      y = y + nextIconIncrement
+    end
   end
 
   -- Clean up the combo data so we only show combos up to the highest combo the user has done
@@ -869,14 +875,14 @@ function Stack.drawAnalyticData(self, analytic, x, y)
   end
 
   -- Draw the combo images
-  icon_width, icon_height = themes[config.theme].images.IMG_cards[false][4]:getDimensions()
   local xCombo = x + column2Distance
-  for i = 4, #comboData do
-    local combo_amount = comboData[i] or 0
-    draw(themes[config.theme].images.IMG_cards[false][i], xCombo / GFX_SCALE, yCombo / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-    gprintf(combo_amount, xCombo + iconToTextSpacing, yCombo + 0, canvas_width, "left", nil, 1, fontIncrement)
-
-    yCombo = yCombo + nextIconIncrement
+  for i, combo_amount in pairs(comboData) do
+    if combo_amount and combo_amount > 0 then
+      icon_width, icon_height = themes[config.theme].images.IMG_cards[false][i]:getDimensions()
+      draw(themes[config.theme].images.IMG_cards[false][i], xCombo / GFX_SCALE, yCombo / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+      gprintf(combo_amount, xCombo + iconToTextSpacing, yCombo + 0, canvas_width, "left", nil, 1, fontIncrement)
+      yCombo = yCombo + nextIconIncrement
+    end
   end
 end
 

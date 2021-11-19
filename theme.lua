@@ -64,7 +64,7 @@ Theme =
     self.ratingLabel_Scale = 2 -- the scale size of the rating label
     self.rating_Pos = {25, 200} -- the position of the rating value
     self.rating_Scale = 1 -- the scale size of the rating value
-    self.spectators_Pos = {547, 354} -- the position of the spectator list
+    self.spectators_Pos = {547, 500} -- the position of the spectator list
     self.healthbar_frame_Pos = {-20, -4} -- the position of the healthbar frame
     self.healthbar_frame_Scale = 3 -- the scale size of the healtbar frame
     self.healthbar_Pos = {-16, 0} -- the position of the healthbar
@@ -226,7 +226,9 @@ function Theme.graphics_init(self)
   --self.images.IMG_wall8P = load_theme_img("frame/wall8P")
 
   self.images.IMG_swap = load_theme_img("swap")
-  self.images.IMG_aps = load_theme_img("aps")
+  self.images.IMG_apm = load_theme_img("apm")
+  self.images.IMG_gpm = load_theme_img("GPM")
+  self.images.IMG_cursorCount = load_theme_img("CursorCount")
 
   self.images.IMG_cards = {}
   self.images.IMG_cards[true] = {}
@@ -481,7 +483,7 @@ function Theme.json_init(self)
     self.name_Pos = read_data.name_Pos
   end
 
-  -- Ratin label position
+  -- Rating label position
   if read_data.ratingLabel_Pos and type(read_data.ratingLabel_Pos) == "table" then
     self.ratingLabel_Pos = read_data.ratingLabel_Pos
   end

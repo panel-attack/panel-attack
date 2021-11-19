@@ -84,6 +84,9 @@ function fmainloop()
   love.filesystem.createDirectory("themes")
   love.filesystem.createDirectory("stages")
 
+  -- Run all unit tests now that we have everything loaded
+  require("ServerQueueTests")
+  
   --check for game updates
   if GAME_UPDATER_CHECK_UPDATE_INGAME then
     wait_game_update = GAME_UPDATER:async_download_latest_version()
@@ -112,7 +115,9 @@ function variable_step(f)
       leftover_time = leftover_time - 1 / 60
       if leftover_time >= 1 / 60 then
         GAME.droppedFrames = GAME.droppedFrames + 1
-        print("Dropped Frame, total is: " .. GAME.droppedFrames)
+        if GAME.match then
+          print("Dropped Frame, total is: " .. GAME.droppedFrames)
+        end
       end
     end
   end
@@ -162,6 +167,7 @@ do
       {loc("mm_1_vs"), main_local_vs_yourself_setup},
       --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
       {loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
+      --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
       --{loc("mm_2_vs_online", "betaserver.panelattack.com"), main_net_vs_setup, {"betaserver.panelattack.com"}},
       --{loc("mm_2_vs_online", "(USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)"), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "This test build is for offline-use only"), main_select_mode},
@@ -541,6 +547,9 @@ function main_net_vs_lobby()
   local updated = true -- need update when first entering
   local ret = nil
 
+  local playerRatingMap = nil
+  json_send({leaderboard_request = true}) -- Request the leaderboard so we can show ratings
+
   while true do
     if connection_up_time <= login_status_message_duration then
       gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y - 120)
@@ -613,12 +622,13 @@ function main_net_vs_lobby()
         play_optional_sfx(themes[config.theme].sounds.notification)
       end
       if msg.leaderboard_report then
-        showing_leaderboard = true
+        playerRatingMap = {}
         if lobby_menu then
           lobby_menu:show_controls(true)
         end
         leaderboard_report = msg.leaderboard_report
         for k, v in ipairs(leaderboard_report) do
+          playerRatingMap[v.user_name] = v.rating
           if v.is_you then
             my_rank = k
           end
@@ -635,6 +645,7 @@ function main_net_vs_lobby()
     local function toggleLeaderboard()
       updated = true
       if not showing_leaderboard then
+        showing_leaderboard = true
         json_send({leaderboard_request = true})
         --lobby_menu:set_button_text(#lobby_menu.buttons - 1, loc("lb_hide_board"))
       else
@@ -688,16 +699,25 @@ function main_net_vs_lobby()
         end
       end
 
+      local function playerRatingString(playerName)
+        local rating = ""
+        if playerRatingMap and playerRatingMap[playerName] then
+          rating =  " (" .. playerRatingMap[playerName] .. ")"
+        end
+        return rating
+      end
+
       lobby_menu = Click_menu(lobby_menu_x[showing_leaderboard], lobby_menu_y, nil, love.graphics.getHeight() - lobby_menu_y - 10, 1)
       for _, v in ipairs(unpaired_players) do
         if v ~= config.name then
-          local unmatchedPlayer = v .. (sent_requests[v] and " " .. loc("lb_request") or "") .. (willing_players[v] and " " .. loc("lb_received") or "")
+          local unmatchedPlayer = v .. playerRatingString(v) .. (sent_requests[v] and " " .. loc("lb_request") or "") .. (willing_players[v] and " " .. loc("lb_received") or "")
           lobby_menu:add_button(unmatchedPlayer, requestGameFunction(v), goEscape)
         end
       end
       for _, room in ipairs(spectatable_rooms) do
         if room.name then
-          local roomName = loc("lb_spectate") .. " " .. room.name .. " (" .. room.state .. ")" --printing room names
+          local roomName = loc("lb_spectate") .. " " .. room.a .. playerRatingString(room.a) .. " vs " .. room.b .. playerRatingString(room.b) .. " (" .. room.state .. ")"
+          --local roomName = loc("lb_spectate") .. " " .. room.name .. " (" .. room.state .. ")" --printing room names
           lobby_menu:add_button(roomName, requestSpectateFunction(room), goEscape)
         end
       end
@@ -709,20 +729,24 @@ function main_net_vs_lobby()
       lobby_menu:add_button(loc("lb_back"), exitLobby, exitLobby)
 
       -- Restore the lobby selection
-      if oldLobbyMenu then
+      -- (If the lobby only had 2 buttons it was before we got lobby info so don't restore the selection)
+      if oldLobbyMenu and #oldLobbyMenu.buttons > 2 then
         if oldLobbyMenu.active_idx == #oldLobbyMenu.buttons then
           lobby_menu:set_active_idx(#lobby_menu.buttons)
         elseif oldLobbyMenu.active_idx == #oldLobbyMenu.buttons - 1 and #lobby_menu.buttons >= 2 then
           lobby_menu:set_active_idx(#lobby_menu.buttons - 1) --the position of the "hide leaderboard" menu item
         else
+          local desiredIndex = bound(1, oldLobbyMenu.active_idx, #lobby_menu.buttons)
+          local previousText = oldLobbyMenu.buttons[oldLobbyMenu.active_idx].stringText
           for i = 1, #lobby_menu.buttons do
             if #oldLobbyMenu.buttons >= i then
-              if lobby_menu.buttons[i].stringText == oldLobbyMenu.buttons[i].stringText then
-                lobby_menu:set_active_idx(i)
+              if lobby_menu.buttons[i].stringText == previousText then
+                desiredIndex = i
                 break
               end
             end
           end
+          lobby_menu:set_active_idx(desiredIndex)
         end
 
         oldLobbyMenu = nil
@@ -814,10 +838,12 @@ function main_net_vs_setup(ip, network_port)
   end
   P1, P1_level, P2_level, got_opponent = nil
   P2 = {panel_buffer = "", gpanel_buffer = ""}
-  server_queue = ServerQueue(SERVER_QUEUE_CAPACITY)
+  server_queue = ServerQueue()
   gprint(loc("lb_set_connect"), unpack(main_menu_screen_pos))
   wait()
-  network_init(ip, network_port)
+  if not network_init(ip, network_port) then
+    return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
+  end
   local timeout_counter = 0
   while not connection_is_ready() do
     gprint(loc("lb_connecting"), unpack(main_menu_screen_pos))
@@ -885,30 +911,7 @@ function main_net_vs()
     if not config.debug_mode then --this is printed in the same space as the debug details
       gprint(spectators_string, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
     end
-    if match_type == "Ranked" then
-      if global_current_room_ratings[my_player_number] and global_current_room_ratings[my_player_number].new then
-        local rating_to_print = loc("ss_rating") .. "\n"
-        if global_current_room_ratings[my_player_number].new > 0 then
-          rating_to_print = global_current_room_ratings[my_player_number].new
-        end
-        --gprint(rating_to_print, P1.score_x, P1.score_y-30)
-        draw_label(themes[config.theme].images.IMG_rating_1P, (P1.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
-        if type(rating_to_print) == "number" then
-          draw_number(rating_to_print, themes[config.theme].images.IMG_number_atlas_1P, 10, P1_rating_quads, P1.score_x + themes[config.theme].rating_Pos[1], P1.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, (15 / themes[config.theme].images.numberWidth_1P * themes[config.theme].rating_Scale), (19 / themes[config.theme].images.numberHeight_1P * themes[config.theme].rating_Scale), "center")
-        end
-      end
-      if global_current_room_ratings[op_player_number] and global_current_room_ratings[op_player_number].new then
-        local op_rating_to_print = loc("ss_rating") .. "\n"
-        if global_current_room_ratings[op_player_number].new > 0 then
-          op_rating_to_print = global_current_room_ratings[op_player_number].new
-        end
-        --gprint(op_rating_to_print, P2.score_x, P2.score_y-30)
-        draw_label(themes[config.theme].images.IMG_rating_2P, (P2.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (P2.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
-        if type(op_rating_to_print) == "number" then
-          draw_number(op_rating_to_print, themes[config.theme].images.IMG_number_atlas_2P, 10, P2_rating_quads, P2.score_x + themes[config.theme].rating_Pos[1], P2.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, (15 / themes[config.theme].images.numberWidth_2P * themes[config.theme].rating_Scale), (19 / themes[config.theme].images.numberHeight_2P * themes[config.theme].rating_Scale), "center")
-        end
-      end
-    end
+    
     -- don't spend time rendering when catching up to a current match in replays
     if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
       GAME.match:render()
@@ -1052,6 +1055,7 @@ function main_local_vs_yourself_setup()
   currently_spectating = false
   my_name = config.name or loc("player_n", "1")
   op_name = nil
+  my_player_number = 1
   op_state = nil
   select_screen.character_select_mode = "1p_vs_yourself"
   return select_screen.main
@@ -1088,17 +1092,6 @@ function main_local_vs_yourself()
   end
 end
 
--- shows debug info for mouse hover
-local function draw_debug_mouse_panel()
-  if debug_mouse_panel then
-    local str = loc("pl_panel_info", debug_mouse_panel[1], debug_mouse_panel[2])
-    for k, v in spairs(debug_mouse_panel[3]) do
-      str = str .. "\n" .. k .. ": " .. tostring(v)
-    end
-    gprintf(str, 10, 10)
-  end
-end
-
 -- replay for 2pvs match
 function main_replay_vs()
   local replay = replay.vs
@@ -1109,7 +1102,8 @@ function main_replay_vs()
   pick_random_stage()
   pick_use_music_from()
   select_screen.fallback_when_missing = {nil, nil}
-  GAME.match = Match("vs")
+  GAME.battleRoom = BattleRoom()
+  GAME.match = Match("vs", GAME.battleRoom)
   P1 = Stack(1, GAME.match, false, config.panels, replay.P1_level or 5)
   GAME.match.P1 = P1
   P2 = Stack(2, GAME.match, false, config.panels, replay.P2_level or 5)
@@ -1149,11 +1143,7 @@ function main_replay_vs()
   P2:starting_state()
   local run = true
   while true do
-    debug_mouse_panel = nil
-    gprint(my_name or "", P1.score_x, P1.score_y - 28)
-    gprint(op_name or "", P2.score_x, P2.score_y - 28)
     GAME.match:render()
-    draw_debug_mouse_panel()
     wait()
     local ret = nil
     variable_step(
@@ -1269,9 +1259,7 @@ function main_replay_puzzle()
   P2 = nil
   local run = true
   while true do
-    debug_mouse_panel = nil
     GAME.match:render()
-    draw_debug_mouse_panel()
     wait()
     local ret = nil
     variable_step(
@@ -1659,7 +1647,7 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
   local k = K[1]
   local font = love.graphics.getFont()
   while true do
-    gprint(text, (canvas_width - font:getWidth(text)) / 2, (canvas_height - font:getHeight(text)) / 2)
+    gprint(text, (canvas_width - font:getWidth(text)) / 2, (canvas_height - font:getHeight()) / 2)
     wait()
     local ret = nil
     variable_step(
@@ -1702,8 +1690,8 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
 
   while true do
     GAME.match:render()
-    gprint(text, (canvas_width - font:getWidth(text)) / 2, (canvas_height - font:getHeight(text)) / 2)
-    gprint(button_text, (canvas_width - font:getWidth(button_text)) / 2, ((canvas_height - font:getHeight(button_text)) / 2) + 30)
+    gprint(text, (canvas_width - font:getWidth(text)) / 2, (canvas_height - font:getHeight()) / 2)
+    gprint(button_text, (canvas_width - font:getWidth(button_text)) / 2, ((canvas_height - font:getHeight()) / 2) + 30)
     wait()
     local ret = nil
     variable_step(

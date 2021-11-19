@@ -126,7 +126,7 @@ function queue_message(type, data)
     local dataMessage = {}
     dataMessage[type] = data
     if printNetworkMessageForType(type) then
-      print("Queuing: " .. type .. " with data:" .. data)
+      --print("Queuing: " .. type .. " with data:" .. data)
     end
     server_queue:push(dataMessage)
   elseif type == "L" then
@@ -150,7 +150,7 @@ function queue_message(type, data)
       return
     end
     if printNetworkMessageForType(type) then
-      print("Queuing: " .. type .. " with data:" .. dump(current_message))
+      --print("Queuing: " .. type .. " with data:" .. dump(current_message))
     end
     server_queue:push(current_message)
   end
@@ -210,7 +210,8 @@ function network_init(ip, network_port)
   TCP_sock:settimeout(7)
   if not TCP_sock:connect(ip, network_port or 49569) then --for official server
     --if not TCP_sock:connect(ip,59569) then --for beta server
-    error(loc("nt_conn_timeout"))
+    --error(loc("nt_conn_timeout"))
+    return false
   end
   TCP_sock:settimeout(0)
   got_H = false
@@ -229,6 +230,7 @@ function network_init(ip, network_port)
   }
   sent_json.character_display_name = sent_json.character_is_random and "" or characters[config.character].display_name
   json_send(sent_json)
+  return true
 end
 
 function connection_is_ready()
