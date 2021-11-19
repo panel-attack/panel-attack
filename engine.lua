@@ -17,15 +17,15 @@ local current_music_is_casual = false -- must be false so that casual music star
 -- Represents the full panel stack for one player
 Stack =
   class(
-  function(s, which, match, is_local, panels_dir, speed, difficulty, player_number)
+  function(s, which, match, is_local, panels_dir, speed, difficulty, player_number, wantsCanvas)
 
+    wantsCanvas = wantsCanvas or 1
     s.match = match
     s.character = config.character
     s.max_health = 1
     s.panels_dir = panels_dir or config.panels
     s.portraitFade = 0
     s.is_local = is_local
-    s.computer = nil
     if not panels[panels_dir] then
       s.panels_dir = config.panels
     end
@@ -41,7 +41,7 @@ Stack =
     end
 
     -- frame.png dimensions
-    if s.computer == nil then
+    if wantsCanvas then
       s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE)
       s.canvas:setFilter("nearest", "nearest")
     end
@@ -214,7 +214,6 @@ function Stack.mkcpy(self, other)
       clone_pool[#clone_pool] = nil
     end
   end
-  other.computer = self.computer
   other.do_swap = self.do_swap
   other.speed = self.speed
   other.health = self.health
@@ -671,15 +670,6 @@ function Stack.run(self, timesToRun)
     return
   end
 
-  if self.computer and self:game_ended() == false then
-    local nextInput = self.computer:getInput(self)
-    if nextInput then
-      self.input_buffer = self.input_buffer .. nextInput
-    end
-    assert(#self.input_buffer > 0, "Should have input from computer")
-    timesToRun = 1
-  end
-
   if timesToRun == nil then
     -- Normally we want to run 1 frame, but if we are a replay or from a net game,
     -- we want to possibly run a lot frames to catch up, or 0 if there is nothing to simulate.
@@ -701,7 +691,7 @@ function Stack.run(self, timesToRun)
         -- since we don't always run at top speed until the buffer is empty.
         timesToRun = self.max_runs_per_frame
       elseif buffer_len >= 10 then
-        timesToRun = 2
+        timesToRun = math.min(2, self.max_runs_per_frame)
       elseif buffer_len >= 1 then
         timesToRun = 1
       end
@@ -715,17 +705,20 @@ function Stack.run(self, timesToRun)
     end
   end
 
+  assert(self.canvas == nil or timesToRun == 1)
   for i = 1, timesToRun do
     self:update_popfxs()
     self:update_cards()
-    if self.is_local == false then
-      if self.input_buffer and string.len(self.input_buffer) > 0 then
-        self.input_state = string.sub(self.input_buffer, 1, 1)
+    if self:game_ended() == false then 
+      if self.is_local == false then
+        if self.input_buffer and string.len(self.input_buffer) > 0 then
+          self.input_state = string.sub(self.input_buffer, 1, 1)
+        else
+          break
+        end
       else
-        break
+        self.input_state = self:send_controls()
       end
-    elseif self:game_ended() == false then
-      self.input_state = self:send_controls()
     end
     self:prep_rollback()
     self:controls()
@@ -1884,7 +1877,7 @@ end
 
 -- Receives garbage on to the stack, rewinding the stack and simulating it again if needed.
 function Stack.recv_garbage(self, time, to_recv)
-  if self.CLOCK > time and self.prev_states then --TODO
+  if self.CLOCK > time and self.prev_states then
     local prev_states = self.prev_states
     local next_self = prev_states[time + 1]
     while next_self and (next_self.prev_active_panels ~= 0 or next_self.n_active_panels ~= 0) do

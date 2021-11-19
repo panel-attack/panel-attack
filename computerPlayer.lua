@@ -111,6 +111,16 @@ function ComputerPlayer.cpuLog(self, level, ...)
   end
 end
 
+function ComputerPlayer.run(self, stack)
+  if stack:game_ended() == false then
+    local nextInput = self:getInput(stack)
+    if nextInput then
+      stack.input_buffer = stack.input_buffer .. nextInput
+    end
+    assert(#stack.input_buffer > 0, "Should have input from computer")
+  end
+end
+
 function ComputerPlayer.getInput(self, stack)
   local result
   if self.config.profiled and self.profiler == nil and stack.which == 2 then
@@ -244,9 +254,10 @@ end
 function ComputerPlayer.copyMatch(self, oldStack)
 
   -- TODO pass in match
-  local match = deepcopy(oldStack.match, nil, {P1=true, P2=true})
-  local stack = deepcopy(oldStack, nil, {garbage_target=true, prev_states=true, canvas=true, computer=true, match=true})
-  local otherStack = deepcopy(oldStack.garbage_target, nil, {garbage_target=true, prev_states=true, canvas=true, computer=true, match=true})
+  -- TODO not copying prev_states means we can't simulate rollback of garbage, but copying is expensive?
+  local match = deepcopy(oldStack.match, nil, {P1=true, P2=true, P1CPU=true, P2CPU=true})
+  local stack = deepcopy(oldStack, nil, {garbage_target=true, prev_states=true, canvas=true, match=true})
+  local otherStack = deepcopy(oldStack.garbage_target, nil, {garbage_target=true, prev_states=true, canvas=true, match=true})
   otherStack.is_local = false
   stack.garbage_target = otherStack
   otherStack.garbage_target = stack

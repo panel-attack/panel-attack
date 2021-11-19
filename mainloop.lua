@@ -1024,7 +1024,14 @@ function main_local_vs()
     GAME.match:render()
     wait()
     variable_step(
-      function()
+    function()
+        --TODO: maybe do this on a seperate thread?
+        if GAME.match.P1CPU then
+          GAME.match.P1CPU:run(P1)
+        end
+        if GAME.match.P2CPU then
+          GAME.match.P2CPU:run(P2)
+        end
         P1:run()
         P2:run()
         assert((P1.CLOCK == P2.CLOCK) or GAME.match:matchOutcome(), "should run at same speed: " .. P1.CLOCK .. " - " .. P2.CLOCK)

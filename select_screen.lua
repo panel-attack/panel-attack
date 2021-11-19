@@ -121,16 +121,6 @@ local function resolve_stage_random(state)
   end
 end
 
-function update_win_counts(win_counts)
-  if (P1 and P1.player_number == 1) or currently_spectating then
-    my_win_count = win_counts[1] or 0
-    op_win_count = win_counts[2] or 0
-  elseif P1 and P1.player_number == 2 then
-    my_win_count = win_counts[2] or 0
-    op_win_count = win_counts[1] or 0
-  end
-end
-
 -- The main screen for selecting characters and settings for a match
 function select_screen.main()
   if themes[config.theme].musics.select_screen then
@@ -1376,14 +1366,16 @@ function select_screen.main()
       GAME.match = Match("vs", GAME.battleRoom)
       if true then --both computers
         P1 = Stack(1, GAME.match, false, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
-        P1.computer = ComputerPlayer("Hard")
+        P1.max_runs_per_frame = 1
+        GAME.match.P1CPU = ComputerPlayer("Hard")
       else
         P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       end
       GAME.match.P1 = P1
       P2 = Stack(2, GAME.match, false, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+      P2.max_runs_per_frame = 1
       GAME.match.P2 = P2
-      P2.computer = ComputerPlayer("Medium")
+      GAME.match.P2CPU = ComputerPlayer("Medium")
       P1.garbage_target = P2
       P2.garbage_target = P1
       current_stage = cursor_data[math.random(1, 2)].state.stage

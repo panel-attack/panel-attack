@@ -728,13 +728,6 @@ function Stack.render(self)
       draw_time(frames_to_time_string(P1.game_stopwatch, self.match.mode == "endless"), time_quads, main_infos_screen_pos.x + themes[config.theme].time_Pos[1], main_infos_screen_pos.y + themes[config.theme].time_Pos[2], 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale)
     end
 
-    -- Draw the time for non time attack modes
-    if P2 and P2.game_stopwatch and tonumber(P2.game_stopwatch) and self.match.mode ~= "time" then
-      local xOffset = 100
-      draw_label(themes[config.theme].images.IMG_time, (xOffset + main_infos_screen_pos.x + themes[config.theme].timeLabel_Pos[1]) / GFX_SCALE, (main_infos_screen_pos.y + themes[config.theme].timeLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].timeLabel_Scale)
-      draw_time(frames_to_time_string(P2.game_stopwatch, self.match.mode == "endless"), time_quads, xOffset + main_infos_screen_pos.x + themes[config.theme].time_Pos[1], main_infos_screen_pos.y + themes[config.theme].time_Pos[2], 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale)
-    end
-
     -- Draw the community message
     if not config.debug_mode then
       gprint(join_community_msg or "", main_infos_screen_pos.x - 45, main_infos_screen_pos.y + 550)
