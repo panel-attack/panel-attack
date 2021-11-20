@@ -363,13 +363,13 @@ function transform_coordinates(x, y)
   return (x - lbx) / scale * canvas_width / lbw, (y - lby) / scale * canvas_height / lbh
 end
 
--- Handle a mouse press
+-- Handle a mouse or touch press
 function love.mousepressed(x, y)
   click_or_tap(transform_coordinates(x, y))
 end
 
 -- Handle a touch press
-function love.touchpressed(id, x, y, dx, dy, pressure)
-  local _x, _y = transform_coordinates(x, y)
-  click_or_tap(_x, _y, {id = id, x = _x, y = _y, dx = dx, dy = dy, pressure = pressure})
-end
+-- function love.touchpressed(id, x, y, dx, dy, pressure)
+  -- local _x, _y = transform_coordinates(x, y)
+  -- click_or_tap(_x, _y, {id = id, x = _x, y = _y, dx = dx, dy = dy, pressure = pressure})
+-- end
