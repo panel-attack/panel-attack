@@ -599,6 +599,7 @@ function main_net_vs_lobby()
         select_screen.character_select_mode = "2p_net_vs"
         love.window.requestAttention()
         play_optional_sfx(themes[config.theme].sounds.notification)
+        lobby_menu:remove_self()
         return select_screen.main
       end
       if msg.unpaired then
@@ -669,6 +670,7 @@ function main_net_vs_lobby()
         updated = true
         spectator_list = {}
         spectators_string = ""
+        lobby_menu:remove_self()
       end
 
       local function goEscape()
