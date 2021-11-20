@@ -323,7 +323,7 @@ function Click_menu.move(self, x, y)
 end
 
 -- Handles taps or clicks on the menu
-function click_or_tap(x, y)
+function click_or_tap(x, y, touchpress)
   print(x .. "," .. y)
   for menu_name, menu in pairs(click_menus) do
     if menu.active then
