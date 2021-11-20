@@ -1,6 +1,6 @@
 require("engine")
 require("profiler")
-require("priority_queue")
+require("PriorityQueue")
 
 local MONTE_CARLO_RUN_COUNT = 1
 local MAX_CURSOR_MOVE_DISTANCE = 5
@@ -8,23 +8,22 @@ local CURSOR_MOVE_WAIT_TIME = 2
 local PROFILE_TIME = 400
 local MAX_CLOCK_PLAYOUT = 10
 local EXPAND_COUNT = 3
-local MAX_THINK_TIME = 1 / 200
+local MAX_THINK_TIME = 1 / 130
 
-local HEURISTIC_GAME_OVER_WEIGHT = 1000000
-local HEURISTIC_STOP_TIME_WEIGHT = 1000
-local HEURISTIC_PRE_STOP_TIME_WEIGHT = 100
-local HEURISTIC_NEAR_TOP_OUT_WEIGHT = -12
-local HEURISTIC_LOW_PANEL_COUNT_WEIGHT = -10
-local HEURISTIC_RANDOM_WEIGHT = 0.1
-local HEURISTIC_CLOCK_WEIGHT = -0.01
+local HEURISTIC_STOP_TIME_WEIGHT = .2
+local HEURISTIC_PRE_STOP_TIME_WEIGHT = .1
+local HEURISTIC_RANDOM_WEIGHT = 0 -- 0.001
+local HEURISTIC_LOW_PANEL_COUNT_WEIGHT = -0.01
 
+local STACK_LOW_ROW = 3
+local STACK_ROW_EMPTY_ALLOWING_RAISE = 3
 
 local cpuConfigs = {
   ["Hard"] =
   {
     log = 0,
     profiled = false,
-    inputSpeed = 20
+    inputSpeed = 30
   },
   ["Medium"] =
   {
@@ -153,7 +152,7 @@ function ComputerPlayer.getInput(self, stack)
       self.targetInputTime = nil
       self:clearThink()
 
-      self:cpuLog(2, "Computer " .. stack.which .. " inputting " .. inputBuffer .. " at Clock: " .. stack.CLOCK .. " with value " .. results[2])
+      self:cpuLog(1, "Computer " .. stack.which .. " inputting " .. inputBuffer .. " at Clock: " .. stack.CLOCK .. " with value " .. results[2])
     else
       if #stack.input_buffer > 0 then
         self:cpuLog(4, "Computer thinking while using up inputs")
@@ -184,7 +183,7 @@ function ComputerPlayer.allActions(self, stack)
 
   --actions[#actions + 1] = waitInput
 
-  if self:rowEmpty(stack, 5) then
+  if self:rowEmpty(stack, STACK_ROW_EMPTY_ALLOWING_RAISE) then
     actions[#actions + 1] = raiseInput
   end
 
@@ -240,6 +239,19 @@ function ComputerPlayer.moveToRowColumnAction(self, stack, row, column)
   return result
 end
 
+function ComputerPlayer.panelCount(self, stack)
+  local panelCount = 0
+
+  for column = 1, stack.width - 1, 1 do
+    for row = 1, stack.height, 1 do
+      if stack.panels[row][column].color ~= 0 then
+        panelCount = panelCount + 1
+      end
+    end
+  end
+  return panelCount
+end
+
 function ComputerPlayer.rowEmpty(self, stack, row)
   local allBlank = true
   for col = 1, stack.width do
@@ -280,32 +292,41 @@ end
 
 function ComputerPlayer.heuristicValueForStack(self, stack)
 
-  local result = math.random() * HEURISTIC_RANDOM_WEIGHT -- small amount of randomness
 
   local gameResult = stack:gameResult()
-  if gameResult and gameResult ~= 0 then
-    result = gameResult * HEURISTIC_GAME_OVER_WEIGHT
+  if gameResult and gameResult == 1 then
+    return 1
+  elseif gameResult and gameResult == -1 then
+    return 0
   elseif stack:game_ended() ~= stack.garbage_target:game_ended() then
     error("Stacks differ in game over")
   elseif stack.CLOCK ~= stack.garbage_target.CLOCK then
     error("Stacks not simulated equal")
   end
 
+  local result = 0.5 + math.random() * HEURISTIC_RANDOM_WEIGHT -- small amount of randomness
+
   if stack.stop_time > 0 then
-    self:cpuLog(4, "stop time: " .. stack.stop_time)
-    result = result + (stack.pre_stop_time * HEURISTIC_STOP_TIME_WEIGHT)
+    local maxStopTime = 1000 -- TODO
+    local value = (stack.stop_time / maxStopTime) * HEURISTIC_STOP_TIME_WEIGHT
+    result = result + value
+    self:cpuLog(4, "stop time: " .. value)
   end
 
   if stack.pre_stop_time > 0 then
-    self:cpuLog(6, "pre_stop_time: " .. stack.pre_stop_time)
-    result = result + (stack.pre_stop_time * HEURISTIC_PRE_STOP_TIME_WEIGHT)
+    local maxPreStop = stack.FRAMECOUNT_MATCH + stack.FRAMECOUNT_POP * (100) --TODO
+    local value = (stack.pre_stop_time / maxPreStop) * HEURISTIC_PRE_STOP_TIME_WEIGHT
+    result = result + value
+    self:cpuLog(4, "pre_stop_time: " .. value)
   end
 
-
-  -- if self:rowEmpty(stack, 3) then
-  --   result = result + HEURISTIC_LOW_PANEL_COUNT_WEIGHT
-  --   self:cpuLog(4, "Computer: " .. stack.CLOCK .. " low panel count")
-  -- end
+  if self:rowEmpty(stack, STACK_LOW_ROW) then
+    local panelCount = self:panelCount(stack)
+    local maxPanels = (STACK_LOW_ROW * stack.width)
+    local value = (maxPanels - panelCount) / maxPanels * HEURISTIC_LOW_PANEL_COUNT_WEIGHT
+    result = result + value
+    self:cpuLog(2, "Computer: " .. stack.CLOCK .. " low panel count " .. value)
+  end
 
   -- for index = 8, 12, 1 do
   --   if self:rowEmpty(stack, index) == false then
@@ -313,8 +334,6 @@ function ComputerPlayer.heuristicValueForStack(self, stack)
   --     self:cpuLog(2, "Computer: " .. stack.CLOCK .. " near top out")
   --   end
   -- end
-
-  result = result + (stack.CLOCK * HEURISTIC_CLOCK_WEIGHT)
 
   return result
 end
@@ -367,6 +386,7 @@ function ComputerPlayer.fillRandomActions(self, stack)
   end 
 end
 
+--[[
 function ComputerPlayer.playoutValueForStack(self, stack, maxClock)
 
   self:fillRandomActions(stack)
@@ -441,13 +461,14 @@ function ComputerPlayer.bestAction(self, stack, maxClock, depthAllowed)
   self:cpuLog(2, "Computer - done, best " .. bestAction .. " Value: " .. bestEvaluation)
   return {bestAction, bestEvaluation}
 end
+--]]
 
 function ComputerPlayer.yieldIfTooLong(self)
   -- If we spent enough time, pause
   local currentTime = os.clock()
   local timeSpent = currentTime - self.startTime
   if timeSpent > MAX_THINK_TIME then
-    self:cpuLog(2, "Computer - timeSpent " .. round(timeSpent, 4) .. " " .. self.unexpandedQueue:size() .. " / " .. self.resultQueue:size())
+    self:cpuLog(4, "Computer - timeSpent " .. round(timeSpent, 4) .. " " .. self.unexpandedQueue:size() .. " / " .. self.resultQueue:size())
     coroutine.yield()
     self.startTime = os.clock()
   end
@@ -477,16 +498,19 @@ function ComputerPlayer.think(self)
           if value > 0 then
             self:cpuLog(4, "Computer - found " .. value .. "  totalActions: " .. totalActions .. " clock: " .. simulatedStack.CLOCK)
           end
-          self.unexpandedQueue:put({stack=simulatedStack, actions=totalActions, value=value}, -value)
+
+          -- Don't allow the empty start state to be a valid result
+          if #totalActions > 0 then
+            local node = {stack=simulatedStack, actions=totalActions, value=value}
+            local expandValue = -1 * self:expandValue(value, #totalActions)
+            self.unexpandedQueue:put(node, expandValue)
+            self.resultQueue:put(node, -value)
+          end
+
           self:yieldIfTooLong()
         end
       end
     
-      -- Don't allow the empty start state to be a valid result
-      if #expand.actions > 0 then
-        self.resultQueue:put(expand, -expand.value)
-      end
-
       self:yieldIfTooLong()
     else
       coroutine.yield()
@@ -495,8 +519,28 @@ function ComputerPlayer.think(self)
   end
 end
 
-function ComputerPlayer.initThink(self, stack, idleCount)
+-- function ComputerPlayer.mctsValue(self, stack) 
+--   self = current
+--   q = sum of explored values
+--   n = numberOfVisits explored
+--   c = child
+--   local c_param = math.sqrt(2)
+--   local exploitation = c.q() / c.n()
+--   local exploration = c_param * math.sqrt((2 * math.log(self.n()) / c.n()
+--   local value = exploitation + exploration
+--   return value
+-- end
 
+function ComputerPlayer.expandValue(self, value, depth)
+  --local depthMultiplier = 3 - math.sqrt(depth * 2.2)
+  --local depthMultiplier = math.sqrt(depth * 6.2)
+  local depthMultiplier = 1.0
+  local result = value * depth
+  return result
+end
+
+
+function ComputerPlayer.initThink(self, stack, idleCount)
   self.resultQueue = PriorityQueue()
   self.unexpandedQueue = PriorityQueue()
 
@@ -505,7 +549,7 @@ function ComputerPlayer.initThink(self, stack, idleCount)
   assert(stack.CLOCK + #stack.input_buffer == self.targetInputTime, "should have buffer to input time")
 
   local baseValue = self:heuristicValueForIdleFilledStack(stack)
-  self.unexpandedQueue:put({stack=stack, actions="", value=baseValue}, baseValue)
+  self.unexpandedQueue:put({stack=stack, actions="", value=baseValue}, self:expandValue(baseValue, 0))
 
 end
 
@@ -520,6 +564,7 @@ function ComputerPlayer.currentResult(self)
     local bestAction = result.actions
     local bestEvaluation = result.value
 
+    self:cpuLog(1, "Computer resultQueue:" .. self.resultQueue:size() .. " unexpandedQueue " .. self.unexpandedQueue:size())
     return {bestAction, bestEvaluation}
   else
     return {waitInput, 0}

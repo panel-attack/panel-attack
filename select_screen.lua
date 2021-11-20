@@ -1364,7 +1364,7 @@ function select_screen.main()
     -- Handle Vs Computer Setup
     elseif cursor_data[1].state.ready and select_screen.character_select_mode == "2p_local_computer_vs" then
       GAME.match = Match("vs", GAME.battleRoom)
-      if true then --both computers
+      if false then --both computers
         P1 = Stack(1, GAME.match, false, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
         P1.max_runs_per_frame = 1
         GAME.match.P1CPU = ComputerPlayer("Hard")
@@ -1375,7 +1375,7 @@ function select_screen.main()
       P2 = Stack(2, GAME.match, false, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       P2.max_runs_per_frame = 1
       GAME.match.P2 = P2
-      GAME.match.P2CPU = ComputerPlayer("Medium")
+      GAME.match.P2CPU = ComputerPlayer("Dev")
       P1.garbage_target = P2
       P2.garbage_target = P1
       current_stage = cursor_data[math.random(1, 2)].state.stage

@@ -30,6 +30,7 @@ require("timezones")
 require("gen_panels")
 require("computerPlayer")
 require("deepcopy")
+require("PriorityQueue")
 
 GAME.scores = require("scores")
 

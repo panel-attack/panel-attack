@@ -86,6 +86,7 @@ function fmainloop()
 
   -- Run all unit tests now that we have everything loaded
   require("ServerQueueTests")
+  require("PriorityQueueTests")
   
   --check for game updates
   if GAME_UPDATER_CHECK_UPDATE_INGAME then
