@@ -22,11 +22,11 @@ leagues = { {league="Newcomer",     min_rating = -1000},
             {league="Master",       min_rating = 2225},
             {league="Grandmaster",  min_rating = 2475}
           }]]
-PLACEMENT_MATCH_COUNT_REQUIREMENT = 50
+PLACEMENT_MATCH_COUNT_REQUIREMENT = 30
 DEFAULT_RATING = 1500
 RATING_SPREAD_MODIFIER = 400
 ALLOWABLE_RATING_SPREAD_MULITPLIER = .9 --set this to a huge number like 100 if you want everyone to be able to play with anyone, regardless of rating gap
-PLACEMENT_MATCH_K = 30
+PLACEMENT_MATCH_K = 50
 NAME_LENGTH_LIMIT = 16
 PLACEMENT_MATCHES_ENABLED = false
 MIN_LEVEL_FOR_RANKED = 1
