@@ -189,6 +189,7 @@ Room =
     self.win_counts[2] = 0
     local a_rating, b_rating
     local a_placement_match_progress, b_placement_match_progress
+
     if a.user_id then
       if leaderboard.players[a.user_id] and leaderboard.players[a.user_id].rating then
         a_rating = round(leaderboard.players[a.user_id].rating)
@@ -198,19 +199,16 @@ Room =
         a_placement_match_progress = a_progress
       end
     end
+    
     if b.user_id then
       if leaderboard.players[b.user_id] and leaderboard.players[b.user_id].rating then
         b_rating = round(leaderboard.players[b.user_id].rating or 0)
       end
-      if b.user_id then
-        if leaderboard.players[b.user_id] and leaderboard.players[b.user_id].rating then
-          b_rating = round(leaderboard.players[b.user_id].rating or 0)
-        end
-        local b_qualifies, b_progress = qualifies_for_placement(b.user_id)
-        if not (leaderboard.players[b.user_id] and leaderboard.players[b.user_id].placement_done) and not b_qualifies then
-          b_placement_match_progress = b_progress
-        end
+      local b_qualifies, b_progress = qualifies_for_placement(b.user_id)
+      if not (leaderboard.players[b.user_id] and leaderboard.players[b.user_id].placement_done) and not b_qualifies then
+        b_placement_match_progress = b_progress
       end
+    end
 
     self.ratings = {
       {old = a_rating or 0, new = a_rating or 0, difference = 0, league = get_league(a_rating or 0), placement_match_progress = a_placement_match_progress},
