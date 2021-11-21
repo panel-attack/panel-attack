@@ -19,6 +19,16 @@ Using math, you can figure out what inputs go to each character by adding them t
 
 For example, let's say that a player is inputting both down and right at the same time. Right is equal to 1, and Down is equal to 4. Therefore, we would add them both together (1 + 4 = 5) to reach the letter "F". (Remember that since we are dealing with indexes, we start counting at 0).
 
+Common actions:
+
+A = Do nothing
+B = Move Right
+C = Move Left
+E = Move Down
+I = Move Up
+Q = Swap
+g = Raise Stack
+
 "P" and "O" represent P1's and P2's stacks, respectively. Every character represents a block, starting from row 7, column 1. They are always given in batches of 120, for a total of 20 rows with 6 columns.
 
 0 = Air
