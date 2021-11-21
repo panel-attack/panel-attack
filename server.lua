@@ -179,45 +179,42 @@ Room =
     self.b = b --player b
     self.stage = nil
     self.name = a.name .. " vs " .. b.name
-    if not self.a.room or not self.b.room then
-      self.roomNumber = ROOMNUMBER
-      ROOMNUMBER = ROOMNUMBER + 1
-      self.a.room = self
-      self.b.room = self
-      self.spectators = {}
-      self.win_counts = {}
-      self.win_counts[1] = 0
-      self.win_counts[2] = 0
-      local a_rating, b_rating
-      local a_placement_match_progress, b_placement_match_progress
-      if a.user_id then
-        if leaderboard.players[a.user_id] and leaderboard.players[a.user_id].rating then
-          a_rating = round(leaderboard.players[a.user_id].rating)
-        end
-        local a_qualifies, a_progress = qualifies_for_placement(a.user_id)
-        if not (leaderboard.players[a.user_id] and leaderboard.players[a.user_id].placement_done) and not a_qualifies then
-          a_placement_match_progress = a_progress
-        end
-      end
-      if b.user_id then
-        if leaderboard.players[b.user_id] and leaderboard.players[b.user_id].rating then
-          b_rating = round(leaderboard.players[b.user_id].rating or 0)
-        end
-        local b_qualifies, b_progress = qualifies_for_placement(b.user_id)
-        if not (leaderboard.players[b.user_id] and leaderboard.players[b.user_id].placement_done) and not b_qualifies then
-          b_placement_match_progress = b_progress
-        end
-      end
+    self.roomNumber = ROOMNUMBER
+    ROOMNUMBER = ROOMNUMBER + 1
+    self.a.room = self
+    self.b.room = self
+    self.spectators = {}
+    self.win_counts = {}
+    self.win_counts[1] = 0
+    self.win_counts[2] = 0
+    local a_rating, b_rating
+    local a_placement_match_progress, b_placement_match_progress
 
-      self.ratings = {
-        {old = a_rating or 0, new = a_rating or 0, difference = 0, league = get_league(a_rating or 0), placement_match_progress = a_placement_match_progress},
-        {old = b_rating or 0, new = b_rating or 0, difference = 0, league = get_league(b_rating or 0), placement_match_progress = b_placement_match_progress}
-      }
-    else
-      self.win_counts = self.a.room.win_counts
-      self.spectators = self.a.room.spectators
-      self.roomNumber = self.a.room.roomNumber
+    if a.user_id then
+      if leaderboard.players[a.user_id] and leaderboard.players[a.user_id].rating then
+        a_rating = round(leaderboard.players[a.user_id].rating)
+      end
+      local a_qualifies, a_progress = qualifies_for_placement(a.user_id)
+      if not (leaderboard.players[a.user_id] and leaderboard.players[a.user_id].placement_done) and not a_qualifies then
+        a_placement_match_progress = a_progress
+      end
     end
+    
+    if b.user_id then
+      if leaderboard.players[b.user_id] and leaderboard.players[b.user_id].rating then
+        b_rating = round(leaderboard.players[b.user_id].rating or 0)
+      end
+      local b_qualifies, b_progress = qualifies_for_placement(b.user_id)
+      if not (leaderboard.players[b.user_id] and leaderboard.players[b.user_id].placement_done) and not b_qualifies then
+        b_placement_match_progress = b_progress
+      end
+    end
+
+    self.ratings = {
+      {old = a_rating or 0, new = a_rating or 0, difference = 0, league = get_league(a_rating or 0), placement_match_progress = a_placement_match_progress},
+      {old = b_rating or 0, new = b_rating or 0, difference = 0, league = get_league(b_rating or 0), placement_match_progress = b_placement_match_progress}
+    }
+
     self.game_outcome_reports = {}
     rooms[self.roomNumber] = self
   end
@@ -309,6 +306,7 @@ function Room.remove_spectator(self, connection)
       self.spectators[k].state = "lobby"
       print(connection.name .. " left " .. self.name .. " as a spectator")
       self.spectators[k] = nil
+      connection.room = nil
       lobby_changed = true
     end
   end
