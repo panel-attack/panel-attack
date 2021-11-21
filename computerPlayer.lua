@@ -18,17 +18,17 @@ local STACK_LOW_ROW = 3
 local STACK_ROW_EMPTY_ALLOWING_RAISE = 3
 
 local cpuConfigs = {
-  ["Hard1"] =
+  ["Hard"] =
   {
     log = 0,
     profiled = false,
-    inputSpeed = 30
+    inputSpeed = 5
   },
-  ["Hard2"] =
+  ["Medium"] =
   {
     log = 2,
     profiled = false,
-    inputSpeed = 20
+    inputSpeed = 10
   },
   ["Easy"] =
   {
@@ -40,7 +40,7 @@ local cpuConfigs = {
   {
     log = 3,
     profiled = false,
-    inputSpeed = 30,
+    inputSpeed = 5,
     heuristicPanelScore = 0
   },
   ["DevSlow"] =

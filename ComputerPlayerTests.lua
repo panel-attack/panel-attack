@@ -1,14 +1,16 @@
 
 local battleRoom = BattleRoom()
-local match = Match("puzzle", battleRoom)
-local stack = Stack(1, match, false, config.panels, 5)
+local match = Match("vs", battleRoom)
+local stack = Stack(1, match, false, config.panels, 8)
 make_local_panels(stack, "000000")
 make_local_gpanels(stack, "000000")
+stack:starting_state()
 stack.do_countdown = false
 
-local stack2 = Stack(2, match, false, config.panels, 5)
+local stack2 = Stack(2, match, false, config.panels, 8)
 make_local_panels(stack2, "000000")
 make_local_gpanels(stack2, "000000")
+stack2:starting_state()
 stack2.do_countdown = false
 
 stack.garbage_target = stack2
