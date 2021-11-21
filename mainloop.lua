@@ -1,7 +1,4 @@
-require("match")
-require("panels")
-require("theme")
-require("click_menu")
+
 local select_screen = require("select_screen")
 local replay_browser = require("replay_browser")
 local options = require("options")
@@ -83,14 +80,19 @@ function fmainloop()
   love.filesystem.createDirectory("panels")
   love.filesystem.createDirectory("themes")
   love.filesystem.createDirectory("stages")
-
-  -- Run all unit tests now that we have everything loaded
-  require("ServerQueueTests")
-  require("PriorityQueueTests")
   
   --check for game updates
   if GAME_UPDATER_CHECK_UPDATE_INGAME then
     wait_game_update = GAME_UPDATER:async_download_latest_version()
+  end
+
+  -- Run Unit Tests
+  if TESTS_ENABLED then
+    -- Run all unit tests now that we have everything loaded
+    require("ServerQueueTests")
+    require("PriorityQueueTests")
+    require("StackTests")
+    require("ComputerPlayerTests")
   end
 
   while true do
@@ -1065,6 +1067,7 @@ function main_local_vs_yourself_setup()
   op_name = nil
   my_player_number = 1
   op_state = nil
+  my_player_number = 1
   select_screen.character_select_mode = "1p_vs_yourself"
   return select_screen.main
 end
@@ -1121,7 +1124,7 @@ function main_replay_vs()
   P1.ice = true
   P1.garbage_target = P2
   P2.garbage_target = P1
-  move_stack(P2, 2)
+  P2:moveForPlayerNumber(2)
   P1.input_buffer = uncompress_input_string(replay.in_buf)
   P1.panel_buffer = replay.P
   P1.gpanel_buffer = replay.Q

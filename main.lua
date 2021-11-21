@@ -1,7 +1,7 @@
 local launch_type = arg[2]
 if launch_type == "test" or launch_type == "debug" then
     require "lldebugger"
-
+    TESTS_ENABLED = 1
     if launch_type == "debug" then
         lldebugger.start()
     end
@@ -10,6 +10,7 @@ require("class")
 socket = require("socket")
 json = require("dkjson")
 GAME = require("game")
+require("match")
 require("BattleRoom")
 require("util")
 require("consts")
@@ -28,9 +29,12 @@ require("mainloop")
 require("sound")
 require("timezones")
 require("gen_panels")
-require("computerPlayer")
-require("deepcopy")
 require("PriorityQueue")
+require("deepcopy")
+require("computerPlayer")
+require("panels")
+require("theme")
+require("click_menu")
 
 GAME.scores = require("scores")
 

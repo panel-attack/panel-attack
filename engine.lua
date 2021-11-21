@@ -85,7 +85,7 @@ Stack =
     -- garbage_to_send.chain is an array of garbage to send when the chain ends.
     s.garbage_to_send = {}
 
-    move_stack(s, 1)
+    s:moveForPlayerNumber(1)
 
     s.panel_buffer = ""
     s.gpanel_buffer = ""
@@ -204,6 +204,29 @@ Stack =
     s.analytic = AnalyticsInstance(s.is_local)
   end
 )
+
+-- Positions the stack draw position for the given player
+function Stack.moveForPlayerNumber(stack, player_num)
+  local stack_padding_x_for_legacy_pos = ((canvas_width - legacy_canvas_width) / 2)
+  if player_num == 1 then
+    stack.pos_x = 4 + stack_padding_x_for_legacy_pos / GFX_SCALE
+    stack.score_x = 315 + stack_padding_x_for_legacy_pos
+    stack.mirror_x = 1
+    stack.origin_x = stack.pos_x
+    stack.multiplication = 0
+    stack.id = "_1P"
+    stack.VAR_numbers = ""
+  elseif player_num == 2 then
+    stack.pos_x = 172 + stack_padding_x_for_legacy_pos / GFX_SCALE
+    stack.score_x = 410 + stack_padding_x_for_legacy_pos
+    stack.mirror_x = -1
+    stack.origin_x = stack.pos_x + (stack.canvas:getWidth() / GFX_SCALE) - 8
+    stack.multiplication = 1
+    stack.id = "_2P"
+  end
+  stack.pos_y = 4 + (canvas_height - legacy_canvas_height) / GFX_SCALE
+  stack.score_y = 100 + (canvas_height - legacy_canvas_height)
+end
 
 function Stack.mkcpy(self, other)
   if other == nil then
@@ -567,7 +590,9 @@ function Stack.set_puzzle_state(self, pstr, n_turns)
     end
   end
   self.puzzle_moves = n_turns
-  characters[self.character]:stop_sounds()
+  if self.character and characters[self.character] then
+    characters[self.character]:stop_sounds()
+  end
 end
 
 function Stack.puzzle_done(self)
@@ -1462,11 +1487,11 @@ function Stack.PdP(self)
             SFX_Go_Play = 0
           end
         else
-          local winningPlayer = P1
+          local winningPlayer = self
           if GAME.battleRoom then
             winningPlayer = GAME.battleRoom:winningPlayer(P1, P2)
           end
-          local musics_to_use = (current_use_music_from == "stage") and stages[current_stage].musics or characters[winningPlayer.character].musics
+          local musics_to_use = (current_use_music_from == "stage") and current_stage and stages[current_stage].musics or characters[winningPlayer.character].musics
           if not musics_to_use["normal_music"] then -- use the other one as fallback
             musics_to_use = (current_use_music_from ~= "stage") and stages[current_stage].musics or characters[winningPlayer.character].musics
           end

@@ -1,35 +1,34 @@
 require("engine")
 require("profiler")
-require("PriorityQueue")
 
 local MONTE_CARLO_RUN_COUNT = 1
-local MAX_CURSOR_MOVE_DISTANCE = 5
 local CURSOR_MOVE_WAIT_TIME = 2
 local PROFILE_TIME = 400
 local MAX_CLOCK_PLAYOUT = 10
 local EXPAND_COUNT = 3
 local MAX_THINK_TIME = 1 / 130
+local DEFAULT_CURSOR_MOVE_DISTANCE = 20
 
 local HEURISTIC_STOP_TIME_WEIGHT = .2
 local HEURISTIC_PRE_STOP_TIME_WEIGHT = .1
-local HEURISTIC_RANDOM_WEIGHT = 0 -- 0.001
+local HEURISTIC_RANDOM_WEIGHT = 0.001
 local HEURISTIC_LOW_PANEL_COUNT_WEIGHT = -0.01
 
 local STACK_LOW_ROW = 3
 local STACK_ROW_EMPTY_ALLOWING_RAISE = 3
 
 local cpuConfigs = {
-  ["Hard"] =
+  ["Hard1"] =
   {
     log = 0,
     profiled = false,
     inputSpeed = 30
   },
-  ["Medium"] =
+  ["Hard2"] =
   {
-    log = 0,
+    log = 2,
     profiled = false,
-    inputSpeed = 15
+    inputSpeed = 20
   },
   ["Easy"] =
   {
@@ -41,7 +40,8 @@ local cpuConfigs = {
   {
     log = 3,
     profiled = false,
-    inputSpeed = 20
+    inputSpeed = 30,
+    heuristicPanelScore = 0
   },
   ["DevSlow"] =
   {
@@ -57,6 +57,8 @@ CPUConfig = class(function(self, actualConfig)
   self.log = actualConfig["log"]
   self.inputSpeed = actualConfig["inputSpeed"]
   self.profiled = actualConfig["profiled"]
+  self.heuristicPanelScore = actualConfig["heuristicPanelScore"] or 0
+  self.cursorMoveDistance = actualConfig["cursorMoveDistance"] or DEFAULT_CURSOR_MOVE_DISTANCE
 end)
 
 ComputerPlayer = class(function(self, configName)
@@ -194,11 +196,11 @@ function ComputerPlayer.allActions(self, stack)
   for column = 1, stack.width - 1, 1 do
     for row = 1, stack.height, 1 do
       local distance = math.abs(row - cursorRow) + math.abs(column - cursorColumn)
-      if distance > 0 and distance <= MAX_CURSOR_MOVE_DISTANCE then
+      if distance > 0 and distance <= self.config.cursorMoveDistance then
         if stack:canSwap(row, column) then
           if stack.panels[row][column].color ~= stack.panels[row][column + 1].color then
             -- We wait one frame after swapping because thats when the swap actually happens
-            actions[#actions + 1] = self:moveToRowColumnAction(stack, row, column) .. swapInput .. waitInput
+            actions[#actions + 1] = self:moveToRowColumnAction(stack, row, column) .. swapInput .. string.rep(waitInput, 5)
           end
         end
       end
@@ -290,6 +292,59 @@ function ComputerPlayer.addAction(self, stack, action)
   stack.input_buffer = stack.input_buffer .. action
 end
 
+function ComputerPlayer.panelsScore(self, stack)
+
+  local score = 0
+  local panels = stack.panels
+
+  local colorColumns = {}
+
+  for color = 1, stack.NCOLORS do
+    colorColumns[color] = {total=0, columns={}}
+  end
+  colorColumns[8] = {total=0, columns={}}
+
+  for row = 1, stack.height do
+    for col = 1, stack.width do
+      local color = panels[row][col].color
+      if color > 0 and color ~= 9 then
+        if not panels[row][col]:exclude_match() then
+          table.insert(colorColumns[color].columns, col)
+          colorColumns[color].total = colorColumns[color].total + col
+        end
+      end
+    end
+  end
+
+  local bestColor = 0
+  local bestColorCount = 0
+  for k, color in pairs(colorColumns) do
+    if #color.columns > bestColorCount then
+      bestColor = k
+      bestColorCount = #color.columns
+    end
+  end
+
+  --for k, color in pairs(colorColumns) do
+  local color = colorColumns[bestColor]
+  print("bestcolor " .. bestColor)
+    if #color.columns > 2 then
+      local averageColumn = color.total / #color.columns
+      local colorScore = 0
+      for k, v in pairs(color.columns) do
+        -- ((x+2)*0.1)^(-1.5)
+        local distance = math.abs(v - averageColumn)
+        local panelScore = math.pow((distance+2)*0.1, -3.2)
+        --colorScore = colorScore + math.pow(math.abs(v - averageColumn), 2)
+        colorScore = colorScore + panelScore
+      end
+      score = score + colorScore
+    end
+  --end
+
+  return score
+end
+
 function ComputerPlayer.heuristicValueForStack(self, stack)
 
 
@@ -318,6 +373,13 @@ function ComputerPlayer.heuristicValueForStack(self, stack)
     local value = (stack.pre_stop_time / maxPreStop) * HEURISTIC_PRE_STOP_TIME_WEIGHT
     result = result + value
     self:cpuLog(4, "pre_stop_time: " .. value)
+  end
+  
+  if self.config.heuristicPanelScore ~= 0 then
+    assert(false) -- todo revalue
+    local localResult = self:panelsScore(stack) * self.config.heuristicPanelScore
+    self:cpuLog(2, "panelScore: " .. localResult)
+    result = result + localResult
   end
 
   if self:rowEmpty(stack, STACK_LOW_ROW) then

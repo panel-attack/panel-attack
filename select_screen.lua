@@ -905,7 +905,7 @@ function select_screen.main()
           P2.gpanel_buffer = fake_P2.gpanel_buffer
           P1.garbage_target = P2
           P2.garbage_target = P1
-          move_stack(P2, 2)
+          P2:moveForPlayerNumber(2)
           replay = {}
           replay.vs = {
             P = "",
@@ -1381,7 +1381,7 @@ function select_screen.main()
       current_stage = cursor_data[math.random(1, 2)].state.stage
       stage_loader_load(current_stage)
       stage_loader_wait()
-      move_stack(P2, 2)
+      P2:moveForPlayerNumber(2)
       -- TODO: this does not correctly implement starting configurations.
       -- Starting configurations should be identical for visible blocks, and
       -- they should not be completely flat.
@@ -1407,7 +1407,7 @@ function select_screen.main()
       current_stage = cursor_data[math.random(1, 2)].state.stage
       stage_loader_load(current_stage)
       stage_loader_wait()
-      move_stack(P2, 2)
+      P2:moveForPlayerNumber(2)
       -- TODO: this does not correctly implement starting configurations.
       -- Starting configurations should be identical for visible blocks, and
       -- they should not be completely flat.

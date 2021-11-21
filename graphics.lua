@@ -234,29 +234,6 @@ function Stack.draw_popfxs(self)
   end
 end
 
--- Positions the stack draw position for the given player
-function move_stack(stack, player_num)
-  local stack_padding_x_for_legacy_pos = ((canvas_width - legacy_canvas_width) / 2)
-  if player_num == 1 then
-    stack.pos_x = 4 + stack_padding_x_for_legacy_pos / GFX_SCALE
-    stack.score_x = 315 + stack_padding_x_for_legacy_pos
-    stack.mirror_x = 1
-    stack.origin_x = stack.pos_x
-    stack.multiplication = 0
-    stack.id = "_1P"
-    stack.VAR_numbers = ""
-  elseif player_num == 2 then
-    stack.pos_x = 172 + stack_padding_x_for_legacy_pos / GFX_SCALE
-    stack.score_x = 410 + stack_padding_x_for_legacy_pos
-    stack.mirror_x = -1
-    stack.origin_x = stack.pos_x + (stack.canvas:getWidth() / GFX_SCALE) - 8
-    stack.multiplication = 1
-    stack.id = "_2P"
-  end
-  stack.pos_y = 4 + (canvas_height - legacy_canvas_height) / GFX_SCALE
-  stack.score_y = 100 + (canvas_height - legacy_canvas_height)
-end
-
 local mask_shader = love.graphics.newShader [[
    vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
       if (Texel(texture, texture_coords).rgb == vec3(0.0)) {
