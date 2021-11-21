@@ -41,7 +41,7 @@ local cpuConfigs = {
     log = 3,
     profiled = false,
     inputSpeed = 5,
-    heuristicPanelScore = 0
+    heuristicPanelScore = 0.05
   },
   ["DevSlow"] =
   {
@@ -327,14 +327,14 @@ function ComputerPlayer.panelsScore(self, stack)
 
   --for k, color in pairs(colorColumns) do
   local color = colorColumns[bestColor]
-  print("bestcolor " .. bestColor)
     if #color.columns > 2 then
       local averageColumn = color.total / #color.columns
       local colorScore = 0
       for k, v in pairs(color.columns) do
         -- ((x+2)*0.1)^(-1.5)
         local distance = math.abs(v - averageColumn)
-        local panelScore = math.pow((distance+2)*0.1, -3.2)
+        --local panelScore = math.pow((distance+2)*0.1, -3.2)
+        local panelScore = -distance
         --colorScore = colorScore + math.pow(math.abs(v - averageColumn), 2)
         colorScore = colorScore + panelScore
       end
@@ -342,7 +342,7 @@ function ComputerPlayer.panelsScore(self, stack)
     end
   --end
 
-  return score
+  return score / 200
 end
 
 function ComputerPlayer.heuristicValueForStack(self, stack)
@@ -376,7 +376,6 @@ function ComputerPlayer.heuristicValueForStack(self, stack)
   end
   
   if self.config.heuristicPanelScore ~= 0 then
-    assert(false) -- todo revalue
     local localResult = self:panelsScore(stack) * self.config.heuristicPanelScore
     self:cpuLog(2, "panelScore: " .. localResult)
     result = result + localResult
