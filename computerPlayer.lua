@@ -377,7 +377,7 @@ function ComputerPlayer.heuristicValueForStack(self, stack)
   
   if self.config.heuristicPanelScore ~= 0 then
     local localResult = self:panelsScore(stack) * self.config.heuristicPanelScore
-    self:cpuLog(2, "panelScore: " .. localResult)
+    self:cpuLog(4, "panelScore: " .. localResult)
     result = result + localResult
   end
 
