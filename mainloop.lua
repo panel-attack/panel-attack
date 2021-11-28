@@ -86,7 +86,7 @@ function fmainloop()
 
   -- Run all unit tests now that we have everything loaded
   require("ServerQueueTests")
-  
+
   --check for game updates
   if GAME_UPDATER_CHECK_UPDATE_INGAME then
     wait_game_update = GAME_UPDATER:async_download_latest_version()
@@ -144,11 +144,11 @@ do
     local menu_x, menu_y = unpack(main_menu_screen_pos)
     local main_menu
     local ret = nil
-    
+
     local function goEscape()
       main_menu:set_active_idx(#main_menu.buttons)
     end
-  
+
     local function selectFunction(myFunction, args)
       local function constructedFunction()
         main_menu_last_index = main_menu.active_idx
@@ -207,7 +207,7 @@ do
 
       wait()
       variable_step(
-        function()          
+        function()
           main_menu:update()
         end
       )
@@ -242,7 +242,7 @@ function main_select_speed_99(next_func)
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")
   end
-  
+
   local gameSettingsMenu
 
   local function goEscape()
@@ -260,7 +260,7 @@ function main_select_speed_99(next_func)
   local function updateMenuDifficulty()
     gameSettingsMenu:set_button_setting(2, loc_difficulties[difficulty])
   end
-  
+
   local function increaseSpeed()
     speed = bound(1, speed + 1, 99)
     updateMenuSpeed()
@@ -280,7 +280,7 @@ function main_select_speed_99(next_func)
     difficulty = bound(1, difficulty - 1, 4)
     updateMenuDifficulty()
   end
-    
+
   local function startGame()
     if config.endless_speed ~= speed or config.endless_difficulty ~= difficulty then
       config.endless_speed = speed
@@ -325,9 +325,9 @@ function main_select_speed_99(next_func)
     lastScore = tostring(lastScore)
     record = tostring(record)
     draw_pixel_font("last score", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition, 0.5, 1.0)
-    draw_pixel_font(lastScore,    themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition + 24, 0.5, 1.0)
-    draw_pixel_font("record",     themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition, 0.5, 1.0)
-    draw_pixel_font(record,       themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition + 24, 0.5, 1.0)
+    draw_pixel_font(lastScore, themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition + 24, 0.5, 1.0)
+    draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition, 0.5, 1.0)
+    draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition + 24, 0.5, 1.0)
 
     gameSettingsMenu:draw()
 
@@ -647,9 +647,9 @@ function main_net_vs_lobby()
     local function toggleLeaderboard()
       updated = true
       if not showing_leaderboard then
+        --lobby_menu:set_button_text(#lobby_menu.buttons - 1, loc("lb_hide_board"))
         showing_leaderboard = true
         json_send({leaderboard_request = true})
-        --lobby_menu:set_button_text(#lobby_menu.buttons - 1, loc("lb_hide_board"))
       else
         --lobby_menu:set_button_text(#lobby_menu.buttons - 1, loc("lb_show_board"))
         showing_leaderboard = false
@@ -683,7 +683,7 @@ function main_net_vs_lobby()
       end
 
       local function requestGameFunction(opponentName)
-        return function ()
+        return function()
           my_name = config.name
           op_name = opponentName
           currently_spectating = false
@@ -692,9 +692,9 @@ function main_net_vs_lobby()
           updated = true
         end
       end
-        
+
       local function requestSpectateFunction(room)
-        return function ()
+        return function()
           my_name = room.a
           op_name = room.b
           currently_spectating = true
@@ -705,7 +705,7 @@ function main_net_vs_lobby()
       local function playerRatingString(playerName)
         local rating = ""
         if playerRatingMap and playerRatingMap[playerName] then
-          rating =  " (" .. playerRatingMap[playerName] .. ")"
+          rating = " (" .. playerRatingMap[playerName] .. ")"
         end
         return rating
       end
@@ -928,7 +928,7 @@ function main_net_vs()
     if not config.debug_mode then --this is printed in the same space as the debug details
       gprint(spectators_string, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
     end
-    
+
     -- don't spend time rendering when catching up to a current match in replays
     if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
       GAME.match:render()
@@ -1464,13 +1464,12 @@ do
   end
 end
 
-
 -- menu for setting the username
 function main_set_name()
   local name = config.name or ""
   love.keyboard.setTextInput(true) -- enables user to type
   while true do
-    local to_print = loc("op_enter_name") .. "\n" .. name
+    local to_print = loc("op_enter_name") .. " (" .. name:len() .. "/" .. NAME_LENGTH_LIMIT .. ")\n" .. name
     if (love.timer.getTime() * 3) % 2 > 1 then
       to_print = to_print .. "|"
     end
@@ -1647,13 +1646,12 @@ function fullscreen()
 end
 
 -- returns true if the user input to exit a local game in progress
-function menu_escape_game(k) 
+function menu_escape_game(k)
   if game_is_paused and menu_escape(K[1]) then
     return true
   end
   return false
 end
-
 
 -- dumb transition that shows a black screen
 function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
