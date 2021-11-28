@@ -18,7 +18,7 @@ Note: non-optional data that are missing will automatically get replaced by defa
 
 ~~ [.txt] ~~
 
-- "characters": list of the characters to be displayed in the select screen
+- "characters": add this file with one character ID per line to limit characters you can pick and random characters
 - "stages": list of the stages to be displayed in the select screen
 
 ~~ [.png, .jpg] ~~
