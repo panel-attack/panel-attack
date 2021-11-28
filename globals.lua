@@ -37,6 +37,8 @@ current_stage = nil
 
 GAME_ENDED_CLOCK = 0
 
+replay = {}
+
 -- sfx play
 SFX_Fanfare_Play = 0
 SFX_GarbageThud_Play = 0

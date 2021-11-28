@@ -105,6 +105,21 @@ function printNetworkMessageForType(type)
   return result
 end
 
+-- list of spectators
+function spectator_list_string(list)
+  local str = ""
+  for k, v in ipairs(list) do
+    str = str .. v
+    if k < #list then
+      str = str .. "\n"
+    end
+  end
+  if str ~= "" then
+    str = loc("pl_spectators") .. "\n" .. str
+  end
+  return str
+end
+
 -- Adds the message to the network queue or processes it immediately in a couple cases
 function queue_message(type, data)
   if type == "P" or type == "O" or type == "U" or type == "I" or type == "Q" or type == "R" then
@@ -273,10 +288,9 @@ function ask_for_gpanels(prev_panels, stack)
 end
 
 function make_local_panels(stack, prev_panels)
-  local ncolors = stack.NCOLORS
   local ret = make_panels(stack.NCOLORS, prev_panels, stack)
   stack.panel_buffer = stack.panel_buffer .. ret
-  local replay = replay[P1.match.mode]
+  local replay = replay[stack.match.mode]
   if replay and replay.pan_buf then
     replay.pan_buf = replay.pan_buf .. ret
   end
@@ -285,7 +299,7 @@ end
 function make_local_gpanels(stack, prev_panels)
   local ret = make_gpanels(stack.NCOLORS, prev_panels)
   stack.gpanel_buffer = stack.gpanel_buffer .. ret
-  local replay = replay[P1.match.mode]
+  local replay = replay[stack.match.mode]
   if replay and replay.gpan_buf then
     replay.gpan_buf = replay.gpan_buf .. ret
   end

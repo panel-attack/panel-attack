@@ -1,7 +1,4 @@
-require("match")
-require("panels")
-require("theme")
-require("click_menu")
+
 local select_screen = require("select_screen")
 local replay_browser = require("replay_browser")
 local options = require("options")
@@ -11,7 +8,7 @@ local main_config_input = require("config_inputs")
 
 local wait, resume = coroutine.yield, coroutine.resume
 
-local main_endless, make_main_puzzle, main_net_vs_setup, main_select_puzz, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, main_options, main_replay_browser, exit_game
+local main_endless, make_main_puzzle, main_net_vs_setup, main_select_puzz, main_local_vs_computer_setup, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, main_options, main_replay_browser, exit_game
 -- main_select_mode, main_dumb_transition, main_net_vs, main_net_vs_lobby, main_local_vs_yourself, main_local_vs, main_replay_endless, main_replay_puzzle, main_replay_vs are not local since they are also used elsewhere
 
 local PLAYING = "playing" -- room states
@@ -84,12 +81,16 @@ function fmainloop()
   love.filesystem.createDirectory("themes")
   love.filesystem.createDirectory("stages")
 
-  -- Run all unit tests now that we have everything loaded
-  require("ServerQueueTests")
-
   --check for game updates
   if GAME_UPDATER_CHECK_UPDATE_INGAME then
     wait_game_update = GAME_UPDATER:async_download_latest_version()
+  end
+
+  -- Run Unit Tests
+  if TESTS_ENABLED then
+    -- Run all unit tests now that we have everything loaded
+    require("ServerQueueTests")
+    require("StackTests")
   end
 
   while true do
@@ -101,6 +102,7 @@ end
 
 -- Wrapper for doing something at 60hz
 -- The rest of the stuff happens at whatever rate is convenient
+-- Note there should only be one of these in the current loop as it handles key input ect.
 function variable_step(f)
   for i = 1, 4 do
     if leftover_time >= 1 / 60 then
@@ -420,6 +422,7 @@ function main_endless(...)
   replay.gpan_buf = ""
   replay.mode = "endless"
   P1 = Stack(1, GAME.match, true, config.panels, ...)
+  GAME.match.P1 = P1
   P1:wait_for_random_character()
   P1.do_countdown = config.ready_countdown_1P or false
   P2 = nil
@@ -472,6 +475,7 @@ function main_time_attack(...)
   pick_random_stage()
   pick_use_music_from()
   P1 = Stack(1, GAME.match, true, config.panels, ...)
+  GAME.match.P1 = P1
   P1:wait_for_random_character()
   make_local_panels(P1, "000000")
   P1:starting_state()
@@ -499,11 +503,6 @@ function main_time_attack(...)
       return unpack(ret)
     end
   end
-end
-
-function main_net_vs_room()
-  select_screen.character_select_mode = "2p_net_vs"
-  return select_screen.main()
 end
 
 function main_net_vs_lobby()
@@ -806,20 +805,6 @@ function main_net_vs_lobby()
   end
 end
 
--- list of spectators
-function spectator_list_string(list)
-  local str = ""
-  for k, v in ipairs(list) do
-    str = str .. v
-    if k < #list then
-      str = str .. "\n"
-    end
-  end
-  if str ~= "" then
-    str = loc("pl_spectators") .. "\n" .. str
-  end
-  return str
-end
 -- creates a leaderboard string that is sorted by rank
 function build_viewable_leaderboard_string(report, first_viewable_idx, last_viewable_idx)
   str = loc("lb_header_board") .. "\n"
@@ -894,7 +879,7 @@ function main_net_vs()
     -- love.timer.sleep(0.030)
     local messages = server_queue:pop_all_with("taunt", "leave_room")
     for _, msg in ipairs(messages) do
-      if msg.taunt then -- send taunts
+      if msg.taunt then -- receive taunts
         local taunts = nil
         -- P1.character and P2.character are supposed to be already filtered with current mods, taunts may differ though!
         if msg.player_number == my_player_number then
@@ -961,23 +946,13 @@ function main_net_vs()
     local outcome_claim = nil
     local winSFX = nil
     local end_text = nil
-    -- We can't call it until someone has lost and everyone has played up to that point in time.
-    if GAME_ENDED_CLOCK > 0 and P1.CLOCK >= GAME_ENDED_CLOCK and P2.CLOCK >= GAME_ENDED_CLOCK then
-      if P1.game_over_clock == GAME_ENDED_CLOCK and P2.game_over_clock == GAME_ENDED_CLOCK then -- draw
-        end_text = loc("ss_draw")
-        outcome_claim = 0
-      elseif P1.game_over_clock == GAME_ENDED_CLOCK then -- opponent wins
-        winSFX = P2:pick_win_sfx()
-        end_text = loc("ss_p_wins", op_name)
-        GAME.battleRoom.playerWinCounts[P2.player_number] = GAME.battleRoom.playerWinCounts[P2.player_number] + 1 -- leaving these in just in case used with an old server that doesn't keep score.  win_counts will get overwritten after this by the server anyway.
-        outcome_claim = P2.player_number
-      elseif P2.game_over_clock == GAME_ENDED_CLOCK then -- client wins
-        winSFX = P1:pick_win_sfx()
-        end_text = loc("ss_p_wins", my_name)
-        GAME.battleRoom.playerWinCounts[P1.player_number] = GAME.battleRoom.playerWinCounts[P1.player_number] + 1 -- leave this in
-        outcome_claim = P1.player_number
-      end
+    local matchOutcome = GAME.match:matchOutcome()
+    if matchOutcome then
+      end_text = matchOutcome["end_text"]
+      winSFX = matchOutcome["winSFX"]
+      outcome_claim = matchOutcome["outcome_claim"]
     end
+
     if end_text then
       undo_stonermode()
       json_send({game_over = true, outcome = outcome_claim})
@@ -1038,9 +1013,10 @@ function main_local_vs()
     GAME.match:render()
     wait()
     variable_step(
-      function()
+    function()
         P1:run()
         P2:run()
+        assert((P1.CLOCK == P2.CLOCK) or GAME.match:matchOutcome(), "should run at same speed: " .. P1.CLOCK .. " - " .. P2.CLOCK)
         P1:handle_pause()
         P2:handle_pause()
       end
@@ -1049,20 +1025,11 @@ function main_local_vs()
     --TODO: refactor this so it isn't duplicated
     local winSFX = nil
     local end_text = nil
-    -- We can't call it until someone has lost and everyone has played up to that point in time.
-    if GAME_ENDED_CLOCK > 0 and P1.CLOCK >= GAME_ENDED_CLOCK and P2.CLOCK >= GAME_ENDED_CLOCK then
-      if P1.game_over_clock == GAME_ENDED_CLOCK and P2.game_over_clock == GAME_ENDED_CLOCK then
-        end_text = loc("ss_draw")
-        outcome_claim = 0
-      elseif P1.game_over_clock == GAME_ENDED_CLOCK then
-        winSFX = P2:pick_win_sfx()
-        end_text = loc("pl_2_win", op_name)
-        GAME.battleRoom.playerWinCounts[P2.player_number] = GAME.battleRoom.playerWinCounts[P2.player_number] + 1
-      elseif P2.game_over_clock == GAME_ENDED_CLOCK then
-        winSFX = P1:pick_win_sfx()
-        end_text = loc("pl_1_win", my_name)
-        GAME.battleRoom.playerWinCounts[P1.player_number] = GAME.battleRoom.playerWinCounts[P1.player_number] + 1
-      end
+    local matchOutcome = GAME.match:matchOutcome()
+    if matchOutcome then
+      end_text = matchOutcome["end_text"]
+      winSFX = matchOutcome["winSFX"]
+      outcome_claim = matchOutcome["outcome_claim"]
     end
 
     if end_text then
@@ -1127,13 +1094,15 @@ function main_replay_vs()
   GAME.battleRoom = BattleRoom()
   GAME.match = Match("vs", GAME.battleRoom)
   P1 = Stack(1, GAME.match, false, config.panels, replay.P1_level or 5)
+  GAME.match.P1 = P1
   P2 = Stack(2, GAME.match, false, config.panels, replay.P2_level or 5)
+  GAME.match.P2 = P2
   P1.do_countdown = replay.do_countdown or false
   P2.do_countdown = replay.do_countdown or false
   P1.ice = true
   P1.garbage_target = P2
   P2.garbage_target = P1
-  move_stack(P2, 2)
+  P2:moveForPlayerNumber(2)
   P1.input_buffer = uncompress_input_string(replay.in_buf)
   P1.panel_buffer = replay.P
   P1.gpanel_buffer = replay.Q
@@ -1161,7 +1130,6 @@ function main_replay_vs()
 
   P1:starting_state()
   P2:starting_state()
-  local end_text = nil
   local run = true
   while true do
     GAME.match:render()
@@ -1190,31 +1158,14 @@ function main_replay_vs()
     end
     local winSFX = nil
 
-    --TODO: refactor this so it isn't duplicated
+    local outcome_claim = nil
     local winSFX = nil
     local end_text = nil
-    -- We can't call it until someone has lost and everyone has played up to that point in time.
-    if GAME_ENDED_CLOCK > 0 and P1.CLOCK >= GAME_ENDED_CLOCK and P2.CLOCK >= GAME_ENDED_CLOCK then
-      if P1.game_over_clock == GAME_ENDED_CLOCK and P2.game_over_clock == GAME_ENDED_CLOCK then
-        end_text = loc("ss_draw")
-      elseif P1.game_over_clock == GAME_ENDED_CLOCK then
-        winSFX = P2:pick_win_sfx()
-        if replay.P2_name and replay.P2_name ~= "anonymous" then
-          end_text = loc("ss_p_wins", replay.P2_name)
-        else
-          end_text = loc("pl_2_win")
-        end
-      elseif P2.game_over_clock == GAME_ENDED_CLOCK then
-        winSFX = P1:pick_win_sfx()
-        if replay.P1_name and replay.P1_name ~= "anonymous" then
-          end_text = loc("ss_p_wins", replay.P1_name)
-        else
-          end_text = loc("pl_1_win")
-        end
-      end
-    end
-
-    if end_text then
+    local matchOutcome = GAME.match:matchOutcome()
+    if matchOutcome then
+      end_text = matchOutcome["end_text"]
+      winSFX = matchOutcome["winSFX"]
+      outcome_claim = matchOutcome["outcome_claim"]
       return game_over_transition, {main_select_mode, end_text, 0, -1, winSFX}
     end
   end
@@ -1231,6 +1182,7 @@ function main_replay_endless()
   pick_use_music_from()
   GAME.match = Match("endless")
   P1 = Stack(1, GAME.match, false, config.panels, replay.speed, replay.difficulty)
+  GAME.match.P1 = P1
   P1:wait_for_random_character()
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
@@ -1286,6 +1238,7 @@ function main_replay_puzzle()
 
   GAME.match = Match("puzzle")
   P1 = Stack(1, GAME.match, false, config.panels)
+  GAME.match.P1 = P1
   P1:wait_for_random_character()
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
@@ -1341,6 +1294,7 @@ function make_main_puzzle(puzzles)
     local replay = replay.puzzle
     GAME.match = Match("puzzle")
     P1 = Stack(1, GAME.match, true, config.panels)
+    GAME.match.P1 = P1
     P1:wait_for_random_character()
     P1.do_countdown = config.ready_countdown_1P or false
     P2 = nil

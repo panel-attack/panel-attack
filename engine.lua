@@ -17,8 +17,9 @@ local current_music_is_casual = false -- must be false so that casual music star
 -- Represents the full panel stack for one player
 Stack =
   class(
-  function(s, which, match, is_local, panels_dir, speed, difficulty, player_number)
+  function(s, which, match, is_local, panels_dir, speed, difficulty, player_number, wantsCanvas)
 
+    wantsCanvas = wantsCanvas or 1
     s.match = match
     s.character = config.character
     s.max_health = 1
@@ -40,8 +41,10 @@ Stack =
     end
 
     -- frame.png dimensions
-    s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE)
-    s.canvas:setFilter("nearest", "nearest")
+    if wantsCanvas then
+      s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE)
+      s.canvas:setFilter("nearest", "nearest")
+    end
 
     if s.match.mode == "2ptime" or s.match.mode == "vs" then
       local level = speed or 5
@@ -82,7 +85,7 @@ Stack =
     -- garbage_to_send.chain is an array of garbage to send when the chain ends.
     s.garbage_to_send = {}
 
-    move_stack(s, 1)
+    s:moveForPlayerNumber(1)
 
     s.panel_buffer = ""
     s.gpanel_buffer = ""
@@ -184,7 +187,6 @@ Stack =
     s.combo_chain_play = nil
     s.game_over = false -- only set if this player got a game over
     s.game_over_clock = 0 -- only set if game_over is true, the exact clock frame the player lost
-    GAME_ENDED_CLOCK = 0 -- 0 if no one has lost, otherwise the minimum clock time of those that lost
     s.sfx_land = false
     s.sfx_garbage_thud = 0
 
@@ -202,6 +204,29 @@ Stack =
     s.analytic = AnalyticsInstance(s.is_local)
   end
 )
+
+-- Positions the stack draw position for the given player
+function Stack.moveForPlayerNumber(stack, player_num)
+  local stack_padding_x_for_legacy_pos = ((canvas_width - legacy_canvas_width) / 2)
+  if player_num == 1 then
+    stack.pos_x = 4 + stack_padding_x_for_legacy_pos / GFX_SCALE
+    stack.score_x = 315 + stack_padding_x_for_legacy_pos
+    stack.mirror_x = 1
+    stack.origin_x = stack.pos_x
+    stack.multiplication = 0
+    stack.id = "_1P"
+    stack.VAR_numbers = ""
+  elseif player_num == 2 then
+    stack.pos_x = 172 + stack_padding_x_for_legacy_pos / GFX_SCALE
+    stack.score_x = 410 + stack_padding_x_for_legacy_pos
+    stack.mirror_x = -1
+    stack.origin_x = stack.pos_x + (stack.canvas:getWidth() / GFX_SCALE) - 8
+    stack.multiplication = 1
+    stack.id = "_2P"
+  end
+  stack.pos_y = 4 + (canvas_height - legacy_canvas_height) / GFX_SCALE
+  stack.score_y = 100 + (canvas_height - legacy_canvas_height)
+end
 
 function Stack.mkcpy(self, other)
   if other == nil then
@@ -565,7 +590,9 @@ function Stack.set_puzzle_state(self, pstr, n_turns)
     end
   end
   self.puzzle_moves = n_turns
-  characters[self.character]:stop_sounds()
+  if self.character and characters[self.character] then
+    characters[self.character]:stop_sounds()
+  end
 end
 
 function Stack.puzzle_done(self)
@@ -663,55 +690,59 @@ function Stack.controls(self)
 end
 
 -- Update everything for the stack based on inputs. Will update many times if needed to catch up.
-function Stack.run(self)
+function Stack.run(self, timesToRun)
   if game_is_paused then
     return
   end
 
-  -- Normally we want to run 1 frame, but if we are a replay or from a net game,
-  -- we want to possibly run a lot frames to catch up, or 0 if there is nothing to simulate.
-  -- However, if we are a reaply or net game, we still want to run after game over to show
-  -- game over effects.
-  local times_to_run = 1
-  if self.is_local == false then
-    if self:game_ended() == false then
-      times_to_run = 0
-    end
+  if timesToRun == nil then
+    -- Normally we want to run 1 frame, but if we are a replay or from a net game,
+    -- we want to possibly run a lot frames to catch up, or 0 if there is nothing to simulate.
+    -- However, if we are a reaply or net game, we still want to run after game over to show
+    -- game over effects.
+    timesToRun = 1
+    if self.is_local == false then
+      if self:game_ended() == false then
+        timesToRun = 0
+      end
 
-    -- Decide how many frames of input we should run.
-    local buffer_len = string.len(self.input_buffer)
+      -- Decide how many frames of input we should run.
+      local buffer_len = string.len(self.input_buffer)
 
-    -- If we're way behind, run at max speed.
-    if buffer_len >= 15 then
-      -- When we're closer, run fewer per frame, so things are less choppy.
-      -- This might have a side effect of being a little farther behind on average,
-      -- since we don't always run at top speed until the buffer is empty.
-      times_to_run = self.max_runs_per_frame
-    elseif buffer_len >= 10 then
-      times_to_run = 2
-    elseif buffer_len >= 1 then
-      times_to_run = 1
-    end
+      -- If we're way behind, run at max speed.
+      if buffer_len >= 15 then
+        -- When we're closer, run fewer per frame, so things are less choppy.
+        -- This might have a side effect of being a little farther behind on average,
+        -- since we don't always run at top speed until the buffer is empty.
+        timesToRun = self.max_runs_per_frame
+      elseif buffer_len >= 10 then
+        timesToRun = math.min(2, self.max_runs_per_frame)
+      elseif buffer_len >= 1 then
+        timesToRun = 1
+      end
 
-    if self.play_to_end then
-      if string.len(self.input_buffer) < 4 then
-        self.play_to_end = nil
-        stop_sounds = true
+      if self.play_to_end then
+        if string.len(self.input_buffer) < 4 then
+          self.play_to_end = nil
+          stop_sounds = true
+        end
       end
     end
   end
 
-  for i = 1, times_to_run do
+  for i = 1, timesToRun do
     self:update_popfxs()
     self:update_cards()
-    if self.is_local == false then
-      if self.input_buffer and string.len(self.input_buffer) > 0 then
-        self.input_state = string.sub(self.input_buffer, 1, 1)
+    if self:game_ended() == false then 
+      if self.is_local == false then
+        if self.input_buffer and string.len(self.input_buffer) > 0 then
+          self.input_state = string.sub(self.input_buffer, 1, 1)
+        else
+          break
+        end
       else
-        -- Set input state to no input?
+        self.input_state = self:send_controls()
       end
-    elseif self:game_ended() == false then
-      self.input_state = self:send_controls()
     end
     self:prep_rollback()
     self:controls()
@@ -725,6 +756,10 @@ end
 
 -- Enqueue a card animation
 function Stack.enqueue_card(self, chain, x, y, n)
+  if self.canvas == nil then
+    return
+  end
+
   card_burstAtlas = nil
   card_burstParticle = nil
   if config.popfx == true then
@@ -737,6 +772,10 @@ end
 
 -- Enqueue a pop animation
 function Stack.enqueue_popfx(self, x, y, popsize)
+  if self.canvas == nil then
+    return
+  end
+
   if characters[self.character].images["burst"] then
     burstAtlas = characters[self.character].images["burst"]
     burstFrameDimension = burstAtlas:getWidth() / 9
@@ -821,12 +860,12 @@ function Stack.PdP(self)
           self.starting_cur_col = nil
           self.countdown_CLOCK = nil
           self.game_stopwatch_running = true
-          if self.which == 1 then
+          if self.which == 1 and self.canvas ~= nil then
             SFX_Go_Play = 1
           end
         elseif self.countdown_timer and self.countdown_timer % 60 == 0 and self.which == 1 then
           --play beep for timer dropping to next second in 3-2-1 countdown
-          if self.which == 1 then
+          if self.which == 1 and self.canvas ~= nil then
             SFX_Countdown_Play = 1
           end
         end
@@ -1014,7 +1053,9 @@ function Stack.PdP(self)
               if config.popfx == true then
                 self:enqueue_popfx(col, row, popsize)
               end
-              SFX_Garbage_Pop_Play = panel.pop_index
+              if self.canvas ~= nil then
+                SFX_Garbage_Pop_Play = panel.pop_index
+              end
             end
             if panel.timer == 0 then
               if panel.y_offset == -1 then
@@ -1193,7 +1234,9 @@ function Stack.PdP(self)
                 if self.match.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
                   self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
                 end
-                SFX_Pop_Play = 1
+                if self.canvas ~= nil then
+                  SFX_Pop_Play = 1
+                end
                 self.poppedPanelIndex = panel.combo_index
                 panel.color = 0
                 if (panel.chaining) then
@@ -1208,7 +1251,9 @@ function Stack.PdP(self)
                 if self.match.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
                   self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
                 end
-                SFX_Pop_Play = 1
+                if self.canvas ~= nil then
+                  SFX_Pop_Play = 1
+                end
                 self.poppedPanelIndex = panel.combo_index
               end
             elseif panel.state == "popped" then
@@ -1267,7 +1312,9 @@ function Stack.PdP(self)
       self.cur_row = bound(1, self.cur_row + d_row[self.cur_dir], self.top_cur_row)
       self.cur_col = bound(1, self.cur_col + d_col[self.cur_dir], width - 1)
       if (self.move_sound and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and (self.cur_row ~= prev_row or self.cur_col ~= prev_col)) then
-        SFX_Cur_Move_Play = 1
+        if self.canvas ~= nil then
+          SFX_Cur_Move_Play = 1
+        end
         if self.cur_timer ~= self.cur_wait_time then
           self.analytic:register_move()
         end
@@ -1280,44 +1327,27 @@ function Stack.PdP(self)
       self.cur_timer = self.cur_timer + 1
     end
     -- TAUNTING
-    if self.taunt_up ~= nil then
-      for _, t in ipairs(characters[self.character].sounds.taunt_ups) do
-        t:stop()
+    if self.canvas ~= nil then
+      if self.taunt_up ~= nil then
+        for _, t in ipairs(characters[self.character].sounds.taunt_ups) do
+          t:stop()
+        end
+        characters[self.character].sounds.taunt_ups[self.taunt_up]:play()
+        self:taunt("taunt_up")
+        self.taunt_up = nil
+      elseif self.taunt_down ~= nil then
+        for _, t in ipairs(characters[self.character].sounds.taunt_downs) do
+          t:stop()
+        end
+        characters[self.character].sounds.taunt_downs[self.taunt_down]:play()
+        self:taunt("taunt_down")
+        self.taunt_down = nil
       end
-      characters[self.character].sounds.taunt_ups[self.taunt_up]:play()
-      self:taunt("taunt_up")
-      self.taunt_up = nil
-    elseif self.taunt_down ~= nil then
-      for _, t in ipairs(characters[self.character].sounds.taunt_downs) do
-        t:stop()
-      end
-      characters[self.character].sounds.taunt_downs[self.taunt_down]:play()
-      self:taunt("taunt_down")
-      self.taunt_down = nil
     end
 
     -- SWAPPING
     if (self.swap_1 or self.swap_2) and not swapped_this_frame then
-      local row = self.cur_row
-      local col = self.cur_col
-      -- in order for a swap to occur, one of the two panels in
-      -- the cursor must not be a non-panel.
-      local do_swap =
-        (panels[row][col].color ~= 0 or panels[row][col + 1].color ~= 0) and -- also, both spaces must be swappable.
-        (not panels[row][col]:exclude_swap()) and
-        (not panels[row][col + 1]:exclude_swap()) and -- also, neither space above us can be hovering.
-        (self.cur_row == #panels or (panels[row + 1][col].state ~= "hovering" and panels[row + 1][col + 1].state ~= "hovering")) and --also, we can't swap if the game countdown isn't finished
-        not self.do_countdown and --also, don't swap on the first frame
-        not (self.CLOCK and self.CLOCK <= 1)
-      -- If you have two pieces stacked vertically, you can't move
-      -- both of them to the right or left by swapping with empty space.
-      -- TODO: This might be wrong if something lands on a swapping panel?
-      if panels[row][col].color == 0 or panels[row][col + 1].color == 0 then
-        do_swap = do_swap and not (self.cur_row ~= self.height and (panels[row + 1][col].state == "swapping" and panels[row + 1][col + 1].state == "swapping") and (panels[row + 1][col].color == 0 or panels[row + 1][col + 1].color == 0) and (panels[row + 1][col].color ~= 0 or panels[row + 1][col + 1].color ~= 0))
-        do_swap = do_swap and not (self.cur_row ~= 1 and (panels[row - 1][col].state == "swapping" and panels[row - 1][col + 1].state == "swapping") and (panels[row - 1][col].color == 0 or panels[row - 1][col + 1].color == 0) and (panels[row - 1][col].color ~= 0 or panels[row - 1][col + 1].color ~= 0))
-      end
-
-      do_swap = do_swap and (self.puzzle_moves == nil or self.puzzle_moves > 0)
+      local do_swap = self:canSwap(self.cur_row, self.cur_col)
 
       if do_swap then
         self.do_swap = true
@@ -1355,7 +1385,9 @@ function Stack.PdP(self)
     -- if at the end of the routine there are no chain panels, the chain ends.
     if self.chain_counter ~= 0 and self.n_chain_panels == 0 then
       self:set_chain_garbage(self.chain_counter)
-      SFX_Fanfare_Play = self.chain_counter
+      if self.canvas ~= nil then
+        SFX_Fanfare_Play = self.chain_counter
+      end
       self.analytic:register_chain(self.chain_counter)
       self.chain_counter = 0
     end
@@ -1443,7 +1475,7 @@ function Stack.PdP(self)
 
     -- Update Music
     if not music_mute and not game_is_paused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
-      if self:game_ended() == false then
+      if self:game_ended() == false and self.canvas ~= nil then
         if self.do_countdown then
           if SFX_Go_Play == 1 then
             themes[config.theme].sounds.go:stop()
@@ -1455,11 +1487,11 @@ function Stack.PdP(self)
             SFX_Go_Play = 0
           end
         else
-          local winningPlayer = P1
+          local winningPlayer = self
           if GAME.battleRoom then
             winningPlayer = GAME.battleRoom:winningPlayer(P1, P2)
           end
-          local musics_to_use = (current_use_music_from == "stage") and stages[current_stage].musics or characters[winningPlayer.character].musics
+          local musics_to_use = (current_use_music_from == "stage") and current_stage and stages[current_stage].musics or characters[winningPlayer.character].musics
           if not musics_to_use["normal_music"] then -- use the other one as fallback
             musics_to_use = (current_use_music_from ~= "stage") and stages[current_stage].musics or characters[winningPlayer.character].musics
           end
@@ -1485,7 +1517,7 @@ function Stack.PdP(self)
     end
 
     -- Update Sound FX
-    if not SFX_mute and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
+    if not SFX_mute and self.canvas ~= nil and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
       if SFX_Swap_Play == 1 then
         themes[config.theme].sounds.swap:stop()
         themes[config.theme].sounds.swap:play()
@@ -1588,12 +1620,14 @@ function Stack.PdP(self)
         stop_sounds = nil
       end
       if self.game_over or (self.garbage_target and self.garbage_target.game_over) then
-        SFX_GameOver_Play = 1
+        if self.canvas ~= nil then
+          SFX_GameOver_Play = 1
+        end
       end
     end
 
     self.CLOCK = self.CLOCK + 1
-    if self.game_stopwatch_running and GAME_ENDED_CLOCK == 0 then
+    if self.game_stopwatch_running and self.match.gameEndedClock == 0 then
       self.game_stopwatch = (self.game_stopwatch or -1) + 1
     end
   end
@@ -1602,7 +1636,7 @@ end
 -- Returns true if the stack is simulated past the end of the match.
 function Stack.game_ended(self)
   local result = false
-  if GAME_ENDED_CLOCK > 0 and self.CLOCK > GAME_ENDED_CLOCK then
+  if self.match.gameEndedClock > 0 and self.CLOCK > self.match.gameEndedClock then
     result = true
   end
 
@@ -1617,25 +1651,45 @@ function Stack.game_ended(self)
   return result
 end
 
+-- Returns 1 if this player won, 0 for draw, and -1 for loss, nil if no result yet
+function Stack.gameResult(self)
+  
+  -- We can't call it until someone has lost and everyone has played up to that point in time.
+  local otherPlayer = self.garbage_target
+  if self.match.gameEndedClock > 0 and self.CLOCK >= self.match.gameEndedClock and otherPlayer.CLOCK >= self.match.gameEndedClock then
+    if self.game_over_clock == self.match.gameEndedClock and otherPlayer.game_over_clock == self.match.gameEndedClock then
+      return 0
+    elseif self.game_over_clock == self.match.gameEndedClock then
+      return -1
+    elseif otherPlayer.game_over_clock == self.match.gameEndedClock then
+      return 1
+    end
+  end
+
+  return nil
+end
+
 -- Sets the current stack as "lost" will update the match too if they lost first.
 -- Also begins drawing game over effects
 function Stack.set_game_over(self)
   self.game_over = true
   self.game_over_clock = self.CLOCK
 
-  if GAME_ENDED_CLOCK == 0 or self.CLOCK <= GAME_ENDED_CLOCK then
-    GAME_ENDED_CLOCK = self.CLOCK
+  if self.match.gameEndedClock == 0 or self.CLOCK <= self.match.gameEndedClock then
+    self.match.gameEndedClock = self.CLOCK
   end
 
-  local popsize = "small"
-  local panels = self.panels
-  local width = self.width
-  for row = 1, #panels do
-    for col = 1, width do
-      local panel = panels[row][col]
-      panel.state = "dead"
-      if row == #panels then
-        self:enqueue_popfx(col, row, popsize)
+  if self.canvas then 
+    local popsize = "small"
+    local panels = self.panels
+    local width = self.width
+    for row = 1, #panels do
+      for col = 1, width do
+        local panel = panels[row][col]
+        panel.state = "dead"
+        if row == #panels then
+          self:enqueue_popfx(col, row, popsize)
+        end
       end
     end
   end
@@ -1648,6 +1702,32 @@ function Stack.pick_win_sfx(self)
   else
     return nil
   end
+end
+
+function Stack.canSwap(self, row, column)
+  local panels = self.panels
+  local width = self.width
+  local height = self.height
+  -- in order for a swap to occur, one of the two panels in
+  -- the cursor must not be a non-panel.
+  local do_swap =
+    (panels[row][column].color ~= 0 or panels[row][column + 1].color ~= 0) and -- also, both spaces must be swappable.
+    (not panels[row][column]:exclude_swap()) and
+    (not panels[row][column + 1]:exclude_swap()) and -- also, neither space above us can be hovering.
+    (row == #panels or (panels[row + 1][column].state ~= "hovering" and panels[row + 1][column + 1].state ~= "hovering")) and --also, we can't swap if the game countdown isn't finished
+    not self.do_countdown and --also, don't swap on the first frame
+    not (self.CLOCK and self.CLOCK <= 1)
+  -- If you have two pieces stacked vertically, you can't move
+  -- both of them to the right or left by swapping with empty space.
+  -- TODO: This might be wrong if something lands on a swapping panel?
+  if panels[row][column].color == 0 or panels[row][column + 1].color == 0 then
+    do_swap = do_swap and not (row ~= self.height and (panels[row + 1][column].state == "swapping" and panels[row + 1][column + 1].state == "swapping") and (panels[row + 1][column].color == 0 or panels[row + 1][column + 1].color == 0) and (panels[row + 1][column].color ~= 0 or panels[row + 1][column + 1].color ~= 0))
+    do_swap = do_swap and not (row ~= 1 and (panels[row - 1][column].state == "swapping" and panels[row - 1][column + 1].state == "swapping") and (panels[row - 1][column].color == 0 or panels[row - 1][column + 1].color == 0) and (panels[row - 1][column].color ~= 0 or panels[row - 1][column + 1].color ~= 0))
+  end
+
+  do_swap = do_swap and (self.puzzle_moves == nil or self.puzzle_moves > 0)
+
+  return do_swap
 end
 
 -- Swaps panels at the current cursor location
@@ -1672,7 +1752,9 @@ function Stack.swap(self)
   panels[row][col].timer = 4
   panels[row][col + 1].timer = 4
 
-  SFX_Swap_Play = 1
+  if self.canvas ~= nil then
+    SFX_Swap_Play = 1
+  end
 
   -- If you're swapping a panel into a position
   -- above an empty space or above a falling piece
@@ -1735,7 +1817,9 @@ function Stack.drop_garbage(self, width, height, metal)
     end
   end
 
-  print(string.format("Dropping garbage on player %d - height %d  width %d  %s", self.player_number, height, width, metal and "Metal" or ""))
+  if self.canvas ~= nil then
+    print(string.format("Dropping garbage on player %d - height %d  width %d  %s", self.player_number, height, width, metal and "Metal" or ""))
+  end
 
   for i = self.height + 1, spawn_row + height - 1 do
     if not self.panels[i] then
@@ -1821,7 +1905,7 @@ end
 
 -- Receives garbage on to the stack, rewinding the stack and simulating it again if needed.
 function Stack.recv_garbage(self, time, to_recv)
-  if self.CLOCK > time then
+  if self.CLOCK > time and self.prev_states then
     local prev_states = self.prev_states
     local next_self = prev_states[time + 1]
     while next_self and (next_self.prev_active_panels ~= 0 or next_self.n_active_panels ~= 0) do
@@ -1879,19 +1963,8 @@ end
 
 -- Goes through whole stack checking for matches and updating chains etc based on matches.
 function Stack.check_matches(self)
-  local row = 0
-  local col = 0
-  local count = 0
-  local old_color = 0
-  local is_chain = false
-  local first_panel_row = 0
-  local first_panel_col = 0
-  local combo_index, garbage_index = 0, 0
-  local combo_size, garbage_size = 0, 0
+
   local panels = self.panels
-  local q, garbage = Queue(), {}
-  local seen, seenm = {}, {}
-  local metal_count = 0
 
   for col = 1, self.width do
     for row = 1, self.height do
@@ -1899,6 +1972,9 @@ function Stack.check_matches(self)
     end
   end
 
+  local is_chain = false
+  local combo_size = 0
+  local floodQueue = Queue()
   for row = 1, self.height do
     for col = 1, self.width do
       if
@@ -1919,7 +1995,7 @@ function Stack.check_matches(self)
           end
           is_chain = is_chain or panel.chaining
         end
-        q:push({row, col, true, true})
+        floodQueue:push({row, col, true, true})
       end
       if
         col ~= 1 and col ~= self.width and --check horiz match centered here.
@@ -1939,20 +2015,29 @@ function Stack.check_matches(self)
           end
           is_chain = is_chain or panel.chaining
         end
-        q:push({row, col, true, true})
+        floodQueue:push({row, col, true, true})
       end
     end
   end
 
   -- This is basically two flood fills at the same time.
   -- One for clearing normal garbage, one for metal.
-  while q:len() ~= 0 do
-    local y, x, normal, metal = unpack(q:pop())
+  local garbage = {}
+  local seen, seenm = {}, {}
+  local garbage_size = 0
+  while floodQueue:len() ~= 0 do
+    local y, x, normal, metal = unpack(floodQueue:pop())
     local panel = panels[y][x]
+
+    -- We found a new panel we haven't handled yet that we should
     if ((panel.garbage and panel.state == "normal") or panel.matching) and ((normal and not seen[panel]) or (metal and not seenm[panel])) then
+
+      -- We matched a new garbage
       if ((metal and panel.metal) or (normal and not panel.metal)) and panel.garbage and not garbage[panel] then
         garbage[panel] = true
-        SFX_garbage_match_play = true
+        if self.canvas ~= nil then
+          SFX_garbage_match_play = true
+        end
         if y <= self.height then
           garbage_size = garbage_size + 1
         end
@@ -1965,16 +2050,16 @@ function Stack.check_matches(self)
       end
       if normal or metal then
         if y ~= 1 then
-          q:push({y - 1, x, normal, metal})
+          floodQueue:push({y - 1, x, normal, metal})
         end
         if y ~= #panels then
-          q:push({y + 1, x, normal, metal})
+          floodQueue:push({y + 1, x, normal, metal})
         end
         if x ~= 1 then
-          q:push({y, x - 1, normal, metal})
+          floodQueue:push({y, x - 1, normal, metal})
         end
         if x ~= self.width then
-          q:push({y, x + 1, normal, metal})
+          floodQueue:push({y, x + 1, normal, metal})
         end
       end
     end
@@ -1988,10 +2073,13 @@ function Stack.check_matches(self)
     end
   end
 
+  local first_panel_row = 0
+  local first_panel_col = 0
+  local metal_count = 0
   local pre_stop_time = self.FRAMECOUNT_MATCH + self.FRAMECOUNT_POP * (combo_size + garbage_size)
   local garbage_match_time = self.FRAMECOUNT_MATCH + self.FRAMECOUNT_POP * (combo_size + garbage_size)
-  garbage_index = garbage_size - 1
-  combo_index = combo_size
+  local garbage_index = garbage_size - 1
+  local combo_index = combo_size
   for row = 1, #panels do
     local gpan_row = nil
     for col = self.width, 1, -1 do
