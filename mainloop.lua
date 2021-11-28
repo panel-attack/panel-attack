@@ -1496,7 +1496,10 @@ function main_set_name()
           end
         end
         for _, v in ipairs(this_frame_unicodes) do
-          name = name .. v
+          -- Don't add more characters than the server char limit
+          if name:len() < NAME_LENGTH_LIMIT then
+            name = name .. v
+          end
         end
       end
     )
