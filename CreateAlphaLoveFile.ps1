@@ -5,8 +5,8 @@ $UTCTime = $Time.ToUniversalTime().ToString("yyyy-MM-dd_HH-mm-ss")
 $FileNameZip = "panel-alpha-$($UTCTime).zip"
 
 $compress = @{
-Path = ".\*"
-DestinationPath = ".\$($FileNameZip)"
+Path = "$($PSScriptRoot)\*"
+DestinationPath = "$($PSScriptRoot)\$($FileNameZip)"
 }
 
-Compress-Archive @compress; Rename-Item -Path ".\$($FileNameZip)" -NewName $($FileNameZip).Replace(".zip", ".love")
+Compress-Archive @compress; Rename-Item -Path "$($PSScriptRoot)\$($FileNameZip)" -NewName $($FileNameZip).Replace(".zip", ".love")
