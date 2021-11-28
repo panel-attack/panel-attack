@@ -10,6 +10,7 @@ Game =
     self.focused = true -- if the window is focused
     self.backgroundImage = nil -- the background image for the game, should always be set to something with the proper dimensions
     self.droppedFrames = 0
+    self.puzzleSets = {} -- all the puzzles loaded into the game
   end
 )
 

@@ -491,8 +491,10 @@ function Stack.render(self)
   -- draw outside of stack's frame canvas
   if self.match.mode == "puzzle" then
     --gprint(loc("pl_moves", self.puzzle_moves), self.score_x, self.score_y)
-    draw_label(themes[config.theme].images.IMG_moves, (self.origin_x + themes[config.theme].moveLabel_Pos[1]) / GFX_SCALE, (self.pos_y + themes[config.theme].moveLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].moveLabel_Scale)
-    draw_number(self.puzzle_moves, themes[config.theme].images.IMG_number_atlas_1P, 10, move_quads, self.score_x + themes[config.theme].move_Pos[1], self.score_y + themes[config.theme].move_Pos[2], themes[config.theme].move_Scale, (30 / themes[config.theme].images.numberWidth_1P * themes[config.theme].move_Scale), (38 / themes[config.theme].images.numberHeight_1P * themes[config.theme].move_Scale), "center", self.multiplication)
+    if self.puzzle_moves then
+      draw_label(themes[config.theme].images.IMG_moves, (self.origin_x + themes[config.theme].moveLabel_Pos[1]) / GFX_SCALE, (self.pos_y + themes[config.theme].moveLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].moveLabel_Scale)
+      draw_number(self.puzzle_moves, themes[config.theme].images.IMG_number_atlas_1P, 10, move_quads, self.score_x + themes[config.theme].move_Pos[1], self.score_y + themes[config.theme].move_Pos[2], themes[config.theme].move_Scale, (30 / themes[config.theme].images.numberWidth_1P * themes[config.theme].move_Scale), (38 / themes[config.theme].images.numberHeight_1P * themes[config.theme].move_Scale), "center", self.multiplication)  
+    end
     if config.show_ingame_infos then
     --gprint(loc("pl_frame", self.CLOCK), self.score_x, self.score_y+30)
     end
@@ -712,7 +714,7 @@ function Stack.render(self)
   end
 
   -- Draw the analytics data
-  if config.enable_analytics then
+  if config.enable_analytics and self.drawsAnalytics == true then
     local xPosition = self.score_x - 512
     if self == P2 then
       xPosition = xPosition + 990
