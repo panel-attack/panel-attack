@@ -1,7 +1,5 @@
 ﻿#This file may need to be unblocked on your computer in order to run. Go to your file properties to do this.
 
-
-
 if (Test-Path "$($PSScriptRoot)\main.lua") {
     $Time = Get-Date 
     $UTCTime = $Time.ToUniversalTime().ToString("yyyy-MM-dd_HH-mm-ss")
