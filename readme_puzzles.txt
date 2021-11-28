@@ -10,33 +10,61 @@ individual puzzles.
 The contents of each puzzle file should be formatted something like this:
 
 {
-"set name 1":
-[
-["numbers mapping out puzzle 1 in this set", Number of moves allowed],
-["numbers mapping out puzzle 2 in this set", Number of moves allowed],
-["numbers mapping out puzzle 3 in this set", Number of moves allowed]
-],
-"set name 2":
-[
-["numbers mapping out puzzle 1 in this set", Number of moves allowed],
-["numbers mapping out puzzle 2 in this set", Number of moves allowed],
-["numbers mapping out puzzle 3 in this set", Number of moves allowed]
-]
+  "Version": 2,
+  "Puzzle Sets": [
+    [
+      "Set Name": "Name of Puzzle Set",
+      "Puzzles": [
+        [
+          "Puzzle Type": "chain",
+          "Do Countdown": true,
+          "Moves": 0,
+          "Stack": 
+            "040000
+             111440",
+        ],
+        [
+          "Puzzle Type": "moves",
+          "Do Countdown": false,
+          "Moves": 2,
+          "Stack": 
+            "999799
+             994999
+             999499
+             994999
+             997999
+             997999",
+        ],
+      ]
+    ],
+  ]
 }
 
+Version should be 2 for now
 
-Note: carriage returns in your file are very helpful for readability,
- but are not necessary, and unfortunately don't get automatically put into the example 
- "stock (example).txt" file.
+"Puzzle Sets" contains a list of all the puzzle sets
+
+"Set Name" is the name of the set
+"Puzzles" is the list of all the puzzles
+
+"Puzzle Type" should be one of the following
+    "moves" all panels need to be cleared in the set number of moves
+    "chain" all panels need to be cleared onces the first chain ends, and there must be a chain
+
+"Do Countdown" whether to do the countdown at the beginning
+
+"Moves" the number of moves, can be zero to not have a limit
+
+"Stack" the starting arangement of the panels, see below
+
+Note: carriage returns and spaces in your file are very helpful for readability,
+ but are not necessary.
  
 Be sure to use the correct delimiters in the right places, i.e: 
 curly braces {} to start and end the file,
 square brackets [] around individual puzzles and around puzzle sets,
 quotes "" around set names and panel maps
-commas between elements, but not after the last element in a list.
-
-See the example file at the bottom of the guide for reference.
-
+commas between elements
 
 About the numbers mapping out each puzzle now:
 
@@ -49,11 +77,7 @@ This allows us to lay out our text representation of the puzzle how it would loo
 002100
 002100
 
-Note: you do have to remove the carriage returns when you're done making the individual puzzle.
-The same all on one line would be like this:
-001200002100002100
-
-Carriage returns in the file are OK, but not in the middle of the panel maps for each individual puzzle.
+Carriage returns are allowed in the middle of the panel maps for each individual puzzle.
 
 panel colors:
 0 = empty
@@ -66,36 +90,3 @@ panel colors:
 7 = orange (not really used in the game so far, but it exists)
 8 = exclamation block [!]
 9 = block with no color (dark grey, doesn't match with anything)
-
-For reference: here's how to make a file with classic sets 1 and 2:
-I'll change the set names slightly (by adding an !), since you can't load two sets with the same name.
-
-{
-"Classic set 1!":
-[
-["10110",1],
-["3000033030",1],
-["2100001200001200",1],
-["6400006400004600006400006400",1],
-["2000223303",1],
-["115155",1],
-["1000001000003000001000001000003300",1],
-["40000040055450",1],
-["3000002300002230",1],
-["4100001400004100001400004100",3]
-],
-"Classic set 2!":
-[
-["4000001000001000004000001440",1],
-["60000026000062200",1],
-["3300055350",1],
-["1200001212",2],
-["363636",3],
-["3000332000224000441000115000556000663000332000224000441600116600",1],
-["600002600062200",2],
-["5000005000001000001500005100",2],
-["2200004400004200",2],
-["13000031000013110",2]
-]
-}
-

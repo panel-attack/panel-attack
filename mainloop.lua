@@ -1156,7 +1156,6 @@ function main_replay_vs()
     if ret then
       return unpack(ret)
     end
-    local winSFX = nil
 
     local outcome_claim = nil
     local winSFX = nil
@@ -1166,7 +1165,7 @@ function main_replay_vs()
       end_text = matchOutcome["end_text"]
       winSFX = matchOutcome["winSFX"]
       outcome_claim = matchOutcome["outcome_claim"]
-      return game_over_transition, {main_select_mode, end_text, 0, -1, winSFX}
+      return game_over_transition, {main_select_mode, end_text, winSFX}
     end
   end
 end
@@ -1240,7 +1239,6 @@ function main_replay_puzzle()
   P1 = Stack(1, GAME.match, false, config.panels)
   GAME.match.P1 = P1
   P1:wait_for_random_character()
-  P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
   P1.input_buffer = uncompress_input_string(replay.in_buf)
   P1.cur_wait_time = replay.cur_wait_time or default_input_repeat_delay
@@ -1280,9 +1278,12 @@ function main_replay_puzzle()
     end
   end
 end
+
 -- creates a puzzle game
-function make_main_puzzle(puzzles)
-  local awesome_idx, next_func = 1, nil
+-- puzzleSet is a PuzzleSet
+function make_main_puzzle(puzzleSet, awesome_idx)
+  local next_func = nil
+  awesome_idx = awesome_idx or 1
   function next_func()
     stop_the_music()
     pick_random_stage()
@@ -1300,11 +1301,12 @@ function make_main_puzzle(puzzles)
     P2 = nil
     local start_delay = 0
     if awesome_idx == nil then
-      awesome_idx = math.random(#puzzles)
+      awesome_idx = math.random(#puzzleSet.puzzles)
     end
-    P1:set_puzzle_state(unpack(puzzles[awesome_idx]))
+    local puzzleDetails = puzzleSet.puzzles[awesome_idx]
+    P1:set_puzzle_state(puzzleDetails.stack, puzzleDetails.moves, puzzleDetails.doCountdown, puzzleDetails.puzzleType)
     replay.cur_wait_time = P1.cur_wait_time or default_input_repeat_delay
-    replay.puzzle = puzzles[awesome_idx]
+    replay.puzzle = puzzleDetails[awesome_idx] --todo
     replay.in_buf = ""
     while true do
       GAME.match:render()
@@ -1312,38 +1314,42 @@ function make_main_puzzle(puzzles)
       local ret = nil
       variable_step(
         function()
-          if this_frame_keys["escape"] then
+          local k = K[1]
+          -- Reset puzzle button
+          if this_frame_keys[k.taunt_down] or this_frame_keys[k.taunt_up] then 
+            ret = {main_dumb_transition, {make_main_puzzle(puzzleSet, awesome_idx), "", 0, 0}}
+          elseif this_frame_keys["escape"] then
             ret = {main_dumb_transition, {main_select_puzz, "", 0, 0}}
           else
-            if P1.n_active_panels == 0 and P1.prev_active_panels == 0 then
-              if P1:puzzle_done() then -- writes successful puzzle replay and ends game
-                awesome_idx = (awesome_idx % #puzzles) + 1
-                local now = os.date("*t", to_UTC(os.time()))
-                local sep = "/"
-                local path = "replays" .. sep .. "v" .. VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
-                path = path .. sep .. "Puzzles"
-                local filename = "v" .. VERSION .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. "-" .. config.name .. "-Successful" .. "-Puzzle"
-                filename = filename .. ".txt"
-                write_replay_file()
-                write_replay_file(path, filename)
-                if awesome_idx == 1 then
-                  ret = {main_dumb_transition, {main_select_puzz, loc("pl_you_win"), 30, -1, P1:pick_win_sfx()}}
-                else
-                  ret = {main_dumb_transition, {next_func, loc("pl_you_win"), 30, -1, P1:pick_win_sfx()}}
-                end
-              elseif P1.puzzle_moves == 0 then -- writes failed puzzle replay and returns to menu
-                local now = os.date("*t", to_UTC(os.time()))
-                local sep = "/"
-                local path = "replays" .. sep .. "v" .. VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
-                path = path .. sep .. "Puzzles"
-                local filename = "v" .. VERSION .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. "-" .. config.name .. "-Failed" .. "-Puzzle"
-                filename = filename .. ".txt"
-                write_replay_file()
-                write_replay_file(path, filename)
-                ret = {main_dumb_transition, {main_select_puzz, loc("pl_you_lose"), 30, -1}}
+            if P1:puzzle_done() then -- writes successful puzzle replay and ends game
+              awesome_idx = (awesome_idx % #puzzleSet.puzzles) + 1
+              local now = os.date("*t", to_UTC(os.time()))
+              local sep = "/"
+              local path = "replays" .. sep .. "v" .. VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
+              path = path .. sep .. "Puzzles"
+              local filename = "v" .. VERSION .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. "-" .. config.name .. "-Successful" .. "-Puzzle"
+              filename = filename .. ".txt"
+              write_replay_file()
+              write_replay_file(path, filename)
+              if awesome_idx == 1 then
+                ret = {game_over_transition, {main_select_puzz, loc("pl_you_win"), P1:pick_win_sfx()}}
+              else
+                ret = {game_over_transition, {next_func, loc("pl_you_win"), P1:pick_win_sfx()}}
               end
+            elseif P1:puzzle_failed() then -- writes failed puzzle replay and returns to menu
+              local now = os.date("*t", to_UTC(os.time()))
+              local sep = "/"
+              local path = "replays" .. sep .. "v" .. VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
+              path = path .. sep .. "Puzzles"
+              local filename = "v" .. VERSION .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. "-" .. config.name .. "-Failed" .. "-Puzzle"
+              filename = filename .. ".txt"
+              write_replay_file()
+              write_replay_file(path, filename)
+              SFX_GameOver_Play = 1
+              ret = {game_over_transition, {make_main_puzzle(puzzleSet, awesome_idx), loc("pl_you_lose")}}
             end
-            if P1.n_active_panels ~= 0 or P1.prev_active_panels ~= 0 or P1.puzzle_moves ~= 0 then
+
+            if not ret then            
               P1:run()
               P1:handle_pause()
               if menu_escape_game(K[1]) then
@@ -1363,7 +1369,7 @@ end
 
 do
   local items = {}
-  for key, val in spairs(puzzle_sets) do
+  for key, val in spairs(GAME.puzzleSets) do
     items[#items + 1] = {key, make_main_puzzle(val)}
   end
   items[#items + 1] = {"back", main_select_mode}
@@ -1658,6 +1664,7 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
     end
   end
 end
+
 -- show game over screen, last frame of gameplay
 function game_over_transition(next_func, text, winnerSFX, timemax)
   game_is_paused = false
@@ -1672,10 +1679,13 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
   local t = 0 -- the amount of frames that have passed since the game over screen was displayed
   local k = K[1]
   local font = love.graphics.getFont()
+  local winnerTime = 60
 
   if SFX_GameOver_Play == 1 then
     themes[config.theme].sounds.game_over:play()
     SFX_GameOver_Play = 0
+  else 
+    winnerTime = 0
   end
 
   while true do
@@ -1698,12 +1708,9 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
         end
 
         -- Play the winner sound effect after a delay
-        winnerSFX = winnerSFX or nil
         if not SFX_mute then
-          local winnerTime = 60
           if t >= winnerTime then
-            -- TODO: somehow winnerSFX can be 0 instead of nil
-            if winnerSFX ~= nil and winnerSFX ~= 0 then -- play winnerSFX then nil it so it doesn't loop
+            if winnerSFX ~= nil then -- play winnerSFX then nil it so it doesn't loop
               print(winnerSFX)
               winnerSFX:play()
               winnerSFX = nil
