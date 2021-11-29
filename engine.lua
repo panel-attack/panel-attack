@@ -26,11 +26,16 @@ Stack =
     s.panels_dir = panels_dir or config.panels
     s.portraitFade = 0
     s.is_local = is_local
+
+    s.drawsAnalytics = true
+    
     if not panels[panels_dir] then
       s.panels_dir = config.panels
     end
 
-    if s.match.mode ~= "puzzle" then
+    if s.match.mode == "puzzle" then
+      s.drawsAnalytics = false
+    else
       s.do_first_row = true
     end
 
@@ -574,8 +579,11 @@ function Panel.clear_flags(self)
   self.state = "normal"
 end
 
-function Stack.set_puzzle_state(self, pstr, n_turns)
+function Stack.set_puzzle_state(self, pstr, n_turns, do_countdown, puzzleType)
   -- Copy the puzzle into our state
+  puzzleType = puzzleType or "moves"
+  do_countdown = do_countdown or false
+  pstr = string.gsub(pstr, "%s+", "") -- Remove whitespace so files can be easier to read
   local sz = self.width * self.height
   while string.len(pstr) < sz do
     pstr = "0" .. pstr
@@ -589,23 +597,60 @@ function Stack.set_puzzle_state(self, pstr, n_turns)
       idx = idx + 1
     end
   end
-  self.puzzle_moves = n_turns
+  self.do_countdown = do_countdown
+  self.puzzleType = puzzleType
+  if n_turns ~= 0 then
+    self.puzzle_moves = n_turns
+  end
   if self.character and characters[self.character] then
     characters[self.character]:stop_sounds()
   end
 end
 
 function Stack.puzzle_done(self)
-  local panels = self.panels
-  for row = 1, self.height do
-    for col = 1, self.width do
-      local color = panels[row][col].color
-      if color ~= 0 and color ~= 9 then
-        return false
+  if not P1.do_countdown then
+    -- For now don't require active panels to be 0, we will still animate in game over, 
+    -- and we need to win immediately to avoid the failure below in the chain case.
+    --if P1.n_active_panels == 0 then
+      --if self.puzzleType == "chain" or P1.prev_active_panels == 0 then
+        local panels = self.panels
+        for row = 1, self.height do
+          for col = 1, self.width do
+            local color = panels[row][col].color
+            if color ~= 0 and color ~= 9 then
+              return false
+            end
+          end
+        end
+
+        return true
+      --end
+    --end
+  end
+
+  return false
+end
+
+
+function Stack.puzzle_failed(self)
+  if not P1.do_countdown then
+    if self.puzzleType == "moves" then
+      if P1.n_active_panels == 0 and P1.prev_active_panels == 0 then
+        return P1.puzzle_moves == 0
+      end
+    elseif self.puzzleType and self.puzzleType == "chain" then
+      if P1.n_active_panels == 0 and P1.prev_active_panels == 0 and #P1.analytic.data.reached_chains == 0 and P1.analytic.data.destroyed_panels > 0 then
+        -- We finished matching but never made a chain -> fail
+        return true
+      end
+      if #P1.analytic.data.reached_chains > 0 and P1.n_chain_panels == 0 then
+        -- We achieved a chain, finished chaining, but haven't won yet -> fail
+        return true
       end
     end
   end
-  return true
+
+  return false
 end
 
 function Stack.has_falling_garbage(self)
@@ -1648,6 +1693,12 @@ function Stack.game_ended(self)
     end
   end
 
+  if self.match.mode == "puzzle" then
+    if self:puzzle_done() or self:puzzle_failed() then
+      result = true
+    end
+  end
+
   return result
 end
 
@@ -1700,7 +1751,7 @@ function Stack.pick_win_sfx(self)
   if #characters[self.character].sounds.wins ~= 0 then
     return characters[self.character].sounds.wins[math.random(#characters[self.character].sounds.wins)]
   else
-    return nil
+    return themes[config.theme].sounds.fanfare1 -- TODO add a default win sound
   end
 end
 
@@ -1963,6 +2014,9 @@ end
 
 -- Goes through whole stack checking for matches and updating chains etc based on matches.
 function Stack.check_matches(self)
+  if self.do_countdown then
+    return
+  end
 
   local panels = self.panels
 

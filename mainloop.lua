@@ -80,7 +80,7 @@ function fmainloop()
   love.filesystem.createDirectory("panels")
   love.filesystem.createDirectory("themes")
   love.filesystem.createDirectory("stages")
-  
+
   --check for game updates
   if GAME_UPDATER_CHECK_UPDATE_INGAME then
     wait_game_update = GAME_UPDATER:async_download_latest_version()
@@ -118,9 +118,9 @@ function variable_step(f)
       leftover_time = leftover_time - 1 / 60
       if leftover_time >= 1 / 60 then
         GAME.droppedFrames = GAME.droppedFrames + 1
-        if GAME.match then
-          print("Dropped Frame, total is: " .. GAME.droppedFrames)
-        end
+        --if GAME.match then
+          --print("Dropped Frame, total is: " .. GAME.droppedFrames)
+        --end
       end
     end
   end
@@ -148,11 +148,11 @@ do
     local menu_x, menu_y = unpack(main_menu_screen_pos)
     local main_menu
     local ret = nil
-    
+
     local function goEscape()
       main_menu:set_active_idx(#main_menu.buttons)
     end
-  
+
     local function selectFunction(myFunction, args)
       local function constructedFunction()
         main_menu_last_index = main_menu.active_idx
@@ -212,7 +212,7 @@ do
 
       wait()
       variable_step(
-        function()          
+        function()
           main_menu:update()
         end
       )
@@ -247,7 +247,7 @@ function main_select_speed_99(next_func)
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")
   end
-  
+
   local gameSettingsMenu
 
   local function goEscape()
@@ -265,7 +265,7 @@ function main_select_speed_99(next_func)
   local function updateMenuDifficulty()
     gameSettingsMenu:set_button_setting(2, loc_difficulties[difficulty])
   end
-  
+
   local function increaseSpeed()
     speed = bound(1, speed + 1, 99)
     updateMenuSpeed()
@@ -285,7 +285,7 @@ function main_select_speed_99(next_func)
     difficulty = bound(1, difficulty - 1, 4)
     updateMenuDifficulty()
   end
-    
+
   local function startGame()
     if config.endless_speed ~= speed or config.endless_difficulty ~= difficulty then
       config.endless_speed = speed
@@ -330,9 +330,9 @@ function main_select_speed_99(next_func)
     lastScore = tostring(lastScore)
     record = tostring(record)
     draw_pixel_font("last score", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition, 0.5, 1.0)
-    draw_pixel_font(lastScore,    themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition + 24, 0.5, 1.0)
-    draw_pixel_font("record",     themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition, 0.5, 1.0)
-    draw_pixel_font(record,       themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition + 24, 0.5, 1.0)
+    draw_pixel_font(lastScore, themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition + 24, 0.5, 1.0)
+    draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition, 0.5, 1.0)
+    draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition + 24, 0.5, 1.0)
 
     gameSettingsMenu:draw()
 
@@ -649,9 +649,9 @@ function main_net_vs_lobby()
     local function toggleLeaderboard()
       updated = true
       if not showing_leaderboard then
+        --lobby_menu:set_button_text(#lobby_menu.buttons - 1, loc("lb_hide_board"))
         showing_leaderboard = true
         json_send({leaderboard_request = true})
-        --lobby_menu:set_button_text(#lobby_menu.buttons - 1, loc("lb_hide_board"))
       else
         --lobby_menu:set_button_text(#lobby_menu.buttons - 1, loc("lb_show_board"))
         showing_leaderboard = false
@@ -685,7 +685,7 @@ function main_net_vs_lobby()
       end
 
       local function requestGameFunction(opponentName)
-        return function ()
+        return function()
           my_name = config.name
           op_name = opponentName
           currently_spectating = false
@@ -694,9 +694,9 @@ function main_net_vs_lobby()
           updated = true
         end
       end
-        
+
       local function requestSpectateFunction(room)
-        return function ()
+        return function()
           my_name = room.a
           op_name = room.b
           currently_spectating = true
@@ -707,7 +707,7 @@ function main_net_vs_lobby()
       local function playerRatingString(playerName)
         local rating = ""
         if playerRatingMap and playerRatingMap[playerName] then
-          rating =  " (" .. playerRatingMap[playerName] .. ")"
+          rating = " (" .. playerRatingMap[playerName] .. ")"
         end
         return rating
       end
@@ -916,7 +916,7 @@ function main_net_vs()
     if not config.debug_mode then --this is printed in the same space as the debug details
       gprint(spectators_string, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
     end
-    
+
     -- don't spend time rendering when catching up to a current match in replays
     if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
       GAME.match:render()
@@ -1180,7 +1180,6 @@ function main_replay_vs()
     if ret then
       return unpack(ret)
     end
-    local winSFX = nil
 
     local outcome_claim = nil
     local winSFX = nil
@@ -1190,7 +1189,7 @@ function main_replay_vs()
       end_text = matchOutcome["end_text"]
       winSFX = matchOutcome["winSFX"]
       outcome_claim = matchOutcome["outcome_claim"]
-      return game_over_transition, {main_select_mode, end_text, 0, -1, winSFX}
+      return game_over_transition, {main_select_mode, end_text, winSFX}
     end
   end
 end
@@ -1264,7 +1263,6 @@ function main_replay_puzzle()
   P1 = Stack(1, GAME.match, false, config.panels)
   GAME.match.P1 = P1
   P1:wait_for_random_character()
-  P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
   P1.input_buffer = uncompress_input_string(replay.in_buf)
   P1.cur_wait_time = replay.cur_wait_time or default_input_repeat_delay
@@ -1304,9 +1302,12 @@ function main_replay_puzzle()
     end
   end
 end
+
 -- creates a puzzle game
-function make_main_puzzle(puzzles)
-  local awesome_idx, next_func = 1, nil
+-- puzzleSet is a PuzzleSet
+function make_main_puzzle(puzzleSet, awesome_idx)
+  local next_func = nil
+  awesome_idx = awesome_idx or 1
   function next_func()
     stop_the_music()
     pick_random_stage()
@@ -1324,11 +1325,12 @@ function make_main_puzzle(puzzles)
     P2 = nil
     local start_delay = 0
     if awesome_idx == nil then
-      awesome_idx = math.random(#puzzles)
+      awesome_idx = math.random(#puzzleSet.puzzles)
     end
-    P1:set_puzzle_state(unpack(puzzles[awesome_idx]))
+    local puzzleDetails = puzzleSet.puzzles[awesome_idx]
+    P1:set_puzzle_state(puzzleDetails.stack, puzzleDetails.moves, puzzleDetails.doCountdown, puzzleDetails.puzzleType)
     replay.cur_wait_time = P1.cur_wait_time or default_input_repeat_delay
-    replay.puzzle = puzzles[awesome_idx]
+    replay.puzzle = puzzleDetails[awesome_idx] --todo
     replay.in_buf = ""
     while true do
       GAME.match:render()
@@ -1336,38 +1338,42 @@ function make_main_puzzle(puzzles)
       local ret = nil
       variable_step(
         function()
-          if this_frame_keys["escape"] then
+          local k = K[1]
+          -- Reset puzzle button
+          if this_frame_keys[k.taunt_down] or this_frame_keys[k.taunt_up] then 
+            ret = {main_dumb_transition, {make_main_puzzle(puzzleSet, awesome_idx), "", 0, 0}}
+          elseif this_frame_keys["escape"] then
             ret = {main_dumb_transition, {main_select_puzz, "", 0, 0}}
           else
-            if P1.n_active_panels == 0 and P1.prev_active_panels == 0 then
-              if P1:puzzle_done() then -- writes successful puzzle replay and ends game
-                awesome_idx = (awesome_idx % #puzzles) + 1
-                local now = os.date("*t", to_UTC(os.time()))
-                local sep = "/"
-                local path = "replays" .. sep .. "v" .. VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
-                path = path .. sep .. "Puzzles"
-                local filename = "v" .. VERSION .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. "-" .. config.name .. "-Successful" .. "-Puzzle"
-                filename = filename .. ".txt"
-                write_replay_file()
-                write_replay_file(path, filename)
-                if awesome_idx == 1 then
-                  ret = {main_dumb_transition, {main_select_puzz, loc("pl_you_win"), 30, -1, P1:pick_win_sfx()}}
-                else
-                  ret = {main_dumb_transition, {next_func, loc("pl_you_win"), 30, -1, P1:pick_win_sfx()}}
-                end
-              elseif P1.puzzle_moves == 0 then -- writes failed puzzle replay and returns to menu
-                local now = os.date("*t", to_UTC(os.time()))
-                local sep = "/"
-                local path = "replays" .. sep .. "v" .. VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
-                path = path .. sep .. "Puzzles"
-                local filename = "v" .. VERSION .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. "-" .. config.name .. "-Failed" .. "-Puzzle"
-                filename = filename .. ".txt"
-                write_replay_file()
-                write_replay_file(path, filename)
-                ret = {main_dumb_transition, {main_select_puzz, loc("pl_you_lose"), 30, -1}}
+            if P1:puzzle_done() then -- writes successful puzzle replay and ends game
+              awesome_idx = (awesome_idx % #puzzleSet.puzzles) + 1
+              local now = os.date("*t", to_UTC(os.time()))
+              local sep = "/"
+              local path = "replays" .. sep .. "v" .. VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
+              path = path .. sep .. "Puzzles"
+              local filename = "v" .. VERSION .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. "-" .. config.name .. "-Successful" .. "-Puzzle"
+              filename = filename .. ".txt"
+              write_replay_file()
+              write_replay_file(path, filename)
+              if awesome_idx == 1 then
+                ret = {game_over_transition, {main_select_puzz, loc("pl_you_win"), P1:pick_win_sfx()}}
+              else
+                ret = {game_over_transition, {next_func, loc("pl_you_win"), P1:pick_win_sfx()}}
               end
+            elseif P1:puzzle_failed() then -- writes failed puzzle replay and returns to menu
+              local now = os.date("*t", to_UTC(os.time()))
+              local sep = "/"
+              local path = "replays" .. sep .. "v" .. VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
+              path = path .. sep .. "Puzzles"
+              local filename = "v" .. VERSION .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. "-" .. config.name .. "-Failed" .. "-Puzzle"
+              filename = filename .. ".txt"
+              write_replay_file()
+              write_replay_file(path, filename)
+              SFX_GameOver_Play = 1
+              ret = {game_over_transition, {make_main_puzzle(puzzleSet, awesome_idx), loc("pl_you_lose")}}
             end
-            if P1.n_active_panels ~= 0 or P1.prev_active_panels ~= 0 or P1.puzzle_moves ~= 0 then
+
+            if not ret then            
               P1:run()
               P1:handle_pause()
               if menu_escape_game(K[1]) then
@@ -1387,7 +1393,7 @@ end
 
 do
   local items = {}
-  for key, val in spairs(puzzle_sets) do
+  for key, val in spairs(GAME.puzzleSets) do
     items[#items + 1] = {key, make_main_puzzle(val)}
   end
   items[#items + 1] = {"back", main_select_mode}
@@ -1442,13 +1448,12 @@ do
   end
 end
 
-
 -- menu for setting the username
 function main_set_name()
   local name = config.name or ""
   love.keyboard.setTextInput(true) -- enables user to type
   while true do
-    local to_print = loc("op_enter_name") .. "\n" .. name
+    local to_print = loc("op_enter_name") .. " (" .. name:len() .. "/" .. NAME_LENGTH_LIMIT .. ")\n" .. name
     if (love.timer.getTime() * 3) % 2 > 1 then
       to_print = to_print .. "|"
     end
@@ -1474,7 +1479,10 @@ function main_set_name()
           end
         end
         for _, v in ipairs(this_frame_unicodes) do
-          name = name .. v
+          -- Don't add more characters than the server char limit
+          if name:len() < NAME_LENGTH_LIMIT then
+            name = name .. v
+          end
         end
       end
     )
@@ -1622,13 +1630,12 @@ function fullscreen()
 end
 
 -- returns true if the user input to exit a local game in progress
-function menu_escape_game(k) 
+function menu_escape_game(k)
   if game_is_paused and menu_escape(K[1]) then
     return true
   end
   return false
 end
-
 
 -- dumb transition that shows a black screen
 function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
@@ -1681,6 +1688,7 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
     end
   end
 end
+
 -- show game over screen, last frame of gameplay
 function game_over_transition(next_func, text, winnerSFX, timemax)
   game_is_paused = false
@@ -1695,10 +1703,13 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
   local t = 0 -- the amount of frames that have passed since the game over screen was displayed
   local k = K[1]
   local font = love.graphics.getFont()
+  local winnerTime = 60
 
   if SFX_GameOver_Play == 1 then
     themes[config.theme].sounds.game_over:play()
     SFX_GameOver_Play = 0
+  else 
+    winnerTime = 0
   end
 
   while true do
@@ -1721,12 +1732,9 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
         end
 
         -- Play the winner sound effect after a delay
-        winnerSFX = winnerSFX or nil
         if not SFX_mute then
-          local winnerTime = 60
           if t >= winnerTime then
-            -- TODO: somehow winnerSFX can be 0 instead of nil
-            if winnerSFX ~= nil and winnerSFX ~= 0 then -- play winnerSFX then nil it so it doesn't loop
+            if winnerSFX ~= nil then -- play winnerSFX then nil it so it doesn't loop
               print(winnerSFX)
               winnerSFX:play()
               winnerSFX = nil

@@ -283,11 +283,20 @@ end
 function write_puzzles()
   pcall(
     function()
-      love.filesystem.createDirectory("puzzles")
-      local file = love.filesystem.newFile("puzzles/stock (example).txt")
-      file:open("w")
-      file:write(json.encode(puzzle_sets))
-      file:close()
+      local currentPuzzles = love.filesystem.getDirectoryItems("puzzles") or {}
+      local customPuzzleExists = false
+      for _, filename in pairs(currentPuzzles) do
+        if love.filesystem.getInfo("puzzles/" .. filename) and filename ~= ".DS_Store" and filename ~= "stock (example).json" and filename ~= "README.txt" then
+          customPuzzleExists = true
+          break
+        end
+      end
+
+      if customPuzzleExists == false then
+        love.filesystem.createDirectory("puzzles")
+
+        recursive_copy("default_data/puzzles", "puzzles")
+      end
     end
   )
 end
@@ -304,16 +313,38 @@ function read_puzzles()
       print("loading custom puzzles...")
       for _, filename in pairs(puzzle_packs) do
         print(filename)
-        if love.filesystem.getInfo("puzzles/" .. filename) and filename ~= "stock (example).txt" and filename ~= "README.txt" then
+        if love.filesystem.getInfo("puzzles/" .. filename) and filename ~= "README.txt" and filename ~= ".DS_Store" then
           print("loading custom puzzle set: " .. (filename or "nil"))
           local current_set = {}
           local file = love.filesystem.newFile("puzzles/" .. filename)
           file:open("r")
           local teh_json = file:read(file:getSize())
-          current_set = json.decode(teh_json) or {}
-          for set_name, puzzle_set in pairs(current_set) do
-            puzzle_sets[set_name] = puzzle_set
+          local current_json = json.decode(teh_json) or {}
+          if current_json["Version"] == 2 then
+            for _, puzzleSet in pairs(current_json["Puzzle Sets"]) do
+              local puzzleSetName = puzzleSet["Set Name"]
+              local puzzles = {}
+              for _, puzzle in pairs(puzzleSet["Puzzles"]) do
+                local puzzle = Puzzle(puzzle["Puzzle Type"], puzzle["Do Countdown"], puzzle["Moves"], puzzle["Stack"])
+                puzzles[#puzzles+1] = puzzle
+              end
+
+              local puzzleSet = PuzzleSet(puzzleSetName, puzzles)
+              GAME.puzzleSets[puzzleSetName] = puzzleSet
+            end
+          else -- old file format compatibility
+            for set_name, puzzle_set in pairs(current_json) do
+              local puzzles = {}
+              for _, puzzleData in pairs(puzzle_set) do
+                local puzzle = Puzzle("moves", true, puzzleData[2], puzzleData[1])
+                puzzles[#puzzles+1] = puzzle
+              end
+
+              local puzzleSet = PuzzleSet(set_name, puzzles)
+              GAME.puzzleSets[set_name] = puzzleSet
+            end
           end
+          
           print("loaded above set")
         end
       end
