@@ -608,7 +608,7 @@ function Stack.set_puzzle_state(self, pstr, n_turns, do_countdown, puzzleType)
 end
 
 function Stack.puzzle_done(self)
-  if not P1.do_countdown then
+  if not self.do_countdown then
     -- For now don't require active panels to be 0, we will still animate in game over, 
     -- and we need to win immediately to avoid the failure below in the chain case.
     --if P1.n_active_panels == 0 then
@@ -633,13 +633,13 @@ end
 
 
 function Stack.puzzle_failed(self)
-  if not P1.do_countdown then
+  if not self.do_countdown then
     if self.puzzleType == "moves" then
-      if P1.n_active_panels == 0 and P1.prev_active_panels == 0 then
-        return P1.puzzle_moves == 0
+      if self.n_active_panels == 0 and self.prev_active_panels == 0 then
+        return self.puzzle_moves == 0
       end
     elseif self.puzzleType and self.puzzleType == "chain" then
-      if P1.n_active_panels == 0 and P1.prev_active_panels == 0 and #P1.analytic.data.reached_chains == 0 and P1.analytic.data.destroyed_panels > 0 then
+      if self.n_active_panels == 0 and self.prev_active_panels == 0 and #self.analytic.data.reached_chains == 0 and self.analytic.data.destroyed_panels > 0 then
         -- We finished matching but never made a chain -> fail
         return true
       end

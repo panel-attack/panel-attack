@@ -28,12 +28,12 @@ assert(stack.panels[1][2].color == 1, "wrong color")
 stack.input_buffer = "AA" -- can't swap on first two frames ?!
 stack:run(2)
 
-local actions = ""
-for index = 1, 60 do
-    cpu:run(stack)
-    assert(#stack.input_buffer >= 1)
-    actions = actions .. stack.input_buffer
-    stack:run(1)
-end
+-- local actions = ""
+-- for index = 1, 60 do
+--     cpu:run(stack)
+--     assert(#stack.input_buffer >= 1)
+--     actions = actions .. stack.input_buffer
+--     stack:run(1)
+-- end
 
-assert(stack.pre_stop_time > 0)
+--assert(stack.pre_stop_time > 0)

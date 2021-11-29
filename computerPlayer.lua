@@ -2,7 +2,7 @@ require("engine")
 require("profiler")
 
 local MONTE_CARLO_RUN_COUNT = 1
-local CURSOR_MOVE_WAIT_TIME = 2
+local DEFAULT_CURSOR_MOVE_WAIT_TIME = 2
 local PROFILE_TIME = 400
 local MAX_CLOCK_PLAYOUT = 10
 local EXPAND_COUNT = 3
@@ -38,9 +38,12 @@ local cpuConfigs = {
   },
   ["Dev"] =
   {
-    log = 3,
+    log = 2,
     profiled = false,
-    inputSpeed = 5,
+    inputSpeed = 60 * 1,
+    actionsPerThink = 10,
+    cursorMoveWaitTime = 10,
+    cursorMoveDistance = 20,
     heuristicPanelScore = 0.05
   },
   ["DevSlow"] =
@@ -51,21 +54,18 @@ local cpuConfigs = {
   }
 }
 
-local active_cpuConfig = cpuConfigs["Dev"]
-
 CPUConfig = class(function(self, actualConfig)
   self.log = actualConfig["log"]
   self.inputSpeed = actualConfig["inputSpeed"]
+  self.actionsPerThink = actualConfig["actionsPerThink"] or nil
+  self.cursorMoveWaitTime = actualConfig["cursorMoveWaitTime"] or DEFAULT_CURSOR_MOVE_WAIT_TIME
   self.profiled = actualConfig["profiled"]
   self.heuristicPanelScore = actualConfig["heuristicPanelScore"] or 0
   self.cursorMoveDistance = actualConfig["cursorMoveDistance"] or DEFAULT_CURSOR_MOVE_DISTANCE
 end)
 
 ComputerPlayer = class(function(self, configName)
-  local config = active_cpuConfig
-  if configName then
-    config = cpuConfigs[configName]
-  end
+  local config = cpuConfigs[configName]
 
   if config then
       print("cpu config successfully loaded")
@@ -180,13 +180,15 @@ function ComputerPlayer.getInput(self, stack)
   return inputBuffer
 end
 
-function ComputerPlayer.allActions(self, stack)
+function ComputerPlayer.allActions(self, stack, actionsAllowed)
   local actions = {}
 
   --actions[#actions + 1] = waitInput
 
-  if self:rowEmpty(stack, STACK_ROW_EMPTY_ALLOWING_RAISE) then
-    actions[#actions + 1] = raiseInput
+  if not actionsAllowed or actionsAllowed > 0 then
+    if self:rowEmpty(stack, STACK_ROW_EMPTY_ALLOWING_RAISE) then
+      actions[#actions + 1] = raiseInput
+    end
   end
 
   --actions[#actions + 1] = swapInput .. waitInput
@@ -196,11 +198,13 @@ function ComputerPlayer.allActions(self, stack)
   for column = 1, stack.width - 1, 1 do
     for row = 1, stack.height, 1 do
       local distance = math.abs(row - cursorRow) + math.abs(column - cursorColumn)
-      if distance > 0 and distance <= self.config.cursorMoveDistance then
-        if stack:canSwap(row, column) then
-          if stack.panels[row][column].color ~= stack.panels[row][column + 1].color then
-            -- We wait one frame after swapping because thats when the swap actually happens
-            actions[#actions + 1] = self:moveToRowColumnAction(stack, row, column) .. swapInput .. string.rep(waitInput, 5)
+      if not actionsAllowed or actionsAllowed > distance + 1 then
+        if distance > 0 and distance <= self.config.cursorMoveDistance then
+          if stack:canSwap(row, column) then
+            if stack.panels[row][column].color ~= stack.panels[row][column + 1].color then
+              -- We wait one frame after swapping because thats when the swap actually happens
+              actions[#actions + 1] = self:moveToRowColumnAction(stack, row, column) .. swapInput .. string.rep(waitInput, 5)
+            end
           end
         end
       end
@@ -225,17 +229,18 @@ function ComputerPlayer.moveToRowColumnAction(self, stack, row, column)
   local cursorColumn = stack.cur_col
 
   local result = ""
+  local cursorWaitTime = self.config.cursorMoveWaitTime
 
   if cursorColumn > column then
-    result = result .. string.rep(leftInput .. string.rep(waitInput, CURSOR_MOVE_WAIT_TIME), cursorColumn - column)
+    result = result .. string.rep(leftInput .. string.rep(waitInput, cursorWaitTime), cursorColumn - column)
   elseif cursorColumn < column then
-    result = result .. string.rep(rightInput .. string.rep(waitInput, CURSOR_MOVE_WAIT_TIME), column - cursorColumn)
+    result = result .. string.rep(rightInput .. string.rep(waitInput, cursorWaitTime), column - cursorColumn)
   end
 
   if cursorRow > row then
-    result = result .. string.rep(downInput .. string.rep(waitInput, CURSOR_MOVE_WAIT_TIME), cursorRow - row)
+    result = result .. string.rep(downInput .. string.rep(waitInput, cursorWaitTime), cursorRow - row)
   elseif cursorRow < row then
-    result = result .. string.rep(upInput .. string.rep(waitInput, CURSOR_MOVE_WAIT_TIME), row - cursorRow)
+    result = result .. string.rep(upInput .. string.rep(waitInput, cursorWaitTime), row - cursorRow)
   end
 
   return result
@@ -317,7 +322,7 @@ function ComputerPlayer.panelsScore(self, stack)
   end
 
   local bestColor = 0
-  local bestColorCount = 0
+  local bestColorCount = -1
   for k, color in pairs(colorColumns) do
     if #color.columns > bestColorCount then
       bestColor = k
@@ -386,7 +391,7 @@ function ComputerPlayer.heuristicValueForStack(self, stack)
     local maxPanels = (STACK_LOW_ROW * stack.width)
     local value = (maxPanels - panelCount) / maxPanels * HEURISTIC_LOW_PANEL_COUNT_WEIGHT
     result = result + value
-    self:cpuLog(2, "Computer: " .. stack.CLOCK .. " low panel count " .. value)
+    self:cpuLog(4, "Computer: " .. stack.CLOCK .. " low panel count " .. value)
   end
 
   -- for index = 8, 12, 1 do
@@ -435,6 +440,7 @@ function ComputerPlayer.fillIdleActions(self, stack)
   end 
 end
 
+--[[
 function ComputerPlayer.fillRandomActions(self, stack)
   while stack.CLOCK + #stack.input_buffer <= stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer do
     local randomAction = uniformly(self:allActions(stack))
@@ -447,7 +453,6 @@ function ComputerPlayer.fillRandomActions(self, stack)
   end 
 end
 
---[[
 function ComputerPlayer.playoutValueForStack(self, stack, maxClock)
 
   self:fillRandomActions(stack)
@@ -547,7 +552,15 @@ function ComputerPlayer.think(self)
       local gameResult = expand.stack:gameResult()
 
       if gameResult == nil then
-        local actions = self:allActions(expand.stack)
+
+        local actionsAllowed = nil
+        if self.config.actionsPerThink then
+          local _, idleCount = string.gsub(expand.actions, waitInput, "")
+          local actionCount = #expand.actions - idleCount
+          actionsAllowed = self.config.actionsPerThink - actionCount
+          self:cpuLog(5, "actionsAllowed " .. actionsAllowed)
+        end
+        local actions = self:allActions(expand.stack, actionsAllowed)
 
         self:cpuLog(4, "expanding " .. #actions)
         for idx = 1, #actions do
@@ -609,6 +622,8 @@ function ComputerPlayer.initThink(self, stack, idleCount)
   self:addAction(stack, self:idleAction(idleCount))
   assert(stack.CLOCK + #stack.input_buffer == self.targetInputTime, "should have buffer to input time")
 
+  self.thinkStartClock = stack.CLOCK
+  
   local baseValue = self:heuristicValueForIdleFilledStack(stack)
   self.unexpandedQueue:put({stack=stack, actions="", value=baseValue}, self:expandValue(baseValue, 0))
 
