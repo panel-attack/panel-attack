@@ -18,7 +18,6 @@ local current_music_is_casual = false -- must be false so that casual music star
 Stack =
   class(
   function(s, which, match, is_local, panels_dir, speed, difficulty, player_number, wantsCanvas)
-
     wantsCanvas = wantsCanvas or 1
     s.match = match
     s.character = config.character
@@ -28,7 +27,7 @@ Stack =
     s.is_local = is_local
 
     s.drawsAnalytics = true
-    
+
     if not panels[panels_dir] then
       s.panels_dir = config.panels
     end
@@ -609,28 +608,27 @@ end
 
 function Stack.puzzle_done(self)
   if not P1.do_countdown then
-    -- For now don't require active panels to be 0, we will still animate in game over, 
+    -- For now don't require active panels to be 0, we will still animate in game over,
     -- and we need to win immediately to avoid the failure below in the chain case.
     --if P1.n_active_panels == 0 then
-      --if self.puzzleType == "chain" or P1.prev_active_panels == 0 then
-        local panels = self.panels
-        for row = 1, self.height do
-          for col = 1, self.width do
-            local color = panels[row][col].color
-            if color ~= 0 and color ~= 9 then
-              return false
-            end
-          end
+    --if self.puzzleType == "chain" or P1.prev_active_panels == 0 then
+    local panels = self.panels
+    for row = 1, self.height do
+      for col = 1, self.width do
+        local color = panels[row][col].color
+        if color ~= 0 and color ~= 9 then
+          return false
         end
+      end
+    end
 
-        return true
-      --end
-    --end
+    return true
+  --end
+  --end
   end
 
   return false
 end
-
 
 function Stack.puzzle_failed(self)
   if not P1.do_countdown then
@@ -778,7 +776,7 @@ function Stack.run(self, timesToRun)
   for i = 1, timesToRun do
     self:update_popfxs()
     self:update_cards()
-    if self:game_ended() == false then 
+    if self:game_ended() == false then
       if self.is_local == false then
         if self.input_buffer and string.len(self.input_buffer) > 0 then
           self.input_state = string.sub(self.input_buffer, 1, 1)
@@ -1454,6 +1452,22 @@ function Stack.PdP(self)
     end
 
     local to_send = self.garbage_to_send[self.CLOCK]
+    if self.which == 2 then
+      local tele = ""
+
+      if self.chain_counter > 0 then
+        tele = self.chain_counter .. " "
+      end
+      
+      for index, value in pairs(self.garbage_to_send) do
+        tele = tele .. "| "
+        for key, v in ipairs(value) do
+          tele = tele .. v[1] .. ", " .. v[2] .. " | "
+          --print(key, v[1], v[2])
+        end
+      end
+      gprint(tele, 200, 90)
+    end
     if to_send then
       self.garbage_to_send[self.CLOCK] = nil
 
@@ -1516,7 +1530,7 @@ function Stack.PdP(self)
           self.garbage_q:pop()
         end
       end
-    end 
+    end
 
     -- Update Music
     if not music_mute and not game_is_paused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
@@ -1704,7 +1718,6 @@ end
 
 -- Returns 1 if this player won, 0 for draw, and -1 for loss, nil if no result yet
 function Stack.gameResult(self)
-  
   -- We can't call it until someone has lost and everyone has played up to that point in time.
   local otherPlayer = self.garbage_target
   if self.match.gameEndedClock > 0 and self.CLOCK >= self.match.gameEndedClock and otherPlayer.CLOCK >= self.match.gameEndedClock then
@@ -1730,7 +1743,7 @@ function Stack.set_game_over(self)
     self.match.gameEndedClock = self.CLOCK
   end
 
-  if self.canvas then 
+  if self.canvas then
     local popsize = "small"
     local panels = self.panels
     local width = self.width
@@ -2085,7 +2098,6 @@ function Stack.check_matches(self)
 
     -- We found a new panel we haven't handled yet that we should
     if ((panel.garbage and panel.state == "normal") or panel.matching) and ((normal and not seen[panel]) or (metal and not seenm[panel])) then
-
       -- We matched a new garbage
       if ((metal and panel.metal) or (normal and not panel.metal)) and panel.garbage and not garbage[panel] then
         garbage[panel] = true
