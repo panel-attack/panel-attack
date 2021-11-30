@@ -352,6 +352,28 @@ function read_puzzles()
   )
 end
 
+-- writes the stock puzzles
+function write_replays()
+  pcall(
+    function()
+      local currentReplays = love.filesystem.getDirectoryItems("replays") or {}
+      local customReplayExists = false
+      for _, filename in pairs(currentReplays) do
+        if love.filesystem.getInfo("replays/" .. filename) and filename ~= ".DS_Store" and filename ~= "README.txt" then
+          customPuzzleExists = false
+          break
+        end
+      end
+
+      if customPuzzleExists == false then
+        love.filesystem.createDirectory("replays")
+
+        recursive_copy("default_data/replays", "replays")
+      end
+    end
+  )
+end
+
 function print_list(t)
   for i, v in ipairs(t) do
     print(v)
