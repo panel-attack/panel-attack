@@ -1450,7 +1450,25 @@ function Stack.PdP(self)
         end
       end
     end
-    if self.which == 2 then
+    if self.which == 1 then
+      local did_first_seperator = false
+      local tele = ""
+
+      if self.chain_counter > 0 then
+        tele = self.chain_counter .. " "
+      end
+      
+      for index, value in pairs(self.garbage_to_send) do
+        for key, v in ipairs(value) do
+          if not did_first_seperator then
+            tele = tele .. "| "
+            did_first_seperator = true
+          end
+          tele = tele .. v[1] .. ", " .. v[2] .. " | "
+        end
+      end
+      gprint(tele, 740, 90)
+    elseif self.which == 2 then
       local did_first_seperator = false
       local tele = ""
 
