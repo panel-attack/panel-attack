@@ -1450,9 +1450,8 @@ function Stack.PdP(self)
         end
       end
     end
-
-    local to_send = self.garbage_to_send[self.CLOCK]
     if self.which == 2 then
+      local did_first_seperator = false
       local tele = ""
 
       if self.chain_counter > 0 then
@@ -1460,14 +1459,18 @@ function Stack.PdP(self)
       end
       
       for index, value in pairs(self.garbage_to_send) do
-        tele = tele .. "| "
         for key, v in ipairs(value) do
+          if not did_first_seperator then
+            tele = tele .. "| "
+            did_first_seperator = true
+          end
           tele = tele .. v[1] .. ", " .. v[2] .. " | "
-          --print(key, v[1], v[2])
         end
       end
       gprint(tele, 200, 90)
     end
+
+    local to_send = self.garbage_to_send[self.CLOCK]
     if to_send then
       self.garbage_to_send[self.CLOCK] = nil
 
