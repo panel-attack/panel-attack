@@ -903,8 +903,10 @@ function select_screen.main()
           end
           P2.panel_buffer = fake_P2.panel_buffer
           P2.gpanel_buffer = fake_P2.gpanel_buffer
-          P1.garbage_target = P2
-          P2.garbage_target = P1
+          P1:set_garbage_target(P2)
+          P2:set_garbage_target(P1)
+          P1.telegraph:subscribe(P2.incoming_telegraph)
+          P2.telegraph:subscribe(P1.incoming_telegraph)
           P2:moveForPlayerNumber(2)
           replay = {}
           replay.vs = {
@@ -1352,7 +1354,8 @@ function select_screen.main()
       GAME.match = Match("vs", GAME.battleRoom)
       P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       GAME.match.P1 = P1
-      P1.garbage_target = P1
+      P1:set_garbage_target(P1)
+      P1.telegraph:subscribe(P1.incoming_telegraph)
       P2 = nil
       make_local_panels(P1, "000000")
       make_local_gpanels(P1, "000000")
@@ -1368,8 +1371,8 @@ function select_screen.main()
       GAME.match.P1 = P1
       P2 = Stack(2, GAME.match, true, cursor_data[2].state.panels_dir, cursor_data[2].state.level, cursor_data[2].state.character)
       GAME.match.P2 = P2
-      P1.garbage_target = P2
-      P2.garbage_target = P1
+      P1:set_garbage_target(P2)
+      P2:set_garbage_target(P1)
       current_stage = cursor_data[math.random(1, 2)].state.stage
       stage_loader_load(current_stage)
       stage_loader_wait()

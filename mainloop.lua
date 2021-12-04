@@ -167,7 +167,7 @@ do
       {loc("mm_1_time"), main_timeattack_setup},
       {loc("mm_1_vs"), main_local_vs_yourself_setup},
       --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
-      {loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
+      --{loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
       --{loc("mm_2_vs_online", "betaserver.panelattack.com"), main_net_vs_setup, {"betaserver.panelattack.com"}},
       --{loc("mm_2_vs_online", "(USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)"), main_net_vs_setup, {"18.188.43.50"}},
@@ -175,7 +175,7 @@ do
       --{loc("mm_2_vs_online", "domi1819.xyz"), main_net_vs_setup, {"domi1819.xyz"}},
       --{loc("mm_2_vs_online", "(development-use only)"), main_net_vs_setup, {"localhost"}},
       --{loc("mm_2_vs_online", "LittleEndu's server"), main_net_vs_setup, {"51.15.207.223"}},
-      {loc("mm_2_vs_online", "server for ranked Ex Mode"), main_net_vs_setup, {"exserver.panelattack.com", 49568}},
+      --{loc("mm_2_vs_online", "server for ranked Ex Mode"), main_net_vs_setup, {"exserver.panelattack.com", 49568}},
       {loc("mm_2_vs_local"), main_local_vs_setup},
       {loc("mm_replay_browser"), replay_browser.main},
       {loc("mm_configure"), main_config_input},
@@ -1100,8 +1100,8 @@ function main_replay_vs()
   P1.do_countdown = replay.do_countdown or false
   P2.do_countdown = replay.do_countdown or false
   P1.ice = true
-  P1.garbage_target = P2
-  P2.garbage_target = P1
+  P1:set_garbage_target(P2)
+  P2:set_garbage_target(P1)
   P2:moveForPlayerNumber(2)
   P1.input_buffer = uncompress_input_string(replay.in_buf)
   P1.panel_buffer = replay.P

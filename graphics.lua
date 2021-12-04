@@ -4,6 +4,7 @@ require("util")
 local floor = math.floor
 local ceil = math.ceil
 
+
 local shake_arr = {}
 
 -- Setup the shake_arr data used for rendering the stack shake animation
@@ -26,6 +27,220 @@ for i = 1, #shake_arr do
   shake_arr[i] = shake_arr[i] * shake_mult
   -- print(shake_arr[i])
   shake_mult = shake_mult - shake_step
+end
+
+local _r, _g, _b, _a
+function set_color(r, g, b, a)
+  a = a or 1
+  -- only do it if this color isn't the same as the previous one...
+  if _r~=r or _g~=g or _b~=b or _a~=a then
+      _r,_g,_b,_a = r,g,b,a
+      gfx_q:push({love.graphics.setColor, {r, g, b, a}})
+  end
+end
+
+IMG_stagecount = 1
+function graphics_init()
+  title = load_img("menu/title.png")
+  charselect = load_img("menu/charselect.png")
+  IMG_stages = {}
+
+  IMG_stagecount = 1
+  i = 0
+  while i > -1 do
+    IMG_stages[IMG_stagecount] = load_img("stages/"..tostring(IMG_stagecount)..".png")
+    if IMG_stages[IMG_stagecount] == nil then
+      i=-1
+      break
+    else
+      IMG_stagecount=IMG_stagecount+1
+    end
+  end
+--[[   
+  IMG_particles = {}
+  particle_quads = {}
+  
+  texture = load_img("lakitu/particles.png")
+  local w = texture:getWidth()
+  local h = texture:getHeight()
+  local char_particles = {}
+  
+
+  particle_quads[1] = love.graphics.newQuad(0, 0, 48, 48, 256, 256)
+  particle_quads[2] = love.graphics.newQuad(48, 0, 48, 48, 256, 256)
+  particle_quads[3] = love.graphics.newQuad(96, 0, 48, 48, 256, 256)
+  particle_quads[4] = love.graphics.newQuad(144, 0, 48, 48, 256, 256)
+  particle_quads[5] = love.graphics.newQuad(0, 48, 48, 48, 256, 256)
+  particle_quads[6] = love.graphics.newQuad(48, 48, 48, 48, 256, 256)
+  particle_quads[7] = love.graphics.newQuad(96, 48, 48, 48, 256, 256)
+  particle_quads[8] = love.graphics.newQuad(144, 48, 48, 48, 256, 256)
+  particle_quads[9] = love.graphics.newQuad(0, 96, 48, 48, 256, 256)
+  particle_quads[10] = love.graphics.newQuad(48, 96, 48, 48, 256, 256)
+  particle_quads[11] = love.graphics.newQuad(96, 96, 48, 48, 256, 256)
+  particle_quads[12] = love.graphics.newQuad(144, 96, 48, 48, 256, 256)
+  particle_quads[13] = particle_quads[12]
+  particle_quads[14] = love.graphics.newQuad(0, 144, 48, 48, 256, 256)
+  particle_quads[15] = particle_quads[14]
+  particle_quads[16] = love.graphics.newQuad(48, 144, 48, 48, 256, 256)
+  particle_quads[17] = particle_quads[16]
+  particle_quads[18] = love.graphics.newQuad(96, 144, 48, 48, 256, 256)
+  particle_quads[19] = particle_quads[18]
+  particle_quads[20] = particle_quads[18]
+  particle_quads[21] = love.graphics.newQuad(144, 144, 48, 48, 256, 256)
+  particle_quads[22] = particle_quads[21]
+  particle_quads[23] = particle_quads[21]
+  particle_quads[24] = particle_quads[21]
+--]]
+  --IMG_telegraph_garbage = {} --values will be accessed by IMG_telegraph_garbage[garbage_height][garbage_width]
+  --IMG_telegraph_attack = {}
+  -- for _,v in ipairs(characters) do
+    -- local imgs = {}
+    -- IMG_garbage[v] = imgs
+    -- --for _,part in ipairs(g_parts) do
+    -- --  imgs[part] = load_img(""..v.."/"..part..".png")
+    -- --end
+    -- -- for h=1,14 do
+      -- -- IMG_telegraph_garbage[h] = {}
+      -- -- IMG_telegraph_garbage[h][6] = load_img("".."telegraph/"..h.."-tall.png")
+    -- -- end
+    -- -- for w=3,6 do
+      -- -- IMG_telegraph_garbage[1][w] = load_img("".."telegraph/"..w.."-wide.png")
+    -- -- end
+    -- --IMG_telegraph_attack[v] = load_img(""..v.."/attack.png")
+    -- --IMG_particles[v] = load_img(""..v.."/particles.png")
+  -- end
+  IMG_telegraph_metal = load_img("telegraph/6-wide-metal.png")
+
+  IMG_level_cursor = load_img("level_cursor.png")
+  IMG_levels = {}
+  IMG_levels_unfocus = {}
+  IMG_levels[1] = load_img("level1.png")
+  IMG_levels_unfocus[1] = nil -- meaningless by design
+  for i=2,10 do
+    IMG_levels[i] = load_img("level"..i..".png")
+    IMG_levels_unfocus[i] = load_img("level"..i.."unfocus.png")
+  end
+
+  IMG_ready = load_img("ready.png")
+  IMG_numbers = {}
+  for i=1,3 do
+    IMG_numbers[i] = load_img(i..".png")
+  end
+  IMG_cursor = {  load_img("cur0.png"),
+          load_img("cur1.png")}
+
+  IMG_players = {  load_img("player_1.png"),
+          load_img("player_2.png")}
+
+  IMG_frame = load_img("frame.png")
+  IMG_wall = load_img("wall.png")
+
+  IMG_cards = {}
+  IMG_cards[true] = {}
+  IMG_cards[false] = {}
+  for i=4,66 do
+    IMG_cards[false][i] = load_img("combo"
+      ..tostring(floor(i/10))..tostring(i%10)..".png")
+  end
+  for i=2,13 do
+    IMG_cards[true][i] = load_img("chain"
+      ..tostring(floor(i/10))..tostring(i%10)..".png")
+  end
+  for i=14,99 do
+    IMG_cards[true][i] = load_img("chain00.png")
+  end
+  IMG_character_icons = {}
+  for _, name in ipairs(characters) do
+    IMG_character_icons[name] = load_img(""..name.."/icon.png")
+  end
+  local MAX_SUPPORTED_PLAYERS = 2
+  IMG_char_sel_cursors = {}
+  for player_num=1,MAX_SUPPORTED_PLAYERS do
+    IMG_char_sel_cursors[player_num] = {}
+    for position_num=1,2 do
+      IMG_char_sel_cursors[player_num][position_num] = load_img("char_sel_cur_"..player_num.."P_pos"..position_num..".png")
+    end
+  end
+  IMG_char_sel_cursor_halves = {left={}, right={}}
+  for player_num=1,MAX_SUPPORTED_PLAYERS do
+    IMG_char_sel_cursor_halves.left[player_num] = {}
+    for position_num=1,2 do
+      local cur_width, cur_height = IMG_char_sel_cursors[player_num][position_num]:getDimensions()
+      local half_width, half_height = cur_width/2, cur_height/2 -- TODO: is these unused vars an error ??? -Endu
+      IMG_char_sel_cursor_halves["left"][player_num][position_num] = love.graphics.newQuad(0,0,half_width,cur_height,cur_width, cur_height)
+    end
+    IMG_char_sel_cursor_halves.right[player_num] = {}
+    for position_num=1,2 do
+      local cur_width, cur_height = IMG_char_sel_cursors[player_num][position_num]:getDimensions()
+      local half_width, half_height = cur_width/2, cur_height/2
+      IMG_char_sel_cursor_halves.right[player_num][position_num] = love.graphics.newQuad(half_width,0,half_width,cur_height,cur_width, cur_height)
+    end
+  end
+  character_display_names = {}
+  for _, original_name in ipairs(characters) do
+    name_txt_file = love.filesystem.newFile("assets/"..config.assets_dir.."/"..original_name.."/name.txt")
+    open_success, err = name_txt_file:open("r")
+    local display_name = name_txt_file:read(name_txt_file:getSize())
+    if display_name then
+      character_display_names[original_name] = display_name
+    else
+      character_display_names[original_name] = original_name
+    end
+  end
+  print("character_display_names: ")
+  for k,v in pairs(character_display_names) do
+    print(k.." = "..v)
+  end
+  character_display_names_to_original_names = {}
+  for k,v in pairs(character_display_names) do
+    character_display_names_to_original_names[v] = k
+  end
+end
+
+function panels_init()
+  IMG_panels = {}
+  IMG_panels_dirs = {}
+
+  IMG_metals = {}
+
+  local function load_panels_dir(dir, full_dir, default_dir)
+    default_dir = default_dir or "panels/"..default_panels_dir
+
+    IMG_panels[dir] = {}
+    IMG_panels_dirs[#IMG_panels_dirs+1] = dir
+
+    for i=1,8 do
+      IMG_panels[dir][i] = {}
+      for j=1,7 do
+        IMG_panels[dir][i][j] = load_img("panel"..tostring(i)..tostring(j)..".png",full_dir,default_dir)
+      end
+    end
+    IMG_panels[dir][9] = {}
+    for j=1,7 do
+      IMG_panels[dir][9][j] = load_img("panel00.png",full_dir,default_dir)
+    end
+
+    IMG_metals[dir] = { left = load_img("metalend0.png",full_dir,default_dir), 
+                        mid = load_img("metalmid.png",full_dir,default_dir), 
+                        right = load_img("metalend1.png",full_dir,default_dir),
+                        flash = load_img("garbageflash.png",full_dir,default_dir) }
+  end
+
+  if config.use_panels_from_assets_folder then
+    load_panels_dir(config.assets_dir, "assets/"..config.assets_dir)
+  else
+    -- default ones
+    load_panels_dir(default_panels_dir, "panels/"..default_panels_dir)
+
+    -- custom ones
+    local raw_dir_list = love.filesystem.getDirectoryItems("panels")
+    for k,v in ipairs(raw_dir_list) do
+      local start_of_v = string.sub(v,0,string.len(prefix_of_ignored_dirs))
+      if love.filesystem.getInfo("panels/"..v) and v ~= "Example folder structure" and v ~= default_panels_dir and start_of_v ~= prefix_of_ignored_dirs then
+        load_panels_dir(v, "panels/"..v)
+      end
+    end
+  end
 end
 
 -- Update all the card frames used for doing the card animation
@@ -248,6 +463,15 @@ local mask_shader = love.graphics.newShader [[
 function Stack.render(self)
   if self.canvas == nil then
     return
+  end
+
+  --setScissor(self.pos_x-100, self.pos_y-4, IMG_frame:getWidth()+300, IMG_frame:getHeight())
+  --I anticipate needing to put this back if garbage starts drawing above the frame
+  local mx,my
+  if config.debug_mode then
+    mx,my = love.mouse.getPosition()
+    mx = mx / GFX_SCALE
+    my = my / GFX_SCALE
   end
 
   local function frame_mask(x_pos, y_pos)
@@ -907,9 +1131,152 @@ function Stack.render_countdown(self)
   end
 end
 
+-- function Stack.render_gfx(self)
+  -- for key, gfx_item in pairs(self.gfx) do
+    -- drawQuad(IMG_particles[self.character], particle_quads[gfx_item["age"]], gfx_item["x"], gfx_item["y"])
+  -- end
+-- end
+
+function Stack.render_telegraph(self)
+  local telegraph_to_render 
+  
+  --if self.foreign then
+    --print("rendering foreign Player "..self.which.."'s self.garbage_target.telegraph")
+    --telegraph_to_render = self.garbage_target.telegraph
+  --else
+    --if self.garbage_target == self then
+      --print("rendering Player "..self.which.."'s self.telegraph")
+      telegraph_to_render = self.telegraph
+    --else
+      --print("rendering Player "..self.which.."'s self.incoming_telegraph")
+      --telegraph_to_render = self.incoming_telegraph
+      -- if self.which == 2 then
+        -- print("\ntelegraph_stoppers: "..json.encode(telegraph_to_render.stoppers))
+        -- print("telegraph garbage queue:")
+        -- print(telegraph_to_render.garbage_queue:to_string())
+        -- print("telegraph g_q chain in progress: "..tostring(true and telegraph_to_render.sender.chains.current))
+      -- end
+    --end
+  --end
+  -- print("\nrendering telegraph for player "..self.which)
+  -- if self.which == 1 then 
+    -- print(telegraph_to_render.garbage_queue:to_string())
+  -- end
+  local render_x = telegraph_to_render.pos_x
+  for frame_earned, attacks_this_frame in pairs(telegraph_to_render.attacks) do
+    -- print("frame_earned:")
+    -- print(frame_earned)
+    -- print(#card_animation)
+    -- print(self.CLOCK)
+    -- print(GARBAGE_TRANSIT_TIME)
+    local frames_since_earned = self.CLOCK - frame_earned
+    if frames_since_earned <= GARBAGE_TRANSIT_TIME then
+      if frames_since_earned <= #card_animation then
+        --don't draw anything yet, card animation is still in progress.
+      elseif frames_since_earned <= #card_animation + #telegraph_attack_animation_speed then
+        --draw telegraph attack animation, little loop down and to the side of origin.
+        for _, attack in ipairs(attacks_this_frame) do
+          for _k, garbage_block in ipairs(attack.stuff_to_send) do
+            if not garbage_block.destination_x then 
+              print("ZZZZZZZ")
+              garbage_block.destination_x = telegraph_to_render.pos_x + TELEGRAPH_BLOCK_WIDTH * telegraph_to_render.garbage_queue:get_idx_of_garbage(unpack(garbage_block))
+            end
+            if not garbage_block.x or not garbage_block.y then
+              garbage_block.x = (attack.origin_col-1) * 16 +telegraph_to_render.sender.pos_x
+              garbage_block.y = (11-attack.origin_row) * 16 + telegraph_to_render.sender.pos_y + telegraph_to_render.sender.displacement - card_animation[#card_animation]
+              garbage_block.origin_x = garbage_block.x
+              garbage_block.origin_y = garbage_block.y
+              garbage_block.direction = garbage_block.direction or sign(garbage_block.destination_x - garbage_block.origin_x) --should give -1 for left, or 1 for right
+              
+              for frame=1, frames_since_earned - #card_animation do
+                print("YYYYYYYYYYYY")
+                garbage_block.x = garbage_block.x + telegraph_attack_animation[garbage_block.direction][frame].dx
+                garbage_block.y = garbage_block.y + telegraph_attack_animation[garbage_block.direction][frame].dy
+              end
+            else
+              garbage_block.x = garbage_block.x + telegraph_attack_animation[garbage_block.direction][frames_since_earned-#card_animation].dx
+              garbage_block.y = garbage_block.y + telegraph_attack_animation[garbage_block.direction][frames_since_earned-#card_animation].dy
+            end
+            --print("DRAWING******")
+            --print(garbage_block.x..","..garbage_block.y)
+            draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y)
+            --draw(IMG_telegraph_attack[telegraph_to_render.sender.character], garbage_block.x, garbage_block.y)
+          end
+        end
+      elseif frames_since_earned < GARBAGE_TRANSIT_TIME then 
+        --move toward destination
+        for _, attack in ipairs(attacks_this_frame) do
+          for _k, garbage_block in ipairs(attack.stuff_to_send) do
+            --update destination
+            --garbage_block.frame_earned = frame_earned --this will be handy when we want to draw the telegraph garbage blocks
+            garbage_block.destination_x = render_x + TELEGRAPH_BLOCK_WIDTH * telegraph_to_render.garbage_queue:get_idx_of_garbage(unpack(garbage_block))
+            garbage_block.destination_y = garbage_block.destination_y or telegraph_to_render.pos_y - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING 
+            
+            local distance_to_destination = math.sqrt(math.pow(garbage_block.x-garbage_block.destination_x,2)+math.pow(garbage_block.y-garbage_block.destination_y,2))
+            if frames_since_earned == #card_animation + #telegraph_attack_animation_speed then
+              garbage_block.speed = distance_to_destination / (GARBAGE_TRANSIT_TIME-frames_since_earned)
+            end
+
+            if distance_to_destination <= (garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED) then
+              --just move it to it's destination
+              garbage_block.x, garbage_block.y = garbage_block.destination_x, garbage_block.destination_y
+            else
+              garbage_block.x = garbage_block.x - ((garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED)*(garbage_block.x-garbage_block.destination_x))/distance_to_destination
+              garbage_block.y = garbage_block.y - ((garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED)*(garbage_block.y-garbage_block.destination_y))/distance_to_destination
+            end
+            -- if self.which == 1 then
+              -- print("rendering P1's telegraph's attack animation")
+            -- end
+            draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y)
+          end
+        end
+      elseif frames_since_earned == GARBAGE_TRANSIT_TIME then
+      --arrived at target
+        for _, attack in ipairs(attacks_this_frame) do
+          for _k, garbage_block in ipairs(attack.stuff_to_send) do
+            local last_chain_in_queue = telegraph_to_render.garbage_queue.chain_garbage[telegraph_to_render.garbage_queue.chain_garbage.last]
+            print("telegraph_to_render.garbage_queue.chain_garbage.last: "..telegraph_to_render.garbage_queue.chain_garbage.last)
+            if garbage_block[4]--[[from_chain]] then
+              print("setting ghost_chain")
+              telegraph_to_render.garbage_queue.ghost_chain = (telegraph_to_render.garbage_queue.ghost_chain or 0) + 1
+            end
+          end
+        end
+      end
+    end
+    --then draw the telegraph's garbage queue, leaving an empty space until such a time as the attack arrives (earned_frame-GARBAGE_TRANSIT_TIME)
+    -- print("BBBBBB")
+    -- print("telegraph_to_render.garbage_queue.ghost_chain: "..(telegraph_to_render.garbage_queue.ghost_chain or "nil"))
+    local g_queue_to_draw = telegraph_to_render.garbage_queue:mkcpy()
+    --print("g_queue_to_draw.ghost_chain: "..(g_queue_to_draw.ghost_chain or "nil"))
+    local current_block = g_queue_to_draw:pop()
+    local draw_x = telegraph_to_render.pos_x
+    local draw_y = telegraph_to_render.pos_y
+
+    while current_block do
+      --TODO: create a way to draw telegraphs from right to left
+      if self.CLOCK - current_block.frame_earned >= GARBAGE_TRANSIT_TIME then
+        if not current_block[3]--[[is_metal]] then
+          draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images[current_block[2]--[[height]]][current_block[1]--[[width]]], draw_x, draw_y)
+        else
+          draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images["metal"], draw_x, draw_y)
+        end
+      end
+      draw_x = draw_x + TELEGRAPH_BLOCK_WIDTH
+      current_block = g_queue_to_draw:pop()
+    end
+  end
+  if telegraph_to_render.garbage_queue.ghost_chain then
+    print("SHOULD BE DRAWING GHOST_CHAIN - SIZE: "..telegraph_to_render.garbage_queue.ghost_chain)
+    draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images[telegraph_to_render.garbage_queue.ghost_chain][6], telegraph_to_render.pos_x, telegraph_to_render.pos_y)
+  end
+
+end
+
 -- Draw the pause menu
 function draw_pause()
   draw(themes[config.theme].images.pause, 0, 0)
   gprintf(loc("pause"), 0, 330, canvas_width, "center", nil, 1, large_font)
   gprintf(loc("pl_pause_help"), 0, 360, canvas_width, "center", nil, 1)
 end
+
