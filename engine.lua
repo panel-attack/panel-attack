@@ -89,7 +89,7 @@ Stack =
 
     s.garbage_to_send = {}
 
-    s:moveForPlayerNumber(1)
+    s:moveForPlayerNumber(which)
 
     s.panel_buffer = ""
     s.gpanel_buffer = ""
