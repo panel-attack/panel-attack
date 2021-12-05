@@ -283,6 +283,9 @@ function Stack.render(self)
 
   -- draw inside stack's frame canvas
   local portrait_w, portrait_h = characters[self.character].images["portrait"]:getDimensions()
+  if not P1 == self and characters[self.character].images["portrait2"] then
+    portrait_w, portrait_h = characters[self.character].images["portrait2"]:getDimensions()
+  end
 
   -- Draw the portrait (with fade and inversion if needed)
   if self.do_countdown == false then
@@ -300,7 +303,11 @@ function Stack.render(self)
     draw(characters[self.character].images["portrait"], 4, 4, 0, 96 / portrait_w, 192 / portrait_h)
     grectangle_color("fill", 4, 4, 96, 192, 0, 0, 0, self.portraitFade)
   else
-    draw(characters[self.character].images["portrait"], 100, 4, 0, (96 / portrait_w) * -1, 192 / portrait_h)
+    if not characters[self.character].images["portrait2"] then
+      draw(characters[self.character].images["portrait"], 100, 4, 0, (96/portrait_w)*-1, 192/portrait_h)
+    else
+      draw(characters[self.character].images["portrait2"], 4, 4, 0, (96/portrait_w), 192/portrait_h)
+    end
     grectangle_color("fill", 4, 4, 96, 192, 0, 0, 0, self.portraitFade)
   end
 
