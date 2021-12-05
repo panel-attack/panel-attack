@@ -1370,6 +1370,40 @@ function select_screen.main()
       stage_loader_wait()
       P1:starting_state()
       return main_dumb_transition, {main_local_vs_yourself, "", 0, 0}
+    -- Handle Vs Computer Setup
+    elseif cursor_data[1].state.ready and select_screen.character_select_mode == "2p_local_computer_vs" then
+      GAME.match = Match("vs", GAME.battleRoom)
+      if false then --both computers
+        P1 = Stack(1, GAME.match, false, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+        P1.max_runs_per_frame = 1
+        GAME.match.P1CPU = ComputerPlayer("Hard")
+      else
+        P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+      end
+      GAME.match.P1 = P1
+      P2 = Stack(2, GAME.match, false, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+      P2.max_runs_per_frame = 1
+      GAME.match.P2 = P2
+      GAME.match.P2CPU = ComputerPlayer("Dev")
+      P1.garbage_target = P2
+      P2.garbage_target = P1
+      current_stage = cursor_data[math.random(1, 2)].state.stage
+      stage_loader_load(current_stage)
+      stage_loader_wait()
+      P2:moveForPlayerNumber(2)
+      -- TODO: this does not correctly implement starting configurations.
+      -- Starting configurations should be identical for visible blocks, and
+      -- they should not be completely flat.
+      --
+      -- In general the block-generation logic should be the same as the server's, so
+      -- maybe there should be only one implementation.
+      make_local_panels(P1, "000000")
+      make_local_gpanels(P1, "000000")
+      make_local_panels(P2, "000000")
+      make_local_gpanels(P2, "000000")
+      P1:starting_state()
+      P2:starting_state()
+      return main_dumb_transition, {main_local_vs, "", 0, 0}
     -- Handle two player vs game setup
     elseif cursor_data[1].state.ready and select_screen.character_select_mode == "2p_local_vs" and cursor_data[2].state.ready then
       GAME.match = Match("vs", GAME.battleRoom)

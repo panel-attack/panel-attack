@@ -77,7 +77,9 @@ function fmainloop()
   if TESTS_ENABLED then
     -- Run all unit tests now that we have everything loaded
     require("ServerQueueTests")
+    require("PriorityQueueTests")
     require("StackTests")
+    require("ComputerPlayerTests")
   end
 
   while true do
@@ -166,6 +168,7 @@ do
       --{loc("mm_2_vs_online", "(development-use only)"), main_net_vs_setup, {"localhost"}},
       --{loc("mm_2_vs_online", "LittleEndu's server"), main_net_vs_setup, {"51.15.207.223"}},
       {loc("mm_2_vs_online", "server for ranked Ex Mode"), main_net_vs_setup, {"exserver.panelattack.com", 49568}},
+      {"Vs Computer", main_local_vs_computer_setup},
       {loc("mm_2_vs_local"), main_local_vs_setup},
       {loc("mm_replay_browser"), replay_browser.main},
       {loc("mm_configure"), main_config_input},
@@ -1175,6 +1178,19 @@ function main_local_vs_setup()
   return select_screen.main
 end
 
+-- sets up globals for local vs computer
+function main_local_vs_computer_setup()
+  GAME.battleRoom = BattleRoom()
+  currently_spectating = false
+  my_name = config.name or "Player 1"
+  op_name = "Computer"
+  op_state = nil
+  my_player_number = 1
+  op_player_number = 2
+  select_screen.character_select_mode = "2p_local_computer_vs"
+  return select_screen.main
+end
+
 -- local 2pvs mode
 function main_local_vs()
 
@@ -1223,6 +1239,7 @@ function main_local_vs_yourself_setup(trainingModeSettings)
   GAME.battleRoom.playerNames[2] = nil
   my_player_number = 1
   op_state = nil
+  my_player_number = 1
   select_screen.character_select_mode = "1p_vs_yourself"
   return select_screen.main
 end
