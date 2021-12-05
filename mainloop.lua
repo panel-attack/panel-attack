@@ -628,7 +628,11 @@ function main_net_vs_lobby()
           lobby_menu:show_controls(true)
         end
         leaderboard_report = msg.leaderboard_report
-        for k, v in ipairs(leaderboard_report) do
+        local rev_leaderboard_report = {}
+        for i = #leaderboard_report, 1, -1 do
+          rev_leaderboard_report[#rev_leaderboard_report + 1] = leaderboard_report[i]
+        end
+        for k, v in ipairs(rev_leaderboard_report) do
           playerRatingMap[v.user_name] = v.rating
           if v.is_you then
             my_rank = k
