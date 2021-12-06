@@ -1690,8 +1690,8 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
 
   while true do
     GAME.match:render()
-    gprint(text, (canvas_width - font:getWidth(text)) / 2, (canvas_height - font:getHeight()) / 2)
-    gprint(button_text, (canvas_width - font:getWidth(button_text)) / 2, ((canvas_height - font:getHeight()) / 2) + 30)
+    gprint(text, (canvas_width - font:getWidth(text)) / 2, (canvas_height - font:getHeight()) / 20)
+    gprint(button_text, (canvas_width - font:getWidth(button_text)) / 2, ((canvas_height - font:getHeight()) / 20) + 30)
     wait()
     local ret = nil
     variable_step(
