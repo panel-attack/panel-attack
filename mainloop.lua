@@ -1699,10 +1699,10 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
         -- Fade the music out over time
         local fadeMusicLength = 3 * 60
         if t <= fadeMusicLength then
-          set_music_fade_percentage((fadeMusicLength - t) / fadeMusicLength)
+          setMusicFadePercentage((fadeMusicLength - t) / fadeMusicLength)
         else
           if t == fadeMusicLength + 1 then
-            set_music_fade_percentage(1) -- reset the music back to normal config volume
+            setMusicFadePercentage(1) -- reset the music back to normal config volume
             stop_the_music()
           end
         end
@@ -1741,7 +1741,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
 
         -- if conditions are met, leave the game over screen
         if t >= timemin and ((t >= timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) or left_select_menu then
-          set_music_fade_percentage(1) -- reset the music back to normal config volume
+          setMusicFadePercentage(1) -- reset the music back to normal config volume
           stop_all_audio()
           SFX_GameOver_Play = 0
           analytics.game_ends(P1.analytic)
