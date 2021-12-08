@@ -76,7 +76,7 @@ config = {
 
 	ranked                        = true,
 
-	vsync                         = true,
+	vsync                         = false,
 
 	use_music_from                = "either",
 	-- Level (2P modes / 1P vs yourself mode)
