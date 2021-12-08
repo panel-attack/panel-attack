@@ -19,6 +19,7 @@ local other_images = {
   "filler2",
   "flash",
   "portrait",
+  "portrait2",
   "burst",
   "fade"
 }
@@ -39,6 +40,7 @@ local defaulted_images = {
   filler2 = true,
   flash = true,
   portrait = true,
+  portrait2 = false,
   burst = true,
   fade = true
 } -- those images will be defaulted if missing
