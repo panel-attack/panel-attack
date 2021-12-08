@@ -29,6 +29,7 @@ Note: non-optional data that are missing will automatically get replaced by defa
 	- id: unique identifier of this stage, this id should be specific (see note). [IF MISSING YOUR STAGE WILL BE IGNORED!] 
 	- (sub_ids): identifiers for other stages, this allows you to define a stage bundle that encompasses multiple other stages (picked at random)
 	- (visible): true/false, make it so the stage is automatically hidden in the select screen (useful for stage bundles)
+	- (music_style): The style of music to use, options: "normal"(default), "dynamic"(normal music and dynamic music will maintain the same play time stamp and fade seamlessly)
 
 Note: providing a specific, long enough id is a very good idea so that people renaming your mods folders still get properly match with other users regarding your mods
 e.g. "mystage_myname"

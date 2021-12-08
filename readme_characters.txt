@@ -25,6 +25,8 @@ Note: non-optional data that is missing will automatically get replaced by defau
 	- (popfx_rotation): If this option set to true, the burst popfx up, down, left, and right particles rotate to point to the direction they are moving in. Default is false.
 	- (burst_scale): The scale of the burst popfx, default is 1, 2 means twice the size, 0.5 half the size, etc.
 	- (fade_scale): The scale of the fade popfx, default is 1, 2 means twice the size, 0.5 half the size, etc.
+	- (music_style): The style of music to use, options: "normal"(default), "dynamic"(normal music and dynamic music will maintain the same play time stamp and fade seamlessly)
+
 Note: providing a specific, long enough id is a very good idea so that people renaming your mods folders still get properly match with other users regarding your mods. e.g. "mycharacter_myname"
 
 ~~ [.png, .jpg] ~~

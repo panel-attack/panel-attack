@@ -54,14 +54,19 @@ function stop_the_music()
   music_t = {}
 end
 
--- Set all the playing music files to the given percentage from their normal config volume
-function set_music_fade_percentage(percentage)
-  --print(debug.traceback(""))
-  --print(percentage * config.music_volume / 100)
-  for k, v in pairs(currently_playing_tracks) do
+
+-- Set the given music files to the given percentage from their normal config volume
+function setFadePercentageForGivenTracks(percentage, tracks)
+  for _, v in pairs(tracks) do
     v:setVolume(percentage * config.music_volume / 100)
   end
 end
+
+-- Set all the playing music files to the given percentage from their normal config volume
+function setMusicFadePercentage(percentage)
+  setFadePercentageForGivenTracks(percentage, currently_playing_tracks)
+end
+
 -- creates a music track
 local function make_music_t(source, loop)
   return {t = source, l = loop or false}
