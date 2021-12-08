@@ -23,6 +23,7 @@ Stage =
     s.musics = {} -- music
     s.fully_loaded = false
     s.is_visible = true
+    s.music_style = "normal"
   end
 )
 
@@ -53,6 +54,11 @@ function Stage.json_init(self)
       self.is_visible = read_data.visible
     elseif read_data.visible and type(read_data.visible) == "string" then
       self.is_visible = read_data.visible == "true"
+    end
+
+    --music style
+    if read_data.music_style and type(read_data.music_style) == "string" then
+      self.music_style = read_data.music_style
     end
 
     return true
