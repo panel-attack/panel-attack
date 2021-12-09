@@ -263,7 +263,7 @@ function options.main(starting_idx)
     --[[2]] {"master_volume", "op_vol", config.master_volume, "numeric", 0, 100, normal_music_for_sound_option, true, nil, true},
     --[[3]] {"sfx_volume", "op_vol_sfx", config.SFX_volume, "numeric", 0, 100, themes[config.theme].sounds.cur_move, true},
     --[[4]] {"music_volume", "op_vol_music", config.music_volume, "numeric", 0, 100, normal_music_for_sound_option, true, nil, true},
-    --[[5]] {"vsync", "op_vsync", on_off_text[config.vsync], "bool", true, nil, nil, false},
+    --[[5]] {"vsync", "op_vsync", on_off_text[config.vsync], "bool", false, nil, nil, false},
     --[[6]] {"debug", "op_debug", on_off_text[config.debug_mode], "bool", false, nil, nil, false},
     --[[7]] {
       "replays",
