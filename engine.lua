@@ -1563,7 +1563,7 @@ function Stack.PdP(self)
             local normalMusic = {musics_to_use["normal_music"], musics_to_use["normal_music_start"]}
             local dangerMusic = {musics_to_use["danger_music"], musics_to_use["danger_music_start"]}
               
-            if #currently_playing_tracks == 0 then
+            if not self.fade_music_clock or #currently_playing_tracks == 0 then
               self.fade_music_clock = fadeLength
               find_and_add_music(musics_to_use, "normal_music")
               find_and_add_music(musics_to_use, "danger_music")
