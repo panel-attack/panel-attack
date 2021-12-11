@@ -95,6 +95,7 @@ Theme =
     self.multibar_frame_Scale = 1 -- the scale size of the multibar
     self.multibar_Pos = {106, 1148} -- the position of the multibar
     self.multibar_Scale = 1 -- the scale size of the multibar
+    self.multibar_is_absolute = false -- if the multibar should render in absolute scale
   end
 )
 
@@ -656,6 +657,11 @@ function Theme.json_init(self)
   -- Multibar scale
   if read_data.multibar_Scale and type(read_data.multibar_Scale) == "number" then
     self.multibar_Scale = read_data.multibar_Scale
+  end
+
+  -- Multibar is absolute
+  if read_data.multibar_is_absolute and type(read_data.multibar_is_absolute) == "boolean" then
+    self.multibar_is_absolute = read_data.multibar_is_absolute
   end
 end
 
