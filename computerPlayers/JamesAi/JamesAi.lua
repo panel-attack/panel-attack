@@ -85,6 +85,10 @@ function JamesAi.setConfig(self, config)
     end
 end
 
+function JamesAi.updateStack(self, stack)
+    self.stack = stack
+  end
+
 --inputs directly as variables cause there are no input devices
 local waitInput = base64encode[0 + 1]
 local rightInput = base64encode[1 + 1]
@@ -590,10 +594,6 @@ function JamesAi.expandValue(self, value, depth)
   local depthMultiplier = 1.0
   local result = value * depth
   return result
-end
-
-function JamesAi.updateStack(self, stack)
-  self.stack = self:copyMatch(stack)  
 end
 
 function JamesAi.initThink(self, idleCount)
