@@ -27,13 +27,13 @@ function Match.matchOutcome(self)
     results["outcome_claim"] = 0
   elseif gameResult == -1 then -- opponent wins
     results["winSFX"] = self.P2:pick_win_sfx()
-    results["end_text"] =  loc("ss_p_wins", op_name)
+    results["end_text"] =  loc("ss_p_wins", GAME.battleRoom.playerNames[2])
     -- win_counts will get overwritten by the server in net games
     GAME.battleRoom.playerWinCounts[P2.player_number] = GAME.battleRoom.playerWinCounts[P2.player_number] + 1
     results["outcome_claim"] = P2.player_number
   elseif P2.game_over_clock == self.gameEndedClock then -- client wins
     results["winSFX"] = self.P1:pick_win_sfx()
-    results["end_text"] =  loc("ss_p_wins", my_name)
+    results["end_text"] =  loc("ss_p_wins", GAME.battleRoom.playerNames[1])
     -- win_counts will get overwritten by the server in net games
     GAME.battleRoom.playerWinCounts[P1.player_number] = GAME.battleRoom.playerWinCounts[P1.player_number] + 1
     results["outcome_claim"] = P1.player_number
@@ -66,13 +66,13 @@ function Match.render(self)
   -- Draw VS HUD
   if self.battleRoom then
     -- P1 username
-    gprint((my_name or ""), P1.score_x + themes[config.theme].name_Pos[1], P1.score_y + themes[config.theme].name_Pos[2])
+    gprint((GAME.battleRoom.playerNames[1] or ""), P1.score_x + themes[config.theme].name_Pos[1], P1.score_y + themes[config.theme].name_Pos[2])
     if P2 then
       -- P1 win count graphics
       draw_label(themes[config.theme].images.IMG_wins, (P1.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
       draw_number(GAME.battleRoom.playerWinCounts[P1.player_number], themes[config.theme].images.IMG_timeNumber_atlas, 12, P1_win_quads, P1.score_x + themes[config.theme].win_Pos[1], P1.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale, "center")
       -- P2 username
-      gprint((op_name or ""), P2.score_x + themes[config.theme].name_Pos[1], P2.score_y + themes[config.theme].name_Pos[2])
+      gprint((GAME.battleRoom.playerNames[2] or ""), P2.score_x + themes[config.theme].name_Pos[1], P2.score_y + themes[config.theme].name_Pos[2])
       -- P2 win count graphics
       draw_label(themes[config.theme].images.IMG_wins, (P2.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P2.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
       draw_number(GAME.battleRoom.playerWinCounts[P2.player_number], themes[config.theme].images.IMG_timeNumber_atlas, 12, P2_win_quads, P2.score_x + themes[config.theme].win_Pos[1], P2.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale, "center")
