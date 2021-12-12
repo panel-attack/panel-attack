@@ -79,7 +79,7 @@ function fmainloop()
     require("ServerQueueTests")
     require("PriorityQueueTests")
     require("StackTests")
-    require("ComputerPlayerTests")
+    require("computerPlayers.JamesAi.JamesAiTests")
   end
 
   while true do
