@@ -16,7 +16,7 @@ stack2.do_countdown = false
 stack.garbage_target = stack2
 stack2.garbage_target = stack
 
-local cpu = ComputerPlayer("Dev")
+local cpu = ComputerPlayer("JamesAi", "Dev")
 
 
 assert(characters ~= nil, "no characters")

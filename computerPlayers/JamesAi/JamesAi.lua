@@ -3,7 +3,6 @@ require("profiler")
 
 local MONTE_CARLO_RUN_COUNT = 1
 local DEFAULT_CURSOR_MOVE_WAIT_TIME = 2
-local PROFILE_TIME = 400
 local MAX_CLOCK_PLAYOUT = 10
 local EXPAND_COUNT = 3
 local MAX_THINK_TIME = 1 / 130
@@ -20,7 +19,7 @@ local STACK_ROW_EMPTY_ALLOWING_RAISE = 3
 local cpuConfigs = {
   ["Hard"] =
   {
-    log = 0,
+    log = 5,
     profiled = false,
     inputSpeed = 5
   },
@@ -54,28 +53,37 @@ local cpuConfigs = {
   }
 }
 
-CPUConfig = class(function(self, actualConfig)
-  self.log = actualConfig["log"]
-  self.inputSpeed = actualConfig["inputSpeed"]
-  self.actionsPerThink = actualConfig["actionsPerThink"] or nil
-  self.cursorMoveWaitTime = actualConfig["cursorMoveWaitTime"] or DEFAULT_CURSOR_MOVE_WAIT_TIME
-  self.profiled = actualConfig["profiled"]
-  self.heuristicPanelScore = actualConfig["heuristicPanelScore"] or 0
-  self.cursorMoveDistance = actualConfig["cursorMoveDistance"] or DEFAULT_CURSOR_MOVE_DISTANCE
+JamesAi = class(function(self)  
+    self.name = "JamesAi"
+    self.stack = nil
+    self.config = nil
 end)
 
-ComputerPlayer = class(function(self, configName)
-  local config = cpuConfigs[configName]
+function JamesAi.initializeConfig(self, config)
+    self.config.log = config["log"]
+    self.config.inputSpeed = config["inputSpeed"]
+    self.config.actionsPerThink = config["actionsPerThink"] or nil
+    self.config.cursorMoveWaitTime = config["cursorMoveWaitTime"] or DEFAULT_CURSOR_MOVE_WAIT_TIME
+    self.config.profiled = config["profiled"]
+    self.config.heuristicPanelScore = config["heuristicPanelScore"] or 0
+    self.config.cursorMoveDistance = config["cursorMoveDistance"] or DEFAULT_CURSOR_MOVE_DISTANCE
+end
 
-  if config then
-      print("cpu config successfully loaded")
-      self.config = CPUConfig(config)
-      self.targetInputTime = nil
-      self.thinkRoutine = nil
-  else
-      error("cpu config is nil")
-  end
-end)
+function JamesAi.getConfigs()
+    return cpuConfigs
+end
+
+function JamesAi.setConfig(self, config)
+    if config then
+        print("cpu config successfully loaded")
+        self.config = CPUConfig(config)
+        self:initializeConfig(config)
+        self.targetInputTime = nil
+        self.thinkRoutine = nil
+    else
+        error("cpu config is nil")
+    end
+end
 
 --inputs directly as variables cause there are no input devices
 local waitInput = base64encode[0 + 1]
@@ -96,7 +104,7 @@ local doubleInsert = 512
 --the CPU should make sure to save up enough idleframes for all moves and then perform the inputs in one go
 local stealth = 1024
 
-function ComputerPlayer.isMovement(self, input)
+function JamesAi.isMovement(self, input)
   --innocently assuming we never input a direction together with something else unless it's a special that includes a timed swap anyway (doubleInsert,stealth)
   if input == rightInput or input == leftInput or input == upInput or input == downInput then
       return true
@@ -106,37 +114,17 @@ end
 
 -- a glorified print that can be turned on/off via the cpu configuration
 -- high level means very detailed logging
-function ComputerPlayer.cpuLog(self, level, ...)
+function JamesAi.cpuLog(self, level, ...)
   if self.config.log >= level then
       print(...)
   end
 end
 
-function ComputerPlayer.run(self, stack)
-  if stack:game_ended() == false then
-    local nextInput = self:getInput(stack)
-    if nextInput then
-      stack.input_buffer = stack.input_buffer .. nextInput
-    end
-    assert(#stack.input_buffer > 0, "Should have input from computer")
-  end
-end
-
-function ComputerPlayer.getInput(self, stack)
-  local result
-  if self.config.profiled and self.profiler == nil and stack.which == 2 then
-    local launch_type = arg[2]
-    if launch_type == "test" or launch_type == "debug" then
-      error("Can't profile while debugging")
-    end
-    self.profiler = newProfiler()
-    self.profiler:start()
-  end
-
-  if self.targetInputTime == nil and #stack.input_buffer <= self.config.inputSpeed then
-    self.targetInputTime = stack.CLOCK + self.config.inputSpeed
-    local idleCount = self.config.inputSpeed - #stack.input_buffer
-    self:initThink(stack, idleCount)
+function JamesAi.getInput(self)
+  if self.targetInputTime == nil and #self.stack.input_buffer <= self.config.inputSpeed then
+    self.targetInputTime = self.stack.CLOCK + self.config.inputSpeed
+    local idleCount = self.config.inputSpeed - #self.stack.input_buffer
+    self:initThink(idleCount)
     self.thinkRoutine = coroutine.create(self.think)
   end
 
@@ -147,16 +135,16 @@ function ComputerPlayer.getInput(self, stack)
       error(err .. "\n" .. debug.traceback(mainloop))
     end
 
-    if self.targetInputTime == stack.CLOCK then
+    if self.targetInputTime == self.stack.CLOCK then
       local results = self:currentResult()
       inputBuffer = results[1]
       assert(inputBuffer and inputBuffer ~= "", "no result action")
       self.targetInputTime = nil
       self:clearThink()
 
-      self:cpuLog(1, "Computer " .. stack.which .. " inputting " .. inputBuffer .. " at Clock: " .. stack.CLOCK .. " with value " .. results[2])
+      self:cpuLog(1, "Computer " .. self.stack.which .. " inputting " .. inputBuffer .. " at Clock: " .. self.stack.CLOCK .. " with value " .. results[2])
     else
-      if #stack.input_buffer > 0 then
+      if #self.stack.input_buffer > 0 then
         self:cpuLog(4, "Computer thinking while using up inputs")
       else
         self:cpuLog(4, "Computer thinking while idling")
@@ -164,23 +152,14 @@ function ComputerPlayer.getInput(self, stack)
       end
     end
   else
-    assert(#stack.input_buffer > 0, "expected input")
-    self:cpuLog(4, "Computer not thinking, already has large input count: " .. #stack.input_buffer)
-  end
-
-  if self.profiler and stack.CLOCK > PROFILE_TIME then
-    self.profiler:stop()
-    local outfile = io.open( "profile.txt", "w+" )
-    self.profiler:report( outfile )
-    outfile:close()
-    self.config.profiled = false
-    self.profiler = nil
+    assert(#self.stack.input_buffer > 0, "expected input")
+    self:cpuLog(4, "Computer not thinking, already has large input count: " .. #self.stack.input_buffer)
   end
 
   return inputBuffer
 end
 
-function ComputerPlayer.allActions(self, stack, actionsAllowed)
+function JamesAi.allActions(self, stack, actionsAllowed)
   local actions = {}
 
   --actions[#actions + 1] = waitInput
@@ -203,7 +182,7 @@ function ComputerPlayer.allActions(self, stack, actionsAllowed)
           if stack:canSwap(row, column) then
             if stack.panels[row][column].color ~= stack.panels[row][column + 1].color then
               -- We wait one frame after swapping because thats when the swap actually happens
-              actions[#actions + 1] = self:moveToRowColumnAction(stack, row, column) .. swapInput .. string.rep(waitInput, 5)
+              actions[#actions + 1] = self:moveToRowColumnAction(row, column) .. swapInput .. string.rep(waitInput, 5)
             end
           end
         end
@@ -214,7 +193,7 @@ function ComputerPlayer.allActions(self, stack, actionsAllowed)
   return actions
 end
 
-function ComputerPlayer.idleAction(self, idleCount)
+function JamesAi.idleAction(self, idleCount)
   local result = ""
   idleCount = idleCount or 1
   for idx = 1, idleCount do
@@ -223,10 +202,10 @@ function ComputerPlayer.idleAction(self, idleCount)
   return result
 end
 
-function ComputerPlayer.moveToRowColumnAction(self, stack, row, column)
+function JamesAi.moveToRowColumnAction(self, row, column)
 
-  local cursorRow = stack.cur_row
-  local cursorColumn = stack.cur_col
+  local cursorRow = self.stack.cur_row
+  local cursorColumn = self.stack.cur_col
 
   local result = ""
   local cursorWaitTime = self.config.cursorMoveWaitTime
@@ -246,7 +225,7 @@ function ComputerPlayer.moveToRowColumnAction(self, stack, row, column)
   return result
 end
 
-function ComputerPlayer.panelCount(self, stack)
+function JamesAi.panelCount(self, stack)
   local panelCount = 0
 
   for column = 1, stack.width - 1, 1 do
@@ -259,7 +238,7 @@ function ComputerPlayer.panelCount(self, stack)
   return panelCount
 end
 
-function ComputerPlayer.rowEmpty(self, stack, row)
+function JamesAi.rowEmpty(self, stack, row)
   local allBlank = true
   for col = 1, stack.width do
     if stack.panels[row][col].color ~= 0 then
@@ -270,7 +249,7 @@ function ComputerPlayer.rowEmpty(self, stack, row)
   return allBlank
 end
 
-function ComputerPlayer.copyMatch(self, oldStack)
+function JamesAi.copyMatch(self, oldStack)
 
   -- TODO pass in match
   -- TODO not copying prev_states means we can't simulate rollback of garbage, but copying is expensive?
@@ -293,24 +272,24 @@ function ComputerPlayer.copyMatch(self, oldStack)
   return stack
 end
 
-function ComputerPlayer.addAction(self, stack, action)
+function JamesAi.addAction(self, stack, action)
   stack.input_buffer = stack.input_buffer .. action
 end
 
-function ComputerPlayer.panelsScore(self, stack)
+function JamesAi.panelsScore(self)
 
   local score = 0
-  local panels = stack.panels
+  local panels = self.stack.panels
 
   local colorColumns = {}
 
-  for color = 1, stack.NCOLORS do
+  for color = 1, self.stack.NCOLORS do
     colorColumns[color] = {total=0, columns={}}
   end
   colorColumns[8] = {total=0, columns={}}
 
-  for row = 1, stack.height do
-    for col = 1, stack.width do
+  for row = 1, self.stack.height do
+    for col = 1, self.stack.width do
       local color = panels[row][col].color
       if color > 0 and color ~= 9 then
         if not panels[row][col]:exclude_match() then
@@ -350,140 +329,140 @@ function ComputerPlayer.panelsScore(self, stack)
   return score / 200
 end
 
-function ComputerPlayer.heuristicValueForStack(self, stack)
+function JamesAi.heuristicValueForStack(self)
 
 
-  local gameResult = stack:gameResult()
+  local gameResult = self.stack:gameResult()
   if gameResult and gameResult == 1 then
     return 1
   elseif gameResult and gameResult == -1 then
     return 0
-  elseif stack:game_ended() ~= stack.garbage_target:game_ended() then
+  elseif self.stack:game_ended() ~= self.stack.garbage_target:game_ended() then
     error("Stacks differ in game over")
-  elseif stack.CLOCK ~= stack.garbage_target.CLOCK then
+  elseif self.stack.CLOCK ~= self.stack.garbage_target.CLOCK then
     error("Stacks not simulated equal")
   end
 
   local result = 0.5 + math.random() * HEURISTIC_RANDOM_WEIGHT -- small amount of randomness
 
-  if stack.stop_time > 0 then
+  if self.stack.stop_time > 0 then
     local maxStopTime = 1000 -- TODO
-    local value = (stack.stop_time / maxStopTime) * HEURISTIC_STOP_TIME_WEIGHT
+    local value = (self.stack.stop_time / maxStopTime) * HEURISTIC_STOP_TIME_WEIGHT
     result = result + value
     self:cpuLog(4, "stop time: " .. value)
   end
 
-  if stack.pre_stop_time > 0 then
-    local maxPreStop = stack.FRAMECOUNT_MATCH + stack.FRAMECOUNT_POP * (100) --TODO
-    local value = (stack.pre_stop_time / maxPreStop) * HEURISTIC_PRE_STOP_TIME_WEIGHT
+  if self.stack.pre_stop_time > 0 then
+    local maxPreStop = self.stack.FRAMECOUNT_MATCH + self.stack.FRAMECOUNT_POP * (100) --TODO
+    local value = (self.stack.pre_stop_time / maxPreStop) * HEURISTIC_PRE_STOP_TIME_WEIGHT
     result = result + value
     self:cpuLog(4, "pre_stop_time: " .. value)
   end
   
   if self.config.heuristicPanelScore ~= 0 then
-    local localResult = self:panelsScore(stack) * self.config.heuristicPanelScore
+    local localResult = self:panelsScore() * self.config.heuristicPanelScore
     self:cpuLog(4, "panelScore: " .. localResult)
     result = result + localResult
   end
 
-  if self:rowEmpty(stack, STACK_LOW_ROW) then
-    local panelCount = self:panelCount(stack)
-    local maxPanels = (STACK_LOW_ROW * stack.width)
+  if self:rowEmpty(self.stack, STACK_LOW_ROW) then
+    local panelCount = self:panelCount()
+    local maxPanels = (STACK_LOW_ROW * self.stack.width)
     local value = (maxPanels - panelCount) / maxPanels * HEURISTIC_LOW_PANEL_COUNT_WEIGHT
     result = result + value
-    self:cpuLog(4, "Computer: " .. stack.CLOCK .. " low panel count " .. value)
+    self:cpuLog(4, "Computer: " .. self.stack.CLOCK .. " low panel count " .. value)
   end
 
   -- for index = 8, 12, 1 do
-  --   if self:rowEmpty(stack, index) == false then
+  --   if self:rowEmpty(self.stack, index) == false then
   --     result = result + HEURISTIC_NEAR_TOP_OUT_WEIGHT
-  --     self:cpuLog(2, "Computer: " .. stack.CLOCK .. " near top out")
+  --     self:cpuLog(2, "Computer: " .. self.stack.CLOCK .. " near top out")
   --   end
   -- end
 
   return result
 end
 
-function ComputerPlayer.heuristicValueForIdleFilledStack(self, stack)
-  self:fillIdleActions(stack)
-  self:simulateTillEqual(stack)
-  return self:heuristicValueForStack(stack)
+function JamesAi.heuristicValueForIdleFilledStack(self)
+  self:fillIdleActions()
+  self:simulateTillEqual()
+  return self:heuristicValueForStack()
 end
 
-function ComputerPlayer.simulateAllInputs(self, stack)
-  stack:run(#stack.input_buffer)
+function JamesAi.simulateAllInputs(self)
+  self.stack:run(#self.stack.input_buffer)
 end
 
-function ComputerPlayer.simulateTillEqual(self, stack)
-  --local runAmount = math.min(#stack.input_buffer, #stack.garbage_target.input_buffer)
-  local goal = math.min(stack.CLOCK + #stack.input_buffer, stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer)
-  stack:run(goal - stack.CLOCK)
-  stack.garbage_target:run(goal - stack.garbage_target.CLOCK)
+function JamesAi.simulateTillEqual(self)
+  --local runAmount = math.min(#self.stack.input_buffer, #self.stack.garbage_target.input_buffer)
+  local goal = math.min(self.stack.CLOCK + #self.stack.input_buffer, self.stack.garbage_target.CLOCK + #self.stack.garbage_target.input_buffer)
+  self.stack:run(goal - self.stack.CLOCK)
+  self.stack.garbage_target:run(goal - self.stack.garbage_target.CLOCK)
 
-  if stack:game_ended() == false and stack.CLOCK ~= goal then
+  if self.stack:game_ended() == false and self.stack.CLOCK ~= goal then
     error("us goal wrong")
   end
-  if stack.garbage_target:game_ended() == false and stack.garbage_target.CLOCK ~= goal then
+  if self.stack.garbage_target:game_ended() == false and self.stack.garbage_target.CLOCK ~= goal then
     error("opponent goal wrong")
   end
 end
 
-function ComputerPlayer.fillIdleActions(self, stack)
-  while stack.CLOCK + #stack.input_buffer < stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer do
-    local count = (stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer) - (stack.CLOCK + #stack.input_buffer)
-    self:addAction(stack, self:idleAction(count))
+function JamesAi.fillIdleActions(self)
+  while self.stack.CLOCK + #self.stack.input_buffer < self.stack.garbage_target.CLOCK + #self.stack.garbage_target.input_buffer do
+    local count = (self.stack.garbage_target.CLOCK + #self.stack.garbage_target.input_buffer) - (self.stack.CLOCK + #self.stack.input_buffer)
+    self:addAction(self.stack, self:idleAction(count))
   end 
 
-  while stack.CLOCK + #stack.input_buffer > stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer do
-    local count = (stack.CLOCK + #stack.input_buffer) - (stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer)
-    self:addAction(stack.garbage_target, self:idleAction(count))
+  while self.stack.CLOCK + #self.stack.input_buffer > self.stack.garbage_target.CLOCK + #self.stack.garbage_target.input_buffer do
+    local count = (self.stack.CLOCK + #self.stack.input_buffer) - (self.stack.garbage_target.CLOCK + #self.stack.garbage_target.input_buffer)
+    self:addAction(self.stack.garbage_target, self:idleAction(count))
   end 
 end
 
 --[[
-function ComputerPlayer.fillRandomActions(self, stack)
-  while stack.CLOCK + #stack.input_buffer <= stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer do
-    local randomAction = uniformly(self:allActions(stack))
-    self:addAction(stack, randomAction)
+function JamesAi.fillRandomActions(self)
+  while self.stack.CLOCK + #self.stack.input_buffer <= self.stack.garbage_target.CLOCK + #self.stack.garbage_target.input_buffer do
+    local randomAction = uniformly(self:allActions())
+    self:addAction(self.stack, randomAction)
   end 
 
-  while stack.CLOCK + #stack.input_buffer >= stack.garbage_target.CLOCK + #stack.garbage_target.input_buffer do
-    local randomAction2 = uniformly(self:allActions(stack.garbage_target))
-    self:addAction(stack.garbage_target, randomAction2)
+  while self.stack.CLOCK + #self.stack.input_buffer >= self.stack.garbage_target.CLOCK + #self.stack.garbage_target.input_buffer do
+    local randomAction2 = uniformly(self:allActions(self.stack.garbage_target))
+    self:addAction(self.stack.garbage_target, randomAction2)
   end 
 end
 
-function ComputerPlayer.playoutValueForStack(self, stack, maxClock)
+function JamesAi.playoutValueForStack(self, maxClock)
 
-  self:fillRandomActions(stack)
-  self:simulateTillEqual(stack)
+  self:fillRandomActions()
+  self:simulateTillEqual()
 
-  local gameResult = stack:gameResult()
+  local gameResult = self.stack:gameResult()
   if gameResult then
     -- if gameResult == 1 then
-    --   gameResult = gameResult - (stack.CLOCK / 1000)
+    --   gameResult = gameResult - (self.stack.CLOCK / 1000)
     -- end
     -- if gameResult == -1 then
-    --   gameResult = gameResult + (stack.CLOCK / 1000)
+    --   gameResult = gameResult + (self.stack.CLOCK / 1000)
     -- end
     return gameResult
   end
 
-  if stack.CLOCK < maxClock then
-    self:cpuLog(7, "Deeper..." .. stack.CLOCK)
-    local innerValue = self:playoutValueForStack(stack, maxClock)
+  if self.stack.CLOCK < maxClock then
+    self:cpuLog(7, "Deeper..." .. self.stack.CLOCK)
+    local innerValue = self:playoutValueForStack(maxClock)
     return innerValue
   end
 
-  return self:heuristicValueForStack(stack)
+  return self:heuristicValueForStack()
 end
 
-function ComputerPlayer.monteCarloValueForStack(self, stack, maxClock, n)
+function JamesAi.monteCarloValueForStack(self, maxClock, n)
   
   n = n or MONTE_CARLO_RUN_COUNT
   local sum = 0
   for index = 1, n do
-    local copiedStack = self:copyMatch(stack)
+    local copiedStack = self:copyMatch(self.stack)
     local value = self:playoutValueForStack(copiedStack, maxClock)
     sum = sum + value
   end
@@ -491,21 +470,21 @@ function ComputerPlayer.monteCarloValueForStack(self, stack, maxClock, n)
   return sum
 end
 
-function ComputerPlayer.bestAction(self, stack, maxClock, depthAllowed)
-  maxClock = maxClock or stack.CLOCK + MAX_CLOCK_PLAYOUT
+function JamesAi.bestAction(self, maxClock, depthAllowed)
+  maxClock = maxClock or self.stack.CLOCK + MAX_CLOCK_PLAYOUT
   --self:cpuLog(2, "maxClock " .. maxClock )
 
   local bestAction = nil
   local bestEvaluation = -100000
-  local actions = self:allActions(stack)
+  local actions = self:allActions()
   for idx = 1, #actions do
     local action = actions[idx]
-    local simulatedStack = self:copyMatch(stack)
+    local simulatedStack = self:copyMatch(self.stack)
 
     self:addAction(simulatedStack, action)
 
     local evaluation
-    if (depthAllowed and depthAllowed <= 0) or (maxClock and stack.CLOCK + #stack.input_buffer > maxClock) then
+    if (depthAllowed and depthAllowed <= 0) or (maxClock and self.stack.CLOCK + #self.stack.input_buffer > maxClock) then
       self:fillIdleActions(simulatedStack)
       evaluation = self:heuristicValueForStack(simulatedStack)
     else
@@ -529,7 +508,7 @@ function ComputerPlayer.bestAction(self, stack, maxClock, depthAllowed)
 end
 --]]
 
-function ComputerPlayer.yieldIfTooLong(self)
+function JamesAi.yieldIfTooLong(self)
   -- If we spent enough time, pause
   local currentTime = os.clock()
   local timeSpent = currentTime - self.startTime
@@ -540,7 +519,7 @@ function ComputerPlayer.yieldIfTooLong(self)
   end
 end
 
-function ComputerPlayer.think(self)
+function JamesAi.think(self)
 
   self.startTime = os.clock()
 
@@ -593,7 +572,7 @@ function ComputerPlayer.think(self)
   end
 end
 
--- function ComputerPlayer.mctsValue(self, stack) 
+-- function JamesAi.mctsValue(self) 
 --   self = current
 --   q = sum of explored values
 --   n = numberOfVisits explored
@@ -605,7 +584,7 @@ end
 --   return value
 -- end
 
-function ComputerPlayer.expandValue(self, value, depth)
+function JamesAi.expandValue(self, value, depth)
   --local depthMultiplier = 3 - math.sqrt(depth * 2.2)
   --local depthMultiplier = math.sqrt(depth * 6.2)
   local depthMultiplier = 1.0
@@ -613,28 +592,31 @@ function ComputerPlayer.expandValue(self, value, depth)
   return result
 end
 
+function JamesAi.updateStack(self, stack)
+  self.stack = self:copyMatch(stack)  
+end
 
-function ComputerPlayer.initThink(self, stack, idleCount)
+function JamesAi.initThink(self, idleCount)
   self.resultQueue = PriorityQueue()
   self.unexpandedQueue = PriorityQueue()
 
-  stack = self:copyMatch(stack)
-  self:addAction(stack, self:idleAction(idleCount))
-  assert(stack.CLOCK + #stack.input_buffer == self.targetInputTime, "should have buffer to input time")
+  self.stack = self:copyMatch(self.stack)
+  self:addAction(self.stack, self:idleAction(idleCount))
+  assert(self.stack.CLOCK + #self.stack.input_buffer == self.targetInputTime, "should have buffer to input time")
 
-  self.thinkStartClock = stack.CLOCK
+  self.thinkStartClock = self.stack.CLOCK
   
-  local baseValue = self:heuristicValueForIdleFilledStack(stack)
-  self.unexpandedQueue:put({stack=stack, actions="", value=baseValue}, self:expandValue(baseValue, 0))
+  local baseValue = self:heuristicValueForIdleFilledStack()
+  self.unexpandedQueue:put({stack=self.stack, actions="", value=baseValue}, self:expandValue(baseValue, 0))
 
 end
 
-function ComputerPlayer.clearThink(self)
+function JamesAi.clearThink(self)
   self.resultQueue = PriorityQueue()
   self.unexpandedQueue = PriorityQueue()
 end
 
-function ComputerPlayer.currentResult(self) 
+function JamesAi.currentResult(self) 
   if self.resultQueue:size() > 0 then
     local result = self.resultQueue:pop()
     local bestAction = result.actions

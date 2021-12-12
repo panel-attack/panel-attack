@@ -1367,7 +1367,7 @@ function select_screen.main()
       if false then --both computers
         P1 = Stack(1, GAME.match, false, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
         P1.max_runs_per_frame = 1
-        GAME.match.P1CPU = ComputerPlayer("Hard")
+        GAME.match.P1CPU = ComputerPlayer("JamesAi", "Hard")
       else
         P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       end
@@ -1375,7 +1375,7 @@ function select_screen.main()
       P2 = Stack(2, GAME.match, false, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       P2.max_runs_per_frame = 1
       GAME.match.P2 = P2
-      GAME.match.P2CPU = ComputerPlayer("Dev")
+      GAME.match.P2CPU = ComputerPlayer("JamesAi", "Dev")
       P1.garbage_target = P2
       P2.garbage_target = P1
       current_stage = cursor_data[math.random(1, 2)].state.stage
