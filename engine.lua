@@ -98,10 +98,11 @@ Stack =
     s.panels = {}
     s.width = 6
     s.height = 12
+    s.panels_created = 0
     for i = 0, s.height do
       s.panels[i] = {}
       for j = 1, s.width do
-        s.panels[i][j] = Panel()
+        s.panels[i][j] = s:CreatePanel()
       end
     end
 
@@ -209,6 +210,12 @@ Stack =
     s.analytic = AnalyticsInstance(s.is_local)
   end
 )
+
+function Stack.CreatePanel(self)
+  self.panels_created = self.panels_created + 1
+  local panel = Panel(self.panels_created)
+  return panel
+end 
 
 -- Positions the stack draw position for the given player
 function Stack.moveForPlayerNumber(stack, player_num)
@@ -335,8 +342,9 @@ end
 -- Represents an individual panel in the stack
 Panel =
   class(
-  function(p)
+  function(p, id)
     p:clear()
+    p.id = id
   end
 )
 
@@ -1876,7 +1884,7 @@ function Stack.drop_garbage(self, width, height, metal)
     if not self.panels[i] then
       self.panels[i] = {}
       for j = 1, self.width do
-        self.panels[i][j] = Panel()
+        self.panels[i][j] = self:CreatePanel()
       end
     end
   end
@@ -2370,7 +2378,7 @@ function Stack.new_row(self)
     metal_panels_this_row = 1
   end
   for col = 1, self.width do
-    local panel = Panel()
+    local panel = self:CreatePanel()
     panels[0][col] = panel
     this_panel_color = string.sub(self.panel_buffer, col, col)
     --a capital letter for the place where the first shock block should spawn (if earned), and a lower case letter is where a second should spawn (if earned).  (color 8 is metal)
