@@ -1,6 +1,7 @@
 require("engine")
 require("profiler")
 require("computerPlayers.JamesAi.JamesAi")
+require("computerPlayers.EndarisCpu.EndarisCpu")
 
 local PROFILE_TIME = 400
 
@@ -9,12 +10,19 @@ CPUConfig = class(function(self, actualConfig)
   self.profiled = actualConfig["profiled"]
 end)
 
+function CPUConfig.print(self)
+  print("print config")
+  for key, value in pairs (self) do
+      print('\t', key, value)
+  end
+end
+
 ComputerPlayer = class(function(self, cpuName, configName)
   print("Initialising Computerplayer " .. cpuName .. " with config " .. configName)
   if cpuName == "JamesAi" then
     self.implementation = JamesAi()
   elseif cpuName == "EndarisCpu" then
-
+    self.implementation = EndarisCpu()
   end
 
   if configName then
@@ -56,7 +64,6 @@ end
 
 -- exposed for selection in menu
 function ComputerPlayer.setConfig(self, config)
-  self.printConfig(config)
   self.config = CPUConfig(config)
   self.implementation:setConfig(config)
 end
@@ -100,11 +107,5 @@ function ComputerPlayer.stopProfiler(self)
     outfile:close()
     self.config.profiled = false
     self.profiler = nil
-  end
-end
-
-function ComputerPlayer.printConfig(config)
-  for key, value in pairs (config) do
-    print('\t', key, value)
   end
 end
