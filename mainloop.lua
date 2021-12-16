@@ -124,7 +124,7 @@ end
 
 do
   function main_select_mode()
-    click_menus = {}
+    CLICK_MENUS = {}
     if themes[config.theme].musics["main"] then
       find_and_add_music(themes[config.theme].musics, "main")
     end
