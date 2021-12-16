@@ -602,9 +602,6 @@ function Stack.set_puzzle_state(self, pstr, n_turns, do_countdown, puzzleType)
   if n_turns ~= 0 then
     self.puzzle_moves = n_turns
   end
-  if self.character and characters[self.character] then
-    characters[self.character]:stop_sounds()
-  end
 end
 
 function Stack.puzzle_done(self)
@@ -690,7 +687,6 @@ function Stack.starting_state(self, n)
       self.cur_row = self.cur_row - 1
     end
   end
-  characters[self.character]:stop_sounds()
 end
 
 function Stack.prep_first_row(self)

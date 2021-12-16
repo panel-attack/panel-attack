@@ -1601,14 +1601,8 @@ end
 
 -- dumb transition that shows a black screen
 function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
-  if P1 and P1.character then
-    characters[P1.character]:stop_sounds()
-  end
-  if P2 and P2.character then
-    characters[P2.character]:stop_sounds()
-  end
   game_is_paused = false
-  stop_all_audio()
+  stop_the_music()
   winnerSFX = winnerSFX or nil
   if not SFX_mute then
     -- TODO: somehow winnerSFX can be 0 instead of nil
@@ -1728,7 +1722,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
         -- if conditions are met, leave the game over screen
         if t >= timemin and ((t >= timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) or left_select_menu then
           setMusicFadePercentage(1) -- reset the music back to normal config volume
-          stop_all_audio()
+          stop_the_music()
           SFX_GameOver_Play = 0
           analytics.game_ends(P1.analytic)
           ret = {next_func}
