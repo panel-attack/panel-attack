@@ -11,6 +11,7 @@ Game =
     self.backgroundImage = nil -- the background image for the game, should always be set to something with the proper dimensions
     self.droppedFrames = 0
     self.puzzleSets = {} -- all the puzzles loaded into the game
+    self.game_is_paused = false -- game can be paused while playing on local
   end
 )
 

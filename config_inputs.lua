@@ -6,15 +6,24 @@ local function main_config_input()
   local menu_x, menu_y = unpack(main_menu_screen_pos)
 
   local active_player = 1 -- current player we are setting inputs for
-  local k = K[active_player] -- keys for that player
+  local keyMappings = K[active_player] -- keys for that player
   local input_menu = nil
   local createInputMenu
   local idxs_to_set = {} -- indexs we are waiting for the user to key press
   local ret = nil
 
+  local function decrementPlayer()
+    active_player = wrap(1, active_player - 1, 2)
+    keyMappings = K[active_player]
+    if input_menu then
+      input_menu:remove_self()
+    end
+    input_menu = createInputMenu(active_player)
+  end
+
   local function incrementPlayer()
     active_player = wrap(1, active_player + 1, 2)
-    k = K[active_player]
+    keyMappings = K[active_player]
     if input_menu then
       input_menu:remove_self()
     end
@@ -45,26 +54,17 @@ local function main_config_input()
 
   function createInputMenu(player)
     local clickMenu = Click_menu(menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 10, 1)
-    clickMenu:add_button(loc("player") .. " ", incrementPlayer, goEscape)
+    clickMenu:add_button(loc("player") .. " ", incrementPlayer, goEscape, decrementPlayer, incrementPlayer)
     clickMenu:set_button_setting(#clickMenu.buttons, active_player)
     for i = 1, #key_names do
       clickMenu:add_button(pretty_names[i], selectKey, goEscape)
-      clickMenu:set_button_setting(#clickMenu.buttons, k[key_names[i]] or loc("op_none"))
+      clickMenu:set_button_setting(#clickMenu.buttons, keyMappings[key_names[i]] or loc("op_none"))
     end
     clickMenu:add_button(loc("op_all_keys") .. " ", selectAllKeys, goEscape)
     clickMenu:add_button(loc("back") .. " ", mainMenu, mainMenu)
 
     return clickMenu
   end
-
---[[ TODO left and right
-         elseif menu_left(K[1]) then
-active_player = wrap(1, active_player - 1, 2)
-k = K[active_player]
-elseif menu_right(K[1]) then
-active_player = wrap(1, active_player + 1, 2)
-k = K[active_player]
-]]
 
   input_menu = createInputMenu(active_player)
 
@@ -77,13 +77,13 @@ k = K[active_player]
           local idx = idxs_to_set[1]
           for key, val in pairs(this_frame_keys) do
             if val then
-              k[key_names[idx - 1]] = key
+              keyMappings[key_names[idx - 1]] = key
               table.remove(idxs_to_set, 1)
               if #idxs_to_set == 0 then
                 write_key_file()
               end
               input_menu:set_active_idx(idx + 1)
-              input_menu:set_button_setting(idx, k[key_names[idx - 1]] or loc("op_none"))
+              input_menu:set_button_setting(idx, keyMappings[key_names[idx - 1]] or loc("op_none"))
             end
           end
         else

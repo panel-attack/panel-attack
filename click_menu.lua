@@ -223,23 +223,23 @@ function Click_menu.update(self)
   end
   
   if self.visible then
-    if menu_up(K[1]) then
+    if menu_up() then
       self:selectPreviousIndex()
-    elseif menu_down(K[1]) then
+    elseif menu_down() then
       self:selectNextIndex()
-    elseif menu_enter(K[1]) then
+    elseif menu_enter() then
       if self.buttons[self.active_idx].selectFunction then
         self:selectButton(self.active_idx)
       end
-    elseif menu_escape(K[1]) then
+    elseif menu_escape() then
       if self.buttons[self.active_idx].escapeFunction then
         self.buttons[self.active_idx].escapeFunction()
       end
-    elseif menu_left(K[1]) then
+    elseif menu_left() then
       if self.buttons[self.active_idx].leftFunction then
         self.buttons[self.active_idx].leftFunction()
       end
-    elseif menu_right(K[1]) then
+    elseif menu_right() then
       if self.buttons[self.active_idx].rightFunction then
         self.buttons[self.active_idx].rightFunction()
       end
