@@ -5,29 +5,31 @@ local function main_config_input()
   local pretty_names = {loc("up"), loc("down"), loc("left"), loc("right"), "A", "B", "X", "Y", "L", "R", loc("start")}
   local menu_x, menu_y = unpack(main_menu_screen_pos)
 
-  local active_player = 1 -- current player we are setting inputs for
-  local keyMappings = K[active_player] -- keys for that player
+  menu_y = menu_y + 40
+
+  local active_configuration = 1 -- current configuration we are setting inputs for
+  local inputConfiguration = GAME.input.inputConfigurations[active_configuration] -- keys for that configuration
   local input_menu = nil
   local createInputMenu
   local idxs_to_set = {} -- indexs we are waiting for the user to key press
   local ret = nil
 
-  local function decrementPlayer()
-    active_player = wrap(1, active_player - 1, 2)
-    keyMappings = K[active_player]
+  local function decrementConfiguration()
+    active_configuration = wrap(1, active_configuration - 1, GAME.input.maxConfigurations)
+    inputConfiguration = GAME.input.inputConfigurations[active_configuration]
     if input_menu then
       input_menu:remove_self()
     end
-    input_menu = createInputMenu(active_player)
+    input_menu = createInputMenu(active_configuration)
   end
 
-  local function incrementPlayer()
-    active_player = wrap(1, active_player + 1, 2)
-    keyMappings = K[active_player]
+  local function incrementConfiguration()
+    active_configuration = wrap(1, active_configuration + 1, GAME.input.maxConfigurations)
+    inputConfiguration = GAME.input.inputConfigurations[active_configuration]
     if input_menu then
       input_menu:remove_self()
     end
-    input_menu = createInputMenu(active_player)
+    input_menu = createInputMenu(active_configuration)
   end
 
   local function selectKey()
@@ -52,13 +54,14 @@ local function main_config_input()
     ret = {main_select_mode}
   end
 
-  function createInputMenu(player)
+  function createInputMenu(configurationNumber)
     local clickMenu = Click_menu(menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 10, 1)
-    clickMenu:add_button(loc("player") .. " ", incrementPlayer, goEscape, decrementPlayer, incrementPlayer)
-    clickMenu:set_button_setting(#clickMenu.buttons, active_player)
+    clickMenu:add_button(loc("configuration") .. " ", incrementConfiguration, goEscape, decrementConfiguration, incrementConfiguration)
+    clickMenu:set_button_setting(#clickMenu.buttons, configurationNumber)
     for i = 1, #key_names do
       clickMenu:add_button(pretty_names[i], selectKey, goEscape)
-      clickMenu:set_button_setting(#clickMenu.buttons, keyMappings[key_names[i]] or loc("op_none"))
+      local cleanString = GAME.input:cleanNameForButton(inputConfiguration[key_names[i]]) or loc("op_none")
+      clickMenu:set_button_setting(#clickMenu.buttons, cleanString)
     end
     clickMenu:add_button(loc("op_all_keys") .. " ", selectAllKeys, goEscape)
     clickMenu:add_button(loc("back") .. " ", mainMenu, mainMenu)
@@ -66,9 +69,10 @@ local function main_config_input()
     return clickMenu
   end
 
-  input_menu = createInputMenu(active_player)
+  input_menu = createInputMenu(active_configuration)
 
   while true do
+    gprintf(loc("config_input_welcome"), 0, menu_y - 30, canvas_width, "center")
     input_menu:draw()
     wait()
     variable_step(
@@ -77,13 +81,15 @@ local function main_config_input()
           local idx = idxs_to_set[1]
           for key, val in pairs(this_frame_keys) do
             if val then
-              keyMappings[key_names[idx - 1]] = key
+              inputConfiguration[key_names[idx - 1]] = key
               table.remove(idxs_to_set, 1)
               if #idxs_to_set == 0 then
                 write_key_file()
               end
               input_menu:set_active_idx(idx + 1)
-              input_menu:set_button_setting(idx, keyMappings[key_names[idx - 1]] or loc("op_none"))
+              local cleanString = GAME.input:cleanNameForButton(inputConfiguration[key_names[idx-1]]) or loc("op_none")
+              input_menu:set_button_setting(idx, cleanString)
+              break
             end
           end
         else

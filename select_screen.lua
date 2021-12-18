@@ -1075,6 +1075,11 @@ function select_screen.main()
       gprintf(match_type_message, 0, 30, canvas_width, "center")
     end
 
+    local playerNumberWaiting = GAME.input.playerNumberWaitingForInputConfiguration()
+    if playerNumberWaiting then
+      gprintf(loc("player_press_key", playerNumberWaiting), 0, 30, canvas_width, "center")
+    end
+
     -- Draw an indicator that there are more character pages
     if pages_amount ~= 1 then
       gprintf(loc("page") .. " " .. current_page .. "/" .. pages_amount, 0, 660, canvas_width, "center")

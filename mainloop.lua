@@ -133,6 +133,8 @@ do
     close_socket()
     GAME.backgroundImage = themes[config.theme].images.bg_main
     GAME.battleRoom = nil
+    GAME.input:clearInputConfigurationsForPlayers()
+    GAME.input:requestPlayerInputConfigurationAssignments(1)
     reset_filters()
     logged_in = 0
     connection_up_time = 0
@@ -973,6 +975,8 @@ function main_local_vs_setup()
   my_player_number = 1
   op_player_number = 2
   select_screen.character_select_mode = "2p_local_vs"
+  GAME.input:clearInputConfigurationsForPlayers()
+  GAME.input:requestPlayerInputConfigurationAssignments(2)
   return select_screen.main
 end
 

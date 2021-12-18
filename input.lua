@@ -5,7 +5,16 @@ require("util")
 Input =
   class(
   function(self)
-    self.inputConfigurations = {}
+    self.inputConfigurations = {} -- a table of all valid input configurations, each configuration is a map of input type to the mapped key
+    self.maxConfigurations = 8
+    for i = 1, self.maxConfigurations do
+      self.inputConfigurations[#self.inputConfigurations+1] = {}
+    end
+    self.inputConfigurations[1] = {up="up", down="down", left="left", right="right", swap1="z", swap2="x", taunt_up="y", taunt_down="u", raise1="c", raise2="v", pause="p"}
+    self.playerInputConfigurationsMap = {} -- playerNumber -> table of all inputConfigurations assigned to that player
+    self.acceptingPlayerInputConfigurationAssignments = false -- If true the next inputs that come in will assign to the next player that doesn't have assignments
+    self.availableInputConfigurationsToAssign = nil -- the list of available input configurations to assign, only valid while acceptingPlayerInputConfigurationAssignments is set
+    self.numberOfPlayersAcceptingInputConfiguration = 0 -- the number of players we want assigned input configurations, only valid while acceptingPlayerInputConfigurationAssignments is set
   end
 )
 
@@ -28,33 +37,37 @@ local __old_jp_handler = love.handlers[jpname]
 local __old_jr_handler = love.handlers[jrname]
 love.handlers[jpname] = function(a, b)
   __old_jp_handler(a, b)
-  love.keypressed("j" .. a:getID() .. b)
+  love.keypressed(input:getJoystickGUID(a) .. "-" .. b)
 end
 love.handlers[jrname] = function(a, b)
   __old_jr_handler(a, b)
-  love.keyreleased("j" .. a:getID() .. b)
+  love.keyreleased(input:getJoystickGUID(a) .. "-" .. b)
 end
 
 local prev_ax = {}
-local axis_to_button = function(idx, value)
-  local prev = prev_ax[idx] or 0
-  prev_ax[idx] = value
+local axis_to_button = function(idx, axis, value)
+  local axisName = idx .. "-axis" .. axis
+  local prev = prev_ax[axisName] or 0
+  prev_ax[axisName] = value
   if value <= .5 and not (prev <= .5) then
-    love.keyreleased("ja" .. idx .. "+")
+    love.keyreleased(axisName .. "+")
   end
   if value >= -.5 and not (prev >= -.5) then
-    love.keyreleased("ja" .. idx .. "-")
+    love.keyreleased(axisName .. "-")
   end
   if value > .5 and not (prev > .5) then
-    love.keypressed("ja" .. idx .. "+")
+    love.keypressed(axisName .. "+")
   end
   if value < -.5 and not (prev < -.5) then
-    love.keypressed("ja" .. idx .. "-")
+    love.keypressed(axisName .. "-")
   end
 end
 
 local prev_hat = {{}, {}}
-local hat_to_button = function(idx, value)
+local hat_to_button = function(idx, hatIndex, value)
+
+  local hatName = idx .. "-hat" .. hatIndex .. "-"
+
   if string.len(value) == 1 then
     if value == "l" or value == "r" then
       value = value .. "c"
@@ -64,15 +77,107 @@ local hat_to_button = function(idx, value)
   end
   value = procat(value)
   for i = 1, 2 do
-    local prev = prev_hat[i][idx] or "c"
+    local prev = prev_hat[i][hatName] or "c"
     if value[i] ~= prev and value[i] ~= "c" then
-      love.keypressed("jh" .. idx .. value[i])
+      love.keypressed(hatName .. value[i])
     end
     if prev ~= value[i] and prev ~= "c" then
-      love.keyreleased("jh" .. idx .. prev)
+      love.keyreleased(hatName .. prev)
     end
-    prev_hat[i][idx] = value[i]
+    prev_hat[i][hatName] = value[i]
   end
+end
+
+
+--[[
+  -- Current System
+  K[player] -> map of key names to current button configured
+  keys[] map of raw key value to if it was pressed and not released yet
+  keys[k.pause] 
+  this_frame_keys[] same as keys but cleared at end of frame regardless of release
+
+  -- New System
+  1. Allow multiple configs per player that can change
+  Set current configs active for each player
+  Just loop through an array of mappings instead of just one
+
+  keyMaps[player] -> K[1-n]
+
+  allConfigs[1-n] -> guid -> keyboard or controller GUID mapped to K
+  availableConfigs same but unused
+
+  controller 1 -> GUID
+  controller 2 of same -> GUID2
+
+  on input, if first of controller -> GUID
+else GUID2
+
+  2. Make joystick buttons stable
+  On configure record joystick GUID and connected index
+  save both into key file
+
+  When connected use first index thats unused
+
+]]
+
+function Input.cleanNameForButton(self, buttonString)
+
+  if not buttonString then
+    return buttonString
+  end
+
+  local result = nil
+
+  --local searchString = "^(%w+%-)"
+  --result = string.gsub(buttonString, searchString, "Controller ")
+
+  for index, joystick in ipairs(love.joystick.getJoysticks()) do
+    local joystickID = self:getJoystickGUID(joystick)
+    local joystickConnectedIndex = joystick:getID()
+    local resultString, count = string.gsub(buttonString, "^(" .. joystickID .. "%-)(.*)$", "Controller " .. joystickConnectedIndex .. " %2")
+    if count > 0 then
+      result = resultString
+      break
+    end
+  end
+
+  if not result then
+    local resultString, count = string.gsub(buttonString, "^(%w+%-)(.*)$", "Unplugged Controller %2")
+    if count > 0 then
+      result = resultString
+    else
+      result = buttonString
+    end
+  end
+
+  return result
+end
+
+
+function Input.getJoystickGUID(self, joystick)
+  if not joystick then
+    error("Expected to be passed in joystick")
+  end
+
+  local connectedIndex = joystick:getID()
+  local searchGUID = joystick:getGUID()
+  local numberOfMatchingJoysticks = 0
+  local isFirst = true
+  for k, v in ipairs(love.joystick.getJoysticks()) do
+    if v:getGUID() == searchGUID then
+      numberOfMatchingJoysticks = numberOfMatchingJoysticks + 1
+      if connectedIndex == v:getID() then
+        if numberOfMatchingJoysticks == 1 then
+          return searchGUID
+        else
+          return searchGUID .. "#" .. numberOfMatchingJoysticks
+        end
+      end
+    end
+  end
+
+  error("Expected to find joystick")
+  return nil
 end
 
 function love.joystick.getHats(joystick)
@@ -87,14 +192,15 @@ end
 function joystick_ax()
   local joysticks = love.joystick.getJoysticks()
   for k, v in ipairs(joysticks) do
+    local joystickID = input:getJoystickGUID(v)
     local axes = {v:getAxes()}
     for idx, value in ipairs(axes) do
-      axis_to_button(k .. idx, value)
+      axis_to_button(joystickID, idx, value)
     end
 
     local hats = {love.joystick.getHats(v)}
     for idx, value in ipairs(hats) do
-      hat_to_button(k .. idx, value)
+      hat_to_button(joystickID, idx, value)
     end
   end
 end
@@ -108,6 +214,24 @@ function love.keypressed(key, scancode, rep)
     keys[key] = 0
   end
   this_frame_keys[key] = true
+
+  if input.acceptingPlayerInputConfigurationAssignments then
+    for index, inputConfiguration in ipairs(input.availableInputConfigurationsToAssign) do
+      for rawKey, keyName in pairs(inputConfiguration) do
+        if keyName == key then
+          input.playerInputConfigurationsMap[#input.playerInputConfigurationsMap+1] = {inputConfiguration}
+          table.remove(input.availableInputConfigurationsToAssign, index)
+          goto done
+        end
+      end
+    end
+
+    ::done::
+
+    if #input.playerInputConfigurationsMap >= input.numberOfPlayersAcceptingInputConfiguration then
+      input.acceptingPlayerInputConfigurationAssignments = false
+    end
+  end
 end
 
 function love.textinput(text)
@@ -150,19 +274,44 @@ local function released_key_after_time(key, time)
   return this_frame_released_keys[key] and this_frame_released_keys[key] >= time
 end
 
-function Input.getKeyMappingsForPlayerNumber(self, playerNumber)
+function Input.clearInputConfigurationsForPlayers(self)
+  self.playerInputConfigurationsMap = {}
+  self.acceptingPlayerInputConfigurationAssignments = false
+  self.availableInputConfigurationsToAssign = nil
+end
+
+function Input.requestPlayerInputConfigurationAssignments(self, numberOfPlayers)
+  if numberOfPlayers == 1 then
+    self.playerInputConfigurationsMap[1] = self.inputConfigurations
+  else
+    if #input.playerInputConfigurationsMap < numberOfPlayers then
+      self.acceptingPlayerInputConfigurationAssignments = true
+      self.availableInputConfigurationsToAssign = deepcpy(self.inputConfigurations)
+      self.numberOfPlayersAcceptingInputConfiguration = numberOfPlayers
+    end
+  end
+end
+
+function Input.playerNumberWaitingForInputConfiguration(self)
+  if not input.acceptingPlayerInputConfigurationAssignments then
+    return nil
+  end
+
+  if #input.playerInputConfigurationsMap < input.numberOfPlayersAcceptingInputConfiguration then
+    return #input.playerInputConfigurationsMap + 1
+  end
+
+  return nil
+end
+
+function Input.getInputConfigurationsForPlayerNumber(self, playerNumber)
 
   local results = {}
 
-  local minPlayer = 1
-  local maxPlayer = #K
-  if playerNumber then
-    minPlayer = playerNumber
-    maxPlayer = playerNumber
-  end
-
-  for player = minPlayer, maxPlayer do
-    results[#results+1] = K[player]
+  if not playerNumber then
+    results = self.inputConfigurations
+  elseif self.playerInputConfigurationsMap[playerNumber] then
+    results = self.playerInputConfigurationsMap[playerNumber]
   end
 
   return results
@@ -193,9 +342,11 @@ local function input_key_func(fixed, configurable, query, sound, ...)
     end
 
     for i = 1, #configurable do
-      for _, keyMapping in pairs(input:getKeyMappingsForPlayerNumber(playerNumber)) do
-        local keyname = keyMapping[configurable[i]]
-        res = res or query(keyname, other_args) and not menu_reserved_keys[keyname]
+      for index, inputConfiguration in ipairs(input:getInputConfigurationsForPlayerNumber(playerNumber)) do
+        local keyname = inputConfiguration[configurable[i]]
+        if keyname then
+          res = res or query(keyname, other_args) and not menu_reserved_keys[keyname]
+        end
       end
     end
 
@@ -222,8 +373,8 @@ local function get_being_pressed_for_duration_ratio(fixed, configurable, time)
       res = math.max(get_pressed_ratio(fixed[i], time), res)
     end
     for i = 1, #configurable do
-      for _, keyMapping in pairs(input:getKeyMappingsForPlayerNumber(playerNumber)) do
-        local keyname = keyMapping[configurable[i]]
+      for _, inputConfiguration in ipairs(input:getInputConfigurationsForPlayerNumber(playerNumber)) do
+        local keyname = inputConfiguration[configurable[i]]
         if not menu_reserved_keys[keyname] then
           res = math.max(get_pressed_ratio(keyname, time), res)
         end
