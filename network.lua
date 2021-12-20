@@ -306,23 +306,13 @@ function make_local_gpanels(stack, prev_panels)
 end
 
 function Stack.handle_input_taunt(self)
-  local k = K[self.which]
-  local taunt_keys = {taunt_up = (keys[k.taunt_up] or this_frame_keys[k.taunt_up]), taunt_down = (keys[k.taunt_down] or this_frame_keys[k.taunt_down])}
 
-  if self.wait_for_not_taunting ~= nil then
-    if not taunt_keys[self.wait_for_not_taunting] then
-      self.wait_for_not_taunting = nil
-    else
-      return
-    end
-  end
-
-  if taunt_keys.taunt_up and self:can_taunt() and #characters[self.character].sounds.taunt_ups > 0 then
+  if player_taunt_up(self.which) and self:can_taunt() and #characters[self.character].sounds.taunt_ups > 0 then
     self.taunt_up = math.random(#characters[self.character].sounds.taunt_ups)
     if TCP_sock then
       json_send({taunt = true, type = "taunt_ups", index = self.taunt_up})
     end
-  elseif taunt_keys.taunt_down and self:can_taunt() and #characters[self.character].sounds.taunt_downs > 0 then
+  elseif player_taunt_down(self.which) and self:can_taunt() and #characters[self.character].sounds.taunt_downs > 0 then
     self.taunt_down = math.random(#characters[self.character].sounds.taunt_downs)
     if TCP_sock then
       json_send({taunt = true, type = "taunt_downs", index = self.taunt_down})
@@ -331,8 +321,15 @@ function Stack.handle_input_taunt(self)
 end
 
 function Stack.send_controls(self)
-  local k = K[self.which]
-  local to_send = base64encode[((keys[k.raise1] or keys[k.raise2] or this_frame_keys[k.raise1] or this_frame_keys[k.raise2]) and 32 or 0) + ((this_frame_keys[k.swap1] or this_frame_keys[k.swap2]) and 16 or 0) + ((keys[k.up] or this_frame_keys[k.up]) and 8 or 0) + ((keys[k.down] or this_frame_keys[k.down]) and 4 or 0) + ((keys[k.left] or this_frame_keys[k.left]) and 2 or 0) + ((keys[k.right] or this_frame_keys[k.right]) and 1 or 0) + 1]
+  local playerNumber = self.which
+  local to_send = base64encode[
+    (player_raise(playerNumber) and 32 or 0) + 
+    (player_swap(playerNumber) and 16 or 0) + 
+    (player_up(playerNumber) and 8 or 0) + 
+    (player_down(playerNumber) and 4 or 0) + 
+    (player_left(playerNumber) and 2 or 0) + 
+    (player_right(playerNumber) and 1 or 0) + 1
+    ]
 
   if TCP_sock then
     net_send("I" .. to_send)
