@@ -64,6 +64,11 @@ function panels_init()
   panels_ids = {} -- holds all panels ids
 
   add_panels_from_dir_rec("panels")
+  
+  if #panels_ids == 0 then
+    recursive_copy("default_data/panels", "panels")
+    add_panels_from_dir_rec("panels")
+  end
 
   -- fix config panel set if it's missing
   if not config.panels or not panels[config.panels] then
@@ -81,7 +86,10 @@ function Panels.load(self)
   local function load_panel_img(name)
     local img = load_img_from_supported_extensions(self.path .. "/" .. name)
     if not img then
-      img = load_img_from_supported_extensions("panels/" .. default_panels_dir .. "/" .. name)
+      img = load_img_from_supported_extensions("panels/__default/" .. name)
+      if not img then
+        error("Could not find default panel image")
+      end
     end
     return img
   end

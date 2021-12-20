@@ -401,6 +401,9 @@ function Character.graphics_init(self, full, yields)
         self.images[image_name] = themes[config.theme].images[image_name]
       else
         self.images[image_name] = default_character.images[image_name]
+        if not self.images[image_name] then
+          error("Could not find default character image")
+        end
       end
     --print("MISSING!")
     end

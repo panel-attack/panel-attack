@@ -14,6 +14,9 @@ local function main_show_custom_themes_readme(idx)
     gprint(loc("op_copy_files"), 280, 280)
     wait()
     recursive_copy("themes/" .. default_theme_dir, "themes/" .. prefix_of_ignored_dirs .. default_theme_dir)
+
+    -- Android can't easily copy into the save dir, so do it for them to help.
+    recursive_copy("default_data/themes", "themes")
   end
 
   local readme = read_txt_file("readme_themes.txt")
@@ -39,16 +42,6 @@ local function main_show_custom_stages_readme(idx)
   GAME.backgroundImage = themes[config.theme].images.bg_readme
   reset_filters()
 
-  local default_stages_list = love.filesystem.getDirectoryItems("default_data/stages")
-  for _, stage in ipairs(default_stages_list) do
-    if not love.filesystem.getInfo("stages/" .. prefix_of_ignored_dirs .. stage) then
-      print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
-      gprint(loc("op_copy_files"), 280, 280)
-      wait()
-      recursive_copy("default_data/stages/" .. stage, "stages/" .. prefix_of_ignored_dirs .. stage)
-    end
-  end
-
   local readme = read_txt_file("readme_stages.txt")
   while true do
     gprint(readme, 15, 15)
@@ -72,16 +65,6 @@ local function main_show_custom_characters_readme(idx)
   GAME.backgroundImage = themes[config.theme].images.bg_readme
   reset_filters()
 
-  local default_characters_list = love.filesystem.getDirectoryItems("default_data/characters")
-  for _, current_character in ipairs(default_characters_list) do
-    if not love.filesystem.getInfo("characters/" .. prefix_of_ignored_dirs .. current_character) then
-      print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
-      gprint(loc("op_copy_files"), 280, 280)
-      wait()
-      recursive_copy("default_data/characters/" .. current_character, "characters/" .. prefix_of_ignored_dirs .. current_character)
-    end
-  end
-
   local readme = read_txt_file("readme_characters.txt")
   while true do
     gprint(readme, 15, 15)
@@ -104,18 +87,6 @@ end
 local function main_show_custom_panels_readme(idx)
   GAME.backgroundImage = themes[config.theme].images.bg_readme
   reset_filters()
-
-  -- add other defaults panels sets here so that anyone can update them if wanted
-  local default_panels_dirs = {default_panels_dir, "pdp_ta"}
-
-  for _, panels_dir in ipairs(default_panels_dirs) do
-    if not love.filesystem.getInfo("panels/" .. prefix_of_ignored_dirs .. panels_dir) then
-      print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
-      gprint(loc("op_copy_files"), 280, 280)
-      wait()
-      recursive_copy("panels/" .. panels_dir, "panels/" .. prefix_of_ignored_dirs .. panels_dir)
-    end
-  end
 
   local readme = read_txt_file("readme_panels.txt")
   while true do
