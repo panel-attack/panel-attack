@@ -98,6 +98,16 @@ function Defragment.chooseAction(self)
 
         local panel = table.remove(panelsToMove, 1)
         panel:print()
+        while StackExtensions.moveIsValid(self.cpu.stack, panel.id, emptySpacesToFill[i].vector) == false do
+            if #panelsToMove > 0 then
+                panel = table.remove(panelsToMove, 1)
+            else
+                -- reached a dead end, gotta reparse and hope for the best
+                -- or maybe raise if it actually deathlocks here
+                cpuLog("Tried to defragment but couldn't decide to do anything")
+                return
+            end
+        end
         local action = Move(self.cpu.stack, panel, emptySpacesToFill[i].vector)
         action:calculateExecution(self.cpu.stack.cur_row, self.cpu.stack.cur_col)
         action:print()
@@ -125,7 +135,7 @@ function Defragment.GetFreshPanelsToMove(self, panels)
     local panelScore = panels[1][2]
     local firstPanel = table.remove(panels, 1)[1]
     local panelsToMove = { firstPanel }
-    while #panels > 0 and panels[1][2] == panelScore do
+    while #panels > 0 and panels[1][2] - 15 < panelScore do
         local panel = table.remove(panels, 1)[1]
         table.insert(panelsToMove, panel)
     end

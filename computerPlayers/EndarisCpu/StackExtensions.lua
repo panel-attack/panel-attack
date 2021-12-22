@@ -379,3 +379,43 @@ function StackExtensions.aprilStackToPanels(aprilStack)
 
     return panels
 end
+
+function StackExtensions.moveIsValid(stack, panelId, targetVector)
+    return StackExtensions.moveIsValidByPanels(stack.panels, panelId, targetVector)
+end
+
+function StackExtensions.moveIsValidByPanels(panels, panelId, targetVector)
+    local panel = StackExtensions.getPanelByIdFromPanels(panels, panelId)
+    if panel.height < targetVector.column then
+        return false
+    else
+        -- this is very naive and certainly not true in some cases but should be fine for a start
+        return true
+    end
+end
+
+function StackExtensions.getPanelById(stack, id)
+    return StackExtensions.getPanelById(stack.panels, id)
+end
+
+function StackExtensions.getPanelByIdFromPanels(panels, id)
+    for i=1,#panels do
+        for j=1, #panels[1] do
+           if panels[i][j].id == id then
+            panels[i][j].height = j
+            panels[i][j].width = i
+               return panels[i][j]
+           end
+        end
+    end
+
+    return nil
+end
+
+function StackExtensions.calculateExecution(stack, action)
+    -- 2 components are important:
+    -- 1. the action has to know how it executes (setup and execution panel)
+    -- -> dictates order of panels
+    -- 2. the stack has to sanity check whether a movement is actually possible
+    -- -> checks whether we are actually falling down
+end

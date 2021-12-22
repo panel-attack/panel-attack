@@ -1,6 +1,7 @@
 Attack = class(
         function(strategy, cpu)
             Strategy.init(strategy, "Attack", cpu)
+            cpuLog("chose to ATTACK")
         end,
         Strategy
 )
@@ -14,11 +15,13 @@ function Attack.chooseAction(self)
     end
 
     if #self.cpu.actions > 0 then
-        self.cpu.currentAction = self:getCheapestAction()      
+        self.cpu.currentAction = self:getCheapestAction()
     else
         self.cpu.currentAction = Raise()
     end
     self.cpu.inputQueue = self.cpu.currentAction.executionPath
+    cpuLog("executionPath has " .. #self.cpu.currentAction.executionPath .. " entries")
+    cpuLog("input queue has " .. #self.cpu.inputQueue .. " entries")
 end
 
 function Attack.getCheapestAction(self)
@@ -43,6 +46,7 @@ function Attack.getCheapestAction(self)
 
         local i = 1
         while i <= #self.cpu.actions and self.cpu.actions[i].estimatedCost == self.cpu.actions[1].estimatedCost do
+            StackExtensions.calculateExecution(stack, action)
             self.cpu.actions[i]:calculateExecution(self.cpu.stack.cur_row, self.cpu.stack.cur_col + 0.5)
             table.insert(actions, self.cpu.actions[i])
             i = i + 1

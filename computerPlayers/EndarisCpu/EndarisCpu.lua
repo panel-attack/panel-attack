@@ -276,7 +276,7 @@ ActionPanel =
 )
 
 function ActionPanel.print(self)
-    local message = 'panel with color ' .. self.color 
+    local message = 'panel ' .. self.id .. ' with color ' .. self.color 
     if self.vector then
         message = message .. ' at coordinate ' .. self.vector:toString()
     end

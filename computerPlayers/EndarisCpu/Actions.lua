@@ -94,7 +94,7 @@ function Action.addCursorMovementToExecution(self, gridVector)
     --horizontal movement
     if math.sign(gridVector.column) == 1 then
         for i = 1, math.abs(gridVector.column) do
-            table.insert(self.executionPath, left)
+            table.insert(self.executionPath, Input.Left())
         end
     elseif math.sign(gridVector.column) == -1 then
         for i = 1, math.abs(gridVector.column) do
