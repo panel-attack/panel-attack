@@ -6,8 +6,8 @@ Defragment = class(
 )
 
 function Defragment.chooseAction(self)
-    local columns = self.cpu.stack:getTier1PanelsAsColumns()
-    local connectedPanelSections = self.cpu.stack:getTier1ConnectedPanelSections()
+    local columns = StackExtensions.getTier1PanelsAsColumns(self.cpu.stack)
+    local connectedPanelSections = StackExtensions.getTier1ConnectedPanelSections(self.cpu.stack)
     local panels = {}
     local emptySpaces = {}
 

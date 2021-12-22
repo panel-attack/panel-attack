@@ -1,27 +1,42 @@
 StackExtensions = class(function(self) end)
 
-function StackExtensions.printAsAprilStack(stack)
+function StackExtensions.AsAprilStack(stack)
     if stack then
-        local panels = stack.panels
+        return StackExtensions.AsAprilStackByPanels(stack.panels)
+    end
+end
+
+function StackExtensions.AsAprilStackByPanels(panels)
+    if panels then
         local panelString = ""
         for i=#panels,1,-1 do
             for j=1,#panels[1] do
                 panelString = panelString.. (tostring(panels[i][j].color))
             end
         end
-        cpuLog("april panelstring is " .. panelString)
 
-        panelString = ""
-        for i=#panels,1,-1 do
-            for j=1,#panels[1] do
-                if not panels[i][j].state == "normal" then
-                    panelString = panelString.. (tostring(panels[i][j].color))
-                end
-            end
-        end
+        return panelString
 
-        cpuLog("panels in non-normal state are " .. panelString)
+        -- panelString = ""
+        -- for i=#panels,1,-1 do
+        --     for j=1,#panels[1] do
+        --         if not panels[i][j].state == "normal" then
+        --             panelString = panelString.. (tostring(panels[i][j].color))
+        --         end
+        --     end
+        -- end
+
+        -- cpuLog("panels in non-normal state are " .. panelString)
     end
+end
+
+function StackExtensions.printAsAprilStack(stack)
+    StackExtensions.printAsAprilStackByPanels(stack.panels)
+end
+
+function StackExtensions.printAsAprilStackByPanels(panels)
+    local aprilString = StackExtensions.AsAprilStackByPanels(panels)
+    cpuLog("april panelstring is " .. aprilString)
 end
 
 
@@ -30,8 +45,12 @@ end
 -- a panel counts as connected if you can move it along that block without it dropping rows
 -- 1 - N_connectedpanels / N_totalpanels
 function StackExtensions.getFragmentationPercentage(stack)
-    local connectedPanels = stack:getMaxConnectedTier1PanelsCount()
-    local totalPanels = stack:getTotalTier1PanelsCount()
+    return StackExtensions.getFragmentationPercentageByPanels(stack.panels)
+end
+
+function StackExtensions.getFragmentationPercentageByPanels(panels)
+    local connectedPanels = StackExtensions.getMaxConnectedTier1PanelsCountByPanels(panels)
+    local totalPanels = StackExtensions.getTotalTier1PanelsCountByPanels(panels)
 
     print('total panel count is ' .. totalPanels)
     print('connected panel count is ' .. connectedPanels)
@@ -40,9 +59,13 @@ function StackExtensions.getFragmentationPercentage(stack)
 end
 
 --gets all panels in the stack that are in the first tier of the stack
-function Stack.getTotalTier1PanelsCount(self)
+function StackExtensions.getTotalTier1PanelsCount(stack)
+    return StackExtensions.getTotalTier1PanelsCountByPanels(stack.panels)
+end
+
+function StackExtensions.getTotalTier1PanelsCountByPanels(panels)
     local panelCount = 0
-    local columns = self:getTier1PanelsAsColumns()
+    local columns = StackExtensions.getTier1PanelsAsColumnsByPanels(panels)
 
     for i = 1, #columns do
         for j = 1, #columns[i] do
@@ -54,14 +77,18 @@ function Stack.getTotalTier1PanelsCount(self)
 end
 
 -- returns the stack in 6 columns that hold the panels from bottom up
-function Stack.getPanelsAsColumns(self)
+function StackExtensions.getPanelsAsColumns(stack)
+    return StackExtensions.getPanelsAsColumnsByPanels(stack.panels)
+end
+
+function StackExtensions.getPanelsAsColumnsByPanels(panels)
     local columns = {}
     -- first transforming into a column representation
-    if self.panels and self.panels[1] then
-        for i = 1, #self.panels[1] do
+    if panels and panels[1] then
+        for i = 1, #panels[1] do
             columns[i] = {}
-            for j = 1, #self.panels do
-                local panel = self.panels[j][i]
+            for j = 1, #panels do
+                local panel = panels[j][i]
                 columns[i][j] = ActionPanel(panel.id, panel.color, j, i)
             end
         end
@@ -71,9 +98,13 @@ end
 
 -- returns the stack in 6 columns that hold the panels from bottom up until reaching the first garbage panel
 -- for that reason at times it may not actually be the entire first tier if a low combo garbage blocks early and has panels on top
-function Stack.getTier1PanelsAsColumns(self)
+function StackExtensions.getTier1PanelsAsColumns(stack)
+    return StackExtensions.getTier1PanelsAsColumnsByPanels(stack.panels)
+end
+
+function StackExtensions.getTier1PanelsAsColumnsByPanels(panels)
     -- first transforming into a column representation
-    local columns = self:getPanelsAsColumns()
+    local columns = StackExtensions.getPanelsAsColumnsByPanels(panels)
 
     -- cut out everything 0 and everything that is behind a 9
     for i =1, #columns do
@@ -94,10 +125,14 @@ end
 -- returns the maximum number of panels connected in a MxN rectangle shape in the first tier of the stack
 -- where M >= 2 and N >= 3
 -- a panel counts as connected if you can move it along that block without it dropping rows
-function Stack.getMaxConnectedTier1PanelsCount(self)
+function StackExtensions.getMaxConnectedTier1PanelsCount(stack)
+    return StackExtensions.getMaxConnectedTier1PanelsCountByPanels(stack.panels)
+end
+
+function StackExtensions.getMaxConnectedTier1PanelsCountByPanels(panels)
     local maximumConnectedPanelCount = 0
 
-    local panelSections = self:getTier1ConnectedPanelSections()
+    local panelSections = StackExtensions.getTier1ConnectedPanelSectionsByPanels(panels)
 
     for i=1,#panelSections do
         maximumConnectedPanelCount = math.max(maximumConnectedPanelCount, panelSections[i].numberOfPanels)
@@ -109,8 +144,12 @@ end
 -- returns all sections of connected panels that are at least 2x3 in size
 -- a panel counts as connected if you can move it along that section without it dropping rows
 -- includes sections that are fully part of other sections, no duplicates
-function Stack.getTier1ConnectedPanelSections(self)
-    local columns = self:getTier1PanelsAsColumns()
+function StackExtensions.getTier1ConnectedPanelSections(stack)
+    return StackExtensions.getTier1ConnectedPanelSectionsByPanels(stack.panels)
+end
+
+function StackExtensions.getTier1ConnectedPanelSectionsByPanels(panels)
+    local columns = StackExtensions.getTier1PanelsAsColumnsByPanels(panels)
     local connectedPanelSections = {}
 
     for i = 1, #columns - 1 do
@@ -119,7 +158,6 @@ function Stack.getTier1ConnectedPanelSections(self)
 
         --match with height = baseHeight - 1 and heigh = baseHeight
         for height = baseHeight - 1, baseHeight do
-            if alreadyExists ~= true then
                 local connectedPanelCount = baseHeight
                 local colsToTheLeft = 0
                 local colsToTheRight = 0
@@ -179,14 +217,13 @@ function Stack.getTier1ConnectedPanelSections(self)
                 
                                     table.insert(connectedPanelSections,
                                     ConnectedPanelSection(bottomLeft, topRight,
-                                                          panelCount, self.panels))
+                                                          panelCount, panels))
                                 end
 
                             end
                         end
                     end
                 end
-            end      
         end
     end
 
@@ -317,4 +354,28 @@ function StackExtensions.findActions(stack)
     end
 
     return actions
+end
+
+-- expects an aprilStack WITH whitespace! (or at least full rows)
+function StackExtensions.aprilStackToPanels(aprilStack)
+    local panels = {}
+    local panelCount = 0
+    local loops = 0
+    -- chunk the aprilstack into rows:
+    while #aprilStack > 0 do
+        loops = loops + 1
+        local rowString = string.sub(aprilStack, #aprilStack - 5, #aprilStack)
+        aprilStack = string.sub(aprilStack, 1, #aprilStack - 6)
+        -- copy the panels into the row
+        panels[loops] = {}
+        for i = 1, 6 do
+            local color = string.sub(rowString, i, i)
+            local panel = Panel(panelCount)
+            panel.color = tonumber(color)
+            panelCount = panelCount + 1
+            panels[loops][i] = panel
+        end
+    end
+
+    return panels
 end
