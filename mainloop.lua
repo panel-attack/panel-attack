@@ -76,10 +76,13 @@ function fmainloop()
   -- Run Unit Tests
   if TESTS_ENABLED then
     -- Run all unit tests now that we have everything loaded
-    require("ServerQueueTests")
-    require("PriorityQueueTests")
-    require("StackTests")
-    require("computerPlayers.JamesAi.JamesAiTests")
+    print("Running unit tests")
+    --require("ServerQueueTests")
+    --require("PriorityQueueTests")
+    --require("StackTests")
+    --require("computerPlayers.JamesAi.JamesAiTests")
+    require("computerPlayers.EndarisCpu.Tests.StackExtensionsTest")
+    require("computerPlayers.EndarisCpu.Tests.DefragmentationTest")
   end
 
   while true do
