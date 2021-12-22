@@ -506,7 +506,12 @@ function Stack.render(self)
   multi_shakeQuad = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight(), themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight())
 
   -- draw inside stack's frame canvas
-  local portrait_w, portrait_h = characters[self.character].images["portrait"]:getDimensions()
+  local portrait_image = "portrait"
+  if not (self.which == 1) and characters[self.character].images["portrait2"] then
+    portrait_image = "portrait2"
+  end
+
+  local portrait_w, portrait_h = characters[self.character].images[portrait_image]:getDimensions()
 
   -- Draw the portrait (with fade and inversion if needed)
   if self.do_countdown == false then
@@ -520,13 +525,12 @@ function Stack.render(self)
       self.portraitFade = config.portrait_darkness / 100
     end
   end
-  if P1 == self then
-    draw(characters[self.character].images["portrait"], 4, 4, 0, 96 / portrait_w, 192 / portrait_h)
-    grectangle_color("fill", 4, 4, 96, 192, 0, 0, 0, self.portraitFade)
+  if self.which == 1 or portrait_image == "portrait2" then
+    draw(characters[self.character].images[portrait_image], 4, 4, 0, 96 / portrait_w, 192 / portrait_h)
   else
-    draw(characters[self.character].images["portrait"], 100, 4, 0, (96 / portrait_w) * -1, 192 / portrait_h)
-    grectangle_color("fill", 4, 4, 96, 192, 0, 0, 0, self.portraitFade)
+    draw(characters[self.character].images[portrait_image], 100, 4, 0, (96/portrait_w)*-1, 192/portrait_h)
   end
+  grectangle_color("fill", 4, 4, 96, 192, 0, 0, 0, self.portraitFade)
 
   local metals
   if self.garbage_target then
@@ -660,7 +664,7 @@ function Stack.render(self)
   end
 
   -- Draw the frames and wall at the bottom
-  if P1 == self then
+  if self.which == 1 then
     draw(themes[config.theme].images.IMG_frame1P, 0, 0)
     draw(themes[config.theme].images.IMG_wall1P, 4, 4 - shake + self.height * 16)
   else
@@ -925,10 +929,10 @@ function Stack.render(self)
     end
 
     -- Draw the time for non time attack modes
-    if P1 and P1.game_stopwatch and tonumber(P1.game_stopwatch) and self.match.mode ~= "time" then
-      --gprint(frames_to_time_string(P1.game_stopwatch, P1.match.mode == "endless"), main_infos_screen_pos.x+10, main_infos_screen_pos.y+6)
+    if self and self.game_stopwatch and tonumber(self.game_stopwatch) and self.match.mode ~= "time" then
+      --gprint(frames_to_time_string(self.game_stopwatch, self.match.mode == "endless"), main_infos_screen_pos.x+10, main_infos_screen_pos.y+6)
       draw_label(themes[config.theme].images.IMG_time, (main_infos_screen_pos.x + themes[config.theme].timeLabel_Pos[1]) / GFX_SCALE, (main_infos_screen_pos.y + themes[config.theme].timeLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].timeLabel_Scale)
-      draw_time(frames_to_time_string(P1.game_stopwatch, self.match.mode == "endless"), time_quads, main_infos_screen_pos.x + themes[config.theme].time_Pos[1], main_infos_screen_pos.y + themes[config.theme].time_Pos[2], 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale)
+      draw_time(frames_to_time_string(self.game_stopwatch, self.match.mode == "endless"), time_quads, main_infos_screen_pos.x + themes[config.theme].time_Pos[1], main_infos_screen_pos.y + themes[config.theme].time_Pos[2], 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale)
     end
 
     -- Draw the community message
@@ -940,7 +944,7 @@ function Stack.render(self)
   -- Draw the analytics data
   if config.enable_analytics and self.drawsAnalytics == true then
     local xPosition = self.score_x - 512
-    if self == P2 then
+    if self.which == 2 then
       xPosition = xPosition + 990
     end
     self:drawAnalyticData(self.analytic, xPosition, self.score_y - 81)

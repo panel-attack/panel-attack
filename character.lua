@@ -19,6 +19,7 @@ local other_images = {
   "filler2",
   "flash",
   "portrait",
+  "portrait2",
   "burst",
   "fade"
 }
@@ -39,6 +40,7 @@ local defaulted_images = {
   filler2 = true,
   flash = true,
   portrait = true,
+  portrait2 = false,
   burst = true,
   fade = true
 } -- those images will be defaulted if missing
@@ -73,6 +75,7 @@ Character =
     self.popfx_burstRotate = false
     self.popfx_burstScale = 1
     self.popfx_fadeScale = 1
+    self.music_style = "normal"
   end
 )
 
@@ -127,6 +130,11 @@ function Character.json_init(self)
     --popfx_fadeScale
     if read_data.popfx_fadeScale and type(read_data.popfx_fadeScale) == "number" then
       self.popfx_fadeScale = read_data.popfx_fadeScale
+    end
+
+    --music style
+    if read_data.music_style and type(read_data.music_style) == "string" then
+      self.music_style = read_data.music_style
     end
 
     -- associated stage

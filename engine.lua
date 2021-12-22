@@ -1842,7 +1842,7 @@ function Stack.PdP(self)
     end
 
     -- Update Music
-    if not music_mute and not game_is_paused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
+    if not game_is_paused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
       if self:game_ended() == false and self.canvas ~= nil then
         if self.do_countdown then
           if SFX_Go_Play == 1 then
@@ -1859,25 +1859,87 @@ function Stack.PdP(self)
           if GAME.battleRoom then
             winningPlayer = GAME.battleRoom:winningPlayer(P1, P2)
           end
-          local musics_to_use = (current_use_music_from == "stage") and current_stage and stages[current_stage].musics or characters[winningPlayer.character].musics
-          if not musics_to_use["normal_music"] then -- use the other one as fallback
-            musics_to_use = (current_use_music_from ~= "stage") and stages[current_stage].musics or characters[winningPlayer.character].musics
-          end
-          if (self.danger_music or (self.garbage_target and self.garbage_target.danger_music)) then --may have to rethink this bit if we do more than 2 players
-            if (current_music_is_casual or table.getn(currently_playing_tracks) == 0) and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
-              stop_the_music()
-              find_and_add_music(musics_to_use, "danger_music")
-              current_music_is_casual = false
-            elseif table.getn(currently_playing_tracks) == 0 and musics_to_use["normal_music"] then
-              stop_the_music()
-              find_and_add_music(musics_to_use, "normal_music")
-              current_music_is_casual = true
+
+          local musics_to_use = nil
+          local dynamicMusic = false
+          local stageHasMusic = current_stage and stages[current_stage].musics and stages[current_stage].musics["normal_music"]
+          local characterHasMusic = winningPlayer.character and characters[winningPlayer.character].musics and characters[winningPlayer.character].musics["normal_music"]
+          if ((current_use_music_from == "stage") and stageHasMusic) or not characterHasMusic then
+            if stages[current_stage].music_style == "dynamic" then
+              dynamicMusic = true
             end
-          else --we should be playing normal_music or normal_music_start
-            if (not current_music_is_casual or table.getn(currently_playing_tracks) == 0) and musics_to_use["normal_music"] then
-              stop_the_music()
+            musics_to_use = stages[current_stage].musics
+          elseif characterHasMusic then
+            if characters[self.character].music_style == "dynamic" then
+              dynamicMusic = true
+            end
+            musics_to_use = characters[winningPlayer.character].musics
+          else
+            -- no music loaded
+          end
+
+          local wantsDangerMusic = self.danger_music or (self.garbage_target and self.garbage_target.danger_music)
+
+          if dynamicMusic then
+            local fadeLength = 60
+
+            local normalMusic = {musics_to_use["normal_music"], musics_to_use["normal_music_start"]}
+            local dangerMusic = {musics_to_use["danger_music"], musics_to_use["danger_music_start"]}
+              
+            if not self.fade_music_clock or #currently_playing_tracks == 0 then
+              self.fade_music_clock = fadeLength
               find_and_add_music(musics_to_use, "normal_music")
-              current_music_is_casual = true
+              find_and_add_music(musics_to_use, "danger_music")
+              setFadePercentageForGivenTracks(1, normalMusic)
+              setFadePercentageForGivenTracks(0, dangerMusic)
+            else 
+              if current_music_is_casual ~= wantsDangerMusic then
+                current_music_is_casual = not current_music_is_casual
+
+                if self.fade_music_clock >= fadeLength then
+                  self.fade_music_clock = 0
+                else
+                  -- switched music before we fully faded, so start part way through
+                  self.fade_music_clock = fadeLength - self.fade_music_clock
+                end
+                if wantsDangerMusic then
+                  setFadePercentageForGivenTracks(1, normalMusic)
+                  setFadePercentageForGivenTracks(0, dangerMusic)
+                else
+                  setFadePercentageForGivenTracks(0, normalMusic)
+                  setFadePercentageForGivenTracks(1, dangerMusic)
+                end
+              else
+                if self.fade_music_clock < fadeLength then
+                  self.fade_music_clock = self.fade_music_clock + 1
+                  local fadePercentage = self.fade_music_clock / fadeLength
+                  if wantsDangerMusic then
+                    setFadePercentageForGivenTracks(1 - fadePercentage, normalMusic)
+                    setFadePercentageForGivenTracks(fadePercentage, dangerMusic)
+                  else
+                    setFadePercentageForGivenTracks(fadePercentage, normalMusic)
+                    setFadePercentageForGivenTracks(1 - fadePercentage, dangerMusic)
+                  end
+                end
+              end
+            end
+          else -- classic music
+            if wantsDangerMusic then --may have to rethink this bit if we do more than 2 players
+              if (current_music_is_casual or #currently_playing_tracks == 0) and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
+                stop_the_music()
+                find_and_add_music(musics_to_use, "danger_music")
+                current_music_is_casual = false
+              elseif #currently_playing_tracks == 0 and musics_to_use["normal_music"] then
+                stop_the_music()
+                find_and_add_music(musics_to_use, "normal_music")
+                current_music_is_casual = true
+              end
+            else --we should be playing normal_music or normal_music_start
+              if (not current_music_is_casual or #currently_playing_tracks == 0) and musics_to_use["normal_music"] then
+                stop_the_music()
+                find_and_add_music(musics_to_use, "normal_music")
+                current_music_is_casual = true
+              end
             end
           end
         end

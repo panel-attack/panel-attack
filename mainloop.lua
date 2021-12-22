@@ -13,7 +13,6 @@ local main_endless, make_main_puzzle, main_net_vs_setup, main_select_puzz, main_
 
 local PLAYING = "playing" -- room states
 local CHARACTERSELECT = "character select" -- room states
-currently_spectating = false -- whether or not you are spectating a game
 connection_up_time = 0 -- connection_up_time counts "E" messages, not seconds
 logged_in = 0
 connected_server_ip = nil -- the ip address of the server you are connected to
@@ -26,7 +25,6 @@ leftover_time = 0
 main_menu_screen_pos = {300 + (canvas_width - legacy_canvas_width) / 2, 195 + (canvas_height - legacy_canvas_height) / 2}
 wait_game_update = nil
 has_game_update = false
-local arrow_padding = 12
 local main_menu_last_index = 1
 
 P1_win_quads = {}
@@ -127,7 +125,6 @@ end
 do
   function main_select_mode()
     click_menus = {}
-    currently_spectating = false
     if themes[config.theme].musics["main"] then
       find_and_add_music(themes[config.theme].musics, "main")
     end
@@ -546,6 +543,7 @@ function main_net_vs_lobby()
   local lastPlayerIndex = 0
   local updated = true -- need update when first entering
   local ret = nil
+  local requestedSpectateRoom = nil
 
   local playerRatingMap = nil
   json_send({leaderboard_request = true}) -- Request the leaderboard so we can show ratings
@@ -562,12 +560,12 @@ function main_net_vs_lobby()
             my_user_id = msg.new_user_id
             print("about to write user id file")
             write_user_id_file()
-            login_status_message = loc("lb_user_new", my_name)
+            login_status_message = loc("lb_user_new", config.name)
           elseif msg.name_changed then
             login_status_message = loc("lb_user_update", msg.old_name, msg.new_name)
             login_status_message_duration = 5
           else
-            login_status_message = loc("lb_welcome_back", my_name)
+            login_status_message = loc("lb_welcome_back", config.name)
           end
         elseif msg.login_denied then
           current_server_supports_ranking = true
@@ -595,6 +593,17 @@ function main_net_vs_lobby()
       if msg.create_room or msg.spectate_request_granted then
         global_initialize_room_msg = msg
         GAME.battleRoom = BattleRoom()
+        if msg.spectate_request_granted then
+          if not requestedSpectateRoom then
+            error("expected requested room")
+          end
+          GAME.battleRoom.spectating = true
+          GAME.battleRoom.playerNames[1] = requestedSpectateRoom.a
+          GAME.battleRoom.playerNames[2] = requestedSpectateRoom.b
+        else
+          GAME.battleRoom.playerNames[1] = config.name
+          GAME.battleRoom.playerNames[2] = msg.opponent
+        end
         select_screen.character_select_mode = "2p_net_vs"
         love.window.requestAttention()
         play_optional_sfx(themes[config.theme].sounds.notification)
@@ -628,7 +637,8 @@ function main_net_vs_lobby()
           lobby_menu:show_controls(true)
         end
         leaderboard_report = msg.leaderboard_report
-        for k, v in ipairs(leaderboard_report) do
+        for i = #leaderboard_report, 1, -1 do
+          local v = leaderboard_report[i]
           playerRatingMap[v.user_name] = v.rating
           if v.is_you then
             my_rank = k
@@ -683,10 +693,7 @@ function main_net_vs_lobby()
 
       local function requestGameFunction(opponentName)
         return function()
-          my_name = config.name
-          op_name = opponentName
-          currently_spectating = false
-          sent_requests[op_name] = true
+          sent_requests[opponentName] = true
           request_game(opponentName)
           updated = true
         end
@@ -694,9 +701,7 @@ function main_net_vs_lobby()
 
       local function requestSpectateFunction(room)
         return function()
-          my_name = room.a
-          op_name = room.b
-          currently_spectating = true
+          requestedSpectateRoom = room
           request_spectate(room.roomNumber)
         end
       end
@@ -830,8 +835,6 @@ end
 function main_net_vs_setup(ip, network_port)
   if not config.name then
     return main_set_name
-  else
-    my_name = config.name
   end
   while config.name == "defaultname" do
     if main_set_name() == {main_select_mode} and config.name ~= "defaultname" then
@@ -859,7 +862,7 @@ function main_net_vs_setup(ip, network_port)
   return main_net_vs_lobby
 end
 
--- online match
+-- online match in progress
 function main_net_vs()
   --Uncomment below to induce lag
   --STONER_MODE = true
@@ -871,7 +874,7 @@ function main_net_vs()
   pick_use_music_from()
   local k = K[1] --may help with spectators leaving games in progress
   local op_name_y = 40
-  if string.len(my_name) > 12 then
+  if string.len(GAME.battleRoom.playerNames[1]) > 12 then
     op_name_y = 55
   end
   while true do
@@ -901,18 +904,6 @@ function main_net_vs()
         return main_dumb_transition, {main_net_vs_lobby, "", 0, 0} -- someone left the game, quit to lobby
       end
     end
-    --draw graphics
-    gprint((my_name or ""), P1.score_x + themes[config.theme].name_Pos[1], P1.score_y + themes[config.theme].name_Pos[2])
-    gprint((op_name or ""), P2.score_x + themes[config.theme].name_Pos[1], P2.score_y + themes[config.theme].name_Pos[2])
-    draw_label(themes[config.theme].images.IMG_wins, (P1.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
-    draw_number(GAME.battleRoom.playerWinCounts[P1.player_number], themes[config.theme].images.IMG_timeNumber_atlas, 12, P1_win_quads, P1.score_x + themes[config.theme].win_Pos[1], P1.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale, "center")
-
-    draw_label(themes[config.theme].images.IMG_wins, (P2.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P2.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
-    draw_number(GAME.battleRoom.playerWinCounts[P2.player_number], themes[config.theme].images.IMG_timeNumber_atlas, 12, P2_win_quads, P2.score_x + themes[config.theme].win_Pos[1], P2.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale, "center")
-
-    if not config.debug_mode then --this is printed in the same space as the debug details
-      gprint(spectators_string, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
-    end
 
     -- don't spend time rendering when catching up to a current match in replays
     if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
@@ -920,7 +911,7 @@ function main_net_vs()
       wait()
     end
 
-    if currently_spectating and menu_escape(K[1]) then
+    if GAME.battleRoom.spectating and menu_escape(K[1]) then
       print("spectator pressed escape during a game")
       json_send({leave_room = true})
       return main_dumb_transition, {main_net_vs_lobby, "", 0, 0} -- spectator leaving the match
@@ -959,7 +950,7 @@ function main_net_vs()
       local now = os.date("*t", to_UTC(os.time()))
       local sep = "/"
       local path = "replays" .. sep .. "v" .. VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
-      local rep_a_name, rep_b_name = my_name, op_name
+      local rep_a_name, rep_b_name = GAME.battleRoom.playerNames[1], GAME.battleRoom.playerNames[2]
       --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
       if rep_b_name < rep_a_name then
         path = path .. sep .. rep_b_name .. "-vs-" .. rep_a_name
@@ -981,11 +972,9 @@ function main_net_vs()
       write_replay_file(path, filename)
 
       select_screen.character_select_mode = "2p_net_vs"
-      if currently_spectating then --transition to game over.
-        return game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}
-      else
-        return game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}
-      end
+      --transition to game over.
+      return game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}
+
     end
   end
 end
@@ -993,9 +982,8 @@ end
 -- sets up globals for local vs
 function main_local_vs_setup()
   GAME.battleRoom = BattleRoom()
-  currently_spectating = false
-  my_name = config.name or "Player 1"
-  op_name = "Player 2"
+  GAME.battleRoom.playerNames[1] = loc("player_n", "1")
+  GAME.battleRoom.playerNames[2] = loc("player_n", "2")
   op_state = nil
   my_player_number = 1
   op_player_number = 2
@@ -1041,9 +1029,7 @@ end
 -- sets up globals for vs yourself
 function main_local_vs_yourself_setup()
   GAME.battleRoom = BattleRoom()
-  currently_spectating = false
-  my_name = config.name or loc("player_n", "1")
-  op_name = nil
+  GAME.battleRoom.playerNames[2] = nil
   my_player_number = 1
   op_state = nil
   select_screen.character_select_mode = "1p_vs_yourself"
@@ -1120,8 +1106,8 @@ function main_replay_vs()
   character_loader_load(P1.character)
   character_loader_load(P2.character)
   character_loader_wait()
-  my_name = replay.P1_name or loc("player_n", "1")
-  op_name = replay.P2_name or loc("player_n", "2")
+  GAME.battleRoom.playerNames[1] = replay.P1_name or loc("player_n", "1")
+  GAME.battleRoom.playerNames[2] = replay.P2_name or loc("player_n", "2")
   if replay.ranked then
     match_type = "Ranked"
   else
@@ -1690,8 +1676,8 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
 
   while true do
     GAME.match:render()
-    gprint(text, (canvas_width - font:getWidth(text)) / 2, (canvas_height - font:getHeight()) / 2)
-    gprint(button_text, (canvas_width - font:getWidth(button_text)) / 2, ((canvas_height - font:getHeight()) / 2) + 30)
+    gprint(text, (canvas_width - font:getWidth(text)) / 2, 10)
+    gprint(button_text, (canvas_width - font:getWidth(button_text)) / 2, 10 + 30)
     wait()
     local ret = nil
     variable_step(
@@ -1699,10 +1685,10 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
         -- Fade the music out over time
         local fadeMusicLength = 3 * 60
         if t <= fadeMusicLength then
-          set_music_fade_percentage((fadeMusicLength - t) / fadeMusicLength)
+          setMusicFadePercentage((fadeMusicLength - t) / fadeMusicLength)
         else
           if t == fadeMusicLength + 1 then
-            set_music_fade_percentage(1) -- reset the music back to normal config volume
+            setMusicFadePercentage(1) -- reset the music back to normal config volume
             stop_the_music()
           end
         end
@@ -1741,7 +1727,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
 
         -- if conditions are met, leave the game over screen
         if t >= timemin and ((t >= timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) or left_select_menu then
-          set_music_fade_percentage(1) -- reset the music back to normal config volume
+          setMusicFadePercentage(1) -- reset the music back to normal config volume
           stop_all_audio()
           SFX_GameOver_Play = 0
           analytics.game_ends(P1.analytic)
