@@ -1,6 +1,6 @@
 require("engine")
 require("profiler")
-require("computerPlayers.JamesAi.JamesAi")
+require("computerPlayers.TreeSearchComputer.TreeSearchComputer")
 require("computerPlayers.EndarisCpu.EndarisCpu")
 
 local PROFILE_TIME = 400
@@ -19,8 +19,8 @@ end
 
 ComputerPlayer = class(function(self, cpuName, configName)
   print("Initialising Computerplayer " .. cpuName .. " with config " .. configName)
-  if cpuName == "JamesAi" then
-    self.implementation = JamesAi()
+  if cpuName == "TreeSearchComputer" then
+    self.implementation = TreeSearchComputer()
   elseif cpuName == "EndarisCpu" then
     self.implementation = EndarisCpu()
   end

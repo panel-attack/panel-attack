@@ -40,3 +40,27 @@ function Input.sort(inputTable)
         return a.executionTime < b.executionTime
     end)
 end
+
+function Input.Left(executionTime)
+    return Input(left, executionTime)
+end
+
+function Input.Right(executionTime)
+    return Input(right, executionTime)
+end
+
+function Input.Down(executionTime)
+    return Input(down, executionTime)
+end
+
+function Input.Up(executionTime)
+    return Input(up, executionTime)
+end
+
+function Input.Raise(executionTime)
+    return Input(raise, executionTime)
+end
+
+function Input.Swap(executionTime)
+    return Input(swap, executionTime)
+end
