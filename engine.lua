@@ -274,7 +274,7 @@ function Stack.mkcpy(self, other)
     if other.panels[i] == nil then
       other.panels[i] = {}
       for j = 1, width do
-        other.panels[i][j] = Panel()
+        other.panels[i][j] = self:CreatePanel()
       end
     end
     for j = 1, width do

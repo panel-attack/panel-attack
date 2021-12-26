@@ -1,5 +1,6 @@
 require("engine")
 require("profiler")
+require("computerPlayers.StackExtensions")
 require("computerPlayers.TreeSearchComputer.TreeSearchComputer")
 require("computerPlayers.EndarisCpu.EndarisCpu")
 
@@ -40,6 +41,7 @@ end)
 
 -- ComputerPlayer holds some functions it expects CPU implementations to implement
 -- this is some kind of check for "interface" implementation
+-- does actually not seem to work although I don't understand why
 function ComputerPlayer.validateImplementation(self)
   if self.implementation.name == nil then
     error("cpu does not have a name")
