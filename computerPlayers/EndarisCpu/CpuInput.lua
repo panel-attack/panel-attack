@@ -16,20 +16,21 @@ local doubleInsert = 512
 --the CPU should make sure to save up enough idleframes for all moves and then perform the inputs in one go
 local stealth = 1024
 
-Input = class(function(self, bit, executionTime)
+Input = class(function(self, bit, executionFrame)
     self.bit = bit
-    self.executionTime = executionTime
+    -- executionFrame is assumed to be the framenumber on the stack
+    self.executionFrame = executionFrame
 end)
 
 function Input.getEncoded(self)
-    return base64encode(self.bit)
+    return base64encode[self.bit + 1]
 end
 
 --rewrite function properly with bitwise operations when it becomes relevant
-function Input.isMovement(self, input)
+function Input.isMovement(input)
     --innocently assuming we never input a direction together with something else unless it's a special that includes a timed swap anyway (doubleInsert,stealth)
     if input then
-        return input > 0 and input < 16
+        return input.bit > 0 and input.bit < 16
     else --only relevant for the very first input
         return true
     end
@@ -37,30 +38,44 @@ end
 
 function Input.sort(inputTable)
     table.sort(inputTable, function(a,b)
-        return a.executionTime < b.executionTime
+        return a.executionFrame < b.executionFrame
     end)
 end
 
-function Input.Left(executionTime)
-    return Input(left, executionTime)
+function Input.EncodedWait()
+    return base64encode[1]
 end
 
-function Input.Right(executionTime)
-    return Input(right, executionTime)
+function Input.WaitTimeSpan(from, to)
+    local input = Input(wait, from)
+    input.to = to
+    return input
 end
 
-function Input.Down(executionTime)
-    return Input(down, executionTime)
+function Input.Left(executionFrame)
+    return Input(left, executionFrame)
 end
 
-function Input.Up(executionTime)
-    return Input(up, executionTime)
+function Input.Right(executionFrame)
+    return Input(right, executionFrame)
 end
 
-function Input.Raise(executionTime)
-    return Input(raise, executionTime)
+function Input.Down(executionFrame)
+    return Input(down, executionFrame)
 end
 
-function Input.Swap(executionTime)
-    return Input(swap, executionTime)
+function Input.Up(executionFrame)
+    return Input(up, executionFrame)
+end
+
+function Input.Raise(executionFrame)
+    return Input(raise, executionFrame)
+end
+
+function Input.Swap(executionFrame)
+    return Input(swap, executionFrame)
+end
+
+function Input.toString(self)
+    return  "Input " .. self.bit .. " at executionFrame " .. self.executionFrame
 end

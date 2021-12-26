@@ -1,34 +1,6 @@
-StackExtensions = class(function(self) end)
-
-function StackExtensions.AsAprilStack(stack)
-    if stack then
-        return StackExtensions.AsAprilStackByPanels(stack.panels)
-    end
-end
-
-function StackExtensions.AsAprilStackByPanels(panels)
-    if panels then
-        local panelString = ""
-        for i=#panels,1,-1 do
-            for j=1,#panels[1] do
-                panelString = panelString.. (tostring(panels[i][j].color))
-            end
-        end
-
-        return panelString
-
-        -- panelString = ""
-        -- for i=#panels,1,-1 do
-        --     for j=1,#panels[1] do
-        --         if not panels[i][j].state == "normal" then
-        --             panelString = panelString.. (tostring(panels[i][j].color))
-        --         end
-        --     end
-        -- end
-
-        -- cpuLog("panels in non-normal state are " .. panelString)
-    end
-end
+-- all StackExtensions should have an extra method that only takes the panelproperty as the parameter
+-- unless they need more than just the panels property
+-- this makes it easier to mock a stack for unit tests while maintaining convenience
 
 function StackExtensions.printAsAprilStack(stack)
     StackExtensions.printAsAprilStackByPanels(stack.panels)
@@ -36,9 +8,8 @@ end
 
 function StackExtensions.printAsAprilStackByPanels(panels)
     local aprilString = StackExtensions.AsAprilStackByPanels(panels)
-    cpuLog("april panelstring is " .. aprilString)
+    print("april panelstring is " .. aprilString)
 end
-
 
 -- returns the maximum number of panels connected in a MxN rectangle shape
 -- where M >= 2 and N >= 3 divided through the total number of panels on the board
@@ -154,7 +125,7 @@ function StackExtensions.getTier1ConnectedPanelSectionsByPanels(panels)
 
     for i = 1, #columns - 1 do
         local baseHeight = #columns[i]
-        cpuLog('column ' .. i .. ' with a height of ' .. baseHeight)
+        --CpuLog:log(6, 'column ' .. i .. ' with a height of ' .. baseHeight)
 
         --match with height = baseHeight - 1 and heigh = baseHeight
         for height = baseHeight - 1, baseHeight do
@@ -182,7 +153,7 @@ function StackExtensions.getTier1ConnectedPanelSectionsByPanels(panels)
                 end
 
                 local cols = 1 + colsToTheLeft + colsToTheRight
-                cpuLog("Found " .. cols .. " columns around column " .. i .. " with a height of >= " .. height)
+                --CpuLog:log(6, "Found " .. cols .. " columns around column " .. i .. " with a height of >= " .. height)
 
                 if cols >= 2 and (connectedPanelCount / cols) > 2 then
                     --suffices the 2x3 criteria
@@ -208,8 +179,8 @@ function StackExtensions.getTier1ConnectedPanelSectionsByPanels(panels)
 
                                 if alreadyExists == false then
                                     -- count the panels
-                                    cpuLog("Counting panels for subsection " .. bottomLeft:toString() .. "," .. topRight:toString())
-                                    cpuLog("c: " .. c .. ",rows: " .. rows .. ",startCol: " .. startCol .. ",endCol: " .. endCol .. ",col_offset: " .. col_offset)
+                                    --CpuLog:log(6, "Counting panels for subsection " .. bottomLeft:toString() .. "," .. topRight:toString())
+                                    --CpuLog:log(6, "c: " .. c .. ",rows: " .. rows .. ",startCol: " .. startCol .. ",endCol: " .. endCol .. ",col_offset: " .. col_offset)
                                     local panelCount = 0
                                     for l=startCol,endCol do
                                         panelCount = panelCount + math.min(rows, #columns[l])
@@ -238,14 +209,25 @@ ConnectedPanelSection = class(function(panelSection, bottomLeftVector, topRightV
 
     for i=bottomLeftVector.row,topRightVector.row do
         for j=bottomLeftVector.column,topRightVector.column do
-            table.insert(panelSection.panels, panels[j][i])
+            table.insert(panelSection.panels, panels[i][j])
         end
     end
 end)
 
 function ConnectedPanelSection.print(self)
-    cpuLog("ConnectedPanelSection with anchors " .. self.bottomLeftVector:toString() .. ", " .. self.topRightVector:toString() 
-            .. " containing a total of " .. self.numberOfPanels .. " panels")
+    CpuLog:log(6, self:toString())
+end
+
+function ConnectedPanelSection.toString(self)
+    return "ConnectedPanelSection with anchors " .. self.bottomLeftVector:toString() .. ", " .. self.topRightVector:toString() 
+    .. " containing a total of " .. self.numberOfPanels .. " panels"
+end
+
+function ConnectedPanelSection.equals(self, otherSection)
+    return self.bottomLeftVector:equals(otherSection.bottomLeftVector) and
+        self.topRightVector:equals(otherSection.topRightVector) and
+        self.numberOfPanels == otherSection.numberOfPanels and
+        StackExtensions.panelsAreEqualByPanels(self.panels, otherSection.panels)
 end
 
 
@@ -282,7 +264,7 @@ function StackExtensions.findActions(stack)
             -- horizontal 3 matches
             if grid[i][j] >= 3 then
                 --fetch the actual panels
-                cpuLog('found horizontal 3 match in row ' .. i .. ' for color ' .. j)
+                CpuLog:log(6, 'found horizontal 3 match in row ' .. i .. ' for color ' .. j)
                 local panels = {}
                 for k = 1, #stack.panels[i] do
                     if stack.panels[i][k].color == j then
@@ -300,17 +282,17 @@ function StackExtensions.findActions(stack)
                     table.insert(actionPanels, panels[n + 2]:copy())
 
                     --create the action and put it in our list
-                    table.insert(actions, H3Match(actionPanels))
+                        table.insert(actions, H3Match(actionPanels))
                 end
             end
             -- vertical 3 matches
             if grid[i][j] > 0 then
                 -- if colorConsecutiveRowCount >= 4 then
-                --     cpuLog("found vertical 4 combo in row " .. i-3 .. " to " .. i .. " for color " .. j)
+                --     CpuLog:log(6, "found vertical 4 combo in row " .. i-3 .. " to " .. i .. " for color " .. j)
                 --     table.insert(actions, V4Combo(colorConsecutivePanels))
                 -- end
                 -- if colorConsecutiveRowCount >= 5 then
-                --     cpuLog("found vertical 5 combo in row " .. i-4 .. " to " .. i .. " for color " .. j)
+                --     CpuLog:log(6, "found vertical 5 combo in row " .. i-4 .. " to " .. i .. " for color " .. j)
                 --     table.insert(actions, V5Combo(colorConsecutivePanels))
                 -- end
                 colorConsecutiveRowCount = colorConsecutiveRowCount + 1
@@ -327,12 +309,12 @@ function StackExtensions.findActions(stack)
                         #colorConsecutivePanels[colorConsecutiveRowCount - 2] *
                         #colorConsecutivePanels[colorConsecutiveRowCount - 1] *
                         #colorConsecutivePanels[colorConsecutiveRowCount]
-                    cpuLog(
-                        'found ' ..
-                            combinations ..
-                                ' combination(s) for a vertical 3 match in row ' ..
-                                    i - 2 .. ' to ' .. i .. ' for color ' .. j
-                    )
+                    -- CpuLog:log(6,
+                    --     'found ' ..
+                    --         combinations ..
+                    --             ' combination(s) for a vertical 3 match in row ' ..
+                    --                 i - 2 .. ' to ' .. i .. ' for color ' .. j
+                    -- )
 
                     for q = 1, #colorConsecutivePanels[colorConsecutiveRowCount - 2] do
                         for r = 1, #colorConsecutivePanels[colorConsecutiveRowCount - 1] do
@@ -356,28 +338,8 @@ function StackExtensions.findActions(stack)
     return actions
 end
 
--- expects an aprilStack WITH whitespace! (or at least full rows)
-function StackExtensions.aprilStackToPanels(aprilStack)
-    local panels = {}
-    local panelCount = 0
-    local loops = 0
-    -- chunk the aprilstack into rows:
-    while #aprilStack > 0 do
-        loops = loops + 1
-        local rowString = string.sub(aprilStack, #aprilStack - 5, #aprilStack)
-        aprilStack = string.sub(aprilStack, 1, #aprilStack - 6)
-        -- copy the panels into the row
-        panels[loops] = {}
-        for i = 1, 6 do
-            local color = string.sub(rowString, i, i)
-            local panel = Panel(panelCount)
-            panel.color = tonumber(color)
-            panelCount = panelCount + 1
-            panels[loops][i] = panel
-        end
-    end
-
-    return panels
+function StackExtensions.swapIsValid(panel1, panel2)
+    return panel1:exclude_swap() and panel2:exclude_swap()
 end
 
 function StackExtensions.moveIsValid(stack, panelId, targetVector)
@@ -418,4 +380,60 @@ function StackExtensions.calculateExecution(stack, action)
     -- -> dictates order of panels
     -- 2. the stack has to sanity check whether a movement is actually possible
     -- -> checks whether we are actually falling down
+end
+
+function StackExtensions.actionIsValid(stack, action)
+    return StackExtensions.actionIsValidByPanels(stack.panels, action)
+end
+
+
+function StackExtensions.actionIsValidByPanels(panels, action)
+    for i=1, #action.panels do
+        if not StackExtensions.moveIsValidByPanels(panels,
+                               action.panels[i].id, action.panels[i].targetVector) then
+            return false
+        end
+    end
+
+    return true
+end
+
+-- not really equal but sufficiently equal
+function StackExtensions.stacksAreEqual(stack, otherStack)
+    if stack and otherStack then
+        if StackExtensions.panelsAreEqualByPanels(stack.panels, otherStack.panels) then
+            return true
+        else
+            return false
+        end
+    end
+end
+
+function StackExtensions.panelsAreEqualByPanels(panels, otherPanels)
+    if #panels ~= #otherPanels then
+        return false
+    end
+
+    for i=1,#panels do
+        for j=1,#panels[i] do
+           if not panels[i][j]:equals(otherPanels[i][j]) then
+               return false
+           end
+        end
+    end
+
+    return true
+end
+
+-- this is halfbaked but should be fine for now
+function Panel.equals(self, otherPanel)
+    if self == nil and otherPanel == nil then
+        return true
+    elseif self.id == otherPanel.id and
+        self.state == otherPanel.state and
+        self.chaining == otherPanel.chaining then
+        return true
+    else
+        return false
+    end
 end

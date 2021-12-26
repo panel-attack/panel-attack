@@ -51,11 +51,11 @@ function Defragment.chooseAction(self)
 
     --debugging
     for i=1,#panels do
-        cpuLog("panel " .. panels[i][1].id .. " at coord " .. panels[i][1].vector:toString() .. " with value of " .. panels[i][2])
+        --cpuLog("panel " .. panels[i][1].id .. " at coord " .. panels[i][1].vector:toString() .. " with value of " .. panels[i][2])
     end
     --debugging
     for i=1,#emptySpaces do
-        cpuLog("empty space " .. i .. " at coord " .. emptySpaces[i][1].vector:toString() .. " with value of " .. emptySpaces[i][2])
+        --cpuLog("empty space " .. i .. " at coord " .. emptySpaces[i][1].vector:toString() .. " with value of " .. emptySpaces[i][2])
     end
 
     table.sort(emptySpaces, function(a, b)
@@ -94,23 +94,23 @@ function Defragment.chooseAction(self)
                                 a.row >= emptySpacesToFill[i].row
         end)
 
-        cpuLog("Trying to fill " .. #emptySpacesToFill .. " emptySpaces with " .. #panelsToMove .. " panels")
+        CpuLog:log(6, "Trying to fill " .. #emptySpacesToFill .. " emptySpaces with " .. #panelsToMove .. " panels")
 
         local panel = table.remove(panelsToMove, 1)
-        panel:print()
+        CpuLog:log(1, panel:toString())
         while StackExtensions.moveIsValid(self.cpu.stack, panel.id, emptySpacesToFill[i].vector) == false do
             if #panelsToMove > 0 then
                 panel = table.remove(panelsToMove, 1)
             else
                 -- reached a dead end, gotta reparse and hope for the best
-                -- or maybe raise if it actually deathlocks here
-                cpuLog("Tried to defragment but couldn't decide to do anything")
+                -- or maybe raise if it actually deadlocks here (turns out it does)
+                CpuLog:log(1, "Tried to defragment but couldn't decide to do anything")
                 return
             end
         end
-        local action = Move(self.cpu.stack, panel, emptySpacesToFill[i].vector)
+        local action = MovePanel(self.cpu.stack, panel, emptySpacesToFill[i].vector)
         action:calculateExecution(self.cpu.stack.cur_row, self.cpu.stack.cur_col)
-        action:print()
+        CpuLog:log(1, action:toString())
 
         if self.cpu.currentAction == nil then
             self.cpu.currentAction = action

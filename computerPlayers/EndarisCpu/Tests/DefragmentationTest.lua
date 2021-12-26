@@ -88,9 +88,86 @@ function DefragmentationTest.testFragmentationPercentage3()
     print("passed test fragmentation percentage 3")
 end
 
+function DefragmentationTest.testGetTier1ConnectedPanelSectionsByPanels1()
+    -- can't use garbagePanels because the function tests for them
+    local aprilString = "000000000000000000000000000000000000800000800008880008880088880888880888"
+    local panels = StackExtensions.aprilStackToPanels(aprilString)
+
+    local expectedValue = {}
+    table.insert(expectedValue, ConnectedPanelSection(GridVector(1, 1), GridVector(5, 2), 9, panels))
+    table.insert(expectedValue, ConnectedPanelSection(GridVector(1, 1), GridVector(4, 2), 8, panels))
+    table.insert(expectedValue, ConnectedPanelSection(GridVector(1, 1), GridVector(3, 2), 6, panels))
+    table.insert(expectedValue, ConnectedPanelSection(GridVector(1, 4), GridVector(3, 6), 8, panels))
+    table.insert(expectedValue, ConnectedPanelSection(GridVector(1, 4), GridVector(3, 5), 5, panels))
+    table.insert(expectedValue, ConnectedPanelSection(GridVector(1, 5), GridVector(3, 6), 6, panels))
+    table.insert(expectedValue, ConnectedPanelSection(GridVector(1, 5), GridVector(4, 6), 7, panels))
+
+    local connectedSections = StackExtensions.getTier1ConnectedPanelSectionsByPanels(panels)
+    assert(#connectedSections == 7, "wrong amount of sections found")
+
+    for i=1,#expectedValue do
+        local matched = false
+        for j=1,#connectedSections do
+            if expectedValue[i]:equals(connectedSections[j]) then
+                matched = true
+                break
+            end
+        end
+        assert(matched, "couldn\'t find a match for section" .. expectedValue[i]:toString())
+    end
+
+    print("passed test getTier1ConnectedPanelSectionsByPanels1 (or maybe it isn't good enough)")
+end
+
+function DefragmentationTest.testGetTier1ConnectedPanelSectionsByPanels2()
+-- can't use garbagePanels because the function tests for them
+local aprilString = "000000000000000000000000000000000000800000800008880008888808888808888888"
+local panels = StackExtensions.aprilStackToPanels(aprilString)
+
+local expectedValue = {}
+table.insert(expectedValue, ConnectedPanelSection(GridVector(1, 1), GridVector(5, 2), 9, panels))
+table.insert(expectedValue, ConnectedPanelSection(GridVector(1, 1), GridVector(4, 2), 8, panels))
+table.insert(expectedValue, ConnectedPanelSection(GridVector(1, 1), GridVector(3, 2), 6, panels))
+table.insert(expectedValue, ConnectedPanelSection(GridVector(1, 1), GridVector(4, 3), 11, panels))
+table.insert(expectedValue, ConnectedPanelSection(GridVector(1, 1), GridVector(3, 3), 9, panels))
+table.insert(expectedValue, ConnectedPanelSection(GridVector(1, 2), GridVector(4, 3), 7, panels))
+table.insert(expectedValue, ConnectedPanelSection(GridVector(1, 2), GridVector(3, 3), 6, panels))
+table.insert(expectedValue, ConnectedPanelSection(GridVector(1, 1), GridVector(4, 4), 14, panels))
+table.insert(expectedValue, ConnectedPanelSection(GridVector(1, 1), GridVector(3, 4), 12, panels))
+table.insert(expectedValue, ConnectedPanelSection(GridVector(1, 2), GridVector(4, 4), 10, panels))
+table.insert(expectedValue, ConnectedPanelSection(GridVector(1, 2), GridVector(3, 4), 9, panels))
+table.insert(expectedValue, ConnectedPanelSection(GridVector(1, 3), GridVector(3, 4), 6, panels))
+
+local connectedSections = StackExtensions.getTier1ConnectedPanelSectionsByPanels(panels)
+assert(#connectedSections == 12, "wrong amount of sections found (" .. #connectedSections .. ")")
+-- test fails at the moment, reason:
+-- false positive: ConnectedPanelSection with anchors 1|3, 4|4 containing a total of 6 panels
+-- -> that section is not 4 rows high and therefore the same as 1|3 -> 4|3
+
+for i=1,#connectedSections do
+    print(connectedSections[i]:toString())
+end
+
+for i=1,#expectedValue do
+    local matched = false
+    for j=1,#connectedSections do
+        if expectedValue[i]:equals(connectedSections[j]) then
+            matched = true
+            break
+        end
+    end
+    assert(matched, "couldn\'t find a match for section" .. expectedValue[i]:toString())
+end
+
+print("passed test getTier1ConnectedPanelSectionsByPanels2 (or maybe it isn't good enough)")
+end
+
 DefragmentationTest.testGetPanelsAsColumnsByPanels()
 DefragmentationTest.testGetTotalTier1PanelsCountByPanels()
 DefragmentationTest.testMaxConnectedTier1PanelsCount()
 DefragmentationTest.testFragmentationPercentage1()
 DefragmentationTest.testFragmentationPercentage2()
 DefragmentationTest.testFragmentationPercentage3()
+DefragmentationTest.testGetTier1ConnectedPanelSectionsByPanels1()
+DefragmentationTest.testGetTier1ConnectedPanelSectionsByPanels2()
+

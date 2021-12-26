@@ -8,36 +8,43 @@ Action =
         action.executionPath = nil
         action.isClear = false
         action.name = 'unknown action'
+        action.moves = nil
+        action.popsPanels = true
     end
 )
 
-function Action.print(self)
-    cpuLog('printing ' .. self.name .. ' with estimated cost of ' .. self.estimatedCost)
+function Action.toString(self)
+    local actionString = 'printing ' .. self.name .. ' with estimated cost of ' .. self.estimatedCost
     if self.panels then
+        actionString = actionString .. "\n"
         for i = 1, #self.panels do
-            self.panels[i]:print()
+            actionString = actionString .. self.panels[i]:toString() .. "\n"
         end
     end
 
     if self.executionPath then
         for i = 1, #self.executionPath do
-            cpuLog('element ' .. i .. ' of executionpath is ' .. self.executionPath[i])
+            actionString = actionString .. 'element ' .. i .. ' of executionpath is ' .. self.executionPath[i].bit
+            if self.executionPath[i].executionFrame then
+                actionString = actionString .. ', scheduled to execute at frame ' .. self.executionPath[i].executionFrame
+            else
+                actionString = actionString .. ', execution is not scheduled yet'
+            end
         end
+    else
+        actionString = actionString .. 'action has no executionpath'
     end
+
+    return actionString
 end
 
 function Action.getPanelsToMove(self)
     local panelsToMove = {}
-    cpuLog('#self.panels has ' .. #self.panels .. ' panels')
     for i = 1, #self.panels do
-        cpuLog('printing panel with index ' .. i)
-        self.panels[i]:print()
+        CpuLog:log(6, self.panels[i]:toString())
 
         if self.panels[i]:needsToMove() then
-            cpuLog('inserting panel with index ' .. i .. ' into the table')
             table.insert(panelsToMove, self.panels[i])
-        else
-            cpuLog(' panel with index ' .. i .. ' is already at the desired coordinate, skipping')
         end
     end
 
@@ -73,19 +80,19 @@ function Action.setCursorStartPos(panel, projectedCoordinate)
     else
         panel.cursorStartPos = GridVector(coordinate.row, coordinate.column + 0.5)
     end
-    cpuLog("Set cursorStartPos for panel " .. panel.id .. " to " .. panel.cursorStartPos:toString())
+    CpuLog:log(6, "Set cursorStartPos for panel " .. panel.id .. " to " .. panel.cursorStartPos:toString())
 end
 
 function Action.addCursorMovementToExecution(self, gridVector)
-    cpuLog('adding cursor movement to the input queue with vector' .. gridVector:toString())
+    CpuLog:log(6, 'adding cursor movement to the input queue with vector' .. gridVector:toString())
     --vertical movement
     if math.sign(gridVector.row) == 1 then
         for i = 1, math.abs(gridVector.row) do
-            table.insert(self.executionPath, down)
+            table.insert(self.executionPath, Input.Down())
         end
     elseif math.sign(gridVector.row) == -1 then
         for i = 1, math.abs(gridVector.row) do
-            table.insert(self.executionPath, up)
+            table.insert(self.executionPath, Input.Up())
         end
     else
         --no vertical movement required
@@ -98,7 +105,7 @@ function Action.addCursorMovementToExecution(self, gridVector)
         end
     elseif math.sign(gridVector.column) == -1 then
         for i = 1, math.abs(gridVector.column) do
-            table.insert(self.executionPath, right)
+            table.insert(self.executionPath, Input.Right())
         end
     else
         --no vertical movement required
@@ -106,21 +113,21 @@ function Action.addCursorMovementToExecution(self, gridVector)
 end
 
 function Action.addPanelMovementToExecution(self, gridVector)
-    cpuLog('adding panel movement to the input queue with vector' .. gridVector:toString())
+    CpuLog:log(6, 'adding panel movement to the input queue with vector' .. gridVector:toString())
 
     -- always starting with a swap because it is assumed that we already moved into the correct location for the initial swap
-    table.insert(self.executionPath, swap)
+    table.insert(self.executionPath, Input.Swap())
     --section needs a rework once moving panels between rows are considered
     --vertical movement
     if math.sign(gridVector.row) == 1 then
         for i = 2, math.abs(gridVector.row) do
-            table.insert(self.executionPath, up)
-            table.insert(self.executionPath, swap)
+            table.insert(self.executionPath, Input.Up())
+            table.insert(self.executionPath, Input.Swap())
         end
     elseif math.sign(gridVector.row) == -1 then
         for i = 2, math.abs(gridVector.row) do
-            table.insert(self.executionPath, down)
-            table.insert(self.executionPath, swap)
+            table.insert(self.executionPath, Input.Down())
+            table.insert(self.executionPath, Input.Swap())
         end
     else
         --no vertical movement required
@@ -129,13 +136,13 @@ function Action.addPanelMovementToExecution(self, gridVector)
     --horizontal movement
     if math.sign(gridVector.column) == 1 then
         for i = 2, math.abs(gridVector.column) do
-            table.insert(self.executionPath, right)
-            table.insert(self.executionPath, swap)
+            table.insert(self.executionPath, Input.Right())
+            table.insert(self.executionPath, Input.Swap())
         end
     elseif math.sign(gridVector.column) == -1 then
         for i = 2, math.abs(gridVector.column) do
-            table.insert(self.executionPath, left)
-            table.insert(self.executionPath, swap)
+            table.insert(self.executionPath, Input.Left())
+            table.insert(self.executionPath, Input.Swap())
         end
     else
         --no vertical movement required
@@ -152,67 +159,104 @@ end
 
 --#region Action implementations go here
 
+WaitTimeSpan =
+    class(
+    function(action, from, to)
+        Action.init(action)
+        action.name = 'WaitTimeSpan'
+        action.estimatedCost = 0
+        action.executionPath = { Input.WaitTimeSpan(from, to)}
+        action.popsPanels = false
+    end
+    )
+
 Raise =
     class(
-    function(action)
+    function(action, executionFrame)
         Action.init(action)
         action.name = 'Raise'
         action.estimatedCost = 0
-        action.executionPath = {raise, wait}
+        action.executionPath =
+            {Input.Raise(executionFrame), Input.WaitTimeSpan(executionFrame, executionFrame + 10 / 60)}
+            -- the wait is a crutch to avoid a double raise
+        action.popsPanels = false
     end,
     Action
 )
 
-Move =
+MoveCursor =
+    class(
+        function(action, stack, targetVector)
+            Action.init(action)
+            action.name = "MoveCursor"
+            action.stack = stack
+            action.targetVector = targetVector
+            action.popsPanels = false
+        end
+    )
+
+
+function MoveCursor.calculateExecution(self, cursor_row, cursor_col)
+    self.executionPath = {}
+    CpuLog:log(6, "cursor_row is " .. cursor_row .. ", cursor_col is " .. cursor_col)
+    local cursorVec = GridVector(cursor_row, cursor_col)
+    CpuLog:log(6, "cursorVec is " .. cursorVec:toString())
+
+    local moveToPanelVec = cursorVec:difference(self.targetVector)
+    self:addCursorMovementToExecution(moveToPanelVec)
+end
+
+MovePanel =
     class(
         function(action, stack, panel, targetVector)
             Action.init(action)
-            action.name = 'Move'
+            action.name = 'MovePanel'
             action.stack = stack
             action.panel = panel
             action.targetVector = targetVector
             action.panel.targetVector = targetVector
+            action.popsPanels = false
         end,
         Action
     )
 
-    function Move.calculateExecution(self, cursor_row, cursor_col)
-        self.executionPath = {}
-        cpuLog("cursor_row is " .. cursor_row .. ", cursor_col is " .. cursor_col)
-        local cursorVec = GridVector(cursor_row, cursor_col)
-        cpuLog("cursorVec is " .. cursorVec:toString())
-        
-        local generalDirection = self.panel.targetVector.column - self.panel.vector.column
-        local movementVec = GridVector(0, (generalDirection / math.abs(generalDirection)) * -1)
-        local projectedPos = self.panel.vector
+function MovePanel.calculateExecution(self, cursor_row, cursor_col)
+    self.executionPath = {}
+    CpuLog:log(6, "cursor_row is " .. cursor_row .. ", cursor_col is " .. cursor_col)
+    local cursorVec = GridVector(cursor_row, cursor_col)
+    CpuLog:log(6, "cursorVec is " .. cursorVec:toString())
 
-        cpuLog("targetVec is " .. self.panel.targetVector:toString())
+    local generalDirection = self.panel.targetVector.column - self.panel.vector.column
+    local movementVec = GridVector(0, (generalDirection / math.abs(generalDirection)) * -1)
+    local projectedPos = self.panel.vector
 
-        while projectedPos.column ~= self.panel.targetVector.column do
-            local moveToPanelVec = cursorVec:difference(projectedPos)
-            self:addCursorMovementToExecution(moveToPanelVec)
-            self:addPanelMovementToExecution(movementVec)
+    CpuLog:log(6, "targetVec is " .. self.panel.targetVector:toString())
 
-            -- find out where the panel ended up now
-            -- the result of the swap
-            projectedPos = projectedPos:substract(movementVec)
-            cpuLog("ProjectedPos after swap is " .. projectedPos:toString())
-            -- panel is falling down
-            for r=projectedPos.row - 1,1,-1 do
-                if self.stack.panels[r][projectedPos.column].color == 0 then
-                    projectedPos = projectedPos:substract(GridVector(1, 0))
-                else
-                    break
-                end
+    while projectedPos.column ~= self.panel.targetVector.column do
+        local moveToPanelVec = cursorVec:difference(projectedPos)
+        self:addCursorMovementToExecution(moveToPanelVec)
+        self:addPanelMovementToExecution(movementVec)
+
+        -- find out where the panel ended up now
+        -- the result of the swap
+        projectedPos = projectedPos:substract(movementVec)
+        CpuLog:log(6, "ProjectedPos after swap is " .. projectedPos:toString())
+        -- simulating the effect of gravity after the swap
+        for r=projectedPos.row - 1,1,-1 do
+            if self.stack.panels[r][projectedPos.column].color == 0 then
+                projectedPos = projectedPos:substract(GridVector(1, 0))
+            else
+                break
             end
-            cpuLog("ProjectedPos after falling is " .. projectedPos:toString())
-
-            -- update the cursor position for the next round
-            cursorVec =
-            cursorVec:substract(moveToPanelVec):add(GridVector(0, movementVec.column - math.sign(movementVec.column)))
-            cpuLog('next cursor vec is ' .. cursorVec:toString())
         end
+        CpuLog:log(5, "ProjectedPos after falling is " .. projectedPos:toString())
+
+        -- update the cursor position for the next round
+        cursorVec =
+        cursorVec:substract(moveToPanelVec):add(GridVector(0, movementVec.column - math.sign(movementVec.column)))
+        CpuLog:log(6, 'next cursor vec is ' .. cursorVec:toString())
     end
+end
 
 Match3 =
     class(
@@ -224,39 +268,39 @@ Match3 =
 )
 
 function Match3.calculateExecution(self, cursor_row, cursor_col)
-    cpuLog('calculating execution path for action ' .. self.name)
-    self:print()
+    CpuLog:log(6, 'calculating execution path for action ' .. self.name)
+    CpuLog:log(6, self:toString())
 
     self.executionPath = {}
 
     local panelsToMove = self:getPanelsToMove()
-    cpuLog('found ' .. #panelsToMove .. ' panels to move')
+    CpuLog:log(6, 'found ' .. #panelsToMove .. ' panels to move')
     -- cursor_col is the column of the left part of the cursor
     local cursorVec = GridVector(cursor_row, cursor_col)
-    cpuLog('cursor vec is ' .. cursorVec:toString())
+    CpuLog:log(6, 'cursor vec is ' .. cursorVec:toString())
     while (#panelsToMove > 0) do
         panelsToMove = self:sortByDistanceToCursor(panelsToMove, cursorVec)
         local nextPanel = panelsToMove[1]:copy()
-        cpuLog('nextPanel cursorstartpos is ' .. nextPanel.cursorStartPos:toString())
+        CpuLog:log(6, 'nextPanel cursorstartpos is ' .. nextPanel.cursorStartPos:toString())
         local moveToPanelVec = cursorVec:difference(nextPanel.cursorStartPos)
-        cpuLog('difference vec is ' .. moveToPanelVec:toString())
+        CpuLog:log(6, 'difference vec is ' .. moveToPanelVec:toString())
         self:addCursorMovementToExecution(moveToPanelVec)
         local movePanelVec = GridVector(0, nextPanel.targetVector.column - nextPanel.vector.column)
-        cpuLog('panel movement vec is ' .. movePanelVec:toString())
+        CpuLog:log(6, 'panel movement vec is ' .. movePanelVec:toString())
         self:addPanelMovementToExecution(movePanelVec)
         -- update the cursor position for the next round
         cursorVec =
             cursorVec:substract(moveToPanelVec):add(GridVector(0, movePanelVec.column - math.sign(movePanelVec.column)))
-        cpuLog('next cursor vec is ' .. cursorVec:toString())
+        CpuLog:log(6, 'next cursor vec is ' .. cursorVec:toString())
         --remove the panel we just moved so we don't try moving it again
         table.remove(panelsToMove, 1)
-        cpuLog(#panelsToMove .. ' panels left to move')
+        CpuLog:log(6, #panelsToMove .. ' panels left to move')
     end
 
     -- wait at the end of each action to avoid scanning the board again while the last swap is still in progress
     -- or don't cause we have waitFrames now
     --table.insert(self.executionPath, wait)
-    cpuLog('exiting calculateExecution')
+    CpuLog:log(6, 'exiting calculateExecution')
 end
 
 H3Match =
@@ -270,8 +314,8 @@ H3Match =
 )
 
 function H3Match.calculateCost(self)
-    cpuLog("calculating cost for action")
-    self:print()
+    CpuLog:log(6, "calculating cost for action")
+    CpuLog:log(6, self:toString())
 
     -- always pick the panel in the middle as the one that doesn't need to get moved
     local middlePanelColumn = self.panels[2].vector.column
@@ -300,8 +344,8 @@ V3Match =
 )
 
 function V3Match.calculateCost(self)
-    cpuLog("calculating cost for action")
-    self:print()
+    CpuLog:log(6, "calculating cost for action")
+    CpuLog:log(6, self:toString())
     self:chooseColumn()
 end
 
@@ -328,11 +372,11 @@ function V3Match.chooseColumn(self)
 
     self.estimatedCost = minCost
     self.targetColumn = column
-    cpuLog('chose targetColumn ' .. self.targetColumn)
-    cpuLog('setting target vectors for V3Match ' .. self.targetColumn)
+    CpuLog:log(6, 'chose targetColumn ' .. self.targetColumn)
+    CpuLog:log(6, 'setting target vectors for V3Match ' .. self.targetColumn)
     for i = 1, #self.panels do
         self.panels[i].targetVector = GridVector(self.panels[i].row, self.targetColumn)
-        self.panels[i]:print()
+        CpuLog:log(6, self.panels[i]:toString())
     end
 end
 
