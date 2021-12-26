@@ -125,76 +125,84 @@ function StackExtensions.getTier1ConnectedPanelSectionsByPanels(panels)
 
     for i = 1, #columns - 1 do
         local baseHeight = #columns[i]
-        --CpuLog:log(6, 'column ' .. i .. ' with a height of ' .. baseHeight)
+        CpuLog:log(6, 'column ' .. i .. ' with a height of ' .. baseHeight)
 
         --match with height = baseHeight - 1 and heigh = baseHeight
         for height = baseHeight - 1, baseHeight do
-                local connectedPanelCount = baseHeight
-                local colsToTheLeft = 0
-                local colsToTheRight = 0
-                for k = i - 1, 1, -1 do
-                    -- from column i to the left side of the board
-                    if columns[k] and #columns[k] >= height then
-                        connectedPanelCount = connectedPanelCount + math.min(height + 1, #columns[k])
-                        colsToTheLeft = colsToTheLeft + 1
-                    else
-                        break
-                    end
+            local connectedPanelCount = baseHeight
+            local colsToTheLeft = 0
+            local colsToTheRight = 0
+            for k = i - 1, 1, -1 do
+                -- from column i to the left side of the board
+                if columns[k] and #columns[k] >= height then
+                    connectedPanelCount = connectedPanelCount + math.min(height + 1, #columns[k])
+                    colsToTheLeft = colsToTheLeft + 1
+                else
+                    break
                 end
+            end
 
-                -- from column i to the right side of the board
-                for k = i + 1, #columns do
-                    if columns[k] and #columns[k] >= height then
-                        connectedPanelCount = connectedPanelCount + math.min(height + 1, #columns[k])
-                        colsToTheRight = colsToTheRight + 1
-                    else
-                        break
-                    end
+            -- from column i to the right side of the board
+            for k = i + 1, #columns do
+                if columns[k] and #columns[k] >= height then
+                    connectedPanelCount = connectedPanelCount + math.min(height + 1, #columns[k])
+                    colsToTheRight = colsToTheRight + 1
+                else
+                    break
                 end
+            end
 
-                local cols = 1 + colsToTheLeft + colsToTheRight
-                --CpuLog:log(6, "Found " .. cols .. " columns around column " .. i .. " with a height of >= " .. height)
+            local cols = 1 + colsToTheLeft + colsToTheRight
+            CpuLog:log(6, "Found " .. cols .. " columns around column " .. i .. " with a height of >= " .. height)
 
-                if cols >= 2 and (connectedPanelCount / cols) > 2 then
-                    --suffices the 2x3 criteria
+            if cols >= 2 and (connectedPanelCount / cols) > 2 then
+                --suffices the 2x3 criteria
 
-                    --add all valid subsections in the section
-                    for c=cols,2,-1 do
-                        for rows=height+1,3,-1 do
-                            for col_offset=i - colsToTheLeft,i - colsToTheLeft + (cols - c) do
-                                
-                                local startCol = col_offset
-                                local endCol = col_offset + c - 1 -- -1 because the col range is [], not [)
-                                local bottomLeft = GridVector(1, startCol)
-                                local topRight = GridVector(rows, endCol)
+                --add all valid subsections in the section
+                for c=cols,2,-1 do
+                    for rows=height+1,3,-1 do
+                        for col_offset=i - colsToTheLeft, i - colsToTheLeft + (cols - c) do
+                            
+                            local startCol = col_offset
+                            local endCol = col_offset + c - 1 -- -1 because the col range is [], not [)
+                            local bottomLeft = GridVector(1, startCol)
+                            local topRight = GridVector(rows, endCol)
 
-                                local alreadyExists = false
-                                -- but only those that don't exist yet
-                                for n=1,#connectedPanelSections do
-                                    if connectedPanelSections[n].bottomLeftVector:equals(bottomLeft) and connectedPanelSections[n].topRightVector:equals(topRight) then
-                                        alreadyExists = true
-                                        break
-                                    end
+                            local alreadyExists = false
+                            -- but only those that don't exist yet
+                            for n=1,#connectedPanelSections do
+                                if connectedPanelSections[n].bottomLeftVector:equals(bottomLeft) and connectedPanelSections[n].topRightVector:equals(topRight) then
+                                    alreadyExists = true
+                                    break
+                                end
+                            end
+
+                            if alreadyExists == false then
+                                -- count the panels
+                                CpuLog:log(6, "Counting panels for subsection " .. bottomLeft:toString() .. "," .. topRight:toString())
+                                CpuLog:log(6, "c: " .. c .. ",rows: " .. rows .. ",startCol: " .. startCol .. ",endCol: " .. endCol .. ",col_offset: " .. col_offset)
+                                local panelCount = 0
+                                for l=startCol,endCol do
+                                    panelCount = panelCount + math.min(rows, #columns[l])
                                 end
 
-                                if alreadyExists == false then
-                                    -- count the panels
-                                    --CpuLog:log(6, "Counting panels for subsection " .. bottomLeft:toString() .. "," .. topRight:toString())
-                                    --CpuLog:log(6, "c: " .. c .. ",rows: " .. rows .. ",startCol: " .. startCol .. ",endCol: " .. endCol .. ",col_offset: " .. col_offset)
-                                    local panelCount = 0
-                                    for l=startCol,endCol do
-                                        panelCount = panelCount + math.min(rows, #columns[l])
-                                    end
-                
-                                    table.insert(connectedPanelSections,
-                                    ConnectedPanelSection(bottomLeft, topRight,
-                                                          panelCount, panels))
-                                end
+                                -- a scenario in when a subsection assumed to have a certain amount of rows
+                                -- fails to actually meet the same amount of rows as its parent section
+                                local isValid = math.ceil(panelCount / (endCol - startCol + 1)) == rows
 
+                                if isValid then
+                                    local newPanelSection = ConnectedPanelSection(bottomLeft, topRight,
+                                                                                panelCount, panels)
+                                    CpuLog:log(5, "Adding new "  .. newPanelSection:toString())
+                                    table.insert(connectedPanelSections, newPanelSection)
+                                else
+                                    CpuLog:log(6, "Section is not actually " .. rows .. " rows high and is therefore skipped.")
+                                end
                             end
                         end
                     end
                 end
+            end
         end
     end
 

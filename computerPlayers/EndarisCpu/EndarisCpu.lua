@@ -39,7 +39,6 @@ EndarisCpu = class(function(self)
     self.enable_catches = false
     self.enable_doubleInsert = false
     self.lastInput = Input.WaitTimeSpan(-180, -170)
-    self.lastInputTime = -180
 end)
 
 function EndarisCpu.getConfigs()
@@ -169,8 +168,11 @@ end
 function EndarisCpu.input(self)
     local nextInput = table.remove(self.inputQueue, 1)
     if nextInput.executionFrame <= (os.clock() or 0) then
+        if nextInput.name == 'WaitTimeSpan' and nextInput.to > os.clock() then
+            -- still need that one
+            table.insert(self.inputQueue, 1, nextInput)
+        end
         self.lastInput = nextInput
-        self.lastInputTime = (os.clock() or 0)
         CpuLog:log(2, 'executing ' .. self.lastInput:toString())
         return nextInput:getEncoded()
     else
