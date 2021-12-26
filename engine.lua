@@ -206,7 +206,6 @@ Stack =
     s.prev_states = {}
 
     s.analytic = AnalyticsInstance(s.is_local)
-    s.gfx = {} --TODO, what is this for?
     s.telegraph = Telegraph(s)
     s.unverified_garbage = {}
     s.combos = {}  --TODO: use these to show stats at the end of a game
@@ -261,9 +260,6 @@ function Stack.mkcpy(self, other)
   other.garbage_q = self.garbage_q:mkcpy()
   --other.garbage_to_send = deepcpy(self.garbage_to_send)
   other.telegraph = self.telegraph:mkcpy()
-  if self.incoming_telegraph then
-    other.incoming_telegraph = self.incoming_telegraph:mkcpy()
-  end
   other.input_state = self.input_state
   local height = self.height or other.height
   local width = self.width or other.width
@@ -334,7 +330,6 @@ end
 function Stack.set_foreign(self, make_foreign)
   if make_foreign then 
     self.foreign = true
-    self.incoming_telegraph = nil
   else
     self.foreign = nil
   end
@@ -344,25 +339,6 @@ function Stack.set_garbage_target(self, new_target)
   self.garbage_target = new_target
   self.telegraph.pos_x = new_target.pos_x - 4
   self.telegraph.pos_y = new_target.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
-  --TODO: maybe, if the telegraph.pos_x is left of self.pos_x, set the telegraph to be drawn right to left.
-  --[[
-  if not self.foreign then
-    if self.garbage_target and self.garbage_target ~= self then
-      --not playing vs-yourself
-      self.incoming_telegraph = Telegraph(self.garbage_target)
-      self.incoming_telegraph.pos_x = self.pos_x - 4
-      self.incoming_telegraph.pos_y = self.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
-    elseif self.garbage_target then
-      self.telegraph.pos_x = self.garbage_target.pos_x
-      self.telegraph.pos_y = self.garbage_target.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
-    end
-
-    --our incoming telegraph will also get new attack pushes
-    --from our garbage_target's telegraph as they are pushed to it.
-    -- print("Player "..self.which.."'s incoming telegraph is subscribing to attacks pushes from Player "..self.garbage_target.which)
-    -- new_target.telegraph:subscribe(self.incoming_telegraph)
-  end
-  --]]
 end
 
 local MAX_TAUNT_PER_10_SEC = 4
@@ -612,8 +588,7 @@ Telegraph = class(function(self, sender)
   
   --keys for self.stoppers.combo[some_key] will be garbage widths, and values will be frame_to_release
   self.sender = sender
-  self.attacks = {}
-  self.subscribed_telegraphs = {}
+  self.attacks = {} -- A copy of the chains and combos earned used to render the animation of going to the telegraph
 end)
 
 function Telegraph.mkcpy(self)
@@ -624,10 +599,6 @@ function Telegraph.mkcpy(self)
   copy.sender = self.sender
   copy.pos_x = self.pos_x
   copy.pos_y = self.pos_y
-  copy.subscribed_telegraphs = {}
-  for k, v in pairs(self.subscribed_telegraphs) do
-    copy.subscribed_telegraphs[k] = v
-  end
   return copy
 end
 
@@ -651,10 +622,6 @@ function Telegraph.push(self, attack_type, attack_size, metal_count, attack_orig
   self.attacks[frame_earned][#self.attacks[frame_earned]+1] =
   {frame_earned=frame_earned, attack_type=attack_type, 
   size=attack_size, origin_col=attack_origin_col, origin_row= attack_origin_row, stuff_to_send=stuff_to_send}
-  for k, v in pairs(self.subscribed_telegraphs) do 
-    print("now also pushing to a subscribed telegraph")
-    v:push(attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned)
-  end
 end
 
 function Telegraph.add_combo_garbage(self, n_combo, n_metal, frame_earned)
@@ -672,10 +639,6 @@ function Telegraph.add_combo_garbage(self, n_combo, n_metal, frame_earned)
   self.garbage_queue:push(stuff_to_send)
   return stuff_to_send
   
-end
-
-function Telegraph.subscribe(self, following_telegraph)
-  self.subscribed_telegraphs[#self.subscribed_telegraphs+1] = following_telegraph
 end
 
 function Telegraph.grow_chain(self, frame_earned)
@@ -804,22 +767,6 @@ function Telegraph.pop_all_ready_garbage(self, frame, just_peeking)
     return nil
   end
 end
-
---[[
-function Telegraph.sender_chain_ended(self, frame_it_ended)
- --this bit is unneeded, I think
-  for chain_idx, chain_release_frame in pairs(self.stoppers.chain) do
-    if (self.sender.CLOCK + GARBAGE_TRANSIT_TIME + GARBAGE_DELAY >= chain_release_frame) then
-      self.stoppers.chain[chain_idx] = nil
-    end
-  end
-
-  self.garbage_queue:sender_chain_ended(frame_it_ended)
-  for k, v in pairs(self.subscribed_telegraphs) do
-    v.garbage_queue:sender_chain_ended(frame_it_ended)
-  end
-end
---]]
 
 do
   local exclude_hover_set = {
@@ -1237,14 +1184,6 @@ function Stack.PdP(self)
       end
       if self.countdown_CLOCK then
         self.countdown_CLOCK = self.countdown_CLOCK + 1
-      end
-    end
-
-    -- Update GFX items (and remove them if neccessary)
-    for key, gfx_item in pairs(self.gfx) do
-      gfx_item["age"] = gfx_item["age"] + 1
-      if gfx_item["age"] > 24 then
-        self.gfx[key] = nil
       end
     end
 

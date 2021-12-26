@@ -1135,37 +1135,12 @@ function Stack.render_countdown(self)
   end
 end
 
--- function Stack.render_gfx(self)
-  -- for key, gfx_item in pairs(self.gfx) do
-    -- drawQuad(IMG_particles[self.character], particle_quads[gfx_item["age"]], gfx_item["x"], gfx_item["y"])
-  -- end
--- end
-
 function Stack.render_telegraph(self)
   local telegraph_to_render 
   
-  --if self.foreign then
-    --print("rendering foreign Player "..self.which.."'s self.garbage_target.telegraph")
-    --telegraph_to_render = self.garbage_target.telegraph
-  --else
-    --if self.garbage_target == self then
-      --print("rendering Player "..self.which.."'s self.telegraph")
+
       telegraph_to_render = self.telegraph
-    --else
-      --print("rendering Player "..self.which.."'s self.incoming_telegraph")
-      --telegraph_to_render = self.incoming_telegraph
-      -- if self.which == 2 then
-        -- print("\ntelegraph_stoppers: "..json.encode(telegraph_to_render.stoppers))
-        -- print("telegraph garbage queue:")
-        -- print(telegraph_to_render.garbage_queue:to_string())
-        -- print("telegraph g_q chain in progress: "..tostring(true and telegraph_to_render.sender.chains.current))
-      -- end
-    --end
-  --end
-  -- print("\nrendering telegraph for player "..self.which)
-  -- if self.which == 1 then 
-    -- print(telegraph_to_render.garbage_queue:to_string())
-  -- end
+
   local render_x = telegraph_to_render.pos_x
   for frame_earned, attacks_this_frame in pairs(telegraph_to_render.attacks) do
     -- print("frame_earned:")
@@ -1241,8 +1216,8 @@ function Stack.render_telegraph(self)
             local last_chain_in_queue = telegraph_to_render.garbage_queue.chain_garbage[telegraph_to_render.garbage_queue.chain_garbage.last]
             print("telegraph_to_render.garbage_queue.chain_garbage.last: "..telegraph_to_render.garbage_queue.chain_garbage.last)
             if garbage_block[4]--[[from_chain]] then
-              print("setting ghost_chain")
               telegraph_to_render.garbage_queue.ghost_chain = (telegraph_to_render.garbage_queue.ghost_chain or 0) + 1
+              print("setting ghost_chain " .. telegraph_to_render.garbage_queue.ghost_chain .. " frame " .. frames_since_earned)
             end
           end
         end
