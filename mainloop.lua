@@ -93,8 +93,7 @@ function fmainloop()
     -- require("PriorityQueueTests")
     -- require("StackTests")
     -- require("computerPlayers.TreeSearchComputer.TreeSearchComputerTests")
-    require("computerPlayers.EndarisCpu.Tests.StackExtensionsTest")
-    require("computerPlayers.EndarisCpu.Tests.DefragmentationTest")
+    require("computerPlayers.EndarisCpu.Tests.Tests")
   end
 
   while true do
