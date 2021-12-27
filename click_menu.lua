@@ -1,7 +1,7 @@
 require("graphics_util")
 
 menu_font = love.graphics.getFont()
-click_menus = {} -- All click menus currently showing in the game
+CLICK_MENUS = {} -- All click menus currently showing in the game
 
 -- A series of buttons with text strings that can be clicked or use input to navigate
 -- Buttons are laid out vertically and scroll buttons are added if not all options fit.
@@ -44,9 +44,9 @@ Click_menu =
     self.arrow_padding = 12
     self.active = true
     self.visible = true
-    click_menus[#click_menus + 1] = self
+    CLICK_MENUS[#CLICK_MENUS + 1] = self
     self.active_idx = active_idx or 1 -- the currently selected button
-    self.id = #click_menus
+    self.id = #CLICK_MENUS
     self.top_visible_button = 1
     self.clock = 1
 
@@ -115,7 +115,7 @@ end
 
 -- Removes this menu from the list of menus
 function Click_menu.remove_self(self)
-  click_menus[self.id] = nil
+  CLICK_MENUS[self.id] = nil
 end
 
 -- PRIVATE
@@ -323,53 +323,29 @@ function Click_menu.move(self, x, y)
 end
 
 -- Handles taps or clicks on the menu
-function click_or_tap(x, y, touchpress)
-  print(x .. "," .. y)
-  for menu_name, menu in pairs(click_menus) do
-    if menu.active then
-      menu.idx_selected = nil
-      for i = 1, #menu.buttons do
-        if y >= menu.y + menu.buttons[i].y and y <= menu.y + menu.buttons[i].y + menu:get_button_height(i) and x >= menu.x + menu.buttons[i].x and x <= menu.x + menu.buttons[i].x + menu:get_button_width(i) then
-          menu.idx_selected = i
-          menu:selectButton(menu.idx_selected)
-        end
+function Click_menu.click_or_tap(self, x, y, touchpress)
+  if self.active then
+    self.idx_selected = nil
+
+    -- Handle tapping on a menu option
+    for i = 1, #self.buttons do
+      if y >= self.y + self.buttons[i].y and y <= self.y + self.buttons[i].y + self:get_button_height(i) and x >= self.x + self.buttons[i].x and x <= self.x + self.buttons[i].x + self:get_button_width(i) then
+        self.idx_selected = i
+        self:selectButton(self.idx_selected)
+
+        --TODO: consolidate with the input functions sound
+        play_optional_sfx(themes[config.theme].sounds.menu_validate)
       end
-      for control_name, control in pairs(menu.menu_controls) do
-        if control.visible then
-          if y >= menu.y + control.y and y <= menu.y + control.y + control.h and x >= menu.x + control.x and x <= menu.x + control.x + control.w then
-            --print(menu_name.."'s "..control_name.." was clicked or tapped")
-            this_frame_keys[control_name] = true
+    end
 
-          --this method moves the menu's index, but doesn't let you move the leaderboard up/down
-          -- if control_name == "up" then
-          -- -- menu:set_active_idx(menu.active_idx - 1)
-          -- elseif control_name == "down" then
-          -- menu:set_active_idx(menu.active_idx + 1)
-          -- end
-
-          --attempt at getting repeat of the key to work (didn't work)
-          --love:keypressed(control_name, control_name, repeating_key(control_name))
-          end
+    -- Handle tapping on a button control
+    for control_name, control in pairs(self.menu_controls) do
+      if control.visible then
+        if y >= self.y + control.y and y <= self.y + control.y + control.h and x >= self.x + control.x and x <= self.x + control.x + control.w then
+          --print(menu_name.."'s "..control_name.." was clicked or tapped")
+          this_frame_keys[control_name] = true
         end
       end
     end
   end
 end
-
--- Transform from window coordinates to game coordinates
-function transform_coordinates(x, y)
-  local lbx, lby, lbw, lbh = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 16, 9)
-  local scale = canvas_width / math.max(GAME.backgroundImage:getWidth(), GAME.backgroundImage:getHeight())
-  return (x - lbx) / scale * canvas_width / lbw, (y - lby) / scale * canvas_height / lbh
-end
-
--- Handle a mouse or touch press
-function love.mousepressed(x, y)
-  click_or_tap(transform_coordinates(x, y))
-end
-
--- Handle a touch press
--- function love.touchpressed(id, x, y, dx, dy, pressure)
-  -- local _x, _y = transform_coordinates(x, y)
-  -- click_or_tap(_x, _y, {id = id, x = _x, y = _y, dx = dx, dy = dy, pressure = pressure})
--- end
