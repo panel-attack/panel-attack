@@ -19,6 +19,7 @@ require("globals")
 require("character") -- after globals!
 require("stage") -- after globals!
 require("save")
+require("engine/telegraph")
 require("engine")
 require("localization")
 require("graphics")
