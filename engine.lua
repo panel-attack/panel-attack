@@ -82,7 +82,7 @@ Stack =
       {1, 2, idx = 1},
       {1, idx = 1}
     }
-    s.later_garbage = {}
+    s.later_garbage = {} -- Queue of garbage that is done waiting in telegraph, and been popped out, and will be sent to the other player next frame
     s.garbage_q = GarbageQueue(s)
     -- garbage_to_send[frame] is an array of garbage to send at frame.
     -- garbage_to_send.chain is an array of garbage to send when the chain ends.
@@ -407,7 +407,7 @@ end
 GarbageQueue = class(function(s, sender)
   s.sender = sender
   s.chain_garbage = Queue()
-  s.combo_garbage = {Queue(),Queue(),Queue(),Queue(),Queue(),Queue()} --index here represents width, and value represents how many of that width queued
+  s.combo_garbage = {Queue(),Queue(),Queue(),Queue(),Queue(),Queue()} --index here represents width, and length represents how many of that width queued
   s.metal = Queue()
 end)
 
@@ -580,14 +580,24 @@ function GarbageQueue.get_idx_of_garbage(self, garbage_width, garbage_height, is
 end
 
 Telegraph = class(function(self, sender)
+
+  -- A combo won't delay a chain
+  -- A chain will delay a combo, combo goes on top
+
+  -- Metal won't delay a combo
+  -- Combo delays a metal, metal goes on top
+
+
+  -- Stores the actual queue of garbages in the telegraph but not queued long enough to exceed the "stoppers"
   self.garbage_queue = GarbageQueue(sender)
-  self.stoppers =  {chain = {}, combo = {}, metal = nil}
-  
+
+  -- Attacks must stay in the telegraph a certain amount of time before they can be sent, we track this with "stoppers"
   --note: keys for stoppers such as self.stoppers.chain[some_key]
   --will be the garbage block's index in the queue , and value will be the frame the stopper expires).
-  
   --keys for self.stoppers.combo[some_key] will be garbage widths, and values will be frame_to_release
-  self.sender = sender
+  self.stoppers =  {chain = {}, combo = {}, metal = nil}
+  
+  self.sender = sender -- The stack that sent this garbage
   self.attacks = {} -- A copy of the chains and combos earned used to render the animation of going to the telegraph
 end)
 
@@ -602,6 +612,7 @@ function Telegraph.mkcpy(self)
   return copy
 end
 
+-- Adds a piece of garbage to the queue
 function Telegraph.push(self, attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned)
   print("telegraph.push")
   local x_displacement 
@@ -620,8 +631,7 @@ function Telegraph.push(self, attack_type, attack_size, metal_count, attack_orig
     self.attacks[frame_earned] = {}
   end
   self.attacks[frame_earned][#self.attacks[frame_earned]+1] =
-  {frame_earned=frame_earned, attack_type=attack_type, 
-  size=attack_size, origin_col=attack_origin_col, origin_row= attack_origin_row, stuff_to_send=stuff_to_send}
+    {frame_earned=frame_earned, attack_type=attack_type, size=attack_size, origin_col=attack_origin_col, origin_row= attack_origin_row, stuff_to_send=stuff_to_send}
 end
 
 function Telegraph.add_combo_garbage(self, n_combo, n_metal, frame_earned)
@@ -664,7 +674,7 @@ end
 
 function Telegraph.pop_all_ready_garbage(self, frame, just_peeking)
   local ready_garbage = {}
-  local n_chain_stoppers, n_combo_stoppers = 0, 0
+  local n_chain_stoppers, n_combo_stoppers = 0, 0 -- count of stoppers remaining
   local subject = self
   local time_to_check = self.sender.CLOCK
   if just_peeking then
@@ -673,8 +683,8 @@ function Telegraph.pop_all_ready_garbage(self, frame, just_peeking)
   if frame then
     time_to_check = frame
   end
+
   for chain_idx, chain_release_frame in pairs(subject.stoppers.chain) do
-    
     --remove any chain stoppers that expire this frame,
     if chain_release_frame <= time_to_check then
       print("in Telegraph.pop_all_ready_garbage")
@@ -692,10 +702,11 @@ function Telegraph.pop_all_ready_garbage(self, frame, just_peeking)
       n_combo_stoppers = n_combo_stoppers + 1
     end
   end
- --remove the metal stopper if it expires this frame
- if subject.stoppers.metal and subject.stoppers.metal <= time_to_check then
-   subject.stoppers.metal = nil
- end
+
+  --remove the metal stopper if it expires this frame
+  if subject.stoppers.metal and subject.stoppers.metal <= time_to_check then
+    subject.stoppers.metal = nil
+  end
   -- print(P1.CLOCK)
   -- print("table_to_string(subject.stoppers.chain):-")
   -- print(table_to_string(subject.stoppers.chain))
@@ -738,6 +749,7 @@ function Telegraph.pop_all_ready_garbage(self, frame, just_peeking)
       end
     end
   end
+
   for combo_garbage_width=3,6 do
     local n_blocks_of_this_width = subject.garbage_queue.combo_garbage[combo_garbage_width]:len()
     
@@ -757,6 +769,7 @@ function Telegraph.pop_all_ready_garbage(self, frame, just_peeking)
       end
     end
   end
+  
   local frame_to_release_metal = subject.stoppers.metal
   while subject.garbage_queue.metal:peek() and not subject.stoppers.metal do
       ready_garbage[#ready_garbage+1] = subject.garbage_queue:pop()
@@ -1726,7 +1739,9 @@ function Stack.PdP(self)
     if self.match.mode == "vs" then
       local to_send = self.telegraph:pop_all_ready_garbage()
       if to_send and to_send[1] then
-        self:really_send(to_send)
+        if self.garbage_target then
+          self.garbage_target.later_garbage[self.CLOCK+1] = to_send
+        end
       end
     end
   
@@ -2229,12 +2244,6 @@ function Stack.drop_garbage(self, width, height, metal)
   end
 
   return true
-end
-
-function Stack.really_send(self, to_send)
-  if self.garbage_target then
-    self.garbage_target.later_garbage[self.CLOCK+1] = to_send
-  end
 end
 
 function Stack.check_matches(self)
