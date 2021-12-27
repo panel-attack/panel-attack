@@ -1536,7 +1536,7 @@ function Stack.PdP(self)
       local to_send = self.telegraph:pop_all_ready_garbage()
       if to_send and to_send[1] then
         if self.garbage_target then
-          self.garbage_target.later_garbage[self.CLOCK+1] = to_send
+          self.garbage_target:receiveGarbage(self.CLOCK+1, to_send)
         end
       end
     end
@@ -2040,6 +2040,64 @@ function Stack.drop_garbage(self, width, height, metal)
   end
 
   return true
+end
+
+-- Receives garbage on to the stack, rewinding the stack and simulating it again if needed.
+function Stack.receiveGarbage(self, time, to_recv)
+  if self.CLOCK > time and self.prev_states then
+    local prev_states = self.prev_states
+    local next_self = prev_states[time + 1]
+    while next_self and (next_self.prev_active_panels ~= 0 or next_self.n_active_panels ~= 0) do
+      time = time + 1
+      next_self = prev_states[time + 1]
+    end
+    if self.CLOCK - time > 200 then
+      error("Latency is too high :(")
+    else
+      local CLOCK = self.CLOCK
+      local old_self = prev_states[time]
+      --MAGICAL ROLLBACK!?!?
+      self.in_rollback = true
+      print("attempting magical rollback with difference = " .. self.CLOCK - time .. " at time " .. self.CLOCK)
+
+      -- The garbage that we send this time might (rarely) not be the same
+      -- as the garbage we sent before.  Wipe out the garbage we sent before...
+      local first_wipe_time = time + GARBAGE_DELAY
+      local other_later_garbage = self.garbage_target.later_garbage
+      for k, v in pairs(other_later_garbage) do
+        if k >= first_wipe_time then
+          other_later_garbage[k] = nil
+        end
+      end
+      -- and record the garbage that we send this time!
+
+      -- We can do it like this because the sender of the garbage
+      -- and self.garbage_target are the same thing.
+      -- Since we're in this code at all, we know that self.garbage_target
+      -- is waaaaay behind us, so it couldn't possibly have processed
+      -- the garbage that we sent during the frames we're rolling back.
+      --
+      -- If a mode with >2 players is implemented, we can continue doing
+      -- the same thing as long as we keep all of the opponents'
+      -- stacks in sync.
+
+      self:restoreFromRollbackCopy(prev_states[time])
+      self:receiveGarbage(time, to_recv)
+
+      for t = time, CLOCK - 1 do
+        self.input_state = prev_states[t].input_state
+        self:rollbackCopy(prev_states[t]) -- copy self into prev_states t
+        self:controls()
+        self:PdP()
+      end
+      self.in_rollback = nil
+    end
+  end
+  local garbage = self.later_garbage[time] or {}
+  for i = 1, #to_recv do
+    garbage[#garbage + 1] = to_recv[i]
+  end
+  self.later_garbage[time] = garbage
 end
 
 -- Goes through whole stack checking for matches and updating chains etc based on matches.
