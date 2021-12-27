@@ -270,9 +270,9 @@ function Stack.rollbackCopy(self, other)
   else
 
   end--]]
-  other.garbage_q = self.garbage_q:mkcpy()
+  other.garbage_q = self.garbage_q:makeCopy()
   if self.telegraph then
-    other.telegraph = self.telegraph:mkcpy()
+    other.telegraph = self.telegraph:makeCopy()
   end
   other.input_state = self.input_state
   local height = self.height or other.height
@@ -415,7 +415,7 @@ GarbageQueue = class(function(s, sender)
   s.metal = Queue()
 end)
 
-function GarbageQueue.mkcpy(self)
+function GarbageQueue.makeCopy(self)
   local other = GarbageQueue()
   other.sender = self.sender
   other.chain_garbage = deepcpy(self.chain_garbage)
@@ -558,7 +558,7 @@ end
   --note: the first index for our implemented Queue object is 0, not 1
   --this will return 0 for the first index.
 function GarbageQueue.get_idx_of_garbage(self, garbage_width, garbage_height, is_metal, from_chain)
-  local copy = self:mkcpy()
+  local copy = self:makeCopy()
   local sorted_queue = {}
   local idx = -1
   local idx_found = false

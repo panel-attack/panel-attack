@@ -14,9 +14,9 @@ Telegraph = class(function(self, sender)
     self.attacks = {} -- A copy of the chains and combos earned used to render the animation of going to the telegraph
   end)
   
-  function Telegraph.mkcpy(self)
+  function Telegraph.makeCopy(self)
     local copy = Telegraph(self.sender)
-    copy.garbage_queue = self.garbage_queue:mkcpy()
+    copy.garbage_queue = self.garbage_queue:makeCopy()
     copy.stoppers = deepcpy(self.stoppers)
     copy.attacks = deepcpy(self.attacks)
     copy.sender = self.sender
@@ -100,7 +100,7 @@ Telegraph = class(function(self, sender)
     local subject = self
     local time_to_check = self.sender.CLOCK
     if just_peeking then
-      subject = self:mkcpy()
+      subject = self:makeCopy()
     end
     if frame then
       time_to_check = frame

@@ -1217,7 +1217,7 @@ function Stack.render_telegraph(self)
   --then draw the telegraph's garbage queue, leaving an empty space until such a time as the attack arrives (earned_frame-GARBAGE_TRANSIT_TIME)
   -- print("BBBBBB")
   -- print("telegraph_to_render.garbage_queue.ghost_chain: "..(telegraph_to_render.garbage_queue.ghost_chain or "nil"))
-  local g_queue_to_draw = telegraph_to_render.garbage_queue:mkcpy()
+  local g_queue_to_draw = telegraph_to_render.garbage_queue:makeCopy()
   --print("g_queue_to_draw.ghost_chain: "..(g_queue_to_draw.ghost_chain or "nil"))
   local current_block = g_queue_to_draw:pop()
   local draw_x = telegraph_to_render.pos_x
