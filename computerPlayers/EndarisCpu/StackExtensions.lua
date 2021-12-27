@@ -355,8 +355,9 @@ function StackExtensions.moveIsValid(stack, panelId, targetVector)
 end
 
 function StackExtensions.moveIsValidByPanels(panels, panelId, targetVector)
-    local panel = StackExtensions.getPanelByIdFromPanels(panels, panelId)
-    if panel.height < targetVector.column then
+    local panel1 = StackExtensions.getPanelByIdFromPanels(panels, panelId)
+    local panel2 = StackExtensions.getPanelByVectorByPanels(panels, targetVector)
+    if panel1.height < panel2.height or not StackExtensions.swapIsValid(panel1, panel2) then
         return false
     else
         -- this is very naive and certainly not true in some cases but should be fine for a start
@@ -380,6 +381,17 @@ function StackExtensions.getPanelByIdFromPanels(panels, id)
     end
 
     return nil
+end
+
+function StackExtensions.getPanelByVector(stack, vector)
+    return StackExtensions.getPanelByVectorByPanels(stack.panels, vector)
+end
+
+function StackExtensions.getPanelByVectorByPanels(panels,vector)
+    local panel = panels[vector.row][vector.column]
+    panel.height = vector.row
+    panel.width = vector.column
+    return panel
 end
 
 function StackExtensions.calculateExecution(stack, action)

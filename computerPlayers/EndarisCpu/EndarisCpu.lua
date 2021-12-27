@@ -12,7 +12,7 @@ CpuLog = nil
 local cpuConfigs = {
     ['DevConfig'] = {
         ReadingBehaviour = 'WaitAll',
-        Log = 3,
+        Log = 6,
         MoveRateLimit = 10,
         MoveSwapRateLimit = 10,
         DefragmentationPercentageThreshold = 0.3
@@ -146,7 +146,7 @@ end
 function EndarisCpu.getInput(self)
     local ok, errorMsg = coroutine.resume(self.thinkRoutine, self)
     if not ok then
-        error(errorMsg)
+      error(errorMsg .. "\n" .. debug.traceback(self.thinkRoutine) .. "\n" .. debug.traceback(mainloop))
     end
 
     --the conditions are intentional so that the control flow (specifically the exits) is more obvious rather than having a tail of "else return" where you can't tell where it's coming from
