@@ -67,8 +67,8 @@ for k, animation in ipairs(leftward_or_rightward) do
     telegraph_attack_animation[animation][frame].dy = distance * math.sin(angle*2*math.pi)
   end
 end
-print("table_to_string(telegraph_attack_animation):")
-print(table_to_string(telegraph_attack_animation))
+--print("table_to_string(telegraph_attack_animation):")
+--print(table_to_string(telegraph_attack_animation))
  
 GARBAGE_DELAY = 60
 GARBAGE_TRANSIT_TIME = 90

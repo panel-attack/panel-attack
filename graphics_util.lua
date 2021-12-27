@@ -40,22 +40,6 @@ function draw(img, x, y, rot, x_scale, y_scale)
   rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
 end
 
-function drawQuad(img, quad, x, y, rot, x_scale,y_scale)
-  rot = rot or 0
-  x_scale = x_scale or 1
-  y_scale = y_scale or 1
-  gfx_q:push({love.graphics.draw, {img, quad, x*GFX_SCALE, y*GFX_SCALE,
-    rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
-end
-
-function setScissor(x, y, width, height)
-  if x then
-    gfx_q:push({love.graphics.setScissor, {x*GFX_SCALE, y*GFX_SCALE, width*GFX_SCALE, height*GFX_SCALE}})
-  else
-    gfx_q:push({love.graphics.setScissor, {}})
-  end
-end
-
 -- Draws a label image at the given spot.
 -- TODO consolidate with above
 function draw_label(img, x, y, rot, scale, mirror)

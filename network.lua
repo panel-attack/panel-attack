@@ -92,6 +92,7 @@ function undo_stonermode()
   while lag_q:len() ~= 0 do
     TCP_sock:send(unpack(lag_q:pop()))
   end
+  STONER_MODE = false
 end
 
 local got_H = false

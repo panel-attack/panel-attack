@@ -499,9 +499,9 @@ function GarbageQueue.to_string(self)
   if self.chain_garbage:peek() then
     --list chain garbage last to first such that the one to fall first is at the bottom of the list (if any).
     for i=self.chain_garbage:len()-1, 0, -1 do 
-      print("in GarbageQueue.to_string. i="..i)
-      print("table_to_string(self.chain_garbage)")
-      print(table_to_string(self.chain_garbage))
+      --print("in GarbageQueue.to_string. i="..i)
+      --print("table_to_string(self.chain_garbage)")
+      --print(table_to_string(self.chain_garbage))
       --I've run into a bug where I think the following line errors if there is more than one chain_garbage in the queue... TODO: figure that out.
       if self.chain_garbage[i] then
         local width, height, metal, from_chain = unpack(self.chain_garbage[i])
@@ -531,21 +531,21 @@ end
 -- This is used by the telegraph to increase the size of the chain garbage being built
 -- or add a 6-wide if there is not chain garbage yet in the queue
 function GarbageQueue.grow_chain(self,frame_earned)
-  print("in GarbageQueue.grow_chain")
-  print("frame_earned: "..(frame_earned or "nil"))
-  print("json.encode(self.sender.chains):")
-  print(json.encode(self.sender.chains))
+  --print("in GarbageQueue.grow_chain")
+  --print("frame_earned: "..(frame_earned or "nil"))
+  --print("json.encode(self.sender.chains):")
+  --print(json.encode(self.sender.chains))
   if self.sender.chains[self.sender.chains.current].size == 2  then
     self:push({{6,1,false,true, frame_earned=frame_earned}}) --a garbage block 6-wide, 1-tall, not metal, from_chain
   else 
-    print("in GarbageQueue.grow_chain")
-    print("self.sender.CLOCK:")
-    print(self.sender.CLOCK)
+    --print("in GarbageQueue.grow_chain")
+    --print("self.sender.CLOCK:")
+    --print(self.sender.CLOCK)
     --print("self.stack.chain_counter = "..(self.stack.chain_counter or "nil"))
     --print("self.chain_garbage:len() = "..self.chain_garbage:len())
-    print(self:to_string())
-    print("table_to_string(self.chain_garbage):")
-    print(table_to_string(self.chain_garbage))
+    --print(self:to_string())
+    --print("table_to_string(self.chain_garbage):")
+    --print(table_to_string(self.chain_garbage))
     local garbage_block = {unpack(self.chain_garbage[self.chain_garbage.last])}
     garbage_block[2]--[[height]] = garbage_block[2]--[[height]] + 1
     garbage_block.frame_earned = frame_earned
