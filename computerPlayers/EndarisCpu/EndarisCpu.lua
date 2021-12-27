@@ -149,17 +149,25 @@ function EndarisCpu.getInput(self)
       error(errorMsg .. "\n" .. debug.traceback(self.thinkRoutine) .. "\n" .. debug.traceback(mainloop))
     end
 
+     if self:readyToInput() then
+         return self:input()
+     else
+        return Input.EncodedWait()
+     end
+end
+
+function EndarisCpu.readyToInput(self)
     --the conditions are intentional so that the control flow (specifically the exits) is more obvious rather than having a tail of "else return" where you can't tell where it's coming from
     if not self.stack then
-        return Input.EncodedWait()
+        return false
     else --there is a stack, most basic requirement
         if not self.inputQueue or #self.inputQueue == 0 then
-            return Input.EncodedWait()
+            return false
         else --there is actually something to execute
             if self.stack.countdown_timer and self.stack.countdown_timer > 0 and not Input.isMovement(self.inputQueue[1]) then
-                return Input.EncodedWait()
+                return false
             else --either we're just moving or countdown is already over so we can actually do the thing
-                return self:input()
+                return true
             end
         end
     end
@@ -258,7 +266,9 @@ end
 
 -- function serves to actually assign executiontimes to the inputs
 function EndarisCpu.assignExecutionFramesToAction(self, action)
-    assert(#action.executionPath > 0)
+    if #action.executionPath == 0 then
+        return
+    end
     CpuLog:log(3, "entering function assignExecutionTimesToAction")
 
     local lastInput = nil
