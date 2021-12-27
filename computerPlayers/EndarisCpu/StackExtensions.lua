@@ -347,7 +347,7 @@ function StackExtensions.findActions(stack)
 end
 
 function StackExtensions.swapIsValid(panel1, panel2)
-    return panel1:exclude_swap() and panel2:exclude_swap()
+    return not panel1:exclude_swap() and not panel2:exclude_swap()
 end
 
 function StackExtensions.moveIsValid(stack, panelId, targetVector)
@@ -356,8 +356,16 @@ end
 
 function StackExtensions.moveIsValidByPanels(panels, panelId, targetVector)
     local panel1 = StackExtensions.getPanelByIdFromPanels(panels, panelId)
+    CpuLog:log(1, "panel1 is at " .. GridVector(panel1.height, panel1.width):toString())
     local panel2 = StackExtensions.getPanelByVectorByPanels(panels, targetVector)
-    if panel1.height < panel2.height or not StackExtensions.swapIsValid(panel1, panel2) then
+    CpuLog:log(1, "panel2 is at " .. GridVector(panel2.height, panel2.width):toString())
+    if panel1.height < panel2.height then
+        CpuLog:log(1, "panel1 is on a lower row than panel2, can't work")
+        return false
+    elseif not StackExtensions.swapIsValid(panel1, panel2) then
+        CpuLog:log(1, "swapping for one of the two panels is not valid")
+        CpuLog:log(1, "panel1 swappable: " .. tostring(not panel1:exclude_swap()))
+        CpuLog:log(1, "panel2 swappable: " .. tostring(not panel2:exclude_swap()))
         return false
     else
         -- this is very naive and certainly not true in some cases but should be fine for a start
@@ -373,8 +381,8 @@ function StackExtensions.getPanelByIdFromPanels(panels, id)
     for i=1,#panels do
         for j=1, #panels[1] do
            if panels[i][j].id == id then
-            panels[i][j].height = j
-            panels[i][j].width = i
+            panels[i][j].height = i
+            panels[i][j].width = j
                return panels[i][j]
            end
         end
@@ -387,7 +395,7 @@ function StackExtensions.getPanelByVector(stack, vector)
     return StackExtensions.getPanelByVectorByPanels(stack.panels, vector)
 end
 
-function StackExtensions.getPanelByVectorByPanels(panels,vector)
+function StackExtensions.getPanelByVectorByPanels(panels, vector)
     local panel = panels[vector.row][vector.column]
     panel.height = vector.row
     panel.width = vector.column
