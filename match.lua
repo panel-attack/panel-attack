@@ -66,13 +66,6 @@ function Match.render(self)
   -- Draw VS HUD
   if self.battleRoom then
 
-    if P1 and P1.telegraph then
-      P1:render_telegraph()
-    end
-    if P2 and P2.telegraph then
-      P2:render_telegraph()
-    end
-
     -- P1 username
     gprint((GAME.battleRoom.playerNames[1] or ""), P1.score_x + themes[config.theme].name_Pos[1], P1.score_y + themes[config.theme].name_Pos[2])
     if P2 then
@@ -136,6 +129,15 @@ function Match.render(self)
       end
       if P2 then
         P2:render()
+      end
+
+      if self.battleRoom then
+        if P1 and P1.telegraph then
+          P1:render_telegraph()
+        end
+        if P2 and P2.telegraph then
+          P2:render_telegraph()
+        end
       end
     end
   end

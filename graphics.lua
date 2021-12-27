@@ -1136,10 +1136,7 @@ function Stack.render_countdown(self)
 end
 
 function Stack.render_telegraph(self)
-  local telegraph_to_render 
-  
-
-      telegraph_to_render = self.telegraph
+  local telegraph_to_render = self.telegraph
 
   local render_x = telegraph_to_render.pos_x
   for frame_earned, attacks_this_frame in pairs(telegraph_to_render.attacks) do
@@ -1209,43 +1206,39 @@ function Stack.render_telegraph(self)
             draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y)
           end
         end
-      elseif frames_since_earned == GARBAGE_TRANSIT_TIME then
-      --arrived at target
-        for _, attack in ipairs(attacks_this_frame) do
-          for _k, garbage_block in ipairs(attack.stuff_to_send) do
-            local last_chain_in_queue = telegraph_to_render.garbage_queue.chain_garbage[telegraph_to_render.garbage_queue.chain_garbage.last]
-            print("telegraph_to_render.garbage_queue.chain_garbage.last: "..telegraph_to_render.garbage_queue.chain_garbage.last)
-            if garbage_block[4]--[[from_chain]] then
-              telegraph_to_render.garbage_queue.ghost_chain = (telegraph_to_render.garbage_queue.ghost_chain or 0) + 1
-              print("setting ghost_chain " .. telegraph_to_render.garbage_queue.ghost_chain .. " frame " .. frames_since_earned)
-            end
-          end
-        end
       end
+    
+    else
+      telegraph_to_render.attacks[frame_earned] = nil
     end
-    --then draw the telegraph's garbage queue, leaving an empty space until such a time as the attack arrives (earned_frame-GARBAGE_TRANSIT_TIME)
-    -- print("BBBBBB")
-    -- print("telegraph_to_render.garbage_queue.ghost_chain: "..(telegraph_to_render.garbage_queue.ghost_chain or "nil"))
-    local g_queue_to_draw = telegraph_to_render.garbage_queue:mkcpy()
-    --print("g_queue_to_draw.ghost_chain: "..(g_queue_to_draw.ghost_chain or "nil"))
-    local current_block = g_queue_to_draw:pop()
-    local draw_x = telegraph_to_render.pos_x
-    local draw_y = telegraph_to_render.pos_y
 
-    while current_block do
-      --TODO: create a way to draw telegraphs from right to left
-      if self.CLOCK - current_block.frame_earned >= GARBAGE_TRANSIT_TIME then
-        if not current_block[3]--[[is_metal]] then
-          draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images[current_block[2]--[[height]]][current_block[1]--[[width]]], draw_x, draw_y)
-        else
-          draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images["metal"], draw_x, draw_y)
-        end
-      end
-      draw_x = draw_x + TELEGRAPH_BLOCK_WIDTH
-      current_block = g_queue_to_draw:pop()
-    end
   end
-  if telegraph_to_render.garbage_queue.ghost_chain then
+
+  --then draw the telegraph's garbage queue, leaving an empty space until such a time as the attack arrives (earned_frame-GARBAGE_TRANSIT_TIME)
+  -- print("BBBBBB")
+  -- print("telegraph_to_render.garbage_queue.ghost_chain: "..(telegraph_to_render.garbage_queue.ghost_chain or "nil"))
+  local g_queue_to_draw = telegraph_to_render.garbage_queue:mkcpy()
+  --print("g_queue_to_draw.ghost_chain: "..(g_queue_to_draw.ghost_chain or "nil"))
+  local current_block = g_queue_to_draw:pop()
+  local draw_x = telegraph_to_render.pos_x
+  local draw_y = telegraph_to_render.pos_y
+  local drewChain = false
+
+  while current_block do
+    --TODO: create a way to draw telegraphs from right to left
+    if self.CLOCK - current_block.frame_earned >= GARBAGE_TRANSIT_TIME then
+      if not current_block[3]--[[is_metal]] then
+        draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images[current_block[2]--[[height]]][current_block[1]--[[width]]], draw_x, draw_y)
+      else
+        draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images["metal"], draw_x, draw_y)
+      end
+      drewChain = drewChain or current_block[4]
+    end
+    draw_x = draw_x + TELEGRAPH_BLOCK_WIDTH
+    current_block = g_queue_to_draw:pop()
+  end
+  
+  if not drewChain and telegraph_to_render.garbage_queue.ghost_chain then
     print("SHOULD BE DRAWING GHOST_CHAIN - SIZE: "..telegraph_to_render.garbage_queue.ghost_chain)
     draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images[telegraph_to_render.garbage_queue.ghost_chain][6], telegraph_to_render.pos_x, telegraph_to_render.pos_y)
   end

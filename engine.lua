@@ -82,12 +82,9 @@ Stack =
       {1, 2, idx = 1},
       {1, idx = 1}
     }
-    s.later_garbage = {} -- Queue of garbage that is done waiting in telegraph, and been popped out, and will be sent to the other player next frame
-    s.garbage_q = GarbageQueue(s)
-    -- garbage_to_send[frame] is an array of garbage to send at frame.
-    -- garbage_to_send.chain is an array of garbage to send when the chain ends.
 
-    s.garbage_to_send = {}
+    s.later_garbage = {} -- Queue of garbage that is done waiting in telegraph, and been popped out, and will be sent to the other player next frame
+    s.garbage_q = GarbageQueue(s) -- Queue of garbage that is about to be dropped
 
     s:moveForPlayerNumber(which)
 
@@ -206,10 +203,25 @@ Stack =
     s.prev_states = {}
 
     s.analytic = AnalyticsInstance(s.is_local)
-    s.telegraph = Telegraph(s)
-    s.unverified_garbage = {}
-    s.combos = {}  --TODO: use these to show stats at the end of a game
-    s.chains = {}
+
+    if s.match.mode == "vs" then
+      s.telegraph = Telegraph(s) -- Telegraph holds the garbage that hasn't been set yet and also tracks the attack animations
+    end
+
+    s.combos = {} -- Tracks the combos made throughout the whole game. Key is the clock time, value is the combo size
+
+    s.chains = {} -- Tracks the chains mades throughout the whole game
+    --[[
+      .last_complete - the CLOCK index into the last chain or nil if no chains this game yet
+      .current - the CLOCK index into the current chain or nil if no chain active
+      indexes
+        Key - CLOCK time the chain started
+        Value -
+	        start - CLOCK time the chain started (same as key)
+	        finish - CLOCK time the chain finished
+	        size - the chain size 2, 3, etc
+    ]]
+
   end)
 
 -- Positions the stack draw position for the given player
@@ -258,8 +270,9 @@ function Stack.mkcpy(self, other)
 
   end--]]
   other.garbage_q = self.garbage_q:mkcpy()
-  --other.garbage_to_send = deepcpy(self.garbage_to_send)
-  other.telegraph = self.telegraph:mkcpy()
+  if self.telegraph then
+    other.telegraph = self.telegraph:mkcpy()
+  end
   other.input_state = self.input_state
   local height = self.height or other.height
   local width = self.width or other.width
@@ -313,8 +326,6 @@ function Stack.mkcpy(self, other)
   other.card_q = deepcpy(self.card_q)
   other.do_countdown = self.do_countdown
   other.ready_y = self.ready_y
-  other.unverified_garbage = deepcpy(self.unverified_garbage)
-  other.next_speculation_time = self.next_speculation_time
   other.foreign = self.foreign
   other.combos = deepcpy(self.combos)
   other.chains = deepcpy(self.chains)
@@ -337,8 +348,10 @@ end
 
 function Stack.set_garbage_target(self, new_target)
   self.garbage_target = new_target
-  self.telegraph.pos_x = new_target.pos_x - 4
-  self.telegraph.pos_y = new_target.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
+  if self.telegraph then
+    self.telegraph.pos_x = new_target.pos_x - 4
+    self.telegraph.pos_y = new_target.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
+  end
 end
 
 local MAX_TAUNT_PER_10_SEC = 4
@@ -428,13 +441,13 @@ function GarbageQueue.push(self, garbage)
     for k,v in pairs(garbage) do
       local width, height, metal, from_chain = unpack(v)
       if width and height then
-        print("GarbageQueue.push")
-        print("frame_earned: "..v.frame_earned)
+        --print("GarbageQueue.push")
+        --print("frame_earned: "..v.frame_earned)
         if metal then
           self.metal:push(v)
         elseif from_chain or height > 1 then
           if not from_chain then
-            print("ERROR: garbage with height > 1 was not marked as 'from_chain'")
+            error("ERROR: garbage with height > 1 was not marked as 'from_chain'")
             print("adding it to the chain garbage queue anyway")
           end
           self.chain_garbage:push(v)
@@ -444,8 +457,8 @@ function GarbageQueue.push(self, garbage)
         end
       end
     end
-    print("after push, the queue is:")
-    print(self:to_string())
+    --print("after push, the queue is:")
+    --print(self:to_string())
   end
 end
 
@@ -457,7 +470,7 @@ function GarbageQueue.pop(self, just_peeking)
       return self.chain_garbage:peek()
     else
       local ret = self.chain_garbage:pop()
-      if not self.chain_garbage[self.chain_garbage.last] then
+      if self.chain_garbage:len() == 0 then
         self.ghost_chain = nil
       end
       return ret
@@ -530,7 +543,6 @@ function GarbageQueue.grow_chain(self,frame_earned)
   print(json.encode(self.sender.chains))
   if self.sender.chains[self.sender.chains.current].size == 2  then
     self:push({{6,1,false,true, frame_earned=frame_earned}}) --a garbage block 6-wide, 1-tall, not metal, from_chain
-    --self.chain_in_progress = true
   else 
     print("in GarbageQueue.grow_chain")
     print("self.sender.CLOCK:")
@@ -544,14 +556,11 @@ function GarbageQueue.grow_chain(self,frame_earned)
     garbage_block[2]--[[height]] = garbage_block[2]--[[height]] + 1
     garbage_block.frame_earned = frame_earned
     self.chain_garbage:replace_last(garbage_block)
+    self.ghost_chain = garbage_block[2] - 1
   end
 -- This is used by the telegraph to increase the size of the chain garbage being built
 -- or add a 6-wide if there is not chain garbage yet in the queue
 end
-
--- function GarbageQueue.sender_chain_ended(self)
-  -- self.chain_garbage[self.chain_garbage.last].finalized = 
--- end
 
 --returns the index of the first garbage block matching the requested type and size, or where it would go if it was in the Garbage_Queue.
   --note: the first index for our implemented Queue object is 0, not 1
@@ -1710,9 +1719,6 @@ function Stack.PdP(self)
       self.chains[self.chains.current].size = self.chain_counter
       self.chains.last_complete = self.current
       self.chains.current = nil
-      -- if self.match.mode == "vs" then
-        -- self.telegraph:sender_chain_ended()
-      -- end
       if self.canvas ~= nil then
         SFX_Fanfare_Play = self.chain_counter
       end
@@ -1736,7 +1742,7 @@ function Stack.PdP(self)
       end
     end
 
-    if self.match.mode == "vs" then
+    if self.telegraph then
       local to_send = self.telegraph:pop_all_ready_garbage()
       if to_send and to_send[1] then
         if self.garbage_target then
@@ -2246,6 +2252,7 @@ function Stack.drop_garbage(self, width, height, metal)
   return true
 end
 
+-- Goes through whole stack checking for matches and updating chains etc based on matches.
 function Stack.check_matches(self)
   if self.do_countdown then
     return
@@ -2441,7 +2448,7 @@ function Stack.check_matches(self)
 
   if (combo_size ~= 0) then
     self.combos[self.CLOCK] = combo_size
-    if self.match.mode == "vs" and metal_count == 3 and combo_size == 3 then
+    if self.telegraph and metal_count == 3 and combo_size == 3 then
       self.telegraph:push("combo", combo_size, metal_count,first_panel_col, first_panel_row, self.CLOCK)
     end
     self.analytic:register_destroyed_panels(combo_size)
@@ -2460,7 +2467,7 @@ function Stack.check_matches(self)
       end
 
       self:enqueue_card(false, first_panel_col, first_panel_row, combo_size)
-      if self.match.mode == "vs" then
+      if self.telegraph then
         self.telegraph:push("combo", combo_size, metal_count,first_panel_col, first_panel_row, self.CLOCK)
       end
       --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
@@ -2477,7 +2484,7 @@ function Stack.check_matches(self)
       self:enqueue_card(true, first_panel_col, first_panel_row, self.chain_counter)
     --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
     --          first_panel_row<<4+P1StackPosY+self.displacement-9);
-      if self.match.mode == "vs" then
+      if self.telegraph then
         self.telegraph:push("chain",self.chain_counter,0,first_panel_col, first_panel_row, self.CLOCK)
       end
     end
