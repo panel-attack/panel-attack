@@ -1202,7 +1202,7 @@ function Connection.J(self, message)
       response = {choose_another_name = {reason = 'Username cannot be "anonymous"'}}
       self:send(response)
       return
-    elseif string.lower(message.name:match("d+e+f+a+u+l+t+n+a+m+e?")) then
+    elseif message.name:lower():match("d+e+f+a+u+l+t+n+a+m+e?") then
       print('connection tried to use name "defaultname", or a variation of it')
       response = {choose_another_name = {reason = 'Username cannot be "defaultname" or a variation of it'}}
       self:send(response)
