@@ -1,4 +1,5 @@
 require("analytics")
+local logger = require("logger")
 
 -- Stuff defined in this file:
 --  . the data structures that store the configuration of
@@ -396,8 +397,8 @@ function GarbageQueue.push(self, garbage)
     self.metal = self.metal + 1
   elseif from_chain or height > 1 then
     if not from_chain then
-      print("ERROR: garbage with height > 1 was not marked as 'from_chain'")
-      print("adding it to the chain garbage queue anyway")
+      logger.warn("garbage with height > 1 was not marked as 'from_chain'")
+      logger.warn("adding it to the chain garbage queue anyway")
     end
     self.chain_garbage:push(garbage)
   else
@@ -1918,7 +1919,7 @@ function Stack.drop_garbage(self, width, height, metal)
       for j = 1, self.width do
         if self.panels[i][j] then
           if self.panels[i][j].color ~= 0 then
-            print("Aborting garbage drop: panel found at row " .. tostring(i) .. " column " .. tostring(j))
+            logger.trace("Aborting garbage drop: panel found at row " .. tostring(i) .. " column " .. tostring(j))
             return false
           end
         end
@@ -1927,7 +1928,7 @@ function Stack.drop_garbage(self, width, height, metal)
   end
 
   if self.canvas ~= nil then
-    print(string.format("Dropping garbage on player %d - height %d  width %d  %s", self.player_number, height, width, metal and "Metal" or ""))
+    logger.trace(string.format("Dropping garbage on player %d - height %d  width %d  %s", self.player_number, height, width, metal and "Metal" or ""))
   end
 
   for i = self.height + 1, spawn_row + height - 1 do
@@ -2028,7 +2029,7 @@ function Stack.recv_garbage(self, time, to_recv)
       local old_self = prev_states[time]
       --MAGICAL ROLLBACK!?!?
       self.in_rollback = true
-      print("attempting magical rollback with difference = " .. self.CLOCK - time .. " at time " .. self.CLOCK)
+      logger.trace("attempting magical rollback with difference = " .. self.CLOCK - time .. " at time " .. self.CLOCK)
 
       -- The garbage that we send this time might (rarely) not be the same
       -- as the garbage we sent before.  Wipe out the garbage we sent before...
