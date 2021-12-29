@@ -220,7 +220,7 @@ function select_screen.main()
     elseif GAME.battleRoom.spectating then
       op_player_number = 2
     elseif op_player_number and op_player_number ~= 0 then
-      logger.tracdebuge("We assumed op player number is still " .. op_player_number)
+      logger.debug("We assumed op player number is still " .. op_player_number)
     else
       error("We never heard from the server as to what player number we are")
       logger.error("The server never told us our player number.  Assuming it is 2")
