@@ -1,3 +1,5 @@
+local logger = require("logger")
+
 local select_screen = {}
 
 select_screen.fallback_when_missing = {nil, nil}
@@ -24,7 +26,7 @@ local function fill_map(template_map, map)
           character_id_index = character_id_index + 1
           -- end case: no more characters_ids_for_current_theme to add
           if character_id_index == #characters_ids_for_current_theme + 1 then
-            print("filled " .. #characters_ids_for_current_theme .. " characters across " .. pages_amount .. " page(s)")
+            logger.trace("filled " .. #characters_ids_for_current_theme .. " characters across " .. pages_amount .. " page(s)")
             return pages_amount
           end
         end
@@ -173,7 +175,7 @@ function select_screen.main()
     P1 = nil
     P2 = nil
     drop_old_data_messages() -- Starting a new game, clear all old data messages from the previous game
-    print("Reseting player stacks")
+    logger.debug("Reseting player stacks")
 
     -- Wait till we have the room setup messages from the server
     local opponent_connected = false
@@ -206,10 +208,10 @@ function select_screen.main()
     elseif GAME.battleRoom.spectating then
       my_player_number = 1
     elseif my_player_number and my_player_number ~= 0 then
-      print("We assumed our player number is still " .. my_player_number)
+      logger.debug("We assumed our player number is still " .. my_player_number)
     else
       error(loc("nt_player_err"))
-      print("Error: The server never told us our player number.  Assuming it is 1")
+      logger.error("The server never told us our player number.  Assuming it is 1")
       my_player_number = 1
     end
 
@@ -218,15 +220,15 @@ function select_screen.main()
     elseif GAME.battleRoom.spectating then
       op_player_number = 2
     elseif op_player_number and op_player_number ~= 0 then
-      print("We assumed op player number is still " .. op_player_number)
+      logger.debug("We assumed op player number is still " .. op_player_number)
     else
       error("We never heard from the server as to what player number we are")
-      print("Error: The server never told us our player number.  Assuming it is 2")
+      logger.error("The server never told us our player number.  Assuming it is 2")
       op_player_number = 2
     end
 
     if my_player_number == 2 and msg.a_menu_state ~= nil and msg.b_menu_state ~= nil then
-      print("inverting the states to match player number!")
+      logger.warn("inverting the states to match player number!")
       msg.a_menu_state, msg.b_menu_state = msg.b_menu_state, msg.a_menu_state
     end
 
@@ -250,7 +252,7 @@ function select_screen.main()
       match_type = "Casual"
     end
 
-    print("current_server_supports_ranking: " .. tostring(current_server_supports_ranking))
+    logger.trace("current_server_supports_ranking: " .. tostring(current_server_supports_ranking))
 
     if current_server_supports_ranking then
       template_map = {
@@ -275,8 +277,8 @@ function select_screen.main()
     global_current_room_ratings = global_current_room_ratings or {{new = 0, old = 0, difference = 0}, {new = 0, old = 0, difference = 0}}
     my_expected_win_ratio = nil
     op_expected_win_ratio = nil
-    print("my_player_number = " .. my_player_number)
-    print("op_player_number = " .. op_player_number)
+    logger.trace("my_player_number = " .. my_player_number)
+    logger.trace("op_player_number = " .. op_player_number)
     if global_current_room_ratings[my_player_number].new and global_current_room_ratings[my_player_number].new ~= 0 and global_current_room_ratings[op_player_number] and global_current_room_ratings[op_player_number].new ~= 0 then
       my_expected_win_ratio = (100 * round(1 / (1 + 10 ^ ((global_current_room_ratings[op_player_number].new - global_current_room_ratings[my_player_number].new) / RATING_SPREAD_MODIFIER)), 2))
       op_expected_win_ratio = (100 * round(1 / (1 + 10 ^ ((global_current_room_ratings[my_player_number].new - global_current_room_ratings[op_player_number].new) / RATING_SPREAD_MODIFIER)), 2))
@@ -777,7 +779,7 @@ function select_screen.main()
     end
   end
 
-  print("got to LOC before net_vs_room character select loop")
+  logger.trace("got to LOC before net_vs_room character select loop")
   menu_clock = 0
 
   local v_align_center = {__Ready = true, __Random = true, __Leave = true}
@@ -872,7 +874,7 @@ function select_screen.main()
           return main_dumb_transition, {main_net_vs_lobby, "", 0, 0} -- opponent left the select screen
         end
         if (msg.match_start or replay_of_match_so_far) and msg.player_settings and msg.opponent_settings then
-          print("spectating: " .. tostring(GAME.battleRoom.spectating))
+          logger.debug("spectating: " .. tostring(GAME.battleRoom.spectating))
           local fake_P1 = {panel_buffer = "", gpanel_buffer = ""}
           local fake_P2 = {panel_buffer = "", gpanel_buffer = ""}
           refresh_based_on_own_mods(msg.opponent_settings)
@@ -965,11 +967,11 @@ function select_screen.main()
           local game_start_timeout = 0
           while P1.panel_buffer == "" or P2.panel_buffer == "" or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
             game_start_timeout = game_start_timeout + 1
-            print("game_start_timeout = " .. game_start_timeout)
-            print("P1.panel_buffer = " .. P1.panel_buffer)
-            print("P2.panel_buffer = " .. P2.panel_buffer)
-            print("P1.gpanel_buffer = " .. P1.gpanel_buffer)
-            print("P2.gpanel_buffer = " .. P2.gpanel_buffer)
+            logger.trace("game_start_timeout = " .. game_start_timeout)
+            logger.trace("P1.panel_buffer = " .. P1.panel_buffer)
+            logger.trace("P2.panel_buffer = " .. P2.panel_buffer)
+            logger.trace("P1.gpanel_buffer = " .. P1.gpanel_buffer)
+            logger.trace("P2.gpanel_buffer = " .. P2.gpanel_buffer)
             gprint(to_print, unpack(main_menu_screen_pos))
             if not do_messages() then
               return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
@@ -1152,7 +1154,7 @@ function select_screen.main()
           state.stage = uniformly(stages[state.stage].sub_stages)
         end
       end
-      print("stage and stage_is_random: " .. state.stage .. " / " .. (state.stage_is_random or "nil"))
+      logger.trace("stage and stage_is_random: " .. state.stage .. " / " .. (state.stage_is_random or "nil"))
     end
 
     -- Function to tell the select screen to exit

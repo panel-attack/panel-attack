@@ -1,4 +1,5 @@
 require("character_loader")
+local logger = require("logger")
 
 -- Stuff defined in this file: the data structure that store a character's data
 
@@ -234,27 +235,27 @@ function Character.play_combo_chain_sfx(self, chain_combo)
 end
 
 function Character.preload(self)
-  print("preloading character " .. self.id)
+  logger.trace("preloading character " .. self.id)
   self:graphics_init(false, false)
   self:sound_init(false, false)
 end
 
 -- Loads all the sounds and graphics
 function Character.load(self, instant)
-  print("loading character " .. self.id)
+  logger.trace("loading character " .. self.id)
   self:graphics_init(true, (not instant))
   self:sound_init(true, (not instant))
   self.fully_loaded = true
-  print("loaded character " .. self.id)
+  logger.trace("loaded character " .. self.id)
 end
 
 -- Unloads the sounds and graphics
 function Character.unload(self)
-  print("unloading character " .. self.id)
+  logger.trace("unloading character " .. self.id)
   self:graphics_uninit()
   self:sound_uninit()
   self.fully_loaded = false
-  print("unloaded character " .. self.id)
+  logger.trace("unloaded character " .. self.id)
 end
 
 -- Adds all the characters recursively in a folder to the global characters variable
@@ -275,9 +276,9 @@ local function add_characters_from_dir_rec(path)
 
         if success then
           if characters[character.id] ~= nil then
-            print(current_path .. " has been ignored since a character with this id has already been found")
+            logger.trace(current_path .. " has been ignored since a character with this id has already been found")
           else
-            -- print(current_path.." has been added to the character list!")
+            -- logger.trace(current_path.." has been added to the character list!")
             characters[character.id] = character
             characters_ids[#characters_ids + 1] = character.id
           end
@@ -301,20 +302,20 @@ local function fill_characters_ids()
       for _, sub_character in ipairs(copy_of_sub_characters) do
         if characters[sub_character] and #characters[sub_character].sub_characters == 0 then -- inner bundles are prohibited
           character.sub_characters[#character.sub_characters + 1] = sub_character
-          print(character.id .. " has " .. sub_character .. " as part of its subcharacters.")
+          logger.trace(character.id .. " has " .. sub_character .. " as part of its subcharacters.")
         end
       end
 
       if #character.sub_characters < 2 then
         invalid[#invalid + 1] = character_id -- character is invalid
-        print(character.id .. " (bundle) is being ignored since it's invalid!")
+        logger.warn(character.id .. " (bundle) is being ignored since it's invalid!")
       else
         characters_ids[#characters_ids + 1] = character_id
-        print(character.id .. " (bundle) has been added to the character list!")
+        logger.debug(character.id .. " (bundle) has been added to the character list!")
       end
     else -- normal character
       characters_ids[#characters_ids + 1] = character_id
-      print(character.id .. " has been added to the character list!")
+      logger.debug(character.id .. " has been added to the character list!")
     end
   end
 
@@ -394,7 +395,6 @@ end
 function Character.graphics_init(self, full, yields)
   local character_images = full and other_images or basic_images
   for _, image_name in ipairs(character_images) do
-    --print(image_name)
     self.images[image_name] = load_img_from_supported_extensions(self.path .. "/" .. image_name)
     if not self.images[image_name] and defaulted_images[image_name] and not self:is_bundle() then
       if image_name == "burst" or image_name == "fade" then
@@ -402,7 +402,6 @@ function Character.graphics_init(self, full, yields)
       else
         self.images[image_name] = default_character.images[image_name]
       end
-    --print("MISSING!")
     end
     if yields then
       coroutine.yield()
@@ -497,7 +496,7 @@ function Character.sound_init(self, full, yields)
         self.sounds.chains[i] = {}
         self:init_sfx_variants(self.sounds.chains[i], "chain" .. i, "_")
         if #self.sounds.chains[i] ~= 0 then
-          print("chain" .. i .. " has " .. #self.sounds.chains[i] .. " variant(s)")
+          logger.trace("chain" .. i .. " has " .. #self.sounds.chains[i] .. " variant(s)")
         end
       end
       self.sounds.chains[0] = {}

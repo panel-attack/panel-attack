@@ -1,4 +1,5 @@
 require("graphics_util")
+local logger = require("logger")
 
 -- The class representing the panel image data
 -- Not to be confused with "Panel" which is one individual panel in the game stack model
@@ -47,9 +48,8 @@ local function add_panels_from_dir_rec(path)
 
         if success then
           if panels[panel_set.id] ~= nil then
-            print(current_path .. " has been ignored since a panel set with this id has already been found")
+            logger.trace(current_path .. " has been ignored since a panel set with this id has already been found")
           else
-            -- print(current_path.." has been added to the character list!")
             panels[panel_set.id] = panel_set
             panels_ids[#panels_ids + 1] = panel_set.id
           end
@@ -76,7 +76,7 @@ function panels_init()
 end
 
 function Panels.load(self)
-  print("loading panels " .. self.id)
+  logger.debug("loading panels " .. self.id)
 
   local function load_panel_img(name)
     local img = load_img_from_supported_extensions(self.path .. "/" .. name)

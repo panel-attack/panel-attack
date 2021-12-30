@@ -1,4 +1,4 @@
-
+local logger = require("logger")
 local select_screen = require("select_screen")
 local replay_browser = require("replay_browser")
 local options = require("options")
@@ -558,7 +558,7 @@ function main_net_vs_lobby()
           logged_in = true
           if msg.new_user_id then
             my_user_id = msg.new_user_id
-            print("about to write user id file")
+            logger.trace("about to write user id file")
             write_user_id_file()
             login_status_message = loc("lb_user_new", config.name)
           elseif msg.name_changed then
@@ -912,7 +912,7 @@ function main_net_vs()
     end
 
     if GAME.battleRoom.spectating and menu_escape(K[1]) then
-      print("spectator pressed escape during a game")
+      logger.trace("spectator pressed escape during a game")
       json_send({leave_room = true})
       return main_dumb_transition, {main_net_vs_lobby, "", 0, 0} -- spectator leaving the match
     end
@@ -921,7 +921,6 @@ function main_net_vs()
     end
     process_all_data_messages() -- main game play processing
 
-    --print(P1.CLOCK, P2.CLOCK)
     if (P1 and P1.play_to_end) or (P2 and P2.play_to_end) then
       P1:run()
       P2:run()
@@ -968,7 +967,7 @@ function main_net_vs()
       end
       filename = filename .. ".txt"
       write_replay_file()
-      print("saving replay as " .. path .. sep .. filename)
+      logger.info("saving replay as " .. path .. sep .. filename)
       write_replay_file(path, filename)
 
       select_screen.character_select_mode = "2p_net_vs"
@@ -1609,7 +1608,7 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
     if winnerSFX ~= nil and winnerSFX ~= 0 then
       winnerSFX:play()
     elseif SFX_GameOver_Play == 1 then
-      print(debug.traceback(""))
+      logger.trace(debug.traceback(""))
       themes[config.theme].sounds.game_over:play()
     end
   end
@@ -1691,7 +1690,6 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
         if not SFX_mute then
           if t >= winnerTime then
             if winnerSFX ~= nil then -- play winnerSFX then nil it so it doesn't loop
-              print(winnerSFX)
               winnerSFX:play()
               winnerSFX = nil
             end
