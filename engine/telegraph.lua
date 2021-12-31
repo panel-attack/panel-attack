@@ -39,6 +39,7 @@ Telegraph = class(function(self, sender)
     elseif attack_type == "combo" then
       -- get combo_garbage_widths, n_resulting_metal_garbage
       stuff_to_send = self:add_combo_garbage(attack_size, metal_count, frame_earned)
+      stuff_to_send = deepcpy(stuff_to_send) -- we don't want to use the same object as in the garbage queue so they don't change each other
     end
     if not self.attacks[frame_earned] then
       self.attacks[frame_earned] = {}

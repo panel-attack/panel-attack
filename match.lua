@@ -6,12 +6,24 @@ Match =
     self.P1 = nil
     self.P2 = nil
     self.mode = mode
-    self.gameEndedClock = 0 -- 0 if no one has lost, otherwise the minimum clock time of those that lost
     assert(mode ~= "vs" or battleRoom)
     self.battleRoom = battleRoom
     GAME.droppedFrames = 0
+    self.timeSpentRunning = 0
+    self.createTime = love.timer.getTime()
   end
 )
+
+function Match.gameEndedClockTime()
+
+  local result = P1.game_over_clock
+  
+  if P2 and P2.game_over_clock > result then
+    result = P2.game_over_clock
+  end
+
+  return result
+end
 
 function Match.matchOutcome(self)
   
@@ -31,27 +43,111 @@ function Match.matchOutcome(self)
     -- win_counts will get overwritten by the server in net games
     GAME.battleRoom.playerWinCounts[P2.player_number] = GAME.battleRoom.playerWinCounts[P2.player_number] + 1
     results["outcome_claim"] = P2.player_number
-  elseif P2.game_over_clock == self.gameEndedClock then -- client wins
+  else -- client wins
     results["winSFX"] = self.P1:pick_win_sfx()
     results["end_text"] =  loc("ss_p_wins", GAME.battleRoom.playerNames[1])
     -- win_counts will get overwritten by the server in net games
     GAME.battleRoom.playerWinCounts[P1.player_number] = GAME.battleRoom.playerWinCounts[P1.player_number] + 1
     results["outcome_claim"] = P1.player_number
-  else
-    error("No win result")
   end
 
   return results
 end
 
--- shows debug info for mouse hover
-function Match.draw_debug_mouse_panel()
-  if GAME.debug_mouse_panel then
-    local str = loc("pl_panel_info", GAME.debug_mouse_panel[1], GAME.debug_mouse_panel[2])
-    for k, v in spairs(GAME.debug_mouse_panel[3]) do
-      str = str .. "\n" .. k .. ": " .. tostring(v)
+function Match.run(self)
+  local startTime = love.timer.getTime()
+
+  -- We need to save CLOCK 0 as a base case
+  if P1.CLOCK == 0 then  
+    P1:saveForRollback()
+  end
+  if P2 and P2.CLOCK == 0 then  
+    P2:saveForRollback()
+  end
+
+  self:rollbackIfNeeded()
+
+  if P1 and P1.is_local and P1:game_ended() == false then  
+    P1:send_controls()
+  end
+  if P2 and P2.is_local and P2:game_ended() == false then
+    P2:send_controls()
+  end
+
+  local timesToRun = self:framesToSimulate()
+  --print("running " .. timesToRun .. " times")
+  for i = 1, timesToRun do
+    GAME.preventSounds = i < timesToRun
+    if P1 then
+      P1:run()
     end
-    gprintf(str, 10, 10)
+    if P2 then
+      P2:run()
+    end
+    if P1 then
+      P1:saveForRollback()
+    end
+    if P2 then
+      P2:saveForRollback()
+    end
+  end
+
+  GAME.preventSounds = false
+
+  local endTime = love.timer.getTime()
+  local timeDifference = endTime - startTime
+  self.timeSpentRunning = self.timeSpentRunning + timeDifference
+end
+
+-- returns the last frame that is definitely simulated correct
+function Match.confirmedSave(self) 
+  local confirmedSave = P1.prev_states.last
+  if P2 then
+    confirmedSave = math.min(confirmedSave, P2.prev_states.last)
+  end
+
+  return confirmedSave
+end
+
+function Match.framesToSimulate(self) 
+  local framesToSimulate = 1
+
+  if P1:game_ended() == false then
+    local maxConfirmedFrame = string.len(P1.confirmedInput)
+    if P2 and string.len(P2.confirmedInput) > maxConfirmedFrame then
+      maxConfirmedFrame = string.len(P2.confirmedInput)
+    end
+    framesToSimulate = maxConfirmedFrame - P1.CLOCK
+  end
+
+  return framesToSimulate
+end
+
+function Match.rollbackIfNeeded(self) 
+
+  if (P1 and P2) or config.debug_mode then
+
+    local gameEnded = P1:game_ended()
+    if P2 then
+      gameEnded = false
+      if P1:gameResult() then
+        gameEnded = true
+      end
+    end
+
+    if not gameEnded then
+      local confirmedSave = self:confirmedSave()
+      if config.debug_mode then
+        if P1.CLOCK > 0 and P1.prev_states[confirmedSave - 5] then
+          confirmedSave = confirmedSave - 5
+        end
+      end
+      P1:rollbackToFrame(confirmedSave)
+      if P2 then
+        P2:rollbackToFrame(confirmedSave)
+        assert(P1.CLOCK == P2.CLOCK)
+      end
+    end
   end
 end
 
@@ -108,6 +204,53 @@ function Match.render(self)
       end
     end
   end
+
+
+  if config.debug_mode then
+    local drawX = 140
+    local drawY = 10
+
+    grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 200/GFX_SCALE, 100/GFX_SCALE, 0, 0, 0, 0.5)
+    
+    gprintf("P1 Clock " .. P1.CLOCK, drawX, drawY)
+
+    -- drawY = drawY + 14
+    -- gprintf("Time Spent Running " .. self.timeSpentRunning * 1000, drawX, drawY)
+
+    -- drawY = drawY + 14
+    -- local totalTime = love.timer.getTime() - self.createTime
+    -- gprintf("Total Time " .. totalTime * 1000, drawX, drawY)
+
+    drawY = drawY + 14
+    local totalTime = love.timer.getTime() - self.createTime
+    local timePercent = self.timeSpentRunning / totalTime
+    gprintf("Time Percent Running Match: " .. timePercent, drawX, drawY)
+
+    -- drawY = drawY + 14
+    -- gprintf("P1 Panels: " .. P1.panel_buffer, drawX, drawY)
+
+    -- drawY = drawY + 14
+    -- gprintf("Save Frame: " .. self:confirmedSave(), drawX, drawY)
+
+    drawY = drawY + 14
+    gprintf("P1 Ended?: " .. tostring(P1:game_ended()), drawX, drawY)
+    
+
+    if P2 then 
+      drawY = drawY + 14
+      local maxConfirmedFrame = string.len(P1.confirmedInput)
+      if string.len(P2.confirmedInput) > maxConfirmedFrame then
+        maxConfirmedFrame = string.len(P2.confirmedInput)
+      end
+      local framesAhead = maxConfirmedFrame - self:confirmedSave()
+      gprintf("Ahead: " .. framesAhead, drawX, drawY)
+
+      drawY = drawY + 14
+      gprintf("P1 Confirmed " .. string.len(P1.confirmedInput) , drawX, drawY)
+      drawY = drawY + 14
+      gprintf("P2 Confirmed " .. string.len(P2.confirmedInput) , drawX, drawY)
+    end
+  end
   
   if game_is_paused then
     draw_pause()
@@ -122,8 +265,6 @@ function Match.render(self)
     end
 
     if renderingAllowed then
-      GAME.debug_mouse_panel = nil
-      self:draw_debug_mouse_panel()
       if P1 then
         P1:render()
       end

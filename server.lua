@@ -1152,7 +1152,7 @@ function Connection.P(self, message)
     return
   end
   local ncolors = 0 + message[1]
-  local ret = make_panels(ncolors, string.sub(message, 2, 7), self)
+  local ret = make_panels(nil, ncolors, string.sub(message, 2, 7), self)
   if self.first_seven and self.opponent and ((self.level < 9 and self.opponent.level < 9) or (self.level >= 9 and self.opponent.level >= 9)) then
     self.opponent.first_seven = self.first_seven
   end
@@ -1174,7 +1174,7 @@ function Connection.Q(self, message)
     return
   end
   local ncolors = 0 + message[1]
-  local ret = make_gpanels(ncolors, string.sub(message, 2, 7))
+  local ret = makeGarbagePanels(nil, ncolors, string.sub(message, 2, 7))
   self:send("Q" .. ret)
   if self.player_number == 1 then
     self.room:send_to_spectators("Q" .. ret)

@@ -427,8 +427,6 @@ function main_endless(...)
   replay.speed = P1.speed
   replay.difficulty = P1.difficulty
   replay.cur_wait_time = P1.cur_wait_time or default_input_repeat_delay
-  make_local_panels(P1, "000000")
-  make_local_gpanels(P1, "000000")
   P1:starting_state()
   while true do
     GAME.match:render()
@@ -449,7 +447,7 @@ function main_endless(...)
     end
     variable_step(
       function()
-        P1:run()
+        GAME.match:run()
         P1:handle_pause()
         if menu_escape_game(K[1]) then
           ret = {main_dumb_transition, {main_endless_setup, "", 0, 0}}
@@ -474,7 +472,6 @@ function main_time_attack(...)
   P1 = Stack(1, GAME.match, true, config.panels, ...)
   GAME.match.P1 = P1
   P1:wait_for_random_character()
-  make_local_panels(P1, "000000")
   P1:starting_state()
   P2 = nil
   while true do
@@ -488,7 +485,7 @@ function main_time_attack(...)
     variable_step(
       function()
         if P1:game_ended() == false then
-          P1:run()
+          GAME.match:run()
           P1:handle_pause()
           if menu_escape_game(K[1]) then
             ret = {main_dumb_transition, {main_timeattack_setup, "", 0, 0}}
@@ -923,13 +920,11 @@ function main_net_vs()
 
     --print(P1.CLOCK, P2.CLOCK)
     if (P1 and P1.play_to_end) or (P2 and P2.play_to_end) then
-      P1:run()
-      P2:run()
+      GAME.match:run()
     else
       variable_step(
         function()
-          P1:run()
-          P2:run()
+          GAME.match:run()
         end
       )
     end
@@ -1002,8 +997,7 @@ function main_local_vs()
     wait()
     variable_step(
     function()
-        P1:run()
-        P2:run()
+        GAME.match:run()
         assert((P1.CLOCK == P2.CLOCK) or GAME.match:matchOutcome(), "should run at same speed: " .. P1.CLOCK .. " - " .. P2.CLOCK)
         P1:handle_pause()
         P2:handle_pause()
@@ -1048,7 +1042,7 @@ function main_local_vs_yourself()
     variable_step(
       function()
         if P1:game_ended() == false then
-          P1:run()
+          GAME.match:run()
           P1:handle_pause()
           if menu_escape_game(K[1]) then
             ret = {main_dumb_transition, {main_local_vs_yourself_setup, "", 0, 0}}
@@ -1089,12 +1083,8 @@ function main_replay_vs()
   P1:set_garbage_target(P2)
   P2:set_garbage_target(P1)
   P2:moveForPlayerNumber(2)
-  P1.input_buffer = uncompress_input_string(replay.in_buf)
-  P1.panel_buffer = replay.P
-  P1.gpanel_buffer = replay.Q
-  P2.input_buffer = uncompress_input_string(replay.I)
-  P2.panel_buffer = replay.O
-  P2.gpanel_buffer = replay.R
+  P1.confirmedInput = uncompress_input_string(replay.in_buf)
+  P2.confirmedInput = uncompress_input_string(replay.I)
   P1.max_runs_per_frame = 1
   P2.max_runs_per_frame = 1
   P1.character = replay.P1_char
@@ -1133,9 +1123,8 @@ function main_replay_vs()
           run = false
         end
         if run or this_frame_keys["\\"] then
-          P1:run()
+          GAME.match:run()
           P1:handle_pause()
-          P2:run()
         end
       end
     )
@@ -1171,9 +1160,7 @@ function main_replay_endless()
   P1:wait_for_random_character()
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
-  P1.input_buffer = table.concat({uncompress_input_string(replay.in_buf)})
-  P1.panel_buffer = replay.pan_buf
-  P1.gpanel_buffer = replay.gpan_buf
+  P1.confirmedInput = table.concat({uncompress_input_string(replay.in_buf)})
   P1.speed = replay.speed
   P1.difficulty = replay.difficulty
   P1.cur_wait_time = replay.cur_wait_time or default_input_repeat_delay
@@ -1200,7 +1187,7 @@ function main_replay_endless()
             local end_text = loc("rp_score", P1.score, frames_to_time_string(P1.game_stopwatch, true))
             ret = {game_over_transition, {replay_browser.main, end_text, P1:pick_win_sfx()}}
           end
-          P1:run()
+          GAME.match:run()
           P1:handle_pause()
         end
       end
@@ -1226,7 +1213,7 @@ function main_replay_puzzle()
   GAME.match.P1 = P1
   P1:wait_for_random_character()
   P1.max_runs_per_frame = 1
-  P1.input_buffer = uncompress_input_string(replay.in_buf)
+  P1.confirmedInput = uncompress_input_string(replay.in_buf)
   P1.cur_wait_time = replay.cur_wait_time or default_input_repeat_delay
   P1:set_puzzle_state(unpack(replay.puzzle))
   P2 = nil
@@ -1254,7 +1241,7 @@ function main_replay_puzzle()
               ret = {main_dumb_transition, {replay_browser.main, loc("pl_you_lose"), 30, -1}}
             end
           end
-          P1:run()
+          GAME.match:run()
           P1:handle_pause()
         end
       end
@@ -1336,7 +1323,7 @@ function make_main_puzzle(puzzleSet, awesome_idx)
             end
 
             if not ret then            
-              P1:run()
+              GAME.match:run()
               P1:handle_pause()
               if menu_escape_game(K[1]) then
                 ret = {main_dumb_transition, {main_select_puzz, "", 0, 0}}
@@ -1704,12 +1691,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
           end
         end
 
-        if P1 then
-          P1:run()
-        end
-        if P2 then
-          P2:run()
-        end
+        GAME.match:run()
 
         if network_connected() then
           do_messages() -- recieve messages so we know if the next game is in the queue

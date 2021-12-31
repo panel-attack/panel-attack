@@ -2,8 +2,22 @@ require("util")
 require("server_globals")
 local random = math.random
 
+local function setSeed(seed)
+
+  if seed then
+    math.randomseed(seed)
+    math.random()
+    math.random()
+    math.random()
+  end
+
+end
+
 -- stuff should have first_seven, metal, vs_mode, metal_col, prev_metal_col
-function make_panels(ncolors, prev_panels, stuff)
+function make_panels(seed, ncolors, prev_panels, stuff)
+
+  setSeed(seed)
+
   --print("make_panels(" .. ncolors .. ", " .. prev_panels .. ", " .. (stuff.first_seven or "") .. ")")
   local ret = prev_panels
   local rows_to_make = 20
@@ -13,7 +27,8 @@ function make_panels(ncolors, prev_panels, stuff)
   end
   local cut_panels = false
 
-  if prev_panels == "000000" then
+  if prev_panels == "" then
+    prev_panels = "000000"
     if stuff.first_seven then
       ret = stuff.first_seven
       rows_to_make = rows_to_make - 7
@@ -21,10 +36,11 @@ function make_panels(ncolors, prev_panels, stuff)
       cut_panels = true
     end
   end
+
   for x = 0, rows_to_make - 1 do
     for y = 0, 5 do
       local prevtwo = y > 1 and string.sub(ret, -1, -1) == string.sub(ret, -2, -2)
-      local nogood, color = true
+      local nogood, color = true, nil
       while nogood do
         color = (y == stuff.metal_col) and 8 or tostring(math.random(1, ncolors))
         nogood = (prevtwo and color == string.sub(ret, -1, -1)) or color == string.sub(ret, -6, -6) or (y > 0 and color == string.sub(ret, -1, -1) and (stuff.vs_mode or stuff.match.mode == "vs") and stuff.level > 7)
@@ -77,7 +93,7 @@ function make_panels(ncolors, prev_panels, stuff)
     local height = {7, 7, 7, 7, 7, 7}
     local to_remove = 12
     while to_remove > 0 do
-      idx = random(1, 6)
+      idx = math.random(1, 6)
       if height[idx] > 0 then
         ret[idx + 6 * (-height[idx] + 8)] = "0"
         height[idx] = height[idx] - 1
@@ -94,11 +110,14 @@ function make_panels(ncolors, prev_panels, stuff)
   return string.sub(ret, 7, -1)
 end
 
-function make_gpanels(ncolors, prev_panels)
+function makeGarbagePanels(seed, ncolors, prev_panels)
+
+  setSeed(seed)
+
   local ret = prev_panels
   for x = 0, 19 do
     for y = 0, 5 do
-      local nogood, color = true
+      local nogood, color = true, nil
       while nogood do
         color = tostring(math.random(1, ncolors))
         nogood = (y > 0 and color == string.sub(ret, -1, -1)) or color == string.sub(ret, -6, -6)

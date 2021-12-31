@@ -469,25 +469,39 @@ function Stack.render(self)
 
   -- Draw debug graphics if set
   if config.debug_mode then
-    local mx, my = love.mouse.getPosition()
+    local mx, my = transform_coordinates(love.mouse.getPosition())
+
     for row = 0, self.height do
       for col = 1, self.width do
         local panel = self.panels[row][col]
         local draw_x = (self.pos_x + (col - 1) * 16) * GFX_SCALE
         local draw_y = (self.pos_y + (11 - (row)) * 16 + self.displacement - shake) * GFX_SCALE
-        if panel.color ~= 0 and panel.state ~= "popped" then
-          gprint(panel.state, draw_x, draw_y)
-          if panel.match_anyway ~= nil then
-            gprint(tostring(panel.match_anyway), draw_x, draw_y + 10)
-            if panel.debug_tag then
-              gprint(tostring(panel.debug_tag), draw_x, draw_y + 20)
+
+        -- Require hovering over a stack to show details
+        if mx >= self.pos_x * GFX_SCALE and mx <= (self.pos_x + self.width * 16) * GFX_SCALE then
+          if panel.color ~= 0 and panel.state ~= "popped" then
+            gprint(panel.state, draw_x, draw_y)
+            if panel.match_anyway ~= nil then
+              gprint(tostring(panel.match_anyway), draw_x, draw_y + 10)
+              if panel.debug_tag then
+                gprint(tostring(panel.debug_tag), draw_x, draw_y + 20)
+              end
             end
+            gprint(panel.chaining and "chaining" or "nah", draw_x, draw_y + 30)
           end
-          gprint(panel.chaining and "chaining" or "nah", draw_x, draw_y + 30)
         end
+
         if mx >= draw_x and mx < draw_x + 16 * GFX_SCALE and my >= draw_y and my < draw_y + 16 * GFX_SCALE then
-          GAME.debug_mouse_panel = {row, col, panel}
-          draw(panels[self.panels_dir].images.classic[9][1], draw_x + 16, draw_y + 16)
+          local str = loc("pl_panel_info", row, col)
+          for k, v in spairs(panel) do
+            str = str .. "\n" .. k .. ": " .. tostring(v)
+          end
+
+          local drawX = 30
+          local drawY = 10
+
+          grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 100/GFX_SCALE, 100/GFX_SCALE, 0, 0, 0, 0.5)
+          gprintf(str, drawX, drawY)
         end
       end
     end
@@ -761,7 +775,7 @@ function Stack.drawAnalyticData(self, analytic, x, y)
   y = y + nextIconIncrement
 
   -- GPM
-  if math.fmod(self.CLOCK, 60) == 0 then
+  if analytic.lastGPM == 0 or math.fmod(self.CLOCK, 60) == 0 then
     if self.CLOCK > 0 and (analytic.data.sent_garbage_lines > 0) then
       local garbagePerMinute = analytic.data.sent_garbage_lines / (self.CLOCK / 60 / 60)
       analytic.lastGPM = string.format("%0.1f", round(garbagePerMinute, 1))
@@ -790,7 +804,7 @@ function Stack.drawAnalyticData(self, analytic, x, y)
   y = y + nextIconIncrement
 
   -- APM
-  if math.fmod(self.CLOCK, 60) == 0 then
+  if analytic.lastAPM == 0 or math.fmod(self.CLOCK, 60) == 0 then
     if self.CLOCK > 0 and (analytic.data.swap_count + analytic.data.move_count > 0) then
       local actionsPerMinute = (analytic.data.swap_count + analytic.data.move_count) / (self.CLOCK / 60 / 60)
       analytic.lastAPM = string.format("%0.0f", round(actionsPerMinute, 0))
@@ -923,72 +937,58 @@ function Stack.render_telegraph(self)
     -- print(self.CLOCK)
     -- print(GARBAGE_TRANSIT_TIME)
     local frames_since_earned = self.CLOCK - frame_earned
-    if frames_since_earned <= GARBAGE_TRANSIT_TIME then
       if frames_since_earned <= #card_animation then
         --don't draw anything yet, card animation is still in progress.
-      elseif frames_since_earned <= #card_animation + #telegraph_attack_animation_speed then
-        --draw telegraph attack animation, little loop down and to the side of origin.
+      elseif frames_since_earned >= GARBAGE_TRANSIT_TIME then
+        --Attack is done, remove.
+        telegraph_to_render.attacks[frame_earned] = nil
+      else
         for _, attack in ipairs(attacks_this_frame) do
           for _k, garbage_block in ipairs(attack.stuff_to_send) do
-            if not garbage_block.destination_x then 
-              print("ZZZZZZZ")
-              garbage_block.destination_x = telegraph_to_render.pos_x + TELEGRAPH_BLOCK_WIDTH * telegraph_to_render.garbage_queue:get_idx_of_garbage(unpack(garbage_block))
-            end
-            if not garbage_block.x or not garbage_block.y then
-              garbage_block.x = (attack.origin_col-1) * 16 +telegraph_to_render.sender.pos_x
-              garbage_block.y = (11-attack.origin_row) * 16 + telegraph_to_render.sender.pos_y + telegraph_to_render.sender.displacement - card_animation[#card_animation]
-              garbage_block.origin_x = garbage_block.x
-              garbage_block.origin_y = garbage_block.y
+            garbage_block.destination_x = telegraph_to_render.pos_x + TELEGRAPH_BLOCK_WIDTH * telegraph_to_render.garbage_queue:get_idx_of_garbage(unpack(garbage_block))
+            garbage_block.destination_y = garbage_block.destination_y or telegraph_to_render.pos_y - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING 
+            
+            if not garbage_block.origin_x or not garbage_block.origin_y then
+              garbage_block.origin_x = (attack.origin_col-1) * 16 +telegraph_to_render.sender.pos_x
+              garbage_block.origin_y = (11-attack.origin_row) * 16 + telegraph_to_render.sender.pos_y + telegraph_to_render.sender.displacement - card_animation[#card_animation]
+              garbage_block.x = garbage_block.origin_x
+              garbage_block.y = garbage_block.origin_y
               garbage_block.direction = garbage_block.direction or sign(garbage_block.destination_x - garbage_block.origin_x) --should give -1 for left, or 1 for right
-              
+            end
+
+            if frames_since_earned <= #card_animation + #telegraph_attack_animation_speed then
+              --draw telegraph attack animation, little loop down and to the side of origin.
+     
+              -- We can't gaurantee every frame was rendered, so we must calculate the exact location regardless of how many frames happened.
+              -- TODO make this more performant?
+              garbage_block.x = garbage_block.origin_x
+              garbage_block.y = garbage_block.origin_y
               for frame=1, frames_since_earned - #card_animation do
-                print("YYYYYYYYYYYY")
                 garbage_block.x = garbage_block.x + telegraph_attack_animation[garbage_block.direction][frame].dx
                 garbage_block.y = garbage_block.y + telegraph_attack_animation[garbage_block.direction][frame].dy
               end
-            else
-              garbage_block.x = garbage_block.x + telegraph_attack_animation[garbage_block.direction][frames_since_earned-#card_animation].dx
-              garbage_block.y = garbage_block.y + telegraph_attack_animation[garbage_block.direction][frames_since_earned-#card_animation].dy
-            end
-            --print("DRAWING******")
-            --print(garbage_block.x..","..garbage_block.y)
-            draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y)
-            --draw(IMG_telegraph_attack[telegraph_to_render.sender.character], garbage_block.x, garbage_block.y)
-          end
-        end
-      elseif frames_since_earned < GARBAGE_TRANSIT_TIME then 
-        --move toward destination
-        for _, attack in ipairs(attacks_this_frame) do
-          for _k, garbage_block in ipairs(attack.stuff_to_send) do
-            --update destination
-            --garbage_block.frame_earned = frame_earned --this will be handy when we want to draw the telegraph garbage blocks
-            garbage_block.destination_x = render_x + TELEGRAPH_BLOCK_WIDTH * telegraph_to_render.garbage_queue:get_idx_of_garbage(unpack(garbage_block))
-            garbage_block.destination_y = garbage_block.destination_y or telegraph_to_render.pos_y - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING 
-            
-            local distance_to_destination = math.sqrt(math.pow(garbage_block.x-garbage_block.destination_x,2)+math.pow(garbage_block.y-garbage_block.destination_y,2))
-            if frames_since_earned == #card_animation + #telegraph_attack_animation_speed then
-              garbage_block.speed = distance_to_destination / (GARBAGE_TRANSIT_TIME-frames_since_earned)
-            end
 
-            if distance_to_destination <= (garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED) then
-              --just move it to it's destination
-              garbage_block.x, garbage_block.y = garbage_block.destination_x, garbage_block.destination_y
+              draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y)
             else
-              garbage_block.x = garbage_block.x - ((garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED)*(garbage_block.x-garbage_block.destination_x))/distance_to_destination
-              garbage_block.y = garbage_block.y - ((garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED)*(garbage_block.y-garbage_block.destination_y))/distance_to_destination
+              --move toward destination
+              local distance_to_destination = math.sqrt(math.pow(garbage_block.x-garbage_block.destination_x,2)+math.pow(garbage_block.y-garbage_block.destination_y,2))
+              if frames_since_earned == #card_animation + #telegraph_attack_animation_speed then
+                garbage_block.speed = distance_to_destination / (GARBAGE_TRANSIT_TIME-frames_since_earned)
+              end
+  
+              if distance_to_destination <= (garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED) then
+                --just move it to it's destination
+                garbage_block.x, garbage_block.y = garbage_block.destination_x, garbage_block.destination_y
+              else
+                garbage_block.x = garbage_block.x - ((garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED)*(garbage_block.x-garbage_block.destination_x))/distance_to_destination
+                garbage_block.y = garbage_block.y - ((garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED)*(garbage_block.y-garbage_block.destination_y))/distance_to_destination
+              end
+
+              draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y)
             end
-            -- if self.which == 1 then
-              -- print("rendering P1's telegraph's attack animation")
-            -- end
-            draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y)
           end
         end
       end
-    
-    else
-      telegraph_to_render.attacks[frame_earned] = nil
-    end
-
   end
 
   --then draw the telegraph's garbage queue, leaving an empty space until such a time as the attack arrives (earned_frame-GARBAGE_TRANSIT_TIME)

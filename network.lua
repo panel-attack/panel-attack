@@ -178,12 +178,10 @@ function process_all_data_messages()
   local messages = server_queue:pop_all_with("P", "O", "U", "I", "Q", "R")
   for _, msg in ipairs(messages) do
     for type, data in pairs(msg) do
-      if type ~= "_expiration" then
-        if printNetworkMessageForType(type) then
-          print("Processing: " .. type .. " with data:" .. data)
-        end
-        process_data_message(type, data)
+      if printNetworkMessageForType(type) then
+        print("Processing: " .. type .. " with data:" .. data)
       end
+      process_data_message(type, data)
     end
   end
 end
@@ -191,17 +189,17 @@ end
 -- Handler for the various "game data" message types
 function process_data_message(type, data)
   if type == "P" then
-    P1.panel_buffer = P1.panel_buffer .. data
+    
   elseif type == "O" then
-    P2.panel_buffer = P2.panel_buffer .. data
+    
   elseif type == "U" then
-    P1.input_buffer = P1.input_buffer .. data
+    P1:receiveConfirmedInput(data)
   elseif type == "I" then
-    P2.input_buffer = P2.input_buffer .. data
+    P2:receiveConfirmedInput(data)
   elseif type == "Q" then
-    P1.gpanel_buffer = P1.gpanel_buffer .. data
+    
   elseif type == "R" then
-    P2.gpanel_buffer = P2.gpanel_buffer .. data
+    
   end
 end
 
@@ -272,40 +270,6 @@ function request_spectate(roomNr)
   json_send({spectate_request = {sender = config.name, roomNumber = roomNr}})
 end
 
-function ask_for_panels(prev_panels, stack)
-  if TCP_sock then
-    net_send("P" .. tostring(P1.NCOLORS) .. prev_panels)
-  else
-    make_local_panels(stack or P1, prev_panels)
-  end
-end
-
-function ask_for_gpanels(prev_panels, stack)
-  if TCP_sock then
-    net_send("Q" .. tostring(P1.NCOLORS) .. prev_panels)
-  else
-    make_local_gpanels(stack or P1, prev_panels)
-  end
-end
-
-function make_local_panels(stack, prev_panels)
-  local ret = make_panels(stack.NCOLORS, prev_panels, stack)
-  stack.panel_buffer = stack.panel_buffer .. ret
-  local replay = replay[stack.match.mode]
-  if replay and replay.pan_buf then
-    replay.pan_buf = replay.pan_buf .. ret
-  end
-end
-
-function make_local_gpanels(stack, prev_panels)
-  local ret = make_gpanels(stack.NCOLORS, prev_panels)
-  stack.gpanel_buffer = stack.gpanel_buffer .. ret
-  local replay = replay[stack.match.mode]
-  if replay and replay.gpan_buf then
-    replay.gpan_buf = replay.gpan_buf .. ret
-  end
-end
-
 function Stack.handle_input_taunt(self)
   local k = K[self.which]
   local taunt_keys = {taunt_up = (keys[k.taunt_up] or this_frame_keys[k.taunt_up]), taunt_down = (keys[k.taunt_down] or this_frame_keys[k.taunt_down])}
@@ -331,6 +295,10 @@ function Stack.handle_input_taunt(self)
   end
 end
 
+function Stack.idleInput(self) 
+  return base64encode[1]
+end
+
 function Stack.send_controls(self)
   local k = K[self.which]
   local to_send = base64encode[((keys[k.raise1] or keys[k.raise2] or this_frame_keys[k.raise1] or this_frame_keys[k.raise2]) and 32 or 0) + ((this_frame_keys[k.swap1] or this_frame_keys[k.swap2]) and 16 or 0) + ((keys[k.up] or this_frame_keys[k.up]) and 8 or 0) + ((keys[k.down] or this_frame_keys[k.down]) and 4 or 0) + ((keys[k.left] or this_frame_keys[k.left]) and 2 or 0) + ((keys[k.right] or this_frame_keys[k.right]) and 1 or 0) + 1]
@@ -341,9 +309,5 @@ function Stack.send_controls(self)
 
   self:handle_input_taunt()
 
-  local replay = replay[self.match.mode]
-  if replay and replay.in_buf then
-    replay.in_buf = replay.in_buf .. to_send
-  end
-  return to_send
+  self:receiveConfirmedInput(to_send)
 end

@@ -927,11 +927,7 @@ function select_screen.main()
           if GAME.battleRoom.spectating and replay_of_match_so_far then --we joined a match in progress
             replay.vs = replay_of_match_so_far.vs
             P1.input_buffer = replay_of_match_so_far.vs.in_buf
-            P1.panel_buffer = replay_of_match_so_far.vs.P
-            P1.gpanel_buffer = replay_of_match_so_far.vs.Q
             P2.input_buffer = replay_of_match_so_far.vs.I
-            P2.panel_buffer = replay_of_match_so_far.vs.O
-            P2.gpanel_buffer = replay_of_match_so_far.vs.R
             if replay.vs.ranked then
               match_type = "Ranked"
               match_type_message = ""
@@ -941,10 +937,6 @@ function select_screen.main()
             replay_of_match_so_far = nil
             P1.play_to_end = true --this makes non local stacks run until caught up
             P2.play_to_end = true
-          end
-          if not GAME.battleRoom.spectating then
-            ask_for_gpanels("000000")
-            ask_for_panels("000000")
           end
           to_print = loc("pl_game_start") .. "\n" .. loc("level") .. ": " .. P1.level .. "\n" .. loc("opponent_level") .. ": " .. P2.level
           if P1.play_to_end or P2.play_to_end then
@@ -959,32 +951,6 @@ function select_screen.main()
             end
             process_all_data_messages() -- process data to get initial panel stacks setup
             wait()
-          end
-
-          -- Wait for all the game start data to come in before moving to the game screen
-          local game_start_timeout = 0
-          while P1.panel_buffer == "" or P2.panel_buffer == "" or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
-            game_start_timeout = game_start_timeout + 1
-            print("game_start_timeout = " .. game_start_timeout)
-            print("P1.panel_buffer = " .. P1.panel_buffer)
-            print("P2.panel_buffer = " .. P2.panel_buffer)
-            print("P1.gpanel_buffer = " .. P1.gpanel_buffer)
-            print("P2.gpanel_buffer = " .. P2.gpanel_buffer)
-            gprint(to_print, unpack(main_menu_screen_pos))
-            if not do_messages() then
-              return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
-            end
-            process_all_data_messages() -- process data to get initial panel stacks setup
-            wait()
-            if game_start_timeout > 250 then
-              warning(loc("pl_time_out") .. "\n")
-              return main_dumb_transition, {
-                main_select_mode,
-                loc("pl_time_out") .. "\n" .. "\n" .. "msg.match_start = " .. (tostring(msg.match_start) or "nil") .. "\n" .. "replay_of_match_so_far = " .. (tostring(replay_of_match_so_far) or "nil") .. "\n" .. "P1.panel_buffer = " .. P1.panel_buffer .. "\n" .. "P2.panel_buffer = " .. P2.panel_buffer .. "\n" .. "P1.gpanel_buffer = " .. P1.gpanel_buffer .. "\n" .. "P2.gpanel_buffer = " .. P2.gpanel_buffer,
-                180
-              }
-            end
-            love.timer.sleep(0.017)
           end
 
           -- Proceed to the game screen and start the game
@@ -1353,8 +1319,6 @@ function select_screen.main()
       GAME.match.P1 = P1
       P1:set_garbage_target(P1)
       P2 = nil
-      make_local_panels(P1, "000000")
-      make_local_gpanels(P1, "000000")
       current_stage = cursor_data[1].state.stage
       stage_loader_load(current_stage)
       stage_loader_wait()
@@ -1379,10 +1343,6 @@ function select_screen.main()
       --
       -- In general the block-generation logic should be the same as the server's, so
       -- maybe there should be only one implementation.
-      make_local_panels(P1, "000000")
-      make_local_gpanels(P1, "000000")
-      make_local_panels(P2, "000000")
-      make_local_gpanels(P2, "000000")
       P1:starting_state()
       P2:starting_state()
       return main_dumb_transition, {main_local_vs, "", 0, 0}

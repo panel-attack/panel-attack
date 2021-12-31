@@ -72,6 +72,7 @@ end
  
 GARBAGE_DELAY = 60
 GARBAGE_TRANSIT_TIME = 90
+MAX_LAG = GARBAGE_DELAY + GARBAGE_TRANSIT_TIME -- maximum amount of lag before net games abort, any more and game correctness would suffer
 
 gfx_q = Queue()
 
@@ -90,8 +91,6 @@ panels = {} -- initialized in panels.lua
 panels_ids = {} -- initialized in panels.lua
 
 current_stage = nil
-
-GAME_ENDED_CLOCK = 0
 
 replay = {}
 
