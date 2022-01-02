@@ -269,7 +269,6 @@ function Stack.divergenceString(self, stackToTest)
       end
   end
 
-  result = result .. "Attacks " .. #stackToTest.telegraph.attacks .. "\n"
   result = result .. "garbage_q " .. stackToTest.garbage_q:len() .. "\n"
   result = result .. "later_garbage " .. tableLength(stackToTest.later_garbage) .. "\n"
   result = result .. "Stop " .. stackToTest.stop_time .. "\n"
