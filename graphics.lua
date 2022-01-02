@@ -545,12 +545,15 @@ function Stack.render(self)
       --(self.pos_x-4)*GFX_SCALE, (self.pos_y-4)*GFX_SCALE
       --if healthQuad == nil then local healthQuad = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight(),
       --  themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight()) end
-      -- Healthbar frame
-      draw_label(themes[config.theme].images["IMG_healthbar_frame" .. self.id], self.origin_x + themes[config.theme].healthbar_frame_Pos[1] * self.mirror_x, self.pos_y + themes[config.theme].healthbar_frame_Pos[2], 0, themes[config.theme].healthbar_frame_Scale, self.multiplication)
-      -- Healthbar
-      healthbar = self.health * (themes[config.theme].images.IMG_healthbar:getHeight() / self.max_health)
-      healthQuad:setViewport(0, themes[config.theme].images.IMG_healthbar:getHeight() - healthbar, themes[config.theme].images.IMG_healthbar:getWidth(), healthbar)
-      qdraw(themes[config.theme].images.IMG_healthbar, healthQuad, self.origin_x + themes[config.theme].healthbar_Pos[1] * self.mirror_x, (self.pos_y + themes[config.theme].healthbar_Pos[2]) + (themes[config.theme].images.IMG_healthbar:getHeight() - healthbar), themes[config.theme].healthbar_Rotate, themes[config.theme].healthbar_Scale, themes[config.theme].healthbar_Scale, 0, 0, self.multiplication)
+
+      if not themes[config.theme].multibar_is_absolute then
+        -- Healthbar frame
+        draw_label(themes[config.theme].images["IMG_healthbar_frame" .. self.id], self.origin_x + themes[config.theme].healthbar_frame_Pos[1] * self.mirror_x, self.pos_y + themes[config.theme].healthbar_frame_Pos[2], 0, themes[config.theme].healthbar_frame_Scale, self.multiplication)
+        -- Healthbar
+        local healthbar = self.health * (themes[config.theme].images.IMG_healthbar:getHeight() / self.max_health)
+        healthQuad:setViewport(0, themes[config.theme].images.IMG_healthbar:getHeight() - healthbar, themes[config.theme].images.IMG_healthbar:getWidth(), healthbar)
+        qdraw(themes[config.theme].images.IMG_healthbar, healthQuad, self.origin_x + themes[config.theme].healthbar_Pos[1] * self.mirror_x, (self.pos_y + themes[config.theme].healthbar_Pos[2]) + (themes[config.theme].images.IMG_healthbar:getHeight() - healthbar), themes[config.theme].healthbar_Rotate, themes[config.theme].healthbar_Scale, themes[config.theme].healthbar_Scale, 0, 0, self.multiplication)
+      end
 
       --gprint(loc("pl_stop", self.stop_time), self.score_x, self.score_y+300)
       --gprint(loc("pl_shake", self.shake_time), self.score_x, self.score_y+320)
@@ -609,39 +612,85 @@ function Stack.render(self)
       else
         shake_bar = 0
       end
-      shakeQuad:setViewport(0, themes[config.theme].images.IMG_shake_bar:getHeight() - shake_bar, themes[config.theme].images.IMG_shake_bar:getWidth(), shake_bar)
-      qdraw(themes[config.theme].images.IMG_shake_bar, shakeQuad, self.origin_x + themes[config.theme].shake_bar_Pos[1] * self.mirror_x, ((self.pos_y + themes[config.theme].shake_bar_Pos[2]) + ((themes[config.theme].images.IMG_shake_bar:getHeight() - shake_bar) / GFX_SCALE)), themes[config.theme].shake_bar_Rotate, themes[config.theme].shake_bar_Scale / GFX_SCALE, themes[config.theme].shake_bar_Scale / GFX_SCALE, 0, 0, self.multiplication)
+
+      if not themes[config.theme].multibar_is_absolute then
+        shakeQuad:setViewport(0, themes[config.theme].images.IMG_shake_bar:getHeight() - shake_bar, themes[config.theme].images.IMG_shake_bar:getWidth(), shake_bar)
+        qdraw(themes[config.theme].images.IMG_shake_bar, shakeQuad, self.origin_x + themes[config.theme].shake_bar_Pos[1] * self.mirror_x, ((self.pos_y + themes[config.theme].shake_bar_Pos[2]) + ((themes[config.theme].images.IMG_shake_bar:getHeight() - shake_bar) / GFX_SCALE)), themes[config.theme].shake_bar_Rotate, themes[config.theme].shake_bar_Scale / GFX_SCALE, themes[config.theme].shake_bar_Scale / GFX_SCALE, 0, 0, self.multiplication)
+      end
       -- Shake number
       draw_number(self.shake_time, themes[config.theme].images.IMG_timeNumber_atlas, 12, shake_quads, (self.origin_x + (themes[config.theme].shake_Pos[1] * self.mirror_x)) * GFX_SCALE, (self.pos_y + themes[config.theme].shake_Pos[2]) * GFX_SCALE, themes[config.theme].shake_Scale, (15 / themes[config.theme].images.timeNumberWidth * themes[config.theme].shake_Scale), (19 / themes[config.theme].images.timeNumberHeight * themes[config.theme].shake_Scale), "center", self.multiplication)
 
       -- Multibar
 
-      if self.maxShake > 0 and self.shake_time >= self.pre_stop_time + self.stop_time then
-        multi_shake_bar = self.shake_time * (themes[config.theme].images.IMG_multibar_shake_bar:getHeight() / self.maxShake) * 3
-      else
-        multi_shake_bar = 0
-      end
-      if self.maxStop > 0 and self.shake_time < self.pre_stop_time + self.stop_time then
-        multi_stop_bar = self.stop_time * (themes[config.theme].images.IMG_multibar_stop_bar:getHeight() / self.maxStop) * 1.5
-      else
-        multi_stop_bar = 0
-      end
-      if self.maxPrestop > 0 and self.shake_time < self.pre_stop_time + self.stop_time then
-        multi_prestop_bar = self.pre_stop_time * (themes[config.theme].images.IMG_multibar_prestop_bar:getHeight() / self.maxPrestop) * 1.5
-      else
-        multi_prestop_bar = 0
-      end
-      multi_shakeQuad:setViewport(0, themes[config.theme].images.IMG_multibar_shake_bar:getHeight() - multi_shake_bar, themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), multi_shake_bar)
-      multi_stopQuad:setViewport(0, themes[config.theme].images.IMG_multibar_stop_bar:getHeight() - multi_stop_bar, themes[config.theme].images.IMG_multibar_stop_bar:getWidth(), multi_stop_bar)
-      multi_prestopQuad:setViewport(0, themes[config.theme].images.IMG_multibar_prestop_bar:getHeight() - multi_prestop_bar, themes[config.theme].images.IMG_multibar_prestop_bar:getWidth(), multi_prestop_bar)
+      if not themes[config.theme].multibar_is_absolute then
+        local multi_shake_bar, multi_stop_bar, multi_prestop_bar = 0, 0, 0
+        if self.maxShake > 0 and self.shake_time >= self.pre_stop_time + self.stop_time then
+          multi_shake_bar = self.shake_time * (themes[config.theme].images.IMG_multibar_shake_bar:getHeight() / self.maxShake) * 3
+        end
+        if self.maxStop > 0 and self.shake_time < self.pre_stop_time + self.stop_time then
+          multi_stop_bar = self.stop_time * (themes[config.theme].images.IMG_multibar_stop_bar:getHeight() / self.maxStop) * 1.5
+        end
+        if self.maxPrestop > 0 and self.shake_time < self.pre_stop_time + self.stop_time then
+          multi_prestop_bar = self.pre_stop_time * (themes[config.theme].images.IMG_multibar_prestop_bar:getHeight() / self.maxPrestop) * 1.5
+        end
+        multi_shakeQuad:setViewport(0, themes[config.theme].images.IMG_multibar_shake_bar:getHeight() - multi_shake_bar, themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), multi_shake_bar)
+        multi_stopQuad:setViewport(0, themes[config.theme].images.IMG_multibar_stop_bar:getHeight() - multi_stop_bar, themes[config.theme].images.IMG_multibar_stop_bar:getWidth(), multi_stop_bar)
+        multi_prestopQuad:setViewport(0, themes[config.theme].images.IMG_multibar_prestop_bar:getHeight() - multi_prestop_bar, themes[config.theme].images.IMG_multibar_prestop_bar:getWidth(), multi_prestop_bar)
 
-      draw_label(themes[config.theme].images.IMG_multibar_frame, self.origin_x + themes[config.theme].multibar_frame_Pos[1] * self.mirror_x, self.pos_y + themes[config.theme].multibar_frame_Pos[2], 0, themes[config.theme].multibar_frame_Scale, self.multiplication)
-      --Shake
-      qdraw(themes[config.theme].images.IMG_multibar_shake_bar, multi_shakeQuad, self.origin_x + themes[config.theme].multibar_Pos[1] * self.mirror_x, ((self.pos_y + themes[config.theme].multibar_Pos[2]) + ((themes[config.theme].images.IMG_multibar_shake_bar:getHeight() - multi_shake_bar) / GFX_SCALE)), 0, themes[config.theme].multibar_Scale / GFX_SCALE, themes[config.theme].multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
-      --Stop
-      qdraw(themes[config.theme].images.IMG_multibar_stop_bar, multi_stopQuad, self.origin_x + themes[config.theme].multibar_Pos[1] * self.mirror_x, (((self.pos_y - (multi_shake_bar / GFX_SCALE)) + themes[config.theme].multibar_Pos[2]) + ((themes[config.theme].images.IMG_multibar_stop_bar:getHeight() - multi_stop_bar) / GFX_SCALE)), 0, themes[config.theme].multibar_Scale / GFX_SCALE, themes[config.theme].multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
-      -- Prestop
-      qdraw(themes[config.theme].images.IMG_multibar_prestop_bar, multi_prestopQuad, self.origin_x + (themes[config.theme].multibar_Pos[1] * self.mirror_x), (((self.pos_y - (multi_shake_bar / GFX_SCALE + multi_stop_bar / GFX_SCALE)) + themes[config.theme].multibar_Pos[2]) + ((themes[config.theme].images.IMG_multibar_prestop_bar:getHeight() - multi_prestop_bar) / GFX_SCALE)), 0, themes[config.theme].multibar_Scale / GFX_SCALE, themes[config.theme].multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
+        draw_label(themes[config.theme].images.IMG_multibar_frame, self.origin_x + themes[config.theme].multibar_frame_Pos[1] * self.mirror_x, self.pos_y + themes[config.theme].multibar_frame_Pos[2], 0, themes[config.theme].multibar_frame_Scale, self.multiplication)
+        --Shake
+        qdraw(themes[config.theme].images.IMG_multibar_shake_bar, multi_shakeQuad, self.origin_x + themes[config.theme].multibar_Pos[1] * self.mirror_x, ((self.pos_y + themes[config.theme].multibar_Pos[2]) + ((themes[config.theme].images.IMG_multibar_shake_bar:getHeight() - multi_shake_bar) / GFX_SCALE)), 0, themes[config.theme].multibar_Scale / GFX_SCALE, themes[config.theme].multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
+        --Stop
+        qdraw(themes[config.theme].images.IMG_multibar_stop_bar, multi_stopQuad, self.origin_x + themes[config.theme].multibar_Pos[1] * self.mirror_x, (((self.pos_y - (multi_shake_bar / GFX_SCALE)) + themes[config.theme].multibar_Pos[2]) + ((themes[config.theme].images.IMG_multibar_stop_bar:getHeight() - multi_stop_bar) / GFX_SCALE)), 0, themes[config.theme].multibar_Scale / GFX_SCALE, themes[config.theme].multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
+        -- Prestop
+        qdraw(themes[config.theme].images.IMG_multibar_prestop_bar, multi_prestopQuad, self.origin_x + (themes[config.theme].multibar_Pos[1] * self.mirror_x), (((self.pos_y - (multi_shake_bar / GFX_SCALE + multi_stop_bar / GFX_SCALE)) + themes[config.theme].multibar_Pos[2]) + ((themes[config.theme].images.IMG_multibar_prestop_bar:getHeight() - multi_prestop_bar) / GFX_SCALE)), 0, themes[config.theme].multibar_Scale / GFX_SCALE, themes[config.theme].multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
+      else
+        -- Healthbar
+        local iconX = (self.origin_x + themes[config.theme].multibar_Pos[1] * self.mirror_x) * GFX_SCALE
+        local iconY = 700
+        local multiBarMaxHeight = 590
+        local multiBarFrameScale = 3
+
+        local healthBar = self.health * multiBarFrameScale
+        local shakeTimeBar, stopTimeBar, preStopBar = 0, 0, 0
+        if self.maxShake > 0 and self.shake_time >= self.pre_stop_time + self.stop_time then
+          stopTimeBar = math.min(self.shake_time * multiBarFrameScale, multiBarMaxHeight - healthBar)
+        end
+        if self.maxStop > 0 and self.shake_time < self.pre_stop_time + self.stop_time then
+          stopTimeBar = math.min(self.stop_time * multiBarFrameScale, multiBarMaxHeight - shakeTimeBar - healthBar)
+        end
+        if self.maxPrestop > 0 and self.shake_time < self.pre_stop_time + self.stop_time then
+          preStopBar = math.min(self.pre_stop_time * multiBarFrameScale, multiBarMaxHeight - stopTimeBar - shakeTimeBar - healthBar)
+        end
+
+        local desiredWidth, _ = themes[config.theme].images.IMG_multibar_shake_bar:getDimensions()
+        local iconXScale, iconYScale, icon_width, icon_height
+        icon_width, icon_height = themes[config.theme].images.IMG_healthbar:getDimensions()
+        iconXScale = (desiredWidth / GFX_SCALE) / icon_width * self.mirror_x
+        iconYScale = -(healthBar / icon_height) / GFX_SCALE
+        draw(themes[config.theme].images.IMG_healthbar, iconX / GFX_SCALE, iconY / GFX_SCALE, 0, iconXScale, iconYScale)
+
+        iconY = iconY - healthBar
+
+        --Shake
+        icon_width, icon_height = themes[config.theme].images.IMG_multibar_shake_bar:getDimensions()
+        iconXScale = (desiredWidth / GFX_SCALE) / icon_width * self.mirror_x
+        iconYScale = -(shakeTimeBar / icon_height) / GFX_SCALE
+        draw(themes[config.theme].images.IMG_multibar_shake_bar, iconX / GFX_SCALE, iconY / GFX_SCALE, 0, iconXScale, iconYScale)
+
+        --Stop
+        icon_width, icon_height = themes[config.theme].images.IMG_multibar_stop_bar:getDimensions()
+        iconXScale = (desiredWidth / GFX_SCALE) / icon_width * self.mirror_x
+        iconYScale = -(stopTimeBar / icon_height) / GFX_SCALE
+        draw(themes[config.theme].images.IMG_multibar_stop_bar, iconX / GFX_SCALE, iconY / GFX_SCALE, 0, iconXScale, iconYScale)
+
+        -- Prestop
+        icon_width, icon_height = themes[config.theme].images.IMG_multibar_prestop_bar:getDimensions()
+        iconXScale = (desiredWidth / GFX_SCALE) / icon_width * self.mirror_x
+        iconYScale = -(preStopBar / icon_height) / GFX_SCALE
+        iconY = iconY - math.max(shakeTimeBar, stopTimeBar)
+        draw(themes[config.theme].images.IMG_multibar_prestop_bar, iconX / GFX_SCALE, iconY / GFX_SCALE, 0, iconXScale, iconYScale)
+      end
 
       if config.debug_mode and self.danger then
         gprint("danger", self.score_x, self.score_y + 135)

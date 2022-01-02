@@ -26,6 +26,7 @@ require("gen_panels")
 require("panels")
 require("theme")
 require("click_menu")
+local logger = require("logger")
 
 GAME.scores = require("scores")
 
@@ -79,7 +80,7 @@ function love.update(dt)
     error(err .. "\n" .. debug.traceback(mainloop))
   end
   if server_queue and server_queue:size() > 0 then
-    print("Queue Size: " .. server_queue:size() .. " Data:" .. server_queue:to_short_string())
+    logger.trace("Queue Size: " .. server_queue:size() .. " Data:" .. server_queue:to_short_string())
   end
   this_frame_messages = {}
 
@@ -129,3 +130,24 @@ function love.draw()
     menu_drawf(GAME.background_overlay, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
   end
 end
+
+-- Transform from window coordinates to game coordinates
+local function transform_coordinates(x, y)
+  local lbx, lby, lbw, lbh = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 16, 9)
+  local scale = canvas_width / math.max(GAME.backgroundImage:getWidth(), GAME.backgroundImage:getHeight())
+  return (x - lbx) / scale * canvas_width / lbw, (y - lby) / scale * canvas_height / lbh
+end
+
+-- Handle a mouse or touch press
+function love.mousepressed(x, y)
+  for menu_name, menu in pairs(CLICK_MENUS) do
+    menu:click_or_tap(transform_coordinates(x, y))
+  end
+end
+
+-- Handle a touch press
+-- Note we are specifically not implementing this because mousepressed above handles mouse and touch
+-- function love.touchpressed(id, x, y, dx, dy, pressure)
+  -- local _x, _y = transform_coordinates(x, y)
+  -- click_or_tap(_x, _y, {id = id, x = _x, y = _y, dx = dx, dy = dy, pressure = pressure})
+-- end

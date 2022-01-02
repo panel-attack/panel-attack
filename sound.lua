@@ -1,4 +1,5 @@
 require("sound_util")
+local logger = require("logger")
 
 -- Sets the volumes based on the current player configuration settings
 function apply_config_volume()
@@ -46,7 +47,7 @@ end
 
 -- Stop just music files
 function stop_the_music()
-  --print("musics have been stopped")
+  --logger.trace("musics have been stopped")
   for k, v in pairs(currently_playing_tracks) do
     v:stop()
     currently_playing_tracks[k] = nil
@@ -74,10 +75,10 @@ end
 
 -- Finds the given music file with the given type and adds it to the queue
 function find_and_add_music(musics, music_type)
-  print("music " .. music_type .. " is now playing")
+  logger.trace("music " .. music_type .. " is now playing")
   local start_music = musics[music_type .. "_start"] or zero_sound
   local loop_music = musics[music_type]
-  if loop_music:isPlaying() or start_music:isPlaying() then
+  if not loop_music or not start_music or loop_music:isPlaying() or start_music:isPlaying() then
     return
   end
   music_t[love.timer.getTime()] = make_music_t(start_music)
