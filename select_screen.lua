@@ -1,3 +1,5 @@
+local logger = require("logger")
+
 local select_screen = {}
 
 select_screen.fallback_when_missing = {nil, nil}
@@ -24,7 +26,7 @@ local function fill_map(template_map, map)
           character_id_index = character_id_index + 1
           -- end case: no more characters_ids_for_current_theme to add
           if character_id_index == #characters_ids_for_current_theme + 1 then
-            print("filled " .. #characters_ids_for_current_theme .. " characters across " .. pages_amount .. " page(s)")
+            logger.trace("filled " .. #characters_ids_for_current_theme .. " characters across " .. pages_amount .. " page(s)")
             return pages_amount
           end
         end
@@ -173,7 +175,7 @@ function select_screen.main()
     P1 = nil
     P2 = nil
     drop_old_data_messages() -- Starting a new game, clear all old data messages from the previous game
-    print("Reseting player stacks")
+    logger.debug("Reseting player stacks")
 
     -- Wait till we have the room setup messages from the server
     local opponent_connected = false
@@ -206,10 +208,10 @@ function select_screen.main()
     elseif GAME.battleRoom.spectating then
       my_player_number = 1
     elseif my_player_number and my_player_number ~= 0 then
-      print("We assumed our player number is still " .. my_player_number)
+      logger.debug("We assumed our player number is still " .. my_player_number)
     else
       error(loc("nt_player_err"))
-      print("Error: The server never told us our player number.  Assuming it is 1")
+      logger.error("The server never told us our player number.  Assuming it is 1")
       my_player_number = 1
     end
 
@@ -218,15 +220,15 @@ function select_screen.main()
     elseif GAME.battleRoom.spectating then
       op_player_number = 2
     elseif op_player_number and op_player_number ~= 0 then
-      print("We assumed op player number is still " .. op_player_number)
+      logger.debug("We assumed op player number is still " .. op_player_number)
     else
       error("We never heard from the server as to what player number we are")
-      print("Error: The server never told us our player number.  Assuming it is 2")
+      logger.error("The server never told us our player number.  Assuming it is 2")
       op_player_number = 2
     end
 
     if my_player_number == 2 and msg.a_menu_state ~= nil and msg.b_menu_state ~= nil then
-      print("inverting the states to match player number!")
+      logger.warn("inverting the states to match player number!")
       msg.a_menu_state, msg.b_menu_state = msg.b_menu_state, msg.a_menu_state
     end
 
@@ -250,7 +252,7 @@ function select_screen.main()
       match_type = "Casual"
     end
 
-    print("current_server_supports_ranking: " .. tostring(current_server_supports_ranking))
+    logger.trace("current_server_supports_ranking: " .. tostring(current_server_supports_ranking))
 
     if current_server_supports_ranking then
       template_map = {
@@ -275,8 +277,8 @@ function select_screen.main()
     global_current_room_ratings = global_current_room_ratings or {{new = 0, old = 0, difference = 0}, {new = 0, old = 0, difference = 0}}
     my_expected_win_ratio = nil
     op_expected_win_ratio = nil
-    print("my_player_number = " .. my_player_number)
-    print("op_player_number = " .. op_player_number)
+    logger.trace("my_player_number = " .. my_player_number)
+    logger.trace("op_player_number = " .. op_player_number)
     if global_current_room_ratings[my_player_number].new and global_current_room_ratings[my_player_number].new ~= 0 and global_current_room_ratings[op_player_number] and global_current_room_ratings[op_player_number].new ~= 0 then
       my_expected_win_ratio = (100 * round(1 / (1 + 10 ^ ((global_current_room_ratings[op_player_number].new - global_current_room_ratings[my_player_number].new) / RATING_SPREAD_MODIFIER)), 2))
       op_expected_win_ratio = (100 * round(1 / (1 + 10 ^ ((global_current_room_ratings[my_player_number].new - global_current_room_ratings[op_player_number].new) / RATING_SPREAD_MODIFIER)), 2))
@@ -510,7 +512,7 @@ function select_screen.main()
 
     -- Draws the players "flashing ready" effect on their current cursor
     local function draw_super_select(player_num)
-      local ratio = menu_pressing_enter(K[player_num])
+      local ratio = select_being_pressed_ratio(player_num)
       if ratio > super_selection_enable_ratio then
         super_select_shaders[player_num]:send("percent", linear_smooth(ratio, super_selection_enable_ratio, 1.0))
         set_shader(super_select_shaders[player_num])
@@ -777,7 +779,7 @@ function select_screen.main()
     end
   end
 
-  print("got to LOC before net_vs_room character select loop")
+  logger.trace("got to LOC before net_vs_room character select loop")
   menu_clock = 0
 
   local v_align_center = {__Ready = true, __Random = true, __Leave = true}
@@ -872,7 +874,7 @@ function select_screen.main()
           return main_dumb_transition, {main_net_vs_lobby, "", 0, 0} -- opponent left the select screen
         end
         if (msg.match_start or replay_of_match_so_far) and msg.player_settings and msg.opponent_settings then
-          print("spectating: " .. tostring(GAME.battleRoom.spectating))
+          logger.debug("spectating: " .. tostring(GAME.battleRoom.spectating))
           local fake_P1 = {panel_buffer = "", gpanel_buffer = ""}
           local fake_P2 = {panel_buffer = "", gpanel_buffer = ""}
           refresh_based_on_own_mods(msg.opponent_settings)
@@ -1041,6 +1043,11 @@ function select_screen.main()
       gprintf(match_type_message, 0, 30, canvas_width, "center")
     end
 
+    local playerNumberWaiting = GAME.input.playerNumberWaitingForInputConfiguration()
+    if playerNumberWaiting then
+      gprintf(loc("player_press_key", playerNumberWaiting), 0, 30, canvas_width, "center")
+    end
+
     -- Draw an indicator that there are more character pages
     if pages_amount ~= 1 then
       gprintf(loc("page") .. " " .. current_page .. "/" .. pages_amount, 0, 660, canvas_width, "center")
@@ -1118,7 +1125,7 @@ function select_screen.main()
           state.stage = uniformly(stages[state.stage].sub_stages)
         end
       end
-      print("stage and stage_is_random: " .. state.stage .. " / " .. (state.stage_is_random or "nil"))
+      logger.trace("stage and stage_is_random: " .. state.stage .. " / " .. (state.stage_is_random or "nil"))
     end
 
     -- Function to tell the select screen to exit
@@ -1211,25 +1218,24 @@ function select_screen.main()
             KMax = 2
           end
           for i = 1, KMax do
-            local k = K[i]
             local cursor = cursor_data[i]
-            if menu_prev_page(k) then
+            if menu_prev_page(i) then
               if not cursor.selected then
                 current_page = bound(1, current_page - 1, pages_amount)
               end
-            elseif menu_next_page(k) then
+            elseif menu_next_page(i) then
               if not cursor.selected then
                 current_page = bound(1, current_page + 1, pages_amount)
               end
-            elseif menu_up(k) then
+            elseif menu_up(i) then
               if not cursor.selected then
                 move_cursor(cursor, up)
               end
-            elseif menu_down(k) then
+            elseif menu_down(i) then
               if not cursor.selected then
                 move_cursor(cursor, down)
               end
-            elseif menu_left(k) then
+            elseif menu_left(i) then
               if cursor.selected then
                 if cursor.state.cursor == "__Level" then
                   cursor.state.level = bound(1, cursor.state.level - 1, #level_to_starting_speed) --which should equal the number of levels in the game
@@ -1242,7 +1248,7 @@ function select_screen.main()
               if not cursor.selected then
                 move_cursor(cursor, left)
               end
-            elseif menu_right(k) then
+            elseif menu_right(i) then
               if cursor.selected then
                 if cursor.state.cursor == "__Level" then
                   cursor.state.level = bound(1, cursor.state.level + 1, #level_to_starting_speed) --which should equal the number of levels in the game
@@ -1257,17 +1263,17 @@ function select_screen.main()
               end
             else
               -- code below is bit hard to read: basically we are storing the default sfx callbacks until it's needed (or not!) based on the on_select method
-              local long_enter, long_enter_callback = menu_long_enter(k, true)
-              local normal_enter, normal_enter_callback = menu_enter(k, true)
+              local long_enter, long_enter_callback = menu_long_enter(i, true)
+              local normal_enter, normal_enter_callback = menu_enter(i, true)
               if long_enter then
                 if not on_select(cursor, true) then
                   long_enter_callback()
                 end
-              elseif normal_enter and (not cursor.can_super_select or menu_pressing_enter(k) < super_selection_enable_ratio) then
+              elseif normal_enter and (not cursor.can_super_select or select_being_pressed_ratio(i) < super_selection_enable_ratio) then
                 if not on_select(cursor, false) then
                   normal_enter_callback()
                 end
-              elseif menu_escape(k) then
+              elseif menu_escape() then
                 if cursor.state.cursor == "__Leave" then
                   on_quit()
                 end
@@ -1300,7 +1306,7 @@ function select_screen.main()
           end
           prev_state = shallowcpy(cursor_data[1].state)
         else -- (we are spectating)
-          if menu_escape(K[1]) then
+          if menu_escape() then
             do_leave()
             ret = {main_net_vs_lobby} -- we left the select screen as a spectator
           end

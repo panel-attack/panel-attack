@@ -23,7 +23,7 @@ require("engine/telegraph")
 require("engine")
 require("localization")
 require("graphics")
-require("input")
+GAME.input = require("input")
 require("network")
 require("Puzzle")
 require("PuzzleSet")
@@ -35,6 +35,7 @@ require("gen_panels")
 require("panels")
 require("theme")
 require("click_menu")
+local logger = require("logger")
 
 GAME.scores = require("scores")
 
@@ -88,7 +89,7 @@ function love.update(dt)
     error(err .. "\n" .. debug.traceback(mainloop))
   end
   if server_queue and server_queue:size() > 0 then
-    print("Queue Size: " .. server_queue:size() .. " Data:" .. server_queue:to_short_string())
+    logger.trace("Queue Size: " .. server_queue:size() .. " Data:" .. server_queue:to_short_string())
   end
   this_frame_messages = {}
 

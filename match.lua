@@ -252,7 +252,7 @@ function Match.render(self)
     end
   end
   
-  if game_is_paused then
+  if GAME.game_is_paused then
     draw_pause()
   else
     -- Don't allow rendering if either player is loading for spectating

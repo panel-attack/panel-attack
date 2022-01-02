@@ -1,3 +1,5 @@
+local logger = require("logger")
+
 local TCP_sock = nil
 
 -- Expected length for each message type
@@ -45,7 +47,7 @@ function get_message()
   if type == "J" then
     if string.len(leftovers) >= 4 then
       len = byte(string.sub(leftovers, 2, 2)) * 65536 + byte(string.sub(leftovers, 3, 3)) * 256 + byte(string.sub(leftovers, 4, 4))
-      --print("json message has length "..len)
+      --logger.trace("json message has length "..len)
       gap = 3
     else
       return nil
@@ -127,7 +129,7 @@ function queue_message(type, data)
     local dataMessage = {}
     dataMessage[type] = data
     if printNetworkMessageForType(type) then
-      --print("Queuing: " .. type .. " with data:" .. data)
+      --logger.debug("Queuing: " .. type .. " with data:" .. data)
     end
     server_queue:push(dataMessage)
   elseif type == "L" then
@@ -151,7 +153,7 @@ function queue_message(type, data)
       return
     end
     if printNetworkMessageForType(type) then
-      --print("Queuing: " .. type .. " with data:" .. dump(current_message))
+      --logger.debug("Queuing: " .. type .. " with data:" .. dump(current_message))
     end
     server_queue:push(current_message)
   end
@@ -179,7 +181,7 @@ function process_all_data_messages()
   for _, msg in ipairs(messages) do
     for type, data in pairs(msg) do
       if printNetworkMessageForType(type) then
-        print("Processing: " .. type .. " with data:" .. data)
+        logger.debug("Processing: " .. type .. " with data:" .. data)
       end
       process_data_message(type, data)
     end
@@ -271,23 +273,13 @@ function request_spectate(roomNr)
 end
 
 function Stack.handle_input_taunt(self)
-  local k = K[self.which]
-  local taunt_keys = {taunt_up = (keys[k.taunt_up] or this_frame_keys[k.taunt_up]), taunt_down = (keys[k.taunt_down] or this_frame_keys[k.taunt_down])}
 
-  if self.wait_for_not_taunting ~= nil then
-    if not taunt_keys[self.wait_for_not_taunting] then
-      self.wait_for_not_taunting = nil
-    else
-      return
-    end
-  end
-
-  if taunt_keys.taunt_up and self:can_taunt() and #characters[self.character].sounds.taunt_ups > 0 then
+  if player_taunt_up(self.which) and self:can_taunt() and #characters[self.character].sounds.taunt_ups > 0 then
     self.taunt_up = math.random(#characters[self.character].sounds.taunt_ups)
     if TCP_sock then
       json_send({taunt = true, type = "taunt_ups", index = self.taunt_up})
     end
-  elseif taunt_keys.taunt_down and self:can_taunt() and #characters[self.character].sounds.taunt_downs > 0 then
+  elseif player_taunt_down(self.which) and self:can_taunt() and #characters[self.character].sounds.taunt_downs > 0 then
     self.taunt_down = math.random(#characters[self.character].sounds.taunt_downs)
     if TCP_sock then
       json_send({taunt = true, type = "taunt_downs", index = self.taunt_down})
@@ -300,8 +292,15 @@ function Stack.idleInput(self)
 end
 
 function Stack.send_controls(self)
-  local k = K[self.which]
-  local to_send = base64encode[((keys[k.raise1] or keys[k.raise2] or this_frame_keys[k.raise1] or this_frame_keys[k.raise2]) and 32 or 0) + ((this_frame_keys[k.swap1] or this_frame_keys[k.swap2]) and 16 or 0) + ((keys[k.up] or this_frame_keys[k.up]) and 8 or 0) + ((keys[k.down] or this_frame_keys[k.down]) and 4 or 0) + ((keys[k.left] or this_frame_keys[k.left]) and 2 or 0) + ((keys[k.right] or this_frame_keys[k.right]) and 1 or 0) + 1]
+  local playerNumber = self.which
+  local to_send = base64encode[
+    (player_raise(playerNumber) and 32 or 0) + 
+    (player_swap(playerNumber) and 16 or 0) + 
+    (player_up(playerNumber) and 8 or 0) + 
+    (player_down(playerNumber) and 4 or 0) + 
+    (player_left(playerNumber) and 2 or 0) + 
+    (player_right(playerNumber) and 1 or 0) + 1
+    ]
 
   if TCP_sock then
     net_send("I" .. to_send)

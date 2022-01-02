@@ -199,7 +199,7 @@ Room =
         a_placement_match_progress = a_progress
       end
     end
-    
+
     if b.user_id then
       if leaderboard.players[b.user_id] and leaderboard.players[b.user_id].rating then
         b_rating = round(leaderboard.players[b.user_id].rating or 0)
@@ -352,7 +352,7 @@ Playerbase =
   function(s, name)
     s.name = name
     s.players = {}
-     --{["e2016ef09a0c7c2fa70a0fb5b99e9674"]="Bob",
+    --{["e2016ef09a0c7c2fa70a0fb5b99e9674"]="Bob",
     --["d28ac48ba5e1a82e09b9579b0a5a7def"]="Alice"}
     s.deleted_players = {}
     playerbases[#playerbases + 1] = s
@@ -448,6 +448,17 @@ function Leaderboard.get_report(self, user_id_of_requester)
     v.rating = round(v.rating)
   end
   return report
+end
+
+function Leaderboard.update_timestamp(self, user_id)
+  if self.players[user_id] then
+    local timestamp = os.time()
+    self.players[user_id].last_login_time = timestamp
+    write_leaderboard_file()
+    print(user_id .. "'s login timestamp has been updated to ".. timestamp)
+  else
+    print(user_id.. " is not on the leaderboard, so no timestamp will be assigned at this time.")
+  end
 end
 
 Connection =
@@ -552,6 +563,7 @@ function Connection.login(self, user_id)
 
   if self.logged_in then
     self:send(lobby_state())
+    leaderboard:update_timestamp(user_id)
   end
 
   return self.logged_in
@@ -1202,7 +1214,7 @@ function Connection.J(self, message)
       response = {choose_another_name = {reason = 'Username cannot be "anonymous"'}}
       self:send(response)
       return
-    elseif string.lower(message.name:match("d+e+f+a+u+l+t+n+a+m+e?")) then
+    elseif message.name:lower():match("d+e+f+a+u+l+t+n+a+m+e?") then
       print('connection tried to use name "defaultname", or a variation of it')
       response = {choose_another_name = {reason = 'Username cannot be "defaultname" or a variation of it'}}
       self:send(response)

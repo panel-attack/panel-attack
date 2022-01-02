@@ -1,4 +1,5 @@
 require("analytics")
+local logger = require("logger")
 
 -- Stuff defined in this file:
 --  . the data structures that store the configuration of
@@ -169,8 +170,6 @@ Stack =
 
     s.taunt_up = nil -- will hold an index
     s.taunt_down = nil -- will hold an index
-    s.wait_for_not_taunting = nil -- will hold either "taunt_up" or "taunt_down"
-    s.wait_for_not_pausing = false -- wait for end of input
     s.taunt_queue = Queue()
 
     s.cur_wait_time = config.input_repeat_delay -- number of ticks to wait before the cursor begins
@@ -475,7 +474,6 @@ function Stack.taunt(self, taunt_type)
     self.taunt_queue:pop()
   end
   self.taunt_queue:push(love.timer.getTime())
-  self.wait_for_not_taunting = taunt_type -- to avoid taunting multiple times with the same input
 end
 
 -- Represents an individual panel in the stack
@@ -560,7 +558,7 @@ function GarbageQueue.push(self, garbage)
         elseif from_chain or height > 1 then
           if not from_chain then
             error("ERROR: garbage with height > 1 was not marked as 'from_chain'")
-            print("adding it to the chain garbage queue anyway")
+            logger.warn("adding it to the chain garbage queue anyway")
           end
           self.chain_garbage:push(v)
           self.ghost_chain = nil
@@ -799,9 +797,6 @@ function Stack.set_puzzle_state(self, pstr, n_turns, do_countdown, puzzleType)
   if n_turns ~= 0 then
     self.puzzle_moves = n_turns
   end
-  if self.character and characters[self.character] then
-    characters[self.character]:stop_sounds()
-  end
 end
 
 function Stack.puzzle_done(self)
@@ -871,7 +866,6 @@ function Stack.starting_state(self, n)
       self.cur_row = self.cur_row - 1
     end
   end
-  characters[self.character]:stop_sounds()
 end
 
 function Stack.prep_first_row(self)
@@ -917,8 +911,7 @@ end
 
 -- Update everything for the stack based on inputs. Will update many times if needed to catch up.
 function Stack.run(self)
-
-  if not game_is_paused then
+  if not GAME.game_is_paused then
     self:setupInput()
     self:simulate()
   end
@@ -2111,7 +2104,7 @@ function Stack.drop_garbage(self, width, height, metal)
       for j = 1, self.width do
         if self.panels[i][j] then
           if self.panels[i][j].color ~= 0 then
-            print("Aborting garbage drop: panel found at row " .. tostring(i) .. " column " .. tostring(j))
+            logger.trace("Aborting garbage drop: panel found at row " .. tostring(i) .. " column " .. tostring(j))
             return false
           end
         end
@@ -2120,7 +2113,7 @@ function Stack.drop_garbage(self, width, height, metal)
   end
 
   if self.canvas ~= nil then
-    print(string.format("Dropping garbage on player %d - height %d  width %d  %s", self.player_number, height, width, metal and "Metal" or ""))
+    logger.trace(string.format("Dropping garbage on player %d - height %d  width %d  %s", self.player_number, height, width, metal and "Metal" or ""))
   end
 
   for i = self.height + 1, spawn_row + height - 1 do

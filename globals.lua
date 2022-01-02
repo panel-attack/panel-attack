@@ -4,9 +4,6 @@ require("server_queue")
 require("sound_util")
 
 -- keyboard assignment vars
-K = {{up="up", down="down", left="left", right="right",
-      swap1="z", swap2="x", taunt_up="y", taunt_down="u", raise1="c", raise2="v", pause="p"},
-      {},{},{}}
 keys = {}
 this_frame_keys = {}
 this_frame_released_keys = {}
@@ -104,9 +101,6 @@ global_op_state = nil
 
 -- Warning messages
 display_warning_message = false
-
--- game can be paused while playing on local
-game_is_paused = false
 
 large_font = 10 -- large font base+10
 small_font = -3 -- small font base-3

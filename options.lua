@@ -14,6 +14,9 @@ local function main_show_custom_themes_readme(idx)
     gprint(loc("op_copy_files"), 280, 280)
     wait()
     recursive_copy("themes/" .. default_theme_dir, "themes/" .. prefix_of_ignored_dirs .. default_theme_dir)
+
+    -- Android can't easily copy into the save dir, so do it for them to help.
+    recursive_copy("default_data/themes", "themes")
   end
 
   local readme = read_txt_file("readme_themes.txt")
@@ -24,7 +27,7 @@ local function main_show_custom_themes_readme(idx)
     local ret = nil
     variable_step(
       function()
-        if menu_escape(K[1]) or menu_enter(K[1]) then
+        if menu_escape() or menu_enter() then
           ret = {options.main, {idx}}
         end
       end
@@ -39,16 +42,6 @@ local function main_show_custom_stages_readme(idx)
   GAME.backgroundImage = themes[config.theme].images.bg_readme
   reset_filters()
 
-  local default_stages_list = love.filesystem.getDirectoryItems("default_data/stages")
-  for _, stage in ipairs(default_stages_list) do
-    if not love.filesystem.getInfo("stages/" .. prefix_of_ignored_dirs .. stage) then
-      print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
-      gprint(loc("op_copy_files"), 280, 280)
-      wait()
-      recursive_copy("default_data/stages/" .. stage, "stages/" .. prefix_of_ignored_dirs .. stage)
-    end
-  end
-
   local readme = read_txt_file("readme_stages.txt")
   while true do
     gprint(readme, 15, 15)
@@ -57,7 +50,7 @@ local function main_show_custom_stages_readme(idx)
     local ret = nil
     variable_step(
       function()
-        if menu_escape(K[1]) or menu_enter(K[1]) then
+        if menu_escape() or menu_enter() then
           ret = {options.main, {idx}}
         end
       end
@@ -72,16 +65,6 @@ local function main_show_custom_characters_readme(idx)
   GAME.backgroundImage = themes[config.theme].images.bg_readme
   reset_filters()
 
-  local default_characters_list = love.filesystem.getDirectoryItems("default_data/characters")
-  for _, current_character in ipairs(default_characters_list) do
-    if not love.filesystem.getInfo("characters/" .. prefix_of_ignored_dirs .. current_character) then
-      print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
-      gprint(loc("op_copy_files"), 280, 280)
-      wait()
-      recursive_copy("default_data/characters/" .. current_character, "characters/" .. prefix_of_ignored_dirs .. current_character)
-    end
-  end
-
   local readme = read_txt_file("readme_characters.txt")
   while true do
     gprint(readme, 15, 15)
@@ -90,7 +73,7 @@ local function main_show_custom_characters_readme(idx)
     local ret = nil
     variable_step(
       function()
-        if menu_escape(K[1]) or menu_enter(K[1]) then
+        if menu_escape() or menu_enter() then
           ret = {options.main, {idx}}
         end
       end
@@ -105,18 +88,6 @@ local function main_show_custom_panels_readme(idx)
   GAME.backgroundImage = themes[config.theme].images.bg_readme
   reset_filters()
 
-  -- add other defaults panels sets here so that anyone can update them if wanted
-  local default_panels_dirs = {default_panels_dir, "pdp_ta"}
-
-  for _, panels_dir in ipairs(default_panels_dirs) do
-    if not love.filesystem.getInfo("panels/" .. prefix_of_ignored_dirs .. panels_dir) then
-      print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
-      gprint(loc("op_copy_files"), 280, 280)
-      wait()
-      recursive_copy("panels/" .. panels_dir, "panels/" .. prefix_of_ignored_dirs .. panels_dir)
-    end
-  end
-
   local readme = read_txt_file("readme_panels.txt")
   while true do
     gprint(readme, 15, 15)
@@ -125,7 +96,7 @@ local function main_show_custom_panels_readme(idx)
     local ret = nil
     variable_step(
       function()
-        if menu_escape(K[1]) or menu_enter(K[1]) then
+        if menu_escape() or menu_enter() then
           ret = {options.main, {idx}}
         end
       end
@@ -187,7 +158,6 @@ function options.main(starting_idx)
   reset_filters()
 
   local items, active_idx = {}, starting_idx or 1
-  local k = K[1]
   local selected, deselected_this_frame, adjust_active_value = false, false, false
   local save_replays_publicly_choices = {{"with my name", "op_replay_public_with_name"}, {"anonymously", "op_replay_public_anonymously"}, {"not at all", "op_replay_public_no"}}
   local use_music_from_choices = {{"stage", "op_only_stage"}, {"often_stage", "op_often_stage"}, {"either", "op_stage_characters"}, {"often_characters", "op_often_characters"}, {"characters", "op_only_characters"}}
@@ -361,15 +331,15 @@ function options.main(starting_idx)
     local ret = nil
     variable_step(
       function()
-        if menu_up(K[1]) and not selected then
+        if menu_up() and not selected then
           active_idx = wrap(1, active_idx - 1, #items)
-        elseif menu_down(K[1]) and not selected then
+        elseif menu_down() and not selected then
           active_idx = wrap(1, active_idx + 1, #items)
-        elseif menu_left(K[1]) and (selected or not items[active_idx][8]) then --or not selectable
+        elseif menu_left() and (selected or not items[active_idx][8]) then --or not selectable
           adjust_left()
-        elseif menu_right(K[1]) and (selected or not items[active_idx][8]) then --or not selectable
+        elseif menu_right() and (selected or not items[active_idx][8]) then --or not selectable
           adjust_right()
-        elseif menu_enter(K[1]) then
+        elseif menu_enter() then
           if items[active_idx][8] then --is selectable
             selected = not selected
             if not selected then
@@ -383,7 +353,7 @@ function options.main(starting_idx)
           elseif active_idx == #items then
             ret = {exit_options_menu}
           end
-        elseif menu_escape(K[1]) then
+        elseif menu_escape() then
           if selected then
             selected = not selected
             deselected_this_frame = true
