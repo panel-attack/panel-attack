@@ -8,7 +8,7 @@ Step by step instructions (Windows example):
    
 Note: folders starting with "__" will be ignored upon loading. You may choose to remove those "__" to mod default themes
 
-3. Create a folder with your theùe. The name of the folder will be the id of your theme.
+3. Create a folder with your theme. The name of the folder will be the id of your theme.
 
 4. Place assets, sounds and txt files in that folder with the proper names to add your data. Exhaustive list below.
 
