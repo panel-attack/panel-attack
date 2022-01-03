@@ -752,13 +752,13 @@ function Room.resolve_game_outcome(self)
         filename = filename .. "-draw"
       end
       filename = filename .. ".txt"
-      logger.info("saving replay as " .. path .. sep .. filename)
-      if self.replay.vs then
+      if self.replay.vs and COMPRESS_REPLAYS_ENABLED then
         self.replay.vs.I = compress_input_string(self.replay.vs.I)
         self.replay.vs.in_buf = compress_input_string(self.replay.vs.in_buf)
         logger.debug("Compressed vs I/in_buf")
+        logger.info("saving compressed replay as " .. path .. sep .. filename)
       else
-        logger.warn("Unable to compress replay, could not find replay.vs")
+        logger.info("saving replay as " .. path .. sep .. filename)
       end
       write_replay_file(self.replay, path, filename)
     else
