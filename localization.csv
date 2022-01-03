@@ -387,3 +387,4 @@ rp_browser_error_loading,Error loading replay: %1,Erreur au chargement du replay
 rp_browser_error_unknown_filetype,Unknown filetype %1. (%2),Type de fichier inconnu %1. (%2),Tipo de arquivo desconhecido %1. (%2),,Formato de archivo desconocido %1. (%2),,Tipo di file sconosciuto %1. (%2)
 rp_browser_error_file_not_found,File not found! (%1),Fichier introuvable ! (%1),Arquivo não encontrado! (%1),,¡No se encontró el archivo! (%1),,File non trovato! (%1)
 mm_replay_browser,Replay Browser,Bibliothèque des replays,Navegador de Replays,,,,Navigatore Replay
+continue_button,"Push any key!",Appuyez sur n'importe quelle touche!,Aperte qualquer tecla!,任意のキーを押してください！,¡Pulsa cualquier tecla!,Drücken Sie eine beliebige Taste!,Premi un tasto qualsiasi!

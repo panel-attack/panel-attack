@@ -11,8 +11,6 @@ function get_tzoffset(timezone)
   return string.format("%+.4d", 100 * h + 60 * m)
 end
 
-
-
 --[[ debugging
 for _, tz in ipairs(arg) do
   if tz == '-' then
@@ -23,17 +21,16 @@ for _, tz in ipairs(arg) do
   print(tz, get_tzoffset(tz))
 end
 --]]
-
 -- return the timezone offset in seconds, as it was on the time given by ts
 -- Eric Feliksik
 function get_timezone_offset(ts)
-	local utcdate   = os.date("!*t", ts)
-	local localdate = os.date("*t", ts)
-	localdate.isdst = false -- this is the trick
-	return os.difftime(os.time(localdate), os.time(utcdate))
+  local utcdate = os.date("!*t", ts)
+  local localdate = os.date("*t", ts)
+  localdate.isdst = false -- this is the trick
+  return os.difftime(os.time(localdate), os.time(utcdate))
 end
 tzoffset = get_timezone_offset(os.time())
 
 function to_UTC(time_to_convert)
-  return time_to_convert+-1*tzoffset
+  return time_to_convert + -1 * tzoffset
 end

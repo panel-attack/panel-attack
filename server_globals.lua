@@ -6,12 +6,12 @@ panel_color_to_number = { ["A"]=1, ["B"]=2, ["C"]=3, ["D"]=4, ["E"]=5, ["F"]=6, 
                           ["0"]=0}
 leagues = { {league="Newcomer",     min_rating = -1000},
             {league="Bronze",       min_rating = 1},
-            {league="Silver",       min_rating = 1176},
-            {league="Gold",         min_rating = 1376},
-            {league="Platinum",     min_rating = 1519},
-            {league="Diamond",      min_rating = 1670},
-            {league="Master",       min_rating = 1926},
-            {league="Grandmaster",  min_rating = 2139}
+            {league="Silver",       min_rating = 1275},
+            {league="Gold",         min_rating = 1425},
+            {league="Platinum",     min_rating = 1575},
+            {league="Diamond",      min_rating = 1725},
+            {league="Master",       min_rating = 1875},
+            {league="Grandmaster",  min_rating = 2025}
           }
 --[[leagues = { {league="Newcomer",     min_rating = -1000},
             {league="Bronze",       min_rating = 1},
@@ -22,7 +22,7 @@ leagues = { {league="Newcomer",     min_rating = -1000},
             {league="Master",       min_rating = 2225},
             {league="Grandmaster",  min_rating = 2475}
           }]]
-PLACEMENT_MATCH_COUNT_REQUIREMENT = 50
+PLACEMENT_MATCH_COUNT_REQUIREMENT = 30
 DEFAULT_RATING = 1500
 RATING_SPREAD_MODIFIER = 400
 ALLOWABLE_RATING_SPREAD_MULITPLIER = .9 --set this to a huge number like 100 if you want everyone to be able to play with anyone, regardless of rating gap
