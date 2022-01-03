@@ -668,6 +668,8 @@ function main_net_vs_lobby()
 
     -- If we got an update to the lobby, refresh the menu
     if updated then
+      spectator_list = {}
+      spectators_string = ""
       local oldLobbyMenu = nil
       if lobby_menu then
         oldLobbyMenu = lobby_menu
