@@ -1,4 +1,5 @@
 local socket = require("socket")
+local logger = require("logger")
 require("class")
 json = require("dkjson")
 require("stridx")
@@ -120,12 +121,12 @@ end
 
 function start_match(a, b)
   if (a.player_number ~= 1) then
-    print("Match starting, players a and b need to be swapped.")
+    logger.info("Match starting, players a and b need to be swapped.")
     a, b = b, a
     if (a.player_number == 1) then
-      print("Success, player a now has player_number 1.")
+      logger.info("Success, player a now has player_number 1.")
     else
-      print("ERROR: player a still doesn't have player_number 1.")
+      logger.error("ERROR: player a still doesn't have player_number 1.")
     end
   end
 
@@ -164,7 +165,7 @@ function start_match(a, b)
   a:setup_game()
   b:setup_game()
   if not a.room then
-    print("ERROR: In start_match, Player A " .. (a.name or "nil") .. " doesn't have a room\nCannot run setup_game() for spectators!")
+    logger.error("ERROR: In start_match, Player A " .. (a.name or "nil") .. " doesn't have a room\nCannot run setup_game() for spectators!")
   end
   for k, v in pairs(a.room.spectators) do
     v:setup_game()
@@ -226,16 +227,16 @@ function Room.character_select(self)
 end
 
 function Room.prepare_character_select(self)
-  print("Called Server.lua Room.character_select")
+  logger.debug("Called Server.lua Room.character_select")
   self.a.state = "character select"
   self.b.state = "character select"
   if self.a.player_number and self.a.player_number ~= 0 and self.a.player_number ~= 1 then
-    print("initializing room. player a does not have player_number 1. Swapping players a and b")
+    logger.info("initializing room. player a does not have player_number 1. Swapping players a and b")
     self.a, self.b = self.b, self.a
     if self.a.player_number == 1 then
-      print("Success. player a has player_number 1 now.")
+      logger.info("Success. player a has player_number 1 now.")
     else
-      print("ERROR. Player a still doesn't have player_number 1")
+      logger.error("ERROR. Player a still doesn't have player_number 1")
     end
   else
     self.a.player_number = 1
@@ -269,7 +270,7 @@ function Room.add_spectator(self, new_spectator_connection)
   new_spectator_connection.state = "spectating"
   new_spectator_connection.room = self
   self.spectators[#self.spectators + 1] = new_spectator_connection
-  print(new_spectator_connection.name .. " joined " .. self.name .. " as a spectator")
+  logger.info(new_spectator_connection.name .. " joined " .. self.name .. " as a spectator")
   msg = {
     spectate_request_granted = true,
     spectate_request_rejected = false,
@@ -287,7 +288,7 @@ function Room.add_spectator(self, new_spectator_connection)
   }
   new_spectator_connection:send(msg)
   msg = {spectators = self:spectator_names()}
-  print("sending spectator list: " .. json.encode(msg))
+  logger.debug("sending spectator list: " .. json.encode(msg))
   self:send(msg)
   lobby_changed = true
 end
@@ -304,14 +305,14 @@ function Room.remove_spectator(self, connection)
   for k, v in pairs(self.spectators) do
     if v.name == connection.name then
       self.spectators[k].state = "lobby"
-      print(connection.name .. " left " .. self.name .. " as a spectator")
+      logger.info(connection.name .. " left " .. self.name .. " as a spectator")
       self.spectators[k] = nil
       connection.room = nil
       lobby_changed = true
     end
   end
   msg = {spectators = self:spectator_names()}
-  print("sending spectator list: " .. json.encode(msg))
+  logger.debug("sending spectator list: " .. json.encode(msg))
   self:send(msg)
 end
 
@@ -379,7 +380,7 @@ end
 
 function generate_new_user_id()
   new_user_id = cs_random()
-  print("new_user_id: " .. new_user_id)
+  logger.debug("new_user_id: " .. new_user_id)
   return tostring(new_user_id)
 end
 
@@ -393,7 +394,7 @@ Leaderboard =
 )
 
 function Leaderboard.update(self, user_id, new_rating, match_details)
-  print("in Leaderboard.update")
+  logger.debug("in Leaderboard.update")
   if self.players[user_id] then
     self.players[user_id].rating = new_rating
   else
@@ -405,10 +406,10 @@ function Leaderboard.update(self, user_id, new_rating, match_details)
       self.players[user_id].ranked_games_played = (self.players[user_id].ranked_games_played or 0) + 1
     end
   end
-  print("new_rating = " .. new_rating)
-  print("about to write_leaderboard_file")
+  logger.debug("new_rating = " .. new_rating)
+  logger.debug("about to write_leaderboard_file")
   write_leaderboard_file()
-  print("done with Leaderboard.update")
+  logger.debug("done with Leaderboard.update")
 end
 
 function Leaderboard.get_report(self, user_id_of_requester)
@@ -455,9 +456,9 @@ function Leaderboard.update_timestamp(self, user_id)
     local timestamp = os.time()
     self.players[user_id].last_login_time = timestamp
     write_leaderboard_file()
-    print(user_id .. "'s login timestamp has been updated to ".. timestamp)
+    logger.info(user_id .. "'s login timestamp has been updated to " .. timestamp)
   else
-    print(user_id.. " is not on the leaderboard, so no timestamp will be assigned at this time.")
+    logger.info(user_id .. " is not on the leaderboard, so no timestamp will be assigned at this time.")
   end
 end
 
@@ -493,11 +494,11 @@ function Connection.send(self, stuff)
     local len = json:len()
     local prefix = "J" .. char(floor(len / 65536)) .. char(floor((len / 256) % 256)) .. char(len % 256)
     --print(byte(prefix[1]), byte(prefix[2]), byte(prefix[3]), byte(prefix[4]))
-    print("sending json " .. json)
+    logger.debug("sending json " .. json)
     stuff = prefix .. json
   else
     if stuff[1] ~= "I" and stuff[1] ~= "U" and stuff[1] ~= "E" then
-      print("sending non-json " .. stuff)
+      logger.debug("sending non-json " .. stuff)
     end
   end
   local retry_count = 0
@@ -506,15 +507,15 @@ function Connection.send(self, stuff)
   while not foo[1] and retry_count <= 5 do
     foo = {self.socket:send(stuff)}
     if stuff[1] ~= "I" and stuff[1] ~= "U" and stuff[1] ~= "E" then
-      print(unpack(foo))
+      logger.trace(unpack(foo))
     end
     if not foo[1] then
-      print("WARNING: Connection.send failed. will retry...")
+      logger.warn("WARNING: Connection.send failed. will retry...")
       retry_count = retry_count + 1
     end
   end
   if not foo[1] then
-    print("Closing connection for " .. (self.name or "nil") .. ". During Connection.send, foo[1] was nil after " .. times_to_retry .. " retries were attempted")
+    logger.warn("Closing connection for " .. (self.name or "nil") .. ". During Connection.send, foo[1] was nil after " .. times_to_retry .. " retries were attempted")
     self:close()
   end
 end
@@ -525,17 +526,17 @@ function Connection.login(self, user_id)
   self.user_id = user_id
   self.logged_in = false
   local IP_logging_in, port = self.socket:getpeername()
-  print("New login attempt:  " .. IP_logging_in .. ":" .. port)
+  logger.info("New login attempt:  " .. IP_logging_in .. ":" .. port)
   if is_banned(IP_logging_in) then
     deny_login(self, "Awaiting ban timeout")
   elseif not self.name then
     deny_login(self, "Player has no name")
-    print("Login failure: Player has no name")
+    logger.warn("Login failure: Player has no name")
   elseif not self.user_id then
     deny_login(self, "Client did not send a user_id in the login request")
     success = false
   elseif self.user_id == "need a new user id" and self.name then
-    print(self.name .. " needs a new user id!")
+    logger.info(self.name .. " needs a new user id!")
     local their_new_user_id
     while not their_new_user_id or playerbase.players[their_new_user_id] do
       their_new_user_id = generate_new_user_id()
@@ -544,16 +545,16 @@ function Connection.login(self, user_id)
     self:send({login_successful = true, new_user_id = their_new_user_id})
     self.user_id = their_new_user_id
     self.logged_in = true
-    print("Connection with name " .. self.name .. " was assigned a new user_id")
+    logger.info("Connection with name " .. self.name .. " was assigned a new user_id")
   elseif not playerbase.players[self.user_id] then
     deny_login(self, "The user_id provided was not found on this server")
-    print("Login failure: " .. self.name .. " specified an invalid user_id")
+    logger.warn("Login failure: " .. self.name .. " specified an invalid user_id")
   elseif playerbase.players[self.user_id] ~= self.name then
     local the_old_name = playerbase.players[self.user_id]
     playerbase:update(self.user_id, self.name)
     self.logged_in = true
     self:send({login_successful = true, name_changed = true, old_name = the_old_name, new_name = self.name})
-    print("Login successful and changed name " .. the_old_name .. " to " .. self.name)
+    logger.info("Login successful and changed name " .. the_old_name .. " to " .. self.name)
   elseif playerbase.players[self.user_id] then
     self.logged_in = true
     self:send({login_successful = true})
@@ -593,7 +594,7 @@ function deny_login(connection, reason)
       violation_count = ban_list[IP].violation_count
     }
   )
-  print("login denied.  Reason:  " .. reason)
+  logger.warn("login denied.  Reason:  " .. reason)
 end
 
 function unban(connection)
@@ -616,7 +617,7 @@ function Connection.opponent_disconnected(self)
   self.state = "lobby"
   lobby_changed = true
   if self.room then
-    print("Closing room for " .. (self.name or "nil") .. " because opponent disconnected.")
+    logger.info("Closing room for " .. (self.name or "nil") .. " because opponent disconnected.")
     self.room:close()
   end
   self:send({leave_room = true})
@@ -640,7 +641,7 @@ function Connection.close(self)
     lobby_changed = true
   end
   if self.room and (self.room.a.name == self.name or self.room.b.name == self.name) then
-    print("about to close room for " .. (self.name or "nil") .. ".  Connection.close was called")
+    logger.warn("about to close room for " .. (self.name or "nil") .. ".  Connection.close was called")
     self.room:close()
   elseif self.room then
     self.room:remove_spectator(self)
@@ -669,10 +670,9 @@ function Connection.I(self, message)
   if self.opponent then
     self.opponent:send("I" .. message)
     if not self.room then
-      print("WARNING: missing room")
-      print(self.name)
-      print("doesn't have a room")
-      print("we are wondering if this disconnects spectators")
+      logger.warn("WARNING: missing room")
+      logger.warn(self.name)
+      logger.warn("doesn't have a room, we are wondering if this disconnects spectators")
     end
     if self.player_number == 1 and self.room then
       self.room:send_to_spectators("U" .. message)
@@ -712,12 +712,12 @@ function Room.resolve_game_outcome(self)
     if self.game_outcome_reports[1] ~= self.game_outcome_reports[2] then
       --if clients disagree, the server needs to decide the outcome, perhaps by watching a replay it had created during the game.
       --for now though...
-      print("clients " .. self.a.name .. " and " .. self.b.name .. " disagree on their game outcome. So the server will decide.")
+      logger.info("clients " .. self.a.name .. " and " .. self.b.name .. " disagree on their game outcome. So the server will decide.")
       outcome = 0
     else
       outcome = self.game_outcome_reports[1]
     end
-    print("resolve_game_outcome says: " .. outcome)
+    logger.info("resolve_game_outcome says: " .. outcome)
     --outcome is the player number of the winner, or 0 for a tie
     if self.a.save_replays_publicly ~= "not at all" and self.b.save_replays_publicly ~= "not at all" then
       --write_replay_file(self.replay, "replay.txt")
@@ -752,29 +752,29 @@ function Room.resolve_game_outcome(self)
         filename = filename .. "-draw"
       end
       filename = filename .. ".txt"
-      print("saving replay as " .. path .. sep .. filename)
-      if self.replay.vs then
+      if self.replay.vs and COMPRESS_REPLAYS_ENABLED then
         self.replay.vs.I = compress_input_string(self.replay.vs.I)
         self.replay.vs.in_buf = compress_input_string(self.replay.vs.in_buf)
-        print("Compressed vs I/in_buf")
+        logger.debug("Compressed vs I/in_buf")
+        logger.info("saving compressed replay as " .. path .. sep .. filename)
       else
-        print("No vs")
+        logger.info("saving replay as " .. path .. sep .. filename)
       end
       write_replay_file(self.replay, path, filename)
     else
-      print("replay not saved because a player didn't want it saved")
+      logger.info("replay not saved because a player didn't want it saved")
     end
     self.replay = nil
     if outcome == 0 then
-      print("tie.  Nobody scored")
+      logger.info("tie.  Nobody scored")
       --do nothing. no points or rating adjustments for ties.
       return true
     else
       local someone_scored = false
       for i = 1, 2, 1 --[[or Number of players if we implement more than 2 players]] do
-        print("checking if player " .. i .. " scored...")
+        logger.debug("checking if player " .. i .. " scored...")
         if outcome == i then
-          print("Player " .. i .. " scored")
+          logger.info("Player " .. i .. " scored")
           self.win_counts[i] = self.win_counts[i] + 1
           adjust_ratings(self, i)
           someone_scored = true
@@ -863,7 +863,7 @@ function Room.rating_adjustment_approved(self)
   end
 end
 
-function calculate_rating_adjustment(Rc, Ro, Oa, k) --
+function calculate_rating_adjustment(Rc, Ro, Oa, k) -- -- print("calculating expected outcome for") -- print(players[player_number].name.." Ranking: "..leaderboard.players[players[player_number].user_id].rating)
   --[[ --Algorithm we are implementing, per community member Bbforky:
       Formula for Calculating expected outcome:
       RATING_SPREAD_MODIFIER = 400
@@ -880,9 +880,7 @@ function calculate_rating_adjustment(Rc, Ro, Oa, k) --
       Rn=New Rating
       Oa=Actual Outcome (0 for loss, 1 for win)
       k= Constant (Probably will use 10)
-  ]] -- print("calculating expected outcome for")
-  -- print(players[player_number].name.." Ranking: "..leaderboard.players[players[player_number].user_id].rating)
-  -- print("vs")
+  ]] -- print("vs")
   -- print(players[player_number].opponent.name.." Ranking: "..leaderboard.players[players[player_number].opponent.user_id].rating)
   Oe = 1 / (1 + 10 ^ ((Ro - Rc) / RATING_SPREAD_MODIFIER))
   -- print("expected outcome: "..Oe)
@@ -891,7 +889,7 @@ function calculate_rating_adjustment(Rc, Ro, Oa, k) --
 end
 
 function adjust_ratings(room, winning_player_number)
-  print("We'd be adjusting the rating of " .. room.a.name .. " and " .. room.b.name .. ". Player " .. winning_player_number .. " wins!")
+  logger.info("We'd be adjusting the rating of " .. room.a.name .. " and " .. room.b.name .. ". Player " .. winning_player_number .. " wins!")
   local players = {room.a, room.b}
   local continue = true
   local placement_match_progress
@@ -903,7 +901,7 @@ function adjust_ratings(room, winning_player_number)
       --if they aren't on the leaderboard yet, give them the default rating
       if not leaderboard.players[players[player_number].user_id] or not leaderboard.players[players[player_number].user_id].rating then
         leaderboard.players[players[player_number].user_id] = {user_name = playerbase.players[players[player_number].user_id], rating = DEFAULT_RATING}
-        print("Gave " .. playerbase.players[players[player_number].user_id] .. " a new rating of " .. DEFAULT_RATING)
+        logger.info("Gave " .. playerbase.players[players[player_number].user_id] .. " a new rating of " .. DEFAULT_RATING)
         if not PLACEMENT_MATCHES_ENABLED then
           leaderboard.players[players[player_number].user_id].placement_done = true
         end
@@ -929,10 +927,10 @@ function adjust_ratings(room, winning_player_number)
       end
       if placement_done[players[player_number].user_id] then
         if placement_done[players[player_number].opponent.user_id] then
-          print("Player " .. player_number .. " played a non-placement ranked match.  Updating his rating now.")
+          logger.info("Player " .. player_number .. " played a non-placement ranked match.  Updating his rating now.")
           room.ratings[player_number].new = calculate_rating_adjustment(leaderboard.players[players[player_number].user_id].rating, leaderboard.players[players[player_number].opponent.user_id].rating, Oa, k)
         else
-          print("Player " .. player_number .. " played ranked against an unranked opponent.  We'll process this match when his opponent has finished placement")
+          logger.info("Player " .. player_number .. " played ranked against an unranked opponent.  We'll process this match when his opponent has finished placement")
           room.ratings[player_number].placement_matches_played = leaderboard.players[players[player_number].user_id].ranked_games_played
           room.ratings[player_number].new = round(leaderboard.players[players[player_number].user_id].rating)
           room.ratings[player_number].old = round(leaderboard.players[players[player_number].user_id].rating)
@@ -940,8 +938,8 @@ function adjust_ratings(room, winning_player_number)
         end
       else -- this player has not finished placement
         if placement_done[players[player_number].opponent.user_id] then
-          print("Player " .. player_number .. " (unranked) just played a placement match against a ranked player.")
-          print("Adding this match to the list of matches to be processed when player finishes placement")
+          logger.info("Player " .. player_number .. " (unranked) just played a placement match against a ranked player.")
+          logger.info("Adding this match to the list of matches to be processed when player finishes placement")
           load_placement_matches(players[player_number].user_id)
           local pm_count = #loaded_placement_matches.incomplete[players[player_number].user_id]
 
@@ -951,8 +949,8 @@ function adjust_ratings(room, winning_player_number)
             op_rating = leaderboard.players[players[player_number].opponent.user_id].rating,
             outcome = Oa
           }
-          print("PRINTING PLACEMENT MATCHES FOR USER")
-          print(json.encode(loaded_placement_matches.incomplete[players[player_number].user_id]))
+          logger.debug("PRINTING PLACEMENT MATCHES FOR USER")
+          logger.debug(json.encode(loaded_placement_matches.incomplete[players[player_number].user_id]))
           write_user_placement_match_file(players[player_number].user_id, loaded_placement_matches.incomplete[players[player_number].user_id])
 
           --adjust newcomer's placement_rating
@@ -960,7 +958,7 @@ function adjust_ratings(room, winning_player_number)
             leaderboard.players[players[player_number].user_id] = {}
           end
           leaderboard.players[players[player_number].user_id].placement_rating = calculate_rating_adjustment(leaderboard.players[players[player_number].user_id].placement_rating or DEFAULT_RATING, leaderboard.players[players[player_number].opponent.user_id].rating, Oa, PLACEMENT_MATCH_K)
-          print("New newcomer rating: " .. leaderboard.players[players[player_number].user_id].placement_rating)
+          logger.info("New newcomer rating: " .. leaderboard.players[players[player_number].user_id].placement_rating)
           leaderboard.players[players[player_number].user_id].ranked_games_played = (leaderboard.players[players[player_number].user_id].ranked_games_played or 0) + 1
           if Oa == 1 then
             leaderboard.players[players[player_number].user_id].ranked_games_won = (leaderboard.players[players[player_number].user_id].ranked_games_won or 0) + 1
@@ -969,7 +967,7 @@ function adjust_ratings(room, winning_player_number)
           local process_them, reason = qualifies_for_placement(players[player_number].user_id)
           if process_them then
             local op_player_number = players[player_number].opponent.player_number
-            print("op_player_number: " .. op_player_number)
+            logger.debug("op_player_number: " .. op_player_number)
             room.ratings[player_number].old = 0
             if not room.ratings[op_player_number] then
               room.ratings[op_player_number] = {}
@@ -991,7 +989,7 @@ function adjust_ratings(room, winning_player_number)
             placement_match_progress = reason
           end
         else
-          print("Neither player is done with placement.  We should not have gotten to this line of code")
+          logger.error("Neither player is done with placement.  We should not have gotten to this line of code")
         end
         if not process_them then
           room.ratings[player_number].new = 0
@@ -999,16 +997,15 @@ function adjust_ratings(room, winning_player_number)
           room.ratings[player_number].difference = 0
         end
       end
-      print("room.ratings[" .. player_number .. "].new = " .. (room.ratings[player_number].new or ""))
+      logger.debug("room.ratings[" .. player_number .. "].new = " .. (room.ratings[player_number].new or ""))
     end
     --check that both player's new room.ratings are numeric (and not nil)
     if not process_them then
       for player_number = 1, 2 do
         if tonumber(room.ratings[player_number].new) then
-          print()
           continue = true
         else
-          print(players[player_number].name .. "'s new rating wasn't calculated properly.  Not adjusting the rating for this match")
+          logger.warn(players[player_number].name .. "'s new rating wasn't calculated properly.  Not adjusting the rating for this match")
           continue = false
         end
       end
@@ -1016,12 +1013,12 @@ function adjust_ratings(room, winning_player_number)
     if continue and not process_them then
       --now that both new room.ratings have been calculated properly, actually update the leaderboard
       for player_number = 1, 2 do
-        print(playerbase.players[players[player_number].user_id])
-        print("Old rating:" .. leaderboard.players[players[player_number].user_id].rating)
+        logger.info(playerbase.players[players[player_number].user_id])
+        logger.info("Old rating:" .. leaderboard.players[players[player_number].user_id].rating)
         room.ratings[player_number].old = leaderboard.players[players[player_number].user_id].rating
         leaderboard.players[players[player_number].user_id].ranked_games_played = (leaderboard.players[players[player_number].user_id].ranked_games_played or 0) + 1
         leaderboard:update(players[player_number].user_id, room.ratings[player_number].new)
-        print("New rating:" .. leaderboard.players[players[player_number].user_id].rating)
+        logger.info("New rating:" .. leaderboard.players[players[player_number].user_id].rating)
       end
       for player_number = 1, 2 do
         --round and calculate rating gain or loss (difference) to send to the clients
@@ -1041,25 +1038,25 @@ function adjust_ratings(room, winning_player_number)
     -- room:send(msg)
     end
   else
-    print("Not adjusting ratings.  " .. reasons[1])
+    logger.info("Not adjusting ratings.  " .. reasons[1])
   end
 end
 
 function load_placement_matches(user_id)
-  print("Requested loading placement matches for user_id:  " .. (user_id or "nil"))
+  logger.debug("Requested loading placement matches for user_id:  " .. (user_id or "nil"))
   if not loaded_placement_matches.incomplete[user_id] then
     local read_success, matches = read_user_placement_match_file(user_id)
     if read_success then
       loaded_placement_matches.incomplete[user_id] = matches or {}
-      print("loaded placement matches from file:")
+      logger.debug("loaded placement matches from file:")
     else
       loaded_placement_matches.incomplete[user_id] = {}
-      print("error reading file")
+      logger.error("error reading placement matches file")
     end
-    print(tostring(loaded_placement_matches.incomplete[user_id]))
-    print(json.encode(loaded_placement_matches.incomplete[user_id]))
+    logger.debug(tostring(loaded_placement_matches.incomplete[user_id]))
+    logger.debug(json.encode(loaded_placement_matches.incomplete[user_id]))
   else
-    print("Didn't load placement matches from file. It is already loaded")
+    logger.info("Didn't load placement matches from file. It is already loaded")
   end
 end
 
@@ -1093,7 +1090,7 @@ function process_placement_matches(user_id)
   load_placement_matches(user_id)
   local placement_matches = loaded_placement_matches.incomplete[user_id]
   if #placement_matches < 1 then
-    print("Error: failed to process placement matches because we couldn't find any")
+    logger.error("Failed to process placement matches because we couldn't find any")
     return
   end
 
@@ -1119,10 +1116,10 @@ function process_placement_matches(user_id)
   --assign the current placement_rating as the newcomer's official rating.
   leaderboard.players[user_id].rating = leaderboard.players[user_id].placement_rating
   leaderboard.players[user_id].placement_done = true
-  print("FINAL PLACEMENT RATING for " .. (playerbase.players[user_id] or "nil") .. ": " .. leaderboard.players[user_id].rating or "nil")
+  logger.info("FINAL PLACEMENT RATING for " .. (playerbase.players[user_id] or "nil") .. ": " .. leaderboard.players[user_id].rating or "nil")
 
   --Calculate changes to opponents ratings for placement matches won/lost
-  print("adjusting opponent rating(s) for these placement matches")
+  logger.info("adjusting opponent rating(s) for these placement matches")
   for i = 1, #placement_matches do
     if placement_matches[i].outcome == 0 then
       op_outcome = 1
@@ -1205,22 +1202,22 @@ function Connection.J(self, message)
   local response
   if self.state == "needs_name" then
     if not message.name or message.name == "" then
-      print("connection didn't send a name")
+      logger.warn("connection didn't send a name")
       response = {choose_another_name = {reason = "Name cannot be blank"}}
       self:send(response)
       return
     elseif string.lower(message.name) == "anonymous" then
-      print('connection tried to use name "anonymous"')
+      logger.warn('connection tried to use name "anonymous"')
       response = {choose_another_name = {reason = 'Username cannot be "anonymous"'}}
       self:send(response)
       return
     elseif message.name:lower():match("d+e+f+a+u+l+t+n+a+m+e?") then
-      print('connection tried to use name "defaultname", or a variation of it')
+      logger.warn('connection tried to use name "defaultname", or a variation of it')
       response = {choose_another_name = {reason = 'Username cannot be "defaultname" or a variation of it'}}
       self:send(response)
       return
     elseif name_to_idx[message.name] then
-      print("connection sent name: " .. message.name)
+      logger.info("connection sent name: " .. message.name)
       local names = {}
       for _, v in pairs(connections) do
         names[#names + 1] = v.name -- fine if name is nil :o
@@ -1266,25 +1263,25 @@ function Connection.J(self, message)
     local requestedRoom = roomNumberToRoom(message.spectate_request.roomNumber)
     if self.state ~= "lobby" then
       if requestedRoom then
-        print("removing " .. self.name .. " from room nr " .. message.spectate_request.roomNumber)
+        logger.info("removing " .. self.name .. " from room nr " .. message.spectate_request.roomNumber)
         requestedRoom:remove_spectator()
       else
-        print("could not find room to remove " .. self.name)
+        logger.warn("could not find room to remove " .. self.name)
         self.state = "lobby"
       end
     end
     if requestedRoom and requestedRoom:state() == CHARACTERSELECT then
       -- TODO: allow them to join
-      print("join allowed")
-      print("adding " .. self.name .. " to room nr " .. message.spectate_request.roomNumber)
+      logger.info("join allowed")
+      logger.info("adding " .. self.name .. " to room nr " .. message.spectate_request.roomNumber)
       requestedRoom:add_spectator(self)
     elseif requestedRoom and requestedRoom:state() == PLAYING then
-      print("join-in-progress allowed")
-      print("adding " .. self.name .. " to room nr " .. message.spectate_request.roomNumber)
+      logger.info("join-in-progress allowed")
+      logger.info("adding " .. self.name .. " to room nr " .. message.spectate_request.roomNumber)
       requestedRoom:add_spectator(self)
     else
       -- TODO: tell the client the join request failed, couldn't find the room.
-      print("couldn't find room")
+      logger.warn("couldn't find room")
     end
   elseif self.state == "character select" and message.menu_state then
     self.level = message.menu_state.level
@@ -1297,10 +1294,7 @@ function Connection.J(self, message)
     self.cursor = message.menu_state.cursor
     self.panels_dir = message.menu_state.panels_dir
     self.wants_ranked_match = message.menu_state.ranked
-    print("about to check for rating_adjustment_approval for ")
-    print(self.name)
-    print("and")
-    print(self.opponent.name)
+    logger.info("about to check for rating_adjustment_approval for " .. self.name .. " and " .. self.opponent.name)
     if self.wants_ranked_match or self.opponent.wants_ranked_match then
       local ranked_match_approved, reasons = self.room:rating_adjustment_approved()
       if ranked_match_approved then
@@ -1337,15 +1331,15 @@ function Connection.J(self, message)
     else
       self.opponent:send(message)
       message.player_number = self.player_number
-      print("about to send match start to spectators of " .. (self.name or "nil") .. " and " .. (self.opponent.name or "nil"))
+      logger.info("about to send match start to spectators of " .. (self.name or "nil") .. " and " .. (self.opponent.name or "nil"))
       self.room:send_to_spectators(message) -- TODO: may need to include in the message who is sending the message
     end
   elseif self.state == "playing" and message.game_over then
     self.room.game_outcome_reports[self.player_number] = message.outcome
     if self.room:resolve_game_outcome() then
-      print("\n*******************************")
-      print("***" .. self.room.a.name .. " " .. self.room.win_counts[1] .. " - " .. self.room.win_counts[2] .. " " .. self.room.b.name .. "***")
-      print("*******************************\n")
+      logger.info("\n*******************************")
+      logger.info("***" .. self.room.a.name .. " " .. self.room.win_counts[1] .. " - " .. self.room.win_counts[2] .. " " .. self.room.b.name .. "***")
+      logger.info("*******************************\n")
       self.room.game_outcome_reports = {}
       self.room:character_select()
     end
@@ -1371,7 +1365,7 @@ end
 function Connection.data_received(self, data)
   self.last_read = time()
   if data:len() ~= 2 and data[1] ~= "F" then
-    print("got raw data " .. data)
+    logger.trace("got raw data " .. data)
   end
   data = self.leftovers .. data
   local idx = 1
@@ -1388,8 +1382,8 @@ function Connection.data_received(self, data)
         break
       end
       local jmsg = data:sub(5, msg_len + 4)
-      print("got JSON message " .. jmsg)
-      print(
+      logger.debug("got JSON message " .. jmsg)
+      logger.debug(
         "Pcall results for json: ",
         pcall(
           function()
@@ -1400,16 +1394,16 @@ function Connection.data_received(self, data)
       data = data:sub(msg_len + 5)
     else
       if msg_type ~= "I" and msg_type ~= "F" then
-        print("using non-J type " .. msg_type)
+        logger.trace("using non-J type " .. msg_type)
       end
       total_len = type_to_length[msg_type]
       if not total_len then
-        print("closing because len did not exist")
+        logger.warn("closing because len did not exist")
         self:close()
         return
       end
       if data:len() < total_len then
-        print("breaking because len was too small")
+        logger.warn("breaking because len was too small")
         break
       end
       res = {
@@ -1420,8 +1414,8 @@ function Connection.data_received(self, data)
         )
       }
       if (msg_type ~= "I" and msg_type ~= "F") or not res[1] then
-        print("got message " .. msg_type .. " " .. data:sub(2, total_len))
-        print("Pcall results for " .. msg_type .. ": ", unpack(res))
+        logger.trace("got message " .. msg_type .. " " .. data:sub(2, total_len))
+        logger.trace("Pcall results for " .. msg_type .. ": ", unpack(res))
       end
       data = data:sub(total_len + 1)
     end
@@ -1473,7 +1467,7 @@ end
 local server_socket = socket.bind("*", SERVER_PORT or 49569) --for official server
 --local server_socket = socket.bind("*", 59569) --for beta server
 local sep = package.config:sub(1, 1)
-print("sep: " .. sep)
+logger.info("sep: " .. sep)
 playerbase = Playerbase("playerbase")
 read_players_file()
 read_deleted_players_file()
@@ -1484,20 +1478,20 @@ for k, v in pairs(playerbase.players) do
     leaderboard.players[k].user_name = v
   end
 end
-print("leaderboard json:")
-print(json.encode(leaderboard.players))
+logger.info("leaderboard json:")
+logger.info(json.encode(leaderboard.players))
 write_leaderboard_file()
-print("Leagues")
+logger.info("Leagues")
 for k, v in ipairs(leagues) do
-  print(v.league .. ":  " .. v.min_rating)
+  logger.info(v.league .. ":  " .. v.min_rating)
 end
-print(os.time())
+logger.info(os.time())
 --TODO: remove test print for leaderboard
-print("playerbase: " .. json.encode(playerbase.players))
-print("leaderboard report: " .. json.encode(leaderboard:get_report()))
+logger.info("playerbase: " .. json.encode(playerbase.players))
+logger.info("leaderboard report: " .. json.encode(leaderboard:get_report()))
 read_csprng_seed_file()
 if csprng_seed == 2000 then
-  print("ALERT! YOU SHOULD CHANGE YOUR CSPRNG_SEED.TXT FILE TO MAKE YOUR USER_IDS MORE SECURE!")
+  logger.warn("ALERT! YOU SHOULD CHANGE YOUR CSPRNG_SEED.TXT FILE TO MAKE YOUR USER_IDS MORE SECURE!")
 end
 initialize_mt_generator(csprng_seed)
 seed_from_mt(extract_mt())
@@ -1514,8 +1508,9 @@ ban_list = {}
 -- now = os.date("*t",to_UTC(server_start_time))
 -- local formatted_UTC_time = string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
 -- print("formatted UTC time: "..formatted_UTC_time)
-print("RATING_SPREAD_MODIFIER: " .. (RATING_SPREAD_MODIFIER or "nil"))
-print("initialized!")
+logger.debug("RATING_SPREAD_MODIFIER: " .. (RATING_SPREAD_MODIFIER or "nil"))
+logger.debug("COMPRESS_REPLAYS_ENABLED: " .. COMPRESS_REPLAYS_ENABLED)
+logger.info("initialized!")
 -- print("get_timezone() output: "..get_timezone())
 -- print("get_timezone_offset(os.time()) output: "..get_timezone_offset(os.time()))
 -- print("get_tzoffset(get_timezone()) output:"..get_tzoffset(get_timezone()))
@@ -1542,7 +1537,7 @@ while true do
   if now ~= prev_now then
     for _, v in pairs(connections) do
       if now - v.last_read > 10 then
-        print("about to close connection for " .. (v.name or "nil") .. ". Connection timed out (>10 sec)")
+        logger.warn("about to close connection for " .. (v.name or "nil") .. ". Connection timed out (>10 sec)")
         v:close()
       elseif now - v.last_read > 1 then
         v:send("ELOL")
