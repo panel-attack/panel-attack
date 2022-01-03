@@ -10,8 +10,8 @@ Click_menu =
   function(self, x, y, width, height, active_idx)
     self.x = x or 0
     self.y = y or 0
-    self.width = width or (love.graphics.getWidth() - self.x - 30) --width not used yet for scrolling
-    self.height = height or (love.graphics.getHeight() - self.y - 30) --scrolling does care about height
+    self.width = width or (canvas_width - self.x - 30) --width not used yet for scrolling
+    self.height = height or (canvas_height - self.y - 30) --scrolling does care about height
     self.new_item_y = 0
     self.menu_controls = {
       up = {
