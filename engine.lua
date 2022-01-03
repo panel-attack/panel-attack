@@ -202,12 +202,12 @@ Stack =
     s.shake_time = 0
 
     s.prev_states = {}
-    s.prev_states.last = 0 -- CLOCK of last saved state
 
     s.analytic = AnalyticsInstance(s.is_local)
 
     if s.match.mode == "vs" then
-      s.telegraph = Telegraph(s) -- Telegraph holds the garbage that hasn't been set yet and also tracks the attack animations
+      s.telegraph = Telegraph(s, s) -- Telegraph holds the garbage that hasn't been set yet and also tracks the attack animations
+      -- NOTE: this is the telegraph above this stack, so the opponents puts garbage in this stack.
     end
 
     s.combos = {} -- Tracks the combos made throughout the whole game. Key is the clock time, value is the combo size
@@ -225,6 +225,8 @@ Stack =
     ]]
 
     s.seed = 0 -- TODO have server send
+    s.panelGenCount = 0
+    s.garbageGenCount = 0
 
   end)
 
@@ -303,11 +305,9 @@ function Stack.rollbackCopy(self, source, other)
   else
 
   end--]]
-  other.later_garbage = deepcpy(source.later_garbage)
-  other.garbage_q = source.garbage_q:makeCopy()
-  if source.telegraph then
-    other.telegraph = source.telegraph:makeCopy()
-  end
+  other.later_garbage = source.later_garbage
+  other.garbage_q = source.garbage_q
+  other.telegraph = source.telegraph
   local width = source.width or other.width
   local height_to_cpy = #source.panels
   other.panels = other.panels or {}
@@ -409,44 +409,40 @@ end
 -- Saves state in backups in case its needed for rollback
 function Stack.saveForRollback(self)
   local prev_states = self.prev_states
-  -- only save the state if it is a confirmed frame for now
-  if self.CLOCK == 0 or string.len(self.fakeInput) == 0 then
-    if not prev_states[self.CLOCK] then
-      local garbage_target = self.garbage_target
-      self.garbage_target = nil
-      self.prev_states = nil
-      self:remove_extra_rows()
-      prev_states[self.CLOCK] = self:rollbackCopy(self)
-      prev_states.last = self.CLOCK
-      self.prev_states = prev_states
-      self.garbage_target = garbage_target
-    elseif config.debug_mode then -- Don't need to save, but lets check for divergence
-      local savedStack = prev_states[self.CLOCK]
+  local garbage_target = self.garbage_target
+  self.garbage_target = nil
+  self.prev_states = nil
+  self:remove_extra_rows()
+  prev_states[self.CLOCK] = self:rollbackCopy(self)
+  self.prev_states = prev_states
+  self.garbage_target = garbage_target
+    
+  --   if config.debug_mode then -- Don't need to save, but lets check for divergence
+  --   local savedStack = prev_states[self.CLOCK]
 
-      local diverged = false
-      for k,v in pairs(savedStack) do
-        if type(v) ~= "table" then
-          local v2 = self[k]
-          if v ~= v2 then
-            diverged = true
-          end
-        end
-      end
+  --   local diverged = false
+  --   for k,v in pairs(savedStack) do
+  --     if type(v) ~= "table" then
+  --       local v2 = self[k]
+  --       if v ~= v2 then
+  --         diverged = true
+  --       end
+  --     end
+  --   end
 
-      local savedStackString = self:divergenceString(savedStack)
-      local localStackString = self:divergenceString(self)
+  --   local savedStackString = self:divergenceString(savedStack)
+  --   local localStackString = self:divergenceString(self)
 
-      if savedStackString ~= localStackString then
-        diverged = true
-      end
+  --   if savedStackString ~= localStackString then
+  --     diverged = true
+  --   end
 
-      if diverged then
-        print("Stacks have diverged")
-        self:rollbackToFrame(self.CLOCK-1)
-        self:run()
-      end
-    end
-  end
+  --   if diverged then
+  --     print("Stacks have diverged")
+  --     self:rollbackToFrame(self.CLOCK-1)
+  --     self:run()
+  --   end
+  -- end
 
   local deleteFrame = self.CLOCK - MAX_LAG - 1
   if prev_states[deleteFrame] then
@@ -457,9 +453,13 @@ end
 
 function Stack.set_garbage_target(self, new_target)
   self.garbage_target = new_target
+  if new_target.telegraph then
+    new_target.telegraph.sender = self
+    new_target.telegraph.garbage_queue.sender = self
+  end
   if self.telegraph then
-    self.telegraph.pos_x = new_target.pos_x - 4
-    self.telegraph.pos_y = new_target.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
+    self.telegraph.pos_x = self.pos_x - 4
+    self.telegraph.pos_y = self.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
   end
 end
 
@@ -909,12 +909,54 @@ function Stack.controls(self)
   end
 end
 
+function Stack.timesToRun(self) 
+
+  -- Normally we want to run 1 frame, but if we are a replay or from a net game,
+  -- we want to possibly run a lot frames to catch up, or 0 if there is nothing to simulate.
+  -- However, if we are a reaply or net game, we still want to run after game over to show
+  -- game over effects.
+  local timesToRun = 1
+  if self:game_ended() == false and self.is_local == false then
+    timesToRun = 0
+  end
+
+  -- Decide how many frames of input we should run.
+  local buffer_len = string.len(self.input_buffer)
+
+  -- If we're way behind, run at max speed.
+  if buffer_len >= 15 then
+    -- When we're closer, run fewer per frame, so things are less choppy.
+    -- This might have a side effect of being a little farther behind on average,
+    -- since we don't always run at top speed until the buffer is empty.
+    timesToRun = self.max_runs_per_frame
+  elseif buffer_len >= 10 then
+    timesToRun = math.min(2, self.max_runs_per_frame)
+  elseif buffer_len >= 1 then
+    timesToRun = 1
+  end
+
+  return timesToRun
+end
+
 -- Update everything for the stack based on inputs. Will update many times if needed to catch up.
 function Stack.run(self)
-  if not GAME.game_is_paused then
-    self:setupInput()
-    self:simulate()
+  if GAME.game_is_paused then
+    return
   end
+
+  if self.is_local == false then
+    if self.play_to_end then
+      GAME.preventSounds = true
+      if string.len(self.input_buffer) < 4 then
+        self.play_to_end = nil
+        GAME.preventSounds = false
+      end
+    end
+  end
+
+  self:setupInput()
+  self:simulate()
+
 end
 
 -- Grabs input from the buffer of inputs or from the controller and sends out to the network if needed.
@@ -926,12 +968,8 @@ function Stack.setupInput(self)
       self.input_state = string.sub(self.input_buffer, 1, 1)
       self.input_buffer = string.sub(self.input_buffer, 2)
     end
-  end
-
-  if not self.input_state then  
-    --print("player " .. self.which .. " using fake input on frame " .. self.CLOCK)
+  else
     self.input_state = self:idleInput()
-    self.fakeInput = self.fakeInput .. self.input_state
   end
 
   self:controls()
@@ -1217,6 +1255,8 @@ function Stack.simulate(self)
         panels[row][col].match_anyway = nil
       end
     end
+
+    self.telegraph:update()
 
     -- Phase 2. /////////////////////////////////////////////////////////////
     -- Timer-expiring actions + falling
@@ -1600,16 +1640,14 @@ function Stack.simulate(self)
       end
     end
 
-    if self.telegraph then
-      local to_send = self.telegraph:pop_all_ready_garbage()
+    if self.garbage_target and self.telegraph then
+      local to_send = self.telegraph:pop_all_ready_garbage(self.CLOCK)
       if to_send and to_send[1] then
-        if self.garbage_target then
-          local garbage = self.garbage_target.later_garbage[self.CLOCK+1] or {}
-          for i = 1, #to_send do
-            garbage[#garbage + 1] = to_send[i]
-          end
-          self.garbage_target.later_garbage[self.CLOCK+1] = garbage
+        local garbage = self.later_garbage[self.CLOCK+1] or {}
+        for i = 1, #to_send do
+          garbage[#garbage + 1] = to_send[i]
         end
+        self.later_garbage[self.CLOCK+1] = garbage
       end
     end
 
@@ -2286,8 +2324,10 @@ function Stack.check_matches(self)
         if panel.y_offset == -1 then
           if gpan_row == nil then
             if string.len(self.gpanel_buffer) <= 10 * self.width then
-              local garbagePanels = makeGarbagePanels(self.seed + self.CLOCK, self.NCOLORS, self.gpanel_buffer)
+              local garbagePanels = makeGarbagePanels(self.seed + self.garbageGenCount, self.NCOLORS, self.gpanel_buffer)
               self.gpanel_buffer = self.gpanel_buffer .. garbagePanels
+              logger.info("Generating garbage with seed: " .. self.seed + self.garbageGenCount .. " buffer: " .. self.gpanel_buffer)
+              self.garbageGenCount = self.garbageGenCount + 1
             end
             gpan_row = string.sub(self.gpanel_buffer, 1, 6)
             self.gpanel_buffer = string.sub(self.gpanel_buffer, 7)
@@ -2346,8 +2386,8 @@ function Stack.check_matches(self)
 
   if (combo_size ~= 0) then
     self.combos[self.CLOCK] = combo_size
-    if self.telegraph and metal_count == 3 and combo_size == 3 then
-      self.telegraph:push("combo", combo_size, metal_count,first_panel_col, first_panel_row, self.CLOCK)
+    if self.garbage_target and self.garbage_target.telegraph and metal_count == 3 and combo_size == 3 then
+      self.garbage_target.telegraph:push("combo", combo_size, metal_count,first_panel_col, first_panel_row, self.CLOCK)
     end
     self.analytic:register_destroyed_panels(combo_size)
     if (combo_size > 3) then
@@ -2365,8 +2405,8 @@ function Stack.check_matches(self)
       end
 
       self:enqueue_card(false, first_panel_col, first_panel_row, combo_size)
-      if self.telegraph then
-        self.telegraph:push("combo", combo_size, metal_count,first_panel_col, first_panel_row, self.CLOCK)
+      if self.garbage_target and self.garbage_target.telegraph then
+        self.garbage_target.telegraph:push("combo", combo_size, metal_count,first_panel_col, first_panel_row, self.CLOCK)
       end
       --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
       --          first_panel_row<<4+P1StackPosY+self.displacement-9);
@@ -2382,8 +2422,8 @@ function Stack.check_matches(self)
       self:enqueue_card(true, first_panel_col, first_panel_row, self.chain_counter)
     --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
     --          first_panel_row<<4+P1StackPosY+self.displacement-9);
-      if self.telegraph then
-        self.telegraph:push("chain",self.chain_counter,0,first_panel_col, first_panel_row, self.CLOCK)
+      if self.garbage_target and self.garbage_target.telegraph then
+        self.garbage_target.telegraph:push("chain",self.chain_counter,0,first_panel_col, first_panel_row, self.CLOCK)
       end
     end
     local chain_bonus = self.chain_counter
@@ -2512,7 +2552,9 @@ function Stack.new_row(self)
   end
 
   if string.len(self.panel_buffer) <= 10 * self.width then
-    self.panel_buffer = self.panel_buffer .. make_panels(self.seed + self.CLOCK, self.NCOLORS, self.panel_buffer, self)
+    self.panel_buffer = self.panel_buffer .. make_panels(self.seed + self.panelGenCount, self.NCOLORS, self.panel_buffer, self)
+    logger.info("generating panels with seed: " .. self.seed + self.panelGenCount .. " buffer: " .. self.panel_buffer)
+    self.panelGenCount = self.panelGenCount + 1
   end
 
   -- generate a new row

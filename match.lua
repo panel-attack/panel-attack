@@ -65,8 +65,6 @@ function Match.run(self)
     P2:saveForRollback()
   end
 
-  self:rollbackIfNeeded()
-
   if P1 and P1.is_local and P1:game_ended() == false then  
     P1:send_controls()
   end
@@ -74,39 +72,29 @@ function Match.run(self)
     P2:send_controls()
   end
 
-  local timesToRun = self:framesToSimulate()
-  --print("running " .. timesToRun .. " times")
-  for i = 1, timesToRun do
-    GAME.preventSounds = i < timesToRun
-    if P1 then
+  --self:rollbackIfNeeded()
+
+  local timesToRunP1 = P1:timesToRun()
+  local timesToRunP2 = P2 and P2:timesToRun() or 0
+
+  for i = 1, math.max(timesToRunP1, timesToRunP2) do
+    if P1 and i <= timesToRunP1 then
       P1:run()
     end
-    if P2 then
+    if P2 and i <= timesToRunP2 then
       P2:run()
     end
-    if P1 then
+    if P1 and i <= timesToRunP1 then
       P1:saveForRollback()
     end
-    if P2 then
+    if P2 and i <= timesToRunP2 then
       P2:saveForRollback()
     end
   end
 
-  GAME.preventSounds = false
-
   local endTime = love.timer.getTime()
   local timeDifference = endTime - startTime
   self.timeSpentRunning = self.timeSpentRunning + timeDifference
-end
-
--- returns the last frame that is definitely simulated correct
-function Match.confirmedSave(self) 
-  local confirmedSave = P1.prev_states.last
-  if P2 then
-    confirmedSave = math.min(confirmedSave, P2.prev_states.last)
-  end
-
-  return confirmedSave
 end
 
 function Match.framesToSimulate(self) 
@@ -136,16 +124,17 @@ function Match.rollbackIfNeeded(self)
     end
 
     if not gameEnded then
-      local confirmedSave = self:confirmedSave()
       if config.debug_mode then
-        if P1.CLOCK > 0 and P1.prev_states[confirmedSave - 5] then
-          confirmedSave = confirmedSave - 5
+        local rollbackLength = P1.max_runs_per_frame - 1
+        if P1.CLOCK > 0 and P1.prev_states[P1.CLOCK - rollbackLength] then
+          P1:rollbackToFrame(P1.CLOCK - rollbackLength)
         end
-      end
-      P1:rollbackToFrame(confirmedSave)
-      if P2 then
-        P2:rollbackToFrame(confirmedSave)
-        assert(P1.CLOCK == P2.CLOCK)
+          
+        if P2 then
+          if P2.CLOCK > 0 and P2.prev_states[P2.CLOCK - rollbackLength] then
+            P2:rollbackToFrame(P2.CLOCK - rollbackLength)
+          end
+        end
       end
     end
   end
@@ -230,23 +219,22 @@ function Match.render(self)
     -- gprintf("P1 Panels: " .. P1.panel_buffer, drawX, drawY)
 
     -- drawY = drawY + 14
-    -- gprintf("Save Frame: " .. self:confirmedSave(), drawX, drawY)
+    -- gprintf("P1 Confirmed " .. string.len(P1.confirmedInput) , drawX, drawY)
+
+    -- drawY = drawY + 14
+    -- gprintf("P1 Ended?: " .. tostring(P1:game_ended()), drawX, drawY)
+    
+    drawY = drawY + 14
+    gprintf("P1 attacks: " .. #P1.telegraph.attacks, drawX, drawY)
 
     drawY = drawY + 14
-    gprintf("P1 Ended?: " .. tostring(P1:game_ended()), drawX, drawY)
-    
+    gprintf("P1 Garbage Q: " .. P1.garbage_q:len(), drawX, drawY)
 
     if P2 then 
       drawY = drawY + 14
-      local maxConfirmedFrame = string.len(P1.confirmedInput)
-      if string.len(P2.confirmedInput) > maxConfirmedFrame then
-        maxConfirmedFrame = string.len(P2.confirmedInput)
-      end
-      local framesAhead = maxConfirmedFrame - self:confirmedSave()
+      local framesAhead = string.len(P1.confirmedInput) - string.len(P2.confirmedInput)
       gprintf("Ahead: " .. framesAhead, drawX, drawY)
 
-      drawY = drawY + 14
-      gprintf("P1 Confirmed " .. string.len(P1.confirmedInput) , drawX, drawY)
       drawY = drawY + 14
       gprintf("P2 Confirmed " .. string.len(P2.confirmedInput) , drawX, drawY)
     end

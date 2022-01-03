@@ -977,6 +977,7 @@ end
 
 function Stack.render_telegraph(self)
   local telegraph_to_render = self.telegraph
+  local senderCharacter = telegraph_to_render.sender.character
 
   local render_x = telegraph_to_render.pos_x
   for frame_earned, attacks_this_frame in pairs(telegraph_to_render.attacks) do
@@ -998,7 +999,7 @@ function Stack.render_telegraph(self)
             garbage_block.destination_y = garbage_block.destination_y or telegraph_to_render.pos_y - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING 
             
             if not garbage_block.origin_x or not garbage_block.origin_y then
-              garbage_block.origin_x = (attack.origin_col-1) * 16 +telegraph_to_render.sender.pos_x
+              garbage_block.origin_x = (attack.origin_col-1) * 16 + telegraph_to_render.sender.pos_x
               garbage_block.origin_y = (11-attack.origin_row) * 16 + telegraph_to_render.sender.pos_y + telegraph_to_render.sender.displacement - card_animation[#card_animation]
               garbage_block.x = garbage_block.origin_x
               garbage_block.y = garbage_block.origin_y
@@ -1017,7 +1018,7 @@ function Stack.render_telegraph(self)
                 garbage_block.y = garbage_block.y + telegraph_attack_animation[garbage_block.direction][frame].dy
               end
 
-              draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y)
+              draw(characters[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y)
             else
               --move toward destination
               local distance_to_destination = math.sqrt(math.pow(garbage_block.x-garbage_block.destination_x,2)+math.pow(garbage_block.y-garbage_block.destination_y,2))
@@ -1033,7 +1034,7 @@ function Stack.render_telegraph(self)
                 garbage_block.y = garbage_block.y - ((garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED)*(garbage_block.y-garbage_block.destination_y))/distance_to_destination
               end
 
-              draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y)
+              draw(characters[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y)
             end
           end
         end
@@ -1054,9 +1055,9 @@ function Stack.render_telegraph(self)
     --TODO: create a way to draw telegraphs from right to left
     if self.CLOCK - current_block.frame_earned >= GARBAGE_TRANSIT_TIME then
       if not current_block[3]--[[is_metal]] then
-        draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images[current_block[2]--[[height]]][current_block[1]--[[width]]], draw_x, draw_y)
+        draw(characters[senderCharacter].telegraph_garbage_images[current_block[2]--[[height]]][current_block[1]--[[width]]], draw_x, draw_y)
       else
-        draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images["metal"], draw_x, draw_y)
+        draw(characters[senderCharacter].telegraph_garbage_images["metal"], draw_x, draw_y)
       end
       drewChain = drewChain or current_block[4]
     end
@@ -1066,7 +1067,7 @@ function Stack.render_telegraph(self)
   
   if not drewChain and telegraph_to_render.garbage_queue.ghost_chain then
     print("SHOULD BE DRAWING GHOST_CHAIN - SIZE: "..telegraph_to_render.garbage_queue.ghost_chain)
-    draw(characters[telegraph_to_render.sender.character].telegraph_garbage_images[telegraph_to_render.garbage_queue.ghost_chain][6], telegraph_to_render.pos_x, telegraph_to_render.pos_y)
+    draw(characters[senderCharacter].telegraph_garbage_images[telegraph_to_render.garbage_queue.ghost_chain][6], telegraph_to_render.pos_x, telegraph_to_render.pos_y)
   end
 
 end
