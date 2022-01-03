@@ -44,7 +44,7 @@ local function main_config_input()
   end
 
   function createInputMenu(player)
-    local clickMenu = Click_menu(menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 10, 1)
+    local clickMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
     clickMenu:add_button(loc("player") .. " ", incrementPlayer, goEscape)
     clickMenu:set_button_setting(#clickMenu.buttons, active_player)
     for i = 1, #key_names do
