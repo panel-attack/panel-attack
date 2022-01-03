@@ -193,7 +193,7 @@ Telegraph = class(function(self, sender, owner)
       -- print(subject.stoppers.chain[subject.garbage_queue.chain_garbage.first])
       -- print("subject.sender.chains.current:")
       -- print(subject.sender.chains.current)
-      local sender_could_be_chaining = false
+      local sender_could_be_chaining = false --todo investigate this with garbage chains
       --see if we can determine whether the opponent could still be chaining
       if subject.sender.CLOCK >= time_to_check then
         if (not subject.sender.chains.current or (subject.sender.chains.current and subject.sender.chains.current > time_to_check)
