@@ -133,13 +133,14 @@ do
     close_socket()
     GAME.backgroundImage = themes[config.theme].images.bg_main
     GAME.battleRoom = nil
+    GAME.input:clearInputConfigurationsForPlayers()
+    GAME.input:requestPlayerInputConfigurationAssignments(1)
     reset_filters()
     logged_in = 0
     connection_up_time = 0
     connected_server_ip = ""
     current_server_supports_ranking = false
     match_type = ""
-    local k = K[1]
     local menu_x, menu_y = unpack(main_menu_screen_pos)
     local main_menu
     local ret = nil
@@ -232,7 +233,6 @@ function main_select_speed_99(next_func)
   local speed = config.endless_speed or 1
   local difficulty = config.endless_difficulty or 1
   local active_idx = 1
-  local k = K[1]
   local ret = nil
   local loc_difficulties = {loc("easy"), loc("normal"), loc("hard"), "EX Mode"} -- TODO: localize "EX Mode"
 
@@ -385,21 +385,10 @@ function Stack.wait_for_random_character(self)
 end
 
 function Stack.handle_pause(self)
-  local k = K[self.which]
+  if menu_pause() then
+    GAME.game_is_paused = not GAME.game_is_paused
 
-  if self.wait_for_not_pausing then
-    if not keys[k.pause] and not this_frame_keys[k.pause] then
-      self.wait_for_not_pausing = false
-    else
-      return
-    end
-  end
-
-  if keys[k.pause] or this_frame_keys[k.pause] then
-    game_is_paused = not game_is_paused
-    self.wait_for_not_pausing = true
-
-    if game_is_paused then
+    if GAME.game_is_paused then
       stop_the_music()
       reset_filters()
     else
@@ -451,7 +440,7 @@ function main_endless(...)
       function()
         P1:run()
         P1:handle_pause()
-        if menu_escape_game(K[1]) then
+        if menu_escape_game() then
           ret = {main_dumb_transition, {main_endless_setup, "", 0, 0}}
         end
       end
@@ -490,7 +479,7 @@ function main_time_attack(...)
         if P1:game_ended() == false then
           P1:run()
           P1:handle_pause()
-          if menu_escape_game(K[1]) then
+          if menu_escape_game() then
             ret = {main_dumb_transition, {main_timeattack_setup, "", 0, 0}}
           end
         end
@@ -515,7 +504,6 @@ function main_net_vs_lobby()
   local unpaired_players = {} -- list
   local willing_players = {} -- set
   local spectatable_rooms = {}
-  local k = K[1]
   my_player_number = nil
   op_player_number = nil
   local notice = {[true] = loc("lb_select_player"), [false] = loc("lb_alone")}
@@ -777,7 +765,7 @@ function main_net_vs_lobby()
     variable_step(
       function()
         if showing_leaderboard then
-          if menu_up(k) then
+          if menu_up() then
             if showing_leaderboard then
               if leaderboard_first_idx_to_show > 1 then
                 leaderboard_first_idx_to_show = leaderboard_first_idx_to_show - 1
@@ -785,7 +773,7 @@ function main_net_vs_lobby()
                 leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
               end
             end
-          elseif menu_down(k) then
+          elseif menu_down() then
             if showing_leaderboard then
               if leaderboard_last_idx_to_show < #leaderboard_report then
                 leaderboard_first_idx_to_show = leaderboard_first_idx_to_show + 1
@@ -793,7 +781,7 @@ function main_net_vs_lobby()
                 leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
               end
             end
-          elseif menu_escape(k) or menu_enter(k) then
+          elseif menu_escape() or menu_enter() then
             toggleLeaderboard()
           end
         elseif lobby_menu then
@@ -874,7 +862,6 @@ function main_net_vs()
     pick_random_stage()
   end
   pick_use_music_from()
-  local k = K[1] --may help with spectators leaving games in progress
   local op_name_y = 40
   if string.len(GAME.battleRoom.playerNames[1]) > 12 then
     op_name_y = 55
@@ -913,7 +900,7 @@ function main_net_vs()
       wait()
     end
 
-    if GAME.battleRoom.spectating and menu_escape(K[1]) then
+    if GAME.battleRoom.spectating and menu_escape() then
       logger.trace("spectator pressed escape during a game")
       json_send({leave_room = true})
       return main_dumb_transition, {main_net_vs_lobby, "", 0, 0} -- spectator leaving the match
@@ -989,6 +976,8 @@ function main_local_vs_setup()
   my_player_number = 1
   op_player_number = 2
   select_screen.character_select_mode = "2p_local_vs"
+  GAME.input:clearInputConfigurationsForPlayers()
+  GAME.input:requestPlayerInputConfigurationAssignments(2)
   return select_screen.main
 end
 
@@ -1007,7 +996,9 @@ function main_local_vs()
         P2:run()
         assert((P1.CLOCK == P2.CLOCK) or GAME.match:matchOutcome(), "should run at same speed: " .. P1.CLOCK .. " - " .. P2.CLOCK)
         P1:handle_pause()
-        P2:handle_pause()
+        if menu_escape_game() then
+          ret = {main_dumb_transition, {select_screen.main, "", 0, 0}}
+        end
       end
     )
 
@@ -1051,7 +1042,7 @@ function main_local_vs_yourself()
         if P1:game_ended() == false then
           P1:run()
           P1:handle_pause()
-          if menu_escape_game(K[1]) then
+          if menu_escape_game() then
             ret = {main_dumb_transition, {main_local_vs_yourself_setup, "", 0, 0}}
           end
         end
@@ -1124,10 +1115,10 @@ function main_replay_vs()
     local ret = nil
     variable_step(
       function()
-        if menu_escape(K[1]) then
+        if menu_escape() then
           ret = {main_dumb_transition, {replay_browser.main, "", 0, 0}}
         end
-        if menu_enter(K[1]) then
+        if menu_enter() then
           run = not run
         end
         if this_frame_keys["\\"] then
@@ -1187,10 +1178,10 @@ function main_replay_endless()
     local ret = nil
     variable_step(
       function()
-        if menu_escape(K[1]) then
+        if menu_escape() then
           ret = {main_dumb_transition, {replay_browser.main, "", 0, 0}}
         end
-        if menu_enter(K[1]) then
+        if menu_enter() then
           run = not run
         end
         if this_frame_keys["\\"] then
@@ -1238,10 +1229,10 @@ function main_replay_puzzle()
     local ret = nil
     variable_step(
       function()
-        if menu_escape(K[1]) then
+        if menu_escape() then
           ret = {main_dumb_transition, {replay_browser.main, "", 0, 0}}
         end
-        if menu_enter(K[1]) then
+        if menu_enter() then
           run = not run
         end
         if this_frame_keys["\\"] then
@@ -1301,9 +1292,8 @@ function make_main_puzzle(puzzleSet, awesome_idx)
       local ret = nil
       variable_step(
         function()
-          local k = K[1]
           -- Reset puzzle button
-          if this_frame_keys[k.taunt_down] or this_frame_keys[k.taunt_up] then 
+          if player_reset() then 
             ret = {main_dumb_transition, {make_main_puzzle(puzzleSet, awesome_idx), "", 0, 0}}
           elseif this_frame_keys["escape"] then
             ret = {main_dumb_transition, {main_select_puzz, "", 0, 0}}
@@ -1339,7 +1329,7 @@ function make_main_puzzle(puzzleSet, awesome_idx)
             if not ret then            
               P1:run()
               P1:handle_pause()
-              if menu_escape_game(K[1]) then
+              if menu_escape_game() then
                 ret = {main_dumb_transition, {main_select_puzz, "", 0, 0}}
               end
             end
@@ -1367,7 +1357,6 @@ do
     GAME.backgroundImage = themes[config.theme].images.bg_main
     reset_filters()
     local active_idx = last_puzzle_idx or 1
-    local k = K[1]
     while true do
       local to_print = ""
       local arrow = ""
@@ -1388,14 +1377,14 @@ do
       local ret = nil
       variable_step(
         function()
-          if menu_up(k) then
+          if menu_up() then
             active_idx = wrap(1, active_idx - 1, #items)
-          elseif menu_down(k) then
+          elseif menu_down() then
             active_idx = wrap(1, active_idx + 1, #items)
-          elseif menu_enter(k) then
+          elseif menu_enter() then
             last_puzzle_idx = active_idx
             ret = {items[active_idx][2], items[active_idx][3]}
-          elseif menu_escape(k) then
+          elseif menu_escape() then
             if active_idx == #items then
               ret = {items[active_idx][2], items[active_idx][3]}
             else
@@ -1428,12 +1417,12 @@ function main_set_name()
         if this_frame_keys["escape"] then
           ret = {main_select_mode}
         end
-        if menu_enter(K[1]) then
+        if menu_enter() then
           config.name = name
           write_conf_file()
           ret = {main_select_mode}
         end
-        if menu_backspace(K[1]) then
+        if menu_backspace() then
           -- Remove the last character.
           -- This could be a UTF-8 character, so handle it properly.
           local utf8offset = utf8.offset(name, -1)
@@ -1544,13 +1533,13 @@ function main_music_test()
     local ret = nil
     variable_step(
       function()
-        if menu_left(K[1]) or menu_right(K[1]) or menu_escape(K[1]) then
+        if menu_left() or menu_right() or menu_escape() then
           stop_the_music()
         end
-        if menu_left(K[1]) then
+        if menu_left() then
           index = index - 1
         end
-        if menu_right(K[1]) then
+        if menu_right() then
           index = index + 1
         end
         if index > #tracks then
@@ -1559,11 +1548,11 @@ function main_music_test()
         if index < 1 then
           index = #tracks
         end
-        if menu_left(K[1]) or menu_right(K[1]) then
+        if menu_left() or menu_right() then
           find_and_add_music(tracks[index].is_character and characters[tracks[index].id].musics or stages[tracks[index].id].musics, tracks[index].type)
         end
 
-        if menu_escape(K[1]) then
+        if menu_escape() then
           -- unloads music for characters/stages that are not fully loaded (they have been loaded when entering this submenu)
           for _, character_id in ipairs(characters_ids_for_current_theme) do
             if not characters[character_id].fully_loaded then
@@ -1593,8 +1582,8 @@ function fullscreen()
 end
 
 -- returns true if the user input to exit a local game in progress
-function menu_escape_game(k)
-  if game_is_paused and menu_escape(K[1]) then
+function menu_escape_game()
+  if GAME.game_is_paused and menu_escape() then
     return true
   end
   return false
@@ -1602,7 +1591,7 @@ end
 
 -- dumb transition that shows a black screen
 function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
-  game_is_paused = false
+  GAME.game_is_paused = false
   stop_the_music()
   winnerSFX = winnerSFX or nil
   if not SFX_mute then
@@ -1621,7 +1610,6 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
   timemin = timemin or 0
   timemax = timemax or -1 -- negative values means the user needs to press enter/escape to continue
   local t = 0
-  local k = K[1]
   local font = love.graphics.getFont()
   while true do
     gprint(text, (canvas_width - font:getWidth(text)) / 2, (canvas_height - font:getHeight()) / 2)
@@ -1629,7 +1617,7 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
     local ret = nil
     variable_step(
       function()
-        if t >= timemin and ((t >= timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) then
+        if t >= timemin and ((t >= timemax and timemax >= 0) or (menu_enter() or menu_escape())) then
           ret = {next_func}
         end
         t = t + 1
@@ -1648,7 +1636,7 @@ end
 
 -- show game over screen, last frame of gameplay
 function game_over_transition(next_func, text, winnerSFX, timemax)
-  game_is_paused = false
+  GAME.game_is_paused = false
 
   timemax = timemax or -1 -- negative values means the user needs to press enter/escape to continue
   text = text or ""
@@ -1658,7 +1646,6 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
   timemin = 60 -- the minimum amount of frames the game over screen will be displayed for
 
   local t = 0 -- the amount of frames that have passed since the game over screen was displayed
-  local k = K[1]
   local font = love.graphics.getFont()
   local winnerTime = 60
 
@@ -1720,7 +1707,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
         end
 
         -- if conditions are met, leave the game over screen
-        if t >= timemin and ((t >= timemax and timemax >= 0) or (menu_enter(k) or menu_escape(k))) or left_select_menu then
+        if t >= timemin and ((t >= timemax and timemax >= 0) or (menu_enter() or menu_escape())) or left_select_menu then
           setMusicFadePercentage(1) -- reset the music back to normal config volume
           stop_the_music()
           SFX_GameOver_Play = 0

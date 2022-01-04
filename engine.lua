@@ -172,8 +172,6 @@ Stack =
 
     s.taunt_up = nil -- will hold an index
     s.taunt_down = nil -- will hold an index
-    s.wait_for_not_taunting = nil -- will hold either "taunt_up" or "taunt_down"
-    s.wait_for_not_pausing = false -- wait for end of input
     s.taunt_queue = Queue()
 
     s.cur_wait_time = config.input_repeat_delay -- number of ticks to wait before the cursor begins
@@ -330,7 +328,6 @@ function Stack.taunt(self, taunt_type)
     self.taunt_queue:pop()
   end
   self.taunt_queue:push(love.timer.getTime())
-  self.wait_for_not_taunting = taunt_type -- to avoid taunting multiple times with the same input
 end
 
 -- Represents an individual panel in the stack
@@ -733,7 +730,7 @@ end
 
 -- Update everything for the stack based on inputs. Will update many times if needed to catch up.
 function Stack.run(self, timesToRun)
-  if game_is_paused then
+  if GAME.game_is_paused then
     return
   end
 
@@ -1516,7 +1513,7 @@ function Stack.PdP(self)
     end 
 
     -- Update Music
-    if not game_is_paused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
+    if not GAME.game_is_paused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
       if self:game_ended() == false and self.canvas ~= nil then
         if self.do_countdown then
           if SFX_Go_Play == 1 then

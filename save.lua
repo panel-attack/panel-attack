@@ -6,9 +6,9 @@ local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "
 function write_key_file()
   pcall(
     function()
-      local file = love.filesystem.newFile("keys.txt")
+      local file = love.filesystem.newFile("keysV2.txt")
       file:open("w")
-      file:write(json.encode(K))
+      file:write(json.encode(GAME.input.inputConfigurations))
       file:close()
     end
   )
@@ -17,23 +17,17 @@ end
 function read_key_file()
   pcall(
     function()
-      local K = K
-      local file = love.filesystem.newFile("keys.txt")
+      local inputConfigs = GAME.input.inputConfigurations
+      local file = love.filesystem.newFile("keysV2.txt")
       file:open("r")
       local teh_json = file:read(file:getSize())
       local user_conf = json.decode(teh_json)
       file:close()
-      -- TODO: remove this later, it just converts the old format.
-      if #user_conf == 0 then
-        local new_conf = {}
-        for k, v in pairs(user_conf) do
-          new_conf[k:sub(3)] = v
-        end
-        user_conf = {new_conf, {}, {}, {}}
-      end
       for k, v in ipairs(user_conf) do
-        K[k] = v
+        inputConfigs[k] = v
       end
+
+      GAME.input.inputConfigurations = inputConfigs
     end
   )
 end

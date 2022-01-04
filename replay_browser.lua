@@ -120,20 +120,19 @@ function replay_browser.main()
 
       variable_step(
         function()
-          local k = K[1]
-          if menu_escape(k) then
+          if menu_escape() then
             ret = {main_select_mode}
-          elseif menu_enter(k) then
+          elseif menu_enter() then
             if replay_browser_select() then
               replay_browser.state = "info"
             end
-          elseif menu_backspace(k) then
+          elseif menu_backspace() then
             replay_browser_go_up()
           else
-            if menu_up(k) then
+            if menu_up() then
               replay_browser_cursor(-1)
             end
-            if menu_down(k) then
+            if menu_down() then
               replay_browser_cursor(1)
             end
           end
@@ -184,10 +183,9 @@ function replay_browser.main()
 
       variable_step(
         function()
-          local k = K[1]
-          if menu_backspace(k) or menu_escape(k) then
+          if menu_backspace() or menu_escape() then
             replay_browser.state = "browser"
-          elseif menu_enter(k) then
+          elseif menu_enter() then
             if next_func then
               ret = {next_func}
             end
