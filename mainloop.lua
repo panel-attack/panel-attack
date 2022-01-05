@@ -1,4 +1,4 @@
-
+local logger = require("logger")
 local select_screen = require("select_screen")
 local replay_browser = require("replay_browser")
 local options = require("options")
@@ -181,7 +181,7 @@ do
       {loc("mm_options"), options.main}
     }
 
-    main_menu = Click_menu(menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 10, main_menu_last_index)
+    main_menu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, main_menu_last_index)
     for i = 1, #items do
       main_menu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
     end
@@ -298,7 +298,7 @@ function main_select_speed_99(next_func)
 
   local menu_x, menu_y = unpack(main_menu_screen_pos)
   menu_y = menu_y + 70
-  gameSettingsMenu = Click_menu(menu_x, menu_y, nil, love.graphics.getHeight() - menu_y - 10, 1)
+  gameSettingsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
   gameSettingsMenu:add_button(loc("speed"), nextMenu, goEscape, decreaseSpeed, increaseSpeed)
   gameSettingsMenu:add_button(loc("difficulty"), nextMenu, goEscape, decreaseDifficulty, increaseDifficulty)
   gameSettingsMenu:add_button(loc("go_"), startGame, goEscape)
@@ -549,7 +549,7 @@ function main_net_vs_lobby()
           logged_in = true
           if msg.new_user_id then
             my_user_id = msg.new_user_id
-            print("about to write user id file")
+            logger.trace("about to write user id file")
             write_user_id_file()
             login_status_message = loc("lb_user_new", config.name)
           elseif msg.name_changed then
@@ -659,6 +659,8 @@ function main_net_vs_lobby()
 
     -- If we got an update to the lobby, refresh the menu
     if updated then
+      spectator_list = {}
+      spectators_string = ""
       local oldLobbyMenu = nil
       if lobby_menu then
         oldLobbyMenu = lobby_menu
@@ -705,7 +707,7 @@ function main_net_vs_lobby()
         return rating
       end
 
-      lobby_menu = Click_menu(lobby_menu_x[showing_leaderboard], lobby_menu_y, nil, love.graphics.getHeight() - lobby_menu_y - 10, 1)
+      lobby_menu = Click_menu(lobby_menu_x[showing_leaderboard], lobby_menu_y, nil, canvas_height - lobby_menu_y - 10, 1)
       for _, v in ipairs(unpaired_players) do
         if v ~= config.name then
           local unmatchedPlayer = v .. playerRatingString(v) .. (sent_requests[v] and " " .. loc("lb_request") or "") .. (willing_players[v] and " " .. loc("lb_received") or "")
@@ -902,7 +904,7 @@ function main_net_vs()
     end
 
     if GAME.battleRoom.spectating and menu_escape() then
-      print("spectator pressed escape during a game")
+      logger.trace("spectator pressed escape during a game")
       json_send({leave_room = true})
       return main_dumb_transition, {main_net_vs_lobby, "", 0, 0} -- spectator leaving the match
     end
@@ -911,7 +913,6 @@ function main_net_vs()
     end
     process_all_data_messages() -- main game play processing
 
-    --print(P1.CLOCK, P2.CLOCK)
     if (P1 and P1.play_to_end) or (P2 and P2.play_to_end) then
       P1:run()
       P2:run()
@@ -958,7 +959,7 @@ function main_net_vs()
       end
       filename = filename .. ".txt"
       write_replay_file()
-      print("saving replay as " .. path .. sep .. filename)
+      logger.info("saving replay as " .. path .. sep .. filename)
       write_replay_file(path, filename)
 
       select_screen.character_select_mode = "2p_net_vs"
@@ -1602,7 +1603,7 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
     if winnerSFX ~= nil and winnerSFX ~= 0 then
       winnerSFX:play()
     elseif SFX_GameOver_Play == 1 then
-      print(debug.traceback(""))
+      logger.trace(debug.traceback(""))
       themes[config.theme].sounds.game_over:play()
     end
   end
@@ -1690,7 +1691,6 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
         if not SFX_mute then
           if t >= winnerTime then
             if winnerSFX ~= nil then -- play winnerSFX then nil it so it doesn't loop
-              print(winnerSFX)
               winnerSFX:play()
               winnerSFX = nil
             end

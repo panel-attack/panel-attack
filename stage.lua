@@ -1,4 +1,5 @@
 require("stage_loader")
+local logger = require("logger")
 
 -- Stuff defined in this file:
 --  . the data structure that store a stage's data
@@ -79,27 +80,27 @@ end
 
 -- preemptively loads a stage
 function Stage.preload(self)
-  print("preloading stage " .. self.id)
+  logger.trace("preloading stage " .. self.id)
   self:graphics_init(false, false)
   self:sound_init(false, false)
 end
 
 -- loads a stage
 function Stage.load(self, instant)
-  print("loading stage " .. self.id)
+  logger.trace("loading stage " .. self.id)
   self:graphics_init(true, (not instant))
   self:sound_init(true, (not instant))
   self.fully_loaded = true
-  print("loaded stage " .. self.id)
+  logger.trace("loaded stage " .. self.id)
 end
 
 -- unloads a stage
 function Stage.unload(self)
-  print("unloading stage " .. self.id)
+  logger.trace("unloading stage " .. self.id)
   self:graphics_uninit()
   self:sound_uninit()
   self.fully_loaded = false
-  print("unloaded stage " .. self.id)
+  logger.trace("unloaded stage " .. self.id)
 end
 
 -- adds stages from the path given
@@ -120,7 +121,7 @@ local function add_stages_from_dir_rec(path)
 
         if success then
           if stages[stage.id] ~= nil then
-            print(current_path .. " has been ignored since a stage with this id has already been found")
+            logger.trace(current_path .. " has been ignored since a stage with this id has already been found")
           else
             stages[stage.id] = stage
             stages_ids[#stages_ids + 1] = stage.id
@@ -145,20 +146,20 @@ local function fill_stages_ids()
       for _, sub_stage in ipairs(copy_of_sub_stages) do
         if stages[sub_stage] and #stages[sub_stage].sub_stages == 0 then -- inner bundles are prohibited
           stage.sub_stages[#stage.sub_stages + 1] = sub_stage
-          print(stage.id .. " has " .. sub_stage .. " as part of its substages.")
+          logger.trace(stage.id .. " has " .. sub_stage .. " as part of its substages.")
         end
       end
 
       if #stage.sub_stages < 2 then
         invalid_stages[#invalid_stages + 1] = stage_id -- stage is invalid
-        print(stage.id .. " (bundle) is being ignored since it's invalid!")
+        logger.warn(stage.id .. " (bundle) is being ignored since it's invalid!")
       else
         stages_ids[#stages_ids + 1] = stage_id
-        print(stage.id .. " (bundle) has been added to the stage list!")
+        logger.debug(stage.id .. " (bundle) has been added to the stage list!")
       end
     else -- normal stage
       stages_ids[#stages_ids + 1] = stage_id
-      print(stage.id .. " has been added to the stage list!")
+      logger.debug(stage.id .. " has been added to the stage list!")
     end
   end
 

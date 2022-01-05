@@ -1,3 +1,5 @@
+local logger = require("logger")
+
 local TCP_sock = nil
 
 -- Expected length for each message type
@@ -45,7 +47,7 @@ function get_message()
   if type == "J" then
     if string.len(leftovers) >= 4 then
       len = byte(string.sub(leftovers, 2, 2)) * 65536 + byte(string.sub(leftovers, 3, 3)) * 256 + byte(string.sub(leftovers, 4, 4))
-      --print("json message has length "..len)
+      --logger.trace("json message has length "..len)
       gap = 3
     else
       return nil
@@ -126,7 +128,7 @@ function queue_message(type, data)
     local dataMessage = {}
     dataMessage[type] = data
     if printNetworkMessageForType(type) then
-      --print("Queuing: " .. type .. " with data:" .. data)
+      --logger.debug("Queuing: " .. type .. " with data:" .. data)
     end
     server_queue:push(dataMessage)
   elseif type == "L" then
@@ -150,7 +152,7 @@ function queue_message(type, data)
       return
     end
     if printNetworkMessageForType(type) then
-      --print("Queuing: " .. type .. " with data:" .. dump(current_message))
+      --logger.debug("Queuing: " .. type .. " with data:" .. dump(current_message))
     end
     server_queue:push(current_message)
   end
@@ -179,7 +181,7 @@ function process_all_data_messages()
     for type, data in pairs(msg) do
       if type ~= "_expiration" then
         if printNetworkMessageForType(type) then
-          print("Processing: " .. type .. " with data:" .. data)
+          logger.debug("Processing: " .. type .. " with data:" .. data)
         end
         process_data_message(type, data)
       end

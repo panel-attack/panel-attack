@@ -20,6 +20,7 @@ class.lua
 csprng.lua
 dkjson.lua
 gen_panels.lua
+logger.lua
 save.lua
 server.lua
 server.py
