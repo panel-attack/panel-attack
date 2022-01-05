@@ -40,16 +40,26 @@ local loaded_placement_matches = {
 
 function lobby_state()
   local names = {}
+  local ratings = {}
   for _, v in pairs(connections) do
     if v.state == "lobby" then
       names[#names + 1] = v.name
+      if leaderboard.players[v.user_id] and leaderboard.players[v.user_id].rating then
+        ratings[#ratings + 1] = {name = v.name, rating = round(leaderboard.players[v.user_id].rating)}
+      end
     end
   end
   local spectatableRooms = {}
   for _, v in pairs(rooms) do
     spectatableRooms[#spectatableRooms + 1] = {roomNumber = v.roomNumber, name = v.name, a = v.a.name, b = v.b.name, state = v:state()}
+    if leaderboard.players[v.a.user_id] and leaderboard.players[v.a.user_id].rating then
+      ratings[#ratings + 1] = {name = v.a.name, rating = round(leaderboard.players[v.a.user_id].rating)}
+    end
+    if leaderboard.players[v.b.user_id] and leaderboard.players[v.b.user_id].rating then
+      ratings[#ratings + 1] = {name = v.b.name, rating = round(leaderboard.players[v.b.user_id].rating)}
+    end
   end
-  return {unpaired = names, spectatable = spectatableRooms}
+  return {unpaired = names, spectatable = spectatableRooms, ratings = ratings}
 end
 
 function propose_game(sender, receiver, message)
