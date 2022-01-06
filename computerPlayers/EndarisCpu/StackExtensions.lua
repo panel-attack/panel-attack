@@ -59,8 +59,7 @@ function StackExtensions.getPanelsAsColumnsByPanels(panels)
         for i = 1, #panels[1] do
             columns[i] = {}
             for j = 1, #panels do
-                local panel = panels[j][i]
-                columns[i][j] = ActionPanel(panel.id, panel.color, j, i)
+                columns[i][j] = ActionPanel(panels[j][i], j, i)
             end
         end
     end
@@ -261,7 +260,51 @@ end
 
 
 function StackExtensions.findActions(stack)
-    local actions = {}
+    local latentMatches = StackExtensions.findLatentMatches(stack)
+    return StackExtensions.evaluateLatentMatches(latentMatches, stack)
+end
+
+--returns all actually possible matches for a latent match
+--all actions returned from this have their estimatedCost and their targetVectors set
+function StackExtensions.evaluateLatentMatches(latentMatches, stack)
+    local possibleMatches = {}
+    for i=1,#latentMatches do
+        local results =  StackExtensions.evaluateLatentMatch(latentMatches[i], stack)
+        for j=1,#results do
+            table.insert(possibleMatches,results[j])
+        end
+    end
+
+    return possibleMatches
+end
+
+function StackExtensions.evaluateLatentMatch(latentMatch, stack)
+    -- get concrete actions from ActionObject
+    local concreteMatches = latentMatch:getConcreteMatchesFromLatentMatch()
+
+    -- for each concrete action
+    for i=#concreteMatches, 1, -1 do
+    -- check if action is actually possible to execute (e.g. not switching with garbage)
+        if StackExtensions.actionIsValid(stack, concreteMatches[i]) then
+            -- TODO Endaris
+            -- check if action requires gap filling
+
+            -- check if there are enough panels to fill the gap if it is required
+
+            -- if yes or gap filling = false
+            -- calculate estimated cost
+            concreteMatches[i]:calculateCost()
+        else
+            table.remove(concreteMatches, i)
+        end
+
+        return concreteMatches
+    end
+end
+
+-- finds all potential 3 matches on the board using the rowgrid scan
+function StackExtensions.findLatentMatches(stack)
+    local latentMatches = {}
     local grid = StackExtensions.toRowGrid(stack)
 
     --find matches, i is row, j is panel color, grid[i][j] is the amount of panels of that color in the row, k is the column the panel is in
@@ -276,7 +319,7 @@ function StackExtensions.findActions(stack)
                 local panels = {}
                 for k = 1, #stack.panels[i] do
                     if stack.panels[i][k].color == j then
-                        local actionPanel = ActionPanel(stack.panels[i][k].id, j, i, k)
+                        local actionPanel = ActionPanel(stack.panels[i][k], i, k)
                         table.insert(panels, actionPanel)
                     end
                 end
@@ -290,40 +333,21 @@ function StackExtensions.findActions(stack)
                     table.insert(actionPanels, panels[n + 2]:copy())
 
                     --create the action and put it in our list
-                        table.insert(actions, H3Match(actionPanels))
+                        table.insert(latentMatches, H3Match(actionPanels))
                 end
             end
             -- vertical 3 matches
             if grid[i][j] > 0 then
-                -- if colorConsecutiveRowCount >= 4 then
-                --     CpuLog:log(6, "found vertical 4 combo in row " .. i-3 .. " to " .. i .. " for color " .. j)
-                --     table.insert(actions, V4Combo(colorConsecutivePanels))
-                -- end
-                -- if colorConsecutiveRowCount >= 5 then
-                --     CpuLog:log(6, "found vertical 5 combo in row " .. i-4 .. " to " .. i .. " for color " .. j)
-                --     table.insert(actions, V5Combo(colorConsecutivePanels))
-                -- end
                 colorConsecutiveRowCount = colorConsecutiveRowCount + 1
                 colorConsecutivePanels[colorConsecutiveRowCount] = {}
                 for k = 1, #stack.panels[i] do
                     if stack.panels[i][k].color == j then
-                        local actionPanel = ActionPanel(stack.panels[i][k].id, j, i, k)
+                        local actionPanel = ActionPanel(stack.panels[i][k], i, k)
                         table.insert(colorConsecutivePanels[colorConsecutiveRowCount], actionPanel)
                     end
                 end
                 if colorConsecutiveRowCount >= 3 then
                     -- technically we need action for each unique combination of panels to find the best option
-                    local combinations =
-                        #colorConsecutivePanels[colorConsecutiveRowCount - 2] *
-                        #colorConsecutivePanels[colorConsecutiveRowCount - 1] *
-                        #colorConsecutivePanels[colorConsecutiveRowCount]
-                    -- CpuLog:log(6,
-                    --     'found ' ..
-                    --         combinations ..
-                    --             ' combination(s) for a vertical 3 match in row ' ..
-                    --                 i - 2 .. ' to ' .. i .. ' for color ' .. j
-                    -- )
-
                     for q = 1, #colorConsecutivePanels[colorConsecutiveRowCount - 2] do
                         for r = 1, #colorConsecutivePanels[colorConsecutiveRowCount - 1] do
                             for s = 1, #colorConsecutivePanels[colorConsecutiveRowCount] do
@@ -331,7 +355,7 @@ function StackExtensions.findActions(stack)
                                 table.insert(panels, colorConsecutivePanels[colorConsecutiveRowCount - 2][q]:copy())
                                 table.insert(panels, colorConsecutivePanels[colorConsecutiveRowCount - 1][r]:copy())
                                 table.insert(panels, colorConsecutivePanels[colorConsecutiveRowCount][s]:copy())
-                                table.insert(actions, V3Match(panels))
+                                table.insert(latentMatches, V3Match(panels))
                             end
                         end
                     end
@@ -343,33 +367,32 @@ function StackExtensions.findActions(stack)
         end
     end
 
-    return actions
+    return latentMatches
 end
 
 function StackExtensions.swapIsValid(panel1, panel2)
-    return not panel1:exclude_swap() and not panel2:exclude_swap()
+    return not panel1.panel:exclude_swap() and not panel2.panel:exclude_swap()
 end
 
 function StackExtensions.moveIsValid(stack, panelId, targetVector)
     return StackExtensions.moveIsValidByPanels(stack.panels, panelId, targetVector)
 end
 
-function StackExtensions.moveIsValidByPanels(panels, panelId, targetVector)
-    local panel1 = StackExtensions.getPanelByIdFromPanels(panels, panelId)
-    CpuLog:log(1, "panel1 is at " .. GridVector(panel1.height, panel1.width):toString())
-    local panel2 = StackExtensions.getPanelByVectorByPanels(panels, targetVector)
-    CpuLog:log(1, "panel2 is at " .. GridVector(panel2.height, panel2.width):toString())
-    if panel1.height < panel2.height then
-        CpuLog:log(1, "panel1 is on a lower row than panel2, can't work")
-        return false
-    elseif not StackExtensions.swapIsValid(panel1, panel2) then
-        CpuLog:log(1, "swapping for one of the two panels is not valid")
-        CpuLog:log(1, "panel1 swappable: " .. tostring(not panel1:exclude_swap()))
-        CpuLog:log(1, "panel2 swappable: " .. tostring(not panel2:exclude_swap()))
+function StackExtensions.moveIsValidByPanels(panels, panel, targetVector)
+    if panel.row < targetVector.row then
         return false
     else
-        -- this is very naive and certainly not true in some cases but should be fine for a start
-        return true
+        local panelAtTarget = StackExtensions.getPanelByVectorByPanels(panels, targetVector)
+        -- TODO Endaris: check swapIsValid for every panel we need to swap with along the way
+        if not StackExtensions.swapIsValid(panel, panelAtTarget) then
+            --CpuLog:log(1, "swapping for one of the two panels is not valid")
+            --CpuLog:log(1, "panel1 swappable: " .. tostring(not panel1:exclude_swap()))
+            --CpuLog:log(1, "panel2 swappable: " .. tostring(not panel2:exclude_swap()))
+            return false
+        else
+            -- this is very naive and certainly not true in some cases but should be fine for a start
+            return true
+        end
     end
 end
 
@@ -396,10 +419,11 @@ function StackExtensions.getPanelByVector(stack, vector)
 end
 
 function StackExtensions.getPanelByVectorByPanels(panels, vector)
+    CpuLog:log(1, "Attempting to get panel at vector " .. vector:toString())
     local panel = panels[vector.row][vector.column]
-    panel.height = vector.row
-    panel.width = vector.column
-    return panel
+    local actionPanel = ActionPanel(panel, vector.row, vector.column)
+    CpuLog:log(1, "Turned up with panel " .. panel:toString())
+    return actionPanel
 end
 
 function StackExtensions.calculateExecution(stack, action)
@@ -416,9 +440,11 @@ end
 
 
 function StackExtensions.actionIsValidByPanels(panels, action)
+    CpuLog:log(1, "checking if action is valid " .. action:toString())
     for i=1, #action.panels do
+        CpuLog:log(1, "checking if move is valid for " .. action.panels[i]:toString())
         if not StackExtensions.moveIsValidByPanels(panels,
-                               action.panels[i].id, action.panels[i].targetVector) then
+                               action.panels[i], action.panels[i].targetVector) then
             return false
         end
     end
@@ -464,4 +490,33 @@ function Panel.equals(self, otherPanel)
     else
         return false
     end
+end
+
+function Panel.toString(self)
+    local stringRep = "Panel in state " .. self.state .. ""
+
+    if self.width and self.height then
+        stringRep = stringRep .. " at coordinate " .. GridVector(self.height, self.width):toString()
+    end
+
+    return stringRep
+end
+
+function StackExtensions.getGarbage(stack)
+    return StackExtensions.getGarbageByPanels(stack.panels)
+end
+
+function StackExtensions.getGarbageByPanels(panels)
+    local garbagePanels = {}
+    for i=1,#panels do
+        for j=1, #panels[i] do
+            if panels[i][j].color == 9 and
+             panels[i][j].exclude_swap and 
+             panels[i][j].state ~= "falling" then
+                table.insert(garbagePanels, ActionPanel(panels[i][j], i, j))
+            end
+        end
+    end
+
+    return garbagePanels
 end

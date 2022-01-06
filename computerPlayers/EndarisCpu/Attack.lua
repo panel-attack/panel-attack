@@ -7,16 +7,14 @@ Attack = class(
 )
 
 function Attack.chooseAction(self)
-    for i = 1, #self.cpu.actions do
-        CpuLog:log(7, 'Action at index' ..
-                i .. ': ' .. self.cpu.actions[i].name .. ' with cost of ' .. self.cpu.actions[i].estimatedCost
-        )
-    end
-
     if #self.cpu.actions > 0 then
-        self.cpu.currentAction = self:getCheapestAction()
+        local actions = StackExtensions.findActions(self.cpu.stack)
+        for i=1, #actions do
+            actions[i]:calculateCost()
+        end
+        return Action.getCheapestAction(actions, self.cpu.stack)
     else
-        self.cpu.currentAction = Raise(self.cpu.stack.CLOCK)
+        return Raise(self.cpu.stack.CLOCK)
     end
 end
 

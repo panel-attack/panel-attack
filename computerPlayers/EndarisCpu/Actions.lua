@@ -157,6 +157,74 @@ function Action.calculateExecution(self, cursor_row, cursor_col)
     error('calculateExecution was not implemented for action ' .. self.name)
 end
 
+function Action.equals(self, action)
+    if #self.panels ~= #action.panels then
+        return false
+    end
+
+    for i=1, #self.panels do
+        local matched = false
+        for j=1, #action.panels do
+            if self.panels[i]:equals(action.panels[j]) then
+                matched = true
+                break
+            end
+        end
+        if matched == false then
+            return false
+        end
+    end
+
+    return true
+end
+
+function Action.calculateCosts(actions, stack)
+    for i=1, #actions do
+        actions:calculateCost()
+    end
+
+    return actions
+end
+
+function Action.getCheapestAction(actions, stack)
+    if #actions > 0 then
+        table.sort(
+            actions,
+            function(a, b)
+                return a.estimatedCost < b.estimatedCost
+            end
+        )
+
+        for i = #actions, 1, -1 do
+            CpuLog:log(6, actions[i]:toString())
+            -- this is a crutch cause sometimes we can find actions that are already completed and then we choose them cause they're already...complete
+            if actions[i].estimatedCost == 0 then
+                CpuLog:log(6, 'action is already completed, removing...')
+                table.remove(actions, i)
+            end
+        end
+
+        local i = 1
+        local filteredActions = {}
+        while i <= #actions and actions[i].estimatedCost == actions[1].estimatedCost do
+            actions[i]:calculateExecution(stack.cur_row, stack.cur_col + 0.5)
+            table.insert(filteredActions, actions[i])
+            i = i + 1
+        end
+
+        table.sort(
+            filteredActions,
+            function(a, b)
+                return #a.executionPath < #b.executionPath
+            end
+        )
+
+        return filteredActions[1]
+    else
+        return Raise()
+    end
+end
+
 --#region Action implementations go here
 
 WaitTimeSpan =
@@ -303,6 +371,10 @@ function Match3.calculateExecution(self, cursor_row, cursor_col)
     CpuLog:log(6, 'exiting calculateExecution')
 end
 
+function Match3.getConcreteMatchesFromLatentMatch(self)
+    error("didn't implement method getConcreteMatchesFromLatentMatch for " .. self.name)
+end
+
 H3Match =
     class(
     function(action, panels)
@@ -317,12 +389,6 @@ function H3Match.calculateCost(self)
     CpuLog:log(6, "calculating cost for action")
     CpuLog:log(6, self:toString())
 
-    -- always pick the panel in the middle as the one that doesn't need to get moved
-    local middlePanelColumn = self.panels[2].vector.column
-    self.panels[1].targetVector = GridVector(self.panels[1].vector.row, middlePanelColumn - 1)
-    self.panels[2].targetVector = GridVector(self.panels[2].vector.row, middlePanelColumn)
-    self.panels[3].targetVector = GridVector(self.panels[3].vector.row, middlePanelColumn + 1)
-
     self.estimatedCost = 0
     for i = 1, #self.panels do
         local distance = math.abs(self.panels[i].targetVector.column - self.panels[i].vector.column)
@@ -331,6 +397,27 @@ function H3Match.calculateCost(self)
             self.estimatedCost = self.estimatedCost + distance
         end
     end
+end
+
+function H3Match.getConcreteMatchesFromLatentMatch(self)
+    local concreteMatches = {}
+
+    -- need a deepcopy to have unique targetVectors
+    local panels = deepcopy(self.panels)
+    -- make sure they're in correct order for the loop
+    table.sort(panels, function(a,b) return a.vector.column < b.vector.column end)
+
+    -- assuming column index of left most panel
+    for i=1,4 do
+        for j=1,#panels do
+            panels[j].targetVector = GridVector(panels[j].row, i + j - 1)
+        end
+
+        local newMatch = H3Match(panels)
+        table.insert(concreteMatches, newMatch)
+    end
+
+    return concreteMatches
 end
 
 V3Match =
@@ -346,38 +433,38 @@ V3Match =
 function V3Match.calculateCost(self)
     CpuLog:log(6, "calculating cost for action")
     CpuLog:log(6, self:toString())
-    self:chooseColumn()
+    
+    self.estimatedCost = 0
+
+    for j = 1, #self.panels do
+        --how many columns the panel is away from the column we're testing for
+        local distance = math.abs(self.panels[j].column - self.panels[j].targetVector.column)
+        if distance > 0 then
+            --penalty for having to move to the panel to move it
+            self.estimatedCost = self.estimatedCost + 2
+            --cost for moving the panel
+            self.estimatedCost = self.estimatedCost + distance
+        end
+    end
 end
 
-function V3Match.chooseColumn(self)
-    local column
-    local minCost = 1000
+function V3Match.getConcreteMatchesFromLatentMatch(self)
+    local concreteMatches = {}
+    -- for each column
     for i = 1, 6 do
-        local colCost = 0
-        for j = 1, #self.panels do
-            --how many columns the panel is away from the column we're testing for
-            local distance = math.abs(self.panels[j].column - i)
-            if distance > 0 then
-                --penalty for having to move to the panel to move it
-                colCost = colCost + 2
-                --cost for moving the panel
-                colCost = colCost + distance
-            end
+        -- need a deepcopy to have unique targetVectors
+        local panels = deepcopy(self.panels)
+        -- setting targetvector to column
+        for j = 1, #panels do
+            panels[j].targetVector = GridVector(panels[j].row, i)
         end
-        if colCost < minCost then
-            minCost = colCost
-            column = i
-        end
+
+        -- creating action from edited panels
+        local newMatch = V3Match(panels)
+        table.insert(concreteMatches, newMatch)
     end
 
-    self.estimatedCost = minCost
-    self.targetColumn = column
-    CpuLog:log(6, 'chose targetColumn ' .. self.targetColumn)
-    CpuLog:log(6, 'setting target vectors for V3Match ' .. self.targetColumn)
-    for i = 1, #self.panels do
-        self.panels[i].targetVector = GridVector(self.panels[i].row, self.targetColumn)
-        CpuLog:log(6, self.panels[i]:toString())
-    end
+    return concreteMatches
 end
 
 V4Combo =
