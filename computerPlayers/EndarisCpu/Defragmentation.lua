@@ -1,6 +1,7 @@
 Defragment = class(
         function(strategy, cpu)
             Strategy.init(strategy, "Defragment", cpu)
+            CpuLog:log(1, "chose to DEFRAGMENT")
         end,
         Strategy
 )
@@ -19,9 +20,10 @@ function Defragment.chooseAction(self)
         action:calculateExecution(self.cpu.stack.cur_row, self.cpu.stack.cur_col)
         CpuLog:log(1, action:toString())
 
-        self.cpu.currentAction = action
+        return action
     else
         CpuLog:log(1, "targetted gap is likely not swappable at the moment due to an unexpected match or similar things")
+        return nil
     end
 
     -- open issues with defragmenting:
@@ -43,7 +45,7 @@ function Defragment.getScoredEmptySpaceTable(panels, columns, connectedPanelSect
     for i=1,maxColHeight + 1 do
         for j=1,#columns do
             if panels[i][j].color == 0 then
-                local emptySpace = ActionPanel(panels[i][j].id, 0, i, j)
+                local emptySpace = ActionPanel(panels[i][j], i, j)
                 table.insert(emptySpaces, {panel = emptySpace, score = 0})
             end
         end
@@ -145,7 +147,7 @@ function Defragment.findBestPanelForGap(self, gapPanel, scoredPanels)
 
     for i=1,#scoredPanels do
         CpuLog:log(1, "Checking panel " .. scoredPanels[i].panel.vector:toString())
-        if StackExtensions.moveIsValid(self.cpu.stack, scoredPanels[i].panel.id, gapPanel.vector) then
+        if StackExtensions.moveIsValid(self.cpu.stack, scoredPanels[i].panel, gapPanel) then
             CpuLog:log(4, "Selected " .. scoredPanels[i].panel:toString())
             return scoredPanels[i].panel
         end

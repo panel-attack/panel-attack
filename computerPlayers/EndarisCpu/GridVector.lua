@@ -50,3 +50,11 @@ end
 function GridVector.scalarMultiply(self, scalar)
     return GridVector(self.row * scalar, self.column * scalar)
 end
+
+function GridVector.isAdjacent(self, vector)
+    return self:difference(vector):distance(GridVector(0, 0)) == 1
+end
+
+function GridVector.IsInAdjacentRow(self, vector)
+    return math.abs(self:difference(vector).row) == 1
+end

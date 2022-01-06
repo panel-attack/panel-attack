@@ -252,7 +252,7 @@ function EndarisCpu.chooseAction(self)
         end
         self:appendToInputQueue(self.currentAction)
     else
-        self.strategy:chooseAction()
+        self:executeStrategy()
     end
 
     if self.currentAction then
@@ -320,10 +320,9 @@ function EndarisCpu.chooseStrategy(self)
         StackExtensions.printAsAprilStack(self.stack)
     end
 
-    if self.stack.danger_music then
-        --return Defend(self) 
-        --for testing
-        return Defragment(self)
+    local garbagePanels = StackExtensions.getGarbage(self.stack)
+    if #garbagePanels > 0 then
+        return Defend(self, garbagePanels)
     end
 
     local fragmentationPercentage = StackExtensions.getFragmentationPercentage(self.stack)
@@ -334,6 +333,29 @@ function EndarisCpu.chooseStrategy(self)
     end
 
     return Attack(self)
+end
+
+function EndarisCpu.executeStrategy(self)
+    local action
+    action = self.strategy:chooseAction()
+
+    if action == nil and self.strategy.name == "Defend" then
+        -- check if it wouldn't be better to defrag now so that one may get into a defendable position again
+        if StackExtensions.getFragmentationPercentage(self.stack) > self.config.DefragmentationPercentageThreshold * 0.8 then
+        CpuLog:log(1, "found no action to defend")
+            self.strategy = Defragment(self)
+            action = self.strategy:chooseAction()
+        end
+    end
+
+    -- let the cpu do something if it can't find a sensible action for defrag/defend
+    if action == nil and self.strategy.name ~= "Attack" then
+        CpuLog:log(1, "found no action to  " .. self.strategy.name)
+        self.strategy = Attack(self)
+        action = self.strategy:chooseAction()
+    end
+
+    self.currentAction = action
 end
 
 function EndarisCpu.calculateCosts(self)
@@ -351,9 +373,10 @@ end
 
 ActionPanel =
     class(
-    function(actionPanel, id, color, row, column)
-        actionPanel.id = id
-        actionPanel.color = color
+    function(actionPanel, panel, row, column)
+        actionPanel.panel = panel
+        actionPanel.id = panel.id
+        actionPanel.color = panel.color
         actionPanel.row = row
         actionPanel.column = column
         actionPanel.vector = GridVector(row, column)
@@ -366,7 +389,7 @@ ActionPanel =
 )
 
 function ActionPanel.toString(self)
-    local message = 'panel ' .. self.id .. ' with color ' .. self.color 
+    local message = 'panel ' .. self.id .. ' with color ' .. self.color
     if self.vector then
         message = message .. ' at coordinate ' .. self.vector:toString()
     end
@@ -378,7 +401,7 @@ function ActionPanel.toString(self)
 end
 
 function ActionPanel.copy(self)
-    local panel = ActionPanel(self.id, self.color, self.row, self.column)
+    local panel = ActionPanel(self.panel, self.row, self.column)
     if self.cursorStartPos then
         panel.cursorStartPos = GridVector(self.cursorStartPos.row, self.cursorStartPos.column)
     end
@@ -390,4 +413,8 @@ end
 
 function ActionPanel.needsToMove(self)
     return not self.vector:equals(self.targetVector)
+end
+
+function ActionPanel.equals(self, otherPanel)
+    return self.id == otherPanel.id
 end

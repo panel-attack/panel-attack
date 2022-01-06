@@ -193,21 +193,22 @@ function DefragmentationTest.testGetScoredPanelTable1()
     end
 
     local expectedValue = {}
-    table.insert(expectedValue, {panel = ActionPanel(0, 8, 2, 1), score = 23})
-    table.insert(expectedValue, {panel = ActionPanel(0, 8, 3, 1), score = 23})
-    table.insert(expectedValue, {panel = ActionPanel(0, 8, 2, 2), score = 23})
-    table.insert(expectedValue, {panel = ActionPanel(0, 8, 3, 2), score = 23})
-    table.insert(expectedValue, {panel = ActionPanel(0, 8, 4, 1), score = 17})
-    table.insert(expectedValue, {panel = ActionPanel(0, 8, 4, 2), score = 17})
-    table.insert(expectedValue, {panel = ActionPanel(0, 8, 5, 1), score = 9})
-    table.insert(expectedValue, {panel = ActionPanel(0, 8, 6, 1), score = 0})
-    table.insert(expectedValue, {panel = ActionPanel(0, 8, 2, 4), score = 13})
-    table.insert(expectedValue, {panel = ActionPanel(0, 8, 2, 5), score = 26})
-    table.insert(expectedValue, {panel = ActionPanel(0, 8, 3, 5), score = 26})
-    table.insert(expectedValue, {panel = ActionPanel(0, 8, 2, 6), score = 21})
-    table.insert(expectedValue, {panel = ActionPanel(0, 8, 3, 6), score = 21})
-    table.insert(expectedValue, {panel = ActionPanel(0, 8, 4, 6), score = 7})
-    table.insert(expectedValue, {panel = ActionPanel(0, 8, 5, 6), score = 0})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=8}, 2, 1), score = 23})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=8}, 2, 1), score = 23})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=8}, 3, 1), score = 23})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=8}, 2, 2), score = 23})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=8}, 3, 2), score = 23})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=8}, 4, 1), score = 17})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=8}, 4, 2), score = 17})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=8}, 5, 1), score = 9})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=8}, 6, 1), score = 0})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=8}, 2, 4), score = 13})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=8}, 2, 5), score = 26})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=8}, 3, 5), score = 26})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=8}, 2, 6), score = 21})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=8}, 3, 6), score = 21})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=8}, 4, 6), score = 7})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=8}, 5, 6), score = 0})
 
     for i=1,#expectedValue do
         local matched = false
@@ -236,14 +237,14 @@ function DefragmentationTest.testGetScoredEmptySpaceTable1()
     end
 
     local expectedValue = {}
-    table.insert(expectedValue, {panel = ActionPanel(0, 0, 1, 3), score = 5})
-    table.insert(expectedValue, {panel = ActionPanel(0, 0, 2, 3), score = 5})
-    table.insert(expectedValue, {panel = ActionPanel(0, 0, 3, 3), score = 5})
-    table.insert(expectedValue, {panel = ActionPanel(0, 0, 4, 3), score = 2})
-    table.insert(expectedValue, {panel = ActionPanel(0, 0, 4, 4), score = 1})
-    table.insert(expectedValue, {panel = ActionPanel(0, 0, 4, 5), score = 1})
-    table.insert(expectedValue, {panel = ActionPanel(0, 0, 3, 4), score = 4})
-    table.insert(expectedValue, {panel = ActionPanel(0, 0, 5, 2), score = 1})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=0}, 1, 3), score = 5})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=0}, 2, 3), score = 5})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=0}, 3, 3), score = 5})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=0}, 4, 3), score = 2})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=0}, 4, 4), score = 1})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=0}, 4, 5), score = 1})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=0}, 3, 4), score = 4})
+    table.insert(expectedValue, {panel = ActionPanel({id=0, color=0}, 5, 2), score = 1})
 
     for i=1,#expectedValue do
         local matched = false
