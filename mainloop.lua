@@ -23,17 +23,9 @@ spectator_list = nil
 spectators_string = ""
 leftover_time = 0
 main_menu_screen_pos = {300 + (canvas_width - legacy_canvas_width) / 2, 195 + (canvas_height - legacy_canvas_height) / 2}
-wait_game_update = nil
-has_game_update = false
+local wait_game_update = nil
+local has_game_update = false
 local main_menu_last_index = 1
-
-P1_win_quads = {}
-P1_rating_quads = {}
-P1_health_quad = {}
-
-P2_rating_quads = {}
-P2_win_quads = {}
-P2_health_quad = {}
 
 function fmainloop()
   local func, arg = main_select_mode, nil
@@ -384,7 +376,7 @@ function Stack.wait_for_random_character(self)
   character_loader_wait()
 end
 
-function Stack.handle_pause(self)
+local function handle_pause(self)
   if menu_pause() then
     GAME.gameIsPaused = not GAME.gameIsPaused
 
@@ -440,7 +432,7 @@ function main_endless(...)
     variable_step(
       function()
         P1:run()
-        P1:handle_pause()
+        handle_pause()
         if menu_escape_game() then
           GAME:clearMatch()
           ret = {main_dumb_transition, {main_endless_setup, "", 0, 0}}
@@ -480,7 +472,7 @@ function main_time_attack(...)
       function()
         if P1:game_ended() == false then
           P1:run()
-          P1:handle_pause()
+          handle_pause()
           if menu_escape_game() then
             GAME:clearMatch()
             ret = {main_dumb_transition, {main_timeattack_setup, "", 0, 0}}
@@ -824,6 +816,7 @@ function build_viewable_leaderboard_string(report, first_viewable_idx, last_view
   end
   return str
 end
+
 -- connects to the server using the given ip address and network port
 function main_net_vs_setup(ip, network_port)
   if not config.name then
@@ -1000,7 +993,7 @@ function main_local_vs()
         P1:run()
         P2:run()
         assert((P1.CLOCK == P2.CLOCK) or GAME.match:matchOutcome(), "should run at same speed: " .. P1.CLOCK .. " - " .. P2.CLOCK)
-        P1:handle_pause()
+        handle_pause()
         if menu_escape_game() then
           GAME:clearMatch()
           ret = {main_dumb_transition, {select_screen.main, "", 0, 0}}
@@ -1050,7 +1043,7 @@ function main_local_vs_yourself()
       function()
         if P1:game_ended() == false then
           P1:run()
-          P1:handle_pause()
+          handle_pause()
           if menu_escape_game() then
             GAME:clearMatch()
             ret = {main_dumb_transition, {main_local_vs_yourself_setup, "", 0, 0}}
@@ -1332,7 +1325,7 @@ function make_main_puzzle(puzzleSet, awesome_idx)
 
             if not ret then            
               P1:run()
-              P1:handle_pause()
+              handle_pause()
               if menu_escape_game() then
                 GAME:clearMatch()
                 ret = {main_dumb_transition, {main_select_puzz, "", 0, 0}}
@@ -1450,148 +1443,10 @@ function main_set_name()
   end
 end
 
--- opens up music test menue
-function main_music_test()
-  gprint(loc("op_music_load"), unpack(main_menu_screen_pos))
-  wait()
-  -- load music for characters/stages that are not fully loaded
-  for _, character_id in ipairs(characters_ids_for_current_theme) do
-    if not characters[character_id].fully_loaded then
-      characters[character_id]:sound_init(true, false)
-    end
-  end
-  for _, stage_id in ipairs(stages_ids_for_current_theme) do
-    if not stages[stage_id].fully_loaded then -- we perform the same although currently no stage are being loaded at this point
-      stages[stage_id]:sound_init(true, false)
-    end
-  end
-
-  local index = 1
-  local tracks = {}
-
-  for _, character_id in ipairs(characters_ids_for_current_theme) do
-    local character = characters[character_id]
-    if character.musics.normal_music then
-      tracks[#tracks + 1] = {
-        is_character = true,
-        name = character.display_name .. ": normal_music",
-        id = character_id,
-        type = "normal_music",
-        start = character.musics.normal_music_start or zero_sound,
-        loop = character.musics.normal_music
-      }
-    end
-    if character.musics.danger_music then
-      tracks[#tracks + 1] = {
-        is_character = true,
-        name = character.display_name .. ": danger_music",
-        id = character_id,
-        type = "danger_music",
-        start = character.musics.danger_music_start or zero_sound,
-        loop = character.musics.danger_music
-      }
-    end
-  end
-  for _, stage_id in ipairs(stages_ids_for_current_theme) do
-    local stage = stages[stage_id]
-    if stage.musics.normal_music then
-      tracks[#tracks + 1] = {
-        is_character = false,
-        name = stage.display_name .. ": normal_music",
-        id = stage_id,
-        type = "normal_music",
-        start = stage.musics.normal_music_start or zero_sound,
-        loop = stage.musics.normal_music
-      }
-    end
-    if stage.musics.danger_music then
-      tracks[#tracks + 1] = {
-        is_character = false,
-        name = stage.display_name .. ": danger_music",
-        id = stage_id,
-        type = "danger_music",
-        start = stage.musics.danger_music_start or zero_sound,
-        loop = stage.musics.danger_music
-      }
-    end
-  end
-
-  -- stop main music
-  stop_all_audio()
-
-  -- initial song starts here
-  find_and_add_music(tracks[index].is_character and characters[tracks[index].id].musics or stages[tracks[index].id].musics, tracks[index].type)
-
-  while true do
-    tp = loc("op_music_current") .. tracks[index].name
-    tp = tp .. (table.getn(currently_playing_tracks) == 1 and "\n" .. loc("op_music_intro") .. "\n" or "\n" .. loc("op_music_loop") .. "\n")
-    min_time = math.huge
-    for k, _ in pairs(music_t) do
-      if k and k < min_time then
-        min_time = k
-      end
-    end
-    tp = tp .. string.format("%d", min_time - love.timer.getTime())
-    tp = tp .. "\n\n\n" .. loc("op_music_nav", "<", ">", "ESC")
-    gprint(tp, unpack(main_menu_screen_pos))
-    wait()
-    local ret = nil
-    variable_step(
-      function()
-        if menu_left() or menu_right() or menu_escape() then
-          stop_the_music()
-        end
-        if menu_left() then
-          index = index - 1
-        end
-        if menu_right() then
-          index = index + 1
-        end
-        if index > #tracks then
-          index = 1
-        end
-        if index < 1 then
-          index = #tracks
-        end
-        if menu_left() or menu_right() then
-          find_and_add_music(tracks[index].is_character and characters[tracks[index].id].musics or stages[tracks[index].id].musics, tracks[index].type)
-        end
-
-        if menu_escape() then
-          -- unloads music for characters/stages that are not fully loaded (they have been loaded when entering this submenu)
-          for _, character_id in ipairs(characters_ids_for_current_theme) do
-            if not characters[character_id].fully_loaded then
-              characters[character_id]:sound_uninit()
-            end
-          end
-          for _, stage_id in ipairs(stages_ids_for_current_theme) do
-            if not stages[stage_id].fully_loaded then
-              stages[stage_id]:sound_uninit()
-            end
-          end
-
-          ret = {main_select_mode}
-        end
-      end
-    )
-    if ret then
-      return unpack(ret)
-    end
-  end
-end
-
 -- toggles fullscreen
 function fullscreen()
   love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
   return main_select_mode
-end
-
--- returns true if the user input to exit a local game in progress
-function menu_escape_game()
-  if GAME.gameIsPaused and menu_escape() then
-    return true
-  end
-  return false
 end
 
 -- dumb transition that shows a black screen
@@ -1741,6 +1596,7 @@ function exit_game(...)
   love.event.quit()
   return main_select_mode
 end
+
 -- quit handling
 function love.quit()
   love.audio.stop()

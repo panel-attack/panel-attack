@@ -55,6 +55,13 @@ function Match.draw_debug_mouse_panel()
   end
 end
 
+
+local P1_win_quads = {}
+local P1_rating_quads = {}
+
+local P2_rating_quads = {}
+local P2_win_quads = {}
+
 function Match.render(self)
 
   if GAME.droppedFrames > 10 and config.show_fps then

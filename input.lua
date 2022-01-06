@@ -556,6 +556,14 @@ player_right =
   nil
 )
 
+-- returns true if the user input to exit a local game in progress
+function menu_escape_game()
+  if GAME.gameIsPaused and menu_escape() then
+    return true
+  end
+  return false
+end
+
 select_being_pressed_ratio = get_being_pressed_for_duration_ratio({"return", "kenter", "z"}, {"swap1"}, super_selection_duration)
 
 return input
