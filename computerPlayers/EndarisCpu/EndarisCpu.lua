@@ -109,15 +109,9 @@ function EndarisCpu.think(self)
                     self:yieldIfTooLong()
                     self:calculateCosts()
                     self:yieldIfTooLong()
-                    -- discard actions that aren't reasonably possible to execute:
-                    for i=#self.actions,1,-1 do
-                        if not StackExtensions.actionIsValid(self.stack, self.actions[i]) then
-                            table.remove(self.actions, i)
-                        end
-                    end
-                    self:yieldIfTooLong()
                 end
                 self:chooseAction()
+                -- self:yieldIfTooLong()
                 -- to avoid having to reinitialise the coroutine a stack projection is generated that holds...
                 -- ...anticipated future snapshots of the stack that can be compared...
                 -- ... to the updates received from the game to see if all happened according to expectations
