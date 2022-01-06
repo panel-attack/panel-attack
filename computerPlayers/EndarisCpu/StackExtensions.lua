@@ -441,6 +441,19 @@ end
 
 function StackExtensions.actionIsValidByPanels(panels, action)
     CpuLog:log(1, "checking if action is valid " .. action:toString())
+
+    for i=1, #action.panels do
+        if action.panels[i].panel.state == "matched"
+        or action.panels[i].panel.state == "popping"
+        or action.panels[i].panel.state == "popped"
+        or action.panels[i].panel.state == "dimmed"
+        or action.panels[i].panel.state == "falling"
+        or action.panels[i].panel.state == "hovering" then
+            CpuLog:log(1, "action marked invalid due to panelstate " .. action.panels[i].panel.state)
+            return false
+        end
+    end
+
     for i=1, #action.panels do
         CpuLog:log(1, "checking if move is valid for " .. action.panels[i]:toString())
         if not StackExtensions.moveIsValidByPanels(panels,

@@ -58,8 +58,7 @@ end
 function Defend.couldBeAClear(self, action)
     for i=1, #action.panels do
         for j=1, #self.garbagePanels do
-            if action.panels[i].vector:IsInAdjacentRow(self.garbagePanels[j].vector)
-             and StackExtensions.actionIsValid(self.cpu.stack, action) then
+            if action.panels[i].vector:IsInAdjacentRow(self.garbagePanels[j].vector) then
                 return true
             end
         end
