@@ -71,6 +71,7 @@ function EndarisCpu.updateStack(self, stack)
         self.realStack = stack
     end
     if stack then
+        CpuLog:log(1, "game_stopwatch realStack: " .. self.realStack.game_stopwatch)
         if self.stack == nil then
             self.stack = StackExtensions.copyStack(stack)
             self:initializeCoroutine()
@@ -84,6 +85,7 @@ function EndarisCpu.updateStack(self, stack)
                 self:initializeCoroutine()
             end
         end
+        CpuLog:log(1, "game_stopwatch local stack: " .. self.stack.game_stopwatch)
     end
 end
 
@@ -355,7 +357,12 @@ function EndarisCpu.executeStrategy(self)
         action = self.strategy:chooseAction()
     end
 
-    self.currentAction = action
+    if self.currentAction then
+        table.insert(self.actionQueue, #self.actionQueue, action)
+    else
+        self.currentAction = action
+    end
+
 end
 
 function EndarisCpu.calculateCosts(self)
@@ -374,18 +381,32 @@ function EndarisCpu.projectPostActionStack(self)
     -- get a valid inputbuffer sequence from self.inputQueue
     -- assign it to the stack
     -- let it run
+    CpuLog:log(1, "running projectPostActionStack")
     local inputbuffer = ""
     local frameCount = self.realStack.game_stopwatch - self.yieldCount
+    CpuLog:log(1, "self.realStack.game_stopwatch: " .. self.realStack.game_stopwatch)
+    CpuLog:log(1, "self.yieldCount: " .. self.yieldCount)
+
     for i=1, #self.inputQueue do
+        CpuLog:log(1, "adding " .. self.inputQueue[i]:toString() .. " to inputbuffer")
         local waitFrameCount = self.inputQueue[i].executionFrame - frameCount - 1
+        frameCount = self.inputQueue[i].executionFrame
+        CpuLog:log(1, "waitFrameCount: " .. waitFrameCount)
         for j=1, waitFrameCount do
             inputbuffer = inputbuffer .. Input.EncodedWait()
         end
         inputbuffer = inputbuffer .. self.inputQueue[i]:getEncoded()
     end
 
+    CpuLog:log(1, "inputbuffer:" .. inputbuffer)
+    CpuLog:log(1, "game_stopwatch local stack before running inputs " .. self.stack.game_stopwatch)
+    CpuLog:log(1, StackExtensions.AsAprilStack(self.stack))
     self.stack.input_buffer = inputbuffer
     self.stack:run()
+    CpuLog:log(1, "game_stopwatch local stack after running inputs " .. self.stack.game_stopwatch)
+    CpuLog:log(1, StackExtensions.AsAprilStack(self.stack))
+
+
 end
 
 

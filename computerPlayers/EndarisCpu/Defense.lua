@@ -14,7 +14,9 @@ function Defend.chooseAction(self)
 
     if #clearActions > 0 then
         local action = Action.getCheapestAction(clearActions, self.cpu.stack)
-        CpuLog:log(1, "found action to defend " .. action:toString())
+        if action then
+            CpuLog:log(1, "found action to defend " .. action:toString())
+        end
         return action
     else
         return nil
