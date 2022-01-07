@@ -20,7 +20,28 @@ Input = class(function(self, bit, executionFrame)
     self.bit = bit
     -- executionFrame is assumed to be the framenumber on the stack
     self.executionFrame = executionFrame
+    self.name = Input.getNameByBit(bit)
 end)
+
+function Input.getNameByBit(bit)
+    if bit == wait then
+        return "Wait"
+    elseif bit == right then
+        return "Right"
+    elseif bit == left then
+        return "Left"
+    elseif bit == down then
+        return "Down"
+    elseif bit == up then
+        return "Up"
+    elseif bit == swap then
+        return "Swap"
+    elseif bit == raise then
+        return "Raise"
+    else
+        return tostring(bit)
+    end
+end
 
 function Input.getEncoded(self)
     return base64encode[self.bit + 1]
@@ -77,5 +98,5 @@ function Input.Swap(executionFrame)
 end
 
 function Input.toString(self)
-    return  "Input " .. self.bit .. " at executionFrame " .. self.executionFrame
+    return  "Input " .. self.name .. " at executionFrame " .. self.executionFrame
 end
