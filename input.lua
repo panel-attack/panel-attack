@@ -1,4 +1,5 @@
 require("util")
+local logger = require("logger")
 
 -- The class that holds all input mappings and state
 -- TODO: move all state variables in here
@@ -214,6 +215,7 @@ function love.keypressed(key, scancode, rep)
     keys[key] = 0
   end
   this_frame_keys[key] = true
+  logger.debug("key pressed: " .. key)
 
   if input.acceptingPlayerInputConfigurationAssignments then
     for index, inputConfiguration in ipairs(input.availableInputConfigurationsToAssign) do
