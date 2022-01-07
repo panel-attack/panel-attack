@@ -195,6 +195,7 @@ function Action.getCheapestAction(actions, stack)
             end
         )
 
+        -- TODO Endaris: technically this should already be possible to remove but the game lags as a result, research needed
         for i = #actions, 1, -1 do
             CpuLog:log(6, actions[i]:toString())
             -- this is a crutch cause sometimes we can find actions that are already completed and then we choose them cause they're already...complete

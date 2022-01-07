@@ -61,19 +61,23 @@ function EndarisCpu.initializeConfig(self, config)
     CpuLog = CpuLogger(self.config.Log)
     self.config.ReadingBehaviour = config['ReadingBehaviour']
     -- config is supposed to be in frames but internally s are being used
-    self.config.MoveRateLimit = round(config['MoveRateLimit'] / 60, 3)
-    self.config.MoveSwapRateLimit = round(config['MoveSwapRateLimit'] / 60, 3)
+    self.config.MoveRateLimit = config['MoveRateLimit']
+    self.config.MoveSwapRateLimit = config['MoveSwapRateLimit']
     self.config.DefragmentationPercentageThreshold = config['DefragmentationPercentageThreshold']
 end
 
 function EndarisCpu.updateStack(self, stack)
+    if self.realStack == nil then
+        self.realStack = stack
+    end
     if stack then
         if self.stack == nil then
             self.stack = StackExtensions.copyStack(stack)
             self:initializeCoroutine()
         else
             -- compare stack with self.stack at the projected time
-            if not StackExtensions.stacksAreEqual(self.stack, stack) then
+            if --stack.game_stopwatch == self.stack.game_stopwatch and 
+            not StackExtensions.stacksAreEqual(self.stack, stack) then
                 -- discard queued actions in favor of recalculation
                 self.actionQueue = {}
                 self.stack = StackExtensions.copyStack(stack)
@@ -89,6 +93,7 @@ end
 
 function EndarisCpu.think(self)
     self.startTime = os.clock()
+    self.yieldCount = 0
     CpuLog:log(3, "starting coroutine at " .. self.startTime)
 
     -- Never terminate the coroutine
@@ -111,11 +116,11 @@ function EndarisCpu.think(self)
                     self:yieldIfTooLong()
                 end
                 self:chooseAction()
-                -- self:yieldIfTooLong()
+                self:yieldIfTooLong()
                 -- to avoid having to reinitialise the coroutine a stack projection is generated that holds...
                 -- ...anticipated future snapshots of the stack that can be compared...
                 -- ... to the updates received from the game to see if all happened according to expectations
-                --self:projectPostActionStack()
+                self:projectPostActionStack()
             end
         end
         CpuLog:log(3, "yielding after finishing the thinking process at " .. os.clock())
@@ -132,6 +137,7 @@ function EndarisCpu.yieldIfTooLong(self)
   -- and use the rest for the CPU calcs
   if timeSpent > 0.083 then
     CpuLog:log(6, "Computer - timeSpent " .. round(timeSpent, 4) .. ", resuming thinking later")
+    self.yieldCount = (self.yieldCount or 0) + 1
     coroutine.yield()
     self.startTime = os.clock()
   end
@@ -169,8 +175,8 @@ end
 
 function EndarisCpu.input(self)
     local nextInput = table.remove(self.inputQueue, 1)
-    if nextInput.executionFrame <= (os.clock() or 0) then
-        if nextInput.name == 'WaitTimeSpan' and nextInput.to > os.clock() then
+    if nextInput.executionFrame <= (self.realStack.game_stopwatch or 0) then
+        if nextInput.name == 'WaitTimeSpan' and nextInput.to > self.realStack.game_stopwatch then
             -- still need that one
             table.insert(self.inputQueue, 1, nextInput)
         end
@@ -222,7 +228,7 @@ function EndarisCpu.getPostActionWaitTime(self)
         end
     end
 
-    return waitFrames / 60
+    return waitFrames
 end
 
 Strategy = class(function(strategy, name, cpu)
@@ -276,9 +282,9 @@ function EndarisCpu.assignExecutionFramesToAction(self, action)
     -- first determine the earliest possible input based on the last input
     local executionFrame = 0
     if action.executionPath[1].isMovement() and (lastInput == nil or lastInput.isMovement()) then
-        executionFrame = math.max(lastInput.executionFrame + self.config.MoveRateLimit, (os.clock() or 0)) + self:getPostActionWaitTime()
+        executionFrame = math.max(lastInput.executionFrame + self.config.MoveRateLimit, (self.realStack.game_stopwatch or 0)) + self:getPostActionWaitTime()
     else
-        executionFrame = math.max(lastInput.executionFrame + self.config.MoveSwapRateLimit, (os.clock() or 0)) + self:getPostActionWaitTime()
+        executionFrame = math.max(lastInput.executionFrame + self.config.MoveSwapRateLimit, (self.realStack.game_stopwatch or 0)) + self:getPostActionWaitTime()
     end
 
     CpuLog:log(3, "setting executionframe for first input to " .. executionFrame)
@@ -362,6 +368,24 @@ function EndarisCpu.estimateCost(self, action)
     --dummy value for testing purposes
     --self.stack.cursor_pos
     action.estimatedCost = 1
+end
+
+function EndarisCpu.projectPostActionStack(self)
+    -- get a valid inputbuffer sequence from self.inputQueue
+    -- assign it to the stack
+    -- let it run
+    local inputbuffer = ""
+    local frameCount = self.realStack.game_stopwatch - self.yieldCount
+    for i=1, #self.inputQueue do
+        local waitFrameCount = self.inputQueue[i].executionFrame - frameCount - 1
+        for j=1, waitFrameCount do
+            inputbuffer = inputbuffer .. Input.EncodedWait()
+        end
+        inputbuffer = inputbuffer .. self.inputQueue[i]:getEncoded()
+    end
+
+    self.stack.input_buffer = inputbuffer
+    self.stack:run()
 end
 
 
