@@ -603,7 +603,7 @@ function Stack.set_puzzle_state(self, pstr, n_turns, do_countdown, puzzleType)
 end
 
 function Stack.puzzle_done(self)
-  if not P1.do_countdown then
+  if not self.do_countdown then
     -- For now don't require active panels to be 0, we will still animate in game over, 
     -- and we need to win immediately to avoid the failure below in the chain case.
     --if P1.n_active_panels == 0 then
@@ -628,17 +628,17 @@ end
 
 
 function Stack.puzzle_failed(self)
-  if not P1.do_countdown then
+  if not self.do_countdown then
     if self.puzzleType == "moves" then
-      if P1.n_active_panels == 0 and P1.prev_active_panels == 0 then
-        return P1.puzzle_moves == 0
+      if self.n_active_panels == 0 and self.prev_active_panels == 0 then
+        return self.puzzle_moves == 0
       end
     elseif self.puzzleType and self.puzzleType == "chain" then
-      if P1.n_active_panels == 0 and P1.prev_active_panels == 0 and #P1.analytic.data.reached_chains == 0 and P1.analytic.data.destroyed_panels > 0 then
+      if self.n_active_panels == 0 and self.prev_active_panels == 0 and #self.analytic.data.reached_chains == 0 and self.analytic.data.destroyed_panels > 0 then
         -- We finished matching but never made a chain -> fail
         return true
       end
-      if #P1.analytic.data.reached_chains > 0 and P1.n_chain_panels == 0 then
+      if #self.analytic.data.reached_chains > 0 and self.n_chain_panels == 0 then
         -- We achieved a chain, finished chaining, but haven't won yet -> fail
         return true
       end
@@ -730,7 +730,7 @@ end
 
 -- Update everything for the stack based on inputs. Will update many times if needed to catch up.
 function Stack.run(self, timesToRun)
-  if GAME.game_is_paused then
+  if GAME.gameIsPaused then
     return
   end
 
@@ -1513,7 +1513,7 @@ function Stack.PdP(self)
     end 
 
     -- Update Music
-    if not GAME.game_is_paused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
+    if not GAME.gameIsPaused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
       if self:game_ended() == false and self.canvas ~= nil then
         if self.do_countdown then
           if SFX_Go_Play == 1 then
@@ -1553,46 +1553,41 @@ function Stack.PdP(self)
 
           if dynamicMusic then
             local fadeLength = 60
+            if not self.fade_music_clock then
+              self.fade_music_clock = fadeLength -- start fully faded in
+            end
 
             local normalMusic = {musics_to_use["normal_music"], musics_to_use["normal_music_start"]}
             local dangerMusic = {musics_to_use["danger_music"], musics_to_use["danger_music_start"]}
               
-            if not self.fade_music_clock or #currently_playing_tracks == 0 then
-              self.fade_music_clock = fadeLength
+            if #currently_playing_tracks == 0 then
               find_and_add_music(musics_to_use, "normal_music")
               find_and_add_music(musics_to_use, "danger_music")
-              setFadePercentageForGivenTracks(1, normalMusic)
-              setFadePercentageForGivenTracks(0, dangerMusic)
-            else 
-              if current_music_is_casual ~= wantsDangerMusic then
-                current_music_is_casual = not current_music_is_casual
+            end
+          
+            -- Do we need to switch music?
+            if current_music_is_casual ~= wantsDangerMusic then
+              current_music_is_casual = not current_music_is_casual
 
-                if self.fade_music_clock >= fadeLength then
-                  self.fade_music_clock = 0
-                else
-                  -- switched music before we fully faded, so start part way through
-                  self.fade_music_clock = fadeLength - self.fade_music_clock
-                end
-                if wantsDangerMusic then
-                  setFadePercentageForGivenTracks(1, normalMusic)
-                  setFadePercentageForGivenTracks(0, dangerMusic)
-                else
-                  setFadePercentageForGivenTracks(0, normalMusic)
-                  setFadePercentageForGivenTracks(1, dangerMusic)
-                end
+              if self.fade_music_clock >= fadeLength then
+                self.fade_music_clock = 0 -- Do a full fade
               else
-                if self.fade_music_clock < fadeLength then
-                  self.fade_music_clock = self.fade_music_clock + 1
-                  local fadePercentage = self.fade_music_clock / fadeLength
-                  if wantsDangerMusic then
-                    setFadePercentageForGivenTracks(1 - fadePercentage, normalMusic)
-                    setFadePercentageForGivenTracks(fadePercentage, dangerMusic)
-                  else
-                    setFadePercentageForGivenTracks(fadePercentage, normalMusic)
-                    setFadePercentageForGivenTracks(1 - fadePercentage, dangerMusic)
-                  end
-                end
+                -- switched music before we fully faded, so start part way through
+                self.fade_music_clock = fadeLength - self.fade_music_clock
               end
+            end
+
+            if self.fade_music_clock < fadeLength then
+              self.fade_music_clock = self.fade_music_clock + 1
+            end
+
+            local fadePercentage = self.fade_music_clock / fadeLength
+            if wantsDangerMusic then
+              setFadePercentageForGivenTracks(1 - fadePercentage, normalMusic)
+              setFadePercentageForGivenTracks(fadePercentage, dangerMusic)
+            else
+              setFadePercentageForGivenTracks(fadePercentage, normalMusic)
+              setFadePercentageForGivenTracks(1 - fadePercentage, dangerMusic)
             end
           else -- classic music
             if wantsDangerMusic then --may have to rethink this bit if we do more than 2 players

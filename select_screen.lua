@@ -172,8 +172,8 @@ function select_screen.main()
 
   -- Setup settings for Main Character Select for 2 Player over Network
   if select_screen.character_select_mode == "2p_net_vs" then
-    P1 = nil
-    P2 = nil
+    GAME:clearMatch()
+    
     drop_old_data_messages() -- Starting a new game, clear all old data messages from the previous game
     logger.debug("Reseting player stacks")
 

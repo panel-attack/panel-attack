@@ -110,6 +110,8 @@ function replay_browser.main()
 
   coroutine.yield()
 
+  GAME.renderDuringPause = true
+
   while true do
     local ret = nil
 

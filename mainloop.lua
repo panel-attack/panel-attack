@@ -386,10 +386,11 @@ end
 
 function Stack.handle_pause(self)
   if menu_pause() then
-    GAME.game_is_paused = not GAME.game_is_paused
+    GAME.gameIsPaused = not GAME.gameIsPaused
 
-    if GAME.game_is_paused then
-      stop_the_music()
+    setMusicPaused(GAME.gameIsPaused)
+
+    if GAME.gameIsPaused then
       reset_filters()
     else
       use_current_stage()
@@ -441,6 +442,7 @@ function main_endless(...)
         P1:run()
         P1:handle_pause()
         if menu_escape_game() then
+          GAME:clearMatch()
           ret = {main_dumb_transition, {main_endless_setup, "", 0, 0}}
         end
       end
@@ -480,6 +482,7 @@ function main_time_attack(...)
           P1:run()
           P1:handle_pause()
           if menu_escape_game() then
+            GAME:clearMatch()
             ret = {main_dumb_transition, {main_timeattack_setup, "", 0, 0}}
           end
         end
@@ -987,6 +990,8 @@ function main_local_vs()
   use_current_stage()
   pick_use_music_from()
   local end_text = nil
+  local ret = nil
+
   while true do
     GAME.match:render()
     wait()
@@ -997,23 +1002,27 @@ function main_local_vs()
         assert((P1.CLOCK == P2.CLOCK) or GAME.match:matchOutcome(), "should run at same speed: " .. P1.CLOCK .. " - " .. P2.CLOCK)
         P1:handle_pause()
         if menu_escape_game() then
+          GAME:clearMatch()
           ret = {main_dumb_transition, {select_screen.main, "", 0, 0}}
         end
       end
     )
 
-    --TODO: refactor this so it isn't duplicated
-    local winSFX = nil
-    local end_text = nil
-    local matchOutcome = GAME.match:matchOutcome()
-    if matchOutcome then
-      end_text = matchOutcome["end_text"]
-      winSFX = matchOutcome["winSFX"]
-      outcome_claim = matchOutcome["outcome_claim"]
-    end
+    if not ret then
+      local winSFX = nil
+      local end_text = nil
+      local matchOutcome = GAME.match:matchOutcome()
+      if matchOutcome then
+        end_text = matchOutcome["end_text"]
+        winSFX = matchOutcome["winSFX"]
+        outcome_claim = matchOutcome["outcome_claim"]
+      end
 
-    if end_text then
-      return game_over_transition, {select_screen.main, end_text, winSFX}
+      if end_text then
+        return game_over_transition, {select_screen.main, end_text, winSFX}
+      end
+    else
+      return unpack(ret)
     end
   end
 end
@@ -1043,18 +1052,19 @@ function main_local_vs_yourself()
           P1:run()
           P1:handle_pause()
           if menu_escape_game() then
+            GAME:clearMatch()
             ret = {main_dumb_transition, {main_local_vs_yourself_setup, "", 0, 0}}
           end
         end
       end
     )
+    if ret then
+      return unpack(ret)
+    end
     if P1:game_ended() then
       GAME.scores:saveVsSelfScoreForLevel(P1.analytic.data.sent_garbage_lines, P1.level)
 
       return game_over_transition, {select_screen.main, nil, P1:pick_win_sfx()}
-    end
-    if ret then
-      return unpack(ret)
     end
   end
 end
@@ -1126,7 +1136,6 @@ function main_replay_vs()
         end
         if run or this_frame_keys["\\"] then
           P1:run()
-          P1:handle_pause()
           P2:run()
         end
       end
@@ -1181,9 +1190,6 @@ function main_replay_endless()
         if menu_escape() then
           ret = {main_dumb_transition, {replay_browser.main, "", 0, 0}}
         end
-        if menu_enter() then
-          run = not run
-        end
         if this_frame_keys["\\"] then
           run = false
         end
@@ -1193,7 +1199,6 @@ function main_replay_endless()
             ret = {game_over_transition, {replay_browser.main, end_text, P1:pick_win_sfx()}}
           end
           P1:run()
-          P1:handle_pause()
         end
       end
     )
@@ -1247,7 +1252,6 @@ function main_replay_puzzle()
             end
           end
           P1:run()
-          P1:handle_pause()
         end
       end
     )
@@ -1330,6 +1334,7 @@ function make_main_puzzle(puzzleSet, awesome_idx)
               P1:run()
               P1:handle_pause()
               if menu_escape_game() then
+                GAME:clearMatch()
                 ret = {main_dumb_transition, {main_select_puzz, "", 0, 0}}
               end
             end
@@ -1583,7 +1588,7 @@ end
 
 -- returns true if the user input to exit a local game in progress
 function menu_escape_game()
-  if GAME.game_is_paused and menu_escape() then
+  if GAME.gameIsPaused and menu_escape() then
     return true
   end
   return false
@@ -1591,7 +1596,6 @@ end
 
 -- dumb transition that shows a black screen
 function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
-  GAME.game_is_paused = false
   stop_the_music()
   winnerSFX = winnerSFX or nil
   if not SFX_mute then
@@ -1636,14 +1640,11 @@ end
 
 -- show game over screen, last frame of gameplay
 function game_over_transition(next_func, text, winnerSFX, timemax)
-  GAME.game_is_paused = false
 
   timemax = timemax or -1 -- negative values means the user needs to press enter/escape to continue
   text = text or ""
-  button_text = loc("continue_button")
-  button_text = button_text or ""
-
-  timemin = 60 -- the minimum amount of frames the game over screen will be displayed for
+  local button_text = loc("continue_button") or ""
+  local timemin = 60 -- the minimum amount of frames the game over screen will be displayed for
 
   local t = 0 -- the amount of frames that have passed since the game over screen was displayed
   local font = love.graphics.getFont()
@@ -1654,6 +1655,13 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
     SFX_GameOver_Play = 0
   else 
     winnerTime = 0
+  end
+
+  -- The music may have already been partially faded due to dynamic music or something else,
+  -- record what volume it was so we can fade down from that.
+  local initialMusicVolumes = {}
+  for k, v in pairs(currently_playing_tracks) do
+    initialMusicVolumes[v] = v:getVolume()
   end
 
   while true do
@@ -1667,7 +1675,11 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
         -- Fade the music out over time
         local fadeMusicLength = 3 * 60
         if t <= fadeMusicLength then
-          setMusicFadePercentage((fadeMusicLength - t) / fadeMusicLength)
+          local percentage = (fadeMusicLength - t) / fadeMusicLength
+          for k, v in pairs(initialMusicVolumes) do
+            local volume = v * percentage
+            setFadePercentageForGivenTracks(volume, {k}, true)
+          end
         else
           if t == fadeMusicLength + 1 then
             setMusicFadePercentage(1) -- reset the music back to normal config volume
@@ -1718,9 +1730,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
       end
     )
     if ret then
-      GAME.match = nil
-      P1 = nil
-      P2 = nil
+      GAME:clearMatch()
       return unpack(ret)
     end
   end
