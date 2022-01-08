@@ -37,11 +37,17 @@ local __old_jp_handler = love.handlers[jpname]
 local __old_jr_handler = love.handlers[jrname]
 love.handlers[jpname] = function(a, b)
   __old_jp_handler(a, b)
-  love.keypressed(input:getJoystickGUID(a) .. "-" .. b)
+  local joystickID = input:getJoystickGUID(a)
+  if joystickID then
+    love.keypressed(joystickID .. "-" .. b)
+  end
 end
 love.handlers[jrname] = function(a, b)
   __old_jr_handler(a, b)
-  love.keyreleased(input:getJoystickGUID(a) .. "-" .. b)
+  local joystickID = input:getJoystickGUID(a)
+  if joystickID then
+    love.keyreleased(joystickID .. "-" .. b)
+  end
 end
 
 local prev_ax = {}
@@ -133,16 +139,19 @@ function Input.cleanNameForButton(self, buttonString)
 
   for index, joystick in ipairs(love.joystick.getJoysticks()) do
     local joystickID = self:getJoystickGUID(joystick)
-    local joystickConnectedIndex = joystick:getID()
-    local resultString, count = string.gsub(buttonString, "^(" .. joystickID .. "%-)(.*)$", "Controller " .. joystickConnectedIndex .. " %2")
-    if count > 0 then
-      result = resultString
-      break
+    if joystickID then
+      local joystickConnectedIndex = joystick:getID()
+      local resultString, count = string.gsub(buttonString, "^(" .. joystickID .. "%-)(.*)$", "Controller " .. joystickConnectedIndex .. " %2")
+      if count > 0 then
+        result = resultString
+        break
+      end
     end
   end
 
   if not result then
-    local resultString, count = string.gsub(buttonString, "^(%w+%-)(.*)$", "Unplugged Controller %2")
+    -- Match any number of letters, numbers, and # followed by a dash and replace with "Unplogged Controller"
+    local resultString, count = string.gsub(buttonString, "^([%w%d%#]+%-)(.*)$", "Unplugged Controller %2")
     if count > 0 then
       result = resultString
     else
@@ -163,7 +172,8 @@ function Input.getJoystickGUID(self, joystick)
   local searchGUID = joystick:getGUID()
   local numberOfMatchingJoysticks = 0
   local isFirst = true
-  for k, v in ipairs(love.joystick.getJoysticks()) do
+  local joysticks = love.joystick.getJoysticks()
+  for k, v in ipairs(joysticks) do
     if v:getGUID() == searchGUID then
       numberOfMatchingJoysticks = numberOfMatchingJoysticks + 1
       if connectedIndex == v:getID() then
@@ -175,8 +185,6 @@ function Input.getJoystickGUID(self, joystick)
       end
     end
   end
-
-  error("Expected to find joystick")
   return nil
 end
 
@@ -193,14 +201,16 @@ function joystick_ax()
   local joysticks = love.joystick.getJoysticks()
   for k, v in ipairs(joysticks) do
     local joystickID = input:getJoystickGUID(v)
-    local axes = {v:getAxes()}
-    for idx, value in ipairs(axes) do
-      axis_to_button(joystickID, idx, value)
-    end
+    if joystickID then
+      local axes = {v:getAxes()}
+      for idx, value in ipairs(axes) do
+        axis_to_button(joystickID, idx, value)
+      end
 
-    local hats = {love.joystick.getHats(v)}
-    for idx, value in ipairs(hats) do
-      hat_to_button(joystickID, idx, value)
+      local hats = {love.joystick.getHats(v)}
+      for idx, value in ipairs(hats) do
+        hat_to_button(joystickID, idx, value)
+      end
     end
   end
 end
