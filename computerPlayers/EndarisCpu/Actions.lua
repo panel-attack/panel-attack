@@ -246,7 +246,7 @@ Raise =
         action.name = 'Raise'
         action.estimatedCost = 0
         action.executionPath =
-            {Input.Raise(executionFrame), Input.WaitTimeSpan(executionFrame, executionFrame + 10 / 60)}
+            {Input.Raise(), Input.WaitTimeSpan(0, 9)}
             -- the wait is a crutch to avoid a double raise
         action.popsPanels = false
     end,

@@ -11,8 +11,8 @@ CpuLog = nil
 
 local cpuConfigs = {
     ['DevConfig'] = {
-        ReadingBehaviour = 'WaitAll',
-        Log = 6,
+        ReadingBehaviour = 'WaitMatch',
+        Log = 4,
         MoveRateLimit = 10,
         MoveSwapRateLimit = 10,
         DefragmentationPercentageThreshold = 0.3
@@ -32,13 +32,15 @@ EndarisCpu = class(function(self)
     self.currentAction = nil
     self.actionQueue = {}
     self.inputQueue = {}
+    self.simulationQueue = {}
     self.stack = nil
     self.enable_stealth = true
     self.enable_inserts = true
     self.enable_slides = false
     self.enable_catches = false
     self.enable_doubleInsert = false
-    self.lastInput = Input.WaitTimeSpan(-180, -170)
+    self.lastInput = Input.WaitTimeSpan(170, 180)
+    self.lookAheadSnapShots = {}
 end)
 
 function EndarisCpu.getConfigs()
@@ -66,26 +68,51 @@ function EndarisCpu.initializeConfig(self, config)
     self.config.DefragmentationPercentageThreshold = config['DefragmentationPercentageThreshold']
 end
 
-function EndarisCpu.updateStack(self, stack)
+function EndarisCpu.updateStack(self, realStack)
+    CpuLog:log(1, "entering function updateStack")
     if self.realStack == nil then
-        self.realStack = stack
+        self.realStack = realStack
     end
-    if stack then
-        CpuLog:log(1, "game_stopwatch realStack: " .. self.realStack.game_stopwatch)
+    if realStack then
+        CpuLog:log(1, "CLOCK realStack: " .. self.realStack.CLOCK)
         if self.stack == nil then
-            self.stack = StackExtensions.copyStack(stack)
+            self.stack = StackExtensions.copyStack(realStack)
             self:initializeCoroutine()
         else
-            -- compare stack with self.stack at the projected time
-            if --stack.game_stopwatch == self.stack.game_stopwatch and 
-            not StackExtensions.stacksAreEqual(self.stack, stack) then
-                -- discard queued actions in favor of recalculation
-                self.actionQueue = {}
-                self.stack = StackExtensions.copyStack(stack)
-                self:initializeCoroutine()
+            CpuLog:log(1, "CLOCK local stack: " .. self.stack.CLOCK)
+            if #self.lookAheadSnapShots > 0 then
+                CpuLog:log(1, "Found " .. #self.lookAheadSnapShots .. " lookAheadSnapshots")
+                local snapShot = self.lookAheadSnapShots[1]
+
+                -- compare stack with the snapshot at the snapshot's time
+                if realStack.CLOCK >= snapShot.CLOCK then
+                    CpuLog:log(1, "Real stack caught up with oldest snapshot")
+                    if not StackExtensions.stacksAreEqual(snapShot, realStack) then
+                        -- discard queued actions in favor of recalculation
+                        CpuLog:log(1, "Found mismatch between realStack and simulated snapshot, discarding planned actions and simulated stack and restart the coroutine on the new stack copy")
+                        self.lookAheadSnapShots = {}
+                        self.actionQueue = {}
+                        self.inputQueue = {} --makes sense cause we just finished an action
+                        self.stack = StackExtensions.copyStack(realStack)
+                        self:initializeCoroutine()
+                    else
+                        CpuLog:log(1, "RealStack and simulated snapshot are equal, removing snapshot and resuming with simulated stack")
+                        -- snapShot has been reached with the expected result
+                        table.remove(self.lookAheadSnapShots, 1)
+                    end
+                else
+                    --CpuLog:log(1, "Real stack has not yet caught up with oldest snapshot")
+                    if not self.thinkRoutine or coroutine.status(self.thinkRoutine) == "dead" then
+                        CpuLog:log(1, "Coroutine has terminated for whatever reason, restarting the think process")
+                        -- currently not thinking, might as well plan out more moves in the future
+                        self:initializeCoroutine()
+                    end
+                end
+            else
+                CpuLog:log(1, "No lookAheadSnapshots found, coroutine expected to be suspended")
+                assert(coroutine.status(self.thinkRoutine) == "suspended")
             end
         end
-        CpuLog:log(1, "game_stopwatch local stack: " .. self.stack.game_stopwatch)
     end
 end
 
@@ -104,25 +131,23 @@ function EndarisCpu.think(self)
 
         --this means the game is still in progress
         if gameResult == nil then
-            if self.stack and #self.inputQueue == 0 then
+            if self.stack then
                 if self.currentAction then
                     self:finalizeCurrentAction()
                 end
-        
-                if #self.actionQueue == 0 then
+                -- discard actions of previous loop
+                self.actions = {}
+
+                if #self.lookAheadSnapShots < 3 then
                     self.strategy = self:chooseStrategy()
                     self:yieldIfTooLong()
-                    self.actions = StackExtensions.findActions(self.stack)
+                    self:chooseAction()
                     self:yieldIfTooLong()
-                    self:calculateCosts()
-                    self:yieldIfTooLong()
+                    -- to avoid having to reinitialise the coroutine a stack projection is generated that holds...
+                    -- ...anticipated future snapshots of the stack that can be compared...
+                    -- ... to the updates received from the game to see if all happened according to expectations
+                    self:simulatePostActionStack()
                 end
-                self:chooseAction()
-                self:yieldIfTooLong()
-                -- to avoid having to reinitialise the coroutine a stack projection is generated that holds...
-                -- ...anticipated future snapshots of the stack that can be compared...
-                -- ... to the updates received from the game to see if all happened according to expectations
-                self:projectPostActionStack()
             end
         end
         CpuLog:log(3, "yielding after finishing the thinking process at " .. os.clock())
@@ -169,7 +194,7 @@ function EndarisCpu.readyToInput(self)
             if self.stack.countdown_timer and self.stack.countdown_timer > 0 and not Input.isMovement(self.inputQueue[1]) then
                 return false
             else --either we're just moving or countdown is already over so we can actually do the thing
-                return true
+                return self.stack.CLOCK > 0
             end
         end
     end
@@ -177,8 +202,8 @@ end
 
 function EndarisCpu.input(self)
     local nextInput = table.remove(self.inputQueue, 1)
-    if nextInput.executionFrame <= (self.realStack.game_stopwatch or 0) then
-        if nextInput.name == 'WaitTimeSpan' and nextInput.to > self.realStack.game_stopwatch then
+    if nextInput.executionFrame <= self.realStack.CLOCK then
+        if nextInput.name == 'WaitTimeSpan' and nextInput.to > self.realStack.CLOCK then
             -- still need that one
             table.insert(self.inputQueue, 1, nextInput)
         end
@@ -247,7 +272,7 @@ function EndarisCpu.chooseAction(self)
     if #self.actionQueue > 0 then
         local action = table.remove(self.actionQueue, 1)
         CpuLog:log(1, "Taking action out of the actionQueue")
-        CpuLog:log(1, action:toString())
+        CpuLog:log(1, "Setting the current action to " .. action:toString())
         self.currentAction = action
         if not self.currentAction.executionPath or #self.currentAction.executionPath == 0 then
             self.currentAction:calculateExecution(self.stack.cur_row, self.stack.cur_col)
@@ -258,9 +283,9 @@ function EndarisCpu.chooseAction(self)
     end
 
     if self.currentAction then
-        CpuLog:log(1, 'chose following action')
-        CpuLog:log(1, self.currentAction:toString())
-        self:appendToInputQueue(self.currentAction)
+        self:assignExecutionFramesToAction(self.currentAction)
+        EndarisCpu.appendActionToQueue(self.simulationQueue, self.currentAction)
+        EndarisCpu.appendActionToQueue(self.inputQueue, self.currentAction)
     else
         CpuLog:log(1, 'chosen action is nil')
     end
@@ -284,9 +309,9 @@ function EndarisCpu.assignExecutionFramesToAction(self, action)
     -- first determine the earliest possible input based on the last input
     local executionFrame = 0
     if action.executionPath[1].isMovement() and (lastInput == nil or lastInput.isMovement()) then
-        executionFrame = math.max(lastInput.executionFrame + self.config.MoveRateLimit, (self.realStack.game_stopwatch or 0)) + self:getPostActionWaitTime()
+        executionFrame = math.max(lastInput.executionFrame + self.config.MoveRateLimit, (self.realStack.CLOCK or 0)) + self:getPostActionWaitTime()
     else
-        executionFrame = math.max(lastInput.executionFrame + self.config.MoveSwapRateLimit, (self.realStack.game_stopwatch or 0)) + self:getPostActionWaitTime()
+        executionFrame = math.max(lastInput.executionFrame + self.config.MoveSwapRateLimit, (self.realStack.CLOCK or 0)) + self:getPostActionWaitTime()
     end
 
     CpuLog:log(3, "setting executionframe for first input to " .. executionFrame)
@@ -294,24 +319,30 @@ function EndarisCpu.assignExecutionFramesToAction(self, action)
 
     -- base all the others consecutively on the first executionFrame
     for i=2,#action.executionPath do
-        local lastExecutionFrame = action.executionPath[i-1].executionFrame
-        executionFrame = 0
-        if action.executionPath[i-1].isMovement() and action.executionPath[i].isMovement() then
+        local lastExecutionFrame = action.executionPath[i-1].tillFrame
+
+        if action.executionPath[i-1].name == "Wait" or action.executionPath[i].name == "Wait" then
+            executionFrame = lastExecutionFrame + 1
+        elseif action.executionPath[i-1].isMovement() and action.executionPath[i].isMovement() then
             executionFrame = lastExecutionFrame + self.config.MoveRateLimit
         else
             executionFrame = lastExecutionFrame + self.config.MoveSwapRateLimit
         end
-        action.executionPath[i] = Input(action.executionPath[i].bit, executionFrame)
+
+        if action.executionPath[i].tillFrame and action.executionPath[i].tillFrame > action.executionPath[i].executionFrame then
+            local duration = action.executionPath[i].tillFrame - action.executionPath[i].executionFrame
+            action.executionPath[i] = Input(action.executionPath[i].bit, executionFrame, executionFrame + duration)
+        else
+            action.executionPath[i] = Input(action.executionPath[i].bit, executionFrame)
+        end
     end
 end
 
-function EndarisCpu.appendToInputQueue(self, action)
-    CpuLog:log(1, action:toString())
-    self:assignExecutionFramesToAction(action)
+function EndarisCpu.appendActionToQueue(queue, action)
     for i=1,#action.executionPath do
-        CpuLog:log(3, "Inserting following input into the inputQueue: ")
+        CpuLog:log(3, "Inserting following input into the queue: ")
         CpuLog:log(3, action.executionPath[i]:toString())
-        table.insert(self.inputQueue, #self.inputQueue + 1, action.executionPath[i])
+        table.insert(queue, #queue + 1, action.executionPath[i])
     end
 end
 
@@ -343,8 +374,8 @@ function EndarisCpu.executeStrategy(self)
 
     if action == nil and self.strategy.name == "Defend" then
         -- check if it wouldn't be better to defrag now so that one may get into a defendable position again
-        if StackExtensions.getFragmentationPercentage(self.stack) > self.config.DefragmentationPercentageThreshold * 0.8 then
-        CpuLog:log(1, "found no action to defend")
+        if StackExtensions.getFragmentationPercentage(self.stack) > self.config.DefragmentationPercentageThreshold * 0.5 then
+            CpuLog:log(1, "found no action to defend")
             self.strategy = Defragment(self)
             action = self.strategy:chooseAction()
         end
@@ -357,56 +388,66 @@ function EndarisCpu.executeStrategy(self)
         action = self.strategy:chooseAction()
     end
 
-    if self.currentAction then
+    if self.currentAction and action then
+        CpuLog:log(1, "appending action " .. action:toString() .. " to the actionQueue")
         table.insert(self.actionQueue, #self.actionQueue, action)
     else
+        if action then
+            CpuLog:log(1, "setting the current action to " .. action:toString())
+        else
+            CpuLog:log(1, "setting the current action to nil, couldn't choose an action")
+        end
         self.currentAction = action
     end
-
 end
 
-function EndarisCpu.calculateCosts(self)
-    for i = 1, #self.actions do
-        self.actions[i]:calculateCost()
-    end
-end
-
-function EndarisCpu.estimateCost(self, action)
-    --dummy value for testing purposes
-    --self.stack.cursor_pos
-    action.estimatedCost = 1
-end
-
-function EndarisCpu.projectPostActionStack(self)
-    -- get a valid inputbuffer sequence from self.inputQueue
+function EndarisCpu.simulatePostActionStack(self)
+    -- get a valid inputbuffer sequence from self.simulationQueue
     -- assign it to the stack
     -- let it run
-    CpuLog:log(1, "running projectPostActionStack")
+    CpuLog:log(1, "running simulatePostActionStack")
     local inputbuffer = ""
-    local frameCount = self.realStack.game_stopwatch - self.yieldCount
-    CpuLog:log(1, "self.realStack.game_stopwatch: " .. self.realStack.game_stopwatch)
+    local frameCount = self.stack.CLOCK - self.yieldCount
+    CpuLog:log(1, "self.stack.CLOCK: " .. self.stack.CLOCK)
     CpuLog:log(1, "self.yieldCount: " .. self.yieldCount)
 
-    for i=1, #self.inputQueue do
-        CpuLog:log(1, "adding " .. self.inputQueue[i]:toString() .. " to inputbuffer")
-        local waitFrameCount = self.inputQueue[i].executionFrame - frameCount - 1
-        frameCount = self.inputQueue[i].executionFrame
+    for i=1, #self.simulationQueue do
+        CpuLog:log(1, "adding " .. self.simulationQueue[i]:toString() .. " to inputbuffer")
+        
+        local waitFrameCount = math.max(self.simulationQueue[i].executionFrame - frameCount - 1, 0)
+        
         CpuLog:log(1, "waitFrameCount: " .. waitFrameCount)
         for j=1, waitFrameCount do
             inputbuffer = inputbuffer .. Input.EncodedWait()
         end
-        inputbuffer = inputbuffer .. self.inputQueue[i]:getEncoded()
+        
+        frameCount = self.simulationQueue[i].executionFrame
+        if self.simulationQueue[i].name == "Wait" then
+            while frameCount <= self.simulationQueue[i].tillFrame do
+                frameCount = frameCount + 1
+                inputbuffer = inputbuffer .. Input.EncodedWait()
+            end
+        else
+            inputbuffer = inputbuffer .. self.simulationQueue[i]:getEncoded()
+        end
+
+        -- adding waitFrames at the end to make sure that the final swap completes
+        inputbuffer = inputbuffer .. "AA"
     end
 
     CpuLog:log(1, "inputbuffer:" .. inputbuffer)
-    CpuLog:log(1, "game_stopwatch local stack before running inputs " .. self.stack.game_stopwatch)
+    CpuLog:log(1, "CLOCK local stack before running inputs " .. self.stack.CLOCK)
     CpuLog:log(1, StackExtensions.AsAprilStack(self.stack))
     self.stack.input_buffer = inputbuffer
-    self.stack:run()
-    CpuLog:log(1, "game_stopwatch local stack after running inputs " .. self.stack.game_stopwatch)
+    while #self.stack.input_buffer > 0 do
+        self.stack:run()
+    end
+    CpuLog:log(1, "CLOCK local stack after running inputs " .. self.stack.CLOCK)
     CpuLog:log(1, StackExtensions.AsAprilStack(self.stack))
 
-
+    local lookAheadCopy = StackExtensions.copyStack(self.stack)
+    table.insert(self.lookAheadSnapShots, #self.lookAheadSnapShots + 1, lookAheadCopy)
+    self.simulationQueue = {}
 end
 
 

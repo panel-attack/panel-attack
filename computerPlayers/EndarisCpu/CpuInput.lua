@@ -16,10 +16,11 @@ local doubleInsert = 512
 --the CPU should make sure to save up enough idleframes for all moves and then perform the inputs in one go
 local stealth = 1024
 
-Input = class(function(self, bit, executionFrame)
+Input = class(function(self, bit, executionFrame, tillFrame)
     self.bit = bit
     -- executionFrame is assumed to be the framenumber on the stack
     self.executionFrame = executionFrame
+    self.tillFrame = tillFrame or executionFrame
     self.name = Input.getNameByBit(bit)
 end)
 
@@ -67,9 +68,8 @@ function Input.EncodedWait()
     return base64encode[1]
 end
 
-function Input.WaitTimeSpan(from, to)
-    local input = Input(wait, from)
-    input.to = to
+function Input.WaitTimeSpan(from, till)
+    local input = Input(wait, from, till)
     return input
 end
 
@@ -98,5 +98,5 @@ function Input.Swap(executionFrame)
 end
 
 function Input.toString(self)
-    return  "Input " .. self.name .. " at executionFrame " .. self.executionFrame
+    return "Input " .. self.name .. " at executionFrame " .. self.executionFrame .. " lasting till " .. self.tillFrame
 end

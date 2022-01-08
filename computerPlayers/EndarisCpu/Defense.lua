@@ -8,9 +8,11 @@ Defend = class(
 )
 
 function Defend.chooseAction(self)
-    local actions = StackExtensions.findActions(self.cpu.stack)
+    if not self.cpu.actions or #self.cpu.actions == 0 then
+        self.cpu.actions = StackExtensions.findActions(self.cpu.stack)
+    end
 
-    local clearActions = self:getClearActions(actions)
+    local clearActions = self:getClearActions(self.cpu.actions)
 
     if #clearActions > 0 then
         local action = Action.getCheapestAction(clearActions, self.cpu.stack)
