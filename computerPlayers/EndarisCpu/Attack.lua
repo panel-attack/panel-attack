@@ -7,18 +7,22 @@ Attack = class(
 )
 
 function Attack.chooseAction(self)
+    if not self.cpu.actions or #self.cpu.actions == 0 then
+        self.cpu.actions = StackExtensions.findActions(self.cpu.stack)
+    end
+
     if #self.cpu.actions > 0 then
-        local actions = StackExtensions.findActions(self.cpu.stack)
-        for i=1, #actions do
-            actions[i]:calculateCost()
-        end
-        return Action.getCheapestAction(actions, self.cpu.stack)
+        return Action.getCheapestAction(self.cpu.actions, self.cpu.stack)
     else
         return Raise(self.cpu.stack.CLOCK)
     end
 end
 
 function Attack.getCheapestAction(self)
+    if not self.cpu.actions or #self.cpu.actions == 0 then
+        self.cpu.actions = StackExtensions.findActions(self.cpu.stack)
+    end
+
     local actions = {}
 
     if #self.cpu.actions > 0 then

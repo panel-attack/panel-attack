@@ -7,22 +7,34 @@ Defragment = class(
 )
 
 function Defragment.chooseAction(self)
+    local gapToBeFilled
+    local panelToMove
+
+    local cursorVec = GridVector(self.cpu.stack.cur_row, self.cpu.stack.cur_col)
     local columns = StackExtensions.getTier1PanelsAsColumns(self.cpu.stack)
     local connectedPanelSections = StackExtensions.getTier1ConnectedPanelSections(self.cpu.stack)
     local panels = self.GetScoredPanelTable(columns, connectedPanelSections)
+    local filteredPanels = Defragment.FilterPanels(panels)
     local emptySpaces = self.getScoredEmptySpaceTable(self.cpu.stack.panels, columns, connectedPanelSections)
-    local emptySpacesToFill = self:FilterEmptySpaces(emptySpaces)
-    local gapToBeFilled = self:getClosestEmptySpaceToCursorAsPanel(emptySpacesToFill)
-    local panelToMove = self:findBestPanelForGap(gapToBeFilled, panels)
+    local emptySpacesToFill = self.FilterEmptySpaces(emptySpaces)
+    if #emptySpacesToFill == 1 then
+        gapToBeFilled = emptySpacesToFill[1]
+        panelToMove = self:findBestPanelForGap(gapToBeFilled, filteredPanels)
+        if not panelToMove then
+            panelToMove = self:findBestPanelForGap(gapToBeFilled, panels)
+        end
+    else
+        panelToMove = Defragment.getClosestPanelToCursor(filteredPanels, cursorVec)
+        gapToBeFilled = Defragment.findBestGapForPanel(self.cpu.stack.panels, panelToMove, emptySpacesToFill)
+    end
 
-    if panelToMove then
+    if panelToMove and gapToBeFilled then
         local action = MovePanel(self.cpu.stack, panelToMove, gapToBeFilled.vector)
         action:calculateExecution(self.cpu.stack.cur_row, self.cpu.stack.cur_col)
-        CpuLog:log(1, action:toString())
 
         return action
     else
-        CpuLog:log(1, "targetted gap is likely not swappable at the moment due to an unexpected match or similar things")
+        CpuLog:log(1, "targetted gap or panel is likely not swappable at the moment due to an unexpected match or similar things")
         return nil
     end
 
@@ -62,40 +74,66 @@ function Defragment.getScoredEmptySpaceTable(panels, columns, connectedPanelSect
         end
     end
 
-    --purge emptySpaces that scored 0 because none cares about them
-    for i=#emptySpaces, 1, -1 do
-        if emptySpaces[i].score == 0 then
-            table.remove(emptySpaces, i)
+    --create a new table without emptySpaces that scored 0 because none cares about them
+    local filteredEmptySpaces = {}
+    for i=1, #emptySpaces do
+        if emptySpaces[i].score > 0 then
+            table.insert(filteredEmptySpaces, emptySpaces[i])
         end
+    end
+
+    --but if we only have ones that scored 0, we still would like them
+    if #filteredEmptySpaces == 0 then
+        filteredEmptySpaces = emptySpaces
     end
 
     --debugging
-    for i=1,#emptySpaces do
-        CpuLog:log(5, "empty space " .. i .. " at coord " .. emptySpaces[i].panel.vector:toString() .. " with value of " .. emptySpaces[i].score)
+    for i=1,#filteredEmptySpaces do
+        CpuLog:log(5, "empty space " .. i .. " at coord " .. filteredEmptySpaces[i].panel.vector:toString() .. " with value of " .. filteredEmptySpaces[i].score)
     end
 
-    return emptySpaces
+    return filteredEmptySpaces
 end
 
 -- returns all emptyspaces that share the highest score
-function Defragment.FilterEmptySpaces(self, emptySpaces)
+function Defragment.FilterEmptySpaces(emptySpaces)
     table.sort(emptySpaces, function(a, b)
-        return a.score>b.score
+        return a.score<b.score
     end)
 
-    local emptySpacesToFill = { emptySpaces[1].panel }
-    for i=2,#emptySpaces do
-        if emptySpaces[i].score == emptySpaces[1].score then
-            table.insert(emptySpacesToFill, emptySpaces[i].panel)
-        else
-            break
-        end
-    end
+    --special low stack scenario where no connectedPanelSections exist
+    if emptySpaces[1].score == 0 then
+        table.sort(emptySpaces, function(a, b)
+            -- in that case we fill the lowest gaps but not those in row 1 since panels are scarce
+            -- and panels in row 1 won't contribute to form a connectedpanelsection
+            return a.panel.row < b.panel.row and a.panel.row ~=1
+        end)
 
-    return emptySpacesToFill
+        local emptySpacesToFill = { emptySpaces[1].panel }
+        for i=2,#emptySpaces do
+            if emptySpaces[i].panel.row == emptySpaces[1].panel.row then
+                table.insert(emptySpacesToFill, emptySpaces[i].panel)
+            else
+                break
+            end
+        end
+
+        return emptySpacesToFill
+    else
+        local emptySpacesToFill = { emptySpaces[1].panel }
+        for i=2,#emptySpaces do
+            if emptySpaces[i].score == emptySpaces[1].score then
+                table.insert(emptySpacesToFill, emptySpaces[i].panel)
+            else
+                break
+            end
+        end
+
+        return emptySpacesToFill
+    end
 end
 
--- returns all panels above row 3 with a score based on the connectedPanelSections they are contained in
+-- returns all panels above row 1 with a score based on the connectedPanelSections they are contained in
 function Defragment.GetScoredPanelTable(columns, connectedPanelSections)
     local panels = {}
 
@@ -127,9 +165,44 @@ function Defragment.GetScoredPanelTable(columns, connectedPanelSections)
     return panels
 end
 
-function Defragment.getClosestEmptySpaceToCursorAsPanel(self, emptySpaces)
-    local cursorVec = GridVector(self.cpu.stack.cur_row, self.cpu.stack.cur_col)
+function Defragment.FilterPanels(panels)
+    local panelsToMove = {}
 
+    table.sort(panels, function(a, b)
+        return a.score>b.score
+    end)
+
+    if panels[1].score > 0 then
+        -- default, by score
+        table.insert(panelsToMove, 1, panels[1])
+        for i=2,#panels do
+            if panels[i].score + 15 >= panels[1].score then
+                table.insert(panelsToMove, panels[i])
+            else
+                break
+            end
+        end
+    else
+    --special weird/low stack scenario where no connectedPanelSections exist
+        table.sort(panels, function(a, b)
+            -- in that case we take the highest panel
+            return a.panel.row > b.panel.row
+        end)
+
+        table.insert(panelsToMove, 1, panels[1])
+        for i=2,#panels do
+            if panels[i].panel.row == panels[1].panel.row then
+                table.insert(panelsToMove, panels[i])
+            else
+                break
+            end
+        end
+    end
+
+    return panelsToMove
+end
+
+function Defragment.getClosestEmptySpaceToCursorAsPanel(emptySpaces, cursorVec)
     table.sort(emptySpaces, function(a, b)
         return a.vector:distance(cursorVec) < b.vector:distance(cursorVec)
     end)
@@ -139,14 +212,13 @@ end
 
 -- tests all panels in order of score whether they can be moved into the gap and returns the first one with which it is possible
 function Defragment.findBestPanelForGap(self, gapPanel, scoredPanels)
-    table.sort(scoredPanels, function(a, b)
-        return a.score<b.score
-    end)
-    CpuLog:log(1, "trying to fill gap " .. gapPanel.vector:toString())
-    CpuLog:log(1, "searching among " .. #scoredPanels .. " panels")
+    -- no sorting of scoredPanls necessary as they are already sorted through prior filtering
+
+    CpuLog:log(4, "trying to fill gap " .. gapPanel.vector:toString())
+    CpuLog:log(4, "searching among " .. #scoredPanels .. " panels")
 
     for i=1,#scoredPanels do
-        CpuLog:log(1, "Checking panel " .. scoredPanels[i].panel.vector:toString())
+        CpuLog:log(4, "Checking panel " .. scoredPanels[i].panel.vector:toString())
         if StackExtensions.moveIsValid(self.cpu.stack, scoredPanels[i].panel, gapPanel) then
             CpuLog:log(4, "Selected " .. scoredPanels[i].panel:toString())
             return scoredPanels[i].panel
@@ -154,5 +226,28 @@ function Defragment.findBestPanelForGap(self, gapPanel, scoredPanels)
     end
 
     CpuLog:log(1, "Unexpectedly couldn't find a panel to fill the gap with")
+    return nil
+end
+
+function Defragment.getClosestPanelToCursor(panels, cursorVec)
+    table.sort(panels, function(a, b)
+        return a.panel.vector:distance(cursorVec) < b.panel.vector:distance(cursorVec)
+    end)
+
+    return panels[1].panel
+end
+
+function Defragment.findBestGapForPanel(stackPanels, panel, emptySpacesToFill)
+    table.sort(emptySpacesToFill, function(a, b)
+        return a.vector:distance(panel.vector) < b.vector:distance(panel.vector)
+    end)
+
+    for i=1, #emptySpacesToFill do
+        if StackExtensions.moveIsValidByPanels(stackPanels, panel, emptySpacesToFill[i].vector) then
+            return emptySpacesToFill[i]
+        end
+    end
+
+    CpuLog:log(1, "Unexpectedly couldn't find a gap to put the panel into")
     return nil
 end

@@ -3,7 +3,6 @@ function class(init, baseClass)
   -- copy attributes and values of the base class
   if baseClass then   
     for k,v in pairs(baseClass) do
-      print("creating attribute " .. k .. " from baseclass")
       instance[k] = v
     end
   end

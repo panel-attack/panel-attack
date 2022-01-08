@@ -122,7 +122,7 @@ function StackExtensions.getTier1ConnectedPanelSectionsByPanels(panels)
     local columns = StackExtensions.getTier1PanelsAsColumnsByPanels(panels)
     local connectedPanelSections = {}
 
-    for i = 1, #columns - 1 do
+    for i = 1, #columns do
         local baseHeight = #columns[i]
         CpuLog:log(6, 'column ' .. i .. ' with a height of ' .. baseHeight)
 
@@ -419,10 +419,10 @@ function StackExtensions.getPanelByVector(stack, vector)
 end
 
 function StackExtensions.getPanelByVectorByPanels(panels, vector)
-    CpuLog:log(1, "Attempting to get panel at vector " .. vector:toString())
+    CpuLog:log(5, "Attempting to get panel at vector " .. vector:toString())
     local panel = panels[vector.row][vector.column]
     local actionPanel = ActionPanel(panel, vector.row, vector.column)
-    CpuLog:log(1, "Turned up with panel " .. panel:toString())
+    CpuLog:log(5, "Turned up with panel " .. panel:toString())
     return actionPanel
 end
 
@@ -440,7 +440,7 @@ end
 
 
 function StackExtensions.actionIsValidByPanels(panels, action)
-    CpuLog:log(1, "checking if action is valid " .. action:toString())
+    CpuLog:log(5, "checking if action is valid " .. action:toString())
 
     for i=1, #action.panels do
         if action.panels[i].panel.state == "matched"
@@ -448,14 +448,16 @@ function StackExtensions.actionIsValidByPanels(panels, action)
         or action.panels[i].panel.state == "popped"
         or action.panels[i].panel.state == "dimmed"
         or action.panels[i].panel.state == "falling"
-        or action.panels[i].panel.state == "hovering" then
-            CpuLog:log(1, "action marked invalid due to panelstate " .. action.panels[i].panel.state)
+        or action.panels[i].panel.state == "hovering"
+        or action.panels[i].panel.state == "swapping" --technically not necessary but probably still getting swapped by the last action
+        then
+            CpuLog:log(5, "action marked invalid due to panelstate " .. action.panels[i].panel.state)
             return false
         end
     end
 
     for i=1, #action.panels do
-        CpuLog:log(1, "checking if move is valid for " .. action.panels[i]:toString())
+        CpuLog:log(5, "checking if move is valid for " .. action.panels[i]:toString())
         if not StackExtensions.moveIsValidByPanels(panels,
                                action.panels[i], action.panels[i].targetVector) then
             return false
