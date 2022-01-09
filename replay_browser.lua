@@ -196,11 +196,16 @@ function replay_browser.main()
         end
 
         next_func = main_replay
-      elseif replay.endless then
-        gprint(loc("rp_browser_info_endless"), replay_browser.menu_x + 220, replay_browser.menu_y + 20)
+      elseif replay.endless or replay.time then
+        if replay.time then
+          gprint(loc("rp_browser_info_time"), replay_browser.menu_x + 220, replay_browser.menu_y + 20)
+        else
+          gprint(loc("rp_browser_info_endless"), replay_browser.menu_x + 220, replay_browser.menu_y + 20)
+        end
 
-        gprint(loc("rp_browser_info_speed", replay.endless.speed), replay_browser.menu_x + 150, replay_browser.menu_y + 50)
-        gprint(loc("rp_browser_info_difficulty", replay.endless.difficulty), replay_browser.menu_x + 150, replay_browser.menu_y + 65)
+        local replay = replay.endless or replay.time
+        gprint(loc("rp_browser_info_speed", replay.speed), replay_browser.menu_x + 150, replay_browser.menu_y + 50)
+        gprint(loc("rp_browser_info_difficulty", replay.difficulty), replay_browser.menu_x + 150, replay_browser.menu_y + 65)
 
         next_func = main_replay
       elseif replay.puzzle then

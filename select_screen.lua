@@ -908,17 +908,18 @@ function select_screen.main()
           P2.garbage_target = P1
           P2:moveForPlayerNumber(2)
           replay = createNewReplay(GAME.match.mode)
-          replay.vs.ranked = msg.ranked
           
           if GAME.battleRoom.spectating and replay_of_match_so_far then --we joined a match in progress
-            replay.vs = replay_of_match_so_far.vs
+            for k, v in pairs(replay_of_match_so_far.vs) do
+              replay.vs[k] = v
+            end
             P1.input_buffer = replay_of_match_so_far.vs.in_buf
             P1.panel_buffer = replay_of_match_so_far.vs.P
             P1.gpanel_buffer = replay_of_match_so_far.vs.Q
             P2.input_buffer = replay_of_match_so_far.vs.I
             P2.panel_buffer = replay_of_match_so_far.vs.O
             P2.gpanel_buffer = replay_of_match_so_far.vs.R
-            if replay.vs.ranked then
+            if msg.ranked then
               match_type = "Ranked"
               match_type_message = ""
             else
@@ -928,6 +929,9 @@ function select_screen.main()
             P1.play_to_end = true --this makes non local stacks run until caught up
             P2.play_to_end = true
           end
+
+          replay.vs.ranked = msg.ranked
+
           if not GAME.battleRoom.spectating then
             ask_for_gpanels("000000")
             ask_for_panels("000000")

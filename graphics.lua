@@ -449,7 +449,7 @@ function Stack.render(self)
   end
 
   -- Draw the cursor
-  if self:gameResult() == nil then
+  if self:game_ended() == false then
     self:render_cursor()
   end
 

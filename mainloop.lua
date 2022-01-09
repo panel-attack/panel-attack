@@ -271,9 +271,7 @@ function createNewReplay(mode)
     modeReplay.speed = P1.speed
     modeReplay.difficulty = P1.difficulty
     modeReplay.cur_wait_time = P1.cur_wait_time or default_input_repeat_delay
-    modeReplay.pan_buf = ""
     modeReplay.in_buf = ""
-    modeReplay.gpan_buf = ""
   elseif mode == "vs" then
     modeReplay.P = ""
     modeReplay.O = ""
@@ -291,6 +289,9 @@ function createNewReplay(mode)
       modeReplay.P2_name = GAME.battleRoom.playerNames[2]
       modeReplay.P2_char = P2.character
       modeReplay.P2_cur_wait_time = P2.cur_wait_time
+
+      modeReplay.P1_win_count = GAME.match.battleRoom.playerWinCounts[1]
+      modeReplay.P2_win_count = GAME.match.battleRoom.playerWinCounts[2]
     end
   end
 
@@ -316,6 +317,11 @@ local function handle_pause(self)
 end
 
 local function finalizeAndWriteReplay(extraPath, extraFilename)
+
+  replay[GAME.match.mode].in_buf = P1.input_buffer_record
+  replay[GAME.match.mode].P = P1.panel_buffer_record
+  replay[GAME.match.mode].Q = P1.gpanel_buffer_record
+
   local now = os.date("*t", to_UTC(os.time()))
   local sep = "/"
   local path = "replays" .. sep .. "v" .. VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
@@ -334,18 +340,11 @@ end
 
 local function finalizeAndWriteVsReplay(battleRoom, outcome_claim)
 
-  replay[GAME.match.mode].in_buf = P1.input_buffer_record
-  replay[GAME.match.mode].P = P1.panel_buffer_record
-  replay[GAME.match.mode].Q = P1.gpanel_buffer_record
-
   local extraPath, extraFilename
   if P2 then
     replay[GAME.match.mode].I = P2.input_buffer_record
     replay[GAME.match.mode].O = P2.panel_buffer_record
     replay[GAME.match.mode].R = P2.gpanel_buffer_record
-
-    replay[GAME.match.mode].P1_win_count = GAME.match.battleRoom.playerWinCounts[1]
-    replay[GAME.match.mode].P2_win_count = GAME.match.battleRoom.playerWinCounts[2]
 
     local rep_a_name, rep_b_name = battleRoom.playerNames[1], battleRoom.playerNames[2]
     --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
@@ -1170,11 +1169,11 @@ function loadFromReplay(replay)
 
       P2.character = replay.P2_char
 
-      if replay[GAME.match.mode].P1_win_count then
-        GAME.match.battleRoom.playerWinCounts[1] = replay[GAME.match.mode].P1_win_count
-        GAME.match.battleRoom.playerWinCounts[2] = replay[GAME.match.mode].P2_win_count
+      if replay.P1_win_count then
+        GAME.match.battleRoom.playerWinCounts[1] = replay.P1_win_count
+        GAME.match.battleRoom.playerWinCounts[2] = replay.P2_win_count
       end
-        
+
     else
       P1.garbage_target = P1
     end
@@ -1191,11 +1190,18 @@ function loadFromReplay(replay)
     end
 
   elseif replay.endless or replay.time then
+    if replay.time then
+      GAME.match = Match("time")
+    else
+      GAME.match = Match("endless")
+    end
+
     replay = replay.endless or replay.time
 
-    replay.P = replay.pan_buf -- support old versions
-      
-    GAME.match = Match("endless")
+    if replay.pan_buf then
+      replay.P = replay.pan_buf -- support old versions
+    end
+
     P1 = Stack(1, GAME.match, false, config.panels, replay.speed, replay.difficulty)
     GAME.match.P1 = P1
     P1:wait_for_random_character()

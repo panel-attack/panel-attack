@@ -745,7 +745,7 @@ function Stack.run(self, timesToRun)
     -- game over effects.
     timesToRun = 1
     if self.is_local == false then
-      if self:gameResult() == nil then
+      if self:game_ended() == false then
         timesToRun = 0
       end
 
@@ -776,7 +776,7 @@ function Stack.run(self, timesToRun)
   for i = 1, timesToRun do
     self:update_popfxs()
     self:update_cards()
-    if self:gameResult() == nil then 
+    if self:game_ended() == false then 
       if self.is_local == false then
         if self.input_buffer and string.len(self.input_buffer) > 0 then
           self.input_state = string.sub(self.input_buffer, 1, 1)
@@ -855,7 +855,7 @@ local d_row = {up = 1, down = -1, left = 0, right = 0}
 -- One run of the engine routine.
 function Stack.PdP(self)
   -- Don't run the main logic if the player has simulated past one of the game overs or the time attack time
-  if self:gameResult() == nil then
+  if self:game_ended() == false then
     local panels = self.panels
     local width = self.width
     local height = self.height
@@ -1518,7 +1518,7 @@ function Stack.PdP(self)
 
     -- Update Music
     if not GAME.gameIsPaused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
-      if self:gameResult() == nil and self.canvas ~= nil then
+      if self:game_ended() == false and self.canvas ~= nil then
         if self.do_countdown then
           if SFX_Go_Play == 1 then
             themes[config.theme].sounds.go:stop()
@@ -1733,19 +1733,50 @@ function Stack.PdP(self)
   end
 end
 
+-- Returns true if the stack is simulated past the end of the match.
+function Stack.game_ended(self)
+
+  if self.match.mode == "vs" then
+    -- Note we use "greater" and not "greater than or equal" because our stack may be currently processing this clock frame.
+    -- At the end of the clock frame it will be incremented and we know we have process the game over clock frame.
+    if self.match.gameEndedClock > 0 and self.CLOCK > self.match.gameEndedClock then
+      return true
+    end
+  elseif self.match.mode == "time" then
+    if self.match.gameEndedClock > 0 and self.CLOCK > self.match.gameEndedClock then
+      return true
+    elseif self.game_stopwatch then
+      if self.game_stopwatch > time_attack_time * 60 then
+        return true
+      end
+    end
+  elseif self.match.mode == "endless" then
+    if self.match.gameEndedClock > 0 and self.CLOCK > self.match.gameEndedClock then
+      return true
+    end
+  elseif self.match.mode == "puzzle" then
+    if self:puzzle_done() then
+      return true
+    elseif self:puzzle_failed() then
+      return true
+    end
+  end
+
+  return false
+end
+
 -- Returns 1 if this player won, 0 for draw, and -1 for loss, nil if no result yet
 function Stack.gameResult(self)
+  if self:game_ended() == false then
+    return nil
+  end
   
   if self.match.mode == "vs" then
     local otherPlayer = self.garbage_target
     if otherPlayer == self then
-      if self.match.gameEndedClock > 0 and self.CLOCK >= self.match.gameEndedClock then
-        return -1
-      end
+      return -1
     -- We can't call it until someone has lost and everyone has played up to that point in time.
-    -- Note we use "greater" and not "greater than or equal" because our stack may be currently processing this clock frame.
-    -- At the end of the clock frame it will be incremented and we know we have process the game over clock frame.
-    elseif self.match.gameEndedClock > 0 and self.CLOCK > self.match.gameEndedClock and otherPlayer.CLOCK >= self.match.gameEndedClock then
+    elseif otherPlayer:game_ended() then
       if self.game_over_clock == self.match.gameEndedClock and otherPlayer.game_over_clock == self.match.gameEndedClock then
         return 0
       elseif self.game_over_clock == self.match.gameEndedClock then
