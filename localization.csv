@@ -362,6 +362,7 @@ ss_wins,Wins:,Victoires :,Vitórias:,勝ち：,Gana:, ,Vittorie:
 ss_ex_mode,EX Mode,EX Mode,Modo EX,EXモード,Modo EX, ,Modalità EX
 rp_browser_header,~ Replay Browser ~,~ Bibliothèque des replays ~,~ Navegador de Replays ~,,~ Explorador de Repeticiones ~,,~ Navigatore Replay ~
 rp_browser_info_header,~ Replay Information ~,~ Information des replays ~,~ Informações de Replays ~,,~ Información de la repetición ~,,~ Informazioni Replay ~
+rp_browser_wrong_version,Replay version does not match. Use a different version of the game to view this replay.
 rp_browser_current_dir,Current directory: %1,Dossier actuel : %1,Pasta atual: %1,,Directorio actual: %1,,Elenco corrente: %1
 rp_browser_up,up,monter,acima,,volver,,su
 rp_browser_root,root,racine,raiz,,raíz,,sorgente

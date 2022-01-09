@@ -215,7 +215,7 @@ function love.keypressed(key, scancode, rep)
     keys[key] = 0
   end
   this_frame_keys[key] = true
-  logger.debug("key pressed: " .. key)
+  logger.trace("key pressed: " .. key)
 
   if input.acceptingPlayerInputConfigurationAssignments then
     for index, inputConfiguration in ipairs(input.availableInputConfigurationsToAssign) do

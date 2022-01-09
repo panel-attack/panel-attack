@@ -94,8 +94,12 @@ Stack =
     s:moveForPlayerNumber(1)
 
     s.panel_buffer = ""
+    s.panel_buffer_record = ""
     s.gpanel_buffer = ""
+    s.gpanel_buffer_record = ""
     s.input_buffer = ""
+    s.input_buffer_record = ""
+
     s.panels = {}
     s.width = 6
     s.height = 12
@@ -1739,7 +1743,9 @@ function Stack.gameResult(self)
         return -1
       end
     -- We can't call it until someone has lost and everyone has played up to that point in time.
-    elseif self.match.gameEndedClock > 0 and self.CLOCK >= self.match.gameEndedClock and otherPlayer.CLOCK >= self.match.gameEndedClock then
+    -- Note we use "greater" and not "greater than or equal" because our stack may be currently processing this clock frame.
+    -- At the end of the clock frame it will be incremented and we know we have process the game over clock frame.
+    elseif self.match.gameEndedClock > 0 and self.CLOCK > self.match.gameEndedClock and otherPlayer.CLOCK >= self.match.gameEndedClock then
       if self.game_over_clock == self.match.gameEndedClock and otherPlayer.game_over_clock == self.match.gameEndedClock then
         return 0
       elseif self.game_over_clock == self.match.gameEndedClock then
@@ -1749,7 +1755,7 @@ function Stack.gameResult(self)
       end
     end
   elseif self.match.mode == "time" then
-    if self.match.gameEndedClock > 0 and self.CLOCK >= self.match.gameEndedClock then
+    if self.match.gameEndedClock > 0 and self.CLOCK > self.match.gameEndedClock then
       return -1
     elseif self.game_stopwatch then
       if self.game_stopwatch > time_attack_time * 60 then
@@ -1757,7 +1763,7 @@ function Stack.gameResult(self)
       end
     end
   elseif self.match.mode == "endless" then
-    if self.match.gameEndedClock > 0 and self.CLOCK >= self.match.gameEndedClock then
+    if self.match.gameEndedClock > 0 and self.CLOCK > self.match.gameEndedClock then
       return -1
     end
   elseif self.match.mode == "puzzle" then

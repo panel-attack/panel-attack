@@ -962,7 +962,9 @@ end
 
 -- Draw the pause menu
 function draw_pause()
-  draw(themes[config.theme].images.pause, 0, 0)
+  if not GAME.renderDuringPause then
+    draw(themes[config.theme].images.pause, 0, 0)
+  end
   gprintf(loc("pause"), 0, 330, canvas_width, "center", nil, 1, large_font)
   gprintf(loc("pl_pause_help"), 0, 360, canvas_width, "center", nil, 1)
 end
