@@ -919,6 +919,13 @@ function select_screen.main()
             P2.input_buffer = replay_of_match_so_far.vs.I
             P2.panel_buffer = replay_of_match_so_far.vs.O
             P2.gpanel_buffer = replay_of_match_so_far.vs.R
+            P1.input_buffer_record = P1.input_buffer
+            P1.panel_buffer_record = P1.panel_buffer
+            P1.gpanel_buffer_record = P1.gpanel_buffer
+            P2.input_buffer_record = P2.input_buffer
+            P2.panel_buffer_record = P2.panel_buffer
+            P2.gpanel_buffer_record = P2.gpanel_buffer
+
             if msg.ranked then
               match_type = "Ranked"
               match_type_message = ""
