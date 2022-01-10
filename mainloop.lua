@@ -262,6 +262,7 @@ end
 function createNewReplay(mode)
   local result = {}
   result.engineVersion = VERSION
+  result.replayVersion = 2
 
   result[mode] = {}
   local modeReplay = result[mode]
