@@ -7,6 +7,7 @@ select_screen.character_select_mode = "1p_vs_yourself"
 
 local wait = coroutine.yield
 local current_page = 1
+local floor = math.floor
 
 -- fills the provided map based on the provided template and return the amount of pages. __Empty values will be replaced by character_ids
 local function fill_map(template_map, map)
@@ -414,8 +415,8 @@ function select_screen.main()
     local menu_height = X * 80
     local spacing = 8
     local text_height = 13
-    local x_padding = math.floor((canvas_width - menu_width) / 2)
-    local y_padding = math.floor((canvas_height - menu_height) / 2)
+    local x_padding = floor((canvas_width - menu_width) / 2)
+    local y_padding = floor((canvas_height - menu_height) / 2)
     set_color(unpack(colors.white))
     render_x = x_padding + (y - 1) * 100 + spacing
     render_y = y_padding + (x - 1) * 100 + spacing
@@ -449,9 +450,9 @@ function select_screen.main()
     local width_for_alignment = button_width
     local x_add, y_add = 0, 0
     if valign == "center" then
-      y_add = math.floor(0.5 * button_height - 0.5 * text_height) - 3
+      y_add = floor(0.5 * button_height - 0.5 * text_height) - 3
     elseif valign == "bottom" then
-      y_add = math.floor(button_height - text_height)
+      y_add = floor(button_height - text_height)
     end
 
     -- Draw the character icon at the current button using globals *gross*
@@ -528,12 +529,12 @@ function select_screen.main()
       local draw_cur_this_frame = false
       local cursor_frame = 1
       if ready then
-        if (math.floor(menu_clock / cur_blink_frequency) + player_num) % 2 + 1 == player_num then
+        if (floor(menu_clock / cur_blink_frequency) + player_num) % 2 + 1 == player_num then
           draw_cur_this_frame = true
         end
       else
         draw_cur_this_frame = true
-        cursor_frame = (math.floor(menu_clock / cur_pos_change_frequency) + player_num) % 2 + 1
+        cursor_frame = (floor(menu_clock / cur_pos_change_frequency) + player_num) % 2 + 1
       end
       if draw_cur_this_frame then
         local cur_img = themes[config.theme].images.IMG_char_sel_cursors[player_num][cursor_frame]
@@ -593,7 +594,7 @@ function select_screen.main()
     local function draw_levels(cursor_data, player_number, y_padding)
       local level_max_width = 0.2 * button_height
       local level_width = math.min(level_max_width, themes[config.theme].images.IMG_levels[1]:getWidth())
-      local padding_x = math.floor(0.5 * button_width - 5.5 * level_width)
+      local padding_x = floor(0.5 * button_width - 5.5 * level_width)
       local is_selected = cursor_data.selected and cursor_data.state.cursor == "__Level"
       if is_selected then
         padding_x = padding_x - level_width
@@ -608,7 +609,7 @@ function select_screen.main()
         padding_x = padding_x + level_width
       end
       for i = 1, #level_to_starting_speed do --which should equal the number of levels in the game
-        local additional_padding = math.floor(0.5 * (themes[config.theme].images.IMG_levels[i]:getWidth() - level_width))
+        local additional_padding = floor(0.5 * (themes[config.theme].images.IMG_levels[i]:getWidth() - level_width))
         padding_x = padding_x + additional_padding
         local use_unfocus = cursor_data.state.level < i
         if use_unfocus then
@@ -628,7 +629,7 @@ function select_screen.main()
 
     -- Draw the Casual/Ranked selection UI
     local function draw_match_type(cursor_data, player_number, y_padding)
-      local padding_x = math.floor(0.5 * button_width - themes[config.theme].images.IMG_players[player_number]:getWidth() * 0.5 - 46) -- ty GIMP; no way to know the size of the text?
+      local padding_x = floor(0.5 * button_width - themes[config.theme].images.IMG_players[player_number]:getWidth() * 0.5 - 46) -- ty GIMP; no way to know the size of the text?
       menu_drawf(themes[config.theme].images.IMG_players[player_number], render_x + padding_x, render_y + y_padding, "center", "center")
       padding_x = padding_x + themes[config.theme].images.IMG_players[player_number]:getWidth()
       local to_print
@@ -643,15 +644,15 @@ function select_screen.main()
     -- Draw the stage select UI
     local function draw_stage(cursor_data, player_number, x_padding)
       local stage_dimensions = {80, 45}
-      local y_padding = math.floor(0.5 * button_height)
-      local padding_x = math.floor(x_padding - 0.5 * stage_dimensions[1])
+      local y_padding = floor(0.5 * button_height)
+      local padding_x = floor(x_padding - 0.5 * stage_dimensions[1])
       local is_selected = cursor_data.selected and cursor_data.state.cursor == "__Stage"
       if is_selected then
-        local arrow_pos = select_screen.character_select_mode == "2p_net_vs" and {math.floor(render_x + x_padding - 20), math.floor(render_y + y_padding - stage_dimensions[2] * 0.5 - 15)} or {math.floor(render_x + padding_x - 13), math.floor(render_y + y_padding + 0.25 * text_height)}
+        local arrow_pos = select_screen.character_select_mode == "2p_net_vs" and {floor(render_x + x_padding - 20), floor(render_y + y_padding - stage_dimensions[2] * 0.5 - 15)} or {floor(render_x + padding_x - 13), floor(render_y + y_padding + 0.25 * text_height)}
         gprintf("<", arrow_pos[1], arrow_pos[2], 10, "center")
       end
       -- background for thumbnail
-      grectangle("line", render_x + padding_x, math.floor(render_y + y_padding - stage_dimensions[2] * 0.5), stage_dimensions[1], stage_dimensions[2])
+      grectangle("line", render_x + padding_x, floor(render_y + y_padding - stage_dimensions[2] * 0.5), stage_dimensions[1], stage_dimensions[2])
 
       -- thumbnail or composed thumbnail (for bundles without thumbnails)
       if cursor_data.state.stage_is_random == random_stage_special_value or (cursor_data.state.stage_is_random and not stages[cursor_data.state.stage_is_random]) or (cursor_data.state.stage_is_random and stages[cursor_data.state.stage_is_random] and stages[cursor_data.state.stage_is_random].images.thumbnail) or (not cursor_data.state.stage_is_random and stages[cursor_data.state.stage].images.thumbnail) then
@@ -663,12 +664,12 @@ function select_screen.main()
         end
         menu_drawf(thumbnail, render_x + padding_x, render_y + y_padding - 1, "left", "center", 0, stage_dimensions[1] / thumbnail:getWidth(), stage_dimensions[2] / thumbnail:getHeight())
       elseif cursor_data.state.stage_is_random and stages[cursor_data.state.stage_is_random]:is_bundle() then
-        local half_stage_dimensions = {math.floor(stage_dimensions[1] * 0.5), math.floor(stage_dimensions[2] * 0.5)}
+        local half_stage_dimensions = {floor(stage_dimensions[1] * 0.5), floor(stage_dimensions[2] * 0.5)}
         local sub_stages = stages[cursor_data.state.stage_is_random].sub_stages
         local sub_stages_count = math.min(4, #sub_stages) -- between 2 and 4 (inclusive), by design
 
         local thumbnail_1 = stages[sub_stages[1]].images.thumbnail
-        local thumb_y_padding = math.floor(half_stage_dimensions[2] * 0.5)
+        local thumb_y_padding = floor(half_stage_dimensions[2] * 0.5)
         local thumb_1_and_2_y_padding = sub_stages_count >= 3 and -thumb_y_padding or 0
         menu_drawf(thumbnail_1, render_x + padding_x, render_y + y_padding - 1 + thumb_1_and_2_y_padding, "left", "center", 0, half_stage_dimensions[1] / thumbnail_1:getWidth(), half_stage_dimensions[2] / thumbnail_1:getHeight())
 
@@ -677,7 +678,7 @@ function select_screen.main()
 
         if sub_stages_count >= 3 then
           local thumbnail_3 = stages[sub_stages[3]].images.thumbnail
-          local thumb_3_x_padding = sub_stages_count == 3 and math.floor(half_stage_dimensions[1] * 0.5) or 0
+          local thumb_3_x_padding = sub_stages_count == 3 and floor(half_stage_dimensions[1] * 0.5) or 0
           menu_drawf(thumbnail_3, render_x + padding_x + thumb_3_x_padding, render_y + y_padding - 1 + thumb_y_padding, "left", "center", 0, half_stage_dimensions[1] / thumbnail_3:getWidth(), half_stage_dimensions[2] / thumbnail_3:getHeight())
         end
         if sub_stages_count == 4 then
@@ -687,7 +688,7 @@ function select_screen.main()
       end
 
       -- player image
-      local player_icon_pos = select_screen.character_select_mode == "2p_net_vs" and {math.floor(render_x + padding_x + stage_dimensions[1] * 0.5), math.floor(render_y + y_padding - stage_dimensions[2] * 0.5 - 7)} or {math.floor(render_x + padding_x - 10), math.floor(render_y + y_padding - stage_dimensions[2] * 0.25)}
+      local player_icon_pos = select_screen.character_select_mode == "2p_net_vs" and {floor(render_x + padding_x + stage_dimensions[1] * 0.5), floor(render_y + y_padding - stage_dimensions[2] * 0.5 - 7)} or {floor(render_x + padding_x - 10), floor(render_y + y_padding - stage_dimensions[2] * 0.25)}
       menu_drawf(themes[config.theme].images.IMG_players[player_number], player_icon_pos[1], player_icon_pos[2], "center", "center")
       -- display name
       local display_name = nil
@@ -698,12 +699,12 @@ function select_screen.main()
       else
         display_name = stages[cursor_data.state.stage].display_name
       end
-      gprintf(display_name, render_x + padding_x, math.floor(render_y + y_padding + stage_dimensions[2] * 0.5), stage_dimensions[1], "center", nil, 1, small_font)
+      gprintf(display_name, render_x + padding_x, floor(render_y + y_padding + stage_dimensions[2] * 0.5), stage_dimensions[1], "center", nil, 1, small_font)
 
       padding_x = padding_x + stage_dimensions[1]
 
       if is_selected then
-        local arrow_pos = select_screen.character_select_mode == "2p_net_vs" and {math.floor(render_x + x_padding + 11), math.floor(render_y + y_padding - stage_dimensions[2] * 0.5 - 15)} or {math.floor(render_x + padding_x + 3), math.floor(render_y + y_padding + 0.25 * text_height)}
+        local arrow_pos = select_screen.character_select_mode == "2p_net_vs" and {floor(render_x + x_padding + 11), floor(render_y + y_padding - stage_dimensions[2] * 0.5 - 15)} or {floor(render_x + padding_x + 3), floor(render_y + y_padding + 0.25 * text_height)}
         gprintf(">", arrow_pos[1], arrow_pos[2], 10, "center")
       end
     end

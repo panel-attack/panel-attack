@@ -47,10 +47,10 @@ function make_panels(ncolors, prev_panels, stuff)
       local first, second  --locations of potential metal panels
       --while panel vertically adjacent is not numeric, so can be a metal panel
       while not first or not tonumber(string.sub(prev_row, first, first)) do
-        first = math.random(1, row_width)
+        first = random(1, row_width)
       end
       while not second or second == first or not tonumber(string.sub(prev_row, second, second)) do
-        second = math.random(1, row_width)
+        second = random(1, row_width)
       end
       new_row = ""
       for j = 1, row_width do

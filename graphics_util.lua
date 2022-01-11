@@ -243,16 +243,17 @@ function menu_drawf(img, x, y, halign, valign, rot, x_scale, y_scale)
   x_scale = x_scale or 1
   y_scale = y_scale or 1
   halign = halign or "left"
+  local floor = math.floor
   if halign == "center" then
-    x = x - math.floor(img:getWidth() * 0.5 * x_scale)
+    x = x - floor(img:getWidth() * 0.5 * x_scale)
   elseif halign == "right" then
-    x = x - math.floor(img:getWidth() * x_scale)
+    x = x - floor(img:getWidth() * x_scale)
   end
   valign = valign or "top"
   if valign == "center" then
-    y = y - math.floor(img:getHeight() * 0.5 * y_scale)
+    y = y - floor(img:getHeight() * 0.5 * y_scale)
   elseif valign == "bottom" then
-    y = y - math.floor(img:getHeight() * y_scale)
+    y = y - floor(img:getHeight() * y_scale)
   end
   gfx_q:push({love.graphics.draw, {img, x, y,
     rot, x_scale, y_scale}})

@@ -234,11 +234,12 @@ function Theme.graphics_init(self)
   self.images.IMG_cards = {}
   self.images.IMG_cards[true] = {}
   self.images.IMG_cards[false] = {}
+  local floor = math.floor
   for i = 4, 66 do
-    self.images.IMG_cards[false][i] = load_theme_img("combo/combo" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "")
+    self.images.IMG_cards[false][i] = load_theme_img("combo/combo" .. tostring(floor(i / 10)) .. tostring(i % 10) .. "")
   end
   for i = 2, 13 do
-    self.images.IMG_cards[true][i] = load_theme_img("chain/chain" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "")
+    self.images.IMG_cards[true][i] = load_theme_img("chain/chain" .. tostring(floor(i / 10)) .. tostring(i % 10) .. "")
   end
 
   self.images.IMG_cards[true][14] = load_theme_img("chain/chain00")

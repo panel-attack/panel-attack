@@ -3,6 +3,7 @@ require("util")
 
 local floor = math.floor
 local ceil = math.ceil
+local rad = math.rad
 
 local shake_arr = {}
 
@@ -70,8 +71,8 @@ function Stack.draw_cards(self)
           radius = 10
         end
         for i = 1, 6, 1 do
-          local cardfx_x = draw_x + math.cos(math.rad((i * 60) + (card.frame * 5))) * radius
-          local cardfx_y = draw_y + math.sin(math.rad((i * 60) + (card.frame * 5))) * radius
+          local cardfx_x = draw_x + math.cos(rad((i * 60) + (card.frame * 5))) * radius
+          local cardfx_y = draw_y + math.sin(rad((i * 60) + (card.frame * 5))) * radius
           qdraw(card.burstAtlas, card.burstParticle, cardfx_x, cardfx_y, 0, 16 / burstFrameDimension, 16 / burstFrameDimension)
         end
       end
@@ -89,7 +90,7 @@ function Stack.update_popfxs(self)
   if self.canvas == nil then
     return
   end
-  
+
   for i = self.pop_q.first, self.pop_q.last do
     local popfx = self.pop_q[i]
     if characters[self.character].popfx_style == "burst" or characters[self.character].popfx_style == "fadeburst" then
@@ -152,10 +153,10 @@ function Stack.draw_popfxs(self)
           }
 
           if characters[self.character].popfx_burstrotate == true then
-            topRot = {math.rad(45), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
-            bottomRot = {math.rad(-135), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
-            leftRot = {math.rad(-45), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
-            rightRot = {math.rad(135), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
+            topRot = {rad(45), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
+            bottomRot = {rad(-135), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
+            leftRot = {rad(-45), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
+            rightRot = {rad(135), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
           else
             topRot = {0, (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
             bottomRot = {0, (16 / burstFrameDimension) * burstScale, -(16 / burstFrameDimension) * burstScale}
@@ -304,7 +305,7 @@ function Stack.render(self)
   if self.which == 1 or portrait_image == "portrait2" then
     draw(characters[self.character].images[portrait_image], 4, 4, 0, 96 / portrait_w, 192 / portrait_h)
   else
-    draw(characters[self.character].images[portrait_image], 100, 4, 0, (96/portrait_w)*-1, 192/portrait_h)
+    draw(characters[self.character].images[portrait_image], 100, 4, 0, (96 / portrait_w) * -1, 192 / portrait_h)
   end
   grectangle_color("fill", 4, 4, 96, 192, 0, 0, 0, self.portraitFade)
 
@@ -497,7 +498,7 @@ function Stack.render(self)
     --gprint(loc("pl_moves", self.puzzle_moves), self.score_x, self.score_y)
     if self.puzzle_moves then
       draw_label(themes[config.theme].images.IMG_moves, (self.origin_x + themes[config.theme].moveLabel_Pos[1]) / GFX_SCALE, (self.pos_y + themes[config.theme].moveLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].moveLabel_Scale)
-      draw_number(self.puzzle_moves, themes[config.theme].images.IMG_number_atlas_1P, 10, move_quads, self.score_x + themes[config.theme].move_Pos[1], self.score_y + themes[config.theme].move_Pos[2], themes[config.theme].move_Scale, (30 / themes[config.theme].images.numberWidth_1P * themes[config.theme].move_Scale), (38 / themes[config.theme].images.numberHeight_1P * themes[config.theme].move_Scale), "center", self.multiplication)  
+      draw_number(self.puzzle_moves, themes[config.theme].images.IMG_number_atlas_1P, 10, move_quads, self.score_x + themes[config.theme].move_Pos[1], self.score_y + themes[config.theme].move_Pos[2], themes[config.theme].move_Scale, (30 / themes[config.theme].images.numberWidth_1P * themes[config.theme].move_Scale), (38 / themes[config.theme].images.numberHeight_1P * themes[config.theme].move_Scale), "center", self.multiplication)
     end
     if config.show_ingame_infos then
     --gprint(loc("pl_frame", self.CLOCK), self.score_x, self.score_y+30)
@@ -517,6 +518,7 @@ function Stack.render(self)
 
     -- Draw the timer for time attack
     if self.match.mode == "time" then
+      -- Draw the current difficulty level
       local time_left = time_attack_time - ((self.game_stopwatch or (time_attack_time * 60)) / 60) -- time left in seconds
       if time_left < 0 then
         time_left = 0
@@ -530,7 +532,6 @@ function Stack.render(self)
       --gprint(loc("pl_time", string.format("%01d:%02d",mins,secs)), self.score_x, self.score_y+60)
       draw_label(themes[config.theme].images.IMG_time, (main_infos_screen_pos.x + themes[config.theme].timeLabel_Pos[1]) / GFX_SCALE, (main_infos_screen_pos.y + themes[config.theme].timeLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].timeLabel_Scale)
       draw_time(string.format("%01d:%02d", mins, secs), time_quads, main_infos_screen_pos.x + themes[config.theme].time_Pos[1], main_infos_screen_pos.y + themes[config.theme].time_Pos[2], 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale)
-    -- Draw the current difficulty level
     elseif self.level then
       --gprint(loc("pl_level", self.level), self.score_x, self.score_y+70)
       draw_label(themes[config.theme].images["IMG_level" .. self.id], self.origin_x + themes[config.theme].levelLabel_Pos[1] * self.mirror_x, self.pos_y + themes[config.theme].levelLabel_Pos[2], 0, themes[config.theme].levelLabel_Scale, self.multiplication)
@@ -558,8 +559,9 @@ function Stack.render(self)
       --gprint(loc("pl_stop", self.stop_time), self.score_x, self.score_y+300)
       --gprint(loc("pl_shake", self.shake_time), self.score_x, self.score_y+320)
       --gprint(loc("pl_pre_stop", self.pre_stop_time), self.score_x, self.score_y+340)
+
       -- Prestop frame
-      draw_label(themes[config.theme].images.IMG_prestop_frame, self.origin_x + themes[config.theme].prestop_frame_Pos[1] * self.mirror_x, self.pos_y + themes[config.theme].prestop_frame_Pos[2], 0, themes[config.theme].prestop_frame_Scale, self.multiplication)
+      -- draw_label(themes[config.theme].images.IMG_prestop_frame, self.origin_x + themes[config.theme].prestop_frame_Pos[1] * self.mirror_x, self.pos_y + themes[config.theme].prestop_frame_Pos[2], 0, themes[config.theme].prestop_frame_Scale, self.multiplication)
       -- Prestop bar
       if self.pre_stop_time == 0 or self.maxPrestop == nil then
         self.maxPrestop = 0
@@ -568,19 +570,19 @@ function Stack.render(self)
         self.maxPrestop = self.pre_stop_time
       end
 
-      prestop_frame_Pos = {(self.origin_x + themes[config.theme].prestop_frame_Pos[1] * self.mirror_x) + ((themes[config.theme].images.IMG_prestop_frame:getWidth() - 10) / GFX_SCALE * self.multiplication * self.mirror_x), self.pos_y + themes[config.theme].prestop_frame_Pos[2]}
-      if self.maxPrestop > 0 then
-        prestop_bar = self.pre_stop_time * (themes[config.theme].images.IMG_prestop_bar:getHeight() / self.maxPrestop)
-      else
-        prestop_bar = 0
-      end
-      prestopQuad:setViewport(0, themes[config.theme].images.IMG_prestop_bar:getHeight() - prestop_bar, themes[config.theme].images.IMG_prestop_bar:getWidth(), prestop_bar)
-      qdraw(themes[config.theme].images.IMG_prestop_bar, prestopQuad, self.origin_x + (themes[config.theme].prestop_bar_Pos[1] * self.mirror_x), ((self.pos_y + themes[config.theme].prestop_bar_Pos[2]) + ((themes[config.theme].images.IMG_prestop_bar:getHeight() - prestop_bar) / GFX_SCALE)), themes[config.theme].prestop_bar_Rotate, themes[config.theme].prestop_bar_Scale / GFX_SCALE, themes[config.theme].prestop_bar_Scale / GFX_SCALE, 0, 0, self.multiplication)
+      -- prestop_frame_Pos = {(self.origin_x + themes[config.theme].prestop_frame_Pos[1] * self.mirror_x) + ((themes[config.theme].images.IMG_prestop_frame:getWidth() - 10) / GFX_SCALE * self.multiplication * self.mirror_x), self.pos_y + themes[config.theme].prestop_frame_Pos[2]}
+      -- if self.maxPrestop > 0 then
+      --  prestop_bar = self.pre_stop_time * (themes[config.theme].images.IMG_prestop_bar:getHeight() / self.maxPrestop)
+      -- else
+      --  prestop_bar = 0
+      -- end
+      -- prestopQuad:setViewport(0, themes[config.theme].images.IMG_prestop_bar:getHeight() - prestop_bar, themes[config.theme].images.IMG_prestop_bar:getWidth(), prestop_bar)
+      -- qdraw(themes[config.theme].images.IMG_prestop_bar, prestopQuad, self.origin_x + (themes[config.theme].prestop_bar_Pos[1] * self.mirror_x), ((self.pos_y + themes[config.theme].prestop_bar_Pos[2]) + ((themes[config.theme].images.IMG_prestop_bar:getHeight() - prestop_bar) / GFX_SCALE)), themes[config.theme].prestop_bar_Rotate, themes[config.theme].prestop_bar_Scale / GFX_SCALE, themes[config.theme].prestop_bar_Scale / GFX_SCALE, 0, 0, self.multiplication)
       -- Prestop number
-      draw_number(self.pre_stop_time, themes[config.theme].images.IMG_timeNumber_atlas, 12, prestop_quads, (self.origin_x + (themes[config.theme].prestop_Pos[1] * self.mirror_x)) * GFX_SCALE, (self.pos_y + themes[config.theme].prestop_Pos[2]) * GFX_SCALE, themes[config.theme].prestop_Scale, (15 / themes[config.theme].images.timeNumberWidth * themes[config.theme].prestop_Scale), (19 / themes[config.theme].images.timeNumberHeight * themes[config.theme].prestop_Scale), "center", self.multiplication)
+      -- draw_number(self.pre_stop_time, themes[config.theme].images.IMG_timeNumber_atlas, 12, prestop_quads, (self.origin_x + (themes[config.theme].prestop_Pos[1] * self.mirror_x)) * GFX_SCALE, (self.pos_y + themes[config.theme].prestop_Pos[2]) * GFX_SCALE, themes[config.theme].prestop_Scale, (15 / themes[config.theme].images.timeNumberWidth * themes[config.theme].prestop_Scale), (19 / themes[config.theme].images.timeNumberHeight * themes[config.theme].prestop_Scale), "center", self.multiplication)
 
       -- Stop frame
-      draw_label(themes[config.theme].images.IMG_stop_frame, self.origin_x + themes[config.theme].stop_frame_Pos[1] * self.mirror_x, self.pos_y + themes[config.theme].stop_frame_Pos[2], 0, themes[config.theme].stop_frame_Scale, self.multiplication)
+      -- draw_label(themes[config.theme].images.IMG_stop_frame, self.origin_x + themes[config.theme].stop_frame_Pos[1] * self.mirror_x, self.pos_y + themes[config.theme].stop_frame_Pos[2], 0, themes[config.theme].stop_frame_Scale, self.multiplication)
       -- Stop bar
       if self.stop_time == 0 or self.maxStop == nil then
         self.maxStop = 0
@@ -588,18 +590,18 @@ function Stack.render(self)
       if self.stop_time > self.maxStop then
         self.maxStop = self.stop_time
       end
-      if self.maxStop > 0 then
-        stop_bar = self.stop_time * (themes[config.theme].images.IMG_stop_bar:getHeight() / self.maxStop)
-      else
-        stop_bar = 0
-      end
-      stopQuad:setViewport(0, themes[config.theme].images.IMG_stop_bar:getHeight() - stop_bar, themes[config.theme].images.IMG_stop_bar:getWidth(), stop_bar)
-      qdraw(themes[config.theme].images.IMG_stop_bar, stopQuad, self.origin_x + themes[config.theme].stop_bar_Pos[1] * self.mirror_x, ((self.pos_y + themes[config.theme].stop_bar_Pos[2]) + ((themes[config.theme].images.IMG_stop_bar:getHeight() - stop_bar) / GFX_SCALE)), themes[config.theme].stop_bar_Rotate, themes[config.theme].stop_bar_Scale / GFX_SCALE, themes[config.theme].stop_bar_Scale / GFX_SCALE, 0, 0, self.multiplication)
+      -- if self.maxStop > 0 then
+      --   stop_bar = self.stop_time * (themes[config.theme].images.IMG_stop_bar:getHeight() / self.maxStop)
+      -- else
+      --   stop_bar = 0
+      -- end
+      -- stopQuad:setViewport(0, themes[config.theme].images.IMG_stop_bar:getHeight() - stop_bar, themes[config.theme].images.IMG_stop_bar:getWidth(), stop_bar)
+      -- qdraw(themes[config.theme].images.IMG_stop_bar, stopQuad, self.origin_x + themes[config.theme].stop_bar_Pos[1] * self.mirror_x, ((self.pos_y + themes[config.theme].stop_bar_Pos[2]) + ((themes[config.theme].images.IMG_stop_bar:getHeight() - stop_bar) / GFX_SCALE)), themes[config.theme].stop_bar_Rotate, themes[config.theme].stop_bar_Scale / GFX_SCALE, themes[config.theme].stop_bar_Scale / GFX_SCALE, 0, 0, self.multiplication)
       -- Stop number
-      draw_number(self.stop_time, themes[config.theme].images.IMG_timeNumber_atlas, 12, stop_quads, (self.origin_x + (themes[config.theme].stop_Pos[1] * self.mirror_x)) * GFX_SCALE, (self.pos_y + themes[config.theme].stop_Pos[2]) * GFX_SCALE, themes[config.theme].stop_Scale, (15 / themes[config.theme].images.timeNumberWidth * themes[config.theme].stop_Scale), (19 / themes[config.theme].images.timeNumberHeight * themes[config.theme].stop_Scale), "center", self.multiplication)
+      -- draw_number(self.stop_time, themes[config.theme].images.IMG_timeNumber_atlas, 12, stop_quads, (self.origin_x + (themes[config.theme].stop_Pos[1] * self.mirror_x)) * GFX_SCALE, (self.pos_y + themes[config.theme].stop_Pos[2]) * GFX_SCALE, themes[config.theme].stop_Scale, (15 / themes[config.theme].images.timeNumberWidth * themes[config.theme].stop_Scale), (19 / themes[config.theme].images.timeNumberHeight * themes[config.theme].stop_Scale), "center", self.multiplication)
 
       -- Shake frame
-      draw_label(themes[config.theme].images.IMG_shake_frame, self.origin_x + themes[config.theme].shake_frame_Pos[1] * self.mirror_x, self.pos_y + themes[config.theme].shake_frame_Pos[2], 0, themes[config.theme].shake_frame_Scale, self.multiplication)
+      --cdraw_label(themes[config.theme].images.IMG_shake_frame, self.origin_x + themes[config.theme].shake_frame_Pos[1] * self.mirror_x, self.pos_y + themes[config.theme].shake_frame_Pos[2], 0, themes[config.theme].shake_frame_Scale, self.multiplication)
       -- Shake bar
       if self.shake_time == 0 or self.maxShake == nil then
         self.maxShake = 0
@@ -607,18 +609,18 @@ function Stack.render(self)
       if self.shake_time > self.maxShake then
         self.maxShake = self.shake_time
       end
-      if self.maxShake > 0 then
-        shake_bar = self.shake_time * (themes[config.theme].images.IMG_shake_bar:getHeight() / self.maxShake)
-      else
-        shake_bar = 0
-      end
+      -- if self.maxShake > 0 then
+      --   shake_bar = self.shake_time * (themes[config.theme].images.IMG_shake_bar:getHeight() / self.maxShake)
+      -- else
+      --  shake_bar = 0
+      -- end
 
       if not themes[config.theme].multibar_is_absolute then
-        shakeQuad:setViewport(0, themes[config.theme].images.IMG_shake_bar:getHeight() - shake_bar, themes[config.theme].images.IMG_shake_bar:getWidth(), shake_bar)
-        qdraw(themes[config.theme].images.IMG_shake_bar, shakeQuad, self.origin_x + themes[config.theme].shake_bar_Pos[1] * self.mirror_x, ((self.pos_y + themes[config.theme].shake_bar_Pos[2]) + ((themes[config.theme].images.IMG_shake_bar:getHeight() - shake_bar) / GFX_SCALE)), themes[config.theme].shake_bar_Rotate, themes[config.theme].shake_bar_Scale / GFX_SCALE, themes[config.theme].shake_bar_Scale / GFX_SCALE, 0, 0, self.multiplication)
+        -- shakeQuad:setViewport(0, themes[config.theme].images.IMG_shake_bar:getHeight() - shake_bar, themes[config.theme].images.IMG_shake_bar:getWidth(), shake_bar)
+        -- qdraw(themes[config.theme].images.IMG_shake_bar, shakeQuad, self.origin_x + themes[config.theme].shake_bar_Pos[1] * self.mirror_x, ((self.pos_y + themes[config.theme].shake_bar_Pos[2]) + ((themes[config.theme].images.IMG_shake_bar:getHeight() - shake_bar) / GFX_SCALE)), themes[config.theme].shake_bar_Rotate, themes[config.theme].shake_bar_Scale / GFX_SCALE, themes[config.theme].shake_bar_Scale / GFX_SCALE, 0, 0, self.multiplication)
       end
       -- Shake number
-      draw_number(self.shake_time, themes[config.theme].images.IMG_timeNumber_atlas, 12, shake_quads, (self.origin_x + (themes[config.theme].shake_Pos[1] * self.mirror_x)) * GFX_SCALE, (self.pos_y + themes[config.theme].shake_Pos[2]) * GFX_SCALE, themes[config.theme].shake_Scale, (15 / themes[config.theme].images.timeNumberWidth * themes[config.theme].shake_Scale), (19 / themes[config.theme].images.timeNumberHeight * themes[config.theme].shake_Scale), "center", self.multiplication)
+      -- draw_number(self.shake_time, themes[config.theme].images.IMG_timeNumber_atlas, 12, shake_quads, (self.origin_x + (themes[config.theme].shake_Pos[1] * self.mirror_x)) * GFX_SCALE, (self.pos_y + themes[config.theme].shake_Pos[2]) * GFX_SCALE, themes[config.theme].shake_Scale, (15 / themes[config.theme].images.timeNumberWidth * themes[config.theme].shake_Scale), (19 / themes[config.theme].images.timeNumberHeight * themes[config.theme].shake_Scale), "center", self.multiplication)
 
       -- Multibar
 
@@ -777,9 +779,7 @@ function Stack.render(self)
   -- ends here
 end
 
-
 function Stack.drawAnalyticData(self, analytic, x, y)
-
   local backgroundPadding = 6
   local textYPadding = 18
   local iconToTextSpacing = 30
@@ -792,7 +792,7 @@ function Stack.drawAnalyticData(self, analytic, x, y)
   local icon_height
 
   -- Background
-  grectangle_color("fill", x / GFX_SCALE - backgroundPadding, y / GFX_SCALE - backgroundPadding, 160/GFX_SCALE, 600/GFX_SCALE, 0, 0, 0, 0.5)
+  grectangle_color("fill", x / GFX_SCALE - backgroundPadding, y / GFX_SCALE - backgroundPadding, 160 / GFX_SCALE, 600 / GFX_SCALE, 0, 0, 0, 0.5)
 
   -- Panels cleared
   icon_width, icon_height = panels[self.panels_dir].images.classic[1][6]:getDimensions()
@@ -817,7 +817,7 @@ function Stack.drawAnalyticData(self, analytic, x, y)
   end
   icon_width, icon_height = themes[config.theme].images.IMG_gpm:getDimensions()
   draw(themes[config.theme].images.IMG_gpm, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-  gprintf(analytic.lastGPM .. "/m", x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)  
+  gprintf(analytic.lastGPM .. "/m", x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
 
   y = y + nextIconIncrement
 
@@ -952,7 +952,7 @@ function Stack.render_countdown(self)
       if self.countdown_timer >= 100 then
         draw(themes[config.theme].images.IMG_ready, ready_x, self.ready_y or initial_ready_y + 8 * 6)
       end
-      local IMG_number_to_draw = themes[config.theme].images.IMG_numbers[math.ceil(self.countdown_timer / 60)]
+      local IMG_number_to_draw = themes[config.theme].images.IMG_numbers[ceil(self.countdown_timer / 60)]
       if IMG_number_to_draw then
         draw(IMG_number_to_draw, countdown_x, countdown_y)
       end
