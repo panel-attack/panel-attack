@@ -4,6 +4,7 @@ local wait = coroutine.yield
 local function main_config_input()
   local pretty_names = {loc("up"), loc("down"), loc("left"), loc("right"), "A", "B", "X", "Y", "L", "R", loc("start")}
   local menu_x, menu_y = unpack(main_menu_screen_pos)
+  local ignoreMenuPressesTimer = nil
 
   menu_y = menu_y + 40
 
@@ -85,6 +86,7 @@ local function main_config_input()
               table.remove(idxs_to_set, 1)
               if #idxs_to_set == 0 then
                 write_key_file()
+                ignoreMenuPressesTimer = 30
               end
               input_menu:set_active_idx(idx + 1)
               local cleanString = GAME.input:cleanNameForButton(inputConfiguration[key_names[idx-1]]) or loc("op_none")
@@ -92,8 +94,15 @@ local function main_config_input()
               break
             end
           end
-        else
+        elseif not ignoreMenuPressesTimer then
           input_menu:update()
+        end
+
+        if ignoreMenuPressesTimer then
+          ignoreMenuPressesTimer = ignoreMenuPressesTimer - 1
+          if ignoreMenuPressesTimer == 0 then
+            ignoreMenuPressesTimer = nil
+          end
         end
       end
     )
