@@ -34,10 +34,10 @@ local function main_config_input()
 
   local function selectKey()
     if not was_return_just_bound then
-    input_menu:set_button_setting(input_menu.active_idx, "___")
-    idxs_to_set = {input_menu.active_idx}
-  end
-  was_return_just_bound = false
+      input_menu:set_button_setting(input_menu.active_idx, "___")
+      idxs_to_set = {input_menu.active_idx}
+    end
+    was_return_just_bound = false
   end
 
   local function selectAllKeys()
