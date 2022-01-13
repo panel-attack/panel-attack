@@ -1,5 +1,5 @@
 local wait = coroutine.yield
-
+local was_return_just_bound = false
 -- menu for configuring inputs
 local function main_config_input()
   local pretty_names = {loc("up"), loc("down"), loc("left"), loc("right"), "A", "B", "X", "Y", "L", "R", loc("start")}
@@ -38,11 +38,14 @@ local function main_config_input()
   end
 
   local function selectAllKeys()
-    input_menu:set_active_idx(2)
-    for i = 1, #key_names do
-      input_menu:set_button_setting(i + 1, "___")
-      table.insert(idxs_to_set, i + 1)
+    if not was_return_just_bound then
+      input_menu:set_active_idx(2)
+      for i = 1, #key_names do
+        input_menu:set_button_setting(i + 1, "___")
+        table.insert(idxs_to_set, i + 1)
+      end
     end
+    was_return_just_bound = false
   end
 
   local function goEscape()
@@ -86,8 +89,11 @@ local function main_config_input()
               if #idxs_to_set == 0 then
                 write_key_file()
               end
+              if key == "return" then
+                was_return_just_bound = true
+              end
               input_menu:set_active_idx(idx + 1)
-              local cleanString = GAME.input:cleanNameForButton(inputConfiguration[key_names[idx-1]]) or loc("op_none")
+              local cleanString = GAME.input:cleanNameForButton(inputConfiguration[key_names[idx - 1]]) or loc("op_none")
               input_menu:set_button_setting(idx, cleanString)
               break
             end
