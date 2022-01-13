@@ -174,8 +174,8 @@ nt_conn_timeout,Failed to connect to the server.,Impossible de se connecter au s
 nt_msg_err,"Network error, message could not be decoded: ""%1""","Erreur réseau, le message ne peut pas être décodé: ""%1""","Erro de conexão, a mensagem não pôde ser codificada: ""%1""","Network error, message could not be decoded: ""%1""","Error de red, el mensaje no pudo ser decodificado: ""%1""",,"Errore di network, il messaggio non può essere decodificato: ""%1"""
 nt_player_err,Server did not send number of players.,Le serveur n'a pas envoyé le nombre de joueurs.,O servidor não emitiu nº de jogadores.,Server did not send number of players.,El servidor no envio la cantidad de jugadores.,,Il server non ha inviato il numero di giocatori.
 op_none,none,rien,Nenhum,無し,Nada, ,Niente
-op_on,On,On,Ativ.,ON,On,,On
-op_off,Off,Off,Desat.,OFF,Off,,Off
+op_on,On,On,Ativ.,ON,On,On,On
+op_off,Off,Off,Desat.,OFF,Off,Off,Off
 op_all_keys,Set all keys,Définir toutes les touches,Definir todas as teclas,すべてのキーを設定する,Definir todas las teclas, ,Imposta tutti i tasti
 op_about_characters,About custom characters,À propos des personnages personnalisés,Sobre personagens personalizados,カスタムキャラクターについて,Acerca de personajes personalizados, ,A propostio dei personaggi personalizzabili
 op_about_themes,About custom themes,À propos des thèmes personnalisés,Sobre temas personalizados,カスタムテーマについて,Acerca de temas personalizados,,A proposito dei temi personalizzabili
@@ -251,6 +251,9 @@ op_vol_music,Music Volume,Volume Musique,Vol da música,音楽ボリューム,Vo
 op_vol_sfx,SFX Volume,Volume Effets,Vol Efeitos Esp.,SFXボリューム,Volumen de sonido, ,Volume SFX
 op_vsync,V-Sync,V-Sync,V-Sync,垂直同期,Sincronización Vertical (V-Sync),,V-Sync
 op_input_delay,Key repeat delay (offline only),Délai de répétition des touches,Atraso na repetição das teclas,DAS　（オフライン専用）,Retraso de repetición de las teclas (Solo fuera de línea),,Ritardo della ripetizione dell'input (solo offline)
+op_portrait_darkness,Portrait Darkness
+op_popfx,Pop Effects
+op_cardfx_scale,Attack Particle Distance
 opponent_level,Opponent's level,Niveau adverse,Nível do oponente,相手のレベル,Nivel del oponente, ,Livello dell'avversario
 pl_pause_help,Press Start again to resume,Appuyer sur Start pour continuer,Pressione Começar novamente para continuar,再開するにはもう一度スタートボタン押してください。,"Presiona ""Start"" para resumir",,"Premi ""Start"" di nuovo per riprendere"
 pl_1_win,P1 wins ^^,J1 gagne ^^,J1 vence ^^,1Pの勝ち！ ＾＾,J1 gana ^^, ,P1 vince ^^
