@@ -1541,7 +1541,7 @@ function Stack.PdP(self)
             end
             musics_to_use = stages[current_stage].musics
           elseif characterHasMusic then
-            if characters[self.character].music_style == "dynamic" then
+            if characters[winningPlayer.character].music_style == "dynamic" then  
               dynamicMusic = true
             end
             musics_to_use = characters[winningPlayer.character].musics
