@@ -77,7 +77,11 @@ function love.update(dt)
 
   local status, err = coroutine.resume(mainloop)
   if not status then
-    error(err .. "\n" .. debug.traceback(mainloop))
+    local system_info = "OS: " .. love.system.getOS()
+    if GAME_UPDATER_GAME_VERSION then
+      system_info = system_info .. "\n" .. GAME_UPDATER_GAME_VERSION
+    end
+    error(err .. "\n" .. debug.traceback(mainloop).. "\n" .. system_info)
   end
   if server_queue and server_queue:size() > 0 then
     logger.trace("Queue Size: " .. server_queue:size() .. " Data:" .. server_queue:to_short_string())
