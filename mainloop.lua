@@ -262,7 +262,6 @@ end
 function createNewReplay(mode)
   local result = {}
   result.engineVersion = VERSION
-  result.replayVersion = 2
 
   result[mode] = {}
   local modeReplay = result[mode]
@@ -331,7 +330,7 @@ local function finalizeAndWriteReplay(extraPath, extraFilename)
   end
   local filename = "v" .. VERSION .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
   if extraFilename then
-    filename = filename .. extraFilename
+    filename = filename .. "-" .. extraFilename
   end
   filename = filename .. ".txt"
   write_replay_file()
@@ -354,7 +353,7 @@ local function finalizeAndWriteVsReplay(battleRoom, outcome_claim)
     else
       extraPath = rep_a_name .. "-vs-" .. rep_b_name
     end
-    extraFilename = "-" .. rep_a_name .. "-L" .. P1.level .. "-vs-" .. rep_b_name .. "-L" .. P2.level
+    extraFilename = rep_a_name .. "-L" .. P1.level .. "-vs-" .. rep_b_name .. "-L" .. P2.level
     if match_type and match_type ~= "" then
       extraFilename = extraFilename .. "-" .. match_type
     end
@@ -365,6 +364,7 @@ local function finalizeAndWriteVsReplay(battleRoom, outcome_claim)
     end
   else -- vs Self
     extraPath = "Vs Self"
+    extraFilename = "vsSelf-" .. "L" .. P1.level
   end
 
   finalizeAndWriteReplay(extraPath, extraFilename)
@@ -475,11 +475,11 @@ local function main_endless_time_setup(mode, speed, difficulty)
     if GAME.match.mode == "endless" then
       GAME.scores:saveEndlessScoreForLevel(P1.score, P1.difficulty)
       extraPath = "Endless"
-      extraFilename = "-Spd" .. stack.speed .. "-Dif" .. stack.difficulty .. "-endless"
+      extraFilename = "Spd" .. stack.speed .. "-Dif" .. stack.difficulty .. "-endless"
     elseif GAME.match.mode == "time" then
       GAME.scores:saveTimeAttack1PScoreForLevel(P1.score, P1.difficulty)
       extraPath = "Time Attack"
-      extraFilename = "-Spd" .. stack.speed .. "-Dif" .. stack.difficulty .. "-timeattack"
+      extraFilename = "Spd" .. stack.speed .. "-Dif" .. stack.difficulty .. "-timeattack"
     end
     finalizeAndWriteReplay(extraPath, extraFilename)
 
