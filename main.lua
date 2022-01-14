@@ -78,7 +78,11 @@ function love.update(dt)
 
   local status, err = coroutine.resume(mainloop)
   if not status then
-    error(err .. "\n" .. debug.traceback(mainloop))
+    local system_info = "OS: " .. love.system.getOS()
+    if GAME_UPDATER_GAME_VERSION then
+      system_info = system_info .. "\n" .. GAME_UPDATER_GAME_VERSION
+    end
+    error(err .. "\n" .. debug.traceback(mainloop).. "\n" .. system_info)
   end
   if server_queue and server_queue:size() > 0 then
     logger.trace("Queue Size: " .. server_queue:size() .. " Data:" .. server_queue:to_short_string())
@@ -135,8 +139,7 @@ end
 -- Transform from window coordinates to game coordinates
 local function transform_coordinates(x, y)
   local lbx, lby, lbw, lbh = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 16, 9)
-  local scale = canvas_width / math.max(GAME.backgroundImage:getWidth(), GAME.backgroundImage:getHeight())
-  return (x - lbx) / scale * canvas_width / lbw, (y - lby) / scale * canvas_height / lbh
+  return (x - lbx) / 1 * canvas_width / lbw, (y - lby) / 1 * canvas_height / lbh
 end
 
 -- Handle a mouse or touch press
