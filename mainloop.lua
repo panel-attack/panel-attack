@@ -290,8 +290,8 @@ function createNewReplay(mode)
       modeReplay.P2_char = P2.character
       modeReplay.P2_cur_wait_time = P2.cur_wait_time
 
-      modeReplay.P1_win_count = GAME.match.battleRoom.playerWinCounts[1]
-      modeReplay.P2_win_count = GAME.match.battleRoom.playerWinCounts[2]
+      modeReplay.P1_win_count = GAME.match.battleRoom.playerWinCounts[P1.player_number]
+      modeReplay.P2_win_count = GAME.match.battleRoom.playerWinCounts[P2.player_number]
     end
   end
 
