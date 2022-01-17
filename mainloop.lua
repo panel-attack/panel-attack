@@ -8,7 +8,7 @@ local main_config_input = require("config_inputs")
 
 local wait, resume = coroutine.yield, coroutine.resume
 
-local main_endless, make_main_puzzle, main_net_vs_setup, main_select_puzz, main_local_vs_computer_setup, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, main_options, main_replay_browser, exit_game, training_setup
+local main_endless, make_main_puzzle, main_net_vs_setup, main_select_puzz, main_local_vs_computer_setup, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, main_options, main_replay_browser, exit_game, vs_self_setup
 -- main_select_mode, main_dumb_transition, main_net_vs, main_net_vs_lobby, main_local_vs_yourself, main_local_vs, main_replay_endless, main_replay_puzzle, main_replay_vs are not local since they are also used elsewhere
 
 local PLAYING = "playing" -- room states
@@ -164,10 +164,9 @@ do
       {loc("mm_1_endless"), main_endless_setup},
       {loc("mm_1_puzzle"), main_select_puzz},
       {loc("mm_1_time"), main_timeattack_setup},
-      {loc("mm_1_vs"), main_local_vs_yourself_setup},
+      {loc("mm_1_vs"), vs_self_setup},
       --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
       {loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
-      {"Training", training_setup},
       --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
       --{loc("mm_2_vs_online", "betaserver.panelattack.com"), main_net_vs_setup, {"betaserver.panelattack.com"}},
       --{loc("mm_2_vs_online", "(USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)"), main_net_vs_setup, {"18.188.43.50"}},
@@ -230,7 +229,7 @@ function main_timeattack_setup()
   return unpack({main_select_speed_99, {main_time_attack}})
 end
 
-function training_setup()
+function vs_self_setup()
   training_mode_settings = nil
   local height = 1
   local width = 6
@@ -241,11 +240,11 @@ function training_setup()
   local trainingSettingsMenu
 
   local function update_height()
-    trainingSettingsMenu:set_button_setting(1, height)
+    trainingSettingsMenu:set_button_setting(2, height)
   end
 
   local function update_width()
-    trainingSettingsMenu:set_button_setting(2, width)
+    trainingSettingsMenu:set_button_setting(3, width)
   end
 
   local function increase_height()
@@ -276,8 +275,26 @@ function training_setup()
     training_mode_settings = nil
     ret = {main_select_mode}
   end
+  local function start_standard_game()
+    ret = {main_local_vs_yourself_setup}
+  end
 
-  local function start_game()
+  local function start_factory_game()
+    training_mode_settings = {width = 6, height = 2}
+    ret = {main_local_vs_yourself_setup}
+  end
+
+  local function start_combo_storm_game()
+    training_mode_settings = {width = 4, height = 1}
+    ret = {main_local_vs_yourself_setup}
+  end
+
+  local function start_large_garbage_game()
+    training_mode_settings = {width = 6, height = 12}
+    ret = {main_local_vs_yourself_setup}
+  end
+
+  local function start_custom_game()
     training_mode_settings = {width = width, height = height}
     ret = {main_local_vs_yourself_setup}
   end
@@ -287,9 +304,13 @@ function training_setup()
   end
   
   trainingSettingsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
+  trainingSettingsMenu:add_button("Standard 1PVS", start_standard_game, goEscape)
   trainingSettingsMenu:add_button("Height", nextMenu, goEscape, decrease_height, increase_height)
   trainingSettingsMenu:add_button("Width", nextMenu, goEscape, decrease_width, increase_width)
-  trainingSettingsMenu:add_button(loc("go_"), start_game, goEscape)
+  trainingSettingsMenu:add_button("Factory Training", start_factory_game, goEscape)
+  trainingSettingsMenu:add_button("Combo Storm Training", start_combo_storm_game, goEscape)
+  trainingSettingsMenu:add_button("Large Garbage Training", start_large_garbage_game, goEscape)
+  trainingSettingsMenu:add_button(loc("go_"), start_custom_game, goEscape)
   trainingSettingsMenu:add_button(loc("back"), exitSettings, exitSettings)
   update_height()
   update_width()
@@ -1142,8 +1163,9 @@ function main_local_vs_yourself()
       return unpack(ret)
     end
     if P1:game_ended() then
-      GAME.scores:saveVsSelfScoreForLevel(P1.analytic.data.sent_garbage_lines, P1.level)
-
+      if not training_mode_settings then
+        GAME.scores:saveVsSelfScoreForLevel(P1.analytic.data.sent_garbage_lines, P1.level)
+      end
       return game_over_transition, {select_screen.main, nil, P1:pick_win_sfx()}
     end
   end

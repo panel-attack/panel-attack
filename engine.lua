@@ -1969,7 +1969,7 @@ function Stack.set_combo_garbage(self, n_combo, n_metal)
   if not training_mode_settings then
     combo_pieces = combo_garbage[n_combo]
   else
-    combo_pieces = {6,6,6,6,6,6,6,6,6,6,6,6,6,6,6}
+    combo_pieces = {6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6}
   end
 
   for i = 1, #combo_pieces do
@@ -2262,7 +2262,7 @@ function Stack.check_matches(self)
       end
     end
   end
-  
+
   if (combo_size ~= 0) then
     self.analytic:register_destroyed_panels(combo_size)
     if (combo_size > 3) then
