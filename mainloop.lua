@@ -1241,10 +1241,11 @@ function main_local_vs_yourself()
   end
   
   local function processGameResults(gameResult) 
+    if not training_mode_settings  then
+      GAME.scores:saveVsSelfScoreForLevel(P1.analytic.data.sent_garbage_lines, P1.level)
+      finalizeAndWriteVsReplay(nil, nil)
+    end
 
-    GAME.scores:saveVsSelfScoreForLevel(P1.analytic.data.sent_garbage_lines, P1.level)
-    
-    finalizeAndWriteVsReplay(nil, nil)
 
     return {game_over_transition, {select_screen.main, nil, P1:pick_win_sfx()}}
   end
