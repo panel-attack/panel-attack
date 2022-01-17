@@ -114,9 +114,9 @@ function variable_step(f)
       leftover_time = leftover_time - 1 / 60
       if leftover_time >= 1 / 60 then
         GAME.droppedFrames = GAME.droppedFrames + 1
-        --if GAME.match then
-          --print("Dropped Frame, total is: " .. GAME.droppedFrames)
-        --end
+      --if GAME.match then
+      --print("Dropped Frame, total is: " .. GAME.droppedFrames)
+      --end
       end
     end
   end
@@ -385,11 +385,9 @@ function Stack.wait_for_random_character(self)
 end
 
 function Stack.handle_pause(self)
-  if menu_pause() or not love.window.hasFocus() then
+  if menu_pause() or (not GAME.focused and not GAME.gameIsPaused) then
     GAME.gameIsPaused = not GAME.gameIsPaused
-    if not love.window.hasFocus() then
-      GAME.gameIsPaused = true
-    end
+
     setMusicPaused(GAME.gameIsPaused)
 
     if GAME.gameIsPaused then
@@ -967,7 +965,6 @@ function main_net_vs()
       select_screen.character_select_mode = "2p_net_vs"
       --transition to game over.
       return game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}
-
     end
   end
 end
@@ -998,7 +995,7 @@ function main_local_vs()
     GAME.match:render()
     wait()
     variable_step(
-    function()
+      function()
         P1:run()
         P2:run()
         assert((P1.CLOCK == P2.CLOCK) or GAME.match:matchOutcome(), "should run at same speed: " .. P1.CLOCK .. " - " .. P2.CLOCK)
@@ -1299,7 +1296,7 @@ function make_main_puzzle(puzzleSet, awesome_idx)
       variable_step(
         function()
           -- Reset puzzle button
-          if player_reset() then 
+          if player_reset() then
             ret = {main_dumb_transition, {make_main_puzzle(puzzleSet, awesome_idx), "", 0, 0}}
           elseif this_frame_keys["escape"] then
             ret = {main_dumb_transition, {main_select_puzz, "", 0, 0}}
@@ -1332,7 +1329,7 @@ function make_main_puzzle(puzzleSet, awesome_idx)
               ret = {game_over_transition, {make_main_puzzle(puzzleSet, awesome_idx), loc("pl_you_lose")}}
             end
 
-            if not ret then            
+            if not ret then
               P1:run()
               P1:handle_pause()
               if menu_escape_game() then
@@ -1642,7 +1639,6 @@ end
 
 -- show game over screen, last frame of gameplay
 function game_over_transition(next_func, text, winnerSFX, timemax)
-
   timemax = timemax or -1 -- negative values means the user needs to press enter/escape to continue
   text = text or ""
   local button_text = loc("continue_button") or ""
@@ -1655,7 +1651,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
   if SFX_GameOver_Play == 1 then
     themes[config.theme].sounds.game_over:play()
     SFX_GameOver_Play = 0
-  else 
+  else
     winnerTime = 0
   end
 
