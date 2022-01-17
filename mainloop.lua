@@ -104,9 +104,9 @@ function variable_step(f)
       leftover_time = leftover_time - 1 / 60
       if leftover_time >= 1 / 60 then
         GAME.droppedFrames = GAME.droppedFrames + 1
-        --if GAME.match then
-          --print("Dropped Frame, total is: " .. GAME.droppedFrames)
-        --end
+      --if GAME.match then
+      --print("Dropped Frame, total is: " .. GAME.droppedFrames)
+      --end
       end
     end
   end
@@ -300,7 +300,7 @@ end
 
 local function handle_pause(self)
   if GAME.match.supportsPause then
-    if menu_pause() then
+    if menu_pause() or (not GAME.focused and not GAME.gameIsPaused) then
       GAME.gameIsPaused = not GAME.gameIsPaused
 
       setMusicPaused(GAME.gameIsPaused)
@@ -1497,7 +1497,6 @@ end
 
 -- show game over screen, last frame of gameplay
 function game_over_transition(next_func, text, winnerSFX, timemax)
-
   timemax = timemax or -1 -- negative values means the user needs to press enter/escape to continue
   text = text or ""
   local button_text = loc("continue_button") or ""
@@ -1510,7 +1509,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
   if SFX_GameOver_Play == 1 then
     themes[config.theme].sounds.game_over:play()
     SFX_GameOver_Play = 0
-  else 
+  else
     winnerTime = 0
   end
 
