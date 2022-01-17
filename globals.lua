@@ -34,8 +34,6 @@ training_mode_settings = nil
 
 current_stage = nil
 
-GAME_ENDED_CLOCK = 0
-
 replay = {}
 
 -- sfx play

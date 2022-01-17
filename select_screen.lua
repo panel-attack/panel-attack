@@ -907,34 +907,26 @@ function select_screen.main()
           P1.garbage_target = P2
           P2.garbage_target = P1
           P2:moveForPlayerNumber(2)
-          replay = {}
-          replay.vs = {
-            P = "",
-            O = "",
-            I = "",
-            Q = "",
-            R = "",
-            in_buf = "",
-            P1_level = P1.level,
-            P2_level = P2.level,
-            P1_name = GAME.battleRoom.playerNames[1],
-            P2_name = GAME.battleRoom.playerNames[2],
-            P1_char = P1.character,
-            P2_char = P2.character,
-            P1_cur_wait_time = P1.cur_wait_time,
-            P2_cur_wait_time = P2.cur_wait_time,
-            ranked = msg.ranked,
-            do_countdown = true
-          }
+          replay = createNewReplay(GAME.match.mode)
+          
           if GAME.battleRoom.spectating and replay_of_match_so_far then --we joined a match in progress
-            replay.vs = replay_of_match_so_far.vs
+            for k, v in pairs(replay_of_match_so_far.vs) do
+              replay.vs[k] = v
+            end
             P1.input_buffer = replay_of_match_so_far.vs.in_buf
             P1.panel_buffer = replay_of_match_so_far.vs.P
             P1.gpanel_buffer = replay_of_match_so_far.vs.Q
             P2.input_buffer = replay_of_match_so_far.vs.I
             P2.panel_buffer = replay_of_match_so_far.vs.O
             P2.gpanel_buffer = replay_of_match_so_far.vs.R
-            if replay.vs.ranked then
+            P1.input_buffer_record = P1.input_buffer
+            P1.panel_buffer_record = P1.panel_buffer
+            P1.gpanel_buffer_record = P1.gpanel_buffer
+            P2.input_buffer_record = P2.input_buffer
+            P2.panel_buffer_record = P2.panel_buffer
+            P2.gpanel_buffer_record = P2.gpanel_buffer
+
+            if msg.ranked then
               match_type = "Ranked"
               match_type_message = ""
             else
@@ -944,6 +936,9 @@ function select_screen.main()
             P1.play_to_end = true --this makes non local stacks run until caught up
             P2.play_to_end = true
           end
+
+          replay.vs.ranked = msg.ranked
+
           if not GAME.battleRoom.spectating then
             ask_for_gpanels("000000")
             ask_for_panels("000000")
