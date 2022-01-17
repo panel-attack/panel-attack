@@ -30,6 +30,8 @@ stages_ids_for_current_theme = {} -- initialized in stage.lua
 panels = {} -- initialized in panels.lua
 panels_ids = {} -- initialized in panels.lua
 
+training_mode_settings = nil
+
 current_stage = nil
 
 GAME_ENDED_CLOCK = 0
