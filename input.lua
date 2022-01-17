@@ -225,6 +225,7 @@ function love.keypressed(key, scancode, rep)
   end
   this_frame_keys[key] = true
 
+  -- If we need to record a new player input method, lookup this input config and assign to this player number
   if input.acceptingPlayerInputConfigurationAssignments then
     for index, inputConfiguration in ipairs(input.availableInputConfigurationsToAssign) do
       for rawKey, keyName in pairs(inputConfiguration) do
@@ -284,12 +285,14 @@ local function released_key_after_time(key, time)
   return this_frame_released_keys[key] and this_frame_released_keys[key] >= time
 end
 
+-- Clears all input configurations assigned to player numbers
 function Input.clearInputConfigurationsForPlayers(self)
   self.playerInputConfigurationsMap = {}
   self.acceptingPlayerInputConfigurationAssignments = false
   self.availableInputConfigurationsToAssign = nil
 end
 
+-- Requests the next inputs assign configurations to players, up to the number of players passed in
 function Input.requestPlayerInputConfigurationAssignments(self, numberOfPlayers)
   if numberOfPlayers == 1 then
     self.playerInputConfigurationsMap[1] = self.inputConfigurations
@@ -302,6 +305,7 @@ function Input.requestPlayerInputConfigurationAssignments(self, numberOfPlayers)
   end
 end
 
+-- Returns the first player still needing an input configuration or nil if none
 function Input.playerNumberWaitingForInputConfiguration(self)
   if not input.acceptingPlayerInputConfigurationAssignments then
     return nil
@@ -314,6 +318,7 @@ function Input.playerNumberWaitingForInputConfiguration(self)
   return nil
 end
 
+-- Returns all input configurations available for this player
 function Input.getInputConfigurationsForPlayerNumber(self, playerNumber)
 
   local results = {}
@@ -345,7 +350,8 @@ local function input_key_func(fixed, configurable, query, sound, ...)
     silent = silent or false
     local res = false
 
-    if not playerNumber then
+    -- If this isn't for a specific player, or we are only doing input for one player, allow the fixed keys as well.
+    if not playerNumber or (#input.playerInputConfigurationsMap <= 1 and input:playerNumberWaitingForInputConfiguration() == nil) then
       for i = 1, #fixed do
         res = res or query(fixed[i], other_args)
       end
