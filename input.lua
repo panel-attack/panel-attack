@@ -1,4 +1,5 @@
 require("util")
+local logger = require("logger")
 
 -- The class that holds all input mappings and state
 -- TODO: move all state variables in here
@@ -224,6 +225,7 @@ function love.keypressed(key, scancode, rep)
     keys[key] = 0
   end
   this_frame_keys[key] = true
+  logger.trace("key pressed: " .. key)
 
   -- If we need to record a new player input method, lookup this input config and assign to this player number
   if input.acceptingPlayerInputConfigurationAssignments then
@@ -571,6 +573,14 @@ player_right =
   key_is_down,
   nil
 )
+
+-- returns true if the user input to exit a local game in progress
+function menu_escape_game()
+  if GAME.gameIsPaused and menu_escape() then
+    return true
+  end
+  return false
+end
 
 select_being_pressed_ratio = get_being_pressed_for_duration_ratio({"return", "kenter", "z"}, {"swap1"}, super_selection_duration)
 
