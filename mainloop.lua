@@ -487,7 +487,7 @@ function Stack.wait_for_random_character(self)
 end
 
 function Stack.handle_pause(self)
-  if menu_pause() then
+  if menu_pause() or (not GAME.focused and not GAME.gameIsPaused) then
     GAME.gameIsPaused = not GAME.gameIsPaused
 
     setMusicPaused(GAME.gameIsPaused)
