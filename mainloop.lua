@@ -8,7 +8,7 @@ local main_config_input = require("config_inputs")
 
 local wait, resume = coroutine.yield, coroutine.resume
 
-local main_endless_select, main_timeattack_select, make_main_puzzle, main_net_vs_setup, main_select_puzz, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, exit_game
+local main_endless_select, main_timeattack_select, make_main_puzzle, main_net_vs_setup, main_select_puzz, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, exit_game, training_setup
 
 local PLAYING = "playing" -- room states
 local CHARACTERSELECT = "character select" -- room states
@@ -131,6 +131,7 @@ do
     connected_server_ip = ""
     current_server_supports_ranking = false
     match_type = ""
+    training_mode_settings = nil
     local menu_x, menu_y = unpack(main_menu_screen_pos)
     local main_menu
     local ret = nil
@@ -154,6 +155,7 @@ do
       {loc("mm_1_puzzle"), main_select_puzz},
       {loc("mm_1_time"), main_timeattack_select},
       {loc("mm_1_vs"), main_local_vs_yourself_setup},
+      {"1P Training", training_setup},
       --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
       {loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
@@ -490,8 +492,111 @@ local function main_endless_time_setup(mode, speed, difficulty)
 
 end
 
-local function main_select_speed_99(mode)
+function training_setup()
+  training_mode_settings = nil
+  local height = 1
+  local width = 6
+  local ret = nil
+  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  menu_y = menu_y + 70
 
+  local trainingSettingsMenu
+
+  local function update_height()
+    trainingSettingsMenu:set_button_setting(4, height)
+  end
+
+  local function update_width()
+    trainingSettingsMenu:set_button_setting(5, width)
+  end
+
+  local function increase_height()
+    height = bound(1, height + 1, 69)
+    update_height()
+  end
+
+  local function decrease_height()
+    height = bound(1, height - 1, 69)
+    update_height()
+  end
+
+  local function increase_width()
+    width = bound(1, width + 1, 6)
+    update_width()
+  end
+
+  local function decrease_width()
+    width = bound(1, width - 1, 6)
+    update_width()
+  end
+  local function goToStart()
+    update_height()
+    update_width()
+    trainingSettingsMenu:set_active_idx(#trainingSettingsMenu.buttons - 1)
+  end
+  local function goEscape()
+    trainingSettingsMenu:set_active_idx(#trainingSettingsMenu.buttons)
+  end
+
+  local function exitSettings()
+    training_mode_settings = nil
+    ret = {main_select_mode}
+  end
+
+  local function factory_settings()
+    width = 6
+    height = 2
+    goToStart()
+  end
+
+  local function combo_storm_settings()
+    width = 4
+    height = 1
+    goToStart()
+  end
+
+  local function large_garbage_settings()
+    width = 6
+    height = 12
+    goToStart()
+  end
+
+  local function start_custom_game()
+    training_mode_settings = {width = width, height = height}
+    ret = {main_local_vs_yourself_setup}
+  end
+
+  local function nextMenu()
+    trainingSettingsMenu:selectNextIndex()
+  end
+  
+  trainingSettingsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
+  trainingSettingsMenu:add_button("Factory Training", factory_settings, goEscape)
+  trainingSettingsMenu:add_button("Combo Storm Training", combo_storm_settings, goEscape)
+  trainingSettingsMenu:add_button("Large Garbage Training", large_garbage_settings, goEscape)
+  trainingSettingsMenu:add_button("Height", nextMenu, goEscape, decrease_height, increase_height)
+  trainingSettingsMenu:add_button("Width", nextMenu, goEscape, decrease_width, increase_width)
+  trainingSettingsMenu:add_button(loc("go_"), start_custom_game, goEscape)
+  trainingSettingsMenu:add_button(loc("back"), exitSettings, exitSettings)
+  update_height()
+  update_width()
+
+  while true do
+    trainingSettingsMenu:draw()
+    wait()
+    variable_step(
+      function()
+        trainingSettingsMenu:update()
+      end
+    )
+
+    if ret then
+      return unpack(ret)
+    end
+  end
+end
+
+local function main_select_speed_99(mode)
   -- stack rise speed
   local speed = config.endless_speed or 1
   local difficulty = config.endless_difficulty or 1
@@ -1140,10 +1245,11 @@ function main_local_vs_yourself()
   end
   
   local function processGameResults(gameResult) 
+    if not training_mode_settings  then
+      GAME.scores:saveVsSelfScoreForLevel(P1.analytic.data.sent_garbage_lines, P1.level)
+      finalizeAndWriteVsReplay(nil, nil)
+    end
 
-    GAME.scores:saveVsSelfScoreForLevel(P1.analytic.data.sent_garbage_lines, P1.level)
-    
-    finalizeAndWriteVsReplay(nil, nil)
 
     return {game_over_transition, {select_screen.main, nil, P1:pick_win_sfx()}}
   end

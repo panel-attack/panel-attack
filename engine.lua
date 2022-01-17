@@ -19,7 +19,6 @@ local current_music_is_casual = false -- must be false so that casual music star
 Stack =
   class(
   function(s, which, match, is_local, panels_dir, speed, difficulty, player_number, wantsCanvas)
-
     wantsCanvas = wantsCanvas or 1
     s.match = match
     s.character = config.character
@@ -29,7 +28,7 @@ Stack =
     s.is_local = is_local
 
     s.drawsAnalytics = true
-    
+
     if not panels[panels_dir] then
       s.panels_dir = config.panels
     end
@@ -608,28 +607,27 @@ end
 
 function Stack.puzzle_done(self)
   if not self.do_countdown then
-    -- For now don't require active panels to be 0, we will still animate in game over, 
+    -- For now don't require active panels to be 0, we will still animate in game over,
     -- and we need to win immediately to avoid the failure below in the chain case.
     --if P1.n_active_panels == 0 then
-      --if self.puzzleType == "chain" or P1.prev_active_panels == 0 then
-        local panels = self.panels
-        for row = 1, self.height do
-          for col = 1, self.width do
-            local color = panels[row][col].color
-            if color ~= 0 and color ~= 9 then
-              return false
-            end
-          end
+    --if self.puzzleType == "chain" or P1.prev_active_panels == 0 then
+    local panels = self.panels
+    for row = 1, self.height do
+      for col = 1, self.width do
+        local color = panels[row][col].color
+        if color ~= 0 and color ~= 9 then
+          return false
         end
+      end
+    end
 
-        return true
-      --end
-    --end
+    return true
+  --end
+  --end
   end
 
   return false
 end
-
 
 function Stack.puzzle_failed(self)
   if not self.do_countdown then
@@ -776,7 +774,7 @@ function Stack.run(self, timesToRun)
   for i = 1, timesToRun do
     self:update_popfxs()
     self:update_cards()
-    if self:game_ended() == false then 
+    if self:game_ended() == false then
       if self.is_local == false then
         if self.input_buffer and string.len(self.input_buffer) > 0 then
           self.input_state = string.sub(self.input_buffer, 1, 1)
@@ -1514,7 +1512,7 @@ function Stack.PdP(self)
           self.garbage_q:pop()
         end
       end
-    end 
+    end
 
     -- Update Music
     if not GAME.gameIsPaused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
@@ -1545,7 +1543,7 @@ function Stack.PdP(self)
             end
             musics_to_use = stages[current_stage].musics
           elseif characterHasMusic then
-            if characters[winningPlayer.character].music_style == "dynamic" then  
+            if characters[winningPlayer.character].music_style == "dynamic" then
               dynamicMusic = true
             end
             musics_to_use = characters[winningPlayer.character].musics
@@ -1563,12 +1561,12 @@ function Stack.PdP(self)
 
             local normalMusic = {musics_to_use["normal_music"], musics_to_use["normal_music_start"]}
             local dangerMusic = {musics_to_use["danger_music"], musics_to_use["danger_music_start"]}
-              
+
             if #currently_playing_tracks == 0 then
               find_and_add_music(musics_to_use, "normal_music")
               find_and_add_music(musics_to_use, "danger_music")
             end
-          
+
             -- Do we need to switch music?
             if current_music_is_casual ~= wantsDangerMusic then
               current_music_is_casual = not current_music_is_casual
@@ -1818,7 +1816,7 @@ function Stack.set_game_over(self)
     self.match.gameEndedClock = self.CLOCK
   end
 
-  if self.canvas then 
+  if self.canvas then
     local popsize = "small"
     local panels = self.panels
     local width = self.width
@@ -1941,6 +1939,10 @@ end
 -- drops a width x height garbage.
 function Stack.drop_garbage(self, width, height, metal)
   local spawn_row = self.height + 1
+  if training_mode_settings then
+    width = training_mode_settings.width
+    height = training_mode_settings.height
+  end
 
   -- Do one last check for panels in the way.
   for i = spawn_row, #self.panels do
@@ -2001,7 +2003,13 @@ function Stack.set_combo_garbage(self, n_combo, n_metal)
   for i = 3, n_metal do
     stuff_to_send[#stuff_to_send + 1] = {6, 1, true, false}
   end
-  local combo_pieces = combo_garbage[n_combo]
+  local combo_pieces
+  if not training_mode_settings then
+    combo_pieces = combo_garbage[n_combo]
+  else
+    combo_pieces = {6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6}
+  end
+
   for i = 1, #combo_pieces do
     stuff_to_send[#stuff_to_send + 1] = {combo_pieces[i], 1, false, false}
   end
@@ -2173,7 +2181,6 @@ function Stack.check_matches(self)
 
     -- We found a new panel we haven't handled yet that we should
     if ((panel.garbage and panel.state == "normal") or panel.matching) and ((normal and not seen[panel]) or (metal and not seenm[panel])) then
-
       -- We matched a new garbage
       if ((metal and panel.metal) or (normal and not panel.metal)) and panel.garbage and not garbage[panel] then
         garbage[panel] = true
