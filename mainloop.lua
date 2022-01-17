@@ -8,7 +8,7 @@ local main_config_input = require("config_inputs")
 
 local wait, resume = coroutine.yield, coroutine.resume
 
-local main_endless_select, main_timeattack_select, make_main_puzzle, main_net_vs_setup, main_select_puzz, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, exit_game, vs_self_setup
+local main_endless_select, main_timeattack_select, make_main_puzzle, main_net_vs_setup, main_select_puzz, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, exit_game, training_setup
 
 local PLAYING = "playing" -- room states
 local CHARACTERSELECT = "character select" -- room states
@@ -154,7 +154,8 @@ do
       {loc("mm_1_endless"), main_endless_select},
       {loc("mm_1_puzzle"), main_select_puzz},
       {loc("mm_1_time"), main_timeattack_select},
-      {loc("mm_1_vs"), vs_self_setup},
+      {loc("mm_1_vs"), main_local_vs_yourself_setup},
+      {"1P Training", training_setup},
       --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
       {loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
@@ -491,7 +492,7 @@ local function main_endless_time_setup(mode, speed, difficulty)
 
 end
 
-function vs_self_setup()
+function training_setup()
   training_mode_settings = nil
   local height = 1
   local width = 6
@@ -502,11 +503,11 @@ function vs_self_setup()
   local trainingSettingsMenu
 
   local function update_height()
-    trainingSettingsMenu:set_button_setting(2, height)
+    trainingSettingsMenu:set_button_setting(1, height)
   end
 
   local function update_width()
-    trainingSettingsMenu:set_button_setting(3, width)
+    trainingSettingsMenu:set_button_setting(2, width)
   end
 
   local function increase_height()
@@ -537,9 +538,6 @@ function vs_self_setup()
     training_mode_settings = nil
     ret = {main_select_mode}
   end
-  local function start_standard_game()
-    ret = {main_local_vs_yourself_setup}
-  end
 
   local function start_factory_game()
     training_mode_settings = {width = 6, height = 2}
@@ -566,7 +564,6 @@ function vs_self_setup()
   end
   
   trainingSettingsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
-  trainingSettingsMenu:add_button("Standard 1PVS", start_standard_game, goEscape)
   trainingSettingsMenu:add_button("Height", nextMenu, goEscape, decrease_height, increase_height)
   trainingSettingsMenu:add_button("Width", nextMenu, goEscape, decrease_width, increase_width)
   trainingSettingsMenu:add_button("Factory Training", start_factory_game, goEscape)
