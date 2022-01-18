@@ -13,6 +13,7 @@ BattleRoom =
     self.playerNames[1] = config.name or loc("player_n", "1")
     self.playerNames[2] = loc("player_n", "2")
     self.spectating = false
+    self.trainingModeSettings = nil
   end
 )
 
