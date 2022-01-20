@@ -123,6 +123,9 @@ function Match.render(self)
       if P2 then
         P2:render()
       end
+      if self.health then
+        self.health:render()
+      end
     end
   end
 end

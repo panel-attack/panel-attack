@@ -1738,6 +1738,12 @@ end
 function Stack.game_ended(self)
 
   if self.match.mode == "vs" then
+    if GAME.battleRoom.trainingModeSettings then
+      if self.match.health:game_ended() then
+        return true
+      end
+    end
+
     -- Note we use "greater" and not "greater than or equal" because our stack may be currently processing this clock frame.
     -- At the end of the clock frame it will be incremented and we know we have process the game over clock frame.
     if self.match.gameEndedClock > 0 and self.CLOCK > self.match.gameEndedClock then
@@ -1775,6 +1781,11 @@ function Stack.gameResult(self)
   if self.match.mode == "vs" then
     local otherPlayer = self.garbage_target
     if otherPlayer == self or otherPlayer == nil then
+      if GAME.battleRoom.trainingModeSettings then
+        if self.match.health:game_ended() then
+          return 1
+        end
+      end
       return -1
     -- We can't call it until someone has lost and everyone has played up to that point in time.
     elseif otherPlayer:game_ended() then
