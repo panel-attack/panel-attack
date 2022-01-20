@@ -12,6 +12,7 @@ require("character") -- after globals!
 require("stage") -- after globals!
 require("save")
 require("engine")
+require("AttackEngine")
 require("localization")
 require("graphics")
 GAME.input = require("input")

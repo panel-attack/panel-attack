@@ -3,10 +3,11 @@ local logger = require("logger")
 -- A pattern for sending garbage
 AttackPattern =
   class(
-  function(self, width, height, start, repeatDelay, metal, chain)
+  function(self, width, height, start, repeatDelay, attackCount, metal, chain)
     self.width = width
     self.height = height
     self.start = start
+    self.attackCount = attackCount
     self.repeatDelay = repeatDelay
     self.garbage = {width, height, metal, chain}
   end
@@ -25,12 +26,13 @@ AttackEngine =
 -- Adds an attack pattern that happens repeatedly on a timer.
 -- width - the width of the attack
 -- height - the height of the attack
--- start -- the clock frame these attacks should start being sent
+-- start -- the CLOCK frame these attacks should start being sent
 -- repeatDelay - the amount of time in between each attack after start
+-- attackCount - the number of times to send the attack, nil for infinite
 -- metal - if this is a metal block
 -- chain - if this is a chain attack
-function AttackEngine.addAttackPattern(self, width, height, start, repeatDelay, metal, chain)
-    local attackPattern = AttackPattern(width, height, start, repeatDelay, metal, chain)
+function AttackEngine.addAttackPattern(self, width, height, start, repeatDelay, attackCount, metal, chain)
+    local attackPattern = AttackPattern(width, height, start, repeatDelay, attackCount, metal, chain)
     self.attackPatterns[#self.attackPatterns+1] = attackPattern
 end
 
@@ -38,13 +40,17 @@ end
 function AttackEngine.run(self)
     local garbageToSend = {}
     for _, attackPattern in ipairs(self.attackPatterns) do
-        if self.clock >= attackPattern.start then
-            local difference = self.clock - attackPattern.start
-            local remainder = difference % attackPattern.repeatDelay
-            if remainder == 0 then
-                garbageToSend[#garbageToSend+1] = attackPattern.garbage
-            end
+      local lastAttackTime
+      if attackPattern.attackCount then
+        lastAttackTime = attackPattern.start + ((attackPattern.attackCount-1) * attackPattern.repeatDelay)
+      end
+      if self.clock >= attackPattern.start and (attackPattern.attackCount == nil or self.clock <= lastAttackTime) then
+        local difference = self.clock - attackPattern.start
+        local remainder = difference % attackPattern.repeatDelay
+        if remainder == 0 then
+            garbageToSend[#garbageToSend+1] = attackPattern.garbage
         end
+      end
     end
 
     if #garbageToSend > 0 then
