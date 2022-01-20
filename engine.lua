@@ -2016,6 +2016,11 @@ function Stack.set_combo_garbage(self, n_combo, n_metal)
     end
   end
   self.garbage_to_send[self.CLOCK + GARBAGE_TRANSIT_TIME] = stuff_to_send
+
+  if self.match.health then
+    self.match.health:take_combo_damage(n_combo)
+    self.match.health:take_metal_damage(n_metal)
+  end
 end
 
 -- the chain is over!
@@ -2033,7 +2038,12 @@ function Stack.set_chain_garbage(self, n_chain)
     end
     self.garbage_to_send.chain = nil
   end
+
   tab[#tab + 1] = {6, n_chain - 1, false, true}
+
+  if self.match.health then
+    self.match.health:take_chain_damage(n_chain)
+  end
 end
 
 -- actually sends the garbage

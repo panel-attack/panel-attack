@@ -11,6 +11,7 @@ require("globals")
 require("character") -- after globals!
 require("stage") -- after globals!
 require("save")
+require("health")
 require("engine")
 require("AttackEngine")
 require("localization")
