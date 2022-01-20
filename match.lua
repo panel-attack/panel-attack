@@ -11,6 +11,7 @@ Match =
     self.battleRoom = battleRoom
     GAME.droppedFrames = 0
     self.supportsPause = true
+    self.current_music_is_casual = true 
   end
 )
 
