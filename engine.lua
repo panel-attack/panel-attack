@@ -13,7 +13,6 @@ local garbage_bounce_time = #garbage_bounce_table
 local GARBAGE_DELAY = 60
 local GARBAGE_TRANSIT_TIME = 90
 local clone_pool = {}
-local current_music_is_casual = false -- must be false so that casual music start playing
 
 -- Represents the full panel stack for one player
 Stack =
@@ -1551,12 +1550,16 @@ function Stack.PdP(self)
             -- no music loaded
           end
 
-          local wantsDangerMusic = self.danger_music or (self.garbage_target and self.garbage_target.danger_music)
+          local wantsDangerMusic = self.danger_music
+          if self.garbage_target and self.garbage_target.danger_music then
+            wantsDangerMusic = true
+          end
 
           if dynamicMusic then
             local fadeLength = 60
             if not self.fade_music_clock then
               self.fade_music_clock = fadeLength -- start fully faded in
+              self.match.current_music_is_casual = true
             end
 
             local normalMusic = {musics_to_use["normal_music"], musics_to_use["normal_music_start"]}
@@ -1568,8 +1571,8 @@ function Stack.PdP(self)
             end
 
             -- Do we need to switch music?
-            if current_music_is_casual ~= wantsDangerMusic then
-              current_music_is_casual = not current_music_is_casual
+            if self.match.current_music_is_casual ~= wantsDangerMusic then
+              self.match.current_music_is_casual = not self.match.current_music_is_casual
 
               if self.fade_music_clock >= fadeLength then
                 self.fade_music_clock = 0 -- Do a full fade
@@ -1593,20 +1596,20 @@ function Stack.PdP(self)
             end
           else -- classic music
             if wantsDangerMusic then --may have to rethink this bit if we do more than 2 players
-              if (current_music_is_casual or #currently_playing_tracks == 0) and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
+              if (self.match.current_music_is_casual or #currently_playing_tracks == 0) and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
                 stop_the_music()
                 find_and_add_music(musics_to_use, "danger_music")
-                current_music_is_casual = false
+                self.match.current_music_is_casual = false
               elseif #currently_playing_tracks == 0 and musics_to_use["normal_music"] then
                 stop_the_music()
                 find_and_add_music(musics_to_use, "normal_music")
-                current_music_is_casual = true
+                self.match.current_music_is_casual = true
               end
             else --we should be playing normal_music or normal_music_start
-              if (not current_music_is_casual or #currently_playing_tracks == 0) and musics_to_use["normal_music"] then
+              if (not self.match.current_music_is_casual or #currently_playing_tracks == 0) and musics_to_use["normal_music"] then
                 stop_the_music()
                 find_and_add_music(musics_to_use, "normal_music")
-                current_music_is_casual = true
+                self.match.current_music_is_casual = true
               end
             end
           end
