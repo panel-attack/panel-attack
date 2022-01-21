@@ -789,7 +789,7 @@ function select_screen.main()
   while true do
 
     -- Draw the current score and record
-    if select_screen.character_select_mode == "1p_vs_yourself" then
+    if select_screen.character_select_mode == "1p_vs_yourself" and not GAME.battleRoom.trainingModeSettings then
       local xPosition1 = 196
       local xPosition2 = 320
       local yPosition = 24
