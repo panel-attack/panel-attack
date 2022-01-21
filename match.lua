@@ -13,6 +13,7 @@ Match =
     GAME.droppedFrames = 0
     self.supportsPause = true
     self.attackEngine = nil
+    self.current_music_is_casual = true 
   end
 )
 

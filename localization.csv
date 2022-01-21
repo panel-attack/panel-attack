@@ -157,6 +157,7 @@ ld_analytics,Loading analytics...,Chargement des statistiques...,Carregando esta
 mm_1_endless,1P endless,1J infini,1J infinito,1P　エンドレス,1J interminable, ,1P infinito
 mm_1_puzzle,1P puzzle,1J puzzle,1J quebra-cabeça,1P　パズル,1J Puzzle, ,1P puzzle
 mm_1_time,1P time attack,1J contre la montre,1J contra o tempo,1P　スコアアタック,1J Contrareloj, ,1P a tempo
+mm_1_training,1P training
 mm_1_vs,1P vs yourself,1J vs soi-même,1J vs você mesmo,1P　じぶんとのたたかい,1J vs Tú, ,1P vs te stesso
 mm_2_vs_local,2P vs local game,2J vs en local,2J vs jogo local,2P　ローカルVS,2J vs partida local, ,2P vs in locale
 mm_2_vs_online,2P vs online %1,2J vs en ligne %1,2J vs online %1,2P　オンラインVS %1,2J vs partida en línea %1, ,2P vs online %1
