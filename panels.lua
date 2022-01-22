@@ -65,7 +65,8 @@ function panels_init()
 
   add_panels_from_dir_rec("panels")
   
-  if #panels_ids == 0 then
+  if #panels_ids == 0 or (config and not config.defaultPanelsCopied) then
+    config.defaultPanelsCopied = true
     recursive_copy("default_data/panels", "panels")
     add_panels_from_dir_rec("panels")
   end
