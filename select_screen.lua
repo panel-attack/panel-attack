@@ -1354,7 +1354,7 @@ function select_screen.main()
       if GAME.battleRoom.trainingModeSettings then
         GAME.match.attackEngine = AttackEngine(P1)
         local startTime = 200
-        GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime --[[start time]], 10--[[repeat]], nil--[[attack count]], false--[[metal]],  GAME.battleRoom.trainingModeSettings.height > 1--[[chain]])
+        GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime --[[start time]], 1--[[repeat]], nil--[[attack count]], false--[[metal]],  GAME.battleRoom.trainingModeSettings.height > 1--[[chain]])
       end
       GAME.match.P1 = P1
       if not GAME.battleRoom.trainingModeSettings then
