@@ -8,8 +8,8 @@ AttackPattern =
     self.height = height
     self.start = start
     self.attackCount = attackCount
-    self.repeatDelay = repeatDelay
-    self.garbage = {width, height, metal, chain}
+    self.repeatDelay = repeatDelay and math.max(1, repeatDelay) or 1
+    self.garbage = {width, height, metal or false, chain or height > 1}
   end
 )
 
