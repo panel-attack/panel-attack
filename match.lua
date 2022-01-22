@@ -5,18 +5,32 @@ Match =
   function(self, mode, battleRoom)
     self.P1 = nil
     self.P2 = nil
+    self.attackEngine = nil
     self.mode = mode
     self.gameEndedClock = 0 -- 0 if no one has lost, otherwise the minimum clock time of those that lost
     assert(mode ~= "vs" or battleRoom)
     self.battleRoom = battleRoom
     GAME.droppedFrames = 0
     self.supportsPause = true
+    self.attackEngine = nil
     self.current_music_is_casual = true 
   end
 )
 
+function Match.run(self)
+  if P1 then
+    P1:run()
+  end
+  if P2 then
+    P2:run()
+  end
+  if self.attackEngine then
+    self.attackEngine:run()
+  end
+end
+
 -- shows debug info for mouse hover
-function Match.draw_debug_mouse_panel()
+function Match.draw_debug_mouse_panel(self)
   if GAME.debug_mouse_panel then
     local str = loc("pl_panel_info", GAME.debug_mouse_panel[1], GAME.debug_mouse_panel[2])
     for k, v in spairs(GAME.debug_mouse_panel[3]) do

@@ -1774,7 +1774,7 @@ function Stack.gameResult(self)
   
   if self.match.mode == "vs" then
     local otherPlayer = self.garbage_target
-    if otherPlayer == self then
+    if otherPlayer == self or otherPlayer == nil then
       return -1
     -- We can't call it until someone has lost and everyone has played up to that point in time.
     elseif otherPlayer:game_ended() then
@@ -1942,10 +1942,6 @@ end
 -- drops a width x height garbage.
 function Stack.drop_garbage(self, width, height, metal)
   local spawn_row = self.height + 1
-  if training_mode_settings then
-    width = training_mode_settings.width
-    height = training_mode_settings.height
-  end
 
   -- Do one last check for panels in the way.
   for i = spawn_row, #self.panels do
@@ -2006,12 +2002,7 @@ function Stack.set_combo_garbage(self, n_combo, n_metal)
   for i = 3, n_metal do
     stuff_to_send[#stuff_to_send + 1] = {6, 1, true, false}
   end
-  local combo_pieces
-  if not training_mode_settings then
-    combo_pieces = combo_garbage[n_combo]
-  else
-    combo_pieces = {6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6}
-  end
+  local combo_pieces = combo_garbage[n_combo]
 
   for i = 1, #combo_pieces do
     stuff_to_send[#stuff_to_send + 1] = {combo_pieces[i], 1, false, false}
@@ -2071,16 +2062,18 @@ function Stack.recv_garbage(self, time, to_recv)
       self.in_rollback = true
       logger.trace("attempting magical rollback with difference = " .. self.CLOCK - time .. " at time " .. self.CLOCK)
 
-      -- The garbage that we send this time might (rarely) not be the same
-      -- as the garbage we sent before.  Wipe out the garbage we sent before...
-      local first_wipe_time = time + GARBAGE_DELAY
-      local other_later_garbage = self.garbage_target.later_garbage
-      for k, v in pairs(other_later_garbage) do
-        if k >= first_wipe_time then
-          other_later_garbage[k] = nil
+      if self.garbage_target then
+        -- The garbage that we send this time might (rarely) not be the same
+        -- as the garbage we sent before.  Wipe out the garbage we sent before...
+        local first_wipe_time = time + GARBAGE_DELAY
+        local other_later_garbage = self.garbage_target.later_garbage
+        for k, v in pairs(other_later_garbage) do
+          if k >= first_wipe_time then
+            other_later_garbage[k] = nil
+          end
         end
+        -- and record the garbage that we send this time!
       end
-      -- and record the garbage that we send this time!
 
       -- We can do it like this because the sender of the garbage
       -- and self.garbage_target are the same thing.

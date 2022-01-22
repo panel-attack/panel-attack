@@ -131,7 +131,6 @@ do
     connected_server_ip = ""
     current_server_supports_ranking = false
     match_type = ""
-    training_mode_settings = nil
     local menu_x, menu_y = unpack(main_menu_screen_pos)
     local main_menu
     local ret = nil
@@ -394,17 +393,11 @@ local function runMainGameLoop(updateFunction, variableStepFunction, abortGameFu
     end
     
     if (P1 and P1.play_to_end) or (P2 and P2.play_to_end) then
-      P1:run()
-      if P2 then
-        P2:run()
-      end
+      GAME.match:run()
     else
       variable_step(
         function()
-          P1:run()
-          if P2 then
-            P2:run()
-          end
+          GAME.match:run()
 
           returnFunction = variableStepFunction()
 
@@ -493,9 +486,9 @@ local function main_endless_time_setup(mode, speed, difficulty)
 end
 
 function training_setup()
-  training_mode_settings = nil
-  local height = 1
-  local width = 6
+  local trainingModeSettings = {}
+  trainingModeSettings.height = 1
+  trainingModeSettings.width = 6
   local ret = nil
   local menu_x, menu_y = unpack(main_menu_screen_pos)
   menu_y = menu_y + 70
@@ -503,35 +496,33 @@ function training_setup()
   local trainingSettingsMenu
 
   local function update_height()
-    trainingSettingsMenu:set_button_setting(4, height)
+    trainingSettingsMenu:set_button_setting(4, trainingModeSettings.height)
   end
 
   local function update_width()
-    trainingSettingsMenu:set_button_setting(5, width)
+    trainingSettingsMenu:set_button_setting(5, trainingModeSettings.width)
   end
 
   local function increase_height()
-    height = bound(1, height + 1, 69)
+    trainingModeSettings.height = bound(1, trainingModeSettings.height + 1, 69)
     update_height()
   end
 
   local function decrease_height()
-    height = bound(1, height - 1, 69)
+    trainingModeSettings.height = bound(1, trainingModeSettings.height - 1, 69)
     update_height()
   end
 
   local function increase_width()
-    width = bound(1, width + 1, 6)
+    trainingModeSettings.width = bound(1, trainingModeSettings.width + 1, 6)
     update_width()
   end
 
   local function decrease_width()
-    width = bound(1, width - 1, 6)
+    trainingModeSettings.width = bound(1, trainingModeSettings.width - 1, 6)
     update_width()
   end
   local function goToStart()
-    update_height()
-    update_width()
     trainingSettingsMenu:set_active_idx(#trainingSettingsMenu.buttons - 1)
   end
   local function goEscape()
@@ -539,31 +530,35 @@ function training_setup()
   end
 
   local function exitSettings()
-    training_mode_settings = nil
     ret = {main_select_mode}
   end
 
   local function factory_settings()
-    width = 6
-    height = 2
+    trainingModeSettings.width = 6
+    trainingModeSettings.height = 2
+    update_width()
+    update_height()
     goToStart()
   end
 
   local function combo_storm_settings()
-    width = 4
-    height = 1
+    trainingModeSettings.width = 4
+    trainingModeSettings.height = 1
+    update_width()
+    update_height()
     goToStart()
   end
 
   local function large_garbage_settings()
-    width = 6
-    height = 12
+    trainingModeSettings.width = 6
+    trainingModeSettings.height = 12
+    update_width()
+    update_height()
     goToStart()
   end
 
   local function start_custom_game()
-    training_mode_settings = {width = width, height = height}
-    ret = {main_local_vs_yourself_setup}
+    ret = {main_local_vs_yourself_setup, {trainingModeSettings}}
   end
 
   local function nextMenu()
@@ -591,6 +586,7 @@ function training_setup()
     )
 
     if ret then
+      trainingSettingsMenu:remove_self()
       return unpack(ret)
     end
   end
@@ -707,8 +703,10 @@ local function main_select_speed_99(mode)
     )
 
     if startGameSet then
+      gameSettingsMenu:remove_self()
       return main_endless_time_setup, {mode, speed, difficulty}
     elseif exitSet then
+      gameSettingsMenu:remove_self()
       return main_select_mode, {}
     end
   end
@@ -1216,8 +1214,11 @@ function main_local_vs()
 end
 
 -- sets up globals for vs yourself
-function main_local_vs_yourself_setup()
+function main_local_vs_yourself_setup(trainingModeSettings)
   GAME.battleRoom = BattleRoom()
+  if trainingModeSettings then
+    GAME.battleRoom.trainingModeSettings = trainingModeSettings
+  end
   GAME.battleRoom.playerNames[2] = nil
   my_player_number = 1
   op_state = nil
@@ -1245,11 +1246,10 @@ function main_local_vs_yourself()
   end
   
   local function processGameResults(gameResult) 
-    if not training_mode_settings  then
+    if not GAME.battleRoom.trainingModeSettings  then
       GAME.scores:saveVsSelfScoreForLevel(P1.analytic.data.sent_garbage_lines, P1.level)
       finalizeAndWriteVsReplay(nil, nil)
     end
-
 
     return {game_over_transition, {select_screen.main, nil, P1:pick_win_sfx()}}
   end
@@ -1364,10 +1364,7 @@ function main_replay()
     --   run = false
     -- end
     -- if run or this_frame_keys["\\"] then
-    --   P1:run()
-    --   if P2 then
-    --     P2:run()
-    --   end
+    --   GAME.match:run()
     -- end
   end
 
@@ -1659,12 +1656,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
           end
         end
 
-        if P1 then
-          P1:run()
-        end
-        if P2 then
-          P2:run()
-        end
+        GAME.match:run()
 
         if network_connected() then
           do_messages() -- recieve messages so we know if the next game is in the queue

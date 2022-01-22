@@ -1351,8 +1351,15 @@ function select_screen.main()
     if cursor_data[1].state.ready and select_screen.character_select_mode == "1p_vs_yourself" then
       GAME.match = Match("vs", GAME.battleRoom)
       P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+      if GAME.battleRoom.trainingModeSettings then
+        GAME.match.attackEngine = AttackEngine(P1)
+        local startTime = 300
+        GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime --[[start time]], 1--[[repeat]], nil--[[attack count]], false--[[metal]],  GAME.battleRoom.trainingModeSettings.height > 1--[[chain]])
+      end
       GAME.match.P1 = P1
-      P1.garbage_target = P1
+      if not GAME.battleRoom.trainingModeSettings then
+        P1.garbage_target = P1
+      end
       P2 = nil
       make_local_panels(P1, "000000")
       make_local_gpanels(P1, "000000")

@@ -332,7 +332,11 @@ function Stack.render(self)
         if panel.garbage then
           local imgs = {flash = metals.flash}
           if not panel.metal then
-            imgs = characters[self.garbage_target.character].images
+            if not self.garbage_target then 
+              imgs = characters[self.character].images
+            else
+              imgs = characters[self.garbage_target.character].images
+            end
           end
           if panel.x_offset == 0 and panel.y_offset == 0 then
             -- draw the entire block!
