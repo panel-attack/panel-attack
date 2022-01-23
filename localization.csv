@@ -7,6 +7,11 @@ hard,,Hard,Difficile,Difícil,HARD,Difícil,Schwer,Difficile
 level,,Level,Niveau,Nível,LV,Nivel,Level,Livello
 normal,,Normal,Normal,Normal,NORMAL,Normal,Normal,Normale
 speed,,Speed,Vitesse,Velocidade,スピード,Velocidad,Geschwindigkeit,Velocità
+factory,Training mode that drops multiple tiers of chain garbage,Factory,Usine,Fábrica,工場,Fábrica,Fabrik,Fabbrica
+combo_storm,Training mode that drops lots of small combo blocks in a row,Combo Storm,Tempête combo,Tempestade de combinação,コンボ嵐,Tormenta combo,Combo Storm.,Combo Storm.
+large_garbage,Training mode that drops huge chain blocks,Large Garbage,Gros ordures,Grande lixo,大規模なごみ,Basura grande,Großer Müll,Grande spazzatura
+width,width of garbage blocks in training mode,Width,Largeur,Largura,幅,Ancho,Breite,Larghezza
+height,height of garbage blocks in training mode,Height,Hauteur,Altura,高さ,Altura,Höhe,Altezza
 vs,,vs,vs,vs,対,vs,vs,vs
 up,,Up,Haut,Cima,上,Arriba,hoch,Su
 down,,Down,Bas,Baixo,下,Abajo,runter,Giù
@@ -199,7 +204,7 @@ ld_analytics,,Loading analytics...,Chargement des statistiques...,Carregando est
 mm_1_endless,,1P endless,1J infini,1J infinito,1P エンドレス,1J interminable,1SP Endless,1P infinito
 mm_1_puzzle,,1P puzzle,1J puzzle,1J quebra-cabeça,1P パズル,1J Puzzle,1SP Puzzle,1P puzzle
 mm_1_time,,1P time attack,1J contre la montre,1J contra o tempo,1P スコアアタック,1J Contrareloj,1SP Time Attack,1P a tempo
-mm_1_training,Vs training mode,1P training,Formation 1P,treinamento 1P,1P トレーニング,entrenamiento 1P,1SP Training,Formazione 1P
+mm_1_training,Vs training mode,1P training,Formation 1P,treinamento 1P,1P トレーニング,entrenamiento 1P,1SP Training,Allenamento 1P
 mm_1_vs,,1P vs yourself,1J vs soi-même,1J vs você mesmo,1P じぶんとのたたかい,1J vs Tú,1SP gegen dich selbst,1P vs te stesso
 mm_2_vs_local,,2P vs local game,2J vs en local,2J vs jogo local,2P ローカルVS,2J vs partida local,2SP vs lokal,2P vs in locale
 mm_2_vs_online,,2P vs online %1,2J vs en ligne %1,2J vs online %1,2P オンラインVS %1,2J vs partida en línea %1,2SP vs online %1,2P vs online %1
