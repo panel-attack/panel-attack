@@ -916,6 +916,8 @@ function Stack.PdP(self)
       if self.countdown_CLOCK then
         self.countdown_CLOCK = self.countdown_CLOCK + 1
       end
+    else 
+      self.game_stopwatch_running = true
     end
 
     if self.pre_stop_time ~= 0 then
