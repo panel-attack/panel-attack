@@ -495,12 +495,12 @@ function training_setup()
 
   local trainingSettingsMenu
 
-  local function update_height()
-    trainingSettingsMenu:set_button_setting(4, trainingModeSettings.height)
+  local function update_width()
+    trainingSettingsMenu:set_button_setting(4, trainingModeSettings.width)
   end
 
-  local function update_width()
-    trainingSettingsMenu:set_button_setting(5, trainingModeSettings.width)
+  local function update_height()
+    trainingSettingsMenu:set_button_setting(5, trainingModeSettings.height)
   end
 
   local function increase_height()
