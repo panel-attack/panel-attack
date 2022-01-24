@@ -495,12 +495,12 @@ function training_setup()
 
   local trainingSettingsMenu
 
-  local function update_height()
-    trainingSettingsMenu:set_button_setting(4, trainingModeSettings.height)
+  local function update_width()
+    trainingSettingsMenu:set_button_setting(4, trainingModeSettings.width)
   end
 
-  local function update_width()
-    trainingSettingsMenu:set_button_setting(5, trainingModeSettings.width)
+  local function update_height()
+    trainingSettingsMenu:set_button_setting(5, trainingModeSettings.height)
   end
 
   local function increase_height()
@@ -566,11 +566,11 @@ function training_setup()
   end
   
   trainingSettingsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
-  trainingSettingsMenu:add_button("Factory Training", factory_settings, goEscape)
-  trainingSettingsMenu:add_button("Combo Storm Training", combo_storm_settings, goEscape)
-  trainingSettingsMenu:add_button("Large Garbage Training", large_garbage_settings, goEscape)
-  trainingSettingsMenu:add_button("Height", nextMenu, goEscape, decrease_height, increase_height)
-  trainingSettingsMenu:add_button("Width", nextMenu, goEscape, decrease_width, increase_width)
+  trainingSettingsMenu:add_button(loc("factory"), factory_settings, goEscape)
+  trainingSettingsMenu:add_button(loc("combo_storm"), combo_storm_settings, goEscape)
+  trainingSettingsMenu:add_button(loc("large_garbage"), large_garbage_settings, goEscape)
+  trainingSettingsMenu:add_button(loc("width"), nextMenu, goEscape, decrease_width, increase_width)
+  trainingSettingsMenu:add_button(loc("height"), nextMenu, goEscape, decrease_height, increase_height)
   trainingSettingsMenu:add_button(loc("go_"), start_custom_game, goEscape)
   trainingSettingsMenu:add_button(loc("back"), exitSettings, exitSettings)
   update_height()
