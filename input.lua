@@ -1,4 +1,5 @@
 require("util")
+local logger = require("logger")
 
 -- The class that holds all input mappings and state
 -- TODO: move all state variables in here
@@ -37,11 +38,17 @@ local __old_jp_handler = love.handlers[jpname]
 local __old_jr_handler = love.handlers[jrname]
 love.handlers[jpname] = function(a, b)
   __old_jp_handler(a, b)
-  love.keypressed(input:getJoystickGUID(a) .. "-" .. b)
+  local joystickID = input:getJoystickGUID(a)
+  if joystickID then
+    love.keypressed(joystickID .. "-" .. b)
+  end
 end
 love.handlers[jrname] = function(a, b)
   __old_jr_handler(a, b)
-  love.keyreleased(input:getJoystickGUID(a) .. "-" .. b)
+  local joystickID = input:getJoystickGUID(a)
+  if joystickID then
+    love.keyreleased(joystickID .. "-" .. b)
+  end
 end
 
 local prev_ax = {}
@@ -133,16 +140,19 @@ function Input.cleanNameForButton(self, buttonString)
 
   for index, joystick in ipairs(love.joystick.getJoysticks()) do
     local joystickID = self:getJoystickGUID(joystick)
-    local joystickConnectedIndex = joystick:getID()
-    local resultString, count = string.gsub(buttonString, "^(" .. joystickID .. "%-)(.*)$", "Controller " .. joystickConnectedIndex .. " %2")
-    if count > 0 then
-      result = resultString
-      break
+    if joystickID then
+      local joystickConnectedIndex = joystick:getID()
+      local resultString, count = string.gsub(buttonString, "^(" .. joystickID .. "%-)(.*)$", "Controller " .. joystickConnectedIndex .. " %2")
+      if count > 0 then
+        result = resultString
+        break
+      end
     end
   end
 
   if not result then
-    local resultString, count = string.gsub(buttonString, "^(%w+%-)(.*)$", "Unplugged Controller %2")
+    -- Match any number of letters, numbers, and # followed by a dash and replace with "Unplogged Controller"
+    local resultString, count = string.gsub(buttonString, "^([%w%d%#]+%-)(.*)$", "Unplugged Controller %2")
     if count > 0 then
       result = resultString
     else
@@ -163,7 +173,8 @@ function Input.getJoystickGUID(self, joystick)
   local searchGUID = joystick:getGUID()
   local numberOfMatchingJoysticks = 0
   local isFirst = true
-  for k, v in ipairs(love.joystick.getJoysticks()) do
+  local joysticks = love.joystick.getJoysticks()
+  for k, v in ipairs(joysticks) do
     if v:getGUID() == searchGUID then
       numberOfMatchingJoysticks = numberOfMatchingJoysticks + 1
       if connectedIndex == v:getID() then
@@ -175,8 +186,6 @@ function Input.getJoystickGUID(self, joystick)
       end
     end
   end
-
-  error("Expected to find joystick")
   return nil
 end
 
@@ -193,14 +202,16 @@ function joystick_ax()
   local joysticks = love.joystick.getJoysticks()
   for k, v in ipairs(joysticks) do
     local joystickID = input:getJoystickGUID(v)
-    local axes = {v:getAxes()}
-    for idx, value in ipairs(axes) do
-      axis_to_button(joystickID, idx, value)
-    end
+    if joystickID then
+      local axes = {v:getAxes()}
+      for idx, value in ipairs(axes) do
+        axis_to_button(joystickID, idx, value)
+      end
 
-    local hats = {love.joystick.getHats(v)}
-    for idx, value in ipairs(hats) do
-      hat_to_button(joystickID, idx, value)
+      local hats = {love.joystick.getHats(v)}
+      for idx, value in ipairs(hats) do
+        hat_to_button(joystickID, idx, value)
+      end
     end
   end
 end
@@ -214,7 +225,9 @@ function love.keypressed(key, scancode, rep)
     keys[key] = 0
   end
   this_frame_keys[key] = true
+  logger.trace("key pressed: " .. key)
 
+  -- If we need to record a new player input method, lookup this input config and assign to this player number
   if input.acceptingPlayerInputConfigurationAssignments then
     for index, inputConfiguration in ipairs(input.availableInputConfigurationsToAssign) do
       for rawKey, keyName in pairs(inputConfiguration) do
@@ -274,12 +287,14 @@ local function released_key_after_time(key, time)
   return this_frame_released_keys[key] and this_frame_released_keys[key] >= time
 end
 
+-- Clears all input configurations assigned to player numbers
 function Input.clearInputConfigurationsForPlayers(self)
   self.playerInputConfigurationsMap = {}
   self.acceptingPlayerInputConfigurationAssignments = false
   self.availableInputConfigurationsToAssign = nil
 end
 
+-- Requests the next inputs assign configurations to players, up to the number of players passed in
 function Input.requestPlayerInputConfigurationAssignments(self, numberOfPlayers)
   if numberOfPlayers == 1 then
     self.playerInputConfigurationsMap[1] = self.inputConfigurations
@@ -292,6 +307,7 @@ function Input.requestPlayerInputConfigurationAssignments(self, numberOfPlayers)
   end
 end
 
+-- Returns the first player still needing an input configuration or nil if none
 function Input.playerNumberWaitingForInputConfiguration(self)
   if not input.acceptingPlayerInputConfigurationAssignments then
     return nil
@@ -304,6 +320,7 @@ function Input.playerNumberWaitingForInputConfiguration(self)
   return nil
 end
 
+-- Returns all input configurations available for this player
 function Input.getInputConfigurationsForPlayerNumber(self, playerNumber)
 
   local results = {}
@@ -335,7 +352,8 @@ local function input_key_func(fixed, configurable, query, sound, ...)
     silent = silent or false
     local res = false
 
-    if not playerNumber then
+    -- If this isn't for a specific player, or we are only doing input for one player, allow the fixed keys as well.
+    if not playerNumber or (#input.playerInputConfigurationsMap <= 1 and input:playerNumberWaitingForInputConfiguration() == nil) then
       for i = 1, #fixed do
         res = res or query(fixed[i], other_args)
       end
@@ -488,6 +506,15 @@ menu_pause =
     return themes[config.theme].sounds.menu_validate
   end
 )
+menu_advance_frame =
+  input_key_func(
+  {},
+  {"swap1"},
+  normal_key,
+  function()
+    return nil
+  end
+)
 
 player_reset =
   input_key_func(
@@ -555,6 +582,14 @@ player_right =
   key_is_down,
   nil
 )
+
+-- returns true if the user input to exit a local game in progress
+function menu_escape_game()
+  if GAME.gameIsPaused and menu_escape() then
+    return true
+  end
+  return false
+end
 
 select_being_pressed_ratio = get_being_pressed_for_duration_ratio({"return", "kenter", "z"}, {"swap1"}, super_selection_duration)
 

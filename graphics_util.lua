@@ -316,8 +316,7 @@ function set_global_font(filepath, size)
 end
 
 -- Creates a new font based on the current font and a delta
-local function get_font_delta(with_delta_size)
-  local font_size = font_size + with_delta_size
+local function get_global_font_with_size(font_size)
   local f = font_cache[font_size]
   if not f then
     if font_file then
@@ -328,6 +327,17 @@ local function get_font_delta(with_delta_size)
     font_cache[font_size] = f
   end
   return f
+end
+
+-- Returns the current global font
+function get_global_font()
+  return get_global_font_with_size(font_size)
+end
+
+-- Creates a new font based on the current font and a delta
+function get_font_delta(with_delta_size)
+  local font_size = font_size + with_delta_size
+  return get_global_font_with_size(font_size)
 end
 
 function set_font(font)

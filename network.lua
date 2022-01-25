@@ -43,7 +43,8 @@ function get_message()
   if string.len(leftovers) == 0 then
     return nil
   end
-  local type, gap, len = string.sub(leftovers, 1, 1), 0
+  local len
+  local type, gap = string.sub(leftovers, 1, 1), 0
   if type == "J" then
     if string.len(leftovers) >= 4 then
       len = byte(string.sub(leftovers, 2, 2)) * 65536 + byte(string.sub(leftovers, 3, 3)) * 256 + byte(string.sub(leftovers, 4, 4))
@@ -132,7 +133,7 @@ function queue_message(type, data)
     end
     server_queue:push(dataMessage)
   elseif type == "L" then
-    P2_level = ({["0"] = 10})[data] or (data + 0)
+    error(loc("nt_ver_err"))
   elseif type == "H" then
     got_H = true
   elseif type == "N" then
@@ -193,16 +194,22 @@ end
 function process_data_message(type, data)
   if type == "P" then
     P1.panel_buffer = P1.panel_buffer .. data
+    P1.panel_buffer_record = P1.panel_buffer_record .. data
   elseif type == "O" then
     P2.panel_buffer = P2.panel_buffer .. data
+    P2.panel_buffer_record = P2.panel_buffer_record .. data
   elseif type == "U" then
     P1.input_buffer = P1.input_buffer .. data
+    P1.input_buffer_record = P1.input_buffer_record .. data
   elseif type == "I" then
     P2.input_buffer = P2.input_buffer .. data
+    P2.input_buffer_record = P2.input_buffer_record .. data
   elseif type == "Q" then
     P1.gpanel_buffer = P1.gpanel_buffer .. data
+    P1.gpanel_buffer_record = P1.gpanel_buffer_record .. data
   elseif type == "R" then
     P2.gpanel_buffer = P2.gpanel_buffer .. data
+    P2.gpanel_buffer_record = P2.gpanel_buffer_record .. data
   end
 end
 
@@ -251,12 +258,6 @@ function do_messages()
     local type, data = get_message()
     if type then
       queue_message(type, data)
-      if type == "U" then
-        type = "in_buf"
-      end
-      if P1 and P1.match.mode and replay[P1.match.mode][type] then
-        replay[P1.match.mode][type] = replay[P1.match.mode][type] .. data
-      end
     else
       break
     end
@@ -292,19 +293,13 @@ end
 function make_local_panels(stack, prev_panels)
   local ret = make_panels(stack.NCOLORS, prev_panels, stack)
   stack.panel_buffer = stack.panel_buffer .. ret
-  local replay = replay[stack.match.mode]
-  if replay and replay.pan_buf then
-    replay.pan_buf = replay.pan_buf .. ret
-  end
+  stack.panel_buffer_record = stack.panel_buffer_record .. ret
 end
 
 function make_local_gpanels(stack, prev_panels)
   local ret = make_gpanels(stack.NCOLORS, prev_panels)
   stack.gpanel_buffer = stack.gpanel_buffer .. ret
-  local replay = replay[stack.match.mode]
-  if replay and replay.gpan_buf then
-    replay.gpan_buf = replay.gpan_buf .. ret
-  end
+  stack.gpanel_buffer_record = stack.gpanel_buffer_record .. ret
 end
 
 function Stack.handle_input_taunt(self)
@@ -339,9 +334,7 @@ function Stack.send_controls(self)
 
   self:handle_input_taunt()
 
-  local replay = replay[self.match.mode]
-  if replay and replay.in_buf then
-    replay.in_buf = replay.in_buf .. to_send
-  end
+  self.input_buffer_record = self.input_buffer_record .. to_send
+
   return to_send
 end

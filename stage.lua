@@ -233,6 +233,9 @@ function Stage.graphics_init(self, full, yields)
     self.images[image_name] = load_img_from_supported_extensions(self.path .. "/" .. image_name)
     if not self.images[image_name] and defaulted_images[image_name] and not self:is_bundle() then
       self.images[image_name] = default_stage.images[image_name]
+      if not self.images[image_name] then
+        error("Could not find default stage image")
+      end
     end
     if yields then
       coroutine.yield()

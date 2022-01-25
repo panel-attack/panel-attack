@@ -12,6 +12,7 @@ require("character") -- after globals!
 require("stage") -- after globals!
 require("save")
 require("engine")
+require("AttackEngine")
 require("localization")
 require("graphics")
 GAME.input = require("input")
@@ -36,6 +37,7 @@ local last_x = 0
 local last_y = 0
 local input_delta = 0.0
 local pointer_hidden = false
+local mainloop = nil
 
 -- Called at the beginning to load the game
 function love.load()
@@ -77,7 +79,11 @@ function love.update(dt)
 
   local status, err = coroutine.resume(mainloop)
   if not status then
-    error(err .. "\n" .. debug.traceback(mainloop))
+    local system_info = "OS: " .. love.system.getOS()
+    if GAME_UPDATER_GAME_VERSION then
+      system_info = system_info .. "\n" .. GAME_UPDATER_GAME_VERSION
+    end
+    error(err .. "\n" .. debug.traceback(mainloop).. "\n" .. system_info)
   end
   if server_queue and server_queue:size() > 0 then
     logger.trace("Queue Size: " .. server_queue:size() .. " Data:" .. server_queue:to_short_string())
@@ -134,8 +140,7 @@ end
 -- Transform from window coordinates to game coordinates
 local function transform_coordinates(x, y)
   local lbx, lby, lbw, lbh = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 16, 9)
-  local scale = canvas_width / math.max(GAME.backgroundImage:getWidth(), GAME.backgroundImage:getHeight())
-  return (x - lbx) / scale * canvas_width / lbw, (y - lby) / scale * canvas_height / lbh
+  return (x - lbx) / 1 * canvas_width / lbw, (y - lby) / 1 * canvas_height / lbh
 end
 
 -- Handle a mouse or touch press

@@ -13,13 +13,11 @@ local garbage_bounce_time = #garbage_bounce_table
 local GARBAGE_DELAY = 60
 local GARBAGE_TRANSIT_TIME = 90
 local clone_pool = {}
-local current_music_is_casual = false -- must be false so that casual music start playing
 
 -- Represents the full panel stack for one player
 Stack =
   class(
   function(s, which, match, is_local, panels_dir, speed, difficulty, player_number, wantsCanvas)
-
     wantsCanvas = wantsCanvas or 1
     s.match = match
     s.character = config.character
@@ -29,7 +27,7 @@ Stack =
     s.is_local = is_local
 
     s.drawsAnalytics = true
-    
+
     if not panels[panels_dir] then
       s.panels_dir = config.panels
     end
@@ -94,8 +92,12 @@ Stack =
     s:moveForPlayerNumber(1)
 
     s.panel_buffer = ""
+    s.panel_buffer_record = ""
     s.gpanel_buffer = ""
+    s.gpanel_buffer_record = ""
     s.input_buffer = ""
+    s.input_buffer_record = ""
+
     s.panels = {}
     s.width = 6
     s.height = 12
@@ -603,42 +605,41 @@ function Stack.set_puzzle_state(self, pstr, n_turns, do_countdown, puzzleType)
 end
 
 function Stack.puzzle_done(self)
-  if not P1.do_countdown then
-    -- For now don't require active panels to be 0, we will still animate in game over, 
+  if not self.do_countdown then
+    -- For now don't require active panels to be 0, we will still animate in game over,
     -- and we need to win immediately to avoid the failure below in the chain case.
     --if P1.n_active_panels == 0 then
-      --if self.puzzleType == "chain" or P1.prev_active_panels == 0 then
-        local panels = self.panels
-        for row = 1, self.height do
-          for col = 1, self.width do
-            local color = panels[row][col].color
-            if color ~= 0 and color ~= 9 then
-              return false
-            end
-          end
+    --if self.puzzleType == "chain" or P1.prev_active_panels == 0 then
+    local panels = self.panels
+    for row = 1, self.height do
+      for col = 1, self.width do
+        local color = panels[row][col].color
+        if color ~= 0 and color ~= 9 then
+          return false
         end
+      end
+    end
 
-        return true
-      --end
-    --end
+    return true
+  --end
+  --end
   end
 
   return false
 end
 
-
 function Stack.puzzle_failed(self)
-  if not P1.do_countdown then
+  if not self.do_countdown then
     if self.puzzleType == "moves" then
-      if P1.n_active_panels == 0 and P1.prev_active_panels == 0 then
-        return P1.puzzle_moves == 0
+      if self.n_active_panels == 0 and self.prev_active_panels == 0 then
+        return self.puzzle_moves == 0
       end
     elseif self.puzzleType and self.puzzleType == "chain" then
-      if P1.n_active_panels == 0 and P1.prev_active_panels == 0 and #P1.analytic.data.reached_chains == 0 and P1.analytic.data.destroyed_panels > 0 then
+      if self.n_active_panels == 0 and self.prev_active_panels == 0 and #self.analytic.data.reached_chains == 0 and self.analytic.data.destroyed_panels > 0 then
         -- We finished matching but never made a chain -> fail
         return true
       end
-      if #P1.analytic.data.reached_chains > 0 and P1.n_chain_panels == 0 then
+      if #self.analytic.data.reached_chains > 0 and self.n_chain_panels == 0 then
         -- We achieved a chain, finished chaining, but haven't won yet -> fail
         return true
       end
@@ -730,7 +731,7 @@ end
 
 -- Update everything for the stack based on inputs. Will update many times if needed to catch up.
 function Stack.run(self, timesToRun)
-  if GAME.game_is_paused then
+  if GAME.gameIsPaused then
     return
   end
 
@@ -772,7 +773,7 @@ function Stack.run(self, timesToRun)
   for i = 1, timesToRun do
     self:update_popfxs()
     self:update_cards()
-    if self:game_ended() == false then 
+    if self:game_ended() == false then
       if self.is_local == false then
         if self.input_buffer and string.len(self.input_buffer) > 0 then
           self.input_state = string.sub(self.input_buffer, 1, 1)
@@ -915,6 +916,8 @@ function Stack.PdP(self)
       if self.countdown_CLOCK then
         self.countdown_CLOCK = self.countdown_CLOCK + 1
       end
+    else 
+      self.game_stopwatch_running = true
     end
 
     if self.pre_stop_time ~= 0 then
@@ -1510,10 +1513,10 @@ function Stack.PdP(self)
           self.garbage_q:pop()
         end
       end
-    end 
+    end
 
     -- Update Music
-    if not GAME.game_is_paused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
+    if not GAME.gameIsPaused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
       if self:game_ended() == false and self.canvas ~= nil then
         if self.do_countdown then
           if SFX_Go_Play == 1 then
@@ -1541,7 +1544,7 @@ function Stack.PdP(self)
             end
             musics_to_use = stages[current_stage].musics
           elseif characterHasMusic then
-            if characters[self.character].music_style == "dynamic" then
+            if characters[winningPlayer.character].music_style == "dynamic" then
               dynamicMusic = true
             end
             musics_to_use = characters[winningPlayer.character].musics
@@ -1549,67 +1552,66 @@ function Stack.PdP(self)
             -- no music loaded
           end
 
-          local wantsDangerMusic = self.danger_music or (self.garbage_target and self.garbage_target.danger_music)
+          local wantsDangerMusic = self.danger_music
+          if self.garbage_target and self.garbage_target.danger_music then
+            wantsDangerMusic = true
+          end
 
           if dynamicMusic then
             local fadeLength = 60
+            if not self.fade_music_clock then
+              self.fade_music_clock = fadeLength -- start fully faded in
+              self.match.current_music_is_casual = true
+            end
 
             local normalMusic = {musics_to_use["normal_music"], musics_to_use["normal_music_start"]}
             local dangerMusic = {musics_to_use["danger_music"], musics_to_use["danger_music_start"]}
-              
-            if not self.fade_music_clock or #currently_playing_tracks == 0 then
-              self.fade_music_clock = fadeLength
+
+            if #currently_playing_tracks == 0 then
               find_and_add_music(musics_to_use, "normal_music")
               find_and_add_music(musics_to_use, "danger_music")
-              setFadePercentageForGivenTracks(1, normalMusic)
-              setFadePercentageForGivenTracks(0, dangerMusic)
-            else 
-              if current_music_is_casual ~= wantsDangerMusic then
-                current_music_is_casual = not current_music_is_casual
+            end
 
-                if self.fade_music_clock >= fadeLength then
-                  self.fade_music_clock = 0
-                else
-                  -- switched music before we fully faded, so start part way through
-                  self.fade_music_clock = fadeLength - self.fade_music_clock
-                end
-                if wantsDangerMusic then
-                  setFadePercentageForGivenTracks(1, normalMusic)
-                  setFadePercentageForGivenTracks(0, dangerMusic)
-                else
-                  setFadePercentageForGivenTracks(0, normalMusic)
-                  setFadePercentageForGivenTracks(1, dangerMusic)
-                end
+            -- Do we need to switch music?
+            if self.match.current_music_is_casual ~= wantsDangerMusic then
+              self.match.current_music_is_casual = not self.match.current_music_is_casual
+
+              if self.fade_music_clock >= fadeLength then
+                self.fade_music_clock = 0 -- Do a full fade
               else
-                if self.fade_music_clock < fadeLength then
-                  self.fade_music_clock = self.fade_music_clock + 1
-                  local fadePercentage = self.fade_music_clock / fadeLength
-                  if wantsDangerMusic then
-                    setFadePercentageForGivenTracks(1 - fadePercentage, normalMusic)
-                    setFadePercentageForGivenTracks(fadePercentage, dangerMusic)
-                  else
-                    setFadePercentageForGivenTracks(fadePercentage, normalMusic)
-                    setFadePercentageForGivenTracks(1 - fadePercentage, dangerMusic)
-                  end
-                end
+                -- switched music before we fully faded, so start part way through
+                self.fade_music_clock = fadeLength - self.fade_music_clock
               end
+            end
+
+            if self.fade_music_clock < fadeLength then
+              self.fade_music_clock = self.fade_music_clock + 1
+            end
+
+            local fadePercentage = self.fade_music_clock / fadeLength
+            if wantsDangerMusic then
+              setFadePercentageForGivenTracks(1 - fadePercentage, normalMusic)
+              setFadePercentageForGivenTracks(fadePercentage, dangerMusic)
+            else
+              setFadePercentageForGivenTracks(fadePercentage, normalMusic)
+              setFadePercentageForGivenTracks(1 - fadePercentage, dangerMusic)
             end
           else -- classic music
             if wantsDangerMusic then --may have to rethink this bit if we do more than 2 players
-              if (current_music_is_casual or #currently_playing_tracks == 0) and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
+              if (self.match.current_music_is_casual or #currently_playing_tracks == 0) and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
                 stop_the_music()
                 find_and_add_music(musics_to_use, "danger_music")
-                current_music_is_casual = false
+                self.match.current_music_is_casual = false
               elseif #currently_playing_tracks == 0 and musics_to_use["normal_music"] then
                 stop_the_music()
                 find_and_add_music(musics_to_use, "normal_music")
-                current_music_is_casual = true
+                self.match.current_music_is_casual = true
               end
             else --we should be playing normal_music or normal_music_start
-              if (not current_music_is_casual or #currently_playing_tracks == 0) and musics_to_use["normal_music"] then
+              if (not self.match.current_music_is_casual or #currently_playing_tracks == 0) and musics_to_use["normal_music"] then
                 stop_the_music()
                 find_and_add_music(musics_to_use, "normal_music")
-                current_music_is_casual = true
+                self.match.current_music_is_casual = true
               end
             end
           end
@@ -1736,40 +1738,73 @@ end
 
 -- Returns true if the stack is simulated past the end of the match.
 function Stack.game_ended(self)
-  local result = false
-  if self.match.gameEndedClock > 0 and self.CLOCK > self.match.gameEndedClock then
-    result = true
-  end
 
-  if self.match.mode == "time" then
-    if self.game_stopwatch then
+  if self.match.mode == "vs" then
+    -- Note we use "greater" and not "greater than or equal" because our stack may be currently processing this clock frame.
+    -- At the end of the clock frame it will be incremented and we know we have process the game over clock frame.
+    if self.match.gameEndedClock > 0 and self.CLOCK > self.match.gameEndedClock then
+      return true
+    end
+  elseif self.match.mode == "time" then
+    if self.match.gameEndedClock > 0 and self.CLOCK > self.match.gameEndedClock then
+      return true
+    elseif self.game_stopwatch then
       if self.game_stopwatch > time_attack_time * 60 then
-        result = true
+        return true
       end
     end
-  end
-
-  if self.match.mode == "puzzle" then
-    if self:puzzle_done() or self:puzzle_failed() then
-      result = true
+  elseif self.match.mode == "endless" then
+    if self.match.gameEndedClock > 0 and self.CLOCK > self.match.gameEndedClock then
+      return true
+    end
+  elseif self.match.mode == "puzzle" then
+    if self:puzzle_done() then
+      return true
+    elseif self:puzzle_failed() then
+      return true
     end
   end
 
-  return result
+  return false
 end
 
 -- Returns 1 if this player won, 0 for draw, and -1 for loss, nil if no result yet
 function Stack.gameResult(self)
+  if self:game_ended() == false then
+    return nil
+  end
   
-  -- We can't call it until someone has lost and everyone has played up to that point in time.
-  local otherPlayer = self.garbage_target
-  if self.match.gameEndedClock > 0 and self.CLOCK >= self.match.gameEndedClock and otherPlayer.CLOCK >= self.match.gameEndedClock then
-    if self.game_over_clock == self.match.gameEndedClock and otherPlayer.game_over_clock == self.match.gameEndedClock then
-      return 0
-    elseif self.game_over_clock == self.match.gameEndedClock then
+  if self.match.mode == "vs" then
+    local otherPlayer = self.garbage_target
+    if otherPlayer == self or otherPlayer == nil then
       return -1
-    elseif otherPlayer.game_over_clock == self.match.gameEndedClock then
+    -- We can't call it until someone has lost and everyone has played up to that point in time.
+    elseif otherPlayer:game_ended() then
+      if self.game_over_clock == self.match.gameEndedClock and otherPlayer.game_over_clock == self.match.gameEndedClock then
+        return 0
+      elseif self.game_over_clock == self.match.gameEndedClock then
+        return -1
+      elseif otherPlayer.game_over_clock == self.match.gameEndedClock then
+        return 1
+      end
+    end
+  elseif self.match.mode == "time" then
+    if self.match.gameEndedClock > 0 and self.CLOCK > self.match.gameEndedClock then
+      return -1
+    elseif self.game_stopwatch then
+      if self.game_stopwatch > time_attack_time * 60 then
+        return 1
+      end
+    end
+  elseif self.match.mode == "endless" then
+    if self.match.gameEndedClock > 0 and self.CLOCK > self.match.gameEndedClock then
+      return -1
+    end
+  elseif self.match.mode == "puzzle" then
+    if self:puzzle_done() then
       return 1
+    elseif self:puzzle_failed() then
+      return -1
     end
   end
 
@@ -1786,7 +1821,7 @@ function Stack.set_game_over(self)
     self.match.gameEndedClock = self.CLOCK
   end
 
-  if self.canvas then 
+  if self.canvas then
     local popsize = "small"
     local panels = self.panels
     local width = self.width
@@ -1970,6 +2005,7 @@ function Stack.set_combo_garbage(self, n_combo, n_metal)
     stuff_to_send[#stuff_to_send + 1] = {6, 1, true, false}
   end
   local combo_pieces = combo_garbage[n_combo]
+
   for i = 1, #combo_pieces do
     stuff_to_send[#stuff_to_send + 1] = {combo_pieces[i], 1, false, false}
   end
@@ -2028,16 +2064,18 @@ function Stack.recv_garbage(self, time, to_recv)
       self.in_rollback = true
       logger.trace("attempting magical rollback with difference = " .. self.CLOCK - time .. " at time " .. self.CLOCK)
 
-      -- The garbage that we send this time might (rarely) not be the same
-      -- as the garbage we sent before.  Wipe out the garbage we sent before...
-      local first_wipe_time = time + GARBAGE_DELAY
-      local other_later_garbage = self.garbage_target.later_garbage
-      for k, v in pairs(other_later_garbage) do
-        if k >= first_wipe_time then
-          other_later_garbage[k] = nil
+      if self.garbage_target then
+        -- The garbage that we send this time might (rarely) not be the same
+        -- as the garbage we sent before.  Wipe out the garbage we sent before...
+        local first_wipe_time = time + GARBAGE_DELAY
+        local other_later_garbage = self.garbage_target.later_garbage
+        for k, v in pairs(other_later_garbage) do
+          if k >= first_wipe_time then
+            other_later_garbage[k] = nil
+          end
         end
+        -- and record the garbage that we send this time!
       end
-      -- and record the garbage that we send this time!
 
       -- We can do it like this because the sender of the garbage
       -- and self.garbage_target are the same thing.
@@ -2141,7 +2179,6 @@ function Stack.check_matches(self)
 
     -- We found a new panel we haven't handled yet that we should
     if ((panel.garbage and panel.state == "normal") or panel.matching) and ((normal and not seen[panel]) or (metal and not seenm[panel])) then
-
       -- We matched a new garbage
       if ((metal and panel.metal) or (normal and not panel.metal)) and panel.garbage and not garbage[panel] then
         garbage[panel] = true

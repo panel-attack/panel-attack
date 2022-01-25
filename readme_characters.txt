@@ -1,12 +1,10 @@
 Adding/modding characters: step by step instructions (Windows example):
-
 1. Press the Windows key then type "%appdata%" without quotes and hit enter.
-2. Look at the folders starting with "__" located in: %appdata%\Panel Attack\characters\ for a reference of where your files should go and how they should be named. 
-   Folders starting with "__" will be ignored upon loading. You may choose to remove those "__" to mod the default characters
+2. Look at the example folders located in: %appdata%\Panel Attack\characters\ for a reference of where your files should go and how they should be named. 
+   Folders starting with "__" will be ignored upon loading.
 3. Create a folder with your character. The name of this folder is different from your character id and is kinda meaningless (see config.json below).
 4. Place assets, sounds and json file in that folder with the proper names to add your data. Exhaustive list below.
-5. Add/update characters.txt file in your theme folder. All characters will be loaded. This file specifies which ones get to be displayed in the lobby and in what order.
-   Without a characters.txt file, all characters will be displayed and roughly ordered based on their folder names.
+5. Optionally add/update characters.txt file in your theme folder. See the documentation in the themes readme for more details.
 
 ~~~~ Exhaustive list of a character folder data! ~~~~
 Note: non-optional data that is missing will automatically get replaced by default ones so everything is optional in that sense
@@ -26,7 +24,6 @@ Note: non-optional data that is missing will automatically get replaced by defau
 	- (burst_scale): The scale of the burst popfx, default is 1, 2 means twice the size, 0.5 half the size, etc.
 	- (fade_scale): The scale of the fade popfx, default is 1, 2 means twice the size, 0.5 half the size, etc.
 	- (music_style): The style of music to use, options: "normal"(default), "dynamic"(normal music and dynamic music will maintain the same play time stamp and fade seamlessly)
-
 Note: providing a specific, long enough id is a very good idea so that people renaming your mods folders still get properly match with other users regarding your mods. e.g. "mycharacter_myname"
 
 ~~ [.png, .jpg] ~~

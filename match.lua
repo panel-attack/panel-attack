@@ -5,47 +5,32 @@ Match =
   function(self, mode, battleRoom)
     self.P1 = nil
     self.P2 = nil
+    self.attackEngine = nil
     self.mode = mode
     self.gameEndedClock = 0 -- 0 if no one has lost, otherwise the minimum clock time of those that lost
     assert(mode ~= "vs" or battleRoom)
     self.battleRoom = battleRoom
     GAME.droppedFrames = 0
+    self.supportsPause = true
+    self.attackEngine = nil
+    self.current_music_is_casual = true 
   end
 )
 
-function Match.matchOutcome(self)
-  
-  local gameResult = self.P1:gameResult()
-
-  if gameResult == nil then
-    return nil
+function Match.run(self)
+  if P1 then
+    P1:run()
   end
-
-  local results = {}
-  if gameResult == 0 then -- draw
-    results["end_text"] = loc("ss_draw")
-    results["outcome_claim"] = 0
-  elseif gameResult == -1 then -- opponent wins
-    results["winSFX"] = self.P2:pick_win_sfx()
-    results["end_text"] =  loc("ss_p_wins", GAME.battleRoom.playerNames[2])
-    -- win_counts will get overwritten by the server in net games
-    GAME.battleRoom.playerWinCounts[P2.player_number] = GAME.battleRoom.playerWinCounts[P2.player_number] + 1
-    results["outcome_claim"] = P2.player_number
-  elseif P2.game_over_clock == self.gameEndedClock then -- client wins
-    results["winSFX"] = self.P1:pick_win_sfx()
-    results["end_text"] =  loc("ss_p_wins", GAME.battleRoom.playerNames[1])
-    -- win_counts will get overwritten by the server in net games
-    GAME.battleRoom.playerWinCounts[P1.player_number] = GAME.battleRoom.playerWinCounts[P1.player_number] + 1
-    results["outcome_claim"] = P1.player_number
-  else
-    error("No win result")
+  if P2 then
+    P2:run()
   end
-
-  return results
+  if self.attackEngine then
+    self.attackEngine:run()
+  end
 end
 
 -- shows debug info for mouse hover
-function Match.draw_debug_mouse_panel()
+function Match.draw_debug_mouse_panel(self)
   if GAME.debug_mouse_panel then
     local str = loc("pl_panel_info", GAME.debug_mouse_panel[1], GAME.debug_mouse_panel[2])
     for k, v in spairs(GAME.debug_mouse_panel[3]) do
@@ -54,6 +39,13 @@ function Match.draw_debug_mouse_panel()
     gprintf(str, 10, 10)
   end
 end
+
+
+local P1_win_quads = {}
+local P1_rating_quads = {}
+
+local P2_rating_quads = {}
+local P2_win_quads = {}
 
 function Match.render(self)
 
@@ -64,7 +56,7 @@ function Match.render(self)
   -- Stack specific values for the HUD are drawn in Stack.render
 
   -- Draw VS HUD
-  if self.battleRoom then
+  if self.battleRoom and (GAME.gameIsPaused == false or GAME.renderDuringPause) then
     -- P1 username
     gprint((GAME.battleRoom.playerNames[1] or ""), P1.score_x + themes[config.theme].name_Pos[1], P1.score_y + themes[config.theme].name_Pos[2])
     if P2 then
@@ -108,9 +100,11 @@ function Match.render(self)
     end
   end
   
-  if GAME.game_is_paused then
+  if GAME.gameIsPaused then
     draw_pause()
-  else
+  end
+
+  if GAME.gameIsPaused == false or GAME.renderDuringPause then
     -- Don't allow rendering if either player is loading for spectating
     local renderingAllowed = true
     if P1 and P1.play_to_end then
