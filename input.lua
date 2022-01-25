@@ -506,6 +506,15 @@ menu_pause =
     return themes[config.theme].sounds.menu_validate
   end
 )
+menu_advance_frame =
+  input_key_func(
+  {},
+  {"swap1"},
+  normal_key,
+  function()
+    return nil
+  end
+)
 
 player_reset =
   input_key_func(
