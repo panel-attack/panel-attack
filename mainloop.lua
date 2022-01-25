@@ -81,6 +81,7 @@ function fmainloop()
   end
 
   while true do
+    leftover_time = 1 / 120 -- prevents any left over time from getting big transitioning between menus
 ---@diagnostic disable-next-line: redundant-parameter
     func, arg = func(unpack(arg or {}))
     collectgarbage("collect")
