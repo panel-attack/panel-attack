@@ -1357,16 +1357,43 @@ function main_replay()
   local function update() 
   end
 
-  local function variableStep() 
-    -- if menu_enter() then
-    --   run = not run
-    -- end
-    -- if this_frame_keys["\\"] then
-    --   run = false
-    -- end
-    -- if run or this_frame_keys["\\"] then
-    --   GAME.match:run()
-    -- end
+  local frameAdvance = false
+  local playbackSpeed = 1
+  local maximumSpeed = 20
+  local function variableStep()
+    -- If we just finished a frame advance, pause again
+    if frameAdvance then
+      frameAdvance = false
+      GAME.gameIsPaused = true
+    end
+
+    -- Advance one frame
+    if (menu_advance_frame() or this_frame_keys["\\"]) and not frameAdvance then
+      frameAdvance = true
+      GAME.gameIsPaused = false
+      if P1 then
+        P1.max_runs_per_frame = 1
+      end
+      if P2 then
+        P2.max_runs_per_frame = 1
+      end
+    elseif menu_right() then
+      playbackSpeed = bound(1, playbackSpeed + 1, maximumSpeed)
+      if P1 then
+        P1.max_runs_per_frame = playbackSpeed
+      end
+      if P2 then
+        P2.max_runs_per_frame = playbackSpeed
+      end
+    elseif menu_left() then
+      playbackSpeed = bound(1, playbackSpeed - 1, maximumSpeed)
+      if P1 then
+        P1.max_runs_per_frame = playbackSpeed
+      end
+      if P2 then
+        P2.max_runs_per_frame = playbackSpeed
+      end
+    end
   end
 
   local function abortGame() 
