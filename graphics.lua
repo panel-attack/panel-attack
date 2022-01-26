@@ -813,7 +813,7 @@ function Stack.drawAnalyticData(self, analytic, x, y)
   y = y + nextIconIncrement
 
   -- GPM
-  if math.fmod(self.CLOCK, 60) == 0 then
+  if math.fmod(self.CLOCK, 60) < math.fmod(self.CLOCK - (self.max_runs_per_frame), 60) then
     if self.CLOCK > 0 and (analytic.data.sent_garbage_lines > 0) then
       local garbagePerMinute = analytic.data.sent_garbage_lines / (self.CLOCK / 60 / 60)
       analytic.lastGPM = string.format("%0.1f", round(garbagePerMinute, 1))
