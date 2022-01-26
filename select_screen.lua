@@ -172,8 +172,8 @@ function select_screen.main()
 
   -- Setup settings for Main Character Select for 2 Player over Network
   if select_screen.character_select_mode == "2p_net_vs" then
-    P1 = nil
-    P2 = nil
+    GAME:clearMatch()
+    
     drop_old_data_messages() -- Starting a new game, clear all old data messages from the previous game
     logger.debug("Reseting player stacks")
 
@@ -789,7 +789,7 @@ function select_screen.main()
   while true do
 
     -- Draw the current score and record
-    if select_screen.character_select_mode == "1p_vs_yourself" then
+    if select_screen.character_select_mode == "1p_vs_yourself" and not GAME.battleRoom.trainingModeSettings then
       local xPosition1 = 196
       local xPosition2 = 320
       local yPosition = 24
@@ -907,29 +907,14 @@ function select_screen.main()
           P1:set_garbage_target(P2)
           P2:set_garbage_target(P1)
           P2:moveForPlayerNumber(2)
-          replay = {}
-          replay.vs = {
-            P = "",
-            O = "",
-            I = "",
-            Q = "",
-            R = "",
-            in_buf = "",
-            P1_level = P1.level,
-            P2_level = P2.level,
-            P1_name = GAME.battleRoom.playerNames[1],
-            P2_name = GAME.battleRoom.playerNames[2],
-            P1_char = P1.character,
-            P2_char = P2.character,
-            P1_cur_wait_time = P1.cur_wait_time,
-            P2_cur_wait_time = P2.cur_wait_time,
-            ranked = msg.ranked,
-            do_countdown = true
-          }
+          replay = createNewReplay(GAME.match.mode)
+          
           if GAME.battleRoom.spectating and replay_of_match_so_far then --we joined a match in progress
-            replay.vs = replay_of_match_so_far.vs
-            P1.input_buffer = replay_of_match_so_far.vs.in_buf
-            P2.input_buffer = replay_of_match_so_far.vs.I
+            for k, v in pairs(replay_of_match_so_far.vs) do
+              replay.vs[k] = v
+            end
+            P1:receiveConfirmedInput(replay_of_match_so_far.vs.in_buf)
+            P2:receiveConfirmedInput(replay_of_match_so_far.vs.I)
             if replay.vs.ranked then
               match_type = "Ranked"
               match_type_message = ""
@@ -940,6 +925,9 @@ function select_screen.main()
             P1.play_to_end = true --this makes non local stacks run until caught up
             P2.play_to_end = true
           end
+
+          replay.vs.ranked = msg.ranked
+
           to_print = loc("pl_game_start") .. "\n" .. loc("level") .. ": " .. P1.level .. "\n" .. loc("opponent_level") .. ": " .. P2.level
           if P1.play_to_end or P2.play_to_end then
             to_print = loc("pl_spectate_join")
@@ -1322,8 +1310,15 @@ function select_screen.main()
     if cursor_data[1].state.ready and select_screen.character_select_mode == "1p_vs_yourself" then
       GAME.match = Match("vs", GAME.battleRoom)
       P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+      if GAME.battleRoom.trainingModeSettings then
+        GAME.match.attackEngine = AttackEngine(P1)
+        local startTime = 300
+        GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime --[[start time]], 1--[[repeat]], nil--[[attack count]], false--[[metal]],  GAME.battleRoom.trainingModeSettings.height > 1--[[chain]])
+      end
       GAME.match.P1 = P1
-      P1:set_garbage_target(P1)
+      if not GAME.battleRoom.trainingModeSettings then
+        P1:set_garbage_target(P1)
+      end
       P2 = nil
       current_stage = cursor_data[1].state.stage
       stage_loader_load(current_stage)

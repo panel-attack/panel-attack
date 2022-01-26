@@ -333,7 +333,11 @@ function Stack.render(self)
         if panel.garbage then
           local imgs = {flash = metals.flash}
           if not panel.metal then
-            imgs = characters[self.garbage_target.character].images
+            if not self.garbage_target then 
+              imgs = characters[self.character].images
+            else
+              imgs = characters[self.garbage_target.character].images
+            end
           end
           if panel.x_offset == 0 and panel.y_offset == 0 then
             -- draw the entire block!
@@ -769,7 +773,7 @@ function Stack.render(self)
     end
 
     -- Draw the time for non time attack modes
-    if self and self.game_stopwatch and tonumber(self.game_stopwatch) and self.match.mode ~= "time" then
+    if self and self.which == 1 and self.game_stopwatch and tonumber(self.game_stopwatch) and self.match.mode ~= "time" then
       --gprint(frames_to_time_string(self.game_stopwatch, self.match.mode == "endless"), main_infos_screen_pos.x+10, main_infos_screen_pos.y+6)
       draw_label(themes[config.theme].images.IMG_time, (main_infos_screen_pos.x + themes[config.theme].timeLabel_Pos[1]) / GFX_SCALE, (main_infos_screen_pos.y + themes[config.theme].timeLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].timeLabel_Scale)
       draw_time(frames_to_time_string(self.game_stopwatch, self.match.mode == "endless"), time_quads, main_infos_screen_pos.x + themes[config.theme].time_Pos[1], main_infos_screen_pos.y + themes[config.theme].time_Pos[2], 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale)
@@ -1074,7 +1078,9 @@ end
 
 -- Draw the pause menu
 function draw_pause()
-  draw(themes[config.theme].images.pause, 0, 0)
+  if not GAME.renderDuringPause then
+    draw(themes[config.theme].images.pause, 0, 0)
+  end
   gprintf(loc("pause"), 0, 330, canvas_width, "center", nil, 1, large_font)
   gprintf(loc("pl_pause_help"), 0, 360, canvas_width, "center", nil, 1)
 end

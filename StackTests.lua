@@ -2,6 +2,8 @@
 local match = Match("puzzle") -- to stop rising
 local stack = Stack(1, match, false, config.panels, 5)
 stack.do_countdown = false
+stack:wait_for_random_character()
+pick_random_stage()
 
 assert(characters ~= nil, "no characters")
 stack:set_puzzle_state("011010", 1)

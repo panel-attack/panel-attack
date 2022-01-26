@@ -43,7 +43,8 @@ function get_message()
   if string.len(leftovers) == 0 then
     return nil
   end
-  local type, gap, len = string.sub(leftovers, 1, 1), 0
+  local len
+  local type, gap = string.sub(leftovers, 1, 1), 0
   if type == "J" then
     if string.len(leftovers) >= 4 then
       len = byte(string.sub(leftovers, 2, 2)) * 65536 + byte(string.sub(leftovers, 3, 3)) * 256 + byte(string.sub(leftovers, 4, 4))
@@ -133,7 +134,7 @@ function queue_message(type, data)
     end
     server_queue:push(dataMessage)
   elseif type == "L" then
-    P2_level = ({["0"] = 10})[data] or (data + 0)
+    error(loc("nt_ver_err"))
   elseif type == "H" then
     got_H = true
   elseif type == "N" then
@@ -250,12 +251,6 @@ function do_messages()
     local type, data = get_message()
     if type then
       queue_message(type, data)
-      if type == "U" then
-        type = "in_buf"
-      end
-      if P1 and P1.match.mode and replay[P1.match.mode][type] then
-        replay[P1.match.mode][type] = replay[P1.match.mode][type] .. data
-      end
     else
       break
     end

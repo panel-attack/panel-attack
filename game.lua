@@ -11,9 +11,18 @@ Game =
     self.backgroundImage = nil -- the background image for the game, should always be set to something with the proper dimensions
     self.droppedFrames = 0
     self.puzzleSets = {} -- all the puzzles loaded into the game
-    self.game_is_paused = false -- game can be paused while playing on local
+    self.gameIsPaused = false -- game can be paused while playing on local
+    self.renderDuringPause = false -- if the game can render when you are paused
   end
 )
+
+function Game.clearMatch(self)
+  self.match = nil
+  self.gameIsPaused = false
+  self.renderDuringPause = false
+  P1 = nil
+  P2 = nil
+end
 
 local game = Game()
 

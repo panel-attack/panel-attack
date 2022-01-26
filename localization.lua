@@ -113,28 +113,31 @@ function Localization.init(self)
     for line in love.filesystem.lines(FILENAME) do
       if num_line == 1 then
         tokens = csv_line(line)
-        for i, v in ipairs(tokens) do
-          if i > 1 and v:gsub("%s", ""):len() > 0 then
+        for j, v in ipairs(tokens) do
+          if j > 2 and v:gsub("%s", ""):len() > 0 then
             self.codes[#self.codes + 1] = v
             self.data[v] = {}
           end
         end
       else
         tokens, leftover = csv_line(line, leftover)
-        for _, v in ipairs(tokens) do
+        for j, v in ipairs(tokens) do
+          -- Key all the other languages by the first column
           if not key then
             key = v
             if key == "" or key:match("%s+") then
               break
             end
           else
-            if v ~= "" and not v:match("^%s+$") then
-              if num_line == 2 then
-                self.langs[#self.langs + 1] = v
+            if j ~= 2 then
+              if v ~= "" and not v:match("^%s+$") then
+                if num_line == 2 then
+                  self.langs[#self.langs + 1] = v
+                end
+                self.data[self.codes[i]][key] = v
               end
-              self.data[self.codes[i]][key] = v
+              i = i + 1
             end
-            i = i + 1
           end
           if i > #self.codes then
             break

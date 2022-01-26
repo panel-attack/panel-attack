@@ -5,12 +5,16 @@ Match =
   function(self, mode, battleRoom)
     self.P1 = nil
     self.P2 = nil
+    self.attackEngine = nil
     self.mode = mode
     assert(mode ~= "vs" or battleRoom)
     self.battleRoom = battleRoom
     GAME.droppedFrames = 0
     self.timeSpentRunning = 0
     self.createTime = love.timer.getTime()
+    self.supportsPause = true
+    self.attackEngine = nil
+    self.current_music_is_casual = true 
   end
 )
 
@@ -43,16 +47,19 @@ function Match.matchOutcome(self)
     -- win_counts will get overwritten by the server in net games
     GAME.battleRoom.playerWinCounts[P2.player_number] = GAME.battleRoom.playerWinCounts[P2.player_number] + 1
     results["outcome_claim"] = P2.player_number
-  else -- client wins
+  elseif P2.game_over_clock == self.gameEndedClock then -- client wins
     results["winSFX"] = self.P1:pick_win_sfx()
     results["end_text"] =  loc("ss_p_wins", GAME.battleRoom.playerNames[1])
     -- win_counts will get overwritten by the server in net games
     GAME.battleRoom.playerWinCounts[P1.player_number] = GAME.battleRoom.playerWinCounts[P1.player_number] + 1
     results["outcome_claim"] = P1.player_number
+  else
+    error("No win result")
   end
 
   return results
 end
+
 
 function Match.run(self)
   local startTime = love.timer.getTime()
@@ -83,6 +90,9 @@ function Match.run(self)
     end
     if P2 and i <= timesToRunP2 then
       P2:run()
+    end
+    if self.attackEngine then
+      self.attackEngine:run()
     end
     if P1 and i <= timesToRunP1 then
       P1:saveForRollback()
@@ -140,6 +150,13 @@ function Match.rollbackIfNeeded(self)
   end
 end
 
+
+local P1_win_quads = {}
+local P1_rating_quads = {}
+
+local P2_rating_quads = {}
+local P2_win_quads = {}
+
 function Match.render(self)
 
   if GAME.droppedFrames > 10 and config.show_fps then
@@ -149,8 +166,7 @@ function Match.render(self)
   -- Stack specific values for the HUD are drawn in Stack.render
 
   -- Draw VS HUD
-  if self.battleRoom then
-
+  if self.battleRoom and (GAME.gameIsPaused == false or GAME.renderDuringPause) then
     -- P1 username
     gprint((GAME.battleRoom.playerNames[1] or ""), P1.score_x + themes[config.theme].name_Pos[1], P1.score_y + themes[config.theme].name_Pos[2])
     if P2 then
@@ -240,9 +256,11 @@ function Match.render(self)
     end
   end
   
-  if GAME.game_is_paused then
+  if GAME.gameIsPaused then
     draw_pause()
-  else
+  end
+
+  if GAME.gameIsPaused == false or GAME.renderDuringPause then
     -- Don't allow rendering if either player is loading for spectating
     local renderingAllowed = true
     if P1 and P1.play_to_end then

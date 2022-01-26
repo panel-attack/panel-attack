@@ -76,7 +76,23 @@ function replay_browser.main()
       return false
     end
 
+    replay = {}
     replay = json.decode(file)
+    if not replay.engineVersion then
+      replay.engineVersion = "045"
+    end
+
+    -- Old versions saved replays with extra data, prefer vs and endless in that case
+    if replay.vs and replay.endless then
+      replay.endless = nil
+    end
+    if replay.vs and replay.puzzle then
+      replay.puzzle = nil
+    end
+    if replay.endless and replay.puzzle then
+      replay.puzzle = nil
+    end
+
     if type(replay.in_buf) == "table" then
       replay.in_buf = table.concat(replay.in_buf)
     end
@@ -103,12 +119,16 @@ function replay_browser.main()
     end
   end
 
+  reset_filters()
+
   replay_browser.state = "browser"
   replay_browser_update()
 
   GAME.backgroundImage = themes[config.theme].images.bg_main
 
   coroutine.yield()
+
+  GAME.renderDuringPause = true
 
   while true do
     local ret = nil
@@ -141,51 +161,72 @@ function replay_browser.main()
     elseif replay_browser.state == "info" then
       local next_func = nil
 
+      if replay.engineVersion ~= VERSION then
+        gprint(loc("rp_browser_wrong_version"), replay_browser.menu_x - 150, replay_browser.menu_y - 80 + replay_browser.menu_h)
+      end
+      
       gprint(loc("rp_browser_info_header"), replay_browser.menu_x + 170, replay_browser.menu_y - 40)
       gprint(replay_browser.filename, replay_browser.menu_x - 150, replay_browser.menu_y - 40 + replay_browser.menu_h)
 
       if replay.vs then
-        gprint(loc("rp_browser_info_2p_vs"), replay_browser.menu_x + 220, replay_browser.menu_y + 20)
+        local twoPlayerVs = replay.vs.O and string.len(replay.vs.O) > 0
+        local modeText
+        if twoPlayerVs then
+          modeText = loc("rp_browser_info_2p_vs")
+        else
+          modeText = loc("rp_browser_info_1p_vs")
+        end
+
+        gprint(modeText, replay_browser.menu_x + 220, replay_browser.menu_y + 20)
 
         gprint(loc("rp_browser_info_1p"), replay_browser.menu_x, replay_browser.menu_y + 50)
         gprint(loc("rp_browser_info_name", replay.vs.P1_name), replay_browser.menu_x, replay_browser.menu_y + 65)
         gprint(loc("rp_browser_info_level", replay.vs.P1_level), replay_browser.menu_x, replay_browser.menu_y + 80)
         gprint(loc("rp_browser_info_character", replay.vs.P1_char), replay_browser.menu_x, replay_browser.menu_y + 95)
 
-        gprint(loc("rp_browser_info_2p"), replay_browser.menu_x + 300, replay_browser.menu_y + 50)
-        gprint(loc("rp_browser_info_name", replay.vs.P2_name), replay_browser.menu_x + 300, replay_browser.menu_y + 65)
-        gprint(loc("rp_browser_info_level", replay.vs.P2_level), replay_browser.menu_x + 300, replay_browser.menu_y + 80)
-        gprint(loc("rp_browser_info_character", replay.vs.P2_char), replay_browser.menu_x + 300, replay_browser.menu_y + 95)
+        if twoPlayerVs then
+          gprint(loc("rp_browser_info_2p"), replay_browser.menu_x + 300, replay_browser.menu_y + 50)
+          gprint(loc("rp_browser_info_name", replay.vs.P2_name), replay_browser.menu_x + 300, replay_browser.menu_y + 65)
+          gprint(loc("rp_browser_info_level", replay.vs.P2_level), replay_browser.menu_x + 300, replay_browser.menu_y + 80)
+          gprint(loc("rp_browser_info_character", replay.vs.P2_char), replay_browser.menu_x + 300, replay_browser.menu_y + 95)
 
-        if replay.vs.ranked then
-          gprint(loc("rp_browser_info_ranked"), replay_browser.menu_x + 200, replay_browser.menu_y + 120)
+          if replay.vs.ranked then
+            gprint(loc("rp_browser_info_ranked"), replay_browser.menu_x + 200, replay_browser.menu_y + 120)
+          end
         end
 
-        next_func = main_replay_vs
-      elseif replay.endless then
-        gprint(loc("rp_browser_info_endless"), replay_browser.menu_x + 220, replay_browser.menu_y + 20)
+        next_func = main_replay
+      elseif replay.endless or replay.time then
+        if replay.time then
+          gprint(loc("rp_browser_info_time"), replay_browser.menu_x + 220, replay_browser.menu_y + 20)
+        else
+          gprint(loc("rp_browser_info_endless"), replay_browser.menu_x + 220, replay_browser.menu_y + 20)
+        end
 
-        gprint(loc("rp_browser_info_speed", replay.endless.speed), replay_browser.menu_x + 150, replay_browser.menu_y + 50)
-        gprint(loc("rp_browser_info_difficulty", replay.endless.difficulty), replay_browser.menu_x + 150, replay_browser.menu_y + 65)
+        local replay = replay.endless or replay.time
+        gprint(loc("rp_browser_info_speed", replay.speed), replay_browser.menu_x + 150, replay_browser.menu_y + 50)
+        gprint(loc("rp_browser_info_difficulty", replay.difficulty), replay_browser.menu_x + 150, replay_browser.menu_y + 65)
 
-        next_func = main_replay_endless
+        next_func = main_replay
       elseif replay.puzzle then
         gprint(loc("rp_browser_info_puzzle"), replay_browser.menu_x + 220, replay_browser.menu_y + 20)
 
         gprint(loc("rp_browser_no_info"), replay_browser.menu_x + 150, replay_browser.menu_y + 50)
 
-        next_func = main_replay_puzzle
+        next_func = main_replay
       else
         gprint(loc("rp_browser_error_unknown_replay_type"), replay_browser.menu_x + 220, replay_browser.menu_y + 20)
       end
 
-      gprint(loc("rp_browser_watch"), replay_browser.menu_x + 75, replay_browser.menu_y + 150)
+      if replay.engineVersion == VERSION and not replay.puzzle then
+        gprint(loc("rp_browser_watch"), replay_browser.menu_x + 75, replay_browser.menu_y + 150)
+      end
 
       variable_step(
         function()
           if menu_backspace() or menu_escape() then
             replay_browser.state = "browser"
-          elseif menu_enter() then
+          elseif menu_enter() and replay.engineVersion == VERSION and not replay.puzzle then
             if next_func then
               ret = {next_func}
             end

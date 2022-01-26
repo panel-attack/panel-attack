@@ -32,7 +32,7 @@ function love.conf(t)
     t.window = nil
  
     t.modules.audio = false              -- Enable the audio module (boolean)
-    t.modules.data = false               -- Enable the data module (boolean)
+    t.modules.data = true               -- Enable the data module (boolean, mandatory)
     t.modules.event = true              -- Enable the event module (boolean)
     t.modules.font = true               -- Enable the font module (boolean)
     t.modules.graphics = true           -- Enable the graphics module (boolean)
