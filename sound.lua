@@ -56,22 +56,24 @@ function stop_the_music()
   music_t = {}
 end
 
-local currently_paused_tracks = {}
-
 -- Pause/Unpause just music files
 function setMusicPaused(paused)
+  if not GAME then
+    return
+  end
+
   if paused then
     for k, v in pairs(currently_playing_tracks) do
         if v:isPlaying() then
           v:pause()
-          currently_paused_tracks[#currently_paused_tracks+1] = v
+          GAME.currently_paused_tracks[#GAME.currently_paused_tracks+1] = v
         end
     end
   else
-    for k, v in pairs(currently_paused_tracks) do
+    for k, v in pairs(GAME.currently_paused_tracks) do
       v:play()
     end
-    currently_paused_tracks = {}
+    GAME.currently_paused_tracks = {}
   end
 end
 
