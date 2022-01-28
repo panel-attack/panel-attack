@@ -986,6 +986,12 @@ function Stack.render_telegraph(self)
   local senderCharacter = telegraph_to_render.sender.character
 
   local render_x = telegraph_to_render.pos_x
+
+  -- Render if we are "currently chaining" for debug purposes
+  if config.debug_mode and telegraph_to_render.senderCurrentlyChaining then
+    draw(characters[senderCharacter].telegraph_garbage_images["attack"], render_x - 15 , telegraph_to_render.pos_y)
+  end
+
   for frame_earned, attacks_this_frame in pairs(telegraph_to_render.attacks) do
     -- print("frame_earned:")
     -- print(frame_earned)
@@ -1066,8 +1072,28 @@ function Stack.render_telegraph(self)
         draw(characters[senderCharacter].telegraph_garbage_images["metal"], draw_x, draw_y)
       end
       drewChain = drewChain or current_block[4]
+
+      -- Render the stop times above blocks for debug purposes
+      if config.debug_mode then
+        local stopperTime = nil
+
+        if current_block[4]--[[chain]] then
+          stopperTime = telegraph_to_render.stoppers.chain[telegraph_to_render.garbage_queue.chain_garbage.first]
+        else
+          if current_block[3]--[[is_metal]] then
+            stopperTime = telegraph_to_render.stoppers.metal
+          else
+            stopperTime = telegraph_to_render.stoppers.combo[current_block[1]]
+          end
+        end
+
+        if stopperTime then
+          gprintf(stopperTime, draw_x*GFX_SCALE, (draw_y-8)*GFX_SCALE, 70, "center", nil, 1, large_font)
+        end
+      end
+
     end
-    draw_x = draw_x + TELEGRAPH_BLOCK_WIDTH
+    draw_x = draw_x + TELEGRAPH_BLOCK_WIDTH 
     current_block = g_queue_to_draw:pop()
   end
   

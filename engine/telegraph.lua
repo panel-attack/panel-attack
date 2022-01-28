@@ -68,6 +68,7 @@ Telegraph = class(function(self, sender, owner)
 
     -- If we got an attack earlier then our current frame, we need to rollback
     if frame_earned < self.owner.CLOCK then
+      self.owner:rollbackToFrame(frame_earned)
 
       -- The garbage that we send this time might (rarely) not be the same
       -- as the garbage we sent before.  Wipe out the garbage we sent before...
@@ -139,6 +140,11 @@ Telegraph = class(function(self, sender, owner)
       return
     end
     
+    -- If they ended chaining earlier then our current frame, we need to rollback as that might change the timing
+    if frame_earned < self.owner.CLOCK then
+      self.owner:rollbackToFrame(frame_earned)
+    end
+
     self.senderCurrentlyChaining = false
     local chain = self.garbage_queue.chain_garbage[self.garbage_queue.chain_garbage.first]
     chain.finalized = true
