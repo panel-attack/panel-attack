@@ -306,7 +306,9 @@ function Stack.rollbackCopy(self, source, other)
   end--]]
   other.later_garbage = source.later_garbage
   other.garbage_q = source.garbage_q
-  other.telegraph = source.telegraph:rollbackCopy(source.telegraph, other.telegraph)
+  if source.telegraph then
+    other.telegraph = source.telegraph:rollbackCopy(source.telegraph, other.telegraph)
+  end
   local width = source.width or other.width
   local height_to_cpy = #source.panels
   other.panels = other.panels or {}
