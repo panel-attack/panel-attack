@@ -15,23 +15,39 @@ Telegraph = class(function(self, sender, owner)
     self.owner = owner -- The stack that is receiving the garbage
     self.attacks = {} -- A copy of the chains and combos earned used to render the animation of going to the telegraph
     self.pendingGarbage = {} -- Table of garbage that needs to be pushed into the telegraph at specific CLOCK times
+    self.pendingChainingEnded = {} -- A list of CLOCK times where chaining ended
+    self.senderCurrentlyChaining = false -- Set when we start a new chain, cleared when the sender is done chaining, used to know if we should grow a chain or start a new one, and to know if we are allowed to send the attack since the sender is done.
+    -- (typically sending is prevented by garbage chaining)
   end)
   
-  function Telegraph.makeCopy(self)
-    local copy = Telegraph(self.sender, self.owner)
-    copy.garbage_queue = self.garbage_queue:makeCopy()
-    copy.stoppers = deepcpy(self.stoppers)
-    copy.attacks = deepcpy(self.attacks)
-    copy.sender = self.sender
-    copy.pos_x = self.pos_x
-    copy.pos_y = self.pos_y
-    return copy
-  end
+  function Telegraph.rollbackCopy(self, source, other)
+    if other == nil then
+      other = Telegraph(source.sender, source.owner)
+    end
 
+    other.garbage_queue = source.garbage_queue:makeCopy()
+    other.stoppers = deepcpy(source.stoppers)
+    other.attacks = deepcpy(source.attacks)
+    other.sender = source.sender
+    other.pos_x = source.pos_x
+    other.pos_y = source.pos_y
+    other.senderCurrentlyChaining = source.senderCurrentlyChaining
+    other.pendingGarbage = deepcpy(source.pendingGarbage)
+    other.pendingChainingEnded = deepcpy(source.pendingChainingEnded)
+    return other
+  end
+  
   function Telegraph.update(self) 
+
+    if self.pendingChainingEnded[self.owner.CLOCK] then
+      self:chainingEnded(self.owner.CLOCK)
+      self.pendingChainingEnded[self.owner.CLOCK] = nil
+    end
+
     if self.pendingGarbage[self.owner.CLOCK] then
-      local garbage = self.pendingGarbage[self.owner.CLOCK]
-      self:privatePush(unpack(garbage))
+      for _, pendingGarbage in ipairs(self.pendingGarbage[self.owner.CLOCK]) do
+        self:privatePush(unpack(pendingGarbage))
+      end
       self.pendingGarbage[self.owner.CLOCK] = nil
     end
   end
@@ -41,17 +57,17 @@ Telegraph = class(function(self, sender, owner)
 
     -- If we got the attack in the future, wait to queue it
     if frame_earned > self.owner.CLOCK then
-      self.pendingGarbage[frame_earned] = {attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned}
+      if not self.pendingGarbage[frame_earned] then
+        self.pendingGarbage[frame_earned] = {}
+      end
+
+      self.pendingGarbage[frame_earned][#self.pendingGarbage[frame_earned]+1] = {attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned}
+
       return
     end
 
-    -- If we got an attack earlier then our current frame, we need to resimulate
-    local timesToRun = nil
-    local restoreFrame = nil
+    -- If we got an attack earlier then our current frame, we need to rollback
     if frame_earned < self.owner.CLOCK then
-      restoreFrame = self.owner.CLOCK
-      self.owner:rollbackToFrame(frame_earned)
-      timesToRun = restoreFrame - frame_earned
 
       -- The garbage that we send this time might (rarely) not be the same
       -- as the garbage we sent before.  Wipe out the garbage we sent before...
@@ -60,18 +76,19 @@ Telegraph = class(function(self, sender, owner)
           self.owner.garbage_target.telegraph.pendingGarbage[k] = nil
         end
       end
+
+      for k, v in pairs(self.owner.garbage_target.telegraph.pendingChainingEnded) do
+        if k >= frame_earned then
+          self.owner.garbage_target.telegraph.pendingChainingEnded[k] = nil
+        end
+      end
     end
 
     -- Now push this attack
     self:privatePush(attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned)
 
-    -- resimulate if needed now that we have the attack
-    if timesToRun then
-      for i = 1, timesToRun do
-        self.owner:run()
-      end
-      assert(self.owner.CLOCK == restoreFrame)
-    end
+    -- We may have more attacks this frame. To make sure we save our rollback state with all attacks, don't save and resimulate till we are done with this frame.
+    -- Then only resimulate as needed, because we might simulate more than we need to since another rollback might happen.
   end
 
   -- Adds a piece of garbage to the queue
@@ -84,8 +101,7 @@ Telegraph = class(function(self, sender, owner)
     end
     local stuff_to_send
     if attack_type == "chain" then
-      self:grow_chain(frame_earned)
-      stuff_to_send = {{6, self.sender.chain_counter-1,false, true}}
+      stuff_to_send = self:grow_chain(frame_earned)
     elseif attack_type == "combo" then
       -- get combo_garbage_widths, n_resulting_metal_garbage
       stuff_to_send = self:add_combo_garbage(attack_size, metal_count, frame_earned)
@@ -115,15 +131,33 @@ Telegraph = class(function(self, sender, owner)
     return stuff_to_send
     
   end
-  
+
+  function Telegraph.chainingEnded(self, frame_earned)
+    -- If we got the attack in the future, wait to queue it
+    if frame_earned > self.owner.CLOCK then
+      self.pendingChainingEnded[frame_earned] = true
+      return
+    end
+    
+    self.senderCurrentlyChaining = false
+    local chain = self.garbage_queue.chain_garbage[self.garbage_queue.chain_garbage.first]
+    chain.finalized = true
+  end
+
   function Telegraph.grow_chain(self, frame_earned)
-    self.garbage_queue:grow_chain(frame_earned)
-    self.stoppers.chain[self.garbage_queue.chain_garbage.last] = frame_earned + GARBAGE_TRANSIT_TIME + GARBAGE_DELAY
+    local newChain = false
+    if not self.senderCurrentlyChaining then
+      self.senderCurrentlyChaining = true
+      newChain = true
+    end
+
+    local result = self.garbage_queue:grow_chain(frame_earned, newChain)
+    self.stoppers.chain[self.garbage_queue.chain_garbage.first] = frame_earned + GARBAGE_TRANSIT_TIME + GARBAGE_DELAY
     --print(frame_earned)
     --print("in Telegraph.grow_chain")
     --print("table_to_string(self.stoppers.chain):")
     --print(table_to_string(self.stoppers.chain))
-    
+    return result
   end
   
   --to see what's going to be ready at a given frame
@@ -187,32 +221,9 @@ Telegraph = class(function(self, sender, owner)
     -- print(table_to_string(subject.stoppers.chain))
     
     while subject.garbage_queue.chain_garbage:peek() do
-      -- print("in telegraph.pop_all_ready_garbage")
-      -- print("while subject.garbage_queue.chain_garbage:peek()")
-      -- print("subject.stoppers.chain[subject.garbage_queue.chain_garbage.first]:")
-      -- print(subject.stoppers.chain[subject.garbage_queue.chain_garbage.first])
-      -- print("subject.sender.chains.current:")
-      -- print(subject.sender.chains.current)
-      local sender_could_be_chaining = false --todo investigate this with garbage chains
-      --see if we can determine whether the opponent could still be chaining
-      if subject.sender.CLOCK >= time_to_check then
-        if (not subject.sender.chains.current or (subject.sender.chains.current and subject.sender.chains.current > time_to_check)
-            and
-           ((subject.sender.chains.last_complete and subject.sender.chain.last_complete.finish <= time_to_check)
-             or not subject.sender.chains.last_complete --[[ie: they have not yet finished a chain this round]])) then
-          sender_could_be_chaining = false
-        end
-      end
-      if subject.sender.CLOCK < time_to_check and not subject.waiting_on_end_of_chain then
-        subject.waiting_on_end_of_chain = time_to_check
-      end
-      if not subject.stoppers.chain[subject.garbage_queue.chain_garbage.first] and not sender_could_be_chaining then
-      -- and 
-        -- ( (subject.sender.prev_states[time_to_check] and not subject.sender.prev_states[time_to_check].chains.current)
-           -- or 
-          -- (subject.sender.CLOCK >= time_to_check and not subject.sender.chains.current) ) then
+
+      if not subject.stoppers.chain[subject.garbage_queue.chain_garbage.first] and subject.garbage_queue.chain_garbage:peek().finalized then
         print("in Telegraph.pop_all_ready_garbage")
-        --print("so there was not a stopper for the first chain now")
         print("popping the first chain")
         ready_garbage[#ready_garbage+1] = subject.garbage_queue:pop()
       else 

@@ -93,7 +93,6 @@ Stack =
     s.gpanel_buffer_record = ""
     s.input_buffer = ""
     s.confirmedInput = "" -- All inputs the player has input that are confirmed by remote
-    s.fakeInput = "" -- Inputs we simulated while waiting for remote input
     s.panels = {}
     s.width = 6
     s.height = 12
@@ -307,7 +306,7 @@ function Stack.rollbackCopy(self, source, other)
   end--]]
   other.later_garbage = source.later_garbage
   other.garbage_q = source.garbage_q
-  other.telegraph = source.telegraph
+  other.telegraph = source.telegraph:rollbackCopy(source.telegraph, other.telegraph)
   local width = source.width or other.width
   local height_to_cpy = #source.panels
   other.panels = other.panels or {}
@@ -384,6 +383,7 @@ function Stack.rollbackCopy(self, source, other)
   other.panels_cleared = source.panels_cleared
   other.danger_timer = source.danger_timer
   other.analytic = deepcpy(source.analytic)
+  other.game_over_clock = source.game_over_clock
 
   return other
 end
@@ -392,7 +392,6 @@ function Stack.restoreFromRollbackCopy(self, other)
   self:rollbackCopy(other, self)
   -- The remaining inputs is the confirmed inputs not processed yet for this clock time
   self.input_buffer = string.sub(self.confirmedInput, self.CLOCK)
-  self.fakeInput = ""
 end
 
 function Stack.rollbackToFrame(self, frame) 
@@ -407,6 +406,7 @@ function Stack.rollbackToFrame(self, frame)
 end
 
 -- Saves state in backups in case its needed for rollback
+-- NOTE: the CLOCK time is the save state for simulating right BEFORE that clock time is simulated
 function Stack.saveForRollback(self)
   local prev_states = self.prev_states
   local garbage_target = self.garbage_target
@@ -549,7 +549,7 @@ end
 function GarbageQueue.push(self, garbage)
   if garbage then
     for k,v in pairs(garbage) do
-      local width, height, metal, from_chain = unpack(v)
+      local width, height, metal, from_chain, finalized = unpack(v)
       if width and height then
         --print("GarbageQueue.push")
         --print("frame_earned: "..v.frame_earned)
@@ -649,13 +649,15 @@ end
 
 -- This is used by the telegraph to increase the size of the chain garbage being built
 -- or add a 6-wide if there is not chain garbage yet in the queue
-function GarbageQueue.grow_chain(self,frame_earned)
+function GarbageQueue.grow_chain(self,frame_earned, newChain)
+  local result = nil
   --print("in GarbageQueue.grow_chain")
   --print("frame_earned: "..(frame_earned or "nil"))
   --print("json.encode(self.sender.chains):")
   --print(json.encode(self.sender.chains))
-  if self.sender.chains[self.sender.chains.current].size == 2  then
-    self:push({{6,1,false,true, frame_earned=frame_earned}}) --a garbage block 6-wide, 1-tall, not metal, from_chain
+  if newChain then
+    result = {{6,1,false,true, frame_earned=frame_earned, finalized=false}}
+    self:push(result) --a garbage block 6-wide, 1-tall, not metal, from_chain
   else 
     --print("in GarbageQueue.grow_chain")
     --print("self.sender.CLOCK:")
@@ -665,12 +667,15 @@ function GarbageQueue.grow_chain(self,frame_earned)
     --print(self:to_string())
     --print("table_to_string(self.chain_garbage):")
     --print(table_to_string(self.chain_garbage))
-    local garbage_block = {unpack(self.chain_garbage[self.chain_garbage.last])}
-    garbage_block[2]--[[height]] = garbage_block[2]--[[height]] + 1
-    garbage_block.frame_earned = frame_earned
-    self.chain_garbage:replace_last(garbage_block)
-    self.ghost_chain = garbage_block[2] - 1
+    result = self.chain_garbage[self.chain_garbage.first]
+    result[2]--[[height]] = result[2]--[[height]] + 1
+    result.frame_earned = frame_earned
+    -- Note we are changing the value inside the queue so no need to pop and insert it.
+    self.ghost_chain = result[2] - 1
+    result = {result}
   end
+
+  return result
 end
 
 --returns the index of the first garbage block matching the requested type and size, or where it would go if it was in the Garbage_Queue.
@@ -678,7 +683,6 @@ end
   --this will return 0 for the first index.
 function GarbageQueue.get_idx_of_garbage(self, garbage_width, garbage_height, is_metal, from_chain)
   local copy = self:makeCopy()
-  local sorted_queue = {}
   local idx = -1
   local idx_found = false
 
@@ -910,28 +914,35 @@ end
 
 function Stack.timesToRun(self) 
 
-  -- Normally we want to run 1 frame, but if we are a replay or from a net game,
-  -- we want to possibly run a lot frames to catch up, or 0 if there is nothing to simulate.
-  -- However, if we are a reaply or net game, we still want to run after game over to show
+  -- If we are a replay or net game, we want to run after game over to show
   -- game over effects.
-  local timesToRun = 1
-  if self:game_ended() == false and self.is_local == false then
-    timesToRun = 0
+  if self:game_ended() then
+    return 1
   end
+
+  local timesToRun
 
   -- Decide how many frames of input we should run.
   local buffer_len = string.len(self.input_buffer)
 
-  -- If we're way behind, run at max speed.
-  if buffer_len >= 15 then
-    -- When we're closer, run fewer per frame, so things are less choppy.
-    -- This might have a side effect of being a little farther behind on average,
-    -- since we don't always run at top speed until the buffer is empty.
-    timesToRun = self.max_runs_per_frame
-  elseif buffer_len >= 10 then
-    timesToRun = math.min(2, self.max_runs_per_frame)
-  elseif buffer_len >= 1 then
-    timesToRun = 1
+  -- If we are local we always want to catch up and run the new input which is already appended
+  if self.is_local then
+    timesToRun = buffer_len
+  else
+    -- If we are not locak, we want to run faster to catch up.
+    if buffer_len >= 15 then
+      -- way behind, run at max speed.
+      timesToRun = self.max_runs_per_frame
+    elseif buffer_len >= 10 then
+      -- When we're closer, run fewer times per frame, so things are less choppy.
+      -- This might have a side effect of taking a little longer to catch up
+      -- since we don't always run at top speed.
+      timesToRun = math.min(2, self.max_runs_per_frame)
+    elseif buffer_len >= 1 then
+      timesToRun = 1
+    else
+      timesToRun = 0
+    end
   end
 
   return timesToRun
@@ -955,7 +966,6 @@ function Stack.run(self)
 
   self:setupInput()
   self:simulate()
-
 end
 
 -- Grabs input from the buffer of inputs or from the controller and sends out to the network if needed.
@@ -1257,7 +1267,9 @@ function Stack.simulate(self)
       end
     end
 
-    self.telegraph:update()
+    if self.telegraph then
+      self.telegraph:update()
+    end
 
     -- Phase 2. /////////////////////////////////////////////////////////////
     -- Timer-expiring actions + falling
@@ -1623,6 +1635,10 @@ function Stack.simulate(self)
       end
       self.analytic:register_chain(self.chain_counter)
       self.chain_counter = 0
+
+      if self.garbage_target and self.garbage_target.telegraph then
+        self.garbage_target.telegraph:chainingEnded(self.CLOCK)
+      end
     end
 
     if (self.score > 99999) then
@@ -1933,7 +1949,7 @@ function Stack.shouldChangeMusic(self)
       result = false
     end
 
-    if P1.play_to_end or string.len(P1.fakeInput) > 0 then
+    if P1.play_to_end then
       result = false
     end
 
@@ -1953,7 +1969,7 @@ function Stack.shouldChangeSoundEffects(self)
       result = false
     end
 
-    if self.play_to_end or string.len(self.fakeInput) > 0 then
+    if self.play_to_end then
       result = false
     end
 
@@ -2044,6 +2060,11 @@ end
 -- Sets the current stack as "lost"
 -- Also begins drawing game over effects
 function Stack.set_game_over(self)
+
+  if self.game_over_clock ~= 0 then
+    error("should not set gameover when it is already set")
+  end
+  
   self.game_over = true
   self.game_over_clock = self.CLOCK
 

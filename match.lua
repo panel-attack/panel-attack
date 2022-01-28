@@ -22,8 +22,12 @@ function Match.gameEndedClockTime()
 
   local result = P1.game_over_clock
   
-  if P2 and P2.game_over_clock > result then
-    result = P2.game_over_clock
+  if P2 then
+    if P2.game_over_clock > 0 then
+      if result == 0 or P2.game_over_clock < result then
+        result = P2.game_over_clock
+      end
+    end
   end
 
   return result
@@ -79,8 +83,6 @@ function Match.run(self)
     P2:send_controls()
   end
 
-  --self:rollbackIfNeeded()
-
   local timesToRunP1 = P1:timesToRun()
   local timesToRunP2 = P2 and P2:timesToRun() or 0
 
@@ -120,36 +122,6 @@ function Match.framesToSimulate(self)
 
   return framesToSimulate
 end
-
-function Match.rollbackIfNeeded(self) 
-
-  if (P1 and P2) or config.debug_mode then
-
-    local gameEnded = P1:game_ended()
-    if P2 then
-      gameEnded = false
-      if P1:gameResult() then
-        gameEnded = true
-      end
-    end
-
-    if not gameEnded then
-      if config.debug_mode then
-        local rollbackLength = P1.max_runs_per_frame - 1
-        if P1.CLOCK > 0 and P1.prev_states[P1.CLOCK - rollbackLength] then
-          P1:rollbackToFrame(P1.CLOCK - rollbackLength)
-        end
-          
-        if P2 then
-          if P2.CLOCK > 0 and P2.prev_states[P2.CLOCK - rollbackLength] then
-            P2:rollbackToFrame(P2.CLOCK - rollbackLength)
-          end
-        end
-      end
-    end
-  end
-end
-
 
 local P1_win_quads = {}
 local P1_rating_quads = {}
@@ -212,47 +184,101 @@ function Match.render(self)
 
 
   if config.debug_mode then
+
     local drawX = 140
     local drawY = 10
+    local padding = 14
 
-    grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 200/GFX_SCALE, 100/GFX_SCALE, 0, 0, 0, 0.5)
+    grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 1000/GFX_SCALE, 100/GFX_SCALE, 0, 0, 0, 0.5)
     
     gprintf("P1 Clock " .. P1.CLOCK, drawX, drawY)
 
-    -- drawY = drawY + 14
+
+    -- drawY = drawY + padding
+    -- gprintf("P1 Panels: " .. P1.panel_buffer, drawX, drawY)
+
+    -- drawY = drawY + padding
+    -- gprintf("P1 Confirmed " .. string.len(P1.confirmedInput) , drawX, drawY)
+
+    -- drawY = drawY + padding
+    -- gprintf("P1 Ended?: " .. tostring(P1:game_ended()), drawX, drawY)
+    
+    -- drawY = drawY + padding
+    -- gprintf("P1 attacks: " .. #P1.telegraph.attacks, drawX, drawY)
+
+    -- drawY = drawY + padding
+    -- gprintf("P1 Garbage Q: " .. P1.garbage_q:len(), drawX, drawY)
+
+    if P1.game_over_clock > 0 then
+      drawY = drawY + padding
+      gprintf("P1 game_over_clock " .. P1.game_over_clock, drawX, drawY)
+    end
+
+    drawY = drawY + padding
+    gprintf("P1 chain panels " .. P1.n_chain_panels, drawX, drawY)
+
+    if P1.telegraph then
+      drawY = drawY + padding
+      gprintf("incoming chains " .. P1.telegraph.garbage_queue.chain_garbage:len(), drawX, drawY)
+
+      for combo_garbage_width=3,6 do
+        drawY = drawY + padding
+        gprintf("incoming combos " .. P1.telegraph.garbage_queue.combo_garbage[combo_garbage_width]:len(), drawX, drawY)
+      end
+    end
+
+
+
+    drawX = 400
+    drawY = 10 - padding
+    -- drawY = drawY + padding
     -- gprintf("Time Spent Running " .. self.timeSpentRunning * 1000, drawX, drawY)
 
-    -- drawY = drawY + 14
+    -- drawY = drawY + padding
     -- local totalTime = love.timer.getTime() - self.createTime
     -- gprintf("Total Time " .. totalTime * 1000, drawX, drawY)
 
-    drawY = drawY + 14
+    drawY = drawY + padding
     local totalTime = love.timer.getTime() - self.createTime
     local timePercent = self.timeSpentRunning / totalTime
     gprintf("Time Percent Running Match: " .. timePercent, drawX, drawY)
 
-    -- drawY = drawY + 14
-    -- gprintf("P1 Panels: " .. P1.panel_buffer, drawX, drawY)
+    local gameEndedClockTime = self:gameEndedClockTime()
 
-    -- drawY = drawY + 14
-    -- gprintf("P1 Confirmed " .. string.len(P1.confirmedInput) , drawX, drawY)
-
-    -- drawY = drawY + 14
-    -- gprintf("P1 Ended?: " .. tostring(P1:game_ended()), drawX, drawY)
-    
-    drawY = drawY + 14
-    gprintf("P1 attacks: " .. #P1.telegraph.attacks, drawX, drawY)
-
-    drawY = drawY + 14
-    gprintf("P1 Garbage Q: " .. P1.garbage_q:len(), drawX, drawY)
+    if gameEndedClockTime > 0 then
+      drawY = drawY + padding
+      gprintf("gameEndedClockTime " .. gameEndedClockTime, drawX, drawY)
+    end
 
     if P2 then 
-      drawY = drawY + 14
+      drawX = 800
+      drawY = 10 - padding
+
+      drawY = drawY + padding
+      gprintf("P2 Clock " .. P2.CLOCK, drawX, drawY)
+
+      drawY = drawY + padding
       local framesAhead = string.len(P1.confirmedInput) - string.len(P2.confirmedInput)
       gprintf("Ahead: " .. framesAhead, drawX, drawY)
 
-      drawY = drawY + 14
+      drawY = drawY + padding
       gprintf("P2 Confirmed " .. string.len(P2.confirmedInput) , drawX, drawY)
+
+      if P2.game_over_clock > 0 then
+        drawY = drawY + padding
+        gprintf("P2 game_over_clock " .. P2.game_over_clock, drawX, drawY)
+      end
+
+      if P2.telegraph then
+        drawY = drawY + padding
+        gprintf("incoming chains " .. P2.telegraph.garbage_queue.chain_garbage:len(), drawX, drawY)
+  
+        for combo_garbage_width=3,6 do
+          drawY = drawY + padding
+          gprintf("incoming combos " .. P2.telegraph.garbage_queue.combo_garbage[combo_garbage_width]:len(), drawX, drawY)
+        end
+      end
+  
     end
   end
   

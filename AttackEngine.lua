@@ -38,24 +38,31 @@ end
 
 -- 
 function AttackEngine.run(self)
-    local garbageToSend = {}
-    for _, attackPattern in ipairs(self.attackPatterns) do
-      local lastAttackTime
-      if attackPattern.attackCount then
-        lastAttackTime = attackPattern.start + ((attackPattern.attackCount-1) * attackPattern.repeatDelay)
-      end
-      if self.clock >= attackPattern.start and (attackPattern.attackCount == nil or self.clock <= lastAttackTime) then
-        local difference = self.clock - attackPattern.start
-        local remainder = difference % attackPattern.repeatDelay
-        if remainder == 0 then
-            garbageToSend[#garbageToSend+1] = attackPattern.garbage
-        end
+  if not self.target.telegraph then
+    return
+  end
+
+  local garbageToSend = {}
+  for _, attackPattern in ipairs(self.attackPatterns) do
+    local lastAttackTime
+    if attackPattern.attackCount then
+      lastAttackTime = attackPattern.start + ((attackPattern.attackCount-1) * attackPattern.repeatDelay)
+    end
+    if self.clock >= attackPattern.start and (attackPattern.attackCount == nil or self.clock <= lastAttackTime) then
+      local difference = self.clock - attackPattern.start
+      local remainder = difference % attackPattern.repeatDelay
+      if remainder == 0 then
+        --TODO Make telegraph work with non stack sender
+        --TODO handle metal
+        -- if attackPattern.garbage[4] == true then
+        --   self.target.telegraph:push("chain", attackPattern.garbage[2], 0, 1, 1, self.clock)
+        -- else
+        --   --TODO better combo size
+        --   self.target.telegraph:push("combo", attackPattern.garbage[1]+1, 0, 1, 1, self.clock)
+        -- end
       end
     end
+  end
 
-    if #garbageToSend > 0 then
-        self.target:recv_garbage(self.clock+1, garbageToSend)
-    end
-
-    self.clock = self.clock + 1
+  self.clock = self.clock + 1
 end

@@ -155,7 +155,7 @@ do
       {loc("mm_1_puzzle"), main_select_puzz},
       {loc("mm_1_time"), main_timeattack_select},
       {loc("mm_1_vs"), main_local_vs_yourself_setup},
-      {loc("mm_1_training"), training_setup},
+      --{loc("mm_1_training"), training_setup},
       --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
       --{loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
@@ -1277,7 +1277,7 @@ function loadFromReplay(replay)
       end
 
     else
-      P1.set_garbage_target(P1)
+      P1:set_garbage_target(P1)
     end
 
     GAME.battleRoom.playerNames[1] = replay.P1_name or loc("player_n", "1")
@@ -1309,7 +1309,7 @@ function loadFromReplay(replay)
     P1:wait_for_random_character()
   end
 
-  P1.confirmedInput = uncompress_input_string(replay.in_buf)
+  P1:receiveConfirmedInput(uncompress_input_string(replay.in_buf))
   GAME.match.P1 = P1
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
@@ -1319,7 +1319,7 @@ function loadFromReplay(replay)
   character_loader_load(P1.character)
 
   if P2 then
-    P2.confirmedInput = uncompress_input_string(replay.I)
+    P2:receiveConfirmedInput(uncompress_input_string(replay.I))
 
     GAME.match.P2 = P2
     P2.do_countdown = replay.do_countdown or false
