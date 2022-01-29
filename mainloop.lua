@@ -1263,11 +1263,11 @@ function loadFromReplay(replay)
     P1 = Stack(1, GAME.match, false, config.panels, replay.P1_level or 5)
     P1.character = replay.P1_char
 
-    if replay.O and string.len(replay.O) > 0 then
+    if replay.I and string.len(replay.I) > 0 then
       P2 = Stack(2, GAME.match, false, config.panels, replay.P2_level or 5)
       
-      P1.set_garbage_target(P2)
-      P2.set_garbage_target(P1)
+      P1:set_garbage_target(P2)
+      P2:set_garbage_target(P1)
       P2:moveForPlayerNumber(2)
 
       P2.character = replay.P2_char
