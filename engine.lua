@@ -914,40 +914,37 @@ function Stack.controls(self)
   end
 end
 
-function Stack.timesToRun(self) 
+function Stack.shouldRun(self, runsSoFar) 
 
   -- If we are a replay or net game, we want to run after game over to show
   -- game over effects.
   if self:game_ended() then
-    return 1
+    return runsSoFar == 0
   end
-
-  local timesToRun
 
   -- Decide how many frames of input we should run.
   local buffer_len = string.len(self.input_buffer)
 
   -- If we are local we always want to catch up and run the new input which is already appended
   if self.is_local then
-    timesToRun = buffer_len
-  else
-    -- If we are not locak, we want to run faster to catch up.
-    if buffer_len >= 15 then
-      -- way behind, run at max speed.
-      timesToRun = self.max_runs_per_frame
-    elseif buffer_len >= 10 then
-      -- When we're closer, run fewer times per frame, so things are less choppy.
-      -- This might have a side effect of taking a little longer to catch up
-      -- since we don't always run at top speed.
-      timesToRun = math.min(2, self.max_runs_per_frame)
-    elseif buffer_len >= 1 then
-      timesToRun = 1
-    else
-      timesToRun = 0
-    end
+    return buffer_len > 0
   end
 
-  return timesToRun
+  -- If we are not local, we want to run faster to catch up.
+  if buffer_len >= 15 - runsSoFar then
+    -- way behind, run at max speed.
+    return runsSoFar < self.max_runs_per_frame
+  elseif buffer_len >= 10 - runsSoFar then
+    -- When we're closer, run fewer times per frame, so things are less choppy.
+    -- This might have a side effect of taking a little longer to catch up
+    -- since we don't always run at top speed.
+    local maxRuns = math.min(2, self.max_runs_per_frame)
+    return runsSoFar < maxRuns
+  elseif buffer_len >= 1 then
+    return runsSoFar == 0
+  end
+
+  return false
 end
 
 -- Update everything for the stack based on inputs. Will update many times if needed to catch up.

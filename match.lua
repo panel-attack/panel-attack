@@ -66,6 +66,10 @@ end
 
 
 function Match.run(self)
+  if GAME.gameIsPaused then
+    return
+  end
+
   local startTime = love.timer.getTime()
 
   -- We need to save CLOCK 0 as a base case
@@ -83,25 +87,43 @@ function Match.run(self)
     P2:send_controls()
   end
 
-  local timesToRunP1 = P1:timesToRun()
-  local timesToRunP2 = P2 and P2:timesToRun() or 0
-
-  for i = 1, math.max(timesToRunP1, timesToRunP2) do
-    if P1 and i <= timesToRunP1 then
+  local ranP1 = true
+  local ranP2 = true
+  local runsSoFar = 0
+  while ranP1 or ranP2 do
+    
+    ranP1 = false
+    if P1 and P1:shouldRun(runsSoFar) then
       P1:run()
+      ranP1 = true
     end
-    if P2 and i <= timesToRunP2 then
+
+    ranP2 = false
+    if P2 and P2:shouldRun(runsSoFar) then
       P2:run()
+      ranP2 = true
     end
+
     if self.attackEngine then
       self.attackEngine:run()
     end
-    if P1 and i <= timesToRunP1 then
+
+    if ranP1 then
       P1:saveForRollback()
     end
-    if P2 and i <= timesToRunP2 then
+
+    if ranP2 then
       P2:saveForRollback()
     end
+
+    runsSoFar = runsSoFar + 1
+  end
+
+  if P1 and P1.is_local and string.len(P1.input_buffer) > 0 then
+    error("Local games should always simulate all inputs")
+  end
+  if P2 and P2.is_local and string.len(P2.input_buffer) > 0 then
+    error("Local games should always simulate all inputs")
   end
 
   local endTime = love.timer.getTime()

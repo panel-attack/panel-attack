@@ -158,7 +158,7 @@ Telegraph = class(function(self, sender, owner)
     end
 
     local result = self.garbage_queue:grow_chain(frame_earned, newChain)
-    self.stoppers.chain[self.garbage_queue.chain_garbage.first] = frame_earned + GARBAGE_TRANSIT_TIME + GARBAGE_DELAY
+    self.stoppers.chain[self.garbage_queue.chain_garbage.last] = frame_earned + GARBAGE_TRANSIT_TIME + GARBAGE_DELAY
     --print(frame_earned)
     --print("in Telegraph.grow_chain")
     --print("table_to_string(self.stoppers.chain):")

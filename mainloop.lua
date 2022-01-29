@@ -312,6 +312,7 @@ local function handle_pause(self)
           reset_filters()
         else
           use_current_stage()
+          leftover_time = 1 / 120 -- prevents any left over time from getting big after a pause
         end
       end
     end
@@ -378,7 +379,7 @@ local function runMainGameLoop(updateFunction, variableStepFunction, abortGameFu
     -- Uncomment this to cripple your game :D
     -- love.timer.sleep(0.030)
 
-    -- don't spend time rendering when catching up to a current spectate match
+    -- Render only if we are not catching up to a current spectate match
     if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
       GAME.match:render()
       wait()
