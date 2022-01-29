@@ -393,7 +393,8 @@ end
 function Stack.restoreFromRollbackCopy(self, other)
   self:rollbackCopy(other, self)
   -- The remaining inputs is the confirmed inputs not processed yet for this clock time
-  self.input_buffer = string.sub(self.confirmedInput, self.CLOCK)
+  -- We have processed CLOCK time number of inputs when we are at CLOCK, so we only want to process the CLOCK+1 input on
+  self.input_buffer = string.sub(self.confirmedInput, self.CLOCK+1)
 end
 
 function Stack.rollbackToFrame(self, frame) 

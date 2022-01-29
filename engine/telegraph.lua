@@ -67,7 +67,7 @@ Telegraph = class(function(self, sender, owner)
     end
 
     -- If we got an attack earlier then our current frame, we need to rollback
-    if frame_earned < self.owner.CLOCK then
+    if frame_earned < self.owner.CLOCK - 1 then
       self.owner:rollbackToFrame(frame_earned)
 
       -- The garbage that we send this time might (rarely) not be the same
@@ -141,7 +141,7 @@ Telegraph = class(function(self, sender, owner)
     end
     
     -- If they ended chaining earlier then our current frame, we need to rollback as that might change the timing
-    if frame_earned < self.owner.CLOCK then
+    if frame_earned < self.owner.CLOCK - 1 then
       self.owner:rollbackToFrame(frame_earned)
     end
 

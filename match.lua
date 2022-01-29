@@ -194,6 +194,12 @@ function Match.render(self)
     gprintf("P1 Clock " .. P1.CLOCK, drawX, drawY)
 
 
+    drawY = drawY + padding
+    gprintf("P1 Confirmed " .. string.len(P1.confirmedInput) , drawX, drawY)
+
+    drawY = drawY + padding
+    gprintf("P1 input_buffer " .. string.len(P1.input_buffer) , drawX, drawY)
+
     -- drawY = drawY + padding
     -- gprintf("P1 Panels: " .. P1.panel_buffer, drawX, drawY)
 
@@ -217,15 +223,15 @@ function Match.render(self)
     drawY = drawY + padding
     gprintf("P1 chain panels " .. P1.n_chain_panels, drawX, drawY)
 
-    if P1.telegraph then
-      drawY = drawY + padding
-      gprintf("incoming chains " .. P1.telegraph.garbage_queue.chain_garbage:len(), drawX, drawY)
+    -- if P1.telegraph then
+    --   drawY = drawY + padding
+    --   gprintf("incoming chains " .. P1.telegraph.garbage_queue.chain_garbage:len(), drawX, drawY)
 
-      for combo_garbage_width=3,6 do
-        drawY = drawY + padding
-        gprintf("incoming combos " .. P1.telegraph.garbage_queue.combo_garbage[combo_garbage_width]:len(), drawX, drawY)
-      end
-    end
+    --   for combo_garbage_width=3,6 do
+    --     drawY = drawY + padding
+    --     gprintf("incoming combos " .. P1.telegraph.garbage_queue.combo_garbage[combo_garbage_width]:len(), drawX, drawY)
+    --   end
+    -- end
 
 
 
@@ -264,20 +270,23 @@ function Match.render(self)
       drawY = drawY + padding
       gprintf("P2 Confirmed " .. string.len(P2.confirmedInput) , drawX, drawY)
 
+      drawY = drawY + padding
+      gprintf("P2 input_buffer " .. string.len(P2.input_buffer) , drawX, drawY)
+
       if P2.game_over_clock > 0 then
         drawY = drawY + padding
         gprintf("P2 game_over_clock " .. P2.game_over_clock, drawX, drawY)
       end
 
-      if P2.telegraph then
-        drawY = drawY + padding
-        gprintf("incoming chains " .. P2.telegraph.garbage_queue.chain_garbage:len(), drawX, drawY)
+      -- if P2.telegraph then
+      --   drawY = drawY + padding
+      --   gprintf("incoming chains " .. P2.telegraph.garbage_queue.chain_garbage:len(), drawX, drawY)
   
-        for combo_garbage_width=3,6 do
-          drawY = drawY + padding
-          gprintf("incoming combos " .. P2.telegraph.garbage_queue.combo_garbage[combo_garbage_width]:len(), drawX, drawY)
-        end
-      end
+      --   for combo_garbage_width=3,6 do
+      --     drawY = drawY + padding
+      --     gprintf("incoming combos " .. P2.telegraph.garbage_queue.combo_garbage[combo_garbage_width]:len(), drawX, drawY)
+      --   end
+      -- end
   
     end
   end
