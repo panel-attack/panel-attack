@@ -35,7 +35,7 @@ require("timezones")
 require("gen_panels")
 require("panels")
 require("Theme")
-require("dump")
+-- require("dump")
 local logger = require("logger")
 
 --[[

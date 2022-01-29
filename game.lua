@@ -145,6 +145,9 @@ function Game:update(dt)
   local status, err = nil
   if coroutine.status(self._setup) ~= "dead" then
     status, err = coroutine.resume(self._setup)
+  elseif scene_manager.is_transitioning then
+    scene_manager:transition()
+    status = true
   elseif scene_manager.active_scene then
     scene_manager.active_scene:update()
     status = true
@@ -167,10 +170,6 @@ function Game:update(dt)
 end
 
 function Game:draw()
-  if scene_manager.active_scene then
-    scene_manager.active_scene:draw()
-  end
-    
   -- if not main_font then
   -- main_font = love.graphics.newFont("Oswald-Light.ttf", 15)
   -- end
