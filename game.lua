@@ -46,7 +46,6 @@ local Game = class(
     self._mainloop = nil
     -- coroutines
     self._setup = coroutine.create(function() self:_setup_co() end)
-    
   end
 )
 
