@@ -36,6 +36,7 @@ local Game = class(
     self.config = require("config") -- remove when done
     self.localization = Localization()
     self.replay = {}
+    self.currently_paused_tracks = {} -- list of tracks currently paused
 
     -- private members
     self._pointer_hidden = false
@@ -45,6 +46,7 @@ local Game = class(
     self._mainloop = nil
     -- coroutines
     self._setup = coroutine.create(function() self:_setup_co() end)
+    
   end
 )
 
@@ -216,6 +218,7 @@ function Game:clearMatch()
   self.match = nil
   self.gameIsPaused = false
   self.renderDuringPause = false
+  self.currently_paused_tracks = {}
   P1 = nil
   P2 = nil
 end
