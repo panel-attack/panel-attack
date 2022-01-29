@@ -1,5 +1,6 @@
 require("graphics_util")
 require("sound_util")
+local class = require("class")
 
 local musics = {"main", "select_screen", "main_start", "select_screen_start"} -- the music used in a theme
 
@@ -27,8 +28,7 @@ local function load_theme_img(name)
 end
 
 -- Represents the current styles and images to apply to the game UI
-Theme =
-  class(
+Theme = class(
   function(self)
     self.images = {} -- theme images
     self.sounds = {} -- theme sfx

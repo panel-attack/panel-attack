@@ -1,4 +1,4 @@
-require("game_updater")
+local GameUpdater = require("GameUpdater")
 
 -- CONSTANTS
 local UPDATER_NAME = "panel-alpha" -- you should name the distributed auto updater zip the same as this
@@ -22,6 +22,7 @@ local wait_all_versions = nil
 local wait_download = nil
 
 function love.load()
+  print("updater running")
   -- Cleanup old love files
   for i, v in ipairs(love.filesystem.getDirectoryItems(path)) do
     if v ~= local_version and v:match('%.love$') then
@@ -124,13 +125,21 @@ function love.draw()
 end
 
 function start_game(file)
+  print(file)
   if not love.filesystem.mount(path..file, '') then error("Could not mount game file: "..file) end
   GAME_UPDATER_GAME_VERSION = file:gsub("^panel%-", ""):gsub("%.love", "")
+  print(GAME_UPDATER_GAME_VERSION)
   package.loaded.main = nil
   package.loaded.conf = nil
   love.conf = nil
   love.init()
+  if not args then
+    args = {GAME_UPDATER}
+  else
+    table.insert(args, GAME_UPDATER)
+  end
   love.load(args)
+  print("post updater")
 end
 
 function display_message(txt)

@@ -1,3 +1,34 @@
 1.	Install love (http://love2d.org/)
 2.	cd Panel-Attack
 	love ./
+	
+install visual studio 2019
+download lua https://www.lua.org/ftp/
+compile lua with windows make file https://github.com/vtudorache/lua-msvc
+download luarocks http://luarocks.github.io/luarocks/releases/
+link rocks to lua
+variables = {
+   LUA = "/usr/local/opt/lua/bin/lua5.1",
+   LUA_BINDIR = "/usr/local/opt/lua/bin",
+   LUA_INCDIR = "/usr/local/opt/lua/include",
+   LUA_LIBDIR = "/usr/local/opt/lua/lib",
+}
+download love https://github.com/love2d/love
+compile love via the megasource https://github.com/love2d/megasource
+download zerobrane https://studio.zerobrane.com/download?not-this-time
+run server
+run client
+profit
+
+luarocks tips:
+https://leafo.net/guides/customizing-the-luarocks-tree.html
+
+lua style guide:
+http://lua-users.org/wiki/LuaStyleGuide
+https://github.com/luarocks/lua-style-guide
+
+lua docs:
+https://stevedonovan.github.io/ldoc/
+
+
+"D:\Lua\luarocks-3.8.0-windows-64\luarocks.exe" install --tree lua_modules logger

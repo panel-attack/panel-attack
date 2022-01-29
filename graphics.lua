@@ -1,6 +1,9 @@
 require("input")
 require("util")
 
+--- @module graphics
+local graphics = {}
+
 local floor = math.floor
 local ceil = math.ceil
 
@@ -259,10 +262,10 @@ function Stack.render(self)
     love.graphics.setShader()
   end
 
-  gfx_q:push({love.graphics.setCanvas, {{self.canvas, stencil = true}}})
-  gfx_q:push({love.graphics.clear, {}})
-  gfx_q:push({love.graphics.stencil, {frame_mask, "replace", 1}})
-  gfx_q:push({love.graphics.setStencilTest, {"greater", 0}})
+  GAME.gfx_q:push({love.graphics.setCanvas, {{self.canvas, stencil = true}}})
+  GAME.gfx_q:push({love.graphics.clear, {}})
+  GAME.gfx_q:push({love.graphics.stencil, {frame_mask, "replace", 1}})
+  GAME.gfx_q:push({love.graphics.setStencilTest, {"greater", 0}})
 
   time_quads = {}
   move_quads = {}
@@ -463,9 +466,9 @@ function Stack.render(self)
   end
   -- ends here
 
-  gfx_q:push({love.graphics.setStencilTest, {}})
-  gfx_q:push({love.graphics.setCanvas, {global_canvas}})
-  gfx_q:push({love.graphics.draw, {self.canvas, (self.pos_x - 4) * GFX_SCALE, (self.pos_y - 4) * GFX_SCALE}})
+  GAME.gfx_q:push({love.graphics.setStencilTest, {}})
+  GAME.gfx_q:push({love.graphics.setCanvas, {global_canvas}})
+  GAME.gfx_q:push({love.graphics.draw, {self.canvas, (self.pos_x - 4) * GFX_SCALE, (self.pos_y - 4) * GFX_SCALE}})
 
   self:draw_popfxs()
   self:draw_cards()
@@ -972,3 +975,5 @@ function draw_pause()
   gprintf(loc("pause"), 0, 330, canvas_width, "center", nil, 1, large_font)
   gprintf(loc("pl_pause_help"), 0, 360, canvas_width, "center", nil, 1)
 end
+
+return graphics

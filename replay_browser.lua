@@ -1,20 +1,23 @@
-local replay_browser = {}
+--@module replay_browser
+local replay_browser = {
+  selection = nil,
+  base_path = "replays",
+  current_path = "/",
+  path_contents = {},
+  filename = nil,
+  state = "browser",
 
-replay_browser.selection = nil
-replay_browser.base_path = "replays"
-replay_browser.current_path = "/"
-replay_browser.path_contents = {}
-replay_browser.filename = nil
-replay_browser.state = "browser"
+  menu_x = 400,
+  menu_y = 280,
+  menu_h = 14,
+  menu_cursor_offset = 16,
 
-replay_browser.menu_x = 400
-replay_browser.menu_y = 280
-replay_browser.menu_h = 14
-replay_browser.menu_cursor_offset = 16
+  cursor_pos = 0,
 
-replay_browser.cursor_pos = 0
+  replay_id_top = 0,
+}
 
-replay_browser.replay_id_top = 0
+
 
 function replay_browser.main()
   local function replay_browser_menu()
@@ -243,7 +246,7 @@ function replay_browser.main()
   end
 end
 
-function set_replay_browser_path(path)
+function replay_browser.set_replay_browser_path(path)
   local new_path = string.sub(path, (string.len(replay_browser.base_path) + 1)) .. "/"
   replay_browser.current_path = new_path
 end

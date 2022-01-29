@@ -1,6 +1,9 @@
 require("sound_util")
 local logger = require("logger")
 
+--@module sound
+local sound = {}
+
 -- Sets the volumes based on the current player configuration settings
 function apply_config_volume()
   love.audio.setVolume(config.master_volume / 100)
@@ -25,6 +28,20 @@ end
 -- New music engine stuff here
 music_t = {}
 currently_playing_tracks = {} -- needed because we clone the tracks below
+
+-- Takes all queued music and starts playing it
+function sound.update_music()
+  for k, v in pairs(music_t) do
+    if v and k - love.timer.getTime() < 0.007 then
+      if not v.t:isPlaying() then
+        v.t:play()
+        currently_playing_tracks[#currently_playing_tracks + 1] = v.t
+        logger.debug("Playing music at time " .. k)
+      end
+      music_t[k] = nil
+    end
+  end
+end
 
 -- Takes all queued music and starts playing it
 function update_music()
@@ -106,3 +123,5 @@ function find_and_add_music(musics, music_type)
   music_t[love.timer.getTime()] = make_music_t(start_music)
   music_t[love.timer.getTime() + start_music:getDuration()] = make_music_t(loop_music, true)
 end
+
+return sound

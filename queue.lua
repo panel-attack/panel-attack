@@ -1,21 +1,22 @@
+local class = require("class")
 
 -- A class representing a Queue data structure where you typically put new data on the front and take data off the back.
 -- TODO consolidate with ServerQueue
-Queue =
-  class(
-  function(q)
-    q.first = 0
-    q.last = -1
+--- @module Queue
+local Queue = class(
+  function(self)
+    self.first = 0
+    self.last = -1
   end
 )
 
-function Queue.push(self, value)
+function Queue:push(value)
   local last = self.last + 1
   self.last = last
   self[last] = value
 end
 
-function Queue.pop(self)
+function Queue:pop()
   local first = self.first
   if first > self.last then
     error("Queue is empty")
@@ -31,18 +32,20 @@ function Queue.pop(self)
   return ret
 end
 
-function Queue.peek(self)
+function Queue:peek()
   return self[self.first]
 end
 
-function Queue.len(self)
+function Queue:len()
   return self.last - self.first + 1
 end
 
-function Queue.clear(self)
+function Queue:clear()
   for i = self.first, self.last do
     self[i] = nil
   end
   self.first = 0
   self.last = -1
 end
+
+return Queue

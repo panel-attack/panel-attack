@@ -1,5 +1,17 @@
 require("util")
 
+--- @module consts
+local consts = {
+  VERSION = "045",
+  CANVAS_WIDTH = 1280,
+  CANVAS_HEIGHT = 720,
+  DEFAULT_THEME_DIR = "Panel Attack",
+  RANDOM_CHARACTER_SPECIAL_VALUE = "__RandomCharacter",
+  RANDOM_STAGE_SPECIAL_VALUE = "__RandomStage",
+  DEFAULT_INPUT_REPEAT_DELAY = 20,
+  MOUSE_POINTER_TIMEOUT = 1.5, --seconds
+}
+
 -- The values in this file are constants (except in this file perhaps) and are expected never to change during the game, not to be confused with globals!
 VERSION = "045"
 
@@ -224,3 +236,5 @@ garbage_to_shake_time = {
 for i=25,1000 do
   garbage_to_shake_time[i] = garbage_to_shake_time[i-1]
 end
+
+return consts

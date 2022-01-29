@@ -1,11 +1,13 @@
 require("graphics_util")
+local scene_manager = require("scenes.scene_manager")
+local class = require("class")
 
 CLICK_MENUS = {} -- All click menus currently showing in the game
 
+--@module ClickMenu
 -- A series of buttons with text strings that can be clicked or use input to navigate
 -- Buttons are laid out vertically and scroll buttons are added if not all options fit.
-Click_menu =
-  class(
+local ClickMenu = class(
   function(self, x, y, width, height, active_idx)
     self.x = x or 0
     self.y = y or 0
@@ -53,7 +55,7 @@ Click_menu =
   end
 )
 
-function Click_menu.add_button(self, string_text, selectFunction, escapeFunction, leftFunction, rightFunction)
+function ClickMenu.add_button(self, string_text, selectFunction, escapeFunction, leftFunction, rightFunction)
   self.buttons[#self.buttons + 1] = {
     text = love.graphics.newText(get_global_font(), string_text),
     stringText = string_text,
@@ -74,28 +76,28 @@ function Click_menu.add_button(self, string_text, selectFunction, escapeFunction
 end
 
 -- Sets the string for the menu text
-function Click_menu.set_button_text(self, button_idx, string)
+function ClickMenu.set_button_text(self, button_idx, string)
   self.buttons[button_idx].text = love.graphics.newText(get_global_font(), string)
 end
 
 
 -- Sets the string to render to the right of the menu text
-function Click_menu.set_button_setting(self, button_idx, new_setting)
+function ClickMenu.set_button_setting(self, button_idx, new_setting)
   self.buttons[button_idx].current_setting = love.graphics.newText(get_global_font(), new_setting)
 end
 
 -- Sets the button at the given index's visibility
-function Click_menu.set_button_visibility(self, idx, visible)
+function ClickMenu.set_button_visibility(self, idx, visible)
   self.buttons[idx].visible = visible
 end
 
 -- Gets the button at the given index's width including padding
-function Click_menu.get_button_width(self, idx)
+function ClickMenu.get_button_width(self, idx)
   return self.buttons[idx].w or self.buttons[idx].text:getWidth() + 2 * self.button_padding
 end
 
 -- Gets the button at the given index's height including padding
-function Click_menu.get_button_height(self, idx)
+function ClickMenu.get_button_height(self, idx)
   if self.buttons and self.buttons[idx] then
     return self.buttons[idx].h or self.buttons[idx].text:getHeight() + 2 * self.button_padding
   else
@@ -104,7 +106,7 @@ function Click_menu.get_button_height(self, idx)
 end
 
 -- Gets the button at the given index's current setting width including padding
-function Click_menu.get_button_setting_width(self, idx)
+function ClickMenu.get_button_setting_width(self, idx)
   local result = 0
   if self.buttons[idx].current_setting then
     result = self.buttons[idx].current_setting:getWidth() + 2 * self.button_padding
@@ -113,13 +115,13 @@ function Click_menu.get_button_setting_width(self, idx)
 end
 
 -- Removes this menu from the list of menus
-function Click_menu.remove_self(self)
+function ClickMenu.remove_self(self)
   CLICK_MENUS[self.id] = nil
 end
 
 -- PRIVATE
 -- Recalculates top_visible_button
-function Click_menu.update_top_button(self)
+function ClickMenu.update_top_button(self)
   if self.active_idx < self.top_visible_button then
     self.top_visible_button = math.max(self.active_idx, 1)
   elseif self.active_idx > self.top_visible_button + self.button_limit - 1 then
@@ -128,7 +130,7 @@ function Click_menu.update_top_button(self)
 end
 
 -- Sets the current selected button and scrolls to it if needed
-function Click_menu.set_active_idx(self, idx)
+function ClickMenu.set_active_idx(self, idx)
   idx = wrap(1, idx, #self.buttons)
   self.active_idx = idx
   local top_visible_button_before = self.top_visible_button
@@ -139,7 +141,7 @@ function Click_menu.set_active_idx(self, idx)
 end
 
 -- Repositions in the x direction so the menu doesn't go off the screen
-function Click_menu.resize_to_fit(self)
+function ClickMenu.resize_to_fit(self)
   for k, v in pairs(self.buttons) do
     self.current_setting_x = math.max(self.current_setting_x or 0, self:get_button_width(k) + 2 * (self.button_padding or 0))
     local potential_width = self:get_button_width(#self.buttons) + 2 * self.padding
@@ -152,7 +154,7 @@ function Click_menu.resize_to_fit(self)
 end
 
 -- Positions the buttons, scrolls, and makes sure the scroll buttons are visible if needed
-function Click_menu.layout_buttons(self)
+function ClickMenu.layout_buttons(self)
   self.new_item_y = self.padding
   self.active_idx = self.active_idx or 1
   self.button_limit = 1
@@ -188,7 +190,7 @@ function Click_menu.layout_buttons(self)
 end
 
 -- Sets the visibility of the scroll controls
-function Click_menu.show_controls(self, bool)
+function ClickMenu.show_controls(self, bool)
   if bool or #self.buttons > self.button_limit then
     for k, v in pairs(self.menu_controls) do
       self.menu_controls[k].visible = true
@@ -200,21 +202,21 @@ function Click_menu.show_controls(self, bool)
   end
 end
 
-function Click_menu.selectButton(self, buttonIndex)
+function ClickMenu.selectButton(self, buttonIndex)
   self:set_active_idx(buttonIndex)
   self.buttons[self.active_idx].selectFunction()
 end
 
-function Click_menu.selectPreviousIndex(self)
+function ClickMenu.selectPreviousIndex(self)
   self:set_active_idx(wrap(1, self.active_idx - 1, #self.buttons))
 end
 
-function Click_menu.selectNextIndex(self)
+function ClickMenu.selectNextIndex(self)
   self:set_active_idx(wrap(1, self.active_idx + 1, #self.buttons))
 end
 
 -- Responds to input
-function Click_menu.update(self)
+function ClickMenu.update(self)
   self.clock = self.clock + 1
 
   if GAME.focused == false then
@@ -229,6 +231,7 @@ function Click_menu.update(self)
     elseif menu_enter() then
       if self.buttons[self.active_idx].selectFunction then
         self:selectButton(self.active_idx)
+        scene_manager:switchScene(nil)
       end
     elseif menu_escape() then
       if self.buttons[self.active_idx].escapeFunction then
@@ -247,7 +250,7 @@ function Click_menu.update(self)
 end
 
 -- Draws the menu
-function Click_menu.draw(self)
+function ClickMenu.draw(self)
   if self.visible then
     if self.background then
       menu_drawf(self.background, self.x, self.y)
@@ -316,13 +319,13 @@ function Click_menu.draw(self)
 end
 
 -- Moves the menu to the given location
-function Click_menu.move(self, x, y)
+function ClickMenu.move(self, x, y)
   self.x = x or 0
   self.y = y or 0
 end
 
 -- Handles taps or clicks on the menu
-function Click_menu.click_or_tap(self, x, y, touchpress)
+function ClickMenu.click_or_tap(self, x, y, touchpress)
   if self.active then
     self.idx_selected = nil
 
@@ -331,6 +334,7 @@ function Click_menu.click_or_tap(self, x, y, touchpress)
       if y >= self.y + self.buttons[i].y and y <= self.y + self.buttons[i].y + self:get_button_height(i) and x >= self.x + self.buttons[i].x and x <= self.x + self.buttons[i].x + self:get_button_width(i) then
         self.idx_selected = i
         self:selectButton(self.idx_selected)
+        scene_manager:switchScene(nil)
 
         --TODO: consolidate with the input functions sound
         play_optional_sfx(themes[config.theme].sounds.menu_validate)
@@ -349,3 +353,5 @@ function Click_menu.click_or_tap(self, x, y, touchpress)
     end
   end
 end
+
+return ClickMenu

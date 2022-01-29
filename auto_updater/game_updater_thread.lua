@@ -2,7 +2,6 @@ local socket = require("socket")
 local http = require("socket.http")
 require("love.timer")
 
-
 function download_available_versions(server_url, timeout, max_size, timestamp_file)
   local body = ""
   local all_versions = {}
@@ -83,4 +82,5 @@ local ftable = {
 
 }
 
+-- Receive values sent via thread:start
 ftable[select(1, ...)](select(2, ...))

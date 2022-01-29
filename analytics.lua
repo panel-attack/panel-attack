@@ -1,3 +1,4 @@
+--@module analytics
 local analytics = {}
 
 local analytics_version = 3

@@ -1,25 +1,25 @@
+local class = require("class")
 
 -- Tracks a queue data structure.
 -- Values are tracked via incrementing ID keys, when something is nilled it is tracked as an "empty"
-ServerQueue =
-  class(
+local ServerQueue = class(
   function(self)
     self:clear()
   end
 )
 
-function ServerQueue.clear(self)
+function ServerQueue:clear()
   self.data = {}
   self.first = 0
   self.last = -1
   self.empties = 0
 end
 
-function ServerQueue.to_string(self)
+function ServerQueue:to_string()
   return "QUEUE: " .. dump(self)
 end
 
-function ServerQueue.to_short_string(self)
+function ServerQueue:to_short_string()
   local returnString = ""
 
   if self.first <= self.last then
@@ -39,14 +39,14 @@ end
 
 
 -- push a server message in queue
-function ServerQueue.push(self, msg)
+function ServerQueue:push(msg)
   local last = self.last + 1
   self.last = last
   self.data[last] = msg
 end
 
 -- pop oldest server message in queue
-function ServerQueue.pop(self)
+function ServerQueue:pop()
   local first = self.first
   local ret = nil
 
@@ -66,7 +66,7 @@ function ServerQueue.pop(self)
 end
 
 -- pop first element found with a message containing any specified keys...
-function ServerQueue.pop_next_with(self, ...)
+function ServerQueue:pop_next_with(...)
   if self.first > self.last then
     return
   end
@@ -91,7 +91,7 @@ function ServerQueue.pop_next_with(self, ...)
 end
 
 -- pop all messages containing any specified keys...
-function ServerQueue.pop_all_with(self, ...)
+function ServerQueue:pop_all_with(...)
   local ret = {}
 
   if self.first <= self.last then
@@ -117,7 +117,7 @@ function ServerQueue.pop_all_with(self, ...)
   return ret
 end
 
-function ServerQueue.remove(self, index)
+function ServerQueue:remove(index)
   if self.data[index] then
     self.data[index] = nil
     self.empties = self.empties + 1
@@ -127,21 +127,23 @@ function ServerQueue.remove(self, index)
   return false
 end
 
-function ServerQueue.top(self)
+function ServerQueue:top()
   return self.data[self.first]
 end
 
-function ServerQueue.size(self)
+function ServerQueue:size()
   if self.last < self.first then
     return 0
   end
   return self.last - self.first - self.empties + 1
 end
 
-function ServerQueue.check_empty(self)
+function ServerQueue:check_empty()
   if self:size() == 0 then
     self.first = 0
     self.last = -1
     self.empties = 0
   end
 end
+
+return ServerQueue

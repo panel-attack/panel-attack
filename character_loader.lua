@@ -1,4 +1,3 @@
-require("queue")
 require("globals")
 
 local loading_queue = Queue()

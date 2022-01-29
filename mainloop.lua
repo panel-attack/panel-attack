@@ -5,10 +5,11 @@ local options = require("options")
 local utf8 = require("utf8")
 local analytics = require("analytics")
 local main_config_input = require("config_inputs")
+local ServerQueue = require("ServerQueue")
 
 local wait, resume = coroutine.yield, coroutine.resume
 
-local main_endless_select, main_timeattack_select, make_main_puzzle, main_net_vs_setup, main_select_puzz, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, exit_game, training_setup
+-- local main_endless_select, main_timeattack_select, make_main_puzzle, main_net_vs_setup, main_select_puzz, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, exit_game, training_setup
 
 local PLAYING = "playing" -- room states
 local CHARACTERSELECT = "character select" -- room states
@@ -21,58 +22,12 @@ replay_of_match_so_far = nil -- current replay of spectatable replay
 spectator_list = nil
 spectators_string = ""
 leftover_time = 0
-main_menu_screen_pos = {300 + (canvas_width - legacy_canvas_width) / 2, 195 + (canvas_height - legacy_canvas_height) / 2}
 local wait_game_update = nil
 local has_game_update = false
 local main_menu_last_index = 1
 
 function fmainloop()
-  local func, arg = main_select_mode, nil
-  -- loading various assets into the game
-  gprint("Reading config file", unpack(main_menu_screen_pos))
-  wait()
-  read_conf_file()
-  local x, y, display = love.window.getPosition()
-  love.window.setPosition(config.window_x or x, config.window_y or y, config.display or display)
-  love.window.setFullscreen(config.fullscreen or false)
-  love.window.setVSync(config.vsync and 1 or 0)
-  gprint("Loading localization...", unpack(main_menu_screen_pos))
-  wait()
-  Localization.init(localization)
-  gprint(loc("ld_puzzles"), unpack(main_menu_screen_pos))
-  wait()
-  copy_file("readme_puzzles.txt", "puzzles/README.txt")
-  gprint(loc("ld_replay"), unpack(main_menu_screen_pos))
-  wait()
-  read_replay_file()
-  gprint(loc("ld_theme"), unpack(main_menu_screen_pos))
-  wait()
-  theme_init()
-  -- stages and panels before characters since they are part of their loading!
-  gprint(loc("ld_stages"), unpack(main_menu_screen_pos))
-  wait()
-  stages_init()
-  gprint(loc("ld_panels"), unpack(main_menu_screen_pos))
-  wait()
-  panels_init()
-  gprint(loc("ld_characters"), unpack(main_menu_screen_pos))
-  wait()
-  characters_init()
-  gprint(loc("ld_analytics"), unpack(main_menu_screen_pos))
-  wait()
-  analytics.init()
-  apply_config_volume()
-  -- create folders in appdata for those who don't have them already
-  love.filesystem.createDirectory("characters")
-  love.filesystem.createDirectory("panels")
-  love.filesystem.createDirectory("themes")
-  love.filesystem.createDirectory("stages")
-
-  --check for game updates
-  if GAME_UPDATER_CHECK_UPDATE_INGAME then
-    wait_game_update = GAME_UPDATER:async_download_latest_version()
-  end
-
+  -- local func, arg = main_select_mode, nil
   -- Run Unit Tests
   if TESTS_ENABLED then
     -- Run all unit tests now that we have everything loaded
@@ -173,7 +128,7 @@ do
       {loc("mm_options"), options.main}
     }
 
-    main_menu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, main_menu_last_index)
+    main_menu = ClickMenu(menu_x, menu_y, nil, canvas_height - menu_y - 10, main_menu_last_index)
     for i = 1, #items do
       main_menu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
     end
@@ -566,7 +521,7 @@ function training_setup()
     trainingSettingsMenu:selectNextIndex()
   end
   
-  trainingSettingsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
+  trainingSettingsMenu = ClickMenu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
   trainingSettingsMenu:add_button(loc("factory"), factory_settings, goEscape)
   trainingSettingsMenu:add_button(loc("combo_storm"), combo_storm_settings, goEscape)
   trainingSettingsMenu:add_button(loc("large_garbage"), large_garbage_settings, goEscape)
@@ -664,7 +619,7 @@ local function main_select_speed_99(mode)
 
   local menu_x, menu_y = unpack(main_menu_screen_pos)
   menu_y = menu_y + 70
-  gameSettingsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
+  gameSettingsMenu = ClickMenu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
   gameSettingsMenu:add_button(loc("speed"), nextMenu, goEscape, decreaseSpeed, increaseSpeed)
   gameSettingsMenu:add_button(loc("difficulty"), nextMenu, goEscape, decreaseDifficulty, increaseDifficulty)
   gameSettingsMenu:add_button(loc("go_"), startGame, goEscape)
@@ -935,7 +890,7 @@ function main_net_vs_lobby()
         return rating
       end
 
-      lobby_menu = Click_menu(lobby_menu_x[showing_leaderboard], lobby_menu_y, nil, canvas_height - lobby_menu_y - 10, 1)
+      lobby_menu = ClickMenu(lobby_menu_x[showing_leaderboard], lobby_menu_y, nil, canvas_height - lobby_menu_y - 10, 1)
       for _, v in ipairs(unpaired_players) do
         if v ~= config.name then
           local unmatchedPlayer = v .. playerRatingString(v) .. (sent_requests[v] and " " .. loc("lb_request") or "") .. (willing_players[v] and " " .. loc("lb_received") or "")

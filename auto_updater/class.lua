@@ -10,3 +10,21 @@ function class(init)
   setmetatable(c, mt)
   return c
 end
+
+--@module class
+local class = function(init)
+  local class_tbl = {}
+  local class_mt = {__index = class_tbl}
+  local metatable = {
+    __call = function(_, ...)
+      local self = {}
+      setmetatable(self, class_mt)
+      init(self, ...)
+      return self
+    end
+  }
+  setmetatable(class_tbl, metatable)
+  return class_tbl
+end
+
+return class

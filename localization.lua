@@ -1,9 +1,10 @@
+local class = require("class")
+
 -- TODO rename
 local FILENAME = "localization.csv"
 
 -- Holds all the data for localizing the game
-Localization =
-  class(
+local Localization = class(
   function(self)
     self.data = {}
     self.langs = {}
@@ -15,19 +16,19 @@ Localization =
 
 localization = Localization()
 
-function Localization.get_list_codes(self)
+function Localization:get_list_codes()
   return self.codes
 end
 
-function Localization.get_language(self)
+function Localization:get_language()
   return self.codes[self.lang_index]
 end
 
-function Localization.refresh_global_strings(self)
+function Localization:refresh_global_strings()
   join_community_msg = loc("join_community") .. "\ndiscord.panelattack.com"
 end
 
-function Localization.set_language(self, lang_code)
+function Localization:set_language(lang_code)
   for i, v in ipairs(self.codes) do
     if v == lang_code then
       self.lang_index = i
@@ -45,7 +46,7 @@ function Localization.set_language(self, lang_code)
   self:refresh_global_strings()
 end
 
-function Localization.init(self)
+function Localization:init2()
   local function csv_line(line, acc)
     local function trim(a, b)
       if line:sub(a, a) == '"' then
@@ -191,3 +192,5 @@ function loc(text_key, ...)
 
   return ret
 end
+
+return Localization

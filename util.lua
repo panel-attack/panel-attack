@@ -2,6 +2,9 @@ local sort, pairs, select, unpack, error = table.sort, pairs, select, unpack, er
 local type, setmetatable, getmetatable = type, setmetatable, getmetatable
 local random = math.random
 
+--@module util
+local util = {}
+
 -- returns the number of entries in a table
 function tableLength(T)
   local count = 0
@@ -9,6 +12,11 @@ function tableLength(T)
     count = count + 1
   end
   return count
+end
+
+function util.clamp(a, b, c)
+  -- boolean operators return the value they terminated on
+  return b < a and a or b > c and c or b
 end
 
 -- bounds b so a<=b<=c
@@ -329,3 +337,5 @@ function dump(o)
     return tostring(o)
   end
 end
+
+return util
