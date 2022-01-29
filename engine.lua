@@ -372,7 +372,6 @@ function Stack.rollbackCopy(self, source, other)
   other.cur_col = source.cur_col
   other.shake_time = source.shake_time
   other.peak_shake_time = source.peak_shake_time
-  other.card_q = deepcpy(source.card_q)
   other.do_countdown = source.do_countdown
   other.ready_y = source.ready_y
   other.combos = deepcpy(source.combos)
