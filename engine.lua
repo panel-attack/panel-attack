@@ -378,6 +378,8 @@ function Stack.rollbackCopy(self, source, other)
   other.chains = deepcpy(source.chains)
   other.panel_buffer = source.panel_buffer
   other.gpanel_buffer = source.gpanel_buffer
+  other.panelGenCount = source.panelGenCount
+  other.garbageGenCount = source.garbageGenCount
   other.panels_in_top_row = source.panels_in_top_row
   other.has_risen = source.has_risen
   other.metal_panels_queued = source.metal_panels_queued
