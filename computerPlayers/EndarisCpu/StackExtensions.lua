@@ -237,15 +237,16 @@ function ConnectedPanelSection.equals(self, otherSection)
         StackExtensions.panelsAreEqualByPanels(self.panels, otherSection.panels)
 end
 
-
+-- returns a 2 dimensional array where the first index signifies the row in the stack
+-- the second index signifies the panel color and the value signifies how many panels of that color are in that row
 function StackExtensions.toRowGrid(stack)
     local panels = stack.panels
     StackExtensions.printAsAprilStack(stack)
     local grid = {}
     for i = 1, #panels do
         grid[i] = {}
-        -- always use 8: shockpanels appear on every level and we want columnnumber=color number for readability
-        for j = 1, 8 do
+        -- always use 9: shockpanels and garbage appear on every level and we want columnnumber=color number for readability
+        for j = 1, 9 do
             local count = 0
             for k = 1, #panels[1] do
                 if panels[i][k].color == j then
@@ -258,6 +259,110 @@ function StackExtensions.toRowGrid(stack)
     return grid
 end
 
+function StackExtensions.getTopRowWithPanelsFromRowGrid(rowgrid)
+
+end
+
+function StackExtensions.getRowGridColumn(rowgrid, color)
+    local colorGridColumn = {}
+    for row=#rowgrid, 1, -1 do
+        local emptyPanelsInRow = 6
+        for color=1,#rowgrid[1] do
+            emptyPanelsInRow = emptyPanelsInRow - rowgrid[row][color]
+        end
+        colorGridColumn[row] = { colorCount = rowgrid[row][color], emptyPanelsCount = emptyPanelsInRow}
+    end
+    return colorGridColumn
+end
+
+function StackExtensions.substractRowGridColumns(column1, column2)
+    local columnDiff = {}
+    for row= 1, #column1 do
+        columnDiff[row].colorDiff = column1.colorCount - column2.colorCount
+        columnDiff[row].emptyDiff = column1.emptyPanelsCount - column2.emptyPanelsCount
+    end
+
+    return columnDiff
+end
+
+function StackExtensions.getDownstackPanelVectors(stack)
+    return StackExtensions.getDownstackPanelColumnsByPanels(stack.panels)
+end
+
+function StackExtensions.getDownstackPanelVectorsByPanels(panels)
+    local downstackCoords = {}
+
+    for column = 1,#panels[1] do
+        for row = 1, #panels do
+            local vector = GridVector(row, column)
+            if StackExtensions.IsDownstackPanelByPanels(panels, vector) then
+                table.insert(downstackCoords, vector)
+            end
+        end
+    end
+
+    return downstackCoords
+end
+
+function StackExtensions.getNonDownstackPanelVectors(stack)
+    return StackExtensions.getNonDownstackPanelVectorsByPanels(stack.panels)
+end
+
+function StackExtensions.getNonDownstackPanelVectorsByPanels(panels)
+    local downstackVectors = StackExtensions.getDownstackPanelVectorsByPanels(panels)
+    local nonDownstackVectors = {}
+
+    for row=1, #panels do
+        for column=1, #panels[row] do
+            local vector = GridVector(row, column)
+            local IsDownstackVector = false
+            for i=1, #downstackVectors do
+                if vector:equals(downstackVectors[i]) then
+                    IsDownstackVector = true
+                end
+            end
+            if not IsDownstackVector then
+                table.insert(nonDownstackVectors, vector)
+            end
+        end
+    end
+
+    return nonDownstackVectors
+end
+
+function StackExtensions.IsDownstackable(stack, vector)
+    return StackExtensions.isDownstackableByPanels(stack.panels, vector)
+end
+
+function StackExtensions.isDownstackableByPanels(panels, vector)
+    if vector.row == 1 or panels[vector.row][vector.column].color == 0 then
+        return false
+    else
+        return StackExtensions.IsDownstackPanelByPanels(panels, vector:substract(GridVector(1, 0)))
+    end
+end
+
+function StackExtensions.IsDownstackPanel(stack, vector)
+    return StackExtensions.IsDownstackPanelByPanels(stack.panels, vector)
+end
+
+function StackExtensions.IsDownstackPanelByPanels(panels, vector)
+    if StackExtensions.isDownstackableByPanels(panels, vector) then
+        return true
+    else
+        if panels[vector.row][vector.column].color ~= 0 and
+           panels[vector.row + 1][vector.column].color ~= 0 then
+            if vector.column == 1 then
+                return panels[vector.row][vector.column + 1].color == 0
+            elseif vector.column == 6 then
+                return panels[vector.row][vector.column - 1].color == 0
+            else
+                return (panels[vector.row][vector.column + 1].color == 0 or
+                        panels[vector.row][vector.column - 1].color == 0)
+            end
+        end
+    end
+end
 
 function StackExtensions.findActions(stack)
     local latentMatches = StackExtensions.findLatentMatches(stack)
@@ -307,24 +412,25 @@ function StackExtensions.findLatentMatches(stack)
     local latentMatches = {}
     local grid = StackExtensions.toRowGrid(stack)
 
-    --find matches, i is row, j is panel color, grid[i][j] is the amount of panels of that color in the row, k is the column the panel is in
-    for j = 1, #grid[1] do
+    --find matches, grid[row][color] is the amount of panels of that color in the row
+    --iterating to 8 instead of #grid[1] because color 9 is garbage which is included in the rowGrid but cannot form matches
+    for color = 1, 8 do
         local colorConsecutiveRowCount = 0
         local colorConsecutivePanels = {}
-        for i = 1, #grid do
+        for row = 1, #grid do
             -- horizontal 3 matches
-            if grid[i][j] >= 3 then
+            if grid[row][color] >= 3 then
                 --fetch the actual panels
-                CpuLog:log(6, 'found horizontal 3 match in row ' .. i .. ' for color ' .. j)
+                CpuLog:log(6, 'found horizontal 3 match in row ' .. row .. ' for color ' .. color)
                 local panels = {}
-                for k = 1, #stack.panels[i] do
-                    if stack.panels[i][k].color == j then
-                        local actionPanel = ActionPanel(stack.panels[i][k], i, k)
+                for column = 1, #stack.panels[row] do
+                    if stack.panels[row][column].color == color then
+                        local actionPanel = ActionPanel(stack.panels[row][column], row, column)
                         table.insert(panels, actionPanel)
                     end
                 end
 
-                -- if there are 4 in the row, add 2 actions
+                -- if there are 4 in the row, add 2 actions, there cannot be more than 4 (ignoring possible addition of 3D)
                 for n = 1, #panels - 2 do
                     local actionPanels = {}
 
@@ -337,17 +443,17 @@ function StackExtensions.findLatentMatches(stack)
                 end
             end
             -- vertical 3 matches
-            if grid[i][j] > 0 then
+            if grid[row][color] > 0 then
                 colorConsecutiveRowCount = colorConsecutiveRowCount + 1
                 colorConsecutivePanels[colorConsecutiveRowCount] = {}
-                for k = 1, #stack.panels[i] do
-                    if stack.panels[i][k].color == j then
-                        local actionPanel = ActionPanel(stack.panels[i][k], i, k)
+                for column = 1, #stack.panels[row] do
+                    if stack.panels[row][column].color == color then
+                        local actionPanel = ActionPanel(stack.panels[row][column], row, column)
                         table.insert(colorConsecutivePanels[colorConsecutiveRowCount], actionPanel)
                     end
                 end
                 if colorConsecutiveRowCount >= 3 then
-                    -- technically we need action for each unique combination of panels to find the best option
+                    -- technically we need an action for each unique combination of panels to find the best option
                     for q = 1, #colorConsecutivePanels[colorConsecutiveRowCount - 2] do
                         for r = 1, #colorConsecutivePanels[colorConsecutiveRowCount - 1] do
                             for s = 1, #colorConsecutivePanels[colorConsecutiveRowCount] do
