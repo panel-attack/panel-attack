@@ -82,7 +82,7 @@ Stack =
       {1, idx = 1}
     }
 
-    s.later_garbage = {} -- Queue of garbage that is done waiting in telegraph, and been popped out, and will be sent to the other player next frame
+    s.later_garbage = {} -- Queue of garbage that is done waiting in telegraph, and been popped out, and will be sent to our stack next frame
     s.garbage_q = GarbageQueue(s) -- Queue of garbage that is about to be dropped
 
     s:moveForPlayerNumber(which)
@@ -179,7 +179,6 @@ Stack =
     s.cur_col = 3 -- the column the left half of the cursor's on
     s.top_cur_row = s.height + (s.match.mode == "puzzle" and 0 or -1)
 
-    s.move_sound = false -- this is set if the cursor movement sound should be played
     s.poppedPanelIndex = s.poppedPanelIndex or 1
     s.panels_cleared = s.panels_cleared or 0
     s.metal_panels_queued = s.metal_panels_queued or 0
@@ -227,6 +226,9 @@ Stack =
     s.panelGenCount = 0
     s.garbageGenCount = 0
 
+    s.rollbackCount = 0 -- the number of times total we have done rollback
+    s.lastRollbackFrame = -1 -- the last frame we had to rollback from
+
   end)
 
 -- Positions the stack draw position for the given player
@@ -269,6 +271,9 @@ function Stack.divergenceString(self, stackToTest)
       end
   end
 
+  result = result .. "telegraph.chain count " .. stackToTest.telegraph.garbage_queue.chain_garbage:len() .. "\n"
+  result = result .. "telegraph.senderCurrentlyChaining " .. tostring(stackToTest.telegraph.senderCurrentlyChaining) .. "\n"
+  result = result .. "telegraph.attacks " .. tableLength(stackToTest.telegraph.attacks) .. "\n"
   result = result .. "garbage_q " .. stackToTest.garbage_q:len() .. "\n"
   result = result .. "later_garbage " .. tableLength(stackToTest.later_garbage) .. "\n"
   result = result .. "Stop " .. stackToTest.stop_time .. "\n"
@@ -304,8 +309,8 @@ function Stack.rollbackCopy(self, source, other)
   else
 
   end--]]
-  other.later_garbage = source.later_garbage
-  other.garbage_q = source.garbage_q
+  other.later_garbage = deepcpy(source.later_garbage)
+  other.garbage_q = source.garbage_q:makeCopy()
   if source.telegraph then
     other.telegraph = source.telegraph:rollbackCopy(source.telegraph, other.telegraph)
   end
@@ -399,14 +404,84 @@ function Stack.restoreFromRollbackCopy(self, other)
 end
 
 function Stack.rollbackToFrame(self, frame) 
-  local difference = self.CLOCK - frame
+  local currentFrame = self.CLOCK
+  local difference = currentFrame - frame
   assert(difference <= MAX_LAG, "Lag is too high > 1.5 seconds")
-  if frame < self.CLOCK then
+  if frame < currentFrame then
     local prev_states = self.prev_states
     print("Rolling back " .. self.which .. " to " .. frame)
     assert(prev_states[frame])
     self:restoreFromRollbackCopy(prev_states[frame])
+
+    -- The garbage that we send this time might (rarely) not be the same
+    -- as the garbage we sent before.  Wipe out the garbage we sent before...
+    for k, v in pairs(self.garbage_target.telegraph.pendingGarbage) do
+      if k >= frame then
+        self.garbage_target.telegraph.pendingGarbage[k] = nil
+      end
+    end
+
+    for k, v in pairs(self.garbage_target.telegraph.pendingChainingEnded) do
+      if k >= frame then
+        self.garbage_target.telegraph.pendingChainingEnded[k] = nil
+      end
+    end
+
+    self.rollbackCount = self.rollbackCount + 1
+    self.lastRollbackFrame = currentFrame
   end
+end
+
+function Stack.debugRollbackTest(self)
+  local targetFrame = self.CLOCK
+
+  if self.garbage_target and self.garbage_target.CLOCK ~= targetFrame then
+    return
+  end
+
+  local savedStack = self.prev_states[self.CLOCK]
+  
+  self:rollbackToFrame(self.CLOCK - 1)
+
+  if self.garbage_target and self.garbage_target ~= self then
+    self.garbage_target:rollbackToFrame(self.garbage_target.CLOCK - 1)
+  end
+
+  for i=1,1 do
+    self:run()
+    if self.garbage_target and self.garbage_target ~= self then
+      self.garbage_target:run()
+    end
+  end
+
+  assert(self.CLOCK == targetFrame, "should have got back to target frame")
+  if self.garbage_target and self.garbage_target ~= self then
+    assert(self.garbage_target.CLOCK == targetFrame, "should have got back to target frame")
+  end
+
+  local diverged = false
+  for k,v in pairs(savedStack) do
+    if type(v) ~= "table" then
+      local v2 = self[k]
+      if v ~= v2 then
+        diverged = true
+      end
+    end
+  end
+
+  local savedStackString = self:divergenceString(savedStack)
+  local localStackString = self:divergenceString(self)
+
+  if savedStackString ~= localStackString then
+    diverged = true
+  end
+
+  if diverged then
+    print("Stacks have diverged")
+    self:rollbackToFrame(targetFrame-1)
+    self:run()
+  end
+
 end
 
 -- Saves state in backups in case its needed for rollback
@@ -420,33 +495,6 @@ function Stack.saveForRollback(self)
   prev_states[self.CLOCK] = self:rollbackCopy(self)
   self.prev_states = prev_states
   self.garbage_target = garbage_target
-    
-  --   if config.debug_mode then -- Don't need to save, but lets check for divergence
-  --   local savedStack = prev_states[self.CLOCK]
-
-  --   local diverged = false
-  --   for k,v in pairs(savedStack) do
-  --     if type(v) ~= "table" then
-  --       local v2 = self[k]
-  --       if v ~= v2 then
-  --         diverged = true
-  --       end
-  --     end
-  --   end
-
-  --   local savedStackString = self:divergenceString(savedStack)
-  --   local localStackString = self:divergenceString(self)
-
-  --   if savedStackString ~= localStackString then
-  --     diverged = true
-  --   end
-
-  --   if diverged then
-  --     print("Stacks have diverged")
-  --     self:rollbackToFrame(self.CLOCK-1)
-  --     self:run()
-  --   end
-  -- end
 
   local deleteFrame = self.CLOCK - MAX_LAG - 1
   if prev_states[deleteFrame] then
@@ -918,8 +966,7 @@ end
 
 function Stack.shouldRun(self, runsSoFar) 
 
-  -- If we are a replay or net game, we want to run after game over to show
-  -- game over effects.
+  -- We want to run after game over to show game over effects.
   if self:game_ended() then
     return runsSoFar == 0
   end
@@ -1339,10 +1386,12 @@ function Stack.simulate(self)
             end
             if panel.shake_time and panel.state == "normal" then
               if row <= self.height then
-                if panel.height > 3 then
-                  self.sfx_garbage_thud = 3
-                else
-                  self.sfx_garbage_thud = panel.height
+                if self:shouldChangeSoundEffects() then
+                  if panel.height > 3 then
+                    self.sfx_garbage_thud = 3
+                  else
+                    self.sfx_garbage_thud = panel.height
+                  end
                 end
                 shake_time = max(shake_time, panel.shake_time, self.peak_shake_time or 0)
                 --a smaller garbage block landing should renew the largest of the previous blocks' shake times since our shake time was last zero.
@@ -1369,7 +1418,9 @@ function Stack.simulate(self)
             -- unless the panel below is falling.
             panel.state = "landing"
             panel.timer = 12
-            self.sfx_land = true
+            if self:shouldChangeSoundEffects() then
+              self.sfx_land = true
+            end
           elseif panels[row - 1][col].color ~= 0 and panels[row - 1][col].state ~= "falling" then
             -- if it lands on a hovering panel, it inherits
             -- that panel's hover time.
@@ -1380,7 +1431,9 @@ function Stack.simulate(self)
               panel.state = "landing"
               panel.timer = 12
             end
-            self.sfx_land = true
+            if self:shouldChangeSoundEffects() then
+              self.sfx_land = true
+            end
           else
             panels[row - 1][col], panels[row][col] = panels[row][col], panels[row - 1][col]
             panels[row][col]:clear()
@@ -1548,13 +1601,13 @@ function Stack.simulate(self)
     -- Actions performed according to player input
 
     -- CURSOR MOVEMENT
-    self.move_sound = true
+    local playMoveSounds = true -- set this to false to disable move sounds for debugging
     if self.cur_dir and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and not self.cursor_lock then
       local prev_row = self.cur_row
       local prev_col = self.cur_col
       self.cur_row = bound(1, self.cur_row + d_row[self.cur_dir], self.top_cur_row)
       self.cur_col = bound(1, self.cur_col + d_col[self.cur_dir], width - 1)
-      if (self.move_sound and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and (self.cur_row ~= prev_row or self.cur_col ~= prev_col)) then
+      if (playMoveSounds and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and (self.cur_row ~= prev_row or self.cur_col ~= prev_col)) then
         if self:shouldChangeSoundEffects() then
           SFX_Cur_Move_Play = 1
         end
@@ -1942,11 +1995,24 @@ function Stack.simulate(self)
   self:update_cards()
 end
 
+function Stack.behindRollback(self)
+  if self.lastRollbackFrame > self.CLOCK then
+    return true
+  end
+
+  return false
+end
+
 function Stack.shouldChangeMusic(self)
   local result = not game_is_paused and self.which == 1 and not GAME.preventSounds
 
   if result then
     if self:game_ended() or self.canvas == nil then
+      result = false
+    end
+
+    -- If we are still catching up from rollback don't play sounds again
+    if self:behindRollback() then
       result = false
     end
 
@@ -1962,11 +2028,17 @@ function Stack.shouldChangeMusic(self)
   return result
 end
 
+
 function Stack.shouldChangeSoundEffects(self)
   local result = not game_is_paused and not SFX_mute and not GAME.preventSounds
 
   if result then
     if self:game_ended() or self.canvas == nil then
+      result = false
+    end
+
+    -- If we are still catching up from rollback don't play sounds again
+    if self:behindRollback() then
       result = false
     end
 
@@ -2650,22 +2722,3 @@ function Stack.new_row(self)
   self.panel_buffer = string.sub(self.panel_buffer, 7)
   self.displacement = 16
 end
-
---[[function quiet_cursor_movement()
-  if self.cur_timer == 0 then
-    return
-  end
-   -- the cursor will move if a direction's was just pressed or has been
-   -- pressed for at least the self.cur_wait_time
-  self.move_sound = true
-  if self.cur_dir and (self.cur_timer == 1 or
-    self.cur_timer == self.cur_wait_time) then
-    self.cur_row = bound(0, self.cur_row + d_row[self.cur_dir],
-            self.bottom_row)
-    self.cur_col = bound(0, self.cur_col + d_col[self.cur_dir],
-            self.width - 2)
-  end
-  if self.cur_timer ~= self.cur_wait_time then
-    self.cur_timer = self.cur_timer + 1
-  end
-end--]]

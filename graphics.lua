@@ -1098,7 +1098,6 @@ function Stack.render_telegraph(self)
   end
   
   if not drewChain and telegraph_to_render.garbage_queue.ghost_chain then
-    print("SHOULD BE DRAWING GHOST_CHAIN - SIZE: "..telegraph_to_render.garbage_queue.ghost_chain)
     draw(characters[senderCharacter].telegraph_garbage_images[telegraph_to_render.garbage_queue.ghost_chain][6], telegraph_to_render.pos_x, telegraph_to_render.pos_y)
   end
 

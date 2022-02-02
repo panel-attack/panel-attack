@@ -65,12 +65,56 @@ function Match.matchOutcome(self)
 end
 
 
+function Match.debugRollbackDivergenceCheck(self)
+  local targetFrame = P1.CLOCK
+
+  local savedStack = self.prev_states[self.CLOCK]
+  
+  self:rollbackToFrame(self.CLOCK - 1)
+  for i=1,1 do
+    self:run()
+  end
+
+  assert(self.CLOCK == targetFrame, "should have got back to target frame")
+
+  local diverged = false
+  for k,v in pairs(savedStack) do
+    if type(v) ~= "table" then
+      local v2 = self[k]
+      if v ~= v2 then
+        diverged = true
+      end
+    end
+  end
+
+  local savedStackString = self:divergenceString(savedStack)
+  local localStackString = self:divergenceString(self)
+
+  if savedStackString ~= localStackString then
+    diverged = true
+  end
+
+  if diverged then
+    print("Stacks have diverged")
+    self:rollbackToFrame(targetFrame-1)
+    self:run()
+  end
+
+end
+
 function Match.run(self)
   if GAME.gameIsPaused then
     return
   end
 
   local startTime = love.timer.getTime()
+
+  if config.debug_mode then
+    local rollbackStart = 100
+    if P1 and P1:game_ended() == false and P1:behindRollback() == false and P1.CLOCK > rollbackStart then
+      P1:debugRollbackTest()
+    end
+  end
 
   -- We need to save CLOCK 0 as a base case
   if P1.CLOCK == 0 then  
@@ -108,6 +152,7 @@ function Match.run(self)
       self.attackEngine:run()
     end
 
+    -- Since the stacks can affect each other, don't save rollback until after both have run
     if ranP1 then
       P1:saveForRollback()
     end
@@ -213,14 +258,17 @@ function Match.render(self)
 
     grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 1000/GFX_SCALE, 100/GFX_SCALE, 0, 0, 0, 0.5)
     
-    gprintf("P1 Clock " .. P1.CLOCK, drawX, drawY)
+    gprintf("Clock " .. P1.CLOCK, drawX, drawY)
 
 
     drawY = drawY + padding
-    gprintf("P1 Confirmed " .. string.len(P1.confirmedInput) , drawX, drawY)
+    gprintf("Confirmed " .. string.len(P1.confirmedInput) , drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("P1 input_buffer " .. string.len(P1.input_buffer) , drawX, drawY)
+    gprintf("input_buffer " .. string.len(P1.input_buffer) , drawX, drawY)
+
+    drawY = drawY + padding
+    gprintf("rollbackCount " .. P1.rollbackCount , drawX, drawY)
 
     -- drawY = drawY + padding
     -- gprintf("P1 Panels: " .. P1.panel_buffer, drawX, drawY)
@@ -239,11 +287,11 @@ function Match.render(self)
 
     if P1.game_over_clock > 0 then
       drawY = drawY + padding
-      gprintf("P1 game_over_clock " .. P1.game_over_clock, drawX, drawY)
+      gprintf("game_over_clock " .. P1.game_over_clock, drawX, drawY)
     end
 
     drawY = drawY + padding
-    gprintf("P1 chain panels " .. P1.n_chain_panels, drawX, drawY)
+    gprintf("chain panels " .. P1.n_chain_panels, drawX, drawY)
 
     -- if P1.telegraph then
     --   drawY = drawY + padding
@@ -283,21 +331,24 @@ function Match.render(self)
       drawY = 10 - padding
 
       drawY = drawY + padding
-      gprintf("P2 Clock " .. P2.CLOCK, drawX, drawY)
+      gprintf("Clock " .. P2.CLOCK, drawX, drawY)
 
       drawY = drawY + padding
       local framesAhead = string.len(P1.confirmedInput) - string.len(P2.confirmedInput)
       gprintf("Ahead: " .. framesAhead, drawX, drawY)
 
       drawY = drawY + padding
-      gprintf("P2 Confirmed " .. string.len(P2.confirmedInput) , drawX, drawY)
+      gprintf("Confirmed " .. string.len(P2.confirmedInput) , drawX, drawY)
 
       drawY = drawY + padding
-      gprintf("P2 input_buffer " .. string.len(P2.input_buffer) , drawX, drawY)
+      gprintf("input_buffer " .. string.len(P2.input_buffer) , drawX, drawY)
+
+      drawY = drawY + padding
+      gprintf("rollbackCount " .. P2.rollbackCount , drawX, drawY)
 
       if P2.game_over_clock > 0 then
         drawY = drawY + padding
-        gprintf("P2 game_over_clock " .. P2.game_over_clock, drawX, drawY)
+        gprintf("game_over_clock " .. P2.game_over_clock, drawX, drawY)
       end
 
       -- if P2.telegraph then

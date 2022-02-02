@@ -69,20 +69,6 @@ Telegraph = class(function(self, sender, owner)
     -- If we got an attack earlier then our current frame, we need to rollback
     if frame_earned < self.owner.CLOCK - 1 then
       self.owner:rollbackToFrame(frame_earned)
-
-      -- The garbage that we send this time might (rarely) not be the same
-      -- as the garbage we sent before.  Wipe out the garbage we sent before...
-      for k, v in pairs(self.owner.garbage_target.telegraph.pendingGarbage) do
-        if k >= frame_earned then
-          self.owner.garbage_target.telegraph.pendingGarbage[k] = nil
-        end
-      end
-
-      for k, v in pairs(self.owner.garbage_target.telegraph.pendingChainingEnded) do
-        if k >= frame_earned then
-          self.owner.garbage_target.telegraph.pendingChainingEnded[k] = nil
-        end
-      end
     end
 
     -- Now push this attack
@@ -134,15 +120,16 @@ Telegraph = class(function(self, sender, owner)
   end
 
   function Telegraph.chainingEnded(self, frame_earned)
-    -- If we got the attack in the future, wait to queue it
-    if frame_earned > self.owner.CLOCK then
-      self.pendingChainingEnded[frame_earned] = true
-      return
-    end
-    
+
     -- If they ended chaining earlier then our current frame, we need to rollback as that might change the timing
     if frame_earned < self.owner.CLOCK - 1 then
       self.owner:rollbackToFrame(frame_earned)
+    end
+    
+    -- If we got the attack in the future (even because of rollback), wait to queue it
+    if frame_earned > self.owner.CLOCK then
+      self.pendingChainingEnded[frame_earned] = true
+      return
     end
 
     self.senderCurrentlyChaining = false
