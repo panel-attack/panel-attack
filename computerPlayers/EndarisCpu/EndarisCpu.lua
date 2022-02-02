@@ -138,7 +138,8 @@ function EndarisCpu.think(self)
                 -- discard actions of previous loop
                 self.actions = {}
 
-                if #self.lookAheadSnapShots < 3 then
+                -- technically the snapshot system should work but I think there are still some direct references to current_action and/or lastInput that make the CPU goof around if the snapshot system is used
+                if #self.lookAheadSnapShots < 1 then
                     self.strategy = self:chooseStrategy()
                     self:yieldIfTooLong()
                     self:chooseAction()
@@ -355,7 +356,7 @@ function EndarisCpu.chooseStrategy(self)
 
     local garbagePanels = StackExtensions.getGarbage(self.stack)
     if #garbagePanels > 0 then
-        return Defend(self, garbagePanels)
+        return Defend(self)
     end
 
     local fragmentationPercentage = StackExtensions.getFragmentationPercentage(self.stack)
@@ -369,36 +370,38 @@ function EndarisCpu.chooseStrategy(self)
 end
 
 function EndarisCpu.executeStrategy(self)
-    local action
-    action = self.strategy:chooseAction()
+    local actions
+    actions = self.strategy:chooseAction()
 
-    if action == nil and self.strategy.name == "Defend" then
+    if actions == nil and self.strategy.name == "Defend" then
         -- check if it wouldn't be better to defrag now so that one may get into a defendable position again
         if StackExtensions.getFragmentationPercentage(self.stack) > self.config.DefragmentationPercentageThreshold * 0.5 then
             CpuLog:log(1, "found no action to defend")
             self.strategy = Defragment(self)
-            action = self.strategy:chooseAction()
+            actions = self.strategy:chooseAction()
         end
     end
 
     -- let the cpu do something if it can't find a sensible action for defrag/defend
-    if action == nil and self.strategy.name ~= "Attack" then
+    if actions == nil and self.strategy.name ~= "Attack" then
         CpuLog:log(1, "found no action to  " .. self.strategy.name)
         self.strategy = Attack(self)
-        action = self.strategy:chooseAction()
+        actions = self.strategy:chooseAction()
     end
 
-    if self.currentAction and action then
-        CpuLog:log(1, "appending action " .. action:toString() .. " to the actionQueue")
-        table.insert(self.actionQueue, #self.actionQueue, action)
-    else
-        if action then
-            CpuLog:log(1, "setting the current action to " .. action:toString())
-        else
-            CpuLog:log(1, "setting the current action to nil, couldn't choose an action")
+    if actions then
+        if not self.currentAction then
+            CpuLog:log(1, "setting the current action to " .. actions[1]:toString())
+            self.currentAction = table.remove(actions, 1)
         end
-        self.currentAction = action
+
+        for i=1,#actions do
+            EndarisCpu.appendActionToQueue(self.actionQueue, actions[i])
+        end
+    else
+        CpuLog:log(1, "executeStrategy failed, couldn't find an action")
     end
+
 end
 
 function EndarisCpu.simulatePostActionStack(self)
