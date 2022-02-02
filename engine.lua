@@ -271,9 +271,12 @@ function Stack.divergenceString(self, stackToTest)
       end
   end
 
-  result = result .. "telegraph.chain count " .. stackToTest.telegraph.garbage_queue.chain_garbage:len() .. "\n"
-  result = result .. "telegraph.senderCurrentlyChaining " .. tostring(stackToTest.telegraph.senderCurrentlyChaining) .. "\n"
-  result = result .. "telegraph.attacks " .. tableLength(stackToTest.telegraph.attacks) .. "\n"
+  if stackToTest.telegraph then
+    result = result .. "telegraph.chain count " .. stackToTest.telegraph.garbage_queue.chain_garbage:len() .. "\n"
+    result = result .. "telegraph.senderCurrentlyChaining " .. tostring(stackToTest.telegraph.senderCurrentlyChaining) .. "\n"
+    result = result .. "telegraph.attacks " .. tableLength(stackToTest.telegraph.attacks) .. "\n"
+  end
+  
   result = result .. "garbage_q " .. stackToTest.garbage_q:len() .. "\n"
   result = result .. "later_garbage " .. tableLength(stackToTest.later_garbage) .. "\n"
   result = result .. "Stop " .. stackToTest.stop_time .. "\n"
@@ -413,17 +416,19 @@ function Stack.rollbackToFrame(self, frame)
     assert(prev_states[frame])
     self:restoreFromRollbackCopy(prev_states[frame])
 
-    -- The garbage that we send this time might (rarely) not be the same
-    -- as the garbage we sent before.  Wipe out the garbage we sent before...
-    for k, v in pairs(self.garbage_target.telegraph.pendingGarbage) do
-      if k >= frame then
-        self.garbage_target.telegraph.pendingGarbage[k] = nil
+    if self.garbage_target and self.garbage_target.telegraph then
+      -- The garbage that we send this time might (rarely) not be the same
+      -- as the garbage we sent before.  Wipe out the garbage we sent before...
+      for k, v in pairs(self.garbage_target.telegraph.pendingGarbage) do
+        if k >= frame then
+          self.garbage_target.telegraph.pendingGarbage[k] = nil
+        end
       end
-    end
 
-    for k, v in pairs(self.garbage_target.telegraph.pendingChainingEnded) do
-      if k >= frame then
-        self.garbage_target.telegraph.pendingChainingEnded[k] = nil
+      for k, v in pairs(self.garbage_target.telegraph.pendingChainingEnded) do
+        if k >= frame then
+          self.garbage_target.telegraph.pendingChainingEnded[k] = nil
+        end
       end
     end
 
