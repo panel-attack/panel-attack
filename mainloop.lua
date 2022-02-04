@@ -1548,7 +1548,7 @@ function main_set_name()
         if this_frame_keys["escape"] then
           ret = {main_select_mode}
         end
-        if menu_enter() then
+        if menu_return_once() then
           config.name = name
           write_conf_file()
           ret = {main_select_mode}
