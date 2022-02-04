@@ -888,7 +888,12 @@ function select_screen.main()
           character_loader_wait()
           stage_loader_wait()
           GAME.match = Match("vs", GAME.battleRoom)
-          GAME.match.seed = global_current_room_ratings[1].new + global_current_room_ratings[2].new + GAME.battleRoom.playerWinCounts[1] + GAME.battleRoom.playerWinCounts[2]
+          local seed = 17
+          seed = seed * 37 + global_current_room_ratings[1].new;
+          seed = seed * 37 + global_current_room_ratings[2].new;
+          seed = seed * 37 + GAME.battleRoom.playerWinCounts[1];
+          seed = seed * 37 + GAME.battleRoom.playerWinCounts[2];
+          GAME.match.seed = seed
           local is_local = true
           if GAME.battleRoom.spectating then
             is_local = false
