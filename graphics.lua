@@ -1067,7 +1067,8 @@ function Stack.render_telegraph(self)
     --TODO: create a way to draw telegraphs from right to left
     if self.CLOCK - current_block.frame_earned >= GARBAGE_TRANSIT_TIME then
       if not current_block[3]--[[is_metal]] then
-        draw(characters[senderCharacter].telegraph_garbage_images[current_block[2]--[[height]]][current_block[1]--[[width]]], draw_x, draw_y)
+        local height = math.min(current_block[2], 14)
+        draw(characters[senderCharacter].telegraph_garbage_images[height--[[height]]][current_block[1]--[[width]]], draw_x, draw_y)
       else
         draw(characters[senderCharacter].telegraph_garbage_images["metal"], draw_x, draw_y)
       end
@@ -1098,7 +1099,8 @@ function Stack.render_telegraph(self)
   end
   
   if not drewChain and telegraph_to_render.garbage_queue.ghost_chain then
-    draw(characters[senderCharacter].telegraph_garbage_images[telegraph_to_render.garbage_queue.ghost_chain][6], telegraph_to_render.pos_x, telegraph_to_render.pos_y)
+    local height = math.min(telegraph_to_render.garbage_queue.ghost_chain, 14)
+    draw(characters[senderCharacter].telegraph_garbage_images[height][6], telegraph_to_render.pos_x, telegraph_to_render.pos_y)
   end
 
 end
