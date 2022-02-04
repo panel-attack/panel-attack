@@ -242,6 +242,8 @@ function select_screen.main()
     end
 
     if msg.replay_of_match_so_far then
+      msg.replay_of_match_so_far.vs.I = uncompress_input_string(msg.replay_of_match_so_far.vs.I)
+      msg.replay_of_match_so_far.vs.in_buf = uncompress_input_string(msg.replay_of_match_so_far.vs.in_buf)
       replay_of_match_so_far = msg.replay_of_match_so_far
     end
 
