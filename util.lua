@@ -313,7 +313,7 @@ function uncompress_input_string(inputs)
   -- If there are two consecutive letters or symbols in the inputs, do nothing, as inputs are not compressed.
   if not inputs:match("[%a%+%/][%a%+%/]") then
     local uncompressed_inputs = "" -- Actual uncompressed inputs
-    local digit_inputs = "" -- Actual inputs represented as digits
+    local digit_inputs -- Actual inputs represented as digits
     --[[For every base64encode char that is followed by at least one digit,
     with an optional left parenthesis immediately after the aforementioned digit,
     followed by any amount of digits (including zero digits whatsoever),
