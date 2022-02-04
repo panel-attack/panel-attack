@@ -506,6 +506,16 @@ menu_pause =
     return themes[config.theme].sounds.menu_validate
   end
 )
+menu_return_once =
+  input_key_func(
+  {"return", "kenter"},
+  {},
+  released_key_before_time,
+  function()
+    return themes[config.theme].sounds.menu_validate
+  end,
+  super_selection_duration
+)
 menu_advance_frame =
   input_key_func(
   {},
