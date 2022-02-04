@@ -23,6 +23,12 @@ local xPosition1 = 520
 local xPosition2 = xPosition1 + 150
 local yPosition = 270
 
+local font = love.graphics.getFont()
+local arrow = love.graphics.newText(font, ">")
+
+local selected_id = 1
+local time = 0
+
 local speed_slider = Slider({
     min = 1, 
     max = 99, 
@@ -52,10 +58,6 @@ local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
   scene_manager:switchScene("main_menu")
 end
-  
-local font = love.graphics.getFont()
-local arrow = love.graphics.newText(font, ">")
-
 
 local menu_options = {
   Label({text = love.graphics.newText(font, loc("speed")), is_visible = false}),
@@ -78,15 +80,6 @@ function endless_menu:setDifficulty(new_difficulty)
   end
 end
 
-local selected_id = 1
-local time = 0
-
--- stack rise speed
-local active_idx = 1
-local startGameSet = false
-local exitSet = false
-local loc_difficulties = {loc("easy"), loc("normal"), loc("hard"), "EX Mode"} -- TODO: localize "EX Mode"
-
 function endless_menu:init()
   self._difficulty_buttons = {
     Button({text = love.graphics.newText(font, loc("easy")), onClick = function() self:setDifficulty(1) end, is_visible = false}),
@@ -98,103 +91,6 @@ function endless_menu:init()
   self:setDifficulty(difficulty)
   scene_manager:addScene(endless_menu)
 end
-
-
-local function main_select_speed_99(mode)
-  
-
-  local gameSettingsMenu
-
-  local function goEscape()
-    gameSettingsMenu:set_active_idx(#gameSettingsMenu.buttons)
-  end
-
-  local function exitSettings()
-    exitSet = true
-  end
-
-  local function updateMenuSpeed()
-    gameSettingsMenu:set_button_setting(1, speed)
-  end
-
-  local function updateMenuDifficulty()
-    gameSettingsMenu:set_button_setting(2, loc_difficulties[difficulty])
-  end
-
-  local function increaseSpeed()
-    speed = bound(1, speed + 1, 99)
-    updateMenuSpeed()
-  end
-
-  local function increaseDifficulty()
-    difficulty = bound(1, difficulty + 1, 4)
-    updateMenuDifficulty()
-  end
-
-  local function decreaseSpeed()
-    speed = bound(1, speed - 1, 99)
-    updateMenuSpeed()
-  end
-
-  local function decreaseDifficulty()
-    difficulty = bound(1, difficulty - 1, 4)
-    updateMenuDifficulty()
-  end
-
-  
-
-  local function nextMenu()
-    gameSettingsMenu:selectNextIndex()
-  end
-
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
-  menu_y = menu_y + 70
-  gameSettingsMenu = ClickMenu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
-  
-  updateMenuSpeed()
-  updateMenuDifficulty()
-
-  while true do
-    -- Draw the current score and record
-    local record = 0
-    local lastScore = 0
-    if mode == "time" then
-      lastScore = GAME.scores:lastTimeAttack1PForLevel(difficulty)
-      record = GAME.scores:recordTimeAttack1PForLevel(difficulty)
-    elseif mode == "endless" then
-      lastScore = GAME.scores:lastEndlessForLevel(difficulty)
-      record = GAME.scores:recordEndlessForLevel(difficulty)
-    end
-    local xPosition1 = 520
-    local xPosition2 = xPosition1 + 150
-    local yPosition = 270
-
-    lastScore = tostring(lastScore)
-    record = tostring(record)
-    draw_pixel_font("last score", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition, 0.5, 1.0)
-    draw_pixel_font(lastScore, themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition + 24, 0.5, 1.0)
-    draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition, 0.5, 1.0)
-    draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition + 24, 0.5, 1.0)
-
-    gameSettingsMenu:draw()
-
-    wait()
-    variable_step(
-      function()
-        gameSettingsMenu:update()
-      end
-    )
-
-    if startGameSet then
-      gameSettingsMenu:remove_self()
-      return main_endless_time_setup, {mode, speed, difficulty}
-    elseif exitSet then
-      gameSettingsMenu:remove_self()
-      return main_select_mode, {}
-    end
-  end
-end
-
 
 function endless_menu:load()
   GAME.backgroundImage = themes[config.theme].images.bg_main
