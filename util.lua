@@ -313,6 +313,7 @@ function uncompress_input_string(inputs)
   -- If there are two consecutive letters or symbols in the inputs, do nothing, as inputs are not compressed.
   if not inputs:match("[%a%+%/][%a%+%/]") then
     local uncompressed_inputs = "" -- Actual uncompressed inputs
+    local digit_inputs = "" -- Actual inputs represented as digits
     --[[For every base64encode char that is followed by at least one digit,
     with an optional left parenthesis immediately after the aforementioned digit,
     followed by any amount of digits (including zero digits whatsoever),
@@ -320,10 +321,10 @@ function uncompress_input_string(inputs)
     for w in inputs:gmatch("[%a%+%/]%d+%(?%d*%)?") do
       -- repeat the char the amount of times that the digit afterwards indicates
       uncompressed_inputs = uncompressed_inputs .. string.rep(w:sub(1, 1), w:match("%d+"))
-      local input_value = w:match("%(%d+%)") -- Assign digits enclosed in parentheses, if any
-      if input_value then
+      digit_inputs = w:match("%(%d+%)") -- Assign digits enclosed in parentheses, if any
+      if digit_inputs then
         -- If there are digits in parentheses, add them to the string without the parentheses
-        uncompressed_inputs = uncompressed_inputs .. input_value:match("%d+")
+        uncompressed_inputs = uncompressed_inputs .. digit_inputs:match("%d+")
       end
     end
     return uncompressed_inputs
