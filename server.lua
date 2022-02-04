@@ -40,16 +40,26 @@ local loaded_placement_matches = {
 
 function lobby_state()
   local names = {}
+  local ratings = {}
   for _, v in pairs(connections) do
     if v.state == "lobby" then
       names[#names + 1] = v.name
+      if leaderboard.players[v.user_id] and leaderboard.players[v.user_id].rating then
+        ratings[v.name] = round(leaderboard.players[v.user_id].rating)
+      end
     end
   end
   local spectatableRooms = {}
   for _, v in pairs(rooms) do
     spectatableRooms[#spectatableRooms + 1] = {roomNumber = v.roomNumber, name = v.name, a = v.a.name, b = v.b.name, state = v:state()}
+    if leaderboard.players[v.a.user_id] and leaderboard.players[v.a.user_id].rating then
+      ratings[v.a.name] = round(leaderboard.players[v.a.user_id].rating)
+    end
+    if leaderboard.players[v.b.user_id] and leaderboard.players[v.b.user_id].rating then
+      ratings[v.b.name] = round(leaderboard.players[v.b.user_id].rating)
+    end
   end
-  return {unpaired = names, spectatable = spectatableRooms}
+  return {unpaired = names, spectatable = spectatableRooms, ratings = ratings}
 end
 
 function propose_game(sender, receiver, message)
@@ -153,6 +163,8 @@ function start_match(a, b)
       msg.opponent_settings.rating = DEFAULT_RATING
     end
   end
+  a.room.replay.vs.seed = math.random(1,9999999)
+  msg.seed = a.room.replay.vs.seed
   a.room.replay.vs.P1_name = a.name
   a.room.replay.vs.P2_name = b.name
   a.room.replay.vs.P1_char = a.character
