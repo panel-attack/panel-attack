@@ -15,6 +15,7 @@ Match =
     self.supportsPause = true
     self.attackEngine = nil
     self.current_music_is_casual = true 
+    self.seed = math.random(1,9999999)
   end
 )
 
@@ -109,7 +110,6 @@ function Match.run(self)
 
   local startTime = love.timer.getTime()
 
-  if config.debug_mode then
   if config.debug_mode and network_connected() == false then
     local rollbackStart = 100
     if P1 and P1:game_ended() == false and P1:behindRollback() == false and P1.CLOCK > rollbackStart then
@@ -319,6 +319,9 @@ function Match.render(self)
     local totalTime = love.timer.getTime() - self.createTime
     local timePercent = self.timeSpentRunning / totalTime
     gprintf("Time Percent Running Match: " .. timePercent, drawX, drawY)
+
+    drawY = drawY + padding
+    gprintf("Seed " .. GAME.match.seed, drawX, drawY)
 
     local gameEndedClockTime = self:gameEndedClockTime()
 

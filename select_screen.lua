@@ -888,6 +888,7 @@ function select_screen.main()
           character_loader_wait()
           stage_loader_wait()
           GAME.match = Match("vs", GAME.battleRoom)
+          GAME.match.seed = global_current_room_ratings[1].new + global_current_room_ratings[2].new + GAME.battleRoom.playerWinCounts[1] + GAME.battleRoom.playerWinCounts[2]
           local is_local = true
           if GAME.battleRoom.spectating then
             is_local = false
@@ -907,7 +908,7 @@ function select_screen.main()
           P1:set_garbage_target(P2)
           P2:set_garbage_target(P1)
           P2:moveForPlayerNumber(2)
-          replay = createNewReplay(GAME.match.mode)
+          replay = createNewReplay(GAME.match)
           
           if GAME.battleRoom.spectating and replay_of_match_so_far then --we joined a match in progress
             for k, v in pairs(replay_of_match_so_far.vs) do
