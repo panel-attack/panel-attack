@@ -385,7 +385,7 @@ local function runMainGameLoop(updateFunction, variableStepFunction, abortGameFu
   end
 end
 
-local function main_endless_time_setup(mode, speed, difficulty)
+function main_endless_time_setup(mode, speed, difficulty)
 
   GAME.match = Match(mode)
 

@@ -2,20 +2,24 @@ local class = require("class")
 
 --@module Scene
 local Scene = class(
-  function (self)
-    
+  function (self, name)
+    self.name = name
   end
 )
+
+function Scene:init()
+  
+end
 
 function Scene:load()
   
 end
 
-function Scene:unload()
+function Scene:update()
   
 end
 
-function Scene:draw()
+function Scene:unload()
   
 end
 

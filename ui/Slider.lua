@@ -1,0 +1,59 @@
+local class = require("class")
+local slider_manager = require("ui.slider_manager")
+local util = require("util")
+
+--@module Slider
+local Slider = class(
+  function(self, options)
+    self.id = nil -- set in the slider manager
+    self.x = options.x or 0
+    self.y = options.y or 0
+    self.min = options.min or 1
+    self.max = options.max or 99
+    self.text = options.text or love.graphics.newText(love.graphics.getFont(), "Slider")
+    self.is_visible = options.is_visible or options.is_visible == nil and true 
+    self.value = options.value or math.floor((self.max - self.min) / 2)
+    
+    --local text_width, text_height = self.text:getDimensions()
+    --self.width = math.max(text_width + 6, self.width)
+    --self.height = math.max(text_height + 6, self.height)
+    self._min_text = love.graphics.newText(love.graphics.getFont(), self.min)
+    self._max_text = love.graphics.newText(love.graphics.getFont(), self.max)
+    self._value_text = love.graphics.newText(love.graphics.getFont(), self.value)
+    slider_manager.add_slider(self)
+  end
+)
+
+function Slider:remove()
+  slider_manager.remove_slider(self)
+end
+
+function Slider:isSelected(x, y)
+  return x > self.x and x < self.x + self.max - self.min and y > self.y and y < self.y + 15
+end
+
+function Slider:setValue(value)
+  self.value = util.clamp(self.min, value, self.max)
+  self._value_text = love.graphics.newText(love.graphics.getFont(), self.value)
+end
+
+function Slider:draw()
+  local dark_gray = .3
+  local light_gray = .5
+  local alpha = .7
+  GAME.gfx_q:push({love.graphics.setColor, {light_gray, light_gray, light_gray, alpha}})
+  GAME.gfx_q:push({love.graphics.rectangle, {"fill", self.x, self.y, self.max - self.min, 5}})
+  --GAME.gfx_q:push({love.graphics.setColor, {light_gray, light_gray, light_gray, alpha}})
+  --GAME.gfx_q:push({love.graphics.rectangle, {"line", self.x, self.y, self.max - self.min, 10}})
+  
+  GAME.gfx_q:push({love.graphics.setColor, {dark_gray, dark_gray, dark_gray, .9}})
+  GAME.gfx_q:push({love.graphics.circle, {"fill", self.x + self.value, self.y + 2.5, 7.5, 32}})
+  GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
+  
+  --local text_width, text_height = self.text:getDimensions()
+  GAME.gfx_q:push({love.graphics.draw, {self._min_text, self.x - self._min_text:getWidth() - 5, self.y, 0, 1, 1, 0, 0}})
+  GAME.gfx_q:push({love.graphics.draw, {self._max_text, self.x + self.max - self.min, self.y, 0, 1, 1, 0, 0}})
+  GAME.gfx_q:push({love.graphics.draw, {self._value_text, self.x + self.value - 10, self.y - 20, 0, 1, 1, 0, 0}})
+end
+
+return Slider

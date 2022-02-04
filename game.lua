@@ -12,7 +12,7 @@ local sound = require("sound")
 local Localization = require("Localization")
 local analytics = require("analytics")
 local scene_manager = require("scenes.scene_manager")
-local main_menu = require("scenes.main_menu")
+local scenes = nil
 
 --- @module Game
 local Game = class(
@@ -104,7 +104,15 @@ function Game:_setup_co()
     wait_game_update = self.game_updater:async_download_latest_version()
   end
   
-  scene_manager:switchScene(main_menu)
+  -- move to top
+  scenes = {
+    require("scenes.main_menu"),
+    require("scenes.endless_menu")
+  }
+  for i, scene in ipairs(scenes) do
+    scene:init()
+  end
+  scene_manager:switchScene("main_menu")
 end
 
 function Game:load(game_updater)
@@ -141,15 +149,19 @@ function Game:update(dt)
   end
 
   leftover_time = leftover_time + dt
-
+  
   local status, err = nil
   if coroutine.status(self._setup) ~= "dead" then
     status, err = coroutine.resume(self._setup)
-  elseif scene_manager.is_transitioning then
-    scene_manager:transition()
-    status = true
   elseif scene_manager.active_scene then
     scene_manager.active_scene:update()
+    -- update transition to use draw priority queue
+    if scene_manager.is_transitioning then
+      scene_manager:transition()
+    end
+    status = true
+  elseif scene_manager.is_transitioning then
+    scene_manager:transition()
     status = true
   else
     status, err = coroutine.resume(mainloop)

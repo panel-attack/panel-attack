@@ -1,5 +1,7 @@
-local Button = require("Button")
-local button_manager = require("button_manager")
+local Button = require("ui.Button")
+local button_manager = require("ui.button_manager")
+local Slider = require("ui.Button")
+local slider_manager = require("ui.slider_manager")
 Queue = require("Queue")
 config = require("config")
 require("class")
@@ -37,6 +39,7 @@ require("panels")
 require("Theme")
 -- require("dump")
 local logger = require("logger")
+local input = require("input2")
 
 --[[
 local consts = require("consts")
@@ -71,7 +74,6 @@ function love.load(args)
     math.random()
   end
   
-  
   -- construct game here
   GAME:load(game_updater)
   mainloop = coroutine.create(fmainloop)
@@ -84,12 +86,14 @@ end
 -- Called every few fractions of a second to update the game
 -- dt is the amount of time in seconds that has passed.
 function love.update(dt)
+  button_manager.draw()
+  slider_manager.draw()
+  input:update()
   GAME:update(dt)
 end
 
 -- Called whenever the game needs to draw.
 function love.draw()
-  button_manager.draw()
   GAME:draw()
 end
 
@@ -102,11 +106,25 @@ end
 -- Handle a mouse or touch press
 function love.mousepressed(x, y)
   button_manager.mousepressed(x, y)
+  slider_manager.mousepressed(x, y)
 
   for menu_name, menu in pairs(CLICK_MENUS) do
     menu:click_or_tap(transform_coordinates(x, y))
   end
 end
+
+function love.mousereleased(x, y, button)
+  if button == 1 then
+    slider_manager.mouseReleased(x, y)
+  end
+end
+
+function love.mousemoved( x, y, dx, dy, istouch )
+	if love.mouse.isDown(1) then
+    slider_manager.mouseDragged(x, y)
+  end
+end
+
 
 -- Handle a touch press
 -- Note we are specifically not implementing this because mousepressed above handles mouse and touch

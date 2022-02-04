@@ -7,19 +7,40 @@ local utf8 = require("utf8")
 local analytics = require("analytics")
 local main_config_input = require("config_inputs")
 local ServerQueue = require("ServerQueue")
+local Button = require("ui.Button")
+local scene_manager = require("scenes.scene_manager")
+local input = require("input2")
+require("mainloop")
 
 --@module MainMenu
-local main_menu = Scene()
+local main_menu = Scene("main_menu")
 
---[[
-local menu_options = {
-  {loc("mm_1_endless"), main_endless_select},
-  {loc("mm_1_puzzle"), main_select_puzz},
-  {loc("mm_1_time"), main_timeattack_select},
-  {loc("mm_1_vs"), main_local_vs_yourself_setup},
-  {loc("mm_1_training"), training_setup},
+local function genOnClickFn(myFunction, args)
+  local onClick = function()
+    func = myFunction
+    arg = args
+    play_optional_sfx(themes[config.theme].sounds.menu_validate)
+    scene_manager:switchScene(nil)
+  end
+  return onClick
+end
+
+local onClick = function()
+  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  scene_manager:switchScene("endless_menu")
+end
+  
+local font = love.graphics.getFont()
+local arrow = love.graphics.newText(font, ">")
+local menu_buttons = {
+  --Button({text = love.graphics.newText(font, loc("mm_1_endless")), onClick = genOnClickFn(main_endless_select), isVisible = false}),
+  Button({text = love.graphics.newText(font, loc("mm_1_endless")), onClick = onClick, is_visible = false}),
+  Button({text = love.graphics.newText(font, loc("mm_1_puzzle")), onClick = genOnClickFn(main_select_puzz), is_visible = false}),
+  Button({text = love.graphics.newText(font, loc("mm_1_time")), onClick = genOnClickFn(main_timeattack_select), is_visible = false}),
+  Button({text = love.graphics.newText(font, loc("mm_1_vs")), onClick = genOnClickFn(main_local_vs_yourself_setup), is_visible = false}),
+  Button({text = love.graphics.newText(font, loc("mm_1_training")), onClick = genOnClickFn(training_setup), is_visible = false}),
   --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
-  {loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
+  Button({text = love.graphics.newText(font, loc("mm_2_vs_online", "")), onClick = genOnClickFn(main_net_vs_setup, {"18.188.43.50"}), is_visible = false}),
   --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
   --{loc("mm_2_vs_online", "betaserver.panelattack.com"), main_net_vs_setup, {"betaserver.panelattack.com"}},
   --{loc("mm_2_vs_online", "(USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)"), main_net_vs_setup, {"18.188.43.50"}},
@@ -27,20 +48,24 @@ local menu_options = {
   --{loc("mm_2_vs_online", "domi1819.xyz"), main_net_vs_setup, {"domi1819.xyz"}},
   --{loc("mm_2_vs_online", "(development-use only)"), main_net_vs_setup, {"localhost"}},
   --{loc("mm_2_vs_online", "LittleEndu's server"), main_net_vs_setup, {"51.15.207.223"}},
-  {loc("mm_2_vs_online", "server for ranked Ex Mode"), main_net_vs_setup, {"exserver.panelattack.com", 49568}},
-  {loc("mm_2_vs_local"), main_local_vs_setup},
-  {loc("mm_replay_browser"), replay_browser.main},
-  {loc("mm_configure"), main_config_input},
-  {loc("mm_set_name"), main_set_name},
-  {loc("mm_options"), options.main},
-  {loc("mm_fullscreen", "(LAlt+Enter)"), fullscreen, goEscape},
-  {loc("mm_quit"), exit_game, exit_game}
+  Button({text = love.graphics.newText(font, loc("mm_2_vs_online", "\nserver for ranked Ex Mode")), onClick = genOnClickFn(main_net_vs_setup, {"exserver.panelattack.com", 49568}), is_visible = false}),
+  Button({text = love.graphics.newText(font, loc("mm_2_vs_local")), onClick = genOnClickFn(main_local_vs_setup), is_visible = false}),
+  Button({text = love.graphics.newText(font, loc("mm_replay_browser")), onClick = genOnClickFn(replay_browser.main), is_visible = false}),
+  Button({text = love.graphics.newText(font, loc("mm_configure")), onClick = genOnClickFn(main_config_input), is_visible = false}),
+  Button({text = love.graphics.newText(font, loc("mm_set_name")), onClick = genOnClickFn(main_set_name), is_visible = false}),
+  Button({text = love.graphics.newText(font, loc("mm_options")), onClick = genOnClickFn(options.main), is_visible = false}),
+  Button({text = love.graphics.newText(font, loc("mm_fullscreen", "\n(LAlt+Enter)")), onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) fullscreen() end, is_visible = false}),
+  Button({text = love.graphics.newText(font, loc("mm_quit")), onClick = exit_game, is_visible = false})
 }
---]]
 
-local main_menu2
+local selected_id = 1
+local time = 0
+
+function main_menu:init()
+  scene_manager:addScene(main_menu)
+end
+
 function main_menu:load()
-  CLICK_MENUS = {}
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")
   end
@@ -57,59 +82,43 @@ function main_menu:load()
   connected_server_ip = ""
   current_server_supports_ranking = false
   match_type = ""
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
-  
-  ret = nil
-
-  local function goEscape()
-    main_menu2:set_active_idx(#main_menu.buttons)
-  end
-
-  local function selectFunction(myFunction, args)
-    local function constructedFunction()
-      main_menu_last_index = main_menu.active_idx
-      main_menu2:remove_self()
-      func = myFunction
-      arg = args
-    end
-    return constructedFunction
-  end
-
   match_type_message = ""
-  print(main_endless_select)
-  local items = {
-    {loc("mm_1_endless"), main_endless_select},
-    {loc("mm_1_puzzle"), main_select_puzz},
-    {loc("mm_1_time"), main_timeattack_select},
-    {loc("mm_1_vs"), main_local_vs_yourself_setup},
-    {loc("mm_1_training"), training_setup},
-    --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
-    {loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
-    --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
-    --{loc("mm_2_vs_online", "betaserver.panelattack.com"), main_net_vs_setup, {"betaserver.panelattack.com"}},
-    --{loc("mm_2_vs_online", "(USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)"), main_net_vs_setup, {"18.188.43.50"}},
-    --{loc("mm_2_vs_online", "This test build is for offline-use only"), main_select_mode},
-    --{loc("mm_2_vs_online", "domi1819.xyz"), main_net_vs_setup, {"domi1819.xyz"}},
-    --{loc("mm_2_vs_online", "(development-use only)"), main_net_vs_setup, {"localhost"}},
-    --{loc("mm_2_vs_online", "LittleEndu's server"), main_net_vs_setup, {"51.15.207.223"}},
-    {loc("mm_2_vs_online", "server for ranked Ex Mode"), main_net_vs_setup, {"exserver.panelattack.com", 49568}},
-    {loc("mm_2_vs_local"), main_local_vs_setup},
-    {loc("mm_replay_browser"), replay_browser.main},
-    {loc("mm_configure"), main_config_input},
-    {loc("mm_set_name"), main_set_name},
-    {loc("mm_options"), options.main}
-  }
-
-  main_menu2 = ClickMenu(menu_x, menu_y, nil, canvas_height - menu_y - 10, main_menu_last_index)
-  for i = 1, #items do
-    main_menu2:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
+  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  for i, button in ipairs(menu_buttons) do
+    button.x = menu_x + 25
+    button.y = i > 1 and menu_buttons[i - 1].y + menu_buttons[i - 1].height + 5 or menu_y
+    -- button.width = 110
+    -- button.height = 25
+    button.is_visible = true
   end
-  main_menu2:add_button(loc("mm_fullscreen", "(LAlt+Enter)"), fullscreen, goEscape)
-  main_menu2:add_button(loc("mm_quit"), exit_game, exit_game)
 end
 
 function main_menu:update()
-  main_menu2:draw()
+  if input.isDown["down"] or (input.isPressed["down"] and input.isPressed["down"] > 100 and input.isPressed["down"] % 20 == 0) then
+    selected_id = (selected_id % #menu_buttons) + 1
+    play_optional_sfx(themes[config.theme].sounds.menu_move)
+  end
+  if input.isDown["up"] or (input.isPressed["up"] and input.isPressed["up"] > 100 and input.isPressed["up"] % 20 == 0) then
+    selected_id = ((selected_id - 2) % #menu_buttons) + 1
+    play_optional_sfx(themes[config.theme].sounds.menu_move)
+  end
+  if input.isDown["return"] then
+    menu_buttons[selected_id].onClick()
+  end
+  if input.isDown["escape"] then
+    if selected_id ~= #menu_buttons then
+      selected_id = #menu_buttons
+      play_optional_sfx(themes[config.theme].sounds.menu_cancel)
+    else
+      love.event.quit()
+    end
+  end
+  
+  local animationX = (math.cos(math.rad(time * .6)) * 5) - 9
+  local arrowx = menu_buttons[selected_id].x - 10 + animationX
+  local arrowy = menu_buttons[selected_id].y + menu_buttons[selected_id].height / 4
+  GAME.gfx_q:push({love.graphics.draw, {arrow, arrowx, arrowy, 0, 1, 1, 0, 0}})
+  
   if wait_game_update ~= nil then
     has_game_update = wait_game_update:pop()
     if has_game_update ~= nil and has_game_update then
@@ -124,21 +133,13 @@ function main_menu:update()
       menu_draw(panels[config.panels].images.classic[1][1], 1262, 685)
     end
   end
-
-  coroutine.yield()
-  variable_step(
-    function()
-      main_menu2:update()
-    end
-  )
-end
-
-function main_menu:draw()
-  
+  time = time + 1
 end
 
 function main_menu:unload()
-  
+  for i, button in ipairs(menu_buttons) do
+    button.is_visible = false
+  end
 end
 
 return main_menu
