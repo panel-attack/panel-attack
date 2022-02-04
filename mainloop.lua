@@ -261,12 +261,15 @@ local function commonGameSetup()
   pick_use_music_from()
 end
 
-function createNewReplay(mode)
+function createNewReplay(match)
+  local mode = match.mode
   local result = {}
   result.engineVersion = VERSION
 
   result[mode] = {}
   local modeReplay = result[mode]
+
+  modeReplay.seed = match.seed
 
   if mode == "endless" or mode == "time" then
     modeReplay.do_countdown = P1.do_countdown or false
@@ -439,7 +442,7 @@ local function main_endless_time_setup(mode, speed, difficulty)
   P1.do_countdown = config.ready_countdown_1P or false
   P2 = nil
 
-  replay = createNewReplay(mode)
+  replay = createNewReplay(GAME.match)
 
   P1:starting_state()
 
@@ -1175,7 +1178,7 @@ function main_local_vs()
 
   commonGameSetup()
 
-  replay = createNewReplay(GAME.match.mode)
+  replay = createNewReplay(GAME.match)
   
   local function update() 
     assert((P1.CLOCK == P2.CLOCK), "should run at same speed: " .. P1.CLOCK .. " - " .. P2.CLOCK)
@@ -1227,7 +1230,7 @@ function main_local_vs_yourself()
 
   commonGameSetup()
 
-  replay = createNewReplay(GAME.match.mode)
+  replay = createNewReplay(GAME.match)
   
   local function update() 
 
@@ -1260,6 +1263,7 @@ function loadFromReplay(replay)
 
     GAME.battleRoom = BattleRoom()
     GAME.match = Match("vs", GAME.battleRoom)
+    GAME.match.seed = replay.seed or 0
     P1 = Stack(1, GAME.match, false, config.panels, replay.P1_level or 5)
     P1.character = replay.P1_char
 
@@ -1298,7 +1302,8 @@ function loadFromReplay(replay)
     else
       GAME.match = Match("endless")
     end
-
+    GAME.match.seed = replay.seed or 0
+    
     replay = replay.endless or replay.time
 
     if replay.pan_buf then
