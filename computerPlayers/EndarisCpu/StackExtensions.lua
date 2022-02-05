@@ -334,6 +334,7 @@ function StackExtensions.IsDownstackable(stack, vector)
     return StackExtensions.isDownstackableByPanels(stack.panels, vector)
 end
 
+--returns true if the panel can fall down rows by either swappig the panel itself once or one of the panels directly below
 function StackExtensions.isDownstackableByPanels(panels, vector)
     if vector.row == 1 or panels[vector.row][vector.column].color == 0 then
         return false
@@ -346,11 +347,14 @@ function StackExtensions.IsDownstackPanel(stack, vector)
     return StackExtensions.IsDownstackPanelByPanels(stack.panels, vector)
 end
 
+--returns true if swapping the panel once may result in a different rowgrid representation of the stack
+--returns false if not (including if the panel cannot be swapped because it is garbage)
 function StackExtensions.IsDownstackPanelByPanels(panels, vector)
     if StackExtensions.isDownstackableByPanels(panels, vector) then
         return true
     else
         if panels[vector.row][vector.column].color ~= 0 and
+           panels[vector.row][vector.column].color ~= 9 and
            panels[vector.row + 1][vector.column].color ~= 0 then
             if vector.column == 1 then
                 return panels[vector.row][vector.column + 1].color == 0
@@ -360,6 +364,8 @@ function StackExtensions.IsDownstackPanelByPanels(panels, vector)
                 return (panels[vector.row][vector.column + 1].color == 0 or
                         panels[vector.row][vector.column - 1].color == 0)
             end
+        else
+            return false
         end
     end
 end
