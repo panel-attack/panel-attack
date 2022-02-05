@@ -43,7 +43,7 @@ function addPublicPlayerData(players, playerName, player)
     return
   end
 
-  if not players[player.name] then
+  if not players[playerName] then
     players[playerName] = {}
   end
 
