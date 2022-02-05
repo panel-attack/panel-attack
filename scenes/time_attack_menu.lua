@@ -14,7 +14,7 @@ local scene_manager = require("scenes.scene_manager")
 local input = require("input2")
 
 --@module MainMenu
-local endless_menu = Scene("endless_menu")
+local time_attack_menu = Scene("time_attack_menu")
 
 local speed = GAME.config.endless_speed or 1
 local difficulty = GAME.config.endless_difficulty or 1
@@ -49,7 +49,7 @@ local function startGame()
   scene_manager:switchScene(nil)
   
   func = main_endless_time_setup
-  arg = {"endless", speed_slider.value, difficulty}
+  arg = {"time", speed_slider.value, difficulty}
 end
 
 local function exitMenu()
@@ -64,7 +64,7 @@ local menu_options = {
   Button({text = love.graphics.newText(font, loc("back")), onClick = exitMenu, is_visible = false}),
 }
 
-function endless_menu:setDifficulty(new_difficulty)
+function time_attack_menu:setDifficulty(new_difficulty)
   self._difficulty_buttons[new_difficulty].color = {.5, .5, 1, .7}
   
   if new_difficulty ~= difficulty then
@@ -78,7 +78,7 @@ function endless_menu:setDifficulty(new_difficulty)
   end
 end
 
-function endless_menu:init()
+function time_attack_menu:init()
   self._difficulty_buttons = {
     Button({text = love.graphics.newText(font, loc("easy")), onClick = function() self:setDifficulty(1) end, is_visible = false}),
     Button({text = love.graphics.newText(font, loc("normal")), onClick = function() self:setDifficulty(2) end, is_visible = false}),
@@ -87,10 +87,10 @@ function endless_menu:init()
     Button({text = love.graphics.newText(font, "EX Mode"), onClick = function() self:setDifficulty(4) end, is_visible = false}),
   }
   self:setDifficulty(difficulty)
-  scene_manager:addScene(endless_menu)
+  scene_manager:addScene(time_attack_menu)
 end
 
-function endless_menu:load()
+function time_attack_menu:load()
   GAME.backgroundImage = themes[config.theme].images.bg_main
   reset_filters()
   if themes[config.theme].musics["main"] then
@@ -119,7 +119,7 @@ function endless_menu:load()
   end
 end
 
-function endless_menu:update()
+function time_attack_menu:update()
   if input.isDown["down"] or (input.isPressed["down"] and input.isPressed["down"] > 100 and input.isPressed["down"] % 20 == 0) then
     selected_id = (selected_id % #menu_options) + 1
     play_optional_sfx(themes[config.theme].sounds.menu_move)
@@ -154,8 +154,8 @@ function endless_menu:update()
     menu_options[i]:draw()
   end
   
-  lastScore = tostring(GAME.scores:lastEndlessForLevel(difficulty))
-  record = tostring(GAME.scores:recordEndlessForLevel(difficulty))
+  lastScore = tostring(GAME.scores:lastTimeAttack1PForLevel(difficulty))
+  record = tostring(GAME.scores:recordTimeAttack1PForLevel(difficulty))
   draw_pixel_font("last score", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition, 0.5, 1.0)
   draw_pixel_font(lastScore, themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition + 24, 0.5, 1.0)
   draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition, 0.5, 1.0)
@@ -183,7 +183,7 @@ function endless_menu:update()
   time = time + 1
 end
 
-function endless_menu:unload()
+function time_attack_menu:unload()
   for i = 3, 4 do
     menu_options[i].is_visible = false
   end
@@ -193,4 +193,4 @@ function endless_menu:unload()
   speed_slider.is_visible = false
 end
 
-return endless_menu
+return time_attack_menu

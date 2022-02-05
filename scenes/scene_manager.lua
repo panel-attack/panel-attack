@@ -1,5 +1,6 @@
 local consts = require("consts")
 local socket = require("socket")
+local transition_utils = require("scenes.transition_utils")
 
 --@module scene_manager
 local scene_manager = {
@@ -10,6 +11,18 @@ local scene_manager = {
 
 local scenes = {}
 local transition_co = nil
+local transition_type = "fade"
+local transitions = {
+  none = {
+    pre_load_transition = function() end,
+    post_load_transition = function() end
+  },
+  fade = {
+    pre_load_transition = function() transition_utils.fade(0, 1, .01) end,
+    post_load_transition = function() transition_utils.fade(1, 0, -.01) end
+  }
+}
+
 function scene_manager:switchScene(scene_name)
   transition_co = coroutine.create(function() self:transitionFn() end)
   self.next_scene = scenes[scene_name]
@@ -17,12 +30,7 @@ function scene_manager:switchScene(scene_name)
 end
 
 function scene_manager:transitionFn()
-  for alpha = 0, 1, .01 do
-    GAME.gfx_q:push({love.graphics.setColor, {0, 0, 0, alpha}})
-    GAME.gfx_q:push({love.graphics.rectangle, {"fill", 0, 0, consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT}})
-    GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
-    coroutine.yield()
-  end
+  transitions[transition_type].pre_load_transition()
   
   if scene_manager.active_scene then
     self.active_scene:unload()
@@ -35,12 +43,8 @@ function scene_manager:transitionFn()
     self.active_scene = nil
   end
   
-  for alpha = 1, 0, -.01 do
-    GAME.gfx_q:push({love.graphics.setColor, {0, 0, 0, alpha}})
-    GAME.gfx_q:push({love.graphics.rectangle, {"fill", 0, 0, consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT}})
-    GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
-    coroutine.yield()
-  end
+  transitions[transition_type].post_load_transition()
+  
   self.is_transitioning = false
 end
 

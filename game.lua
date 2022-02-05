@@ -107,7 +107,8 @@ function Game:_setup_co()
   -- move to top
   scenes = {
     require("scenes.main_menu"),
-    require("scenes.endless_menu")
+    require("scenes.endless_menu"),
+    require("scenes.time_attack_menu")
   }
   for i, scene in ipairs(scenes) do
     scene:init()
