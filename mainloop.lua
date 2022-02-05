@@ -765,7 +765,6 @@ function main_net_vs_lobby()
   local requestedSpectateRoom = nil
 
   local playerData = nil
-  json_send({leaderboard_request = true}) -- Request the leaderboard so we can show ratings
 
   while true do
     if connection_up_time <= login_status_message_duration then
