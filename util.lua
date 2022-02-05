@@ -50,22 +50,6 @@ function map_dict(func, tab)
   return ret
 end
 
--- applies the function to each item in tab and replaces
-function map_inplace(func, tab)
-  for i = 1, #tab do
-    tab[i] = func(tab[i])
-  end
-  return tab
-end
-
--- applies the function to each item in tab and replaces
-function map_dict_inplace(func, tab)
-  for key, val in pairs(tab) do
-    tab[key] = func(val)
-  end
-  return tab
-end
-
 -- reduce for numeric tables
 function reduce(func, tab, ...)
   local idx, value = 2, nil
