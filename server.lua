@@ -38,28 +38,40 @@ local loaded_placement_matches = {
   complete = {}
 }
 
+function addPublicPlayerData(players, playerName, player) 
+  if not players or not player then
+    return
+  end
+
+  if not players[player.name] then
+    players[playerName] = {}
+  end
+
+  if player.rating then
+    players[playerName].rating = round(player.rating)
+  end
+
+  if player.ranked_games_played then
+    players[playerName].ranked_games_played = player.ranked_games_played
+  end
+end
+
 function lobby_state()
   local names = {}
-  local ratings = {}
+  local players = {}
   for _, v in pairs(connections) do
     if v.state == "lobby" then
       names[#names + 1] = v.name
-      if leaderboard.players[v.user_id] and leaderboard.players[v.user_id].rating then
-        ratings[v.name] = round(leaderboard.players[v.user_id].rating)
-      end
+      addPublicPlayerData(players, v.name, leaderboard.players[v.user_id])
     end
   end
   local spectatableRooms = {}
   for _, v in pairs(rooms) do
     spectatableRooms[#spectatableRooms + 1] = {roomNumber = v.roomNumber, name = v.name, a = v.a.name, b = v.b.name, state = v:state()}
-    if leaderboard.players[v.a.user_id] and leaderboard.players[v.a.user_id].rating then
-      ratings[v.a.name] = round(leaderboard.players[v.a.user_id].rating)
-    end
-    if leaderboard.players[v.b.user_id] and leaderboard.players[v.b.user_id].rating then
-      ratings[v.b.name] = round(leaderboard.players[v.b.user_id].rating)
-    end
+    addPublicPlayerData(players, v.a.name, leaderboard.players[v.a.user_id])
+    addPublicPlayerData(players, v.b.name, leaderboard.players[v.b.user_id])
   end
-  return {unpaired = names, spectatable = spectatableRooms, ratings = ratings}
+  return {unpaired = names, spectatable = spectatableRooms, players = players}
 end
 
 function propose_game(sender, receiver, message)
