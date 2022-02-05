@@ -255,12 +255,16 @@ function Defend.getDownstackPairs(self, rowgrid, color)
 
     for row=#downstackInstructions, 1, -1 do
         if downstackInstructions[row].colorDiff < 0 then
-            table.insert(pairs, #pairs + 1, {panelOrigin = row, panelDestination = nil, color = color})
+            for times = 1, downstackInstructions[row].colorDiff * -1 do
+                table.insert(pairs, #pairs + 1, {panelRowOrigin = row, panelRowDestination = nil, color = color})    
+            end
         elseif downstackInstructions[row].colorDiff > 0 then
-            for i=1,#pairs do
-                if pairs[i].panelDestination == nil then
-                    pairs[i].panelDestination = row
-                    break
+            for times = 1, downstackInstructions[row].colorDiff do
+                for i=1,#pairs do
+                    if pairs[i].panelRowDestination == nil then
+                        pairs[i].panelRowDestination = row
+                        break
+                    end
                 end
             end
         end
@@ -270,69 +274,38 @@ function Defend.getDownstackPairs(self, rowgrid, color)
 end
 
 function Defend.simulateDownstackStack(self, downstackPairs, color)
-    local prepDownstackingActions = self:preparePanelsForDownstackingActions(downstackPairs, color)
     -- this part is absolutely horrifying
-end
 
-function Defend.preparePanelsForDownstackingActions(self, downstackPairs, color)
     local downstackVectors = StackExtensions.getDownstackPanelVectors(self.cpu.stack)
     local movePanelActions = {}
 
     for i=1,#downstackPairs do
-        local originPanels = {}
-        for column=1, #self.cpu.stack.panels[downstackPairs[i].panelOrigin] do
-            if self.cpu.stack.panels[downstackPairs[i].panelOrigin][column].color == downstackPairs[i].color then
-                table.insert(originPanels, ActionPanel(self.cpu.stack.panels[downstackPairs[i].panelOrigin][column], downstackPairs[i].panelOrigin, column))
-            end
-        end
+        local panelsInOriginRow = Defend.getPanelsFilteredByColorAndRow(self.cpu.stack.panels, color, downstackPairs[i].panelRowOrigin)
+        local panelsReadyToDownstackInOriginRow = Defend.getPanelsReadyToDownstack(panelsInOriginRow, downstackVectors)
 
-        local setUpForDownstacking = {}
-        for j=#originPanels, 1, -1 do
-            if Defend.isOnDownstackVector(downstackVectors, originPanels[j]) then
-                local panelToDownstack = table.remove(originPanels, j)
-                table.insert(setUpForDownstacking, panelToDownstack)
-                downstackPairs[i].colorDiff = downstackPairs[i].colorDiff + 1
-            end
-        end
+        if #panelsReadyToDownstackInOriginRow >= downstackPairs[i].colorDiff * -1 then
+            -- if they are equal, perfect
+            -- if the former number is higher it means the following:
+            -- there is more than one panel of the color in this row and more panels are already downstackable than necessary
+            -- as they are in the same row they naturally cannot be in the same column
+            -- as we're running a top down approach it can later be decided which column to use for downstacking, ideally based on panels to downstack further below
+            -- for that reason it should not be necessary to move any panels away from the downstack columns
+            
+        elseif #panelsReadyToDownstackInOriginRow < downstackPairs[i].colorDiff * -1 then
 
-        if downstackPairs[i].colorDiff == 0 then
-            -- perfect
-        elseif downstackPairs[i].colorDiff > 0 then
-            local nonDownstackVectors = StackExtensions.getNonDownstackPanelVectors(self.cpu.stack)
-
-            -- need to move #downstackPairs[i].colorDiff panels away from a downstack vector or refrain from downstacking their specific row/column
-            for j = downstackPairs[i].colorDiff, 0, -1 do
-                local nonDownstackVectorsInRow = {}
-
-                -- the point of this part is that the panel of that color does *not* change it's row so only check stuff from the same row
-                for k = 1, #nonDownstackVectors do
-                    if nonDownstackVectors[k].row == setUpForDownstacking[j].vector.row then
-                        table.insert(nonDownstackVectorsInRow, nonDownstackVectors[k])
-                    end
-                end
-
-                if #nonDownstackVectorsInRow == 0 then
-                    -- there is no way to move it to a nonDownstackVector without downstacking it
-                    -- remove the downstackVectors below this so that the panel can't get downstacked as a side effect of downstacking a different one
-                    for k = #downstackVectors, 1, -1 do
-                        local diffVec = downstackVectors[k]:difference(setUpForDownstacking[j].vector)
-                        if diffVec.column == 0 and diffVec.row < 0 then
-                            table.remove(downstackVectors, k)
-                        end
-                    end
+            local panelCountLeftToPrep = downstackPairs[i].colorDiff * -1 - #panelsReadyToDownstackInOriginRow
+            for j = 1, #panelsInOriginRow do
+                if Defend.panelArrayContainsActionPanel(panelsReadyToDownstackInOriginRow, panelsInOriginRow[j]) then
+                    -- already getting downstacked, there's nothing to do
                 else
-                    table.sort(nonDownstackVectorsInRow, function(a, b)
-                        return a:Distance(setUpForDownstacking[j].vector) < b:Distance(setUpForDownstacking[j].vector)
-                    end)
-
-                    local movePanelAction = MovePanel(self.cpu.stack, setUpForDownstacking[j], nonDownstackVectorsInRow[1])
-                    table.insert(movePanelActions, movePanelAction)
+                    -- look for a downstack column that is not yet occupied
+                    -- random thought: in the actual case that 2 panels need to be dropped from the top row (e.g. 2 0 0 1 pattern) they could also be dropped from the same column consecutively
+                    -- with that in mind, doing each pair in sequence suddenly seems a lot more attractive
                 end
             end
-        elseif downstackPairs[i].colorDiff < 0 then
             -- need to move #downstackPairs[i].colorDiff panels onto a downstack vector
-            for j = 0, downstackPairs[i].colorDiff do
-                local panelToDownstack = originPanels[j]
+            for j = panelsReadyToDownstackInOriginRow, downstackPairs[i].colorDiff * -1 do
+                local panelToDownstack = panelsInOriginRow[j]
                 local downstackVectorsInRow = {}
 
                 -- downstackVector should be in the same row (although I guess if you use a different one you would have already passed one)
@@ -363,8 +336,47 @@ function Defend.preparePanelsForDownstackingActions(self, downstackPairs, color)
     return movePanelActions
 end
 
-function Defend.isOnDownstackVector(downstackVectors, actionPanel)
+function Defend.getPanelsFilteredByColorAndRow(panels, color, row)
+    local filteredPanels = {}
 
+    for column=1, #panels[row] do
+        if panels[row][column].color == color then
+            table.insert(filteredPanels, ActionPanel(panels[row][column], row, column))
+        end
+    end
+
+    return filteredPanels
+end
+
+function Defend.getPanelsReadyToDownstack(panels, downstackPanelVectors)
+    local panelsReadyToDownstack = {}
+
+    for i=#panels, 1, -1 do
+        if Defend.isOnDownstackVector(downstackPanelVectors, panels[i]) then
+            table.insert(panelsReadyToDownstack, panels[i])
+        end
+    end
+
+    return panelsReadyToDownstack
+end
+
+function Defend.panelArrayContainsActionPanel(array, actionPanel)
+    for i=1, #array do
+        if array[i].panel.id == actionPanel.panel.id then
+            return true
+        end
+    end
+
+    return false
+end
+
+function Defend.isOnDownstackVector(downstackVectors, actionPanel)
+    for i=1, #downstackVectors do
+        if downstackVectors[i]:difference(actionPanel) == GridVector(0, 0) then
+            return true
+        end
+    end
+    return false
 end
 
 function Defend.findDownstackAction(self, downstackPairs)
