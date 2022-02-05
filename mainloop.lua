@@ -764,7 +764,7 @@ function main_net_vs_lobby()
   local ret = nil
   local requestedSpectateRoom = nil
 
-  local playerRatingMap = nil
+  local playerData = nil
   json_send({leaderboard_request = true}) -- Request the leaderboard so we can show ratings
 
   while true do
@@ -829,8 +829,8 @@ function main_net_vs_lobby()
         lobby_menu:remove_self()
         return select_screen.main
       end
-      if msg.ratings then
-        playerRatingMap = msg.ratings
+      if msg.players then
+        playerData = msg.players
       end
       if msg.unpaired then
         unpaired_players = msg.unpaired
@@ -930,8 +930,8 @@ function main_net_vs_lobby()
 
       local function playerRatingString(playerName)
         local rating = ""
-        if playerRatingMap and playerRatingMap[playerName] then
-          rating = " (" .. playerRatingMap[playerName] .. ")"
+        if playerData and playerData[playerName] and playerData[playerName].rating then
+          rating = " (" .. playerData[playerName].rating .. ")"
         end
         return rating
       end
