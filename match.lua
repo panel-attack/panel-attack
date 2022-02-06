@@ -16,6 +16,7 @@ Match =
     self.attackEngine = nil
     self.current_music_is_casual = true 
     self.seed = math.random(1,9999999)
+    self.isFromReplay = false
   end
 )
 

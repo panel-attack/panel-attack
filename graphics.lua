@@ -1080,6 +1080,9 @@ function Stack.render_telegraph(self)
 
         if current_block[4]--[[chain]] then
           stopperTime = telegraph_to_render.stoppers.chain[telegraph_to_render.garbage_queue.chain_garbage.first]
+          if current_block.finalized then
+            stopperTime = stopperTime .. " F"
+          end
         else
           if current_block[3]--[[is_metal]] then
             stopperTime = telegraph_to_render.stoppers.metal
@@ -1099,8 +1102,15 @@ function Stack.render_telegraph(self)
   end
   
   if not drewChain and telegraph_to_render.garbage_queue.ghost_chain then
+    local draw_x = telegraph_to_render.pos_x
+    local draw_y = telegraph_to_render.pos_y
     local height = math.min(telegraph_to_render.garbage_queue.ghost_chain, 14)
-    draw(characters[senderCharacter].telegraph_garbage_images[height][6], telegraph_to_render.pos_x, telegraph_to_render.pos_y)
+    draw(characters[senderCharacter].telegraph_garbage_images[height][6], draw_x, draw_y)
+
+    -- Render a "G" for ghost
+    if config.debug_mode then
+      gprintf("G", draw_x*GFX_SCALE, (draw_y-8)*GFX_SCALE, 70, "center", nil, 1, large_font)
+    end
   end
 
 end

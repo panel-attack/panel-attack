@@ -1264,6 +1264,7 @@ function loadFromReplay(replay)
     GAME.battleRoom = BattleRoom()
     GAME.match = Match("vs", GAME.battleRoom)
     GAME.match.seed = replay.seed or 0
+    GAME.match.isFromReplay = true
     P1 = Stack(1, GAME.match, false, config.panels, replay.P1_level or 5)
     P1.character = replay.P1_char
 

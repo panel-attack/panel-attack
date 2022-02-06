@@ -119,21 +119,24 @@ Telegraph = class(function(self, sender, owner)
     
   end
 
-  function Telegraph.chainingEnded(self, frame_earned)
+  function Telegraph.chainingEnded(self, frameEnded)
 
     -- If they ended chaining earlier then our current frame, we need to rollback as that might change the timing
-    if frame_earned < self.owner.CLOCK - 1 then
-      self.owner:rollbackToFrame(frame_earned)
+    if frameEnded < self.owner.CLOCK - 1 then
+      self.owner:rollbackToFrame(frameEnded)
     end
     
     -- If we got the attack in the future (even because of rollback), wait to queue it
-    if frame_earned > self.owner.CLOCK then
-      self.pendingChainingEnded[frame_earned] = true
+    if frameEnded > self.owner.CLOCK then
+      self.pendingChainingEnded[frameEnded] = true
       return
     end
 
     self.senderCurrentlyChaining = false
-    local chain = self.garbage_queue.chain_garbage[self.garbage_queue.chain_garbage.first]
+    local chain = self.garbage_queue.chain_garbage[self.garbage_queue.chain_garbage.last]
+    if chain.frame_earned > frameEnded then
+      logger.error("Finalizing a chain that ended before it was earned.")
+    end
     chain.finalized = true
   end
 
