@@ -268,51 +268,68 @@ function get_directory_contents(path)
 end
 
 function compress_input_string(inputs)
-  if inputs:match("%(%d+%)") or not inputs:match("[%a%+%/][%a%+%/]") then
-    -- Detected a digit enclosed in parentheses in the inputs, the inputs are already compressed.
-    return inputs
-  else
-    local compressed_inputs = ""
-    local buff = inputs:sub(1, 1)
-    local out_str, next_char = inputs:sub(1, 1)
+  -- Check for a digit enclosed in parentheses in the inputs to ensure the inputs aren't already compressed.
+  if not inputs:match("%(%d+%)") or inputs:match("[%a%+%/][%a%+%/]") then
+    local compressed_inputs = "" -- Actual compressed input string
+    local buff = inputs:sub(1, 1) -- Current section inputs to compress
+    local prev_char, next_char = inputs:sub(1, 1)
+    -- We start at the second input because there is nothing to compare the first input to
     for pos = 2, #inputs do
+      -- Assign the next input
       next_char = inputs:sub(pos, pos)
-      if next_char ~= out_str:sub(#out_str, #out_str) then
+      -- Check if the input is different from the previous one
+      if next_char ~= prev_char then
         if buff:match("%d+") then
+          -- Found one or more digit to enclose in parentheses, to show they are actual inputs
           compressed_inputs = compressed_inputs .. "(" .. buff .. ")"
         else
-          compressed_inputs = compressed_inputs .. buff:sub(1, 1) .. buff:len()
+          -- Add a single char, preceded by a digit representing the amount of that char
+          compressed_inputs = compressed_inputs .. buff:sub(1, 1) .. #buff
         end
+        -- Since the next char is not the same as the previous, clear the buffer
         buff = ""
       end
-      buff = buff .. inputs:sub(pos, pos)
-      out_str = out_str .. next_char
+      -- Add the char to the buffer
+      buff = buff .. next_char
+      -- Set the next char as the previous char (the next assignment will be updating the next char)
+      prev_char = next_char
     end
     if buff:match("%d+") then
       compressed_inputs = compressed_inputs .. "(" .. buff .. ")"
     else
-      compressed_inputs = compressed_inputs .. buff:sub(1, 1) .. buff:len()
+      compressed_inputs = compressed_inputs .. buff:sub(1, 1) .. #buff
     end
+    -- If there are parentheses that close and open immediately after, get rid of them.
     compressed_inputs = compressed_inputs:gsub("%)%(", "")
-    return compressed_inputs
+    -- Confirm that the compressed version is smaller than the initial size
+    if #compressed_inputs < #inputs then
+      return compressed_inputs
+    end
   end
+  return inputs
 end
 
 function uncompress_input_string(inputs)
-  if inputs:match("[%a%+%/][%a%+%/]") then
-    -- Detected two consecutive letters or symbols in the inputs, the inputs are not compressed.
-    return inputs
-  else
-    local uncompressed_inputs = ""
+  -- If there are two consecutive letters or symbols in the inputs, do nothing, as inputs are not compressed.
+  if not inputs:match("[%a%+%/][%a%+%/]") then
+    local uncompressed_inputs = "" -- Actual uncompressed inputs
+    local digit_inputs -- Actual inputs represented as digits
+    --[[For every base64encode char that is followed by at least one digit,
+    with an optional left parenthesis immediately after the aforementioned digit,
+    followed by any amount of digits (including zero digits whatsoever),
+    with an optional right parenthesis afterwards]]
     for w in inputs:gmatch("[%a%+%/]%d+%(?%d*%)?") do
+      -- repeat the char the amount of times that the digit afterwards indicates
       uncompressed_inputs = uncompressed_inputs .. string.rep(w:sub(1, 1), w:match("%d+"))
-      input_value = w:match("%(%d+%)")
-      if input_value then
-        uncompressed_inputs = uncompressed_inputs .. input_value:match("%d+")
+      digit_inputs = w:match("%(%d+%)") -- Assign digits enclosed in parentheses, if any
+      if digit_inputs then
+        -- If there are digits in parentheses, add them to the string without the parentheses
+        uncompressed_inputs = uncompressed_inputs .. digit_inputs:match("%d+")
       end
     end
     return uncompressed_inputs
   end
+  return inputs
 end
 
 function dump(o)
