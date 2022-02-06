@@ -2,15 +2,6 @@ local sort, pairs, select, unpack, error = table.sort, pairs, select, unpack, er
 local type, setmetatable, getmetatable = type, setmetatable, getmetatable
 local random = math.random
 
--- returns the number of entries in a table
-function tableLength(T)
-  local count = 0
-  for _ in pairs(T) do
-    count = count + 1
-  end
-  return count
-end
-
 -- bounds b so a<=b<=c
 function bound(a, b, c)
   if b < a then
@@ -30,52 +21,6 @@ end
 -- mods b so a<=b<=c
 function wrap(a, b, c)
   return (b - a) % (c - a + 1) + a
-end
-
--- map for numeric tables
-function map(func, tab)
-  local ret = {}
-  for i = 1, #tab do
-    ret[i] = func(tab[i])
-  end
-  return ret
-end
-
--- map for dicts
-function map_dict(func, tab)
-  local ret = {}
-  for key, val in pairs(tab) do
-    ret[key] = func(val)
-  end
-  return ret
-end
-
--- reduce for numeric tables
-function reduce(func, tab, ...)
-  local idx, value = 2, nil
-  if select("#", ...) ~= 0 then
-    value = select(1, ...)
-    idx = 1
-  elseif #tab == 0 then
-    error("Tried to reduce empty table with no initial value")
-  else
-    value = tab[1]
-  end
-  for i = idx, #tab do
-    value = func(value, tab[i])
-  end
-  return value
-end
-
--- TODO delete
-function car(tab)
-  return tab[1]
-end
-
--- This sucks lol
--- TODO delete
-function cdr(tab)
-  return {select(2, unpack(tab))}
 end
 
 -- a useful right inverse of table.concat
@@ -101,11 +46,6 @@ function spairs(tab)
     idx = idx + 1
     return keys[idx], vals[idx]
   end
-end
-
--- Randomly grabs a value from t
-function uniformly(t)
-  return t[random(#t)]
 end
 
 -- Returns true if a and b have equal content

@@ -223,9 +223,9 @@ local function use_current_stage()
 end
 
 function pick_random_stage()
-  current_stage = uniformly(stages_ids_for_current_theme)
+  current_stage = table.getRandomElement(stages_ids_for_current_theme)
   if stages[current_stage]:is_bundle() then -- may pick a bundle!
-    current_stage = uniformly(stages[current_stage].sub_stages)
+    current_stage = table.getRandomElement(stages[current_stage].sub_stages)
   end
   use_current_stage()
 end
@@ -247,9 +247,9 @@ end
 
 function Stack.wait_for_random_character(self)
   if self.character == random_character_special_value then
-    self.character = uniformly(characters_ids_for_current_theme)
+    self.character = table.getRandomElement(characters_ids_for_current_theme)
   elseif characters[self.character]:is_bundle() then -- may have picked a bundle
-    self.character = uniformly(characters[self.character].sub_characters)
+    self.character = table.getRandomElement(characters[self.character].sub_characters)
   end
   character_loader_load(self.character)
   character_loader_wait()
