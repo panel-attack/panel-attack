@@ -59,7 +59,7 @@ function table.all(tab, condition)
 end
 
 -- appends all entries of tab to the end of list
-function table.insertRange(list, tab)
+function table.appendRange(list, tab)
     for i = 1, #tab do
         table.insert(list, #list + 1, tab[i])
     end
@@ -74,7 +74,7 @@ end
 
 -- returns true if the table contains the given element, otherwise false
 function table.contains(tab, element)
-    return table.any(tab, function(tabElement) deep_content_equal(tabElement, element) end)
+    return table.any(tab, function(tabElement) return deep_content_equal(tabElement, element) end)
 end
 
 -- appends an element to a table only if it does not contain the element yet

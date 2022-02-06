@@ -73,11 +73,13 @@ function fmainloop()
     wait_game_update = GAME_UPDATER:async_download_latest_version()
   end
 
+  print(TESTS_ENABLED)
   -- Run Unit Tests
   if TESTS_ENABLED then
     -- Run all unit tests now that we have everything loaded
     require("ServerQueueTests")
     require("StackTests")
+    require("table_util_tests")
   end
 
   while true do
