@@ -1,6 +1,6 @@
 require("computerPlayers.EndarisCpu.StackExtensions")
 
-StackExtensionsTest = class(function(self) end)
+local StackExtensionsTest = class(function(self) end)
 
 function StackExtensionsTest.aprilStackToPanelsAndBack()
     local aprilString = "000000000000000000000000000000000000900000900009990009990099990999990999"

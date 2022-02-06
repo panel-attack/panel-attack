@@ -3,7 +3,7 @@ require("computerPlayers.EndarisCpu.Defragmentation")
 
 -- test through all samples of the document and verify the expected results
 
-DefragmentationTest = class(function(self) end)
+local DefragmentationTest = class(function(self) end)
 
 function DefragmentationTest.getAprilStringSample1()
     return "000000000000000000000000000000000000800000800008880008880088880888880888"
