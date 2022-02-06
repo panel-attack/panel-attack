@@ -1,7 +1,7 @@
 require("computerPlayers.EndarisCpu.StackExtensions")
 require("computerPlayers.EndarisCpu.Defense")
 
-DefenseTest = class(function(self) end)
+local DefenseTest = class(function(self) end)
 
 function DefenseTest.getAprilStringSample1()
     return "000000000000000000000000000000000000999000030000140000330000550005130001"
