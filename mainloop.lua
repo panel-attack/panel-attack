@@ -1477,7 +1477,7 @@ end
 
 do
   local items = {}
-  for key, val in spairs(GAME.puzzleSets) do
+  for key, val in pairsSortedByKeys(GAME.puzzleSets) do
     items[#items + 1] = {key, make_main_puzzle(val)}
   end
   items[#items + 1] = {"back", main_select_mode}

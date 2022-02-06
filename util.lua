@@ -1,6 +1,5 @@
-local sort, pairs, select, unpack, error = table.sort, pairs, select, unpack, error
+local sort, pairs = table.sort, pairs
 local type, setmetatable, getmetatable = type, setmetatable, getmetatable
-local random = math.random
 
 -- bounds b so a<=b<=c
 function bound(a, b, c)
@@ -32,16 +31,27 @@ function procat(str)
   return ret
 end
 
--- iterate over frozen pairs in sorted order
-function spairs(tab)
+-- iterate over a dictionary sorted by keys
+
+-- this is a dedicated method to use for dictionaries for technical reasons
+function pairsSortedByKeys(tab)
+  -- dictionary kind of table assigns like table["myKey"] = myValue
+  -- keys in a dictionary cannot be directly accessed as there is no field to address them by
+  -- therefore they need to be fetched into a helper table using the pairs method
   local keys, vals, idx = {}, {}, 0
-  for k in pairs(tab) do
+  for k,v in pairs(tab) do
     keys[#keys + 1] = k
   end
+  -- the helper table can then be used to sort
   sort(keys)
+
+  -- and then assign the values with the corresponding indexes
   for i = 1, #keys do
     vals[i] = tab[keys[i]]
   end
+
+  -- the key and value table are kept separately instead of being rearranged into a "sorted dictionary"
+  -- this is because pairs always returns them in an arbitrary order even after they have been sorted in advance
   return function()
     idx = idx + 1
     return keys[idx], vals[idx]
