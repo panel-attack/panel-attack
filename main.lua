@@ -34,7 +34,11 @@ require("timezones")
 require("gen_panels")
 require("PriorityQueue")
 require("deepcopy")
+<<<<<<< HEAD
 require("computerPlayers.computerPlayer")
+=======
+require("computerPlayer")
+>>>>>>> 635d7fcb13f7df35979833aba99bd7e35e1c0727
 require("panels")
 require("theme")
 require("click_menu")
