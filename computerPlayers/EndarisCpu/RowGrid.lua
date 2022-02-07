@@ -1,21 +1,14 @@
 require("computerPlayers.EndarisCpu.StackExtensions")
 
-RowGrid = class(function(self, panels)
-    self.panels = panels
-    self.sourcePanelSection = nil
-    self.gridRows = self:getGridRows()
+RowGrid = class(function(self, gridRows)
+    self.gridRows = gridRows
 end)
 
-function RowGrid.getGridRows(self)
+function RowGrid.getGridRows(panels)
     local rowGridRows = {}
-    StackExtensions.printAsAprilStack(self.panels)
-    for rowIndex = 1, #self.panels do
-        local rowPanels = {}
-        for columnIndex = 1, #self.panels[rowIndex] do
-            table.insert(rowPanels, self.panels[rowIndex][columnIndex])
-        end
-
-        table.insert(rowGridRows, RowGridRow(rowIndex, rowPanels))
+    StackExtensions.printAsAprilStack(panels)
+    for rowIndex = 1, #panels do
+        rowGridRows[rowIndex] = RowGridRow.FromPanels(rowIndex, panels[rowIndex])
     end
 
     return rowGridRows
@@ -26,7 +19,7 @@ function RowGrid.FromStack(stack)
 end
 
 function RowGrid.FromPanels(panels)
-    return RowGrid(panels)
+    return RowGrid(RowGrid.getGridRows(panels))
 end
 
 function RowGrid.FromConnectedPanelSection(connectedPanelSection)
@@ -34,7 +27,13 @@ function RowGrid.FromConnectedPanelSection(connectedPanelSection)
 end
 
 function RowGrid.Subtract(rowgrid1, rowgrid2)
+    local diffGridRows = {}
 
+    for gridRowIndex = 1, #rowgrid1 do
+        diffGridRows[gridRowIndex] = RowGridRow.Subtract(rowgrid1[gridRowIndex], rowgrid2[gridRowIndex])
+    end
+
+    return RowGrid(diffGridRows)
 end
 
 function RowGrid.MoveDownPanel(self, color, row)
@@ -59,16 +58,16 @@ function RowGrid.DropIsValid(self, row)
 end
 
 -- returns true if the rowGrid is valid
--- returns the index of the invalid row otherwise
+-- additionally returns the index of the invalid row if false
 function RowGrid.IsValid(self)
     -- local invalidRow = table.firstOrDefault(self.gridRows, function(row) return not row:IsValid() end)
     -- if invalidRow then
-    --  return invalidRow.rowIndex
+    --  return false, invalidRow.rowIndex
     -- else
     --    local emptyPanelsCount = gridRows[#gridRows].emptyPanelsCount
     --    for i = #gridRows - 1, 1 do
     --      if gridRows[i].emptyPanelsCount > emptyPanelsCount then
-    --          return i
+    --          return false, i
     --      end
     --    end
     --    return true
@@ -101,24 +100,40 @@ end
 
 -- returns the minimum rowindex the rowgrid can be downstacked into
 function RowGrid.GetMinimumTopRowIndex(self)
-
+    local totalEmptyPanelCountInRowAndBelow = 0
+    local totalPanelCountAboveRow = self:GetTotalPanelCountAboveRow(0)
+    for row = 1, #self.gridRows do
+        totalEmptyPanelCountInRowAndBelow = totalEmptyPanelCountInRowAndBelow + self.gridRows[row].emptyPanelsCount
+        totalPanelCountAboveRow = totalPanelCountAboveRow - self.gridRows[row].panelCount
+        if totalEmptyPanelCountInRowAndBelow >= totalPanelCountAboveRow then
+            return row
+        end
+    end
 end
 
-RowGridRow = class(function(self, rowIndex, panels)
+RowGridRow = class(function(self, rowIndex, colorColumns)
     self.rowIndex = rowIndex
--- always use at least 9: shockpanels (8) and garbage (9) appear on every level
--- column 10 is for storing arbitrary panels during downstack analysis
+    self.colorColumns = colorColumns
+    self.panelCount = 0
+    for column = 1, #self.colorColumns do
+        self.panelCount = self.panelCount + self.colorColumns[column]
+    end
+    self.emptyPanelCount = 6 - self.panelCount
+end)
 
-            --color 1  2  3  4  5  6  7  8  9 10
-    self.columns = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-    for i = 1, #panels do
+function RowGridRow.FromPanels(rowIndex, rowPanels)
+    -- always use at least 9: shockpanels (8) and garbage (9) appear on every level
+    -- column 10 is for storing arbitrary panels during downstack analysis
+
+                  --color 1  2  3  4  5  6  7  8  9 10
+    local colorColumns = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+    for column = 1, #rowPanels do
         -- the idea is that columnnumber=color number for readability
-        self.columns[panels[i].color] = self.columns[panels[i].color] + 1
+        colorColumns[rowPanels[column].color] = colorColumns[rowPanels[column].color] + 1
     end
 
-    self.emptyPanelCount = 6 - #panels
-    self.panelCount = #panels
-end)
+    return RowGridRow(rowIndex, colorColumns)
+end
 
 function RowGridRow.AddPanel(self, color)
     self.columns[color] = self.columns[color] + 1
@@ -132,12 +147,23 @@ function RowGridRow.RemovePanel(self, color)
     self.panelCount = self.panelCount - 1
 end
 
-function RowGridRow.GetCount(self, color)
+function RowGridRow.GetColorCount(self, color)
     return self.columns[color]
 end
 
 function RowGridRow.IsValid(self)
     return self.emptyPanelCount >= 0
+end
+
+function RowGridRow.Subtract(gridrow1, gridrow2)
+    assert(gridrow1.rowIndex == gridrow2.rowIndex, "Subtracting 2 completely different rows doesn't make sense")
+    local diffGridRowColumns = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+
+    for column = 1, #gridrow1.columns do
+        diffGridRowColumns[column] = gridrow1.columns[column] - gridrow2.columns[column]
+    end
+
+    return RowGridRow(gridrow1.rowIndex, diffGridRowColumns)
 end
 
 ColorGridColumn = class(function(self, rowGrid, color)
@@ -153,8 +179,27 @@ function ColorGridColumn.GetColumnRepresentation(self)
     return count
 end
 
-function ColorGridColumn.GetMatches(self)
+function ColorGridColumn.GetLatentMatches(self)
+    local consecutiveRowCount = 0
+    local columnRepresentation = self:GetColumnRepresentation()
+    local matches = {}
 
+    for row = 1, #columnRepresentation do
+        -- horizontal 3 matches
+        if columnRepresentation[row] >= 3 then
+            table.insert(matches, {type = "H", row = row})
+        -- vertical 3 matches
+        elseif columnRepresentation[row] < 3 and columnRepresentation[row] > 0 then
+            consecutiveRowCount = consecutiveRowCount + 1
+            if consecutiveRowCount >= 3 then
+                table.insert(matches, {type = "V", rows = {row - 2, row - 1, row}})
+            end
+        else
+            consecutiveRowCount = 0
+        end
+    end
+
+    return matches
 end
 
 -- drops one panel in the specified row by one row and returns the new column representation

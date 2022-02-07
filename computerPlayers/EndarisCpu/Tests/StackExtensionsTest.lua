@@ -20,10 +20,6 @@ function StackExtensionsTest.stacksAreEqual()
     print("passed test stacksAreEqual")
 end
 
-function StackExtensionsTest.toRowGrid()
-
-end
-
 function StackExtensionsTest.findActions()
 
 end
