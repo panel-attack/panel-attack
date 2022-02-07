@@ -76,18 +76,11 @@ function fmainloop()
   -- Run Unit Tests
   if TESTS_ENABLED then
     -- Run all unit tests now that we have everything loaded
-<<<<<<< HEAD
     -- require("ServerQueueTests")
     -- require("PriorityQueueTests")
     -- require("StackTests")
     -- require("computerPlayers.TreeSearchComputer.TreeSearchComputerTests")
     require("computerPlayers.EndarisCpu.Tests.Tests")
-=======
-    require("ServerQueueTests")
-    require("PriorityQueueTests")
-    require("StackTests")
-    require("ComputerPlayerTests")
->>>>>>> 635d7fcb13f7df35979833aba99bd7e35e1c0727
   end
 
   while true do
@@ -1214,32 +1207,6 @@ end
 
 -- local 2pvs mode
 function main_local_vs()
-<<<<<<< HEAD
-=======
-  -- TODO: replay!
-  use_current_stage()
-  pick_use_music_from()
-  local end_text = nil
-  while true do
-    GAME.match:render()
-    wait()
-    variable_step(
-    function()
-        --TODO: maybe do this on a seperate thread?
-        if GAME.match.P1CPU then
-          GAME.match.P1CPU:run(P1)
-        end
-        if GAME.match.P2CPU then
-          GAME.match.P2CPU:run(P2)
-        end
-        P1:run()
-        P2:run()
-        assert((P1.CLOCK == P2.CLOCK) or GAME.match:matchOutcome(), "should run at same speed: " .. P1.CLOCK .. " - " .. P2.CLOCK)
-        P1:handle_pause()
-        P2:handle_pause()
-      end
-    )
->>>>>>> 635d7fcb13f7df35979833aba99bd7e35e1c0727
 
   commonGameSetup()
 

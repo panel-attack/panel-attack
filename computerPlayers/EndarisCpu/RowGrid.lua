@@ -219,3 +219,7 @@ function ColorGridColumn.GetTotalPanelCount(self)
     end
     return count
 end
+
+function ColorGridColumn.GetCountInRow(self, row)
+    return self.sourceRowGrid.gridRows[row]:GetColorCount()
+end
