@@ -158,10 +158,9 @@ local function testTableAppendToDict()
     local extraData2 = {}
     extraData2["row3"] = "412821"
 
-    --anticipated error is getting bubbled through pcall for unknown reasons
-    --assert(not pcall(table.appendTo(testData, extraData2)), "Expected error from key collision but got none")
+    assert(not pcall(function() table.appendTo(testData, extraData2) end), "Expected error from key collision but got none")
 
-    logger.trace("passed test testTableAppendTo")
+    logger.trace("passed test testTableAppendToDict")
 end
 
 local function testTableInsertListAt()
