@@ -1,6 +1,7 @@
 require("table_util")
+local logger = require("logger")
 
-local function getTestData()
+local function getTestDataList()
     local testData = {  { row = 1, column = 1, color = 2},
                         { row = 1, column = 2, color = 1},
                         { row = 2, column = 1, color = 3},
@@ -9,14 +10,33 @@ local function getTestData()
     return testData
 end
 
-local function testTableMap()
-    local testData = getTestData()
+local function getTestDataDict()
+    local testData = {}
+    testData["row1"] = "210000"
+    testData["row2"] = "330000"
+    testData["row3"] = "400000"
+    return testData
+end
+
+local function testTableMapList()
+    local testData = getTestDataList()
     local mappedTable = table.map(testData, function(data) return data.color end)
     for i=1,#testData do
         assert(testData[i].color == mappedTable[i])
     end
 
-    print("Passed test testTableMap")
+    logger.trace("passed test testTableMapList")
+end
+
+local function testTableMapDict()
+    local testData = getTestDataDict()
+    local mappedTable = table.map(testData, function(value) return string.sub(value, 1, 2) end)
+
+    assert(mappedTable["row1"] == "21")
+    assert(mappedTable["row2"] == "33")
+    assert(mappedTable["row3"] == "40")
+
+    logger.trace("passed test testTableMapDict")
 end
 
 local function testTableLength()
@@ -28,11 +48,11 @@ local function testTableLength()
 
     assert(table.length(scrambledTable) == 11)
 
-    print("Passed test testTableLength")
+    logger.trace("passed test testTableLength")
 end
 
-local function testTableFilter()
-    local testData = getTestData()
+local function testTableFilterList()
+    local testData = getTestDataList()
     local expected = {{ row = 2, column = 1, color = 3},
                       { row = 2, column = 2, color = 3}}
 
@@ -42,28 +62,58 @@ local function testTableFilter()
         assert(deep_content_equal(filteredTable[i],expected[i]))
     end
 
-    print("Passed test testTableFilter")
-
+    logger.trace("passed test testTableFilterList")
 end
 
-local function testTableAny()
-    local testData = getTestData()
-    assert(table.any(testData, function(data) return data.color == 4 end))
-    assert(not table.any(testData, function(data) return data.color == 5 end))
+local function testTableFilterDict()
+    local testData = getTestDataDict()
+    local expected = {}
+    expected["row1"] = "210000"
+    expected["row2"] = "330000"
 
-    print("Passed test testTableAny")
+    local filteredTable = table.filter(testData, function(value) return string.len(string.gsub(value, "0", "")) > 1 end)
+    assert(table.length(filteredTable) == 2)
+    for i=1, table.length(expected) do
+        assert(deep_content_equal(filteredTable[i],expected[i]))
+    end
+
+    logger.trace("passed test testTableFilterDict")
 end
 
-local function testTableAll()
-    local testData = getTestData()
-    assert(table.all(testData, function(data) return data.color end))
-    assert(not table.all(testData, function (data) return data.row > 1 end))
+local function testTableTrueForAnyList()
+    local testData = getTestDataList()
+    assert(table.trueForAny(testData, function(data) return data.color == 4 end))
+    assert(not table.trueForAny(testData, function(data) return data.color == 5 end))
 
-    print("Passed test testTableAll")
+    logger.trace("passed test testTableAnyList")
 end
 
-local function testTableAppendRange()
-    local testData = getTestData()
+local function testTableTrueForAnyDict()
+    local testData = getTestDataDict()
+    assert(table.trueForAny(testData, function(value) return string.sub(value, 2, 2) ~= "0" end))
+    assert(not table.trueForAny(testData, function(value) return string.len(value) > 6 end))
+
+    logger.trace("passed test testTableAnyDict")
+end
+
+local function testTableTrueForAllList()
+    local testData = getTestDataList()
+    assert(table.trueForAll(testData, function(data) return data.color end))
+    assert(not table.trueForAll(testData, function (data) return data.row > 1 end))
+
+    logger.trace("passed test testTableAll")
+end
+
+local function testTableTrueForAllDict()
+    local testData = getTestDataDict()
+    assert(table.trueForAll(testData, function(value) return string.len(value) == 6 end))
+    assert(not table.trueForAll(testData, function (value) return string.sub(value, 2, 2) ~= "0" end))
+
+    logger.trace("passed test testTableAllDict")
+end
+
+local function testTableAppendToList()
+    local testData = getTestDataList()
     local extraData = { { row = 4, column = 1, color = 5},
                         { row = 5, column = 1, color = 1}}
 
@@ -75,18 +125,47 @@ local function testTableAppendRange()
                         { row = 4, column = 1, color = 5},
                         { row = 5, column = 1, color = 1}}
     
-    table.appendRange(testData, extraData)
+    table.appendTo(testData, extraData)
 
     assert(#testData == #expected)
     for i=1,#expected do
         assert(deep_content_equal(testData[i],expected[i]))
     end
 
-    print("Passed test testTableAppendRange")
+    logger.trace("passed test testTableAppendToList")
 end
 
-local function testTableInsertRange()
-    local testData = getTestData()
+local function testTableAppendToDict()
+    local testData = getTestDataDict()
+    local extraData = {}
+    extraData["row4"] = "700000"
+    extraData["row5"] = "000000"
+
+    local expected =  {}
+    expected["row1"] = "210000"
+    expected["row2"] = "330000"
+    expected["row3"] = "400000"
+    expected["row4"] = "700000"
+    expected["row5"] = "000000"
+
+    table.appendTo(testData, extraData)
+
+    assert(table.length(testData) == table.length(expected))
+    for key, value in pairs(expected) do
+        assert(deep_content_equal(testData[key], value), "Testdata " .. json.encode(testData[key]) .. " does not match expected data " .. json.encode(value))
+    end
+
+    local extraData2 = {}
+    extraData2["row3"] = "412821"
+
+    --anticipated error is getting bubbled through pcall for unknown reasons
+    --assert(not pcall(table.appendTo(testData, extraData2)), "Expected error from key collision but got none")
+
+    logger.trace("passed test testTableAppendTo")
+end
+
+local function testTableInsertListAt()
+    local testData = getTestDataList()
     local extraData = { { row = 4, column = 1, color = 5},
                         { row = 5, column = 1, color = 1}}
 
@@ -98,45 +177,76 @@ local function testTableInsertRange()
                         { row = 2, column = 2, color = 3},
                         { row = 3, column = 1, color = 4}}
     
-    table.insertRange(testData, 3, extraData)
+    table.insertListAt(testData, 3, extraData)
 
     assert(#testData == #expected)
     for i=1,#expected do
         assert(deep_content_equal(testData[i],expected[i]))
     end
 
-    print("Passed test testTableInsertRange")
+    logger.trace("passed test testTableInsertListAt")
 end
 
-local function testTableContains()
-    local testData = getTestData()
+local function testTableContainsList()
+    local testData = getTestDataList()
     local data1 = { row = 1, column = 1, color = 2}
     local data2 = { row = 4, column = 1, color = 55}
 
     assert(table.contains(testData, data1))
     assert(not table.contains(testData, data2))
 
-    print("Passed test testTableInsertRangeWithPos")
+    logger.trace("passed test testTableContainsList")
 end
 
-local function testTableGetIterator()
-    local testData = getTestData()
-    local i = 1
-    local n = #testData
+local function testTableContainsDict()
+    local testData = getTestDataDict()
 
-    for data in table.getIterator(testData) do
-        assert( i <= n)
-        assert(deep_content_equal(data, testData[i]))
-        i = i + 1
+    local data1 = "330000"
+    local data2 = "helloWorld"
+
+    assert(table.contains(testData, data1))
+    assert(not table.contains(testData, data2))
+
+    logger.trace("passed test testTableContainsDict")
+end
+
+-- how to search the keys of a dictionary using trueForAny, trueForAll or contains
+local function testTableContainsDictKeys()
+    local testData = getTestDataDict()
+    local keys = table.getKeys(testData)
+    local data1 = "row3"
+    local data2 = "row4"
+
+    assert(table.contains(keys, data1))
+    assert(not table.contains(keys, data2))
+
+    logger.trace("passed test testTableContainsDictKeys")
+end
+
+local function testTableGetKeys()
+    local testData = getTestDataDict()
+    local keys = table.getKeys(testData)
+
+    for key, _ in pairs(testData) do
+        assert(table.contains(keys, key))
     end
+
+    logger.trace("passed test testTableGetKeys")
 end
 
-testTableAll()
-testTableAny()
-testTableContains()
-testTableFilter()
-testTableGetIterator()
-testTableInsertRange()
-testTableAppendRange()
+testTableGetKeys()
+testTableTrueForAllList()
+testTableTrueForAllDict()
+testTableTrueForAnyList()
+testTableTrueForAnyDict()
+testTableContainsList()
+testTableContainsDict()
+testTableContainsDictKeys()
+testTableFilterList()
+testTableFilterDict()
+testTableInsertListAt()
+testTableAppendToList()
+testTableAppendToDict()
 testTableLength()
-testTableMap()
+testTableMapList()
+testTableMapDict()
