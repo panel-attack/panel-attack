@@ -82,20 +82,19 @@ end
 
 function Defend.DownstackIntoClear(self)
     local defragmentationPercentage = StackExtensions.getFragmentationPercentage(self.cpu.stack)
-    local defenseStack
+    local rowGrid
 
     if defragmentationPercentage > self.cpu.config.DefragmentationPercentageThreshold then
-        defenseStack = self.cpu.stack
+        rowGrid = RowGrid.FromStack(self.cpu.stack)
         -- TODO Endaris: get biggest connected panel section that connects directly to garbage and use that as the defense stack instead
     else
-        defenseStack = self.cpu.stack
+        rowGrid = RowGrid.FromStack(self.cpu.stack)
     end
 
-    local rowgrid = StackExtensions.toRowGrid(defenseStack)
-    local potentialClearColors = self:getPotentialClearColors(rowgrid)
+    local potentialClearColors = self:getPotentialClearColors(rowGrid)
     local downstackPairs = {}
     for i=1,#potentialClearColors do
-        local pairs = self:getDownstackPairs(rowgrid, potentialClearColors[i])
+        local pairs = self:getDownstackPairs(rowGrid, potentialClearColors[i])
         table.insert(downstackPairs, {color = potentialClearColors[i], pairs = pairs})
     end
 
@@ -123,50 +122,22 @@ function Defend.DownstackIntoClear(self)
 end
 
 function Defend.getPotentialClearColors(self, rowgrid)
-    -- first eliminate the colors that don't even have 3 panels in the stack
     local potentialColors = {}
-    local panelSumForColor = 0
-    -- iterating to 8 instead of #grid[i] because color 9 is garbage which is included in the rowGrid to be able to calculate the empty panels per line accurately but cannot form matches
+    -- first eliminate the colors that don't even have 3 panels in the stack
+    -- iterating to 8 instead of #grid[i] because 8 is shock, 9 is garbage and 10 is a helper color
     for color=1,8 do
-        for row=1,#rowgrid do
-            panelSumForColor = panelSumForColor + rowgrid[row][color]
-        end
-        if panelSumForColor >= 3 then
+        local colorColumn = rowgrid:GetColorColumn(color)
+        if colorColumn:GetTotalPanelCount() >= 3 then
             table.insert(potentialColors, color)
         end
     end
 
-    -- measure the empty panels per row to see later how low the stack can potentially get
-    local emptyPanelsCount = {}
-    for row=1,#rowgrid do
-        local emptyPanelsInRow = 6
-        for color=1,#rowgrid[1] do
-            emptyPanelsInRow = emptyPanelsInRow - rowgrid[row][color]
-        end
-        emptyPanelsCount[row] = emptyPanelsInRow
-    end
-
-    -- this looks kind of ugly, maybe make a RowGrid class later and wrap part of it in some Helper functions on that class
-    local stackTopRow = StackExtensions.getTopRowWithPanelsFromRowGrid(rowgrid)
+    local stackMinimumTopRow = rowgrid:GetMinimumTopRowIndex()
     for i=#potentialColors, 1, -1 do
-        local topRow = self:findTopRowForColorClearOnRowGrid(rowgrid, potentialColors[i])
-        if topRow < stackTopRow then
-            local maxEmptyPanelsCountAbovePotentialClear = (#emptyPanelsCount - (topRow + 1)) * 6
-            local emptyPanelsAbovePotentialClear = 0
-            for j=topRow+1,#emptyPanelsCount do
-                emptyPanelsAbovePotentialClear = emptyPanelsAbovePotentialClear + emptyPanelsCount[j]
-            end
-            local panelsAbovePotentialClear = maxEmptyPanelsCountAbovePotentialClear - emptyPanelsAbovePotentialClear
-
-            local emptyPanelsAtAndBelowPotentialClear = 0
-            for j=1,topRow do
-                emptyPanelsAtAndBelowPotentialClear = emptyPanelsAtAndBelowPotentialClear + emptyPanelsCount[j]
-            end
-
-            if panelsAbovePotentialClear > emptyPanelsAtAndBelowPotentialClear then
-                -- clear cannot possibly reach the top row even after completely flattening the stack
-                table.remove(potentialColors, i)
-            end
+        local clearTopRow = self:findTopRowForColorClearOnRowGrid(rowgrid, potentialColors[i])
+        if clearTopRow < stackMinimumTopRow then
+            -- clear cannot possibly reach the top row even after completely flattening the stack
+            table.remove(potentialColors, i)
         end
     end
 
@@ -199,13 +170,13 @@ function Defend.getTheoreticalDownstackInstructions(rowgrid, color)
 end
 
 function Defend.getTopMostMatchStateAsColorGridRow(rowgrid, color)
-    local colorGridColumn = StackExtensions.getRowGridColumn(rowgrid, color)
+    local colorGridColumn = RowGrid:GetColorColumn(color)
     local gridTopRow = StackExtensions.getTopRowWithPanelsFromRowGrid(rowgrid)
     local clearTopRow = gridTopRow
 
-    while not Defend.colorGridColumnIsAMatch(colorGridColumn) do
+    while #colorGridColumn.GetLatentMatches() == 0 do
         Defend.runDownRowGridColumn(colorGridColumn, clearTopRow)
-        if colorGridColumn[clearTopRow].colorCount == 0 then
+        if colorGridColumn.GetCountInRow(clearTopRow) == 0 then
             -- only possible explanation is that the panel in the top row trickled down because of an empty row
             clearTopRow = clearTopRow - 1
         end

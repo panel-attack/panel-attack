@@ -211,3 +211,11 @@ function ColorGridColumn.DropPanel(self, row)
         return nil
     end
 end
+
+function ColorGridColumn.GetTotalPanelCount(self)
+    local count = 0
+    for row = 1, #self.sourceRowGrid.gridRows do
+        count = count + self.sourceRowGrid.gridRows[row]:GetCount(self.color)
+    end
+    return count
+end
