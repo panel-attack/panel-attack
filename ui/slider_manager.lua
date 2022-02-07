@@ -42,8 +42,6 @@ end
 
 function slider_manager.mousepressed(x, y)
   for id, slider in pairs(sliders) do
-    print(slider.is_visible)
-    print(slider:isSelected(x, y))
     if slider.is_visible and slider:isSelected(x, y) then
       selected_slider = slider
       selected_slider:setValue(x - selected_slider.x)

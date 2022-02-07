@@ -73,7 +73,6 @@ function Game:_setup_co()
   
   graphics_util.gprint(loc("ld_theme"), unpack(self.main_menu_screen_pos))
   coroutine.yield()
-  print()
   theme_init()
   
   -- stages and panels before characters since they are part of their loading!
@@ -108,7 +107,8 @@ function Game:_setup_co()
   scenes = {
     require("scenes.main_menu"),
     require("scenes.endless_menu"),
-    require("scenes.time_attack_menu")
+    require("scenes.time_attack_menu"),
+    require("scenes.vs_self_menu")
   }
   for i, scene in ipairs(scenes) do
     scene:init()

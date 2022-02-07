@@ -165,21 +165,6 @@ function time_attack_menu:update()
   local arrowx = menu_options[selected_id].x - 10 + animationX
   local arrowy = menu_options[selected_id].y + menu_options[selected_id].height / 4
   GAME.gfx_q:push({love.graphics.draw, {arrow, arrowx, arrowy, 0, 1, 1, 0, 0}})
-  
-  if wait_game_update ~= nil then
-    has_game_update = wait_game_update:pop()
-    if has_game_update ~= nil and has_game_update then
-      wait_game_update = nil
-      GAME_UPDATER_GAME_VERSION = "NEW VERSION FOUND! RESTART THE GAME!"
-    end
-  end
-
-  if GAME_UPDATER_GAME_VERSION then
-    gprintf("version: " .. GAME_UPDATER_GAME_VERSION, -2, 705, canvas_width, "right")
-    if has_game_update then
-      menu_draw(panels[config.panels].images.classic[1][1], 1262, 685)
-    end
-  end
   time = time + 1
 end
 
