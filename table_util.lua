@@ -60,19 +60,10 @@ function table.trueForAll(tab, condition)
 end
 
 -- appends all entries of tab to the end of list
-function table.appendTo(list, tab)
-    if table.isList(tab) then
-        for i = 1, #tab do
-            table.insert(list, #list + 1, tab[i])
-        end
-    else
-        for key, value in pairs(tab) do
-            if list[key] == nil then
-                list[key] = value
-            else
-                error("Key collision for key " .. json.encode(key) .. " while trying to append to dictionary\n" .. debug.traceback(mainloop))
-            end
-        end
+function table.appendToList(list, tab)
+    assert(table.isList(tab), "insertListAt can only be used with continuously integer indexed tables")
+    for i = 1, #tab do
+        table.insert(list, #list + 1, tab[i])
     end
 end
 
@@ -117,7 +108,8 @@ end
 
 -- returns true if the table uses sequential integer indices without gaps
 function table.isList(tab)
-    return #tab == table.length(tab)
+    -- the tab[1] check is just to get dictionaries out of the way really quickly
+    return tab[1] ~= nil and #tab == table.length(tab)
 end
 
 -- returns all keys of a table, sorted using the standard comparator to account for sequence based tables

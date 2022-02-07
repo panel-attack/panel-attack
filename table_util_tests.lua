@@ -125,7 +125,7 @@ local function testTableAppendToList()
                         { row = 4, column = 1, color = 5},
                         { row = 5, column = 1, color = 1}}
     
-    table.appendTo(testData, extraData)
+    table.appendToList(testData, extraData)
 
     assert(#testData == #expected)
     for i=1,#expected do
@@ -133,34 +133,6 @@ local function testTableAppendToList()
     end
 
     logger.trace("passed test testTableAppendToList")
-end
-
-local function testTableAppendToDict()
-    local testData = getTestDataDict()
-    local extraData = {}
-    extraData["row4"] = "700000"
-    extraData["row5"] = "000000"
-
-    local expected =  {}
-    expected["row1"] = "210000"
-    expected["row2"] = "330000"
-    expected["row3"] = "400000"
-    expected["row4"] = "700000"
-    expected["row5"] = "000000"
-
-    table.appendTo(testData, extraData)
-
-    assert(table.length(testData) == table.length(expected))
-    for key, value in pairs(expected) do
-        assert(deep_content_equal(testData[key], value), "Testdata " .. json.encode(testData[key]) .. " does not match expected data " .. json.encode(value))
-    end
-
-    local extraData2 = {}
-    extraData2["row3"] = "412821"
-
-    assert(not pcall(function() table.appendTo(testData, extraData2) end), "Expected error from key collision but got none")
-
-    logger.trace("passed test testTableAppendToDict")
 end
 
 local function testTableInsertListAt()
@@ -175,7 +147,7 @@ local function testTableInsertListAt()
                         { row = 2, column = 1, color = 3},
                         { row = 2, column = 2, color = 3},
                         { row = 3, column = 1, color = 4}}
-    
+
     table.insertListAt(testData, 3, extraData)
 
     assert(#testData == #expected)
@@ -245,7 +217,6 @@ testTableFilterList()
 testTableFilterDict()
 testTableInsertListAt()
 testTableAppendToList()
-testTableAppendToDict()
 testTableLength()
 testTableMapList()
 testTableMapDict()
