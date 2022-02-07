@@ -1813,8 +1813,6 @@ function Stack.simulate(self)
         else
           -- no music loaded
         end
-        musics_to_use = stages[current_stage].musics
-
 
         local wantsDangerMusic = self.danger_music
         if self.garbage_target and self.garbage_target.danger_music then
