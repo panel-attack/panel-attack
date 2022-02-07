@@ -115,6 +115,7 @@ function table.getRandomElement(tab)
     end
 end
 
+-- returns true if the table uses sequential integer indices without gaps
 function table.isList(tab)
     return #tab == table.length(tab)
 end
@@ -128,9 +129,4 @@ function table.getKeys(tab)
     table.sort(keys)
 
     return keys
-end
-
--- returns all values of a table, sorted using the standard comparator to account for sequence based tables
-function table.getValues(tab)
-
 end
