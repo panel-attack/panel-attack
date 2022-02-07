@@ -174,7 +174,10 @@ function Defend.getTopMostMatchStateAsColorGridRow(rowgrid, color)
     local gridTopRow = StackExtensions.getTopRowWithPanelsFromRowGrid(rowgrid)
     local clearTopRow = gridTopRow
 
-    while #colorGridColumn.GetLatentMatches() == 0 do
+    while #table.filter(colorGridColumn.GetLatentMatches(),
+        function(match) if match.type == "V" then return match.rows[3] == clearTopRow
+                        else return match.row == clearTopRow end
+                    end) == 0 do
         Defend.runDownRowGridColumn(colorGridColumn, clearTopRow)
         if colorGridColumn.GetCountInRow(clearTopRow) == 0 then
             -- only possible explanation is that the panel in the top row trickled down because of an empty row
@@ -184,7 +187,7 @@ function Defend.getTopMostMatchStateAsColorGridRow(rowgrid, color)
 
     -- validate that no row has negative emptyPanels (which would make the downstack scenario categorically impossible)
     for row=clearTopRow, 1, -1 do
-        if colorGridColumn.emptyPanelsCount < 0 then
+        if rowgrid:getEmptyPanelsCountInRow(row) < 0 then
             return nil
         end
     end
@@ -208,14 +211,11 @@ function Defend.colorGridColumnIsAMatch(colorGridColumn, topRow)
 end
 
 function Defend.runDownRowGridColumn(colorGridColumn, topRow)
-    for row=topRow, 1, -1 do
-        if colorGridColumn[row].colorCount == 0 and row >= topRow - 2 then
+    for row=topRow, topRow - 2, -1 do
+        if colorGridColumn:GetCountInRow(row) == 0 then
             assert(row < topRow, "if you see this, something is very fishy here")
-            colorGridColumn[row + 1].colorCount = colorGridColumn[row + 1].colorCount - 1
-            colorGridColumn[row + 1].emptyPanelsCount = colorGridColumn[row + 1].emptyPanelsCount + 1
-            colorGridColumn[row].colorCount = colorGridColumn[row].colorCount + 1
-            colorGridColumn[row].emptyPanelsCount = colorGridColumn[row].emptyPanelsCount - 1
-            return colorGridColumn
+            colorGridColumn:DropPanel(row)
+            return
         end
     end
 end

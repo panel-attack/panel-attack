@@ -625,3 +625,20 @@ function StackExtensions.getGarbageByPanels(panels)
 
   return garbagePanels
 end
+
+function StackExtensions.getActionPanelsFromStack(stack)
+  return StackExtensions.getActionPanelsFromPanels(stack.panels)
+end
+
+function StackExtensions.getActionPanelsFromPanels(panels)
+  local actionPanels = {}
+
+  for row = 1, #panels do
+    actionPanels[row] = {}
+    for column = 1, #panels[row] do
+      actionPanels[row][column] = ActionPanel(panels[row][column], row, column)
+    end
+  end
+
+  return actionPanels
+end

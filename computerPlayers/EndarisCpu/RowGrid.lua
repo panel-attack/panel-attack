@@ -111,6 +111,10 @@ function RowGrid.GetMinimumTopRowIndex(self)
     end
 end
 
+function RowGrid.GetEmptyPanelsCountInRow(self, row)
+  return self.gridRows[row].emptyPanelsCount
+end
+
 RowGridRow = class(function(self, rowIndex, colorColumns)
     self.rowIndex = rowIndex
     self.colorColumns = colorColumns

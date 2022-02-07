@@ -58,3 +58,7 @@ end
 function GridVector.IsInAdjacentRow(self, vector)
     return math.abs(self:difference(vector).row) == 1
 end
+
+function GridVector.copy(self)
+  return GridVector(self.row, self.column)
+end

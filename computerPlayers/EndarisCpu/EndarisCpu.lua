@@ -460,14 +460,13 @@ ActionPanel =
         actionPanel.panel = panel
         actionPanel.id = panel.id
         actionPanel.color = panel.color
-        actionPanel.row = row
-        actionPanel.column = column
         actionPanel.vector = GridVector(row, column)
+        actionPanel.row = function() return actionPanel.vector.row end
+        actionPanel.column = function() return actionPanel.vector.column end
         actionPanel.targetVector = nil
         actionPanel.cursorStartPos = nil
         actionPanel.isSetupPanel = false
         actionPanel.isExecutionPanel = false
-        -- add a reference to the original panel to track state etc.
     end
 )
 
@@ -500,4 +499,20 @@ end
 
 function ActionPanel.equals(self, otherPanel)
     return self.id == otherPanel.id
+end
+
+function ActionPanel.setVector(self, vector)
+  self.vector = vector
+end
+
+function ActionPanel.setColumn(self, column)
+  self.vector = GridVector(self.row, column)
+end
+
+function ActionPanel.setRow(self, row)
+  self.vector = GridVector(row, self.column)
+end
+
+function ActionPanel.isMatchable(self)
+  return self.color ~= 0 and self.color ~= 9
 end
