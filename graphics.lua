@@ -4,7 +4,6 @@ require("util")
 local floor = math.floor
 local ceil = math.ceil
 
-
 local shake_arr = {}
 
 -- Setup the shake_arr data used for rendering the stack shake animation
@@ -993,11 +992,6 @@ function Stack.render_telegraph(self)
   end
 
   for frame_earned, attacks_this_frame in pairs(telegraph_to_render.attacks) do
-    -- print("frame_earned:")
-    -- print(frame_earned)
-    -- print(#card_animation)
-    -- print(self.CLOCK)
-    -- print(GARBAGE_TRANSIT_TIME)
     local frames_since_earned = self.CLOCK - frame_earned
       if frames_since_earned <= #card_animation then
         --don't draw anything yet, card animation is still in progress.
@@ -1054,10 +1048,7 @@ function Stack.render_telegraph(self)
   end
 
   --then draw the telegraph's garbage queue, leaving an empty space until such a time as the attack arrives (earned_frame-GARBAGE_TRANSIT_TIME)
-  -- print("BBBBBB")
-  -- print("telegraph_to_render.garbage_queue.ghost_chain: "..(telegraph_to_render.garbage_queue.ghost_chain or "nil"))
   local g_queue_to_draw = telegraph_to_render.garbage_queue:makeCopy()
-  --print("g_queue_to_draw.ghost_chain: "..(g_queue_to_draw.ghost_chain or "nil"))
   local current_block = g_queue_to_draw:pop()
   local draw_x = telegraph_to_render.pos_x
   local draw_y = telegraph_to_render.pos_y
@@ -1123,4 +1114,3 @@ function draw_pause()
   gprintf(loc("pause"), 0, 330, canvas_width, "center", nil, 1, large_font)
   gprintf(loc("pl_pause_help"), 0, 360, canvas_width, "center", nil, 1)
 end
-

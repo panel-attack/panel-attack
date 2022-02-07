@@ -1,4 +1,5 @@
 require("consts")
+local logger = require("logger")
 
 local function load_img(path_and_name)
   local img = nil
@@ -8,13 +9,13 @@ local function load_img(path_and_name)
     end
   )
   if not status then
-    print("Error loading image: " .. path_and_name .. 
+    logger.error("Error loading image: " .. path_and_name .. 
       " Check it is valid and try resaving it in an image editor. If you are not the owner please get them to update it or download the latest version.")
   end
   if img == nil then
     return nil
   end
-  -- print("loaded asset: "..path_and_name)
+  -- logger.debug("loaded asset: "..path_and_name)
   local ret = love.graphics.newImage(img)
   ret:setFilter("nearest","nearest")
   return ret
@@ -149,7 +150,7 @@ function standard_pixel_font_map()
   for i = 10, 35, 1 do
     local characterString = string.char(97+(i-10))
     fontMap[characterString] = i
-    --print(characterString .. " = " .. fontMap[characterString])
+    --logger.debug(characterString .. " = " .. fontMap[characterString])
   end
 
   return fontMap

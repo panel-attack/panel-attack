@@ -15,7 +15,7 @@ Telegraph = class(function(self, sender, owner)
     self.owner = owner -- The stack that is receiving the garbage
     self.attacks = {} -- A copy of the chains and combos earned used to render the animation of going to the telegraph
     self.pendingGarbage = {} -- Table of garbage that needs to be pushed into the telegraph at specific CLOCK times
-    self.pendingChainingEnded = {} -- A list of CLOCK times where chaining ended
+    self.pendingChainingEnded = {} -- A list of CLOCK times where chaining ended in the future
     self.senderCurrentlyChaining = false -- Set when we start a new chain, cleared when the sender is done chaining, used to know if we should grow a chain or start a new one, and to know if we are allowed to send the attack since the sender is done.
     -- (typically sending is prevented by garbage chaining)
   end)
@@ -81,7 +81,6 @@ Telegraph = class(function(self, sender, owner)
   -- Adds a piece of garbage to the queue
   function Telegraph.privatePush(self, attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned)
 
-    print("telegraph.push")
     local x_displacement 
     if not metal_count then
       metal_count = 0
@@ -103,7 +102,7 @@ Telegraph = class(function(self, sender, owner)
   end
   
   function Telegraph.add_combo_garbage(self, n_combo, n_metal, frame_earned)
-    print("Telegraph.add_combo_garbage "..(n_combo or "nil").." "..(n_metal or "nil"))
+    logger.debug("Telegraph.add_combo_garbage "..(n_combo or "nil").." "..(n_metal or "nil"))
     local stuff_to_send = {}
     for i=3,n_metal do
       stuff_to_send[#stuff_to_send+1] = {6, 1, true, false, frame_earned = frame_earned}
@@ -149,10 +148,6 @@ Telegraph = class(function(self, sender, owner)
 
     local result = self.garbage_queue:grow_chain(frame_earned, newChain)
     self.stoppers.chain[self.garbage_queue.chain_garbage.last] = frame_earned + GARBAGE_TRANSIT_TIME + GARBAGE_DELAY
-    --print(frame_earned)
-    --print("in Telegraph.grow_chain")
-    --print("table_to_string(self.stoppers.chain):")
-    --print(table_to_string(self.stoppers.chain))
     return result
   end
   
@@ -187,12 +182,9 @@ Telegraph = class(function(self, sender, owner)
     end
     --remove any chain stoppers that expire this frame,
     for chain_idx, chain_release_frame in pairs(subject.stoppers.chain) do
-      if self.which == 1 then
-        print("releasting")
-      end
       if chain_release_frame <= time_to_check then
-        print("in Telegraph.pop_all_ready_garbage")
-        print("removing a stopper")
+        logger.debug("in Telegraph.pop_all_ready_garbage")
+        logger.debug("removing a stopper")
         subject.stoppers.chain[chain_idx] = nil
       else
         n_chain_stoppers = n_chain_stoppers + 1
@@ -212,15 +204,12 @@ Telegraph = class(function(self, sender, owner)
     if subject.stoppers.metal and subject.stoppers.metal <= time_to_check then
       subject.stoppers.metal = nil
     end
-    -- print(P1.CLOCK)
-    -- print("table_to_string(subject.stoppers.chain):-")
-    -- print(table_to_string(subject.stoppers.chain))
     
     while subject.garbage_queue.chain_garbage:peek() do
 
       if not subject.stoppers.chain[subject.garbage_queue.chain_garbage.first] and subject.garbage_queue.chain_garbage:peek().finalized then
-        print("in Telegraph.pop_all_ready_garbage")
-        print("popping the first chain")
+        logger.debug("in Telegraph.pop_all_ready_garbage")
+        logger.debug("popping the first chain")
         ready_garbage[#ready_garbage+1] = subject.garbage_queue:pop()
       else 
         logger.debug("could be chaining or stopper")

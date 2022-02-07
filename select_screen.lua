@@ -890,6 +890,8 @@ function select_screen.main()
           character_loader_wait()
           stage_loader_wait()
           GAME.match = Match("vs", GAME.battleRoom)
+
+          -- Use the seed the server gives us if it makes one, else generate a basic one off data both clients have.
           local seed
           if msg.seed or (replay_of_match_so_far and replay_of_match_so_far.vs and replay_of_match_so_far.vs.seed) then
             seed = msg.seed or (replay_of_match_so_far and replay_of_match_so_far.vs and replay_of_match_so_far.vs.seed)

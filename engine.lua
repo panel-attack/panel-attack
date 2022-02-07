@@ -16,7 +16,9 @@ local clone_pool = {}
 Stack =
   class(
   function(s, which, match, is_local, panels_dir, speed, difficulty, player_number, wantsCanvas)
-    wantsCanvas = wantsCanvas or 1
+    if wantsCanvas == nil then
+      wantsCanvas = true
+    end
     s.match = match
     s.character = config.character
     s.max_health = 1
@@ -92,7 +94,7 @@ Stack =
     s.gpanel_buffer = ""
     s.gpanel_buffer_record = ""
     s.input_buffer = ""
-    s.confirmedInput = "" -- All inputs the player has input that are confirmed by remote
+    s.confirmedInput = "" -- All inputs the player has input ever
     s.panels = {}
     s.width = 6
     s.height = 12
@@ -204,7 +206,7 @@ Stack =
     s.analytic = AnalyticsInstance(s.is_local)
 
     if s.match.mode == "vs" then
-      s.telegraph = Telegraph(s, s) -- Telegraph holds the garbage that hasn't been set yet and also tracks the attack animations
+      s.telegraph = Telegraph(s, s) -- Telegraph holds the garbage that hasn't been committed yet and also tracks the attack animations
       -- NOTE: this is the telegraph above this stack, so the opponents puts garbage in this stack.
     end
 
@@ -349,8 +351,6 @@ function Stack.rollbackCopy(self, source, other)
   other.countdown_cursor_state = source.countdown_cursor_state
   other.countdown_cur_speed = source.countdown_cur_speed
   other.countdown_timer = source.countdown_timer
-
-
   other.CLOCK = source.CLOCK
   other.game_stopwatch = source.game_stopwatch
   other.game_stopwatch_running = source.game_stopwatch_running
@@ -408,10 +408,10 @@ end
 function Stack.rollbackToFrame(self, frame) 
   local currentFrame = self.CLOCK
   local difference = currentFrame - frame
-  assert(difference <= MAX_LAG, "Lag is too high > 1.5 seconds")
+  assert(difference <= MAX_LAG, "Latency is too high :(")
   if frame < currentFrame then
     local prev_states = self.prev_states
-    print("Rolling back " .. self.which .. " to " .. frame)
+    logger.debug("Rolling back " .. self.which .. " to " .. frame)
     assert(prev_states[frame])
     self:restoreFromRollbackCopy(prev_states[frame])
 
@@ -481,7 +481,7 @@ function Stack.debugRollbackTest(self)
   end
 
   if diverged then
-    print("Stacks have diverged")
+    logger.error("Stacks have diverged")
     self:rollbackToFrame(targetFrame-1)
     self:run()
   end
@@ -607,14 +607,11 @@ function GarbageQueue.push(self, garbage)
     for k,v in pairs(garbage) do
       local width, height, metal, from_chain, finalized = unpack(v)
       if width and height then
-        --print("GarbageQueue.push")
-        --print("frame_earned: "..v.frame_earned)
         if metal then
           self.metal:push(v)
         elseif from_chain or height > 1 then
           if not from_chain then
             error("ERROR: garbage with height > 1 was not marked as 'from_chain'")
-            logger.warn("adding it to the chain garbage queue anyway")
           end
           self.chain_garbage:push(v)
           self.ghost_chain = nil
@@ -623,8 +620,6 @@ function GarbageQueue.push(self, garbage)
         end
       end
     end
-    --print("after push, the queue is:")
-    --print(self:to_string())
   end
 end
 
@@ -656,7 +651,6 @@ function GarbageQueue.pop(self, just_peeking)
   --check for any metal garbage, and return one if any
   if self.metal:peek() then
     if not just_peeking then
-      print("popping metal garbage from the queue")
       return self.metal:pop()
     else
       return self.metal:peek()
@@ -707,22 +701,11 @@ end
 -- or add a 6-wide if there is not chain garbage yet in the queue
 function GarbageQueue.grow_chain(self,frame_earned, newChain)
   local result = nil
-  --print("in GarbageQueue.grow_chain")
-  --print("frame_earned: "..(frame_earned or "nil"))
-  --print("json.encode(self.sender.chains):")
-  --print(json.encode(self.sender.chains))
+
   if newChain then
     result = {{6,1,false,true, frame_earned=frame_earned, finalized=false}}
     self:push(result) --a garbage block 6-wide, 1-tall, not metal, from_chain
   else 
-    --print("in GarbageQueue.grow_chain")
-    --print("self.sender.CLOCK:")
-    --print(self.sender.CLOCK)
-    --print("self.stack.chain_counter = "..(self.stack.chain_counter or "nil"))
-    --print("self.chain_garbage:len() = "..self.chain_garbage:len())
-    --print(self:to_string())
-    --print("table_to_string(self.chain_garbage):")
-    --print(table_to_string(self.chain_garbage))
     result = self.chain_garbage[self.chain_garbage.first]
     result[2]--[[height]] = result[2]--[[height]] + 1
     result.frame_earned = frame_earned
@@ -1000,7 +983,7 @@ function Stack.shouldRun(self, runsSoFar)
   return false
 end
 
--- Update everything for the stack based on inputs. Will update many times if needed to catch up.
+-- Runs one step of the stack.
 function Stack.run(self)
   if GAME.gameIsPaused then
     return
@@ -1039,7 +1022,7 @@ end
 function Stack.receiveConfirmedInput(self, input)
   self.confirmedInput = self.confirmedInput .. input
   self.input_buffer = self.input_buffer .. input
-  --print("Player " .. self.which .. " got new input. Total length: " .. string.len(self.confirmedInput))
+  --logger.debug("Player " .. self.which .. " got new input. Total length: " .. string.len(self.confirmedInput))
 end
 
 -- Enqueue a card animation
@@ -1506,7 +1489,7 @@ function Stack.simulate(self)
               panel.state = "popping"
               panel.timer = panel.combo_index * self.FRAMECOUNT_POP
             elseif panel.state == "popping" then
-              --print("POP")
+              --logger.debug("POP")
               if (panel.combo_size > 6) or self.chain_counter > 1 then
                 popsize = "normal"
               end
@@ -1742,23 +1725,24 @@ function Stack.simulate(self)
         self.panels_in_top_row = true
       end
     end
-    local garbage_fits_in_populated_top_row 
 
-    if self.garbage_q:len() > 0 then
-      --even if there are some panels in the top row,
-      --check if the next block in the garbage_q would fit anyway
-      --ie. 3-wide garbage might fit if there are three empty spaces where it would spawn
-      garbage_fits_in_populated_top_row = true
-      local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
-      local cols = self.garbage_cols[next_garbage_block_width]
-      local spawn_col = cols[cols.idx]
-      local spawn_row = #self.panels
-      for idx=spawn_col, spawn_col+next_garbage_block_width-1 do
-        if prow[idx]:dangerous() then 
-          garbage_fits_in_populated_top_row = nil
-        end
-      end
-    end
+    -- local garbage_fits_in_populated_top_row 
+    -- if self.garbage_q:len() > 0 then
+    --   --even if there are some panels in the top row,
+    --   --check if the next block in the garbage_q would fit anyway
+    --   --ie. 3-wide garbage might fit if there are three empty spaces where it would spawn
+    --   garbage_fits_in_populated_top_row = true
+    --   local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
+    --   local cols = self.garbage_cols[next_garbage_block_width]
+    --   local spawn_col = cols[cols.idx]
+    --   local spawn_row = #self.panels
+    --   for idx=spawn_col, spawn_col+next_garbage_block_width-1 do
+    --     if prow[idx]:dangerous() then 
+    --       garbage_fits_in_populated_top_row = nil
+    --     end
+    --   end
+    -- end
+    
     -- If any panels (dangerous or not) are in rows above the top row, garbage should not fall.
     for row_idx = top_row + 1, #self.panels do
       for col_idx = 1, width do
@@ -2006,33 +1990,7 @@ function Stack.behindRollback(self)
 end
 
 function Stack.shouldChangeMusic(self)
-  local result = not game_is_paused and self.which == 1 and not GAME.preventSounds
-
-  if result then
-    if self:game_ended() or self.canvas == nil then
-      result = false
-    end
-
-    -- If we are still catching up from rollback don't play sounds again
-    if self:behindRollback() then
-      result = false
-    end
-
-    if P1.play_to_end then
-      result = false
-    end
-
-    if P2 and P2.play_to_end then
-      result = false
-    end
-  end
-
-  return result
-end
-
-
-function Stack.shouldChangeSoundEffects(self)
-  local result = not game_is_paused and not SFX_mute and not GAME.preventSounds
+  local result = not GAME.gameIsPaused and not GAME.preventSounds
 
   if result then
     if self:game_ended() or self.canvas == nil then
@@ -2048,7 +2006,17 @@ function Stack.shouldChangeSoundEffects(self)
       result = false
     end
 
+    if self.garbage_target and self.garbage_target.play_to_end then
+      result = false
+    end
   end
+
+  return result
+end
+
+
+function Stack.shouldChangeSoundEffects(self)
+  local result = self:shouldChangeMusic() and not SFX_mute
 
   return result
 end
@@ -2266,7 +2234,7 @@ end
 -- drops a width x height garbage.
 function Stack.drop_garbage(self, width, height, metal)
 
-  print("dropping garbage at frame "..self.CLOCK)
+  logger.debug("dropping garbage at frame "..self.CLOCK)
   local spawn_row = self.height + 1
 
   -- Do one last check for panels in the way.
@@ -2519,7 +2487,7 @@ function Stack.check_matches(self)
   if (combo_size ~= 0) then
     self.combos[self.CLOCK] = combo_size
     if self.garbage_target and self.garbage_target.telegraph and metal_count == 3 and combo_size == 3 then
-      self.garbage_target.telegraph:push("combo", combo_size, metal_count,first_panel_col, first_panel_row, self.CLOCK)
+      self.garbage_target.telegraph:push("combo", combo_size, metal_count, first_panel_col, first_panel_row, self.CLOCK)
     end
     self.analytic:register_destroyed_panels(combo_size)
     if (combo_size > 3) then
@@ -2538,7 +2506,7 @@ function Stack.check_matches(self)
 
       self:enqueue_card(false, first_panel_col, first_panel_row, combo_size)
       if self.garbage_target and self.garbage_target.telegraph then
-        self.garbage_target.telegraph:push("combo", combo_size, metal_count,first_panel_col, first_panel_row, self.CLOCK)
+        self.garbage_target.telegraph:push("combo", combo_size, metal_count, first_panel_col, first_panel_row, self.CLOCK)
       end
       --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
       --          first_panel_row<<4+P1StackPosY+self.displacement-9);

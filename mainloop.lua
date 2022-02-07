@@ -315,7 +315,6 @@ local function handle_pause(self)
           reset_filters()
         else
           use_current_stage()
-          leftover_time = 1 / 120 -- prevents any left over time from getting big after a pause
         end
       end
     end

@@ -64,12 +64,10 @@ for k, animation in ipairs(leftward_or_rightward) do
     telegraph_attack_animation[animation][frame].dy = distance * math.sin(angle*2*math.pi)
   end
 end
---print("table_to_string(telegraph_attack_animation):")
---print(table_to_string(telegraph_attack_animation))
  
 GARBAGE_DELAY = 60
 GARBAGE_TRANSIT_TIME = 90
-MAX_LAG = GARBAGE_DELAY + GARBAGE_TRANSIT_TIME -- maximum amount of lag before net games abort, any more and game correctness would suffer
+MAX_LAG = 200 -- maximum amount of lag before net games abort
 
 gfx_q = Queue()
 

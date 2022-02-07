@@ -18,7 +18,7 @@ function make_panels(seed, ncolors, prev_panels, stuff)
 
   setSeed(seed)
 
-  --print("make_panels(" .. ncolors .. ", " .. prev_panels .. ", " .. (stuff.first_seven or "") .. ")")
+  --logger.debug("make_panels(" .. ncolors .. ", " .. prev_panels .. ", " .. (stuff.first_seven or "") .. ")")
   local ret = prev_panels
   local rows_to_make = 20
   local rows_to_place_metal_locations = rows_to_make
@@ -48,8 +48,8 @@ function make_panels(seed, ncolors, prev_panels, stuff)
       ret = ret .. color
     end
   end
-  --print("panels before potential metal panel position assignments:")
-  --print(ret)
+  --logger.debug("panels before potential metal panel position assignments:")
+  --logger.debug(ret)
   --assign potential metal panel placements
   local row_width = 6 --this may belong in globals if we were to ever make a game mode with a different width
   local new_ret = "000000"
@@ -57,7 +57,7 @@ function make_panels(seed, ncolors, prev_panels, stuff)
   local prev_row
   for i = 2, rows_to_place_metal_locations + 1 do
     current_row_from_ret = string.sub(ret, (i - 1) * row_width + 1, (i - 1) * row_width + row_width)
-    --print("current_row_from_ret: " .. current_row_from_ret)
+    --logger.debug("current_row_from_ret: " .. current_row_from_ret)
     if tonumber(current_row_from_ret) then --doesn't already have letters in it for metal panel locations
       prev_row = string.sub(new_ret, 0 - row_width, -1)
       local first, second  --locations of potential metal panels
@@ -86,8 +86,8 @@ function make_panels(seed, ncolors, prev_panels, stuff)
     new_ret = new_ret .. new_row
   end
   ret = new_ret
-  --print("panels after potential metal panel position assignments:")
-  --print(ret)
+  --logger.debug("panels after potential metal panel position assignments:")
+  --logger.debug(ret)
   if cut_panels then
     ret = procat(ret)
     local height = {7, 7, 7, 7, 7, 7}
@@ -104,8 +104,8 @@ function make_panels(seed, ncolors, prev_panels, stuff)
     stuff.first_seven = string.sub(ret, 1, 48)
   end
   -- if cut_panels then
-  -- print("panels after cut_panels")
-  -- print(ret)
+  -- logger.debug("panels after cut_panels")
+  -- logger.debug(ret)
   -- end
   return string.sub(ret, 7, -1)
 end

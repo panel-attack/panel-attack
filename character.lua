@@ -414,40 +414,40 @@ function Character.graphics_init(self, full, yields)
     self.telegraph_garbage_images = {}
     for garbage_h=1,14 do
       self.telegraph_garbage_images[garbage_h] = {}
-      print("telegraph/"..garbage_h.."-tall")
+      logger.debug("telegraph/"..garbage_h.."-tall")
       self.telegraph_garbage_images[garbage_h][6] = load_img_from_supported_extensions(self.path.."/telegraph/"..garbage_h.."-tall")
       if not self.telegraph_garbage_images[garbage_h][6] and default_character.telegraph_garbage_images[garbage_h][6] then
         self.telegraph_garbage_images[garbage_h][6] = default_character.telegraph_garbage_images[garbage_h][6]
-        print("DEFAULT used for telegraph/"..garbage_h.."-tall")
+        logger.debug("DEFAULT used for telegraph/"..garbage_h.."-tall")
       elseif not self.telegraph_garbage_images[garbage_h][6] then
-        print("FAILED TO LOAD: telegraph/"..garbage_h.."-tall")
+        logger.debug("FAILED TO LOAD: telegraph/"..garbage_h.."-tall")
       end
     end
     for garbage_w=3,6 do
-      print("telegraph/"..garbage_w.."-wide")
+      logger.debug("telegraph/"..garbage_w.."-wide")
       self.telegraph_garbage_images[1][garbage_w] = load_img_from_supported_extensions(self.path.."/telegraph/"..garbage_w.."-wide")
       if not self.telegraph_garbage_images[1][garbage_w] and default_character.telegraph_garbage_images[1][garbage_w] then
         self.telegraph_garbage_images[1][garbage_w] = default_character.telegraph_garbage_images[1][garbage_w]
-        print("DEFAULT used for telegraph/"..garbage_w.."-wide")
+        logger.debug("DEFAULT used for telegraph/"..garbage_w.."-wide")
       elseif not self.telegraph_garbage_images[1][garbage_w] then
-        print("FAILED TO LOAD: telegraph/"..garbage_w.."-wide")
+        logger.debug("FAILED TO LOAD: telegraph/"..garbage_w.."-wide")
       end
     end
-    print("telegraph/6-wide-metal")
+    logger.debug("telegraph/6-wide-metal")
     self.telegraph_garbage_images["metal"] = load_img_from_supported_extensions(self.path.."/telegraph/6-wide-metal")
     if not self.telegraph_garbage_images["metal"] and default_character.telegraph_garbage_images["metal"] then
       self.telegraph_garbage_images["metal"] = default_character.telegraph_garbage_images["metal"]
-      print("DEFAULT used for telegraph/6-wide-metal")
+      logger.debug("DEFAULT used for telegraph/6-wide-metal")
     elseif not self.telegraph_garbage_images[1][garbage_w] then
-      print("FAILED TO LOAD: telegraph/6-wide-metal")
+      logger.debug("FAILED TO LOAD: telegraph/6-wide-metal")
     end
-    print("telegraph/attack")
+    logger.debug("telegraph/attack")
     self.telegraph_garbage_images["attack"] = load_img_from_supported_extensions(self.path.."/telegraph/attack")
     if not self.telegraph_garbage_images["attack"] and default_character.telegraph_garbage_images["attack"] then
       self.telegraph_garbage_images["attack"] = default_character.telegraph_garbage_images["attack"]
-      print("DEFAULT used for telegraph/attack")
+      logger.debug("DEFAULT used for telegraph/attack")
     elseif not self.telegraph_garbage_images[1][garbage_w] then
-      print("FAILED TO LOAD: telegraph/attack")
+      logger.debug("FAILED TO LOAD: telegraph/attack")
     end
   end
 end

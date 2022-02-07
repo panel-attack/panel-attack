@@ -20,14 +20,15 @@ Match =
   end
 )
 
-function Match.gameEndedClockTime()
+function Match:gameEndedClockTime()
 
-  local result = P1.game_over_clock
+  local result = self.P1.game_over_clock
   
-  if P2 then
-    if P2.game_over_clock > 0 then
-      if result == 0 or P2.game_over_clock < result then
-        result = P2.game_over_clock
+  if self.P1.garbage_target and self.P1.garbage_target ~= self then
+    local otherPlayer = self.P1.garbage_target
+    if otherPlayer.game_over_clock > 0 then
+      if result == 0 or otherPlayer.game_over_clock < result then
+        result = otherPlayer.game_over_clock
       end
     end
   end
@@ -66,45 +67,10 @@ function Match.matchOutcome(self)
   return results
 end
 
-
-function Match.debugRollbackDivergenceCheck(self)
-  local targetFrame = P1.CLOCK
-
-  local savedStack = self.prev_states[self.CLOCK]
-  
-  self:rollbackToFrame(self.CLOCK - 1)
-  for i=1,1 do
-    self:run()
-  end
-
-  assert(self.CLOCK == targetFrame, "should have got back to target frame")
-
-  local diverged = false
-  for k,v in pairs(savedStack) do
-    if type(v) ~= "table" then
-      local v2 = self[k]
-      if v ~= v2 then
-        diverged = true
-      end
-    end
-  end
-
-  local savedStackString = self:divergenceString(savedStack)
-  local localStackString = self:divergenceString(self)
-
-  if savedStackString ~= localStackString then
-    diverged = true
-  end
-
-  if diverged then
-    print("Stacks have diverged")
-    self:rollbackToFrame(targetFrame-1)
-    self:run()
-  end
-
-end
-
 function Match.run(self)
+  local P1 = self.P1
+  local P2 = self.P2
+
   if GAME.gameIsPaused then
     return
   end
@@ -178,20 +144,6 @@ function Match.run(self)
   self.timeSpentRunning = self.timeSpentRunning + timeDifference
 end
 
-function Match.framesToSimulate(self) 
-  local framesToSimulate = 1
-
-  if P1:game_ended() == false then
-    local maxConfirmedFrame = string.len(P1.confirmedInput)
-    if P2 and string.len(P2.confirmedInput) > maxConfirmedFrame then
-      maxConfirmedFrame = string.len(P2.confirmedInput)
-    end
-    framesToSimulate = maxConfirmedFrame - P1.CLOCK
-  end
-
-  return framesToSimulate
-end
-
 local P1_win_quads = {}
 local P1_rating_quads = {}
 
@@ -199,7 +151,9 @@ local P2_rating_quads = {}
 local P2_win_quads = {}
 
 function Match.render(self)
-
+  local P1 = self.P1
+  local P2 = self.P2
+  
   if GAME.droppedFrames > 10 and config.show_fps then
     gprint("Dropped Frames: " .. GAME.droppedFrames, 1, 12)
   end
