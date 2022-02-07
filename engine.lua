@@ -614,11 +614,7 @@ end
 
 function Stack.puzzle_done(self)
   if not self.do_countdown then
-<<<<<<< HEAD
     -- For now don't require active panels to be 0, we will still animate in game over,
-=======
-    -- For now don't require active panels to be 0, we will still animate in game over, 
->>>>>>> 635d7fcb13f7df35979833aba99bd7e35e1c0727
     -- and we need to win immediately to avoid the failure below in the chain case.
     --if P1.n_active_panels == 0 then
     --if self.puzzleType == "chain" or P1.prev_active_panels == 0 then
