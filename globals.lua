@@ -12,6 +12,8 @@ this_frame_messages = {}
 
 server_queue = ServerQueue()
 
+rich_presence = {}
+
 score_mode = SCOREMODE_TA
 
 gfx_q = Queue()
