@@ -1,3 +1,11 @@
+local launch_type = arg[2]
+if launch_type == "test" or launch_type == "debug" then
+    require "lldebugger"
+    TESTS_ENABLED = 1
+    if launch_type == "debug" then
+        lldebugger.start()
+    end
+end
 require("class")
 socket = require("socket")
 json = require("dkjson")
@@ -25,6 +33,9 @@ require("mainloop")
 require("sound")
 require("timezones")
 require("gen_panels")
+require("PriorityQueue")
+require("deepcopy")
+require("computerPlayers.computerPlayer")
 require("panels")
 require("theme")
 require("click_menu")
