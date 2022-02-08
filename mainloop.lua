@@ -1204,16 +1204,7 @@ function main_local_vs()
   end
   
   local function variableStep() 
-    if GAME.match.P1CPU then
-      GAME.match.P1CPU:run(P1)
-    end
-    if GAME.match.P2CPU then
-      GAME.match.P2CPU:run(P2)
-    end
 
-    P1:run()
-    P2:run()
-    handle_pause()
   end
 
   local function abortGame() 

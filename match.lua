@@ -19,6 +19,12 @@ Match =
 
 function Match.run(self)
   if P1 then
+    if self.P1CPU then
+      self.P1CPU:run(P1)
+    end
+    if self.P2CPU then
+      self.P2CPU:run(P2)
+    end
     P1:run()
   end
   if P2 then

@@ -1382,7 +1382,7 @@ function select_screen.main()
         P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       end
       GAME.match.P1 = P1
-      P2 = Stack(2, GAME.match, false, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+      P2 = Stack(2, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       P2.max_runs_per_frame = 1
       GAME.match.P2 = P2
       GAME.match.P2CPU = ComputerPlayer("EndarisCpu", "DevConfig")
