@@ -1302,10 +1302,11 @@ function loadFromReplay(replay)
     else
       GAME.match = Match("endless")
     end
-    GAME.match.seed = replay.seed or 0
     
     replay = replay.endless or replay.time
 
+    GAME.match.seed = replay.seed or 0
+    
     if replay.pan_buf then
       replay.P = replay.pan_buf -- support old versions
     end
