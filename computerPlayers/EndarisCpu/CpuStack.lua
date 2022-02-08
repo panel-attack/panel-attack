@@ -1,6 +1,5 @@
 -- well shit²
 -- this seeks to emulate stack transformations on a simplified level to evaluate Actions and aid in pathfinding
-require("StackExtensions")
 
 local CpuSwapDirection = { Right = 1, Left = -1}
 
@@ -37,8 +36,8 @@ function CpuStack.GetPanelByRowColumn(self, row, column)
 end
 
 function CpuStack.GetPanelNeighboringPanel(self, panel, direction)
-  if self.columns[panel.column + direction] then
-    return self:GetPanelByRowColumn(panel.row, panel.column + direction)
+  if self.columns[panel:column() + direction] then
+    return self:GetPanelByRowColumn(panel:row(), panel:column() + direction)
   else
     return nil
   end
@@ -47,7 +46,7 @@ end
 -- returns the other swapped panel if the swap did something, false if not
 function CpuStack.Swap(self, panel, direction)
   if not panel:exclude_swap() then
-    local otherSwappedPanel = self.rows[panel.row]:Swap(panel, direction)
+    local otherSwappedPanel = self.rows[panel:row()]:Swap(panel, direction)
     if otherSwappedPanel then
       for _, value in pairs({panel, otherSwappedPanel}) do
         self:GetColumn(value.column):DropPanels()
@@ -137,8 +136,8 @@ function CpuStackRow.GetPanelInColumn(self, column)
 end
 
 function CpuStackRow.GetPanelNeighboringPanel(self, panel, direction)
-  if self.columns[panel.column + direction] then
-    return self:GetPanelInColumn(panel.column + direction)
+  if self.columns[panel.column() + direction] then
+    return self:GetPanelInColumn(panel.column() + direction)
   else
     return nil
   end
@@ -159,12 +158,12 @@ function CpuStackRow.Swap(self, panel, direction)
 end
 
 function CpuStackRow.AddPanel(self, panel)
-  assert(self.columns[panel.column].color == 0)
-  self.columns[panel.column] = panel
+  assert(self.columns[panel:column()].color == 0)
+  self.columns[panel:column()] = panel
 end
 
 function CpuStackRow.RemovePanel(self, panel)
-  self.columns[panel.column] = ActionPanel(Panel(0), panel.row, panel.column)
+  self.columns[panel:column()] = ActionPanel(Panel(0), panel:row(), panel:column())
 end
 
 function CpuStackRow.GetMatchablePanelCount(self)

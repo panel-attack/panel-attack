@@ -6,7 +6,7 @@ end)
 
 function RowGrid.getGridRows(panels)
     local rowGridRows = {}
-    StackExtensions.printAsAprilStack(panels)
+    StackExtensions.printAsAprilStackByPanels(panels)
     for rowIndex = 1, #panels do
         rowGridRows[rowIndex] = RowGridRow.FromPanels(rowIndex, panels[rowIndex])
     end
@@ -133,26 +133,28 @@ function RowGridRow.FromPanels(rowIndex, rowPanels)
     local colorColumns = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
     for column = 1, #rowPanels do
         -- the idea is that columnnumber=color number for readability
-        colorColumns[rowPanels[column].color] = colorColumns[rowPanels[column].color] + 1
+        if rowPanels[column].color > 0 then
+          colorColumns[rowPanels[column].color] = colorColumns[rowPanels[column].color] + 1
+        end
     end
 
     return RowGridRow(rowIndex, colorColumns)
 end
 
 function RowGridRow.AddPanel(self, color)
-    self.columns[color] = self.columns[color] + 1
+    self.colorColumns[color] = self.colorColumns[color] + 1
     self.emptyPanelCount = self.emptyPanelCount - 1
     self.panelCount = self.panelCount + 1
 end
 
 function RowGridRow.RemovePanel(self, color)
-    self.columns[color] = self.columns[color] - 1
+    self.colorColumns[color] = self.colorColumns[color] - 1
     self.emptyPanelCount = self.emptyPanelCount + 1
     self.panelCount = self.panelCount - 1
 end
 
 function RowGridRow.GetColorCount(self, color)
-    return self.columns[color]
+    return self.colorColumns[color]
 end
 
 function RowGridRow.IsValid(self)
@@ -164,7 +166,7 @@ function RowGridRow.Subtract(gridrow1, gridrow2)
     local diffGridRowColumns = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
     for column = 1, #gridrow1.columns do
-        diffGridRowColumns[column] = gridrow1.columns[column] - gridrow2.columns[column]
+        diffGridRowColumns[column] = gridrow1.colorColumns[column] - gridrow2.colorColumns[column]
     end
 
     return RowGridRow(gridrow1.rowIndex, diffGridRowColumns)
@@ -178,7 +180,7 @@ end)
 function ColorGridColumn.GetColumnRepresentation(self)
     local count = {}
     for row = 1, #self.sourceRowGrid.gridRows do
-        count[row] = self.sourceRowGrid.gridRows[row]:GetCount(self.color)
+        count[row] = self.sourceRowGrid.gridRows[row]:GetColorCount(self.color)
     end
     return count
 end

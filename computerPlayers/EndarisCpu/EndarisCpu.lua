@@ -1,5 +1,7 @@
 require("computerPlayers.EndarisCpu.StackExtensions")
 require("computerPlayers.EndarisCpu.GridVector")
+require("computerPlayers.EndarisCpu.CpuStack")
+require("computerPlayers.EndarisCpu.RowGrid")
 require("computerPlayers.EndarisCpu.CpuInput")
 require("computerPlayers.EndarisCpu.Helpers")
 require("computerPlayers.EndarisCpu.Actions")
@@ -389,7 +391,7 @@ function EndarisCpu.executeStrategy(self)
         actions = self.strategy:chooseAction()
     end
 
-    if actions then
+    if actions and #actions > 0 then
         if not self.currentAction then
             CpuLog:log(1, "setting the current action to " .. actions[1]:toString())
             self.currentAction = table.remove(actions, 1)
@@ -461,8 +463,6 @@ ActionPanel =
         actionPanel.id = panel.id
         actionPanel.color = panel.color
         actionPanel.vector = GridVector(row, column)
-        actionPanel.row = function() return actionPanel.vector.row end
-        actionPanel.column = function() return actionPanel.vector.column end
         actionPanel.targetVector = nil
         actionPanel.cursorStartPos = nil
         actionPanel.isSetupPanel = false
@@ -483,7 +483,7 @@ function ActionPanel.toString(self)
 end
 
 function ActionPanel.copy(self)
-    local panel = ActionPanel(self.panel, self.row, self.column)
+    local panel = ActionPanel(self.panel, self:row(), self:column())
     if self.cursorStartPos then
         panel.cursorStartPos = GridVector(self.cursorStartPos.row, self.cursorStartPos.column)
     end
@@ -505,12 +505,20 @@ function ActionPanel.setVector(self, vector)
   self.vector = vector
 end
 
+function ActionPanel.row(self)
+  return self.vector.row
+end
+
+function ActionPanel.column(self)
+  return self.vector.column
+end
+
 function ActionPanel.setColumn(self, column)
-  self.vector = GridVector(self.row, column)
+  self.vector = GridVector(self.vector.row, column)
 end
 
 function ActionPanel.setRow(self, row)
-  self.vector = GridVector(row, self.column)
+  self.vector = GridVector(row, self.vector.column)
 end
 
 function ActionPanel.isMatchable(self)

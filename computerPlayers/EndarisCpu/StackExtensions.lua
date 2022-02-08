@@ -424,13 +424,13 @@ end
 -- finds all potential 3 matches on the board using the rowgrid scan
 function StackExtensions.findLatentMatchesFromPanels(panels)
   local matches = {}
-  local grid = RowGrid.FromStack(panels)
+  local grid = RowGrid.FromPanels(panels)
 
   --iterating to 8 instead of #grid[1] because color 9 is garbage which is included in the rowGrid but cannot form matches
   for color = 1, 8 do
     local colorColumn = grid:GetColorColumn(color)
     local latentColorMatches = colorColumn:GetLatentMatches()
-    local actionPanelsOfColor = StackExtensions.getAllActionPanelsOfColor(panels, color)
+    local actionPanelsOfColor = StackExtensions.getAllActionPanelsOfColorByRow(panels, color)
 
     for matchIndex = 1, #latentColorMatches do
       local match = latentColorMatches[matchIndex]
@@ -475,7 +475,7 @@ function StackExtensions.moveIsValid(stack, panelId, targetVector)
 end
 
 function StackExtensions.moveIsValidByPanels(panels, panel, targetVector)
-  if panel.row < targetVector.row then
+  if panel:row() < targetVector.row then
     return false
   else
     local panelAtTarget = StackExtensions.getPanelByVectorByPanels(panels, targetVector)

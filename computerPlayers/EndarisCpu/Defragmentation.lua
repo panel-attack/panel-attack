@@ -106,12 +106,12 @@ function Defragment.FilterEmptySpaces(emptySpaces)
         table.sort(emptySpaces, function(a, b)
             -- in that case we fill the lowest gaps but not those in row 1 since panels are scarce
             -- and panels in row 1 won't contribute to form a connectedpanelsection
-            return a.panel.row < b.panel.row and a.panel.row ~=1
+            return a.panel:row() < b.panel:row() and a.panel:row() ~=1
         end)
 
         local emptySpacesToFill = { emptySpaces[1].panel }
         for i=2,#emptySpaces do
-            if emptySpaces[i].panel.row == emptySpaces[1].panel.row then
+            if emptySpaces[i].panel:row() == emptySpaces[1].panel:row() then
                 table.insert(emptySpacesToFill, emptySpaces[i].panel)
             else
                 break
@@ -186,12 +186,12 @@ function Defragment.FilterPanels(panels)
     --special weird/low stack scenario where no connectedPanelSections exist
         table.sort(panels, function(a, b)
             -- in that case we take the highest panel
-            return a.panel.row > b.panel.row
+            return a.panel:row() > b.panel:row()
         end)
 
         table.insert(panelsToMove, 1, panels[1])
         for i=2,#panels do
-            if panels[i].panel.row == panels[1].panel.row then
+            if panels[i].panel:row() == panels[1].panel:row() then
                 table.insert(panelsToMove, panels[i])
             else
                 break

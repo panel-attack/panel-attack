@@ -411,7 +411,7 @@ function H3Match.getConcreteMatchesFromLatentMatch(self)
     -- assuming column index of left most panel
     for i=1,4 do
         for j=1,#panels do
-            panels[j].targetVector = GridVector(panels[j].row, i + j - 1)
+            panels[j].targetVector = GridVector(panels[j]:row(), i + j - 1)
         end
 
         local newMatch = H3Match(panels)
@@ -439,7 +439,7 @@ function V3Match.calculateCost(self)
 
     for j = 1, #self.panels do
         --how many columns the panel is away from the column we're testing for
-        local distance = math.abs(self.panels[j].column - self.panels[j].targetVector.column)
+        local distance = math.abs(self.panels[j]:column() - self.panels[j].targetVector.column)
         if distance > 0 then
             --penalty for having to move to the panel to move it
             self.estimatedCost = self.estimatedCost + 2
@@ -457,7 +457,7 @@ function V3Match.getConcreteMatchesFromLatentMatch(self)
         local panels = deepcopy(self.panels, {panel=true})
         -- setting targetvector to column
         for j = 1, #panels do
-            panels[j].targetVector = GridVector(panels[j].row, i)
+            panels[j].targetVector = GridVector(panels[j]:row(), i)
         end
 
         -- creating action from edited panels

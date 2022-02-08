@@ -12,9 +12,9 @@ function Attack.chooseAction(self)
     end
 
     if #self.cpu.actions > 0 then
-        return Action.getCheapestAction(self.cpu.actions, self.cpu.stack)
+        return {Action.getCheapestAction(self.cpu.actions, self.cpu.stack)}
     else
-        return Raise(self.cpu.stack.CLOCK)
+        return {Raise(self.cpu.stack.CLOCK)}
     end
 end
 
