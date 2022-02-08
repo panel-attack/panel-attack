@@ -101,11 +101,10 @@ Stack =
     s.panels = {}
     s.width = 6
     s.height = 12
-    s.panels_created = 0
     for i = 0, s.height do
       s.panels[i] = {}
       for j = 1, s.width do
-        s.panels[i][j] = s:CreatePanel()
+        s.panels[i][j] = Panel()
       end
     end
 
@@ -212,12 +211,6 @@ Stack =
   end
 )
 
-function Stack.CreatePanel(self)
-  self.panels_created = self.panels_created + 1
-  local panel = Panel(self.panels_created)
-  return panel
-end 
-
 -- Positions the stack draw position for the given player
 function Stack.moveForPlayerNumber(stack, player_num)
   local stack_padding_x_for_legacy_pos = ((canvas_width - legacy_canvas_width) / 2)
@@ -274,7 +267,7 @@ function Stack.mkcpy(self, other)
     if other.panels[i] == nil then
       other.panels[i] = {}
       for j = 1, width do
-        other.panels[i][j] = self:CreatePanel()
+        other.panels[i][j] = Panel()
       end
     end
     for j = 1, width do
@@ -342,9 +335,8 @@ end
 -- Represents an individual panel in the stack
 Panel =
   class(
-  function(p, id)
+  function(p)
     p:clear()
-    p.id = id
   end
 )
 
@@ -1975,7 +1967,7 @@ function Stack.drop_garbage(self, width, height, metal)
     if not self.panels[i] then
       self.panels[i] = {}
       for j = 1, self.width do
-        self.panels[i][j] = self:CreatePanel()
+        self.panels[i][j] = Panel()
       end
     end
   end
@@ -2471,7 +2463,7 @@ function Stack.new_row(self)
     metal_panels_this_row = 1
   end
   for col = 1, self.width do
-    local panel = self:CreatePanel()
+    local panel = Panel()
     panels[0][col] = panel
     this_panel_color = string.sub(self.panel_buffer, col, col)
     --a capital letter for the place where the first shock block should spawn (if earned), and a lower case letter is where a second should spawn (if earned).  (color 8 is metal)
