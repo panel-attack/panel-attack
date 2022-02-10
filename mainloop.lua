@@ -136,10 +136,7 @@ do
     local menu_x, menu_y = unpack(main_menu_screen_pos)
     local main_menu
     local ret = nil
-    rich_presence = {
-      largeImageKey = "panel_attack_main",
-      startTimestamp = os.time(os.date("*t"))
-    }
+    GAME.rich_presence:setPresence(nil, nil, true)
     local function goEscape()
       main_menu:set_active_idx(#main_menu.buttons)
     end
@@ -770,11 +767,7 @@ function main_net_vs_lobby()
 
   local playerRatingMap = nil
   json_send({leaderboard_request = true}) -- Request the leaderboard so we can show ratings
-  rich_presence = {
-    state = "In Lobby",
-    largeImageKey = "panel_attack_main",
-    startTimestamp = os.time(os.date("*t"))
-  }
+  GAME.rich_presence:setPresence(nil, "In Lobby", true)
   while true do
     if connection_up_time <= login_status_message_duration then
       gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y - 120)

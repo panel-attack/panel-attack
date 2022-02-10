@@ -28,14 +28,10 @@ require("gen_panels")
 require("panels")
 require("theme")
 require("click_menu")
+require("rich_presence.RichPresence")
 local logger = require("logger")
 GAME.scores = require("scores")
-local discordRPC
-pcall(
-  function()
-    discordRPC = require("rich_presence.discordRPC")
-  end
-)
+GAME.rich_presence = RichPresence()
 
 global_canvas = love.graphics.newCanvas(canvas_width, canvas_height)
 
@@ -53,12 +49,7 @@ function love.load()
     math.random()
   end
   read_key_file()
-  if discordRPC then
-    discordRPC.initialize("902897593049301004", true)
-    rich_presence = {
-      largeImageKey = "panel_attack_main"
-    }
-  end
+  GAME.rich_presence:initialize("902897593049301004")
   mainloop = coroutine.create(fmainloop)
 end
 
@@ -104,13 +95,7 @@ function love.update(dt)
   this_frame_messages = {}
 
   update_music()
-  if discordRPC then
-    if nextPresenceUpdate < love.timer.getTime() then
-      discordRPC.updatePresence(rich_presence)
-      nextPresenceUpdate = love.timer.getTime() + 2.0
-    end
-    discordRPC.runCallbacks()
-  end
+  GAME.rich_presence:runCallbacks()
 end
 
 -- Called whenever the game needs to draw.

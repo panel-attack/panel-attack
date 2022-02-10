@@ -1,4 +1,3 @@
-
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =
   class(
@@ -13,8 +12,20 @@ Match =
     GAME.droppedFrames = 0
     self.supportsPause = true
     self.attackEngine = nil
-    self.current_music_is_casual = true 
+    self.current_music_is_casual = true
     self.startTimestamp = os.time(os.date("*t"))
+    if P2 or mode == "vs" then
+      print(mode)
+      GAME.rich_presence:setPresence(
+      (self.battleRoom.spectating and "Spectating" or "Playing") .. " a " .. match_type .. " match",
+      GAME.battleRoom.playerNames[1] .. " vs " .. (GAME.battleRoom.playerNames[2] or "themselves"),
+      true)
+    else
+      GAME.rich_presence:setPresence(
+      "Playing " .. mode .. " mode",
+      nil,
+      true)
+    end
   end
 )
 
@@ -41,7 +52,6 @@ function Match.draw_debug_mouse_panel(self)
   end
 end
 
-
 local P1_win_quads = {}
 local P1_rating_quads = {}
 
@@ -49,7 +59,6 @@ local P2_rating_quads = {}
 local P2_win_quads = {}
 
 function Match.render(self)
-
   if GAME.droppedFrames > 10 and config.show_fps then
     gprint("Dropped Frames: " .. GAME.droppedFrames, 1, 12)
   end
@@ -61,12 +70,6 @@ function Match.render(self)
     -- P1 username
     gprint((GAME.battleRoom.playerNames[1] or ""), P1.score_x + themes[config.theme].name_Pos[1], P1.score_y + themes[config.theme].name_Pos[2])
     if P2 then
-      rich_presence = {
-        details = (self.battleRoom.spectating and "Spectating" or "Playing") .. " a " .. match_type .. " match",
-        state = GAME.battleRoom.playerNames[1] .. " vs ".. GAME.battleRoom.playerNames[2],
-        largeImageKey = "panel_attack_main",
-        startTimestamp =  self.startTimestamp
-    }
       -- P1 win count graphics
       draw_label(themes[config.theme].images.IMG_wins, (P1.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
       draw_number(GAME.battleRoom.playerWinCounts[P1.player_number], themes[config.theme].images.IMG_timeNumber_atlas, 12, P1_win_quads, P1.score_x + themes[config.theme].win_Pos[1], P1.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale, "center")
@@ -106,7 +109,7 @@ function Match.render(self)
       end
     end
   end
-  
+
   if GAME.gameIsPaused then
     draw_pause()
   end
