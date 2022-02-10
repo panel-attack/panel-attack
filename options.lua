@@ -328,19 +328,19 @@ function options.main(starting_idx)
     if config.use_music_from == "stage" then
       local stage_id = config.stage
       if stage_id == random_stage_special_value then
-        stage_id = uniformly(stages_ids_for_current_theme)
+        stage_id = table.getRandomElement(stages_ids_for_current_theme)
         if stages[stage_id]:is_bundle() then -- may pick a bundle
-          stage_id = uniformly(stages[stage_id].sub_stages)
+          stage_id = table.getRandomElement(stages[stage_id].sub_stages)
         end
       elseif stages[stage_id]:is_bundle() then -- may pick a bundle
-        stage_id = uniformly(stages[stage_id].sub_stages)
+        stage_id = table.getRandomElement(stages[stage_id].sub_stages)
       end
       stage_loader_load(stage_id)
       stage_loader_wait()
       normal_music_for_sound_option = stages[stage_id].musics.normal_music
     else
       if config.character == random_character_special_value then
-        local random_id = uniformly(characters_ids_for_current_theme)
+        local random_id = table.getRandomElement(characters_ids_for_current_theme)
         character_loader_load(random_id)
         character_loader_wait()
         normal_music_for_sound_option = characters[random_id].musics.normal_music

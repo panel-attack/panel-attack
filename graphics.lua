@@ -859,12 +859,14 @@ function Stack.drawAnalyticData(self, analytic, x, y)
   local yCombo = y
 
   -- Clean up the chain data so we only show chains up to the highest chain the user has done
-  local chainData = shallowcpy(analytic.data.reached_chains)
+  local chainData = {}
   local chain_above_13 = analytic:compute_above_13()
 
   for i = 2, 13, 1 do
-    if not chainData[i] then
+    if not analytic.data.reached_chains[i] then
       chainData[i] = 0
+    else
+      chainData[i] = analytic.data.reached_chains[i]
     end
   end
   table.insert(chainData, chain_above_13)

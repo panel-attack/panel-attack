@@ -1,4 +1,5 @@
 require("util")
+require("table_util")
 
 -- The values in this file are constants (except in this file perhaps) and are expected never to change during the game, not to be confused with globals!
 VERSION = "045"
@@ -105,7 +106,7 @@ difficulty_to_ncolors_1Ptime = {6,6,6,6}
 
 time_attack_time = 120
 -- Yes, 2 is slower than 1 and 50..99 are the same.
-speed_to_rise_time = map(function(x) return x/16 end,
+speed_to_rise_time = table.map(
    {942, 983, 838, 790, 755, 695, 649, 604, 570, 515,
     474, 444, 394, 370, 347, 325, 306, 289, 271, 256,
     240, 227, 213, 201, 189, 178, 169, 158, 148, 138,
@@ -115,7 +116,8 @@ speed_to_rise_time = map(function(x) return x/16 end,
      47,  47,  47,  47,  47,  47,  47,  47,  47,  47,
      47,  47,  47,  47,  47,  47,  47,  47,  47,  47,
      47,  47,  47,  47,  47,  47,  47,  47,  47,  47,
-     47,  47,  47,  47,  47,  47,  47,  47,  47})
+     47,  47,  47,  47,  47,  47,  47,  47,  47},
+     function(x) return x/16 end)
 
 -- endless and 1P time attack use a speed system in which
 -- speed increases based on the number of panels you clear.
