@@ -1073,7 +1073,7 @@ function Stack.render_telegraph(self)
 
         if current_block[4]--[[chain]] then
           stopperTime = telegraph_to_render.stoppers.chain[telegraph_to_render.garbage_queue.chain_garbage.first]
-          if current_block.finalized then
+          if stopperTime and current_block.finalized then
             stopperTime = stopperTime .. " F"
           end
         else
