@@ -966,6 +966,10 @@ function Stack.shouldRun(self, runsSoFar)
     return buffer_len > 0
   end
 
+  if self:behindRollback() then
+    return true
+  end
+
   -- If we are not local, we want to run faster to catch up.
   if buffer_len >= 15 - runsSoFar then
     -- way behind, run at max speed.
