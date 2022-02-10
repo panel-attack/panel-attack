@@ -364,7 +364,7 @@ function characters_init()
 
   -- fix config character if it's missing
   if not config.character or (config.character ~= random_character_special_value and not characters[config.character]) then
-    config.character = uniformly(characters_ids_for_current_theme)
+    config.character = table.getRandomElement(characters_ids_for_current_theme)
   end
 
   -- actual init for all characters, starting with the default one
