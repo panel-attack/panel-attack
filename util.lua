@@ -1,15 +1,5 @@
-local sort, pairs, select, unpack, error = table.sort, pairs, select, unpack, error
+local sort, pairs = table.sort, pairs
 local type, setmetatable, getmetatable = type, setmetatable, getmetatable
-local random = math.random
-
--- returns the number of entries in a table
-function tableLength(T)
-  local count = 0
-  for _ in pairs(T) do
-    count = count + 1
-  end
-  return count
-end
 
 -- bounds b so a<=b<=c
 function bound(a, b, c)
@@ -32,68 +22,6 @@ function wrap(a, b, c)
   return (b - a) % (c - a + 1) + a
 end
 
--- map for numeric tables
-function map(func, tab)
-  local ret = {}
-  for i = 1, #tab do
-    ret[i] = func(tab[i])
-  end
-  return ret
-end
-
--- map for dicts
-function map_dict(func, tab)
-  local ret = {}
-  for key, val in pairs(tab) do
-    ret[key] = func(val)
-  end
-  return ret
-end
-
--- applies the function to each item in tab and replaces
-function map_inplace(func, tab)
-  for i = 1, #tab do
-    tab[i] = func(tab[i])
-  end
-  return tab
-end
-
--- applies the function to each item in tab and replaces
-function map_dict_inplace(func, tab)
-  for key, val in pairs(tab) do
-    tab[key] = func(val)
-  end
-  return tab
-end
-
--- reduce for numeric tables
-function reduce(func, tab, ...)
-  local idx, value = 2, nil
-  if select("#", ...) ~= 0 then
-    value = select(1, ...)
-    idx = 1
-  elseif #tab == 0 then
-    error("Tried to reduce empty table with no initial value")
-  else
-    value = tab[1]
-  end
-  for i = idx, #tab do
-    value = func(value, tab[i])
-  end
-  return value
-end
-
--- TODO delete
-function car(tab)
-  return tab[1]
-end
-
--- This sucks lol
--- TODO delete
-function cdr(tab)
-  return {select(2, unpack(tab))}
-end
-
 -- a useful right inverse of table.concat
 function procat(str)
   local ret = {}
@@ -103,25 +31,25 @@ function procat(str)
   return ret
 end
 
--- iterate over frozen pairs in sorted order
-function spairs(tab)
-  local keys, vals, idx = {}, {}, 0
-  for k in pairs(tab) do
-    keys[#keys + 1] = k
-  end
-  sort(keys)
+-- iterate over a dictionary sorted by keys
+
+-- this is a dedicated method to use for dictionaries for technical reasons
+function pairsSortedByKeys(tab)
+  -- these are already sorted
+  local keys = table.getKeys(tab)
+  local vals = {}
+  -- and then assign the values with the corresponding indexes
   for i = 1, #keys do
     vals[i] = tab[keys[i]]
   end
+
+  local idx = 0
+  -- the key and value table are kept separately instead of being rearranged into a "sorted dictionary"
+  -- this is because pairs always returns them in an arbitrary order even after they have been sorted in advance
   return function()
     idx = idx + 1
     return keys[idx], vals[idx]
   end
-end
-
--- Randomly grabs a value from t
-function uniformly(t)
-  return t[random(#t)]
 end
 
 -- Returns true if a and b have equal content
@@ -284,68 +212,51 @@ function get_directory_contents(path)
 end
 
 function compress_input_string(inputs)
-  -- Check for a digit enclosed in parentheses in the inputs to ensure the inputs aren't already compressed.
-  if not inputs:match("%(%d+%)") or inputs:match("[%a%+%/][%a%+%/]") then
-    local compressed_inputs = "" -- Actual compressed input string
-    local buff = inputs:sub(1, 1) -- Current section inputs to compress
-    local prev_char, next_char = inputs:sub(1, 1)
-    -- We start at the second input because there is nothing to compare the first input to
+  if inputs:match("%(%d+%)") or not inputs:match("[%a%+%/][%a%+%/]") then
+    -- Detected a digit enclosed in parentheses in the inputs, the inputs are already compressed.
+    return inputs
+  else
+    local compressed_inputs = ""
+    local buff = inputs:sub(1, 1)
+    local out_str, next_char = inputs:sub(1, 1)
     for pos = 2, #inputs do
-      -- Assign the next input
       next_char = inputs:sub(pos, pos)
-      -- Check if the input is different from the previous one
-      if next_char ~= prev_char then
+      if next_char ~= out_str:sub(#out_str, #out_str) then
         if buff:match("%d+") then
-          -- Found one or more digit to enclose in parentheses, to show they are actual inputs
           compressed_inputs = compressed_inputs .. "(" .. buff .. ")"
         else
-          -- Add a single char, preceded by a digit representing the amount of that char
-          compressed_inputs = compressed_inputs .. buff:sub(1, 1) .. #buff
+          compressed_inputs = compressed_inputs .. buff:sub(1, 1) .. buff:len()
         end
-        -- Since the next char is not the same as the previous, clear the buffer
         buff = ""
       end
-      -- Add the char to the buffer
-      buff = buff .. next_char
-      -- Set the next char as the previous char (the next assignment will be updating the next char)
-      prev_char = next_char
+      buff = buff .. inputs:sub(pos, pos)
+      out_str = out_str .. next_char
     end
     if buff:match("%d+") then
       compressed_inputs = compressed_inputs .. "(" .. buff .. ")"
     else
-      compressed_inputs = compressed_inputs .. buff:sub(1, 1) .. #buff
+      compressed_inputs = compressed_inputs .. buff:sub(1, 1) .. buff:len()
     end
-    -- If there are parentheses that close and open immediately after, get rid of them.
     compressed_inputs = compressed_inputs:gsub("%)%(", "")
-    -- Confirm that the compressed version is smaller than the initial size
-    if #compressed_inputs < #inputs then
-      return compressed_inputs
-    end
+    return compressed_inputs
   end
-  return inputs
 end
 
 function uncompress_input_string(inputs)
-  -- If there are two consecutive letters or symbols in the inputs, do nothing, as inputs are not compressed.
-  if not inputs:match("[%a%+%/][%a%+%/]") then
-    local uncompressed_inputs = "" -- Actual uncompressed inputs
-    local digit_inputs -- Actual inputs represented as digits
-    --[[For every base64encode char that is followed by at least one digit,
-    with an optional left parenthesis immediately after the aforementioned digit,
-    followed by any amount of digits (including zero digits whatsoever),
-    with an optional right parenthesis afterwards]]
+  if inputs:match("[%a%+%/][%a%+%/]") then
+    -- Detected two consecutive letters or symbols in the inputs, the inputs are not compressed.
+    return inputs
+  else
+    local uncompressed_inputs = ""
     for w in inputs:gmatch("[%a%+%/]%d+%(?%d*%)?") do
-      -- repeat the char the amount of times that the digit afterwards indicates
       uncompressed_inputs = uncompressed_inputs .. string.rep(w:sub(1, 1), w:match("%d+"))
-      digit_inputs = w:match("%(%d+%)") -- Assign digits enclosed in parentheses, if any
-      if digit_inputs then
-        -- If there are digits in parentheses, add them to the string without the parentheses
-        uncompressed_inputs = uncompressed_inputs .. digit_inputs:match("%d+")
+      input_value = w:match("%(%d+%)")
+      if input_value then
+        uncompressed_inputs = uncompressed_inputs .. input_value:match("%d+")
       end
     end
     return uncompressed_inputs
   end
-  return inputs
 end
 
 function dump(o)

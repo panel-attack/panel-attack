@@ -498,7 +498,7 @@ function Stack.render(self)
 
         if mx >= draw_x and mx < draw_x + 16 * GFX_SCALE and my >= draw_y and my < draw_y + 16 * GFX_SCALE then
           local str = loc("pl_panel_info", row, col)
-          for k, v in spairs(panel) do
+          for k, v in pairsSortedByKeys(panel) do
             str = str .. "\n" .. k .. ": " .. tostring(v)
           end
 
@@ -875,12 +875,14 @@ if analytic.lastAPM == 0 or math.fmod(self.CLOCK, 60) < self.max_runs_per_frame 
   local yCombo = y
 
   -- Clean up the chain data so we only show chains up to the highest chain the user has done
-  local chainData = shallowcpy(analytic.data.reached_chains)
+  local chainData = {}
   local chain_above_13 = analytic:compute_above_13()
 
   for i = 2, 13, 1 do
-    if not chainData[i] then
+    if not analytic.data.reached_chains[i] then
       chainData[i] = 0
+    else
+      chainData[i] = analytic.data.reached_chains[i]
     end
   end
   table.insert(chainData, chain_above_13)

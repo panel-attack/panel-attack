@@ -168,7 +168,7 @@ function draw_pixel_font(string, atlas, font_map, x, y, x_scale, y_scale, align,
   mirror = mirror or 0
   font_map = font_map or standard_pixel_font_map()
 
-  local atlasFrameCount = tableLength(font_map)
+  local atlasFrameCount = table.length(font_map)
   local atlasWidth = atlas:getWidth()
   local atlasHeight = atlas:getHeight()
   local characterWidth = atlasWidth/atlasFrameCount
