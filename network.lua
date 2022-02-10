@@ -287,6 +287,13 @@ function Stack.idleInput(self)
 end
 
 function Stack.send_controls(self)
+
+  if self.is_local and TCP_sock and string.len(self.confirmedInput) > 0 and self.garbage_target and string.len(self.garbage_target.confirmedInput) == 0 then
+    -- Send 1 frame at CLOCK time 0 then wait till we get our first input from the other player.
+    -- This will cause a player that got the start message earlierer than the other player to wait for the other player just once.
+    return
+  end
+
   local playerNumber = self.which
   local to_send = base64encode[
     (player_raise(playerNumber) and 32 or 0) + 
