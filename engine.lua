@@ -513,10 +513,6 @@ function Stack.set_garbage_target(self, new_target)
     new_target.telegraph.sender = self
     new_target.telegraph.garbage_queue.sender = self
   end
-  if self.telegraph then
-    self.telegraph.pos_x = self.pos_x - 4
-    self.telegraph.pos_y = self.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
-  end
 end
 
 local MAX_TAUNT_PER_10_SEC = 4
@@ -1702,7 +1698,7 @@ function Stack.simulate(self)
       end
     end
 
-    if self.garbage_target and self.telegraph then
+    if self.telegraph then
       local to_send = self.telegraph:pop_all_ready_garbage(self.CLOCK)
       if to_send and to_send[1] then
         local garbage = self.later_garbage[self.CLOCK+1] or {}

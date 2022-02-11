@@ -13,6 +13,8 @@ Telegraph = class(function(self, sender, owner)
     
     self.sender = sender -- The stack that sent this garbage
     self.owner = owner -- The stack that is receiving the garbage
+    self.pos_x = owner.pos_x - 4
+    self.pos_y = owner.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
     self.attacks = {} -- A copy of the chains and combos earned used to render the animation of going to the telegraph
     self.pendingGarbage = {} -- Table of garbage that needs to be pushed into the telegraph at specific CLOCK times
     self.pendingChainingEnded = {} -- A list of CLOCK times where chaining ended in the future
@@ -97,7 +99,7 @@ Telegraph = class(function(self, sender, owner)
       self.attacks[frame_earned] = {}
     end
     self.attacks[frame_earned][#self.attacks[frame_earned]+1] =
-      {frame_earned=frame_earned, attack_type=attack_type, size=attack_size, origin_col=attack_origin_col, origin_row= attack_origin_row, stuff_to_send=stuff_to_send}
+      {frame_earned=frame_earned, origin_col=attack_origin_col, origin_row= attack_origin_row, stuff_to_send=stuff_to_send}
 
   end
   
@@ -106,12 +108,12 @@ Telegraph = class(function(self, sender, owner)
     local stuff_to_send = {}
     for i=3,n_metal do
       stuff_to_send[#stuff_to_send+1] = {6, 1, true, false, frame_earned = frame_earned}
-      self.stoppers.metal = frame_earned+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
+      self.stoppers.metal = frame_earned+GARBAGE_TRANSIT_TIME + GARBAGE_DELAY
     end
     local combo_pieces = combo_garbage[n_combo]
     for i=1,#combo_pieces do
       stuff_to_send[#stuff_to_send+1] = {combo_pieces[i], 1, false, false, frame_earned = frame_earned}
-      self.stoppers.combo[combo_pieces[i]] = frame_earned+GARBAGE_TRANSIT_TIME+GARBAGE_DELAY
+      self.stoppers.combo[combo_pieces[i]] = frame_earned+GARBAGE_TRANSIT_TIME + GARBAGE_DELAY
     end
     self.garbage_queue:push(stuff_to_send)
     return stuff_to_send

@@ -1325,8 +1325,17 @@ function select_screen.main()
       P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       if GAME.battleRoom.trainingModeSettings then
         GAME.match.attackEngine = AttackEngine(P1)
-        local startTime = 300
-        GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime --[[start time]], 1--[[repeat]], nil--[[attack count]], false--[[metal]],  GAME.battleRoom.trainingModeSettings.height > 1--[[chain]])
+        local startTime = 150
+        local delay = GARBAGE_TRANSIT_TIME + GARBAGE_DELAY + 1
+        local delayPerAttack = 6
+        local attackCountPerDelay = 1
+        if GAME.battleRoom.trainingModeSettings.height == 1 then
+          attackCountPerDelay = 6
+          delay = delay + (attackCountPerDelay * delayPerAttack)
+        end
+        for i = 1, attackCountPerDelay, 1 do
+          GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  GAME.battleRoom.trainingModeSettings.height > 1--[[chain]])  
+        end
       end
       GAME.match.P1 = P1
       if not GAME.battleRoom.trainingModeSettings then
