@@ -33,7 +33,7 @@ end
 function Match.draw_debug_mouse_panel(self)
   if GAME.debug_mouse_panel then
     local str = loc("pl_panel_info", GAME.debug_mouse_panel[1], GAME.debug_mouse_panel[2])
-    for k, v in spairs(GAME.debug_mouse_panel[3]) do
+    for k, v in pairsSortedByKeys(GAME.debug_mouse_panel[3]) do
       str = str .. "\n" .. k .. ": " .. tostring(v)
     end
     gprintf(str, 10, 10)
