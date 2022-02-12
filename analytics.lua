@@ -14,7 +14,7 @@ local function create_blank_data()
     move_count = 0,
     -- the amount of times the panels were swapped
     swap_count = 0,
-    -- 1 to 12, then 13+, 1 is obviously meaningless
+    -- 1 to X, mystery chains are recorded as whatever chain they were, 1 is obviously meaningless
     reached_chains = {},
     -- 1 to 40, 1 to 3 being meaningless
     used_combos = {}
