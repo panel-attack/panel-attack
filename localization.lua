@@ -1,12 +1,17 @@
+-- TODO rename
 local FILENAME = "localization.csv"
 
-Localization = class(function(self)
-  self.data = {}
-  self.langs = {}
-  self.codes = {}
-  self.lang_index = 1
-  self.init = false
-end)
+-- Holds all the data for localizing the game
+Localization =
+  class(
+  function(self)
+    self.data = {}
+    self.langs = {}
+    self.codes = {}
+    self.lang_index = 1
+    self.init = false
+  end
+)
 
 localization = Localization()
 
@@ -19,7 +24,7 @@ function Localization.get_language(self)
 end
 
 function Localization.refresh_global_strings(self)
-  join_community_msg = loc("join_community").."\ndiscord.panelattack.com"
+  join_community_msg = loc("join_community") .. "\ndiscord.panelattack.com"
 end
 
 function Localization.set_language(self, lang_code)
@@ -41,14 +46,13 @@ function Localization.set_language(self, lang_code)
 end
 
 function Localization.init(self)
-
   local function csv_line(line, acc)
     local function trim(a, b)
       if line:sub(a, a) == '"' then
-        a = a+1
+        a = a + 1
       end
       if line:sub(b, b) == '"' then
-        b = b-1
+        b = b - 1
       end
       return line:sub(a, b)
     end
@@ -64,16 +68,16 @@ function Localization.init(self)
       ch = line:sub(cur, cur)
 
       if ch == '"' then
-        if line:sub(cur+1, cur+1) == '"' then
+        if line:sub(cur + 1, cur + 1) == '"' then
           cur = cur + 1
         else
           escape = not escape
         end
-      elseif not escape and ch == ',' then
-        tokens[#tokens+1] = trim(stop_cur, cur-1)
+      elseif not escape and ch == "," then
+        tokens[#tokens + 1] = trim(stop_cur, cur - 1)
 
         if acc then
-          tokens[#tokens] = acc..tokens[#tokens]
+          tokens[#tokens] = acc .. tokens[#tokens]
           acc = nil
         end
 
@@ -87,13 +91,13 @@ function Localization.init(self)
 
     if escape then
       if not acc then
-        leftover = line:sub(stop_cur+1, cur)
+        leftover = line:sub(stop_cur + 1, cur)
       else
-        leftover = acc..line:sub(stop_cur, cur)
+        leftover = acc .. line:sub(stop_cur, cur)
       end
-        leftover = leftover.."\n"
+      leftover = leftover .. "\n"
     else
-      tokens[#tokens+1] = trim(stop_cur, cur)
+      tokens[#tokens + 1] = trim(stop_cur, cur)
     end
 
     return tokens, leftover
@@ -104,34 +108,36 @@ function Localization.init(self)
   local tokens, leftover
   local i = 1
   local key = nil
+  -- Process all the localization strings
   if love.filesystem.getInfo(FILENAME) then
     for line in love.filesystem.lines(FILENAME) do
-
       if num_line == 1 then
         tokens = csv_line(line)
-        for i, v in ipairs(tokens) do
-          if i > 1 and v:gsub("%s", ""):len() > 0 then
-            self.codes[#self.codes+1] = v
+        for j, v in ipairs(tokens) do
+          if j > 2 and v:gsub("%s", ""):len() > 0 then
+            self.codes[#self.codes + 1] = v
             self.data[v] = {}
           end
         end
       else
         tokens, leftover = csv_line(line, leftover)
-        for _, v in ipairs(tokens) do
-
+        for j, v in ipairs(tokens) do
+          -- Key all the other languages by the first column
           if not key then
             key = v
             if key == "" or key:match("%s+") then
               break
             end
           else
-            if v ~= "" and not v:match("^%s+$") then
-              if num_line == 2 then
-                self.langs[#self.langs+1] = v
+            if j ~= 2 then
+              if v ~= "" and not v:match("^%s+$") then
+                if num_line == 2 then
+                  self.langs[#self.langs + 1] = v
+                end
+                self.data[self.codes[i]][key] = v
               end
-              self.data[self.codes[i]][key] = v
+              i = i + 1
             end
-            i = i+1
           end
           if i > #self.codes then
             break
@@ -148,16 +154,16 @@ function Localization.init(self)
     end
   end
 
---[[    for k, v in pairs(self.data) do
+  --[[    for k, v in pairs(self.data) do
       print("LANG "..k)
       for a, b in pairs(v) do
         print(a..": "..b)
       end
     end--]]
-
   self:set_language(config.language_code)
 end
 
+-- Gets the localized string for a loc key
 function loc(text_key, ...)
   local self = localization
   local code = self.codes[self.lang_index]
@@ -172,14 +178,14 @@ function loc(text_key, ...)
   end
 
   if ret then
-    for i = 1, select('#', ...) do
+    for i = 1, select("#", ...) do
       local tmp = select(i, ...)
-      ret = ret:gsub("%%"..i, tmp)
+      ret = ret:gsub("%%" .. i, tmp)
     end
   else
-    ret = "#"..text_key
-    for i = 1, select('#', ...) do
-      ret = ret.." "..select(i, ...)
+    ret = "#" .. text_key
+    for i = 1, select("#", ...) do
+      ret = ret .. " " .. select(i, ...)
     end
   end
 

@@ -8,7 +8,7 @@ Step by step instructions (Windows example):
    
 Note: folders starting with "__" will be ignored upon loading. You may choose to remove those "__" to mod default themes
 
-3. Create a folder with your theùe. The name of the folder will be the id of your theme.
+3. Create a folder with your theme. The name of the folder will be the id of your theme.
 
 4. Place assets, sounds and txt files in that folder with the proper names to add your data. Exhaustive list below.
 
@@ -18,7 +18,7 @@ Note: non-optional data that are missing will automatically get replaced by defa
 
 ~~ [.txt] ~~
 
-- "characters": list of the characters to be displayed in the select screen
+- "characters": add this file with one character ID per line to limit characters you can pick and random characters
 - "stages": list of the stages to be displayed in the select screen
 
 ~~ [.png, .jpg] ~~

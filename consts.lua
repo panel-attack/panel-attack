@@ -11,7 +11,7 @@ legacy_canvas_height = 612
 global_background_color = { 0.1, 0.1, 0.1 }
 
 mouse_pointer_timeout = 1.5 --seconds
-RATING_SPREAD_MODIFIER = 400
+RATING_SPREAD_MODIFIER = 400 -- rating players must be within to play ranked
 
 super_selection_duration = 30 -- frames (reminder: 60 frames per sec)
 super_selection_enable_ratio = 0.3 -- ratio at which super enable is considered started (cancelling it won't validate a character)
@@ -20,7 +20,6 @@ assert(super_selection_enable_ratio<1.0,"")
 prefix_of_ignored_dirs = "__"
 
 default_theme_dir = "Panel Attack"
-default_panels_dir = "Panels HD - Basic"
 
 default_characters_folders = {"lip", "windy", "sherbet", "thiana", "ruby",
               "elias", "flare", "neris", "seren", "phoenix", 
@@ -38,16 +37,19 @@ random_character_special_value = "__RandomCharacter"
 key_names = {"up", "down", "left", "right", "swap1",
   "swap2", "taunt_up", "taunt_down", "raise1", "raise2", "pause"}
 
+-- frames to use for bounce animation
 bounce_table = {1, 1, 1, 1,
                 2, 2, 2,
                 3, 3, 3,
                 4, 4, 4}
 
+-- frames to use for garbage bounce animation
 garbage_bounce_table = {2, 2, 2,
                         3, 3, 3,
                         4, 4, 4,
                         1, 1}
 
+-- frames to use for in danger animation
 danger_bounce_table = {1, 1, 1,
                        2, 2, 2,
                        3, 3, 3,
@@ -56,7 +58,7 @@ danger_bounce_table = {1, 1, 1,
                        4, 4, 4}
 
 SCOREMODE_TA    = 1
-SCOREMODE_PDP64 = 2
+SCOREMODE_PDP64 = 2 -- currently not used
 
 -- score lookup tables
 score_combo_PdP64 = {} --size 40
@@ -73,6 +75,7 @@ score_chain_TA = {  0,   50,   80,  150,  300,
 
 GFX_SCALE = 3
 
+-- frames to use for the card animation
 card_animation = {false,
    -1, 0, 1, 2, 3, 4, 4, 5, 5, 6,
    6, 7, 7, 8, 8, 8, 9, 9, 9, 9,
@@ -80,7 +83,7 @@ card_animation = {false,
    10, 10, 10, 10, 10, 10, 11, 11, 11, 11,
    11}
 
--- The popping particle animation. First number is how far the particles go, second is wich frame to show from the spritesheet
+-- The popping particle animation. First number is how far the particles go, second is which frame to show from the spritesheet
  popfx_burst_animation = {{1, 1}, {4, 1}, {7, 1}, {8, 1},
     {9, 1}, {9, 1}, {10, 1}, {10, 2}, {10, 2}, {10, 3},
     {10, 3}, {10, 4}, {10, 4}, {10, 5}, {10, 5}, {10, 6}, {10, 6}, {10, 7}, {10, 7}, {10, 8}, {10, 8}, {10, 8}}
@@ -100,6 +103,7 @@ stop_time_danger = {600, 420, 240, 180}
 difficulty_to_ncolors_endless = {5,6,6,6}
 difficulty_to_ncolors_1Ptime = {6,6,6,6}
 
+time_attack_time = 120
 -- Yes, 2 is slower than 1 and 50..99 are the same.
 speed_to_rise_time = map(function(x) return x/16 end,
    {942, 983, 838, 790, 755, 695, 649, 604, 570, 515,
