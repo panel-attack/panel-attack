@@ -153,44 +153,25 @@ Premi ""Swap"" o Indietro per continuare."
 lb_user_new,,"Welcome, new user: %1","Bienvenue, nouvel utilisateur : %1","Bem-vindo(a), novo usuário(a): %1",ようこそ、新しいユーザー：%1,Bienvenido: nuevo usuario %1,"Willkommen, neuer Spieler %1","Benvenuto, nuovo utente: %1"
 lb_user_update,,"Welcome, your username has been updated. 
 
-
 Old name:  ""%1""
-
-
 New name:  ""%2""","Bienvenue, votre pseudo a été mis à jour.
 
-
 Ancien:  ""%1""
-
-
 Nouveau:  ""%2""","Bem-vindo(a), seu apelido foi atualizado.
 
-
 Nome antigo: ""%1""
-
-
 Novo nome: ""%2""","ようこそ、ユーザー名が更新されました。
 
-
 以前のユーザー名： ""%1""
-
-
 新しいユーザー名： ""%2""","Bienvenido, tu nombre de usuario fue actualizado.
 
-
 Nombre antiguo: ""%1""
-
-
 Nombre nuevo: ""%2""","Willkommen, dein Anzeigename wurde aktualisiert.
 
 Alter Name: ""%1""
-
 Neuer Name: ""%2""","Benvenuto, il tuo nome utente è stato aggiornato.
 
-
 Vecchio nome: ""%1""
-
-
 Nuovo nome: ""%2"""
 lb_welcome_back,,"Welcome back, %1","Vous êtes de retour, %1","Bem-vindo(a) de volta, %1",おかえりなさい、%1,"Bienvenido de vuelta, %1","Willkommen zurück, %1","Bentornato, %1"
 lb_you,,You,Vous,Você,あなた,Tú,Du,Tu

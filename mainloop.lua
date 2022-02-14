@@ -770,7 +770,7 @@ function main_net_vs_lobby()
 
   while true do
     if connection_up_time <= login_status_message_duration then
-      gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y - 120)
+      gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y - 100)
       local messages = server_queue:pop_all_with("login_successful", "login_denied")
       for _, msg in ipairs(messages) do
         if msg.login_successful then
@@ -1564,7 +1564,7 @@ function main_set_name()
         end
         for _, v in ipairs(this_frame_unicodes) do
           -- Don't add more characters than the server char limit
-          if name:len() < NAME_LENGTH_LIMIT then
+          if name:len() < NAME_LENGTH_LIMIT and v ~= " " then
             name = name .. v
           end
         end
