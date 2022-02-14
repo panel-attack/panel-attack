@@ -38,18 +38,40 @@ local loaded_placement_matches = {
   complete = {}
 }
 
+function addPublicPlayerData(players, playerName, player) 
+  if not players or not player then
+    return
+  end
+
+  if not players[playerName] then
+    players[playerName] = {}
+  end
+
+  if player.rating then
+    players[playerName].rating = round(player.rating)
+  end
+
+  if player.ranked_games_played then
+    players[playerName].ranked_games_played = player.ranked_games_played
+  end
+end
+
 function lobby_state()
   local names = {}
+  local players = {}
   for _, v in pairs(connections) do
     if v.state == "lobby" then
       names[#names + 1] = v.name
+      addPublicPlayerData(players, v.name, leaderboard.players[v.user_id])
     end
   end
   local spectatableRooms = {}
   for _, v in pairs(rooms) do
     spectatableRooms[#spectatableRooms + 1] = {roomNumber = v.roomNumber, name = v.name, a = v.a.name, b = v.b.name, state = v:state()}
+    addPublicPlayerData(players, v.a.name, leaderboard.players[v.a.user_id])
+    addPublicPlayerData(players, v.b.name, leaderboard.players[v.b.user_id])
   end
-  return {unpaired = names, spectatable = spectatableRooms}
+  return {unpaired = names, spectatable = spectatableRooms, players = players}
 end
 
 function propose_game(sender, receiver, message)
@@ -153,6 +175,8 @@ function start_match(a, b)
       msg.opponent_settings.rating = DEFAULT_RATING
     end
   end
+  a.room.replay.vs.seed = math.random(1,9999999)
+  msg.seed = a.room.replay.vs.seed
   a.room.replay.vs.P1_name = a.name
   a.room.replay.vs.P2_name = b.name
   a.room.replay.vs.P1_char = a.character
