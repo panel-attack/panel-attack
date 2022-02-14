@@ -1,4 +1,5 @@
 require("graphics_util")
+logger = require("logger")
 
 CLICK_MENUS = {} -- All click menus currently showing in the game
 
