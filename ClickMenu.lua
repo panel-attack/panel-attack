@@ -1,13 +1,14 @@
 require("graphics_util")
 local scene_manager = require("scenes.scene_manager")
 local class = require("class")
+local logger = require("logger")
 
 CLICK_MENUS = {} -- All click menus currently showing in the game
 
 --@module ClickMenu
 -- A series of buttons with text strings that can be clicked or use input to navigate
 -- Buttons are laid out vertically and scroll buttons are added if not all options fit.
-local ClickMenu = class(
+ClickMenu = class(
   function(self, x, y, width, height, active_idx)
     self.x = x or 0
     self.y = y or 0
@@ -231,7 +232,6 @@ function ClickMenu.update(self)
     elseif menu_enter() then
       if self.buttons[self.active_idx].selectFunction then
         self:selectButton(self.active_idx)
-        scene_manager:switchScene(nil)
       end
     elseif menu_escape() then
       if self.buttons[self.active_idx].escapeFunction then
@@ -334,7 +334,6 @@ function ClickMenu.click_or_tap(self, x, y, touchpress)
       if y >= self.y + self.buttons[i].y and y <= self.y + self.buttons[i].y + self:get_button_height(i) and x >= self.x + self.buttons[i].x and x <= self.x + self.buttons[i].x + self:get_button_width(i) then
         self.idx_selected = i
         self:selectButton(self.idx_selected)
-        scene_manager:switchScene(nil)
 
         --TODO: consolidate with the input functions sound
         play_optional_sfx(themes[config.theme].sounds.menu_validate)

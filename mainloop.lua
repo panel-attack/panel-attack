@@ -720,12 +720,11 @@ function main_net_vs_lobby()
   local ret = nil
   local requestedSpectateRoom = nil
 
-  local playerRatingMap = nil
-  json_send({leaderboard_request = true}) -- Request the leaderboard so we can show ratings
+  local playerData = nil
 
   while true do
     if connection_up_time <= login_status_message_duration then
-      gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y - 120)
+      gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y - 100)
       local messages = server_queue:pop_all_with("login_successful", "login_denied")
       for _, msg in ipairs(messages) do
         if msg.login_successful then
@@ -785,6 +784,9 @@ function main_net_vs_lobby()
         lobby_menu:remove_self()
         return select_screen.main
       end
+      if msg.players then
+        playerData = msg.players
+      end
       if msg.unpaired then
         unpaired_players = msg.unpaired
         -- players who leave the unpaired list no longer have standing invitations to us.\
@@ -807,14 +809,12 @@ function main_net_vs_lobby()
         play_optional_sfx(themes[config.theme].sounds.notification)
       end
       if msg.leaderboard_report then
-        playerRatingMap = {}
         if lobby_menu then
           lobby_menu:show_controls(true)
         end
         leaderboard_report = msg.leaderboard_report
         for i = #leaderboard_report, 1, -1 do
           local v = leaderboard_report[i]
-          playerRatingMap[v.user_name] = v.rating
           if v.is_you then
             my_rank = k
           end
@@ -885,8 +885,8 @@ function main_net_vs_lobby()
 
       local function playerRatingString(playerName)
         local rating = ""
-        if playerRatingMap and playerRatingMap[playerName] then
-          rating = " (" .. playerRatingMap[playerName] .. ")"
+        if playerData and playerData[playerName] and playerData[playerName].rating then
+          rating = " (" .. playerData[playerName].rating .. ")"
         end
         return rating
       end
@@ -1519,7 +1519,7 @@ function main_set_name()
         end
         for _, v in ipairs(this_frame_unicodes) do
           -- Don't add more characters than the server char limit
-          if name:len() < NAME_LENGTH_LIMIT then
+          if name:len() < NAME_LENGTH_LIMIT and v ~= " " then
             name = name .. v
           end
         end
