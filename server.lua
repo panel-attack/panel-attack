@@ -369,7 +369,7 @@ end
 function Playerbase:nameTaken(userID, playerName)
 
   for key, value in pairs(self.players) do
-    if string.lower(value) == string.lower(playerName) then
+    if value:lower() == playerName:lower() then
       if key ~= userID then
         return true
       end
