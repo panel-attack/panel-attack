@@ -552,7 +552,7 @@ function Connection.login(self, user_id)
   elseif self.user_id == "need a new user id" and self.name then
 
     if playerbase:nameTaken("", self.name) then
-      deny_login(self, "That player name is already taken")
+      self:send({choose_another_name = {reason = "That player name is already taken"}})
       logger.warn("Login failure: Player tried to use already taken name: " .. self.name)
     else 
       logger.info(self.name .. " needs a new user id!")
