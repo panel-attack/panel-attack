@@ -571,7 +571,7 @@ function Connection.login(self, user_id)
     logger.warn("Login failure: " .. self.name .. " specified an invalid user_id")
   elseif playerbase.players[self.user_id] ~= self.name then
     if playerbase:nameTaken(self.user_id, self.name) then
-      deny_login(self, "That player name is already taken")
+      self:send({choose_another_name = {reason = "That player name is already taken"}})
       logger.warn("Login failure: Player tried to use already taken name: " .. self.name)
     else 
       local the_old_name = playerbase.players[self.user_id]
