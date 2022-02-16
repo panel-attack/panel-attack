@@ -25,11 +25,11 @@ local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "
 
 local VERSION = "045"
 local type_to_length = {H = 4, E = 4, F = 4, P = 8, I = 2, L = 2, Q = 8, U = 2}
-local INDEX = 1
+local INDEX = 1 -- GLOBAL counter of the next available connection index
 local connections = {}
 local ROOMNUMBER = 1
 local rooms = {}
-local name_to_idx = {}
+local name_to_idx = {} -- mapping of names to their connection unique INDEX
 local socket_to_idx = {}
 local proposals = {}
 local playerbases = {}
@@ -384,9 +384,23 @@ Playerbase =
   end
 )
 
-function Playerbase.update(self, user_id, user_name)
+function Playerbase:update(user_id, user_name)
   self.players[user_id] = user_name
   write_players_file()
+end
+
+-- returns true if the name is taken by a different user already
+function Playerbase:nameTaken(userID, playerName)
+
+  for key, value in pairs(self.players) do
+    if value:lower() == playerName:lower() then
+      if key ~= userID then
+        return true
+      end
+    end
+  end
+
+  return false
 end
 
 function Playerbase.delete_player(self, user_id)
@@ -413,7 +427,7 @@ Leaderboard =
   class(
   function(s, name)
     s.name = name
-    s.players = {}
+    s.players = {} -- user_id -> user_id,user_name,rating,placement_done,placement_rating,ranked_games_played,ranked_games_won,last_login_time
   end
 )
 
@@ -560,25 +574,39 @@ function Connection.login(self, user_id)
     deny_login(self, "Client did not send a user_id in the login request")
     success = false
   elseif self.user_id == "need a new user id" and self.name then
-    logger.info(self.name .. " needs a new user id!")
-    local their_new_user_id
-    while not their_new_user_id or playerbase.players[their_new_user_id] do
-      their_new_user_id = generate_new_user_id()
+
+    if playerbase:nameTaken("", self.name) then
+      self:send({choose_another_name = {reason = "That player name is already taken"}})
+      logger.warn("Login failure: Player tried to use already taken name: " .. self.name)
+    else 
+      logger.info(self.name .. " needs a new user id!")
+      local their_new_user_id
+      while not their_new_user_id or playerbase.players[their_new_user_id] do
+        their_new_user_id = generate_new_user_id()
+      end
+      playerbase:update(their_new_user_id, self.name)
+      self:send({login_successful = true, new_user_id = their_new_user_id})
+      self.user_id = their_new_user_id
+      self.logged_in = true
+      logger.info("Connection with name " .. self.name .. " was assigned a new user_id")
     end
-    playerbase:update(their_new_user_id, self.name)
-    self:send({login_successful = true, new_user_id = their_new_user_id})
-    self.user_id = their_new_user_id
-    self.logged_in = true
-    logger.info("Connection with name " .. self.name .. " was assigned a new user_id")
   elseif not playerbase.players[self.user_id] then
     deny_login(self, "The user_id provided was not found on this server")
     logger.warn("Login failure: " .. self.name .. " specified an invalid user_id")
   elseif playerbase.players[self.user_id] ~= self.name then
-    local the_old_name = playerbase.players[self.user_id]
-    playerbase:update(self.user_id, self.name)
-    self.logged_in = true
-    self:send({login_successful = true, name_changed = true, old_name = the_old_name, new_name = self.name})
-    logger.info("Login successful and changed name " .. the_old_name .. " to " .. self.name)
+    if playerbase:nameTaken(self.user_id, self.name) then
+      self:send({choose_another_name = {reason = "That player name is already taken"}})
+      logger.warn("Login failure: Player tried to use already taken name: " .. self.name)
+    else 
+      local the_old_name = playerbase.players[self.user_id]
+      playerbase:update(self.user_id, self.name)
+      if leaderboard.players[self.user_id] then
+        leaderboard.players[self.user_id].user_name = self.name
+      end
+      self.logged_in = true
+      self:send({login_successful = true, name_changed = true, old_name = the_old_name, new_name = self.name})
+      logger.info("Login successful and changed name " .. the_old_name .. " to " .. self.name)
+    end
   elseif playerbase.players[self.user_id] then
     self.logged_in = true
     self:send({login_successful = true})
