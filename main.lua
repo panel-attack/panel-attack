@@ -155,6 +155,10 @@ function love.mousepressed(x, y)
   end
 end
 
+function love.quit()
+  json_send({logout = true})
+end
+
 -- Handle a touch press
 -- Note we are specifically not implementing this because mousepressed above handles mouse and touch
 -- function love.touchpressed(id, x, y, dx, dy, pressure)
