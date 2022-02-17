@@ -1,4 +1,3 @@
-
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =
   class(
@@ -13,7 +12,19 @@ Match =
     GAME.droppedFrames = 0
     self.supportsPause = true
     self.attackEngine = nil
-    self.current_music_is_casual = true 
+    self.current_music_is_casual = true
+    self.startTimestamp = os.time(os.date("*t"))
+    if P2 or mode == "vs" then
+      GAME.rich_presence:setPresence(
+      (self.battleRoom.spectating and "Spectating" or "Playing") .. " a " .. match_type .. " match",
+      GAME.battleRoom.playerNames[1] .. " vs " .. (GAME.battleRoom.playerNames[2] or "themselves"),
+      true)
+    else
+      GAME.rich_presence:setPresence(
+      "Playing " .. mode .. " mode",
+      nil,
+      true)
+    end
   end
 )
 
@@ -40,7 +51,6 @@ function Match.draw_debug_mouse_panel(self)
   end
 end
 
-
 local P1_win_quads = {}
 local P1_rating_quads = {}
 
@@ -48,7 +58,6 @@ local P2_rating_quads = {}
 local P2_win_quads = {}
 
 function Match.render(self)
-
   if GAME.droppedFrames > 10 and config.show_fps then
     gprint("Dropped Frames: " .. GAME.droppedFrames, 1, 12)
   end
@@ -99,7 +108,7 @@ function Match.render(self)
       end
     end
   end
-  
+
   if GAME.gameIsPaused then
     draw_pause()
   end

@@ -14,6 +14,7 @@ Game =
     self.gameIsPaused = false -- game can be paused while playing on local
     self.renderDuringPause = false -- if the game can render when you are paused
     self.currently_paused_tracks = {} -- list of tracks currently paused
+    self.rich_presence = nil
   end
 )
 
