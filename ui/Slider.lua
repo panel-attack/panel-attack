@@ -11,8 +11,11 @@ local Slider = class(
     self.min = options.min or 1
     self.max = options.max or 99
     self.text = options.text or love.graphics.newText(love.graphics.getFont(), "Slider")
-    self.is_visible = options.is_visible or options.is_visible == nil and true 
+    self.is_visible = options.is_visible or options.is_visible == nil and true
+    self.is_enabled = options.is_enabled or options.is_enabled == nil and true
     self.value = options.value or math.floor((self.max - self.min) / 2)
+    self.tick_length = options.tick_length or 1
+    self.onValueChange = options.onValueChange or function() end
     
     --local text_width, text_height = self.text:getDimensions()
     --self.width = math.max(text_width + 6, self.width)
@@ -20,6 +23,7 @@ local Slider = class(
     self._min_text = love.graphics.newText(love.graphics.getFont(), self.min)
     self._max_text = love.graphics.newText(love.graphics.getFont(), self.max)
     self._value_text = love.graphics.newText(love.graphics.getFont(), self.value)
+    
     slider_manager.add_slider(self)
   end
 )
@@ -29,12 +33,20 @@ function Slider:remove()
 end
 
 function Slider:isSelected(x, y)
-  return x > self.x and x < self.x + self.max - self.min and y > self.y and y < self.y + 15
+  return self.is_enabled and x >= self.x and x <= self.x + (self.max - self.min + 1) * self.tick_length and y >= self.y and y <= self.y + 15
+end
+
+function Slider:setValueFromPos(x)
+  self:setValue(math.floor((x - self.x) / self.tick_length) + 1)
 end
 
 function Slider:setValue(value)
+  local prev_value = self.value
   self.value = util.clamp(self.min, value, self.max)
   self._value_text = love.graphics.newText(love.graphics.getFont(), self.value)
+  if self.value ~= prev_value then
+    self:onValueChange()
+  end
 end
 
 function Slider:draw()
@@ -42,7 +54,7 @@ function Slider:draw()
   local light_gray = .5
   local alpha = .7
   GAME.gfx_q:push({love.graphics.setColor, {light_gray, light_gray, light_gray, alpha}})
-  GAME.gfx_q:push({love.graphics.rectangle, {"fill", self.x, self.y, self.max - self.min, 5}})
+  GAME.gfx_q:push({love.graphics.rectangle, {"fill", self.x, self.y, (self.max - self.min) * self.tick_length, 5}})
   --GAME.gfx_q:push({love.graphics.setColor, {light_gray, light_gray, light_gray, alpha}})
   --GAME.gfx_q:push({love.graphics.rectangle, {"line", self.x, self.y, self.max - self.min, 10}})
   
@@ -52,7 +64,7 @@ function Slider:draw()
   
   --local text_width, text_height = self.text:getDimensions()
   GAME.gfx_q:push({love.graphics.draw, {self._min_text, self.x - self._min_text:getWidth() - 5, self.y, 0, 1, 1, 0, 0}})
-  GAME.gfx_q:push({love.graphics.draw, {self._max_text, self.x + self.max - self.min, self.y, 0, 1, 1, 0, 0}})
+  GAME.gfx_q:push({love.graphics.draw, {self._max_text, self.x + (self.max - self.min) * self.tick_length, self.y, 0, 1, 1, 0, 0}})
   GAME.gfx_q:push({love.graphics.draw, {self._value_text, self.x + self.value - 10, self.y - 20, 0, 1, 1, 0, 0}})
 end
 

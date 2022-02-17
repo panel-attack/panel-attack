@@ -1,6 +1,4 @@
-local Button = require("ui.Button")
 local button_manager = require("ui.button_manager")
-local Slider = require("ui.Button")
 local slider_manager = require("ui.slider_manager")
 Queue = require("Queue")
 config = require("config")
@@ -38,7 +36,7 @@ require("timezones")
 require("gen_panels")
 require("panels")
 require("Theme")
--- require("dump")
+require("dump")
 local logger = require("logger")
 local input = require("input2")
 
@@ -87,6 +85,7 @@ end
 -- Called every few fractions of a second to update the game
 -- dt is the amount of time in seconds that has passed.
 function love.update(dt)
+  button_manager.update()
   button_manager.draw()
   slider_manager.draw()
   input:update()
@@ -106,8 +105,8 @@ end
 
 -- Handle a mouse or touch press
 function love.mousepressed(x, y)
-  button_manager.mousepressed(x, y)
-  slider_manager.mousepressed(x, y)
+  button_manager.mousePressed(x, y)
+  slider_manager.mousePressed(x, y)
 
   for menu_name, menu in pairs(CLICK_MENUS) do
     menu:click_or_tap(transform_coordinates(x, y))
@@ -117,6 +116,7 @@ end
 function love.mousereleased(x, y, button)
   if button == 1 then
     slider_manager.mouseReleased(x, y)
+    button_manager.mouseReleased(x, y)
   end
 end
 

@@ -60,7 +60,6 @@ function write_conf_file()
   pcall(
     function()
       local file = love.filesystem.newFile("conf.json")
-      print(dump(GAME.config))
       file:open("w")
       file:write(json.encode(GAME.config))
       file:close()
@@ -99,8 +98,6 @@ function save.read_conf_file()
   end
 
   file:close()
-  
-  print(dump(user_config))
   return user_config
 end
 

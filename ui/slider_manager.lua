@@ -28,7 +28,7 @@ function slider_manager.mouseDragged(x, y)
     return
   end
   
-  selected_slider:setValue(x - selected_slider.x)
+  selected_slider:setValueFromPos(x)
 end
 
 function slider_manager.mouseReleased(x, y)
@@ -36,15 +36,15 @@ function slider_manager.mouseReleased(x, y)
     return
   end
 
-  selected_slider:setValue(x - selected_slider.x)
+  selected_slider:setValueFromPos(x)
   selected_slider = nil
 end
 
-function slider_manager.mousepressed(x, y)
+function slider_manager.mousePressed(x, y)
   for id, slider in pairs(sliders) do
     if slider.is_visible and slider:isSelected(x, y) then
       selected_slider = slider
-      selected_slider:setValue(x - selected_slider.x)
+      selected_slider:setValueFromPos(x)
     end
   end
 end

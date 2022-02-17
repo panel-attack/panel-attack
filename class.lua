@@ -12,9 +12,10 @@ function class(init)
 end
 
 --@module class
-local class = function(init)
+local class = function(init, parent)
   local class_tbl = {}
   local metatable = {
+    __index = parent,
     __call = function(_, ...)
       local self = {}
       setmetatable(self, { __index = class_tbl })

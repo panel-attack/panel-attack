@@ -10,13 +10,386 @@ local ServerQueue = require("ServerQueue")
 local Button = require("ui.Button")
 local scene_manager = require("scenes.scene_manager")
 local input = require("input2")
+local LevelSlider = require("ui.LevelSlider")
+require("table")
 require("mainloop")
 
 --@module vs_self_menu
 local vs_self_menu = Scene("vs_self_menu")
+local MAX_CHARACTERS_PER_PAGE = 34
+local MAX_COLS = 9
+local TILE_SIZE = 84
+local GRID_SIZE = 100
+local buttons = {
+  characters = {},
+  level_select = {},
+  stage_select = {},
+  panel_select = {},
+  leave = nil,
+  ready = nil
+}
+--local buttons.characters = {}
+--local buttons.random = nil
+--local buttons.leave = nil
+--local buttons.ready = nil
+local level_slider = nil
+--local buttons.level_select.enable = nil
+local player_name_text = nil
+
+--local loc_str = {Level = loc("level"), Mode = loc("mode"), Stage = loc("stage"), Panels = loc("panels"), Ready = loc("ready"), Random = loc("random"), Leave = loc("leave")}
+local function grid_to_screen(x, y)
+  return 198 + x * GRID_SIZE, 268 + y * GRID_SIZE
+end
+
+local cursor_data = {}
+
+local function move_cursor2()
+  level_slider.is_enabled = false
+  buttons.stage_select.left.is_enabled = false
+  buttons.stage_select.right.is_enabled = false
+  buttons.panel_select.left.is_enabled = false
+  buttons.panel_select.right.is_enabled = false 
+end
+
+local function onReady()
+  print("onReady")
+  move_cursor2()
+  -- Handle one player vs game setup
+  GAME.match = Match("vs", GAME.battleRoom)
+  P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+  --[[
+  if GAME.battleRoom.trainingModeSettings then
+    GAME.match.attackEngine = AttackEngine(P1)
+    local startTime = 300
+    GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime, 1, nil, false,  GAME.battleRoom.trainingModeSettings.height > 1)
+  end
+  --]]
+  GAME.match.P1 = P1
+  P1.garbage_target = P1
+  P2 = nil
+  make_local_panels(P1, "000000")
+  make_local_gpanels(P1, "000000")
+  current_stage = cursor_data[1].state.stage
+  stage_loader_load(current_stage)
+  stage_loader_wait()
+  P1:starting_state()
+  
+  scene_manager:switchScene(nil)
+  func = main_dumb_transition
+  arg = {main_local_vs_yourself, "", 0, 0}
+end
+
+local brackets = {
+  left = love.graphics.newText(love.graphics.getFont(), "<"),
+  right = love.graphics.newText(love.graphics.getFont(), ">")
+}
+
+-- Sets the state object to a new stage based on the increment
+local function change_stage(state, increment)
+  -- random_stage_special_value is placed at the end of the list and is 'replaced' by a random pick and stage_is_random=true
+  local current = nil
+  for k, v in ipairs(stages_ids_for_current_theme) do
+    if (not state.stage_is_random and v == state.stage) or (state.stage_is_random and v == state.stage_is_random) then
+      current = k
+      break
+    end
+  end
+  if state.stage == nil or state.stage_is_random == random_stage_special_value then
+    current = #stages_ids_for_current_theme + 1
+  end
+  if current == nil then -- stage belonged to another set of stages, it's no more in the list
+    current = 0
+  end
+  local dir_count = #stages_ids_for_current_theme + 1
+  local new_stage_idx = ((current - 1 + increment) % dir_count) + 1
+  if new_stage_idx <= #stages_ids_for_current_theme then
+    local new_stage = stages_ids_for_current_theme[new_stage_idx]
+    if stages[new_stage]:is_bundle() then
+      state.stage_is_random = new_stage
+      state.stage = table.getRandomElement(stages[new_stage].sub_stages)
+    else
+      state.stage_is_random = nil
+      state.stage = new_stage
+    end
+  else
+    state.stage_is_random = random_stage_special_value
+    state.stage = table.getRandomElement(stages_ids_for_current_theme)
+    if stages[state.stage]:is_bundle() then -- may pick a bundle!
+      state.stage = table.getRandomElement(stages[state.stage].sub_stages)
+    end
+  end
+  logger.trace("stage and stage_is_random: " .. state.stage .. " / " .. (state.stage_is_random or "nil"))
+end
+
+-- Returns the panel dir for the given increment 
+local function change_panels_dir(panels_dir, increment)
+  local current = 0
+  for k, v in ipairs(panels_ids) do
+    if v == panels_dir then
+      current = k
+      break
+    end
+  end
+  local dir_count = #panels_ids
+  local new_theme_idx = ((current - 1 + increment) % dir_count) + 1
+  for k, v in ipairs(panels_ids) do
+    if k == new_theme_idx then
+      return v
+    end
+  end
+  return panels_dir
+end
 
 function vs_self_menu:init()
   scene_manager:addScene(vs_self_menu)
+  for i, id in ipairs(characters_ids_for_current_theme) do
+    local name = string.gsub(characters[id].display_name, "%s", "\n")
+    --menu_drawf(icon_to_use, render_x + 0.5 * button_width, render_y + 0.5 * button_height, "center", "center", 0, scale, scale)
+    local x, y = grid_to_screen(
+      ((i - 1) % MAX_CHARACTERS_PER_PAGE + 1) % MAX_COLS, 
+      math.floor(((i - 1) % MAX_CHARACTERS_PER_PAGE + 1) / MAX_COLS))
+    buttons.characters[i] = Button({
+        x = x, 
+        y = y, 
+        width = TILE_SIZE, 
+        height = TILE_SIZE, 
+        text = love.graphics.newText(love.graphics.getFont(), name),
+        valign = "top",
+        image = characters[id].images.icon, 
+        outline_color = {234/255, 234/255, 234/255, 1},
+        is_visible = false,
+        onClick = function()
+          move_cursor2()
+          cursor_data[1].state.character = id
+          config.character = id
+          characters[id]:play_selection_sfx()
+          character_loader_load(id)
+        end
+      })
+  end
+  local x, y = grid_to_screen(0, 0)
+  buttons.random = Button({
+      x = x, 
+      y = y, 
+      width = TILE_SIZE, 
+      height = TILE_SIZE, 
+      text = love.graphics.newText(love.graphics.getFont(), loc("random")),
+      outline_color = {234/255, 234/255, 234/255, 1},
+      is_visible = false,
+      onClick = function()
+        move_cursor2()
+        play_optional_sfx(themes[config.theme].sounds.menu_validate)
+        cursor_data[1].state.character = table.getRandomElement(characters_ids_for_current_theme)
+        config.character = "__RandomCharacter"
+        character_loader_load(cursor_data[1].state.character)
+      end
+    })
+  x, y = grid_to_screen(8, 3)
+  buttons.leave = Button({
+      x = x, 
+      y = y, 
+      width = TILE_SIZE, 
+      height = TILE_SIZE, 
+      text = love.graphics.newText(love.graphics.getFont(), loc("leave")),
+      outline_color = {234/255, 234/255, 234/255, 1},
+      is_visible = false,
+      onClick = function()
+        move_cursor2()
+        play_optional_sfx(themes[config.theme].sounds.menu_validate)
+        scene_manager:switchScene("main_menu")
+      end
+    })
+  x, y = grid_to_screen(8, -1)
+  buttons.ready = Button({
+      x = x, 
+      y = y, 
+      width = TILE_SIZE, 
+      height = TILE_SIZE, 
+      text = love.graphics.newText(love.graphics.getFont(), loc("ready")),
+      outline_color = {234/255, 234/255, 234/255, 1},
+      is_visible = false,
+      onClick = onReady
+    })
+  x, y = grid_to_screen(5, -1)
+  level_slider = LevelSlider({
+      x = x + 150 - 11 * 5.5 - 2,
+      y = y + 50 - 11 - 2,
+      is_visible = false,
+      is_enabled = false,
+      onValueChange = function() play_optional_sfx(themes[config.theme].sounds.menu_move) end
+    })
+  buttons.level_select.enable = Button({
+      x = x, 
+      y = y, 
+      width = GRID_SIZE * 3 - GRID_SIZE + TILE_SIZE, 
+      height = TILE_SIZE, 
+      text = love.graphics.newText(love.graphics.getFont(), loc("level")),
+      valign = "top",
+      outline_color = {234/255, 234/255, 234/255, 1},
+      color = {0, 0, 0, 0},
+      is_visible = false,
+      onClick = function() 
+        move_cursor2()
+        level_slider.is_enabled = true 
+      end,
+      onMousePressed = function() end
+    })
+  x, y = grid_to_screen(2, -1)
+  buttons.stage_select.left = Button({
+      x = x,
+      y = y, 
+      width = GRID_SIZE * 1.5 - GRID_SIZE + TILE_SIZE, 
+      height = TILE_SIZE, 
+      text = love.graphics.newText(love.graphics.getFont(), ""),
+      outline_color = {0, 0, 0, 0},
+      color = {0, 0, 0, 0},
+      is_visible = false,
+      is_enabled = false,
+      onClick = function()
+        play_optional_sfx(themes[config.theme].sounds.menu_move)
+        change_stage(cursor_data[1].state, -1)
+      end,
+      onMousePressed = function() end
+    })
+  buttons.stage_select.right = Button({
+      x = x + (GRID_SIZE * 1.5 - GRID_SIZE + TILE_SIZE), 
+      y = y, 
+      width = GRID_SIZE * 1.5 - GRID_SIZE + TILE_SIZE, 
+      height = TILE_SIZE, 
+      text = love.graphics.newText(love.graphics.getFont(), ""),
+      outline_color = {0, 0, 0, 0},
+      color = {0, 0, 0, 0},
+      is_visible = false,
+      is_enabled = false,
+      onClick = function()
+        play_optional_sfx(themes[config.theme].sounds.menu_move)
+        change_stage(cursor_data[1].state, 1)
+      end,
+      onMousePressed = function() end
+    })
+  buttons.stage_select.enable = Button({
+      x = x, 
+      y = y, 
+      width = GRID_SIZE * 3 - GRID_SIZE + TILE_SIZE, 
+      height = TILE_SIZE, 
+      text = love.graphics.newText(love.graphics.getFont(), loc("stage")),
+      valign = "top",
+      outline_color = {234/255, 234/255, 234/255, 1},
+      color = {0, 0, 0, 0},
+      is_visible = false,
+      onClick = function() 
+        move_cursor2()
+        buttons.stage_select.left.is_enabled = true
+        buttons.stage_select.right.is_enabled = true 
+      end,
+      onMousePressed = function() end
+    })
+  x, y = grid_to_screen(0, -1)
+  buttons.panel_select.left = Button({
+      x = x,
+      y = y, 
+      width = GRID_SIZE - GRID_SIZE + TILE_SIZE, 
+      height = TILE_SIZE, 
+      text = love.graphics.newText(love.graphics.getFont(), ""),
+      outline_color = {0, 0, 0, 0},
+      color = {0, 0, 0, 0},
+      is_visible = false,
+      is_enabled = false,
+      onClick = function()
+        play_optional_sfx(themes[config.theme].sounds.menu_move)
+        cursor_data[1].state.panels_dir = change_panels_dir(cursor_data[1].state.panels_dir, -1)
+      end,
+      onMousePressed = function() end
+    })
+  buttons.panel_select.right = Button({
+      x = x + (GRID_SIZE - GRID_SIZE + TILE_SIZE), 
+      y = y, 
+      width = GRID_SIZE - GRID_SIZE + TILE_SIZE, 
+      height = TILE_SIZE, 
+      text = love.graphics.newText(love.graphics.getFont(), ""),
+      outline_color = {0, 0, 0, 0},
+      color = {0, 0, 0, 0},
+      is_visible = false,
+      is_enabled = false,
+      onClick = function()
+        play_optional_sfx(themes[config.theme].sounds.menu_move)
+        cursor_data[1].state.panels_dir = change_panels_dir(cursor_data[1].state.panels_dir, 1)
+      end,
+      onMousePressed = function() end
+    })
+  buttons.panel_select.enable = Button({
+      x = x, 
+      y = y, 
+      width = GRID_SIZE * 2 - GRID_SIZE + TILE_SIZE, 
+      height = TILE_SIZE, 
+      text = love.graphics.newText(love.graphics.getFont(), loc("panels")),
+      valign = "top",
+      outline_color = {234/255, 234/255, 234/255, 1},
+      color = {0, 0, 0, 0},
+      is_visible = false,
+      onClick = function() 
+        move_cursor2()
+        buttons.panel_select.left.is_enabled = true
+        buttons.panel_select.right.is_enabled = true 
+      end,
+      onMousePressed = function() end
+    })
+  -- Draw the character icon at the current button using globals *gross*
+  -- draw character icon with its super selection or bundle character icon
+  --[[
+  if character == random_character_special_value or not character:is_bundle() or character.images.icon then
+    local icon_to_use = character == random_character_special_value and themes[config.theme].images.IMG_random_character or character.images.icon
+    local orig_w, orig_h = icon_to_use:getDimensions()
+    local scale = button_width / math.max(orig_w, orig_h) -- keep image ratio
+    menu_drawf(icon_to_use, render_x + 0.5 * button_width, render_y + 0.5 * button_height, "center", "center", 0, scale, scale)
+    if str ~= "P1" and str ~= "P2" then
+      if character.stage then
+        local orig_w, orig_h = stages[character.stage].images.thumbnail:getDimensions()
+        menu_drawf(stages[character.stage].images.thumbnail, render_x + 10, render_y + button_height - 7, "center", "center", 0, 16 / orig_w, 9 / orig_h)
+      end
+      if character.panels then
+        local orig_w, orig_h = panels[character.panels].images.classic[1][1]:getDimensions()
+        menu_drawf(panels[character.panels].images.classic[1][1], render_x + 7, character.stage and render_y + button_height - 19 or render_y + button_height - 6, "center", "center", 0, 12 / orig_w, 12 / orig_h)
+      end
+    end
+  elseif character and character:is_bundle() then -- draw bundle character generated thumbnails
+    local sub_characters = character.sub_characters
+    local sub_characters_count = math.min(4, #sub_characters) -- between 2 and 4 (inclusive), by design
+
+    local thumbnail_1 = characters[sub_characters[1] ].images.icon
+    local thumb_y_padding = 0.25 * button_height
+    local thumb_1_and_2_y_padding = sub_characters_count >= 3 and -thumb_y_padding or 0
+    local scale_1 = button_width * 0.5 / math.max(thumbnail_1:getWidth(), thumbnail_1:getHeight())
+    menu_drawf(thumbnail_1, render_x + 0.25 * button_width, render_y + 0.5 * button_height + thumb_1_and_2_y_padding, "center", "center", 0, scale_1, scale_1)
+
+    local thumbnail_2 = characters[sub_characters[2] ].images.icon
+    local scale_2 = button_width * 0.5 / math.max(thumbnail_2:getWidth(), thumbnail_2:getHeight())
+    menu_drawf(thumbnail_2, render_x + 0.75 * button_width, render_y + 0.5 * button_height + thumb_1_and_2_y_padding, "center", "center", 0, scale_2, scale_2)
+
+    if sub_characters_count >= 3 then
+      local thumbnail_3 = characters[sub_characters[3] ].images.icon
+      local scale_3 = button_width * 0.5 / math.max(thumbnail_3:getWidth(), thumbnail_3:getHeight())
+      local thumb_3_x_padding = sub_characters_count == 3 and 0.25 * button_width or 0
+      menu_drawf(thumbnail_3, render_x + 0.25 * button_width + thumb_3_x_padding, render_y + 0.75 * button_height, "center", "center", 0, scale_3, scale_3)
+    end
+    if sub_characters_count == 4 then
+      local thumbnail_4 = characters[sub_characters[4] ].images.icon
+      local scale_4 = button_width * 0.5 / math.max(thumbnail_4:getWidth(), thumbnail_4:getHeight())
+      menu_drawf(thumbnail_4, render_x + 0.75 * button_width, render_y + 0.75 * button_height, "center", "center", 0, scale_4, scale_4)
+    end
+  end
+
+  -- draw flag in the bottom-right corner
+  if character and character ~= random_character_special_value and character.flag then
+    local flag_icon = themes[config.theme].images.flags[character.flag]
+    if flag_icon then
+      local orig_w, orig_h = flag_icon:getDimensions()
+      local scale = 0.2 * button_width / orig_w -- keep image ratio
+      menu_drawf(flag_icon, render_x + button_width - 1, render_y + button_height - 1, "right", "bottom", 0, scale, scale)
+    end
+  end
+  --]]
+  
 end
 
 local character_select_mode = "1p_vs_yourself"
@@ -32,7 +405,6 @@ local template_map = {
   {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}
 }
 local map = {}
-local cursor_data = nil
 local prev_state = nil
 
 local X, Y = 5, 9
@@ -90,12 +462,12 @@ end
 local function resolve_character_random(state)
   if state.character_is_random ~= nil then
     if state.character_is_random == random_character_special_value then
-      state.character = uniformly(characters_ids_for_current_theme)
+      state.character = table.getRandomElement(characters_ids_for_current_theme)
       if characters[state.character]:is_bundle() then -- may pick a bundle
-        state.character = uniformly(characters[state.character].sub_characters)
+        state.character = table.getRandomElement(characters[state.character].sub_characters)
       end
     else
-      state.character = uniformly(characters[state.character_is_random].sub_characters)
+      state.character = table.getRandomElement(characters[state.character_is_random].sub_characters)
     end
     return true
   end
@@ -106,12 +478,12 @@ end
 local function resolve_stage_random(state)
   if state.stage_is_random ~= nil then
     if state.stage_is_random == random_stage_special_value then
-      state.stage = uniformly(stages_ids_for_current_theme)
+      state.stage = table.getRandomElement(stages_ids_for_current_theme)
       if stages[state.stage]:is_bundle() then
-        state.stage = uniformly(stages[state.stage].sub_stages)
+        state.stage = table.getRandomElement(stages[state.stage].sub_stages)
       end
     else
-      state.stage = uniformly(stages[state.stage_is_random].sub_stages)
+      state.stage = table.getRandomElement(stages[state.stage_is_random].sub_stages)
     end
   end
 end
@@ -155,62 +527,7 @@ local function move_cursor(cursor, direction)
   cursor_pos[1], cursor_pos[2] = can_x, can_y
   local character = characters[map[current_page][can_x][can_y]]
   cursor.can_super_select = character and (character.stage or character.panels)
-end
-
--- Returns the panel dir for the given increment 
-local function change_panels_dir(panels_dir, increment)
-  local current = 0
-  for k, v in ipairs(panels_ids) do
-    if v == panels_dir then
-      current = k
-      break
-    end
-  end
-  local dir_count = #panels_ids
-  local new_theme_idx = ((current - 1 + increment) % dir_count) + 1
-  for k, v in ipairs(panels_ids) do
-    if k == new_theme_idx then
-      return v
-    end
-  end
-  return panels_dir
-end
-
--- Sets the state object to a new stage based on the increment
-local function change_stage(state, increment)
-  -- random_stage_special_value is placed at the end of the list and is 'replaced' by a random pick and stage_is_random=true
-  local current = nil
-  for k, v in ipairs(stages_ids_for_current_theme) do
-    if (not state.stage_is_random and v == state.stage) or (state.stage_is_random and v == state.stage_is_random) then
-      current = k
-      break
-    end
-  end
-  if state.stage == nil or state.stage_is_random == random_stage_special_value then
-    current = #stages_ids_for_current_theme + 1
-  end
-  if current == nil then -- stage belonged to another set of stages, it's no more in the list
-    current = 0
-  end
-  local dir_count = #stages_ids_for_current_theme + 1
-  local new_stage_idx = ((current - 1 + increment) % dir_count) + 1
-  if new_stage_idx <= #stages_ids_for_current_theme then
-    local new_stage = stages_ids_for_current_theme[new_stage_idx]
-    if stages[new_stage]:is_bundle() then
-      state.stage_is_random = new_stage
-      state.stage = uniformly(stages[new_stage].sub_stages)
-    else
-      state.stage_is_random = nil
-      state.stage = new_stage
-    end
-  else
-    state.stage_is_random = random_stage_special_value
-    state.stage = uniformly(stages_ids_for_current_theme)
-    if stages[state.stage]:is_bundle() then -- may pick a bundle!
-      state.stage = uniformly(stages[state.stage].sub_stages)
-    end
-  end
-  logger.trace("stage and stage_is_random: " .. state.stage .. " / " .. (state.stage_is_random or "nil"))
+  print(dump(cursor))
 end
 
 -- Function to tell the select screen to exit
@@ -228,37 +545,9 @@ local function on_quit()
   scene_manager:switchScene("main_menu")
 end
 
-local function onReady()
-  print("onReady")
-  -- Handle one player vs game setup
-  GAME.match = Match("vs", GAME.battleRoom)
-  P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
-  --[[
-  if GAME.battleRoom.trainingModeSettings then
-    GAME.match.attackEngine = AttackEngine(P1)
-    local startTime = 300
-    GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime, 1, nil, false,  GAME.battleRoom.trainingModeSettings.height > 1)
-  end
-  --]]
-  GAME.match.P1 = P1
-  P1.garbage_target = P1
-  P2 = nil
-  make_local_panels(P1, "000000")
-  make_local_gpanels(P1, "000000")
-  current_stage = cursor_data[1].state.stage
-  stage_loader_load(current_stage)
-  stage_loader_wait()
-  P1:starting_state()
-  
-  scene_manager:switchScene(nil)
-  func = main_dumb_transition
-  arg = {main_local_vs_yourself, "", 0, 0}
-end
-
 -- Function to know what to do when you press select on your current cursor
 -- returns true if a sound should be played
 local function on_select(cursor, super)
-  print(dump(cursor))
   local noisy = false
   local selectable = {__Stage = true, __Panels = true, __Level = true, __Ready = true}
   if selectable[cursor.state.cursor] then
@@ -274,9 +563,9 @@ local function on_select(cursor, super)
     on_quit()
   elseif cursor.state.cursor == "__Random" then
     cursor.state.character_is_random = random_character_special_value
-    cursor.state.character = uniformly(characters_ids_for_current_theme)
+    cursor.state.character = table.getRandomElement(characters_ids_for_current_theme)
     if characters[cursor.state.character]:is_bundle() then -- may pick a bundle
-      cursor.state.character = uniformly(characters[cursor.state.character].sub_characters)
+      cursor.state.character = table.getRandomElement(characters[cursor.state.character].sub_characters)
     end
     cursor.state.character_display_name = characters[cursor.state.character].display_name
     character_loader_load(cursor.state.character)
@@ -290,7 +579,7 @@ local function on_select(cursor, super)
     cursor.state.character = cursor.state.cursor
     if characters[cursor.state.character]:is_bundle() then -- may pick a bundle
       cursor.state.character_is_random = cursor.state.character
-      cursor.state.character = uniformly(characters[cursor.state.character_is_random].sub_characters)
+      cursor.state.character = table.getRandomElement(characters[cursor.state.character_is_random].sub_characters)
     end
     cursor.state.character_display_name = characters[cursor.state.character].display_name
     local character = characters[cursor.state.character]
@@ -318,11 +607,30 @@ local function on_select(cursor, super)
   return noisy
 end
 
+local function showCharacterPage(page)
+  for i, character_button in ipairs(buttons.characters) do
+    character_button.is_visible = i > (page - 1) * MAX_CHARACTERS_PER_PAGE and i <= page * MAX_CHARACTERS_PER_PAGE
+  end
+end
+
 function vs_self_menu:load()
+  for _, button_group in pairs(buttons) do
+    if button_group.TYPE == "Button" then
+      button_group.is_visible = true
+    else
+      for _, button in pairs(button_group) do
+        button.is_visible = true
+      end
+    end
+  end
+  showCharacterPage(current_page)
+  level_slider.is_visible = true
+  
   GAME.battleRoom = BattleRoom()
   GAME.battleRoom.playerNames[2] = nil
   my_player_number = 1
   op_state = nil
+  player_name_text = love.graphics.newText(love.graphics.getFont(), GAME.battleRoom.playerNames[1])
   
   if themes[config.theme].musics.select_screen then
     stop_the_music()
@@ -355,7 +663,8 @@ function vs_self_menu:load()
     end
   end
     
-  cursor_data = {{position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"]), can_super_select = false, selected = false}, {position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"]), can_super_select = false, selected = false}}
+  cursor_data[1] = {position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"]), can_super_select = false, selected = false}
+  cursor_data[2] = {position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"]), can_super_select = false, selected = false}
 
   -- our data (first player in local)
   if global_my_state ~= nil then
@@ -389,6 +698,9 @@ function vs_self_menu:load()
   prev_state = shallowcpy(cursor_data[1].state)
   
   menu_clock = 0
+  
+  -- new stuff
+  
 end
 
 -- Draws a button for the select screen.
@@ -454,7 +766,7 @@ local function draw_button(x, y, w, h, str, halign, valign, no_rect)
       local icon_to_use = character == random_character_special_value and themes[config.theme].images.IMG_random_character or character.images.icon
       local orig_w, orig_h = icon_to_use:getDimensions()
       local scale = button_width / math.max(orig_w, orig_h) -- keep image ratio
-      menu_drawf(icon_to_use, render_x + 0.5 * button_width, render_y + 0.5 * button_height, "center", "center", 0, scale, scale)
+      -- menu_drawf(icon_to_use, render_x + 0.5 * button_width, render_y + 0.5 * button_height, "center", "center", 0, scale, scale)
       if str ~= "P1" and str ~= "P2" then
         if character.stage then
           local orig_w, orig_h = stages[character.stage].images.thumbnail:getDimensions()
@@ -537,19 +849,6 @@ local function draw_button(x, y, w, h, str, halign, valign, no_rect)
       menu_drawq(cur_img, cur_img_left, render_x - spacing, render_y - spacing, 0, cursor_scale, cursor_scale)
       menu_drawq(cur_img, cur_img_right, render_x + button_width + spacing - cur_img_w * cursor_scale / 2, render_y - spacing, 0, cursor_scale, cursor_scale)
     end
-  end
-
-  -- Draw the players current character, player number etc
-  local function draw_player_state(cursor_data, player_number)
-    if characters[cursor_data.state.character] and not characters[cursor_data.state.character].fully_loaded then
-      menu_drawf(themes[config.theme].images.IMG_loading, render_x + button_width * 0.5, render_y + button_height * 0.5, "center", "center")
-    elseif cursor_data.state.wants_ready then
-      menu_drawf(themes[config.theme].images.IMG_ready, render_x + button_width * 0.5, render_y + button_height * 0.5, "center", "center")
-    end
-    local scale = 0.25 * button_width / math.max(themes[config.theme].images.IMG_players[player_number]:getWidth(), themes[config.theme].images.IMG_players[player_number]:getHeight()) -- keep image ratio
-    menu_drawf(themes[config.theme].images.IMG_players[player_number], render_x + 1, render_y + button_height - 1, "left", "bottom", 0, scale, scale)
-    scale = 0.25 * button_width / math.max(themes[config.theme].images.IMG_levels[cursor_data.state.level]:getWidth(), themes[config.theme].images.IMG_levels[cursor_data.state.level]:getHeight()) -- keep image ratio
-    menu_drawf(themes[config.theme].images.IMG_levels[cursor_data.state.level], render_x + button_width - 1, render_y + button_height - 1, "right", "bottom", 0, scale, scale)
   end
 
   -- Draw the panel selection UI
@@ -738,13 +1037,10 @@ local function draw_button(x, y, w, h, str, halign, valign, no_rect)
       draw_levels(cursor_data[1], 1, 0.4 * button_height)
       draw_levels(cursor_data[2], 2, 0.7 * button_height)
     else
-      draw_levels(cursor_data[1], 1, 0.5 * button_height)
+      --draw_levels(cursor_data[1], 1, 0.5 * button_height)
     end
-  elseif str == "P1" then
-    draw_player_state(cursor_data[1], 1)
-    pstr = GAME.battleRoom.playerNames[1]
   elseif str == "P2" then
-    draw_player_state(cursor_data[2], 2)
+    --draw_player_state(cursor_data[2], 2)
     pstr = GAME.battleRoom.playerNames[2]
   elseif character and character ~= random_character_special_value then
     pstr = character.display_name
@@ -768,7 +1064,7 @@ local function draw_button(x, y, w, h, str, halign, valign, no_rect)
   if str ~= "__Empty" and str ~= "__Reserved" then
     local loc_str = {Level = loc("level"), Mode = loc("mode"), Stage = loc("stage"), Panels = loc("panels"), Ready = loc("ready"), Random = loc("random"), Leave = loc("leave")}
     local to_p = loc_str[pstr]
-    gprintf(not to_p and pstr or to_p, render_x + x_add, render_y + y_add, width_for_alignment, halign)
+    -- gprintf(not to_p and pstr or to_p, render_x + x_add, render_y + y_add, width_for_alignment, halign)
   end
 end
 
@@ -1258,7 +1554,56 @@ function select_screen_main()
   end
 end
 
+-- Draw the players current character, player number etc
+local function drawPlayerInfo()
+  local x, y = grid_to_screen(0, -2)
+  local character_img = characters[cursor_data[1].state.character].images.icon
+  local scale = TILE_SIZE / character_img:getWidth()
+  
+  GAME.gfx_q:push({love.graphics.draw, {characters[cursor_data[1].state.character].images.icon, x, y, 0, scale, scale, 0, 0}})
+  GAME.gfx_q:push({love.graphics.setColor, {234/255, 234/255, 234/255, 1}})
+  GAME.gfx_q:push({love.graphics.rectangle, {"line", x, y, TILE_SIZE, TILE_SIZE}})
+  GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
+
+  if characters[cursor_data[1].state.character] and not characters[cursor_data[1].state.character].fully_loaded then
+    local loading_img = themes[config.theme].images.IMG_loading
+    GAME.gfx_q:push({love.graphics.draw, {themes[config.theme].images.IMG_loading, x + .5 * TILE_SIZE, y + .5 * TILE_SIZE, 0, 1, 1, loading_img:getWidth() / 2, loading_img:getHeight() / 2}})
+  elseif cursor_data[1].state.wants_ready then
+    local ready_img = themes[config.theme].images.IMG_ready
+    GAME.gfx_q:push({love.graphics.draw, {ready_img, x + .5 * TILE_SIZE, y + .5 * TILE_SIZE, 0, 1, 1, ready_img:getWidth() / 2, ready_img:getHeight() / 2}})
+  end
+
+  local player_img = themes[config.theme].images.IMG_players[1]
+  scale = 20 / player_img:getHeight()
+  GAME.gfx_q:push({love.graphics.draw, {player_img, x + .3 * TILE_SIZE, y + .75 * TILE_SIZE, 0, scale, scale, player_img:getWidth(), 0}})
+
+  local level_img = themes[config.theme].images.IMG_levels[level_slider.value]
+  scale = 20 / level_img:getHeight()
+  GAME.gfx_q:push({love.graphics.draw, {level_img, x + .75 * TILE_SIZE, y + .75 * TILE_SIZE, 0, scale, scale, 0, 0}})
+  
+  GAME.gfx_q:push({love.graphics.setColor, {0, 0, 0, 1}})
+  GAME.gfx_q:push({love.graphics.draw, {player_name_text, x + .5 * TILE_SIZE + 1, y + 1, 0, 1, 1, player_name_text:getWidth() / 2, 0}})
+  GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
+  GAME.gfx_q:push({love.graphics.draw, {player_name_text, x + .5 * TILE_SIZE, y, 0, 1, 1, player_name_text:getWidth() / 2, 0}})
+end
+
+local function drawLevelSelector()
+  local x, y = grid_to_screen(5, -1)
+  local x_offset
+  if level_slider.is_enabled then
+    x_offset = 150 - 11 * 7.6
+    GAME.gfx_q:push({love.graphics.draw, {brackets.left, x + 150 - 11 * 6.6, y + 50 - 15, 0, 1, 1, 0, 0}})
+    GAME.gfx_q:push({love.graphics.draw, {brackets.right, x + 150 + 11 * 5.4, y + 50 - 15, 0, 1, 1, 0, 0}})
+  else
+    x_offset = 150 - 11 * 6.6
+  end
+  GAME.gfx_q:push({love.graphics.draw, {themes[config.theme].images.IMG_players[1], x + x_offset, y + 50 - 11, 0, 1, 1, 0, 0}})
+end
+
 function vs_self_menu:update()
+  drawLevelSelector()
+  drawPlayerInfo()
+  
   -- Draw the current score and record
   local xPosition1 = 196
   local xPosition2 = 320
@@ -1334,10 +1679,12 @@ function vs_self_menu:update()
   if input.isDown["e"] then
     if not cursor.selected then
       current_page = bound(1, current_page - 1, pages_amount)
+      showCharacterPage(current_page)
     end
   elseif input.isDown["r"] then
     if not cursor.selected then
       current_page = bound(1, current_page + 1, pages_amount)
+      showCharacterPage(current_page)
     end
   elseif input.isDown["up"] then
     if not cursor.selected then
@@ -1423,6 +1770,16 @@ function vs_self_menu:update()
 end
 
 function vs_self_menu:unload()
+  for _, button_group in pairs(buttons) do
+    if button_group.TYPE == "Button" then
+      button_group.is_visible = false
+    else
+      for _, button in pairs(button_group) do
+        button.is_visible = false
+      end
+    end
+  end
+  level_slider.is_visible = false
   if themes[config.theme].musics.select_screen then
     stop_the_music()
   end

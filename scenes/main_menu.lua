@@ -33,11 +33,9 @@ end
 local font = love.graphics.getFont()
 local arrow = love.graphics.newText(font, ">")
 local menu_buttons = {
-  --Button({text = love.graphics.newText(font, loc("mm_1_endless")), onClick = genOnClickFn(main_endless_select), isVisible = false}),
   Button({text = love.graphics.newText(font, loc("mm_1_endless")), onClick = function() switchScene("endless_menu") end, is_visible = false}),
   Button({text = love.graphics.newText(font, loc("mm_1_puzzle")), onClick = genOnClickFn(main_select_puzz), is_visible = false}),
   Button({text = love.graphics.newText(font, loc("mm_1_time")), onClick = function() switchScene("time_attack_menu") end, is_visible = false}),
-  -- Button({text = love.graphics.newText(font, loc("mm_1_vs")), onClick = genOnClickFn(main_local_vs_yourself_setup), is_visible = false}),
   Button({text = love.graphics.newText(font, loc("mm_1_vs")), onClick = function() switchScene("vs_self_menu") end, is_visible = false}),
   Button({text = love.graphics.newText(font, loc("mm_1_training")), onClick = genOnClickFn(training_setup), is_visible = false}),
   --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
