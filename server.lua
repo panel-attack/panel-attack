@@ -1253,8 +1253,10 @@ function Connection.J(self, message)
   message = json.decode(message)
   local response
   if message.error_report then -- Error report is checked for first so that a full login is not required
-    logger.info("Recieved error report")
-    write_error_report(message.error_report)
+    logger.info("Recieved an error report.")
+    if not write_error_report(message.error_report) then
+      logger.warn("The error report was either too large or had an I/O failure when attempting to write the file.")
+    end
     self:close() -- After sending the error report, the client will throw the error, so end the connection.
     return
   elseif self.state == "needs_name" then
