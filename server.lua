@@ -577,7 +577,7 @@ function Connection.login(self, user_id)
 
     if playerbase:nameTaken("", self.name) then
       self:send({choose_another_name = {reason = "That player name is already taken"}})
-      logger.warn("Login failure: Player tried to use already taken name: " .. self.name)
+      logger.warn("Login failure: Player tried to create a new user with an already taken name: " .. self.name)
     else 
       logger.info(self.name .. " needs a new user id!")
       local their_new_user_id
@@ -605,7 +605,7 @@ function Connection.login(self, user_id)
       end
       self.logged_in = true
       self:send({login_successful = true, name_changed = true, old_name = the_old_name, new_name = self.name})
-      logger.info("Login successful and changed name " .. the_old_name .. " to " .. self.name)
+      logger.warn("Login successful and changed name " .. the_old_name .. " to " .. self.name)
     end
   elseif playerbase.players[self.user_id] then
     self.logged_in = true
@@ -693,7 +693,7 @@ function Connection.close(self)
     lobby_changed = true
   end
   if self.room and (self.room.a.name == self.name or self.room.b.name == self.name) then
-    logger.warn("about to close room for " .. (self.name or "nil") .. ".  Connection.close was called")
+    logger.info("about to close room for " .. (self.name or "nil") .. ".  Connection.close was called")
     self.room:close()
   elseif self.room then
     self.room:remove_spectator(self)
@@ -764,7 +764,7 @@ function Room.resolve_game_outcome(self)
     if self.game_outcome_reports[1] ~= self.game_outcome_reports[2] then
       --if clients disagree, the server needs to decide the outcome, perhaps by watching a replay it had created during the game.
       --for now though...
-      logger.info("clients " .. self.a.name .. " and " .. self.b.name .. " disagree on their game outcome. So the server will decide.")
+      logger.warn("clients " .. self.a.name .. " and " .. self.b.name .. " disagree on their game outcome. So the server will declare a tie.")
       outcome = 0
     else
       outcome = self.game_outcome_reports[1]
