@@ -1,4 +1,3 @@
-
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =
   class(
@@ -17,6 +16,19 @@ Match =
     self.current_music_is_casual = true 
     self.seed = math.random(1,9999999)
     self.isFromReplay = false
+    self.current_music_is_casual = true
+    self.startTimestamp = os.time(os.date("*t"))
+    if P2 or mode == "vs" then
+      GAME.rich_presence:setPresence(
+      (self.battleRoom.spectating and "Spectating" or "Playing") .. " a " .. match_type .. " match",
+      GAME.battleRoom.playerNames[1] .. " vs " .. (GAME.battleRoom.playerNames[2] or "themselves"),
+      true)
+    else
+      GAME.rich_presence:setPresence(
+      "Playing " .. mode .. " mode",
+      nil,
+      true)
+    end
   end
 )
 
@@ -204,7 +216,6 @@ function Match.render(self)
       end
     end
   end
-
 
   if config.debug_mode then
 
