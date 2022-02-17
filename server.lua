@@ -1252,7 +1252,12 @@ end
 function Connection.J(self, message)
   message = json.decode(message)
   local response
-  if self.state == "needs_name" then
+  if message.error_report then -- Error report is checked for first so that a full login is not required
+    logger.info("Recieved error report")
+    write_error_report(message.error_report)
+    self:close() -- After sending the error report, the client will throw the error, so end the connection.
+    return
+  elseif self.state == "needs_name" then
     if not message.name or message.name == "" then
       logger.warn("connection didn't send a name")
       response = {choose_another_name = {reason = "Name cannot be blank"}}

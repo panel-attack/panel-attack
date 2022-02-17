@@ -86,6 +86,20 @@ function read_deleted_players_file()
   )
 end
 
+function write_error_report(error_report_json)
+  local sep = package.config:sub(1, 1)
+  local now = os.date("*t", to_UTC(os.time()))
+  local filename = "v" .. (error_report_json.engine_version or "000") .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. "_" .. (error_report_json.name or "Unknown") ..  "-ErrorReport.json"
+  pcall(
+    function()
+      local f = assert(io.open("reports" .. sep .. filename, "w"))
+      io.output(f)
+      io.write(json.encode(error_report_json))
+      io.close(f)
+    end
+  )
+end
+
 function write_leaderboard_file()
   pcall(
     function()
