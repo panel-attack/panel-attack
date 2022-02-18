@@ -12,6 +12,7 @@ require("globals")
 require("character") -- after globals!
 require("stage") -- after globals!
 require("save")
+require("engine/GarbageQueue")
 require("engine/telegraph")
 require("engine")
 require("AttackEngine")
