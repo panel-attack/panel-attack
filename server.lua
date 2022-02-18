@@ -1255,7 +1255,7 @@ function Connection.J(self, message)
   if message.error_report then -- Error report is checked for first so that a full login is not required
     logger.info("Recieved an error report.")
     if not write_error_report(message.error_report) then
-      logger.warn("The error report was either too large or had an I/O failure when attempting to write the file.")
+      logger.error("The error report was either too large or had an I/O failure when attempting to write the file.")
     end
     self:close() -- After sending the error report, the client will throw the error, so end the connection.
     return
