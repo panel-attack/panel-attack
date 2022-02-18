@@ -1253,7 +1253,7 @@ function Connection.J(self, message)
   message = json.decode(message)
   local response
   if message.error_report then -- Error report is checked for first so that a full login is not required
-    logger.info("Recieved an error report.")
+    logger.warn("Recieved an error report.")
     if not write_error_report(message.error_report) then
       logger.error("The error report was either too large or had an I/O failure when attempting to write the file.")
     end
