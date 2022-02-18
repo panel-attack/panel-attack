@@ -87,6 +87,7 @@ function love.update(dt)
     local system_info = "OS: " .. love.system.getOS()
     if GAME_UPDATER_GAME_VERSION then
       system_info = system_info .. "\n" .. GAME_UPDATER_GAME_VERSION
+      send_error_report(err, debug.traceback(mainloop), GAME_UPDATER_GAME_VERSION, love.system.getOS())
     end
     error(err .. "\n" .. debug.traceback(mainloop) .. "\n" .. system_info)
   end
