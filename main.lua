@@ -156,7 +156,9 @@ function love.mousepressed(x, y)
 end
 
 function love.quit()
-  json_send({logout = true})
+  if network_connected() then
+    json_send({logout = true})
+  end
 end
 
 -- Handle a touch press
