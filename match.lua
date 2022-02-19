@@ -14,7 +14,7 @@ Match =
     self.attackEngine = nil
     self.current_music_is_casual = true
     self.startTimestamp = os.time(os.date("*t"))
-    if P2 or mode == "vs" and GAME.battleRoom then
+    if (P2 or mode == "vs") and GAME.battleRoom then
       GAME.rich_presence:setPresence(
       (GAME.battleRoom.spectating and "Spectating" or "Playing") .. " a " .. match_type .. " match",
       GAME.battleRoom.playerNames[1] .. " vs " .. (GAME.battleRoom.playerNames[2] or "themselves"),
