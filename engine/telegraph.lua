@@ -370,7 +370,7 @@ function Telegraph:render()
                 garbage_block.y = garbage_block.y - ((garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED)*(garbage_block.y-garbage_block.destination_y))/distance_to_destination
               end
 
-              draw(characters[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y,0, atk_scale, atk_scale)
+              draw(characters[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y, 0, atk_scale, atk_scale)
             end
           end
         end
