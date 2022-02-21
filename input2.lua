@@ -38,5 +38,8 @@ function input2:update()
   end
 end
 
+function input2:isPressedWithRepeat(key, delay, repeat_period)
+  return self.isDown[key] or (self.isPressed[key] and self.isPressed[key] > delay and self.isPressed[key] % repeat_period == 0)
+end
 
 return input2
