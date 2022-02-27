@@ -27,7 +27,6 @@ local font = love.graphics.getFont()
 local arrow = love.graphics.newText(font, ">")
 
 local selected_id = 1
-local time = 0
 
 local speed_slider = Slider({
     min = 1, 
@@ -120,17 +119,17 @@ function endless_menu:load()
 end
 
 function endless_menu:update()
-  if input.isDown["down"] or (input.isPressed["down"] and input.isPressed["down"] > 100 and input.isPressed["down"] % 20 == 0) then
+  if input:isPressedWithRepeat("down", .25, .05) then
     selected_id = (selected_id % #menu_options) + 1
     play_optional_sfx(themes[config.theme].sounds.menu_move)
   end
   
-  if input.isDown["up"] or (input.isPressed["up"] and input.isPressed["up"] > 100 and input.isPressed["up"] % 20 == 0) then
+  if input:isPressedWithRepeat("up", .25, .05) then
     selected_id = ((selected_id - 2) % #menu_options) + 1
     play_optional_sfx(themes[config.theme].sounds.menu_move)
   end
   
-  if input.isDown["left"] or (input.isPressed["left"] and input.isPressed["left"] > 100 and input.isPressed["left"] % 20 == 0) then
+  if input:isPressedWithRepeat("left", .25, .05) then
     if selected_id == 2 and difficulty > 1 then
       self:setDifficulty(difficulty - 1)
     elseif selected_id == 1 then
@@ -138,7 +137,7 @@ function endless_menu:update()
     end
   end
 
-  if input.isDown["right"] or (input.isPressed["right"] and input.isPressed["right"] > 100 and input.isPressed["right"] % 20 == 0) then
+  if input:isPressedWithRepeat("right", .25, .05) then
     if selected_id == 2 and difficulty < 4 then
       self:setDifficulty(difficulty + 1)
     elseif selected_id == 1 then
@@ -161,11 +160,10 @@ function endless_menu:update()
   draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition, 0.5, 1.0)
   draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition + 24, 0.5, 1.0)
   
-  local animationX = (math.cos(math.rad(time * .6)) * 5) - 9
+  local animationX = (math.cos(6 * love.timer.getTime()) * 5) - 9
   local arrowx = menu_options[selected_id].x - 10 + animationX
   local arrowy = menu_options[selected_id].y + menu_options[selected_id].height / 4
   GAME.gfx_q:push({love.graphics.draw, {arrow, arrowx, arrowy, 0, 1, 1, 0, 0}})
-  time = time + 1
 end
 
 function endless_menu:unload()

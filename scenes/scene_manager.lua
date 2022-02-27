@@ -18,8 +18,8 @@ local transitions = {
     post_load_transition = function() end
   },
   fade = {
-    pre_load_transition = function() transition_utils.fade(0, 1, .01) end,
-    post_load_transition = function() transition_utils.fade(1, 0, -.01) end
+    pre_load_transition = function() transition_utils.fade(0, 1, .25) end,
+    post_load_transition = function() transition_utils.fade(1, 0, .25) end
   }
 }
 

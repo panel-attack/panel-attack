@@ -707,27 +707,27 @@ function vs_self_menu:update()
   stage_loader_update()
   refresh_loaded_and_ready(cursor_data[1].state, cursor_data[2] and cursor_data[2].state or nil)
 
-  if input:isPressedWithRepeat("e", 100, 20) then
+  if input:isPressedWithRepeat("e", .25, .05) then
     if not (level_slider.is_enabled or buttons.stage_select.left.is_enabled or buttons.panels_select.left.is_enabled) then
       current_page = bound(1, current_page - 1, num_character_pages)
       showCharacterPage(current_page)
     end
-  elseif input:isPressedWithRepeat("r", 100, 20) then
+  elseif input:isPressedWithRepeat("r", .25, .05) then
     if not (level_slider.is_enabled or buttons.stage_select.left.is_enabled or buttons.panels_select.left.is_enabled) then
       current_page = bound(1, current_page + 1, num_character_pages)
       showCharacterPage(current_page)
     end
-  elseif input:isPressedWithRepeat("up", 100, 20) then
+  elseif input:isPressedWithRepeat("up", .25, .05) then
     if not (level_slider.is_enabled or buttons.stage_select.left.is_enabled or buttons.panels_select.left.is_enabled) then
       cursor_pos.y = (cursor_pos.y - 2) % MAX_ROWS + 1
       play_optional_sfx(themes[config.theme].sounds.menu_move)
     end
-  elseif input:isPressedWithRepeat("down", 100, 20) then
+  elseif input:isPressedWithRepeat("down", .25, .05) then
     if not (level_slider.is_enabled or buttons.stage_select.left.is_enabled or buttons.panels_select.left.is_enabled) then
       cursor_pos.y = cursor_pos.y % MAX_ROWS + 1
       play_optional_sfx(themes[config.theme].sounds.menu_move)
     end
-  elseif input:isPressedWithRepeat("left", 100, 20) then
+  elseif input:isPressedWithRepeat("left", .25, .05) then
     if level_slider.is_enabled then
       level_slider:setValue(level_slider.value - 1)
     elseif buttons.stage_select.left.is_enabled then
@@ -745,7 +745,7 @@ function vs_self_menu:update()
       cursor_pos.x = (cursor_pos.x - 2) % MAX_COLS + 1
       play_optional_sfx(themes[config.theme].sounds.menu_move)
     end
-  elseif input:isPressedWithRepeat("right", 100, 20) then
+  elseif input:isPressedWithRepeat("right", .25, .05) then
     if level_slider.is_enabled then
       level_slider:setValue(level_slider.value + 1)
     elseif buttons.stage_select.right.is_enabled then

@@ -58,7 +58,6 @@ local menu_buttons = {
 }
 
 local selected_id = 1
-local time = 0
 
 function main_menu:init()
   scene_manager:addScene(main_menu)
@@ -93,11 +92,11 @@ function main_menu:load()
 end
 
 function main_menu:update()
-  if input.isDown["down"] or (input.isPressed["down"] and input.isPressed["down"] > 100 and input.isPressed["down"] % 20 == 0) then
+  if input:isPressedWithRepeat("down", .25, .05) then
     selected_id = (selected_id % #menu_buttons) + 1
     play_optional_sfx(themes[config.theme].sounds.menu_move)
   end
-  if input.isDown["up"] or (input.isPressed["up"] and input.isPressed["up"] > 100 and input.isPressed["up"] % 20 == 0) then
+  if input:isPressedWithRepeat("up", .25, .05) then
     selected_id = ((selected_id - 2) % #menu_buttons) + 1
     play_optional_sfx(themes[config.theme].sounds.menu_move)
   end
@@ -113,7 +112,7 @@ function main_menu:update()
     end
   end
   
-  local animationX = (math.cos(math.rad(time * .6)) * 5) - 9
+  local animationX = (math.cos(6 * love.timer.getTime()) * 5) - 9
   local arrowx = menu_buttons[selected_id].x - 10 + animationX
   local arrowy = menu_buttons[selected_id].y + menu_buttons[selected_id].height / 4
   GAME.gfx_q:push({love.graphics.draw, {arrow, arrowx, arrowy, 0, 1, 1, 0, 0}})
@@ -132,7 +131,6 @@ function main_menu:update()
       menu_draw(panels[config.panels].images.classic[1][1], 1262, 685)
     end
   end
-  time = time + 1
 end
 
 function main_menu:unload()

@@ -77,7 +77,7 @@ function love.update(dt)
   button_manager.update()
   button_manager.draw()
   slider_manager.draw()
-  input:update()
+  input:update(dt)
   GAME:update(dt)
   GAME.rich_presence:runCallbacks()
 end
