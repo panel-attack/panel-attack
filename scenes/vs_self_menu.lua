@@ -104,6 +104,7 @@ local function onReady()
   GAME.match = Match("vs", GAME.battleRoom)
   P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
   GAME.match.P1 = P1
+  P1:set_garbage_target(P1)
   P2 = nil
   current_stage = cursor_data[1].state.stage
   stage_loader_load(current_stage)
@@ -422,68 +423,6 @@ local character_select_mode = "1p_vs_yourself"
 local fallback_when_missing = {nil, nil}
 local current_page = 1
 
--- map is composed of special values prefixed by __ and character ids
-local template_map = {
-  {"__Panels", "__Panels", "__Stage", "__Stage", "__Stage", "__Level", "__Level", "__Level", "__Ready"},
-  {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-  {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-  {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-  {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}
-}
-local map = {}
-local prev_state = nil
-
-local X, Y = 5, 9
-local name_to_xy_per_page = {}
-local pages_amount = nil
-
-local v_align_center = {__Ready = true, __Random = true, __Leave = true}
-local is_special_value = {__Leave = true, __Level = true, __Panels = true, __Ready = true, __Stage = true, __Mode = true, __Random = true}
-
--- function for rendering the flashing selection
-local super_select_pixelcode = [[
-    uniform float percent;
-    vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
-    {
-        vec4 c = Texel(tex, texture_coords) * color;
-        if( texture_coords.x < percent )
-        {
-          return c;
-        }
-        float ret = (c.x+c.y+c.z)/3.0;
-        return vec4(ret, ret, ret, c.a);
-    }
-]]
-
--- one per player, should we put them into cursor_data even though it's meaningless?
-local super_select_shaders = {love.graphics.newShader(super_select_pixelcode), love.graphics.newShader(super_select_pixelcode)}
-
--- fills the provided map based on the provided template and return the amount of pages. __Empty values will be replaced by character_ids
-local function fill_map(template_map, map)
-  local pages_amount = 0
-  local character_id_index = 1
-  while true do
-    -- new page handling
-    pages_amount = pages_amount + 1
-    map[pages_amount] = deepcpy(template_map)
-
-    -- go through the page and replace __Empty with characters_ids_for_current_theme
-    for i = 1, X do
-      for j = 1, Y do
-        if map[pages_amount][i][j] == "__Empty" then
-          map[pages_amount][i][j] = characters_ids_for_current_theme[character_id_index]
-          character_id_index = character_id_index + 1
-          -- end case: no more characters_ids_for_current_theme to add
-          if character_id_index == #characters_ids_for_current_theme + 1 then
-            logger.trace("filled " .. #characters_ids_for_current_theme .. " characters across " .. pages_amount .. " page(s)")
-            return pages_amount
-          end
-        end
-      end
-    end
-  end
-end
-
 -- Resolve the current character if it is random
 local function resolve_character_random(state)
   if state.character_is_random ~= nil then
@@ -526,17 +465,6 @@ local function refresh_loaded_and_ready(state_1, state_2)
   if state_2 then
     state_2.loaded = characters[state_2.character] and characters[state_2.character].fully_loaded and stages[state_2.stage] and stages[state_2.stage].fully_loaded
   end
-
-  --[[
-  if select_screen.character_select_mode == "2p_net_vs" then
-    state_1.ready = state_1.wants_ready and state_1.loaded and state_2.loaded
-  else
-    state_1.ready = state_1.wants_ready and state_1.loaded
-    if state_2 then
-      state_2.ready = state_2.wants_ready and state_2.loaded
-    end
-  end
-  --]]
 end
 
 local function showCharacterPage(page)
