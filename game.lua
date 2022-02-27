@@ -37,7 +37,7 @@ local Game = class(
     self.localization = Localization()
     self.replay = {}
     self.currently_paused_tracks = {} -- list of tracks currently paused
-
+    self.rich_presence = nil
     -- private members
     self._pointer_hidden = false
     self._last_x = 0

@@ -39,23 +39,10 @@ require("Theme")
 require("dump")
 local logger = require("logger")
 local input = require("input2")
-
---[[
-local consts = require("consts")
-local function endless_buttons(button)
-  button:remove()
-  
-  local b1 = Button({label = "button1", x = math.random(0, consts.CANVAS_WIDTH), y = math.random(0, consts.CANVAS_HEIGHT)})
-  b1.label = "button" .. b1.id
-  b1.onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) endless_buttons(b1) end
-  
-  if math.random() > .75 then
-    local b2 = Button({label = "button1", x = math.random(0, consts.CANVAS_WIDTH), y = math.random(0, consts.CANVAS_HEIGHT)})
-    b2.label = "button" .. b2.id
-    b2.onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) endless_buttons(b2) end
-  end
-end
---]]
+require("rich_presence.RichPresence")
+GAME.scores = require("scores")
+GAME.rich_presence = RichPresence()
+local nextPresenceUpdate = 0
 
 -- Called at the beginning to load the game
 -- Either called directly or from auto_updater
@@ -72,10 +59,9 @@ function love.load(args)
   for i = 1, 4 do
     math.random()
   end
-  
   -- construct game here
   GAME:load(game_updater)
-  mainloop = coroutine.create(fmainloop)
+  GAME.rich_presence:initialize("902897593049301004")
 end
 
 function love.focus(f)
@@ -90,6 +76,7 @@ function love.update(dt)
   slider_manager.draw()
   input:update()
   GAME:update(dt)
+  GAME.rich_presence:runCallbacks()
 end
 
 -- Called whenever the game needs to draw.
@@ -126,10 +113,9 @@ function love.mousemoved( x, y, dx, dy, istouch )
   end
 end
 
-
 -- Handle a touch press
 -- Note we are specifically not implementing this because mousepressed above handles mouse and touch
 -- function love.touchpressed(id, x, y, dx, dy, pressure)
-  -- local _x, _y = transform_coordinates(x, y)
-  -- click_or_tap(_x, _y, {id = id, x = _x, y = _y, dx = dx, dy = dy, pressure = pressure})
+-- local _x, _y = transform_coordinates(x, y)
+-- click_or_tap(_x, _y, {id = id, x = _x, y = _y, dx = dx, dy = dy, pressure = pressure})
 -- end
