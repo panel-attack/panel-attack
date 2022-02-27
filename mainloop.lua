@@ -402,11 +402,13 @@ local function runMainGameLoop(updateFunction, variableStepFunction, abortGameFu
 
           returnFunction = variableStepFunction()
 
-          handle_pause()
+          if not returnFunction  then
+            handle_pause()
 
-          if not returnFunction and menu_escape_game() then
-            GAME:clearMatch()
-            returnFunction = abortGameFunction()
+            if menu_escape_game() then
+              GAME:clearMatch()
+              returnFunction = abortGameFunction()
+            end
           end
 
           if returnFunction then 
@@ -1014,7 +1016,7 @@ function main_net_vs_lobby()
     variable_step(
       function()
         if showing_leaderboard then
-          if menu_up() then
+          if menu_up() and leaderboard_report then
             if showing_leaderboard then
               if leaderboard_first_idx_to_show > 1 then
                 leaderboard_first_idx_to_show = leaderboard_first_idx_to_show - 1
@@ -1022,7 +1024,7 @@ function main_net_vs_lobby()
                 leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
               end
             end
-          elseif menu_down() then
+          elseif menu_down() and leaderboard_report then
             if showing_leaderboard then
               if leaderboard_last_idx_to_show < #leaderboard_report then
                 leaderboard_first_idx_to_show = leaderboard_first_idx_to_show + 1
@@ -1147,6 +1149,7 @@ function main_net_vs()
     if GAME.battleRoom.spectating and menu_escape() then
       logger.trace("spectator pressed escape during a game")
       json_send({leave_room = true})
+      GAME:clearMatch()
       return {main_dumb_transition, {main_net_vs_lobby, "", 0, 0}} -- spectator leaving the match
     end
   end
