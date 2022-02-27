@@ -14,6 +14,7 @@ local MAX_COLS = 9
 local TILE_SIZE = 84
 local GRID_SIZE = 100
 
+local current_page = 1
 local num_character_pages = nil
 
 local buttons = {
@@ -21,6 +22,7 @@ local buttons = {
   level_select = {},
   stage_select = {},
   panels_select = {},
+  page_select = {},
   leave = nil,
   ready = nil,
   random = nil
@@ -170,6 +172,24 @@ local function change_panels_dir(panels_dir, increment)
     end
   end
   return panels_dir
+end
+
+local function showCharacterPage(page)
+  local index = 0
+  for i = 0, MAX_CHARACTERS_PER_PAGE - 1 do
+    local x = (i + button_info.characters.x - 1) % MAX_COLS + 1
+    local y = math.floor((i + button_info.characters.x - 1) / MAX_COLS + button_info.characters.y)
+    button_grid[y][x] = nil
+  end
+  for i, character_button in ipairs(buttons.characters) do
+    character_button.is_visible = i > (page - 1) * MAX_CHARACTERS_PER_PAGE and i <= page * MAX_CHARACTERS_PER_PAGE
+    if character_button.is_visible then
+      local x = (index + button_info.characters.x - 1) % MAX_COLS + 1
+      local y = math.floor((index + button_info.characters.x - 1) / MAX_COLS + button_info.characters.y)
+      button_grid[y][x] = character_button
+      index = index + 1
+    end
+  end
 end
 
 function vs_self_menu:init()
@@ -404,6 +424,35 @@ function vs_self_menu:init()
       end,
       onMousePressed = function() end
     })
+  
+  -- init page select
+  x, y = grid_to_screen(5, 6)
+  buttons.page_select.left = Button({
+      x = x - 25,
+      y = y - 5, 
+      width = 25, 
+      height = 25, 
+      text = love.graphics.newText(love.graphics.getFont(), "<"),
+      is_visible = false,
+      onClick = function()
+        play_optional_sfx(themes[config.theme].sounds.menu_move)
+        current_page = bound(1, current_page - 1, num_character_pages)
+        showCharacterPage(current_page)
+      end
+    })
+  buttons.page_select.right = Button({
+      x = x + TILE_SIZE, 
+      y = y - 5, 
+      width = 25, 
+      height = 25, 
+      text = love.graphics.newText(love.graphics.getFont(), ">"),
+      is_visible = false,
+      onClick = function()
+        play_optional_sfx(themes[config.theme].sounds.menu_move)
+        current_page = bound(1, current_page + 1, num_character_pages)
+        showCharacterPage(current_page)
+      end
+    })
 
   button_grid[button_info.random.y][button_info.random.x] = buttons.random
   button_grid[button_info.leave.y][button_info.leave.x] = buttons.leave
@@ -421,7 +470,6 @@ end
 
 local character_select_mode = "1p_vs_yourself"
 local fallback_when_missing = {nil, nil}
-local current_page = 1
 
 -- Resolve the current character if it is random
 local function resolve_character_random(state)
@@ -464,24 +512,6 @@ local function refresh_loaded_and_ready(state_1, state_2)
   state_1.loaded = characters[state_1.character] and characters[state_1.character].fully_loaded and stages[state_1.stage] and stages[state_1.stage].fully_loaded
   if state_2 then
     state_2.loaded = characters[state_2.character] and characters[state_2.character].fully_loaded and stages[state_2.stage] and stages[state_2.stage].fully_loaded
-  end
-end
-
-local function showCharacterPage(page)
-  local index = 0
-  for i = 0, MAX_CHARACTERS_PER_PAGE - 1 do
-    local x = (i + button_info.characters.x - 1) % MAX_COLS + 1
-    local y = math.floor((i + button_info.characters.x - 1) / MAX_COLS + button_info.characters.y)
-    button_grid[y][x] = nil
-  end
-  for i, character_button in ipairs(buttons.characters) do
-    character_button.is_visible = i > (page - 1) * MAX_CHARACTERS_PER_PAGE and i <= page * MAX_CHARACTERS_PER_PAGE
-    if character_button.is_visible then
-      local x = (index + button_info.characters.x - 1) % MAX_COLS + 1
-      local y = math.floor((index + button_info.characters.x - 1) / MAX_COLS + button_info.characters.y)
-      button_grid[y][x] = character_button
-      index = index + 1
-    end
   end
 end
 
@@ -708,15 +738,9 @@ function vs_self_menu:update()
   refresh_loaded_and_ready(cursor_data[1].state, cursor_data[2] and cursor_data[2].state or nil)
 
   if input:isPressedWithRepeat("e", .25, .05) then
-    if not (level_slider.is_enabled or buttons.stage_select.left.is_enabled or buttons.panels_select.left.is_enabled) then
-      current_page = bound(1, current_page - 1, num_character_pages)
-      showCharacterPage(current_page)
-    end
+    buttons.page_select.left.onClick()
   elseif input:isPressedWithRepeat("r", .25, .05) then
-    if not (level_slider.is_enabled or buttons.stage_select.left.is_enabled or buttons.panels_select.left.is_enabled) then
-      current_page = bound(1, current_page + 1, num_character_pages)
-      showCharacterPage(current_page)
-    end
+    buttons.page_select.right.onClick()
   elseif input:isPressedWithRepeat("up", .25, .05) then
     if not (level_slider.is_enabled or buttons.stage_select.left.is_enabled or buttons.panels_select.left.is_enabled) then
       cursor_pos.y = (cursor_pos.y - 2) % MAX_ROWS + 1
