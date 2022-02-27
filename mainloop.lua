@@ -1747,6 +1747,9 @@ end
 
 -- quit handling
 function love.quit()
+  if network_connected() then
+    json_send({logout = true})
+  end
   love.audio.stop()
   if love.window.getFullscreen() == true then
     null, null, config.display = love.window.getPosition()
