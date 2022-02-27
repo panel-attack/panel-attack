@@ -124,6 +124,22 @@ function deepcpy(tab)
   return ret
 end
 
+function table_to_string(tab)
+  local ret = ""
+  for k,v in pairs(tab) do
+    if type(v) == "table" then
+      ret = ret..k.." table:\n"..table_to_string(v).."\n"
+    else
+      ret = ret..k.." "..tostring(v).."\n"
+    end
+  end
+  return ret
+end
+
+function sign(x)
+  return (x<0 and -1) or 1
+end
+
 --Note: this round() doesn't work with negative numbers
 function round(positive_decimal_number, number_of_decimal_places)
   if not number_of_decimal_places then

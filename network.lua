@@ -95,6 +95,7 @@ function undo_stonermode()
   while lag_q:len() ~= 0 do
     TCP_sock:send(unpack(lag_q:pop()))
   end
+  STONER_MODE = false
 end
 
 local got_H = false
@@ -180,12 +181,10 @@ function process_all_data_messages()
   local messages = server_queue:pop_all_with("P", "O", "U", "I", "Q", "R")
   for _, msg in ipairs(messages) do
     for type, data in pairs(msg) do
-      if type ~= "_expiration" then
-        if printNetworkMessageForType(type) then
-          logger.debug("Processing: " .. type .. " with data:" .. data)
-        end
-        process_data_message(type, data)
+      if printNetworkMessageForType(type) then
+        logger.debug("Processing: " .. type .. " with data:" .. data)
       end
+      process_data_message(type, data)
     end
   end
 end
@@ -193,23 +192,17 @@ end
 -- Handler for the various "game data" message types
 function process_data_message(type, data)
   if type == "P" then
-    P1.panel_buffer = P1.panel_buffer .. data
-    P1.panel_buffer_record = P1.panel_buffer_record .. data
+    
   elseif type == "O" then
-    P2.panel_buffer = P2.panel_buffer .. data
-    P2.panel_buffer_record = P2.panel_buffer_record .. data
+    
   elseif type == "U" then
-    P1.input_buffer = P1.input_buffer .. data
-    P1.input_buffer_record = P1.input_buffer_record .. data
+    P1:receiveConfirmedInput(data)
   elseif type == "I" then
-    P2.input_buffer = P2.input_buffer .. data
-    P2.input_buffer_record = P2.input_buffer_record .. data
+    P2:receiveConfirmedInput(data)
   elseif type == "Q" then
-    P1.gpanel_buffer = P1.gpanel_buffer .. data
-    P1.gpanel_buffer_record = P1.gpanel_buffer_record .. data
+    
   elseif type == "R" then
-    P2.gpanel_buffer = P2.gpanel_buffer .. data
-    P2.gpanel_buffer_record = P2.gpanel_buffer_record .. data
+    
   end
 end
 
@@ -245,7 +238,7 @@ end
 function send_error_report(error, stack, release_version, OS)
   TCP_sock = socket.tcp()
   TCP_sock:settimeout(7)
-  if not TCP_sock:connect("18.188.43.50", 49569) then --for official server
+  if not TCP_sock:connect("18.188.43.50", 59569) then --for official server
     return false
   end
   TCP_sock:settimeout(0)
@@ -295,34 +288,6 @@ function request_spectate(roomNr)
   json_send({spectate_request = {sender = config.name, roomNumber = roomNr}})
 end
 
-function ask_for_panels(prev_panels, stack)
-  if TCP_sock then
-    net_send("P" .. tostring(P1.NCOLORS) .. prev_panels)
-  else
-    make_local_panels(stack or P1, prev_panels)
-  end
-end
-
-function ask_for_gpanels(prev_panels, stack)
-  if TCP_sock then
-    net_send("Q" .. tostring(P1.NCOLORS) .. prev_panels)
-  else
-    make_local_gpanels(stack or P1, prev_panels)
-  end
-end
-
-function make_local_panels(stack, prev_panels)
-  local ret = make_panels(stack.NCOLORS, prev_panels, stack)
-  stack.panel_buffer = stack.panel_buffer .. ret
-  stack.panel_buffer_record = stack.panel_buffer_record .. ret
-end
-
-function make_local_gpanels(stack, prev_panels)
-  local ret = make_gpanels(stack.NCOLORS, prev_panels)
-  stack.gpanel_buffer = stack.gpanel_buffer .. ret
-  stack.gpanel_buffer_record = stack.gpanel_buffer_record .. ret
-end
-
 function Stack.handle_input_taunt(self)
 
   if player_taunt_up(self.which) and self:can_taunt() and #characters[self.character].sounds.taunt_ups > 0 then
@@ -338,7 +303,18 @@ function Stack.handle_input_taunt(self)
   end
 end
 
+function Stack.idleInput(self) 
+  return base64encode[1]
+end
+
 function Stack.send_controls(self)
+
+  if self.is_local and TCP_sock and string.len(self.confirmedInput) > 0 and self.garbage_target and string.len(self.garbage_target.confirmedInput) == 0 then
+    -- Send 1 frame at CLOCK time 0 then wait till we get our first input from the other player.
+    -- This will cause a player that got the start message earlierer than the other player to wait for the other player just once.
+    return
+  end
+
   local playerNumber = self.which
   local to_send = base64encode[
     (player_raise(playerNumber) and 32 or 0) + 
@@ -355,7 +331,5 @@ function Stack.send_controls(self)
 
   self:handle_input_taunt()
 
-  self.input_buffer_record = self.input_buffer_record .. to_send
-
-  return to_send
+  self:receiveConfirmedInput(to_send)
 end

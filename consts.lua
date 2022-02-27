@@ -2,7 +2,7 @@ require("util")
 require("table_util")
 
 -- The values in this file are constants (except in this file perhaps) and are expected never to change during the game, not to be confused with globals!
-VERSION = "045"
+VERSION = "046"
 
 canvas_width = 1280
 canvas_height = 720

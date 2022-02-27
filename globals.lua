@@ -13,6 +13,10 @@ this_frame_messages = {}
 server_queue = ServerQueue()
 
 score_mode = SCOREMODE_TA
+ 
+GARBAGE_DELAY = 60
+GARBAGE_TRANSIT_TIME = 90
+MAX_LAG = 200 -- maximum amount of lag before net games abort
 
 gfx_q = Queue()
 

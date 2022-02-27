@@ -12,6 +12,8 @@ require("globals")
 require("character") -- after globals!
 require("stage") -- after globals!
 require("save")
+require("engine/GarbageQueue")
+require("engine/telegraph")
 require("engine")
 require("AttackEngine")
 require("localization")
@@ -144,7 +146,7 @@ function love.draw()
 end
 
 -- Transform from window coordinates to game coordinates
-local function transform_coordinates(x, y)
+function transform_coordinates(x, y)
   local lbx, lby, lbw, lbh = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 16, 9)
   return (x - lbx) / 1 * canvas_width / lbw, (y - lby) / 1 * canvas_height / lbh
 end
