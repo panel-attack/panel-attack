@@ -39,7 +39,7 @@ local menu_buttons = {
   Button({text = love.graphics.newText(font, loc("mm_1_vs")), onClick = function() switchScene("vs_self_menu") end, is_visible = false}),
   Button({text = love.graphics.newText(font, loc("mm_1_training")), onClick = genOnClickFn(training_setup), is_visible = false}),
   --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
-  Button({text = love.graphics.newText(font, loc("mm_2_vs_online", "")), onClick = genOnClickFn(main_net_vs_setup, {"18.188.43.50"}), is_visible = false}),
+  Button({text = love.graphics.newText(font, loc("mm_2_vs_online", "Telegraph Server")), onClick = genOnClickFn(main_net_vs_setup, {"betaserver.panelattack.com", 59569}), is_visible = false}),
   --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
   --{loc("mm_2_vs_online", "betaserver.panelattack.com"), main_net_vs_setup, {"betaserver.panelattack.com"}},
   --{loc("mm_2_vs_online", "(USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)"), main_net_vs_setup, {"18.188.43.50"}},

@@ -344,7 +344,7 @@ function ClickMenu.click_or_tap(self, x, y, touchpress)
     for control_name, control in pairs(self.menu_controls) do
       if control.visible then
         if y >= self.y + control.y and y <= self.y + control.y + control.h and x >= self.x + control.x and x <= self.x + control.x + control.w then
-          --print(menu_name.."'s "..control_name.." was clicked or tapped")
+          --logger.debug(menu_name.."'s "..control_name.." was clicked or tapped")
           this_frame_keys[control_name] = true
           logger.debug("Click Menu tapped, pressing button: " .. control_name)
         end

@@ -9,6 +9,10 @@ this_frame_unicodes = {}
 this_frame_messages = {}
 
 score_mode = SCOREMODE_TA
+ 
+GARBAGE_DELAY = 60
+GARBAGE_TRANSIT_TIME = 90
+MAX_LAG = 200 -- maximum amount of lag before net games abort
 
 themes = {} -- initialized in theme.lua
 

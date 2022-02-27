@@ -888,6 +888,19 @@ function select_screen.main()
           character_loader_wait()
           stage_loader_wait()
           GAME.match = Match("vs", GAME.battleRoom)
+
+          -- Use the seed the server gives us if it makes one, else generate a basic one off data both clients have.
+          local seed
+          if msg.seed or (replay_of_match_so_far and replay_of_match_so_far.vs and replay_of_match_so_far.vs.seed) then
+            seed = msg.seed or (replay_of_match_so_far and replay_of_match_so_far.vs and replay_of_match_so_far.vs.seed)
+          else 
+            seed = 17
+            seed = seed * 37 + global_current_room_ratings[1].new;
+            seed = seed * 37 + global_current_room_ratings[2].new;
+            seed = seed * 37 + GAME.battleRoom.playerWinCounts[1];
+            seed = seed * 37 + GAME.battleRoom.playerWinCounts[2];
+          end
+          GAME.match.seed = seed
           local is_local = true
           if GAME.battleRoom.spectating then
             is_local = false
@@ -904,29 +917,18 @@ function select_screen.main()
           end
           P2.panel_buffer = fake_P2.panel_buffer
           P2.gpanel_buffer = fake_P2.gpanel_buffer
-          P1.garbage_target = P2
-          P2.garbage_target = P1
+          P1:set_garbage_target(P2)
+          P2:set_garbage_target(P1)
           P2:moveForPlayerNumber(2)
-          replay = createNewReplay(GAME.match.mode)
+          replay = createNewReplay(GAME.match)
           
           if GAME.battleRoom.spectating and replay_of_match_so_far then --we joined a match in progress
             for k, v in pairs(replay_of_match_so_far.vs) do
               replay.vs[k] = v
             end
-            P1.input_buffer = replay_of_match_so_far.vs.in_buf
-            P1.panel_buffer = replay_of_match_so_far.vs.P
-            P1.gpanel_buffer = replay_of_match_so_far.vs.Q
-            P2.input_buffer = replay_of_match_so_far.vs.I
-            P2.panel_buffer = replay_of_match_so_far.vs.O
-            P2.gpanel_buffer = replay_of_match_so_far.vs.R
-            P1.input_buffer_record = P1.input_buffer
-            P1.panel_buffer_record = P1.panel_buffer
-            P1.gpanel_buffer_record = P1.gpanel_buffer
-            P2.input_buffer_record = P2.input_buffer
-            P2.panel_buffer_record = P2.panel_buffer
-            P2.gpanel_buffer_record = P2.gpanel_buffer
-
-            if msg.ranked then
+            P1:receiveConfirmedInput(replay_of_match_so_far.vs.in_buf)
+            P2:receiveConfirmedInput(replay_of_match_so_far.vs.I)
+            if replay.vs.ranked then
               match_type = "Ranked"
               match_type_message = ""
             else
@@ -939,10 +941,6 @@ function select_screen.main()
 
           replay.vs.ranked = msg.ranked
 
-          if not GAME.battleRoom.spectating then
-            ask_for_gpanels("000000")
-            ask_for_panels("000000")
-          end
           to_print = loc("pl_game_start") .. "\n" .. loc("level") .. ": " .. P1.level .. "\n" .. loc("opponent_level") .. ": " .. P2.level
           if P1.play_to_end or P2.play_to_end then
             to_print = loc("pl_spectate_join")
@@ -956,32 +954,6 @@ function select_screen.main()
             end
             process_all_data_messages() -- process data to get initial panel stacks setup
             wait()
-          end
-
-          -- Wait for all the game start data to come in before moving to the game screen
-          local game_start_timeout = 0
-          while P1.panel_buffer == "" or P2.panel_buffer == "" or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
-            game_start_timeout = game_start_timeout + 1
-            logger.trace("game_start_timeout = " .. game_start_timeout)
-            logger.trace("P1.panel_buffer = " .. P1.panel_buffer)
-            logger.trace("P2.panel_buffer = " .. P2.panel_buffer)
-            logger.trace("P1.gpanel_buffer = " .. P1.gpanel_buffer)
-            logger.trace("P2.gpanel_buffer = " .. P2.gpanel_buffer)
-            gprint(to_print, unpack(main_menu_screen_pos))
-            if not do_messages() then
-              return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
-            end
-            process_all_data_messages() -- process data to get initial panel stacks setup
-            wait()
-            if game_start_timeout > 250 then
-              warning(loc("pl_time_out") .. "\n")
-              return main_dumb_transition, {
-                main_select_mode,
-                loc("pl_time_out") .. "\n" .. "\n" .. "msg.match_start = " .. (tostring(msg.match_start) or "nil") .. "\n" .. "replay_of_match_so_far = " .. (tostring(replay_of_match_so_far) or "nil") .. "\n" .. "P1.panel_buffer = " .. P1.panel_buffer .. "\n" .. "P2.panel_buffer = " .. P2.panel_buffer .. "\n" .. "P1.gpanel_buffer = " .. P1.gpanel_buffer .. "\n" .. "P2.gpanel_buffer = " .. P2.gpanel_buffer,
-                180
-              }
-            end
-            love.timer.sleep(0.017)
           end
 
           -- Proceed to the game screen and start the game
@@ -1353,16 +1325,23 @@ function select_screen.main()
       P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       if GAME.battleRoom.trainingModeSettings then
         GAME.match.attackEngine = AttackEngine(P1)
-        local startTime = 300
-        GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime --[[start time]], 1--[[repeat]], nil--[[attack count]], false--[[metal]],  GAME.battleRoom.trainingModeSettings.height > 1--[[chain]])
+        local startTime = 150
+        local delay = GARBAGE_TRANSIT_TIME + GARBAGE_DELAY + 1
+        local delayPerAttack = 6
+        local attackCountPerDelay = 1
+        if GAME.battleRoom.trainingModeSettings.height == 1 then
+          attackCountPerDelay = 6
+          delay = delay + (attackCountPerDelay * delayPerAttack)
+        end
+        for i = 1, attackCountPerDelay, 1 do
+          GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  GAME.battleRoom.trainingModeSettings.height > 1--[[chain]])  
+        end
       end
       GAME.match.P1 = P1
       if not GAME.battleRoom.trainingModeSettings then
-        P1.garbage_target = P1
+        P1:set_garbage_target(P1)
       end
       P2 = nil
-      make_local_panels(P1, "000000")
-      make_local_gpanels(P1, "000000")
       current_stage = cursor_data[1].state.stage
       stage_loader_load(current_stage)
       stage_loader_wait()
@@ -1375,8 +1354,8 @@ function select_screen.main()
       GAME.match.P1 = P1
       P2 = Stack(2, GAME.match, true, cursor_data[2].state.panels_dir, cursor_data[2].state.level, cursor_data[2].state.character)
       GAME.match.P2 = P2
-      P1.garbage_target = P2
-      P2.garbage_target = P1
+      P1:set_garbage_target(P2)
+      P2:set_garbage_target(P1)
       current_stage = cursor_data[math.random(1, 2)].state.stage
       stage_loader_load(current_stage)
       stage_loader_wait()
@@ -1387,10 +1366,6 @@ function select_screen.main()
       --
       -- In general the block-generation logic should be the same as the server's, so
       -- maybe there should be only one implementation.
-      make_local_panels(P1, "000000")
-      make_local_gpanels(P1, "000000")
-      make_local_panels(P2, "000000")
-      make_local_gpanels(P2, "000000")
       P1:starting_state()
       P2:starting_state()
       return main_dumb_transition, {main_local_vs, "", 0, 0}

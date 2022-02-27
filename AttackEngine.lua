@@ -38,24 +38,30 @@ end
 
 -- 
 function AttackEngine.run(self)
-    local garbageToSend = {}
-    for _, attackPattern in ipairs(self.attackPatterns) do
-      local lastAttackTime
-      if attackPattern.attackCount then
-        lastAttackTime = attackPattern.start + ((attackPattern.attackCount-1) * attackPattern.repeatDelay)
-      end
-      if self.clock >= attackPattern.start and (attackPattern.attackCount == nil or self.clock <= lastAttackTime) then
-        local difference = self.clock - attackPattern.start
-        local remainder = difference % attackPattern.repeatDelay
-        if remainder == 0 then
-            garbageToSend[#garbageToSend+1] = attackPattern.garbage
+  local garbageToSend = {}
+  for _, attackPattern in ipairs(self.attackPatterns) do
+    local lastAttackTime
+    if attackPattern.attackCount then
+      lastAttackTime = attackPattern.start + ((attackPattern.attackCount-1) * attackPattern.repeatDelay)
+    end
+    if self.clock >= attackPattern.start and (attackPattern.attackCount == nil or self.clock <= lastAttackTime) then
+      local difference = self.clock - attackPattern.start
+      local remainder = difference % attackPattern.repeatDelay
+      local origin_column = 17
+      local origin_row = 11
+      if remainder == 0 then
+        -- TODO Handle Metal
+        if attackPattern.garbage[4] == true then
+          for i = 1,  attackPattern.garbage[2], 1 do
+            self.target.telegraph:push("chain", attackPattern.garbage[2], 0, origin_column, origin_row, self.clock)
+          end
+          self.target.telegraph:chainingEnded(self.clock)
+        else
+          self.target.telegraph:push("combo", attackPattern.garbage[1]+1, 0, origin_column, origin_row, self.clock)
         end
       end
     end
+  end
 
-    if #garbageToSend > 0 then
-        self.target:recv_garbage(self.clock+1, garbageToSend)
-    end
-
-    self.clock = self.clock + 1
+  self.clock = self.clock + 1
 end
