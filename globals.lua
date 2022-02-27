@@ -4,17 +4,19 @@ require("server_queue")
 require("sound_util")
 
 -- keyboard assignment vars
-K = {{up="up", down="down", left="left", right="right",
-      swap1="z", swap2="x", taunt_up="y", taunt_down="u", raise1="c", raise2="v", pause="p"},
-      {},{},{}}
 keys = {}
 this_frame_keys = {}
 this_frame_released_keys = {}
 this_frame_unicodes = {}
 this_frame_messages = {}
-server_queue = ServerQueue(20)
+
+server_queue = ServerQueue()
 
 score_mode = SCOREMODE_TA
+ 
+GARBAGE_DELAY = 60
+GARBAGE_TRANSIT_TIME = 90
+MAX_LAG = 200 -- maximum amount of lag before net games abort
 
 gfx_q = Queue()
 
@@ -34,12 +36,7 @@ panels_ids = {} -- initialized in panels.lua
 
 current_stage = nil
 
-background_overlay = nil
-foreground_overlay = nil
-
--- win counters
-my_win_count = 0
-op_win_count = 0
+replay = {}
 
 -- sfx play
 SFX_Fanfare_Play = 0
@@ -52,13 +49,11 @@ global_op_state = nil
 -- Warning messages
 display_warning_message = false
 
--- game can be paused while playing on local
-game_is_paused = false
-
 large_font = 10 -- large font base+10
 small_font = -3 -- small font base-3
 
 default_input_repeat_delay = 20
+default_portrait_darkness = 70
 
 zero_sound = load_sound_from_supported_extensions("zero_music")
 
@@ -77,7 +72,7 @@ config = {
 
 	ranked                        = true,
 
-	vsync                         = true,
+	vsync                         = false,
 
 	use_music_from                = "either",
 	-- Level (2P modes / 1P vs yourself mode)
@@ -105,6 +100,9 @@ config = {
 	enable_analytics              = false,
 	-- Save replays setting
 	save_replays_publicly         = "with my name",
+	portrait_darkness             = default_portrait_darkness,
+	popfx                         = true,
+	cardfx_scale                  = 100,
 }
 
 current_use_music_from = "stage" -- either "stage" or "characters", no other values!
@@ -112,6 +110,7 @@ current_use_music_from = "stage" -- either "stage" or "characters", no other val
 function warning(msg)
 	err = "=================================================================\n["..os.date("%x %X").."]\nError: "..msg..debug.traceback("").."\n"
 	love.filesystem.append("warnings.txt", err)
+	print(err)
 	if display_warning_message then
 		display_warning_message = false
 		local loc_warning = "You've had a bug. Please report this on Discord with file:"

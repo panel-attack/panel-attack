@@ -8,7 +8,7 @@ Step by step instructions (Windows example):
    
 Note: folders starting with "__" will be ignored upon loading. You may choose to remove those "__" to mod default themes
 
-3. Create a folder with your theùe. The name of the folder will be the id of your theme.
+3. Create a folder with your theme. The name of the folder will be the id of your theme.
 
 4. Place assets, sounds and txt files in that folder with the proper names to add your data. Exhaustive list below.
 
@@ -18,7 +18,7 @@ Note: non-optional data that are missing will automatically get replaced by defa
 
 ~~ [.txt] ~~
 
-- "characters": list of the characters to be displayed in the select screen
+- "characters": add this file with one character ID per line to limit characters you can pick and random characters
 - "stages": list of the stages to be displayed in the select screen
 
 ~~ [.png, .jpg] ~~
@@ -27,6 +27,7 @@ Note: non-optional data that are missing will automatically get replaced by defa
 - ("background/bg_overlay"), ("background/fg_overlay"): overlays: the first one is on top of the stage's background while the other one is up front
 - "pause": overlay during the pause
 - "chain/chain00", "chain/chain02", ... "chain/chain19", "combo/combo04", ..., "combo/combo66": chains and combo counter
+- "flags/": flags to be displayed in the select screen (based on the character's specified flags). Values are mostly the country codes from https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2, not all flags are available
 - "1", "2", "3": countdown
 - "p1", "p1_cursor", "p1_select_screen_cursor1", "p1_select_screen_cursor2": cursors for player 1, change p1 by p2 for those of player 2
 - "ready", "loading", "super": displayed when a player is ready, loading, or super selecting something in the select screen
