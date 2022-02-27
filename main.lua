@@ -5,6 +5,7 @@ GAME = require("game")
 require("match")
 require("BattleRoom")
 require("util")
+require("table_util")
 require("consts")
 require("queue")
 require("globals")
@@ -27,9 +28,10 @@ require("gen_panels")
 require("panels")
 require("theme")
 require("click_menu")
+require("rich_presence.RichPresence")
 local logger = require("logger")
-
 GAME.scores = require("scores")
+GAME.rich_presence = RichPresence()
 
 global_canvas = love.graphics.newCanvas(canvas_width, canvas_height)
 
@@ -37,6 +39,7 @@ local last_x = 0
 local last_y = 0
 local input_delta = 0.0
 local pointer_hidden = false
+local nextPresenceUpdate = 0
 local mainloop = nil
 
 -- Called at the beginning to load the game
@@ -46,6 +49,7 @@ function love.load()
     math.random()
   end
   read_key_file()
+  GAME.rich_presence:initialize("902897593049301004")
   mainloop = coroutine.create(fmainloop)
 end
 
@@ -82,8 +86,9 @@ function love.update(dt)
     local system_info = "OS: " .. love.system.getOS()
     if GAME_UPDATER_GAME_VERSION then
       system_info = system_info .. "\n" .. GAME_UPDATER_GAME_VERSION
+      send_error_report(err, debug.traceback(mainloop), GAME_UPDATER_GAME_VERSION, love.system.getOS())
     end
-    error(err .. "\n" .. debug.traceback(mainloop).. "\n" .. system_info)
+    error(err .. "\n" .. debug.traceback(mainloop) .. "\n" .. system_info)
   end
   if server_queue and server_queue:size() > 0 then
     logger.trace("Queue Size: " .. server_queue:size() .. " Data:" .. server_queue:to_short_string())
@@ -91,6 +96,7 @@ function love.update(dt)
   this_frame_messages = {}
 
   update_music()
+  GAME.rich_presence:runCallbacks()
 end
 
 -- Called whenever the game needs to draw.
@@ -150,9 +156,15 @@ function love.mousepressed(x, y)
   end
 end
 
+function love.quit()
+  if network_connected() then
+    json_send({logout = true})
+  end
+end
+
 -- Handle a touch press
 -- Note we are specifically not implementing this because mousepressed above handles mouse and touch
 -- function love.touchpressed(id, x, y, dx, dy, pressure)
-  -- local _x, _y = transform_coordinates(x, y)
-  -- click_or_tap(_x, _y, {id = id, x = _x, y = _y, dx = dx, dy = dy, pressure = pressure})
+-- local _x, _y = transform_coordinates(x, y)
+-- click_or_tap(_x, _y, {id = id, x = _x, y = _y, dx = dx, dy = dy, pressure = pressure})
 -- end

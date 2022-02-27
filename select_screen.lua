@@ -68,9 +68,9 @@ function refresh_based_on_own_mods(refreshed, ask_change_fallback)
     -- stage
     if refreshed.stage == nil or (refreshed.stage ~= random_stage_special_value and stages[refreshed.stage] == nil) then
       if not select_screen.fallback_when_missing[1] or ask_change_fallback then
-        select_screen.fallback_when_missing[1] = uniformly(stages_ids_for_current_theme)
+        select_screen.fallback_when_missing[1] = table.getRandomElement(stages_ids_for_current_theme)
         if stages[select_screen.fallback_when_missing[1]]:is_bundle() then -- may pick a bundle!
-          select_screen.fallback_when_missing[1] = uniformly(stages[select_screen.fallback_when_missing[1]].sub_stages)
+          select_screen.fallback_when_missing[1] = table.getRandomElement(stages[select_screen.fallback_when_missing[1]].sub_stages)
         end
       end
       refreshed.stage = select_screen.fallback_when_missing[1]
@@ -82,9 +82,9 @@ function refresh_based_on_own_mods(refreshed, ask_change_fallback)
         refreshed.character = characters_ids_by_display_names[refreshed.character_display_name][1]
       else
         if not select_screen.fallback_when_missing[2] or ask_change_fallback then
-          select_screen.fallback_when_missing[2] = uniformly(characters_ids_for_current_theme)
+          select_screen.fallback_when_missing[2] = table.getRandomElement(characters_ids_for_current_theme)
           if characters[select_screen.fallback_when_missing[2]]:is_bundle() then -- may pick a bundle
-            select_screen.fallback_when_missing[2] = uniformly(characters[select_screen.fallback_when_missing[2]].sub_characters)
+            select_screen.fallback_when_missing[2] = table.getRandomElement(characters[select_screen.fallback_when_missing[2]].sub_characters)
           end
         end
         refreshed.character = select_screen.fallback_when_missing[2]
@@ -97,12 +97,12 @@ end
 local function resolve_character_random(state)
   if state.character_is_random ~= nil then
     if state.character_is_random == random_character_special_value then
-      state.character = uniformly(characters_ids_for_current_theme)
+      state.character = table.getRandomElement(characters_ids_for_current_theme)
       if characters[state.character]:is_bundle() then -- may pick a bundle
-        state.character = uniformly(characters[state.character].sub_characters)
+        state.character = table.getRandomElement(characters[state.character].sub_characters)
       end
     else
-      state.character = uniformly(characters[state.character_is_random].sub_characters)
+      state.character = table.getRandomElement(characters[state.character_is_random].sub_characters)
     end
     return true
   end
@@ -113,12 +113,12 @@ end
 local function resolve_stage_random(state)
   if state.stage_is_random ~= nil then
     if state.stage_is_random == random_stage_special_value then
-      state.stage = uniformly(stages_ids_for_current_theme)
+      state.stage = table.getRandomElement(stages_ids_for_current_theme)
       if stages[state.stage]:is_bundle() then
-        state.stage = uniformly(stages[state.stage].sub_stages)
+        state.stage = table.getRandomElement(stages[state.stage].sub_stages)
       end
     else
-      state.stage = uniformly(stages[state.stage_is_random].sub_stages)
+      state.stage = table.getRandomElement(stages[state.stage_is_random].sub_stages)
     end
   end
 end
@@ -1142,16 +1142,16 @@ function select_screen.main()
         local new_stage = stages_ids_for_current_theme[new_stage_idx]
         if stages[new_stage]:is_bundle() then
           state.stage_is_random = new_stage
-          state.stage = uniformly(stages[new_stage].sub_stages)
+          state.stage = table.getRandomElement(stages[new_stage].sub_stages)
         else
           state.stage_is_random = nil
           state.stage = new_stage
         end
       else
         state.stage_is_random = random_stage_special_value
-        state.stage = uniformly(stages_ids_for_current_theme)
+        state.stage = table.getRandomElement(stages_ids_for_current_theme)
         if stages[state.stage]:is_bundle() then -- may pick a bundle!
-          state.stage = uniformly(stages[state.stage].sub_stages)
+          state.stage = table.getRandomElement(stages[state.stage].sub_stages)
         end
       end
       logger.trace("stage and stage_is_random: " .. state.stage .. " / " .. (state.stage_is_random or "nil"))
@@ -1187,9 +1187,9 @@ function select_screen.main()
         on_quit()
       elseif cursor.state.cursor == "__Random" then
         cursor.state.character_is_random = random_character_special_value
-        cursor.state.character = uniformly(characters_ids_for_current_theme)
+        cursor.state.character = table.getRandomElement(characters_ids_for_current_theme)
         if characters[cursor.state.character]:is_bundle() then -- may pick a bundle
-          cursor.state.character = uniformly(characters[cursor.state.character].sub_characters)
+          cursor.state.character = table.getRandomElement(characters[cursor.state.character].sub_characters)
         end
         cursor.state.character_display_name = characters[cursor.state.character].display_name
         character_loader_load(cursor.state.character)
@@ -1203,7 +1203,7 @@ function select_screen.main()
         cursor.state.character = cursor.state.cursor
         if characters[cursor.state.character]:is_bundle() then -- may pick a bundle
           cursor.state.character_is_random = cursor.state.character
-          cursor.state.character = uniformly(characters[cursor.state.character_is_random].sub_characters)
+          cursor.state.character = table.getRandomElement(characters[cursor.state.character_is_random].sub_characters)
         end
         cursor.state.character_display_name = characters[cursor.state.character].display_name
         local character = characters[cursor.state.character]

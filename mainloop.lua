@@ -78,6 +78,7 @@ function fmainloop()
     -- Run all unit tests now that we have everything loaded
     require("ServerQueueTests")
     require("StackTests")
+    require("table_util_tests")
   end
 
   while true do
@@ -135,7 +136,7 @@ do
     local menu_x, menu_y = unpack(main_menu_screen_pos)
     local main_menu
     local ret = nil
-
+    GAME.rich_presence:setPresence(nil, nil, true)
     local function goEscape()
       main_menu:set_active_idx(#main_menu.buttons)
     end
@@ -223,9 +224,9 @@ local function use_current_stage()
 end
 
 function pick_random_stage()
-  current_stage = uniformly(stages_ids_for_current_theme)
+  current_stage = table.getRandomElement(stages_ids_for_current_theme)
   if stages[current_stage]:is_bundle() then -- may pick a bundle!
-    current_stage = uniformly(stages[current_stage].sub_stages)
+    current_stage = table.getRandomElement(stages[current_stage].sub_stages)
   end
   use_current_stage()
 end
@@ -247,9 +248,9 @@ end
 
 function Stack.wait_for_random_character(self)
   if self.character == random_character_special_value then
-    self.character = uniformly(characters_ids_for_current_theme)
+    self.character = table.getRandomElement(characters_ids_for_current_theme)
   elseif characters[self.character]:is_bundle() then -- may have picked a bundle
-    self.character = uniformly(characters[self.character].sub_characters)
+    self.character = table.getRandomElement(characters[self.character].sub_characters)
   end
   character_loader_load(self.character)
   character_loader_wait()
@@ -402,11 +403,13 @@ local function runMainGameLoop(updateFunction, variableStepFunction, abortGameFu
 
           returnFunction = variableStepFunction()
 
-          handle_pause()
+          if not returnFunction  then
+            handle_pause()
 
-          if not returnFunction and menu_escape_game() then
-            GAME:clearMatch()
-            returnFunction = abortGameFunction()
+            if menu_escape_game() then
+              GAME:clearMatch()
+              returnFunction = abortGameFunction()
+            end
           end
 
           if returnFunction then 
@@ -763,13 +766,11 @@ function main_net_vs_lobby()
   local updated = true -- need update when first entering
   local ret = nil
   local requestedSpectateRoom = nil
-
-  local playerRatingMap = nil
-  json_send({leaderboard_request = true}) -- Request the leaderboard so we can show ratings
-
+  local playerData = nil
+  GAME.rich_presence:setPresence(nil, "In Lobby", true)
   while true do
     if connection_up_time <= login_status_message_duration then
-      gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y - 120)
+      gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y - 100)
       local messages = server_queue:pop_all_with("login_successful", "login_denied")
       for _, msg in ipairs(messages) do
         if msg.login_successful then
@@ -829,6 +830,9 @@ function main_net_vs_lobby()
         lobby_menu:remove_self()
         return select_screen.main
       end
+      if msg.players then
+        playerData = msg.players
+      end
       if msg.unpaired then
         unpaired_players = msg.unpaired
         -- players who leave the unpaired list no longer have standing invitations to us.\
@@ -851,14 +855,12 @@ function main_net_vs_lobby()
         play_optional_sfx(themes[config.theme].sounds.notification)
       end
       if msg.leaderboard_report then
-        playerRatingMap = {}
         if lobby_menu then
           lobby_menu:show_controls(true)
         end
         leaderboard_report = msg.leaderboard_report
         for i = #leaderboard_report, 1, -1 do
           local v = leaderboard_report[i]
-          playerRatingMap[v.user_name] = v.rating
           if v.is_you then
             my_rank = k
           end
@@ -929,8 +931,8 @@ function main_net_vs_lobby()
 
       local function playerRatingString(playerName)
         local rating = ""
-        if playerRatingMap and playerRatingMap[playerName] then
-          rating = " (" .. playerRatingMap[playerName] .. ")"
+        if playerData and playerData[playerName] and playerData[playerName].rating then
+          rating = " (" .. playerData[playerName].rating .. ")"
         end
         return rating
       end
@@ -996,7 +998,7 @@ function main_net_vs_lobby()
     variable_step(
       function()
         if showing_leaderboard then
-          if menu_up() then
+          if menu_up() and leaderboard_report then
             if showing_leaderboard then
               if leaderboard_first_idx_to_show > 1 then
                 leaderboard_first_idx_to_show = leaderboard_first_idx_to_show - 1
@@ -1004,7 +1006,7 @@ function main_net_vs_lobby()
                 leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
               end
             end
-          elseif menu_down() then
+          elseif menu_down() and leaderboard_report then
             if showing_leaderboard then
               if leaderboard_last_idx_to_show < #leaderboard_report then
                 leaderboard_first_idx_to_show = leaderboard_first_idx_to_show + 1
@@ -1129,6 +1131,7 @@ function main_net_vs()
     if GAME.battleRoom.spectating and menu_escape() then
       logger.trace("spectator pressed escape during a game")
       json_send({leave_room = true})
+      GAME:clearMatch()
       return {main_dumb_transition, {main_net_vs_lobby, "", 0, 0}} -- spectator leaving the match
     end
   end
@@ -1477,7 +1480,7 @@ end
 
 do
   local items = {}
-  for key, val in spairs(GAME.puzzleSets) do
+  for key, val in pairsSortedByKeys(GAME.puzzleSets) do
     items[#items + 1] = {key, make_main_puzzle(val)}
   end
   items[#items + 1] = {"back", main_select_mode}
@@ -1563,7 +1566,7 @@ function main_set_name()
         end
         for _, v in ipairs(this_frame_unicodes) do
           -- Don't add more characters than the server char limit
-          if name:len() < NAME_LENGTH_LIMIT then
+          if name:len() < NAME_LENGTH_LIMIT and v ~= " " then
             name = name .. v
           end
         end

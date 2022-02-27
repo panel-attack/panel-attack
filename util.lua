@@ -1,15 +1,5 @@
-local sort, pairs, select, unpack, error = table.sort, pairs, select, unpack, error
+local sort, pairs = table.sort, pairs
 local type, setmetatable, getmetatable = type, setmetatable, getmetatable
-local random = math.random
-
--- returns the number of entries in a table
-function tableLength(T)
-  local count = 0
-  for _ in pairs(T) do
-    count = count + 1
-  end
-  return count
-end
 
 -- bounds b so a<=b<=c
 function bound(a, b, c)
@@ -32,68 +22,6 @@ function wrap(a, b, c)
   return (b - a) % (c - a + 1) + a
 end
 
--- map for numeric tables
-function map(func, tab)
-  local ret = {}
-  for i = 1, #tab do
-    ret[i] = func(tab[i])
-  end
-  return ret
-end
-
--- map for dicts
-function map_dict(func, tab)
-  local ret = {}
-  for key, val in pairs(tab) do
-    ret[key] = func(val)
-  end
-  return ret
-end
-
--- applies the function to each item in tab and replaces
-function map_inplace(func, tab)
-  for i = 1, #tab do
-    tab[i] = func(tab[i])
-  end
-  return tab
-end
-
--- applies the function to each item in tab and replaces
-function map_dict_inplace(func, tab)
-  for key, val in pairs(tab) do
-    tab[key] = func(val)
-  end
-  return tab
-end
-
--- reduce for numeric tables
-function reduce(func, tab, ...)
-  local idx, value = 2, nil
-  if select("#", ...) ~= 0 then
-    value = select(1, ...)
-    idx = 1
-  elseif #tab == 0 then
-    error("Tried to reduce empty table with no initial value")
-  else
-    value = tab[1]
-  end
-  for i = idx, #tab do
-    value = func(value, tab[i])
-  end
-  return value
-end
-
--- TODO delete
-function car(tab)
-  return tab[1]
-end
-
--- This sucks lol
--- TODO delete
-function cdr(tab)
-  return {select(2, unpack(tab))}
-end
-
 -- a useful right inverse of table.concat
 function procat(str)
   local ret = {}
@@ -103,25 +31,25 @@ function procat(str)
   return ret
 end
 
--- iterate over frozen pairs in sorted order
-function spairs(tab)
-  local keys, vals, idx = {}, {}, 0
-  for k in pairs(tab) do
-    keys[#keys + 1] = k
-  end
-  sort(keys)
+-- iterate over a dictionary sorted by keys
+
+-- this is a dedicated method to use for dictionaries for technical reasons
+function pairsSortedByKeys(tab)
+  -- these are already sorted
+  local keys = table.getKeys(tab)
+  local vals = {}
+  -- and then assign the values with the corresponding indexes
   for i = 1, #keys do
     vals[i] = tab[keys[i]]
   end
+
+  local idx = 0
+  -- the key and value table are kept separately instead of being rearranged into a "sorted dictionary"
+  -- this is because pairs always returns them in an arbitrary order even after they have been sorted in advance
   return function()
     idx = idx + 1
     return keys[idx], vals[idx]
   end
-end
-
--- Randomly grabs a value from t
-function uniformly(t)
-  return t[random(#t)]
 end
 
 -- Returns true if a and b have equal content
