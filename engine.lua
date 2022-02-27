@@ -1363,7 +1363,10 @@ function Stack.simulate(self)
                 end
                 self.poppedPanelIndex = panel.combo_index
                 panel.color = 0
-                if (panel.chaining) then
+		if self.panels_to_speedup then
+	          self.panels_to_speedup = self.panels_to_speedup - 1
+	        end
+                if panel.chaining then
                   self.n_chain_panels = self.n_chain_panels - 1
                 end
                 panel:clear_flags()
@@ -1383,12 +1386,6 @@ function Stack.simulate(self)
             elseif panel.state == "popped" then
               -- It's time for this panel
               -- to be gone forever :'(
-              if self.panels_to_speedup then
-                self.panels_to_speedup = self.panels_to_speedup - 1
-              end
-              SFX_Pop_Play = 1
-              self.poppedPanelIndex = panel.combo_index
-              panel.color=0;
               if self.panels_to_speedup then
                 self.panels_to_speedup = self.panels_to_speedup - 1
               end
