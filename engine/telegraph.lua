@@ -92,7 +92,7 @@ function Telegraph.rollbackCopy(self, source, other)
   return other
 end
 
-function Telegraph.update(self) 
+function Telegraph:update() 
 
   if self.pendingChainingEnded[self.owner.CLOCK] then
     self:chainingEnded(self.owner.CLOCK)
@@ -110,6 +110,11 @@ end
 -- Adds a piece of garbage to the queue
 function Telegraph.push(self, attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned)
 
+  -- If we got an attack earlier then last frame, (they attacked in the past and we missed it) we need to rollback
+  if frame_earned < self.owner.CLOCK - 1 then
+    self.owner:rollbackToFrame(frame_earned+1)
+  end
+
   -- If we got the attack in the future, wait to queue it
   if frame_earned > self.owner.CLOCK then
     if not self.pendingGarbage[frame_earned] then
@@ -119,11 +124,6 @@ function Telegraph.push(self, attack_type, attack_size, metal_count, attack_orig
     self.pendingGarbage[frame_earned][#self.pendingGarbage[frame_earned]+1] = {attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned}
 
     return
-  end
-
-  -- If we got an attack earlier then our current frame, we need to rollback
-  if frame_earned < self.owner.CLOCK - 1 then
-    self.owner:rollbackToFrame(frame_earned)
   end
 
   -- Now push this attack
@@ -173,14 +173,14 @@ function Telegraph.add_combo_garbage(self, n_combo, n_metal, frame_earned)
   
 end
 
-function Telegraph.chainingEnded(self, frameEnded)
+function Telegraph:chainingEnded(frameEnded)
 
-  -- If they ended chaining earlier then our current frame, we need to rollback as that might change the timing
+  -- If they ended chaining earlier then last frame, (they finished the chain in the past and we missed it) we need to rollback
   if frameEnded < self.owner.CLOCK - 1 then
-    self.owner:rollbackToFrame(frameEnded)
+    self.owner:rollbackToFrame(frameEnded+1)
   end
   
-  -- If we got the attack in the future (even because of rollback), wait to queue it
+  -- If we got the attack in the future wait to queue it
   if frameEnded > self.owner.CLOCK then
     self.pendingChainingEnded[frameEnded] = true
     return
@@ -188,7 +188,7 @@ function Telegraph.chainingEnded(self, frameEnded)
 
   self.senderCurrentlyChaining = false
   local chain = self.garbage_queue.chain_garbage[self.garbage_queue.chain_garbage.last]
-  if chain.frame_earned > frameEnded then
+  if chain.frame_earned >= frameEnded then
     logger.error("Finalizing a chain that ended before it was earned.")
   end
   chain.finalized = true
