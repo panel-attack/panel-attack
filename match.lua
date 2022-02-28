@@ -304,8 +304,8 @@ function Match.render(self)
       gprintf("Clock " .. P2.CLOCK, drawX, drawY)
 
       drawY = drawY + padding
-      local framesAhead = string.len(P1.confirmedInput) - string.len(P2.confirmedInput)
-      gprintf("Ahead: " .. framesAhead, drawX, drawY)
+      local framesAhead = P1.CLOCK - P2.CLOCK
+      gprintf("P1 Ahead: " .. framesAhead, drawX, drawY)
 
       drawY = drawY + padding
       gprintf("Confirmed " .. string.len(P2.confirmedInput) , drawX, drawY)
