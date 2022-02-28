@@ -1,1 +1,1 @@
--- Put any local development changes you need in here that you don't want commited. This file is git ignored by default.
+-- Put any local development changes you need in here that you don't want commited.
