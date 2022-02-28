@@ -108,15 +108,17 @@ function Telegraph:update()
 end
 
 -- Adds a piece of garbage to the queue
-function Telegraph.push(self, attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned)
+function Telegraph:push(attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned)
 
-  -- If we got an attack earlier then last frame, (they attacked in the past and we missed it) we need to rollback
-  if frame_earned < self.owner.CLOCK - 1 then
-    self.owner:rollbackToFrame(frame_earned+1)
+  logger.debug("Player " .. self.sender.which .. " attacked with " .. attack_type .. " at " .. frame_earned)
+
+  -- If we are past the frame the attack would be processed we need to rollback
+  if self.owner.CLOCK > frame_earned + 1 then
+    self.owner:rollbackToFrame(frame_earned + 1)
   end
 
   -- If we got the attack in the future, wait to queue it
-  if frame_earned > self.owner.CLOCK then
+  if self.owner.CLOCK < frame_earned then
     if not self.pendingGarbage[frame_earned] then
       self.pendingGarbage[frame_earned] = {}
     end
@@ -175,13 +177,15 @@ end
 
 function Telegraph:chainingEnded(frameEnded)
 
-  -- If they ended chaining earlier then last frame, (they finished the chain in the past and we missed it) we need to rollback
-  if frameEnded < self.owner.CLOCK - 1 then
-    self.owner:rollbackToFrame(frameEnded+1)
+  logger.debug("Player " .. self.sender.which .. " chain ended at " .. frameEnded)
+
+  -- If we are past the frame the chain end would process we need to rollback
+  if self.owner.CLOCK > frameEnded + 1 then
+    self.owner:rollbackToFrame(frameEnded + 1)
   end
   
   -- If we got the attack in the future wait to queue it
-  if frameEnded > self.owner.CLOCK then
+  if self.owner.CLOCK < frameEnded then
     self.pendingChainingEnded[frameEnded] = true
     return
   end
