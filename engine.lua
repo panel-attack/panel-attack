@@ -807,11 +807,6 @@ function Stack.shouldRun(self, runsSoFar)
     return true
   end
 
-  if config.debug_mode and self.which == 2 then
-    local framesBehind = 50
-    return self.CLOCK < self.garbage_target.CLOCK - framesBehind
-  end
-
   -- If we are not local, we want to run faster to catch up.
   if buffer_len >= 15 - runsSoFar then
     -- way behind, run at max speed.
