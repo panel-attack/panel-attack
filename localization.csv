@@ -80,6 +80,14 @@ lb_new_id,,need a new user id,besoin d'un nouvel identifiant utilisateur,necess�
 lb_received,,(wants to play with you :o),(vous invite à jouer :o),(quer jogar com você :o),（対戦を申し込まれました！（・o・））,(quiere jugar contigo :o),(will mit dir spielen),(vuole giocare con te :o)
 lb_request,,(request sent),(demande envoyée),(solicitação enviada),（対戦申請中）,(petición enviada),(Anfrage geschickt),(richiesta inviata)
 lb_select_player,,Select a player name to ask for a match.,Selectionnez un joueur avec qui jouer.,Selecione um nome de jogador para solicitar uma partida.,プレイヤー名を選択して対戦を申し込んで下さい。,Selecciona el nombre de un jugador para enviarle solicitud de partida.,"Wähle einen Namen aus, um den Spieler zum Spiel zu bitten",Seleziona il nome di un giocatore con cui giocare.
+lb_telegraph_alpha,Shown when using the alpha telegraph build in the lobby,"You are playing on the Alpha build, which is currently incompatible with the Beta and Stable builds for online play.
+Please use Beta or Stable unless you're testing the Telegraph feature","Vous jouez sur l'alpha Build, qui est actuellement incompatible avec les bêta et les constructions stables pour la lecture en ligne.
+Veuillez utiliser bêta ou stable, sauf si vous testez la fonctionnalité télégraphique","Você está jogando na compilação alfa, que é atualmente incompatível com as beta e constabilidades estáveis ​​para o jogo on-line.
+Por favor, use beta ou estável a menos que você esteja testando o recurso Telegraph","Alpha Buildで遊んでいます。
+テレグラフ機能をテストしていない限り、ベータ版または安定性を使用してください。","Está jugando en la construcción alfa, que actualmente es incompatible con las compilaciones beta y estables para el juego en línea.
+Utilice Beta o Estable a menos que esté probando la función Telegraph","Sie spielen auf dem Alpha Build, der derzeit mit den Beta- und stabilen Builds für Online-Play kompatibel ist.
+Bitte verwenden Sie Beta oder Stabil, sofern Sie nicht die Telegraphenfunktion testen","Stai giocando su Alpha Build, che è attualmente incompatibile con le Build beta e stabile per il gioco online.
+Si prega di utilizzare beta o stabile a meno che non provi la funzione Telegraph"
 lb_set_connect,,Setting up connection...,Préparation de la connexion...,Estabelecendo conexão...,接続しています…,Estableciendo conexión...,Verbindungsaufbau...,Stabilendo la connessione...
 lb_hide_board,,Hide Leaderboard,Cacher le classement,Ocultar Placar de Classificação,ランキングを非表示,Ocultar Tabla de Puntuación,Rangliste verbergen,Nascondi la classifica
 lb_spectate,,spectate,regarder,assistir,観戦する,espectar,zuschauen,Assisti

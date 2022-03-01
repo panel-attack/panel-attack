@@ -1002,6 +1002,7 @@ function main_net_vs_lobby()
     end
 
     if lobby_menu then
+      gprint(loc("lb_telegraph_alpha"), lobby_menu_x[showing_leaderboard] - 230, lobby_menu_y - 70)
       gprint(notice[#lobby_menu.buttons > 2], lobby_menu_x[showing_leaderboard], lobby_menu_y - 30)
       gprint(arrow, lobby_menu_x[showing_leaderboard], lobby_menu_y)
       gprint(to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y)
