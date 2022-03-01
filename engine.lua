@@ -1522,7 +1522,7 @@ function Stack.simulate(self)
       self.chain_counter = 0
 
       if self.garbage_target and self.garbage_target.telegraph then
-        self.garbage_target.telegraph:chainingEnded(self.CLOCK+1)
+        self.garbage_target.telegraph:chainingEnded(self.CLOCK)
       end
     end
 
