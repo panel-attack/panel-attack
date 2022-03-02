@@ -195,7 +195,8 @@ function Telegraph:chainingEnded(frameEnded)
   if chain.frame_earned >= frameEnded then
     logger.error("Finalizing a chain that ended before it was earned.")
   end
-  chain.finalized = true
+  logger.debug("finalizing chain at " .. frameEnded)
+  chain.finalized = frameEnded
 end
 
 function Telegraph.grow_chain(self, frame_earned)
@@ -242,8 +243,7 @@ function Telegraph.pop_all_ready_garbage(self, time_to_check, just_peeking)
   --remove any chain stoppers that expire this frame,
   for chain_idx, chain_release_frame in pairs(subject.stoppers.chain) do
     if chain_release_frame <= time_to_check then
-      logger.debug("in Telegraph.pop_all_ready_garbage")
-      logger.debug("removing a stopper")
+      logger.debug("removing a chain stopper at " .. chain_release_frame)
       subject.stoppers.chain[chain_idx] = nil
     else
       n_chain_stoppers = n_chain_stoppers + 1
@@ -253,6 +253,7 @@ function Telegraph.pop_all_ready_garbage(self, time_to_check, just_peeking)
   --remove any combo stoppers that expire this frame,
   for combo_garbage_width, combo_release_frame in pairs(subject.stoppers.combo) do
     if combo_release_frame <= time_to_check then
+      logger.debug("removing a combo stopper at " .. combo_release_frame)
       subject.stoppers.combo[combo_garbage_width] = nil
     else 
       n_combo_stoppers = n_combo_stoppers + 1
@@ -261,14 +262,16 @@ function Telegraph.pop_all_ready_garbage(self, time_to_check, just_peeking)
 
   --remove the metal stopper if it expires this frame
   if subject.stoppers.metal and subject.stoppers.metal <= time_to_check then
+    logger.debug("removing a metal stopper at " .. subject.stoppers.metal)
     subject.stoppers.metal = nil
   end
   
   while subject.garbage_queue.chain_garbage:peek() do
 
-    if not subject.stoppers.chain[subject.garbage_queue.chain_garbage.first] and subject.garbage_queue.chain_garbage:peek().finalized then
-      logger.debug("in Telegraph.pop_all_ready_garbage")
-      logger.debug("popping the first chain")
+    if not subject.stoppers.chain[subject.garbage_queue.chain_garbage.first] and 
+       subject.garbage_queue.chain_garbage:peek().finalized and 
+       time_to_check >= CHAIN_ENDED_DELAY + subject.garbage_queue.chain_garbage:peek().finalized then
+      logger.debug("committing chain at " .. time_to_check)
       ready_garbage[#ready_garbage+1] = subject.garbage_queue:pop()
     else 
       logger.debug("could be chaining or stopper")
@@ -287,6 +290,7 @@ function Telegraph.pop_all_ready_garbage(self, time_to_check, just_peeking)
     local frame_to_release = subject.stoppers.combo[combo_garbage_width]
     if n_blocks_of_this_width > 0 then
       if not frame_to_release then
+        logger.debug("committing combo at " .. time_to_check)
         for i=1,n_blocks_of_this_width do
           ready_garbage[#ready_garbage+1] = subject.garbage_queue:pop()
         end
@@ -303,7 +307,8 @@ function Telegraph.pop_all_ready_garbage(self, time_to_check, just_peeking)
   
   local frame_to_release_metal = subject.stoppers.metal
   while subject.garbage_queue.metal:peek() and not subject.stoppers.metal do
-      ready_garbage[#ready_garbage+1] = subject.garbage_queue:pop()
+    logger.debug("committing metal at " .. time_to_check)
+    ready_garbage[#ready_garbage+1] = subject.garbage_queue:pop()
   end
   if ready_garbage[1] then
     return ready_garbage
