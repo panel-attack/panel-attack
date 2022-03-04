@@ -53,7 +53,7 @@ function AttackEngine.run(self)
         -- TODO Handle Metal
         if attackPattern.garbage[4] == true then
           for i = 1,  attackPattern.garbage[2], 1 do
-            self.target.telegraph:push("chain", attackPattern.garbage[2], 0, origin_column, origin_row, self.clock)
+            self.target.telegraph:push({attackPattern.width, attackPattern.height, attackPattern.metal, attackPattern.garbage[4]}, origin_column, origin_row, self.clock)
           end
           self.target.telegraph:chainingEnded(self.clock)
         else
