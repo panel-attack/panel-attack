@@ -2350,7 +2350,12 @@ function Stack.check_matches(self)
 
       self:enqueue_card(false, first_panel_col, first_panel_row, combo_size)
       if self.garbage_target and self.garbage_target.telegraph then
-        self.garbage_target.telegraph:push("combo", combo_size, metal_count, first_panel_col, first_panel_row, self.CLOCK)
+
+        logger.debug("Telegraph.add_combo_garbage "..(n_combo or "nil").." "..(n_metal or "nil"))
+        local combo_pieces = combo_garbage[combo_size]
+
+  
+        self.garbage_target.telegraph:push_legacy("combo", combo_size, metal_count, first_panel_col, first_panel_row, self.CLOCK)
       end
       --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
       --          first_panel_row<<4+P1StackPosY+self.displacement-9);

@@ -136,6 +136,49 @@ function Telegraph:push(attack_type, attack_size, metal_count, attack_origin_col
 end
 
 -- Adds a piece of garbage to the queue
+function Telegraph.push_legacy(self, garbage, attack_origin_col, attack_origin_row, frame_earned)
+
+  -- If we got an attack earlier then last frame, (they attacked in the past and we missed it) we need to rollback
+  if frame_earned < self.owner.CLOCK - 1 then
+    self.owner:rollbackToFrame(frame_earned+1)
+  end
+
+  -- If we got the attack in the future, wait to queue it
+  if frame_earned > self.owner.CLOCK then
+    if not self.pendingGarbage[frame_earned] then
+      self.pendingGarbage[frame_earned] = {}
+    end
+
+    self.pendingGarbage[frame_earned][#self.pendingGarbage[frame_earned]+1] = {attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned}
+
+    return
+  end
+
+  -- Now push this attack
+  local x_displacement 
+  if not metal_count then
+    metal_count = 0
+  end
+  local stuff_to_send
+  if attack_type == "chain" then
+    stuff_to_send = self:grow_chain(frame_earned)
+  elseif attack_type == "combo" then
+    -- get combo_garbage_widths, n_resulting_metal_garbage
+    stuff_to_send = self:add_combo_garbage(attack_size, metal_count, frame_earned)
+    stuff_to_send = deepcpy(stuff_to_send) -- we don't want to use the same object as in the garbage queue so they don't change each other
+  end
+  if not self.attacks[frame_earned] then
+    self.attacks[frame_earned] = {}
+  end
+  self.attacks[frame_earned][#self.attacks[frame_earned]+1] =
+    {frame_earned=frame_earned, origin_col=attack_origin_col, origin_row= attack_origin_row, stuff_to_send=stuff_to_send}
+
+
+  -- We may have more attacks this frame. To make sure we save our rollback state with all attacks, don't save and resimulate till we are done with this frame.
+  -- Then only resimulate as needed, because we might simulate more than we need to since another rollback might happen.
+end
+
+-- Adds a piece of garbage to the queue
 function Telegraph.privatePush(self, attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned)
 
   local x_displacement 
