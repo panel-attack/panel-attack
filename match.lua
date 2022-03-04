@@ -22,12 +22,12 @@ function Match.run(self)
     if self.P1CPU then
       self.P1CPU:run(P1)
     end
-    if self.P2CPU then
-      self.P2CPU:run(P2)
-    end
     P1:run()
   end
   if P2 then
+    if self.P2CPU then
+      self.P2CPU:run(P2)
+    end
     P2:run()
   end
   if self.attackEngine then
