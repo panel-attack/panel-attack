@@ -80,9 +80,9 @@ function ComputerPlayer.run(self, stack)
     self.stack = stack
     self:startProfiler()
     self.implementation:updateStack(stack)
-    stack.input_state = self.implementation:getInput()
-    assert(stack.input_state, "Should have input from computer")
+    local nextInput = self.implementation:getInput()
     self:stopProfiler()
+    stack:receiveConfirmedInput(nextInput)
   end
 end
 

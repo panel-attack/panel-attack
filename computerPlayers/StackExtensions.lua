@@ -47,8 +47,8 @@ end
 
 function StackExtensions.copyStack(stack)
     local match = deepcopy(stack.match, nil, {P1=true, P2=true, P1CPU=true, P2CPU=true})
-    local stackCopy = deepcopy(stack, nil, {garbage_target=true, prev_states=true, canvas=true, match=true})
-    local otherStack = deepcopy(stack.garbage_target, nil, {garbage_target=true, prev_states=true, canvas=true, match=true})
+    local stackCopy = deepcopy(stack, nil, {garbage_target=true, prev_states=true, canvas=true, match=true, telegraph=true})
+    local otherStack = deepcopy(stack.garbage_target, nil, {garbage_target=true, prev_states=true, canvas=true, match=true, telegraph=true})
     otherStack.is_local = false
     stackCopy.garbage_target = otherStack
     otherStack.garbage_target = stackCopy

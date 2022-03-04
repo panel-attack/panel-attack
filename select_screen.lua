@@ -1376,10 +1376,6 @@ function select_screen.main()
       --
       -- In general the block-generation logic should be the same as the server's, so
       -- maybe there should be only one implementation.
-      make_local_panels(P1, "000000")
-      make_local_gpanels(P1, "000000")
-      make_local_panels(P2, "000000")
-      make_local_gpanels(P2, "000000")
       P1:starting_state()
       P2:starting_state()
       return main_dumb_transition, {main_local_vs, "", 0, 0}
