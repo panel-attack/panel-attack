@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 local launch_type = arg[2]
 if launch_type == "test" or launch_type == "debug" then
     require "lldebugger"
@@ -7,9 +6,6 @@ if launch_type == "test" or launch_type == "debug" then
         lldebugger.start()
     end
 end
-=======
-require("developer")
->>>>>>> alpha
 require("class")
 socket = require("socket")
 json = require("dkjson")
