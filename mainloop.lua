@@ -532,13 +532,13 @@ function training_setup()
   end
 
   local function increase_width()
-    trainingModeSettings.width = bound(3, trainingModeSettings.width + 1, 6)
+    trainingModeSettings.width = bound(1, trainingModeSettings.width + 1, 6)
     update_width()
     force_legal_height()
   end
 
   local function decrease_width()
-    trainingModeSettings.width = bound(3, trainingModeSettings.width - 1, 6)
+    trainingModeSettings.width = bound(1, trainingModeSettings.width - 1, 6)
     update_width()
     force_legal_height()
   end

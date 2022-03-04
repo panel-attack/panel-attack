@@ -57,7 +57,7 @@ function AttackEngine.run(self)
           end
           self.target.telegraph:chainingEnded(self.clock)
         else
-          self.target.telegraph:push("combo", attackPattern.garbage[1]+1, 0, origin_column, origin_row, self.clock)
+          self.target.telegraph:push({attackPattern.width, attackPattern.height, attackPattern.metal, attackPattern.chain}, origin_column, origin_row, self.clock)
         end
       end
     end

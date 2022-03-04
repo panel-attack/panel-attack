@@ -11,7 +11,7 @@ GarbageQueue = class(function(s, sender)
     local other = GarbageQueue()
     other.sender = self.sender
     other.chain_garbage = deepcpy(self.chain_garbage)
-    for i=3, 6 do
+    for i=1, 6 do
       other.combo_garbage[i] = deepcpy(self.combo_garbage[i])
     end
     other.metal = deepcpy(self.metal)
