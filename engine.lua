@@ -2331,7 +2331,7 @@ function Stack.check_matches(self)
   if (combo_size ~= 0) then
     self.combos[self.CLOCK] = combo_size
     if self.garbage_target and self.garbage_target.telegraph and metal_count == 3 and combo_size == 3 then
-      --self.garbage_target.telegraph:push("combo", combo_size, metal_count, first_panel_col, first_panel_row, self.CLOCK)
+      self.garbage_target.telegraph:push({6, 1, true, false}, first_panel_col, first_panel_row, self.CLOCK)
     end
     self.analytic:register_destroyed_panels(combo_size)
     if (combo_size > 3) then
@@ -2350,10 +2350,16 @@ function Stack.check_matches(self)
 
       self:enqueue_card(false, first_panel_col, first_panel_row, combo_size)
       if self.garbage_target and self.garbage_target.telegraph then
-        local combo_pieces = combo_garbage[combo_size]
+        if metal_count > 3 then
+          for i = 3, metal_count do
+            self.garbage_target.telegraph:push({6, 1, true, false}, first_panel_col, first_panel_row, self.CLOCK)
+          end
+        else
+          local combo_pieces = combo_garbage[combo_size]
           for i=1,#combo_pieces do
             self.garbage_target.telegraph:push({combo_pieces[i], 1, false, false}, first_panel_col, first_panel_row, self.CLOCK)
           end
+        end
       end
       --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
       --          first_panel_row<<4+P1StackPosY+self.displacement-9);
