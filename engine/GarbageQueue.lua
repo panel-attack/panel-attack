@@ -26,7 +26,7 @@ GarbageQueue = class(function(s, sender)
         if width and height then
           if metal then
             self.metal:push(v)
-          elseif from_chain or height > 1 then
+          elseif from_chain or (height > 1 and not GAME.battleRoom.trainingModeSettings) then
             if not from_chain then
               error("ERROR: garbage with height > 1 was not marked as 'from_chain'")
             end
