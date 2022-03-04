@@ -5,13 +5,14 @@ local CpuSwapDirection = { Right = 1, Left = -1}
 
 CpuStack =
   class(
-  function(self, stackRows)
+  function(self, stackRows, CLOCK)
     self.rows = stackRows
     -- create columns
     self.columns = {}
     for column = 1, #self.rows[1].panels do
       self.columns[column] = CpuStackColumn(self.rows, column)
     end
+    self.CLOCK = CLOCK
   end
 )
 
@@ -56,6 +57,87 @@ function CpuStack.Swap(self, panel, direction)
   end
   -- supposedly nothing happens at all because the swap attempt included a (clear)wall or garbage
   return nil
+end
+
+function CpuStack.GetSwapDirection(panel)
+  if panel.vector.column > panel.targetVector.column then
+    return CpuSwapDirection.Left
+  elseif panel.vector.column > panel.targetVector.column then
+    return CpuSwapDirection.Right
+  else
+    error("jokes on you, swapping vertically isn't going to work and a strategy for downstacking a panel to reinsert it into it's original row does not exist yet")
+  end
+end
+
+function CpuStack.SimulateAction(self, action)
+  for i=1, #action.panels do
+    local panel = action.panels[i]
+    while not panel.vector:Equals(panel.targetVector) do
+      local otherPanel = self:Swap(panel, CpuStack.GetSwapDirection(panel))
+
+      local matchTypes = CpuStack:GetMatchTypes(panel)
+      if matchTypes.Horizontal or matchTypes.Vertical then
+        return
+      end
+
+      matchTypes = CpuStack:GetMatchTypes(otherPanel)
+      if matchTypes.Horizontal then
+        CpuStack:SimulateHorizontalMatch(otherPanel)
+      elseif matchTypes.Vertical then
+        CpuStack:SimulateVerticalMatch(otherPanel)
+      end
+    end
+  end
+end
+
+function CpuStack.SimulateHorizontalMatch(self, panel)
+  -- this is probably stupid but for now i'm just going to transform them into unswappable panels and see what happens
+  local row = self:GetRow(panel.vector.row)
+  for _, direction in pairs(CpuSwapDirection) do
+    local nextPanel = panel
+    while (nextPanel.color == panel.color) do
+      if nextPanel.color == panel.color then
+        nextPanel.isSwappable = false
+      end
+
+      nextPanel = row:GetPanelNeighboringPanel(panel, direction)
+    end
+  end
+end
+
+function CpuStack.SimulateVerticalMatch(self, panel)
+  -- this is probably stupid but for now i'm just going to transform them into unswappable panels and see what happens
+  local column = self:GetColumn(panel.vector.column)
+  for _, direction in pairs(CpuSwapDirection) do
+    local nextPanel = panel
+    while (nextPanel.color == panel.color) do
+      if nextPanel.color == panel.color then
+        nextPanel.isSwappable = false
+      end
+
+      nextPanel = column:GetPanelNeighboringPanel(panel, direction)
+    end
+  end
+end
+
+function CpuStack.GetMatchTypes(self, panel)
+  local matches = { Horizontal = false, Vertical = false}
+
+  -- horizontal
+  local row = self:GetRow(panel.vector.row)
+  if row:GetPanelNeighboringPanel(panel, CpuSwapDirection.Left).color == panel.color and
+     row:GetPanelNeighboringPanel(panel, CpuSwapDirection.Right).color == panel.color then
+    matches.Horizontal = true
+  end
+
+  -- vertical
+  local column = self:GetColumn(panel.vector.column)
+  if column:GetPanelNeighboringPanel(panel, CpuSwapDirection.Left).color == panel.color and
+     column:GetPanelNeighboringPanel(panel, CpuSwapDirection.Right).color == panel.color then
+      matches.Vertical = true
+  end
+
+  return matches
 end
 
 function CpuStack.GetColumnHeight(self, column)
@@ -136,8 +218,8 @@ function CpuStackRow.GetPanelInColumn(self, column)
 end
 
 function CpuStackRow.GetPanelNeighboringPanel(self, panel, direction)
-  if self.columns[panel.column() + direction] then
-    return self:GetPanelInColumn(panel.column() + direction)
+  if self.columns[panel.vector.column + direction] then
+    return self:GetPanelInColumn(panel.vector.column + direction)
   else
     return nil
   end
@@ -145,8 +227,12 @@ end
 
 -- returns other swapped panel if the swap is successful, nil if not
 function CpuStackRow.Swap(self, panel, direction)
+  if not panel.isSwappable then
+    return nil
+  end
+
   local otherPanel = self:GetPanelNeighboringPanel(panel, direction)
-  if otherPanel and not otherPanel:exclude_swap() then
+  if otherPanel and otherPanel.isSwappable then
     local vec = panel.vector:copy()
     panel:setVector(otherPanel.vector:copy())
     otherPanel:setVector(vec)
@@ -247,5 +333,13 @@ function CpuStackColumn.GetHeightWithoutGarbage(self)
     if panel.color == 0 or panel.color == 9 then
       return row - 1
     end
+  end
+end
+
+function CpuStackColumn.GetPanelNeighboringPanel(self, panel, direction)
+  if self.rows[panel.vector.row + direction] then
+    return self:GetPanelInColumn(panel.column() + direction)
+  else
+    return nil
   end
 end

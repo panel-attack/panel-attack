@@ -9,9 +9,9 @@ Defend = class(
 function Defend.chooseAction(self)
     local action = self:Clear()
 
-    if not action then
+    --[[ if not action then
         action = self:DownstackIntoClear()
-    end
+    end ]]
 
     return action
 end

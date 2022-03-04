@@ -35,7 +35,8 @@ EndarisCpu = class(function(self)
     self.actionQueue = {}
     self.inputQueue = {}
     self.simulationQueue = {}
-    self.stack = nil
+    self.cpuStack = nil
+    self.realStack = nil
     self.enable_stealth = true
     self.enable_inserts = true
     self.enable_slides = false
@@ -77,8 +78,8 @@ function EndarisCpu.updateStack(self, realStack)
     end
     if realStack then
         CpuLog:log(1, "CLOCK realStack: " .. self.realStack.CLOCK)
-        if self.stack == nil then
-            self.stack = StackExtensions.copyStack(realStack)
+        if self.cpuStack == nil then
+            self.cpuStack = CpuStack(realStack.panels)
             self:initializeCoroutine()
         else
             CpuLog:log(1, "CLOCK local stack: " .. self.stack.CLOCK)
@@ -89,13 +90,14 @@ function EndarisCpu.updateStack(self, realStack)
                 -- compare stack with the snapshot at the snapshot's time
                 if realStack.CLOCK >= snapShot.CLOCK then
                     CpuLog:log(1, "Real stack caught up with oldest snapshot")
-                    if not StackExtensions.stacksAreEqual(snapShot, realStack) then
+                    if not StackExtensions.panelsAreEqualByPanels(self.cpuStack.rows, realStack.panels) then
                         -- discard queued actions in favor of recalculation
                         CpuLog:log(1, "Found mismatch between realStack and simulated snapshot, discarding planned actions and simulated stack and restart the coroutine on the new stack copy")
                         self.lookAheadSnapShots = {}
                         self.actionQueue = {}
                         self.inputQueue = {} --makes sense cause we just finished an action
-                        self.stack = StackExtensions.copyStack(realStack)
+                        self.cpuStack = CpuStack(realStack.panels)
+                        -- need to restart the coroutine to discard calculations in progress from invalid stack
                         self:initializeCoroutine()
                     else
                         CpuLog:log(1, "RealStack and simulated snapshot are equal, removing snapshot and resuming with simulated stack")
@@ -129,11 +131,11 @@ function EndarisCpu.think(self)
 
     -- Never terminate the coroutine
     while true do
-        local gameResult = self.stack:gameResult()
+        local gameResult = self.realStack:gameResult()
 
         --this means the game is still in progress
         if gameResult == nil then
-            if self.stack then
+            if self.cpuStack then
                 if self.currentAction then
                     self:finalizeCurrentAction()
                 end
@@ -149,7 +151,7 @@ function EndarisCpu.think(self)
                     -- to avoid having to reinitialise the coroutine a stack projection is generated that holds...
                     -- ...anticipated future snapshots of the stack that can be compared...
                     -- ... to the updates received from the game to see if all happened according to expectations
-                    self:simulatePostActionStack()
+                    --self:simulatePostActionStack()
                 end
             end
         end
@@ -188,13 +190,13 @@ end
 
 function EndarisCpu.readyToInput(self)
     --the conditions are intentional so that the control flow (specifically the exits) is more obvious rather than having a tail of "else return" where you can't tell where it's coming from
-    if not self.stack then
+    if not self.cpuStack then
         return false
     else --there is a stack, most basic requirement
         if not self.inputQueue or #self.inputQueue == 0 then
             return false
         else --there is actually something to execute
-            if self.stack.countdown_timer and self.stack.countdown_timer > 0 and not Input.isMovement(self.inputQueue[1]) then
+            if self.realStack.countdown_timer and self.realStack.countdown_timer > 0 and not Input.isMovement(self.inputQueue[1]) then
                 return false
             else --either we're just moving or countdown is already over so we can actually do the thing
                 return self.stack.CLOCK > 0
@@ -467,6 +469,7 @@ ActionPanel =
         actionPanel.cursorStartPos = nil
         actionPanel.isSetupPanel = false
         actionPanel.isExecutionPanel = false
+        actionPanel.isSwappable = not panel.exclude_swap()
     end
 )
 

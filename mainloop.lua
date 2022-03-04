@@ -1203,7 +1203,7 @@ function main_local_vs()
     assert((P1.CLOCK == P2.CLOCK), "should run at same speed: " .. P1.CLOCK .. " - " .. P2.CLOCK)
   end
   
-  local function variableStep() 
+  local function variableStep()
 
   end
 
