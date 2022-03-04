@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 local launch_type = arg[2]
 if launch_type == "test" or launch_type == "debug" then
     require "lldebugger"
@@ -6,6 +7,9 @@ if launch_type == "test" or launch_type == "debug" then
         lldebugger.start()
     end
 end
+=======
+require("developer")
+>>>>>>> alpha
 require("class")
 socket = require("socket")
 json = require("dkjson")
@@ -20,6 +24,8 @@ require("globals")
 require("character") -- after globals!
 require("stage") -- after globals!
 require("save")
+require("engine/GarbageQueue")
+require("engine/telegraph")
 require("engine")
 require("AttackEngine")
 require("localization")
@@ -39,9 +45,10 @@ require("computerPlayers.computerPlayer")
 require("panels")
 require("theme")
 require("click_menu")
+require("rich_presence.RichPresence")
 local logger = require("logger")
-
 GAME.scores = require("scores")
+GAME.rich_presence = RichPresence()
 
 global_canvas = love.graphics.newCanvas(canvas_width, canvas_height)
 
@@ -49,6 +56,7 @@ local last_x = 0
 local last_y = 0
 local input_delta = 0.0
 local pointer_hidden = false
+local nextPresenceUpdate = 0
 local mainloop = nil
 
 -- Called at the beginning to load the game
@@ -58,6 +66,7 @@ function love.load()
     math.random()
   end
   read_key_file()
+  GAME.rich_presence:initialize("902897593049301004")
   mainloop = coroutine.create(fmainloop)
 end
 
@@ -94,8 +103,9 @@ function love.update(dt)
     local system_info = "OS: " .. love.system.getOS()
     if GAME_UPDATER_GAME_VERSION then
       system_info = system_info .. "\n" .. GAME_UPDATER_GAME_VERSION
+      send_error_report(err, debug.traceback(mainloop), GAME_UPDATER_GAME_VERSION, love.system.getOS())
     end
-    error(err .. "\n" .. debug.traceback(mainloop).. "\n" .. system_info)
+    error(err .. "\n" .. debug.traceback(mainloop) .. "\n" .. system_info)
   end
   if server_queue and server_queue:size() > 0 then
     logger.trace("Queue Size: " .. server_queue:size() .. " Data:" .. server_queue:to_short_string())
@@ -103,6 +113,7 @@ function love.update(dt)
   this_frame_messages = {}
 
   update_music()
+  GAME.rich_presence:runCallbacks()
 end
 
 -- Called whenever the game needs to draw.
@@ -150,7 +161,7 @@ function love.draw()
 end
 
 -- Transform from window coordinates to game coordinates
-local function transform_coordinates(x, y)
+function transform_coordinates(x, y)
   local lbx, lby, lbw, lbh = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 16, 9)
   return (x - lbx) / 1 * canvas_width / lbw, (y - lby) / 1 * canvas_height / lbh
 end
@@ -165,6 +176,6 @@ end
 -- Handle a touch press
 -- Note we are specifically not implementing this because mousepressed above handles mouse and touch
 -- function love.touchpressed(id, x, y, dx, dy, pressure)
-  -- local _x, _y = transform_coordinates(x, y)
-  -- click_or_tap(_x, _y, {id = id, x = _x, y = _y, dx = dx, dy = dy, pressure = pressure})
+-- local _x, _y = transform_coordinates(x, y)
+-- click_or_tap(_x, _y, {id = id, x = _x, y = _y, dx = dx, dy = dy, pressure = pressure})
 -- end
