@@ -396,6 +396,9 @@ function Telegraph:render()
     if telegraph_to_render.owner.CLOCK - current_block.frame_earned >= GARBAGE_TRANSIT_TIME then
       if not current_block[3]--[[is_metal]] then
         local height = math.min(current_block[2], 14)
+        if height > 1 then -- For illegal chain garbage, default to using the chain size graphics
+          current_block[1] = 6
+        end
         local orig_grb_w, orig_grb_h = characters[senderCharacter].telegraph_garbage_images[height][current_block[1]]:getDimensions()
         local grb_scale_x = 24 / orig_grb_w
         local grb_scale_y = 16 / orig_grb_h
