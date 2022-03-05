@@ -2,7 +2,7 @@ local logger = require("logger")
 
 local TELEGRAPH_HEIGHT = 16
 local TELEGRAPH_PADDING = 2 --vertical space between telegraph and stack
-local TELEGRAPH_BLOCK_WIDTH = 24
+local TELEGRAPH_BLOCK_WIDTH = 26
 local TELEGRAPH_ATTACK_MAX_SPEED = 8 --fastest an attack can travel toward the telegraph per frame
 
 Telegraph = class(function(self, sender, owner)
@@ -317,6 +317,39 @@ function Telegraph.pop_all_ready_garbage(self, time_to_check, just_peeking)
   end
 end
 
+function Telegraph:telegraphRenderXPosition(index)
+
+  local stackWidth, _ = themes[config.theme].images.IMG_frame1P:getDimensions()
+  local increment = -TELEGRAPH_BLOCK_WIDTH * self.owner.mirror_x
+
+  local result = self.pos_x
+  if self.owner.which == 1 then
+    result = result + stackWidth + increment
+  end
+
+  result = result + (increment * index)
+
+  return result
+end
+
+function Telegraph:telegraphLoopAttackPosition(garbage_block, frames_since_earned)
+
+  local resultX, resultY = garbage_block.origin_x, garbage_block.origin_y
+
+  if frames_since_earned > #card_animation + #telegraph_attack_animation_speed then
+    frames_since_earned = #card_animation + #telegraph_attack_animation_speed
+  end
+
+  -- We can't gaurantee every frame was rendered, so we must calculate the exact location regardless of how many frames happened.
+  -- TODO make this more performant?
+  for frame=1, frames_since_earned - #card_animation do
+    resultX = resultX + telegraph_attack_animation[garbage_block.direction][frame].dx
+    resultY = resultY + telegraph_attack_animation[garbage_block.direction][frame].dy
+  end
+
+  return resultX, resultY
+end
+
 function Telegraph:render()
   local telegraph_to_render = self
   local senderCharacter = telegraph_to_render.sender.character
@@ -327,75 +360,66 @@ function Telegraph:render()
 
   -- Render if we are "currently chaining" for debug purposes
   if config.debug_mode and telegraph_to_render.senderCurrentlyChaining then
-    draw(characters[senderCharacter].telegraph_garbage_images["attack"], render_x - 15 , telegraph_to_render.pos_y, 0, atk_scale, atk_scale)
+    draw(characters[senderCharacter].telegraph_garbage_images["attack"], telegraph_to_render:telegraphRenderXPosition(-1), telegraph_to_render.pos_y, 0, atk_scale, atk_scale)
   end
 
   for frame_earned, attacks_this_frame in pairs(telegraph_to_render.attacks) do
     local frames_since_earned = telegraph_to_render.owner.CLOCK - frame_earned
-      if frames_since_earned <= #card_animation then
-        --don't draw anything yet, card animation is still in progress.
-      elseif frames_since_earned >= GARBAGE_TRANSIT_TIME then
-        --Attack is done, remove.
-        telegraph_to_render.attacks[frame_earned] = nil
-      else
-        for _, attack in ipairs(attacks_this_frame) do
-          for _k, garbage_block in ipairs(attack.stuff_to_send) do
-            garbage_block.destination_x = telegraph_to_render.pos_x + TELEGRAPH_BLOCK_WIDTH * telegraph_to_render.garbage_queue:get_idx_of_garbage(unpack(garbage_block))
-            garbage_block.destination_y = garbage_block.destination_y or telegraph_to_render.pos_y - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING 
-            
-            if not garbage_block.origin_x or not garbage_block.origin_y then
-              garbage_block.origin_x = (attack.origin_col-1) * 16 + telegraph_to_render.sender.pos_x
-              garbage_block.origin_y = (11-attack.origin_row) * 16 + telegraph_to_render.sender.pos_y + telegraph_to_render.sender.displacement - card_animation[#card_animation]
-              garbage_block.x = garbage_block.origin_x
-              garbage_block.y = garbage_block.origin_y
-              garbage_block.direction = garbage_block.direction or sign(garbage_block.destination_x - garbage_block.origin_x) --should give -1 for left, or 1 for right
-            end
+    if frames_since_earned <= #card_animation then
+      --don't draw anything yet, card animation is still in progress.
+    elseif frames_since_earned >= GARBAGE_TRANSIT_TIME then
+      --Attack is done, remove.
+      telegraph_to_render.attacks[frame_earned] = nil
+    else
+      for _, attack in ipairs(attacks_this_frame) do
+        for _k, garbage_block in ipairs(attack.stuff_to_send) do
+          garbage_block.destination_x = self:telegraphRenderXPosition(telegraph_to_render.garbage_queue:get_idx_of_garbage(unpack(garbage_block))) + (TELEGRAPH_BLOCK_WIDTH / 2) - (orig_atk_w / 2)
+          garbage_block.destination_y = garbage_block.destination_y or (telegraph_to_render.pos_y - TELEGRAPH_PADDING)
+          
+          if not garbage_block.origin_x or not garbage_block.origin_y then
+            garbage_block.origin_x = (attack.origin_col-1) * 16 + telegraph_to_render.sender.pos_x
+            garbage_block.origin_y = (11-attack.origin_row) * 16 + telegraph_to_render.sender.pos_y + telegraph_to_render.sender.displacement - card_animation[#card_animation]
+            garbage_block.x = garbage_block.origin_x
+            garbage_block.y = garbage_block.origin_y
+            garbage_block.direction = garbage_block.direction or sign(garbage_block.destination_x - garbage_block.origin_x) --should give -1 for left, or 1 for right
+          end
 
-            if frames_since_earned <= #card_animation + #telegraph_attack_animation_speed then
-              --draw telegraph attack animation, little loop down and to the side of origin.
-     
-              -- We can't gaurantee every frame was rendered, so we must calculate the exact location regardless of how many frames happened.
-              -- TODO make this more performant?
-              garbage_block.x = garbage_block.origin_x
-              garbage_block.y = garbage_block.origin_y
-              for frame=1, frames_since_earned - #card_animation do
-                garbage_block.x = garbage_block.x + telegraph_attack_animation[garbage_block.direction][frame].dx
-                garbage_block.y = garbage_block.y + telegraph_attack_animation[garbage_block.direction][frame].dy
-              end
+          if frames_since_earned <= #card_animation + #telegraph_attack_animation_speed then
+            --draw telegraph attack animation, little loop down and to the side of origin.
+    
+            -- We can't gaurantee every frame was rendered, so we must calculate the exact location regardless of how many frames happened.
+            -- TODO make this more performant?
+            garbage_block.x, garbage_block.y = telegraph_to_render:telegraphLoopAttackPosition(garbage_block, frames_since_earned)
 
-              draw(characters[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y, 0, atk_scale, atk_scale)
-            else
-              --move toward destination
-              local distance_to_destination = math.sqrt(math.pow(garbage_block.x-garbage_block.destination_x,2)+math.pow(garbage_block.y-garbage_block.destination_y,2))
-              if frames_since_earned == #card_animation + #telegraph_attack_animation_speed then
-                garbage_block.speed = distance_to_destination / (GARBAGE_TRANSIT_TIME-frames_since_earned)
-              end
-  
-              if distance_to_destination <= (garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED) then
-                --just move it to it's destination
-                garbage_block.x, garbage_block.y = garbage_block.destination_x, garbage_block.destination_y
-              else
-                garbage_block.x = garbage_block.x - ((garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED)*(garbage_block.x-garbage_block.destination_x))/distance_to_destination
-                garbage_block.y = garbage_block.y - ((garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED)*(garbage_block.y-garbage_block.destination_y))/distance_to_destination
-              end
+            draw(characters[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y, 0, atk_scale, atk_scale)
+          else
+            --move toward destination
 
-              draw(characters[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y, 0, atk_scale, atk_scale)
-            end
+            local loopX, loopY = telegraph_to_render:telegraphLoopAttackPosition(garbage_block, frames_since_earned)
+            local framesHappened = frames_since_earned - (#card_animation + #telegraph_attack_animation_speed)
+            local totalFrames = GARBAGE_TRANSIT_TIME - (#card_animation + #telegraph_attack_animation_speed)
+            local percent =  framesHappened / totalFrames
+
+            garbage_block.x = loopX + percent * (garbage_block.destination_x - loopX)
+            garbage_block.y = loopY + percent * (garbage_block.destination_y - loopY)
+
+            draw(characters[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y, 0, atk_scale, atk_scale)
           end
         end
       end
+    end
   end
 
   --then draw the telegraph's garbage queue, leaving an empty space until such a time as the attack arrives (earned_frame-GARBAGE_TRANSIT_TIME)
   local g_queue_to_draw = telegraph_to_render.garbage_queue:makeCopy()
   local current_block = g_queue_to_draw:pop()
-  local draw_x = telegraph_to_render.pos_x
   local draw_y = telegraph_to_render.pos_y
   local drewChain = false
 
+  local currentIndex = 0
   while current_block do
-    --TODO: create a way to draw telegraphs from right to left
     if telegraph_to_render.owner.CLOCK - current_block.frame_earned >= GARBAGE_TRANSIT_TIME then
+      local draw_x = self:telegraphRenderXPosition(currentIndex)
       if not current_block[3]--[[is_metal]] then
         local height = math.min(current_block[2], 14)
         local orig_grb_w, orig_grb_h = characters[senderCharacter].telegraph_garbage_images[height][current_block[1]]:getDimensions()
@@ -433,12 +457,12 @@ function Telegraph:render()
       end
 
     end
-    draw_x = draw_x + TELEGRAPH_BLOCK_WIDTH 
     current_block = g_queue_to_draw:pop()
+    currentIndex = currentIndex + 1
   end
   
   if not drewChain and telegraph_to_render.garbage_queue.ghost_chain then
-    local draw_x = telegraph_to_render.pos_x
+    local draw_x = self:telegraphRenderXPosition(0)
     local draw_y = telegraph_to_render.pos_y
     local height = math.min(telegraph_to_render.garbage_queue.ghost_chain, 14)
     local orig_grb_w, orig_grb_h = characters[senderCharacter].telegraph_garbage_images[height][6]:getDimensions()
