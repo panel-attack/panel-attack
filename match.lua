@@ -132,6 +132,14 @@ function Match.run(self)
       self.attackEngine:run()
     end
 
+    if ranP1 then
+      P1:processIncomingTelegraph()
+    end
+
+    if ranP2 then
+      P2:processIncomingTelegraph()
+    end
+
     -- Since the stacks can affect each other, don't save rollback until after both have run
     if ranP1 then
       P1:saveForRollback()
