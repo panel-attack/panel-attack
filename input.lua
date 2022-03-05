@@ -221,7 +221,7 @@ function love.keypressed(key, scancode, rep)
     love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
     return
   end
-  if key == "f2" then
+  if key == "f2" or key == "printscreen" then
     local now = os.date("*t", to_UTC(os.time()))
     local filename = "screenshot_" .. "v" .. config.version .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. ".png"
     love.filesystem.createDirectory("screenshots")
