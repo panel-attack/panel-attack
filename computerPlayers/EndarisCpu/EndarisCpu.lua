@@ -34,7 +34,6 @@ EndarisCpu = class(function(self)
     self.currentAction = nil
     self.actionQueue = {}
     self.inputQueue = {}
-    self.simulationQueue = {}
     self.cpuStack = nil
     self.realStack = nil
     self.enable_stealth = true
@@ -79,10 +78,10 @@ function EndarisCpu.updateStack(self, realStack)
     if realStack then
         CpuLog:log(1, "CLOCK realStack: " .. self.realStack.CLOCK)
         if self.cpuStack == nil then
-            self.cpuStack = CpuStack(realStack.panels)
+          self.cpuStack = CpuStack(CpuStackRow.GetStackRowsFromStack(realStack), GridVector(realStack.cur_row, realStack.cur_col), realStack.CLOCK, self.config)
             self:initializeCoroutine()
         else
-            CpuLog:log(1, "CLOCK local stack: " .. self.stack.CLOCK)
+            CpuLog:log(1, "CLOCK local stack: " .. self.cpuStack.CLOCK)
             if #self.lookAheadSnapShots > 0 then
                 CpuLog:log(1, "Found " .. #self.lookAheadSnapShots .. " lookAheadSnapshots")
                 local snapShot = self.lookAheadSnapShots[1]
@@ -96,7 +95,7 @@ function EndarisCpu.updateStack(self, realStack)
                         self.lookAheadSnapShots = {}
                         self.actionQueue = {}
                         self.inputQueue = {} --makes sense cause we just finished an action
-                        self.cpuStack = CpuStack(realStack.panels)
+                        self.cpuStack = CpuStack(CpuStackRow.GetStackRowsFromStack(realStack), GridVector(realStack.cur_row, realStack.cur_col), realStack.CLOCK, self.config)
                         -- need to restart the coroutine to discard calculations in progress from invalid stack
                         self:initializeCoroutine()
                     else
@@ -151,7 +150,7 @@ function EndarisCpu.think(self)
                     -- to avoid having to reinitialise the coroutine a stack projection is generated that holds...
                     -- ...anticipated future snapshots of the stack that can be compared...
                     -- ... to the updates received from the game to see if all happened according to expectations
-                    --self:simulatePostActionStack()
+                    self:simulatePostActionStack()
                 end
             end
         end
@@ -199,7 +198,7 @@ function EndarisCpu.readyToInput(self)
             if self.realStack.countdown_timer and self.realStack.countdown_timer > 0 and not Input.isMovement(self.inputQueue[1]) then
                 return false
             else --either we're just moving or countdown is already over so we can actually do the thing
-                return self.stack.CLOCK > 0
+                return self.realStack.CLOCK > 180 - self.config.MoveSwapRateLimit
             end
         end
     end
@@ -238,15 +237,15 @@ function EndarisCpu.getPostActionWaitTime(self)
             -- constant for completing a swap, see Panel.clear() for reference
             waitFrames = waitFrames + 4
             -- wait for all panels to pop
-            waitFrames = waitFrames + level_to_flash[self.stack.level]
-            waitFrames = waitFrames + level_to_face[self.stack.level]
+            waitFrames = waitFrames + level_to_flash[self.cpuStack.level]
+            waitFrames = waitFrames + level_to_face[self.cpuStack.level]
             --the first panel is popped at the end of the face part so there's only additional waiting time for each panel beyond the first
             for i = 1, #self.currentAction.panels do
-                waitFrames = waitFrames + level_to_pop[self.stack.level]
+                waitFrames = waitFrames + level_to_pop[self.cpuStack.level]
             end
 
             -- wait for other panels to fall
-            waitFrames = waitFrames + level_to_hover[self.stack.level]
+            waitFrames = waitFrames + level_to_hover[self.cpuStack.level]
             -- this is overly simplified, assuming that all the panels in the action are vertically stacked, meaning this might overshoot the waiting time
             waitFrames = waitFrames + #self.currentAction.panels
 
@@ -280,7 +279,7 @@ function EndarisCpu.chooseAction(self)
         CpuLog:log(1, "Setting the current action to " .. action:toString())
         self.currentAction = action
         if not self.currentAction.executionPath or #self.currentAction.executionPath == 0 then
-            self.currentAction:calculateExecution(self.stack.cur_row, self.stack.cur_col)
+            self.currentAction:calculateExecution(self.cpuStack.cursorPos)
         end
         self:appendToInputQueue(self.currentAction)
     else
@@ -289,7 +288,6 @@ function EndarisCpu.chooseAction(self)
 
     if self.currentAction then
         self:assignExecutionFramesToAction(self.currentAction)
-        EndarisCpu.appendActionToQueue(self.simulationQueue, self.currentAction)
         EndarisCpu.appendActionToQueue(self.inputQueue, self.currentAction)
     else
         CpuLog:log(1, 'chosen action is nil')
@@ -352,18 +350,18 @@ function EndarisCpu.appendActionToQueue(queue, action)
 end
 
 function EndarisCpu.chooseStrategy(self)
-    if not self.stack or not self.stack.panels then
+    if not self.CpuStack or not self.CpuStack.rows then
         return Attack(self)
     else
-        StackExtensions.printAsAprilStack(self.stack)
+        print(self.cpuStack:AsAprilStack())
     end
 
-    local garbagePanels = StackExtensions.getGarbage(self.stack)
+    local garbagePanels = StackExtensions.getGarbageByPanels(self.CpuStack:GetPanels())
     if #garbagePanels > 0 then
         return Defend(self)
     end
 
-    local fragmentationPercentage = StackExtensions.getFragmentationPercentage(self.stack)
+    local fragmentationPercentage = StackExtensions.getFragmentationPercentageByPanels(self.CpuStack:GetPanels())
     CpuLog:log(1, 'Fragmentation % is ' .. fragmentationPercentage)
     if fragmentationPercentage > self.config.DefragmentationPercentageThreshold then
         CpuLog:log(1, "Chose Defragment as strategy!")
@@ -379,7 +377,8 @@ function EndarisCpu.executeStrategy(self)
 
     if actions == nil and self.strategy.name == "Defend" then
         -- check if it wouldn't be better to defrag now so that one may get into a defendable position again
-        if StackExtensions.getFragmentationPercentage(self.stack) > self.config.DefragmentationPercentageThreshold * 0.5 then
+        if StackExtensions.getFragmentationPercentageByPanels(self.CpuStack:GetPanels())
+                              > self.config.DefragmentationPercentageThreshold * 0.5 then
             CpuLog:log(1, "found no action to defend")
             self.strategy = Defragment(self)
             actions = self.strategy:chooseAction()
@@ -409,52 +408,14 @@ function EndarisCpu.executeStrategy(self)
 end
 
 function EndarisCpu.simulatePostActionStack(self)
-    -- get a valid inputbuffer sequence from self.simulationQueue
-    -- assign it to the stack
-    -- let it run
     CpuLog:log(1, "running simulatePostActionStack")
-    local inputbuffer = ""
-    local frameCount = self.stack.CLOCK - self.yieldCount
-    CpuLog:log(1, "self.stack.CLOCK: " .. self.stack.CLOCK)
-    CpuLog:log(1, "self.yieldCount: " .. self.yieldCount)
+    CpuLog:log(1, "self.cpuStack.CLOCK before simulation: " .. self.cpuStack.CLOCK)
+    self.cpuStack:SimulatePanelAction(self.currentAction)
+    CpuLog:log(1, "self.cpuStack.CLOCK after simulation: " .. self.cpuStack.CLOCK)
+    CpuLog:log(1, StackExtensions.AsAprilStack(self.cpuStack))
 
-    for i=1, #self.simulationQueue do
-        CpuLog:log(1, "adding " .. self.simulationQueue[i]:toString() .. " to inputbuffer")
-        
-        local waitFrameCount = math.max(self.simulationQueue[i].executionFrame - frameCount - 1, 0)
-        
-        CpuLog:log(1, "waitFrameCount: " .. waitFrameCount)
-        for j=1, waitFrameCount do
-            inputbuffer = inputbuffer .. Input.EncodedWait()
-        end
-        
-        frameCount = self.simulationQueue[i].executionFrame
-        if self.simulationQueue[i].name == "Wait" then
-            while frameCount <= self.simulationQueue[i].tillFrame do
-                frameCount = frameCount + 1
-                inputbuffer = inputbuffer .. Input.EncodedWait()
-            end
-        else
-            inputbuffer = inputbuffer .. self.simulationQueue[i]:getEncoded()
-        end
-
-        -- adding waitFrames at the end to make sure that the final swap completes
-        inputbuffer = inputbuffer .. "AA"
-    end
-
-    CpuLog:log(1, "inputbuffer:" .. inputbuffer)
-    CpuLog:log(1, "CLOCK local stack before running inputs " .. self.stack.CLOCK)
-    CpuLog:log(1, StackExtensions.AsAprilStack(self.stack))
-    self.stack.input_buffer = inputbuffer
-    while #self.stack.input_buffer > 0 do
-        self.stack:run()
-    end
-    CpuLog:log(1, "CLOCK local stack after running inputs " .. self.stack.CLOCK)
-    CpuLog:log(1, StackExtensions.AsAprilStack(self.stack))
-
-    local lookAheadCopy = StackExtensions.copyStack(self.stack)
+    local lookAheadCopy = self.cpuStack:Clone()
     table.insert(self.lookAheadSnapShots, #self.lookAheadSnapShots + 1, lookAheadCopy)
-    self.simulationQueue = {}
 end
 
 
@@ -469,7 +430,7 @@ ActionPanel =
         actionPanel.cursorStartPos = nil
         actionPanel.isSetupPanel = false
         actionPanel.isExecutionPanel = false
-        actionPanel.isSwappable = not panel.exclude_swap()
+        actionPanel.isSwappable = not panel:exclude_swap()
     end
 )
 
@@ -486,7 +447,7 @@ function ActionPanel.toString(self)
 end
 
 function ActionPanel.copy(self)
-    local panel = ActionPanel(self.panel, self:row(), self:column())
+    local panel = ActionPanel(self.panel, self.vector.row, self.vector.column)
     if self.cursorStartPos then
         panel.cursorStartPos = GridVector(self.cursorStartPos.row, self.cursorStartPos.column)
     end

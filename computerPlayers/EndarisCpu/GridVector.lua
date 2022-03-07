@@ -62,3 +62,7 @@ end
 function GridVector.copy(self)
   return GridVector(self.row, self.column)
 end
+
+function GridVector.length(self)
+  return self.row + self.column
+end

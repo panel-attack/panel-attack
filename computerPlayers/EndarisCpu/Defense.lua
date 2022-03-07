@@ -64,13 +64,13 @@ end
 
 function Defend.Clear(self)
     if not self.cpu.actions or #self.cpu.actions == 0 then
-        self.cpu.actions = StackExtensions.findActions(self.cpu.stack)
+        self.cpu.actions = StackExtensions.findActions(self.cpu.cpuStack)
     end
 
     local clearActions = self:getClearActions(self.cpu.actions)
 
     if #clearActions > 0 then
-        local action = Action.getCheapestAction(clearActions, self.cpu.stack)
+        local action = Action.getCheapestAction(clearActions, self.cpu.cpuStack)
         if action then
             CpuLog:log(1, "found action to defend " .. action:toString())
         end

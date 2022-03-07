@@ -358,17 +358,17 @@ function StackExtensions.IsDownstackPanelByPanels(panels, vector)
   end
 end
 
-function StackExtensions.findActions(stack)
-  local latentMatches = StackExtensions.findLatentMatches(stack)
-  return StackExtensions.evaluateLatentMatches(latentMatches, stack)
+function StackExtensions.findActions(cpuStack)
+  local latentMatches = StackExtensions.findLatentMatchesFromCpuStack(cpuStack)
+  return StackExtensions.evaluateLatentMatches(latentMatches, cpuStack:GetPanels())
 end
 
 --returns all actually possible matches for a latent match
 --all actions returned from this have their estimatedCost and their targetVectors set
-function StackExtensions.evaluateLatentMatches(latentMatches, stack)
+function StackExtensions.evaluateLatentMatches(latentMatches, panels)
   local possibleMatches = {}
   for i = 1, #latentMatches do
-    local results = StackExtensions.evaluateLatentMatch(latentMatches[i], stack)
+    local results = StackExtensions.evaluateLatentMatch(latentMatches[i], panels)
     for j = 1, #results do
       table.insert(possibleMatches, results[j])
     end
@@ -377,14 +377,15 @@ function StackExtensions.evaluateLatentMatches(latentMatches, stack)
   return possibleMatches
 end
 
-function StackExtensions.evaluateLatentMatch(latentMatch, stack)
+function StackExtensions.evaluateLatentMatch(latentMatch, panels)
   -- get concrete actions from ActionObject
   local concreteMatches = latentMatch:getConcreteMatchesFromLatentMatch()
 
   -- for each concrete action
   for i = #concreteMatches, 1, -1 do
     -- check if action is actually possible to execute (e.g. not switching with garbage)
-    if StackExtensions.actionIsValid(stack, concreteMatches[i]) then
+    if StackExtensions.actionIsValidByPanels(panels, concreteMatches[i]) then
+      -- if ActionValidator.ActionIsValid(cpuStack, concreteMatches[i]) then
       -- TODO Endaris
       -- check if action requires gap filling
 
@@ -417,8 +418,51 @@ function StackExtensions.getAllActionPanelsOfColorByRow(panels, color)
   return actionPanels
 end
 
-function StackExtensions.findLatentMatches(stack)
-  return StackExtensions.findLatentMatchesFromPanels(stack.panels)
+function StackExtensions.findLatentMatches(cpuStack)
+  return StackExtensions.findLatentMatchesFromPanels(cpuStack:GetPanels())
+end
+
+function StackExtensions.findLatentMatchesFromCpuStack(cpuStack)
+  local matches = {}
+  local grid = RowGrid.FromPanels(cpuStack:GetPanels())
+
+  for color = 1, 8 do
+    local colorColumn = grid:GetColorColumn(color)
+    local latentColorMatches = colorColumn:GetLatentMatches()
+    local actionPanelsOfColor = cpuStack:GetPanelsOfColorByRow(color)
+
+    for matchIndex = 1, #latentColorMatches do
+      local match = latentColorMatches[matchIndex]
+      if match.type == "H" then
+        -- if there are 4 in the row, add 2 actions, there cannot be more than 4 (ignoring possible addition of 3D)
+        for n = 1, #actionPanelsOfColor[match.row] - 2 do
+          local actionPanels = {}
+
+          table.insert(actionPanels, actionPanelsOfColor[match.row][n]:copy())
+          table.insert(actionPanels, actionPanelsOfColor[match.row][n + 1]:copy())
+          table.insert(actionPanels, actionPanelsOfColor[match.row][n + 2]:copy())
+
+          CpuLog:log(6, "found horizontal 3 match in row " .. match.row .. " for color " .. color)
+          --create the action and put it in our list
+          table.insert(matches, H3Match(actionPanels))
+        end
+      else
+        -- one possible match for each possible combination of panels in the 3 rows
+        for q = 1, #actionPanelsOfColor[match.rows[1]] do
+          for r = 1, #actionPanelsOfColor[match.rows[2]] do
+            for s = 1, #actionPanelsOfColor[match.rows[3]] do
+              local actionPanels = {}
+              table.insert(actionPanels, actionPanelsOfColor[match.rows[1]][q]:copy())
+              table.insert(actionPanels, actionPanelsOfColor[match.rows[2]][r]:copy())
+              table.insert(actionPanels, actionPanelsOfColor[match.rows[3]][s]:copy())
+              table.insert(matches, V3Match(actionPanels))
+            end
+          end
+        end
+      end
+    end
+  end
+  return matches
 end
 
 -- finds all potential 3 matches on the board using the rowgrid scan
@@ -430,7 +474,7 @@ function StackExtensions.findLatentMatchesFromPanels(panels)
   for color = 1, 8 do
     local colorColumn = grid:GetColorColumn(color)
     local latentColorMatches = colorColumn:GetLatentMatches()
-    local actionPanelsOfColor = StackExtensions.getAllActionPanelsOfColorByRow(panels, color)
+    local actionPanelsOfColor = cpuStack:GetPanelsOfColorByRow(color)
 
     for matchIndex = 1, #latentColorMatches do
       local match = latentColorMatches[matchIndex]
@@ -517,9 +561,8 @@ end
 function StackExtensions.getPanelByVectorByPanels(panels, vector)
   CpuLog:log(5, "Attempting to get panel at vector " .. vector:toString())
   local panel = panels[vector.row][vector.column]
-  local actionPanel = ActionPanel(panel, vector.row, vector.column)
   CpuLog:log(5, "Turned up with panel " .. panel:toString())
-  return actionPanel
+  return panel
 end
 
 function StackExtensions.calculateExecution(stack, action)
@@ -617,7 +660,7 @@ function StackExtensions.getGarbageByPanels(panels)
   local garbagePanels = {}
   for i = 1, #panels do
     for j = 1, #panels[i] do
-      if panels[i][j].color == 9 and panels[i][j].exclude_swap and panels[i][j].state ~= "falling" then
+      if panels[i][j].color == 9 and panels[i][j]:exclude_swap() and panels[i][j].state ~= "falling" then
         table.insert(garbagePanels, ActionPanel(panels[i][j], i, j))
       end
     end

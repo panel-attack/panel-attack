@@ -2,19 +2,36 @@
 -- this seeks to emulate stack transformations on a simplified level to evaluate Actions and aid in pathfinding
 
 local CpuSwapDirection = { Right = 1, Left = -1}
+local InputType = { Move = 1, Swap = 2}
 
 CpuStack =
   class(
-  function(self, stackRows, CLOCK)
+  function(self, stackRows, cursorPos, CLOCK, cpuConfig, level)
     self.rows = stackRows
     -- create columns
     self.columns = {}
-    for column = 1, #self.rows[1].panels do
+    for column = 1, #self.rows[1].columns do
       self.columns[column] = CpuStackColumn(self.rows, column)
     end
     self.CLOCK = CLOCK
+    self.cursorPos = cursorPos
+    self.cpuConfig = cpuConfig
+    self.lastInputType = InputType.Move
+    if level then
+      self.level = level
+    else
+      self.level = 5
+    end
   end
 )
+
+function CpuStack.AsAprilStack(self)
+  return StackExtensions.AsAprilStackByPanels(self:GetPanels())
+end
+
+function CpuStack.GetPanels(self)
+  return table.map(self.rows, function (row) return row.columns end)
+end
 
 function CpuStack.Clone(self)
   return deepcopy(self)
@@ -46,11 +63,13 @@ end
 
 -- returns the other swapped panel if the swap did something, false if not
 function CpuStack.Swap(self, panel, direction)
-  if not panel:exclude_swap() then
+  if panel.isSwappable then
+    self:UpdateCursor(panel, direction)
+    self:UpdateClockWithSwap()
     local otherSwappedPanel = self.rows[panel:row()]:Swap(panel, direction)
     if otherSwappedPanel then
       for _, value in pairs({panel, otherSwappedPanel}) do
-        self:GetColumn(value.column):DropPanels()
+        self:GetColumn(value.vector.column):DropPanels()
       end
       return otherSwappedPanel
     end
@@ -59,32 +78,66 @@ function CpuStack.Swap(self, panel, direction)
   return nil
 end
 
+function CpuStack.UpdateCursor(self, panel, swapDirection)
+  local cursorTarget = CpuStack.GetCursorTarget(panel, swapDirection)
+  local numberOfInputs = cursorTarget:distance(self.cursorPos)
+  self.cursorPos = cursorTarget
+  self:UpdateClockWithCursorMovement(numberOfInputs)
+end
+
+function CpuStack.UpdateClockWithCursorMovement(self, numberOfInputs)
+  for i=1, numberOfInputs do
+    if self.lastInputType == InputType.Move then
+      self.CLOCK = self.CLOCK + self.cpuConfig.MoveRateLimit
+    else
+      self.CLOCK = self.CLOCK + self.cpuConfig.MoveSwapRateLimit
+      self.lastInputType = InputType.Move
+    end
+  end
+end
+
+function CpuStack.UpdateClockWithSwap(self)
+  self.CLOCK = self.CLOCK + self.cpuConfig.MoveSwapRateLimit
+  self.lastInputType = InputType.Swap
+end
+
+function CpuStack.GetCursorTarget(panel, swapDirection)
+  if swapDirection == CpuSwapDirection.Right then
+    return panel.vector
+  else
+    return panel.vector:substract(GridVector(0, 1))
+  end
+end
+
 function CpuStack.GetSwapDirection(panel)
   if panel.vector.column > panel.targetVector.column then
     return CpuSwapDirection.Left
-  elseif panel.vector.column > panel.targetVector.column then
+  elseif panel.vector.column < panel.targetVector.column then
     return CpuSwapDirection.Right
   else
     error("jokes on you, swapping vertically isn't going to work and a strategy for downstacking a panel to reinsert it into it's original row does not exist yet")
   end
 end
 
-function CpuStack.SimulateAction(self, action)
-  for i=1, #action.panels do
-    local panel = action.panels[i]
-    while not panel.vector:Equals(panel.targetVector) do
-      local otherPanel = self:Swap(panel, CpuStack.GetSwapDirection(panel))
+function CpuStack.SimulatePanelAction(self, action)
+  if action.panels then
+    for i=1, #action.panels do
+      local panel = action.panels[i]
+      while not panel.vector:equals(panel.targetVector) do
+        local swapDirection = CpuStack.GetSwapDirection(panel)
+        local otherPanel = self:Swap(panel, swapDirection)
 
-      local matchTypes = CpuStack:GetMatchTypes(panel)
-      if matchTypes.Horizontal or matchTypes.Vertical then
-        return
-      end
+        local matchTypes = self:GetMatchTypes(panel)
+        if matchTypes.Horizontal or matchTypes.Vertical then
+          return
+        end
 
-      matchTypes = CpuStack:GetMatchTypes(otherPanel)
-      if matchTypes.Horizontal then
-        CpuStack:SimulateHorizontalMatch(otherPanel)
-      elseif matchTypes.Vertical then
-        CpuStack:SimulateVerticalMatch(otherPanel)
+        matchTypes = self:GetMatchTypes(otherPanel)
+        if matchTypes.Horizontal then
+          CpuStack:SimulateHorizontalMatch(otherPanel)
+        elseif matchTypes.Vertical then
+          CpuStack:SimulateVerticalMatch(otherPanel)
+        end
       end
     end
   end
@@ -151,29 +204,46 @@ function CpuStack.GetTiers(self)
   local stackRowsForNewTier = {}
   for row = 1, #self.rows do
     if not tierSeparatorReached then
-      if table.trueForAny(self.rows[row], function(panel) return panel:isMatchable() end) then
+      if table.trueForAny(self.rows[row].columns, function(panel) return panel:isMatchable() end) then
         if firstGarbageRowIndex == 0 and
-           table.trueForAny(self.rows[row], function(panel) return panel.color == 9 end) then
+           table.trueForAny(self.rows[row].columns, function(panel) return panel.color == 9 end) then
           firstGarbageRowIndex = row
         end
-        table.insert(stackRowsForNewTier, self.rows[row])
       else
+        if firstGarbageRowIndex == 0 then
+          -- need to set this for single row tiers
+          firstGarbageRowIndex = row
+        end
         tierSeparatorReached = true
       end
+      table.insert(stackRowsForNewTier, self.rows[row])
     else
-      if table.trueForAll(self.rows[row], function(panel) return not panel:isMatchable() end) then
+      if table.trueForAll(self.rows[row].columns, function(panel) return not panel:isMatchable() end) then
         table.insert(stackRowsForNewTier, self.rows[row])
       else
         table.insert(tiers, CpuStackTier(stackRowsForNewTier, stackRowsForNewTier[1].rowIndex))
         tierSeparatorReached = false
         stackRowsForNewTier = {}
-        for reRow = firstGarbageRowIndex, row do
+        for reRow = firstGarbageRowIndex, row - 1 do
           table.insert(stackRowsForNewTier, self.rows[reRow]:GetWithoutMatchablePanels())
         end
+        -- last row is the new row that has matchable panels that are part of the tier so we want them of course
+        table.insert(stackRowsForNewTier, self.rows[row])
         firstGarbageRowIndex = 0
       end
     end
   end
+  -- insert the final tier manually
+  table.insert(tiers, CpuStackTier(stackRowsForNewTier, stackRowsForNewTier[1].rowIndex))
+  return tiers
+end
+
+function CpuStack.GetPanelsOfColorByRow(self, color)
+  local rowPanels = {}
+  for row = 1, #self.rows do
+    table.insert(rowPanels, self.rows[row]:GetPanelsOfColor(color))
+  end
+  return rowPanels
 end
 
 
@@ -199,7 +269,15 @@ CpuStackRow =
 )
 
 function CpuStackRow.GetStackRowsFromStack(stack)
-  local independentActionPanels = deepcopy(StackExtensions.getActionPanelsFromStack(stack))
+  return CpuStackRow.GetStackRowsFromPanels(stack.panels)
+end
+
+function CpuStackRow.GetStackRowsFromPanels(panels)
+  return CpuStackRow.GetStackRowsFromActionPanels(StackExtensions.getActionPanelsFromPanels(panels))
+end
+
+function CpuStackRow.GetStackRowsFromActionPanels(actionPanels)
+  local independentActionPanels = deepcopy(actionPanels)
   -- create rows
   local stackRows = {}
   for row = 1, #independentActionPanels do
@@ -218,10 +296,14 @@ function CpuStackRow.GetPanelInColumn(self, column)
 end
 
 function CpuStackRow.GetPanelNeighboringPanel(self, panel, direction)
-  if self.columns[panel.vector.column + direction] then
+  if panel.vector.column + direction > 0 and panel.vector.column + direction < 7
+  and self.columns[panel.vector.column + direction] then
     return self:GetPanelInColumn(panel.vector.column + direction)
   else
-    return nil
+    local imaginaryPanel = ActionPanel(Panel(0), panel.vector.row, panel.vector.column + direction)
+    imaginaryPanel.color = 0
+    imaginaryPanel.isSwappable = false
+    return imaginaryPanel
   end
 end
 
@@ -236,7 +318,7 @@ function CpuStackRow.Swap(self, panel, direction)
     local vec = panel.vector:copy()
     panel:setVector(otherPanel.vector:copy())
     otherPanel:setVector(vec)
-    table.sort(self.panels, function(a,b) return a.column < b.column end)
+    table.sort(self.columns, function(a,b) return a.vector.column < b.vector.column end)
     return otherPanel
   else
     return nil
@@ -249,11 +331,21 @@ function CpuStackRow.AddPanel(self, panel)
 end
 
 function CpuStackRow.RemovePanel(self, panel)
-  self.columns[panel:column()] = ActionPanel(Panel(0), panel:row(), panel:column())
+  self.columns[panel.vector.column] = ActionPanel(Panel(0), panel.vector.row, panel.vector.column)
 end
 
 function CpuStackRow.GetMatchablePanelCount(self)
   return #table.filter(self.columns, function(panel) return panel:isMatchable() end)
+end
+
+function CpuStackRow.GetPanelsOfColor(self, color)
+  local panels = {}
+  for column=1, #self.columns do
+    if self.columns[column].color == color then
+      table.insert(panels, self.columns[column])
+    end
+  end
+  return panels
 end
 
 CpuStackColumn =
@@ -265,7 +357,7 @@ CpuStackColumn =
 )
 
 function CpuStackColumn.GetPanelInRow(self, row)
-  return self.cpuStackRows[row][self.columnIndex]
+  return self.cpuStackRows[row].columns[self.columnIndex]
 end
 
 function CpuStackColumn.GetColumnArray(self)
@@ -276,11 +368,14 @@ function CpuStackColumn.GetColumnArray(self)
   return columnArray
 end
 
+-- TODO Endaris:
+-- Consider the way garbage panels are connected with each other
+-- Otherwise this will just drop down garbage panels as well when it shouldn't
 function CpuStackColumn.DropPanels(self)
   local emptyRows = {}
   local floatingRows = {}
   for row = 1, #self.cpuStackRows do
-    if self.cpuStackRows[row][self.columnIndex].color == 0 then
+    if self.cpuStackRows[row].columns[self.columnIndex].color == 0 then
       table.insert(emptyRows, row)
     else
       if #emptyRows > 0 then
@@ -291,10 +386,11 @@ function CpuStackColumn.DropPanels(self)
 
   while #floatingRows > 0 do
     local floatingRow = table.remove(floatingRows, 1)
-    local panel = self.cpuStackRows[floatingRow][self.columnIndex]
+    local panel = self.cpuStackRows[floatingRow].columns[self.columnIndex]
     self.cpuStackRows[floatingRow]:RemovePanel(panel)
     table.insert(emptyRows, floatingRow)
     self.cpuStackRows[emptyRows[1]]:AddPanel(panel)
+    panel.vector = GridVector(emptyRows[1], panel.vector.column)
     table.remove(emptyRows, 1)
     table.sort(emptyRows)
   end
@@ -337,9 +433,12 @@ function CpuStackColumn.GetHeightWithoutGarbage(self)
 end
 
 function CpuStackColumn.GetPanelNeighboringPanel(self, panel, direction)
-  if self.rows[panel.vector.row + direction] then
-    return self:GetPanelInColumn(panel.column() + direction)
+  if panel.vector.row + direction > 0 and self.cpuStackRows[panel.vector.row + direction] then
+    return self:GetPanelInRow(panel.vector.row + direction)
   else
-    return nil
+    local imaginaryPanel = ActionPanel(Panel(0), panel.vector.row + direction, self.columnIndex)
+    imaginaryPanel.color = 0
+    imaginaryPanel.isSwappable = false
+    return imaginaryPanel
   end
 end

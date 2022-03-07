@@ -21,6 +21,10 @@ function StackExtensions.AsAprilStackByPanels(panels)
     end
 end
 
+-- TODO Endaris:
+-- to properly utilize aprilStacks for writing test cases, the new puzzle syntax including connected garbage
+-- proposed in https://github.com/panel-attack/panel-attack/issues/193 needs to be introduced
+-- and mapped accordingly by this method
 -- expects an aprilStack WITH whitespace! (or at least full rows)
 function StackExtensions.aprilStackToPanels(aprilStack)
     local panels = {}

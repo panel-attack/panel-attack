@@ -186,7 +186,7 @@ function Action.calculateCosts(actions, stack)
     return actions
 end
 
-function Action.getCheapestAction(actions, stack)
+function Action.getCheapestAction(actions, cpuStack)
     if #actions > 0 then
         table.sort(
             actions,
@@ -208,7 +208,7 @@ function Action.getCheapestAction(actions, stack)
         local i = 1
         local filteredActions = {}
         while i <= #actions and actions[i].estimatedCost == actions[1].estimatedCost do
-            actions[i]:calculateExecution(stack.cur_row, stack.cur_col + 0.5)
+            actions[i]:calculateExecution(cpuStack.cursorPos:add(GridVector(0, 0.5)))
             table.insert(filteredActions, actions[i])
             i = i + 1
         end
@@ -281,18 +281,16 @@ MovePanel =
             Action.init(action)
             action.name = 'MovePanel'
             action.stack = stack
-            action.panel = panel
+            panel.targetVector = targetVector
+            action.panels = {panel}
             action.targetVector = targetVector
-            action.panel.targetVector = targetVector
             action.popsPanels = false
         end,
         Action
     )
 
-function MovePanel.calculateExecution(self, cursor_row, cursor_col)
+function MovePanel.calculateExecution(self, cursorVec)
     self.executionPath = {}
-    CpuLog:log(6, "cursor_row is " .. cursor_row .. ", cursor_col is " .. cursor_col)
-    local cursorVec = GridVector(cursor_row, cursor_col)
     CpuLog:log(6, "cursorVec is " .. cursorVec:toString())
 
     local generalDirection = self.panel.targetVector.column - self.panel.vector.column
@@ -336,7 +334,7 @@ Match3 =
     Action
 )
 
-function Match3.calculateExecution(self, cursor_row, cursor_col)
+function Match3.calculateExecution(self, cursorVec)
     CpuLog:log(6, 'calculating execution path for action ' .. self.name)
     CpuLog:log(6, self:toString())
 
@@ -345,7 +343,6 @@ function Match3.calculateExecution(self, cursor_row, cursor_col)
     local panelsToMove = self:getPanelsToMove()
     CpuLog:log(6, 'found ' .. #panelsToMove .. ' panels to move')
     -- cursor_col is the column of the left part of the cursor
-    local cursorVec = GridVector(cursor_row, cursor_col)
     CpuLog:log(6, 'cursor vec is ' .. cursorVec:toString())
     while (#panelsToMove > 0) do
         panelsToMove = self:sortByDistanceToCursor(panelsToMove, cursorVec)

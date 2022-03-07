@@ -8,11 +8,11 @@ Attack = class(
 
 function Attack.chooseAction(self)
     if not self.cpu.actions or #self.cpu.actions == 0 then
-        self.cpu.actions = StackExtensions.findActions(self.cpu.stack)
+        self.cpu.actions = StackExtensions.findActions(self.cpu.cpuStack)
     end
 
     if #self.cpu.actions > 0 then
-        return {Action.getCheapestAction(self.cpu.actions, self.cpu.stack)}
+        return {Action.getCheapestAction(self.cpu.actions, self.cpu.cpuStack)}
     else
         return {Raise(self.cpu.stack.CLOCK)}
     end
@@ -20,7 +20,7 @@ end
 
 function Attack.getCheapestAction(self)
     if not self.cpu.actions or #self.cpu.actions == 0 then
-        self.cpu.actions = StackExtensions.findActions(self.cpu.stack)
+        self.cpu.actions = StackExtensions.findActions(self.cpu.cpuStack)
     end
 
     local actions = {}
