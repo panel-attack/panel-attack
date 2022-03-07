@@ -2,6 +2,7 @@ local logger = require("logger")
 local select_screen = require("select_screen")
 local replay_browser = require("replay_browser")
 local options = require("options")
+local options2 = require("options2")
 local utf8 = require("utf8")
 local analytics = require("analytics")
 local main_config_input = require("config_inputs")
@@ -171,7 +172,7 @@ do
       {loc("mm_replay_browser"), replay_browser.main},
       {loc("mm_configure"), main_config_input},
       {loc("mm_set_name"), main_set_name},
-      {loc("mm_options"), options.main}
+      {loc("mm_options"), options2.main}
     }
 
     main_menu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, main_menu_last_index)
