@@ -331,5 +331,8 @@ function Stack.send_controls(self)
 
   self:handle_input_taunt()
 
-  self:receiveConfirmedInput(to_send)
+  -- a hack that assumes that the CPU is always player 2
+  if self.which == 1 then
+    self:receiveConfirmedInput(to_send)
+  end
 end

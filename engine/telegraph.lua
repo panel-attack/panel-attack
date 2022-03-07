@@ -8,7 +8,7 @@ local TELEGRAPH_ATTACK_MAX_SPEED = 8 --fastest an attack can travel toward the t
 Telegraph = class(function(self, sender, owner)
 
   -- Stores the actual queue of garbages in the telegraph but not queued long enough to exceed the "stoppers"
-  self.garbage_queue = GarbageQueue(sender)
+  self.garbage_queue = GarbageQueue()
 
   -- Attacks must stay in the telegraph a certain amount of time before they can be sent, we track this with "stoppers"
   --note: keys for stoppers such as self.stoppers.chain[some_key]

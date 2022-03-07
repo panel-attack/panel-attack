@@ -85,7 +85,7 @@ Stack =
     }
 
     s.later_garbage = {} -- Queue of garbage that is done waiting in telegraph, and been popped out, and will be sent to our stack next frame
-    s.garbage_q = GarbageQueue(s) -- Queue of garbage that is about to be dropped
+    s.garbage_q = GarbageQueue() -- Queue of garbage that is about to be dropped
 
     s:moveForPlayerNumber(which)
 
