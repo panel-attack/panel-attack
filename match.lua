@@ -89,13 +89,6 @@ function Match.run(self)
 
   local startTime = love.timer.getTime()
 
-  if config.debug_mode and network_connected() == false and not self.attackEngine then
-    local rollbackStart = 100
-    if P1 and P1:game_ended() == false and P1:behindRollback() == false and P1.CLOCK > rollbackStart then
-      P1:debugRollbackTest()
-    end
-  end
-
   -- We need to save CLOCK 0 as a base case
   if P1.CLOCK == 0 then  
     P1:saveForRollback()
