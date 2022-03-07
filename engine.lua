@@ -90,9 +90,7 @@ Stack =
     s:moveForPlayerNumber(which)
 
     s.panel_buffer = ""
-    s.panel_buffer_record = ""
     s.gpanel_buffer = ""
-    s.gpanel_buffer_record = ""
     s.input_buffer = ""
     s.confirmedInput = "" -- All inputs the player has input ever
     s.panels = {}
@@ -2270,7 +2268,7 @@ function Stack.check_matches(self)
         if panel.y_offset == -1 then
           if gpan_row == nil then
             if string.len(self.gpanel_buffer) <= 10 * self.width then
-              local garbagePanels = makeGarbagePanels(self.match.seed + self.garbageGenCount, self.NCOLORS, self.gpanel_buffer)
+              local garbagePanels = PanelGenerator.makeGarbagePanels(self.match.seed + self.garbageGenCount, self.NCOLORS, self.gpanel_buffer, self.match.mode, self.level)
               self.gpanel_buffer = self.gpanel_buffer .. garbagePanels
               logger.info("Generating garbage with seed: " .. self.match.seed + self.garbageGenCount .. " buffer: " .. self.gpanel_buffer)
               self.garbageGenCount = self.garbageGenCount + 1
@@ -2498,7 +2496,11 @@ function Stack.new_row(self)
   end
 
   if string.len(self.panel_buffer) <= 10 * self.width then
-    self.panel_buffer = self.panel_buffer .. make_panels(self.match.seed + self.panelGenCount, self.NCOLORS, self.panel_buffer, self)
+    local opponentLevel = nil
+    if self.garbage_target then
+      opponentLevel = self.garbage_target.level
+    end
+    self.panel_buffer = PanelGenerator.makePanels(self.match.seed + self.panelGenCount, self.NCOLORS, self.panel_buffer, self.match.mode, self.level, opponentLevel)
     logger.info("generating panels with seed: " .. self.match.seed + self.panelGenCount .. " buffer: " .. self.panel_buffer)
     self.panelGenCount = self.panelGenCount + 1
   end
