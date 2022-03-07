@@ -79,6 +79,7 @@ function fmainloop()
     require("ServerQueueTests")
     require("StackTests")
     require("table_util_tests")
+    require("csprngTests")
   end
 
   while true do

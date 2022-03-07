@@ -1,18 +1,7 @@
 require("util")
 require("server_globals")
+require("csprng")
 local logger = require("logger")
-local random = math.random
-
-local function setSeed(seed)
-
-  if seed then
-    math.randomseed(seed)
-    math.random()
-    math.random()
-    math.random()
-  end
-
-end
 
 -- class used for generating panels
 PanelGenerator =
@@ -21,6 +10,12 @@ PanelGenerator =
 
   end
 )
+
+function PanelGenerator.setSeed(seed)
+  if seed then
+    initialize_mt_generator(seed)
+  end
+end
 
 function PanelGenerator.privateGeneratePanels(rows_to_make, ncolors, previousPanels, disallowAdjacentColors)
   local result = previousPanels
@@ -32,7 +27,7 @@ function PanelGenerator.privateGeneratePanels(rows_to_make, ncolors, previousPan
       local color = 0
       local belowColor = panel_color_to_number[string.sub(result, -6, -6)]
       while nogood do
-        color = math.random(1, ncolors)
+        color = extract_mt(1, ncolors)
         nogood = (previousTwoMatchOnThisRow and color == panel_color_to_number[string.sub(result, -1, -1)]) or -- Can't have three in a row on this column
                  color == belowColor or -- can't have the same color as below
                  (y > 0 and color == panel_color_to_number[string.sub(result, -1, -1)] and disallowAdjacentColors) -- on level 8+ vs, don't allow any adjacent colors
@@ -59,11 +54,11 @@ end
 
 function PanelGenerator.makePanels(seed, ncolors, prev_panels, mode, level, opponentLevel)
 
-  setSeed(seed)
+  PanelGenerator.setSeed(seed)
 
   --logger.debug("make_panels(" .. ncolors .. ", " .. prev_panels .. ", ") .. ")")
   local ret = prev_panels
-  local rows_to_make = 8
+  local rows_to_make = 100 -- setting the seed is slow, so try to build a lot of panels at once.
   if ncolors < 2 then
     return
   end
@@ -72,6 +67,7 @@ function PanelGenerator.makePanels(seed, ncolors, prev_panels, mode, level, oppo
 
   if prev_panels == "" then
     ret = "000000"
+    rows_to_make = 7
     -- During the initial board we can't allow adjacent colors if the other player can't
     disallowAdjacentColors = (mode == "vs" and (level > 7 or opponentLevel > 7))
     if mode == "vs" or mode == "endless" or mode == "time" then
@@ -103,10 +99,10 @@ function PanelGenerator.makePanels(seed, ncolors, prev_panels, mode, level, oppo
       local first, second  --locations of potential metal panels
       --while panel vertically adjacent is not numeric, so can be a metal panel
       while not first or not tonumber(string.sub(prev_row, first, first)) do
-        first = math.random(1, row_width)
+        first = extract_mt(1, row_width)
       end
       while not second or second == first or not tonumber(string.sub(prev_row, second, second)) do
-        second = math.random(1, row_width)
+        second = extract_mt(1, row_width)
       end
       new_row = ""
       for j = 1, row_width do
@@ -136,7 +132,7 @@ function PanelGenerator.makePanels(seed, ncolors, prev_panels, mode, level, oppo
     local height = {7, 7, 7, 7, 7, 7}
     local to_remove = 12
     while to_remove > 0 do
-      local idx = math.random(1, 6) -- pick a random column
+      local idx = extract_mt(1, 6) -- pick a random column
       if height[idx] > 0 then
         ret[idx + 6 * (-height[idx] + 8)] = "0" -- delete the topmost panel in this column
         height[idx] = height[idx] - 1
@@ -158,7 +154,7 @@ end
 
 function PanelGenerator.makeGarbagePanels(seed, ncolors, prev_panels, mode, level)
 
-  setSeed(seed)
+  PanelGenerator.setSeed(seed)
 
   local firstPanelSet = false
   if prev_panels == "" then
