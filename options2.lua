@@ -366,6 +366,7 @@ local function audio_menu()
 
   local function update_master_volume()
     audioMenu:set_button_setting(1, config.master_volume)
+    apply_config_volume()
   end
 
   local function increase_master_volume()
@@ -380,6 +381,7 @@ local function audio_menu()
 
   local function update_sfx_volume()
     audioMenu:set_button_setting(2, config.SFX_volume)
+    apply_config_volume()
   end
 
   local function increase_sfx_volume()
@@ -394,6 +396,7 @@ local function audio_menu()
 
   local function update_music_volume()
     audioMenu:set_button_setting(3, config.music_volume)
+    apply_config_volume()
   end
 
   local function increase_music_volume()
@@ -477,7 +480,7 @@ end
 local function about_menu(button_idx)
   local ret = nil
   local menu_x, menu_y = unpack(main_menu_screen_pos)
-
+  GAME.backgroundImage = themes[config.theme].images.bg_main
   local aboutMenu
 
   local function show_themes_readme()
