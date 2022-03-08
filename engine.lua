@@ -2354,12 +2354,12 @@ function Stack.check_matches(self)
           for i = 3, metal_count do
             self.garbage_target.telegraph:push({6, 1, true, false}, first_panel_col, first_panel_row, self.CLOCK)
           end
-        else
-          local combo_pieces = combo_garbage[combo_size]
-          for i=1,#combo_pieces do
-            self.garbage_target.telegraph:push({combo_pieces[i], 1, false, false}, first_panel_col, first_panel_row, self.CLOCK)
-          end
         end
+        local combo_pieces = combo_garbage[combo_size]
+        for i=1,#combo_pieces do
+          self.garbage_target.telegraph:push({combo_pieces[i], 1, false, false}, first_panel_col, first_panel_row, self.CLOCK)
+        end
+        
       end
       --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
       --          first_panel_row<<4+P1StackPosY+self.displacement-9);
