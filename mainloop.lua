@@ -506,42 +506,24 @@ function training_setup()
     trainingSettingsMenu:set_button_setting(5, trainingModeSettings.height)
   end
 
-  local function force_legal_width()
-    if trainingModeSettings.height > 1 then
-      trainingModeSettings.width = 6
-      update_width()
-    end
-  end
-
   local function increase_height()
     trainingModeSettings.height = bound(1, trainingModeSettings.height + 1, 69)
     update_height()
-    force_legal_width()
   end
 
   local function decrease_height()
     trainingModeSettings.height = bound(1, trainingModeSettings.height - 1, 69)
     update_height()
-    force_legal_width()
-  end
-
-  local function force_legal_height()
-    if trainingModeSettings.width < 6 then
-      trainingModeSettings.height = 1
-      update_height()
-    end
   end
 
   local function increase_width()
-    trainingModeSettings.width = bound(3, trainingModeSettings.width + 1, 6)
+    trainingModeSettings.width = bound(1, trainingModeSettings.width + 1, 6)
     update_width()
-    force_legal_height()
   end
 
   local function decrease_width()
-    trainingModeSettings.width = bound(3, trainingModeSettings.width - 1, 6)
+    trainingModeSettings.width = bound(1, trainingModeSettings.width - 1, 6)
     update_width()
-    force_legal_height()
   end
 
   local function goToStart()

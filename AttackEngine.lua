@@ -9,7 +9,7 @@ AttackPattern =
     self.start = start
     self.attackCount = attackCount
     self.repeatDelay = repeatDelay and math.max(1, repeatDelay) or 1
-    self.garbage = {width, height, metal or false, chain or height > 1}
+    self.garbage = {width, height, metal or false, chain}
   end
 )
 
@@ -50,14 +50,13 @@ function AttackEngine.run(self)
       local origin_column = 17
       local origin_row = 11
       if remainder == 0 then
-        -- TODO Handle Metal
-        if attackPattern.garbage[4] == true then
+        if attackPattern.garbage[4] then
           for i = 1,  attackPattern.garbage[2], 1 do
-            self.target.telegraph:push("chain", attackPattern.garbage[2], 0, origin_column, origin_row, self.clock)
+            self.target.telegraph:push(attackPattern.garbage, origin_column, origin_row, self.clock)
           end
           self.target.telegraph:chainingEnded(self.clock)
         else
-          self.target.telegraph:push("combo", attackPattern.garbage[1]+1, 0, origin_column, origin_row, self.clock)
+          self.target.telegraph:push(attackPattern.garbage, origin_column, origin_row, self.clock)
         end
       end
     end

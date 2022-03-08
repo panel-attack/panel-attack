@@ -108,9 +108,9 @@ function Telegraph:update()
 end
 
 -- Adds a piece of garbage to the queue
-function Telegraph:push(attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned)
+function Telegraph:push(garbage, attack_origin_col, attack_origin_row, frame_earned)
 
-  logger.debug("Player " .. self.sender.which .. " attacked with " .. attack_type .. " at " .. frame_earned)
+  --logger.debug("Player " .. self.sender.which .. " attacked with " .. attack_type .. " at " .. frame_earned)
 
   -- If we are past the frame the attack would be processed we need to rollback
   if self.owner.CLOCK > frame_earned + 1 then
@@ -123,31 +123,31 @@ function Telegraph:push(attack_type, attack_size, metal_count, attack_origin_col
       self.pendingGarbage[frame_earned] = {}
     end
 
-    self.pendingGarbage[frame_earned][#self.pendingGarbage[frame_earned]+1] = {attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned}
+    self.pendingGarbage[frame_earned][#self.pendingGarbage[frame_earned]+1] = {garbage, attack_origin_col, attack_origin_row, frame_earned}
 
     return
   end
 
   -- Now push this attack
-  self:privatePush(attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned)
+  self:privatePush(garbage, attack_origin_col, attack_origin_row, frame_earned)
 
   -- We may have more attacks this frame. To make sure we save our rollback state with all attacks, don't save and resimulate till we are done with this frame.
   -- Then only resimulate as needed, because we might simulate more than we need to since another rollback might happen.
 end
 
 -- Adds a piece of garbage to the queue
-function Telegraph.privatePush(self, attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned)
+function Telegraph.privatePush(self, garbage, attack_origin_col, attack_origin_row, frame_earned)
 
   local x_displacement 
   if not metal_count then
     metal_count = 0
   end
   local stuff_to_send
-  if attack_type == "chain" then
+  if garbage[4] then
     stuff_to_send = self:grow_chain(frame_earned)
-  elseif attack_type == "combo" then
+  else
     -- get combo_garbage_widths, n_resulting_metal_garbage
-    stuff_to_send = self:add_combo_garbage(attack_size, metal_count, frame_earned)
+    stuff_to_send = self:add_combo_garbage(garbage, frame_earned)
     stuff_to_send = deepcpy(stuff_to_send) -- we don't want to use the same object as in the garbage queue so they don't change each other
   end
   if not self.attacks[frame_earned] then
@@ -158,17 +158,15 @@ function Telegraph.privatePush(self, attack_type, attack_size, metal_count, atta
 
 end
 
-function Telegraph.add_combo_garbage(self, n_combo, n_metal, frame_earned)
-  logger.debug("Telegraph.add_combo_garbage "..(n_combo or "nil").." "..(n_metal or "nil"))
+function Telegraph.add_combo_garbage(self, garbage, frame_earned)
+  logger.debug("Telegraph.add_combo_garbage "..(garbage[1] or "nil").." "..(garbage[3] and "true" or "false"))
   local stuff_to_send = {}
-  for i=3,n_metal do
+  if garbage[3] then
     stuff_to_send[#stuff_to_send+1] = {6, 1, true, false, frame_earned = frame_earned}
     self.stoppers.metal = frame_earned+GARBAGE_TRANSIT_TIME + GARBAGE_DELAY
-  end
-  local combo_pieces = combo_garbage[n_combo]
-  for i=1,#combo_pieces do
-    stuff_to_send[#stuff_to_send+1] = {combo_pieces[i], 1, false, false, frame_earned = frame_earned}
-    self.stoppers.combo[combo_pieces[i]] = frame_earned+GARBAGE_TRANSIT_TIME + GARBAGE_DELAY
+  else
+    stuff_to_send[#stuff_to_send+1] = {garbage[1], garbage[2], garbage[3], garbage[4], frame_earned = frame_earned}
+    self.stoppers.combo[garbage[1]] = frame_earned+GARBAGE_TRANSIT_TIME + GARBAGE_DELAY
   end
   self.garbage_queue:push(stuff_to_send)
   return stuff_to_send
@@ -284,7 +282,7 @@ function Telegraph.pop_all_ready_garbage(self, time_to_check, just_peeking)
     end
   end
 
-  for combo_garbage_width=3,6 do
+  for combo_garbage_width=1,6 do
     local n_blocks_of_this_width = subject.garbage_queue.combo_garbage[combo_garbage_width]:len()
     
     local frame_to_release = subject.stoppers.combo[combo_garbage_width]
@@ -422,6 +420,9 @@ function Telegraph:render()
       local draw_x = self:telegraphRenderXPosition(currentIndex)
       if not current_block[3]--[[is_metal]] then
         local height = math.min(current_block[2], 14)
+        if height > 1 then -- For illegal chain garbage, default to using the chain size graphics
+          current_block[1] = 6
+        end
         local orig_grb_w, orig_grb_h = characters[senderCharacter].telegraph_garbage_images[height][current_block[1]]:getDimensions()
         local grb_scale_x = 24 / orig_grb_w
         local grb_scale_y = 16 / orig_grb_h
