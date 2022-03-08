@@ -371,7 +371,7 @@ function Telegraph:render()
     else
       for _, attack in ipairs(attacks_this_frame) do
         for _k, garbage_block in ipairs(attack.stuff_to_send) do
-          garbage_block.destination_x = self:telegraphRenderXPosition(telegraph_to_render.garbage_queue:get_idx_of_garbage(unpack(garbage_block))) + (TELEGRAPH_BLOCK_WIDTH / 2) - (orig_atk_w / 2)
+          garbage_block.destination_x = self:telegraphRenderXPosition(telegraph_to_render.garbage_queue:get_idx_of_garbage(unpack(garbage_block))) + (TELEGRAPH_BLOCK_WIDTH / 2) - ((TELEGRAPH_BLOCK_WIDTH / orig_atk_w) / 2)
           garbage_block.destination_y = garbage_block.destination_y or (telegraph_to_render.pos_y - TELEGRAPH_PADDING)
           
           if not garbage_block.origin_x or not garbage_block.origin_y then
