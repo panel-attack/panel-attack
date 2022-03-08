@@ -1801,6 +1801,23 @@ function Stack.simulate(self)
       end
     end
 
+  end
+end
+
+function Stack:runEndPhase()
+  if self:game_ended() == false then
+
+    if self.telegraph then
+      local to_send = self.telegraph:pop_all_ready_garbage(self.CLOCK)
+      if to_send and to_send[1] then
+        local garbage = self.later_garbage[self.CLOCK+1] or {}
+        for i = 1, #to_send do
+          garbage[#garbage + 1] = to_send[i]
+        end
+        self.later_garbage[self.CLOCK+1] = garbage
+      end
+    end
+
     self.CLOCK = self.CLOCK + 1
     local gameEndedClockTime = self.match:gameEndedClockTime()
     if self.game_stopwatch_running and (gameEndedClockTime == 0 or self.CLOCK <= gameEndedClockTime) then
@@ -1810,19 +1827,6 @@ function Stack.simulate(self)
 
   self:update_popfxs()
   self:update_cards()
-end
-
-function Stack:processIncomingTelegraph()
-  if self.telegraph then
-    local to_send = self.telegraph:pop_all_ready_garbage(self.CLOCK)
-    if to_send and to_send[1] then
-      local garbage = self.later_garbage[self.CLOCK+1] or {}
-      for i = 1, #to_send do
-        garbage[#garbage + 1] = to_send[i]
-      end
-      self.later_garbage[self.CLOCK+1] = garbage
-    end
-  end
 end
 
 function Stack.behindRollback(self)
