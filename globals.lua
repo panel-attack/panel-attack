@@ -62,7 +62,7 @@ config = {
 	language_code                 = "EN",
 
 	theme                         = default_theme_dir,
-	panels                     	  = default_panels_dir,
+	panels                     	  			= default_panels_dir,
 	character                     = random_character_special_value,
 	stage                         = random_stage_special_value,
 
@@ -86,14 +86,14 @@ config = {
 	-- Show FPS in the top-left corner of the screen
 	show_fps                      = false,
 	-- Show ingame infos while playing the game
-	show_ingame_infos             = false,
+	show_ingame_infos             = true,
 	-- Enable ready countdown flag
 	ready_countdown_1P            = true,
 	-- Change danger music back later flag
 	danger_music_changeback_delay = false,
   	input_repeat_delay            = default_input_repeat_delay,
 	-- analytics
-	enable_analytics              = false,
+	enable_analytics              = true,
 	-- Save replays setting
 	save_replays_publicly         = "with my name",
 	portrait_darkness             = default_portrait_darkness,
