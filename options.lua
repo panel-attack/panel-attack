@@ -213,136 +213,7 @@ local function graphics_menu()
   end
 end
 
-local function music_test()
-  gprint(loc("op_music_load"), unpack(main_menu_screen_pos))
-  wait()
-  -- load music for characters/stages that are not fully loaded
-  for _, character_id in ipairs(characters_ids_for_current_theme) do
-    if not characters[character_id].fully_loaded then
-      characters[character_id]:sound_init(true, false)
-    end
-  end
-  for _, stage_id in ipairs(stages_ids_for_current_theme) do
-    if not stages[stage_id].fully_loaded then -- we perform the same although currently no stage are being loaded at this point
-      stages[stage_id]:sound_init(true, false)
-    end
-  end
-
-  local index = 1
-  local tracks = {}
-
-  for _, character_id in ipairs(characters_ids_for_current_theme) do
-    local character = characters[character_id]
-    if character.musics.normal_music then
-      tracks[#tracks + 1] = {
-        is_character = true,
-        name = character.display_name .. ": normal_music",
-        id = character_id,
-        type = "normal_music",
-        start = character.musics.normal_music_start or zero_sound,
-        loop = character.musics.normal_music
-      }
-    end
-    if character.musics.danger_music then
-      tracks[#tracks + 1] = {
-        is_character = true,
-        name = character.display_name .. ": danger_music",
-        id = character_id,
-        type = "danger_music",
-        start = character.musics.danger_music_start or zero_sound,
-        loop = character.musics.danger_music
-      }
-    end
-  end
-  for _, stage_id in ipairs(stages_ids_for_current_theme) do
-    local stage = stages[stage_id]
-    if stage.musics.normal_music then
-      tracks[#tracks + 1] = {
-        is_character = false,
-        name = stage.display_name .. ": normal_music",
-        id = stage_id,
-        type = "normal_music",
-        start = stage.musics.normal_music_start or zero_sound,
-        loop = stage.musics.normal_music
-      }
-    end
-    if stage.musics.danger_music then
-      tracks[#tracks + 1] = {
-        is_character = false,
-        name = stage.display_name .. ": danger_music",
-        id = stage_id,
-        type = "danger_music",
-        start = stage.musics.danger_music_start or zero_sound,
-        loop = stage.musics.danger_music
-      }
-    end
-  end
-
-  -- stop main music
-  stop_all_audio()
-
-  -- initial song starts here
-  find_and_add_music(tracks[index].is_character and characters[tracks[index].id].musics or stages[tracks[index].id].musics, tracks[index].type)
-
-  while true do
-    tp = loc("op_music_current") .. tracks[index].name
-    tp = tp .. (table.getn(currently_playing_tracks) == 1 and "\n" .. loc("op_music_intro") .. "\n" or "\n" .. loc("op_music_loop") .. "\n")
-    min_time = math.huge
-    for k, _ in pairs(music_t) do
-      if k and k < min_time then
-        min_time = k
-      end
-    end
-    tp = tp .. string.format("%d", min_time - love.timer.getTime())
-    tp = tp .. "\n\n\n" .. loc("op_music_nav", "<", ">", "ESC")
-    gprint(tp, unpack(main_menu_screen_pos))
-    wait()
-    local ret = nil
-    variable_step(
-      function()
-        if menu_left() or menu_right() or menu_escape() then
-          stop_the_music()
-        end
-        if menu_left() then
-          index = index - 1
-        end
-        if menu_right() then
-          index = index + 1
-        end
-        if index > #tracks then
-          index = 1
-        end
-        if index < 1 then
-          index = #tracks
-        end
-        if menu_left() or menu_right() then
-          find_and_add_music(tracks[index].is_character and characters[tracks[index].id].musics or stages[tracks[index].id].musics, tracks[index].type)
-        end
-
-        if menu_escape() then
-          -- unloads music for characters/stages that are not fully loaded (they have been loaded when entering this submenu)
-          for _, character_id in ipairs(characters_ids_for_current_theme) do
-            if not characters[character_id].fully_loaded then
-              characters[character_id]:sound_uninit()
-            end
-          end
-          for _, stage_id in ipairs(stages_ids_for_current_theme) do
-            if not stages[stage_id].fully_loaded then
-              stages[stage_id]:sound_uninit()
-            end
-          end
-
-          ret = {main_select_mode}
-        end
-      end
-    )
-    if ret then
-      return unpack(ret)
-    end
-  end
-end
-
-local function audio_menu()
+local function audio_menu(button_idx)
   local ret = nil
   local menu_x, menu_y = unpack(main_menu_screen_pos)
   menu_y = menu_y + 70
@@ -423,7 +294,136 @@ local function audio_menu()
   end
 
   local function enter_music_test()
-    music_test()
+    ret = {
+      function()
+        gprint(loc("op_music_load"), unpack(main_menu_screen_pos))
+        wait()
+        -- load music for characters/stages that are not fully loaded
+        for _, character_id in ipairs(characters_ids_for_current_theme) do
+          if not characters[character_id].fully_loaded then
+            characters[character_id]:sound_init(true, false)
+          end
+        end
+        for _, stage_id in ipairs(stages_ids_for_current_theme) do
+          if not stages[stage_id].fully_loaded then -- we perform the same although currently no stage are being loaded at this point
+            stages[stage_id]:sound_init(true, false)
+          end
+        end
+
+        local index = 1
+        local tracks = {}
+
+        for _, character_id in ipairs(characters_ids_for_current_theme) do
+          local character = characters[character_id]
+          if character.musics.normal_music then
+            tracks[#tracks + 1] = {
+              is_character = true,
+              name = character.display_name .. ": normal_music",
+              id = character_id,
+              type = "normal_music",
+              start = character.musics.normal_music_start or zero_sound,
+              loop = character.musics.normal_music
+            }
+          end
+          if character.musics.danger_music then
+            tracks[#tracks + 1] = {
+              is_character = true,
+              name = character.display_name .. ": danger_music",
+              id = character_id,
+              type = "danger_music",
+              start = character.musics.danger_music_start or zero_sound,
+              loop = character.musics.danger_music
+            }
+          end
+        end
+        for _, stage_id in ipairs(stages_ids_for_current_theme) do
+          local stage = stages[stage_id]
+          if stage.musics.normal_music then
+            tracks[#tracks + 1] = {
+              is_character = false,
+              name = stage.display_name .. ": normal_music",
+              id = stage_id,
+              type = "normal_music",
+              start = stage.musics.normal_music_start or zero_sound,
+              loop = stage.musics.normal_music
+            }
+          end
+          if stage.musics.danger_music then
+            tracks[#tracks + 1] = {
+              is_character = false,
+              name = stage.display_name .. ": danger_music",
+              id = stage_id,
+              type = "danger_music",
+              start = stage.musics.danger_music_start or zero_sound,
+              loop = stage.musics.danger_music
+            }
+          end
+        end
+
+        -- stop main music
+        stop_all_audio()
+
+        -- initial song starts here
+        find_and_add_music(tracks[index].is_character and characters[tracks[index].id].musics or stages[tracks[index].id].musics, tracks[index].type)
+
+        while true do
+          tp = loc("op_music_current") .. tracks[index].name
+          tp = tp .. (table.getn(currently_playing_tracks) == 1 and "\n" .. loc("op_music_intro") .. "\n" or "\n" .. loc("op_music_loop") .. "\n")
+          min_time = math.huge
+          for k, _ in pairs(music_t) do
+            if k and k < min_time then
+              min_time = k
+            end
+          end
+          tp = tp .. string.format("%d", min_time - love.timer.getTime())
+          tp = tp .. "\n\n\n" .. loc("op_music_nav", "<", ">", "ESC")
+          gprint(tp, unpack(main_menu_screen_pos))
+          wait()
+          local audio_test_ret = nil
+          variable_step(
+            function()
+              if menu_left() or menu_right() or menu_escape() then
+                stop_the_music()
+              end
+              if menu_left() then
+                index = index - 1
+              end
+              if menu_right() then
+                index = index + 1
+              end
+              if index > #tracks then
+                index = 1
+              end
+              if index < 1 then
+                index = #tracks
+              end
+              if menu_left() or menu_right() then
+                find_and_add_music(tracks[index].is_character and characters[tracks[index].id].musics or stages[tracks[index].id].musics, tracks[index].type)
+              end
+
+              if menu_escape() then
+                -- unloads music for characters/stages that are not fully loaded (they have been loaded when entering this submenu)
+                for _, character_id in ipairs(characters_ids_for_current_theme) do
+                  if not characters[character_id].fully_loaded then
+                    characters[character_id]:sound_uninit()
+                  end
+                end
+                for _, stage_id in ipairs(stages_ids_for_current_theme) do
+                  if not stages[stage_id].fully_loaded then
+                    stages[stage_id]:sound_uninit()
+                  end
+                end
+
+                audio_test_ret = {audio_menu, {6}}
+              end
+            end
+          )
+          if audio_test_ret then
+            return unpack(audio_test_ret)
+          end
+        end
+      end
+    }
   end
 
   local function nextMenu()
@@ -451,6 +451,10 @@ local function audio_menu()
   update_music_volume()
   update_music_frequency()
   update_music_delay(true)
+
+  if button_idx then
+    audioMenu:set_active_idx(button_idx)
+  end
 
   while true do
     audioMenu:draw()
