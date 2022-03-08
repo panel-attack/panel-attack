@@ -4,14 +4,6 @@ local wait = coroutine.yield
 local memory_before_options_menu = nil
 local theme_index
 local found_themes = {}
-for k, v in ipairs(love.filesystem.getDirectoryItems("themes")) do
-  if love.filesystem.getInfo("themes/" .. v) and v:sub(0, prefix_of_ignored_dirs:len()) ~= prefix_of_ignored_dirs then
-    found_themes[#found_themes + 1] = v
-    if config.theme == v then
-      theme_index = k
-    end
-  end
-end
 
 local function general_menu()
   local ret = nil
@@ -696,9 +688,7 @@ function options.main(button_idx)
     gprint("writing config to file...", unpack(main_menu_screen_pos))
     wait()
 
-    local selected_theme = memory_before_options_menu.theme
-    memory_before_options_menu.theme = found_themes[theme_index]
-    config.theme = selected_theme
+    config.theme = found_themes[theme_index]
 
     write_conf_file()
 
@@ -750,6 +740,15 @@ function options.main(button_idx)
   if button_idx then
     optionsMenu:set_active_idx(button_idx)
   else
+    found_themes = {}
+    for k, v in ipairs(love.filesystem.getDirectoryItems("themes")) do
+      if love.filesystem.getInfo("themes/" .. v) and v:sub(0, prefix_of_ignored_dirs:len()) ~= prefix_of_ignored_dirs then
+        found_themes[#found_themes + 1] = v
+        if config.theme == v then
+          theme_index = #found_themes
+        end
+      end
+    end
     memory_before_options_menu = {
       theme = config.theme,
       --this one is actually updated with the menu and change upon leaving, be careful!
