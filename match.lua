@@ -126,11 +126,11 @@ function Match.run(self)
     end
 
     if ranP1 then
-      P1:processIncomingTelegraph()
+      P1:runEndPhase()
     end
 
     if ranP2 then
-      P2:processIncomingTelegraph()
+      P2:runEndPhase()
     end
 
     -- Since the stacks can affect each other, don't save rollback until after both have run
