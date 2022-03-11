@@ -42,7 +42,6 @@ local last_x = 0
 local last_y = 0
 local input_delta = 0.0
 local pointer_hidden = false
-local nextPresenceUpdate = 0
 local mainloop = nil
 
 -- Called at the beginning to load the game

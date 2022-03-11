@@ -96,6 +96,7 @@ function write_error_report(error_report_json)
   local filename = "v" .. (error_report_json.engine_version or "000") .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. "_" .. (error_report_json.name or "Unknown") .. "-ErrorReport.json"
   return pcall(
     function()
+      mkDir("reports")
       local f = assert(io.open("reports" .. sep .. filename, "w"))
       io.output(f)
       io.write(json_string)
