@@ -65,6 +65,10 @@ function get_message()
 end
 
 local lag_q = Queue() -- only used for debugging
+local lastSendTime = nil
+local minLagSeconds = 0.01
+local maxLagSeconds = 2
+local lagSeconds = minLagSeconds
 
 -- send the given message through
 function net_send(...)
@@ -74,9 +78,18 @@ function net_send(...)
   if not STONER_MODE then
     TCP_sock:send(...)
   else
+    if lastSendTime == nil then
+      lastSendTime = love.timer.getTime()
+    end
     lag_q:push({...})
-    if lag_q:len() == 70 then
-      TCP_sock:send(unpack(lag_q:pop()))
+    local currentTime = love.timer.getTime()
+    local timeDifference = currentTime - lastSendTime
+    if timeDifference > lagSeconds then
+      while lag_q:len() > 0 do
+        TCP_sock:send(unpack(lag_q:pop()))
+        lagSeconds = (math.random() * (maxLagSeconds - minLagSeconds)) + minLagSeconds
+        lastSendTime = love.timer.getTime()
+      end
     end
   end
   return true
