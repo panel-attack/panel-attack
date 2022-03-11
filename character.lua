@@ -423,7 +423,7 @@ function Character.graphics_init(self, full, yields)
         logger.debug("FAILED TO LOAD: telegraph/"..garbage_h.."-tall")
       end
     end
-    for garbage_w=3,6 do
+    for garbage_w=1,6 do
       logger.debug("telegraph/"..garbage_w.."-wide")
       self.telegraph_garbage_images[1][garbage_w] = load_img_from_supported_extensions(self.path.."/telegraph/"..garbage_w.."-wide")
       if not self.telegraph_garbage_images[1][garbage_w] and default_character.telegraph_garbage_images[1][garbage_w] then

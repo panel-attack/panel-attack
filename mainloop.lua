@@ -34,6 +34,7 @@ function fmainloop()
     require("ServerQueueTests")
     require("StackTests")
     require("table_util_tests")
+    require("csprngTests")
   end
 
   while true do
@@ -297,8 +298,10 @@ local function finalizeAndWriteReplay(extraPath, extraFilename)
   write_replay_file(path, filename)
 end
 
-local function finalizeAndWriteVsReplay(battleRoom, outcome_claim)
+local function finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGame)
 
+  incompleteGame = incompleteGame or false
+  
   local extraPath, extraFilename
   if P2 then
     replay[GAME.match.mode].I = P2.confirmedInput
@@ -314,10 +317,14 @@ local function finalizeAndWriteVsReplay(battleRoom, outcome_claim)
     if match_type and match_type ~= "" then
       extraFilename = extraFilename .. "-" .. match_type
     end
-    if outcome_claim == 1 or outcome_claim == 2 then
-      extraFilename = extraFilename .. "-P" .. outcome_claim .. "wins"
-    elseif outcome_claim == 0 then
-      extraFilename = extraFilename .. "-draw"
+    if incompleteGame then
+      extraFilename = extraFilename .. "-INCOMPLETE"
+    else
+      if outcome_claim == 1 or outcome_claim == 2 then
+        extraFilename = extraFilename .. "-P" .. outcome_claim .. "wins"
+      elseif outcome_claim == 0 then
+        extraFilename = extraFilename .. "-draw"
+      end
     end
   else -- vs Self
     extraPath = "Vs Self"
@@ -328,9 +335,6 @@ local function finalizeAndWriteVsReplay(battleRoom, outcome_claim)
 end
 
 local function runMainGameLoop(updateFunction, variableStepFunction, abortGameFunction, processGameResultsFunction)
-
-  --Uncomment below to induce lag
-  --STONER_MODE = true
 
   local returnFunction = nil
   while true do
@@ -460,42 +464,24 @@ function training_setup()
     trainingSettingsMenu:set_button_setting(5, trainingModeSettings.height)
   end
 
-  local function force_legal_width()
-    if trainingModeSettings.height > 1 then
-      trainingModeSettings.width = 6
-      update_width()
-    end
-  end
-
   local function increase_height()
     trainingModeSettings.height = bound(1, trainingModeSettings.height + 1, 69)
     update_height()
-    force_legal_width()
   end
 
   local function decrease_height()
     trainingModeSettings.height = bound(1, trainingModeSettings.height - 1, 69)
     update_height()
-    force_legal_width()
-  end
-
-  local function force_legal_height()
-    if trainingModeSettings.width < 6 then
-      trainingModeSettings.height = 1
-      update_height()
-    end
   end
 
   local function increase_width()
-    trainingModeSettings.width = bound(3, trainingModeSettings.width + 1, 6)
+    trainingModeSettings.width = bound(1, trainingModeSettings.width + 1, 6)
     update_width()
-    force_legal_height()
   end
 
   local function decrease_width()
-    trainingModeSettings.width = bound(3, trainingModeSettings.width - 1, 6)
+    trainingModeSettings.width = bound(1, trainingModeSettings.width - 1, 6)
     update_width()
-    force_legal_height()
   end
 
   local function goToStart()
@@ -957,6 +943,7 @@ function main_net_vs_lobby()
     end
 
     if lobby_menu then
+      gprint(loc("lb_telegraph_alpha"), lobby_menu_x[showing_leaderboard] - 230, lobby_menu_y - 70)
       gprint(notice[#lobby_menu.buttons > 2], lobby_menu_x[showing_leaderboard], lobby_menu_y - 30)
       gprint(arrow, lobby_menu_x[showing_leaderboard], lobby_menu_y)
       gprint(to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y)
@@ -1065,6 +1052,9 @@ function main_net_vs()
   GAME.match.supportsPause = false
 
   commonGameSetup()
+
+  --Uncomment below to induce lag
+  --STONER_MODE = true
   
   local function update() 
     local messages = server_queue:pop_all_with("taunt", "leave_room")
@@ -1087,8 +1077,9 @@ function main_net_vs()
             taunts[math.random(#taunts)]:play()
           end
         end
-      elseif msg.leave_room then --reset win counts and go back to lobby
-        return {main_dumb_transition, {main_net_vs_lobby, "", 0, 0}} -- someone left the game, quit to lobby
+      elseif msg.leave_room then -- lost room during game, go back to lobby
+        finalizeAndWriteVsReplay(GAME.match.battleRoom, 0, true)
+        return {main_dumb_transition, {main_net_vs_lobby, loc("ss_room_closed_in_game"), 60, -1}}
       end
     end
 
@@ -1577,10 +1568,27 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
   text = text or ""
   timemin = timemin or 0
   timemax = timemax or -1 -- negative values means the user needs to press enter/escape to continue
+
+  if timemax <= -1 then   
+    local button_text = loc("continue_button") or ""
+    text = text .. "\n\n" .. button_text
+  end
+
   local t = 0
   local font = love.graphics.getFont()
+
+  local x = canvas_width / 2
+  local y = canvas_height / 2
+  local backgroundPadding = 10
+  local textObject = love.graphics.newText(get_global_font(), text)
+  local width = textObject:getWidth()
+  local height = textObject:getHeight()
+  
   while true do
-    gprint(text, (canvas_width - font:getWidth(text)) / 2, (canvas_height - font:getHeight()) / 2)
+
+    grectangle_color("fill", (x - (width/2) - backgroundPadding) / GFX_SCALE, (y - (height/2) - backgroundPadding) / GFX_SCALE, (width + 2 * backgroundPadding)/GFX_SCALE, (height + 2 * backgroundPadding)/GFX_SCALE, 0, 0, 0, 0.5)
+    menu_drawf(textObject, x, y, "center", "center", 0)
+
     wait()
     local ret = nil
     variable_step(
@@ -1589,11 +1597,6 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
           ret = {next_func}
         end
         t = t + 1
-        --if network_connected() then
-        --  if not do_messages() then
-        --    -- do something? probably shouldn't drop back to the main menu transition since we're already here
-        --  end
-        --end
       end
     )
     if ret then

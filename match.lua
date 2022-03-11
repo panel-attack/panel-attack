@@ -1,3 +1,5 @@
+local logger = require("logger")
+
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =
   class(
@@ -79,7 +81,82 @@ function Match.matchOutcome(self)
   return results
 end
 
-function Match.run(self)
+function Match:debugShouldTestRollback()
+  return false -- config.debug_mode
+end
+
+function Match:debugRollbackAndCaptureState()
+
+  if not self:debugShouldTestRollback() then
+    return
+  end
+
+  local P1 = self.P1
+  local P2 = self.P2
+
+  if P1.CLOCK == 0 then
+    return
+  end
+
+  if P1.garbage_target and P1.garbage_target.CLOCK ~= P1.CLOCK then
+    return
+  end
+
+  self.savedStackP1 = P1.prev_states[P1.CLOCK]
+  if P2 then
+    self.savedStackP2 = P2.prev_states[P2.CLOCK]
+  end
+  
+  P1:rollbackToFrame(P1.CLOCK - 1)
+  if P2 then
+    P2:rollbackToFrame(P2.CLOCK - 1)
+  end
+end
+
+function Match:debugAssertDivergence(stack, savedStack)
+
+  local diverged = false
+  for k,v in pairs(savedStack) do
+    if type(v) ~= "table" then
+      local v2 = stack[k]
+      if v ~= v2 then
+        diverged = true
+        logger.error("Stacks have diverged")
+      end
+    end
+  end
+
+  local savedStackString = Stack.divergenceString(savedStack)
+  local localStackString = Stack.divergenceString(stack)
+
+  if savedStackString ~= localStackString then
+    diverged = true
+    logger.error("Stacks have diverged")
+  end
+end
+
+function Match:debugCheckDivergence()
+
+  if not self:debugShouldTestRollback() then
+    return
+  end
+
+  if not self.savedStackP1 or self.savedStackP1.CLOCK ~= self.P1.CLOCK then
+    return
+  end
+
+  self:debugAssertDivergence(self.P1, self.savedStackP1)
+  self.savedStackP1 = nil
+
+  if not self.savedStackP2 or self.savedStackP2.CLOCK ~= self.P2.CLOCK then
+    return
+  end
+
+  self:debugAssertDivergence(self.P2, self.savedStackP2)
+  self.savedStackP2 = nil
+end
+
+function Match:run()
   local P1 = self.P1
   local P2 = self.P2
 
@@ -89,13 +166,6 @@ function Match.run(self)
 
   local startTime = love.timer.getTime()
 
-  if config.debug_mode and network_connected() == false and not self.attackEngine then
-    local rollbackStart = 100
-    if P1 and P1:game_ended() == false and P1:behindRollback() == false and P1.CLOCK > rollbackStart then
-      P1:debugRollbackTest()
-    end
-  end
-
   -- We need to save CLOCK 0 as a base case
   if P1.CLOCK == 0 then  
     P1:saveForRollback()
@@ -103,6 +173,8 @@ function Match.run(self)
   if P2 and P2.CLOCK == 0 then  
     P2:saveForRollback()
   end
+
+  self:debugRollbackAndCaptureState()
 
   if P1 and P1.is_local and P1:game_ended() == false then  
     P1:send_controls()
@@ -132,6 +204,14 @@ function Match.run(self)
       self.attackEngine:run()
     end
 
+    if ranP1 then
+      P1:runEndPhase()
+    end
+
+    if ranP2 then
+      P2:runEndPhase()
+    end
+
     -- Since the stacks can affect each other, don't save rollback until after both have run
     if ranP1 then
       P1:saveForRollback()
@@ -141,14 +221,20 @@ function Match.run(self)
       P2:saveForRollback()
     end
 
+    self:debugCheckDivergence()
+
     runsSoFar = runsSoFar + 1
   end
 
-  if P1 and P1.is_local and string.len(P1.input_buffer) > 0 then
-    error("Local games should always simulate all inputs")
+  if P1 then
+    if P1.is_local and not P1:game_ended() then
+      assert(string.len(P1.input_buffer) == 0, "Local games should always simulate all inputs")
+    end
   end
-  if P2 and P2.is_local and string.len(P2.input_buffer) > 0 then
-    error("Local games should always simulate all inputs")
+  if P2 then
+    if P2.is_local and not P2:game_ended() then
+      assert(string.len(P2.input_buffer) == 0, "Local games should always simulate all inputs")
+    end
   end
 
   local endTime = love.timer.getTime()

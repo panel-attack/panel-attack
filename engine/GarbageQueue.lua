@@ -11,7 +11,7 @@ GarbageQueue = class(function(s, sender)
     local other = GarbageQueue()
     other.sender = self.sender
     other.chain_garbage = deepcpy(self.chain_garbage)
-    for i=3, 6 do
+    for i=1, 6 do
       other.combo_garbage[i] = deepcpy(self.combo_garbage[i])
     end
     other.metal = deepcpy(self.metal)
@@ -26,7 +26,7 @@ GarbageQueue = class(function(s, sender)
         if width and height then
           if metal then
             self.metal:push(v)
-          elseif from_chain or height > 1 then
+          elseif from_chain or (height > 1 and not GAME.battleRoom.trainingModeSettings) then
             if not from_chain then
               error("ERROR: garbage with height > 1 was not marked as 'from_chain'")
             end
@@ -120,7 +120,7 @@ GarbageQueue = class(function(s, sender)
     local result = nil
   
     if newChain then
-      result = {{6,1,false,true, frame_earned=frame_earned, finalized=false}}
+      result = {{6,1,false,true, frame_earned=frame_earned, finalized=nil}}
       self:push(result) --a garbage block 6-wide, 1-tall, not metal, from_chain
     else 
       result = self.chain_garbage[self.chain_garbage.first]
