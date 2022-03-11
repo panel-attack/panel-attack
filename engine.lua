@@ -253,7 +253,7 @@ function Stack.moveForPlayerNumber(stack, player_num)
   stack.score_y = 100 + (canvas_height - legacy_canvas_height)
 end
 
-function Stack.divergenceString(self, stackToTest)
+function Stack.divergenceString(stackToTest)
   local result = ""
 
   local panels = stackToTest.panels
@@ -432,58 +432,6 @@ function Stack.rollbackToFrame(self, frame)
     self.rollbackCount = self.rollbackCount + 1
     self.lastRollbackFrame = currentFrame
   end
-end
-
-function Stack.debugRollbackTest(self)
-  local targetFrame = self.CLOCK
-
-  if self.garbage_target and self.garbage_target.CLOCK ~= targetFrame then
-    return
-  end
-
-  local savedStack = self.prev_states[self.CLOCK]
-  
-  self:rollbackToFrame(self.CLOCK - 1)
-
-  if self.garbage_target and self.garbage_target ~= self then
-    self.garbage_target:rollbackToFrame(self.garbage_target.CLOCK - 1)
-  end
-
-  for i=1,1 do
-    self:run()
-    if self.garbage_target and self.garbage_target ~= self then
-      self.garbage_target:run()
-    end
-  end
-
-  assert(self.CLOCK == targetFrame, "should have got back to target frame")
-  if self.garbage_target and self.garbage_target ~= self then
-    assert(self.garbage_target.CLOCK == targetFrame, "should have got back to target frame")
-  end
-
-  local diverged = false
-  for k,v in pairs(savedStack) do
-    if type(v) ~= "table" then
-      local v2 = self[k]
-      if v ~= v2 then
-        diverged = true
-      end
-    end
-  end
-
-  local savedStackString = self:divergenceString(savedStack)
-  local localStackString = self:divergenceString(self)
-
-  if savedStackString ~= localStackString then
-    diverged = true
-  end
-
-  if diverged then
-    logger.error("Stacks have diverged")
-    self:rollbackToFrame(targetFrame-1)
-    self:run()
-  end
-
 end
 
 -- Saves state in backups in case its needed for rollback

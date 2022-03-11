@@ -375,9 +375,6 @@ end
 
 local function runMainGameLoop(updateFunction, variableStepFunction, abortGameFunction, processGameResultsFunction)
 
-  --Uncomment below to induce lag
-  --STONER_MODE = true
-
   local returnFunction = nil
   while true do
     -- Uncomment this to cripple your game :D
@@ -1094,6 +1091,9 @@ function main_net_vs()
   GAME.match.supportsPause = false
 
   commonGameSetup()
+
+  --Uncomment below to induce lag
+  --STONER_MODE = true
   
   local function update() 
     local messages = server_queue:pop_all_with("taunt", "leave_room")
@@ -1618,11 +1618,6 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
           ret = {next_func}
         end
         t = t + 1
-        --if network_connected() then
-        --  if not do_messages() then
-        --    -- do something? probably shouldn't drop back to the main menu transition since we're already here
-        --  end
-        --end
       end
     )
     if ret then
