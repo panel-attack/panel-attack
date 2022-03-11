@@ -422,6 +422,7 @@ in 2%"
 ss_casual,,Casual,Normal,Casual,カジュアル,Casual,Normal,Normale
 ss_current_rating,,current:,courant :,atual:,現在：,Actual:,derzeitig:,corrente:
 ss_disconnect,,Disconnected from server.,Vous êtes deconnecté du serveur.,Desconectado do servidor.,サーバーから切断されました。,Desconectado del servidor.,Verbindung zum Server verloren.,Disconnesso dal server.
+ss_room_closed_in_game,Message shown when room closes mid game,The server or opponent closed the room in the middle of the game,Le serveur ou l'adversaire a fermé la pièce au milieu du jeu,O servidor ou oponente fechou a sala no meio do jogo,サーバーまたは対戦相手はゲームの真ん中で部屋を閉じました,El servidor u oponente cerró la habitación en medio del juego.,Der Server oder der Gegner schloss das Zimmer in der Mitte des Spiels,Il server o l'avversario chiuse la stanza nel mezzo del gioco
 ss_draw,,Draw,Egalité,Empate,引き分け,Empate,Unentschieden,Pareggio
 ss_err_no_reason,,Reason unknown,Erreur inconnue,Motivo desconhecido,理由不明,Razón desconocida,Grund unbekannt,Ragione sconosciuta
 ss_error_leave,,Error when leaving online,Erreur en quittant le serveur,Erro ao sair do servidor,オンラインを離れる際のエラー,Error al salir de en línea,Fehler beim Verlassen des Servers,Errore nell'uscita dal server
