@@ -204,14 +204,6 @@ function Match:run()
       self.attackEngine:run()
     end
 
-    if ranP1 then
-      P1:runEndPhase()
-    end
-
-    if ranP2 then
-      P2:runEndPhase()
-    end
-
     -- Since the stacks can affect each other, don't save rollback until after both have run
     if ranP1 then
       P1:saveForRollback()
