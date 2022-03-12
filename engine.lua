@@ -417,13 +417,13 @@ function Stack.rollbackToFrame(self, frame)
       -- The garbage that we send this time might (rarely) not be the same
       -- as the garbage we sent before.  Wipe out the garbage we sent before...
       for k, v in pairs(self.garbage_target.telegraph.pendingGarbage) do
-        if k >= frame then
+        if k > frame then
           self.garbage_target.telegraph.pendingGarbage[k] = nil
         end
       end
 
       for k, v in pairs(self.garbage_target.telegraph.pendingChainingEnded) do
-        if k >= frame then
+        if k > frame then
           self.garbage_target.telegraph.pendingChainingEnded[k] = nil
         end
       end
