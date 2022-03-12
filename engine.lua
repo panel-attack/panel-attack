@@ -417,13 +417,13 @@ function Stack.rollbackToFrame(self, frame)
       -- The garbage that we send this time might (rarely) not be the same
       -- as the garbage we sent before.  Wipe out the garbage we sent before...
       for k, v in pairs(self.garbage_target.telegraph.pendingGarbage) do
-        if k >= frame then
+        if k > frame then
           self.garbage_target.telegraph.pendingGarbage[k] = nil
         end
       end
 
       for k, v in pairs(self.garbage_target.telegraph.pendingChainingEnded) do
-        if k >= frame then
+        if k > frame then
           self.garbage_target.telegraph.pendingChainingEnded[k] = nil
         end
       end
@@ -1488,6 +1488,17 @@ function Stack.simulate(self)
       end
     end
 
+    if self.telegraph then
+      local to_send = self.telegraph:pop_all_ready_garbage(self.CLOCK)
+      if to_send and to_send[1] then
+        local garbage = self.later_garbage[self.CLOCK+1] or {}
+        for i = 1, #to_send do
+          garbage[#garbage + 1] = to_send[i]
+        end
+        self.later_garbage[self.CLOCK+1] = garbage
+      end
+    end
+    
     if self.later_garbage[self.CLOCK] then
       self.garbage_q:push(self.later_garbage[self.CLOCK])
       self.later_garbage[self.CLOCK] = nil
@@ -1746,23 +1757,6 @@ function Stack.simulate(self)
         if self:shouldChangeSoundEffects() then
           SFX_GameOver_Play = 1
         end
-      end
-    end
-
-  end
-end
-
-function Stack:runEndPhase()
-  if self:game_ended() == false then
-
-    if self.telegraph then
-      local to_send = self.telegraph:pop_all_ready_garbage(self.CLOCK)
-      if to_send and to_send[1] then
-        local garbage = self.later_garbage[self.CLOCK+1] or {}
-        for i = 1, #to_send do
-          garbage[#garbage + 1] = to_send[i]
-        end
-        self.later_garbage[self.CLOCK+1] = garbage
       end
     end
 

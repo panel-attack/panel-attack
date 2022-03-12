@@ -116,16 +116,16 @@ GarbageQueue = class(function(s, sender)
   
   -- This is used by the telegraph to increase the size of the chain garbage being built
   -- or add a 6-wide if there is not chain garbage yet in the queue
-  function GarbageQueue.grow_chain(self,frame_earned, newChain)
+  function GarbageQueue:grow_chain(timeAttackInteracts, newChain)
     local result = nil
   
     if newChain then
-      result = {{6,1,false,true, frame_earned=frame_earned, finalized=nil}}
+      result = {{6,1,false,true, timeAttackInteracts=timeAttackInteracts, finalized=nil}}
       self:push(result) --a garbage block 6-wide, 1-tall, not metal, from_chain
     else 
       result = self.chain_garbage[self.chain_garbage.first]
       result[2]--[[height]] = result[2]--[[height]] + 1
-      result.frame_earned = frame_earned
+      result.timeAttackInteracts = timeAttackInteracts
       -- Note we are changing the value inside the queue so no need to pop and insert it.
       self.ghost_chain = result[2] - 1
       result = {result}
