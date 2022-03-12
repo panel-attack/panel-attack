@@ -69,7 +69,7 @@ function PanelGenerator.makePanels(seed, ncolors, prev_panels, mode, level, oppo
     ret = "000000"
     rows_to_make = 7
     -- During the initial board we can't allow adjacent colors if the other player can't
-    disallowAdjacentColors = (mode == "vs" and (level > 7 or opponentLevel > 7))
+    disallowAdjacentColors = (mode == "vs" and (level > 7 or (opponentLevel or 1) > 7))
     if mode == "vs" or mode == "endless" or mode == "time" then
       cut_panels = true
     end
