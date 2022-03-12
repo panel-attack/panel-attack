@@ -13,7 +13,7 @@ PanelGenerator =
 
 function PanelGenerator.setSeed(seed)
   if seed then
-    initialize_mt_generator(seed)
+    love.math.setRandomSeed(seed)
   end
 end
 
@@ -27,7 +27,7 @@ function PanelGenerator.privateGeneratePanels(rows_to_make, ncolors, previousPan
       local color = 0
       local belowColor = panel_color_to_number[string.sub(result, -6, -6)]
       while nogood do
-        color = extract_mt(1, ncolors)
+        color = love.math.random(1, ncolors)
         nogood = (previousTwoMatchOnThisRow and color == panel_color_to_number[string.sub(result, -1, -1)]) or -- Can't have three in a row on this column
                  color == belowColor or -- can't have the same color as below
                  (y > 0 and color == panel_color_to_number[string.sub(result, -1, -1)] and disallowAdjacentColors) -- on level 8+ vs, don't allow any adjacent colors
@@ -99,10 +99,10 @@ function PanelGenerator.makePanels(seed, ncolors, prev_panels, mode, level, oppo
       local first, second  --locations of potential metal panels
       --while panel vertically adjacent is not numeric, so can be a metal panel
       while not first or not tonumber(string.sub(prev_row, first, first)) do
-        first = extract_mt(1, row_width)
+        first = love.math.random(1, row_width)
       end
       while not second or second == first or not tonumber(string.sub(prev_row, second, second)) do
-        second = extract_mt(1, row_width)
+        second = love.math.random(1, row_width)
       end
       new_row = ""
       for j = 1, row_width do
@@ -132,7 +132,7 @@ function PanelGenerator.makePanels(seed, ncolors, prev_panels, mode, level, oppo
     local height = {7, 7, 7, 7, 7, 7}
     local to_remove = 12
     while to_remove > 0 do
-      local idx = extract_mt(1, 6) -- pick a random column
+      local idx = love.math.random(1, 6) -- pick a random column
       if height[idx] > 0 then
         ret[idx + 6 * (-height[idx] + 8)] = "0" -- delete the topmost panel in this column
         height[idx] = height[idx] - 1
