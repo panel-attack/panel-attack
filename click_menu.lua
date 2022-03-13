@@ -1,6 +1,6 @@
 require("graphics_util")
+local logger = require("logger")
 
-menu_font = love.graphics.getFont()
 CLICK_MENUS = {} -- All click menus currently showing in the game
 
 -- A series of buttons with text strings that can be clicked or use input to navigate
@@ -15,7 +15,7 @@ Click_menu =
     self.new_item_y = 0
     self.menu_controls = {
       up = {
-        text = love.graphics.newText(menu_font, "^"),
+        text = love.graphics.newText(get_global_font(), "^"),
         x = self.width - 30,
         y = 10,
         w = 30,
@@ -24,7 +24,7 @@ Click_menu =
         visible = false
       },
       down = {
-        text = love.graphics.newText(menu_font, "v"),
+        text = love.graphics.newText(get_global_font(), "v"),
         x = self.width - 30,
         y = 80,
         w = 30,
@@ -56,7 +56,7 @@ Click_menu =
 
 function Click_menu.add_button(self, string_text, selectFunction, escapeFunction, leftFunction, rightFunction)
   self.buttons[#self.buttons + 1] = {
-    text = love.graphics.newText(menu_font, string_text),
+    text = love.graphics.newText(get_global_font(), string_text),
     stringText = string_text,
     x = 0,
     y = 0,
@@ -76,13 +76,13 @@ end
 
 -- Sets the string for the menu text
 function Click_menu.set_button_text(self, button_idx, string)
-  self.buttons[button_idx].text = love.graphics.newText(menu_font, string)
+  self.buttons[button_idx].text = love.graphics.newText(get_global_font(), string)
 end
 
 
 -- Sets the string to render to the right of the menu text
 function Click_menu.set_button_setting(self, button_idx, new_setting)
-  self.buttons[button_idx].current_setting = love.graphics.newText(menu_font, new_setting)
+  self.buttons[button_idx].current_setting = love.graphics.newText(get_global_font(), new_setting)
 end
 
 -- Sets the button at the given index's visibility
@@ -342,7 +342,7 @@ function Click_menu.click_or_tap(self, x, y, touchpress)
     for control_name, control in pairs(self.menu_controls) do
       if control.visible then
         if y >= self.y + control.y and y <= self.y + control.y + control.h and x >= self.x + control.x and x <= self.x + control.x + control.w then
-          --print(menu_name.."'s "..control_name.." was clicked or tapped")
+          --logger.debug(menu_name.."'s "..control_name.." was clicked or tapped")
           this_frame_keys[control_name] = true
           logger.debug("Click Menu tapped, pressing button: " .. control_name)
         end

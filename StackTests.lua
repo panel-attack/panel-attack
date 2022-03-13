@@ -1,8 +1,7 @@
 
 local match = Match("puzzle") -- to stop rising
-local stack = Stack(1, match, false, config.panels, 5)
-make_local_panels(stack, "000000")
-make_local_gpanels(stack, "000000")
+local stack = Stack(1, match, true, config.panels, 5, 1, 1, false)
+match.P1 = stack
 stack.do_countdown = false
 stack:wait_for_random_character()
 pick_random_stage()
@@ -13,6 +12,6 @@ stack:set_puzzle_state("011010", 1)
 assert(stack.panels[1][1].color == 0, "wrong color")
 assert(stack.panels[1][2].color == 1, "wrong color")
 
-stack.input_buffer = "AA" -- can't swap on first two frames ?!
-stack:run(2)
+stack:receiveConfirmedInput("AA") -- can't swap on first two frames ?!
+match:run()
 assert(stack:canSwap(1, 4), "should be able to swap")

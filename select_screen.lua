@@ -68,9 +68,9 @@ function refresh_based_on_own_mods(refreshed, ask_change_fallback)
     -- stage
     if refreshed.stage == nil or (refreshed.stage ~= random_stage_special_value and stages[refreshed.stage] == nil) then
       if not select_screen.fallback_when_missing[1] or ask_change_fallback then
-        select_screen.fallback_when_missing[1] = uniformly(stages_ids_for_current_theme)
+        select_screen.fallback_when_missing[1] = table.getRandomElement(stages_ids_for_current_theme)
         if stages[select_screen.fallback_when_missing[1]]:is_bundle() then -- may pick a bundle!
-          select_screen.fallback_when_missing[1] = uniformly(stages[select_screen.fallback_when_missing[1]].sub_stages)
+          select_screen.fallback_when_missing[1] = table.getRandomElement(stages[select_screen.fallback_when_missing[1]].sub_stages)
         end
       end
       refreshed.stage = select_screen.fallback_when_missing[1]
@@ -82,9 +82,9 @@ function refresh_based_on_own_mods(refreshed, ask_change_fallback)
         refreshed.character = characters_ids_by_display_names[refreshed.character_display_name][1]
       else
         if not select_screen.fallback_when_missing[2] or ask_change_fallback then
-          select_screen.fallback_when_missing[2] = uniformly(characters_ids_for_current_theme)
+          select_screen.fallback_when_missing[2] = table.getRandomElement(characters_ids_for_current_theme)
           if characters[select_screen.fallback_when_missing[2]]:is_bundle() then -- may pick a bundle
-            select_screen.fallback_when_missing[2] = uniformly(characters[select_screen.fallback_when_missing[2]].sub_characters)
+            select_screen.fallback_when_missing[2] = table.getRandomElement(characters[select_screen.fallback_when_missing[2]].sub_characters)
           end
         end
         refreshed.character = select_screen.fallback_when_missing[2]
@@ -97,12 +97,12 @@ end
 local function resolve_character_random(state)
   if state.character_is_random ~= nil then
     if state.character_is_random == random_character_special_value then
-      state.character = uniformly(characters_ids_for_current_theme)
+      state.character = table.getRandomElement(characters_ids_for_current_theme)
       if characters[state.character]:is_bundle() then -- may pick a bundle
-        state.character = uniformly(characters[state.character].sub_characters)
+        state.character = table.getRandomElement(characters[state.character].sub_characters)
       end
     else
-      state.character = uniformly(characters[state.character_is_random].sub_characters)
+      state.character = table.getRandomElement(characters[state.character_is_random].sub_characters)
     end
     return true
   end
@@ -113,12 +113,12 @@ end
 local function resolve_stage_random(state)
   if state.stage_is_random ~= nil then
     if state.stage_is_random == random_stage_special_value then
-      state.stage = uniformly(stages_ids_for_current_theme)
+      state.stage = table.getRandomElement(stages_ids_for_current_theme)
       if stages[state.stage]:is_bundle() then
-        state.stage = uniformly(stages[state.stage].sub_stages)
+        state.stage = table.getRandomElement(stages[state.stage].sub_stages)
       end
     else
-      state.stage = uniformly(stages[state.stage_is_random].sub_stages)
+      state.stage = table.getRandomElement(stages[state.stage_is_random].sub_stages)
     end
   end
 end
@@ -789,7 +789,7 @@ function select_screen.main()
   while true do
 
     -- Draw the current score and record
-    if select_screen.character_select_mode == "1p_vs_yourself" then
+    if select_screen.character_select_mode == "1p_vs_yourself" and not GAME.battleRoom.trainingModeSettings then
       local xPosition1 = 196
       local xPosition2 = 320
       local yPosition = 24
@@ -888,6 +888,19 @@ function select_screen.main()
           character_loader_wait()
           stage_loader_wait()
           GAME.match = Match("vs", GAME.battleRoom)
+
+          -- Use the seed the server gives us if it makes one, else generate a basic one off data both clients have.
+          local seed
+          if msg.seed or (replay_of_match_so_far and replay_of_match_so_far.vs and replay_of_match_so_far.vs.seed) then
+            seed = msg.seed or (replay_of_match_so_far and replay_of_match_so_far.vs and replay_of_match_so_far.vs.seed)
+          else 
+            seed = 17
+            seed = seed * 37 + global_current_room_ratings[1].new;
+            seed = seed * 37 + global_current_room_ratings[2].new;
+            seed = seed * 37 + GAME.battleRoom.playerWinCounts[1];
+            seed = seed * 37 + GAME.battleRoom.playerWinCounts[2];
+          end
+          GAME.match.seed = seed
           local is_local = true
           if GAME.battleRoom.spectating then
             is_local = false
@@ -904,29 +917,18 @@ function select_screen.main()
           end
           P2.panel_buffer = fake_P2.panel_buffer
           P2.gpanel_buffer = fake_P2.gpanel_buffer
-          P1.garbage_target = P2
-          P2.garbage_target = P1
+          P1:set_garbage_target(P2)
+          P2:set_garbage_target(P1)
           P2:moveForPlayerNumber(2)
-          replay = createNewReplay(GAME.match.mode)
+          replay = createNewReplay(GAME.match)
           
           if GAME.battleRoom.spectating and replay_of_match_so_far then --we joined a match in progress
             for k, v in pairs(replay_of_match_so_far.vs) do
               replay.vs[k] = v
             end
-            P1.input_buffer = replay_of_match_so_far.vs.in_buf
-            P1.panel_buffer = replay_of_match_so_far.vs.P
-            P1.gpanel_buffer = replay_of_match_so_far.vs.Q
-            P2.input_buffer = replay_of_match_so_far.vs.I
-            P2.panel_buffer = replay_of_match_so_far.vs.O
-            P2.gpanel_buffer = replay_of_match_so_far.vs.R
-            P1.input_buffer_record = P1.input_buffer
-            P1.panel_buffer_record = P1.panel_buffer
-            P1.gpanel_buffer_record = P1.gpanel_buffer
-            P2.input_buffer_record = P2.input_buffer
-            P2.panel_buffer_record = P2.panel_buffer
-            P2.gpanel_buffer_record = P2.gpanel_buffer
-
-            if msg.ranked then
+            P1:receiveConfirmedInput(replay_of_match_so_far.vs.in_buf)
+            P2:receiveConfirmedInput(replay_of_match_so_far.vs.I)
+            if replay.vs.ranked then
               match_type = "Ranked"
               match_type_message = ""
             else
@@ -939,10 +941,6 @@ function select_screen.main()
 
           replay.vs.ranked = msg.ranked
 
-          if not GAME.battleRoom.spectating then
-            ask_for_gpanels("000000")
-            ask_for_panels("000000")
-          end
           to_print = loc("pl_game_start") .. "\n" .. loc("level") .. ": " .. P1.level .. "\n" .. loc("opponent_level") .. ": " .. P2.level
           if P1.play_to_end or P2.play_to_end then
             to_print = loc("pl_spectate_join")
@@ -956,32 +954,6 @@ function select_screen.main()
             end
             process_all_data_messages() -- process data to get initial panel stacks setup
             wait()
-          end
-
-          -- Wait for all the game start data to come in before moving to the game screen
-          local game_start_timeout = 0
-          while P1.panel_buffer == "" or P2.panel_buffer == "" or P1.gpanel_buffer == "" or P2.gpanel_buffer == "" do
-            game_start_timeout = game_start_timeout + 1
-            logger.trace("game_start_timeout = " .. game_start_timeout)
-            logger.trace("P1.panel_buffer = " .. P1.panel_buffer)
-            logger.trace("P2.panel_buffer = " .. P2.panel_buffer)
-            logger.trace("P1.gpanel_buffer = " .. P1.gpanel_buffer)
-            logger.trace("P2.gpanel_buffer = " .. P2.gpanel_buffer)
-            gprint(to_print, unpack(main_menu_screen_pos))
-            if not do_messages() then
-              return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
-            end
-            process_all_data_messages() -- process data to get initial panel stacks setup
-            wait()
-            if game_start_timeout > 250 then
-              warning(loc("pl_time_out") .. "\n")
-              return main_dumb_transition, {
-                main_select_mode,
-                loc("pl_time_out") .. "\n" .. "\n" .. "msg.match_start = " .. (tostring(msg.match_start) or "nil") .. "\n" .. "replay_of_match_so_far = " .. (tostring(replay_of_match_so_far) or "nil") .. "\n" .. "P1.panel_buffer = " .. P1.panel_buffer .. "\n" .. "P2.panel_buffer = " .. P2.panel_buffer .. "\n" .. "P1.gpanel_buffer = " .. P1.gpanel_buffer .. "\n" .. "P2.gpanel_buffer = " .. P2.gpanel_buffer,
-                180
-              }
-            end
-            love.timer.sleep(0.017)
           end
 
           -- Proceed to the game screen and start the game
@@ -1142,16 +1114,16 @@ function select_screen.main()
         local new_stage = stages_ids_for_current_theme[new_stage_idx]
         if stages[new_stage]:is_bundle() then
           state.stage_is_random = new_stage
-          state.stage = uniformly(stages[new_stage].sub_stages)
+          state.stage = table.getRandomElement(stages[new_stage].sub_stages)
         else
           state.stage_is_random = nil
           state.stage = new_stage
         end
       else
         state.stage_is_random = random_stage_special_value
-        state.stage = uniformly(stages_ids_for_current_theme)
+        state.stage = table.getRandomElement(stages_ids_for_current_theme)
         if stages[state.stage]:is_bundle() then -- may pick a bundle!
-          state.stage = uniformly(stages[state.stage].sub_stages)
+          state.stage = table.getRandomElement(stages[state.stage].sub_stages)
         end
       end
       logger.trace("stage and stage_is_random: " .. state.stage .. " / " .. (state.stage_is_random or "nil"))
@@ -1187,9 +1159,9 @@ function select_screen.main()
         on_quit()
       elseif cursor.state.cursor == "__Random" then
         cursor.state.character_is_random = random_character_special_value
-        cursor.state.character = uniformly(characters_ids_for_current_theme)
+        cursor.state.character = table.getRandomElement(characters_ids_for_current_theme)
         if characters[cursor.state.character]:is_bundle() then -- may pick a bundle
-          cursor.state.character = uniformly(characters[cursor.state.character].sub_characters)
+          cursor.state.character = table.getRandomElement(characters[cursor.state.character].sub_characters)
         end
         cursor.state.character_display_name = characters[cursor.state.character].display_name
         character_loader_load(cursor.state.character)
@@ -1203,7 +1175,7 @@ function select_screen.main()
         cursor.state.character = cursor.state.cursor
         if characters[cursor.state.character]:is_bundle() then -- may pick a bundle
           cursor.state.character_is_random = cursor.state.character
-          cursor.state.character = uniformly(characters[cursor.state.character_is_random].sub_characters)
+          cursor.state.character = table.getRandomElement(characters[cursor.state.character_is_random].sub_characters)
         end
         cursor.state.character_display_name = characters[cursor.state.character].display_name
         local character = characters[cursor.state.character]
@@ -1352,18 +1324,21 @@ function select_screen.main()
       GAME.match = Match("vs", GAME.battleRoom)
       P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       if GAME.battleRoom.trainingModeSettings then
-        GAME.match.attackEngine = AttackEngine(P1)
         GAME.match.health = Health(3000)
-        local startTime = 200
-        GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime --[[start time]], 10--[[repeat]], nil--[[attack count]], false--[[metal]],  GAME.battleRoom.trainingModeSettings.height > 1--[[chain]])
+        GAME.match.attackEngine = AttackEngine(P1)
+        local startTime = 150
+        local delayPerAttack = 6
+        local attackCountPerDelay = 15
+        local delay = GARBAGE_TRANSIT_TIME + GARBAGE_DELAY + (attackCountPerDelay * delayPerAttack) + 1
+        for i = 1, attackCountPerDelay, 1 do
+          GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        end
       end
       GAME.match.P1 = P1
       if not GAME.battleRoom.trainingModeSettings then
-        P1.garbage_target = P1
+        P1:set_garbage_target(P1)
       end
       P2 = nil
-      make_local_panels(P1, "000000")
-      make_local_gpanels(P1, "000000")
       current_stage = cursor_data[1].state.stage
       stage_loader_load(current_stage)
       stage_loader_wait()
@@ -1376,8 +1351,8 @@ function select_screen.main()
       GAME.match.P1 = P1
       P2 = Stack(2, GAME.match, true, cursor_data[2].state.panels_dir, cursor_data[2].state.level, cursor_data[2].state.character)
       GAME.match.P2 = P2
-      P1.garbage_target = P2
-      P2.garbage_target = P1
+      P1:set_garbage_target(P2)
+      P2:set_garbage_target(P1)
       current_stage = cursor_data[math.random(1, 2)].state.stage
       stage_loader_load(current_stage)
       stage_loader_wait()
@@ -1388,10 +1363,6 @@ function select_screen.main()
       --
       -- In general the block-generation logic should be the same as the server's, so
       -- maybe there should be only one implementation.
-      make_local_panels(P1, "000000")
-      make_local_gpanels(P1, "000000")
-      make_local_panels(P2, "000000")
-      make_local_gpanels(P2, "000000")
       P1:starting_state()
       P2:starting_state()
       return main_dumb_transition, {main_local_vs, "", 0, 0}

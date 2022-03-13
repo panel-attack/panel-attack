@@ -1,4 +1,5 @@
 require("consts")
+local logger = require("logger")
 
 local function load_img(path_and_name)
   local img = nil
@@ -8,13 +9,13 @@ local function load_img(path_and_name)
     end
   )
   if not status then
-    print("Error loading image: " .. path_and_name .. 
+    logger.error("Error loading image: " .. path_and_name .. 
       " Check it is valid and try resaving it in an image editor. If you are not the owner please get them to update it or download the latest version.")
   end
   if img == nil then
     return nil
   end
-  -- print("loaded asset: "..path_and_name)
+  -- logger.debug("loaded asset: "..path_and_name)
   local ret = love.graphics.newImage(img)
   ret:setFilter("nearest","nearest")
   return ret
@@ -149,7 +150,7 @@ function standard_pixel_font_map()
   for i = 10, 35, 1 do
     local characterString = string.char(97+(i-10))
     fontMap[characterString] = i
-    --print(characterString .. " = " .. fontMap[characterString])
+    --logger.debug(characterString .. " = " .. fontMap[characterString])
   end
 
   return fontMap
@@ -167,7 +168,7 @@ function draw_pixel_font(string, atlas, font_map, x, y, x_scale, y_scale, align,
   mirror = mirror or 0
   font_map = font_map or standard_pixel_font_map()
 
-  local atlasFrameCount = tableLength(font_map)
+  local atlasFrameCount = table.length(font_map)
   local atlasWidth = atlas:getWidth()
   local atlasHeight = atlas:getHeight()
   local characterWidth = atlasWidth/atlasFrameCount
@@ -316,8 +317,7 @@ function set_global_font(filepath, size)
 end
 
 -- Creates a new font based on the current font and a delta
-local function get_font_delta(with_delta_size)
-  local font_size = font_size + with_delta_size
+local function get_global_font_with_size(font_size)
   local f = font_cache[font_size]
   if not f then
     if font_file then
@@ -328,6 +328,17 @@ local function get_font_delta(with_delta_size)
     font_cache[font_size] = f
   end
   return f
+end
+
+-- Returns the current global font
+function get_global_font()
+  return get_global_font_with_size(font_size)
+end
+
+-- Creates a new font based on the current font and a delta
+function get_font_delta(with_delta_size)
+  local font_size = font_size + with_delta_size
+  return get_global_font_with_size(font_size)
 end
 
 function set_font(font)

@@ -65,14 +65,15 @@ function panels_init()
 
   add_panels_from_dir_rec("panels")
   
-  if #panels_ids == 0 then
+  if #panels_ids == 0 or (config and not config.defaultPanelsCopied) then
+    config.defaultPanelsCopied = true
     recursive_copy("default_data/panels", "panels")
     add_panels_from_dir_rec("panels")
   end
 
   -- fix config panel set if it's missing
   if not config.panels or not panels[config.panels] then
-    config.panels = uniformly(panels_ids)
+    config.panels = table.getRandomElement(panels_ids)
   end
 
   for _, panel in pairs(panels) do

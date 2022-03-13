@@ -184,6 +184,9 @@ function read_conf_file()
       if type(read_data.fullscreen) == "boolean" then
         config.fullscreen = read_data.fullscreen
       end
+      if type(read_data.defaultPanelsCopied) == "boolean" then
+        config.defaultPanelsCopied = read_data.defaultPanelsCopied
+      end
 
       file:close()
     end

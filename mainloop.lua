@@ -78,9 +78,12 @@ function fmainloop()
     -- Run all unit tests now that we have everything loaded
     require("ServerQueueTests")
     require("StackTests")
+    require("table_util_tests")
+    require("csprngTests")
   end
 
   while true do
+    leftover_time = 1 / 120 -- prevents any left over time from getting big transitioning between menus
 ---@diagnostic disable-next-line: redundant-parameter
     func, arg = func(unpack(arg or {}))
     collectgarbage("collect")
@@ -134,7 +137,7 @@ do
     local menu_x, menu_y = unpack(main_menu_screen_pos)
     local main_menu
     local ret = nil
-
+    GAME.rich_presence:setPresence(nil, nil, true)
     local function goEscape()
       main_menu:set_active_idx(#main_menu.buttons)
     end
@@ -156,15 +159,15 @@ do
       {loc("mm_1_vs"), main_local_vs_yourself_setup},
       {loc("mm_1_training"), training_setup},
       --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
-      {loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
+      --{loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
-      --{loc("mm_2_vs_online", "betaserver.panelattack.com"), main_net_vs_setup, {"betaserver.panelattack.com"}},
+      {loc("mm_2_vs_online", "Telegraph Server"), main_net_vs_setup, {"betaserver.panelattack.com", 59569}},
       --{loc("mm_2_vs_online", "(USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)"), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "This test build is for offline-use only"), main_select_mode},
       --{loc("mm_2_vs_online", "domi1819.xyz"), main_net_vs_setup, {"domi1819.xyz"}},
       --{loc("mm_2_vs_online", "(development-use only)"), main_net_vs_setup, {"localhost"}},
       --{loc("mm_2_vs_online", "LittleEndu's server"), main_net_vs_setup, {"51.15.207.223"}},
-      {loc("mm_2_vs_online", "server for ranked Ex Mode"), main_net_vs_setup, {"exserver.panelattack.com", 49568}},
+      --{loc("mm_2_vs_online", "server for ranked Ex Mode"), main_net_vs_setup, {"exserver.panelattack.com", 49568}},
       {loc("mm_2_vs_local"), main_local_vs_setup},
       {loc("mm_replay_browser"), replay_browser.main},
       {loc("mm_configure"), main_config_input},
@@ -222,9 +225,9 @@ local function use_current_stage()
 end
 
 function pick_random_stage()
-  current_stage = uniformly(stages_ids_for_current_theme)
+  current_stage = table.getRandomElement(stages_ids_for_current_theme)
   if stages[current_stage]:is_bundle() then -- may pick a bundle!
-    current_stage = uniformly(stages[current_stage].sub_stages)
+    current_stage = table.getRandomElement(stages[current_stage].sub_stages)
   end
   use_current_stage()
 end
@@ -246,9 +249,9 @@ end
 
 function Stack.wait_for_random_character(self)
   if self.character == random_character_special_value then
-    self.character = uniformly(characters_ids_for_current_theme)
+    self.character = table.getRandomElement(characters_ids_for_current_theme)
   elseif characters[self.character]:is_bundle() then -- may have picked a bundle
-    self.character = uniformly(characters[self.character].sub_characters)
+    self.character = table.getRandomElement(characters[self.character].sub_characters)
   end
   character_loader_load(self.character)
   character_loader_wait()
@@ -260,12 +263,15 @@ local function commonGameSetup()
   pick_use_music_from()
 end
 
-function createNewReplay(mode)
+function createNewReplay(match)
+  local mode = match.mode
   local result = {}
   result.engineVersion = VERSION
 
   result[mode] = {}
   local modeReplay = result[mode]
+
+  modeReplay.seed = match.seed
 
   if mode == "endless" or mode == "time" then
     modeReplay.do_countdown = P1.do_countdown or false
@@ -319,9 +325,7 @@ end
 
 local function finalizeAndWriteReplay(extraPath, extraFilename)
 
-  replay[GAME.match.mode].in_buf = P1.input_buffer_record
-  replay[GAME.match.mode].P = P1.panel_buffer_record
-  replay[GAME.match.mode].Q = P1.gpanel_buffer_record
+  replay[GAME.match.mode].in_buf = P1.confirmedInput
 
   local now = os.date("*t", to_UTC(os.time()))
   local sep = "/"
@@ -339,13 +343,13 @@ local function finalizeAndWriteReplay(extraPath, extraFilename)
   write_replay_file(path, filename)
 end
 
-local function finalizeAndWriteVsReplay(battleRoom, outcome_claim)
+local function finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGame)
 
+  incompleteGame = incompleteGame or false
+  
   local extraPath, extraFilename
   if P2 then
-    replay[GAME.match.mode].I = P2.input_buffer_record
-    replay[GAME.match.mode].O = P2.panel_buffer_record
-    replay[GAME.match.mode].R = P2.gpanel_buffer_record
+    replay[GAME.match.mode].I = P2.confirmedInput
 
     local rep_a_name, rep_b_name = battleRoom.playerNames[1], battleRoom.playerNames[2]
     --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
@@ -358,10 +362,14 @@ local function finalizeAndWriteVsReplay(battleRoom, outcome_claim)
     if match_type and match_type ~= "" then
       extraFilename = extraFilename .. "-" .. match_type
     end
-    if outcome_claim == 1 or outcome_claim == 2 then
-      extraFilename = extraFilename .. "-P" .. outcome_claim .. "wins"
-    elseif outcome_claim == 0 then
-      extraFilename = extraFilename .. "-draw"
+    if incompleteGame then
+      extraFilename = extraFilename .. "-INCOMPLETE"
+    else
+      if outcome_claim == 1 or outcome_claim == 2 then
+        extraFilename = extraFilename .. "-P" .. outcome_claim .. "wins"
+      elseif outcome_claim == 0 then
+        extraFilename = extraFilename .. "-draw"
+      end
     end
   else -- vs Self
     extraPath = "Vs Self"
@@ -373,15 +381,12 @@ end
 
 local function runMainGameLoop(updateFunction, variableStepFunction, abortGameFunction, processGameResultsFunction)
 
-  --Uncomment below to induce lag
-  --STONER_MODE = true
-
   local returnFunction = nil
   while true do
     -- Uncomment this to cripple your game :D
     -- love.timer.sleep(0.030)
 
-    -- don't spend time rendering when catching up to a current spectate match
+    -- Render only if we are not catching up to a current spectate match
     if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
       GAME.match:render()
       wait()
@@ -401,11 +406,13 @@ local function runMainGameLoop(updateFunction, variableStepFunction, abortGameFu
 
           returnFunction = variableStepFunction()
 
-          handle_pause()
+          if not returnFunction  then
+            handle_pause()
 
-          if not returnFunction and menu_escape_game() then
-            GAME:clearMatch()
-            returnFunction = abortGameFunction()
+            if menu_escape_game() then
+              GAME:clearMatch()
+              returnFunction = abortGameFunction()
+            end
           end
 
           if returnFunction then 
@@ -441,10 +448,8 @@ local function main_endless_time_setup(mode, speed, difficulty)
   P1.do_countdown = config.ready_countdown_1P or false
   P2 = nil
 
-  replay = createNewReplay(mode)
+  replay = createNewReplay(GAME.match)
 
-  make_local_panels(P1, "000000")
-  make_local_gpanels(P1, "000000")
   P1:starting_state()
 
   local nextFunction = nil
@@ -486,6 +491,7 @@ local function main_endless_time_setup(mode, speed, difficulty)
 end
 
 function training_setup()
+  -- TODO make "illegal garbage blocks" possible again in telegraph.
   local trainingModeSettings = {}
   trainingModeSettings.height = 1
   trainingModeSettings.width = 6
@@ -495,12 +501,12 @@ function training_setup()
 
   local trainingSettingsMenu
 
-  local function update_height()
-    trainingSettingsMenu:set_button_setting(4, trainingModeSettings.height)
+  local function update_width()
+    trainingSettingsMenu:set_button_setting(4, trainingModeSettings.width)
   end
 
-  local function update_width()
-    trainingSettingsMenu:set_button_setting(5, trainingModeSettings.width)
+  local function update_height()
+    trainingSettingsMenu:set_button_setting(5, trainingModeSettings.height)
   end
 
   local function increase_height()
@@ -522,9 +528,11 @@ function training_setup()
     trainingModeSettings.width = bound(1, trainingModeSettings.width - 1, 6)
     update_width()
   end
+
   local function goToStart()
     trainingSettingsMenu:set_active_idx(#trainingSettingsMenu.buttons - 1)
   end
+
   local function goEscape()
     trainingSettingsMenu:set_active_idx(#trainingSettingsMenu.buttons)
   end
@@ -566,11 +574,11 @@ function training_setup()
   end
   
   trainingSettingsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
-  trainingSettingsMenu:add_button("Factory Training", factory_settings, goEscape)
-  trainingSettingsMenu:add_button("Combo Storm Training", combo_storm_settings, goEscape)
-  trainingSettingsMenu:add_button("Large Garbage Training", large_garbage_settings, goEscape)
-  trainingSettingsMenu:add_button("Height", nextMenu, goEscape, decrease_height, increase_height)
-  trainingSettingsMenu:add_button("Width", nextMenu, goEscape, decrease_width, increase_width)
+  trainingSettingsMenu:add_button(loc("factory"), factory_settings, goEscape)
+  trainingSettingsMenu:add_button(loc("combo_storm"), combo_storm_settings, goEscape)
+  trainingSettingsMenu:add_button(loc("large_garbage"), large_garbage_settings, goEscape)
+  trainingSettingsMenu:add_button(loc("width"), nextMenu, goEscape, decrease_width, increase_width)
+  trainingSettingsMenu:add_button(loc("height"), nextMenu, goEscape, decrease_height, increase_height)
   trainingSettingsMenu:add_button(loc("go_"), start_custom_game, goEscape)
   trainingSettingsMenu:add_button(loc("back"), exitSettings, exitSettings)
   update_height()
@@ -762,13 +770,11 @@ function main_net_vs_lobby()
   local updated = true -- need update when first entering
   local ret = nil
   local requestedSpectateRoom = nil
-
-  local playerRatingMap = nil
-  json_send({leaderboard_request = true}) -- Request the leaderboard so we can show ratings
-
+  local playerData = nil
+  GAME.rich_presence:setPresence(nil, "In Lobby", true)
   while true do
     if connection_up_time <= login_status_message_duration then
-      gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y - 120)
+      gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y - 100)
       local messages = server_queue:pop_all_with("login_successful", "login_denied")
       for _, msg in ipairs(messages) do
         if msg.login_successful then
@@ -828,6 +834,9 @@ function main_net_vs_lobby()
         lobby_menu:remove_self()
         return select_screen.main
       end
+      if msg.players then
+        playerData = msg.players
+      end
       if msg.unpaired then
         unpaired_players = msg.unpaired
         -- players who leave the unpaired list no longer have standing invitations to us.\
@@ -850,14 +859,12 @@ function main_net_vs_lobby()
         play_optional_sfx(themes[config.theme].sounds.notification)
       end
       if msg.leaderboard_report then
-        playerRatingMap = {}
         if lobby_menu then
           lobby_menu:show_controls(true)
         end
         leaderboard_report = msg.leaderboard_report
         for i = #leaderboard_report, 1, -1 do
           local v = leaderboard_report[i]
-          playerRatingMap[v.user_name] = v.rating
           if v.is_you then
             my_rank = k
           end
@@ -928,8 +935,8 @@ function main_net_vs_lobby()
 
       local function playerRatingString(playerName)
         local rating = ""
-        if playerRatingMap and playerRatingMap[playerName] then
-          rating = " (" .. playerRatingMap[playerName] .. ")"
+        if playerData and playerData[playerName] and playerData[playerName].rating then
+          rating = " (" .. playerData[playerName].rating .. ")"
         end
         return rating
       end
@@ -981,6 +988,7 @@ function main_net_vs_lobby()
     end
 
     if lobby_menu then
+      gprint(loc("lb_telegraph_alpha"), lobby_menu_x[showing_leaderboard] - 230, lobby_menu_y - 70)
       gprint(notice[#lobby_menu.buttons > 2], lobby_menu_x[showing_leaderboard], lobby_menu_y - 30)
       gprint(arrow, lobby_menu_x[showing_leaderboard], lobby_menu_y)
       gprint(to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y)
@@ -995,7 +1003,7 @@ function main_net_vs_lobby()
     variable_step(
       function()
         if showing_leaderboard then
-          if menu_up() then
+          if menu_up() and leaderboard_report then
             if showing_leaderboard then
               if leaderboard_first_idx_to_show > 1 then
                 leaderboard_first_idx_to_show = leaderboard_first_idx_to_show - 1
@@ -1003,7 +1011,7 @@ function main_net_vs_lobby()
                 leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
               end
             end
-          elseif menu_down() then
+          elseif menu_down() and leaderboard_report then
             if showing_leaderboard then
               if leaderboard_last_idx_to_show < #leaderboard_report then
                 leaderboard_first_idx_to_show = leaderboard_first_idx_to_show + 1
@@ -1063,7 +1071,7 @@ function main_net_vs_setup(ip, network_port)
     end
   end
   P1 = nil
-  P2 = {panel_buffer = "", gpanel_buffer = ""}
+  P2 = {}
   server_queue = ServerQueue()
   gprint(loc("lb_set_connect"), unpack(main_menu_screen_pos))
   wait()
@@ -1089,6 +1097,9 @@ function main_net_vs()
   GAME.match.supportsPause = false
 
   commonGameSetup()
+
+  --Uncomment below to induce lag
+  --STONER_MODE = true
   
   local function update() 
     local messages = server_queue:pop_all_with("taunt", "leave_room")
@@ -1111,8 +1122,9 @@ function main_net_vs()
             taunts[math.random(#taunts)]:play()
           end
         end
-      elseif msg.leave_room then --reset win counts and go back to lobby
-        return {main_dumb_transition, {main_net_vs_lobby, "", 0, 0}} -- someone left the game, quit to lobby
+      elseif msg.leave_room then -- lost room during game, go back to lobby
+        finalizeAndWriteVsReplay(GAME.match.battleRoom, 0, true)
+        return {main_dumb_transition, {main_net_vs_lobby, loc("ss_room_closed_in_game"), 60, -1}}
       end
     end
 
@@ -1128,6 +1140,7 @@ function main_net_vs()
     if GAME.battleRoom.spectating and menu_escape() then
       logger.trace("spectator pressed escape during a game")
       json_send({leave_room = true})
+      GAME:clearMatch()
       return {main_dumb_transition, {main_net_vs_lobby, "", 0, 0}} -- spectator leaving the match
     end
   end
@@ -1179,7 +1192,7 @@ function main_local_vs()
 
   commonGameSetup()
 
-  replay = createNewReplay(GAME.match.mode)
+  replay = createNewReplay(GAME.match)
   
   local function update() 
     assert((P1.CLOCK == P2.CLOCK), "should run at same speed: " .. P1.CLOCK .. " - " .. P2.CLOCK)
@@ -1231,7 +1244,7 @@ function main_local_vs_yourself()
 
   commonGameSetup()
 
-  replay = createNewReplay(GAME.match.mode)
+  replay = createNewReplay(GAME.match)
   
   local function update() 
 
@@ -1264,14 +1277,16 @@ function loadFromReplay(replay)
 
     GAME.battleRoom = BattleRoom()
     GAME.match = Match("vs", GAME.battleRoom)
+    GAME.match.seed = replay.seed or 0
+    GAME.match.isFromReplay = true
     P1 = Stack(1, GAME.match, false, config.panels, replay.P1_level or 5)
     P1.character = replay.P1_char
 
-    if replay.O and string.len(replay.O) > 0 then
+    if replay.I and string.len(replay.I) > 0 then
       P2 = Stack(2, GAME.match, false, config.panels, replay.P2_level or 5)
       
-      P1.garbage_target = P2
-      P2.garbage_target = P1
+      P1:set_garbage_target(P2)
+      P2:set_garbage_target(P1)
       P2:moveForPlayerNumber(2)
 
       P2.character = replay.P2_char
@@ -1282,7 +1297,7 @@ function loadFromReplay(replay)
       end
 
     else
-      P1.garbage_target = P1
+      P1:set_garbage_target(P1)
     end
 
     GAME.battleRoom.playerNames[1] = replay.P1_name or loc("player_n", "1")
@@ -1302,9 +1317,11 @@ function loadFromReplay(replay)
     else
       GAME.match = Match("endless")
     end
-
+    
     replay = replay.endless or replay.time
 
+    GAME.match.seed = replay.seed or 0
+    
     if replay.pan_buf then
       replay.P = replay.pan_buf -- support old versions
     end
@@ -1314,9 +1331,7 @@ function loadFromReplay(replay)
     P1:wait_for_random_character()
   end
 
-  P1.input_buffer = uncompress_input_string(replay.in_buf)
-  P1.panel_buffer = replay.P
-  P1.gpanel_buffer = replay.Q
+  P1:receiveConfirmedInput(uncompress_input_string(replay.in_buf))
   GAME.match.P1 = P1
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
@@ -1326,9 +1341,7 @@ function loadFromReplay(replay)
   character_loader_load(P1.character)
 
   if P2 then
-    P2.input_buffer = uncompress_input_string(replay.I)
-    P2.panel_buffer = replay.O
-    P2.gpanel_buffer = replay.R
+    P2:receiveConfirmedInput(uncompress_input_string(replay.I))
 
     GAME.match.P2 = P2
     P2.do_countdown = replay.do_countdown or false
@@ -1356,16 +1369,43 @@ function main_replay()
   local function update() 
   end
 
-  local function variableStep() 
-    -- if menu_enter() then
-    --   run = not run
-    -- end
-    -- if this_frame_keys["\\"] then
-    --   run = false
-    -- end
-    -- if run or this_frame_keys["\\"] then
-    --   GAME.match:run()
-    -- end
+  local frameAdvance = false
+  local playbackSpeed = 1
+  local maximumSpeed = 20
+  local function variableStep()
+    -- If we just finished a frame advance, pause again
+    if frameAdvance then
+      frameAdvance = false
+      GAME.gameIsPaused = true
+    end
+
+    -- Advance one frame
+    if (menu_advance_frame() or this_frame_keys["\\"]) and not frameAdvance then
+      frameAdvance = true
+      GAME.gameIsPaused = false
+      if P1 then
+        P1.max_runs_per_frame = 1
+      end
+      if P2 then
+        P2.max_runs_per_frame = 1
+      end
+    elseif menu_right() then
+      playbackSpeed = bound(1, playbackSpeed + 1, maximumSpeed)
+      if P1 then
+        P1.max_runs_per_frame = playbackSpeed
+      end
+      if P2 then
+        P2.max_runs_per_frame = playbackSpeed
+      end
+    elseif menu_left() then
+      playbackSpeed = bound(1, playbackSpeed - 1, maximumSpeed)
+      if P1 then
+        P1.max_runs_per_frame = playbackSpeed
+      end
+      if P2 then
+        P2.max_runs_per_frame = playbackSpeed
+      end
+    end
   end
 
   local function abortGame() 
@@ -1449,7 +1489,7 @@ end
 
 do
   local items = {}
-  for key, val in spairs(GAME.puzzleSets) do
+  for key, val in pairsSortedByKeys(GAME.puzzleSets) do
     items[#items + 1] = {key, make_main_puzzle(val)}
   end
   items[#items + 1] = {"back", main_select_mode}
@@ -1520,7 +1560,7 @@ function main_set_name()
         if this_frame_keys["escape"] then
           ret = {main_select_mode}
         end
-        if menu_enter() then
+        if menu_return_once() then
           config.name = name
           write_conf_file()
           ret = {main_select_mode}
@@ -1535,7 +1575,7 @@ function main_set_name()
         end
         for _, v in ipairs(this_frame_unicodes) do
           -- Don't add more characters than the server char limit
-          if name:len() < NAME_LENGTH_LIMIT then
+          if name:len() < NAME_LENGTH_LIMIT and v ~= " " then
             name = name .. v
           end
         end
@@ -1573,10 +1613,27 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
   text = text or ""
   timemin = timemin or 0
   timemax = timemax or -1 -- negative values means the user needs to press enter/escape to continue
+
+  if timemax <= -1 then   
+    local button_text = loc("continue_button") or ""
+    text = text .. "\n\n" .. button_text
+  end
+
   local t = 0
   local font = love.graphics.getFont()
+
+  local x = canvas_width / 2
+  local y = canvas_height / 2
+  local backgroundPadding = 10
+  local textObject = love.graphics.newText(get_global_font(), text)
+  local width = textObject:getWidth()
+  local height = textObject:getHeight()
+  
   while true do
-    gprint(text, (canvas_width - font:getWidth(text)) / 2, (canvas_height - font:getHeight()) / 2)
+
+    grectangle_color("fill", (x - (width/2) - backgroundPadding) / GFX_SCALE, (y - (height/2) - backgroundPadding) / GFX_SCALE, (width + 2 * backgroundPadding)/GFX_SCALE, (height + 2 * backgroundPadding)/GFX_SCALE, 0, 0, 0, 0.5)
+    menu_drawf(textObject, x, y, "center", "center", 0)
+
     wait()
     local ret = nil
     variable_step(
@@ -1585,11 +1642,6 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
           ret = {next_func}
         end
         t = t + 1
-        --if network_connected() then
-        --  if not do_messages() then
-        --    -- do something? probably shouldn't drop back to the main menu transition since we're already here
-        --  end
-        --end
       end
     )
     if ret then
@@ -1698,6 +1750,9 @@ end
 
 -- quit handling
 function love.quit()
+  if network_connected() then
+    json_send({logout = true})
+  end
   love.audio.stop()
   if love.window.getFullscreen() == true then
     null, null, config.display = love.window.getPosition()

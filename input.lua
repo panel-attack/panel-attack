@@ -221,6 +221,13 @@ function love.keypressed(key, scancode, rep)
     love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
     return
   end
+  if key == "f2" or key == "printscreen" then
+    local now = os.date("*t", to_UTC(os.time()))
+    local filename = "screenshot_" .. "v" .. config.version .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. ".png"
+    love.filesystem.createDirectory("screenshots")
+    love.graphics.captureScreenshot("screenshots/" .. filename)
+    return
+  end
   if not rep then
     keys[key] = 0
   end
@@ -504,6 +511,25 @@ menu_pause =
   normal_key,
   function()
     return themes[config.theme].sounds.menu_validate
+  end
+)
+menu_return_once =
+  input_key_func(
+  {"return", "kenter"},
+  {},
+  released_key_before_time,
+  function()
+    return themes[config.theme].sounds.menu_validate
+  end,
+  super_selection_duration
+)
+menu_advance_frame =
+  input_key_func(
+  {},
+  {"swap1"},
+  normal_key,
+  function()
+    return nil
   end
 )
 

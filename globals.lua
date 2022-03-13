@@ -13,6 +13,14 @@ this_frame_messages = {}
 server_queue = ServerQueue()
 
 score_mode = SCOREMODE_TA
+ 
+GARBAGE_DELAY = 60
+CHAIN_ENDED_DELAY = 30 -- this is the amount of time to delay committing a chain after the chain ends
+											 -- Technically this was 0 in classic games, but we are using 60 to make rollback less noticable and match PA history.
+											 -- In a standard chain this doesn't introduce much delay, but when garbage chaining it typically introduces the full 
+											 -- delay which is only noticable if the opponent is able to recieve a chain in that moment.
+GARBAGE_TRANSIT_TIME = 90
+MAX_LAG = 200 -- maximum amount of lag before net games abort
 
 gfx_q = Queue()
 
@@ -62,7 +70,7 @@ config = {
 	language_code                 = "EN",
 
 	theme                         = default_theme_dir,
-	panels                     	  = default_panels_dir,
+	panels                     	  			= default_panels_dir,
 	character                     = random_character_special_value,
 	stage                         = random_stage_special_value,
 
@@ -86,14 +94,14 @@ config = {
 	-- Show FPS in the top-left corner of the screen
 	show_fps                      = false,
 	-- Show ingame infos while playing the game
-	show_ingame_infos             = false,
+	show_ingame_infos             = true,
 	-- Enable ready countdown flag
 	ready_countdown_1P            = true,
 	-- Change danger music back later flag
 	danger_music_changeback_delay = false,
   	input_repeat_delay            = default_input_repeat_delay,
 	-- analytics
-	enable_analytics              = false,
+	enable_analytics              = true,
 	-- Save replays setting
 	save_replays_publicly         = "with my name",
 	portrait_darkness             = default_portrait_darkness,
