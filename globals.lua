@@ -20,7 +20,7 @@ CHAIN_ENDED_DELAY = 30 -- this is the amount of time to delay committing a chain
 											 -- In a standard chain this doesn't introduce much delay, but when garbage chaining it typically introduces the full 
 											 -- delay which is only noticable if the opponent is able to recieve a chain in that moment.
 GARBAGE_TRANSIT_TIME = 90
-MAX_LAG = 200 -- maximum amount of lag before net games abort
+MAX_LAG = 200 + GARBAGE_DELAY -- maximum amount of lag before net games abort
 
 gfx_q = Queue()
 

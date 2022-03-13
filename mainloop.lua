@@ -124,6 +124,7 @@ do
     character_loader_clear()
     stage_loader_clear()
     close_socket()
+    undo_stonermode()
     GAME.backgroundImage = themes[config.theme].images.bg_main
     GAME.battleRoom = nil
     GAME.input:clearInputConfigurationsForPlayers()
@@ -735,6 +736,7 @@ function main_net_vs_lobby()
   end
   GAME.backgroundImage = themes[config.theme].images.bg_main
   GAME.battleRoom = nil
+  undo_stonermode()
   reset_filters()
   character_loader_clear()
   stage_loader_clear()
@@ -1124,7 +1126,22 @@ function main_net_vs()
         end
       elseif msg.leave_room then -- lost room during game, go back to lobby
         finalizeAndWriteVsReplay(GAME.match.battleRoom, 0, true)
-        return {main_dumb_transition, {main_net_vs_lobby, loc("ss_room_closed_in_game"), 60, -1}}
+
+        -- Show a message that the match connection was lost along with the average frames behind.
+        local message = loc("ss_room_closed_in_game")
+
+        local P1Behind = P1:averageFramesBehind()
+        local P2Behind = P2:averageFramesBehind()
+        local maxBehind = math.max(P1Behind, P2Behind)
+
+        if GAME.battleRoom.spectating then
+          message = message .. "\n" .. loc("ss_average_frames_behind_player", GAME.battleRoom.playerNames[1], P1Behind)
+          message = message .. "\n" .. loc("ss_average_frames_behind_player", GAME.battleRoom.playerNames[2], P2Behind)
+        else 
+          message = message .. "\n" .. loc("ss_average_frames_behind", maxBehind)
+        end
+
+        return {main_dumb_transition, {main_net_vs_lobby, message, 60, -1}}
       end
     end
 
@@ -1133,6 +1150,15 @@ function main_net_vs()
     end
 
     process_all_data_messages() -- Receive game play inputs from the network
+
+    if not GAME.battleRoom.spectating then
+      if P1.tooFarBehindError or P2.tooFarBehindError then
+        finalizeAndWriteVsReplay(GAME.match.battleRoom, 0, true)
+        GAME:clearMatch()
+        json_send({leave_room = true})
+        return {main_dumb_transition, {main_net_vs_lobby, loc("ss_latency_error"), 60, -1}}
+      end
+    end
   end
   
   local function variableStep() 
@@ -1630,6 +1656,11 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
   local height = textObject:getHeight()
   
   while true do
+
+    -- We need to keep processing network messages during a transition so we don't get booted by the server for not responding.
+    if network_connected() then
+      do_messages()
+    end
 
     grectangle_color("fill", (x - (width/2) - backgroundPadding) / GFX_SCALE, (y - (height/2) - backgroundPadding) / GFX_SCALE, (width + 2 * backgroundPadding)/GFX_SCALE, (height + 2 * backgroundPadding)/GFX_SCALE, 0, 0, 0, 0.5)
     menu_drawf(textObject, x, y, "center", "center", 0)
