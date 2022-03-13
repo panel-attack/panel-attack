@@ -1330,8 +1330,10 @@ function select_screen.main()
         local delayPerAttack = 6
         local attackCountPerDelay = 15
         local delay = GARBAGE_TRANSIT_TIME + GARBAGE_DELAY + (attackCountPerDelay * delayPerAttack) + 1
-        for i = 1, attackCountPerDelay, 1 do
-          GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        if GAME.battleRoom.trainingModeSettings.width > 0 and GAME.battleRoom.trainingModeSettings.height > 0 then
+          for i = 1, attackCountPerDelay, 1 do
+            GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+          end
         end
       end
       GAME.match.P1 = P1
