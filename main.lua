@@ -46,7 +46,6 @@ local input = require("input2")
 local RichPresence = require("rich_presence.RichPresence")
 GAME.scores = require("scores")
 GAME.rich_presence = RichPresence()
-local nextPresenceUpdate = 0
 
 -- Called at the beginning to load the game
 -- Either called directly or from auto_updater
