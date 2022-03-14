@@ -7,12 +7,12 @@ local input2 = {
 
 local current_dt
 
-function input2:keypressed(key, scancode, isrepeat)
+function input2:keyPressed(key, scancode, isrepeat)
   -- print(key)
   self.isDown[key] = 1
 end
 
-function input2:keyreleased(key, scancode)
+function input2:keyReleased(key, scancode)
   self.isPressed[key] = nil
   self.isUp[key] = 1
 end

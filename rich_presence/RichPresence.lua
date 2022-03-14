@@ -1,5 +1,4 @@
-RichPresence =
-  class(
+local RichPresence = class(
   function(self)
     self.discordRPC = nil
     self.rich_presence = {}
@@ -8,6 +7,7 @@ RichPresence =
 )
 
 function RichPresence.initialize(self, applicationId)
+  self.discordRPC = require("rich_presence.discordRPC")
   pcall(
     function()
       self.discordRPC = require("rich_presence.discordRPC")
@@ -38,3 +38,5 @@ function RichPresence.runCallbacks(self)
     self.discordRPC.runCallbacks()
   end
 end
+
+return RichPresence

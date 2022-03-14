@@ -39,6 +39,7 @@ function scene_manager:transitionFn()
   if self.next_scene then
     self.next_scene:load()
     self.active_scene = self.next_scene
+    GAME.rich_presence:setPresence(nil, self.next_scene.name, true)
   else
     self.active_scene = nil
   end

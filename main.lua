@@ -1,5 +1,7 @@
 local button_manager = require("ui.button_manager")
 local slider_manager = require("ui.slider_manager")
+local input_field_manager = require("ui.input_field_manager")
+local InputField = require("ui.InputField")
 Queue = require("Queue")
 config = require("config")
 require("developer")
@@ -42,7 +44,7 @@ require("Theme")
 --require("dump")
 local logger = require("logger")
 local input = require("input2")
-require("rich_presence.RichPresence")
+local RichPresence = require("rich_presence.RichPresence")
 GAME.scores = require("scores")
 GAME.rich_presence = RichPresence()
 local nextPresenceUpdate = 0
@@ -56,15 +58,15 @@ function love.load(args)
     game_updater = args[#args]
   end
   
-  -- local button = Button({label = "button"})
-  -- button.onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) endless_buttons(button) end
+  local input_field = InputField({x=100, y=100})
+  local input_field2 = InputField({x=100, y=200, placeholder_text=love.graphics.newText(love.graphics.getFont(), "Input Field 2")})
   math.randomseed(os.time())
   for i = 1, 4 do
     math.random()
   end
   -- construct game here
-  GAME:load(game_updater)
   GAME.rich_presence:initialize("902897593049301004")
+  GAME:load(game_updater)
   mainloop = coroutine.create(fmainloop)
 end
 
@@ -75,12 +77,14 @@ end
 -- Called every few fractions of a second to update the game
 -- dt is the amount of time in seconds that has passed.
 function love.update(dt)
+  input:update(dt)
   button_manager.update()
   button_manager.draw()
   slider_manager.draw()
-  input:update(dt)
-  GAME:update(dt)
+  input_field_manager.update()
+  input_field_manager.draw()
   GAME.rich_presence:runCallbacks()
+  GAME:update(dt)
 end
 
 -- Called whenever the game needs to draw.
@@ -98,6 +102,7 @@ end
 function love.mousepressed(x, y)
   button_manager.mousePressed(x, y)
   slider_manager.mousePressed(x, y)
+  input_field_manager.mousePressed(x, y)
 
   for menu_name, menu in pairs(CLICK_MENUS) do
     menu:click_or_tap(transform_coordinates(x, y))
@@ -108,6 +113,7 @@ function love.mousereleased(x, y, button)
   if button == 1 then
     slider_manager.mouseReleased(x, y)
     button_manager.mouseReleased(x, y)
+    input_field_manager.mouseReleased(x, y)
   end
 end
 
