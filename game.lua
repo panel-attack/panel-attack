@@ -108,7 +108,8 @@ function Game:_setup_co()
     require("scenes.main_menu"),
     require("scenes.endless_menu"),
     require("scenes.time_attack_menu"),
-    require("scenes.vs_self_menu")
+    require("scenes.vs_self_menu"),
+    require("scenes.puzzle_menu")
   }
   for i, scene in ipairs(scenes) do
     scene:init()

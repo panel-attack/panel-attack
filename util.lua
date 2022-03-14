@@ -52,6 +52,25 @@ end
 -- iterate over a dictionary sorted by keys
 
 -- this is a dedicated method to use for dictionaries for technical reasons
+function util.pairsSortedByKeys(tab)
+  -- these are already sorted
+  local keys = table.getKeys(tab)
+  local vals = {}
+  -- and then assign the values with the corresponding indexes
+  for i = 1, #keys do
+    vals[i] = tab[keys[i]]
+  end
+
+  local idx = 0
+  -- the key and value table are kept separately instead of being rearranged into a "sorted dictionary"
+  -- this is because pairs always returns them in an arbitrary order even after they have been sorted in advance
+  return function()
+    idx = idx + 1
+    return keys[idx], vals[idx]
+  end
+end
+
+-- this is a dedicated method to use for dictionaries for technical reasons
 function pairsSortedByKeys(tab)
   -- these are already sorted
   local keys = table.getKeys(tab)
