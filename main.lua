@@ -1,7 +1,6 @@
 local button_manager = require("ui.button_manager")
 local slider_manager = require("ui.slider_manager")
 local input_field_manager = require("ui.input_field_manager")
-local InputField = require("ui.InputField")
 Queue = require("Queue")
 config = require("config")
 require("developer")
@@ -58,8 +57,6 @@ function love.load(args)
     game_updater = args[#args]
   end
   
-  local input_field = InputField({x=100, y=100})
-  local input_field2 = InputField({x=100, y=200, placeholder_text=love.graphics.newText(love.graphics.getFont(), "Input Field 2")})
   math.randomseed(os.time())
   for i = 1, 4 do
     math.random()
