@@ -17,14 +17,8 @@ local util = require("util")
 --@module MainMenu
 local puzzle_menu = Scene("puzzle_menu")
 
-local xPosition1 = 520
-local xPosition2 = xPosition1 + 150
-local yPosition = 270
-
 local font = love.graphics.getFont()
 local arrow = love.graphics.newText(font, ">")
-
-local selected_id = 1
 
 local items = {}
 local last_puzzle_idx = 1
@@ -45,33 +39,16 @@ local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
   scene_manager:switchScene("main_menu")
 end
-
-function puzzle_menu:setDifficulty(new_difficulty)
-  self._difficulty_buttons[new_difficulty].color = {.5, .5, 1, .7}
-  
-  if new_difficulty ~= difficulty then
-    difficulty = new_difficulty
-    play_optional_sfx(themes[config.theme].sounds.menu_move)
-    for i, buttons in ipairs(self._difficulty_buttons) do
-      if i ~= difficulty then
-        buttons.color = {.3, .3, .3, .7}
-      end
-    end
-  end
-end
-
-
   
 function puzzle_menu:init()
   scene_manager:addScene(puzzle_menu)
-end
-
-function puzzle_menu:load()
   for key, val in util.pairsSortedByKeys(GAME.puzzleSets) do
     items[#items + 1] = {key, make_main_puzzle(val)}
   end
   items[#items + 1] = {"back", nil} -- uses scene manager to go back
+end
 
+function puzzle_menu:load()
   if themes[config.theme].musics.main then
     find_and_add_music(themes[config.theme].musics, "main")
   end
@@ -109,7 +86,11 @@ function puzzle_menu:update()
   end
   
   if input.isDown["return"] then
-    startGame()
+    if active_idx == #items then
+      exitMenu()
+    else
+      startGame()
+    end
   end
   
   if input.isDown["escape"] then
