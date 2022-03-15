@@ -1324,17 +1324,36 @@ function select_screen.main()
       GAME.match = Match("vs", GAME.battleRoom)
       P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
       if GAME.battleRoom.trainingModeSettings then
-        GAME.match.health = Health(3000)
+        GAME.match.health = Health(12000)
         GAME.match.attackEngine = AttackEngine(P1)
-        local startTime = 150
-        local delayPerAttack = 6
-        local attackCountPerDelay = 15
-        local delay = GARBAGE_TRANSIT_TIME + GARBAGE_DELAY + (attackCountPerDelay * delayPerAttack) + 1
-        if GAME.battleRoom.trainingModeSettings.width > 0 and GAME.battleRoom.trainingModeSettings.height > 0 then
-          for i = 1, attackCountPerDelay, 1 do
-            GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-          end
-        end
+        -- local startTime = 150
+        -- local delayPerAttack = 6
+        -- local attackCountPerDelay = 15
+        -- local delay = GARBAGE_TRANSIT_TIME + GARBAGE_DELAY + (attackCountPerDelay * delayPerAttack) + 1
+        -- if GAME.battleRoom.trainingModeSettings.width > 0 and GAME.battleRoom.trainingModeSettings.height > 0 then
+        --   for i = 1, attackCountPerDelay, 1 do
+        --     GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        --   end
+        -- end
+
+        local delay = 85 * 60
+        GAME.match.attackEngine:addAttackPattern(6, 4, 180 + (10 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
+        GAME.match.attackEngine:addAttackPattern(6, 3, 180 + (15 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
+        GAME.match.attackEngine:addAttackPattern(6, 13, 180 + (40 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
+        GAME.match.attackEngine:addAttackPattern(6, 2, 180 + (50 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
+        GAME.match.attackEngine:addAttackPattern(6, 1, 180 + (60 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
+        GAME.match.attackEngine:addAttackPattern(6, 1, 180 + (67 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
+        GAME.match.attackEngine:addAttackPattern(6, 1, 180 + (76 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
+
+        GAME.match.attackEngine:addAttackPattern(5, 1, 180 + (4 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        GAME.match.attackEngine:addAttackPattern(4, 1, 180 + (22 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        GAME.match.attackEngine:addAttackPattern(5, 1, 180 + (30 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        GAME.match.attackEngine:addAttackPattern(3, 1, 180 + (70 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        GAME.match.attackEngine:addAttackPattern(5, 1, 180 + (75 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        GAME.match.attackEngine:addAttackPattern(3, 1, 180 + (78 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        GAME.match.attackEngine:addAttackPattern(4, 1, 180 + (79 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        GAME.match.attackEngine:addAttackPattern(5, 1, 180 + (80 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+
       end
       GAME.match.P1 = P1
       if not GAME.battleRoom.trainingModeSettings then
