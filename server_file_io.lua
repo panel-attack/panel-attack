@@ -240,14 +240,14 @@ function write_replay_file(replay, path, filename)
   pcall(
     function()
       local sep = package.config:sub(1, 1)
-      print("about to open new replay file for writing")
+      logger.debug("about to open new replay file for writing")
       mkDir(path)
       local f = assert(io.open(path .. sep .. filename, "w"))
-      print("past file open")
+      logger.debug("past file open")
       io.output(f)
       io.write(json.encode(replay))
       io.close(f)
-      print("finished write_replay_file()")
+      logger.debug("finished write_replay_file()")
     end
   )
 end
