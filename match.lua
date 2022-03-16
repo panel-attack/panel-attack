@@ -206,10 +206,12 @@ function Match:run()
 
     -- Since the stacks can affect each other, don't save rollback until after both have run
     if ranP1 then
+      P1:updateFramesBehind()
       P1:saveForRollback()
     end
 
     if ranP2 then
+      P2:updateFramesBehind()
       P2:saveForRollback()
     end
 
@@ -247,6 +249,29 @@ function Match.render(self)
   if GAME.droppedFrames > 10 and config.show_fps then
     gprint("Dropped Frames: " .. GAME.droppedFrames, 1, 12)
   end
+
+  if config.show_fps and P1 and P2 then
+
+    local P1Behind = P1:averageFramesBehind()
+    local P2Behind = P2:averageFramesBehind()
+    local behind = math.abs(P1.CLOCK - P2.CLOCK)
+
+    if P1Behind > 0 then
+      gprint("P1 Average Latency: " .. P1Behind, 1, 23)
+    end
+    if P2Behind > 0 then
+      gprint("P2 Average Latency: " .. P2Behind, 1, 34)
+    end
+    
+    if GAME.battleRoom.spectating and behind > MAX_LAG * 0.75 then
+      local iconSize = 20
+      local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
+      local x = (canvas_width / 2) - (iconSize / 2)
+      local y = (canvas_height / 2) - (iconSize / 2)
+      draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+    end
+  end
+  
 
   -- Stack specific values for the HUD are drawn in Stack.render
 
@@ -297,7 +322,7 @@ function Match.render(self)
 
   if config.debug_mode then
 
-    local drawX = 140
+    local drawX = 240
     local drawY = 10
     local padding = 14
 
@@ -350,7 +375,7 @@ function Match.render(self)
 
 
 
-    drawX = 400
+    drawX = 500
     drawY = 10 - padding
     -- drawY = drawY + padding
     -- gprintf("Time Spent Running " .. self.timeSpentRunning * 1000, drawX, drawY)
@@ -361,7 +386,7 @@ function Match.render(self)
 
     drawY = drawY + padding
     local totalTime = love.timer.getTime() - self.createTime
-    local timePercent = self.timeSpentRunning / totalTime
+    local timePercent = round(self.timeSpentRunning / totalTime, 4)
     gprintf("Time Percent Running Match: " .. timePercent, drawX, drawY)
 
     drawY = drawY + padding

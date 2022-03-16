@@ -294,6 +294,7 @@ function select_screen.main()
   -- Leaves the 2p vs match room
   local function do_leave()
     stop_the_music()
+    GAME:clearMatch()
     return json_send({leave_room = true})
   end
 

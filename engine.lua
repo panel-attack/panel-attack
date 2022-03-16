@@ -228,6 +228,9 @@ Stack =
     s.rollbackCount = 0 -- the number of times total we have done rollback
     s.lastRollbackFrame = -1 -- the last frame we had to rollback from
 
+    s.framesBehindArray = {}
+    s.totalFramesBehind = 0
+
   end)
 
 -- Positions the stack draw position for the given player
@@ -406,7 +409,14 @@ end
 function Stack.rollbackToFrame(self, frame) 
   local currentFrame = self.CLOCK
   local difference = currentFrame - frame
-  assert(difference <= MAX_LAG, "Latency is too high :(")
+  local safeToRollback = difference <= MAX_LAG
+  if not safeToRollback then
+    if self.garbage_target then
+      self.garbage_target.tooFarBehindError = true
+    end
+    return -- EARLY RETURN
+  end
+
   if frame < currentFrame then
     local prev_states = self.prev_states
     logger.debug("Rolling back " .. self.which .. " to " .. frame)
@@ -1761,6 +1771,11 @@ function Stack.simulate(self)
     end
 
     self.CLOCK = self.CLOCK + 1
+
+    if self.garbage_target and self.CLOCK > self.garbage_target.CLOCK + MAX_LAG then
+      self.garbage_target.tooFarBehindError = true
+    end
+
     local gameEndedClockTime = self.match:gameEndedClockTime()
     if self.game_stopwatch_running and (gameEndedClockTime == 0 or self.CLOCK <= gameEndedClockTime) then
       self.game_stopwatch = (self.game_stopwatch or -1) + 1
@@ -1769,6 +1784,16 @@ function Stack.simulate(self)
 
   self:update_popfxs()
   self:update_cards()
+end
+
+function Stack:updateFramesBehind()
+  if self.garbage_target and self.garbage_target ~= self then
+    if not self.framesBehindArray[self.CLOCK] then
+      local framesBehind = math.max(0, self.garbage_target.CLOCK - self.CLOCK)
+      self.framesBehindArray[self.CLOCK] = framesBehind
+      self.totalFramesBehind = self.totalFramesBehind + framesBehind
+    end
+  end
 end
 
 function Stack.behindRollback(self)
@@ -1809,6 +1834,11 @@ function Stack.shouldChangeSoundEffects(self)
   local result = self:shouldChangeMusic() and not SFX_mute
 
   return result
+end
+
+function Stack:averageFramesBehind()
+  local average = tonumber(string.format("%1.1f", round(self.totalFramesBehind / math.max(self.CLOCK, 1)), 1))
+  return average
 end
 
 -- Returns true if the stack is simulated past the end of the match.

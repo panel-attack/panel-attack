@@ -119,15 +119,19 @@ function love.draw()
   love.graphics.setBackgroundColor(unpack(global_background_color))
   love.graphics.clear()
 
+  -- Draw the FPS if enabled
+  if config ~= nil and config.show_fps then
+    gprintf("FPS: " .. love.timer.getFPS(), 1, 1)
+  end
+
+  if STONER_MODE then
+    gprintf("STONER", 1, 1 + (11 * 4))
+  end
+
   for i = gfx_q.first, gfx_q.last do
     gfx_q[i][1](unpack(gfx_q[i][2]))
   end
   gfx_q:clear()
-
-  -- Draw the FPS if enabled
-  if config ~= nil and config.show_fps then
-    love.graphics.print("FPS: " .. love.timer.getFPS(), 1, 1)
-  end
 
   love.graphics.setCanvas() -- render everything thats been added
   love.graphics.clear(love.graphics.getBackgroundColor()) -- clear in preperation for the next render
