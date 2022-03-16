@@ -400,10 +400,12 @@ function Stack.rollbackCopy(self, source, other)
 end
 
 function Stack.restoreFromRollbackCopy(self, other)
+  PROFILER.push("restoreFromRollbackCopy", self.which .. " " .. self.CLOCK)
   self:rollbackCopy(other, self)
   -- The remaining inputs is the confirmed inputs not processed yet for this clock time
   -- We have processed CLOCK time number of inputs when we are at CLOCK, so we only want to process the CLOCK+1 input on
   self.input_buffer = string.sub(self.confirmedInput, self.CLOCK+1)
+  PROFILER.pop("restoreFromRollbackCopy")
 end
 
 function Stack.rollbackToFrame(self, frame) 
@@ -447,6 +449,8 @@ end
 -- Saves state in backups in case its needed for rollback
 -- NOTE: the CLOCK time is the save state for simulating right BEFORE that clock time is simulated
 function Stack.saveForRollback(self)
+  PROFILER.push("saveForRollback", self.which .. " " .. self.CLOCK)
+
   local prev_states = self.prev_states
   local garbage_target = self.garbage_target
   self.garbage_target = nil
@@ -461,6 +465,8 @@ function Stack.saveForRollback(self)
     clone_pool[#clone_pool + 1] = prev_states[deleteFrame]
     prev_states[deleteFrame] = nil
   end
+
+  PROFILER.pop("saveForRollback")
 end
 
 function Stack.set_garbage_target(self, new_target)
@@ -763,6 +769,13 @@ function Stack.shouldRun(self, runsSoFar)
     return true
   end
 
+  if config.debug_mode and config.debug_vsFramesBehind and config.debug_vsFramesBehind ~= 0 then
+    if (config.debug_vsFramesBehind > 0) == (self.which == 2) then
+      local framesBehind = math.min(math.abs(config.debug_vsFramesBehind), string.len(self.garbage_target.input_buffer))
+      return self.CLOCK < self.garbage_target.CLOCK - framesBehind
+    end
+  end
+    
   -- If we are not local, we want to run faster to catch up.
   if buffer_len >= 15 - runsSoFar then
     -- way behind, run at max speed.
@@ -782,6 +795,9 @@ end
 
 -- Runs one step of the stack.
 function Stack.run(self)
+
+  PROFILER.push("stackrun", self.which .. " " .. self.CLOCK)
+
   if GAME.gameIsPaused then
     return
   end
@@ -798,10 +814,13 @@ function Stack.run(self)
 
   self:setupInput()
   self:simulate()
+
+  PROFILER.pop("stackrun")
 end
 
 -- Grabs input from the buffer of inputs or from the controller and sends out to the network if needed.
 function Stack.setupInput(self) 
+  PROFILER.push("setupInput", self.which .. " " .. self.CLOCK)
   self.input_state = nil
 
   if self:game_ended() == false then 
@@ -814,6 +833,7 @@ function Stack.setupInput(self)
   end
 
   self:controls()
+  PROFILER.pop("setupInput")
 end
 
 function Stack.receiveConfirmedInput(self, input)
@@ -879,6 +899,9 @@ local d_row = {up = 1, down = -1, left = 0, right = 0}
 
 -- One run of the engine routine.
 function Stack.simulate(self)
+
+  PROFILER.push("simulate", self.which .. " " .. self.CLOCK)
+
   -- Don't run the main logic if the player has simulated past one of the game overs or the time attack time
   if self:game_ended() == false then
     self:prep_first_row()
@@ -1784,6 +1807,8 @@ function Stack.simulate(self)
 
   self:update_popfxs()
   self:update_cards()
+
+  PROFILER.pop("simulate")
 end
 
 function Stack:updateFramesBehind()
@@ -2114,6 +2139,8 @@ function Stack.check_matches(self)
     return
   end
 
+  PROFILER.push("check_matches")
+
   local panels = self.panels
 
   for col = 1, self.width do
@@ -2421,6 +2448,8 @@ function Stack.check_matches(self)
       self.combo_chain_play = {e_chain_or_combo.combo, "combos"}
     end
   end
+
+  PROFILER.pop("check_matches")
 end
 
 -- Sets the hovering state on the appropriate panels

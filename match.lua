@@ -91,10 +91,12 @@ function Match:debugRollbackAndCaptureState()
     return
   end
 
+  local rollbackAmount = 50
+
   local P1 = self.P1
   local P2 = self.P2
 
-  if P1.CLOCK == 0 then
+  if P1.CLOCK <= rollbackAmount then
     return
   end
 
@@ -107,9 +109,9 @@ function Match:debugRollbackAndCaptureState()
     self.savedStackP2 = P2.prev_states[P2.CLOCK]
   end
   
-  P1:rollbackToFrame(P1.CLOCK - 1)
+  P1:rollbackToFrame(P1.CLOCK - rollbackAmount)
   if P2 then
-    P2:rollbackToFrame(P2.CLOCK - 1)
+    P2:rollbackToFrame(P2.CLOCK - rollbackAmount)
   end
 end
 
@@ -243,6 +245,8 @@ local P2_rating_quads = {}
 local P2_win_quads = {}
 
 function Match.render(self)
+
+  PROFILER.push("renderMatch")
   local P1 = self.P1
   local P2 = self.P2
   
@@ -469,4 +473,6 @@ function Match.render(self)
       end
     end
   end
+
+  PROFILER.pop("renderMatch")
 end

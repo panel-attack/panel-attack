@@ -105,10 +105,6 @@ function read_conf_file()
         config.ranked = read_data.ranked
       end
 
-      if type(read_data.vsync) == "boolean" then
-        config.vsync = read_data.vsync
-      end
-
       if type(read_data.use_music_from) == "string" and use_music_from_values[read_data.use_music_from] then
         config.use_music_from = read_data.use_music_from
       end

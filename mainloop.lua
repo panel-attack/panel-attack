@@ -35,7 +35,7 @@ function fmainloop()
   local x, y, display = love.window.getPosition()
   love.window.setPosition(config.window_x or x, config.window_y or y, config.display or display)
   love.window.setFullscreen(config.fullscreen or false)
-  love.window.setVSync(config.vsync and 1 or 0)
+  love.window.setVSync(0)
   gprint("Loading localization...", unpack(main_menu_screen_pos))
   wait()
   Localization.init(localization)
@@ -107,9 +107,6 @@ function variable_step(f)
       leftover_time = leftover_time - 1 / 60
       if leftover_time >= 1 / 60 then
         GAME.droppedFrames = GAME.droppedFrames + 1
-      --if GAME.match then
-      --print("Dropped Frame, total is: " .. GAME.droppedFrames)
-      --end
       end
     end
   end
@@ -1794,4 +1791,8 @@ function love.quit()
   end
   config.fullscreen = love.window.getFullscreen()
   write_conf_file()
+
+  PROFILER.write("prof.mpack")
+
+  return false
 end

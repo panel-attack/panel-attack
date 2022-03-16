@@ -250,6 +250,8 @@ function Stack.render(self)
     return
   end
 
+  PROFILER.push("renderStack")
+
   local function frame_mask(x_pos, y_pos)
     love.graphics.setShader(mask_shader)
     love.graphics.setBackgroundColor(1, 1, 1)
@@ -795,6 +797,8 @@ function Stack.render(self)
     self:drawAnalyticData(self.analytic, xPosition, self.score_y - 81)
   end
   -- ends here
+
+  PROFILER.pop("renderStack")
 end
 
 
