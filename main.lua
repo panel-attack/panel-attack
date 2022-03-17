@@ -59,12 +59,15 @@ function love.focus(f)
   GAME.focused = f
 end
 
-PROF_CAPTURE = true
+PROF_CAPTURE = false
 PROFILER = require("jprof")
 
 -- Called every few fractions of a second to update the game
 -- dt is the amount of time in seconds that has passed.
 function love.update(dt)
+
+  PROFILER.push("frame")
+
   if love.mouse.getX() == last_x and love.mouse.getY() == last_y then
     if not pointer_hidden then
       if input_delta > mouse_pointer_timeout then
@@ -90,6 +93,10 @@ function love.update(dt)
   local status, err = coroutine.resume(mainloop)
   PROFILER.pop("coroutine")
 
+  PROFILER.push("garbage")
+  collectgarbage("step", 100)
+  PROFILER.pop("garbage")
+
   if not status then
     local system_info = "OS: " .. love.system.getOS()
     if GAME_UPDATER_GAME_VERSION then
@@ -107,73 +114,7 @@ function love.update(dt)
   GAME.rich_presence:runCallbacks()
 end
 
-function love.run()
-	if love.load then love.load(love.arg.parseGameArguments(arg), arg) end
 
-	-- We don't want the first frame's dt to include time taken by love.load.
-	if love.timer then love.timer.step() end
-
-	local dt = 0.0    -- delta time
-	local tr = 1/60  -- tick rate
-
-	local ua = 0.0    -- update accumulator
-
-	-- Main loop time.
-	return function()
-    
-		-- Process events.
-		if love.event then
-			love.event.pump()
-			for name, a,b,c,d,e,f in love.event.poll() do
-				if name == "quit" then
-					if not love.quit or not love.quit() then
-						return a or 0
-					end
-				end
-				love.handlers[name](a,b,c,d,e,f)
-			end
-		end
- 
-		-- Update dt, as we'll be passing it to update
-		if love.timer then
-			love.timer.step()
-			dt = love.timer.getDelta()
-			ua = ua + dt
-		end
- 
-    PROFILER.push("frame")
-
-		-- Call update
-		if ua > tr then
-      while ua > tr do
-
-        if love.update then
-          love.update(tr) -- will pass 0 if love.timer is disabled
-        end
-
-        if love.graphics and love.graphics.isActive() then
-          love.graphics.clear(love.graphics.getBackgroundColor())
-          love.graphics.origin()
-          if love.draw then love.draw() end -- no interpolation
-          love.graphics.present()
-        end
-
-        ua = ua - tr
-      end  
-		else
-      PROFILER.push("garbage")
-      collectgarbage("step", 100)
-      PROFILER.pop("garbage")
-    end
- 
-    PROFILER.pop("frame")
-
-		-- Optimal sleep time, anything higher does not go below 0.40 % cpu
-		-- utilization; 0.001 results in 0.72 %, so this is an improvement.
-		--if love.timer then love.timer.sleep(0.002) end
-		if love.timer then love.timer.sleep(0.001) end
-	end
-end
 
 -- Called whenever the game needs to draw.
 function love.draw()
@@ -225,6 +166,7 @@ function love.draw()
 
 
   PROFILER.pop("draw")
+  PROFILER.pop("frame")
 end
 
 -- Transform from window coordinates to game coordinates
