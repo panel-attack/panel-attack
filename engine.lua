@@ -763,6 +763,22 @@ function Stack.shouldRun(self, runsSoFar)
     return true
   end
 
+  -- In debug mode allow forcing a certain number of frames behind
+  if config.debug_mode and config.debug_vsFramesBehind and config.debug_vsFramesBehind ~= 0 then
+    if (config.debug_vsFramesBehind > 0) == (self.which == 2) then
+      -- Don't fall behind if the game is over for the other player
+      if self.garbage_target and self.garbage_target:game_ended() == false then
+        -- If we are at the end of the replay we want to catch up
+        if network_connected() or string.len(self.garbage_target.input_buffer) > 0 then
+          local framesBehind = math.abs(config.debug_vsFramesBehind)
+          if self.CLOCK >= self.garbage_target.CLOCK - framesBehind then
+            return false
+          end
+        end
+      end
+    end
+  end
+    
   -- If we are not local, we want to run faster to catch up.
   if buffer_len >= 15 - runsSoFar then
     -- way behind, run at max speed.
