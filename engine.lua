@@ -402,6 +402,10 @@ end
 function Stack.restoreFromRollbackCopy(self, other)
   PROFILER.push("restoreFromRollbackCopy", self.which .. " " .. self.CLOCK)
   self:rollbackCopy(other, self)
+  if self.telegraph then
+    self.telegraph.owner = self
+    self.telegraph.sender = self.garbage_target
+  end
   -- The remaining inputs is the confirmed inputs not processed yet for this clock time
   -- We have processed CLOCK time number of inputs when we are at CLOCK, so we only want to process the CLOCK+1 input on
   self.input_buffer = string.sub(self.confirmedInput, self.CLOCK+1)
@@ -459,9 +463,13 @@ function Stack.saveForRollback(self)
   prev_states[self.CLOCK] = self:rollbackCopy(self)
   self.prev_states = prev_states
   self.garbage_target = garbage_target
-
   local deleteFrame = self.CLOCK - MAX_LAG - 1
   if prev_states[deleteFrame] then
+    Telegraph.saveClone(prev_states[deleteFrame].telegraph)
+
+     -- Has a reference to stacks we don't want kept around
+    prev_states[deleteFrame].telegraph = nil
+
     clone_pool[#clone_pool + 1] = prev_states[deleteFrame]
     prev_states[deleteFrame] = nil
   end
