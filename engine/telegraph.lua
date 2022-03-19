@@ -5,6 +5,8 @@ local TELEGRAPH_PADDING = 2 --vertical space between telegraph and stack
 local TELEGRAPH_BLOCK_WIDTH = 26
 local TELEGRAPH_ATTACK_MAX_SPEED = 8 --fastest an attack can travel toward the telegraph per frame
 
+local clone_pool = {}
+
 Telegraph = class(function(self, sender, owner)
 
   -- Stores the actual queue of garbages in the telegraph but not queued long enough to exceed the "stoppers"
@@ -74,10 +76,18 @@ for k, animation in ipairs(leftward_or_rightward) do
   end
 end
 
+function Telegraph.saveClone(toSave)
+  clone_pool[#clone_pool + 1] = toSave
+end
 
 function Telegraph.rollbackCopy(self, source, other)
   if other == nil then
-    other = Telegraph(source.sender, source.owner)
+    if #clone_pool == 0 then
+      other = Telegraph(source.sender, source.owner)
+    else
+      other = clone_pool[#clone_pool]
+      clone_pool[#clone_pool] = nil
+    end
   end
 
   other.garbage_queue = source.garbage_queue:makeCopy()
@@ -89,6 +99,10 @@ function Telegraph.rollbackCopy(self, source, other)
   other.senderCurrentlyChaining = source.senderCurrentlyChaining
   other.pendingGarbage = deepcpy(source.pendingGarbage)
   other.pendingChainingEnded = deepcpy(source.pendingChainingEnded)
+
+  -- We don't want saved copies to hold on to stacks, up to the rollback restore to set these back up.
+  other.sender = nil
+  other.owner = nil
   return other
 end
 
@@ -109,6 +123,8 @@ end
 
 -- Adds a piece of garbage to the queue
 function Telegraph:push(garbage, attack_origin_col, attack_origin_row, frame_earned)
+
+  assert(self.sender ~= nil and self.owner ~= nil, "telegraph needs owner and sender set")
 
   local timeAttackInteracts = frame_earned + 1
   --logger.debug("Player " .. self.sender.which .. " attacked with " .. attack_type .. " at " .. frame_earned)
