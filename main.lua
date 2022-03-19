@@ -93,10 +93,6 @@ function love.update(dt)
   local status, err = coroutine.resume(mainloop)
   PROFILER.pop("coroutine")
 
-  PROFILER.push("garbage")
-  collectgarbage("step", 100)
-  PROFILER.pop("garbage")
-
   if not status then
     local system_info = "OS: " .. love.system.getOS()
     if GAME_UPDATER_GAME_VERSION then
