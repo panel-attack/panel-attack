@@ -400,21 +400,19 @@ local function runMainGameLoop(updateFunction, variableStepFunction, abortGameFu
     else
       variable_step(
         function()
-          GAME.match:run()
+          if not returnFunction then
+            GAME.match:run()
 
-          returnFunction = variableStepFunction()
+            returnFunction = variableStepFunction()
 
-          if not returnFunction  then
-            handle_pause()
+            if not returnFunction  then
+              handle_pause()
 
-            if menu_escape_game() then
-              GAME:clearMatch()
-              returnFunction = abortGameFunction()
+              if menu_escape_game() then
+                GAME:clearMatch()
+                returnFunction = abortGameFunction()
+              end
             end
-          end
-
-          if returnFunction then 
-            return -- Exit the variable step so we can go to the next function
           end
         end
       )
