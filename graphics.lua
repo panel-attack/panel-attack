@@ -1,5 +1,6 @@
 require("input")
 require("util")
+local logger = require("logger")
 
 local floor = math.floor
 local ceil = math.ceil
@@ -59,6 +60,7 @@ function Stack.draw_cards(self)
       local draw_y = (self.pos_y) + (11 - card.y) * 16 + self.displacement - card_animation[card.frame]
       if config.popfx == true and card.frame then
         burstFrameDimension = card.burstAtlas:getWidth() / 9
+        local radius
         -- draw cardfx
         if card.frame <= 21 then
           radius = (200 - (card.frame * 7)) * (config.cardfx_scale / 100)
@@ -134,10 +136,10 @@ function Stack.draw_popfxs(self)
     local fadeFrameDimension = popfx.fadeFrameDimension
     if characters[self.character].popfx_style == "burst" or characters[self.character].popfx_style == "fadeburst" then
       if characters[self.character].images["burst"] then
-        burstFrame = popfx_burst_animation[popfx.frame]
+        local burstFrame = popfx_burst_animation[popfx.frame]
         if popfx_burst_animation[popfx.frame] then
           burstParticle:setViewport(burstFrame[2] * burstFrameDimension, 0, burstFrameDimension, burstFrameDimension, burstParticle_atlas:getDimensions())
-          positions = {
+          local positions = {
             -- four corner
             {x = draw_x - burstFrame[1], y = draw_y - burstFrame[1]},
             {x = draw_x + 15 + burstFrame[1], y = draw_y - burstFrame[1]},
@@ -151,6 +153,7 @@ function Stack.draw_popfxs(self)
             {x = draw_x + 10 + (burstFrame[1] * 2), y = draw_y}
           }
 
+          local topRot, bottomRot, leftRot, rightRot
           if characters[self.character].popfx_burstrotate == true then
             topRot = {math.rad(45), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
             bottomRot = {math.rad(-135), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
@@ -163,7 +166,7 @@ function Stack.draw_popfxs(self)
             rightRot = {0, -(16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
           end
 
-          randomMax = 0
+          local randomMax = 0
 
           if popsize == "normal" then
             randomMax = 4
@@ -174,6 +177,8 @@ function Stack.draw_popfxs(self)
           if popsize == "giant" then
             randomMax = 8
           end
+
+          local big_position
           if popsize ~= "small" and popfx.bigTimer == 0 then
             big_position = math.random(randomMax)
             big_position = 0
