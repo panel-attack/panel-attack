@@ -12,6 +12,7 @@ Match =
     self.battleRoom = battleRoom
     GAME.droppedFrames = 0
     self.timeSpentRunning = 0
+    self.maxTimeSpentRunning = 0
     self.createTime = love.timer.getTime()
     self.supportsPause = true
     self.attackEngine = nil
@@ -236,6 +237,7 @@ function Match:run()
   local endTime = love.timer.getTime()
   local timeDifference = endTime - startTime
   self.timeSpentRunning = self.timeSpentRunning + timeDifference
+  self.maxTimeSpentRunning = math.max(self.maxTimeSpentRunning, timeDifference)
 end
 
 local P1_win_quads = {}
@@ -390,8 +392,12 @@ function Match.render(self)
 
     drawY = drawY + padding
     local totalTime = love.timer.getTime() - self.createTime
-    local timePercent = round(self.timeSpentRunning / totalTime, 4)
+    local timePercent = round(self.timeSpentRunning / totalTime, 5)
     gprintf("Time Percent Running Match: " .. timePercent, drawX, drawY)
+
+    drawY = drawY + padding
+    local maxTime = round(self.maxTimeSpentRunning, 5)
+    gprintf("Max Stack Update: " .. maxTime, drawX, drawY)
 
     drawY = drawY + padding
     gprintf("Seed " .. GAME.match.seed, drawX, drawY)
