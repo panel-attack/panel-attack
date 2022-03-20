@@ -21,6 +21,7 @@ local function general_menu()
   local function update_vsync(noToggle)
     if not noToggle then
       config.vsync = not config.vsync
+      love.window.setVSync(config.vsync and 1 or 0)
     end
     generalMenu:set_button_setting(1, config.vsync and loc("op_on") or loc("op_off"))
   end
