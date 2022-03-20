@@ -25,43 +25,36 @@ local function general_menu()
     generalMenu:set_button_setting(1, config.vsync and loc("op_on") or loc("op_off"))
   end
 
-  local function update_debug(noToggle)
-    if not noToggle then
-      config.debug_mode = not config.debug_mode
-    end
-    generalMenu:set_button_setting(2, config.debug_mode and loc("op_on") or loc("op_off"))
-  end
-
   local function update_countdown(noToggle)
     if not noToggle then
       config.ready_countdown_1P = not config.ready_countdown_1P
     end
-    generalMenu:set_button_setting(3, config.ready_countdown_1P and loc("op_on") or loc("op_off"))
+    generalMenu:set_button_setting(2, config.ready_countdown_1P and loc("op_on") or loc("op_off"))
   end
 
   local function update_fps(noToggle)
     if not noToggle then
       config.show_fps = not config.show_fps
     end
-    generalMenu:set_button_setting(4, config.show_fps and loc("op_on") or loc("op_off"))
+    generalMenu:set_button_setting(3, config.show_fps and loc("op_on") or loc("op_off"))
   end
 
   local function update_infos(noToggle)
     if not noToggle then
       config.show_ingame_infos = not config.show_ingame_infos
     end
-    generalMenu:set_button_setting(5, config.show_ingame_infos and loc("op_on") or loc("op_off"))
+    generalMenu:set_button_setting(4, config.show_ingame_infos and loc("op_on") or loc("op_off"))
   end
 
   local function update_analytics(noToggle)
     if not noToggle then
       config.enable_analytics = not config.enable_analytics
     end
-    generalMenu:set_button_setting(6, config.enable_analytics and loc("op_on") or loc("op_off"))
+    generalMenu:set_button_setting(5, config.enable_analytics and loc("op_on") or loc("op_off"))
   end
 
   local function update_input_repeat_delay()
-    generalMenu:set_button_setting(7, config.input_repeat_delay)
+    generalMenu:set_button_setting(6, config.input_repeat_delay)
   end
 
   local function increase_input_repeat_delay()
@@ -76,7 +69,7 @@ local function general_menu()
 
   local function update_replay_preference()
     config.save_replays_publicly = save_replays_publicly_choices[save_replays_preference_index][1]
-    generalMenu:set_button_setting(8, loc(save_replays_publicly_choices[save_replays_preference_index][2]))
+    generalMenu:set_button_setting(7, loc(save_replays_publicly_choices[save_replays_preference_index][2]))
   end
 
   local function increase_publicness() -- privatize or publicize?
@@ -103,7 +96,6 @@ local function general_menu()
 
   generalMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
   generalMenu:add_button(loc("op_vsync"), update_vsync, goEscape, update_vsync, update_vsync)
-  generalMenu:add_button(loc("op_debug"), update_debug, goEscape, update_debug, update_debug)
   generalMenu:add_button(loc("op_countdown"), update_countdown, goEscape, update_countdown, update_countdown)
   generalMenu:add_button(loc("op_fps"), update_fps, goEscape, update_fps, update_fps)
   generalMenu:add_button(loc("op_ingame_infos"), update_infos, goEscape, update_infos, update_infos)
@@ -112,7 +104,6 @@ local function general_menu()
   generalMenu:add_button(loc("op_replay_public"), nextMenu, goEscape, increase_publicness, increase_privateness)
   generalMenu:add_button(loc("back"), exitSettings, exitSettings)
   update_vsync(true)
-  update_debug(true)
   update_countdown(true)
   update_fps(true)
   update_infos(true)
@@ -472,6 +463,76 @@ local function audio_menu(button_idx)
   end
 end
 
+local function debug_menu(button_idx)
+  local ret = nil
+  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  menu_y = menu_y + 70
+  local vsFramesBehind = config.debug_vsFramesBehind or 0
+  local debugMenu
+
+  local function update_debug(noToggle)
+    if not noToggle then
+      config.debug_mode = not config.debug_mode
+    end
+    debugMenu:set_button_setting(1, config.debug_mode and loc("op_on") or loc("op_off"))
+  end
+
+  local function updateVsFramesBehind()
+    config.debug_vsFramesBehind = vsFramesBehind
+    debugMenu:set_button_setting(2, vsFramesBehind)
+  end
+
+  local framesBehindLimit = 200
+
+  local function increaseVsFramesBehind()
+    vsFramesBehind = bound(-framesBehindLimit, vsFramesBehind + 1, framesBehindLimit)
+    updateVsFramesBehind()
+  end
+
+  local function decreaseVsFramesBehind()
+    vsFramesBehind = bound(-framesBehindLimit, vsFramesBehind - 1, framesBehindLimit)
+    updateVsFramesBehind()
+  end
+
+  local function nextMenu()
+    debugMenu:selectNextIndex()
+  end
+
+  local function goEscape()
+    debugMenu:set_active_idx(#debugMenu.buttons)
+  end
+
+  local function exitSettings()
+    ret = {options.main, {5}}
+  end
+
+  debugMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
+  debugMenu:add_button(loc("op_debug"), update_debug, goEscape, update_debug, update_debug)
+  debugMenu:add_button("VS Frames Behind", nextMenu, goEscape, decreaseVsFramesBehind, increaseVsFramesBehind)
+  debugMenu:add_button(loc("back"), exitSettings, exitSettings)
+  update_debug(true)
+  updateVsFramesBehind()
+
+  if button_idx then
+    debugMenu:set_active_idx(button_idx)
+  end
+
+  while true do
+    debugMenu:draw()
+    wait()
+    variable_step(
+      function()
+        debugMenu:update()
+      end
+    )
+
+    if ret then
+      debugMenu:remove_self()
+      return unpack(ret)
+    end
+  end
+end
+
 local function about_menu(button_idx)
   local ret = nil
   local menu_x, menu_y = unpack(main_menu_screen_pos)
@@ -676,6 +737,10 @@ function options.main(button_idx)
     ret = {audio_menu}
   end
 
+  local function enter_debug_menu()
+    ret = {debug_menu}
+  end
+
   local function enter_about_menu()
     ret = {about_menu}
   end
@@ -737,6 +802,7 @@ function options.main(button_idx)
   optionsMenu:add_button("General", enter_general_menu, goEscape)
   optionsMenu:add_button("Graphics", enter_graphics_menu, goEscape)
   optionsMenu:add_button("Audio", enter_audio_menu, goEscape)
+  optionsMenu:add_button("Debug", enter_debug_menu, goEscape)
   optionsMenu:add_button("About", enter_about_menu, goEscape)
   optionsMenu:add_button(loc("back"), exitSettings, exitSettings)
   update_language()

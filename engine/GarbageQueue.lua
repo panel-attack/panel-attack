@@ -1,7 +1,6 @@
 local logger = require("logger")
 
-GarbageQueue = class(function(s, sender)
-    s.sender = sender
+GarbageQueue = class(function(s)
     s.chain_garbage = Queue()
     s.combo_garbage = {Queue(),Queue(),Queue(),Queue(),Queue(),Queue()} --index here represents width, and length represents how many of that width queued
     s.metal = Queue()
@@ -9,7 +8,6 @@ GarbageQueue = class(function(s, sender)
   
   function GarbageQueue.makeCopy(self)
     local other = GarbageQueue()
-    other.sender = self.sender
     other.chain_garbage = deepcpy(self.chain_garbage)
     for i=1, 6 do
       other.combo_garbage[i] = deepcpy(self.combo_garbage[i])

@@ -12,6 +12,7 @@ Match =
     self.battleRoom = battleRoom
     GAME.droppedFrames = 0
     self.timeSpentRunning = 0
+    self.maxTimeSpentRunning = 0
     self.createTime = love.timer.getTime()
     self.supportsPause = true
     self.attackEngine = nil
@@ -91,10 +92,12 @@ function Match:debugRollbackAndCaptureState()
     return
   end
 
+  local rollbackAmount = 50
+
   local P1 = self.P1
   local P2 = self.P2
 
-  if P1.CLOCK == 0 then
+  if P1.CLOCK <= rollbackAmount then
     return
   end
 
@@ -107,9 +110,9 @@ function Match:debugRollbackAndCaptureState()
     self.savedStackP2 = P2.prev_states[P2.CLOCK]
   end
   
-  P1:rollbackToFrame(P1.CLOCK - 1)
+  P1:rollbackToFrame(P1.CLOCK - rollbackAmount)
   if P2 then
-    P2:rollbackToFrame(P2.CLOCK - 1)
+    P2:rollbackToFrame(P2.CLOCK - rollbackAmount)
   end
 end
 
@@ -234,6 +237,7 @@ function Match:run()
   local endTime = love.timer.getTime()
   local timeDifference = endTime - startTime
   self.timeSpentRunning = self.timeSpentRunning + timeDifference
+  self.maxTimeSpentRunning = math.max(self.maxTimeSpentRunning, timeDifference)
 end
 
 local P1_win_quads = {}
@@ -386,8 +390,12 @@ function Match.render(self)
 
     drawY = drawY + padding
     local totalTime = love.timer.getTime() - self.createTime
-    local timePercent = round(self.timeSpentRunning / totalTime, 4)
+    local timePercent = round(self.timeSpentRunning / totalTime, 5)
     gprintf("Time Percent Running Match: " .. timePercent, drawX, drawY)
+
+    drawY = drawY + padding
+    local maxTime = round(self.maxTimeSpentRunning, 5)
+    gprintf("Max Stack Update: " .. maxTime, drawX, drawY)
 
     drawY = drawY + padding
     gprintf("Seed " .. GAME.match.seed, drawX, drawY)
