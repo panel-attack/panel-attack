@@ -86,6 +86,25 @@ function read_deleted_players_file()
   )
 end
 
+function write_error_report(error_report_json)
+  local json_string = json.encode(error_report_json)
+  if json_string:len() >= 5000 --[[5kB]] then
+    return false
+  end
+  local sep = package.config:sub(1, 1)
+  local now = os.date("*t", to_UTC(os.time()))
+  local filename = "v" .. (error_report_json.engine_version or "000") .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. "_" .. (error_report_json.name or "Unknown") .. "-ErrorReport.json"
+  return pcall(
+    function()
+      mkDir("reports")
+      local f = assert(io.open("reports" .. sep .. filename, "w"))
+      io.output(f)
+      io.write(json_string)
+      io.close(f)
+    end
+  )
+end
+
 function write_leaderboard_file()
   pcall(
     function()
@@ -221,14 +240,14 @@ function write_replay_file(replay, path, filename)
   pcall(
     function()
       local sep = package.config:sub(1, 1)
-      print("about to open new replay file for writing")
+      logger.debug("about to open new replay file for writing")
       mkDir(path)
       local f = assert(io.open(path .. sep .. filename, "w"))
-      print("past file open")
+      logger.debug("past file open")
       io.output(f)
       io.write(json.encode(replay))
       io.close(f)
-      print("finished write_replay_file()")
+      logger.debug("finished write_replay_file()")
     end
   )
 end

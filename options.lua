@@ -1,602 +1,777 @@
 local options = {}
-
 local analytics = require("analytics")
 local wait = coroutine.yield
-
 local memory_before_options_menu = nil
+local theme_index
+local found_themes = {}
 
--- opens up music test menu
-local function main_music_test()
-  gprint(loc("op_music_load"), unpack(main_menu_screen_pos))
-  wait()
-  -- load music for characters/stages that are not fully loaded
-  for _, character_id in ipairs(characters_ids_for_current_theme) do
-    if not characters[character_id].fully_loaded then
-      characters[character_id]:sound_init(true, false)
-    end
-  end
-  for _, stage_id in ipairs(stages_ids_for_current_theme) do
-    if not stages[stage_id].fully_loaded then -- we perform the same although currently no stage are being loaded at this point
-      stages[stage_id]:sound_init(true, false)
-    end
-  end
-
-  local index = 1
-  local tracks = {}
-
-  for _, character_id in ipairs(characters_ids_for_current_theme) do
-    local character = characters[character_id]
-    if character.musics.normal_music then
-      tracks[#tracks + 1] = {
-        is_character = true,
-        name = character.display_name .. ": normal_music",
-        id = character_id,
-        type = "normal_music",
-        start = character.musics.normal_music_start or zero_sound,
-        loop = character.musics.normal_music
-      }
-    end
-    if character.musics.danger_music then
-      tracks[#tracks + 1] = {
-        is_character = true,
-        name = character.display_name .. ": danger_music",
-        id = character_id,
-        type = "danger_music",
-        start = character.musics.danger_music_start or zero_sound,
-        loop = character.musics.danger_music
-      }
-    end
-  end
-  for _, stage_id in ipairs(stages_ids_for_current_theme) do
-    local stage = stages[stage_id]
-    if stage.musics.normal_music then
-      tracks[#tracks + 1] = {
-        is_character = false,
-        name = stage.display_name .. ": normal_music",
-        id = stage_id,
-        type = "normal_music",
-        start = stage.musics.normal_music_start or zero_sound,
-        loop = stage.musics.normal_music
-      }
-    end
-    if stage.musics.danger_music then
-      tracks[#tracks + 1] = {
-        is_character = false,
-        name = stage.display_name .. ": danger_music",
-        id = stage_id,
-        type = "danger_music",
-        start = stage.musics.danger_music_start or zero_sound,
-        loop = stage.musics.danger_music
-      }
-    end
-  end
-
-  -- stop main music
-  stop_all_audio()
-
-  -- initial song starts here
-  find_and_add_music(tracks[index].is_character and characters[tracks[index].id].musics or stages[tracks[index].id].musics, tracks[index].type)
-
-  while true do
-    tp = loc("op_music_current") .. tracks[index].name
-    tp = tp .. (table.getn(currently_playing_tracks) == 1 and "\n" .. loc("op_music_intro") .. "\n" or "\n" .. loc("op_music_loop") .. "\n")
-    min_time = math.huge
-    for k, _ in pairs(music_t) do
-      if k and k < min_time then
-        min_time = k
-      end
-    end
-    tp = tp .. string.format("%d", min_time - love.timer.getTime())
-    tp = tp .. "\n\n\n" .. loc("op_music_nav", "<", ">", "ESC")
-    gprint(tp, unpack(main_menu_screen_pos))
-    wait()
-    local ret = nil
-    variable_step(
-      function()
-        if menu_left() or menu_right() or menu_escape() then
-          stop_the_music()
-        end
-        if menu_left() then
-          index = index - 1
-        end
-        if menu_right() then
-          index = index + 1
-        end
-        if index > #tracks then
-          index = 1
-        end
-        if index < 1 then
-          index = #tracks
-        end
-        if menu_left() or menu_right() then
-          find_and_add_music(tracks[index].is_character and characters[tracks[index].id].musics or stages[tracks[index].id].musics, tracks[index].type)
-        end
-
-        if menu_escape() then
-          -- unloads music for characters/stages that are not fully loaded (they have been loaded when entering this submenu)
-          for _, character_id in ipairs(characters_ids_for_current_theme) do
-            if not characters[character_id].fully_loaded then
-              characters[character_id]:sound_uninit()
-            end
-          end
-          for _, stage_id in ipairs(stages_ids_for_current_theme) do
-            if not stages[stage_id].fully_loaded then
-              stages[stage_id]:sound_uninit()
-            end
-          end
-
-          ret = {main_select_mode}
-        end
-      end
-    )
-    if ret then
-      return unpack(ret)
-    end
-  end
-end
-
-local function main_show_custom_themes_readme(idx)
-  GAME.backgroundImage = themes[config.theme].images.bg_readme
-  reset_filters()
-
-  if not love.filesystem.getInfo("themes/" .. prefix_of_ignored_dirs .. default_theme_dir) then
-    print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
-    gprint(loc("op_copy_files"), 280, 280)
-    wait()
-    recursive_copy("themes/" .. default_theme_dir, "themes/" .. prefix_of_ignored_dirs .. default_theme_dir)
-
-    -- Android can't easily copy into the save dir, so do it for them to help.
-    recursive_copy("default_data/themes", "themes")
-  end
-
-  local readme = read_txt_file("readme_themes.txt")
-  while true do
-    gprint(readme, 15, 15)
-    do_menu_function = false
-    wait()
-    local ret = nil
-    variable_step(
-      function()
-        if menu_escape() or menu_enter() then
-          ret = {options.main, {idx}}
-        end
-      end
-    )
-    if ret then
-      return unpack(ret)
-    end
-  end
-end
-
-local function main_show_custom_stages_readme(idx)
-  GAME.backgroundImage = themes[config.theme].images.bg_readme
-  reset_filters()
-
-  local readme = read_txt_file("readme_stages.txt")
-  while true do
-    gprint(readme, 15, 15)
-    do_menu_function = false
-    wait()
-    local ret = nil
-    variable_step(
-      function()
-        if menu_escape() or menu_enter() then
-          ret = {options.main, {idx}}
-        end
-      end
-    )
-    if ret then
-      return unpack(ret)
-    end
-  end
-end
-
-local function main_show_custom_characters_readme(idx)
-  GAME.backgroundImage = themes[config.theme].images.bg_readme
-  reset_filters()
-
-  local readme = read_txt_file("readme_characters.txt")
-  while true do
-    gprint(readme, 15, 15)
-    do_menu_function = false
-    wait()
-    local ret = nil
-    variable_step(
-      function()
-        if menu_escape() or menu_enter() then
-          ret = {options.main, {idx}}
-        end
-      end
-    )
-    if ret then
-      return unpack(ret)
-    end
-  end
-end
-
-local function main_show_custom_panels_readme(idx)
-  GAME.backgroundImage = themes[config.theme].images.bg_readme
-  reset_filters()
-
-  local readme = read_txt_file("readme_panels.txt")
-  while true do
-    gprint(readme, 15, 15)
-    do_menu_function = false
-    wait()
-    local ret = nil
-    variable_step(
-      function()
-        if menu_escape() or menu_enter() then
-          ret = {options.main, {idx}}
-        end
-      end
-    )
-    if ret then
-      return unpack(ret)
-    end
-  end
-end
-
-local function exit_options_menu()
-  gprint("writing config to file...", unpack(main_menu_screen_pos))
-  wait()
-
-  local selected_theme = memory_before_options_menu.theme
-  memory_before_options_menu.theme = config.theme
-  config.theme = selected_theme
-
-  write_conf_file()
-
-  if config.theme ~= memory_before_options_menu.theme then
-    gprint(loc("op_reload_theme"), unpack(main_menu_screen_pos))
-    wait()
-    stop_the_music()
-    theme_init()
-    if themes[config.theme].musics["main"] then
-      find_and_add_music(themes[config.theme].musics, "main")
-    end
-  end
-
-  -- stages before characters since they are part of their loading
-  if config.theme ~= memory_before_options_menu.theme then
-    gprint(loc("op_reload_stages"), unpack(main_menu_screen_pos))
-    wait()
-    stages_init()
-  end
-
-  if config.theme ~= memory_before_options_menu.theme then
-    gprint(loc("op_reload_characters"), unpack(main_menu_screen_pos))
-    wait()
-    characters_init()
-  end
-
-  if config.enable_analytics ~= memory_before_options_menu.enable_analytics then
-    gprint(loc("op_reload_analytics"), unpack(main_menu_screen_pos))
-    wait()
-    analytics.init()
-  end
-
-  apply_config_volume()
-
-  memory_before_options_menu = nil
-  normal_music_for_sound_option = nil
-  return main_select_mode
-end
-
-function options.main(starting_idx)
-  GAME.backgroundImage = themes[config.theme].images.bg_main
-  reset_filters()
-
-  local items, active_idx = {}, starting_idx or 1
-  local selected, deselected_this_frame, adjust_active_value = false, false, false
+local function general_menu()
+  local ret = nil
+  local menu_x, menu_y = unpack(main_menu_screen_pos)
   local save_replays_publicly_choices = {{"with my name", "op_replay_public_with_name"}, {"anonymously", "op_replay_public_anonymously"}, {"not at all", "op_replay_public_no"}}
-  local use_music_from_choices = {{"stage", "op_only_stage"}, {"often_stage", "op_often_stage"}, {"either", "op_stage_characters"}, {"often_characters", "op_often_characters"}, {"characters", "op_only_characters"}}
-  local on_off_text = {[true] = {"On", "op_on"}, [false] = {"Off", "op_off"}}
-  local language_choices = {}
-  for k, v in ipairs(localization:get_list_codes()) do
-    language_choices[k] = {v, "LANG"}
-  end
-
-  memory_before_options_menu = {
-    theme = config.theme,
-     --this one is actually updated with the menu and change upon leaving, be careful!
-    enable_analytics = config.enable_analytics
-  }
-
+  local save_replays_preference_index
   for k, v in ipairs(save_replays_publicly_choices) do
-    save_replays_publicly_choices[v[1]] = v
+    if v[1] == config.save_replays_publicly then
+      save_replays_preference_index = k
+      break
+    end
   end
-  for k, v in ipairs(use_music_from_choices) do
-    use_music_from_choices[v[1]] = v
+  local generalMenu
+
+  local function update_vsync(noToggle)
+    if not noToggle then
+      config.vsync = not config.vsync
+      love.window.setVSync(config.vsync and 1 or 0)
+    end
+    generalMenu:set_button_setting(1, config.vsync and loc("op_on") or loc("op_off"))
   end
 
-  local function get_dir_set(set, path)
-    local raw_dir_list = love.filesystem.getDirectoryItems(path)
-    for k, v in ipairs(raw_dir_list) do
-      local start_of_v = string.sub(v, 0, string.len(prefix_of_ignored_dirs))
-      if love.filesystem.getInfo(path .. "/" .. v) and start_of_v ~= prefix_of_ignored_dirs then
-        set[#set + 1] = {v, nil}
-      end
+  local function update_debug(noToggle)
+    if not noToggle then
+      config.debug_mode = not config.debug_mode
     end
+    generalMenu:set_button_setting(2, config.debug_mode and loc("op_on") or loc("op_off"))
   end
 
-  local themes_set = {}
-  get_dir_set(themes_set, "themes")
+  local function update_countdown(noToggle)
+    if not noToggle then
+      config.ready_countdown_1P = not config.ready_countdown_1P
+    end
+    generalMenu:set_button_setting(3, config.ready_countdown_1P and loc("op_on") or loc("op_off"))
+  end
 
-  local normal_music_for_sound_option = nil
-  local function update_normal_music_for_sound_volume_option()
-    if config.use_music_from == "stage" then
-      local stage_id = config.stage
-      if stage_id == random_stage_special_value then
-        stage_id = uniformly(stages_ids_for_current_theme)
-        if stages[stage_id]:is_bundle() then -- may pick a bundle
-          stage_id = uniformly(stages[stage_id].sub_stages)
-        end
-      elseif stages[stage_id]:is_bundle() then -- may pick a bundle
-        stage_id = uniformly(stages[stage_id].sub_stages)
-      end
-      stage_loader_load(stage_id)
-      stage_loader_wait()
-      normal_music_for_sound_option = stages[stage_id].musics.normal_music
-    else
-      if config.character == random_character_special_value then
-        local random_id = uniformly(characters_ids_for_current_theme)
-        character_loader_load(random_id)
-        character_loader_wait()
-        normal_music_for_sound_option = characters[random_id].musics.normal_music
-      else
-        -- config.character should already be loaded!
-        normal_music_for_sound_option = characters[config.character].musics.normal_music
-      end
+  local function update_fps(noToggle)
+    if not noToggle then
+      config.show_fps = not config.show_fps
     end
+    generalMenu:set_button_setting(4, config.show_fps and loc("op_on") or loc("op_off"))
+  end
 
-    if not normal_music_for_sound_option then -- avoid crashes!
-      normal_music_for_sound_option = zero_sound
+  local function update_infos(noToggle)
+    if not noToggle then
+      config.show_ingame_infos = not config.show_ingame_infos
     end
+    generalMenu:set_button_setting(5, config.show_ingame_infos and loc("op_on") or loc("op_off"))
   end
-  update_normal_music_for_sound_volume_option()
-  items = {
-    --options menu table reference:
-    --{[1] option id, [2] loc key, [3]current or default value, [4]type, [5]min or bool value or choices_table (composed of {value, loc_key}),
-    -- [6]max, [7]sound_source, [8]selectable, [9]next_func, [10]play_while selected}
-    --[[1]] {"language", "op_language", {localization:get_language(), "LANG"}, "multiple choice", language_choices},
-    --[[2]] {"master_volume", "op_vol", config.master_volume, "numeric", 0, 100, normal_music_for_sound_option, true, nil, true},
-    --[[3]] {"sfx_volume", "op_vol_sfx", config.SFX_volume, "numeric", 0, 100, themes[config.theme].sounds.cur_move, true},
-    --[[4]] {"music_volume", "op_vol_music", config.music_volume, "numeric", 0, 100, normal_music_for_sound_option, true, nil, true},
-    --[[5]] {"vsync", "op_vsync", on_off_text[config.vsync], "bool", false, nil, nil, false},
-    --[[6]] {"debug", "op_debug", on_off_text[config.debug_mode], "bool", false, nil, nil, false},
-    --[[7]] {
-      "replays",
-      "op_replay_public",
-      save_replays_publicly_choices[config.save_replays_publicly] or save_replays_publicly_choices["with my name"],
-      "multiple choice",
-      save_replays_publicly_choices
-    },
-    --[[8]] {"theme", "op_theme", {config.theme, nil}, "multiple choice", themes_set},
-    --[[9]] {"countdown", "op_countdown", on_off_text[config.ready_countdown_1P], "bool", true, nil, nil, false},
-    --[[10]] {"fps", "op_fps", on_off_text[config.show_fps], "bool", true, nil, nil, false},
-    --[[11]] {"infos", "op_ingame_infos", on_off_text[config.show_ingame_infos], "bool", true, nil, nil, false},
-    --[[12]] {"music_delay", "op_music_delay", on_off_text[config.danger_music_changeback_delay], "bool", false, nil, nil, false},
-    --[[13]] {"analytics", "op_analytics", on_off_text[config.enable_analytics], "bool", false, nil, nil, false},
-    --[[14]] {"input_repeat_delay", "op_input_delay", config.input_repeat_delay, "numeric", 1, 50, nil, true},
-    --[[15]] {"portrait_darkness", "op_portrait_darkness", config.portrait_darkness, "numeric", 0, 100, nil, true},
-    --[[16]] {"popfx", "op_popfx", on_off_text[config.popfx], "bool", true, nil, nil, false},
-    --[[17]] {"cardfx_scale", "op_cardfx_scale", config.cardfx_scale, "numeric", 1, 200, nil, true},
-    --[[18]] {"music_from", "op_use_music_from", use_music_from_choices[config.use_music_from], "multiple choice", use_music_from_choices},
-    --[[19]] {"about_themes", "op_about_themes", "", "function", nil, nil, nil, nil, main_show_custom_themes_readme},
-    --[[20]] {"about_chars", "op_about_characters", "", "function", nil, nil, nil, nil, main_show_custom_characters_readme},
-    --[[21]] {"about_stages", "op_about_stages", "", "function", nil, nil, nil, nil, main_show_custom_stages_readme},
-    --[[22]] {"about_panels", "op_about_panels", "", "function", nil, nil, nil, nil, main_show_custom_panels_readme},
-    --[[23]] {"Music test", "mm_music_test", "", "function", nil, nil, nil, nil, main_music_test},
-    --[[24]] {"back", "back", "", nil, nil, nil, nil, false, main_select_mode},
-  }
-  local function print_stuff()
-    local to_print, to_print2, arrow = "", "", ""
-    for i = 1, #items do
-      if active_idx == i then
-        arrow = arrow .. ">"
-      else
-        arrow = arrow .. "\n"
-      end
-      to_print = to_print .. "   " .. loc(items[i][2]) .. "\n"
-      to_print2 = to_print2 .. "                                                                    "
-      if active_idx == i and selected then
-        to_print2 = to_print2 .. "                < "
-      else
-        to_print2 = to_print2 .. "                  "
-      end
-      if items[i][4] == "multiple choice" or items[i][4] == "bool" then
-        to_print2 = to_print2 .. (items[i][3][2] and loc(items[i][3][2]) or items[i][3][1])
-      else
-        to_print2 = to_print2 .. items[i][3]
-      end
-      if active_idx == i and selected then
-        to_print2 = to_print2 .. " >"
-      end
-      to_print2 = to_print2 .. "\n"
+
+  local function update_analytics(noToggle)
+    if not noToggle then
+      config.enable_analytics = not config.enable_analytics
     end
-    local x, y = unpack(main_menu_screen_pos)
-    x = x - 60 --options menu is 'lefter' than main_menu
-    gprint(arrow, x, y)
-    gprint(to_print, x, y)
-    gprint(to_print2, x, y)
+    generalMenu:set_button_setting(6, config.enable_analytics and loc("op_on") or loc("op_off"))
   end
-  local function adjust_left()
-    if items[active_idx][4] == "numeric" then
-      if items[active_idx][3] > items[active_idx][5] then --value > minimum
-        items[active_idx][3] = items[active_idx][3] - 1
-      end
-    elseif items[active_idx][4] == "multiple choice" then
-      adjust_backwards = true
-      adjust_active_value = true
-    end
-    --the following is enough for "bool"
-    adjust_active_value = true
-    if items[active_idx][7] and not items[active_idx][10] then
-      --sound_source for this menu item exists and not play_while_selected
-      items[active_idx][7]:stop()
-      items[active_idx][7]:play()
-    end
+
+  local function update_input_repeat_delay()
+    generalMenu:set_button_setting(7, config.input_repeat_delay)
   end
-  local function adjust_right()
-    if items[active_idx][4] == "numeric" then
-      if items[active_idx][3] < items[active_idx][6] then --value < maximum
-        items[active_idx][3] = items[active_idx][3] + 1
-      end
-    elseif items[active_idx][4] == "multiple choice" then
-      adjust_active_value = true
-    end
-    --the following is enough for "bool"
-    adjust_active_value = true
-    if items[active_idx][7] and not items[active_idx][10] then
-      --sound_source for this menu item exists and not play_while_selected
-      items[active_idx][7]:stop()
-      items[active_idx][7]:play()
-    end
+
+  local function increase_input_repeat_delay()
+    config.input_repeat_delay = bound(0, config.input_repeat_delay + 1, 50)
+    update_input_repeat_delay()
   end
-  local do_menu_function = false
+
+  local function decrease_input_repeat_delay()
+    config.input_repeat_delay = bound(0, config.input_repeat_delay - 1, 50)
+    update_input_repeat_delay()
+  end
+
+  local function update_replay_preference()
+    config.save_replays_publicly = save_replays_publicly_choices[save_replays_preference_index][1]
+    generalMenu:set_button_setting(8, loc(save_replays_publicly_choices[save_replays_preference_index][2]))
+  end
+
+  local function increase_publicness() -- privatize or publicize?
+    save_replays_preference_index = bound(1, save_replays_preference_index + 1, #save_replays_publicly_choices)
+    update_replay_preference()
+  end
+
+  local function increase_privateness()
+    save_replays_preference_index = bound(1, save_replays_preference_index - 1, #save_replays_publicly_choices)
+    update_replay_preference()
+  end
+
+  local function nextMenu()
+    generalMenu:selectNextIndex()
+  end
+
+  local function goEscape()
+    generalMenu:set_active_idx(#generalMenu.buttons)
+  end
+
+  local function exitSettings()
+    ret = {options.main, {2}}
+  end
+
+  generalMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
+  generalMenu:add_button(loc("op_vsync"), update_vsync, goEscape, update_vsync, update_vsync)
+  generalMenu:add_button(loc("op_debug"), update_debug, goEscape, update_debug, update_debug)
+  generalMenu:add_button(loc("op_countdown"), update_countdown, goEscape, update_countdown, update_countdown)
+  generalMenu:add_button(loc("op_fps"), update_fps, goEscape, update_fps, update_fps)
+  generalMenu:add_button(loc("op_ingame_infos"), update_infos, goEscape, update_infos, update_infos)
+  generalMenu:add_button(loc("op_analytics"), update_analytics, goEscape, update_analytics, update_analytics)
+  generalMenu:add_button(loc("op_input_delay"), nextMenu, goEscape, decrease_input_repeat_delay, increase_input_repeat_delay)
+  generalMenu:add_button(loc("op_replay_public"), nextMenu, goEscape, increase_publicness, increase_privateness)
+  generalMenu:add_button(loc("back"), exitSettings, exitSettings)
+  update_vsync(true)
+  update_debug(true)
+  update_countdown(true)
+  update_fps(true)
+  update_infos(true)
+  update_analytics(true)
+  update_input_repeat_delay()
+  update_replay_preference()
+
   while true do
-    print_stuff()
+    generalMenu:draw()
     wait()
-    local ret = nil
     variable_step(
       function()
-        if menu_up() and not selected then
-          active_idx = wrap(1, active_idx - 1, #items)
-        elseif menu_down() and not selected then
-          active_idx = wrap(1, active_idx + 1, #items)
-        elseif menu_left() and (selected or not items[active_idx][8]) then --or not selectable
-          adjust_left()
-        elseif menu_right() and (selected or not items[active_idx][8]) then --or not selectable
-          adjust_right()
-        elseif menu_enter() then
-          if items[active_idx][8] then --is selectable
-            selected = not selected
-            if not selected then
-              deselected_this_frame = true
-              adjust_active_value = true
-            end
-          elseif items[active_idx][4] == "bool" or items[active_idx][4] == "multiple choice" then
-            adjust_active_value = true
-          elseif items[active_idx][4] == "function" then
-            do_menu_function = true
-          elseif active_idx == #items then
-            ret = {exit_options_menu}
-          end
-        elseif menu_escape() then
-          if selected then
-            selected = not selected
-            deselected_this_frame = true
-          elseif active_idx == #items then
-            ret = {exit_options_menu}
-          else
-            active_idx = #items
+        generalMenu:update()
+      end
+    )
+
+    if ret then
+      generalMenu:remove_self()
+      return unpack(ret)
+    end
+  end
+end
+
+local function graphics_menu()
+  local ret = nil
+  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  local graphicsMenu
+
+  local function update_theme()
+    graphicsMenu:set_button_setting(1, found_themes[theme_index])
+  end
+
+  local function next_theme()
+    theme_index = bound(1, theme_index + 1, #found_themes)
+    update_theme()
+  end
+
+  local function previous_theme()
+    theme_index = bound(1, theme_index - 1, #found_themes)
+    update_theme()
+  end
+
+  local function update_portrait_darkness()
+    graphicsMenu:set_button_setting(2, config.portrait_darkness)
+  end
+
+  local function increase_portrait_darkness()
+    config.portrait_darkness = bound(0, config.portrait_darkness + 1, 100)
+    update_portrait_darkness()
+  end
+
+  local function decrease_portrait_darkness()
+    config.portrait_darkness = bound(0, config.portrait_darkness - 1, 100)
+    update_portrait_darkness()
+  end
+
+  local function update_popfx(noToggle)
+    if not noToggle then
+      config.popfx = not config.popfx
+    end
+    graphicsMenu:set_button_setting(3, config.popfx and loc("op_on") or loc("op_off"))
+  end
+
+  local function nextMenu()
+    graphicsMenu:selectNextIndex()
+  end
+
+  local function goEscape()
+    graphicsMenu:set_active_idx(#graphicsMenu.buttons)
+  end
+
+  local function exitSettings()
+    ret = {options.main, {3}}
+  end
+
+  graphicsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
+  graphicsMenu:add_button(loc("op_theme"), nextMenu, goEscape, previous_theme, next_theme)
+  graphicsMenu:add_button(loc("op_portrait_darkness"), nextMenu, goEscape, decrease_portrait_darkness, increase_portrait_darkness)
+  graphicsMenu:add_button(loc("op_popfx"), update_popfx, goEscape, update_popfx, update_popfx)
+  graphicsMenu:add_button(loc("back"), exitSettings, exitSettings)
+  update_theme()
+  update_portrait_darkness()
+  update_popfx(true)
+
+  while true do
+    graphicsMenu:draw()
+    wait()
+    variable_step(
+      function()
+        graphicsMenu:update()
+      end
+    )
+
+    if ret then
+      graphicsMenu:remove_self()
+      return unpack(ret)
+    end
+  end
+end
+
+local function audio_menu(button_idx)
+  local ret = nil
+  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  menu_y = menu_y + 70
+  local music_choice_frequency
+  local use_music_from_choices = {{"stage", "op_only_stage"}, {"often_stage", "op_often_stage"}, {"either", "op_stage_characters"}, {"often_characters", "op_often_characters"}, {"characters", "op_only_characters"}}
+  for k, v in ipairs(use_music_from_choices) do
+    if v[1] == config.use_music_from then
+      music_choice_frequency = k
+    end
+  end
+  local audioMenu
+
+  local function update_master_volume()
+    audioMenu:set_button_setting(1, config.master_volume)
+    apply_config_volume()
+  end
+
+  local function increase_master_volume()
+    config.master_volume = bound(0, config.master_volume + 1, 100)
+    update_master_volume()
+  end
+
+  local function decrease_master_volume()
+    config.master_volume = bound(0, config.master_volume - 1, 100)
+    update_master_volume()
+  end
+
+  local function update_sfx_volume()
+    audioMenu:set_button_setting(2, config.SFX_volume)
+    apply_config_volume()
+  end
+
+  local function increase_sfx_volume()
+    config.SFX_volume = bound(0, config.SFX_volume + 1, 100)
+    update_sfx_volume()
+  end
+
+  local function decrease_sfx_volume()
+    config.SFX_volume = bound(0, config.SFX_volume - 1, 100)
+    update_sfx_volume()
+  end
+
+  local function update_music_volume()
+    audioMenu:set_button_setting(3, config.music_volume)
+    apply_config_volume()
+  end
+
+  local function increase_music_volume()
+    config.music_volume = bound(0, config.music_volume + 1, 100)
+    update_music_volume()
+  end
+
+  local function decrease_music_volume()
+    config.music_volume = bound(0, config.music_volume - 1, 100)
+    update_music_volume()
+  end
+
+  local function update_music_frequency()
+    config.use_music_from = use_music_from_choices[music_choice_frequency][1]
+    audioMenu:set_button_setting(4, loc(use_music_from_choices[music_choice_frequency][2]))
+  end
+
+  local function increase_character_frequency()
+    music_choice_frequency = bound(1, music_choice_frequency + 1, #use_music_from_choices)
+    update_music_frequency()
+  end
+
+  local function increase_stage_frequency()
+    music_choice_frequency = bound(1, music_choice_frequency - 1, #use_music_from_choices)
+    update_music_frequency()
+  end
+
+  local function update_music_delay(noToggle)
+    if not noToggle then
+      config.danger_music_changeback_delay = not config.danger_music_changeback_delay
+    end
+    audioMenu:set_button_setting(5, config.danger_music_changeback_delay and loc("op_on") or loc("op_off"))
+  end
+
+  local function enter_music_test()
+    ret = {
+      function()
+        gprint(loc("op_music_load"), unpack(main_menu_screen_pos))
+        wait()
+        -- load music for characters/stages that are not fully loaded
+        for _, character_id in ipairs(characters_ids_for_current_theme) do
+          if not characters[character_id].fully_loaded then
+            characters[character_id]:sound_init(true, false)
           end
         end
-        if adjust_active_value and not ret then
-          if items[active_idx][4] == "bool" then
-            --add any other bool config updates here
-            if items[active_idx][1] == "debug" then
-              config.debug_mode = not config.debug_mode
-              items[active_idx][3] = on_off_text[config.debug_mode]
-            elseif items[active_idx][1] == "countdown" then
-              config.ready_countdown_1P = not config.ready_countdown_1P
-              items[active_idx][3] = on_off_text[config.ready_countdown_1P]
-            elseif items[active_idx][1] == "vsync" then
-              config.vsync = not config.vsync
-              items[active_idx][3] = on_off_text[config.vsync]
-              love.window.setVSync(config.vsync and 1 or 0)
-            elseif items[active_idx][1] == "fps" then
-              config.show_fps = not config.show_fps
-              items[active_idx][3] = on_off_text[config.show_fps]
-            elseif items[active_idx][1] == "debug" then
-              config.debug_mode = not config.debug_mode
-              items[active_idx][3] = on_off_text[config.debug_mode]
-            elseif items[active_idx][1] == "infos" then
-              config.show_ingame_infos = not config.show_ingame_infos
-              items[active_idx][3] = on_off_text[config.show_ingame_infos]
-            elseif items[active_idx][1] == "music_delay" then
-              config.danger_music_changeback_delay = not config.danger_music_changeback_delay
-              items[active_idx][3] = on_off_text[config.danger_music_changeback_delay]
-            elseif items[active_idx][1] == "analytics" then
-              config.enable_analytics = not config.enable_analytics
-              items[active_idx][3] = on_off_text[config.enable_analytics]
-            elseif items[active_idx][1] == "popfx" then
-              config.popfx = not config.popfx
-              items[active_idx][3] = on_off_text[config.popfx]
+        for _, stage_id in ipairs(stages_ids_for_current_theme) do
+          if not stages[stage_id].fully_loaded then -- we perform the same although currently no stage are being loaded at this point
+            stages[stage_id]:sound_init(true, false)
+          end
+        end
+
+        local index = 1
+        local tracks = {}
+
+        for _, character_id in ipairs(characters_ids_for_current_theme) do
+          local character = characters[character_id]
+          if character.musics.normal_music then
+            tracks[#tracks + 1] = {
+              is_character = true,
+              name = character.display_name .. ": normal_music",
+              id = character_id,
+              type = "normal_music",
+              start = character.musics.normal_music_start or zero_sound,
+              loop = character.musics.normal_music
+            }
+          end
+          if character.musics.danger_music then
+            tracks[#tracks + 1] = {
+              is_character = true,
+              name = character.display_name .. ": danger_music",
+              id = character_id,
+              type = "danger_music",
+              start = character.musics.danger_music_start or zero_sound,
+              loop = character.musics.danger_music
+            }
+          end
+        end
+        for _, stage_id in ipairs(stages_ids_for_current_theme) do
+          local stage = stages[stage_id]
+          if stage.musics.normal_music then
+            tracks[#tracks + 1] = {
+              is_character = false,
+              name = stage.display_name .. ": normal_music",
+              id = stage_id,
+              type = "normal_music",
+              start = stage.musics.normal_music_start or zero_sound,
+              loop = stage.musics.normal_music
+            }
+          end
+          if stage.musics.danger_music then
+            tracks[#tracks + 1] = {
+              is_character = false,
+              name = stage.display_name .. ": danger_music",
+              id = stage_id,
+              type = "danger_music",
+              start = stage.musics.danger_music_start or zero_sound,
+              loop = stage.musics.danger_music
+            }
+          end
+        end
+
+        -- stop main music
+        stop_all_audio()
+
+        -- initial song starts here
+        find_and_add_music(tracks[index].is_character and characters[tracks[index].id].musics or stages[tracks[index].id].musics, tracks[index].type)
+
+        while true do
+          tp = loc("op_music_current") .. tracks[index].name
+          tp = tp .. (table.getn(currently_playing_tracks) == 1 and "\n" .. loc("op_music_intro") .. "\n" or "\n" .. loc("op_music_loop") .. "\n")
+          min_time = math.huge
+          for k, _ in pairs(music_t) do
+            if k and k < min_time then
+              min_time = k
             end
-          elseif items[active_idx][4] == "numeric" then
-            --add any other numeric config updates here
-            if config.master_volume ~= items[2][3] then
-              config.master_volume = items[2][3]
-              love.audio.setVolume(config.master_volume / 100)
-            end
-            if config.SFX_volume ~= items[3][3] then --SFX volume should be updated
-              config.SFX_volume = items[3][3]
-              items[3][7]:setVolume(config.SFX_volume / 100) --do just the one sound effect until we deselect
-            end
-            if config.music_volume ~= items[4][3] then --music volume should be updated
-              config.music_volume = items[4][3]
-              items[4][7]:setVolume(config.music_volume / 100) --do just the one music source until we deselect
-            end
-            if config.input_repeat_delay ~= items[14][3] then --music volume should be updated
-              config.input_repeat_delay = items[14][3]
-            end
-            if config.portrait_darkness ~= items[15][3] then
-              config.portrait_darkness = items[15][3]
-            end
-            if config.cardfx_scale ~= items[17][3] then
-              config.cardfx_scale = items[17][3]
-            end
-          elseif items[active_idx][4] == "multiple choice" then
-            local active_choice_num = 1
-            --find the key for the currently selected choice
-            for k, v in ipairs(items[active_idx][5]) do
-              if v == items[active_idx][3] then
-                active_choice_num = k
+          end
+          tp = tp .. string.format("%d", min_time - love.timer.getTime())
+          tp = tp .. "\n\n\n" .. loc("op_music_nav", "<", ">", "ESC")
+          gprint(tp, unpack(main_menu_screen_pos))
+          wait()
+          local audio_test_ret = nil
+          variable_step(
+            function()
+              if menu_left() or menu_right() or menu_escape() then
+                stop_the_music()
+              end
+              if menu_left() then
+                index = index - 1
+              end
+              if menu_right() then
+                index = index + 1
+              end
+              if index > #tracks then
+                index = 1
+              end
+              if index < 1 then
+                index = #tracks
+              end
+              if menu_left() or menu_right() then
+                find_and_add_music(tracks[index].is_character and characters[tracks[index].id].musics or stages[tracks[index].id].musics, tracks[index].type)
+              end
+
+              if menu_escape() then
+                -- unloads music for characters/stages that are not fully loaded (they have been loaded when entering this submenu)
+                for _, character_id in ipairs(characters_ids_for_current_theme) do
+                  if not characters[character_id].fully_loaded then
+                    characters[character_id]:sound_uninit()
+                  end
+                end
+                for _, stage_id in ipairs(stages_ids_for_current_theme) do
+                  if not stages[stage_id].fully_loaded then
+                    stages[stage_id]:sound_uninit()
+                  end
+                end
+
+                audio_test_ret = {audio_menu, {6}}
               end
             end
-            -- the next line of code means
-            -- current_choice_num = choices[wrap(1, next_choice_num, last_choice_num)]
-            if adjust_backwards then
-              items[active_idx][3] = items[active_idx][5][wrap(1, active_choice_num - 1, #items[active_idx][5])]
-              adjust_backwards = nil
-            else
-              items[active_idx][3] = items[active_idx][5][wrap(1, active_choice_num + 1, #items[active_idx][5])]
-            end
-            if items[active_idx][1] == "replays" then
-              -- don't change config.theme directly here as it is used while being in this menu! instead we change it upon leaving
-              config.save_replays_publicly = items[active_idx][3][1]
-            elseif items[active_idx][1] == "theme" then
-              memory_before_options_menu.theme = items[active_idx][3][1]
-            elseif items[active_idx][1] == "music_from" then
-              config.use_music_from = items[active_idx][3][1]
-              update_normal_music_for_sound_volume_option()
-              items[2][7] = normal_music_for_sound_option
-              items[4][7] = normal_music_for_sound_option
-            elseif items[active_idx][1] == "language" then
-              localization:set_language(items[active_idx][3][1])
-            end
-          --add any other multiple choice config updates here
+          )
+          if audio_test_ret then
+            return unpack(audio_test_ret)
           end
-          adjust_active_value = false
-        end
-        if items[active_idx][4] == "function" and do_menu_function and not ret then
-          ret = {items[active_idx][9], {active_idx}}
-        end
-        if not ret and selected and items[active_idx][10] and items[active_idx][7] and not items[active_idx][7]:isPlaying() then
-          --if selected and play_while_selected and sound source exists and it isn't playing
-          items[active_idx][7]:play()
-        end
-        if not ret and deselected_this_frame then
-          if items[active_idx][7] then --sound_source for this menu item exists
-            items[active_idx][7]:stop()
-          end
-          deselected_this_frame = false
         end
       end
+    }
+  end
+
+  local function nextMenu()
+    audioMenu:selectNextIndex()
+  end
+
+  local function goEscape()
+    audioMenu:set_active_idx(#audioMenu.buttons)
+  end
+
+  local function exitSettings()
+    ret = {options.main, {4}}
+  end
+
+  audioMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
+  audioMenu:add_button(loc("op_vol"), nextMenu, goEscape, decrease_master_volume, increase_master_volume)
+  audioMenu:add_button(loc("op_vol_sfx"), nextMenu, goEscape, decrease_sfx_volume, increase_sfx_volume)
+  audioMenu:add_button(loc("op_vol_music"), nextMenu, goEscape, decrease_music_volume, increase_music_volume)
+  audioMenu:add_button(loc("op_use_music_from"), nextMenu, goEscape, increase_stage_frequency, increase_character_frequency)
+  audioMenu:add_button(loc("op_music_delay"), update_music_delay, goEscape, update_music_delay, update_music_delay)
+  audioMenu:add_button(loc("mm_music_test"), enter_music_test, goEscape, decrease_music_volume, increase_music_volume)
+  audioMenu:add_button(loc("back"), exitSettings, exitSettings)
+  update_master_volume()
+  update_sfx_volume()
+  update_music_volume()
+  update_music_frequency()
+  update_music_delay(true)
+
+  if button_idx then
+    audioMenu:set_active_idx(button_idx)
+  end
+
+  while true do
+    audioMenu:draw()
+    wait()
+    variable_step(
+      function()
+        audioMenu:update()
+      end
     )
+
     if ret then
+      audioMenu:remove_self()
+      return unpack(ret)
+    end
+  end
+end
+
+local function about_menu(button_idx)
+  local ret = nil
+  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  GAME.backgroundImage = themes[config.theme].images.bg_main
+  local aboutMenu
+
+  local function show_themes_readme()
+    ret = {
+      function()
+        GAME.backgroundImage = themes[config.theme].images.bg_readme
+        reset_filters()
+
+        if not love.filesystem.getInfo("themes/" .. prefix_of_ignored_dirs .. default_theme_dir) then
+          print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
+          gprint(loc("op_copy_files"), 280, 280)
+          wait()
+          recursive_copy("themes/" .. default_theme_dir, "themes/" .. prefix_of_ignored_dirs .. default_theme_dir)
+
+          -- Android can't easily copy into the save dir, so do it for them to help.
+          recursive_copy("default_data/themes", "themes")
+        end
+
+        local readme = read_txt_file("readme_themes.txt")
+        while true do
+          gprint(readme, 15, 15)
+          wait()
+          local theme_ret = nil
+          variable_step(
+            function()
+              if menu_escape() or menu_enter() then
+                theme_ret = {about_menu, {1}}
+              end
+            end
+          )
+          if theme_ret then
+            return unpack(theme_ret)
+          end
+        end
+      end
+    }
+  end
+
+  local function show_characters_readme()
+    ret = {
+      function()
+        GAME.backgroundImage = themes[config.theme].images.bg_readme
+        reset_filters()
+
+        local readme = read_txt_file("readme_characters.txt")
+        while true do
+          gprint(readme, 15, 15)
+          wait()
+          local characters_ret = nil
+          variable_step(
+            function()
+              if menu_escape() or menu_enter() then
+                characters_ret = {about_menu, {2}}
+              end
+            end
+          )
+          if characters_ret then
+            return unpack(characters_ret)
+          end
+        end
+      end
+    }
+  end
+
+  local function show_stages_readme()
+    ret = {
+      function()
+        GAME.backgroundImage = themes[config.theme].images.bg_readme
+        reset_filters()
+
+        local readme = read_txt_file("readme_stages.txt")
+        while true do
+          gprint(readme, 15, 15)
+          wait()
+          local stages_ret = nil
+          variable_step(
+            function()
+              if menu_escape() or menu_enter() then
+                stages_ret = {about_menu, {3}}
+              end
+            end
+          )
+          if stages_ret then
+            return unpack(stages_ret)
+          end
+        end
+      end
+    }
+  end
+
+  local function show_panels_readme()
+    ret = {
+      function()
+        GAME.backgroundImage = themes[config.theme].images.bg_readme
+        reset_filters()
+
+        local readme = read_txt_file("readme_panels.txt")
+        while true do
+          gprint(readme, 15, 15)
+          wait()
+          local panels_ret = nil
+          variable_step(
+            function()
+              if menu_escape() or menu_enter() then
+                panels_ret = {about_menu, {4}}
+              end
+            end
+          )
+          if panels_ret then
+            return unpack(panels_ret)
+          end
+        end
+      end
+    }
+  end
+
+  local function nextMenu()
+    aboutMenu:selectNextIndex()
+  end
+
+  local function goEscape()
+    aboutMenu:set_active_idx(#aboutMenu.buttons)
+  end
+
+  local function exitSettings()
+    ret = {options.main, {5}}
+  end
+
+  aboutMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
+  aboutMenu:add_button(loc("op_about_themes"), show_themes_readme, goEscape)
+  aboutMenu:add_button(loc("op_about_characters"), show_characters_readme, goEscape)
+  aboutMenu:add_button(loc("op_about_stages"), show_stages_readme, goEscape)
+  aboutMenu:add_button(loc("op_about_panels"), show_panels_readme, goEscape)
+
+  aboutMenu:add_button(loc("back"), exitSettings, exitSettings)
+
+  if button_idx then
+    aboutMenu:set_active_idx(button_idx)
+  end
+
+  while true do
+    aboutMenu:draw()
+    wait()
+    variable_step(
+      function()
+        aboutMenu:update()
+      end
+    )
+
+    if ret then
+      aboutMenu:remove_self()
+      return unpack(ret)
+    end
+  end
+end
+
+function options.main(button_idx)
+  local ret = nil
+  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  menu_y = menu_y + 70
+  local language_number
+  local language_choices = {}
+  for k, v in ipairs(localization:get_list_codes()) do
+    language_choices[k] = v
+    if localization:get_language() == v then
+      language_number = k
+    end
+  end
+  local optionsMenu
+
+  local function update_language(update_text)
+    localization:set_language(language_choices[language_number])
+    optionsMenu:set_button_setting(1, loc("LANG"))
+    if update_text then
+      ret = {options.main} -- this allows the menu to change the text
+    end
+  end
+
+  local function increase_language()
+    language_number = bound(1, language_number + 1, #localization:get_list_codes())
+    update_language(true)
+  end
+
+  local function decrease_language()
+    language_number = bound(1, language_number - 1, #localization:get_list_codes())
+    update_language(true)
+  end
+
+  local function enter_general_menu()
+    ret = {general_menu}
+  end
+
+  local function enter_graphics_menu()
+    ret = {graphics_menu}
+  end
+
+  local function enter_audio_menu()
+    ret = {audio_menu}
+  end
+
+  local function enter_about_menu()
+    ret = {about_menu}
+  end
+
+  local function nextMenu()
+    optionsMenu:selectNextIndex()
+  end
+
+  local function goEscape()
+    optionsMenu:set_active_idx(#optionsMenu.buttons)
+  end
+
+  local function exitSettings()
+    gprint("writing config to file...", unpack(main_menu_screen_pos))
+    wait()
+
+    config.theme = found_themes[theme_index]
+
+    write_conf_file()
+
+    if config.theme ~= memory_before_options_menu.theme then
+      gprint(loc("op_reload_theme"), unpack(main_menu_screen_pos))
+      wait()
+      stop_the_music()
+      theme_init()
+      if themes[config.theme].musics["main"] then
+        find_and_add_music(themes[config.theme].musics, "main")
+      end
+    end
+
+    -- stages before characters since they are part of their loading
+    if config.theme ~= memory_before_options_menu.theme then
+      gprint(loc("op_reload_stages"), unpack(main_menu_screen_pos))
+      wait()
+      stages_init()
+    end
+
+    if config.theme ~= memory_before_options_menu.theme then
+      gprint(loc("op_reload_characters"), unpack(main_menu_screen_pos))
+      wait()
+      characters_init()
+    end
+
+    if config.enable_analytics ~= memory_before_options_menu.enable_analytics then
+      gprint(loc("op_reload_analytics"), unpack(main_menu_screen_pos))
+      wait()
+      analytics.init()
+    end
+
+    apply_config_volume()
+
+    memory_before_options_menu = nil
+    normal_music_for_sound_option = nil
+    ret = {main_select_mode}
+  end
+
+  optionsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
+  optionsMenu:add_button(loc("op_language"), nextMenu, goEscape, decrease_language, increase_language)
+  optionsMenu:add_button("General", enter_general_menu, goEscape)
+  optionsMenu:add_button("Graphics", enter_graphics_menu, goEscape)
+  optionsMenu:add_button("Audio", enter_audio_menu, goEscape)
+  optionsMenu:add_button("About", enter_about_menu, goEscape)
+  optionsMenu:add_button(loc("back"), exitSettings, exitSettings)
+  update_language()
+
+  if button_idx then
+    optionsMenu:set_active_idx(button_idx)
+  else
+    found_themes = {}
+    for k, v in ipairs(love.filesystem.getDirectoryItems("themes")) do
+      if love.filesystem.getInfo("themes/" .. v) and v:sub(0, prefix_of_ignored_dirs:len()) ~= prefix_of_ignored_dirs then
+        found_themes[#found_themes + 1] = v
+        if config.theme == v then
+          theme_index = #found_themes
+        end
+      end
+    end
+    memory_before_options_menu = {
+      theme = config.theme,
+      --this one is actually updated with the menu and change upon leaving, be careful!
+      enable_analytics = config.enable_analytics
+    }
+  end
+
+  while true do
+    optionsMenu:draw()
+    wait()
+    variable_step(
+      function()
+        optionsMenu:update()
+      end
+    )
+
+    if ret then
+      optionsMenu:remove_self()
       return unpack(ret)
     end
   end

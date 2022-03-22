@@ -81,7 +81,7 @@ end
 function setFadePercentageForGivenTracks(percentage, tracks, absolute)
   absolute = absolute or false
   for _, v in pairs(tracks) do
-    logger.debug("Setting Volume Percentage: " .. percentage)
+    logger.trace("Setting Volume Percentage: " .. percentage)
     v:setVolume(percentage * config.music_volume / 100)
   end
 end
