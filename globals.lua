@@ -15,10 +15,10 @@ server_queue = ServerQueue()
 score_mode = SCOREMODE_TA
  
 GARBAGE_DELAY = 60
-CHAIN_ENDED_DELAY = 30 -- this is the amount of time to delay committing a chain after the chain ends
-											 -- Technically this was 0 in classic games, but we are using 60 to make rollback less noticable and match PA history.
-											 -- In a standard chain this doesn't introduce much delay, but when garbage chaining it typically introduces the full 
-											 -- delay which is only noticable if the opponent is able to recieve a chain in that moment.
+GARBAGE_ATTACK_DELAY = 60 -- this is the amount of time to delay landing a chain on the opponent.
+													-- A higher value allows less rollback to happen and makes lag have less of an impact on the game
+										      -- Technically this was 0 in classic games, but we are using 60 to make rollback less noticable and match PA history.
+
 GARBAGE_TRANSIT_TIME = 90
 MAX_LAG = 200 + GARBAGE_DELAY -- maximum amount of lag before net games abort
 
