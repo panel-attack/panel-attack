@@ -149,26 +149,22 @@ function round(positive_decimal_number, number_of_decimal_places)
 end
 
 -- Returns a time string for the number of frames
-function frames_to_time_string(frame_count, include_60ths_of_secs)
-  local hour_min_sep = ":"
+function frames_to_time_string(frame_count, include_milliseconds)
   local min_sec_sep = ":"
   local sec_60th_sep = "'"
   local ret = ""
-  if frame_count >= 216000 then
-    --enough to include hours
-    ret = ret .. math.floor(frame_count / 216000)
-    --minutes with 2 digits (like 05 instead of 5)
-    ret = ret .. hour_min_sep .. string.format("%02d", math.floor(frame_count / 3600 % 3600))
-  else
-    --minutes with only one digit if only one digit if needed
-    ret = ret .. math.floor(frame_count / 3600 % 3600)
-  end
+
+  --minutes with only one digit if only one digit if needed
+  ret = ret .. math.floor(frame_count / 3600 % 3600)
+
   --seconds
   ret = ret .. min_sec_sep .. string.format("%02d", math.floor(frame_count / 60 % 60))
-  if include_60ths_of_secs then
-    --also include 60ths of a second
-    ret = ret .. sec_60th_sep .. string.format("%02d", frame_count % 60)
+  
+  if include_milliseconds then
+    --also include milliseconds
+    ret = ret .. sec_60th_sep .. string.format("%03d", ((1000 / 60) * (frame_count % 60)))
   end
+  
   return ret
 end
 
