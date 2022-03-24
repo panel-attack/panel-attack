@@ -508,7 +508,6 @@ Connection =
     connections[s.index] = s
     socket_to_idx[socket] = s.index
     s.socket = socket
-    socket:settimeout(0)
     s.leftovers = ""
     s.state = "needs_name"
     s.room = nil
@@ -1525,6 +1524,8 @@ end
 --]]
 local server_socket = socket.bind("*", SERVER_PORT or 49569) --for official server
 --local server_socket = socket.bind("*", 59569) --for beta server
+server_socket:settimeout(0)
+logger.info(server_socket:setoption("tcp-nodelay", true) and "tcp-nodelay enabled" or "tcp-nodelay option failure")
 local sep = package.config:sub(1, 1)
 logger.info("sep: " .. sep)
 playerbase = Playerbase("playerbase")
@@ -1576,8 +1577,9 @@ logger.info("initialized!")
 
 local prev_now = time()
 while true do
-  server_socket:settimeout(0)
   local new_conn = server_socket:accept()
+  new_conn:settimeout(0) --! Is this even a legal argument?!
+  new_conn:setoption("tcp-nodelay", true)
   if new_conn then
     Connection(new_conn)
   end
