@@ -1578,7 +1578,7 @@ logger.info("initialized!")
 local prev_now = time()
 while true do
   local new_conn = server_socket:accept()
-  new_conn:settimeout(0) --! Is this even a legal argument?!
+  new_conn:settimeout(0)
   new_conn:setoption("tcp-nodelay", true)
   if new_conn then
     Connection(new_conn)
