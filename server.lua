@@ -1577,6 +1577,8 @@ logger.info("initialized!")
 
 local prev_now = time()
 while true do
+  server_socket:settimeout(0)
+  server_socket:setoption("tcp-nodelay", true)
   local new_conn = server_socket:accept()
   new_conn:settimeout(0)
   new_conn:setoption("tcp-nodelay", true)
