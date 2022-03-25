@@ -2391,7 +2391,7 @@ function Stack.check_matches(self)
       local stop_time
       if self.panels_in_top_row and is_chain then
         if self.level then
-          local length = (self.chain_counter > 5) and 5 or self.chain_counter
+          local length = (self.chain_counter > 4) and 6 or self.chain_counter
           stop_time = -8 * self.level + 168 + (length - 1) * (-2 * self.level + 22)
         else
           stop_time = stop_time_danger[self.difficulty]
