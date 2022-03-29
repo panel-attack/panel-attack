@@ -1525,7 +1525,7 @@ end
 local server_socket = socket.bind("*", SERVER_PORT or 49569) --for official server
 --local server_socket = socket.bind("*", 59569) --for beta server
 server_socket:settimeout(0)
-logger.info(server_socket:setoption("tcp-nodelay", true) and "tcp-nodelay enabled" or "tcp-nodelay option failure")
+server_socket:setoption("tcp-nodelay", true)
 local sep = package.config:sub(1, 1)
 logger.info("sep: " .. sep)
 playerbase = Playerbase("playerbase")
