@@ -471,6 +471,30 @@ function Stack.saveForRollback(self)
   end
 end
 
+function Stack.is_clearing_garbage(self)
+  for i = 1, self.height do 
+    local prow = self.panels[i]
+    for j = 1, self.width do
+      if prow and prow[j].garbage and prow[j].state == "matched" then
+        return true
+      end
+    end
+  end
+  return false
+end
+
+function Stack.has_hovering_chaining_panels(self)
+  for i = 1, self.height do 
+    local prow = self.panels[i]
+    for j = 1, self.width do
+      if prow and prow[j].state == "hovering" and prow[j].chaining then
+        return true
+      end
+    end
+  end
+  return false
+end
+
 function Stack.set_garbage_target(self, new_target)
   self.garbage_target = new_target
   if new_target.telegraph then
@@ -1076,15 +1100,21 @@ function Stack.simulate(self)
       self.FRAMECOUNT_RISE = speed_to_rise_time[self.speed]
     end
 
+    local has_life_time = self.pre_stop_time > 0 or self.stop_time > 0 or self.shake_time > 0
+    if self.panels_in_top_row and self.speed ~= 0 and self.match.mode ~= "puzzle" then
+      local used_health_bonus = (self.health ~= self.max_health or not has_life_time) -- Has the player been granted their bonus stop time
+      if used_health_bonus and not self:is_clearing_garbage() and not ((self.health == self.max_health) and self:has_hovering_chaining_panels()) then
+        self.health = bound(0, self.health - 1, self.max_health)
+      end
+      if self.health < 1 and not has_life_time and not (self.n_active_panels ~= 0 or self.prev_active_panels ~= 0 or self.do_swap) then
+        self:set_game_over()
+      end
+    end
+
     -- Phase 0 //////////////////////////////////////////////////////////////
     -- Stack automatic rising
     if self.speed ~= 0 and not self.manual_raise and self.stop_time == 0 and not self.rise_lock and self.match.mode ~= "puzzle" then
-      if self.panels_in_top_row then
-        self.health = self.health - 1
-        if self.health < 1 and self.shake_time < 1 then
-          self:set_game_over()
-        end
-      else
+      if not self.panels_in_top_row then
         self.rise_timer = self.rise_timer - 1
         if self.rise_timer <= 0 then -- try to rise
           self.displacement = self.displacement - 1
@@ -1098,7 +1128,7 @@ function Stack.simulate(self)
       end
     end
 
-    if not self.panels_in_top_row then
+    if not self.panels_in_top_row and not self:has_falling_garbage() then
       self.health = self.max_health
     end
 
