@@ -1103,7 +1103,7 @@ function Stack.simulate(self)
     local has_life_time = self.pre_stop_time > 0 or self.stop_time > 0 or self.shake_time > 0
     if self.panels_in_top_row and self.speed ~= 0 and self.match.mode ~= "puzzle" then
       local used_health_bonus = (self.health ~= self.max_health or not has_life_time) -- Has the player been granted their bonus stop time
-      if used_health_bonus and not self:is_clearing_garbage() and not ((self.health == self.max_health) and self:has_hovering_chaining_panels()) then
+      if used_health_bonus and not self:is_clearing_garbage() and not ((self.health == self.max_health) and (self:has_hovering_chaining_panels() or self:has_falling_garbage() or self.n_active_panels ~= 0 or self.prev_active_panels ~= 0)) then
         self.health = bound(0, self.health - 1, self.max_health)
       end
       if self.health < 1 and not has_life_time and not (self.n_active_panels ~= 0 or self.prev_active_panels ~= 0 or self.do_swap) then
