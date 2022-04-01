@@ -66,9 +66,11 @@ end
 
 local lag_q = Queue() -- only used for debugging
 local lastSendTime = nil
-local minLagSeconds = 0.01
-local maxLagSeconds = 2
+local minLagSeconds = 0
+local maxLagSeconds = 1
+local lagIncrease = 1
 local lagSeconds = minLagSeconds
+local lagCount = 0
 
 -- send the given message through
 function net_send(...)
@@ -87,9 +89,11 @@ function net_send(...)
     if timeDifference > lagSeconds then
       while lag_q:len() > 0 do
         TCP_sock:send(unpack(lag_q:pop()))
-        lagSeconds = (math.random() * (maxLagSeconds - minLagSeconds)) + minLagSeconds
-        lastSendTime = love.timer.getTime()
       end
+      lagSeconds = (math.random() * (maxLagSeconds - minLagSeconds)) + minLagSeconds
+      lagCount = lagCount + 1
+      lagSeconds = lagSeconds + (lagIncrease * lagCount)
+      lastSendTime = love.timer.getTime()
     end
   end
   return true
@@ -108,6 +112,9 @@ function undo_stonermode()
   while lag_q:len() ~= 0 do
     TCP_sock:send(unpack(lag_q:pop()))
   end
+  lastSendTime = nil
+  lagCount = 0
+  lagSeconds = minLagSeconds
   STONER_MODE = false
 end
 

@@ -228,6 +228,9 @@ Stack =
     s.rollbackCount = 0 -- the number of times total we have done rollback
     s.lastRollbackFrame = -1 -- the last frame we had to rollback from
 
+    s.framesBehindArray = {}
+    s.totalFramesBehind = 0
+
   end)
 
 -- Positions the stack draw position for the given player
@@ -398,6 +401,10 @@ end
 
 function Stack.restoreFromRollbackCopy(self, other)
   self:rollbackCopy(other, self)
+  if self.telegraph then
+    self.telegraph.owner = self
+    self.telegraph.sender = self.garbage_target
+  end
   -- The remaining inputs is the confirmed inputs not processed yet for this clock time
   -- We have processed CLOCK time number of inputs when we are at CLOCK, so we only want to process the CLOCK+1 input on
   self.input_buffer = string.sub(self.confirmedInput, self.CLOCK+1)
@@ -406,7 +413,14 @@ end
 function Stack.rollbackToFrame(self, frame) 
   local currentFrame = self.CLOCK
   local difference = currentFrame - frame
-  assert(difference <= MAX_LAG, "Latency is too high :(")
+  local safeToRollback = difference <= MAX_LAG
+  if not safeToRollback then
+    if self.garbage_target then
+      self.garbage_target.tooFarBehindError = true
+    end
+    return -- EARLY RETURN
+  end
+
   if frame < currentFrame then
     local prev_states = self.prev_states
     logger.debug("Rolling back " .. self.which .. " to " .. frame)
@@ -445,9 +459,13 @@ function Stack.saveForRollback(self)
   prev_states[self.CLOCK] = self:rollbackCopy(self)
   self.prev_states = prev_states
   self.garbage_target = garbage_target
-
   local deleteFrame = self.CLOCK - MAX_LAG - 1
   if prev_states[deleteFrame] then
+    Telegraph.saveClone(prev_states[deleteFrame].telegraph)
+
+     -- Has a reference to stacks we don't want kept around
+    prev_states[deleteFrame].telegraph = nil
+
     clone_pool[#clone_pool + 1] = prev_states[deleteFrame]
     prev_states[deleteFrame] = nil
   end
@@ -753,6 +771,22 @@ function Stack.shouldRun(self, runsSoFar)
     return true
   end
 
+  -- In debug mode allow forcing a certain number of frames behind
+  if config.debug_mode and config.debug_vsFramesBehind and config.debug_vsFramesBehind ~= 0 then
+    if (config.debug_vsFramesBehind > 0) == (self.which == 2) then
+      -- Don't fall behind if the game is over for the other player
+      if self.garbage_target and self.garbage_target:game_ended() == false then
+        -- If we are at the end of the replay we want to catch up
+        if network_connected() or string.len(self.garbage_target.input_buffer) > 0 then
+          local framesBehind = math.abs(config.debug_vsFramesBehind)
+          if self.CLOCK >= self.garbage_target.CLOCK - framesBehind then
+            return false
+          end
+        end
+      end
+    end
+  end
+    
   -- If we are not local, we want to run faster to catch up.
   if buffer_len >= 15 - runsSoFar then
     -- way behind, run at max speed.
@@ -1761,6 +1795,11 @@ function Stack.simulate(self)
     end
 
     self.CLOCK = self.CLOCK + 1
+
+    if self.garbage_target and self.CLOCK > self.garbage_target.CLOCK + MAX_LAG then
+      self.garbage_target.tooFarBehindError = true
+    end
+
     local gameEndedClockTime = self.match:gameEndedClockTime()
     if self.game_stopwatch_running and (gameEndedClockTime == 0 or self.CLOCK <= gameEndedClockTime) then
       self.game_stopwatch = (self.game_stopwatch or -1) + 1
@@ -1769,6 +1808,16 @@ function Stack.simulate(self)
 
   self:update_popfxs()
   self:update_cards()
+end
+
+function Stack:updateFramesBehind()
+  if self.garbage_target and self.garbage_target ~= self then
+    if not self.framesBehindArray[self.CLOCK] then
+      local framesBehind = math.max(0, self.garbage_target.CLOCK - self.CLOCK)
+      self.framesBehindArray[self.CLOCK] = framesBehind
+      self.totalFramesBehind = self.totalFramesBehind + framesBehind
+    end
+  end
 end
 
 function Stack.behindRollback(self)
@@ -1809,6 +1858,11 @@ function Stack.shouldChangeSoundEffects(self)
   local result = self:shouldChangeMusic() and not SFX_mute
 
   return result
+end
+
+function Stack:averageFramesBehind()
+  local average = tonumber(string.format("%1.1f", round(self.totalFramesBehind / math.max(self.CLOCK, 1)), 1))
+  return average
 end
 
 -- Returns true if the stack is simulated past the end of the match.
@@ -2338,7 +2392,7 @@ function Stack.check_matches(self)
       if self.panels_in_top_row and is_chain then
         if self.level then
           local length = (self.chain_counter > 4) and 6 or self.chain_counter
-          stop_time = -8 * self.level + 168 + (self.chain_counter - 1) * (-2 * self.level + 22)
+          stop_time = -8 * self.level + 168 + (length - 1) * (-2 * self.level + 22)
         else
           stop_time = stop_time_danger[self.difficulty]
         end
