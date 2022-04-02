@@ -27,6 +27,34 @@ function Game.clearMatch(self)
   P2 = nil
 end
 
+function Game.errorData(errorString, traceBack)
+  local system_info = "OS: " .. love.system.getOS()
+  local loveVersion = Game.loveVersionString()
+  
+  local errorData = { 
+      stack = traceBack,
+      name = config.name or "Unknown",
+      error = errorString,
+      engine_version = VERSION,
+      release_version = GAME_UPDATER_GAME_VERSION or "Unknown",
+      operating_system = system_info or "Unknown",
+      love_version = loveVersion or "Unknown"
+    }
+
+  return errorData
+end
+
+local loveVersionStringValue = nil
+
+function Game.loveVersionString()
+  if loveVersionStringValue then
+    return loveVersionStringValue
+  end
+  local major, minor, revision, codename = love.getVersion()
+  loveVersionStringValue = string.format("%d.%d.%d", major, minor, revision)
+  return loveVersionStringValue
+end
+
 local game = Game()
 
 return game
