@@ -255,23 +255,15 @@ function network_init(ip, network_port)
   return true
 end
 
-function send_error_report(error, stack, release_version, OS)
+function send_error_report(errorData)
   TCP_sock = socket.tcp()
   TCP_sock:settimeout(7)
   if not TCP_sock:connect("18.188.43.50", 59569) then --for official server
     return false
   end
   TCP_sock:settimeout(0)
-  local error_json = {
-    error_report = {
-      name = config.name or "Unknown",
-      error = error,
-      stack = stack,
-      engine_version = VERSION,
-      release_version = release_version or "Unknown",
-      operating_system = OS or "Unknown"
-  }}
-  json_send(error_json)
+  local errorFull = { error_report = errorData }
+  json_send(errorFull)
   close_socket()
   return true
 end
