@@ -310,6 +310,10 @@ function Room.add_spectator(self, new_spectator_connection)
     player_settings = {character = self.a.character, character_display_name = self.a.character_display_name, level = self.a.level, player_number = self.a.player_number},
     opponent_settings = {character = self.b.character, character_display_name = self.b.character_display_name, level = self.b.level, player_number = self.b.player_number}
   }
+  if COMPRESS_SPECTATOR_REPLAYS_ENABLED then
+    msg.replay_of_match_so_far.vs.in_buf = compress_input_string(msg.replay_of_match_so_far.vs.in_buf)
+    msg.replay_of_match_so_far.vs.I = compress_input_string(msg.replay_of_match_so_far.vs.I)
+  end
   new_spectator_connection:send(msg)
   msg = {spectators = self:spectator_names()}
   logger.debug("sending spectator list: " .. json.encode(msg))
@@ -508,7 +512,6 @@ Connection =
     connections[s.index] = s
     socket_to_idx[socket] = s.index
     s.socket = socket
-    socket:settimeout(0)
     s.leftovers = ""
     s.state = "needs_name"
     s.room = nil
@@ -707,7 +710,7 @@ function Connection.close(self)
 end
 
 function Connection.H(self, version)
-  if version ~= VERSION then
+  if version ~= VERSION and not ANY_ENGINE_VERSION_ENABLED then
     self:send("N")
   else
     self:send("H")
@@ -1520,6 +1523,10 @@ end
 --]]
 local server_socket = socket.bind("*", SERVER_PORT or 49569) --for official server
 --local server_socket = socket.bind("*", 59569) --for beta server
+server_socket:settimeout(0)
+if TCP_NODELAY_ENABLED then
+  server_socket:setoption("tcp-nodelay", true)
+end
 local sep = package.config:sub(1, 1)
 logger.info("sep: " .. sep)
 playerbase = Playerbase("playerbase")
@@ -1572,8 +1579,15 @@ logger.info("initialized!")
 local prev_now = time()
 while true do
   server_socket:settimeout(0)
+  if TCP_NODELAY_ENABLED then
+    server_socket:setoption("tcp-nodelay", true)
+  end
   local new_conn = server_socket:accept()
   if new_conn then
+    new_conn:settimeout(0)
+    if TCP_NODELAY_ENABLED then
+      new_conn:setoption("tcp-nodelay", true)
+    end
     Connection(new_conn)
   end
   local recvt = {server_socket}
