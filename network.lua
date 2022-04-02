@@ -235,6 +235,7 @@ function network_init(ip, network_port)
     --error(loc("nt_conn_timeout"))
     return false
   end
+  TCP_sock:setoption("tcp-nodelay", true)
   TCP_sock:settimeout(0)
   got_H = false
   net_send("H" .. VERSION)
