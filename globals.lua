@@ -14,12 +14,12 @@ server_queue = ServerQueue()
 
 score_mode = SCOREMODE_TA
  
-GARBAGE_DELAY = 45
+GARBAGE_DELAY = 45 -- The amount of time the garbage stays in the telegraph after the attack animation
 GARBAGE_ATTACK_DELAY = 60 -- this is the amount of time to delay landing a chain on the opponent.
-													-- A higher value allows less rollback to happen and makes lag have less of an impact on the game
-										      -- Technically this was 0 in classic games, but we are using 60 to make rollback less noticable and match PA history.
+						  -- A higher value allows less rollback to happen and makes lag have less of an impact on the game
+						  -- Technically this was 0 in classic games, but we are using 60 to make rollback less noticable and match PA history.
 
-GARBAGE_TRANSIT_TIME = 45
+GARBAGE_TRANSIT_TIME = 45 -- The amount of time the "attack" animation happens moving the attack to the telegraph
 MAX_LAG = 200 + GARBAGE_DELAY -- maximum amount of lag before net games abort
 
 gfx_q = Queue()
@@ -107,6 +107,8 @@ config = {
 	portrait_darkness             = default_portrait_darkness,
 	popfx                         = true,
 	cardfx_scale                  = 100,
+	renderTelegraph               = true,
+	renderAttacks                 = true
 }
 
 current_use_music_from = "stage" -- either "stage" or "characters", no other values!
