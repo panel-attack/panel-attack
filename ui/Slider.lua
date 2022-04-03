@@ -37,7 +37,7 @@ function Slider:isSelected(x, y)
 end
 
 function Slider:setValueFromPos(x)
-  self:setValue(math.floor((x - self.x) / self.tick_length) + 1)
+  self:setValue(math.floor((x - self.x) / self.tick_length) + self.min)
 end
 
 function Slider:setValue(value)
@@ -54,18 +54,18 @@ function Slider:draw()
   local light_gray = .5
   local alpha = .7
   GAME.gfx_q:push({love.graphics.setColor, {light_gray, light_gray, light_gray, alpha}})
-  GAME.gfx_q:push({love.graphics.rectangle, {"fill", self.x, self.y, (self.max - self.min) * self.tick_length, 5}})
+  GAME.gfx_q:push({love.graphics.rectangle, {"fill", self.x, self.y, (self.max - self.min + 1) * self.tick_length, 5}})
   --GAME.gfx_q:push({love.graphics.setColor, {light_gray, light_gray, light_gray, alpha}})
   --GAME.gfx_q:push({love.graphics.rectangle, {"line", self.x, self.y, self.max - self.min, 10}})
   
   GAME.gfx_q:push({love.graphics.setColor, {dark_gray, dark_gray, dark_gray, .9}})
-  GAME.gfx_q:push({love.graphics.circle, {"fill", self.x + self.value, self.y + 2.5, 7.5, 32}})
+  GAME.gfx_q:push({love.graphics.circle, {"fill", self.x + (self.value - self.min + .5) * self.tick_length, self.y + 2.5, 7.5, 32}})
   GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
   
   --local text_width, text_height = self.text:getDimensions()
-  GAME.gfx_q:push({love.graphics.draw, {self._min_text, self.x - self._min_text:getWidth() - 5, self.y, 0, 1, 1, 0, 0}})
-  GAME.gfx_q:push({love.graphics.draw, {self._max_text, self.x + (self.max - self.min) * self.tick_length, self.y, 0, 1, 1, 0, 0}})
-  GAME.gfx_q:push({love.graphics.draw, {self._value_text, self.x + self.value - 10, self.y - 20, 0, 1, 1, 0, 0}})
+  GAME.gfx_q:push({love.graphics.draw, {self._min_text, self.x - self._min_text:getWidth() - 7, self.y, 0, 1, 1, 0, 0}})
+  GAME.gfx_q:push({love.graphics.draw, {self._max_text, self.x + (self.max - self.min + 1) * self.tick_length + 7, self.y, 0, 1, 1, 0, 0}})
+  GAME.gfx_q:push({love.graphics.draw, {self._value_text, self.x + (self.value - self.min + .5) * self.tick_length - 5, self.y - 20, 0, 1, 1, 0, 0}})
 end
 
 return Slider

@@ -37,7 +37,7 @@ local menu_buttons = {
   Button({text = love.graphics.newText(font, loc("mm_1_puzzle")), onClick = function() switchScene("puzzle_menu") end, is_visible = false}),
   Button({text = love.graphics.newText(font, loc("mm_1_time")), onClick = function() switchScene("time_attack_menu") end, is_visible = false}),
   Button({text = love.graphics.newText(font, loc("mm_1_vs")), onClick = function() switchScene("vs_self_menu") end, is_visible = false}),
-  Button({text = love.graphics.newText(font, loc("mm_1_training")), onClick = genOnClickFn(training_setup), is_visible = false}),
+  Button({text = love.graphics.newText(font, loc("mm_1_training")), onClick = function() switchScene("training_mode_menu") end, is_visible = false}),
   --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
   Button({text = love.graphics.newText(font, loc("mm_2_vs_online", "\nTelegraph Server")), onClick = genOnClickFn(main_net_vs_setup, {"betaserver.panelattack.com", 59569}), is_visible = false}),
   --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
