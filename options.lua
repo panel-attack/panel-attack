@@ -492,6 +492,7 @@ local function audio_menu(button_idx)
               addSounds("taunt down", characters[tracks[index].id].sounds.taunt_downs, " ")
               
               current_sound_index = 1
+
             else
               if not stages[tracks[index].id].fully_loaded then
                 stages[tracks[index].id]:sound_init(true, false)
@@ -687,8 +688,6 @@ local function audio_menu(button_idx)
           themes[config.theme].sounds.menu_validate = menu_validate_sound
           audio_test_ret = {audio_menu, {6}}
         end
-  
-        -- TO-DO: localization options: "Play/Stop", "Type/Music(?)", "SFX/Sounds(?)"
         
         soundTestMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
         soundTestMenu:add_button(loc("character"), nextTrack, goBack, previousTrack, nextTrack)
@@ -697,7 +696,11 @@ local function audio_menu(button_idx)
         soundTestMenu:add_button(loc("op_music_sfx"), playSFX, goBack, previousSFX, nextSFX)
         soundTestMenu:add_button(loc("back"), exitAudioTest, exitAudioTest)
         soundTestMenu:set_button_setting(1, tracks[index].name)
-        soundTestMenu:set_button_setting(2, music_type)
+        if tracks[index].has_music then
+          soundTestMenu:set_button_setting(2, music_type)
+        else
+          soundTestMenu:set_button_setting(2, loc("op_none"))
+        end
         soundTestMenu:set_button_setting(4, "combo")
         unloadTrack()
         loadTrack()
