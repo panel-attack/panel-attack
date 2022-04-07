@@ -104,6 +104,14 @@ function Match.run(self)
     P2:saveForRollback()
   end
 
+  if self.P1CPU then
+    self.P1CPU:run(P1)
+  end
+
+  if self.P2CPU then
+    self.P2CPU:run(P2)
+  end
+
   if P1 and P1.is_local and P1:game_ended() == false then  
     P1:send_controls()
   end
@@ -118,18 +126,12 @@ function Match.run(self)
     
     ranP1 = false
     if P1 and P1:shouldRun(runsSoFar) then
-      if self.P1CPU then
-        self.P1CPU:run(P1)
-      end
       P1:run()
       ranP1 = true
     end
 
     ranP2 = false
     if P2 and P2:shouldRun(runsSoFar) then
-      if self.P2CPU then
-        self.P2CPU:run(P2)
-      end
       P2:run()
       ranP2 = true
     end
