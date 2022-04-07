@@ -602,6 +602,10 @@ function Stack.set_puzzle_state(self, pstr, n_turns, do_countdown, puzzleType)
   if n_turns ~= 0 then
     self.puzzle_moves = n_turns
   end
+
+  -- transform any cleared garbage into colorles garbage panels
+  self.gpanel_buffer = "9999999999999999999999999999999999999999999999999999999999999999999999999"
+
 end
 
 function Stack.puzzle_done(self)
