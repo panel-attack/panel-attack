@@ -1,5 +1,4 @@
 require("analytics")
-require("GridVector")
 local logger = require("logger")
 
 -- Stuff defined in this file:
@@ -54,25 +53,7 @@ Stack =
     if s.match.mode == "2ptime" or s.match.mode == "vs" then
       local level = speed or 5
       s.character = (type(difficulty) == "string") and difficulty or s.character -- we used the difficulty variable for the character....
-      s.level = level
-      speed = level_to_starting_speed[level]
-      --difficulty           = level_to_difficulty[level]
-      s.speed_times = {15 * 60, idx = 1, delta = 15 * 60}
-      s.max_health = level_to_hang_time[level]
-      s.FRAMECOUNT_HOVER = level_to_hover[s.level]
-      s.FRAMECOUNT_GPHOVER = level_to_garbage_panel_hover[s.level]
-      s.FRAMECOUNT_FLASH = level_to_flash[s.level]
-      s.FRAMECOUNT_FACE = level_to_face[s.level]
-      s.FRAMECOUNT_POP = level_to_pop[s.level]
-      s.combo_constant = level_to_combo_constant[s.level]
-      s.combo_coefficient = level_to_combo_coefficient[s.level]
-      s.chain_constant = level_to_chain_constant[s.level]
-      s.chain_coefficient = level_to_chain_coefficient[s.level]
-      if s.match.mode == "2ptime" then
-        s.NCOLORS = level_to_ncolors_time[level]
-      else
-        s.NCOLORS = level_to_ncolors_vs[level]
-      end
+      s:setLevel(level)
     end
     s.health = s.max_health
 
@@ -211,6 +192,28 @@ Stack =
     s.analytic = AnalyticsInstance(s.is_local)
   end
 )
+
+function Stack.setLevel(self, level)
+  self.level = level
+  speed = level_to_starting_speed[level]
+  --difficulty           = level_to_difficulty[level]
+  self.speed_times = {15 * 60, idx = 1, delta = 15 * 60}
+  self.max_health = level_to_hang_time[level]
+  self.FRAMECOUNT_HOVER = level_to_hover[level]
+  self.FRAMECOUNT_GPHOVER = level_to_garbage_panel_hover[level]
+  self.FRAMECOUNT_FLASH = level_to_flash[level]
+  self.FRAMECOUNT_FACE = level_to_face[level]
+  self.FRAMECOUNT_POP = level_to_pop[level]
+  self.combo_constant = level_to_combo_constant[level]
+  self.combo_coefficient = level_to_combo_coefficient[level]
+  self.chain_constant = level_to_chain_constant[level]
+  self.chain_coefficient = level_to_chain_coefficient[level]
+  if self.match.mode == "2ptime" then
+    self.NCOLORS = level_to_ncolors_time[level]
+  else
+    self.NCOLORS = level_to_ncolors_vs[level]
+  end
+end
 
 -- Positions the stack draw position for the given player
 function Stack.moveForPlayerNumber(stack, player_num)
@@ -582,6 +585,7 @@ end
 
 function Stack.set_puzzle_state(self, puzzleString, n_turns, do_countdown, puzzleType)
   -- Copy the puzzle into our state
+  self:setLevel(5)
   puzzleType = puzzleType or "moves"
   do_countdown = do_countdown or false
   puzzleString = string.gsub(puzzleString, "%s+", "") -- Remove whitespace so files can be easier to read
@@ -599,12 +603,12 @@ function Stack.set_puzzle_state(self, puzzleString, n_turns, do_countdown, puzzl
 
   -- transform any cleared garbage into colorless garbage panels
   self.gpanel_buffer = "9999999999999999999999999999999999999999999999999999999999999999999999999"
-
 end
 
 function Stack.puzzleStringToPanels(self, puzzleString)
   local panels = {}
-  local garbageStart = nil
+  local garbageStartRow = nil
+  local garbageStartColumn = nil
   local isMetal = false
   local connectedGarbagePanels = nil
   -- chunk the aprilstack into rows
@@ -616,14 +620,15 @@ function Stack.puzzleStringToPanels(self, puzzleString)
       panels[row] = {}
       for column = 6, 1, -1 do
           local color = string.sub(rowString, column, column)
-          if not garbageStart and tonumber(color) then
+          if not garbageStartRow and tonumber(color) then
             local panel = Panel()
             panel.color = tonumber(color)
             panels[row][column] = panel
           else
             -- start of a garbage block
             if color == "]" or color == "}" then
-              garbageStart = GridVector(row, column)
+              garbageStartRow = row
+              garbageStartColumn = column
               connectedGarbagePanels = {}
               if color == "}" then
                 isMetal = true
@@ -632,7 +637,7 @@ function Stack.puzzleStringToPanels(self, puzzleString)
             local panel = Panel()
             panel.garbage = true
             panel.color = 9
-            panel.y_offset = row - garbageStart.row
+            panel.y_offset = row - garbageStartRow
             -- iterating the row right to left to make sure we catch the start of each garbage block
             -- but the offset is expected left to right, therefore we can't know the x_offset before reaching the end of the garbage
             -- instead save the column index in that field to calculate it later
@@ -645,14 +650,15 @@ function Stack.puzzleStringToPanels(self, puzzleString)
               -- calculate dimensions of the garbage and add it to the relevant width/height properties
               local height = connectedGarbagePanels[#connectedGarbagePanels].y_offset + 1
               -- this is disregarding the possible existence of irregularly shaped garbage
-              local width = garbageStart.column - column + 1
+              local width = garbageStartColumn - column + 1
               for i = 1, #connectedGarbagePanels do
                 connectedGarbagePanels[i].x_offset = connectedGarbagePanels[i].x_offset - column
                 connectedGarbagePanels[i].height = height
                 connectedGarbagePanels[i].width = width
                 -- panels are already in the main table and they should already be updated by reference
               end
-              garbageStart = nil
+              garbageStartRow = nil
+              garbageStartColumn = nil
               connectedGarbagePanels = nil
               isMetal = false
             end
