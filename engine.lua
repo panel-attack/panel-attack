@@ -1,4 +1,5 @@
 require("analytics")
+require("GridVector")
 local logger = require("logger")
 
 -- Stuff defined in this file:
@@ -579,33 +580,95 @@ function Panel.clear_flags(self)
   self.state = "normal"
 end
 
-function Stack.set_puzzle_state(self, pstr, n_turns, do_countdown, puzzleType)
+function Stack.set_puzzle_state(self, puzzleString, n_turns, do_countdown, puzzleType)
   -- Copy the puzzle into our state
   puzzleType = puzzleType or "moves"
   do_countdown = do_countdown or false
-  pstr = string.gsub(pstr, "%s+", "") -- Remove whitespace so files can be easier to read
-  local sz = self.width * self.height
-  while string.len(pstr) < sz do
-    pstr = "0" .. pstr
+  puzzleString = string.gsub(puzzleString, "%s+", "") -- Remove whitespace so files can be easier to read
+  local boardSizeInPanels = self.width * self.height
+  while string.len(puzzleString) < boardSizeInPanels do
+    puzzleString = "0" .. puzzleString
   end
-  local idx = 1
-  local panels = self.panels
-  for row = self.height, 1, -1 do
-    for col = 1, self.width do
-      panels[row][col]:clear()
-      panels[row][col].color = string.sub(pstr, idx, idx) + 0
-      idx = idx + 1
-    end
-  end
+
+  self.panels = self:puzzleStringToPanels(puzzleString)
   self.do_countdown = do_countdown
   self.puzzleType = puzzleType
   if n_turns ~= 0 then
     self.puzzle_moves = n_turns
   end
 
-  -- transform any cleared garbage into colorles garbage panels
+  -- transform any cleared garbage into colorless garbage panels
   self.gpanel_buffer = "9999999999999999999999999999999999999999999999999999999999999999999999999"
 
+end
+
+function Stack.puzzleStringToPanels(self, puzzleString)
+  local panels = {}
+  local garbageStart = nil
+  local isMetal = false
+  local connectedGarbagePanels = nil
+  -- chunk the aprilstack into rows
+  -- it is necessary to go bottom up because garbage block panels contain the offset relative to their bottom left corner
+  for row = 1, 12 do
+      local rowString = string.sub(puzzleString, #puzzleString - 5, #puzzleString)
+      puzzleString = string.sub(puzzleString, 1, #puzzleString - 6)
+      -- copy the panels into the row
+      panels[row] = {}
+      for column = 6, 1, -1 do
+          local color = string.sub(rowString, column, column)
+          if not garbageStart and tonumber(color) then
+            local panel = Panel()
+            panel.color = tonumber(color)
+            panels[row][column] = panel
+          else
+            -- start of a garbage block
+            if color == "]" or color == "}" then
+              garbageStart = GridVector(row, column)
+              connectedGarbagePanels = {}
+              if color == "}" then
+                isMetal = true
+              end
+            end
+            local panel = Panel()
+            panel.garbage = true
+            panel.color = 9
+            panel.y_offset = row - garbageStart.row
+            -- iterating the row right to left to make sure we catch the start of each garbage block
+            -- but the offset is expected left to right, therefore we can't know the x_offset before reaching the end of the garbage
+            -- instead save the column index in that field to calculate it later
+            panel.x_offset = column
+            panel.metal = isMetal
+            panels[row][column] = panel
+            table.insert(connectedGarbagePanels, panel)
+            -- garbage ends here
+            if color == "[" or color == "{" then
+              -- calculate dimensions of the garbage and add it to the relevant width/height properties
+              local height = connectedGarbagePanels[#connectedGarbagePanels].y_offset + 1
+              -- this is disregarding the possible existence of irregularly shaped garbage
+              local width = garbageStart.column - column + 1
+              for i = 1, #connectedGarbagePanels do
+                connectedGarbagePanels[i].x_offset = connectedGarbagePanels[i].x_offset - column
+                connectedGarbagePanels[i].height = height
+                connectedGarbagePanels[i].width = width
+                -- panels are already in the main table and they should already be updated by reference
+              end
+              garbageStart = nil
+              connectedGarbagePanels = nil
+              isMetal = false
+            end
+          end
+      end
+  end
+
+  -- add row 0 because it crashes if there is no row 0 for whatever reason
+  panels[0] = {}
+  for column = 6, 1, -1 do
+    local panel = Panel()
+    panel.color = 0
+    panels[0][column] = panel
+  end
+
+  return panels
 end
 
 function Stack.puzzle_done(self)
