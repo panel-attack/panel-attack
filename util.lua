@@ -292,7 +292,8 @@ function uncompress_input_string(inputs)
   end
 end
 
-function dump(o)
+function dump(o, includeNewLines)
+  includeNewLines = includeNewLines or false
   if type(o) == "table" then
     local s = "{ "
     for k, v in pairs(o) do
@@ -300,6 +301,9 @@ function dump(o)
         k = '"' .. k .. '"'
       end
       s = s .. "[" .. k .. "] = " .. dump(v) .. ","
+      if includeNewLines then
+        s = s .. "\n"
+      end
     end
     return s .. "} "
   else

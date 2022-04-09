@@ -44,6 +44,8 @@ local Game = class(
     self._last_y = 0
     self._input_delta = 0.0
     self._mainloop = nil
+    local major, minor, revision, codename = love.getVersion()
+    self._loveVersionStringValue = string.format("%d.%d.%d", major, minor, revision)
     -- coroutines
     self._setup = coroutine.create(function() self:_setup_co() end)
   end
@@ -170,18 +172,18 @@ function Game:update(dt)
     status, err = coroutine.resume(mainloop)
   end
   if not status then
-    local system_info = "OS: " .. love.system.getOS()
-    if self.game_updater then
-      system_info = system_info .. "\n" .. self.game_updater.game_version
+    local errorData = self.errorData(err, debug.traceback(mainloop))
+    if GAME_UPDATER_GAME_VERSION then
+      send_error_report(errorData)
     end
-    error(err .. "\n" .. debug.traceback(mainloop).. "\n" .. system_info)
+    error(err .. "\n\n" .. dump(errorData, true))
   end
   if self.server_queue and self.server_queue:size() > 0 then
     logger.trace("Queue Size: " .. self.server_queue:size() .. " Data:" .. self.server_queue:to_short_string())
   end
   this_frame_messages = {}
 
-  sound.update_music()
+  update_music()
 end
 
 function Game:draw()
@@ -238,6 +240,27 @@ function Game:clearMatch()
   self.currently_paused_tracks = {}
   P1 = nil
   P2 = nil
+end
+
+function Game:errorData(errorString, traceBack)
+  local system_info = "OS: " .. love.system.getOS()
+  local loveVersion = Game.loveVersionString()
+  
+  local errorData = { 
+      stack = traceBack,
+      name = config.name or "Unknown",
+      error = errorString,
+      engine_version = VERSION,
+      release_version = GAME_UPDATER_GAME_VERSION or "Unknown",
+      operating_system = system_info or "Unknown",
+      love_version = loveVersion or "Unknown"
+    }
+
+  return errorData
+end
+
+function Game:loveVersionString()
+  return self._loveVersionStringValue
 end
 
 return Game
