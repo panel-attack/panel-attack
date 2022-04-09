@@ -583,22 +583,19 @@ function Panel.clear_flags(self)
   self.state = "normal"
 end
 
-function Stack.set_puzzle_state(self, puzzleString, n_turns, do_countdown, puzzleType)
+function Stack.set_puzzle_state(self, puzzle)
   -- Copy the puzzle into our state
   self:setLevel(5)
-  puzzleType = puzzleType or "moves"
-  do_countdown = do_countdown or false
-  puzzleString = string.gsub(puzzleString, "%s+", "") -- Remove whitespace so files can be easier to read
   local boardSizeInPanels = self.width * self.height
-  while string.len(puzzleString) < boardSizeInPanels do
-    puzzleString = "0" .. puzzleString
+  while string.len(puzzle.stack) < boardSizeInPanels do
+    puzzle.stack = "0" .. puzzle.stack
   end
 
-  self.panels = self:puzzleStringToPanels(puzzleString)
-  self.do_countdown = do_countdown
-  self.puzzleType = puzzleType
-  if n_turns ~= 0 then
-    self.puzzle_moves = n_turns
+  self.panels = self:puzzleStringToPanels(puzzle.stack)
+  self.do_countdown = puzzle.do_countdown or false
+  self.puzzleType = puzzle.puzzleType or "moves"
+  if puzzle.moves ~= 0 then
+    self.puzzle_moves = puzzle.moves
   end
 
   -- transform any cleared garbage into colorless garbage panels
