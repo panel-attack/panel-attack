@@ -112,7 +112,8 @@ function Game:_setup_co()
     require("scenes.time_attack_menu"),
     require("scenes.vs_self_menu"),
     require("scenes.puzzle_menu"),
-    require("scenes.training_mode_menu")
+    require("scenes.training_mode_menu"),
+    require("scenes.training_mode_character_select")
   }
   for i, scene in ipairs(scenes) do
     scene:init()
@@ -244,7 +245,7 @@ end
 
 function Game:errorData(errorString, traceBack)
   local system_info = "OS: " .. love.system.getOS()
-  local loveVersion = Game.loveVersionString()
+  local loveVersion = Game:loveVersionString()
   
   local errorData = { 
       stack = traceBack,

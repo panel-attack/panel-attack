@@ -63,10 +63,9 @@ local arrow = love.graphics.newText(font, ">")
 local function startGame()
   stop_the_music()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  scene_manager:switchScene(nil)
-  
-  func = main_local_vs_yourself_setup
-  arg = {{width = width_slider.value, height = height_slider.value}}
+  GAME.battleRoom = BattleRoom()
+  GAME.battleRoom.trainingModeSettings = {width = width_slider.value, height = height_slider.value}
+  scene_manager:switchScene("training_mode_character_select")
 end
 
 local function exitMenu()

@@ -18,7 +18,7 @@ local LevelSlider = class(
     self.onValueChange = options.onValueChange or function() end
     slider_manager.add_slider(self)
   end,
-  Slider, {{}})
+  Slider)
 
 function LevelSlider:isSelected(x, y)
   return self.is_enabled and x >= self.x and x <= self.x + (self.max - self.min + 1) * self.tick_length and y >= self.y and y <= self.y + self.tick_length * 2
