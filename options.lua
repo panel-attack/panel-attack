@@ -323,10 +323,10 @@ local function audio_menu(button_idx)
             characters[character_id]:sound_init(true, false)
           end
           local character = characters[character_id]
-          if next(character.sub_characters) == nil then
+          if not next(character.sub_characters) then
             tracks[#tracks + 1] = {
             is_character = true,
-            name = string.len(trim(character.display_name)) == 0 and character_id or character.display_name,
+            name = trim(character.display_name):len() == 0 and character_id or character.display_name,
             id = character_id,
             parent_id = nil,
             has_music = character.musics.normal_music and true,
@@ -342,7 +342,7 @@ local function audio_menu(button_idx)
               local subcharacter = characters[sub_character_id]
               tracks[#tracks + 1] = {
               is_character = true,
-              name = (string.len(trim(character.display_name)) == 0 and character_id or character.display_name) .. " " .. (string.len(trim(subcharacter.display_name)) == 0 and sub_character_id or subcharacter.display_name),
+              name = (trim(character.display_name):len() == 0 and character_id or character.display_name) .. " " .. (trim(subcharacter.display_name):len() == 0 and sub_character_id or subcharacter.display_name),
               id = sub_character_id,
               parent_id = character_id,
               has_music = subcharacter.musics.normal_music and true,
@@ -456,7 +456,7 @@ local function audio_menu(button_idx)
                 addSounds("combo echo", characters[tracks[index].id].sounds.combo_echos, " ")
               end
 
-              if next(characters[tracks[index].id].sounds.chains) == nil and next(characters[tracks[index].id].sounds.others) and not (characters[tracks[index].id].sounds.others["chain"] == characters[tracks[index].id].sounds.combos[1]) then
+              if not next(characters[tracks[index].id].sounds.chains) and next(characters[tracks[index].id].sounds.others) and not (characters[tracks[index].id].sounds.others["chain"] == characters[tracks[index].id].sounds.combos[1]) then
                 addSound("chain", characters[tracks[index].id].sounds.others["chain"])
                 if characters[tracks[index].id].sounds.others["chain"] ~= characters[tracks[index].id].sounds.others["chain2"] then
                   addSound("chain 2", characters[tracks[index].id].sounds.others["chain2"])
@@ -481,7 +481,7 @@ local function audio_menu(button_idx)
               addSounds("garbage match", characters[tracks[index].id].sounds.garbage_matches, " ")
               addSounds("garbage land", characters[tracks[index].id].sounds.garbage_lands, " ")
               
-              if next(characters[tracks[index].id].sounds.selections) == nil and tracks[index].parent_id then
+              if not next(characters[tracks[index].id].sounds.selections) and tracks[index].parent_id then
                 addSounds("selection", characters[tracks[index].parent_id].sounds.selections, " ")
               else
                 addSounds("selection", characters[tracks[index].id].sounds.selections, " ")

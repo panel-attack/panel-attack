@@ -115,7 +115,7 @@ end
 do
   function main_select_mode()
     CLICK_MENUS = {}
-    if next(currently_playing_tracks) == nil then
+    if not next(currently_playing_tracks) then
       stop_the_music()
       if themes[config.theme].musics["main"] then
         find_and_add_music(themes[config.theme].musics, "main")
@@ -217,7 +217,7 @@ do
 end
 
 local function use_current_stage()
-  if current_stage == nil then
+  if not current_stage then
     pick_random_stage()
   else
     stage_loader_load(current_stage)
@@ -613,7 +613,7 @@ local function main_select_speed_99(mode)
 
   GAME.backgroundImage = themes[config.theme].images.bg_main
   reset_filters()
-  if next(currently_playing_tracks) == nil then
+  if not next(currently_playing_tracks) then
     stop_the_music()
     if themes[config.theme].musics["main"] then
       find_and_add_music(themes[config.theme].musics, "main")
@@ -735,7 +735,7 @@ end
 
 -- The menu where you spectate / join net vs games
 function main_net_vs_lobby()
-  if next(currently_playing_tracks) == nil then
+  if not next(currently_playing_tracks) then
     stop_the_music()
     if themes[config.theme].musics["main"] then
       find_and_add_music(themes[config.theme].musics, "main")
@@ -1054,8 +1054,8 @@ function build_viewable_leaderboard_string(report, first_viewable_idx, last_view
   last_viewable_idx = math.min(last_viewable_idx, #report)
 
   for i = first_viewable_idx, last_viewable_idx do
-    rating_spacing = "     " .. string.rep("  ", (3 - string.len(i)))
-    name_spacing = "     " .. string.rep("  ", (4 - string.len(report[i].rating)))
+    rating_spacing = "     " .. string.rep("  ", (3 - i:len()))
+    name_spacing = "     " .. string.rep("  ", (4 - report[i].rating:len()))
     if report[i].is_you then
       str = str .. loc("lb_you") .. "-> "
     else
@@ -1315,7 +1315,7 @@ function loadFromReplay(replay)
     P1 = Stack(1, GAME.match, false, config.panels, replay.P1_level or 5)
     P1.character = replay.P1_char
 
-    if replay.I and string.len(replay.I) > 0 then
+    if replay.I and replay.I:len() > 0 then
       P2 = Stack(2, GAME.match, false, config.panels, replay.P2_level or 5)
       
       P1:set_garbage_target(P2)
@@ -1480,7 +1480,7 @@ function make_main_puzzle(puzzleSet, awesome_idx)
     P1.do_countdown = config.ready_countdown_1P or false
     P2 = nil
     local start_delay = 0
-    if awesome_idx == nil then
+    if not awesome_idx then
       awesome_idx = math.random(#puzzleSet.puzzles)
     end
     local puzzleDetails = puzzleSet.puzzles[awesome_idx]
@@ -1527,7 +1527,7 @@ do
   end
   items[#items + 1] = {"back", main_select_mode}
   function main_select_puzz()
-    if next(currently_playing_tracks) == nil then
+    if not next(currently_playing_tracks) then
       stop_the_music()
       if themes[config.theme].musics["main"] then
         find_and_add_music(themes[config.theme].musics, "main")
