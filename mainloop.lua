@@ -115,8 +115,11 @@ end
 do
   function main_select_mode()
     CLICK_MENUS = {}
-    if themes[config.theme].musics["main"] then
-      find_and_add_music(themes[config.theme].musics, "main")
+    if next(currently_playing_tracks) == nil then
+      stop_the_music()
+      if themes[config.theme].musics["main"] then
+        find_and_add_music(themes[config.theme].musics, "main")
+      end
     end
     character_loader_clear()
     stage_loader_clear()
@@ -610,8 +613,11 @@ local function main_select_speed_99(mode)
 
   GAME.backgroundImage = themes[config.theme].images.bg_main
   reset_filters()
-  if themes[config.theme].musics["main"] then
-    find_and_add_music(themes[config.theme].musics, "main")
+  if next(currently_playing_tracks) == nil then
+    stop_the_music()
+    if themes[config.theme].musics["main"] then
+      find_and_add_music(themes[config.theme].musics, "main")
+    end
   end
 
   local gameSettingsMenu
@@ -729,8 +735,11 @@ end
 
 -- The menu where you spectate / join net vs games
 function main_net_vs_lobby()
-  if themes[config.theme].musics.main then
-    find_and_add_music(themes[config.theme].musics, "main")
+  if next(currently_playing_tracks) == nil then
+    stop_the_music()
+    if themes[config.theme].musics["main"] then
+      find_and_add_music(themes[config.theme].musics, "main")
+    end
   end
   GAME.backgroundImage = themes[config.theme].images.bg_main
   GAME.battleRoom = nil
@@ -1518,8 +1527,11 @@ do
   end
   items[#items + 1] = {"back", main_select_mode}
   function main_select_puzz()
-    if themes[config.theme].musics.main then
-      find_and_add_music(themes[config.theme].musics, "main")
+    if next(currently_playing_tracks) == nil then
+      stop_the_music()
+      if themes[config.theme].musics["main"] then
+        find_and_add_music(themes[config.theme].musics, "main")
+      end
     end
     GAME.backgroundImage = themes[config.theme].images.bg_main
     reset_filters()

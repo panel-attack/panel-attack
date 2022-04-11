@@ -46,7 +46,7 @@ local defaulted_images = {
   fade = true
 } -- those images will be defaulted if missing
 local basic_sfx = {"selection"}
-local other_sfx = {"chain", "combo", "combo_echo", "chain_echo", "chain2", "chain2_echo", "garbage_match", "garbage_land", "win", "taunt_up", "taunt_down"}
+local other_sfx = {"chain", "combo", "combo_echo", "chain2", "chain_echo", "chain2_echo", "garbage_match", "garbage_land", "win", "taunt_up", "taunt_down"}
 local defaulted_sfxs = {} -- those sfxs will be defaulted if missing
 local basic_musics = {}
 local other_musics = {"normal_music", "danger_music", "normal_music_start", "danger_music_start"}
@@ -505,19 +505,16 @@ function Character.sound_init(self, full, yields)
 
     -- fallback case: chain/combo can be used for the other one if missing and for the longer names versions ("combo" used for "combo_echo" for instance)
     if not self.sounds.others[sfx] then
-      if sfx == "combo" then
-        self.sounds.others[sfx] = load_sound_from_supported_extensions(self.path .. "/chain", false)
-      elseif sfx == "chain" then
+      if sfx == "chain" then
         self.sounds.others[sfx] = load_sound_from_supported_extensions(self.path .. "/combo", false)
+      elseif sfx == "combo" then
+        self.sounds.others[sfx] = self.sounds.others["chain"]
       elseif sfx == "combo_echo" then
-        self.sounds.others[sfx] = load_sound_from_supported_extensions(self.path .. "/combo", false)
-        if not self.sounds.others[sfx] then
-          self.sounds.others[sfx] = load_sound_from_supported_extensions(self.path .. "/chain", false)
-        end
+        self.sounds.others[sfx] = self.sounds.others["combo"]
       elseif string.find(sfx, "chain") then
-        self.sounds.others[sfx] = load_sound_from_supported_extensions(self.path .. "/chain", false)
+        self.sounds.others[sfx] = self.sounds.others["chain"]
       elseif string.find(sfx, "combo") then
-        self.sounds.others[sfx] = load_sound_from_supported_extensions(self.path .. "/combo", false)
+        self.sounds.others[sfx] = self.sounds.others["combo"]
       end
     end
     if not self.sounds.others[sfx] and defaulted_sfxs[sfx] and not self:is_bundle() then
