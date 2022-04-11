@@ -145,7 +145,7 @@ do
         end
       end
       
-      local loveString = Game.loveVersionString()
+      local loveString = GAME:loveVersionString()
       gprintf("Love Version: " .. loveString, -5, 705, canvas_width, "right")
 
       if GAME_UPDATER_GAME_VERSION then
