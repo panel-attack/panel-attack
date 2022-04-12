@@ -58,6 +58,22 @@ function PuzzleTests.validationGarbageCoherence2()
   assert(string.match(validationMessage, "invalid garbage notation"))
 end
 
+function PuzzleTests.validationGarbageCoherence3()
+  local puzzle = Puzzle("moves", false, 2, "{====}929999[======]040000224999949999")
+  local isValid, validationMessage = puzzle:validate()
+
+  assert(not isValid)
+  assert(string.match(validationMessage, "length"))
+end
+
+function PuzzleTests.validationGarbageCoherence4()
+  local puzzle = Puzzle("moves", false, 2, "9299[===]99040000224999949999")
+  local isValid, validationMessage = puzzle:validate()
+
+  assert(not isValid)
+  assert(string.match(validationMessage, "extend"))
+end
+
 function PuzzleTests.validationValid()
   local puzzle = Puzzle("moves", false, 2, "{====}929999[====]040000224999949999")
   local isValid, validationMessage = puzzle:validate()
@@ -73,4 +89,6 @@ PuzzleTests.validationStackLength()
 PuzzleTests.validationStackCharacters()
 PuzzleTests.validationGarbageCoherence1()
 PuzzleTests.validationGarbageCoherence2()
+PuzzleTests.validationGarbageCoherence3()
+PuzzleTests.validationGarbageCoherence4()
 PuzzleTests.validationValid()

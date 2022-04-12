@@ -33,6 +33,7 @@ function Puzzle.validate(self)
 
   local illegalCharacters = {}
   local pendingGarbageStart = nil
+  local pendingGarbageStartIndex = 0
   for i = 1, #self.stack do
     local char = string.sub(self.stack, i, i)
     if not table.contains(Puzzle.getLegalCharacters(), char)
@@ -42,6 +43,7 @@ function Puzzle.validate(self)
     if char == "[" or char == "{" then
       if not pendingGarbageStart then
         pendingGarbageStart = char
+        pendingGarbageStartIndex = i
       else
         errMessage = errMessage ..
         "\nPuzzlestring contains invalid garbage notation, make sure you close garbage before you open another."
@@ -52,6 +54,18 @@ function Puzzle.validate(self)
         "\nPuzzlestring contains invalid garbage notation, make sure to not mix the symbols for opening/closing regular and shock garbage in your puzzle."
     elseif char == "]" and pendingGarbageStart == "["
       or char == "}" and pendingGarbageStart == "{" then
+        if (i + 1 - pendingGarbageStartIndex) - 6 > 0 then-- more than 6 panels in the garbage -> chain garbage
+          if ((i + 1 - pendingGarbageStartIndex) % 6 > 0 -- length of the garbage is not valid (needs to be divisable by 6)
+            or (i % 6 > 0)) then -- end position of the garbage is not valid (needs to be at the end of a row)
+            errMessage = errMessage ..
+            "\nPuzzlestring contains invalid garbage notation, make sure to enter a valid length for chain type garbage, creating garbage that is  possible to encounter in the game."
+          end
+        else -- combo garbage
+          if math.floor((i - 1) / 6) ~= math.floor(pendingGarbageStartIndex / 6) then
+            errMessage = errMessage ..
+            "\nPuzzlestring contains invalid garbage notation, make sure that your combo garbage does not extend over the scope of a single row."
+          end
+        end
         -- garbage has been properly closed - most likely
         pendingGarbageStart = nil
     end
