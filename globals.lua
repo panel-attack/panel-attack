@@ -70,7 +70,7 @@ config = {
 	language_code                 = "EN",
 
 	theme                         = default_theme_dir,
-	panels                     	  			= default_panels_dir,
+	panels                     	  = default_panels_dir,
 	character                     = random_character_special_value,
 	stage                         = random_stage_special_value,
 
