@@ -1,5 +1,5 @@
 local logger = require("logger")
-local select_screen = require("select_screen")
+require("select_screen.select_screen")
 local replay_browser = require("replay_browser")
 local options = require("options")
 local utf8 = require("utf8")
@@ -828,7 +828,7 @@ function main_net_vs_lobby()
           GAME.battleRoom.playerNames[1] = config.name
           GAME.battleRoom.playerNames[2] = msg.opponent
         end
-        select_screen.character_select_mode = "2p_net_vs"
+        local select_screen = select_screen("2p_net_vs")
         love.window.requestAttention()
         play_optional_sfx(themes[config.theme].sounds.notification)
         lobby_menu:remove_self()
@@ -1183,9 +1183,8 @@ function main_net_vs()
       json_send({game_over = true, outcome = outcome_claim})
 
       finalizeAndWriteVsReplay(GAME.match.battleRoom, outcome_claim)
-
-      select_screen.character_select_mode = "2p_net_vs"
-
+      local select_screen = select_screen("2p_net_vs")
+    
       if GAME.battleRoom.spectating then
         return {game_over_transition, {select_screen.main, end_text, winSFX}}
       else
@@ -1205,7 +1204,7 @@ function main_local_vs_setup()
   op_state = nil
   my_player_number = 1
   op_player_number = 2
-  select_screen.character_select_mode = "2p_local_vs"
+  local select_screen = select_screen("2p_local_vs")
   GAME.input:clearInputConfigurationsForPlayers()
   GAME.input:requestPlayerInputConfigurationAssignments(2)
   return select_screen.main
@@ -1259,7 +1258,7 @@ function main_local_vs_yourself_setup(trainingModeSettings)
   GAME.battleRoom.playerNames[2] = nil
   my_player_number = 1
   op_state = nil
-  select_screen.character_select_mode = "1p_vs_yourself"
+  local select_screen = select_screen("1p_vs_yourself")
   return select_screen.main
 end
 
