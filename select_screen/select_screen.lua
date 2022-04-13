@@ -564,8 +564,21 @@ function select_screen.prepareDrawMap(self)
 end
 
 function select_screen.setInitialCursors(self)
-  self.roomState.cursorP1 = {position = shallowcpy(self.name_to_xy_per_page[current_page]["__Ready"]), can_super_select = false, selected = false}
-  self.roomState.cursorP2 = {position = shallowcpy(self.name_to_xy_per_page[current_page]["__Ready"]), can_super_select = false, selected = false}
+  for playerNumber, _ in pairs(self.roomState.players) do
+    self:setInitialCursor(playerNumber)
+  end
+end
+
+function select_screen.setInitialCursor(self, playerNumber)
+  local cursor = {}
+
+  cursor.position = shallowcpy(self.name_to_xy_per_page[self.current_page]["__Ready"])
+  cursor.positionId = self.drawMap[self.current_page][cursor.position[1]][cursor.position[2]]
+  cursor.can_super_select = false
+  cursor.selected = false
+
+  self.roomState.players[playerNumber].cursor = cursor
+
 end
 
 function select_screen.drawMapToPageIdMapTransform(self)
@@ -638,6 +651,16 @@ function select_screen.setUpOpponentPlayer(self)
   self:confirmLoadingState(self.op_player_number)
 end
 
+function select_screen.updateMyConfig(self)
+  -- update config, does not redefine it
+  local myPlayer = self.roomState.players[self.my_player_number]
+  config.character = myPlayer.character_is_random or myPlayer.character
+  config.stage = myPlayer.stage_is_random or myPlayer.stage
+  config.level = myPlayer.level
+  config.ranked = myPlayer.ranked
+  config.panels = myPlayer.panels_dir
+end
+
 function select_screen.handleInput(self)
   local up, down, left, right = {-1, 0}, {1, 0}, {0, -1}, {0, 1}
   if not GAME.battleRoom.spectating then
@@ -646,7 +669,8 @@ function select_screen.handleInput(self)
       KMax = 2
     end
     for i = 1, KMax do
-      local cursor = cursor_data[i]
+      local player = self.roomState.players[i]
+      local cursor = player.cursor
       if menu_prev_page(i) then
         if not cursor.selected then
           current_page = bound(1, current_page - 1, self.pages_amount)
@@ -665,12 +689,12 @@ function select_screen.handleInput(self)
         end
       elseif menu_left(i) then
         if cursor.selected then
-          if cursor.state.cursor == "__Level" then
-            cursor.state.level = bound(1, cursor.state.level - 1, #level_to_starting_speed) --which should equal the number of levels in the game
-          elseif cursor.state.cursor == "__Panels" then
-            cursor.state.panels_dir = self.change_panels_dir(cursor.state.panels_dir, -1)
-          elseif cursor.state.cursor == "__Stage" then
-            self.change_stage(cursor.state, -1)
+          if cursor.positionId == "__Level" then
+            player.level = bound(1, player.level - 1, #level_to_starting_speed) --which should equal the number of levels in the game
+          elseif cursor.positionId == "__Panels" then
+            player.panels_dir = self.change_panels_dir(player.panels_dir, -1)
+          elseif cursor.positionId == "__Stage" then
+            self.change_stage(player, -1)
           end
         end
         if not cursor.selected then
@@ -678,12 +702,12 @@ function select_screen.handleInput(self)
         end
       elseif menu_right(i) then
         if cursor.selected then
-          if cursor.state.cursor == "__Level" then
-            cursor.state.level = bound(1, cursor.state.level + 1, #level_to_starting_speed) --which should equal the number of levels in the game
-          elseif cursor.state.cursor == "__Panels" then
-            cursor.state.panels_dir = self.change_panels_dir(cursor.state.panels_dir, 1)
-          elseif cursor.state.cursor == "__Stage" then
-            self.change_stage(cursor.state, 1)
+          if cursor.positionId == "__Level" then
+            player.level = bound(1, player.level + 1, #level_to_starting_speed) --which should equal the number of levels in the game
+          elseif cursor.positionId == "__Panels" then
+            player.panels_dir = self.change_panels_dir(player.panels_dir, 1)
+          elseif cursor.positionId == "__Stage" then
+            self.change_stage(player, 1)
           end
         end
         if not cursor.selected then
@@ -702,40 +726,36 @@ function select_screen.handleInput(self)
             normal_enter_callback()
           end
         elseif menu_escape() then
-          if cursor.state.cursor == "__Leave" then
-            on_quit()
+          if cursor.positionId == "__Leave" then
+            self.on_quit()
           end
           cursor.selected = false
-          cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Leave"])
+          cursor.position = shallowcpy(self.name_to_xy_per_page[current_page]["__Leave"])
+          cursor.positionId = "__Leave"
           cursor.can_super_select = false
         end
       end
       if cursor.state ~= nil then
-        cursor.state.cursor = map[current_page][cursor.position[1]][cursor.position[2]]
+        cursor.state.cursor = self.drawMap[self.current_page][cursor.position[1]][cursor.position[2]]
         cursor.state.wants_ready = cursor.selected and cursor.state.cursor == "__Ready"
       end
     end
-    -- update config, does not redefine it
-    config.character = cursor_data[1].state.character_is_random and cursor_data[1].state.character_is_random or cursor_data[1].state.character
-    config.stage = cursor_data[1].state.stage_is_random and cursor_data[1].state.stage_is_random or cursor_data[1].state.stage
-    config.level = cursor_data[1].state.level
-    config.ranked = cursor_data[1].state.ranked
-    config.panels = cursor_data[1].state.panels_dir
+    self:updateMyConfig()
 
     if select_screen.character_select_mode == "2p_local_vs" then -- this is registered for future entering of the lobby
-      global_op_state = shallowcpy(cursor_data[2].state)
-      global_op_state.character = global_op_state.character_is_random and global_op_state.character_is_random or global_op_state.character
-      global_op_state.stage = global_op_state.stage_is_random and global_op_state.stage_is_random or global_op_state.stage
+      global_op_state = shallowcpy(self.roomState.players[self.op_player_number])
+      global_op_state.character = global_op_state.character_is_random or global_op_state.character
+      global_op_state.stage = global_op_state.stage_is_random or global_op_state.stage
       global_op_state.wants_ready = false
     end
 
-    if select_screen:isNetPlay() and not content_equal(cursor_data[1].state, myPreviousConfig) and not GAME.battleRoom.spectating then
-      json_send({menu_state = cursor_data[1].state})
+    if self:isNetPlay() and not content_equal(self.roomState.players[self.my_player_number], self.myPreviousConfig) and not GAME.battleRoom.spectating then
+      json_send({menu_state = self.roomState.players[self.my_player_number]})
     end
-    myPreviousConfig = shallowcpy(cursor_data[1].state)
+    self.myPreviousConfig = shallowcpy(self.roomState.players[self.my_player_number])
   else -- (we are spectating)
     if menu_escape() then
-      do_leave()
+      self.do_leave()
       ret = {main_net_vs_lobby} -- we left the select screen as a spectator
     end
   end
