@@ -832,7 +832,7 @@ function main_net_vs_lobby()
         love.window.requestAttention()
         play_optional_sfx(themes[config.theme].sounds.notification)
         lobby_menu:remove_self()
-        return select_screen.main
+        return select_screen.main, {select_screen}
       end
       if msg.players then
         playerData = msg.players
@@ -1186,9 +1186,9 @@ function main_net_vs()
       local select_screen = select_screen("2p_net_vs")
     
       if GAME.battleRoom.spectating then
-        return {game_over_transition, {select_screen.main, end_text, winSFX}}
+        return {game_over_transition, {select_screen.main, {select_screen}, end_text, winSFX}}
       else
-        return {game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}}
+        return {game_over_transition, {select_screen.main, {select_screen}, end_text, winSFX, 60 * 8}}
       end
     end
   end
@@ -1207,7 +1207,7 @@ function main_local_vs_setup()
   local select_screen = select_screen("2p_local_vs")
   GAME.input:clearInputConfigurationsForPlayers()
   GAME.input:requestPlayerInputConfigurationAssignments(2)
-  return select_screen.main
+  return select_screen.main, {select_screen}
 end
 
 -- local 2pvs mode
@@ -1226,7 +1226,7 @@ function main_local_vs()
   end
 
   local function abortGame() 
-    return {main_dumb_transition, {select_screen.main, "", 0, 0}}
+    return {main_dumb_transition, {select_screen.main, {select_screen}, "", 0, 0}}
   end
   
   
@@ -1242,7 +1242,7 @@ function main_local_vs()
       
       finalizeAndWriteVsReplay(GAME.match.battleRoom, outcome_claim)
 
-      return {game_over_transition, {select_screen.main, end_text, winSFX}}
+      return {game_over_transition, {select_screen.main, {select_screen}, end_text, winSFX}}
     end
   end
 
@@ -1259,7 +1259,7 @@ function main_local_vs_yourself_setup(trainingModeSettings)
   my_player_number = 1
   op_state = nil
   local select_screen = select_screen("1p_vs_yourself")
-  return select_screen.main
+  return select_screen.main, {select_screen}
 end
 
 -- 1vs against yourself
@@ -1278,7 +1278,7 @@ function main_local_vs_yourself()
   end
 
   local function abortGame() 
-    return {main_dumb_transition, {select_screen.main, "", 0, 0}}
+    return {main_dumb_transition, {select_screen.main, {select_screen}, "", 0, 0}}
   end
   
   local function processGameResults(gameResult) 
@@ -1287,7 +1287,7 @@ function main_local_vs_yourself()
       finalizeAndWriteVsReplay(nil, nil)
     end
 
-    return {game_over_transition, {select_screen.main, nil, P1:pick_win_sfx()}}
+    return {game_over_transition, {select_screen.main, {select_screen}, nil, P1:pick_win_sfx()}}
   end
 
   return runMainGameLoop, {update, variableStep, abortGame, processGameResults}

@@ -7,8 +7,12 @@ select_screen = class(function(self, character_select_mode)
   self.fallback_when_missing = {nil, nil}
   -- in roomstate goes everything that can change through player inputs
   self.roomState = {}
+  self.roomState.players = {}
+  for i=1, tonumber(self.character_select_mode:sub(1, 1)) do
+    self.roomState.players[i] = {}
+  end
   -- everything else gets its field directly on select_screen
-  
+  self.current_page = 1
 end)
 
 function select_screen.draw(self)
@@ -86,7 +90,7 @@ end
 
 
 -- Updates the loaded and ready state for both states
-function select_screen.refresh_ready_states(self)
+function select_screen.refreshReadyStates(self)
   for _, playerConfig in pairs(self.roomState.players) do
     if self:isNetPlay() then
       playerConfig.ready =
@@ -113,7 +117,7 @@ function select_screen.on_quit(self)
   end
   if select_screen:isNetPlay() then
     -- Tell the server we want to leave, once it disconnects us we will actually leave
-    if not do_leave() then
+    if not self:do_leave() then
       ret = {main_dumb_transition, {main_select_mode, loc("ss_error_leave"), 60, 300}}
     end
   else
@@ -130,77 +134,77 @@ end
 
 --#region handling cursor input
 -- Moves the given cursor in the given direction
-function select_screen.move_cursor(cursor, direction)
+function select_screen.move_cursor(self, cursor, direction)
   local cursor_pos = cursor.position
   local dx, dy = unpack(direction)
-  local can_x, can_y = wrap(1, cursor_pos[1] + dx, X), wrap(1, cursor_pos[2] + dy, Y)
+  local can_x, can_y = wrap(1, cursor_pos[1] + dx, self.graphics.ROWS), wrap(1, cursor_pos[2] + dy, self.graphics.COLUMNS)
   while can_x ~= cursor_pos[1] or can_y ~= cursor_pos[2] do
-    if map[current_page][can_x][can_y] and (map[current_page][can_x][can_y] ~= map[current_page][cursor_pos[1]][cursor_pos[2]] or map[current_page][can_x][can_y] == "__Empty" or map[current_page][can_x][can_y] == "__Reserved") then
+    if self.drawMap[self.current_page][can_x][can_y] and (self.drawMap[self.current_page][can_x][can_y] ~= self.drawMap[self.current_page][cursor_pos[1]][cursor_pos[2]] or self.drawMap[self.current_page][can_x][can_y] == "__Empty" or self.drawMap[self.current_page][can_x][can_y] == "__Reserved") then
       break
     end
-    can_x, can_y = wrap(1, can_x + dx, X), wrap(1, can_y + dy, Y)
+    can_x, can_y = wrap(1, can_x + dx, self.graphics.ROWS), wrap(1, can_y + dy, self.graphics.COLUMNS)
   end
   cursor_pos[1], cursor_pos[2] = can_x, can_y
-  local character = characters[map[current_page][can_x][can_y]]
+  local character = characters[self.drawMap[self.current_page][can_x][can_y]]
   cursor.can_super_select = character and (character.stage or character.panels)
 end
 
 
 -- Function to know what to do when you press select on your current cursor
 -- returns true if a sound should be played
-function select_screen.on_select(cursor, super)
+function select_screen.on_select(self, player, super)
   local noisy = false
   local selectable = {__Stage = true, __Panels = true, __Level = true, __Ready = true}
-  if selectable[cursor.state.cursor] then
-    if cursor.selected and cursor.state.cursor == "__Stage" then
+  if selectable[player.cursor.positionId] then
+    if player.cursor.selected and player.cursor.positionId == "__Stage" then
       -- load stage even if hidden!
-      stage_loader_load(cursor.state.stage)
+      stage_loader_load(player.stage)
     end
-    cursor.selected = not cursor.selected
-  elseif cursor.state.cursor == "__Leave" then
-    on_quit()
-  elseif cursor.state.cursor == "__Random" then
-    cursor.state.character_is_random = random_character_special_value
-    cursor.state.character = table.getRandomElement(characters_ids_for_current_theme)
-    if characters[cursor.state.character]:is_bundle() then -- may pick a bundle
-      cursor.state.character = table.getRandomElement(characters[cursor.state.character].sub_characters)
+    player.cursor.selected = not player.cursor.selected
+  elseif player.cursor.positionId == "__Leave" then
+    self:on_quit()
+  elseif player.cursor.positionId == "__Random" then
+    player.character_is_random = random_character_special_value
+    player.character = table.getRandomElement(characters_ids_for_current_theme)
+    if characters[player.character]:is_bundle() then -- may pick a bundle
+      player.cursor.state.character = table.getRandomElement(characters[player.character].sub_characters)
     end
-    cursor.state.character_display_name = characters[cursor.state.character].display_name
+    player.character_display_name = characters[player.character].display_name
     character_loader_load(cursor.state.character)
-    cursor.state.cursor = "__Ready"
-    cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"])
-    cursor.can_super_select = false
-  elseif cursor.state.cursor == "__Mode" then
-    cursor.state.ranked = not cursor.state.ranked
-  elseif (cursor.state.cursor ~= "__Empty" and cursor.state.cursor ~= "__Reserved") then
-    cursor.state.character_is_random = nil
-    cursor.state.character = cursor.state.cursor
-    if characters[cursor.state.character]:is_bundle() then -- may pick a bundle
-      cursor.state.character_is_random = cursor.state.character
-      cursor.state.character = table.getRandomElement(characters[cursor.state.character_is_random].sub_characters)
+    player.cursor.positionId = "__Ready"
+    player.cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"])
+    player.cursor.can_super_select = false
+  elseif player.cursor.positionId == "__Mode" then
+    player.ranked = not player.ranked
+  elseif (player.cursor.positionId ~= "__Empty" and player.cursor.positionId ~= "__Reserved") then
+    player.character_is_random = nil
+    player.character = player.cursor.positionId
+    if characters[player.character]:is_bundle() then -- may pick a bundle
+      player.character_is_random = player.character
+      player.character = table.getRandomElement(characters[player.character_is_random].sub_characters)
     end
-    cursor.state.character_display_name = characters[cursor.state.character].display_name
-    local character = characters[cursor.state.character]
-    if not cursor.state.character_is_random then
+    player.character_display_name = characters[player.character].display_name
+    local character = characters[player.character]
+    if not player.character_is_random then
       noisy = character:play_selection_sfx()
-    elseif characters[cursor.state.character_is_random] then
-      noisy = characters[cursor.state.character_is_random]:play_selection_sfx()
+    elseif characters[player.character_is_random] then
+      noisy = characters[player.character_is_random]:play_selection_sfx()
     end
-    character_loader_load(cursor.state.character)
+    character_loader_load(player.character)
     if super then
       if character.stage then
-        cursor.state.stage = character.stage
-        stage_loader_load(cursor.state.stage)
-        cursor.state.stage_is_random = false
+        player.stage = character.stage
+        stage_loader_load(player.stage)
+        player.stage_is_random = false
       end
       if character.panels then
-        cursor.state.panels_dir = character.panels
+        player.panels_dir = character.panels
       end
     end
     --When we select a character, move cursor to "__Ready"
-    cursor.state.cursor = "__Ready"
-    cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"])
-    cursor.can_super_select = false
+    player.cursor.positionId = "__Ready"
+    player.cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"])
+    player.cursor.can_super_select = false
   end
   return noisy
 end
@@ -208,49 +212,11 @@ end
 
 
 --#region handling server messages
--- Returns a string with the players rating, win rate, and expected rating
-function select_screen.get_player_state_str(player_number, rating_difference, win_count, op_win_count, expected_win_ratio)
-  local state = ""
-  if current_server_supports_ranking then
-    state = state .. loc("ss_rating") .. " " .. (global_current_room_ratings[player_number].league or "")
-    if not global_current_room_ratings[player_number].placement_match_progress then
-      state = state .. "\n" .. rating_difference .. global_current_room_ratings[player_number].new
-    elseif global_current_room_ratings[player_number].placement_match_progress and global_current_room_ratings[player_number].new and global_current_room_ratings[player_number].new == 0 then
-      state = state .. "\n" .. global_current_room_ratings[player_number].placement_match_progress
-    end
-  end
-  if select_screen:isMultiplayer() then
-    if current_server_supports_ranking then
-      state = state .. "\n"
-    end
-    state = state .. loc("ss_wins") .. " " .. win_count
-    if (current_server_supports_ranking and expected_win_ratio) or win_count + op_win_count > 0 then
-      state = state .. "\n" .. loc("ss_winrate") .. "\n"
-      local need_line_return = false
-      if win_count + op_win_count > 0 then
-        state = state .. "    " .. loc("ss_current_rating") .. " " .. (100 * round(win_count / (op_win_count + win_count), 2)) .. "%"
-        need_line_return = true
-      end
-      if current_server_supports_ranking and expected_win_ratio then
-        if need_line_return then
-          state = state .. "\n"
-        end
-        state = state .. "    " .. loc("ss_expected_rating") .. " " .. expected_win_ratio .. "%"
-      end
-    end
-  end
-  return state
-end
+
 --#endregion
 
 
 --#region battleroom state
-select_screen_state = class(
-  function(self)
-
-  end
-)
-
 function select_screen.isNetPlay(self)
   return select_screen.character_select_mode == "2p_net_vs"
 end
@@ -433,8 +399,8 @@ function select_screen.initializeNetPlayRoom(self)
   self:setPlayerRatings()
   self:setPlayerNumbers()
   self:setPlayerStates()
-  self:updateWinCounts()
-  self:updateReplayInfo()
+  self:updateWinCountsFromMessage(self.roomInitializationMessage)
+  self:updateReplayInfo(self.roomInitializationMessage)
   self:setMatchType()
   self:setExpectedWinRatios()
 end
@@ -486,15 +452,15 @@ function select_screen.setPlayerStates(self)
   refresh_based_on_own_mods(self.roomState.opState)
 end
 
-function select_screen.updateWinCounts(self)
-  if self.roomInitializationMessage.win_counts then
+function select_screen.updateWinCountsFromMessage(self, msg)
+  if msg.win_counts then
     GAME.battleRoom:updateWinCounts(msg.win_counts)
   end
 end
 
-function select_screen.updateReplayInfo(self)
-  if self.roomInitializationMessage.replay_of_match_so_far then
-    self.roomState.replayInfo = self.roomInitializationMessage.replay_of_match_so_far
+function select_screen.updateReplayInfoFromMessage(self, msg)
+  if msg.replay_of_match_so_far then
+    self.replayInfo = msg.replay_of_match_so_far
   end
 end
 
@@ -556,9 +522,8 @@ end
 function select_screen.prepareDrawMap(self)
   local template_map = self:getTemplateMap()
   self.drawMap = {}
-
   self.pages_amount = fill_map(template_map, self.drawMap)
-  if self.current_page > self.pages_amount then
+  if self.current_page or 0 > self.pages_amount then
     self.current_page = 1
   end
 end
@@ -597,36 +562,39 @@ function select_screen.drawMapToPageIdMapTransform(self)
 end
 
 function select_screen.initializeFromPlayerConfig(self, playerNumber)
-  self.roomState.player[playerNumber].stage = config.stage
-  self.roomState.player[playerNumber].stage_is_random = ((config.stage == random_stage_special_value or stages[config.stage]:is_bundle()) and config.stage or nil)
-  self.roomState.player[playerNumber].character = config.character
-  self.roomState.player[playerNumber].character_is_random = ((config.character == random_character_special_value or characters[config.character]:is_bundle()) and config.character or nil)
-  self.roomState.player[playerNumber].level = config.level
-  self.roomState.player[playerNumber].panels_dir = config.panels
-  self.roomState.player[playerNumber].ready = false
-  self.roomState.player[playerNumber].ranked = config.ranked
+  self.roomState.players[playerNumber].stage = config.stage
+  self.roomState.players[playerNumber].stage_is_random = ((config.stage == random_stage_special_value or stages[config.stage]:is_bundle()) and config.stage or nil)
+  self.roomState.players[playerNumber].character = config.character
+  self.roomState.players[playerNumber].character_is_random = ((config.character == random_character_special_value or characters[config.character]:is_bundle()) and config.character or nil)
+  self.roomState.players[playerNumber].level = config.level
+  self.roomState.players[playerNumber].panels_dir = config.panels
+  self.roomState.players[playerNumber].ready = false
+  self.roomState.players[playerNumber].ranked = config.ranked
 end
 
 function select_screen.loadCharacter(self, playerNumber)
-  if self.roomState.player[playerNumber].character_is_random then
-    select_screen.resolve_character_random(self.roomState.player[playerNumber])
+  if self.roomState.players[playerNumber].character_is_random then
+    select_screen.resolve_character_random(self.roomState.players[playerNumber])
   else
-    character_loader_load(self.roomState.player[playerNumber].character)
+    character_loader_load(self.roomState.players[playerNumber].character)
   end
-  self.roomState.player[playerNumber].character_display_name = characters[self.roomState.player[playerNumber].character].display_name
+  self.roomState.players[playerNumber].character_display_name = characters[self.roomState.players[playerNumber].character].display_name
 end
 
 function select_screen.loadStage(self, playerNumber)
-  if self.roomState.player[playerNumber].stage_is_random then
-    select_screen.resolve_stage_random(self.roomState.player[playerNumber])
+  if self.roomState.players[playerNumber].stage_is_random then
+    select_screen.resolve_stage_random(self.roomState.players[playerNumber])
   else
-    stage_loader_load(self.roomState.player[playerNumber].stage)
+    stage_loader_load(self.roomState.players[playerNumber].stage)
   end
-  self.roomState.player[playerNumber].stage_display_name = stages[self.roomState.player[playerNumber].stage].display_name
+  self.roomState.players[playerNumber].stage_display_name = stages[self.roomState.players[playerNumber].stage].display_name
 end
 
 function select_screen.setUpMyPlayer(self)
   -- set up the local player
+  if not self:isNetPlay() and not self.my_player_number then
+    self.my_player_number = 1
+  end
   self:initializeFromPlayerConfig(self.my_player_number)
   self:loadCharacter(self.my_player_number)
   self:loadStage(self.my_player_number)
@@ -681,11 +649,11 @@ function select_screen.handleInput(self)
         end
       elseif menu_up(i) then
         if not cursor.selected then
-          self.move_cursor(cursor, up)
+          self:move_cursor(cursor, up)
         end
       elseif menu_down(i) then
         if not cursor.selected then
-          self.move_cursor(cursor, down)
+          self:move_cursor(cursor, down)
         end
       elseif menu_left(i) then
         if cursor.selected then
@@ -698,7 +666,7 @@ function select_screen.handleInput(self)
           end
         end
         if not cursor.selected then
-          self.move_cursor(cursor, left)
+          self:move_cursor(cursor, left)
         end
       elseif menu_right(i) then
         if cursor.selected then
@@ -711,18 +679,18 @@ function select_screen.handleInput(self)
           end
         end
         if not cursor.selected then
-          self.move_cursor(cursor, right)
+          self:move_cursor(cursor, right)
         end
       else
         -- code below is bit hard to read: basically we are storing the default sfx callbacks until it's needed (or not!) based on the on_select method
         local long_enter, long_enter_callback = menu_long_enter(i, true)
         local normal_enter, normal_enter_callback = menu_enter(i, true)
         if long_enter then
-          if not self.on_select(cursor, true) then
+          if not self:on_select(player, true) then
             long_enter_callback()
           end
         elseif normal_enter and (not cursor.can_super_select or select_being_pressed_ratio(i) < super_selection_enable_ratio) then
-          if not self.on_select(cursor, false) then
+          if not self:on_select(player, false) then
             normal_enter_callback()
           end
         elseif menu_escape() then
@@ -761,6 +729,154 @@ function select_screen.handleInput(self)
   end
 end
 
+function select_screen.handleServerMessages(self)
+  local messages = server_queue:pop_all_with("win_counts", "menu_state", "ranked_match_approved", "leave_room", "match_start", "ranked_match_denied")
+  for _, msg in ipairs(messages) do
+    self:updateWinCountsFromMessage(msg)
+    if msg.menu_state then
+      if GAME.battleRoom.spectating then
+        if msg.player_number == 1 or msg.player_number == 2 then
+          self.roomState.player[msg.player_number] = msg.menu_state
+          refresh_based_on_own_mods(self.roomState.player[msg.player_number])
+          character_loader_load(self.roomState.player[msg.player_number].character)
+          stage_loader_load(self.roomState.player[msg.player_number].stage)
+          self:confirmLoadingState(msg.player_number)
+        end
+      else
+        self.roomState.player[self.op_player_number] = msg.menu_state
+        refresh_based_on_own_mods(self.roomState.player[self.op_player_number])
+        character_loader_load(self.roomState.player[self.op_player_number].character)
+        stage_loader_load(self.roomState.player[self.op_player_number].stage)
+        self:confirmLoadingState(self.op_player_number)
+      end
+      self:refreshReadyStates()
+    end
+    if msg.ranked_match_approved then
+      self.roomState.match_type = "Ranked"
+      self.roomState.match_type_message = ""
+      if msg.caveats then
+        self.roomState.match_type_message = self.roomState.match_type_message .. (msg.caveats[1] or "")
+      end
+    elseif msg.ranked_match_denied then
+      self.roomState.match_type = "Casual"
+      self.roomState.match_type_message = (loc("ss_not_ranked") or "") .. "  "
+      if msg.reasons then
+        self.roomState.match_type_message = self.roomState.match_type_message .. (msg.reasons[1] or loc("ss_err_no_reason"))
+      end
+    end
+    if msg.leave_room then
+      return main_dumb_transition, {main_net_vs_lobby, "", 0, 0} -- opponent left the select screen
+    end
+    if (msg.match_start or replay_of_match_so_far) and msg.player_settings and msg.opponent_settings then
+      return self:startMatch(msg)
+    end
+  end
+
+  return nil
+end
+
+function select_screen.getSeed(self, msg)
+  -- Use the seed the server gives us if it makes one, else generate a basic one off data both clients have.
+  local seed
+  if msg.seed or (self.replayInfo and self.replayInfo.vs and self.replayInfo.vs.seed) then
+    seed = msg.seed or (self.replayInfo and self.replayInfo.vs and self.replayInfo.vs.seed)
+  else
+    seed = 17
+    seed = seed * 37 + self.currentRoomRatings[1].new;
+    seed = seed * 37 + self.currentRoomRatings[2].new;
+    seed = seed * 37 + GAME.battleRoom.playerWinCounts[1];
+    seed = seed * 37 + GAME.battleRoom.playerWinCounts[2];
+  end
+
+  return seed
+end
+
+function select_screen.startMatch(self, msg)
+  logger.debug("spectating: " .. tostring(GAME.battleRoom.spectating))
+  local fake_P1 = {panel_buffer = "", gpanel_buffer = ""}
+  local fake_P2 = {panel_buffer = "", gpanel_buffer = ""}
+  refresh_based_on_own_mods(msg.opponent_settings)
+  refresh_based_on_own_mods(msg.player_settings, true)
+  refresh_based_on_own_mods(msg) -- for stage only, other data are meaningless to us
+  -- mainly for spectator mode, those characters have already been loaded otherwise
+  character_loader_load(msg.player_settings.character)
+  character_loader_load(msg.opponent_settings.character)
+  self.current_stage = msg.stage
+  stage_loader_load(msg.stage)
+  character_loader_wait()
+  stage_loader_wait()
+  GAME.match = Match("vs", GAME.battleRoom)
+
+  GAME.match.seed = self:getSeed(msg)
+  local is_local = true
+  if GAME.battleRoom.spectating then
+    is_local = false
+  end
+  P1 = Stack(1, GAME.match, is_local, msg.player_settings.panels_dir, msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
+  GAME.match.P1 = P1
+  P1.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
+  P2 = Stack(2, GAME.match, false, msg.opponent_settings.panels_dir, msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
+  GAME.match.P2 = P2
+  P2.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
+  if GAME.battleRoom.spectating then
+    P1.panel_buffer = fake_P1.panel_buffer
+    P1.gpanel_buffer = fake_P1.gpanel_buffer
+  end
+  P2.panel_buffer = fake_P2.panel_buffer
+  P2.gpanel_buffer = fake_P2.gpanel_buffer
+  P1:set_garbage_target(P2)
+  P2:set_garbage_target(P1)
+  P2:moveForPlayerNumber(2)
+  self.replay = createNewReplay(GAME.match)
+  
+  if GAME.battleRoom.spectating and self.replayInfo then --we joined a match in progress
+    for k, v in pairs(self.replayInfo.vs) do
+      self.replay.vs[k] = v
+    end
+    P1:receiveConfirmedInput(self.replayInfo.vs.in_buf)
+    P2:receiveConfirmedInput(self.replayInfo.vs.I)
+    if self.replay.vs.ranked then
+      -- this doesn't really make sense
+      self.match_type = "Ranked"
+      self.match_type_message = ""
+    else
+      self.match_type = "Casual"
+    end
+    self.replayInfo = nil
+    P1.play_to_end = true --this makes non local stacks run until caught up
+    P2.play_to_end = true
+  end
+
+  self.replay.vs.ranked = msg.ranked
+
+  to_print = loc("pl_game_start") .. "\n" .. loc("level") .. ": " .. P1.level .. "\n" .. loc("opponent_level") .. ": " .. P2.level
+  if P1.play_to_end or P2.play_to_end then
+    to_print = loc("pl_spectate_join")
+  end
+
+  local abort = self:showGameStartMessage()
+  if abort then
+    return abort
+  end
+
+  -- Proceed to the game screen and start the game
+  P1:starting_state()
+  P2:starting_state()
+  return main_dumb_transition, {main_net_vs, "", 0, 0}
+end
+
+function select_screen.showGameStartMessage(self)
+  -- For a short time, show the game start / spectate message
+  for i = 1, 30 do
+    gprint(to_print, unpack(main_menu_screen_pos))
+    if not do_messages() then
+      return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
+    end
+    process_all_data_messages() -- process data to get initial panel stacks setup
+    wait()
+  end
+end
+
 -- The main screen for selecting characters and settings for a match
 function select_screen.main(self)
   self:loadThemeAssets()
@@ -785,168 +901,21 @@ function select_screen.main(self)
   if self:isMultiplayer() then
     self:setUpOpponentPlayer()
   end
-  self:refresh_ready_states()
+  self:refreshReadyStates()
 
   self.myPreviousConfig = shallowcpy(self.roomState.players[self.my_player_number])
 
   logger.trace("got to lines of code before net_vs_room character select loop")
-  menu_clock = 0
+  self.menu_clock = 0
 
   -- Main loop for running the select screen and drawing
   while true do
-
-    --self:handleServerMessages()
+    self:draw()
     -- Handle network messages for 2p vs net
     if select_screen:isNetPlay() then
-      local messages = server_queue:pop_all_with("win_counts", "menu_state", "ranked_match_approved", "leave_room", "match_start", "ranked_match_denied")
-      if global_initialize_room_msg then
-        messages[#messages + 1] = global_initialize_room_msg
-        global_initialize_room_msg = nil
-      end
-      for _, msg in ipairs(messages) do
-        if msg.win_counts then
-          GAME.battleRoom:updateWinCounts(msg.win_counts)
-        end
-        if msg.menu_state then
-          if GAME.battleRoom.spectating then
-            if msg.player_number == 1 or msg.player_number == 2 then
-              cursor_data[msg.player_number].state = msg.menu_state
-              refresh_based_on_own_mods(cursor_data[msg.player_number].state)
-              character_loader_load(cursor_data[msg.player_number].state.character)
-              stage_loader_load(cursor_data[msg.player_number].state.stage)
-            end
-          else
-            cursor_data[2].state = msg.menu_state
-            refresh_based_on_own_mods(cursor_data[2].state)
-            character_loader_load(cursor_data[2].state.character)
-            stage_loader_load(cursor_data[2].state.stage)
-          end
-          refresh_loaded_and_ready_states(cursor_data[1], cursor_data[2])
-        end
-        if msg.ranked_match_approved then
-          match_type = "Ranked"
-          match_type_message = ""
-          if msg.caveats then
-            match_type_message = match_type_message .. (msg.caveats[1] or "")
-          end
-        elseif msg.ranked_match_denied then
-          match_type = "Casual"
-          match_type_message = (loc("ss_not_ranked") or "") .. "  "
-          if msg.reasons then
-            match_type_message = match_type_message .. (msg.reasons[1] or loc("ss_err_no_reason"))
-          end
-        end
-        if msg.leave_room then
-          return main_dumb_transition, {main_net_vs_lobby, "", 0, 0} -- opponent left the select screen
-        end
-        if (msg.match_start or replay_of_match_so_far) and msg.player_settings and msg.opponent_settings then
-          logger.debug("spectating: " .. tostring(GAME.battleRoom.spectating))
-          local fake_P1 = {panel_buffer = "", gpanel_buffer = ""}
-          local fake_P2 = {panel_buffer = "", gpanel_buffer = ""}
-          refresh_based_on_own_mods(msg.opponent_settings)
-          refresh_based_on_own_mods(msg.player_settings, true)
-          refresh_based_on_own_mods(msg) -- for stage only, other data are meaningless to us
-          -- mainly for spectator mode, those characters have already been loaded otherwise
-          character_loader_load(msg.player_settings.character)
-          character_loader_load(msg.opponent_settings.character)
-          current_stage = msg.stage
-          stage_loader_load(msg.stage)
-          character_loader_wait()
-          stage_loader_wait()
-          GAME.match = Match("vs", GAME.battleRoom)
-
-          -- Use the seed the server gives us if it makes one, else generate a basic one off data both clients have.
-          local seed
-          if msg.seed or (replay_of_match_so_far and replay_of_match_so_far.vs and replay_of_match_so_far.vs.seed) then
-            seed = msg.seed or (replay_of_match_so_far and replay_of_match_so_far.vs and replay_of_match_so_far.vs.seed)
-          else 
-            seed = 17
-            seed = seed * 37 + global_current_room_ratings[1].new;
-            seed = seed * 37 + global_current_room_ratings[2].new;
-            seed = seed * 37 + GAME.battleRoom.playerWinCounts[1];
-            seed = seed * 37 + GAME.battleRoom.playerWinCounts[2];
-          end
-          GAME.match.seed = seed
-          local is_local = true
-          if GAME.battleRoom.spectating then
-            is_local = false
-          end
-          P1 = Stack(1, GAME.match, is_local, msg.player_settings.panels_dir, msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
-          GAME.match.P1 = P1
-          P1.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
-          P2 = Stack(2, GAME.match, false, msg.opponent_settings.panels_dir, msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
-          GAME.match.P2 = P2
-          P2.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
-          if GAME.battleRoom.spectating then
-            P1.panel_buffer = fake_P1.panel_buffer
-            P1.gpanel_buffer = fake_P1.gpanel_buffer
-          end
-          P2.panel_buffer = fake_P2.panel_buffer
-          P2.gpanel_buffer = fake_P2.gpanel_buffer
-          P1:set_garbage_target(P2)
-          P2:set_garbage_target(P1)
-          P2:moveForPlayerNumber(2)
-          replay = createNewReplay(GAME.match)
-          
-          if GAME.battleRoom.spectating and replay_of_match_so_far then --we joined a match in progress
-            for k, v in pairs(replay_of_match_so_far.vs) do
-              replay.vs[k] = v
-            end
-            P1:receiveConfirmedInput(replay_of_match_so_far.vs.in_buf)
-            P2:receiveConfirmedInput(replay_of_match_so_far.vs.I)
-            if replay.vs.ranked then
-              match_type = "Ranked"
-              match_type_message = ""
-            else
-              match_type = "Casual"
-            end
-            replay_of_match_so_far = nil
-            P1.play_to_end = true --this makes non local stacks run until caught up
-            P2.play_to_end = true
-          end
-
-          replay.vs.ranked = msg.ranked
-
-          to_print = loc("pl_game_start") .. "\n" .. loc("level") .. ": " .. P1.level .. "\n" .. loc("opponent_level") .. ": " .. P2.level
-          if P1.play_to_end or P2.play_to_end then
-            to_print = loc("pl_spectate_join")
-          end
-
-          -- For a short time, show the game start / spectate message
-          for i = 1, 30 do
-            gprint(to_print, unpack(main_menu_screen_pos))
-            if not do_messages() then
-              return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
-            end
-            process_all_data_messages() -- process data to get initial panel stacks setup
-            wait()
-          end
-
-          -- Proceed to the game screen and start the game
-          P1:starting_state()
-          P2:starting_state()
-          return main_dumb_transition, {main_net_vs, "", 0, 0}
-        end
-      end
-    end
-
-    -- Calculate the rating difference
-    local my_rating_difference = ""
-    local op_rating_difference = ""
-    if current_server_supports_ranking and not global_current_room_ratings[my_player_number].placement_match_progress then
-      if global_current_room_ratings[my_player_number].difference then
-        if global_current_room_ratings[my_player_number].difference >= 0 then
-          my_rating_difference = "(+" .. global_current_room_ratings[my_player_number].difference .. ") "
-        else
-          my_rating_difference = "(" .. global_current_room_ratings[my_player_number].difference .. ") "
-        end
-      end
-      if global_current_room_ratings[op_player_number].difference then
-        if global_current_room_ratings[op_player_number].difference >= 0 then
-          op_rating_difference = "(+" .. global_current_room_ratings[op_player_number].difference .. ") "
-        else
-          op_rating_difference = "(" .. global_current_room_ratings[op_player_number].difference .. ") "
-        end
+      local func = self:handleServerMessages()
+      if func then
+        func()
       end
     end
 
@@ -961,11 +930,15 @@ function select_screen.main(self)
 
     variable_step(
       function()
-        menu_clock = menu_clock + 1
+        self.menu_clock = self.menu_clock + 1
 
         character_loader_update()
         stage_loader_update()
-        refresh_loaded_and_ready_states(cursor_data[1].state, cursor_data[2] and cursor_data[2].state or nil)
+        self:confirmLoadingState(self.my_player_number)
+        if self:isMultiplayer() then
+          self:confirmLoadingState(self.op_player_number)
+        end
+        self:refreshReadyStates()
         self:handleInput()
       end
     )
@@ -975,9 +948,9 @@ function select_screen.main(self)
     end
 
     -- Handle one player vs game setup
-    if cursor_data[1].state.ready and select_screen.character_select_mode == "1p_vs_yourself" then
+    if self.roomState.players[self.my_player_number].ready and self.character_select_mode == "1p_vs_yourself" then
       GAME.match = Match("vs", GAME.battleRoom)
-      P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+      P1 = Stack(1, GAME.match, true, self.roomState.players[self.my_player_number].panels_dir, self.roomState.players[self.my_player_number].level, self.roomState.players[self.my_player_number].character)
       if GAME.battleRoom.trainingModeSettings then
         GAME.match.attackEngine = AttackEngine(P1)
         local startTime = 150
@@ -993,30 +966,25 @@ function select_screen.main(self)
         P1:set_garbage_target(P1)
       end
       P2 = nil
-      current_stage = cursor_data[1].state.stage
+      self.current_stage = self.roomState.players[self.my_player_number].stage
       stage_loader_load(current_stage)
       stage_loader_wait()
       P1:starting_state()
       return main_dumb_transition, {main_local_vs_yourself, "", 0, 0}
     -- Handle two player vs game setup
-    elseif cursor_data[1].state.ready and select_screen.character_select_mode == "2p_local_vs" and cursor_data[2].state.ready then
+    elseif self.roomState.players[self.my_player_number].ready and select_screen.character_select_mode == "2p_local_vs" and self.roomState.players[self.op_player_number].ready then
       GAME.match = Match("vs", GAME.battleRoom)
-      P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+      P1 = Stack(1, GAME.match, true, self.roomState.players[self.my_player_number].panels_dir, self.roomState.players[self.my_player_number].level, self.roomState.players[self.my_player_number].character)
       GAME.match.P1 = P1
-      P2 = Stack(2, GAME.match, true, cursor_data[2].state.panels_dir, cursor_data[2].state.level, cursor_data[2].state.character)
+      P2 = Stack(2, GAME.match, true, self.roomState.players[self.op_player_number].panels_dir, self.roomState.players[self.op_player_number].level, self.roomState.players[self.op_player_number].character)
       GAME.match.P2 = P2
       P1:set_garbage_target(P2)
       P2:set_garbage_target(P1)
-      current_stage = cursor_data[math.random(1, 2)].state.stage
+      self.current_stage = self.roomState.players[self.my_player_number][math.random(1, #self.roomState.players)].stage
       stage_loader_load(current_stage)
       stage_loader_wait()
       P2:moveForPlayerNumber(2)
-      -- TODO: this does not correctly implement starting configurations.
-      -- Starting configurations should be identical for visible blocks, and
-      -- they should not be completely flat.
-      --
-      -- In general the block-generation logic should be the same as the server's, so
-      -- maybe there should be only one implementation.
+
       P1:starting_state()
       P2:starting_state()
       return main_dumb_transition, {main_local_vs, "", 0, 0}
@@ -1029,5 +997,3 @@ function select_screen.main(self)
     end
   end
 end
-
-return select_screen
