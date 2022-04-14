@@ -205,13 +205,13 @@ end
     elseif valign == "bottom" then
       y_add = math.floor(self.button_height - self.text_height)
     end
-  
+
     if character then
       x_add = 0.025 * self.button_width
       width_for_alignment = 0.95 * self.button_width
       self:draw_character(character)
     end
-  
+
     -- Based on the string type, render the right type of button
     local pstr
     if string.sub(str, 1, 2) == "__" then

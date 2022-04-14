@@ -97,6 +97,8 @@ function select_screen.refreshReadyStates(self)
           playerConfig.wants_ready and
           table.trueForAll(self.roomState.players, function(pc) return pc.loaded end)
     else
+      print("wants ready: " .. tostring(playerConfig.wants_ready) .. ", loaded: " .. tostring(playerConfig.loaded))
+      print("posId: " .. tostring(playerConfig.cursor.positionId) .. ", selected: " .. tostring(playerConfig.cursor.selected))
       playerConfig.ready = playerConfig.wants_ready and playerConfig.loaded
     end
   end
@@ -118,10 +120,10 @@ function select_screen.on_quit(self)
   if select_screen:isNetPlay() then
     -- Tell the server we want to leave, once it disconnects us we will actually leave
     if not self:do_leave() then
-      ret = {main_dumb_transition, {main_select_mode, loc("ss_error_leave"), 60, 300}}
+      return main_dumb_transition, {main_select_mode, loc("ss_error_leave"), 60, 300}
     end
   else
-    ret = {main_select_mode}
+    return main_select_mode
   end
 end
 --#endregion
@@ -162,7 +164,7 @@ function select_screen.on_select(self, player, super)
     end
     player.cursor.selected = not player.cursor.selected
   elseif player.cursor.positionId == "__Leave" then
-    self:on_quit()
+    return self:on_quit()
   elseif player.cursor.positionId == "__Random" then
     player.character_is_random = random_character_special_value
     player.character = table.getRandomElement(characters_ids_for_current_theme)
@@ -170,9 +172,9 @@ function select_screen.on_select(self, player, super)
       player.cursor.state.character = table.getRandomElement(characters[player.character].sub_characters)
     end
     player.character_display_name = characters[player.character].display_name
-    character_loader_load(cursor.state.character)
+    character_loader_load(player.character)
     player.cursor.positionId = "__Ready"
-    player.cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"])
+    player.cursor.position = shallowcpy(self.name_to_xy_per_page[self.current_page]["__Ready"])
     player.cursor.can_super_select = false
   elseif player.cursor.positionId == "__Mode" then
     player.ranked = not player.ranked
@@ -203,7 +205,7 @@ function select_screen.on_select(self, player, super)
     end
     --When we select a character, move cursor to "__Ready"
     player.cursor.positionId = "__Ready"
-    player.cursor.position = shallowcpy(name_to_xy_per_page[current_page]["__Ready"])
+    player.cursor.position = shallowcpy(self.name_to_xy_per_page[self.current_page]["__Ready"])
     player.cursor.can_super_select = false
   end
   return noisy
@@ -226,15 +228,14 @@ function select_screen.isMultiplayer(self)
 end
 
 -- Makes sure all the client data is up to date and ready
-function select_screen.confirmLoadingState(self, playerNumber)
+function select_screen.refreshLoadingState(self, playerNumber)
   self.roomState.players[playerNumber].loaded = characters[self.roomState.players[playerNumber].character] and characters[self.roomState.players[playerNumber].character].fully_loaded and stages[self.roomState.players[playerNumber].stage] and stages[self.roomState.players[playerNumber].stage].fully_loaded
-  self.roomState.players[playerNumber].wants_ready = self.roomState.players[playerNumber].ready
 end
 --#endregion
 
 --#region business functions altering the state
 
--- Returns the panel dir for the given increment 
+-- Returns the panel dir for the given increment
 function select_screen.change_panels_dir(panels_dir, increment)
   local current = 0
   for k, v in ipairs(panels_ids) do
@@ -598,7 +599,7 @@ function select_screen.setUpMyPlayer(self)
   self:initializeFromPlayerConfig(self.my_player_number)
   self:loadCharacter(self.my_player_number)
   self:loadStage(self.my_player_number)
-  self:confirmLoadingState(self.my_player_number)
+  self:refreshLoadingState(self.my_player_number)
 end
 
 function select_screen.setUpOpponentPlayer(self)
@@ -616,7 +617,7 @@ function select_screen.setUpOpponentPlayer(self)
     self:loadStage(self.op_player_number)
   end
 
-  self:confirmLoadingState(self.op_player_number)
+  self:refreshLoadingState(self.op_player_number)
 end
 
 function select_screen.updateMyConfig(self)
@@ -695,17 +696,17 @@ function select_screen.handleInput(self)
           end
         elseif menu_escape() then
           if cursor.positionId == "__Leave" then
-            self.on_quit()
+            return self.on_quit()
           end
           cursor.selected = false
-          cursor.position = shallowcpy(self.name_to_xy_per_page[current_page]["__Leave"])
+          cursor.position = shallowcpy(self.name_to_xy_per_page[self.current_page]["__Leave"])
           cursor.positionId = "__Leave"
           cursor.can_super_select = false
         end
       end
-      if cursor.state ~= nil then
-        cursor.state.cursor = self.drawMap[self.current_page][cursor.position[1]][cursor.position[2]]
-        cursor.state.wants_ready = cursor.selected and cursor.state.cursor == "__Ready"
+      if player ~= nil then
+        player.cursor.positionId = self.drawMap[self.current_page][cursor.position[1]][cursor.position[2]]
+        player.wants_ready = player.cursor.selected and player.cursor.positionId == "__Ready"
       end
     end
     self:updateMyConfig()
@@ -724,9 +725,11 @@ function select_screen.handleInput(self)
   else -- (we are spectating)
     if menu_escape() then
       self.do_leave()
-      ret = {main_net_vs_lobby} -- we left the select screen as a spectator
+      return main_net_vs_lobby -- we left the select screen as a spectator
     end
   end
+
+  return nil
 end
 
 function select_screen.handleServerMessages(self)
@@ -740,14 +743,14 @@ function select_screen.handleServerMessages(self)
           refresh_based_on_own_mods(self.roomState.player[msg.player_number])
           character_loader_load(self.roomState.player[msg.player_number].character)
           stage_loader_load(self.roomState.player[msg.player_number].stage)
-          self:confirmLoadingState(msg.player_number)
+          self:refreshLoadingState(msg.player_number)
         end
       else
         self.roomState.player[self.op_player_number] = msg.menu_state
         refresh_based_on_own_mods(self.roomState.player[self.op_player_number])
         character_loader_load(self.roomState.player[self.op_player_number].character)
         stage_loader_load(self.roomState.player[self.op_player_number].stage)
-        self:confirmLoadingState(self.op_player_number)
+        self:refreshLoadingState(self.op_player_number)
       end
       self:refreshReadyStates()
     end
@@ -911,7 +914,7 @@ function select_screen.main(self)
   -- Main loop for running the select screen and drawing
   while true do
     self:draw()
-    -- Handle network messages for 2p vs net
+
     if select_screen:isNetPlay() then
       local func = self:handleServerMessages()
       if func then
@@ -934,12 +937,12 @@ function select_screen.main(self)
 
         character_loader_update()
         stage_loader_update()
-        self:confirmLoadingState(self.my_player_number)
+        self:refreshLoadingState(self.my_player_number)
         if self:isMultiplayer() then
-          self:confirmLoadingState(self.op_player_number)
+          self:refreshLoadingState(self.op_player_number)
         end
+        ret = self:handleInput()
         self:refreshReadyStates()
-        self:handleInput()
       end
     )
 
