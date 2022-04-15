@@ -1092,7 +1092,7 @@ function Stack.simulate(self)
       end
     end
 
-    if not self.panels_in_top_row then
+    if not self.panels_in_top_row and not self:has_falling_garbage() then
       self.health = self.max_health
     end
 
