@@ -76,6 +76,7 @@ function fmainloop()
   -- Run Unit Tests
   if TESTS_ENABLED then
     -- Run all unit tests now that we have everything loaded
+    require("PuzzleTests")
     require("ServerQueueTests")
     require("StackTests")
     require("table_util_tests")
@@ -1442,8 +1443,15 @@ function make_main_puzzle(puzzleSet, awesome_idx)
     if awesome_idx == nil then
       awesome_idx = math.random(#puzzleSet.puzzles)
     end
-    local puzzleDetails = puzzleSet.puzzles[awesome_idx]
-    P1:set_puzzle_state(puzzleDetails.stack, puzzleDetails.moves, puzzleDetails.doCountdown, puzzleDetails.puzzleType)
+    local puzzle = puzzleSet.puzzles[awesome_idx]
+    local isValid, validationError = puzzle:validate()
+    if isValid then
+      P1:set_puzzle_state(puzzle)
+    else
+      validationError = "Validation error in puzzle set " .. puzzleSet.setName .. "\n"
+                        .. validationError
+      return main_dumb_transition, {main_select_mode, validationError, 60, -1}
+    end
 
     local function update() 
     end
