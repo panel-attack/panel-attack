@@ -579,7 +579,30 @@ function Panel.clear_flags(self)
   self.state = "normal"
 end
 
-function Stack.set_puzzle_state(self, pstr, n_turns, do_countdown, puzzleType)
+function Stack.randomizeColorString(colorString)
+  local colorArray = {}
+  local newColorOrder = {}
+  local maxColor = 7
+
+  for i = 1, maxColor, 1 do
+    colorArray[#colorArray+1] = i
+  end
+
+  for i = 1, maxColor, 1 do
+    newColorOrder[tostring(i)] = tostring(table.remove(colorArray, math.random(1, #colorArray)))
+  end
+  
+  colorString = colorString:gsub("%d", newColorOrder)
+
+  return colorString
+end
+
+function Stack.set_puzzle_state(self, pstr, n_turns, do_countdown, puzzleType, randomizeColors)
+  randomizeColors = randomizeColors or false
+  if randomizeColors then
+    pstr = Stack.randomizeColorString(pstr)
+  end
+
   -- Copy the puzzle into our state
   puzzleType = puzzleType or "moves"
   do_countdown = do_countdown or false

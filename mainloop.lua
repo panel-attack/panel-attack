@@ -1443,7 +1443,7 @@ function make_main_puzzle(puzzleSet, awesome_idx)
       awesome_idx = math.random(#puzzleSet.puzzles)
     end
     local puzzleDetails = puzzleSet.puzzles[awesome_idx]
-    P1:set_puzzle_state(puzzleDetails.stack, puzzleDetails.moves, puzzleDetails.doCountdown, puzzleDetails.puzzleType)
+    P1:set_puzzle_state(puzzleDetails.stack, puzzleDetails.moves, puzzleDetails.doCountdown, puzzleDetails.puzzleType, true)
 
     local function update() 
     end
