@@ -52,11 +52,11 @@ function AttackEngine.run(self)
       if remainder == 0 then
         if attackPattern.garbage[4] then
           for i = 1,  attackPattern.garbage[2], 1 do
-            self.target.telegraph:push(attackPattern.garbage, origin_column, origin_row, self.clock)
+            self.target.telegraph:push(attackPattern.garbage, origin_column, origin_row, self.target.CLOCK)
           end
           self.target.telegraph:chainingEnded(self.clock)
         else
-          self.target.telegraph:push(attackPattern.garbage, origin_column, origin_row, self.clock)
+          self.target.telegraph:push(attackPattern.garbage, origin_column, origin_row, self.target.CLOCK)
         end
       end
     end
