@@ -141,10 +141,10 @@ function Telegraph.add_combo_garbage(self, garbage, timeAttackInteracts)
   local stuff_to_send = {}
   if garbage[3] then
     stuff_to_send[#stuff_to_send+1] = {6, 1, true, false, timeAttackInteracts = timeAttackInteracts}
-    self.stoppers.metal = timeAttackInteracts + GARBAGE_TRANSIT_TIME + GARBAGE_DELAY
+    self.stoppers.metal = timeAttackInteracts + GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME
   else
     stuff_to_send[#stuff_to_send+1] = {garbage[1], garbage[2], garbage[3], garbage[4], timeAttackInteracts = timeAttackInteracts}
-    self.stoppers.combo[garbage[1]] = timeAttackInteracts + GARBAGE_TRANSIT_TIME + GARBAGE_DELAY
+    self.stoppers.combo[garbage[1]] = timeAttackInteracts + GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME
   end
   self.garbage_queue:push(stuff_to_send)
   return stuff_to_send
@@ -182,7 +182,7 @@ function Telegraph.grow_chain(self, timeAttackInteracts)
   end
 
   local result = self.garbage_queue:grow_chain(timeAttackInteracts, newChain)
-  self.stoppers.chain[self.garbage_queue.chain_garbage.last] = timeAttackInteracts + GARBAGE_TRANSIT_TIME + GARBAGE_DELAY
+  self.stoppers.chain[self.garbage_queue.chain_garbage.last] = timeAttackInteracts + GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME
   return result
 end
 

@@ -1329,7 +1329,7 @@ function select_screen.main()
         local startTime = 150
         local delayPerAttack = 6
         local attackCountPerDelay = 15
-        local delay = GARBAGE_TRANSIT_TIME + GARBAGE_DELAY + (attackCountPerDelay * delayPerAttack) + 1
+        local delay = GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME + (attackCountPerDelay * delayPerAttack) + 1
         for i = 1, attackCountPerDelay, 1 do
           GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
         end

@@ -1518,7 +1518,7 @@ function Stack.simulate(self)
         -- Right now the training attacks are put on the players telegraph, 
         -- but they really should be a seperate telegraph since the telegraph on the player's stack is for sending outgoing attacks.
         local receiver = self.garbage_target or self 
-        receiver:receiveGarbage(self.CLOCK + GARBAGE_ATTACK_DELAY, to_send)
+        receiver:receiveGarbage(self.CLOCK + GARBAGE_DELAY_LAND_TIME, to_send)
       end
     end
     
