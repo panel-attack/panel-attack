@@ -106,6 +106,8 @@ config = {
 	portrait_darkness             = default_portrait_darkness,
 	popfx                         = true,
 	cardfx_scale                  = 100,
+	renderTelegraph               = true,
+	renderAttacks                 = true
 }
 
 current_use_music_from = "stage" -- either "stage" or "characters", no other values!

@@ -163,9 +163,23 @@ local function graphics_menu()
 
   local function update_popfx(noToggle)
     if not noToggle then
-      config.popfx = not config.popfx
+      config.renderAttacks = not config.renderAttacks
     end
     graphicsMenu:set_button_setting(3, config.popfx and loc("op_on") or loc("op_off"))
+  end
+
+  local function update_renderTelegraph(noToggle)
+    if not noToggle then
+      config.renderTelegraph = not config.renderTelegraph
+    end
+    graphicsMenu:set_button_setting(4, config.renderTelegraph and loc("op_on") or loc("op_off"))
+  end
+
+  local function update_renderAttacks(noToggle)
+    if not noToggle then
+      config.renderAttacks = not config.renderAttacks
+    end
+    graphicsMenu:set_button_setting(5, config.renderAttacks and loc("op_on") or loc("op_off"))
   end
 
   local function nextMenu()
@@ -184,10 +198,14 @@ local function graphics_menu()
   graphicsMenu:add_button(loc("op_theme"), nextMenu, goEscape, previous_theme, next_theme)
   graphicsMenu:add_button(loc("op_portrait_darkness"), nextMenu, goEscape, decrease_portrait_darkness, increase_portrait_darkness)
   graphicsMenu:add_button(loc("op_popfx"), update_popfx, goEscape, update_popfx, update_popfx)
+  graphicsMenu:add_button(loc("op_renderTelegraph"), update_renderTelegraph, goEscape, update_renderTelegraph, update_renderTelegraph)
+  graphicsMenu:add_button(loc("op_renderAttacks"), update_renderAttacks, goEscape, update_renderAttacks, update_renderAttacks)
   graphicsMenu:add_button(loc("back"), exitSettings, exitSettings)
   update_theme()
   update_portrait_darkness()
   update_popfx(true)
+  update_renderTelegraph(true)
+  update_renderAttacks(true)
 
   while true do
     graphicsMenu:draw()
@@ -1106,11 +1124,11 @@ function options.main(button_idx)
 
   optionsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
   optionsMenu:add_button(loc("op_language"), nextMenu, goEscape, decrease_language, increase_language)
-  optionsMenu:add_button("General", enter_general_menu, goEscape)
-  optionsMenu:add_button("Graphics", enter_graphics_menu, goEscape)
-  optionsMenu:add_button("Audio", enter_audio_menu, goEscape)
-  optionsMenu:add_button("Debug", enter_debug_menu, goEscape)
-  optionsMenu:add_button("About", enter_about_menu, goEscape)
+  optionsMenu:add_button(loc("op_general"), enter_general_menu, goEscape)
+  optionsMenu:add_button(loc("op_graphics"), enter_graphics_menu, goEscape)
+  optionsMenu:add_button(loc("op_audio"), enter_audio_menu, goEscape)
+  optionsMenu:add_button(loc("op_debug"), enter_debug_menu, goEscape)
+  optionsMenu:add_button(loc("op_about"), enter_about_menu, goEscape)
   optionsMenu:add_button(loc("back"), exitSettings, exitSettings)
   update_language()
 
