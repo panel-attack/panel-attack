@@ -54,6 +54,7 @@ Stack =
       local level = speed or 5
       s.character = (type(difficulty) == "string") and difficulty or s.character -- we used the difficulty variable for the character....
       s:setLevel(level)
+      speed = level_to_starting_speed[level]
     end
     s.health = s.max_health
 
@@ -195,7 +196,6 @@ Stack =
 
 function Stack.setLevel(self, level)
   self.level = level
-  speed = level_to_starting_speed[level]
   --difficulty           = level_to_difficulty[level]
   self.speed_times = {15 * 60, idx = 1, delta = 15 * 60}
   self.max_health = level_to_hang_time[level]
