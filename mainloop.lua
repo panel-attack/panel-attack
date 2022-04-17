@@ -25,6 +25,7 @@ main_menu_screen_pos = {300 + (canvas_width - legacy_canvas_width) / 2, 195 + (c
 local wait_game_update = nil
 local has_game_update = false
 local main_menu_last_index = 1
+local puzzle_menu_last_index = 1
 
 function fmainloop()
   local func, arg = main_select_mode, nil
@@ -76,6 +77,7 @@ function fmainloop()
   -- Run Unit Tests
   if TESTS_ENABLED then
     -- Run all unit tests now that we have everything loaded
+    require("PuzzleTests")
     require("ServerQueueTests")
     require("StackTests")
     require("table_util_tests")
@@ -1442,8 +1444,15 @@ function make_main_puzzle(puzzleSet, awesome_idx)
     if awesome_idx == nil then
       awesome_idx = math.random(#puzzleSet.puzzles)
     end
-    local puzzleDetails = puzzleSet.puzzles[awesome_idx]
-    P1:set_puzzle_state(puzzleDetails.stack, puzzleDetails.moves, puzzleDetails.doCountdown, puzzleDetails.puzzleType, true)
+    local puzzle = puzzleSet.puzzles[awesome_idx]
+    local isValid, validationError = puzzle:validate()
+    if isValid then
+      P1:set_puzzle_state(puzzle)
+    else
+      validationError = "Validation error in puzzle set " .. puzzleSet.setName .. "\n"
+                        .. validationError
+      return main_dumb_transition, {main_select_mode, validationError, 60, -1}
+    end
 
     local function update() 
     end
@@ -1479,58 +1488,68 @@ function make_main_puzzle(puzzleSet, awesome_idx)
   return next_func
 end
 
-do
+function main_select_puzz()
+  
+  if themes[config.theme].musics.main then
+    find_and_add_music(themes[config.theme].musics, "main")
+  end
+  GAME.backgroundImage = themes[config.theme].images.bg_main
+  reset_filters()
+
+  local exitSet = false
+  local puzzleMenu
+  local ret = nil
+
+  local function selectFunction(myFunction, args)
+    local function constructedFunction()
+      puzzle_menu_last_index = puzzleMenu.active_idx
+      puzzleMenu:remove_self()
+      ret = {myFunction, args}
+    end
+    return constructedFunction
+  end
+
+  local function goEscape()
+    puzzleMenu:set_active_idx(#puzzleMenu.buttons)
+  end
+
+  local function exitSettings()
+    exitSet = true
+  end
+
   local items = {}
   for key, val in pairsSortedByKeys(GAME.puzzleSets) do
     items[#items + 1] = {key, make_main_puzzle(val)}
   end
-  items[#items + 1] = {"back", main_select_mode}
-  function main_select_puzz()
-    if themes[config.theme].musics.main then
-      find_and_add_music(themes[config.theme].musics, "main")
-    end
-    GAME.backgroundImage = themes[config.theme].images.bg_main
-    reset_filters()
-    local active_idx = last_puzzle_idx or 1
-    while true do
-      local to_print = ""
-      local arrow = ""
-      for i = 1, #items do
-        if active_idx == i then
-          arrow = arrow .. ">"
-        else
-          arrow = arrow .. "\n"
-        end
-        local loc_item = (items[i][1] == "back") and loc("back") or items[i][1]
-        to_print = to_print .. "   " .. loc_item .. "\n"
+
+  -- Ensure the last index is sane in case puzzles got reloaded differently
+  puzzle_menu_last_index = wrap(1, puzzle_menu_last_index, #items)
+
+  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  puzzleMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, puzzle_menu_last_index)
+  -- TODO, add level and randomize colors
+  -- TODO, fix music and stage reseting per puzzle / retry
+  for i = 1, #items do
+    puzzleMenu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
+  end
+  puzzleMenu:add_button(loc("back"), exitSettings, exitSettings)
+
+  while true do
+    puzzleMenu:draw()
+
+    wait()
+    variable_step(
+      function()
+        puzzleMenu:update()
       end
-      gprint(loc("pz_puzzles"), unpack(main_menu_screen_pos))
-      gprint(loc("pz_info"), main_menu_screen_pos[1] - 280, main_menu_screen_pos[2] + 220)
-      gprint(arrow, main_menu_screen_pos[1] + 100, main_menu_screen_pos[2])
-      gprint(to_print, main_menu_screen_pos[1] + 100, main_menu_screen_pos[2])
-      wait()
-      local ret = nil
-      variable_step(
-        function()
-          if menu_up() then
-            active_idx = wrap(1, active_idx - 1, #items)
-          elseif menu_down() then
-            active_idx = wrap(1, active_idx + 1, #items)
-          elseif menu_enter() then
-            last_puzzle_idx = active_idx
-            ret = {items[active_idx][2], items[active_idx][3]}
-          elseif menu_escape() then
-            if active_idx == #items then
-              ret = {items[active_idx][2], items[active_idx][3]}
-            else
-              active_idx = #items
-            end
-          end
-        end
-      )
-      if ret then
-        return unpack(ret)
-      end
+    )
+
+    if ret then
+      puzzleMenu:remove_self()
+      return unpack(ret)
+    elseif exitSet then
+      puzzleMenu:remove_self()
+      return main_select_mode, {}
     end
   end
 end
