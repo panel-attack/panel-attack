@@ -8,7 +8,7 @@ local main_config_input = require("config_inputs")
 
 local wait, resume = coroutine.yield, coroutine.resume
 
-local main_endless_select, main_timeattack_select, make_main_puzzle, main_net_vs_setup, main_select_puzz, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, exit_game, training_setup
+local main_endless_select, main_timeattack_select, makeSelectPuzzleSetFunction, main_net_vs_setup, main_select_puzz, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, exit_game, training_setup
 
 local PLAYING = "playing" -- room states
 local CHARACTERSELECT = "character select" -- room states
@@ -442,7 +442,9 @@ local function main_endless_time_setup(mode, speed, difficulty)
 
   commonGameSetup()
 
-  P1 = Stack(1, GAME.match, true, config.panels, speed, difficulty)
+  P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, speed=speed, difficulty=difficulty, character=config.character}
+  --P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, level=8, character=config.character}
+
   GAME.match.P1 = P1
   P1:wait_for_random_character()
   P1.do_countdown = config.ready_countdown_1P or false
@@ -474,16 +476,18 @@ local function main_endless_time_setup(mode, speed, difficulty)
   local function processGameResults(gameResult) 
     local extraPath, extraFilename
     local stack = P1
-    if GAME.match.mode == "endless" then
-      GAME.scores:saveEndlessScoreForLevel(P1.score, P1.difficulty)
-      extraPath = "Endless"
-      extraFilename = "Spd" .. stack.speed .. "-Dif" .. stack.difficulty .. "-endless"
-    elseif GAME.match.mode == "time" then
-      GAME.scores:saveTimeAttack1PScoreForLevel(P1.score, P1.difficulty)
-      extraPath = "Time Attack"
-      extraFilename = "Spd" .. stack.speed .. "-Dif" .. stack.difficulty .. "-timeattack"
+    if stack.level == nil then
+      if GAME.match.mode == "endless" then
+        GAME.scores:saveEndlessScoreForLevel(P1.score, P1.difficulty)
+        extraPath = "Endless"
+        extraFilename = "Spd" .. stack.speed .. "-Dif" .. stack.difficulty .. "-endless"
+      elseif GAME.match.mode == "time" then
+        GAME.scores:saveTimeAttack1PScoreForLevel(P1.score, P1.difficulty)
+        extraPath = "Time Attack"
+        extraFilename = "Spd" .. stack.speed .. "-Dif" .. stack.difficulty .. "-timeattack"
+      end
+      finalizeAndWriteReplay(extraPath, extraFilename)
     end
-    finalizeAndWriteReplay(extraPath, extraFilename)
 
     return {game_over_transition, {nextFunction, nil, P1:pick_win_sfx()}}
   end
@@ -1271,17 +1275,14 @@ function loadFromReplay(replay)
 
     GAME.battleRoom = BattleRoom()
     GAME.match = Match("vs", GAME.battleRoom)
-    P1 = Stack(1, GAME.match, false, config.panels, replay.P1_level or 5)
-    P1.character = replay.P1_char
+    P1 = Stack{which=1, match=GAME.match, is_local=false, level=replay.P1_level or 5, character=replay.P1_char}
 
     if replay.O and string.len(replay.O) > 0 then
-      P2 = Stack(2, GAME.match, false, config.panels, replay.P2_level or 5)
+      P2 = Stack{which=2, match=GAME.match, is_local=false, level=replay.P2_level or 5, character=replay.P2_char}
       
       P1.garbage_target = P2
       P2.garbage_target = P1
       P2:moveForPlayerNumber(2)
-
-      P2.character = replay.P2_char
 
       if replay.P1_win_count then
         GAME.match.battleRoom.playerWinCounts[1] = replay.P1_win_count
@@ -1316,7 +1317,7 @@ function loadFromReplay(replay)
       replay.P = replay.pan_buf -- support old versions
     end
 
-    P1 = Stack(1, GAME.match, false, config.panels, replay.speed, replay.difficulty)
+    P1 = Stack{which=1, match=GAME.match, is_local=false, speed=replay.speed, difficulty=replay.difficulty}
     GAME.match.P1 = P1
     P1:wait_for_random_character()
   end
@@ -1426,18 +1427,31 @@ function main_replay()
 end
 
 -- creates a puzzle game function for a given puzzle and index
-function make_main_puzzle(puzzleSet, awesome_idx)
+function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx)
   local next_func = nil
+  local musicSetup = false
+  local character = nil
+  local difficultyLevel = 5
   awesome_idx = awesome_idx or 1
 
   function next_func()
     
-    commonGameSetup()
+    if not musicSetup then
+      current_stage = config.stage
+      if current_stage == random_stage_special_value then
+        current_stage = nil
+      end
+      commonGameSetup()
+      musicSetup = true
+    end
 
     GAME.match = Match("puzzle")
-    P1 = Stack(1, GAME.match, true, config.panels)
+    P1 = Stack{which=1, match=GAME.match, is_local=true, level=difficultyLevel, character=character}
     GAME.match.P1 = P1
     P1:wait_for_random_character()
+    if not character then
+      character = P1.character
+    end
     P1.do_countdown = config.ready_countdown_1P or false
     P2 = nil
     local start_delay = 0
@@ -1460,7 +1474,7 @@ function make_main_puzzle(puzzleSet, awesome_idx)
     local function variableStep() 
       -- Reset puzzle button
       if player_reset() then 
-        return {main_dumb_transition, {make_main_puzzle(puzzleSet, awesome_idx), "", 0, 0}}
+        return {main_dumb_transition, {next_func, "", 0, 0, nil, true}}
       end
     end
 
@@ -1474,11 +1488,11 @@ function make_main_puzzle(puzzleSet, awesome_idx)
         if awesome_idx == 1 then
           return {game_over_transition, {main_select_puzz, loc("pl_you_win"), P1:pick_win_sfx()}}
         else
-          return {game_over_transition, {next_func, loc("pl_you_win"), P1:pick_win_sfx()}}
+          return {game_over_transition, {next_func, loc("pl_you_win"), P1:pick_win_sfx(), -1, true}}
         end
       elseif P1:puzzle_failed() then -- writes failed puzzle replay and returns to menu
         SFX_GameOver_Play = 1
-        return {game_over_transition, {make_main_puzzle(puzzleSet, awesome_idx), loc("pl_you_lose")}}
+        return {game_over_transition, {next_func, loc("pl_you_lose"), nil, -1, true}}
       end
     end
     
@@ -1519,7 +1533,7 @@ function main_select_puzz()
 
   local items = {}
   for key, val in pairsSortedByKeys(GAME.puzzleSets) do
-    items[#items + 1] = {key, make_main_puzzle(val)}
+    items[#items + 1] = {key, makeSelectPuzzleSetFunction(val)}
   end
 
   -- Ensure the last index is sane in case puzzles got reloaded differently
@@ -1528,7 +1542,6 @@ function main_select_puzz()
   local menu_x, menu_y = unpack(main_menu_screen_pos)
   puzzleMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, puzzle_menu_last_index)
   -- TODO, add level and randomize colors
-  -- TODO, fix music and stage reseting per puzzle / retry
   for i = 1, #items do
     puzzleMenu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
   end
@@ -1606,8 +1619,11 @@ function fullscreen()
 end
 
 -- dumb transition that shows a black screen
-function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
-  stop_the_music()
+function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX, keepMusic)
+  keepMusic = keepMusic or false
+  if not keepMusic then
+    stop_the_music()
+  end
   winnerSFX = winnerSFX or nil
   if not SFX_mute then
     -- TODO: somehow winnerSFX can be 0 instead of nil
@@ -1650,9 +1666,10 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
 end
 
 -- show game over screen, last frame of gameplay
-function game_over_transition(next_func, text, winnerSFX, timemax)
+function game_over_transition(next_func, text, winnerSFX, timemax, keepMusic)
   timemax = timemax or -1 -- negative values means the user needs to press enter/escape to continue
   text = text or ""
+  keepMusic = keepMusic or false
   local button_text = loc("continue_button") or ""
   local timemin = 60 -- the minimum amount of frames the game over screen will be displayed for
 
@@ -1682,18 +1699,20 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
     local ret = nil
     variable_step(
       function()
-        -- Fade the music out over time
-        local fadeMusicLength = 3 * 60
-        if t <= fadeMusicLength then
-          local percentage = (fadeMusicLength - t) / fadeMusicLength
-          for k, v in pairs(initialMusicVolumes) do
-            local volume = v * percentage
-            setFadePercentageForGivenTracks(volume, {k}, true)
-          end
-        else
-          if t == fadeMusicLength + 1 then
-            setMusicFadePercentage(1) -- reset the music back to normal config volume
-            stop_the_music()
+        if not keepMusic then
+          -- Fade the music out over time
+          local fadeMusicLength = 3 * 60
+          if t <= fadeMusicLength then
+            local percentage = (fadeMusicLength - t) / fadeMusicLength
+            for k, v in pairs(initialMusicVolumes) do
+              local volume = v * percentage
+              setFadePercentageForGivenTracks(volume, {k}, true)
+            end
+          else
+            if t == fadeMusicLength + 1 then
+              setMusicFadePercentage(1) -- reset the music back to normal config volume
+              stop_the_music()
+            end
           end
         end
 
@@ -1726,7 +1745,9 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
         -- if conditions are met, leave the game over screen
         if t >= timemin and ((t >= timemax and timemax >= 0) or (menu_enter() or menu_escape())) or left_select_menu then
           setMusicFadePercentage(1) -- reset the music back to normal config volume
-          stop_the_music()
+          if not keepMusic then
+            stop_the_music()
+          end
           SFX_GameOver_Play = 0
           analytics.game_ends(P1.analytic)
           ret = {next_func}
