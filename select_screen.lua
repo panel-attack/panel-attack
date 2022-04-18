@@ -1324,14 +1324,27 @@ function select_screen.main()
     if cursor_data[1].state.ready and select_screen.character_select_mode == "1p_vs_yourself" then
       GAME.match = Match("vs", GAME.battleRoom)
       P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
-      if GAME.battleRoom.trainingModeSettings then
+      if GAME.battleRoom.trainingModeSettings then 
         GAME.match.attackEngine = AttackEngine(P1)
         local startTime = 150
         local delayPerAttack = 6
         local attackCountPerDelay = 15
         local delay = GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME + (attackCountPerDelay * delayPerAttack) + 1
-        for i = 1, attackCountPerDelay, 1 do
-          GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        if GAME.battleRoom.trainingModeSettings.armageddon then
+          startTime = 22
+          delayPerAttack = 1
+          attackCountPerDelay = 3
+          delay = GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME + (attackCountPerDelay * delayPerAttack) + 12
+          for i = 1, attackCountPerDelay, 1 do
+            GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack)--[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]], false--[[chain]])  
+            GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, 1 + startTime + (i * delayPerAttack)--[[start time]], delay--[[repeat]], nil--[[attack count]], true--[[metal]], false--[[chain]])  
+            GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, 7 + startTime + (i * delayPerAttack * 2)--[[start time]], delay--[[repeat]], nil--[[attack count]], true--[[metal]], false--[[chain]])  
+            GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, 8 + startTime + (i * delayPerAttack * 2)--[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]], false--[[chain]])  
+          end
+        else
+          for i = 1, attackCountPerDelay, 1 do
+            GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]]) 
+          end 
         end
       end
       GAME.match.P1 = P1

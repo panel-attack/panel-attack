@@ -505,11 +505,11 @@ function training_setup()
   local trainingSettingsMenu
 
   local function update_width()
-    trainingSettingsMenu:set_button_setting(4, trainingModeSettings.width)
+    trainingSettingsMenu:set_button_setting(5, trainingModeSettings.width)
   end
 
   local function update_height()
-    trainingSettingsMenu:set_button_setting(5, trainingModeSettings.height)
+    trainingSettingsMenu:set_button_setting(6, trainingModeSettings.height)
   end
 
   local function increase_height()
@@ -572,6 +572,15 @@ function training_setup()
     ret = {main_local_vs_yourself_setup, {trainingModeSettings}}
   end
 
+  local function armageddon_settings()
+    trainingModeSettings.width = 1
+    trainingModeSettings.height = 1
+    trainingModeSettings.armageddon = true
+    update_width()
+    update_height()
+    start_custom_game()
+  end
+
   local function nextMenu()
     trainingSettingsMenu:selectNextIndex()
   end
@@ -580,6 +589,7 @@ function training_setup()
   trainingSettingsMenu:add_button(loc("factory"), factory_settings, goEscape)
   trainingSettingsMenu:add_button(loc("combo_storm"), combo_storm_settings, goEscape)
   trainingSettingsMenu:add_button(loc("large_garbage"), large_garbage_settings, goEscape)
+  trainingSettingsMenu:add_button("Armageddon", armageddon_settings, goEscape)
   trainingSettingsMenu:add_button(loc("width"), nextMenu, goEscape, decrease_width, increase_width)
   trainingSettingsMenu:add_button(loc("height"), nextMenu, goEscape, decrease_height, increase_height)
   trainingSettingsMenu:add_button(loc("go_"), start_custom_game, goEscape)
