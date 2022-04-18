@@ -436,14 +436,13 @@ local function runMainGameLoop(updateFunction, variableStepFunction, abortGameFu
   end
 end
 
-local function main_endless_time_setup(mode, speed, difficulty)
+local function main_endless_time_setup(mode, speed, difficulty, level)
 
   GAME.match = Match(mode)
 
   commonGameSetup()
 
-  P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, speed=speed, difficulty=difficulty, character=config.character}
-  --P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, level=8, character=config.character}
+  P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, speed=speed, difficulty=difficulty, level=level, character=config.character}
 
   GAME.match.P1 = P1
   P1:wait_for_random_character()
@@ -606,7 +605,11 @@ end
 local function main_select_speed_99(mode)
   -- stack rise speed
   local speed = config.endless_speed or 1
-  local difficulty = config.endless_difficulty or 1
+  local difficulty = config.endless_difficulty or nil
+  local level = config.endless_level or nil
+  if not level and not difficulty then
+    difficulty = 1
+  end
   local active_idx = 1
   local startGameSet = false
   local exitSet = false
@@ -633,7 +636,19 @@ local function main_select_speed_99(mode)
   end
 
   local function updateMenuDifficulty()
-    gameSettingsMenu:set_button_setting(2, loc_difficulties[difficulty])
+    local difficultyString = ""
+    if difficulty then
+      difficultyString = loc_difficulties[difficulty]
+    end
+    gameSettingsMenu:set_button_setting(2, difficultyString)
+  end
+
+  local function updateMenuLevel()
+    local levelString = ""
+    if level then
+      levelString = tostring(level)
+    end
+    gameSettingsMenu:set_button_setting(3, levelString)
   end
 
   local function increaseSpeed()
@@ -642,8 +657,17 @@ local function main_select_speed_99(mode)
   end
 
   local function increaseDifficulty()
-    difficulty = bound(1, difficulty + 1, 4)
+    difficulty = bound(1, (difficulty or 1) + 1, 4)
+    level = nil
     updateMenuDifficulty()
+    updateMenuLevel()
+  end
+
+  local function increaseLevel()
+    level = bound(1, (level or 1) + 1, 11)
+    difficulty = nil
+    updateMenuDifficulty()
+    updateMenuLevel()
   end
 
   local function decreaseSpeed()
@@ -652,15 +676,25 @@ local function main_select_speed_99(mode)
   end
 
   local function decreaseDifficulty()
-    difficulty = bound(1, difficulty - 1, 4)
+    difficulty = bound(1, (difficulty or 1) - 1, 4)
+    level = nil
     updateMenuDifficulty()
+    updateMenuLevel()
+  end
+
+  local function decreaseLevel()
+    level = bound(1, (level or 1) - 1, 11)
+    difficulty = nil
+    updateMenuDifficulty()
+    updateMenuLevel()
   end
 
   local function startGame()
-    if config.endless_speed ~= speed or config.endless_difficulty ~= difficulty then
+    if config.endless_speed ~= speed or config.endless_difficulty ~= difficulty or config.endless_level ~= level then
       config.endless_speed = speed
       config.endless_difficulty = difficulty
-      gprint("saving settings...", unpack(main_menu_screen_pos))
+      config.endless_level = level
+      logger.debug("saving settings...")
       wait()
       write_conf_file()
     end
@@ -675,34 +709,39 @@ local function main_select_speed_99(mode)
   local menu_x, menu_y = unpack(main_menu_screen_pos)
   menu_y = menu_y + 70
   gameSettingsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
-  gameSettingsMenu:add_button(loc("speed"), nextMenu, goEscape, decreaseSpeed, increaseSpeed)
-  gameSettingsMenu:add_button(loc("difficulty"), nextMenu, goEscape, decreaseDifficulty, increaseDifficulty)
+  gameSettingsMenu:add_button(loc("speed"), increaseSpeed, goEscape, decreaseSpeed, increaseSpeed)
+  gameSettingsMenu:add_button(loc("difficulty"), increaseDifficulty, goEscape, decreaseDifficulty, increaseDifficulty)
+  gameSettingsMenu:add_button(loc("level"), increaseLevel, goEscape, decreaseLevel, increaseLevel)
   gameSettingsMenu:add_button(loc("go_"), startGame, goEscape)
   gameSettingsMenu:add_button(loc("back"), exitSettings, exitSettings)
   updateMenuSpeed()
+  updateMenuLevel()
   updateMenuDifficulty()
 
   while true do
-    -- Draw the current score and record
-    local record = 0
-    local lastScore = 0
-    if mode == "time" then
-      lastScore = GAME.scores:lastTimeAttack1PForLevel(difficulty)
-      record = GAME.scores:recordTimeAttack1PForLevel(difficulty)
-    elseif mode == "endless" then
-      lastScore = GAME.scores:lastEndlessForLevel(difficulty)
-      record = GAME.scores:recordEndlessForLevel(difficulty)
-    end
-    local xPosition1 = 520
-    local xPosition2 = xPosition1 + 150
-    local yPosition = 270
 
-    lastScore = tostring(lastScore)
-    record = tostring(record)
-    draw_pixel_font("last score", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition, 0.5, 1.0)
-    draw_pixel_font(lastScore, themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition + 24, 0.5, 1.0)
-    draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition, 0.5, 1.0)
-    draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition + 24, 0.5, 1.0)
+    if difficulty then
+      -- Draw the current score and record
+      local record = 0
+      local lastScore = 0
+      if mode == "time" then
+        lastScore = GAME.scores:lastTimeAttack1PForLevel(difficulty)
+        record = GAME.scores:recordTimeAttack1PForLevel(difficulty)
+      elseif mode == "endless" then
+        lastScore = GAME.scores:lastEndlessForLevel(difficulty)
+        record = GAME.scores:recordEndlessForLevel(difficulty)
+      end
+      local xPosition1 = 520
+      local xPosition2 = xPosition1 + 150
+      local yPosition = 270
+
+      lastScore = tostring(lastScore)
+      record = tostring(record)
+      draw_pixel_font("last score", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition, 0.5, 1.0)
+      draw_pixel_font(lastScore, themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition + 24, 0.5, 1.0)
+      draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition, 0.5, 1.0)
+      draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition + 24, 0.5, 1.0)
+    end
 
     gameSettingsMenu:draw()
 
@@ -715,7 +754,7 @@ local function main_select_speed_99(mode)
 
     if startGameSet then
       gameSettingsMenu:remove_self()
-      return main_endless_time_setup, {mode, speed, difficulty}
+      return main_endless_time_setup, {mode, speed, difficulty, level}
     elseif exitSet then
       gameSettingsMenu:remove_self()
       return main_select_mode, {}
@@ -1431,7 +1470,6 @@ function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx)
   local next_func = nil
   local musicSetup = false
   local character = nil
-  local difficultyLevel = 5
   awesome_idx = awesome_idx or 1
 
   function next_func()
@@ -1446,7 +1484,7 @@ function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx)
     end
 
     GAME.match = Match("puzzle")
-    P1 = Stack{which=1, match=GAME.match, is_local=true, level=difficultyLevel, character=character}
+    P1 = Stack{which=1, match=GAME.match, is_local=true, level=config.puzzle_level, character=character}
     GAME.match.P1 = P1
     P1:wait_for_random_character()
     if not character then
@@ -1459,6 +1497,7 @@ function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx)
       awesome_idx = math.random(#puzzleSet.puzzles)
     end
     local puzzle = puzzleSet.puzzles[awesome_idx]
+    puzzle.randomizeColors = config.puzzle_randomColors
     local isValid, validationError = puzzle:validate()
     if isValid then
       P1:set_puzzle_state(puzzle)
@@ -1513,10 +1552,19 @@ function main_select_puzz()
   local exitSet = false
   local puzzleMenu
   local ret = nil
+  local level = config.puzzle_level or 5
+  local randomColors = config.puzzle_randomColors or false
 
   local function selectFunction(myFunction, args)
     local function constructedFunction()
       puzzle_menu_last_index = puzzleMenu.active_idx
+      if config.puzzle_level ~= level or config.puzzle_randomColors ~= randomColors then
+        config.puzzle_level = level
+        config.puzzle_randomColors = randomColors
+        logger.debug("saving settings...")
+        wait()
+        write_conf_file()
+      end
       puzzleMenu:remove_self()
       ret = {myFunction, args}
     end
@@ -1539,13 +1587,42 @@ function main_select_puzz()
   -- Ensure the last index is sane in case puzzles got reloaded differently
   puzzle_menu_last_index = wrap(1, puzzle_menu_last_index, #items)
 
+  local function updateMenuLevel()
+    local levelString = ""
+    if level then
+      levelString = tostring(level)
+    end
+    puzzleMenu:set_button_setting(1, levelString)
+  end
+
+  local function increaseLevel()
+    level = bound(1, (level or 1) + 1, 11)
+    updateMenuLevel()
+  end
+
+  local function decreaseLevel()
+    level = bound(1, (level or 1) - 1, 11)
+    updateMenuLevel()
+  end
+
+  local function update_randomColors(noToggle)
+    if not noToggle then
+      randomColors = not randomColors
+    end
+    puzzleMenu:set_button_setting(2, randomColors and loc("op_on") or loc("op_off"))
+  end
+
   local menu_x, menu_y = unpack(main_menu_screen_pos)
   puzzleMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, puzzle_menu_last_index)
   -- TODO, add level and randomize colors
+  puzzleMenu:add_button(loc("level"), increaseLevel, goEscape, decreaseLevel, increaseLevel)
+  puzzleMenu:add_button(loc("randomColors"), update_randomColors, goEscape, update_randomColors, update_randomColors)
   for i = 1, #items do
     puzzleMenu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
   end
   puzzleMenu:add_button(loc("back"), exitSettings, exitSettings)
+  updateMenuLevel()
+  update_randomColors(true)
 
   while true do
     puzzleMenu:draw()

@@ -123,6 +123,15 @@ function read_conf_file()
       if type(read_data.endless_difficulty) == "number" then
         config.endless_difficulty = bound(1, read_data.endless_difficulty, 3)
       end
+      if type(read_data.endless_level) == "number" then
+        config.endless_level = bound(1, read_data.endless_level, 11)
+      end
+      if type(read_data.puzzle_level) == "number" then
+        config.puzzle_level = bound(1, read_data.puzzle_level, 11)
+      end
+      if type(read_data.puzzle_randomColors) == "boolean" then
+        config.puzzle_randomColors = read_data.puzzle_randomColors
+      end
 
       if type(read_data.name) == "string" then
         config.name = read_data.name
