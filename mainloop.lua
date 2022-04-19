@@ -607,6 +607,10 @@ local function main_select_speed_99(mode)
   local speed = config.endless_speed or 1
   local difficulty = config.endless_difficulty or nil
   local level = config.endless_level or nil
+  if level then
+    difficulty = nil
+    speed = nil
+  end
   if not level and not difficulty then
     difficulty = 1
   end
@@ -652,40 +656,52 @@ local function main_select_speed_99(mode)
   end
 
   local function increaseSpeed()
-    speed = bound(1, speed + 1, 99)
-    updateMenuSpeed()
+    if speed then
+      speed = bound(1, speed + 1, 99)
+      updateMenuSpeed()
+    end
   end
 
   local function increaseDifficulty()
     difficulty = bound(1, (difficulty or 1) + 1, 4)
     level = nil
+    speed = config.endless_speed or 1
     updateMenuDifficulty()
+    updateMenuSpeed()
     updateMenuLevel()
   end
 
   local function increaseLevel()
     level = bound(1, (level or 1) + 1, 11)
     difficulty = nil
+    speed = nil
     updateMenuDifficulty()
+    updateMenuSpeed()
     updateMenuLevel()
   end
 
   local function decreaseSpeed()
-    speed = bound(1, speed - 1, 99)
-    updateMenuSpeed()
+    if speed then
+      speed = bound(1, speed - 1, 99)
+      updateMenuSpeed()
+    end
   end
 
   local function decreaseDifficulty()
     difficulty = bound(1, (difficulty or 1) - 1, 4)
     level = nil
+    speed = config.endless_speed or 1
     updateMenuDifficulty()
+    updateMenuSpeed()
     updateMenuLevel()
   end
 
   local function decreaseLevel()
     level = bound(1, (level or 1) - 1, 11)
     difficulty = nil
+    speed = nil
     updateMenuDifficulty()
+    updateMenuSpeed()
     updateMenuLevel()
   end
 
@@ -709,9 +725,9 @@ local function main_select_speed_99(mode)
   local menu_x, menu_y = unpack(main_menu_screen_pos)
   menu_y = menu_y + 70
   gameSettingsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
-  gameSettingsMenu:add_button(loc("speed"), increaseSpeed, goEscape, decreaseSpeed, increaseSpeed)
-  gameSettingsMenu:add_button(loc("difficulty"), increaseDifficulty, goEscape, decreaseDifficulty, increaseDifficulty)
-  gameSettingsMenu:add_button(loc("level"), increaseLevel, goEscape, decreaseLevel, increaseLevel)
+  gameSettingsMenu:add_button(loc("speed"), nextMenu, goEscape, decreaseSpeed, increaseSpeed)
+  gameSettingsMenu:add_button(loc("difficulty"), nextMenu, goEscape, decreaseDifficulty, increaseDifficulty)
+  gameSettingsMenu:add_button(loc("level"), nextMenu, goEscape, decreaseLevel, increaseLevel)
   gameSettingsMenu:add_button(loc("go_"), startGame, goEscape)
   gameSettingsMenu:add_button(loc("back"), exitSettings, exitSettings)
   updateMenuSpeed()
@@ -1612,10 +1628,14 @@ function main_select_puzz()
     puzzleMenu:set_button_setting(2, randomColors and loc("op_on") or loc("op_off"))
   end
 
+  local function nextMenu()
+    puzzleMenu:selectNextIndex()
+  end
+
   local menu_x, menu_y = unpack(main_menu_screen_pos)
   puzzleMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, puzzle_menu_last_index)
   -- TODO, add level and randomize colors
-  puzzleMenu:add_button(loc("level"), increaseLevel, goEscape, decreaseLevel, increaseLevel)
+  puzzleMenu:add_button(loc("level"), nextMenu, goEscape, decreaseLevel, increaseLevel)
   puzzleMenu:add_button(loc("randomColors"), update_randomColors, goEscape, update_randomColors, update_randomColors)
   for i = 1, #items do
     puzzleMenu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
