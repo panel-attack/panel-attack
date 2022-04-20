@@ -16,6 +16,10 @@ Note: folders starting with "__" will be ignored upon loading. You may choose to
 
 Note: non-optional data that are missing will automatically get replaced by default ones so they are kinda optional in that sense
 
+~~ [.ttf] ~~
+
+- "font": add this file to customize the font
+
 ~~ [.txt] ~~
 
 - "characters": add this file with one character ID per line to limit characters you can pick and random characters

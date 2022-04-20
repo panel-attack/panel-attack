@@ -274,6 +274,10 @@ function Theme.graphics_init(self)
       self.images.IMG_char_sel_cursor_halves.right[player_num][position_num] = love.graphics.newQuad(half_width, 0, half_width, cur_height, cur_width, cur_height)
     end
   end
+
+  if love.filesystem.getInfo("themes/" .. config.theme .. "/font.ttf") then
+    set_global_font("themes/" .. config.theme .. "/font.ttf", 12)
+  end
 end
 
 -- applies the config volume to the theme
