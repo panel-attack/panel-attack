@@ -25,8 +25,13 @@ local Slider = class(
     self._value_text = love.graphics.newText(love.graphics.getFont(), self.value)
     
     slider_manager.add_slider(self)
+    self.TYPE = "Slider"
   end
 )
+
+function Slider:setVisibility(is_visible)
+  self.is_visible = is_visible
+end
 
 function Slider:remove()
   slider_manager.remove_slider(self)

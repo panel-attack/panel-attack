@@ -9,13 +9,18 @@ local Label = class(
     self.width = options.width or 110
     self.height = options.height or 25
     self.text = options.text or love.graphics.newText(love.graphics.getFont(), "Label")
-    self.isVisible = options.isVisible or options.isVisible == nil and true
+    self.is_visible = options.is_visible or options.is_visible == nil and true
     
     local text_width, text_height = self.text:getDimensions()
     self.width = math.max(text_width + 6, self.width)
     self.height = math.max(text_height + 6, self.height)
+    self.TYPE = "Label"
   end
 )
+
+function Label:setVisibility(is_visible)
+  self.is_visible = is_visible
+end
 
 function Label:draw()
   local dark_gray = .5

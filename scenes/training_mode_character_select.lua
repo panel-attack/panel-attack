@@ -6,7 +6,6 @@ local training_mode_character_select = CharacterSelect(
   {previous_scene = "training_mode_menu"})
 
 function training_mode_character_select:matchSetup(match)
-  print("SETUP MATCH")
   GAME.match.attackEngine = AttackEngine(GAME.match.P1)
   local startTime = 150
   local delayPerAttack = 6

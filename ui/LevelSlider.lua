@@ -17,6 +17,7 @@ local LevelSlider = class(
     self.value = options.value or math.floor((self.max - self.min) / 2)
     self.onValueChange = options.onValueChange or function() end
     slider_manager.add_slider(self)
+    self.TYPE = "SLIDER"
   end,
   Slider)
 

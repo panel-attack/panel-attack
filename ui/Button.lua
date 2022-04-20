@@ -36,6 +36,10 @@ local Button = class(
   end
 )
 
+function Button:setVisibility(is_visible)
+  self.is_visible = is_visible
+end
+
 function Button:remove()
   button_manager.remove_button(self)
 end

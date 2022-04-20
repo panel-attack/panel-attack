@@ -10,6 +10,7 @@ local ServerQueue = require("ServerQueue")
 local Button = require("ui.Button")
 local Slider = require("ui.Slider")
 local Label = require("ui.Label")
+local Menu = require("ui.Menu")
 local scene_manager = require("scenes.scene_manager")
 local input = require("input2")
 
@@ -57,9 +58,6 @@ local function largeGarbageSettings()
   height_slider:setValue(12)
 end
 
-local font = love.graphics.getFont()
-local arrow = love.graphics.newText(font, ">")
-
 local function startGame()
   stop_the_music()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
@@ -73,6 +71,7 @@ local function exitMenu()
   scene_manager:switchScene("main_menu")
 end
 
+local font = love.graphics.getFont()
 local menu_options = {
   Button({text = love.graphics.newText(font, loc("factory")), onClick = factorySettings, is_visible = false}),
   Button({text = love.graphics.newText(font, loc("combo_storm")), onClick = comboStormSettings, is_visible = false}),
@@ -84,20 +83,18 @@ local menu_options = {
 }
 
 function training_mode_menu:init()
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
-  menu_y = menu_y + 100
-  
-  for i, button in ipairs(menu_options) do
-    button.x = menu_x + 25
-    button.y = i > 1 and menu_options[i - 1].y + menu_options[i - 1].height + 5 or menu_y
-    button.width = 110
-    button.height = 25
-  end
-  width_slider.x = menu_x + 110 + 25 + 20
-  width_slider.y = menu_options[4].y + menu_options[4].height / 2
-  height_slider.x = menu_x + 110 + 25 + 20
-  height_slider.y = menu_options[5].y + menu_options[5].height / 2
-  
+  local x, y = unpack(main_menu_screen_pos)
+  y = y + 100
+  self.menu = Menu({
+      {menu_options[1]},
+      {menu_options[2]},
+      {menu_options[3]},
+      {menu_options[4], width_slider},
+      {menu_options[5], height_slider},
+      {menu_options[6]},
+      {menu_options[7]},
+      }, {x = x, y = y})
+  self.menu:setVisibility(false)
   scene_manager:addScene(training_mode_menu)
 end
 
@@ -108,60 +105,16 @@ function training_mode_menu:load()
     find_and_add_music(themes[config.theme].musics, "main")
   end
   
-  width_slider.is_visible = true
-  height_slider.is_visible = true
-  for i, button in ipairs(menu_options) do
-    button.is_visible = true
-  end
+  self.menu:setVisibility(true)
 end
 
-function training_mode_menu:update()    
-  if input:isPressedWithRepeat("down", .25, .05) then
-    selected_id = (selected_id % #menu_options) + 1
-    play_optional_sfx(themes[config.theme].sounds.menu_move)
-  end
-  
-  if input:isPressedWithRepeat("up", .25, .05) then
-    selected_id = ((selected_id - 2) % #menu_options) + 1
-    play_optional_sfx(themes[config.theme].sounds.menu_move)
-  end
-  
-  if input:isPressedWithRepeat("left", .25, .05) then
-    if selected_id == 4 then
-      width_slider:setValue(width_slider.value - 1)
-    elseif selected_id == 5 then
-      height_slider:setValue(height_slider.value - 1)
-    end
-  end
-
-  if input:isPressedWithRepeat("right", .25, .05) then
-    if selected_id == 4 then
-      width_slider:setValue(width_slider.value + 1)
-    elseif selected_id == 5 then
-      height_slider:setValue(height_slider.value + 1)
-    end
-  end
-  
-  if input.isDown["return"] and selected_id ~= 4 and selected_id ~= 5 then
-    menu_options[selected_id].onClick()
-  end
-  
-  for i = 4, 5 do
-    menu_options[i]:draw()
-  end
-  
-  local animationX = (math.cos(6 * love.timer.getTime()) * 5) - 9
-  local arrowx = menu_options[selected_id].x - 10 + animationX
-  local arrowy = menu_options[selected_id].y + menu_options[selected_id].height / 4
-  GAME.gfx_q:push({love.graphics.draw, {arrow, arrowx, arrowy, 0, 1, 1, 0, 0}})
+function training_mode_menu:update()
+  self.menu:update()
+  self.menu:draw()
 end
 
 function training_mode_menu:unload()
-  for i, button in ipairs(menu_options) do
-    button.is_visible = false
-  end
-  width_slider.is_visible = false
-  height_slider.is_visible = false
+  self.menu:setVisibility(false)
 end
 
 return training_mode_menu
