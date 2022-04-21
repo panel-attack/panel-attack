@@ -211,6 +211,11 @@ nt_ver_err,,PLEASE DOWNLOAD the latest version of the game from #welcome-getting
 nt_conn_timeout,,Failed to connect to the server.,Impossible de se connecter au serveur.,Falha ao conectar o servidor.,サーバーに接続が失敗しました。,Error al conectarse al servidor.,Konnte keine Verbindung zum Server herstellen.,Errore di connessione al server.
 nt_msg_err,,"Network error, message could not be decoded: ""%1""","Erreur réseau, le message ne peut pas être décodé: ""%1""","Erro de conexão, a mensagem não pôde ser codificada: ""%1""","ネットワークエラー、メッセージのデコード失敗: ""%1""","Error de red, el mensaje no pudo ser decodificado: ""%1""","Netzwerkfehler, die folgende Nachricht konnte nicht entschlüsselt werden: %1","Errore di network, il messaggio non può essere decodificato: ""%1"""
 nt_player_err,,Server did not send number of players.,Le serveur n'a pas envoyé le nombre de joueurs.,O servidor não emitiu nº de jogadores.,サーバーからプレイヤー人数を受信しませんでした。,El servidor no envio la cantidad de jugadores.,Server schickte nicht die Anzahl der Spieler,Il server non ha inviato il numero di giocatori.
+op_general,Options: General,General,Général,Em geral,全般的,General,Allgemein,Generale
+op_graphics,Options: Graphics,Graphics,Graphique,Gráficos,グラフィック,Gráficos,Grafik,Grafica
+op_audio,Options: Audio,Audio,l'audio,Áudio.,オーディオ,Audio,Audio,Audio
+op_debug,Options: Debug,Debug,Déboguer,Depurar,デバッグ,Depurar,Debuggen,Debug.
+op_about,Options: About,About,Sur,Sobre,だいたい,Sobre,Über,Di
 op_none,,none,rien,Nenhum,無し,Nada,keine,Niente
 op_on,,On,On,Ativ.,ON,On,An,On
 op_off,,Off,Off,Desat.,OFF,Off,Aus,Off
@@ -310,6 +315,8 @@ op_vsync,,V-Sync,V-Sync,V-Sync,垂直同期,Sincronización Vertical (V-Sync),V-
 op_input_delay,,Key repeat delay (offline only),Délai de répétition des touches,Atraso na repetição das teclas (apenas offline),DAS 設定（オフラインのみ）,Retraso de repetición de las teclas (Solo fuera de línea),Verzögerung für die Tastenwiederholung bei gedrückt halten (nur offline),Ritardo della ripetizione dell'input (solo offline)
 op_portrait_darkness,Options: darkness of the portraits in game,Portrait Darkness,Portrait Obscurité,Claridade de Retratos,背景の暗さ,Retrato Oscuridad,Helligkeit des Charakterporträts während des Spiels,Oscurità del ritratto
 op_popfx,Options: Whether pop effects should show,Pop Effects,Effets Pop,Efeitos de Explosão,パネル消しエフェクト,efectos pop,Popeffekte,Effetti pop
+op_renderTelegraph,Options: Whether the telegraph above the stack should show,Show Telegraph,Montrer le télégraphe,Mostrar telégrafo,テレグラフを表示,Mostrar telégrafo,Telegraph zeigen.,Mostra telegrafo
+op_renderAttacks,Options: Whether the telegraph attack animations should show,Show Attacks,Montrer des attaques,Mostrar ataques,攻撃を示す,Mostrar ataques,Angriffe anzeigen.,Mostra attacchi
 op_cardfx_scale,Options: how far away the popfx particles converge onto your combo/chain before it pops,Attack Particle Distance,Distance des particules d'attaque,Alcance de Partículas de Ataque,攻撃パーティクル発生距離,Distancia de partículas de ataque,Skalierung der Popeffekte bei Kombos und Ketten,Distanza delle particelle di attacco
 opponent_level,,Opponent's level,Niveau adverse,Nível do oponente,相手のレベル,Nivel del oponente,Level des Gegners,Livello dell'avversario
 pl_pause_help,,Press Start again to resume,Appuyer sur Start pour continuer,Pressione Começar novamente para continuar,STARTで再開,"Presiona ""Start"" para resumir",Drücke Start um fortzufahren,"Premi ""Start"" di nuovo per riprendere"

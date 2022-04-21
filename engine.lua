@@ -53,25 +53,8 @@ Stack =
     if s.match.mode == "2ptime" or s.match.mode == "vs" then
       local level = speed or 5
       s.character = (type(difficulty) == "string") and difficulty or s.character -- we used the difficulty variable for the character....
-      s.level = level
+      s:setLevel(level)
       speed = level_to_starting_speed[level]
-      --difficulty           = level_to_difficulty[level]
-      s.speed_times = {15 * 60, idx = 1, delta = 15 * 60}
-      s.max_health = level_to_hang_time[level]
-      s.FRAMECOUNT_HOVER = level_to_hover[s.level]
-      s.FRAMECOUNT_GPHOVER = level_to_garbage_panel_hover[s.level]
-      s.FRAMECOUNT_FLASH = level_to_flash[s.level]
-      s.FRAMECOUNT_FACE = level_to_face[s.level]
-      s.FRAMECOUNT_POP = level_to_pop[s.level]
-      s.combo_constant = level_to_combo_constant[s.level]
-      s.combo_coefficient = level_to_combo_coefficient[s.level]
-      s.chain_constant = level_to_chain_constant[s.level]
-      s.chain_coefficient = level_to_chain_coefficient[s.level]
-      if s.match.mode == "2ptime" then
-        s.NCOLORS = level_to_ncolors_time[level]
-      else
-        s.NCOLORS = level_to_ncolors_vs[level]
-      end
     end
     s.health = s.max_health
 
@@ -232,6 +215,27 @@ Stack =
     s.totalFramesBehind = 0
 
   end)
+
+function Stack.setLevel(self, level)
+  self.level = level
+  --difficulty           = level_to_difficulty[level]
+  self.speed_times = {15 * 60, idx = 1, delta = 15 * 60}
+  self.max_health = level_to_hang_time[level]
+  self.FRAMECOUNT_HOVER = level_to_hover[level]
+  self.FRAMECOUNT_GPHOVER = level_to_garbage_panel_hover[level]
+  self.FRAMECOUNT_FLASH = level_to_flash[level]
+  self.FRAMECOUNT_FACE = level_to_face[level]
+  self.FRAMECOUNT_POP = level_to_pop[level]
+  self.combo_constant = level_to_combo_constant[level]
+  self.combo_coefficient = level_to_combo_coefficient[level]
+  self.chain_constant = level_to_chain_constant[level]
+  self.chain_coefficient = level_to_chain_coefficient[level]
+  if self.match.mode == "2ptime" then
+    self.NCOLORS = level_to_ncolors_time[level]
+  else
+    self.NCOLORS = level_to_ncolors_vs[level]
+  end
+end
 
 -- Positions the stack draw position for the given player
 function Stack.moveForPlayerNumber(stack, player_num)
@@ -402,8 +406,8 @@ end
 function Stack.restoreFromRollbackCopy(self, other)
   self:rollbackCopy(other, self)
   if self.telegraph then
-    self.telegraph.owner = self
-    self.telegraph.sender = self.garbage_target
+    self.telegraph.owner = self.garbage_target
+    self.telegraph.sender = self
   end
   -- The remaining inputs is the confirmed inputs not processed yet for this clock time
   -- We have processed CLOCK time number of inputs when we are at CLOCK, so we only want to process the CLOCK+1 input on
@@ -427,18 +431,12 @@ function Stack.rollbackToFrame(self, frame)
     assert(prev_states[frame])
     self:restoreFromRollbackCopy(prev_states[frame])
 
-    if self.garbage_target and self.garbage_target.telegraph then
+    if self.garbage_target and self.garbage_target.later_garbage then
       -- The garbage that we send this time might (rarely) not be the same
       -- as the garbage we sent before.  Wipe out the garbage we sent before...
-      for k, v in pairs(self.garbage_target.telegraph.pendingGarbage) do
+      for k, v in pairs(self.garbage_target.later_garbage) do
         if k > frame then
-          self.garbage_target.telegraph.pendingGarbage[k] = nil
-        end
-      end
-
-      for k, v in pairs(self.garbage_target.telegraph.pendingChainingEnded) do
-        if k > frame then
-          self.garbage_target.telegraph.pendingChainingEnded[k] = nil
+          self.garbage_target.later_garbage[k] = nil
         end
       end
     end
@@ -473,9 +471,9 @@ end
 
 function Stack.set_garbage_target(self, new_target)
   self.garbage_target = new_target
-  if new_target.telegraph then
-    new_target.telegraph.sender = self
-    new_target.telegraph.garbage_queue.sender = self
+  if self.telegraph then
+    self.telegraph.owner = new_target
+    self.telegraph:updatePosition()
   end
 end
 
@@ -618,29 +616,95 @@ function Panel.clear_flags(self)
   self.state = "normal"
 end
 
-function Stack.set_puzzle_state(self, pstr, n_turns, do_countdown, puzzleType)
+function Stack.set_puzzle_state(self, puzzle)
   -- Copy the puzzle into our state
-  puzzleType = puzzleType or "moves"
-  do_countdown = do_countdown or false
-  pstr = string.gsub(pstr, "%s+", "") -- Remove whitespace so files can be easier to read
-  local sz = self.width * self.height
-  while string.len(pstr) < sz do
-    pstr = "0" .. pstr
+  self:setLevel(5)
+  local boardSizeInPanels = self.width * self.height
+  while string.len(puzzle.stack) < boardSizeInPanels do
+    puzzle.stack = "0" .. puzzle.stack
   end
-  local idx = 1
-  local panels = self.panels
-  for row = self.height, 1, -1 do
-    for col = 1, self.width do
-      panels[row][col]:clear()
-      panels[row][col].color = string.sub(pstr, idx, idx) + 0
-      idx = idx + 1
-    end
+
+  self.panels = self:puzzleStringToPanels(puzzle.stack)
+  self.do_countdown = puzzle.do_countdown or false
+  self.puzzleType = puzzle.puzzleType or "moves"
+  if puzzle.moves ~= 0 then
+    self.puzzle_moves = puzzle.moves
   end
-  self.do_countdown = do_countdown
-  self.puzzleType = puzzleType
-  if n_turns ~= 0 then
-    self.puzzle_moves = n_turns
+
+  -- transform any cleared garbage into colorless garbage panels
+  self.gpanel_buffer = "9999999999999999999999999999999999999999999999999999999999999999999999999"
+end
+
+function Stack.puzzleStringToPanels(self, puzzleString)
+  local panels = {}
+  local garbageStartRow = nil
+  local garbageStartColumn = nil
+  local isMetal = false
+  local connectedGarbagePanels = nil
+  -- chunk the aprilstack into rows
+  -- it is necessary to go bottom up because garbage block panels contain the offset relative to their bottom left corner
+  for row = 1, 12 do
+      local rowString = string.sub(puzzleString, #puzzleString - 5, #puzzleString)
+      puzzleString = string.sub(puzzleString, 1, #puzzleString - 6)
+      -- copy the panels into the row
+      panels[row] = {}
+      for column = 6, 1, -1 do
+          local color = string.sub(rowString, column, column)
+          if not garbageStartRow and tonumber(color) then
+            local panel = Panel()
+            panel.color = tonumber(color)
+            panels[row][column] = panel
+          else
+            -- start of a garbage block
+            if color == "]" or color == "}" then
+              garbageStartRow = row
+              garbageStartColumn = column
+              connectedGarbagePanels = {}
+              if color == "}" then
+                isMetal = true
+              end
+            end
+            local panel = Panel()
+            panel.garbage = true
+            panel.color = 9
+            panel.y_offset = row - garbageStartRow
+            -- iterating the row right to left to make sure we catch the start of each garbage block
+            -- but the offset is expected left to right, therefore we can't know the x_offset before reaching the end of the garbage
+            -- instead save the column index in that field to calculate it later
+            panel.x_offset = column
+            panel.metal = isMetal
+            panels[row][column] = panel
+            table.insert(connectedGarbagePanels, panel)
+            -- garbage ends here
+            if color == "[" or color == "{" then
+              -- calculate dimensions of the garbage and add it to the relevant width/height properties
+              local height = connectedGarbagePanels[#connectedGarbagePanels].y_offset + 1
+              -- this is disregarding the possible existence of irregularly shaped garbage
+              local width = garbageStartColumn - column + 1
+              for i = 1, #connectedGarbagePanels do
+                connectedGarbagePanels[i].x_offset = connectedGarbagePanels[i].x_offset - column
+                connectedGarbagePanels[i].height = height
+                connectedGarbagePanels[i].width = width
+                -- panels are already in the main table and they should already be updated by reference
+              end
+              garbageStartRow = nil
+              garbageStartColumn = nil
+              connectedGarbagePanels = nil
+              isMetal = false
+            end
+          end
+      end
   end
+
+  -- add row 0 because it crashes if there is no row 0 for whatever reason
+  panels[0] = {}
+  for column = 6, 1, -1 do
+    local panel = Panel()
+    panel.color = 0
+    panels[0][column] = panel
+  end
+
+  return panels
 end
 
 function Stack.puzzle_done(self)
@@ -1098,7 +1162,7 @@ function Stack.simulate(self)
       end
     end
 
-    if not self.panels_in_top_row then
+    if not self.panels_in_top_row and not self:has_falling_garbage() then
       self.health = self.max_health
     end
 
@@ -1121,10 +1185,6 @@ function Stack.simulate(self)
       for col = 1, width do
         panels[row][col].match_anyway = nil
       end
-    end
-
-    if self.telegraph then
-      self.telegraph:update()
     end
 
     -- Phase 2. /////////////////////////////////////////////////////////////
@@ -1502,7 +1562,7 @@ function Stack.simulate(self)
       self.chain_counter = 0
 
       if self.garbage_target and self.garbage_target.telegraph then
-        self.garbage_target.telegraph:chainingEnded(self.CLOCK)
+        self.telegraph:chainingEnded(self.CLOCK)
       end
     end
 
@@ -1525,11 +1585,10 @@ function Stack.simulate(self)
     if self.telegraph then
       local to_send = self.telegraph:pop_all_ready_garbage(self.CLOCK)
       if to_send and to_send[1] then
-        local garbage = self.later_garbage[self.CLOCK+1] or {}
-        for i = 1, #to_send do
-          garbage[#garbage + 1] = to_send[i]
-        end
-        self.later_garbage[self.CLOCK+1] = garbage
+        -- Right now the training attacks are put on the players telegraph, 
+        -- but they really should be a seperate telegraph since the telegraph on the player's stack is for sending outgoing attacks.
+        local receiver = self.garbage_target or self 
+        receiver:receiveGarbage(self.CLOCK + GARBAGE_DELAY_LAND_TIME, to_send)
       end
     end
     
@@ -1808,6 +1867,20 @@ function Stack.simulate(self)
 
   self:update_popfxs()
   self:update_cards()
+end
+
+function Stack:receiveGarbage(frameToReceive, garbageList)
+
+  -- If we are past the frame the attack would be processed we need to rollback
+  if self.CLOCK > frameToReceive then
+    self:rollbackToFrame(frameToReceive)
+  end
+
+  local garbage = self.later_garbage[frameToReceive] or {}
+  for i = 1, #garbageList do
+    garbage[#garbage + 1] = garbageList[i]
+  end
+  self.later_garbage[frameToReceive] = garbage
 end
 
 function Stack:updateFramesBehind()
@@ -2330,8 +2403,8 @@ function Stack.check_matches(self)
 
   if (combo_size ~= 0) then
     self.combos[self.CLOCK] = combo_size
-    if self.garbage_target and self.garbage_target.telegraph and metal_count == 3 and combo_size >= 3 then
-      self.garbage_target.telegraph:push({6, 1, true, false}, first_panel_col, first_panel_row, self.CLOCK)
+    if self.garbage_target and self.telegraph and metal_count == 3 and combo_size >= 3 then
+      self.telegraph:push({6, 1, true, false}, first_panel_col, first_panel_row, self.CLOCK)
     end
     self.analytic:register_destroyed_panels(combo_size)
     if (combo_size > 3) then
@@ -2349,16 +2422,16 @@ function Stack.check_matches(self)
       end
 
       self:enqueue_card(false, first_panel_col, first_panel_row, combo_size)
-      if self.garbage_target and self.garbage_target.telegraph then
+      if self.garbage_target and self.telegraph then
         if metal_count > 3 then
           for i = 3, metal_count do
-            self.garbage_target.telegraph:push({6, 1, true, false}, first_panel_col, first_panel_row, self.CLOCK)
+            self.telegraph:push({6, 1, true, false}, first_panel_col, first_panel_row, self.CLOCK)
           end
         end
         if metal_count ~= combo_size then
           local combo_pieces = combo_garbage[combo_size]
           for i=1,#combo_pieces do
-            self.garbage_target.telegraph:push({combo_pieces[i], 1, false, false}, first_panel_col, first_panel_row, self.CLOCK)
+            self.telegraph:push({combo_pieces[i], 1, false, false}, first_panel_col, first_panel_row, self.CLOCK)
           end
         end
       end
@@ -2376,8 +2449,8 @@ function Stack.check_matches(self)
       self:enqueue_card(true, first_panel_col, first_panel_row, self.chain_counter)
     --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
     --          first_panel_row<<4+P1StackPosY+self.displacement-9);
-      if self.garbage_target and self.garbage_target.telegraph then
-        self.garbage_target.telegraph:push({6, self.chain_counter - 1, false, true}, first_panel_col, first_panel_row, self.CLOCK)
+      if self.garbage_target and self.telegraph then
+        self.telegraph:push({6, self.chain_counter - 1, false, true}, first_panel_col, first_panel_row, self.CLOCK)
       end
     end
     local chain_bonus = self.chain_counter

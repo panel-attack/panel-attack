@@ -47,11 +47,13 @@ local config = {
   portrait_darkness             = 70,
   popfx                         = true,
   cardfx_scale                  = 100,
-  window_x = 800,
-  window_y = 400,
-  display = 1,
-  fullscreen = false,
-  defaultPanelsCopied = false
+  window_x                      = 800,
+  window_y                      = 400,
+  display                       = 1,
+  fullscreen                    = false,
+  defaultPanelsCopied           = false,
+  renderTelegraph               = true,
+  renderAttacks                 = true
 }
 
 return config
