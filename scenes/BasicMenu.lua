@@ -73,13 +73,13 @@ function BasicMenu:init()
   
   local x, y = unpack(main_menu_screen_pos)
   y = y + 100
-  BasicMenu.menu = Menu({
+  self.menu = Menu({
       {menu_options[1], speed_slider},
       {menu_options[2], difficulty_buttons},
       {menu_options[3]},
       {menu_options[4]},
       }, {x = x, y = y})
-  BasicMenu.menu:setVisibility(false)
+  self.menu:setVisibility(false)
 end
 
 function BasicMenu:load()
@@ -94,7 +94,7 @@ function BasicMenu:load()
     button.height = 25
   end
   
-  BasicMenu.menu:setVisibility(true)
+  self.menu:setVisibility(true)
 end
 
 function BasicMenu:update()  
@@ -109,12 +109,12 @@ function BasicMenu:update()
   draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition, 0.5, 1.0)
   draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition + 24, 0.5, 1.0)
   
-  BasicMenu.menu:update()
-  BasicMenu.menu:draw()
+  self.menu:update()
+  self.menu:draw()
 end
 
 function BasicMenu:unload()  
-  BasicMenu.menu:setVisibility(false)
+  self.menu:setVisibility(false)
 end
 
 return BasicMenu
