@@ -35,7 +35,7 @@ local Menu = class(
     self.menu_items = menu_items
     self.x = options.x or 0
     self.y = options.y or 0
-    self.selected_id_ = 1
+    self.selected_id = 1
     updatePos(self, self.x, self.y)
   end
 )
@@ -55,62 +55,62 @@ end
 
 function Menu:update()
   if input:isPressedWithRepeat("down", .25, .05) then
-    self.selected_id_ = (self.selected_id_ % #self.menu_items) + 1
+    self.selected_id = (self.selected_id % #self.menu_items) + 1
     play_optional_sfx(themes[config.theme].sounds.menu_move)
   end
   
   if input:isPressedWithRepeat("up", .25, .05) then
-    self.selected_id_ = ((self.selected_id_ - 2) % #self.menu_items) + 1
+    self.selected_id = ((self.selected_id - 2) % #self.menu_items) + 1
     play_optional_sfx(themes[config.theme].sounds.menu_move)
   end
   
   if input:isPressedWithRepeat("left", .25, .05) then
-    if self.menu_items[self.selected_id_][2] then
-      if self.menu_items[self.selected_id_][2].TYPE == "Slider" then
-        local slider = self.menu_items[self.selected_id_][2]
+    if self.menu_items[self.selected_id][2] then
+      if self.menu_items[self.selected_id][2].TYPE == "Slider" then
+        local slider = self.menu_items[self.selected_id][2]
         slider:setValue(slider.value - 1)
       end
-      if self.menu_items[self.selected_id_][2].TYPE == "ButtonGroup" then
-        local button_group = self.menu_items[self.selected_id_][2]
+      if self.menu_items[self.selected_id][2].TYPE == "ButtonGroup" then
+        local button_group = self.menu_items[self.selected_id][2]
         button_group:setActiveButton(button_group.selected_index - 1)
       end
     end
   end
 
   if input:isPressedWithRepeat("right", .25, .05) then
-    if self.menu_items[self.selected_id_][2] then
-      if self.menu_items[self.selected_id_][2].TYPE == "Slider" then
-        local slider = self.menu_items[self.selected_id_][2]
+    if self.menu_items[self.selected_id][2] then
+      if self.menu_items[self.selected_id][2].TYPE == "Slider" then
+        local slider = self.menu_items[self.selected_id][2]
         slider:setValue(slider.value + 1)
         --self:setDifficulty(difficulty - 1)
       end
-      if self.menu_items[self.selected_id_][2].TYPE == "ButtonGroup" then
-        local button_group = self.menu_items[self.selected_id_][2]
+      if self.menu_items[self.selected_id][2].TYPE == "ButtonGroup" then
+        local button_group = self.menu_items[self.selected_id][2]
         button_group:setActiveButton(button_group.selected_index + 1)
       end
     end
   end
   
   if input.isDown["return"] then
-    if self.menu_items[self.selected_id_][1].TYPE == "Button" then
-      self.menu_items[self.selected_id_][1].onClick()
+    if self.menu_items[self.selected_id][1].TYPE == "Button" then
+      self.menu_items[self.selected_id][1].onClick()
     end
   end
   
   if input.isDown["escape"] then
-    if self.selected_id_ ~= #self.menu_items then
-      self.selected_id_ = #self.menu_items
+    if self.selected_id ~= #self.menu_items then
+      self.selected_id = #self.menu_items
       play_optional_sfx(themes[config.theme].sounds.menu_cancel)
     else
-      self.menu_items[self.selected_id_][1].onClick()
+      self.menu_items[self.selected_id][1].onClick()
     end
   end
 end
 
 function Menu:draw()
   local animationX = (math.cos(6 * love.timer.getTime()) * 5) - 9
-  local arrowx = self.menu_items[self.selected_id_][1].x - 10 + animationX
-  local arrowy = self.menu_items[self.selected_id_][1].y + self.menu_items[self.selected_id_][1].height / 4
+  local arrowx = self.menu_items[self.selected_id][1].x - 10 + animationX
+  local arrowy = self.menu_items[self.selected_id][1].y + self.menu_items[self.selected_id][1].height / 4
   GAME.gfx_q:push({love.graphics.draw, {arrow, arrowx, arrowy, 0, 1, 1, 0, 0}})
   
   for i, menu_item in ipairs(self.menu_items) do

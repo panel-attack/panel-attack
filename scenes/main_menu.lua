@@ -50,7 +50,7 @@ local menu_buttons = {
   --{loc("mm_2_vs_online", "LittleEndu's server"), main_net_vs_setup, {"51.15.207.223"}},
   Button({text = love.graphics.newText(font, loc("mm_2_vs_local")), onClick = genOnClickFn(main_local_vs_setup)}),
   Button({text = love.graphics.newText(font, loc("mm_replay_browser")), onClick = genOnClickFn(replay_browser.main)}),
-  Button({text = love.graphics.newText(font, loc("mm_configure")), onClick = genOnClickFn(main_config_input)}),
+  Button({text = love.graphics.newText(font, loc("mm_configure")), onClick = function() switchScene("input_config_menu") end}),
   Button({text = love.graphics.newText(font, loc("mm_set_name")), onClick = genOnClickFn(main_set_name)}),
   Button({text = love.graphics.newText(font, loc("mm_options")), onClick = genOnClickFn(options.main)}),
   Button({text = love.graphics.newText(font, loc("mm_fullscreen", "\n(LAlt+Enter)")), onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) fullscreen() end}),

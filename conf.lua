@@ -1,4 +1,4 @@
-require("consts")
+local consts = require("consts")
 
 function love.conf(t)
   t.identity = "Panel Attack" -- The name of the save directory (string)
@@ -17,8 +17,8 @@ function love.conf(t)
 
   t.window.title = "Panel Attack" -- The window title (string)
   t.window.icon = nil -- Filepath to an image to use as the window's icon (string)
-  t.window.width = canvas_width -- The window width (number)
-  t.window.height = canvas_height -- The window height (number)
+  t.window.width = consts.CANVAS_WIDTH -- The window width (number)
+  t.window.height = consts.CANVAS_HEIGHT -- The window height (number)
   t.window.borderless = false -- Remove all border visuals from the window (boolean)
   t.window.resizable = true -- Let the window be user-resizable (boolean)
   t.window.minwidth = 1 -- Minimum window width if the window is resizable (number)

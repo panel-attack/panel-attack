@@ -11,6 +11,7 @@ local consts = {
   RANDOM_STAGE_SPECIAL_VALUE = "__RandomStage",
   DEFAULT_INPUT_REPEAT_DELAY = 20,
   MOUSE_POINTER_TIMEOUT = 1.5, --seconds
+  KEY_NAMES = {"up", "down", "left", "right", "swap1", "swap2", "taunt_up", "taunt_down", "raise1", "raise2", "pause"}
 }
 
 -- The values in this file are constants (except in this file perhaps) and are expected never to change during the game, not to be confused with globals!
