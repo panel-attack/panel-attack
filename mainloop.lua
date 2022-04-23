@@ -25,7 +25,7 @@ main_menu_screen_pos = {300 + (canvas_width - legacy_canvas_width) / 2, 195 + (c
 local wait_game_update = nil
 local has_game_update = false
 local main_menu_last_index = 1
-local puzzle_menu_last_index = 1
+local puzzle_menu_last_index = 3
 
 function fmainloop()
   local func, arg = main_select_mode, nil
@@ -608,17 +608,10 @@ end
 
 local function main_select_speed_99(mode)
   -- stack rise speed
-  local speed = config.endless_speed or 1
-  local difficulty = config.endless_difficulty or nil
+  local speed = nil
+  local difficulty = nil
   local level = config.endless_level or nil
-  if level then
-    difficulty = nil
-    speed = nil
-  end
-  if not level and not difficulty then
-    difficulty = 1
-  end
-  local active_idx = 1
+
   local startGameSet = false
   local exitSet = false
   local loc_difficulties = {loc("easy"), loc("normal"), loc("hard"), "EX Mode"} -- TODO: localize "EX Mode"
@@ -629,7 +622,7 @@ local function main_select_speed_99(mode)
     find_and_add_music(themes[config.theme].musics, "main")
   end
 
-  local gameSettingsMenu
+  local gameSettingsMenu, updateType, updateMenus
 
   local function goEscape()
     gameSettingsMenu:set_active_idx(#gameSettingsMenu.buttons)
@@ -639,74 +632,46 @@ local function main_select_speed_99(mode)
     exitSet = true
   end
 
-  local function updateMenuSpeed()
-    gameSettingsMenu:set_button_setting(2, speed)
-  end
-
-  local function updateMenuDifficulty()
-    local difficultyString = ""
-    if difficulty then
-      difficultyString = loc_difficulties[difficulty]
-    end
-    gameSettingsMenu:set_button_setting(3, difficultyString)
-  end
-
-  local function updateMenuLevel()
-    local levelString = ""
-    if level then
-      levelString = tostring(level)
-    end
-    gameSettingsMenu:set_button_setting(4, levelString)
-  end
-
-  local function increaseSpeed()
+  local function increaseSpeed(menu, button, index)
     if speed then
       speed = bound(1, speed + 1, 99)
-      updateMenuSpeed()
+      updateMenus()
     end
   end
 
-  local function increaseDifficulty()
+  local function decreaseSpeed(menu, button, index)
+    if speed then
+      speed = bound(1, speed - 1, 99)
+      updateMenus()
+    end
+  end
+
+  local function increaseDifficulty(menu, button, index)
     difficulty = bound(1, (difficulty or 1) + 1, 4)
     level = nil
     speed = config.endless_speed or 1
-    updateMenuDifficulty()
-    updateMenuSpeed()
-    updateMenuLevel()
+    updateMenus()
   end
 
-  local function increaseLevel()
-    level = bound(1, (level or 1) + 1, 11)
-    difficulty = nil
-    speed = nil
-    updateMenuDifficulty()
-    updateMenuSpeed()
-    updateMenuLevel()
-  end
-
-  local function decreaseSpeed()
-    if speed then
-      speed = bound(1, speed - 1, 99)
-      updateMenuSpeed()
-    end
-  end
-
-  local function decreaseDifficulty()
+  local function decreaseDifficulty(menu, button, index)
     difficulty = bound(1, (difficulty or 1) - 1, 4)
     level = nil
     speed = config.endless_speed or 1
-    updateMenuDifficulty()
-    updateMenuSpeed()
-    updateMenuLevel()
+    updateMenus()
   end
 
-  local function decreaseLevel()
+  local function increaseLevel(menu, button, index)
+    level = bound(1, (level or 1) + 1, 11)
+    difficulty = nil
+    speed = nil
+    updateMenus()
+  end
+
+  local function decreaseLevel(menu, button, index)
     level = bound(1, (level or 1) - 1, 11)
     difficulty = nil
     speed = nil
-    updateMenuDifficulty()
-    updateMenuSpeed()
-    updateMenuLevel()
+    updateMenus()
   end
 
   local function startGame()
@@ -730,17 +695,87 @@ local function main_select_speed_99(mode)
     gameSettingsMenu:set_active_idx(1)
   end
 
+  local function addDifficultyButtons()
+    gameSettingsMenu:set_button_setting(2, loc("endless_classic"))
+    gameSettingsMenu:add_button(loc("difficulty"), nextMenu, goEscape, decreaseDifficulty, increaseDifficulty)
+    gameSettingsMenu:add_button(loc("speed"), goToStart, goEscape, decreaseSpeed, increaseSpeed)
+  end
+
+  local function addLevelButtons()
+    gameSettingsMenu:set_button_setting(2, loc("endless_modern"))
+    gameSettingsMenu:add_button(loc("level"), goToStart, goEscape, decreaseLevel, increaseLevel)
+  end
+
+  local function toggleType()
+    if difficulty == nil then
+      difficulty = config.endless_difficulty or 1
+      speed = config.endless_speed or 1
+      level = nil
+    else
+      difficulty = nil
+      speed = nil
+      level = config.endless_level or 1
+    end
+
+    if difficulty then
+      gameSettingsMenu:remove_button(#gameSettingsMenu.buttons)
+      gameSettingsMenu:remove_button(#gameSettingsMenu.buttons)
+      addDifficultyButtons()
+    else
+      gameSettingsMenu:remove_button(#gameSettingsMenu.buttons)
+      gameSettingsMenu:remove_button(#gameSettingsMenu.buttons)
+      gameSettingsMenu:remove_button(#gameSettingsMenu.buttons)
+      addLevelButtons()
+    end
+
+    gameSettingsMenu:add_button(loc("back"), exitSettings, exitSettings)
+
+    updateMenus()
+  end
+
+  local function updateMenuDifficulty()
+    if difficulty then
+      local difficultyString = ""
+      if difficulty then
+        difficultyString = loc_difficulties[difficulty]
+      end
+      gameSettingsMenu:set_button_setting(3, difficultyString)
+    end
+  end
+
+  local function updateMenuSpeed()
+    if difficulty then
+      gameSettingsMenu:set_button_setting(4, speed)
+    end
+  end
+
+  local function updateMenuLevel()
+    if level then
+      local levelString = ""
+      if level then
+        levelString = tostring(level)
+      end
+      gameSettingsMenu:set_button_setting(3, levelString)
+    end
+  end
+
+  updateMenus = function()
+    updateMenuDifficulty()
+    updateMenuSpeed()
+    updateMenuLevel()
+  end
+
   local menu_x, menu_y = unpack(main_menu_screen_pos)
   menu_y = menu_y + 70
   gameSettingsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
   gameSettingsMenu:add_button(loc("go_"), startGame, goEscape)
-  gameSettingsMenu:add_button(loc("speed"), nextMenu, goEscape, decreaseSpeed, increaseSpeed)
-  gameSettingsMenu:add_button(loc("difficulty"), nextMenu, goEscape, decreaseDifficulty, increaseDifficulty)
-  gameSettingsMenu:add_button(loc("level"), goToStart, goEscape, decreaseLevel, increaseLevel)
+  gameSettingsMenu:add_button(loc("endless_type"), nextMenu, goEscape, toggleType, toggleType)
+  addLevelButtons()
   gameSettingsMenu:add_button(loc("back"), exitSettings, exitSettings)
-  updateMenuSpeed()
-  updateMenuLevel()
-  updateMenuDifficulty()
+  if not config.endless_level then
+    toggleType()
+  end
+  updateMenus()
 
   while true do
 
@@ -1609,7 +1644,7 @@ function main_select_puzz()
   end
 
   -- Ensure the last index is sane in case puzzles got reloaded differently
-  puzzle_menu_last_index = wrap(1, puzzle_menu_last_index, #items)
+  puzzle_menu_last_index = wrap(3, puzzle_menu_last_index, #items + 2)
 
   local function updateMenuLevel()
     local levelString = ""

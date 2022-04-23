@@ -358,6 +358,31 @@ Panel =
   end
 )
 
+function Panel.regularColorsArray()
+  return {
+    1, -- hearts
+    2, -- circles
+    3, -- triangles
+    4, -- stars
+    5, -- diamonds
+    6, -- inverse triangles
+    }
+    -- Note see the methods below for square, shock, and colorless
+end
+
+function Panel.extendedRegularColorsArray()
+  local result = Panel.regularColorsArray()
+  result[#result+1] = 7 -- squares
+  return result
+end
+
+function Panel.allPossibleColorsArray()
+  local result = Panel.extendedRegularColorsArray()
+  result[#result+1] = 8 -- shock
+  result[#result+1] = 9 -- colorless
+  return result
+end
+
 -- Sets all variables to the default settings
 function Panel.clear(self)
   -- color 0 is an empty panel.

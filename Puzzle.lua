@@ -19,16 +19,14 @@ function Puzzle.getLegalCharacters()
 end
 
 function Puzzle.randomizeColorString(colorString)
-  local colorArray = {}
-  local newColorOrder = {}
-  local maxColor = 7
-
-  for i = 1, maxColor, 1 do
-    colorArray[#colorArray+1] = i
+  local colorArray = Panel.regularColorsArray()
+  if colorString:find("7") then
+    colorArray = Panel.extendedRegularColorsArray()
   end
+  local newColorOrder = {}
 
-  for i = 1, maxColor, 1 do
-    newColorOrder[tostring(i)] = tostring(table.remove(colorArray, math.random(1, #colorArray)))
+  for i = 1, #colorArray, 1 do
+    newColorOrder[tostring(table.length(newColorOrder)+1)] = tostring(table.remove(colorArray, math.random(1, #colorArray)))
   end
   
   colorString = colorString:gsub("%d", newColorOrder)

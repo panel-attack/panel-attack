@@ -228,7 +228,7 @@ function select_screen.main()
     end
 
     if my_player_number == 2 and msg.a_menu_state ~= nil and msg.b_menu_state ~= nil then
-      logger.warn("inverting the states to match player number!")
+      logger.debug("inverting the states to match player number!")
       msg.a_menu_state, msg.b_menu_state = msg.b_menu_state, msg.a_menu_state
     end
 

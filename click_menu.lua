@@ -93,6 +93,13 @@ function Click_menu.add_button(self, string_text, selectFunction, escapeFunction
   self:layout_buttons()
 end
 
+function Click_menu:remove_button(index)
+  table.remove(self.buttons, index)
+
+  self:resize_to_fit()
+  self:layout_buttons()
+end
+
 -- Sets the string for the menu text
 function Click_menu.set_button_text(self, button_idx, string)
   self.buttons[button_idx].text = love.graphics.newText(get_global_font(), string)
