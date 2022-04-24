@@ -16,7 +16,7 @@ Note: folders starting with "__" will be ignored upon loading. You may choose to
 
 Note: non-optional data that are missing will automatically get replaced by default ones so they are kinda optional in that sense
 
-- "*.tff": add this file to customize the font, the file may have any name as long as the extension is ".tff"
+- "*.ttf": add this file to customize the font, the file may have any name as long as the extension is ".ttf"
 
 ~~ [.txt] ~~
 

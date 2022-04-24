@@ -36,7 +36,9 @@ function Localization.set_language(self, lang_code)
   end
   config.language_code = self.codes[self.lang_index]
 
-  if config.language_code == "JP" then
+  if themes[config.theme] and themes[config.theme].font and themes[config.theme].font.path then
+    set_global_font(themes[config.theme].font.path, themes[config.theme].font.size)
+  elseif config.language_code == "JP" then
     set_global_font("jp.ttf", 14)
   else
     set_global_font(nil, 12)
