@@ -113,13 +113,13 @@ end
 
 --#region entry point and leave point
 -- Function to tell the select screen to exit
-function select_screen.on_quit(self)
+function select_screen.on_quit()
   if themes[config.theme].musics.select_screen then
     stop_the_music()
   end
   if select_screen:isNetPlay() then
     -- Tell the server we want to leave, once it disconnects us we will actually leave
-    if not self:do_leave() then
+    if not select_screen.do_leave() then
       return main_dumb_transition, {main_select_mode, loc("ss_error_leave"), 60, 300}
     end
   else
@@ -298,7 +298,7 @@ end
 
 --#region randomisation
 -- Randomizes the settings if they are set to random
-local function patch_is_random(refreshed) -- retrocompatibility
+function patch_is_random(refreshed) -- retrocompatibility
   if refreshed ~= nil then
     if refreshed.stage_is_random == true then
       refreshed.stage_is_random = random_stage_special_value
@@ -576,18 +576,16 @@ end
 function select_screen.loadCharacter(self, playerNumber)
   if self.roomState.players[playerNumber].character_is_random then
     select_screen.resolve_character_random(self.roomState.players[playerNumber])
-  else
-    character_loader_load(self.roomState.players[playerNumber].character)
   end
+  character_loader_load(self.roomState.players[playerNumber].character)
   self.roomState.players[playerNumber].character_display_name = characters[self.roomState.players[playerNumber].character].display_name
 end
 
 function select_screen.loadStage(self, playerNumber)
   if self.roomState.players[playerNumber].stage_is_random then
     select_screen.resolve_stage_random(self.roomState.players[playerNumber])
-  else
-    stage_loader_load(self.roomState.players[playerNumber].stage)
   end
+  stage_loader_load(self.roomState.players[playerNumber].stage)
   self.roomState.players[playerNumber].stage_display_name = stages[self.roomState.players[playerNumber].stage].display_name
 end
 
