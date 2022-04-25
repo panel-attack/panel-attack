@@ -622,7 +622,7 @@ local function about_menu(button_idx)
           variable_step(
             function()
               if menu_escape() or menu_enter() then
-                panels_ret = {about_menu, {4}}
+                panels_ret = {about_menu, {5}}
               end
             end
           )
