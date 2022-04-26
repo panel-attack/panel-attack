@@ -1,26 +1,9 @@
 local logger = require("logger")
-require("select_screen.select_screen_graphics")
+local graphics = require("select_screen.select_screen_graphics")
 
-select_screen = class(function(self, character_select_mode)
-  self.graphics = select_screen_graphics()
-  self.character_select_mode = character_select_mode
-  self.fallback_when_missing = {nil, nil}
-  -- in roomstate goes everything that can change through player inputs
-  self.roomState = {}
-  self.roomState.players = {}
-  for i=1, tonumber(self.character_select_mode:sub(1, 1)) do
-    self.roomState.players[i] = {}
-  end
-  -- everything else gets its field directly on select_screen
-  self.current_page = 1
-end)
-
-function select_screen.draw(self)
-  self.graphics:draw(self)
-end
+local select_screen = {}
 
 local wait = coroutine.yield
-local current_page = 1
 
 -- fills the provided map based on the provided template and return the amount of pages. __Empty values will be replaced by character_ids
 local function fill_map(template_map, map)
@@ -522,6 +505,8 @@ end
 
 function select_screen.prepareDrawMap(self)
   local template_map = self:getTemplateMap()
+  self.ROWS = #template_map
+  self.COLUMNS = #template_map[1]
   self.drawMap = {}
   self.pages_amount = fill_map(template_map, self.drawMap)
   if self.current_page or 0 > self.pages_amount then
@@ -552,8 +537,8 @@ function select_screen.drawMapToPageIdMapTransform(self)
   self.name_to_xy_per_page = {}
   for p = 1, self.pages_amount do
     self.name_to_xy_per_page[p] = {}
-    for i = 1, self.graphics.ROWS do
-      for j = 1, self.graphics.COLUMNS do
+    for i = 1, self.ROWS do
+      for j = 1, self.COLUMNS do
         if self.drawMap[p][i][j] then
           self.name_to_xy_per_page[p][self.drawMap[p][i][j]] = {i, j}
         end
@@ -640,11 +625,11 @@ function select_screen.handleInput(self)
       local cursor = player.cursor
       if menu_prev_page(i) then
         if not cursor.selected then
-          current_page = bound(1, current_page - 1, self.pages_amount)
+          self.current_page = bound(1, self.current_page - 1, self.pages_amount)
         end
       elseif menu_next_page(i) then
         if not cursor.selected then
-          current_page = bound(1, current_page + 1, self.pages_amount)
+          self.current_page = bound(1, self.current_page + 1, self.pages_amount)
         end
       elseif menu_up(i) then
         if not cursor.selected then
@@ -878,8 +863,22 @@ function select_screen.showGameStartMessage(self)
   end
 end
 
+function select_screen.initialize(self, character_select_mode)
+  self.character_select_mode = character_select_mode
+  self.fallback_when_missing = {nil, nil}
+  -- in roomstate goes everything that can change through player inputs
+  self.roomState = {}
+  self.roomState.players = {}
+  for i=1, tonumber(self.character_select_mode:sub(1, 1)) do
+    self.roomState.players[i] = {}
+  end
+  -- everything else gets its field directly on select_screen
+  self.current_page = 1
+end
+
 -- The main screen for selecting characters and settings for a match
-function select_screen.main(self)
+function select_screen.main(self, character_select_mode)
+  self:initialize(character_select_mode)
   self:loadThemeAssets()
   self:setFallbackAssets()
 
@@ -911,7 +910,7 @@ function select_screen.main(self)
 
   -- Main loop for running the select screen and drawing
   while true do
-    self:draw()
+    graphics:draw(self)
 
     if select_screen:isNetPlay() then
       local func = self:handleServerMessages()
@@ -998,3 +997,5 @@ function select_screen.main(self)
     end
   end
 end
+
+return select_screen

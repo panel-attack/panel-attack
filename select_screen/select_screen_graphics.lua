@@ -1,32 +1,29 @@
 
-
---#region drawing funcs
-
-select_screen_graphics = class(function(self, state)
-  self.v_align_center = {__Ready = true, __Random = true, __Leave = true}
-  self.is_special_value = {__Leave = true, __Level = true, __Panels = true, __Ready = true, __Stage = true, __Mode = true, __Random = true}
-  self.ROWS = 5
-  self.COLUMNS = 9
-  self.menu_width = self.COLUMNS * 100
-  self.menu_height = self.ROWS * 80
-  self.spacing = 8
-  self.text_height = 13
-end)
+local select_screen_graphics = {
+  v_align_center = {__Ready = true, __Random = true, __Leave = true},
+  is_special_value = {__Leave = true, __Level = true, __Panels = true, __Ready = true, __Stage = true, __Mode = true, __Random = true},
+  spacing = 8,
+  text_height = 13,
+}
 
 function select_screen_graphics.draw(self, select_screen)
   self.select_screen = select_screen
+
+  select_screen_graphics.menu_width = select_screen.COLUMNS * 100
+  select_screen_graphics.menu_height = select_screen.ROWS * 80
+
   set_color(unpack(colors.white))
 
   -- Go through the grid, drawing the buttons, handling horizontal spans
-  for i = 1, self.ROWS do
-    for j = 1, self.COLUMNS do
+  for i = 1, select_screen.ROWS do
+    for j = 1, select_screen.COLUMNS do
       local value = self.select_screen.drawMap[self.select_screen.current_page][i][j]
       local span_width = 1
       if self.is_special_value[value] then
         if j == 1 or self.select_screen.drawMap[self.select_screen.current_page][i][j - 1] ~= value then
           -- detect how many blocks the special value spans
-          if j ~= self.COLUMNS then
-            for u = j + 1, self.COLUMNS do
+          if j ~= select_screen.COLUMNS then
+            for u = j + 1, select_screen.COLUMNS do
               if self.select_screen.drawMap[self.select_screen.current_page][i][u] == value then
                 span_width = span_width + 1
               else
@@ -98,7 +95,7 @@ function select_screen_graphics.get_player_state_str(self, player_number, rating
       state = state .. "\n" .. self.select_screen.currentRoomRatings[player_number].placement_match_progress
     end
   end
-  if select_screen:isMultiplayer() then
+  if self.select_screen:isMultiplayer() then
     if current_server_supports_ranking then
       state = state .. "\n"
     end
@@ -123,7 +120,7 @@ end
 
 function select_screen_graphics.drawMatchTypeString(self)
   -- Draw the current match type result
-  if select_screen:isNetPlay() then
+  if self.select_screen:isNetPlay() then
     local match_type_str = ""
     if match_type == "Casual" then
       match_type_str = loc("ss_casual")
@@ -144,7 +141,7 @@ end
 
 function select_screen_graphics.draw1pRecords(self)
   -- Draw the current score and record
-  if select_screen.character_select_mode == "1p_vs_yourself" and not GAME.battleRoom.trainingModeSettings then
+  if self.select_screen.character_select_mode == "1p_vs_yourself" and not GAME.battleRoom.trainingModeSettings then
     local xPosition1 = 196
     local xPosition2 = 320
     local yPosition = 24
@@ -218,28 +215,28 @@ end
       pstr = string.sub(str, 3)
     end
     if str == "__Mode" then
-      if (select_screen:isMultiplayer()) then
+      if (self.select_screen:isMultiplayer()) then
         self:draw_match_type(self.select_screen.roomState.players[1], 1, 0.4 * self.button_height)
         self:draw_match_type(self.select_screen.roomState.players[2], 2, 0.7 * self.button_height)
       else
         self:draw_match_type(self.select_screen.roomState.players[1], 1, 0.5 * self.button_height)
       end
     elseif str == "__Panels" then
-      if (select_screen:isMultiplayer()) then
+      if (self.select_screen:isMultiplayer()) then
         self:draw_panels(self.select_screen.roomState.players[1], 1, 0.4 * self.button_height)
         self:draw_panels(self.select_screen.roomState.players[2], 2, 0.7 * self.button_height)
       else
         self:draw_panels(self.select_screen.roomState.players[1], 1, 0.5 * self.button_height)
       end
     elseif str == "__Stage" then
-      if (select_screen:isMultiplayer()) then
+      if (self.select_screen:isMultiplayer()) then
         self:draw_stage(self.select_screen.roomState.players[1], 1, 0.25 * self.button_width)
         self:draw_stage(self.select_screen.roomState.players[2], 2, 0.75 * self.button_width)
       else
         self:draw_stage(self.select_screen.roomState.players[1], 1, 0.5 * self.button_width)
       end
     elseif str == "__Level" then
-      if (select_screen:isMultiplayer()) then
+      if (self.select_screen:isMultiplayer()) then
         self:draw_levels(self.select_screen.roomState.players[1], 1, 0.4 * self.button_height)
         self:draw_levels(self.select_screen.roomState.players[2], 2, 0.7 * self.button_height)
       else
@@ -263,7 +260,7 @@ end
           self:draw_super_select(1)
         end
       end
-      if select_screen:isMultiplayer() and self.select_screen.roomState.players[2] and self.select_screen.roomState.players[2].cursor.positionId == str and ((str ~= "__Empty" and str ~= "__Reserved") or (self.select_screen.roomState.players[2].cursor.position[1] == x and self.select_screen.roomState.players[2].cursor.position[2] == y)) then
+      if self.select_screen:isMultiplayer() and self.select_screen.roomState.players[2] and self.select_screen.roomState.players[2].cursor.positionId == str and ((str ~= "__Empty" and str ~= "__Reserved") or (self.select_screen.roomState.players[2].cursor.position[1] == x and self.select_screen.roomState.players[2].cursor.position[2] == y)) then
         self:draw_cursor(self.button_height, self.spacing, 2, self.select_screen.roomState.players[2].ready)
         if self.select_screen.roomState.players[2].cursor.can_super_select then
           self:draw_super_select(2)
@@ -488,7 +485,7 @@ function select_screen_graphics.draw_stage(self, player, player_number, x_paddin
   local padding_x = math.floor(x_padding - 0.5 * stage_dimensions[1])
   local is_selected = player.cursor.selected and player.cursor.positionId == "__Stage"
   if is_selected then
-    local arrow_pos = select_screen:isNetPlay() and {math.floor(self.render_x + x_padding - 20), math.floor(self.render_y + y_padding - stage_dimensions[2] * 0.5 - 15)} or {math.floor(self.render_x + padding_x - 13), math.floor(self.render_y + y_padding + 0.25 * self.text_height)}
+    local arrow_pos = self.select_screen:isNetPlay() and {math.floor(self.render_x + x_padding - 20), math.floor(self.render_y + y_padding - stage_dimensions[2] * 0.5 - 15)} or {math.floor(self.render_x + padding_x - 13), math.floor(self.render_y + y_padding + 0.25 * self.text_height)}
     gprintf("<", arrow_pos[1], arrow_pos[2], 10, "center")
   end
   -- background for thumbnail
@@ -548,4 +545,5 @@ function select_screen_graphics.draw_stage(self, player, player_number, x_paddin
     gprintf(">", arrow_pos[1], arrow_pos[2], 10, "center")
   end
 end
---#endregion
+
+return select_screen_graphics
