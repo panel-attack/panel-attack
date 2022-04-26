@@ -103,10 +103,10 @@ function select_screen.on_quit()
   if select_screen:isNetPlay() then
     -- Tell the server we want to leave, once it disconnects us we will actually leave
     if not select_screen.do_leave() then
-      return main_dumb_transition, {main_select_mode, loc("ss_error_leave"), 60, 300}
+      return {main_dumb_transition, {main_select_mode, loc("ss_error_leave"), 60, 300}}
     end
   else
-    return main_select_mode
+    return {main_select_mode}
   end
 end
 --#endregion
@@ -122,12 +122,12 @@ end
 function select_screen.move_cursor(self, cursor, direction)
   local cursor_pos = cursor.position
   local dx, dy = unpack(direction)
-  local can_x, can_y = wrap(1, cursor_pos[1] + dx, self.graphics.ROWS), wrap(1, cursor_pos[2] + dy, self.graphics.COLUMNS)
+  local can_x, can_y = wrap(1, cursor_pos[1] + dx, self.ROWS), wrap(1, cursor_pos[2] + dy, self.COLUMNS)
   while can_x ~= cursor_pos[1] or can_y ~= cursor_pos[2] do
     if self.drawMap[self.current_page][can_x][can_y] and (self.drawMap[self.current_page][can_x][can_y] ~= self.drawMap[self.current_page][cursor_pos[1]][cursor_pos[2]] or self.drawMap[self.current_page][can_x][can_y] == "__Empty" or self.drawMap[self.current_page][can_x][can_y] == "__Reserved") then
       break
     end
-    can_x, can_y = wrap(1, can_x + dx, self.graphics.ROWS), wrap(1, can_y + dy, self.graphics.COLUMNS)
+    can_x, can_y = wrap(1, can_x + dx, self.ROWS), wrap(1, can_y + dy, self.COLUMNS)
   end
   cursor_pos[1], cursor_pos[2] = can_x, can_y
   local character = characters[self.drawMap[self.current_page][can_x][can_y]]
@@ -499,8 +499,6 @@ function select_screen.setupForNetPlay(self)
     -- abort due to connection loss or timeout
     return abort
   end
-
-  
 end
 
 function select_screen.prepareDrawMap(self)
@@ -708,7 +706,7 @@ function select_screen.handleInput(self)
   else -- (we are spectating)
     if menu_escape() then
       self.do_leave()
-      return main_net_vs_lobby -- we left the select screen as a spectator
+      return {main_net_vs_lobby} -- we left the select screen as a spectator
     end
   end
 

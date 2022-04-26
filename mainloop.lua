@@ -1184,9 +1184,14 @@ function main_net_vs()
       finalizeAndWriteVsReplay(GAME.match.battleRoom, outcome_claim)
     
       if GAME.battleRoom.spectating then
-        return {game_over_transition, {select_screen.main, {"2p_net_vs"}, end_text, winSFX}}
+        -- next_func, text, winnerSFX, timemax, args
+        return {game_over_transition,
+          {select_screen.main, end_text, winSFX, nil, {select_screen, "2p_net_vs"}}
+        }
       else
-        return {game_over_transition, {select_screen.main, {"2p_net_vs"}, end_text, winSFX, 60 * 8}}
+        return {game_over_transition, 
+          {select_screen.main, end_text, winSFX, 60 * 8, {select_screen, "2p_net_vs"}}
+        }
       end
     end
   end
@@ -1222,8 +1227,15 @@ function main_local_vs()
 
   end
 
-  local function abortGame() 
-    return {main_dumb_transition, {select_screen.main, {select_screen, "2p_local_vs"}, "", 0, 0}}
+  local function abortGame()
+    return {main_dumb_transition, {
+            select_screen.main, -- next_func
+            "", -- text
+            0, -- timemin
+            0, -- timemax
+            nil, -- winnerSFX
+            {select_screen, "2p_local_vs"} -- args
+    }}
   end
   
   
@@ -1239,7 +1251,9 @@ function main_local_vs()
       
       finalizeAndWriteVsReplay(GAME.match.battleRoom, outcome_claim)
 
-      return {game_over_transition, {select_screen.main, {select_screen, "2p_local_vs"}, end_text, winSFX}}
+      return {game_over_transition, 
+          {select_screen.main, end_text, winSFX, nil, {select_screen, "2p_local_vs"}}
+        }
     end
   end
 
@@ -1274,7 +1288,14 @@ function main_local_vs_yourself()
   end
 
   local function abortGame() 
-    return {main_dumb_transition, {select_screen.main, {select_screen, "1p_vs_yourself"}, "", 0, 0}}
+    return {main_dumb_transition, {
+      select_screen.main, -- next_func
+      "", -- text
+      0, -- timemin
+      0, -- timemax
+      nil, -- winnerSFX
+      {select_screen, "1p_vs_yourself"} -- args
+    }}
   end
   
   local function processGameResults(gameResult) 
@@ -1283,7 +1304,9 @@ function main_local_vs_yourself()
       finalizeAndWriteVsReplay(nil, nil)
     end
 
-    return {game_over_transition, {select_screen.main, {select_screen, "1p_vs_yourself"}, nil, P1:pick_win_sfx()}}
+    return {game_over_transition,
+          {select_screen.main, nil, P1:pick_win_sfx(), nil, {select_screen, "1p_vs_yourself"}}
+        }
   end
 
   return runMainGameLoop, {update, variableStep, abortGame, processGameResults}
@@ -1614,7 +1637,7 @@ function fullscreen()
 end
 
 -- dumb transition that shows a black screen
-function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
+function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX, args)
   stop_the_music()
   winnerSFX = winnerSFX or nil
   if not SFX_mute then
@@ -1663,7 +1686,7 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
     variable_step(
       function()
         if t >= timemin and ((t >= timemax and timemax >= 0) or (menu_enter() or menu_escape())) then
-          ret = {next_func}
+          ret = {next_func, args}
         end
         t = t + 1
       end
@@ -1675,7 +1698,7 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX)
 end
 
 -- show game over screen, last frame of gameplay
-function game_over_transition(next_func, text, winnerSFX, timemax)
+function game_over_transition(next_func, text, winnerSFX, timemax, args)
   timemax = timemax or -1 -- negative values means the user needs to press enter/escape to continue
   text = text or ""
   local button_text = loc("continue_button") or ""
@@ -1754,7 +1777,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax)
           stop_the_music()
           SFX_GameOver_Play = 0
           analytics.game_ends(P1.analytic)
-          ret = {next_func}
+          ret = {next_func, args}
         end
         t = t + 1
       end
