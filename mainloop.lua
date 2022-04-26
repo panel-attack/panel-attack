@@ -83,10 +83,52 @@ function fmainloop()
 
   while true do
     leftover_time = 1 / 120 -- prevents any left over time from getting big transitioning between menus
----@diagnostic disable-next-line: redundant-parameter
-    func, arg = func(unpack(arg or {}))
+    if type(func) == "number" then
+      func, arg = callPageFunc(func, arg)
+    else
+      ---@diagnostic disable-next-line: redundant-parameter
+          func, arg = func(unpack(arg or {}))
+    end
+
     collectgarbage("collect")
     logger.trace("Transitioning to next fmainloop function")
+  end
+end
+
+function callPageFunc(pageIndex, args)
+  if pageIndex == PAGES.GAME_OVER_TRANSITION then
+    return game_over_transition(unpack(args))
+  elseif pageIndex == PAGES.MAIN_DUMB_TRANSITION then
+    return main_dumb_transition(unpack(args))
+  elseif pageIndex == PAGES.MAIN_ENDLESS_TIME_SETUP then
+    return main_endless_time_setup(unpack(args))
+  elseif pageIndex == PAGES.MAIN_LOCAL_VS then
+    return main_local_vs()
+  elseif pageIndex == PAGES.MAIN_LOCAL_VS_YOURSELF then
+    return main_local_vs_yourself()
+  elseif pageIndex == PAGES.MAIN_NET_VS then
+    return main_net_vs()
+  elseif pageIndex == PAGES.MAIN_NET_VS_LOBBY then
+    return main_net_vs_lobby()
+  elseif pageIndex == PAGES.MAIN_SELECT_MODE then
+    return main_select_mode()
+  elseif pageIndex == PAGES.MAIN_SELECT_SPEED_99 then
+    return main_select_speed_99(unpack(args))
+  elseif pageIndex == PAGES.MAIN_SET_NAME then
+    return main_set_name(unpack(args))
+  elseif pageIndex == PAGES.MAKE_MAIN_PUZZLE then
+    return make_main_puzzle(unpack(args))
+  elseif pageIndex == PAGES.OPTIONS_MAIN then
+    return options.main()
+  else
+    --oops, this shouldn't happen
+  -- elseif pageIndex == PAGES.OPTIONS_ABOUT_MENU then
+  -- elseif pageIndex == PAGES.OPTIONS_AUDIO_MENU then
+  -- elseif pageIndex == PAGES.OPTIONS_DEBUG_MENU then
+  -- elseif pageIndex == PAGES.OPTIONS_GENERAL_MENU then
+  -- elseif pageIndex == PAGES.OPTIONS_GRAPHICS_MENU then
+  -- elseif pageIndex == PAGES.OPTIONS_MUSIC_TEST then
+  --   -- not globally accessible but only inside the options file
   end
 end
 
@@ -431,7 +473,7 @@ local function runMainGameLoop(updateFunction, variableStepFunction, abortGameFu
   end
 end
 
-local function main_endless_time_setup(mode, speed, difficulty)
+function main_endless_time_setup(mode, speed, difficulty)
 
   GAME.match = Match(mode)
 
@@ -480,7 +522,7 @@ local function main_endless_time_setup(mode, speed, difficulty)
     end
     finalizeAndWriteReplay(extraPath, extraFilename)
 
-    return {game_over_transition, {nextFunction, nil, P1:pick_win_sfx()}}
+    return {PAGES.GAME_OVER_TRANSITION, {nextFunction, nil, P1:pick_win_sfx()}}
   end
   
   return runMainGameLoop, {update, variableStep, abortGame, processGameResults}
@@ -594,7 +636,7 @@ function training_setup()
   end
 end
 
-local function main_select_speed_99(mode)
+function main_select_speed_99(mode)
   -- stack rise speed
   local speed = config.endless_speed or 1
   local difficulty = config.endless_difficulty or 1
@@ -1152,9 +1194,9 @@ function main_net_vs()
       select_screen.character_select_mode = "2p_net_vs"
 
       if GAME.battleRoom.spectating then
-        return {game_over_transition, {select_screen.main, end_text, winSFX}}
+        return {PAGES.GAME_OVER_TRANSITION, {select_screen.main, end_text, winSFX}}
       else
-        return {game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}}
+        return {PAGES.GAME_OVER_TRANSITION, {select_screen.main, end_text, winSFX, 60 * 8}}
       end
     end
   end
@@ -1208,7 +1250,7 @@ function main_local_vs()
       
       finalizeAndWriteVsReplay(GAME.match.battleRoom, outcome_claim)
 
-      return {game_over_transition, {select_screen.main, end_text, winSFX}}
+      return {PAGES.GAME_OVER_TRANSITION, {select_screen.main, end_text, winSFX}}
     end
   end
 
@@ -1253,7 +1295,7 @@ function main_local_vs_yourself()
       finalizeAndWriteVsReplay(nil, nil)
     end
 
-    return {game_over_transition, {select_screen.main, nil, P1:pick_win_sfx()}}
+    return {PAGES.GAME_OVER_TRANSITION, {select_screen.main, nil, P1:pick_win_sfx()}}
   end
 
   return runMainGameLoop, {update, variableStep, abortGame, processGameResults}
@@ -1409,10 +1451,10 @@ function main_replay()
         local end_text = matchOutcome["end_text"]
         local winSFX = matchOutcome["winSFX"]
 
-        return {game_over_transition, {replay_browser.main, end_text, winSFX}}
+        return {PAGES.GAME_OVER_TRANSITION, {replay_browser.main, end_text, winSFX}}
       end
     else
-      return {game_over_transition, {replay_browser.main, nil, P1:pick_win_sfx()}}
+      return {PAGES.GAME_OVER_TRANSITION, {replay_browser.main, nil, P1:pick_win_sfx()}}
     end
   end
   
@@ -1460,13 +1502,13 @@ function make_main_puzzle(puzzleSet, awesome_idx)
       if P1:puzzle_done() then -- writes successful puzzle replay and ends game
         awesome_idx = (awesome_idx % #puzzleSet.puzzles) + 1
         if awesome_idx == 1 then
-          return {game_over_transition, {main_select_puzz, loc("pl_you_win"), P1:pick_win_sfx()}}
+          return {PAGES.GAME_OVER_TRANSITION, {main_select_puzz, loc("pl_you_win"), P1:pick_win_sfx()}}
         else
-          return {game_over_transition, {next_func, loc("pl_you_win"), P1:pick_win_sfx()}}
+          return {PAGES.GAME_OVER_TRANSITION, {next_func, loc("pl_you_win"), P1:pick_win_sfx()}}
         end
       elseif P1:puzzle_failed() then -- writes failed puzzle replay and returns to menu
         SFX_GameOver_Play = 1
-        return {game_over_transition, {make_main_puzzle(puzzleSet, awesome_idx), loc("pl_you_lose")}}
+        return {PAGES.GAME_OVER_TRANSITION, {make_main_puzzle(puzzleSet, awesome_idx), loc("pl_you_lose")}}
       end
     end
     

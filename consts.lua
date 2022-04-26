@@ -4,6 +4,8 @@ require("table_util")
 -- The values in this file are constants (except in this file perhaps) and are expected never to change during the game, not to be confused with globals!
 VERSION = "045"
 
+-- GRAPHICS AND INTERFACE
+
 canvas_width = 1280
 canvas_height = 720
 legacy_canvas_width = 816
@@ -17,6 +19,37 @@ RATING_SPREAD_MODIFIER = 400 -- rating players must be within to play ranked
 super_selection_duration = 30 -- frames (reminder: 60 frames per sec)
 super_selection_enable_ratio = 0.3 -- ratio at which super enable is considered started (cancelling it won't validate a character)
 assert(super_selection_enable_ratio<1.0,"")
+
+-- PA currently does not actually know the "concept" of a page
+-- however there are various functions effectively leading to drawing something, effectively making them "page functions"
+-- internally they are often using the same functions e.g. select_screen.main, just with different params
+-- they are executed via a callback inside the mainloop in which it is not possible to see via debugger which function is getting called (only the pointer)
+-- to alleviate this issue, this pages array is used as a proxy, making it possible to identify what is actually happening
+PAGES = {
+  GAME_OVER_TRANSITION = 1,
+  MAIN_DUMB_TRANSITION = 2,
+  MAIN_LOCAL_VS_YOURSELF = 3,
+  MAIN_SELECT_MODE = 4,
+  MAIN_NET_VS_LOBBY = 5,
+  MAIN_NET_VS = 6,
+  MAIN_LOCAL_VS = 7,
+  MAIN_ENDLESS_TIME_SETUP = 8,
+  MAIN_SELECT_SPEED_99 = 9,
+  MAIN_SET_NAME = 10,
+  MAKE_MAIN_PUZZLE = 11,
+  OPTIONS_MAIN = 12,
+  OPTIONS_GENERAL_MENU = 13,
+  OPTIONS_GRAPHICS_MENU = 14,
+  OPTIONS_AUDIO_MENU = 15,
+  OPTIONS_ABOUT_MENU = 16,
+  OPTIONS_DEBUG_MENU = 17,
+  OPTIONS_MUSIC_TEST = 18,
+}
+
+key_names = {"up", "down", "left", "right", "swap1",
+  "swap2", "taunt_up", "taunt_down", "raise1", "raise2", "pause"}
+
+-- MODS
 
 prefix_of_ignored_dirs = "__"
 
@@ -35,8 +68,8 @@ default_stages_folders = {"cave", "fire", "flower", "forest", "ice",
 random_stage_special_value = "__RandomStage"
 random_character_special_value = "__RandomCharacter"
 
-key_names = {"up", "down", "left", "right", "swap1",
-  "swap2", "taunt_up", "taunt_down", "raise1", "raise2", "pause"}
+
+-- GAME SYSTEM
 
 -- frames to use for bounce animation
 bounce_table = {1, 1, 1, 1,
