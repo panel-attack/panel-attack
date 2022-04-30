@@ -192,8 +192,11 @@ do
         end
       end
       
+      local loveString = Game.loveVersionString()
+      gprintf("Love Version: " .. loveString, -5, 705, canvas_width, "right")
+
       if GAME_UPDATER_GAME_VERSION then
-        gprintf("PA Version: " .. GAME_UPDATER_GAME_VERSION, -5, 705, canvas_width, "right")
+        gprintf("PA Version: " .. GAME_UPDATER_GAME_VERSION, -5, 690, canvas_width, "right")
         if has_game_update then
           menu_draw(panels[config.panels].images.classic[1][1], 1262, 685)
         end
