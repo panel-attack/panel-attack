@@ -616,7 +616,7 @@ local function about_menu(button_idx)
           info_string = info_string .. info.name .. ": " .. (info.value or "Unknown") .. "\n"
         end
         while true do
-          gprint(info_string, 0, 15)
+          gprint(info_string, 15, 15)
           wait()
           local panels_ret = nil
           variable_step(
