@@ -43,6 +43,7 @@ function ServerQueue.push(self, msg)
   local last = self.last + 1
   self.last = last
   self.data[last] = msg
+  print("Pushing message:\n" .. json.encode(msg))
 end
 
 -- pop oldest server message in queue
@@ -80,12 +81,14 @@ function ServerQueue.pop_next_with(self, ...)
         if msg[select(j, ...)] ~= nil then
           --print("POP "..select(j, ...))
           self:remove(i)
+          print("pop_next_with: " .. json.encode(...) .. "\nPopping message:\n" .. json.encode(msg))
           return msg
         end
       end
     elseif still_empty then
       self.first = self.first + 1
       self.empties = self.empties - 1
+      print("pop_next_with: " .. json.encode(...) .. "\nNo message found")
     end
   end
 end
@@ -114,6 +117,7 @@ function ServerQueue.pop_all_with(self, ...)
       end
     end
   end
+  print("pop_all_with: " .. json.encode(...) .. "\nPopping messages:\n" .. json.encode(ret))
   return ret
 end
 

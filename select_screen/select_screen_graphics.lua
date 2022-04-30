@@ -51,12 +51,12 @@ function select_screen_graphics.drawPlayerInfo(self)
   -- Draw the player information buttons
   self:drawButton(0, 1, 1, 1, "P1")
   assert(GAME.battleRoom, "need battle room")
-  assert(my_player_number and (my_player_number == 1 or my_player_number == 2), "need number")
+  assert(self.select_screen.my_player_number and (self.select_screen.my_player_number == 1 or self.select_screen.my_player_number == 2), "need number")
   local my_rating_difference, op_rating_difference = self:calculateRatingDiffBetweenGames()
-  self:drawButton(0, 2, 2, 1, self:get_player_state_str(my_player_number, my_rating_difference, GAME.battleRoom.playerWinCounts[my_player_number], GAME.battleRoom.playerWinCounts[op_player_number], my_expected_win_ratio), "left", "top", true)
+  self:drawButton(0, 2, 2, 1, self:get_player_state_str(self.select_screen.my_player_number, my_rating_difference, GAME.battleRoom.playerWinCounts[self.select_screen.my_player_number], GAME.battleRoom.playerWinCounts[self.select_screen.op_player_number], self.select_screen.my_expected_win_ratio), "left", "top", true)
   if self.select_screen.roomState.players[1] and GAME.battleRoom.playerNames[2] then
     self:drawButton(0, 7, 1, 1, "P2")
-    self:drawButton(0, 8, 2, 1, self:get_player_state_str(op_player_number, op_rating_difference, GAME.battleRoom.playerWinCounts[op_player_number], GAME.battleRoom.playerWinCounts[my_player_number], op_expected_win_ratio), "left", "top", true)
+    self:drawButton(0, 8, 2, 1, self:get_player_state_str(self.select_screen.op_player_number, op_rating_difference, GAME.battleRoom.playerWinCounts[self.select_screen.op_player_number], GAME.battleRoom.playerWinCounts[self.select_screen.my_player_number], self.select_screen.op_expected_win_ratio), "left", "top", true)
   --state = state.." "..json.encode(op_state)
   end
 end
@@ -65,19 +65,19 @@ function select_screen_graphics.calculateRatingDiffBetweenGames(self)
   -- Calculate the rating difference
   local my_rating_difference = ""
   local op_rating_difference = ""
-  if current_server_supports_ranking and not self.select_screen.currentRoomRatings[my_player_number].placement_match_progress then
-    if self.select_screen.currentRoomRatings[my_player_number].difference then
-      if self.select_screen.currentRoomRatings[my_player_number].difference >= 0 then
-        my_rating_difference = "(+" .. self.select_screen.currentRoomRatings[my_player_number].difference .. ") "
+  if current_server_supports_ranking and not self.select_screen.currentRoomRatings[self.select_screen.my_player_number].placement_match_progress then
+    if self.select_screen.currentRoomRatings[self.select_screen.my_player_number].difference then
+      if self.select_screen.currentRoomRatings[self.select_screen.my_player_number].difference >= 0 then
+        my_rating_difference = "(+" .. self.select_screen.currentRoomRatings[self.select_screen.my_player_number].difference .. ") "
       else
-        my_rating_difference = "(" .. self.select_screen.currentRoomRatings[my_player_number].difference .. ") "
+        my_rating_difference = "(" .. self.select_screen.currentRoomRatings[self.select_screen.my_player_number].difference .. ") "
       end
     end
-    if self.select_screen.currentRoomRatings[op_player_number].difference then
-      if self.select_screen.currentRoomRatings[op_player_number].difference >= 0 then
-        op_rating_difference = "(+" .. self.select_screen.currentRoomRatings[op_player_number].difference .. ") "
+    if self.select_screen.currentRoomRatings[self.select_screen.op_player_number].difference then
+      if self.select_screen.currentRoomRatings[self.select_screen.op_player_number].difference >= 0 then
+        op_rating_difference = "(+" .. self.select_screen.currentRoomRatings[self.select_screen.op_player_number].difference .. ") "
       else
-        op_rating_difference = "(" .. self.select_screen.currentRoomRatings[op_player_number].difference .. ") "
+        op_rating_difference = "(" .. self.select_screen.currentRoomRatings[self.select_screen.op_player_number].difference .. ") "
       end
     end
   end

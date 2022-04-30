@@ -356,10 +356,11 @@ end
 function select_screen.awaitRoomInitializationMessage(self)
   -- Wait till we have the room setup messages from the server
   local retries, retry_limit = 0, 250
+  local msg
   while not global_initialize_room_msg and retries < retry_limit do
-    local msg = server_queue:pop_next_with("create_room", "character_select", "spectate_request_granted")
+    msg = server_queue:pop_next_with("create_room", "character_select", "spectate_request_granted")
     if msg then
-      self.roomInitializationMessage = msg
+      global_initialize_room_msg = msg
     end
     gprint(loc("ss_init"), unpack(main_menu_screen_pos))
     wait()
@@ -380,24 +381,24 @@ function select_screen.awaitRoomInitializationMessage(self)
 end
 
 function select_screen.initializeNetPlayRoom(self)
-  self:setPlayerRatings()
-  self:setPlayerNumbers()
-  self:setPlayerStates()
-  self:updateWinCountsFromMessage(self.roomInitializationMessage)
-  self:updateReplayInfo(self.roomInitializationMessage)
-  self:setMatchType()
+  self:setPlayerRatings(global_initialize_room_msg)
+  self:setPlayerNumbers(global_initialize_room_msg)
+  self:setPlayerStates(global_initialize_room_msg)
+  self:updateWinCountsFromMessage(global_initialize_room_msg)
+  self:updateReplayInfoFromMessage(global_initialize_room_msg)
+  self:setMatchType(global_initialize_room_msg)
   self:setExpectedWinRatios()
 end
 
-function select_screen.setPlayerRatings(self)
-  if self.roomInitializationMessage.ratings then
-    self.currentRoomRatings = self.roomInitializationMessage.ratings
+function select_screen.setPlayerRatings(self, msg)
+  if msg.ratings then
+    self.currentRoomRatings = msg.ratings
   end
 end
 
-function select_screen.setPlayerNumbers(self)
-  if self.roomInitializationMessage.your_player_number then
-    self.my_player_number = self.roomInitializationMessage.your_player_number
+function select_screen.setPlayerNumbers(self, msg)
+  if msg.player_settings.player_number then
+    self.my_player_number = msg.player_settings.player_number
   elseif GAME.battleRoom.spectating then
     self.my_player_number = 1
   elseif self.my_player_number and self.my_player_number ~= 0 then
@@ -408,8 +409,8 @@ function select_screen.setPlayerNumbers(self)
     self.my_player_number = 1
   end
 
-  if self.roomInitializationMessage.op_player_number then
-    self.op_player_number = self.roomInitializationMessage.op_player_number or self.op_player_number
+  if msg.opponent_settings.player_number then
+    self.op_player_number = msg.opponent_settings.player_number or self.op_player_number
   elseif GAME.battleRoom.spectating then
     self.op_player_number = 2
   elseif self.op_player_number and self.op_player_number ~= 0 then
@@ -421,15 +422,15 @@ function select_screen.setPlayerNumbers(self)
   end
 end
 
-function select_screen.setPlayerStates(self)
-  if self.roomState.my_player_number == 2 and self.roomInitializationMessage.a_menu_state ~= nil
-    and self.roomInitializationMessage.b_menu_state ~= nil then
+function select_screen.setPlayerStates(self, msg)
+  if self.roomState.my_player_number == 2 and msg.a_menu_state ~= nil
+    and msg.b_menu_state ~= nil then
     logger.warn("inverting the states to match player number!")
-    self.roomState.myState = self.roomInitializationMessage.b_menu_state
-    self.roomState.opState = self.roomInitializationMessage.a_menu_state
+    self.roomState.myState = msg.b_menu_state
+    self.roomState.opState = msg.a_menu_state
   else
-    self.roomState.myState = self.roomInitializationMessage.a_menu_state
-    self.roomState.opState = self.roomInitializationMessage.b_menu_state
+    self.roomState.myState = msg.a_menu_state
+    self.roomState.opState = msg.b_menu_state
   end
 
   refresh_based_on_own_mods(self.roomState.myState)
@@ -448,8 +449,8 @@ function select_screen.updateReplayInfoFromMessage(self, msg)
   end
 end
 
-function select_screen.setMatchType(self)
-  if self.roomInitializationMessage.ranked then
+function select_screen.setMatchType(self, msg)
+  if msg.ranked then
     self.roomState.match_type = "Ranked"
     self.roomState.match_type_message = ""
   else
@@ -463,9 +464,9 @@ function select_screen.setExpectedWinRatios(self)
   self.op_expected_win_ratio = nil
   logger.trace("my_player_number = " .. self.my_player_number)
   logger.trace("op_player_number = " .. self.op_player_number)
-  if self.currentRoomRatings[my_player_number].new and self.currentRoomRatings[my_player_number].new ~= 0 and self.currentRoomRatings[op_player_number] and self.currentRoomRatings[op_player_number].new ~= 0 then
-    self.my_expected_win_ratio = (100 * round(1 / (1 + 10 ^ ((self.currentRoomRatings[op_player_number].new - self.currentRoomRatings[my_player_number].new) / RATING_SPREAD_MODIFIER)), 2))
-    self.op_expected_win_ratio = (100 * round(1 / (1 + 10 ^ ((self.currentRoomRatings[my_player_number].new - self.currentRoomRatings[op_player_number].new) / RATING_SPREAD_MODIFIER)), 2))
+  if self.currentRoomRatings[self.my_player_number].new and self.currentRoomRatings[self.my_player_number].new ~= 0 and self.currentRoomRatings[self.op_player_number] and self.currentRoomRatings[self.op_player_number].new ~= 0 then
+    self.my_expected_win_ratio = (100 * round(1 / (1 + 10 ^ ((self.currentRoomRatings[self.op_player_number].new - self.currentRoomRatings[self.my_player_number].new) / RATING_SPREAD_MODIFIER)), 2))
+    self.op_expected_win_ratio = (100 * round(1 / (1 + 10 ^ ((self.currentRoomRatings[self.my_player_number].new - self.currentRoomRatings[self.op_player_number].new) / RATING_SPREAD_MODIFIER)), 2))
   end
 end
 
@@ -720,17 +721,17 @@ function select_screen.handleServerMessages(self)
     if msg.menu_state then
       if GAME.battleRoom.spectating then
         if msg.player_number == 1 or msg.player_number == 2 then
-          self.roomState.player[msg.player_number] = msg.menu_state
-          refresh_based_on_own_mods(self.roomState.player[msg.player_number])
-          character_loader_load(self.roomState.player[msg.player_number].character)
-          stage_loader_load(self.roomState.player[msg.player_number].stage)
+          self.roomState.players[msg.player_number] = msg.menu_state
+          refresh_based_on_own_mods(self.roomState.players[msg.player_number])
+          character_loader_load(self.roomState.players[msg.player_number].character)
+          stage_loader_load(self.roomState.players[msg.player_number].stage)
           self:refreshLoadingState(msg.player_number)
         end
       else
-        self.roomState.player[self.op_player_number] = msg.menu_state
-        refresh_based_on_own_mods(self.roomState.player[self.op_player_number])
-        character_loader_load(self.roomState.player[self.op_player_number].character)
-        stage_loader_load(self.roomState.player[self.op_player_number].stage)
+        self.roomState.players[self.op_player_number] = msg.menu_state
+        refresh_based_on_own_mods(self.roomState.players[self.op_player_number])
+        character_loader_load(self.roomState.players[self.op_player_number].character)
+        stage_loader_load(self.roomState.players[self.op_player_number].stage)
         self:refreshLoadingState(self.op_player_number)
       end
       self:refreshReadyStates()
@@ -846,7 +847,7 @@ function select_screen.startMatch(self, msg)
   -- Proceed to the game screen and start the game
   P1:starting_state()
   P2:starting_state()
-  return main_dumb_transition, {main_net_vs, "", 0, 0}
+  return {main_dumb_transition, {main_net_vs, "", 0, 0}}
 end
 
 function select_screen.showGameStartMessage(self)
@@ -854,7 +855,7 @@ function select_screen.showGameStartMessage(self)
   for i = 1, 30 do
     gprint(to_print, unpack(main_menu_screen_pos))
     if not do_messages() then
-      return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
+      return {main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}}
     end
     process_all_data_messages() -- process data to get initial panel stacks setup
     wait()
@@ -913,7 +914,7 @@ function select_screen.main(self, character_select_mode)
     if select_screen:isNetPlay() then
       local func = self:handleServerMessages()
       if func then
-        func()
+        return unpack(func)
       end
     end
 
