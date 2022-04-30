@@ -102,9 +102,5 @@ function Puzzle.validate(self)
     "\nInvalid number of moves detected, expecting a number greater than zero but instead got " .. self.moves
   end
 
-  if errMessage ~= "" then
-    errMessage = "The following puzzle contains invalid values:\n" .. json.encode(self) .. errMessage
-  end
-
   return errMessage == "", errMessage
 end

@@ -626,7 +626,6 @@ end
 function Stack.set_puzzle_state(self, puzzle)
   
   -- Copy the puzzle into our state
-  self:setLevel(5)
   local boardSizeInPanels = self.width * self.height
   while string.len(puzzle.stack) < boardSizeInPanels do
     puzzle.stack = "0" .. puzzle.stack
