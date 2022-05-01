@@ -606,6 +606,7 @@ function training_setup()
   end
 end
 
+local endlessMenuLastIndex = 1
 local function main_select_speed_99(mode)
   -- stack rise speed
   local speed = nil
@@ -691,19 +692,15 @@ local function main_select_speed_99(mode)
     gameSettingsMenu:selectNextIndex()
   end
 
-  local function goToStart()
-    gameSettingsMenu:set_active_idx(1)
-  end
-
   local function addDifficultyButtons()
-    gameSettingsMenu:set_button_setting(2, loc("endless_classic"))
+    gameSettingsMenu:set_button_setting(1, loc("endless_classic"))
     gameSettingsMenu:add_button(loc("difficulty"), nextMenu, goEscape, decreaseDifficulty, increaseDifficulty)
-    gameSettingsMenu:add_button(loc("speed"), goToStart, goEscape, decreaseSpeed, increaseSpeed)
+    gameSettingsMenu:add_button(loc("speed"), nextMenu, goEscape, decreaseSpeed, increaseSpeed)
   end
 
   local function addLevelButtons()
-    gameSettingsMenu:set_button_setting(2, loc("endless_modern"))
-    gameSettingsMenu:add_button(loc("level"), goToStart, goEscape, decreaseLevel, increaseLevel)
+    gameSettingsMenu:set_button_setting(1, loc("endless_modern"))
+    gameSettingsMenu:add_button(loc("level"), nextMenu, goEscape, decreaseLevel, increaseLevel)
   end
 
   local function toggleType()
@@ -717,17 +714,19 @@ local function main_select_speed_99(mode)
       level = config.endless_level or 1
     end
 
+    gameSettingsMenu:remove_button(#gameSettingsMenu.buttons) -- go
+    gameSettingsMenu:remove_button(#gameSettingsMenu.buttons) -- back
+
     if difficulty then
-      gameSettingsMenu:remove_button(#gameSettingsMenu.buttons)
-      gameSettingsMenu:remove_button(#gameSettingsMenu.buttons)
+      gameSettingsMenu:remove_button(#gameSettingsMenu.buttons) -- level
       addDifficultyButtons()
     else
-      gameSettingsMenu:remove_button(#gameSettingsMenu.buttons)
-      gameSettingsMenu:remove_button(#gameSettingsMenu.buttons)
-      gameSettingsMenu:remove_button(#gameSettingsMenu.buttons)
+      gameSettingsMenu:remove_button(#gameSettingsMenu.buttons) -- difficulty
+      gameSettingsMenu:remove_button(#gameSettingsMenu.buttons) -- speed
       addLevelButtons()
     end
 
+    gameSettingsMenu:add_button(loc("go_"), startGame, goEscape)
     gameSettingsMenu:add_button(loc("back"), exitSettings, exitSettings)
 
     updateMenus()
@@ -739,13 +738,13 @@ local function main_select_speed_99(mode)
       if difficulty then
         difficultyString = loc_difficulties[difficulty]
       end
-      gameSettingsMenu:set_button_setting(3, difficultyString)
+      gameSettingsMenu:set_button_setting(2, difficultyString)
     end
   end
 
   local function updateMenuSpeed()
     if difficulty then
-      gameSettingsMenu:set_button_setting(4, speed)
+      gameSettingsMenu:set_button_setting(3, speed)
     end
   end
 
@@ -755,7 +754,7 @@ local function main_select_speed_99(mode)
       if level then
         levelString = tostring(level)
       end
-      gameSettingsMenu:set_button_setting(3, levelString)
+      gameSettingsMenu:set_button_setting(2, levelString)
     end
   end
 
@@ -763,14 +762,15 @@ local function main_select_speed_99(mode)
     updateMenuDifficulty()
     updateMenuSpeed()
     updateMenuLevel()
+    endlessMenuLastIndex = bound(1, #gameSettingsMenu.buttons - 1, #gameSettingsMenu.buttons)
   end
 
   local menu_x, menu_y = unpack(main_menu_screen_pos)
   menu_y = menu_y + 70
-  gameSettingsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
-  gameSettingsMenu:add_button(loc("go_"), startGame, goEscape)
+  gameSettingsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, endlessMenuLastIndex)
   gameSettingsMenu:add_button(loc("endless_type"), nextMenu, goEscape, toggleType, toggleType)
   addLevelButtons()
+  gameSettingsMenu:add_button(loc("go_"), startGame, goEscape)
   gameSettingsMenu:add_button(loc("back"), exitSettings, exitSettings)
   if not config.endless_level then
     toggleType()
@@ -812,6 +812,7 @@ local function main_select_speed_99(mode)
     )
 
     if startGameSet then
+      endlessMenuLastIndex = bound(1, #gameSettingsMenu.buttons - 1, #gameSettingsMenu.buttons)
       gameSettingsMenu:remove_self()
       return main_endless_time_setup, {mode, speed, difficulty, level}
     elseif exitSet then

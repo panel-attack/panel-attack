@@ -1,5 +1,6 @@
 require("graphics_util")
 require("sound_util")
+local logger = require("logger")
 
 local musics = {"main", "select_screen", "main_start", "select_screen_start"} -- the music used in a theme
 
@@ -667,11 +668,11 @@ end
 
 -- loads a theme into the game
 function Theme.load(self, id)
-  print("loading theme " .. id)
+  logger.debug("loading theme " .. id)
   self:graphics_init()
   self:sound_init()
   self:json_init()
-  print("loaded theme " .. id)
+  logger.debug("loaded theme " .. id)
 end
 
 -- initializes a theme
