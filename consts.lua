@@ -11,7 +11,7 @@ local consts = {
   RANDOM_STAGE_SPECIAL_VALUE = "__RandomStage",
   DEFAULT_INPUT_REPEAT_DELAY = 20,
   MOUSE_POINTER_TIMEOUT = 1.5, --seconds
-  KEY_NAMES = {"up", "down", "left", "right", "swap1", "swap2", "taunt_up", "taunt_down", "raise1", "raise2", "pause"}
+  KEY_NAMES = {"Up", "Down", "Left", "Right", "Swap1", "Swap2", "TauntUp", "TauntDown", "Raise1", "Raise2", "Pause"}
 }
 
 -- The values in this file are constants (except in this file perhaps) and are expected never to change during the game, not to be confused with globals!
@@ -48,8 +48,7 @@ default_stages_folders = {"cave", "fire", "flower", "forest", "ice",
 random_stage_special_value = "__RandomStage"
 random_character_special_value = "__RandomCharacter"
 
-key_names = {"up", "down", "left", "right", "swap1",
-  "swap2", "taunt_up", "taunt_down", "raise1", "raise2", "pause"}
+key_names = {"Up", "Down", "Left", "Right", "Swap1", "Swap2", "TauntUp", "TauntDown", "Raise1", "Raise2", "Pause"}
 
 -- frames to use for bounce animation
 bounce_table = {1, 1, 1, 1,

@@ -742,21 +742,21 @@ function CharacterSelect:update()
   stage_loader_update()
   refresh_loaded_and_ready(self.cursor_data[1].state, self.cursor_data[2] and self.cursor_data[2].state or nil)
 
-  if input:isPressedWithRepeat("e", .25, .05) then
+  if input:isPressedWithRepeat("Raise1", .25, .05) then
     self.buttons.page_select.left.onClick()
-  elseif input:isPressedWithRepeat("r", .25, .05) then
+  elseif input:isPressedWithRepeat("Raise2", .25, .05) then
     self.buttons.page_select.right.onClick()
-  elseif input:isPressedWithRepeat("up", .25, .05) then
+  elseif input:isPressedWithRepeat("Up", .25, .05) then
     if not (self.level_slider.is_enabled or self.buttons.stage_select.left.is_enabled or self.buttons.panels_select.left.is_enabled) then
       self.cursor_pos.y = (self.cursor_pos.y - 2) % MAX_ROWS + 1
       play_optional_sfx(themes[config.theme].sounds.menu_move)
     end
-  elseif input:isPressedWithRepeat("down", .25, .05) then
+  elseif input:isPressedWithRepeat("Down", .25, .05) then
     if not (self.level_slider.is_enabled or self.buttons.stage_select.left.is_enabled or self.buttons.panels_select.left.is_enabled) then
       self.cursor_pos.y = self.cursor_pos.y % MAX_ROWS + 1
       play_optional_sfx(themes[config.theme].sounds.menu_move)
     end
-  elseif input:isPressedWithRepeat("left", .25, .05) then
+  elseif input:isPressedWithRepeat("Left", .25, .05) then
     if self.level_slider.is_enabled then
       self.level_slider:setValue(self.level_slider.value - 1)
     elseif self.buttons.stage_select.left.is_enabled then
@@ -774,7 +774,7 @@ function CharacterSelect:update()
       self.cursor_pos.x = (self.cursor_pos.x - 2) % MAX_COLS + 1
       play_optional_sfx(themes[config.theme].sounds.menu_move)
     end
-  elseif input:isPressedWithRepeat("right", .25, .05) then
+  elseif input:isPressedWithRepeat("Right", .25, .05) then
     if self.level_slider.is_enabled then
       self.level_slider:setValue(self.level_slider.value + 1)
     elseif self.buttons.stage_select.right.is_enabled then
@@ -793,7 +793,7 @@ function CharacterSelect:update()
       play_optional_sfx(themes[config.theme].sounds.menu_move)
     end
   else
-    if input.isDown["return"] then
+    if input.isDown["Swap1"] or input.isDown["Start"] then
       if self.level_slider.is_enabled or self.buttons.stage_select.left.is_enabled or self.buttons.panels_select.left.is_enabled then
         self:moveCursor(self.cursor_pos.x, self.cursor_pos.y)
         play_optional_sfx(themes[config.theme].sounds.menu_validate)
@@ -806,7 +806,7 @@ function CharacterSelect:update()
         end
       end
     end
-    if input.isDown["escape"] then
+    if input.isDown["Swap2"] then
       if self.cursor_pos.x == button_info.leave.x and self.cursor_pos.y == button_info.leave.y then
         scene_manager:switchScene("main_menu")
       else

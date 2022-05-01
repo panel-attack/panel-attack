@@ -19,6 +19,15 @@ function util.clamp(a, b, c)
   return b < a and a or b > c and c or b
 end
 
+function util.split(input_str, sep)
+  sep = sep or "%s"
+  local t = {}
+  for str in string.gmatch(input_str, "([^"..sep.."]+)") do
+    table.insert(t, str)
+  end
+  return t
+end
+
 -- bounds b so a<=b<=c
 function bound(a, b, c)
   if b < a then

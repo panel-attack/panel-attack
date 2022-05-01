@@ -54,17 +54,17 @@ function Menu:setVisibility(is_visible)
 end
 
 function Menu:update()
-  if input:isPressedWithRepeat("down", .25, .05) then
-    self.selected_id = (self.selected_id % #self.menu_items) + 1
-    play_optional_sfx(themes[config.theme].sounds.menu_move)
-  end
-  
-  if input:isPressedWithRepeat("up", .25, .05) then
+  if input:isPressedWithRepeat("Up", .25, .05) then
     self.selected_id = ((self.selected_id - 2) % #self.menu_items) + 1
     play_optional_sfx(themes[config.theme].sounds.menu_move)
   end
   
-  if input:isPressedWithRepeat("left", .25, .05) then
+  if input:isPressedWithRepeat("Down", .25, .05) then
+    self.selected_id = (self.selected_id % #self.menu_items) + 1
+    play_optional_sfx(themes[config.theme].sounds.menu_move)
+  end
+
+  if input:isPressedWithRepeat("Left", .25, .05) then
     if self.menu_items[self.selected_id][2] then
       if self.menu_items[self.selected_id][2].TYPE == "Slider" then
         local slider = self.menu_items[self.selected_id][2]
@@ -77,12 +77,11 @@ function Menu:update()
     end
   end
 
-  if input:isPressedWithRepeat("right", .25, .05) then
+  if input:isPressedWithRepeat("Right", .25, .05) then
     if self.menu_items[self.selected_id][2] then
       if self.menu_items[self.selected_id][2].TYPE == "Slider" then
         local slider = self.menu_items[self.selected_id][2]
         slider:setValue(slider.value + 1)
-        --self:setDifficulty(difficulty - 1)
       end
       if self.menu_items[self.selected_id][2].TYPE == "ButtonGroup" then
         local button_group = self.menu_items[self.selected_id][2]
@@ -91,13 +90,13 @@ function Menu:update()
     end
   end
   
-  if input.isDown["return"] then
+  if input.isDown["Start"] or input.isDown["Swap1"]  then
     if self.menu_items[self.selected_id][1].TYPE == "Button" then
       self.menu_items[self.selected_id][1].onClick()
     end
   end
   
-  if input.isDown["escape"] then
+  if input.isDown["Swap2"] then
     if self.selected_id ~= #self.menu_items then
       self.selected_id = #self.menu_items
       play_optional_sfx(themes[config.theme].sounds.menu_cancel)

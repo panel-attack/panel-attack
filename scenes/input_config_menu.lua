@@ -7,8 +7,9 @@ local Menu = require("ui.Menu")
 local ButtonGroup = require("ui.ButtonGroup")
 local consts = require("consts")
 local input = require("input2")
+local util = require("util")
 
---@module BasicMenu
+--@module input_config_menu
 local input_config_menu = Scene("input_config_menu")
 
 input_config_menu.setting_key = false
@@ -18,28 +19,52 @@ local pretty_names = {loc("up"), loc("down"), loc("left"), loc("right"), "A", "B
 local pending_input_text = love.graphics.newText(font, "__")
 local config_index = 1
 
+local function shorten_controller_name(name)
+  local name_to_short_names = {
+    ["Nintendo Switch Pro Controller"] = "Switch Pro Con"
+  }
+  return name_to_short_names[name] or name
+end
+
 function input_config_menu:updateInputConfigSet(value)
   config_index = value
   play_optional_sfx(themes[config.theme].sounds.menu_move)
   for i, key in ipairs(consts.KEY_NAMES) do
     local key_name = GAME.input:cleanNameForButton(GAME.input.inputConfigurations[config_index][key]) or loc("op_none")
+    if string.match(key_name, ":") then
+      local controller_key_split = util.split(key_name, ":")
+      local controller_name = shorten_controller_name(input.guid_to_name[controller_key_split[2]])
+      key_name = string.format("%s (%s-%s)", controller_key_split[1], controller_name, controller_key_split[3])
+    end
     self.menu.menu_items[i + 1][2].text = love.graphics.newText(font, key_name)
   end
 end
 
-function input_config_menu:setKeyFn(key, index)
+function input_config_menu:pollAndSetKey(key, index)
   coroutine.yield()
+  self.menu.menu_items[index + 1][2].text = pending_input_text
+  self.menu.selected_id = index + 1
   local pressed_key = nil
   while not pressed_key do
-    for p, _ in pairs(input.isDown) do
+    for p, _ in pairs(input.raw.isDown) do
       pressed_key = p
       break
     end
     coroutine.yield()
   end
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  local key_display_name = pressed_key
+  if string.match(pressed_key, ":") then
+    local controller_key_split = util.split(pressed_key, ":")
+    local controller_name = shorten_controller_name(input.guid_to_name[controller_key_split[2]])
+    key_display_name = string.format("%s (%s-%s)", controller_key_split[1], controller_name, controller_key_split[3])
+  end
   GAME.input.inputConfigurations[config_index][key] = pressed_key
-  self.menu.menu_items[index + 1][2].text = love.graphics.newText(font, pressed_key)
+  self.menu.menu_items[index + 1][2].text = love.graphics.newText(font, key_display_name)
+end
+
+function input_config_menu:setKeyFn(key, index)
+  self:pollAndSetKey(key, index)
   write_key_file()
   self.setting_key = false
 end
@@ -48,20 +73,7 @@ function input_config_menu:setAllKeysFn()
     coroutine.yield()
     
   for i, key in ipairs(consts.KEY_NAMES) do
-    self.menu.menu_items[i + 1][2].text = pending_input_text
-    self.menu.selected_id = i + 1
-    local pressed_key = nil
-    while not pressed_key do
-      for p, _ in pairs(input.isDown) do
-        pressed_key = p
-        break
-      end
-      coroutine.yield()
-    end
-    play_optional_sfx(themes[config.theme].sounds.menu_validate)
-    GAME.input.inputConfigurations[config_index][key] = pressed_key
-    self.menu.menu_items[i + 1][2].text = love.graphics.newText(font, pressed_key)
-    coroutine.yield()
+    self:pollAndSetKey(key, i)
   end
 
   write_key_file()
@@ -77,7 +89,6 @@ function input_config_menu:setKey(key)
       break
     end
   end
-  self.menu.menu_items[index + 1][2].text = pending_input_text
   self.setting_key = true
   self.set_key_co = coroutine.create(function(key) self:setKeyFn(key, index) end)
   coroutine.resume(self.set_key_co, key, index)
@@ -122,7 +133,7 @@ function input_config_menu:init()
     }
   for i, key in ipairs(consts.KEY_NAMES) do
     local key_name = GAME.input:cleanNameForButton(GAME.input.inputConfigurations[config_index][key]) or loc("op_none")
-    local label = Label({text = love.graphics.newText(font, key_name)})
+    local label = Label({text = love.graphics.newText(font, key_name), width = 200})
     menu_options[#menu_options + 1] = {
       Button({
           text = love.graphics.newText(font, key),

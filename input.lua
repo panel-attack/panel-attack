@@ -219,7 +219,9 @@ function joystick_ax()
 end
 
 function love.keypressed(key, scancode, rep)
-  input2:keyPressed(key, scancode, rep)
+  if scancode then
+    input2:keyPressed(key, scancode, rep)
+  end
   if key == "return" and not rep and love.keyboard.isDown("lalt") then
     love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
     return

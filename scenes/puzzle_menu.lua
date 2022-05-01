@@ -73,19 +73,19 @@ function puzzle_menu:update()
   gprint(arrow, main_menu_screen_pos[1] + 100, main_menu_screen_pos[2])
   gprint(to_print, main_menu_screen_pos[1] + 100, main_menu_screen_pos[2])
       
-  if input:isPressedWithRepeat("down", .25, .05) then
+  if input:isPressedWithRepeat("Down", .25, .05) then
     active_idx = wrap(1, active_idx + 1, #items)
     --selected_id = (selected_id % #menu_options) + 1
     play_optional_sfx(themes[config.theme].sounds.menu_move)
   end
   
-  if input:isPressedWithRepeat("up", .25, .05) then
+  if input:isPressedWithRepeat("Up", .25, .05) then
     active_idx = wrap(1, active_idx - 1, #items)
     --selected_id = ((selected_id - 2) % #menu_options) + 1
     play_optional_sfx(themes[config.theme].sounds.menu_move)
   end
   
-  if input.isDown["return"] then
+  if input.isDown["Start"] or input.isDown["Swap1"] then
     if active_idx == #items then
       exitMenu()
     else
@@ -93,7 +93,7 @@ function puzzle_menu:update()
     end
   end
   
-  if input.isDown["escape"] then
+  if input.isDown["Swap2"] then
     if active_idx == #items then
       exitMenu()
     else
