@@ -445,7 +445,7 @@ end
 
 function select_screen.updateReplayInfoFromMessage(self, msg)
   if msg.replay_of_match_so_far then
-    self.replayInfo = msg.replay_of_match_so_far
+    replay_of_match_so_far = msg.replay_of_match_so_far
   end
 end
 
@@ -763,8 +763,8 @@ end
 function select_screen.getSeed(self, msg)
   -- Use the seed the server gives us if it makes one, else generate a basic one off data both clients have.
   local seed
-  if msg.seed or (self.replayInfo and self.replayInfo.vs and self.replayInfo.vs.seed) then
-    seed = msg.seed or (self.replayInfo and self.replayInfo.vs and self.replayInfo.vs.seed)
+  if msg.seed or (replay_of_match_so_far and replay_of_match_so_far.vs and replay_of_match_so_far.vs.seed) then
+    seed = msg.seed or (replay_of_match_so_far and replay_of_match_so_far.vs and replay_of_match_so_far.vs.seed)
   else
     seed = 17
     seed = seed * 37 + self.currentRoomRatings[1].new;
@@ -814,12 +814,12 @@ function select_screen.startMatch(self, msg)
   P2:moveForPlayerNumber(2)
   self.replay = createNewReplay(GAME.match)
   
-  if GAME.battleRoom.spectating and self.replayInfo then --we joined a match in progress
-    for k, v in pairs(self.replayInfo.vs) do
+  if GAME.battleRoom.spectating and replay_of_match_so_far then --we joined a match in progress
+    for k, v in pairs(replay_of_match_so_far.vs) do
       self.replay.vs[k] = v
     end
-    P1:receiveConfirmedInput(self.replayInfo.vs.in_buf)
-    P2:receiveConfirmedInput(self.replayInfo.vs.I)
+    P1:receiveConfirmedInput(replay_of_match_so_far.vs.in_buf)
+    P2:receiveConfirmedInput(replay_of_match_so_far.vs.I)
     if self.replay.vs.ranked then
       -- this doesn't really make sense
       self.match_type = "Ranked"
@@ -827,7 +827,7 @@ function select_screen.startMatch(self, msg)
     else
       self.match_type = "Casual"
     end
-    self.replayInfo = nil
+    replay_of_match_so_far = nil
     P1.play_to_end = true --this makes non local stacks run until caught up
     P2.play_to_end = true
   end
