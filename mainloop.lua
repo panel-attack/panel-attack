@@ -630,6 +630,7 @@ local function main_select_speed_99(mode)
   end
 
   local function exitSettings()
+    endlessMenuLastIndex = 1
     exitSet = true
   end
 
