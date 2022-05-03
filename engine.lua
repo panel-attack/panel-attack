@@ -2011,7 +2011,7 @@ function Stack.canSwap(self, row, column)
     do_swap = do_swap and not (row ~= 1 and (panels[row - 1][column].state == "swapping" and panels[row - 1][column + 1].state == "swapping") and (panels[row - 1][column].color == 0 or panels[row - 1][column + 1].color == 0) and (panels[row - 1][column].color ~= 0 or panels[row - 1][column + 1].color ~= 0))
   end
 
-  do_swap = do_swap and (self.puzzle_type ~= "moves" or self.puzzle_moves > 0)
+  do_swap = do_swap and (self.puzzle.moves == 0 or self.puzzle_moves > 0)
 
   return do_swap
 end
