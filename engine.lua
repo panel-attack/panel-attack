@@ -148,7 +148,7 @@ Stack =
     s.danger_music = s.danger_music or false -- changes music state
 
     s.n_active_panels = 0
-    s.prev_active_panels = 0
+    s.n_prev_active_panels = 0
     s.n_chain_panels = 0
 
     -- These change depending on the difficulty and speed levels:
@@ -314,7 +314,7 @@ function Stack.mkcpy(self, other)
   other.score = self.score
   other.chain_counter = self.chain_counter
   other.n_active_panels = self.n_active_panels
-  other.prev_active_panels = self.prev_active_panels
+  other.n_prev_active_panels = self.n_prev_active_panels
   other.n_chain_panels = self.n_chain_panels
   other.FRAMECOUNT_RISE = self.FRAMECOUNT_RISE
   other.rise_timer = self.rise_timer
@@ -636,12 +636,11 @@ function Stack.set_puzzle_state(self, puzzle)
     puzzleString = Puzzle.randomizeColorString(puzzleString)
   end
 
+  self.puzzle = puzzle
   self.panels = self:puzzleStringToPanels(puzzleString)
   self.do_countdown = puzzle.do_countdown or false
   self.puzzleType = puzzle.puzzleType or "moves"
-  if puzzle.moves ~= 0 then
-    self.puzzle_moves = puzzle.moves
-  end
+  self.puzzle_moves = puzzle.moves
 
   -- transform any cleared garbage into colorless garbage panels
   self.gpanel_buffer = "9999999999999999999999999999999999999999999999999999999999999999999999999"
@@ -724,13 +723,17 @@ function Stack.puzzle_done(self)
     -- For now don't require active panels to be 0, we will still animate in game over,
     -- and we need to win immediately to avoid the failure below in the chain case.
     --if P1.n_active_panels == 0 then
-    --if self.puzzleType == "chain" or P1.prev_active_panels == 0 then
-    local panels = self.panels
-    for row = 1, self.height do
-      for col = 1, self.width do
-        local color = panels[row][col].color
-        if color ~= 0 and color ~= 9 then
-          return false
+    --if self.puzzleType == "chain" or P1.n_prev_active_panels == 0 then
+    if self.puzzleType == "clear" then
+      return not self:hasGarbage()
+    else
+      local panels = self.panels
+      for row = 1, self.height do
+        for col = 1, self.width do
+          local color = panels[row][col].color
+          if color ~= 0 and color ~= 9 then
+            return false
+          end
         end
       end
     end
@@ -743,14 +746,25 @@ function Stack.puzzle_done(self)
   return false
 end
 
-function Stack.puzzle_failed(self)
-  if not self.do_countdown then
-    if self.puzzleType == "moves" then
-      if self.n_active_panels == 0 and self.prev_active_panels == 0 then
-        return self.puzzle_moves == 0
+function Stack.hasGarbage(self)
+  -- garbage is more likely to be found at the top of the stack
+  for row = #self.panels, 1, -1 do
+    for column = 1, #self.panels[row] do
+      if self.panels[row][column].garbage and self.panels[row][column].state == "normal" then
+        return true
       end
+    end
+  end
+
+  return false
+end
+
+function Stack.puzzle_failed(self)
+  if not self.do_countdown and not self:hasPendingAction() then
+    if self.puzzleType == "moves" then
+        return self.puzzle_moves == 0
     elseif self.puzzleType and self.puzzleType == "chain" then
-      if self.n_active_panels == 0 and self.prev_active_panels == 0 and #self.analytic.data.reached_chains == 0 and self.analytic.data.destroyed_panels > 0 then
+      if #self.analytic.data.reached_chains == 0 and self.analytic.data.destroyed_panels > 0 then
         -- We finished matching but never made a chain -> fail
         return true
       end
@@ -758,10 +772,24 @@ function Stack.puzzle_failed(self)
         -- We achieved a chain, finished chaining, but haven't won yet -> fail
         return true
       end
+    elseif self.puzzleType == "clear" then
+      if self:hasGarbage() then
+        if self.puzzle.moves > 0 and self.puzzle_moves <= 0 then
+          -- move restricted clear puzzle
+          return true
+        else
+          -- unrestricted clear puzzle
+          
+        end
+      end
     end
   end
 
   return false
+end
+
+function Stack.hasPendingAction(self)
+  return self.n_active_panels > 0 or self.n_prev_active_panels > 0
 end
 
 function Stack.has_falling_garbage(self)
@@ -1116,7 +1144,7 @@ function Stack.PdP(self)
       self:new_row()
     end
     self.prev_rise_lock = self.rise_lock
-    self.rise_lock = self.n_active_panels ~= 0 or self.prev_active_panels ~= 0 or self.shake_time ~= 0 or self.do_countdown or self.do_swap
+    self.rise_lock = self.n_active_panels ~= 0 or self.n_prev_active_panels ~= 0 or self.shake_time ~= 0 or self.do_countdown or self.do_swap
     if self.prev_rise_lock and not self.rise_lock then
       self.prevent_manual_raise = false
     end
@@ -1554,8 +1582,9 @@ function Stack.PdP(self)
     -- lol owned
     end
 
-    self.prev_active_panels = self.n_active_panels
+    self.n_prev_active_panels = self.n_active_panels
     self.n_active_panels = 0
+    self.active_panels = {}
     for row = 1, self.height do
       for col = 1, self.width do
         local panel = panels[row][col]
@@ -1622,7 +1651,7 @@ function Stack.PdP(self)
 
     if self.garbage_q:len() > 0 then
       local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
-      local drop_it = not self.panels_in_top_row and not self:has_falling_garbage() and ((from_chain and next_garbage_block_height > 1) or (self.n_active_panels == 0 and self.prev_active_panels == 0))
+      local drop_it = not self.panels_in_top_row and not self:has_falling_garbage() and ((from_chain and next_garbage_block_height > 1) or (self.n_active_panels == 0 and self.n_prev_active_panels == 0))
       if drop_it and self.garbage_q:len() > 0 then
         if self:drop_garbage(unpack(self.garbage_q:peek())) then
           self.garbage_q:pop()
@@ -1982,7 +2011,7 @@ function Stack.canSwap(self, row, column)
     do_swap = do_swap and not (row ~= 1 and (panels[row - 1][column].state == "swapping" and panels[row - 1][column + 1].state == "swapping") and (panels[row - 1][column].color == 0 or panels[row - 1][column + 1].color == 0) and (panels[row - 1][column].color ~= 0 or panels[row - 1][column + 1].color ~= 0))
   end
 
-  do_swap = do_swap and (self.puzzle_moves == nil or self.puzzle_moves > 0)
+  do_swap = do_swap and (self.puzzle_type ~= "moves" or self.puzzle_moves > 0)
 
   return do_swap
 end
@@ -1992,9 +2021,7 @@ function Stack.swap(self)
   local panels = self.panels
   local row = self.cur_row
   local col = self.cur_col
-  if self.puzzle_moves then
-    self.puzzle_moves = self.puzzle_moves - 1
-  end
+  self.puzzle_moves = self.puzzle_moves - 1
   panels[row][col], panels[row][col + 1] = panels[row][col + 1], panels[row][col]
   local tmp_chaining = panels[row][col].chaining
   panels[row][col]:clear_flags()
@@ -2166,7 +2193,7 @@ function Stack.recv_garbage(self, time, to_recv)
   if self.CLOCK > time and self.prev_states then
     local prev_states = self.prev_states
     local next_self = prev_states[time + 1]
-    while next_self and (next_self.prev_active_panels ~= 0 or next_self.n_active_panels ~= 0) do
+    while next_self and (next_self.n_prev_active_panels ~= 0 or next_self.n_active_panels ~= 0) do
       time = time + 1
       next_self = prev_states[time + 1]
     end

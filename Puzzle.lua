@@ -4,14 +4,14 @@ Puzzle =
   function(self, puzzleType, doCountdown, moves, stack)
     self.puzzleType = puzzleType
     self.doCountdown = doCountdown
-    self.moves = moves
+    self.moves = moves or 0
     self.stack = string.gsub(stack, "%s+", "") -- Remove whitespace so files can be easier to read
     self.randomizeColors = false
   end
 )
 
 function Puzzle.getPuzzleTypes()
-  return { "moves", "chain" }
+  return { "moves", "chain", "clear" }
 end
 
 function Puzzle.getLegalCharacters()
