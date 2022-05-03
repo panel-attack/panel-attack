@@ -332,7 +332,7 @@ function read_puzzles()
               local puzzleSetName = puzzleSet["Set Name"]
               local puzzles = {}
               for _, puzzle in pairs(puzzleSet["Puzzles"]) do
-                local puzzle = Puzzle(puzzle["Puzzle Type"], puzzle["Do Countdown"], puzzle["Moves"], puzzle["Stack"])
+                local puzzle = Puzzle(puzzle["Puzzle Type"], puzzle["Do Countdown"], puzzle["Moves"], puzzle["Stack"], puzzle["Stop"], puzzle["Shake"])
                 puzzles[#puzzles+1] = puzzle
               end
 
