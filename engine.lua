@@ -779,7 +779,13 @@ function Stack.puzzle_failed(self)
           return true
         else
           -- unrestricted clear puzzle
-          
+          -- player has triggered an initial swap
+          if self.puzzle_moves < 0 -- has no invincible time left
+          and self.stop_time == 0 and self.pre_stop_time == 0 and self.shake_time == 0 then
+            self.health = self.health - 1
+            -- and health ran out
+            return self.health <= 0
+          end
         end
       end
     end
@@ -1903,7 +1909,6 @@ function Stack.game_ended(self)
     end
   elseif self.match.mode == "puzzle" then
     if self:puzzle_done() or self:puzzle_failed() then
-      self.puzzle = nil
       return true
     end
   end
