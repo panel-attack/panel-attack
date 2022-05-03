@@ -5,6 +5,7 @@ difficulty,,Difficulty,Difficulté,Dificuldade,難易度,Dificultad,Schwierigkei
 easy,,Easy,Facile,Fácil,EASY,Fácil,Leicht,Facile
 hard,,Hard,Difficile,Difícil,HARD,Difícil,Schwer,Difficile
 level,,Level,Niveau,Nível,LV,Nivel,Level,Livello
+randomColors,Option to randomize panel colors,Random Colors,Couleurs aléatoires,Cores aleatórias,ランダムな色,Colores al azar,Zufällige Farben,Colori casuali
 normal,,Normal,Normal,Normal,NORMAL,Normal,Normal,Normale
 speed,,Speed,Vitesse,Velocidade,スピード,Velocidad,Geschwindigkeit,Velocità
 factory,Training mode that drops multiple tiers of chain garbage,Factory,Usine,Fábrica,工場,Fábrica,Fabrik,Fabbrica
@@ -30,6 +31,9 @@ random,,Random,Aléatoire,Aleatório,ランダム,Aleatorio,Zufall,Casuale
 leave,,Leave,Quitter,Sair,終わる,Salir,Verlassen,Esci
 pause,,Pause,Pause,Pausa,ポーズ,Pausa,Pause,Pausa
 go_,,Go!,Commencer,Vai!,GO!,¡Comenzar!,Los!,Via!
+endless_type,Name of the menu in endless / time attack that lets you pick between the old difficulty style and the new one,Type,Taper,Tipo,タイプ,Tipo,Typ,Tipo
+endless_classic,old difficulty style in endless / time attack,Classic,Classique,Clássico,クラシック,Clásico,Klassisch,Classico
+endless_modern,new difficulty style in endless / time attack,Modern,Moderne,Moderno,モダン,Moderno,Modern,Moderno
 anonymous,,Anonymous,Anonyme,Anônimo,匿名,Anónimo,Anonym,Anonimo
 stages,,stages,terrains,Cenários,ステージ,escenarios,Arenen,Scenario
 characters,,characters,personnages,Personagens,キャラクター,personajes,Charaktere,Personaggi

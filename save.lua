@@ -123,6 +123,15 @@ function read_conf_file()
       if type(read_data.endless_difficulty) == "number" then
         config.endless_difficulty = bound(1, read_data.endless_difficulty, 3)
       end
+      if type(read_data.endless_level) == "number" then
+        config.endless_level = bound(1, read_data.endless_level, 11)
+      end
+      if type(read_data.puzzle_level) == "number" then
+        config.puzzle_level = bound(1, read_data.puzzle_level, 11)
+      end
+      if type(read_data.puzzle_randomColors) == "boolean" then
+        config.puzzle_randomColors = read_data.puzzle_randomColors
+      end
 
       if type(read_data.name) == "string" then
         config.name = read_data.name
@@ -314,11 +323,11 @@ function read_puzzles()
       -- end
 
       puzzle_packs = love.filesystem.getDirectoryItems("puzzles") or {}
-      print("loading custom puzzles...")
+      logger.debug("loading custom puzzles...")
       for _, filename in pairs(puzzle_packs) do
-        print(filename)
+        logger.trace(filename)
         if love.filesystem.getInfo("puzzles/" .. filename) and filename ~= "README.txt" and filename ~= ".DS_Store" then
-          print("loading custom puzzle set: " .. (filename or "nil"))
+          logger.debug("loading custom puzzle set: " .. (filename or "nil"))
           local current_set = {}
           local file = love.filesystem.newFile("puzzles/" .. filename)
           file:open("r")
@@ -349,7 +358,7 @@ function read_puzzles()
             end
           end
           
-          print("loaded above set")
+          logger.debug("loaded above set")
         end
       end
     end
@@ -385,14 +394,14 @@ function recursive_copy(source, destination)
   for i, name in ipairs(names) do
     local info = lfs.getInfo(source .. "/" .. name)
     if info and info.type == "directory" then
-      print("calling recursive_copy(source" .. "/" .. name .. ", " .. destination .. "/" .. name .. ")")
+      logger.trace("calling recursive_copy(source" .. "/" .. name .. ", " .. destination .. "/" .. name .. ")")
       recursive_copy(source .. "/" .. name, destination .. "/" .. name)
     elseif info and info.type == "file" then
       local destination_info = lfs.getInfo(destination)
       if not destination_info or destination_info.type ~= "directory" then
         love.filesystem.createDirectory(destination)
       end
-      print("copying file:  " .. source .. "/" .. name .. " to " .. destination .. "/" .. name)
+      logger.trace("copying file:  " .. source .. "/" .. name .. " to " .. destination .. "/" .. name)
 
       local source_file = lfs.newFile(source .. "/" .. name)
       source_file:open("r")
@@ -406,10 +415,10 @@ function recursive_copy(source, destination)
       new_file:close()
 
       if not success then
-        print(message)
+        logger.warn(message)
       end
     else
-      print("name:  " .. name .. " isn't a directory or file?")
+      logger.warn("name:  " .. name .. " isn't a directory or file?")
     end
   end
 end

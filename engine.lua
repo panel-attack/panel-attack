@@ -15,14 +15,26 @@ local clone_pool = {}
 -- Represents the full panel stack for one player
 Stack =
   class(
-  function(s, which, match, is_local, panels_dir, speed, difficulty, player_number, wantsCanvas)
-    if wantsCanvas == nil then
-      wantsCanvas = true
-    end
+  function(s, arguments)
+    local which = arguments.which or 1
+    assert(arguments.match ~= nil)
+    local match = arguments.match
+    assert(arguments.is_local ~= nil)
+    local is_local = arguments.is_local
+    local panels_dir = arguments.panels_dir or config.panels
+    -- level or difficulty should be set
+    assert(arguments.level ~= nil or arguments.difficulty ~= nil)
+    local level = arguments.level
+    local difficulty = arguments.difficulty
+    local speed = arguments.speed
+    local player_number = arguments.player_number or which
+    local wantsCanvas = arguments.wantsCanvas or 1
+    local character = arguments.character or config.character
+
     s.match = match
-    s.character = config.character
+    s.character = character
     s.max_health = 1
-    s.panels_dir = panels_dir or config.panels
+    s.panels_dir = panels_dir
     s.portraitFade = 0
     s.is_local = is_local
 
@@ -38,10 +50,12 @@ Stack =
       s.do_first_row = true
     end
 
-    if s.match.mode == "endless" then
-      s.NCOLORS = difficulty_to_ncolors_endless[difficulty]
-    elseif s.match.mode == "time" then
-      s.NCOLORS = difficulty_to_ncolors_1Ptime[difficulty]
+    if difficulty then
+      if s.match.mode == "endless" then
+        s.NCOLORS = difficulty_to_ncolors_endless[difficulty]
+      elseif s.match.mode == "time" then
+        s.NCOLORS = difficulty_to_ncolors_1Ptime[difficulty]
+      end
     end
 
     -- frame.png dimensions
@@ -50,11 +64,9 @@ Stack =
       s.canvas:setFilter("nearest", "nearest")
     end
 
-    if s.match.mode == "2ptime" or s.match.mode == "vs" then
-      local level = speed or 5
-      s.character = (type(difficulty) == "string") and difficulty or s.character -- we used the difficulty variable for the character....
+    if level then
       s:setLevel(level)
-      speed = level_to_starting_speed[level]
+      speed = speed or level_to_starting_speed[level]
     end
     s.health = s.max_health
 
@@ -177,8 +189,8 @@ Stack =
 
     s.pop_q = Queue()
 
-    s.which = which or 1 -- Pk.which == k
-    s.player_number = player_number or s.which --player number according to the multiplayer server, for game outcome reporting
+    s.which = which
+    s.player_number = player_number --player number according to the multiplayer server, for game outcome reporting
 
     s.shake_time = 0
 
@@ -498,6 +510,31 @@ Panel =
   end
 )
 
+function Panel.regularColorsArray()
+  return {
+    1, -- hearts
+    2, -- circles
+    3, -- triangles
+    4, -- stars
+    5, -- diamonds
+    6, -- inverse triangles
+    }
+    -- Note see the methods below for square, shock, and colorless
+end
+
+function Panel.extendedRegularColorsArray()
+  local result = Panel.regularColorsArray()
+  result[#result+1] = 7 -- squares
+  return result
+end
+
+function Panel.allPossibleColorsArray()
+  local result = Panel.extendedRegularColorsArray()
+  result[#result+1] = 8 -- shock
+  result[#result+1] = 9 -- colorless
+  return result
+end
+
 -- Sets all variables to the default settings
 function Panel.clear(self)
   -- color 0 is an empty panel.
@@ -616,15 +653,21 @@ function Panel.clear_flags(self)
   self.state = "normal"
 end
 
+
 function Stack.set_puzzle_state(self, puzzle)
+  
   -- Copy the puzzle into our state
-  self:setLevel(5)
   local boardSizeInPanels = self.width * self.height
   while string.len(puzzle.stack) < boardSizeInPanels do
     puzzle.stack = "0" .. puzzle.stack
   end
 
-  self.panels = self:puzzleStringToPanels(puzzle.stack)
+  local puzzleString = puzzle.stack
+  if puzzle.randomizeColors then
+    puzzleString = Puzzle.randomizeColorString(puzzleString)
+  end
+
+  self.panels = self:puzzleStringToPanels(puzzleString)
   self.do_countdown = puzzle.do_countdown or false
   self.puzzleType = puzzle.puzzleType or "moves"
   if puzzle.moves ~= 0 then

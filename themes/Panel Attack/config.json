@@ -28,5 +28,6 @@
 "multibar_frame_Pos": [110, 1100],
 "multibar_frame_Scale": 1,
 "multibar_Pos": [-13, 96],
-"multibar_Scale": 1
+"multibar_Scale": 1,
+"font_size": 12
 }

@@ -871,7 +871,7 @@ local function about_menu(button_idx)
         reset_filters()
 
         if not love.filesystem.getInfo("themes/" .. prefix_of_ignored_dirs .. default_theme_dir) then
-          print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
+          --print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
           gprint(loc("op_copy_files"), 280, 280)
           wait()
           recursive_copy("themes/" .. default_theme_dir, "themes/" .. prefix_of_ignored_dirs .. default_theme_dir)
@@ -978,6 +978,47 @@ local function about_menu(button_idx)
     }
   end
 
+  local function show_system_info()
+    ret = {
+      function()
+        GAME.backgroundImage = themes[config.theme].images.bg_readme
+        reset_filters()
+        local renderer_name, renderer_version, graphics_card_vendor, graphics_card_name = love.graphics.getRendererInfo()
+        local sys_info = {}
+        sys_info[#sys_info + 1] = {name = "Operating System", value = love.system.getOS()} 
+        sys_info[#sys_info + 1] = {name = "Renderer", value = renderer_name.." "..renderer_version}
+        sys_info[#sys_info + 1] = {name = "Graphics Card", value = graphics_card_name}
+        sys_info[#sys_info + 1] = {name = "LOVE Version", value = Game.loveVersionString()} 
+        sys_info[#sys_info + 1] = {name = "Panel Attack Engine Version", value = VERSION} 
+        sys_info[#sys_info + 1] = {name = "Panel Attack Release Version", value = GAME_UPDATER_GAME_VERSION} 
+        sys_info[#sys_info + 1] = {name = "Save Data Directory Path", value = love.filesystem.getSaveDirectory()}  
+        sys_info[#sys_info + 1] = {name = "Characters [Enabled/Total]", value = #characters_ids_for_current_theme.."/"..#characters_ids} 
+        sys_info[#sys_info + 1] = {name = "Stages [Enabled/Total]", value = #stages_ids_for_current_theme.."/"..#stages_ids} 
+        sys_info[#sys_info + 1] = {name = "Total Panel Sets", value = #panels_ids} 
+        sys_info[#sys_info + 1] = {name = "Total Themes", value = #found_themes}
+        local info_string = ""
+        for index, info in ipairs(sys_info) do
+          info_string = info_string .. info.name .. ": " .. (info.value or "Unknown") .. "\n"
+        end
+        while true do
+          gprint(info_string, 15, 15)
+          wait()
+          local panels_ret = nil
+          variable_step(
+            function()
+              if menu_escape() or menu_enter() then
+                panels_ret = {about_menu, {5}}
+              end
+            end
+          )
+          if panels_ret then
+            return unpack(panels_ret)
+          end
+        end
+      end
+    }
+  end
+
   local function nextMenu()
     aboutMenu:selectNextIndex()
   end
@@ -995,7 +1036,7 @@ local function about_menu(button_idx)
   aboutMenu:add_button(loc("op_about_characters"), show_characters_readme, goEscape)
   aboutMenu:add_button(loc("op_about_stages"), show_stages_readme, goEscape)
   aboutMenu:add_button(loc("op_about_panels"), show_panels_readme, goEscape)
-
+  aboutMenu:add_button("System Info", show_system_info, goEscape)
   aboutMenu:add_button(loc("back"), exitSettings, exitSettings)
 
   if button_idx then
@@ -1091,6 +1132,7 @@ function options.main(button_idx)
       wait()
       stop_the_music()
       theme_init()
+      localization:set_language(language_choices[language_number]) -- Apply new font and font size if needed
       if themes[config.theme].musics["main"] then
         find_and_add_music(themes[config.theme].musics, "main")
       end
