@@ -13,10 +13,11 @@ Click_menu =
     self.width = width or (canvas_width - self.x - 30) --width not used yet for scrolling
     self.height = height or (canvas_height - self.y - 30) --scrolling does care about height
     self.new_item_y = 0
+    local menuXPosition = -100
     self.menu_controls = {
       up = {
         text = love.graphics.newText(get_global_font(), "^"),
-        x = self.width - 30,
+        x = menuXPosition,
         y = 10,
         w = 30,
         h = 30,
@@ -25,8 +26,26 @@ Click_menu =
       },
       down = {
         text = love.graphics.newText(get_global_font(), "v"),
-        x = self.width - 30,
-        y = 80,
+        x = menuXPosition,
+        y = 90,
+        w = 30,
+        h = 30,
+        outlined = true,
+        visible = false
+      },
+      left = {
+        text = love.graphics.newText(get_global_font(), "<"),
+        x = menuXPosition - 35,
+        y = 50,
+        w = 30,
+        h = 30,
+        outlined = true,
+        visible = false
+      },
+      right = {
+        text = love.graphics.newText(get_global_font(), ">"),
+        x = menuXPosition + 35,
+        y = 50,
         w = 30,
         h = 30,
         outlined = true,
@@ -69,6 +88,13 @@ function Click_menu.add_button(self, string_text, selectFunction, escapeFunction
     rightFunction = rightFunction
   }
   self.buttons[#self.buttons].y = self.new_item_y or 0
+
+  self:resize_to_fit()
+  self:layout_buttons()
+end
+
+function Click_menu:remove_button(index)
+  table.remove(self.buttons, index)
 
   self:resize_to_fit()
   self:layout_buttons()
@@ -134,9 +160,7 @@ function Click_menu.set_active_idx(self, idx)
   self.active_idx = idx
   local top_visible_button_before = self.top_visible_button
   self:update_top_button()
-  if self.top_visible_button ~= top_visible_button_before or not self.buttons[idx].visible then
-    self:layout_buttons()
-  end
+  self:layout_buttons()
 end
 
 -- Repositions in the x direction so the menu doesn't go off the screen
@@ -181,22 +205,20 @@ function Click_menu.layout_buttons(self)
     end
   end
 
-  if #self.buttons > self.button_limit then
-    self:show_controls(true)
-  else
-    self:show_controls(false)
-  end
+  self:show_controls(false)
 end
 
 -- Sets the visibility of the scroll controls
-function Click_menu.show_controls(self, bool)
-  if bool or #self.buttons > self.button_limit then
-    for k, v in pairs(self.menu_controls) do
-      self.menu_controls[k].visible = true
-    end
-  else
-    for k, v in pairs(self.menu_controls) do
-      self.menu_controls[k].visible = false
+function Click_menu.show_controls(self, forceUpDownShowing)
+  local verticalControlsNeeded = #self.buttons > self.button_limit
+
+  for control_name, v in pairs(self.menu_controls) do
+    if control_name == "up" or control_name == "down" then
+      self.menu_controls[control_name].visible = forceUpDownShowing or verticalControlsNeeded
+    elseif control_name == "left" then
+      self.menu_controls[control_name].visible = #self.buttons >= self.active_idx and self.buttons[self.active_idx].leftFunction
+    elseif control_name == "right" then
+      self.menu_controls[control_name].visible = #self.buttons >= self.active_idx and self.buttons[self.active_idx].rightFunction
     end
   end
 end
@@ -290,7 +312,7 @@ function Click_menu.draw(self)
       end
     end
 
-    --draw menu controls (up and down scrolling buttons, so far)
+    --draw menu controls (up and down, left right, etc)
     for k, control in pairs(self.menu_controls) do
       if control.visible then
         if control.background then

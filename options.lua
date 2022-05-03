@@ -486,7 +486,7 @@ local function about_menu(button_idx)
         reset_filters()
 
         if not love.filesystem.getInfo("themes/" .. prefix_of_ignored_dirs .. default_theme_dir) then
-          print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
+          --print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
           gprint(loc("op_copy_files"), 280, 280)
           wait()
           recursive_copy("themes/" .. default_theme_dir, "themes/" .. prefix_of_ignored_dirs .. default_theme_dir)
