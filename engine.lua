@@ -750,7 +750,7 @@ function Stack.hasGarbage(self)
   -- garbage is more likely to be found at the top of the stack
   for row = #self.panels, 1, -1 do
     for column = 1, #self.panels[row] do
-      if self.panels[row][column].garbage and self.panels[row][column].state == "normal" then
+      if self.panels[row][column].garbage and self.panels[row][column].state ~= "matched" then
         return true
       end
     end
@@ -774,19 +774,7 @@ function Stack.puzzle_failed(self)
       end
     elseif self.puzzleType == "clear" then
       if self:hasGarbage() then
-        if self.puzzle.moves > 0 and self.puzzle_moves <= 0 then
-          -- move restricted clear puzzle
-          return true
-        else
-          -- unrestricted clear puzzle
-          -- player has triggered an initial swap
-          if self.puzzle_moves < 0 -- has no invincible time left
-          and self.stop_time == 0 and self.pre_stop_time == 0 and self.shake_time == 0 then
-            self.health = self.health - 1
-            -- and health ran out
-            return self.health <= 0
-          end
-        end
+        return (self.puzzle.moves > 0 and self.puzzle_moves <= 0) or self.health <= 0
       end
     end
   end
@@ -1175,27 +1163,36 @@ function Stack.PdP(self)
 
     -- Phase 0 //////////////////////////////////////////////////////////////
     -- Stack automatic rising
-    if self.speed ~= 0 and not self.manual_raise and self.stop_time == 0 and not self.rise_lock and self.match.mode ~= "puzzle" then
-      if self.panels_in_top_row then
-        self.health = self.health - 1
-        if self.health < 1 and self.shake_time < 1 then
-          self:set_game_over()
+    if self.speed ~= 0 and not self.manual_raise and self.stop_time == 0 and not self.rise_lock then
+      if self.match.mode == "puzzle" then
+        if self.puzzleType == "clear" and self.puzzle_moves - self.puzzle.moves < 0 then
+          self.health = self.health - 1
+          -- no gameover because it can't return otherwise, exit is taken care of by puzzle_failed
         end
       else
-        self.rise_timer = self.rise_timer - 1
-        if self.rise_timer <= 0 then -- try to rise
-          self.displacement = self.displacement - 1
-          if self.displacement == 0 then
-            self.prevent_manual_raise = false
-            self.top_cur_row = self.height
-            self:new_row()
+        if self.panels_in_top_row then
+          self.health = self.health - 1
+          if self.health < 1 and self.shake_time < 1 then
+            self:set_game_over()
           end
-          self.rise_timer = self.rise_timer + self.FRAMECOUNT_RISE
+        else
+          if self.match.mode ~= "puzzle" then
+            self.rise_timer = self.rise_timer - 1
+            if self.rise_timer <= 0 then -- try to rise
+              self.displacement = self.displacement - 1
+              if self.displacement == 0 then
+                self.prevent_manual_raise = false
+                self.top_cur_row = self.height
+                self:new_row()
+              end
+              self.rise_timer = self.rise_timer + self.FRAMECOUNT_RISE
+            end
+          end
         end
       end
     end
 
-    if not self.panels_in_top_row then
+    if not self.panels_in_top_row and self.match.mode ~= "puzzle" then
       self.health = self.max_health
     end
 
