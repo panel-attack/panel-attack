@@ -1902,9 +1902,8 @@ function Stack.game_ended(self)
       return true
     end
   elseif self.match.mode == "puzzle" then
-    if self:puzzle_done() then
-      return true
-    elseif self:puzzle_failed() then
+    if self:puzzle_done() or self:puzzle_failed() then
+      self.puzzle = nil
       return true
     end
   end
@@ -2011,7 +2010,7 @@ function Stack.canSwap(self, row, column)
     do_swap = do_swap and not (row ~= 1 and (panels[row - 1][column].state == "swapping" and panels[row - 1][column + 1].state == "swapping") and (panels[row - 1][column].color == 0 or panels[row - 1][column + 1].color == 0) and (panels[row - 1][column].color ~= 0 or panels[row - 1][column + 1].color ~= 0))
   end
 
-  do_swap = do_swap and (self.puzzle.moves == 0 or self.puzzle_moves > 0)
+  do_swap = do_swap and (not self.puzzle or self.puzzle.moves == 0 or self.puzzle_moves > 0)
 
   return do_swap
 end
@@ -2021,7 +2020,7 @@ function Stack.swap(self)
   local panels = self.panels
   local row = self.cur_row
   local col = self.cur_col
-  self.puzzle_moves = self.puzzle_moves - 1
+  self:processPuzzleSwap()
   panels[row][col], panels[row][col + 1] = panels[row][col + 1], panels[row][col]
   local tmp_chaining = panels[row][col].chaining
   panels[row][col]:clear_flags()
@@ -2062,6 +2061,17 @@ function Stack.swap(self)
     if panels[row][col + 1].color == 0 and panels[row + 1][col + 1].color ~= 0 then
       panels[row][col + 1].dont_swap = true
     end
+  end
+end
+
+function Stack.processPuzzleSwap(self)
+  if self.puzzle then
+    if self.puzzle_moves == 0 and self.puzzle_type == "clear" then
+      -- start depleting stop / shake time
+      self.stop_time = self.puzzle.stop_time
+      self.shake_time = self.puzzle.shake_time
+    end
+    self.puzzle_moves = self.puzzle_moves - 1
   end
 end
 
