@@ -743,6 +743,7 @@ function options.main(button_idx)
       wait()
       stop_the_music()
       theme_init()
+      localization:set_language(language_choices[language_number]) -- Apply new font and font size if needed
       if themes[config.theme].musics["main"] then
         find_and_add_music(themes[config.theme].musics, "main")
       end

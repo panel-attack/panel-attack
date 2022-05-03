@@ -34,6 +34,7 @@ Theme =
     self.images = {} -- theme images
     self.sounds = {} -- theme sfx
     self.musics = {} -- theme music
+    self.font = {} -- font
     self.matchtypeLabel_Pos = {-40, -30} -- the position of the "match type" label
     self.matchtypeLabel_Scale = 3 -- the scale size of the "match type" lavel
     self.timeLabel_Pos = {0, 10} -- the position of the timer label
@@ -273,6 +274,15 @@ function Theme.graphics_init(self)
       local cur_width, cur_height = self.images.IMG_char_sel_cursors[player_num][position_num]:getDimensions()
       local half_width, half_height = cur_width / 2, cur_height / 2
       self.images.IMG_char_sel_cursor_halves.right[player_num][position_num] = love.graphics.newQuad(half_width, 0, half_width, cur_height, cur_width, cur_height)
+    end
+  end
+
+  self.font.size = themes[config.theme].font.size or 12
+  for key, value in pairs(love.filesystem.getDirectoryItems("themes/" .. config.theme)) do
+    if value:lower():match(".*%.ttf") then -- Any .ttf file
+      self.font.path = "themes/" .. config.theme .. "/" .. value
+      set_global_font(self.font.path, self.font.size)
+      break
     end
   end
 end
@@ -664,14 +674,19 @@ function Theme.json_init(self)
   if read_data.multibar_is_absolute and type(read_data.multibar_is_absolute) == "boolean" then
     self.multibar_is_absolute = read_data.multibar_is_absolute
   end
+
+  -- Font size
+  if read_data.font_size and type(read_data.font_size) == "number" then
+    self.font.size = read_data.font_size
+  end
 end
 
 -- loads a theme into the game
 function Theme.load(self, id)
   logger.debug("loading theme " .. id)
+  self:json_init()
   self:graphics_init()
   self:sound_init()
-  self:json_init()
   logger.debug("loaded theme " .. id)
 end
 
