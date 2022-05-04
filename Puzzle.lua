@@ -113,7 +113,7 @@ function Puzzle.toPuzzleString(panels)
         -- this is making the assumption that garbage that is currently clearing into panels is still to be included for the garbage block
         effectiveHeight = panel.height + 1
       end
-      -- offsets are being calculated from the bottom left corner of garbage (doesn't make sense but well)
+      -- offsets are being calculated from the bottom left corner of garbage
       -- but we need to go in our order of traversal, therefore...
       -- top left anchor point
       if panel.x_offset == 0 and panel.y_offset == panel.height - 1 then

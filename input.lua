@@ -267,10 +267,6 @@ function love.keypressed(key, scancode, rep)
   end
 end
 
-local function handleCopy()
-
-end
-
 function love.textinput(text)
   this_frame_unicodes[#this_frame_unicodes + 1] = text
 end
