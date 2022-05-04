@@ -228,6 +228,19 @@ function love.keypressed(key, scancode, rep)
     love.graphics.captureScreenshot("screenshots/" .. filename)
     return
   end
+  -- copy
+  if key == "c" and not rep and (love.keyboard.isDown("rctrl") or love.keyboard.isDown("lctrl")) then
+    local stacks = {}
+    if P1 then
+      stacks["P1"] = P1:toPuzzleInfo()
+    end
+    if P2 then
+      stacks["P2"] = P2:toPuzzleInfo()
+    end
+    if table.length(stacks) > 0 then
+      love.system.setClipboardText(json.encode(stacks))
+    end
+  end
   if not rep then
     keys[key] = 0
   end
@@ -252,6 +265,10 @@ function love.keypressed(key, scancode, rep)
       input.acceptingPlayerInputConfigurationAssignments = false
     end
   end
+end
+
+local function handleCopy()
+
 end
 
 function love.textinput(text)
