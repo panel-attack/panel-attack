@@ -1416,9 +1416,11 @@ function loadFromReplay(replay)
 
     GAME.battleRoom = BattleRoom()
     GAME.match = Match("vs", GAME.battleRoom)
+    GAME.match.seed = replay.seed or 0
+    GAME.match.isFromReplay = true
     P1 = Stack{which=1, match=GAME.match, is_local=false, level=replay.P1_level or 5, character=replay.P1_char}
 
-    if replay.O and string.len(replay.O) > 0 then
+    if replay.I and string.len(replay.I) > 0 then
       P2 = Stack{which=2, match=GAME.match, is_local=false, level=replay.P2_level or 5, character=replay.P2_char}
       
       P1:set_garbage_target(P2)
