@@ -21,45 +21,42 @@ replay_of_match_so_far = nil -- current replay of spectatable replay
 spectator_list = nil
 spectators_string = ""
 leftover_time = 0
-main_menu_screen_pos = {300 + (canvas_width - legacy_canvas_width) / 2, 195 + (canvas_height - legacy_canvas_height) / 2}
 local wait_game_update = nil
 local has_game_update = false
 local main_menu_last_index = 1
 local puzzle_menu_last_index = 3
 
+local function drawLoadingString(loadingString) 
+  local textMaxWidth = 300
+  local textHeight = 40
+  local x = 20
+  local y = canvas_height - textHeight
+  local backgroundPadding = 10
+  grectangle_color("fill", (x - backgroundPadding) / GFX_SCALE , (y - backgroundPadding) / GFX_SCALE, textMaxWidth/GFX_SCALE, textHeight/GFX_SCALE, 0, 0, 0, 0.5)
+  gprintf(loadingString, x, y, canvas_width, "left", nil, nil, 10)
+end
+
 function fmainloop()
-  local func, arg = main_select_mode, nil
-  -- loading various assets into the game
-  gprint("Reading config file", unpack(main_menu_screen_pos))
-  wait()
   read_conf_file()
   local x, y, display = love.window.getPosition()
   love.window.setPosition(config.window_x or x, config.window_y or y, config.display or display)
   love.window.setFullscreen(config.fullscreen or false)
   love.window.setVSync(config.vsync and 1 or 0)
-  gprint("Loading localization...", unpack(main_menu_screen_pos))
-  wait()
   Localization.init(localization)
-  gprint(loc("ld_puzzles"), unpack(main_menu_screen_pos))
-  wait()
   copy_file("readme_puzzles.txt", "puzzles/README.txt")
-  gprint(loc("ld_replay"), unpack(main_menu_screen_pos))
-  wait()
-  read_replay_file()
-  gprint(loc("ld_theme"), unpack(main_menu_screen_pos))
-  wait()
   theme_init()
+
   -- stages and panels before characters since they are part of their loading!
-  gprint(loc("ld_stages"), unpack(main_menu_screen_pos))
+  drawLoadingString(loc("ld_stages"))
   wait()
   stages_init()
-  gprint(loc("ld_panels"), unpack(main_menu_screen_pos))
+  drawLoadingString(loc("ld_panels"))
   wait()
   panels_init()
-  gprint(loc("ld_characters"), unpack(main_menu_screen_pos))
+  drawLoadingString(loc("ld_characters"))
   wait()
   characters_init()
-  gprint(loc("ld_analytics"), unpack(main_menu_screen_pos))
+  drawLoadingString(loc("ld_analytics"))
   wait()
   analytics.init()
   apply_config_volume()
@@ -77,12 +74,16 @@ function fmainloop()
   -- Run Unit Tests
   if TESTS_ENABLED then
     -- Run all unit tests now that we have everything loaded
+    drawLoadingString("Running Unit Tests")
+    wait()
     require("PuzzleTests")
     require("ServerQueueTests")
     require("StackTests")
     require("table_util_tests")
     require("csprngTests")
   end
+
+  local func, arg = main_title, nil
 
   while true do
     leftover_time = 1 / 120 -- prevents any left over time from getting big transitioning between menus
@@ -114,6 +115,54 @@ function variable_step(f)
   end
 end
 
+local function titleDrawPressStart(percent) 
+  local textMaxWidth = canvas_width - 40
+  local textHeight = 40
+  local x = (canvas_width / 2) - (textMaxWidth / 2)
+  local y = canvas_height * 0.75
+  gprintf(loc("continue_button"), x, y, textMaxWidth, "center", {1,1,1,percent}, nil, 16)
+end
+
+function main_title()
+
+  if not themes[config.theme].images.bg_title then
+    return main_select_mode
+  end
+
+  GAME.backgroundImage = themes[config.theme].images.bg_title
+  
+  local ret = nil
+  local percent = 0
+  local incrementAmount = 0.01
+  local decrementAmount = 0.02
+  local increment = incrementAmount
+
+  local totalTime = 0
+  while true do
+    titleDrawPressStart(percent)
+    local lastTime = leftover_time
+    wait()
+    totalTime = totalTime + (leftover_time - lastTime)
+    variable_step(
+      function()
+        if increment > 0 and percent >= 1 then
+          increment = -decrementAmount
+        elseif increment < 0 and percent <= 0.5 then
+          increment = incrementAmount
+        end
+        percent =  bound(0, percent + increment, 1)
+        
+        if menu_enter() then
+          ret = {main_select_mode}
+        end
+      end
+    )
+    if ret then
+      return unpack(ret)
+    end
+  end
+end
+
 do
   function main_select_mode()
     CLICK_MENUS = {}
@@ -137,7 +186,7 @@ do
     connected_server_ip = ""
     current_server_supports_ranking = false
     match_type = ""
-    local menu_x, menu_y = unpack(main_menu_screen_pos)
+    local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
     local main_menu
     local ret = nil
     GAME.rich_presence:setPresence(nil, nil, true)
@@ -185,8 +234,14 @@ do
     main_menu:add_button(loc("mm_fullscreen", "(LAlt+Enter)"), fullscreen, goEscape)
     main_menu:add_button(loc("mm_quit"), exit_game, exit_game)
 
+
+  local totalTime = 0
+
     while true do
+
       main_menu:draw()
+
+
       if wait_game_update ~= nil then
         has_game_update = wait_game_update:pop()
         if has_game_update ~= nil and has_game_update then
@@ -196,16 +251,22 @@ do
       end
       
       local loveString = Game.loveVersionString()
-      gprintf("Love Version: " .. loveString, -5, 705, canvas_width, "right")
+      local fontHeight = get_global_font():getHeight()
+      local infoYPosition = 705 - fontHeight/2
+      gprintf("Love Version: " .. loveString, -5, infoYPosition, canvas_width, "right")
 
       if GAME_UPDATER_GAME_VERSION then
-        gprintf("PA Version: " .. GAME_UPDATER_GAME_VERSION, -5, 690, canvas_width, "right")
+        gprintf("PA Version: " .. GAME_UPDATER_GAME_VERSION, -5, infoYPosition - fontHeight, canvas_width, "right")
         if has_game_update then
           menu_draw(panels[config.panels].images.classic[1][1], 1262, 685)
         end
       end
 
-      wait()
+
+    local lastTime = leftover_time
+    wait()
+    totalTime = totalTime + (leftover_time - lastTime)
+
       variable_step(
         function()
           main_menu:update()
@@ -507,7 +568,7 @@ function training_setup()
   trainingModeSettings.height = 1
   trainingModeSettings.width = 6
   local ret = nil
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
   menu_y = menu_y + 70
 
   local trainingSettingsMenu
@@ -774,7 +835,7 @@ local function main_select_speed_99(mode)
     endlessMenuLastIndex = bound(1, #gameSettingsMenu.buttons - 1, #gameSettingsMenu.buttons)
   end
 
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
   menu_y = menu_y + 70
   gameSettingsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, endlessMenuLastIndex)
   gameSettingsMenu:add_button(loc("endless_type"), nextMenu, goEscape, toggleType, toggleType)
@@ -801,7 +862,7 @@ local function main_select_speed_99(mode)
       end
       local xPosition1 = 520
       local xPosition2 = xPosition1 + 150
-      local yPosition = 270
+      local yPosition = themes[config.theme].main_menu_screen_pos[2] + 21
 
       lastScore = tostring(lastScore)
       record = tostring(record)
@@ -873,8 +934,11 @@ function main_net_vs_lobby()
   local login_status_message_duration = 2
   local login_denied = false
   local showing_leaderboard = false
-  local lobby_menu_x = {[true] = main_menu_screen_pos[1] - 200, [false] = main_menu_screen_pos[1]} --will be used to make room in case the leaderboard should be shown.
-  local lobby_menu_y = main_menu_screen_pos[2] + 50
+  local lobby_menu_x = {[true] = themes[config.theme].main_menu_screen_pos[1] - 200, [false] = themes[config.theme].main_menu_screen_pos[1]} --will be used to make room in case the leaderboard should be shown.
+  local lobby_menu_y = themes[config.theme].main_menu_screen_pos[2] + 50
+  if lobby_menu_y <= 120 then
+    lobby_menu_y = 120
+  end
   local sent_requests = {}
   if connection_up_time <= login_status_message_duration then
     json_send({login_request = true, user_id = my_user_id})
@@ -989,7 +1053,7 @@ function main_net_vs_lobby()
         leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
       end
     end
-    local print_x, print_y = unpack(main_menu_screen_pos)
+    local print_x, print_y = unpack(themes[config.theme].main_menu_screen_pos)
     local to_print = ""
     local arrow = ""
 
@@ -1110,7 +1174,7 @@ function main_net_vs_lobby()
       if showing_leaderboard then
         gprint(leaderboard_string, lobby_menu_x[showing_leaderboard] + 400, lobby_menu_y - 120)
       end
-      gprint(join_community_msg, main_menu_screen_pos[1] + 30, canvas_height - 50)
+      gprint(join_community_msg, themes[config.theme].main_menu_screen_pos[1] + 30, canvas_height - 50)
       lobby_menu:draw()
     end
     updated = false
@@ -1188,14 +1252,14 @@ function main_net_vs_setup(ip, network_port)
   P1 = nil
   P2 = {}
   server_queue = ServerQueue()
-  gprint(loc("lb_set_connect"), unpack(main_menu_screen_pos))
+  gprint(loc("lb_set_connect"), unpack(themes[config.theme].main_menu_screen_pos))
   wait()
   if not network_init(ip, network_port) then
     return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
   end
   local timeout_counter = 0
   while not connection_is_ready() do
-    gprint(loc("lb_connecting"), unpack(main_menu_screen_pos))
+    gprint(loc("lb_connecting"), unpack(themes[config.theme].main_menu_screen_pos))
     wait()
     if not do_messages() then
       return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
@@ -1718,7 +1782,7 @@ function main_select_puzz()
     puzzleMenu:selectNextIndex()
   end
 
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
   puzzleMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, puzzle_menu_last_index)
   puzzleMenu:add_button(loc("level"), nextMenu, goEscape, decreaseLevel, increaseLevel)
   puzzleMenu:add_button(loc("randomColors"), update_randomColors, goEscape, update_randomColors, update_randomColors)
@@ -1758,7 +1822,7 @@ function main_set_name()
     if (love.timer.getTime() * 3) % 2 > 1 then
       to_print = to_print .. "|"
     end
-    gprint(to_print, unpack(main_menu_screen_pos))
+    gprint(to_print, unpack(themes[config.theme].main_menu_screen_pos))
     wait()
     local ret = nil
     variable_step(

@@ -98,10 +98,17 @@ Theme =
     self.multibar_Pos = {-13, 96} -- the position of the multibar
     self.multibar_Scale = 1 -- the scale size of the multibar
     self.multibar_is_absolute = false -- if the multibar should render in absolute scale
+    self.bg_title_speed_x = 0 -- speed the various backgrounds move at
+    self.bg_title_speed_y = 0
+    self.bg_main_speed_x = 0
+    self.bg_main_speed_y = 0
+    self.bg_select_screen_speed_x = 0
+    self.bg_select_screen_speed_y = 0
+    self.bg_readme_speed_x = 0
+    self.bg_readme_speed_y = 0
+    self.main_menu_screen_pos = {0, 0} -- the top center position of most menus
   end
 )
-
-GAME.backgroundImage = load_theme_img("background/main")
 
 function Theme.graphics_init(self)
   self.images = {}
@@ -111,9 +118,14 @@ function Theme.graphics_init(self)
     self.images.flags[flag] = load_theme_img("flags/" .. flag)
   end
 
-  self.images.bg_main = load_theme_img("background/main")
-  self.images.bg_select_screen = load_theme_img("background/select_screen")
-  self.images.bg_readme = load_theme_img("background/readme")
+  local titleImage = load_theme_img("background/title")
+  if titleImage then
+    self.images.bg_title = TilingImage(titleImage, 0, 0, canvas_width, canvas_height)
+  end
+
+  self.images.bg_main = TilingImage(load_theme_img("background/main"), 0, 0, canvas_width, canvas_height)
+  self.images.bg_select_screen = TilingImage(load_theme_img("background/select_screen"), 0, 0, canvas_width, canvas_height)
+  self.images.bg_readme = TilingImage(load_theme_img("background/readme"), 0, 0, canvas_width, canvas_height)
 
   self.images.bg_overlay = load_theme_img("background/bg_overlay")
   self.images.fg_overlay = load_theme_img("background/fg_overlay")
@@ -681,6 +693,57 @@ function Theme.json_init(self)
   if read_data.font_size and type(read_data.font_size) == "number" then
     self.font.size = read_data.font_size
   end
+  
+  -- Background Speeds
+  if read_data.bg_title_speed_x and type(read_data.bg_title_speed_x) == "number" then
+    self.bg_title_speed_x = read_data.bg_title_speed_x
+  end
+  if read_data.bg_title_speed_y and type(read_data.bg_title_speed_y) == "number" then
+    self.bg_title_speed_y = read_data.bg_title_speed_y
+  end
+
+  if read_data.bg_main_speed_x and type(read_data.bg_main_speed_x) == "number" then
+    self.bg_main_speed_x = read_data.bg_main_speed_x
+  end
+  if read_data.bg_main_speed_y and type(read_data.bg_main_speed_y) == "number" then
+    self.bg_main_speed_y = read_data.bg_main_speed_y
+  end
+
+  if read_data.bg_select_screen_speed_x and type(read_data.bg_select_screen_speed_x) == "number" then
+    self.bg_select_screen_speed_x = read_data.bg_select_screen_speed_x
+  end
+  if read_data.bg_select_screen_speed_y and type(read_data.bg_select_screen_speed_y) == "number" then
+    self.bg_select_screen_speed_y = read_data.bg_select_screen_speed_y
+  end
+
+  if read_data.bg_readme_speed_x and type(read_data.bg_readme_speed_x) == "number" then
+    self.bg_readme_speed_x = read_data.bg_readme_speed_x
+  end
+  if read_data.bg_readme_speed_y and type(read_data.bg_readme_speed_y) == "number" then
+    self.bg_readme_speed_y = read_data.bg_readme_speed_y
+  end
+
+end
+
+function Theme:final_init()
+
+  if themes[config.theme].images.bg_title then
+    self.main_menu_screen_pos = {532, 40}
+  else
+    self.main_menu_screen_pos = {532, 249}
+  end
+
+  -- Background Speeds
+  if self.images.bg_title then
+    self.images.bg_title.speedX = self.bg_title_speed_x
+    self.images.bg_title.speedY = self.bg_title_speed_y
+  end
+  self.images.bg_main.speedX = self.bg_main_speed_x
+  self.images.bg_main.speedY = self.bg_main_speed_y
+  self.images.bg_select_screen.speedX = self.bg_select_screen_speed_x
+  self.images.bg_select_screen.speedY = self.bg_select_screen_speed_y
+  self.images.bg_readme.speedX = self.bg_readme_speed_x
+  self.images.bg_readme.speedY = self.bg_readme_speed_y
 end
 
 -- loads a theme into the game
@@ -689,6 +752,7 @@ function Theme.load(self, id)
   self:json_init()
   self:graphics_init()
   self:sound_init()
+  self:final_init()
   logger.debug("loaded theme " .. id)
 end
 

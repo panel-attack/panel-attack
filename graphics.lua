@@ -533,7 +533,7 @@ function Stack.render(self)
       draw_number(self.speed, themes[config.theme].images["IMG_number_atlas" .. self.id], 10, speed_quads, (self.origin_x + (themes[config.theme].speed_Pos[1] * self.mirror_x)) * GFX_SCALE, (self.pos_y + themes[config.theme].speed_Pos[2]) * GFX_SCALE, themes[config.theme].speed_Scale, (15 / themes[config.theme].images["numberWidth" .. self.id] * themes[config.theme].speed_Scale), (19 / themes[config.theme].images["numberHeight" .. self.id] * themes[config.theme].speed_Scale), "center", self.multiplication)
     --gprint(loc("pl_frame", self.CLOCK), self.score_x, self.score_y+100)
     end
-    local main_infos_screen_pos = {x = 375 + (canvas_width - legacy_canvas_width) / 2, y = 10 + (canvas_height - legacy_canvas_height)}
+    local main_infos_screen_pos = {x = 375 + (464) / 2, y = 118}
 
     -- Draw the timer for time attack
     if self.match.mode == "time" then
@@ -754,7 +754,6 @@ function Stack.render(self)
       --   gprint(inputs_to_print, self.score_x, self.score_y + 195)
       -- end
     end
-    --local main_infos_screen_pos = { x=375 + (canvas_width-legacy_canvas_width)/2, y=10 + (canvas_height-legacy_canvas_height) }
     if match_type ~= "" then
       --gprint(match_type, main_infos_screen_pos.x, main_infos_screen_pos.y-50)
       if match_type == "Ranked" then

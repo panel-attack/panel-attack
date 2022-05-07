@@ -7,7 +7,7 @@ local found_themes = {}
 
 local function general_menu()
   local ret = nil
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
   local save_replays_publicly_choices = {{"with my name", "op_replay_public_with_name"}, {"anonymously", "op_replay_public_anonymously"}, {"not at all", "op_replay_public_no"}}
   local save_replays_preference_index
   for k, v in ipairs(save_replays_publicly_choices) do
@@ -130,7 +130,7 @@ end
 
 local function graphics_menu()
   local ret = nil
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
   local graphicsMenu
 
   local function update_theme()
@@ -225,7 +225,7 @@ end
 
 local function audio_menu(button_idx)
   local ret = nil
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
   menu_y = menu_y + 70
   local music_choice_frequency
   local use_music_from_choices = {{"stage", "op_only_stage"}, {"often_stage", "op_often_stage"}, {"either", "op_stage_characters"}, {"often_characters", "op_often_characters"}, {"characters", "op_only_characters"}}
@@ -307,7 +307,7 @@ local function audio_menu(button_idx)
     ret = {
       function()
         local audio_test_ret = nil
-        local menu_x, menu_y = unpack(main_menu_screen_pos)
+        local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
         local soundTestMenu
         local loaded_track_index = 0
         local index = 1
@@ -332,7 +332,7 @@ local function audio_menu(button_idx)
         local menu_validate_sound = themes[config.theme].sounds.menu_validate
         themes[config.theme].sounds.menu_validate = zero_sound
 
-        gprint(loc("op_music_load"), unpack(main_menu_screen_pos))
+        gprint(loc("op_music_load"), unpack(themes[config.theme].main_menu_screen_pos))
         wait()
 
         -- temporarily load music for characters that are not fully loaded to build tracklist, bundle characters add their subcharacters as tracks instead
@@ -790,7 +790,7 @@ end
 
 local function debug_menu(button_idx)
   local ret = nil
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
   menu_y = menu_y + 70
   local vsFramesBehind = config.debug_vsFramesBehind or 0
   local debugMenu
@@ -860,7 +860,7 @@ end
 
 local function about_menu(button_idx)
   local ret = nil
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
   GAME.backgroundImage = themes[config.theme].images.bg_main
   local aboutMenu
 
@@ -1061,7 +1061,7 @@ end
 
 function options.main(button_idx)
   local ret = nil
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
   menu_y = menu_y + 70
   local language_number
   local language_choices = {}
@@ -1120,15 +1120,16 @@ function options.main(button_idx)
   end
 
   local function exitSettings()
-    gprint("writing config to file...", unpack(main_menu_screen_pos))
+    gprint("writing config to file...", unpack(themes[config.theme].main_menu_screen_pos))
     wait()
 
+    local previousMenuPosition = themes[config.theme].main_menu_screen_pos
     config.theme = found_themes[theme_index]
 
     write_conf_file()
 
     if config.theme ~= memory_before_options_menu.theme then
-      gprint(loc("op_reload_theme"), unpack(main_menu_screen_pos))
+      gprint(loc("op_reload_theme"), unpack(previousMenuPosition))
       wait()
       stop_the_music()
       theme_init()
@@ -1140,19 +1141,19 @@ function options.main(button_idx)
 
     -- stages before characters since they are part of their loading
     if config.theme ~= memory_before_options_menu.theme then
-      gprint(loc("op_reload_stages"), unpack(main_menu_screen_pos))
+      gprint(loc("op_reload_stages"), unpack(themes[config.theme].main_menu_screen_pos))
       wait()
       stages_init()
     end
 
     if config.theme ~= memory_before_options_menu.theme then
-      gprint(loc("op_reload_characters"), unpack(main_menu_screen_pos))
+      gprint(loc("op_reload_characters"), unpack(themes[config.theme].main_menu_screen_pos))
       wait()
       characters_init()
     end
 
     if config.enable_analytics ~= memory_before_options_menu.enable_analytics then
-      gprint(loc("op_reload_analytics"), unpack(main_menu_screen_pos))
+      gprint(loc("op_reload_analytics"), unpack(themes[config.theme].main_menu_screen_pos))
       wait()
       analytics.init()
     end

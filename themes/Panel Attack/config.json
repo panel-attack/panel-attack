@@ -29,5 +29,14 @@
 "multibar_frame_Scale": 1,
 "multibar_Pos": [-13, 96],
 "multibar_Scale": 1,
-"font_size": 12
+"font_size": 12,
+"multibar_is_absolute": false,
+"bg_title_speed_x": 0,
+"bg_title_speed_y": 0,
+"bg_main_speed_x": 0,
+"bg_main_speed_y": 0,
+"bg_select_screen_speed_x": 0,
+"bg_select_screen_speed_y": 0,
+"bg_readme_speed_x": 0,
+"bg_readme_speed_y": 0
 }

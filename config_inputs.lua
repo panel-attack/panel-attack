@@ -3,7 +3,7 @@ local wait = coroutine.yield
 -- menu for configuring inputs
 local function main_config_input()
   local pretty_names = {loc("up"), loc("down"), loc("left"), loc("right"), "A", "B", "X", "Y", "L", "R", loc("start")}
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
   local ignoreMenuPressesTimer = nil
 
   menu_y = menu_y + 40
