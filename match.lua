@@ -112,7 +112,7 @@ function Match.run(self)
     self.P2CPU:run(P2)
   end
 
-  if P1 and P1.is_local and P1:game_ended() == false then  
+  if P1 and P1.is_local and P1:game_ended() == false then
     P1:send_controls()
   end
   if P2 and P2.is_local and P2:game_ended() == false then

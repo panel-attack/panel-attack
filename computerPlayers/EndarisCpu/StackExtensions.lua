@@ -606,7 +606,7 @@ end
 
 -- not really equal but sufficiently equal
 function StackExtensions.stacksAreEqual(stack, otherStack)
-  if stack and otherStack then
+  if stack and otherStack and stack.panels and otherStack.panels then
     if StackExtensions.panelsAreEqualByPanels(stack.panels, otherStack.panels) then
       return true
     else

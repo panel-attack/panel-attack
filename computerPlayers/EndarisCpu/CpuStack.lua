@@ -25,6 +25,10 @@ CpuStack =
   end
 )
 
+function CpuStack.FromStack(engineStack, config)
+  return CpuStack(CpuStackRow.GetStackRowsFromStack(engineStack), GridVector(engineStack.cur_row, engineStack.cur_col), engineStack.CLOCK, config)
+end
+
 function CpuStack.AsAprilStack(self)
   return StackExtensions.AsAprilStackByPanels(self:GetPanels())
 end

@@ -34,6 +34,7 @@ EndarisCpu = class(function(self)
     self.currentAction = nil
     self.actionQueue = {}
     self.inputQueue = {}
+    self.simulationQueue = {}
     self.cpuStack = nil
     self.realStack = nil
     self.enable_stealth = true
@@ -78,7 +79,7 @@ function EndarisCpu.updateStack(self, realStack)
     if realStack then
         CpuLog:log(1, "CLOCK realStack: " .. self.realStack.CLOCK)
         if self.cpuStack == nil then
-          self.cpuStack = CpuStack(CpuStackRow.GetStackRowsFromStack(realStack), GridVector(realStack.cur_row, realStack.cur_col), realStack.CLOCK, self.config)
+          self.cpuStack =  StackExtensions.copyStack(realStack)
             self:initializeCoroutine()
         else
             CpuLog:log(1, "CLOCK local stack: " .. self.cpuStack.CLOCK)
@@ -89,13 +90,14 @@ function EndarisCpu.updateStack(self, realStack)
                 -- compare stack with the snapshot at the snapshot's time
                 if realStack.CLOCK >= snapShot.CLOCK then
                     CpuLog:log(1, "Real stack caught up with oldest snapshot")
-                    if not StackExtensions.panelsAreEqualByPanels(self.cpuStack.rows, realStack.panels) then
+                    if not StackExtensions.panelsAreEqualByPanels(self.cpuStack.panels, realStack.panels) then
                         -- discard queued actions in favor of recalculation
                         CpuLog:log(1, "Found mismatch between realStack and simulated snapshot, discarding planned actions and simulated stack and restart the coroutine on the new stack copy")
                         self.lookAheadSnapShots = {}
                         self.actionQueue = {}
                         self.inputQueue = {} --makes sense cause we just finished an action
-                        self.cpuStack = CpuStack(CpuStackRow.GetStackRowsFromStack(realStack), GridVector(realStack.cur_row, realStack.cur_col), realStack.CLOCK, self.config)
+                        self.simulationQueue = {}
+                        self.cpuStack =  StackExtensions.copyStack(realStack)
                         -- need to restart the coroutine to discard calculations in progress from invalid stack
                         self:initializeCoroutine()
                     else
@@ -281,6 +283,7 @@ function EndarisCpu.chooseAction(self)
         if not self.currentAction.executionPath or #self.currentAction.executionPath == 0 then
             self.currentAction:calculateExecution(self.cpuStack.cursorPos)
         end
+        self:appendToSimulationQueue(self.currentAction)
         self:appendToInputQueue(self.currentAction)
     else
         self:executeStrategy()
@@ -288,7 +291,7 @@ function EndarisCpu.chooseAction(self)
 
     if self.currentAction then
         self:assignExecutionFramesToAction(self.currentAction)
-        EndarisCpu.appendActionToQueue(self.inputQueue, self.currentAction)
+        self:appendToInputQueue(self.currentAction)
     else
         CpuLog:log(1, 'chosen action is nil')
     end
@@ -345,8 +348,18 @@ function EndarisCpu.appendActionToQueue(queue, action)
     for i=1,#action.executionPath do
         CpuLog:log(3, "Inserting following input into the queue: ")
         CpuLog:log(3, action.executionPath[i]:toString())
-        table.insert(queue, #queue + 1, action.executionPath[i])
+        queue[#queue + 1] =  action.executionPath[i]
     end
+end
+
+function EndarisCpu.appendToInputQueue(self, action)
+  CpuLog:log(5, "appending action to inputQueue: " .. action:toString())
+  EndarisCpu.appendActionToQueue(self.inputQueue, action)
+end
+
+function EndarisCpu.appendToSimulationQueue(self, action)
+  CpuLog:log(10, "appending action to simulationQueue: " .. action:toString())
+  EndarisCpu.appendActionToQueue(self.simulationQueue, action)
 end
 
 function EndarisCpu.chooseStrategy(self)
@@ -408,14 +421,52 @@ function EndarisCpu.executeStrategy(self)
 end
 
 function EndarisCpu.simulatePostActionStack(self)
-    CpuLog:log(1, "running simulatePostActionStack")
-    CpuLog:log(1, "self.cpuStack.CLOCK before simulation: " .. self.cpuStack.CLOCK)
-    self.cpuStack:SimulatePanelAction(self.currentAction)
-    CpuLog:log(1, "self.cpuStack.CLOCK after simulation: " .. self.cpuStack.CLOCK)
-    CpuLog:log(1, StackExtensions.AsAprilStack(self.cpuStack))
+  -- get a valid inputbuffer sequence from self.simulationQueue
+  -- assign it to the stack
+  -- let it run
+  CpuLog:log(1, "running simulatePostActionStack")
+  local inputbuffer = ""
+  local frameCount = self.cpuStack.CLOCK - self.yieldCount
+  CpuLog:log(1, "self.stack.CLOCK: " .. self.cpuStack.CLOCK)
+  CpuLog:log(1, "self.yieldCount: " .. self.yieldCount)
 
-    local lookAheadCopy = self.cpuStack:Clone()
-    table.insert(self.lookAheadSnapShots, #self.lookAheadSnapShots + 1, lookAheadCopy)
+  for i=1, #self.simulationQueue do
+    CpuLog:log(1, "adding " .. self.simulationQueue[i]:toString() .. " to inputbuffer")
+    
+    local waitFrameCount = math.max(self.simulationQueue[i].executionFrame - frameCount - 1, 0)
+    
+    CpuLog:log(1, "waitFrameCount: " .. waitFrameCount)
+    for j=1, waitFrameCount do
+        inputbuffer = inputbuffer .. Input.EncodedWait()
+    end
+    
+    frameCount = self.simulationQueue[i].executionFrame
+    if self.simulationQueue[i].name == "Wait" then
+        while frameCount <= self.simulationQueue[i].tillFrame do
+            frameCount = frameCount + 1
+            inputbuffer = inputbuffer .. Input.EncodedWait()
+        end
+    else
+        inputbuffer = inputbuffer .. self.simulationQueue[i]:getEncoded()
+    end
+
+    -- adding waitFrames at the end to make sure that the final swap completes
+    inputbuffer = inputbuffer .. "AA"
+  end
+
+  CpuLog:log(1, "inputbuffer:" .. inputbuffer)
+  CpuLog:log(1, "CLOCK local stack before running inputs " .. self.cpuStack.CLOCK)
+  CpuLog:log(1, StackExtensions.AsAprilStack(self.cpuStack))
+  self.cpuStack.input_buffer = inputbuffer
+  while #self.cpuStack.input_buffer > 0 do
+      self.cpuStack:run()
+  end
+  CpuLog:log(1, "CLOCK local stack after running inputs " .. self.cpuStack.CLOCK)
+  CpuLog:log(1, StackExtensions.AsAprilStack(self.cpuStack))
+
+  local lookAheadCopy = StackExtensions.copyStack(self.cpuStack)
+  table.insert(self.lookAheadSnapShots, #self.lookAheadSnapShots + 1, lookAheadCopy)
+  self.simulationQueue = {}
 end
 
 
