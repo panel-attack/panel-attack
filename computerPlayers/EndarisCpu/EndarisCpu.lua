@@ -283,15 +283,14 @@ function EndarisCpu.chooseAction(self)
         if not self.currentAction.executionPath or #self.currentAction.executionPath == 0 then
             self.currentAction:calculateExecution(self.cpuStack.cursorPos)
         end
-        self:appendToSimulationQueue(self.currentAction)
-        self:appendToInputQueue(self.currentAction)
-    else
+      else
         self:executeStrategy()
-    end
-
-    if self.currentAction then
+      end
+      
+      if self.currentAction then
         self:assignExecutionFramesToAction(self.currentAction)
         self:appendToInputQueue(self.currentAction)
+        self:appendToSimulationQueue(self.currentAction)
     else
         CpuLog:log(1, 'chosen action is nil')
     end
@@ -353,12 +352,12 @@ function EndarisCpu.appendActionToQueue(queue, action)
 end
 
 function EndarisCpu.appendToInputQueue(self, action)
-  CpuLog:log(5, "appending action to inputQueue: " .. action:toString())
+  CpuLog:log(1, "appending action to inputQueue: " .. action:toString())
   EndarisCpu.appendActionToQueue(self.inputQueue, action)
 end
 
 function EndarisCpu.appendToSimulationQueue(self, action)
-  CpuLog:log(10, "appending action to simulationQueue: " .. action:toString())
+  CpuLog:log(1, "appending action to simulationQueue: " .. action:toString())
   EndarisCpu.appendActionToQueue(self.simulationQueue, action)
 end
 
@@ -425,8 +424,8 @@ function EndarisCpu.simulatePostActionStack(self)
   -- assign it to the stack
   -- let it run
   CpuLog:log(1, "running simulatePostActionStack")
-  local inputbuffer = ""
   local frameCount = self.cpuStack.CLOCK - self.yieldCount
+  local inputs = {}
   CpuLog:log(1, "self.stack.CLOCK: " .. self.cpuStack.CLOCK)
   CpuLog:log(1, "self.yieldCount: " .. self.yieldCount)
 
@@ -437,23 +436,24 @@ function EndarisCpu.simulatePostActionStack(self)
     
     CpuLog:log(1, "waitFrameCount: " .. waitFrameCount)
     for j=1, waitFrameCount do
-        inputbuffer = inputbuffer .. Input.EncodedWait()
+      inputs[#inputs+1] = Input.EncodedWait()
     end
     
     frameCount = self.simulationQueue[i].executionFrame
     if self.simulationQueue[i].name == "Wait" then
         while frameCount <= self.simulationQueue[i].tillFrame do
             frameCount = frameCount + 1
-            inputbuffer = inputbuffer .. Input.EncodedWait()
+            inputs[#inputs+1] = Input.EncodedWait()
         end
     else
-        inputbuffer = inputbuffer .. self.simulationQueue[i]:getEncoded()
+      inputs[#inputs+1] = self.simulationQueue[i]:getEncoded()
     end
-
-    -- adding waitFrames at the end to make sure that the final swap completes
-    inputbuffer = inputbuffer .. "AA"
+    -- adding waitFrames at the end to make sure that the final swap completes before reading the stack again
+    inputs[#inputs+1] = "AA"
   end
 
+  local inputbuffer = table.concat(inputs)
+  
   CpuLog:log(1, "inputbuffer:" .. inputbuffer)
   CpuLog:log(1, "CLOCK local stack before running inputs " .. self.cpuStack.CLOCK)
   CpuLog:log(1, StackExtensions.AsAprilStack(self.cpuStack))

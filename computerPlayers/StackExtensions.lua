@@ -50,37 +50,40 @@ function StackExtensions.aprilStackToPanels(aprilStack)
 end
 
 function StackExtensions.copyStack(stack)
-    local match = deepcopy(stack.match, nil, {P1=true, P2=true, P1CPU=true, P2CPU=true})
-    local stackCopy =  deepcopy(stack,                nil, {garbage_target=true, prev_states=true, canvas=true, match=true, telegraph=true})
-    local otherStack = deepcopy(stack.garbage_target, nil, {garbage_target=true, prev_states=true, canvas=true, match=true, telegraph=true})
+  local match = deepcopy(stack.match, nil, {P1=true, P2=true, P1CPU=true, P2CPU=true})
+  local stackCopy =  deepcopy(stack,                nil, {garbage_target=true, prev_states=true, canvas=true, match=true, telegraph=true})
+  local otherStack = deepcopy(stack.garbage_target, nil, {garbage_target=true, prev_states=true, canvas=true, match=true, telegraph=true})
 
-    if otherStack then
-      local stackTelegraph = deepcopy(stack.telegraph, nil, {sender=true, owner=true})
-      if stackTelegraph then
-        stackTelegraph.sender = otherStack
-        stackTelegraph.owner = stackCopy
-        stackCopy.telegraph = stackTelegraph
-      end
-      
-      local otherTelegraph = deepcopy(stack.garbage_target.telegraph, nil, {sender=true, owner=true})
-      if otherTelegraph then
-        otherTelegraph.sender = stackCopy
-        otherTelegraph.owner = otherStack
-        otherStack.telegraph = otherTelegraph
-      end
-      stackCopy.garbage_target = otherStack
-      otherStack.garbage_target = stackCopy
-
-      if stackCopy.which == 1 then
-          match.P1 = stackCopy
-          match.P2 = otherStack
-      else
-          match.P2 = stackCopy
-          match.P1 = otherStack
-      end
-      otherStack.match = match
+  if stackCopy.which == 1 then
+    match.P1 = stackCopy
+  else
+      match.P2 = stackCopy
+  end
+  if otherStack then
+    local stackTelegraph = deepcopy(stack.telegraph, nil, {sender=true, owner=true})
+    if stackTelegraph then
+      stackTelegraph.sender = otherStack
+      stackTelegraph.owner = stackCopy
+      stackCopy.telegraph = stackTelegraph
     end
-    stackCopy.match = match
+    
+    local otherTelegraph = deepcopy(stack.garbage_target.telegraph, nil, {sender=true, owner=true})
+    if otherTelegraph then
+      otherTelegraph.sender = stackCopy
+      otherTelegraph.owner = otherStack
+      otherStack.telegraph = otherTelegraph
+    end
+    stackCopy.garbage_target = otherStack
+    otherStack.garbage_target = stackCopy
 
-    return stackCopy
+    if otherStack.which == 2 then
+      match.P2 = otherStack
+    else
+      match.P1 = otherStack
+    end
+    otherStack.match = match
+  end
+  stackCopy.match = match
+
+  return stackCopy
 end
