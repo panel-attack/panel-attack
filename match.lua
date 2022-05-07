@@ -1,3 +1,5 @@
+local logger = require("logger")
+
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =
   class(
@@ -10,6 +12,7 @@ Match =
     self.battleRoom = battleRoom
     GAME.droppedFrames = 0
     self.timeSpentRunning = 0
+    self.maxTimeSpentRunning = 0
     self.createTime = love.timer.getTime()
     self.supportsPause = true
     self.attackEngine = nil
@@ -79,7 +82,84 @@ function Match.matchOutcome(self)
   return results
 end
 
-function Match.run(self)
+function Match:debugShouldTestRollback()
+  return false -- config.debug_mode
+end
+
+function Match:debugRollbackAndCaptureState()
+
+  if not self:debugShouldTestRollback() then
+    return
+  end
+
+  local rollbackAmount = 50
+
+  local P1 = self.P1
+  local P2 = self.P2
+
+  if P1.CLOCK <= rollbackAmount then
+    return
+  end
+
+  if P1.garbage_target and P1.garbage_target.CLOCK ~= P1.CLOCK then
+    return
+  end
+
+  self.savedStackP1 = P1.prev_states[P1.CLOCK]
+  if P2 then
+    self.savedStackP2 = P2.prev_states[P2.CLOCK]
+  end
+  
+  P1:rollbackToFrame(P1.CLOCK - rollbackAmount)
+  if P2 then
+    P2:rollbackToFrame(P2.CLOCK - rollbackAmount)
+  end
+end
+
+function Match:debugAssertDivergence(stack, savedStack)
+
+  local diverged = false
+  for k,v in pairs(savedStack) do
+    if type(v) ~= "table" then
+      local v2 = stack[k]
+      if v ~= v2 then
+        diverged = true
+        logger.error("Stacks have diverged")
+      end
+    end
+  end
+
+  local savedStackString = Stack.divergenceString(savedStack)
+  local localStackString = Stack.divergenceString(stack)
+
+  if savedStackString ~= localStackString then
+    diverged = true
+    logger.error("Stacks have diverged")
+  end
+end
+
+function Match:debugCheckDivergence()
+
+  if not self:debugShouldTestRollback() then
+    return
+  end
+
+  if not self.savedStackP1 or self.savedStackP1.CLOCK ~= self.P1.CLOCK then
+    return
+  end
+
+  self:debugAssertDivergence(self.P1, self.savedStackP1)
+  self.savedStackP1 = nil
+
+  if not self.savedStackP2 or self.savedStackP2.CLOCK ~= self.P2.CLOCK then
+    return
+  end
+
+  self:debugAssertDivergence(self.P2, self.savedStackP2)
+  self.savedStackP2 = nil
+end
+
+function Match:run()
   local P1 = self.P1
   local P2 = self.P2
 
@@ -88,13 +168,6 @@ function Match.run(self)
   end
 
   local startTime = love.timer.getTime()
-
-  if config.debug_mode and network_connected() == false and not self.attackEngine then
-    local rollbackStart = 100
-    if P1 and P1:game_ended() == false and P1:behindRollback() == false and P1.CLOCK > rollbackStart then
-      P1:debugRollbackTest()
-    end
-  end
 
   -- We need to save CLOCK 0 as a base case
   if P1.CLOCK == 0 then  
@@ -111,6 +184,8 @@ function Match.run(self)
   if self.P2CPU then
     self.P2CPU:run(P2)
   end
+
+  self:debugRollbackAndCaptureState()
 
   if P1 and P1.is_local and P1:game_ended() == false then
     P1:send_controls()
@@ -142,26 +217,35 @@ function Match.run(self)
 
     -- Since the stacks can affect each other, don't save rollback until after both have run
     if ranP1 then
+      P1:updateFramesBehind()
       P1:saveForRollback()
     end
 
     if ranP2 then
+      P2:updateFramesBehind()
       P2:saveForRollback()
     end
+
+    self:debugCheckDivergence()
 
     runsSoFar = runsSoFar + 1
   end
 
-  if P1 and P1.is_local and string.len(P1.input_buffer) > 0 then
-    error("Local games should always simulate all inputs")
+  if P1 then
+    if P1.is_local and not P1:game_ended() then
+      assert(string.len(P1.input_buffer) == 0, "Local games should always simulate all inputs")
+    end
   end
-  if P2 and P2.is_local and string.len(P2.input_buffer) > 0 then
-    error("Local games should always simulate all inputs")
+  if P2 then
+    if P2.is_local and not P2:game_ended() then
+      assert(string.len(P2.input_buffer) == 0, "Local games should always simulate all inputs")
+    end
   end
 
   local endTime = love.timer.getTime()
   local timeDifference = endTime - startTime
   self.timeSpentRunning = self.timeSpentRunning + timeDifference
+  self.maxTimeSpentRunning = math.max(self.maxTimeSpentRunning, timeDifference)
 end
 
 local P1_win_quads = {}
@@ -177,6 +261,29 @@ function Match.render(self)
   if GAME.droppedFrames > 10 and config.show_fps then
     gprint("Dropped Frames: " .. GAME.droppedFrames, 1, 12)
   end
+
+  if config.show_fps and P1 and P2 then
+
+    local P1Behind = P1:averageFramesBehind()
+    local P2Behind = P2:averageFramesBehind()
+    local behind = math.abs(P1.CLOCK - P2.CLOCK)
+
+    if P1Behind > 0 then
+      gprint("P1 Average Latency: " .. P1Behind, 1, 23)
+    end
+    if P2Behind > 0 then
+      gprint("P2 Average Latency: " .. P2Behind, 1, 34)
+    end
+    
+    if GAME.battleRoom.spectating and behind > MAX_LAG * 0.75 then
+      local iconSize = 20
+      local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
+      local x = (canvas_width / 2) - (iconSize / 2)
+      local y = (canvas_height / 2) - (iconSize / 2)
+      draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+    end
+  end
+  
 
   -- Stack specific values for the HUD are drawn in Stack.render
 
@@ -227,7 +334,7 @@ function Match.render(self)
 
   if config.debug_mode then
 
-    local drawX = 140
+    local drawX = 240
     local drawY = 10
     local padding = 14
 
@@ -280,7 +387,7 @@ function Match.render(self)
 
 
 
-    drawX = 400
+    drawX = 500
     drawY = 10 - padding
     -- drawY = drawY + padding
     -- gprintf("Time Spent Running " .. self.timeSpentRunning * 1000, drawX, drawY)
@@ -291,8 +398,12 @@ function Match.render(self)
 
     drawY = drawY + padding
     local totalTime = love.timer.getTime() - self.createTime
-    local timePercent = self.timeSpentRunning / totalTime
+    local timePercent = round(self.timeSpentRunning / totalTime, 5)
     gprintf("Time Percent Running Match: " .. timePercent, drawX, drawY)
+
+    drawY = drawY + padding
+    local maxTime = round(self.maxTimeSpentRunning, 5)
+    gprintf("Max Stack Update: " .. maxTime, drawX, drawY)
 
     drawY = drawY + padding
     gprintf("Seed " .. GAME.match.seed, drawX, drawY)

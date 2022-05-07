@@ -2,8 +2,6 @@ local analytics = {}
 
 local analytics_version = 3
 
-local analytic_data_cap = 999999 -- prevents overflow
-
 local function create_blank_data()
   return {
     -- the amount of destroyed panels
@@ -105,7 +103,7 @@ function analytics.init()
         if read_data[analytic] and type(read_data[analytic]) == "table" then
           for n, param in pairs(number_params) do
             if read_data[analytic][param] and type(read_data[analytic][param]) == "number" then
-              analytics_data[analytic][param] = math.min(read_data[analytic][param], analytic_data_cap)
+              analytics_data[analytic][param] = read_data[analytic][param]
             end
           end
           for m, param in pairs(table_params) do
@@ -207,7 +205,7 @@ function AnalyticsInstance.register_destroyed_panels(self, amount)
       if not analytic.used_combos[amount] then
         analytic.used_combos[amount] = 1
       else
-        analytic.used_combos[amount] = math.min(analytic.used_combos[amount] + 1, analytic_data_cap)
+        analytic.used_combos[amount] = analytic.used_combos[amount] + 1
       end
       analytic.sent_garbage_lines = analytic.sent_garbage_lines + amount_of_garbages_lines_per_combo[amount]
     end
@@ -222,7 +220,7 @@ function AnalyticsInstance.register_chain(self, size)
     if not analytic.reached_chains[size] then
       analytic.reached_chains[size] = 1
     else
-      analytic.reached_chains[size] = math.min(analytic.reached_chains[size] + 1, analytic_data_cap)
+      analytic.reached_chains[size] = analytic.reached_chains[size] + 1
     end
     size = math.min(size, 13)
     analytic.sent_garbage_lines = analytic.sent_garbage_lines + (max_size - 1)
@@ -232,14 +230,14 @@ end
 function AnalyticsInstance.register_swap(self)
   local analytics_filters = self:data_update_list()
   for _, analytic in pairs(analytics_filters) do
-    analytic.swap_count = math.min(analytic.swap_count + 1, analytic_data_cap)
+    analytic.swap_count = analytic.swap_count + 1
   end
 end
 
 function AnalyticsInstance.register_move(self)
   local analytics_filters = self:data_update_list()
   for _, analytic in pairs(analytics_filters) do
-    analytic.move_count = math.min(analytic.move_count + 1, analytic_data_cap)
+    analytic.move_count = analytic.move_count + 1
   end
 end
 

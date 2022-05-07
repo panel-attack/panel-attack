@@ -2,8 +2,10 @@ local logger = require("logger")
 
 local TELEGRAPH_HEIGHT = 16
 local TELEGRAPH_PADDING = 2 --vertical space between telegraph and stack
-local TELEGRAPH_BLOCK_WIDTH = 24
+local TELEGRAPH_BLOCK_WIDTH = 26
 local TELEGRAPH_ATTACK_MAX_SPEED = 8 --fastest an attack can travel toward the telegraph per frame
+
+local clone_pool = {}
 
 Telegraph = class(function(self, sender, owner)
 
@@ -18,11 +20,8 @@ Telegraph = class(function(self, sender, owner)
   
   self.sender = sender -- The stack that sent this garbage
   self.owner = owner -- The stack that is receiving the garbage
-  self.pos_x = owner.pos_x - 4
-  self.pos_y = owner.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
+  self:updatePosition()
   self.attacks = {} -- A copy of the chains and combos earned used to render the animation of going to the telegraph
-  self.pendingGarbage = {} -- Table of garbage that needs to be pushed into the telegraph at specific CLOCK times
-  self.pendingChainingEnded = {} -- A list of CLOCK times where chaining ended in the future
   self.senderCurrentlyChaining = false -- Set when we start a new chain, cleared when the sender is done chaining, used to know if we should grow a chain or start a new one, and to know if we are allowed to send the attack since the sender is done.
   -- (typically sending is prevented by garbage chaining)
 end)
@@ -74,10 +73,23 @@ for k, animation in ipairs(leftward_or_rightward) do
   end
 end
 
+function Telegraph:updatePosition()
+  self.pos_x = self.owner.pos_x - 4
+  self.pos_y = self.owner.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
+end
+
+function Telegraph.saveClone(toSave)
+  clone_pool[#clone_pool + 1] = toSave
+end
 
 function Telegraph.rollbackCopy(self, source, other)
   if other == nil then
-    other = Telegraph(source.sender, source.owner)
+    if #clone_pool == 0 then
+      other = Telegraph(source.sender, source.owner)
+    else
+      other = clone_pool[#clone_pool]
+      clone_pool[#clone_pool] = nil
+    end
   end
 
   other.garbage_queue = source.garbage_queue:makeCopy()
@@ -87,88 +99,52 @@ function Telegraph.rollbackCopy(self, source, other)
   other.pos_x = source.pos_x
   other.pos_y = source.pos_y
   other.senderCurrentlyChaining = source.senderCurrentlyChaining
-  other.pendingGarbage = deepcpy(source.pendingGarbage)
-  other.pendingChainingEnded = deepcpy(source.pendingChainingEnded)
+
+  -- We don't want saved copies to hold on to stacks, up to the rollback restore to set these back up.
+  other.sender = nil
+  other.owner = nil
   return other
 end
 
-function Telegraph:update() 
+-- Adds a piece of garbage to the queue
+function Telegraph:push(garbage, attack_origin_col, attack_origin_row, frame_earned)
 
-  if self.pendingChainingEnded[self.owner.CLOCK] then
-    self:chainingEnded(self.owner.CLOCK)
-    self.pendingChainingEnded[self.owner.CLOCK] = nil
-  end
+  assert(self.sender ~= nil and self.owner ~= nil, "telegraph needs owner and sender set")
 
-  if self.pendingGarbage[self.owner.CLOCK] then
-    for _, pendingGarbage in ipairs(self.pendingGarbage[self.owner.CLOCK]) do
-      self:privatePush(unpack(pendingGarbage))
-    end
-    self.pendingGarbage[self.owner.CLOCK] = nil
-  end
+  local timeAttackInteracts = frame_earned + 1
+  --logger.debug("Player " .. self.sender.which .. " attacked with " .. attack_type .. " at " .. frame_earned)
+
+  assert(frame_earned == self.sender.CLOCK, "expected sender clock to equal attack")
+
+  self:privatePush(garbage, attack_origin_col, attack_origin_row, timeAttackInteracts)
 end
 
 -- Adds a piece of garbage to the queue
-function Telegraph:push(attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned)
-
-  logger.debug("Player " .. self.sender.which .. " attacked with " .. attack_type .. " at " .. frame_earned)
-
-  -- If we are past the frame the attack would be processed we need to rollback
-  if self.owner.CLOCK > frame_earned + 1 then
-    self.owner:rollbackToFrame(frame_earned + 1)
-  end
-
-  -- If we got the attack in the future, wait to queue it
-  if self.owner.CLOCK < frame_earned then
-    if not self.pendingGarbage[frame_earned] then
-      self.pendingGarbage[frame_earned] = {}
-    end
-
-    self.pendingGarbage[frame_earned][#self.pendingGarbage[frame_earned]+1] = {attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned}
-
-    return
-  end
-
-  -- Now push this attack
-  self:privatePush(attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned)
-
-  -- We may have more attacks this frame. To make sure we save our rollback state with all attacks, don't save and resimulate till we are done with this frame.
-  -- Then only resimulate as needed, because we might simulate more than we need to since another rollback might happen.
-end
-
--- Adds a piece of garbage to the queue
-function Telegraph.privatePush(self, attack_type, attack_size, metal_count, attack_origin_col, attack_origin_row, frame_earned)
-
-  local x_displacement 
-  if not metal_count then
-    metal_count = 0
-  end
+function Telegraph.privatePush(self, garbage, attack_origin_col, attack_origin_row, timeAttackInteracts)
   local stuff_to_send
-  if attack_type == "chain" then
-    stuff_to_send = self:grow_chain(frame_earned)
-  elseif attack_type == "combo" then
+  if garbage[4] then
+    stuff_to_send = self:grow_chain(timeAttackInteracts)
+  else
     -- get combo_garbage_widths, n_resulting_metal_garbage
-    stuff_to_send = self:add_combo_garbage(attack_size, metal_count, frame_earned)
+    stuff_to_send = self:add_combo_garbage(garbage, timeAttackInteracts)
     stuff_to_send = deepcpy(stuff_to_send) -- we don't want to use the same object as in the garbage queue so they don't change each other
   end
-  if not self.attacks[frame_earned] then
-    self.attacks[frame_earned] = {}
+  if not self.attacks[timeAttackInteracts] then
+    self.attacks[timeAttackInteracts] = {}
   end
-  self.attacks[frame_earned][#self.attacks[frame_earned]+1] =
-    {frame_earned=frame_earned, origin_col=attack_origin_col, origin_row= attack_origin_row, stuff_to_send=stuff_to_send}
-
+  self.attacks[timeAttackInteracts][#self.attacks[timeAttackInteracts]+1] =
+    {timeAttackInteracts=timeAttackInteracts, origin_col=attack_origin_col, origin_row= attack_origin_row, stuff_to_send=stuff_to_send}
 end
 
-function Telegraph.add_combo_garbage(self, n_combo, n_metal, frame_earned)
-  logger.debug("Telegraph.add_combo_garbage "..(n_combo or "nil").." "..(n_metal or "nil"))
+function Telegraph.add_combo_garbage(self, garbage, timeAttackInteracts)
+  logger.debug("Telegraph.add_combo_garbage "..(garbage[1] or "nil").." "..(garbage[3] and "true" or "false"))
   local stuff_to_send = {}
-  for i=3,n_metal do
-    stuff_to_send[#stuff_to_send+1] = {6, 1, true, false, frame_earned = frame_earned}
-    self.stoppers.metal = frame_earned+GARBAGE_TRANSIT_TIME + GARBAGE_DELAY
-  end
-  local combo_pieces = combo_garbage[n_combo]
-  for i=1,#combo_pieces do
-    stuff_to_send[#stuff_to_send+1] = {combo_pieces[i], 1, false, false, frame_earned = frame_earned}
-    self.stoppers.combo[combo_pieces[i]] = frame_earned+GARBAGE_TRANSIT_TIME + GARBAGE_DELAY
+  if garbage[3] then
+    stuff_to_send[#stuff_to_send+1] = {6, 1, true, false, timeAttackInteracts = timeAttackInteracts}
+    self.stoppers.metal = timeAttackInteracts + GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME
+  else
+    stuff_to_send[#stuff_to_send+1] = {garbage[1], garbage[2], garbage[3], garbage[4], timeAttackInteracts = timeAttackInteracts}
+    self.stoppers.combo[garbage[1]] = timeAttackInteracts + GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME
   end
   self.garbage_queue:push(stuff_to_send)
   return stuff_to_send
@@ -177,37 +153,36 @@ end
 
 function Telegraph:chainingEnded(frameEnded)
 
+  local timeAttackInteracts = frameEnded + 1
+
   logger.debug("Player " .. self.sender.which .. " chain ended at " .. frameEnded)
 
-  -- If we are past the frame the chain end would process we need to rollback
-  if self.owner.CLOCK > frameEnded + 1 then
-    self.owner:rollbackToFrame(frameEnded + 1)
-  end
-  
-  -- If we got the attack in the future wait to queue it
-  if self.owner.CLOCK < frameEnded then
-    self.pendingChainingEnded[frameEnded] = true
-    return
-  end
+  assert(frameEnded == self.sender.CLOCK, "expected sender clock to equal attack")
+
+  self:privateChainingEnded(frameEnded)
+end
+
+function Telegraph:privateChainingEnded(timeAttackInteracts)
 
   self.senderCurrentlyChaining = false
   local chain = self.garbage_queue.chain_garbage[self.garbage_queue.chain_garbage.last]
-  if chain.frame_earned >= frameEnded then
+  if chain.timeAttackInteracts >= timeAttackInteracts then
     logger.error("Finalizing a chain that ended before it was earned.")
   end
-  logger.debug("finalizing chain at " .. frameEnded)
-  chain.finalized = frameEnded
+  logger.debug("finalizing chain at " .. timeAttackInteracts)
+  chain.finalized = timeAttackInteracts
 end
 
-function Telegraph.grow_chain(self, frame_earned)
+
+function Telegraph.grow_chain(self, timeAttackInteracts)
   local newChain = false
   if not self.senderCurrentlyChaining then
     self.senderCurrentlyChaining = true
     newChain = true
   end
 
-  local result = self.garbage_queue:grow_chain(frame_earned, newChain)
-  self.stoppers.chain[self.garbage_queue.chain_garbage.last] = frame_earned + GARBAGE_TRANSIT_TIME + GARBAGE_DELAY
+  local result = self.garbage_queue:grow_chain(timeAttackInteracts, newChain)
+  self.stoppers.chain[self.garbage_queue.chain_garbage.last] = timeAttackInteracts + GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME
   return result
 end
 
@@ -269,8 +244,7 @@ function Telegraph.pop_all_ready_garbage(self, time_to_check, just_peeking)
   while subject.garbage_queue.chain_garbage:peek() do
 
     if not subject.stoppers.chain[subject.garbage_queue.chain_garbage.first] and 
-       subject.garbage_queue.chain_garbage:peek().finalized and 
-       time_to_check >= CHAIN_ENDED_DELAY + subject.garbage_queue.chain_garbage:peek().finalized then
+       subject.garbage_queue.chain_garbage:peek().finalized then
       logger.debug("committing chain at " .. time_to_check)
       ready_garbage[#ready_garbage+1] = subject.garbage_queue:pop()
     else 
@@ -284,7 +258,7 @@ function Telegraph.pop_all_ready_garbage(self, time_to_check, just_peeking)
     end
   end
 
-  for combo_garbage_width=3,6 do
+  for combo_garbage_width=1,6 do
     local n_blocks_of_this_width = subject.garbage_queue.combo_garbage[combo_garbage_width]:len()
     
     local frame_to_release = subject.stoppers.combo[combo_garbage_width]
@@ -317,31 +291,65 @@ function Telegraph.pop_all_ready_garbage(self, time_to_check, just_peeking)
   end
 end
 
+function Telegraph:telegraphRenderXPosition(index)
+
+  local stackWidth, _ = themes[config.theme].images.IMG_frame1P:getDimensions()
+  local increment = -TELEGRAPH_BLOCK_WIDTH * self.owner.mirror_x
+
+  local result = self.pos_x
+  if self.owner.which == 1 then
+    result = result + stackWidth + increment
+  end
+
+  result = result + (increment * index)
+
+  return result
+end
+
+function Telegraph:attackStartFrame()
+  return 1
+end
+
+function Telegraph:telegraphLoopAttackPosition(garbage_block, frames_since_earned)
+
+  local resultX, resultY = garbage_block.origin_x, garbage_block.origin_y
+
+  if frames_since_earned > self:attackStartFrame() + #telegraph_attack_animation_speed then
+    frames_since_earned = self:attackStartFrame() + #telegraph_attack_animation_speed
+  end
+
+  -- We can't gaurantee every frame was rendered, so we must calculate the exact location regardless of how many frames happened.
+  -- TODO make this more performant?
+  for frame=1, frames_since_earned - self:attackStartFrame() do
+    resultX = resultX + telegraph_attack_animation[garbage_block.direction][frame].dx
+    resultY = resultY + telegraph_attack_animation[garbage_block.direction][frame].dy
+  end
+
+  return resultX, resultY
+end
+
 function Telegraph:render()
+
   local telegraph_to_render = self
   local senderCharacter = telegraph_to_render.sender.character
 
-  local render_x = telegraph_to_render.pos_x
-  local orig_atk_w, orig_atk_h = characters[senderCharacter].telegraph_garbage_images["attack"]:getDimensions()
-  local atk_scale = 16 / math.max(orig_atk_w, orig_atk_h) -- keep image ratio
+  if config.renderAttacks then
 
-  -- Render if we are "currently chaining" for debug purposes
-  if config.debug_mode and telegraph_to_render.senderCurrentlyChaining then
-    draw(characters[senderCharacter].telegraph_garbage_images["attack"], render_x - 15 , telegraph_to_render.pos_y, 0, atk_scale, atk_scale)
-  end
+    local orig_atk_w, orig_atk_h = characters[senderCharacter].telegraph_garbage_images["attack"]:getDimensions()
+    local atk_scale = 16 / math.max(orig_atk_w, orig_atk_h) -- keep image ratio
 
-  for frame_earned, attacks_this_frame in pairs(telegraph_to_render.attacks) do
-    local frames_since_earned = telegraph_to_render.owner.CLOCK - frame_earned
-      if frames_since_earned <= #card_animation then
+    for timeAttackInteracts, attacks_this_frame in pairs(telegraph_to_render.attacks) do
+      local frames_since_earned = telegraph_to_render.sender.CLOCK - timeAttackInteracts
+      if frames_since_earned <= self:attackStartFrame() then
         --don't draw anything yet, card animation is still in progress.
       elseif frames_since_earned >= GARBAGE_TRANSIT_TIME then
         --Attack is done, remove.
-        telegraph_to_render.attacks[frame_earned] = nil
+        telegraph_to_render.attacks[timeAttackInteracts] = nil
       else
         for _, attack in ipairs(attacks_this_frame) do
           for _k, garbage_block in ipairs(attack.stuff_to_send) do
-            garbage_block.destination_x = telegraph_to_render.pos_x + TELEGRAPH_BLOCK_WIDTH * telegraph_to_render.garbage_queue:get_idx_of_garbage(unpack(garbage_block))
-            garbage_block.destination_y = garbage_block.destination_y or telegraph_to_render.pos_y - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING 
+            garbage_block.destination_x = self:telegraphRenderXPosition(telegraph_to_render.garbage_queue:get_idx_of_garbage(unpack(garbage_block))) + (TELEGRAPH_BLOCK_WIDTH / 2) - ((TELEGRAPH_BLOCK_WIDTH / orig_atk_w) / 2)
+            garbage_block.destination_y = garbage_block.destination_y or (telegraph_to_render.pos_y - TELEGRAPH_PADDING)
             
             if not garbage_block.origin_x or not garbage_block.origin_y then
               garbage_block.origin_x = (attack.origin_col-1) * 16 + telegraph_to_render.sender.pos_x
@@ -351,105 +359,113 @@ function Telegraph:render()
               garbage_block.direction = garbage_block.direction or sign(garbage_block.destination_x - garbage_block.origin_x) --should give -1 for left, or 1 for right
             end
 
-            if frames_since_earned <= #card_animation + #telegraph_attack_animation_speed then
+            if frames_since_earned <= self:attackStartFrame() + #telegraph_attack_animation_speed then
               --draw telegraph attack animation, little loop down and to the side of origin.
-     
+      
               -- We can't gaurantee every frame was rendered, so we must calculate the exact location regardless of how many frames happened.
               -- TODO make this more performant?
-              garbage_block.x = garbage_block.origin_x
-              garbage_block.y = garbage_block.origin_y
-              for frame=1, frames_since_earned - #card_animation do
-                garbage_block.x = garbage_block.x + telegraph_attack_animation[garbage_block.direction][frame].dx
-                garbage_block.y = garbage_block.y + telegraph_attack_animation[garbage_block.direction][frame].dy
-              end
+              garbage_block.x, garbage_block.y = telegraph_to_render:telegraphLoopAttackPosition(garbage_block, frames_since_earned)
 
               draw(characters[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y, 0, atk_scale, atk_scale)
             else
               --move toward destination
-              local distance_to_destination = math.sqrt(math.pow(garbage_block.x-garbage_block.destination_x,2)+math.pow(garbage_block.y-garbage_block.destination_y,2))
-              if frames_since_earned == #card_animation + #telegraph_attack_animation_speed then
-                garbage_block.speed = distance_to_destination / (GARBAGE_TRANSIT_TIME-frames_since_earned)
-              end
-  
-              if distance_to_destination <= (garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED) then
-                --just move it to it's destination
-                garbage_block.x, garbage_block.y = garbage_block.destination_x, garbage_block.destination_y
-              else
-                garbage_block.x = garbage_block.x - ((garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED)*(garbage_block.x-garbage_block.destination_x))/distance_to_destination
-                garbage_block.y = garbage_block.y - ((garbage_block.speed or TELEGRAPH_ATTACK_MAX_SPEED)*(garbage_block.y-garbage_block.destination_y))/distance_to_destination
-              end
+
+              local loopX, loopY = telegraph_to_render:telegraphLoopAttackPosition(garbage_block, frames_since_earned)
+              local framesHappened = frames_since_earned - (self:attackStartFrame() + #telegraph_attack_animation_speed)
+              local totalFrames = GARBAGE_TRANSIT_TIME - (self:attackStartFrame() + #telegraph_attack_animation_speed)
+              local percent =  framesHappened / totalFrames
+
+              garbage_block.x = loopX + percent * (garbage_block.destination_x - loopX)
+              garbage_block.y = loopY + percent * (garbage_block.destination_y - loopY)
 
               draw(characters[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y, 0, atk_scale, atk_scale)
             end
           end
         end
       end
-  end
-
-  --then draw the telegraph's garbage queue, leaving an empty space until such a time as the attack arrives (earned_frame-GARBAGE_TRANSIT_TIME)
-  local g_queue_to_draw = telegraph_to_render.garbage_queue:makeCopy()
-  local current_block = g_queue_to_draw:pop()
-  local draw_x = telegraph_to_render.pos_x
-  local draw_y = telegraph_to_render.pos_y
-  local drewChain = false
-
-  while current_block do
-    --TODO: create a way to draw telegraphs from right to left
-    if telegraph_to_render.owner.CLOCK - current_block.frame_earned >= GARBAGE_TRANSIT_TIME then
-      if not current_block[3]--[[is_metal]] then
-        local height = math.min(current_block[2], 14)
-        local orig_grb_w, orig_grb_h = characters[senderCharacter].telegraph_garbage_images[height][current_block[1]]:getDimensions()
-        local grb_scale_x = 24 / orig_grb_w
-        local grb_scale_y = 16 / orig_grb_h
-        draw(characters[senderCharacter].telegraph_garbage_images[height--[[height]]][current_block[1]--[[width]]], draw_x, draw_y, 0, grb_scale_x, grb_scale_y)
-      else
-        local orig_mtl_w, orig_mtl_h = characters[senderCharacter].telegraph_garbage_images["metal"]:getDimensions()
-        local mtl_scale_x = 24 / orig_mtl_w
-        local mtl_scale_y = 16 / orig_mtl_h
-        draw(characters[senderCharacter].telegraph_garbage_images["metal"], draw_x, draw_y, 0, mtl_scale_x, mtl_scale_y)
-      end
-      drewChain = drewChain or current_block[4]
-
-      -- Render the stop times above blocks for debug purposes
-      if config.debug_mode then
-        local stopperTime = nil
-
-        if current_block[4]--[[chain]] then
-          stopperTime = telegraph_to_render.stoppers.chain[telegraph_to_render.garbage_queue.chain_garbage.first]
-          if stopperTime and current_block.finalized then
-            stopperTime = stopperTime .. " F"
-          end
-        else
-          if current_block[3]--[[is_metal]] then
-            stopperTime = telegraph_to_render.stoppers.metal
-          else
-            stopperTime = telegraph_to_render.stoppers.combo[current_block[1]]
-          end
-        end
-
-        if stopperTime then
-          gprintf(stopperTime, draw_x*GFX_SCALE, (draw_y-8)*GFX_SCALE, 70, "center", nil, 1, large_font)
-        end
-      end
-
     end
-    draw_x = draw_x + TELEGRAPH_BLOCK_WIDTH 
-    current_block = g_queue_to_draw:pop()
   end
-  
-  if not drewChain and telegraph_to_render.garbage_queue.ghost_chain then
-    local draw_x = telegraph_to_render.pos_x
+
+  if config.renderTelegraph then
+    
+    -- Render if we are "currently chaining" for debug purposes
+    if config.debug_mode and telegraph_to_render.senderCurrentlyChaining then
+      draw(characters[senderCharacter].telegraph_garbage_images["attack"], telegraph_to_render:telegraphRenderXPosition(-1), telegraph_to_render.pos_y, 0, atk_scale, atk_scale)
+    end
+
+    --then draw the telegraph's garbage queue, leaving an empty space until such a time as the attack arrives (earned_frame-GARBAGE_TRANSIT_TIME)
+    local g_queue_to_draw = telegraph_to_render.garbage_queue:makeCopy()
+    local current_block = g_queue_to_draw:pop()
     local draw_y = telegraph_to_render.pos_y
-    local height = math.min(telegraph_to_render.garbage_queue.ghost_chain, 14)
-    local orig_grb_w, orig_grb_h = characters[senderCharacter].telegraph_garbage_images[height][6]:getDimensions()
-    local grb_scale_x = 24 / orig_grb_w
-    local grb_scale_y = 16 / orig_grb_h
-    draw(characters[senderCharacter].telegraph_garbage_images[height][6], draw_x, draw_y, 0, grb_scale_x, grb_scale_y)
-
-    -- Render a "G" for ghost
-    if config.debug_mode then
-      gprintf("G", draw_x*GFX_SCALE, (draw_y-8)*GFX_SCALE, 70, "center", nil, 1, large_font)
+    local drewChain = false
+    local attackAnimationLength = GARBAGE_TRANSIT_TIME
+    if not config.renderAttacks then
+      attackAnimationLength = 0
     end
+
+    local currentIndex = 0
+    while current_block do
+      if telegraph_to_render.sender.CLOCK - current_block.timeAttackInteracts >= attackAnimationLength then
+        local draw_x = self:telegraphRenderXPosition(currentIndex)
+        if not current_block[3]--[[is_metal]] then
+          local height = math.min(current_block[2], 14)
+          if height > 1 then -- For illegal chain garbage, default to using the chain size graphics
+            current_block[1] = 6
+          end
+          local orig_grb_w, orig_grb_h = characters[senderCharacter].telegraph_garbage_images[height][current_block[1]]:getDimensions()
+          local grb_scale_x = 24 / orig_grb_w
+          local grb_scale_y = 16 / orig_grb_h
+          draw(characters[senderCharacter].telegraph_garbage_images[height--[[height]]][current_block[1]--[[width]]], draw_x, draw_y, 0, grb_scale_x, grb_scale_y)
+        else
+          local orig_mtl_w, orig_mtl_h = characters[senderCharacter].telegraph_garbage_images["metal"]:getDimensions()
+          local mtl_scale_x = 24 / orig_mtl_w
+          local mtl_scale_y = 16 / orig_mtl_h
+          draw(characters[senderCharacter].telegraph_garbage_images["metal"], draw_x, draw_y, 0, mtl_scale_x, mtl_scale_y)
+        end
+        drewChain = drewChain or current_block[4]
+
+        -- Render the stop times above blocks for debug purposes
+        if config.debug_mode then
+          local stopperTime = nil
+
+          if current_block[4]--[[chain]] then
+            stopperTime = telegraph_to_render.stoppers.chain[telegraph_to_render.garbage_queue.chain_garbage.first]
+            if stopperTime and current_block.finalized then
+              stopperTime = stopperTime .. " F"
+            end
+          else
+            if current_block[3]--[[is_metal]] then
+              stopperTime = telegraph_to_render.stoppers.metal
+            else
+              stopperTime = telegraph_to_render.stoppers.combo[current_block[1]]
+            end
+          end
+
+          if stopperTime then
+            gprintf(stopperTime, draw_x*GFX_SCALE, (draw_y-8)*GFX_SCALE, 70, "center", nil, 1, large_font)
+          end
+        end
+
+      end
+      current_block = g_queue_to_draw:pop()
+      currentIndex = currentIndex + 1
+    end
+    
+    if not drewChain and telegraph_to_render.garbage_queue.ghost_chain then
+      local draw_x = self:telegraphRenderXPosition(0)
+      local draw_y = telegraph_to_render.pos_y
+      local height = math.min(telegraph_to_render.garbage_queue.ghost_chain, 14)
+      local orig_grb_w, orig_grb_h = characters[senderCharacter].telegraph_garbage_images[height][6]:getDimensions()
+      local grb_scale_x = 24 / orig_grb_w
+      local grb_scale_y = 16 / orig_grb_h
+      draw(characters[senderCharacter].telegraph_garbage_images[height][6], draw_x, draw_y, 0, grb_scale_x, grb_scale_y)
+
+      -- Render a "G" for ghost
+      if config.debug_mode then
+        gprintf("G", draw_x*GFX_SCALE, (draw_y-8)*GFX_SCALE, 70, "center", nil, 1, large_font)
+      end
+    end
+
   end
 
 end

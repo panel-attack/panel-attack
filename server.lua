@@ -310,6 +310,10 @@ function Room.add_spectator(self, new_spectator_connection)
     player_settings = {character = self.a.character, character_display_name = self.a.character_display_name, level = self.a.level, player_number = self.a.player_number},
     opponent_settings = {character = self.b.character, character_display_name = self.b.character_display_name, level = self.b.level, player_number = self.b.player_number}
   }
+  if COMPRESS_SPECTATOR_REPLAYS_ENABLED then
+    msg.replay_of_match_so_far.vs.in_buf = compress_input_string(msg.replay_of_match_so_far.vs.in_buf)
+    msg.replay_of_match_so_far.vs.I = compress_input_string(msg.replay_of_match_so_far.vs.I)
+  end
   new_spectator_connection:send(msg)
   msg = {spectators = self:spectator_names()}
   logger.debug("sending spectator list: " .. json.encode(msg))
@@ -508,7 +512,6 @@ Connection =
     connections[s.index] = s
     socket_to_idx[socket] = s.index
     s.socket = socket
-    socket:settimeout(0)
     s.leftovers = ""
     s.state = "needs_name"
     s.room = nil
@@ -682,10 +685,6 @@ function Connection.setup_game(self)
   lobby_changed = true --TODO: remove this line when we implement joining games in progress
   self.vs_mode = true
   self.metal = false
-  self.rows_left = 14 + random(1, 8)
-  self.prev_metal_col = nil
-  self.metal_col = nil
-  self.first_seven = nil
 end
 
 function Connection.close(self)
@@ -711,7 +710,7 @@ function Connection.close(self)
 end
 
 function Connection.H(self, version)
-  if version ~= VERSION then
+  if version ~= VERSION and not ANY_ENGINE_VERSION_ENABLED then
     self:send("N")
   else
     self:send("H")
@@ -772,7 +771,6 @@ function Room.resolve_game_outcome(self)
     logger.info("resolve_game_outcome says: " .. outcome)
     --outcome is the player number of the winner, or 0 for a tie
     if self.a.save_replays_publicly ~= "not at all" and self.b.save_replays_publicly ~= "not at all" then
-      --write_replay_file(self.replay, "replay.txt")
       --use UTC time for dates on replays
       local now = os.date("*t", to_UTC(os.time()))
       local path = "ftp" .. sep .. "replays" .. sep .. "v" .. VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
@@ -1213,10 +1211,8 @@ function Connection.P(self, message)
     return
   end
   local ncolors = 0 + message[1]
-  local ret = make_panels(nil, ncolors, string.sub(message, 2, 7), self)
-  if self.first_seven and self.opponent and ((self.level < 9 and self.opponent.level < 9) or (self.level >= 9 and self.opponent.level >= 9)) then
-    self.opponent.first_seven = self.first_seven
-  end
+  -- TODO: remove this server message type
+  local ret = "Garbage Panel Generation is now local only"
   self:send("P" .. ret)
   if self.player_number == 1 then
     self.room:send_to_spectators("P" .. ret)
@@ -1235,7 +1231,8 @@ function Connection.Q(self, message)
     return
   end
   local ncolors = 0 + message[1]
-  local ret = makeGarbagePanels(nil, ncolors, string.sub(message, 2, 7))
+  -- TODO: remove this server message type
+  local ret = "Garbage Panel Generation is now local only"
   self:send("Q" .. ret)
   if self.player_number == 1 then
     self.room:send_to_spectators("Q" .. ret)
@@ -1525,6 +1522,10 @@ end
 --]]
 local server_socket = socket.bind("*", SERVER_PORT or 49569) --for official server
 --local server_socket = socket.bind("*", 59569) --for beta server
+server_socket:settimeout(0)
+if TCP_NODELAY_ENABLED then
+  server_socket:setoption("tcp-nodelay", true)
+end
 local sep = package.config:sub(1, 1)
 logger.info("sep: " .. sep)
 playerbase = Playerbase("playerbase")
@@ -1577,8 +1578,15 @@ logger.info("initialized!")
 local prev_now = time()
 while true do
   server_socket:settimeout(0)
+  if TCP_NODELAY_ENABLED then
+    server_socket:setoption("tcp-nodelay", true)
+  end
   local new_conn = server_socket:accept()
   if new_conn then
+    new_conn:settimeout(0)
+    if TCP_NODELAY_ENABLED then
+      new_conn:setoption("tcp-nodelay", true)
+    end
     Connection(new_conn)
   end
   local recvt = {server_socket}

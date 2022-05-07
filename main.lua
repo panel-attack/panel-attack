@@ -52,7 +52,6 @@ local last_x = 0
 local last_y = 0
 local input_delta = 0.0
 local pointer_hidden = false
-local nextPresenceUpdate = 0
 local mainloop = nil
 
 -- Called at the beginning to load the game
@@ -96,12 +95,11 @@ function love.update(dt)
 
   local status, err = coroutine.resume(mainloop)
   if not status then
-    local system_info = "OS: " .. love.system.getOS()
+    local errorData = Game.errorData(err, debug.traceback(mainloop))
     if GAME_UPDATER_GAME_VERSION then
-      system_info = system_info .. "\n" .. GAME_UPDATER_GAME_VERSION
-      send_error_report(err, debug.traceback(mainloop), GAME_UPDATER_GAME_VERSION, love.system.getOS())
+      send_error_report(errorData)
     end
-    error(err .. "\n" .. debug.traceback(mainloop) .. "\n" .. system_info)
+    error(err .. "\n\n" .. dump(errorData, true))
   end
   if server_queue and server_queue:size() > 0 then
     logger.trace("Queue Size: " .. server_queue:size() .. " Data:" .. server_queue:to_short_string())
@@ -130,15 +128,19 @@ function love.draw()
   love.graphics.setBackgroundColor(unpack(global_background_color))
   love.graphics.clear()
 
+  -- Draw the FPS if enabled
+  if config ~= nil and config.show_fps then
+    gprintf("FPS: " .. love.timer.getFPS(), 1, 1)
+  end
+
+  if STONER_MODE then
+    gprintf("STONER", 1, 1 + (11 * 4))
+  end
+
   for i = gfx_q.first, gfx_q.last do
     gfx_q[i][1](unpack(gfx_q[i][2]))
   end
   gfx_q:clear()
-
-  -- Draw the FPS if enabled
-  if config ~= nil and config.show_fps then
-    love.graphics.print("FPS: " .. love.timer.getFPS(), 1, 1)
-  end
 
   love.graphics.setCanvas() -- render everything thats been added
   love.graphics.clear(love.graphics.getBackgroundColor()) -- clear in preperation for the next render

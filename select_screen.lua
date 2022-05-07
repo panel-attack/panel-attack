@@ -228,7 +228,7 @@ function select_screen.main()
     end
 
     if my_player_number == 2 and msg.a_menu_state ~= nil and msg.b_menu_state ~= nil then
-      logger.warn("inverting the states to match player number!")
+      logger.debug("inverting the states to match player number!")
       msg.a_menu_state, msg.b_menu_state = msg.b_menu_state, msg.a_menu_state
     end
 
@@ -294,6 +294,7 @@ function select_screen.main()
   -- Leaves the 2p vs match room
   local function do_leave()
     stop_the_music()
+    GAME:clearMatch()
     return json_send({leave_room = true})
   end
 
@@ -905,10 +906,10 @@ function select_screen.main()
           if GAME.battleRoom.spectating then
             is_local = false
           end
-          P1 = Stack(1, GAME.match, is_local, msg.player_settings.panels_dir, msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
+          P1 = Stack{which=1, match=GAME.match, is_local=is_local, panels_dir=msg.player_settings.panels_dir, level=msg.player_settings.level, player_number=msg.player_settings.player_number, character=msg.player_settings.character}
           GAME.match.P1 = P1
           P1.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
-          P2 = Stack(2, GAME.match, false, msg.opponent_settings.panels_dir, msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
+          P2 = Stack{which=2, match=GAME.match, is_local=false, panels_dir=msg.opponent_settings.panels_dir, level=msg.opponent_settings.level, player_number=msg.opponent_settings.player_number, character=msg.opponent_settings.character}
           GAME.match.P2 = P2
           P2.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
           if GAME.battleRoom.spectating then
@@ -1322,19 +1323,15 @@ function select_screen.main()
     -- Handle one player vs game setup
     if cursor_data[1].state.ready and select_screen.character_select_mode == "1p_vs_yourself" then
       GAME.match = Match("vs", GAME.battleRoom)
-      P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+      P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=cursor_data[1].state.panels_dir, level=cursor_data[1].state.level, player_number=1, character=cursor_data[1].state.character}
       if GAME.battleRoom.trainingModeSettings then
         GAME.match.attackEngine = AttackEngine(P1)
         local startTime = 150
-        local delay = GARBAGE_TRANSIT_TIME + GARBAGE_DELAY + 1
         local delayPerAttack = 6
-        local attackCountPerDelay = 1
-        if GAME.battleRoom.trainingModeSettings.height == 1 then
-          attackCountPerDelay = 6
-          delay = delay + (attackCountPerDelay * delayPerAttack)
-        end
+        local attackCountPerDelay = 15
+        local delay = GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME + (attackCountPerDelay * delayPerAttack) + 1
         for i = 1, attackCountPerDelay, 1 do
-          GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  GAME.battleRoom.trainingModeSettings.height > 1--[[chain]])  
+          GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
         end
       end
       GAME.match.P1 = P1
@@ -1382,9 +1379,9 @@ function select_screen.main()
     -- Handle two player vs game setup
     elseif cursor_data[1].state.ready and select_screen.character_select_mode == "2p_local_vs" and cursor_data[2].state.ready then
       GAME.match = Match("vs", GAME.battleRoom)
-      P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+      P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=cursor_data[1].state.panels_dir, level=cursor_data[1].state.level, player_number=1, character=cursor_data[1].state.character}
       GAME.match.P1 = P1
-      P2 = Stack(2, GAME.match, true, cursor_data[2].state.panels_dir, cursor_data[2].state.level, cursor_data[2].state.character)
+      P2 = Stack{which=2, match=GAME.match, is_local=true, panels_dir=cursor_data[2].state.panels_dir, level=cursor_data[2].state.level, player_number=2, character=cursor_data[2].state.character}
       GAME.match.P2 = P2
       P1:set_garbage_target(P2)
       P2:set_garbage_target(P1)
