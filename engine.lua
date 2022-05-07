@@ -694,6 +694,7 @@ function Stack.puzzleStringToPanels(self, puzzleString)
   local connectedGarbagePanels = nil
   -- chunk the aprilstack into rows
   -- it is necessary to go bottom up because garbage block panels contain the offset relative to their bottom left corner
+  local panel_id = 1
   for row = 1, 12 do
       local rowString = string.sub(puzzleString, #puzzleString - 5, #puzzleString)
       puzzleString = string.sub(puzzleString, 1, #puzzleString - 6)
@@ -702,7 +703,7 @@ function Stack.puzzleStringToPanels(self, puzzleString)
       for column = 6, 1, -1 do
           local color = string.sub(rowString, column, column)
           if not garbageStartRow and tonumber(color) then
-            local panel = Panel()
+            local panel = Panel(panel_id)
             panel.color = tonumber(color)
             panels[row][column] = panel
           else
@@ -715,7 +716,7 @@ function Stack.puzzleStringToPanels(self, puzzleString)
                 isMetal = true
               end
             end
-            local panel = Panel()
+            local panel = Panel(panel_id)
             panel.garbage = true
             panel.color = 9
             panel.y_offset = row - garbageStartRow
@@ -744,15 +745,17 @@ function Stack.puzzleStringToPanels(self, puzzleString)
               isMetal = false
             end
           end
+          panel_id = panel_id + 1
       end
   end
 
   -- add row 0 because it crashes if there is no row 0 for whatever reason
   panels[0] = {}
   for column = 6, 1, -1 do
-    local panel = Panel()
+    local panel = Panel(panel_id)
     panel.color = 0
     panels[0][column] = panel
+    panel_id = panel_id + 1
   end
 
   return panels

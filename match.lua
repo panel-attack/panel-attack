@@ -170,7 +170,7 @@ function Match:run()
   local startTime = love.timer.getTime()
 
   -- We need to save CLOCK 0 as a base case
-  if P1.CLOCK == 0 then  
+  if P1.CLOCK == 0 then
     P1:saveForRollback()
   end
   if P2 and P2.CLOCK == 0 then  

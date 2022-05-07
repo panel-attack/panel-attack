@@ -400,13 +400,14 @@ end
 function H3Match.getConcreteMatchesFromLatentMatch(self)
     local concreteMatches = {}
 
-    -- need a deepcopy to have unique targetVectors
-    local panels = deepcopy(self.panels, {panel=true})
-    -- make sure they're in correct order for the loop
-    table.sort(panels, function(a,b) return a.vector.column < b.vector.column end)
-
+    
     -- assuming column index of left most panel
     for i=1,4 do
+      -- need a deepcopy to have unique targetVectors
+      local panels = deepcopy(self.panels, {panel=true})
+      -- make sure they're in correct order for the loop
+      table.sort(panels, function(a,b) return a.vector.column < b.vector.column end)
+      
         for j=1,#panels do
             panels[j].targetVector = GridVector(panels[j]:row(), i + j - 1)
         end

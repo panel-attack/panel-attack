@@ -128,3 +128,5 @@ function warning(msg)
 		love.window.showMessageBox("Warning", loc_warning.."\n%appdata%\\Panel Attack\\warnings.txt")
 	end
 end
+
+useCpuForPuzzles = false

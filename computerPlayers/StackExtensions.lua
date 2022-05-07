@@ -54,26 +54,33 @@ function StackExtensions.copyStack(stack)
     local stackCopy =  deepcopy(stack,                nil, {garbage_target=true, prev_states=true, canvas=true, match=true, telegraph=true})
     local otherStack = deepcopy(stack.garbage_target, nil, {garbage_target=true, prev_states=true, canvas=true, match=true, telegraph=true})
 
-    local stackTelegraph = deepcopy(stack.telegraph, nil, {sender=true, owner=true})
-    stackTelegraph.sender = otherStack
-    stackTelegraph.owner = stackCopy
-    stackCopy.telegraph = stackTelegraph
-    local otherTelegraph = deepcopy(stack.garbage_target.telegraph, nil, {sender=true, owner=true})
-    otherTelegraph.sender = stackCopy
-    otherTelegraph.owner = otherStack
-    otherStack.telegraph = otherTelegraph
+    if otherStack then
+      local stackTelegraph = deepcopy(stack.telegraph, nil, {sender=true, owner=true})
+      if stackTelegraph then
+        stackTelegraph.sender = otherStack
+        stackTelegraph.owner = stackCopy
+        stackCopy.telegraph = stackTelegraph
+      end
+      
+      local otherTelegraph = deepcopy(stack.garbage_target.telegraph, nil, {sender=true, owner=true})
+      if otherTelegraph then
+        otherTelegraph.sender = stackCopy
+        otherTelegraph.owner = otherStack
+        otherStack.telegraph = otherTelegraph
+      end
+      stackCopy.garbage_target = otherStack
+      otherStack.garbage_target = stackCopy
 
-    stackCopy.garbage_target = otherStack
-    otherStack.garbage_target = stackCopy
-    if stackCopy.which == 1 then
-        match.P1 = stackCopy
-        match.P2 = otherStack
-    else
-        match.P2 = stackCopy
-        match.P1 = otherStack
+      if stackCopy.which == 1 then
+          match.P1 = stackCopy
+          match.P2 = otherStack
+      else
+          match.P2 = stackCopy
+          match.P1 = otherStack
+      end
+      otherStack.match = match
     end
     stackCopy.match = match
-    otherStack.match = match
 
     return stackCopy
 end

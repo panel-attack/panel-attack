@@ -79,7 +79,7 @@ function fmainloop()
     -- Run all unit tests now that we have everything loaded
     require("PuzzleTests")
     require("ServerQueueTests")
-    require("StackTests")
+    --require("StackTests")
     require("table_util_tests")
     require("computerPlayers.EndarisCpu.Tests.Tests")
     -- require("computerPlayers.TreeSearchComputer.TreeSearchComputerTests")
@@ -174,6 +174,7 @@ do
       --{loc("mm_2_vs_online", "LittleEndu's server"), main_net_vs_setup, {"51.15.207.223"}},
       --{loc("mm_2_vs_online", "server for ranked Ex Mode"), main_net_vs_setup, {"exserver.panelattack.com", 49568}},
       {"Vs Computer", main_local_vs_computer_setup},
+      {"Computer puzzles", main_computer_select_puzzle},
       {loc("mm_2_vs_local"), main_local_vs_setup},
       {loc("mm_replay_browser"), replay_browser.main},
       {loc("mm_configure"), main_config_input},
@@ -1583,7 +1584,7 @@ function main_replay()
 end
 
 -- creates a puzzle game function for a given puzzle and index
-function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx)
+function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx, useCpu)
   local next_func = nil
   local musicSetup = false
   local character = nil
@@ -1603,6 +1604,9 @@ function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx)
     GAME.match = Match("puzzle")
     P1 = Stack{which=1, match=GAME.match, is_local=true, level=config.puzzle_level, character=character}
     GAME.match.P1 = P1
+    if useCpu then
+      GAME.match.P1CPU = ComputerPlayer("EndarisCpu", "DevConfig")
+    end
     P1:wait_for_random_character()
     if not character then
       character = P1.character
@@ -1698,7 +1702,7 @@ function main_select_puzz()
 
   local items = {}
   for key, val in pairsSortedByKeys(GAME.puzzleSets) do
-    items[#items + 1] = {key, makeSelectPuzzleSetFunction(val)}
+    items[#items + 1] = {key, makeSelectPuzzleSetFunction(val, nil, useCpuForPuzzles)}
   end
 
   -- Ensure the last index is sane in case puzzles got reloaded differently
@@ -1762,6 +1766,13 @@ function main_select_puzz()
       return main_select_mode, {}
     end
   end
+end
+
+function main_computer_select_puzzle()
+  useCpuForPuzzles = true
+  local func, args = main_select_puzz()
+  useCpuForPuzzles = false
+  return func, args
 end
 
 -- menu for setting the username
