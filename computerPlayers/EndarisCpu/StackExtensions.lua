@@ -397,9 +397,9 @@ function StackExtensions.evaluateLatentMatch(latentMatch, panels)
     else
       table.remove(concreteMatches, i)
     end
-
-    return concreteMatches
   end
+
+  return concreteMatches
 end
 
 function StackExtensions.getAllActionPanelsOfColorByRow(panels, color)

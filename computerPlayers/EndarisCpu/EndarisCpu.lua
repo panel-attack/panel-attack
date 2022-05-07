@@ -458,8 +458,12 @@ function EndarisCpu.simulatePostActionStack(self)
   CpuLog:log(1, "CLOCK local stack before running inputs " .. self.cpuStack.CLOCK)
   CpuLog:log(1, StackExtensions.AsAprilStack(self.cpuStack))
   self.cpuStack.input_buffer = inputbuffer
-  while #self.cpuStack.input_buffer > 0 do
-      self.cpuStack:run()
+  while self.cpuStack.input_buffer:len() > 0 do
+    self.cpuStack:setupInput()
+    -- stack ceases running if the game ended in any way so we need to avoid getting stuck in a deathloop
+    if not self.cpuStack:simulate() then
+      self.cpuStack.input_buffer = ""
+    end
   end
   CpuLog:log(1, "CLOCK local stack after running inputs " .. self.cpuStack.CLOCK)
   CpuLog:log(1, StackExtensions.AsAprilStack(self.cpuStack))

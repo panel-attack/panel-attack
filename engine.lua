@@ -943,10 +943,10 @@ function Stack.run(self)
 end
 
 -- Grabs input from the buffer of inputs or from the controller and sends out to the network if needed.
-function Stack.setupInput(self) 
+function Stack.setupInput(self)
   self.input_state = nil
 
-  if self:game_ended() == false then 
+  if self:game_ended() == false then
     if self.input_buffer and string.len(self.input_buffer) > 0 then
       self.input_state = string.sub(self.input_buffer, 1, 1)
       self.input_buffer = string.sub(self.input_buffer, 2)
@@ -1022,7 +1022,9 @@ local d_row = {up = 1, down = -1, left = 0, right = 0}
 -- One run of the engine routine.
 function Stack.simulate(self)
   -- Don't run the main logic if the player has simulated past one of the game overs or the time attack time
-  if self:game_ended() == false then
+  if self:game_ended() == true then
+    return false
+  else
     self:prep_first_row()
     local panels = self.panels
     local width = self.width
@@ -1921,6 +1923,9 @@ function Stack.simulate(self)
 
   self:update_popfxs()
   self:update_cards()
+
+  -- reporting that we did indeed simulate
+  return true
 end
 
 function Stack:receiveGarbage(frameToReceive, garbageList)
