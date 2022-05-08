@@ -12,11 +12,32 @@ local input2 = {
     isUp = {}
   },
   guid_to_name = {},
-  sensitivity = .75
+  sensitivity = .5,
+  joysticks = {}
 }
 
 local current_dt
 local guids_to_joysticks = {}
+local stick_map = {
+    {{"-", "x"}},
+    {{"-", "x"}, {"-", "y"}},
+    {{"-", "y"}},
+    {{"+", "x"}, {"-", "y"}},
+    {{"+", "x"}},
+    {{"+", "x"}, {"+", "y"}},
+    {{"+", "y"}},
+    {{"-", "x"}, {"+", "y"}}
+  }
+local anti_stick_map = {
+    {{"+", "x"}, {"+", "y"}, {"-", "y"}},
+    {{"+", "x"}, {"+", "y"}},
+    {{"+", "y"}, {"+", "x"}, {"-", "x"}},
+    {{"-", "x"}, {"+", "y"}},
+    {{"-", "x"}, {"+", "y"}, {"-", "y"}},
+    {{"-", "x"}, {"-", "y"}},
+    {{"-", "y"}, {"+", "x"}, {"-", "x"}},
+    {{"+", "x"}, {"-", "y"}}
+  }
 
 function input2:getJoystickButtonName(joystick, button)
   if not guids_to_joysticks[joystick:getGUID()] then
@@ -34,6 +55,7 @@ function input2:keyPressed(key, scancode, isrepeat)
 end
 
 function input2:keyReleased(key, scancode)
+  self.raw.isDown[key] = nil
   self.raw.isPressed[key] = nil
   self.raw.isUp[key] = 1
 end
@@ -43,34 +65,50 @@ function input2:gamepadPressed(joystick, button)
 end
 
 function input2:gamepadReleased(joystick, button)
-  self.raw.isPressed[self:getJoystickButtonName(joystick, button)] = nil
-  self.raw.isUp[self:getJoystickButtonName(joystick, button)] = 1
+  local key = self:getJoystickButtonName(joystick, button)
+  self.raw.isDown[key] = nil
+  self.raw.isPressed[key] = nil
+  self.raw.isUp[key] = 1
 end
 
-function input2:gamepadAxis(joystick, axis, value)
-  local sign = value > 0 and "+" or "-"
-  local axis_name = sign..axis
-  local axis_keys = {
-    {self:getJoystickButtonName(joystick, "+"..axis), math.abs(math.max(value, 0))},
-    {self:getJoystickButtonName(joystick, "-"..axis), math.abs(math.min(value, 0))}
-  }
-  for _, key_value in ipairs(axis_keys) do
-    local key, value = unpack(key_value)
-    if value > self.sensitivity then
-      if not self.raw.isDown[key] and not self.raw.isPressed[key] then
-        self.raw.isDown[key] = 1
+function input2:joystickToButtons()
+  local joysticks2 = love.joystick.getJoysticks()
+  for _, joystick in ipairs(love.joystick.getJoysticks()) do
+    for _, axis in ipairs({"left", "right"}) do
+      local x = axis.."x"
+      local y = axis.."y"
+      local mag = math.sqrt(joystick:getGamepadAxis(x) * joystick:getGamepadAxis(x) + joystick:getGamepadAxis(y) * joystick:getGamepadAxis(y))
+      local dir = math.atan2(joystick:getGamepadAxis(y), joystick:getGamepadAxis(x)) * 180.0 / math.pi
+      local quantized_dir = math.floor(((dir + 180 + 45 / 2) / 45.0) % 8) + 1
+      for _, button in ipairs(stick_map[quantized_dir]) do
+        local key = self:getJoystickButtonName(joystick, button[1]..axis..button[2])
+        if mag > self.sensitivity then
+          if not self.raw.isDown[key] and not self.raw.isPressed[key] then
+            self.raw.isDown[key] = 1
+          end
+        else
+          if self.raw.isDown[key] or self.raw.isPressed[key] then
+            self.raw.isDown[key] = nil
+            self.raw.isPressed[key] = nil
+            self.raw.isUp[key] = 1
+          end
+        end
       end
-    else
-      if self.raw.isDown[key] or self.raw.isPressed[key] then
-        self.raw.isPressed[key] = nil
-        self.raw.isUp[key] = 1
+      for _, button in ipairs(anti_stick_map[quantized_dir]) do
+        local key = self:getJoystickButtonName(joystick, button[1]..axis..button[2])
+        if self.raw.isDown[key] or self.raw.isPressed[key] then
+          self.raw.isDown[key] = nil
+          self.raw.isPressed[key] = nil
+          self.raw.isUp[key] = 1
+        end
       end
     end
   end
-  
 end
 
 function input2:update(dt)
+  self:joystickToButtons()
+  
   current_dt = dt
   for key, value in pairs(self.raw.isDown) do
     if self.raw.isDown[key] == 1 then
@@ -111,7 +149,6 @@ local function quantize(x, period)
   return math.floor(x / period) * period
 end
 
--- FIX THIS!
 function input2:isPressedWithRepeat(key, delay, repeat_period)
   local inputs = self.raw
   if table.trueForAny(consts.KEY_NAMES, function(k) return k == key end) then
