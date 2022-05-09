@@ -16,6 +16,8 @@ Note: folders starting with "__" will be ignored upon loading. You may choose to
 
 Note: non-optional data that are missing will automatically get replaced by default ones so they are kinda optional in that sense
 
+- "*.ttf": add this file to customize the font, the file may have any name as long as the extension is ".ttf". Font size can be changed in the config.json file with the parameter "font_size" with an integer font size
+
 ~~ [.txt] ~~
 
 - "characters": add this file with one character ID per line to limit characters you can pick and random characters

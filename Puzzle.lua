@@ -6,6 +6,7 @@ Puzzle =
     self.doCountdown = doCountdown
     self.moves = moves
     self.stack = string.gsub(stack, "%s+", "") -- Remove whitespace so files can be easier to read
+    self.randomizeColors = false
   end
 )
 
@@ -15,6 +16,22 @@ end
 
 function Puzzle.getLegalCharacters()
   return { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "[", "]", "{", "}", "=" }
+end
+
+function Puzzle.randomizeColorString(colorString)
+  local colorArray = Panel.regularColorsArray()
+  if colorString:find("7") then
+    colorArray = Panel.extendedRegularColorsArray()
+  end
+  local newColorOrder = {}
+
+  for i = 1, #colorArray, 1 do
+    newColorOrder[tostring(table.length(newColorOrder)+1)] = tostring(table.remove(colorArray, math.random(1, #colorArray)))
+  end
+  
+  colorString = colorString:gsub("%d", newColorOrder)
+
+  return colorString
 end
 
 function Puzzle.validate(self)
@@ -83,10 +100,6 @@ function Puzzle.validate(self)
   if string.lower(self.puzzleType) == "moves" and (not tonumber(self.moves) or tonumber(self.moves) < 1 ) then
     errMessage = errMessage ..
     "\nInvalid number of moves detected, expecting a number greater than zero but instead got " .. self.moves
-  end
-
-  if errMessage ~= "" then
-    errMessage = "The following puzzle contains invalid values:\n" .. json.encode(self) .. errMessage
   end
 
   return errMessage == "", errMessage

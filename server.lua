@@ -771,7 +771,6 @@ function Room.resolve_game_outcome(self)
     logger.info("resolve_game_outcome says: " .. outcome)
     --outcome is the player number of the winner, or 0 for a tie
     if self.a.save_replays_publicly ~= "not at all" and self.b.save_replays_publicly ~= "not at all" then
-      --write_replay_file(self.replay, "replay.txt")
       --use UTC time for dates on replays
       local now = os.date("*t", to_UTC(os.time()))
       local path = "ftp" .. sep .. "replays" .. sep .. "v" .. VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)

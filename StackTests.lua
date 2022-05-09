@@ -1,7 +1,8 @@
 
 local match = Match("puzzle") -- to stop rising
-local stack = Stack(1, match, true, config.panels, 5, 1, 1, false)
-match.P1 = stack
+local stack = Stack{which=1, match=match, is_local=false, level=5}
+make_local_panels(stack, "000000")
+make_local_gpanels(stack, "000000")
 stack.do_countdown = false
 stack:wait_for_random_character()
 pick_random_stage()

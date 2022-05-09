@@ -110,7 +110,7 @@ function CharacterSelect:onReady()
   self:moveCursor(button_info.ready.x, button_info.ready.y)
   -- Handle one player vs game setup
   GAME.match = Match("vs", GAME.battleRoom)
-  P1 = Stack(1, GAME.match, true, self.cursor_data[1].state.panels_dir, self.cursor_data[1].state.level, self.cursor_data[1].state.character)
+  P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=self.cursor_data[1].state.panels_dir, level=self.cursor_data[1].state.level, character=self.cursor_data[1].state.character}
   GAME.match.P1 = P1
   self:matchSetup(GAME.match)
   

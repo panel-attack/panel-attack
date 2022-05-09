@@ -53,7 +53,9 @@ local config = {
   fullscreen                    = false,
   defaultPanelsCopied           = false,
   renderTelegraph               = true,
-  renderAttacks                 = true
+  renderAttacks                 = true,
+  puzzle_level                  = 5,       
+  puzzle_randomColors           = false
 }
 
 return config

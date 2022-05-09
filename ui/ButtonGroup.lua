@@ -9,9 +9,10 @@ local function setState(self, i)
   self.value = self.values[i]
 end
 
-local function genButtonGroupFn(self, i)
+local function genButtonGroupFn(self, i, onClick)
   return function()
     setState(self, i)
+    onClick()
     self.onChange()
   end
 end
@@ -44,7 +45,7 @@ local ButtonGroup = class(
     setState(self, self.selected_index)
     
     for i, button in ipairs(self.buttons) do
-      button.onClick = genButtonGroupFn(self, i)
+      button.onClick = genButtonGroupFn(self, i, button.onClick)
     end
     self.TYPE = "ButtonGroup"
   end
