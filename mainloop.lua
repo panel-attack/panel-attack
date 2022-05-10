@@ -1526,20 +1526,31 @@ function main_replay()
         P2.max_runs_per_frame = 1
       end
     elseif menu_right() then
-      playbackSpeed = bound(1, playbackSpeed + 1, maximumSpeed)
+      playbackSpeed = bound(-1, playbackSpeed + 1, maximumSpeed)
       if P1 then
-        P1.max_runs_per_frame = playbackSpeed
+        P1.max_runs_per_frame = math.max(playbackSpeed, 0)
       end
       if P2 then
-        P2.max_runs_per_frame = playbackSpeed
+        P2.max_runs_per_frame = math.max(playbackSpeed, 0)
       end
     elseif menu_left() then
-      playbackSpeed = bound(1, playbackSpeed - 1, maximumSpeed)
+      playbackSpeed = bound(-1, playbackSpeed - 1, maximumSpeed)
       if P1 then
-        P1.max_runs_per_frame = playbackSpeed
+        P1.max_runs_per_frame = math.max(playbackSpeed, 0)
       end
       if P2 then
-        P2.max_runs_per_frame = playbackSpeed
+        P2.max_runs_per_frame = math.max(playbackSpeed, 0)
+      end
+    end
+
+    if playbackSpeed == -1 then
+      if P1 and P1.CLOCK > 0 then
+        P1:rollbackToFrame(P1.CLOCK-1)
+        P1.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
+      end
+      if P2 and P2.CLOCK > 0 then
+        P2:rollbackToFrame(P2.CLOCK-1)
+        P2.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
       end
     end
   end
