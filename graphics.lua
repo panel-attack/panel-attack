@@ -309,8 +309,8 @@ function Stack.render(self)
   grectangle_color("fill", 4, 4, 96, 192, 0, 0, 0, self.portraitFade)
 
   local metals
-  if self.garbage_target then
-    metals = panels[self.garbage_target.panels_dir].images.metals
+  if self.opponentStack then
+    metals = panels[self.opponentStack.panels_dir].images.metals
   else
     metals = panels[self.panels_dir].images.metals
   end
@@ -332,10 +332,10 @@ function Stack.render(self)
         if panel.garbage then
           local imgs = {flash = metals.flash}
           if not panel.metal then
-            if not self.garbage_target then 
+            if not self.opponentStack then 
               imgs = characters[self.character].images
             else
-              imgs = characters[self.garbage_target.character].images
+              imgs = characters[self.opponentStack.character].images
             end
           end
           if panel.x_offset == 0 and panel.y_offset == 0 then

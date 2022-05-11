@@ -288,6 +288,18 @@ local function add_characters_from_dir_rec(path)
   end
 end
 
+function Character.wait_for_random_character(character)
+  local resolvedCharacter = character
+  if character == random_character_special_value then
+    resolvedCharacter = table.getRandomElement(characters_ids_for_current_theme)
+  elseif characters[character]:is_bundle() then -- may have picked a bundle
+    resolvedCharacter = table.getRandomElement(characters[character].sub_characters)
+  end
+  character_loader_load(resolvedCharacter)
+  character_loader_wait()
+  return resolvedCharacter
+end
+
 -- Loads all character IDs into the characters_ids global
 local function fill_characters_ids()
   -- check validity of bundle characters

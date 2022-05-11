@@ -918,8 +918,10 @@ function select_screen.main()
           end
           P2.panel_buffer = fake_P2.panel_buffer
           P2.gpanel_buffer = fake_P2.gpanel_buffer
-          P1:set_garbage_target(P2)
-          P2:set_garbage_target(P1)
+          P1:setOpponent(P2)
+          P1:setTarget(P2)
+          P2:setOpponent(P1)
+          P2:setTarget(P1)
           P2:moveForPlayerNumber(2)
           replay = createNewReplay(GAME.match)
           
@@ -1324,40 +1326,49 @@ function select_screen.main()
     if cursor_data[1].state.ready and select_screen.character_select_mode == "1p_vs_yourself" then
       GAME.match = Match("vs", GAME.battleRoom)
       P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=cursor_data[1].state.panels_dir, level=cursor_data[1].state.level, player_number=1, character=cursor_data[1].state.character}
-      if GAME.battleRoom.trainingModeSettings then
-        GAME.match.health = Health(30, 0.05, P1.height)
-        GAME.match.attackEngine = AttackEngine(P1)
-        -- local startTime = 150
-        -- local delayPerAttack = 6
-        -- local attackCountPerDelay = 15
-        -- local delay = GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME + (attackCountPerDelay * delayPerAttack) + 1
-        -- for i = 1, attackCountPerDelay, 1 do
-        --   GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        -- end
+      if GAME.battleRoom.trainingModeSettings and GAME.battleRoom.trainingModeSettings.healthDifficulty then
+        local health = Health(GAME.battleRoom.trainingModeSettings.height * 10,
+         15, 6, 249.3, 40, -1)
+        
+        GAME.match.health = health
+      end
+      if GAME.battleRoom.trainingModeSettings and GAME.battleRoom.trainingModeSettings.attackDifficulty then
+        local attackEngine = AttackEngine()
+        local startTime = 150
+        local delayPerAttack = 120 --6
+        local attackCountPerDelay = 1
+        local delay = GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME + (attackCountPerDelay * delayPerAttack) + 1
+        for i = 1, attackCountPerDelay, 1 do
+          attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        end
+      
+        -- local delay = 85 * 60
+        -- attackEngine:addAttackPattern(6, 4, 180 + (10 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
+        -- attackEngine:addAttackPattern(6, 3, 180 + (15 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
+        -- --attackEngine:addAttackPattern(6, 13, 180 + (40 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
+        -- attackEngine:addAttackPattern(6, 2, 180 + (50 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
+        -- attackEngine:addAttackPattern(6, 1, 180 + (60 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
+        -- attackEngine:addAttackPattern(6, 1, 180 + (67 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
+        -- attackEngine:addAttackPattern(6, 1, 180 + (76 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
+      
+        -- attackEngine:addAttackPattern(5, 1, 180 + (4 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        -- attackEngine:addAttackPattern(4, 1, 180 + (22 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        -- attackEngine:addAttackPattern(5, 1, 180 + (30 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        -- attackEngine:addAttackPattern(3, 1, 180 + (70 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        -- attackEngine:addAttackPattern(5, 1, 180 + (75 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        -- attackEngine:addAttackPattern(3, 1, 180 + (78 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        -- attackEngine:addAttackPattern(4, 1, 180 + (79 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        -- attackEngine:addAttackPattern(5, 1, 180 + (80 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+      
+        attackEngine:setTarget(P1)
 
-        local delay = 85 * 60
-        GAME.match.attackEngine:addAttackPattern(6, 4, 180 + (10 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
-        GAME.match.attackEngine:addAttackPattern(6, 3, 180 + (15 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
-        GAME.match.attackEngine:addAttackPattern(6, 13, 180 + (40 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
-        GAME.match.attackEngine:addAttackPattern(6, 2, 180 + (50 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
-        GAME.match.attackEngine:addAttackPattern(6, 1, 180 + (60 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
-        GAME.match.attackEngine:addAttackPattern(6, 1, 180 + (67 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
-        GAME.match.attackEngine:addAttackPattern(6, 1, 180 + (76 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
-
-        GAME.match.attackEngine:addAttackPattern(5, 1, 180 + (4 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        GAME.match.attackEngine:addAttackPattern(4, 1, 180 + (22 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        GAME.match.attackEngine:addAttackPattern(5, 1, 180 + (30 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        GAME.match.attackEngine:addAttackPattern(3, 1, 180 + (70 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        GAME.match.attackEngine:addAttackPattern(5, 1, 180 + (75 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        GAME.match.attackEngine:addAttackPattern(3, 1, 180 + (78 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        GAME.match.attackEngine:addAttackPattern(4, 1, 180 + (79 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        GAME.match.attackEngine:addAttackPattern(5, 1, 180 + (80 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-
-
+        GAME.match.attackEngine = attackEngine
       end
       GAME.match.P1 = P1
       if not GAME.battleRoom.trainingModeSettings then
-        P1:set_garbage_target(P1)
+        P1:setTarget(P1)
+      elseif GAME.match.health then
+        P1:setTarget(GAME.match.health)
       end
       P2 = nil
       current_stage = cursor_data[1].state.stage
@@ -1372,8 +1383,10 @@ function select_screen.main()
       GAME.match.P1 = P1
       P2 = Stack{which=2, match=GAME.match, is_local=true, panels_dir=cursor_data[2].state.panels_dir, level=cursor_data[2].state.level, player_number=2, character=cursor_data[2].state.character}
       GAME.match.P2 = P2
-      P1:set_garbage_target(P2)
-      P2:set_garbage_target(P1)
+      P1:setOpponent(P2)
+      P1:setTarget(P2)
+      P2:setOpponent(P1)
+      P2:setTarget(P1)
       current_stage = cursor_data[math.random(1, 2)].state.stage
       stage_loader_load(current_stage)
       stage_loader_wait()

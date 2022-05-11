@@ -39,8 +39,8 @@ function Match:gameEndedClockTime()
 
   local result = self.P1.game_over_clock
   
-  if self.P1.garbage_target and self.P1.garbage_target ~= self then
-    local otherPlayer = self.P1.garbage_target
+  if self.P1.opponentStack then
+    local otherPlayer = self.P1.opponentStack
     if otherPlayer.game_over_clock > 0 then
       if result == 0 or otherPlayer.game_over_clock < result then
         result = otherPlayer.game_over_clock
@@ -101,7 +101,7 @@ function Match:debugRollbackAndCaptureState()
     return
   end
 
-  if P1.garbage_target and P1.garbage_target.CLOCK ~= P1.CLOCK then
+  if P1.opponentStack and P1.opponentStack.CLOCK ~= P1.CLOCK then
     return
   end
 
@@ -205,6 +205,10 @@ function Match:run()
 
     if ranP1 and self.attackEngine then
       self.attackEngine:run()
+    end
+
+    if ranP1 and P1:gameResult() == nil and self.health then
+      self.health:run()
     end
 
     -- Since the stacks can affect each other, don't save rollback until after both have run
@@ -465,6 +469,10 @@ function Match.render(self)
       end
       if P2 then
         P2:render()
+      end
+
+      if self.attackEngine then
+        self.attackEngine:render()
       end
 
       if self.health then

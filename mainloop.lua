@@ -253,16 +253,6 @@ local function pick_use_music_from()
   end
 end
 
-function Stack.wait_for_random_character(self)
-  if self.character == random_character_special_value then
-    self.character = table.getRandomElement(characters_ids_for_current_theme)
-  elseif characters[self.character]:is_bundle() then -- may have picked a bundle
-    self.character = table.getRandomElement(characters[self.character].sub_characters)
-  end
-  character_loader_load(self.character)
-  character_loader_wait()
-end
-
 local function commonGameSetup()
   stop_the_music()
   use_current_stage()
@@ -504,6 +494,8 @@ end
 function training_setup()
   -- TODO make "illegal garbage blocks" possible again in telegraph.
   local trainingModeSettings = {}
+  trainingModeSettings.healthDifficulty = 1
+  trainingModeSettings.attackDifficulty = 1
   trainingModeSettings.height = 1
   trainingModeSettings.width = 6
   local ret = nil
@@ -1423,8 +1415,10 @@ function loadFromReplay(replay)
     if replay.I and string.len(replay.I) > 0 then
       P2 = Stack{which=2, match=GAME.match, is_local=false, level=replay.P2_level or 5, character=replay.P2_char}
       
-      P1:set_garbage_target(P2)
-      P2:set_garbage_target(P1)
+      P1:setOpponent(P2)
+      P1:setTarget(P2)
+      P2:setOpponent(P1)
+      P2:setTarget(P1)
       P2:moveForPlayerNumber(2)
 
       if replay.P1_win_count then
@@ -1433,7 +1427,7 @@ function loadFromReplay(replay)
       end
 
     else
-      P1:set_garbage_target(P1)
+      P1:setTarget(P1)
     end
 
     GAME.battleRoom.playerNames[1] = replay.P1_name or loc("player_n", "1")

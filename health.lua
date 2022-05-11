@@ -11,11 +11,53 @@ local metal_to_damage = {0, 0, 320, 640, 960, 1280, 1600, 1920, 2240, 2560, 2880
 
 Health =
   class(
-  function(self, starting_health)
-    self.health = starting_health
-    self.maxHealth = starting_health
+  function(self, secondsToppedOutToLose, lineClearGPM, height, positionX, positionY, mirror)
+    self.secondsToppedOutToLose = secondsToppedOutToLose
+    self.maxSecondsToppedOutToLose = secondsToppedOutToLose
+    self.lineClearRate = lineClearGPM / 60
+    self.currentLines = 0
+    self.lastWasFourCombo = false
+    self.height = height
+    self.pos_x = positionX
+    self.pos_y = positionY
+    self.mirror_x = mirror
   end
 )
+
+function Health:run()
+  local decrementLines = (self.lineClearRate * (1/60.0))
+  logger.warn("decrementing " .. decrementLines)
+  self.currentLines = math.max(0, self.currentLines - decrementLines)
+  if self.currentLines >= self.height then
+    self.secondsToppedOutToLose = math.max(0, self.secondsToppedOutToLose - (1/60.0))
+  end
+end
+
+function Health:receiveGarbage(frameToReceive, garbageList)
+  for k,v in pairs(garbageList) do
+    local width, height, metal, from_chain, finalized = unpack(v)
+    if width and height then
+      local countGarbage = true
+      if not metal and not from_chain and width == 3 then
+        if self.lastWasFourCombo then
+          -- Two four combos in a row, don't count an extra line
+          self.lastWasFourCombo = false
+          countGarbage = false
+        else
+          -- First four combo
+          self.lastWasFourCombo = true
+        end
+      else
+        -- non four combo
+        self.lastWasFourCombo = false
+      end
+
+      if countGarbage then
+        self.currentLines = self.currentLines + height
+      end
+    end
+  end
+end
 
 function Health.take_combo_damage(self, combo_size)
   if combo_size > 3 then
@@ -39,22 +81,47 @@ function Health.take_metal_damage(self, metal_combo_size)
 end
 
 function Health.game_ended(self)
-  return self.health <= 0
+  return self.secondsToppedOutToLose <= 0
 end
-
 
 function Health.render(self)
 
   local healthQuadBoss = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight(), themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight())
 
   -- Healthbar
-  local healthbar = math.max(0, self.health) * (themes[config.theme].images.IMG_healthbar:getHeight() / self.maxHealth)
+  local healthbar = math.max(0, self.secondsToppedOutToLose) * (themes[config.theme].images.IMG_healthbar:getHeight() / self.maxSecondsToppedOutToLose)
   local width = themes[config.theme].images.IMG_healthbar:getWidth()
   local height = themes[config.theme].images.IMG_healthbar:getHeight()
-  healthQuadBoss:setViewport(0,height - healthbar, width, healthbar)
+  
+  healthQuadBoss:setViewport(0,height - healthbar, width, healthbar, width, height)
+
   qdraw(themes[config.theme].images.IMG_healthbar, healthQuadBoss, 260, 36 + (height - healthbar), 
   themes[config.theme].healthbar_Rotate,
    themes[config.theme].healthbar_Scale,
     themes[config.theme].healthbar_Scale, 0, 0, 1)
+
+
+  local linesQuad = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight(), themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight())
+
+  -- Healthbar
+  local linesBar = self.currentLines * (themes[config.theme].images.IMG_healthbar:getHeight() / self.height)
+  local width = themes[config.theme].images.IMG_healthbar:getWidth()
+  local height = themes[config.theme].images.IMG_healthbar:getHeight()
+  local linesX = 300
+  local linesY = 36
+  
+  linesQuad:setViewport(0, height - linesBar, width, linesBar, width, height)
+
+  qdraw(themes[config.theme].images.IMG_healthbar, linesQuad, linesX, linesY + (height - linesBar), 
+  themes[config.theme].healthbar_Rotate,
+   themes[config.theme].healthbar_Scale,
+    themes[config.theme].healthbar_Scale, 0, 0, 1)
+
+  width = 10
+  height = 2
+  local grey = 0.8
+  local alpha = 1
+  grectangle_color("fill", linesX , linesY , width / GFX_SCALE, height / GFX_SCALE, grey, grey, grey, alpha)
+
 
 end
