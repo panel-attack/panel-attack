@@ -66,9 +66,11 @@ end
 
 local lag_q = Queue() -- only used for debugging
 local lastSendTime = nil
-local minLagSeconds = 0.01
-local maxLagSeconds = 2
+local minLagSeconds = 0
+local maxLagSeconds = 1
+local lagIncrease = 1
 local lagSeconds = minLagSeconds
+local lagCount = 0
 
 -- send the given message through
 function net_send(...)
@@ -87,9 +89,11 @@ function net_send(...)
     if timeDifference > lagSeconds then
       while lag_q:len() > 0 do
         TCP_sock:send(unpack(lag_q:pop()))
-        lagSeconds = (math.random() * (maxLagSeconds - minLagSeconds)) + minLagSeconds
-        lastSendTime = love.timer.getTime()
       end
+      lagSeconds = (math.random() * (maxLagSeconds - minLagSeconds)) + minLagSeconds
+      lagCount = lagCount + 1
+      lagSeconds = lagSeconds + (lagIncrease * lagCount)
+      lastSendTime = love.timer.getTime()
     end
   end
   return true
@@ -108,6 +112,9 @@ function undo_stonermode()
   while lag_q:len() ~= 0 do
     TCP_sock:send(unpack(lag_q:pop()))
   end
+  lastSendTime = nil
+  lagCount = 0
+  lagSeconds = minLagSeconds
   STONER_MODE = false
 end
 
@@ -228,6 +235,7 @@ function network_init(ip, network_port)
     --error(loc("nt_conn_timeout"))
     return false
   end
+  TCP_sock:setoption("tcp-nodelay", true)
   TCP_sock:settimeout(0)
   got_H = false
   net_send("H" .. VERSION)
@@ -248,23 +256,15 @@ function network_init(ip, network_port)
   return true
 end
 
-function send_error_report(error, stack, release_version, OS)
+function send_error_report(errorData)
   TCP_sock = socket.tcp()
   TCP_sock:settimeout(7)
   if not TCP_sock:connect("18.188.43.50", 59569) then --for official server
     return false
   end
   TCP_sock:settimeout(0)
-  local error_json = {
-    error_report = {
-      name = config.name or "Unknown",
-      error = error,
-      stack = stack,
-      engine_version = VERSION,
-      release_version = release_version or "Unknown",
-      operating_system = OS or "Unknown"
-  }}
-  json_send(error_json)
+  local errorFull = { error_report = errorData }
+  json_send(errorFull)
   close_socket()
   return true
 end
