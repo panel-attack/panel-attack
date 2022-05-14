@@ -7,13 +7,15 @@ local RichPresence = class(
 )
 
 function RichPresence.initialize(self, applicationId)
-  self.discordRPC = require("rich_presence.discordRPC")
-  pcall(
+  local status, err = pcall(
     function()
       self.discordRPC = require("rich_presence.discordRPC")
       self.discordRPC.initialize(applicationId --[["902897593049301004"]], true)
     end
   )
+  if not status then
+    print(err)
+  end
 end
 
 -- Overwrites the presence to whatever is given.
