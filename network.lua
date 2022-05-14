@@ -1,4 +1,5 @@
 local logger = require("logger")
+local input = require("input2")
 
 local TCP_sock = nil
 
@@ -303,12 +304,12 @@ end
 
 function Stack.handle_input_taunt(self)
 
-  if player_taunt_up(self.which) and self:can_taunt() and #characters[self.character].sounds.taunt_ups > 0 then
+  if input.isDown["TauntUp"] and self:can_taunt() and #characters[self.character].sounds.taunt_ups > 0 then
     self.taunt_up = math.random(#characters[self.character].sounds.taunt_ups)
     if TCP_sock then
       json_send({taunt = true, type = "taunt_ups", index = self.taunt_up})
     end
-  elseif player_taunt_down(self.which) and self:can_taunt() and #characters[self.character].sounds.taunt_downs > 0 then
+  elseif input.isDown["TauntDown"] and self:can_taunt() and #characters[self.character].sounds.taunt_downs > 0 then
     self.taunt_down = math.random(#characters[self.character].sounds.taunt_downs)
     if TCP_sock then
       json_send({taunt = true, type = "taunt_downs", index = self.taunt_down})
@@ -329,6 +330,7 @@ function Stack.send_controls(self)
   end
 
   local playerNumber = self.which
+  --[[
   local to_send = base64encode[
     (player_raise(playerNumber) and 32 or 0) + 
     (player_swap(playerNumber) and 16 or 0) + 
@@ -337,12 +339,20 @@ function Stack.send_controls(self)
     (player_left(playerNumber) and 2 or 0) + 
     (player_right(playerNumber) and 1 or 0) + 1
     ]
-
+  --]]
+  local to_send = base64encode[
+    ((input.isDown["Raise1"] or input.isDown["Raise2"] or input.isPressed["Raise1"] or input.isPressed["Raise2"]) and 32 or 0) + 
+    ((input.isDown["Swap1"] or input.isDown["Swap2"]) and 16 or 0) + 
+    ((input.isDown["Up"] or input.isPressed["Up"]) and 8 or 0) + 
+    ((input.isDown["Down"] or input.isPressed["Down"]) and 4 or 0) + 
+    ((input.isDown["Left"] or input.isPressed["Left"]) and 2 or 0) + 
+    ((input.isDown["Right"] or input.isPressed["Right"]) and 1 or 0) + 1
+    ]
   if TCP_sock then
     net_send("I" .. to_send)
   end
 
   self:handle_input_taunt()
-
+  --
   self:receiveConfirmedInput(to_send)
 end

@@ -33,4 +33,14 @@ function table_utils.filter(t, filter)
   return filteredTable
 end
 
+-- returns true if the table contains at least one value that fulfills the condition, otherwise false
+function table_utils.trueForAny(tab, condition)
+  for _, value in pairs(tab) do
+    if condition(value) then
+      return true
+    end
+  end
+  return false
+end
+
 return table_utils
