@@ -73,7 +73,8 @@ function BasicMenu:startGame()
   end
   stop_the_music()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  scene_manager:switchScene(nil)
+  --scene_manager:switchScene(nil)
+  scene_manager:switchScene("game_scene")
   
   local abort_game_function = nil
   if self.game_mode == "endless" then
@@ -101,8 +102,8 @@ function BasicMenu:startGame()
     return {game_over_transition, {nextFunction, nil, P1:pick_win_sfx()}}
   end
   
-  func = runMainGameLoop
-  arg = {--[[update]] function() end, --[[variableStep]] function() end, abort_game_function, processGameResults}
+  --func = runMainGameLoop
+  --arg = {--[[update]] function() end, --[[variableStep]] function() end, abort_game_function, processGameResults}
 end
 
 local function exitMenu()
