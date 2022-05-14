@@ -26,7 +26,6 @@ Health =
 
 function Health:run()
   local decrementLines = (self.lineClearRate * (1/60.0))
-  logger.warn("decrementing " .. decrementLines)
   self.currentLines = math.max(0, self.currentLines - decrementLines)
   if self.currentLines >= self.height then
     self.secondsToppedOutToLose = math.max(0, self.secondsToppedOutToLose - (1/60.0))

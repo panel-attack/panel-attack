@@ -1334,31 +1334,31 @@ function select_screen.main()
       end
       if GAME.battleRoom.trainingModeSettings and GAME.battleRoom.trainingModeSettings.attackDifficulty then
         local attackEngine = AttackEngine()
-        local startTime = 150
-        local delayPerAttack = 120 --6
-        local attackCountPerDelay = 1
-        local delay = GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME + (attackCountPerDelay * delayPerAttack) + 1
-        for i = 1, attackCountPerDelay, 1 do
-          attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        end
+        -- local startTime = 150
+        -- local delayPerAttack = 120 --6
+        -- local attackCountPerDelay = 1
+        -- local delay = GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME + (attackCountPerDelay * delayPerAttack) + 1
+        -- for i = 1, attackCountPerDelay, 1 do
+        --   attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        -- end
       
-        -- local delay = 85 * 60
-        -- attackEngine:addAttackPattern(6, 4, 180 + (10 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
-        -- attackEngine:addAttackPattern(6, 3, 180 + (15 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
-        -- --attackEngine:addAttackPattern(6, 13, 180 + (40 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
-        -- attackEngine:addAttackPattern(6, 2, 180 + (50 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
-        -- attackEngine:addAttackPattern(6, 1, 180 + (60 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
-        -- attackEngine:addAttackPattern(6, 1, 180 + (67 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
-        -- attackEngine:addAttackPattern(6, 1, 180 + (76 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
+        local delay = 85 * 60
+        attackEngine:addAttackPattern(6, 4, 180 + (10 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
+        attackEngine:addAttackPattern(6, 3, 180 + (15 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
+        attackEngine:addAttackPattern(6, 6, 180 + (40 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
+        attackEngine:addAttackPattern(6, 2, 180 + (50 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
+        attackEngine:addAttackPattern(6, 1, 180 + (60 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
+        attackEngine:addAttackPattern(6, 1, 180 + (67 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
+        attackEngine:addAttackPattern(6, 1, 180 + (76 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
       
-        -- attackEngine:addAttackPattern(5, 1, 180 + (4 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        -- attackEngine:addAttackPattern(4, 1, 180 + (22 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        -- attackEngine:addAttackPattern(5, 1, 180 + (30 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        -- attackEngine:addAttackPattern(3, 1, 180 + (70 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        -- attackEngine:addAttackPattern(5, 1, 180 + (75 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        -- attackEngine:addAttackPattern(3, 1, 180 + (78 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        -- attackEngine:addAttackPattern(4, 1, 180 + (79 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        -- attackEngine:addAttackPattern(5, 1, 180 + (80 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        attackEngine:addAttackPattern(5, 1, 180 + (4 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        attackEngine:addAttackPattern(4, 1, 180 + (22 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        attackEngine:addAttackPattern(5, 1, 180 + (30 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        attackEngine:addAttackPattern(3, 1, 180 + (70 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        attackEngine:addAttackPattern(5, 1, 180 + (75 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        attackEngine:addAttackPattern(3, 1, 180 + (78 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        attackEngine:addAttackPattern(4, 1, 180 + (79 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        attackEngine:addAttackPattern(5, 1, 180 + (80 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
       
         attackEngine:setTarget(P1)
 
