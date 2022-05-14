@@ -708,7 +708,7 @@ local function audio_menu(button_idx)
           audio_test_ret = {audio_menu, {6}}
         end
         
-        soundTestMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
+        soundTestMenu = ClickMenu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
         soundTestMenu:add_button(loc("character"), nextTrack, goBack, previousTrack, nextTrack)
         soundTestMenu:add_button(loc("op_music_type"), switchDanger, goBack, switchDanger, switchDanger)
         soundTestMenu:add_button(loc("op_music_play"), playOrStopMusic, goBack)
@@ -832,7 +832,7 @@ local function debug_menu(button_idx)
     ret = {options.main, {5}}
   end
 
-  debugMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
+  debugMenu = ClickMenu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
   debugMenu:add_button(loc("op_debug"), update_debug, goEscape, update_debug, update_debug)
   debugMenu:add_button("VS Frames Behind", nextMenu, goEscape, decreaseVsFramesBehind, increaseVsFramesBehind)
   debugMenu:add_button(loc("back"), exitSettings, exitSettings)

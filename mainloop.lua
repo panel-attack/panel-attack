@@ -731,7 +731,7 @@ local function main_select_speed_99(mode)
 
   local menu_x, menu_y = unpack(main_menu_screen_pos)
   menu_y = menu_y + 70
-  gameSettingsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, endlessMenuLastIndex)
+  gameSettingsMenu = ClickMenu(menu_x, menu_y, nil, canvas_height - menu_y - 10, endlessMenuLastIndex)
   gameSettingsMenu:add_button(loc("endless_type"), nextMenu, goEscape, toggleType, toggleType)
   addLevelButtons()
   gameSettingsMenu:add_button(loc("go_"), startGame, goEscape)
@@ -1674,7 +1674,7 @@ function main_select_puzz()
   end
 
   local menu_x, menu_y = unpack(main_menu_screen_pos)
-  puzzleMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, puzzle_menu_last_index)
+  puzzleMenu = ClickMenu(menu_x, menu_y, nil, canvas_height - menu_y - 10, puzzle_menu_last_index)
   puzzleMenu:add_button(loc("level"), nextMenu, goEscape, decreaseLevel, increaseLevel)
   puzzleMenu:add_button(loc("randomColors"), update_randomColors, goEscape, update_randomColors, update_randomColors)
   for i = 1, #items do
