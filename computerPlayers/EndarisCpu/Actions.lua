@@ -389,6 +389,8 @@ function H3Match.calculateCost(self)
 
     self.estimatedCost = 0
     for i = 1, #self.panels do
+      -- this is assuming that all panels are in the same row
+      -- which is obviously wrong for dropins or any kinds of chains
         local distance = math.abs(self.panels[i].targetVector.column - self.panels[i].vector.column)
         if distance > 0 then
             self.estimatedCost = self.estimatedCost + 2

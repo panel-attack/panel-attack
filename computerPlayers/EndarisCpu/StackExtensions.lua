@@ -469,6 +469,7 @@ end
 function StackExtensions.findLatentMatchesFromPanels(panels)
   local matches = {}
   local grid = RowGrid.FromPanels(panels)
+  local cpuStack = CpuStack.FromPanels(panels, nil)
 
   --iterating to 8 instead of #grid[1] because color 9 is garbage which is included in the rowGrid but cannot form matches
   for color = 1, 8 do

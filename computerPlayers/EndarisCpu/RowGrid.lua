@@ -64,9 +64,9 @@ function RowGrid.IsValid(self)
     -- if invalidRow then
     --  return false, invalidRow.rowIndex
     -- else
-    --    local emptyPanelsCount = gridRows[#gridRows].emptyPanelsCount
+    --    local emptyPanelCount = gridRows[#gridRows].emptyPanelCount
     --    for i = #gridRows - 1, 1 do
-    --      if gridRows[i].emptyPanelsCount > emptyPanelsCount then
+    --      if gridRows[i].emptyPanelCount > emptyPanelCount then
     --          return false, i
     --      end
     --    end
@@ -83,7 +83,7 @@ function RowGrid.GetTotalEmptyPanelCountInRowAndBelow(self, rowIndex)
     local totalEmptyPanelCountInRowAndBelow = 0
     for row=1,rowIndex do
         totalEmptyPanelCountInRowAndBelow =
-            totalEmptyPanelCountInRowAndBelow + self.gridRows[row].emptyPanelsCount
+            totalEmptyPanelCountInRowAndBelow + self.gridRows[row].emptyPanelCount
     end
 
     return totalEmptyPanelCountInRowAndBelow
@@ -103,7 +103,7 @@ function RowGrid.GetMinimumTopRowIndex(self)
     local totalEmptyPanelCountInRowAndBelow = 0
     local totalPanelCountAboveRow = self:GetTotalPanelCountAboveRow(0)
     for row = 1, #self.gridRows do
-        totalEmptyPanelCountInRowAndBelow = totalEmptyPanelCountInRowAndBelow + self.gridRows[row].emptyPanelsCount
+        totalEmptyPanelCountInRowAndBelow = totalEmptyPanelCountInRowAndBelow + self.gridRows[row].emptyPanelCount
         totalPanelCountAboveRow = totalPanelCountAboveRow - self.gridRows[row].panelCount
         if totalEmptyPanelCountInRowAndBelow >= totalPanelCountAboveRow then
             return row
@@ -112,7 +112,7 @@ function RowGrid.GetMinimumTopRowIndex(self)
 end
 
 function RowGrid.GetEmptyPanelsCountInRow(self, row)
-  return self.gridRows[row].emptyPanelsCount
+  return self.gridRows[row].emptyPanelCount
 end
 
 RowGridRow = class(function(self, rowIndex, colorColumns)
@@ -221,7 +221,7 @@ end
 function ColorGridColumn.GetTotalPanelCount(self)
     local count = 0
     for row = 1, #self.sourceRowGrid.gridRows do
-        count = count + self.sourceRowGrid.gridRows[row]:GetCount(self.color)
+        count = count + self.sourceRowGrid.gridRows[row]:GetColorCount(self.color)
     end
     return count
 end

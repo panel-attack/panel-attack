@@ -43,4 +43,20 @@ function DefenseTest.testGetDownstackableVectors1()
     print("passed test testGetDownstackableVectors1")
 end
 
+function DefenseTest.testGetPotentialClearColors1()
+  local aprilString = DefenseTest.getAprilStringSample1()
+  local panels = StackExtensions.aprilStackToPanels(aprilString)
+  local expectedValue = {3, 5}
+  local rowGrid = RowGrid.FromPanels(panels)
+  local potentialClearColors = Defend.getPotentialClearColors(rowGrid)
+
+  assert(#expectedValue == #potentialClearColors)
+  for i=1, #expectedValue do
+    assert(table.trueForAny(potentialClearColors), function(colorId) return colorId == expectedValue[i] end)
+  end
+
+  print("passed test testGetDownstackableVectors1")
+end
+
 DefenseTest.testGetDownstackableVectors1()
+DefenseTest.testGetPotentialClearColors1()

@@ -9,9 +9,9 @@ Defend = class(
 function Defend.chooseAction(self)
     local action = self:Clear()
 
-    --[[ if not action then
-        action = self:DownstackIntoClear()
-    end ]]
+    if not action then
+      action = self:DownstackIntoClear()
+    end
 
     return action
 end
@@ -91,7 +91,7 @@ function Defend.DownstackIntoClear(self)
         rowGrid = RowGrid.FromStack(self.cpu.stack)
     end
 
-    local potentialClearColors = self:getPotentialClearColors(rowGrid)
+    local potentialClearColors = Defend.getPotentialClearColors(rowGrid)
     local downstackPairs = {}
     for i=1,#potentialClearColors do
         local pairs = self:getDownstackPairs(rowGrid, potentialClearColors[i])
@@ -121,7 +121,7 @@ function Defend.DownstackIntoClear(self)
     end
 end
 
-function Defend.getPotentialClearColors(self, rowgrid)
+function Defend.getPotentialClearColors(rowgrid)
     local potentialColors = {}
     -- first eliminate the colors that don't even have 3 panels in the stack
     -- iterating to 8 instead of #grid[i] because 8 is shock, 9 is garbage and 10 is a helper color
@@ -134,7 +134,7 @@ function Defend.getPotentialClearColors(self, rowgrid)
 
     local stackMinimumTopRow = rowgrid:GetMinimumTopRowIndex()
     for i=#potentialColors, 1, -1 do
-        local clearTopRow = self:findTopRowForColorClearOnRowGrid(rowgrid, potentialColors[i])
+        local clearTopRow = Defend.findTopRowForColorClearOnRowGrid(rowgrid, potentialColors[i])
         if clearTopRow < stackMinimumTopRow then
             -- clear cannot possibly reach the top row even after completely flattening the stack
             table.remove(potentialColors, i)
@@ -144,7 +144,7 @@ function Defend.getPotentialClearColors(self, rowgrid)
     return potentialColors
 end
 
-function Defend.findTopRowForColorClearOnRowGrid(self, rowgrid, color)
+function Defend.findTopRowForColorClearOnRowGrid(rowgrid, color)
     -- any 1 above 2 or 2 above 1 pattern will always yield a rowgrid in which the arrangeable vertical clear reaches at least as high of a top row as the horizontal clear
     -- even 3 above 0 if we purposely ignore that a row cannot have more than 6 panels
     -- you see this instantly, it's trivial (is what my math prof said while scribbling a ton of greek symbols at incomprehensible speed on the blackboard), so even though I can't think of a formal proof right now, just take it!
@@ -174,7 +174,7 @@ function Defend.getTopMostMatchStateAsColorGridRow(rowgrid, color)
     local gridTopRow = StackExtensions.getTopRowWithPanelsFromRowGrid(rowgrid)
     local clearTopRow = gridTopRow
 
-    while #table.filter(colorGridColumn.GetLatentMatches(),
+    while #table.filter(colorGridColumn:GetLatentMatches(),
         function(match) if match.type == "V" then return match.rows[3] == clearTopRow
                         else return match.row == clearTopRow end
                     end) == 0 do
