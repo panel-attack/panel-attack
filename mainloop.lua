@@ -152,7 +152,7 @@ function main_title()
         end
         percent =  bound(0, percent + increment, 1)
         
-        if menu_enter() then
+        if menu_enter() or menu_escape() then
           ret = {main_select_mode}
         end
       end
@@ -227,7 +227,7 @@ do
       {loc("mm_options"), options.main}
     }
 
-    main_menu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, main_menu_last_index)
+    main_menu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, main_menu_last_index)
     for i = 1, #items do
       main_menu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
     end
@@ -569,7 +569,6 @@ function training_setup()
   trainingModeSettings.width = 6
   local ret = nil
   local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
-  menu_y = menu_y + 70
 
   local trainingSettingsMenu
 
@@ -645,7 +644,7 @@ function training_setup()
     trainingSettingsMenu:selectNextIndex()
   end
   
-  trainingSettingsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
+  trainingSettingsMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
   trainingSettingsMenu:add_button(loc("factory"), factory_settings, goEscape)
   trainingSettingsMenu:add_button(loc("combo_storm"), combo_storm_settings, goEscape)
   trainingSettingsMenu:add_button(loc("large_garbage"), large_garbage_settings, goEscape)
@@ -836,8 +835,7 @@ local function main_select_speed_99(mode)
   end
 
   local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
-  menu_y = menu_y + 70
-  gameSettingsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, endlessMenuLastIndex)
+  gameSettingsMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, endlessMenuLastIndex)
   gameSettingsMenu:add_button(loc("endless_type"), nextMenu, goEscape, toggleType, toggleType)
   addLevelButtons()
   gameSettingsMenu:add_button(loc("go_"), startGame, goEscape)
@@ -862,7 +860,7 @@ local function main_select_speed_99(mode)
       end
       local xPosition1 = 520
       local xPosition2 = xPosition1 + 150
-      local yPosition = themes[config.theme].main_menu_screen_pos[2] + 21
+      local yPosition = gameSettingsMenu.y - 60
 
       lastScore = tostring(lastScore)
       record = tostring(record)
@@ -935,10 +933,7 @@ function main_net_vs_lobby()
   local login_denied = false
   local showing_leaderboard = false
   local lobby_menu_x = {[true] = themes[config.theme].main_menu_screen_pos[1] - 200, [false] = themes[config.theme].main_menu_screen_pos[1]} --will be used to make room in case the leaderboard should be shown.
-  local lobby_menu_y = themes[config.theme].main_menu_screen_pos[2] + 50
-  if lobby_menu_y <= 120 then
-    lobby_menu_y = 120
-  end
+  local lobby_menu_y = themes[config.theme].main_menu_screen_pos[2] + 120
   local sent_requests = {}
   if connection_up_time <= login_status_message_duration then
     json_send({login_request = true, user_id = my_user_id})
@@ -1053,9 +1048,6 @@ function main_net_vs_lobby()
         leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
       end
     end
-    local print_x, print_y = unpack(themes[config.theme].main_menu_screen_pos)
-    local to_print = ""
-    local arrow = ""
 
     local function toggleLeaderboard()
       updated = true
@@ -1066,7 +1058,7 @@ function main_net_vs_lobby()
       else
         --lobby_menu:set_button_text(#lobby_menu.buttons - 1, loc("lb_show_board"))
         showing_leaderboard = false
-        lobby_menu:move(lobby_menu_x[showing_leaderboard], lobby_menu_y)
+        lobby_menu.x = lobby_menu_x[showing_leaderboard]
       end
     end
 
@@ -1119,8 +1111,8 @@ function main_net_vs_lobby()
         end
         return rating
       end
-
-      lobby_menu = Click_menu(lobby_menu_x[showing_leaderboard], lobby_menu_y, nil, canvas_height - lobby_menu_y - 10, 1)
+      local menuHeight = (themes[config.theme].main_menu_y_max - lobby_menu_y)
+      lobby_menu = Click_menu(lobby_menu_x[showing_leaderboard], lobby_menu_y, nil, menuHeight, 1)
       for _, v in ipairs(unpaired_players) do
         if v ~= config.name then
           local unmatchedPlayer = v .. playerRatingString(v) .. (sent_requests[v] and " " .. loc("lb_request") or "") .. (willing_players[v] and " " .. loc("lb_received") or "")
@@ -1169,8 +1161,6 @@ function main_net_vs_lobby()
     if lobby_menu then
       gprint(loc("lb_telegraph_alpha"), lobby_menu_x[showing_leaderboard] - 230, lobby_menu_y - 70)
       gprint(notice[#lobby_menu.buttons > 2], lobby_menu_x[showing_leaderboard], lobby_menu_y - 30)
-      gprint(arrow, lobby_menu_x[showing_leaderboard], lobby_menu_y)
-      gprint(to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y)
       if showing_leaderboard then
         gprint(leaderboard_string, lobby_menu_x[showing_leaderboard] + 400, lobby_menu_y - 120)
       end
@@ -1783,7 +1773,7 @@ function main_select_puzz()
   end
 
   local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
-  puzzleMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, puzzle_menu_last_index)
+  puzzleMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, puzzle_menu_last_index)
   puzzleMenu:add_button(loc("level"), nextMenu, goEscape, decreaseLevel, increaseLevel)
   puzzleMenu:add_button(loc("randomColors"), update_randomColors, goEscape, update_randomColors, update_randomColors)
   for i = 1, #items do
@@ -1818,11 +1808,13 @@ function main_set_name()
   local name = config.name or ""
   love.keyboard.setTextInput(true) -- enables user to type
   while true do
-    local to_print = loc("op_enter_name") .. " (" .. name:len() .. "/" .. NAME_LENGTH_LIMIT .. ")\n" .. name
+    local to_print = loc("op_enter_name") .. " (" .. name:len() .. "/" .. NAME_LENGTH_LIMIT .. ")"
+    local line2 = name
     if (love.timer.getTime() * 3) % 2 > 1 then
-      to_print = to_print .. "|"
+      line2 = line2 .. "| "
     end
-    gprint(to_print, unpack(themes[config.theme].main_menu_screen_pos))
+    gprintf(to_print, 0, canvas_height/2, canvas_width, "center")
+    gprintf(line2, (canvas_width/2) - 60, (canvas_height/2) + 20)
     wait()
     local ret = nil
     variable_step(

@@ -179,7 +179,7 @@ function draw_pixel_font(string, atlas, font_map, x, y, x_scale, y_scale, align,
   x = x - (characterWidth*GFX_SCALE*x_scale)*mirror
 
   if string == nil or atlas == nil or atlasFrameCount == nil or characterWidth == nil or characterHeight == nil then
-    print("Error initalizing draw pixel font")
+    logger.error("Error initalizing draw pixel font")
     return 
   end
 

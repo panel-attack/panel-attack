@@ -1,6 +1,6 @@
 require("stage_loader")
 local logger = require("logger")
-require("TilingImage")
+require("UpdatingImage")
 
 -- Stuff defined in this file:
 --  . the data structure that store a stage's data
@@ -240,7 +240,7 @@ function Stage.graphics_init(self, full, yields)
       end
     end
     if image_name == backgroundImageName and self.images[image_name] then
-      self.images[image_name] = TilingImage(self.images[image_name], 0, 0, nil, nil)
+      self.images[image_name] = UpdatingImage(self.images[image_name], false, 0, 0, nil, nil)
     end
     if yields then
       coroutine.yield()
