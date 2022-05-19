@@ -9,6 +9,8 @@ local chain_to_damage = {0, 256, 512, 768, 1024, 1280, 1536, 1792, 2048, 2240, 2
 -- (Does not include combo damage, combo damage is seperate)
 local metal_to_damage = {0, 0, 320, 640, 960, 1280, 1600, 1920, 2240, 2560, 2880, 3200, 3520, 3840, 4096, 3584, 3840, 4096}
 
+local barWidth = 50
+
 Health =
   class(
   function(self, secondsToppedOutToLose, lineClearGPM, height, positionX, positionY, mirror)
@@ -79,48 +81,46 @@ function Health.take_metal_damage(self, metal_combo_size)
   end
 end
 
-function Health.game_ended(self)
+function Health:game_ended()
   return self.secondsToppedOutToLose <= 0
+end
+
+function Health:renderPartialScaledImage(image, x, y, maxWidth, maxHeight, percentageX, percentageY)
+  local width = image:getWidth()
+  local height = image:getHeight()
+  local partialWidth = width * percentageX
+  local partialHeight = height * percentageY
+  local quad = love.graphics.newQuad(width - partialWidth, height - partialHeight, partialWidth, partialHeight, width, height)
+  
+  local scaleX = maxWidth / width
+  local scaleY = maxHeight / height
+  
+  local xPosition = x + (1 - percentageX) * maxWidth
+  local yPosition = y + (1 - percentageY) * maxHeight
+  gfx_q:push({love.graphics.draw, {image, quad, xPosition, yPosition, 0, scaleX, scaleY}})
+end
+
+function Health:renderHealth()
+  local percentage = math.max(0, self.secondsToppedOutToLose) / self.maxSecondsToppedOutToLose
+  self:renderPartialScaledImage(themes[config.theme].images.IMG_healthbar, 760, 110, barWidth, 590, 1, percentage)
+end
+
+function Health:renderTopOut()
+  local percentage = math.max(0, self.currentLines) / self.height
+  local x = 860
+  local y = 110
+  self:renderPartialScaledImage(themes[config.theme].images.IMG_shake_bar, 860, 110, barWidth, 590, 1, percentage)
+
+  local height = 4
+  local grey = 0.8
+  local alpha = 1
+  grectangle_color("fill", x / GFX_SCALE, y / GFX_SCALE, barWidth / GFX_SCALE, height / GFX_SCALE, grey, grey, grey, alpha)
 end
 
 function Health.render(self)
 
-  local healthQuadBoss = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight(), themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight())
-
-  -- Healthbar
-  local healthbar = math.max(0, self.secondsToppedOutToLose) * (themes[config.theme].images.IMG_healthbar:getHeight() / self.maxSecondsToppedOutToLose)
-  local width = themes[config.theme].images.IMG_healthbar:getWidth()
-  local height = themes[config.theme].images.IMG_healthbar:getHeight()
-  
-  healthQuadBoss:setViewport(0,height - healthbar, width, healthbar, width, height)
-
-  qdraw(themes[config.theme].images.IMG_healthbar, healthQuadBoss, 260, 36 + (height - healthbar), 
-  themes[config.theme].healthbar_Rotate,
-   themes[config.theme].healthbar_Scale,
-    themes[config.theme].healthbar_Scale, 0, 0, 1)
-
-
-  local linesQuad = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight(), themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight())
-
-  -- Healthbar
-  local linesBar = self.currentLines * (themes[config.theme].images.IMG_healthbar:getHeight() / self.height)
-  local width = themes[config.theme].images.IMG_healthbar:getWidth()
-  local height = themes[config.theme].images.IMG_healthbar:getHeight()
-  local linesX = 300
-  local linesY = 36
-  
-  linesQuad:setViewport(0, height - linesBar, width, linesBar, width, height)
-
-  qdraw(themes[config.theme].images.IMG_healthbar, linesQuad, linesX, linesY + (height - linesBar), 
-  themes[config.theme].healthbar_Rotate,
-   themes[config.theme].healthbar_Scale,
-    themes[config.theme].healthbar_Scale, 0, 0, 1)
-
-  width = 10
-  height = 2
-  local grey = 0.8
-  local alpha = 1
-  grectangle_color("fill", linesX , linesY , width / GFX_SCALE, height / GFX_SCALE, grey, grey, grey, alpha)
+  self:renderHealth()
+  self:renderTopOut()
 
 
 end

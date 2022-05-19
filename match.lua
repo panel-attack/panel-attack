@@ -203,12 +203,14 @@ function Match:run()
       ranP2 = true
     end
 
-    if ranP1 and self.attackEngine then
-      self.attackEngine:run()
-    end
+    if ranP1 and P1:gameResult() == nil then
+      if self.attackEngine then
+        self.attackEngine:run()
+      end
 
-    if ranP1 and P1:gameResult() == nil and self.health then
-      self.health:run()
+      if self.health then
+        self.health:run()
+      end
     end
 
     -- Since the stacks can affect each other, don't save rollback until after both have run
