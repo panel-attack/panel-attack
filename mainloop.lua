@@ -63,6 +63,7 @@ function fmainloop()
   wait()
   analytics.init()
   apply_config_volume()
+  read_training_files()
   -- create folders in appdata for those who don't have them already
   love.filesystem.createDirectory("characters")
   love.filesystem.createDirectory("panels")

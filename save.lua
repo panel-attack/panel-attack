@@ -339,7 +339,7 @@ function read_puzzles()
               local puzzles = {}
               for _, puzzle in pairs(puzzleSet["Puzzles"]) do
                 local puzzle = Puzzle(puzzle["Puzzle Type"], puzzle["Do Countdown"], puzzle["Moves"], puzzle["Stack"])
-                puzzles[#puzzles+1] = puzzle
+                puzzles[#puzzles + 1] = puzzle
               end
 
               local puzzleSet = PuzzleSet(puzzleSetName, puzzles)
@@ -350,19 +350,44 @@ function read_puzzles()
               local puzzles = {}
               for _, puzzleData in pairs(puzzle_set) do
                 local puzzle = Puzzle("moves", true, puzzleData[2], puzzleData[1])
-                puzzles[#puzzles+1] = puzzle
+                puzzles[#puzzles + 1] = puzzle
               end
 
               local puzzleSet = PuzzleSet(set_name, puzzles)
               GAME.puzzleSets[set_name] = puzzleSet
             end
           end
-          
+
           logger.debug("loaded above set")
         end
       end
     end
   )
+end
+
+function read_training_files()
+  trainings = {}
+
+  local raw_dir_list = love.filesystem.getDirectoryItems("training")
+  for i, v in ipairs(raw_dir_list) do
+    local file = love.filesystem.newFile("training/" .. v)
+    file:open("r")
+    print(file:getSize())
+    local teh_json = file:read(file:getSize())
+    local training_conf = {}
+    print(teh_json)
+
+    for k, v in pairs(json.decode(teh_json)) do
+      training_conf[k] = v
+    end
+    if type(training_conf.name) == "string" then
+      local training_name = training_conf.name
+      trainings[training_name] = training_conf
+    end
+    file:close()
+  end
+
+  print(json.encode(trainings))
 end
 
 function print_list(t)

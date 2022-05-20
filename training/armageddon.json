@@ -1,0 +1,85 @@
+{
+  "name": "Armageddon Mode",
+  "delayPerAttack": 1,
+  "attackCountPerDelay": 1,
+  "attackpatterns": [
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 22,
+      "delay": 22
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 23,
+      "metal": true,
+      "delay": 22
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 24,
+      "delay": 22
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 25,
+      "metal": true,
+      "delay": 22
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 26,
+      "delay": 22
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 27,
+      "metal": true,
+      "delay": 22
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 28,
+      "metal": true,
+      "delay": 22
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 29,
+      "delay": 22
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 30,
+      "metal": true,
+      "delay": 22
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 31,
+      "delay": 22
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 32,
+      "metal": true,
+      "delay": 22
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 33,
+      "delay": 22
+    }
+  ]
+}
