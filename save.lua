@@ -367,18 +367,14 @@ end
 
 function read_attack_files()
   trainings = {}
-
   local raw_dir_list = love.filesystem.getDirectoryItems("training")
   for i, v in ipairs(raw_dir_list) do
     local file = love.filesystem.newFile("training/" .. v)
     file:open("r")
-    print(file:getSize())
     local teh_json = file:read(file:getSize())
     local training_conf = {}
-    print(teh_json)
-
-    for k, v in pairs(json.decode(teh_json)) do
-      training_conf[k] = v
+    for k, w in pairs(json.decode(teh_json)) do
+      training_conf[k] = w
     end
     if not training_conf.name or not type(training_conf.name) == "string" then
       training_conf.name = v
@@ -386,8 +382,6 @@ function read_attack_files()
     trainings[#trainings+1] = training_conf
     file:close()
   end
-
-  print(json.encode(trainings))
 end
 
 function print_list(t)

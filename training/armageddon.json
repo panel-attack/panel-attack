@@ -1,13 +1,13 @@
 {
   "name": "Armageddon Mode",
   "delayPerAttack": 1,
-  "attackCountPerDelay": 3,
+  "attackCountPerDelay": 4,
   "mergeComboMetalQueue": true,
   "attackpatterns": [
     {
       "width": 1,
       "height": 1,
-      "startTime": 38,
+      "startTime": 30,
       "delay": 600,
       "attackcount": null,
       "metal": false,
@@ -16,7 +16,7 @@
     {
       "width": 1,
       "height": 1,
-      "startTime": 38,
+      "startTime": 30,
       "delay": 600,
       "attackcount": null,
       "metal": true,
@@ -25,7 +25,7 @@
     {
       "width": 1,
       "height": 1,
-      "startTime": 38,
+      "startTime": 30,
       "delay": 600,
       "attackcount": null,
       "metal": false,
@@ -34,7 +34,7 @@
     {
       "width": 1,
       "height": 1,
-      "startTime": 38,
+      "startTime": 30,
       "delay": 600,
       "attackcount": null,
       "metal": true,
@@ -43,7 +43,7 @@
     {
       "width": 1,
       "height": 1,
-      "startTime": 38,
+      "startTime": 30,
       "delay": 600,
       "attackcount": null,
       "metal": false,
@@ -52,7 +52,7 @@
     {
       "width": 1,
       "height": 1,
-      "startTime": 38,
+      "startTime": 30,
       "delay": 600,
       "attackcount": null,
       "metal": true,
@@ -61,7 +61,7 @@
     {
       "width": 1,
       "height": 1,
-      "startTime": 38,
+      "startTime": 30,
       "delay": 600,
       "attackcount": null,
       "metal": true,
@@ -70,7 +70,7 @@
     {
       "width": 1,
       "height": 1,
-      "startTime": 38,
+      "startTime": 30,
       "delay": 600,
       "attackcount": null,
       "metal": false,
@@ -79,7 +79,7 @@
     {
       "width": 1,
       "height": 1,
-      "startTime": 38,
+      "startTime": 30,
       "delay": 600,
       "attackcount": null,
       "metal": true,
@@ -88,7 +88,7 @@
     {
       "width": 1,
       "height": 1,
-      "startTime": 38,
+      "startTime": 30,
       "delay": 600,
       "attackcount": null,
       "metal": false,
@@ -97,7 +97,7 @@
     {
       "width": 1,
       "height": 1,
-      "startTime": 38,
+      "startTime": 30,
       "delay": 600,
       "attackcount": null,
       "metal": true,
@@ -106,7 +106,7 @@
     {
       "width": 1,
       "height": 1,
-      "startTime": 38,
+      "startTime": 30,
       "delay": 600,
       "attackcount": null,
       "metal": false,

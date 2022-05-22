@@ -517,7 +517,6 @@ function training_setup()
     customTrainingModes[#customTrainingModes+1] = value
   end
   
-  print(#customTrainingModes)
   local ret = nil
   local menu_x, menu_y = unpack(main_menu_screen_pos)
   menu_y = menu_y + 70

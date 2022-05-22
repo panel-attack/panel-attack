@@ -32,31 +32,29 @@ AttackEngine =
 -- metal - if this is a metal block
 -- chain - if this is a chain attack
 function AttackEngine.addAttackPattern(self, width, height, start, repeatDelay, attackCount, metal, chain)
-    local attackPattern = AttackPattern(width, height, start, repeatDelay, attackCount, metal, chain)
-    self.attackPatterns[#self.attackPatterns+1] = attackPattern
+  local attackPattern = AttackPattern(width, height, start, repeatDelay, attackCount, metal, chain)
+  self.attackPatterns[#self.attackPatterns + 1] = attackPattern
 end
 
--- 
+--
 function AttackEngine.run(self)
   local garbageToSend = {}
   for _, attackPattern in ipairs(self.attackPatterns) do
     local lastAttackTime
     if attackPattern.attackCount then
-      lastAttackTime = attackPattern.start + ((attackPattern.attackCount-1) * attackPattern.repeatDelay)
+      lastAttackTime = attackPattern.start + ((attackPattern.attackCount - 1) * attackPattern.repeatDelay)
     end
     if self.clock >= attackPattern.start and (attackPattern.attackCount == nil or self.clock <= lastAttackTime) then
       local difference = self.clock - attackPattern.start
       local remainder = difference % attackPattern.repeatDelay
-      local origin_column = 17
-      local origin_row = 11
       if remainder == 0 then
         if attackPattern.garbage[4] then
-          for i = 1,  attackPattern.garbage[2], 1 do
-            self.target.telegraph:push(attackPattern.garbage, origin_column, origin_row, self.target.CLOCK)
+          for i = 1, attackPattern.garbage[2], 1 do
+            self.target.telegraph:push(attackPattern.garbage, math.random(11, 17), math.random(1, 11), self.target.CLOCK)
           end
           self.target.telegraph:chainingEnded(self.clock)
         else
-          self.target.telegraph:push(attackPattern.garbage, origin_column, origin_row, self.target.CLOCK)
+          self.target.telegraph:push(attackPattern.garbage, math.random(11, 17), math.random(1, 11), self.target.CLOCK)
         end
       end
     end

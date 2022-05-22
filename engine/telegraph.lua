@@ -157,7 +157,9 @@ function Telegraph:chainingEnded(frameEnded)
 
   logger.debug("Player " .. self.sender.which .. " chain ended at " .. frameEnded)
 
-  assert(frameEnded == self.sender.CLOCK, "expected sender clock to equal attack")
+  if not GAME.battleRoom.trainingModeSettings then
+    assert(frameEnded == self.sender.CLOCK, "expected sender clock to equal attack")
+  end
 
   self:privateChainingEnded(frameEnded)
 end
