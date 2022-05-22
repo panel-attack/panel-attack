@@ -365,7 +365,7 @@ function read_puzzles()
   )
 end
 
-function read_training_files()
+function read_attack_files()
   trainings = {}
 
   local raw_dir_list = love.filesystem.getDirectoryItems("training")
@@ -380,10 +380,10 @@ function read_training_files()
     for k, v in pairs(json.decode(teh_json)) do
       training_conf[k] = v
     end
-    if type(training_conf.name) == "string" then
-      local training_name = training_conf.name
-      trainings[training_name] = training_conf
+    if not training_conf.name or not type(training_conf.name) == "string" then
+      training_conf.name = v
     end
+    trainings[#trainings+1] = training_conf
     file:close()
   end
 

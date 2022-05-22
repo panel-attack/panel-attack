@@ -1,85 +1,85 @@
 {
   "name": "Armageddon Mode",
   "delayPerAttack": 1,
-  "attackCountPerDelay": 1,
+  "attackCountPerDelay": 3,
   "attackpatterns": [
     {
       "width": 1,
       "height": 1,
-      "startTime": 22,
-      "delay": 22
+      "startTime": 38,
+      "delay": 600
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 23,
+      "startTime": 38,
       "metal": true,
-      "delay": 22
+      "delay": 600
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 24,
-      "delay": 22
+      "startTime": 38,
+      "delay": 600
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 25,
+      "startTime": 38,
       "metal": true,
-      "delay": 22
+      "delay": 600
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 26,
-      "delay": 22
+      "startTime": 38,
+      "delay": 600
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 27,
+      "startTime": 38,
       "metal": true,
-      "delay": 22
+      "delay": 600
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 28,
+      "startTime": 38,
       "metal": true,
-      "delay": 22
+      "delay": 600
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 29,
-      "delay": 22
+      "startTime": 38,
+      "delay": 600
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 30,
+      "startTime": 38,
       "metal": true,
-      "delay": 22
+      "delay": 600
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 31,
-      "delay": 22
+      "startTime": 38,
+      "delay": 600
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 32,
+      "startTime": 38,
       "metal": true,
-      "delay": 22
+      "delay": 600
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 33,
-      "delay": 22
+      "startTime": 38,
+      "delay": 600
     }
   ]
 }

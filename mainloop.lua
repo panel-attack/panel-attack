@@ -63,7 +63,7 @@ function fmainloop()
   wait()
   analytics.init()
   apply_config_volume()
-  read_training_files()
+  read_attack_files()
   -- create folders in appdata for those who don't have them already
   love.filesystem.createDirectory("characters")
   love.filesystem.createDirectory("panels")
@@ -507,38 +507,60 @@ function training_setup()
   local trainingModeSettings = {}
   trainingModeSettings.height = 1
   trainingModeSettings.width = 6
+  local customModeID = 0
+  local customTrainingModes = {}
+  for customfile, value in ipairs(trainings) do
+    customTrainingModes[#customTrainingModes+1] = value
+  end
+  customTrainingModes[0] = {name = "None"}
+  print(#customTrainingModes)
   local ret = nil
   local menu_x, menu_y = unpack(main_menu_screen_pos)
   menu_y = menu_y + 70
 
   local trainingSettingsMenu
 
-  local function update_width()
-    trainingSettingsMenu:set_button_setting(4, trainingModeSettings.width)
+  local function update_custom_setting()
+    trainingSettingsMenu:set_button_setting(4, customTrainingModes[customModeID].name)
+    trainingSettingsMenu:set_button_setting(5, "Custom")
+    trainingSettingsMenu:set_button_setting(6, "Custom")
   end
 
-  local function update_height()
-    trainingSettingsMenu:set_button_setting(5, trainingModeSettings.height)
+  local function update_size()
+    customModeID = 0
+    trainingSettingsMenu:set_button_setting(4, customTrainingModes[customModeID].name)
+    trainingSettingsMenu:set_button_setting(5, trainingModeSettings.width)
+    trainingSettingsMenu:set_button_setting(6, trainingModeSettings.height)
+  end
+
+  local function custom_right()
+    customModeID = bound(1, customModeID + 1, #customTrainingModes)
+    update_custom_setting()
+  end
+
+  local function custom_left()
+    customModeID = bound(1, customModeID - 1, #customTrainingModes)
+    update_custom_setting()
   end
 
   local function increase_height()
     trainingModeSettings.height = bound(1, trainingModeSettings.height + 1, 69)
-    update_height()
+    update_size()
   end
 
   local function decrease_height()
     trainingModeSettings.height = bound(1, trainingModeSettings.height - 1, 69)
-    update_height()
+    update_size()
   end
 
   local function increase_width()
     trainingModeSettings.width = bound(1, trainingModeSettings.width + 1, 6)
-    update_width()
+    update_size()
   end
 
   local function decrease_width()
     trainingModeSettings.width = bound(1, trainingModeSettings.width - 1, 6)
-    update_width()
+    update_size()
   end
 
   local function goToStart()
@@ -556,29 +578,30 @@ function training_setup()
   local function factory_settings()
     trainingModeSettings.width = 6
     trainingModeSettings.height = 2
-    update_width()
-    update_height()
+    update_size()
     goToStart()
   end
 
   local function combo_storm_settings()
     trainingModeSettings.width = 4
     trainingModeSettings.height = 1
-    update_width()
-    update_height()
+    update_size()
     goToStart()
   end
 
   local function large_garbage_settings()
     trainingModeSettings.width = 6
     trainingModeSettings.height = 12
-    update_width()
-    update_height()
+    update_size()
     goToStart()
   end
 
   local function start_custom_game()
-    ret = {main_local_vs_yourself_setup, {trainingModeSettings}}
+    customTrainingModes[0].attackpatterns = {}
+    customTrainingModes[0].attackpatterns[#customTrainingModes[0].attackpatterns+1] = {}
+    customTrainingModes[0].attackpatterns[1].width = trainingModeSettings.width
+    customTrainingModes[0].attackpatterns[1].height = trainingModeSettings.height
+    ret = {main_local_vs_yourself_setup, {customTrainingModes[customModeID]}}
   end
 
   local function nextMenu()
@@ -589,12 +612,14 @@ function training_setup()
   trainingSettingsMenu:add_button(loc("factory"), factory_settings, goEscape)
   trainingSettingsMenu:add_button(loc("combo_storm"), combo_storm_settings, goEscape)
   trainingSettingsMenu:add_button(loc("large_garbage"), large_garbage_settings, goEscape)
+  trainingSettingsMenu:add_button("Custom", goToStart, goEscape, custom_left, custom_right)
   trainingSettingsMenu:add_button(loc("width"), nextMenu, goEscape, decrease_width, increase_width)
   trainingSettingsMenu:add_button(loc("height"), nextMenu, goEscape, decrease_height, increase_height)
   trainingSettingsMenu:add_button(loc("go_"), start_custom_game, goEscape)
   trainingSettingsMenu:add_button(loc("back"), exitSettings, exitSettings)
-  update_height()
-  update_width()
+  update_custom_setting()
+  update_size()
+
 
   while true do
     trainingSettingsMenu:draw()

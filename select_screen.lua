@@ -1324,31 +1324,18 @@ function select_screen.main()
     if cursor_data[1].state.ready and select_screen.character_select_mode == "1p_vs_yourself" then
       GAME.match = Match("vs", GAME.battleRoom)
       P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=cursor_data[1].state.panels_dir, level=cursor_data[1].state.level, player_number=1, character=cursor_data[1].state.character}
+
       if GAME.battleRoom.trainingModeSettings then
         GAME.match.attackEngine = AttackEngine(P1)
-        if true then
-          local training_config = trainings["Armageddon Mode"]
-          print(json.encode(training_config))
-          local delayPerAttack = training_config.delayPerAttack
-          local attackCountPerDelay = training_config.attackCountPerDelay
-          local delay = GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME + (attackCountPerDelay * delayPerAttack) + 1
-          for i = 1, attackCountPerDelay, 1 do
+        local delayPerAttack = GAME.battleRoom.trainingModeSettings.delayPerAttack or 6
+        local attackCountPerDelay = GAME.battleRoom.trainingModeSettings.attackCountPerDelay or 15
+        local delay = GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME + (attackCountPerDelay * delayPerAttack) + 1
 
-            for i, value in ipairs(training_config.attackpatterns) do
-              GAME.match.attackEngine:addAttackPattern(value.width or 4, value.height or 1, (value.startTime or 150) + (i * delayPerAttack) --[[start time]], delay + (value.delay or 0)--[[repeat]], value.attackcount--[[attack count]], (value.metal or false)--[[metal]],  (value.chain or false)--[[chain]])  
-            end
-            
-          end
-        else
-          local startTime = 150
-          local delayPerAttack = 6
-          local attackCountPerDelay = 15
-          local delay = GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME + (attackCountPerDelay * delayPerAttack) + 1
-          for i = 1, attackCountPerDelay, 1 do
-            GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        for i = 1, attackCountPerDelay do
+          for patternid, values in ipairs(GAME.battleRoom.trainingModeSettings.attackpatterns) do
+            GAME.match.attackEngine:addAttackPattern(values.width or 4, values.height or 1, (values.startTime or 150) + (i * delayPerAttack) --[[start time]], delay + (values.delay or 0)--[[repeat]], values.attackcount--[[attack count]], values.metal --[[metal]],  values.chain or false--[[chain]]) 
           end
         end
-      else
       end
       GAME.match.P1 = P1
       if not GAME.battleRoom.trainingModeSettings then
