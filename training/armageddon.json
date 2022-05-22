@@ -2,6 +2,7 @@
   "name": "Armageddon Mode",
   "delayPerAttack": 1,
   "attackCountPerDelay": 3,
+  "mergeComboMetalQueue": true,
   "attackpatterns": [
     {
       "width": 1,
