@@ -506,13 +506,17 @@ function training_setup()
   -- TODO make "illegal garbage blocks" possible again in telegraph.
   local trainingModeSettings = {}
   trainingModeSettings.height = 1
-  trainingModeSettings.width = 6
-  local customModeID = 0
+  trainingModeSettings.width = 4
+  local customModeID = 1
   local customTrainingModes = {}
+  customTrainingModes[0] = {name = "None"}
+  customTrainingModes[1] = {name = loc("combo_storm"), attackpatterns = {[1] = {width = 4, height = 1}}}
+  customTrainingModes[2] = {name = loc("factory"), attackpatterns = {[1] = {width = 6, height = 2}}}
+  customTrainingModes[3] = {name = loc("large_garbage"), attackpatterns = {[1] = {width = 6, height = 12}}}
   for customfile, value in ipairs(trainings) do
     customTrainingModes[#customTrainingModes+1] = value
   end
-  customTrainingModes[0] = {name = "None"}
+  
   print(#customTrainingModes)
   local ret = nil
   local menu_x, menu_y = unpack(main_menu_screen_pos)
@@ -521,16 +525,16 @@ function training_setup()
   local trainingSettingsMenu
 
   local function update_custom_setting()
-    trainingSettingsMenu:set_button_setting(4, customTrainingModes[customModeID].name)
-    trainingSettingsMenu:set_button_setting(5, "Custom")
-    trainingSettingsMenu:set_button_setting(6, "Custom")
+    trainingSettingsMenu:set_button_setting(1, customTrainingModes[customModeID].name)
+    trainingSettingsMenu:set_button_setting(2, "Custom")
+    trainingSettingsMenu:set_button_setting(3, "Custom")
   end
 
   local function update_size()
     customModeID = 0
-    trainingSettingsMenu:set_button_setting(4, customTrainingModes[customModeID].name)
-    trainingSettingsMenu:set_button_setting(5, trainingModeSettings.width)
-    trainingSettingsMenu:set_button_setting(6, trainingModeSettings.height)
+    trainingSettingsMenu:set_button_setting(1, customTrainingModes[customModeID].name)
+    trainingSettingsMenu:set_button_setting(2, trainingModeSettings.width)
+    trainingSettingsMenu:set_button_setting(3, trainingModeSettings.height)
   end
 
   local function custom_right()
@@ -575,32 +579,8 @@ function training_setup()
     ret = {main_select_mode}
   end
 
-  local function factory_settings()
-    trainingModeSettings.width = 6
-    trainingModeSettings.height = 2
-    update_size()
-    goToStart()
-  end
-
-  local function combo_storm_settings()
-    trainingModeSettings.width = 4
-    trainingModeSettings.height = 1
-    update_size()
-    goToStart()
-  end
-
-  local function large_garbage_settings()
-    trainingModeSettings.width = 6
-    trainingModeSettings.height = 12
-    update_size()
-    goToStart()
-  end
-
   local function start_custom_game()
-    customTrainingModes[0].attackpatterns = {}
-    customTrainingModes[0].attackpatterns[#customTrainingModes[0].attackpatterns+1] = {}
-    customTrainingModes[0].attackpatterns[1].width = trainingModeSettings.width
-    customTrainingModes[0].attackpatterns[1].height = trainingModeSettings.height
+    customTrainingModes[0] = {attackpatterns = {[1] = {width = trainingModeSettings.width, height = trainingModeSettings.height}}}
     ret = {main_local_vs_yourself_setup, {customTrainingModes[customModeID]}}
   end
 
@@ -609,17 +589,14 @@ function training_setup()
   end
   
   trainingSettingsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
-  trainingSettingsMenu:add_button(loc("factory"), factory_settings, goEscape)
-  trainingSettingsMenu:add_button(loc("combo_storm"), combo_storm_settings, goEscape)
-  trainingSettingsMenu:add_button(loc("large_garbage"), large_garbage_settings, goEscape)
   trainingSettingsMenu:add_button("Custom", goToStart, goEscape, custom_left, custom_right)
   trainingSettingsMenu:add_button(loc("width"), nextMenu, goEscape, decrease_width, increase_width)
   trainingSettingsMenu:add_button(loc("height"), nextMenu, goEscape, decrease_height, increase_height)
   trainingSettingsMenu:add_button(loc("go_"), start_custom_game, goEscape)
   trainingSettingsMenu:add_button(loc("back"), exitSettings, exitSettings)
-  update_custom_setting()
-  update_size()
-
+  trainingSettingsMenu:set_button_setting(1, customTrainingModes[customModeID].name)
+  trainingSettingsMenu:set_button_setting(2, trainingModeSettings.width)
+  trainingSettingsMenu:set_button_setting(3, trainingModeSettings.height)
 
   while true do
     trainingSettingsMenu:draw()

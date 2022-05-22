@@ -8,79 +8,109 @@
       "width": 1,
       "height": 1,
       "startTime": 38,
-      "delay": 600
+      "delay": 600,
+      "attackcount": null,
+      "metal": false,
+      "chain": false
     },
     {
       "width": 1,
       "height": 1,
       "startTime": 38,
+      "delay": 600,
+      "attackcount": null,
       "metal": true,
-      "delay": 600
+      "chain": false
     },
     {
       "width": 1,
       "height": 1,
       "startTime": 38,
-      "delay": 600
+      "delay": 600,
+      "attackcount": null,
+      "metal": false,
+      "chain": false
     },
     {
       "width": 1,
       "height": 1,
       "startTime": 38,
+      "delay": 600,
+      "attackcount": null,
       "metal": true,
-      "delay": 600
+      "chain": false
     },
     {
       "width": 1,
       "height": 1,
       "startTime": 38,
-      "delay": 600
+      "delay": 600,
+      "attackcount": null,
+      "metal": false,
+      "chain": false
     },
     {
       "width": 1,
       "height": 1,
       "startTime": 38,
+      "delay": 600,
+      "attackcount": null,
       "metal": true,
-      "delay": 600
+      "chain": false
     },
     {
       "width": 1,
       "height": 1,
       "startTime": 38,
+      "delay": 600,
+      "attackcount": null,
       "metal": true,
-      "delay": 600
+      "chain": false
     },
     {
       "width": 1,
       "height": 1,
       "startTime": 38,
-      "delay": 600
+      "delay": 600,
+      "attackcount": null,
+      "metal": false,
+      "chain": false
     },
     {
       "width": 1,
       "height": 1,
       "startTime": 38,
+      "delay": 600,
+      "attackcount": null,
       "metal": true,
-      "delay": 600
+      "chain": false
     },
     {
       "width": 1,
       "height": 1,
       "startTime": 38,
-      "delay": 600
+      "delay": 600,
+      "attackcount": null,
+      "metal": false,
+      "chain": false
     },
     {
       "width": 1,
       "height": 1,
       "startTime": 38,
+      "delay": 600,
+      "attackcount": null,
       "metal": true,
-      "delay": 600
+      "chain": false
     },
     {
       "width": 1,
       "height": 1,
       "startTime": 38,
-      "delay": 600
+      "delay": 600,
+      "attackcount": null,
+      "metal": false,
+      "chain": false
     }
   ]
 }
