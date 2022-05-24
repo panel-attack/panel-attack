@@ -366,6 +366,7 @@ function read_puzzles()
 end
 
 function read_attack_files()
+  recursive_copy("default_data/training", "training")
   trainings = {}
   local raw_dir_list = love.filesystem.getDirectoryItems("training")
   for i, v in ipairs(raw_dir_list) do

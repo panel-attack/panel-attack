@@ -69,6 +69,8 @@ function fmainloop()
   love.filesystem.createDirectory("panels")
   love.filesystem.createDirectory("themes")
   love.filesystem.createDirectory("stages")
+  love.filesystem.createDirectory("training")
+
 
   --check for game updates
   if GAME_UPDATER_CHECK_UPDATE_INGAME then
