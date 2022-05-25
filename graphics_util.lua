@@ -11,7 +11,7 @@ local function load_img(path_and_name)
   if not status then
     status = pcall(
       function()
-        img = love.image.newImageData("themes/Panel Attack/bug.png")
+        img = love.image.newImageData("characters/__default/portrait.png")
       end
     )
     if not status then
