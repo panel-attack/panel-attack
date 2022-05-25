@@ -259,7 +259,7 @@ end
 function send_error_report(errorData)
   TCP_sock = socket.tcp()
   TCP_sock:settimeout(7)
-  if not TCP_sock:connect("18.188.43.50", 59569) then --for official server
+  if not TCP_sock:connect("18.188.43.50", 49569) then --for official server
     return false
   end
   TCP_sock:settimeout(0)
