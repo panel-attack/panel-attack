@@ -10,8 +10,6 @@ local logger = require("logger")
 local min, pairs, deepcpy = math.min, pairs, deepcpy
 local max = math.max
 local garbage_bounce_time = #garbage_bounce_table
-local GARBAGE_DELAY = 60
-local GARBAGE_TRANSIT_TIME = 90
 local clone_pool = {}
 
 -- Represents the full panel stack for one player
@@ -80,21 +78,16 @@ Stack =
       {1, 2, idx = 1},
       {1, idx = 1}
     }
-    s.later_garbage = {}
-    s.garbage_q = GarbageQueue()
-    -- garbage_to_send[frame] is an array of garbage to send at frame.
-    -- garbage_to_send.chain is an array of garbage to send when the chain ends.
-    s.garbage_to_send = {}
 
-    s:moveForPlayerNumber(1)
+    s.later_garbage = {} -- Queue of garbage that is done waiting in telegraph, and been popped out, and will be sent to our stack next frame
+    s.garbage_q = GarbageQueue(s) -- Queue of garbage that is about to be dropped
+
+    s:moveForPlayerNumber(which)
 
     s.panel_buffer = ""
-    s.panel_buffer_record = ""
     s.gpanel_buffer = ""
-    s.gpanel_buffer_record = ""
     s.input_buffer = ""
-    s.input_buffer_record = ""
-
+    s.confirmedInput = "" -- All inputs the player has input ever
     s.panels = {}
     s.width = 6
     s.height = 12
@@ -181,7 +174,6 @@ Stack =
     s.cur_col = 3 -- the column the left half of the cursor's on
     s.top_cur_row = s.height + (s.match.mode == "puzzle" and 0 or -1)
 
-    s.move_sound = false -- this is set if the cursor movement sound should be played
     s.poppedPanelIndex = s.poppedPanelIndex or 1
     s.panels_cleared = s.panels_cleared or 0
     s.metal_panels_queued = s.metal_panels_queued or 0
@@ -205,8 +197,36 @@ Stack =
     s.prev_states = {}
 
     s.analytic = AnalyticsInstance(s.is_local)
-  end
-)
+
+    if s.match.mode == "vs" then
+      s.telegraph = Telegraph(s, s) -- Telegraph holds the garbage that hasn't been committed yet and also tracks the attack animations
+      -- NOTE: this is the telegraph above this stack, so the opponents puts garbage in this stack.
+    end
+
+    s.combos = {} -- Tracks the combos made throughout the whole game. Key is the clock time, value is the combo size
+
+    s.chains = {} -- Tracks the chains mades throughout the whole game
+    --[[
+      .last_complete - the CLOCK index into the last chain or nil if no chains this game yet
+      .current - the CLOCK index into the current chain or nil if no chain active
+      indexes
+        Key - CLOCK time the chain started
+        Value -
+	        start - CLOCK time the chain started (same as key)
+	        finish - CLOCK time the chain finished
+	        size - the chain size 2, 3, etc
+    ]]
+
+    s.panelGenCount = 0
+    s.garbageGenCount = 0
+
+    s.rollbackCount = 0 -- the number of times total we have done rollback
+    s.lastRollbackFrame = -1 -- the last frame we had to rollback from
+
+    s.framesBehindArray = {}
+    s.totalFramesBehind = 0
+
+  end)
 
 function Stack.setLevel(self, level)
   self.level = level
@@ -252,7 +272,43 @@ function Stack.moveForPlayerNumber(stack, player_num)
   stack.score_y = 100 + (canvas_height - legacy_canvas_height)
 end
 
-function Stack.mkcpy(self, other)
+function Stack.divergenceString(stackToTest)
+  local result = ""
+
+  local panels = stackToTest.panels
+
+  if panels then
+      for i=#panels,1,-1 do
+          for j=1,#panels[i] do
+            result = result .. (tostring(panels[i][j].color)) .. " "
+            if panels[i][j].state ~= "normal" then
+              result = result .. (panels[i][j].state) .. " "
+            end
+          end
+          result = result .. "\n"
+      end
+  end
+
+  if stackToTest.telegraph then
+    result = result .. "telegraph.chain count " .. stackToTest.telegraph.garbage_queue.chain_garbage:len() .. "\n"
+    result = result .. "telegraph.senderCurrentlyChaining " .. tostring(stackToTest.telegraph.senderCurrentlyChaining) .. "\n"
+    result = result .. "telegraph.attacks " .. table.length(stackToTest.telegraph.attacks) .. "\n"
+  end
+  
+  result = result .. "garbage_q " .. stackToTest.garbage_q:len() .. "\n"
+  result = result .. "later_garbage " .. table.length(stackToTest.later_garbage) .. "\n"
+  result = result .. "Stop " .. stackToTest.stop_time .. "\n"
+  result = result .. "Pre Stop " .. stackToTest.pre_stop_time .. "\n"
+  result = result .. "Shake " .. stackToTest.shake_time .. "\n"
+  result = result .. "Displacement " .. stackToTest.displacement .. "\n"
+  result = result .. "Clock " .. stackToTest.CLOCK .. "\n"
+  result = result .. "Panel Buffer " .. stackToTest.panel_buffer .. "\n"
+
+  return result
+end
+
+-- Backup important variables into the passed in variable to be restored in rollback. Note this doesn't do a full copy.
+function Stack.rollbackCopy(self, source, other)
   if other == nil then
     if #clone_pool == 0 then
       other = {}
@@ -261,27 +317,32 @@ function Stack.mkcpy(self, other)
       clone_pool[#clone_pool] = nil
     end
   end
-  other.do_swap = self.do_swap
-  other.speed = self.speed
-  other.health = self.health
-  other.garbage_cols = deepcpy(self.garbage_cols)
-  --[[if self.garbage_cols then
+  other.do_swap = source.do_swap
+  other.speed = source.speed
+  other.health = source.health
+  other.garbage_cols = deepcpy(source.garbage_cols)
+  --[[if source.garbage_cols then
     other.garbage_idxs = other.garbage_idxs or {}
-    local n_g_cols = #(self.garbage_cols or other.garbage_cols)
+    local n_g_cols = #(source.garbage_cols or other.garbage_cols)
     for i=1,n_g_cols do
-      other.garbage_idxs[i]=self.garbage_cols[i].idx
+      other.garbage_idxs[i]=source.garbage_cols[i].idx
     end
   else
 
   end--]]
-  other.garbage_q = deepcpy(self.garbage_q)
-  other.garbage_to_send = deepcpy(self.garbage_to_send)
-  other.input_state = self.input_state
-  local height = self.height or other.height
-  local width = self.width or other.width
-  local height_to_cpy = #self.panels
+  other.later_garbage = deepcpy(source.later_garbage)
+  other.garbage_q = source.garbage_q:makeCopy()
+  if source.telegraph then
+    other.telegraph = source.telegraph:rollbackCopy(source.telegraph, other.telegraph)
+  end
+  local width = source.width or other.width
+  local height_to_cpy = #source.panels
   other.panels = other.panels or {}
-  for i = 1, height_to_cpy do
+  local startRow = 1
+  if self.panels[0] then
+    startRow = 0
+  end
+  for i = startRow, height_to_cpy do
     if other.panels[i] == nil then
       other.panels[i] = {}
       for j = 1, width do
@@ -290,7 +351,7 @@ function Stack.mkcpy(self, other)
     end
     for j = 1, width do
       local opanel = other.panels[i][j]
-      local spanel = self.panels[i][j]
+      local spanel = source.panels[i][j]
       opanel:clear()
       for k, v in pairs(spanel) do
         opanel[k] = v
@@ -298,43 +359,134 @@ function Stack.mkcpy(self, other)
     end
   end
   for i = height_to_cpy + 1, #other.panels do
-    for j = 1, width do
-      other.panels[i][j]:clear()
-    end
+    other.panels[i] = nil
   end
-  other.CLOCK = self.CLOCK
-  other.game_stopwatch = self.game_stopwatch
-  other.game_stopwatch_running = self.game_stopwatch_running
-  other.cursor_lock = self.cursor_lock
-  other.displacement = self.displacement
-  other.speed_times = deepcpy(self.speed_times)
-  other.panels_to_speedup = self.panels_to_speedup
-  other.stop_time = self.stop_time
-  other.pre_stop_time = self.pre_stop_time
-  other.score = self.score
-  other.chain_counter = self.chain_counter
-  other.n_active_panels = self.n_active_panels
-  other.prev_active_panels = self.prev_active_panels
-  other.n_chain_panels = self.n_chain_panels
-  other.FRAMECOUNT_RISE = self.FRAMECOUNT_RISE
-  other.rise_timer = self.rise_timer
-  other.manual_raise_yet = self.manual_raise_yet
-  other.prevent_manual_raise = self.prevent_manual_raise
-  other.cur_timer = self.cur_timer
-  other.cur_dir = self.cur_dir
-  other.cur_row = self.cur_row
-  other.cur_col = self.cur_col
-  other.shake_time = self.shake_time
-  other.peak_shake_time = self.peak_shake_time
-  other.card_q = deepcpy(self.card_q)
-  other.do_countdown = self.do_countdown
-  other.ready_y = self.ready_y
+
+  other.countdown_CLOCK = source.countdown_CLOCK
+  other.starting_cur_row = source.starting_cur_row
+  other.starting_cur_col = source.starting_cur_col
+  other.countdown_cursor_state = source.countdown_cursor_state
+  other.countdown_cur_speed = source.countdown_cur_speed
+  other.countdown_timer = source.countdown_timer
+  other.CLOCK = source.CLOCK
+  other.game_stopwatch = source.game_stopwatch
+  other.game_stopwatch_running = source.game_stopwatch_running
+  other.prev_rise_lock = source.prev_rise_lock
+  other.rise_lock = source.rise_lock
+  other.top_cur_row = source.top_cur_row
+  other.cursor_lock = source.cursor_lock
+  other.displacement = source.displacement
+  other.speed_times = deepcpy(source.speed_times)
+  other.panels_to_speedup = source.panels_to_speedup
+  other.stop_time = source.stop_time
+  other.pre_stop_time = source.pre_stop_time
+  other.score = source.score
+  other.chain_counter = source.chain_counter
+  other.n_active_panels = source.n_active_panels
+  other.prev_active_panels = source.prev_active_panels
+  other.n_chain_panels = source.n_chain_panels
+  other.FRAMECOUNT_RISE = source.FRAMECOUNT_RISE
+  other.rise_timer = source.rise_timer
+  other.manual_raise = source.manual_raise
+  other.manual_raise_yet = source.manual_raise_yet
+  other.prevent_manual_raise = source.prevent_manual_raise
+  other.cur_timer = source.cur_timer
+  other.cur_dir = source.cur_dir
+  other.cur_row = source.cur_row
+  other.cur_col = source.cur_col
+  other.shake_time = source.shake_time
+  other.peak_shake_time = source.peak_shake_time
+  other.do_countdown = source.do_countdown
+  other.ready_y = source.ready_y
+  other.combos = deepcpy(source.combos)
+  other.chains = deepcpy(source.chains)
+  other.panel_buffer = source.panel_buffer
+  other.gpanel_buffer = source.gpanel_buffer
+  other.panelGenCount = source.panelGenCount
+  other.garbageGenCount = source.garbageGenCount
+  other.panels_in_top_row = source.panels_in_top_row
+  other.has_risen = source.has_risen
+  other.metal_panels_queued = source.metal_panels_queued
+  other.panels_cleared = source.panels_cleared
+  other.danger_timer = source.danger_timer
+  other.analytic = deepcpy(source.analytic)
+  other.game_over_clock = source.game_over_clock
+
   return other
 end
 
-function Stack.fromcpy(self, other)
-  Stack.mkcpy(other, self)
+function Stack.restoreFromRollbackCopy(self, other)
+  self:rollbackCopy(other, self)
+  if self.telegraph then
+    self.telegraph.owner = self.garbage_target
+    self.telegraph.sender = self
+  end
+  -- The remaining inputs is the confirmed inputs not processed yet for this clock time
+  -- We have processed CLOCK time number of inputs when we are at CLOCK, so we only want to process the CLOCK+1 input on
+  self.input_buffer = string.sub(self.confirmedInput, self.CLOCK+1)
+end
+
+function Stack.rollbackToFrame(self, frame) 
+  local currentFrame = self.CLOCK
+  local difference = currentFrame - frame
+  local safeToRollback = difference <= MAX_LAG
+  if not safeToRollback then
+    if self.garbage_target then
+      self.garbage_target.tooFarBehindError = true
+    end
+    return -- EARLY RETURN
+  end
+
+  if frame < currentFrame then
+    local prev_states = self.prev_states
+    logger.debug("Rolling back " .. self.which .. " to " .. frame)
+    assert(prev_states[frame])
+    self:restoreFromRollbackCopy(prev_states[frame])
+
+    if self.garbage_target and self.garbage_target.later_garbage then
+      -- The garbage that we send this time might (rarely) not be the same
+      -- as the garbage we sent before.  Wipe out the garbage we sent before...
+      for k, v in pairs(self.garbage_target.later_garbage) do
+        if k > frame then
+          self.garbage_target.later_garbage[k] = nil
+        end
+      end
+    end
+
+    self.rollbackCount = self.rollbackCount + 1
+    self.lastRollbackFrame = currentFrame
+  end
+end
+
+-- Saves state in backups in case its needed for rollback
+-- NOTE: the CLOCK time is the save state for simulating right BEFORE that clock time is simulated
+function Stack.saveForRollback(self)
+  local prev_states = self.prev_states
+  local garbage_target = self.garbage_target
+  self.garbage_target = nil
+  self.prev_states = nil
   self:remove_extra_rows()
+  prev_states[self.CLOCK] = self:rollbackCopy(self)
+  self.prev_states = prev_states
+  self.garbage_target = garbage_target
+  local deleteFrame = self.CLOCK - MAX_LAG - 1
+  if prev_states[deleteFrame] then
+    Telegraph.saveClone(prev_states[deleteFrame].telegraph)
+
+     -- Has a reference to stacks we don't want kept around
+    prev_states[deleteFrame].telegraph = nil
+
+    clone_pool[#clone_pool + 1] = prev_states[deleteFrame]
+    prev_states[deleteFrame] = nil
+  end
+end
+
+function Stack.set_garbage_target(self, new_target)
+  self.garbage_target = new_target
+  if self.telegraph then
+    self.telegraph.owner = new_target
+    self.telegraph:updatePosition()
+  end
 end
 
 local MAX_TAUNT_PER_10_SEC = 4
@@ -411,6 +563,8 @@ function Panel.clear(self)
   self.height = nil
   self.garbage = nil
   self.metal = nil
+  self.shake_time = nil
+  self.match_anyway = nil
 
   -- Also flags
   self:clear_flags()
@@ -423,129 +577,6 @@ end
 -- from_left
 -- dont_swap
 -- chaining
-
-GarbageQueue =
-  class(
-  function(s)
-    s.chain_garbage = Queue()
-    s.combo_garbage = {0, 0, 0, 0, 0, 0} --index here represents width, and value represents how many of that width queued
-    s.metal = 0
-  end
-)
-
-function GarbageQueue.push(self, garbage)
-  local width, height, metal, from_chain = unpack(garbage)
-  if metal then
-    self.metal = self.metal + 1
-  elseif from_chain or height > 1 then
-    if not from_chain then
-      logger.warn("garbage with height > 1 was not marked as 'from_chain'")
-      logger.warn("adding it to the chain garbage queue anyway")
-    end
-    self.chain_garbage:push(garbage)
-  else
-    self.combo_garbage[width] = self.combo_garbage[width] + 1
-  end
-end
-
-function GarbageQueue.pop(self, just_peeking)
-  --check for any chain garbage, and return the first one (chronologically), if any
-  if self.chain_garbage:peek() then
-    if just_peeking then
-      return self.chain_garbage:peek()
-    else
-      return self.chain_garbage:pop()
-    end
-  end
-  --check for any combo garbage, and return the smallest one, if any
-  for k, v in ipairs(self.combo_garbage) do
-    if v > 0 then
-      if not just_peeking then
-        self.combo_garbage[k] = v - 1
-      end
-      --returning {width, height, is_metal, is_from_chain}
-      return {k, 1, false, false}
-    end
-  end
-  --check for any metal garbage, and return one if any
-  if self.metal > 0 then
-    if not just_peeking then
-      self.metal = self.metal - 1
-    end
-    return {6, 1, true, false}
-  end
-  return nil
-end
-
-function GarbageQueue.peek(self)
-  return self:pop(true) --(just peeking)
-end
-
-function GarbageQueue.len(self)
-  local ret = 0
-  ret = ret + self.chain_garbage:len()
-  for k, v in ipairs(self.combo_garbage) do
-    ret = ret + v
-  end
-  ret = ret + self.metal
-  return ret
-end
-
-function GarbageQueue.grow_chain(self)
-  -- TODO: this should increase the size of the first chain garbage by 1.
-  -- This is used by the telegraph to increase the size of the chain garbage being built
-  -- or add a 6-wide if there is not chain garbage yet in the queue
-end
-
-Telegraph =
-  class(
-  function(self, sender, recipient)
-    self.garbage_queue = new
-    GarbageQueue()
-    self.stopper = {garbage_type, size, frame_to_release}
-    self.sender = sender
-    self.recipient = recipient
-  end
-)
-
-function Telegraph.push(self, attack_type, attack_size)
-  self.stopper = {garbage_type = attack_type, attack_size, frame_to_release = self.stack.CLOCK + GARBAGE_TRANSIT_TIME + GARBAGE_DELAY}
-  if attack_type == "chain" then
-    self.garbage_queue:grow_chain()
-  elseif attack_type == "combo" then
-    local garbage = {}
-    self.garbage_queue:push(garbage)
-  end
-end
-
-function Telegraph.pop_all_ready_garbage()
-  local ready_garbage = {}
-  if self.stopper and self.stopper.frame_to_release <= self.recipient.CLOCK then
-    self.stopper = nil
-  end
-  if not self.stopper then
-    local next_block = {}
-    local number_of_blocks = self.garbage_queue:len()
-    for i = 1, number_of_blocks do
-      ready_garbage[i] = self.garbage_queue:pop()
-    end
-    return ready_garbage
-  elseif self.stopper and self.stopper.garbage_type == "chain" then
-    return {} --waiting on sender chain to end
-  elseif self.stopper and self.stopper.garbage_type == "combo" and stopper.garbage then
-    local next_block_type = "combo"
-    local next_in_queue = self.garbage_queue:peek()
-    while not next_in_queue[4] --[[is_from_chain]] and next_in_queue[1] --[[width]] < self.stopper.size do
-      ready_garbage[#ready_garbage + 1] = self.garbage_queue:pop()
-      next_in_queue = self.garbage_queue:peek()
-    end
-    return ready_garbage
-  end
-end
-
-function Telegraph.sender_chain_ended()
-  self.stopper = nil
-end
 
 do
   local exclude_hover_set = {
@@ -776,22 +807,6 @@ function Stack.has_falling_garbage(self)
   return false
 end
 
--- Saves state in backups in case its needed for rollback
-function Stack.prep_rollback(self)
-  local prev_states = self.prev_states
-  -- prev_states will not exist if we're doing a rollback right now
-  if prev_states then
-    local garbage_target = self.garbage_target
-    self.garbage_target = nil
-    self.prev_states = nil
-    prev_states[self.CLOCK] = self:mkcpy()
-    clone_pool[#clone_pool + 1] = prev_states[self.CLOCK - 400]
-    prev_states[self.CLOCK - 400] = nil
-    self.prev_states = prev_states
-    self.garbage_target = garbage_target
-  end
-end
-
 -- Setup the stack at a new starting state
 function Stack.starting_state(self, n)
   if self.do_first_row then
@@ -844,69 +859,98 @@ function Stack.controls(self)
   end
 end
 
--- Update everything for the stack based on inputs. Will update many times if needed to catch up.
-function Stack.run(self, timesToRun)
+function Stack.shouldRun(self, runsSoFar) 
+
+  -- We want to run after game over to show game over effects.
+  if self:game_ended() then
+    return runsSoFar == 0
+  end
+
+  -- Decide how many frames of input we should run.
+  local buffer_len = string.len(self.input_buffer)
+
+  -- If we are local we always want to catch up and run the new input which is already appended
+  if self.is_local then
+    return buffer_len > 0
+  end
+
+  if self:behindRollback() then
+    return true
+  end
+
+  -- In debug mode allow forcing a certain number of frames behind
+  if config.debug_mode and config.debug_vsFramesBehind and config.debug_vsFramesBehind ~= 0 then
+    if (config.debug_vsFramesBehind > 0) == (self.which == 2) then
+      -- Don't fall behind if the game is over for the other player
+      if self.garbage_target and self.garbage_target:game_ended() == false then
+        -- If we are at the end of the replay we want to catch up
+        if network_connected() or string.len(self.garbage_target.input_buffer) > 0 then
+          local framesBehind = math.abs(config.debug_vsFramesBehind)
+          if self.CLOCK >= self.garbage_target.CLOCK - framesBehind then
+            return false
+          end
+        end
+      end
+    end
+  end
+    
+  -- If we are not local, we want to run faster to catch up.
+  if buffer_len >= 15 - runsSoFar then
+    -- way behind, run at max speed.
+    return runsSoFar < self.max_runs_per_frame
+  elseif buffer_len >= 10 - runsSoFar then
+    -- When we're closer, run fewer times per frame, so things are less choppy.
+    -- This might have a side effect of taking a little longer to catch up
+    -- since we don't always run at top speed.
+    local maxRuns = math.min(2, self.max_runs_per_frame)
+    return runsSoFar < maxRuns
+  elseif buffer_len >= 1 then
+    return runsSoFar == 0
+  end
+
+  return false
+end
+
+-- Runs one step of the stack.
+function Stack.run(self)
   if GAME.gameIsPaused then
     return
   end
 
-  if timesToRun == nil then
-    -- Normally we want to run 1 frame, but if we are a replay or from a net game,
-    -- we want to possibly run a lot frames to catch up, or 0 if there is nothing to simulate.
-    -- However, if we are a reaply or net game, we still want to run after game over to show
-    -- game over effects.
-    timesToRun = 1
-    if self.is_local == false then
-      if self:game_ended() == false then
-        timesToRun = 0
-      end
-
-      -- Decide how many frames of input we should run.
-      local buffer_len = string.len(self.input_buffer)
-
-      -- If we're way behind, run at max speed.
-      if buffer_len >= 15 then
-        -- When we're closer, run fewer per frame, so things are less choppy.
-        -- This might have a side effect of being a little farther behind on average,
-        -- since we don't always run at top speed until the buffer is empty.
-        timesToRun = self.max_runs_per_frame
-      elseif buffer_len >= 10 then
-        timesToRun = math.min(2, self.max_runs_per_frame)
-      elseif buffer_len >= 1 then
-        timesToRun = 1
-      end
-
-      if self.play_to_end then
-        if string.len(self.input_buffer) < 4 then
-          self.play_to_end = nil
-          stop_sounds = true
-        end
+  if self.is_local == false then
+    if self.play_to_end then
+      GAME.preventSounds = true
+      if string.len(self.input_buffer) < 4 then
+        self.play_to_end = nil
+        GAME.preventSounds = false
       end
     end
   end
 
-  for i = 1, timesToRun do
-    self:update_popfxs()
-    self:update_cards()
-    if self:game_ended() == false then
-      if self.is_local == false then
-        if self.input_buffer and string.len(self.input_buffer) > 0 then
-          self.input_state = string.sub(self.input_buffer, 1, 1)
-        else
-          break
-        end
-      else
-        self.input_state = self:send_controls()
-      end
-    end
-    self:prep_rollback()
-    self:controls()
-    self:prep_first_row()
-    self:PdP()
-    if self.is_local == false and self.input_buffer and string.len(self.input_buffer) > 0 then
+  self:setupInput()
+  self:simulate()
+end
+
+-- Grabs input from the buffer of inputs or from the controller and sends out to the network if needed.
+function Stack.setupInput(self) 
+  self.input_state = nil
+
+  if self:game_ended() == false then 
+    if self.input_buffer and string.len(self.input_buffer) > 0 then
+      self.input_state = string.sub(self.input_buffer, 1, 1)
       self.input_buffer = string.sub(self.input_buffer, 2)
     end
+  else
+    self.input_state = self:idleInput()
   end
+
+  self:controls()
+end
+
+function Stack.receiveConfirmedInput(self, input)
+  self.confirmedInput = self.confirmedInput .. input
+  self.input_buffer = self.input_buffer .. input
+  --logger.debug("Player " .. self.which .. " got new input. Total length: " .. string.len(self.confirmedInput))
 end
 
 -- Enqueue a card animation
@@ -965,9 +1009,10 @@ local d_col = {up = 0, down = 0, left = -1, right = 1}
 local d_row = {up = 1, down = -1, left = 0, right = 0}
 
 -- One run of the engine routine.
-function Stack.PdP(self)
+function Stack.simulate(self)
   -- Don't run the main logic if the player has simulated past one of the game overs or the time attack time
   if self:game_ended() == false then
+    self:prep_first_row()
     local panels = self.panels
     local width = self.width
     local height = self.height
@@ -1015,12 +1060,12 @@ function Stack.PdP(self)
           self.starting_cur_col = nil
           self.countdown_CLOCK = nil
           self.game_stopwatch_running = true
-          if self.which == 1 and self.canvas ~= nil then
+          if self.which == 1 and self:shouldChangeSoundEffects() then
             SFX_Go_Play = 1
           end
         elseif self.countdown_timer and self.countdown_timer % 60 == 0 and self.which == 1 then
           --play beep for timer dropping to next second in 3-2-1 countdown
-          if self.which == 1 and self.canvas ~= nil then
+          if self.which == 1 and self:shouldChangeSoundEffects() then
             SFX_Countdown_Play = 1
           end
         end
@@ -1052,7 +1097,6 @@ function Stack.PdP(self)
     end
 
     -- calculate which columns should bounce
-    local prev_danger = self.danger
     self.danger = false
     prow = panels[self.height - 1]
     for idx = 1, width do
@@ -1161,7 +1205,7 @@ function Stack.PdP(self)
       end
     end
 
-    if not self.panels_in_top_row then
+    if not self.panels_in_top_row and not self:has_falling_garbage() then
       self.health = self.max_health
     end
 
@@ -1210,7 +1254,7 @@ function Stack.PdP(self)
               if config.popfx == true then
                 self:enqueue_popfx(col, row, popsize)
               end
-              if self.canvas ~= nil then
+              if self:shouldChangeSoundEffects() then
                 SFX_Garbage_Pop_Play = panel.pop_index
               end
             end
@@ -1253,10 +1297,12 @@ function Stack.PdP(self)
             end
             if panel.shake_time and panel.state == "normal" then
               if row <= self.height then
-                if panel.height > 3 then
-                  self.sfx_garbage_thud = 3
-                else
-                  self.sfx_garbage_thud = panel.height
+                if self:shouldChangeSoundEffects() then
+                  if panel.height > 3 then
+                    self.sfx_garbage_thud = 3
+                  else
+                    self.sfx_garbage_thud = panel.height
+                  end
                 end
                 shake_time = max(shake_time, panel.shake_time, self.peak_shake_time or 0)
                 --a smaller garbage block landing should renew the largest of the previous blocks' shake times since our shake time was last zero.
@@ -1283,7 +1329,9 @@ function Stack.PdP(self)
             -- unless the panel below is falling.
             panel.state = "landing"
             panel.timer = 12
-            self.sfx_land = true
+            if self:shouldChangeSoundEffects() then
+              self.sfx_land = true
+            end
           elseif panels[row - 1][col].color ~= 0 and panels[row - 1][col].state ~= "falling" then
             -- if it lands on a hovering panel, it inherits
             -- that panel's hover time.
@@ -1294,7 +1342,9 @@ function Stack.PdP(self)
               panel.state = "landing"
               panel.timer = 12
             end
-            self.sfx_land = true
+            if self:shouldChangeSoundEffects() then
+              self.sfx_land = true
+            end
           else
             panels[row - 1][col], panels[row][col] = panels[row][col], panels[row - 1][col]
             panels[row][col]:clear()
@@ -1363,7 +1413,7 @@ function Stack.PdP(self)
               panel.state = "popping"
               panel.timer = panel.combo_index * self.FRAMECOUNT_POP
             elseif panel.state == "popping" then
-              --print("POP")
+              --logger.debug("POP")
               if (panel.combo_size > 6) or self.chain_counter > 1 then
                 popsize = "normal"
               end
@@ -1391,12 +1441,15 @@ function Stack.PdP(self)
                 if self.match.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
                   self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
                 end
-                if self.canvas ~= nil then
+                if self:shouldChangeSoundEffects() then
                   SFX_Pop_Play = 1
                 end
                 self.poppedPanelIndex = panel.combo_index
                 panel.color = 0
-                if (panel.chaining) then
+		if self.panels_to_speedup then
+	          self.panels_to_speedup = self.panels_to_speedup - 1
+	        end
+                if panel.chaining then
                   self.n_chain_panels = self.n_chain_panels - 1
                 end
                 panel:clear_flags()
@@ -1408,7 +1461,7 @@ function Stack.PdP(self)
                 if self.match.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
                   self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
                 end
-                if self.canvas ~= nil then
+                if self:shouldChangeSoundEffects() then
                   SFX_Pop_Play = 1
                 end
                 self.poppedPanelIndex = panel.combo_index
@@ -1462,14 +1515,14 @@ function Stack.PdP(self)
     -- Actions performed according to player input
 
     -- CURSOR MOVEMENT
-    self.move_sound = true
+    local playMoveSounds = true -- set this to false to disable move sounds for debugging
     if self.cur_dir and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and not self.cursor_lock then
       local prev_row = self.cur_row
       local prev_col = self.cur_col
       self.cur_row = bound(1, self.cur_row + d_row[self.cur_dir], self.top_cur_row)
       self.cur_col = bound(1, self.cur_col + d_col[self.cur_dir], width - 1)
-      if (self.move_sound and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and (self.cur_row ~= prev_row or self.cur_col ~= prev_col)) then
-        if self.canvas ~= nil then
+      if (playMoveSounds and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and (self.cur_row ~= prev_row or self.cur_col ~= prev_col)) then
+        if self:shouldChangeSoundEffects() then
           SFX_Cur_Move_Play = 1
         end
         if self.cur_timer ~= self.cur_wait_time then
@@ -1484,7 +1537,7 @@ function Stack.PdP(self)
       self.cur_timer = self.cur_timer + 1
     end
     -- TAUNTING
-    if self.canvas ~= nil then
+    if self:shouldChangeSoundEffects() then
       if self.taunt_up ~= nil then
         for _, t in ipairs(characters[self.character].sounds.taunt_ups) do
           t:stop()
@@ -1541,12 +1594,19 @@ function Stack.PdP(self)
 
     -- if at the end of the routine there are no chain panels, the chain ends.
     if self.chain_counter ~= 0 and self.n_chain_panels == 0 then
-      self:set_chain_garbage(self.chain_counter)
-      if self.canvas ~= nil then
+      self.chains[self.chains.current].finish = self.CLOCK
+      self.chains[self.chains.current].size = self.chain_counter
+      self.chains.last_complete = self.current
+      self.chains.current = nil
+      if self:shouldChangeSoundEffects() then
         SFX_Fanfare_Play = self.chain_counter
       end
       self.analytic:register_chain(self.chain_counter)
       self.chain_counter = 0
+
+      if self.garbage_target and self.garbage_target.telegraph then
+        self.telegraph:chainingEnded(self.CLOCK)
+      end
     end
 
     if (self.score > 99999) then
@@ -1565,45 +1625,25 @@ function Stack.PdP(self)
       end
     end
 
-    local to_send = self.garbage_to_send[self.CLOCK]
-    if to_send then
-      self.garbage_to_send[self.CLOCK] = nil
-
-      -- if there's no chain, we can send it
-      if self.chain_counter == 0 then
-        if #to_send > 0 then
-          --[[table.sort(to_send, function(a,b)
-              if a[4] or b[4] then
-                return a[4] and not b[4]
-              elseif a[3] or b[3] then
-                return b[3] and not a[3]
-              else
-                return a[1] < b[1]
-              end
-            end)--]]
-          self:really_send(to_send)
-        end
-      elseif self.garbage_to_send.chain then
-        local waiting_for_chain = self.garbage_to_send.chain
-        for i = 1, #to_send do
-          waiting_for_chain[#waiting_for_chain + 1] = to_send[i]
-        end
-      else
-        self.garbage_to_send.chain = to_send
+    if self.telegraph then
+      local to_send = self.telegraph:pop_all_ready_garbage(self.CLOCK)
+      if to_send and to_send[1] then
+        -- Right now the training attacks are put on the players telegraph, 
+        -- but they really should be a seperate telegraph since the telegraph on the player's stack is for sending outgoing attacks.
+        local receiver = self.garbage_target or self 
+        receiver:receiveGarbage(self.CLOCK + GARBAGE_DELAY_LAND_TIME, to_send)
       end
+    end
+    
+    if self.later_garbage[self.CLOCK] then
+      self.garbage_q:push(self.later_garbage[self.CLOCK])
+      self.later_garbage[self.CLOCK] = nil
     end
 
     self:remove_extra_rows()
+    
+    --double-check panels_in_top_row
 
-    local garbage = self.later_garbage[self.CLOCK]
-    if garbage then
-      for i = 1, #garbage do
-        self.garbage_q:push(garbage[i])
-      end
-    end
-    self.later_garbage[self.CLOCK - 409] = nil
-
-    -- Check for panels at or above the top.
     self.panels_in_top_row = false
     -- If any dangerous panels are in the top row, garbage should not fall.
     for col_idx = 1, width do
@@ -1611,6 +1651,24 @@ function Stack.PdP(self)
         self.panels_in_top_row = true
       end
     end
+
+    -- local garbage_fits_in_populated_top_row 
+    -- if self.garbage_q:len() > 0 then
+    --   --even if there are some panels in the top row,
+    --   --check if the next block in the garbage_q would fit anyway
+    --   --ie. 3-wide garbage might fit if there are three empty spaces where it would spawn
+    --   garbage_fits_in_populated_top_row = true
+    --   local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
+    --   local cols = self.garbage_cols[next_garbage_block_width]
+    --   local spawn_col = cols[cols.idx]
+    --   local spawn_row = #self.panels
+    --   for idx=spawn_col, spawn_col+next_garbage_block_width-1 do
+    --     if prow[idx]:dangerous() then 
+    --       garbage_fits_in_populated_top_row = nil
+    --     end
+    --   end
+    -- end
+    
     -- If any panels (dangerous or not) are in rows above the top row, garbage should not fall.
     for row_idx = top_row + 1, #self.panels do
       for col_idx = 1, width do
@@ -1631,103 +1689,101 @@ function Stack.PdP(self)
     end
 
     -- Update Music
-    if not GAME.gameIsPaused and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
-      if self:game_ended() == false and self.canvas ~= nil then
-        if self.do_countdown then
-          if SFX_Go_Play == 1 then
-            themes[config.theme].sounds.go:stop()
-            themes[config.theme].sounds.go:play()
-            SFX_Go_Play = 0
-          elseif SFX_Countdown_Play == 1 then
-            themes[config.theme].sounds.countdown:stop()
-            themes[config.theme].sounds.countdown:play()
-            SFX_Go_Play = 0
+    if self:shouldChangeMusic() then
+      if self.do_countdown then
+        if SFX_Go_Play == 1 then
+          themes[config.theme].sounds.go:stop()
+          themes[config.theme].sounds.go:play()
+          SFX_Go_Play = 0
+        elseif SFX_Countdown_Play == 1 then
+          themes[config.theme].sounds.countdown:stop()
+          themes[config.theme].sounds.countdown:play()
+          SFX_Go_Play = 0
+        end
+      else
+        local winningPlayer = self
+        if GAME.battleRoom then
+          winningPlayer = GAME.battleRoom:winningPlayer(P1, P2)
+        end
+
+        local musics_to_use = nil
+        local dynamicMusic = false
+        local stageHasMusic = current_stage and stages[current_stage].musics and stages[current_stage].musics["normal_music"]
+        local characterHasMusic = winningPlayer.character and characters[winningPlayer.character].musics and characters[winningPlayer.character].musics["normal_music"]
+        if ((current_use_music_from == "stage") and stageHasMusic) or not characterHasMusic then
+          if stages[current_stage].music_style == "dynamic" then
+            dynamicMusic = true
           end
+          musics_to_use = stages[current_stage].musics
+        elseif characterHasMusic then
+          if characters[winningPlayer.character].music_style == "dynamic" then
+            dynamicMusic = true
+          end
+          musics_to_use = characters[winningPlayer.character].musics
         else
-          local winningPlayer = self
-          if GAME.battleRoom then
-            winningPlayer = GAME.battleRoom:winningPlayer(P1, P2)
+          -- no music loaded
+        end
+
+        local wantsDangerMusic = self.danger_music
+        if self.garbage_target and self.garbage_target.danger_music then
+          wantsDangerMusic = true
+        end
+
+        if dynamicMusic then
+          local fadeLength = 60
+          if not self.fade_music_clock then
+            self.fade_music_clock = fadeLength -- start fully faded in
+            self.match.current_music_is_casual = true
           end
 
-          local musics_to_use = nil
-          local dynamicMusic = false
-          local stageHasMusic = current_stage and stages[current_stage].musics and stages[current_stage].musics["normal_music"]
-          local characterHasMusic = winningPlayer.character and characters[winningPlayer.character].musics and characters[winningPlayer.character].musics["normal_music"]
-          if ((current_use_music_from == "stage") and stageHasMusic) or not characterHasMusic then
-            if stages[current_stage].music_style == "dynamic" then
-              dynamicMusic = true
+          local normalMusic = {musics_to_use["normal_music"], musics_to_use["normal_music_start"]}
+          local dangerMusic = {musics_to_use["danger_music"], musics_to_use["danger_music_start"]}
+
+          if #currently_playing_tracks == 0 then
+            find_and_add_music(musics_to_use, "normal_music")
+            find_and_add_music(musics_to_use, "danger_music")
+          end
+
+          -- Do we need to switch music?
+          if self.match.current_music_is_casual ~= wantsDangerMusic then
+            self.match.current_music_is_casual = not self.match.current_music_is_casual
+
+            if self.fade_music_clock >= fadeLength then
+              self.fade_music_clock = 0 -- Do a full fade
+            else
+              -- switched music before we fully faded, so start part way through
+              self.fade_music_clock = fadeLength - self.fade_music_clock
             end
-            musics_to_use = stages[current_stage].musics
-          elseif characterHasMusic then
-            if characters[winningPlayer.character].music_style == "dynamic" then
-              dynamicMusic = true
-            end
-            musics_to_use = characters[winningPlayer.character].musics
+          end
+
+          if self.fade_music_clock < fadeLength then
+            self.fade_music_clock = self.fade_music_clock + 1
+          end
+
+          local fadePercentage = self.fade_music_clock / fadeLength
+          if wantsDangerMusic then
+            setFadePercentageForGivenTracks(1 - fadePercentage, normalMusic)
+            setFadePercentageForGivenTracks(fadePercentage, dangerMusic)
           else
-            -- no music loaded
+            setFadePercentageForGivenTracks(fadePercentage, normalMusic)
+            setFadePercentageForGivenTracks(1 - fadePercentage, dangerMusic)
           end
-
-          local wantsDangerMusic = self.danger_music
-          if self.garbage_target and self.garbage_target.danger_music then
-            wantsDangerMusic = true
-          end
-
-          if dynamicMusic then
-            local fadeLength = 60
-            if not self.fade_music_clock then
-              self.fade_music_clock = fadeLength -- start fully faded in
+        else -- classic music
+          if wantsDangerMusic then --may have to rethink this bit if we do more than 2 players
+            if (self.match.current_music_is_casual or #currently_playing_tracks == 0) and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
+              stop_the_music()
+              find_and_add_music(musics_to_use, "danger_music")
+              self.match.current_music_is_casual = false
+            elseif #currently_playing_tracks == 0 and musics_to_use["normal_music"] then
+              stop_the_music()
+              find_and_add_music(musics_to_use, "normal_music")
               self.match.current_music_is_casual = true
             end
-
-            local normalMusic = {musics_to_use["normal_music"], musics_to_use["normal_music_start"]}
-            local dangerMusic = {musics_to_use["danger_music"], musics_to_use["danger_music_start"]}
-
-            if #currently_playing_tracks == 0 then
+          else --we should be playing normal_music or normal_music_start
+            if (not self.match.current_music_is_casual or #currently_playing_tracks == 0) and musics_to_use["normal_music"] then
+              stop_the_music()
               find_and_add_music(musics_to_use, "normal_music")
-              find_and_add_music(musics_to_use, "danger_music")
-            end
-
-            -- Do we need to switch music?
-            if self.match.current_music_is_casual ~= wantsDangerMusic then
-              self.match.current_music_is_casual = not self.match.current_music_is_casual
-
-              if self.fade_music_clock >= fadeLength then
-                self.fade_music_clock = 0 -- Do a full fade
-              else
-                -- switched music before we fully faded, so start part way through
-                self.fade_music_clock = fadeLength - self.fade_music_clock
-              end
-            end
-
-            if self.fade_music_clock < fadeLength then
-              self.fade_music_clock = self.fade_music_clock + 1
-            end
-
-            local fadePercentage = self.fade_music_clock / fadeLength
-            if wantsDangerMusic then
-              setFadePercentageForGivenTracks(1 - fadePercentage, normalMusic)
-              setFadePercentageForGivenTracks(fadePercentage, dangerMusic)
-            else
-              setFadePercentageForGivenTracks(fadePercentage, normalMusic)
-              setFadePercentageForGivenTracks(1 - fadePercentage, dangerMusic)
-            end
-          else -- classic music
-            if wantsDangerMusic then --may have to rethink this bit if we do more than 2 players
-              if (self.match.current_music_is_casual or #currently_playing_tracks == 0) and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
-                stop_the_music()
-                find_and_add_music(musics_to_use, "danger_music")
-                self.match.current_music_is_casual = false
-              elseif #currently_playing_tracks == 0 and musics_to_use["normal_music"] then
-                stop_the_music()
-                find_and_add_music(musics_to_use, "normal_music")
-                self.match.current_music_is_casual = true
-              end
-            else --we should be playing normal_music or normal_music_start
-              if (not self.match.current_music_is_casual or #currently_playing_tracks == 0) and musics_to_use["normal_music"] then
-                stop_the_music()
-                find_and_add_music(musics_to_use, "normal_music")
-                self.match.current_music_is_casual = true
-              end
+              self.match.current_music_is_casual = true
             end
           end
         end
@@ -1735,7 +1791,7 @@ function Stack.PdP(self)
     end
 
     -- Update Sound FX
-    if not SFX_mute and self.canvas ~= nil and not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
+    if self:shouldChangeSoundEffects() then
       if SFX_Swap_Play == 1 then
         themes[config.theme].sounds.swap:stop()
         themes[config.theme].sounds.swap:play()
@@ -1833,35 +1889,111 @@ function Stack.PdP(self)
         SFX_Pop_Play = nil
         SFX_Garbage_Pop_Play = nil
       end
-      if stop_sounds then
-        stop_all_audio()
-        stop_sounds = nil
-      end
       if self.game_over or (self.garbage_target and self.garbage_target.game_over) then
-        if self.canvas ~= nil then
+        if self:shouldChangeSoundEffects() then
           SFX_GameOver_Play = 1
         end
       end
     end
 
     self.CLOCK = self.CLOCK + 1
-    if self.game_stopwatch_running and self.match.gameEndedClock == 0 then
+
+    if self.garbage_target and self.CLOCK > self.garbage_target.CLOCK + MAX_LAG then
+      self.garbage_target.tooFarBehindError = true
+    end
+
+    local gameEndedClockTime = self.match:gameEndedClockTime()
+    if self.game_stopwatch_running and (gameEndedClockTime == 0 or self.CLOCK <= gameEndedClockTime) then
       self.game_stopwatch = (self.game_stopwatch or -1) + 1
     end
   end
+
+  self:update_popfxs()
+  self:update_cards()
+end
+
+function Stack:receiveGarbage(frameToReceive, garbageList)
+
+  -- If we are past the frame the attack would be processed we need to rollback
+  if self.CLOCK > frameToReceive then
+    self:rollbackToFrame(frameToReceive)
+  end
+
+  local garbage = self.later_garbage[frameToReceive] or {}
+  for i = 1, #garbageList do
+    garbage[#garbage + 1] = garbageList[i]
+  end
+  self.later_garbage[frameToReceive] = garbage
+end
+
+function Stack:updateFramesBehind()
+  if self.garbage_target and self.garbage_target ~= self then
+    if not self.framesBehindArray[self.CLOCK] then
+      local framesBehind = math.max(0, self.garbage_target.CLOCK - self.CLOCK)
+      self.framesBehindArray[self.CLOCK] = framesBehind
+      self.totalFramesBehind = self.totalFramesBehind + framesBehind
+    end
+  end
+end
+
+function Stack.behindRollback(self)
+  if self.lastRollbackFrame > self.CLOCK then
+    return true
+  end
+
+  return false
+end
+
+function Stack.shouldChangeMusic(self)
+  local result = not GAME.gameIsPaused and not GAME.preventSounds
+
+  if result then
+    if self:game_ended() or self.canvas == nil then
+      result = false
+    end
+
+    -- If we are still catching up from rollback don't play sounds again
+    if self:behindRollback() then
+      result = false
+    end
+
+    if self.play_to_end then
+      result = false
+    end
+
+    if self.garbage_target and self.garbage_target.play_to_end then
+      result = false
+    end
+  end
+
+  return result
+end
+
+
+function Stack.shouldChangeSoundEffects(self)
+  local result = self:shouldChangeMusic() and not SFX_mute
+
+  return result
+end
+
+function Stack:averageFramesBehind()
+  local average = tonumber(string.format("%1.1f", round(self.totalFramesBehind / math.max(self.CLOCK, 1)), 1))
+  return average
 end
 
 -- Returns true if the stack is simulated past the end of the match.
 function Stack.game_ended(self)
 
+  local gameEndedClockTime = self.match:gameEndedClockTime()
+
   if self.match.mode == "vs" then
     -- Note we use "greater" and not "greater than or equal" because our stack may be currently processing this clock frame.
     -- At the end of the clock frame it will be incremented and we know we have process the game over clock frame.
-    if self.match.gameEndedClock > 0 and self.CLOCK > self.match.gameEndedClock then
+    if gameEndedClockTime > 0 and self.CLOCK > gameEndedClockTime then
       return true
     end
   elseif self.match.mode == "time" then
-    if self.match.gameEndedClock > 0 and self.CLOCK > self.match.gameEndedClock then
+    if gameEndedClockTime > 0 and self.CLOCK > gameEndedClockTime then
       return true
     elseif self.game_stopwatch then
       if self.game_stopwatch > time_attack_time * 60 then
@@ -1869,7 +2001,7 @@ function Stack.game_ended(self)
       end
     end
   elseif self.match.mode == "endless" then
-    if self.match.gameEndedClock > 0 and self.CLOCK > self.match.gameEndedClock then
+    if gameEndedClockTime > 0 and self.CLOCK > gameEndedClockTime then
       return true
     end
   elseif self.match.mode == "puzzle" then
@@ -1888,23 +2020,25 @@ function Stack.gameResult(self)
   if self:game_ended() == false then
     return nil
   end
-  
+
+  local gameEndedClockTime = self.match:gameEndedClockTime()
+
   if self.match.mode == "vs" then
     local otherPlayer = self.garbage_target
     if otherPlayer == self or otherPlayer == nil then
       return -1
     -- We can't call it until someone has lost and everyone has played up to that point in time.
     elseif otherPlayer:game_ended() then
-      if self.game_over_clock == self.match.gameEndedClock and otherPlayer.game_over_clock == self.match.gameEndedClock then
+      if self.game_over_clock == gameEndedClockTime and otherPlayer.game_over_clock == gameEndedClockTime then
         return 0
-      elseif self.game_over_clock == self.match.gameEndedClock then
+      elseif self.game_over_clock == gameEndedClockTime then
         return -1
-      elseif otherPlayer.game_over_clock == self.match.gameEndedClock then
+      elseif otherPlayer.game_over_clock == gameEndedClockTime then
         return 1
       end
     end
   elseif self.match.mode == "time" then
-    if self.match.gameEndedClock > 0 and self.CLOCK > self.match.gameEndedClock then
+    if gameEndedClockTime > 0 and self.CLOCK > gameEndedClockTime then
       return -1
     elseif self.game_stopwatch then
       if self.game_stopwatch > time_attack_time * 60 then
@@ -1912,7 +2046,7 @@ function Stack.gameResult(self)
       end
     end
   elseif self.match.mode == "endless" then
-    if self.match.gameEndedClock > 0 and self.CLOCK > self.match.gameEndedClock then
+    if gameEndedClockTime > 0 and self.CLOCK > gameEndedClockTime then
       return -1
     end
   elseif self.match.mode == "puzzle" then
@@ -1926,15 +2060,16 @@ function Stack.gameResult(self)
   return nil
 end
 
--- Sets the current stack as "lost" will update the match too if they lost first.
+-- Sets the current stack as "lost"
 -- Also begins drawing game over effects
 function Stack.set_game_over(self)
+
+  if self.game_over_clock ~= 0 then
+    error("should not set gameover when it is already set")
+  end
+  
   self.game_over = true
   self.game_over_clock = self.CLOCK
-
-  if self.match.gameEndedClock == 0 or self.CLOCK <= self.match.gameEndedClock then
-    self.match.gameEndedClock = self.CLOCK
-  end
 
   if self.canvas then
     local popsize = "small"
@@ -2009,7 +2144,7 @@ function Stack.swap(self)
   panels[row][col].timer = 4
   panels[row][col + 1].timer = 4
 
-  if self.canvas ~= nil then
+  if self:shouldChangeSoundEffects() then
     SFX_Swap_Play = 1
   end
 
@@ -2058,6 +2193,8 @@ end
 
 -- drops a width x height garbage.
 function Stack.drop_garbage(self, width, height, metal)
+
+  logger.debug("dropping garbage at frame "..self.CLOCK)
   local spawn_row = self.height + 1
 
   -- Do one last check for panels in the way.
@@ -2109,116 +2246,6 @@ function Stack.drop_garbage(self, width, height, metal)
   end
 
   return true
-end
-
--- prepare to send some garbage!
--- also, delay any combo garbage that wasn't sent out yet
--- and set it to be sent at the same time as this garbage.
-function Stack.set_combo_garbage(self, n_combo, n_metal)
-  local stuff_to_send = {}
-  for i = 3, n_metal do
-    stuff_to_send[#stuff_to_send + 1] = {6, 1, true, false}
-  end
-  local combo_pieces = combo_garbage[n_combo]
-
-  for i = 1, #combo_pieces do
-    stuff_to_send[#stuff_to_send + 1] = {combo_pieces[i], 1, false, false}
-  end
-  for k, v in pairs(self.garbage_to_send) do
-    if type(k) == "number" then
-      for i = 1, #v do
-        stuff_to_send[#stuff_to_send + 1] = v[i]
-      end
-      self.garbage_to_send[k] = nil
-    end
-  end
-  self.garbage_to_send[self.CLOCK + GARBAGE_TRANSIT_TIME] = stuff_to_send
-end
-
--- the chain is over!
--- let's send it and the stuff waiting on it.
-function Stack.set_chain_garbage(self, n_chain)
-  local tab = self.garbage_to_send[self.CLOCK]
-  if not tab then
-    tab = {}
-    self.garbage_to_send[self.CLOCK] = tab
-  end
-  local to_add = self.garbage_to_send.chain
-  if to_add then
-    for i = 1, #to_add do
-      tab[#tab + 1] = to_add[i]
-    end
-    self.garbage_to_send.chain = nil
-  end
-  tab[#tab + 1] = {6, n_chain - 1, false, true}
-end
-
--- actually sends the garbage
--- TODO rename
-function Stack.really_send(self, to_send)
-  if self.garbage_target then
-    self.garbage_target:recv_garbage(self.CLOCK + GARBAGE_DELAY, to_send)
-  end
-end
-
--- Receives garbage on to the stack, rewinding the stack and simulating it again if needed.
-function Stack.recv_garbage(self, time, to_recv)
-  if self.CLOCK > time and self.prev_states then
-    local prev_states = self.prev_states
-    local next_self = prev_states[time + 1]
-    while next_self and (next_self.prev_active_panels ~= 0 or next_self.n_active_panels ~= 0) do
-      time = time + 1
-      next_self = prev_states[time + 1]
-    end
-    if self.CLOCK - time > 200 then
-      error("Latency is too high :(")
-    else
-      local CLOCK = self.CLOCK
-      local old_self = prev_states[time]
-      --MAGICAL ROLLBACK!?!?
-      self.in_rollback = true
-      logger.trace("attempting magical rollback with difference = " .. self.CLOCK - time .. " at time " .. self.CLOCK)
-
-      if self.garbage_target then
-        -- The garbage that we send this time might (rarely) not be the same
-        -- as the garbage we sent before.  Wipe out the garbage we sent before...
-        local first_wipe_time = time + GARBAGE_DELAY
-        local other_later_garbage = self.garbage_target.later_garbage
-        for k, v in pairs(other_later_garbage) do
-          if k >= first_wipe_time then
-            other_later_garbage[k] = nil
-          end
-        end
-        -- and record the garbage that we send this time!
-      end
-
-      -- We can do it like this because the sender of the garbage
-      -- and self.garbage_target are the same thing.
-      -- Since we're in this code at all, we know that self.garbage_target
-      -- is waaaaay behind us, so it couldn't possibly have processed
-      -- the garbage that we sent during the frames we're rolling back.
-      --
-      -- If a mode with >2 players is implemented, we can continue doing
-      -- the same thing as long as we keep all of the opponents'
-      -- stacks in sync.
-
-      self:fromcpy(prev_states[time])
-      self:recv_garbage(time, to_recv)
-
-      for t = time, CLOCK - 1 do
-        self.input_state = prev_states[t].input_state
-        self:mkcpy(prev_states[t]) -- copy self into prev_states t
-        self:controls()
-        self:PdP()
-      end
-      self.in_rollback = nil
-    end
-  end
-  local garbage = self.later_garbage[time] or {}
-  for i = 1, #to_recv do
-    garbage[#garbage + 1] = to_recv[i]
-  end
-  self.later_garbage[time] = garbage
 end
 
 -- Goes through whole stack checking for matches and updating chains etc based on matches.
@@ -2297,7 +2324,7 @@ function Stack.check_matches(self)
       -- We matched a new garbage
       if ((metal and panel.metal) or (normal and not panel.metal)) and panel.garbage and not garbage[panel] then
         garbage[panel] = true
-        if self.canvas ~= nil then
+        if self:shouldChangeSoundEffects() then
           SFX_garbage_match_play = true
         end
         if y <= self.height then
@@ -2356,11 +2383,14 @@ function Stack.check_matches(self)
         panel.height = panel.height - 1
         if panel.y_offset == -1 then
           if gpan_row == nil then
+            if string.len(self.gpanel_buffer) <= 10 * self.width then
+              local garbagePanels = PanelGenerator.makeGarbagePanels(self.match.seed + self.garbageGenCount, self.NCOLORS, self.gpanel_buffer, self.match.mode, self.level)
+              self.gpanel_buffer = self.gpanel_buffer .. garbagePanels
+              logger.info("Generating garbage with seed: " .. self.match.seed + self.garbageGenCount .. " buffer: " .. self.gpanel_buffer)
+              self.garbageGenCount = self.garbageGenCount + 1
+            end
             gpan_row = string.sub(self.gpanel_buffer, 1, 6)
             self.gpanel_buffer = string.sub(self.gpanel_buffer, 7)
-            if string.len(self.gpanel_buffer) <= 10 * self.width then
-              ask_for_gpanels(string.sub(self.panel_buffer, -6), self)
-            end
           end
           panel.color = string.sub(gpan_row, col, col) + 0
           if is_chain then
@@ -2415,6 +2445,10 @@ function Stack.check_matches(self)
   end
 
   if (combo_size ~= 0) then
+    self.combos[self.CLOCK] = combo_size
+    if self.garbage_target and self.telegraph and metal_count == 3 and combo_size >= 3 then
+      self.telegraph:push({6, 1, true, false}, first_panel_col, first_panel_row, self.CLOCK)
+    end
     self.analytic:register_destroyed_panels(combo_size)
     if (combo_size > 3) then
       if (score_mode == SCOREMODE_TA) then
@@ -2431,15 +2465,36 @@ function Stack.check_matches(self)
       end
 
       self:enqueue_card(false, first_panel_col, first_panel_row, combo_size)
+      if self.garbage_target and self.telegraph then
+        if metal_count > 3 then
+          for i = 3, metal_count do
+            self.telegraph:push({6, 1, true, false}, first_panel_col, first_panel_row, self.CLOCK)
+          end
+        end
+        if metal_count ~= combo_size then
+          local combo_pieces = combo_garbage[combo_size]
+          for i=1,#combo_pieces do
+            self.telegraph:push({combo_pieces[i], 1, false, false}, first_panel_col, first_panel_row, self.CLOCK)
+          end
+        end
+      end
       --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
       --          first_panel_row<<4+P1StackPosY+self.displacement-9);
       --TODO: this stuff ^
       first_panel_row = first_panel_row + 1 -- offset chain cards
     end
     if (is_chain) then
+      if self.chain_counter == 2 then
+        self.chains.current = self.CLOCK
+        self.chains[self.CLOCK] = {start = self.CLOCK}  -- a bit redundant, but might come in handy, maybe, probably not.  The key is the same as .start.
+      end
+      self.chains[self.chains.current].size = self.chain_counter
       self:enqueue_card(true, first_panel_col, first_panel_row, self.chain_counter)
     --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
     --          first_panel_row<<4+P1StackPosY+self.displacement-9);
+      if self.garbage_target and self.telegraph then
+        self.telegraph:push({6, self.chain_counter - 1, false, true}, first_panel_col, first_panel_row, self.CLOCK)
+      end
     end
     local chain_bonus = self.chain_counter
     if (score_mode == SCOREMODE_TA) then
@@ -2453,7 +2508,7 @@ function Stack.check_matches(self)
       if self.panels_in_top_row and is_chain then
         if self.level then
           local length = (self.chain_counter > 4) and 6 or self.chain_counter
-          stop_time = -8 * self.level + 168 + (self.chain_counter - 1) * (-2 * self.level + 22)
+          stop_time = -8 * self.level + 168 + (length - 1) * (-2 * self.level + 22)
         else
           stop_time = stop_time_danger[self.difficulty]
         end
@@ -2484,10 +2539,12 @@ function Stack.check_matches(self)
       --MrStopTimer=MrStopAni[self.stop_time];
       --TODO: Mr Stop ^
       -- @CardsOfTheHeart says there are 4 chain sfx: --x2/x3, --x4, --x5 is x2/x3 with an echo effect, --x6+ is x4 with an echo effect
-      if is_chain then
-        self.combo_chain_play = {e_chain_or_combo.chain, self.chain_counter}
-      elseif combo_size > 3 then
-        self.combo_chain_play = {e_chain_or_combo.combo, "combos"}
+      if self:shouldChangeSoundEffects() then
+        if is_chain then
+          self.combo_chain_play = {e_chain_or_combo.chain, self.chain_counter}
+        elseif combo_size > 3 then
+          self.combo_chain_play = {e_chain_or_combo.combo, "combos"}
+        end
       end
       self.sfx_land = false
     end
@@ -2503,7 +2560,6 @@ function Stack.check_matches(self)
     elseif metal_count > 2 then
       self.combo_chain_play = {e_chain_or_combo.combo, "combos"}
     end
-    self:set_combo_garbage(combo_size, metal_count)
   end
 end
 
@@ -2565,9 +2621,16 @@ function Stack.new_row(self)
     panels[1][col].state = "normal"
   end
 
-  if string.len(self.panel_buffer) < self.width then
-    error("Ran out of buffered panels.  Is the server down?")
+  if string.len(self.panel_buffer) <= 10 * self.width then
+    local opponentLevel = nil
+    if self.garbage_target then
+      opponentLevel = self.garbage_target.level
+    end
+    self.panel_buffer = PanelGenerator.makePanels(self.match.seed + self.panelGenCount, self.NCOLORS, self.panel_buffer, self.match.mode, self.level, opponentLevel)
+    logger.info("generating panels with seed: " .. self.match.seed + self.panelGenCount .. " buffer: " .. self.panel_buffer)
+    self.panelGenCount = self.panelGenCount + 1
   end
+
   -- generate a new row
   local metal_panels_this_row = 0
   if self.metal_panels_queued > 3 then
@@ -2580,7 +2643,7 @@ function Stack.new_row(self)
   for col = 1, self.width do
     local panel = Panel()
     panels[0][col] = panel
-    this_panel_color = string.sub(self.panel_buffer, col, col)
+    local this_panel_color = string.sub(self.panel_buffer, col, col)
     --a capital letter for the place where the first shock block should spawn (if earned), and a lower case letter is where a second should spawn (if earned).  (color 8 is metal)
     if tonumber(this_panel_color) then
       --do nothing special
@@ -2601,27 +2664,5 @@ function Stack.new_row(self)
     panel.state = "dimmed"
   end
   self.panel_buffer = string.sub(self.panel_buffer, 7)
-  if string.len(self.panel_buffer) <= 10 * self.width then
-    ask_for_panels(string.sub(self.panel_buffer, -6), self)
-  end
   self.displacement = 16
 end
-
---[[function quiet_cursor_movement()
-  if self.cur_timer == 0 then
-    return
-  end
-   -- the cursor will move if a direction's was just pressed or has been
-   -- pressed for at least the self.cur_wait_time
-  self.move_sound = true
-  if self.cur_dir and (self.cur_timer == 1 or
-    self.cur_timer == self.cur_wait_time) then
-    self.cur_row = bound(0, self.cur_row + d_row[self.cur_dir],
-            self.bottom_row)
-    self.cur_col = bound(0, self.cur_col + d_col[self.cur_dir],
-            self.width - 2)
-  end
-  if self.cur_timer ~= self.cur_wait_time then
-    self.cur_timer = self.cur_timer + 1
-  end
-end--]]

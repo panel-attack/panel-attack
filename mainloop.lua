@@ -81,6 +81,7 @@ function fmainloop()
     require("ServerQueueTests")
     require("StackTests")
     require("table_util_tests")
+    require("csprngTests")
   end
 
   while true do
@@ -108,9 +109,6 @@ function variable_step(f)
       leftover_time = leftover_time - 1 / 60
       if leftover_time >= 1 / 60 then
         GAME.droppedFrames = GAME.droppedFrames + 1
-      --if GAME.match then
-      --print("Dropped Frame, total is: " .. GAME.droppedFrames)
-      --end
       end
     end
   end
@@ -119,12 +117,16 @@ end
 do
   function main_select_mode()
     CLICK_MENUS = {}
-    if themes[config.theme].musics["main"] then
-      find_and_add_music(themes[config.theme].musics, "main")
+    if next(currently_playing_tracks) == nil then
+      stop_the_music()
+      if themes[config.theme].musics["main"] then
+        find_and_add_music(themes[config.theme].musics, "main")
+      end
     end
     character_loader_clear()
     stage_loader_clear()
     close_socket()
+    undo_stonermode()
     GAME.backgroundImage = themes[config.theme].images.bg_main
     GAME.battleRoom = nil
     GAME.input:clearInputConfigurationsForPlayers()
@@ -160,15 +162,15 @@ do
       {loc("mm_1_vs"), main_local_vs_yourself_setup},
       {loc("mm_1_training"), training_setup},
       --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
-      {loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
+      --{loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
-      --{loc("mm_2_vs_online", "betaserver.panelattack.com"), main_net_vs_setup, {"betaserver.panelattack.com"}},
+      {loc("mm_2_vs_online", ""), main_net_vs_setup, {"betaserver.panelattack.com", 59569}},
       --{loc("mm_2_vs_online", "(USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)"), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "This test build is for offline-use only"), main_select_mode},
       --{loc("mm_2_vs_online", "domi1819.xyz"), main_net_vs_setup, {"domi1819.xyz"}},
       --{loc("mm_2_vs_online", "(development-use only)"), main_net_vs_setup, {"localhost"}},
       --{loc("mm_2_vs_online", "LittleEndu's server"), main_net_vs_setup, {"51.15.207.223"}},
-      {loc("mm_2_vs_online", "server for ranked Ex Mode"), main_net_vs_setup, {"exserver.panelattack.com", 49568}},
+      --{loc("mm_2_vs_online", "server for ranked Ex Mode"), main_net_vs_setup, {"exserver.panelattack.com", 49568}},
       {loc("mm_2_vs_local"), main_local_vs_setup},
       {loc("mm_replay_browser"), replay_browser.main},
       {loc("mm_configure"), main_config_input},
@@ -267,12 +269,15 @@ local function commonGameSetup()
   pick_use_music_from()
 end
 
-function createNewReplay(mode)
+function createNewReplay(match)
+  local mode = match.mode
   local result = {}
   result.engineVersion = VERSION
 
   result[mode] = {}
   local modeReplay = result[mode]
+
+  modeReplay.seed = match.seed
 
   if mode == "endless" or mode == "time" then
     modeReplay.do_countdown = P1.do_countdown or false
@@ -326,9 +331,7 @@ end
 
 local function finalizeAndWriteReplay(extraPath, extraFilename)
 
-  replay[GAME.match.mode].in_buf = P1.input_buffer_record
-  replay[GAME.match.mode].P = P1.panel_buffer_record
-  replay[GAME.match.mode].Q = P1.gpanel_buffer_record
+  replay[GAME.match.mode].in_buf = P1.confirmedInput
 
   local now = os.date("*t", to_UTC(os.time()))
   local sep = "/"
@@ -346,13 +349,13 @@ local function finalizeAndWriteReplay(extraPath, extraFilename)
   write_replay_file(path, filename)
 end
 
-local function finalizeAndWriteVsReplay(battleRoom, outcome_claim)
+local function finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGame)
 
+  incompleteGame = incompleteGame or false
+  
   local extraPath, extraFilename
   if P2 then
-    replay[GAME.match.mode].I = P2.input_buffer_record
-    replay[GAME.match.mode].O = P2.panel_buffer_record
-    replay[GAME.match.mode].R = P2.gpanel_buffer_record
+    replay[GAME.match.mode].I = P2.confirmedInput
 
     local rep_a_name, rep_b_name = battleRoom.playerNames[1], battleRoom.playerNames[2]
     --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
@@ -365,10 +368,14 @@ local function finalizeAndWriteVsReplay(battleRoom, outcome_claim)
     if match_type and match_type ~= "" then
       extraFilename = extraFilename .. "-" .. match_type
     end
-    if outcome_claim == 1 or outcome_claim == 2 then
-      extraFilename = extraFilename .. "-P" .. outcome_claim .. "wins"
-    elseif outcome_claim == 0 then
-      extraFilename = extraFilename .. "-draw"
+    if incompleteGame then
+      extraFilename = extraFilename .. "-INCOMPLETE"
+    else
+      if outcome_claim == 1 or outcome_claim == 2 then
+        extraFilename = extraFilename .. "-P" .. outcome_claim .. "wins"
+      elseif outcome_claim == 0 then
+        extraFilename = extraFilename .. "-draw"
+      end
     end
   else -- vs Self
     extraPath = "Vs Self"
@@ -380,15 +387,12 @@ end
 
 local function runMainGameLoop(updateFunction, variableStepFunction, abortGameFunction, processGameResultsFunction)
 
-  --Uncomment below to induce lag
-  --STONER_MODE = true
-
   local returnFunction = nil
   while true do
     -- Uncomment this to cripple your game :D
     -- love.timer.sleep(0.030)
 
-    -- don't spend time rendering when catching up to a current spectate match
+    -- Render only if we are not catching up to a current spectate match
     if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
       GAME.match:render()
       wait()
@@ -453,10 +457,8 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
   P1.do_countdown = config.ready_countdown_1P or false
   P2 = nil
 
-  replay = createNewReplay(mode)
+  replay = createNewReplay(GAME.match)
 
-  make_local_panels(P1, "000000")
-  make_local_gpanels(P1, "000000")
   P1:starting_state()
 
   local nextFunction = nil
@@ -500,6 +502,7 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
 end
 
 function training_setup()
+  -- TODO make "illegal garbage blocks" possible again in telegraph.
   local trainingModeSettings = {}
   trainingModeSettings.height = 1
   trainingModeSettings.width = 6
@@ -536,9 +539,11 @@ function training_setup()
     trainingModeSettings.width = bound(1, trainingModeSettings.width - 1, 6)
     update_width()
   end
+
   local function goToStart()
     trainingSettingsMenu:set_active_idx(#trainingSettingsMenu.buttons - 1)
   end
+
   local function goEscape()
     trainingSettingsMenu:set_active_idx(#trainingSettingsMenu.buttons)
   end
@@ -619,8 +624,11 @@ local function main_select_speed_99(mode)
 
   GAME.backgroundImage = themes[config.theme].images.bg_main
   reset_filters()
-  if themes[config.theme].musics["main"] then
-    find_and_add_music(themes[config.theme].musics, "main")
+  if next(currently_playing_tracks) == nil then
+    stop_the_music()
+    if themes[config.theme].musics["main"] then
+      find_and_add_music(themes[config.theme].musics, "main")
+    end
   end
 
   local gameSettingsMenu, updateType, updateMenus
@@ -833,11 +841,15 @@ end
 
 -- The menu where you spectate / join net vs games
 function main_net_vs_lobby()
-  if themes[config.theme].musics.main then
-    find_and_add_music(themes[config.theme].musics, "main")
+  if next(currently_playing_tracks) == nil then
+    stop_the_music()
+    if themes[config.theme].musics["main"] then
+      find_and_add_music(themes[config.theme].musics, "main")
+    end
   end
   GAME.backgroundImage = themes[config.theme].images.bg_main
   GAME.battleRoom = nil
+  undo_stonermode()
   reset_filters()
   character_loader_clear()
   stage_loader_clear()
@@ -1173,7 +1185,7 @@ function main_net_vs_setup(ip, network_port)
     end
   end
   P1 = nil
-  P2 = {panel_buffer = "", gpanel_buffer = ""}
+  P2 = {}
   server_queue = ServerQueue()
   gprint(loc("lb_set_connect"), unpack(main_menu_screen_pos))
   wait()
@@ -1199,6 +1211,9 @@ function main_net_vs()
   GAME.match.supportsPause = false
 
   commonGameSetup()
+
+  --Uncomment below to induce lag
+  --STONER_MODE = true
   
   local function update() 
     local messages = server_queue:pop_all_with("taunt", "leave_room")
@@ -1221,8 +1236,24 @@ function main_net_vs()
             taunts[math.random(#taunts)]:play()
           end
         end
-      elseif msg.leave_room then --reset win counts and go back to lobby
-        return {main_dumb_transition, {main_net_vs_lobby, "", 0, 0}} -- someone left the game, quit to lobby
+      elseif msg.leave_room then -- lost room during game, go back to lobby
+        finalizeAndWriteVsReplay(GAME.match.battleRoom, 0, true)
+
+        -- Show a message that the match connection was lost along with the average frames behind.
+        local message = loc("ss_room_closed_in_game")
+
+        local P1Behind = P1:averageFramesBehind()
+        local P2Behind = P2:averageFramesBehind()
+        local maxBehind = math.max(P1Behind, P2Behind)
+
+        if GAME.battleRoom.spectating then
+          message = message .. "\n" .. loc("ss_average_frames_behind_player", GAME.battleRoom.playerNames[1], P1Behind)
+          message = message .. "\n" .. loc("ss_average_frames_behind_player", GAME.battleRoom.playerNames[2], P2Behind)
+        else 
+          message = message .. "\n" .. loc("ss_average_frames_behind", maxBehind)
+        end
+
+        return {main_dumb_transition, {main_net_vs_lobby, message, 60, -1}}
       end
     end
 
@@ -1231,6 +1262,15 @@ function main_net_vs()
     end
 
     process_all_data_messages() -- Receive game play inputs from the network
+
+    if not GAME.battleRoom.spectating then
+      if P1.tooFarBehindError or P2.tooFarBehindError then
+        finalizeAndWriteVsReplay(GAME.match.battleRoom, 0, true)
+        GAME:clearMatch()
+        json_send({leave_room = true})
+        return {main_dumb_transition, {main_net_vs_lobby, loc("ss_latency_error"), 60, -1}}
+      end
+    end
   end
   
   local function variableStep() 
@@ -1290,7 +1330,7 @@ function main_local_vs()
 
   commonGameSetup()
 
-  replay = createNewReplay(GAME.match.mode)
+  replay = createNewReplay(GAME.match)
   
   local function update() 
     assert((P1.CLOCK == P2.CLOCK), "should run at same speed: " .. P1.CLOCK .. " - " .. P2.CLOCK)
@@ -1342,7 +1382,7 @@ function main_local_vs_yourself()
 
   commonGameSetup()
 
-  replay = createNewReplay(GAME.match.mode)
+  replay = createNewReplay(GAME.match)
   
   local function update() 
 
@@ -1375,13 +1415,15 @@ function loadFromReplay(replay)
 
     GAME.battleRoom = BattleRoom()
     GAME.match = Match("vs", GAME.battleRoom)
+    GAME.match.seed = replay.seed or 0
+    GAME.match.isFromReplay = true
     P1 = Stack{which=1, match=GAME.match, is_local=false, level=replay.P1_level or 5, character=replay.P1_char}
 
-    if replay.O and string.len(replay.O) > 0 then
+    if replay.I and string.len(replay.I) > 0 then
       P2 = Stack{which=2, match=GAME.match, is_local=false, level=replay.P2_level or 5, character=replay.P2_char}
       
-      P1.garbage_target = P2
-      P2.garbage_target = P1
+      P1:set_garbage_target(P2)
+      P2:set_garbage_target(P1)
       P2:moveForPlayerNumber(2)
 
       if replay.P1_win_count then
@@ -1390,7 +1432,7 @@ function loadFromReplay(replay)
       end
 
     else
-      P1.garbage_target = P1
+      P1:set_garbage_target(P1)
     end
 
     GAME.battleRoom.playerNames[1] = replay.P1_name or loc("player_n", "1")
@@ -1410,9 +1452,11 @@ function loadFromReplay(replay)
     else
       GAME.match = Match("endless")
     end
-
+    
     replay = replay.endless or replay.time
 
+    GAME.match.seed = replay.seed or 0
+    
     if replay.pan_buf then
       replay.P = replay.pan_buf -- support old versions
     end
@@ -1422,9 +1466,7 @@ function loadFromReplay(replay)
     P1:wait_for_random_character()
   end
 
-  P1.input_buffer = uncompress_input_string(replay.in_buf)
-  P1.panel_buffer = replay.P
-  P1.gpanel_buffer = replay.Q
+  P1:receiveConfirmedInput(uncompress_input_string(replay.in_buf))
   GAME.match.P1 = P1
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
@@ -1434,9 +1476,7 @@ function loadFromReplay(replay)
   character_loader_load(P1.character)
 
   if P2 then
-    P2.input_buffer = uncompress_input_string(replay.I)
-    P2.panel_buffer = replay.O
-    P2.gpanel_buffer = replay.R
+    P2:receiveConfirmedInput(uncompress_input_string(replay.I))
 
     GAME.match.P2 = P2
     P2.do_countdown = replay.do_countdown or false
@@ -1781,10 +1821,32 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX, keep
   text = text or ""
   timemin = timemin or 0
   timemax = timemax or -1 -- negative values means the user needs to press enter/escape to continue
+
+  if timemax <= -1 then   
+    local button_text = loc("continue_button") or ""
+    text = text .. "\n\n" .. button_text
+  end
+
   local t = 0
   local font = love.graphics.getFont()
+
+  local x = canvas_width / 2
+  local y = canvas_height / 2
+  local backgroundPadding = 10
+  local textObject = love.graphics.newText(get_global_font(), text)
+  local width = textObject:getWidth()
+  local height = textObject:getHeight()
+  
   while true do
-    gprint(text, (canvas_width - font:getWidth(text)) / 2, (canvas_height - font:getHeight()) / 2)
+
+    -- We need to keep processing network messages during a transition so we don't get booted by the server for not responding.
+    if network_connected() then
+      do_messages()
+    end
+
+    grectangle_color("fill", (x - (width/2) - backgroundPadding) / GFX_SCALE, (y - (height/2) - backgroundPadding) / GFX_SCALE, (width + 2 * backgroundPadding)/GFX_SCALE, (height + 2 * backgroundPadding)/GFX_SCALE, 0, 0, 0, 0.5)
+    menu_drawf(textObject, x, y, "center", "center", 0)
+
     wait()
     local ret = nil
     variable_step(
@@ -1793,11 +1855,6 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX, keep
           ret = {next_func}
         end
         t = t + 1
-        --if network_connected() then
-        --  if not do_messages() then
-        --    -- do something? probably shouldn't drop back to the main menu transition since we're already here
-        --  end
-        --end
       end
     )
     if ret then

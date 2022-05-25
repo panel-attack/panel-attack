@@ -23,8 +23,6 @@ Tetris Attack.  Many fewer initial configurations are posible in Tetris Attack,
 and Tetris Attack's procedure for [!] blocks is based on how many
 panels the player clears, while panel-attack's is not.
 
-
-
 In Tetris Attack, a stack of garbage that should all begin falling at the same
 time will occasionally separate.  panel-attack will not implement this bug.
 
@@ -34,3 +32,10 @@ will not implement this bug.
 
 In Panel de Pon (but not in Tetris Attack), a 32 combo gives too many points.
 panel-attack will not implement this bug.
+
+In Tetris Attack, when you are topped out and have run out of stop and shake time,
+you can be granted a "grace period". This grace period comes in the form of
+literal stop time, and it will not be granted again until you are no longer topped out.
+panel-attack instead implements this in the form of "health". Health only drains when
+the player is topped out and has run out of stop/shake time. Health is seperate from stop/shake time.
+Health is restored when you are no longer topped out.

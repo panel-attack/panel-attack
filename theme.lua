@@ -207,6 +207,8 @@ function Theme.graphics_init(self)
   self.images.IMG_multibar_stop_bar = load_theme_img("multibar_stop_bar")
   self.images.IMG_multibar_shake_bar = load_theme_img("multibar_shake_bar")
 
+  self.images.IMG_bug = load_theme_img("bug")
+
   --play field frames, plus the wall at the bottom.
   self.images.IMG_frame1P = load_theme_img("frame/frame1P")
   self.images.IMG_wall1P = load_theme_img("frame/wall1P")

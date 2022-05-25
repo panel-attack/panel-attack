@@ -472,25 +472,41 @@ function Stack.render(self)
 
   -- Draw debug graphics if set
   if config.debug_mode then
-    local mx, my = love.mouse.getPosition()
+    local mx, my = transform_coordinates(love.mouse.getPosition())
+
     for row = 0, self.height do
       for col = 1, self.width do
         local panel = self.panels[row][col]
         local draw_x = (self.pos_x + (col - 1) * 16) * GFX_SCALE
         local draw_y = (self.pos_y + (11 - (row)) * 16 + self.displacement - shake) * GFX_SCALE
-        if panel.color ~= 0 and panel.state ~= "popped" then
-          gprint(panel.state, draw_x, draw_y)
-          if panel.match_anyway ~= nil then
-            gprint(tostring(panel.match_anyway), draw_x, draw_y + 10)
-            if panel.debug_tag then
-              gprint(tostring(panel.debug_tag), draw_x, draw_y + 20)
+
+        -- Require hovering over a stack to show details
+        if mx >= self.pos_x * GFX_SCALE and mx <= (self.pos_x + self.width * 16) * GFX_SCALE then
+          if panel.color ~= 0 and panel.state ~= "popped" then
+            gprint(panel.state, draw_x, draw_y)
+            if panel.match_anyway ~= nil then
+              gprint(tostring(panel.match_anyway), draw_x, draw_y + 10)
+              if panel.debug_tag then
+                gprint(tostring(panel.debug_tag), draw_x, draw_y + 20)
+              end
+            end
+            if panel.chaining then
+              gprint("chaining", draw_x, draw_y + 30)
             end
           end
-          gprint(panel.chaining and "chaining" or "nah", draw_x, draw_y + 30)
         end
+
         if mx >= draw_x and mx < draw_x + 16 * GFX_SCALE and my >= draw_y and my < draw_y + 16 * GFX_SCALE then
-          GAME.debug_mouse_panel = {row, col, panel}
-          draw(panels[self.panels_dir].images.classic[9][1], draw_x + 16, draw_y + 16)
+          local str = loc("pl_panel_info", row, col)
+          for k, v in pairsSortedByKeys(panel) do
+            str = str .. "\n" .. k .. ": " .. tostring(v)
+          end
+
+          local drawX = 30
+          local drawY = 10
+
+          grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 100/GFX_SCALE, 100/GFX_SCALE, 0, 0, 0, 0.5)
+          gprintf(str, drawX, drawY)
         end
       end
     end
@@ -702,41 +718,41 @@ function Stack.render(self)
       if config.debug_mode and self.danger_music then
         gprint("danger music", self.score_x, self.score_y + 150)
       end
-      if config.debug_mode then
-        gprint(loc("pl_cleared", (self.panels_cleared or 0)), self.score_x, self.score_y + 165)
-      end
+      -- if config.debug_mode then
+      --   gprint(loc("pl_cleared", (self.panels_cleared or 0)), self.score_x, self.score_y + 165)
+      -- end
       if config.debug_mode then
         gprint(loc("pl_metal", (self.metal_panels_queued or 0)), self.score_x, self.score_y + 180)
       end
-      if config.debug_mode and (self.input_state or self.taunt_up or self.taunt_down) then
-        local iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
-        local inputs_to_print = "inputs:"
-        if iraise then
-          inputs_to_print = inputs_to_print .. "\nraise"
-        end --◄▲▼►
-        if iswap then
-          inputs_to_print = inputs_to_print .. "\nswap"
-        end
-        if iup then
-          inputs_to_print = inputs_to_print .. "\nup"
-        end
-        if idown then
-          inputs_to_print = inputs_to_print .. "\ndown"
-        end
-        if ileft then
-          inputs_to_print = inputs_to_print .. "\nleft"
-        end
-        if iright then
-          inputs_to_print = inputs_to_print .. "\nright"
-        end
-        if self.taunt_down then
-          inputs_to_print = inputs_to_print .. "\ntaunt_down"
-        end
-        if self.taunt_up then
-          inputs_to_print = inputs_to_print .. "\ntaunt_up"
-        end
-        gprint(inputs_to_print, self.score_x, self.score_y + 195)
-      end
+      -- if config.debug_mode and (self.input_state or self.taunt_up or self.taunt_down) then
+      --   local iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
+      --   local inputs_to_print = "inputs:"
+      --   if iraise then
+      --     inputs_to_print = inputs_to_print .. "\nraise"
+      --   end --◄▲▼►
+      --   if iswap then
+      --     inputs_to_print = inputs_to_print .. "\nswap"
+      --   end
+      --   if iup then
+      --     inputs_to_print = inputs_to_print .. "\nup"
+      --   end
+      --   if idown then
+      --     inputs_to_print = inputs_to_print .. "\ndown"
+      --   end
+      --   if ileft then
+      --     inputs_to_print = inputs_to_print .. "\nleft"
+      --   end
+      --   if iright then
+      --     inputs_to_print = inputs_to_print .. "\nright"
+      --   end
+      --   if self.taunt_down then
+      --     inputs_to_print = inputs_to_print .. "\ntaunt_down"
+      --   end
+      --   if self.taunt_up then
+      --     inputs_to_print = inputs_to_print .. "\ntaunt_up"
+      --   end
+      --   gprint(inputs_to_print, self.score_x, self.score_y + 195)
+      -- end
     end
     --local main_infos_screen_pos = { x=375 + (canvas_width-legacy_canvas_width)/2, y=10 + (canvas_height-legacy_canvas_height) }
     if match_type ~= "" then
@@ -813,7 +829,7 @@ function Stack.drawAnalyticData(self, analytic, x, y)
   y = y + nextIconIncrement
 
   -- GPM
-  if math.fmod(self.CLOCK, 60) < self.max_runs_per_frame then
+  if analytic.lastGPM == 0 or math.fmod(self.CLOCK, 60) < self.max_runs_per_frame then
     if self.CLOCK > 0 and (analytic.data.sent_garbage_lines > 0) then
       local garbagePerMinute = analytic.data.sent_garbage_lines / (self.CLOCK / 60 / 60)
       analytic.lastGPM = string.format("%0.1f", round(garbagePerMinute, 1))
@@ -842,7 +858,7 @@ function Stack.drawAnalyticData(self, analytic, x, y)
   y = y + nextIconIncrement
 
   -- APM
-  if math.fmod(self.CLOCK, 60) < self.max_runs_per_frame then
+if analytic.lastAPM == 0 or math.fmod(self.CLOCK, 60) < self.max_runs_per_frame then
     if self.CLOCK > 0 and (analytic.data.swap_count + analytic.data.move_count > 0) then
       local actionsPerMinute = (analytic.data.swap_count + analytic.data.move_count) / (self.CLOCK / 60 / 60)
       analytic.lastAPM = string.format("%0.0f", round(actionsPerMinute, 0))

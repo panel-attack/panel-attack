@@ -13,6 +13,6 @@ stack:set_puzzle_state(Puzzle(nil, nil, 1, "011010"))
 assert(stack.panels[1][1].color == 0, "wrong color")
 assert(stack.panels[1][2].color == 1, "wrong color")
 
-stack.input_buffer = "AA" -- can't swap on first two frames ?!
-stack:run(2)
+stack:receiveConfirmedInput("AA") -- can't swap on first two frames ?!
+match:run()
 assert(stack:canSwap(1, 4), "should be able to swap")
