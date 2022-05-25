@@ -9,6 +9,11 @@ local function load_img(path_and_name)
     end
   )
   if not status then
+    pcall(
+      function ()
+        img = love.image.newImageData("themes/Panel Attack/transparent.png")
+      end)
+    
     logger.error("Error loading image: " .. path_and_name .. 
       " Check it is valid and try resaving it in an image editor. If you are not the owner please get them to update it or download the latest version.")
   end
