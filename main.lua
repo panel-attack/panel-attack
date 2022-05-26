@@ -83,6 +83,10 @@ function love.update(dt)
 
   leftover_time = leftover_time + dt
 
+  if GAME.backgroundImage then
+    GAME.backgroundImage:update(dt)
+  end
+
   local status, err = coroutine.resume(mainloop)
   if not status then
     local errorData = Game.errorData(err, debug.traceback(mainloop))
@@ -140,8 +144,9 @@ function love.draw()
   love.graphics.draw(global_canvas, x, y, 0, w / canvas_width, h / canvas_height)
 
   -- draw background and its overlay
-  local scale = canvas_width / math.max(GAME.backgroundImage:getWidth(), GAME.backgroundImage:getHeight()) -- keep image ratio
-  menu_drawf(GAME.backgroundImage, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
+  if GAME.backgroundImage then
+    GAME.backgroundImage:draw()
+  end
   if GAME.background_overlay then
     local scale = canvas_width / math.max(GAME.background_overlay:getWidth(), GAME.background_overlay:getHeight()) -- keep image ratio
     menu_drawf(GAME.background_overlay, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)

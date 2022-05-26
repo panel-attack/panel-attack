@@ -7,11 +7,16 @@ CLICK_MENUS = {} -- All click menus currently showing in the game
 -- Buttons are laid out vertically and scroll buttons are added if not all options fit.
 Click_menu =
   class(
-  function(self, x, y, width, height, active_idx)
-    self.x = x or 0
-    self.y = y or 0
-    self.width = width or (canvas_width - self.x - 30) --width not used yet for scrolling
-    self.height = height or (canvas_height - self.y - 30) --scrolling does care about height
+  function(self, xCenter, yMin, width, maxHeight, active_idx)
+    assert(xCenter)
+    assert(yMin)
+    self.x = xCenter
+    self.y = yMin
+    self.yMin = yMin
+    self.current_setting_x = nil -- the x offset for the second column of options
+    local defaultPadding = 30
+    self.width = width or 0
+    self.maxHeight = maxHeight or (canvas_height - (2 * defaultPadding)) --scrolling does care about height
     self.new_item_y = 0
     local menuXPosition = -100
     self.menu_controls = {
@@ -158,7 +163,6 @@ end
 function Click_menu.set_active_idx(self, idx)
   idx = wrap(1, idx, #self.buttons)
   self.active_idx = idx
-  local top_visible_button_before = self.top_visible_button
   self:update_top_button()
   self:layout_buttons()
 end
@@ -184,13 +188,13 @@ function Click_menu.layout_buttons(self)
   if #self.buttons > 0 then
     local firstButtonHeight = self:get_button_height(1) + (2 * self.padding)
     local eachExtraButtonHeight = self:get_button_height(1) + self.padding_between_buttons
-    self.button_limit = self.button_limit + math.floor((self.height - firstButtonHeight) / eachExtraButtonHeight)
+    self.button_limit = self.button_limit + math.floor((self.maxHeight - firstButtonHeight) / eachExtraButtonHeight)
   end
 
   --scroll up or down if not showing the active button
   self:update_top_button()
 
-  local menu_is_full = false
+  local height = 0
   for i = 1, #self.buttons do
     if i < self.top_visible_button then
       self.buttons[i].visible = false
@@ -199,11 +203,13 @@ function Click_menu.layout_buttons(self)
       self.buttons[i].x = self.padding
       self.buttons[i].y = self.new_item_y
       self.new_item_y = self.new_item_y + self:get_button_height(i) + self.padding_between_buttons
+      height = math.max(height, self.new_item_y)
     else --button doesn't fit
-      menu_is_full = true
       self.buttons[i].visible = false
     end
   end
+
+  self.y = self.yMin + (self.maxHeight / 2) - (height / 2)
 
   self:show_controls(false)
 end
@@ -336,12 +342,6 @@ function Click_menu.draw(self)
       gprintf(self.arrow or ">", xPosition+1, yPosition+1, 100, "left", nil, nil, 2)
     end
   end
-end
-
--- Moves the menu to the given location
-function Click_menu.move(self, x, y)
-  self.x = x or 0
-  self.y = y or 0
 end
 
 -- Handles taps or clicks on the menu
