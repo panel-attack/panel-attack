@@ -85,35 +85,6 @@ lb_new_id,,need a new user id,besoin d'un nouvel identifiant utilisateur,necess�
 lb_received,,(wants to play with you :o),(vous invite à jouer :o),(quer jogar com você :o),（対戦を申し込まれました！（・o・））,(quiere jugar contigo :o),(will mit dir spielen),(vuole giocare con te :o)
 lb_request,,(request sent),(demande envoyée),(solicitação enviada),（対戦申請中）,(petición enviada),(Anfrage geschickt),(richiesta inviata)
 lb_select_player,,Select a player name to ask for a match.,Selectionnez un joueur avec qui jouer.,Selecione um nome de jogador para solicitar uma partida.,プレイヤー名を選択して対戦を申し込んで下さい。,Selecciona el nombre de un jugador para enviarle solicitud de partida.,"Wähle einen Namen aus, um den Spieler zum Spiel zu bitten",Seleziona il nome di un giocatore con cui giocare.
-lb_telegraph_alpha,Shown when using the telegraph build in the lobby,"You are playing on a telegraph build, which is currently incompatible with the Stable build for online play.
-Please use Stable for ranked and tournament play.
-Telegraph will be in stable after the May tournaments, so please report any bugs you find to the discord.
-
-","Vous jouez sur une construction télégraphique, qui est actuellement incompatible avec la construction stable pour le jeu en ligne.
-Veuillez utiliser Stable pour le jeu classé et le tournoi.
-Telegraph sera stable après les tournois de mai, veuillez donc signaler tout bug que vous trouvez à la discorde.
-
-","Você está jogando em uma construção de telégrafo, que atualmente é incompatível com a compilação estável para o jogo on -line.
-Por favor, use estábulo para jogo classificado e torneio.
-O Telegraph estará em estábulo após os torneios de maio; portanto, relate todos os bugs que encontrar à discórdia.
-
-","現在、オンラインプレイ用の安定したビルドと互換性のない電信ビルドでプレイしています。
-ランク付けされたトーナメントプレイやトーナメントプレイにはstable舎を使用してください。
-テレグラフは5月のトーナメントの後に安定しているので、不一致に見つけたバグを報告してください。
-
-","Estás jugando en una construcción de Telegraph, que actualmente es incompatible con la construcción estable para el juego en línea.
-Utilice el establo para el juego clasificado y del torneo.
-Telegraph estará en establo después de los torneos de mayo, así que informe cualquier error que encuentre a la discordia.
-
-","Sie spielen in einem Telegraph -Build, der derzeit mit dem stabilen Build für Online -Spielen nicht kompatibel ist.
-Bitte verwenden Sie Stall für Ranglisten- und Turnierspiele.
-Telegraph wird nach den Mai -Turnieren stabil sein. Melden Sie also bitte alle Fehler, die Sie finden, der Zwietracht.
-
-","Stai giocando su una build Telegraph, che è attualmente incompatibile con la build stabile per il gioco online.
-Si prega di utilizzare Stable per il gioco classificato e torneo.
-Telegraph sarà stabile dopo i tornei di maggio, quindi segnala eventuali bug che trovi alla discordia.
-
-"
 lb_set_connect,,Setting up connection...,Préparation de la connexion...,Estabelecendo conexão...,接続しています…,Estableciendo conexión...,Verbindungsaufbau...,Stabilendo la connessione...
 lb_hide_board,,Hide Leaderboard,Cacher le classement,Ocultar Placar de Classificação,ランキングを非表示,Ocultar Tabla de Puntuación,Rangliste verbergen,Nascondi la classifica
 lb_spectate,,spectate,regarder,assistir,観戦する,espectar,zuschauen,Assisti
@@ -508,3 +479,4 @@ continue_button,Text shown to press any key to continue,Press Any Button,Appuyer
 player_press_key,,Player %1 press any key,Le joueur %1 appuie sur n'importe quelle touche,O jogador %1 carregue em qualquer tecla,プレーヤー％1　PUSH ANY KEY,Jugador %1 presione cualquier tecla,Spieler %1 drücke eine beliebige Taste,Il giocatore %1 preme un tasto qualsiasi
 config_input_welcome,Shown on the configure input screen,Set a input configuration for each keyboard / controller you want to be able to use.,Définissez une configuration d'entrée pour chaque clavier/contrôleur que vous souhaitez pouvoir utiliser.,Defina uma configuração de entrada para cada teclado / controlador que deseja usar.,使用するキーボード/コントローラーごとにキーコンフィグを設定して下さい。,Establezca una configuración de entrada para cada teclado / controlador que desee poder utilizar.,Gib eine Eingabekonfiguration für alle Kontroller oder Tastaturen an,Imposta una configurazione di input per ogni tastiera/controller che desideri utilizzare.
 configuration,Configuration for controller / keyboard setup,Configuration,Configuration,Configuração,キーコンフィグ,Configuración,Konfiguration,Configurazione
+love_version_warning,Warning shown to users using love 11.3,"You are using an outdated version of Panel Attack which uses an old LOVE version, please download the latest version from the website / discord.","Vous utilisez une version obsolète de l'attaque de panneau qui utilise une ancienne version d'amour, veuillez télécharger la dernière version du site Web / Discord.","Você está usando uma versão desatualizada do painel de ataque que usa uma versão antiga do amor, faça o download da versão mais recente do site / discórdia.",古いLoveバージョンを使用する古いバージョンのパネル攻撃を使用しています。ウェブサイト / Discordから最新バージョンをダウンロードしてください。,"Está utilizando una versión obsoleta de Panel Attack que utiliza una vieja versión de amor, descargue la última versión del sitio web / discordia.","Sie verwenden eine veraltete Version des Panel -Angriffs, die eine alte Love -Version verwendet. Laden Sie die neueste Version von der Website / Discord herunter.","Stai usando una versione obsoleta dell'attacco del pannello che utilizza una vecchia versione d'amore, scarica l'ultima versione dal sito Web / discordia."

@@ -211,9 +211,9 @@ do
       {loc("mm_1_vs"), main_local_vs_yourself_setup},
       {loc("mm_1_training"), training_setup},
       --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
-      --{loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
+      {loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
-      {loc("mm_2_vs_online", "Telegraph Server"), main_net_vs_setup, {"betaserver.panelattack.com", 59569}},
+      --{loc("mm_2_vs_online", ""), main_net_vs_setup, {"betaserver.panelattack.com", 59569}},
       --{loc("mm_2_vs_online", "(USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)"), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "This test build is for offline-use only"), main_select_mode},
       --{loc("mm_2_vs_online", "domi1819.xyz"), main_net_vs_setup, {"domi1819.xyz"}},
@@ -234,13 +234,9 @@ do
     main_menu:add_button(loc("mm_fullscreen", "(LAlt+Enter)"), fullscreen, goEscape)
     main_menu:add_button(loc("mm_quit"), exit_game, exit_game)
 
-
-  local totalTime = 0
-
     while true do
 
       main_menu:draw()
-
 
       if wait_game_update ~= nil then
         has_game_update = wait_game_update:pop()
@@ -250,22 +246,24 @@ do
         end
       end
       
-      local loveString = Game.loveVersionString()
       local fontHeight = get_global_font():getHeight()
       local infoYPosition = 705 - fontHeight/2
-      gprintf("Love Version: " .. loveString, -5, infoYPosition, canvas_width, "right")
+
+      local loveString = Game.loveVersionString()
+      if loveString == "11.3.0" then
+        gprintf(loc("love_version_warning"), -5, infoYPosition, canvas_width, "right")
+        infoYPosition = infoYPosition - fontHeight
+      end
 
       if GAME_UPDATER_GAME_VERSION then
-        gprintf("PA Version: " .. GAME_UPDATER_GAME_VERSION, -5, infoYPosition - fontHeight, canvas_width, "right")
+        gprintf("PA Version: " .. GAME_UPDATER_GAME_VERSION, -5, infoYPosition, canvas_width, "right")
+        infoYPosition = infoYPosition - fontHeight
         if has_game_update then
           menu_draw(panels[config.panels].images.classic[1][1], 1262, 685)
         end
       end
 
-
-    local lastTime = leftover_time
-    wait()
-    totalTime = totalTime + (leftover_time - lastTime)
+      wait()
 
       variable_step(
         function()
@@ -1159,7 +1157,6 @@ function main_net_vs_lobby()
     end
 
     if lobby_menu then
-      gprint(loc("lb_telegraph_alpha"), lobby_menu_x[showing_leaderboard] - 230, lobby_menu_y - 70)
       gprint(notice[#lobby_menu.buttons > 2], lobby_menu_x[showing_leaderboard], lobby_menu_y - 30)
       if showing_leaderboard then
         gprint(leaderboard_string, lobby_menu_x[showing_leaderboard] + 400, lobby_menu_y - 120)
