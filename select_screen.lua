@@ -185,7 +185,7 @@ function select_screen.main()
       if msg then
         global_initialize_room_msg = msg
       end
-      gprint(loc("ss_init"), unpack(main_menu_screen_pos))
+      gprint(loc("ss_init"), themes[config.theme].main_menu_screen_pos[1], themes[config.theme].main_menu_y_center)
       wait()
       if not do_messages() then
         return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
@@ -195,7 +195,7 @@ function select_screen.main()
 
     -- If we never got the room setup message, bail
     if not global_initialize_room_msg then
-      warning(loc("ss_init_fail") .. "\n")
+      logger.warn(loc("ss_init_fail") .. "\n")
       return main_dumb_transition, {main_select_mode, loc("ss_init_fail") .. "\n\n" .. loc("ss_return"), 60, 300}
     end
     msg = global_initialize_room_msg
@@ -949,7 +949,7 @@ function select_screen.main()
 
           -- For a short time, show the game start / spectate message
           for i = 1, 30 do
-            gprint(to_print, unpack(main_menu_screen_pos))
+            gprint(to_print, themes[config.theme].main_menu_screen_pos[1], themes[config.theme].main_menu_y_center)
             if not do_messages() then
               return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
             end
