@@ -512,7 +512,7 @@ function Stack.render(self)
     end
   end
 
-  local main_infos_screen_pos = {x = 375 + (canvas_width - legacy_canvas_width) / 2, y = 10 + (canvas_height - legacy_canvas_height)}
+  local main_infos_screen_pos = {x = 375 + (464) / 2, y = 118}
 
   local function drawMoveCount()
     -- draw outside of stack's frame canvas

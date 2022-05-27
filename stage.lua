@@ -1,11 +1,13 @@
 require("stage_loader")
 local logger = require("logger")
+require("UpdatingImage")
 
 -- Stuff defined in this file:
 --  . the data structure that store a stage's data
 
 local basic_images = {"thumbnail"}
-local other_images = {"background"}
+local backgroundImageName = "background"
+local other_images = {backgroundImageName}
 local defaulted_images = {thumbnail = true, background = true} -- those images will be defaulted if missing
 local basic_musics = {}
 local other_musics = {"normal_music", "danger_music", "normal_music_start", "danger_music_start"}
@@ -236,6 +238,9 @@ function Stage.graphics_init(self, full, yields)
       if not self.images[image_name] then
         error("Could not find default stage image")
       end
+    end
+    if image_name == backgroundImageName and self.images[image_name] then
+      self.images[image_name] = UpdatingImage(self.images[image_name], false, 0, 0, nil, nil)
     end
     if yields then
       coroutine.yield()

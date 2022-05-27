@@ -251,7 +251,7 @@ end
 
 -- Positions the stack draw position for the given player
 function Stack.moveForPlayerNumber(stack, player_num)
-  local stack_padding_x_for_legacy_pos = ((canvas_width - legacy_canvas_width) / 2)
+  local stack_padding_x_for_legacy_pos = ((464) / 2)
   if player_num == 1 then
     stack.pos_x = 4 + stack_padding_x_for_legacy_pos / GFX_SCALE
     stack.score_x = 315 + stack_padding_x_for_legacy_pos
@@ -268,8 +268,8 @@ function Stack.moveForPlayerNumber(stack, player_num)
     stack.multiplication = 1
     stack.id = "_2P"
   end
-  stack.pos_y = 4 + (canvas_height - legacy_canvas_height) / GFX_SCALE
-  stack.score_y = 100 + (canvas_height - legacy_canvas_height)
+  stack.pos_y = 4 + (108) / GFX_SCALE
+  stack.score_y = 208
 end
 
 function Stack.divergenceString(stackToTest)
