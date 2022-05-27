@@ -24,16 +24,25 @@ The contents of each puzzle file should be formatted something like this:
              111440",
         ],
         [
-          "Puzzle Type": "moves",
+          "Puzzle Type": "clear",
           "Do Countdown": false,
-          "Moves": 2,
+          "Moves": 0,
           "Stack": 
-            "999799
-             994999
-             999499
-             994999
-             997999
-             997999",
+           "
+		   [====]
+		   [====]
+		   [====]
+		   [====]
+		   [====]
+		   [====]
+		   [====]
+		   [====]
+		   020000
+		   122[=]
+		   245156
+		   325363",
+		   "Stop": 60,
+           "Shake": 0
         ],
       ]
     ],
@@ -50,12 +59,17 @@ Version should be 2 for now
 "Puzzle Type" should be one of the following
     "moves" all panels need to be cleared in the set number of moves
     "chain" all panels need to be cleared onces the first chain ends, and there must be a chain
+    "clear" all garbage on the field needs to be cleared before health runs out
 
 "Do Countdown" whether to do the countdown at the beginning
 
 "Moves" the number of moves, can be zero to not have a limit
 
 "Stack" the starting arangement of the panels, see below
+
+"Stop" specifies how many frames of stop time are initially granted to the player
+
+"Shake" specifies how many frames of shake time are initially granted to the player
 
 Note: carriage returns and spaces in your file are very helpful for readability,
  but are not necessary.
