@@ -177,6 +177,12 @@ function read_conf_file()
       if type(read_data.popfx) == "boolean" then
         config.popfx = read_data.popfx
       end
+      if type(read_data.renderTelegraph) == "boolean" then
+        config.renderTelegraph = read_data.renderTelegraph
+      end
+      if type(read_data.renderAttacks) == "boolean" then
+        config.renderAttacks = read_data.renderAttacks
+      end
 
       if type(read_data.save_replays_publicly) == "string" and save_replays_values[read_data.save_replays_publicly] then
         config.save_replays_publicly = read_data.save_replays_publicly

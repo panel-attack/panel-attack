@@ -472,25 +472,41 @@ function Stack.render(self)
 
   -- Draw debug graphics if set
   if config.debug_mode then
-    local mx, my = love.mouse.getPosition()
+    local mx, my = transform_coordinates(love.mouse.getPosition())
+
     for row = 0, self.height do
       for col = 1, self.width do
         local panel = self.panels[row][col]
         local draw_x = (self.pos_x + (col - 1) * 16) * GFX_SCALE
         local draw_y = (self.pos_y + (11 - (row)) * 16 + self.displacement - shake) * GFX_SCALE
-        if panel.color ~= 0 and panel.state ~= "popped" then
-          gprint(panel.state, draw_x, draw_y)
-          if panel.match_anyway ~= nil then
-            gprint(tostring(panel.match_anyway), draw_x, draw_y + 10)
-            if panel.debug_tag then
-              gprint(tostring(panel.debug_tag), draw_x, draw_y + 20)
+
+        -- Require hovering over a stack to show details
+        if mx >= self.pos_x * GFX_SCALE and mx <= (self.pos_x + self.width * 16) * GFX_SCALE then
+          if panel.color ~= 0 and panel.state ~= "popped" then
+            gprint(panel.state, draw_x, draw_y)
+            if panel.match_anyway ~= nil then
+              gprint(tostring(panel.match_anyway), draw_x, draw_y + 10)
+              if panel.debug_tag then
+                gprint(tostring(panel.debug_tag), draw_x, draw_y + 20)
+              end
+            end
+            if panel.chaining then
+              gprint("chaining", draw_x, draw_y + 30)
             end
           end
-          gprint(panel.chaining and "chaining" or "nah", draw_x, draw_y + 30)
         end
+
         if mx >= draw_x and mx < draw_x + 16 * GFX_SCALE and my >= draw_y and my < draw_y + 16 * GFX_SCALE then
-          GAME.debug_mouse_panel = {row, col, panel}
-          draw(panels[self.panels_dir].images.classic[9][1], draw_x + 16, draw_y + 16)
+          local str = loc("pl_panel_info", row, col)
+          for k, v in pairsSortedByKeys(panel) do
+            str = str .. "\n" .. k .. ": " .. tostring(v)
+          end
+
+          local drawX = 30
+          local drawY = 10
+
+          grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 100/GFX_SCALE, 100/GFX_SCALE, 0, 0, 0, 0.5)
+          gprintf(str, drawX, drawY)
         end
       end
     end
@@ -809,7 +825,6 @@ function Stack.render(self)
     local y = self.score_y - 81
   
     local backgroundPadding = 6
-    local textYPadding = 18
     local iconToTextSpacing = 30
     local nextIconIncrement = 30
     local column2Distance = 70
