@@ -239,9 +239,6 @@ function Stage.graphics_init(self, full, yields)
         error("Could not find default stage image")
       end
     end
-    if image_name == backgroundImageName and self.images[image_name] then
-      self.images[image_name] = UpdatingImage(self.images[image_name], false, 0, 0, nil, nil)
-    end
     if yields then
       coroutine.yield()
     end

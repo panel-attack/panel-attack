@@ -283,7 +283,7 @@ local function use_current_stage()
   else
     stage_loader_load(current_stage)
     stage_loader_wait()
-    GAME.backgroundImage = stages[current_stage].images.background
+    GAME.backgroundImage = UpdatingImage(stages[current_stage].images.background, false, 0, 0, canvas_width, canvas_height)
     GAME.background_overlay = themes[config.theme].images.bg_overlay
     GAME.foreground_overlay = themes[config.theme].images.fg_overlay
   end
