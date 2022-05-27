@@ -47,7 +47,11 @@ function direct_log(prefix, msg)
     -- Lua date format strings reference: https://www.lua.org/pil/22.1.html
     -- %x - Date
     -- %X - Time
-    print(os.date("%x %X") .. "." .. socket_millis .. " " .. prefix .. ": " .. msg)
+    local message = os.date("%x %X") .. "." .. socket_millis .. " " .. prefix .. ": " .. msg
+    print(message)
+    if prefix == "ERROR" or prefix == " WARN" then
+      love.filesystem.append("warnings.txt", message .. "\n")
+    end
 end
 
 return logger;
