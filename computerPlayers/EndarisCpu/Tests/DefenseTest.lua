@@ -52,7 +52,7 @@ function DefenseTest.testGetPotentialClearColors1()
 
   assert(#expectedValue == #potentialClearColors)
   for i=1, #expectedValue do
-    assert(table.trueForAny(potentialClearColors, function(colorId) return colorId == expectedValue[i] end))
+    assert(table.trueForAny(potentialClearColors, function(color) return color.idx == expectedValue[i] end))
   end
 
   print("passed test testGetPotentialClearColors1")

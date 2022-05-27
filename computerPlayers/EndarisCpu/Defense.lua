@@ -88,6 +88,11 @@ function Defend.DownstackIntoClear(self)
         rowGrid = RowGrid.FromStack(self.cpu.stack)
         -- TODO Endaris: get biggest connected panel section that connects directly to garbage and use that as the defense stack instead
         -- Rerun with full stack if that does not find anything
+    elseif defragmentationPercentage == 0 then
+      -- abandon ship immediately, this signifies that there is 0 potential for downstacking
+      -- meaning that any available clear would have already been found by the regular clear logic
+      -- for multistep solves that rely on chains / combos to stall for time while manipulating the stack shape a separate routine will likely be required somewhere down the line
+      return
     else
         rowGrid = RowGrid.FromStack(self.cpu.stack)
     end
@@ -123,6 +128,7 @@ function Defend.DownstackIntoClear(self)
 end
 
 -- returns an array of color indices that have available latent matches that can realistically touch the garbage
+-- along with the index comes a rowgridcolumn for that color that displays the highest row match for the color that has been found to determine the color as a potential clear
 function Defend.getPotentialClearColors(rowgrid)
     local potentialColors = {}
     -- first eliminate the colors that don't even have 3 panels in the stack
@@ -130,7 +136,7 @@ function Defend.getPotentialClearColors(rowgrid)
     for color=1,8 do
         local colorColumn = rowgrid:GetColorColumn(color)
         if colorColumn:GetTotalPanelCount() >= 3 then
-            table.insert(potentialColors, color)
+          potentialColors[#potentialColors+1] = { idx = color, targetGridColumn = nil}
         end
     end
 
@@ -140,10 +146,12 @@ function Defend.getPotentialClearColors(rowgrid)
       -- need a copy, otherwise result might get skewed by other colors already being downstacked for dry simulation
       local rowgridCopy = deepcpy(rowgrid)
       -- then use that information to determine if any match of a color can reach that top row (and thus the garbage)
-        local clearTopRow = Defend.findTopRowForColorClearOnRowGrid(rowgridCopy, potentialColors[i])
+        local clearTopRow = Defend.findTopRowForColorClearOnRowGrid(rowgridCopy, potentialColors[i].idx)
         if clearTopRow == nil or clearTopRow < stackMinimumTopRow then
             -- clear cannot possibly reach the top row even after completely flattening the stack
             table.remove(potentialColors, i)
+        else
+          potentialColors[i].targetGridColumn = rowgridCopy:GetColorColumn(potentialColors[i].idx)
         end
     end
 
