@@ -23,7 +23,7 @@ local CHARACTERSELECT = "character select" -- room states
 local PLAYING = "playing" -- room states
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
-local VERSION = "045"
+local VERSION = "046"
 local type_to_length = {H = 4, E = 4, F = 4, P = 8, I = 2, L = 2, Q = 8, U = 2}
 local INDEX = 1 -- GLOBAL counter of the next available connection index
 local connections = {}
@@ -685,10 +685,6 @@ function Connection.setup_game(self)
   lobby_changed = true --TODO: remove this line when we implement joining games in progress
   self.vs_mode = true
   self.metal = false
-  self.rows_left = 14 + random(1, 8)
-  self.prev_metal_col = nil
-  self.metal_col = nil
-  self.first_seven = nil
 end
 
 function Connection.close(self)
@@ -1215,10 +1211,8 @@ function Connection.P(self, message)
     return
   end
   local ncolors = 0 + message[1]
-  local ret = make_panels(ncolors, string.sub(message, 2, 7), self)
-  if self.first_seven and self.opponent and ((self.level < 9 and self.opponent.level < 9) or (self.level >= 9 and self.opponent.level >= 9)) then
-    self.opponent.first_seven = self.first_seven
-  end
+  -- TODO: remove this server message type
+  local ret = "Garbage Panel Generation is now local only"
   self:send("P" .. ret)
   if self.player_number == 1 then
     self.room:send_to_spectators("P" .. ret)
@@ -1237,7 +1231,8 @@ function Connection.Q(self, message)
     return
   end
   local ncolors = 0 + message[1]
-  local ret = make_gpanels(ncolors, string.sub(message, 2, 7))
+  -- TODO: remove this server message type
+  local ret = "Garbage Panel Generation is now local only"
   self:send("Q" .. ret)
   if self.player_number == 1 then
     self.room:send_to_spectators("Q" .. ret)

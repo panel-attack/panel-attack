@@ -1,12 +1,4 @@
-local launch_type = arg[2]
-if launch_type == "test" or launch_type == "debug" then
-    require "lldebugger"
-    TESTS_ENABLED = 1
-    if launch_type == "debug" then
-        lldebugger.start()
-    end
-end
-
+require("developer")
 require("class")
 socket = require("socket")
 json = require("dkjson")
@@ -21,6 +13,8 @@ require("globals")
 require("character") -- after globals!
 require("stage") -- after globals!
 require("save")
+require("engine/GarbageQueue")
+require("engine/telegraph")
 require("engine")
 require("AttackEngine")
 require("localization")
@@ -89,6 +83,10 @@ function love.update(dt)
 
   leftover_time = leftover_time + dt
 
+  if GAME.backgroundImage then
+    GAME.backgroundImage:update(dt)
+  end
+
   local status, err = coroutine.resume(mainloop)
   if not status then
     local errorData = Game.errorData(err, debug.traceback(mainloop))
@@ -124,15 +122,19 @@ function love.draw()
   love.graphics.setBackgroundColor(unpack(global_background_color))
   love.graphics.clear()
 
+  -- Draw the FPS if enabled
+  if config ~= nil and config.show_fps then
+    gprintf("FPS: " .. love.timer.getFPS(), 1, 1)
+  end
+
+  if STONER_MODE then
+    gprintf("STONER", 1, 1 + (11 * 4))
+  end
+
   for i = gfx_q.first, gfx_q.last do
     gfx_q[i][1](unpack(gfx_q[i][2]))
   end
   gfx_q:clear()
-
-  -- Draw the FPS if enabled
-  if config ~= nil and config.show_fps then
-    love.graphics.print("FPS: " .. love.timer.getFPS(), 1, 1)
-  end
 
   love.graphics.setCanvas() -- render everything thats been added
   love.graphics.clear(love.graphics.getBackgroundColor()) -- clear in preperation for the next render
@@ -142,8 +144,9 @@ function love.draw()
   love.graphics.draw(global_canvas, x, y, 0, w / canvas_width, h / canvas_height)
 
   -- draw background and its overlay
-  local scale = canvas_width / math.max(GAME.backgroundImage:getWidth(), GAME.backgroundImage:getHeight()) -- keep image ratio
-  menu_drawf(GAME.backgroundImage, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
+  if GAME.backgroundImage then
+    GAME.backgroundImage:draw()
+  end
   if GAME.background_overlay then
     local scale = canvas_width / math.max(GAME.background_overlay:getWidth(), GAME.background_overlay:getHeight()) -- keep image ratio
     menu_drawf(GAME.background_overlay, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
@@ -151,7 +154,7 @@ function love.draw()
 end
 
 -- Transform from window coordinates to game coordinates
-local function transform_coordinates(x, y)
+function transform_coordinates(x, y)
   local lbx, lby, lbw, lbh = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 16, 9)
   return (x - lbx) / 1 * canvas_width / lbw, (y - lby) / 1 * canvas_height / lbh
 end

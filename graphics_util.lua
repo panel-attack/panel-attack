@@ -1,4 +1,5 @@
 require("consts")
+local logger = require("logger")
 
 local function load_img(path_and_name)
   local img = nil
@@ -8,13 +9,18 @@ local function load_img(path_and_name)
     end
   )
   if not status then
-    print("Error loading image: " .. path_and_name .. 
+    pcall(
+      function ()
+        img = love.image.newImageData("themes/Panel Attack/transparent.png")
+      end)
+    
+    logger.error("Error loading image: " .. path_and_name .. 
       " Check it is valid and try resaving it in an image editor. If you are not the owner please get them to update it or download the latest version.")
   end
   if img == nil then
     return nil
   end
-  -- print("loaded asset: "..path_and_name)
+  -- logger.debug("loaded asset: "..path_and_name)
   local ret = love.graphics.newImage(img)
   ret:setFilter("nearest","nearest")
   return ret
@@ -149,7 +155,7 @@ function standard_pixel_font_map()
   for i = 10, 35, 1 do
     local characterString = string.char(97+(i-10))
     fontMap[characterString] = i
-    --print(characterString .. " = " .. fontMap[characterString])
+    --logger.debug(characterString .. " = " .. fontMap[characterString])
   end
 
   return fontMap
@@ -178,7 +184,7 @@ function draw_pixel_font(string, atlas, font_map, x, y, x_scale, y_scale, align,
   x = x - (characterWidth*GFX_SCALE*x_scale)*mirror
 
   if string == nil or atlas == nil or atlasFrameCount == nil or characterWidth == nil or characterHeight == nil then
-    print("Error initalizing draw pixel font")
+    logger.error("Error initalizing draw pixel font")
     return 
   end
 
@@ -280,7 +286,6 @@ function grectangle_color(mode, x, y, w, h, r, g, b, a)
 end
 
 -- Draws text at the given spot
--- TODO: Using color is broken...
 function gprint(str, x, y, color, scale)
   x = x or 0
   y = y or 0
@@ -294,6 +299,7 @@ function gprint(str, x, y, color, scale)
   end
   set_color(r,g,b,a)
   gfx_q:push({love.graphics.print, {str, x, y, 0, scale}})
+  set_color(1,1,1,1)
 end
 
 -- font file to use
@@ -349,7 +355,6 @@ function set_shader(shader)
 end
 
 -- Draws a font with a given font delta from the standard font
--- TODO: Using color is broken...
 function gprintf(str, x, y, limit, halign, color, scale, font_delta_size)
   x = x or 0
   y = y or 0
@@ -371,6 +376,7 @@ function gprintf(str, x, y, limit, halign, color, scale, font_delta_size)
   set_color(r,g,b,a)
   gfx_q:push({love.graphics.printf, {str, x, y, limit, halign, 0, scale}})
   if font_delta_size ~= 0 then set_font(old_font) end
+  set_color(1,1,1,1)
 end
 
 local _r, _g, _b, _a

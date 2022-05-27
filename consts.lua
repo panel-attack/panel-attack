@@ -2,14 +2,12 @@ require("util")
 require("table_util")
 
 -- The values in this file are constants (except in this file perhaps) and are expected never to change during the game, not to be confused with globals!
-VERSION = "045"
+VERSION = "046"
 
 canvas_width = 1280
 canvas_height = 720
-legacy_canvas_width = 816
-legacy_canvas_height = 612
 
-global_background_color = { 0.1, 0.1, 0.1 }
+global_background_color = { 0.0, 0.0, 0.0 }
 
 mouse_pointer_timeout = 1.5 --seconds
 RATING_SPREAD_MODIFIER = 400 -- rating players must be within to play ranked

@@ -169,7 +169,9 @@ function replay_browser.main()
       gprint(replay_browser.filename, replay_browser.menu_x - 150, replay_browser.menu_y - 40 + replay_browser.menu_h)
 
       if replay.vs then
-        local twoPlayerVs = replay.vs.O and string.len(replay.vs.O) > 0
+        -- This used to be calculated based on the length of "O", but that no longer always exists.
+        -- "I" will always exist for two player vs
+        local twoPlayerVs = replay.vs.I and string.len(replay.vs.I) > 0
         local modeText
         if twoPlayerVs then
           modeText = loc("rp_browser_info_2p_vs")

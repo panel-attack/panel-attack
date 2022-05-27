@@ -9,7 +9,7 @@ AttackPattern =
     self.start = start
     self.attackCount = attackCount
     self.repeatDelay = repeatDelay and math.max(1, repeatDelay) or 1
-    self.garbage = {width, height, metal or false, chain or height > 1}
+    self.garbage = {width, height, metal or false, chain}
   end
 )
 
@@ -38,24 +38,29 @@ end
 
 -- 
 function AttackEngine.run(self)
-    local garbageToSend = {}
-    for _, attackPattern in ipairs(self.attackPatterns) do
-      local lastAttackTime
-      if attackPattern.attackCount then
-        lastAttackTime = attackPattern.start + ((attackPattern.attackCount-1) * attackPattern.repeatDelay)
-      end
-      if self.clock >= attackPattern.start and (attackPattern.attackCount == nil or self.clock <= lastAttackTime) then
-        local difference = self.clock - attackPattern.start
-        local remainder = difference % attackPattern.repeatDelay
-        if remainder == 0 then
-            garbageToSend[#garbageToSend+1] = attackPattern.garbage
+  local garbageToSend = {}
+  for _, attackPattern in ipairs(self.attackPatterns) do
+    local lastAttackTime
+    if attackPattern.attackCount then
+      lastAttackTime = attackPattern.start + ((attackPattern.attackCount-1) * attackPattern.repeatDelay)
+    end
+    if self.clock >= attackPattern.start and (attackPattern.attackCount == nil or self.clock <= lastAttackTime) then
+      local difference = self.clock - attackPattern.start
+      local remainder = difference % attackPattern.repeatDelay
+      local origin_column = 17
+      local origin_row = 11
+      if remainder == 0 then
+        if attackPattern.garbage[4] then
+          for i = 1,  attackPattern.garbage[2], 1 do
+            self.target.telegraph:push(attackPattern.garbage, origin_column, origin_row, self.target.CLOCK)
+          end
+          self.target.telegraph:chainingEnded(self.clock)
+        else
+          self.target.telegraph:push(attackPattern.garbage, origin_column, origin_row, self.target.CLOCK)
         end
       end
     end
+  end
 
-    if #garbageToSend > 0 then
-        self.target:recv_garbage(self.clock+1, garbageToSend)
-    end
-
-    self.clock = self.clock + 1
+  self.clock = self.clock + 1
 end
