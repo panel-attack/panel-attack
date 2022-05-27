@@ -248,9 +248,6 @@ function ConnectedPanelSection.equals(self, otherSection)
     StackExtensions.panelsAreEqualByPanels(self.panels, otherSection.panels)
 end
 
-function StackExtensions.getTopRowWithPanelsFromRowGrid(rowgrid)
-end
-
 function StackExtensions.getRowGridColumn(rowgrid, color)
   local colorGridColumn = {}
   for row = #rowgrid, 1, -1 do

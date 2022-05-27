@@ -87,6 +87,7 @@ function Defend.DownstackIntoClear(self)
     if defragmentationPercentage > self.cpu.config.DefragmentationPercentageThreshold then
         rowGrid = RowGrid.FromStack(self.cpu.stack)
         -- TODO Endaris: get biggest connected panel section that connects directly to garbage and use that as the defense stack instead
+        -- Rerun with full stack if that does not find anything
     else
         rowGrid = RowGrid.FromStack(self.cpu.stack)
     end
@@ -121,6 +122,7 @@ function Defend.DownstackIntoClear(self)
     end
 end
 
+-- returns an array of color indices that have available latent matches that can realistically touch the garbage
 function Defend.getPotentialClearColors(rowgrid)
     local potentialColors = {}
     -- first eliminate the colors that don't even have 3 panels in the stack
@@ -132,10 +134,14 @@ function Defend.getPotentialClearColors(rowgrid)
         end
     end
 
+    -- find out how low the stack can be stacked to
     local stackMinimumTopRow = rowgrid:GetMinimumTopRowIndex()
     for i=#potentialColors, 1, -1 do
-        local clearTopRow = Defend.findTopRowForColorClearOnRowGrid(rowgrid, potentialColors[i])
-        if clearTopRow < stackMinimumTopRow then
+      -- need a copy, otherwise result might get skewed by other colors already being downstacked for dry simulation
+      local rowgridCopy = deepcpy(rowgrid)
+      -- then use that information to determine if any match of a color can reach that top row (and thus the garbage)
+        local clearTopRow = Defend.findTopRowForColorClearOnRowGrid(rowgridCopy, potentialColors[i])
+        if clearTopRow == nil or clearTopRow < stackMinimumTopRow then
             -- clear cannot possibly reach the top row even after completely flattening the stack
             table.remove(potentialColors, i)
         end
@@ -145,14 +151,23 @@ function Defend.getPotentialClearColors(rowgrid)
 end
 
 function Defend.findTopRowForColorClearOnRowGrid(rowgrid, color)
-    -- any 1 above 2 or 2 above 1 pattern will always yield a rowgrid in which the arrangeable vertical clear reaches at least as high of a top row as the horizontal clear
-    -- even 3 above 0 if we purposely ignore that a row cannot have more than 6 panels
+    -- any 1 above 2 or 2 above 1 pattern will always yield a rowgrid in which the arrangeable vertical clear reaches at least as high of a top row as the horizontal clear:
+    -- 2      1    0   1      1    0   1      0    0
+    -- 1  ->  1 or 3;  2  ->  1 or 3;  0  ->  1 or 0   etc. etc., the vertical option always reaches higher
+    -- 0      1    0   0      1    0   2      1    3
+    --                                        1    0
+    -- even 3 above 0 if we purposely ignore that a row cannot have more than 6 panels (which might prevent downstacking into that shape)
+    -- 3      1    3
+    -- 0  ->  1 or 0
+    -- 0      1    0
     -- you see this instantly, it's trivial (is what my math prof said while scribbling a ton of greek symbols at incomprehensible speed on the blackboard), so even though I can't think of a formal proof right now, just take it!
-    -- therefore only vertical matches need to be considered
-    local matchedColorGridColumn = Defend.getTopMostMatchStateAsColorGridRow(rowgrid, color)
+    -- therefore only vertical matches need to be considered to find the TOP ROW for the color clear
+    -- for further consideration it only needs to be checked if downstacking to the required degree is possible
+    local matchedColorGridColumn = Defend.getTopMostMatchStateAsColorGridColumn(rowgrid, color)
     if matchedColorGridColumn then
-        for row=#matchedColorGridColumn, 1, -1 do
-            if matchedColorGridColumn[row].colorCount > 0 then
+        for row=#matchedColorGridColumn.sourceRowGrid.gridRows, 1, -1 do
+            if matchedColorGridColumn:GetCountInRow(row) > 0 then
+              -- just returning the top row index of the match we found
                 return row
             end
         end
@@ -164,35 +179,43 @@ end
 
 function Defend.getTheoreticalDownstackInstructions(rowgrid, color)
     local colorGridColumn = StackExtensions.getRowGridColumn(rowgrid, color)
-    local matchedColorGridColumn = Defend.getTopMostMatchStateAsColorGridRow(rowgrid, color)
+    local matchedColorGridColumn = Defend.getTopMostMatchStateAsColorGridColumn(rowgrid, color)
 
     return StackExtensions.substractRowGridColumns(colorGridColumn, matchedColorGridColumn)
 end
 
-function Defend.getTopMostMatchStateAsColorGridRow(rowgrid, color)
-    local colorGridColumn = RowGrid:GetColorColumn(color)
-    local gridTopRow = StackExtensions.getTopRowWithPanelsFromRowGrid(rowgrid)
+function Defend.getTopMostMatchStateAsColorGridColumn(rowgrid, color)
+    local colorGridColumn = rowgrid:GetColorColumn(color)
+    local gridTopRow = rowgrid:GetTopRowWithPanels()
     local clearTopRow = gridTopRow
 
+    -- this while is arranging the colorgridcolumn into the state of the match of that color that reaches furthest to the top
+    -- won't deathloop cause we KNOW we have enough panels for a match and the amount of panels per row as well as the row we want to reach are still being ignored
     while #table.filter(colorGridColumn:GetLatentMatches(),
-        function(match) if match.type == "V" then return match.rows[3] == clearTopRow
-                        else return match.row == clearTopRow end
-                    end) == 0 do
-        Defend.runDownRowGridColumn(colorGridColumn, clearTopRow)
-        if colorGridColumn.GetCountInRow(clearTopRow) == 0 then
-            -- only possible explanation is that the panel in the top row trickled down because of an empty row
+        function(match) return Defend.MatchWouldClear(clearTopRow, match) end) == 0 do
+        Defend.downstackRowGridColumnTopDown(colorGridColumn, clearTopRow)
+        -- check if we downstacked the top most panel so that the toprow we can potentially reach with this color got reduced
+        if colorGridColumn:GetCountInRow(clearTopRow) == 0 then
+            -- panel in the top row trickled down because of an empty row below
             clearTopRow = clearTopRow - 1
         end
     end
 
-    -- validate that no row has negative emptyPanels (which would make the downstack scenario categorically impossible)
+    -- validate that no row has negative emptyPanels by downstacking into an already full row
     for row=clearTopRow, 1, -1 do
-        if rowgrid:getEmptyPanelsCountInRow(row) < 0 then
+        if rowgrid.gridRows[row].emptyPanelCount < 0 then
+          -- which makes the imagined downstack scenario categorically impossible
             return nil
         end
     end
 
+    -- returning the arranged colorGridColumn, comparison with where the garbage is happens elsewhere
     return colorGridColumn
+end
+
+function Defend.MatchWouldClear(clearTopRow, match)
+  if match.type == "V" then return match.rows[3] == clearTopRow
+  else return match.row == clearTopRow end
 end
 
 function Defend.colorGridColumnIsAMatch(colorGridColumn, topRow)
@@ -210,14 +233,25 @@ function Defend.colorGridColumnIsAMatch(colorGridColumn, topRow)
     return true
 end
 
-function Defend.runDownRowGridColumn(colorGridColumn, topRow)
+function Defend.downstackRowGridColumnTopDown(colorGridColumn, topRow)
+  if colorGridColumn:GetCountInRow(topRow) > 0 then
     for row=topRow, topRow - 2, -1 do
+      if row == 0 then
+        -- can't drop anything to row 0, need to opt for horizontal match by dropping top down
+        -- basically guaranteed to be in a scenario where 3 panels are spread across row 1 and 2
+        colorGridColumn:DropPanel(topRow)
+        return
+      else
         if colorGridColumn:GetCountInRow(row) == 0 then
             assert(row < topRow, "if you see this, something is very fishy here")
-            colorGridColumn:DropPanel(row)
+            colorGridColumn:DropPanel(row + 1)
             return
         end
+      end
     end
+  --else
+  -- if there's no panel in the top row, don't even bother, come back after lowering the top row
+  end
 end
 
 function Defend.getDownstackPairs(self, rowgrid, color)

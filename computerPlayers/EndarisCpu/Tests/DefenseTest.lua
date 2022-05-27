@@ -4,7 +4,7 @@ require("computerPlayers.EndarisCpu.Defense")
 local DefenseTest = class(function(self) end)
 
 function DefenseTest.getAprilStringSample1()
-    return "000000000000000000000000000000000000999000030000140000330000550005130001"
+    return "000000000000000000000000000000000000[=]000030000140000330000550005130001"
 end
 
 function DefenseTest.testGetDownstackableVectors1()
@@ -45,17 +45,17 @@ end
 
 function DefenseTest.testGetPotentialClearColors1()
   local aprilString = DefenseTest.getAprilStringSample1()
-  local panels = StackExtensions.aprilStackToPanels(aprilString)
+  local panels = Stack.puzzleStringToPanels(nil, aprilString)
   local expectedValue = {3, 5}
   local rowGrid = RowGrid.FromPanels(panels)
   local potentialClearColors = Defend.getPotentialClearColors(rowGrid)
 
   assert(#expectedValue == #potentialClearColors)
   for i=1, #expectedValue do
-    assert(table.trueForAny(potentialClearColors), function(colorId) return colorId == expectedValue[i] end)
+    assert(table.trueForAny(potentialClearColors, function(colorId) return colorId == expectedValue[i] end))
   end
 
-  print("passed test testGetDownstackableVectors1")
+  print("passed test testGetPotentialClearColors1")
 end
 
 DefenseTest.testGetDownstackableVectors1()

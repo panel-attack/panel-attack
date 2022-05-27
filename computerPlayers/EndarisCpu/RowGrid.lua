@@ -2,6 +2,7 @@ require("computerPlayers.EndarisCpu.StackExtensions")
 
 RowGrid = class(function(self, gridRows)
     self.gridRows = gridRows
+    self.columnCount = 6
 end)
 
 function RowGrid.getGridRows(panels)
@@ -52,8 +53,8 @@ function RowGrid.DropIsValid(self, row)
     if row <= 0 then
         return false
     else
-    -- local rowsBelow = table.where(self.gridRows.rowIndex, function(gridRow) return gridRow.rowIndex < row end)
-    -- return table.any(rowsBelow, function(gridRow) return gridRow.emptyPanelCount > 0 end)
+      local rowsBelow = table.filter(self.gridRows, function(gridRow) return gridRow.rowIndex < row end)
+      return table.trueForAny(rowsBelow, function(gridRow) return gridRow.emptyPanelCount > 0 end)
     end
 end
 
@@ -98,6 +99,15 @@ function RowGrid.GetTotalPanelCountAboveRow(self, rowIndex)
     return totalPanelCountAboveRow
 end
 
+function RowGrid.GetTopRowWithPanels(self)
+  for i=#self.gridRows, 1, -1 do
+    -- at least one panel that is neither empty nor garbage
+    if self.columnCount - self.gridRows[i].emptyPanelCount - self.gridRows[i].colorColumns[9] > 0 then
+      return i
+    end
+  end
+end
+
 -- returns the minimum rowindex the rowgrid can be downstacked into
 function RowGrid.GetMinimumTopRowIndex(self)
     local totalEmptyPanelCountInRowAndBelow = 0
@@ -120,7 +130,11 @@ RowGridRow = class(function(self, rowIndex, colorColumns)
     self.colorColumns = colorColumns
     self.panelCount = 0
     for column = 1, #self.colorColumns do
+      if column == 9 then
+        self.garbagePanelCount = self.colorColumns[column]
+      else
         self.panelCount = self.panelCount + self.colorColumns[column]
+      end
     end
     self.emptyPanelCount = 6 - self.panelCount
 end)
@@ -227,5 +241,5 @@ function ColorGridColumn.GetTotalPanelCount(self)
 end
 
 function ColorGridColumn.GetCountInRow(self, row)
-    return self.sourceRowGrid.gridRows[row]:GetColorCount()
+    return self.sourceRowGrid.gridRows[row]:GetColorCount(self.color)
 end
