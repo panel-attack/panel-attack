@@ -927,11 +927,13 @@ function main_net_vs_lobby()
     my_user_id = "need a new user id"
   end
   local login_status_message = "   " .. loc("lb_login")
+  local noticeTextObject = nil
+  local noticeLastText = nil
   local login_status_message_duration = 2
   local login_denied = false
   local showing_leaderboard = false
   local lobby_menu_x = {[true] = themes[config.theme].main_menu_screen_pos[1] - 200, [false] = themes[config.theme].main_menu_screen_pos[1]} --will be used to make room in case the leaderboard should be shown.
-  local lobby_menu_y = themes[config.theme].main_menu_screen_pos[2] + 120
+  local lobby_menu_y = themes[config.theme].main_menu_screen_pos[2] + 10
   local sent_requests = {}
   if connection_up_time <= login_status_message_duration then
     json_send({login_request = true, user_id = my_user_id})
@@ -946,7 +948,6 @@ function main_net_vs_lobby()
   GAME.rich_presence:setPresence(nil, "In Lobby", true)
   while true do
     if connection_up_time <= login_status_message_duration then
-      gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y - 100)
       local messages = server_queue:pop_all_with("login_successful", "login_denied")
       for _, msg in ipairs(messages) do
         if msg.login_successful then
@@ -1157,9 +1158,34 @@ function main_net_vs_lobby()
     end
 
     if lobby_menu then
-      gprint(notice[#lobby_menu.buttons > 2], lobby_menu_x[showing_leaderboard], lobby_menu_y - 30)
+      local noticeText = notice[#lobby_menu.buttons > 2]
+      if connection_up_time <= login_status_message_duration then
+        noticeText = login_status_message
+      end
+
+      local noticeHeight = 0
+      local button_padding = 4
+      if noticeText ~= noticeLastText then
+        noticeTextObject = love.graphics.newText(get_global_font(), noticeText)
+        noticeHeight = noticeTextObject:getHeight() + (button_padding * 2)
+        lobby_menu.yMin = lobby_menu_y + noticeHeight
+        local menuHeight = (themes[config.theme].main_menu_y_max - lobby_menu.yMin)
+        lobby_menu:setHeight(menuHeight)
+      end
+      if noticeTextObject then
+        local noticeX = lobby_menu_x[showing_leaderboard] + 2
+        local noticeY = lobby_menu.y - noticeHeight - 10
+        local noticeWidth = noticeTextObject:getWidth() + (button_padding * 2)
+        local grey = 0.0
+        local alpha = 0.6
+        grectangle_color("fill", noticeX / GFX_SCALE, noticeY / GFX_SCALE, noticeWidth / GFX_SCALE, noticeHeight / GFX_SCALE, grey, grey, grey, alpha)
+        --grectangle_color("line", noticeX / GFX_SCALE, noticeY / GFX_SCALE, noticeWidth / GFX_SCALE, noticeHeight / GFX_SCALE, grey, grey, grey, alpha)
+
+        menu_drawf(noticeTextObject, noticeX + button_padding, noticeY + button_padding)
+      end
+
       if showing_leaderboard then
-        gprint(leaderboard_string, lobby_menu_x[showing_leaderboard] + 400, lobby_menu_y - 120)
+        gprint(leaderboard_string, lobby_menu_x[showing_leaderboard] + 400, lobby_menu_y)
       end
       gprint(join_community_msg, themes[config.theme].main_menu_screen_pos[1] + 30, canvas_height - 50)
       lobby_menu:draw()
