@@ -3,7 +3,7 @@
 if (Test-Path "$($PSScriptRoot)\main.lua") {
     $Time = Get-Date 
     $UTCTime = $Time.ToUniversalTime().ToString("yyyy-MM-dd_HH-mm-ss")
-    $FileNameZip = "panel-beta-$($UTCTime).zip"
+    $FileNameZip = "panel-alpha-$($UTCTime).zip"
     $compress = @{
         Path            = "$($PSScriptRoot)\*"
         DestinationPath = "$($PSScriptRoot)\$($FileNameZip)"
