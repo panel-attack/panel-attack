@@ -881,7 +881,7 @@ function Stack.render(self)
     y = y + nextIconIncrement
   
     -- APM
-    if math.fmod(self.CLOCK, 60) < self.max_runs_per_frame then
+    if analytic.lastAPM == 0 or math.fmod(self.CLOCK, 60) < self.max_runs_per_frame then
       if self.CLOCK > 0 and (analytic.data.swap_count + analytic.data.move_count > 0) then
         local actionsPerMinute = (analytic.data.swap_count + analytic.data.move_count) / (self.CLOCK / 60 / 60)
         analytic.lastAPM = string.format("%0.0f", round(actionsPerMinute, 0))
