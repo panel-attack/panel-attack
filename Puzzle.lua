@@ -2,7 +2,7 @@
 Puzzle =
   class(
   function(self, puzzleType, doCountdown, moves, stack, stop_time, shake_time)
-    self.puzzleType = puzzleType
+    self.puzzleType = puzzleType or "moves"
     self.doCountdown = doCountdown
     self.moves = moves or 0
     self.stack = string.gsub(stack, "%s+", "") -- Remove whitespace so files can be easier to read
