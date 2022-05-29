@@ -67,20 +67,26 @@ function love.load(args)
 end
 
 local prev_time = 0
+local FRAME_RATE = 1/60
+local sleep_ratio = .9
 function love.run()
 	if love.load then love.load(love.arg.parseGameArguments(arg), arg) end
 
 	-- We don't want the first frame's dt to include time taken by love.load.
 	if love.timer then love.timer.step() end
 
-	local dt = 0
-  
+	local dt = 0  
 
   -- Main loop time.
 	return function()
-    local current_time = socket.gettime()*1000
-    while current_time - prev_time < 16 do
-      current_time = socket.gettime()*1000
+    local current_time = love.timer.getTime()
+    local wait_time = (prev_time + FRAME_RATE - current_time) * sleep_ratio
+    if love.timer and wait_time > 0 then 
+      love.timer.sleep(wait_time) 
+    end
+    current_time = love.timer.getTime()
+    while prev_time + FRAME_RATE > current_time do
+      current_time = love.timer.getTime()
     end
     prev_time = current_time
   
@@ -111,8 +117,6 @@ function love.run()
 
       love.graphics.present()
     end
-
-    --if love.timer then love.timer.sleep(0.001) end
   end
 end
 
