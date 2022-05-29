@@ -5,44 +5,14 @@
   "delayBeforeRepeat": 91,
   "attackPatterns": [
     {
-      "width": 6,
-      "height": 1,
+      "height": 5,
       "startTime": 300,
-      "chain": true
+      "chain": 60
     },
     {
       "width": 6,
       "height": 1,
-      "startTime": 360,
-      "chain": true
-    },
-    {
-      "width": 6,
-      "height": 1,
-      "startTime": 420,
-      "chain": true
-    },
-    {
-      "width": 6,
-      "height": 1,
-      "startTime": 480,
-      "chain": true
-    },
-    {
-      "width": 6,
-      "height": 1,
-      "startTime": 540,
-      "chain": true
-    },
-    {
-      "startTime": 540,
-      "endsChain": true
-    },
-    {
-      "width": 6,
-      "height": 1,
-      "startTime": 600,
-      "chain": false
-    },
+      "startTime": 600
+    }
   ]
 }

@@ -1330,12 +1330,26 @@ function select_screen.main()
         local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
         local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
         GAME.match.attackEngine = AttackEngine(P1, delayBeforeStart, delayBeforeRepeat)
-
         for patternid, values in ipairs(trainingModeSettings.attackPatterns) do
-          if values.endsChain then
-            GAME.match.attackEngine:addEndChainPattern(values.startTime)
+          if values.chain then
+            if type(values.chain) == "boolean" then
+              values.chain = 60
+            end
+            if type(values.chain) == "number" then
+              for i = 1, (values.height or 1) do
+                GAME.match.attackEngine:addAttackPattern(values.width or 6, values.height, values.startTime + (i * values.chain), values.attackCount, false, true)
+              end
+              GAME.match.attackEngine:addEndChainPattern(values.startTime + (values.height * values.chain))
+            elseif type(values.chain) == "table" then
+              local highestTime = values.chain[1]
+              for _, chainTime in ipairs(values.chain) do
+                GAME.match.attackEngine:addAttackPattern(values.width or 6, values.height, values.startTime + chainTime, values.attackCount, false, true)
+                highestTime = math.max(highestTime, chainTime)
+              end
+              GAME.match.attackEngine:addEndChainPattern(values.startTime + highestTime)
+            end
           else
-            GAME.match.attackEngine:addAttackPattern(values.width, values.height, values.startTime, values.metal or false, values.chain)
+            GAME.match.attackEngine:addAttackPattern(values.width, values.height, values.startTime, values.attackCount, values.metal or false, false)
           end
         end
       end

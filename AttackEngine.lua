@@ -3,10 +3,11 @@ local logger = require("logger")
 -- A pattern for sending garbage
 AttackPattern =
   class(
-  function(self, width, height, startTime, metal, chain, endsChain)
+  function(self, width, height, startTime, attackCount, metal, chain, endsChain)
     self.width = width
     self.height = height
     self.startTime = startTime
+    self.attackCount = attackCount
     self.endsChain = endsChain
     self.garbage = {width, height, metal or false, chain}
   end
@@ -31,15 +32,16 @@ AttackEngine =
 -- repeatDelay - the amount of time in between each attack after start
 -- metal - if this is a metal block
 -- chain - if this is a chain attack
-function AttackEngine.addAttackPattern(self, width, height, start, metal, chain)
-  assert(width ~= nil and height ~= nil and start ~= nil and metal ~= nil and chain ~= nil)
-  assert(height == 1 or not chain, "chains should be sent one command at a time")
-  local attackPattern = AttackPattern(width, height, self.delayBeforeStart + start, metal, chain, false)
+function AttackEngine.addAttackPattern(self, width, height, start, attackCount, metal, chain)
+  --assert(width ~= nil and height ~= nil and start ~= nil and metal ~= nil and chain ~= nil)
+  --assert(height == 1 or not chain, "chains should be sent one command at a time")
+
+  local attackPattern = AttackPattern(width, height, self.delayBeforeStart + start, attackCount, metal, chain, false)
   self.attackPatterns[#self.attackPatterns + 1] = attackPattern
 end
 
 function AttackEngine.addEndChainPattern(self, start, repeatDelay)
-  local attackPattern = AttackPattern(0, 0, self.delayBeforeStart + start, false, false, true)
+  local attackPattern = AttackPattern(0, 0, self.delayBeforeStart + start, nil, false, false, true)
   self.attackPatterns[#self.attackPatterns + 1] = attackPattern
 end
 
@@ -49,14 +51,16 @@ function AttackEngine.run(self)
   local totalAttackTimeBeforeRepeat = self.delayBeforeRepeat + self.attackPatterns[#self.attackPatterns].startTime - self.delayBeforeStart
   for _, attackPattern in ipairs(self.attackPatterns) do
     if self.clock >= attackPattern.startTime then
+      local lastAttackTime
+      if attackPattern.attackCount then
+        lastAttackTime = attackPattern.startTime + ((attackPattern.attackCount - 1) * attackPattern.totalAttackTimeBeforeRepeat)
+      end
       local difference = self.clock - attackPattern.startTime
       local remainder = difference % totalAttackTimeBeforeRepeat
       if remainder == 0 then
         if attackPattern.endsChain then
           self.target.telegraph:chainingEnded(self.target.CLOCK)
-        elseif attackPattern.garbage[4] then -- chain
-          self.target.telegraph:push(attackPattern.garbage, math.random(11, 17), math.random(1, 11), self.target.CLOCK)
-        else -- combo
+        else
           self.target.telegraph:push(attackPattern.garbage, math.random(11, 17), math.random(1, 11), self.target.CLOCK)
         end
       end
