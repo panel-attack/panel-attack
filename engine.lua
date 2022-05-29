@@ -750,6 +750,17 @@ function Stack.puzzleStringToPanels(self, puzzleString)
   return panels
 end
 
+function Stack.toPuzzleInfo(self)
+  local puzzleInfo = {}
+  puzzleInfo["Player"] = self.match.battleRoom.playerNames[self.which]
+  puzzleInfo["Stop"] = self.stop_time
+  puzzleInfo["Shake"] = self.shake_time
+  puzzleInfo["Pre-Stop"] = self.pre_stop_time
+  puzzleInfo["Stack"] = Puzzle.toPuzzleString(self.panels)
+
+  return puzzleInfo
+end
+
 function Stack.puzzle_done(self)
   if not self.do_countdown then
     -- For now don't require active panels to be 0, we will still animate in game over,

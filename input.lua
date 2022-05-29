@@ -217,17 +217,45 @@ function joystick_ax()
 end
 
 function love.keypressed(key, scancode, rep)
-  if key == "return" and not rep and love.keyboard.isDown("lalt") then
-    love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
+  local function handleFullscreenToggle()
+    if key == "return" and not rep and love.keyboard.isDown("lalt") then
+      love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
+      return true
+    end
+  end
+
+  local function handleScreenshot()
+    if key == "f2" or key == "printscreen" then
+      local now = os.date("*t", to_UTC(os.time()))
+      local filename = "screenshot_" .. "v" .. config.version .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. ".png"
+      love.filesystem.createDirectory("screenshots")
+      love.graphics.captureScreenshot("screenshots/" .. filename)
+      return true
+    end
+  end
+
+  local function handleCopy()
+    if key == "c" and not rep and (love.keyboard.isDown("rctrl") or love.keyboard.isDown("lctrl")) then
+      local stacks = {}
+      if P1 then
+        stacks["P1"] = P1:toPuzzleInfo()
+      end
+      if P2 then
+        stacks["P2"] = P2:toPuzzleInfo()
+      end
+      if table.length(stacks) > 0 then
+        love.system.setClipboardText(json.encode(stacks))
+        return true
+      end
+    end
+  end
+
+  if handleFullscreenToggle() or
+     handleScreenshot() or
+     handleCopy() then
     return
   end
-  if key == "f2" or key == "printscreen" then
-    local now = os.date("*t", to_UTC(os.time()))
-    local filename = "screenshot_" .. "v" .. config.version .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. ".png"
-    love.filesystem.createDirectory("screenshots")
-    love.graphics.captureScreenshot("screenshots/" .. filename)
-    return
-  end
+
   if not rep then
     keys[key] = 0
   end
