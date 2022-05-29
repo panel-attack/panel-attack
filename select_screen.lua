@@ -1326,14 +1326,16 @@ function select_screen.main()
       P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=cursor_data[1].state.panels_dir, level=cursor_data[1].state.level, player_number=1, character=cursor_data[1].state.character}
 
       if GAME.battleRoom.trainingModeSettings then
-        GAME.match.attackEngine = AttackEngine(P1)
-        local delayPerAttack = GAME.battleRoom.trainingModeSettings.delayPerAttack or 6
-        local attackCountPerDelay = GAME.battleRoom.trainingModeSettings.attackCountPerDelay or 15
-        local delay = GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME + (attackCountPerDelay * delayPerAttack) + 1
+        local trainingModeSettings = GAME.battleRoom.trainingModeSettings
+        local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
+        local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
+        GAME.match.attackEngine = AttackEngine(P1, delayBeforeStart, delayBeforeRepeat)
 
-        for i = 1, attackCountPerDelay do
-          for patternid, values in ipairs(GAME.battleRoom.trainingModeSettings.attackpatterns) do
-            GAME.match.attackEngine:addAttackPattern(values.width or 4, values.height or 1, (values.startTime or 150) + (i * delayPerAttack) --[[start time]], delay + (values.delay or 0)--[[repeat]], values.attackcount--[[attack count]], values.metal --[[metal]],  values.chain or false--[[chain]]) 
+        for patternid, values in ipairs(trainingModeSettings.attackPatterns) do
+          if values.endsChain then
+            GAME.match.attackEngine:addEndChainPattern(values.startTime)
+          else
+            GAME.match.attackEngine:addAttackPattern(values.width, values.height, values.startTime, values.metal or false, values.chain)
           end
         end
       end
