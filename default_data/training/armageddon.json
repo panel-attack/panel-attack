@@ -1,114 +1,90 @@
 {
   "name": "Armageddon Mode",
-  "delayPerAttack": 1,
-  "attackCountPerDelay": 4,
   "mergeComboMetalQueue": true,
-  "attackpatterns": [
+  "delayBeforeStart": 150,
+  "delayBeforeRepeat": 91,
+  "attackPatterns": [
     {
       "width": 1,
       "height": 1,
-      "startTime": 30,
-      "delay": 600,
-      "attackcount": null,
+      "startTime": 1,
       "metal": false,
       "chain": false
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 30,
-      "delay": 600,
-      "attackcount": null,
+      "startTime": 2,
       "metal": true,
       "chain": false
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 30,
-      "delay": 600,
-      "attackcount": null,
+      "startTime": 3,
       "metal": false,
       "chain": false
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 30,
-      "delay": 600,
-      "attackcount": null,
+      "startTime": 4,
       "metal": true,
       "chain": false
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 30,
-      "delay": 600,
-      "attackcount": null,
+      "startTime": 5,
       "metal": false,
       "chain": false
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 30,
-      "delay": 600,
-      "attackcount": null,
+      "startTime": 6,
       "metal": true,
       "chain": false
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 30,
-      "delay": 600,
-      "attackcount": null,
+      "startTime": 7,
       "metal": true,
       "chain": false
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 30,
-      "delay": 600,
-      "attackcount": null,
+      "startTime": 8,
       "metal": false,
       "chain": false
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 30,
-      "delay": 600,
-      "attackcount": null,
+      "startTime": 9,
       "metal": true,
       "chain": false
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 30,
-      "delay": 600,
-      "attackcount": null,
+      "startTime": 10,
       "metal": false,
       "chain": false
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 30,
-      "delay": 600,
-      "attackcount": null,
+      "startTime": 11,
       "metal": true,
       "chain": false
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 30,
-      "delay": 600,
-      "attackcount": null,
+      "startTime": 12,
       "metal": false,
       "chain": false
     }

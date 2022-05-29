@@ -563,17 +563,39 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
 
 end
 
+local function createBasicTrainingMode(name, width, height) 
+
+  local delayBeforeStart = 150
+  local delayBeforeRepeat = 91
+  local attacksPerVolley = 6
+  local attackPatterns = {}
+  if height > 1 and width == 6 then -- chain
+    local chainEndTime = height + 1 + GARBAGE_TRANSIT_TIME
+    for i = 1, height + 1 do
+      local startTime = math.floor(i / (height + 1) * chainEndTime)
+      attackPatterns[#attackPatterns+1] = {width = width, height = 1, startTime = startTime, metal = false, chain = true, endsChain = false}
+    end
+    attackPatterns[#attackPatterns+1] = {width = width, height = 1, startTime = chainEndTime, metal = false, chain = true, endsChain = true}
+  else -- combo (or illegal garbage)
+    for i = 1, attacksPerVolley do
+      attackPatterns[#attackPatterns+1] = {width = width, height = height, startTime = i, metal = false, chain = false, endsChain = false}
+    end
+  end
+  local customTrainingModeData = {name = name, delayBeforeStart = delayBeforeStart, delayBeforeRepeat = delayBeforeRepeat, attackPatterns = attackPatterns}
+
+  return customTrainingModeData
+end
+
 function training_setup()
-  -- TODO make "illegal garbage blocks" possible again in telegraph.
   local trainingModeSettings = {}
   trainingModeSettings.height = 1
   trainingModeSettings.width = 4
   local customModeID = 1
   local customTrainingModes = {}
   customTrainingModes[0] = {name = "None"}
-  customTrainingModes[1] = {name = loc("combo_storm"), attackpatterns = {[1] = {width = 4, height = 1}}}
-  customTrainingModes[2] = {name = loc("factory"), attackpatterns = {[1] = {width = 6, height = 2}}}
-  customTrainingModes[3] = {name = loc("large_garbage"), attackpatterns = {[1] = {width = 6, height = 12}}}
+  customTrainingModes[1] = createBasicTrainingMode(loc("combo_storm"), 4, 1)
+  customTrainingModes[2] = createBasicTrainingMode(loc("factory"), 6, 2)
+  customTrainingModes[3] = createBasicTrainingMode(loc("large_garbage"), 6, 12)
   for customfile, value in ipairs(trainings) do
     customTrainingModes[#customTrainingModes+1] = value
   end
@@ -639,7 +661,7 @@ function training_setup()
   end
 
   local function start_custom_game()
-    customTrainingModes[0] = {attackpatterns = {[1] = {width = trainingModeSettings.width, height = trainingModeSettings.height}}}
+    customTrainingModes[0] = createBasicTrainingMode("", trainingModeSettings.width, trainingModeSettings.height)
     ret = {main_local_vs_yourself_setup, {customTrainingModes[customModeID]}}
   end
 
