@@ -1,0 +1,14 @@
+{
+  "name": "Chain Multiply Example",
+  "mergeComboMetalQueue": false,
+  "delayBeforeStart": 150,
+  "delayBeforeRepeat": 91,
+  "attackPatterns": [
+    {
+      "height": 5,
+      "startTime": 300,
+      "chain": 60,
+      "chainEndDelta": 73
+    }
+  ]
+}
