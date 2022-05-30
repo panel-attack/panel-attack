@@ -751,6 +751,7 @@ function Theme:final_init()
   self.images.bg_readme = UpdatingImage(load_theme_img("background/readme"), self.bg_readme_is_tiled, self.bg_readme_speed_x, self.bg_readme_speed_y, canvas_width, canvas_height)
 
   local menuYPadding = 10
+  self.centerMenusVertically = true
   if themes[config.theme].images.bg_title then
     menuYPadding = 100
     self.main_menu_screen_pos = {532, menuYPadding}
@@ -758,6 +759,7 @@ function Theme:final_init()
   else
     self.main_menu_screen_pos = {532, 249}
     self.main_menu_y_max = canvas_height - menuYPadding
+    self.centerMenusVertically = false
   end
   self.main_menu_max_height = (self.main_menu_y_max - self.main_menu_screen_pos[2])
   self.main_menu_y_center = self.main_menu_screen_pos[2] + (self.main_menu_max_height / 2)
