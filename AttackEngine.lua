@@ -54,7 +54,7 @@ function AttackEngine.run(self)
   for _, patterns in ipairs(self.attackPatterns) do
     highestStartTime = math.max(patterns.startTime, highestStartTime)
   end
-  local totalAttackTimeBeforeRepeat = self.delayBeforeRepeat + self.attackPatterns[#self.attackPatterns].startTime - self.delayBeforeStart
+  local totalAttackTimeBeforeRepeat = self.delayBeforeRepeat + highestStartTime - self.delayBeforeStart
   for _, attackPattern in ipairs(self.attackPatterns) do
     if self.clock >= attackPattern.startTime then
       local difference = self.clock - attackPattern.startTime
