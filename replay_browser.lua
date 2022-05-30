@@ -79,7 +79,7 @@ function replay_browser.main()
     replay = {}
     replay = json.decode(file)
     if not replay.engineVersion then
-      replay.engineVersion = "045"
+      replay.engineVersion = "046"
     end
 
     -- Old versions saved replays with extra data, prefer vs and endless in that case
