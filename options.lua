@@ -163,7 +163,7 @@ local function graphics_menu()
 
   local function update_popfx(noToggle)
     if not noToggle then
-      config.renderAttacks = not config.renderAttacks
+      config.popfx = not config.popfx
     end
     graphicsMenu:set_button_setting(3, config.popfx and loc("op_on") or loc("op_off"))
   end
