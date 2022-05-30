@@ -8,85 +8,73 @@
       "width": 1,
       "height": 1,
       "startTime": 1,
-      "metal": false,
-      "chain": false
+      "metal": false
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 2,
-      "metal": true,
-      "chain": false
+      "startTime": 1,
+      "metal": true
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 3,
-      "metal": false,
-      "chain": false
+      "startTime": 1,
+      "metal": false
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 4,
-      "metal": true,
-      "chain": false
+      "startTime": 1,
+      "metal": true
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 5,
-      "metal": false,
-      "chain": false
+      "startTime": 1,
+      "metal": false
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 6,
-      "metal": true,
-      "chain": false
+      "startTime": 1,
+      "metal": true
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 7,
-      "metal": true,
-      "chain": false
+      "startTime": 1,
+      "metal": true
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 8,
-      "metal": false,
-      "chain": false
+      "startTime": 1,
+      "metal": false
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 9,
-      "metal": true,
-      "chain": false
+      "startTime": 1,
+      "metal": true
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 10,
-      "metal": false,
-      "chain": false
+      "startTime": 1,
+      "metal": false
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 11,
-      "metal": true,
-      "chain": false
+      "startTime": 1,
+      "metal": true
     },
     {
       "width": 1,
       "height": 1,
-      "startTime": 12,
-      "metal": false,
-      "chain": false
+      "startTime": 1,
+      "metal": false
     }
   ]
 }

@@ -60,14 +60,16 @@ function fmainloop()
   wait()
   analytics.init()
   apply_config_volume()
-  read_attack_files()
   -- create folders in appdata for those who don't have them already
   love.filesystem.createDirectory("characters")
   love.filesystem.createDirectory("panels")
   love.filesystem.createDirectory("themes")
   love.filesystem.createDirectory("stages")
   love.filesystem.createDirectory("training")
-
+  if #love.filesystem.getDirectoryItems("training") == 0 then
+    recursive_copy("default_data/training", "training")
+  end
+  read_attack_files("training")
 
   --check for game updates
   if GAME_UPDATER_CHECK_UPDATE_INGAME then
@@ -577,7 +579,7 @@ local function createBasicTrainingMode(name, width, height)
       local startTime = math.floor(i / (height + 1) * chainEndTime)
       attackPatterns[#attackPatterns+1] = {width = width, height = 1, startTime = startTime, metal = false, chain = true, endsChain = false}
     end
-    
+
     attackPatterns[#attackPatterns+1] = {width = width, height = 1, startTime = chainEndTime, metal = false, chain = true, endsChain = true}
   else -- combo (or illegal garbage)
     for i = 1, attacksPerVolley do
