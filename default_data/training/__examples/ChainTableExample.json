@@ -1,0 +1,12 @@
+{
+  "name": "Chain Table Example",
+  "mergeComboMetalQueue": false,
+  "delayBeforeStart": 150,
+  "delayBeforeRepeat": 91,
+  "attackPatterns": [
+    {
+      "chain": [300, 360, 420, 480, 540],
+      "chainEndTime": 613
+    }
+  ]
+}
