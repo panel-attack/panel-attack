@@ -30,7 +30,7 @@ An attack file looks something like this:
 For Combo Garbage:
 - "startTime": The amount of frames to wait after the attack pattern has been started before sending the garbage. This is relative to the beginning of the attack pattern.
 - "width": The width of the garbage block, ranging from 1-6.
-- "height" The height of the garbage block, defaults to 1. You CAN create chain-size blocks by changing this value to numbers greater than 1, and those blocks will be treated like combo garbage.
+- "height": The height of the garbage block, defaults to 1. You CAN create chain-size blocks by changing this value to numbers greater than 1, and those blocks will be treated like combo garbage.
 This can allow you to send multiple chain-size blocks to the garbage queue, which is normally impossible during standard gameplay.
 - "metal": This determines whether or not the garbage is metal. Defaults to false if unused.
 See the "ComboExample.json" file for reference.
