@@ -23,7 +23,7 @@ An attack file looks something like this:
 
 - "name": The display name of the attack file. Defaults to the name of the file if unused.
 - "mergeComboMetalQueue": Makes the game disregard combo/metal garbage priority. Allows you to send shock garbage before combo garbage, for instance. Defaults to false if unused.
-- "delayBeforeStart": The initial amount of frames to wait from the beginning of the game before sending the attack pattern.
+- "delayBeforeStart": The initial amount of frames (always assume 60fps) to wait from the beginning of the game before sending the attack pattern.
 - "delayBeforeRepeat": The amount of frames to wait in between repeating the attack pattern again after it has sent all the garbage in the "attackPatterns" table.
 - "attackPatterns": This holds an array of all the garbage that is to be sent. You can put as much garbage data in here as you want. Each table represents one piece of garbage.
 
