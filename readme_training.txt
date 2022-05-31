@@ -47,5 +47,4 @@ The second method:
 - "chain": An array of numbers that represent the frame relative to the beginning of the attack pattern to grow the chain size. The lowest number is considered the "startTime" of the chain.
 - "chainEndTime": The amount of frames to wait after the chain has fully grown in order to commit it to the garbage queue. This is relative to the beginning of the attack pattern instead of the chain itself.
 See the "ChainTableExample.json" file for reference.
-
-Extra note to keep in mind: Your "delayBeforeRepeat" plus the largest "startTime" you have needs to equal at least 91 in order for your garbage to send, or else it will queue indefinitely. 
+General note to keep in mind for all garbage: Your "delayBeforeRepeat" plus the largest "startTime" you have needs to equal at least 91 in order for your garbage to send, or else it will queue indefinitely. 
