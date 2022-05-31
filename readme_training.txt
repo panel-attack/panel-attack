@@ -10,13 +10,13 @@ An attack file looks something like this:
   "delayBeforeRepeat": 91,
   "attackPatterns": [
     {
-      "chain": [300, 360, 420, 480, 540],
-      "chainEndTime": 613
-    },
-    {
       "width": 6,
       "height": 1,
       "startTime": 540
+    },
+    {
+      "chain": [300, 360, 420, 480, 540],
+      "chainEndTime": 613
     }
   ]
 }
