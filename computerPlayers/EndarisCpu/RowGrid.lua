@@ -30,11 +30,21 @@ end
 function RowGrid.Subtract(rowgrid1, rowgrid2)
     local diffGridRows = {}
 
-    for gridRowIndex = 1, #rowgrid1 do
-        diffGridRows[gridRowIndex] = RowGridRow.Subtract(rowgrid1[gridRowIndex], rowgrid2[gridRowIndex])
+    for gridRowIndex = 1, #rowgrid1.gridRows do
+        diffGridRows[gridRowIndex] = RowGridRow.Subtract(rowgrid1.gridRows[gridRowIndex], rowgrid2.gridRows[gridRowIndex])
     end
 
     return RowGrid(diffGridRows)
+end
+
+function RowGrid.SubtractColumn(self, column)
+  local diffGrid = deepcpy(self)
+
+  for gridRowIndex = 1, #diffGrid.gridRows do
+      diffGrid.gridRows[gridRowIndex].colorColumns[column.color] = diffGrid.gridRows[gridRowIndex].colorColumns[column.color] - column:GetCountInRow(gridRowIndex)
+  end
+
+  return diffGrid
 end
 
 function RowGrid.MoveDownPanel(self, color, row)
@@ -147,7 +157,8 @@ function RowGridRow.FromPanels(rowIndex, rowPanels)
     local colorColumns = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
     for column = 1, #rowPanels do
         -- the idea is that columnnumber=color number for readability
-        if rowPanels[column].color > 0 then
+        -- exclude garbage but include color 9 panels
+        if rowPanels[column].color > 0 and not rowPanels[column].garbage then
           colorColumns[rowPanels[column].color] = colorColumns[rowPanels[column].color] + 1
         end
     end
@@ -184,6 +195,19 @@ function RowGridRow.Subtract(gridrow1, gridrow2)
     end
 
     return RowGridRow(gridrow1.rowIndex, diffGridRowColumns)
+end
+
+function RowGridRow.TransformToColor10Except(self, exceptColor)
+  -- to 9 instead of #self.colorColumns cause converting 10 to 10 really doesn't make sense
+  for color = 1, 9 do
+    if exceptColor == nil or exceptColor ~= color then
+      local count = self.colorColumns[color]
+      self.colorColumns[10] = self.colorColumns[10] + count
+      self.colorColumns[color] = 0
+    end
+  end
+
+  return self
 end
 
 ColorGridColumn = class(function(self, rowGrid, color)
@@ -242,4 +266,21 @@ end
 
 function ColorGridColumn.GetCountInRow(self, row)
     return self.sourceRowGrid.gridRows[row]:GetColorCount(self.color)
+end
+
+function ColorGridColumn.Subtract(self, column)
+  assert(self.color == column.color)
+
+  local diffGrid = self.sourceRowGrid:SubtractColumn(column)
+  return diffGrid:GetColorColumn(self.color)
+end
+
+function ColorGridColumn.GetTopRowWithPanel(self)
+  for i = #self.sourceRowGrid.gridRows, 1, -1 do
+    if self:GetCountInRow(i) > 0 then
+      return i
+    end
+  end
+
+  return 0
 end

@@ -98,6 +98,16 @@ function Defend.DownstackIntoClear(self)
     end
 
     local potentialClearColors = Defend.getPotentialClearColors(rowGrid)
+
+    for i=#potentialClearColors, 1, -1 do
+      local targetRowGrid = Defend:getTargetRowGrid(rowGrid, potentialClearColors[i])
+      if targetRowGrid == nil then
+        table.remove(potentialClearColors, i)
+      else
+        potentialClearColors[i].targetRowGrid = targetRowGrid
+      end
+    end
+
     local downstackPairs = {}
     for i=1,#potentialClearColors do
         local pairs = self:getDownstackPairs(rowGrid, potentialClearColors[i])
@@ -259,6 +269,54 @@ function Defend.downstackRowGridColumnTopDown(colorGridColumn, topRow)
     end
   --else
   -- if there's no panel in the top row, don't even bother, come back after lowering the top row
+  end
+end
+
+-- uses the desired gridColumn of the color in conjunction with the rowGrid to come up with a full RowGrid that supports the form of the targetGridColumn
+-- returns the rowGrid if one can be found, nil otherwise
+function Defend.getTargetRowGrid(self, originalRowGrid, color, targetGridColumn)
+  -- first apply the targetGridColumn to the originalRowGrid
+  local originalGridColumn = originalRowGrid:GetColorColumn(color)
+  local diffColumn = targetGridColumn:Subtract(originalGridColumn)
+  local targetRowGrid = originalRowGrid:SubtractColumn(diffColumn)
+  local matchTopRow = targetGridColumn:GetTopRowWithPanels()
+
+
+  -- next analyse the emptyPanelsCount for each row to find out if / where additional panels need to be moved
+  -- going top down because for bottom up, you'd always need to consider the case that you could drop something from a column further up if the column that has the extra panels doesn't work for you
+  for i = #targetRowGrid.gridRows, 2 do
+    for j = i - 1, 1, -1 do
+      -- check if higher row has more panels than the low row
+      while targetRowGrid.gridRows[i].emptyPanelCount < targetRowGrid.gridRows[j].emptyPanelCount do
+        -- dropping a panel is required
+        -- convert colors in the row from which we need to drop one panel to color 10
+        if Defend.IsPartOfMatch(targetGridColumn, matchTopRow, i) then
+          targetRowGrid.gridRows[i] = targetRowGrid.gridRows[i]:TransformToColor10Except(color)
+        else
+          targetRowGrid.gridRows[i] = targetRowGrid.gridRows[i]:TransformToColor10Except()
+        end
+
+        if targetRowGrid.gridRows[i]:GetColorCount(10) == 0 then
+          -- there are no panels to drop, abort
+          return nil
+        else
+          targetRowGrid.gridRows[j].colorColumns[10] = targetRowGrid.gridRows[j].colorColumns[10] + 1
+          targetRowGrid.gridRows[i].colorColumns[10] = targetRowGrid.gridRows[i].colorColumns[10] - 1
+        end
+      end
+    end
+  end
+
+  return targetRowGrid
+end
+
+function Defend.IsPartOfMatch(targetGridColumn, matchTopRow, rowIndex)
+  -- horizontal match
+  if targetGridColumn.GetCountInRow(matchTopRow) >= 3 then
+    return rowIndex == matchTopRow
+  else
+    -- vertical match
+    return rowIndex >= matchTopRow - 2
   end
 end
 
