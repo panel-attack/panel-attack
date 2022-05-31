@@ -976,6 +976,32 @@ local function about_menu(button_idx)
     }
   end
 
+  local function show_attack_readme()
+    ret = {
+      function()
+        GAME.backgroundImage = themes[config.theme].images.bg_readme
+        reset_filters()
+
+        local readme = read_txt_file("readme_training.txt")
+        while true do
+          gprint(readme, 15, 15)
+          wait()
+          local panels_ret = nil
+          variable_step(
+            function()
+              if menu_escape() or menu_enter() then
+                panels_ret = {about_menu, {5}}
+              end
+            end
+          )
+          if panels_ret then
+            return unpack(panels_ret)
+          end
+        end
+      end
+    }
+  end
+
   local function show_system_info()
     ret = {
       function()
@@ -1005,7 +1031,7 @@ local function about_menu(button_idx)
           variable_step(
             function()
               if menu_escape() or menu_enter() then
-                panels_ret = {about_menu, {5}}
+                panels_ret = {about_menu, {6}}
               end
             end
           )
@@ -1034,6 +1060,7 @@ local function about_menu(button_idx)
   aboutMenu:add_button(loc("op_about_characters"), show_characters_readme, goEscape)
   aboutMenu:add_button(loc("op_about_stages"), show_stages_readme, goEscape)
   aboutMenu:add_button(loc("op_about_panels"), show_panels_readme, goEscape)
+  aboutMenu:add_button("About Attack Files", show_attack_readme, goEscape)
   aboutMenu:add_button("System Info", show_system_info, goEscape)
   aboutMenu:add_button(loc("back"), exitSettings, exitSettings)
 

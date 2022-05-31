@@ -569,7 +569,7 @@ local function createBasicTrainingMode(name, width, height)
 
   local delayBeforeStart = 150
   local delayBeforeRepeat = 91
-  local attacksPerVolley = 6
+  local attacksPerVolley = 13
   local attackPatterns = {}
 
   if height > 1 and width == 6 then -- chain

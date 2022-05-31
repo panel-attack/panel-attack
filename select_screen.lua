@@ -1344,7 +1344,7 @@ function select_screen.main()
               GAME.match.attackEngine:addEndChainPattern(values.chainEndTime)
             end
           else
-            GAME.match.attackEngine:addAttackPattern(values.width, values.height, values.startTime, values.metal or false, false)
+            GAME.match.attackEngine:addAttackPattern(values.width, values.height or 1, values.startTime, values.metal or false, false)
           end
         end
       end

@@ -127,7 +127,7 @@ function love.draw()
     gprintf("FPS: " .. love.timer.getFPS(), 1, 1)
   end
 
-  if STONER_MODE then
+  if STONER_MODE then 
     gprintf("STONER", 1, 1 + (11 * 4))
   end
 
