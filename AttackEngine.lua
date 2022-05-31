@@ -32,9 +32,7 @@ AttackEngine =
 -- metal - if this is a metal block
 -- chain - if this is a chain attack
 function AttackEngine.addAttackPattern(self, width, height, start, metal, chain)
-  --assert(width ~= nil and height ~= nil and start ~= nil and metal ~= nil and chain ~= nil)
-  --assert(height == 1 or not chain, "chains should be sent one command at a time")
-
+  assert(width ~= nil and height ~= nil and start ~= nil and metal ~= nil and chain ~= nil)
   local attackPattern = AttackPattern(width, height, self.delayBeforeStart + start, metal, chain, false)
   self.attackPatterns[#self.attackPatterns + 1] = attackPattern
 end
