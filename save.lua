@@ -366,7 +366,6 @@ function read_puzzles()
 end
 
 function read_attack_files(path)
-  trainings = {}
   local lfs = love.filesystem
   local raw_dir_list = lfs.getDirectoryItems(path)
   for i, v in ipairs(raw_dir_list) do

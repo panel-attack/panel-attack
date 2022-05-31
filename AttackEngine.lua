@@ -42,8 +42,6 @@ function AttackEngine.addEndChainPattern(self, start, repeatDelay)
   self.attackPatterns[#self.attackPatterns + 1] = attackPattern
 end
 
-
-
 function AttackEngine.run(self)
   local garbageToSend = {}
   local highestStartTime = self.attackPatterns[#self.attackPatterns].startTime
