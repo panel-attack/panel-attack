@@ -251,7 +251,7 @@ end
 
 -- Positions the stack draw position for the given player
 function Stack.moveForPlayerNumber(stack, player_num)
-  local stack_padding_x_for_legacy_pos = ((canvas_width - legacy_canvas_width) / 2)
+  local stack_padding_x_for_legacy_pos = ((464) / 2)
   if player_num == 1 then
     stack.pos_x = 4 + stack_padding_x_for_legacy_pos / GFX_SCALE
     stack.score_x = 315 + stack_padding_x_for_legacy_pos
@@ -268,8 +268,8 @@ function Stack.moveForPlayerNumber(stack, player_num)
     stack.multiplication = 1
     stack.id = "_2P"
   end
-  stack.pos_y = 4 + (canvas_height - legacy_canvas_height) / GFX_SCALE
-  stack.score_y = 100 + (canvas_height - legacy_canvas_height)
+  stack.pos_y = 4 + (108) / GFX_SCALE
+  stack.score_y = 208
 end
 
 function Stack.divergenceString(stackToTest)
@@ -748,6 +748,17 @@ function Stack.puzzleStringToPanels(self, puzzleString)
   end
 
   return panels
+end
+
+function Stack.toPuzzleInfo(self)
+  local puzzleInfo = {}
+  puzzleInfo["Player"] = self.match.battleRoom.playerNames[self.which]
+  puzzleInfo["Stop"] = self.stop_time
+  puzzleInfo["Shake"] = self.shake_time
+  puzzleInfo["Pre-Stop"] = self.pre_stop_time
+  puzzleInfo["Stack"] = Puzzle.toPuzzleString(self.panels)
+
+  return puzzleInfo
 end
 
 function Stack.puzzle_done(self)
@@ -2446,8 +2457,13 @@ function Stack.check_matches(self)
 
   if (combo_size ~= 0) then
     self.combos[self.CLOCK] = combo_size
-    if self.garbage_target and self.telegraph and metal_count == 3 and combo_size >= 3 then
-      self.telegraph:push({6, 1, true, false}, first_panel_col, first_panel_row, self.CLOCK)
+    if self.garbage_target and self.telegraph then
+      if metal_count >= 3 then
+        -- Give a shock garbage for every shock block after 2
+        for i = 3, metal_count do
+          self.telegraph:push({6, 1, true, false}, first_panel_col, first_panel_row, self.CLOCK)
+        end
+      end
     end
     self.analytic:register_destroyed_panels(combo_size)
     if (combo_size > 3) then
@@ -2466,16 +2482,11 @@ function Stack.check_matches(self)
 
       self:enqueue_card(false, first_panel_col, first_panel_row, combo_size)
       if self.garbage_target and self.telegraph then
-        if metal_count > 3 then
-          for i = 3, metal_count do
-            self.telegraph:push({6, 1, true, false}, first_panel_col, first_panel_row, self.CLOCK)
-          end
-        end
-        if metal_count ~= combo_size then
-          local combo_pieces = combo_garbage[combo_size]
-          for i=1,#combo_pieces do
-            self.telegraph:push({combo_pieces[i], 1, false, false}, first_panel_col, first_panel_row, self.CLOCK)
-          end
+        local combo_pieces = combo_garbage[combo_size]
+        for i=1,#combo_pieces do
+          -- Give out combo garbage based on the lookup table, even if we already made shock garbage,
+          -- OP! Too bad its hard to get shock panels in vs. :)
+          self.telegraph:push({combo_pieces[i], 1, false, false}, first_panel_col, first_panel_row, self.CLOCK)
         end
       end
       --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,

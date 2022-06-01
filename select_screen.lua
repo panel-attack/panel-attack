@@ -185,7 +185,7 @@ function select_screen.main()
       if msg then
         global_initialize_room_msg = msg
       end
-      gprint(loc("ss_init"), unpack(main_menu_screen_pos))
+      gprint(loc("ss_init"), themes[config.theme].main_menu_screen_pos[1], themes[config.theme].main_menu_y_center)
       wait()
       if not do_messages() then
         return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
@@ -195,7 +195,7 @@ function select_screen.main()
 
     -- If we never got the room setup message, bail
     if not global_initialize_room_msg then
-      warning(loc("ss_init_fail") .. "\n")
+      logger.warn(loc("ss_init_fail") .. "\n")
       return main_dumb_transition, {main_select_mode, loc("ss_init_fail") .. "\n\n" .. loc("ss_return"), 60, 300}
     end
     msg = global_initialize_room_msg
@@ -949,7 +949,7 @@ function select_screen.main()
 
           -- For a short time, show the game start / spectate message
           for i = 1, 30 do
-            gprint(to_print, unpack(main_menu_screen_pos))
+            gprint(to_print, themes[config.theme].main_menu_screen_pos[1], themes[config.theme].main_menu_y_center)
             if not do_messages() then
               return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
             end
@@ -1324,14 +1324,28 @@ function select_screen.main()
     if cursor_data[1].state.ready and select_screen.character_select_mode == "1p_vs_yourself" then
       GAME.match = Match("vs", GAME.battleRoom)
       P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=cursor_data[1].state.panels_dir, level=cursor_data[1].state.level, player_number=1, character=cursor_data[1].state.character}
+
       if GAME.battleRoom.trainingModeSettings then
-        GAME.match.attackEngine = AttackEngine(P1)
-        local startTime = 150
-        local delayPerAttack = 6
-        local attackCountPerDelay = 15
-        local delay = GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME + (attackCountPerDelay * delayPerAttack) + 1
-        for i = 1, attackCountPerDelay, 1 do
-          GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+        local trainingModeSettings = GAME.battleRoom.trainingModeSettings
+        local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
+        local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
+        GAME.match.attackEngine = AttackEngine(P1, delayBeforeStart, delayBeforeRepeat)
+        for _, values in ipairs(trainingModeSettings.attackPatterns) do
+          if values.chain then
+            if type(values.chain) == "number" then
+              for i = 1, values.height do
+                GAME.match.attackEngine:addAttackPattern(6, i, values.startTime + ((i-1) * values.chain), false, true)
+              end
+              GAME.match.attackEngine:addEndChainPattern(values.startTime + ((values.height - 1) * values.chain) + values.chainEndDelta)
+            elseif type(values.chain) == "table" then
+              for i, chainTime in ipairs(values.chain) do
+                GAME.match.attackEngine:addAttackPattern(6, i, chainTime, false, true)
+              end
+              GAME.match.attackEngine:addEndChainPattern(values.chainEndTime)
+            end
+          else
+            GAME.match.attackEngine:addAttackPattern(values.width, values.height or 1, values.startTime, values.metal or false, false)
+          end
         end
       end
       GAME.match.P1 = P1
