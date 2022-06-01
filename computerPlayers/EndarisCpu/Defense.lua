@@ -257,12 +257,12 @@ function Defend.downstackRowGridColumnTopDown(colorGridColumn, topRow)
       if row == 0 then
         -- can't drop anything to row 0, need to opt for horizontal match by dropping top down
         -- basically guaranteed to be in a scenario where 3 panels are spread across row 1 and 2
-        colorGridColumn:DropPanel(topRow)
+        colorGridColumn:DropPanelOneRow(topRow)
         return
       else
         if colorGridColumn:GetCountInRow(row) == 0 then
             assert(row < topRow, "if you see this, something is very fishy here")
-            colorGridColumn:DropPanel(row + 1)
+            colorGridColumn:DropPanelOneRow(row + 1)
             return
         end
       end

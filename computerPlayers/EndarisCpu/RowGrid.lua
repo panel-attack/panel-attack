@@ -47,7 +47,7 @@ function RowGrid.SubtractColumn(self, column)
   return diffGrid
 end
 
-function RowGrid.MoveDownPanel(self, color, row)
+function RowGrid.MoveDownPanelOneRow(self, color, row)
     if self:DropIsValid(row) then
         local rowToDropFrom = self.gridRows[row]
         local receivingRow = self.gridRows[row - 1]
@@ -275,7 +275,7 @@ function ColorGridColumn.DropPanels(self, row)
 
   while self:GetCountInRow(row) > 0 do
     -- drop immediately by 1 row
-    self.sourceRowGrid:MoveDownPanel(self.color, row)
+    self.sourceRowGrid:MoveDownPanelOneRow(self.color, row)
 
     for i = row - 1, 2, -1 do
       if row <= topFullRow then
@@ -284,7 +284,7 @@ function ColorGridColumn.DropPanels(self, row)
 
       if self.sourceRowGrid.gridRow[i].emptyPanelCount < self.sourceRowGrid.gridRow[i - 1].emptyPanelCount then
         -- invalid position, need to drop the panel further
-        self.sourceRowGrid:MoveDownPanel(self.color, i)
+        self.sourceRowGrid:MoveDownPanelOneRow(self.color, i)
       end
     end
   end
