@@ -284,7 +284,7 @@ function Defend.getTargetRowGrid(self, originalRowGrid, color, targetGridColumn)
 
   -- next analyse the emptyPanelsCount for each row to find out if / where additional panels need to be moved
   -- going top down because for bottom up, you'd always need to consider the case that you could drop something from a column further up if the column that has the extra panels doesn't work for you
-  for i = #targetRowGrid.gridRows, 2 do
+  for i = #targetRowGrid.gridRows, 2, -1 do
     for j = i - 1, 1, -1 do
       -- check if higher row has more panels than the low row
       while targetRowGrid.gridRows[i].emptyPanelCount < targetRowGrid.gridRows[j].emptyPanelCount do
@@ -305,6 +305,18 @@ function Defend.getTargetRowGrid(self, originalRowGrid, color, targetGridColumn)
         end
       end
     end
+  end
+
+  -- Compare the top row of the match to the current top row and downstack all other panels into the well until the match is in the top row
+  local topRowWithPanels = targetRowGrid:GetTopRowWithPanels()
+  while topRowWithPanels > matchTopRow do
+    local row = targetRowGrid.gridRows[topRowWithPanels]
+    for i = 1, #row.colorColumns do
+      if i ~= color then
+        targetRowGrid:GetColorColumn():DropPanels(topRowWithPanels)
+      end
+    end
+    topRowWithPanels = targetRowGrid:GetTopRowWithPanels()
   end
 
   return targetRowGrid

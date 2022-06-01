@@ -118,6 +118,15 @@ function RowGrid.GetTopRowWithPanels(self)
   end
 end
 
+-- returns the top row that has no empty panels, 0 if the bottom row isn't full
+function RowGrid.GetTopFullRow(self)
+  for i = 1, #self.gridRows do
+    if self.gridRows[i].emptyPanelCount > 0 then
+      return i - 1
+    end
+  end
+end
+
 -- returns the minimum rowindex the rowgrid can be downstacked into
 function RowGrid.GetMinimumTopRowIndex(self)
     local totalEmptyPanelCountInRowAndBelow = 0
@@ -247,13 +256,38 @@ function ColorGridColumn.GetLatentMatches(self)
 end
 
 -- drops one panel in the specified row by one row and returns the new column representation
-function ColorGridColumn.DropPanel(self, row)
-    local newRowGrid = self.sourceRowGrid:MoveDownPanel(self.color, row)
+function ColorGridColumn.DropPanelOneRow(self, row)
+    local newRowGrid = self.sourceRowGrid:MoveDownPanelOneRow(self.color, row)
     if newRowGrid then
         return self:GetColumnRepresentation()
     else
         return nil
     end
+end
+
+-- drops all panels in that row so that each row contains a valid amount of empty panels
+function ColorGridColumn.DropPanels(self, row)
+  local topFullRow = self.sourceRowGrid:GetTopFullRow()
+  if row <= topFullRow then
+    -- impossible to drop panels from this row
+    return
+  end
+
+  while self:GetCountInRow(row) > 0 do
+    -- drop immediately by 1 row
+    self.sourceRowGrid:MoveDownPanel(self.color, row)
+
+    for i = row - 1, 2, -1 do
+      if row <= topFullRow then
+        break
+      end
+
+      if self.sourceRowGrid.gridRow[i].emptyPanelCount < self.sourceRowGrid.gridRow[i - 1].emptyPanelCount then
+        -- invalid position, need to drop the panel further
+        self.sourceRowGrid:MoveDownPanel(self.color, i)
+      end
+    end
+  end
 end
 
 function ColorGridColumn.GetTotalPanelCount(self)
