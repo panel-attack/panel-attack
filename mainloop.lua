@@ -584,7 +584,6 @@ end
 function training_setup()
   local trainingModeSettings = {}
   trainingModeSettings.healthDifficulty = 1
-  trainingModeSettings.attackDifficulty = 1
   trainingModeSettings.height = 1
   trainingModeSettings.width = 4
   local customModeID = 1
@@ -659,7 +658,7 @@ function training_setup()
 
   local function start_custom_game()
     customTrainingModes[0] = createBasicTrainingMode("", trainingModeSettings.width, trainingModeSettings.height)
-    customTrainingModes[0].healthDifficulty = 1
+    customTrainingModes[customModeID].healthDifficulty = 1
     ret = {main_local_vs_yourself_setup, {customTrainingModes[customModeID]}}
   end
 

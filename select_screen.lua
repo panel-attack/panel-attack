@@ -1328,8 +1328,7 @@ function select_screen.main()
       P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=cursor_data[1].state.panels_dir, level=cursor_data[1].state.level, player_number=1, character=cursor_data[1].state.character}
 
       if GAME.battleRoom.trainingModeSettings and GAME.battleRoom.trainingModeSettings.healthDifficulty then
-        local health = Health(GAME.battleRoom.trainingModeSettings.height * 10,
-         15, 6, 249.3, 40, -1)
+        local health = Health(10, 15, 6, 249.3, 40, -1)
         
         GAME.match.health = health
       end
@@ -1338,29 +1337,34 @@ function select_screen.main()
         local trainingModeSettings = GAME.battleRoom.trainingModeSettings
         local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
         local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
-        GAME.match.attackEngine = AttackEngine(P1, delayBeforeStart, delayBeforeRepeat)
+
+        local attackEngine = AttackEngine(P1, delayBeforeStart, delayBeforeRepeat)
         for _, values in ipairs(trainingModeSettings.attackPatterns) do
           if values.chain then
             if type(values.chain) == "number" then
               for i = 1, values.height do
-                GAME.match.attackEngine:addAttackPattern(6, i, values.startTime + ((i-1) * values.chain), false, true)
+                attackEngine:addAttackPattern(6, i, values.startTime + ((i-1) * values.chain), false, true)
               end
-              GAME.match.attackEngine:addEndChainPattern(values.startTime + ((values.height - 1) * values.chain) + values.chainEndDelta)
+              attackEngine:addEndChainPattern(values.startTime + ((values.height - 1) * values.chain) + values.chainEndDelta)
             elseif type(values.chain) == "table" then
               for i, chainTime in ipairs(values.chain) do
-                GAME.match.attackEngine:addAttackPattern(6, i, chainTime, false, true)
+                attackEngine:addAttackPattern(6, i, chainTime, false, true)
               end
-              GAME.match.attackEngine:addEndChainPattern(values.chainEndTime)
+              attackEngine:addEndChainPattern(values.chainEndTime)
             end
           else
-            GAME.match.attackEngine:addAttackPattern(values.width, values.height or 1, values.startTime, values.metal or false, false)
+            attackEngine:addAttackPattern(values.width, values.height or 1, values.startTime, values.metal or false, false)
           end
         end
+
+        attackEngine:setTarget(P1)
+
+        GAME.match.attackEngine = attackEngine
       end
       GAME.match.P1 = P1
-      if not GAME.battleRoom.trainingModeSettings then
+      if not GAME.match.health then
         P1:setTarget(P1)
-      elseif GAME.match.health then
+      else
         P1:setTarget(GAME.match.health)
       end
       P2 = nil

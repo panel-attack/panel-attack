@@ -69,17 +69,17 @@ function AttackEngine.run(self)
       local remainder = difference % totalAttackTimeBeforeRepeat
       if remainder == 0 then
         if attackPattern.endsChain then
-          self.target.telegraph:chainingEnded(self.target.CLOCK)
+          self.telegraph:chainingEnded(self.CLOCK)
         else
-          self.target.telegraph:push(attackPattern.garbage, math.random(11, 17), math.random(1, 11), self.target.CLOCK)
+          self.telegraph:push(attackPattern.garbage, math.random(11, 17), math.random(1, 11), self.CLOCK)
         end
       end
     end
   end
 
-  -- if self.telegraph then
-  --   self.telegraph:popAllAndSendToTarget(self.CLOCK, self.target)
-  -- end
+  if self.telegraph then
+    self.telegraph:popAllAndSendToTarget(self.CLOCK, self.target)
+  end
 
   self.CLOCK = self.CLOCK + 1
 end
