@@ -45,7 +45,7 @@ function fmainloop()
   Localization.init(localization)
   copy_file("readme_puzzles.txt", "puzzles/README.txt")
   theme_init()
-
+  goto deprecated
   -- stages and panels before characters since they are part of their loading!
   drawLoadingString(loc("ld_stages"))
   wait()
@@ -70,7 +70,7 @@ function fmainloop()
     recursive_copy("default_data/training", "training")
   end
   read_attack_files("training")
-
+  ::deprecated::
   --check for game updates
   if GAME_UPDATER_CHECK_UPDATE_INGAME then
     wait_game_update = GAME_UPDATER:async_download_latest_version()
@@ -125,16 +125,16 @@ local function titleDrawPressStart(percent)
   local textHeight = 40
   local x = (canvas_width / 2) - (textMaxWidth / 2)
   local y = canvas_height * 0.75
-  gprintf(loc("continue_button"), x, y, textMaxWidth, "center", {1,1,1,percent}, nil, 16)
+  gprintf(loc("deprecated"), x, y, textMaxWidth, "center", {1,1,1,percent}, nil, 16)
 end
 
 function main_title()
 
   if not themes[config.theme].images.bg_title then
-    return main_select_mode
+    --return main_select_mode
   end
 
-  GAME.backgroundImage = themes[config.theme].images.bg_title
+  GAME.backgroundImage = nil
   
   local ret = nil
   local percent = 0
@@ -181,7 +181,7 @@ do
     stage_loader_clear()
     close_socket()
     undo_stonermode()
-    GAME.backgroundImage = themes[config.theme].images.bg_main
+    GAME.backgroundImage = nil
     GAME.battleRoom = nil
     GAME.input:clearInputConfigurationsForPlayers()
     GAME.input:requestPlayerInputConfigurationAssignments(1)
@@ -234,9 +234,9 @@ do
 
     main_menu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, main_menu_last_index)
     for i = 1, #items do
-      main_menu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
+      --main_menu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
     end
-    main_menu:add_button(loc("mm_fullscreen", "(LAlt+Enter)"), fullscreen, goEscape)
+    --main_menu:add_button(loc("mm_fullscreen", "(LAlt+Enter)"), fullscreen, goEscape)
     main_menu:add_button(loc("mm_quit"), exit_game, exit_game)
 
     while true do
