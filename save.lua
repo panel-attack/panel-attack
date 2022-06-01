@@ -375,7 +375,7 @@ function read_attack_files(path)
       if lfs.getInfo(current_path) then
         if lfs.getInfo(current_path).type == "directory" then
           read_attack_files(current_path)
-        else
+        elseif v ~= ".DS_Store" then
           local file = love.filesystem.newFile(current_path)
           file:open("r")
           local teh_json = file:read(file:getSize())
