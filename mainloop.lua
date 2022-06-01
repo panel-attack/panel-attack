@@ -157,7 +157,7 @@ function main_title()
         end
         percent =  bound(0, percent + increment, 1)
         
-        if menu_enter() or menu_escape() then
+        if menu_enter() or menu_escape() or #love.touch.getTouches() > 0 then
           ret = {main_select_mode}
         end
       end
