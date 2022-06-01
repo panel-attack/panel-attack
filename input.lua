@@ -250,9 +250,33 @@ function love.keypressed(key, scancode, rep)
     end
   end
 
+  local function handleDumpAttackPattern()
+    if (key == "1" or key == "2") and not rep and (love.keyboard.isDown("rctrl") or love.keyboard.isDown("lctrl")) then
+      local stack = P1
+
+      if key == "2" then
+        stack = P2
+      end
+
+      if stack then
+        local data = stack:getAttackPatternData()
+        pcall(
+          function()
+            local file = love.filesystem.newFile("dumpAttackPattern.json")
+            file:open("w")
+            file:write(json.encode(data))
+            file:close()
+          end
+        )
+        return true
+      end
+    end
+  end
+  
   if handleFullscreenToggle() or
      handleScreenshot() or
-     handleCopy() then
+     handleCopy() or
+     handleDumpAttackPattern() then
     return
   end
 
