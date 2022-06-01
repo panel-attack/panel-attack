@@ -255,7 +255,7 @@ end
 
 -- Positions the stack draw position for the given player
 function Stack.moveForPlayerNumber(stack, player_num)
-  local stack_padding_x_for_legacy_pos = ((canvas_width - legacy_canvas_width) / 2)
+  local stack_padding_x_for_legacy_pos = ((464) / 2)
   if player_num == 1 then
     stack.pos_x = 4 + stack_padding_x_for_legacy_pos / GFX_SCALE
     stack.score_x = 315 + stack_padding_x_for_legacy_pos
@@ -272,8 +272,8 @@ function Stack.moveForPlayerNumber(stack, player_num)
     stack.multiplication = 1
     stack.id = "_2P"
   end
-  stack.pos_y = 4 + (canvas_height - legacy_canvas_height) / GFX_SCALE
-  stack.score_y = 100 + (canvas_height - legacy_canvas_height)
+  stack.pos_y = 4 + (108) / GFX_SCALE
+  stack.score_y = 208
 end
 
 function Stack.divergenceString(stackToTest)
@@ -763,6 +763,17 @@ function Stack.puzzleStringToPanels(self, puzzleString)
   end
 
   return panels
+end
+
+function Stack.toPuzzleInfo(self)
+  local puzzleInfo = {}
+  puzzleInfo["Player"] = self.match.battleRoom.playerNames[self.which]
+  puzzleInfo["Stop"] = self.stop_time
+  puzzleInfo["Shake"] = self.shake_time
+  puzzleInfo["Pre-Stop"] = self.pre_stop_time
+  puzzleInfo["Stack"] = Puzzle.toPuzzleString(self.panels)
+
+  return puzzleInfo
 end
 
 function Stack.puzzle_done(self)
@@ -2002,7 +2013,7 @@ function Stack.game_ended(self)
 
   if self.match.mode == "vs" then
     if GAME.battleRoom.trainingModeSettings then
-      if self.match.health:game_ended() then
+      if self.match.health and self.match.health:game_ended() then
         return true
       end
     end
@@ -2469,9 +2480,14 @@ function Stack.check_matches(self)
   end
 
   if (combo_size ~= 0) then
-    self.combos[self.CLOCK] = combo_size
-    if self.telegraph and metal_count == 3 and combo_size >= 3 then
-      self.telegraph:push({6, 1, true, false}, first_panel_col, first_panel_row, self.CLOCK)
+    if self.garbage_target and self.telegraph then
+      if metal_count >= 3 then
+        -- Give a shock garbage for every shock block after 2
+        for i = 3, metal_count do
+          self.telegraph:push({6, 1, true, false}, first_panel_col, first_panel_row, self.CLOCK)
+          self:recordComboHistory(self.CLOCK, 6, 1, true)
+        end
+      end
     end
 
     -- if metal_count >= 3 and self.match.health then
@@ -2494,22 +2510,13 @@ function Stack.check_matches(self)
       end
 
       self:enqueue_card(false, first_panel_col, first_panel_row, combo_size)
-
-      -- if self.match.health then
-      --   self.match.health:take_combo_damage(combo_size)
-      -- end
-
-      if self.telegraph then
-        if metal_count > 3 then
-          for i = 3, metal_count do
-            self.telegraph:push({6, 1, true, false}, first_panel_col, first_panel_row, self.CLOCK)
-          end
-        end
-        if metal_count ~= combo_size then
-          local combo_pieces = combo_garbage[combo_size]
-          for i=1,#combo_pieces do
-            self.telegraph:push({combo_pieces[i], 1, false, false}, first_panel_col, first_panel_row, self.CLOCK)
-          end
+      if self.garbage_target and self.telegraph then
+        local combo_pieces = combo_garbage[combo_size]
+        for i=1,#combo_pieces do
+          -- Give out combo garbage based on the lookup table, even if we already made shock garbage,
+          -- OP! Too bad its hard to get shock panels in vs. :)
+          self.telegraph:push({combo_pieces[i], 1, false, false}, first_panel_col, first_panel_row, self.CLOCK)
+          self:recordComboHistory(self.CLOCK, combo_pieces[i], 1, false)
         end
       end
       --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
@@ -2520,9 +2527,11 @@ function Stack.check_matches(self)
     if (is_chain) then
       if self.chain_counter == 2 then
         self.chains.current = self.CLOCK
-        self.chains[self.CLOCK] = {start = self.CLOCK}  -- a bit redundant, but might come in handy, maybe, probably not.  The key is the same as .start.
+        self.chains[self.chains.current] = {starts = {}}
       end
-      self.chains[self.chains.current].size = self.chain_counter
+      local currentChainData = self.chains[self.chains.current]
+      currentChainData.size = self.chain_counter
+      currentChainData.starts[#currentChainData.starts+1] = self.CLOCK
       self:enqueue_card(true, first_panel_col, first_panel_row, self.chain_counter)
     --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
     --          first_panel_row<<4+P1StackPosY+self.displacement-9);
@@ -2643,6 +2652,15 @@ function Stack.set_hoverers(self, row, col, hover_time, add_chaining, extra_tick
   end
 end
 
+function Stack:recordComboHistory(time, width, height, metal)
+
+  if self.combos[time] == nil then 
+    self.combos[time] = {} 
+  end
+  
+  self.combos[time][#self.combos[time]+1] = {width = width, height = height, metal = metal}
+end
+
 -- Adds a new row to the play field
 function Stack.new_row(self)
   local panels = self.panels
@@ -2702,4 +2720,37 @@ function Stack.new_row(self)
   end
   self.panel_buffer = string.sub(self.panel_buffer, 7)
   self.displacement = 16
+end
+
+function Stack:getAttackPatternData() 
+
+  local data = {}
+  data.name = "Player " .. self.which
+  data.mergeComboMetalQueue = false
+  data.delayBeforeStart = 0
+  data.delayBeforeRepeat = 91
+  self.chains.current = nil
+  local defaultEndTime = 70
+  local sortedAttackPatterns = {}
+
+  -- Add in all the chains by time
+  for time, currentChain in pairsSortedByKeys(self.chains) do
+    local endTime = currentChain.finish or currentChain.starts[#currentChain.starts] + defaultEndTime
+    sortedAttackPatterns[time] = {chain = currentChain.starts, chainEndTime = endTime}
+  end
+
+  -- Add in all the combos by time
+  for time, combos in pairsSortedByKeys(self.combos) do
+    for index, garbage in ipairs(combos) do
+      sortedAttackPatterns[time] = {width = garbage.width, height = garbage.height, startTime = time, chain = false, metal = garbage.metal}
+    end
+  end
+
+  -- Save the final attack patterns in sorted order without the times since the file format doesn't want that (duplicate data)
+  data.attackPatterns = {}
+  for _, attackPattern in pairsSortedByKeys(sortedAttackPatterns) do
+    data.attackPatterns[#data.attackPatterns+1] = attackPattern
+  end
+
+  return data
 end

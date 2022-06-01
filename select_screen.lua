@@ -185,7 +185,7 @@ function select_screen.main()
       if msg then
         global_initialize_room_msg = msg
       end
-      gprint(loc("ss_init"), unpack(main_menu_screen_pos))
+      gprint(loc("ss_init"), themes[config.theme].main_menu_screen_pos[1], themes[config.theme].main_menu_y_center)
       wait()
       if not do_messages() then
         return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
@@ -195,7 +195,7 @@ function select_screen.main()
 
     -- If we never got the room setup message, bail
     if not global_initialize_room_msg then
-      warning(loc("ss_init_fail") .. "\n")
+      logger.warn(loc("ss_init_fail") .. "\n")
       return main_dumb_transition, {main_select_mode, loc("ss_init_fail") .. "\n\n" .. loc("ss_return"), 60, 300}
     end
     msg = global_initialize_room_msg
@@ -951,7 +951,7 @@ function select_screen.main()
 
           -- For a short time, show the game start / spectate message
           for i = 1, 30 do
-            gprint(to_print, unpack(main_menu_screen_pos))
+            gprint(to_print, themes[config.theme].main_menu_screen_pos[1], themes[config.theme].main_menu_y_center)
             if not do_messages() then
               return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
             end
@@ -1326,43 +1326,36 @@ function select_screen.main()
     if cursor_data[1].state.ready and select_screen.character_select_mode == "1p_vs_yourself" then
       GAME.match = Match("vs", GAME.battleRoom)
       P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=cursor_data[1].state.panels_dir, level=cursor_data[1].state.level, player_number=1, character=cursor_data[1].state.character}
+
       if GAME.battleRoom.trainingModeSettings and GAME.battleRoom.trainingModeSettings.healthDifficulty then
         local health = Health(GAME.battleRoom.trainingModeSettings.height * 10,
          15, 6, 249.3, 40, -1)
         
         GAME.match.health = health
       end
-      if GAME.battleRoom.trainingModeSettings and GAME.battleRoom.trainingModeSettings.attackDifficulty then
-        local attackEngine = AttackEngine()
-        -- local startTime = 150
-        -- local delayPerAttack = 120 --6
-        -- local attackCountPerDelay = 1
-        -- local delay = GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME + (attackCountPerDelay * delayPerAttack) + 1
-        -- for i = 1, attackCountPerDelay, 1 do
-        --   attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        -- end
-      
-        local delay = 85 * 60
-        attackEngine:addAttackPattern(6, 4, 180 + (10 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
-        attackEngine:addAttackPattern(6, 3, 180 + (15 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
-        attackEngine:addAttackPattern(6, 6, 180 + (40 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
-        attackEngine:addAttackPattern(6, 2, 180 + (50 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
-        attackEngine:addAttackPattern(6, 1, 180 + (60 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
-        attackEngine:addAttackPattern(6, 1, 180 + (67 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
-        attackEngine:addAttackPattern(6, 1, 180 + (76 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  true--[[chain]])  
-      
-        attackEngine:addAttackPattern(5, 1, 180 + (4 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        attackEngine:addAttackPattern(4, 1, 180 + (22 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        attackEngine:addAttackPattern(5, 1, 180 + (30 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        attackEngine:addAttackPattern(3, 1, 180 + (70 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        attackEngine:addAttackPattern(5, 1, 180 + (75 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        attackEngine:addAttackPattern(3, 1, 180 + (78 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        attackEngine:addAttackPattern(4, 1, 180 + (79 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        attackEngine:addAttackPattern(5, 1, 180 + (80 * 60) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-      
-        attackEngine:setTarget(P1)
 
-        GAME.match.attackEngine = attackEngine
+      if GAME.battleRoom.trainingModeSettings then
+        local trainingModeSettings = GAME.battleRoom.trainingModeSettings
+        local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
+        local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
+        GAME.match.attackEngine = AttackEngine(P1, delayBeforeStart, delayBeforeRepeat)
+        for _, values in ipairs(trainingModeSettings.attackPatterns) do
+          if values.chain then
+            if type(values.chain) == "number" then
+              for i = 1, values.height do
+                GAME.match.attackEngine:addAttackPattern(6, i, values.startTime + ((i-1) * values.chain), false, true)
+              end
+              GAME.match.attackEngine:addEndChainPattern(values.startTime + ((values.height - 1) * values.chain) + values.chainEndDelta)
+            elseif type(values.chain) == "table" then
+              for i, chainTime in ipairs(values.chain) do
+                GAME.match.attackEngine:addAttackPattern(6, i, chainTime, false, true)
+              end
+              GAME.match.attackEngine:addEndChainPattern(values.chainEndTime)
+            end
+          else
+            GAME.match.attackEngine:addAttackPattern(values.width, values.height or 1, values.startTime, values.metal or false, false)
+          end
+        end
       end
       GAME.match.P1 = P1
       if not GAME.battleRoom.trainingModeSettings then
