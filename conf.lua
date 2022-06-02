@@ -1,4 +1,4 @@
-require("consts")
+require("src/consts")
 
 function love.conf(t)
   t.identity = "Panel Attack" -- The name of the save directory (string)

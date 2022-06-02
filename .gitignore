@@ -1,0 +1,6 @@
+# Server files
+leaderboard.csv
+lfs.so
+players.txt
+socket.lua
+socket/
