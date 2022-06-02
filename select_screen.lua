@@ -1367,10 +1367,10 @@ function select_screen.main()
         GAME.match.P1CPU = ComputerPlayer("EndarisCpu", "DevConfig")
         --GAME.match.P1CPU = ComputerPlayer("TreeSearchComputer", "Hard")
       else
-        P1 = Stack(1, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+        P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=cursor_data[1].state.panels_dir, level=cursor_data[1].state.level, player_number=1, character=cursor_data[1].state.character}
       end
       GAME.match.P1 = P1
-      P2 = Stack(2, GAME.match, true, cursor_data[1].state.panels_dir, cursor_data[1].state.level, cursor_data[1].state.character)
+      P2 = Stack{which=2, match=GAME.match, is_local=true, panels_dir=cursor_data[1].state.panels_dir, level=cursor_data[1].state.level, player_number=2, character=cursor_data[1].state.character}
       P2.max_runs_per_frame = 1
       GAME.match.P2 = P2
       GAME.match.P2CPU = ComputerPlayer("EndarisCpu", "DevConfig")
