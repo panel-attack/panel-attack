@@ -13,6 +13,7 @@ Click_menu =
     self.x = xCenter
     self.y = yMin
     self.yMin = yMin
+    self.centerVertically = themes[config.theme].centerMenusVertically
     self.current_setting_x = nil -- the x offset for the second column of options
     local defaultPadding = 30
     self.width = width or 0
@@ -167,6 +168,13 @@ function Click_menu.set_active_idx(self, idx)
   self:layout_buttons()
 end
 
+-- Sets a new height and resizes the menu
+function Click_menu.setHeight(self, maxHeight)
+  self.maxHeight = maxHeight
+  self:resize_to_fit()
+  self:layout_buttons()
+end
+
 -- Repositions in the x direction so the menu doesn't go off the screen
 function Click_menu.resize_to_fit(self)
   for k, v in pairs(self.buttons) do
@@ -209,7 +217,11 @@ function Click_menu.layout_buttons(self)
     end
   end
 
-  self.y = self.yMin + (self.maxHeight / 2) - (height / 2)
+  if self.centerVertically then
+    self.y = self.yMin + (self.maxHeight / 2) - (height / 2)
+  else
+    self.y = self.yMin
+  end
 
   self:show_controls(false)
 end

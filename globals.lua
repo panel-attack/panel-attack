@@ -37,6 +37,8 @@ stages_ids_for_current_theme = {} -- initialized in stage.lua
 panels = {} -- initialized in panels.lua
 panels_ids = {} -- initialized in panels.lua
 
+trainings = {} -- used in save.lua for training mode files
+
 current_stage = nil
 
 replay = {}
