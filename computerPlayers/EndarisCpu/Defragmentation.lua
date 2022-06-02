@@ -10,12 +10,12 @@ function Defragment.chooseAction(self)
     local gapToBeFilled
     local panelToMove
 
-    local cursorVec = GridVector(self.cpu.stack.cur_row, self.cpu.stack.cur_col)
-    local columns = StackExtensions.getTier1PanelsAsColumns(self.cpu.stack)
-    local connectedPanelSections = StackExtensions.getTier1ConnectedPanelSections(self.cpu.stack)
+    local cursorVec = GridVector(self.cpu.cpuStack.cur_row, self.cpu.cpuStack.cur_col)
+    local columns = StackExtensions.getTier1PanelsAsColumns(self.cpu.cpuStack)
+    local connectedPanelSections = StackExtensions.getTier1ConnectedPanelSections(self.cpu.cpuStack)
     local panels = self.GetScoredPanelTable(columns, connectedPanelSections)
     local filteredPanels = Defragment.FilterPanels(panels)
-    local emptySpaces = self.getScoredEmptySpaceTable(self.cpu.stack.panels, columns, connectedPanelSections)
+    local emptySpaces = self.getScoredEmptySpaceTable(self.cpu.cpuStack.panels, columns, connectedPanelSections)
     local emptySpacesToFill = self.FilterEmptySpaces(emptySpaces)
     if #emptySpacesToFill == 1 then
         gapToBeFilled = emptySpacesToFill[1]
@@ -25,12 +25,12 @@ function Defragment.chooseAction(self)
         end
     else
         panelToMove = Defragment.getClosestPanelToCursor(filteredPanels, cursorVec)
-        gapToBeFilled = Defragment.findBestGapForPanel(self.cpu.stack.panels, panelToMove, emptySpacesToFill)
+        gapToBeFilled = Defragment.findBestGapForPanel(self.cpu.cpuStack.panels, panelToMove, emptySpacesToFill)
     end
 
     if panelToMove and gapToBeFilled then
-        local action = MovePanel(self.cpu.stack, panelToMove, gapToBeFilled.vector)
-        action:calculateExecution(self.cpu.stack.cur_row, self.cpu.stack.cur_col)
+        local action = MovePanel(self.cpu.cpuStack, panelToMove, gapToBeFilled.vector)
+        action:calculateExecution(self.cpu.cpuStack.cur_row, self.cpu.cpuStack.cur_col)
 
         return action
     else
@@ -219,7 +219,7 @@ function Defragment.findBestPanelForGap(self, gapPanel, scoredPanels)
 
     for i=1,#scoredPanels do
         CpuLog:log(4, "Checking panel " .. scoredPanels[i].panel.vector:toString())
-        if StackExtensions.moveIsValid(self.cpu.stack, scoredPanels[i].panel, gapPanel) then
+        if StackExtensions.moveIsValid(self.cpu.cpuStack, scoredPanels[i].panel, gapPanel.vector) then
             CpuLog:log(4, "Selected " .. scoredPanels[i].panel:toString())
             return scoredPanels[i].panel
         end

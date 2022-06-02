@@ -8,7 +8,7 @@ end
 
 function StackExtensions.printAsAprilStackByPanels(panels)
   local aprilString = StackExtensions.AsAprilStackByPanels(panels)
-  print("april panelstring is " .. aprilString)
+  print("april panelstring is " .. (aprilString or "n/a"))
 end
 
 -- returns the maximum number of panels connected in a MxN rectangle shape
@@ -416,7 +416,7 @@ function StackExtensions.getAllActionPanelsOfColorByRow(panels, color)
 end
 
 function StackExtensions.findLatentMatches(cpuStack)
-  return StackExtensions.findLatentMatchesFromPanels(cpuStack:GetPanels())
+  return StackExtensions.findLatentMatchesFromPanels(cpuStack.panels)
 end
 
 function StackExtensions.findLatentMatchesFromCpuStack(cpuStack)
@@ -509,7 +509,7 @@ function StackExtensions.findLatentMatchesFromPanels(panels)
 end
 
 function StackExtensions.swapIsValid(panel1, panel2)
-  return not panel1.panel:exclude_swap() and not panel2.panel:exclude_swap()
+  return panel1.isSwappable and panel2.isSwappable
 end
 
 function StackExtensions.moveIsValid(stack, panelId, targetVector)
@@ -517,7 +517,7 @@ function StackExtensions.moveIsValid(stack, panelId, targetVector)
 end
 
 function StackExtensions.moveIsValidByPanels(panels, panel, targetVector)
-  if panel:row() < targetVector.row then
+  if panel.vector.row < targetVector.row then
     return false
   else
     local panelAtTarget = StackExtensions.getPanelByVectorByPanels(panels, targetVector)
@@ -651,15 +651,15 @@ function Panel.toString(self)
 end
 
 function StackExtensions.getGarbage(stack)
-  return StackExtensions.getGarbageByPanels(stack.panels)
+  return StackExtensions.getGarbageByPanels(stack:GetPanels())
 end
 
 function StackExtensions.getGarbageByPanels(panels)
   local garbagePanels = {}
   for i = 1, #panels do
     for j = 1, #panels[i] do
-      if panels[i][j].color == 9 and panels[i][j]:exclude_swap() and panels[i][j].state ~= "falling" then
-        table.insert(garbagePanels, ActionPanel(panels[i][j], i, j))
+      if panels[i][j].color == 9 and panels[i][j].isSwappable and panels[i][j]:getState() ~= "falling" then
+        table.insert(garbagePanels, panels[i][j])
       end
     end
   end

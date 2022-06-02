@@ -10,7 +10,8 @@ function Defend.chooseAction(self)
     local action = self:Clear()
 
     if not action then
-      action = self:DownstackIntoClear()
+      -- not functional yet
+      --action = self:DownstackIntoClear()
     end
 
     return action
@@ -63,21 +64,22 @@ function Defend.couldBeAClear(self, action, garbagePanels)
 end
 
 function Defend.Clear(self)
-    if not self.cpu.actions or #self.cpu.actions == 0 then
-        self.cpu.actions = StackExtensions.findActions(self.cpu.cpuStack)
-    end
+  local cpuStack = CpuStack.FromStack(self.cpu.cpuStack, self.cpu.config)
+  if not self.cpu.actions or #self.cpu.actions == 0 then
+    self.cpu.actions = StackExtensions.findActions(cpuStack)
+  end
 
-    local clearActions = self:getClearActions(self.cpu.actions)
+  local clearActions = self:getClearActions(self.cpu.actions, cpuStack)
 
-    if #clearActions > 0 then
-        local action = Action.getCheapestAction(clearActions, self.cpu.cpuStack)
-        if action then
-            CpuLog:log(1, "found action to defend " .. action:toString())
-        end
-        return action
-    else
-        return nil
+  if #clearActions > 0 then
+    local action = Action.getCheapestAction(clearActions, self.cpu.cpuStack)
+    if action then
+        CpuLog:log(1, "found action to defend " .. action:toString())
     end
+    return action
+  else
+    return nil
+  end
 end
 
 function Defend.DownstackIntoClear(self)

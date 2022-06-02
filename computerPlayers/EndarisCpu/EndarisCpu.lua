@@ -283,14 +283,14 @@ function EndarisCpu.chooseAction(self)
         if not self.currentAction.executionPath or #self.currentAction.executionPath == 0 then
             self.currentAction:calculateExecution(self.cpuStack.cursorPos)
         end
-      else
-        self:executeStrategy()
-      end
+    else
+      self:executeStrategy()
+    end
       
-      if self.currentAction then
-        self:assignExecutionFramesToAction(self.currentAction)
-        self:appendToInputQueue(self.currentAction)
-        self:appendToSimulationQueue(self.currentAction)
+    if self.currentAction then
+      self:assignExecutionFramesToAction(self.currentAction)
+      self:appendToInputQueue(self.currentAction)
+      self:appendToSimulationQueue(self.currentAction)
     else
         CpuLog:log(1, 'chosen action is nil')
     end
@@ -362,21 +362,20 @@ function EndarisCpu.appendToSimulationQueue(self, action)
 end
 
 function EndarisCpu.chooseStrategy(self)
-    if not self.CpuStack or not self.CpuStack.rows then
+    if not self.cpuStack or not self.cpuStack.panels then
         return Attack(self)
     else
-        print(self.cpuStack:AsAprilStack())
+        print(Puzzle.toPuzzleString(self.cpuStack.panels))
     end
 
-    local garbagePanels = StackExtensions.getGarbageByPanels(self.CpuStack:GetPanels())
+    local garbagePanels = StackExtensions.getGarbageByPanels(self.cpuStack.panels)
     if #garbagePanels > 0 then
         return Defend(self)
     end
 
-    local fragmentationPercentage = StackExtensions.getFragmentationPercentageByPanels(self.CpuStack:GetPanels())
+    local fragmentationPercentage = StackExtensions.getFragmentationPercentageByPanels(self.cpuStack.panels)
     CpuLog:log(1, 'Fragmentation % is ' .. fragmentationPercentage)
     if fragmentationPercentage > self.config.DefragmentationPercentageThreshold then
-        CpuLog:log(1, "Chose Defragment as strategy!")
         return Defragment(self)
     end
 
@@ -384,38 +383,38 @@ function EndarisCpu.chooseStrategy(self)
 end
 
 function EndarisCpu.executeStrategy(self)
-    local actions
+  local actions
+  actions = self.strategy:chooseAction()
+
+  if actions == nil and self.strategy.name == "Defend" then
+    -- check if it wouldn't be better to defrag now so that one may get into a defendable position again
+    if StackExtensions.getFragmentationPercentageByPanels(self.cpuStack.panels)
+                          > self.config.DefragmentationPercentageThreshold * 0.5 then
+      CpuLog:log(1, "found no action to defend")
+      self.strategy = Defragment(self)
+    end
     actions = self.strategy:chooseAction()
+  end
 
-    if actions == nil and self.strategy.name == "Defend" then
-        -- check if it wouldn't be better to defrag now so that one may get into a defendable position again
-        if StackExtensions.getFragmentationPercentageByPanels(self.CpuStack:GetPanels())
-                              > self.config.DefragmentationPercentageThreshold * 0.5 then
-            CpuLog:log(1, "found no action to defend")
-            self.strategy = Defragment(self)
-            actions = self.strategy:chooseAction()
-        end
+  -- let the cpu do something if it can't find a sensible action for defrag/defend
+  if actions == nil and self.strategy.name ~= "Attack" then
+    CpuLog:log(1, "found no action to  " .. self.strategy.name)
+    self.strategy = Attack(self)
+    actions = self.strategy:chooseAction()
+  end
+
+  if actions and #actions > 0 then
+    if not self.currentAction then
+        CpuLog:log(1, "setting the current action to " .. actions[1]:toString())
+        self.currentAction = table.remove(actions, 1)
     end
 
-    -- let the cpu do something if it can't find a sensible action for defrag/defend
-    if actions == nil and self.strategy.name ~= "Attack" then
-        CpuLog:log(1, "found no action to  " .. self.strategy.name)
-        self.strategy = Attack(self)
-        actions = self.strategy:chooseAction()
+    for i=1,#actions do
+        EndarisCpu.appendActionToQueue(self.actionQueue, actions[i])
     end
-
-    if actions and #actions > 0 then
-        if not self.currentAction then
-            CpuLog:log(1, "setting the current action to " .. actions[1]:toString())
-            self.currentAction = table.remove(actions, 1)
-        end
-
-        for i=1,#actions do
-            EndarisCpu.appendActionToQueue(self.actionQueue, actions[i])
-        end
-    else
-        CpuLog:log(1, "executeStrategy failed, couldn't find an action")
-    end
+  else
+    CpuLog:log(1, "executeStrategy failed, couldn't find an action")
+  end
 
 end
 
@@ -441,10 +440,10 @@ function EndarisCpu.simulatePostActionStack(self)
     
     frameCount = self.simulationQueue[i].executionFrame
     if self.simulationQueue[i].name == "Wait" then
-        while frameCount <= self.simulationQueue[i].tillFrame do
-            frameCount = frameCount + 1
-            inputs[#inputs+1] = Input.EncodedWait()
-        end
+      while frameCount <= self.simulationQueue[i].tillFrame do
+        frameCount = frameCount + 1
+        inputs[#inputs+1] = Input.EncodedWait()
+      end
     else
       inputs[#inputs+1] = self.simulationQueue[i]:getEncoded()
     end
@@ -542,4 +541,8 @@ end
 
 function ActionPanel.isMatchable(self)
   return self.color ~= 0 and self.color ~= 9
+end
+
+function ActionPanel.getState(self)
+  return self.panel.state
 end
