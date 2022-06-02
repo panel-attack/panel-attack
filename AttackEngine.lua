@@ -48,15 +48,7 @@ function AttackEngine.run(self)
   
   -- Finds the greatest startTime value found from all the attackPatterns
   for _, patterns in ipairs(self.attackPatterns) do
-    if patterns.startTime then
-      highestStartTime = math.max(patterns.startTime, highestStartTime)
-    elseif patterns.chain then -- This is certainly table format because all other formats declare an actual startTime variable
-      local chainStartTime = patterns.chain[1]
-      for _, chainTime in ipairs(patterns.chain) do
-        chainStartTime = math.min(chainTime, chainStartTime)
-      end
-      highestStartTime = math.max(chainStartTime, highestStartTime)
-    end
+    highestStartTime = math.max(patterns.startTime, highestStartTime)
   end
   local totalAttackTimeBeforeRepeat = self.delayBeforeRepeat + highestStartTime - self.delayBeforeStart
   for _, attackPattern in ipairs(self.attackPatterns) do
