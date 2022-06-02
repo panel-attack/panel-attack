@@ -565,14 +565,14 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
 
 end
 
-local function createBasicTrainingMode(name, width, height) 
+local function createBasicTrainingMode(name, width, height, illegalGarbage) 
 
   local delayBeforeStart = 150
-  local delayBeforeRepeat = 91
-  local attacksPerVolley = 13
+  local delayBeforeRepeat = 900
+  local attacksPerVolley = 50
   local attackPatterns = {}
 
-  if height > 1 and width == 6 then -- chain
+  if height > 1 and width == 6 and not illegalGarbage then -- chain
     local chainEndTime = height + 1 + GARBAGE_TRANSIT_TIME
     
     for i = 1, height + 1 do
@@ -599,8 +599,8 @@ function training_setup()
   local customTrainingModes = {}
   customTrainingModes[0] = {name = "None"}
   customTrainingModes[1] = createBasicTrainingMode(loc("combo_storm"), 4, 1)
-  customTrainingModes[2] = createBasicTrainingMode(loc("factory"), 6, 2)
-  customTrainingModes[3] = createBasicTrainingMode(loc("large_garbage"), 6, 12)
+  customTrainingModes[2] = createBasicTrainingMode(loc("factory"), 6, 2, true)
+  customTrainingModes[3] = createBasicTrainingMode(loc("large_garbage"), 6, 12, true)
   for customfile, value in ipairs(trainings) do
     customTrainingModes[#customTrainingModes+1] = value
   end
@@ -666,7 +666,7 @@ function training_setup()
   end
 
   local function start_custom_game()
-    customTrainingModes[0] = createBasicTrainingMode("", trainingModeSettings.width, trainingModeSettings.height)
+    customTrainingModes[0] = createBasicTrainingMode("", trainingModeSettings.width, trainingModeSettings.height, true)
     ret = {main_local_vs_yourself_setup, {customTrainingModes[customModeID]}}
   end
 
