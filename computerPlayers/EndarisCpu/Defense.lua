@@ -100,7 +100,7 @@ function Defend.DownstackIntoClear(self)
     local potentialClearColors = Defend.getPotentialClearColors(rowGrid)
 
     for i=#potentialClearColors, 1, -1 do
-      local targetRowGrid = Defend:getTargetRowGrid(rowGrid, potentialClearColors[i])
+      local targetRowGrid = Defend:getTargetRowGrid(rowGrid, potentialClearColors[i].color, potentialClearColors[i].targetGridColumn)
       if targetRowGrid == nil then
         table.remove(potentialClearColors, i)
       else
