@@ -569,19 +569,13 @@ local function createBasicTrainingMode(name, width, height)
 
   local delayBeforeStart = 150
   local delayBeforeRepeat = 91
-  local attacksPerVolley = 13
   local attackPatterns = {}
 
   if height > 1 and width == 6 then -- chain
-    local chainEndTime = height + 1 + GARBAGE_TRANSIT_TIME
-    
-    for i = 1, height + 1 do
-      local startTime = math.floor(i / (height + 1) * chainEndTime)
-      attackPatterns[#attackPatterns+1] = {width = width, height = 1, startTime = startTime, metal = false, chain = true, endsChain = false}
-    end
-
-    attackPatterns[#attackPatterns+1] = {width = width, height = 1, startTime = chainEndTime, metal = false, chain = true, endsChain = true}
+    attackPatterns[#attackPatterns+1] = {startTime = 1, height = height, chain = 1, chainEndDelta = GARBAGE_TRANSIT_TIME}
   else -- combo (or illegal garbage)
+    local attacksPerVolley = 50
+    delayBeforeRepeat = 900
     for i = 1, attacksPerVolley do
       attackPatterns[#attackPatterns+1] = {width = width, height = height, startTime = i, metal = false, chain = false, endsChain = false}
     end
