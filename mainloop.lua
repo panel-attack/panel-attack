@@ -157,7 +157,7 @@ function main_title()
         end
         percent =  bound(0, percent + increment, 1)
         
-        if menu_enter() or menu_escape() then
+        if love.mouse.isDown(1, 2, 3) or #love.touch.getTouches() > 0 or (table.length(this_frame_keys) > 0 and totalTime > 0.1) then
           ret = {main_select_mode}
         end
       end
