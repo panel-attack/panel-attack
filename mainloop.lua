@@ -565,23 +565,17 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
 
 end
 
-local function createBasicTrainingMode(name, width, height, illegalGarbage) 
+local function createBasicTrainingMode(name, width, height) 
 
   local delayBeforeStart = 150
-  local delayBeforeRepeat = 900
-  local attacksPerVolley = 50
+  local delayBeforeRepeat = 91
   local attackPatterns = {}
 
-  if height > 1 and width == 6 and not illegalGarbage then -- chain
-    local chainEndTime = height + 1 + GARBAGE_TRANSIT_TIME
-    
-    for i = 1, height + 1 do
-      local startTime = math.floor(i / (height + 1) * chainEndTime)
-      attackPatterns[#attackPatterns+1] = {width = width, height = 1, startTime = startTime, metal = false, chain = true, endsChain = false}
-    end
-
-    attackPatterns[#attackPatterns+1] = {width = width, height = 1, startTime = chainEndTime, metal = false, chain = true, endsChain = true}
+  if height > 1 and width == 6 then -- chain
+    attackPatterns[#attackPatterns+1] = {startTime = 1, height = height, chain = 1, chainEndDelta = GARBAGE_TRANSIT_TIME}
   else -- combo (or illegal garbage)
+    local attacksPerVolley = 50
+    delayBeforeRepeat = 900
     for i = 1, attacksPerVolley do
       attackPatterns[#attackPatterns+1] = {width = width, height = height, startTime = i, metal = false, chain = false, endsChain = false}
     end
@@ -599,8 +593,8 @@ function training_setup()
   local customTrainingModes = {}
   customTrainingModes[0] = {name = "None"}
   customTrainingModes[1] = createBasicTrainingMode(loc("combo_storm"), 4, 1)
-  customTrainingModes[2] = createBasicTrainingMode(loc("factory"), 6, 2, true)
-  customTrainingModes[3] = createBasicTrainingMode(loc("large_garbage"), 6, 12, true)
+  customTrainingModes[2] = createBasicTrainingMode(loc("factory"), 6, 2)
+  customTrainingModes[3] = createBasicTrainingMode(loc("large_garbage"), 6, 12)
   for customfile, value in ipairs(trainings) do
     customTrainingModes[#customTrainingModes+1] = value
   end
@@ -666,7 +660,7 @@ function training_setup()
   end
 
   local function start_custom_game()
-    customTrainingModes[0] = createBasicTrainingMode("", trainingModeSettings.width, trainingModeSettings.height, true)
+    customTrainingModes[0] = createBasicTrainingMode("", trainingModeSettings.width, trainingModeSettings.height)
     ret = {main_local_vs_yourself_setup, {customTrainingModes[customModeID]}}
   end
 
