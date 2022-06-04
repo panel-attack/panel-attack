@@ -568,18 +568,14 @@ end
 local function createBasicTrainingMode(name, width, height) 
 
   local delayBeforeStart = 150
-  local delayBeforeRepeat = 91
+  local delayBeforeRepeat = 900
+  local attacksPerVolley = 50
   local attackPatterns = {}
 
-  if height > 1 and width == 6 then -- chain
-    attackPatterns[#attackPatterns+1] = {startTime = 1, height = height, chain = 1, chainEndDelta = GARBAGE_TRANSIT_TIME}
-  else -- combo (or illegal garbage)
-    local attacksPerVolley = 50
-    delayBeforeRepeat = 900
-    for i = 1, attacksPerVolley do
-      attackPatterns[#attackPatterns+1] = {width = width, height = height, startTime = i, metal = false, chain = false, endsChain = false}
-    end
+  for i = 1, attacksPerVolley do
+    attackPatterns[#attackPatterns+1] = {width = width, height = height, startTime = i, metal = false, chain = false, endsChain = false}
   end
+
   local customTrainingModeData = {name = name, delayBeforeStart = delayBeforeStart, delayBeforeRepeat = delayBeforeRepeat, attackPatterns = attackPatterns}
 
   return customTrainingModeData
