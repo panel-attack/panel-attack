@@ -565,14 +565,14 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
 
 end
 
-local function createBasicTrainingMode(name, width, height, illegalGarbage) 
+local function createBasicTrainingMode(name, width, height, forceComboQueue) 
 
   local delayBeforeStart = 150
   local delayBeforeRepeat = 900
   local attacksPerVolley = 50
   local attackPatterns = {}
 
-  if height > 1 and width == 6 and not illegalGarbage then -- chain
+  if height > 1 and width == 6 and not forceComboQueue then -- chain
     local chainEndTime = height + 1 + GARBAGE_TRANSIT_TIME
     
     for i = 1, height + 1 do
