@@ -346,6 +346,10 @@ local function released_key_after_time(key, time)
   return this_frame_released_keys[key] and this_frame_released_keys[key] >= time
 end
 
+local function released_key(key)
+  return this_frame_released_keys[key]
+end
+
 -- Clears all input configurations assigned to player numbers
 function Input.clearInputConfigurationsForPlayers(self)
   self.playerInputConfigurationsMap = {}
@@ -550,11 +554,11 @@ menu_enter_one_press =
   input_key_func(
   {"return", "kenter", "z"},
   {"swap1"},
-  normal_key,
+  released_key,
   function()
     return themes[config.theme].sounds.menu_validate
   end,
-  super_selection_duration
+  0
 )
 menu_pause =
   input_key_func(

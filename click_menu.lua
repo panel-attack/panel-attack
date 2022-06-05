@@ -267,7 +267,7 @@ function Click_menu.update(self)
       self:selectPreviousIndex()
     elseif menu_down() then
       self:selectNextIndex()
-    elseif menu_enter() then
+    elseif menu_enter_one_press() then
       if self.buttons[self.active_idx].selectFunction then
         self:selectButton(self.active_idx)
       end
