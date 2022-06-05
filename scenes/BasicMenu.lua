@@ -12,6 +12,7 @@ local BasicMenu = class(
   function (self, name, options)
     self.name = name
     self.game_mode = options.game_mode
+    self.game_scene = options.game_scene
   end,
   Scene
 )
@@ -42,27 +43,7 @@ local difficulty_buttons = ButtonGroup(
 )
 
 function BasicMenu:startGame()
-  GAME.match = Match(self.game_mode)
-
-  current_stage = config.stage
-  if current_stage == random_stage_special_value then
-    current_stage = nil
-  end
-  commonGameSetup()
-
-  if self.type_buttons.value == "Classic" then
-    P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, speed=speed_slider.value, difficulty=difficulty_buttons.value, character=config.character}
-  else
-    P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, level=self.level_slider.value, character=config.character}
-  end
-  GAME.match.P1 = P1
-  P1:wait_for_random_character()
-  P1.do_countdown = config.ready_countdown_1P or false
-  P2 = nil
-
-  replay = createNewReplay(GAME.match)
-
-  P1:starting_state()
+  play_optional_sfx(themes[config.theme].sounds.menu_validate)
   
   if config.endless_speed ~= speed_slider.value or config.endless_difficulty ~= difficulty_buttons.value then
     config.endless_speed = speed_slider.value
@@ -71,39 +52,26 @@ function BasicMenu:startGame()
     --wait()
     write_conf_file()
   end
-  stop_the_music()
-  play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  --scene_manager:switchScene(nil)
-  scene_manager:switchScene("game_scene")
   
-  local abort_game_function = nil
-  if self.game_mode == "endless" then
-    abort_game_function = main_endless_select
-  else
-    abort_game_function = main_timeattack_select
-  end
-  
-  local function processGameResults(gameResult) 
-    local extraPath, extraFilename
-    local stack = P1
-    if stack.level == nil then
-      if GAME.match.mode == "endless" then
-        GAME.scores:saveEndlessScoreForLevel(P1.score, P1.difficulty)
-        extraPath = "Endless"
-        extraFilename = "Spd" .. stack.speed .. "-Dif" .. stack.difficulty .. "-endless"
-      elseif GAME.match.mode == "time" then
-        GAME.scores:saveTimeAttack1PScoreForLevel(P1.score, P1.difficulty)
-        extraPath = "Time Attack"
-        extraFilename = "Spd" .. stack.speed .. "-Dif" .. stack.difficulty .. "-timeattack"
-      end
-      finalizeAndWriteReplay(extraPath, extraFilename)
-    end
+  GAME.match = Match(self.game_mode)
 
-    return {game_over_transition, {nextFunction, nil, P1:pick_win_sfx()}}
+  current_stage = config.stage
+  if current_stage == random_stage_special_value then
+    current_stage = nil
   end
+
+  if self.type_buttons.value == "Classic" then
+    GAME.match.P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, speed=speed_slider.value, difficulty=difficulty_buttons.value, character=config.character}
+  else
+    GAME.match.P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, level=self.level_slider.value, character=config.character}
+  end
+  GAME.match.P1:wait_for_random_character()
+  GAME.match.P1.do_countdown = config.ready_countdown_1P or false
+  GAME.match.P2 = nil
+
+  GAME.match.P1:starting_state()
   
-  --func = runMainGameLoop
-  --arg = {--[[update]] function() end, --[[variableStep]] function() end, abort_game_function, processGameResults}
+  scene_manager:switchScene(self.game_scene)
 end
 
 local function exitMenu()
@@ -210,6 +178,7 @@ function BasicMenu:unload()
   else
     self.modern_menu:setVisibility(false)
   end
+  stop_the_music()
 end
 
 return BasicMenu

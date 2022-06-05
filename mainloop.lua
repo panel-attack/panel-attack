@@ -235,10 +235,10 @@ function createNewReplay(match)
   modeReplay.seed = match.seed
 
   if mode == "endless" or mode == "time" then
-    modeReplay.do_countdown = P1.do_countdown or false
-    modeReplay.speed = P1.speed
-    modeReplay.difficulty = P1.difficulty
-    modeReplay.cur_wait_time = P1.cur_wait_time or default_input_repeat_delay
+    modeReplay.do_countdown = GAME.match.P1.do_countdown or false
+    modeReplay.speed = GAME.match.P1.speed
+    modeReplay.difficulty = GAME.match.P1.difficulty
+    modeReplay.cur_wait_time = GAME.match.P1.cur_wait_time or default_input_repeat_delay
     modeReplay.in_buf = ""
   elseif mode == "vs" then
     modeReplay.P = ""
@@ -246,20 +246,20 @@ function createNewReplay(match)
     modeReplay.I = ""
     modeReplay.Q = ""
     modeReplay.in_buf = ""
-    modeReplay.P1_level = P1.level
+    modeReplay.P1_level = GAME.match.P1.level
     modeReplay.P1_name = GAME.battleRoom.playerNames[1]
-    modeReplay.P1_char = P1.character
-    modeReplay.P1_char = P1.character
-    modeReplay.P1_cur_wait_time = P1.cur_wait_time
+    modeReplay.P1_char = GAME.match.P1.character
+    modeReplay.P1_char = GAME.match.P1.character
+    modeReplay.P1_cur_wait_time = GAME.match.P1.cur_wait_time
     modeReplay.do_countdown = true
     if P2 then
-      modeReplay.P2_level = P2.level
+      modeReplay.P2_level = GAME.match.P2.level
       modeReplay.P2_name = GAME.battleRoom.playerNames[2]
-      modeReplay.P2_char = P2.character
-      modeReplay.P2_cur_wait_time = P2.cur_wait_time
+      modeReplay.P2_char = GAME.match.P2.character
+      modeReplay.P2_cur_wait_time = GAME.match.P2.cur_wait_time
 
-      modeReplay.P1_win_count = GAME.match.battleRoom.playerWinCounts[P1.player_number]
-      modeReplay.P2_win_count = GAME.match.battleRoom.playerWinCounts[P2.player_number]
+      modeReplay.P1_win_count = GAME.match.battleRoom.playerWinCounts[GAME.match.P1.player_number]
+      modeReplay.P2_win_count = GAME.match.battleRoom.playerWinCounts[GAME.match.P2.player_number]
     end
   end
 

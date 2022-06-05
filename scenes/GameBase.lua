@@ -19,58 +19,21 @@ local save = require("save")
 local table_utils = require("table_utils")
 
 --@module MainMenu
-local game_scene = Scene("game_scene")
+local GameBase = class(
+  function (self, name, options)
+    self.name = name
+    --self.game_mode = options.game_mode
+    self.abort_game = false
+  end,
+  Scene
+)
 
-function game_scene:init()
-  scene_manager:addScene(game_scene)
+function GameBase:init()
+  scene_manager:addScene(self)
 end
 
-local abort_game = false
-
-function game_scene:load()
-  leftover_time = 1 / 120
-  abort_game = false
-end
-
-local function pick_random_stage()
-  current_stage = table.getRandomElement(stages_ids_for_current_theme)
-  if stages[current_stage]:is_bundle() then -- may pick a bundle!
-    current_stage = table.getRandomElement(stages[current_stage].sub_stages)
-  end
-end
-
-local function use_current_stage()
-  if current_stage == nil then
-    pick_random_stage()
-  end
-  
-  stage_loader_load(current_stage)
-  stage_loader_wait()
-  GAME.backgroundImage = stages[current_stage].images.background
-  GAME.background_overlay = themes[config.theme].images.bg_overlay
-  GAME.foreground_overlay = themes[config.theme].images.fg_overlay
-end
-
-local function handle_pause()
-  if GAME.match.supportsPause then
-    if input.isDown["Start"] or (not GAME.focused and not GAME.gameIsPaused) then
-      GAME.gameIsPaused = not GAME.gameIsPaused
-
-      setMusicPaused(GAME.gameIsPaused)
-
-      if not GAME.renderDuringPause then
-        if GAME.gameIsPaused then
-          reset_filters()
-        else
-          use_current_stage()
-        end
-      end
-    end
-  end
-end
-
-local function finalizeAndWriteReplay(extraPath, extraFilename)
-  replay[GAME.match.mode].in_buf = P1.confirmedInput
+function GameBase:finalizeAndWriteReplay(extraPath, extraFilename)
+  replay[GAME.match.mode].in_buf = GAME.match.P1.confirmedInput
 
   local now = os.date("*t", to_UTC(os.time()))
   local sep = "/"
@@ -88,23 +51,66 @@ local function finalizeAndWriteReplay(extraPath, extraFilename)
   save.write_replay_file(path, filename)
 end
 
-local function processGameResults(gameResult) 
-  local extraPath, extraFilename
-  local stack = P1
-  if stack.level == nil then
-    if GAME.match.mode == "endless" then
-      GAME.scores:saveEndlessScoreForLevel(P1.score, P1.difficulty)
-      extraPath = "Endless"
-      extraFilename = "Spd" .. stack.speed .. "-Dif" .. stack.difficulty .. "-endless"
-    elseif GAME.match.mode == "time" then
-      GAME.scores:saveTimeAttack1PScoreForLevel(P1.score, P1.difficulty)
-      extraPath = "Time Attack"
-      extraFilename = "Spd" .. stack.speed .. "-Dif" .. stack.difficulty .. "-timeattack"
-    end
-    finalizeAndWriteReplay(extraPath, extraFilename)
+local function pickRandomStage()
+  current_stage = table.getRandomElement(stages_ids_for_current_theme)
+  if stages[current_stage]:is_bundle() then -- may pick a bundle!
+    current_stage = table.getRandomElement(stages[current_stage].sub_stages)
   end
+end
 
-  --return {game_over_transition, {nextFunction, nil, P1:pick_win_sfx()}}
+local function useCurrentStage()
+  if current_stage == nil then
+    pickRandomStage()
+  end
+  
+  stage_loader_load(current_stage)
+  stage_loader_wait()
+  GAME.backgroundImage = stages[current_stage].images.background
+  GAME.background_overlay = themes[config.theme].images.bg_overlay
+  GAME.foreground_overlay = themes[config.theme].images.fg_overlay
+end
+
+local function pick_use_music_from()
+  if config.use_music_from == "stage" or config.use_music_from == "characters" then
+    current_use_music_from = config.use_music_from
+    return
+  end
+  local percent = math.random(1, 4)
+  if config.use_music_from == "either" then
+    current_use_music_from = percent <= 2 and "stage" or "characters"
+  elseif config.use_music_from == "often_stage" then
+    current_use_music_from = percent == 1 and "characters" or "stage"
+  else
+    current_use_music_from = percent == 1 and "stage" or "characters"
+  end
+end
+
+function GameBase:load()
+  leftover_time = 1 / 120
+  self.abort_game = false
+  useCurrentStage()
+  pick_use_music_from()
+  replay = createNewReplay(GAME.match)
+end
+
+
+
+local function handlePause()
+  if GAME.match.supportsPause then
+    if input.isDown["Start"] or (not GAME.focused and not GAME.gameIsPaused) then
+      GAME.gameIsPaused = not GAME.gameIsPaused
+
+      setMusicPaused(GAME.gameIsPaused)
+
+      if not GAME.renderDuringPause then
+        if GAME.gameIsPaused then
+          reset_filters()
+        else
+          useCurrentStage()
+        end
+      end
+    end
+  end
 end
 
 local t = 0 -- the amount of frames that have passed since the game over screen was displayed
@@ -129,7 +135,7 @@ local function setupGameOver()
   keep_music = false
   winnerTime = 60
   initialMusicVolumes = {}
-  winnerSFX = P1:pick_win_sfx()
+  winnerSFX = GAME.match.P1:pick_win_sfx()
 
   if SFX_GameOver_Play == 1 then
     themes[config.theme].sounds.game_over:play()
@@ -203,7 +209,7 @@ local function runGameOver()
       stop_the_music()
     end
     SFX_GameOver_Play = 0
-    analytics.game_ends(P1.analytic)
+    analytics.game_ends(GAME.match.P1.analytic)
     scene_manager:switchScene("endless_menu")
   end
   t = t + 1
@@ -211,31 +217,30 @@ local function runGameOver()
   GAME.match:render()
 end
 
-local function runGame()
+function GameBase:runGame()
   GAME.match:run()
-  if not ((P1 and P1.play_to_end) or (P2 and P2.play_to_end)) then
-    handle_pause()
+  if not ((GAME.match.P1 and GAME.match.P1.play_to_end) or (GAME.match.P2 and GAME.match.P2.play_to_end)) then
+    handlePause()
 
     if GAME.gameIsPaused and input.isDown["Swap2"] then
       -- returnFunction = abortGameFunction()
       scene_manager:switchScene("endless_menu")
-      abort_game = true
+      self.abort_game = true
     end
   end
 
-  if abort_game then
+  if self.abort_game then
     return
   end
   
-  gameResult = P1:gameResult()
-  if gameResult then
+  if GAME.match.P1:gameResult() then
     --scene_manager:switchScene("endless_menu")
     setupGameOver()
     return
   end
   
   -- Render only if we are not catching up to a current spectate match
-  if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
+  if not (GAME.match.P1 and GAME.match.P1.play_to_end) and not (GAME.match.P2 and GAME.match.P2.play_to_end) then
     GAME.match:render()
   end
 
@@ -258,12 +263,11 @@ local function runGame()
   --]]
 end
 
-function game_scene:update()
-  local gameResult = P1:gameResult()
-  if gameResult then
+function GameBase:update()
+  if GAME.match.P1:gameResult() then
     runGameOver()
   else
-    runGame()
+    self:runGame()
   end
   -- local returnFunction = nil
   -- Uncomment this to cripple your game :D
@@ -278,12 +282,12 @@ function game_scene:update()
 end
 
 
-function game_scene:unload()
-  local gameResult = P1:gameResult()
-  if gameResult then
-    processGameResults(gameResult)
+function GameBase:unload()
+  local game_result = GAME.match.P1:gameResult()
+  if game_result then
+    self:processGameResults(game_result)
   end
   GAME:clearMatch()
 end
 
-return game_scene
+return GameBase
