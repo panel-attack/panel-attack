@@ -18,18 +18,18 @@ local transitions = {
     post_load_transition = function() end
   },
   fade = {
-    pre_load_transition = function() transition_utils.fade(0, 1, .25) end,
-    post_load_transition = function() transition_utils.fade(1, 0, .25) end
+    pre_load_transition = function() transition_utils.fade(0, 1, .2) end,
+    post_load_transition = function() transition_utils.fade(1, 0, .2) end
   }
 }
 
-function scene_manager:switchScene(scene_name)
-  transition_co = coroutine.create(function() self:transitionFn() end)
+function scene_manager:switchScene(scene_name, scene_params)
+  transition_co = coroutine.create(function() self:transitionFn(scene_params) end)
   self.next_scene = scenes[scene_name]
   self.is_transitioning = true
 end
 
-function scene_manager:transitionFn()
+function scene_manager:transitionFn(scene_params)
   transitions[transition_type].pre_load_transition()
   
   if scene_manager.active_scene then
@@ -37,7 +37,7 @@ function scene_manager:transitionFn()
   end
   
   if self.next_scene then
-    self.next_scene:load()
+    self.next_scene:load(scene_params)
     self.active_scene = self.next_scene
     GAME.rich_presence:setPresence(nil, self.next_scene.name, true)
   else

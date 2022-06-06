@@ -22,11 +22,25 @@ local table_utils = require("table_utils")
 local GameBase = class(
   function (self, name, options)
     self.name = name
-    --self.game_mode = options.game_mode
     self.abort_game = false
+    self.text = ""
+    self.winner_SFX = nil
+    self.keep_music = false
   end,
   Scene
 )
+
+-- abstract functions
+function GameBase:processGameResults(gameResult) end
+
+function GameBase:customLoad(scene_params) end
+
+function GameBase:abortGame() end
+
+function GameBase:customRun() end
+
+function GameBase:customGameOverSetup() end
+-- end abstract functions
 
 function GameBase:init()
   scene_manager:addScene(self)
@@ -70,7 +84,7 @@ local function useCurrentStage()
   GAME.foreground_overlay = themes[config.theme].images.fg_overlay
 end
 
-local function pick_use_music_from()
+local function pickUseMusicFrom()
   if config.use_music_from == "stage" or config.use_music_from == "characters" then
     current_use_music_from = config.use_music_from
     return
@@ -85,11 +99,13 @@ local function pick_use_music_from()
   end
 end
 
-function GameBase:load()
+function GameBase:load(scene_params)
   leftover_time = 1 / 120
   self.abort_game = false
+
   useCurrentStage()
-  pick_use_music_from()
+  pickUseMusicFrom()
+  self:customLoad(scene_params)
   replay = createNewReplay(GAME.match)
 end
 
@@ -117,13 +133,10 @@ local t = 0 -- the amount of frames that have passed since the game over screen 
 local font = love.graphics.getFont()
 local timemin = 60 -- the minimum amount of frames the game over screen will be displayed for
 local timemax = -1
-local text = ""
-local keep_music = false
 local winnerTime = 60
 local initialMusicVolumes = {}
-local winnerSFX
 
-local function setupGameOver()
+function GameBase:setupGameOver()
   --timemax = timemax or -1 -- negative values means the user needs to press enter/escape to continue
   --text = text or ""
   --keepMusic = keepMusic or false
@@ -132,10 +145,10 @@ local function setupGameOver()
   t = 0 -- the amount of frames that have passed since the game over screen was displayed
   timemin = 60 -- the minimum amount of frames the game over screen will be displayed for
   timemax = -1
-  keep_music = false
   winnerTime = 60
   initialMusicVolumes = {}
-  winnerSFX = GAME.match.P1:pick_win_sfx()
+  
+  self:customGameOverSetup()
 
   if SFX_GameOver_Play == 1 then
     themes[config.theme].sounds.game_over:play()
@@ -151,12 +164,12 @@ local function setupGameOver()
   end
 end
 
-local function runGameOver()
-  gprint(text, (canvas_width - font:getWidth(text)) / 2, 10)
+function GameBase:runGameOver()
+  gprint(self.text, (canvas_width - font:getWidth(self.text)) / 2, 10)
   gprint(loc("continue_button"), (canvas_width - font:getWidth(loc("continue_button"))) / 2, 10 + 30)
   -- wait()
   local ret = nil
-  if not keep_music then
+  if not self.keep_music then
     -- Fade the music out over time
     local fadeMusicLength = 3 * 60
     if t <= fadeMusicLength then
@@ -176,9 +189,9 @@ local function runGameOver()
   -- Play the winner sound effect after a delay
   if not SFX_mute then
     if t >= winnerTime then
-      if winnerSFX ~= nil then -- play winnerSFX then nil it so it doesn't loop
-        winnerSFX:play()
-        winnerSFX = nil
+      if self.winner_SFX ~= nil then -- play winnerSFX then nil it so it doesn't loop
+        self.winner_SFX:play()
+        self.winner_SFX = nil
       end
     end
   end
@@ -210,7 +223,7 @@ local function runGameOver()
     end
     SFX_GameOver_Play = 0
     analytics.game_ends(GAME.match.P1.analytic)
-    scene_manager:switchScene("endless_menu")
+    scene_manager:switchScene(self.next_scene, self.next_scene_params)
   end
   t = t + 1
   
@@ -219,23 +232,24 @@ end
 
 function GameBase:runGame()
   GAME.match:run()
+  
+  self:customRun()
+  
   if not ((GAME.match.P1 and GAME.match.P1.play_to_end) or (GAME.match.P2 and GAME.match.P2.play_to_end)) then
     handlePause()
 
     if GAME.gameIsPaused and input.isDown["Swap2"] then
-      -- returnFunction = abortGameFunction()
-      scene_manager:switchScene("endless_menu")
+      self:abortGame()
       self.abort_game = true
     end
   end
-
+  
   if self.abort_game then
     return
   end
   
   if GAME.match.P1:gameResult() then
-    --scene_manager:switchScene("endless_menu")
-    setupGameOver()
+    self:setupGameOver()
     return
   end
   
@@ -243,44 +257,15 @@ function GameBase:runGame()
   if not (GAME.match.P1 and GAME.match.P1.play_to_end) and not (GAME.match.P2 and GAME.match.P2.play_to_end) then
     GAME.match:render()
   end
-
-  --[[
-  if not returnFunction then
-    local gameResult = P1:gameResult()
-    if gameResult then
-      returnFunction = processGameResultsFunction(gameResult)
-    end
-  end
-  --]]
-  
-  
-
-  --[[
-  if returnFunction then
-    undo_stonermode()
-    return unpack(returnFunction)
-  end
-  --]]
 end
 
 function GameBase:update()
   if GAME.match.P1:gameResult() then
-    runGameOver()
+    self:runGameOver()
   else
     self:runGame()
   end
-  -- local returnFunction = nil
-  -- Uncomment this to cripple your game :D
-  -- love.timer.sleep(0.030)
-
-  --returnFunction = updateFunction()
-  --if returnFunction then 
-  --  return unpack(returnFunction)
-  --end
-  
-  
 end
-
 
 function GameBase:unload()
   local game_result = GAME.match.P1:gameResult()

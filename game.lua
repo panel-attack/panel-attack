@@ -116,7 +116,8 @@ function Game:_setup_co()
     require("scenes.training_mode_character_select"),
     require("scenes.input_config_menu"),
     require("scenes.endless_game"),
-    require("scenes.time_attack_game")
+    require("scenes.time_attack_game"),
+    require("scenes.puzzle_game")
   }
   for i, scene in ipairs(scenes) do
     scene:init()

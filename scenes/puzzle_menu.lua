@@ -21,13 +21,15 @@ local save = require("save")
 local puzzle_menu = Scene("puzzle_menu")
 
 local font = love.graphics.getFont()
-
-local items = {}
   
-function puzzle_menu:startGame(id)
-  stop_the_music()
+function puzzle_menu:startGame(puzzle_set)
+  current_stage = config.stage
+  if current_stage == random_stage_special_value then
+    current_stage = nil
+  end
+  
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  scene_manager:switchScene(nil)
+  scene_manager:switchScene("puzzle_game", {puzzle_set = puzzle_set, puzzle_index = 1})
   
   if config.puzzle_level ~= self.level_slider.value or config.puzzle_randomColors ~= self.random_colors_buttons.value then
     config.puzzle_level = self.level_slider.value
@@ -35,16 +37,13 @@ function puzzle_menu:startGame(id)
     logger.debug("saving settings...")
     save.write_conf_file()
   end
-        
-  func = items[id][2]
-  arg = {items[id][3]}
 end
 
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
   scene_manager:switchScene("main_menu")
 end
-  
+
 function puzzle_menu:init()
   scene_manager:addScene(puzzle_menu)
 
@@ -72,10 +71,9 @@ function puzzle_menu:init()
     {Label({text = love.graphics.newText(font, loc("level")), is_visible = false}), self.level_slider},
     {Label({text = love.graphics.newText(font, loc("randomColors")), is_visible = false}), self.random_colors_buttons},
   }
-  
-  for key, val in util.pairsSortedByKeys(GAME.puzzleSets) do
-    items[#items + 1] = {key, makeSelectPuzzleSetFunction(val)}
-    menu_options[#menu_options + 1] = {Button({text = love.graphics.newText(font, key), onClick = function() self:startGame(#items) end})}
+
+  for puzzle_set_name, puzzle_set in util.pairsSortedByKeys(GAME.puzzleSets) do
+    menu_options[#menu_options + 1] = {Button({text = love.graphics.newText(font, puzzle_set_name), onClick = function() self:startGame(puzzle_set) end})}
   end
   menu_options[#menu_options + 1] = {Button({text = love.graphics.newText(font, loc("back")), onClick = exitMenu})}
   
@@ -105,6 +103,7 @@ end
 
 function puzzle_menu:unload()
   self.menu:setVisibility(false)
+  stop_the_music()
 end
 
 return puzzle_menu
