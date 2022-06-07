@@ -29,9 +29,13 @@ function UpdatingImage:draw()
   -- note how the Quad's width and height are larger than the image width and height.
   local bg_quad = love.graphics.newQuad(x, y, self.width, self.height, self.image:getDimensions())
 
-  local scale = 1
+  local x_scale = 1
+  local y_scale = 1
   if not self.tiled then   
-    scale = self.width / math.max(self.image:getWidth(), self.image:getHeight()) -- keep image ratio
+    x_scale = self.width / self.image:getWidth()
+    y_scale = self.height / self.image:getHeight() -- keep image ratio
+    gfx_q:push({love.graphics.draw, {self.image, 0, 0, 0, x_scale, y_scale}})
+  else
+    gfx_q:push({love.graphics.draw, {self.image, bg_quad, 0, 0, 0, x_scale, y_scale}})
   end
-  gfx_q:push({love.graphics.draw, {self.image, bg_quad, 0, 0, 0, scale, scale}})
 end
