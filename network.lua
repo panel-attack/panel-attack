@@ -217,9 +217,9 @@ function process_data_message(type, data)
   elseif type == "O" then
     
   elseif type == "U" then
-    P1:receiveConfirmedInput(data)
+    GAME.match.P1:receiveConfirmedInput(data)
   elseif type == "I" then
-    P2:receiveConfirmedInput(data)
+    GAME.match.P2:receiveConfirmedInput(data)
   elseif type == "Q" then
     
   elseif type == "R" then
