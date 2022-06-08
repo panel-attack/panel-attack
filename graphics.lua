@@ -946,12 +946,15 @@ end
 function Stack.render_cursor(self)
   local shake_idx = #shake_arr - self.shake_time
   local shake = ceil((shake_arr[shake_idx] or 0) * 13)
+  local scale_x = 40 / themes[config.theme].images.IMG_cursor[(floor(self.CLOCK / 16) % 2) + 1]:getWidth()
+  local scale_y = 24 / themes[config.theme].images.IMG_cursor[(floor(self.CLOCK / 16) % 2) + 1]:getHeight()
+
   if self.countdown_timer then
     if self.CLOCK % 2 == 0 then
-      draw(themes[config.theme].images.IMG_cursor[1], (self.cur_col - 1) * 16, (11 - (self.cur_row)) * 16 + self.displacement - shake)
+      draw(themes[config.theme].images.IMG_cursor[1], (self.cur_col - 1) * 16, (11 - (self.cur_row)) * 16 + self.displacement - shake, 0, scale_x, scale_y)
     end
   else
-    draw(themes[config.theme].images.IMG_cursor[(floor(self.CLOCK / 16) % 2) + 1], (self.cur_col - 1) * 16, (11 - (self.cur_row)) * 16 + self.displacement - shake)
+    draw(themes[config.theme].images.IMG_cursor[(floor(self.CLOCK / 16) % 2) + 1], (self.cur_col - 1) * 16, (11 - (self.cur_row)) * 16 + self.displacement - shake, 0, scale_x, scale_y)
   end
 end
 
