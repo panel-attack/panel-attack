@@ -118,6 +118,7 @@ function Game:_setup_co()
     require("scenes.puzzle_menu"),
     require("scenes.training_mode_menu"),
     require("scenes.training_mode_character_select"),
+    require("scenes.training_mode_game"),
     require("scenes.input_config_menu"),
   }
   for i, scene in ipairs(scenes) do
