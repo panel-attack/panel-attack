@@ -52,6 +52,7 @@ local CharacterSelect = class(
     self.name = name
     self.game_setup_fn = options.game_setup_fn or function (game) end
     self.previous_scene = options.previous_scene or "main_menu"
+    self.next_scene = options.next_scene or nil
     self.buttons = {
       characters = {},
       level_select = {},
@@ -108,24 +109,16 @@ end
 
 function CharacterSelect:onReady()
   self:moveCursor(button_info.ready.x, button_info.ready.y)
-  -- Handle one player vs game setup
-  GAME.match = Match("vs", GAME.battleRoom)
-  P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=self.cursor_data[1].state.panels_dir, level=self.cursor_data[1].state.level, character=self.cursor_data[1].state.character}
-  GAME.match.P1 = P1
-  self:matchSetup(GAME.match)
-  
-  -- branch
-  --P1:set_garbage_target(P1)
-  
-  P2 = nil
+
   local current_stage = self.cursor_data[1].state.stage
   stage_loader_load(current_stage)
   stage_loader_wait()
-  P1:starting_state()
+
+  -- Handle one player vs game setup
+  GAME.match = Match("vs", GAME.battleRoom)
+  GAME.match.P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=self.cursor_data[1].state.panels_dir, level=self.cursor_data[1].state.level, character=self.cursor_data[1].state.character}
   
-  scene_manager:switchScene(nil)
-  func = main_dumb_transition
-  arg = {main_local_vs_yourself, "", 0, 0}
+  scene_manager:switchScene(self.next_scene)
 end
 
 -- Sets the state object to a new stage based on the increment

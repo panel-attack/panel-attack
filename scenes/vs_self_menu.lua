@@ -3,11 +3,10 @@ local CharacterSelect = require("scenes.CharacterSelect")
 --@module vs_self_menu
 local vs_self_menu = CharacterSelect(
   "vs_self_menu", 
-  {previous_scene = "main_menu"})
-
-function vs_self_menu:matchSetup(match)
-  P1:set_garbage_target(P1)
-end
+  {
+    previous_scene = "main_menu",
+    next_scene = "vs_self_game"
+  })
 
 function vs_self_menu:customDraw()
   local xPosition1 = 196

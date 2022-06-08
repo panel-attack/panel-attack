@@ -65,6 +65,42 @@ function GameBase:finalizeAndWriteReplay(extraPath, extraFilename)
   save.write_replay_file(path, filename)
 end
 
+function GameBase:finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGame)
+
+  incompleteGame = incompleteGame or false
+  
+  local extraPath, extraFilename
+  if GAME.match.P2 then
+    replay[GAME.match.mode].I = GAME.match.P2.confirmedInput
+
+    local rep_a_name, rep_b_name = battleRoom.playerNames[1], battleRoom.playerNames[2]
+    --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
+    if rep_b_name < rep_a_name then
+      extraPath = rep_b_name .. "-vs-" .. rep_a_name
+    else
+      extraPath = rep_a_name .. "-vs-" .. rep_b_name
+    end
+    extraFilename = rep_a_name .. "-L" .. GAME.match.P1.level .. "-vs-" .. rep_b_name .. "-L" .. GAME.match.P2.level
+    if match_type and match_type ~= "" then
+      extraFilename = extraFilename .. "-" .. match_type
+    end
+    if incompleteGame then
+      extraFilename = extraFilename .. "-INCOMPLETE"
+    else
+      if outcome_claim == 1 or outcome_claim == 2 then
+        extraFilename = extraFilename .. "-P" .. outcome_claim .. "wins"
+      elseif outcome_claim == 0 then
+        extraFilename = extraFilename .. "-draw"
+      end
+    end
+  else -- vs Self
+    extraPath = "Vs Self"
+    extraFilename = "vsSelf-" .. "L" .. GAME.match.P1.level
+  end
+
+  self:finalizeAndWriteReplay(extraPath, extraFilename)
+end
+
 local function pickRandomStage()
   current_stage = table.getRandomElement(stages_ids_for_current_theme)
   if stages[current_stage]:is_bundle() then -- may pick a bundle!
@@ -222,7 +258,6 @@ function GameBase:runGameOver()
       stop_the_music()
     end
     SFX_GameOver_Play = 0
-    analytics.game_ends(GAME.match.P1.analytic)
     scene_manager:switchScene(self.next_scene, self.next_scene_params)
   end
   t = t + 1
@@ -272,6 +307,7 @@ function GameBase:unload()
   if game_result then
     self:processGameResults(game_result)
   end
+  analytics.game_ends(GAME.match.P1.analytic)
   GAME:clearMatch()
 end
 
