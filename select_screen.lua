@@ -308,7 +308,7 @@ function select_screen.main()
         )
         gprint(loc("ss_confirmation_text"), themes[config.theme].main_menu_screen_pos[1], 250)
         if confirmationMenuStatus == 0 then
-          confirmationMenuStatus = -1
+          confirmationMenuStatus = -1;
           confirmLeaveDialog:remove_self()
           return false
         elseif confirmationMenuStatus == 1 then
@@ -335,7 +335,7 @@ function select_screen.main()
   -- Leaves the 2p vs match room
   local function do_leave()
     if not show_leave_confirmation_dialog() then
-      return json_send({leave_room = false});
+      return json_send({leave_room = false})
     end
     stop_the_music()
     GAME:clearMatch()
@@ -1201,6 +1201,9 @@ function select_screen.main()
         end
         cursor.selected = not cursor.selected
       elseif cursor.state.cursor == "__Leave" then
+        if not show_leave_confirmation_dialog() then
+          return json_send({leave_room = false});
+        end
         on_quit()
       elseif cursor.state.cursor == "__Random" then
         cursor.state.character_is_random = random_character_special_value
