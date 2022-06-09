@@ -308,11 +308,11 @@ function select_screen.main()
         )
         gprint(loc("ss_confirmation_text"), themes[config.theme].main_menu_screen_pos[1], 250)
         if confirmationMenuStatus == 0 then
-          confirmationMenuStatus = -1;
+          confirmationMenuStatus = -1
           confirmLeaveDialog:remove_self()
           return false
         elseif confirmationMenuStatus == 1 then
-          confirmationMenuStatus = -1;
+          confirmationMenuStatus = -1
           confirmLeaveDialog:remove_self()
           return true;
         end
@@ -321,15 +321,15 @@ function select_screen.main()
 
   function escape_confirmation_dialog()
 
-    confirmLeaveDialog:set_active_idx(#confirmLeaveDialog.buttons);
+    confirmLeaveDialog:set_active_idx(#confirmLeaveDialog.buttons)
   end
 
   function confirmation_dialog_no()
-    confirmationMenuStatus = 0;
+    confirmationMenuStatus = 0
   end
 
   function confirmation_dialog_yes()
-    confirmationMenuStatus = 1;
+    confirmationMenuStatus = 1
   end
 
   -- Leaves the 2p vs match room
