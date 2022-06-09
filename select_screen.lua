@@ -296,7 +296,7 @@ function select_screen.main()
   local function show_leave_confirmation_dialog()
     confirmLeaveDialog = Click_menu(600, 100, nil, themes[config.theme].main_menu_max_height, 1)
     confirmLeaveDialog:add_button(loc("yes"), confirmation_dialog_yes, escape_confirmation_dialog, nil, nil)
-    confirmLeaveDialog:add_button(loc("no"), confirmation_dialog_no, escape_confirmation_dialog, nil, nil);
+    confirmLeaveDialog:add_button(loc("no"), confirmation_dialog_no, confirmation_dialog_no, nil, nil);
     while true do
         confirmLeaveDialog:draw()
         wait()
