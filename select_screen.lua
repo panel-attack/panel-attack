@@ -1,12 +1,14 @@
 local logger = require("logger")
 
 local select_screen = {}
+local confirmLeaveDialog = nil
 
 select_screen.fallback_when_missing = {nil, nil}
 select_screen.character_select_mode = "1p_vs_yourself"
 
 local wait = coroutine.yield
 local current_page = 1
+local confirmationMenuStatus = -1;
 
 -- fills the provided map based on the provided template and return the amount of pages. __Empty values will be replaced by character_ids
 local function fill_map(template_map, map)
@@ -178,7 +180,6 @@ function select_screen.main()
     logger.debug("Reseting player stacks")
 
     -- Wait till we have the room setup messages from the server
-    local opponent_connected = false
     local retries, retry_limit = 0, 250
     while not global_initialize_room_msg and retries < retry_limit do
       local msg = server_queue:pop_next_with("create_room", "character_select", "spectate_request_granted")
@@ -291,8 +292,51 @@ function select_screen.main()
 
   match_type_message = match_type_message or ""
 
+  -- Shows the confirmation menu  
+  local function show_leave_confirmation_dialog()
+    confirmLeaveDialog = Click_menu(600, 100, nil, themes[config.theme].main_menu_max_height, 1)
+    confirmLeaveDialog:add_button(loc("yes"), confirmation_dialog_yes, escape_confirmation_dialog, nil, nil)
+    confirmLeaveDialog:add_button(loc("no"), confirmation_dialog_no, escape_confirmation_dialog, nil, nil);
+    while true do
+        confirmLeaveDialog:draw()
+        wait()
+        variable_step(
+          function()
+            do_messages()
+            confirmLeaveDialog:update()
+          end
+        )
+        gprint(loc("ss_confirmation_text"), themes[config.theme].main_menu_screen_pos[1], 250)
+        if confirmationMenuStatus == 0 then
+          confirmationMenuStatus = -1;
+          confirmLeaveDialog:remove_self()
+          return false
+        elseif confirmationMenuStatus == 1 then
+          confirmationMenuStatus = -1;
+          confirmLeaveDialog:remove_self()
+          return true;
+        end
+    end
+  end
+
+  function escape_confirmation_dialog()
+
+    confirmLeaveDialog:set_active_idx(#confirmLeaveDialog.buttons);
+  end
+
+  function confirmation_dialog_no()
+    confirmationMenuStatus = 0;
+  end
+
+  function confirmation_dialog_yes()
+    confirmationMenuStatus = 1;
+  end
+
   -- Leaves the 2p vs match room
   local function do_leave()
+    if not show_leave_confirmation_dialog() then
+      return json_send({leave_room = false});
+    end
     stop_the_music()
     GAME:clearMatch()
     return json_send({leave_room = true})
