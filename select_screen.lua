@@ -1,14 +1,12 @@
 local logger = require("logger")
 
 local select_screen = {}
-local confirmLeaveDialog = nil
 
 select_screen.fallback_when_missing = {nil, nil}
 select_screen.character_select_mode = "1p_vs_yourself"
 
 local wait = coroutine.yield
 local current_page = 1
-local confirmationMenuStatus = -1;
 
 -- fills the provided map based on the provided template and return the amount of pages. __Empty values will be replaced by character_ids
 local function fill_map(template_map, map)
@@ -294,42 +292,38 @@ function select_screen.main()
 
   -- Shows the confirmation menu  
   local function show_leave_confirmation_dialog()
-    confirmLeaveDialog = Click_menu(600, 100, nil, themes[config.theme].main_menu_max_height, 1)
+    local ret = nil
+    local confirmLeaveDialog = Click_menu(600, 100, nil, themes[config.theme].main_menu_max_height, 1)
+
+    local function escape_confirmation_dialog()
+      confirmLeaveDialog:set_active_idx(#confirmLeaveDialog.buttons)
+    end
+  
+    local function confirmation_dialog_no()
+      ret = false
+    end
+  
+    local function confirmation_dialog_yes()
+      ret = true
+    end
+
+    
     confirmLeaveDialog:add_button(loc("yes"), confirmation_dialog_yes, escape_confirmation_dialog, nil, nil)
     confirmLeaveDialog:add_button(loc("no"), confirmation_dialog_no, confirmation_dialog_no, nil, nil);
     while true do
-        confirmLeaveDialog:draw()
-        wait()
-        variable_step(
-          function()
-            do_messages()
-            confirmLeaveDialog:update()
-          end
-        )
-        gprint(loc("ss_confirmation_text"), themes[config.theme].main_menu_screen_pos[1], 250)
-        if confirmationMenuStatus == 0 then
-          confirmationMenuStatus = -1;
-          confirmLeaveDialog:remove_self()
-          return false
-        elseif confirmationMenuStatus == 1 then
-          confirmationMenuStatus = -1
-          confirmLeaveDialog:remove_self()
-          return true;
+      confirmLeaveDialog:draw()
+      wait()
+      variable_step(
+        function()
+          do_messages()
+          confirmLeaveDialog:update()
         end
+      )
+      gprint(loc("ss_confirmation_text"), themes[config.theme].main_menu_screen_pos[1], 250)
+      if ret ~= nil then
+        return ret
+      end
     end
-  end
-
-  function escape_confirmation_dialog()
-
-    confirmLeaveDialog:set_active_idx(#confirmLeaveDialog.buttons)
-  end
-
-  function confirmation_dialog_no()
-    confirmationMenuStatus = 0
-  end
-
-  function confirmation_dialog_yes()
-    confirmationMenuStatus = 1
   end
 
   -- Leaves the 2p vs match room
@@ -1201,10 +1195,9 @@ function select_screen.main()
         end
         cursor.selected = not cursor.selected
       elseif cursor.state.cursor == "__Leave" then
-        if not show_leave_confirmation_dialog() then
-          return json_send({leave_room = false});
+        if show_leave_confirmation_dialog() then
+          on_quit()
         end
-        on_quit()
       elseif cursor.state.cursor == "__Random" then
         cursor.state.character_is_random = random_character_special_value
         cursor.state.character = table.getRandomElement(characters_ids_for_current_theme)
