@@ -13,8 +13,8 @@ combo_storm,Training mode that drops lots of small combo blocks in a row,Combo S
 large_garbage,Training mode that drops huge chain blocks,Large Garbage,Gros ordures,Grande lixo,大規模なごみ,Basura grande,Großer Müll,Grande spazzatura
 width,width of garbage blocks in training mode,Width,Largeur,Largura,幅,Ancho,Breite,Larghezza
 height,height of garbage blocks in training mode,Height,Hauteur,Altura,高さ,Altura,Höhe,Altezza
-yes,,Yes,,,,,,,
-no,,No,,,,,,,
+yes,,Yes,Oui,Sim,はい,Si,Ja,Si
+no,,No,No,Não,いいえ,No,Nein,No
 vs,,vs,vs,vs,対,vs,vs,vs
 up,,Up,Haut,Cima,上,Arriba,hoch,Su
 down,,Down,Bas,Baixo,下,Abajo,runter,Giù
@@ -450,7 +450,7 @@ ss_return,,Returning to main menu...,Retour au menu principal...,Voltar ao menu 
 ss_winrate,,Winrate:,Taux de victoire :,Taxa de vitórias:,勝率：,Racha de victorias:,Gewinnrate:,Rateo delle vittorie:
 ss_wins,,Wins:,Victoires :,Vitórias:,勝ち：,Gana:,Siege:,Vittorie:
 ss_ex_mode,,EX Mode,EX Mode,Modo EX,EXモード,Modo EX,EX,Modalità EX
-ss_confirmation_text,,Do you really want to leave this room?,,,,,,,
+ss_confirmation_text,,Do you really want to leave this room?,Voulez-vous quitter cette pièce ?,Você quer sair desta sala?,この部屋を出ますか？,¿Quieres salir de esta habitación?,Wollen Sie den Raum verlassen?,Vuoi lasciare questa stanza?
 rp_browser_header,,~ Replay Browser ~,~ Bibliothèque des replays ~,~ Navegador de Replays ~,～リプレイブラウザ～,~ Explorador de Repeticiones ~,~ Replay Browser ~,~ Navigatore Replay ~
 rp_browser_info_header,,~ Replay Information ~,~ Information des replays ~,~ Informações de Replays ~,～リプレイ情報～,~ Información de la repetición ~,~ Replay Informationen ~,~ Informazioni Replay ~
 rp_browser_current_dir,,Current directory: %1,Dossier actuel : %1,Pasta atual: %1,現在のディレクトリ：%1,Directorio actual: %1,Aktuelles Verzeichnis: %1,Elenco corrente: %1
