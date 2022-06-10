@@ -449,7 +449,7 @@ ss_init_fail,,Room initialization failed.,Problème lors de la création de la s
 ss_not_ranked,Message indicating not ranked right before the reason why,Not ranked.,Non classé.,Casual,レート変動なし。,Sin clasificar.,Nicht bewertet.,Non classificato.
 ss_p_wins,,%1 wins,%1 gagne,%1 vence,%1の勝ち,%1 Gana,%1 gewinnt,%1 vince
 ss_ranked,Message to indicated ranked play,Ranked,Classé,Ranqueada,レート戦,Clasificado,Ranked,Classificato
-ss_rating,,Rating:,Classement :,Classificação:,レート：,Clasificación:,Punktzahl:,Classificazione:
+ss_rating,,Rating:,Classement :,Classificação:,レート：,Clasificación:,Rang:,Classificazione:
 ss_return,,Returning to main menu...,Retour au menu principal...,Voltar ao menu principal...,メインメニューに戻ります...,Regresando al menú principal...,Sie kehren zum Hauptmenü zurück...,Ritorno al menù principale...
 ss_winrate,,Winrate:,Taux de victoire :,Taxa de vitórias:,勝率：,Racha de victorias:,Gewinnrate:,Rateo delle vittorie:
 ss_wins,,Wins:,Victoires :,Vitórias:,勝ち：,Gana:,Siege:,Vittorie:
