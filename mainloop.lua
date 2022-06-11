@@ -65,6 +65,11 @@ function fmainloop()
   love.filesystem.createDirectory("panels")
   love.filesystem.createDirectory("themes")
   love.filesystem.createDirectory("stages")
+  love.filesystem.createDirectory("training")
+  if #love.filesystem.getDirectoryItems("training") == 0 then
+    recursive_copy("default_data/training", "training")
+  end
+  read_attack_files("training")
 
   --check for game updates
   if GAME_UPDATER_CHECK_UPDATE_INGAME then
@@ -560,42 +565,92 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
 
 end
 
+local function createBasicTrainingMode(name, width, height) 
+
+  local delayBeforeStart = 150
+  local delayBeforeRepeat = 91
+  local attacksPerVolley = 13
+  local attackPatterns = {}
+
+  if height > 1 and width == 6 then -- chain
+    local chainEndTime = height + 1 + GARBAGE_TRANSIT_TIME
+    
+    for i = 1, height + 1 do
+      local startTime = math.floor(i / (height + 1) * chainEndTime)
+      attackPatterns[#attackPatterns+1] = {width = width, height = 1, startTime = startTime, metal = false, chain = true, endsChain = false}
+    end
+
+    attackPatterns[#attackPatterns+1] = {width = width, height = 1, startTime = chainEndTime, metal = false, chain = true, endsChain = true}
+  else -- combo (or illegal garbage)
+    for i = 1, attacksPerVolley do
+      attackPatterns[#attackPatterns+1] = {width = width, height = height, startTime = i, metal = false, chain = false, endsChain = false}
+    end
+  end
+  local customTrainingModeData = {name = name, delayBeforeStart = delayBeforeStart, delayBeforeRepeat = delayBeforeRepeat, attackPatterns = attackPatterns}
+
+  return customTrainingModeData
+end
+
 function training_setup()
-  -- TODO make "illegal garbage blocks" possible again in telegraph.
   local trainingModeSettings = {}
   trainingModeSettings.height = 1
-  trainingModeSettings.width = 6
+  trainingModeSettings.width = 4
+  local customModeID = 1
+  local customTrainingModes = {}
+  customTrainingModes[0] = {name = "None"}
+  customTrainingModes[1] = createBasicTrainingMode(loc("combo_storm"), 4, 1)
+  customTrainingModes[2] = createBasicTrainingMode(loc("factory"), 6, 2)
+  customTrainingModes[3] = createBasicTrainingMode(loc("large_garbage"), 6, 12)
+  for customfile, value in ipairs(trainings) do
+    customTrainingModes[#customTrainingModes+1] = value
+  end
+  
   local ret = nil
   local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
 
   local trainingSettingsMenu
 
-  local function update_width()
-    trainingSettingsMenu:set_button_setting(4, trainingModeSettings.width)
+  local function update_custom_setting()
+    trainingSettingsMenu:set_button_setting(1, customTrainingModes[customModeID].name)
+    trainingSettingsMenu:set_button_setting(2, "Custom")
+    trainingSettingsMenu:set_button_setting(3, "Custom")
   end
 
-  local function update_height()
-    trainingSettingsMenu:set_button_setting(5, trainingModeSettings.height)
+  local function update_size()
+    customModeID = 0
+    trainingSettingsMenu:set_button_setting(1, customTrainingModes[customModeID].name)
+    trainingSettingsMenu:set_button_setting(2, trainingModeSettings.width)
+    trainingSettingsMenu:set_button_setting(3, trainingModeSettings.height)
+  end
+
+  local function custom_right()
+    customModeID = bound(1, customModeID + 1, #customTrainingModes)
+    update_custom_setting()
+  end
+
+  local function custom_left()
+    customModeID = bound(1, customModeID - 1, #customTrainingModes)
+    update_custom_setting()
   end
 
   local function increase_height()
     trainingModeSettings.height = bound(1, trainingModeSettings.height + 1, 69)
-    update_height()
+    update_size()
   end
 
   local function decrease_height()
     trainingModeSettings.height = bound(1, trainingModeSettings.height - 1, 69)
-    update_height()
+    update_size()
   end
 
   local function increase_width()
     trainingModeSettings.width = bound(1, trainingModeSettings.width + 1, 6)
-    update_width()
+    update_size()
   end
 
   local function decrease_width()
     trainingModeSettings.width = bound(1, trainingModeSettings.width - 1, 6)
-    update_width()
+    update_size()
   end
 
   local function goToStart()
@@ -610,32 +665,9 @@ function training_setup()
     ret = {main_select_mode}
   end
 
-  local function factory_settings()
-    trainingModeSettings.width = 6
-    trainingModeSettings.height = 2
-    update_width()
-    update_height()
-    goToStart()
-  end
-
-  local function combo_storm_settings()
-    trainingModeSettings.width = 4
-    trainingModeSettings.height = 1
-    update_width()
-    update_height()
-    goToStart()
-  end
-
-  local function large_garbage_settings()
-    trainingModeSettings.width = 6
-    trainingModeSettings.height = 12
-    update_width()
-    update_height()
-    goToStart()
-  end
-
   local function start_custom_game()
-    ret = {main_local_vs_yourself_setup, {trainingModeSettings}}
+    customTrainingModes[0] = createBasicTrainingMode("", trainingModeSettings.width, trainingModeSettings.height)
+    ret = {main_local_vs_yourself_setup, {customTrainingModes[customModeID]}}
   end
 
   local function nextMenu()
@@ -643,15 +675,14 @@ function training_setup()
   end
   
   trainingSettingsMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
-  trainingSettingsMenu:add_button(loc("factory"), factory_settings, goEscape)
-  trainingSettingsMenu:add_button(loc("combo_storm"), combo_storm_settings, goEscape)
-  trainingSettingsMenu:add_button(loc("large_garbage"), large_garbage_settings, goEscape)
+  trainingSettingsMenu:add_button("Custom", goToStart, goEscape, custom_left, custom_right)
   trainingSettingsMenu:add_button(loc("width"), nextMenu, goEscape, decrease_width, increase_width)
   trainingSettingsMenu:add_button(loc("height"), nextMenu, goEscape, decrease_height, increase_height)
   trainingSettingsMenu:add_button(loc("go_"), start_custom_game, goEscape)
   trainingSettingsMenu:add_button(loc("back"), exitSettings, exitSettings)
-  update_height()
-  update_width()
+  trainingSettingsMenu:set_button_setting(1, customTrainingModes[customModeID].name)
+  trainingSettingsMenu:set_button_setting(2, trainingModeSettings.width)
+  trainingSettingsMenu:set_button_setting(3, trainingModeSettings.height)
 
   while true do
     trainingSettingsMenu:draw()
@@ -927,11 +958,13 @@ function main_net_vs_lobby()
     my_user_id = "need a new user id"
   end
   local login_status_message = "   " .. loc("lb_login")
+  local noticeTextObject = nil
+  local noticeLastText = nil
   local login_status_message_duration = 2
   local login_denied = false
   local showing_leaderboard = false
   local lobby_menu_x = {[true] = themes[config.theme].main_menu_screen_pos[1] - 200, [false] = themes[config.theme].main_menu_screen_pos[1]} --will be used to make room in case the leaderboard should be shown.
-  local lobby_menu_y = themes[config.theme].main_menu_screen_pos[2] + 120
+  local lobby_menu_y = themes[config.theme].main_menu_screen_pos[2] + 10
   local sent_requests = {}
   if connection_up_time <= login_status_message_duration then
     json_send({login_request = true, user_id = my_user_id})
@@ -946,7 +979,6 @@ function main_net_vs_lobby()
   GAME.rich_presence:setPresence(nil, "In Lobby", true)
   while true do
     if connection_up_time <= login_status_message_duration then
-      gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y - 100)
       local messages = server_queue:pop_all_with("login_successful", "login_denied")
       for _, msg in ipairs(messages) do
         if msg.login_successful then
@@ -1157,9 +1189,34 @@ function main_net_vs_lobby()
     end
 
     if lobby_menu then
-      gprint(notice[#lobby_menu.buttons > 2], lobby_menu_x[showing_leaderboard], lobby_menu_y - 30)
+      local noticeText = notice[#lobby_menu.buttons > 2]
+      if connection_up_time <= login_status_message_duration then
+        noticeText = login_status_message
+      end
+
+      local noticeHeight = 0
+      local button_padding = 4
+      if noticeText ~= noticeLastText then
+        noticeTextObject = love.graphics.newText(get_global_font(), noticeText)
+        noticeHeight = noticeTextObject:getHeight() + (button_padding * 2)
+        lobby_menu.yMin = lobby_menu_y + noticeHeight
+        local menuHeight = (themes[config.theme].main_menu_y_max - lobby_menu.yMin)
+        lobby_menu:setHeight(menuHeight)
+      end
+      if noticeTextObject then
+        local noticeX = lobby_menu_x[showing_leaderboard] + 2
+        local noticeY = lobby_menu.y - noticeHeight - 10
+        local noticeWidth = noticeTextObject:getWidth() + (button_padding * 2)
+        local grey = 0.0
+        local alpha = 0.6
+        grectangle_color("fill", noticeX / GFX_SCALE, noticeY / GFX_SCALE, noticeWidth / GFX_SCALE, noticeHeight / GFX_SCALE, grey, grey, grey, alpha)
+        --grectangle_color("line", noticeX / GFX_SCALE, noticeY / GFX_SCALE, noticeWidth / GFX_SCALE, noticeHeight / GFX_SCALE, grey, grey, grey, alpha)
+
+        menu_drawf(noticeTextObject, noticeX + button_padding, noticeY + button_padding)
+      end
+
       if showing_leaderboard then
-        gprint(leaderboard_string, lobby_menu_x[showing_leaderboard] + 400, lobby_menu_y - 120)
+        gprint(leaderboard_string, lobby_menu_x[showing_leaderboard] + 400, lobby_menu_y)
       end
       gprint(join_community_msg, themes[config.theme].main_menu_screen_pos[1] + 30, canvas_height - 50)
       lobby_menu:draw()

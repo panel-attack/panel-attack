@@ -1,0 +1,17 @@
+{
+  "name": "Bronze",
+  "mergeComboMetalQueue": false,
+  "delayBeforeStart": 150,
+  "delayBeforeRepeat": 91,
+  "attackPatterns": [
+    {
+      "width": 6,
+      "height": 1,
+      "startTime": 540
+    },
+    {
+      "chain": [300, 360, 420, 480, 540],
+      "chainEndTime": 613
+    }
+  ]
+}
