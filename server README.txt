@@ -26,7 +26,6 @@ server.lua
 server.py
 server_file_io.lua
 simplecsv.lua
-stridx.lua
 timezones.lua
 util.lua
 
