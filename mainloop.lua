@@ -38,13 +38,14 @@ end
 
 function fmainloop()
   read_conf_file()
-  local x, y, display = love.window.getPosition()
+  local width, height, current = love.window.getMode()
+
   -- config.window_x etc. for migration support
   if config.window then
-    love.window.updateMode(config.window.width or 0, config.window.height or 0,
-                          {x = config.window.x or config.window_x or x,
-                           y = config.window.y or config.window_y or y,
-                           display = config.window.display or config.display or display,
+    love.window.updateMode(config.window.width or width, config.window.height or height,
+                          {x = config.window.x or config.window_x or current.x,
+                           y = config.window.y or config.window_y or current.y,
+                           display = config.window.display or config.display or current.display,
                            fullscreen = config.window.fullscreen or config.fullscreen or false,
                            fullscreentype = config.window.fullscreentype or "desktop",
                            vsync = config.vsync and 1 or 0})
@@ -52,12 +53,16 @@ function fmainloop()
       love.window.maximize()
     end
   else
-    love.window.updateMode(0, 0, -- width/height zero causes the game to use the full desktop
-                          {x = config.window_x or x,
-                           y = config.window_y or y,
-                           display = config.display or display,
+    love.window.updateMode(width, height,
+                          {x = config.window_x or current.x,
+                           y = config.window_y or current.y,
+                           display = config.display or current.display,
                            fullscreen = config.fullscreen or false,
                            vsync = config.vsync and 1 or 0})
+    if config.firstStartup then
+      --have a reasonable resolution on first startup while ignoring OS specifics like title/task bar height
+      love.window.maximize()
+    end
   end
 
   Localization.init(localization)
@@ -2091,6 +2096,7 @@ function love.quit()
     json_send({logout = true})
   end
   love.audio.stop()
+
   local width, height, settings = love.window.getMode()
   settings.width = width
   settings.height = height
@@ -2098,5 +2104,6 @@ function love.quit()
   --don't let 'y' be zero, or the title bar will not be visible on next launch.
   config.window.y = math.max(config.window.y, 30)
   config.window.maximized = love.window.isMaximized()
+
   write_conf_file()
 end

@@ -74,164 +74,168 @@ function read_conf_file()
       -- config current values are defined in globals.lua,
       -- we consider those values are currently in config
 
-      local file = love.filesystem.newFile("conf.json")
-      file:open("r")
-      local read_data = {}
-      local teh_json = file:read(file:getSize())
-      for k, v in pairs(json.decode(teh_json)) do
-        read_data[k] = v
-      end
-
-      -- do stuff using read_data.version for retrocompatibility here
-
-      if type(read_data.theme) == "string" and love.filesystem.getInfo("themes/" .. read_data.theme) then
-        config.theme = read_data.theme
-      end
-
-      -- language_code, panels, character and stage are patched later on by their own subsystems, we store their values in config for now!
-      if type(read_data.language_code) == "string" then
-        config.language_code = read_data.language_code
-      end
-      if type(read_data.panels) == "string" then
-        config.panels = read_data.panels
-      end
-      if type(read_data.character) == "string" then
-        config.character = read_data.character
-      end
-      if type(read_data.stage) == "string" then
-        config.stage = read_data.stage
-      end
-
-      if type(read_data.ranked) == "boolean" then
-        config.ranked = read_data.ranked
-      end
-
-      if type(read_data.vsync) == "boolean" then
-        config.vsync = read_data.vsync
-      end
-
-      if type(read_data.use_music_from) == "string" and use_music_from_values[read_data.use_music_from] then
-        config.use_music_from = read_data.use_music_from
-      end
-
-      if type(read_data.level) == "number" then
-        config.level = bound(1, read_data.level, 10)
-      end
-      if type(read_data.endless_speed) == "number" then
-        config.endless_speed = bound(1, read_data.endless_speed, 99)
-      end
-      if type(read_data.endless_difficulty) == "number" then
-        config.endless_difficulty = bound(1, read_data.endless_difficulty, 3)
-      end
-      if type(read_data.endless_level) == "number" then
-        config.endless_level = bound(1, read_data.endless_level, 11)
-      end
-      if type(read_data.puzzle_level) == "number" then
-        config.puzzle_level = bound(1, read_data.puzzle_level, 11)
-      end
-      if type(read_data.puzzle_randomColors) == "boolean" then
-        config.puzzle_randomColors = read_data.puzzle_randomColors
-      end
-
-      if type(read_data.name) == "string" then
-        config.name = read_data.name
-      end
-
-      if type(read_data.master_volume) == "number" then
-        config.master_volume = bound(0, read_data.master_volume, 100)
-      end
-      if type(read_data.SFX_volume) == "number" then
-        config.SFX_volume = bound(0, read_data.SFX_volume, 100)
-      end
-      if type(read_data.music_volume) == "number" then
-        config.music_volume = bound(0, read_data.music_volume, 100)
-      end
-      if type(read_data.input_repeat_delay) == "number" then
-        config.input_repeat_delay = bound(1, read_data.input_repeat_delay, 50)
-      end
-      if type(read_data.portrait_darkness) == "number" then
-        config.portrait_darkness = bound(0, read_data.portrait_darkness, 100)
-      end
-      if type(read_data.cardfx_scale) == "number" then
-        config.cardfx_scale = bound(1, read_data.cardfx_scale, 200)
-      end
-
-      if type(read_data.debug_mode) == "boolean" then
-        config.debug_mode = read_data.debug_mode
-      end
-      if type(read_data.show_fps) == "boolean" then
-        config.show_fps = read_data.show_fps
-      end
-      if type(read_data.show_ingame_infos) == "boolean" then
-        config.show_ingame_infos = read_data.show_ingame_infos
-      end
-      if type(read_data.ready_countdown_1P) == "boolean" then
-        config.ready_countdown_1P = read_data.ready_countdown_1P
-      end
-      if type(read_data.danger_music_changeback_delay) == "boolean" then
-        config.danger_music_changeback_delay = read_data.danger_music_changeback_delay
-      end
-      if type(read_data.enable_analytics) == "boolean" then
-        config.enable_analytics = read_data.enable_analytics
-      end
-      if type(read_data.popfx) == "boolean" then
-        config.popfx = read_data.popfx
-      end
-      if type(read_data.renderTelegraph) == "boolean" then
-        config.renderTelegraph = read_data.renderTelegraph
-      end
-      if type(read_data.renderAttacks) == "boolean" then
-        config.renderAttacks = read_data.renderAttacks
-      end
-
-      if type(read_data.save_replays_publicly) == "string" and save_replays_values[read_data.save_replays_publicly] then
-        config.save_replays_publicly = read_data.save_replays_publicly
-      end
-
-      if type(read_data.window_x) == "number" then
-        config.window_x = read_data.window_x
-      end
-      if type(read_data.window_y) == "number" then
-        config.window_y = read_data.window_y
-      end
-      if type(read_data.display) == "number" then
-        config.display = read_data.display
-      end
-      if type(read_data.fullscreen) == "boolean" then
-        config.fullscreen = read_data.fullscreen
-      end
-      if type(read_data.defaultPanelsCopied) == "boolean" then
-        config.defaultPanelsCopied = read_data.defaultPanelsCopied
-      end
-      if type(read_data.window) == "table" then
-        config.window = {}
-        if type(read_data.window.x) == "number" then
-          config.window.x = read_data.window.x
+      if love.filesystem.getInfo("conf.json") == nil then
+        config.firstStartup = true
+      else
+        local file = love.filesystem.newFile("conf.json")
+        file:open("r")
+        local read_data = {}
+        local teh_json = file:read(file:getSize())
+        for k, v in pairs(json.decode(teh_json)) do
+          read_data[k] = v
         end
-        if type(read_data.window.y) == "number" then
-          config.window.y = read_data.window.y
+  
+        -- do stuff using read_data.version for retrocompatibility here
+  
+        if type(read_data.theme) == "string" and love.filesystem.getInfo("themes/" .. read_data.theme) then
+          config.theme = read_data.theme
         end
-        if type(read_data.window.width) == "number" then
-          config.window.width = read_data.window.width
+  
+        -- language_code, panels, character and stage are patched later on by their own subsystems, we store their values in config for now!
+        if type(read_data.language_code) == "string" then
+          config.language_code = read_data.language_code
         end
-        if type(read_data.window.height) == "number" then
-          config.window.height = read_data.window.height
+        if type(read_data.panels) == "string" then
+          config.panels = read_data.panels
         end
-        if type(read_data.window.display) == "number" then
-          config.window.display = read_data.window.display
+        if type(read_data.character) == "string" then
+          config.character = read_data.character
         end
-        if type(read_data.window.fullscreen) == "boolean" then
-          config.window.fullscreen = read_data.window.fullscreen
+        if type(read_data.stage) == "string" then
+          config.stage = read_data.stage
         end
-        if type(read_data.window.fullscreentype) == "string" then
-          config.window.fullscreentype = read_data.window.fullscreentype
+  
+        if type(read_data.ranked) == "boolean" then
+          config.ranked = read_data.ranked
         end
-        if type(read_data.window.maximized) == "boolean" then
-          config.window.maximized = read_data.window.maximized
+  
+        if type(read_data.vsync) == "boolean" then
+          config.vsync = read_data.vsync
         end
+  
+        if type(read_data.use_music_from) == "string" and use_music_from_values[read_data.use_music_from] then
+          config.use_music_from = read_data.use_music_from
+        end
+  
+        if type(read_data.level) == "number" then
+          config.level = bound(1, read_data.level, 10)
+        end
+        if type(read_data.endless_speed) == "number" then
+          config.endless_speed = bound(1, read_data.endless_speed, 99)
+        end
+        if type(read_data.endless_difficulty) == "number" then
+          config.endless_difficulty = bound(1, read_data.endless_difficulty, 3)
+        end
+        if type(read_data.endless_level) == "number" then
+          config.endless_level = bound(1, read_data.endless_level, 11)
+        end
+        if type(read_data.puzzle_level) == "number" then
+          config.puzzle_level = bound(1, read_data.puzzle_level, 11)
+        end
+        if type(read_data.puzzle_randomColors) == "boolean" then
+          config.puzzle_randomColors = read_data.puzzle_randomColors
+        end
+  
+        if type(read_data.name) == "string" then
+          config.name = read_data.name
+        end
+  
+        if type(read_data.master_volume) == "number" then
+          config.master_volume = bound(0, read_data.master_volume, 100)
+        end
+        if type(read_data.SFX_volume) == "number" then
+          config.SFX_volume = bound(0, read_data.SFX_volume, 100)
+        end
+        if type(read_data.music_volume) == "number" then
+          config.music_volume = bound(0, read_data.music_volume, 100)
+        end
+        if type(read_data.input_repeat_delay) == "number" then
+          config.input_repeat_delay = bound(1, read_data.input_repeat_delay, 50)
+        end
+        if type(read_data.portrait_darkness) == "number" then
+          config.portrait_darkness = bound(0, read_data.portrait_darkness, 100)
+        end
+        if type(read_data.cardfx_scale) == "number" then
+          config.cardfx_scale = bound(1, read_data.cardfx_scale, 200)
+        end
+  
+        if type(read_data.debug_mode) == "boolean" then
+          config.debug_mode = read_data.debug_mode
+        end
+        if type(read_data.show_fps) == "boolean" then
+          config.show_fps = read_data.show_fps
+        end
+        if type(read_data.show_ingame_infos) == "boolean" then
+          config.show_ingame_infos = read_data.show_ingame_infos
+        end
+        if type(read_data.ready_countdown_1P) == "boolean" then
+          config.ready_countdown_1P = read_data.ready_countdown_1P
+        end
+        if type(read_data.danger_music_changeback_delay) == "boolean" then
+          config.danger_music_changeback_delay = read_data.danger_music_changeback_delay
+        end
+        if type(read_data.enable_analytics) == "boolean" then
+          config.enable_analytics = read_data.enable_analytics
+        end
+        if type(read_data.popfx) == "boolean" then
+          config.popfx = read_data.popfx
+        end
+        if type(read_data.renderTelegraph) == "boolean" then
+          config.renderTelegraph = read_data.renderTelegraph
+        end
+        if type(read_data.renderAttacks) == "boolean" then
+          config.renderAttacks = read_data.renderAttacks
+        end
+  
+        if type(read_data.save_replays_publicly) == "string" and save_replays_values[read_data.save_replays_publicly] then
+          config.save_replays_publicly = read_data.save_replays_publicly
+        end
+  
+        if type(read_data.window_x) == "number" then
+          config.window_x = read_data.window_x
+        end
+        if type(read_data.window_y) == "number" then
+          config.window_y = read_data.window_y
+        end
+        if type(read_data.display) == "number" then
+          config.display = read_data.display
+        end
+        if type(read_data.fullscreen) == "boolean" then
+          config.fullscreen = read_data.fullscreen
+        end
+        if type(read_data.defaultPanelsCopied) == "boolean" then
+          config.defaultPanelsCopied = read_data.defaultPanelsCopied
+        end
+        if type(read_data.window) == "table" then
+          config.window = {}
+          if type(read_data.window.x) == "number" then
+            config.window.x = read_data.window.x
+          end
+          if type(read_data.window.y) == "number" then
+            config.window.y = read_data.window.y
+          end
+          if type(read_data.window.width) == "number" then
+            config.window.width = read_data.window.width
+          end
+          if type(read_data.window.height) == "number" then
+            config.window.height = read_data.window.height
+          end
+          if type(read_data.window.display) == "number" then
+            config.window.display = read_data.window.display
+          end
+          if type(read_data.window.fullscreen) == "boolean" then
+            config.window.fullscreen = read_data.window.fullscreen
+          end
+          if type(read_data.window.fullscreentype) == "string" then
+            config.window.fullscreentype = read_data.window.fullscreentype
+          end
+          if type(read_data.window.maximized) == "boolean" then
+            config.window.maximized = read_data.window.maximized
+          end
+        end
+  
+        file:close()
       end
-
-      file:close()
     end
   )
 end
