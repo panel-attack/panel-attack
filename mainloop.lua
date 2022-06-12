@@ -39,9 +39,27 @@ end
 function fmainloop()
   read_conf_file()
   local x, y, display = love.window.getPosition()
-  love.window.setPosition(config.window_x or x, config.window_y or y, config.display or display)
-  love.window.setFullscreen(config.fullscreen or false)
-  love.window.setVSync(config.vsync and 1 or 0)
+  -- config.window_x etc. for migration support
+  if config.window then
+    love.window.updateMode(config.window.width or 0, config.window.height or 0,
+                          {x = config.window.x or config.window_x or x,
+                           y = config.window.y or config.window_y or y,
+                           display = config.window.display or config.display or display,
+                           fullscreen = config.window.fullscreen or config.fullscreen or false,
+                           fullscreentype = config.window.fullscreentype or "desktop",
+                           vsync = config.vsync and 1 or 0})
+    if config.window.maximized then
+      love.window.maximize()
+    end
+  else
+    love.window.updateMode(0, 0, -- width/height zero causes the game to use the full desktop
+                          {x = config.window_x or x,
+                           y = config.window_y or y,
+                           display = config.display or display,
+                           fullscreen = config.fullscreen or false,
+                           vsync = config.vsync and 1 or 0})
+  end
+
   Localization.init(localization)
   copy_file("readme_puzzles.txt", "puzzles/README.txt")
   theme_init()
@@ -2073,13 +2091,12 @@ function love.quit()
     json_send({logout = true})
   end
   love.audio.stop()
-  if love.window.getFullscreen() == true then
-    null, null, config.display = love.window.getPosition()
-  else
-    config.window_x, config.window_y, config.display = love.window.getPosition()
-    config.window_x = math.max(config.window_x, 0)
-    config.window_y = math.max(config.window_y, 30) --don't let 'y' be zero, or the title bar will not be visible on next launch.
-  end
-  config.fullscreen = love.window.getFullscreen()
+  local width, height, settings = love.window.getMode()
+  settings.width = width
+  settings.height = height
+  config.window = settings
+  --don't let 'y' be zero, or the title bar will not be visible on next launch.
+  config.window.y = math.max(config.window.y, 30)
+  config.window.maximized = love.window.isMaximized()
   write_conf_file()
 end

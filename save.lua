@@ -203,6 +203,33 @@ function read_conf_file()
       if type(read_data.defaultPanelsCopied) == "boolean" then
         config.defaultPanelsCopied = read_data.defaultPanelsCopied
       end
+      if type(read_data.window) == "table" then
+        config.window = {}
+        if type(read_data.window.x) == "number" then
+          config.window.x = read_data.window.x
+        end
+        if type(read_data.window.y) == "number" then
+          config.window.y = read_data.window.y
+        end
+        if type(read_data.window.width) == "number" then
+          config.window.width = read_data.window.width
+        end
+        if type(read_data.window.height) == "number" then
+          config.window.height = read_data.window.height
+        end
+        if type(read_data.window.display) == "number" then
+          config.window.display = read_data.window.display
+        end
+        if type(read_data.window.fullscreen) == "boolean" then
+          config.window.fullscreen = read_data.window.fullscreen
+        end
+        if type(read_data.window.fullscreentype) == "string" then
+          config.window.fullscreentype = read_data.window.fullscreentype
+        end
+        if type(read_data.window.maximized) == "boolean" then
+          config.window.maximized = read_data.window.maximized
+        end
+      end
 
       file:close()
     end
