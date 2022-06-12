@@ -1329,7 +1329,8 @@ function select_screen.main()
         local trainingModeSettings = GAME.battleRoom.trainingModeSettings
         local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
         local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
-        GAME.match.attackEngine = AttackEngine(P1, delayBeforeStart, delayBeforeRepeat)
+        local disableMemorySaver = trainingModeSettings.disableMemorySaver or false
+        GAME.match.attackEngine = AttackEngine(P1, delayBeforeStart, delayBeforeRepeat, disableMemorySaver)
         for _, values in ipairs(trainingModeSettings.attackPatterns) do
           if values.chain then
             if type(values.chain) == "number" then
