@@ -13,9 +13,8 @@ local InputField = class(
     self.width = options.width or 200
     self.height = options.height or 25
     self.placeholder_text = options.placeholder_text or love.graphics.newText(love.graphics.getFont(), "Input Field")
-    self.value = ""
+    self.value = options.value or ""
     self.char_limit = 16
-    self.text = options.text or love.graphics.newText(love.graphics.getFont(), "Button")
     self.is_visible = options.is_visible or options.is_visible == nil and true
     self.is_enabled = options.is_enabled or options.is_enabled == nil and true
     self.image = options.image
@@ -35,6 +34,7 @@ local InputField = class(
     end
     self.onMouseUp = options.onMouseUp or function() end
     
+    self.text = love.graphics.newText(love.graphics.getFont(), self.value)
     local text_width, text_height = self.text:getDimensions()
     self.width = math.max(text_width + 6, self.width)
     self.height = math.max(text_height + 6, self.height)
