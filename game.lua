@@ -120,6 +120,8 @@ function Game:_setup_co()
     require("scenes.training_mode_character_select"),
     require("scenes.training_mode_game"),
     require("scenes.input_config_menu"),
+    require("scenes.replay_menu"),
+    require("scenes.replay_game"),
   }
   for i, scene in ipairs(scenes) do
     scene:init()

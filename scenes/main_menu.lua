@@ -49,7 +49,7 @@ local menu_buttons = {
   --{loc("mm_2_vs_online", "(development-use only)"), main_net_vs_setup, {"localhost"}},
   --{loc("mm_2_vs_online", "LittleEndu's server"), main_net_vs_setup, {"51.15.207.223"}},
   Button({text = love.graphics.newText(font, loc("mm_2_vs_local")), onClick = genOnClickFn(main_local_vs_setup)}),
-  Button({text = love.graphics.newText(font, loc("mm_replay_browser")), onClick = genOnClickFn(replay_browser.main)}),
+  Button({text = love.graphics.newText(font, loc("mm_replay_browser")), onClick = function() switchScene("replay_menu") end}),
   Button({text = love.graphics.newText(font, loc("mm_configure")), onClick = function() switchScene("input_config_menu") end}),
   Button({text = love.graphics.newText(font, loc("mm_set_name")), onClick = genOnClickFn(main_set_name)}),
   Button({text = love.graphics.newText(font, loc("mm_options")), onClick = genOnClickFn(options.main)}),
