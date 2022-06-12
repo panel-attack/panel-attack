@@ -15,11 +15,10 @@ AttackPattern =
 -- An attack engine sends attacks based on a set of rules.
 AttackEngine =
   class(
-  function(self, target, delayBeforeStart, delayBeforeRepeat, disableMemorySaver)
+  function(self, target, delayBeforeStart, delayBeforeRepeat)
     self.target = target
     self.delayBeforeStart = delayBeforeStart
     self.delayBeforeRepeat = delayBeforeRepeat
-    self.disableMemorySaver = disableMemorySaver
     self.attackPatterns = {}
     self.clock = 0
   end
@@ -57,7 +56,7 @@ function AttackEngine.run(self)
   end
 
   local totalAttackTimeBeforeRepeat = self.delayBeforeRepeat + highestStartTime - self.delayBeforeStart
-  if self.target.garbage_q:len() <= garbageCount or self.disableMemorySaver then -- don't queue more garbage than needed
+  if self.target.garbage_q:len() <= garbageCount then -- don't queue more garbage than needed
     for _, attackPattern in ipairs(self.attackPatterns) do
       if self.clock >= attackPattern.startTime then
         local difference = self.clock - attackPattern.startTime
