@@ -401,6 +401,8 @@ function select_screen.setPlayerNumbers(self, msg)
   -- on second runthrough we should still have data from the old select_screen, including player_numbers
   if msg.player_settings and msg.player_settings.player_number then
     self.my_player_number = msg.player_settings.player_number
+  elseif msg.your_player_number then
+    self.my_player_number = msg.your_player_number
   elseif GAME.battleRoom.spectating then
     self.my_player_number = 1
   elseif self.my_player_number and self.my_player_number ~= 0 then
@@ -416,6 +418,8 @@ function select_screen.setPlayerNumbers(self, msg)
     self.op_player_number = msg.opponent_settings.player_number or self.op_player_number
   elseif GAME.battleRoom.spectating then
     self.op_player_number = 2
+  elseif msg.op_player_number then
+    self.op_player_number = msg.op_player_number
   elseif self.op_player_number and self.op_player_number ~= 0 then
     logger.debug("We assumed op player number is still " .. self.op_player_number)
   else
@@ -526,7 +530,7 @@ function select_screen.setInitialCursor(self, playerNumber)
   local cursor = {}
 
   cursor.position = shallowcpy(self.name_to_xy_per_page[self.current_page]["__Ready"])
-  cursor.positionId = self.drawMap[self.current_page][cursor.position[1]][cursor.position[2]]
+  cursor.positionId = "__Ready"
   cursor.can_super_select = false
   cursor.selected = false
 
@@ -560,6 +564,20 @@ function select_screen.initializeFromPlayerConfig(self, playerNumber)
   self.roomState.players[playerNumber].ranked = config.ranked
 end
 
+function select_screen.initializeFromMenuState(self, playerNumber, menuState)
+  self.roomState.players[playerNumber].ranked = menuState.ranked
+  self.roomState.players[playerNumber].stage = menuState.stage
+  self.roomState.players[playerNumber].stage_is_random = menuState.stage_is_random
+  self.roomState.players[playerNumber].character = menuState.character
+  self.roomState.players[playerNumber].character_is_random = menuState.character_is_random
+  self.roomState.players[playerNumber].level = menuState.level
+  self.roomState.players[playerNumber].panels_dir = menuState.panels_dir
+  self.roomState.players[playerNumber].ready = false
+  self.roomState.players[playerNumber].ranked = menuState.ranked
+  self.roomState.players[playerNumber].cursor.positionId = menuState.cursor
+  self.roomState.players[playerNumber].cursor.position = self.name_to_xy_per_page[self.current_page][menuState.cursor]
+end
+
 function select_screen.loadCharacter(self, playerNumber)
   if self.roomState.players[playerNumber].character_is_random then
     select_screen.resolve_character_random(self.roomState.players[playerNumber])
@@ -589,7 +607,7 @@ end
 
 function select_screen.setUpOpponentPlayer(self)
   if self.roomState.opState ~= nil then
-    self.roomState.players[self.op_player_number] = shallowcpy(self.roomState.opState)
+    self:initializeFromMenuState(self.op_player_number, self.roomState.opState)
     if self:isNetPlay() then
       self.roomState.opState = nil -- retains state of the second player, also: don't unload its character when going back and forth
     else
@@ -728,14 +746,14 @@ function select_screen.handleServerMessages(self)
     if msg.menu_state then
       if GAME.battleRoom.spectating then
         if msg.player_number == 1 or msg.player_number == 2 then
-          self.roomState.players[msg.player_number] = msg.menu_state
+          self:initializeFromMenuState(msg.player_number, msg.menu_state)
           refresh_based_on_own_mods(self.roomState.players[msg.player_number])
           character_loader_load(self.roomState.players[msg.player_number].character)
           stage_loader_load(self.roomState.players[msg.player_number].stage)
           self:refreshLoadingState(msg.player_number)
         end
       else
-        self.roomState.players[self.op_player_number] = msg.menu_state
+        self:initializeFromMenuState(self.op_player_number, msg.menu_state)
         refresh_based_on_own_mods(self.roomState.players[self.op_player_number])
         character_loader_load(self.roomState.players[self.op_player_number].character)
         stage_loader_load(self.roomState.players[self.op_player_number].stage)

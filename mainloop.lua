@@ -1447,6 +1447,7 @@ function main_local_vs()
             0, -- timemin
             0, -- timemax
             nil, -- winnerSFX
+            false, -- keepMusic
             {select_screen, "2p_local_vs"} -- args
     }}
   end
@@ -1507,6 +1508,7 @@ function main_local_vs_yourself()
       0, -- timemin
       0, -- timemax
       nil, -- winnerSFX
+      false, -- keepMusic
       {select_screen, "1p_vs_yourself"} -- args
     }}
   end

@@ -43,6 +43,7 @@ function ServerQueue.push(self, msg)
   local last = self.last + 1
   self.last = last
   self.data[last] = msg
+  print("Pushing message:\n" .. json.encode(msg))
 end
 
 -- pop oldest server message in queue
