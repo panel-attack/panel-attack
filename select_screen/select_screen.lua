@@ -425,7 +425,7 @@ end
 function select_screen.setPlayerStates(self, msg)
   if self.roomState.my_player_number == 2 and msg.a_menu_state ~= nil
     and msg.b_menu_state ~= nil then
-    logger.warn("inverting the states to match player number!")
+    logger.debug("inverting the states to match player number!")
     self.roomState.myState = msg.b_menu_state
     self.roomState.opState = msg.a_menu_state
   else
@@ -797,10 +797,10 @@ function select_screen.startMatch(self, msg)
   if GAME.battleRoom.spectating then
     is_local = false
   end
-  P1 = Stack(1, GAME.match, is_local, msg.player_settings.panels_dir, msg.player_settings.level, msg.player_settings.character, msg.player_settings.player_number)
+  P1 = Stack{which = 1, match = GAME.match, is_local = is_local, panels_dir = msg.player_settings.panels_dir, level = msg.player_settings.level, character = msg.player_settings.character, player_number = msg.player_settings.player_number}
   GAME.match.P1 = P1
   P1.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
-  P2 = Stack(2, GAME.match, false, msg.opponent_settings.panels_dir, msg.opponent_settings.level, msg.opponent_settings.character, msg.opponent_settings.player_number)
+  P2 = Stack{which = 2, match = GAME.match, is_local = false, panels_dir = msg.opponent_settings.panels_dir, level = msg.opponent_settings.level, character = msg.opponent_settings.character, player_number = msg.opponent_settings.player_number}
   GAME.match.P2 = P2
   P2.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
   if GAME.battleRoom.spectating then
@@ -949,7 +949,7 @@ function select_screen.main(self, character_select_mode)
     -- Handle one player vs game setup
     if self.roomState.players[self.my_player_number].ready and self.character_select_mode == "1p_vs_yourself" then
       GAME.match = Match("vs", GAME.battleRoom)
-      P1 = Stack(1, GAME.match, true, self.roomState.players[self.my_player_number].panels_dir, self.roomState.players[self.my_player_number].level, self.roomState.players[self.my_player_number].character)
+      P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.roomState.players[self.my_player_number].panels_dir, level = self.roomState.players[self.my_player_number].level, character = self.roomState.players[self.my_player_number].character, player_number = 1}
       if GAME.battleRoom.trainingModeSettings then
         GAME.match.attackEngine = AttackEngine(P1)
         local startTime = 150
@@ -973,9 +973,9 @@ function select_screen.main(self, character_select_mode)
     -- Handle two player vs game setup
     elseif self.roomState.players[self.my_player_number].ready and select_screen.character_select_mode == "2p_local_vs" and self.roomState.players[self.op_player_number].ready then
       GAME.match = Match("vs", GAME.battleRoom)
-      P1 = Stack(1, GAME.match, true, self.roomState.players[self.my_player_number].panels_dir, self.roomState.players[self.my_player_number].level, self.roomState.players[self.my_player_number].character)
+      P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.roomState.players[self.my_player_number].panels_dir, level = self.roomState.players[self.my_player_number].level, character = self.roomState.players[self.my_player_number].character, player_number = 1}
       GAME.match.P1 = P1
-      P2 = Stack(2, GAME.match, true, self.roomState.players[self.op_player_number].panels_dir, self.roomState.players[self.op_player_number].level, self.roomState.players[self.op_player_number].character)
+      P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.roomState.players[self.op_player_number].panels_dir, level = self.roomState.players[self.op_player_number].level, character = self.roomState.players[self.op_player_number].character, player_number = 2}
       GAME.match.P2 = P2
       P1:set_garbage_target(P2)
       P2:set_garbage_target(P1)

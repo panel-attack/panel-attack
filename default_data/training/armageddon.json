@@ -1,0 +1,80 @@
+{
+  "name": "Armageddon Mode",
+  "mergeComboMetalQueue": true,
+  "delayBeforeStart": 150,
+  "delayBeforeRepeat": 91,
+  "attackPatterns": [
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 1,
+      "metal": false
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 1,
+      "metal": true
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 1,
+      "metal": false
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 1,
+      "metal": true
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 1,
+      "metal": false
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 1,
+      "metal": true
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 1,
+      "metal": true
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 1,
+      "metal": false
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 1,
+      "metal": true
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 1,
+      "metal": false
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 1,
+      "metal": true
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "startTime": 1,
+      "metal": false
+    }
+  ]
+}

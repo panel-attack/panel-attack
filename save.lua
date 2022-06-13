@@ -123,6 +123,15 @@ function read_conf_file()
       if type(read_data.endless_difficulty) == "number" then
         config.endless_difficulty = bound(1, read_data.endless_difficulty, 3)
       end
+      if type(read_data.endless_level) == "number" then
+        config.endless_level = bound(1, read_data.endless_level, 11)
+      end
+      if type(read_data.puzzle_level) == "number" then
+        config.puzzle_level = bound(1, read_data.puzzle_level, 11)
+      end
+      if type(read_data.puzzle_randomColors) == "boolean" then
+        config.puzzle_randomColors = read_data.puzzle_randomColors
+      end
 
       if type(read_data.name) == "string" then
         config.name = read_data.name
@@ -167,6 +176,12 @@ function read_conf_file()
       end
       if type(read_data.popfx) == "boolean" then
         config.popfx = read_data.popfx
+      end
+      if type(read_data.renderTelegraph) == "boolean" then
+        config.renderTelegraph = read_data.renderTelegraph
+      end
+      if type(read_data.renderAttacks) == "boolean" then
+        config.renderAttacks = read_data.renderAttacks
       end
 
       if type(read_data.save_replays_publicly) == "string" and save_replays_values[read_data.save_replays_publicly] then
@@ -308,11 +323,11 @@ function read_puzzles()
       -- end
 
       puzzle_packs = love.filesystem.getDirectoryItems("puzzles") or {}
-      print("loading custom puzzles...")
+      logger.debug("loading custom puzzles...")
       for _, filename in pairs(puzzle_packs) do
-        print(filename)
+        logger.trace(filename)
         if love.filesystem.getInfo("puzzles/" .. filename) and filename ~= "README.txt" and filename ~= ".DS_Store" then
-          print("loading custom puzzle set: " .. (filename or "nil"))
+          logger.debug("loading custom puzzle set: " .. (filename or "nil"))
           local current_set = {}
           local file = love.filesystem.newFile("puzzles/" .. filename)
           file:open("r")
@@ -324,7 +339,7 @@ function read_puzzles()
               local puzzles = {}
               for _, puzzle in pairs(puzzleSet["Puzzles"]) do
                 local puzzle = Puzzle(puzzle["Puzzle Type"], puzzle["Do Countdown"], puzzle["Moves"], puzzle["Stack"])
-                puzzles[#puzzles+1] = puzzle
+                puzzles[#puzzles + 1] = puzzle
               end
 
               local puzzleSet = PuzzleSet(puzzleSetName, puzzles)
@@ -335,19 +350,48 @@ function read_puzzles()
               local puzzles = {}
               for _, puzzleData in pairs(puzzle_set) do
                 local puzzle = Puzzle("moves", true, puzzleData[2], puzzleData[1])
-                puzzles[#puzzles+1] = puzzle
+                puzzles[#puzzles + 1] = puzzle
               end
 
               local puzzleSet = PuzzleSet(set_name, puzzles)
               GAME.puzzleSets[set_name] = puzzleSet
             end
           end
-          
-          print("loaded above set")
+
+          logger.debug("loaded above set")
         end
       end
     end
   )
+end
+
+function read_attack_files(path)
+  local lfs = love.filesystem
+  local raw_dir_list = lfs.getDirectoryItems(path)
+  for i, v in ipairs(raw_dir_list) do
+    local start_of_v = string.sub(v, 0, string.len(prefix_of_ignored_dirs))
+    if start_of_v ~= prefix_of_ignored_dirs then
+      local current_path = path .. "/" .. v
+      if lfs.getInfo(current_path) then
+        if lfs.getInfo(current_path).type == "directory" then
+          read_attack_files(current_path)
+        elseif v ~= ".DS_Store" then
+          local file = love.filesystem.newFile(current_path)
+          file:open("r")
+          local teh_json = file:read(file:getSize())
+          local training_conf = {}
+          for k, w in pairs(json.decode(teh_json)) do
+            training_conf[k] = w
+          end
+          if not training_conf.name or not type(training_conf.name) == "string" then
+            training_conf.name = v
+          end
+          trainings[#trainings+1] = training_conf
+          file:close()
+        end
+      end
+    end
+  end
 end
 
 function print_list(t)
@@ -379,14 +423,14 @@ function recursive_copy(source, destination)
   for i, name in ipairs(names) do
     local info = lfs.getInfo(source .. "/" .. name)
     if info and info.type == "directory" then
-      print("calling recursive_copy(source" .. "/" .. name .. ", " .. destination .. "/" .. name .. ")")
+      logger.trace("calling recursive_copy(source" .. "/" .. name .. ", " .. destination .. "/" .. name .. ")")
       recursive_copy(source .. "/" .. name, destination .. "/" .. name)
     elseif info and info.type == "file" then
       local destination_info = lfs.getInfo(destination)
       if not destination_info or destination_info.type ~= "directory" then
         love.filesystem.createDirectory(destination)
       end
-      print("copying file:  " .. source .. "/" .. name .. " to " .. destination .. "/" .. name)
+      logger.trace("copying file:  " .. source .. "/" .. name .. " to " .. destination .. "/" .. name)
 
       local source_file = lfs.newFile(source .. "/" .. name)
       source_file:open("r")
@@ -400,10 +444,10 @@ function recursive_copy(source, destination)
       new_file:close()
 
       if not success then
-        print(message)
+        logger.warn(message)
       end
     else
-      print("name:  " .. name .. " isn't a directory or file?")
+      logger.warn("name:  " .. name .. " isn't a directory or file?")
     end
   end
 end

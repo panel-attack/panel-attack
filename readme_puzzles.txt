@@ -70,9 +70,11 @@ About the numbers mapping out each puzzle now:
 
 Panel Attack reads the numbers that represent what each panel's color should be from right to left,
 filling the play field with panels starting at the bottom right corner, from right to left, bottom to top.
+Additionally there exists a special notation for representing connected garbage blocks.
 
 This allows us to lay out our text representation of the puzzle how it would look in the game, like this:
 
+[====]
 001200
 002100
 002100
@@ -90,3 +92,8 @@ panel colors:
 7 = orange (not really used in the game so far, but it exists)
 8 = exclamation block [!]
 9 = block with no color (dark grey, doesn't match with anything)
+[ = top left corner of a combo / chain garbage block
+] = bottom right corner of a combo / chain garbage block
+{ = left end of a shock garbage block
+} = right end of a shock garbage block
+= = filler space to determine the size of the garbage block indicated by the surrounding []{}

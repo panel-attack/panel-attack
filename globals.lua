@@ -14,13 +14,12 @@ server_queue = ServerQueue()
 
 score_mode = SCOREMODE_TA
  
-GARBAGE_DELAY = 60
-CHAIN_ENDED_DELAY = 30 -- this is the amount of time to delay committing a chain after the chain ends
-											 -- Technically this was 0 in classic games, but we are using 60 to make rollback less noticable and match PA history.
-											 -- In a standard chain this doesn't introduce much delay, but when garbage chaining it typically introduces the full 
-											 -- delay which is only noticable if the opponent is able to recieve a chain in that moment.
-GARBAGE_TRANSIT_TIME = 90
-MAX_LAG = 200 + GARBAGE_DELAY -- maximum amount of lag before net games abort
+GARBAGE_TELEGRAPH_TIME = 45 -- the amount of time the garbage stays in the telegraph after getting there from the attack animation
+GARBAGE_DELAY_LAND_TIME = 60 -- this is the amount of time after garbage leaves the telegraph before it can land on the opponent
+						  -- a higher value allows less rollback to happen and makes lag have less of an impact on the game
+						  -- technically this was 0 in classic games, but we are using this value to make rollback less noticable and match PA history
+GARBAGE_TRANSIT_TIME = 45 -- the amount of time the garbage attack animation plays before getting to the telegraph
+MAX_LAG = 200 + GARBAGE_TELEGRAPH_TIME -- maximum amount of lag before net games abort
 
 gfx_q = Queue()
 
@@ -38,6 +37,8 @@ stages_ids_for_current_theme = {} -- initialized in stage.lua
 panels = {} -- initialized in panels.lua
 panels_ids = {} -- initialized in panels.lua
 
+trainings = {} -- used in save.lua for training mode files
+
 current_stage = nil
 
 replay = {}
@@ -49,9 +50,6 @@ SFX_GameOver_Play = 0
 
 global_my_state = nil
 global_op_state = nil
-
--- Warning messages
-display_warning_message = false
 
 large_font = 10 -- large font base+10
 small_font = -3 -- small font base-3
@@ -107,23 +105,8 @@ config = {
 	portrait_darkness             = default_portrait_darkness,
 	popfx                         = true,
 	cardfx_scale                  = 100,
+	renderTelegraph               = true,
+	renderAttacks                 = true
 }
 
 current_use_music_from = "stage" -- either "stage" or "characters", no other values!
-
-function warning(msg)
-	err = "=================================================================\n["..os.date("%x %X").."]\nError: "..msg..debug.traceback("").."\n"
-	love.filesystem.append("warnings.txt", err)
-	print(err)
-	if display_warning_message then
-		display_warning_message = false
-		local loc_warning = "You've had a bug. Please report this on Discord with file:"
-		if loc ~= nil then
-			local str = loc("warning_msg")
-			if str:sub(1, 1) ~= "#" then
-				loc_warning = str
-			end
-		end
-		love.window.showMessageBox("Warning", loc_warning.."\n%appdata%\\Panel Attack\\warnings.txt")
-	end
-end
