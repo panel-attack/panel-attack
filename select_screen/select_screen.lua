@@ -362,7 +362,7 @@ function select_screen.awaitRoomInitializationMessage(self)
     if msg then
       global_initialize_room_msg = msg
     end
-    gprint(loc("ss_init"), unpack(main_menu_screen_pos))
+    gprint(loc("ss_init"), unpack(themes[config.theme].main_menu_screen_pos))
     wait()
     if not do_messages() then
       return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
@@ -373,7 +373,7 @@ function select_screen.awaitRoomInitializationMessage(self)
   -- If we never got the room setup message, bail
   if not global_initialize_room_msg then
     -- abort due to timeout
-    warning(loc("ss_init_fail") .. "\n")
+    logger.warn(loc("ss_init_fail") .. "\n")
     return main_dumb_transition, {main_select_mode, loc("ss_init_fail") .. "\n\n" .. loc("ss_return"), 60, 300}
   end
 
@@ -716,6 +716,10 @@ end
 
 function select_screen.handleServerMessages(self)
   local messages = server_queue:pop_all_with("win_counts", "menu_state", "ranked_match_approved", "leave_room", "match_start", "ranked_match_denied")
+  if global_initialize_room_msg then
+    messages[#messages+1] = global_initialize_room_msg
+    global_initialize_room_msg = nil
+  end
   for _, msg in ipairs(messages) do
     self:updateWinCountsFromMessage(msg)
     if msg.menu_state then
@@ -812,15 +816,15 @@ function select_screen.startMatch(self, msg)
   P1:set_garbage_target(P2)
   P2:set_garbage_target(P1)
   P2:moveForPlayerNumber(2)
-  self.replay = createNewReplay(GAME.match)
+  replay = createNewReplay(GAME.match)
   
   if GAME.battleRoom.spectating and replay_of_match_so_far then --we joined a match in progress
     for k, v in pairs(replay_of_match_so_far.vs) do
-      self.replay.vs[k] = v
+      replay.vs[k] = v
     end
     P1:receiveConfirmedInput(replay_of_match_so_far.vs.in_buf)
     P2:receiveConfirmedInput(replay_of_match_so_far.vs.I)
-    if self.replay.vs.ranked then
+    if replay.vs.ranked then
       -- this doesn't really make sense
       self.match_type = "Ranked"
       self.match_type_message = ""
@@ -832,7 +836,7 @@ function select_screen.startMatch(self, msg)
     P2.play_to_end = true
   end
 
-  self.replay.vs.ranked = msg.ranked
+  replay.vs.ranked = msg.ranked
 
   to_print = loc("pl_game_start") .. "\n" .. loc("level") .. ": " .. P1.level .. "\n" .. loc("opponent_level") .. ": " .. P2.level
   if P1.play_to_end or P2.play_to_end then
@@ -853,7 +857,7 @@ end
 function select_screen.showGameStartMessage(self)
   -- For a short time, show the game start / spectate message
   for i = 1, 30 do
-    gprint(to_print, unpack(main_menu_screen_pos))
+    gprint(to_print, unpack(themes[config.theme].main_menu_screen_pos))
     if not do_messages() then
       return {main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}}
     end

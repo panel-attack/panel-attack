@@ -1397,13 +1397,13 @@ function main_net_vs()
       finalizeAndWriteVsReplay(GAME.match.battleRoom, outcome_claim)
     
       if GAME.battleRoom.spectating then
-        -- next_func, text, winnerSFX, timemax, args
+        -- next_func, text, winnerSFX, timemax, keepMusic, args
         return {game_over_transition,
-          {select_screen.main, end_text, winSFX, nil, {select_screen, "2p_net_vs"}}
+          {select_screen.main, end_text, winSFX, nil, false, {select_screen, "2p_net_vs"}}
         }
       else
         return {game_over_transition, 
-          {select_screen.main, end_text, winSFX, 60 * 8, {select_screen, "2p_net_vs"}}
+          {select_screen.main, end_text, winSFX, 60 * 8, false, {select_screen, "2p_net_vs"}}
         }
       end
     end
@@ -1465,7 +1465,7 @@ function main_local_vs()
       finalizeAndWriteVsReplay(GAME.match.battleRoom, outcome_claim)
 
       return {game_over_transition, 
-          {select_screen.main, end_text, winSFX, nil, {select_screen, "2p_local_vs"}}
+          {select_screen.main, end_text, winSFX, nil, false, {select_screen, "2p_local_vs"}}
         }
     end
   end
@@ -1518,7 +1518,7 @@ function main_local_vs_yourself()
     end
 
     return {game_over_transition,
-          {select_screen.main, nil, P1:pick_win_sfx(), nil, {select_screen, "1p_vs_yourself"}}
+          {select_screen.main, nil, P1:pick_win_sfx(), nil, false, {select_screen, "1p_vs_yourself"}}
         }
   end
 
