@@ -359,7 +359,6 @@ function select_screen.awaitRoomInitializationMessage(self)
   local msg
   while not global_initialize_room_msg and retries < retry_limit do
     msg = server_queue:pop_next_with("create_room", "character_select", "spectate_request_granted")
-    print("try "..retries.."; server_queue.first is "..server_queue.first.."; sevrer_queue.last is "..server_queue.last)
     if msg then
       global_initialize_room_msg = msg
     end
