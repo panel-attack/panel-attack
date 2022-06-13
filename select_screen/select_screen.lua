@@ -359,6 +359,7 @@ function select_screen.awaitRoomInitializationMessage(self)
   local msg
   while not global_initialize_room_msg and retries < retry_limit do
     msg = server_queue:pop_next_with("create_room", "character_select", "spectate_request_granted")
+    print("try "..retries.."; server_queue.first is "..server_queue.first.."; sevrer_queue.last is "..server_queue.last)
     if msg then
       global_initialize_room_msg = msg
     end
@@ -397,7 +398,9 @@ function select_screen.setPlayerRatings(self, msg)
 end
 
 function select_screen.setPlayerNumbers(self, msg)
-  if msg.player_settings.player_number then
+  -- player_settings exists for spectate_request_granted but not for create_room or character_select
+  -- on second runthrough we should still have data from the old select_screen, including player_numbers
+  if msg.player_settings and msg.player_settings.player_number then
     self.my_player_number = msg.player_settings.player_number
   elseif GAME.battleRoom.spectating then
     self.my_player_number = 1
@@ -409,7 +412,8 @@ function select_screen.setPlayerNumbers(self, msg)
     self.my_player_number = 1
   end
 
-  if msg.opponent_settings.player_number then
+  -- same for opponent_settings, read above
+  if msg.opponent_settings and msg.opponent_settings.player_number then
     self.op_player_number = msg.opponent_settings.player_number or self.op_player_number
   elseif GAME.battleRoom.spectating then
     self.op_player_number = 2

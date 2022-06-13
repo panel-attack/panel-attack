@@ -51,6 +51,8 @@ function ServerQueue.pop(self)
   local first = self.first
   local ret = nil
 
+  print("who is popping my messages?!")
+
   for i = self.first, self.last do
     ret = self.data[first]
     self.data[first] = nil
@@ -71,6 +73,8 @@ function ServerQueue.pop_next_with(self, ...)
   if self.first > self.last then
     return
   end
+
+  print("who is popping my messages next?!")
 
   local still_empty = true
   for i = self.first, self.last do
@@ -96,6 +100,8 @@ end
 -- pop all messages containing any specified keys...
 function ServerQueue.pop_all_with(self, ...)
   local ret = {}
+
+  print("who is popping all my messages?!")
 
   if self.first <= self.last then
     local still_empty = true
