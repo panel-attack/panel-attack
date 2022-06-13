@@ -43,35 +43,33 @@ function AttackEngine.addEndChainPattern(self, start, repeatDelay)
 end
 
 function AttackEngine.run(self)
-  local garbageToSend = {}
   local highestStartTime = self.attackPatterns[#self.attackPatterns].startTime
   local garbageCount = 0 -- how many blocks of garbage the attack pattern will send
-  
+
   -- Finds the greatest startTime value found from all the attackPatterns
-  for _, pattern in ipairs(self.attackPatterns) do
-    highestStartTime = math.max(pattern.startTime, highestStartTime)
-    if pattern.endsChain or not pattern.garbage[4] then
+  for i = 1, #self.attackPatterns do
+    highestStartTime = math.max(self.attackPatterns[i].startTime, highestStartTime)
+    if self.attackPatterns[i].endsChain or not self.attackPatterns[i].garbage[4] then -- look for combo garbage and end chain indicators
       garbageCount = garbageCount + 1
     end
   end
 
   local totalAttackTimeBeforeRepeat = self.delayBeforeRepeat + highestStartTime - self.delayBeforeStart
   if self.target.garbage_q:len() <= garbageCount then -- don't queue more garbage than needed
-    for _, attackPattern in ipairs(self.attackPatterns) do
-      if self.clock >= attackPattern.startTime then
-        local difference = self.clock - attackPattern.startTime
+    for i = 1, #self.attackPatterns do
+      if self.clock >= self.attackPatterns[i].startTime then
+        local difference = self.clock - self.attackPatterns[i].startTime
         local remainder = difference % totalAttackTimeBeforeRepeat
         if remainder == 0 then
-          if attackPattern.endsChain then
+          if self.attackPatterns[i].endsChain then
             self.target.telegraph:chainingEnded(self.target.CLOCK)
           else
-            self.target.telegraph:push(attackPattern.garbage, math.random(11, 17), math.random(1, 11), self.target.CLOCK)
+            self.target.telegraph:push(self.attackPatterns[i].garbage, math.random(11, 17), math.random(1, 11), self.target.CLOCK)
           end
         end
       end
     end
   end
-
 
   self.clock = self.clock + 1
 end
