@@ -209,24 +209,10 @@ function read_conf_file()
   )
 end
 
--- reads the "replay.txt" file
-function read_replay_file()
-  pcall(
-    function()
-      local file = love.filesystem.newFile("replay.txt")
-      file:open("r")
-      local teh_json = file:read(file:getSize())
-      replay = json.decode(teh_json)
-      if type(replay.in_buf) == "table" then
-        replay.in_buf = table.concat(replay.in_buf)
-        write_replay_file()
-      end
-    end
-  )
-end
-
 -- writes a replay file of the given path and filename
 function write_replay_file(path, filename)
+  assert(path ~= nil)
+  assert(filename ~= nil)
   pcall(
     function()
       local file
@@ -234,8 +220,6 @@ function write_replay_file(path, filename)
         love.filesystem.createDirectory(path)
         file = love.filesystem.newFile(path .. "/" .. filename)
         set_replay_browser_path(path)
-      else
-        file = love.filesystem.newFile("replay.txt")
       end
       file:open("w")
       logger.debug("Writing to Replay File")

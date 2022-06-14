@@ -67,38 +67,6 @@ function replay_browser.main()
     replay_browser_update(replay_browser.current_path:gsub("(.*/).*/$", "%1"))
   end
 
-  local function replay_browser_load_details(path)
-    replay_browser.filename = path
-    local file, error_msg = love.filesystem.read(replay_browser.filename)
-
-    if file == nil then
-      --print(loc("rp_browser_error_loading", error_msg))
-      return false
-    end
-
-    replay = {}
-    replay = json.decode(file)
-    if not replay.engineVersion then
-      replay.engineVersion = "046"
-    end
-
-    -- Old versions saved replays with extra data, prefer vs and endless in that case
-    if replay.vs and replay.endless then
-      replay.endless = nil
-    end
-    if replay.vs and replay.puzzle then
-      replay.puzzle = nil
-    end
-    if replay.endless and replay.puzzle then
-      replay.puzzle = nil
-    end
-
-    if type(replay.in_buf) == "table" then
-      replay.in_buf = table.concat(replay.in_buf)
-    end
-    return true
-  end
-
   local function replay_browser_select()
     if replay_browser.cursor_pos == 0 then
       replay_browser_go_up()
@@ -107,7 +75,8 @@ function replay_browser.main()
       local file_info = love.filesystem.getInfo(replay_browser.selection)
       if file_info then
         if file_info.type == "file" then
-          return replay_browser_load_details(replay_browser.selection)
+          replay_browser.filename = replay_browser.selection
+          return Replay.loadFromPath(replay_browser.selection)
         elseif file_info.type == "directory" then
           replay_browser_update(replay_browser.current_path .. replay_browser.path_contents[replay_browser.cursor_pos] .. "/")
         else

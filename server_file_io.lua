@@ -278,11 +278,3 @@ function read_csprng_seed_file()
     end
   )
 end
-
---old
--- function write_replay_file(replay_table, file_name) pcall(function()
--- local f = io.open(file_name, "w")
--- io.output(f)
--- io.write(json.encode(replay_table))
--- io.close(f)
--- end) end
