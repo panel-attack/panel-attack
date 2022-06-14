@@ -70,19 +70,17 @@ function refresh_based_on_own_mods(refreshed, ask_change_fallback)
   end
 end
 
-
-
--- Updates the loaded and ready state for both states
+-- Updates the ready state for all players
 function select_screen.refreshReadyStates(self)
-  for _, playerConfig in pairs(self.players) do
+  for playerNumber = 1, #self.players do
     if self:isNetPlay() then
-      playerConfig.ready =
-          playerConfig.wants_ready and
+      self.players[playerNumber].ready =
+          self.players[playerNumber].wants_ready and
           table.trueForAll(self.players, function(pc) return pc.loaded end)
     else
-      print("wants ready: " .. tostring(playerConfig.wants_ready) .. ", loaded: " .. tostring(playerConfig.loaded))
-      print("posId: " .. tostring(playerConfig.cursor.positionId) .. ", selected: " .. tostring(playerConfig.cursor.selected))
-      playerConfig.ready = playerConfig.wants_ready and playerConfig.loaded
+      print("wants ready: " .. tostring(self.players[playerNumber].wants_ready) .. ", loaded: " .. tostring(self.players[playerNumber].loaded))
+      print("posId: " .. tostring(self.players[playerNumber].cursor.positionId) .. ", selected: " .. tostring(self.players[playerNumber].cursor.selected))
+      self.players[playerNumber].ready = self.players[playerNumber].wants_ready and self.players[playerNumber].loaded
     end
   end
 end
@@ -533,6 +531,7 @@ function select_screen.initializeFromMenuState(self, playerNumber, menuState)
   self.players[playerNumber].level = menuState.level
   self.players[playerNumber].panels_dir = menuState.panels_dir
   self.players[playerNumber].ready = false
+  self.players[playerNumber].wants_ready = menuState.wants_ready or false
   self.players[playerNumber].ranked = menuState.ranked
   self.players[playerNumber].cursor.positionId = menuState.cursor
   self.players[playerNumber].cursor.position = self.name_to_xy_per_page[self.current_page][menuState.cursor]
@@ -763,6 +762,8 @@ function select_screen.handleServerMessages(self)
   return nil
 end
 
+-- updates one player based on the given menu state
+-- different from initializeFromMenuState that it only updates one player and works from a different message type
 function select_screen.updatePlayerFromMenuStateMessage(self, msg)
   if GAME.battleRoom.spectating then
     -- server makes no distinction for messages sent to spectators between player_number and op_player_number
@@ -773,6 +774,7 @@ function select_screen.updatePlayerFromMenuStateMessage(self, msg)
       stage_loader_load(self.players[msg.player_number].stage)
       self:refreshLoadingState(msg.player_number)
   else
+    print("updating player from menu state \n".. json.encode(msg))
     -- when being a player, server does not make a distinction for player_number as there are no game modes for 2+ players yet
     self:initializeFromMenuState(self.op_player_number, msg.menu_state)
     refresh_based_on_own_mods(self.players[self.op_player_number])
@@ -1024,7 +1026,7 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
       GAME.match.P2 = P2
       P1:set_garbage_target(P2)
       P2:set_garbage_target(P1)
-      self.current_stage = self.players[self.my_player_number][math.random(1, #self.players)].stage
+      self.current_stage = self.players[math.random(1, #self.players)].stage
       stage_loader_load(current_stage)
       stage_loader_wait()
       P2:moveForPlayerNumber(2)
