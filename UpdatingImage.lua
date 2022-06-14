@@ -33,7 +33,7 @@ function UpdatingImage:draw()
   local y_scale = 1
   if not self.tiled then   
     x_scale = self.width / self.image:getWidth()
-    y_scale = self.height / self.image:getHeight() -- keep image ratio
+    y_scale = self.height / self.image:getHeight()
     gfx_q:push({love.graphics.draw, {self.image, 0, 0, 0, x_scale, y_scale}})
   else
     gfx_q:push({love.graphics.draw, {self.image, bg_quad, 0, 0, 0, x_scale, y_scale}})
