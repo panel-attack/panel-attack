@@ -310,7 +310,7 @@ function Match.render(self)
           draw_number(rating_to_print, themes[config.theme].images.IMG_number_atlas_1P, 10, P1_rating_quads, P1.score_x + themes[config.theme].rating_Pos[1], P1.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, (15 / themes[config.theme].images.numberWidth_1P * themes[config.theme].rating_Scale), (19 / themes[config.theme].images.numberHeight_1P * themes[config.theme].rating_Scale), "center")
         end
       end
-      if self.room_ratings and self.room_ratings[self.op_player_number] and self.room_ratings[op_player_number].new then
+      if self.room_ratings and self.room_ratings[self.op_player_number] and self.room_ratings[self.op_player_number].new then
         local op_rating_to_print = loc("ss_rating") .. "\n"
         if self.room_ratings[self.op_player_number].new > 0 then
           op_rating_to_print = self.room_ratings[self.op_player_number].new

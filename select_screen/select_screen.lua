@@ -420,10 +420,10 @@ end
 
 function select_screen.updateMatchTypeFromMessage(self, msg)
   if msg.ranked then
-    self.match_type = "Ranked"
-    self.match_type_message = ""
+    match_type = "Ranked"
+    match_type_message = ""
   else
-    self.match_type = "Casual"
+    match_type = "Casual"
   end
 end
 
@@ -780,16 +780,16 @@ end
 
 function select_screen.updateRankedStatusFromMessage(self, msg)
   if msg.ranked_match_approved then
-    self.match_type = "Ranked"
-    self.match_type_message = ""
+    match_type = "Ranked"
+    match_type_message = ""
     if msg.caveats then
-      self.match_type_message = self.match_type_message .. (msg.caveats[1] or "")
+      match_type_message = match_type_message .. (msg.caveats[1] or "")
     end
   elseif msg.ranked_match_denied then
-    self.match_type = "Casual"
-    self.match_type_message = (loc("ss_not_ranked") or "") .. "  "
+    match_type = "Casual"
+    match_type_message = (loc("ss_not_ranked") or "") .. "  "
     if msg.reasons then
-      self.match_type_message = self.match_type_message .. (msg.reasons[1] or loc("ss_err_no_reason"))
+      match_type_message = match_type_message .. (msg.reasons[1] or loc("ss_err_no_reason"))
     end
   end
 end
@@ -833,7 +833,7 @@ function select_screen.startMatch(self, msg)
   GAME.match = Match("vs", GAME.battleRoom)
 
   GAME.match.seed = self:getSeed(msg)
-  if self.match_type == "Ranked" then
+  if match_type == "Ranked" then
     GAME.match.room_ratings = self.currentRoomRatings
     GAME.match.my_player_number = self.my_player_number
     GAME.match.op_player_number = self.op_player_number
@@ -868,10 +868,10 @@ function select_screen.startMatch(self, msg)
     P2:receiveConfirmedInput(replay_of_match_so_far.vs.I)
     if replay.vs.ranked then
       -- this doesn't really make sense
-      self.match_type = "Ranked"
-      self.match_type_message = ""
+      match_type = "Ranked"
+      match_type_message = ""
     else
-      self.match_type = "Casual"
+      match_type = "Casual"
     end
     replay_of_match_so_far = nil
     P1.play_to_end = true --this makes non local stacks run until caught up
