@@ -615,18 +615,21 @@ function select_screen.sendMenuState(self)
   menuState.ready = self.players[self.my_player_number].ready
   menuState.level = self.players[self.my_player_number].level
 
+  print("sending menuState \n " .. json.encode(menuState))
   json_send({menu_state = menuState})
 end
 
 function select_screen.handleInput(self)
   local up, down, left, right = {-1, 0}, {1, 0}, {0, -1}, {0, 1}
   if not GAME.battleRoom.spectating then
-    local KMax = 1
+    local local_players
     if select_screen.character_select_mode == "2p_local_vs" then
-      KMax = 2
+      local_players = { self.my_player_number, self.op_player_number}
+    else
+      local_players = { self.my_player_number }
     end
-    for i = 1, KMax do
-      local player = self.players[i]
+    for i = 1, #local_players do
+      local player = self.players[local_players[i]]
       local cursor = player.cursor
       if menu_prev_page(i) then
         if not cursor.selected then
