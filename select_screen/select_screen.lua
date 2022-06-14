@@ -386,7 +386,7 @@ function select_screen.updatePlayerNumbersFromMessage(self, msg)
 
   -- same for opponent_settings, read above
   if msg.opponent_settings and msg.opponent_settings.player_number then
-    self.op_player_number = msg.opponent_settings.player_number or self.op_player_number
+    self.op_player_number = msg.opponent_settings.player_number
   elseif msg.op_player_number then
     self.op_player_number = msg.op_player_number
   elseif self.op_player_number and self.op_player_number ~= 0 then
@@ -523,6 +523,7 @@ function select_screen.initializeFromPlayerConfig(self, playerNumber)
 end
 
 function select_screen.initializeFromMenuState(self, playerNumber, menuState)
+  print("overwriting with menustate for playernumber "..playerNumber.."with \n"..json.encode(menuState))
   self.players[playerNumber].ranked = menuState.ranked
   self.players[playerNumber].stage = menuState.stage
   self.players[playerNumber].stage_is_random = menuState.stage_is_random
@@ -600,28 +601,20 @@ function select_screen.updateMyConfig(self)
 end
 
 function select_screen.sendMenuState(self)
-  -- expected format:
-  --"menu_state": {
---  "character": "pa_characters_poochy",
---  "character_display_name": "Poochy",
---  "loaded": true,
---  "cursor": "__Ready",
---  "panels_dir": "pdp_ta_common",
---  "ranked": true,
---  "stage": "pa_stages_flower",
---  "wants_ready": false,
---  "level": 10
---}
   local menuState = {}
   menuState.character = self.players[self.my_player_number].character
+  menuState.character_is_random = self.players[self.my_player_number].character_is_random
   menuState.character_display_name = self.players[self.my_player_number].character_display_name
   menuState.loaded = self.players[self.my_player_number].loaded
   menuState.cursor = self.players[self.my_player_number].cursor.positionId
   menuState.panels_dir = self.players[self.my_player_number].panels_dir
   menuState.ranked = self.players[self.my_player_number].ranked
   menuState.stage = self.players[self.my_player_number].stage
+  menuState.stage_is_random = self.players[self.my_player_number].stage_is_random
   menuState.wants_ready = self.players[self.my_player_number].wants_ready
+  menuState.ready = self.players[self.my_player_number].ready
   menuState.level = self.players[self.my_player_number].level
+
   json_send({menu_state = menuState})
 end
 
@@ -712,7 +705,7 @@ function select_screen.handleInput(self)
     if self:isNetPlay() and not GAME.battleRoom.spectating and not content_equal(self.players[self.my_player_number], self.myPreviousConfig) then
       self:sendMenuState()
     end
-    self.myPreviousConfig = shallowcpy(self.players[self.my_player_number])
+    self.myPreviousConfig = deepcpy(self.players[self.my_player_number])
   else -- (we are spectating)
     if menu_escape() then
       self.do_leave()
@@ -763,7 +756,7 @@ function select_screen.handleServerMessages(self)
 end
 
 -- updates one player based on the given menu state
--- different from initializeFromMenuState that it only updates one player and works from a different message type
+-- different from updatePlayerStatesFromMessage that it only updates one player and works from a different message type
 function select_screen.updatePlayerFromMenuStateMessage(self, msg)
   if GAME.battleRoom.spectating then
     -- server makes no distinction for messages sent to spectators between player_number and op_player_number
@@ -840,6 +833,12 @@ function select_screen.startMatch(self, msg)
   GAME.match = Match("vs", GAME.battleRoom)
 
   GAME.match.seed = self:getSeed(msg)
+  if self.match_type == "Ranked" then
+    GAME.match.room_ratings = self.currentRoomRatings
+    GAME.match.my_player_number = self.my_player_number
+    GAME.match.op_player_number = self.op_player_number
+  end
+
   local is_local = true
   if GAME.battleRoom.spectating then
     is_local = false
@@ -949,7 +948,7 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
   end
   self:refreshReadyStates()
 
-  self.myPreviousConfig = shallowcpy(self.players[self.my_player_number])
+  self.myPreviousConfig = deepcpy(self.players[self.my_player_number])
 
   logger.trace("got to lines of code before net_vs_room character select loop")
   self.menu_clock = 0

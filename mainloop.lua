@@ -935,8 +935,6 @@ function main_net_vs_lobby()
   local unpaired_players = {} -- list
   local willing_players = {} -- set
   local spectatable_rooms = {}
-  my_player_number = nil
-  op_player_number = nil
   local notice = {[true] = loc("lb_select_player"), [false] = loc("lb_alone")}
   local leaderboard_string = ""
   local my_rank
@@ -1318,9 +1316,9 @@ function main_net_vs()
       if msg.taunt then -- receive taunts
         local taunts = nil
         -- P1.character and P2.character are supposed to be already filtered with current mods, taunts may differ though!
-        if msg.player_number == my_player_number then
+        if msg.player_number == select_screen.my_player_number then
           taunts = characters[P1.character].sounds[msg.type]
-        elseif msg.player_number == op_player_number then
+        elseif msg.player_number == select_screen.op_player_number then
           taunts = characters[P2.character].sounds[msg.type]
         end
         if taunts then
@@ -1416,9 +1414,6 @@ function main_local_vs_setup()
   GAME.battleRoom = BattleRoom()
   GAME.battleRoom.playerNames[1] = loc("player_n", "1")
   GAME.battleRoom.playerNames[2] = loc("player_n", "2")
-  op_state = nil
-  my_player_number = 1
-  op_player_number = 2
   GAME.input:clearInputConfigurationsForPlayers()
   GAME.input:requestPlayerInputConfigurationAssignments(2)
   return select_screen.main, {select_screen, "2p_local_vs"}
@@ -1480,8 +1475,6 @@ function main_local_vs_yourself_setup(trainingModeSettings)
     GAME.battleRoom.trainingModeSettings = trainingModeSettings
   end
   GAME.battleRoom.playerNames[2] = nil
-  my_player_number = 1
-  op_state = nil
   return select_screen.main, {select_screen, "1p_vs_yourself"}
 end
 
