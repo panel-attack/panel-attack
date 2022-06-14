@@ -961,9 +961,9 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
     graphics:draw(self)
 
     if select_screen:isNetPlay() then
-      local func = self:handleServerMessages()
-      if func then
-        return unpack(func)
+      local leaveRoom = self:handleServerMessages()
+      if leaveRoom then
+        return leaveRoom
       end
     end
 
