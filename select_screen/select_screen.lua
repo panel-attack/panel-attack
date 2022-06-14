@@ -705,7 +705,7 @@ function select_screen.handleInput(self)
       self:savePlayer2Config()
     end
 
-    if self:isNetPlay() and not GAME.battleRoom.spectating and not content_equal(self.players[self.my_player_number], self.myPreviousConfig) then
+    if self:isNetPlay() and not GAME.battleRoom.spectating and not deep_content_equal(self.players[self.my_player_number], self.myPreviousConfig) then
       self:sendMenuState()
     end
     self.myPreviousConfig = deepcpy(self.players[self.my_player_number])
