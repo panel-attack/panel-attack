@@ -356,71 +356,62 @@ end
 
 -- initializes information based on the content of the roomInitializationMessage
 function select_screen.initializeNetPlayRoom(self)
-  self:setPlayerRatings(self.roomInitializationMessage)
-  self:setPlayerNumbers(self.roomInitializationMessage)
-  self:setPlayerStates(self.roomInitializationMessage)
+  self:updatePlayerRatingsFromMessage(self.roomInitializationMessage)
+  self:updatePlayerNumbersFromMessage(self.roomInitializationMessage)
+  self:updatePlayerStatesFromMessage(self.roomInitializationMessage)
   self:updateWinCountsFromMessage(self.roomInitializationMessage)
   self:updateReplayInfoFromMessage(self.roomInitializationMessage)
-  self:setMatchType(self.roomInitializationMessage)
-  self:setExpectedWinRatios()
+  self:updateMatchTypeFromMessage(self.roomInitializationMessage)
+  self:updateExpectedWinRatios()
 end
 
-function select_screen.setPlayerRatings(self, msg)
+function select_screen.updatePlayerRatingsFromMessage(self, msg)
   if msg.ratings then
     self.currentRoomRatings = msg.ratings
   end
 end
 
-function select_screen.setPlayerNumbers(self, msg)
+function select_screen.updatePlayerNumbersFromMessage(self, msg)
   -- player_settings exists for spectate_request_granted but not for create_room or character_select
   -- on second runthrough we should still have data from the old select_screen, including player_numbers
   if msg.player_settings and msg.player_settings.player_number then
     self.my_player_number = msg.player_settings.player_number
   elseif msg.your_player_number then
     self.my_player_number = msg.your_player_number
-  elseif GAME.battleRoom.spectating then
-    self.my_player_number = 1
   elseif self.my_player_number and self.my_player_number ~= 0 then
+    -- typical case while spectating, player_number is not sent again on consecutive game starts after the first
     logger.debug("We assumed our player number is still " .. self.my_player_number)
   else
-    logger.error(loc("nt_player_err") .. "Assuming it is 1")
-    self.my_player_number = 1
+    logger.error(loc("nt_player_err"))
+    error(loc("nt_player_err"))
   end
 
   -- same for opponent_settings, read above
   if msg.opponent_settings and msg.opponent_settings.player_number then
     self.op_player_number = msg.opponent_settings.player_number or self.op_player_number
-  elseif GAME.battleRoom.spectating then
-    self.op_player_number = 2
   elseif msg.op_player_number then
     self.op_player_number = msg.op_player_number
   elseif self.op_player_number and self.op_player_number ~= 0 then
+    -- typical case while spectating, player_number is not sent again on consecutive game starts after the first
     logger.debug("We assumed op player number is still " .. self.op_player_number)
   else
-    error("We never heard from the server as to what player number we are")
-    logger.error("The server never told us our player number.  Assuming it is 2")
-    self.op_player_number = 2
+    logger.error(loc("nt_player_err"))
+    error(loc("nt_player_err"))
   end
 end
 
-function select_screen.setPlayerStates(self, msg)
+function select_screen.updatePlayerStatesFromMessage(self, msg)
   if self.my_player_number == 2 and msg.a_menu_state ~= nil
     and msg.b_menu_state ~= nil then
-    self:initializeFromMenuState(msg.b_menu_state, self.my_player_number)
-    self:initializeFromMenuState(msg.a_menu_state, self.op_player_number)
+    self:initializeFromMenuState(self.my_player_number, msg.b_menu_state)
+    self:initializeFromMenuState(self.op_player_number, msg.a_menu_state)
   else
-    self:initializeFromMenuState(msg.a_menu_state, self.my_player_number)
-    self:initializeFromMenuState(msg.b_menu_state, self.op_player_number)
+    self:initializeFromMenuState(self.my_player_number, msg.a_menu_state)
+    self:initializeFromMenuState(self.op_player_number, msg.b_menu_state)
   end
 
   refresh_based_on_own_mods(self.players[self.my_player_number])
   refresh_based_on_own_mods(self.players[self.op_player_number])
-end
-
-function select_screen.updateWinCountsFromMessage(self, msg)
-  if msg.win_counts then
-    GAME.battleRoom:updateWinCounts(msg.win_counts)
-  end
 end
 
 function select_screen.updateReplayInfoFromMessage(self, msg)
@@ -429,7 +420,7 @@ function select_screen.updateReplayInfoFromMessage(self, msg)
   end
 end
 
-function select_screen.setMatchType(self, msg)
+function select_screen.updateMatchTypeFromMessage(self, msg)
   if msg.ranked then
     self.match_type = "Ranked"
     self.match_type_message = ""
@@ -438,7 +429,7 @@ function select_screen.setMatchType(self, msg)
   end
 end
 
-function select_screen.setExpectedWinRatios(self)
+function select_screen.updateExpectedWinRatios(self)
   self.currentRoomRatings = self.currentRoomRatings or {{new = 0, old = 0, difference = 0}, {new = 0, old = 0, difference = 0}}
   self.my_expected_win_ratio = nil
   self.op_expected_win_ratio = nil
@@ -471,16 +462,10 @@ end
 
 function select_screen.setupForNetPlay(self)
   GAME:clearMatch()
-
   drop_old_data_messages() -- Starting a new game, clear all old data messages from the previous game
-  logger.debug("Reseting player stacks")
 
   if not self.roomInitializationMessage then
-    local abort = self:awaitRoomInitializationMessage()
-    if abort then
-      -- abort due to connection loss or timeout
-      return abort
-    end
+    return self:awaitRoomInitializationMessage()
   end
 end
 
@@ -496,7 +481,7 @@ function select_screen.prepareDrawMap(self)
 end
 
 function select_screen.setInitialCursors(self)
-  for playerNumber, _ in pairs(self.players) do
+  for playerNumber = 1, #self.players do
     self:setInitialCursor(playerNumber)
   end
 end
@@ -516,12 +501,12 @@ end
 function select_screen.drawMapToPageIdMapTransform(self)
   -- be wary: name_to_xy_per_page is kinda buggy for larger blocks as they span multiple positions (we retain the last one), and is completely broken with __Empty
   self.name_to_xy_per_page = {}
-  for p = 1, self.pages_amount do
-    self.name_to_xy_per_page[p] = {}
-    for i = 1, self.ROWS do
-      for j = 1, self.COLUMNS do
-        if self.drawMap[p][i][j] then
-          self.name_to_xy_per_page[p][self.drawMap[p][i][j]] = {i, j}
+  for page = 1, self.pages_amount do
+    self.name_to_xy_per_page[page] = {}
+    for row = 1, self.ROWS do
+      for column = 1, self.COLUMNS do
+        if self.drawMap[page][row][column] then
+          self.name_to_xy_per_page[page][self.drawMap[page][row][column]] = {row, column}
         end
       end
     end
@@ -574,27 +559,34 @@ function select_screen.setUpMyPlayer(self)
   if not self:isNetPlay() and not self.my_player_number then
     self.my_player_number = 1
   end
-  self:initializeFromPlayerConfig(self.my_player_number)
+
+  if not GAME.battleRoom.spectating then
+    self:initializeFromPlayerConfig(self.my_player_number)
+  end
+
   self:loadCharacter(self.my_player_number)
   self:loadStage(self.my_player_number)
   self:refreshLoadingState(self.my_player_number)
 end
 
 function select_screen.setUpOpponentPlayer(self)
-  if self.opState ~= nil then
-    self:initializeFromMenuState(self.op_player_number, self.opState)
-    if self:isNetPlay() then
-      self.opState = nil -- retains state of the second player, also: don't unload its character when going back and forth
-    else
-      self:loadCharacter(self.op_player_number)
-      self:loadStage(self.op_player_number)
-    end
+  if self:isNetPlay() then
+    -- player was already initialized through the roomInitializationMessage, don't overwrite stuff!
   else
+    if not self.op_player_number then
+      self.op_player_number = 2
+    end
+
     self:initializeFromPlayerConfig(self.op_player_number)
-    self:loadCharacter(self.op_player_number)
-    self:loadStage(self.op_player_number)
+
+    if global_op_state then
+      self.players[op_player_number].character = global_op_state.character
+      self.players[op_player_number].stage = global_op_state.stage
+    end
   end
 
+  self:loadCharacter(self.op_player_number)
+  self:loadStage(self.op_player_number)
   self:refreshLoadingState(self.op_player_number)
 end
 
@@ -708,10 +700,9 @@ function select_screen.handleInput(self)
           cursor.can_super_select = false
         end
       end
-      if player ~= nil then
-        player.cursor.positionId = self.drawMap[self.current_page][cursor.position[1]][cursor.position[2]]
-        player.wants_ready = player.cursor.selected and player.cursor.positionId == "__Ready"
-      end
+
+      player.cursor.positionId = self.drawMap[self.current_page][cursor.position[1]][cursor.position[2]]
+      player.wants_ready = player.cursor.selected and player.cursor.positionId == "__Ready"
     end
     self:updateMyConfig()
 
@@ -733,7 +724,7 @@ function select_screen.handleInput(self)
   return nil
 end
 
--- this is registered for future entering of the lobby
+-- this is registered for future entering of the 2p vs local lobby
 function select_screen.savePlayer2Config(self)
   global_op_state = shallowcpy(self.players[self.op_player_number])
   global_op_state.character = global_op_state.character_is_random or global_op_state.character
@@ -748,47 +739,70 @@ function select_screen.handleServerMessages(self)
     self.roomInitializationMessage = nil
   end
   for _, msg in ipairs(messages) do
-    self:updateWinCountsFromMessage(msg)
+    if msg.win_counts then
+      self:updateWinCountsFromMessage(msg)
+    end
+
     if msg.menu_state then
-      if GAME.battleRoom.spectating then
-        if msg.player_number == 1 or msg.player_number == 2 then
-          self:initializeFromMenuState(msg.player_number, msg.menu_state)
-          refresh_based_on_own_mods(self.players[msg.player_number])
-          character_loader_load(self.players[msg.player_number].character)
-          stage_loader_load(self.players[msg.player_number].stage)
-          self:refreshLoadingState(msg.player_number)
-        end
-      else
-        self:initializeFromMenuState(self.op_player_number, msg.menu_state)
-        refresh_based_on_own_mods(self.players[self.op_player_number])
-        character_loader_load(self.players[self.op_player_number].character)
-        stage_loader_load(self.players[self.op_player_number].stage)
-        self:refreshLoadingState(self.op_player_number)
-      end
-      self:refreshReadyStates()
+      self:updatePlayerFromMenuStateMessage(msg)
     end
-    if msg.ranked_match_approved then
-      self.match_type = "Ranked"
-      self.match_type_message = ""
-      if msg.caveats then
-        self.match_type_message = self.match_type_message .. (msg.caveats[1] or "")
-      end
-    elseif msg.ranked_match_denied then
-      self.match_type = "Casual"
-      self.match_type_message = (loc("ss_not_ranked") or "") .. "  "
-      if msg.reasons then
-        self.match_type_message = self.match_type_message .. (msg.reasons[1] or loc("ss_err_no_reason"))
-      end
+
+    if msg.ranked_match_approved or msg.ranked_match_denied then
+      self:updateRankedStatusFromMessage(msg)
     end
+
     if msg.leave_room then
       return main_dumb_transition, {main_net_vs_lobby, "", 0, 0} -- opponent left the select screen
     end
+
     if (msg.match_start or replay_of_match_so_far) and msg.player_settings and msg.opponent_settings then
       return self:startMatch(msg)
     end
   end
 
   return nil
+end
+
+function select_screen.updatePlayerFromMenuStateMessage(self, msg)
+  if GAME.battleRoom.spectating then
+    -- server makes no distinction for messages sent to spectators between player_number and op_player_number
+    -- messages are also always sent separately for both players so that this does in fact cover both players
+      self:initializeFromMenuState(msg.player_number, msg.menu_state)
+      refresh_based_on_own_mods(self.players[msg.player_number])
+      character_loader_load(self.players[msg.player_number].character)
+      stage_loader_load(self.players[msg.player_number].stage)
+      self:refreshLoadingState(msg.player_number)
+  else
+    -- when being a player, server does not make a distinction for player_number as there are no game modes for 2+ players yet
+    self:initializeFromMenuState(self.op_player_number, msg.menu_state)
+    refresh_based_on_own_mods(self.players[self.op_player_number])
+    character_loader_load(self.players[self.op_player_number].character)
+    stage_loader_load(self.players[self.op_player_number].stage)
+    self:refreshLoadingState(self.op_player_number)
+  end
+  self:refreshReadyStates()
+end
+
+function select_screen.updateRankedStatusFromMessage(self, msg)
+  if msg.ranked_match_approved then
+    self.match_type = "Ranked"
+    self.match_type_message = ""
+    if msg.caveats then
+      self.match_type_message = self.match_type_message .. (msg.caveats[1] or "")
+    end
+  elseif msg.ranked_match_denied then
+    self.match_type = "Casual"
+    self.match_type_message = (loc("ss_not_ranked") or "") .. "  "
+    if msg.reasons then
+      self.match_type_message = self.match_type_message .. (msg.reasons[1] or loc("ss_err_no_reason"))
+    end
+  end
+end
+
+function select_screen.updateWinCountsFromMessage(self, msg)
+  if msg.win_counts then
+    GAME.battleRoom:updateWinCounts(msg.win_counts)
+  end
 end
 
 function select_screen.getSeed(self, msg)
@@ -911,19 +925,20 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
   self:loadThemeAssets()
   self:setFallbackAssets()
 
+  self:prepareDrawMap()
+  self:drawMapToPageIdMapTransform()
+  self:setInitialCursors()
+
   -- Setup settings for Main Character Select for 2 Player over Network
   if select_screen:isNetPlay() then
     local abort = self:setupForNetPlay()
     if abort then
+      -- abort due to connection loss or timeout
       return abort
     else
       self:initializeNetPlayRoom()
     end
   end
-
-  self:prepareDrawMap()
-  self:drawMapToPageIdMapTransform()
-  self:setInitialCursors()
 
   self:setUpMyPlayer()
 

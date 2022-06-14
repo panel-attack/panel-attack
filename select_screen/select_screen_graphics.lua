@@ -431,7 +431,7 @@ function select_screen_graphics.draw_levels(self, player, player_number, y_paddi
   local level_max_width = 0.2 * self.button_height
   local level_width = math.min(level_max_width, themes[config.theme].images.IMG_levels[1]:getWidth())
   local padding_x = math.floor(0.5 *self.button_width - 5.5 * level_width)
-  local is_selected = player.cursor.selected and player.cursor == "__Level"
+  local is_selected = player.cursor.selected and player.cursor.positionId == "__Level"
   if is_selected then
     padding_x = padding_x - level_width
   end
