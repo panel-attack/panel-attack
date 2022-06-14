@@ -747,7 +747,7 @@ function select_screen.handleServerMessages(self)
     end
 
     if msg.leave_room then
-      return main_dumb_transition, {main_net_vs_lobby, "", 0, 0} -- opponent left the select screen
+      return {main_dumb_transition, {main_net_vs_lobby, "", 0, 0}} -- opponent left the select screen
     end
 
     if (msg.match_start or replay_of_match_so_far) and msg.player_settings and msg.opponent_settings then
@@ -963,7 +963,7 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
     if select_screen:isNetPlay() then
       local leaveRoom = self:handleServerMessages()
       if leaveRoom then
-        return leaveRoom
+        return unpack(leaveRoom)
       end
     end
 
