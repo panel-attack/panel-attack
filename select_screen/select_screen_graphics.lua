@@ -54,10 +54,9 @@ function select_screen_graphics.drawPlayerInfo(self)
   assert(self.select_screen.my_player_number and (self.select_screen.my_player_number == 1 or self.select_screen.my_player_number == 2), "need number")
   local my_rating_difference, op_rating_difference = self:calculateRatingDiffBetweenGames()
   self:drawButton(0, 2, 2, 1, self:get_player_state_str(self.select_screen.my_player_number, my_rating_difference, GAME.battleRoom.playerWinCounts[self.select_screen.my_player_number], GAME.battleRoom.playerWinCounts[self.select_screen.op_player_number], self.select_screen.my_expected_win_ratio), "left", "top", true)
-  if self.select_screen.roomState.players[1] and GAME.battleRoom.playerNames[2] then
+  if self.select_screen.players[1] and GAME.battleRoom.playerNames[2] then
     self:drawButton(0, 7, 1, 1, "P2")
     self:drawButton(0, 8, 2, 1, self:get_player_state_str(self.select_screen.op_player_number, op_rating_difference, GAME.battleRoom.playerWinCounts[self.select_screen.op_player_number], GAME.battleRoom.playerWinCounts[self.select_screen.my_player_number], self.select_screen.op_expected_win_ratio), "left", "top", true)
-  --state = state.." "..json.encode(op_state)
   end
 end
 
@@ -145,8 +144,8 @@ function select_screen_graphics.draw1pRecords(self)
     local xPosition1 = 196
     local xPosition2 = 320
     local yPosition = 24
-    local lastScore = tostring(GAME.scores:lastVsScoreForLevel(self.select_screen.roomState.players[self.select_screen.my_player_number].level))
-    local record = tostring(GAME.scores:recordVsScoreForLevel(self.select_screen.roomState.players[self.select_screen.my_player_number].level))
+    local lastScore = tostring(GAME.scores:lastVsScoreForLevel(self.select_screen.players[self.select_screen.my_player_number].level))
+    local record = tostring(GAME.scores:recordVsScoreForLevel(self.select_screen.players[self.select_screen.my_player_number].level))
     draw_pixel_font("last lines", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition, 0.5, 1.0)
     draw_pixel_font(lastScore,    themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition + 24, 0.5, 1.0)
     draw_pixel_font("record",     themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition, 0.5, 1.0)
@@ -175,24 +174,24 @@ end
     end
     local character = characters[str]
     if str == "P1" then
-      if self.select_screen.roomState.players[1].character_is_random then
-        if self.select_screen.roomState.players[1].character_is_random == random_character_special_value then
+      if self.select_screen.players[1].character_is_random then
+        if self.select_screen.players[1].character_is_random == random_character_special_value then
           character = random_character_special_value
         else
-          character = characters[self.select_screen.roomState.players[1].character_is_random]
+          character = characters[self.select_screen.players[1].character_is_random]
         end
       else
-        character = characters[self.select_screen.roomState.players[1].character]
+        character = characters[self.select_screen.players[1].character]
       end
     elseif str == "P2" then
-      if self.select_screen.roomState.players[2].character_is_random then
-        if self.select_screen.roomState.players[2].character_is_random == random_character_special_value then
+      if self.select_screen.players[2].character_is_random then
+        if self.select_screen.players[2].character_is_random == random_character_special_value then
           character = random_character_special_value
         else
-          character = characters[self.select_screen.roomState.players[2].character_is_random]
+          character = characters[self.select_screen.players[2].character_is_random]
         end
       else
-        character = characters[self.select_screen.roomState.players[2].character]
+        character = characters[self.select_screen.players[2].character]
       end
     end
     local width_for_alignment =self.button_width
@@ -216,37 +215,37 @@ end
     end
     if str == "__Mode" then
       if (self.select_screen:isMultiplayer()) then
-        self:draw_match_type(self.select_screen.roomState.players[1], 1, 0.4 * self.button_height)
-        self:draw_match_type(self.select_screen.roomState.players[2], 2, 0.7 * self.button_height)
+        self:draw_match_type(self.select_screen.players[1], 1, 0.4 * self.button_height)
+        self:draw_match_type(self.select_screen.players[2], 2, 0.7 * self.button_height)
       else
-        self:draw_match_type(self.select_screen.roomState.players[1], 1, 0.5 * self.button_height)
+        self:draw_match_type(self.select_screen.players[1], 1, 0.5 * self.button_height)
       end
     elseif str == "__Panels" then
       if (self.select_screen:isMultiplayer()) then
-        self:draw_panels(self.select_screen.roomState.players[1], 1, 0.4 * self.button_height)
-        self:draw_panels(self.select_screen.roomState.players[2], 2, 0.7 * self.button_height)
+        self:draw_panels(self.select_screen.players[1], 1, 0.4 * self.button_height)
+        self:draw_panels(self.select_screen.players[2], 2, 0.7 * self.button_height)
       else
-        self:draw_panels(self.select_screen.roomState.players[1], 1, 0.5 * self.button_height)
+        self:draw_panels(self.select_screen.players[1], 1, 0.5 * self.button_height)
       end
     elseif str == "__Stage" then
       if (self.select_screen:isMultiplayer()) then
-        self:draw_stage(self.select_screen.roomState.players[1], 1, 0.25 * self.button_width)
-        self:draw_stage(self.select_screen.roomState.players[2], 2, 0.75 * self.button_width)
+        self:draw_stage(self.select_screen.players[1], 1, 0.25 * self.button_width)
+        self:draw_stage(self.select_screen.players[2], 2, 0.75 * self.button_width)
       else
-        self:draw_stage(self.select_screen.roomState.players[1], 1, 0.5 * self.button_width)
+        self:draw_stage(self.select_screen.players[1], 1, 0.5 * self.button_width)
       end
     elseif str == "__Level" then
       if (self.select_screen:isMultiplayer()) then
-        self:draw_levels(self.select_screen.roomState.players[1], 1, 0.4 * self.button_height)
-        self:draw_levels(self.select_screen.roomState.players[2], 2, 0.7 * self.button_height)
+        self:draw_levels(self.select_screen.players[1], 1, 0.4 * self.button_height)
+        self:draw_levels(self.select_screen.players[2], 2, 0.7 * self.button_height)
       else
-        self:draw_levels(self.select_screen.roomState.players[1], 1, 0.5 * self.button_height)
+        self:draw_levels(self.select_screen.players[1], 1, 0.5 * self.button_height)
       end
     elseif str == "P1" then
-      self:draw_player(self.select_screen.roomState.players[1], 1)
+      self:draw_player(self.select_screen.players[1], 1)
       pstr = GAME.battleRoom.playerNames[1]
     elseif str == "P2" then
-      self:draw_player(self.select_screen.roomState.players[2], 2)
+      self:draw_player(self.select_screen.players[2], 2)
       pstr = GAME.battleRoom.playerNames[2]
     elseif character and character ~= random_character_special_value then
       pstr = character.display_name
@@ -254,15 +253,15 @@ end
       pstr = str:gsub("^%l", string.upper)
     end
     if x ~= 0 then
-      if self.select_screen.roomState.players[1] and self.select_screen.roomState.players[1].cursor.positionId == str and ((str ~= "__Empty" and str ~= "__Reserved") or (self.select_screen.roomState.players[1].cursor.position[1] == x and self.select_screen.roomState.players[1].cursor.position[2] == y)) then
-        self:draw_cursor(self.button_height, self.spacing, 1, self.select_screen.roomState.players[1].ready)
-        if self.select_screen.roomState.players[1].cursor.can_super_select then
+      if self.select_screen.players[1] and self.select_screen.players[1].cursor.positionId == str and ((str ~= "__Empty" and str ~= "__Reserved") or (self.select_screen.players[1].cursor.position[1] == x and self.select_screen.players[1].cursor.position[2] == y)) then
+        self:draw_cursor(self.button_height, self.spacing, 1, self.select_screen.players[1].ready)
+        if self.select_screen.players[1].cursor.can_super_select then
           self:draw_super_select(1)
         end
       end
-      if self.select_screen:isMultiplayer() and self.select_screen.roomState.players[2] and self.select_screen.roomState.players[2].cursor.positionId == str and ((str ~= "__Empty" and str ~= "__Reserved") or (self.select_screen.roomState.players[2].cursor.position[1] == x and self.select_screen.roomState.players[2].cursor.position[2] == y)) then
-        self:draw_cursor(self.button_height, self.spacing, 2, self.select_screen.roomState.players[2].ready)
-        if self.select_screen.roomState.players[2].cursor.can_super_select then
+      if self.select_screen:isMultiplayer() and self.select_screen.players[2] and self.select_screen.players[2].cursor.positionId == str and ((str ~= "__Empty" and str ~= "__Reserved") or (self.select_screen.players[2].cursor.position[1] == x and self.select_screen.players[2].cursor.position[2] == y)) then
+        self:draw_cursor(self.button_height, self.spacing, 2, self.select_screen.players[2].ready)
+        if self.select_screen.players[2].cursor.can_super_select then
           self:draw_super_select(2)
         end
       end

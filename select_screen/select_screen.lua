@@ -74,11 +74,11 @@ end
 
 -- Updates the loaded and ready state for both states
 function select_screen.refreshReadyStates(self)
-  for _, playerConfig in pairs(self.roomState.players) do
+  for _, playerConfig in pairs(self.players) do
     if self:isNetPlay() then
       playerConfig.ready =
           playerConfig.wants_ready and
-          table.trueForAll(self.roomState.players, function(pc) return pc.loaded end)
+          table.trueForAll(self.players, function(pc) return pc.loaded end)
     else
       print("wants ready: " .. tostring(playerConfig.wants_ready) .. ", loaded: " .. tostring(playerConfig.loaded))
       print("posId: " .. tostring(playerConfig.cursor.positionId) .. ", selected: " .. tostring(playerConfig.cursor.selected))
@@ -94,7 +94,6 @@ function select_screen.do_leave()
   return json_send({leave_room = true})
 end
 
---#region entry point and leave point
 -- Function to tell the select screen to exit
 function select_screen.on_quit()
   if themes[config.theme].musics.select_screen then
@@ -109,15 +108,7 @@ function select_screen.on_quit()
     return {main_select_mode}
   end
 end
---#endregion
 
-
---#region asset loading
-
---#endregion
-
-
---#region handling cursor input
 -- Moves the given cursor in the given direction
 function select_screen.move_cursor(self, cursor, direction)
   local cursor_pos = cursor.position
@@ -133,7 +124,6 @@ function select_screen.move_cursor(self, cursor, direction)
   local character = characters[self.drawMap[self.current_page][can_x][can_y]]
   cursor.can_super_select = character and (character.stage or character.panels)
 end
-
 
 -- Function to know what to do when you press select on your current cursor
 -- returns true if a sound should be played
@@ -193,15 +183,7 @@ function select_screen.on_select(self, player, super)
   end
   return noisy
 end
---#endregion
 
-
---#region handling server messages
-
---#endregion
-
-
---#region battleroom state
 function select_screen.isNetPlay(self)
   return select_screen.character_select_mode == "2p_net_vs"
 end
@@ -212,11 +194,8 @@ end
 
 -- Makes sure all the client data is up to date and ready
 function select_screen.refreshLoadingState(self, playerNumber)
-  self.roomState.players[playerNumber].loaded = characters[self.roomState.players[playerNumber].character] and characters[self.roomState.players[playerNumber].character].fully_loaded and stages[self.roomState.players[playerNumber].stage] and stages[self.roomState.players[playerNumber].stage].fully_loaded
+  self.players[playerNumber].loaded = characters[self.players[playerNumber].character] and characters[self.players[playerNumber].character].fully_loaded and stages[self.players[playerNumber].stage] and stages[self.players[playerNumber].stage].fully_loaded
 end
---#endregion
-
---#region business functions altering the state
 
 -- Returns the panel dir for the given increment
 function select_screen.change_panels_dir(panels_dir, increment)
@@ -273,13 +252,7 @@ function select_screen.change_stage(state, increment)
   end
   logger.trace("stage and stage_is_random: " .. state.stage .. " / " .. (state.stage_is_random or "nil"))
 end
---#endregion
 
-
-
-
-
---#region randomisation
 -- Randomizes the settings if they are set to random
 function patch_is_random(refreshed) -- retrocompatibility
   if refreshed ~= nil then
@@ -329,8 +302,8 @@ function select_screen.resolve_stage_random(playerConfig)
     end
   end
 end
---#endregion
 
+-- returns the navigable grid layout of the select screen before loading characters
 function select_screen.getTemplateMap(self)
   logger.trace("current_server_supports_ranking: " .. tostring(current_server_supports_ranking))
   if self:isNetPlay() and current_server_supports_ranking then
@@ -352,15 +325,16 @@ function select_screen.getTemplateMap(self)
   end
 end
 
--- returns the room initialization message
+-- sets self.roomInitializationMessage
+-- if a roomInitializationMessage is not received it returns a function to transition out of the room, otherwise returns nil
 function select_screen.awaitRoomInitializationMessage(self)
   -- Wait till we have the room setup messages from the server
   local retries, retry_limit = 0, 250
   local msg
-  while not global_initialize_room_msg and retries < retry_limit do
+  while not self.roomInitializationMessage and retries < retry_limit do
     msg = server_queue:pop_next_with("create_room", "character_select", "spectate_request_granted")
     if msg then
-      global_initialize_room_msg = msg
+      self.roomInitializationMessage = msg
     end
     gprint(loc("ss_init"), unpack(themes[config.theme].main_menu_screen_pos))
     wait()
@@ -371,7 +345,7 @@ function select_screen.awaitRoomInitializationMessage(self)
   end
 
   -- If we never got the room setup message, bail
-  if not global_initialize_room_msg then
+  if not self.roomInitializationMessage then
     -- abort due to timeout
     logger.warn(loc("ss_init_fail") .. "\n")
     return main_dumb_transition, {main_select_mode, loc("ss_init_fail") .. "\n\n" .. loc("ss_return"), 60, 300}
@@ -380,13 +354,14 @@ function select_screen.awaitRoomInitializationMessage(self)
   return nil
 end
 
+-- initializes information based on the content of the roomInitializationMessage
 function select_screen.initializeNetPlayRoom(self)
-  self:setPlayerRatings(global_initialize_room_msg)
-  self:setPlayerNumbers(global_initialize_room_msg)
-  self:setPlayerStates(global_initialize_room_msg)
-  self:updateWinCountsFromMessage(global_initialize_room_msg)
-  self:updateReplayInfoFromMessage(global_initialize_room_msg)
-  self:setMatchType(global_initialize_room_msg)
+  self:setPlayerRatings(self.roomInitializationMessage)
+  self:setPlayerNumbers(self.roomInitializationMessage)
+  self:setPlayerStates(self.roomInitializationMessage)
+  self:updateWinCountsFromMessage(self.roomInitializationMessage)
+  self:updateReplayInfoFromMessage(self.roomInitializationMessage)
+  self:setMatchType(self.roomInitializationMessage)
   self:setExpectedWinRatios()
 end
 
@@ -408,8 +383,7 @@ function select_screen.setPlayerNumbers(self, msg)
   elseif self.my_player_number and self.my_player_number ~= 0 then
     logger.debug("We assumed our player number is still " .. self.my_player_number)
   else
-    error(loc("nt_player_err"))
-    logger.error("The server never told us our player number.  Assuming it is 1")
+    logger.error(loc("nt_player_err") .. "Assuming it is 1")
     self.my_player_number = 1
   end
 
@@ -430,18 +404,17 @@ function select_screen.setPlayerNumbers(self, msg)
 end
 
 function select_screen.setPlayerStates(self, msg)
-  if self.roomState.my_player_number == 2 and msg.a_menu_state ~= nil
+  if self.my_player_number == 2 and msg.a_menu_state ~= nil
     and msg.b_menu_state ~= nil then
-    logger.debug("inverting the states to match player number!")
-    self.roomState.myState = msg.b_menu_state
-    self.roomState.opState = msg.a_menu_state
+    self:initializeFromMenuState(msg.b_menu_state, self.my_player_number)
+    self:initializeFromMenuState(msg.a_menu_state, self.op_player_number)
   else
-    self.roomState.myState = msg.a_menu_state
-    self.roomState.opState = msg.b_menu_state
+    self:initializeFromMenuState(msg.a_menu_state, self.my_player_number)
+    self:initializeFromMenuState(msg.b_menu_state, self.op_player_number)
   end
 
-  refresh_based_on_own_mods(self.roomState.myState)
-  refresh_based_on_own_mods(self.roomState.opState)
+  refresh_based_on_own_mods(self.players[self.my_player_number])
+  refresh_based_on_own_mods(self.players[self.op_player_number])
 end
 
 function select_screen.updateWinCountsFromMessage(self, msg)
@@ -458,10 +431,10 @@ end
 
 function select_screen.setMatchType(self, msg)
   if msg.ranked then
-    self.roomState.match_type = "Ranked"
-    self.roomState.match_type_message = ""
+    self.match_type = "Ranked"
+    self.match_type_message = ""
   else
-    self.roomState.match_type = "Casual"
+    self.match_type = "Casual"
   end
 end
 
@@ -502,10 +475,12 @@ function select_screen.setupForNetPlay(self)
   drop_old_data_messages() -- Starting a new game, clear all old data messages from the previous game
   logger.debug("Reseting player stacks")
 
-  local abort = self:awaitRoomInitializationMessage()
-  if abort then
-    -- abort due to connection loss or timeout
-    return abort
+  if not self.roomInitializationMessage then
+    local abort = self:awaitRoomInitializationMessage()
+    if abort then
+      -- abort due to connection loss or timeout
+      return abort
+    end
   end
 end
 
@@ -521,7 +496,7 @@ function select_screen.prepareDrawMap(self)
 end
 
 function select_screen.setInitialCursors(self)
-  for playerNumber, _ in pairs(self.roomState.players) do
+  for playerNumber, _ in pairs(self.players) do
     self:setInitialCursor(playerNumber)
   end
 end
@@ -534,7 +509,7 @@ function select_screen.setInitialCursor(self, playerNumber)
   cursor.can_super_select = false
   cursor.selected = false
 
-  self.roomState.players[playerNumber].cursor = cursor
+  self.players[playerNumber].cursor = cursor
 
 end
 
@@ -554,44 +529,44 @@ function select_screen.drawMapToPageIdMapTransform(self)
 end
 
 function select_screen.initializeFromPlayerConfig(self, playerNumber)
-  self.roomState.players[playerNumber].stage = config.stage
-  self.roomState.players[playerNumber].stage_is_random = ((config.stage == random_stage_special_value or stages[config.stage]:is_bundle()) and config.stage or nil)
-  self.roomState.players[playerNumber].character = config.character
-  self.roomState.players[playerNumber].character_is_random = ((config.character == random_character_special_value or characters[config.character]:is_bundle()) and config.character or nil)
-  self.roomState.players[playerNumber].level = config.level
-  self.roomState.players[playerNumber].panels_dir = config.panels
-  self.roomState.players[playerNumber].ready = false
-  self.roomState.players[playerNumber].ranked = config.ranked
+  self.players[playerNumber].stage = config.stage
+  self.players[playerNumber].stage_is_random = ((config.stage == random_stage_special_value or stages[config.stage]:is_bundle()) and config.stage or nil)
+  self.players[playerNumber].character = config.character
+  self.players[playerNumber].character_is_random = ((config.character == random_character_special_value or characters[config.character]:is_bundle()) and config.character or nil)
+  self.players[playerNumber].level = config.level
+  self.players[playerNumber].panels_dir = config.panels
+  self.players[playerNumber].ready = false
+  self.players[playerNumber].ranked = config.ranked
 end
 
 function select_screen.initializeFromMenuState(self, playerNumber, menuState)
-  self.roomState.players[playerNumber].ranked = menuState.ranked
-  self.roomState.players[playerNumber].stage = menuState.stage
-  self.roomState.players[playerNumber].stage_is_random = menuState.stage_is_random
-  self.roomState.players[playerNumber].character = menuState.character
-  self.roomState.players[playerNumber].character_is_random = menuState.character_is_random
-  self.roomState.players[playerNumber].level = menuState.level
-  self.roomState.players[playerNumber].panels_dir = menuState.panels_dir
-  self.roomState.players[playerNumber].ready = false
-  self.roomState.players[playerNumber].ranked = menuState.ranked
-  self.roomState.players[playerNumber].cursor.positionId = menuState.cursor
-  self.roomState.players[playerNumber].cursor.position = self.name_to_xy_per_page[self.current_page][menuState.cursor]
+  self.players[playerNumber].ranked = menuState.ranked
+  self.players[playerNumber].stage = menuState.stage
+  self.players[playerNumber].stage_is_random = menuState.stage_is_random
+  self.players[playerNumber].character = menuState.character
+  self.players[playerNumber].character_is_random = menuState.character_is_random
+  self.players[playerNumber].level = menuState.level
+  self.players[playerNumber].panels_dir = menuState.panels_dir
+  self.players[playerNumber].ready = false
+  self.players[playerNumber].ranked = menuState.ranked
+  self.players[playerNumber].cursor.positionId = menuState.cursor
+  self.players[playerNumber].cursor.position = self.name_to_xy_per_page[self.current_page][menuState.cursor]
 end
 
 function select_screen.loadCharacter(self, playerNumber)
-  if self.roomState.players[playerNumber].character_is_random then
-    select_screen.resolve_character_random(self.roomState.players[playerNumber])
+  if self.players[playerNumber].character_is_random then
+    select_screen.resolve_character_random(self.players[playerNumber])
   end
-  character_loader_load(self.roomState.players[playerNumber].character)
-  self.roomState.players[playerNumber].character_display_name = characters[self.roomState.players[playerNumber].character].display_name
+  character_loader_load(self.players[playerNumber].character)
+  self.players[playerNumber].character_display_name = characters[self.players[playerNumber].character].display_name
 end
 
 function select_screen.loadStage(self, playerNumber)
-  if self.roomState.players[playerNumber].stage_is_random then
-    select_screen.resolve_stage_random(self.roomState.players[playerNumber])
+  if self.players[playerNumber].stage_is_random then
+    select_screen.resolve_stage_random(self.players[playerNumber])
   end
-  stage_loader_load(self.roomState.players[playerNumber].stage)
-  self.roomState.players[playerNumber].stage_display_name = stages[self.roomState.players[playerNumber].stage].display_name
+  stage_loader_load(self.players[playerNumber].stage)
+  self.players[playerNumber].stage_display_name = stages[self.players[playerNumber].stage].display_name
 end
 
 function select_screen.setUpMyPlayer(self)
@@ -606,10 +581,10 @@ function select_screen.setUpMyPlayer(self)
 end
 
 function select_screen.setUpOpponentPlayer(self)
-  if self.roomState.opState ~= nil then
-    self:initializeFromMenuState(self.op_player_number, self.roomState.opState)
+  if self.opState ~= nil then
+    self:initializeFromMenuState(self.op_player_number, self.opState)
     if self:isNetPlay() then
-      self.roomState.opState = nil -- retains state of the second player, also: don't unload its character when going back and forth
+      self.opState = nil -- retains state of the second player, also: don't unload its character when going back and forth
     else
       self:loadCharacter(self.op_player_number)
       self:loadStage(self.op_player_number)
@@ -625,12 +600,38 @@ end
 
 function select_screen.updateMyConfig(self)
   -- update config, does not redefine it
-  local myPlayer = self.roomState.players[self.my_player_number]
+  local myPlayer = self.players[self.my_player_number]
   config.character = myPlayer.character_is_random or myPlayer.character
   config.stage = myPlayer.stage_is_random or myPlayer.stage
   config.level = myPlayer.level
   config.ranked = myPlayer.ranked
   config.panels = myPlayer.panels_dir
+end
+
+function select_screen.sendMenuState(self)
+  -- expected format:
+  --"menu_state": {
+--  "character": "pa_characters_poochy",
+--  "character_display_name": "Poochy",
+--  "loaded": true,
+--  "cursor": "__Ready",
+--  "panels_dir": "pdp_ta_common",
+--  "ranked": true,
+--  "stage": "pa_stages_flower",
+--  "wants_ready": false,
+--  "level": 10
+--}
+  local menuState = {}
+  menuState.character = self.players[self.my_player_number].character
+  menuState.character_display_name = self.players[self.my_player_number].character_display_name
+  menuState.loaded = self.players[self.my_player_number].loaded
+  menuState.cursor = self.players[self.my_player_number].cursor.positionId
+  menuState.panels_dir = self.players[self.my_player_number].panels_dir
+  menuState.ranked = self.players[self.my_player_number].ranked
+  menuState.stage = self.players[self.my_player_number].stage
+  menuState.wants_ready = self.players[self.my_player_number].wants_ready
+  menuState.level = self.players[self.my_player_number].level
+  json_send({menu_state = menuState})
 end
 
 function select_screen.handleInput(self)
@@ -641,7 +642,7 @@ function select_screen.handleInput(self)
       KMax = 2
     end
     for i = 1, KMax do
-      local player = self.roomState.players[i]
+      local player = self.players[i]
       local cursor = player.cursor
       if menu_prev_page(i) then
         if not cursor.selected then
@@ -714,17 +715,14 @@ function select_screen.handleInput(self)
     end
     self:updateMyConfig()
 
-    if select_screen.character_select_mode == "2p_local_vs" then -- this is registered for future entering of the lobby
-      global_op_state = shallowcpy(self.roomState.players[self.op_player_number])
-      global_op_state.character = global_op_state.character_is_random or global_op_state.character
-      global_op_state.stage = global_op_state.stage_is_random or global_op_state.stage
-      global_op_state.wants_ready = false
+    if select_screen.character_select_mode == "2p_local_vs" then
+      self:savePlayer2Config()
     end
 
-    if self:isNetPlay() and not content_equal(self.roomState.players[self.my_player_number], self.myPreviousConfig) and not GAME.battleRoom.spectating then
-      json_send({menu_state = self.roomState.players[self.my_player_number]})
+    if self:isNetPlay() and not GAME.battleRoom.spectating and not content_equal(self.players[self.my_player_number], self.myPreviousConfig) then
+      self:sendMenuState()
     end
-    self.myPreviousConfig = shallowcpy(self.roomState.players[self.my_player_number])
+    self.myPreviousConfig = shallowcpy(self.players[self.my_player_number])
   else -- (we are spectating)
     if menu_escape() then
       self.do_leave()
@@ -735,11 +733,19 @@ function select_screen.handleInput(self)
   return nil
 end
 
+-- this is registered for future entering of the lobby
+function select_screen.savePlayer2Config(self)
+  global_op_state = shallowcpy(self.players[self.op_player_number])
+  global_op_state.character = global_op_state.character_is_random or global_op_state.character
+  global_op_state.stage = global_op_state.stage_is_random or global_op_state.stage
+  global_op_state.wants_ready = false
+end
+
 function select_screen.handleServerMessages(self)
   local messages = server_queue:pop_all_with("win_counts", "menu_state", "ranked_match_approved", "leave_room", "match_start", "ranked_match_denied")
-  if global_initialize_room_msg then
-    messages[#messages+1] = global_initialize_room_msg
-    global_initialize_room_msg = nil
+  if self.roomInitializationMessage then
+    messages[#messages+1] = self.roomInitializationMessage
+    self.roomInitializationMessage = nil
   end
   for _, msg in ipairs(messages) do
     self:updateWinCountsFromMessage(msg)
@@ -747,31 +753,31 @@ function select_screen.handleServerMessages(self)
       if GAME.battleRoom.spectating then
         if msg.player_number == 1 or msg.player_number == 2 then
           self:initializeFromMenuState(msg.player_number, msg.menu_state)
-          refresh_based_on_own_mods(self.roomState.players[msg.player_number])
-          character_loader_load(self.roomState.players[msg.player_number].character)
-          stage_loader_load(self.roomState.players[msg.player_number].stage)
+          refresh_based_on_own_mods(self.players[msg.player_number])
+          character_loader_load(self.players[msg.player_number].character)
+          stage_loader_load(self.players[msg.player_number].stage)
           self:refreshLoadingState(msg.player_number)
         end
       else
         self:initializeFromMenuState(self.op_player_number, msg.menu_state)
-        refresh_based_on_own_mods(self.roomState.players[self.op_player_number])
-        character_loader_load(self.roomState.players[self.op_player_number].character)
-        stage_loader_load(self.roomState.players[self.op_player_number].stage)
+        refresh_based_on_own_mods(self.players[self.op_player_number])
+        character_loader_load(self.players[self.op_player_number].character)
+        stage_loader_load(self.players[self.op_player_number].stage)
         self:refreshLoadingState(self.op_player_number)
       end
       self:refreshReadyStates()
     end
     if msg.ranked_match_approved then
-      self.roomState.match_type = "Ranked"
-      self.roomState.match_type_message = ""
+      self.match_type = "Ranked"
+      self.match_type_message = ""
       if msg.caveats then
-        self.roomState.match_type_message = self.roomState.match_type_message .. (msg.caveats[1] or "")
+        self.match_type_message = self.match_type_message .. (msg.caveats[1] or "")
       end
     elseif msg.ranked_match_denied then
-      self.roomState.match_type = "Casual"
-      self.roomState.match_type_message = (loc("ss_not_ranked") or "") .. "  "
+      self.match_type = "Casual"
+      self.match_type_message = (loc("ss_not_ranked") or "") .. "  "
       if msg.reasons then
-        self.roomState.match_type_message = self.roomState.match_type_message .. (msg.reasons[1] or loc("ss_err_no_reason"))
+        self.match_type_message = self.match_type_message .. (msg.reasons[1] or loc("ss_err_no_reason"))
       end
     end
     if msg.leave_room then
@@ -890,18 +896,17 @@ end
 function select_screen.initialize(self, character_select_mode)
   self.character_select_mode = character_select_mode
   self.fallback_when_missing = {nil, nil}
-  -- in roomstate goes everything that can change through player inputs
-  self.roomState = {}
-  self.roomState.players = {}
+  self.players = {}
   for i=1, tonumber(self.character_select_mode:sub(1, 1)) do
-    self.roomState.players[i] = {}
+    self.players[i] = {}
   end
   -- everything else gets its field directly on select_screen
   self.current_page = 1
 end
 
 -- The main screen for selecting characters and settings for a match
-function select_screen.main(self, character_select_mode)
+function select_screen.main(self, character_select_mode, roomInitializationMessage)
+  self.roomInitializationMessage = roomInitializationMessage
   self:initialize(character_select_mode)
   self:loadThemeAssets()
   self:setFallbackAssets()
@@ -927,7 +932,7 @@ function select_screen.main(self, character_select_mode)
   end
   self:refreshReadyStates()
 
-  self.myPreviousConfig = shallowcpy(self.roomState.players[self.my_player_number])
+  self.myPreviousConfig = shallowcpy(self.players[self.my_player_number])
 
   logger.trace("got to lines of code before net_vs_room character select loop")
   self.menu_clock = 0
@@ -972,9 +977,9 @@ function select_screen.main(self, character_select_mode)
     end
 
     -- Handle one player vs game setup
-    if self.roomState.players[self.my_player_number].ready and self.character_select_mode == "1p_vs_yourself" then
+    if self.players[self.my_player_number].ready and self.character_select_mode == "1p_vs_yourself" then
       GAME.match = Match("vs", GAME.battleRoom)
-      P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.roomState.players[self.my_player_number].panels_dir, level = self.roomState.players[self.my_player_number].level, character = self.roomState.players[self.my_player_number].character, player_number = 1}
+      P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
       if GAME.battleRoom.trainingModeSettings then
         GAME.match.attackEngine = AttackEngine(P1)
         local startTime = 150
@@ -990,21 +995,21 @@ function select_screen.main(self, character_select_mode)
         P1:set_garbage_target(P1)
       end
       P2 = nil
-      self.current_stage = self.roomState.players[self.my_player_number].stage
+      self.current_stage = self.players[self.my_player_number].stage
       stage_loader_load(current_stage)
       stage_loader_wait()
       P1:starting_state()
       return main_dumb_transition, {main_local_vs_yourself, "", 0, 0}
     -- Handle two player vs game setup
-    elseif self.roomState.players[self.my_player_number].ready and select_screen.character_select_mode == "2p_local_vs" and self.roomState.players[self.op_player_number].ready then
+    elseif self.players[self.my_player_number].ready and select_screen.character_select_mode == "2p_local_vs" and self.players[self.op_player_number].ready then
       GAME.match = Match("vs", GAME.battleRoom)
-      P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.roomState.players[self.my_player_number].panels_dir, level = self.roomState.players[self.my_player_number].level, character = self.roomState.players[self.my_player_number].character, player_number = 1}
+      P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
       GAME.match.P1 = P1
-      P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.roomState.players[self.op_player_number].panels_dir, level = self.roomState.players[self.op_player_number].level, character = self.roomState.players[self.op_player_number].character, player_number = 2}
+      P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, character = self.players[self.op_player_number].character, player_number = 2}
       GAME.match.P2 = P2
       P1:set_garbage_target(P2)
       P2:set_garbage_target(P1)
-      self.current_stage = self.roomState.players[self.my_player_number][math.random(1, #self.roomState.players)].stage
+      self.current_stage = self.players[self.my_player_number][math.random(1, #self.players)].stage
       stage_loader_load(current_stage)
       stage_loader_wait()
       P2:moveForPlayerNumber(2)

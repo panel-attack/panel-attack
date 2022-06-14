@@ -1009,7 +1009,6 @@ function main_net_vs_lobby()
         return main_dumb_transition, {main_select_mode, "Error: " .. msg.choose_another_name.reason, 60, 300}
       end
       if msg.create_room or msg.spectate_request_granted then
-        global_initialize_room_msg = msg
         GAME.battleRoom = BattleRoom()
         if msg.spectate_request_granted then
           if not requestedSpectateRoom then
@@ -1025,7 +1024,7 @@ function main_net_vs_lobby()
         love.window.requestAttention()
         play_optional_sfx(themes[config.theme].sounds.notification)
         lobby_menu:remove_self()
-        return select_screen.main, {select_screen, "2p_net_vs"}
+        return select_screen.main, {select_screen, "2p_net_vs", msg}
       end
       if msg.players then
         playerData = msg.players
