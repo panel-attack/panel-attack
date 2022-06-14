@@ -48,7 +48,6 @@ SFX_Fanfare_Play = 0
 SFX_GarbageThud_Play = 0
 SFX_GameOver_Play = 0
 
-global_my_state = nil
 global_op_state = nil
 
 large_font = 10 -- large font base+10
