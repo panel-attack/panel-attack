@@ -556,7 +556,7 @@ end
 
 function select_screen.setUpMyPlayer(self)
   -- set up the local player
-  if not self:isNetPlay() and not self.my_player_number then
+  if not self:isNetPlay() then
     self.my_player_number = 1
   end
 
@@ -573,15 +573,13 @@ function select_screen.setUpOpponentPlayer(self)
   if self:isNetPlay() then
     -- player was already initialized through the roomInitializationMessage, don't overwrite stuff!
   else
-    if not self.op_player_number then
-      self.op_player_number = 2
-    end
+    self.op_player_number = 2
 
     self:initializeFromPlayerConfig(self.op_player_number)
 
     if global_op_state then
-      self.players[op_player_number].character = global_op_state.character
-      self.players[op_player_number].stage = global_op_state.stage
+      self.players[self.op_player_number].character = global_op_state.character
+      self.players[self.op_player_number].stage = global_op_state.stage
     end
   end
 
