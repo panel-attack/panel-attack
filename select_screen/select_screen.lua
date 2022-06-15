@@ -454,8 +454,10 @@ function select_screen.loadThemeAssets(self)
   reset_filters()
 end
 
+-- sets character / stage to be used for the opponent in case you don't have their mod
+-- there is currently no config to load a user preference from but it is already functional
 function select_screen.setFallbackAssets(self)
-  select_screen.fallback_when_missing = {nil, nil}
+  self.fallback_when_missing = {nil, nil}
 end
 
 function select_screen.setupForNetPlay(self)
@@ -747,7 +749,7 @@ function select_screen.handleServerMessages(self)
     end
 
     if (msg.match_start or replay_of_match_so_far) and msg.player_settings and msg.opponent_settings then
-      return self:startMatch(msg)
+      return self:startNetPlayMatch(msg)
     end
   end
 
@@ -815,7 +817,7 @@ function select_screen.getSeed(self, msg)
   return seed
 end
 
-function select_screen.startMatch(self, msg)
+function select_screen.startNetPlayMatch(self, msg)
   logger.debug("spectating: " .. tostring(GAME.battleRoom.spectating))
   local fake_P1 = {panel_buffer = "", gpanel_buffer = ""}
   local fake_P2 = {panel_buffer = "", gpanel_buffer = ""}
@@ -890,9 +892,51 @@ function select_screen.startMatch(self, msg)
   return {main_dumb_transition, {main_net_vs, to_print, 0, 0}}
 end
 
+function select_screen.start2pLocalMatch(self)
+  GAME.match = Match("vs", GAME.battleRoom)
+  P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
+  GAME.match.P1 = P1
+  P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, character = self.players[self.op_player_number].character, player_number = 2}
+  GAME.match.P2 = P2
+  P1:set_garbage_target(P2)
+  P2:set_garbage_target(P1)
+  self.current_stage = self.players[math.random(1, #self.players)].stage
+  stage_loader_load(current_stage)
+  stage_loader_wait()
+  P2:moveForPlayerNumber(2)
+
+  P1:starting_state()
+  P2:starting_state()
+  return main_dumb_transition, {main_local_vs, "", 0, 0}
+end
+
+function select_screen.start1pLocalMatch(self)
+  GAME.match = Match("vs", GAME.battleRoom)
+  P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
+  if GAME.battleRoom.trainingModeSettings then
+    GAME.match.attackEngine = AttackEngine(P1)
+    local startTime = 150
+    local delayPerAttack = 6
+    local attackCountPerDelay = 15
+    local delay = GARBAGE_TRANSIT_TIME + GARBAGE_DELAY + (attackCountPerDelay * delayPerAttack) + 1
+    for i = 1, attackCountPerDelay, 1 do
+      GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
+    end
+  end
+  GAME.match.P1 = P1
+  if not GAME.battleRoom.trainingModeSettings then
+    P1:set_garbage_target(P1)
+  end
+  P2 = nil
+  self.current_stage = self.players[self.my_player_number].stage
+  stage_loader_load(current_stage)
+  stage_loader_wait()
+  P1:starting_state()
+  return main_dumb_transition, {main_local_vs_yourself, "", 0, 0}
+end
+
 function select_screen.initialize(self, character_select_mode)
   self.character_select_mode = character_select_mode
-  self.fallback_when_missing = {nil, nil}
   self.players = {}
   for i=1, tonumber(self.character_select_mode:sub(1, 1)) do
     self.players[i] = {}
@@ -932,7 +976,6 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
 
   self.myPreviousConfig = deepcpy(self.players[self.my_player_number])
 
-  logger.trace("got to lines of code before net_vs_room character select loop")
   self.menu_clock = 0
 
   -- Main loop for running the select screen and drawing
@@ -976,46 +1019,10 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
 
     -- Handle one player vs game setup
     if self.players[self.my_player_number].ready and self.character_select_mode == "1p_vs_yourself" then
-      GAME.match = Match("vs", GAME.battleRoom)
-      P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
-      if GAME.battleRoom.trainingModeSettings then
-        GAME.match.attackEngine = AttackEngine(P1)
-        local startTime = 150
-        local delayPerAttack = 6
-        local attackCountPerDelay = 15
-        local delay = GARBAGE_TRANSIT_TIME + GARBAGE_DELAY + (attackCountPerDelay * delayPerAttack) + 1
-        for i = 1, attackCountPerDelay, 1 do
-          GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-        end
-      end
-      GAME.match.P1 = P1
-      if not GAME.battleRoom.trainingModeSettings then
-        P1:set_garbage_target(P1)
-      end
-      P2 = nil
-      self.current_stage = self.players[self.my_player_number].stage
-      stage_loader_load(current_stage)
-      stage_loader_wait()
-      P1:starting_state()
-      return main_dumb_transition, {main_local_vs_yourself, "", 0, 0}
+      self:start1pLocalMatch()
     -- Handle two player vs game setup
-    elseif self.players[self.my_player_number].ready and select_screen.character_select_mode == "2p_local_vs" and self.players[self.op_player_number].ready then
-      GAME.match = Match("vs", GAME.battleRoom)
-      P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
-      GAME.match.P1 = P1
-      P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, character = self.players[self.op_player_number].character, player_number = 2}
-      GAME.match.P2 = P2
-      P1:set_garbage_target(P2)
-      P2:set_garbage_target(P1)
-      self.current_stage = self.players[math.random(1, #self.players)].stage
-      stage_loader_load(current_stage)
-      stage_loader_wait()
-      P2:moveForPlayerNumber(2)
-
-      P1:starting_state()
-      P2:starting_state()
-      return main_dumb_transition, {main_local_vs, "", 0, 0}
-
+    elseif select_screen.character_select_mode == "2p_local_vs" and self.players[self.my_player_number].ready and self.players[self.op_player_number].ready then
+      self:start2pLocalMatch()
     -- Fetch the next network messages for 2p vs. When we get a start message we will transition there.
     elseif select_screen:isNetPlay() then
       if not do_messages() then
