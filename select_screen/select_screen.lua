@@ -34,7 +34,6 @@ end
 
 -- Grabs character / panel / stage settings based on our own mods if they are not set
 function refresh_based_on_own_mods(refreshed, ask_change_fallback)
-  patch_is_random(refreshed)
   ask_change_fallback = ask_change_fallback or false
   if refreshed ~= nil then
     -- panels
@@ -249,26 +248,6 @@ function select_screen.change_stage(state, increment)
     end
   end
   logger.trace("stage and stage_is_random: " .. state.stage .. " / " .. (state.stage_is_random or "nil"))
-end
-
--- Randomizes the settings if they are set to random
-function patch_is_random(refreshed) -- retrocompatibility
-  if refreshed ~= nil then
-    if refreshed.stage_is_random == true then
-      refreshed.stage_is_random = random_stage_special_value
-    elseif refreshed.stage_is_random == false then
-      refreshed.stage_is_random = nil
-    elseif refreshed.stage_is_random ~= nil and refreshed.stage_is_random ~= random_stage_special_value and stages[refreshed.stage_is_random] == nil then
-      refreshed.stage_is_random = random_stage_special_value
-    end
-    if refreshed.character_is_random == true then
-      refreshed.character_is_random = random_character_special_value
-    elseif refreshed.character_is_random == false then
-      refreshed.character_is_random = nil
-    elseif refreshed.character_is_random ~= nil and refreshed.character_is_random ~= random_character_special_value and characters[refreshed.character_is_random] == nil then
-      refreshed.character_is_random = random_character_special_value
-    end
-  end
 end
 
 -- Resolve the current character if it is random
