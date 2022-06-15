@@ -15,10 +15,11 @@ AttackPattern =
 -- An attack engine sends attacks based on a set of rules.
 AttackEngine =
   class(
-  function(self, target, delayBeforeStart, delayBeforeRepeat)
+  function(self, target, delayBeforeStart, delayBeforeRepeat, disableQueueLimit)
     self.target = target
     self.delayBeforeStart = delayBeforeStart
     self.delayBeforeRepeat = delayBeforeRepeat
+    self.disableQueueLimit = disableQueueLimit
     self.attackPatterns = {}
     self.clock = 0
   end
@@ -44,18 +45,14 @@ end
 
 function AttackEngine.run(self)
   local highestStartTime = self.attackPatterns[#self.attackPatterns].startTime
-  local garbageCount = 0 -- how many blocks of garbage the attack pattern will send
 
   -- Finds the greatest startTime value found from all the attackPatterns
   for i = 1, #self.attackPatterns do
     highestStartTime = math.max(self.attackPatterns[i].startTime, highestStartTime)
-    if self.attackPatterns[i].endsChain or not self.attackPatterns[i].garbage[4] then -- look for combo garbage and end chain indicators
-      garbageCount = garbageCount + 1
-    end
   end
 
   local totalAttackTimeBeforeRepeat = self.delayBeforeRepeat + highestStartTime - self.delayBeforeStart
-  if self.target.garbage_q:len() <= garbageCount then -- don't queue more garbage than needed
+  if self.disableQueueLimit or self.target.garbage_q:len() <= 72 then
     for i = 1, #self.attackPatterns do
       if self.clock >= self.attackPatterns[i].startTime then
         local difference = self.clock - self.attackPatterns[i].startTime
