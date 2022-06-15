@@ -831,37 +831,24 @@ function select_screen.startNetPlayMatch(self, msg)
   P2 = Stack{which = 2, match = GAME.match, is_local = false, panels_dir = msg.opponent_settings.panels_dir, level = msg.opponent_settings.level, character = msg.opponent_settings.character, player_number = msg.opponent_settings.player_number}
   GAME.match.P2 = P2
   P2.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
-  if GAME.battleRoom.spectating then
-    P1.panel_buffer = fake_P1.panel_buffer
-    P1.gpanel_buffer = fake_P1.gpanel_buffer
-  end
-  P2.panel_buffer = fake_P2.panel_buffer
-  P2.gpanel_buffer = fake_P2.gpanel_buffer
+  
   P1:set_garbage_target(P2)
   P2:set_garbage_target(P1)
   P2:moveForPlayerNumber(2)
   replay = createNewReplay(GAME.match)
-  
+
   if GAME.battleRoom.spectating and replay_of_match_so_far then --we joined a match in progress
     for k, v in pairs(replay_of_match_so_far.vs) do
       replay.vs[k] = v
     end
     P1:receiveConfirmedInput(replay_of_match_so_far.vs.in_buf)
     P2:receiveConfirmedInput(replay_of_match_so_far.vs.I)
-    if replay.vs.ranked then
-      -- this doesn't really make sense
-      match_type = "Ranked"
-      match_type_message = ""
-    else
-      match_type = "Casual"
-    end
+    
     replay_of_match_so_far = nil
     --this makes non local stacks run until caught up
     P1.play_to_end = true
     P2.play_to_end = true
   end
-
-  replay.vs.ranked = msg.ranked
 
   -- Proceed to the game screen and start the game
   P1:starting_state()
