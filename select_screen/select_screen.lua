@@ -696,7 +696,7 @@ function select_screen.handleInput(self)
   return nil
 end
 
--- this is registered for future entering of the 2p vs local lobby
+-- this is registered for future entering of the 2p vs local lobby, only preserved per session
 function select_screen.savePlayer2Config(self)
   global_op_state = shallowcpy(self.players[self.op_player_number])
   global_op_state.character = global_op_state.character_is_random or global_op_state.character
@@ -704,6 +704,8 @@ function select_screen.savePlayer2Config(self)
   global_op_state.wants_ready = false
 end
 
+-- may return a function for transitioning into a different screen if the opponent left or the server confirmed the start of the game
+-- returns nil if staying in select_screen
 function select_screen.handleServerMessages(self)
   local messages = server_queue:pop_all_with("win_counts", "menu_state", "ranked_match_approved", "leave_room", "match_start", "ranked_match_denied")
   if self.roomInitializationMessage then
@@ -740,7 +742,7 @@ end
 function select_screen.updatePlayerFromMenuStateMessage(self, msg)
   if GAME.battleRoom.spectating then
     -- server makes no distinction for messages sent to spectators between player_number and op_player_number
-    -- messages are also always sent separately for both players so that this does in fact cover both players
+    -- messages are also always sent separately for both players so this does in fact cover both players
       self:initializeFromMenuState(msg.player_number, msg.menu_state)
       refresh_based_on_own_mods(self.players[msg.player_number])
       character_loader_load(self.players[msg.player_number].character)
@@ -780,8 +782,8 @@ function select_screen.updateWinCountsFromMessage(self, msg)
   end
 end
 
+-- Use the seed the server gives us if it makes one, else generate a basic one off data both clients have.
 function select_screen.getSeed(self, msg)
-  -- Use the seed the server gives us if it makes one, else generate a basic one off data both clients have.
   local seed
   if msg.seed or (replay_of_match_so_far and replay_of_match_so_far.vs and replay_of_match_so_far.vs.seed) then
     seed = msg.seed or (replay_of_match_so_far and replay_of_match_so_far.vs and replay_of_match_so_far.vs.seed)
@@ -854,7 +856,8 @@ function select_screen.startNetPlayMatch(self, msg)
       match_type = "Casual"
     end
     replay_of_match_so_far = nil
-    P1.play_to_end = true --this makes non local stacks run until caught up
+    --this makes non local stacks run until caught up
+    P1.play_to_end = true
     P2.play_to_end = true
   end
 
@@ -871,6 +874,7 @@ function select_screen.startNetPlayMatch(self, msg)
   return {main_dumb_transition, {main_net_vs, to_print, 0, 0}}
 end
 
+-- returns transition to local vs screen
 function select_screen.start2pLocalMatch(self)
   GAME.match = Match("vs", GAME.battleRoom)
   P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
@@ -889,6 +893,7 @@ function select_screen.start2pLocalMatch(self)
   return main_dumb_transition, {main_local_vs, "", 0, 0}
 end
 
+-- returns transition to local_vs_yourself screen
 function select_screen.start1pLocalMatch(self)
   GAME.match = Match("vs", GAME.battleRoom)
   P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
