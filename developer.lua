@@ -1,10 +1,12 @@
 -- Put any local development changes you need in here that you don't want commited.
 
-local launch_type = arg[2]
-if launch_type == "test" or launch_type == "debug" then
-    require "lldebugger"
-    TESTS_ENABLED = 1
-    if launch_type == "debug" then
+for _, value in pairs(arg) do
+    if value == "test" then
+      TESTS_ENABLED = 1
+    elseif value == "debug" then
+        require "lldebugger"
         lldebugger.start()
+    elseif value == "profile" then
+      PROFILING_ENABLED = 1
     end
 end

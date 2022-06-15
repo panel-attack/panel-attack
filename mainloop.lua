@@ -86,7 +86,7 @@ function fmainloop()
     require("ServerQueueTests")
     require("StackTests")
     require("table_util_tests")
-    require("performanceTests")
+    require("tests/performanceTests")
   end
 
   local func, arg = main_title, nil
@@ -1983,6 +1983,9 @@ end
 
 -- quit handling
 function love.quit()
+  if PROFILING_ENABLED then
+    GAME.profiler.report("profiler.log")
+  end
   if network_connected() then
     json_send({logout = true})
   end

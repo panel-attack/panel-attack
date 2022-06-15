@@ -33,6 +33,11 @@ require("panels")
 require("theme")
 require("click_menu")
 require("rich_presence.RichPresence")
+
+if PROFILING_ENABLED then
+  GAME.profiler = require("profiler")
+end
+
 local logger = require("logger")
 GAME.scores = require("scores")
 GAME.rich_presence = RichPresence()
@@ -47,6 +52,10 @@ local mainloop = nil
 
 -- Called at the beginning to load the game
 function love.load()
+  if PROFILING_ENABLED then
+    GAME.profiler:start()
+  end
+  
   math.randomseed(os.time())
   for i = 1, 4 do
     math.random()
