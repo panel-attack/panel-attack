@@ -879,32 +879,15 @@ function select_screen.startMatch(self, msg)
 
   replay.vs.ranked = msg.ranked
 
-  local abort = self:showGameStartMessage()
-  if abort then
-    return abort
-  end
-
   -- Proceed to the game screen and start the game
   P1:starting_state()
   P2:starting_state()
-  return {main_dumb_transition, {main_net_vs, "", 0, 0}}
-end
 
-function select_screen.showGameStartMessage(self)
   local to_print = loc("pl_game_start") .. "\n" .. loc("level") .. ": " .. P1.level .. "\n" .. loc("opponent_level") .. ": " .. P2.level
   if P1.play_to_end or P2.play_to_end then
     to_print = loc("pl_spectate_join")
   end
-
-  -- For a short time, show the game start / spectate message
-  for i = 1, 30 do
-    gprint(to_print, unpack(themes[config.theme].main_menu_screen_pos))
-    if not do_messages() then
-      return {main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}}
-    end
-    process_all_data_messages() -- process data to get initial panel stacks setup
-    wait()
-  end
+  return {main_dumb_transition, {main_net_vs, to_print, 0, 0}}
 end
 
 function select_screen.initialize(self, character_select_mode)
