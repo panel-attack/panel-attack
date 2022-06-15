@@ -523,7 +523,6 @@ function select_screen.initializeFromPlayerConfig(self, playerNumber)
 end
 
 function select_screen.initializeFromMenuState(self, playerNumber, menuState)
-  print("overwriting with menustate for playernumber "..playerNumber.."with \n"..json.encode(menuState))
   self.players[playerNumber].ranked = menuState.ranked
   self.players[playerNumber].stage = menuState.stage
   self.players[playerNumber].stage_is_random = menuState.stage_is_random
@@ -613,7 +612,6 @@ function select_screen.sendMenuState(self)
   menuState.ready = self.players[self.my_player_number].ready
   menuState.level = self.players[self.my_player_number].level
 
-  print("sending menuState \n " .. json.encode(menuState))
   json_send({menu_state = menuState})
 end
 
@@ -768,8 +766,8 @@ function select_screen.updatePlayerFromMenuStateMessage(self, msg)
       stage_loader_load(self.players[msg.player_number].stage)
       self:refreshLoadingState(msg.player_number)
   else
-    print("updating player from menu state \n".. json.encode(msg))
     -- when being a player, server does not make a distinction for player_number as there are no game modes for 2+ players yet
+    -- thus automatically assume op_player
     self:initializeFromMenuState(self.op_player_number, msg.menu_state)
     refresh_based_on_own_mods(self.players[self.op_player_number])
     character_loader_load(self.players[self.op_player_number].character)
