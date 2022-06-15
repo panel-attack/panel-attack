@@ -938,8 +938,6 @@ function main_net_vs_lobby()
   local notice = {[true] = loc("lb_select_player"), [false] = loc("lb_alone")}
   local leaderboard_string = ""
   local my_rank
-  match_type = ""
-  match_type_message = ""
   --attempt login
   read_user_id_file()
   if not my_user_id then

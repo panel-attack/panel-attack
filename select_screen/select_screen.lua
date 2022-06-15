@@ -93,7 +93,14 @@ function select_screen.do_leave()
 end
 
 -- Function to tell the select screen to exit
-function select_screen.on_quit()
+function select_screen.on_quit(self)
+  -- reset player ids and match type
+  -- this is necessary because the player ids are only supplied on initial joining and then assumed to stay the same for consecutive games in the same room
+  self.my_player_number = nil
+  self.op_player_number = nil
+  match_type = ""
+  match_type_message = ""
+
   if themes[config.theme].musics.select_screen then
     stop_the_music()
   end
@@ -683,7 +690,7 @@ function select_screen.handleInput(self)
           end
         elseif menu_escape() then
           if cursor.positionId == "__Leave" then
-            return self.on_quit()
+            return self:on_quit()
           end
           cursor.selected = false
           cursor.position = shallowcpy(self.name_to_xy_per_page[self.current_page]["__Leave"])
