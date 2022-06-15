@@ -881,11 +881,6 @@ function select_screen.startMatch(self, msg)
 
   replay.vs.ranked = msg.ranked
 
-  to_print = loc("pl_game_start") .. "\n" .. loc("level") .. ": " .. P1.level .. "\n" .. loc("opponent_level") .. ": " .. P2.level
-  if P1.play_to_end or P2.play_to_end then
-    to_print = loc("pl_spectate_join")
-  end
-
   local abort = self:showGameStartMessage()
   if abort then
     return abort
@@ -898,6 +893,11 @@ function select_screen.startMatch(self, msg)
 end
 
 function select_screen.showGameStartMessage(self)
+  local to_print = loc("pl_game_start") .. "\n" .. loc("level") .. ": " .. P1.level .. "\n" .. loc("opponent_level") .. ": " .. P2.level
+  if P1.play_to_end or P2.play_to_end then
+    to_print = loc("pl_spectate_join")
+  end
+
   -- For a short time, show the game start / spectate message
   for i = 1, 30 do
     gprint(to_print, unpack(themes[config.theme].main_menu_screen_pos))
