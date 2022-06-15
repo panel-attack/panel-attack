@@ -44,6 +44,7 @@ function select_screen_graphics.draw(self, select_screen)
   end
 
   self:drawPlayerInfo()
+  self:drawMatchTypeString()
   self:draw1pRecords()
 end
 

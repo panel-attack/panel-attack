@@ -94,13 +94,6 @@ end
 
 -- Function to tell the select screen to exit
 function select_screen.on_quit(self)
-  -- reset player ids and match type
-  -- this is necessary because the player ids are only supplied on initial joining and then assumed to stay the same for consecutive games in the same room
-  self.my_player_number = nil
-  self.op_player_number = nil
-  match_type = ""
-  match_type_message = ""
-
   if themes[config.theme].musics.select_screen then
     stop_the_music()
   end

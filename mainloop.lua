@@ -935,6 +935,12 @@ function main_net_vs_lobby()
   local unpaired_players = {} -- list
   local willing_players = {} -- set
   local spectatable_rooms = {}
+  -- reset player ids and match type
+  -- this is necessary because the player ids are only supplied on initial joining and then assumed to stay the same for consecutive games in the same room
+  select_screen.my_player_number = nil
+  select_screen.op_player_number = nil
+  match_type = ""
+  match_type_message = ""
   local notice = {[true] = loc("lb_select_player"), [false] = loc("lb_alone")}
   local leaderboard_string = ""
   local my_rank
