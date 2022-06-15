@@ -4,7 +4,7 @@ function love.conf(t)
     t.version = "11.3"                  -- The LÖVE version this game was made for (string)
     t.console = false                   -- Attach a console (boolean, Windows only)
     t.accelerometerjoystick = false      -- Enable the accelerometer on iOS and Android by exposing it as a Joystick (boolean)
-    t.externalstorage = false           -- True to save files (and read from the save directory) in external storage on Android (boolean) 
+    t.externalstorage = true           -- True to save files (and read from the save directory) in external storage on Android (boolean), greatly facilitates installing mod on Android
     t.gammacorrect = false              -- Enable gamma-correct rendering, when supported by the system (boolean)
  
     t.audio.mic = false                 -- Request and use microphone capabilities in Android (boolean)
