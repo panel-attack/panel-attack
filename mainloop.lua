@@ -1670,13 +1670,18 @@ function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx)
   local next_func = nil
   local musicSetup = false
   local character = nil
-  local puzzle = nil
-  -- to track the initial randomization for reuse on failure
-  local failedStack = nil
   awesome_idx = awesome_idx or 1
 
+  if config.puzzle_randomColors then
+    puzzleSet = deepcpy(puzzleSet)
+
+    for _, puzzle in pairs(puzzleSet.puzzles) do
+      puzzle.stack = Puzzle.randomizeColorString(puzzle.stack)
+    end
+  end
+
   function next_func()
-    
+
     if not musicSetup then
       current_stage = config.stage
       if current_stage == random_stage_special_value then
@@ -1698,9 +1703,7 @@ function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx)
     if awesome_idx == nil then
       awesome_idx = math.random(#puzzleSet.puzzles)
     end
-    puzzle = puzzleSet.puzzles[awesome_idx]
-    puzzle.randomizeColors = failedStack and false or config.randomizeColors
-    puzzle.stack = failedStack and failedStack or puzzle.stack
+    local puzzle = puzzleSet.puzzles[awesome_idx]
     local isValid, validationError = puzzle:validate()
     if isValid then
       P1:set_puzzle_state(puzzle)
@@ -1726,7 +1729,6 @@ function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx)
 
     local function processGameResults(gameResult) 
       if P1:puzzle_done() then -- writes successful puzzle replay and ends game
-        failedStack = nil
         awesome_idx = (awesome_idx % #puzzleSet.puzzles) + 1
         if awesome_idx == 1 then
           return {game_over_transition, {main_select_puzz, loc("pl_you_win"), P1:pick_win_sfx()}}
@@ -1735,7 +1737,6 @@ function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx)
         end
       elseif P1:puzzle_failed() then -- writes failed puzzle replay and returns to menu
         SFX_GameOver_Play = 1
-        failedStack = puzzle.stack
         return {game_over_transition, {next_func, loc("pl_you_lose"), nil, -1, true}}
       end
     end
