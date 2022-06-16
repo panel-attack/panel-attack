@@ -787,7 +787,7 @@ function select_screen.startNetPlayMatch(self, msg)
   -- mainly for spectator mode, those characters have already been loaded otherwise
   character_loader_load(msg.player_settings.character)
   character_loader_load(msg.opponent_settings.character)
-  self.current_stage = msg.stage
+  current_stage = msg.stage
   stage_loader_load(msg.stage)
   character_loader_wait()
   stage_loader_wait()
@@ -849,7 +849,7 @@ function select_screen.start2pLocalMatch(self)
   GAME.match.P2 = P2
   P1:set_garbage_target(P2)
   P2:set_garbage_target(P1)
-  self.current_stage = self.players[math.random(1, #self.players)].stage
+  current_stage = self.players[math.random(1, #self.players)].stage
   stage_loader_load(current_stage)
   stage_loader_wait()
   P2:moveForPlayerNumber(2)
