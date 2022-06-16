@@ -82,6 +82,8 @@ function refreshBasedOnOwnMods(player)
     end
 
     resolveRandomStage()
+    player.stage_display_name = stages[player.stage].stage_display_name
+    stage_loader_load(player.stage)
 
     -- character
     if characters[player.selectedCharacter] then
@@ -103,6 +105,8 @@ function refreshBasedOnOwnMods(player)
     end
 
     resolveRandomCharacter()
+    player.character_display_name = characters[player.character].character_display_name
+    character_loader_load(player.character)
   end
 end
 
@@ -173,37 +177,25 @@ function select_screen.on_select(self, player, super)
   elseif player.cursor.positionId == "__Random" then
     player.selectedCharacter = random_character_special_value
     refreshBasedOnOwnMods(player)
-    player.character_display_name = characters[player.character].display_name
-    character_loader_load(player.character)
     player.cursor.positionId = "__Ready"
     player.cursor.position = shallowcpy(self.name_to_xy_per_page[self.current_page]["__Ready"])
     player.cursor.can_super_select = false
   elseif player.cursor.positionId == "__Mode" then
     player.ranked = not player.ranked
   elseif (player.cursor.positionId ~= "__Empty" and player.cursor.positionId ~= "__Reserved") then
-    player.selectedCharacter = nil
-    player.character = player.cursor.positionId
-    if characters[player.character]:is_bundle() then -- may pick a bundle
-      player.selectedCharacter = player.character
-      player.character = table.getRandomElement(characters[player.selectedCharacter].sub_characters)
-    end
-    player.character_display_name = characters[player.character].display_name
-    local character = characters[player.character]
-    if not player.selectedCharacter then
-      noisy = character:play_selection_sfx()
-    elseif characters[player.selectedCharacter] then
+    player.selectedCharacter = player.cursor.positionId
+    local character = characters[player.selectedCharacter]
+    if character then
       noisy = characters[player.selectedCharacter]:play_selection_sfx()
-    end
-    character_loader_load(player.character)
-    if super then
-      if character.stage then
-        player.selectedStage = character.stage
-        refreshBasedOnOwnMods(player)
-        stage_loader_load(player.stage)
+      if super then
+        if character.stage then
+          player.selectedStage = character.stage
+        end
+        if character.panels then
+          player.panels_dir = character.panels
+        end
       end
-      if character.panels then
-        player.panels_dir = character.panels
-      end
+      refreshBasedOnOwnMods(player)
     end
     --When we select a character, move cursor to "__Ready"
     player.cursor.positionId = "__Ready"
@@ -513,18 +505,6 @@ function select_screen.initializeFromMenuState(self, playerNumber, menuState)
   self.players[playerNumber].cursor.position = self.name_to_xy_per_page[self.current_page][menuState.cursor]
 end
 
-function select_screen.loadCharacter(self, playerNumber)
-  refreshBasedOnOwnMods(self.players[playerNumber])
-  character_loader_load(self.players[playerNumber].character)
-  self.players[playerNumber].character_display_name = characters[self.players[playerNumber].character].display_name
-end
-
-function select_screen.loadStage(self, playerNumber)
-  refreshBasedOnOwnMods(self.players[playerNumber])
-  stage_loader_load(self.players[playerNumber].stage)
-  self.players[playerNumber].stage_display_name = stages[self.players[playerNumber].stage].display_name
-end
-
 function select_screen.setUpMyPlayer(self)
   -- set up the local player
   if not self:isNetPlay() then
@@ -535,8 +515,7 @@ function select_screen.setUpMyPlayer(self)
     self:initializeFromPlayerConfig(self.my_player_number)
   end
 
-  self:loadCharacter(self.my_player_number)
-  self:loadStage(self.my_player_number)
+  refreshBasedOnOwnMods(self.players[self.my_player_number])
   self:refreshLoadingState(self.my_player_number)
 end
 
@@ -555,8 +534,7 @@ function select_screen.setUpOpponentPlayer(self)
     end
   end
 
-  self:loadCharacter(self.op_player_number)
-  self:loadStage(self.op_player_number)
+  refreshBasedOnOwnMods(self.players[self.op_player_number])
   self:refreshLoadingState(self.op_player_number)
 end
 
@@ -668,16 +646,18 @@ function select_screen.handleInput(self)
       player.cursor.positionId = self.drawMap[self.current_page][cursor.position[1]][cursor.position[2]]
       player.wants_ready = player.cursor.selected and player.cursor.positionId == "__Ready"
     end
-    self:updateMyConfig()
 
     if select_screen.character_select_mode == "2p_local_vs" then
       self:savePlayer2Config()
     end
 
-    if self:isNetPlay() and not GAME.battleRoom.spectating and not deep_content_equal(self.players[self.my_player_number], self.myPreviousConfig) then
-      self:sendMenuState()
+    if not deep_content_equal(self.players[self.my_player_number], self.myPreviousConfig) then
+      self:updateMyConfig()
+      if self:isNetPlay() and not GAME.battleRoom.spectating  then
+        self:sendMenuState()
+      end
+      self.myPreviousConfig = deepcpy(self.players[self.my_player_number])
     end
-    self.myPreviousConfig = deepcpy(self.players[self.my_player_number])
   else -- (we are spectating)
     if menu_escape() then
       self.do_leave()
@@ -732,23 +712,20 @@ end
 -- updates one player based on the given menu state
 -- different from updatePlayerStatesFromMessage that it only updates one player and works from a different message type
 function select_screen.updatePlayerFromMenuStateMessage(self, msg)
+  local player_number
   if GAME.battleRoom.spectating then
     -- server makes no distinction for messages sent to spectators between player_number and op_player_number
     -- messages are also always sent separately for both players so this does in fact cover both players
-      self:initializeFromMenuState(msg.player_number, msg.menu_state)
-      refreshBasedOnOwnMods(self.players[msg.player_number])
-      character_loader_load(self.players[msg.player_number].character)
-      stage_loader_load(self.players[msg.player_number].stage)
-      self:refreshLoadingState(msg.player_number)
+    player_number = msg.player_number
   else
     -- when being a player, server does not make a distinction for player_number as there are no game modes for 2+ players yet
     -- thus automatically assume op_player
-    self:initializeFromMenuState(self.op_player_number, msg.menu_state)
-    refreshBasedOnOwnMods(self.players[self.op_player_number])
-    character_loader_load(self.players[self.op_player_number].character)
-    stage_loader_load(self.players[self.op_player_number].stage)
-    self:refreshLoadingState(self.op_player_number)
+    player_number = self.op_player_number
   end
+
+  self:initializeFromMenuState(player_number, msg.menu_state)
+  refreshBasedOnOwnMods(self.players[player_number])
+  self:refreshLoadingState(player_number)
   self:refreshReadyStates()
 end
 
@@ -796,10 +773,7 @@ function select_screen.startNetPlayMatch(self, msg)
   refreshBasedOnOwnMods(msg.player_settings)
   refreshBasedOnOwnMods(msg) -- for stage only, other data are meaningless to us
   -- mainly for spectator mode, those characters have already been loaded otherwise
-  character_loader_load(msg.player_settings.character)
-  character_loader_load(msg.opponent_settings.character)
   current_stage = msg.stage
-  stage_loader_load(msg.stage)
   character_loader_wait()
   stage_loader_wait()
   GAME.match = Match("vs", GAME.battleRoom)
