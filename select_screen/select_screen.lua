@@ -843,14 +843,7 @@ function select_screen.start1pLocalMatch(self)
   GAME.match = Match("vs", GAME.battleRoom)
   P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
   if GAME.battleRoom.trainingModeSettings then
-    GAME.match.attackEngine = AttackEngine(P1)
-    local startTime = 150
-    local delayPerAttack = 6
-    local attackCountPerDelay = 15
-    local delay = GARBAGE_TRANSIT_TIME + GARBAGE_DELAY + (attackCountPerDelay * delayPerAttack) + 1
-    for i = 1, attackCountPerDelay, 1 do
-      GAME.match.attackEngine:addAttackPattern(GAME.battleRoom.trainingModeSettings.width, GAME.battleRoom.trainingModeSettings.height, startTime + (i * delayPerAttack) --[[start time]], delay--[[repeat]], nil--[[attack count]], false--[[metal]],  false--[[chain]])  
-    end
+    self:initializeAttackEngine()
   end
   GAME.match.P1 = P1
   if not GAME.battleRoom.trainingModeSettings then
@@ -862,6 +855,33 @@ function select_screen.start1pLocalMatch(self)
   stage_loader_wait()
   P1:starting_state()
   return main_dumb_transition, {main_local_vs_yourself, "", 0, 0}
+end
+
+function select_screen.initializeAttackEngine(self)
+  local trainingModeSettings = GAME.battleRoom.trainingModeSettings
+  local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
+  local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
+  local disableQueueLimit = trainingModeSettings.disableQueueLimit or false
+  GAME.match.attackEngine = AttackEngine(P1, delayBeforeStart, delayBeforeRepeat, disableQueueLimit)
+  for _, values in ipairs(trainingModeSettings.attackPatterns) do
+    if values.chain then
+      if type(values.chain) == "number" then
+        for i = 1, values.height do
+          GAME.match.attackEngine:addAttackPattern(6, i, values.startTime + ((i-1) * values.chain), false, true)
+        end
+        GAME.match.attackEngine:addEndChainPattern(values.startTime + ((values.height - 1) * values.chain) + values.chainEndDelta)
+      elseif type(values.chain) == "table" then
+        for i, chainTime in ipairs(values.chain) do
+          GAME.match.attackEngine:addAttackPattern(6, i, chainTime, false, true)
+        end
+        GAME.match.attackEngine:addEndChainPattern(values.chainEndTime)
+      else
+        error("The 'chain' field in your attack file is invalid. It should either be a number or a list of numbers.")
+      end
+    else
+      GAME.match.attackEngine:addAttackPattern(values.width, values.height or 1, values.startTime, values.metal or false, false)
+    end
+  end
 end
 
 function select_screen.initialize(self, character_select_mode)
