@@ -1587,6 +1587,7 @@ function loadFromReplay(replay)
   P1.max_runs_per_frame = 1
   P1.cur_wait_time = replay.cur_wait_time or default_input_repeat_delay
 
+  P1.selectedCharacter = P1.character
   refreshBasedOnOwnMods(P1)
 
   if P2 then
@@ -1596,6 +1597,7 @@ function loadFromReplay(replay)
     P2.do_countdown = replay.do_countdown or false
     P2.max_runs_per_frame = 1
     P2.cur_wait_time = replay.P2_cur_wait_time or default_input_repeat_delay
+    P2.selectedCharacter = P2.character
     refreshBasedOnOwnMods(P2)
   end
   character_loader_wait()
