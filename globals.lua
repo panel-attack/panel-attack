@@ -105,7 +105,9 @@ config = {
 	popfx                         = true,
 	cardfx_scale                  = 100,
 	renderTelegraph               = true,
-	renderAttacks                 = true
+	renderAttacks                 = true,
+  fallbackCharacter             = random_character_special_value,
+  fallbackStage                 = random_stage_special_value,
 }
 
 current_use_music_from = "stage" -- either "stage" or "characters", no other values!

@@ -71,13 +71,13 @@ function refreshBasedOnOwnMods(player)
       end
     else
       if player.selectedStage ~= random_stage_special_value then
-        -- don't have the selected stage and it's not random, use the fallback or a random mod
-        if select_screen.fallback_when_missing[1] then
-          player.stage = select_screen.fallback_when_missing[1]
-        else
-          player.selectedStage = random_stage_special_value
-          player.stage = nil
-        end
+        -- don't have the selected stage and it's not random, use the fallback
+          player.selectedStage = config.fallbackStage
+
+          if player.selectedStage == random_stage_special_value then
+            -- to make sure it gets randomised again
+            player.stage = nil
+          end
       end
     end
 
@@ -95,12 +95,12 @@ function refreshBasedOnOwnMods(player)
       if player.character_display_name and characters_ids_by_display_names[player.character_display_name] and not characters[characters_ids_by_display_names[player.character_display_name][1]]:is_bundle() then
         player.character = characters_ids_by_display_names[player.character_display_name][1]
       elseif player.selectedCharacter ~= random_character_special_value then
-        -- don't have the selected character and it's not random, use the fallback or a random character
-        if select_screen.fallback_when_missing[2] then
-          player.character = select_screen.fallback_when_missing[2]
+        -- don't have the selected character and it's not random, use the fallback
+        player.selectedCharacter = config.fallbackCharacter
+        if player.selectedCharacter == random_character_special_value then
+            -- to make sure it gets randomised again
+          player.character = nil
         end
-        player.selectedCharacter = random_character_special_value
-        player.character = nil
       end
     end
 
@@ -418,12 +418,6 @@ function select_screen.loadThemeAssets(self)
   self:playThemeMusic()
   GAME.backgroundImage = themes[config.theme].images.bg_select_screen
   reset_filters()
-end
-
--- sets character / stage to be used for the opponent in case you don't have their mod
--- there is currently no config to load a user preference from but it is already functional
-function select_screen.setFallbackAssets(self)
-  self.fallback_when_missing = {nil, nil}
 end
 
 function select_screen.setupForNetPlay(self)
