@@ -1668,27 +1668,33 @@ end
 -- creates a puzzle game function for a given puzzle and index
 function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx)
   local next_func = nil
-  local musicSetup = false
+  local setupComplete = false
   local character = nil
   awesome_idx = awesome_idx or 1
 
-  if config.puzzle_randomColors then
-    puzzleSet = deepcpy(puzzleSet)
-
-    for _, puzzle in pairs(puzzleSet.puzzles) do
-      puzzle.stack = Puzzle.randomizeColorString(puzzle.stack)
+  local function setupPuzzles()
+    if config.puzzle_randomColors then
+      puzzleSet = deepcpy(puzzleSet)
+  
+      for _, puzzle in pairs(puzzleSet.puzzles) do
+        puzzle.stack = Puzzle.randomizeColorString(puzzle.stack)
+      end
     end
-  end
 
-  function next_func()
-
-    if not musicSetup then
-      current_stage = config.stage
+    current_stage = config.stage
       if current_stage == random_stage_special_value then
         current_stage = nil
       end
       commonGameSetup()
-      musicSetup = true
+      setupComplete = true
+  end
+
+  function next_func()
+
+    -- the body of makeSelectPuzzleSetFunction is already getting called when entering the puzzle select screen
+    -- for that reason setup needs to happen inside next_func
+    if not setupComplete then
+      setupPuzzles()
     end
 
     GAME.match = Match("puzzle")
