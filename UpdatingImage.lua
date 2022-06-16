@@ -23,6 +23,12 @@ function UpdatingImage:update(dt)
 end
 
 function UpdatingImage:draw()
+  local x = math.floor(self.totalTime * self.speedX)
+  local y = math.floor(self.totalTime * -self.speedY)
+
+  -- note how the Quad's width and height are larger than the image width and height.
+  local bg_quad = love.graphics.newQuad(x, y, self.width, self.height, self.image:getDimensions())
+
   local x_scale = 1
   local y_scale = 1
   if not self.tiled then   
@@ -30,10 +36,6 @@ function UpdatingImage:draw()
     y_scale = self.height / self.image:getHeight()
     gfx_q:push({love.graphics.draw, {self.image, 0, 0, 0, x_scale, y_scale}})
   else
-    local x = math.floor(self.totalTime * self.speedX)
-    local y = math.floor(self.totalTime * -self.speedY)
-    -- note how the Quad's width and height are larger than the image width and height.
-    local bg_quad = love.graphics.newQuad(x, y, self.width, self.height, self.image:getDimensions())
     gfx_q:push({love.graphics.draw, {self.image, bg_quad, 0, 0, 0, x_scale, y_scale}})
   end
 end
