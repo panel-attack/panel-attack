@@ -249,33 +249,19 @@ function select_screen.change_stage(state, increment)
 end
 
 -- Resolve the current character if it is random
-function select_screen.resolve_character_random(playerConfig)
-  if playerConfig.character_is_random then
-    if playerConfig.character_is_random == random_character_special_value then
-      playerConfig.character = table.getRandomElement(characters_ids_for_current_theme)
-      if characters[playerConfig.character]:is_bundle() then -- may pick a bundle
-        playerConfig.character = table.getRandomElement(characters[playerConfig.character].sub_characters)
-      end
-    else
-      playerConfig.character = table.getRandomElement(characters[playerConfig.character_is_random].sub_characters)
+function select_screen.resolveRandomCharacter(playerConfig)
+    playerConfig.character = table.getRandomElement(characters_ids_for_current_theme)
+    if characters[playerConfig.character]:is_bundle() then -- may pick a bundle
+      playerConfig.character = table.getRandomElement(characters[playerConfig.character].sub_characters)
     end
-    return true
-  end
-  return false
 end
 
 -- Resolve the current stage if it is random
-function select_screen.resolve_stage_random(playerConfig)
-  if playerConfig.stage_is_random ~= nil then
-    if playerConfig.stage_is_random == random_stage_special_value then
-      playerConfig.stage = table.getRandomElement(stages_ids_for_current_theme)
-      if stages[playerConfig.stage]:is_bundle() then
-        playerConfig.stage = table.getRandomElement(stages[playerConfig.stage].sub_stages)
-      end
-    else
-      playerConfig.stage = table.getRandomElement(stages[playerConfig.stage_is_random].sub_stages)
+function select_screen.resolveRandomStage(playerConfig)
+    playerConfig.stage = table.getRandomElement(stages_ids_for_current_theme)
+    if stages[playerConfig.stage]:is_bundle() then
+      playerConfig.stage = table.getRandomElement(stages[playerConfig.stage].sub_stages)
     end
-  end
 end
 
 -- returns the navigable grid layout of the select screen before loading characters
@@ -517,16 +503,16 @@ function select_screen.initializeFromMenuState(self, playerNumber, menuState)
 end
 
 function select_screen.loadCharacter(self, playerNumber)
-  if self.players[playerNumber].character_is_random then
-    select_screen.resolve_character_random(self.players[playerNumber])
+  if self.players[playerNumber].character_is_random == random_character_special_value then
+    select_screen.resolveRandomCharacter(self.players[playerNumber])
   end
   character_loader_load(self.players[playerNumber].character)
   self.players[playerNumber].character_display_name = characters[self.players[playerNumber].character].display_name
 end
 
 function select_screen.loadStage(self, playerNumber)
-  if self.players[playerNumber].stage_is_random then
-    select_screen.resolve_stage_random(self.players[playerNumber])
+  if self.players[playerNumber].stage_is_random == random_stage_special_value then
+    select_screen.resolveRandomStage(self.players[playerNumber])
   end
   stage_loader_load(self.players[playerNumber].stage)
   self.players[playerNumber].stage_display_name = stages[self.players[playerNumber].stage].display_name
