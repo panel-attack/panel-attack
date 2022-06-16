@@ -45,6 +45,7 @@ function select_screen_graphics.draw(self, select_screen)
 
   self:drawPlayerInfo()
   self:drawMatchTypeString()
+  self:drawPagingIndicator()
   self:draw1pRecords()
 end
 
