@@ -878,7 +878,7 @@ function select_screen.start1pLocalMatch(self)
     P1:set_garbage_target(P1)
   end
   P2 = nil
-  self.current_stage = self.players[self.my_player_number].stage
+  current_stage = self.players[self.my_player_number].stage
   stage_loader_load(current_stage)
   stage_loader_wait()
   P1:starting_state()
