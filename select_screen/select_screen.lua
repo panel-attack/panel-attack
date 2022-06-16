@@ -77,8 +77,6 @@ function select_screen.refreshReadyStates(self)
           self.players[playerNumber].wants_ready and
           table.trueForAll(self.players, function(pc) return pc.loaded end)
     else
-      print("wants ready: " .. tostring(self.players[playerNumber].wants_ready) .. ", loaded: " .. tostring(self.players[playerNumber].loaded))
-      print("posId: " .. tostring(self.players[playerNumber].cursor.positionId) .. ", selected: " .. tostring(self.players[playerNumber].cursor.selected))
       self.players[playerNumber].ready = self.players[playerNumber].wants_ready and self.players[playerNumber].loaded
     end
   end
