@@ -240,29 +240,11 @@ end
 -- Sets the state object to a new stage based on the increment
 function select_screen.change_stage(player, increment)
   -- random_stage_special_value is placed at the end of the list and is 'replaced' by a random pick and selectedStage=true
-  local current = nil
-  for k, v in ipairs(stages_ids_for_current_theme) do
-    if (not player.selectedStage and v == player.stage) or (player.selectedStage and v == player.selectedStage) then
-      current = k
-      break
-    end
-  end
-  if player.stage == nil or player.selectedStage == random_stage_special_value then
-    current = #stages_ids_for_current_theme + 1
-  end
-  if current == nil then -- stage belonged to another set of stages, it's no more in the list
-    current = 0
-  end
-  local dir_count = #stages_ids_for_current_theme + 1
-  local new_stage_idx = ((current - 1 + increment) % dir_count) + 1
-  if new_stage_idx <= #stages_ids_for_current_theme then
-    local new_stage = stages_ids_for_current_theme[new_stage_idx]
-    if stages[new_stage]:is_bundle() then
-      player.selectedStage = new_stage
-    else
-      player.selectedStage = new_stage
-    end
-  end
+  local stages = stages_ids_for_current_theme
+  stages[#stages + 1] = random_stage_special_value
+  local currentId = table.indexOf(stages, player.selectedStage)
+  currentId = wrap(1, currentId + increment, #stages)
+  player.selectedStage = stages[currentId]
   refreshBasedOnOwnMods(player)
   logger.trace("stage and selectedStage: " .. player.stage .. " / " .. (player.selectedStage or "nil"))
 end
