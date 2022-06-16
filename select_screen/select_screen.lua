@@ -990,10 +990,10 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
 
     -- Handle one player vs game setup
     if self.players[self.my_player_number].ready and self.character_select_mode == "1p_vs_yourself" then
-      self:start1pLocalMatch()
+      return self:start1pLocalMatch()
     -- Handle two player vs game setup
     elseif select_screen.character_select_mode == "2p_local_vs" and self.players[self.my_player_number].ready and self.players[self.op_player_number].ready then
-      self:start2pLocalMatch()
+      return self:start2pLocalMatch()
     -- Fetch the next network messages for 2p vs. When we get a start message we will transition there.
     elseif select_screen:isNetPlay() then
       if not do_messages() then
