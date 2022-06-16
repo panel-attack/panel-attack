@@ -175,21 +175,21 @@ end
     end
     local character = characters[str]
     if str == "P1" then
-      if self.select_screen.players[self.select_screen.my_player_number].character_is_random then
-        if self.select_screen.players[self.select_screen.my_player_number].character_is_random == random_character_special_value then
+      if self.select_screen.players[self.select_screen.my_player_number].selectedCharacter then
+        if self.select_screen.players[self.select_screen.my_player_number].selectedCharacter == random_character_special_value then
           character = random_character_special_value
         else
-          character = characters[self.select_screen.players[self.select_screen.my_player_number].character_is_random]
+          character = characters[self.select_screen.players[self.select_screen.my_player_number].selectedCharacter]
         end
       else
         character = characters[self.select_screen.players[self.select_screen.my_player_number].character]
       end
     elseif str == "P2" then
-      if self.select_screen.players[self.select_screen.op_player_number].character_is_random then
-        if self.select_screen.players[self.select_screen.op_player_number].character_is_random == random_character_special_value then
+      if self.select_screen.players[self.select_screen.op_player_number].selectedCharacter then
+        if self.select_screen.players[self.select_screen.op_player_number].selectedCharacter == random_character_special_value then
           character = random_character_special_value
         else
-          character = characters[self.select_screen.players[self.select_screen.op_player_number].character_is_random]
+          character = characters[self.select_screen.players[self.select_screen.op_player_number].selectedCharacter]
         end
       else
         character = characters[self.select_screen.players[self.select_screen.op_player_number].character]
@@ -498,17 +498,17 @@ function select_screen_graphics.draw_stage(self, player, player_number, x_paddin
   grectangle("line", self.render_x + padding_x, math.floor(self.render_y + y_padding - stage_dimensions[2] * 0.5), stage_dimensions[1], stage_dimensions[2])
 
   -- thumbnail or composed thumbnail (for bundles without thumbnails)
-  if player.stage_is_random == random_stage_special_value or (player.stage_is_random and not stages[player.stage_is_random]) or (player.stage_is_random and stages[player.stage_is_random] and stages[player.stage_is_random].images.thumbnail) or (not player.stage_is_random and stages[player.stage].images.thumbnail) then
+  if player.selectedStage == random_stage_special_value or (player.selectedStage and not stages[player.selectedStage]) or (player.selectedStage and stages[player.selectedStage] and stages[player.selectedStage].images.thumbnail) or (not player.selectedStage and stages[player.stage].images.thumbnail) then
     local thumbnail = themes[config.theme].images.IMG_random_stage
-    if player.stage_is_random and stages[player.stage_is_random] and stages[player.stage_is_random].images.thumbnail then
-      thumbnail = stages[player.stage_is_random].images.thumbnail
-    elseif not player.stage_is_random and stages[player.stage].images.thumbnail then
+    if player.selectedStage and stages[player.selectedStage] and stages[player.selectedStage].images.thumbnail then
+      thumbnail = stages[player.selectedStage].images.thumbnail
+    elseif not player.selectedStage and stages[player.stage].images.thumbnail then
       thumbnail = stages[player.stage].images.thumbnail
     end
     menu_drawf(thumbnail, self.render_x + padding_x, self.render_y + y_padding - 1, "left", "center", 0, stage_dimensions[1] / thumbnail:getWidth(), stage_dimensions[2] / thumbnail:getHeight())
-  elseif player.stage_is_random and stages[player.stage_is_random]:is_bundle() then
+  elseif player.selectedStage and stages[player.selectedStage]:is_bundle() then
     local half_stage_dimensions = {math.floor(stage_dimensions[1] * 0.5), math.floor(stage_dimensions[2] * 0.5)}
-    local sub_stages = stages[player.stage_is_random].sub_stages
+    local sub_stages = stages[player.selectedStage].sub_stages
     local sub_stages_count = math.min(4, #sub_stages) -- between 2 and 4 (inclusive), by design
 
     local thumbnail_1 = stages[sub_stages[1]].images.thumbnail
@@ -535,10 +535,10 @@ function select_screen_graphics.draw_stage(self, player, player_number, x_paddin
   menu_drawf(themes[config.theme].images.IMG_players[player_number], player_icon_pos[1], player_icon_pos[2], "center", "center")
   -- display name
   local display_name = nil
-  if player.stage_is_random == random_stage_special_value or (player.stage_is_random and not stages[player.stage_is_random]) then
+  if player.selectedStage == random_stage_special_value or (player.selectedStage and not stages[player.selectedStage]) then
     display_name = loc("random")
-  elseif player.stage_is_random then
-    display_name = stages[player.stage_is_random].display_name
+  elseif player.selectedStage then
+    display_name = stages[player.selectedStage].display_name
   else
     display_name = stages[player.stage].display_name
   end
