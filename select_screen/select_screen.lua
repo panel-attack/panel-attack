@@ -879,7 +879,6 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
   self.roomInitializationMessage = roomInitializationMessage
   self:initialize(character_select_mode)
   self:loadThemeAssets()
-  self:setFallbackAssets()
 
   self:prepareDrawMap()
   self:drawMapToPageIdMapTransform()
