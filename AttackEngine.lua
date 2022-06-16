@@ -15,10 +15,11 @@ AttackPattern =
 -- An attack engine sends attacks based on a set of rules.
 AttackEngine =
   class(
-  function(self, target, delayBeforeStart, delayBeforeRepeat)
+  function(self, target, delayBeforeStart, delayBeforeRepeat, disableQueueLimit)
     self.target = target
     self.delayBeforeStart = delayBeforeStart
     self.delayBeforeRepeat = delayBeforeRepeat
+    self.disableQueueLimit = disableQueueLimit
     self.attackPatterns = {}
     self.clock = 0
   end
@@ -43,28 +44,29 @@ function AttackEngine.addEndChainPattern(self, start, repeatDelay)
 end
 
 function AttackEngine.run(self)
-  local garbageToSend = {}
   local highestStartTime = self.attackPatterns[#self.attackPatterns].startTime
-  
+
   -- Finds the greatest startTime value found from all the attackPatterns
-  for _, patterns in ipairs(self.attackPatterns) do
-    highestStartTime = math.max(patterns.startTime, highestStartTime)
+  for i = 1, #self.attackPatterns do
+    highestStartTime = math.max(self.attackPatterns[i].startTime, highestStartTime)
   end
+
   local totalAttackTimeBeforeRepeat = self.delayBeforeRepeat + highestStartTime - self.delayBeforeStart
-  for _, attackPattern in ipairs(self.attackPatterns) do
-    if self.clock >= attackPattern.startTime then
-      local difference = self.clock - attackPattern.startTime
-      local remainder = difference % totalAttackTimeBeforeRepeat
-      if remainder == 0 then
-        if attackPattern.endsChain then
-          self.target.telegraph:chainingEnded(self.target.CLOCK)
-        else
-          self.target.telegraph:push(attackPattern.garbage, math.random(11, 17), math.random(1, 11), self.target.CLOCK)
+  if self.disableQueueLimit or self.target.garbage_q:len() <= 72 then
+    for i = 1, #self.attackPatterns do
+      if self.clock >= self.attackPatterns[i].startTime then
+        local difference = self.clock - self.attackPatterns[i].startTime
+        local remainder = difference % totalAttackTimeBeforeRepeat
+        if remainder == 0 then
+          if self.attackPatterns[i].endsChain then
+            self.target.telegraph:chainingEnded(self.target.CLOCK)
+          else
+            self.target.telegraph:push(self.attackPatterns[i].garbage, math.random(11, 17), math.random(1, 11), self.target.CLOCK)
+          end
         end
       end
     end
   end
-
 
   self.clock = self.clock + 1
 end
