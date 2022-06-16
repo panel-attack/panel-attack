@@ -240,7 +240,7 @@ end
 -- Sets the state object to a new stage based on the increment
 function select_screen.change_stage(player, increment)
   -- random_stage_special_value is placed at the end of the list and is 'replaced' by a random pick and selectedStage=true
-  local stages = stages_ids_for_current_theme
+  local stages = shallowcpy(stages_ids_for_current_theme)
   stages[#stages + 1] = random_stage_special_value
   local currentId = table.indexOf(stages, player.selectedStage)
   currentId = wrap(1, currentId + increment, #stages)
