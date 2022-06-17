@@ -647,7 +647,7 @@ function select_screen.handleInput(self)
     end
   else -- (we are spectating)
     if menu_escape() then
-      self.do_leave()
+      self:on_quit()
       return {main_net_vs_lobby} -- we left the select screen as a spectator
     end
   end
