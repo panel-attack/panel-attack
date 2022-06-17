@@ -1,17 +1,19 @@
 -- A puzzle is a particular instance of the game, where there is a specific goal for clearing the panels
 Puzzle =
   class(
-  function(self, puzzleType, doCountdown, moves, stack)
-    self.puzzleType = puzzleType
+  function(self, puzzleType, doCountdown, moves, stack, stop_time, shake_time)
+    self.puzzleType = puzzleType or "moves"
     self.doCountdown = doCountdown
-    self.moves = moves
+    self.moves = moves or 0
     self.stack = string.gsub(stack, "%s+", "") -- Remove whitespace so files can be easier to read
     self.randomizeColors = false
+    self.stop_time = stop_time or 0
+    self.shake_time = shake_time or 0
   end
 )
 
 function Puzzle.getPuzzleTypes()
-  return { "moves", "chain" }
+  return { "moves", "chain", "clear" }
 end
 
 function Puzzle.getLegalCharacters()
