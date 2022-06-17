@@ -64,42 +64,60 @@ function refreshBasedOnOwnMods(player)
     end
 
     -- stage
-    if stages[player.selectedStage] then
-      -- selected stage exists and shall be used
-      if player.stage ~= player.selectedStage then
-        player.stage = player.selectedStage
+    if player.selectedStage or player.stage then
+      if player.selectedStage == nil and player.stage ~= nil then
+        -- converting to the expected format:
+        -- selectedStage is tentative and unconfirmed, needs to be rechecked against available stages
+        -- stage is confirmed and is definitely available
+        player.selectedStage = player.stage
+        player.stage = nil
       end
-    else
-      if player.selectedStage ~= random_stage_special_value then
-        -- don't have the selected stage and it's not random, use a random stage
-          player.selectedStage = random_stage_special_value
-          player.stage = nil
+      if stages[player.selectedStage] then
+        -- selected stage exists and shall be used
+        if player.stage ~= player.selectedStage then
+          player.stage = player.selectedStage
+        end
+      else
+        if player.selectedStage ~= random_stage_special_value then
+          -- don't have the selected stage and it's not random, use a random stage
+            player.selectedStage = random_stage_special_value
+            player.stage = nil
+        end
       end
-    end
 
-    resolveRandomStage()
-    player.stage_display_name = stages[player.stage].stage_display_name
-    stage_loader_load(player.stage)
+      resolveRandomStage()
+      player.stage_display_name = stages[player.stage].stage_display_name
+      stage_loader_load(player.stage)
+    end
 
     -- character
-    if characters[player.selectedCharacter] then
-      if player.character ~= player.selectedCharacter then
-        player.character = player.selectedCharacter
-      end
-    else
-      -- when there is no stage or the stage the other player selected, check if there's a character with the same name
-      if player.character_display_name and characters_ids_by_display_names[player.character_display_name] and not characters[characters_ids_by_display_names[player.character_display_name][1]]:is_bundle() then
-        player.character = characters_ids_by_display_names[player.character_display_name][1]
-      elseif player.selectedCharacter ~= random_character_special_value then
-        -- don't have the selected character and it's not random, use a random character
-        player.selectedCharacter = random_character_special_value
+    if player.selectedCharacter or player.character then
+      if player.selectedCharacter == nil and player.character ~= nil then
+        -- converting to the expected format:
+        -- selectedCharacter is tentative and unconfirmed, needs to be rechecked against available characters
+        -- character is confirmed and is definitely available
+        player.selectedCharacter = player.character
         player.character = nil
       end
-    end
+      if characters[player.selectedCharacter] then
+        if player.character ~= player.selectedCharacter then
+          player.character = player.selectedCharacter
+        end
+      else
+        -- when there is no stage or the stage the other player selected, check if there's a character with the same name
+        if player.character_display_name and characters_ids_by_display_names[player.character_display_name] and not characters[characters_ids_by_display_names[player.character_display_name][1]]:is_bundle() then
+          player.character = characters_ids_by_display_names[player.character_display_name][1]
+        elseif player.selectedCharacter ~= random_character_special_value then
+          -- don't have the selected character and it's not random, use a random character
+          player.selectedCharacter = random_character_special_value
+          player.character = nil
+        end
+      end
 
-    resolveRandomCharacter()
-    player.character_display_name = characters[player.character].character_display_name
-    character_loader_load(player.character)
+      resolveRandomCharacter()
+      player.character_display_name = characters[player.character].character_display_name
+      character_loader_load(player.character)
+    end
   end
 end
 
