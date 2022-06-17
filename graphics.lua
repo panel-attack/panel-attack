@@ -517,14 +517,14 @@ function Stack.render(self)
   local function drawMoveCount()
     -- draw outside of stack's frame canvas
     if self.match.mode == "puzzle" then
-      --gprint(loc("pl_moves", self.puzzle_moves), self.score_x, self.score_y)
+      --gprint(loc("pl_moves", self.puzzle.remaining_moves), self.score_x, self.score_y)
       draw_label(themes[config.theme].images.IMG_moves, (self.origin_x + themes[config.theme].moveLabel_Pos[1]) / GFX_SCALE, (self.pos_y + themes[config.theme].moveLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].moveLabel_Scale)
-      if self.puzzleType == "moves" then
+      if self.puzzle.puzzleType == "moves" then
         -- display moves left
-        draw_number(self.puzzle_moves, themes[config.theme].images.IMG_number_atlas_1P, 10, move_quads, self.score_x + themes[config.theme].move_Pos[1], self.score_y + themes[config.theme].move_Pos[2], themes[config.theme].move_Scale, (30 / themes[config.theme].images.numberWidth_1P * themes[config.theme].move_Scale), (38 / themes[config.theme].images.numberHeight_1P * themes[config.theme].move_Scale), "center", self.multiplication)
+        draw_number(self.puzzle.remaining_moves, themes[config.theme].images.IMG_number_atlas_1P, 10, move_quads, self.score_x + themes[config.theme].move_Pos[1], self.score_y + themes[config.theme].move_Pos[2], themes[config.theme].move_Scale, (30 / themes[config.theme].images.numberWidth_1P * themes[config.theme].move_Scale), (38 / themes[config.theme].images.numberHeight_1P * themes[config.theme].move_Scale), "center", self.multiplication)
       else
         -- display total amount of moves
-        draw_number(math.abs(self.puzzle_moves), themes[config.theme].images.IMG_number_atlas_1P, 10, move_quads, self.score_x + themes[config.theme].move_Pos[1], self.score_y + themes[config.theme].move_Pos[2], themes[config.theme].move_Scale, (30 / themes[config.theme].images.numberWidth_1P * themes[config.theme].move_Scale), (38 / themes[config.theme].images.numberHeight_1P * themes[config.theme].move_Scale), "center", self.multiplication)  
+        draw_number(math.abs(self.puzzle.remaining_moves), themes[config.theme].images.IMG_number_atlas_1P, 10, move_quads, self.score_x + themes[config.theme].move_Pos[1], self.score_y + themes[config.theme].move_Pos[2], themes[config.theme].move_Scale, (30 / themes[config.theme].images.numberWidth_1P * themes[config.theme].move_Scale), (38 / themes[config.theme].images.numberHeight_1P * themes[config.theme].move_Scale), "center", self.multiplication)  
       end
     end
   end
@@ -590,7 +590,7 @@ function Stack.render(self)
     local shake_time = self.shake_time
 
     -- before the first move, display the stop time from the puzzle, not the stack
-    if self.match.mode == "puzzle" and self.puzzleType == "clear" and self.puzzle.moves == self.puzzle_moves then
+    if self.match.mode == "puzzle" and self.puzzle.puzzleType == "clear" and self.puzzle.moves == self.puzzle.remaining_moves then
       stop_time = self.puzzle.stop_time
       shake_time = self.puzzle.shake_time
     end
@@ -852,7 +852,7 @@ function Stack.render(self)
     y = y + nextIconIncrement
   
     -- GPM
-    if math.fmod(self.CLOCK, 60) < self.max_runs_per_frame then
+    if analytic.lastGPM == 0 or math.fmod(self.CLOCK, 60) < self.max_runs_per_frame then
       if self.CLOCK > 0 and (analytic.data.sent_garbage_lines > 0) then
         local garbagePerMinute = analytic.data.sent_garbage_lines / (self.CLOCK / 60 / 60)
         analytic.lastGPM = string.format("%0.1f", round(garbagePerMinute, 1))
@@ -881,7 +881,7 @@ function Stack.render(self)
     y = y + nextIconIncrement
   
     -- APM
-    if math.fmod(self.CLOCK, 60) < self.max_runs_per_frame then
+    if analytic.lastAPM == 0 or math.fmod(self.CLOCK, 60) < self.max_runs_per_frame then
       if self.CLOCK > 0 and (analytic.data.swap_count + analytic.data.move_count > 0) then
         local actionsPerMinute = (analytic.data.swap_count + analytic.data.move_count) / (self.CLOCK / 60 / 60)
         analytic.lastAPM = string.format("%0.0f", round(actionsPerMinute, 0))
@@ -985,14 +985,18 @@ end
 
 -- Draw the stacks cursor
 function Stack.render_cursor(self)
+  local cursorImage = themes[config.theme].images.IMG_cursor[(floor(self.CLOCK / 16) % 2) + 1]
   local shake_idx = #shake_arr - self.shake_time
   local shake = ceil((shake_arr[shake_idx] or 0) * 13)
+  local scale_x = 40 / cursorImage:getWidth()
+  local scale_y = 24 / cursorImage:getHeight()
+
   if self.countdown_timer then
     if self.CLOCK % 2 == 0 then
-      draw(themes[config.theme].images.IMG_cursor[1], (self.cur_col - 1) * 16, (11 - (self.cur_row)) * 16 + self.displacement - shake)
+      draw(themes[config.theme].images.IMG_cursor[1], (self.cur_col - 1) * 16, (11 - (self.cur_row)) * 16 + self.displacement - shake, 0, scale_x, scale_y)
     end
   else
-    draw(themes[config.theme].images.IMG_cursor[(floor(self.CLOCK / 16) % 2) + 1], (self.cur_col - 1) * 16, (11 - (self.cur_row)) * 16 + self.displacement - shake)
+    draw(cursorImage, (self.cur_col - 1) * 16, (11 - (self.cur_row)) * 16 + self.displacement - shake, 0, scale_x, scale_y)
   end
 end
 

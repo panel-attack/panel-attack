@@ -678,8 +678,7 @@ function Stack.set_puzzle_state(self, puzzle)
   self.puzzle = puzzle
   self.panels = self:puzzleStringToPanels(puzzleString)
   self.do_countdown = puzzle.do_countdown or false
-  self.puzzleType = puzzle.puzzleType or "moves"
-  self.puzzle_moves = puzzle.moves
+  self.puzzle.remaining_moves = puzzle.moves
 
   -- transform any cleared garbage into colorless garbage panels
   self.gpanel_buffer = "9999999999999999999999999999999999999999999999999999999999999999999999999"
@@ -776,8 +775,8 @@ function Stack.puzzle_done(self)
     -- For now don't require active panels to be 0, we will still animate in game over,
     -- and we need to win immediately to avoid the failure below in the chain case.
     --if P1.n_active_panels == 0 then
-    --if self.puzzleType == "chain" or P1.n_prev_active_panels == 0 then
-    if self.puzzleType == "clear" then
+    --if self.puzzle.puzzleType == "chain" or P1.n_prev_active_panels == 0 then
+    if self.puzzle.puzzleType == "clear" then
       return not self:hasGarbage()
     else
       local panels = self.panels
@@ -814,9 +813,9 @@ end
 
 function Stack.puzzle_failed(self)
   if not self.do_countdown and not self:hasPendingAction() then
-    if self.puzzleType == "moves" then
-        return self.puzzle_moves == 0
-    elseif self.puzzleType and self.puzzleType == "chain" then
+    if self.puzzle.puzzleType == "moves" then
+        return self.puzzle.remaining_moves == 0
+    elseif self.puzzle.puzzleType == "chain" then
       if #self.analytic.data.reached_chains == 0 and self.analytic.data.destroyed_panels > 0 then
         -- We finished matching but never made a chain -> fail
         return true
@@ -825,9 +824,9 @@ function Stack.puzzle_failed(self)
         -- We achieved a chain, finished chaining, but haven't won yet -> fail
         return true
       end
-    elseif self.puzzleType == "clear" then
+    elseif self.puzzle.puzzleType == "clear" then
       if self:hasGarbage() then
-        return (self.puzzle.moves > 0 and self.puzzle_moves <= 0) or self.health <= 0
+        return (self.puzzle.moves > 0 and self.puzzle.remaining_moves <= 0) or self.health <= 0
       end
     end
   end
@@ -1233,7 +1232,8 @@ function Stack.simulate(self)
     -- Stack automatic rising
     if self.speed ~= 0 and not self.manual_raise and self.stop_time == 0 and not self.rise_lock then
       if self.match.mode == "puzzle" then
-        if self.puzzleType == "clear" and self.puzzle_moves - self.puzzle.moves < 0 then
+        -- only reduce health after the first swap to give the player a chance to strategize
+        if self.puzzle.puzzleType == "clear" and self.puzzle.remaining_moves - self.puzzle.moves < 0 then
           self.health = self.health - 1
           -- no gameover because it can't return otherwise, exit is taken care of by puzzle_failed
         end
@@ -2174,7 +2174,7 @@ function Stack.canSwap(self, row, column)
     do_swap = do_swap and not (row ~= 1 and (panels[row - 1][column].state == "swapping" and panels[row - 1][column + 1].state == "swapping") and (panels[row - 1][column].color == 0 or panels[row - 1][column + 1].color == 0) and (panels[row - 1][column].color ~= 0 or panels[row - 1][column + 1].color ~= 0))
   end
 
-  do_swap = do_swap and (not self.puzzle or self.puzzle.moves == 0 or self.puzzle_moves > 0)
+  do_swap = do_swap and (not self.puzzle or self.puzzle.moves == 0 or self.puzzle.remaining_moves > 0)
 
   return do_swap
 end
@@ -2230,12 +2230,12 @@ end
 
 function Stack.processPuzzleSwap(self)
   if self.puzzle then
-    if self.puzzle_moves == 0 and self.puzzleType == "clear" then
+    if self.puzzle.remaining_moves == 0 and self.puzzle.puzzleType == "clear" then
       -- start depleting stop / shake time
       self.stop_time = self.puzzle.stop_time
       self.shake_time = self.puzzle.shake_time
     end
-    self.puzzle_moves = self.puzzle_moves - 1
+    self.puzzle.remaining_moves = self.puzzle.remaining_moves - 1
   end
 end
 
