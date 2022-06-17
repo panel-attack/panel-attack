@@ -1342,6 +1342,8 @@ function select_screen.main()
                 GAME.match.attackEngine:addAttackPattern(6, i, chainTime, false, true)
               end
               GAME.match.attackEngine:addEndChainPattern(values.chainEndTime)
+            else
+              error("The 'chain' field in your attack file is invalid. It should either be a number or a list of numbers.")
             end
           else
             GAME.match.attackEngine:addAttackPattern(values.width, values.height or 1, values.startTime, values.metal or false, false)
