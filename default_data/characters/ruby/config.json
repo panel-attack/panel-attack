@@ -1,4 +1,5 @@
 {
 	"id":"pa_characters_ruby",
-	"name":"Ruby"
+	"name":"Ruby",
+	"stage":"pa_stages_jewel"
 }

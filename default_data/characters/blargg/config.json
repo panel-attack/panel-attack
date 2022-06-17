@@ -1,4 +1,5 @@
 {
 	"id":"pa_characters_blargg",
-	"name":"Blargg"
+	"name":"Blargg",
+	"stage":"pa_stages_fire"
 }
