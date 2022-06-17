@@ -71,13 +71,9 @@ function refreshBasedOnOwnMods(player)
       end
     else
       if player.selectedStage ~= random_stage_special_value then
-        -- don't have the selected stage and it's not random, use the fallback
-          player.selectedStage = config.fallbackStage
-
-          if player.selectedStage == random_stage_special_value then
-            -- to make sure it gets randomised again
-            player.stage = nil
-          end
+        -- don't have the selected stage and it's not random, use a random stage
+          player.selectedStage = random_stage_special_value
+          player.stage = nil
       end
     end
 
@@ -95,12 +91,9 @@ function refreshBasedOnOwnMods(player)
       if player.character_display_name and characters_ids_by_display_names[player.character_display_name] and not characters[characters_ids_by_display_names[player.character_display_name][1]]:is_bundle() then
         player.character = characters_ids_by_display_names[player.character_display_name][1]
       elseif player.selectedCharacter ~= random_character_special_value then
-        -- don't have the selected character and it's not random, use the fallback
-        player.selectedCharacter = config.fallbackCharacter
-        if player.selectedCharacter == random_character_special_value then
-            -- to make sure it gets randomised again
-          player.character = nil
-        end
+        -- don't have the selected character and it's not random, use a random character
+        player.selectedCharacter = random_character_special_value
+        player.character = nil
       end
     end
 
