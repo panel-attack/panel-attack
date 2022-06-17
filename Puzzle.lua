@@ -6,7 +6,6 @@ Puzzle =
     self.doCountdown = doCountdown
     self.moves = moves
     self.stack = string.gsub(stack, "%s+", "") -- Remove whitespace so files can be easier to read
-    self.randomizeColors = false
   end
 )
 
