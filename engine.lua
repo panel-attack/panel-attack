@@ -2214,7 +2214,7 @@ end
 
 function Stack.processPuzzleSwap(self)
   if self.puzzle then
-    if self.puzzle.remaining_moves == 0 and self.puzzle.puzzleType == "clear" then
+    if self.puzzle.remaining_moves == self.puzzle.moves and self.puzzle.puzzleType == "clear" then
       -- start depleting stop / shake time
       self.stop_time = self.puzzle.stop_time
       self.shake_time = self.puzzle.shake_time
