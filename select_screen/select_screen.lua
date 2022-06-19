@@ -809,7 +809,7 @@ function select_screen.startNetPlayMatch(self, msg)
   if P1.play_to_end or P2.play_to_end then
     to_print = loc("pl_spectate_join")
   end
-  return {main_dumb_transition, {main_net_vs, to_print, 1, 0}}
+  return {main_dumb_transition, {main_net_vs, to_print, 10, 0}}
 end
 
 -- returns transition to local vs screen
