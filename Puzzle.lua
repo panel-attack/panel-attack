@@ -47,11 +47,14 @@ function Puzzle.validate(self)
   if stackLength > 6*12 then
     -- any encoded panels extending beyond the height of the playfield need to be garbage or empty
     local overflowStack = self.stack:sub(1, stackLength - 72)
-    local match = string.match(overflowStack, "[1-9]")
-    if match then
+    local matches = {}
+    for match in string.gmatch(overflowStack, "[1-9]") do
+      matches[#matches+1] = match
+    end
+    if #matches > 0 then
       errMessage = errMessage ..
      "\nThere cannot be any panels on above the top of the stack, only garbage and whitespace." ..
-     "\nPanels above the top identified: " .. match
+     "\nPanels above the top identified: " .. table.concat(matches)
     end
   end
 
