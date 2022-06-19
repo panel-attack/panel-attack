@@ -43,11 +43,19 @@ function Puzzle.validate(self)
     errMessage = "\nInvalid value for property 'doCountdown'"
   end
 
-  if string.len(self.stack) > 6*12 then
-    errMessage = errMessage ..
-     "\nPuzzlestring contains more panels than the playfield can contain." ..
-     "\nNumber of panels: " .. string.len(self.stack) ..
-     "\nMaximum allowed: " .. 6*12
+  local stackLength = string.len(self.stack)
+  if stackLength > 6*12 then
+    -- any encoded panels extending beyond the height of the playfield need to be garbage or empty
+    local overflowStack = self.stack:sub(1, stackLength - 72)
+    local matches = {}
+    for match in string.gmatch(overflowStack, "[1-9]") do
+      matches[#matches+1] = match
+    end
+    if #matches > 0 then
+      errMessage = errMessage ..
+     "\nThere cannot be any panels on above the top of the stack, only garbage and whitespace." ..
+     "\nPanels above the top identified: " .. table.concat(matches)
+    end
   end
 
   local illegalCharacters = {}
