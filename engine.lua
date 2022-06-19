@@ -1220,7 +1220,7 @@ function Stack.simulate(self)
     if self.speed ~= 0 and not self.manual_raise and self.stop_time == 0 and not self.rise_lock then
       if self.match.mode == "puzzle" then
         -- only reduce health after the first swap to give the player a chance to strategize
-        if self.puzzle.puzzleType == "clear" and self.puzzle.remaining_moves - self.puzzle.moves < 0 then
+        if self.puzzle.puzzleType == "clear" and self.puzzle.remaining_moves - self.puzzle.moves < 0 and self.shake_time < 1 then
           self.health = self.health - 1
           -- no gameover because it can't return otherwise, exit is taken care of by puzzle_failed
         end
