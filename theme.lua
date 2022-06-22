@@ -747,7 +747,7 @@ function Theme:final_init()
   end
 
   self.images.bg_main = UpdatingImage(load_theme_img("background/main"), self.bg_main_is_tiled, self.bg_main_speed_x, self.bg_main_speed_y, canvas_width, canvas_height)
-  self.images.bg_select_screen = UpdatingImage(load_theme_img("background/select_screen"), self.bg_select_is_tiled, self.bg_select_speed_x, self.bg_select_speed_y, canvas_width, canvas_height)
+  self.images.bg_select_screen = UpdatingImage(load_theme_img("background/select_screen"), self.bg_select_screen_is_tiled, self.bg_select_speed_x, self.bg_select_speed_y, canvas_width, canvas_height)
   self.images.bg_readme = UpdatingImage(load_theme_img("background/readme"), self.bg_readme_is_tiled, self.bg_readme_speed_x, self.bg_readme_speed_y, canvas_width, canvas_height)
 
   local menuYPadding = 10

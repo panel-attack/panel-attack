@@ -710,8 +710,6 @@ function select_screen.main()
     end
 
     if character then
-      x_add = 0.025 * button_width
-      width_for_alignment = 0.95 * button_width
       draw_character(character)
     end
 
@@ -776,6 +774,13 @@ function select_screen.main()
     if str ~= "__Empty" and str ~= "__Reserved" then
       local loc_str = {Level = loc("level"), Mode = loc("mode"), Stage = loc("stage"), Panels = loc("panels"), Ready = loc("ready"), Random = loc("random"), Leave = loc("leave")}
       local to_p = loc_str[pstr]
+      
+      if character and character ~= random_character_special_value then
+        local height = 17
+        grectangle_color("fill", render_x / GFX_SCALE, (render_y + y_add) / GFX_SCALE, button_width/GFX_SCALE, height/GFX_SCALE, 0, 0, 0, 0.5)
+        x_add = 0.025 * button_width
+        width_for_alignment = 0.95 * button_width
+      end
       gprintf(not to_p and pstr or to_p, render_x + x_add, render_y + y_add, width_for_alignment, halign)
     end
   end
@@ -1329,7 +1334,8 @@ function select_screen.main()
         local trainingModeSettings = GAME.battleRoom.trainingModeSettings
         local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
         local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
-        GAME.match.attackEngine = AttackEngine(P1, delayBeforeStart, delayBeforeRepeat)
+        local disableQueueLimit = trainingModeSettings.disableQueueLimit or false
+        GAME.match.attackEngine = AttackEngine(P1, delayBeforeStart, delayBeforeRepeat, disableQueueLimit)
         for _, values in ipairs(trainingModeSettings.attackPatterns) do
           if values.chain then
             if type(values.chain) == "number" then

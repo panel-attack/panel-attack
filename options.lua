@@ -1052,7 +1052,7 @@ local function about_menu(button_idx)
   end
 
   local function exitSettings()
-    ret = {options.main, {5}}
+    ret = {options.main, {6}}
   end
 
   aboutMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
