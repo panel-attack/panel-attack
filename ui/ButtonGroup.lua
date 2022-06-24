@@ -13,7 +13,7 @@ local function genButtonGroupFn(self, i, onClick)
   return function()
     setState(self, i)
     onClick()
-    self.onChange()
+    self.onChange(self.value)
   end
 end
 
@@ -36,7 +36,7 @@ local ButtonGroup = class(
   function(self, buttons, values, options)
     self.buttons = buttons
     self.values = values
-    self.value = nil -- set in setActiveButton
+    self.value = nil -- set in setState
     self.onChange = options.onChange or function() end
     self.selected_index = options.selected_index or 1
     self.x = options.x or 0
@@ -54,9 +54,15 @@ local ButtonGroup = class(
 ButtonGroup.setPos = setPos
 ButtonGroup.setActiveButton = setActiveButton
 
+function ButtonGroup:updateLabel()
+  for i, button in ipairs(self.buttons) do
+    button:updateLabel()
+  end
+end
+
 function ButtonGroup:setVisibility(is_visible)
   for i, button in ipairs(self.buttons) do
-    button.is_visible = is_visible
+    button:setVisibility(is_visible)
   end
 end
 

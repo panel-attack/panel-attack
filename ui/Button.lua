@@ -1,4 +1,5 @@
 local class = require("class")
+local UIElement = require("ui.UIElement")
 local button_manager = require("ui.button_manager")
 
 --@module Button
@@ -9,7 +10,8 @@ local Button = class(
     self.y = options.y or 0
     self.width = options.width or 110
     self.height = options.height or 25
-    self.text = options.text or love.graphics.newText(love.graphics.getFont(), "Button")
+    self.label = options.label or "Button"
+    self.translate = options.translate or options.translate == nil and true
     self.is_visible = options.is_visible or options.is_visible == nil and true
     self.is_enabled = options.is_enabled or options.is_enabled == nil and true
     self.image = options.image
@@ -28,17 +30,15 @@ local Button = class(
     end
     self.onMouseUp = options.onMouseUp or function() end
     
+    self.text = options.text or love.graphics.newText(love.graphics.getFont(), self.translate and loc(self.label) or self.label)
     local text_width, text_height = self.text:getDimensions()
     self.width = math.max(text_width + 6, self.width)
     self.height = math.max(text_height + 6, self.height)
     button_manager.add_button(self)
     self.TYPE = "Button"
-  end
+  end,
+  UIElement
 )
-
-function Button:setVisibility(is_visible)
-  self.is_visible = is_visible
-end
 
 function Button:remove()
   button_manager.remove_button(self)

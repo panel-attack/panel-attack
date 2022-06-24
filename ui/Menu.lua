@@ -23,6 +23,8 @@ local function updatePos(self, x, y)
       ui_element.y = prev_y
       if ui_element.TYPE == "ButtonGroup" then
         ui_element:setPos(ui_element.x, ui_element.y)
+      elseif ui_element.TYPE == "Stepper" then
+        ui_element:setPos(ui_element.x, ui_element.y)
       end
     end
     prev_y = prev_y + menu_item[1].height + 5
@@ -44,6 +46,14 @@ local font = love.graphics.getFont()
 local arrow = love.graphics.newText(font, ">")
 
 Menu.updatePos = updatePos
+
+function Menu:updateLabel()
+  for i, menu_item in ipairs(self.menu_items) do
+    for j, ui_element in ipairs(menu_item) do
+      ui_element:updateLabel()
+    end
+  end
+end
 
 function Menu:setVisibility(is_visible)
   for i, menu_item in ipairs(self.menu_items) do
@@ -74,6 +84,10 @@ function Menu:update()
         local button_group = self.menu_items[self.selected_id][2]
         button_group:setActiveButton(button_group.selected_index - 1)
       end
+      if self.menu_items[self.selected_id][2].TYPE == "Stepper" then
+        local dynamic_button_group = self.menu_items[self.selected_id][2]
+        dynamic_button_group:setState(dynamic_button_group.selected_index - 1)
+      end
     end
   end
 
@@ -86,6 +100,10 @@ function Menu:update()
       if self.menu_items[self.selected_id][2].TYPE == "ButtonGroup" then
         local button_group = self.menu_items[self.selected_id][2]
         button_group:setActiveButton(button_group.selected_index + 1)
+      end
+      if self.menu_items[self.selected_id][2].TYPE == "Stepper" then
+        local dynamic_button_group = self.menu_items[self.selected_id][2]
+        dynamic_button_group:setState(dynamic_button_group.selected_index + 1)
       end
     end
   end
@@ -115,6 +133,8 @@ function Menu:draw()
   for i, menu_item in ipairs(self.menu_items) do
     for j, ui_element in ipairs(menu_item) do
       if ui_element.TYPE == "Label" then
+        ui_element:draw()
+      elseif ui_element.TYPE == "Stepper" then
         ui_element:draw()
       end
     end

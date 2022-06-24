@@ -1,4 +1,5 @@
 local class = require("class")
+local UIElement = require("ui.UIElement")
 
 --@module Label
 local Label = class(
@@ -8,19 +9,18 @@ local Label = class(
     self.y = options.y or 0
     self.width = options.width or 110
     self.height = options.height or 25
-    self.text = options.text or love.graphics.newText(love.graphics.getFont(), "Label")
+    self.label = options.label or "Label"
+    self.translate = options.translate or options.translate == nil and true
     self.is_visible = options.is_visible or options.is_visible == nil and true
     
+    self.text = options.text or love.graphics.newText(love.graphics.getFont(), self.translate and loc(self.label) or self.label)
     local text_width, text_height = self.text:getDimensions()
     self.width = math.max(text_width + 6, self.width)
     self.height = math.max(text_height + 6, self.height)
     self.TYPE = "Label"
-  end
+  end,
+  UIElement
 )
-
-function Label:setVisibility(is_visible)
-  self.is_visible = is_visible
-end
 
 function Label:draw()
   local dark_gray = .5
