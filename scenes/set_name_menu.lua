@@ -7,6 +7,7 @@ local scene_manager = require("scenes.scene_manager")
 local Menu = require("ui.Menu")
 local ButtonGroup = require("ui.ButtonGroup")
 local input = require("input2")
+local save = require("save")
 
 --@module BasicMenu
 local set_name_menu = Scene("set_name_menu")
@@ -38,7 +39,7 @@ function set_name_menu:update()
   if input.raw.isDown["return"] then
     play_optional_sfx(themes[config.theme].sounds.menu_validate)
     config.name = name_field.value
-    write_conf_file()
+    save.write_conf_file()
     scene_manager:switchScene("main_menu")
   end
   if input.raw.isDown["escape"] then

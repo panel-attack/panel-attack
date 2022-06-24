@@ -38,6 +38,25 @@ function save.read_key_file()
 end
 
 -- reads the .txt file of the given path and filename
+function save.read_txt_file(path_and_filename)
+  local s
+  pcall(
+    function()
+      local file = love.filesystem.newFile(path_and_filename)
+      file:open("r")
+      s = file:read(file:getSize())
+      file:close()
+    end
+  )
+  if not s then
+    s = "Failed to read file" .. path_and_filename
+  else
+    s = s:gsub("\r\n?", "\n")
+  end
+  return s or "Failed to read file"
+end
+
+-- reads the .txt file of the given path and filename
 function read_txt_file(path_and_filename)
   local s
   pcall(

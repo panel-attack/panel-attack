@@ -6,6 +6,7 @@ local LevelSlider = require("ui.LevelSlider")
 local scene_manager = require("scenes.scene_manager")
 local Menu = require("ui.Menu")
 local ButtonGroup = require("ui.ButtonGroup")
+local save = require("save")
 
 --@module BasicMenu
 local BasicMenu = class(
@@ -50,7 +51,7 @@ function BasicMenu:startGame()
     config.endless_difficulty = difficulty_buttons.value
     --gprint("saving settings...", unpack(main_menu_screen_pos))
     --wait()
-    write_conf_file()
+    save.write_conf_file()
   end
   
   GAME.match = Match(self.game_mode)

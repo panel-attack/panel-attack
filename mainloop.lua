@@ -6,6 +6,7 @@ local utf8 = require("utf8")
 local analytics = require("analytics")
 local main_config_input = require("config_inputs")
 local ServerQueue = require("ServerQueue")
+local save = require("save")
 
 local wait, resume = coroutine.yield, coroutine.resume
 
@@ -1936,7 +1937,7 @@ function love.quit()
     config.window_y = math.max(config.window_y, 30) --don't let 'y' be zero, or the title bar will not be visible on next launch.
   end
   config.fullscreen = love.window.getFullscreen()
-  write_conf_file()
+  save.write_conf_file()
   
   if network_connected() then
     json_send({logout = true})
