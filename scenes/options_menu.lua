@@ -9,7 +9,6 @@ local ButtonGroup = require("ui.ButtonGroup")
 local Stepper = require("ui.Stepper")
 local input = require("input2")
 local save = require("save")
-local sound_test_utils = require("sound_test_utils")
 
 --@module BasicMenu
 local options_menu = Scene("options_menu")
@@ -183,29 +182,7 @@ function options_menu:init()
   about_text["characters"] = save.read_txt_file("readme_characters.txt")
   about_text["stages"] = save.read_txt_file("readme_stages.txt")
   about_text["panels"] = save.read_txt_file("readme_panels.txt")
-   
-  
-  --[[local language_buttons = {}
-  for k, v in ipairs(language_names) do
-    language_buttons[#language_buttons + 1] = Button({
-        label = v[2],
-        translate = false,
-        onClick = function()
-          localization:set_language(v[1])
-          updateMenuLanguage()
-        end, 
-        width = 70,
-        height = 25})
-  end
-  local language_button_group = ButtonGroup(
-    language_buttons,
-    language_names,
-    {
-      selected_index = language_number,
-      onChange = function() play_optional_sfx(themes[config.theme].sounds.menu_move) end
-    }
-  )--]]
-  
+
   local language_labels = {}
   for k, v in ipairs(language_names) do
     language_labels[#language_labels + 1] = Label({
