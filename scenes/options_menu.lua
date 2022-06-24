@@ -178,7 +178,7 @@ end
 
 function options_menu:init()
   scene_manager:addScene(self)
-  about_text["themes"] = save.read_txt_file("readme_themes.txt")--love.graphics.newText(love.graphics.getFont(), save.read_txt_file("readme_themes.txt"))
+  about_text["themes"] = save.read_txt_file("readme_themes.txt")
   about_text["characters"] = save.read_txt_file("readme_characters.txt")
   about_text["stages"] = save.read_txt_file("readme_stages.txt")
   about_text["panels"] = save.read_txt_file("readme_panels.txt")

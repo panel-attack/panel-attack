@@ -57,8 +57,8 @@ function puzzle_menu:init()
   
   self.random_colors_buttons = ButtonGroup(
     {
-      Button({text = love.graphics.newText(font, loc("op_off")), width = 60, height = 25}),
-      Button({text = love.graphics.newText(font, loc("op_on")), width = 60, height = 25}),
+      Button({label = "op_off", width = 60, height = 25}),
+      Button({label = "op_on", width = 60, height = 25}),
     },
     {false, true},
     {
@@ -68,14 +68,14 @@ function puzzle_menu:init()
   )
   
   local menu_options = {
-    {Label({text = love.graphics.newText(font, loc("level")), is_visible = false}), self.level_slider},
-    {Label({text = love.graphics.newText(font, loc("randomColors")), is_visible = false}), self.random_colors_buttons},
+    {Label({label = "level", is_visible = false}), self.level_slider},
+    {Label({label = "randomColors", is_visible = false}), self.random_colors_buttons},
   }
 
   for puzzle_set_name, puzzle_set in util.pairsSortedByKeys(GAME.puzzleSets) do
-    menu_options[#menu_options + 1] = {Button({text = love.graphics.newText(font, puzzle_set_name), onClick = function() self:startGame(puzzle_set) end})}
+    menu_options[#menu_options + 1] = {Button({label = puzzle_set_name, translate = false, onClick = function() self:startGame(puzzle_set) end})}
   end
-  menu_options[#menu_options + 1] = {Button({text = love.graphics.newText(font, loc("back")), onClick = exitMenu})}
+  menu_options[#menu_options + 1] = {Button({label = "back", onClick = exitMenu})}
   
   local x, y = unpack(main_menu_screen_pos)
   y = y + 20
@@ -90,6 +90,7 @@ function puzzle_menu:load()
   GAME.backgroundImage = themes[config.theme].images.bg_main
   reset_filters()
   
+  self.menu:updateLabel()
   self.menu:setVisibility(true)
 end
 

@@ -30,11 +30,11 @@ local speed_slider = Slider({
 local font = love.graphics.getFont() 
 local difficulty_buttons = ButtonGroup(
     {
-      Button({text = love.graphics.newText(font, loc("easy")), width = 60, height = 25}),
-      Button({text = love.graphics.newText(font, loc("normal")), width = 60, height = 25}),
-      Button({text = love.graphics.newText(font, loc("hard")), width = 60, height = 25}),
+      Button({label = "easy", width = 60, height = 25}),
+      Button({label = "normal", width = 60, height = 25}),
+      Button({label = "hard", width = 60, height = 25}),
       -- TODO: localize "EX Mode"
-      Button({text = love.graphics.newText(font, "EX Mode")}),
+      Button({label = "EX Mode", translate = false}),
     },
     {1, 2, 3, 4},
     {
@@ -93,11 +93,11 @@ function BasicMenu:init()
   
   self.type_buttons = ButtonGroup(
     {
-      Button({text = love.graphics.newText(font, loc("endless_classic")), onClick = function()
+      Button({label = "endless_classic", onClick = function()
             self.modern_menu:setVisibility(false)
             self.classic_menu:setVisibility(true)
             end, width = 60, height = 25}),
-      Button({text = love.graphics.newText(font, loc("endless_modern")), onClick = function()
+      Button({label = "endless_modern", onClick = function()
             self.classic_menu:setVisibility(false) 
             self.modern_menu:setVisibility(true)
             end, width = 60, height = 25}),
@@ -110,18 +110,18 @@ function BasicMenu:init()
   )
   
   local modern_menu_options = {
-    {Label({text = love.graphics.newText(font, loc("endless_type")), is_visible = false}), self.type_buttons},
-    {Label({text = love.graphics.newText(font, loc("level")), is_visible = false}), self.level_slider},
-    {Button({text = love.graphics.newText(font, loc("go_")), onClick = function() self:startGame() end, is_visible = false})},
-    {Button({text = love.graphics.newText(font, loc("back")), onClick = exitMenu, is_visible = false})},
+    {Label({label = "endless_type", is_visible = false}), self.type_buttons},
+    {Label({label = "level", is_visible = false}), self.level_slider},
+    {Button({label = "go_", onClick = function() self:startGame() end, is_visible = false})},
+    {Button({label = "back", onClick = exitMenu, is_visible = false})},
   }
   
   local classic_menu_options = {
     modern_menu_options[1],
-    {Label({text = love.graphics.newText(font, loc("speed")), is_visible = false}), speed_slider},
-    {Label({text = love.graphics.newText(font, loc("difficulty")), is_visible = false}), difficulty_buttons},
-    {Button({text = love.graphics.newText(font, loc("go_")), onClick = function() self:startGame() end, is_visible = false})},
-    {Button({text = love.graphics.newText(font, loc("back")), onClick = exitMenu, is_visible = false})},
+    {Label({label = "speed", is_visible = false}), speed_slider},
+    {Label({label = "difficulty", is_visible = false}), difficulty_buttons},
+    {Button({label = "go_", onClick = function() self:startGame() end, is_visible = false})},
+    {Button({label = "back", onClick = exitMenu, is_visible = false})},
   }
   
   local x, y = unpack(main_menu_screen_pos)
@@ -133,6 +133,9 @@ function BasicMenu:init()
 end
 
 function BasicMenu:load()
+  self.classic_menu:updateLabel()
+  self.modern_menu:updateLabel()
+  
   GAME.backgroundImage = themes[config.theme].images.bg_main
   reset_filters()
   if themes[config.theme].musics["main"] then

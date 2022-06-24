@@ -217,7 +217,8 @@ function CharacterSelect:init()
         y = y_pos, 
         width = TILE_SIZE, 
         height = TILE_SIZE, 
-        text = love.graphics.newText(love.graphics.getFont(), name),
+        label = name,
+        translate = false,
         valign = "top",
         image = characters[id].images.icon, 
         outline_color = outline_color,
@@ -239,7 +240,7 @@ function CharacterSelect:init()
       y = y, 
       width = TILE_SIZE, 
       height = TILE_SIZE, 
-      text = love.graphics.newText(love.graphics.getFont(), loc("random")),
+      label = "random",
       outline_color = outline_color,
       is_visible = false,
       onClick = function()
@@ -258,7 +259,7 @@ function CharacterSelect:init()
       y = y, 
       width = TILE_SIZE, 
       height = TILE_SIZE, 
-      text = love.graphics.newText(love.graphics.getFont(), loc("leave")),
+      label = "leave",
       outline_color = outline_color,
       is_visible = false,
       onClick = function()
@@ -276,7 +277,7 @@ function CharacterSelect:init()
       y = y, 
       width = TILE_SIZE, 
       height = TILE_SIZE, 
-      text = love.graphics.newText(love.graphics.getFont(), loc("ready")),
+      label = "ready",
       outline_color = outline_color,
       is_visible = false,
       onClick = function() self:onReady() end
@@ -289,7 +290,7 @@ function CharacterSelect:init()
       y = y, 
       width = GRID_SIZE * button_info.level.width - GRID_SIZE + TILE_SIZE, 
       height = TILE_SIZE, 
-      text = love.graphics.newText(love.graphics.getFont(), loc("level")),
+      label = "level",
       valign = "top",
       outline_color = outline_color,
       color = {0, 0, 0, 0},
@@ -324,7 +325,8 @@ function CharacterSelect:init()
       y = y, 
       width = width, 
       height = TILE_SIZE, 
-      text = love.graphics.newText(love.graphics.getFont(), ""),
+      label = "",
+      translate = false,
       outline_color = {0, 0, 0, 0},
       color = {0, 0, 0, 0},
       is_visible = false,
@@ -340,7 +342,8 @@ function CharacterSelect:init()
       y = y, 
       width = width, 
       height = TILE_SIZE, 
-      text = love.graphics.newText(love.graphics.getFont(), ""),
+      label = "",
+      translate = false,
       outline_color = {0, 0, 0, 0},
       color = {0, 0, 0, 0},
       is_visible = false,
@@ -356,7 +359,7 @@ function CharacterSelect:init()
       y = y, 
       width = GRID_SIZE * button_info.stage.width - GRID_SIZE + TILE_SIZE, 
       height = TILE_SIZE, 
-      text = love.graphics.newText(love.graphics.getFont(), loc("stage")),
+      label = "stage",
       valign = "top",
       outline_color = outline_color,
       color = {0, 0, 0, 0},
@@ -381,7 +384,8 @@ function CharacterSelect:init()
       y = y, 
       width = width, 
       height = TILE_SIZE, 
-      text = love.graphics.newText(love.graphics.getFont(), ""),
+      label = "",
+      translate = false,
       outline_color = {0, 0, 0, 0},
       color = {0, 0, 0, 0},
       is_visible = false,
@@ -397,7 +401,8 @@ function CharacterSelect:init()
       y = y, 
       width = width, 
       height = TILE_SIZE, 
-      text = love.graphics.newText(love.graphics.getFont(), ""),
+      label = "",
+      translate = false,
       outline_color = {0, 0, 0, 0},
       color = {0, 0, 0, 0},
       is_visible = false,
@@ -413,7 +418,7 @@ function CharacterSelect:init()
       y = y, 
       width = GRID_SIZE * button_info.panels.width - GRID_SIZE + TILE_SIZE, 
       height = TILE_SIZE, 
-      text = love.graphics.newText(love.graphics.getFont(), loc("panels")),
+      label = "panels",
       valign = "top",
       outline_color = outline_color,
       color = {0, 0, 0, 0},
@@ -437,7 +442,8 @@ function CharacterSelect:init()
       y = y - 5, 
       width = 25, 
       height = 25, 
-      text = love.graphics.newText(love.graphics.getFont(), "<"),
+      label = "<",
+      translate = false,
       is_visible = false,
       onClick = function()
         play_optional_sfx(themes[config.theme].sounds.menu_move)
@@ -450,7 +456,8 @@ function CharacterSelect:init()
       y = y - 5, 
       width = 25, 
       height = 25, 
-      text = love.graphics.newText(love.graphics.getFont(), ">"),
+      label = ">",
+      translate = false,
       is_visible = false,
       onClick = function()
         play_optional_sfx(themes[config.theme].sounds.menu_move)
@@ -523,9 +530,11 @@ end
 function CharacterSelect:load()
   for _, button_group in pairs(self.buttons) do
     if button_group.TYPE == "Button" then
+      button_group:updateLabel()
       button_group.is_visible = true
     else
       for _, button in pairs(button_group) do
+        button:updateLabel()
         button.is_visible = true
       end
     end

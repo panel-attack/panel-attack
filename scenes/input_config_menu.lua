@@ -36,13 +36,13 @@ function input_config_menu:updateInputConfigSet(value)
       local controller_name = shorten_controller_name(input.guid_to_name[controller_key_split[2]])
       key_name = string.format("%s (%s-%s)", controller_key_split[1], controller_name, controller_key_split[3])
     end
-    self.menu.menu_items[i + 1][2].text = love.graphics.newText(font, key_name)
+    self.menu.menu_items[i + 1][2]:updateLabel(key_name)
   end
 end
 
 function input_config_menu:pollAndSetKey(key, index)
   coroutine.yield()
-  self.menu.menu_items[index + 1][2].text = pending_input_text
+  self.menu.menu_items[index + 1][2]:updateLabel(pending_input_text)
   self.menu.selected_id = index + 1
   local pressed_key = nil
   while not pressed_key do
@@ -60,7 +60,7 @@ function input_config_menu:pollAndSetKey(key, index)
     key_display_name = string.format("%s (%s-%s)", controller_key_split[1], controller_name, controller_key_split[3])
   end
   GAME.input.inputConfigurations[config_index][key] = pressed_key
-  self.menu.menu_items[index + 1][2].text = love.graphics.newText(font, key_display_name)
+  self.menu.menu_items[index + 1][2]:updateLabel(key_display_name)
 end
 
 function input_config_menu:setKeyFn(key, index)
@@ -108,7 +108,7 @@ local function clearAllInputs(menu_options)
   for i, key in ipairs(consts.KEY_NAMES) do
     GAME.input.inputConfigurations[config_index][key] = nil
     local key_name = loc("op_none")
-    menu_options[i + 1][2].text = love.graphics.newText(font, key_name)
+    menu_options[i + 1][2]:updateLabel(key_name)
   end
   write_key_file()
 end
@@ -123,7 +123,7 @@ function input_config_menu:init()
   
   local menu_options = {}
   menu_options[1] = {
-      Label({text = love.graphics.newText(font, loc("configuration"))}), 
+      Label({label = "configuration"}), 
       Slider({
           min = 1,
           max = GAME.input.maxConfigurations,
@@ -133,10 +133,11 @@ function input_config_menu:init()
     }
   for i, key in ipairs(consts.KEY_NAMES) do
     local key_name = GAME.input:cleanNameForButton(GAME.input.inputConfigurations[config_index][key]) or loc("op_none")
-    local label = Label({text = love.graphics.newText(font, key_name), width = 200})
+    local label = Label({label = key_name, translate = false, width = 200})
     menu_options[#menu_options + 1] = {
       Button({
-          text = love.graphics.newText(font, key),
+          label = key,
+          translate = false,
           onClick = function() 
             if not self.setting_key then
               self:setKey(key)
@@ -145,12 +146,12 @@ function input_config_menu:init()
       label}
   end
   menu_options[#menu_options + 1] = {
-    Button({text = love.graphics.newText(font, loc("op_all_keys")),
+    Button({label = "op_all_keys",
     onClick = function() input_config_menu:setAllKeys() end})}
   menu_options[#menu_options + 1] = {
-    Button({text = love.graphics.newText(font, "Clear All Inputs"), 
+    Button({label = "Clear All Inputs", translate = false,
     onClick = function() clearAllInputs(menu_options) end})}
-  menu_options[#menu_options + 1] = {Button({text = love.graphics.newText(font, loc("back")), onClick = exitMenu})}
+  menu_options[#menu_options + 1] = {Button({label = "back", onClick = exitMenu})}
   
   local x, y = unpack(main_menu_screen_pos)
   self.menu = Menu(menu_options, {x = x, y = y})
@@ -164,6 +165,7 @@ function input_config_menu:load()
     find_and_add_music(themes[config.theme].musics, "main")
   end
   
+  self.menu:updateLabel()
   self.menu:setVisibility(true)
 end
 

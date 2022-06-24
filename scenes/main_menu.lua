@@ -34,13 +34,13 @@ end
 local font = love.graphics.getFont() 
 
 local menu_buttons = {
-  Button({text = love.graphics.newText(font, loc("mm_1_endless")), onClick = function() switchScene("endless_menu") end}),
-  Button({text = love.graphics.newText(font, loc("mm_1_puzzle")), onClick = function() switchScene("puzzle_menu") end}),
-  Button({text = love.graphics.newText(font, loc("mm_1_time")), onClick = function() switchScene("time_attack_menu") end}),
-  Button({text = love.graphics.newText(font, loc("mm_1_vs")), onClick = function() switchScene("vs_self_menu") end}),
-  Button({text = love.graphics.newText(font, loc("mm_1_training")), onClick = function() switchScene("training_mode_menu") end}),
+  Button({label = "mm_1_endless", onClick = function() switchScene("endless_menu") end}),
+  Button({label = "mm_1_puzzle", onClick = function() switchScene("puzzle_menu") end}),
+  Button({label = "mm_1_time", onClick = function() switchScene("time_attack_menu") end}),
+  Button({label = "mm_1_vs", onClick = function() switchScene("vs_self_menu") end}),
+  Button({label = "mm_1_training", onClick = function() switchScene("training_mode_menu") end}),
   --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
-  Button({text = love.graphics.newText(font, loc("mm_2_vs_online", "\nTelegraph Server")), onClick = genOnClickFn(main_net_vs_setup, {"betaserver.panelattack.com", 59569})}),
+  Button({label = "mm_2_vs_online", onClick = genOnClickFn(main_net_vs_setup, {"betaserver.panelattack.com", 59569})}),
   --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
   --{loc("mm_2_vs_online", "betaserver.panelattack.com"), main_net_vs_setup, {"betaserver.panelattack.com"}},
   --{loc("mm_2_vs_online", "(USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)"), main_net_vs_setup, {"18.188.43.50"}},
@@ -48,19 +48,19 @@ local menu_buttons = {
   --{loc("mm_2_vs_online", "domi1819.xyz"), main_net_vs_setup, {"domi1819.xyz"}},
   --{loc("mm_2_vs_online", "(development-use only)"), main_net_vs_setup, {"localhost"}},
   --{loc("mm_2_vs_online", "LittleEndu's server"), main_net_vs_setup, {"51.15.207.223"}},
-  Button({text = love.graphics.newText(font, loc("mm_2_vs_local")), onClick = genOnClickFn(main_local_vs_setup)}),
-  Button({text = love.graphics.newText(font, loc("mm_replay_browser")), onClick = function() switchScene("replay_menu") end}),
-  Button({text = love.graphics.newText(font, loc("mm_configure")), onClick = function() switchScene("input_config_menu") end}),
-  Button({text = love.graphics.newText(font, loc("mm_set_name")), onClick = function() switchScene("set_name_menu") end}),
-  Button({text = love.graphics.newText(font, loc("mm_options")), onClick = function() switchScene("options_menu") end}),
-  Button({text = love.graphics.newText(font, loc("mm_fullscreen", "\n(LAlt+Enter)")), onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) fullscreen() end}),
-  Button({text = love.graphics.newText(font, loc("mm_quit")), onClick = love.event.quit})
+  Button({label = "mm_2_vs_local", onClick = genOnClickFn(main_local_vs_setup)}),
+  Button({label = "mm_replay_browser", onClick = function() switchScene("replay_menu") end}),
+  Button({label = "mm_configure", onClick = function() switchScene("input_config_menu") end}),
+  Button({label = "mm_set_name", onClick = function() switchScene("set_name_menu") end}),
+  Button({label = "mm_options", onClick = function() switchScene("options_menu") end}),
+  Button({label = "mm_fullscreen", onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) fullscreen() end}),
+  Button({label = "mm_quit", onClick = love.event.quit})
 }
 
 function main_menu:init()
   scene_manager:addScene(main_menu)
   local x, y = unpack(main_menu_screen_pos)
-  main_menu.menu = Menu({
+  self.menu = Menu({
       {menu_buttons[1]},
       {menu_buttons[2]},
       {menu_buttons[3]},
@@ -75,7 +75,7 @@ function main_menu:init()
       {menu_buttons[12]},
       {menu_buttons[13]},
       }, {x = x, y = y})
-  main_menu.menu:setVisibility(false)
+  self.menu:setVisibility(false)
 end
 
 function main_menu:load()
@@ -96,7 +96,8 @@ function main_menu:load()
   current_server_supports_ranking = false
   match_type = ""
   match_type_message = ""
-  main_menu.menu:setVisibility(true)
+  self.menu:updateLabel()
+  self.menu:setVisibility(true)
 end
 
 function main_menu:update()
@@ -118,12 +119,12 @@ function main_menu:update()
     end
   end
   
-  main_menu.menu:update()
-  main_menu.menu:draw()
+  self.menu:update()
+  self.menu:draw()
 end
 
 function main_menu:unload()
-  main_menu.menu:setVisibility(false)
+  self.menu:setVisibility(false)
 end
 
 return main_menu
