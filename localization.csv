@@ -278,7 +278,8 @@ op_enter_name,,Enter your name:,Entrez votre pseudo :,Digite seu apelido:,ユー
 op_fps,,Show FPS,Afficher les FPS,Mostrar FPS,FPS表示,Mostrar FPS (cuadros por segundo),FPS anzeigen,Mostra FPS (frame al secondo)
 op_language,,Language,Langue,Idioma,言語,Idioma,Sprache,Lingua
 op_theme,,Theme,Thème,Tema,テーマ,Tema,Theme,Tema
-op_ingame_infos,,Show informations during gameplay,Afficher les données pendant la partie,Mostrar informações durante partida,プレイ中情報表示,Mostrar información durante la partida,Informationen während des Spiels anzeigen,Mostra informazioni nel corso della partita
+op_ingame_infos,,"Show information
+during gameplay",Afficher les données pendant la partie,Mostrar informações durante partida,プレイ中情報表示,Mostrar información durante la partida,Informationen während des Spiels anzeigen,Mostra informazioni nel corso della partita
 op_use_music_from,,Use music from,Utiliser les musiques des,Usar música de,使用BGM,Usar música desde,Spiele die Musik von,Usa musica da
 op_only_stage,,Stage 100% | Character 0%,Terrain 100% | Personnage 0%,Cenário 100% | Personagens 0%,ステージ 100% | キャラクター  0%,Escenario 100% | Personaje 0%,Arena 100% | Charakter 0%,Scenario 100% | Personaggio 0%
 op_often_stage,,Stage 75% | Character 25%,Terrain 75% | Personnage 25%,Cenário 75% | Personagens 25%,ステージ 75% | キャラクター  25%,Escenario 75% | Personaje 25%,Arena 75% | Charakter 25%,Scenario 75% | Personaggio 25%
@@ -298,8 +299,8 @@ op_music_nav,,"%1 and %2 to navigate songs
 %3 para salir","Nutze %1 und %2 um zwischen Liedern zu navigieren und %3, um das Menü zu verlassen","%1 e %2 per navigare tra le canzoni
 %3 per uscire"
 op_music_play,Play music button in Sound Test,Play,Play,Play,Play,Play,Play,Play
-op_music_stop,Stop music button in Sound Test,Stop,Arr�ter,Pare,???,Detener,Stoppen,Fermare
-op_music_type,Select music type in Sound Test,Music type,La musique,M�sica,??,M�sica,Musik,Musica
+op_music_stop,Stop music button in Sound Test,Stop,Arrter,Pare,???,Detener,Stoppen,Fermare
+op_music_type,Select music type in Sound Test,Music type,La musique,Msica,??,Msica,Musik,Musica
 op_music_sfx,Sound Effect in Sound Test,SFX,Sonner,Som,?,Sonar,Klang,Suono
 op_panels,,Panels set,Choisir les blocs,Definir painéis,パネルセット,Set de paneles,Panelset,Scelta delle tessere
 op_reload_analytics,,reloading analytics...,rechargement des statistiques...,recarregando estatísticas...,解析を再読み込みしています...,Recargando estadísticas...,Statistiken neu laden...,Ricaricamento delle statistiche...
@@ -316,7 +317,8 @@ op_vol,,Master Volume,Volume Global,Vol. principal,マスターボリューム,V
 op_vol_music,,Music Volume,Volume Musique,Vol. da música,BGMボリューム,Volumen de música,Lautstärke der Musik,Volume della musica
 op_vol_sfx,,SFX Volume,Volume Effets,Vol. Efeitos Esp.,SFXボリューム,Volumen de sonido,Lautstärke der Soundeffekte,Volume SFX
 op_vsync,,V-Sync,V-Sync,V-Sync,垂直同期,Sincronización Vertical (V-Sync),V-Sync,V-Sync
-op_input_delay,,Key repeat delay (offline only),Délai de répétition des touches,Atraso na repetição das teclas (apenas offline),DAS 設定（オフラインのみ）,Retraso de repetición de las teclas (Solo fuera de línea),Verzögerung für die Tastenwiederholung bei gedrückt halten (nur offline),Ritardo della ripetizione dell'input (solo offline)
+op_input_delay,,"Key repeat delay
+(offline only)",Délai de répétition des touches,Atraso na repetição das teclas (apenas offline),DAS 設定（オフラインのみ）,Retraso de repetición de las teclas (Solo fuera de línea),Verzögerung für die Tastenwiederholung bei gedrückt halten (nur offline),Ritardo della ripetizione dell'input (solo offline)
 op_portrait_darkness,Options: darkness of the portraits in game,Portrait Darkness,Portrait Obscurité,Claridade de Retratos,背景の暗さ,Retrato Oscuridad,Helligkeit des Charakterporträts während des Spiels,Oscurità del ritratto
 op_popfx,Options: Whether pop effects should show,Pop Effects,Effets Pop,Efeitos de Explosão,パネル消しエフェクト,efectos pop,Popeffekte,Effetti pop
 op_renderTelegraph,Options: Whether the telegraph above the stack should show,Show Telegraph,Montrer le télégraphe,Mostrar telégrafo,テレグラフを表示,Mostrar telégrafo,Telegraph zeigen.,Mostra telegrafo

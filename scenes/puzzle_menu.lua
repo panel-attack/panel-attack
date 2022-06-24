@@ -57,12 +57,12 @@ function puzzle_menu:init()
   
   self.random_colors_buttons = ButtonGroup(
     {
-      Button({text = love.graphics.newText(font, loc("op_on")), width = 60, height = 25}),
       Button({text = love.graphics.newText(font, loc("op_off")), width = 60, height = 25}),
+      Button({text = love.graphics.newText(font, loc("op_on")), width = 60, height = 25}),
     },
-    {true, false},
+    {false, true},
     {
-      selected_index = config.puzzle_randomColors and 1 or 2,
+      selected_index = config.puzzle_randomColors and 2 or 1,
       onChange = function() play_optional_sfx(themes[config.theme].sounds.menu_move) end
     }
   )

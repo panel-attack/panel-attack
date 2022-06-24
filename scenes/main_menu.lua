@@ -52,7 +52,7 @@ local menu_buttons = {
   Button({text = love.graphics.newText(font, loc("mm_replay_browser")), onClick = function() switchScene("replay_menu") end}),
   Button({text = love.graphics.newText(font, loc("mm_configure")), onClick = function() switchScene("input_config_menu") end}),
   Button({text = love.graphics.newText(font, loc("mm_set_name")), onClick = function() switchScene("set_name_menu") end}),
-  Button({text = love.graphics.newText(font, loc("mm_options")), onClick = genOnClickFn(options.main)}),
+  Button({text = love.graphics.newText(font, loc("mm_options")), onClick = function() switchScene("options_menu") end}),
   Button({text = love.graphics.newText(font, loc("mm_fullscreen", "\n(LAlt+Enter)")), onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) fullscreen() end}),
   Button({text = love.graphics.newText(font, loc("mm_quit")), onClick = love.event.quit})
 }
