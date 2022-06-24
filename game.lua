@@ -213,11 +213,6 @@ function Game:draw()
   love.graphics.setBackgroundColor(unpack(global_background_color))
   love.graphics.clear()
 
-  -- Draw the FPS if enabled
-  if self.config.show_fps then
-    love.graphics.print("FPS: " .. love.timer.getFPS(), 1, 1)
-  end
-  
   if STONER_MODE then
     gprintf("STONER", 1, 1 + (11 * 4))
   end
@@ -226,6 +221,11 @@ function Game:draw()
     self.gfx_q[i][1](unpack(self.gfx_q[i][2]))
   end
   self.gfx_q:clear()
+  
+  -- Draw the FPS if enabled
+  if self.config.show_fps then
+    love.graphics.print("FPS: " .. love.timer.getFPS(), 1, 1)
+  end
 
   love.graphics.setCanvas() -- render everything thats been added
   love.graphics.clear(love.graphics.getBackgroundColor()) -- clear in preperation for the next render
