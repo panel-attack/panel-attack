@@ -47,25 +47,6 @@ local RichPresence = require("rich_presence.RichPresence")
 GAME.scores = require("scores")
 GAME.rich_presence = RichPresence()
 
--- Called at the beginning to load the game
--- Either called directly or from auto_updater
--- auto updater passes in GameUpdater as the last args
-function love.load(args)
-  local game_updater = nil
-  if args then
-    game_updater = args[#args]
-  end
-  
-  math.randomseed(os.time())
-  for i = 1, 4 do
-    math.random()
-  end
-  -- construct game here
-  GAME.rich_presence:initialize("902897593049301004")
-  GAME:load(game_updater)
-  mainloop = coroutine.create(fmainloop)
-end
-
 local prev_time = 0
 local FRAME_RATE = 1/60
 local sleep_ratio = .9
@@ -118,6 +99,26 @@ function love.run()
       love.graphics.present()
     end
   end
+end
+
+-- Called at the beginning to load the game
+-- Either called directly or from auto_updater
+-- auto updater passes in GameUpdater as the last args
+function love.load(args)
+  local game_updater = nil
+  if args then
+    game_updater = args[#args]
+  end
+  
+  --profiler:start()
+  math.randomseed(os.time())
+  for i = 1, 4 do
+    math.random()
+  end
+  -- construct game here
+  GAME.rich_presence:initialize("902897593049301004")
+  GAME:load(game_updater)
+  mainloop = coroutine.create(fmainloop)
 end
 
 function love.focus(f)
