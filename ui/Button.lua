@@ -11,6 +11,7 @@ local Button = class(
     self.width = options.width or 110
     self.height = options.height or 25
     self.label = options.label or "Button"
+    self.extra_labels = options.extra_labels or {}
     self.translate = options.translate or options.translate == nil and true
     self.is_visible = options.is_visible or options.is_visible == nil and true
     self.is_enabled = options.is_enabled or options.is_enabled == nil and true
@@ -30,7 +31,7 @@ local Button = class(
     end
     self.onMouseUp = options.onMouseUp or function() end
     
-    self.text = options.text or love.graphics.newText(love.graphics.getFont(), self.translate and loc(self.label) or self.label)
+    self.text = options.text or love.graphics.newText(love.graphics.getFont(), self.translate and loc(self.label, unpack(self.extra_labels)) or self.label)
     local text_width, text_height = self.text:getDimensions()
     self.width = math.max(text_width + 6, self.width)
     self.height = math.max(text_height + 6, self.height)

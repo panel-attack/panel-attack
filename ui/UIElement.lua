@@ -9,7 +9,7 @@ function UIElement:updateLabel(label)
   end
 
   if self.translate or label then
-    self.text = love.graphics.newText(love.graphics.getFont(), self.translate and loc(self.label) or self.label)
+    self.text = love.graphics.newText(love.graphics.getFont(), self.translate and loc(self.label, unpack(self.extra_labels)) or self.label)
   end
 end
 
