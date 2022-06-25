@@ -655,7 +655,6 @@ end
 
 
 function Stack.set_puzzle_state(self, puzzle)
-  
   -- Copy the puzzle into our state
   local boardSizeInPanels = self.width * self.height
   while string.len(puzzle.stack) < boardSizeInPanels do
@@ -682,9 +681,10 @@ function Stack.puzzleStringToPanels(self, puzzleString)
   local garbageStartColumn = nil
   local isMetal = false
   local connectedGarbagePanels = nil
+  local rowCount = string.len(puzzleString) / 6
   -- chunk the aprilstack into rows
   -- it is necessary to go bottom up because garbage block panels contain the offset relative to their bottom left corner
-  for row = 1, 12 do
+  for row = 1, rowCount do
       local rowString = string.sub(puzzleString, #puzzleString - 5, #puzzleString)
       puzzleString = string.sub(puzzleString, 1, #puzzleString - 6)
       -- copy the panels into the row
@@ -722,10 +722,12 @@ function Stack.puzzleStringToPanels(self, puzzleString)
               local height = connectedGarbagePanels[#connectedGarbagePanels].y_offset + 1
               -- this is disregarding the possible existence of irregularly shaped garbage
               local width = garbageStartColumn - column + 1
+              local shake_time = garbage_to_shake_time[width * height]
               for i = 1, #connectedGarbagePanels do
                 connectedGarbagePanels[i].x_offset = connectedGarbagePanels[i].x_offset - column
                 connectedGarbagePanels[i].height = height
                 connectedGarbagePanels[i].width = width
+                connectedGarbagePanels[i].shake_time = shake_time
                 -- panels are already in the main table and they should already be updated by reference
               end
               garbageStartRow = nil
@@ -1220,7 +1222,7 @@ function Stack.simulate(self)
     if self.speed ~= 0 and not self.manual_raise and self.stop_time == 0 and not self.rise_lock then
       if self.match.mode == "puzzle" then
         -- only reduce health after the first swap to give the player a chance to strategize
-        if self.puzzle.puzzleType == "clear" and self.puzzle.remaining_moves - self.puzzle.moves < 0 then
+        if self.puzzle.puzzleType == "clear" and self.puzzle.remaining_moves - self.puzzle.moves < 0 and self.shake_time < 1 then
           self.health = self.health - 1
           -- no gameover because it can't return otherwise, exit is taken care of by puzzle_failed
         end
@@ -2214,7 +2216,7 @@ end
 
 function Stack.processPuzzleSwap(self)
   if self.puzzle then
-    if self.puzzle.remaining_moves == 0 and self.puzzle.puzzleType == "clear" then
+    if self.puzzle.remaining_moves == self.puzzle.moves and self.puzzle.puzzleType == "clear" then
       -- start depleting stop / shake time
       self.stop_time = self.puzzle.stop_time
       self.shake_time = self.puzzle.shake_time
