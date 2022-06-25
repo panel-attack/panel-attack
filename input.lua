@@ -217,17 +217,69 @@ function joystick_ax()
 end
 
 function love.keypressed(key, scancode, rep)
-  if key == "return" and not rep and love.keyboard.isDown("lalt") then
-    love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
+  local function handleFullscreenToggle()
+    if key == "return" and not rep and love.keyboard.isDown("lalt") then
+      love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
+      return true
+    end
+  end
+
+  local function handleScreenshot()
+    if key == "f2" or key == "printscreen" then
+      local now = os.date("*t", to_UTC(os.time()))
+      local filename = "screenshot_" .. "v" .. config.version .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. ".png"
+      love.filesystem.createDirectory("screenshots")
+      love.graphics.captureScreenshot("screenshots/" .. filename)
+      return true
+    end
+  end
+
+  local function handleCopy()
+    if key == "c" and not rep and (love.keyboard.isDown("rctrl") or love.keyboard.isDown("lctrl")) then
+      local stacks = {}
+      if P1 then
+        stacks["P1"] = P1:toPuzzleInfo()
+      end
+      if P2 then
+        stacks["P2"] = P2:toPuzzleInfo()
+      end
+      if table.length(stacks) > 0 then
+        love.system.setClipboardText(json.encode(stacks))
+        return true
+      end
+    end
+  end
+
+  local function handleDumpAttackPattern()
+    if (key == "1" or key == "2") and not rep and (love.keyboard.isDown("rctrl") or love.keyboard.isDown("lctrl")) then
+      local stack = P1
+
+      if key == "2" then
+        stack = P2
+      end
+
+      if stack then
+        local data = stack:getAttackPatternData()
+        pcall(
+          function()
+            local file = love.filesystem.newFile("dumpAttackPattern.json")
+            file:open("w")
+            file:write(json.encode(data))
+            file:close()
+          end
+        )
+        return true
+      end
+    end
+  end
+  
+  if handleFullscreenToggle() or
+     handleScreenshot() or
+     handleCopy() or
+     handleDumpAttackPattern() then
     return
   end
-  if key == "f2" or key == "printscreen" then
-    local now = os.date("*t", to_UTC(os.time()))
-    local filename = "screenshot_" .. "v" .. config.version .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. ".png"
-    love.filesystem.createDirectory("screenshots")
-    love.graphics.captureScreenshot("screenshots/" .. filename)
-    return
-  end
+
   if not rep then
     keys[key] = 0
   end
@@ -292,6 +344,10 @@ end
 
 local function released_key_after_time(key, time)
   return this_frame_released_keys[key] and this_frame_released_keys[key] >= time
+end
+
+local function released_key(key)
+  return this_frame_released_keys[key]
 end
 
 -- Clears all input configurations assigned to player numbers
@@ -498,11 +554,11 @@ menu_enter_one_press =
   input_key_func(
   {"return", "kenter", "z"},
   {"swap1"},
-  normal_key,
+  released_key,
   function()
     return themes[config.theme].sounds.menu_validate
   end,
-  super_selection_duration
+  0
 )
 menu_pause =
   input_key_func(

@@ -290,8 +290,8 @@ op_music_nav,,"%1 and %2 to navigate songs
 %3 para salir","Nutze %1 und %2 um zwischen Liedern zu navigieren und %3, um das Menü zu verlassen","%1 e %2 per navigare tra le canzoni
 %3 per uscire"
 op_music_play,Play music button in Sound Test,Play,Play,Play,Play,Play,Play,Play
-op_music_stop,Stop music button in Sound Test,Stop,Arr�ter,Pare,???,Detener,Stoppen,Fermare
-op_music_type,Select music type in Sound Test,Music type,La musique,M�sica,??,M�sica,Musik,Musica
+op_music_stop,Stop music button in Sound Test,Stop,Arrêter,Pare,やめる,Detener,Stoppen,Fermare
+op_music_type,Select music type in Sound Test,Music type,La musique,Música,音楽,Música,Musik,Musica
 op_music_sfx,Sound Effect in Sound Test,SFX,Sonner,Som,?,Sonar,Klang,Suono
 op_panels,,Panels set,Choisir les blocs,Definir painéis,パネルセット,Set de paneles,Panelset,Scelta delle tessere
 op_reload_analytics,,reloading analytics...,rechargement des statistiques...,recarregando estatísticas...,解析を再読み込みしています...,Recargando estadísticas...,Statistiken neu laden...,Ricaricamento delle statistiche...
@@ -476,7 +476,7 @@ rp_browser_error_unknown_filetype,,Unknown filetype %1. (%2),Type de fichier inc
 rp_browser_error_file_not_found,,File not found! (%1),Fichier introuvable ! (%1),Arquivo não encontrado! (%1),ファイルを見つけませんでした！,¡No se encontró el archivo! (%1),Datei nicht gefunden! (%1),File non trovato! (%1)
 rp_browser_wrong_version,Error shown when trying to load a old version replay,This replay can not be viewed because it was played on a different version of the game.,Cette rediffusion ne peut pas être vue car elle a été jouée sur une version différente du jeu.,Essa repetição não pode ser vista porque foi jogada em uma versão diferente do jogo.,このリプレイは、ゲームの別のバージョンで再生されたため表示できません。,Esta repetición no se puede ver porque se jugó en una versión diferente del juego.,"Diese Wiederholung kann nicht angesehen werden, da er auf einer anderen Version des Spiels gespielt wurde.",Questo replay non può essere visto perché è stato giocato su una versione diversa del gioco.
 mm_replay_browser,,Replay Browser,Bibliothèque des replays,Navegador de Replays,リプレイブラウザ,Navegador de reproducción,Replay Browser,Navigatore Replay
-continue_button,,Push any key!,Appuyez sur n'importe quelle touche!,Aperte qualquer tecla!,PUSH ANY KEY,¡Pulsa cualquier tecla!,Drücken Sie eine beliebige Taste!,Premi un tasto qualsiasi!
+continue_button,Text shown to press any key to continue,Press Any Button,Appuyer sur un bouton,Pressione qualquer botão,任意のボタンを押します,Pulse cualquier botón,Drücke irgend einen Knopf,Premere qualsiasi pulsante
 player_press_key,,Player %1 press any key,Le joueur %1 appuie sur n'importe quelle touche,O jogador %1 carregue em qualquer tecla,プレーヤー％1　PUSH ANY KEY,Jugador %1 presione cualquier tecla,Spieler %1 drücke eine beliebige Taste,Il giocatore %1 preme un tasto qualsiasi
 config_input_welcome,Shown on the configure input screen,Set a input configuration for each keyboard / controller you want to be able to use.,Définissez une configuration d'entrée pour chaque clavier/contrôleur que vous souhaitez pouvoir utiliser.,Defina uma configuração de entrada para cada teclado / controlador que deseja usar.,使用するキーボード/コントローラーごとにキーコンフィグを設定して下さい。,Establezca una configuración de entrada para cada teclado / controlador que desee poder utilizar.,Gib eine Eingabekonfiguration für alle Kontroller oder Tastaturen an,Imposta una configurazione di input per ogni tastiera/controller che desideri utilizzare.
 configuration,Configuration for controller / keyboard setup,Configuration,Configuration,Configuração,キーコンフィグ,Configuración,Konfiguration,Configurazione

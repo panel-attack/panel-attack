@@ -1,11 +1,13 @@
 require("stage_loader")
 local logger = require("logger")
+require("UpdatingImage")
 
 -- Stuff defined in this file:
 --  . the data structure that store a stage's data
 
 local basic_images = {"thumbnail"}
-local other_images = {"background"}
+local backgroundImageName = "background"
+local other_images = {backgroundImageName}
 local defaulted_images = {thumbnail = true, background = true} -- those images will be defaulted if missing
 local basic_musics = {}
 local other_musics = {"normal_music", "danger_music", "normal_music_start", "danger_music_start"}

@@ -1,17 +1,19 @@
 -- A puzzle is a particular instance of the game, where there is a specific goal for clearing the panels
 Puzzle =
   class(
-  function(self, puzzleType, doCountdown, moves, stack)
-    self.puzzleType = puzzleType
+  function(self, puzzleType, doCountdown, moves, stack, stop_time, shake_time)
+    self.puzzleType = puzzleType or "moves"
     self.doCountdown = doCountdown
-    self.moves = moves
+    self.moves = moves or 0
     self.stack = string.gsub(stack, "%s+", "") -- Remove whitespace so files can be easier to read
     self.randomizeColors = false
+    self.stop_time = stop_time or 0
+    self.shake_time = shake_time or 0
   end
 )
 
 function Puzzle.getPuzzleTypes()
-  return { "moves", "chain" }
+  return { "moves", "chain", "clear" }
 end
 
 function Puzzle.getLegalCharacters()
@@ -103,4 +105,49 @@ function Puzzle.validate(self)
   end
 
   return errMessage == "", errMessage
+end
+
+function Puzzle.toPuzzleString(panels)
+  local function getPanelColor(panel)
+    if panel.garbage then
+      local effectiveHeight = panel.height
+      if panel.state == "matched" then
+        -- this is making the assumption that garbage that is currently clearing into panels is still to be included for the garbage block
+        effectiveHeight = panel.height + 1
+      end
+      -- offsets are being calculated from the bottom left corner of garbage
+      -- but we need to go in our order of traversal, therefore...
+      -- top left anchor point
+      if panel.x_offset == 0 and panel.y_offset == panel.height - 1 then
+        -- garbage start
+        if panel.metal then
+          return "{"
+        else
+          return "["
+        end
+      -- bottom right anchor point
+      elseif panel.x_offset == panel.width - 1 and panel.y_offset == panel.height - effectiveHeight then
+        -- garbage end
+        if panel.metal then
+          return "}"
+        else
+          return "]"
+        end
+      else
+        -- garbage body
+        return "="
+      end
+    else
+      return tostring(panel.color)
+    end
+  end
+  local puzzleMatrix = {}
+
+  for row = #panels, 1, -1 do
+    for column = 1, #panels[row] do
+      puzzleMatrix[#puzzleMatrix+1] = getPanelColor(panels[row][column])
+    end
+  end
+
+  return table.concat(puzzleMatrix)
 end
