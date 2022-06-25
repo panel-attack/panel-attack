@@ -1,4 +1,5 @@
 {
 	"id":"pa_characters_phoenix",
-	"name":"Phoenix"
+	"name":"Phoenix",
+	"stage":"pa_stages_cave"
 }

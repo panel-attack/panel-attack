@@ -1,4 +1,5 @@
 {
 	"id":"pa_characters_navalpiranha",
-	"name":"NavalPiranha"
+	"name":"NavalPiranha",
+	"stage":"pa_stages_cave"
 }

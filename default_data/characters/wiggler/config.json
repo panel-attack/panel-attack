@@ -1,4 +1,5 @@
 {
 	"id":"pa_characters_wiggler",
-	"name":"Wiggler"
+	"name":"Wiggler",
+	"stage":"pa_stages_jewel"
 }

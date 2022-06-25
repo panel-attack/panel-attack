@@ -1,4 +1,5 @@
 {
 	"id":"pa_characters_seren",
-	"name":"Seren"
+	"name":"Seren",
+	"stage":"pa_stages_moon"
 }
