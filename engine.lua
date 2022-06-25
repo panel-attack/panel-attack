@@ -662,9 +662,6 @@ function Stack.set_puzzle_state(self, puzzle)
   end
 
   local puzzleString = puzzle.stack
-  if puzzle.randomizeColors then
-    puzzleString = Puzzle.randomizeColorString(puzzleString)
-  end
 
   self.puzzle = puzzle
   self.panels = self:puzzleStringToPanels(puzzleString)
