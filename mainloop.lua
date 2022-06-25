@@ -1057,10 +1057,10 @@ function main_net_vs_lobby()
           lobby_menu:show_controls(true)
         end
         leaderboard_report = msg.leaderboard_report
-        for i = #leaderboard_report, 1, -1 do
-          local v = leaderboard_report[i]
-          if v.is_you then
-            my_rank = k
+        for rank = #leaderboard_report, 1, -1 do
+          local user = leaderboard_report[rank]
+          if user.user_name == config.name then
+            my_rank = rank
           end
         end
         leaderboard_first_idx_to_show = math.max((my_rank or 1) - 8, 1)
