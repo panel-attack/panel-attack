@@ -124,6 +124,7 @@ function Game:_setup_co()
     require("scenes.replay_game"),
     require("scenes.set_name_menu"),
     require("scenes.options_menu"),
+    require("scenes.sound_test"),
   }
   for i, scene in ipairs(scenes) do
     scene:init()
