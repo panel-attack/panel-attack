@@ -17,6 +17,7 @@ local input = require("input2")
 local util = require("util")
 local save = require("save")
 local table_utils = require("table_utils")
+local consts = require("consts")
 
 --@module MainMenu
 local GameBase = class(
@@ -26,6 +27,7 @@ local GameBase = class(
     self.text = ""
     self.winner_SFX = nil
     self.keep_music = false
+    self.current_stage = config.stage
   end,
   Scene
 )
@@ -101,21 +103,22 @@ function GameBase:finalizeAndWriteVsReplay(battleRoom, outcome_claim, incomplete
   self:finalizeAndWriteReplay(extraPath, extraFilename)
 end
 
-local function pickRandomStage()
-  current_stage = table.getRandomElement(stages_ids_for_current_theme)
-  if stages[current_stage]:is_bundle() then -- may pick a bundle!
-    current_stage = table.getRandomElement(stages[current_stage].sub_stages)
+function GameBase:pickRandomStage()
+  self.current_stage = table.getRandomElement(stages_ids_for_current_theme)
+  if stages[self.current_stage]:is_bundle() then -- may pick a bundle!
+    self.current_stage = table.getRandomElement(stages[self.current_stage].sub_stages)
   end
 end
 
-local function useCurrentStage()
-  if current_stage == nil then
-    pickRandomStage()
+function GameBase:useCurrentStage()
+  if config.stage == consts.RANDOM_STAGE_SPECIAL_VALUE then
+    self:pickRandomStage()
   end
+  current_stage = self.current_stage
   
-  stage_loader_load(current_stage)
+  stage_loader_load(self.current_stage)
   stage_loader_wait()
-  GAME.backgroundImage = stages[current_stage].images.background
+  GAME.backgroundImage = stages[self.current_stage].images.background
   GAME.background_overlay = themes[config.theme].images.bg_overlay
   GAME.foreground_overlay = themes[config.theme].images.fg_overlay
 end
@@ -139,7 +142,7 @@ function GameBase:load(scene_params)
   leftover_time = 1 / 120
   self.abort_game = false
 
-  useCurrentStage()
+  self:useCurrentStage()
   pickUseMusicFrom()
   self:customLoad(scene_params)
   replay = createNewReplay(GAME.match)
@@ -147,19 +150,17 @@ end
 
 
 
-local function handlePause()
-  if GAME.match.supportsPause then
-    if input.isDown["Start"] or (not GAME.focused and not GAME.gameIsPaused) then
-      GAME.gameIsPaused = not GAME.gameIsPaused
+function GameBase:handlePause()
+  if GAME.match.supportsPause and (input.isDown["Start"] or (not GAME.focused and not GAME.gameIsPaused)) then
+    GAME.gameIsPaused = not GAME.gameIsPaused
 
-      setMusicPaused(GAME.gameIsPaused)
+    setMusicPaused(GAME.gameIsPaused)
 
-      if not GAME.renderDuringPause then
-        if GAME.gameIsPaused then
-          reset_filters()
-        else
-          useCurrentStage()
-        end
+    if not GAME.renderDuringPause then
+      if GAME.gameIsPaused then
+        reset_filters()
+      else
+        self:useCurrentStage()
       end
     end
   end
@@ -271,7 +272,7 @@ function GameBase:runGame()
   self:customRun()
   
   if not ((GAME.match.P1 and GAME.match.P1.play_to_end) or (GAME.match.P2 and GAME.match.P2.play_to_end)) then
-    handlePause()
+    self:handlePause()
 
     if GAME.gameIsPaused and input.isDown["Swap2"] then
       self:abortGame()

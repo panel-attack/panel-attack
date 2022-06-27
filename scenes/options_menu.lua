@@ -30,7 +30,7 @@ end
 local optionsMenu
 
 local options_state
-local active_menu_name
+local active_menu_name = "base_menu"
 local info_name
 
 local menus = {
@@ -317,7 +317,7 @@ function options_menu:init()
     {Label({width = label_width, label = "op_vol_music"}), createConfigSlider("music_volume", 0, 100, function() apply_config_volume() end)},
     {Label({width = label_width, label = "op_use_music_from"}), music_frequency_stepper},
     {Label({width = label_width, label = "op_music_delay"}), createToggleButtonGroup("danger_music_changeback_delay")},
-    {Button({width = label_width, label = "mm_music_test", onClick = function() switchMenu("sound_test_menu") end})},
+    {Button({width = label_width, label = "mm_music_test", onClick = function() scene_manager:switchScene("sound_test") end})},
     {Button({width = label_width, label = "back", onClick = function() switchMenu("base_menu") end})},
   }
   
@@ -353,9 +353,11 @@ function options_menu:init()
 end
 
 function options_menu:load()
+  if themes[config.theme].musics["main"] then
+    find_and_add_music(themes[config.theme].musics, "main")
+  end
   options_state = "menus"
-  active_menu_name = "base_menu"
-  menus["base_menu"]:setVisibility(true)
+  menus[active_menu_name]:setVisibility(true)
 end
 
 function options_menu:update()
@@ -370,7 +372,7 @@ function options_menu:update()
 end
 
 function options_menu:unload()
-  menus["base_menu"]:setVisibility(false)
+  menus[active_menu_name]:setVisibility(false)
 end
 
 return options_menu

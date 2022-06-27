@@ -47,7 +47,7 @@ function Slider:isSelected(x, y)
 end
 
 function Slider:setValueFromPos(x)
-  self:setValue(math.floor((x - (self.x + x_offset)) / self.tick_length) + self.min)
+  self:setValue(math.floor((x - (self.x + x_offset)) / self.tick_length) + self.min + 1)
 end
 
 function Slider:setValue(value)

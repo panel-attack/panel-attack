@@ -310,6 +310,7 @@ function CharacterSelect:init()
       tick_length = tick_length,
       is_visible = false,
       is_enabled = false,
+      value = config.level,
       onValueChange = function(s)
         play_optional_sfx(themes[config.theme].sounds.menu_move)
         config.level = s.value
