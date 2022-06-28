@@ -48,7 +48,6 @@ SFX_Fanfare_Play = 0
 SFX_GarbageThud_Play = 0
 SFX_GameOver_Play = 0
 
-global_my_state = nil
 global_op_state = nil
 
 large_font = 10 -- large font base+10
@@ -68,7 +67,7 @@ config = {
 	language_code                 = "EN",
 
 	theme                         = default_theme_dir,
-	panels                     	  			= default_panels_dir,
+	panels                     	  = default_panels_dir,
 	character                     = random_character_special_value,
 	stage                         = random_stage_special_value,
 

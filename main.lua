@@ -1,4 +1,4 @@
-require("developer")
+--require("developer")
 require("class")
 socket = require("socket")
 json = require("dkjson")
