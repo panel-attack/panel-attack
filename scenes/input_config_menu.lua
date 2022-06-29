@@ -16,7 +16,7 @@ input_config_menu.setting_key = false
 
 local font = love.graphics.getFont() 
 local pretty_names = {loc("up"), loc("down"), loc("left"), loc("right"), "A", "B", "X", "Y", "L", "R", loc("start")}
-local pending_input_text = love.graphics.newText(font, "__")
+local pending_input_text = "__"
 local config_index = 1
 
 local function shorten_controller_name(name)
