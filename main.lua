@@ -61,12 +61,12 @@ function love.run()
   -- Main loop time.
 	return function()
     local current_time = love.timer.getTime()
-    local wait_time = (prev_time + FRAME_RATE - current_time) * sleep_ratio
+    local wait_time = (prev_time + consts.FRAME_RATE - current_time) * sleep_ratio
     if love.timer and wait_time > 0 then 
       love.timer.sleep(wait_time) 
     end
     current_time = love.timer.getTime()
-    while prev_time + FRAME_RATE > current_time do
+    while prev_time + consts.FRAME_RATE > current_time do
       current_time = love.timer.getTime()
     end
     prev_time = current_time

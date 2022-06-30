@@ -171,7 +171,7 @@ function Game:update(dt)
   if coroutine.status(self._setup) ~= "dead" then
     status, err = coroutine.resume(self._setup)
   elseif scene_manager.active_scene then
-    scene_manager.active_scene:update()
+    scene_manager.active_scene:update(dt)
     -- update transition to use draw priority queue
     if scene_manager.is_transitioning then
       scene_manager:transition()
