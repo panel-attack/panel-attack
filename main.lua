@@ -20,7 +20,7 @@ require("match")
 require("BattleRoom")
 require("util")
 require("table_util")
-require("consts")
+local consts = require("consts")
 require("globals")
 require("character") -- after globals!
 require("stage") -- after globals!

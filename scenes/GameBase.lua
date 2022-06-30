@@ -266,10 +266,12 @@ function GameBase:runGameOver()
   GAME.match:render()
 end
 
-function GameBase:runGame()
-  GAME.match:run()
-  
-  self:customRun()
+function GameBase:runGame(dt)
+  repeat 
+    GAME.match:run()
+    self:customRun()
+    dt = dt - consts.FRAME_RATE
+  until (dt < consts.FRAME_RATE)
   
   if not ((GAME.match.P1 and GAME.match.P1.play_to_end) or (GAME.match.P2 and GAME.match.P2.play_to_end)) then
     self:handlePause()
@@ -295,11 +297,11 @@ function GameBase:runGame()
   end
 end
 
-function GameBase:update()
+function GameBase:update(dt)
   if GAME.match.P1:gameResult() then
     self:runGameOver()
   else
-    self:runGame()
+    self:runGame(dt)
   end
 end
 
