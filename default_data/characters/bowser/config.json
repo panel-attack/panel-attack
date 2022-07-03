@@ -1,4 +1,5 @@
 {
 	"id":"pa_characters_bowser",
-	"name":"Bowser"
+	"name":"Bowser",
+	"stage":"pa_stages_king"
 }

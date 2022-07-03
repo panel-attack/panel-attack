@@ -1,7 +1,6 @@
 local Scene = require("scenes.Scene")
 local replay_browser = require("replay_browser")
 local logger = require("logger")
-local select_screen = require("select_screen")
 local options = require("options")
 local utf8 = require("utf8")
 local analytics = require("analytics")
@@ -39,8 +38,9 @@ local menu_buttons = {
   Button({label = "mm_1_time", onClick = function() switchScene("time_attack_menu") end}),
   Button({label = "mm_1_vs", onClick = function() switchScene("vs_self_menu") end}),
   Button({label = "mm_1_training", onClick = function() switchScene("training_mode_menu") end}),
+  Button({label = "mm_2_vs_online", extra_labels = {""}, onClick = genOnClickFn(main_net_vs_setup, {"18.188.43.50"})}),
   --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
-  Button({label = "mm_2_vs_online", extra_labels = {"\nTelegraph Server"}, onClick = genOnClickFn(main_net_vs_setup, {"betaserver.panelattack.com", 59569})}),
+  --Button({label = "mm_2_vs_online", extra_labels = {"\nTelegraph Server"}, onClick = genOnClickFn(main_net_vs_setup, {"betaserver.panelattack.com", 59569})}),
   --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
   --{loc("mm_2_vs_online", "betaserver.panelattack.com"), main_net_vs_setup, {"betaserver.panelattack.com"}},
   --{loc("mm_2_vs_online", "(USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)"), main_net_vs_setup, {"18.188.43.50"}},

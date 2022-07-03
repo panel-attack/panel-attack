@@ -1,7 +1,6 @@
 local class = require("class")
 local replay_browser = require("replay_browser")
 local logger = require("logger")
-local select_screen = require("select_screen")
 local options = require("options")
 local utf8 = require("utf8")
 local analytics = require("analytics")

@@ -1,4 +1,5 @@
 {
 	"id":"pa_characters_neris",
-	"name":"Neris"
+	"name":"Neris",
+	"stage":"pa_stages_sea"
 }

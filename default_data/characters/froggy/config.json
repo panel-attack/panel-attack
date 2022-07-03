@@ -1,4 +1,5 @@
 {
 	"id":"pa_characters_froggy",
-	"name":"Froggy"
+	"name":"Froggy",
+	"stage":"pa_stages_water"
 }

@@ -182,6 +182,7 @@ function options_menu:init()
   about_text["characters"] = save.read_txt_file("readme_characters.txt")
   about_text["stages"] = save.read_txt_file("readme_stages.txt")
   about_text["panels"] = save.read_txt_file("readme_panels.txt")
+  about_text["attackFiles"] = save.read_txt_file("readme_training.txt")
 
   local language_labels = {}
   for k, v in ipairs(language_names) do
@@ -332,6 +333,7 @@ function options_menu:init()
     {Button({width = label_width, label = "op_about_characters", onClick = function() setupInfo("characters") end})},
     {Button({width = label_width, label = "op_about_stages", onClick = function() setupInfo("stages") end})},
     {Button({width = label_width, label = "op_about_panels", onClick = function() setupInfo("panels") end})},
+    {Button({width = label_width, label = "About Attack Files", translate = false, onClick = function() setupInfo("attackFiles") end})},
     {Button({width = label_width, label = "System Info", translate = false, onClick = setupSystemInfo})},
     {Button({width = label_width, label = "back", onClick = function() switchMenu("base_menu") end})},
   }

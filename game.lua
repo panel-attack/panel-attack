@@ -167,6 +167,10 @@ function Game:update(dt)
 
   leftover_time = leftover_time + dt
   
+  if self.backgroundImage then
+    self.backgroundImage:update(dt)
+  end
+  
   local status, err = nil
   if coroutine.status(self._setup) ~= "dead" then
     status, err = coroutine.resume(self._setup)
@@ -237,8 +241,10 @@ function Game:draw()
   love.graphics.draw(self.global_canvas, x, y, 0, w / consts.CANVAS_WIDTH, h / consts.CANVAS_HEIGHT)
 
   -- draw background and its overlay
-  local scale = consts.CANVAS_WIDTH / math.max(self.backgroundImage:getWidth(), self.backgroundImage:getHeight()) -- keep image ratio
-  graphics_util.menu_drawf(self.backgroundImage, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
+  if self.backgroundImage then
+    self.backgroundImage:draw()
+  end
+  
   if self.background_overlay then
     local scale = consts.CANVAS_WIDTH / math.max(self.background_overlay:getWidth(), self.background_overlay:getHeight()) -- keep image ratio
     graphics_util.menu_drawf(self.background_overlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)

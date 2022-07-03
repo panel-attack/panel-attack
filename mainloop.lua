@@ -1,5 +1,5 @@
 local logger = require("logger")
-local select_screen = require("select_screen")
+local select_screen = require("select_screen.select_screen")
 local replay_browser = require("replay_browser")
 local options = require("options")
 local utf8 = require("utf8")
@@ -28,17 +28,31 @@ local has_game_update = false
 local main_menu_last_index = 1
 local puzzle_menu_last_index = 3
 
+local function drawLoadingString(loadingString) 
+  local textMaxWidth = 300
+  local textHeight = 40
+  local x = 20
+  local y = canvas_height - textHeight
+  local backgroundPadding = 10
+  grectangle_color("fill", (x - backgroundPadding) / GFX_SCALE , (y - backgroundPadding) / GFX_SCALE, textMaxWidth/GFX_SCALE, textHeight/GFX_SCALE, 0, 0, 0, 0.5)
+  gprintf(loadingString, x, y, canvas_width, "left", nil, nil, 10)
+end
+
 function fmainloop()
   -- local func, arg = main_select_mode, nil
   -- Run Unit Tests
   if TESTS_ENABLED then
     -- Run all unit tests now that we have everything loaded
+    drawLoadingString("Running Unit Tests")
+    wait()
     require("PuzzleTests")
     require("ServerQueueTests")
     require("StackTests")
     require("table_util_tests")
     require("csprngTests")
   end
+
+  local func, arg = main_title, nil
 
   while true do
     leftover_time = 1 / 120 -- prevents any left over time from getting big transitioning between menus
@@ -70,6 +84,54 @@ function variable_step(f)
   end
 end
 
+local function titleDrawPressStart(percent) 
+  local textMaxWidth = canvas_width - 40
+  local textHeight = 40
+  local x = (canvas_width / 2) - (textMaxWidth / 2)
+  local y = canvas_height * 0.75
+  gprintf(loc("continue_button"), x, y, textMaxWidth, "center", {1,1,1,percent}, nil, 16)
+end
+
+function main_title()
+
+  if not themes[config.theme].images.bg_title then
+    return main_select_mode
+  end
+
+  GAME.backgroundImage = themes[config.theme].images.bg_title
+  
+  local ret = nil
+  local percent = 0
+  local incrementAmount = 0.01
+  local decrementAmount = 0.02
+  local increment = incrementAmount
+
+  local totalTime = 0
+  while true do
+    titleDrawPressStart(percent)
+    local lastTime = leftover_time
+    wait()
+    totalTime = totalTime + (leftover_time - lastTime)
+    variable_step(
+      function()
+        if increment > 0 and percent >= 1 then
+          increment = -decrementAmount
+        elseif increment < 0 and percent <= 0.5 then
+          increment = incrementAmount
+        end
+        percent =  bound(0, percent + increment, 1)
+        
+        if love.mouse.isDown(1, 2, 3) or #love.touch.getTouches() > 0 or (table.length(this_frame_released_keys) > 0 and totalTime > 0.1) then
+          ret = {main_select_mode}
+        end
+      end
+    )
+    if ret then
+      return unpack(ret)
+    end
+  end
+end
+
 do
   function main_select_mode()
     CLICK_MENUS = {}
@@ -93,7 +155,7 @@ do
     connected_server_ip = ""
     current_server_supports_ranking = false
     match_type = ""
-    local menu_x, menu_y = unpack(main_menu_screen_pos)
+    local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
     local main_menu
     local ret = nil
     GAME.rich_presence:setPresence(nil, nil, true)
@@ -118,9 +180,9 @@ do
       {loc("mm_1_vs"), main_local_vs_yourself_setup},
       {loc("mm_1_training"), training_setup},
       --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
-      --{loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
+      {loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
-      {loc("mm_2_vs_online", "Telegraph Server"), main_net_vs_setup, {"betaserver.panelattack.com", 59569}},
+      --{loc("mm_2_vs_online", ""), main_net_vs_setup, {"betaserver.panelattack.com", 59569}},
       --{loc("mm_2_vs_online", "(USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)"), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "This test build is for offline-use only"), main_select_mode},
       --{loc("mm_2_vs_online", "domi1819.xyz"), main_net_vs_setup, {"domi1819.xyz"}},
@@ -134,7 +196,7 @@ do
       {loc("mm_options"), options.main}
     }
 
-    main_menu = ClickMenu(menu_x, menu_y, nil, canvas_height - menu_y - 10, main_menu_last_index)
+    main_menu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, main_menu_last_index)
     for i = 1, #items do
       main_menu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
     end
@@ -142,7 +204,9 @@ do
     main_menu:add_button(loc("mm_quit"), exit_game, exit_game)
 
     while true do
+
       main_menu:draw()
+
       if wait_game_update ~= nil then
         has_game_update = wait_game_update:pop()
         if has_game_update ~= nil and has_game_update then
@@ -151,17 +215,25 @@ do
         end
       end
       
-      local loveString = GAME:loveVersionString()
-      gprintf("Love Version: " .. loveString, -5, 705, canvas_width, "right")
+      local fontHeight = get_global_font():getHeight()
+      local infoYPosition = 705 - fontHeight/2
+
+      local loveString = Game.loveVersionString()
+      if loveString == "11.3.0" then
+        gprintf(loc("love_version_warning"), -5, infoYPosition, canvas_width, "right")
+        infoYPosition = infoYPosition - fontHeight
+      end
 
       if GAME_UPDATER_GAME_VERSION then
-        gprintf("PA Version: " .. GAME_UPDATER_GAME_VERSION, -5, 690, canvas_width, "right")
+        gprintf("PA Version: " .. GAME_UPDATER_GAME_VERSION, -5, infoYPosition, canvas_width, "right")
+        infoYPosition = infoYPosition - fontHeight
         if has_game_update then
           menu_draw(panels[config.panels].images.classic[1][1], 1262, 685)
         end
       end
 
       wait()
+
       variable_step(
         function()
           main_menu:update()
@@ -180,7 +252,7 @@ local function use_current_stage()
   else
     stage_loader_load(current_stage)
     stage_loader_wait()
-    GAME.backgroundImage = stages[current_stage].images.background
+    GAME.backgroundImage = UpdatingImage(stages[current_stage].images.background, false, 0, 0, canvas_width, canvas_height)
     GAME.background_overlay = themes[config.theme].images.bg_overlay
     GAME.foreground_overlay = themes[config.theme].images.fg_overlay
   end
@@ -457,43 +529,82 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
 
 end
 
+local function createBasicTrainingMode(name, width, height) 
+
+  local delayBeforeStart = 150
+  local delayBeforeRepeat = 900
+  local attacksPerVolley = 50
+  local attackPatterns = {}
+
+  for i = 1, attacksPerVolley do
+    attackPatterns[#attackPatterns+1] = {width = width, height = height, startTime = i, metal = false, chain = false, endsChain = false}
+  end
+
+  local customTrainingModeData = {name = name, delayBeforeStart = delayBeforeStart, delayBeforeRepeat = delayBeforeRepeat, attackPatterns = attackPatterns}
+
+  return customTrainingModeData
+end
+
 function training_setup()
-  -- TODO make "illegal garbage blocks" possible again in telegraph.
   local trainingModeSettings = {}
   trainingModeSettings.height = 1
-  trainingModeSettings.width = 6
+  trainingModeSettings.width = 4
+  local customModeID = 1
+  local customTrainingModes = {}
+  customTrainingModes[0] = {name = "None"}
+  customTrainingModes[1] = createBasicTrainingMode(loc("combo_storm"), 4, 1)
+  customTrainingModes[2] = createBasicTrainingMode(loc("factory"), 6, 2)
+  customTrainingModes[3] = createBasicTrainingMode(loc("large_garbage"), 6, 12)
+  for customfile, value in ipairs(trainings) do
+    customTrainingModes[#customTrainingModes+1] = value
+  end
+  
   local ret = nil
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
-  menu_y = menu_y + 70
+  local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
 
   local trainingSettingsMenu
 
-  local function update_width()
-    trainingSettingsMenu:set_button_setting(4, trainingModeSettings.width)
+  local function update_custom_setting()
+    trainingSettingsMenu:set_button_setting(1, customTrainingModes[customModeID].name)
+    trainingSettingsMenu:set_button_setting(2, "Custom")
+    trainingSettingsMenu:set_button_setting(3, "Custom")
   end
 
-  local function update_height()
-    trainingSettingsMenu:set_button_setting(5, trainingModeSettings.height)
+  local function update_size()
+    customModeID = 0
+    trainingSettingsMenu:set_button_setting(1, customTrainingModes[customModeID].name)
+    trainingSettingsMenu:set_button_setting(2, trainingModeSettings.width)
+    trainingSettingsMenu:set_button_setting(3, trainingModeSettings.height)
+  end
+
+  local function custom_right()
+    customModeID = bound(1, customModeID + 1, #customTrainingModes)
+    update_custom_setting()
+  end
+
+  local function custom_left()
+    customModeID = bound(1, customModeID - 1, #customTrainingModes)
+    update_custom_setting()
   end
 
   local function increase_height()
     trainingModeSettings.height = bound(1, trainingModeSettings.height + 1, 69)
-    update_height()
+    update_size()
   end
 
   local function decrease_height()
     trainingModeSettings.height = bound(1, trainingModeSettings.height - 1, 69)
-    update_height()
+    update_size()
   end
 
   local function increase_width()
     trainingModeSettings.width = bound(1, trainingModeSettings.width + 1, 6)
-    update_width()
+    update_size()
   end
 
   local function decrease_width()
     trainingModeSettings.width = bound(1, trainingModeSettings.width - 1, 6)
-    update_width()
+    update_size()
   end
 
   local function goToStart()
@@ -508,48 +619,24 @@ function training_setup()
     ret = {main_select_mode}
   end
 
-  local function factory_settings()
-    trainingModeSettings.width = 6
-    trainingModeSettings.height = 2
-    update_width()
-    update_height()
-    goToStart()
-  end
-
-  local function combo_storm_settings()
-    trainingModeSettings.width = 4
-    trainingModeSettings.height = 1
-    update_width()
-    update_height()
-    goToStart()
-  end
-
-  local function large_garbage_settings()
-    trainingModeSettings.width = 6
-    trainingModeSettings.height = 12
-    update_width()
-    update_height()
-    goToStart()
-  end
-
   local function start_custom_game()
-    ret = {main_local_vs_yourself_setup, {trainingModeSettings}}
+    customTrainingModes[0] = createBasicTrainingMode("", trainingModeSettings.width, trainingModeSettings.height)
+    ret = {main_local_vs_yourself_setup, {customTrainingModes[customModeID]}}
   end
 
   local function nextMenu()
     trainingSettingsMenu:selectNextIndex()
   end
   
-  trainingSettingsMenu = ClickMenu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
-  trainingSettingsMenu:add_button(loc("factory"), factory_settings, goEscape)
-  trainingSettingsMenu:add_button(loc("combo_storm"), combo_storm_settings, goEscape)
-  trainingSettingsMenu:add_button(loc("large_garbage"), large_garbage_settings, goEscape)
+  trainingSettingsMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
+  trainingSettingsMenu:add_button("Custom", goToStart, goEscape, custom_left, custom_right)
   trainingSettingsMenu:add_button(loc("width"), nextMenu, goEscape, decrease_width, increase_width)
   trainingSettingsMenu:add_button(loc("height"), nextMenu, goEscape, decrease_height, increase_height)
   trainingSettingsMenu:add_button(loc("go_"), start_custom_game, goEscape)
   trainingSettingsMenu:add_button(loc("back"), exitSettings, exitSettings)
-  update_height()
-  update_width()
+  trainingSettingsMenu:set_button_setting(1, customTrainingModes[customModeID].name)
+  trainingSettingsMenu:set_button_setting(2, trainingModeSettings.width)
+  trainingSettingsMenu:set_button_setting(3, trainingModeSettings.height)
 
   while true do
     trainingSettingsMenu:draw()
@@ -730,9 +817,8 @@ local function main_select_speed_99(mode)
     endlessMenuLastIndex = bound(1, #gameSettingsMenu.buttons - 1, #gameSettingsMenu.buttons)
   end
 
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
-  menu_y = menu_y + 70
-  gameSettingsMenu = ClickMenu(menu_x, menu_y, nil, canvas_height - menu_y - 10, endlessMenuLastIndex)
+  local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
+  gameSettingsMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, endlessMenuLastIndex)
   gameSettingsMenu:add_button(loc("endless_type"), nextMenu, goEscape, toggleType, toggleType)
   addLevelButtons()
   gameSettingsMenu:add_button(loc("go_"), startGame, goEscape)
@@ -757,7 +843,7 @@ local function main_select_speed_99(mode)
       end
       local xPosition1 = 520
       local xPosition2 = xPosition1 + 150
-      local yPosition = 270
+      local yPosition = gameSettingsMenu.y - 60
 
       lastScore = tostring(lastScore)
       record = tostring(record)
@@ -813,24 +899,28 @@ function main_net_vs_lobby()
   local unpaired_players = {} -- list
   local willing_players = {} -- set
   local spectatable_rooms = {}
-  my_player_number = nil
-  op_player_number = nil
+  -- reset player ids and match type
+  -- this is necessary because the player ids are only supplied on initial joining and then assumed to stay the same for consecutive games in the same room
+  select_screen.my_player_number = nil
+  select_screen.op_player_number = nil
+  match_type = ""
+  match_type_message = ""
   local notice = {[true] = loc("lb_select_player"), [false] = loc("lb_alone")}
   local leaderboard_string = ""
   local my_rank
-  match_type = ""
-  match_type_message = ""
   --attempt login
   read_user_id_file()
   if not my_user_id then
     my_user_id = "need a new user id"
   end
   local login_status_message = "   " .. loc("lb_login")
+  local noticeTextObject = nil
+  local noticeLastText = nil
   local login_status_message_duration = 2
   local login_denied = false
   local showing_leaderboard = false
-  local lobby_menu_x = {[true] = main_menu_screen_pos[1] - 200, [false] = main_menu_screen_pos[1]} --will be used to make room in case the leaderboard should be shown.
-  local lobby_menu_y = main_menu_screen_pos[2] + 50
+  local lobby_menu_x = {[true] = themes[config.theme].main_menu_screen_pos[1] - 200, [false] = themes[config.theme].main_menu_screen_pos[1]} --will be used to make room in case the leaderboard should be shown.
+  local lobby_menu_y = themes[config.theme].main_menu_screen_pos[2] + 10
   local sent_requests = {}
   if connection_up_time <= login_status_message_duration then
     json_send({login_request = true, user_id = my_user_id})
@@ -845,7 +935,6 @@ function main_net_vs_lobby()
   GAME.rich_presence:setPresence(nil, "In Lobby", true)
   while true do
     if connection_up_time <= login_status_message_duration then
-      gprint(login_status_message, lobby_menu_x[showing_leaderboard], lobby_menu_y - 100)
       local messages = server_queue:pop_all_with("login_successful", "login_denied")
       for _, msg in ipairs(messages) do
         if msg.login_successful then
@@ -886,7 +975,6 @@ function main_net_vs_lobby()
         return main_dumb_transition, {main_select_mode, "Error: " .. msg.choose_another_name.reason, 60, 300}
       end
       if msg.create_room or msg.spectate_request_granted then
-        global_initialize_room_msg = msg
         GAME.battleRoom = BattleRoom()
         if msg.spectate_request_granted then
           if not requestedSpectateRoom then
@@ -899,11 +987,10 @@ function main_net_vs_lobby()
           GAME.battleRoom.playerNames[1] = config.name
           GAME.battleRoom.playerNames[2] = msg.opponent
         end
-        select_screen.character_select_mode = "2p_net_vs"
         love.window.requestAttention()
         play_optional_sfx(themes[config.theme].sounds.notification)
         lobby_menu:remove_self()
-        return select_screen.main
+        return select_screen.main, {select_screen, "2p_net_vs", msg}
       end
       if msg.players then
         playerData = msg.players
@@ -934,10 +1021,10 @@ function main_net_vs_lobby()
           lobby_menu:show_controls(true)
         end
         leaderboard_report = msg.leaderboard_report
-        for i = #leaderboard_report, 1, -1 do
-          local v = leaderboard_report[i]
-          if v.is_you then
-            my_rank = k
+        for rank = #leaderboard_report, 1, -1 do
+          local user = leaderboard_report[rank]
+          if user.user_name == config.name then
+            my_rank = rank
           end
         end
         leaderboard_first_idx_to_show = math.max((my_rank or 1) - 8, 1)
@@ -945,9 +1032,6 @@ function main_net_vs_lobby()
         leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
       end
     end
-    local print_x, print_y = unpack(main_menu_screen_pos)
-    local to_print = ""
-    local arrow = ""
 
     local function toggleLeaderboard()
       updated = true
@@ -958,7 +1042,7 @@ function main_net_vs_lobby()
       else
         --lobby_menu:set_button_text(#lobby_menu.buttons - 1, loc("lb_show_board"))
         showing_leaderboard = false
-        lobby_menu:move(lobby_menu_x[showing_leaderboard], lobby_menu_y)
+        lobby_menu.x = lobby_menu_x[showing_leaderboard]
       end
     end
 
@@ -1011,8 +1095,8 @@ function main_net_vs_lobby()
         end
         return rating
       end
-
-      lobby_menu = ClickMenu(lobby_menu_x[showing_leaderboard], lobby_menu_y, nil, canvas_height - lobby_menu_y - 10, 1)
+      local menuHeight = (themes[config.theme].main_menu_y_max - lobby_menu_y)
+      lobby_menu = Click_menu(lobby_menu_x[showing_leaderboard], lobby_menu_y, nil, menuHeight, 1)
       for _, v in ipairs(unpaired_players) do
         if v ~= config.name then
           local unmatchedPlayer = v .. playerRatingString(v) .. (sent_requests[v] and " " .. loc("lb_request") or "") .. (willing_players[v] and " " .. loc("lb_received") or "")
@@ -1059,14 +1143,36 @@ function main_net_vs_lobby()
     end
 
     if lobby_menu then
-      gprint(loc("lb_telegraph_alpha"), lobby_menu_x[showing_leaderboard] - 230, lobby_menu_y - 70)
-      gprint(notice[#lobby_menu.buttons > 2], lobby_menu_x[showing_leaderboard], lobby_menu_y - 30)
-      gprint(arrow, lobby_menu_x[showing_leaderboard], lobby_menu_y)
-      gprint(to_print, lobby_menu_x[showing_leaderboard], lobby_menu_y)
-      if showing_leaderboard then
-        gprint(leaderboard_string, lobby_menu_x[showing_leaderboard] + 400, lobby_menu_y - 120)
+      local noticeText = notice[#lobby_menu.buttons > 2]
+      if connection_up_time <= login_status_message_duration then
+        noticeText = login_status_message
       end
-      gprint(join_community_msg, main_menu_screen_pos[1] + 30, canvas_height - 50)
+
+      local noticeHeight = 0
+      local button_padding = 4
+      if noticeText ~= noticeLastText then
+        noticeTextObject = love.graphics.newText(get_global_font(), noticeText)
+        noticeHeight = noticeTextObject:getHeight() + (button_padding * 2)
+        lobby_menu.yMin = lobby_menu_y + noticeHeight
+        local menuHeight = (themes[config.theme].main_menu_y_max - lobby_menu.yMin)
+        lobby_menu:setHeight(menuHeight)
+      end
+      if noticeTextObject then
+        local noticeX = lobby_menu_x[showing_leaderboard] + 2
+        local noticeY = lobby_menu.y - noticeHeight - 10
+        local noticeWidth = noticeTextObject:getWidth() + (button_padding * 2)
+        local grey = 0.0
+        local alpha = 0.6
+        grectangle_color("fill", noticeX / GFX_SCALE, noticeY / GFX_SCALE, noticeWidth / GFX_SCALE, noticeHeight / GFX_SCALE, grey, grey, grey, alpha)
+        --grectangle_color("line", noticeX / GFX_SCALE, noticeY / GFX_SCALE, noticeWidth / GFX_SCALE, noticeHeight / GFX_SCALE, grey, grey, grey, alpha)
+
+        menu_drawf(noticeTextObject, noticeX + button_padding, noticeY + button_padding)
+      end
+
+      if showing_leaderboard then
+        gprint(leaderboard_string, lobby_menu_x[showing_leaderboard] + 400, lobby_menu_y)
+      end
+      gprint(join_community_msg, themes[config.theme].main_menu_screen_pos[1] + 30, canvas_height - 50)
       lobby_menu:draw()
     end
     updated = false
@@ -1144,14 +1250,14 @@ function main_net_vs_setup(ip, network_port)
   P1 = nil
   P2 = {}
   server_queue = ServerQueue()
-  gprint(loc("lb_set_connect"), unpack(main_menu_screen_pos))
+  gprint(loc("lb_set_connect"), unpack(themes[config.theme].main_menu_screen_pos))
   wait()
   if not network_init(ip, network_port) then
     return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
   end
   local timeout_counter = 0
   while not connection_is_ready() do
-    gprint(loc("lb_connecting"), unpack(main_menu_screen_pos))
+    gprint(loc("lb_connecting"), unpack(themes[config.theme].main_menu_screen_pos))
     wait()
     if not do_messages() then
       return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
@@ -1178,9 +1284,9 @@ function main_net_vs()
       if msg.taunt then -- receive taunts
         local taunts = nil
         -- P1.character and P2.character are supposed to be already filtered with current mods, taunts may differ though!
-        if msg.player_number == my_player_number then
+        if msg.player_number == select_screen.my_player_number then
           taunts = characters[P1.character].sounds[msg.type]
-        elseif msg.player_number == op_player_number then
+        elseif msg.player_number == select_screen.op_player_number then
           taunts = characters[P2.character].sounds[msg.type]
         end
         if taunts then
@@ -1254,13 +1360,16 @@ function main_net_vs()
       json_send({game_over = true, outcome = outcome_claim})
 
       finalizeAndWriteVsReplay(GAME.match.battleRoom, outcome_claim)
-
-      select_screen.character_select_mode = "2p_net_vs"
-
+    
       if GAME.battleRoom.spectating then
-        return {game_over_transition, {select_screen.main, end_text, winSFX}}
+        -- next_func, text, winnerSFX, timemax, keepMusic, args
+        return {game_over_transition,
+          {select_screen.main, end_text, winSFX, nil, false, {select_screen, "2p_net_vs"}}
+        }
       else
-        return {game_over_transition, {select_screen.main, end_text, winSFX, 60 * 8}}
+        return {game_over_transition, 
+          {select_screen.main, end_text, winSFX, 60 * 8, false, {select_screen, "2p_net_vs"}}
+        }
       end
     end
   end
@@ -1273,13 +1382,9 @@ function main_local_vs_setup()
   GAME.battleRoom = BattleRoom()
   GAME.battleRoom.playerNames[1] = loc("player_n", "1")
   GAME.battleRoom.playerNames[2] = loc("player_n", "2")
-  op_state = nil
-  my_player_number = 1
-  op_player_number = 2
-  select_screen.character_select_mode = "2p_local_vs"
   GAME.input:clearInputConfigurationsForPlayers()
   GAME.input:requestPlayerInputConfigurationAssignments(2)
-  return select_screen.main
+  return select_screen.main, {select_screen, "2p_local_vs"}
 end
 
 -- local 2pvs mode
@@ -1297,8 +1402,16 @@ function main_local_vs()
 
   end
 
-  local function abortGame() 
-    return {main_dumb_transition, {select_screen.main, "", 0, 0}}
+  local function abortGame()
+    return {main_dumb_transition, {
+            select_screen.main, -- next_func
+            "", -- text
+            0, -- timemin
+            0, -- timemax
+            nil, -- winnerSFX
+            false, -- keepMusic
+            {select_screen, "2p_local_vs"} -- args
+    }}
   end
   
   
@@ -1314,7 +1427,9 @@ function main_local_vs()
       
       finalizeAndWriteVsReplay(GAME.match.battleRoom, outcome_claim)
 
-      return {game_over_transition, {select_screen.main, end_text, winSFX}}
+      return {game_over_transition, 
+          {select_screen.main, end_text, winSFX, nil, false, {select_screen, "2p_local_vs"}}
+        }
     end
   end
 
@@ -1328,10 +1443,7 @@ function main_local_vs_yourself_setup(trainingModeSettings)
     GAME.battleRoom.trainingModeSettings = trainingModeSettings
   end
   GAME.battleRoom.playerNames[2] = nil
-  my_player_number = 1
-  op_state = nil
-  select_screen.character_select_mode = "1p_vs_yourself"
-  return select_screen.main
+  return select_screen.main, {select_screen, "1p_vs_yourself"}
 end
 
 -- 1vs against yourself
@@ -1350,7 +1462,15 @@ function main_local_vs_yourself()
   end
 
   local function abortGame() 
-    return {main_dumb_transition, {select_screen.main, "", 0, 0}}
+    return {main_dumb_transition, {
+      select_screen.main, -- next_func
+      "", -- text
+      0, -- timemin
+      0, -- timemax
+      nil, -- winnerSFX
+      false, -- keepMusic
+      {select_screen, "1p_vs_yourself"} -- args
+    }}
   end
   
   local function processGameResults(gameResult) 
@@ -1359,7 +1479,9 @@ function main_local_vs_yourself()
       finalizeAndWriteVsReplay(nil, nil)
     end
 
-    return {game_over_transition, {select_screen.main, nil, P1:pick_win_sfx()}}
+    return {game_over_transition,
+          {select_screen.main, nil, P1:pick_win_sfx(), nil, false, {select_screen, "1p_vs_yourself"}}
+        }
   end
 
   return runMainGameLoop, {update, variableStep, abortGame, processGameResults}
@@ -1429,8 +1551,7 @@ function loadFromReplay(replay)
   P1.max_runs_per_frame = 1
   P1.cur_wait_time = replay.cur_wait_time or default_input_repeat_delay
 
-  refresh_based_on_own_mods(P1)
-  character_loader_load(P1.character)
+  refreshBasedOnOwnMods(P1)
 
   if P2 then
     P2:receiveConfirmedInput(uncompress_input_string(replay.I))
@@ -1439,8 +1560,7 @@ function loadFromReplay(replay)
     P2.do_countdown = replay.do_countdown or false
     P2.max_runs_per_frame = 1
     P2.cur_wait_time = replay.P2_cur_wait_time or default_input_repeat_delay
-    refresh_based_on_own_mods(P2, true)
-    character_loader_load(P2.character)
+    refreshBasedOnOwnMods(P2)
   end
   character_loader_wait()
 
@@ -1526,19 +1646,33 @@ end
 -- creates a puzzle game function for a given puzzle and index
 function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx)
   local next_func = nil
-  local musicSetup = false
+  local setupComplete = false
   local character = nil
   awesome_idx = awesome_idx or 1
 
-  function next_func()
-    
-    if not musicSetup then
-      current_stage = config.stage
+  local function setupPuzzles()
+    if config.puzzle_randomColors then
+      puzzleSet = deepcpy(puzzleSet)
+  
+      for _, puzzle in pairs(puzzleSet.puzzles) do
+        puzzle.stack = Puzzle.randomizeColorString(puzzle.stack)
+      end
+    end
+
+    current_stage = config.stage
       if current_stage == random_stage_special_value then
         current_stage = nil
       end
       commonGameSetup()
-      musicSetup = true
+      setupComplete = true
+  end
+
+  function next_func()
+
+    -- the body of makeSelectPuzzleSetFunction is already getting called when entering the puzzle select screen
+    -- for that reason setup needs to happen inside next_func
+    if not setupComplete then
+      setupPuzzles()
     end
 
     GAME.match = Match("puzzle")
@@ -1550,12 +1684,10 @@ function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx)
     end
     P1.do_countdown = config.ready_countdown_1P or false
     P2 = nil
-    local start_delay = 0
     if awesome_idx == nil then
       awesome_idx = math.random(#puzzleSet.puzzles)
     end
     local puzzle = puzzleSet.puzzles[awesome_idx]
-    puzzle.randomizeColors = config.puzzle_randomColors
     local isValid, validationError = puzzle:validate()
     if isValid then
       P1:set_puzzle_state(puzzle)
@@ -1674,8 +1806,8 @@ function main_select_puzz()
     puzzleMenu:selectNextIndex()
   end
 
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
-  puzzleMenu = ClickMenu(menu_x, menu_y, nil, canvas_height - menu_y - 10, puzzle_menu_last_index)
+  local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
+  puzzleMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, puzzle_menu_last_index)
   puzzleMenu:add_button(loc("level"), nextMenu, goEscape, decreaseLevel, increaseLevel)
   puzzleMenu:add_button(loc("randomColors"), update_randomColors, goEscape, update_randomColors, update_randomColors)
   for i = 1, #items do
@@ -1710,11 +1842,13 @@ function main_set_name()
   local name = config.name or ""
   love.keyboard.setTextInput(true) -- enables user to type
   while true do
-    local to_print = loc("op_enter_name") .. " (" .. name:len() .. "/" .. NAME_LENGTH_LIMIT .. ")\n" .. name
+    local to_print = loc("op_enter_name") .. " (" .. name:len() .. "/" .. NAME_LENGTH_LIMIT .. ")"
+    local line2 = name
     if (love.timer.getTime() * 3) % 2 > 1 then
-      to_print = to_print .. "|"
+      line2 = line2 .. "| "
     end
-    gprint(to_print, unpack(main_menu_screen_pos))
+    gprintf(to_print, 0, canvas_height/2, canvas_width, "center")
+    gprintf(line2, (canvas_width/2) - 60, (canvas_height/2) + 20)
     wait()
     local ret = nil
     variable_step(
@@ -1757,7 +1891,7 @@ function fullscreen()
 end
 
 -- dumb transition that shows a black screen
-function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX, keepMusic)
+function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX, keepMusic, args)
   keepMusic = keepMusic or false
   if not keepMusic then
     stop_the_music()
@@ -1809,7 +1943,7 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX, keep
     variable_step(
       function()
         if t >= timemin and ((t >= timemax and timemax >= 0) or (menu_enter() or menu_escape())) then
-          ret = {next_func}
+          ret = {next_func, args}
         end
         t = t + 1
       end
@@ -1821,7 +1955,7 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX, keep
 end
 
 -- show game over screen, last frame of gameplay
-function game_over_transition(next_func, text, winnerSFX, timemax, keepMusic)
+function game_over_transition(next_func, text, winnerSFX, timemax, keepMusic, args)
   timemax = timemax or -1 -- negative values means the user needs to press enter/escape to continue
   text = text or ""
   keepMusic = keepMusic or false
@@ -1905,7 +2039,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax, keepMusic)
           end
           SFX_GameOver_Play = 0
           analytics.game_ends(P1.analytic)
-          ret = {next_func}
+          ret = {next_func, args}
         end
         t = t + 1
       end

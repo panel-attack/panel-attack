@@ -1,7 +1,6 @@
 local Scene = require("scenes.Scene")
 local replay_browser = require("replay_browser")
 local logger = require("logger")
-local select_screen = require("select_screen")
 local options = require("options")
 local utf8 = require("utf8")
 local analytics = require("analytics")
@@ -118,7 +117,7 @@ function GameBase:useCurrentStage()
   
   stage_loader_load(self.current_stage)
   stage_loader_wait()
-  GAME.backgroundImage = stages[self.current_stage].images.background
+  GAME.backgroundImage = UpdatingImage(stages[self.current_stage].images.background, false, 0, 0, canvas_width, canvas_height)
   GAME.background_overlay = themes[config.theme].images.bg_overlay
   GAME.foreground_overlay = themes[config.theme].images.fg_overlay
 end
