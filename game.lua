@@ -107,6 +107,7 @@ function Game:_setup_co()
   
   -- move to top
   scenes = {
+    require("scenes.title_screen"),
     require("scenes.main_menu"),
     require("scenes.endless_menu"),
     require("scenes.endless_game"),
@@ -129,7 +130,7 @@ function Game:_setup_co()
   for i, scene in ipairs(scenes) do
     scene:init()
   end
-  scene_manager:switchScene("main_menu")
+  scene_manager:switchScene("titleScreen")
 end
 
 function Game:load(game_updater)
