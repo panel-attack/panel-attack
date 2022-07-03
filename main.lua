@@ -48,7 +48,6 @@ GAME.scores = require("scores")
 GAME.rich_presence = RichPresence()
 
 local prev_time = 0
-local FRAME_RATE = 1/60
 local sleep_ratio = .9
 function love.run()
 	if love.load then love.load(love.arg.parseGameArguments(arg), arg) end

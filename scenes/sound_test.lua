@@ -5,6 +5,7 @@ local Label = require("ui.Label")
 local Button = require("ui.Button")
 local ButtonGroup = require("ui.ButtonGroup")
 local Menu = require("ui.Menu")
+local table_utils = require("table_utils")
 
 --@module sound_test
 local sound_test = Scene("sound_test")
@@ -64,6 +65,25 @@ local function playMusic(source, id, music_type)
   end
 end
 
+local function createSfxMenuInfo(characterId)
+  local characterFiles = love.filesystem.getDirectoryItems(characters[characterId].path)
+  local music_files = {normal_music = true, normal_music_start = true, danger_music = true, danger_music_start = true}
+  local supported_sound_formats = {mp3 = true, ogg = true, wav = true, it = true, flac = true}
+  local soundFiles = table_utils.filter(characterFiles, function(fileName) return not music_files[string.match(fileName, "(.*)[.]")] and supported_sound_formats[string.match(fileName, "[.](.*)")] end)
+  local sfxLabels = {}
+  local sfxValues = {}
+  for _, sfx in ipairs(soundFiles) do
+    sfxLabels[#sfxLabels + 1] = Label({
+        label = string.match(sfx, "(.*)[.]"),
+        translate = false,
+        width = 70,
+        height = 25,
+        is_visible = false})
+    sfxValues[#sfxValues + 1] = sfx
+  end
+  return sfxLabels, sfxValues
+end
+
 function sound_test:init()
   scene_manager:addScene(self)
   
@@ -80,6 +100,7 @@ function sound_test:init()
   
   local play_button_group
   local music_type_button_group
+  local sfxStepper
   local character_stepper = Stepper(
     character_labels,
     character_ids,
@@ -87,12 +108,20 @@ function sound_test:init()
       selected_index = 1,
       onChange = function(value) 
         play_optional_sfx(themes[config.theme].sounds.menu_move)
+
+        sfxStepper.labels, sfxStepper.values = createSfxMenuInfo(value)
+        sfxStepper.selected_index = 1
+        sfxStepper.value = sfxStepper.values[sfxStepper.selected_index]
+        sfxStepper.labels[sfxStepper.selected_index]:setVisibility(true)
+        sfxStepper:setPos(sfxStepper.x, sfxStepper.y)
+
         if play_button_group.value == "character" then
           playMusic("character", value, music_type_button_group.value)
         end
       end
     }
   )
+  
   
   local stage_labels = {}
   local stage_ids = {}
@@ -159,36 +188,18 @@ function sound_test:init()
     }
   )
   
-  --[[local sfx_button_group = ButtonGroup(
-    {
-      Button({label = "combo", translate = false}),
-      Button({label = "combo echo", translate = false}),
-      Button({label = "chain", translate = false}),
-      Button({label = "chain 2", translate = false}),
-      Button({label = "chain echo", translate = false}),
-      Button({label = "chain 2 echo", translate = false}),
-      Button({label = "garbage match", translate = false}),
-      Button({label = "garbage land", translate = false}),
-      Button({label = "selection", translate = false}),
-      Button({label = "win", translate = false}),
-      Button({label = "taunt up", translate = false}),
-      Button({label = "taunt down", translate = false}),
-    },
-    {"", "character", "stage"},
+  local labels, values = createSfxMenuInfo(character_stepper.value)
+  
+  sfxStepper = Stepper(
+    labels,
+    values,
     {
       selected_index = 1,
       onChange = function(value)
         play_optional_sfx(themes[config.theme].sounds.menu_move)
-        if value == "character" then
-          playMusic(value, character_stepper.value, music_type_button_group.value)
-        elseif value == "stage" then
-          playMusic(value, stage_stepper.value, music_type_button_group.value)
-        else
-          stop_the_music()
-        end
       end
     }
-  )--]]
+  )
   
   local menu_label_width = 120
   local sound_test_menu_options = {
@@ -196,7 +207,7 @@ function sound_test:init()
     {Label({width = menu_label_width, label = "stage"}), stage_stepper},
     {Label({width = menu_label_width, label = "op_music_type"}), music_type_button_group},
     {Label({width = menu_label_width, label = "Background", translate = false}), play_button_group},
-    {Label({width = menu_label_width, label = "op_music_sfx"})},
+    {Button({width = menu_label_width, label = "op_music_sfx", onClick = function() love.audio.play(love.audio.newSource(characters[character_stepper.value].path.."/"..sfxStepper.value, "static")) end}), sfxStepper},
     {Button({width = menu_label_width, label = "back", onClick = function() scene_manager:switchScene("options_menu") end})},
   }
   
