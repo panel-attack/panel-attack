@@ -109,11 +109,18 @@ function main_menu:update()
     end
   end
 
+  local fontHeight = get_global_font():getHeight()
+  local infoYPosition = 705 - fontHeight/2
+
   local loveString = GAME:loveVersionString()
-  gprintf("Love Version: " .. loveString, -5, 705, canvas_width, "right")
+  if loveString == "11.3.0" then
+    gprintf(loc("love_version_warning"), -5, infoYPosition, canvas_width, "right")
+    infoYPosition = infoYPosition - fontHeight
+  end
 
   if GAME_UPDATER_GAME_VERSION then
-    gprintf("PA Version: " .. GAME_UPDATER_GAME_VERSION, -5, 690, canvas_width, "right")
+    gprintf("PA Version: " .. GAME_UPDATER_GAME_VERSION, -5, infoYPosition, canvas_width, "right")
+    infoYPosition = infoYPosition - fontHeight
     if has_game_update then
       menu_draw(panels[config.panels].images.classic[1][1], 1262, 685)
     end

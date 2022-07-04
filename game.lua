@@ -263,7 +263,7 @@ end
 
 function Game:errorData(errorString, traceBack)
   local system_info = "OS: " .. love.system.getOS()
-  local loveVersion = Game:loveVersionString()
+  local loveVersion = self:loveVersionString()
   
   local errorData = { 
       stack = traceBack,
