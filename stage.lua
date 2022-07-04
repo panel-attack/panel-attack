@@ -232,7 +232,7 @@ end
 function Stage.graphics_init(self, full, yields)
   local stage_images = full and other_images or basic_images
   for _, image_name in ipairs(stage_images) do
-    self.images[image_name] = load_img_from_supported_extensions(self.path .. "/" .. image_name)
+    self.images[image_name] = GraphicsUtil.loadImageFromSupportedExtensions(self.path .. "/" .. image_name)
     if not self.images[image_name] and defaulted_images[image_name] and not self:is_bundle() then
       self.images[image_name] = default_stage.images[image_name]
       if not self.images[image_name] then

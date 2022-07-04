@@ -15,6 +15,10 @@ Game =
     self.renderDuringPause = false -- if the game can render when you are paused
     self.currently_paused_tracks = {} -- list of tracks currently paused
     self.rich_presence = nil
+    self.canvasX = 0
+    self.canvasY = 0
+    self.canvasXScale = 1
+    self.canvasYScale = 1
   end
 )
 
@@ -53,6 +57,30 @@ function Game.loveVersionString()
   local major, minor, revision, codename = love.getVersion()
   loveVersionStringValue = string.format("%d.%d.%d", major, minor, revision)
   return loveVersionStringValue
+end
+
+function Game:updateCanvasPositionAndScale(newWindowWidth, newWindowHeight)
+  local foundFixedScale = false
+  local availableScales = {1, 1.5, 2}--, 2.5, 3}
+  for i = #availableScales, 1, -1 do
+    local scale = availableScales[i]
+    if newWindowWidth >= canvas_width * scale and newWindowHeight >= canvas_height * scale then
+      GAME.canvasXScale = scale
+      GAME.canvasYScale = scale
+      GAME.canvasX = math.floor((newWindowWidth - (scale * canvas_width)) / 2)
+      GAME.canvasY = math.floor((newWindowHeight - (scale * canvas_height)) / 2)
+      foundFixedScale = true
+      break
+    end
+  end
+
+  if foundFixedScale == false then
+    -- Nothing fits, scale down
+    local w, h
+    GAME.canvasX, GAME.canvasY, w, h = scale_letterbox(newWindowWidth, newWindowHeight, 16, 9)
+    GAME.canvasXScale = w / canvas_width
+    GAME.canvasYScale = h / canvas_height
+  end
 end
 
 local game = Game()

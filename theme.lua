@@ -23,9 +23,9 @@ local function load_theme_img(name, useBackup)
   if useBackup == nil then
     useBackup = true
   end
-  local img = load_img_from_supported_extensions("themes/" .. config.theme .. "/" .. name)
+  local img = GraphicsUtil.loadImageFromSupportedExtensions("themes/" .. config.theme .. "/" .. name)
   if not img and useBackup then
-    img = load_img_from_supported_extensions("themes/" .. default_theme_dir .. "/" .. name)
+    img = GraphicsUtil.loadImageFromSupportedExtensions("themes/" .. default_theme_dir .. "/" .. name)
   end
   return img
 end
@@ -269,11 +269,21 @@ function Theme.graphics_init(self)
   self.images.IMG_cursor = {}
   for player_num = 1, MAX_SUPPORTED_PLAYERS do
     self.images.IMG_players[player_num] = load_theme_img("p" .. player_num)
-    self.images.IMG_cursor[player_num] = load_theme_img("p" .. player_num .. "_cursor")
     self.images.IMG_char_sel_cursors[player_num] = {}
     for position_num = 1, 2 do
       self.images.IMG_char_sel_cursors[player_num][position_num] = load_theme_img("p" .. player_num .. "_select_screen_cursor" .. position_num)
     end
+  end
+
+  -- Cursor animation is 2 frames
+  for i = 1, 2 do
+    local cursorImage = load_theme_img("cursor" .. i)
+    local legacyCursorImage = load_theme_img("p" .. i .. "_cursor", false)
+    if legacyCursorImage then
+      cursorImage = legacyCursorImage
+    end
+    assert(cursorImage ~= nil)
+    self.images.IMG_cursor[i] = cursorImage
   end
 
   self.images.IMG_char_sel_cursor_halves = {left = {}, right = {}}

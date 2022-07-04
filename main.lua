@@ -36,7 +36,6 @@ local logger = require("logger")
 GAME.scores = require("scores")
 GAME.rich_presence = RichPresence()
 
-global_canvas = love.graphics.newCanvas(canvas_width, canvas_height)
 
 local last_x = 0
 local last_y = 0
@@ -46,6 +45,9 @@ local mainloop = nil
 
 -- Called at the beginning to load the game
 function love.load()
+  love.graphics.setDefaultFilter("linear", "linear")
+  local newWidth, newHeight = love.graphics.getWidth(), love.graphics.getHeight()
+  GAME:updateCanvasPositionAndScale(newWidth, newHeight)
   math.randomseed(os.time())
   for i = 1, 4 do
     math.random()
@@ -53,6 +55,8 @@ function love.load()
   read_key_file()
   GAME.rich_presence:initialize("902897593049301004")
   mainloop = coroutine.create(fmainloop)
+
+  GAME.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME.canvasXScale})
 end
 
 function love.focus(f)
@@ -104,21 +108,25 @@ function love.update(dt)
   GAME.rich_presence:runCallbacks()
 end
 
+function love.resize(newWidth, newHeight)
+  if GAME then
+    GAME:updateCanvasPositionAndScale(newWidth, newHeight)
+    -- we need to reload all assets and fonts to get the new scaling info and filters
+    Localization.init(localization)
+    theme_init()
+    panels_init()
+  end
+end
+
 -- Called whenever the game needs to draw.
 function love.draw()
-  -- if not main_font then
-  -- main_font = love.graphics.newFont("Oswald-Light.ttf", 15)
-  -- end
-  -- main_font:setLineHeight(0.66)
-  -- love.graphics.setFont(main_font)
   if GAME.foreground_overlay then
     local scale = canvas_width / math.max(GAME.foreground_overlay:getWidth(), GAME.foreground_overlay:getHeight()) -- keep image ratio
     menu_drawf(GAME.foreground_overlay, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
   end
 
   -- Clear the screen
-  love.graphics.setBlendMode("alpha", "alphamultiply")
-  love.graphics.setCanvas(global_canvas)
+  love.graphics.setCanvas(GAME.globalCanvas)
   love.graphics.setBackgroundColor(unpack(global_background_color))
   love.graphics.clear()
 
@@ -131,17 +139,29 @@ function love.draw()
     gprintf("STONER", 1, 1 + (11 * 4))
   end
 
+  local scaleString = "Scale: " .. GAME.canvasXScale .. " (" .. canvas_width * GAME.canvasXScale .. " x " .. canvas_height * GAME.canvasYScale .. ")"
+  gprintf(scaleString, 5, 700, canvas_width, "left")
+
   for i = gfx_q.first, gfx_q.last do
-    gfx_q[i][1](unpack(gfx_q[i][2]))
+    if gfx_q[i][1] then
+      gfx_q[i][1](unpack(gfx_q[i][2]))
+    end
   end
   gfx_q:clear()
 
   love.graphics.setCanvas() -- render everything thats been added
   love.graphics.clear(love.graphics.getBackgroundColor()) -- clear in preperation for the next render
-  
-  x, y, w, h = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 16, 9)
+    
   love.graphics.setBlendMode("alpha", "premultiplied")
-  love.graphics.draw(global_canvas, x, y, 0, w / canvas_width, h / canvas_height)
+  love.graphics.draw(GAME.globalCanvas, GAME.canvasX, GAME.canvasY, 0, GAME.canvasXScale, GAME.canvasYScale)
+  love.graphics.setBlendMode("alpha", "alphamultiply")
+
+  -- if panels[config.panels] and panels[config.panels].images then
+  --   love.graphics.draw(panels[config.panels].images.classic[1][1], 0, 0, 0, 1, 1)
+  --   love.graphics.draw(panels[config.panels].images.classic[2][1], 48, 0, 0, 1, 1)
+  --   love.graphics.draw(panels[config.panels].images.classic[1][1], 0, 48, 0, 2, 2)
+  --   love.graphics.draw(panels[config.panels].images.classic[2][1], 96, 48, 0, 2, 2)
+  -- end
 
   -- draw background and its overlay
   if GAME.backgroundImage then
