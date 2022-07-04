@@ -286,6 +286,7 @@ function GameBase:runGame(dt)
   end
   
   if GAME.match.P1:gameResult() then
+    GAME.match:render()
     self:setupGameOver()
     return
   end
