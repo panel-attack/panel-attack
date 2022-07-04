@@ -27,6 +27,14 @@ function puzzle_menu:startGame(puzzle_set)
     current_stage = nil
   end
   
+  if config.puzzle_randomColors then
+    puzzle_set = deepcpy(puzzle_set)
+
+    for _, puzzle in pairs(puzzle_set.puzzles) do
+      puzzle.stack = Puzzle.randomizeColorString(puzzle.stack)
+    end
+  end
+  
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
   scene_manager:switchScene("puzzle_game", {puzzle_set = puzzle_set, puzzle_index = 1})
   

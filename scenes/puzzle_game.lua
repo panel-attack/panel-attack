@@ -16,7 +16,6 @@ function puzzle_game:customLoad(scene_params)
   self.puzzle_index = scene_params.puzzle_index
 
   local puzzle = self.puzzle_set.puzzles[self.puzzle_index]
-  puzzle.randomizeColors = config.puzzle_randomColors
   local isValid, validationError = puzzle:validate()
   if isValid then
     GAME.match.P1:set_puzzle_state(puzzle)
