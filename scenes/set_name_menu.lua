@@ -13,7 +13,6 @@ local save = require("save")
 local set_name_menu = Scene("set_name_menu")
 
 local menu_x, menu_y = unpack(main_menu_screen_pos)
-print(config.name)
 local name_field = InputField({
     x = menu_x - 25,
     y = menu_y + 50,

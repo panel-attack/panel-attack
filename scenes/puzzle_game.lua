@@ -23,7 +23,6 @@ function puzzle_game:customLoad(scene_params)
   else
     validationError = "Validation error in puzzle set " .. self.puzzleSet.setName .. "\n"
                       .. validationError
-    print(validationError)
     scene_manager:switchScene("puzzle_menu")
   end
 end
