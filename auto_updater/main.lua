@@ -21,6 +21,62 @@ local next_step = ""
 local wait_all_versions = nil
 local wait_download = nil
 
+local prev_time = 0
+local sleep_ratio = .9
+local FRAME_RATE = 1 / 60
+function love.run()
+	if love.load then love.load(love.arg.parseGameArguments(arg), arg) end
+
+	-- We don't want the first frame's dt to include time taken by love.load.
+	if love.timer then love.timer.step() end
+
+	local dt = 0  
+
+  -- Main loop time.
+	return function()
+    if love.timer then
+      local current_time = love.timer.getTime()
+      local wait_time = (prev_time + FRAME_RATE - current_time) * sleep_ratio
+      if love.timer and wait_time > 0 then 
+        love.timer.sleep(wait_time) 
+      end
+      current_time = love.timer.getTime()
+      while prev_time + FRAME_RATE > current_time do
+        current_time = love.timer.getTime()
+      end
+      prev_time = current_time
+    end
+  
+    -- Process events.
+    if love.event then
+      love.event.pump()
+      for name, a,b,c,d,e,f in love.event.poll() do
+        if name == "quit" then
+          if not love.quit or not love.quit() then
+            return a or 0
+          end
+        end
+        love.handlers[name](a,b,c,d,e,f)
+      end
+    end
+
+    -- Update dt, as we'll be passing it to update
+    if love.timer then dt = love.timer.step() end
+
+    -- Call update and draw
+    if love.update then love.update(dt) end -- will pass 0 if love.timer is disabled
+
+    if love.graphics and love.graphics.isActive() then
+      love.graphics.origin()
+      love.graphics.clear(love.graphics.getBackgroundColor())
+
+      if love.draw then love.draw() end
+
+      love.graphics.present()
+    end
+  end
+end
+
 function love.load()
   -- Cleanup old love files
   for i, v in ipairs(love.filesystem.getDirectoryItems(path)) do
