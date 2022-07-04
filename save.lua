@@ -333,6 +333,35 @@ function read_puzzles()
   )
 end
 
+function save.read_attack_files(path)
+  local lfs = love.filesystem
+  local raw_dir_list = lfs.getDirectoryItems(path)
+  for i, v in ipairs(raw_dir_list) do
+    local start_of_v = string.sub(v, 0, string.len(prefix_of_ignored_dirs))
+    if start_of_v ~= prefix_of_ignored_dirs then
+      local current_path = path .. "/" .. v
+      if lfs.getInfo(current_path) then
+        if lfs.getInfo(current_path).type == "directory" then
+          read_attack_files(current_path)
+        elseif v ~= ".DS_Store" then
+          local file = love.filesystem.newFile(current_path)
+          file:open("r")
+          local teh_json = file:read(file:getSize())
+          local training_conf = {}
+          for k, w in pairs(json.decode(teh_json)) do
+            training_conf[k] = w
+          end
+          if not training_conf.name or not type(training_conf.name) == "string" then
+            training_conf.name = v
+          end
+          trainings[#trainings+1] = training_conf
+          file:close()
+        end
+      end
+    end
+  end
+end
+
 function read_attack_files(path)
   local lfs = love.filesystem
   local raw_dir_list = lfs.getDirectoryItems(path)
