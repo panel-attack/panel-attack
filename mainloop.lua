@@ -37,11 +37,6 @@ local function drawLoadingString(loadingString)
 end
 
 function fmainloop()
-  read_conf_file()
-  local x, y, display = love.window.getPosition()
-  love.window.setPosition(config.window_x or x, config.window_y or y, config.display or display)
-  love.window.setFullscreen(config.fullscreen or false)
-  love.window.setVSync(config.vsync and 1 or 0)
   Localization.init(localization)
   copy_file("readme_puzzles.txt", "puzzles/README.txt")
   theme_init()

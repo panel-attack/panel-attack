@@ -1,7 +1,6 @@
 --require("developer")
 require("class")
 socket = require("socket")
-json = require("dkjson")
 GAME = require("game")
 require("match")
 require("BattleRoom")
