@@ -27,8 +27,9 @@ function set_name_menu:init()
   scene_manager:addScene(self)
 end
 
-function set_name_menu:load()
+function set_name_menu:load(sceneParams)
   name_field.is_visible = true
+  self.prevScene = sceneParams.prevScene
 end
 
 function set_name_menu:update()
@@ -39,7 +40,7 @@ function set_name_menu:update()
     play_optional_sfx(themes[config.theme].sounds.menu_validate)
     config.name = name_field.value
     save.write_conf_file()
-    scene_manager:switchScene("main_menu")
+    scene_manager:switchScene(self.prevScene)
   end
   if input.raw.isDown["escape"] then
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)

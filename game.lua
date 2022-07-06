@@ -120,6 +120,7 @@ function Game:_setup_co()
     require("scenes.training_mode_menu"),
     require("scenes.training_mode_character_select"),
     require("scenes.training_mode_game"),
+    require("scenes.lobby"),
     require("scenes.input_config_menu"),
     require("scenes.replay_menu"),
     require("scenes.replay_game"),
@@ -189,7 +190,7 @@ function Game:update(dt)
     status, err = coroutine.resume(mainloop)
   end
   if not status then
-    local errorData = self.errorData(err, debug.traceback(mainloop))
+    local errorData = self:errorData(err, debug.traceback(mainloop))
     if GAME_UPDATER_GAME_VERSION then
       send_error_report(errorData)
     end
@@ -263,7 +264,7 @@ end
 
 function Game:errorData(errorString, traceBack)
   local system_info = "OS: " .. love.system.getOS()
-  local loveVersion = self:loveVersionString()
+  local loveVersion = self._loveVersionStringValue
   
   local errorData = { 
       stack = traceBack,

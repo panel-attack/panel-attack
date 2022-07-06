@@ -29,8 +29,6 @@ local switchScene = function(scene)
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
   scene_manager:switchScene(scene)
 end
-  
-local font = love.graphics.getFont() 
 
 local menu_buttons = {
   Button({label = "mm_1_endless", onClick = function() switchScene("endless_menu") end}),
@@ -38,7 +36,7 @@ local menu_buttons = {
   Button({label = "mm_1_time", onClick = function() switchScene("time_attack_menu") end}),
   Button({label = "mm_1_vs", onClick = function() switchScene("vs_self_menu") end}),
   Button({label = "mm_1_training", onClick = function() switchScene("training_mode_menu") end}),
-  Button({label = "mm_2_vs_online", extra_labels = {""}, onClick = genOnClickFn(main_net_vs_setup, {"18.188.43.50"})}),
+  Button({label = "mm_2_vs_online", extra_labels = {""}, onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) scene_manager:switchScene("lobby", {ip = "18.188.43.50"}) end}),
   --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
   --Button({label = "mm_2_vs_online", extra_labels = {"\nTelegraph Server"}, onClick = genOnClickFn(main_net_vs_setup, {"betaserver.panelattack.com", 59569})}),
   --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
@@ -51,7 +49,7 @@ local menu_buttons = {
   Button({label = "mm_2_vs_local", onClick = genOnClickFn(main_local_vs_setup)}),
   Button({label = "mm_replay_browser", onClick = function() switchScene("replay_menu") end}),
   Button({label = "mm_configure", onClick = function() switchScene("input_config_menu") end}),
-  Button({label = "mm_set_name", onClick = function() switchScene("set_name_menu") end}),
+  Button({label = "mm_set_name", onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) scene_manager:switchScene("set_name_menu", {prevScene = "main_menu"}) end}),
   Button({label = "mm_options", onClick = function() switchScene("options_menu") end}),
   Button({label = "mm_fullscreen", extra_labels = {"\n(LAlt+Enter)"}, onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) fullscreen() end}),
   Button({label = "mm_quit", onClick = love.event.quit})

@@ -6,7 +6,7 @@ CLICK_MENUS = {} -- All click menus currently showing in the game
 
 -- A series of buttons with text strings that can be clicked or use input to navigate
 -- Buttons are laid out vertically and scroll buttons are added if not all options fit.
-ClickMenu =
+local ClickMenu =
   class(
   function(self, xCenter, yMin, width, maxHeight, active_idx)
     assert(xCenter)
@@ -385,3 +385,5 @@ function ClickMenu.click_or_tap(self, x, y, touchpress)
     end
   end
 end
+
+return ClickMenu
