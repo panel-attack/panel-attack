@@ -19,6 +19,8 @@ Game =
     self.canvasY = 0
     self.canvasXScale = 1
     self.canvasYScale = 1
+    self.availableScales = {1, 1.5, 2, 2.5, 3}
+    self.showGameScale = false
   end
 )
 
@@ -61,16 +63,28 @@ end
 
 function Game:updateCanvasPositionAndScale(newWindowWidth, newWindowHeight)
   local foundFixedScale = false
-  local availableScales = {1, 1.5, 2}--, 2.5, 3}
-  for i = #availableScales, 1, -1 do
-    local scale = availableScales[i]
-    if newWindowWidth >= canvas_width * scale and newWindowHeight >= canvas_height * scale then
-      GAME.canvasXScale = scale
-      GAME.canvasYScale = scale
-      GAME.canvasX = math.floor((newWindowWidth - (scale * canvas_width)) / 2)
-      GAME.canvasY = math.floor((newWindowHeight - (scale * canvas_height)) / 2)
-      foundFixedScale = true
-      break
+
+  local availableScales = shallowcpy(self.availableScales)
+  if config.gameScale == "scaled" then
+    -- Do nothing, fall through to below
+  else
+    if config.gameScale ~= "auto" then
+      local xScale = tonumber(config.gameScale)
+      availableScales = {xScale}
+    end
+
+    -- Handle both "auto" and a fixed scale
+    for i = #availableScales, 1, -1 do
+      local scale = availableScales[i]
+      if config.gameScale ~= "auto" or 
+        (newWindowWidth >= canvas_width * scale and newWindowHeight >= canvas_height * scale) then
+        GAME.canvasXScale = scale
+        GAME.canvasYScale = scale
+        GAME.canvasX = math.floor((newWindowWidth - (scale * canvas_width)) / 2)
+        GAME.canvasY = math.floor((newWindowHeight - (scale * canvas_height)) / 2)
+        foundFixedScale = true
+        break
+      end
     end
   end
 
@@ -81,6 +95,13 @@ function Game:updateCanvasPositionAndScale(newWindowWidth, newWindowHeight)
     GAME.canvasXScale = w / canvas_width
     GAME.canvasYScale = h / canvas_height
   end
+end
+
+function Game:refreshAssets()
+  -- we need to reload all assets and fonts to get the new scaling info and filters
+  Localization.init(localization)
+  theme_init()
+  panels_init()
 end
 
 local game = Game()

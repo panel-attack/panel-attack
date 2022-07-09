@@ -37,11 +37,6 @@ local function drawLoadingString(loadingString)
 end
 
 function fmainloop()
-  read_conf_file()
-  local x, y, display = love.window.getPosition()
-  love.window.setPosition(config.window_x or x, config.window_y or y, config.display or display)
-  love.window.setFullscreen(config.fullscreen or false)
-  love.window.setVSync(config.vsync and 1 or 0)
   Localization.init(localization)
   copy_file("readme_puzzles.txt", "puzzles/README.txt")
   theme_init()
@@ -94,6 +89,7 @@ function fmainloop()
     leftover_time = 1 / 120 -- prevents any left over time from getting big transitioning between menus
 ---@diagnostic disable-next-line: redundant-parameter
     func, arg = func(unpack(arg or {}))
+    GAME.showGameScale = false
     collectgarbage("collect")
     logger.trace("Transitioning to next fmainloop function")
   end
@@ -1778,7 +1774,7 @@ function main_select_puzz()
   local exitSet = false
   local puzzleMenu
   local ret = nil
-  local level = config.puzzle_level or 5
+  local level = config.puzzle_level
   local randomColors = config.puzzle_randomColors or false
 
   local function selectFunction(myFunction, args)
@@ -2100,12 +2096,15 @@ function love.quit()
   end
   love.audio.stop()
   if love.window.getFullscreen() == true then
-    null, null, config.display = love.window.getPosition()
+    _, _, config.display = love.window.getPosition()
   else
     config.window_x, config.window_y, config.display = love.window.getPosition()
     config.window_x = math.max(config.window_x, 0)
     config.window_y = math.max(config.window_y, 30) --don't let 'y' be zero, or the title bar will not be visible on next launch.
   end
+
+  config.width, config.height, _ = love.window.getMode( )
+  config.maximizeOnStartup = love.window.isMaximized()
   config.fullscreen = love.window.getFullscreen()
   write_conf_file()
 end

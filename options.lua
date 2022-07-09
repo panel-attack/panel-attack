@@ -3,6 +3,7 @@ local analytics = require("analytics")
 local wait = coroutine.yield
 local memory_before_options_menu = nil
 local theme_index
+local scaleIndex
 local found_themes = {}
 
 local function general_menu()
@@ -147,8 +148,41 @@ local function graphics_menu()
     update_theme()
   end
 
+  local scaleOptions = {"auto", "scaled"}
+  for _, scale in ipairs(GAME.availableScales) do
+    scaleOptions[#scaleOptions+1] = scale
+  end
+  scaleIndex = 1
+  for index, scale in ipairs(scaleOptions) do
+    if scale == config.gameScale then
+      scaleIndex = index
+      break
+    end
+  end
+
+  local function updateScale(noUpdate)
+    if noUpdate == false then
+      config.gameScale = scaleOptions[scaleIndex]
+      GAME.showGameScale = true
+      local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
+      GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
+      GAME:refreshAssets()
+    end
+    graphicsMenu:set_button_setting(2, scaleOptions[scaleIndex]) --todo localize
+  end
+
+  local function previousScale()
+    scaleIndex = bound(1, scaleIndex - 1, #scaleOptions)
+    updateScale(false)
+  end
+
+  local function nextScale()
+    scaleIndex = bound(1, scaleIndex + 1, #scaleOptions)
+    updateScale(false)
+  end
+
   local function update_portrait_darkness()
-    graphicsMenu:set_button_setting(2, config.portrait_darkness)
+    graphicsMenu:set_button_setting(3, config.portrait_darkness)
   end
 
   local function increase_portrait_darkness()
@@ -165,21 +199,21 @@ local function graphics_menu()
     if not noToggle then
       config.popfx = not config.popfx
     end
-    graphicsMenu:set_button_setting(3, config.popfx and loc("op_on") or loc("op_off"))
+    graphicsMenu:set_button_setting(4, config.popfx and loc("op_on") or loc("op_off"))
   end
 
   local function update_renderTelegraph(noToggle)
     if not noToggle then
       config.renderTelegraph = not config.renderTelegraph
     end
-    graphicsMenu:set_button_setting(4, config.renderTelegraph and loc("op_on") or loc("op_off"))
+    graphicsMenu:set_button_setting(5, config.renderTelegraph and loc("op_on") or loc("op_off"))
   end
 
   local function update_renderAttacks(noToggle)
     if not noToggle then
       config.renderAttacks = not config.renderAttacks
     end
-    graphicsMenu:set_button_setting(5, config.renderAttacks and loc("op_on") or loc("op_off"))
+    graphicsMenu:set_button_setting(6, config.renderAttacks and loc("op_on") or loc("op_off"))
   end
 
   local function nextMenu()
@@ -196,12 +230,14 @@ local function graphics_menu()
 
   graphicsMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
   graphicsMenu:add_button(loc("op_theme"), nextMenu, goEscape, previous_theme, next_theme)
+  graphicsMenu:add_button(loc("op_scale"), nextMenu, goEscape, previousScale, nextScale)
   graphicsMenu:add_button(loc("op_portrait_darkness"), nextMenu, goEscape, decrease_portrait_darkness, increase_portrait_darkness)
   graphicsMenu:add_button(loc("op_popfx"), update_popfx, goEscape, update_popfx, update_popfx)
   graphicsMenu:add_button(loc("op_renderTelegraph"), update_renderTelegraph, goEscape, update_renderTelegraph, update_renderTelegraph)
   graphicsMenu:add_button(loc("op_renderAttacks"), update_renderAttacks, goEscape, update_renderAttacks, update_renderAttacks)
   graphicsMenu:add_button(loc("back"), exitSettings, exitSettings)
   update_theme()
+  updateScale(true)
   update_portrait_darkness()
   update_popfx(true)
   update_renderTelegraph(true)

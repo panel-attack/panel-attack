@@ -1,7 +1,5 @@
---require("developer")
 require("class")
 socket = require("socket")
-json = require("dkjson")
 GAME = require("game")
 require("match")
 require("BattleRoom")
@@ -46,8 +44,11 @@ local mainloop = nil
 -- Called at the beginning to load the game
 function love.load()
   love.graphics.setDefaultFilter("linear", "linear")
-  local newWidth, newHeight = love.graphics.getWidth(), love.graphics.getHeight()
-  GAME:updateCanvasPositionAndScale(newWidth, newHeight)
+  if config.maximizeOnStartup and love.window.isMaximized() == false then
+    love.window.maximize()
+  end
+  local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
+  GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
   math.randomseed(os.time())
   for i = 1, 4 do
     math.random()
@@ -108,13 +109,11 @@ function love.update(dt)
   GAME.rich_presence:runCallbacks()
 end
 
-function love.resize(newWidth, newHeight)
+function love.resize(newPixelWidth, newPixelHeight)
   if GAME then
-    GAME:updateCanvasPositionAndScale(newWidth, newHeight)
-    -- we need to reload all assets and fonts to get the new scaling info and filters
-    Localization.init(localization)
-    theme_init()
-    panels_init()
+    GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
+    GAME:refreshAssets()
+    GAME.showGameScale = true
   end
 end
 
@@ -139,8 +138,10 @@ function love.draw()
     gprintf("STONER", 1, 1 + (11 * 4))
   end
 
-  local scaleString = "Scale: " .. GAME.canvasXScale .. " (" .. canvas_width * GAME.canvasXScale .. " x " .. canvas_height * GAME.canvasYScale .. ")"
-  gprintf(scaleString, 5, 700, canvas_width, "left")
+  if GAME.showGameScale or config.debug_mode then
+    local scaleString = "Scale: " .. GAME.canvasXScale .. " (" .. canvas_width * GAME.canvasXScale .. " x " .. canvas_height * GAME.canvasYScale .. ")"
+    gprintf(scaleString, 5, 700, canvas_width, "left")
+  end
 
   for i = gfx_q.first, gfx_q.last do
     if gfx_q[i][1] then
