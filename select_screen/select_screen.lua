@@ -135,9 +135,7 @@ function select_screen.refreshReadyStates(self)
 end
 
 -- Leaves the 2p vs match room
-function select_screen.do_leave()
-  stop_the_music()
-  GAME:clearMatch()
+function select_screen.sendLeave()
   return json_send({leave_room = true})
 end
 
@@ -147,9 +145,11 @@ function select_screen.on_quit(self)
     stop_the_music()
   end
   if select_screen:isNetPlay() then
-    -- Tell the server we want to leave, once it disconnects us we will actually leave
-    if not select_screen.do_leave() then
+    GAME:clearMatch()
+    if not select_screen.sendLeave() then
       return {main_dumb_transition, {main_select_mode, loc("ss_error_leave"), 60, 300}}
+    else
+      -- don't immediately transition out, wait for the server to confirm our leave via handleServerMessages and quit from there
     end
   else
     return {main_select_mode}
@@ -173,9 +173,9 @@ function select_screen.move_cursor(self, cursor, direction)
 end
 
 -- Function to know what to do when you press select on your current cursor
--- returns true if a sound should be played
+-- returns true if the player desires to quit the room, nil otherwise
 function select_screen.on_select(self, player, super)
-  local noisy = false
+  local characterSelectionSoundHasBeenPlayed = false
   local selectable = {__Stage = true, __Panels = true, __Level = true, __Ready = true}
   if selectable[player.cursor.positionId] then
     if player.cursor.selected and player.cursor.positionId == "__Stage" then
@@ -184,7 +184,7 @@ function select_screen.on_select(self, player, super)
     end
     player.cursor.selected = not player.cursor.selected
   elseif player.cursor.positionId == "__Leave" then
-    return self:on_quit()
+    return true
   elseif player.cursor.positionId == "__Random" then
     player.selectedCharacter = random_character_special_value
     refreshBasedOnOwnMods(player)
@@ -197,7 +197,7 @@ function select_screen.on_select(self, player, super)
     player.selectedCharacter = player.cursor.positionId
     local character = characters[player.selectedCharacter]
     if character then
-      noisy = characters[player.selectedCharacter]:play_selection_sfx()
+      characterSelectionSoundHasBeenPlayed = characters[player.selectedCharacter]:play_selection_sfx()
       if super then
         if character.stage then
           player.selectedStage = character.stage
@@ -213,7 +213,11 @@ function select_screen.on_select(self, player, super)
     player.cursor.position = shallowcpy(self.name_to_xy_per_page[self.current_page]["__Ready"])
     player.cursor.can_super_select = false
   end
-  return noisy
+
+  if not characterSelectionSoundHasBeenPlayed then
+    -- play menu sfx
+    play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  end
 end
 
 function select_screen.isNetPlay(self)
@@ -607,27 +611,28 @@ function select_screen.handleInput(self)
         if not cursor.selected then
           self:move_cursor(cursor, right)
         end
-      else
-        -- code below is bit hard to read: basically we are storing the default sfx callbacks until it's needed (or not!) based on the on_select method
-        local long_enter, long_enter_callback = menu_long_enter(i, true)
-        local normal_enter, normal_enter_callback = menu_enter(i, true)
-        if long_enter then
-          if not self:on_select(player, true) then
-            long_enter_callback()
-          end
-        elseif normal_enter and (not cursor.can_super_select or select_being_pressed_ratio(i) < super_selection_enable_ratio) then
-          if not self:on_select(player, false) then
-            normal_enter_callback()
-          end
-        elseif menu_escape() then
-          if cursor.positionId == "__Leave" then
+      -- mute sound to not play the menu sound in parallel to a character selection sfx
+      -- this is the enter that was held for long enough to super select
+      elseif menu_long_enter(i, true) then
+        if self:on_select(player, true) then
+          return self:on_quit()
+        end
+        -- mute sound to not play the menu sound in parallel to a character selection sfx
+      elseif menu_enter(i, true) then
+        -- don't process the enter yet if enter is still being held and super select is possible
+        if (not cursor.can_super_select or select_being_pressed_ratio(i) < super_selection_enable_ratio) then
+          if self:on_select(player, false) then
             return self:on_quit()
           end
-          cursor.selected = false
-          cursor.position = shallowcpy(self.name_to_xy_per_page[self.current_page]["__Leave"])
-          cursor.positionId = "__Leave"
-          cursor.can_super_select = false
         end
+      elseif menu_escape(i) then
+        if cursor.positionId == "__Leave" then
+          return self:on_quit()
+        end
+        cursor.selected = false
+        cursor.position = shallowcpy(self.name_to_xy_per_page[self.current_page]["__Leave"])
+        cursor.positionId = "__Leave"
+        cursor.can_super_select = false
       end
 
       player.cursor.positionId = self.drawMap[self.current_page][cursor.position[1]][cursor.position[2]]
@@ -648,7 +653,8 @@ function select_screen.handleInput(self)
   else -- (we are spectating)
     if menu_escape() then
       self:on_quit()
-      return {main_net_vs_lobby} -- we left the select screen as a spectator
+      -- we left the select screen as a spectator, there is no need to wait on the server to confirm our leave
+      return {main_net_vs_lobby}
     end
   end
 
@@ -685,7 +691,8 @@ function select_screen.handleServerMessages(self)
     end
 
     if msg.leave_room then
-      return {main_dumb_transition, {main_net_vs_lobby, "", 0, 0}} -- opponent left the select screen
+      -- opponent left the select screen or server sent confirmation for our leave
+      return {main_dumb_transition, {main_net_vs_lobby, "", 0, 0}}
     end
 
     if (msg.match_start or replay_of_match_so_far) and msg.player_settings and msg.opponent_settings then
