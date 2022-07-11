@@ -49,10 +49,4 @@ SFX_GameOver_Play = 0
 
 global_op_state = nil
 
-large_font = 10 -- large font base+10
-small_font = -3 -- small font base-3
-
-default_input_repeat_delay = 20
-default_portrait_darkness = 70
-
 current_use_music_from = "stage" -- either "stage" or "characters", no other values!

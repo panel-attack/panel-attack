@@ -1,4 +1,3 @@
---require("developer")
 require("class")
 socket = require("socket")
 GAME = require("game")
@@ -45,6 +44,9 @@ local mainloop = nil
 
 -- Called at the beginning to load the game
 function love.load()
+  if config.maximizeOnStartup and love.window.isMaximized() == false then
+    love.window.maximize()
+  end
   math.randomseed(os.time())
   for i = 1, 4 do
     math.random()
