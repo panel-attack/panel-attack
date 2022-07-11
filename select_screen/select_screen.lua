@@ -489,7 +489,7 @@ function select_screen.initializeFromMenuState(self, playerNumber, menuState)
   self.players[playerNumber].wants_ready = menuState.wants_ready or false
   self.players[playerNumber].ranked = menuState.ranked
   self.players[playerNumber].cursor.positionId = menuState.cursor
-  self.players[playerNumber].cursor.position = self.name_to_xy_per_page[self.current_page][menuState.cursor]
+  self.players[playerNumber].cursor.position = shallowcpy(self.name_to_xy_per_page[self.current_page][menuState.cursor])
 end
 
 function select_screen.setUpMyPlayer(self)
