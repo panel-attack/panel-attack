@@ -8,6 +8,7 @@ require("BattleRoom")
 require("util")
 require("table_util")
 require("consts")
+require("league")
 require("queue")
 require("globals")
 require("character") -- after globals!

@@ -1126,8 +1126,14 @@ function main_net_vs_lobby()
 
       local function playerRatingString(playerName)
         local rating = ""
-        if playerData and playerData[playerName] and playerData[playerName].rating then
-          rating = " (" .. playerData[playerName].rating .. ")"
+        if GAME.showRatings and playerData and playerData[playerName] and playerData[playerName].rating then
+          local ratingString = playerData[playerName].rating
+          if GAME.showRatings == "league" then
+            ratingString = Leagues.leagueNameForRating(playerData[playerName].rating)
+          end
+          if ratingString then
+            rating = " (" .. ratingString .. ")"
+          end
         end
         return rating
       end
