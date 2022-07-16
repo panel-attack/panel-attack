@@ -2094,7 +2094,7 @@ function love.quit()
     json_send({logout = true})
   end
   love.audio.stop()
-  if love.window.getFullscreen() == true then
+  if love.window.getFullscreen() then
     _, _, config.display = love.window.getPosition()
   else
     config.window_x, config.window_y, config.display = love.window.getPosition()

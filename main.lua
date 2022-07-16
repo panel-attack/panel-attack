@@ -44,7 +44,7 @@ local mainloop = nil
 
 -- Called at the beginning to load the game
 function love.load()
-  if config.maximizeOnStartup and love.window.isMaximized() == false then
+  if config.maximizeOnStartup and not love.window.isMaximized() then
     love.window.maximize()
   end
   math.randomseed(os.time())
