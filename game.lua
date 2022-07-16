@@ -61,19 +61,17 @@ function Game.loveVersionString()
   return loveVersionStringValue
 end
 
+-- Updates the scale and position values to use up the right size of the window based on the user's settings.
 function Game:updateCanvasPositionAndScale(newWindowWidth, newWindowHeight)
-  local foundFixedScale = false
-
-  local availableScales = shallowcpy(self.availableScales)
-  if config.gameScale == "scaled" then
-    -- Do nothing, fall through to below
-  else
+  if config.gameScale ~= "scaled" then
+    local availableScales = shallowcpy(self.availableScales)
     if config.gameScale ~= "auto" then
       local xScale = tonumber(config.gameScale)
       availableScales = {xScale}
     end
 
     -- Handle both "auto" and a fixed scale
+    -- Go from biggest to smallest and used the highest one that still fits
     for i = #availableScales, 1, -1 do
       local scale = availableScales[i]
       if config.gameScale ~= "auto" or 
@@ -82,26 +80,33 @@ function Game:updateCanvasPositionAndScale(newWindowWidth, newWindowHeight)
         GAME.canvasYScale = scale
         GAME.canvasX = math.floor((newWindowWidth - (scale * canvas_width)) / 2)
         GAME.canvasY = math.floor((newWindowHeight - (scale * canvas_height)) / 2)
-        foundFixedScale = true
-        break
+        return -- EARLY RETURN
       end
     end
   end
 
-  if foundFixedScale == false then
-    -- Nothing fits, scale down
-    local w, h
-    GAME.canvasX, GAME.canvasY, w, h = scale_letterbox(newWindowWidth, newWindowHeight, 16, 9)
-    GAME.canvasXScale = w / canvas_width
-    GAME.canvasYScale = h / canvas_height
-  end
+  -- The only thing left to do is scale to fit the window
+  local w, h
+  GAME.canvasX, GAME.canvasY, w, h = scale_letterbox(newWindowWidth, newWindowHeight, 16, 9)
+  GAME.canvasXScale = w / canvas_width
+  GAME.canvasYScale = h / canvas_height
 end
 
-function Game:refreshAssets()
-  -- we need to reload all assets and fonts to get the new scaling info and filters
+-- Reloads the canvas and all images / fonts for the new game scale
+function Game:refreshCanvasAndImagesForNewScale()
+  GAME.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME.canvasXScale})
+  -- We need to reload all assets and fonts to get the new scaling info and filters
+
+  -- Reload loc to get the new font
   Localization.init(localization)
+  -- Reload theme to get the new resolution assets
   theme_init()
+  -- Reload stages to get the new resolution assets
+  stages_init()
+  -- Reload panels to get the new resolution assets
   panels_init()
+  -- Reload characters to get the new resolution assets
+  characters_init()
 end
 
 local game = Game()

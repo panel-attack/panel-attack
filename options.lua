@@ -165,8 +165,11 @@ local function graphics_menu()
       config.gameScale = scaleOptions[scaleIndex]
       GAME.showGameScale = true
       local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
+      local previousXScale = GAME.canvasXScale
       GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
-      GAME:refreshAssets()
+      if previousXScale ~= GAME.canvasXScale then
+        GAME:refreshCanvasAndImagesForNewScale()
+      end
     end
     graphicsMenu:set_button_setting(2, scaleOptions[scaleIndex]) --todo localize
   end

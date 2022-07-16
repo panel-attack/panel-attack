@@ -111,8 +111,11 @@ end
 
 function love.resize(newPixelWidth, newPixelHeight)
   if GAME then
+    local previousXScale = GAME.canvasXScale
     GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
-    GAME:refreshAssets()
+    if previousXScale ~= GAME.canvasXScale then
+      GAME:refreshCanvasAndImagesForNewScale()
+    end
     GAME.showGameScale = true
   end
 end
@@ -144,9 +147,7 @@ function love.draw()
   end
 
   for i = gfx_q.first, gfx_q.last do
-    if gfx_q[i][1] then
-      gfx_q[i][1](unpack(gfx_q[i][2]))
-    end
+    gfx_q[i][1](unpack(gfx_q[i][2]))
   end
   gfx_q:clear()
 
@@ -156,13 +157,6 @@ function love.draw()
   love.graphics.setBlendMode("alpha", "premultiplied")
   love.graphics.draw(GAME.globalCanvas, GAME.canvasX, GAME.canvasY, 0, GAME.canvasXScale, GAME.canvasYScale)
   love.graphics.setBlendMode("alpha", "alphamultiply")
-
-  -- if panels[config.panels] and panels[config.panels].images then
-  --   love.graphics.draw(panels[config.panels].images.classic[1][1], 0, 0, 0, 1, 1)
-  --   love.graphics.draw(panels[config.panels].images.classic[2][1], 48, 0, 0, 1, 1)
-  --   love.graphics.draw(panels[config.panels].images.classic[1][1], 0, 48, 0, 2, 2)
-  --   love.graphics.draw(panels[config.panels].images.classic[2][1], 96, 48, 0, 2, 2)
-  -- end
 
   -- draw background and its overlay
   if GAME.backgroundImage then
