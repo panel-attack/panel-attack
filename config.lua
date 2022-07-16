@@ -48,7 +48,7 @@ config = {
     enable_analytics              = true,
     -- Save replays setting
     save_replays_publicly         = "with my name",
-    portrait_darkness             = default_portrait_darkness,
+    portrait_darkness             = 70,
     popfx                         = true,
     cardfx_scale                  = 100,
     renderTelegraph               = true,
