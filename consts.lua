@@ -34,7 +34,6 @@ random_stage_special_value = "__RandomStage"
 random_character_special_value = "__RandomCharacter"
 
 default_input_repeat_delay = 20
-default_portrait_darkness = 70
 
 large_font = 10 -- large font base+10
 small_font = -3 -- small font base-3

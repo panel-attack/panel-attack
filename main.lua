@@ -44,7 +44,7 @@ local mainloop = nil
 -- Called at the beginning to load the game
 function love.load()
   love.graphics.setDefaultFilter("linear", "linear")
-  if config.maximizeOnStartup and love.window.isMaximized() == false then
+  if config.maximizeOnStartup and not love.window.isMaximized() then
     love.window.maximize()
   end
   local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
