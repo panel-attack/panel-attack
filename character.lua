@@ -120,7 +120,11 @@ function Character.json_init(self)
 
     --popfx_type
     if read_data.popfx_style and type(read_data.popfx_style) == "string" then
-      self.popfx_style = read_data.popfx_style
+      if read_data.popfx_style == "burst" or read_data.popfx_style == "fadeburst" or read_data.popfx_style == "fade" then
+        self.popfx_style = read_data.popfx_style
+      else 
+        logger.warn(self.id .. " (popfx_style) is being ignored since it's invalid!")
+      end
     end
 
     --popfx_burstScale
