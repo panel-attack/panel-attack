@@ -5,7 +5,7 @@ local Label = require("ui.Label")
 local Button = require("ui.Button")
 local ButtonGroup = require("ui.ButtonGroup")
 local Menu = require("ui.Menu")
-local table_utils = require("table_utils")
+local tableUtils = require("tableUtils")
 
 --@module sound_test
 local sound_test = Scene("sound_test")
@@ -69,7 +69,7 @@ local function createSfxMenuInfo(characterId)
   local characterFiles = love.filesystem.getDirectoryItems(characters[characterId].path)
   local music_files = {normal_music = true, normal_music_start = true, danger_music = true, danger_music_start = true}
   local supported_sound_formats = {mp3 = true, ogg = true, wav = true, it = true, flac = true}
-  local soundFiles = table_utils.filter(characterFiles, function(fileName) return not music_files[string.match(fileName, "(.*)[.]")] and supported_sound_formats[string.match(fileName, "[.](.*)")] end)
+  local soundFiles = tableUtils.filter(characterFiles, function(fileName) return not music_files[string.match(fileName, "(.*)[.]")] and supported_sound_formats[string.match(fileName, "[.](.*)")] end)
   local sfxLabels = {}
   local sfxValues = {}
   for _, sfx in ipairs(soundFiles) do

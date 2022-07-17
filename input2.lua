@@ -1,7 +1,16 @@
-local table_utils = require("table_utils")
+local tableUtils = require("tableUtils")
 local consts = require("consts")
 
 --@module input2
+-- table containing the set of keys in various states
+-- base structure:
+--   isDown: table of {key: true} pairs if the key was pressed in the current frame
+--   isUp: table of {key: true} pairs if the key was released in the current frame
+--   isPressed: table of {key: time} pairs if the key is currently being held down where total duration held down is stored as time
+-- Key groups:
+--   raw: every key read in by LOVE (includes keyboard, controller, and joystick)
+--   base (top level): all keys mapped by the input.configuration aliased to the consts.KEY_NAMES
+--   player: list of individual input.configuration mappings also aliased by consts.KEY_NAMES
 local input2 = {
   isDown = {},
   isPressed = {},
@@ -11,14 +20,16 @@ local input2 = {
     isPressed = {},
     isUp = {}
   },
-  guid_to_name = {},
-  sensitivity = .5,
-  joysticks = {}
+  player = {},
+  guidToName = {},
+  joystickSensitivity = .5,
+  joysticks = {},
+  maxConfigurations = 8
 }
 
-local current_dt
-local guids_to_joysticks = {}
-local stick_map = {
+local currentDt
+local guidsToJoysticks = {}
+local stickMap = {
     {{"-", "x"}},
     {{"-", "x"}, {"-", "y"}},
     {{"-", "y"}},
@@ -28,7 +39,7 @@ local stick_map = {
     {{"+", "y"}},
     {{"-", "x"}, {"+", "y"}}
   }
-local anti_stick_map = {
+local antiStickMap = {
     {{"+", "x"}, {"+", "y"}, {"-", "y"}},
     {{"+", "x"}, {"+", "y"}},
     {{"+", "y"}, {"+", "x"}, {"-", "x"}},
@@ -39,15 +50,23 @@ local anti_stick_map = {
     {{"+", "x"}, {"-", "y"}}
   }
 
+for i = 1, input2.maxConfigurations do
+  input2.player[i] = {
+    isDown = {},
+    isPressed = {},
+    isUp = {}
+  }
+end
+
 function input2:getJoystickButtonName(joystick, button)
-  if not guids_to_joysticks[joystick:getGUID()] then
-    guids_to_joysticks[joystick:getGUID()] = {}
-    self.guid_to_name[joystick:getGUID()] = joystick:getName()
+  if not guidsToJoysticks[joystick:getGUID()] then
+    guidsToJoysticks[joystick:getGUID()] = {}
+    self.guidToName[joystick:getGUID()] = joystick:getName()
   end
-  if not guids_to_joysticks[joystick:getGUID()][joystick:getID()] then
-    guids_to_joysticks[joystick:getGUID()][joystick:getID()] = table_utils.length(guids_to_joysticks[joystick:getGUID()])
+  if not guidsToJoysticks[joystick:getGUID()][joystick:getID()] then
+    guidsToJoysticks[joystick:getGUID()][joystick:getID()] = tableUtils.length(guidsToJoysticks[joystick:getGUID()])
   end
-  return string.format("%s:%s:%s", button, joystick:getGUID(), guids_to_joysticks[joystick:getGUID()][joystick:getID()])
+  return string.format("%s:%s:%s", button, joystick:getGUID(), guidsToJoysticks[joystick:getGUID()][joystick:getID()])
 end
 
 function input2:keyPressed(key, scancode, isrepeat)
@@ -79,10 +98,10 @@ function input2:joystickToButtons()
       local y = axis.."y"
       local mag = math.sqrt(joystick:getGamepadAxis(x) * joystick:getGamepadAxis(x) + joystick:getGamepadAxis(y) * joystick:getGamepadAxis(y))
       local dir = math.atan2(joystick:getGamepadAxis(y), joystick:getGamepadAxis(x)) * 180.0 / math.pi
-      local quantized_dir = math.floor(((dir + 180 + 45 / 2) / 45.0) % 8) + 1
-      for _, button in ipairs(stick_map[quantized_dir]) do
+      local quantizedDir = math.floor(((dir + 180 + 45 / 2) / 45.0) % 8) + 1
+      for _, button in ipairs(stickMap[quantizedDir]) do
         local key = self:getJoystickButtonName(joystick, button[1]..axis..button[2])
-        if mag > self.sensitivity then
+        if mag > self.joystickSensitivity then
           if not self.raw.isDown[key] and not self.raw.isPressed[key] then
             self.raw.isDown[key] = 1
           end
@@ -94,7 +113,7 @@ function input2:joystickToButtons()
           end
         end
       end
-      for _, button in ipairs(anti_stick_map[quantized_dir]) do
+      for _, button in ipairs(antiStickMap[quantizedDir]) do
         local key = self:getJoystickButtonName(joystick, button[1]..axis..button[2])
         if self.raw.isDown[key] or self.raw.isPressed[key] then
           self.raw.isDown[key] = nil
@@ -109,7 +128,7 @@ end
 function input2:update(dt)
   self:joystickToButtons()
   
-  current_dt = dt
+  currentDt = dt
   for key, value in pairs(self.raw.isDown) do
     if self.raw.isDown[key] == 1 then
       self.raw.isDown[key] = 2
@@ -136,6 +155,10 @@ function input2:update(dt)
     self.isUp[key] = nil
     self.isPressed[key] = nil
     for i = 1, GAME.input.maxConfigurations do
+      self.player[i].isDown[key] = self.raw.isDown[GAME.input.inputConfigurations[i][key]]
+      self.player[i].isUp[key] = self.raw.isUp[GAME.input.inputConfigurations[i][key]]
+      self.player[i].isPressed[key] = self.raw.isPressed[GAME.input.inputConfigurations[i][key]]
+      
       self.isDown[key] = self.isDown[key] or self.raw.isDown[GAME.input.inputConfigurations[i][key]]
       self.isUp[key] = self.isUp[key] or self.raw.isUp[GAME.input.inputConfigurations[i][key]]
       if self.raw.isPressed[GAME.input.inputConfigurations[i][key]] and (not self.isPressed[key] or self.raw.isPressed[GAME.input.inputConfigurations[i][key]] > self.isPressed[key]) then 
@@ -149,15 +172,15 @@ local function quantize(x, period)
   return math.floor(x / period) * period
 end
 
-function input2:isPressedWithRepeat(key, delay, repeat_period)
+function input2:isPressedWithRepeat(key, delay, repeatPeriod)
   local inputs = self.raw
   if table.trueForAny(consts.KEY_NAMES, function(k) return k == key end) then
     inputs = input2
   end
   if inputs.isPressed[key] then
-    local prev_duration = quantize(inputs.isPressed[key] - current_dt, repeat_period)
-    local curr_duration = quantize(inputs.isPressed[key], repeat_period)
-    return inputs.isPressed[key] > delay and prev_duration ~= curr_duration
+    local prevDuration = quantize(inputs.isPressed[key] - currentDt, repeatPeriod)
+    local currDuration = quantize(inputs.isPressed[key], repeatPeriod)
+    return inputs.isPressed[key] > delay and prevDuration ~= currDuration
   else
     return inputs.isDown[key]
   end

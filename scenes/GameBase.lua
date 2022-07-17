@@ -15,7 +15,7 @@ local scene_manager = require("scenes.scene_manager")
 local input = require("input2")
 local util = require("util")
 local save = require("save")
-local table_utils = require("table_utils")
+local tableUtils = require("tableUtils")
 local consts = require("consts")
 
 --@module MainMenu
@@ -250,7 +250,7 @@ function GameBase:runGameOver()
   end
 
   -- if conditions are met, leave the game over screen
-  local key_pressed = table_utils.trueForAny(input.isDown, function(key) return key end)
+  local key_pressed = tableUtils.trueForAny(input.isDown, function(key) return key end)
   if t >= timemin and ((t >= timemax and timemax >= 0) or key_pressed) or left_select_menu then
     play_optional_sfx(themes[config.theme].sounds.menu_validate)
     setMusicFadePercentage(1) -- reset the music back to normal config volume

@@ -33,7 +33,7 @@ function input_config_menu:updateInputConfigSet(value)
     local key_name = GAME.input:cleanNameForButton(GAME.input.inputConfigurations[config_index][key]) or loc("op_none")
     if string.match(key_name, ":") then
       local controller_key_split = util.split(key_name, ":")
-      local controller_name = shorten_controller_name(input.guid_to_name[controller_key_split[2]])
+      local controller_name = shorten_controller_name(input.guidToName[controller_key_split[2]])
       key_name = string.format("%s (%s-%s)", controller_key_split[1], controller_name, controller_key_split[3])
     end
     self.menu.menu_items[i + 1][2]:updateLabel(key_name)
@@ -56,7 +56,7 @@ function input_config_menu:pollAndSetKey(key, index)
   local key_display_name = pressed_key
   if string.match(pressed_key, ":") then
     local controller_key_split = util.split(pressed_key, ":")
-    local controller_name = shorten_controller_name(input.guid_to_name[controller_key_split[2]])
+    local controller_name = shorten_controller_name(input.guidToName[controller_key_split[2]])
     key_display_name = string.format("%s (%s-%s)", controller_key_split[1], controller_name, controller_key_split[3])
   end
   GAME.input.inputConfigurations[config_index][key] = pressed_key

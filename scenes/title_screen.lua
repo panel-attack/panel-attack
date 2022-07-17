@@ -10,7 +10,7 @@ local Button = require("ui.Button")
 local Menu = require("ui.Menu")
 local scene_manager = require("scenes.scene_manager")
 local input = require("input2")
-local table_utils = require("table_utils")
+local tableUtils = require("tableUtils")
 require("mainloop")
 
 --@module titleScreen
@@ -38,7 +38,7 @@ end
 
 function titleScreen:update()
   titleDrawPressStart(((math.sin(5 * love.timer.getTime()) / 2 + .5) ^ .5) / 2 + .5)
-  local key_pressed = table_utils.trueForAny(input.isDown, function(key) return key end)
+  local key_pressed = tableUtils.trueForAny(input.isDown, function(key) return key end)
   if love.mouse.isDown(1, 2, 3) or #love.touch.getTouches() > 0 or key_pressed then
     play_optional_sfx(themes[config.theme].sounds.menu_validate)
     scene_manager:switchScene("main_menu")
