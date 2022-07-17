@@ -1,5 +1,18 @@
-require("util")
-require("table_util")
+local tableUtils = require("tableUtils")
+
+--- @module consts
+local consts = {
+  VERSION = "046",
+  CANVAS_WIDTH = 1280,
+  CANVAS_HEIGHT = 720,
+  DEFAULT_THEME_DIR = "Panel Attack",
+  RANDOM_CHARACTER_SPECIAL_VALUE = "__RandomCharacter",
+  RANDOM_STAGE_SPECIAL_VALUE = "__RandomStage",
+  DEFAULT_INPUT_REPEAT_DELAY = 20,
+  MOUSE_POINTER_TIMEOUT = 1.5, --seconds
+  KEY_NAMES = {"Up", "Down", "Left", "Right", "Swap1", "Swap2", "TauntUp", "TauntDown", "Raise1", "Raise2", "Start"},
+  FRAME_RATE = 1 / 60
+}
 
 -- The values in this file are constants (except in this file perhaps) and are expected never to change during the game, not to be confused with globals!
 VERSION = "046"
@@ -33,8 +46,7 @@ default_stages_folders = {"cave", "fire", "flower", "forest", "ice",
 random_stage_special_value = "__RandomStage"
 random_character_special_value = "__RandomCharacter"
 
-key_names = {"up", "down", "left", "right", "swap1",
-  "swap2", "taunt_up", "taunt_down", "raise1", "raise2", "pause"}
+key_names = {"Up", "Down", "Left", "Right", "Swap1", "Swap2", "TauntUp", "TauntDown", "Raise1", "Raise2", "Start"}
 
 -- frames to use for bounce animation
 bounce_table = {1, 1, 1, 1,
@@ -104,7 +116,7 @@ difficulty_to_ncolors_1Ptime = {6,6,6,6}
 
 time_attack_time = 120
 -- Yes, 2 is slower than 1 and 50..99 are the same.
-speed_to_rise_time = table.map(
+speed_to_rise_time = tableUtils.map(
    {942, 983, 838, 790, 755, 695, 649, 604, 570, 515,
     474, 444, 394, 370, 347, 325, 306, 289, 271, 256,
     240, 227, 213, 201, 189, 178, 169, 158, 148, 138,
@@ -224,3 +236,5 @@ garbage_to_shake_time = {
 for i=25,1000 do
   garbage_to_shake_time[i] = garbage_to_shake_time[i-1]
 end
+
+return consts

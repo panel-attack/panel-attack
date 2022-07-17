@@ -1,5 +1,6 @@
 require("util")
 local logger = require("logger")
+local input2 = require("input2")
 
 -- The class that holds all input mappings and state
 -- TODO: move all state variables in here
@@ -217,6 +218,10 @@ function joystick_ax()
 end
 
 function love.keypressed(key, scancode, rep)
+  if scancode then
+    input2:keyPressed(key, scancode, rep)
+  end
+
   local function handleFullscreenToggle()
     if key == "return" and not rep and love.keyboard.isDown("lalt") then
       love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
@@ -311,6 +316,8 @@ function love.textinput(text)
 end
 
 function love.keyreleased(key, unicode)
+  input2:keyReleased(key, unicode)
+
   this_frame_released_keys[key] = keys[key] -- retains state in this_frame_released_keys
   keys[key] = nil
 end
