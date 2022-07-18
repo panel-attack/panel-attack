@@ -6,7 +6,11 @@ local consts = require("consts")
 -- base structure: 
 --   isDown: table of {key: true} pairs if the key was pressed in the current frame 
 --   isUp: table of {key: true} pairs if the key was released in the current frame 
---   isPressed: table of {key: time} pairs if the key is currently being held down where total duration held down is stored as time 
+--   isPressed: table of {key: time} pairs if the key is currently being held down where total duration held down is stored as time
+--   Caveats:
+--     the value of isDown & isUp is actually set to one of the following values: (1, 2, nil)
+--     This is because the event handlers happen before update, so in order to hold on to the state for one full frame before wiping it
+--     there needs to be a marker value which update can track to see if the state has already lasted for a full frame or not
 -- Key groups: 
 --   raw: every key read in by LOVE (includes keyboard, controller, and joystick) 
 --   base (top level): all keys mapped by the input.configuration aliased to the consts.KEY_NAMES 
@@ -27,8 +31,15 @@ local inputManager = {
   maxConfigurations = 8 
 } 
  
-local currentDt 
-local guidsToJoysticks = {} 
+local currentDt
+
+-- mapping of GUID to map of joysticks under that GUID (GUIDs are unique per controller type)
+-- the joystick map is a list of {joystickID: customJoystickID}
+-- the custom joystick id is a number starting at 0 and increases by 1 for each new joystick of that type
+-- this is to give each joystick an id that will remain consistant over multiple sessions (the joystick IDs can change per session)
+local guidsToJoysticks = {}
+
+-- list of {directions, axis} pairs for the 8 cardinal directions
 local stickMap = { 
     {{"-", "x"}}, 
     {{"-", "x"}, {"-", "y"}}, 
@@ -38,7 +49,9 @@ local stickMap = {
     {{"+", "x"}, {"+", "y"}}, 
     {{"+", "y"}}, 
     {{"-", "x"}, {"+", "y"}} 
-  } 
+  }
+  
+-- list of {directions, axis} pairs that need to be cleared for the 8 cardinal directions refrenced in stickMap
 local antiStickMap = { 
     {{"+", "x"}, {"+", "y"}, {"-", "y"}}, 
     {{"+", "x"}, {"+", "y"}}, 
@@ -90,18 +103,23 @@ function inputManager:gamepadReleased(joystick, button)
   self.raw.isUp[key] = 1 
 end 
  
+ -- maps joysticks to buttons by converting the {x, y} axis values to {direction, magnitude} pair
+ -- this will give more even mapping along the diagonals when thresholded by a single value (joystickSensitivity)
 function inputManager:joystickToButtons() 
   local joysticks2 = love.joystick.getJoysticks() 
   for _, joystick in ipairs(love.joystick.getJoysticks()) do 
     for _, axis in ipairs({"left", "right"}) do 
       local x = axis.."x" 
-      local y = axis.."y" 
-      local mag = math.sqrt(joystick:getGamepadAxis(x) * joystick:getGamepadAxis(x) + joystick:getGamepadAxis(y) * joystick:getGamepadAxis(y)) 
-      local dir = math.atan2(joystick:getGamepadAxis(y), joystick:getGamepadAxis(x)) * 180.0 / math.pi 
+      local y = axis.."y"
+
+      -- not taking the square root to get the magnitude since it's it more expensive than squaring the joystickSensitivity
+      local magSquared = joystick:getGamepadAxis(x) * joystick:getGamepadAxis(x) + joystick:getGamepadAxis(y) * joystick:getGamepadAxis(y)
+      local dir = math.atan2(joystick:getGamepadAxis(y), joystick:getGamepadAxis(x)) * 180.0 / math.pi
+      -- convert the continuous direction value into 8 quantized values which map to the stickMap & antiStickMap indexes
       local quantizedDir = math.floor(((dir + 180 + 45 / 2) / 45.0) % 8) + 1 
       for _, button in ipairs(stickMap[quantizedDir]) do 
         local key = self:getJoystickButtonName(joystick, button[1]..axis..button[2]) 
-        if mag > self.joystickSensitivity then 
+        if magSquared > self.joystickSensitivity * self.joystickSensitivity then 
           if not self.raw.isDown[key] and not self.raw.isPressed[key] then 
             self.raw.isDown[key] = 1 
           end 
@@ -149,12 +167,13 @@ function inputManager:update(dt)
       self.raw.isUp[key] = nil 
     end 
   end 
-   
+  
+  -- copy over specific raw key states into the custom input structures defined in the header
   for _, key in ipairs(consts.KEY_NAMES) do 
     self.isDown[key] = nil 
     self.isUp[key] = nil 
     self.isPressed[key] = nil 
-    for i = 1, GAME.input.maxConfigurations do 
+    for i = 1, GAME.input.maxConfigurations do
       self.player[i].isDown[key] = self.raw.isDown[GAME.input.inputConfigurations[i][key]] 
       self.player[i].isUp[key] = self.raw.isUp[GAME.input.inputConfigurations[i][key]] 
       self.player[i].isPressed[key] = self.raw.isPressed[GAME.input.inputConfigurations[i][key]] 
