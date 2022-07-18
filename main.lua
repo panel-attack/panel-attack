@@ -33,7 +33,7 @@ require("theme")
 require("click_menu")
 require("rich_presence.RichPresence")
 local logger = require("logger")
-local input = require("input2")
+local inputManager = require("inputManager")
 GAME.scores = require("scores")
 GAME.rich_presence = RichPresence()
 
@@ -63,7 +63,7 @@ end
 -- Called every few fractions of a second to update the game
 -- dt is the amount of time in seconds that has passed.
 function love.update(dt)
-  input:update(dt)
+  inputManager:update(dt)
 
   if love.mouse.getX() == last_x and love.mouse.getY() == last_y then
     if not pointer_hidden then
@@ -170,11 +170,11 @@ function love.mousepressed(x, y)
 end
 
 function love.gamepadpressed(joystick, button)
-  input:gamepadPressed(joystick, button)
+  inputManager:gamepadPressed(joystick, button)
 end
 
 function love.gamepadreleased(joystick, button)
-  input:gamepadReleased(joystick, button)
+  inputManager:gamepadReleased(joystick, button)
 end
 
 -- Handle a touch press

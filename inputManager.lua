@@ -1,7 +1,7 @@
 local tableUtils = require("tableUtils") 
 local consts = require("consts") 
  
---@module input2 
+--@module inputManager 
 -- table containing the set of keys in various states 
 -- base structure: 
 --   isDown: table of {key: true} pairs if the key was pressed in the current frame 
@@ -11,7 +11,7 @@ local consts = require("consts")
 --   raw: every key read in by LOVE (includes keyboard, controller, and joystick) 
 --   base (top level): all keys mapped by the input.configuration aliased to the consts.KEY_NAMES 
 --   player: list of individual input.configuration mappings also aliased by consts.KEY_NAMES 
-local input2 = { 
+local inputManager = { 
   isDown = {}, 
   isPressed = {}, 
   isUp = {}, 
@@ -50,15 +50,15 @@ local antiStickMap = {
     {{"+", "x"}, {"-", "y"}} 
   } 
  
-for i = 1, input2.maxConfigurations do 
-  input2.player[i] = { 
+for i = 1, inputManager.maxConfigurations do 
+  inputManager.player[i] = { 
     isDown = {}, 
     isPressed = {}, 
     isUp = {} 
   } 
 end 
  
-function input2:getJoystickButtonName(joystick, button) 
+function inputManager:getJoystickButtonName(joystick, button) 
   if not guidsToJoysticks[joystick:getGUID()] then 
     guidsToJoysticks[joystick:getGUID()] = {} 
     self.guidToName[joystick:getGUID()] = joystick:getName() 
@@ -69,28 +69,28 @@ function input2:getJoystickButtonName(joystick, button)
   return string.format("%s:%s:%s", button, joystick:getGUID(), guidsToJoysticks[joystick:getGUID()][joystick:getID()]) 
 end 
  
-function input2:keyPressed(key, scancode, isrepeat) 
+function inputManager:keyPressed(key, scancode, isrepeat) 
   self.raw.isDown[key] = 1 
 end 
  
-function input2:keyReleased(key, scancode) 
+function inputManager:keyReleased(key, scancode) 
   self.raw.isDown[key] = nil 
   self.raw.isPressed[key] = nil 
   self.raw.isUp[key] = 1 
 end 
  
-function input2:gamepadPressed(joystick, button) 
+function inputManager:gamepadPressed(joystick, button) 
   self.raw.isDown[self:getJoystickButtonName(joystick, button)] = 1 
 end 
  
-function input2:gamepadReleased(joystick, button) 
+function inputManager:gamepadReleased(joystick, button) 
   local key = self:getJoystickButtonName(joystick, button) 
   self.raw.isDown[key] = nil 
   self.raw.isPressed[key] = nil 
   self.raw.isUp[key] = 1 
 end 
  
-function input2:joystickToButtons() 
+function inputManager:joystickToButtons() 
   local joysticks2 = love.joystick.getJoysticks() 
   for _, joystick in ipairs(love.joystick.getJoysticks()) do 
     for _, axis in ipairs({"left", "right"}) do 
@@ -125,7 +125,7 @@ function input2:joystickToButtons()
   end 
 end 
  
-function input2:update(dt) 
+function inputManager:update(dt) 
   self:joystickToButtons() 
    
   currentDt = dt 
@@ -172,10 +172,10 @@ local function quantize(x, period)
   return math.floor(x / period) * period 
 end 
  
-function input2:isPressedWithRepeat(key, delay, repeatPeriod) 
+function inputManager:isPressedWithRepeat(key, delay, repeatPeriod) 
   local inputs = self.raw 
   if table.trueForAny(consts.KEY_NAMES, function(k) return k == key end) then 
-    inputs = input2 
+    inputs = inputManager 
   end 
   if inputs.isPressed[key] then 
     local prevDuration = quantize(inputs.isPressed[key] - currentDt, repeatPeriod) 
@@ -186,4 +186,4 @@ function input2:isPressedWithRepeat(key, delay, repeatPeriod)
   end 
 end 
  
-return input2
+return inputManager
