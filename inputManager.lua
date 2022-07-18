@@ -115,8 +115,17 @@ function inputManager:joystickToButtons()
       -- not taking the square root to get the magnitude since it's it more expensive than squaring the joystickSensitivity
       local magSquared = joystick:getGamepadAxis(x) * joystick:getGamepadAxis(x) + joystick:getGamepadAxis(y) * joystick:getGamepadAxis(y)
       local dir = math.atan2(joystick:getGamepadAxis(y), joystick:getGamepadAxis(x)) * 180.0 / math.pi
+      -- atan2 maps to [-180, 180] the quantizedDir equation prefers positive numbers (due to modulo) so mapping to [0, 360]
+      dir = dir + 180
+      -- the minimum angle we care to detect
+      local quantizationAngle = 45.0
+      -- if we quantized the raw direction the direction wouldn't register until you are greater than the direction
+      -- Ex: quantizedDir would be 0 (left) until you hit exactly 45deg before it changes to 1 (left, up) and would stay there until you are at 90deg
+      -- adding this offset so the transition is equidistant from both sides of the direction
+      -- Ex: quantizedDir is 1 (left, up) from the range [22.5, 67.5]
+      local angleOffset = quantizationAngle / 2
       -- convert the continuous direction value into 8 quantized values which map to the stickMap & antiStickMap indexes
-      local quantizedDir = math.floor(((dir + 180 + 45 / 2) / 45.0) % 8) + 1 
+      local quantizedDir = math.floor(((dir + angleOffset) / quantizationAngle) % (360 / quantizationAngle)) + 1 
       for _, button in ipairs(stickMap[quantizedDir]) do 
         local key = self:getJoystickButtonName(joystick, button[1]..axis..button[2]) 
         if magSquared > self.joystickSensitivity * self.joystickSensitivity then 
