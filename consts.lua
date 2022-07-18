@@ -46,7 +46,8 @@ default_stages_folders = {"cave", "fire", "flower", "forest", "ice",
 random_stage_special_value = "__RandomStage"
 random_character_special_value = "__RandomCharacter"
 
-key_names = {"Up", "Down", "Left", "Right", "Swap1", "Swap2", "TauntUp", "TauntDown", "Raise1", "Raise2", "Start"}
+key_names = {"up", "down", "left", "right", "swap1",
+  "swap2", "taunt_up", "taunt_down", "raise1", "raise2", "pause"}
 
 -- frames to use for bounce animation
 bounce_table = {1, 1, 1, 1,
