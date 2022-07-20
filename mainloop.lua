@@ -2098,12 +2098,12 @@ function love.quit()
   if love.window.getFullscreen() then
     _, _, config.display = love.window.getPosition()
   else
-    config.window_x, config.window_y, config.display = love.window.getPosition()
-    config.window_x = math.max(config.window_x, 0)
-    config.window_y = math.max(config.window_y, 30) --don't let 'y' be zero, or the title bar will not be visible on next launch.
+    config.windowX, config.windowY, config.display = love.window.getPosition()
+    config.windowX = math.max(config.windowX, 0)
+    config.windowY = math.max(config.windowY, 30) --don't let 'y' be zero, or the title bar will not be visible on next launch.
   end
 
-  config.width, config.height, _ = love.window.getMode( )
+  config.windowWidth, config.windowHeight, _ = love.window.getMode( )
   config.maximizeOnStartup = love.window.isMaximized()
   config.fullscreen = love.window.getFullscreen()
   write_conf_file()

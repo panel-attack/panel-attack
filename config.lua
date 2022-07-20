@@ -60,14 +60,14 @@ config = {
     gameScale                     = "auto",
 
     -- Love configuration variables
-    width                         = canvas_width,
-    height                        = canvas_height,
+    windowWidth                   = canvas_width,
+    windowHeight                  = canvas_height,
     borderless                    = false,
     fullscreen                    = false,
     vsync                         = 1,
     display                       = 1,
-    window_x                      = nil,
-    window_y                      = nil,
+    windowX                       = nil,
+    windowY                       = nil,
   }
   
   -- writes to the "conf.json" file
@@ -210,11 +210,11 @@ config = {
           configTable.gameScale = read_data.gameScale
         end
   
-        if type(read_data.width) == "number" then
-          configTable.width = read_data.width
+        if type(read_data.windowWidth) == "number" then
+          configTable.windowWidth = read_data.windowWidth
         end
-        if type(read_data.height) == "number" then
-          configTable.height = read_data.height
+        if type(read_data.windowHeight) == "number" then
+          configTable.windowHeight = read_data.windowHeight
         end
         if type(read_data.borderless) == "boolean" then
           configTable.borderless = read_data.borderless
@@ -228,11 +228,11 @@ config = {
         if type(read_data.display) == "number" then
           configTable.display = read_data.display
         end
-        if type(read_data.window_x) == "number" then
-          configTable.window_x = read_data.window_x
+        if type(read_data.windowX) == "number" then
+          configTable.windowX = read_data.windowX
         end
-        if type(read_data.window_y) == "number" then
-          configTable.window_y = read_data.window_y
+        if type(read_data.windowY) == "number" then
+          configTable.windowY = read_data.windowY
         end
   
         file:close()
