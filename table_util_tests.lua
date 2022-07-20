@@ -297,6 +297,34 @@ local function testTableGetKeys()
   logger.trace("passed test testTableGetKeys")
 end
 
+local function testTableIntersect1()
+  local fruits1 = {"apple", "pear", "orange"}
+  local fruits2 = {"mango", "banana", "orange"}
+
+  local intersection = table.getIntersection(fruits1, fruits2)
+  assert(#intersection == 1)
+  assert(intersection[1] == "orange")
+
+  logger.trace("passed test testTableIntersect1")
+end
+
+local function testTableIntersect2()
+  local rankThresholds1 = {}
+  rankThresholds1[500] = "Bread"
+  rankThresholds1[550] = "Baguette"
+
+  local rankThresholds2 = {}
+  rankThresholds2[500] = "Bread"
+  rankThresholds2[450] = "Toast"
+  rankThresholds2[600] = "Baguette"
+
+  local intersection = table.getIntersection(rankThresholds1, rankThresholds2)
+  assert(table.length(intersection) == 1)
+  assert(intersection[500] == "Bread")
+
+  logger.trace("passed test testTableIntersect1")
+end
+
 testTableGetKeys()
 testTableTrueForAllList()
 testTableTrueForAllDict()
@@ -312,3 +340,5 @@ testTableAppendToList()
 testTableLength()
 testTableMapList()
 testTableMapDict()
+testTableIntersect1()
+testTableIntersect2()

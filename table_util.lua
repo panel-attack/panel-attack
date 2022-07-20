@@ -138,3 +138,26 @@ function table.indexOf(tab, element)
 
   return nil
 end
+
+function table.getIntersection(tab1, tab2)
+  local newTab = {}
+  if table.isList(tab1) and table.isList(tab2) then
+    for i = 1, #tab1 do
+      for j = 1, #tab2 do
+        if tab1[i] == tab2[j] then
+          newTab[#newTab+1] = tab1[i]
+        end
+      end
+    end
+  else
+    for key1, _ in pairs(tab1) do
+      for key2, _ in pairs(tab2) do
+        if key1 == key2 and tab1[key1] == tab2[key2] then
+          newTab[key1] = tab1[key1]
+        end
+      end
+    end
+  end
+
+  return newTab
+end
