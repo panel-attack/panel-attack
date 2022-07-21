@@ -223,6 +223,15 @@ config = {
         if type(read_data.display) == "number" then
           configTable.display = read_data.display
         end
+
+        -- July 2022 - These are legacy and probably can be removed after a while.
+        if type(read_data.window_x) == "number" then
+          configTable.windowX = read_data.window_x
+        end
+        if type(read_data.window_y) == "number" then
+          configTable.windowY = read_data.window_y
+        end
+        
         if type(read_data.windowX) == "number" then
           configTable.windowX = read_data.windowX
         end
