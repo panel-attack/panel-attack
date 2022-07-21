@@ -1,6 +1,5 @@
 json = require("dkjson")
 require("consts")
-require("globals")
 
 -- Default configuration values
 config = {
