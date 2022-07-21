@@ -100,7 +100,7 @@ end
 
 function inputManager:updateKeyStates()
   currentDt = dt 
-  for key, value in pairs(self.allKeys.isDown) do 
+  for key, _ in pairs(self.allKeys.isDown) do 
     if self.allKeys.isDown[key] == KEY_CHANGE.DETECTED then 
       self.allKeys.isDown[key] = KEY_CHANGE.APPLIED  
     else 
@@ -109,12 +109,12 @@ function inputManager:updateKeyStates()
     end 
   end 
  
-  for key, value in pairs(self.allKeys.isPressed) do 
+  for key, _ in pairs(self.allKeys.isPressed) do 
     self.allKeys.isPressed[key] = self.allKeys.isPressed[key] + dt 
   end 
    
-  for key, value in pairs(self.allKeys.isUp) do 
-    if self.allKeys.isUp[key] == KEY_CHANGE.DETECTED   then 
+  for key, _ in pairs(self.allKeys.isUp) do 
+    if self.allKeys.isUp[key] == KEY_CHANGE.DETECTED then 
       self.allKeys.isUp[key] = KEY_CHANGE.APPLIED   
     else 
       self.allKeys.isUp[key] = KEY_CHANGE.NONE 
