@@ -250,18 +250,17 @@ end
 
 -- Positions the stack draw position for the given player
 function Stack.moveForPlayerNumber(stack, player_num)
-  local stack_padding_x_for_legacy_pos = ((464) / 2)
   if player_num == 1 then
-    stack.pos_x = 4 + stack_padding_x_for_legacy_pos / GFX_SCALE
-    stack.score_x = 315 + stack_padding_x_for_legacy_pos
+    stack.pos_x = 81
+    stack.score_x = 547
     stack.mirror_x = 1
     stack.origin_x = stack.pos_x
     stack.multiplication = 0
     stack.id = "_1P"
     stack.VAR_numbers = ""
   elseif player_num == 2 then
-    stack.pos_x = 172 + stack_padding_x_for_legacy_pos / GFX_SCALE
-    stack.score_x = 410 + stack_padding_x_for_legacy_pos
+    stack.pos_x = 249
+    stack.score_x = 642
     stack.mirror_x = -1
     stack.origin_x = stack.pos_x + (stack.canvas:getWidth() / GFX_SCALE) - 8
     stack.multiplication = 1
