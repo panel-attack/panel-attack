@@ -26,13 +26,14 @@ local inputManager = {
     isUp = {} 
   }, 
   player = {},
+  -- TODO: Convert this into a list of sensitivities per player
   joystickSensitivity = .5,
   maxConfigurations = 8 
 } 
 
 -- Represents the state of love.run while the key in isDown/isUp is active
 -- This is only used within this file, external users should simply treat isDown/isUp as a boolean
-local KEY_STAGE_STATE = { NONE = nil, EVENT_HANDLER = 1, UPDATE = 2 }
+local KEY_CHANGE = { NONE = nil, DETECTED = 1, APPLIED = 2 }
  
 local currentDt
  
@@ -45,24 +46,24 @@ for i = 1, inputManager.maxConfigurations do
 end 
  
 function inputManager:keyPressed(key, scancode, isrepeat) 
-  self.allKeys.isDown[key] = KEY_STAGE_STATE.EVENT_HANDLER
+  self.allKeys.isDown[key] = KEY_CHANGE.DETECTED
 end 
  
 function inputManager:keyReleased(key, scancode) 
-  self.allKeys.isDown[key] = KEY_STAGE_STATE.NONE
-  self.allKeys.isPressed[key] = KEY_STAGE_STATE.NONE 
-  self.allKeys.isUp[key] = KEY_STAGE_STATE.EVENT_HANDLER
+  self.allKeys.isDown[key] = KEY_CHANGE.NONE
+  self.allKeys.isPressed[key] = KEY_CHANGE.NONE 
+  self.allKeys.isUp[key] = KEY_CHANGE.DETECTED
 end 
  
 function inputManager:joystickPressed(joystick, button) 
-  self.allKeys.isDown[joystickManager:getJoystickButtonName(joystick, button)] = KEY_STAGE_STATE.EVENT_HANDLER
+  self.allKeys.isDown[joystickManager:getJoystickButtonName(joystick, button)] = KEY_CHANGE.DETECTED
 end 
  
 function inputManager:joystickReleased(joystick, button) 
   local key = joystickManager:getJoystickButtonName(joystick, button) 
-  self.allKeys.isDown[key] = KEY_STAGE_STATE.NONE  
-  self.allKeys.isPressed[key] = KEY_STAGE_STATE.NONE  
-  self.allKeys.isUp[key] = KEY_STAGE_STATE.EVENT_HANDLER
+  self.allKeys.isDown[key] = KEY_CHANGE.NONE  
+  self.allKeys.isPressed[key] = KEY_CHANGE.NONE  
+  self.allKeys.isUp[key] = KEY_CHANGE.DETECTED
 end 
  
  -- maps joysticks to buttons by converting the {x, y} axis values to {direction, magnitude} pair
@@ -75,22 +76,22 @@ function inputManager:joystickToButtons()
         local key = joystickManager:getJoystickButtonName(joystick, button[1]..axis..button[2]) 
         if magSquared > self.joystickSensitivity * self.joystickSensitivity then 
           if not self.allKeys.isDown[key] and not self.allKeys.isPressed[key] then 
-            self.allKeys.isDown[key] = KEY_STAGE_STATE.EVENT_HANDLER 
+            self.allKeys.isDown[key] = KEY_CHANGE.DETECTED 
           end 
         else 
           if self.allKeys.isDown[key] or self.allKeys.isPressed[key] then 
-            self.allKeys.isDown[key] = KEY_STAGE_STATE.NONE  
-            self.allKeys.isPressed[key] = KEY_STAGE_STATE.NONE  
-            self.allKeys.isUp[key] = KEY_STAGE_STATE.EVENT_HANDLER 
+            self.allKeys.isDown[key] = KEY_CHANGE.NONE  
+            self.allKeys.isPressed[key] = KEY_CHANGE.NONE  
+            self.allKeys.isUp[key] = KEY_CHANGE.DETECTED 
           end 
         end 
       end 
       for _, button in ipairs(joystickManager.antiStickMap[quantizedDir]) do 
         local key = joystickManager:getJoystickButtonName(joystick, button[1]..axis..button[2]) 
         if self.allKeys.isDown[key] or self.allKeys.isPressed[key] then 
-          self.allKeys.isDown[key] = KEY_STAGE_STATE.NONE  
-          self.allKeys.isPressed[key] = KEY_STAGE_STATE.NONE  
-          self.allKeys.isUp[key] = KEY_STAGE_STATE.EVENT_HANDLER  
+          self.allKeys.isDown[key] = KEY_CHANGE.NONE  
+          self.allKeys.isPressed[key] = KEY_CHANGE.NONE  
+          self.allKeys.isUp[key] = KEY_CHANGE.DETECTED  
         end 
       end 
     end 
@@ -100,10 +101,10 @@ end
 function inputManager:updateKeyStates()
   currentDt = dt 
   for key, value in pairs(self.allKeys.isDown) do 
-    if self.allKeys.isDown[key] == KEY_STAGE_STATE.EVENT_HANDLER then 
-      self.allKeys.isDown[key] = KEY_STAGE_STATE.UPDATE  
+    if self.allKeys.isDown[key] == KEY_CHANGE.DETECTED then 
+      self.allKeys.isDown[key] = KEY_CHANGE.APPLIED  
     else 
-      self.allKeys.isDown[key] = KEY_STAGE_STATE.NONE 
+      self.allKeys.isDown[key] = KEY_CHANGE.NONE 
       self.allKeys.isPressed[key] = dt 
     end 
   end 
@@ -113,10 +114,10 @@ function inputManager:updateKeyStates()
   end 
    
   for key, value in pairs(self.allKeys.isUp) do 
-    if self.allKeys.isUp[key] == KEY_STAGE_STATE.EVENT_HANDLER   then 
-      self.allKeys.isUp[key] = KEY_STAGE_STATE.UPDATE   
+    if self.allKeys.isUp[key] == KEY_CHANGE.DETECTED   then 
+      self.allKeys.isUp[key] = KEY_CHANGE.APPLIED   
     else 
-      self.allKeys.isUp[key] = KEY_STAGE_STATE.NONE 
+      self.allKeys.isUp[key] = KEY_CHANGE.NONE 
     end 
   end 
 end
@@ -124,9 +125,9 @@ end
 -- copy over specific raw key states into the custom input structures defined in the header
 function inputManager:updateKeyMaps()
   for _, key in ipairs(consts.KEY_NAMES) do 
-    self.isDown[key] = KEY_STAGE_STATE.NONE 
-    self.isUp[key] = KEY_STAGE_STATE.NONE 
-    self.isPressed[key] = KEY_STAGE_STATE.NONE 
+    self.isDown[key] = KEY_CHANGE.NONE 
+    self.isUp[key] = KEY_CHANGE.NONE 
+    self.isPressed[key] = KEY_CHANGE.NONE 
     for i = 1, GAME.input.maxConfigurations do
       self.player[i].isDown[key] = self.allKeys.isDown[GAME.input.inputConfigurations[i][key]] 
       self.player[i].isUp[key] = self.allKeys.isUp[GAME.input.inputConfigurations[i][key]] 
