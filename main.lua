@@ -169,12 +169,12 @@ function love.mousepressed(x, y)
   end
 end
 
-function love.gamepadpressed(joystick, button)
-  inputManager:gamepadPressed(joystick, button)
+function love.joystickpressed(joystick, button)
+  inputManager:joystickPressed(joystick, button)
 end
 
-function love.gamepadreleased(joystick, button)
-  inputManager:gamepadReleased(joystick, button)
+function love.joystickreleased(joystick, button)
+  inputManager:joystickReleased(joystick, button)
 end
 
 -- Handle a touch press
