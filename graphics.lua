@@ -92,12 +92,6 @@ function Stack.update_popfxs(self)
   
   for i = self.pop_q.first, self.pop_q.last do
     local popfx = self.pop_q[i]
-    if characters[self.character].popfx_style == "burst" or characters[self.character].popfx_style == "fadeburst" then
-      popfx_animation = popfx_burst_animation
-    end
-    if characters[self.character].popfx_style == "fade" then
-      popfx_animation = popfx_fade_animation
-    end
     if popfx_burst_animation[popfx.frame] then
       popfx.frame = popfx.frame + 1
       if (popfx_burst_animation[popfx.frame] == nil) then
