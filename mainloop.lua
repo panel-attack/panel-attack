@@ -37,11 +37,6 @@ local function drawLoadingString(loadingString)
 end
 
 function fmainloop()
-  read_conf_file()
-  local x, y, display = love.window.getPosition()
-  love.window.setPosition(config.window_x or x, config.window_y or y, config.display or display)
-  love.window.setFullscreen(config.fullscreen or false)
-  love.window.setVSync(config.vsync and 1 or 0)
   Localization.init(localization)
   copy_file("readme_puzzles.txt", "puzzles/README.txt")
   theme_init()
@@ -1778,7 +1773,7 @@ function main_select_puzz()
   local exitSet = false
   local puzzleMenu
   local ret = nil
-  local level = config.puzzle_level or 5
+  local level = config.puzzle_level
   local randomColors = config.puzzle_randomColors or false
 
   local function selectFunction(myFunction, args)
@@ -2099,13 +2094,16 @@ function love.quit()
     json_send({logout = true})
   end
   love.audio.stop()
-  if love.window.getFullscreen() == true then
-    null, null, config.display = love.window.getPosition()
+  if love.window.getFullscreen() then
+    _, _, config.display = love.window.getPosition()
   else
-    config.window_x, config.window_y, config.display = love.window.getPosition()
-    config.window_x = math.max(config.window_x, 0)
-    config.window_y = math.max(config.window_y, 30) --don't let 'y' be zero, or the title bar will not be visible on next launch.
+    config.windowX, config.windowY, config.display = love.window.getPosition()
+    config.windowX = math.max(config.windowX, 0)
+    config.windowY = math.max(config.windowY, 30) --don't let 'y' be zero, or the title bar will not be visible on next launch.
   end
+
+  config.windowWidth, config.windowHeight, _ = love.window.getMode( )
+  config.maximizeOnStartup = love.window.isMaximized()
   config.fullscreen = love.window.getFullscreen()
   write_conf_file()
 end
