@@ -215,6 +215,7 @@ do
       {loc("mm_1_time"), main_timeattack_select},
       {loc("mm_1_vs"), main_local_vs_yourself_setup},
       {loc("mm_1_training"), training_setup},
+      {"Vs Computer", main_local_vs_computer_setup},
       --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
       {loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
@@ -1421,6 +1422,12 @@ function main_local_vs_setup()
   GAME.input:clearInputConfigurationsForPlayers()
   GAME.input:requestPlayerInputConfigurationAssignments(2)
   return select_screen.main, {select_screen, "2p_local_vs"}
+end
+
+-- sets up globals for local vs computer
+function main_local_vs_computer_setup()
+  GAME.battleRoom = BattleRoom()
+  return select_screen.main, {select_screen, "2p_local_computer_vs"}
 end
 
 -- local 2pvs mode
