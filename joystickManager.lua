@@ -16,17 +16,8 @@ local joystickManager = {
     {{"-", "x"}, {"+", "y"}} 
   },
   
-  -- list of {directions, axis} pairs that need to be cleared for the 8 cardinal directions refrenced in stickMap
-  antiStickMap = { 
-    {{"+", "x"}, {"+", "y"}, {"-", "y"}}, 
-    {{"+", "x"}, {"+", "y"}}, 
-    {{"+", "y"}, {"+", "x"}, {"-", "x"}}, 
-    {{"-", "x"}, {"+", "y"}}, 
-    {{"-", "x"}, {"+", "y"}, {"-", "y"}}, 
-    {{"-", "x"}, {"-", "y"}}, 
-    {{"-", "y"}, {"+", "x"}, {"-", "x"}}, 
-    {{"+", "x"}, {"-", "y"}} 
-  }
+  -- TODO: Convert this into a list of sensitivities per player
+  joystickSensitivity = .5,
 }
 
 -- mapping of GUID to map of joysticks under that GUID (GUIDs are unique per controller type)
@@ -46,11 +37,19 @@ function joystickManager:getJoystickButtonName(joystick, button)
   return string.format("%s:%s:%s", button, joystick:getGUID(), guidsToJoysticks[joystick:getGUID()][joystick:getID()]) 
 end 
 
--- returns the magnitude squared of the joystick and the quantized direction (maps to the self.stickMap)
-function joystickManager:getQuantizedState(joystick, axis)
+ -- maps joysticks to buttons by converting the {x, y} axis values to {direction, magnitude} pair
+ -- this will give more even mapping along the diagonals when thresholded by a single value (joystickSensitivity)
+function joystickManager:joystickToDPad(joystick, axis)
   local x = axis.."x" 
   local y = axis.."y"
 
+  local dpadState = {
+    [joystickManager:getJoystickButtonName(joystick, "+"..x)] = false,
+    [joystickManager:getJoystickButtonName(joystick, "-"..x)] = false,
+    [joystickManager:getJoystickButtonName(joystick, "+"..y)] = false,
+    [joystickManager:getJoystickButtonName(joystick, "-"..y)] = false
+  }
+  
   -- not taking the square root to get the magnitude since it's it more expensive than squaring the joystickSensitivity
   local magSquared = joystick:getGamepadAxis(x) * joystick:getGamepadAxis(x) + joystick:getGamepadAxis(y) * joystick:getGamepadAxis(y)
   local dir = math.atan2(joystick:getGamepadAxis(y), joystick:getGamepadAxis(x)) * 180.0 / math.pi
@@ -65,8 +64,16 @@ function joystickManager:getQuantizedState(joystick, axis)
   -- adding this offset so the transition is equidistant from both sides of the direction
   -- Ex: quantizedDir is 1 (left, up) from the range [22.5, 67.5]
   local angleOffset = quantizationAngle / 2
-  -- convert the continuous direction value into 8 quantized values which map to the stickMap & antiStickMap indexes
-  return magSquared, math.floor(((dir + angleOffset) / quantizationAngle) % numDirSegments) + 1 
-end
+  -- convert the continuous direction value into 8 quantized values which map to the stickMap indexes
+  local quantizedDir = math.floor(((dir + angleOffset) / quantizationAngle) % numDirSegments) + 1 
+
+  for _, button in ipairs(joystickManager.stickMap[quantizedDir]) do 
+    local key = joystickManager:getJoystickButtonName(joystick, button[1]..axis..button[2])
+    if magSquared > self.joystickSensitivity * self.joystickSensitivity then 
+      dpadState[key] = true
+    end
+  end
+  return dpadState
+end 
 
 return joystickManager

@@ -26,8 +26,6 @@ local inputManager = {
     isUp = {} 
   }, 
   player = {},
-  -- TODO: Convert this into a list of sensitivities per player
-  joystickSensitivity = .5,
   maxConfigurations = 8 
 } 
 
@@ -66,15 +64,13 @@ function inputManager:joystickReleased(joystick, button)
   self.allKeys.isUp[key] = KEY_CHANGE.DETECTED
 end 
  
- -- maps joysticks to buttons by converting the {x, y} axis values to {direction, magnitude} pair
- -- this will give more even mapping along the diagonals when thresholded by a single value (joystickSensitivity)
+ -- maps joysticks' dpad state to the appropriate input maps
 function inputManager:joystickToButtons()
   for _, joystick in ipairs(love.joystick.getJoysticks()) do 
     for _, axis in ipairs({"left", "right"}) do
-      local magSquared, quantizedDir = joystickManager:getQuantizedState(joystick, axis)
-      for _, button in ipairs(joystickManager.stickMap[quantizedDir]) do 
-        local key = joystickManager:getJoystickButtonName(joystick, button[1]..axis..button[2]) 
-        if magSquared > self.joystickSensitivity * self.joystickSensitivity then 
+      local dpadState = joystickManager:joystickToDPad(joystick, axis)
+      for key, isPressed in pairs(dpadState) do 
+        if isPressed then 
           if not self.allKeys.isDown[key] and not self.allKeys.isPressed[key] then 
             self.allKeys.isDown[key] = KEY_CHANGE.DETECTED 
           end 
@@ -85,20 +81,12 @@ function inputManager:joystickToButtons()
             self.allKeys.isUp[key] = KEY_CHANGE.DETECTED 
           end 
         end 
-      end 
-      for _, button in ipairs(joystickManager.antiStickMap[quantizedDir]) do 
-        local key = joystickManager:getJoystickButtonName(joystick, button[1]..axis..button[2]) 
-        if self.allKeys.isDown[key] or self.allKeys.isPressed[key] then 
-          self.allKeys.isDown[key] = KEY_CHANGE.NONE  
-          self.allKeys.isPressed[key] = KEY_CHANGE.NONE  
-          self.allKeys.isUp[key] = KEY_CHANGE.DETECTED  
-        end 
-      end 
+      end
     end 
   end 
 end 
 
-function inputManager:updateKeyStates()
+function inputManager:updateKeyStates(dt)
   currentDt = dt 
   for key, _ in pairs(self.allKeys.isDown) do 
     if self.allKeys.isDown[key] == KEY_CHANGE.DETECTED then 
@@ -144,7 +132,7 @@ end
  
 function inputManager:update(dt) 
   self:joystickToButtons() 
-  self:updateKeyStates()
+  self:updateKeyStates(dt)
   self:updateKeyMaps()
 end 
  
