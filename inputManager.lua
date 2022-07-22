@@ -30,6 +30,8 @@ local inputManager = {
 } 
 
 -- Represents the state of love.run while the key in isDown/isUp is active
+-- DETECTED: set when the key state is first changed within the event handler
+-- APPLIED: set in update immediately after the key state was just DETECTED 
 -- This is only used within this file, external users should simply treat isDown/isUp as a boolean
 local KEY_CHANGE = { NONE = nil, DETECTED = 1, APPLIED = 2 }
  
