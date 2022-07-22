@@ -26,7 +26,7 @@ end
 function tableUtils.filter(tab, filter) 
   local filteredTable = {} 
  
-  if table.isList(tab) then 
+  if tableUtils.isList(tab) then 
     for i = 1, #tab do 
       if filter(tab[i]) then 
         table.insert(filteredTable, tab[i]) 
@@ -65,7 +65,7 @@ end
  
 -- appends all entries of tab to the end of list 
 function tableUtils.appendToList(list, tab) 
-  assert(table.isList(tab), "insertListAt can only be used with continuously integer indexed tables") 
+  assert(tableUtils.isList(tab), "insertListAt can only be used with continuously integer indexed tables") 
   for i = 1, #tab do 
     table.insert(list, #list + 1, tab[i]) 
   end 
@@ -73,7 +73,7 @@ end
  
 -- inserts all entries of tab starting at the specified position of list 
 function tableUtils.insertListAt(list, position, tab) 
-  assert(table.isList(tab), "insertListAt can only be used with continuously integer indexed tables") 
+  assert(tableUtils.isList(tab), "insertListAt can only be used with continuously integer indexed tables") 
   for i = #tab, 1, -1 do 
     table.insert(list, position, tab[i]) 
   end 
@@ -100,11 +100,11 @@ end
  
 -- Randomly grabs a value from the table 
 function tableUtils.getRandomElement(tab) 
-  if table.isList(tab) then 
+  if tableUtils.isList(tab) then 
     return tab[math.random(#tab)] 
   else 
     -- pairs already returns in an arbitrary order but I'm not sure if it's truly random 
-    local rolledIndex = math.random(table.length(tab)) 
+    local rolledIndex = math.random(tableUtils.length(tab)) 
     local index = 0 
     for _, value in pairs(tab) do 
       index = index + 1 
@@ -118,7 +118,7 @@ end
 -- returns true if the table uses sequential integer indices without gaps 
 function tableUtils.isList(tab) 
   -- the tab[1] check is just to get dictionaries out of the way really quickly 
-  return tab[1] ~= nil and #tab == table.length(tab) 
+  return tab[1] ~= nil and #tab == tableUtils.length(tab) 
 end 
  
 -- returns all keys of a table, sorted using the standard comparator to account for sequence based tables 

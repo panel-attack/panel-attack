@@ -1,6 +1,6 @@
 local tableUtils = require("tableUtils")
 local joystickManager = require("joystickManager")
-local consts = require("consts") 
+local consts = require("consts")
  
 --@module inputManager 
 -- table containing the set of keys in various states 
@@ -144,7 +144,7 @@ end
  
 function inputManager:isPressedWithRepeat(key, delay, repeatPeriod) 
   local inputs = self.allKeys 
-  if table.trueForAny(consts.KEY_NAMES, function(k) return k == key end) then 
+  if tableUtils.trueForAny(consts.KEY_NAMES, function(k) return k == key end) then 
     inputs = inputManager 
   end 
   if inputs.isPressed[key] then 

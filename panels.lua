@@ -1,5 +1,6 @@
 require("graphics_util")
 local logger = require("logger")
+local tableUtils = require("tableUtils")
 
 -- The class representing the panel image data
 -- Not to be confused with "Panel" which is one individual panel in the game stack model
@@ -73,7 +74,7 @@ function panels_init()
 
   -- fix config panel set if it's missing
   if not config.panels or not panels[config.panels] then
-    config.panels = table.getRandomElement(panels_ids)
+    config.panels = tableUtils.getRandomElement(panels_ids)
   end
 
   for _, panel in pairs(panels) do

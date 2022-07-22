@@ -1,3 +1,5 @@
+local tableUtils = require("tableUtils")
+
 local sort, pairs = table.sort, pairs
 local type, setmetatable, getmetatable = type, setmetatable, getmetatable
 
@@ -36,7 +38,7 @@ end
 -- this is a dedicated method to use for dictionaries for technical reasons
 function pairsSortedByKeys(tab)
   -- these are already sorted
-  local keys = table.getKeys(tab)
+  local keys = tableUtils.getKeys(tab)
   local vals = {}
   -- and then assign the values with the corresponding indexes
   for i = 1, #keys do

@@ -1,3 +1,5 @@
+local tableUtils = require("tableUtils")
+
 -- A puzzle is a particular instance of the game, where there is a specific goal for clearing the panels
 Puzzle =
   class(
@@ -28,7 +30,7 @@ function Puzzle.randomizeColorString(colorString)
   local newColorOrder = {}
 
   for i = 1, #colorArray, 1 do
-    newColorOrder[tostring(table.length(newColorOrder)+1)] = tostring(table.remove(colorArray, math.random(1, #colorArray)))
+    newColorOrder[tostring(tableUtils.length(newColorOrder)+1)] = tostring(table.remove(colorArray, math.random(1, #colorArray)))
   end
   
   colorString = colorString:gsub("%d", newColorOrder)
@@ -63,8 +65,8 @@ function Puzzle.validate(self)
   local pendingGarbageStartIndex = 0
   for i = 1, #self.stack do
     local char = string.sub(self.stack, i, i)
-    if not table.contains(Puzzle.getLegalCharacters(), char)
-      and not table.contains(illegalCharacters, char) then
+    if not tableUtils.contains(Puzzle.getLegalCharacters(), char)
+      and not tableUtils.contains(illegalCharacters, char) then
       table.insert(illegalCharacters, char)
     end
     if char == "[" or char == "{" then
@@ -99,7 +101,7 @@ function Puzzle.validate(self)
   end
 
   if #illegalCharacters > 0 then
-    errMessage = errMessage .. "\nPuzzlestring contains invalid characters: " .. table.concat(illegalCharacters, ", ")
+    errMessage = errMessage .. "\nPuzzlestring contains invalid characters: " .. tableUtils.concat(illegalCharacters, ", ")
   end
 
   if not table.contains(Puzzle.getPuzzleTypes(), self.puzzleType) then
