@@ -595,9 +595,13 @@ function Stack.render(self)
       shake_time = self.puzzle.shake_time
     end
 
-    if not themes[config.theme].multibar_is_absolute then
-      -- Healthbar frame
+    -- If we have a healthbar frame draw it.
+    -- (It may be the absolute version or the normal version)
+    if themes[config.theme].images["IMG_healthbar_frame" .. self.id] then
       draw_label(themes[config.theme].images["IMG_healthbar_frame" .. self.id], self.origin_x + themes[config.theme].healthbar_frame_Pos[1] * self.mirror_x, self.pos_y + themes[config.theme].healthbar_frame_Pos[2], 0, themes[config.theme].healthbar_frame_Scale, self.multiplication)
+    end
+
+    if not themes[config.theme].multibar_is_absolute then
       -- Healthbar
       local healthbar = self.health * (themes[config.theme].images.IMG_healthbar:getHeight() / self.max_health)
       healthQuad:setViewport(0, themes[config.theme].images.IMG_healthbar:getHeight() - healthbar, themes[config.theme].images.IMG_healthbar:getWidth(), healthbar)
@@ -608,7 +612,9 @@ function Stack.render(self)
     --gprint(loc("pl_shake", shake_time), self.score_x, self.score_y+320)
     --gprint(loc("pl_pre_stop", self.pre_stop_time), self.score_x, self.score_y+340)
     -- Prestop frame
-    draw_label(themes[config.theme].images.IMG_prestop_frame, self.origin_x + themes[config.theme].prestop_frame_Pos[1] * self.mirror_x, self.pos_y + themes[config.theme].prestop_frame_Pos[2], 0, themes[config.theme].prestop_frame_Scale, self.multiplication)
+    if themes[config.theme].images.IMG_prestop_frame then
+      draw_label(themes[config.theme].images.IMG_prestop_frame, self.origin_x + themes[config.theme].prestop_frame_Pos[1] * self.mirror_x, self.pos_y + themes[config.theme].prestop_frame_Pos[2], 0, themes[config.theme].prestop_frame_Scale, self.multiplication)
+    end
     -- Prestop bar
     if self.pre_stop_time == 0 or self.maxPrestop == nil then
       self.maxPrestop = 0
@@ -617,7 +623,6 @@ function Stack.render(self)
       self.maxPrestop = self.pre_stop_time
     end
 
-    prestop_frame_Pos = {(self.origin_x + themes[config.theme].prestop_frame_Pos[1] * self.mirror_x) + ((themes[config.theme].images.IMG_prestop_frame:getWidth() - 10) / GFX_SCALE * self.multiplication * self.mirror_x), self.pos_y + themes[config.theme].prestop_frame_Pos[2]}
     if self.maxPrestop > 0 then
       prestop_bar = self.pre_stop_time * (themes[config.theme].images.IMG_prestop_bar:getHeight() / self.maxPrestop)
     else
@@ -669,8 +674,7 @@ function Stack.render(self)
     -- Shake number
     draw_number(shake_time, themes[config.theme].images.IMG_timeNumber_atlas, 12, shake_quads, (self.origin_x + (themes[config.theme].shake_Pos[1] * self.mirror_x)) * GFX_SCALE, (self.pos_y + themes[config.theme].shake_Pos[2]) * GFX_SCALE, themes[config.theme].shake_Scale, (15 / themes[config.theme].images.timeNumberWidth * themes[config.theme].shake_Scale), (19 / themes[config.theme].images.timeNumberHeight * themes[config.theme].shake_Scale), "center", self.multiplication)
 
-    -- Multibar
-
+    -- Scaled Multibar
     if not themes[config.theme].multibar_is_absolute then
       local multi_shake_bar, multi_stop_bar, multi_prestop_bar = 0, 0, 0
       if self.maxShake > 0 and shake_time >= self.pre_stop_time + stop_time then
@@ -693,10 +697,10 @@ function Stack.render(self)
       qdraw(themes[config.theme].images.IMG_multibar_stop_bar, multi_stopQuad, self.origin_x + themes[config.theme].multibar_Pos[1] * self.mirror_x, (((self.pos_y - (multi_shake_bar / GFX_SCALE)) + themes[config.theme].multibar_Pos[2]) + ((themes[config.theme].images.IMG_multibar_stop_bar:getHeight() - multi_stop_bar) / GFX_SCALE)), 0, themes[config.theme].multibar_Scale / GFX_SCALE, themes[config.theme].multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
       -- Prestop
       qdraw(themes[config.theme].images.IMG_multibar_prestop_bar, multi_prestopQuad, self.origin_x + (themes[config.theme].multibar_Pos[1] * self.mirror_x), (((self.pos_y - (multi_shake_bar / GFX_SCALE + multi_stop_bar / GFX_SCALE)) + themes[config.theme].multibar_Pos[2]) + ((themes[config.theme].images.IMG_multibar_prestop_bar:getHeight() - multi_prestop_bar) / GFX_SCALE)), 0, themes[config.theme].multibar_Scale / GFX_SCALE, themes[config.theme].multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
-    else
+    else -- Absolute Multibar
       -- Healthbar
       local iconX = (self.origin_x + themes[config.theme].multibar_Pos[1] * self.mirror_x) * GFX_SCALE
-      local iconY = 700
+      local iconY = 709
       local multiBarMaxHeight = 590
       local multiBarFrameScale = 3
 
