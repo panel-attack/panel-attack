@@ -90,6 +90,10 @@ function fmainloop()
 ---@diagnostic disable-next-line: redundant-parameter
     func, arg = func(unpack(arg or {}))
     GAME.showGameScale = false
+    if GAME.needsAssetReload then
+      GAME:refreshCanvasAndImagesForNewScale()
+      GAME.needsAssetReload = false
+    end
     collectgarbage("collect")
     logger.trace("Transitioning to next fmainloop function")
   end

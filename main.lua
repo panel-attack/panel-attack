@@ -114,7 +114,11 @@ function love.resize(newPixelWidth, newPixelHeight)
     local previousXScale = GAME.canvasXScale
     GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
     if previousXScale ~= GAME.canvasXScale then
-      GAME:refreshCanvasAndImagesForNewScale()
+      if GAME.match then
+        GAME.needsAssetReload = true
+      else
+        GAME:refreshCanvasAndImagesForNewScale()
+      end
     end
     GAME.showGameScale = true
   end

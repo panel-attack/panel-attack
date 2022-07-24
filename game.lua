@@ -21,6 +21,7 @@ Game =
     self.canvasYScale = 1
     self.availableScales = {1, 1.5, 2, 2.5, 3}
     self.showGameScale = false
+    self.needsAssetReload = false
   end
 )
 
