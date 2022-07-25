@@ -462,10 +462,10 @@ end
 -- NOTE: the CLOCK time is the save state for simulating right BEFORE that clock time is simulated
 function Stack.saveForRollback(self)
 
-  -- We only need to save rollback data if we are ahead enough that we could potentially rollback.
-  -- TODO double check this, could we be even more aggressive?
+  -- If we are behind the time that the opponent's new attacks would land, then we don't need to rollback
+  -- don't save the rollback info for performance reasons
   -- TODO still save for replays so we can rewind
-  if self.garbage_target and self.garbage_target.CLOCK >= self.CLOCK then
+  if self.garbage_target and self.garbage_target.CLOCK + GARBAGE_DELAY_LAND_TIME > self.CLOCK then
     return
   end
 
