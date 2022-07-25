@@ -1,3 +1,4 @@
+local graphicsUtil = require("graphics_util")
 
 local select_screen_graphics = {
   v_align_center = {__Ready = true, __Random = true, __Leave = true},
@@ -196,7 +197,6 @@ end
         character = characters[self.select_screen.players[self.select_screen.op_player_number].character]
       end
     end
-    local width_for_alignment =self.button_width
     local x_add, y_add = 0, 0
     if valign == "center" then
       y_add = math.floor(0.5 * self.button_height - 0.5 * self.text_height) - 3
@@ -236,8 +236,9 @@ end
       end
     elseif str == "__Level" then
       if (self.select_screen:isMultiplayer()) then
-        self:draw_levels(self.select_screen.players[self.select_screen.my_player_number], 1, 0.4 * self.button_height)
         self:draw_levels(self.select_screen.players[self.select_screen.op_player_number], 2, 0.7 * self.button_height)
+        self:draw_levels(self.select_screen.players[self.select_screen.my_player_number], 1, 0.4 * self.button_height)
+        
       else
         self:draw_levels(self.select_screen.players[self.select_screen.my_player_number], 1, 0.5 * self.button_height)
       end
@@ -252,6 +253,20 @@ end
     elseif string.sub(str, 1, 2) ~= "__" then -- catch random_character_special_value case
       pstr = str:gsub("^%l", string.upper)
     end
+    if str ~= "__Empty" and str ~= "__Reserved" then
+      local loc_str = {Level = loc("level"), Mode = loc("mode"), Stage = loc("stage"), Panels = loc("panels"), Ready = loc("ready"), Random = loc("random"), Leave = loc("leave")}
+      local to_p = loc_str[pstr]
+
+      local widthForAlignment = self.button_width
+      if character and character ~= random_character_special_value then
+        local height = 17
+        grectangle_color("fill", self.render_x / GFX_SCALE, (self.render_y + y_add) / GFX_SCALE, self.button_width/GFX_SCALE, height/GFX_SCALE, 0, 0, 0, 0.5)
+        x_add = 0.025 * self.button_width
+        widthForAlignment = 0.95 * self.button_width
+      end
+
+      gprintf(not to_p and pstr or to_p, self.render_x + x_add, self.render_y + y_add, widthForAlignment, halign)
+    end
     if x ~= 0 then
       if self.select_screen.players[self.select_screen.my_player_number] and self.select_screen.players[self.select_screen.my_player_number].cursor.positionId == str and ((str ~= "__Empty" and str ~= "__Reserved") or (self.select_screen.players[self.select_screen.my_player_number].cursor.position[1] == x and self.select_screen.players[self.select_screen.my_player_number].cursor.position[2] == y)) then
         self:draw_cursor(self.button_height, self.spacing, 1, self.select_screen.players[self.select_screen.my_player_number].ready)
@@ -265,19 +280,6 @@ end
           self:draw_super_select(2)
         end
       end
-    end
-    if str ~= "__Empty" and str ~= "__Reserved" then
-      local loc_str = {Level = loc("level"), Mode = loc("mode"), Stage = loc("stage"), Panels = loc("panels"), Ready = loc("ready"), Random = loc("random"), Leave = loc("leave")}
-      local to_p = loc_str[pstr]
-
-      if character and character ~= random_character_special_value then
-        local height = 17
-        grectangle_color("fill", self.render_x / GFX_SCALE, (self.render_y + y_add) / GFX_SCALE, self.button_width/GFX_SCALE, height/GFX_SCALE, 0, 0, 0, 0.5)
-        x_add = 0.025 * self.button_width
-        width_for_alignment = 0.95 * self.button_width
-      end
-
-      gprintf(not to_p and pstr or to_p, self.render_x + x_add, self.render_y + y_add, width_for_alignment, halign)
     end
   end
 
@@ -394,7 +396,8 @@ end
 -- Draw the players current character, player number etc
 function select_screen_graphics.draw_player(self, player, player_number)
   if characters[player.character] and not characters[player.character].fully_loaded then
-    menu_drawf(themes[config.theme].images.IMG_loading, self.render_x +self.button_width * 0.5, self.render_y + self.button_height * 0.5, "center", "center")
+    local scaleX = self.button_width / themes[config.theme].images.IMG_loading:getWidth()
+    menu_drawf(themes[config.theme].images.IMG_loading, self.render_x +self.button_width * 0.5, self.render_y + self.button_height * 0.5, "center", "center", 0, scaleX, scaleX)
   elseif player.wants_ready then
     menu_drawf(themes[config.theme].images.IMG_ready, self.render_x +self.button_width * 0.5, self.render_y + self.button_height * 0.5, "center", "center")
   end
@@ -436,37 +439,36 @@ end
 
 -- Draw the difficulty level selection UI
 function select_screen_graphics.draw_levels(self, player, player_number, y_padding)
-  local level_max_width = 0.2 * self.button_height
-  local level_width = math.min(level_max_width, themes[config.theme].images.IMG_levels[1]:getWidth())
+  local level_width = 20
   local padding_x = math.floor(0.5 *self.button_width - 5.5 * level_width)
   local is_selected = player.cursor.selected and player.cursor.positionId == "__Level"
   if is_selected then
     padding_x = padding_x - level_width
   end
-  local level_scale = level_width / themes[config.theme].images.IMG_levels[1]:getWidth()
   menu_drawf(themes[config.theme].images.IMG_players[player_number], self.render_x + padding_x, self.render_y + y_padding, "center", "center")
-  local ex_scaling = level_width / themes[config.theme].images.IMG_levels[11]:getWidth()
   menu_drawf(themes[config.theme].images.IMG_players[player_number], self.render_x + padding_x, self.render_y + y_padding, "center", "center")
   padding_x = padding_x + level_width
   if is_selected then
+    -- Draw little text arrow on left to indicate you can move the level
     gprintf("<", self.render_x + padding_x - 0.5 * level_width, self.render_y + y_padding - 0.5 * self.text_height, level_width, "center")
     padding_x = padding_x + level_width
   end
   for i = 1, #level_to_starting_speed do --which should equal the number of levels in the game
-    local additional_padding = math.floor(0.5 * (themes[config.theme].images.IMG_levels[i]:getWidth() - level_width))
-    padding_x = padding_x + additional_padding
+    local level_scale = level_width / themes[config.theme].images.IMG_levels[i]:getWidth()
     local use_unfocus = player.level < i
     if use_unfocus then
-      menu_drawf(themes[config.theme].images.IMG_levels_unfocus[i], self.render_x + padding_x, self.render_y + y_padding, "center", "center", 0, (i == 11 and ex_scaling or level_scale), (i == 11 and ex_scaling or level_scale))
+      menu_drawf(themes[config.theme].images.IMG_levels_unfocus[i], self.render_x + padding_x, self.render_y + y_padding, "center", "center", 0, level_scale, level_scale)
     else
-      menu_drawf(themes[config.theme].images.IMG_levels[i], self.render_x + padding_x, self.render_y + y_padding, "center", "center", 0, (i == 11 and ex_scaling or level_scale), (i == 11 and ex_scaling or level_scale))
+      menu_drawf(themes[config.theme].images.IMG_levels[i], self.render_x + padding_x, self.render_y + y_padding, "center", "center", 0, level_scale, level_scale)
     end
     if i == player.level then
-      menu_drawf(themes[config.theme].images.IMG_level_cursor, self.render_x + padding_x, self.render_y + y_padding + themes[config.theme].images.IMG_levels[i]:getHeight() * 0.5, "center", "top", 0, (i == 11 and ex_scaling or level_scale), (i == 11 and ex_scaling or level_scale))
+      local cursorScale = 5 / themes[config.theme].images.IMG_level_cursor:getWidth()
+      menu_drawf(themes[config.theme].images.IMG_level_cursor, self.render_x + padding_x, self.render_y + y_padding + themes[config.theme].images.IMG_levels[i]:getHeight() * 0.5, "center", "top", 0, cursorScale, cursorScale)
     end
-    padding_x = padding_x + level_width + additional_padding
+    padding_x = padding_x + level_width
   end
   if is_selected then
+    -- Draw little text arrow on right to indicate you can move the level
     gprintf(">", self.render_x + padding_x - 0.5 * level_width, self.render_y + y_padding - 0.5 * self.text_height, level_width, "center")
   end
 end
