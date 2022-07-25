@@ -38,16 +38,21 @@ local function recordReplayRunSpeed(path)
     return endTime - startTime
 end
 
-local runCount = 3
-local totalTime = 0
-for i = 1, runCount, 1 do
-  collectgarbage("collect")
-  local time = recordReplayRunSpeed("tests/replays/v046-2022-06-04-19-06-21-Hekato-L8-vs-CoreyBLD-L8-Casual-draw.txt")
+local function testReplayPerformanceWithPath(path)
+  local runCount = 3
+  local totalTime = 0
+  for i = 1, runCount, 1 do
+    collectgarbage("collect")
+    local time = recordReplayRunSpeed(path)
 
-  totalTime = totalTime + time
-  logger.warn("Run " .. i .. " took " .. time)
-  --local garbage = collectgarbage("count")
-  --logger.warn("Memory " .. garbage)
+    totalTime = totalTime + time
+    logger.warn("Run " .. i .. " took " .. time)
+    --local garbage = collectgarbage("count")
+    --logger.warn("Memory " .. garbage)
+  end
+
+  logger.warn("Total Time: " .. round(totalTime / runCount, 5))
 end
 
-logger.warn("Total Time: " .. round(totalTime / runCount, 5))
+testReplayPerformanceWithPath("tests/replays/v046-2022-06-04-19-06-21-Hekato-L8-vs-CoreyBLD-L8-Casual-draw.txt")
+testReplayPerformanceWithPath("tests/replays/10min-v046-2022-07-25-00-23-46-Geminorum-L10-vs-Zyza-L10-Casual-P1wins.txt")
