@@ -1,4 +1,5 @@
 {
 	"id":"pa_characters_thanatos",
-	"name":"Thanatos"
+	"name":"Thanatos",
+	"stage":"pa_stages_king"
 }

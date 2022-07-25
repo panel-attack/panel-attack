@@ -1,4 +1,5 @@
 {
 	"id":"pa_characters_raphael",
-	"name":"Raphael"
+	"name":"Raphael",
+	"stage":"pa_stages_moon"
 }

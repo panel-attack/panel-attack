@@ -1,7 +1,5 @@
-require("developer")
 require("class")
 socket = require("socket")
-json = require("dkjson")
 GAME = require("game")
 require("match")
 require("BattleRoom")
@@ -56,6 +54,9 @@ function love.load()
     GAME.profiler:start()
   end
   
+  if config.maximizeOnStartup and not love.window.isMaximized() then
+    love.window.maximize()
+  end
   math.randomseed(os.time())
   for i = 1, 4 do
     math.random()

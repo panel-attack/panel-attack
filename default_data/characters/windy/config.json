@@ -1,4 +1,5 @@
 {
 	"id":"pa_characters_windy",
-	"name":"Windy"
+	"name":"Windy",
+	"stage":"pa_stages_wind"
 }
