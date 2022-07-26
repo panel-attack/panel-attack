@@ -79,6 +79,12 @@ Click_menu =
   end
 )
 
+function Click_menu:reloadGraphics()
+  for k, v in pairs(self.buttons) do
+    v.text = love.graphics.newText(get_global_font(), v.stringText)
+  end
+end
+
 function Click_menu.add_button(self, string_text, selectFunction, escapeFunction, leftFunction, rightFunction)
   self.buttons[#self.buttons + 1] = {
     text = love.graphics.newText(get_global_font(), string_text),

@@ -95,7 +95,7 @@ end
 
 -- Reloads the canvas and all images / fonts for the new game scale
 function Game:refreshCanvasAndImagesForNewScale()
-  GAME.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME.canvasXScale})
+  self.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME.canvasXScale})
   -- We need to reload all assets and fonts to get the new scaling info and filters
 
   -- Reload loc to get the new font
@@ -108,6 +108,15 @@ function Game:refreshCanvasAndImagesForNewScale()
   panels_init()
   -- Reload characters to get the new resolution assets
   characters_init()
+
+  for _, menu in pairs(CLICK_MENUS) do
+    menu:reloadGraphics()
+  end
+end
+
+-- Transform from window coordinates to game coordinates
+function Game:transform_coordinates(x, y)
+  return (x - self.canvasX) / self.canvasXScale, (y - self.canvasY) / self.canvasYScale
 end
 
 local game = Game()
