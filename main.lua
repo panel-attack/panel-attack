@@ -145,11 +145,6 @@ function love.draw()
     gprintf("STONER", 1, 1 + (11 * 4))
   end
 
-  if GAME.showGameScale or config.debug_mode then
-    local scaleString = "Scale: " .. GAME.canvasXScale .. " (" .. canvas_width * GAME.canvasXScale .. " x " .. canvas_height * GAME.canvasYScale .. ")"
-    gprintf(scaleString, 5, 700, canvas_width, "left")
-  end
-
   for i = gfx_q.first, gfx_q.last do
     gfx_q[i][1](unpack(gfx_q[i][2]))
   end
@@ -161,6 +156,16 @@ function love.draw()
   love.graphics.setBlendMode("alpha", "premultiplied")
   love.graphics.draw(GAME.globalCanvas, GAME.canvasX, GAME.canvasY, 0, GAME.canvasXScale, GAME.canvasYScale)
   love.graphics.setBlendMode("alpha", "alphamultiply")
+
+  if GAME.showGameScale or config.debug_mode then
+    local scaleString = "Scale: " .. GAME.canvasXScale .. " (" .. canvas_width * GAME.canvasXScale .. " x " .. canvas_height * GAME.canvasYScale .. ")"
+    local newPixelWidth = love.graphics.getWidth()
+
+    if canvas_width * GAME.canvasXScale > newPixelWidth then
+      scaleString = scaleString .. " Clipped "
+    end
+    love.graphics.printf(scaleString, 5, 5, 2000, "left", 0, 3, 3)
+  end
 
   -- draw background and its overlay
   if GAME.backgroundImage then
