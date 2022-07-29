@@ -98,17 +98,18 @@ function Game:refreshCanvasAndImagesForNewScale()
   self.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME.canvasXScale})
   -- We need to reload all assets and fonts to get the new scaling info and filters
 
-  -- Reload loc to get the new font
-  Localization.init(localization)
   -- Reload theme to get the new resolution assets
-  theme_init()
+  themes[config.theme]:graphics_init()
+  themes[config.theme]:final_init()
   -- Reload stages to get the new resolution assets
-  stages_init()
+  stages_reload_graphics()
   -- Reload panels to get the new resolution assets
   panels_init()
   -- Reload characters to get the new resolution assets
-  characters_init()
-
+  characters_reload_graphics()
+  
+  -- Reload loc to get the new font
+  localization:set_language(config.language_code)
   for _, menu in pairs(CLICK_MENUS) do
     menu:reloadGraphics()
   end

@@ -388,6 +388,28 @@ function characters_init()
   end
 end
 
+-- for reloading the graphics if the window was resized
+function characters_reload_graphics()
+  local characterIds = shallowcpy(characters_ids_for_current_theme)
+  -- reload the current character graphics immediately
+  if characters[config.character] then
+    characters[config.character]:graphics_init(true, false)
+    table.remove(characterIds, config.character.id)
+  end
+  if P1 and P1.character then
+    characters[P1.character]:graphics_init(true, false)
+    table.remove(characterIds, P1.character)
+  end
+  if P2 and P2.character then
+    characters[P2.character]:graphics_init(true, false)
+    table.remove(characterIds, P2.character)
+  end
+  -- lazy load the rest
+  for i = 1, #characterIds do
+    characters[characterIds[i]]:graphics_init(false, true)
+  end
+end
+
 function Character.is_bundle(self)
   return #self.sub_characters > 1
 end
