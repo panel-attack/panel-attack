@@ -114,7 +114,11 @@ function love.resize(newPixelWidth, newPixelHeight)
     local previousXScale = GAME.canvasXScale
     GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
     if previousXScale ~= GAME.canvasXScale then
-      GAME:refreshCanvasAndImagesForNewScale()
+      if GAME.match then
+        GAME.needsAssetReload = true
+      else
+        GAME:refreshCanvasAndImagesForNewScale()
+      end
     end
     GAME.showGameScale = true
   end
@@ -141,11 +145,6 @@ function love.draw()
     gprintf("STONER", 1, 1 + (11 * 4))
   end
 
-  if GAME.showGameScale or config.debug_mode then
-    local scaleString = "Scale: " .. GAME.canvasXScale .. " (" .. canvas_width * GAME.canvasXScale .. " x " .. canvas_height * GAME.canvasYScale .. ")"
-    gprintf(scaleString, 5, 700, canvas_width, "left")
-  end
-
   for i = gfx_q.first, gfx_q.last do
     gfx_q[i][1](unpack(gfx_q[i][2]))
   end
@@ -158,6 +157,16 @@ function love.draw()
   love.graphics.draw(GAME.globalCanvas, GAME.canvasX, GAME.canvasY, 0, GAME.canvasXScale, GAME.canvasYScale)
   love.graphics.setBlendMode("alpha", "alphamultiply")
 
+  if GAME.showGameScale or config.debug_mode then
+    local scaleString = "Scale: " .. GAME.canvasXScale .. " (" .. canvas_width * GAME.canvasXScale .. " x " .. canvas_height * GAME.canvasYScale .. ")"
+    local newPixelWidth = love.graphics.getWidth()
+
+    if canvas_width * GAME.canvasXScale > newPixelWidth then
+      scaleString = scaleString .. " Clipped "
+    end
+    love.graphics.printf(scaleString, 5, 5, 2000, "left", 0, 3, 3)
+  end
+
   -- draw background and its overlay
   if GAME.backgroundImage then
     GAME.backgroundImage:draw()
@@ -168,22 +177,16 @@ function love.draw()
   end
 end
 
--- Transform from window coordinates to game coordinates
-function transform_coordinates(x, y)
-  local lbx, lby, lbw, lbh = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 16, 9)
-  return (x - lbx) / 1 * canvas_width / lbw, (y - lby) / 1 * canvas_height / lbh
-end
-
 -- Handle a mouse or touch press
 function love.mousepressed(x, y)
   for menu_name, menu in pairs(CLICK_MENUS) do
-    menu:click_or_tap(transform_coordinates(x, y))
+    menu:click_or_tap(GAME:transform_coordinates(x, y))
   end
 end
 
 -- Handle a touch press
 -- Note we are specifically not implementing this because mousepressed above handles mouse and touch
 -- function love.touchpressed(id, x, y, dx, dy, pressure)
--- local _x, _y = transform_coordinates(x, y)
+-- local _x, _y = GAME:transform_coordinates(x, y)
 -- click_or_tap(_x, _y, {id = id, x = _x, y = _y, dx = dx, dy = dy, pressure = pressure})
 -- end

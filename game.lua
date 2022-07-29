@@ -21,6 +21,7 @@ Game =
     self.canvasYScale = 1
     self.availableScales = {1, 1.5, 2, 2.5, 3}
     self.showGameScale = false
+    self.needsAssetReload = false
   end
 )
 
@@ -94,19 +95,29 @@ end
 
 -- Reloads the canvas and all images / fonts for the new game scale
 function Game:refreshCanvasAndImagesForNewScale()
-  GAME.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME.canvasXScale})
+  self.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME.canvasXScale})
   -- We need to reload all assets and fonts to get the new scaling info and filters
 
-  -- Reload loc to get the new font
-  Localization.init(localization)
   -- Reload theme to get the new resolution assets
-  theme_init()
+  themes[config.theme]:graphics_init()
+  themes[config.theme]:final_init()
   -- Reload stages to get the new resolution assets
-  stages_init()
+  stages_reload_graphics()
   -- Reload panels to get the new resolution assets
   panels_init()
   -- Reload characters to get the new resolution assets
-  characters_init()
+  characters_reload_graphics()
+  
+  -- Reload loc to get the new font
+  localization:set_language(config.language_code)
+  for _, menu in pairs(CLICK_MENUS) do
+    menu:reloadGraphics()
+  end
+end
+
+-- Transform from window coordinates to game coordinates
+function Game:transform_coordinates(x, y)
+  return (x - self.canvasX) / self.canvasXScale, (y - self.canvasY) / self.canvasYScale
 end
 
 local game = Game()
