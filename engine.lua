@@ -461,6 +461,14 @@ end
 -- Saves state in backups in case its needed for rollback
 -- NOTE: the CLOCK time is the save state for simulating right BEFORE that clock time is simulated
 function Stack.saveForRollback(self)
+
+  -- If we are behind the time that the opponent's new attacks would land, then we don't need to rollback
+  -- don't save the rollback info for performance reasons
+  -- TODO still save for replays so we can rewind
+  if self.garbage_target and self.garbage_target.CLOCK + GARBAGE_DELAY_LAND_TIME > self.CLOCK then
+    return
+  end
+
   local prev_states = self.prev_states
   local garbage_target = self.garbage_target
   self.garbage_target = nil
@@ -2311,6 +2319,15 @@ function Stack.check_matches(self)
     end
   end
 
+  -- Record whether each panel excludes matching once to prevent duplicated work.
+  local excludeMatchTable = {}
+  for row = 1, self.height do
+    excludeMatchTable[row] = {}
+    for col = 1, self.width do
+      excludeMatchTable[row][col] = panels[row][col]:exclude_match()
+    end
+  end
+
   local is_chain = false
   local combo_size = 0
   local floodQueue = Queue()
@@ -2318,7 +2335,7 @@ function Stack.check_matches(self)
     for col = 1, self.width do
       if
         row ~= 1 and row ~= self.height and --check vertical match centered here.
-          (not (panels[row - 1][col]:exclude_match() or panels[row][col]:exclude_match() or panels[row + 1][col]:exclude_match())) and
+          (not (excludeMatchTable[row - 1][col] or excludeMatchTable[row][col] or excludeMatchTable[row + 1][col])) and
           panels[row][col].color == panels[row - 1][col].color and
           panels[row][col].color == panels[row + 1][col].color
        then
@@ -2338,7 +2355,7 @@ function Stack.check_matches(self)
       end
       if
         col ~= 1 and col ~= self.width and --check horiz match centered here.
-          (not (panels[row][col - 1]:exclude_match() or panels[row][col]:exclude_match() or panels[row][col + 1]:exclude_match())) and
+          (not (excludeMatchTable[row][col - 1] or excludeMatchTable[row][col] or excludeMatchTable[row][col + 1])) and
           panels[row][col].color == panels[row][col - 1].color and
           panels[row][col].color == panels[row][col + 1].color
        then
