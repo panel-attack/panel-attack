@@ -64,18 +64,17 @@ end
 
 -- Updates the scale and position values to use up the right size of the window based on the user's settings.
 function Game:updateCanvasPositionAndScale(newWindowWidth, newWindowHeight)
-  if config.gameScale ~= "scaled" then
+  if config.gameScaleType ~= "fit" then
     local availableScales = shallowcpy(self.availableScales)
-    if config.gameScale ~= "auto" then
-      local xScale = tonumber(config.gameScale)
-      availableScales = {xScale}
+    if config.gameScaleType == "fixed" then
+      availableScales = {config.gameScaleFixedValue}
     end
 
     -- Handle both "auto" and a fixed scale
     -- Go from biggest to smallest and used the highest one that still fits
     for i = #availableScales, 1, -1 do
       local scale = availableScales[i]
-      if config.gameScale ~= "auto" or 
+      if config.gameScaleType ~= "auto" or 
         (newWindowWidth >= canvas_width * scale and newWindowHeight >= canvas_height * scale) then
         GAME.canvasXScale = scale
         GAME.canvasYScale = scale

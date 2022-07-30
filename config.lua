@@ -56,7 +56,8 @@ config = {
   
     -- True if we immediately want to maximize the screen on startup
     maximizeOnStartup             = true,
-    gameScale                     = "auto",
+    gameScaleType                 = "auto",
+    gameScaleFixedValue           = 2,
 
     -- Love configuration variables
     windowWidth                   = canvas_width,
@@ -205,8 +206,11 @@ config = {
         if type(read_data.maximizeOnStartup) == "boolean" then
           configTable.maximizeOnStartup = read_data.maximizeOnStartup
         end
-        if type(read_data.gameScale) == "string" or type(read_data.gameScale) == "number" then
-          configTable.gameScale = read_data.gameScale
+        if type(read_data.gameScaleType) == "string" then
+          configTable.gameScaleType = read_data.gameScaleType
+        end
+        if type(read_data.gameScaleFixedValue) == "number" then
+          configTable.gameScaleFixedValue = read_data.gameScaleFixedValue
         end
   
         if type(read_data.windowWidth) == "number" then
