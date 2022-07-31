@@ -22,9 +22,9 @@ In order to make reasonable decisions, knowledge about the stack is integral. An
 
 ## Configuration
 
-One of the general goals for computer player implementations is configurability. A computer player should be able to return a table of preset configurations via `getConfigs` among which the player can select and possibly finetune. Finally the selection of the user needs to get back to the computer player for which the setter `setConfig` needs to be implemented.
+One of the general goals for computer player implementations is configurability. A computer player implementation should be able to return a table of preset configurations via `getConfigs` among which the player can select and possibly finetune. Finally the selection of the user needs to get back to the computer player for which the setter `setConfig` needs to be implemented.
 
-# GetInput
+## GetInput
 
 `getInput` is the integral function for any computer player implementation to do its work. It is mandatory that this function returns an input every time it is run. Inputs are encoded in a binary value to allow different inputs to occur at the same time.
 
