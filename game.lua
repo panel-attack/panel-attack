@@ -94,6 +94,9 @@ end
 
 -- Reloads the canvas and all images / fonts for the new game scale
 function Game:refreshCanvasAndImagesForNewScale()
+  GAME:drawLoadingString(loc("ld_characters"))
+  coroutine.yield()
+
   self.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME.canvasXScale})
   -- We need to reload all assets and fonts to get the new scaling info and filters
 
@@ -117,6 +120,17 @@ end
 -- Transform from window coordinates to game coordinates
 function Game:transform_coordinates(x, y)
   return (x - self.canvasX) / self.canvasXScale, (y - self.canvasY) / self.canvasYScale
+end
+
+
+function Game:drawLoadingString(loadingString) 
+  local textMaxWidth = 300
+  local textHeight = 40
+  local x = 20
+  local y = canvas_height - textHeight
+  local backgroundPadding = 10
+  grectangle_color("fill", (x - backgroundPadding) / GFX_SCALE , (y - backgroundPadding) / GFX_SCALE, textMaxWidth/GFX_SCALE, textHeight/GFX_SCALE, 0, 0, 0, 0.5)
+  gprintf(loadingString, x, y, canvas_width, "left", nil, nil, 10)
 end
 
 local game = Game()
