@@ -51,10 +51,6 @@ function ComputerPlayer.validateImplementation(self)
   if self.implementation.getInput == nil then
     error(self.implementation.name .. " does not implement getInput")
   end
-
-  if self.implementation.updateStack == nil then
-    error(self.implementation.name .. " does not implement updateStack")
-  end
 end
 
 -- exposed for selection in menu

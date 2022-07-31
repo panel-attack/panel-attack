@@ -2,7 +2,6 @@ local dummyConfig = { ['DummyConfig'] = { Log = 4 } }
 
 DummyCpu = class(function(self, stack)
   self.name = "DummyCpu"
-  self.config = dummyConfig
   self.stack = stack
 end)
 
@@ -11,6 +10,7 @@ function DummyCpu.getInput(self)
 end
 
 function DummyCpu.setConfig(self, config)
+  self.config = dummyConfig
   return
 end
 
