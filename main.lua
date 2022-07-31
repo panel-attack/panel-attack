@@ -164,7 +164,7 @@ function love.draw()
     if canvas_width * GAME.canvasXScale > newPixelWidth then
       scaleString = scaleString .. " Clipped "
     end
-    love.graphics.printf(scaleString, 5, 5, 2000, "left", 0, 3, 3)
+    love.graphics.printf(scaleString, get_global_font_with_size(30), 5, 5, 2000, "left")
   end
 
   -- draw background and its overlay
