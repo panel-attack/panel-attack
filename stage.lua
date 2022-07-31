@@ -232,7 +232,7 @@ function stages_reload_graphics()
   -- lazy load the rest
   for _, stage in pairs(stages) do
     if stage.id ~= current_stage then
-      stage:graphics_init(false, true)
+      stage:graphics_init(false, false)
     end
   end
 end

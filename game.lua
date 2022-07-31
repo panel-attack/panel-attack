@@ -126,11 +126,11 @@ end
 function Game:drawLoadingString(loadingString) 
   local textMaxWidth = 300
   local textHeight = 40
-  local x = 20
-  local y = canvas_height - textHeight
+  local x = 0
+  local y = canvas_height/2 - textHeight/2
   local backgroundPadding = 10
-  grectangle_color("fill", (x - backgroundPadding) / GFX_SCALE , (y - backgroundPadding) / GFX_SCALE, textMaxWidth/GFX_SCALE, textHeight/GFX_SCALE, 0, 0, 0, 0.5)
-  gprintf(loadingString, x, y, canvas_width, "left", nil, nil, 10)
+  grectangle_color("fill", (canvas_width / 2 - (textMaxWidth/2)) / GFX_SCALE , (y - backgroundPadding) / GFX_SCALE, textMaxWidth/GFX_SCALE, textHeight/GFX_SCALE, 0, 0, 0, 0.5)
+  gprintf(loadingString, x, y, canvas_width, "center", nil, nil, 10)
 end
 
 local game = Game()

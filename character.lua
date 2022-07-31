@@ -406,7 +406,7 @@ function characters_reload_graphics()
   end
   -- lazy load the rest
   for i = 1, #characterIds do
-    characters[characterIds[i]]:graphics_init(false, true)
+    characters[characterIds[i]]:graphics_init(false, false)
   end
 end
 
