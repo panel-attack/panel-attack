@@ -65,7 +65,7 @@ end
 
 -- Draws a image at the given screen spot with the given width. Scaling to keep the ratio.
 function GraphicsUtil.drawScaledWidthImage(image, x, y, width)
-  if image ~= nil and x ~= nil and y ~= nil and width ~= nil and height ~= nil then
+  if image ~= nil and x ~= nil and y ~= nil and width ~= nil then
     local scaleX = width / image:getWidth()
     GraphicsUtil.drawImage(image, x, y, scaleX, scaleX)
   end
