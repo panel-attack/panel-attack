@@ -210,7 +210,6 @@ do
       {loc("mm_1_time"), main_timeattack_select},
       {loc("mm_1_vs"), main_local_vs_yourself_setup},
       {loc("mm_1_training"), training_setup},
-      {"Vs Computer", main_local_vs_computer_setup},
       --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
       {loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
@@ -227,6 +226,10 @@ do
       {loc("mm_set_name"), main_set_name},
       {loc("mm_options"), options.main}
     }
+
+    if TESTS_ENABLED then
+      table.insert(items, 6, {"Vs Computer", main_local_vs_computer_setup})
+    end
 
     main_menu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, main_menu_last_index)
     for i = 1, #items do
