@@ -9,13 +9,12 @@ local consts = require("consts")
 --   isUp: table of {key: true} pairs if the key was released in the current frame 
 --   isPressed: table of {key: time} pairs if the key is currently being held down where total duration held down is stored as time
 --   Caveats:
---     the value of isDown & isUp is actually set to one of the following values: (1, 2, nil)
---     This is because the event handlers happen before update, so in order to hold on to the state for one full frame before wiping it
---     there needs to be a marker value which update can track to see if the state has already lasted for a full frame or not
+--     isUp/isDown is set to one of the KEY_CHANGE enum values, see that definition for details
 -- Key groups: 
 --   allKeys: every key read in by LOVE (includes keyboard, controller, and joystick) 
 --   base (top level): all keys mapped by the input.configuration aliased to the consts.KEY_NAMES 
 --   player: list of individual input.configuration mappings also aliased by consts.KEY_NAMES 
+--   mouse: all mouse buttons and the position of the mouse
 local inputManager = { 
   isDown = {}, 
   isPressed = {}, 
@@ -24,8 +23,15 @@ local inputManager = {
     isDown = {}, 
     isPressed = {}, 
     isUp = {} 
-  }, 
+  },
   player = {},
+  mouse = {
+    isDown = {}, 
+    isPressed = {}, 
+    isUp = {},
+    x = 0,
+    y = 0
+  },
   maxConfigurations = 8 
 } 
 
@@ -88,9 +94,9 @@ function inputManager:joystickToButtons()
   end 
 end 
 
-function inputManager:updateKeyStates(dt)
+function inputManager:updateKeyStates(dt, keys)
   currentDt = dt 
-  for key, _ in pairs(self.allKeys.isDown) do 
+  for key, _ in pairs(keys.isDown) do 
     if self.allKeys.isDown[key] == KEY_CHANGE.DETECTED then 
       self.allKeys.isDown[key] = KEY_CHANGE.APPLIED  
     else 
@@ -99,11 +105,11 @@ function inputManager:updateKeyStates(dt)
     end 
   end 
  
-  for key, _ in pairs(self.allKeys.isPressed) do 
+  for key, _ in pairs(keys.isPressed) do 
     self.allKeys.isPressed[key] = self.allKeys.isPressed[key] + dt 
   end 
    
-  for key, _ in pairs(self.allKeys.isUp) do 
+  for key, _ in pairs(keys.isUp) do 
     if self.allKeys.isUp[key] == KEY_CHANGE.DETECTED then 
       self.allKeys.isUp[key] = KEY_CHANGE.APPLIED   
     else 
@@ -134,9 +140,29 @@ end
  
 function inputManager:update(dt) 
   self:joystickToButtons() 
-  self:updateKeyStates(dt)
+  self:updateKeyStates(dt, self.allKeys)
+  self:updateKeyStates(dt, self.mouse)
   self:updateKeyMaps()
 end 
+
+function inputManager:mousePressed(x, y, button)
+  self.mouse.isDown[button] = KEY_CHANGE.DETECTED
+  self.mouse.x = x
+  self.mouse.y = y
+end
+
+function inputManager:mouseReleased(x, y, button)
+  self.mouse.isDown[button] = KEY_CHANGE.NONE
+  self.mouse.isPressed[button] = KEY_CHANGE.NONE
+  self.mouse.isUp[button] = KEY_CHANGE.DETECTED
+  self.mouse.x = x
+  self.mouse.y = y
+end
+
+function inputManager:mouseMoved(x, y)
+  self.mouse.x = x
+  self.mouse.y = y
+end
  
 local function quantize(x, period) 
   return math.floor(x / period) * period 

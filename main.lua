@@ -162,10 +162,19 @@ function transform_coordinates(x, y)
 end
 
 -- Handle a mouse or touch press
-function love.mousepressed(x, y)
+function love.mousepressed(x, y, button)
+  inputManager:mousePressed(x, y, button)
   for menu_name, menu in pairs(CLICK_MENUS) do
     menu:click_or_tap(transform_coordinates(x, y))
   end
+end
+
+function love.mousereleased(x, y, button)
+  inputManager:mouseReleased(x, y, button)
+end
+
+function love.mousemoved(x, y)
+  inputManager:mouseMoved(x, y)
 end
 
 function love.joystickpressed(joystick, button)
