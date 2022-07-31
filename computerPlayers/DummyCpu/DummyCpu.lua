@@ -1,16 +1,13 @@
 local dummyConfig = { ['DummyConfig'] = { Log = 4 } }
 
-DummyCpu = class(function(self)
+DummyCpu = class(function(self, stack)
   self.name = "DummyCpu"
   self.config = dummyConfig
+  self.stack = stack
 end)
 
 function DummyCpu.getInput(self)
   return base64encode[21]
-end
-
-function DummyCpu.updateStack(self, stack)
-  return
 end
 
 function DummyCpu.setConfig(self, config)

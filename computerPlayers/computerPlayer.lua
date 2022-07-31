@@ -13,10 +13,10 @@ function CPUConfig.print(self)
   end
 end
 
-ComputerPlayer = class(function(self, cpuName, configName)
+ComputerPlayer = class(function(self, cpuName, configName, stack)
   logger.trace("Initialising Computerplayer " .. cpuName .. " with config " .. configName)
   if cpuName == "DummyCpu" then
-    self.implementation = DummyCpu()
+    self.implementation = DummyCpu(stack)
   end
 
   if configName then
@@ -70,8 +70,6 @@ end
 
 function ComputerPlayer.run(self, stack)
   if stack:game_ended() == false then
-    self.stack = stack
-    self.implementation:updateStack(stack)
     local nextInput = self.implementation:getInput()
     stack:receiveConfirmedInput(nextInput)
   end
