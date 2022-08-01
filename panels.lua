@@ -85,9 +85,9 @@ function Panels.load(self)
   logger.debug("loading panels " .. self.id)
 
   local function load_panel_img(name)
-    local img = load_img_from_supported_extensions(self.path .. "/" .. name)
+    local img = GraphicsUtil.loadImageFromSupportedExtensions(self.path .. "/" .. name)
     if not img then
-      img = load_img_from_supported_extensions("panels/__default/" .. name)
+      img = GraphicsUtil.loadImageFromSupportedExtensions("panels/__default/" .. name)
       if not img then
         error("Could not find default panel image")
       end

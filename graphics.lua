@@ -473,7 +473,7 @@ function Stack.render(self)
   -- ends here
 
   gfx_q:push({love.graphics.setStencilTest, {}})
-  gfx_q:push({love.graphics.setCanvas, {global_canvas}})
+  gfx_q:push({love.graphics.setCanvas, {GAME.globalCanvas}})
   gfx_q:push({love.graphics.draw, {self.canvas, (self.pos_x - 4) * GFX_SCALE, (self.pos_y - 4) * GFX_SCALE}})
 
   self:draw_popfxs()
@@ -481,7 +481,7 @@ function Stack.render(self)
 
   -- Draw debug graphics if set
   if config.debug_mode then
-    local mx, my = transform_coordinates(love.mouse.getPosition())
+    local mx, my = GAME:transform_coordinates(love.mouse.getPosition())
 
     for row = 0, self.height do
       for col = 1, self.width do
