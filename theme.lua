@@ -23,9 +23,9 @@ local function load_theme_img(name, useBackup)
   if useBackup == nil then
     useBackup = true
   end
-  local img = load_img_from_supported_extensions("themes/" .. config.theme .. "/" .. name)
+  local img = GraphicsUtil.loadImageFromSupportedExtensions("themes/" .. config.theme .. "/" .. name)
   if not img and useBackup then
-    img = load_img_from_supported_extensions("themes/" .. default_theme_dir .. "/" .. name)
+    img = GraphicsUtil.loadImageFromSupportedExtensions("themes/" .. default_theme_dir .. "/" .. name)
   end
   return img
 end
@@ -202,8 +202,13 @@ function Theme.graphics_init(self)
   self.images.IMG_random_stage = load_theme_img("random_stage")
   self.images.IMG_random_character = load_theme_img("random_character")
 
-  self.images.IMG_healthbar_frame_1P = load_theme_img("healthbar_frame_1P")
-  self.images.IMG_healthbar_frame_2P = load_theme_img("healthbar_frame_2P")
+  if self.multibar_is_absolute then
+    self.images.IMG_healthbar_frame_1P = load_theme_img("healthbar_frame_1P_absolute")
+    self.images.IMG_healthbar_frame_2P = load_theme_img("healthbar_frame_2P_absolute")
+  else
+    self.images.IMG_healthbar_frame_1P = load_theme_img("healthbar_frame_1P")
+    self.images.IMG_healthbar_frame_2P = load_theme_img("healthbar_frame_2P")
+  end
   self.images.IMG_healthbar = load_theme_img("healthbar")
 
   self.images.IMG_prestop_frame = load_theme_img("prestop_frame")
@@ -747,7 +752,7 @@ function Theme:final_init()
   end
 
   self.images.bg_main = UpdatingImage(load_theme_img("background/main"), self.bg_main_is_tiled, self.bg_main_speed_x, self.bg_main_speed_y, canvas_width, canvas_height)
-  self.images.bg_select_screen = UpdatingImage(load_theme_img("background/select_screen"), self.bg_select_is_tiled, self.bg_select_speed_x, self.bg_select_speed_y, canvas_width, canvas_height)
+  self.images.bg_select_screen = UpdatingImage(load_theme_img("background/select_screen"), self.bg_select_screen_is_tiled, self.bg_select_speed_x, self.bg_select_speed_y, canvas_width, canvas_height)
   self.images.bg_readme = UpdatingImage(load_theme_img("background/readme"), self.bg_readme_is_tiled, self.bg_readme_speed_x, self.bg_readme_speed_y, canvas_width, canvas_height)
 
   local menuYPadding = 10

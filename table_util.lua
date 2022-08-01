@@ -127,3 +127,14 @@ function table.getKeys(tab)
 
   return keys
 end
+
+-- returns the key for the given value, key is random if value occurs multiple times
+function table.indexOf(tab, element)
+  for key, value in pairs(tab) do
+    if value == element then
+      return key
+    end
+  end
+
+  return nil
+end
