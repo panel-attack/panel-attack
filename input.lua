@@ -1,5 +1,7 @@
 require("util")
 local logger = require("logger")
+local inputManager = require("inputManager")
+local tableUtils = require("tableUtils")
 
 -- The class that holds all input mappings and state
 -- TODO: move all state variables in here
@@ -217,6 +219,10 @@ function joystick_ax()
 end
 
 function love.keypressed(key, scancode, rep)
+  if scancode then
+    inputManager:keyPressed(key, scancode, rep)
+  end
+
   local function handleFullscreenToggle()
     if key == "return" and not rep and love.keyboard.isDown("lalt") then
       love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
@@ -243,7 +249,7 @@ function love.keypressed(key, scancode, rep)
       if P2 then
         stacks["P2"] = P2:toPuzzleInfo()
       end
-      if table.length(stacks) > 0 then
+      if tableUtils.length(stacks) > 0 then
         love.system.setClipboardText(json.encode(stacks))
         return true
       end
@@ -311,6 +317,8 @@ function love.textinput(text)
 end
 
 function love.keyreleased(key, unicode)
+  inputManager:keyReleased(key, unicode)
+
   this_frame_released_keys[key] = keys[key] -- retains state in this_frame_released_keys
   keys[key] = nil
 end

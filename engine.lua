@@ -1,5 +1,6 @@
 require("analytics")
 local logger = require("logger")
+local tableUtils = require("tableUtils")
 
 -- Stuff defined in this file:
 --  . the data structures that store the configuration of
@@ -291,11 +292,11 @@ function Stack.divergenceString(stackToTest)
   if stackToTest.telegraph then
     result = result .. "telegraph.chain count " .. stackToTest.telegraph.garbage_queue.chain_garbage:len() .. "\n"
     result = result .. "telegraph.senderCurrentlyChaining " .. tostring(stackToTest.telegraph.senderCurrentlyChaining) .. "\n"
-    result = result .. "telegraph.attacks " .. table.length(stackToTest.telegraph.attacks) .. "\n"
+    result = result .. "telegraph.attacks " .. tableUtils.length(stackToTest.telegraph.attacks) .. "\n"
   end
   
   result = result .. "garbage_q " .. stackToTest.garbage_q:len() .. "\n"
-  result = result .. "later_garbage " .. table.length(stackToTest.later_garbage) .. "\n"
+  result = result .. "later_garbage " .. tableUtils.length(stackToTest.later_garbage) .. "\n"
   result = result .. "Stop " .. stackToTest.stop_time .. "\n"
   result = result .. "Pre Stop " .. stackToTest.pre_stop_time .. "\n"
   result = result .. "Shake " .. stackToTest.shake_time .. "\n"

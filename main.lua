@@ -4,7 +4,6 @@ GAME = require("game")
 require("match")
 require("BattleRoom")
 require("util")
-require("table_util")
 require("consts")
 require("queue")
 require("globals")
@@ -31,6 +30,7 @@ require("theme")
 require("click_menu")
 require("rich_presence.RichPresence")
 local logger = require("logger")
+local inputManager = require("inputManager")
 GAME.scores = require("scores")
 GAME.rich_presence = RichPresence()
 
@@ -67,6 +67,8 @@ end
 -- Called every few fractions of a second to update the game
 -- dt is the amount of time in seconds that has passed.
 function love.update(dt)
+  inputManager:update(dt)
+
   if love.mouse.getX() == last_x and love.mouse.getY() == last_y then
     if not pointer_hidden then
       if input_delta > mouse_pointer_timeout then
@@ -178,10 +180,27 @@ function love.draw()
 end
 
 -- Handle a mouse or touch press
-function love.mousepressed(x, y)
+function love.mousepressed(x, y, button)
+  inputManager:mousePressed(x, y, button)
   for menu_name, menu in pairs(CLICK_MENUS) do
     menu:click_or_tap(GAME:transform_coordinates(x, y))
   end
+end
+
+function love.mousereleased(x, y, button)
+  inputManager:mouseReleased(x, y, button)
+end
+
+function love.mousemoved(x, y)
+  inputManager:mouseMoved(x, y)
+end
+
+function love.joystickpressed(joystick, button)
+  inputManager:joystickPressed(joystick, button)
+end
+
+function love.joystickreleased(joystick, button)
+  inputManager:joystickReleased(joystick, button)
 end
 
 -- Handle a touch press
