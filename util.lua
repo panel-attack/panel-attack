@@ -127,6 +127,33 @@ function deepcpy(tab)
   return ret
 end
 
+-- deepcopies a table while specifying which keys should get shallow copied or not copied at all in order to prevent recursive death loops
+function selectiveDeepCopy(orig, keysToShallowCopy, keysToIgnore)
+  local origType = type(orig)
+  local copy
+  if origType == 'table' then
+    copy = {}
+    for key, value in pairs(orig) do
+        if keysToIgnore == nil or keysToIgnore[key] == nil then
+          if keysToShallowCopy == nil or keysToShallowCopy[key] == nil then
+            if type(key) == "table" then
+              key = selectiveDeepCopy(key)
+            end
+            if type(value) == "table" then
+              value = selectiveDeepCopy(value)
+            end
+          end
+          copy[key] = value
+        end
+    end
+    setmetatable(copy, getmetatable(orig))
+  else -- number, string, boolean, etc
+      copy = orig
+  end
+
+  return copy
+end
+
 function table_to_string(tab)
   local ret = ""
   for k,v in pairs(tab) do
