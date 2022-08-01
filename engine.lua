@@ -198,11 +198,12 @@ Stack =
     s.analytic = AnalyticsInstance(s.is_local)
 
     s.opponentStack = nil -- the other stack you are playing against
-    s.target = nil
+    s.target = nil -- the target you are sending attacks to
 
     if s.match.mode == "vs" then
-      s.telegraph = Telegraph(s) -- Telegraph holds the garbage that hasn't been committed yet and also tracks the attack animations
-      -- NOTE: this is the telegraph our stack is adding into.
+      s.telegraph = Telegraph(s) 
+      -- Telegraph holds the garbage that hasn't been committed yet and also tracks the attack animations
+      -- NOTE: this is the telegraph our stack is adding into and that show over the other player
       -- .sender = us
     end
 
@@ -464,15 +465,15 @@ end
 -- NOTE: the CLOCK time is the save state for simulating right BEFORE that clock time is simulated
 function Stack.saveForRollback(self)
 
+  local opponentStack = self.opponentStack
   -- If we are behind the time that the opponent's new attacks would land, then we don't need to rollback
   -- don't save the rollback info for performance reasons
   -- TODO still save for replays so we can rewind
-  if self.garbage_target and self.garbage_target.CLOCK + GARBAGE_DELAY_LAND_TIME > self.CLOCK then
+  if opponentStack and opponentStack.CLOCK + GARBAGE_DELAY_LAND_TIME > self.CLOCK then
     return
   end
 
   local prev_states = self.prev_states
-  local opponentStack = self.opponentStack
   local attackTarget = self.target
   self.opponentStack = nil
   self.target = nil
@@ -2534,7 +2535,7 @@ function Stack.check_matches(self)
   end
 
   if (combo_size ~= 0) then
-    if self.garbage_target and self.telegraph then
+    if self.target and self.telegraph then
       if metal_count >= 3 then
         -- Give a shock garbage for every shock block after 2
         for i = 3, metal_count do
@@ -2564,7 +2565,7 @@ function Stack.check_matches(self)
       end
 
       self:enqueue_card(false, first_panel_col, first_panel_row, combo_size)
-      if self.garbage_target and self.telegraph then
+      if self.target and self.telegraph then
         local combo_pieces = combo_garbage[combo_size]
         for i=1,#combo_pieces do
           -- Give out combo garbage based on the lookup table, even if we already made shock garbage,

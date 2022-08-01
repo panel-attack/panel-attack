@@ -790,8 +790,10 @@ function select_screen.startNetPlayMatch(self, msg)
   GAME.match.P2 = P2
   P2.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
   
-  P1:set_garbage_target(P2)
-  P2:set_garbage_target(P1)
+  P1:setOpponent(P2)
+  P1:setTarget(P2)
+  P2:setOpponent(P1)
+  P2:setTarget(P1)
   P2:moveForPlayerNumber(2)
   replay = createNewReplay(GAME.match)
 
@@ -826,8 +828,10 @@ function select_screen.start2pLocalMatch(self)
   GAME.match.P1 = P1
   P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, character = self.players[self.op_player_number].character, player_number = 2}
   GAME.match.P2 = P2
-  P1:set_garbage_target(P2)
-  P2:set_garbage_target(P1)
+  P1:setOpponent(P2)
+  P1:setTarget(P2)
+  P2:setOpponent(P1)
+  P2:setTarget(P1)
   current_stage = self.players[math.random(1, #self.players)].stage
   stage_loader_load(current_stage)
   stage_loader_wait()
@@ -842,12 +846,21 @@ end
 function select_screen.start1pLocalMatch(self)
   GAME.match = Match("vs", GAME.battleRoom)
   P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
+
+  if GAME.battleRoom.trainingModeSettings and GAME.battleRoom.trainingModeSettings.healthDifficulty then
+    local health = Health(10, 15, 6, 249.3, 40, -1)
+    
+    GAME.match.health = health
+  end
+  
   if GAME.battleRoom.trainingModeSettings then
     self:initializeAttackEngine()
   end
   GAME.match.P1 = P1
-  if not GAME.battleRoom.trainingModeSettings then
-    P1:set_garbage_target(P1)
+  if not GAME.match.health then
+    P1:setTarget(P1)
+  else
+    P1:setTarget(GAME.match.health)
   end
   P2 = nil
   current_stage = self.players[self.my_player_number].stage
@@ -882,6 +895,8 @@ function select_screen.initializeAttackEngine(self)
       GAME.match.attackEngine:addAttackPattern(values.width, values.height or 1, values.startTime, values.metal or false, false)
     end
   end
+
+  GAME.match.attackEngine:setTarget(P1)
 end
 
 function select_screen.initialize(self, character_select_mode)
