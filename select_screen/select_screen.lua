@@ -225,7 +225,10 @@ function select_screen.isNetPlay(self)
 end
 
 function select_screen.isMultiplayer(self)
-  return select_screen.character_select_mode == "2p_net_vs" or select_screen.character_select_mode == "2p_local_vs"
+  return select_screen.character_select_mode == "2p_net_vs"
+  or select_screen.character_select_mode == "2p_local_vs"
+  or select_screen.character_select_mode == "2p_local_computer_vs"
+  -- vs cpu is not really multiplayer but it has 2 stacks so we need to set both "players" up
 end
 
 -- Makes sure all the client data is up to date and ready
@@ -857,6 +860,26 @@ function select_screen.start1pLocalMatch(self)
   return main_dumb_transition, {main_local_vs_yourself, "", 0, 0}
 end
 
+function select_screen.start1pCpuMatch(self)
+  GAME.match = Match("vs", GAME.battleRoom)
+  P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
+  GAME.match.P1 = P1
+  P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, character = self.players[self.op_player_number].character, player_number = 2}
+  P2.max_runs_per_frame = 1
+  GAME.match.P2 = P2
+  GAME.match.P2CPU = ComputerPlayer("DummyCpu", "DummyConfig", P2)
+
+  P1.garbage_target = P2
+  P2.garbage_target = P1
+  current_stage = self.players[self.my_player_number].stage
+  stage_loader_load(current_stage)
+  stage_loader_wait()
+  P2:moveForPlayerNumber(2)
+  P1:starting_state()
+  P2:starting_state()
+  return main_dumb_transition, {main_local_vs, "", 0, 0}
+end
+
 function select_screen.initializeAttackEngine(self)
   local trainingModeSettings = GAME.battleRoom.trainingModeSettings
   local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
@@ -971,6 +994,8 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
     -- Handle two player vs game setup
     elseif select_screen.character_select_mode == "2p_local_vs" and self.players[self.my_player_number].ready and self.players[self.op_player_number].ready then
       return self:start2pLocalMatch()
+    elseif select_screen.character_select_mode == "2p_local_computer_vs" and self.players[self.my_player_number].ready then
+      return self:start1pCpuMatch()
     -- Fetch the next network messages for 2p vs. When we get a start message we will transition there.
     elseif select_screen:isNetPlay() then
       if not do_messages() then

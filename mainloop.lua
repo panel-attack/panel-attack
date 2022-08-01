@@ -222,6 +222,10 @@ do
       {loc("mm_options"), options.main}
     }
 
+    if TESTS_ENABLED then
+      table.insert(items, 6, {"Vs Computer", main_local_vs_computer_setup})
+    end
+
     main_menu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, main_menu_last_index)
     for i = 1, #items do
       main_menu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
@@ -1411,6 +1415,12 @@ function main_local_vs_setup()
   GAME.input:clearInputConfigurationsForPlayers()
   GAME.input:requestPlayerInputConfigurationAssignments(2)
   return select_screen.main, {select_screen, "2p_local_vs"}
+end
+
+-- sets up globals for local vs computer
+function main_local_vs_computer_setup()
+  GAME.battleRoom = BattleRoom()
+  return select_screen.main, {select_screen, "2p_local_computer_vs"}
 end
 
 -- local 2pvs mode
