@@ -4,7 +4,9 @@ require("computerPlayers.EndarisCpu.EndarisCpu")
 local logger = require("logger")
 
 CPUConfig = class(function(self, actualConfig)
-  self.log = actualConfig["log"]
+  for key, value in pairs(actualConfig) do
+    self[key] = value
+  end
 end)
 
 function CPUConfig.print(self)
@@ -59,7 +61,7 @@ end
 -- exposed for selection in menu
 function ComputerPlayer.setConfig(self, config)
   self.config = CPUConfig(config)
-  self.implementation:setConfig(config)
+  self.implementation:setConfig(self.config)
 end
 
 -- exposed for selection in menu

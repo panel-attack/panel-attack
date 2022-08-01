@@ -3,10 +3,8 @@ require("computerPlayers.StackExtensions")
 EndarisCpu = class(function(self, stack)
   self.name = "EndarisCpu"
   self.realStack = stack
-  self:initializeCoroutine()
+  self:initializeThinkProcess()
 end)
-
-require("computerPlayers.EndarisCpu.Helpers")
 
 local configs = { ['DummyConfig'] = { Log = 4 } }
 
@@ -16,17 +14,12 @@ end
 
 function EndarisCpu.setConfig(self, config)
   if config then
+    self.config = config
     self:log(1, "cpu config successfully loaded")
-    self.config = CPUConfig(config)
-    self:initializeConfig(config)
     self.config:print()
   else
     error("cpu config is nil")
   end
-end
-
-function EndarisCpu.initializeConfig(self, config)
-  self.config.Log = config['Log']
 end
 
 -- a glorified print that prints based on the log level in the configuration
