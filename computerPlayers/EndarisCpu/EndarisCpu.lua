@@ -35,6 +35,7 @@ end
 
 function EndarisCpu.resumeThinking(self)
   self.startTime = os.clock()
+  self:log(5, "resuming coroutine at " .. self.startTime)
   local ok, errorMsg = coroutine.resume(self.thinkRoutine, self)
   if not ok then
     error(errorMsg .. "\n" .. debug.traceback(self.thinkRoutine) .. "\n" .. debug.traceback(mainloop))
@@ -57,10 +58,7 @@ end
 
 -- the main processing routine for finding out what to do next, runs in a coroutine
 function EndarisCpu.think(self)
-  self.startTime = os.clock()
-  self:log(5, "starting coroutine at " .. self.startTime)
-
-  -- The think process should never end on its own
+    -- The think process should never end on its own
   while true do
     -- do things
     self:yieldIfTooLong()
