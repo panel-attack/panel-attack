@@ -79,10 +79,20 @@ Click_menu =
   end
 )
 
+function Click_menu:reloadGraphics()
+  for k, v in pairs(self.buttons) do
+    v.text = love.graphics.newText(get_global_font(), v.stringText)
+    if v.currentSettingText then
+      v.current_setting = love.graphics.newText(get_global_font(), v.currentSettingText)
+    end
+  end
+end
+
 function Click_menu.add_button(self, string_text, selectFunction, escapeFunction, leftFunction, rightFunction)
   self.buttons[#self.buttons + 1] = {
     text = love.graphics.newText(get_global_font(), string_text),
     stringText = string_text,
+    currentSettingText = nil,
     x = 0,
     y = 0,
     w = nil,
@@ -115,6 +125,7 @@ end
 -- Sets the string to render to the right of the menu text
 function Click_menu.set_button_setting(self, button_idx, new_setting)
   self.buttons[button_idx].current_setting = love.graphics.newText(get_global_font(), new_setting)
+  self.buttons[button_idx].currentSettingText = new_setting
 end
 
 -- Sets the button at the given index's visibility

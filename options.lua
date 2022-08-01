@@ -3,6 +3,8 @@ local analytics = require("analytics")
 local wait = coroutine.yield
 local memory_before_options_menu = nil
 local theme_index
+local scaleTypeIndex
+local fixedScaleIndex
 local found_themes = {}
 
 local function general_menu()
@@ -147,8 +149,83 @@ local function graphics_menu()
     update_theme()
   end
 
+  local scaleTypeOptions = {"auto", "fit", "fixed"}
+  local translatedScaleTypeOptions = {loc("op_scale_auto"), loc("op_scale_fit"), loc("op_scale_fixed")}
+  scaleTypeIndex = 1
+  for index, scaleType in ipairs(scaleTypeOptions) do
+    if scaleType == config.gameScaleType then
+      scaleTypeIndex = index
+      break
+    end
+  end
+  fixedScaleIndex = 1
+  for index, fixedScale in ipairs(GAME.availableScales) do
+    if fixedScale == config.gameScaleFixedValue then
+      fixedScaleIndex = index
+      break
+    end
+  end
+
+  local updateFixedScale
+
+  local function scaleSettingsChanged()
+    GAME.showGameScale = true
+    local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
+    local previousXScale = GAME.canvasXScale
+    GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
+    if previousXScale ~= GAME.canvasXScale then
+      GAME:refreshCanvasAndImagesForNewScale()
+    end
+  end
+
+  local function updateScaleType(noUpdate)
+    if noUpdate == false then
+      config.gameScaleType = scaleTypeOptions[scaleTypeIndex]
+      scaleSettingsChanged()
+    end
+    graphicsMenu:set_button_setting(2, translatedScaleTypeOptions[scaleTypeIndex])
+    updateFixedScale(true)
+  end
+
+  local function previousScaleType()
+    scaleTypeIndex = bound(1, scaleTypeIndex - 1, #scaleTypeOptions)
+    updateScaleType(false)
+  end
+
+  local function nextScaleType()
+    scaleTypeIndex = bound(1, scaleTypeIndex + 1, #scaleTypeOptions)
+    updateScaleType(false)
+  end
+
+  updateFixedScale = function(noUpdate)
+    if config.gameScaleType == "fixed" then
+      if noUpdate == false then
+        config.gameScaleFixedValue = GAME.availableScales[fixedScaleIndex]
+        scaleSettingsChanged()
+      end
+      graphicsMenu:set_button_setting(3, GAME.availableScales[fixedScaleIndex]) --todo localize
+    else
+      -- ideally we would hide this setting, but its too hard without better UI control support
+      graphicsMenu:set_button_setting(3, nil)
+    end
+  end
+
+  local function previousFixedScale()
+    if config.gameScaleType == "fixed" then
+      fixedScaleIndex = bound(1, fixedScaleIndex - 1, #GAME.availableScales)
+      updateFixedScale(false)
+    end
+  end
+
+  local function nextFixedScale()
+    if config.gameScaleType == "fixed" then
+      fixedScaleIndex = bound(1, fixedScaleIndex + 1, #GAME.availableScales)
+      updateFixedScale(false)
+    end
+  end
+
   local function update_portrait_darkness()
-    graphicsMenu:set_button_setting(2, config.portrait_darkness)
+    graphicsMenu:set_button_setting(4, config.portrait_darkness)
   end
 
   local function increase_portrait_darkness()
@@ -165,21 +242,21 @@ local function graphics_menu()
     if not noToggle then
       config.popfx = not config.popfx
     end
-    graphicsMenu:set_button_setting(3, config.popfx and loc("op_on") or loc("op_off"))
+    graphicsMenu:set_button_setting(5, config.popfx and loc("op_on") or loc("op_off"))
   end
 
   local function update_renderTelegraph(noToggle)
     if not noToggle then
       config.renderTelegraph = not config.renderTelegraph
     end
-    graphicsMenu:set_button_setting(4, config.renderTelegraph and loc("op_on") or loc("op_off"))
+    graphicsMenu:set_button_setting(6, config.renderTelegraph and loc("op_on") or loc("op_off"))
   end
 
   local function update_renderAttacks(noToggle)
     if not noToggle then
       config.renderAttacks = not config.renderAttacks
     end
-    graphicsMenu:set_button_setting(5, config.renderAttacks and loc("op_on") or loc("op_off"))
+    graphicsMenu:set_button_setting(7, config.renderAttacks and loc("op_on") or loc("op_off"))
   end
 
   local function nextMenu()
@@ -196,12 +273,16 @@ local function graphics_menu()
 
   graphicsMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
   graphicsMenu:add_button(loc("op_theme"), nextMenu, goEscape, previous_theme, next_theme)
+  graphicsMenu:add_button(loc("op_scale"), nextMenu, goEscape, previousScaleType, nextScaleType)
+  graphicsMenu:add_button(loc("op_scale_fixed_value"), nextMenu, goEscape, previousFixedScale, nextFixedScale)
   graphicsMenu:add_button(loc("op_portrait_darkness"), nextMenu, goEscape, decrease_portrait_darkness, increase_portrait_darkness)
   graphicsMenu:add_button(loc("op_popfx"), update_popfx, goEscape, update_popfx, update_popfx)
   graphicsMenu:add_button(loc("op_renderTelegraph"), update_renderTelegraph, goEscape, update_renderTelegraph, update_renderTelegraph)
   graphicsMenu:add_button(loc("op_renderAttacks"), update_renderAttacks, goEscape, update_renderAttacks, update_renderAttacks)
   graphicsMenu:add_button(loc("back"), exitSettings, exitSettings)
   update_theme()
+  updateScaleType(true)
+  updateFixedScale(true)
   update_portrait_darkness()
   update_popfx(true)
   update_renderTelegraph(true)
