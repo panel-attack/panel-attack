@@ -32,7 +32,11 @@ AttackEngine =
 
 function AttackEngine:setTarget(target)
   self.target = target
-  self.telegraph:updatePosition(target.pos_x, target.pos_y, target.mirror_x)
+  local stackWidth = 0
+  if target.canvas then 
+    stackWidth = math.floor(target.canvas:getWidth() / GFX_SCALE)
+  end
+  self.telegraph:updatePosition(target.pos_x, target.pos_y, target.mirror_x, stackWidth)
 end
 
 -- Adds an attack pattern that happens repeatedly on a timer.

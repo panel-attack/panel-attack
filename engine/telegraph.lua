@@ -71,7 +71,8 @@ for k, animation in ipairs(leftward_or_rightward) do
   end
 end
 
-function Telegraph:updatePosition(positionX, positionY, mirrorX)
+function Telegraph:updatePosition(positionX, positionY, mirrorX, stackWidth)
+  self.stackWidth = stackWidth
   self.mirror_x = mirrorX
   self.pos_x = positionX - 4
   self.pos_y = positionY - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
@@ -289,12 +290,11 @@ end
 
 function Telegraph:telegraphRenderXPosition(index)
 
-  local stackWidth = math.floor(self.owner.canvas:getWidth() / GFX_SCALE)
   local increment = -TELEGRAPH_BLOCK_WIDTH * self.mirror_x
 
   local result = self.pos_x
   if self.mirror_x == 1 then
-    result = result + stackWidth + increment
+    result = result + self.stackWidth + increment
   end
 
   result = result + (increment * index)

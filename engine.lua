@@ -507,7 +507,11 @@ end
 function Stack.setTarget(self, newTarget)
   self.target = newTarget
   if self.telegraph then
-    self.telegraph:updatePosition(newTarget.pos_x, newTarget.pos_y, newTarget.mirror_x)
+    local stackWidth = 0
+    if newTarget.canvas then 
+      stackWidth = math.floor(newTarget.canvas:getWidth() / GFX_SCALE)
+    end
+    self.telegraph:updatePosition(newTarget.pos_x, newTarget.pos_y, newTarget.mirror_x, stackWidth)
   end
 end
 
