@@ -2,7 +2,6 @@ local button_manager = require("ui.button_manager")
 local slider_manager = require("ui.slider_manager")
 local input_field_manager = require("ui.input_field_manager")
 Queue = require("Queue")
-config = require("config")
 require("developer")
 require("class")
 socket = require("socket")
@@ -109,7 +108,12 @@ function love.load(args)
     game_updater = args[#args]
   end
   
-  --profiler:start()
+  love.graphics.setDefaultFilter("linear", "linear")
+  if config.maximizeOnStartup and not love.window.isMaximized() then
+    love.window.maximize()
+  end
+  local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
+  GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
   math.randomseed(os.time())
   for i = 1, 4 do
     math.random()
@@ -118,6 +122,8 @@ function love.load(args)
   GAME.rich_presence:initialize("902897593049301004")
   GAME:load(game_updater)
   mainloop = coroutine.create(fmainloop)
+
+  GAME.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME.canvasXScale})
 end
 
 function love.focus(f)
@@ -137,15 +143,24 @@ function love.update(dt)
   GAME:update(dt)
 end
 
+function love.resize(newPixelWidth, newPixelHeight)
+  if GAME then
+    local previousXScale = GAME.canvasXScale
+    GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
+    if previousXScale ~= GAME.canvasXScale then
+      if GAME.match then
+        GAME.needsAssetReload = true
+      else
+        GAME:refreshCanvasAndImagesForNewScale()
+      end
+    end
+    GAME.showGameScale = true
+  end
+end
+
 -- Called whenever the game needs to draw.
 function love.draw()
   GAME:draw()
-end
-
--- Transform from window coordinates to game coordinates
-function transform_coordinates(x, y)
-  local lbx, lby, lbw, lbh = scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 16, 9)
-  return (x - lbx) / 1 * canvas_width / lbw, (y - lby) / 1 * canvas_height / lbh
 end
 
 -- Handle a mouse or touch press
@@ -155,7 +170,7 @@ function love.mousepressed(x, y)
   input_field_manager.mousePressed(x, y)
 
   for menu_name, menu in pairs(CLICK_MENUS) do
-    menu:click_or_tap(transform_coordinates(x, y))
+    menu:click_or_tap(GAME:transform_coordinates(x, y))
   end
 end
 
@@ -184,6 +199,6 @@ end
 -- Handle a touch press
 -- Note we are specifically not implementing this because mousepressed above handles mouse and touch
 -- function love.touchpressed(id, x, y, dx, dy, pressure)
--- local _x, _y = transform_coordinates(x, y)
+-- local _x, _y = GAME:transform_coordinates(x, y)
 -- click_or_tap(_x, _y, {id = id, x = _x, y = _y, dx = dx, dy = dy, pressure = pressure})
 -- end

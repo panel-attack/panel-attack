@@ -28,22 +28,12 @@ local has_game_update = false
 local main_menu_last_index = 1
 local puzzle_menu_last_index = 3
 
-local function drawLoadingString(loadingString) 
-  local textMaxWidth = 300
-  local textHeight = 40
-  local x = 20
-  local y = canvas_height - textHeight
-  local backgroundPadding = 10
-  grectangle_color("fill", (x - backgroundPadding) / GFX_SCALE , (y - backgroundPadding) / GFX_SCALE, textMaxWidth/GFX_SCALE, textHeight/GFX_SCALE, 0, 0, 0, 0.5)
-  gprintf(loadingString, x, y, canvas_width, "left", nil, nil, 10)
-end
-
 function fmainloop()
   -- local func, arg = main_select_mode, nil
   -- Run Unit Tests
   if TESTS_ENABLED then
     -- Run all unit tests now that we have everything loaded
-    drawLoadingString("Running Unit Tests")
+    GAME:drawLoadingString("Running Unit Tests")
     wait()
     require("PuzzleTests")
     require("ServerQueueTests")
@@ -58,6 +48,11 @@ function fmainloop()
     leftover_time = 1 / 120 -- prevents any left over time from getting big transitioning between menus
 ---@diagnostic disable-next-line: redundant-parameter
     func, arg = func(unpack(arg or {}))
+    GAME.showGameScale = false
+    if GAME.needsAssetReload then
+      GAME:refreshCanvasAndImagesForNewScale()
+      GAME.needsAssetReload = false
+    end
     collectgarbage("collect")
     logger.trace("Transitioning to next fmainloop function")
   end
@@ -1742,7 +1737,7 @@ function main_select_puzz()
   local exitSet = false
   local puzzleMenu
   local ret = nil
-  local level = config.puzzle_level or 5
+  local level = config.puzzle_level
   local randomColors = config.puzzle_randomColors or false
 
   local function selectFunction(myFunction, args)
@@ -2063,13 +2058,16 @@ function love.quit()
     json_send({logout = true})
   end
   love.audio.stop()
-  if love.window.getFullscreen() == true then
-    null, null, config.display = love.window.getPosition()
+  if love.window.getFullscreen() then
+    _, _, config.display = love.window.getPosition()
   else
-    config.window_x, config.window_y, config.display = love.window.getPosition()
-    config.window_x = math.max(config.window_x, 0)
-    config.window_y = math.max(config.window_y, 30) --don't let 'y' be zero, or the title bar will not be visible on next launch.
+    config.windowX, config.windowY, config.display = love.window.getPosition()
+    config.windowX = math.max(config.windowX, 0)
+    config.windowY = math.max(config.windowY, 30) --don't let 'y' be zero, or the title bar will not be visible on next launch.
   end
+
+  config.windowWidth, config.windowHeight, _ = love.window.getMode( )
+  config.maximizeOnStartup = love.window.isMaximized()
   config.fullscreen = love.window.getFullscreen()
   save.write_conf_file()
   

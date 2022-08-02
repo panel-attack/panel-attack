@@ -23,6 +23,11 @@ local config = {
   level                         = 5,
   endless_speed                 = 1,
   endless_difficulty            = 1,
+  endless_level                 = nil, -- nil indicates we want to use classic difficulty
+  
+  puzzle_level                  = 5,
+  puzzle_randomColors           = false,
+  
   -- Player name
   name                          = "defaultname",
   -- Volume settings
@@ -47,15 +52,25 @@ local config = {
   portrait_darkness             = 70,
   popfx                         = true,
   cardfx_scale                  = 100,
-  window_x                      = 800,
-  window_y                      = 400,
-  display                       = 1,
-  fullscreen                    = false,
-  defaultPanelsCopied           = false,
+  
   renderTelegraph               = true,
   renderAttacks                 = true,
-  puzzle_level                  = 5,       
-  puzzle_randomColors           = false
+  defaultPanelsCopied           = false,
+  
+  -- True if we immediately want to maximize the screen on startup
+  maximizeOnStartup             = true,
+  gameScaleType                 = "auto",
+  gameScaleFixedValue           = 2,
+  
+  -- Love configuration variables
+  windowWidth                   = consts.CANVAS_WIDTH,
+  windowHeight                  = consts.CANVAS_HEIGHT,
+  borderless                    = false,
+  fullscreen                    = false,
+  vsync                         = 1,
+  display                       = 1,
+  windowX                       = nil,
+  windowY                       = nil,
 }
 
 return config

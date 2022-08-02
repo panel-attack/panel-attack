@@ -132,6 +132,9 @@ end
 
 -- copy the table one key deep
 function shallowcpy(tab)
+  if tab == nil then
+    return nil
+  end
   local ret = {}
   for k, v in pairs(tab) do
     ret[k] = v

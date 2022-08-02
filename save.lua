@@ -1,6 +1,7 @@
 local config = require("config")
 local config_metadata = require("config_metadata")
 local replay_browser = require("replay_browser")
+local json = require("dkjson")
 
 --- @module save
 -- the save.lua file contains the read/write functions
@@ -101,7 +102,7 @@ end
 
 -- reads the "conf.json" file
 -- falls back to the default config
-function save.read_conf_file()
+function save.readConfigFile()
   local file = love.filesystem.newFile("conf.json")
   local ok, err = file:open("r")
   
@@ -116,7 +117,7 @@ function save.read_conf_file()
 
   -- language_code, panels, character and stage are patched later on by their own subsystems, we store their values in config for now!
   for key, value in pairs(config) do
-    if user_config[key] 
+    if user_config[key] ~= nil
         and type(user_config[key]) == type(config[key]) 
         and (not config_metadata.isValid[key] or config_metadata.isValid[key](value)) then
       local user_value = user_config[key]
@@ -189,6 +190,22 @@ function save.write_replay_file(path, filename)
       end
       file:write(json.encode(replay))
       file:close()
+    end
+  )
+end
+
+-- reads the "replay.txt" file
+function read_replay_file()
+  pcall(
+    function()
+      local file = love.filesystem.newFile("replay.txt")
+      file:open("r")
+      local teh_json = file:read(file:getSize())
+      replay = json.decode(teh_json)
+      if type(replay.in_buf) == "table" then
+        replay.in_buf = table.concat(replay.in_buf)
+        write_replay_file()
+      end
     end
   )
 end

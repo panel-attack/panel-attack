@@ -9,7 +9,6 @@ UpdatingImage =
     self.image = image
     self.tiled = tiled
     self.image:setWrap("repeat", "repeat")
-    self.image:setFilter("linear", "linear")
     self.speedX = speedX or 0
     self.speedY = speedY or 0
     self.width = width or self.image:getWidth()
