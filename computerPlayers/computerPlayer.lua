@@ -1,6 +1,4 @@
 require("engine")
-require("computerPlayers.DummyCpu.DummyCpu")
-require("computerPlayers.EndarisCpu.EndarisCpu")
 local logger = require("logger")
 
 CPUConfig = class(function(self, actualConfig)
@@ -19,8 +17,10 @@ end
 ComputerPlayer = class(function(self, cpuName, configName, stack)
   logger.trace("Initialising Computerplayer " .. cpuName .. " with config " .. configName)
   if cpuName == "DummyCpu" then
+    require("computerPlayers.DummyCpu.DummyCpu")
     self.implementation = DummyCpu(stack)
   elseif cpuName == "EndarisCpu" then
+    require("computerPlayers.EndarisCpu.EndarisCpu")
     self.implementation = EndarisCpu(stack)
   end
 
