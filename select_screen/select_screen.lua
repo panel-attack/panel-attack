@@ -848,7 +848,14 @@ function select_screen.start1pLocalMatch(self)
   P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
 
   if GAME.battleRoom.trainingModeSettings and GAME.battleRoom.trainingModeSettings.healthDifficulty then
-    local health = Health(10, 15, 6, 249.3, 40, -1)
+
+    local secondsToppedOutToLose = 10
+    local lineClearGPM = 5 + GAME.battleRoom.playerWinCounts[1]
+    local lineHeightToKill = 6
+    local xPosition = 249
+    local yPosition = 40
+    local mirror = -1
+    local health = Health(secondsToppedOutToLose, lineClearGPM, lineHeightToKill, xPosition, yPosition, mirror)
     
     GAME.match.health = health
   end

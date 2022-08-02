@@ -1374,6 +1374,9 @@ function main_net_vs()
       local end_text = matchOutcome["end_text"]
       local winSFX = matchOutcome["winSFX"]
       local outcome_claim = matchOutcome["outcome_claim"]
+      if outcome_claim ~= 0 then
+        GAME.battleRoom.playerWinCounts[outcome_claim] = GAME.battleRoom.playerWinCounts[outcome_claim] + 1
+      end
       
       json_send({game_over = true, outcome = outcome_claim})
 
@@ -1442,7 +1445,10 @@ function main_local_vs()
       local end_text = matchOutcome["end_text"]
       local winSFX = matchOutcome["winSFX"]
       local outcome_claim = matchOutcome["outcome_claim"]
-      
+      if outcome_claim ~= 0 then
+        GAME.battleRoom.playerWinCounts[outcome_claim] = GAME.battleRoom.playerWinCounts[outcome_claim] + 1
+      end
+
       finalizeAndWriteVsReplay(GAME.match.battleRoom, outcome_claim)
 
       return {game_over_transition, 
@@ -1492,11 +1498,15 @@ function main_local_vs_yourself()
   end
   
   local function processGameResults(gameResult) 
-    if not GAME.battleRoom.trainingModeSettings  then
+    if not GAME.battleRoom.trainingModeSettings then
       GAME.scores:saveVsSelfScoreForLevel(P1.analytic.data.sent_garbage_lines, P1.level)
       finalizeAndWriteVsReplay(nil, nil)
     end
 
+    if gameResult > 0 then
+      GAME.battleRoom.playerWinCounts[1] = GAME.battleRoom.playerWinCounts[1] + 1
+    end
+    
     return {game_over_transition,
           {select_screen.main, nil, P1:pick_win_sfx(), nil, false, {select_screen, "1p_vs_yourself"}}
         }
