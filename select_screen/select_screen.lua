@@ -867,7 +867,11 @@ function select_screen.start1pCpuMatch(self)
   P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, character = self.players[self.op_player_number].character, player_number = 2}
   P2.max_runs_per_frame = 1
   GAME.match.P2 = P2
+<<<<<<< HEAD
   GAME.match.P2CPU = ComputerPlayer("EndarisCpu", "DummyConfig", P2)
+=======
+  GAME.match.P2CPU = ComputerPlayer("DummyCpu", "DummyConfig", P2)
+>>>>>>> beta
 
   P1.garbage_target = P2
   P2.garbage_target = P1

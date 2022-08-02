@@ -26,32 +26,22 @@ local has_game_update = false
 local main_menu_last_index = 1
 local puzzle_menu_last_index = 3
 
-local function drawLoadingString(loadingString) 
-  local textMaxWidth = 300
-  local textHeight = 40
-  local x = 20
-  local y = canvas_height - textHeight
-  local backgroundPadding = 10
-  grectangle_color("fill", (x - backgroundPadding) / GFX_SCALE , (y - backgroundPadding) / GFX_SCALE, textMaxWidth/GFX_SCALE, textHeight/GFX_SCALE, 0, 0, 0, 0.5)
-  gprintf(loadingString, x, y, canvas_width, "left", nil, nil, 10)
-end
-
 function fmainloop()
   Localization.init(localization)
   copy_file("readme_puzzles.txt", "puzzles/README.txt")
   theme_init()
 
   -- stages and panels before characters since they are part of their loading!
-  drawLoadingString(loc("ld_stages"))
+  GAME:drawLoadingString(loc("ld_stages"))
   wait()
   stages_init()
-  drawLoadingString(loc("ld_panels"))
+  GAME:drawLoadingString(loc("ld_panels"))
   wait()
   panels_init()
-  drawLoadingString(loc("ld_characters"))
+  GAME:drawLoadingString(loc("ld_characters"))
   wait()
   characters_init()
-  drawLoadingString(loc("ld_analytics"))
+  GAME:drawLoadingString(loc("ld_analytics"))
   wait()
   analytics.init()
   apply_config_volume()
@@ -74,7 +64,7 @@ function fmainloop()
   -- Run Unit Tests
   if TESTS_ENABLED then
     -- Run all unit tests now that we have everything loaded
-    drawLoadingString("Running Unit Tests")
+    GAME:drawLoadingString("Running Unit Tests")
     wait()
     require("PuzzleTests")
     require("ServerQueueTests")
@@ -89,6 +79,11 @@ function fmainloop()
     leftover_time = 1 / 120 -- prevents any left over time from getting big transitioning between menus
 ---@diagnostic disable-next-line: redundant-parameter
     func, arg = func(unpack(arg or {}))
+    GAME.showGameScale = false
+    if GAME.needsAssetReload then
+      GAME:refreshCanvasAndImagesForNewScale()
+      GAME.needsAssetReload = false
+    end
     collectgarbage("collect")
     logger.trace("Transitioning to next fmainloop function")
   end

@@ -23,9 +23,9 @@ local function load_theme_img(name, useBackup)
   if useBackup == nil then
     useBackup = true
   end
-  local img = load_img_from_supported_extensions("themes/" .. config.theme .. "/" .. name)
+  local img = GraphicsUtil.loadImageFromSupportedExtensions("themes/" .. config.theme .. "/" .. name)
   if not img and useBackup then
-    img = load_img_from_supported_extensions("themes/" .. default_theme_dir .. "/" .. name)
+    img = GraphicsUtil.loadImageFromSupportedExtensions("themes/" .. default_theme_dir .. "/" .. name)
   end
   return img
 end
