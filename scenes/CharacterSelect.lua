@@ -2,9 +2,9 @@ local Scene = require("scenes.Scene")
 local logger = require("logger")
 local Button = require("ui.Button")
 local scene_manager = require("scenes.scene_manager")
-local input = require("input2")
+local input = require("inputManager")
 local LevelSlider = require("ui.LevelSlider")
-require("table")
+local tableUtils = require("tableUtils")
 
 local MAX_CHARACTERS_PER_PAGE = 34
 local MAX_ROWS = 5
@@ -143,16 +143,16 @@ local function changeStage(state, increment)
     local new_stage = stages_ids_for_current_theme[new_stage_idx]
     if stages[new_stage]:is_bundle() then
       state.stage_is_random = new_stage
-      state.stage = table.getRandomElement(stages[new_stage].sub_stages)
+      state.stage = tableUtils.getRandomElement(stages[new_stage].sub_stages)
     else
       state.stage_is_random = nil
       state.stage = new_stage
     end
   else
     state.stage_is_random = random_stage_special_value
-    state.stage = table.getRandomElement(stages_ids_for_current_theme)
+    state.stage = tableUtils.getRandomElement(stages_ids_for_current_theme)
     if stages[state.stage]:is_bundle() then -- may pick a bundle!
-      state.stage = table.getRandomElement(stages[state.stage].sub_stages)
+      state.stage = tableUtils.getRandomElement(stages[state.stage].sub_stages)
     end
   end
   logger.trace("stage and stage_is_random: " .. state.stage .. " / " .. (state.stage_is_random or "nil"))
@@ -246,7 +246,7 @@ function CharacterSelect:init()
       onClick = function()
         self:moveCursor(button_info.random.x, button_info.random.y)
         play_optional_sfx(themes[config.theme].sounds.menu_validate)
-        self.cursor_data[1].state.character = table.getRandomElement(characters_ids_for_current_theme)
+        self.cursor_data[1].state.character = tableUtils.getRandomElement(characters_ids_for_current_theme)
         config.character = "__RandomCharacter"
         character_loader_load(self.cursor_data[1].state.character)
       end
@@ -488,12 +488,12 @@ local fallback_when_missing = {nil, nil}
 local function resolve_character_random(state)
   if state.character_is_random ~= nil then
     if state.character_is_random == random_character_special_value then
-      state.character = table.getRandomElement(characters_ids_for_current_theme)
+      state.character = tableUtils.getRandomElement(characters_ids_for_current_theme)
       if characters[state.character]:is_bundle() then -- may pick a bundle
-        state.character = table.getRandomElement(characters[state.character].sub_characters)
+        state.character = tableUtils.getRandomElement(characters[state.character].sub_characters)
       end
     else
-      state.character = table.getRandomElement(characters[state.character_is_random].sub_characters)
+      state.character = tableUtils.getRandomElement(characters[state.character_is_random].sub_characters)
     end
     return true
   end
@@ -504,12 +504,12 @@ end
 local function resolve_stage_random(state)
   if state.stage_is_random ~= nil then
     if state.stage_is_random == random_stage_special_value then
-      state.stage = table.getRandomElement(stages_ids_for_current_theme)
+      state.stage = tableUtils.getRandomElement(stages_ids_for_current_theme)
       if stages[state.stage]:is_bundle() then
-        state.stage = table.getRandomElement(stages[state.stage].sub_stages)
+        state.stage = tableUtils.getRandomElement(stages[state.stage].sub_stages)
       end
     else
-      state.stage = table.getRandomElement(stages[state.stage_is_random].sub_stages)
+      state.stage = tableUtils.getRandomElement(stages[state.stage_is_random].sub_stages)
     end
   end
 end

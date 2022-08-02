@@ -10,7 +10,7 @@ local Button = require("ui.Button")
 local Slider = require("ui.Slider")
 local Label = require("ui.Label")
 local scene_manager = require("scenes.scene_manager")
-local input = require("input2")
+local input = require("inputManager")
 
 local function updatePos(self, x, y)
   self.x = x

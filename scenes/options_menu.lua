@@ -7,7 +7,7 @@ local scene_manager = require("scenes.scene_manager")
 local Menu = require("ui.Menu")
 local ButtonGroup = require("ui.ButtonGroup")
 local Stepper = require("ui.Stepper")
-local input = require("input2")
+local input = require("inputManager")
 local save = require("save")
 
 --@module BasicMenu

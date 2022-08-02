@@ -12,7 +12,7 @@ local Label = require("ui.Label")
 local Stepper = require("ui.Stepper")
 local Menu = require("ui.Menu")
 local scene_manager = require("scenes.scene_manager")
-local input = require("input2")
+local input = require("inputManager")
 local save = require("save")
 
 --@module MainMenu

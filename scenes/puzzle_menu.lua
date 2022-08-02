@@ -12,7 +12,7 @@ local ButtonGroup = require("ui.ButtonGroup")
 local LevelSlider = require("ui.LevelSlider")
 local Label = require("ui.Label")
 local scene_manager = require("scenes.scene_manager")
-local input = require("input2")
+local input = require("inputManager")
 local util = require("util")
 local save = require("save")
 

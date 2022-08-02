@@ -14,6 +14,8 @@ local consts = {
   FRAME_RATE = 1 / 60
 }
 
+-- TODO: Move all values below to the above table
+
 -- The values in this file are constants (except in this file perhaps) and are expected never to change during the game, not to be confused with globals!
 VERSION = "046"
 
@@ -51,8 +53,7 @@ default_input_repeat_delay = 20
 large_font = 10 -- large font base+10
 small_font = -3 -- small font base-3
 
-key_names = {"up", "down", "left", "right", "swap1",
-  "swap2", "taunt_up", "taunt_down", "raise1", "raise2", "pause"}
+key_names = {"Up", "Down", "Left", "Right", "Swap1", "Swap2", "TauntUp", "TauntDown", "Raise1", "Raise2", "Start"}
 
 -- frames to use for bounce animation
 bounce_table = {1, 1, 1, 1,

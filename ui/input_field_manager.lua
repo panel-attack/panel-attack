@@ -1,4 +1,4 @@
-local input = require("input2")
+local input = require("inputManager")
 
 --@module input_field_manager
 local input_field_manager = {}

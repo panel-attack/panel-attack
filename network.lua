@@ -1,5 +1,5 @@
 local logger = require("logger")
-local input = require("input2")
+local input = require("inputManager")
 
 local TCP_sock = nil
 

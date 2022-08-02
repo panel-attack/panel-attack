@@ -11,7 +11,7 @@ local ButtonGroup = require("ui.ButtonGroup")
 local LevelSlider = require("ui.LevelSlider")
 local Label = require("ui.Label")
 local scene_manager = require("scenes.scene_manager")
-local input = require("input2")
+local input = require("inputManager")
 local util = require("util")
 local save = require("save")
 
@@ -160,7 +160,7 @@ function replay_menu:update()
     gprint(loc("rp_browser_current_dir", base_path .. current_path), menu_x, menu_y - 40 + menu_h)
     replay_browser_menu()
 
-    if input.raw.isDown["escape"] then
+    if input.allKeys.isDown["escape"] then
       scene_manager:switchScene("main_menu")
     end
     if input.isDown["Swap1"] then

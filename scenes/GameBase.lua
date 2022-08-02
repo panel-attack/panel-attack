@@ -12,7 +12,7 @@ local ButtonGroup = require("ui.ButtonGroup")
 local LevelSlider = require("ui.LevelSlider")
 local Label = require("ui.Label")
 local scene_manager = require("scenes.scene_manager")
-local input = require("input2")
+local input = require("inputManager")
 local util = require("util")
 local save = require("save")
 local tableUtils = require("tableUtils")
@@ -103,9 +103,9 @@ function GameBase:finalizeAndWriteVsReplay(battleRoom, outcome_claim, incomplete
 end
 
 function GameBase:pickRandomStage()
-  self.current_stage = table.getRandomElement(stages_ids_for_current_theme)
+  self.current_stage = tableUtils.getRandomElement(stages_ids_for_current_theme)
   if stages[self.current_stage]:is_bundle() then -- may pick a bundle!
-    self.current_stage = table.getRandomElement(stages[self.current_stage].sub_stages)
+    self.current_stage = tableUtils.getRandomElement(stages[self.current_stage].sub_stages)
   end
 end
 

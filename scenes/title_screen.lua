@@ -9,7 +9,7 @@ local ServerQueue = require("ServerQueue")
 local Button = require("ui.Button")
 local Menu = require("ui.Menu")
 local scene_manager = require("scenes.scene_manager")
-local input = require("input2")
+local input = require("inputManager")
 local tableUtils = require("tableUtils")
 require("mainloop")
 

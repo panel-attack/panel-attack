@@ -1,6 +1,7 @@
 require("stage_loader")
 local GraphicsUtil = require("graphics_util")
 local logger = require("logger")
+local tableUtils = require("tableUtils")
 require("UpdatingImage")
 
 
@@ -212,7 +213,7 @@ function stages_init()
 
   -- fix config stage if it's missing
   if not config.stage or (config.stage ~= random_stage_special_value and not stages[config.stage]) then
-    config.stage = table.getRandomElement(stages_ids_for_current_theme) -- it's legal to pick a bundle here, no need to go further
+    config.stage = tableUtils.getRandomElement(stages_ids_for_current_theme) -- it's legal to pick a bundle here, no need to go further
   end
 
   -- actual init for all stages, starting with the default one

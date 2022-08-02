@@ -18,8 +18,8 @@ ClickMenu = require("ClickMenu")
 require("match")
 require("BattleRoom")
 require("util")
-require("table_util")
 local consts = require("consts")
+require("queue")
 require("globals")
 require("character") -- after globals!
 require("stage") -- after globals!
@@ -41,8 +41,8 @@ require("panels")
 require("Theme")
 require("dump")
 local logger = require("logger")
-local input = require("input2")
 local RichPresence = require("rich_presence.RichPresence")
+local inputManager = require("inputManager")
 GAME.scores = require("scores")
 GAME.rich_presence = RichPresence()
 
@@ -133,12 +133,13 @@ end
 -- Called every few fractions of a second to update the game
 -- dt is the amount of time in seconds that has passed.
 function love.update(dt)
-  input:update(dt)
+  inputManager:update(dt)
   button_manager.update()
   button_manager.draw()
   slider_manager.draw()
   input_field_manager.update()
   input_field_manager.draw()
+  
   GAME.rich_presence:runCallbacks()
   GAME:update(dt)
 end
@@ -164,10 +165,11 @@ function love.draw()
 end
 
 -- Handle a mouse or touch press
-function love.mousepressed(x, y)
+function love.mousepressed(x, y, button)
   button_manager.mousePressed(x, y)
   slider_manager.mousePressed(x, y)
   input_field_manager.mousePressed(x, y)
+  inputManager:mousePressed(x, y, button)
 
   for menu_name, menu in pairs(CLICK_MENUS) do
     menu:click_or_tap(GAME:transform_coordinates(x, y))
@@ -179,6 +181,7 @@ function love.mousereleased(x, y, button)
     slider_manager.mouseReleased(x, y)
     button_manager.mouseReleased(x, y)
     input_field_manager.mouseReleased(x, y)
+    inputManager:mouseReleased(x, y, button)
   end
 end
 
@@ -186,14 +189,19 @@ function love.mousemoved( x, y, dx, dy, istouch )
 	if love.mouse.isDown(1) then
     slider_manager.mouseDragged(x, y)
   end
+  inputManager:mouseMoved(x, y)
 end
 
 function love.gamepadpressed(joystick, button)
   input:gamepadPressed(joystick, button)
 end
 
-function love.gamepadreleased(joystick, button)
-  input:gamepadReleased(joystick, button)
+function love.joystickpressed(joystick, button)
+  inputManager:joystickPressed(joystick, button)
+end
+
+function love.joystickreleased(joystick, button)
+  inputManager:joystickReleased(joystick, button)
 end
 
 -- Handle a touch press

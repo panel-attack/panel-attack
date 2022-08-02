@@ -174,7 +174,7 @@ end
 
 function input2:isPressedWithRepeat(key, delay, repeatPeriod)
   local inputs = self.raw
-  if table.trueForAny(consts.KEY_NAMES, function(k) return k == key end) then
+  if tableUtils.trueForAny(consts.KEY_NAMES, function(k) return k == key end) then
     inputs = input2
   end
   if inputs.isPressed[key] then

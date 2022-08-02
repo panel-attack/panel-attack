@@ -1,6 +1,6 @@
 local GameBase = require("scenes.GameBase")
 local scene_manager = require("scenes.scene_manager")
-local input = require("input2")
+local input = require("inputManager")
 
 --@module training_mode_game
 local training_mode_game = GameBase("training_mode_game", {})

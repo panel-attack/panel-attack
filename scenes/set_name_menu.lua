@@ -6,7 +6,7 @@ local LevelSlider = require("ui.LevelSlider")
 local scene_manager = require("scenes.scene_manager")
 local Menu = require("ui.Menu")
 local ButtonGroup = require("ui.ButtonGroup")
-local input = require("input2")
+local input = require("inputManager")
 local save = require("save")
 
 --@module BasicMenu
@@ -36,13 +36,13 @@ function set_name_menu:update()
   local to_print = loc("op_enter_name") .. " (" .. name_field.value:len() .. "/" .. NAME_LENGTH_LIMIT .. ")"
   gprint(to_print, unpack(main_menu_screen_pos))
   
-  if input.raw.isDown["return"] then
+  if input.allKeys.isDown["return"] then
     play_optional_sfx(themes[config.theme].sounds.menu_validate)
     config.name = name_field.value
     save.write_conf_file()
     scene_manager:switchScene(self.prevScene)
   end
-  if input.raw.isDown["escape"] then
+  if input.allKeys.isDown["escape"] then
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)
     scene_manager:switchScene("main_menu")
   end
