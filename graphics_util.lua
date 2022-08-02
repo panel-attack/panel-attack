@@ -73,6 +73,31 @@ function GraphicsUtil.loadImageFromSupportedExtensions(pathAndName)
   return nil
 end
 
+-- Draws a image at the given screen spot and scales.
+function GraphicsUtil.drawImage(image, x, y, scaleX, scaleY)
+  if image ~= nil and x ~= nil and y ~= nil and scaleX ~= nil and scaleY ~= nil then
+    gfx_q:push({love.graphics.draw, {image, x, y,
+    0, scaleX, scaleY}})
+  end
+end
+
+-- Draws a image at the given screen spot with the given width and height. Scaling as needed.
+function GraphicsUtil.drawScaledImage(image, x, y, width, height)
+  if image ~= nil and x ~= nil and y ~= nil and width ~= nil and height ~= nil then
+    local scaleX = width / image:getWidth()
+    local scaleY = height / image:getHeight()
+    GraphicsUtil.drawImage(image, x, y, scaleX, scaleY)
+  end
+end
+
+-- Draws a image at the given screen spot with the given width. Scaling to keep the ratio.
+function GraphicsUtil.drawScaledWidthImage(image, x, y, width)
+  if image ~= nil and x ~= nil and y ~= nil and width ~= nil then
+    local scaleX = width / image:getWidth()
+    GraphicsUtil.drawImage(image, x, y, scaleX, scaleX)
+  end
+end
+
 -- Draws an image at the given spot
 -- TODO rename
 function draw(img, x, y, rot, x_scale, y_scale)
@@ -88,7 +113,7 @@ end
 function draw_label(img, x, y, rot, scale, mirror)
   rot = rot or 0
   mirror = mirror or 0
-  x = x - (img:getWidth()/GFX_SCALE*scale)*mirror
+  x = x - math.floor((img:getWidth()/GFX_SCALE*scale)*mirror)
   gfx_q:push({love.graphics.draw, {img, x*GFX_SCALE, y*GFX_SCALE,
   rot, scale, scale}})
 end
