@@ -203,13 +203,6 @@ function trim(s)
   return (s:gsub("^%s*(.-)%s*$", "%1"))
 end
 
--- Gets all the contents of a directory
-function get_directory_contents(path)
-  local path = (path and path or "")
-  local results = love.filesystem.getDirectoryItems(path)
-  return results
-end
-
 function compress_input_string(inputs)
   if inputs:match("%(%d+%)") or not inputs:match("[%a%+%/][%a%+%/]") then
     -- Detected a digit enclosed in parentheses in the inputs, the inputs are already compressed.

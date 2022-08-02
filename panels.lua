@@ -33,26 +33,23 @@ end
 -- Recursively load all panel images from the given directory
 local function add_panels_from_dir_rec(path)
   local lfs = love.filesystem
-  local raw_dir_list = lfs.getDirectoryItems(path)
+  local raw_dir_list = FileUtil.getFilteredDirectoryItems(path)
   for i, v in ipairs(raw_dir_list) do
-    local start_of_v = string.sub(v, 0, string.len(prefix_of_ignored_dirs))
-    if start_of_v ~= prefix_of_ignored_dirs then
-      local current_path = path .. "/" .. v
-      if lfs.getInfo(current_path) and lfs.getInfo(current_path).type == "directory" then
-        -- call recursively: facade folder
-        add_panels_from_dir_rec(current_path)
+    local current_path = path .. "/" .. v
+    if lfs.getInfo(current_path) and lfs.getInfo(current_path).type == "directory" then
+      -- call recursively: facade folder
+      add_panels_from_dir_rec(current_path)
 
-        -- init stage: 'real' folder
-        local panel_set = Panels(current_path, v)
-        local success = panel_set:id_init()
+      -- init stage: 'real' folder
+      local panel_set = Panels(current_path, v)
+      local success = panel_set:id_init()
 
-        if success then
-          if panels[panel_set.id] ~= nil then
-            logger.trace(current_path .. " has been ignored since a panel set with this id has already been found")
-          else
-            panels[panel_set.id] = panel_set
-            panels_ids[#panels_ids + 1] = panel_set.id
-          end
+      if success then
+        if panels[panel_set.id] ~= nil then
+          logger.trace(current_path .. " has been ignored since a panel set with this id has already been found")
+        else
+          panels[panel_set.id] = panel_set
+          panels_ids[#panels_ids + 1] = panel_set.id
         end
       end
     end

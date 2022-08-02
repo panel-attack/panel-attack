@@ -6,6 +6,7 @@ require("BattleRoom")
 require("util")
 require("table_util")
 require("consts")
+require("FileUtil")
 require("queue")
 require("globals")
 require("character") -- after globals!
