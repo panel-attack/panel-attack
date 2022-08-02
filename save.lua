@@ -294,12 +294,12 @@ function recursive_copy(source, destination)
     end
   end
 end
--- Deletes any file matching the 
+-- Deletes any file matching the target name from the file tree recursively
 function recursiveRemoveFiles(folder, targetName)
   local lfs = love.filesystem
   local filesTable = lfs.getDirectoryItems(folder)
   for _, fileName in ipairs(filesTable) do
-    local file = folder .. sep .. fileName
+    local file = folder .. "/" .. fileName
     local info = lfs.getInfo(file)
     if info then
       if info.type == "directory" then
