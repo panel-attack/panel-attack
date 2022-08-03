@@ -29,8 +29,10 @@ local puzzle_menu_last_index = 3
 function fmainloop()
   Localization.init(localization)
   copy_file("readme_puzzles.txt", "puzzles/README.txt")
+  if love.system.getOS() ~= "OS X" then
+    recursiveRemoveFiles(".", ".DS_Store")
+  end
   theme_init()
-
   -- stages and panels before characters since they are part of their loading!
   GAME:drawLoadingString(loc("ld_stages"))
   wait()
