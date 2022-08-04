@@ -96,7 +96,7 @@ end
 -- Resolve the current character if it is random
 local function resolve_character_random(state)
   if state.character_is_random ~= nil then
-    if state.character_is_random == random_character_special_value then
+    if state.character_is_random == random_character_special_value or characters[state.character_is_random] == nil then
       state.character = table.getRandomElement(characters_ids_for_current_theme)
       if characters[state.character]:is_bundle() then -- may pick a bundle
         state.character = table.getRandomElement(characters[state.character].sub_characters)
@@ -112,7 +112,7 @@ end
 -- Resolve the current stage if it is random
 local function resolve_stage_random(state)
   if state.stage_is_random ~= nil then
-    if state.stage_is_random == random_stage_special_value then
+    if state.stage_is_random == random_stage_special_value or stage[state.stage_is_random] == nil then
       state.stage = table.getRandomElement(stages_ids_for_current_theme)
       if stages[state.stage]:is_bundle() then
         state.stage = table.getRandomElement(stages[state.stage].sub_stages)
