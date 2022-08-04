@@ -391,22 +391,13 @@ end
 -- for reloading the graphics if the window was resized
 function characters_reload_graphics()
   local characterIds = shallowcpy(characters_ids_for_current_theme)
-  -- reload the current character graphics immediately
-  if characters[config.character] then
-    characters[config.character]:graphics_init(true, false)
-    table.remove(characterIds, config.character.id)
-  end
-  if P1 and P1.character then
-    characters[P1.character]:graphics_init(true, false)
-    table.remove(characterIds, P1.character)
-  end
-  if P2 and P2.character then
-    characters[P2.character]:graphics_init(true, false)
-    table.remove(characterIds, P2.character)
-  end
-  -- lazy load the rest
   for i = 1, #characterIds do
-    characters[characterIds[i]]:graphics_init(false, false)
+    local character = characterIds[i]
+    local fullLoad = false
+    if character == config.character or (P1 and character == P1.character) or (P2 and character == P2.character) then
+      fullLoad = true
+    end
+    characters[character]:graphics_init(fullLoad, false)
   end
 end
 
