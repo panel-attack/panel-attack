@@ -102,11 +102,11 @@ local function resolve_character_random(state)
         state.character = table.getRandomElement(characters[state.character].sub_characters)
       end
     else
-      state.character = table.getRandomElement(characters[state.character_is_random].sub_characters)
+      if characters[state.character_is_random]:is_bundle() then
+        state.character = table.getRandomElement(characters[state.character_is_random].sub_characters)
+      end
     end
-    return true
   end
-  return false
 end
 
 -- Resolve the current stage if it is random
@@ -118,7 +118,9 @@ local function resolve_stage_random(state)
         state.stage = table.getRandomElement(stages[state.stage].sub_stages)
       end
     else
-      state.stage = table.getRandomElement(stages[state.stage_is_random].sub_stages)
+      if stages[state.stage]:is_bundle() then
+        state.stage = table.getRandomElement(stages[state.stage_is_random].sub_stages)
+      end
     end
   end
 end
@@ -332,9 +334,8 @@ function select_screen.main()
     }
   end
 
-  if resolve_character_random(cursor_data[1].state) then
-    character_loader_load(cursor_data[1].state.character)
-  end
+  resolve_character_random(cursor_data[1].state)
+  character_loader_load(cursor_data[1].state.character)
   cursor_data[1].state.character_display_name = characters[cursor_data[1].state.character].display_name
 
   resolve_stage_random(cursor_data[1].state)
