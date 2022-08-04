@@ -112,7 +112,7 @@ end
 -- Resolve the current stage if it is random
 local function resolve_stage_random(state)
   if state.stage_is_random ~= nil then
-    if state.stage_is_random == random_stage_special_value or stage[state.stage_is_random] == nil then
+    if state.stage_is_random == random_stage_special_value or stages[state.stage_is_random] == nil then
       state.stage = table.getRandomElement(stages_ids_for_current_theme)
       if stages[state.stage]:is_bundle() then
         state.stage = table.getRandomElement(stages[state.stage].sub_stages)
