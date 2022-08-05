@@ -58,7 +58,7 @@ function love.load()
   GAME.rich_presence:initialize("902897593049301004")
   mainloop = coroutine.create(fmainloop)
 
-  GAME.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME.canvasXScale})
+  GAME.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME:newCanvasSnappedScale()})
 end
 
 function love.focus(f)

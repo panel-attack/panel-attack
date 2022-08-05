@@ -92,6 +92,14 @@ function Panels.load(self)
         error("Could not find default panel image")
       end
     end
+
+    -- Height is expected to be 48 or more for all panel images including metal,
+    -- if its not, its legacy assets and we need to scale up with "nearest neighbor"
+    local height = img:getHeight()*img:getDPIScale()
+    if height < 48 then
+      img = GraphicsUtil.nearestScaledImageForImage(img, 48 / height)
+    end
+    local newHeight = img:getHeight()*img:getDPIScale()
     return img
   end
 

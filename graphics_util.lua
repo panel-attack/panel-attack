@@ -26,6 +26,23 @@ function GraphicsUtil.privateLoadImage(path_and_name)
   return image
 end
 
+-- Creates a new image object scaled up by the given scale with nearest neighbor filtering
+-- Useful for converting legacy assets to the standard 1x scale PA scale.
+function GraphicsUtil.nearestScaledImageForImage(image, manualScale)
+  local tempCanvas = love.graphics.newCanvas(image:getWidth()*manualScale, image:getHeight()*manualScale, {dpiscale=image:getDPIScale()})
+  image:setFilter("nearest", "nearest")
+
+  love.graphics.setCanvas(tempCanvas)
+  love.graphics.clear()
+  love.graphics.setBlendMode("alpha")
+  love.graphics.draw(image, 0, 0, 0, manualScale, manualScale)
+  love.graphics.setCanvas()
+
+  local data = tempCanvas:newImageData()
+  local scaledImage = love.graphics.newImage(data, {dpiscale=image:getDPIScale()})
+  return scaledImage
+end
+
 function GraphicsUtil.privateLoadImageWithExtensionAndScale(pathAndName, extension, scale)
   local scaleSuffixString = "@" .. scale .. "x"
   if scale == 1 then
@@ -38,14 +55,6 @@ function GraphicsUtil.privateLoadImageWithExtensionAndScale(pathAndName, extensi
     local result = GraphicsUtil.privateLoadImage(fileName)
     if result then
       assert(result:getDPIScale() == scale)
-      -- We would like to use linear for shrinking and nearest for growing,
-      -- but there is a bug in some drivers that doesn't allow for min and mag to be different
-      -- to work around this, calculate if we are shrinking or growing and use the right filter on both.
-      if GAME.canvasXScale >= scale then
-        result:setFilter("nearest", "nearest")
-      else
-        result:setFilter("linear", "linear")
-      end
       return result
     end
     
@@ -367,7 +376,7 @@ end
 local function privateMakeFont(fontPath, size)
   local f
   local hinting = "normal"
-  local dpi = GAME.canvasXScale
+  local dpi = math.max(1, math.floor(GAME.canvasXScale*2) / 2)
   if fontPath then
     f = love.graphics.newFont(fontPath, size, hinting, dpi)
   else

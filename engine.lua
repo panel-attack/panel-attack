@@ -60,7 +60,7 @@ Stack =
 
     -- frame.png dimensions
     if wantsCanvas then
-      s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale=GAME.canvasXScale})
+      s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale=GAME:newCanvasSnappedScale()})
     end
 
     if level then
