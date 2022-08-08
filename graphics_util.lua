@@ -384,7 +384,7 @@ end
 local function privateMakeFont(fontPath, size)
   local f
   local hinting = "normal"
-  local dpi = math.max(1, math.floor(GAME.canvasXScale*2) / 2)
+  local dpi = GAME:newCanvasSnappedScale()
   if fontPath then
     f = love.graphics.newFont(fontPath, size, hinting, dpi)
   else
