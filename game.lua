@@ -96,6 +96,7 @@ end
 -- Useful for creating new canvas with a solid DPI
 function Game:newCanvasSnappedScale()
   local result = math.max(1, math.floor(self.canvasXScale*2)/2)
+  return result
 end
 
 -- Reloads the canvas and all images / fonts for the new game scale
