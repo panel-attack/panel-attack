@@ -1,4 +1,4 @@
-local GraphicsUtil = require("graphics_util")
+require("graphics_util")
 local logger = require("logger")
 
 -- The class representing the panel image data

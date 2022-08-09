@@ -1,6 +1,6 @@
 require("input")
 require("util")
-local GraphicsUtil = require("graphics_util")
+local graphicsUtil = require("graphics_util")
 
 local floor = math.floor
 local ceil = math.ceil
@@ -455,10 +455,10 @@ function Stack.render(self)
     wallImage = themes[config.theme].images.IMG_wall2P
   end
   if frameImage then
-    GraphicsUtil.drawScaledImage(frameImage, 0, 0, 312, 612)
+    graphicsUtil.drawScaledImage(frameImage, 0, 0, 312, 612)
   end
   if wallImage then
-    GraphicsUtil.drawScaledWidthImage(wallImage, 12, (4 - shake + self.height * 16)*GFX_SCALE, 288)
+    graphicsUtil.drawScaledWidthImage(wallImage, 12, (4 - shake + self.height * 16)*GFX_SCALE, 288)
   end
 
   -- Draw the cursor

@@ -1,5 +1,4 @@
 require("stage_loader")
-local GraphicsUtil = require("graphics_util")
 local logger = require("logger")
 require("UpdatingImage")
 
