@@ -1,4 +1,4 @@
-require("graphics_util")
+local GraphicsUtil = require("graphics_util")
 require("sound_util")
 local logger = require("logger")
 

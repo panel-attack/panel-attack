@@ -1,4 +1,5 @@
 require("character_loader")
+local GraphicsUtil = require("graphics_util")
 local logger = require("logger")
 
 -- Stuff defined in this file: the data structure that store a character's data
