@@ -545,7 +545,7 @@ end
 function select_screen.sendMenuState(self)
   local menuState = {}
   menuState.character = self.players[self.my_player_number].character
-  menuState.character_is_random = self.players[self.my_player_number].selectedCharacter
+  menuState.character_is_random = (self.players[self.my_player_number].selectedCharacter ~= self.players[self.my_player_number].character) and self.players[self.my_player_number].selectedCharacter or nil
   menuState.character_display_name = self.players[self.my_player_number].character_display_name
   menuState.loaded = self.players[self.my_player_number].loaded
   menuState.cursor = self.players[self.my_player_number].cursor.positionId
