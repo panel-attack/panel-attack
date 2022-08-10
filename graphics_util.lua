@@ -3,14 +3,7 @@ local logger = require("logger")
 
 
 -- Utility methods for drawing
-GraphicsUtil =
-  class(
-  function(self)
-    self.fontFile = nil
-    self.fontSize = 12
-    self.fontCache = {}
-  end
-)
+GraphicsUtil = { fontFile = nil, fontSize = 12, fontCache = {} }
 
 function GraphicsUtil.privateLoadImage(path_and_name)
   local image = nil
