@@ -27,9 +27,10 @@ function GraphicsUtil.privateLoadImage(path_and_name)
 end
 
 -- Creates a new image object scaled up by the given scale with nearest neighbor filtering
--- Useful for converting legacy assets to the standard 1x scale PA scale.
-function GraphicsUtil.nearestScaledImageForImage(image, manualScale)
-  local tempCanvas = love.graphics.newCanvas(image:getWidth()*manualScale, image:getHeight()*manualScale, {dpiscale=image:getDPIScale()})
+-- Useful for making legacy "blocky" assets keep that look at higher resolutions
+function GraphicsUtil.nearestScaledImageForImage(image, manualScale, path, name)
+  local targetDPI = GAME:newCanvasSnappedScale()
+  local tempCanvas = love.graphics.newCanvas(image:getWidth()*manualScale, image:getHeight()*manualScale, {dpiscale=targetDPI})
   image:setFilter("nearest", "nearest")
 
   love.graphics.setCanvas(tempCanvas)
@@ -39,7 +40,7 @@ function GraphicsUtil.nearestScaledImageForImage(image, manualScale)
   love.graphics.setCanvas()
 
   local data = tempCanvas:newImageData()
-  local scaledImage = love.graphics.newImage(data, {dpiscale=image:getDPIScale()})
+  local scaledImage = love.graphics.newImage(data, {dpiscale=targetDPI})
   scaledImage:setFilter("nearest", "nearest")
   return scaledImage
 end
