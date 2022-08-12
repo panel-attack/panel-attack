@@ -22,6 +22,7 @@ Game =
     self.availableScales = {1, 1.5, 2, 2.5, 3}
     self.showGameScale = false
     self.needsAssetReload = false
+    self.previousWindowWidth = 0
   end
 )
 
@@ -64,6 +65,7 @@ end
 
 -- Updates the scale and position values to use up the right size of the window based on the user's settings.
 function Game:updateCanvasPositionAndScale(newWindowWidth, newWindowHeight)
+  local scaleIsUpdated = false
   if config.gameScaleType ~= "fit" then
     local availableScales = shallowcpy(self.availableScales)
     if config.gameScaleType == "fixed" then
@@ -80,16 +82,21 @@ function Game:updateCanvasPositionAndScale(newWindowWidth, newWindowHeight)
         GAME.canvasYScale = scale
         GAME.canvasX = math.floor((newWindowWidth - (scale * canvas_width)) / 2)
         GAME.canvasY = math.floor((newWindowHeight - (scale * canvas_height)) / 2)
-        return -- EARLY RETURN
+        scaleIsUpdated = true
+        break
       end
     end
   end
 
-  -- The only thing left to do is scale to fit the window
-  local w, h
-  GAME.canvasX, GAME.canvasY, w, h = scale_letterbox(newWindowWidth, newWindowHeight, 16, 9)
-  GAME.canvasXScale = w / canvas_width
-  GAME.canvasYScale = h / canvas_height
+  if scaleIsUpdated == false then
+    -- The only thing left to do is scale to fit the window
+    local w, h
+    GAME.canvasX, GAME.canvasY, w, h = scale_letterbox(newWindowWidth, newWindowHeight, 16, 9)
+    GAME.canvasXScale = w / canvas_width
+    GAME.canvasYScale = h / canvas_height
+  end
+
+  GAME.previousWindowWidth = newWindowWidth
 end
 
 -- Provides a scale that is on .5 boundary to make sure it renders well.
