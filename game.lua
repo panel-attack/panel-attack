@@ -92,12 +92,19 @@ function Game:updateCanvasPositionAndScale(newWindowWidth, newWindowHeight)
   GAME.canvasYScale = h / canvas_height
 end
 
+-- Provides a scale that is on .5 boundary to make sure it renders well.
+-- Useful for creating new canvas with a solid DPI
+function Game:newCanvasSnappedScale()
+  local result = math.max(1, math.floor(self.canvasXScale*2)/2)
+  return result
+end
+
 -- Reloads the canvas and all images / fonts for the new game scale
 function Game:refreshCanvasAndImagesForNewScale()
   GAME:drawLoadingString(loc("ld_characters"))
   coroutine.yield()
 
-  self.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME.canvasXScale})
+  self.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME:newCanvasSnappedScale()})
   -- We need to reload all assets and fonts to get the new scaling info and filters
 
   -- Reload theme to get the new resolution assets
