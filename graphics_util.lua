@@ -57,6 +57,14 @@ function GraphicsUtil.privateLoadImageWithExtensionAndScale(pathAndName, extensi
     local result = GraphicsUtil.privateLoadImage(fileName)
     if result then
       assert(result:getDPIScale() == scale)
+      -- We would like to use linear for shrinking and nearest for growing,
+      -- but there is a bug in some drivers that doesn't allow for min and mag to be different
+      -- to work around this, calculate if we are shrinking or growing and use the right filter on both.
+       if GAME.canvasXScale >= scale then
+        result:setFilter("nearest", "nearest")
+      else
+        result:setFilter("linear", "linear")
+      end
       return result
     end
     
