@@ -9,7 +9,7 @@ local INFO = 2
 local WARN = 3
 local ERROR = 4
 
-local LOG_LEVEL = WARN
+local LOG_LEVEL = TRACE
 
 function logger.trace(msg)
     if LOG_LEVEL <= TRACE then
@@ -51,6 +51,8 @@ function direct_log(prefix, msg)
     print(message)
     if prefix == "ERROR" or prefix == " WARN" then
       love.filesystem.append("warnings.txt", message .. "\n")
+    else
+      love.filesystem.append("log.txt", message .. "\n")
     end
 end
 

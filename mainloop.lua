@@ -454,6 +454,7 @@ local function runMainGameLoop(updateFunction, variableStepFunction, abortGameFu
 
     -- Render only if we are not catching up to a current spectate match
     if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
+      logger.trace("Actually rending the game now")
       GAME.match:render()
       wait()
     end
@@ -464,13 +465,17 @@ local function runMainGameLoop(updateFunction, variableStepFunction, abortGameFu
     end
     
     if (P1 and P1.play_to_end) or (P2 and P2.play_to_end) then
+      logger.trace("Catching up with running game")
       GAME.match:run()
     else
       variable_step(
         function()
+          logger.trace("Running regular game loop, starting with update func")
           if not returnFunction then
+            logger.trace("Running regular game loop, doing match run after update didn't prompt us to exit")
             GAME.match:run()
 
+            logger.trace("Running regular game loop, variableStepFunction")
             returnFunction = variableStepFunction()
 
             if not returnFunction  then
@@ -487,13 +492,16 @@ local function runMainGameLoop(updateFunction, variableStepFunction, abortGameFu
     end
 
     if not returnFunction then
+      logger.trace("Game is still in process")
       local gameResult = P1:gameResult()
       if gameResult then
+        logger.trace("Game has ended")
         returnFunction = processGameResultsFunction(gameResult)
       end
     end
 
     if returnFunction then
+      logger.trace("exiting main game loop")
       undo_stonermode()
       return unpack(returnFunction)
     end
@@ -1356,6 +1364,7 @@ function main_net_vs()
       return {main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}}
     end
 
+    logger.trace("About to process incoming server messages")
     process_all_data_messages() -- Receive game play inputs from the network
 
     if not GAME.battleRoom.spectating then
