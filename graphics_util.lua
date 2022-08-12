@@ -26,25 +26,6 @@ function GraphicsUtil.privateLoadImage(path_and_name)
   return image
 end
 
--- Creates a new image object scaled up by the given scale with nearest neighbor filtering
--- Useful for making legacy "blocky" assets keep that look at higher resolutions
-function GraphicsUtil.nearestScaledImageForImage(image, manualScale, path, name)
-  local targetDPI = GAME:newCanvasSnappedScale()
-  local tempCanvas = love.graphics.newCanvas(image:getWidth()*manualScale, image:getHeight()*manualScale, {dpiscale=targetDPI})
-  image:setFilter("nearest", "nearest")
-
-  love.graphics.setCanvas(tempCanvas)
-  love.graphics.clear()
-  love.graphics.setBlendMode("alpha", "alphamultiply")
-  love.graphics.draw(image, 0, 0, 0, manualScale, manualScale)
-  love.graphics.setCanvas()
-
-  local data = tempCanvas:newImageData()
-  local scaledImage = love.graphics.newImage(data, {dpiscale=targetDPI})
-  scaledImage:setFilter("nearest", "nearest")
-  return scaledImage
-end
-
 function GraphicsUtil.privateLoadImageWithExtensionAndScale(pathAndName, extension, scale)
   local scaleSuffixString = "@" .. scale .. "x"
   if scale == 1 then
