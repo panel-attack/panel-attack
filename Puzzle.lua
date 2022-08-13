@@ -101,10 +101,10 @@ function Puzzle.validate(self)
   end
 
   if #illegalCharacters > 0 then
-    errMessage = errMessage .. "\nPuzzlestring contains invalid characters: " .. tableUtils.concat(illegalCharacters, ", ")
+    errMessage = errMessage .. "\nPuzzlestring contains invalid characters: " .. table.concat(illegalCharacters, ", ")
   end
 
-  if not table.contains(Puzzle.getPuzzleTypes(), self.puzzleType) then
+  if not tableUtils.contains(Puzzle.getPuzzleTypes(), self.puzzleType) then
     errMessage = errMessage ..
     "\nInvalid puzzle type detected, available puzzle types are: " .. table.concat(Puzzle.getPuzzleTypes(), ", ")
   end
