@@ -40,6 +40,7 @@ require("gen_panels")
 require("panels")
 require("Theme")
 require("dump")
+require("computerPlayers.computerPlayer")
 local logger = require("logger")
 local RichPresence = require("rich_presence.RichPresence")
 local inputManager = require("inputManager")
@@ -123,7 +124,7 @@ function love.load(args)
   GAME:load(game_updater)
   mainloop = coroutine.create(fmainloop)
 
-  GAME.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME.canvasXScale})
+  GAME.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME:newCanvasSnappedScale()})
 end
 
 function love.focus(f)
@@ -142,21 +143,6 @@ function love.update(dt)
   
   GAME.rich_presence:runCallbacks()
   GAME:update(dt)
-end
-
-function love.resize(newPixelWidth, newPixelHeight)
-  if GAME then
-    local previousXScale = GAME.canvasXScale
-    GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
-    if previousXScale ~= GAME.canvasXScale then
-      if GAME.match then
-        GAME.needsAssetReload = true
-      else
-        GAME:refreshCanvasAndImagesForNewScale()
-      end
-    end
-    GAME.showGameScale = true
-  end
 end
 
 -- Called whenever the game needs to draw.

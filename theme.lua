@@ -274,11 +274,27 @@ function Theme.graphics_init(self)
   self.images.IMG_cursor = {}
   for player_num = 1, MAX_SUPPORTED_PLAYERS do
     self.images.IMG_players[player_num] = load_theme_img("p" .. player_num)
-    self.images.IMG_cursor[player_num] = load_theme_img("p" .. player_num .. "_cursor")
     self.images.IMG_char_sel_cursors[player_num] = {}
     for position_num = 1, 2 do
       self.images.IMG_char_sel_cursors[player_num][position_num] = load_theme_img("p" .. player_num .. "_select_screen_cursor" .. position_num)
     end
+  end
+
+  -- Cursor animation is 2 frames
+  for i = 1, 2 do
+    -- Cursor images used to be named weird and make modders think they were for different players
+    -- Load either format from the custom theme, and fallback to the built in cursor otherwise.
+    local cursorImage = load_theme_img("cursor" .. i, false)
+    local legacyCursorImage = load_theme_img("p" .. i .. "_cursor", false)
+    if not cursorImage then
+      if legacyCursorImage then
+        cursorImage = legacyCursorImage
+      else
+        cursorImage = load_theme_img("cursor" .. i, true)
+      end
+    end
+    assert(cursorImage ~= nil)
+    self.images.IMG_cursor[i] = cursorImage
   end
 
   self.images.IMG_char_sel_cursor_halves = {left = {}, right = {}}
