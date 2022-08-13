@@ -1364,9 +1364,11 @@ function main_net_vs()
       -- if the game already ended before we caught up, abort trying to catch up to it early in order to get into the next game instead
       if GAME.battleRoom.spectating and (P1.play_to_end or P2.play_to_end) then
         local message = server_queue:pop_next_with("create_room", "character_select")
-        -- shove the message back in for select_screen to handle
-        server_queue:push(message)
-        return {main_dumb_transition, {select_screen.main, "Game ended before catching up", nil, nil, false, false, {select_screen, "2p_net_vs"}}}
+        if message then
+          -- shove the message back in for select_screen to handle
+          server_queue:push(message)
+          return {main_dumb_transition, {select_screen.main, "Game ended before catching up", nil, nil, false, false, {select_screen, "2p_net_vs"}}}
+        end
       end
     end
 
