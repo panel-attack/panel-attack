@@ -30,8 +30,10 @@ local puzzle_menu_last_index = 3
 function fmainloop()
   Localization.init(localization)
   copy_file("readme_puzzles.txt", "puzzles/README.txt")
+  if love.system.getOS() ~= "OS X" then
+    recursiveRemoveFiles(".", ".DS_Store")
+  end
   theme_init()
-
   -- stages and panels before characters since they are part of their loading!
   GAME:drawLoadingString(loc("ld_stages"))
   wait()
@@ -71,7 +73,6 @@ function fmainloop()
     require("ServerQueueTests")
     require("StackTests")
     require("table_util_tests")
-    require("csprngTests")
   end
 
   local func, arg = main_title, nil
@@ -223,6 +224,10 @@ do
       {loc("mm_options"), options.main}
     }
 
+    if TESTS_ENABLED then
+      table.insert(items, 6, {"Vs Computer", main_local_vs_computer_setup})
+    end
+
     main_menu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, main_menu_last_index)
     for i = 1, #items do
       main_menu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
@@ -311,7 +316,8 @@ end
 function Stack.wait_for_random_character(self)
   if self.character == random_character_special_value then
     self.character = tableUtils.getRandomElement(characters_ids_for_current_theme)
-  elseif characters[self.character]:is_bundle() then -- may have picked a bundle
+  end
+  if characters[self.character]:is_bundle() then -- may have picked a bundle
     self.character = tableUtils.getRandomElement(characters[self.character].sub_characters)
   end
   character_loader_load(self.character)
@@ -1412,6 +1418,12 @@ function main_local_vs_setup()
   GAME.input:clearInputConfigurationsForPlayers()
   GAME.input:requestPlayerInputConfigurationAssignments(2)
   return select_screen.main, {select_screen, "2p_local_vs"}
+end
+
+-- sets up globals for local vs computer
+function main_local_vs_computer_setup()
+  GAME.battleRoom = BattleRoom()
+  return select_screen.main, {select_screen, "2p_local_computer_vs"}
 end
 
 -- local 2pvs mode
