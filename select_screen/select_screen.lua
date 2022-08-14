@@ -314,8 +314,8 @@ function select_screen.awaitRoomInitializationMessage(self)
   -- If we never got the room setup message, bail
   if not self.roomInitializationMessage then
     -- abort due to timeout
-    logger.warn(loc("ss_init_fail") .. "\n")
     logger.debug("About to quit select_screen inside awaitRoomInitializationMessage after the initialization message could not be retrieved")
+    logger.warn(loc("ss_init_fail") .. "\n")
     return main_dumb_transition, {main_select_mode, loc("ss_init_fail") .. "\n\n" .. loc("ss_return"), 60, 300}
   end
 
