@@ -147,13 +147,13 @@ function select_screen.on_quit(self)
   if select_screen:isNetPlay() then
     GAME:clearMatch()
     if not select_screen.sendLeave() then
-      logger.trace("About to quit select_screen with a connection error upon quitting via main_dumb_transition to main_select_mode")
+      logger.debug("About to quit select_screen with a connection error upon quitting via main_dumb_transition to main_select_mode")
       return {main_dumb_transition, {main_select_mode, loc("ss_error_leave"), 60, 300}}
     else
       -- don't immediately transition out, wait for the server to confirm our leave via handleServerMessages and quit from there
     end
   else
-    logger.trace("About to quit select_screen regularly in offline play")
+    logger.debug("About to quit select_screen regularly in offline play")
     return {main_select_mode}
   end
 end
@@ -305,7 +305,7 @@ function select_screen.awaitRoomInitializationMessage(self)
     gprint(loc("ss_init"), unpack(themes[config.theme].main_menu_screen_pos))
     wait()
     if not do_messages() then
-      logger.trace("About to quit select_screen inside awaitRoomInitializationMessage after being unable to retrieve server messages")
+      logger.debug("About to quit select_screen inside awaitRoomInitializationMessage after being unable to retrieve server messages")
       return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
     end
     retries = retries + 1
@@ -315,7 +315,7 @@ function select_screen.awaitRoomInitializationMessage(self)
   if not self.roomInitializationMessage then
     -- abort due to timeout
     logger.warn(loc("ss_init_fail") .. "\n")
-    logger.trace("About to quit select_screen inside awaitRoomInitializationMessage after the initialization message could not be retrieved")
+    logger.debug("About to quit select_screen inside awaitRoomInitializationMessage after the initialization message could not be retrieved")
     return main_dumb_transition, {main_select_mode, loc("ss_init_fail") .. "\n\n" .. loc("ss_return"), 60, 300}
   end
 
@@ -699,7 +699,7 @@ function select_screen.handleServerMessages(self)
 
     if msg.leave_room then
       -- opponent left the select screen or server sent confirmation for our leave
-      logger.trace("About to quit select_screen from handleServerMessages after receiving confirmation from the server that we left the room")
+      logger.debug("About to quit select_screen from handleServerMessages after receiving confirmation from the server that we left the room")
       return {main_dumb_transition, {main_net_vs_lobby, "", 0, 0}}
     end
 
@@ -824,7 +824,7 @@ function select_screen.startNetPlayMatch(self, msg)
   if P1.play_to_end or P2.play_to_end then
     to_print = loc("pl_spectate_join")
   end
-  logger.trace("About to transition from select_screen to main_net_vs via main_dumb_transition from startNetPlayMatch")
+  logger.debug("About to transition from select_screen to main_net_vs via main_dumb_transition from startNetPlayMatch")
   return {main_dumb_transition, {main_net_vs, to_print, 10, 0}}
 end
 
@@ -844,7 +844,7 @@ function select_screen.start2pLocalMatch(self)
 
   P1:starting_state()
   P2:starting_state()
-  logger.trace("About to transition from select_screen to main_local_vs via main_dumb_transition from start2pLocalMatch")
+  logger.debug("About to transition from select_screen to main_local_vs via main_dumb_transition from start2pLocalMatch")
   return main_dumb_transition, {main_local_vs, "", 0, 0}
 end
 
@@ -864,7 +864,7 @@ function select_screen.start1pLocalMatch(self)
   stage_loader_load(current_stage)
   stage_loader_wait()
   P1:starting_state()
-  logger.trace("About to transition from select_screen to main_local_vs_yourself via main_dumb_transition from start1pLocalMatch")
+  logger.debug("About to transition from select_screen to main_local_vs_yourself via main_dumb_transition from start1pLocalMatch")
   return main_dumb_transition, {main_local_vs_yourself, "", 0, 0}
 end
 
@@ -885,7 +885,7 @@ function select_screen.start1pCpuMatch(self)
   P2:moveForPlayerNumber(2)
   P1:starting_state()
   P2:starting_state()
-  logger.trace("About to transition from select_screen to main_local_vs via main_dumb_transition from start1pCpuMatch")
+  logger.debug("About to transition from select_screen to main_local_vs via main_dumb_transition from start1pCpuMatch")
   return main_dumb_transition, {main_local_vs, "", 0, 0}
 end
 
@@ -1008,7 +1008,7 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
     -- Fetch the next network messages for 2p vs. When we get a start message we will transition there.
     elseif select_screen:isNetPlay() then
       if not do_messages() then
-        logger.trace("About to transition from select_screen to main_select_mode via main_dumb_transition from select_screen.main after server messages could not be retrieved")
+        logger.debug("About to transition from select_screen to main_select_mode via main_dumb_transition from select_screen.main after server messages could not be retrieved")
         return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
       end
     end
