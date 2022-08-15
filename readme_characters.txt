@@ -27,13 +27,13 @@ Note: non-optional data that is missing will automatically get replaced by defau
 Note: providing a specific, long enough id is a very good idea so that people renaming your mods folders still get properly match with other users regarding your mods. e.g. "mycharacter_myname"
 
 ~~ [.png, .jpg] ~~
-Assets will get scaled and stretched if they don't match the recommended size/ratio.
+Assets will get scaled and stretched if they don't match the recommended size/ratio. Using double the size may look better at higher resolutions.
 
 Garbage assets:
 See https://cdn.discordapp.com/attachments/417706389813592068/874106744392007680/garbage_ref.png for an arrangement overview.
 - "topleft", "botleft", "topright", "botright": corner sprites, recommended size: 24x9
-- "top", "bot": sprites for covering the top and bottom side of the garbage, recommended size: 1x6
-- "left", "right": sprites for the left and right side of the garbage, notably thicker than the top/bot ones, recommended size: 24x1
+- "top", "bot": sprites for covering the top and bottom side of the garbage, gets stretched to the width of the garbage; recommended size: 6px high
+- "left", "right": sprites for the left and right side of the garbage, gets stretched to the height of the garbage, recommended size: 24px wide
 - "face": sprite for the center of garbage pieces of odd-numbered height (1, 3, ...), recommended size: 48x48
 - "face2": optional sprite that can replace face on garbage pieces of odd-numbered width for tiling purposes, recommended size: 48x48
 - "doubleface": sprite for the center of garbage pieces of even-numbered height (2, 4, ...), recommended size: 48x96
