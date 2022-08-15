@@ -1367,7 +1367,7 @@ function main_net_vs()
         if message then
           -- shove the message back in for select_screen to handle
           server_queue:push(message)
-          return {main_dumb_transition, {select_screen.main, "Game ended before catching up", nil, nil, false, false, {select_screen, "2p_net_vs"}}}
+          return {main_dumb_transition, {select_screen.main, loc("pl_abortCatchup"), nil, nil, false, false, {select_screen, "2p_net_vs"}}}
         end
       end
     end

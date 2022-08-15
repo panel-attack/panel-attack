@@ -453,6 +453,7 @@ ss_return,,Returning to main menu...,Retour au menu principal...,Voltar ao menu 
 ss_winrate,,Winrate:,Taux de victoire :,Taxa de vitórias:,勝率：,Racha de victorias:,Gewinnrate:,Rateo delle vittorie:
 ss_wins,,Wins:,Victoires :,Vitórias:,勝ち：,Gana:,Siege:,Vittorie:
 ss_ex_mode,,EX Mode,EX Mode,Modo EX,EXモード,Modo EX,EX,Modalità EX
+ss_abortCatchup,Message displayed when the game tried to catchup to a match in progress but it ended before catching up,Game ended before catching up,FR,PT,JP,Partida se acabó antes de la sincronización,Spiel endete bevor zum Spielstand aufgeholt werden konnte,IT
 rp_browser_header,,~ Replay Browser ~,~ Bibliothèque des replays ~,~ Navegador de Replays ~,～リプレイブラウザ～,~ Explorador de Repeticiones ~,~ Replay Browser ~,~ Navigatore Replay ~
 rp_browser_info_header,,~ Replay Information ~,~ Information des replays ~,~ Informações de Replays ~,～リプレイ情報～,~ Información de la repetición ~,~ Replay Informationen ~,~ Informazioni Replay ~
 rp_browser_current_dir,,Current directory: %1,Dossier actuel : %1,Pasta atual: %1,現在のディレクトリ：%1,Directorio actual: %1,Aktuelles Verzeichnis: %1,Elenco corrente: %1
