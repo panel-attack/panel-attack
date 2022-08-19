@@ -113,8 +113,8 @@ end
 function write_user_id_file()
   pcall(
     function()
-      love.filesystem.createDirectory("servers/" .. connected_server_ip)
-      local file = love.filesystem.newFile("servers/" .. connected_server_ip .. "/user_id.txt")
+      love.filesystem.createDirectory("servers/" .. GAME.connected_server_ip)
+      local file = love.filesystem.newFile("servers/" .. GAME.connected_server_ip .. "/user_id.txt")
       file:open("w")
       file:write(tostring(my_user_id))
       file:close()
@@ -126,7 +126,7 @@ end
 function read_user_id_file()
   pcall(
     function()
-      local file = love.filesystem.newFile("servers/" .. connected_server_ip .. "/user_id.txt")
+      local file = love.filesystem.newFile("servers/" .. GAME.connected_server_ip .. "/user_id.txt")
       file:open("r")
       my_user_id = file:read()
       my_user_id = my_user_id:match("^%s*(.-)%s*$")
