@@ -31,7 +31,13 @@ function flush_socket()
   return true
 end
 
-function close_socket()
+function resetNetwork()
+  logged_in = 0
+  connection_up_time = 0
+  GAME.connected_server_ip = ""
+  GAME.connected_network_port = nil
+  current_server_supports_ranking = false
+  match_type = ""
   if TCP_sock then
     TCP_sock:close()
   end
@@ -265,7 +271,7 @@ function send_error_report(errorData)
   TCP_sock:settimeout(0)
   local errorFull = { error_report = errorData }
   json_send(errorFull)
-  close_socket()
+  resetNetwork()
   return true
 end
 

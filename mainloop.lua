@@ -14,7 +14,8 @@ local PLAYING = "playing" -- room states
 local CHARACTERSELECT = "character select" -- room states
 connection_up_time = 0 -- connection_up_time counts "E" messages, not seconds
 logged_in = 0
-connected_server_ip = nil -- the ip address of the server you are connected to
+GAME.connected_server_ip = nil -- the ip address of the server you are connected to
+GAME.connected_network_port = nil -- the port of the server you are connected to
 my_user_id = nil -- your user id
 leaderboard_report = nil
 replay_of_match_so_far = nil -- current replay of spectatable replay
@@ -170,18 +171,13 @@ do
     end
     character_loader_clear()
     stage_loader_clear()
-    close_socket()
+    resetNetwork()
     undo_stonermode()
     GAME.backgroundImage = themes[config.theme].images.bg_main
     GAME.battleRoom = nil
     GAME.input:clearInputConfigurationsForPlayers()
     GAME.input:requestPlayerInputConfigurationAssignments(1)
     reset_filters()
-    logged_in = 0
-    connection_up_time = 0
-    connected_server_ip = ""
-    current_server_supports_ranking = false
-    match_type = ""
     local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
     local main_menu
     local ret = nil
@@ -1295,7 +1291,8 @@ function main_net_vs_setup(ip, network_port)
       return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
     end
   end
-  connected_server_ip = ip
+  GAME.connected_server_ip = ip
+  GAME.connected_network_port = network_port
   logged_in = false
   return main_net_vs_lobby
 end
@@ -1363,7 +1360,18 @@ function main_net_vs()
         finalizeAndWriteVsReplay(GAME.match.battleRoom, 0, true)
         GAME:clearMatch()
         json_send({leave_room = true})
-        return {main_dumb_transition, {main_net_vs_lobby, loc("ss_latency_error"), 60, -1}}
+        local ip = GAME.connected_server_ip
+        local port = GAME.connected_network_port
+        resetNetwork()
+        return {main_dumb_transition, {
+          main_net_vs_setup, -- next_func
+          loc("ss_latency_error"), -- text
+          60, -- timemin
+          -1, -- timemax
+          nil, -- winnerSFX
+          false, -- keepMusic
+          {ip, port} -- args
+        }}
       end
     end
   end
