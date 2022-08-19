@@ -986,7 +986,7 @@ local function about_menu(button_idx)
       recursive_copy("default_data/themes", "themes")
     end
 
-    ret = show_readme("readme_themes.txt", 1)
+    ret = {show_readme, {"readme_themes.txt", 1}}
   end
 
   local function show_characters_readme()
@@ -1002,7 +1002,7 @@ local function about_menu(button_idx)
   end
 
   local function show_attack_readme()
-    ret = show_readme("readme_training.txt", 5)
+    ret = {show_readme, {"readme_training.txt", 5}}
   end
 
   local function show_system_info()
