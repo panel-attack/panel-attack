@@ -73,6 +73,7 @@ function fmainloop()
     require("ServerQueueTests")
     require("StackTests")
     require("table_util_tests")
+    require("utilTests")
   end
 
   local func, arg = main_title, nil
