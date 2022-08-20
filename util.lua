@@ -298,6 +298,10 @@ function json.isValid(str)
   -- any content inside "" is excluded from search
   content = string.gsub(content, "\".-\"", "")
 
+  -- any comments are excluded from search
+  content = string.gsub(content, "/%*.-%*/", "")
+  content = string.gsub(content, "//.-\n", "")
+
   -- any other content aside from key characters is getting purged for better overview
   content = string.gsub(content, "[^%{%}%[%]:,\n]", "")
 
