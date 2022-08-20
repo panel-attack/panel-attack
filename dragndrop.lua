@@ -15,14 +15,12 @@ function DragAndDrop.importMods(self, assetType)
     local dir = assetType.."/"..files[j]
     local mod = DragAndDrop:loadMod(dir, assetType)
     if self.modIsValid(mod) then
-      -- does the mod already exist?
       if not self.modExists(mod) then
-        -- no, let's go
         recursive_copy(mod.fullDirectory, dir)
-        self.imported[#self.imported+1] = mod.config.id
+        self.imported[#self.imported+1] = mod
       else
         -- save mod name to prompt user for decision later
-        self.existingAssets[#self.existingAssets+1] = { source = mod.fullDirectory, assetType = mod.assetType, destination = dir }
+        self.existingAssets[#self.existingAssets+1] = mod
       end
     else
       self.invalid[#self.invalid+1] = mod.fullDirectory
@@ -34,6 +32,7 @@ function DragAndDrop.loadMod(self, directory, assetType)
   local mod = {}
   mod.directoryName = directory
   mod.fullDirectory = self.modDir .. "/" .. directory
+  mod.targetDirectory = assetType .. "/" .. directory
   mod.assetType = assetType
   local config_file = love.filesystem.newFile(mod.fullDirectory .. "/config.json", "r")
   if config_file then
@@ -84,6 +83,10 @@ function DragAndDrop.acceptFile(self, path)
         if self:promptOverwrite(self.existingAssets[i]) then
           recursive_copy(self.existingAssets[i].source, self.existingAssets[i].destination)
         end
+      end
+
+      for _, mod in pairs(self.imported) do
+        -- load the mod into the game
       end
 
       -- report about unknown files and invalid mods
