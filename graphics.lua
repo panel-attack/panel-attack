@@ -359,8 +359,14 @@ function Stack.render(self)
                 end
               end
               if height % 2 == 1 then
-                local face_w, face_h = imgs.face:getDimensions()
-                draw(imgs.face, draw_x + 8 * (width - 1), top_y + 16 * ((height - 1) / 2), 0, 16 / face_w, 16 / face_h)
+                local face
+                if imgs.face2 and width % 2 == 1 then
+                  face = imgs.face2
+                else
+                  face = imgs.face
+                end
+                local face_w, face_h = face:getDimensions()
+                draw(face, draw_x + 8 * (width - 1), top_y + 16 * ((height - 1) / 2), 0, 16 / face_w, 16 / face_h)
               else
                 local face_w, face_h = imgs.doubleface:getDimensions()
                 draw(imgs.doubleface, draw_x + 8 * (width - 1), top_y + 16 * ((height - 2) / 2), 0, 16 / face_w, 32 / face_h)
