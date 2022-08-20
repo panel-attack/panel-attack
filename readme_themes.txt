@@ -31,9 +31,9 @@ Note: non-optional data that are missing will automatically get replaced by defa
 - "chain/chain00", "chain/chain02", ... "chain/chain19", "combo/combo04", ..., "combo/combo66": chains and combo counter
 - "flags/": flags to be displayed in the select screen (based on the character's specified flags). Values are mostly the country codes from https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2, not all flags are available
 - "1", "2", "3": countdown
-- "p1", "p1_cursor", "p1_select_screen_cursor1", "p1_select_screen_cursor2": cursors for player 1, change p1 by p2 for those of player 2
+- "p1", "cursor1", "p1_select_screen_cursor1", "p1_select_screen_cursor2": cursors for player 1, change p1 by p2 for those of player 2
 - "ready", "loading", "super": displayed when a player is ready, loading, or super selecting something in the select screen
-- "frame", "wall": layout ingame
+- "frame", "wall", "healthbar_frame_1P", "healthbar_frame_1P_absolute": layout ingame
 - "random_stage", "random_character": thumbnail and icon for random stage and random character
 
 ~~ [.mp3, .ogg, .wav, .it, .flac] optional sounds are in parenthesis ~~
