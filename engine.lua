@@ -133,7 +133,7 @@ Stack =
 
     s.NCOLORS = s.NCOLORS or 5
     s.score = 0 -- der skore
-    s.chain_counter = 0 -- how high is the current chain
+    s.chain_counter = 0 -- how high is the current chain (starts at 2)
 
     s.panels_in_top_row = false -- boolean, for losing the game
     s.danger = s.danger or false -- boolean, panels in the top row (danger)
