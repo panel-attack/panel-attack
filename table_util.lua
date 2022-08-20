@@ -139,6 +139,8 @@ function table.indexOf(tab, element)
   return nil
 end
 
+-- returns all elements that are in both tables
+-- in case of a dictionary table, both key and value need to be the same
 function table.getIntersection(tab1, tab2)
   local newTab = {}
   if table.isList(tab1) and table.isList(tab2) then
