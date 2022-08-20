@@ -23,6 +23,7 @@ Game =
     self.showGameScale = false
     self.needsAssetReload = false
     self.previousWindowWidth = 0
+    self.previousWindowHeight = 0
   end
 )
 
@@ -97,6 +98,7 @@ function Game:updateCanvasPositionAndScale(newWindowWidth, newWindowHeight)
   end
 
   GAME.previousWindowWidth = newWindowWidth
+  GAME.previousWindowHeight = newWindowHeight
 end
 
 -- Provides a scale that is on .5 boundary to make sure it renders well.
