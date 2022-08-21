@@ -84,17 +84,12 @@ function main_menu:load()
   end
   character_loader_clear()
   stage_loader_clear()
-  close_socket()
+  resetNetwork()
   GAME.backgroundImage = themes[config.theme].images.bg_main
   GAME.battleRoom = nil
   GAME.input:clearInputConfigurationsForPlayers()
   GAME.input:requestPlayerInputConfigurationAssignments(1)
   reset_filters()
-  logged_in = 0
-  connection_up_time = 0
-  connected_server_ip = ""
-  current_server_supports_ranking = false
-  match_type = ""
   match_type_message = ""
   self.menu:updateLabel()
   self.menu:setVisibility(true)
