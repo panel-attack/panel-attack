@@ -1,3 +1,9 @@
+local buttonManager = require("ui.buttonManager")
+local sliderManager = require("ui.sliderManager")
+local inputFieldManager = require("ui.inputFieldManager")
+local inputManager = require("inputManager")
+local logger = require("logger")
+
 require("class")
 socket = require("socket")
 GAME = require("game")
@@ -30,11 +36,9 @@ require("theme")
 require("click_menu")
 require("computerPlayers.computerPlayer")
 require("rich_presence.RichPresence")
-local logger = require("logger")
-local inputManager = require("inputManager")
+
 GAME.scores = require("scores")
 GAME.rich_presence = RichPresence()
-
 
 local last_x = 0
 local last_y = 0
@@ -69,6 +73,11 @@ end
 -- dt is the amount of time in seconds that has passed.
 function love.update(dt)
   inputManager:update(dt)
+  buttonManager.update()
+  buttonManager.draw()
+  sliderManager.draw()
+  inputFieldManager.update()
+  inputFieldManager.draw()
 
   if love.mouse.getX() == last_x and love.mouse.getY() == last_y then
     if not pointer_hidden then
@@ -178,17 +187,28 @@ end
 
 -- Handle a mouse or touch press
 function love.mousepressed(x, y, button)
+  buttonManager.mousePressed(x, y)
+  sliderManager.mousePressed(x, y)
+  inputFieldManager.mousePressed(x, y)
   inputManager:mousePressed(x, y, button)
+
   for menu_name, menu in pairs(CLICK_MENUS) do
     menu:click_or_tap(GAME:transform_coordinates(x, y))
   end
 end
 
 function love.mousereleased(x, y, button)
-  inputManager:mouseReleased(x, y, button)
+  if button == 1 then
+    sliderManager.mouseReleased(x, y)
+    buttonManager.mouseReleased(x, y)
+    inputManager:mouseReleased(x, y, button)
+  end
 end
 
 function love.mousemoved(x, y)
+  if love.mouse.isDown(1) then
+    sliderManager.mouseDragged(x, y)
+  end
   inputManager:mouseMoved(x, y)
 end
 
