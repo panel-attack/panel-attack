@@ -1,6 +1,6 @@
-local button_manager = require("ui.button_manager")
-local slider_manager = require("ui.slider_manager")
-local input_field_manager = require("ui.input_field_manager")
+local buttonManager = require("ui.buttonManager")
+local sliderManager = require("ui.sliderManager")
+local inputFieldManager = require("ui.inputFieldManager")
 Queue = require("Queue")
 require("developer")
 require("class")
@@ -135,11 +135,11 @@ end
 -- dt is the amount of time in seconds that has passed.
 function love.update(dt)
   inputManager:update(dt)
-  button_manager.update()
-  button_manager.draw()
-  slider_manager.draw()
-  input_field_manager.update()
-  input_field_manager.draw()
+  buttonManager.update()
+  buttonManager.draw()
+  sliderManager.draw()
+  inputFieldManager.update()
+  inputFieldManager.draw()
   
   GAME.rich_presence:runCallbacks()
   GAME:update(dt)
@@ -152,9 +152,9 @@ end
 
 -- Handle a mouse or touch press
 function love.mousepressed(x, y, button)
-  button_manager.mousePressed(x, y)
-  slider_manager.mousePressed(x, y)
-  input_field_manager.mousePressed(x, y)
+  buttonManager.mousePressed(x, y)
+  sliderManager.mousePressed(x, y)
+  inputFieldManager.mousePressed(x, y)
   inputManager:mousePressed(x, y, button)
 
   for menu_name, menu in pairs(CLICK_MENUS) do
@@ -164,16 +164,15 @@ end
 
 function love.mousereleased(x, y, button)
   if button == 1 then
-    slider_manager.mouseReleased(x, y)
-    button_manager.mouseReleased(x, y)
-    input_field_manager.mouseReleased(x, y)
+    sliderManager.mouseReleased(x, y)
+    buttonManager.mouseReleased(x, y)
     inputManager:mouseReleased(x, y, button)
   end
 end
 
 function love.mousemoved( x, y, dx, dy, istouch )
 	if love.mouse.isDown(1) then
-    slider_manager.mouseDragged(x, y)
+    sliderManager.mouseDragged(x, y)
   end
   inputManager:mouseMoved(x, y)
 end

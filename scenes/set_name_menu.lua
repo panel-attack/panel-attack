@@ -18,9 +18,9 @@ local name_field = InputField({
     y = menu_y + 50,
     width = 200,
     height = 25,
-    placeholder_text = love.graphics.newText(love.graphics.getFont(), "username"),
+    placeholder = "username",
     value = config.name,
-    is_visible = false
+    isVisible = false
 })
 
 function set_name_menu:init()
@@ -28,7 +28,7 @@ function set_name_menu:init()
 end
 
 function set_name_menu:load(sceneParams)
-  name_field.is_visible = true
+  name_field:setVisibility(true)
   self.prevScene = sceneParams.prevScene
 end
 
@@ -50,8 +50,8 @@ function set_name_menu:update()
 end
 
 function set_name_menu:unload()  
-  name_field.is_visible = false
-  name_field.has_focus = false
+  name_field:setVisibility(false)
+  name_field.hasFocus = false
 end
 
 return set_name_menu

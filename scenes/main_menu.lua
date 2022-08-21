@@ -59,20 +59,22 @@ function main_menu:init()
   scene_manager:addScene(main_menu)
   local x, y = unpack(main_menu_screen_pos)
   self.menu = Menu({
-      {menu_buttons[1]},
-      {menu_buttons[2]},
-      {menu_buttons[3]},
-      {menu_buttons[4]},
-      {menu_buttons[5]},
-      {menu_buttons[6]},
-      {menu_buttons[7]},
-      {menu_buttons[8]},
-      {menu_buttons[9]},
-      {menu_buttons[10]},
-      {menu_buttons[11]},
-      {menu_buttons[12]},
-      {menu_buttons[13]},
-      }, {x = x, y = y})
+      menuItems =  {
+        {menu_buttons[1]},
+        {menu_buttons[2]},
+        {menu_buttons[3]},
+        {menu_buttons[4]},
+        {menu_buttons[5]},
+        {menu_buttons[6]},
+        {menu_buttons[7]},
+        {menu_buttons[8]},
+        {menu_buttons[9]},
+        {menu_buttons[10]},
+        {menu_buttons[11]},
+        {menu_buttons[12]},
+        {menu_buttons[13]},
+      },
+      x = x, y = y})
   self.menu:setVisibility(false)
 end
 

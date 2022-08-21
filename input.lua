@@ -1,6 +1,6 @@
 require("util")
 local logger = require("logger")
-local input_field_manager = require("ui.input_field_manager")
+local inputFieldManager = require("ui.inputFieldManager")
 local inputManager = require("inputManager")
 local tableUtils = require("tableUtils")
 
@@ -313,7 +313,7 @@ function love.keypressed(key, scancode, rep)
 end
 
 function love.textinput(text)
-  input_field_manager.textInput(text)
+  inputFieldManager.textInput(text)
   this_frame_unicodes[#this_frame_unicodes + 1] = text
 end
 

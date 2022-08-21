@@ -1,10 +1,13 @@
 local class = require("class")
+local UIElement = require("ui.UIElement")
 local util = require("util")
-local button_manager = require("ui.button_manager")
 
+local BUTTON_PADDING = 5
+
+--@module Button
 local function setState(self, i)
-  self.buttons[self.selected_index].color = {.3, .3, .3, .7}
-  self.selected_index = i
+  self.buttons[self.selectedIndex].color = {.3, .3, .3, .7}
+  self.selectedIndex = i
   self.buttons[i].color = {.5, .5, 1, .7}
   self.value = self.values[i]
 end
@@ -17,13 +20,26 @@ local function genButtonGroupFn(self, i, onClick)
   end
 end
 
-local function setPos(self, x, y)
-  self.x = x
-  self.y = y
-  for i, button in ipairs(self.buttons) do
-    button.x = i == 1 and x or (self.buttons[i - 1].x + self.buttons[i - 1].width + 10)
-    button.y = y
+local function setButtons(self, buttons, values, selectedIndex)
+  if self.buttons then
+    for i, button in ipairs(self.buttons) do
+      button:detach()
+    end
   end
+  
+  self.selectedIndex = selectedIndex
+  self.values = values
+  self.buttons = buttons
+  
+  for i, button in ipairs(buttons) do
+    if i > 1 then 
+       button.x = self.buttons[i - 1].x + self.buttons[i - 1].width + BUTTON_PADDING
+    end
+    button.onClick = genButtonGroupFn(self, i, button.onClick)
+    self:addChild(button)
+  end
+  self.buttons[self.selectedIndex].color = {.5, .5, 1, .7}
+  self.value = self.values[self.selectedIndex]
 end
 
 local function setActiveButton(self, selected_index)
@@ -31,39 +47,19 @@ local function setActiveButton(self, selected_index)
   self.buttons[new_index].onClick()
 end
 
---@module Button
 local ButtonGroup = class(
-  function(self, buttons, values, options)
-    self.buttons = buttons
-    self.values = values
-    self.value = nil -- set in setState
+  function(self, options)
     self.onChange = options.onChange or function() end
-    self.selected_index = options.selected_index or 1
-    self.x = options.x or 0
-    self.y = options.y or 0
-    setPos(self, self.x, self.y)
-    setState(self, self.selected_index)
+    self.selectedIndex = options.selectedIndex or 1
     
-    for i, button in ipairs(self.buttons) do
-      button.onClick = genButtonGroupFn(self, i, button.onClick)
-    end
+    setButtons(self, options.buttons, options.values, self.selectedIndex)
+    
     self.TYPE = "ButtonGroup"
-  end
+  end,
+  UIElement
 )
 
-ButtonGroup.setPos = setPos
+ButtonGroup.setButtons = setButtons
 ButtonGroup.setActiveButton = setActiveButton
-
-function ButtonGroup:updateLabel()
-  for i, button in ipairs(self.buttons) do
-    button:updateLabel()
-  end
-end
-
-function ButtonGroup:setVisibility(is_visible)
-  for i, button in ipairs(self.buttons) do
-    button:setVisibility(is_visible)
-  end
-end
 
 return ButtonGroup

@@ -17,7 +17,7 @@ local class = function(init, parent)
   local metatable = {
     __index = parent,
     __call = function(_, ...)
-      local self = {}
+      local self = parent and parent(...) or {}
       setmetatable(self, { __index = class_tbl })
       init(self, ...)
       return self

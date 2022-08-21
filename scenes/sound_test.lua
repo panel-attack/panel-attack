@@ -78,7 +78,7 @@ local function createSfxMenuInfo(characterId)
         translate = false,
         width = 70,
         height = 25,
-        is_visible = false})
+        isVisible = false})
     sfxValues[#sfxValues + 1] = sfx
   end
   return sfxLabels, sfxValues
@@ -102,18 +102,15 @@ function sound_test:init()
   local music_type_button_group
   local sfxStepper
   local character_stepper = Stepper(
-    character_labels,
-    character_ids,
     {
-      selected_index = 1,
+      labels = character_labels,
+      values = character_ids,
+      selectedIndex = 1,
       onChange = function(value) 
         play_optional_sfx(themes[config.theme].sounds.menu_move)
 
-        sfxStepper.labels, sfxStepper.values = createSfxMenuInfo(value)
-        sfxStepper.selected_index = 1
-        sfxStepper.value = sfxStepper.values[sfxStepper.selected_index]
-        sfxStepper.labels[sfxStepper.selected_index]:setVisibility(true)
-        sfxStepper:setPos(sfxStepper.x, sfxStepper.y)
+        local labels, values = createSfxMenuInfo(value)
+        sfxStepper:setLabels(labels, values, 1)
 
         if play_button_group.value == "character" then
           playMusic("character", value, music_type_button_group.value)
@@ -134,10 +131,10 @@ function sound_test:init()
     stage_ids[#stage_ids + 1] = stage.id
   end
   local stage_stepper = Stepper(
-    stage_labels,
-    stage_ids,
     {
-      selected_index = 1,
+      labels = stage_labels,
+      values = stage_ids,
+      selectedIndex = 1,
       onChange = function(value) 
         play_optional_sfx(themes[config.theme].sounds.menu_move)
         if play_button_group.value == "stage" then
@@ -149,11 +146,11 @@ function sound_test:init()
   
   music_type_button_group = ButtonGroup(
     {
-      Button({label = "Normal", translate = false}),
-      Button({label = "Danger", translate = false}),
-    },
-    {"normal_music", "danger_music"},
-    {
+      buttons = {
+        Button({label = "Normal", translate = false}),
+        Button({label = "Danger", translate = false}),
+      },
+      values = {"normal_music", "danger_music"},
       selected_index = 1,
       onChange = function(value)
         play_optional_sfx(themes[config.theme].sounds.menu_move)
@@ -168,12 +165,12 @@ function sound_test:init()
   
   play_button_group = ButtonGroup(
     {
-      Button({label = "op_off"}),
-      Button({label = "character"}),
-      Button({label = "stage"}),
-    },
-    {"", "character", "stage"},
-    {
+      buttons = {
+        Button({label = "op_off"}),
+        Button({label = "character"}),
+        Button({label = "stage"}),
+      },
+      values = {"", "character", "stage"},
       selected_index = 1,
       onChange = function(value)
         play_optional_sfx(themes[config.theme].sounds.menu_move)
@@ -191,10 +188,10 @@ function sound_test:init()
   local labels, values = createSfxMenuInfo(character_stepper.value)
   
   sfxStepper = Stepper(
-    labels,
-    values,
     {
-      selected_index = 1,
+      labels = labels,
+      values = values,
+      selectedIndex = 1,
       onChange = function(value)
         play_optional_sfx(themes[config.theme].sounds.menu_move)
       end
@@ -214,7 +211,7 @@ function sound_test:init()
   local x, y = unpack(main_menu_screen_pos)
   x = x - 70--- 400
   y = y + 10
-  sound_test_menu = Menu(sound_test_menu_options, {x = x, y = y})
+  sound_test_menu = Menu({menuItems = sound_test_menu_options, x = x, y = y})
   sound_test_menu:setVisibility(false)
 end
 

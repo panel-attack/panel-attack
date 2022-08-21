@@ -129,7 +129,7 @@ function input_config_menu:init()
           min = 1,
           max = GAME.input.maxConfigurations,
           value = 1,
-          tick_length = 10,
+          tickLength = 10,
           onValueChange = function(slider) input_config_menu:updateInputConfigSet(slider.value) end})
     }
   for i, key in ipairs(consts.KEY_NAMES) do
@@ -155,7 +155,7 @@ function input_config_menu:init()
   menu_options[#menu_options + 1] = {Button({label = "back", onClick = exitMenu})}
   
   local x, y = unpack(main_menu_screen_pos)
-  self.menu = Menu(menu_options, {x = x, y = y})
+  self.menu = Menu({menuItems = menu_options, x = x, y = y})
   self.menu:setVisibility(false)
 end
 

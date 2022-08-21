@@ -69,11 +69,11 @@ end
 local function createToggleButtonGroup(config_field, on_change_fn)
   return ButtonGroup(
     {
-      Button({width = 60, label = "op_off"}),
-      Button({width = 60, label = "op_on"}),
-    },
-    {false, true},
-    {
+      buttons = {
+        Button({width = 60, label = "op_off"}),
+        Button({width = 60, label = "op_on"}),
+      },
+      values = {false, true},
       selected_index = config[config_field] and 2 or 1,
       onChange = function(value) 
         play_optional_sfx(themes[config.theme].sounds.menu_move) 
@@ -91,7 +91,7 @@ local function createConfigSlider(config_field, min, max, on_value_change_fn)
     min = min, 
     max = max, 
     value = config[config_field] or 20,
-    tick_length = math.ceil(100 / max),
+    tickLength = math.ceil(100 / max),
     onValueChange = function(slider)
       config[config_field] = slider.value
       if on_value_change_fn then
@@ -193,10 +193,10 @@ function options_menu:init()
         height = 25})
   end
   local language_stepper = Stepper(
-    language_labels,
-    language_names,
     {
-      selected_index = language_number,
+      labels = language_labels,
+      values = language_names,
+      selectedIndex = language_number,
       onChange = function(value) 
         play_optional_sfx(themes[config.theme].sounds.menu_move) 
         localization:set_language(value[1])
@@ -208,7 +208,6 @@ function options_menu:init()
   
   local label_width = 130
   local base_menu_options = {
-    --{Label({width = label_width, label = "op_language"}), language_button_group},
     {Label({width = label_width, label = "op_language"}), language_stepper},
     {Button({width = label_width, label = "op_general", onClick = function() switchMenu("general_menu") end})},
     {Button({width = label_width, label = "op_graphics", onClick = function() switchMenu("graphics_menu") end})},
@@ -221,12 +220,12 @@ function options_menu:init()
   local save_replays_publicly_index_map = {["with my name"] = 1, ["anonymously"] = 2, ["not at all"] = 3}
   local public_replay_button_group = ButtonGroup(
     {
-      Button({label = "op_replay_public_with_name"}),
-      Button({label = "op_replay_public_anonymously"}),
-      Button({label = "op_replay_public_no"}),
-    },
-    {"with my name", "anonymously", "not at all"},
-    {
+      buttons = {
+        Button({label = "op_replay_public_with_name"}),
+        Button({label = "op_replay_public_anonymously"}),
+        Button({label = "op_replay_public_no"}),
+      },
+      values = {"with my name", "anonymously", "not at all"},
       selected_index = save_replays_publicly_index_map[config.save_replays_publicly],
       onChange = function(value) 
         play_optional_sfx(themes[config.theme].sounds.menu_move) 
@@ -259,9 +258,9 @@ function options_menu:init()
   end
   
   local theme_button_group = ButtonGroup(
-    theme_buttons,
-    found_themes,
     {
+      buttons = theme_buttons,
+      values = found_themes,
       selected_index = theme_index,
       onChange = function(value) 
         play_optional_sfx(themes[config.theme].sounds.menu_move) 
@@ -296,15 +295,15 @@ function options_menu:init()
   local music_frequency_index_map = {["stage"] = 1, ["often_stage"] = 2, ["either"] = 3, ["often_characters"] = 4, ["characters"] = 5}
   local music_frequency_stepper = Stepper(
     {
-      Label({label = "op_only_stage"}),
-      Label({label = "op_often_stage"}),
-      Label({label = "op_stage_characters"}),
-      Label({label = "op_often_characters"}),
-      Label({label = "op_only_characters"}),
-    },
-    {"stage", "often_stage", "either", "often_characters", "characters"},
-    {
-      selected_index = music_frequency_index_map[config.use_music_from],
+      labels = {
+        Label({label = "op_only_stage"}),
+        Label({label = "op_often_stage"}),
+        Label({label = "op_stage_characters"}),
+        Label({label = "op_often_characters"}),
+        Label({label = "op_only_characters"}),
+      },
+      values = {"stage", "often_stage", "either", "often_characters", "characters"},
+      selectedIndex = music_frequency_index_map[config.use_music_from],
       onChange = function(value) 
         play_optional_sfx(themes[config.theme].sounds.menu_move)
         config.use_music_from = value
@@ -341,13 +340,13 @@ function options_menu:init()
   local x, y = unpack(main_menu_screen_pos)
   x = x - 70--- 400
   y = y + 10
-  menus["base_menu"] = Menu(base_menu_options, {x = x, y = y})
-  menus["general_menu"] = Menu(general_menu_options, {x = x, y = y})
-  menus["graphics_menu"] = Menu(graphics_menu_options, {x = x, y = y})
-  menus["sound_test_menu"] = Menu(sound_test_menu_options, {x = x, y = y})
-  menus["audio_menu"] = Menu(audio_menu_options, {x = x, y = y})
-  menus["debug_menu"] = Menu(debut_menu_options, {x = x, y = y})
-  menus["about_menu"] = Menu(about_menu_options, {x = x, y = y})
+  menus["base_menu"] = Menu({menuItems = base_menu_options, x = x, y = y})
+  menus["general_menu"] = Menu({menuItems = general_menu_options, x = x, y = y})
+  menus["graphics_menu"] = Menu({menuItems = graphics_menu_options, x = x, y = y})
+  menus["sound_test_menu"] = Menu({menuItems = sound_test_menu_options, x = x, y = y})
+  menus["audio_menu"] = Menu({menuItems = audio_menu_options, x = x, y = y})
+  menus["debug_menu"] = Menu({menuItems = debut_menu_options, x = x, y = y})
+  menus["about_menu"] = Menu({menuItems = about_menu_options, x = x, y = y})
 
   for menu_name, menu in pairs(menus) do
     menu:setVisibility(false)

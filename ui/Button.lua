@@ -1,94 +1,80 @@
 local class = require("class")
 local UIElement = require("ui.UIElement")
-local button_manager = require("ui.button_manager")
+local buttonManager = require("ui.buttonManager")
 
 --@module Button
 local Button = class(
   function(self, options)
-    self.id = nil -- set in the button manager
-    self.x = options.x or 0
-    self.y = options.y or 0
-    self.width = options.width or 110
-    self.height = options.height or 25
-    self.label = options.label or "Button"
-    self.extra_labels = options.extra_labels or {}
-    self.translate = options.translate or options.translate == nil and true
-    self.is_visible = options.is_visible or options.is_visible == nil and true
-    self.is_enabled = options.is_enabled or options.is_enabled == nil and true
     self.image = options.image
     self.color = options.color or {.3, .3, .3, .7}
-    self.outline_color = options.outline_color or {.5, .5, .5, .7}
+    self.outlineColor = options.outlineColor or {.5, .5, .5, .7}
     self.halign = options.halign or 'center'
     self.valign = options.valign or 'center'
     self.onClick = options.onClick or function() 
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
     end
     self.onMouseDown = options.onMouseDown or function() end
-    self.onMousePressed = options.onMousePressed or function() 
+    self.onMousePressed = options.onMousePressed or function()
+      local screenX, screenY = self:getScreenPos()
       GAME.gfx_q:push({love.graphics.setColor, {self.color[1], self.color[2], self.color[3], 1}})
-      GAME.gfx_q:push({love.graphics.rectangle, {"fill", self.x, self.y, self.width, self.height}})
+      GAME.gfx_q:push({love.graphics.rectangle, {"fill", screenX, screenY, self.width, self.height}})
       GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
     end
     self.onMouseUp = options.onMouseUp or function() end
     
-    self.text = options.text or love.graphics.newText(love.graphics.getFont(), self.translate and loc(self.label, unpack(self.extra_labels)) or self.label)
-    local text_width, text_height = self.text:getDimensions()
-    self.width = math.max(text_width + 6, self.width)
-    self.height = math.max(text_height + 6, self.height)
-    button_manager.add_button(self)
+    local textWidth, textHeight = self.text:getDimensions()
+    self.width = math.max(textWidth + 6, self.width)
+    self.height = math.max(textHeight + 6, self.height)
+    buttonManager.buttons[self.id] = self.isVisible and self or nil
     self.TYPE = "Button"
   end,
   UIElement
 )
 
-function Button:remove()
-  button_manager.remove_button(self)
+function Button:setVisibility(isVisible)
+  buttonManager.buttons[self.id] = isVisible and self or nil
+  UIElement.setVisibility(self, isVisible)
 end
 
 function Button:isSelected(x, y)
-  return self.is_enabled and x > self.x and x < self.x + self.width and y > self.y and y < self.y + self.height
+  local screenX, screenY = self:getScreenPos()
+  return x > screenX and x < screenX + self.width and y > screenY and y < screenY + self.height
 end
 
 function Button:draw()
-  GAME.gfx_q:push({love.graphics.setColor, self.outline_color})
-  GAME.gfx_q:push({love.graphics.rectangle, {"line", self.x, self.y, self.width, self.height}})
+  local screenX, screenY = self:getScreenPos()
+  
+  GAME.gfx_q:push({love.graphics.setColor, self.outlineColor})
+  GAME.gfx_q:push({love.graphics.rectangle, {"line", screenX, screenY, self.width, self.height}})
   if self.image then
-    GAME.gfx_q:push({love.graphics.draw, {self.image, self.x + 1, self.y + 1, 0, (self.width - 2) / self.image:getWidth(), (self.height - 2) / self.image:getHeight()}})
+    GAME.gfx_q:push({love.graphics.draw, {self.image, screenX + 1, screenY + 1, 0, (self.width - 2) / self.image:getWidth(), (self.height - 2) / self.image:getHeight()}})
   else
-    local dark_gray = .3
-    local light_gray = .5
-    local alpha = .7
     GAME.gfx_q:push({love.graphics.setColor, self.color})
-    GAME.gfx_q:push({love.graphics.rectangle, {"fill", self.x, self.y, self.width, self.height}})
+    GAME.gfx_q:push({love.graphics.rectangle, {"fill", screenX, screenY, self.width, self.height}})
   end
   
-  
-  
-  local text_width, text_height = self.text:getDimensions()
-  local x_alignments = {
-    center = {self.width / 2, text_width / 2},
+  local textWidth, textHeight = self.text:getDimensions()
+  local xAlignments = {
+    center = {self.width / 2, textWidth / 2},
     left = {0, 0},
-    right = {self.width, text_width},
+    right = {self.width, textWidth},
   }
-  local y_alignments = {
-    center = {self.height / 2, text_height / 2},
+  local yAlignments = {
+    center = {self.height / 2, textHeight / 2},
     top = {0, 0},
-    bottom = {self.height, text_height},
+    bottom = {self.height, textHeight},
   }
-  local x_pos_align, x_offset = unpack(x_alignments[self.halign])
-  local y_pos_align, y_offset = unpack(y_alignments[self.valign])
+  local xPosAlign, xOffset = unpack(xAlignments[self.halign])
+  local yPosAlign, yOffset = unpack(yAlignments[self.valign])
   
   GAME.gfx_q:push({love.graphics.setColor, {0, 0, 0, 1}})
-  GAME.gfx_q:push({love.graphics.draw, {self.text, self.x + x_pos_align - 1, self.y + y_pos_align - 1, 0, 1, 1, x_offset, y_offset}})
-  GAME.gfx_q:push({love.graphics.draw, {self.text, self.x + x_pos_align - 1, self.y + y_pos_align + 1, 0, 1, 1, x_offset, y_offset}})
-  GAME.gfx_q:push({love.graphics.draw, {self.text, self.x + x_pos_align + 2, self.y + y_pos_align - 1, 0, 1, 1, x_offset, y_offset}})
-  GAME.gfx_q:push({love.graphics.draw, {self.text, self.x + x_pos_align + 2, self.y + y_pos_align + 1, 0, 1, 1, x_offset, y_offset}})
+  GAME.gfx_q:push({love.graphics.draw, {self.text, screenX + xPosAlign - 1, screenY + yPosAlign - 1, 0, 1, 1, xOffset, yOffset}})
+  GAME.gfx_q:push({love.graphics.draw, {self.text, screenX + xPosAlign - 1, screenY + yPosAlign + 1, 0, 1, 1, xOffset, yOffset}})
+  GAME.gfx_q:push({love.graphics.draw, {self.text, screenX + xPosAlign + 2, screenY + yPosAlign - 1, 0, 1, 1, xOffset, yOffset}})
+  GAME.gfx_q:push({love.graphics.draw, {self.text, screenX + xPosAlign + 2, screenY + yPosAlign + 1, 0, 1, 1, xOffset, yOffset}})
   GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
-  --GAME.gfx_q:push({love.graphics.draw, {self.text, self.x + x_pos_align, self.y + y_pos_align, 0, 1, 1, x_offset, y_offset}})
-  GAME.gfx_q:push({love.graphics.draw, {self.text, self.x + x_pos_align + 0, self.y + y_pos_align + 0, 0, 1, 1, x_offset, y_offset}})
-  --GAME.gfx_q:push({love.graphics.draw, {self.text, self.x + self.width / 2 + 0, self.y + y_pos_align + 1, 0, 1, 1, x_offset, y_offset}})
-  GAME.gfx_q:push({love.graphics.draw, {self.text, self.x + x_pos_align + 1, self.y + y_pos_align + 0, 0, 1, 1, x_offset, y_offset}})
-  --GAME.gfx_q:push({love.graphics.draw, {self.text, self.x + x_pos_align + 1, self.y + y_pos_align + 1, 0, 1, 1, x_offset, y_offset}})
+  GAME.gfx_q:push({love.graphics.draw, {self.text, screenX + xPosAlign + 0, screenY + yPosAlign + 0, 0, 1, 1, xOffset, yOffset}})
+  GAME.gfx_q:push({love.graphics.draw, {self.text, screenX + xPosAlign + 1, screenY + yPosAlign + 0, 0, 1, 1, xOffset, yOffset}})
   
 end
 

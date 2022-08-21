@@ -185,8 +185,8 @@ function CharacterSelect:showCharacterPage(page)
     self.button_grid[y][x] = nil
   end
   for i, character_button in ipairs(self.buttons.characters) do
-    character_button.is_visible = i > (page - 1) * MAX_CHARACTERS_PER_PAGE and i <= page * MAX_CHARACTERS_PER_PAGE
-    if character_button.is_visible then
+    character_button.isVisible = i > (page - 1) * MAX_CHARACTERS_PER_PAGE and i <= page * MAX_CHARACTERS_PER_PAGE
+    if character_button.isVisible then
       local x = (index + button_info.characters.x - 1) % MAX_COLS + 1
       local y = math.floor((index + button_info.characters.x - 1) / MAX_COLS + button_info.characters.y)
       self.button_grid[y][x] = character_button
@@ -221,8 +221,8 @@ function CharacterSelect:init()
         translate = false,
         valign = "top",
         image = characters[id].images.icon, 
-        outline_color = outline_color,
-        is_visible = false,
+        outlineColor = outline_color,
+        isVisible = false,
         onClick = function()
           self:moveCursor(x, y)
           self.cursor_data[1].state.character = id
@@ -241,8 +241,8 @@ function CharacterSelect:init()
       width = TILE_SIZE, 
       height = TILE_SIZE, 
       label = "random",
-      outline_color = outline_color,
-      is_visible = false,
+      outlineColor = outline_color,
+      isVisible = false,
       onClick = function()
         self:moveCursor(button_info.random.x, button_info.random.y)
         play_optional_sfx(themes[config.theme].sounds.menu_validate)
@@ -260,8 +260,8 @@ function CharacterSelect:init()
       width = TILE_SIZE, 
       height = TILE_SIZE, 
       label = "leave",
-      outline_color = outline_color,
-      is_visible = false,
+      outlineColor = outline_color,
+      isVisible = false,
       onClick = function()
         self:moveCursor(button_info.leave.x, button_info.leave.y)
         play_optional_sfx(themes[config.theme].sounds.menu_validate)
@@ -278,8 +278,8 @@ function CharacterSelect:init()
       width = TILE_SIZE, 
       height = TILE_SIZE, 
       label = "ready",
-      outline_color = outline_color,
-      is_visible = false,
+      outlineColor = outline_color,
+      isVisible = false,
       onClick = function() self:onReady() end
     })
   
@@ -292,9 +292,9 @@ function CharacterSelect:init()
       height = TILE_SIZE, 
       label = "level",
       valign = "top",
-      outline_color = outline_color,
+      outlineColor = outline_color,
       color = {0, 0, 0, 0},
-      is_visible = false,
+      isVisible = false,
       onClick = function() 
         self:moveCursor(button_info.level.x, button_info.level.y)
         self.buttons.level_select.enable.is_enabled = false
@@ -303,13 +303,12 @@ function CharacterSelect:init()
       end,
       onMousePressed = function() end
     })
-  local tick_length = 11
+  local tickLength = 11
   self.level_slider = LevelSlider({
-      x = x + self.buttons.level_select.enable.width / 2 - tick_length * #themes[config.theme].images.IMG_levels / 2,
-      y = y + self.buttons.level_select.enable.height / 2 - tick_length / 2,
-      tick_length = tick_length,
-      is_visible = false,
-      is_enabled = false,
+      x = x + self.buttons.level_select.enable.width / 2 - tickLength * #themes[config.theme].images.IMG_levels / 2,
+      y = y + self.buttons.level_select.enable.height / 2 - tickLength / 2,
+      tickLength = tickLength,
+      isVisible = false,
       value = config.level,
       onValueChange = function(s)
         play_optional_sfx(themes[config.theme].sounds.menu_move)
@@ -328,10 +327,9 @@ function CharacterSelect:init()
       height = TILE_SIZE, 
       label = "",
       translate = false,
-      outline_color = {0, 0, 0, 0},
+      outlineColor = {0, 0, 0, 0},
       color = {0, 0, 0, 0},
-      is_visible = false,
-      is_enabled = false,
+      isVisible = false,
       onClick = function()
         play_optional_sfx(themes[config.theme].sounds.menu_move)
         changeStage(self.cursor_data[1].state, -1)
@@ -345,10 +343,9 @@ function CharacterSelect:init()
       height = TILE_SIZE, 
       label = "",
       translate = false,
-      outline_color = {0, 0, 0, 0},
+      outlineColor = {0, 0, 0, 0},
       color = {0, 0, 0, 0},
-      is_visible = false,
-      is_enabled = false,
+      isVisible = false,
       onClick = function()
         play_optional_sfx(themes[config.theme].sounds.menu_move)
         changeStage(self.cursor_data[1].state, 1)
@@ -362,9 +359,9 @@ function CharacterSelect:init()
       height = TILE_SIZE, 
       label = "stage",
       valign = "top",
-      outline_color = outline_color,
+      outlineColor = outline_color,
       color = {0, 0, 0, 0},
-      is_visible = false,
+      isVisible = false,
       onClick = function() 
         self:moveCursor(button_info.stage.x, button_info.stage.y)
         self.cursor_data[1].selected = true
@@ -387,10 +384,9 @@ function CharacterSelect:init()
       height = TILE_SIZE, 
       label = "",
       translate = false,
-      outline_color = {0, 0, 0, 0},
+      outlineColor = {0, 0, 0, 0},
       color = {0, 0, 0, 0},
-      is_visible = false,
-      is_enabled = false,
+      isVisible = false,
       onClick = function()
         play_optional_sfx(themes[config.theme].sounds.menu_move)
         self.cursor_data[1].state.panels_dir = changePanelsDir(self.cursor_data[1].state.panels_dir, -1)
@@ -404,10 +400,9 @@ function CharacterSelect:init()
       height = TILE_SIZE, 
       label = "",
       translate = false,
-      outline_color = {0, 0, 0, 0},
+      outlineColor = {0, 0, 0, 0},
       color = {0, 0, 0, 0},
-      is_visible = false,
-      is_enabled = false,
+      isVisible = false,
       onClick = function()
         play_optional_sfx(themes[config.theme].sounds.menu_move)
         self.cursor_data[1].state.panels_dir = changePanelsDir(self.cursor_data[1].state.panels_dir, 1)
@@ -421,9 +416,9 @@ function CharacterSelect:init()
       height = TILE_SIZE, 
       label = "panels",
       valign = "top",
-      outline_color = outline_color,
+      outlineColor = outline_color,
       color = {0, 0, 0, 0},
-      is_visible = false,
+      isVisible = false,
       onClick = function() 
         self:moveCursor(button_info.panels.x, button_info.panels.y)
         self.cursor_data[1].selected = true
@@ -445,7 +440,7 @@ function CharacterSelect:init()
       height = 25, 
       label = "<",
       translate = false,
-      is_visible = false,
+      isVisible = false,
       onClick = function()
         play_optional_sfx(themes[config.theme].sounds.menu_move)
         self.current_page = bound(1, self.current_page - 1, self.num_character_pages)
@@ -459,7 +454,7 @@ function CharacterSelect:init()
       height = 25, 
       label = ">",
       translate = false,
-      is_visible = false,
+      isVisible = false,
       onClick = function()
         play_optional_sfx(themes[config.theme].sounds.menu_move)
         self.current_page = bound(1, self.current_page + 1, self.num_character_pages)
@@ -532,16 +527,16 @@ function CharacterSelect:load()
   for _, button_group in pairs(self.buttons) do
     if button_group.TYPE == "Button" then
       button_group:updateLabel()
-      button_group.is_visible = true
+      button_group:setVisibility(true)
     else
       for _, button in pairs(button_group) do
         button:updateLabel()
-        button.is_visible = true
+        button:setVisibility(true)
       end
     end
   end
   self:showCharacterPage(self.current_page)
-  self.level_slider.is_visible = true
+  self.level_slider:setVisibility(true)
   
   if not GAME.battleRoom then
     GAME.battleRoom = BattleRoom()
@@ -708,11 +703,11 @@ function CharacterSelect:drawLevelSelector()
   local x_offset
   local level_button = self.buttons.level_select.enable
   if self.level_slider.is_enabled then
-    x_offset = level_button.width / 2 - self.level_slider.tick_length * 7.6
-    GAME.gfx_q:push({love.graphics.draw, {brackets.left, level_button.x + level_button.width / 2 - self.level_slider.tick_length * 6.6, level_button.y + TILE_SIZE / 2, 0, 1, 1, 0, brackets.left:getHeight() / 2}})
-    GAME.gfx_q:push({love.graphics.draw, {brackets.right, level_button.x + level_button.width / 2 + self.level_slider.tick_length * 6.6, level_button.y + TILE_SIZE / 2, 0, 1, 1, brackets.right:getWidth(), brackets.right:getHeight() / 2}})
+    x_offset = level_button.width / 2 - self.level_slider.tickLength * 7.6
+    GAME.gfx_q:push({love.graphics.draw, {brackets.left, level_button.x + level_button.width / 2 - self.level_slider.tickLength * 6.6, level_button.y + TILE_SIZE / 2, 0, 1, 1, 0, brackets.left:getHeight() / 2}})
+    GAME.gfx_q:push({love.graphics.draw, {brackets.right, level_button.x + level_button.width / 2 + self.level_slider.tickLength * 6.6, level_button.y + TILE_SIZE / 2, 0, 1, 1, brackets.right:getWidth(), brackets.right:getHeight() / 2}})
   else
-    x_offset = level_button.width / 2 - self.level_slider.tick_length * 6.6
+    x_offset = level_button.width / 2 - self.level_slider.tickLength * 6.6
   end
   GAME.gfx_q:push({love.graphics.draw, {themes[config.theme].images.IMG_players[1], level_button.x + x_offset, level_button.y + TILE_SIZE / 2, 0, 1, 1, 0, themes[config.theme].images.IMG_players[1]:getHeight() / 2}})
 end
@@ -836,14 +831,14 @@ end
 function CharacterSelect:unload()
   for _, button_group in pairs(self.buttons) do
     if button_group.TYPE == "Button" then
-      button_group.is_visible = false
+      button_group:setVisibility(false)
     else
       for _, button in pairs(button_group) do
-        button.is_visible = false
+        button:setVisibility(false)
       end
     end
   end
-  self.level_slider.is_visible = false
+  self.level_slider:setVisibility(false)
   if themes[config.theme].musics.select_screen then
     stop_the_music()
   end

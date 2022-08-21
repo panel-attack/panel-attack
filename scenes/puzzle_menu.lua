@@ -54,9 +54,9 @@ end
 function puzzle_menu:init()
   scene_manager:addScene(puzzle_menu)
 
-  local tick_length = 16
+  local tickLength = 16
   self.level_slider = LevelSlider({
-      tick_length = tick_length,
+      tickLength = tickLength,
       onValueChange = function(s)
         play_optional_sfx(themes[config.theme].sounds.menu_move)
       end
@@ -64,19 +64,19 @@ function puzzle_menu:init()
   
   self.random_colors_buttons = ButtonGroup(
     {
-      Button({label = "op_off", width = 60, height = 25}),
-      Button({label = "op_on", width = 60, height = 25}),
-    },
-    {false, true},
-    {
+      buttons = {
+        Button({label = "op_off", width = 60, height = 25}),
+        Button({label = "op_on", width = 60, height = 25}),
+      },
+      values = {false, true},
       selected_index = config.puzzle_randomColors and 2 or 1,
       onChange = function() play_optional_sfx(themes[config.theme].sounds.menu_move) end
     }
   )
   
   local menu_options = {
-    {Label({label = "level", is_visible = false}), self.level_slider},
-    {Label({label = "randomColors", is_visible = false}), self.random_colors_buttons},
+    {Label({label = "level", isVisible = false}), self.level_slider},
+    {Label({label = "randomColors", isVisible = false}), self.random_colors_buttons},
   }
 
   for puzzle_set_name, puzzle_set in util.pairsSortedByKeys(GAME.puzzleSets) do
@@ -86,7 +86,7 @@ function puzzle_menu:init()
   
   local x, y = unpack(main_menu_screen_pos)
   y = y + 20
-  self.menu = Menu(menu_options, {x = x, y = y})
+  self.menu = Menu({menuItems = menu_options, x = x, y = y})
   self.menu:setVisibility(false)
 end
 

@@ -24,20 +24,20 @@ local speed_slider = Slider({
     min = 1, 
     max = 99, 
     value = GAME.config.endless_speed or 1, 
-    is_visible = false
+    isVisible = false
 })
 
 local font = love.graphics.getFont() 
 local difficulty_buttons = ButtonGroup(
     {
-      Button({label = "easy", width = 60, height = 25}),
-      Button({label = "normal", width = 60, height = 25}),
-      Button({label = "hard", width = 60, height = 25}),
-      -- TODO: localize "EX Mode"
-      Button({label = "EX Mode", translate = false}),
-    },
-    {1, 2, 3, 4},
-    {
+      buttons = {
+        Button({label = "easy", width = 60, height = 25}),
+        Button({label = "normal", width = 60, height = 25}),
+        Button({label = "hard", width = 60, height = 25}),
+        -- TODO: localize "EX Mode"
+        Button({label = "EX Mode", translate = false}),
+      },
+      values = {1, 2, 3, 4},
       selected_index = GAME.config.endless_difficulty or 1,
       onChange = function() play_optional_sfx(themes[config.theme].sounds.menu_move) end
     }
@@ -83,9 +83,9 @@ end
 function BasicMenu:init()
   scene_manager:addScene(self)
   
-  local tick_length = 16
+  local tickLength = 16
   self.level_slider = LevelSlider({
-      tick_length = tick_length,
+      tickLength = tickLength,
       onValueChange = function(s)
         play_optional_sfx(themes[config.theme].sounds.menu_move)
       end
@@ -93,41 +93,41 @@ function BasicMenu:init()
   
   self.type_buttons = ButtonGroup(
     {
-      Button({label = "endless_classic", onClick = function()
-            self.modern_menu:setVisibility(false)
-            self.classic_menu:setVisibility(true)
-            end, width = 60, height = 25}),
-      Button({label = "endless_modern", onClick = function()
-            self.classic_menu:setVisibility(false) 
-            self.modern_menu:setVisibility(true)
-            end, width = 60, height = 25}),
-    },
-    {"Classic", "Modern"},
-    {
+      buttons = {
+        Button({label = "endless_classic", onClick = function()
+              self.modern_menu:setVisibility(false)
+              self.classic_menu:setVisibility(true)
+              end, width = 60, height = 25}),
+        Button({label = "endless_modern", onClick = function()
+              self.classic_menu:setVisibility(false) 
+              self.modern_menu:setVisibility(true)
+              end, width = 60, height = 25}),
+      },
+      values = {"Classic", "Modern"},
       selected_index = 2,
       onChange = function() play_optional_sfx(themes[config.theme].sounds.menu_move) end
     }
   )
   
   local modern_menu_options = {
-    {Label({label = "endless_type", is_visible = false}), self.type_buttons},
-    {Label({label = "level", is_visible = false}), self.level_slider},
-    {Button({label = "go_", onClick = function() self:startGame() end, is_visible = false})},
-    {Button({label = "back", onClick = exitMenu, is_visible = false})},
+    {Label({label = "endless_type"}), self.type_buttons},
+    {Label({label = "level"}), self.level_slider},
+    {Button({label = "go_", onClick = function() self:startGame() end})},
+    {Button({label = "back", onClick = exitMenu})},
   }
   
   local classic_menu_options = {
     modern_menu_options[1],
-    {Label({label = "speed", is_visible = false}), speed_slider},
-    {Label({label = "difficulty", is_visible = false}), difficulty_buttons},
-    {Button({label = "go_", onClick = function() self:startGame() end, is_visible = false})},
-    {Button({label = "back", onClick = exitMenu, is_visible = false})},
+    {Label({label = "speed", isVisible = false}), speed_slider},
+    {Label({label = "difficulty", isVisible = false}), difficulty_buttons},
+    {Button({label = "go_", onClick = function() self:startGame() end})},
+    {Button({label = "back", onClick = exitMenu})},
   }
   
   local x, y = unpack(main_menu_screen_pos)
   y = y + 100
-  self.classic_menu = Menu(classic_menu_options, {x = x, y = y})
-  self.modern_menu = Menu(modern_menu_options, {x = x, y = y})
+  self.classic_menu = Menu({menuItems = classic_menu_options, x = x, y = y})
+  self.modern_menu = Menu({menuItems = modern_menu_options, x = x, y = y})
   self.classic_menu:setVisibility(false)
   self.modern_menu:setVisibility(false)
 end

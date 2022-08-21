@@ -38,12 +38,12 @@ local trainingStepper
 local width_slider = Slider({
     min = 1, 
     max = 6, 
-    tick_length = 15,
+    tickLength = 15,
     value = 6,
     onValueChange = function()
       trainingStepper:setState(1)
     end,
-    is_visible = false
+    isVisible = false
 })
 
 local height_slider = Slider({
@@ -53,7 +53,7 @@ local height_slider = Slider({
     onValueChange = function()
       trainingStepper:setState(1)
     end,
-    is_visible = false
+    isVisible = false
 })
 
 local function startGame()
@@ -97,10 +97,10 @@ function training_mode_menu:init()
   end
   
   trainingStepper = Stepper(
-    trainingLabels,
-    trainingValues,
     {
-      selected_index = 1,
+      labels = trainingLabels,
+      values = trainingValues,
+      selectedIndex = 1,
       onChange = function(value) 
         play_optional_sfx(themes[config.theme].sounds.menu_move)
       end
@@ -108,16 +108,16 @@ function training_mode_menu:init()
   )
   
   local menu_options = {
-    {Label({label = "Custom", translate = false, is_visible = false}), trainingStepper},
-    {Label({label = "width", is_visible = false}), width_slider},
-    {Label({label = "height", is_visible = false}), height_slider},
-    {Button({label = "go_", onClick = startGame, is_visible = false})},
-    {Button({label = "back", onClick = exitMenu, is_visible = false})},
+    {Label({label = "Custom", translate = false, isVisible = false}), trainingStepper},
+    {Label({label = "width", isVisible = false}), width_slider},
+    {Label({label = "height", isVisible = false}), height_slider},
+    {Button({label = "go_", onClick = startGame, isVisible = false})},
+    {Button({label = "back", onClick = exitMenu, isVisible = false})},
   }
 
   local x, y = unpack(main_menu_screen_pos)
   y = y + 100
-  self.menu = Menu(menu_options, {x = x, y = y})
+  self.menu = Menu({menuItems = menu_options, x = x, y = y})
   self.menu:setVisibility(false)
   scene_manager:addScene(training_mode_menu)
 end
