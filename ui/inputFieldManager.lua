@@ -8,15 +8,19 @@ local inputFieldManager = {
 local selectedInputField = nil
 
 function inputFieldManager.update()
-  if input:isPressedWithRepeat("backspace", .25, .1) and selectedInputField then
+  if not selectedInputField or not selectedInputField.isEnabled then
+    return
+  end
+
+  if input:isPressedWithRepeat("backspace", .25, .1)then
     selectedInputField:onBackspace()
   end
   
-  if input:isPressedWithRepeat("left", .25, .1) and selectedInputField then
+  if input:isPressedWithRepeat("left", .25, .1) then
     selectedInputField:onMoveCursor(-1)
   end
   
-  if input:isPressedWithRepeat("right", .25, .1) and selectedInputField then
+  if input:isPressedWithRepeat("right", .25, .1) then
     selectedInputField:onMoveCursor(1)
   end
 end
@@ -36,7 +40,7 @@ function inputFieldManager.mousePressed(x, y)
   love.keyboard.setTextInput(false)
 
   for id, inputField in pairs(inputFieldManager.inputFields) do
-    if inputField:isSelected(canvasX, canvasY) then
+    if inputField.isEnabled and inputField:isSelected(canvasX, canvasY) then
       inputField:setFocus(x, y)
       love.keyboard.setTextInput(true)
       selectedInputField = inputField
@@ -46,7 +50,7 @@ function inputFieldManager.mousePressed(x, y)
 end
 
 function inputFieldManager.textInput(t)
-  if selectedInputField then
+  if selectedInputField and selectedInputField.isEnabled then
     selectedInputField:textInput(t)
   end
 end

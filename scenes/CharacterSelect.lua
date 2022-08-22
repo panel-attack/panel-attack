@@ -97,14 +97,14 @@ function CharacterSelect:moveCursor(x, y)
   self.cursor_pos.x = x
   self.cursor_pos.y = y
   self.cursor_data[1].selected = false
-  self.buttons.level_select.enable.is_enabled = true
-  self.level_slider.is_enabled = false
-  self.buttons.stage_select.enable.is_enabled = true
-  self.buttons.stage_select.left.is_enabled = false
-  self.buttons.stage_select.right.is_enabled = false
-  self.buttons.panels_select.enable.is_enabled = true
-  self.buttons.panels_select.left.is_enabled = false
-  self.buttons.panels_select.right.is_enabled = false 
+  self.buttons.level_select.enable:setEnabled(true)
+  self.level_slider:setEnabled(false)
+  self.buttons.stage_select.enable:setEnabled(true)
+  self.buttons.stage_select.left:setEnabled(false)
+  self.buttons.stage_select.right:setEnabled(false)
+  self.buttons.panels_select.enable:setEnabled(true)
+  self.buttons.panels_select.left:setEnabled(false)
+  self.buttons.panels_select.right:setEnabled(false)
 end
 
 function CharacterSelect:onReady()
@@ -185,7 +185,7 @@ function CharacterSelect:showCharacterPage(page)
     self.button_grid[y][x] = nil
   end
   for i, character_button in ipairs(self.buttons.characters) do
-    character_button.isVisible = i > (page - 1) * MAX_CHARACTERS_PER_PAGE and i <= page * MAX_CHARACTERS_PER_PAGE
+    character_button:setVisibility(i > (page - 1) * MAX_CHARACTERS_PER_PAGE and i <= page * MAX_CHARACTERS_PER_PAGE)
     if character_button.isVisible then
       local x = (index + button_info.characters.x - 1) % MAX_COLS + 1
       local y = math.floor((index + button_info.characters.x - 1) / MAX_COLS + button_info.characters.y)
@@ -297,8 +297,8 @@ function CharacterSelect:init()
       isVisible = false,
       onClick = function() 
         self:moveCursor(button_info.level.x, button_info.level.y)
-        self.buttons.level_select.enable.is_enabled = false
-        self.level_slider.is_enabled = true 
+        self.buttons.level_select.enable:setEnabled(false)
+        self.level_slider:setEnabled(true)
         play_optional_sfx(themes[config.theme].sounds.menu_validate)
       end,
       onMousePressed = function() end
@@ -366,9 +366,9 @@ function CharacterSelect:init()
         self:moveCursor(button_info.stage.x, button_info.stage.y)
         self.cursor_data[1].selected = true
         self.cursor_data[1].state.cursor = "__Stage"
-        self.buttons.stage_select.enable.is_enabled = false
-        self.buttons.stage_select.left.is_enabled = true
-        self.buttons.stage_select.right.is_enabled = true 
+        self.buttons.stage_select.enable:setEnabled(false)
+        self.buttons.stage_select.left:setEnabled(true)
+        self.buttons.stage_select.right:setEnabled(true)
         play_optional_sfx(themes[config.theme].sounds.menu_validate)
       end,
       onMousePressed = function() end
@@ -423,9 +423,9 @@ function CharacterSelect:init()
         self:moveCursor(button_info.panels.x, button_info.panels.y)
         self.cursor_data[1].selected = true
         self.cursor_data[1].state.cursor = "__Panels"
-        self.buttons.panels_select.enable.is_enabled = false
-        self.buttons.panels_select.left.is_enabled = true
-        self.buttons.panels_select.right.is_enabled = true
+        self.buttons.panels_select.enable:setEnabled(false)
+        self.buttons.panels_select.left:setEnabled(true)
+        self.buttons.panels_select.right:setEnabled(true)
         play_optional_sfx(themes[config.theme].sounds.menu_validate)
       end,
       onMousePressed = function() end
@@ -627,7 +627,7 @@ function CharacterSelect:drawPanelsSelector()
     end
   end
   local x_offset
-  if self.buttons.panels_select.left.is_enabled then
+  if self.buttons.panels_select.left.isEnabled then
     x_offset = panels_button.width / 2 - panel_size * (num_panels / 2 + .9)
     GAME.gfx_q:push({love.graphics.draw, {brackets.left, panels_button.x + panels_button.width / 2 - panel_size * (num_panels / 2 + .5), panels_button.y + TILE_SIZE / 2, 0, 1, 1, 0, brackets.left:getHeight() / 2}})
     GAME.gfx_q:push({love.graphics.draw, {brackets.right, panels_button.x + panels_button.width / 2 + panel_size * (num_panels / 2 + .5), panels_button.y + TILE_SIZE / 2, 0, 1, 1, brackets.right:getWidth(), brackets.right:getHeight() / 2}})
@@ -653,7 +653,7 @@ function CharacterSelect:drawStage()
   GAME.gfx_q:push({love.graphics.draw, {img, stage_button.x + stage_button.width / 2, stage_button.y + stage_button.height / 2, 0, stage_dims[1] / img:getWidth(), stage_dims[2] / img:getHeight(), img:getWidth() / 2, img:getHeight() / 2}})
 
   local x_offset
-  if self.buttons.stage_select.left.is_enabled then
+  if self.buttons.stage_select.left.isEnabled then
     GAME.gfx_q:push({love.graphics.draw, {brackets.left, stage_button.x + stage_button.width / 2 - (stage_dims[1] / 2 + 12), stage_button.y + stage_button.height / 2 + 10, 0, 1, 1, 0, brackets.left:getHeight() / 2}})
     GAME.gfx_q:push({love.graphics.draw, {brackets.right, stage_button.x + stage_button.width / 2 + stage_dims[1] / 2 + 12, stage_button.y + stage_button.height / 2 + 10, 0, 1, 1, brackets.right:getWidth(), brackets.right:getHeight() / 2}})
   end
@@ -702,7 +702,7 @@ end
 function CharacterSelect:drawLevelSelector()
   local x_offset
   local level_button = self.buttons.level_select.enable
-  if self.level_slider.is_enabled then
+  if self.level_slider.isEnabled then
     x_offset = level_button.width / 2 - self.level_slider.tickLength * 7.6
     GAME.gfx_q:push({love.graphics.draw, {brackets.left, level_button.x + level_button.width / 2 - self.level_slider.tickLength * 6.6, level_button.y + TILE_SIZE / 2, 0, 1, 1, 0, brackets.left:getHeight() / 2}})
     GAME.gfx_q:push({love.graphics.draw, {brackets.right, level_button.x + level_button.width / 2 + self.level_slider.tickLength * 6.6, level_button.y + TILE_SIZE / 2, 0, 1, 1, brackets.right:getWidth(), brackets.right:getHeight() / 2}})
@@ -749,25 +749,25 @@ function CharacterSelect:update()
   end
   
   if input:isPressedWithRepeat("Up", .25, .05) then
-    if not (self.level_slider.is_enabled or self.buttons.stage_select.left.is_enabled or self.buttons.panels_select.left.is_enabled) then
+    if not (self.level_slider.isEnabled or self.buttons.stage_select.left.isEnabled or self.buttons.panels_select.left.isEnabled) then
       self.cursor_pos.y = (self.cursor_pos.y - 2) % MAX_ROWS + 1
       play_optional_sfx(themes[config.theme].sounds.menu_move)
     end
   end
   
   if input:isPressedWithRepeat("Down", .25, .05) then
-    if not (self.level_slider.is_enabled or self.buttons.stage_select.left.is_enabled or self.buttons.panels_select.left.is_enabled) then
+    if not (self.level_slider.isEnabled or self.buttons.stage_select.left.isEnabled or self.buttons.panels_select.left.isEnabled) then
       self.cursor_pos.y = self.cursor_pos.y % MAX_ROWS + 1
       play_optional_sfx(themes[config.theme].sounds.menu_move)
     end
   end
   
   if input:isPressedWithRepeat("Left", .25, .05) then
-    if self.level_slider.is_enabled then
+    if self.level_slider.isEnabled then
       self.level_slider:setValue(self.level_slider.value - 1)
-    elseif self.buttons.stage_select.left.is_enabled then
+    elseif self.buttons.stage_select.left.isEnabled then
       self.buttons.stage_select.left.onClick()
-    elseif self.buttons.panels_select.left.is_enabled then
+    elseif self.buttons.panels_select.left.isEnabled then
       self.buttons.panels_select.left.onClick()
     else
       local x = self.cursor_pos.x
@@ -783,11 +783,11 @@ function CharacterSelect:update()
   end
   
   if input:isPressedWithRepeat("Right", .25, .05) then
-    if self.level_slider.is_enabled then
+    if self.level_slider.isEnabled then
       self.level_slider:setValue(self.level_slider.value + 1)
-    elseif self.buttons.stage_select.right.is_enabled then
+    elseif self.buttons.stage_select.right.isEnabled then
       self.buttons.stage_select.right.onClick()
-    elseif self.buttons.panels_select.right.is_enabled then
+    elseif self.buttons.panels_select.right.isEnabled then
       self.buttons.panels_select.right.onClick()
     else
       local x = self.cursor_pos.x
@@ -803,7 +803,7 @@ function CharacterSelect:update()
   end
   
   if input.isDown["Swap1"] or input.isDown["Start"] then
-    if self.level_slider.is_enabled or self.buttons.stage_select.left.is_enabled or self.buttons.panels_select.left.is_enabled then
+    if self.level_slider.isEnabled or self.buttons.stage_select.left.isEnabled or self.buttons.panels_select.left.isEnabled then
       self:moveCursor(self.cursor_pos.x, self.cursor_pos.y)
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
     else

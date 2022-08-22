@@ -13,7 +13,7 @@ end
 
 function sliderManager.mouseDragged(x, y)
   local canvasX, canvasY = GAME:transform_coordinates(x, y)
-  if selectedSlider == nil then
+  if selectedSlider == nil or not selectedSlider.isEnabled then
     return
   end
   
@@ -22,7 +22,7 @@ end
 
 function sliderManager.mouseReleased(x, y)
   local canvasX, canvasY = GAME:transform_coordinates(x, y)
-  if selectedSlider == nil then
+  if selectedSlider == nil or not selectedSlider.isEnabled then
     return
   end
 
@@ -33,7 +33,7 @@ end
 function sliderManager.mousePressed(x, y)
   local canvasX, canvasY = GAME:transform_coordinates(x, y)
   for id, slider in pairs(sliderManager.sliders) do
-    if slider:isSelected(canvasX, canvasY) then
+    if slider.isEnabled and slider:isSelected(canvasX, canvasY) then
       selectedSlider = slider
       selectedSlider:setValueFromPos(canvasX)
     end

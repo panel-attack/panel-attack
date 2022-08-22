@@ -16,6 +16,7 @@ local UIElement = class(
     self.extraLabels = options.extra_labels or {}
     self.translate = options.translate or options.translate == nil and true
     self.isVisible = options.isVisible or options.isVisible == nil and true
+    self.isEnabled = options.isEnabled or options.isEnabled == nil and true
     self.parent = options.parent
     self.children = options.children or {}
     
@@ -61,15 +62,22 @@ function UIElement:updateLabel(label)
     self.text = love.graphics.newText(love.graphics.getFont(), self.translate and loc(self.label, unpack(self.extraLabels)) or self.label)
   end
   
-  for _, uiElement in pairs(self.children) do
+  for _, uiElement in ipairs(self.children) do
     uiElement:updateLabel()
   end
 end
 
 function UIElement:setVisibility(isVisible)
   self.isVisible = isVisible
-  for _, uiElement in pairs(self.children) do
+  for _, uiElement in ipairs(self.children) do
     uiElement:setVisibility(isVisible)
+  end
+end
+
+function UIElement:setEnabled(isEnabled)
+  self.isEnabled = isEnabled
+  for _, uiElement in ipairs(self.children) do
+    uiElement:setEnabled(isEnabled)
   end
 end
 
