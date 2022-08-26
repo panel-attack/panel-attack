@@ -12,7 +12,8 @@ function inputFieldManager.update()
     return
   end
 
-  if input:isPressedWithRepeat("backspace", .25, .1)then
+  if input:isPressedWithRepeat("backspace", .25, .1) then
+
     selectedInputField:onBackspace()
   end
   
