@@ -943,144 +943,66 @@ local function about_menu(button_idx)
   GAME.backgroundImage = themes[config.theme].images.bg_main
   local aboutMenu
 
-  local function show_themes_readme()
-    ret = {
-      function()
-        GAME.backgroundImage = themes[config.theme].images.bg_readme
-        reset_filters()
+  local function show_readme(filename, returnIndex)
+    GAME.backgroundImage = themes[config.theme].images.bg_readme
+    reset_filters()
 
-        if not love.filesystem.getInfo("themes/" .. prefix_of_ignored_dirs .. default_theme_dir) then
-          --print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
-          gprint(loc("op_copy_files"), 280, 280)
-          wait()
-          recursive_copy("themes/" .. default_theme_dir, "themes/" .. prefix_of_ignored_dirs .. default_theme_dir)
-
-          -- Android can't easily copy into the save dir, so do it for them to help.
-          recursive_copy("default_data/themes", "themes")
-        end
-
-        local readme = read_txt_file("readme_themes.txt")
-        while true do
-          gprint(readme, 15, 15)
-          wait()
-          local theme_ret = nil
-          variable_step(
-            function()
-              if menu_escape() or menu_enter() then
-                theme_ret = {about_menu, {1}}
-              end
+    local readme = read_txt_file(filename)
+    local text = love.graphics.newText(get_global_font(), readme)
+    local heightDiff = text:getHeight() - (canvas_height - 15)
+    local offset = 0
+    local scrollStep = 14
+    while true do
+      gfx_q:push({love.graphics.draw, {text, 15, 15, nil, nil, nil, nil, offset}})
+      wait()
+      local readmeRet = nil
+      variable_step(
+        function()
+          if menu_escape() or menu_enter() then
+            readmeRet = {about_menu, {returnIndex}}
+          elseif heightDiff > 0 then
+            if menu_up() then
+              offset = math.max(0, offset - scrollStep)
+            elseif menu_down() then
+              offset = math.min(heightDiff + (scrollStep - (heightDiff % scrollStep)), offset + scrollStep)
             end
-          )
-          if theme_ret then
-            return unpack(theme_ret)
           end
         end
+      )
+      if readmeRet then
+        return unpack(readmeRet)
       end
-    }
+    end
+  end
+
+  local function show_themes_readme()
+    if not love.filesystem.getInfo("themes/" .. prefix_of_ignored_dirs .. default_theme_dir) then
+      --print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
+      gprint(loc("op_copy_files"), 280, 280)
+      wait()
+      recursive_copy("themes/" .. default_theme_dir, "themes/" .. prefix_of_ignored_dirs .. default_theme_dir)
+
+      -- Android can't easily copy into the save dir, so do it for them to help.
+      recursive_copy("default_data/themes", "themes")
+    end
+
+    ret = {show_readme, {"readme_themes.txt", 1}}
   end
 
   local function show_characters_readme()
-    ret = {
-      function()
-        GAME.backgroundImage = themes[config.theme].images.bg_readme
-        reset_filters()
-
-        local readme = read_txt_file("readme_characters.txt")
-        while true do
-          gprint(readme, 15, 15)
-          wait()
-          local characters_ret = nil
-          variable_step(
-            function()
-              if menu_escape() or menu_enter() then
-                characters_ret = {about_menu, {2}}
-              end
-            end
-          )
-          if characters_ret then
-            return unpack(characters_ret)
-          end
-        end
-      end
-    }
+    ret = {show_readme, {"readme_characters.txt", 2}}
   end
 
   local function show_stages_readme()
-    ret = {
-      function()
-        GAME.backgroundImage = themes[config.theme].images.bg_readme
-        reset_filters()
-
-        local readme = read_txt_file("readme_stages.txt")
-        while true do
-          gprint(readme, 15, 15)
-          wait()
-          local stages_ret = nil
-          variable_step(
-            function()
-              if menu_escape() or menu_enter() then
-                stages_ret = {about_menu, {3}}
-              end
-            end
-          )
-          if stages_ret then
-            return unpack(stages_ret)
-          end
-        end
-      end
-    }
+    ret = {show_readme, {"readme_stages.txt", 3}}
   end
 
   local function show_panels_readme()
-    ret = {
-      function()
-        GAME.backgroundImage = themes[config.theme].images.bg_readme
-        reset_filters()
-
-        local readme = read_txt_file("readme_panels.txt")
-        while true do
-          gprint(readme, 15, 15)
-          wait()
-          local panels_ret = nil
-          variable_step(
-            function()
-              if menu_escape() or menu_enter() then
-                panels_ret = {about_menu, {4}}
-              end
-            end
-          )
-          if panels_ret then
-            return unpack(panels_ret)
-          end
-        end
-      end
-    }
+    ret = {show_readme, {"readme_panels.txt", 4}}
   end
 
   local function show_attack_readme()
-    ret = {
-      function()
-        GAME.backgroundImage = themes[config.theme].images.bg_readme
-        reset_filters()
-
-        local readme = read_txt_file("readme_training.txt")
-        while true do
-          gprint(readme, 15, 15)
-          wait()
-          local panels_ret = nil
-          variable_step(
-            function()
-              if menu_escape() or menu_enter() then
-                panels_ret = {about_menu, {5}}
-              end
-            end
-          )
-          if panels_ret then
-            return unpack(panels_ret)
-          end
-        end
-      end
-    }
+    ret = {show_readme, {"readme_training.txt", 5}}
   end
 
   local function show_system_info()

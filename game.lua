@@ -23,6 +23,7 @@ Game =
     self.showGameScale = false
     self.needsAssetReload = false
     self.previousWindowWidth = 0
+    self.previousWindowHeight = 0
   end
 )
 
@@ -97,6 +98,7 @@ function Game:updateCanvasPositionAndScale(newWindowWidth, newWindowHeight)
   end
 
   GAME.previousWindowWidth = newWindowWidth
+  GAME.previousWindowHeight = newWindowHeight
 end
 
 -- Provides a scale that is on .5 boundary to make sure it renders well.
@@ -108,6 +110,11 @@ end
 
 -- Reloads the canvas and all images / fonts for the new game scale
 function Game:refreshCanvasAndImagesForNewScale()
+  if themes == nil or themes[config.theme] == nil then
+    return -- EARLY RETURN, assets haven't loaded the first time yet
+    -- they will load through the normal process
+  end
+
   GAME:drawLoadingString(loc("ld_characters"))
   coroutine.yield()
 
