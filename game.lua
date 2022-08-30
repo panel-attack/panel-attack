@@ -15,6 +15,15 @@ Game =
     self.renderDuringPause = false -- if the game can render when you are paused
     self.currently_paused_tracks = {} -- list of tracks currently paused
     self.rich_presence = nil
+    self.canvasX = 0
+    self.canvasY = 0
+    self.canvasXScale = 1
+    self.canvasYScale = 1
+    self.availableScales = {1, 1.5, 2, 2.5, 3}
+    self.showGameScale = false
+    self.needsAssetReload = false
+    self.previousWindowWidth = 0
+    self.previousWindowHeight = 0
   end
 )
 
@@ -53,6 +62,96 @@ function Game.loveVersionString()
   local major, minor, revision, codename = love.getVersion()
   loveVersionStringValue = string.format("%d.%d.%d", major, minor, revision)
   return loveVersionStringValue
+end
+
+-- Updates the scale and position values to use up the right size of the window based on the user's settings.
+function Game:updateCanvasPositionAndScale(newWindowWidth, newWindowHeight)
+  local scaleIsUpdated = false
+  if config.gameScaleType ~= "fit" then
+    local availableScales = shallowcpy(self.availableScales)
+    if config.gameScaleType == "fixed" then
+      availableScales = {config.gameScaleFixedValue}
+    end
+
+    -- Handle both "auto" and a fixed scale
+    -- Go from biggest to smallest and used the highest one that still fits
+    for i = #availableScales, 1, -1 do
+      local scale = availableScales[i]
+      if config.gameScaleType ~= "auto" or 
+        (newWindowWidth >= canvas_width * scale and newWindowHeight >= canvas_height * scale) then
+        GAME.canvasXScale = scale
+        GAME.canvasYScale = scale
+        GAME.canvasX = math.floor((newWindowWidth - (scale * canvas_width)) / 2)
+        GAME.canvasY = math.floor((newWindowHeight - (scale * canvas_height)) / 2)
+        scaleIsUpdated = true
+        break
+      end
+    end
+  end
+
+  if scaleIsUpdated == false then
+    -- The only thing left to do is scale to fit the window
+    local w, h
+    GAME.canvasX, GAME.canvasY, w, h = scale_letterbox(newWindowWidth, newWindowHeight, 16, 9)
+    GAME.canvasXScale = w / canvas_width
+    GAME.canvasYScale = h / canvas_height
+  end
+
+  GAME.previousWindowWidth = newWindowWidth
+  GAME.previousWindowHeight = newWindowHeight
+end
+
+-- Provides a scale that is on .5 boundary to make sure it renders well.
+-- Useful for creating new canvas with a solid DPI
+function Game:newCanvasSnappedScale()
+  local result = math.max(1, math.floor(self.canvasXScale*2)/2)
+  return result
+end
+
+-- Reloads the canvas and all images / fonts for the new game scale
+function Game:refreshCanvasAndImagesForNewScale()
+  if themes == nil or themes[config.theme] == nil then
+    return -- EARLY RETURN, assets haven't loaded the first time yet
+    -- they will load through the normal process
+  end
+
+  GAME:drawLoadingString(loc("ld_characters"))
+  coroutine.yield()
+
+  self.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME:newCanvasSnappedScale()})
+  -- We need to reload all assets and fonts to get the new scaling info and filters
+
+  -- Reload theme to get the new resolution assets
+  themes[config.theme]:graphics_init()
+  themes[config.theme]:final_init()
+  -- Reload stages to get the new resolution assets
+  stages_reload_graphics()
+  -- Reload panels to get the new resolution assets
+  panels_init()
+  -- Reload characters to get the new resolution assets
+  characters_reload_graphics()
+  
+  -- Reload loc to get the new font
+  localization:set_language(config.language_code)
+  for _, menu in pairs(CLICK_MENUS) do
+    menu:reloadGraphics()
+  end
+end
+
+-- Transform from window coordinates to game coordinates
+function Game:transform_coordinates(x, y)
+  return (x - self.canvasX) / self.canvasXScale, (y - self.canvasY) / self.canvasYScale
+end
+
+
+function Game:drawLoadingString(loadingString) 
+  local textMaxWidth = 300
+  local textHeight = 40
+  local x = 0
+  local y = canvas_height/2 - textHeight/2
+  local backgroundPadding = 10
+  grectangle_color("fill", (canvas_width / 2 - (textMaxWidth/2)) / GFX_SCALE , (y - backgroundPadding) / GFX_SCALE, textMaxWidth/GFX_SCALE, textHeight/GFX_SCALE, 0, 0, 0, 0.5)
+  gprintf(loadingString, x, y, canvas_width, "center", nil, nil, 10)
 end
 
 local game = Game()

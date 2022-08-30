@@ -27,8 +27,24 @@ Note: non-optional data that is missing will automatically get replaced by defau
 Note: providing a specific, long enough id is a very good idea so that people renaming your mods folders still get properly match with other users regarding your mods. e.g. "mycharacter_myname"
 
 ~~ [.png, .jpg] ~~
-- "topleft", "botleft", "topright", "botright", "top", "bot", "left", "right", "face", "pop", "doubleface", "filler1", "filler2", "flash": assets for garbages
-- "portrait", "portrait2", "icon": display of your character ingame on the Player 1 side, the Player 2 side, and in the lobby
+Assets will get scaled and stretched if they don't match the recommended size/ratio. Using double the size may look better at higher resolutions.
+
+Garbage assets:
+See https://cdn.discordapp.com/attachments/417706389813592068/874106744392007680/garbage_ref.png for an arrangement overview.
+- "topleft", "botleft", "topright", "botright": corner sprites, recommended size: 24x9
+- "top", "bot": sprites for covering the top and bottom side of the garbage, gets stretched to the width of the garbage; recommended size: 6px high
+- "left", "right": sprites for the left and right side of the garbage, gets stretched to the height of the garbage, recommended size: 24px wide
+- "face": sprite for the center of garbage pieces of odd-numbered height (1, 3, ...), recommended size: 48x48
+- "face2": optional sprite that can replace face on garbage pieces of odd-numbered width for tiling purposes, recommended size: 48x48
+- "doubleface": sprite for the center of garbage pieces of even-numbered height (2, 4, ...), recommended size: 48x96
+- "pop": appearance for garbage panels after it got cleared but did not reveal the actual panel yet, recommended size: 48x48
+- "flash": sprite for when the garbage gets cleared, rapidly alternates with pop for a short time, recommended size: 48x48
+- "filler1": filling up the garbage blocks, recommended to be 48x48
+- "filler2": filling up the garbage blocks for blocks with height 3 and up, alternating with filler1, recommended size: 48x48
+
+Other image assets:
+- "portrait", "portrait2": display of your character ingame on the player 1/2 side, portrait2 is optional, recommended size: 288x576
+- "icon": display in the lobby, recommended size: 84x84
 - "burst" or "fade": The image used for popfx. The image should be 9 equal sized frames in a row, first frame is the telegraph, frames 2 to 9 are the burst or fade animation
 
 ~~ [.mp3, .ogg, .wav, .it, .flac] optional sounds are in parenthesis ~~

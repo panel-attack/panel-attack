@@ -1,4 +1,5 @@
 {
 	"id":"pa_characters_hookbill",
-	"name":"Hookbill"
+	"name":"Hookbill",
+	"stage":"pa_stages_cave"
 }

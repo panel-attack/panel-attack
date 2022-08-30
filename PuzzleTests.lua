@@ -39,7 +39,14 @@ function PuzzleTests.validationStackLength()
   local isValid, validationMessage = puzzle:validate()
 
   assert(not isValid)
-  assert(string.match(validationMessage, "Maximum allowed"))
+  assert(string.match(validationMessage, "Panels above the top"))
+end
+
+function PuzzleTests.validationStackLength2()
+  local puzzle = Puzzle("clear", false, 3, "[==================================]000060500014600011300024502542203135466243")
+  local isValid = puzzle:validate()
+
+  assert(isValid)
 end
 
 function PuzzleTests.validationGarbageCoherence1()
@@ -86,6 +93,7 @@ PuzzleTests.validationCountdown()
 PuzzleTests.validationPuzzleType()
 PuzzleTests.validationMoves()
 PuzzleTests.validationStackLength()
+PuzzleTests.validationStackLength2()
 PuzzleTests.validationStackCharacters()
 PuzzleTests.validationGarbageCoherence1()
 PuzzleTests.validationGarbageCoherence2()

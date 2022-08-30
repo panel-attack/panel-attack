@@ -1,39 +1,94 @@
 require("consts")
 local logger = require("logger")
 
-local function load_img(path_and_name)
-  local img = nil
+
+-- Utility methods for drawing
+GraphicsUtil = { fontFile = nil, fontSize = 12, fontCache = {} }
+
+function GraphicsUtil.privateLoadImage(path_and_name)
+  local image = nil
   local status = pcall(
     function()
-      img = love.image.newImageData(path_and_name)
+      image = love.graphics.newImage(path_and_name)
     end
   )
-  if not status then
-    pcall(
-      function ()
-        img = love.image.newImageData("themes/Panel Attack/transparent.png")
-      end)
-    
-    logger.error("Error loading image: " .. path_and_name .. 
-      " Check it is valid and try resaving it in an image editor. If you are not the owner please get them to update it or download the latest version.")
-  end
-  if img == nil then
+  if image == nil then
     return nil
   end
-  -- logger.debug("loaded asset: "..path_and_name)
-  local ret = love.graphics.newImage(img)
-  ret:setFilter("nearest","nearest")
-  return ret
+  logger.debug("loaded asset: " .. path_and_name)
+  return image
 end
 
-function load_img_from_supported_extensions(path_and_name)
-  local supported_img_formats = { ".png", ".jpg" }
-  for _, extension in ipairs(supported_img_formats) do
-    if love.filesystem.getInfo(path_and_name..extension) then
-      return load_img(path_and_name..extension)
+function GraphicsUtil.privateLoadImageWithExtensionAndScale(pathAndName, extension, scale)
+  local scaleSuffixString = "@" .. scale .. "x"
+  if scale == 1 then
+    scaleSuffixString = ""
+  end
+
+  local fileName = pathAndName .. scaleSuffixString .. extension
+
+  if love.filesystem.getInfo(fileName) then
+    local result = GraphicsUtil.privateLoadImage(fileName)
+    if result then
+      assert(result:getDPIScale() == scale)
+      -- We would like to use linear for shrinking and nearest for growing,
+      -- but there is a bug in some drivers that doesn't allow for min and mag to be different
+      -- to work around this, calculate if we are shrinking or growing and use the right filter on both.
+      if GAME.canvasXScale >= scale then
+        result:setFilter("nearest", "nearest")
+      else
+        result:setFilter("linear", "linear")
+      end
+      return result
+    end
+    
+    logger.error("Error loading image: " .. fileName .. " Check it is valid and try resaving it in an image editor. If you are not the owner please get them to update it or download the latest version.")
+    result = GraphicsUtil.privateLoadImageWithExtensionAndScale("themes/Panel Attack/transparent", ".png", 1)
+    assert(result ~= next)
+    return result
+  end
+
+  return nil
+end
+
+function GraphicsUtil.loadImageFromSupportedExtensions(pathAndName)
+  local supportedImageFormats = {".png", ".jpg"}
+  local supportedScales = {3, 2, 1}
+  for _, extension in ipairs(supportedImageFormats) do
+    for _, scale in ipairs(supportedScales) do
+      local image = GraphicsUtil.privateLoadImageWithExtensionAndScale(pathAndName, extension, scale)
+      if image then
+        return image
+      end
     end
   end
+
   return nil
+end
+
+-- Draws a image at the given screen spot and scales.
+function GraphicsUtil.drawImage(image, x, y, scaleX, scaleY)
+  if image ~= nil and x ~= nil and y ~= nil and scaleX ~= nil and scaleY ~= nil then
+    gfx_q:push({love.graphics.draw, {image, x, y,
+    0, scaleX, scaleY}})
+  end
+end
+
+-- Draws a image at the given screen spot with the given width and height. Scaling as needed.
+function GraphicsUtil.drawScaledImage(image, x, y, width, height)
+  if image ~= nil and x ~= nil and y ~= nil and width ~= nil and height ~= nil then
+    local scaleX = width / image:getWidth()
+    local scaleY = height / image:getHeight()
+    GraphicsUtil.drawImage(image, x, y, scaleX, scaleY)
+  end
+end
+
+-- Draws a image at the given screen spot with the given width. Scaling to keep the ratio.
+function GraphicsUtil.drawScaledWidthImage(image, x, y, width)
+  if image ~= nil and x ~= nil and y ~= nil and width ~= nil then
+    local scaleX = width / image:getWidth()
+    GraphicsUtil.drawImage(image, x, y, scaleX, scaleX)
+  end
 end
 
 -- Draws an image at the given spot
@@ -51,7 +106,7 @@ end
 function draw_label(img, x, y, rot, scale, mirror)
   rot = rot or 0
   mirror = mirror or 0
-  x = x - (img:getWidth()/GFX_SCALE*scale)*mirror
+  x = x - math.floor((img:getWidth()/GFX_SCALE*scale)*mirror)
   gfx_q:push({love.graphics.draw, {img, x*GFX_SCALE, y*GFX_SCALE,
   rot, scale, scale}})
 end
@@ -302,47 +357,45 @@ function gprint(str, x, y, color, scale)
   set_color(1,1,1,1)
 end
 
--- font file to use
-local font_file = nil
-local font_size = 12
-local font_cache = {}
-
-function set_global_font(filepath, size)
-  font_cache = {}
-  font_file = filepath
-  font_size = size
+local function privateMakeFont(fontPath, size)
   local f
-  if font_file then
-    f = love.graphics.newFont(font_file, font_size)
+  local hinting = "normal"
+  local dpi = GAME:newCanvasSnappedScale()
+  if fontPath then
+    f = love.graphics.newFont(fontPath, size, hinting, dpi)
   else
-    f = love.graphics.newFont(font_size)
+    f = love.graphics.newFont(size, hinting, dpi)
   end
-  f:setFilter("nearest", "nearest")
-  love.graphics.setFont(f)
+  local dpi2 = f:getDPIScale()
+  return f
 end
 
 -- Creates a new font based on the current font and a delta
-local function get_global_font_with_size(font_size)
-  local f = font_cache[font_size]
+function get_global_font_with_size(fontSize)
+  local f = GraphicsUtil.fontCache[fontSize]
   if not f then
-    if font_file then
-      f = love.graphics.newFont(font_file, font_size)
-    else
-      f = love.graphics.newFont(font_size)
-    end
-    font_cache[font_size] = f
+    f = privateMakeFont(GraphicsUtil.fontFile, fontSize)
+    GraphicsUtil.fontCache[fontSize] = f
   end
   return f
 end
 
+function set_global_font(filepath, size)
+  GraphicsUtil.fontCache = {}
+  GraphicsUtil.fontFile = filepath
+  GraphicsUtil.fontSize = size
+  local createdFont = get_global_font_with_size(size)
+  love.graphics.setFont(createdFont)
+end
+
 -- Returns the current global font
 function get_global_font()
-  return get_global_font_with_size(font_size)
+  return get_global_font_with_size(GraphicsUtil.fontSize)
 end
 
 -- Creates a new font based on the current font and a delta
 function get_font_delta(with_delta_size)
-  local font_size = font_size + with_delta_size
+  local font_size = GraphicsUtil.fontSize + with_delta_size
   return get_global_font_with_size(font_size)
 end
 
@@ -399,3 +452,5 @@ function reset_filters()
   GAME.background_overlay = nil
   GAME.foreground_overlay = nil
 end
+
+return GraphicsUtil

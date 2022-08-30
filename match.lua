@@ -177,12 +177,20 @@ function Match:run()
     P2:saveForRollback()
   end
 
+  if self.P1CPU then
+    self.P1CPU:run(P1)
+  end
+
+  if self.P2CPU then
+    self.P2CPU:run(P2)
+  end
+
   self:debugRollbackAndCaptureState()
 
-  if P1 and P1.is_local and P1:game_ended() == false then  
+  if P1 and P1.is_local and not self.P1CPU and P1:game_ended() == false then
     P1:send_controls()
   end
-  if P2 and P2.is_local and P2:game_ended() == false then
+  if P2 and P2.is_local and not self.P2CPU and P2:game_ended() == false then
     P2:send_controls()
   end
 
@@ -299,10 +307,10 @@ function Match.render(self)
     end
 
     if match_type == "Ranked" then
-      if global_current_room_ratings and global_current_room_ratings[my_player_number] and global_current_room_ratings[my_player_number].new then
+      if self.room_ratings and self.room_ratings[self.my_player_number] and self.room_ratings[self.my_player_number].new then
         local rating_to_print = loc("ss_rating") .. "\n"
-        if global_current_room_ratings[my_player_number].new > 0 then
-          rating_to_print = global_current_room_ratings[my_player_number].new
+        if self.room_ratings[self.my_player_number].new > 0 then
+          rating_to_print = self.room_ratings[self.my_player_number].new
         end
         --gprint(rating_to_print, P1.score_x, P1.score_y-30)
         draw_label(themes[config.theme].images.IMG_rating_1P, (P1.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
@@ -310,10 +318,10 @@ function Match.render(self)
           draw_number(rating_to_print, themes[config.theme].images.IMG_number_atlas_1P, 10, P1_rating_quads, P1.score_x + themes[config.theme].rating_Pos[1], P1.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, (15 / themes[config.theme].images.numberWidth_1P * themes[config.theme].rating_Scale), (19 / themes[config.theme].images.numberHeight_1P * themes[config.theme].rating_Scale), "center")
         end
       end
-      if global_current_room_ratings and global_current_room_ratings[op_player_number] and global_current_room_ratings[op_player_number].new then
+      if self.room_ratings and self.room_ratings[self.op_player_number] and self.room_ratings[self.op_player_number].new then
         local op_rating_to_print = loc("ss_rating") .. "\n"
-        if global_current_room_ratings[op_player_number].new > 0 then
-          op_rating_to_print = global_current_room_ratings[op_player_number].new
+        if self.room_ratings[self.op_player_number].new > 0 then
+          op_rating_to_print = self.room_ratings[self.op_player_number].new
         end
         --gprint(op_rating_to_print, P2.score_x, P2.score_y-30)
         draw_label(themes[config.theme].images.IMG_rating_2P, (P2.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (P2.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)

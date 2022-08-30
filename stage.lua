@@ -223,6 +223,20 @@ function stages_init()
   end
 end
 
+-- for reloading the graphics if the window was resized
+function stages_reload_graphics()
+  -- reload the current stage graphics immediately
+  if stages[current_stage] then
+    stages[current_stage]:graphics_init(true, false)
+  end
+  -- lazy load the rest
+  for _, stage in pairs(stages) do
+    if stage.id ~= current_stage then
+      stage:graphics_init(false, false)
+    end
+  end
+end
+
 -- whether or not a stage is part of a bundle or not
 function Stage.is_bundle(self)
   return #self.sub_stages > 1
@@ -232,7 +246,7 @@ end
 function Stage.graphics_init(self, full, yields)
   local stage_images = full and other_images or basic_images
   for _, image_name in ipairs(stage_images) do
-    self.images[image_name] = load_img_from_supported_extensions(self.path .. "/" .. image_name)
+    self.images[image_name] = GraphicsUtil.loadImageFromSupportedExtensions(self.path .. "/" .. image_name)
     if not self.images[image_name] and defaulted_images[image_name] and not self:is_bundle() then
       self.images[image_name] = default_stage.images[image_name]
       if not self.images[image_name] then

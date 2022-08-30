@@ -1,4 +1,5 @@
 {
 	"id":"pa_characters_lip",
-	"name":"Lip"
+	"name":"Lip",
+	"stage":"pa_stages_flower"
 }
