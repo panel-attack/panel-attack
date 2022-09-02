@@ -30,7 +30,7 @@ function GraphicsUtil.privateLoadImageWithExtensionAndScale(pathAndName, extensi
   if love.filesystem.getInfo(fileName) then
     local result = GraphicsUtil.privateLoadImage(fileName)
     if result then
-      assert(result:getDPIScale() == scale)
+      assert(result:getDPIScale() == scale, "The image " .. pathAndName .. " didn't wasn't created with the scale: " .. scale .. " did you make sure the width and height are divisible by the scale?")
       -- We would like to use linear for shrinking and nearest for growing,
       -- but there is a bug in some drivers that doesn't allow for min and mag to be different
       -- to work around this, calculate if we are shrinking or growing and use the right filter on both.
