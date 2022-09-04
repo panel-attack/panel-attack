@@ -409,7 +409,12 @@ local function finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGam
 
   incompleteGame = incompleteGame or false
   
-  local extraPath, extraFilename
+  local extraPath, extraFilename = "", ""
+
+  if GAME.match:warningOccurred() then
+    extraFilename = extraFilename .. "-WARNING-OCCURRED"
+  end
+
   if P2 then
     replay[GAME.match.mode].I = P2.confirmedInput
 
@@ -420,7 +425,7 @@ local function finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGam
     else
       extraPath = rep_a_name .. "-vs-" .. rep_b_name
     end
-    extraFilename = rep_a_name .. "-L" .. P1.level .. "-vs-" .. rep_b_name .. "-L" .. P2.level
+    extraFilename = extraFilename .. rep_a_name .. "-L" .. P1.level .. "-vs-" .. rep_b_name .. "-L" .. P2.level
     if match_type and match_type ~= "" then
       extraFilename = extraFilename .. "-" .. match_type
     end
@@ -435,7 +440,7 @@ local function finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGam
     end
   else -- vs Self
     extraPath = "Vs Self"
-    extraFilename = "vsSelf-" .. "L" .. P1.level
+    extraFilename = extraFilename .. "vsSelf-" .. "L" .. P1.level
   end
 
   finalizeAndWriteReplay(extraPath, extraFilename)
