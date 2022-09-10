@@ -1,15 +1,28 @@
+#   Given an image "garbage.png" that is three thickness high, splits
+#   it into individual pieces
+#
+#   The ideal generation image is 576 x 288 for 2x resolution.
+
 from PIL import Image
-img = Image.open("5x.png")
+img = Image.open("garbage.png")
 w,h = img.size
-img.crop((0,0,8,3)).save("topleft.png")
-img.crop((w-8,0,w,3)).save("topright.png")
-img.crop((0,h-3,8,h)).save("botleft.png")
-img.crop((w-8,h-3,w,h)).save("botright.png")
-img.crop((0,6,8,7)).save("left.png")
-img.crop((w-8,6,w,7)).save("right.png")
-img.crop((17,0,18,2)).save("top.png")
-img.crop((17,h-2,18,h)).save("bot.png")
-img.crop((24,16,40,32)).save("filler1.png")
-img.crop((8,16,24,32)).save("filler2.png")
-img.crop((40,16,56,48)).save("doubleface.png")
-img.crop((40,24,56,40)).save("face.png")
+scale = h / (48 * 2)
+cornerWidth = 24 * scale
+cornerHeight = 9 * scale
+topBottomHeight = 6 * scale
+leftRightWidth = 24 * scale
+panelSize = 48 * scale
+
+img.crop((0,0,cornerWidth,cornerHeight)).save("topleft.png")
+img.crop((w-cornerWidth,0,cornerWidth,cornerHeight)).save("topright.png")
+img.crop((0,h-cornerHeight,cornerWidth,cornerHeight)).save("botleft.png")
+img.crop((w-cornerWidth,h-cornerHeight,cornerWidth,cornerHeight)).save("botright.png")
+img.crop((0,topBottomHeight,leftRightWidth,h-(topBottomHeight*2))).save("left.png")
+img.crop((w-leftRightWidth,topBottomHeight,leftRightWidth,h-(topBottomHeight*2))).save("right.png")
+img.crop((cornerWidth,0,1,topBottomHeight)).save("top.png")
+img.crop((cornerWidth,h-topBottomHeight,1,topBottomHeight)).save("bot.png")
+img.crop((panelSize/2,topBottomHeight+panelSize,panelSize,panelSize)).save("filler1.png")
+img.crop((panelSize/2,topBottomHeight,panelSize,panelSize)).save("filler2.png")
+img.crop(((w/2)-(panelSize/2),0,panelSize,2*panelSize)).save("doubleface.png")
+img.crop(((w/2)-(panelSize/2),panelSize/2,panelSize,panelSize)).save("face.png")
+img.crop(((w/2)-(panelSize/2),panelSize/2,panelSize,panelSize)).save("face2.png")
