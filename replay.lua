@@ -46,7 +46,9 @@ function Replay.loadFromFile(replay)
 
     GAME.battleRoom = BattleRoom()
     GAME.match = Match("vs", GAME.battleRoom)
-    GAME.match.seed = replay.seed or 0
+
+    assert(replay.seed, "invalid replay: seed must be set")
+    GAME.match.seed = replay.seed
     GAME.match.isFromReplay = true
     P1 = Stack{which=1, match=GAME.match, is_local=false, level=replay.P1_level or 5, character=replay.P1_char}
 
@@ -85,7 +87,8 @@ function Replay.loadFromFile(replay)
     
     replay = replay.endless or replay.time
 
-    GAME.match.seed = replay.seed or 0
+    assert(replay.seed, "invalid replay: seed must be set")
+    GAME.match.seed = replay.seed
     
     if replay.pan_buf then
       replay.P = replay.pan_buf -- support old versions

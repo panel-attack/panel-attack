@@ -58,12 +58,9 @@ function write_replay_file(path, filename)
   assert(filename ~= nil)
   pcall(
     function()
-      local file
-      if path and filename then
-        love.filesystem.createDirectory(path)
-        file = love.filesystem.newFile(path .. "/" .. filename)
-        set_replay_browser_path(path)
-      end
+      love.filesystem.createDirectory(path)
+      local file = love.filesystem.newFile(path .. "/" .. filename)
+      set_replay_browser_path(path)
       file:open("w")
       logger.debug("Writing to Replay File")
       if replay.puzzle then
