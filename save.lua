@@ -97,8 +97,8 @@ end
 function write_user_id_file()
   pcall(
     function()
-      love.filesystem.createDirectory("servers/" .. connected_server_ip)
-      local file = love.filesystem.newFile("servers/" .. connected_server_ip .. "/user_id.txt")
+      love.filesystem.createDirectory("servers/" .. GAME.connected_server_ip)
+      local file = love.filesystem.newFile("servers/" .. GAME.connected_server_ip .. "/user_id.txt")
       file:open("w")
       file:write(tostring(my_user_id))
       file:close()
@@ -110,7 +110,7 @@ end
 function read_user_id_file()
   pcall(
     function()
-      local file = love.filesystem.newFile("servers/" .. connected_server_ip .. "/user_id.txt")
+      local file = love.filesystem.newFile("servers/" .. GAME.connected_server_ip .. "/user_id.txt")
       file:open("r")
       my_user_id = file:read()
       my_user_id = my_user_id:match("^%s*(.-)%s*$")
@@ -275,6 +275,22 @@ function recursive_copy(source, destination)
       end
     else
       logger.warn("name:  " .. name .. " isn't a directory or file?")
+    end
+  end
+end
+-- Deletes any file matching the target name from the file tree recursively
+function recursiveRemoveFiles(folder, targetName)
+  local lfs = love.filesystem
+  local filesTable = lfs.getDirectoryItems(folder)
+  for _, fileName in ipairs(filesTable) do
+    local file = folder .. "/" .. fileName
+    local info = lfs.getInfo(file)
+    if info then
+      if info.type == "directory" then
+        recursiveRemoveFiles(file, targetName)
+      elseif info.type == "file" and fileName == targetName then
+        love.filesystem.remove(file)
+      end
     end
   end
 end

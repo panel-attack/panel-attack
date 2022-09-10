@@ -295,7 +295,7 @@ end
 
 function Telegraph:telegraphRenderXPosition(index)
 
-  local stackWidth, _ = themes[config.theme].images.IMG_frame1P:getDimensions()
+  local stackWidth = math.floor(self.owner.canvas:getWidth() / GFX_SCALE)
   local increment = -TELEGRAPH_BLOCK_WIDTH * self.owner.mirror_x
 
   local result = self.pos_x

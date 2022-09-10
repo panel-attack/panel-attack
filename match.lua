@@ -116,6 +116,16 @@ function Match:debugRollbackAndCaptureState()
   end
 end
 
+function Match:warningOccurred()
+  local P1 = self.P1
+  local P2 = self.P2
+  
+  if (P1 and table.length(P1.warningsTriggered) > 0) or (P2 and table.length(P2.warningsTriggered) > 0) then
+    return true
+  end
+  return false
+end
+
 function Match:debugAssertDivergence(stack, savedStack)
 
   local diverged = false
@@ -177,12 +187,20 @@ function Match:run()
     P2:saveForRollback()
   end
 
+  if self.P1CPU then
+    self.P1CPU:run(P1)
+  end
+
+  if self.P2CPU then
+    self.P2CPU:run(P2)
+  end
+
   self:debugRollbackAndCaptureState()
 
-  if P1 and P1.is_local and P1:game_ended() == false then  
+  if P1 and P1.is_local and not self.P1CPU and P1:game_ended() == false then
     P1:send_controls()
   end
-  if P2 and P2.is_local and P2:game_ended() == false then
+  if P2 and P2.is_local and not self.P2CPU and P2:game_ended() == false then
     P2:send_controls()
   end
 
@@ -476,5 +494,14 @@ function Match.render(self)
         end
       end
     end
+  end
+
+  if (self:warningOccurred()) then
+    local iconSize = 20
+    local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
+    local x = 5
+    local y = 5
+    draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+    gprint("A warning has occurred, please post your warnings.txt file and this replay to #panel-attack-bugs in the discord.", x + iconSize, y)
   end
 end
