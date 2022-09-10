@@ -724,7 +724,7 @@ function Stack.render(self)
       local healthBar = self.health * multiBarFrameScale
       local shakeTimeBar, stopTimeBar, preStopBar = 0, 0, 0
       if self.maxShake > 0 and shake_time >= self.pre_stop_time + stop_time then
-        stopTimeBar = math.min(shake_time * multiBarFrameScale, multiBarMaxHeight - healthBar)
+        shakeTimeBar = math.min(shake_time * multiBarFrameScale, multiBarMaxHeight - healthBar)
       end
       if self.maxStop > 0 and shake_time < self.pre_stop_time + stop_time then
         stopTimeBar = math.min(stop_time * multiBarFrameScale, multiBarMaxHeight - shakeTimeBar - healthBar)
