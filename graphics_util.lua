@@ -506,4 +506,25 @@ function reset_filters()
   GAME.foreground_overlay = nil
 end
 
+-- temporary work around to drawing clearer text until we use better fonts
+-- draws multiple copies of the same text slightly offset from each other
+-- to simultate thickness
+-- also draw in 2 stages, first for a drop shadow and second for the main text
+-- text: Drawable text object
+-- x: The position to draw the object (x-axis).
+-- y: The position to draw the object (y-axis).
+-- ox: Origin offset (x-axis).
+-- oy: Origin offset (y-axis).
+function GraphicsUtil.drawClearText(text, x, y, ox, oy)
+  GAME.gfx_q:push({love.graphics.setColor, {0, 0, 0, 1}})
+  GAME.gfx_q:push({love.graphics.draw, {text, x - 1, y - 1, 0, 1, 1, ox, oy}})
+  GAME.gfx_q:push({love.graphics.draw, {text, x - 1, y + 1, 0, 1, 1, ox, oy}})
+  GAME.gfx_q:push({love.graphics.draw, {text, x + 2, y - 1, 0, 1, 1, ox, oy}})
+  GAME.gfx_q:push({love.graphics.draw, {text, x + 2, y + 1, 0, 1, 1, ox, oy}})
+
+  GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
+  GAME.gfx_q:push({love.graphics.draw, {text, x + 0, y + 0, 0, 1, 1, ox, oy}})
+  GAME.gfx_q:push({love.graphics.draw, {text, x + 1, y + 0, 0, 1, 1, ox, oy}})
+end
+
 return GraphicsUtil

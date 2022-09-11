@@ -1,6 +1,7 @@
 local GameBase = require("scenes.GameBase")
 local scene_manager = require("scenes.scene_manager")
 local input = require("inputManager")
+local consts = require("consts")
 
 --@module replay_game
 local replay_game = GameBase("replay_game", {})
@@ -30,7 +31,7 @@ function replay_game:customRun()
     if GAME.match.P2 then
       GAME.match.P2.max_runs_per_frame = 1
     end
-  elseif input:isPressedWithRepeat("Right", .25, .05) then
+  elseif input:isPressedWithRepeat("Right", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     self.playbackSpeed = bound(1, self.playbackSpeed + 1, self.maximumSpeed)
     if GAME.match.P1 then
       GAME.match.P1.max_runs_per_frame = self.playbackSpeed
@@ -38,7 +39,7 @@ function replay_game:customRun()
     if GAME.match.P2 then
       GAME.match.P2.max_runs_per_frame = self.playbackSpeed
     end
-  elseif input:isPressedWithRepeat("Left", .25, .05) then
+  elseif input:isPressedWithRepeat("Left", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     self.playbackSpeed = bound(1, self.playbackSpeed - 1, self.maximumSpeed)
     if GAME.match.P1 then
       GAME.match.P1.max_runs_per_frame = self.playbackSpeed

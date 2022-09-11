@@ -5,6 +5,7 @@ local scene_manager = require("scenes.scene_manager")
 local input = require("inputManager")
 local LevelSlider = require("ui.LevelSlider")
 local tableUtils = require("tableUtils")
+local consts = require("consts")
 
 local MAX_CHARACTERS_PER_PAGE = 34
 local MAX_ROWS = 5
@@ -293,7 +294,7 @@ function CharacterSelect:init()
       label = "level",
       valign = "top",
       outlineColor = outline_color,
-      color = {0, 0, 0, 0},
+      backgroundColor = {0, 0, 0, 0},
       isVisible = false,
       onClick = function() 
         self:moveCursor(button_info.level.x, button_info.level.y)
@@ -328,7 +329,7 @@ function CharacterSelect:init()
       label = "",
       translate = false,
       outlineColor = {0, 0, 0, 0},
-      color = {0, 0, 0, 0},
+      backgroundColor = {0, 0, 0, 0},
       isVisible = false,
       onClick = function()
         play_optional_sfx(themes[config.theme].sounds.menu_move)
@@ -344,7 +345,7 @@ function CharacterSelect:init()
       label = "",
       translate = false,
       outlineColor = {0, 0, 0, 0},
-      color = {0, 0, 0, 0},
+      backgroundColor = {0, 0, 0, 0},
       isVisible = false,
       onClick = function()
         play_optional_sfx(themes[config.theme].sounds.menu_move)
@@ -360,7 +361,7 @@ function CharacterSelect:init()
       label = "stage",
       valign = "top",
       outlineColor = outline_color,
-      color = {0, 0, 0, 0},
+      backgroundColor = {0, 0, 0, 0},
       isVisible = false,
       onClick = function() 
         self:moveCursor(button_info.stage.x, button_info.stage.y)
@@ -385,7 +386,7 @@ function CharacterSelect:init()
       label = "",
       translate = false,
       outlineColor = {0, 0, 0, 0},
-      color = {0, 0, 0, 0},
+      backgroundColor = {0, 0, 0, 0},
       isVisible = false,
       onClick = function()
         play_optional_sfx(themes[config.theme].sounds.menu_move)
@@ -401,7 +402,7 @@ function CharacterSelect:init()
       label = "",
       translate = false,
       outlineColor = {0, 0, 0, 0},
-      color = {0, 0, 0, 0},
+      backgroundColor = {0, 0, 0, 0},
       isVisible = false,
       onClick = function()
         play_optional_sfx(themes[config.theme].sounds.menu_move)
@@ -417,7 +418,7 @@ function CharacterSelect:init()
       label = "panels",
       valign = "top",
       outlineColor = outline_color,
-      color = {0, 0, 0, 0},
+      backgroundColor = {0, 0, 0, 0},
       isVisible = false,
       onClick = function() 
         self:moveCursor(button_info.panels.x, button_info.panels.y)
@@ -712,12 +713,35 @@ function CharacterSelect:drawLevelSelector()
   GAME.gfx_q:push({love.graphics.draw, {themes[config.theme].images.IMG_players[1], level_button.x + x_offset, level_button.y + TILE_SIZE / 2, 0, 1, 1, 0, themes[config.theme].images.IMG_players[1]:getHeight() / 2}})
 end
 
+function CharacterSelect:draw()
+  for _, button in ipairs(self.buttons.characters) do
+    button:draw()
+  end
+  for _, button in pairs(self.buttons.level_select) do
+    button:draw()
+  end
+  for _, button in pairs(self.buttons.stage_select) do
+    button:draw()
+  end
+  for _, button in pairs(self.buttons.panels_select) do
+    button:draw()
+  end
+  for _, button in pairs(self.buttons.page_select) do
+    button:draw()
+  end
+  self.buttons.leave:draw()
+  self.buttons.ready:draw()
+  self.buttons.random:draw()
+  self.level_slider:draw()
+end
+
 function CharacterSelect:update()
   self:drawStage()
   self:drawLevelSelector()
   self:drawPanelsSelector()
   self:drawPlayerInfo()
   self:drawCursor(self.cursor_pos.x, self.cursor_pos.y)
+  self:draw()
   
   -- Draw the current score and record
   self:customDraw()
@@ -740,29 +764,29 @@ function CharacterSelect:update()
   stage_loader_update()
   refresh_loaded_and_ready(self.cursor_data[1].state, self.cursor_data[2] and self.cursor_data[2].state or nil)
 
-  if input:isPressedWithRepeat("Raise1", .25, .05) then
+  if input:isPressedWithRepeat("Raise1", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     self.buttons.page_select.left.onClick()
   end
   
-  if input:isPressedWithRepeat("Raise2", .25, .05) then
+  if input:isPressedWithRepeat("Raise2", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     self.buttons.page_select.right.onClick()
   end
   
-  if input:isPressedWithRepeat("Up", .25, .05) then
+  if input:isPressedWithRepeat("Up", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     if not (self.level_slider.isEnabled or self.buttons.stage_select.left.isEnabled or self.buttons.panels_select.left.isEnabled) then
       self.cursor_pos.y = (self.cursor_pos.y - 2) % MAX_ROWS + 1
       play_optional_sfx(themes[config.theme].sounds.menu_move)
     end
   end
   
-  if input:isPressedWithRepeat("Down", .25, .05) then
+  if input:isPressedWithRepeat("Down", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     if not (self.level_slider.isEnabled or self.buttons.stage_select.left.isEnabled or self.buttons.panels_select.left.isEnabled) then
       self.cursor_pos.y = self.cursor_pos.y % MAX_ROWS + 1
       play_optional_sfx(themes[config.theme].sounds.menu_move)
     end
   end
   
-  if input:isPressedWithRepeat("Left", .25, .05) then
+  if input:isPressedWithRepeat("Left", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     if self.level_slider.isEnabled then
       self.level_slider:setValue(self.level_slider.value - 1)
     elseif self.buttons.stage_select.left.isEnabled then
@@ -782,7 +806,7 @@ function CharacterSelect:update()
     end
   end
   
-  if input:isPressedWithRepeat("Right", .25, .05) then
+  if input:isPressedWithRepeat("Right", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     if self.level_slider.isEnabled then
       self.level_slider:setValue(self.level_slider.value + 1)
     elseif self.buttons.stage_select.right.isEnabled then

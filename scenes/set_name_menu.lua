@@ -47,6 +47,7 @@ function set_name_menu:update()
     scene_manager:switchScene("main_menu")
   end
   
+  name_field:draw()
 end
 
 function set_name_menu:unload()  

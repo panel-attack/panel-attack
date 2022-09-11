@@ -12,6 +12,7 @@ local Slider = require("ui.Slider")
 local Label = require("ui.Label")
 local scene_manager = require("scenes.scene_manager")
 local input = require("inputManager")
+local consts = require("consts")
 
 local BUTTON_PADDING = 5
 
@@ -41,6 +42,13 @@ end
 --@module MainMenu
 local Menu = class(
   function(self, options)
+    self.selecteIndex = nil
+    -- list of menu items
+    -- set from options.menuItems, which consists of a list of UIElement tuples of the form:
+    -- {{Label/Button, ButtonGroup/Stepper/Slider}, ...}
+    -- the actual self.menuItems list is formated slightly differently, consisting of a list of Labels or Buttons
+    -- each of which may have a ButtonGroup, Stepper, or Slider child element which controls the action for that item
+    self.menuItems = nil
     setMenuItems(self, options.menuItems)
   end,
   UIElement
@@ -52,19 +60,19 @@ local arrow = love.graphics.newText(font, ">")
 Menu.setMenuItems = setMenuItems
 
 function Menu:update()
-  if input:isPressedWithRepeat("Up", .25, .05) then
+  if input:isPressedWithRepeat("Up", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     self.selectedIndex = ((self.selectedIndex - 2) % #self.menuItems) + 1
     play_optional_sfx(themes[config.theme].sounds.menu_move)
   end
   
-  if input:isPressedWithRepeat("Down", .25, .05) then
+  if input:isPressedWithRepeat("Down", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     self.selectedIndex = (self.selectedIndex % #self.menuItems) + 1
     play_optional_sfx(themes[config.theme].sounds.menu_move)
   end
 
   local itemController = self.menuItems[self.selectedIndex].children[1]
   if itemController then
-    if input:isPressedWithRepeat("Left", .25, .05) then
+    if input:isPressedWithRepeat("Left", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
       if itemController.TYPE == "Slider" then
         itemController:setValue(itemController.value - 1)
       elseif itemController.TYPE == "ButtonGroup" then
@@ -74,7 +82,7 @@ function Menu:update()
       end
     end
 
-    if input:isPressedWithRepeat("Right", .25, .05) then
+    if input:isPressedWithRepeat("Right", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
       if itemController.TYPE == "Slider" then
         itemController:setValue(itemController.value + 1)
       elseif itemController.TYPE == "ButtonGroup" then
@@ -102,20 +110,18 @@ function Menu:update()
 end
 
 function Menu:draw()
+  if not self.isVisible then
+    return
+  end
+
   local animationX = (math.cos(6 * love.timer.getTime()) * 5) - 9
   local screenX, screenY = self.menuItems[self.selectedIndex]:getScreenPos()
   local arrowx = screenX - 10 + animationX
   local arrowy = screenY + self.menuItems[self.selectedIndex].height / 4
   GAME.gfx_q:push({love.graphics.draw, {arrow, arrowx, arrowy, 0, 1, 1, 0, 0}})
   
-  for i, menuItem in ipairs(self.menuItems) do
-    if menuItem.TYPE == "Label" then
-      menuItem:draw()
-    end
-    if menuItem.children[1] and menuItem.children[1].TYPE == "Stepper" then
-      menuItem.children[1]:draw()
-    end
-  end
+  -- draw children
+  UIElement.draw(self)
 end
 
 return Menu

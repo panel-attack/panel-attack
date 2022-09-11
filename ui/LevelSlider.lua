@@ -1,4 +1,5 @@
 local class = require("class")
+local UIElement = require("ui.UIElement")
 local Slider = require("ui.Slider")
 local util = require("util")
 
@@ -7,7 +8,7 @@ local LevelSlider = class(
   function(self, options)
     self.min = 1
     self.max = #themes[config.theme].images.IMG_levels
-    self.value = options.value or math.floor((self.max - self.min) / 2)
+    -- pixels per value change
     self.tickLength = 11
   end,
   Slider)
@@ -18,6 +19,10 @@ function LevelSlider:isSelected(x, y)
 end
 
 function LevelSlider:draw()
+  if not self.isVisible then
+    return
+  end
+
   local screenX, screenY = self:getScreenPos()
   for i, level_img in ipairs(themes[config.theme].images.IMG_levels) do
     local img = i <= self.value and 
@@ -28,6 +33,9 @@ function LevelSlider:draw()
   end
   local cursor_image = themes[config.theme].images.IMG_level_cursor
   GAME.gfx_q:push({love.graphics.draw, {cursor_image, screenX + (self.value - 1 + .5) * self.tickLength, screenY + self.tickLength, 0, 1, 1, cursor_image:getWidth() / 2, 0}})
+  
+  -- draw children
+  UIElement.draw(self)
 end
 
 return LevelSlider

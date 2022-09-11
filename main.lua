@@ -136,10 +136,7 @@ end
 function love.update(dt)
   inputManager:update(dt)
   buttonManager.update()
-  buttonManager.draw()
-  sliderManager.draw()
   inputFieldManager.update()
-  inputFieldManager.draw()
   
   GAME.rich_presence:runCallbacks()
   GAME:update(dt)
