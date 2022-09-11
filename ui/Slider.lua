@@ -8,7 +8,8 @@ local Slider = class(
   function(self, options)
     self.min = options.min or 1
     self.max = options.max or 99
-    self.value = options.value or math.floor((self.max - self.min) / 2)
+    self.value = options.value and util.clamp(self.min, options.value, self.max) or math.floor((self.max - self.min) / 2)
+    -- pixels per value change
     self.tickLength = options.tickLength or 1
     self.onValueChange = options.onValueChange or function() end
     
@@ -50,6 +51,10 @@ function Slider:setValue(value)
 end
 
 function Slider:draw()
+  if not self.isVisible then
+    return
+  end
+
   local screenX, screenY = self:getScreenPos()
   
   local dark_gray = .3
@@ -65,6 +70,9 @@ function Slider:draw()
   GAME.gfx_q:push({love.graphics.draw, {self.minText, screenX + xOffset - self.minText:getWidth() - 7, screenY + yOffset, 0, 1, 1, 0, 0}})
   GAME.gfx_q:push({love.graphics.draw, {self.maxText, screenX + xOffset + (self.max - self.min + 1) * self.tickLength + 7, screenY + yOffset, 0, 1, 1, 0, 0}})
   GAME.gfx_q:push({love.graphics.draw, {self.valueText, screenX + xOffset + (self.value - self.min + .5) * self.tickLength - 5, screenY + yOffset - 20, 0, 1, 1, 0, 0}})
+  
+  -- draw children
+  UIElement.draw(self)
 end
 
 return Slider

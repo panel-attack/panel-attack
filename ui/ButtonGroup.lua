@@ -4,14 +4,21 @@ local util = require("util")
 
 local BUTTON_PADDING = 5
 
---@module Button
+--@module ButtonGroup
+-- UIElement representing a set of buttons which share state (think radio buttons)
+
+-- changes state for the button group
+-- updates the color of the selected button
+-- updates the value to the selected button's value
 local function setState(self, i)
-  self.buttons[self.selectedIndex].color = {.3, .3, .3, .7}
+  self.buttons[self.selectedIndex].backgroundColor = {.3, .3, .3, .7}
   self.selectedIndex = i
-  self.buttons[i].color = {.5, .5, 1, .7}
+  self.buttons[i].backgroundColor = {.5, .5, 1, .7}
   self.value = self.values[i]
 end
 
+-- forced override for each of the button's onClick function
+-- this allows buttons to have individual custom behaviour while also triggering the global state change
 local function genButtonGroupFn(self, i, onClick)
   return function()
     setState(self, i)
@@ -20,6 +27,7 @@ local function genButtonGroupFn(self, i, onClick)
   end
 end
 
+-- setup the buttons for use within the button group
 local function setButtons(self, buttons, values, selectedIndex)
   if self.buttons then
     for i, button in ipairs(self.buttons) do
@@ -38,7 +46,7 @@ local function setButtons(self, buttons, values, selectedIndex)
     button.onClick = genButtonGroupFn(self, i, button.onClick)
     self:addChild(button)
   end
-  self.buttons[self.selectedIndex].color = {.5, .5, 1, .7}
+  self.buttons[self.selectedIndex].backgroundColor = {.5, .5, 1, .7}
   self.value = self.values[self.selectedIndex]
 end
 
@@ -49,8 +57,9 @@ end
 
 local ButtonGroup = class(
   function(self, options)
-    self.onChange = options.onChange or function() end
     self.selectedIndex = options.selectedIndex or 1
+
+    self.onChange = options.onChange or function() end
     
     setButtons(self, options.buttons, options.values, self.selectedIndex)
     

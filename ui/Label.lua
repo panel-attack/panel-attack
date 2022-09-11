@@ -1,12 +1,11 @@
 local class = require("class")
 local UIElement = require("ui.UIElement")
+local GraphicsUtil = require("graphics_util")
 
 --@module Label
 local Label = class(
   function(self, options)
-    self.width = options.width or 110
-    self.height = options.height or 25
-    
+    -- stretch to fit text
     local textWidth, textHeight = self.text:getDimensions()
     self.width = math.max(textWidth + 6, self.width)
     self.height = math.max(textHeight + 6, self.height)
@@ -16,6 +15,10 @@ local Label = class(
 )
 
 function Label:draw()
+  if not self.isVisible then
+    return
+  end
+
   local screenX, screenY = self:getScreenPos()
   
   local darkGray = .5
@@ -28,7 +31,10 @@ function Label:draw()
   GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
   
   local textWidth, textHeight = self.text:getDimensions()
-  GAME.gfx_q:push({love.graphics.draw, {self.text, screenX + self.width / 2, screenY + self.height / 2, 0, 1, 1, textWidth / 2, textHeight / 2}})
+  GraphicsUtil.drawClearText(self.text, screenX + self.width / 2, screenY + self.height / 2, textWidth / 2, textHeight / 2)
+  
+  -- draw children
+  UIElement.draw(self)
 end
 
 return Label

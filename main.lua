@@ -74,10 +74,7 @@ end
 function love.update(dt)
   inputManager:update(dt)
   buttonManager.update()
-  buttonManager.draw()
-  sliderManager.draw()
   inputFieldManager.update()
-  inputFieldManager.draw()
 
   if love.mouse.getX() == last_x and love.mouse.getY() == last_y then
     if not pointer_hidden then

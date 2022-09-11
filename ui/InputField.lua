@@ -11,23 +11,28 @@ local InputField = class(
     self.placeholderText = love.graphics.newText(love.graphics.getFont(), options.placeholder) or love.graphics.newText(love.graphics.getFont(), "Input Field")
     self.value = options.value or ""
     self.charLimit = options.charLimit or 16
-    self.image = options.image
-    self.color = options.color or {.3, .3, .3, .7}
+
+    self.backgroundColor = options.backgroundColor or {.3, .3, .3, .7}
     self.outlineColor = options.outlineColor or {.5, .5, .5, .7}
+
+    -- text alignments settings
+    -- must be one of the following values:
+    -- left, right, center
     self.halign = options.halign or 'left'
     self.valign = options.valign or 'center'
     
     self.text = love.graphics.newText(love.graphics.getFont(), self.value)
+    -- stretch to fit text
     local textWidth, textHeight = self.text:getDimensions()
     self.width = math.max(textWidth + 6, self.width)
     self.height = math.max(textHeight + 6, self.height)
+
     self.hasFocus = false
-    inputFieldManager.inputFields[self.id] = self.isVisible and self or nil
-    self.TYPE = "InputField"
-    
     self.offset = 0
     self.textCursorPos = nil
-    self.text = love.graphics.newText(love.graphics.getFont(), self.value)
+
+    inputFieldManager.inputFields[self.id] = self.isVisible and self or nil
+    self.TYPE = "InputField"
   end,
   UIElement
 )
@@ -111,14 +116,14 @@ function InputField:textInput(t)
 end
 
 function InputField:draw()
+  if not self.isVisible then
+    return
+  end
+
   GAME.gfx_q:push({love.graphics.setColor, self.outlineColor})
   GAME.gfx_q:push({love.graphics.rectangle, {"line", self.x, self.y, self.width, self.height}})
-  if self.image then
-    GAME.gfx_q:push({love.graphics.draw, {self.image, self.x + 1, self.y + 1, 0, (self.width - 2) / self.image:getWidth(), (self.height - 2) / self.image:getHeight()}})
-  else
-    GAME.gfx_q:push({love.graphics.setColor, self.color})
-    GAME.gfx_q:push({love.graphics.rectangle, {"fill", self.x, self.y, self.width, self.height}})
-  end
+  GAME.gfx_q:push({love.graphics.setColor, self.backgroundColor})
+  GAME.gfx_q:push({love.graphics.rectangle, {"fill", self.x, self.y, self.width, self.height}})
   
   local text = self.value ~= "" and self.text or self.placeholderText
   local textColor = self.value ~= "" and {1, 1, 1, 1} or {.5, .5, .5, 1}
@@ -150,6 +155,9 @@ function InputField:draw()
     end
   end
   GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
+  
+  -- draw children
+  UIElement.draw(self)
 end
 
 return InputField

@@ -1,4 +1,5 @@
 local input = require("inputManager")
+local consts = require("consts")
 
 --@module inputFieldManager
 local inputFieldManager = {
@@ -12,23 +13,16 @@ function inputFieldManager.update()
     return
   end
 
-  if input:isPressedWithRepeat("backspace", .25, .1) then
-
+  if input:isPressedWithRepeat("backspace", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD)then
     selectedInputField:onBackspace()
   end
   
-  if input:isPressedWithRepeat("left", .25, .1) then
+  if input:isPressedWithRepeat("left", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     selectedInputField:onMoveCursor(-1)
   end
   
-  if input:isPressedWithRepeat("right", .25, .1) then
+  if input:isPressedWithRepeat("right", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     selectedInputField:onMoveCursor(1)
-  end
-end
-
-function inputFieldManager.draw()
-  for id, inputField in pairs(inputFieldManager.inputFields) do
-    inputField:draw()
   end
 end
 

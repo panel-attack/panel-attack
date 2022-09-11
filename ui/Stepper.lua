@@ -38,6 +38,7 @@ local function setState(self, i)
 end
 
 --@module Stepper
+-- UIElement representing a scrolling list of options
 local Stepper = class(
   function(self, options)
     self.onChange = options.onChange or function() end
@@ -74,7 +75,12 @@ function Stepper:updateLabel()
 end
 
 function Stepper:draw()
-  self.labels[self.selectedIndex]:draw()
+  if not self.isVisible then
+    return
+  end
+
+  -- draw children
+  UIElement.draw(self)
 end
 
 return Stepper

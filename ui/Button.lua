@@ -1,28 +1,37 @@
 local class = require("class")
 local UIElement = require("ui.UIElement")
 local buttonManager = require("ui.buttonManager")
+local GraphicsUtil = require("graphics_util")
 
 --@module Button
 local Button = class(
   function(self, options)
     self.image = options.image
-    self.color = options.color or {.3, .3, .3, .7}
+    self.backgroundColor = options.backgroundColor or {.3, .3, .3, .7}
     self.outlineColor = options.outlineColor or {.5, .5, .5, .7}
-    self.halign = options.halign or 'center'
-    self.valign = options.valign or 'center'
+    
+    -- text alignments settings
+    -- must be one of the following values:
+    -- left, right, center
+    self.halign = options.halign or "center"
+    self.valign = options.valign or "center"
+    
+    -- callbacks
     self.onClick = options.onClick or function() 
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
     end
     self.onMouseDown = options.onMouseDown or function() end
     self.onMousePressed = options.onMousePressed or function()
       local screenX, screenY = self:getScreenPos()
-      GAME.gfx_q:push({love.graphics.setColor, {self.color[1], self.color[2], self.color[3], 1}})
+      GAME.gfx_q:push({love.graphics.setColor, {self.backgroundColor[1], self.backgroundColor[2], self.backgroundColor[3], 1}})
       GAME.gfx_q:push({love.graphics.rectangle, {"fill", screenX, screenY, self.width, self.height}})
       GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
     end
     self.onMouseUp = options.onMouseUp or function() end
     
+    -- text field is set in base class (UIElement)
     local textWidth, textHeight = self.text:getDimensions()
+    -- stretch to fit text
     self.width = math.max(textWidth + 6, self.width)
     self.height = math.max(textHeight + 6, self.height)
     buttonManager.buttons[self.id] = self.isVisible and self or nil
@@ -42,6 +51,10 @@ function Button:isSelected(x, y)
 end
 
 function Button:draw()
+  if not self.isVisible then
+    return
+  end
+
   local screenX, screenY = self:getScreenPos()
   
   GAME.gfx_q:push({love.graphics.setColor, self.outlineColor})
@@ -49,7 +62,7 @@ function Button:draw()
   if self.image then
     GAME.gfx_q:push({love.graphics.draw, {self.image, screenX + 1, screenY + 1, 0, (self.width - 2) / self.image:getWidth(), (self.height - 2) / self.image:getHeight()}})
   else
-    GAME.gfx_q:push({love.graphics.setColor, self.color})
+    GAME.gfx_q:push({love.graphics.setColor, self.backgroundColor})
     GAME.gfx_q:push({love.graphics.rectangle, {"fill", screenX, screenY, self.width, self.height}})
   end
   
@@ -67,15 +80,10 @@ function Button:draw()
   local xPosAlign, xOffset = unpack(xAlignments[self.halign])
   local yPosAlign, yOffset = unpack(yAlignments[self.valign])
   
-  GAME.gfx_q:push({love.graphics.setColor, {0, 0, 0, 1}})
-  GAME.gfx_q:push({love.graphics.draw, {self.text, screenX + xPosAlign - 1, screenY + yPosAlign - 1, 0, 1, 1, xOffset, yOffset}})
-  GAME.gfx_q:push({love.graphics.draw, {self.text, screenX + xPosAlign - 1, screenY + yPosAlign + 1, 0, 1, 1, xOffset, yOffset}})
-  GAME.gfx_q:push({love.graphics.draw, {self.text, screenX + xPosAlign + 2, screenY + yPosAlign - 1, 0, 1, 1, xOffset, yOffset}})
-  GAME.gfx_q:push({love.graphics.draw, {self.text, screenX + xPosAlign + 2, screenY + yPosAlign + 1, 0, 1, 1, xOffset, yOffset}})
-  GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
-  GAME.gfx_q:push({love.graphics.draw, {self.text, screenX + xPosAlign + 0, screenY + yPosAlign + 0, 0, 1, 1, xOffset, yOffset}})
-  GAME.gfx_q:push({love.graphics.draw, {self.text, screenX + xPosAlign + 1, screenY + yPosAlign + 0, 0, 1, 1, xOffset, yOffset}})
+  GraphicsUtil.drawClearText(self.text, screenX + xPosAlign, screenY + yPosAlign, xOffset, yOffset)
   
+  -- draw children
+  UIElement.draw(self)
 end
 
 return Button

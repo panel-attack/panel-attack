@@ -5,12 +5,6 @@ local sliderManager = {
 
 local selectedSlider = nil
 
-function sliderManager.draw()
-  for id, slider in pairs(sliderManager.sliders) do
-    slider:draw()
-  end
-end
-
 function sliderManager.mouseDragged(x, y)
   local canvasX, canvasY = GAME:transform_coordinates(x, y)
   if selectedSlider == nil or not selectedSlider.isEnabled then
