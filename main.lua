@@ -29,6 +29,7 @@ require("gen_panels")
 require("panels")
 require("theme")
 require("click_menu")
+require("computerPlayers.computerPlayer")
 require("rich_presence.RichPresence")
 local logger = require("logger")
 GAME.scores = require("scores")
@@ -57,7 +58,7 @@ function love.load()
   GAME.rich_presence:initialize("902897593049301004")
   mainloop = coroutine.create(fmainloop)
 
-  GAME.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME.canvasXScale})
+  GAME.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME:newCanvasSnappedScale()})
 end
 
 function love.focus(f)
@@ -90,6 +91,17 @@ function love.update(dt)
 
   if GAME.backgroundImage then
     GAME.backgroundImage:update(dt)
+  end
+
+  local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
+  if GAME.previousWindowWidth ~= newPixelWidth or GAME.previousWindowHeight ~= newPixelHeight then
+    GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
+    if GAME.match then
+      GAME.needsAssetReload = true
+    else
+      GAME:refreshCanvasAndImagesForNewScale()
+    end
+    GAME.showGameScale = true
   end
 
   local status, err = coroutine.resume(mainloop)
@@ -164,7 +176,7 @@ function love.draw()
     if canvas_width * GAME.canvasXScale > newPixelWidth then
       scaleString = scaleString .. " Clipped "
     end
-    love.graphics.printf(scaleString, 5, 5, 2000, "left", 0, 3, 3)
+    love.graphics.printf(scaleString, get_global_font_with_size(30), 5, 5, 2000, "left")
   end
 
   -- draw background and its overlay
