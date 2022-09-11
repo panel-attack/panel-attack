@@ -236,9 +236,8 @@ end
       end
     elseif str == "__Level" then
       if (self.select_screen:isMultiplayer()) then
-        self:draw_levels(self.select_screen.players[self.select_screen.op_player_number], 2, 0.7 * self.button_height)
         self:draw_levels(self.select_screen.players[self.select_screen.my_player_number], 1, 0.4 * self.button_height)
-        
+        self:draw_levels(self.select_screen.players[self.select_screen.op_player_number], 2, 0.7 * self.button_height)
       else
         self:draw_levels(self.select_screen.players[self.select_screen.my_player_number], 1, 0.5 * self.button_height)
       end
@@ -410,8 +409,8 @@ end
 -- Draw the panel selection UI
 function select_screen_graphics.draw_panels(self, player, player_number, y_padding)
   local panels_max_width = 0.25 * self.button_height
-  local panels_width = math.min(panels_max_width, panels[player.panels_dir].images.classic[1][1]:getWidth())
-  local padding_x = 0.5 *self.button_width - 3 * panels_width -- center them, not 3.5 mysteriously?
+  local panels_width = math.min(panels_max_width, 20)
+  local padding_x = 0.5 * self.button_width - 3 * panels_width -- center them, not 3.5 mysteriously?
   if player.level >= 9 then
     padding_x = padding_x - 0.5 * panels_width
   end
@@ -439,37 +438,45 @@ end
 
 -- Draw the difficulty level selection UI
 function select_screen_graphics.draw_levels(self, player, player_number, y_padding)
-  local level_width = 20
-  local padding_x = math.floor(0.5 *self.button_width - 5.5 * level_width)
+  local leftRightIndicatorWidth = 8 -- width of "<" and ">" 
+  local playerNumberWidth = themes[config.theme].images.IMG_players[player_number]:getWidth()
+  local outsidePadding = 8 -- padding on the left and right of "<" and ">"
+  local paddingWidth = 4 -- padding between "<" levels, and ">"
+  local reservedSpace = (outsidePadding * 2) + (leftRightIndicatorWidth * 2) + (paddingWidth) + (playerNumberWidth) -- fixed amount of space needed for the cursors etc
+  local spaceAvailable = (self.button_width - reservedSpace)
+  local level_width = math.floor(spaceAvailable / #level_to_starting_speed)
   local is_selected = player.cursor.selected and player.cursor.positionId == "__Level"
-  if is_selected then
-    padding_x = padding_x - level_width
-  end
-  menu_drawf(themes[config.theme].images.IMG_players[player_number], self.render_x + padding_x, self.render_y + y_padding, "center", "center")
-  menu_drawf(themes[config.theme].images.IMG_players[player_number], self.render_x + padding_x, self.render_y + y_padding, "center", "center")
-  padding_x = padding_x + level_width
+  local drawX = outsidePadding
+
+  menu_drawf(themes[config.theme].images.IMG_players[player_number], self.render_x + drawX, self.render_y + y_padding, "center", "center")
+  drawX = drawX + playerNumberWidth
+
   if is_selected then
     -- Draw little text arrow on left to indicate you can move the level
-    gprintf("<", self.render_x + padding_x - 0.5 * level_width, self.render_y + y_padding - 0.5 * self.text_height, level_width, "center")
-    padding_x = padding_x + level_width
+    gprintf("<", self.render_x + drawX, self.render_y + y_padding - 0.5 * self.text_height, nil, "left")
   end
+  drawX = drawX + leftRightIndicatorWidth + paddingWidth
+
   for i = 1, #level_to_starting_speed do --which should equal the number of levels in the game
     local level_scale = level_width / themes[config.theme].images.IMG_levels[i]:getWidth()
     local use_unfocus = player.level < i
     if use_unfocus then
-      menu_drawf(themes[config.theme].images.IMG_levels_unfocus[i], self.render_x + padding_x, self.render_y + y_padding, "center", "center", 0, level_scale, level_scale)
+      menu_drawf(themes[config.theme].images.IMG_levels_unfocus[i], self.render_x + drawX, self.render_y + y_padding, "left", "center", 0, level_scale, level_scale)
     else
-      menu_drawf(themes[config.theme].images.IMG_levels[i], self.render_x + padding_x, self.render_y + y_padding, "center", "center", 0, level_scale, level_scale)
+      menu_drawf(themes[config.theme].images.IMG_levels[i], self.render_x + drawX, self.render_y + y_padding, "left", "center", 0, level_scale, level_scale)
     end
     if i == player.level then
       local cursorScale = 5 / themes[config.theme].images.IMG_level_cursor:getWidth()
-      menu_drawf(themes[config.theme].images.IMG_level_cursor, self.render_x + padding_x, self.render_y + y_padding + themes[config.theme].images.IMG_levels[i]:getHeight() * 0.5, "center", "top", 0, cursorScale, cursorScale)
+      menu_drawf(themes[config.theme].images.IMG_level_cursor, self.render_x + drawX + level_width / 2, self.render_y + y_padding + themes[config.theme].images.IMG_levels[i]:getHeight() * 0.5 * level_scale, "center", "top", 0, cursorScale, cursorScale)
     end
-    padding_x = padding_x + level_width
+
+    drawX = drawX + level_width
   end
+
+  drawX = drawX + paddingWidth
   if is_selected then
     -- Draw little text arrow on right to indicate you can move the level
-    gprintf(">", self.render_x + padding_x - 0.5 * level_width, self.render_y + y_padding - 0.5 * self.text_height, level_width, "center")
+    gprintf(">", self.render_x + drawX, self.render_y + y_padding - 0.5 * self.text_height, nil, "left")
   end
 end
 
