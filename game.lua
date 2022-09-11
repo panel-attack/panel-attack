@@ -143,6 +143,7 @@ function Game:transform_coordinates(x, y)
   return (x - self.canvasX) / self.canvasXScale, (y - self.canvasY) / self.canvasYScale
 end
 
+
 function Game:drawLoadingString(loadingString) 
   local textMaxWidth = 300
   local textHeight = 40

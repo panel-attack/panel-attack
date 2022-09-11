@@ -121,21 +121,6 @@ function love.update(dt)
   GAME.rich_presence:runCallbacks()
 end
 
-function love.resize(newPixelWidth, newPixelHeight)
-  if GAME then
-    local previousXScale = GAME.canvasXScale
-    GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
-    if previousXScale ~= GAME.canvasXScale then
-      if GAME.match then
-        GAME.needsAssetReload = true
-      else
-        GAME:refreshCanvasAndImagesForNewScale()
-      end
-    end
-    GAME.showGameScale = true
-  end
-end
-
 -- Called whenever the game needs to draw.
 function love.draw()
   if GAME.foreground_overlay then
