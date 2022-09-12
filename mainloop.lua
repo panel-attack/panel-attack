@@ -14,7 +14,8 @@ local PLAYING = "playing" -- room states
 local CHARACTERSELECT = "character select" -- room states
 connection_up_time = 0 -- connection_up_time counts "E" messages, not seconds
 logged_in = 0
-connected_server_ip = nil -- the ip address of the server you are connected to
+GAME.connected_server_ip = nil -- the ip address of the server you are connected to
+GAME.connected_network_port = nil -- the port of the server you are connected to
 my_user_id = nil -- your user id
 leaderboard_report = nil
 replay_of_match_so_far = nil -- current replay of spectatable replay
@@ -26,37 +27,24 @@ local has_game_update = false
 local main_menu_last_index = 1
 local puzzle_menu_last_index = 3
 
-local function drawLoadingString(loadingString) 
-  local textMaxWidth = 300
-  local textHeight = 40
-  local x = 20
-  local y = canvas_height - textHeight
-  local backgroundPadding = 10
-  grectangle_color("fill", (x - backgroundPadding) / GFX_SCALE , (y - backgroundPadding) / GFX_SCALE, textMaxWidth/GFX_SCALE, textHeight/GFX_SCALE, 0, 0, 0, 0.5)
-  gprintf(loadingString, x, y, canvas_width, "left", nil, nil, 10)
-end
-
 function fmainloop()
-  read_conf_file()
-  local x, y, display = love.window.getPosition()
-  love.window.setPosition(config.window_x or x, config.window_y or y, config.display or display)
-  love.window.setFullscreen(config.fullscreen or false)
-  love.window.setVSync(config.vsync and 1 or 0)
   Localization.init(localization)
   copy_file("readme_puzzles.txt", "puzzles/README.txt")
+  if love.system.getOS() ~= "OS X" then
+    recursiveRemoveFiles(".", ".DS_Store")
+  end
   theme_init()
-
   -- stages and panels before characters since they are part of their loading!
-  drawLoadingString(loc("ld_stages"))
+  GAME:drawLoadingString(loc("ld_stages"))
   wait()
   stages_init()
-  drawLoadingString(loc("ld_panels"))
+  GAME:drawLoadingString(loc("ld_panels"))
   wait()
   panels_init()
-  drawLoadingString(loc("ld_characters"))
+  GAME:drawLoadingString(loc("ld_characters"))
   wait()
   characters_init()
-  drawLoadingString(loc("ld_analytics"))
+  GAME:drawLoadingString(loc("ld_analytics"))
   wait()
   analytics.init()
   apply_config_volume()
@@ -79,13 +67,12 @@ function fmainloop()
   -- Run Unit Tests
   if TESTS_ENABLED then
     -- Run all unit tests now that we have everything loaded
-    drawLoadingString("Running Unit Tests")
+    GAME:drawLoadingString("Running Unit Tests")
     wait()
     require("PuzzleTests")
     require("ServerQueueTests")
     require("StackTests")
     require("table_util_tests")
-    require("csprngTests")
   end
 
   local func, arg = main_title, nil
@@ -94,6 +81,11 @@ function fmainloop()
     leftover_time = 1 / 120 -- prevents any left over time from getting big transitioning between menus
 ---@diagnostic disable-next-line: redundant-parameter
     func, arg = func(unpack(arg or {}))
+    GAME.showGameScale = false
+    if GAME.needsAssetReload then
+      GAME:refreshCanvasAndImagesForNewScale()
+      GAME.needsAssetReload = false
+    end
     collectgarbage("collect")
     logger.trace("Transitioning to next fmainloop function")
   end
@@ -179,18 +171,13 @@ do
     end
     character_loader_clear()
     stage_loader_clear()
-    close_socket()
+    resetNetwork()
     undo_stonermode()
     GAME.backgroundImage = themes[config.theme].images.bg_main
     GAME.battleRoom = nil
     GAME.input:clearInputConfigurationsForPlayers()
     GAME.input:requestPlayerInputConfigurationAssignments(1)
     reset_filters()
-    logged_in = 0
-    connection_up_time = 0
-    connected_server_ip = ""
-    current_server_supports_ranking = false
-    match_type = ""
     local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
     local main_menu
     local ret = nil
@@ -231,6 +218,10 @@ do
       {loc("mm_set_name"), main_set_name},
       {loc("mm_options"), options.main}
     }
+
+    if TESTS_ENABLED then
+      table.insert(items, 6, {"Vs Computer", main_local_vs_computer_setup})
+    end
 
     main_menu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, main_menu_last_index)
     for i = 1, #items do
@@ -320,7 +311,8 @@ end
 function Stack.wait_for_random_character(self)
   if self.character == random_character_special_value then
     self.character = table.getRandomElement(characters_ids_for_current_theme)
-  elseif characters[self.character]:is_bundle() then -- may have picked a bundle
+  end
+  if characters[self.character]:is_bundle() then -- may have picked a bundle
     self.character = table.getRandomElement(characters[self.character].sub_characters)
   end
   character_loader_load(self.character)
@@ -417,7 +409,12 @@ local function finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGam
 
   incompleteGame = incompleteGame or false
   
-  local extraPath, extraFilename
+  local extraPath, extraFilename = "", ""
+
+  if GAME.match:warningOccurred() then
+    extraFilename = extraFilename .. "-WARNING-OCCURRED"
+  end
+
   if P2 then
     replay[GAME.match.mode].I = P2.confirmedInput
 
@@ -428,7 +425,7 @@ local function finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGam
     else
       extraPath = rep_a_name .. "-vs-" .. rep_b_name
     end
-    extraFilename = rep_a_name .. "-L" .. P1.level .. "-vs-" .. rep_b_name .. "-L" .. P2.level
+    extraFilename = extraFilename .. rep_a_name .. "-L" .. P1.level .. "-vs-" .. rep_b_name .. "-L" .. P2.level
     if match_type and match_type ~= "" then
       extraFilename = extraFilename .. "-" .. match_type
     end
@@ -443,7 +440,7 @@ local function finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGam
     end
   else -- vs Self
     extraPath = "Vs Self"
-    extraFilename = "vsSelf-" .. "L" .. P1.level
+    extraFilename = extraFilename .. "vsSelf-" .. "L" .. P1.level
   end
 
   finalizeAndWriteReplay(extraPath, extraFilename)
@@ -1305,7 +1302,8 @@ function main_net_vs_setup(ip, network_port)
       return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
     end
   end
-  connected_server_ip = ip
+  GAME.connected_server_ip = ip
+  GAME.connected_network_port = network_port
   logged_in = false
   return main_net_vs_lobby
 end
@@ -1373,7 +1371,18 @@ function main_net_vs()
         finalizeAndWriteVsReplay(GAME.match.battleRoom, 0, true)
         GAME:clearMatch()
         json_send({leave_room = true})
-        return {main_dumb_transition, {main_net_vs_lobby, loc("ss_latency_error"), 60, -1}}
+        local ip = GAME.connected_server_ip
+        local port = GAME.connected_network_port
+        resetNetwork()
+        return {main_dumb_transition, {
+          main_net_vs_setup, -- next_func
+          loc("ss_latency_error"), -- text
+          60, -- timemin
+          -1, -- timemax
+          nil, -- winnerSFX
+          false, -- keepMusic
+          {ip, port} -- args
+        }}
       end
     end
   end
@@ -1427,6 +1436,12 @@ function main_local_vs_setup()
   GAME.input:clearInputConfigurationsForPlayers()
   GAME.input:requestPlayerInputConfigurationAssignments(2)
   return select_screen.main, {select_screen, "2p_local_vs"}
+end
+
+-- sets up globals for local vs computer
+function main_local_vs_computer_setup()
+  GAME.battleRoom = BattleRoom()
+  return select_screen.main, {select_screen, "2p_local_computer_vs"}
 end
 
 -- local 2pvs mode
@@ -1784,7 +1799,7 @@ function main_select_puzz()
   local exitSet = false
   local puzzleMenu
   local ret = nil
-  local level = config.puzzle_level or 5
+  local level = config.puzzle_level
   local randomColors = config.puzzle_randomColors or false
 
   local function selectFunction(myFunction, args)
@@ -2105,13 +2120,16 @@ function love.quit()
     json_send({logout = true})
   end
   love.audio.stop()
-  if love.window.getFullscreen() == true then
-    null, null, config.display = love.window.getPosition()
+  if love.window.getFullscreen() then
+    _, _, config.display = love.window.getPosition()
   else
-    config.window_x, config.window_y, config.display = love.window.getPosition()
-    config.window_x = math.max(config.window_x, 0)
-    config.window_y = math.max(config.window_y, 30) --don't let 'y' be zero, or the title bar will not be visible on next launch.
+    config.windowX, config.windowY, config.display = love.window.getPosition()
+    config.windowX = math.max(config.windowX, 0)
+    config.windowY = math.max(config.windowY, 30) --don't let 'y' be zero, or the title bar will not be visible on next launch.
   end
+
+  config.windowWidth, config.windowHeight, _ = love.window.getMode( )
+  config.maximizeOnStartup = love.window.isMaximized()
   config.fullscreen = love.window.getFullscreen()
   write_conf_file()
 end

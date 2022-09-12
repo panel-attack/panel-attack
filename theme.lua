@@ -23,9 +23,9 @@ local function load_theme_img(name, useBackup)
   if useBackup == nil then
     useBackup = true
   end
-  local img = load_img_from_supported_extensions("themes/" .. config.theme .. "/" .. name)
+  local img = GraphicsUtil.loadImageFromSupportedExtensions("themes/" .. config.theme .. "/" .. name)
   if not img and useBackup then
-    img = load_img_from_supported_extensions("themes/" .. default_theme_dir .. "/" .. name)
+    img = GraphicsUtil.loadImageFromSupportedExtensions("themes/" .. default_theme_dir .. "/" .. name)
   end
   return img
 end
@@ -202,8 +202,13 @@ function Theme.graphics_init(self)
   self.images.IMG_random_stage = load_theme_img("random_stage")
   self.images.IMG_random_character = load_theme_img("random_character")
 
-  self.images.IMG_healthbar_frame_1P = load_theme_img("healthbar_frame_1P")
-  self.images.IMG_healthbar_frame_2P = load_theme_img("healthbar_frame_2P")
+  if self.multibar_is_absolute then
+    self.images.IMG_healthbar_frame_1P = load_theme_img("healthbar_frame_1P_absolute")
+    self.images.IMG_healthbar_frame_2P = load_theme_img("healthbar_frame_2P_absolute")
+  else
+    self.images.IMG_healthbar_frame_1P = load_theme_img("healthbar_frame_1P")
+    self.images.IMG_healthbar_frame_2P = load_theme_img("healthbar_frame_2P")
+  end
   self.images.IMG_healthbar = load_theme_img("healthbar")
 
   self.images.IMG_prestop_frame = load_theme_img("prestop_frame")
@@ -269,11 +274,27 @@ function Theme.graphics_init(self)
   self.images.IMG_cursor = {}
   for player_num = 1, MAX_SUPPORTED_PLAYERS do
     self.images.IMG_players[player_num] = load_theme_img("p" .. player_num)
-    self.images.IMG_cursor[player_num] = load_theme_img("p" .. player_num .. "_cursor")
     self.images.IMG_char_sel_cursors[player_num] = {}
     for position_num = 1, 2 do
       self.images.IMG_char_sel_cursors[player_num][position_num] = load_theme_img("p" .. player_num .. "_select_screen_cursor" .. position_num)
     end
+  end
+
+  -- Cursor animation is 2 frames
+  for i = 1, 2 do
+    -- Cursor images used to be named weird and make modders think they were for different players
+    -- Load either format from the custom theme, and fallback to the built in cursor otherwise.
+    local cursorImage = load_theme_img("cursor" .. i, false)
+    local legacyCursorImage = load_theme_img("p" .. i .. "_cursor", false)
+    if not cursorImage then
+      if legacyCursorImage then
+        cursorImage = legacyCursorImage
+      else
+        cursorImage = load_theme_img("cursor" .. i, true)
+      end
+    end
+    assert(cursorImage ~= nil)
+    self.images.IMG_cursor[i] = cursorImage
   end
 
   self.images.IMG_char_sel_cursor_halves = {left = {}, right = {}}

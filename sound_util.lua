@@ -33,3 +33,5 @@ function load_sound_from_supported_extensions(path_and_filename, streamed)
   end
   return nil
 end
+
+zero_sound = load_sound_from_supported_extensions("zero_music")

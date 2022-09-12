@@ -3,6 +3,8 @@ local analytics = require("analytics")
 local wait = coroutine.yield
 local memory_before_options_menu = nil
 local theme_index
+local scaleTypeIndex
+local fixedScaleIndex
 local found_themes = {}
 
 local function general_menu()
@@ -147,8 +149,83 @@ local function graphics_menu()
     update_theme()
   end
 
+  local scaleTypeOptions = {"auto", "fit", "fixed"}
+  local translatedScaleTypeOptions = {loc("op_scale_auto"), loc("op_scale_fit"), loc("op_scale_fixed")}
+  scaleTypeIndex = 1
+  for index, scaleType in ipairs(scaleTypeOptions) do
+    if scaleType == config.gameScaleType then
+      scaleTypeIndex = index
+      break
+    end
+  end
+  fixedScaleIndex = 1
+  for index, fixedScale in ipairs(GAME.availableScales) do
+    if fixedScale == config.gameScaleFixedValue then
+      fixedScaleIndex = index
+      break
+    end
+  end
+
+  local updateFixedScale
+
+  local function scaleSettingsChanged()
+    GAME.showGameScale = true
+    local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
+    local previousXScale = GAME.canvasXScale
+    GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
+    if previousXScale ~= GAME.canvasXScale then
+      GAME:refreshCanvasAndImagesForNewScale()
+    end
+  end
+
+  local function updateScaleType(noUpdate)
+    if noUpdate == false then
+      config.gameScaleType = scaleTypeOptions[scaleTypeIndex]
+      scaleSettingsChanged()
+    end
+    graphicsMenu:set_button_setting(2, translatedScaleTypeOptions[scaleTypeIndex])
+    updateFixedScale(true)
+  end
+
+  local function previousScaleType()
+    scaleTypeIndex = bound(1, scaleTypeIndex - 1, #scaleTypeOptions)
+    updateScaleType(false)
+  end
+
+  local function nextScaleType()
+    scaleTypeIndex = bound(1, scaleTypeIndex + 1, #scaleTypeOptions)
+    updateScaleType(false)
+  end
+
+  updateFixedScale = function(noUpdate)
+    if config.gameScaleType == "fixed" then
+      if noUpdate == false then
+        config.gameScaleFixedValue = GAME.availableScales[fixedScaleIndex]
+        scaleSettingsChanged()
+      end
+      graphicsMenu:set_button_setting(3, GAME.availableScales[fixedScaleIndex]) --todo localize
+    else
+      -- ideally we would hide this setting, but its too hard without better UI control support
+      graphicsMenu:set_button_setting(3, nil)
+    end
+  end
+
+  local function previousFixedScale()
+    if config.gameScaleType == "fixed" then
+      fixedScaleIndex = bound(1, fixedScaleIndex - 1, #GAME.availableScales)
+      updateFixedScale(false)
+    end
+  end
+
+  local function nextFixedScale()
+    if config.gameScaleType == "fixed" then
+      fixedScaleIndex = bound(1, fixedScaleIndex + 1, #GAME.availableScales)
+      updateFixedScale(false)
+    end
+  end
+
   local function update_portrait_darkness()
-    graphicsMenu:set_button_setting(2, config.portrait_darkness)
+    graphicsMenu:set_button_setting(4, config.portrait_darkness)
   end
 
   local function increase_portrait_darkness()
@@ -165,21 +242,21 @@ local function graphics_menu()
     if not noToggle then
       config.popfx = not config.popfx
     end
-    graphicsMenu:set_button_setting(3, config.popfx and loc("op_on") or loc("op_off"))
+    graphicsMenu:set_button_setting(5, config.popfx and loc("op_on") or loc("op_off"))
   end
 
   local function update_renderTelegraph(noToggle)
     if not noToggle then
       config.renderTelegraph = not config.renderTelegraph
     end
-    graphicsMenu:set_button_setting(4, config.renderTelegraph and loc("op_on") or loc("op_off"))
+    graphicsMenu:set_button_setting(6, config.renderTelegraph and loc("op_on") or loc("op_off"))
   end
 
   local function update_renderAttacks(noToggle)
     if not noToggle then
       config.renderAttacks = not config.renderAttacks
     end
-    graphicsMenu:set_button_setting(5, config.renderAttacks and loc("op_on") or loc("op_off"))
+    graphicsMenu:set_button_setting(7, config.renderAttacks and loc("op_on") or loc("op_off"))
   end
 
   local function nextMenu()
@@ -195,13 +272,17 @@ local function graphics_menu()
   end
 
   graphicsMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
-  graphicsMenu:add_button(loc("op_theme"), nextMenu, goEscape, previous_theme, next_theme)
-  graphicsMenu:add_button(loc("op_portrait_darkness"), nextMenu, goEscape, decrease_portrait_darkness, increase_portrait_darkness)
+  graphicsMenu:add_button(loc("op_theme"), next_theme, goEscape, previous_theme, next_theme)
+  graphicsMenu:add_button(loc("op_scale"), nextScaleType, goEscape, previousScaleType, nextScaleType)
+  graphicsMenu:add_button(loc("op_scale_fixed_value"), nextFixedScale, goEscape, previousFixedScale, nextFixedScale)
+  graphicsMenu:add_button(loc("op_portrait_darkness"), increase_portrait_darkness, goEscape, decrease_portrait_darkness, increase_portrait_darkness)
   graphicsMenu:add_button(loc("op_popfx"), update_popfx, goEscape, update_popfx, update_popfx)
   graphicsMenu:add_button(loc("op_renderTelegraph"), update_renderTelegraph, goEscape, update_renderTelegraph, update_renderTelegraph)
   graphicsMenu:add_button(loc("op_renderAttacks"), update_renderAttacks, goEscape, update_renderAttacks, update_renderAttacks)
   graphicsMenu:add_button(loc("back"), exitSettings, exitSettings)
   update_theme()
+  updateScaleType(true)
+  updateFixedScale(true)
   update_portrait_darkness()
   update_popfx(true)
   update_renderTelegraph(true)
@@ -862,144 +943,66 @@ local function about_menu(button_idx)
   GAME.backgroundImage = themes[config.theme].images.bg_main
   local aboutMenu
 
-  local function show_themes_readme()
-    ret = {
-      function()
-        GAME.backgroundImage = themes[config.theme].images.bg_readme
-        reset_filters()
+  local function show_readme(filename, returnIndex)
+    GAME.backgroundImage = themes[config.theme].images.bg_readme
+    reset_filters()
 
-        if not love.filesystem.getInfo("themes/" .. prefix_of_ignored_dirs .. default_theme_dir) then
-          --print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
-          gprint(loc("op_copy_files"), 280, 280)
-          wait()
-          recursive_copy("themes/" .. default_theme_dir, "themes/" .. prefix_of_ignored_dirs .. default_theme_dir)
-
-          -- Android can't easily copy into the save dir, so do it for them to help.
-          recursive_copy("default_data/themes", "themes")
-        end
-
-        local readme = read_txt_file("readme_themes.txt")
-        while true do
-          gprint(readme, 15, 15)
-          wait()
-          local theme_ret = nil
-          variable_step(
-            function()
-              if menu_escape() or menu_enter() then
-                theme_ret = {about_menu, {1}}
-              end
+    local readme = read_txt_file(filename)
+    local text = love.graphics.newText(get_global_font(), readme)
+    local heightDiff = text:getHeight() - (canvas_height - 15)
+    local offset = 0
+    local scrollStep = 14
+    while true do
+      gfx_q:push({love.graphics.draw, {text, 15, 15, nil, nil, nil, nil, offset}})
+      wait()
+      local readmeRet = nil
+      variable_step(
+        function()
+          if menu_escape() or menu_enter() then
+            readmeRet = {about_menu, {returnIndex}}
+          elseif heightDiff > 0 then
+            if menu_up() then
+              offset = math.max(0, offset - scrollStep)
+            elseif menu_down() then
+              offset = math.min(heightDiff + (scrollStep - (heightDiff % scrollStep)), offset + scrollStep)
             end
-          )
-          if theme_ret then
-            return unpack(theme_ret)
           end
         end
+      )
+      if readmeRet then
+        return unpack(readmeRet)
       end
-    }
+    end
+  end
+
+  local function show_themes_readme()
+    if not love.filesystem.getInfo("themes/" .. prefix_of_ignored_dirs .. default_theme_dir) then
+      --print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
+      gprint(loc("op_copy_files"), 280, 280)
+      wait()
+      recursive_copy("themes/" .. default_theme_dir, "themes/" .. prefix_of_ignored_dirs .. default_theme_dir)
+
+      -- Android can't easily copy into the save dir, so do it for them to help.
+      recursive_copy("default_data/themes", "themes")
+    end
+
+    ret = {show_readme, {"readme_themes.txt", 1}}
   end
 
   local function show_characters_readme()
-    ret = {
-      function()
-        GAME.backgroundImage = themes[config.theme].images.bg_readme
-        reset_filters()
-
-        local readme = read_txt_file("readme_characters.txt")
-        while true do
-          gprint(readme, 15, 15)
-          wait()
-          local characters_ret = nil
-          variable_step(
-            function()
-              if menu_escape() or menu_enter() then
-                characters_ret = {about_menu, {2}}
-              end
-            end
-          )
-          if characters_ret then
-            return unpack(characters_ret)
-          end
-        end
-      end
-    }
+    ret = {show_readme, {"readme_characters.txt", 2}}
   end
 
   local function show_stages_readme()
-    ret = {
-      function()
-        GAME.backgroundImage = themes[config.theme].images.bg_readme
-        reset_filters()
-
-        local readme = read_txt_file("readme_stages.txt")
-        while true do
-          gprint(readme, 15, 15)
-          wait()
-          local stages_ret = nil
-          variable_step(
-            function()
-              if menu_escape() or menu_enter() then
-                stages_ret = {about_menu, {3}}
-              end
-            end
-          )
-          if stages_ret then
-            return unpack(stages_ret)
-          end
-        end
-      end
-    }
+    ret = {show_readme, {"readme_stages.txt", 3}}
   end
 
   local function show_panels_readme()
-    ret = {
-      function()
-        GAME.backgroundImage = themes[config.theme].images.bg_readme
-        reset_filters()
-
-        local readme = read_txt_file("readme_panels.txt")
-        while true do
-          gprint(readme, 15, 15)
-          wait()
-          local panels_ret = nil
-          variable_step(
-            function()
-              if menu_escape() or menu_enter() then
-                panels_ret = {about_menu, {4}}
-              end
-            end
-          )
-          if panels_ret then
-            return unpack(panels_ret)
-          end
-        end
-      end
-    }
+    ret = {show_readme, {"readme_panels.txt", 4}}
   end
 
   local function show_attack_readme()
-    ret = {
-      function()
-        GAME.backgroundImage = themes[config.theme].images.bg_readme
-        reset_filters()
-
-        local readme = read_txt_file("readme_training.txt")
-        while true do
-          gprint(readme, 15, 15)
-          wait()
-          local panels_ret = nil
-          variable_step(
-            function()
-              if menu_escape() or menu_enter() then
-                panels_ret = {about_menu, {5}}
-              end
-            end
-          )
-          if panels_ret then
-            return unpack(panels_ret)
-          end
-        end
-      end
-    }
+    ret = {show_readme, {"readme_training.txt", 5}}
   end
 
   local function show_system_info()
