@@ -22,21 +22,6 @@ function Replay.loadFromPath(path)
         replay.engineVersion = "046"
     end
 
-    -- Old versions saved replays with extra data, prefer vs and endless in that case
-    if replay.vs and replay.endless then
-        replay.endless = nil
-    end
-    if replay.vs and replay.puzzle then
-        replay.puzzle = nil
-    end
-    if replay.endless and replay.puzzle then
-        replay.puzzle = nil
-    end
-
-    -- Fix old replays that were a table instead of a string
-    if type(replay.in_buf) == "table" then
-        replay.in_buf = table.concat(replay.in_buf)
-    end
     return true
 end
 
@@ -47,13 +32,15 @@ function Replay.loadFromFile(replay)
     GAME.battleRoom = BattleRoom()
     GAME.match = Match("vs", GAME.battleRoom)
 
+    assert(replay.P1_level, "invalid replay: player 1 level missing from vs replay")
     assert(replay.seed, "invalid replay: seed must be set")
     GAME.match.seed = replay.seed
     GAME.match.isFromReplay = true
-    P1 = Stack{which=1, match=GAME.match, is_local=false, level=replay.P1_level or 5, character=replay.P1_char}
+    P1 = Stack{which=1, match=GAME.match, is_local=false, level=replay.P1_level, character=replay.P1_char}
 
     if replay.I and string.len(replay.I) > 0 then
-      P2 = Stack{which=2, match=GAME.match, is_local=false, level=replay.P2_level or 5, character=replay.P2_char}
+      assert(replay.P2_level, "invalid replay: player 1 level missing from vs replay")
+      P2 = Stack{which=2, match=GAME.match, is_local=false, level=replay.P2_level, character=replay.P2_char}
       
       P1:set_garbage_target(P2)
       P2:set_garbage_target(P1)
@@ -89,10 +76,6 @@ function Replay.loadFromFile(replay)
 
     assert(replay.seed, "invalid replay: seed must be set")
     GAME.match.seed = replay.seed
-    
-    if replay.pan_buf then
-      replay.P = replay.pan_buf -- support old versions
-    end
 
     P1 = Stack{which=1, match=GAME.match, is_local=false, speed=replay.speed, difficulty=replay.difficulty}
     GAME.match.P1 = P1
