@@ -1,9 +1,9 @@
 StackExtensions = {}
 
 function StackExtensions.copyStack(stack)
-  local match = selectiveDeepCopy(stack.match, nil, {P1=true, P2=true, P1CPU=true, P2CPU=true})
-  local stackCopy =  selectiveDeepCopy(stack,                nil, {garbage_target=true, prev_states=true, canvas=true, match=true, telegraph=true})
-  local otherStack = selectiveDeepCopy(stack.garbage_target, nil, {garbage_target=true, prev_states=true, canvas=true, match=true, telegraph=true})
+  local match = deepCopy(stack.match, nil, {P1=true, P2=true, P1CPU=true, P2CPU=true})
+  local stackCopy =  deepCopy(stack,                nil, {garbage_target=true, prev_states=true, canvas=true, match=true, telegraph=true})
+  local otherStack = deepCopy(stack.garbage_target, nil, {garbage_target=true, prev_states=true, canvas=true, match=true, telegraph=true})
 
   if stackCopy.which == 1 then
     match.P1 = stackCopy
@@ -36,14 +36,14 @@ function StackExtensions.copyStackWithTelegraph(stack)
   end
 
   if otherStack then
-    local stackTelegraph = selectiveDeepCopy(stack.telegraph, nil, {sender=true, owner=true})
+    local stackTelegraph = deepCopy(stack.telegraph, nil, {sender=true, owner=true})
     if stackTelegraph then
       stackTelegraph.sender = otherStack
       stackTelegraph.owner = stackCopy
       stackCopy.telegraph = stackTelegraph
     end
     
-    local otherTelegraph = selectiveDeepCopy(stack.garbage_target.telegraph, nil, {sender=true, owner=true})
+    local otherTelegraph = deepCopy(stack.garbage_target.telegraph, nil, {sender=true, owner=true})
     if otherTelegraph then
       otherTelegraph.sender = stackCopy
       otherTelegraph.owner = otherStack

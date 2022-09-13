@@ -93,8 +93,8 @@ function Telegraph.rollbackCopy(self, source, other)
   end
 
   other.garbage_queue = source.garbage_queue:makeCopy()
-  other.stoppers = deepcpy(source.stoppers)
-  other.attacks = deepcpy(source.attacks)
+  other.stoppers = deepCopy(source.stoppers)
+  other.attacks = deepCopy(source.attacks)
   other.sender = source.sender
   other.pos_x = source.pos_x
   other.pos_y = source.pos_y
@@ -127,7 +127,7 @@ function Telegraph.privatePush(self, garbage, attack_origin_col, attack_origin_r
   else
     -- get combo_garbage_widths, n_resulting_metal_garbage
     stuff_to_send = self:add_combo_garbage(garbage, timeAttackInteracts)
-    stuff_to_send = deepcpy(stuff_to_send) -- we don't want to use the same object as in the garbage queue so they don't change each other
+    stuff_to_send = deepCopy(stuff_to_send) -- we don't want to use the same object as in the garbage queue so they don't change each other
   end
   if not self.attacks[timeAttackInteracts] then
     self.attacks[timeAttackInteracts] = {}

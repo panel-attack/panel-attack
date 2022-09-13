@@ -96,59 +96,27 @@ function shallowcpy(tab)
   return ret
 end
 
-local deepcpy_mapping = {}
-local real_deepcpy
-function real_deepcpy(tab)
-  if deepcpy_mapping[tab] ~= nil then
-    return deepcpy_mapping[tab]
-  end
-  local ret = {}
-  deepcpy_mapping[tab] = ret
-  deepcpy_mapping[ret] = ret
-  for k, v in pairs(tab) do
-    if type(k) == "table" then
-      k = real_deepcpy(k)
-    end
-    if type(v) == "table" then
-      v = real_deepcpy(v)
-    end
-    ret[k] = v
-  end
-  return setmetatable(ret, getmetatable(tab))
-end
-
--- copys the full variable deeply
-function deepcpy(tab)
-  if type(tab) ~= "table" then
-    return tab
-  end
-  local ret = real_deepcpy(tab)
-  deepcpy_mapping = {}
-  return ret
-end
-
 -- deepcopies a table while specifying which keys should get shallow copied or not copied at all in order to prevent recursive death loops
-function selectiveDeepCopy(orig, keysToShallowCopy, keysToIgnore)
-  local origType = type(orig)
+function deepCopy(source, keysToShallowCopy, keysToIgnore)
   local copy
-  if origType == 'table' then
+  if type(source) == 'table' then
     copy = {}
-    for key, value in pairs(orig) do
+    for key, value in pairs(source) do
         if keysToIgnore == nil or keysToIgnore[key] == nil then
           if keysToShallowCopy == nil or keysToShallowCopy[key] == nil then
             if type(key) == "table" then
-              key = selectiveDeepCopy(key)
+              key = deepCopy(key)
             end
             if type(value) == "table" then
-              value = selectiveDeepCopy(value)
+              value = deepCopy(value)
             end
           end
           copy[key] = value
         end
     end
-    setmetatable(copy, getmetatable(orig))
+    setmetatable(copy, getmetatable(source))
   else -- number, string, boolean, etc
-      copy = orig
+      copy = source
   end
 
   return copy

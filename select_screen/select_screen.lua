@@ -13,7 +13,7 @@ local function fill_map(template_map, map)
   while true do
     -- new page handling
     pages_amount = pages_amount + 1
-    map[pages_amount] = deepcpy(template_map)
+    map[pages_amount] = deepCopy(template_map)
 
     -- go through the page and replace __Empty with characters_ids_for_current_theme
     for i = 1, X do
@@ -651,7 +651,7 @@ function select_screen.handleInput(self)
       if self:isNetPlay() and not GAME.battleRoom.spectating  then
         self:sendMenuState()
       end
-      self.myPreviousConfig = deepcpy(self.players[self.my_player_number])
+      self.myPreviousConfig = deepCopy(self.players[self.my_player_number])
     end
   else -- (we are spectating)
     if menu_escape() then
@@ -945,7 +945,7 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
   end
   self:refreshReadyStates()
 
-  self.myPreviousConfig = deepcpy(self.players[self.my_player_number])
+  self.myPreviousConfig = deepCopy(self.players[self.my_player_number])
 
   self.menu_clock = 0
 

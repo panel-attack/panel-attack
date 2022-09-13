@@ -1698,7 +1698,7 @@ function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx)
 
   local function setupPuzzles()
     if config.puzzle_randomColors then
-      puzzleSet = deepcpy(puzzleSet)
+      puzzleSet = deepCopy(puzzleSet)
   
       for _, puzzle in pairs(puzzleSet.puzzles) do
         puzzle.stack = Puzzle.randomizeColorString(puzzle.stack)

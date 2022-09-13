@@ -8,11 +8,11 @@ GarbageQueue = class(function(s)
   
   function GarbageQueue.makeCopy(self)
     local other = GarbageQueue()
-    other.chain_garbage = deepcpy(self.chain_garbage)
+    other.chain_garbage = deepCopy(self.chain_garbage)
     for i=1, 6 do
-      other.combo_garbage[i] = deepcpy(self.combo_garbage[i])
+      other.combo_garbage[i] = deepCopy(self.combo_garbage[i])
     end
-    other.metal = deepcpy(self.metal)
+    other.metal = deepCopy(self.metal)
     other.ghost_chain = self.ghost_chain
     return other
   end

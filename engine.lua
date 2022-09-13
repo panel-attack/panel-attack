@@ -7,7 +7,7 @@ local logger = require("logger")
 --  . the main game routine
 --    (rising, timers, falling, cursor movement, swapping, landing)
 --  . the matches-checking routine
-local min, pairs, deepcpy = math.min, pairs, deepcpy
+local min, pairs, deepCopy = math.min, pairs, deepCopy
 local max = math.max
 local garbage_bounce_time = #garbage_bounce_table
 local clone_pool = {}
@@ -320,7 +320,7 @@ function Stack.rollbackCopy(self, source, other)
   other.do_swap = source.do_swap
   other.speed = source.speed
   other.health = source.health
-  other.garbage_cols = deepcpy(source.garbage_cols)
+  other.garbage_cols = deepCopy(source.garbage_cols)
   --[[if source.garbage_cols then
     other.garbage_idxs = other.garbage_idxs or {}
     local n_g_cols = #(source.garbage_cols or other.garbage_cols)
@@ -330,7 +330,7 @@ function Stack.rollbackCopy(self, source, other)
   else
 
   end--]]
-  other.later_garbage = deepcpy(source.later_garbage)
+  other.later_garbage = deepCopy(source.later_garbage)
   other.garbage_q = source.garbage_q:makeCopy()
   if source.telegraph then
     other.telegraph = source.telegraph:rollbackCopy(source.telegraph, other.telegraph)
@@ -376,7 +376,7 @@ function Stack.rollbackCopy(self, source, other)
   other.top_cur_row = source.top_cur_row
   other.cursor_lock = source.cursor_lock
   other.displacement = source.displacement
-  other.speed_times = deepcpy(source.speed_times)
+  other.speed_times = deepCopy(source.speed_times)
   other.panels_to_speedup = source.panels_to_speedup
   other.stop_time = source.stop_time
   other.pre_stop_time = source.pre_stop_time
@@ -398,8 +398,8 @@ function Stack.rollbackCopy(self, source, other)
   other.peak_shake_time = source.peak_shake_time
   other.do_countdown = source.do_countdown
   other.ready_y = source.ready_y
-  other.combos = deepcpy(source.combos)
-  other.chains = deepcpy(source.chains)
+  other.combos = deepCopy(source.combos)
+  other.chains = deepCopy(source.chains)
   other.panel_buffer = source.panel_buffer
   other.gpanel_buffer = source.gpanel_buffer
   other.panelGenCount = source.panelGenCount
@@ -409,7 +409,7 @@ function Stack.rollbackCopy(self, source, other)
   other.metal_panels_queued = source.metal_panels_queued
   other.panels_cleared = source.panels_cleared
   other.danger_timer = source.danger_timer
-  other.analytic = deepcpy(source.analytic)
+  other.analytic = deepCopy(source.analytic)
   other.game_over_clock = source.game_over_clock
 
   return other

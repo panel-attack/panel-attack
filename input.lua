@@ -364,7 +364,7 @@ function Input.requestPlayerInputConfigurationAssignments(self, numberOfPlayers)
   else
     if #input.playerInputConfigurationsMap < numberOfPlayers then
       self.acceptingPlayerInputConfigurationAssignments = true
-      self.availableInputConfigurationsToAssign = deepcpy(self.inputConfigurations)
+      self.availableInputConfigurationsToAssign = deepCopy(self.inputConfigurations)
       self.numberOfPlayersAcceptingInputConfiguration = numberOfPlayers
     end
   end
