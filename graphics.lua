@@ -359,8 +359,14 @@ function Stack.render(self)
                 end
               end
               if height % 2 == 1 then
-                local face_w, face_h = imgs.face:getDimensions()
-                draw(imgs.face, draw_x + 8 * (width - 1), top_y + 16 * ((height - 1) / 2), 0, 16 / face_w, 16 / face_h)
+                local face
+                if imgs.face2 and width % 2 == 1 then
+                  face = imgs.face2
+                else
+                  face = imgs.face
+                end
+                local face_w, face_h = face:getDimensions()
+                draw(face, draw_x + 8 * (width - 1), top_y + 16 * ((height - 1) / 2), 0, 16 / face_w, 16 / face_h)
               else
                 local face_w, face_h = imgs.doubleface:getDimensions()
                 draw(imgs.doubleface, draw_x + 8 * (width - 1), top_y + 16 * ((height - 2) / 2), 0, 16 / face_w, 32 / face_h)
@@ -445,12 +451,20 @@ function Stack.render(self)
   end
 
   -- Draw the frames and wall at the bottom
+  local frameImage = nil
+  local wallImage = nil
   if self.which == 1 then
-    draw(themes[config.theme].images.IMG_frame1P, 0, 0)
-    draw(themes[config.theme].images.IMG_wall1P, 4, 4 - shake + self.height * 16)
+    frameImage = themes[config.theme].images.IMG_frame1P
+    wallImage = themes[config.theme].images.IMG_wall1P
   else
-    draw(themes[config.theme].images.IMG_frame2P, 0, 0)
-    draw(themes[config.theme].images.IMG_wall2P, 4, 4 - shake + self.height * 16)
+    frameImage = themes[config.theme].images.IMG_frame2P
+    wallImage = themes[config.theme].images.IMG_wall2P
+  end
+  if frameImage then
+    graphicsUtil.drawScaledImage(frameImage, 0, 0, 312, 612)
+  end
+  if wallImage then
+    graphicsUtil.drawScaledWidthImage(wallImage, 12, (4 - shake + self.height * 16)*GFX_SCALE, 288)
   end
 
   -- Draw the cursor
@@ -466,7 +480,9 @@ function Stack.render(self)
 
   gfx_q:push({love.graphics.setStencilTest, {}})
   gfx_q:push({love.graphics.setCanvas, {GAME.globalCanvas}})
+  gfx_q:push({love.graphics.setBlendMode, {"alpha", "premultiplied"}})
   gfx_q:push({love.graphics.draw, {self.canvas, (self.pos_x - 4) * GFX_SCALE, (self.pos_y - 4) * GFX_SCALE}})
+  gfx_q:push({love.graphics.setBlendMode, {"alpha", "alphamultiply"}})
 
   self:draw_popfxs()
   self:draw_cards()
@@ -790,23 +806,18 @@ function Stack.render(self)
   end
 
   local function drawMatchType()
-    --local main_infos_screen_pos = { x=375 + (canvas_width-legacy_canvas_width)/2, y=10 + (canvas_height-legacy_canvas_height) }
     if match_type ~= "" then
+      local matchImage = nil
       --gprint(match_type, main_infos_screen_pos.x, main_infos_screen_pos.y-50)
       if match_type == "Ranked" then
-        IMG_match = themes[config.theme].images.IMG_ranked
+        matchImage = themes[config.theme].images.IMG_ranked
       end
       if match_type == "Casual" then
-        IMG_match = themes[config.theme].images.IMG_casual
+        matchImage = themes[config.theme].images.IMG_casual
       end
-      draw_label(IMG_match, (main_infos_screen_pos.x + themes[config.theme].matchtypeLabel_Pos[1]) / GFX_SCALE, (main_infos_screen_pos.y + themes[config.theme].matchtypeLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].matchtypeLabel_Scale)
-    --[[
-      if self.win_counts == nil then win = 0 else win = self.win_counts end
-      draw(themes[config.theme].images.IMG_wins, (self.score_x+themes[config.theme].winLabel_Pos[1])/GFX_SCALE, (self.score_y+themes[config.theme].winLabel_Pos[2])/GFX_SCALE, 0,
-        (60/themes[config.theme].images.IMG_wins:getWidth()*themes[config.theme].winLabel_Scale)/GFX_SCALE, (28/themes[config.theme].images.IMG_wins:getHeight()*themes[config.theme].winLabel_Scale)/GFX_SCALE)
-      draw_number(win, themes[config.theme].images.IMG_timeNumber_atlas, 12, win_quads, self.score_x+themes[config.theme].win_Pos[1], self.score_y+themes[config.theme].win_Pos[2], themes[config.theme].win_Scale,
-        20/themes[config.theme].images.timeNumberWidth*themes[config.theme].time_Scale, 26/themes[config.theme].images.timeNumberHeight*themes[config.theme].time_Scale, "center")
-      ]]
+      if matchImage then
+        draw_label(matchImage, (main_infos_screen_pos.x + themes[config.theme].matchtypeLabel_Pos[1]) / GFX_SCALE, (main_infos_screen_pos.y + themes[config.theme].matchtypeLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].matchtypeLabel_Scale)
+      end
     end
   end
 
@@ -1034,7 +1045,9 @@ end
 -- Draw the pause menu
 function draw_pause()
   if not GAME.renderDuringPause then
-    draw(themes[config.theme].images.pause, 0, 0)
+    local image = themes[config.theme].images.pause
+    local scale = canvas_width / math.max(image:getWidth(), image:getHeight()) -- keep image ratio
+    menu_drawf(image, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
   end
   gprintf(loc("pause"), 0, 330, canvas_width, "center", nil, 1, large_font)
   gprintf(loc("pl_pause_help"), 0, 360, canvas_width, "center", nil, 1)

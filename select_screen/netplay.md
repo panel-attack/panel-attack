@@ -88,6 +88,19 @@ By convention the information inside `a_menu_state` belongs to the player with t
 
 Locally comparing for differences with the previous menu state, the client always sends this message to the server upon every move the player does.
 
+#### Random values
+
+Historically there have been various developments that *specifically* led to different interpretations of the fields `character_is_random` and `stage_is_random` over time:
+
+Originally these used to be boolean values to indicate whether the player chose the random option. With the addition of bundle characters, this value was transformed into a `string`. The values held by this would be either:
+- the id if a bundle character/stage was picked
+- a special string value if the random character/stage option was picked
+- `nil` if a non-bundle and non-random selection was made
+
+In the newest iteration, the game no longer sends the special string value for random character/stage but instead sends the character/stage locally picked from the roll in the `character` or `stage` field while sending the random field as `nil`.
+
+Ultimately, the `random` fields serve as the indicators to decide whether the local client has randomization to do for picking mods upon receiving the message.
+
 ### Server messages player and spectators about changes in menu state
 
 ```json

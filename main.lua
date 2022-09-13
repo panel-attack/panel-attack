@@ -59,7 +59,7 @@ function love.load()
   GAME.rich_presence:initialize("902897593049301004")
   mainloop = coroutine.create(fmainloop)
 
-  GAME.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME.canvasXScale})
+  GAME.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME:newCanvasSnappedScale()})
 end
 
 function love.focus(f)
@@ -94,6 +94,17 @@ function love.update(dt)
     GAME.backgroundImage:update(dt)
   end
 
+  local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
+  if GAME.previousWindowWidth ~= newPixelWidth then
+    GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
+    if GAME.match then
+      GAME.needsAssetReload = true
+    else
+      GAME:refreshCanvasAndImagesForNewScale()
+    end
+    GAME.showGameScale = true
+  end
+
   local status, err = coroutine.resume(mainloop)
   if not status then
     local errorData = Game.errorData(err, debug.traceback(mainloop))
@@ -109,21 +120,6 @@ function love.update(dt)
 
   update_music()
   GAME.rich_presence:runCallbacks()
-end
-
-function love.resize(newPixelWidth, newPixelHeight)
-  if GAME then
-    local previousXScale = GAME.canvasXScale
-    GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
-    if previousXScale ~= GAME.canvasXScale then
-      if GAME.match then
-        GAME.needsAssetReload = true
-      else
-        GAME:refreshCanvasAndImagesForNewScale()
-      end
-    end
-    GAME.showGameScale = true
-  end
 end
 
 -- Called whenever the game needs to draw.

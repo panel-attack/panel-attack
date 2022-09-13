@@ -92,6 +92,14 @@ function Panels.load(self)
         error("Could not find default panel image")
       end
     end
+
+    -- If height is exactly 48 for this panel image (including metal)
+    -- it is a 1x asset that isn't intended to be blocky (most likely)
+    -- use linear so it doesn't get jaggy
+    local height = img:getHeight()*img:getDPIScale()
+    if height == 48 then
+      img:setFilter("linear", "linear")
+    end
     return img
   end
 

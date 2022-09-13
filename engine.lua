@@ -60,7 +60,7 @@ Stack =
 
     -- frame.png dimensions
     if wantsCanvas then
-      s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale=GAME.canvasXScale})
+      s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale=GAME:newCanvasSnappedScale()})
     end
 
     if level then
@@ -133,7 +133,7 @@ Stack =
 
     s.NCOLORS = s.NCOLORS or 5
     s.score = 0 -- der skore
-    s.chain_counter = 0 -- how high is the current chain
+    s.chain_counter = 0 -- how high is the current chain (starts at 2)
 
     s.panels_in_top_row = false -- boolean, for losing the game
     s.danger = s.danger or false -- boolean, panels in the top row (danger)
@@ -250,18 +250,19 @@ end
 
 -- Positions the stack draw position for the given player
 function Stack.moveForPlayerNumber(stack, player_num)
-  local stack_padding_x_for_legacy_pos = ((464) / 2)
+  -- Position of elements should ideally be on even coordinates to avoid non pixel alignment
+  -- on 150% scale
   if player_num == 1 then
-    stack.pos_x = 4 + stack_padding_x_for_legacy_pos / GFX_SCALE
-    stack.score_x = 315 + stack_padding_x_for_legacy_pos
+    stack.pos_x = 80
+    stack.score_x = 546
     stack.mirror_x = 1
     stack.origin_x = stack.pos_x
     stack.multiplication = 0
     stack.id = "_1P"
     stack.VAR_numbers = ""
   elseif player_num == 2 then
-    stack.pos_x = 172 + stack_padding_x_for_legacy_pos / GFX_SCALE
-    stack.score_x = 410 + stack_padding_x_for_legacy_pos
+    stack.pos_x = 248
+    stack.score_x = 642
     stack.mirror_x = -1
     stack.origin_x = stack.pos_x + (stack.canvas:getWidth() / GFX_SCALE) - 8
     stack.multiplication = 1
