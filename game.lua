@@ -29,6 +29,7 @@ function Game.clearMatch(self)
   self.match = nil
   self.gameIsPaused = false
   self.renderDuringPause = false
+  self.preventSounds = false
   self.currently_paused_tracks = {}
   P1 = nil
   P2 = nil
