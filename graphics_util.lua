@@ -111,87 +111,44 @@ function draw_label(img, x, y, rot, scale, mirror)
   rot, scale, scale}})
 end
 
--- Draws a number via a font image
--- TODO consolidate with draw_pixel_font which should encompass all this API
-function draw_number(number, atlas, frameCount, quads, x, y, scale, x_scale, y_scale, align, mirror)
-  x_scale = x_scale or 1
-  y_scale = y_scale or 1
-  align = align or "left"
-  mirror = mirror or 0
-  
-  local width = atlas:getWidth()
-  local height = atlas:getHeight()
-  local numberWidth = atlas:getWidth()/frameCount
-  local numberHeight = atlas:getHeight()
-  
-  x = x - (numberWidth*GFX_SCALE*scale)*mirror
 
-  if number == nil or atlas == nil or numberHeight == nil or numberWidth == nil then return end
+-- Returns the pixel font map for the pixel fonts that contain just numbers
+-- a font map is a dictionary of a character mapped to the column number in the pixel font image
+local function number_pixel_font_map()
 
-  while #quads < #tostring(number) do
-    table.insert(quads, love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height))
+  local fontMap = {}
+  --0-9 = 0-9
+  for i = 0, 9, 1 do
+    fontMap[tostring(i)] = i
   end
 
-  for i = 1, #tostring(number), 1 do
-    local c = tostring(number):sub(i,i)
-    if c == nil then return end
-    quads[i]:setViewport(tonumber(c)*numberWidth, 0, numberWidth, numberHeight, width, height)
-    if align == "left" then
-      gfx_q:push({love.graphics.draw, {atlas, quads[i], ((x+(i*(13*scale)))-(13*scale)), y,
-        0, x_scale, y_scale}})
-    end
-    if align == "center" then
-      gfx_q:push({love.graphics.draw, {atlas, quads[i], (x+((i-(#tostring(number)/2))*(13*scale))), y,
-        0, x_scale, y_scale}})
-    end
-    if align == "right" then
-      gfx_q:push({love.graphics.draw, {atlas, quads[i], (x+((i-#tostring(number))*(13*scale))), y,
-        0, x_scale, y_scale}})
-    end
-  end
-
+  return fontMap
 end
 
--- Draws a time using a pixel font
--- TODO consolidate with draw_pixel_font which should encompass all this API
-function draw_time(time, quads, x, y, x_scale, y_scale)
-  x_scale = x_scale or 1
-  y_scale = y_scale or 1
+-- Draws a number via the given font image
+function GraphicsUtil.draw_number(number, atlas, quads, x, y, scale, align)
+  draw_pixel_font(tostring(number), atlas, number_pixel_font_map(), x, y, scale, scale, align, 0, quads)
+end
 
-  if #quads == 0 then
-    width = themes[config.theme].images.IMG_timeNumber_atlas:getWidth()
-    height = themes[config.theme].images.IMG_timeNumber_atlas:getHeight()
-    numberWidth = themes[config.theme].images.timeNumberWidth
-    numberHeight = themes[config.theme].images.timeNumberHeight
-    quads =
-    {
-      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
-      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
-      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
-      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
-      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
-      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
-      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
-      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
-      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
-      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height),
-      love.graphics.newQuad(0, 0, numberWidth, numberHeight, width, height)
-    }
+-- Returns the pixel font map for the times
+-- a font map is a dictionary of a character mapped to the column number in the pixel font image
+local function time_pixel_font_map()
 
-    symbolEnum = {[":"]=10, ["'"]=11, ["-"]=13}
-    for i = 1, #time, 1 do
-      local c = time:sub(i,i)
-
-      if c ~= ":" and c ~= "'" and c ~= "-" then
-        quads[i]:setViewport(tonumber(c)*numberWidth, 0, numberWidth, numberHeight, width, height)
-      else
-        quads[i]:setViewport(symbolEnum[c]*numberWidth, 0, numberWidth, numberHeight, width, height)
-      end
-      gfx_q:push({love.graphics.draw, {themes[config.theme].images.IMG_timeNumber_atlas, quads[i], ((x+(i*(20*themes[config.theme].time_Scale)))-(20*themes[config.theme].time_Scale))+((7-#time)*10), y,
-          0, x_scale, y_scale}})
-    end
-
+  local fontMap = {}
+  --0-9 = 0-9
+  for i = 0, 9, 1 do
+    fontMap[tostring(i)] = i
   end
+  
+  fontMap[":"] = 10
+  fontMap["'"] = 11
+
+  return fontMap
+end
+
+-- Draws a time centered horizontally using the theme's time pixel font
+function GraphicsUtil.draw_time(time, quads, x, y, scale)
+  draw_pixel_font(time, themes[config.theme].images.IMG_timeNumber_atlas, time_pixel_font_map(), x, y, scale, scale, "center", 0, quads)
 end
 
 -- Returns the pixel font map for the pixel fonts that contain numbers and letters
@@ -221,7 +178,7 @@ end
 -- TODO support both upper and lower case
 -- atlas - the image to use as the pixel font
 -- font map - a dictionary of a character mapped to the column number in the pixel font image
-function draw_pixel_font(string, atlas, font_map, x, y, x_scale, y_scale, align, mirror)
+function draw_pixel_font(string, atlas, font_map, x, y, x_scale, y_scale, align, characterSpacing, quads)
   x_scale = x_scale or 1
   y_scale = y_scale or 1
   align = align or "left"
@@ -233,17 +190,15 @@ function draw_pixel_font(string, atlas, font_map, x, y, x_scale, y_scale, align,
   local atlasHeight = atlas:getHeight()
   local characterWidth = atlasWidth/atlasFrameCount
   local characterHeight = atlasHeight
-  local characterSpacing = 2 -- 3 -- 7 for time
-  local characterDistance = characterWidth + characterSpacing
-
-  x = x - (characterWidth*GFX_SCALE*x_scale)*mirror
+  characterSpacing = characterSpacing or 2
+  local characterDistanceScaled = (characterWidth + characterSpacing) * x_scale
 
   if string == nil or atlas == nil or atlasFrameCount == nil or characterWidth == nil or characterHeight == nil then
     logger.error("Error initalizing draw pixel font")
     return 
   end
 
-  local quads = {}
+  quads = quads or {}
 
   while #quads < #string do
     table.insert(quads, love.graphics.newQuad(0, 0, characterWidth, characterHeight, atlasWidth, atlasHeight))
@@ -260,11 +215,12 @@ function draw_pixel_font(string, atlas, font_map, x, y, x_scale, y_scale, align,
     -- Select the portion of the atlas that is the current character
     quads[i]:setViewport(frameNumber*characterWidth, 0, characterWidth, characterHeight, atlasWidth, atlasHeight)
 
-    local characterX = ((x+(i*(characterDistance*x_scale)))-(characterDistance*x_scale))
+    local characterIndex = i - 1
+    local characterX = x + (characterIndex * characterDistanceScaled)
     if align == "center" then
-      characterX = (x+((i-(#string/2))*(characterDistance*x_scale)))
+      characterX = x + ((characterIndex-(#string/2))*characterDistanceScaled)
     elseif align == "right" then
-      characterX = (x+((i-#string)*(characterDistance*x_scale)))
+      characterX = x + ((characterIndex-#string)*characterDistanceScaled)
     end
 
     -- Render it at the proper digit location
