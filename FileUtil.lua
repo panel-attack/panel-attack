@@ -17,6 +17,7 @@ function FileUtil.getFilteredDirectoryItems(path)
     local file = directoryList[i]
     
     local startOfFile = string.sub(file, 0, string.len(prefix_of_ignored_dirs))
+   -- macOS sometimes puts these files in folders without warning, they are never useful for PA, so filter them.
     if startOfFile ~= prefix_of_ignored_dirs and file ~= ".DS_Store" then
       results[#results+1] = file
     end
