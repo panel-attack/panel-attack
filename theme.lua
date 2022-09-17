@@ -71,33 +71,10 @@ Theme =
     self.rating_Scale = 1 -- the scale size of the rating value
     self.spectators_Pos = {547, 460} -- the position of the spectator list
     self.healthbar_frame_Pos = {-17, -4} -- the position of the healthbar frame
-    self.healthbar_frame_Scale = 3 -- the scale size of the healtbar frame
+    self.healthbar_frame_Scale = 3 -- the scale size of the healthbar frame
     self.healthbar_Pos = {-13, 148} -- the position of the healthbar
     self.healthbar_Scale = 1 -- the scale size of the healthbar
     self.healthbar_Rotate = 0 -- the rotation of the healthbar
-    self.prestop_frame_Pos = {100, 1090} -- the position of the prestop frame
-    self.prestop_frame_Scale = 1 -- the scale size of the prestop frame
-    self.prestop_bar_Pos = {110, 1097} -- the position of the prestop bar
-    self.prestop_bar_Scale = 1 -- the scale size of the prestop bar
-    self.prestop_bar_Rotate = 0 -- the rotation of the prestop bar
-    self.prestop_Pos = {120, 1105} -- the position of the prestop
-    self.prestop_Scale = 1 -- the scale size of the prestop
-    self.stop_frame_Pos = {100, 1120} -- the position of the stop bar frame
-    self.stop_frame_Scale = 1 -- the scale size of the stop bar frame
-    self.stop_bar_Pos = {110, 1127} -- the position of the stop bar
-    self.stop_bar_Scale = 1 -- the scale size of the stop bar
-    self.stop_bar_Rotate = 0 -- the rotation of the stop bar
-    self.stop_Pos = {120, 1135} -- the position of the stop
-    self.stop_Scale = 1 -- the scale size of the stop
-    self.shake_frame_Pos = {100, 1150} -- the position of the shake bar frame
-    self.shake_frame_Scale = 1 -- the scale size of the shake bar frame
-    self.shake_bar_Pos = {110, 1157} -- the position of the shake bar
-    self.shake_bar_Scale = 1 -- the scale size of the shake bar
-    self.shake_bar_Rotate = 0 -- the rotation of the shake bar
-    self.shake_Pos = {120, 1165} -- the position of the shake
-    self.shake_Scale = 1 -- the scale size of the shake
-    self.multibar_frame_Pos = {100, 1100} -- the position of the multibar frame
-    self.multibar_frame_Scale = 1 -- the scale size of the multibar
     self.multibar_Pos = {-13, 96} -- the position of the multibar
     self.multibar_Scale = 1 -- the scale size of the multibar
     self.multibar_is_absolute = false -- if the multibar should render in absolute scale
@@ -211,15 +188,6 @@ function Theme.graphics_init(self)
   end
   self.images.IMG_healthbar = load_theme_img("healthbar")
 
-  self.images.IMG_prestop_frame = load_theme_img("prestop_frame")
-  self.images.IMG_prestop_bar = load_theme_img("prestop_bar")
-
-  self.images.IMG_stop_frame = load_theme_img("stop_frame")
-  self.images.IMG_stop_bar = load_theme_img("stop_bar")
-
-  self.images.IMG_shake_frame = load_theme_img("shake_frame")
-  self.images.IMG_shake_bar = load_theme_img("shake_bar")
-
   self.images.IMG_multibar_frame = load_theme_img("multibar_frame")
   self.images.IMG_multibar_prestop_bar = load_theme_img("multibar_prestop_bar")
   self.images.IMG_multibar_stop_bar = load_theme_img("multibar_stop_bar")
@@ -232,21 +200,6 @@ function Theme.graphics_init(self)
   self.images.IMG_wall1P = load_theme_img("frame/wall1P")
   self.images.IMG_frame2P = load_theme_img("frame/frame2P")
   self.images.IMG_wall2P = load_theme_img("frame/wall2P")
-  --the game currently only supports 2 players, but since 3P+ support is on the "to-do-eventually" list, include assets for more players
-  --special thanks to TheWolfBunny on DeviantArt for 3P+ frame and wall sprites
-  self.images.IMG_frame3P = load_theme_img("frame/frame3P")
-  self.images.IMG_wall3P = load_theme_img("frame/wall3P")
-  self.images.IMG_frame4P = load_theme_img("frame/frame4P")
-  self.images.IMG_wall4P = load_theme_img("frame/wall4P")
-  --5P-8P might be overkill, but just imagine...
-  --self.images.IMG_frame5P = load_theme_img("frame/frame5P")
-  --self.images.IMG_wall5P = load_theme_img("frame/wall5P")
-  --self.images.IMG_frame6P = load_theme_img("frame/frame6P")
-  --self.images.IMG_wall6P = load_theme_img("frame/wall6P")
-  --self.images.IMG_frame7P = load_theme_img("frame/frame7P")
-  --self.images.IMG_wall7P = load_theme_img("frame/wall7P")
-  --self.images.IMG_frame8P = load_theme_img("frame/frame8P")
-  --self.images.IMG_wall8P = load_theme_img("frame/wall8P")
 
   self.images.IMG_swap = load_theme_img("swap")
   self.images.IMG_apm = load_theme_img("apm")
@@ -579,121 +532,6 @@ function Theme.json_init(self)
   -- Healthbar Rotate
   if read_data.healthbar_Rotate and type(read_data.healthbar_Rotate) == "number" then
     self.healthbar_Rotate = read_data.healthbar_Rotate
-  end
-
-  -- Prestop frame position
-  if read_data.prestop_frame_Pos and type(read_data.prestop_frame_Pos) == "table" then
-    self.prestop_frame_Pos = read_data.prestop_frame_Pos
-  end
-
-  -- Prestop frame scale
-  if read_data.prestop_frame_Scale and type(read_data.prestop_frame_Scale) == "number" then
-    self.prestop_frame_Scale = read_data.prestop_frame_Scale
-  end
-
-  -- Prestop bar position
-  if read_data.prestop_bar_Pos and type(read_data.prestop_bar_Pos) == "table" then
-    self.prestop_bar_Pos = read_data.prestop_bar_Pos
-  end
-
-  -- Prestop bar scale
-  if read_data.prestop_bar_Scale and type(read_data.prestop_bar_Scale) == "number" then
-    self.prestop_bar_Scale = read_data.prestop_bar_Scale
-  end
-
-  -- Prestop bar Rotate
-  if read_data.prestop_bar_Rotate and type(read_data.prestop_bar_Rotate) == "number" then
-    self.prestop_bar_Rotate = read_data.prestop_bar_Rotate
-  end
-
-  -- Prestop position
-  if read_data.prestop_Pos and type(read_data.prestop_Pos) == "table" then
-    self.prestop_Pos = read_data.prestop_Pos
-  end
-
-  -- Prestop scale
-  if read_data.prestop_Scale and type(read_data.prestop_Scale) == "number" then
-    self.prestop_Scale = read_data.prestop_Scale
-  end
-
-  -- Stop frame position
-  if read_data.stop_frame_Pos and type(read_data.stop_frame_Pos) == "table" then
-    self.stop_frame_Pos = read_data.stop_frame_Pos
-  end
-
-  -- Stop frame scale
-  if read_data.stop_frame_Scale and type(read_data.stop_frame_Scale) == "number" then
-    self.stop_frame_Scale = read_data.stop_frame_Scale
-  end
-
-  -- Stop bar position
-  if read_data.stop_bar_Pos and type(read_data.stop_bar_Pos) == "table" then
-    self.stop_bar_Pos = read_data.stop_bar_Pos
-  end
-
-  -- Stop bar scale
-  if read_data.stop_bar_Scale and type(read_data.stop_bar_Scale) == "number" then
-    self.stop_bar_Scale = read_data.stop_bar_Scale
-  end
-
-  -- Stop bar Rotate
-  if read_data.stop_bar_Rotate and type(read_data.stop_bar_Rotate) == "number" then
-    self.stop_bar_Rotate = read_data.stop_bar_Rotate
-  end
-
-  -- Stop position
-  if read_data.stop_Pos and type(read_data.stop_Pos) == "table" then
-    self.stop_Pos = read_data.stop_Pos
-  end
-
-  -- Stop scale
-  if read_data.stop_Scale and type(read_data.stop_Scale) == "number" then
-    self.stop_Scale = read_data.stop_Scale
-  end
-
-  -- Shake frame position
-  if read_data.shake_frame_Pos and type(read_data.shake_frame_Pos) == "table" then
-    self.shake_frame_Pos = read_data.shake_frame_Pos
-  end
-
-  -- Shake frame scale
-  if read_data.shake_frame_Scale and type(read_data.shake_frame_Scale) == "number" then
-    self.shake_frame_Scale = read_data.shake_frame_Scale
-  end
-
-  -- Shake bar position
-  if read_data.shake_bar_Pos and type(read_data.shake_bar_Pos) == "table" then
-    self.shake_bar_Pos = read_data.shake_bar_Pos
-  end
-
-  -- Shake bar scale
-  if read_data.shake_bar_Scale and type(read_data.shake_bar_Scale) == "number" then
-    self.shake_bar_Scale = read_data.shake_bar_Scale
-  end
-
-  -- Shake bar Rotate
-  if read_data.shake_bar_Rotate and type(read_data.shake_bar_Rotate) == "number" then
-    self.shake_bar_Rotate = read_data.shake_bar_Rotate
-  end
-
-  -- Shake position
-  if read_data.shake_Pos and type(read_data.shake_Pos) == "table" then
-    self.shake_Pos = read_data.shake_Pos
-  end
-
-  -- Shake scale
-  if read_data.shake_Scale and type(read_data.shake_Scale) == "number" then
-    self.shake_Scale = read_data.shake_Scale
-  end
-
-  -- Multibar frame position
-  if read_data.multibar_frame_Pos and type(read_data.multibar_frame_Pos) == "table" then
-    self.multibar_frame_Pos = read_data.multibar_frame_Pos
-  end
-
-  -- Multibar frame scale
-  if read_data.multibar_frame_Scale and type(read_data.multibar_frame_Scale) == "number" then
-    self.multibar_frame_Scale = read_data.multibar_frame_Scale
   end
 
   -- Multibar position

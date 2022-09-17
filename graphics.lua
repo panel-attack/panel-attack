@@ -272,12 +272,6 @@ function Stack.render(self)
   level_quad = love.graphics.newQuad(0, 0, themes[config.theme].images["IMG_levelNumber_atlas" .. self.id]:getWidth() / 11, themes[config.theme].images["IMG_levelNumber_atlas" .. self.id]:getHeight(), themes[config.theme].images["IMG_levelNumber_atlas" .. self.id]:getDimensions())
   win_quads = {}
   healthQuad = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight(), themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight())
-  prestopQuad = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_prestop_bar:getWidth(), themes[config.theme].images.IMG_prestop_bar:getHeight(), themes[config.theme].images.IMG_prestop_bar:getWidth(), themes[config.theme].images.IMG_prestop_bar:getHeight())
-  stopQuad = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_stop_bar:getWidth(), themes[config.theme].images.IMG_stop_bar:getHeight(), themes[config.theme].images.IMG_stop_bar:getWidth(), themes[config.theme].images.IMG_stop_bar:getHeight())
-  shakeQuad = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_shake_bar:getWidth(), themes[config.theme].images.IMG_shake_bar:getHeight(), themes[config.theme].images.IMG_shake_bar:getWidth(), themes[config.theme].images.IMG_shake_bar:getHeight())
-  prestop_quads = {}
-  stop_quads = {}
-  shake_quads = {}
   multi_prestopQuad = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_multibar_prestop_bar:getWidth(), themes[config.theme].images.IMG_multibar_prestop_bar:getHeight(), themes[config.theme].images.IMG_multibar_prestop_bar:getWidth(), themes[config.theme].images.IMG_multibar_prestop_bar:getHeight())
   multi_stopQuad = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_multibar_stop_bar:getWidth(), themes[config.theme].images.IMG_multibar_stop_bar:getHeight(), themes[config.theme].images.IMG_multibar_stop_bar:getWidth(), themes[config.theme].images.IMG_multibar_stop_bar:getHeight())
   multi_shakeQuad = love.graphics.newQuad(0, 0, themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight(), themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight())
@@ -628,10 +622,7 @@ function Stack.render(self)
     --gprint(loc("pl_stop", stop_time), self.score_x, self.score_y+300)
     --gprint(loc("pl_shake", shake_time), self.score_x, self.score_y+320)
     --gprint(loc("pl_pre_stop", self.pre_stop_time), self.score_x, self.score_y+340)
-    -- Prestop frame
-    if themes[config.theme].images.IMG_prestop_frame then
-      draw_label(themes[config.theme].images.IMG_prestop_frame, self.origin_x + themes[config.theme].prestop_frame_Pos[1] * self.mirror_x, self.pos_y + themes[config.theme].prestop_frame_Pos[2], 0, themes[config.theme].prestop_frame_Scale, self.multiplication)
-    end
+
     -- Prestop bar
     if self.pre_stop_time == 0 or self.maxPrestop == nil then
       self.maxPrestop = 0
@@ -640,18 +631,6 @@ function Stack.render(self)
       self.maxPrestop = self.pre_stop_time
     end
 
-    if self.maxPrestop > 0 then
-      prestop_bar = self.pre_stop_time * (themes[config.theme].images.IMG_prestop_bar:getHeight() / self.maxPrestop)
-    else
-      prestop_bar = 0
-    end
-    prestopQuad:setViewport(0, themes[config.theme].images.IMG_prestop_bar:getHeight() - prestop_bar, themes[config.theme].images.IMG_prestop_bar:getWidth(), prestop_bar)
-    qdraw(themes[config.theme].images.IMG_prestop_bar, prestopQuad, self.origin_x + (themes[config.theme].prestop_bar_Pos[1] * self.mirror_x), ((self.pos_y + themes[config.theme].prestop_bar_Pos[2]) + ((themes[config.theme].images.IMG_prestop_bar:getHeight() - prestop_bar) / GFX_SCALE)), themes[config.theme].prestop_bar_Rotate, themes[config.theme].prestop_bar_Scale / GFX_SCALE, themes[config.theme].prestop_bar_Scale / GFX_SCALE, 0, 0, self.multiplication)
-    -- Prestop number
-    draw_number(self.pre_stop_time, themes[config.theme].images.IMG_timeNumber_atlas, 12, prestop_quads, (self.origin_x + (themes[config.theme].prestop_Pos[1] * self.mirror_x)) * GFX_SCALE, (self.pos_y + themes[config.theme].prestop_Pos[2]) * GFX_SCALE, themes[config.theme].prestop_Scale, (15 / themes[config.theme].images.timeNumberWidth * themes[config.theme].prestop_Scale), (19 / themes[config.theme].images.timeNumberHeight * themes[config.theme].prestop_Scale), "center", self.multiplication)
-
-    -- Stop frame
-    draw_label(themes[config.theme].images.IMG_stop_frame, self.origin_x + themes[config.theme].stop_frame_Pos[1] * self.mirror_x, self.pos_y + themes[config.theme].stop_frame_Pos[2], 0, themes[config.theme].stop_frame_Scale, self.multiplication)
     -- Stop bar
     if stop_time == 0 or self.maxStop == nil then
       self.maxStop = 0
@@ -659,18 +638,7 @@ function Stack.render(self)
     if stop_time > self.maxStop then
       self.maxStop = stop_time
     end
-    if self.maxStop > 0 then
-      stop_bar = stop_time * (themes[config.theme].images.IMG_stop_bar:getHeight() / self.maxStop)
-    else
-      stop_bar = 0
-    end
-    stopQuad:setViewport(0, themes[config.theme].images.IMG_stop_bar:getHeight() - stop_bar, themes[config.theme].images.IMG_stop_bar:getWidth(), stop_bar)
-    qdraw(themes[config.theme].images.IMG_stop_bar, stopQuad, self.origin_x + themes[config.theme].stop_bar_Pos[1] * self.mirror_x, ((self.pos_y + themes[config.theme].stop_bar_Pos[2]) + ((themes[config.theme].images.IMG_stop_bar:getHeight() - stop_bar) / GFX_SCALE)), themes[config.theme].stop_bar_Rotate, themes[config.theme].stop_bar_Scale / GFX_SCALE, themes[config.theme].stop_bar_Scale / GFX_SCALE, 0, 0, self.multiplication)
-    -- Stop number
-    draw_number(stop_time, themes[config.theme].images.IMG_timeNumber_atlas, 12, stop_quads, (self.origin_x + (themes[config.theme].stop_Pos[1] * self.mirror_x)) * GFX_SCALE, (self.pos_y + themes[config.theme].stop_Pos[2]) * GFX_SCALE, themes[config.theme].stop_Scale, (15 / themes[config.theme].images.timeNumberWidth * themes[config.theme].stop_Scale), (19 / themes[config.theme].images.timeNumberHeight * themes[config.theme].stop_Scale), "center", self.multiplication)
 
-    -- Shake frame
-    draw_label(themes[config.theme].images.IMG_shake_frame, self.origin_x + themes[config.theme].shake_frame_Pos[1] * self.mirror_x, self.pos_y + themes[config.theme].shake_frame_Pos[2], 0, themes[config.theme].shake_frame_Scale, self.multiplication)
     -- Shake bar
     if shake_time == 0 or self.maxShake == nil then
       self.maxShake = 0
@@ -678,18 +646,6 @@ function Stack.render(self)
     if shake_time > self.maxShake then
       self.maxShake = shake_time
     end
-    if self.maxShake > 0 then
-      shake_bar = shake_time * (themes[config.theme].images.IMG_shake_bar:getHeight() / self.maxShake)
-    else
-      shake_bar = 0
-    end
-
-    if not themes[config.theme].multibar_is_absolute then
-      shakeQuad:setViewport(0, themes[config.theme].images.IMG_shake_bar:getHeight() - shake_bar, themes[config.theme].images.IMG_shake_bar:getWidth(), shake_bar)
-      qdraw(themes[config.theme].images.IMG_shake_bar, shakeQuad, self.origin_x + themes[config.theme].shake_bar_Pos[1] * self.mirror_x, ((self.pos_y + themes[config.theme].shake_bar_Pos[2]) + ((themes[config.theme].images.IMG_shake_bar:getHeight() - shake_bar) / GFX_SCALE)), themes[config.theme].shake_bar_Rotate, themes[config.theme].shake_bar_Scale / GFX_SCALE, themes[config.theme].shake_bar_Scale / GFX_SCALE, 0, 0, self.multiplication)
-    end
-    -- Shake number
-    draw_number(shake_time, themes[config.theme].images.IMG_timeNumber_atlas, 12, shake_quads, (self.origin_x + (themes[config.theme].shake_Pos[1] * self.mirror_x)) * GFX_SCALE, (self.pos_y + themes[config.theme].shake_Pos[2]) * GFX_SCALE, themes[config.theme].shake_Scale, (15 / themes[config.theme].images.timeNumberWidth * themes[config.theme].shake_Scale), (19 / themes[config.theme].images.timeNumberHeight * themes[config.theme].shake_Scale), "center", self.multiplication)
 
     -- Scaled Multibar
     if not themes[config.theme].multibar_is_absolute then
@@ -707,7 +663,6 @@ function Stack.render(self)
       multi_stopQuad:setViewport(0, themes[config.theme].images.IMG_multibar_stop_bar:getHeight() - multi_stop_bar, themes[config.theme].images.IMG_multibar_stop_bar:getWidth(), multi_stop_bar)
       multi_prestopQuad:setViewport(0, themes[config.theme].images.IMG_multibar_prestop_bar:getHeight() - multi_prestop_bar, themes[config.theme].images.IMG_multibar_prestop_bar:getWidth(), multi_prestop_bar)
 
-      draw_label(themes[config.theme].images.IMG_multibar_frame, self.origin_x + themes[config.theme].multibar_frame_Pos[1] * self.mirror_x, self.pos_y + themes[config.theme].multibar_frame_Pos[2], 0, themes[config.theme].multibar_frame_Scale, self.multiplication)
       --Shake
       qdraw(themes[config.theme].images.IMG_multibar_shake_bar, multi_shakeQuad, self.origin_x + themes[config.theme].multibar_Pos[1] * self.mirror_x, ((self.pos_y + themes[config.theme].multibar_Pos[2]) + ((themes[config.theme].images.IMG_multibar_shake_bar:getHeight() - multi_shake_bar) / GFX_SCALE)), 0, themes[config.theme].multibar_Scale / GFX_SCALE, themes[config.theme].multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
       --Stop
