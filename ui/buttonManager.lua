@@ -1,4 +1,5 @@
 --@module button_manager
+-- recieves love events and passes them to the correct button object
 local buttonManager = {
   buttons = {}
 }
