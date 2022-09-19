@@ -37,13 +37,13 @@ function input_config_menu:updateInputConfigSet(value)
       local controller_name = shorten_controller_name(joystickManager.guidToName[controller_key_split[2]])
       key_name = string.format("%s (%s-%s)", controller_key_split[1], controller_name, controller_key_split[3])
     end
-    self.menu.menu_items[i + 1][2]:updateLabel(key_name)
+    self.menu.menuItems[i + 1].children[1]:updateLabel(key_name)
   end
 end
 
 function input_config_menu:pollAndSetKey(key, index)
   coroutine.yield()
-  self.menu.menu_items[index + 1][2]:updateLabel(pending_input_text)
+  self.menu.menuItems[index + 1].children[1]:updateLabel(pending_input_text)
   self.menu.selected_id = index + 1
   local pressed_key = nil
   while not pressed_key do
@@ -61,7 +61,7 @@ function input_config_menu:pollAndSetKey(key, index)
     key_display_name = string.format("%s (%s-%s)", controller_key_split[1], controller_name, controller_key_split[3])
   end
   GAME.input.inputConfigurations[config_index][key] = pressed_key
-  self.menu.menu_items[index + 1][2]:updateLabel(key_display_name)
+  self.menu.menuItems[index + 1].children[1]:updateLabel(key_display_name)
 end
 
 function input_config_menu:setKeyFn(key, index)

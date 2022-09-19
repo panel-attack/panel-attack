@@ -19,7 +19,6 @@ require("match")
 require("BattleRoom")
 require("util")
 local consts = require("consts")
-require("queue")
 require("globals")
 require("character") -- after globals!
 require("stage") -- after globals!
@@ -175,7 +174,7 @@ function love.mousemoved( x, y, dx, dy, istouch )
 end
 
 function love.gamepadpressed(joystick, button)
-  input:gamepadPressed(joystick, button)
+  inputManager:gamepadPressed(joystick, button)
 end
 
 function love.joystickpressed(joystick, button)
