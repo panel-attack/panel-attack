@@ -108,26 +108,23 @@ end
 -- adds stages from the path given
 local function add_stages_from_dir_rec(path)
   local lfs = love.filesystem
-  local raw_dir_list = lfs.getDirectoryItems(path)
+  local raw_dir_list = FileUtil.getFilteredDirectoryItems(path)
   for i, v in ipairs(raw_dir_list) do
-    local start_of_v = string.sub(v, 0, string.len(prefix_of_ignored_dirs))
-    if start_of_v ~= prefix_of_ignored_dirs then
-      local current_path = path .. "/" .. v
-      if lfs.getInfo(current_path) and lfs.getInfo(current_path).type == "directory" then
-        -- call recursively: facade folder
-        add_stages_from_dir_rec(current_path)
+    local current_path = path .. "/" .. v
+    if lfs.getInfo(current_path) and lfs.getInfo(current_path).type == "directory" then
+      -- call recursively: facade folder
+      add_stages_from_dir_rec(current_path)
 
-        -- init stage: 'real' folder
-        local stage = Stage(current_path, v)
-        local success = stage:json_init()
+      -- init stage: 'real' folder
+      local stage = Stage(current_path, v)
+      local success = stage:json_init()
 
-        if success then
-          if stages[stage.id] ~= nil then
-            logger.trace(current_path .. " has been ignored since a stage with this id has already been found")
-          else
-            stages[stage.id] = stage
-            stages_ids[#stages_ids + 1] = stage.id
-          end
+      if success then
+        if stages[stage.id] ~= nil then
+          logger.trace(current_path .. " has been ignored since a stage with this id has already been found")
+        else
+          stages[stage.id] = stage
+          stages_ids[#stages_ids + 1] = stage.id
         end
       end
     end

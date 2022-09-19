@@ -267,7 +267,7 @@ function Theme.graphics_init(self)
   end
 
   self.font.size = themes[config.theme].font.size or 12
-  for key, value in pairs(love.filesystem.getDirectoryItems("themes/" .. config.theme)) do
+  for key, value in pairs(FileUtil.getFilteredDirectoryItems("themes/" .. config.theme)) do
     if value:lower():match(".*%.ttf") then -- Any .ttf file
       self.font.path = "themes/" .. config.theme .. "/" .. value
       set_global_font(self.font.path, self.font.size)
