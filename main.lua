@@ -173,10 +173,6 @@ function love.mousemoved( x, y, dx, dy, istouch )
   inputManager:mouseMoved(x, y)
 end
 
-function love.gamepadpressed(joystick, button)
-  inputManager:gamepadPressed(joystick, button)
-end
-
 function love.joystickpressed(joystick, button)
   inputManager:joystickPressed(joystick, button)
 end
