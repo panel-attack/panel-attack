@@ -303,7 +303,7 @@ function select_screen.awaitRoomInitializationMessage(self)
     gprint(loc("ss_init"), unpack(themes[config.theme].main_menu_screen_pos))
     wait()
     if not do_messages() then
-      return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
+      return {main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}}
     end
     retries = retries + 1
   end
@@ -312,7 +312,7 @@ function select_screen.awaitRoomInitializationMessage(self)
   if not self.roomInitializationMessage then
     -- abort due to timeout
     logger.warn(loc("ss_init_fail") .. "\n")
-    return main_dumb_transition, {main_select_mode, loc("ss_init_fail") .. "\n\n" .. loc("ss_return"), 60, 300}
+    return {main_dumb_transition, {main_select_mode, loc("ss_init_fail") .. "\n\n" .. loc("ss_return"), 60, 300}}
   end
 
   return nil
@@ -545,7 +545,7 @@ end
 function select_screen.sendMenuState(self)
   local menuState = {}
   menuState.character = self.players[self.my_player_number].character
-  menuState.character_is_random = self.players[self.my_player_number].selectedCharacter
+  menuState.character_is_random = (self.players[self.my_player_number].selectedCharacter ~= self.players[self.my_player_number].character) and self.players[self.my_player_number].selectedCharacter or nil
   menuState.character_display_name = self.players[self.my_player_number].character_display_name
   menuState.loaded = self.players[self.my_player_number].loaded
   menuState.cursor = self.players[self.my_player_number].cursor.positionId
@@ -954,7 +954,7 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
     local abort = self:setupForNetPlay()
     if abort then
       -- abort due to connection loss or timeout
-      return abort
+      return unpack(abort)
     else
       self:initializeNetPlayRoom()
     end
