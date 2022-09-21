@@ -109,7 +109,7 @@ function Health:renderTopOut()
   local percentage = math.max(0, self.currentLines) / self.height
   local x = 860
   local y = 110
-  self:renderPartialScaledImage(themes[config.theme].images.IMG_shake_bar, 860, 110, barWidth, 590, 1, percentage)
+  self:renderPartialScaledImage(themes[config.theme].images.IMG_multibar_shake_bar, 860, 110, barWidth, 590, 1, percentage)
 
   local height = 4
   local grey = 0.8
