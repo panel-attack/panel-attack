@@ -2062,10 +2062,8 @@ function Stack.game_ended(self)
   local gameEndedClockTime = self.match:gameEndedClockTime()
 
   if self.match.mode == "vs" then
-    if GAME.battleRoom.trainingModeSettings then
-      if self.match.health and self.match.health:game_ended() then
-        return true
-      end
+    if self.match.simulatedOpponent and self.match.simulatedOpponent:isLost() then
+      return true
     end
 
     -- Note we use "greater" and not "greater than or equal" because our stack may be currently processing this clock frame.
@@ -2104,8 +2102,8 @@ function Stack.gameResult(self)
 
   if self.match.mode == "vs" then
     if self.opponentStack == nil then
-      if self.match.health then
-        if self.match.health:game_ended() then
+      if self.match.simulatedOpponent then
+        if self.match.simulatedOpponent:isLost() then
           return 1
         end
       end
@@ -2556,10 +2554,6 @@ function Stack.check_matches(self)
       end
     end
 
-    -- if metal_count >= 3 and self.match.health then
-    --   self.match.health:take_metal_damage(metal_count)
-    -- end
-
     self.analytic:register_destroyed_panels(combo_size)
     if (combo_size > 3) then
       if (score_mode == SCOREMODE_TA) then
@@ -2601,9 +2595,6 @@ function Stack.check_matches(self)
       self:enqueue_card(true, first_panel_col, first_panel_row, self.chain_counter)
     --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
     --          first_panel_row<<4+P1StackPosY+self.displacement-9);
-      -- if self.match.health then
-      --   self.match.health:take_chain_damage(self.chain_counter)
-      -- end
       if self.telegraph then
         self.telegraph:push({6, self.chain_counter - 1, false, true}, first_panel_col, first_panel_row, self.CLOCK)
       end

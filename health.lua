@@ -13,16 +13,13 @@ local barWidth = 50
 
 Health =
   class(
-  function(self, secondsToppedOutToLose, lineClearGPM, height, positionX, positionY, mirror)
+  function(self, secondsToppedOutToLose, lineClearGPM, height)
     self.secondsToppedOutToLose = secondsToppedOutToLose
     self.maxSecondsToppedOutToLose = secondsToppedOutToLose
     self.lineClearRate = lineClearGPM / 60
     self.currentLines = 0
     self.lastWasFourCombo = false
     self.height = height
-    self.pos_x = positionX
-    self.pos_y = positionY
-    self.mirror_x = mirror
   end
 )
 
@@ -81,7 +78,7 @@ function Health.take_metal_damage(self, metal_combo_size)
   end
 end
 
-function Health:game_ended()
+function Health:isLost()
   return self.secondsToppedOutToLose <= 0
 end
 

@@ -1,5 +1,6 @@
 local logger = require("logger")
 local graphics = require("select_screen.select_screen_graphics")
+require("SimulatedOpponent")
 
 local select_screen = {}
 
@@ -850,27 +851,32 @@ function select_screen.start1pLocalMatch(self)
   GAME.match = Match("vs", GAME.battleRoom)
   P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
 
-  if GAME.battleRoom.trainingModeSettings and GAME.battleRoom.trainingModeSettings.healthDifficulty then
+  if GAME.battleRoom.trainingModeSettings then
 
-    local secondsToppedOutToLose = 10
-    local lineClearGPM = 5 + GAME.battleRoom.playerWinCounts[1]
-    local lineHeightToKill = 6
+    local health = nil
+    if GAME.battleRoom.trainingModeSettings.healthDifficulty then
+      local secondsToppedOutToLose = 10
+      local lineClearGPM = 5 + GAME.battleRoom.playerWinCounts[1]
+      local lineHeightToKill = 6
+      health = Health(secondsToppedOutToLose, lineClearGPM, lineHeightToKill)
+    end
+
+    local currentStage = SimulatedOpponent.currentStageForWinCount(GAME.battleRoom.playerWinCounts[P1.player_number])
+    local character = characters_ids_for_current_theme[((currentStage - 1) % #characters_ids_for_current_theme) + 1]
+
+    local attackEngine = self:attackEngineForTrainingModeSettings(GAME.battleRoom.trainingModeSettings)
+
     local xPosition = 249
     local yPosition = 40
     local mirror = -1
-    local health = Health(secondsToppedOutToLose, lineClearGPM, lineHeightToKill, xPosition, yPosition, mirror)
-    
-    GAME.match.health = health
+    GAME.match.simulatedOpponent = SimulatedOpponent(health, character, attackEngine, xPosition, yPosition, mirror)
   end
   
-  if GAME.battleRoom.trainingModeSettings then
-    self:initializeAttackEngine()
-  end
   GAME.match.P1 = P1
-  if not GAME.match.health then
+  if not GAME.match.simulatedOpponent then
     P1:setTarget(P1)
   else
-    P1:setTarget(GAME.match.health)
+    P1:setTarget(GAME.match.simulatedOpponent)
   end
   P2 = nil
   current_stage = self.players[self.my_player_number].stage
@@ -900,33 +906,34 @@ function select_screen.start1pCpuMatch(self)
   return main_dumb_transition, {main_local_vs, "", 0, 0}
 end
 
-function select_screen.initializeAttackEngine(self)
-  local trainingModeSettings = GAME.battleRoom.trainingModeSettings
+function select_screen.attackEngineForTrainingModeSettings(self, trainingModeSettings)
   local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
   local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
   local disableQueueLimit = trainingModeSettings.disableQueueLimit or false
-  GAME.match.attackEngine = AttackEngine(P1, delayBeforeStart, delayBeforeRepeat, disableQueueLimit)
+  local attackEngine = AttackEngine(P1, delayBeforeStart, delayBeforeRepeat, disableQueueLimit)
   for _, values in ipairs(trainingModeSettings.attackPatterns) do
     if values.chain then
       if type(values.chain) == "number" then
         for i = 1, values.height do
-          GAME.match.attackEngine:addAttackPattern(6, i, values.startTime + ((i-1) * values.chain), false, true)
+          attackEngine:addAttackPattern(6, i, values.startTime + ((i-1) * values.chain), false, true)
         end
-        GAME.match.attackEngine:addEndChainPattern(values.startTime + ((values.height - 1) * values.chain) + values.chainEndDelta)
+        attackEngine:addEndChainPattern(values.startTime + ((values.height - 1) * values.chain) + values.chainEndDelta)
       elseif type(values.chain) == "table" then
         for i, chainTime in ipairs(values.chain) do
-          GAME.match.attackEngine:addAttackPattern(6, i, chainTime, false, true)
+          attackEngine:addAttackPattern(6, i, chainTime, false, true)
         end
-        GAME.match.attackEngine:addEndChainPattern(values.chainEndTime)
+        attackEngine:addEndChainPattern(values.chainEndTime)
       else
         error("The 'chain' field in your attack file is invalid. It should either be a number or a list of numbers.")
       end
     else
-      GAME.match.attackEngine:addAttackPattern(values.width, values.height or 1, values.startTime, values.metal or false, false)
+      attackEngine:addAttackPattern(values.width, values.height or 1, values.startTime, values.metal or false, false)
     end
   end
 
-  GAME.match.attackEngine:setTarget(P1)
+  attackEngine:setTarget(P1)
+
+  return attackEngine
 end
 
 function select_screen.initialize(self, character_select_mode)

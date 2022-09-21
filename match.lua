@@ -220,12 +220,8 @@ function Match:run()
     end
 
     if ranP1 and P1:gameResult() == nil then
-      if self.attackEngine then
-        self.attackEngine:run()
-      end
-
-      if self.health then
-        self.health:run()
+      if self.simulatedOpponent then
+        self.simulatedOpponent:run()
       end
     end
 
@@ -493,8 +489,8 @@ function Match.render(self)
         self.attackEngine:render()
       end
 
-      if self.health then
-        self.health:render()
+      if self.simulatedOpponent then
+        self.simulatedOpponent:render()
       end
 
       if self.battleRoom then
