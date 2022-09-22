@@ -2027,7 +2027,7 @@ end
 
 
 function Stack.shouldChangeSoundEffects(self)
-  local result = self:shouldChangeMusic() and not SFX_mute
+  local result = self:shouldChangeMusic() and not GAME.muteSoundEffects
 
   return result
 end

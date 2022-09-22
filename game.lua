@@ -15,6 +15,7 @@ Game =
     self.renderDuringPause = false -- if the game can render when you are paused
     self.currently_paused_tracks = {} -- list of tracks currently paused
     self.rich_presence = nil
+    self.muteSoundEffects = false
     self.canvasX = 0
     self.canvasY = 0
     self.canvasXScale = 1
@@ -33,6 +34,7 @@ function Game.clearMatch(self)
   self.renderDuringPause = false
   self.preventSounds = false
   self.currently_paused_tracks = {}
+  self.muteSoundEffects = false
   P1 = nil
   P2 = nil
 end
