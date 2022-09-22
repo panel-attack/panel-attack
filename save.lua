@@ -52,34 +52,15 @@ function read_txt_file(path_and_filename)
   return s or "Failed to read file"
 end
 
--- reads the "replay.txt" file
-function read_replay_file()
-  pcall(
-    function()
-      local file = love.filesystem.newFile("replay.txt")
-      file:open("r")
-      local teh_json = file:read(file:getSize())
-      replay = json.decode(teh_json)
-      if type(replay.in_buf) == "table" then
-        replay.in_buf = table.concat(replay.in_buf)
-        write_replay_file()
-      end
-    end
-  )
-end
-
 -- writes a replay file of the given path and filename
 function write_replay_file(path, filename)
+  assert(path ~= nil)
+  assert(filename ~= nil)
   pcall(
     function()
-      local file
-      if path and filename then
-        love.filesystem.createDirectory(path)
-        file = love.filesystem.newFile(path .. "/" .. filename)
-        set_replay_browser_path(path)
-      else
-        file = love.filesystem.newFile("replay.txt")
-      end
+      love.filesystem.createDirectory(path)
+      local file = love.filesystem.newFile(path .. "/" .. filename)
+      set_replay_browser_path(path)
       file:open("w")
       logger.debug("Writing to Replay File")
       if replay.puzzle then

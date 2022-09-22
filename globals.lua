@@ -41,6 +41,7 @@ trainings = {} -- used in save.lua for training mode files
 current_stage = nil
 
 replay = {}
+match_type = "Casual"
 
 -- sfx play
 SFX_Fanfare_Play = 0

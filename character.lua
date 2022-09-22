@@ -179,7 +179,7 @@ function Character.stop_sounds(self)
 end
 
 function Character.play_selection_sfx(self)
-  if not SFX_mute and #self.sounds.selections ~= 0 then
+  if not GAME.muteSoundEffects and #self.sounds.selections ~= 0 then
     self.sounds.selections[math.random(#self.sounds.selections)]:play()
     return true
   end
@@ -188,7 +188,7 @@ end
 
 -- Stops old combo / chaing sounds and plays the appropriate chain or combo sound
 function Character.play_combo_chain_sfx(self, chain_combo)
-  if not SFX_mute then
+  if not GAME.muteSoundEffects then
     -- stop previous sounds if any
     for _, v in pairs(self.sounds.combos) do
       v:stop()
