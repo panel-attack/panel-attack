@@ -853,16 +853,20 @@ function select_screen.start1pLocalMatch(self)
 
   if GAME.battleRoom.trainingModeSettings then
 
+    local currentStage = SimulatedOpponent.currentStageForWinCount(GAME.battleRoom.playerWinCounts[P1.player_number])
+
     local health = nil
-    if GAME.battleRoom.trainingModeSettings.healthDifficulty then
-      local secondsToppedOutToLose = 10
-      local lineClearGPM = 5 + GAME.battleRoom.playerWinCounts[1]
-      local lineHeightToKill = 6
-      health = Health(secondsToppedOutToLose, lineClearGPM, lineHeightToKill)
+    if GAME.battleRoom.trainingModeSettings.healthDifficulties then
+      local difficulties = GAME.battleRoom.trainingModeSettings.healthDifficulties
+      health = Health(difficulties[currentStage][1], difficulties[currentStage][2], difficulties[currentStage][3])
     end
 
-    local currentStage = SimulatedOpponent.currentStageForWinCount(GAME.battleRoom.playerWinCounts[P1.player_number])
     local character = characters_ids_for_current_theme[((currentStage - 1) % #characters_ids_for_current_theme) + 1]
+    if characters[character]:is_bundle() then -- may have picked a bundle
+      character = characters[character].sub_characters[1]
+    end
+    character_loader_load(character)
+    character_loader_wait()
 
     local attackEngine = self:attackEngineForTrainingModeSettings(GAME.battleRoom.trainingModeSettings)
 

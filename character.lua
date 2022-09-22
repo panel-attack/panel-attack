@@ -658,3 +658,11 @@ function Character.sound_uninit(self)
     self.musics[music] = nil
   end
 end
+
+function Character:player2Portrait()
+  local portrait_image = "portrait"
+  if self.images["portrait2"] then
+    portrait_image = "portrait2"
+  end
+  return portrait_image
+end

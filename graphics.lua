@@ -281,8 +281,8 @@ function Stack.render(self)
 
   -- draw inside stack's frame canvas
   local portrait_image = "portrait"
-  if not (self.which == 1) and characters[self.character].images["portrait2"] then
-    portrait_image = "portrait2"
+  if not (self.which == 1) then
+    portrait_image = characters[self.character]:player2Portrait()
   end
 
   local portrait_w, portrait_h = characters[self.character].images[portrait_image]:getDimensions()
@@ -330,10 +330,10 @@ function Stack.render(self)
         if panel.garbage then
           local imgs = {flash = metals.flash}
           if not panel.metal then
-            if not self.opponentStack then 
+            if not self.target then 
               imgs = characters[self.character].images
             else
-              imgs = characters[self.opponentStack.character].images
+              imgs = characters[self.target.character].images
             end
           end
           if panel.x_offset == 0 and panel.y_offset == 0 then
