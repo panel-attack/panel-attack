@@ -1,4 +1,5 @@
 --@module sliderManager
+-- recieves love events and passes them to the correct button object
 local sliderManager = {
   sliders = {}
 }

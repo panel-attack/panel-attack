@@ -1,6 +1,12 @@
 local buttonManager = require("ui.buttonManager")
 local sliderManager = require("ui.sliderManager")
 local inputFieldManager = require("ui.inputFieldManager")
+local inputManager = require("inputManager")
+local logger = require("logger")
+local consts = require("consts")
+
+local RichPresence = require("rich_presence.RichPresence")
+
 Queue = require("Queue")
 require("developer")
 require("class")
@@ -18,7 +24,7 @@ ClickMenu = require("ClickMenu")
 require("match")
 require("BattleRoom")
 require("util")
-local consts = require("consts")
+require("FileUtil")
 require("globals")
 require("character") -- after globals!
 require("stage") -- after globals!
@@ -28,6 +34,8 @@ require("engine/telegraph")
 require("engine")
 require("AttackEngine")
 require("graphics")
+GAME.input = require("input")
+require("replay")
 require("network")
 require("Puzzle")
 require("PuzzleSet")
@@ -40,9 +48,11 @@ require("panels")
 require("Theme")
 require("dump")
 require("computerPlayers.computerPlayer")
-local logger = require("logger")
-local RichPresence = require("rich_presence.RichPresence")
-local inputManager = require("inputManager")
+
+if PROFILING_ENABLED then
+  GAME.profiler = require("profiler")
+end
+
 GAME.scores = require("scores")
 GAME.rich_presence = RichPresence()
 
@@ -108,6 +118,10 @@ function love.load(args)
     game_updater = args[#args]
   end
   
+  if PROFILING_ENABLED then
+    GAME.profiler:start()
+  end
+
   love.graphics.setDefaultFilter("linear", "linear")
   if config.maximizeOnStartup and not love.window.isMaximized() then
     love.window.maximize()
@@ -136,7 +150,7 @@ function love.update(dt)
   inputManager:update(dt)
   buttonManager.update()
   inputFieldManager.update()
-  
+
   GAME.rich_presence:runCallbacks()
   GAME:update(dt)
 end

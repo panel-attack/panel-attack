@@ -181,7 +181,7 @@ function Character.stop_sounds(self)
 end
 
 function Character.play_selection_sfx(self)
-  if not SFX_mute and #self.sounds.selections ~= 0 then
+  if not GAME.muteSoundEffects and #self.sounds.selections ~= 0 then
     self.sounds.selections[math.random(#self.sounds.selections)]:play()
     return true
   end
@@ -190,7 +190,7 @@ end
 
 -- Stops old combo / chaing sounds and plays the appropriate chain or combo sound
 function Character.play_combo_chain_sfx(self, chain_combo)
-  if not SFX_mute then
+  if not GAME.muteSoundEffects then
     -- stop previous sounds if any
     for _, v in pairs(self.sounds.combos) do
       v:stop()
@@ -265,7 +265,7 @@ end
 -- Adds all the characters recursively in a folder to the global characters variable
 local function add_characters_from_dir_rec(path)
   local lfs = love.filesystem
-  local raw_dir_list = lfs.getDirectoryItems(path)
+  local raw_dir_list = FileUtil.getFilteredDirectoryItems(path)
   for i, v in ipairs(raw_dir_list) do
     local start_of_v = string.sub(v, 0, string.len(prefix_of_ignored_dirs))
     if start_of_v ~= prefix_of_ignored_dirs then

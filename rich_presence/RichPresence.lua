@@ -1,3 +1,5 @@
+local class = require("class")
+
 local RichPresence = class(
   function(self)
     self.discordRPC = nil

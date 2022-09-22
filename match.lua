@@ -1,4 +1,5 @@
 local logger = require("logger")
+local tableUtils = require("tableUtils")
 
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =
@@ -114,6 +115,16 @@ function Match:debugRollbackAndCaptureState()
   if P2 then
     P2:rollbackToFrame(P2.CLOCK - rollbackAmount)
   end
+end
+
+function Match:warningOccurred()
+  local P1 = self.P1
+  local P2 = self.P2
+  
+  if (P1 and tableUtils.length(P1.warningsTriggered) > 0) or (P2 and tableUtils.length(P2.warningsTriggered) > 0) then
+    return true
+  end
+  return false
 end
 
 function Match:debugAssertDivergence(stack, savedStack)
@@ -484,5 +495,14 @@ function Match.render(self)
         end
       end
     end
+  end
+
+  if (self:warningOccurred()) then
+    local iconSize = 20
+    local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
+    local x = 5
+    local y = 5
+    draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+    gprint("A warning has occurred, please post your warnings.txt file and this replay to #panel-attack-bugs in the discord.", x + iconSize, y)
   end
 end
