@@ -11,7 +11,9 @@ local consts = {
   DEFAULT_INPUT_REPEAT_DELAY = 20,
   MOUSE_POINTER_TIMEOUT = 1.5, --seconds
   KEY_NAMES = {"up", "down", "left", "right", "swap1", "swap2", "taunt_up", "taunt_down", "raise1", "raise2", "start"},
-  FRAME_RATE = 1 / 60
+  FRAME_RATE = 1 / 60,
+  KEY_DELAY = .25,
+  KEY_REPEAT_PERIOD = .05
 }
 
 -- TODO: Move all values below to the above table
