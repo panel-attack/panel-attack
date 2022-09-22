@@ -1312,46 +1312,80 @@ function main_net_vs()
   --Uncomment below to induce lag
   --STONER_MODE = true
   
-  local function update() 
-    local messages = server_queue:pop_all_with("taunt", "leave_room")
-    for _, msg in ipairs(messages) do
-      if msg.taunt then -- receive taunts
-        local taunts = nil
-        -- P1.character and P2.character are supposed to be already filtered with current mods, taunts may differ though!
-        if msg.player_number == select_screen.my_player_number then
-          taunts = characters[P1.character].sounds[msg.type]
-        elseif msg.player_number == select_screen.op_player_number then
-          taunts = characters[P2.character].sounds[msg.type]
-        end
-        if taunts then
-          for _, t in ipairs(taunts) do
-            t:stop()
+  local function update()
+    local function handleTaunt()
+      local messages = server_queue:pop_all_with("taunt")
+      for _, msg in ipairs(messages) do
+        if msg.taunt then -- receive taunts
+          local taunts = nil
+          -- P1.character and P2.character are supposed to be already filtered with current mods, taunts may differ though!
+          if msg.player_number == select_screen.my_player_number then
+            taunts = characters[P1.character].sounds[msg.type]
+          elseif msg.player_number == select_screen.op_player_number then
+            taunts = characters[P2.character].sounds[msg.type]
           end
-          if msg.index <= #taunts then
-            taunts[msg.index]:play()
-          elseif #taunts ~= 0 then
-            taunts[math.random(#taunts)]:play()
+          if taunts then
+            for _, t in ipairs(taunts) do
+              t:stop()
+            end
+            if msg.index <= #taunts then
+              taunts[msg.index]:play()
+            elseif #taunts ~= 0 then
+              taunts[math.random(#taunts)]:play()
+            end
           end
-        end
-      elseif msg.leave_room then -- lost room during game, go back to lobby
-        finalizeAndWriteVsReplay(GAME.match.battleRoom, 0, true)
-
-        -- Show a message that the match connection was lost along with the average frames behind.
-        local message = loc("ss_room_closed_in_game")
-
-        local P1Behind = P1:averageFramesBehind()
-        local P2Behind = P2:averageFramesBehind()
-        local maxBehind = math.max(P1Behind, P2Behind)
-
-        if GAME.battleRoom.spectating then
-          message = message .. "\n" .. loc("ss_average_frames_behind_player", GAME.battleRoom.playerNames[1], P1Behind)
-          message = message .. "\n" .. loc("ss_average_frames_behind_player", GAME.battleRoom.playerNames[2], P2Behind)
-        else 
-          message = message .. "\n" .. loc("ss_average_frames_behind", maxBehind)
-        end
-
-        return {main_dumb_transition, {main_net_vs_lobby, message, 60, -1}}
+       end
       end
+    end
+
+    local function handleLeaveMessage()
+      local messages = server_queue:pop_all_with("leave_room")
+      for _, msg in ipairs(messages) do
+        if msg.leave_room then -- lost room during game, go back to lobby
+          finalizeAndWriteVsReplay(GAME.match.battleRoom, 0, true)
+
+          -- Show a message that the match connection was lost along with the average frames behind.
+          local message = loc("ss_room_closed_in_game")
+
+          local P1Behind = P1:averageFramesBehind()
+          local P2Behind = P2:averageFramesBehind()
+          local maxBehind = math.max(P1Behind, P2Behind)
+
+          if GAME.battleRoom.spectating then
+            message = message .. "\n" .. loc("ss_average_frames_behind_player", GAME.battleRoom.playerNames[1], P1Behind)
+            message = message .. "\n" .. loc("ss_average_frames_behind_player", GAME.battleRoom.playerNames[2], P2Behind)
+          else 
+            message = message .. "\n" .. loc("ss_average_frames_behind", maxBehind)
+          end
+
+          return {main_dumb_transition, {main_net_vs_lobby, message, 60, -1}}
+        end
+      end
+    end
+
+    local function handleGameEndAsSpectator()
+      -- if the game already ended before we caught up, abort trying to catch up to it early in order to get into the next game instead
+      if GAME.battleRoom.spectating and (P1.play_to_end or P2.play_to_end) then
+        local message = server_queue:pop_next_with("create_room", "character_select")
+        if message then
+          -- shove the message back in for select_screen to handle
+          server_queue:push(message)
+          return {main_dumb_transition, {select_screen.main, nil, 0, 0, false, false, {select_screen, "2p_net_vs"}}}
+        end
+      end
+    end
+
+    local transition = nil
+    handleTaunt()
+
+    transition = handleLeaveMessage()
+    if transition then
+      return transition
+    end
+
+    transition = handleGameEndAsSpectator()
+    if transition then
+      return transition
     end
 
     if not do_messages() then
