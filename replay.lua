@@ -42,8 +42,10 @@ function Replay.loadFromFile(replay)
       assert(replay.P2_level, "invalid replay: player 1 level missing from vs replay")
       P2 = Stack{which=2, match=GAME.match, is_local=false, level=replay.P2_level, character=replay.P2_char}
       
-      P1:set_garbage_target(P2)
-      P2:set_garbage_target(P1)
+      P1:setOpponent(P2)
+      P1:setTarget(P2)
+      P2:setOpponent(P1)
+      P2:setTarget(P1)
       P2:moveForPlayerNumber(2)
 
       if replay.P1_win_count then
@@ -51,7 +53,7 @@ function Replay.loadFromFile(replay)
         GAME.match.battleRoom.playerWinCounts[2] = replay.P2_win_count
       end
     else
-      P1:set_garbage_target(P1)
+      P1:setTarget(P1)
     end
 
     GAME.battleRoom.playerNames[1] = replay.P1_name or loc("player_n", "1")
