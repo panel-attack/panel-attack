@@ -1206,7 +1206,7 @@ function options.main(button_idx)
     optionsMenu:set_active_idx(button_idx)
   else
     found_themes = {}
-    for k, v in ipairs(love.filesystem.getDirectoryItems("themes")) do
+    for k, v in ipairs(FileUtil.getFilteredDirectoryItems("themes")) do
       if love.filesystem.getInfo("themes/" .. v) and v:sub(0, prefix_of_ignored_dirs:len()) ~= prefix_of_ignored_dirs then
         found_themes[#found_themes + 1] = v
         if config.theme == v then

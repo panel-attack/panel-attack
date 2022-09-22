@@ -225,6 +225,7 @@ Stack =
 
     s.framesBehindArray = {}
     s.totalFramesBehind = 0
+    s.warningsTriggered = {}
 
   end)
 
@@ -1185,11 +1186,16 @@ function Stack.simulate(self)
         table.insert(changeback_rows, panels[self.height - 3])
       end
       for _, prow in pairs(changeback_rows) do
-        for idx = 1, width do
-          if prow[idx].color ~= 0 then
-            toggle_back = false
-            break
+        if prow ~= nil and type(prow) == "table" then
+          for idx = 1, width do
+            if prow[idx].color ~= 0 then
+              toggle_back = false
+              break
+            end
           end
+        elseif self.warningsTriggered["Panels Invalid"] == nil then
+          logger.warn("Panels have invalid data in them, please tell your local developer." .. dump(panels, true))
+          self.warningsTriggered["Panels Invalid"] = true
         end
       end
       self.danger_music = not toggle_back
@@ -2022,7 +2028,7 @@ end
 
 
 function Stack.shouldChangeSoundEffects(self)
-  local result = self:shouldChangeMusic() and not SFX_mute
+  local result = self:shouldChangeMusic() and not GAME.muteSoundEffects
 
   return result
 end
