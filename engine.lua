@@ -507,15 +507,20 @@ end
 -- pos_x
 -- pos_y
 -- mirror_x
+-- :stackWidth
 function Stack.setTarget(self, newTarget)
   self.target = newTarget
   if self.telegraph then
-    local stackWidth = 0
-    if newTarget.canvas then 
-      stackWidth = math.floor(newTarget.canvas:getWidth() / GFX_SCALE)
-    end
-    self.telegraph:updatePosition(newTarget.pos_x, newTarget.pos_y, newTarget.mirror_x, stackWidth)
+    self.telegraph:updatePositionForTarget(newTarget)
   end
+end
+
+function Stack:stackWidth()
+  local stackWidth = 0
+  if self.canvas then 
+    stackWidth = math.floor(self.canvas:getWidth() / GFX_SCALE)
+  end
+  return stackWidth
 end
 
 local MAX_TAUNT_PER_10_SEC = 4

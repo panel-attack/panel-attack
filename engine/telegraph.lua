@@ -7,7 +7,13 @@ local TELEGRAPH_ATTACK_MAX_SPEED = 8 --fastest an attack can travel toward the t
 
 local clone_pool = {}
 
+-- Sender is the sender of these attacks, must implement CLOCK, pos_x, pos_y, and character
 Telegraph = class(function(self, sender)
+
+  assert(sender.CLOCK ~= nil, "telegraph sender invalid")
+  assert(sender.pos_x ~= nil, "telegraph sender invalid")
+  assert(sender.pos_y ~= nil, "telegraph sender invalid")
+  assert(sender.character ~= nil, "telegraph sender invalid")
 
   -- Stores the actual queue of garbages in the telegraph but not queued long enough to exceed the "stoppers"
   self.garbage_queue = GarbageQueue(sender)
@@ -71,11 +77,11 @@ for k, animation in ipairs(leftward_or_rightward) do
   end
 end
 
-function Telegraph:updatePosition(positionX, positionY, mirrorX, stackWidth)
-  self.stackWidth = stackWidth
-  self.mirror_x = mirrorX
-  self.pos_x = positionX - 4
-  self.pos_y = positionY - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
+function Telegraph:updatePositionForTarget(newTarget)
+  self.stackWidth = newTarget:stackWidth()
+  self.mirror_x = newTarget.mirror_x
+  self.pos_x = newTarget.pos_x - 4
+  self.pos_y = newTarget.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
 end
 
 function Telegraph.saveClone(toSave)
@@ -111,7 +117,6 @@ function Telegraph:push(garbage, attack_origin_col, attack_origin_row, frame_ear
   assert(self.sender ~= nil, "telegraph needs sender set")
 
   local timeAttackInteracts = frame_earned + 1
-  --logger.debug("Player " .. self.sender.which .. " attacked with " .. attack_type .. " at " .. frame_earned)
 
   assert(frame_earned == self.sender.CLOCK, "expected sender clock to equal attack")
 

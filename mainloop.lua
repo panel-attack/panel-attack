@@ -657,13 +657,15 @@ function training_setup()
 
   local function start_training()
     customTrainingModes[0] = createBasicTrainingMode("", trainingModeSettings.width, trainingModeSettings.height)
+    local lineHeightToKill = 6
     customTrainingModes[customModeID].healthDifficulties = {
       -- secondsToppedOutToLose, lineClearGPM, lineHeightToKill
-      {1, 1, 1},
-      {2, 2, 1},
-      {3, 3, 1},
-      {4, 4, 1},
-      {10, 5, 1}
+      {1, 1, lineHeightToKill},
+      {2, 2, lineHeightToKill},
+      {3, 3, lineHeightToKill},
+      {4, 4, lineHeightToKill},
+      {10, 5, lineHeightToKill},
+      {10, 0, 30}
     }
     customTrainingModes[customModeID].stageTimes = {}
     ret = {main_local_vs_yourself_setup, {customTrainingModes[customModeID]}}

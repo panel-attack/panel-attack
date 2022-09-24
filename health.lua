@@ -97,16 +97,17 @@ function Health:renderPartialScaledImage(image, x, y, maxWidth, maxHeight, perce
   gfx_q:push({love.graphics.draw, {image, quad, xPosition, yPosition, 0, scaleX, scaleY}})
 end
 
-function Health:renderHealth()
+
+function Health:renderHealth(xPosition)
   local percentage = math.max(0, self.secondsToppedOutToLose) / self.maxSecondsToppedOutToLose
-  self:renderPartialScaledImage(themes[config.theme].images.IMG_healthbar, 760, 110, barWidth, 590, 1, percentage)
+  self:renderPartialScaledImage(themes[config.theme].images.IMG_healthbar, xPosition, 110, barWidth, 590, 1, percentage)
 end
 
-function Health:renderTopOut()
+function Health:renderTopOut(xPosition)
   local percentage = math.max(0, self.currentLines) / self.height
-  local x = 860
+  local x = xPosition + barWidth
   local y = 110
-  self:renderPartialScaledImage(themes[config.theme].images.IMG_multibar_shake_bar, 860, 110, barWidth, 590, 1, percentage)
+  self:renderPartialScaledImage(themes[config.theme].images.IMG_multibar_shake_bar, x, 110, barWidth, 590, 1, percentage)
 
   local height = 4
   local grey = 0.8
@@ -114,10 +115,9 @@ function Health:renderTopOut()
   grectangle_color("fill", x / GFX_SCALE, y / GFX_SCALE, barWidth / GFX_SCALE, height / GFX_SCALE, grey, grey, grey, alpha)
 end
 
-function Health.render(self)
+function Health:render(xPosition)
 
-  self:renderHealth()
-  self:renderTopOut()
-
+  self:renderHealth(xPosition)
+  self:renderTopOut(xPosition)
 
 end

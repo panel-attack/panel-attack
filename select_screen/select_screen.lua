@@ -868,12 +868,14 @@ function select_screen.start1pLocalMatch(self)
     character_loader_load(character)
     character_loader_wait()
 
-    local attackEngine = self:attackEngineForTrainingModeSettings(GAME.battleRoom.trainingModeSettings)
-
-    local xPosition = 249
-    local yPosition = 40
+    local xPosition = 760
+    local yPosition = 120
     local mirror = -1
-    GAME.match.simulatedOpponent = SimulatedOpponent(health, character, attackEngine, xPosition, yPosition, mirror)
+    local simulatedOpponent = SimulatedOpponent(health, character, xPosition, yPosition, mirror)
+    local attackEngine = self:attackEngineForTrainingModeSettings(GAME.battleRoom.trainingModeSettings, simulatedOpponent)
+    simulatedOpponent:setAttackEngine(attackEngine)
+
+    GAME.match.simulatedOpponent = simulatedOpponent
   end
   
   GAME.match.P1 = P1
@@ -910,11 +912,11 @@ function select_screen.start1pCpuMatch(self)
   return main_dumb_transition, {main_local_vs, "", 0, 0}
 end
 
-function select_screen.attackEngineForTrainingModeSettings(self, trainingModeSettings)
+function select_screen.attackEngineForTrainingModeSettings(self, trainingModeSettings, opponent)
   local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
   local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
   local disableQueueLimit = trainingModeSettings.disableQueueLimit or false
-  local attackEngine = AttackEngine(P1, delayBeforeStart, delayBeforeRepeat, disableQueueLimit)
+  local attackEngine = AttackEngine(P1, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, opponent)
   for _, values in ipairs(trainingModeSettings.attackPatterns) do
     if values.chain then
       if type(values.chain) == "number" then

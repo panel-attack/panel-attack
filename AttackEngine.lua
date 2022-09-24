@@ -15,7 +15,7 @@ AttackPattern =
 -- An attack engine sends attacks based on a set of rules.
 AttackEngine =
   class(
-  function(self, target, delayBeforeStart, delayBeforeRepeat, disableQueueLimit)
+  function(self, target, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, sender)
     self.target = target
     self.delayBeforeStart = delayBeforeStart
     self.delayBeforeRepeat = delayBeforeRepeat
@@ -23,20 +23,15 @@ AttackEngine =
     self.attackPatterns = {}
     self.CLOCK = 0
     self.character = Character.wait_for_random_character(config.character)
-    self.telegraph = Telegraph(self) 
-    self.pos_x = 200
-    self.pos_y = 10
-    self.mirror_x = 1
+    self.telegraph = Telegraph(sender) 
   end
 )
 
 function AttackEngine:setTarget(target)
   self.target = target
-  local stackWidth = 0
-  if target.canvas then 
-    stackWidth = math.floor(target.canvas:getWidth() / GFX_SCALE)
+  if self.telegraph then
+    self.telegraph:updatePositionForTarget(target)
   end
-  self.telegraph:updatePosition(target.pos_x, target.pos_y, target.mirror_x, stackWidth)
 end
 
 -- Adds an attack pattern that happens repeatedly on a timer.
