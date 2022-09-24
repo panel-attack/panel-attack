@@ -1897,13 +1897,10 @@ function Stack.simulate(self)
       if SFX_Fanfare_Play == 0 then
         --do nothing
       elseif SFX_Fanfare_Play >= 6 then
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         themes[config.theme].sounds.fanfare3:play()
       elseif SFX_Fanfare_Play >= 5 then
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         themes[config.theme].sounds.fanfare2:play()
       elseif SFX_Fanfare_Play >= 4 then
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         themes[config.theme].sounds.fanfare1:play()
       end
       SFX_Fanfare_Play = 0
