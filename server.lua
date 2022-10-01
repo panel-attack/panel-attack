@@ -23,6 +23,7 @@ local CHARACTERSELECT = "character select" -- room states
 local PLAYING = "playing" -- room states
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
+SERVER_MODE = true -- global to know the server is running the process
 local VERSION = "046"
 local type_to_length = {H = 4, E = 4, F = 4, P = 8, I = 2, L = 2, Q = 8, U = 2}
 local INDEX = 1 -- GLOBAL counter of the next available connection index
@@ -551,7 +552,7 @@ function Connection.send(self, stuff)
       logger.trace(unpack(foo))
     end
     if not foo[1] then
-      logger.warn("WARNING: Connection.send failed. will retry...")
+      logger.info("WARNING: Connection.send failed. will retry...")
       retry_count = retry_count + 1
     end
   end
