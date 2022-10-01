@@ -64,6 +64,21 @@ function read_players_file()
   )
 end
 
+
+function logGameResult(player1ID, player2ID, player1Won, rankedValue)
+  local status, error = pcall(
+    function()
+      local f = assert(io.open("GameResults.csv", "a"))
+      io.output(f)
+      io.write(player1ID .. "," .. player2ID .. "," .. player1Won .. "," .. rankedValue .. "," .. os.time() .. "\n")
+      io.close(f)
+    end
+  )
+  if not status then
+    logger.warn("Failed to log game result: " .. error)
+  end
+end
+
 function write_deleted_players_file()
   pcall(
     function()
