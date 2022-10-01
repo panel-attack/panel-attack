@@ -49,7 +49,8 @@ function direct_log(prefix, msg)
     -- %X - Time
     local message = os.date("%x %X") .. "." .. socket_millis .. " " .. prefix .. ": " .. msg
     print(message)
-    if prefix == "ERROR" or prefix == " WARN" then
+    -- note the space in the string below is on purpose
+    if SERVER_MODE == nil and (prefix == "ERROR" or prefix == " WARN") then
       love.filesystem.append("warnings.txt", message .. "\n")
     end
 end
