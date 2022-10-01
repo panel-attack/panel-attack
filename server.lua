@@ -820,16 +820,18 @@ function Room.resolve_game_outcome(self)
     --check that it's ok to adjust ratings
     local shouldAdjustRatings, reasons = self:rating_adjustment_approved()
 
-    -- record the ranking result, even if it was a tie, some ranking algorithms care about ties
-    if shouldAdjustRatings then
-      local result = 0.5
-      if self.a.player_number == outcome then
-        result = 1
-      elseif self.b.player_number == outcome then
-        result = 0
-      end
-      log_rank_result(self.a.user_id, self.b.user_id, result)
+    -- record the game result for statistics, record keeping, and testing new features
+    local resultValue = 0.5
+    if self.a.player_number == outcome then
+      resultValue = 1
+    elseif self.b.player_number == outcome then
+      resultValue = 0
     end
+    local rankedValue = 0
+    if shouldAdjustRatings then
+      rankedValue = 1
+    end
+    logGameResult(self.a.user_id, self.b.user_id, resultValue, rankedValue)
 
     if outcome == 0 then
       logger.info("tie.  Nobody scored")
