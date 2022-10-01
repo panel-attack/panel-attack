@@ -68,7 +68,7 @@ end
 function logGameResult(player1ID, player2ID, player1Won, rankedValue)
   local status, error = pcall(
     function()
-      local f = assert(io.open("RankedGameResults.csv", "a"))
+      local f = assert(io.open("GameResults.csv", "a"))
       io.output(f)
       io.write(player1ID .. "," .. player2ID .. "," .. player1Won .. "," .. rankedValue .. "," .. os.time() .. "\n")
       io.close(f)
