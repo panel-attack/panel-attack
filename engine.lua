@@ -469,6 +469,10 @@ function Stack.saveForRollback(self)
   if self.garbage_target and self.garbage_target.CLOCK + GARBAGE_DELAY_LAND_TIME > self.CLOCK then
     return
   end
+  
+  if not self.garbage_target then
+    return -- for now we don't need rewind for endless etc
+  end
 
   local prev_states = self.prev_states
   local garbage_target = self.garbage_target
