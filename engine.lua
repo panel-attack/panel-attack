@@ -1929,7 +1929,7 @@ function Stack.simulate(self)
         local popLevel = min(max(self.chain_counter, 1), 4)
         local popIndex = 1
         if SFX_Garbage_Pop_Play then
-          popIndex = SFX_Garbage_Pop_Play
+          popIndex = min(SFX_Garbage_Pop_Play + self.poppedPanelIndex, 10)
         else
           popIndex = min(self.poppedPanelIndex, 10)
         end
