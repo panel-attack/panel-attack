@@ -24,7 +24,7 @@ require("queue")
 require("save")
 local Game = require("Game")
 GAME = Game()
--- temp hack to keep modules dependnent on the global gfx_q working, please use GAME:gfx_q instead
+-- temp hack to keep modules dependent on the global gfx_q working, please use GAME:gfx_q instead
 gfx_q = GAME.gfx_q
 
 
