@@ -155,7 +155,7 @@ function Game:update(dt)
   end
   
   local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
-  if GAME.previousWindowWidth ~= newPixelWidth then
+if GAME.previousWindowWidth ~= newPixelWidth or GAME.previousWindowHeight ~= newPixelHeight then
     GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
     if GAME.match then
       GAME.needsAssetReload = true
