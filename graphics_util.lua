@@ -111,78 +111,45 @@ function draw_label(img, x, y, rot, scale, mirror)
   rot, scale, scale}})
 end
 
-
--- Returns the pixel font map for the pixel fonts that contain just numbers
--- a font map is a dictionary of a character mapped to the column number in the pixel font image
-local function number_pixel_font_map()
-
-  local fontMap = {}
-  --0-9 = 0-9
-  for i = 0, 9, 1 do
-    fontMap[tostring(i)] = i
-  end
-
-  return fontMap
+-- A pixel font map to use with numbers
+local number_pixel_font_map = {}
+--0-9 = 0-9
+for i = 0, 9, 1 do
+  number_pixel_font_map[tostring(i)] = i
 end
 
--- Draws a number via the given font image
-function GraphicsUtil.draw_number(number, atlas, quads, x, y, scale, align)
-  draw_pixel_font(tostring(number), atlas, number_pixel_font_map(), x, y, scale, scale, align, 0, quads)
+-- A pixel font map to use with times
+local time_pixel_font_map = {}
+--0-9 = 0-9
+for i = 0, 9, 1 do
+  time_pixel_font_map[tostring(i)] = i
+end
+time_pixel_font_map[":"] = 10
+time_pixel_font_map["'"] = 11
+
+-- A pixel font map to use with strings
+local standard_pixel_font_map = {["&"]=36, ["?"]=37, ["!"]=38, ["%"]=39, ["*"]=40, ["."]=41}
+--0-9 = 0-9
+for i = 0, 9, 1 do
+  standard_pixel_font_map[tostring(i)] = i
 end
 
--- Returns the pixel font map for the times
--- a font map is a dictionary of a character mapped to the column number in the pixel font image
-local function time_pixel_font_map()
-
-  local fontMap = {}
-  --0-9 = 0-9
-  for i = 0, 9, 1 do
-    fontMap[tostring(i)] = i
-  end
-  
-  fontMap[":"] = 10
-  fontMap["'"] = 11
-
-  return fontMap
+--10-35 = A-Z
+for i = 10, 35, 1 do
+  local characterString = string.char(97+(i-10))
+  standard_pixel_font_map[characterString] = i
 end
 
--- Draws a time centered horizontally using the theme's time pixel font
-function GraphicsUtil.draw_time(time, quads, x, y, scale)
-  draw_pixel_font(time, themes[config.theme].images.IMG_timeNumber_atlas, time_pixel_font_map(), x, y, scale, scale, "center", 0, quads)
-end
-
--- Returns the pixel font map for the pixel fonts that contain numbers and letters
--- a font map is a dictionary of a character mapped to the column number in the pixel font image
-function standard_pixel_font_map()
-
-  -- Special Characters
-  local fontMap = {["&"]=36, ["?"]=37, ["!"]=38, ["%"]=39, ["*"]=40, ["."]=41}
-
-  --0-9 = 0-9
-  for i = 0, 9, 1 do
-    fontMap[tostring(i)] = i
-  end
-
-  --10-35 = A-Z
-  for i = 10, 35, 1 do
-    local characterString = string.char(97+(i-10))
-    fontMap[characterString] = i
-    --logger.debug(characterString .. " = " .. fontMap[characterString])
-  end
-
-  return fontMap
-end
 
 -- Draws the given string with the given pixel font image atlas
 -- string - the string to draw
 -- TODO support both upper and lower case
 -- atlas - the image to use as the pixel font
 -- font map - a dictionary of a character mapped to the column number in the pixel font image
-function draw_pixel_font(string, atlas, font_map, x, y, x_scale, y_scale, align, characterSpacing, quads)
+local function drawPixelFontWithMap(string, atlas, font_map, x, y, x_scale, y_scale, align, characterSpacing, quads)
   x_scale = x_scale or 1
   y_scale = y_scale or 1
   align = align or "left"
-  mirror = mirror or 0
   font_map = font_map or standard_pixel_font_map()
 
   local atlasFrameCount = table.length(font_map)
@@ -228,6 +195,23 @@ function draw_pixel_font(string, atlas, font_map, x, y, x_scale, y_scale, align,
     ::continue::
   end
 
+end
+
+-- Draws a time centered horizontally using the theme's time pixel font which is 0-9, then : then '
+function GraphicsUtil.draw_time(time, quads, x, y, scale)
+  drawPixelFontWithMap(time, themes[config.theme].images.IMG_timeNumber_atlas, time_pixel_font_map, x, y, scale, scale, "center", 0, quads)
+end
+
+-- Draws a number via the given font image that has 0-9
+function GraphicsUtil.draw_number(number, atlas, quads, x, y, scale, align)
+  drawPixelFontWithMap(tostring(number), atlas, number_pixel_font_map, x, y, scale, scale, align, 0, quads)
+end
+
+-- Draws the given string with a pixel font image atlas that has 0-9 than a-z
+-- string - the string to draw
+-- atlas - the image to use as the pixel font
+function draw_pixel_font(string, atlas, x, y, x_scale, y_scale, align, characterSpacing, quads)
+  drawPixelFontWithMap(string, atlas, standard_pixel_font_map, x, y, x_scale, y_scale, align, characterSpacing, quads)
 end
 
 -- Draws an image at the given position, using the quad for the viewport
