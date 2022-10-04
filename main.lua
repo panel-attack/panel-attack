@@ -23,6 +23,7 @@ require("localization")
 require("queue")
 require("save")
 local Game = require("Game")
+-- move to load once global dependencies have been resolved
 GAME = Game()
 -- temp hack to keep modules dependnent on the global gfx_q working, please use GAME:gfx_q instead
 gfx_q = GAME.gfx_q
@@ -34,7 +35,6 @@ require("engine")
 require("AttackEngine")
 
 require("graphics")
-GAME.input = require("input")
 require("replay")
 require("network")
 require("Puzzle")
@@ -76,7 +76,8 @@ function love.load(args)
   end
   -- construct game here
   GAME.rich_presence:initialize("902897593049301004")
-  GAME:load()
+  -- TODO: pull game updater from from args
+  GAME:load(GAME_UPDATER)
   mainloop = coroutine.create(fmainloop)
 
   GAME.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME:newCanvasSnappedScale()})
@@ -93,7 +94,6 @@ function love.update(dt)
   buttonManager.update()
   inputFieldManager.update()
 
-  GAME.rich_presence:runCallbacks()
   GAME:update(dt)
 end
 

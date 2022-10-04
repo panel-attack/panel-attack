@@ -31,25 +31,6 @@ local main_menu_last_index = 1
 local puzzle_menu_last_index = 3
 
 function fmainloop()
-  --check for game updates
-  if GAME_UPDATER_CHECK_UPDATE_INGAME then
-    wait_game_update = GAME_UPDATER:async_download_latest_version()
-  end
-
-  -- Run Unit Tests
-  if TESTS_ENABLED then
-    -- Run all unit tests now that we have everything loaded
-    GAME:drawLoadingString("Running Unit Tests")
-    wait()
-    require("PuzzleTests")
-    require("ServerQueueTests")
-    require("StackTests")
-    require("tableUtilsTest")
-    if PERFORMANCE_TESTS_ENABLED then
-      require("tests/performanceTests")
-    end
-  end
-
   local func, arg = main_title, nil
 
   while true do
