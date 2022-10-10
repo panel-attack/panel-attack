@@ -10,6 +10,7 @@ local MAX_REQ_SIZE = 100000 -- 100kB
 GAME_UPDATER = GameUpdater(UPDATER_NAME)
 GAME_UPDATER_GAME_VERSION = nil
 GAME_UPDATER_CHECK_UPDATE_INGAME = (GAME_UPDATER.config.force_version == "")
+OPERATING_SYSTEM = nil
 
 -- VARS
 local path = GAME_UPDATER.path
@@ -43,6 +44,11 @@ function love.load()
 end
 
 function love.update(dt)
+  -- pre-load the operating system so it is available for OS-specific settings in the game's conf.lua
+  if not OPERATING_SYSTEM then
+    OPERATING_SYSTEM = love.system.getOS()
+  end
+
   if wait_messages > 0 then
     wait_messages = wait_messages - 1
     return
