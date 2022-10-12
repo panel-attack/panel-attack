@@ -1923,7 +1923,6 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX, keep
   end
 
   local t = 0
-  local font = love.graphics.getFont()
 
   local x = canvas_width / 2
   local y = canvas_height / 2
@@ -1967,7 +1966,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax, keepMusic, ar
   local timemin = 60 -- the minimum amount of frames the game over screen will be displayed for
 
   local t = 0 -- the amount of frames that have passed since the game over screen was displayed
-  local font = love.graphics.getFont()
+  local font = get_global_font()
   local winnerTime = 60
 
   if SFX_GameOver_Play == 1 then

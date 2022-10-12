@@ -106,7 +106,9 @@ end
 function draw_label(img, x, y, rot, scale, mirror)
   rot = rot or 0
   mirror = mirror or 0
-  x = x - math.floor((img:getWidth()/GFX_SCALE*scale)*mirror)
+  if mirror ~= 0 then
+    x = x - math.floor((img:getWidth()/GFX_SCALE*scale)*mirror)
+  end
   gfx_q:push({love.graphics.draw, {img, x*GFX_SCALE, y*GFX_SCALE,
   rot, scale, scale}})
 end
@@ -417,7 +419,6 @@ function gprintf(str, x, y, limit, halign, color, scale, font_delta_size)
   font_delta_size = font_delta_size or 0
   halign = halign or "left"
   set_color(0, 0, 0, 1)
-  local old_font = love.graphics.getFont()
   if font_delta_size ~= 0 then
     set_font(get_font_delta(font_delta_size)) 
   end
@@ -428,7 +429,9 @@ function gprintf(str, x, y, limit, halign, color, scale, font_delta_size)
   end
   set_color(r,g,b,a)
   gfx_q:push({love.graphics.printf, {str, x, y, limit, halign, 0, scale}})
-  if font_delta_size ~= 0 then set_font(old_font) end
+  if font_delta_size ~= 0 then
+    set_font(get_global_font())
+  end
   set_color(1,1,1,1)
 end
 

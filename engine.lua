@@ -459,14 +459,33 @@ function Stack.rollbackToFrame(self, frame)
   end
 end
 
+function Stack:shouldSaveRollback()
+  if not GAME.match then
+    return false
+  end
+
+  if GAME.match.isFromReplay then
+    return true
+  end
+
+  -- if we don't have a garbage target, its is assumed we aren't being attacked either, which means we don't need to rollback
+  if not self.garbage_target then
+    return false
+  -- If we are behind the time that the opponent's new attacks would land, then we don't need to rollback
+  -- don't save the rollback info for performance reasons
+  -- this also includes local play and single player, since the clocks are <= 1 difference
+  elseif self.garbage_target.CLOCK + GARBAGE_DELAY_LAND_TIME > self.CLOCK then
+    return false
+  end
+
+  return true
+end
+
 -- Saves state in backups in case its needed for rollback
 -- NOTE: the CLOCK time is the save state for simulating right BEFORE that clock time is simulated
 function Stack.saveForRollback(self)
 
-  -- If we are behind the time that the opponent's new attacks would land, then we don't need to rollback
-  -- don't save the rollback info for performance reasons
-  -- TODO still save for replays so we can rewind
-  if self.garbage_target and self.garbage_target.CLOCK + GARBAGE_DELAY_LAND_TIME > self.CLOCK then
+  if self:shouldSaveRollback() == false then
     return
   end
 
