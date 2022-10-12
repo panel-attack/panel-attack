@@ -674,7 +674,7 @@ function Stack.set_puzzle_state(self, puzzle)
 
   self.puzzle = puzzle
   self.panels = self:puzzleStringToPanels(puzzleString)
-  self.do_countdown = puzzle.do_countdown or false
+  self.do_countdown = puzzle.doCountdown or false
   self.puzzle.remaining_moves = puzzle.moves
 
   -- transform any cleared garbage into colorless garbage panels
