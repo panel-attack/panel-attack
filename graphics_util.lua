@@ -150,7 +150,7 @@ local function drawPixelFontWithMap(string, atlas, font_map, x, y, x_scale, y_sc
   x_scale = x_scale or 1
   y_scale = y_scale or 1
   align = align or "left"
-  font_map = font_map or standard_pixel_font_map()
+  font_map = font_map or standard_pixel_font_map
 
   local atlasFrameCount = table.length(font_map)
   local atlasWidth = atlas:getWidth()
