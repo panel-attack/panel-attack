@@ -64,6 +64,21 @@ function read_players_file()
   )
 end
 
+
+function logGameResult(player1ID, player2ID, player1Won, rankedValue)
+  local status, error = pcall(
+    function()
+      local f = assert(io.open("GameResults.csv", "a"))
+      io.output(f)
+      io.write(player1ID .. "," .. player2ID .. "," .. player1Won .. "," .. rankedValue .. "," .. os.time() .. "\n")
+      io.close(f)
+    end
+  )
+  if not status then
+    logger.warn("Failed to log game result: " .. error)
+  end
+end
+
 function write_deleted_players_file()
   pcall(
     function()
@@ -96,7 +111,6 @@ function write_error_report(error_report_json)
   local filename = "v" .. (error_report_json.engine_version or "000") .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. "_" .. (error_report_json.name or "Unknown") .. "-ErrorReport.json"
   return pcall(
     function()
-      mkDir("reports")
       local f = assert(io.open("reports" .. sep .. filename, "w"))
       io.output(f)
       io.write(json_string)
@@ -278,11 +292,3 @@ function read_csprng_seed_file()
     end
   )
 end
-
---old
--- function write_replay_file(replay_table, file_name) pcall(function()
--- local f = io.open(file_name, "w")
--- io.output(f)
--- io.write(json.encode(replay_table))
--- io.close(f)
--- end) end

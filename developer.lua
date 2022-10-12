@@ -5,7 +5,11 @@ for _, value in pairs(arg) do
     TESTS_ENABLED = 1
   elseif value == "debug" then
     DEBUG_ENABLED = 1
-      require "lldebugger"
-      lldebugger.start()
+    require "lldebugger"
+    lldebugger.start()
+  elseif value == "profile" then
+    PROFILING_ENABLED = 1
+  elseif value == "performanceTests" then
+    PERFORMANCE_TESTS_ENABLED = 1
   end
 end
