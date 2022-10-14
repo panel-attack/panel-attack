@@ -6,7 +6,6 @@ function makeDirectory(path)
   local status, error = pcall(
     function()
         lfs.mkdir(path)
-      end
     end
   )
   if not status then
