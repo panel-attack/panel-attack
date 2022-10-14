@@ -5,8 +5,7 @@ local csvfile = require("simplecsv")
 function makeDirectory(path) 
   local status, error = pcall(
     function()
-        lfs.mkdir(path)
-      end
+      lfs.mkdir(path)
     end
   )
   if not status then
