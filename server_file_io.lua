@@ -1,49 +1,29 @@
 local lfs = require("lfs")
+local logger = require("logger")
 local csvfile = require("simplecsv")
 
-function os_rename(old_name, new_name)
-  os.rename(old_name, new_name)
+function makeDirectory(path) 
+  local status, error = pcall(
+    function()
+        lfs.mkdir(path)
+      end
+    end
+  )
+  if not status then
+    logger.error("Failed to make directory: " .. path .. " error: " .. error)
+  end
 end
 
-function isFile(name)
-  if type(name) ~= "string" then
-    return false
-  end
-  if not isDir(name) then
-    return os.rename(name, name) and true or false
-  -- note that the short evaluation is to
-  -- return false instead of a possible nil
-  end
-  return false
-end
-
-function isFileOrDir(name)
-  if type(name) ~= "string" then
-    return false
-  end
-  return os.rename(name, name) and true or false
-end
-
-function isDir(name)
-  if type(name) ~= "string" then
-    return false
-  end
-  local cd = lfs.currentdir()
-  local is = lfs.chdir(name) and true or false
-  lfs.chdir(cd)
-  return is
-end
-
-function mkDir(path)
+function makeDirectoryRecursive(path)
   local sep, pStr = package.config:sub(1, 1), ""
   for dir in path:gmatch("[^" .. sep .. "]+") do
     pStr = pStr .. dir .. sep
-    lfs.mkdir(pStr)
+    makeDirectory(pStr)
   end
 end
 
 function write_players_file()
-  pcall(
+  local status, error = pcall(
     function()
       local f = assert(io.open("players.txt", "w"))
       io.output(f)
@@ -51,6 +31,9 @@ function write_players_file()
       io.close(f)
     end
   )
+  if not status then
+    logger.error("Failed to write players file with error: " .. error)
+  end
 end
 
 function read_players_file()
@@ -75,12 +58,12 @@ function logGameResult(player1ID, player2ID, player1Won, rankedValue)
     end
   )
   if not status then
-    logger.warn("Failed to log game result: " .. error)
+    logger.error("Failed to log game result: " .. error)
   end
 end
 
 function write_deleted_players_file()
-  pcall(
+  local status, error = pcall(
     function()
       local f = assert(io.open("deleted_players.txt", "w"))
       io.output(f)
@@ -88,6 +71,9 @@ function write_deleted_players_file()
       io.close(f)
     end
   )
+  if not status then
+    logger.error("Failed to write deleted players file with error: " .. error)
+  end
 end
 
 function read_deleted_players_file()
@@ -120,7 +106,7 @@ function write_error_report(error_report_json)
 end
 
 function write_leaderboard_file()
-  pcall(
+  local status, error = pcall(
     function()
       -- local f = assert(io.open("leaderboard.txt", "w"))
       -- io.output(f)
@@ -138,9 +124,13 @@ function write_leaderboard_file()
         public_leaderboard_table[#public_leaderboard_table + 1] = {v.user_name, v.rating, v.ranked_games_played}
       end
       csvfile.write("." .. sep .. "leaderboard.csv", leaderboard_table)
+      makeDirectoryRecursive("." .. sep .. "ftp")
       csvfile.write("." .. sep .. "ftp" .. sep .. "PA_public_leaderboard.csv", public_leaderboard_table)
     end
   )
+  if not status then
+    logger.error("Failed to write leaderboard file with error: " .. error)
+  end
 end
 
 function read_leaderboard_file()
@@ -148,7 +138,7 @@ function read_leaderboard_file()
     function()
       local csv_table = csvfile.read("./leaderboard.csv")
       if csv_table[2] then
-        print("read leaderboard.csv")
+        logger.info("reading leaderboard.csv")
         for row = 2, #csv_table do
           csv_table[row][1] = tostring(csv_table[row][1])
           leaderboard.players[csv_table[row][1]] = {}
@@ -171,11 +161,12 @@ function read_leaderboard_file()
           end
         end
       else
-        print("failed to read any data from leaderboard.csv, checking for a leaderboard.txt")
-        local f = assert(io.open("leaderboard.txt", "r"))
-        io.input(f)
-        leaderboard.players = json.decode(io.read("*all"))
-        io.close(f)
+        logger.info("failed to read any data from leaderboard.csv, checking for a leaderboard.txt")
+        local f = io.open("leaderboard.txt", "r")
+        if f then
+          leaderboard.players = json.decode(io.read("*all"))
+          io.close(f)
+        end
       end
     end
   )
@@ -187,11 +178,11 @@ function read_user_placement_match_file(user_id)
       local sep = package.config:sub(1, 1)
       local csv_table = csvfile.read("./placement_matches/incomplete/" .. user_id .. ".csv")
       if not csv_table or #csv_table < 2 then
-        print("csv_table from read_user_placement_match_file was nil or <2 length")
+        logger.warn("csv_table from read_user_placement_match_file was nil or <2 length")
         return nil
       else
-        print("csv_table from read_user_placement_match_file :")
-        print(json.encode(csv_table))
+        logger.warn("csv_table from read_user_placement_match_file :")
+        logger.warn(json.encode(csv_table))
       end
       local ret = {}
       for row = 2, #csv_table do
@@ -217,53 +208,60 @@ function read_user_placement_match_file(user_id)
           end
         end
       end
-      print("read_user_placement_match_file ret: ")
-      print(tostring(ret))
-      print(json.encode(ret))
+      logger.warn("read_user_placement_match_file ret: ")
+      logger.warn(tostring(ret))
+      logger.warn(json.encode(ret))
       return ret
     end
   )
 end
 
 function move_user_placement_file_to_complete(user_id)
-  pcall(
+  local status, error = pcall(
     function()
       local sep = package.config:sub(1, 1)
-      mkDir("./placement_matches/complete")
+      makeDirectoryRecursive("./placement_matches/complete")
       local moved, err = os.rename("./placement_matches/incomplete/" .. user_id .. ".csv", "./placement_matches/complete/" .. user_id .. ".csv")
     end
   )
+  if not status then
+    logger.error("Failed to move user placement file to complete: " .. error)
+  end
 end
 
 function write_user_placement_match_file(user_id, placement_matches)
-  pcall(
+  local sep = package.config:sub(1, 1)
+  local pm_table = {}
+  pm_table[#pm_table + 1] = {"op_user_id", "op_name", "op_rating", "outcome"}
+  for k, v in ipairs(placement_matches) do
+    pm_table[#pm_table + 1] = {v.op_user_id, v.op_name, v.op_rating, v.outcome}
+  end
+  makeDirectoryRecursive("placement_matches" .. sep .. "incomplete")
+  local fullFileName = "placement_matches" .. sep .. "incomplete" .. sep .. user_id .. ".csv"
+  local status, error = pcall(
     function()
-      local sep = package.config:sub(1, 1)
-      local pm_table = {}
-      pm_table[#pm_table + 1] = {"op_user_id", "op_name", "op_rating", "outcome"}
-      for k, v in ipairs(placement_matches) do
-        pm_table[#pm_table + 1] = {v.op_user_id, v.op_name, v.op_rating, v.outcome}
-      end
-      mkDir("placement_matches" .. sep .. "incomplete")
-      csvfile.write("placement_matches" .. sep .. "incomplete" .. sep .. user_id .. ".csv", pm_table)
+      csvfile.write(fullFileName, pm_table)
     end
   )
+  if not status then
+    logger.error("Failed to write user placement match file: " .. fullFileName .. " with error: " .. error)
+  end
 end
 
 function write_replay_file(replay, path, filename)
-  pcall(
+  local sep = package.config:sub(1, 1)
+  local status, error = pcall(
     function()
-      local sep = package.config:sub(1, 1)
-      logger.debug("about to open new replay file for writing")
-      mkDir(path)
+      makeDirectoryRecursive(path)
       local f = assert(io.open(path .. sep .. filename, "w"))
-      logger.debug("past file open")
       io.output(f)
       io.write(json.encode(replay))
       io.close(f)
-      logger.debug("finished write_replay_file()")
     end
   )
+  if not status then
+    logger.error("Failed to write replay file: " .. path .. sep .. filename .. " with error: " .. error)
+  end
 end
 
 function read_csprng_seed_file()
