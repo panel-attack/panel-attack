@@ -38,9 +38,13 @@ Note: non-optional data that are missing will automatically get replaced by defa
 
 ~~ [.mp3, .ogg, .wav, .it, .flac] optional sounds are in parenthesis ~~
 
-- "sfx/countdown", "sfx/go", "sfx/move", "sfx/swap", "sfx/land", "sfx/gameover": game sfx
-- "sfx/fanfare1", "sfx/fanfare2", "sfx/fanfare3": fanfare
-- "sfx/thud_1", "sfx/thud_2", "sfx/thud_3": garbage thuds
+- "sfx/countdown", "sfx/go": played at the start of a match
+- "sfx/move", "sfx/swap": played when moving and swapping
+- "sfx/land": Played when a panel lands
+- "sfx/gameover": played when each game is over
+- "sfx/fanfare1": played when a player makes a x4 chain
+- "sfx/fanfare2": 5x chain, "sfx/fanfare3": x6 chain
+- "sfx/thud_1", "sfx/thud_2", "sfx/thud_3": garbage landing noise
 - "sfx/menu_move", "sfx/menu_validate", "sfx/menu_cancel": menu
 - "sfx/notification": will play upon receiving a request or a request's answer while playing online
 - "sfx/pop1-1", "sfx/pop1-2", ..., "sfx/pop1-10", "sfx/pop2-1", ..., "sfx/pop2-10", ..., "sfx/pop4-10": panel pops

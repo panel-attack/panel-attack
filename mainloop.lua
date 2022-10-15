@@ -835,10 +835,10 @@ local function main_select_speed_99(mode)
 
       lastScore = tostring(lastScore)
       record = tostring(record)
-      draw_pixel_font("last score", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition, 0.5, 1.0)
-      draw_pixel_font(lastScore, themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition + 24, 0.5, 1.0)
-      draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition, 0.5, 1.0)
-      draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition + 24, 0.5, 1.0)
+      draw_pixel_font("last score", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition, 0.5, 1.0)
+      draw_pixel_font(lastScore, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition + 24, 0.5, 1.0)
+      draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition, 0.5, 1.0)
+      draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition + 24, 0.5, 1.0)
     end
 
     gameSettingsMenu:draw()
@@ -1875,7 +1875,6 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX, keep
   end
 
   local t = 0
-  local font = love.graphics.getFont()
 
   local x = canvas_width / 2
   local y = canvas_height / 2
@@ -1919,7 +1918,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax, keepMusic, ar
   local timemin = 60 -- the minimum amount of frames the game over screen will be displayed for
 
   local t = 0 -- the amount of frames that have passed since the game over screen was displayed
-  local font = love.graphics.getFont()
+  local font = get_global_font()
   local winnerTime = 60
 
   if SFX_GameOver_Play == 1 then

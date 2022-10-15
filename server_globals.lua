@@ -5,7 +5,8 @@ panel_color_to_number = { ["A"]=1, ["B"]=2, ["C"]=3, ["D"]=4, ["E"]=5, ["F"]=6, 
                           ["1"]=1, ["2"]=2, ["3"]=3, ["4"]=4, ["5"]=5, ["6"]=6, ["7"]=7, ["8"]=8,
                           ["0"]=0}
 leagues = { {league="Newcomer",     min_rating = -1000},
-            {league="Bronze",       min_rating = 1},
+            {league="Copper",       min_rating = 1},
+            {league="Bronze",       min_rating = 1125},
             {league="Silver",       min_rating = 1275},
             {league="Gold",         min_rating = 1425},
             {league="Platinum",     min_rating = 1575},
@@ -28,7 +29,7 @@ RATING_SPREAD_MODIFIER = 400
 ALLOWABLE_RATING_SPREAD_MULITPLIER = .9 --set this to a huge number like 100 if you want everyone to be able to play with anyone, regardless of rating gap
 PLACEMENT_MATCH_K = 50
 NAME_LENGTH_LIMIT = 16
-PLACEMENT_MATCHES_ENABLED = false
+PLACEMENT_MATCHES_ENABLED = true
 COMPRESS_REPLAYS_ENABLED = true
 COMPRESS_SPECTATOR_REPLAYS_ENABLED = false -- Send current replay inputs over the internet in a compressed format to spectators who join.
 TCP_NODELAY_ENABLED = true -- Disables Nagle's Algorithm for TCP. Decreases data packet delivery delay, but increases amount of bandwidth and data used.
