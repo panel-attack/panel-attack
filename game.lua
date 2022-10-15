@@ -216,7 +216,7 @@ function Game:update(dt)
     if GAME_UPDATER_GAME_VERSION then
       send_error_report(errorData)
     end
-    error(err .. "\n\n" .. dump(errorData))
+    error(err .. "\n\n" .. dump(errorData, true))
   end
   if self.server_queue and self.server_queue:size() > 0 then
     logger.trace("Queue Size: " .. self.server_queue:size() .. " Data:" .. self.server_queue:to_short_string())
