@@ -6,6 +6,7 @@ local utf8 = require("utf8")
 local analytics = require("analytics")
 local main_config_input = require("config_inputs")
 local tableUtils = require("tableUtils")
+local Game = require("Game")
 require("replay")
 
 local wait, resume = coroutine.yield, coroutine.resume
@@ -30,56 +31,6 @@ local main_menu_last_index = 1
 local puzzle_menu_last_index = 3
 
 function fmainloop()
-  Localization.init(localization)
-  copy_file("readme_puzzles.txt", "puzzles/README.txt")
-  if love.system.getOS() ~= "OS X" then
-    recursiveRemoveFiles(".", ".DS_Store")
-  end
-  theme_init()
-  -- stages and panels before characters since they are part of their loading!
-  GAME:drawLoadingString(loc("ld_stages"))
-  wait()
-  stages_init()
-  GAME:drawLoadingString(loc("ld_panels"))
-  wait()
-  panels_init()
-  GAME:drawLoadingString(loc("ld_characters"))
-  wait()
-  characters_init()
-  GAME:drawLoadingString(loc("ld_analytics"))
-  wait()
-  analytics.init()
-  apply_config_volume()
-  -- create folders in appdata for those who don't have them already
-  love.filesystem.createDirectory("characters")
-  love.filesystem.createDirectory("panels")
-  love.filesystem.createDirectory("themes")
-  love.filesystem.createDirectory("stages")
-  love.filesystem.createDirectory("training")
-  if #FileUtil.getFilteredDirectoryItems("training") == 0 then
-    recursive_copy("default_data/training", "training")
-  end
-  read_attack_files("training")
-
-  --check for game updates
-  if GAME_UPDATER_CHECK_UPDATE_INGAME then
-    wait_game_update = GAME_UPDATER:async_download_latest_version()
-  end
-
-  -- Run Unit Tests
-  if TESTS_ENABLED then
-    -- Run all unit tests now that we have everything loaded
-    GAME:drawLoadingString("Running Unit Tests")
-    wait()
-    require("PuzzleTests")
-    require("ServerQueueTests")
-    require("StackTests")
-    require("tableUtilsTest")
-    if PERFORMANCE_TESTS_ENABLED then
-      require("tests/performanceTests")
-    end
-  end
-
   local func, arg = main_title, nil
 
   while true do

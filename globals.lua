@@ -20,8 +20,6 @@ GARBAGE_DELAY_LAND_TIME = 60 -- this is the amount of time after garbage leaves 
 GARBAGE_TRANSIT_TIME = 45 -- the amount of time the garbage attack animation plays before getting to the telegraph
 MAX_LAG = 200 + GARBAGE_TELEGRAPH_TIME -- maximum amount of lag before net games abort
 
-gfx_q = Queue()
-
 themes = {} -- initialized in theme.lua
 
 characters = {} -- initialized in character.lua
