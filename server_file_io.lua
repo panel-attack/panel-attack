@@ -133,42 +133,38 @@ function write_leaderboard_file()
 end
 
 function read_leaderboard_file()
-  pcall(
+  local csv_table = {}
+  local status, error = pcall(
     function()
-      local csv_table = csvfile.read("./leaderboard.csv")
-      if csv_table[2] then
-        logger.info("reading leaderboard.csv")
-        for row = 2, #csv_table do
-          csv_table[row][1] = tostring(csv_table[row][1])
-          leaderboard.players[csv_table[row][1]] = {}
-          for col = 1, #csv_table[1] do
-            --Note csv_table[row][1] will be the player's user_id
-            --csv_table[1][col] will be a property name such as "rating"
-            if csv_table[row][col] == "" then
-              csv_table[row][col] = nil
-            end
-            --player with this user_id gets this property equal to the csv_table cell's value
-            if csv_table[1][col] == "user_name" then
-              leaderboard.players[csv_table[row][1]][csv_table[1][col]] = tostring(csv_table[row][col])
-            elseif csv_table[1][col] == "rating" then
-              leaderboard.players[csv_table[row][1]][csv_table[1][col]] = tonumber(csv_table[row][col])
-            elseif csv_table[1][col] == "placement_done" then
-              leaderboard.players[csv_table[row][1]][csv_table[1][col]] = csv_table[row][col] and true and string.lower(csv_table[row][col]) ~= "false"
-            else
-              leaderboard.players[csv_table[row][1]][csv_table[1][col]] = csv_table[row][col]
-            end
-          end
+      csv_table = csvfile.read("./leaderboard.csv")
+    end
+  )
+  if not status then
+    logger.error("Failed to read leaderboard file with error: " .. error)
+  elseif csv_table[2] then
+    logger.debug("loading leaderboard.csv")
+    for row = 2, #csv_table do
+      csv_table[row][1] = tostring(csv_table[row][1])
+      leaderboard.players[csv_table[row][1]] = {}
+      for col = 1, #csv_table[1] do
+        --Note csv_table[row][1] will be the player's user_id
+        --csv_table[1][col] will be a property name such as "rating"
+        if csv_table[row][col] == "" then
+          csv_table[row][col] = nil
         end
-      else
-        logger.info("failed to read any data from leaderboard.csv, checking for a leaderboard.txt")
-        local f = io.open("leaderboard.txt", "r")
-        if f then
-          leaderboard.players = json.decode(io.read("*all"))
-          io.close(f)
+        --player with this user_id gets this property equal to the csv_table cell's value
+        if csv_table[1][col] == "user_name" then
+          leaderboard.players[csv_table[row][1]][csv_table[1][col]] = tostring(csv_table[row][col])
+        elseif csv_table[1][col] == "rating" then
+          leaderboard.players[csv_table[row][1]][csv_table[1][col]] = tonumber(csv_table[row][col])
+        elseif csv_table[1][col] == "placement_done" then
+          leaderboard.players[csv_table[row][1]][csv_table[1][col]] = csv_table[row][col] and true and string.lower(csv_table[row][col]) ~= "false"
+        else
+          leaderboard.players[csv_table[row][1]][csv_table[1][col]] = csv_table[row][col]
         end
       end
     end
-  )
+  end
 end
 
 function read_user_placement_match_file(user_id)
@@ -274,9 +270,11 @@ function read_csprng_seed_file()
       else
         print("csprng_seed.txt could not be read.  Writing a new default (2000) csprng_seed.txt")
         local new_file = io.open("csprng_seed.txt", "w")
-        io.output(new_file)
-        io.write("2000")
-        io.close(new_file)
+        if new_file then
+          io.output(new_file)
+          io.write("2000")
+          io.close(new_file)
+        end
         csprng_seed = "2000"
       end
       if tonumber(csprng_seed) then

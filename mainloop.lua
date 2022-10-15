@@ -405,7 +405,7 @@ local function finalizeAndWriteReplay(extraPath, extraFilename)
     filename = filename .. "-" .. extraFilename
   end
   filename = filename .. ".txt"
-  logger.info("saving replay as " .. path .. sep .. filename)
+  logger.debug("saving replay as " .. path .. sep .. filename)
   write_replay_file(path, filename)
 end
 

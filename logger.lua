@@ -9,7 +9,7 @@ local INFO = 2
 local WARN = 3
 local ERROR = 4
 
-local LOG_LEVEL = WARN
+local LOG_LEVEL = INFO
 
 function logger.trace(msg)
     if LOG_LEVEL <= TRACE then
