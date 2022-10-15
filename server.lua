@@ -1638,6 +1638,7 @@ while true do
           io.stdout:flush()
         end
       )
+      lastFlushTime = now
     end
 
     prev_now = now
