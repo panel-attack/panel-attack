@@ -2,59 +2,61 @@ local consts = require("consts")
 local socket = require("socket")
 local transitionUtils = require("scenes.transitionUtils")
 
---@module scene_manager
-local scene_manager = {
-  active_scene = nil,
-  next_scene = nil,
-  is_transitioning = false
+--@module sceneManager
+local sceneManager = {
+  activeScene = nil,
+  nextScene = nil,
+  isTransitioning = false
 }
 
 local scenes = {}
-local transition_co = nil
-local transition_type = "fade"
+local transitionCo = nil
+local defaultTransition = "none"
+local transitionType = "none"
 local transitions = {
   none = {
-    pre_load_transition = function() end,
-    post_load_transition = function() end
+    preLoadTransition = function() end,
+    postLoadTransition = function() end
   },
   fade = {
-    pre_load_transition = function() transitionUtils.fade(0, 1, .2) end,
-    post_load_transition = function() transitionUtils.fade(1, 0, .2) end
+    preLoadTransition = function() transitionUtils.fade(0, 1, .2) end,
+    postLoadTransition = function() transitionUtils.fade(1, 0, .2) end
   }
 }
 
-function scene_manager:switchScene(scene_name, scene_params)
-  transition_co = coroutine.create(function() self:transitionFn(scene_params) end)
-  self.next_scene = scenes[scene_name]
-  self.is_transitioning = true
+function sceneManager:switchToScene(sceneName, sceneParams, transition)
+  transitionType = transition or defaultTransition
+  transitionCo = coroutine.create(function() self:transitionFn(sceneParams) end)
+  self.nextScene = scenes[sceneName]
+  self.isTransitioning = true
 end
 
-function scene_manager:transitionFn(scene_params)
-  transitions[transition_type].pre_load_transition()
+function sceneManager:transitionFn(sceneParams)
+  transitions[transitionType].preLoadTransition()
   
-  if scene_manager.active_scene then
-    self.active_scene:unload()
+  if self.activeScene then
+    self.activeScene:unload()
   end
   
-  if self.next_scene then
-    self.next_scene:load(scene_params)
-    self.active_scene = self.next_scene
-    GAME.rich_presence:setPresence(nil, self.next_scene.name, true)
+  if self.nextScene then
+    self.nextScene:load(sceneParams)
+    self.activeScene = self.nextScene
+    GAME.rich_presence:setPresence(nil, self.nextScene.name, true)
   else
-    self.active_scene = nil
+    self.activeScene = nil
   end
   
-  transitions[transition_type].post_load_transition()
+  transitions[transitionType].postLoadTransition()
   
-  self.is_transitioning = false
+  self.isTransitioning = false
 end
 
-function scene_manager:transition()
-  coroutine.resume(transition_co)
+function sceneManager:transition()
+  coroutine.resume(transitionCo)
 end
 
-function scene_manager:addScene(scene)
+function sceneManager:addScene(scene)
   scenes[scene.name] = scene
 end
 
-return scene_manager
+return sceneManager

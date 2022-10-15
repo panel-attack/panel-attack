@@ -133,7 +133,7 @@ function Game:postSetup()
   for i, scene in ipairs(scenes) do
     scene:init()
   end
-  sceneManager:switchScene(nil)
+  sceneManager:switchToScene(nil)
 end
 
 local function unitTests()
@@ -198,14 +198,14 @@ function Game:update(dt)
         unitTests()
       end
     end
-  elseif sceneManager.active_scene then
-    sceneManager.active_scene:update(dt)
+  elseif sceneManager.activeScene then
+    sceneManager.activeScene:update(dt)
     -- update transition to use draw priority queue
-    if sceneManager.is_transitioning then
+    if sceneManager.isTransitioning then
       sceneManager:transition()
     end
     status = true
-  elseif sceneManager.is_transitioning then
+  elseif sceneManager.isTransitioning then
     sceneManager:transition()
     status = true
   else
