@@ -1119,12 +1119,12 @@ function load_placement_matches(user_id)
       logger.debug("loaded placement matches from file:")
     else
       loaded_placement_matches.incomplete[user_id] = {}
-      logger.error("error reading placement matches file")
+      logger.debug("no pre-existing placement matches file, starting fresh")
     end
     logger.debug(tostring(loaded_placement_matches.incomplete[user_id]))
     logger.debug(json.encode(loaded_placement_matches.incomplete[user_id]))
   else
-    logger.info("Didn't load placement matches from file. It is already loaded")
+    logger.debug("Didn't load placement matches from file. It is already loaded")
   end
 end
 
@@ -1594,6 +1594,7 @@ logger.info("initialized!")
 -- print("get_tzoffset(get_timezone()) output:"..get_tzoffset(get_timezone()))
 
 local prev_now = time()
+local lastFlushTime = prev_now
 while true do
   server_socket:settimeout(0)
   if TCP_NODELAY_ENABLED then
@@ -1628,6 +1629,12 @@ while true do
         v:send("ELOL")
       end
     end
+    
+    if now - lastFlushTime > 60 then
+      io.flush() 
+      lastFlushTime = now
+    end
+
     prev_now = now
   end
   broadcast_lobby()
