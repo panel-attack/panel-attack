@@ -278,7 +278,7 @@ function json.isValid(str)
   local firstChar = string.sub(content, 1, 1)
   local lastChar = string.sub(content, length, length)
   -- early quit condition for clearly non-matching files
-  if not table.contains({"{", "["}, firstChar) or not table.contains({"}", "]"}, lastChar) then
+  if not tableUtils.contains({"{", "["}, firstChar) or not tableUtils.contains({"}", "]"}, lastChar) then
     return false
   end
 

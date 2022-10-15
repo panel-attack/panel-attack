@@ -113,7 +113,7 @@ function Game:postSetup()
   love.filesystem.createDirectory("stages")
   love.filesystem.createDirectory("training")
   
-  if #love.filesystem.getDirectoryItems("training") == 0 then
+  if #FileUtil.getFilteredDirectoryItems("training") == 0 then
     recursive_copy("default_data/training", "training")
   end
   read_attack_files("training")
@@ -142,6 +142,7 @@ local function unitTests()
   require("ServerQueueTests")
   require("StackTests")
   require("tableUtilsTest")
+  require("utilTests")
   if PERFORMANCE_TESTS_ENABLED then
     require("tests/performanceTests")
   end
