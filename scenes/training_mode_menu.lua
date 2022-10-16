@@ -11,7 +11,7 @@ local Slider = require("ui.Slider")
 local Label = require("ui.Label")
 local Stepper = require("ui.Stepper")
 local Menu = require("ui.Menu")
-local scene_manager = require("scenes.scene_manager")
+local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local save = require("save")
 
@@ -65,12 +65,12 @@ local function startGame()
   else
     GAME.battleRoom.trainingModeSettings = createBasicTrainingMode("", width_slider.value, height_slider.value)
   end
-  scene_manager:switchScene("training_mode_character_select")
+  sceneManager:switchToScene("training_mode_character_select")
 end
 
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  scene_manager:switchScene("main_menu")
+  sceneManager:switchToScene("main_menu")
 end
 
 function training_mode_menu:init()
@@ -119,7 +119,7 @@ function training_mode_menu:init()
   y = y + 100
   self.menu = Menu({menuItems = menu_options, x = x, y = y})
   self.menu:setVisibility(false)
-  scene_manager:addScene(training_mode_menu)
+  sceneManager:addScene(training_mode_menu)
 end
 
 function training_mode_menu:load()

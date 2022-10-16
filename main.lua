@@ -12,6 +12,7 @@ require("developer")
 require("class")
 socket = require("socket")
 json = require("dkjson")
+-- move to load once global dependencies have been resolved
 local Game = require("Game")
 GAME = Game()
 --config = GAME.config
@@ -21,20 +22,29 @@ localization = GAME.localization
 replay = GAME.replay
 main_menu_screen_pos = GAME.main_menu_screen_pos
 ClickMenu = require("ClickMenu")
+
 require("match")
 require("BattleRoom")
 require("util")
 require("FileUtil")
+
 require("globals")
 require("character") -- after globals!
 require("stage") -- after globals!
+
+require("localization")
+require("queue")
 require("save")
+-- temp hack to keep modules dependent on the global gfx_q working, please use GAME:gfx_q instead
+gfx_q = GAME.gfx_q
+
+
 require("engine/GarbageQueue")
 require("engine/telegraph")
 require("engine")
 require("AttackEngine")
+
 require("graphics")
-GAME.input = require("input")
 require("replay")
 require("network")
 require("Puzzle")
@@ -117,7 +127,6 @@ function love.load(args)
   if args then
     game_updater = args[#args]
   end
-  
   if PROFILING_ENABLED then
     GAME.profiler:start()
   end
@@ -151,7 +160,6 @@ function love.update(dt)
   buttonManager.update()
   inputFieldManager.update()
 
-  GAME.rich_presence:runCallbacks()
   GAME:update(dt)
 end
 

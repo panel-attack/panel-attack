@@ -8,7 +8,7 @@ local main_config_input = require("config_inputs")
 local ServerQueue = require("ServerQueue")
 local Button = require("ui.Button")
 local Menu = require("ui.Menu")
-local scene_manager = require("scenes.scene_manager")
+local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local ClickMenu = require("ClickMenu")
 
@@ -76,7 +76,7 @@ end
 local function exitLobby()
   exit = true
   commonSelectLobby()
-  scene_manager:switchScene("main_menu")
+  sceneManager:switchToScene("main_menu")
   json_send({logout = true})
   --ret = {main_select_mode}
 end
@@ -105,14 +105,14 @@ local function playerRatingString(playerName)
 end
 
 function lobby:init()
-  scene_manager:addScene(lobby)
+  sceneManager:addScene(lobby)
 end
 
 function lobby:load(sceneParams)
   exit = false
   
   if not config.name then
-    scene_manager:switchScene("set_name_menu", {prevScene = "lobby"})
+    sceneManager:switchToScene("set_name_menu", {prevScene = "lobby"})
   end
   
   --GAME.match.P1 = nil
@@ -121,7 +121,7 @@ function lobby:load(sceneParams)
   gprint(loc("lb_set_connect"), unpack(themes[config.theme].main_menu_screen_pos))
 
   if not network_init(sceneParams.ip, sceneParams.network_port) then
-    scene_manager:switchScene("main_menu")
+    sceneManager:switchToScene("main_menu")
     return
     --return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
   end
@@ -130,7 +130,7 @@ function lobby:load(sceneParams)
   while not connection_is_ready() do
     gprint(loc("lb_connecting"), unpack(themes[config.theme].main_menu_screen_pos))
     if not do_messages() then
-      scene_manager:switchScene("main_menu")
+      sceneManager:switchToScene("main_menu")
       return
       --return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
     end
@@ -203,7 +203,7 @@ function lobby:update()
         --TODO: create a menu here to let the user choose "continue unranked" or "get a new user_id"
         --login_status_message = "Login for ranked matches failed.\n"..msg.reason.."\n\nYou may continue unranked,\nor delete your invalid user_id file to have a new one assigned."
         login_status_message_duration = 10
-        scene_manager:switchScene("main_menu")
+        sceneManager:switchToScene("main_menu")
         return
         --return main_dumb_transition, {main_select_mode, loc("lb_error_msg") .. "\n\n" .. json.encode(msg), 60, 600}
       end
@@ -218,11 +218,11 @@ function lobby:update()
     updated = true
     items = {}
     if msg.choose_another_name and msg.choose_another_name.used_names then
-      scene_manager:switchScene("main_menu")
+      sceneManager:switchToScene("main_menu")
       return
       --return main_dumb_transition, {main_select_mode, loc("lb_used_name"), 60, 600}
     elseif msg.choose_another_name and msg.choose_another_name.reason then
-      scene_manager:switchScene("main_menu")
+      sceneManager:switchToScene("main_menu")
       return
       --return main_dumb_transition, {main_select_mode, "Error: " .. msg.choose_another_name.reason, 60, 300}
     end
@@ -244,7 +244,7 @@ function lobby:update()
       lobby_menu:remove_self()
       
       -- UPDATE THIS!!!
-      scene_manager:switchScene("vs_self_menu", {message = msg})
+      sceneManager:switchToScene("vs_self_menu", {message = msg})
       return
       --return select_screen.main, {select_screen, "2p_net_vs", msg}
     end
@@ -414,7 +414,7 @@ function lobby:update()
   --  return unpack(ret)
   --end
   if not do_messages() then
-    scene_manager:switchScene("main_menu")
+    sceneManager:switchToScene("main_menu")
     return
     --return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
   end

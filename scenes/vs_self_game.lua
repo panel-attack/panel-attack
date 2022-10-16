@@ -1,5 +1,5 @@
 local GameBase = require("scenes.GameBase")
-local scene_manager = require("scenes.scene_manager")
+local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 
 --@module vs_self_game
@@ -13,7 +13,7 @@ function vs_self_game:customLoad(scene_params)
 end
 
 function vs_self_game:abortGame()
-  scene_manager:switchScene("vs_self_menu")
+  sceneManager:switchToScene("vs_self_menu")
 end
 
 function vs_self_game:customGameOverSetup()

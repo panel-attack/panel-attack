@@ -10,7 +10,7 @@ local Menu = require("ui.Menu")
 local ButtonGroup = require("ui.ButtonGroup")
 local LevelSlider = require("ui.LevelSlider")
 local Label = require("ui.Label")
-local scene_manager = require("scenes.scene_manager")
+local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local util = require("util")
 local save = require("save")
@@ -78,7 +78,7 @@ local function replay_browser_update(new_path)
     end
     current_path = new_path
   end
-  path_contents = get_directory_contents(base_path .. current_path)
+  path_contents = FileUtil.getFilteredDirectoryItems(base_path .. current_path)
 end
 
 local function replay_browser_go_up()
@@ -138,7 +138,7 @@ local function replay_browser_select()
 end
 
 function replay_menu:init()
-  scene_manager:addScene(replay_menu)
+  sceneManager:addScene(self)
 end
 
 function replay_menu:load()
@@ -161,7 +161,7 @@ function replay_menu:update()
     replay_browser_menu()
 
     if input.allKeys.isDown["escape"] then
-      scene_manager:switchScene("main_menu")
+      sceneManager:switchToScene("main_menu")
     end
     if input.isDown["Swap1"] then
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
@@ -256,7 +256,7 @@ function replay_menu:update()
     end
     if input.isDown["Swap1"] and replay.type ~= "UNKNOWN" and replay.engineVersion == VERSION and not replay.puzzle then
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
-      scene_manager:switchScene("replay_game")
+      sceneManager:switchToScene("replay_game")
     end
   end
 end

@@ -3,7 +3,7 @@ local Button = require("ui.Button")
 local InputField = require("ui.InputField")
 local Label = require("ui.Label")
 local LevelSlider = require("ui.LevelSlider")
-local scene_manager = require("scenes.scene_manager")
+local sceneManager = require("scenes.sceneManager")
 local Menu = require("ui.Menu")
 local ButtonGroup = require("ui.ButtonGroup")
 local input = require("inputManager")
@@ -24,7 +24,7 @@ local name_field = InputField({
 })
 
 function set_name_menu:init()
-  scene_manager:addScene(self)
+  sceneManager:addScene(self)
 end
 
 function set_name_menu:load(sceneParams)
@@ -40,11 +40,11 @@ function set_name_menu:update()
     play_optional_sfx(themes[config.theme].sounds.menu_validate)
     config.name = name_field.value
     save.write_conf_file()
-    scene_manager:switchScene(self.prevScene)
+    sceneManager:switchToScene(self.prevScene)
   end
   if input.allKeys.isDown["escape"] then
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-    scene_manager:switchScene("main_menu")
+    sceneManager:switchToScene("main_menu")
   end
   
   name_field:draw()

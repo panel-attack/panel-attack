@@ -8,7 +8,7 @@ local main_config_input = require("config_inputs")
 local ServerQueue = require("ServerQueue")
 local Button = require("ui.Button")
 local Menu = require("ui.Menu")
-local scene_manager = require("scenes.scene_manager")
+local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local tableUtils = require("tableUtils")
 require("mainloop")
@@ -25,12 +25,12 @@ local function titleDrawPressStart(percent)
 end
 
 function titleScreen:init()
-  scene_manager:addScene(titleScreen)
+  sceneManager:addScene(titleScreen)
 end
 
 function titleScreen:load()
   if not themes[config.theme].images.bg_title then
-    return scene_manager:switchScene("main_menu")
+    return sceneManager:switchToScene("main_menu")
   end
 
   GAME.backgroundImage = themes[config.theme].images.bg_title
@@ -41,7 +41,7 @@ function titleScreen:update()
   local key_pressed = tableUtils.trueForAny(input.isDown, function(key) return key end)
   if love.mouse.isDown(1, 2, 3) or #love.touch.getTouches() > 0 or key_pressed then
     play_optional_sfx(themes[config.theme].sounds.menu_validate)
-    scene_manager:switchScene("main_menu")
+    sceneManager:switchToScene("main_menu")
   end
 end
 

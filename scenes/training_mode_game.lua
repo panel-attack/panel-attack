@@ -1,5 +1,5 @@
 local GameBase = require("scenes.GameBase")
-local scene_manager = require("scenes.scene_manager")
+local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 
 --@module training_mode_game
@@ -36,7 +36,7 @@ function training_mode_game:customLoad(scene_params)
 end
 
 function training_mode_game:abortGame()
-  scene_manager:switchScene("training_mode_menu")
+  sceneManager:switchToScene("training_mode_menu")
 end
 
 function training_mode_game:customGameOverSetup()

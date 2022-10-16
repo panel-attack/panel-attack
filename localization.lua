@@ -14,8 +14,6 @@ local Localization = class(
   end
 )
 
-localization = Localization()
-
 function Localization:get_list_codes()
   return self.codes
 end

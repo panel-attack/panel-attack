@@ -3,7 +3,7 @@ local Button = require("ui.Button")
 local Slider = require("ui.Slider")
 local Label = require("ui.Label")
 local LevelSlider = require("ui.LevelSlider")
-local scene_manager = require("scenes.scene_manager")
+local sceneManager = require("scenes.sceneManager")
 local Menu = require("ui.Menu")
 local ButtonGroup = require("ui.ButtonGroup")
 local Stepper = require("ui.Stepper")
@@ -50,7 +50,7 @@ local font = love.graphics.getFont()
 
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  scene_manager:switchScene("main_menu")
+  sceneManager:switchToScene("main_menu")
 end
 
 local function updateMenuLanguage()
@@ -177,7 +177,7 @@ local function drawInfo(text)
 end
 
 function options_menu:init()
-  scene_manager:addScene(self)
+  sceneManager:addScene(self)
   about_text["themes"] = save.read_txt_file("readme_themes.txt")
   about_text["characters"] = save.read_txt_file("readme_characters.txt")
   about_text["stages"] = save.read_txt_file("readme_stages.txt")
@@ -317,7 +317,7 @@ function options_menu:init()
     {Label({width = label_width, label = "op_vol_music"}), createConfigSlider("music_volume", 0, 100, function() apply_config_volume() end)},
     {Label({width = label_width, label = "op_use_music_from"}), music_frequency_stepper},
     {Label({width = label_width, label = "op_music_delay"}), createToggleButtonGroup("danger_music_changeback_delay")},
-    {Button({width = label_width, label = "mm_music_test", onClick = function() scene_manager:switchScene("sound_test") end})},
+    {Button({width = label_width, label = "mm_music_test", onClick = function() sceneManager:switchToScene("sound_test") end})},
     {Button({width = label_width, label = "back", onClick = function() switchMenu("base_menu") end})},
   }
   

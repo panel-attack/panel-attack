@@ -1,5 +1,5 @@
 local GameBase = require("scenes.GameBase")
-local scene_manager = require("scenes.scene_manager")
+local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 
 --@module puzzle_game
@@ -22,7 +22,7 @@ function puzzle_game:customLoad(scene_params)
   else
     validationError = "Validation error in puzzle set " .. self.puzzleSet.setName .. "\n"
                       .. validationError
-    scene_manager:switchScene("puzzle_menu")
+    sceneManager:switchToScene("puzzle_menu")
   end
 end
 
@@ -30,12 +30,12 @@ function puzzle_game:customRun()
   -- reset level
   if input.isDown["TauntUp"] or input.isDown["TauntDown"] then 
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-    scene_manager:switchScene("puzzle_game", {puzzle_set = self.puzzle_set, puzzle_index = self.puzzle_index})
+    sceneManager:switchToScene("puzzle_game", {puzzle_set = self.puzzle_set, puzzle_index = self.puzzle_index})
   end
 end
 
 function puzzle_game:abortGame()
-  scene_manager:switchScene("puzzle_menu")
+  sceneManager:switchToScene("puzzle_menu")
 end
 
 function puzzle_game:customGameOverSetup()

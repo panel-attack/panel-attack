@@ -11,7 +11,7 @@ local Menu = require("ui.Menu")
 local ButtonGroup = require("ui.ButtonGroup")
 local LevelSlider = require("ui.LevelSlider")
 local Label = require("ui.Label")
-local scene_manager = require("scenes.scene_manager")
+local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local util = require("util")
 local save = require("save")
@@ -36,7 +36,7 @@ function puzzle_menu:startGame(puzzle_set)
   end
   
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  scene_manager:switchScene("puzzle_game", {puzzle_set = puzzle_set, puzzle_index = 1})
+  sceneManager:switchToScene("puzzle_game", {puzzle_set = puzzle_set, puzzle_index = 1})
   
   if config.puzzle_level ~= self.level_slider.value or config.puzzle_randomColors ~= self.random_colors_buttons.value then
     config.puzzle_level = self.level_slider.value
@@ -48,11 +48,11 @@ end
 
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  scene_manager:switchScene("main_menu")
+  sceneManager:switchToScene("main_menu")
 end
 
 function puzzle_menu:init()
-  scene_manager:addScene(puzzle_menu)
+  sceneManager:addScene(puzzle_menu)
 
   local tickLength = 16
   self.level_slider = LevelSlider({

@@ -1,7 +1,7 @@
 local Scene = require("scenes.Scene")
 local logger = require("logger")
 local Button = require("ui.Button")
-local scene_manager = require("scenes.scene_manager")
+local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local LevelSlider = require("ui.LevelSlider")
 local tableUtils = require("tableUtils")
@@ -119,7 +119,7 @@ function CharacterSelect:onReady()
   GAME.match = Match("vs", GAME.battleRoom)
   GAME.match.P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=self.cursor_data[1].state.panels_dir, level=self.cursor_data[1].state.level, character=self.cursor_data[1].state.character}
   
-  scene_manager:switchScene(self.next_scene)
+  sceneManager:switchToScene(self.next_scene)
 end
 
 -- Sets the state object to a new stage based on the increment
@@ -197,7 +197,7 @@ function CharacterSelect:showCharacterPage(page)
 end
 
 function CharacterSelect:init()
-  scene_manager:addScene(self)
+  sceneManager:addScene(self)
   
   local outline_color = {234/255, 234/255, 234/255, 1}
   self.num_character_pages = math.ceil(#characters_ids_for_current_theme / MAX_CHARACTERS_PER_PAGE)
@@ -267,7 +267,7 @@ function CharacterSelect:init()
         self:moveCursor(button_info.leave.x, button_info.leave.y)
         play_optional_sfx(themes[config.theme].sounds.menu_validate)
         -- branch
-        scene_manager:switchScene(self.previous_scene)
+        sceneManager:switchToScene(self.previous_scene)
       end
     })
   
@@ -842,7 +842,7 @@ function CharacterSelect:update()
   
   if input.isDown["Swap2"] then
     if self.cursor_pos.x == button_info.leave.x and self.cursor_pos.y == button_info.leave.y then
-      scene_manager:switchScene("main_menu")
+      sceneManager:switchToScene("main_menu")
     else
       self:moveCursor(button_info.leave.x, button_info.leave.y)
     end

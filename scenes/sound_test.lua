@@ -1,5 +1,5 @@
 local Scene = require("scenes.Scene")
-local scene_manager = require("scenes.scene_manager")
+local sceneManager = require("scenes.sceneManager")
 local Stepper = require("ui.Stepper")
 local Label = require("ui.Label")
 local Button = require("ui.Button")
@@ -85,7 +85,7 @@ local function createSfxMenuInfo(characterId)
 end
 
 function sound_test:init()
-  scene_manager:addScene(self)
+  sceneManager:addScene(self)
   
   local character_labels = {}
   local character_ids = {}
@@ -205,7 +205,7 @@ function sound_test:init()
     {Label({width = menu_label_width, label = "op_music_type"}), music_type_button_group},
     {Label({width = menu_label_width, label = "Background", translate = false}), play_button_group},
     {Button({width = menu_label_width, label = "op_music_sfx", onClick = function() love.audio.play(love.audio.newSource(characters[character_stepper.value].path.."/"..sfxStepper.value, "static")) end}), sfxStepper},
-    {Button({width = menu_label_width, label = "back", onClick = function() scene_manager:switchScene("options_menu") end})},
+    {Button({width = menu_label_width, label = "back", onClick = function() sceneManager:switchToScene("options_menu") end})},
   }
   
   local x, y = unpack(main_menu_screen_pos)

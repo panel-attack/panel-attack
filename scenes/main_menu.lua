@@ -8,7 +8,7 @@ local main_config_input = require("config_inputs")
 local ServerQueue = require("ServerQueue")
 local Button = require("ui.Button")
 local Menu = require("ui.Menu")
-local scene_manager = require("scenes.scene_manager")
+local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 require("mainloop")
 
@@ -20,23 +20,23 @@ local function genOnClickFn(myFunction, args)
     func = myFunction
     arg = args
     play_optional_sfx(themes[config.theme].sounds.menu_validate)
-    scene_manager:switchScene(nil)
+    sceneManager:switchToScene(nil)
   end
   return onClick
 end
 
-local switchScene = function(scene)
+local switchToScene = function(scene)
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  scene_manager:switchScene(scene)
+  sceneManager:switchToScene(scene)
 end
 
 local menu_buttons = {
-  Button({label = "mm_1_endless", onClick = function() switchScene("endless_menu") end}),
-  Button({label = "mm_1_puzzle", onClick = function() switchScene("puzzle_menu") end}),
-  Button({label = "mm_1_time", onClick = function() switchScene("time_attack_menu") end}),
-  Button({label = "mm_1_vs", onClick = function() switchScene("vs_self_menu") end}),
-  Button({label = "mm_1_training", onClick = function() switchScene("training_mode_menu") end}),
-  Button({label = "mm_2_vs_online", extra_labels = {""}, onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) scene_manager:switchScene("lobby", {ip = "18.188.43.50"}) end}),
+  Button({label = "mm_1_endless", onClick = function() switchToScene("endless_menu") end}),
+  Button({label = "mm_1_puzzle", onClick = function() switchToScene("puzzle_menu") end}),
+  Button({label = "mm_1_time", onClick = function() switchToScene("time_attack_menu") end}),
+  Button({label = "mm_1_vs", onClick = function() switchToScene("vs_self_menu") end}),
+  Button({label = "mm_1_training", onClick = function() switchToScene("training_mode_menu") end}),
+  Button({label = "mm_2_vs_online", extra_labels = {""}, onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) sceneManager:switchToScene("lobby", {ip = "18.188.43.50"}) end}),
   --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
   --Button({label = "mm_2_vs_online", extra_labels = {"\nTelegraph Server"}, onClick = genOnClickFn(main_net_vs_setup, {"betaserver.panelattack.com", 59569})}),
   --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
@@ -47,16 +47,16 @@ local menu_buttons = {
   --{loc("mm_2_vs_online", "(development-use only)"), main_net_vs_setup, {"localhost"}},
   --{loc("mm_2_vs_online", "LittleEndu's server"), main_net_vs_setup, {"51.15.207.223"}},
   Button({label = "mm_2_vs_local", onClick = genOnClickFn(main_local_vs_setup)}),
-  Button({label = "mm_replay_browser", onClick = function() switchScene("replay_menu") end}),
-  Button({label = "mm_configure", onClick = function() switchScene("input_config_menu") end}),
-  Button({label = "mm_set_name", onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) scene_manager:switchScene("set_name_menu", {prevScene = "main_menu"}) end}),
-  Button({label = "mm_options", onClick = function() switchScene("options_menu") end}),
+  Button({label = "mm_replay_browser", onClick = function() switchToScene("replay_menu") end}),
+  Button({label = "mm_configure", onClick = function() switchToScene("input_config_menu") end}),
+  Button({label = "mm_set_name", onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) sceneManager:switchToScene("set_name_menu", {prevScene = "main_menu"}) end}),
+  Button({label = "mm_options", onClick = function() switchToScene("options_menu") end}),
   Button({label = "mm_fullscreen", extra_labels = {"\n(LAlt+Enter)"}, onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) fullscreen() end}),
   Button({label = "mm_quit", onClick = love.event.quit})
 }
 
 function main_menu:init()
-  scene_manager:addScene(main_menu)
+  sceneManager:addScene(main_menu)
   local x, y = unpack(main_menu_screen_pos)
   self.menu = Menu({
       menuItems =  {

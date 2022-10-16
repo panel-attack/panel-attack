@@ -460,14 +460,33 @@ function Stack.rollbackToFrame(self, frame)
   end
 end
 
+function Stack:shouldSaveRollback()
+  if not GAME.match then
+    return false
+  end
+
+  if GAME.match.isFromReplay then
+    return true
+  end
+
+  -- if we don't have a garbage target, its is assumed we aren't being attacked either, which means we don't need to rollback
+  if not self.garbage_target then
+    return false
+  -- If we are behind the time that the opponent's new attacks would land, then we don't need to rollback
+  -- don't save the rollback info for performance reasons
+  -- this also includes local play and single player, since the clocks are <= 1 difference
+  elseif self.garbage_target.CLOCK + GARBAGE_DELAY_LAND_TIME > self.CLOCK then
+    return false
+  end
+
+  return true
+end
+
 -- Saves state in backups in case its needed for rollback
 -- NOTE: the CLOCK time is the save state for simulating right BEFORE that clock time is simulated
 function Stack.saveForRollback(self)
 
-  -- If we are behind the time that the opponent's new attacks would land, then we don't need to rollback
-  -- don't save the rollback info for performance reasons
-  -- TODO still save for replays so we can rewind
-  if self.garbage_target and self.garbage_target.CLOCK + GARBAGE_DELAY_LAND_TIME > self.CLOCK then
+  if self:shouldSaveRollback() == false then
     return
   end
 
@@ -675,7 +694,7 @@ function Stack.set_puzzle_state(self, puzzle)
 
   self.puzzle = puzzle
   self.panels = self:puzzleStringToPanels(puzzleString)
-  self.do_countdown = puzzle.do_countdown or false
+  self.do_countdown = puzzle.doCountdown or false
   self.puzzle.remaining_moves = puzzle.moves
 
   -- transform any cleared garbage into colorless garbage panels
@@ -1898,13 +1917,10 @@ function Stack.simulate(self)
       if SFX_Fanfare_Play == 0 then
         --do nothing
       elseif SFX_Fanfare_Play >= 6 then
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         themes[config.theme].sounds.fanfare3:play()
       elseif SFX_Fanfare_Play >= 5 then
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         themes[config.theme].sounds.fanfare2:play()
       elseif SFX_Fanfare_Play >= 4 then
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         themes[config.theme].sounds.fanfare1:play()
       end
       SFX_Fanfare_Play = 0
@@ -1933,7 +1949,7 @@ function Stack.simulate(self)
         local popLevel = min(max(self.chain_counter, 1), 4)
         local popIndex = 1
         if SFX_Garbage_Pop_Play then
-          popIndex = SFX_Garbage_Pop_Play
+          popIndex = min(SFX_Garbage_Pop_Play + self.poppedPanelIndex, 10)
         else
           popIndex = min(self.poppedPanelIndex, 10)
         end

@@ -10,6 +10,7 @@ local LevelSlider = class(
     self.max = #themes[config.theme].images.IMG_levels
     -- pixels per value change
     self.tickLength = 11
+    self.value = 5
   end,
   Slider)
 

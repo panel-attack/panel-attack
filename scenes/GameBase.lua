@@ -11,7 +11,7 @@ local Menu = require("ui.Menu")
 local ButtonGroup = require("ui.ButtonGroup")
 local LevelSlider = require("ui.LevelSlider")
 local Label = require("ui.Label")
-local scene_manager = require("scenes.scene_manager")
+local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local util = require("util")
 local save = require("save")
@@ -44,7 +44,7 @@ function GameBase:customGameOverSetup() end
 -- end abstract functions
 
 function GameBase:init()
-  scene_manager:addScene(self)
+  sceneManager:addScene(self)
 end
 
 function GameBase:finalizeAndWriteReplay(extraPath, extraFilename)
@@ -258,7 +258,7 @@ function GameBase:runGameOver()
       stop_the_music()
     end
     SFX_GameOver_Play = 0
-    scene_manager:switchScene(self.next_scene, self.next_scene_params)
+    sceneManager:switchToScene(self.next_scene, self.next_scene_params)
   end
   t = t + 1
   

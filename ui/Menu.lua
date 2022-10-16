@@ -10,7 +10,7 @@ local UIElement = require("ui.UIElement")
 local Button = require("ui.Button")
 local Slider = require("ui.Slider")
 local Label = require("ui.Label")
-local scene_manager = require("scenes.scene_manager")
+local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local consts = require("consts")
 

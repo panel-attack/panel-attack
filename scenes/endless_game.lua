@@ -1,5 +1,5 @@
 local GameBase = require("scenes.GameBase")
-local scene_manager = require("scenes.scene_manager")
+local sceneManager = require("scenes.sceneManager")
 
 --@module endless_game
 local endless_game = GameBase("endless_game", {})
@@ -15,7 +15,7 @@ function endless_game:processGameResults(gameResult)
 end
 
 function endless_game:abortGame()
-  scene_manager:switchScene("endless_menu")
+  sceneManager:switchToScene("endless_menu")
 end
 
 function endless_game:customGameOverSetup()

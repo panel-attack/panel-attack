@@ -1,6 +1,3 @@
--- The main game object for tracking everything in Panel Attack.
--- Not to be confused with "Match" which is the current battle / instance of the game.
-
 local save = require("save")
 local consts = require("consts")
 local GraphicsUtil = require("graphics_util")
@@ -11,10 +8,19 @@ local logger = require("logger")
 local sound = require("sound")
 local Localization = require("Localization")
 local analytics = require("analytics")
-local scene_manager = require("scenes.scene_manager")
+local sceneManager = require("scenes.sceneManager")
 local scenes = nil
 
+-- Provides a scale that is on .5 boundary to make sure it renders well.
+-- Useful for creating new canvas with a solid DPI
+local function newCanvasSnappedScale(self)
+  local result = math.max(1, math.floor(self.canvasXScale*2)/2)
+  return result
+end
+
 --- @module Game
+-- The main game object for tracking everything in Panel Attack.
+-- Not to be confused with "Match" which is the current battle / instance of the game.
 local Game = class(
   function(self, game_updater)
     self.scores = require("scores")
@@ -28,7 +34,6 @@ local Game = class(
     self.puzzleSets = {} -- all the puzzles loaded into the game
     self.gameIsPaused = false -- game can be paused while playing on local
     self.renderDuringPause = false -- if the game can render when you are paused
-    self.global_canvas = love.graphics.newCanvas(consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT)
     self.gfx_q = Queue()
     self.game_updater = game_updater
     self.server_queue = ServerQueue()
@@ -43,63 +48,71 @@ local Game = class(
     self.canvasY = 0
     self.canvasXScale = 1
     self.canvasYScale = 1
+    
+    -- depends on canvasXScale
+    self.global_canvas = love.graphics.newCanvas(consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT, {dpiscale=newCanvasSnappedScale(self)})
+    
     self.availableScales = {1, 1.5, 2, 2.5, 3}
     self.showGameScale = false
     self.needsAssetReload = false
     self.previousWindowWidth = 0
     self.previousWindowHeight = 0
-    
+
     -- private members
-    self._pointer_hidden = false
-    self._last_x = 0
-    self._last_y = 0
-    self._input_delta = 0.0
-    self._mainloop = nil
+    self.pointer_hidden = false
+    self.last_x = 0
+    self.last_y = 0
+    self.input_delta = 0.0
+    self.mainloop = nil
     local major, minor, revision, codename = love.getVersion()
-    self._loveVersionStringValue = string.format("%d.%d.%d", major, minor, revision)
+    self.loveVersionStringValue = string.format("%d.%d.%d", major, minor, revision)
+
     -- coroutines
-    self._setup = coroutine.create(function() self:_setup_co() end)
+    self.setup = coroutine.create(function() self:setupCo() end)
   end
 )
 
-function Game:_setup_co()
+Game.newCanvasSnappedScale = newCanvasSnappedScale
+
+function Game:load(game_updater)
+  -- move to constructor
+  self.game_updater = game_updater
+  local user_input_conf = save.read_key_file()
+  if user_input_conf then
+    self.input.inputConfigurations = user_input_conf
+  end
+end
+
+function Game:setupCo()
   -- loading various assets into the game
-  love.window.setPosition(config.windowX, config.windowY, config.display)
-  love.window.setFullscreen(config.fullscreen)
-  love.window.setVSync(config.vsync and 1 or 0)
-  
-  GraphicsUtil.gprint("Loading localization...", unpack(self.main_menu_screen_pos))
+  self:drawLoadingString("Loading localization...")
   coroutine.yield()
   self.localization:init2()
-  
-  GraphicsUtil.gprint(loc("ld_puzzles"), unpack(self.main_menu_screen_pos))
-  coroutine.yield()
   save.copy_file("readme_puzzles.txt", "puzzles/README.txt")
   
-  GraphicsUtil.gprint(loc("ld_replay"), unpack(self.main_menu_screen_pos))
-  coroutine.yield()
-  self.replay = save.read_replay_file()
-  
-  GraphicsUtil.gprint(loc("ld_theme"), unpack(self.main_menu_screen_pos))
+  self:drawLoadingString(loc("ld_theme"))
   coroutine.yield()
   theme_init()
   
   -- stages and panels before characters since they are part of their loading!
-  GraphicsUtil.gprint(loc("ld_stages"), unpack(self.main_menu_screen_pos))
+  self:drawLoadingString(loc("ld_stages"))
   coroutine.yield()
   stages_init()
   
-  GraphicsUtil.gprint(loc("ld_panels"), unpack(self.main_menu_screen_pos))
+  self:drawLoadingString(loc("ld_panels"))
   coroutine.yield()
   panels_init()
   
-  GraphicsUtil.gprint(loc("ld_characters"), unpack(self.main_menu_screen_pos))
+  self:drawLoadingString(loc("ld_characters"))
   coroutine.yield()
   characters_init()
   
-  GraphicsUtil.gprint(loc("ld_analytics"), unpack(self.main_menu_screen_pos))
+  self:drawLoadingString(loc("ld_analytics"))
   coroutine.yield()
   analytics.init()
+end
+
+function Game:postSetup()
   apply_config_volume()
   -- create folders in appdata for those who don't have them already
   love.filesystem.createDirectory("characters")
@@ -108,7 +121,7 @@ function Game:_setup_co()
   love.filesystem.createDirectory("stages")
   love.filesystem.createDirectory("training")
   
-  if #love.filesystem.getDirectoryItems("training") == 0 then
+  if #FileUtil.getFilteredDirectoryItems("training") == 0 then
     recursive_copy("default_data/training", "training")
   end
   read_attack_files("training")
@@ -122,7 +135,7 @@ function Game:_setup_co()
     wait_game_update = self.game_updater:async_download_latest_version()
   end
   
-  -- move to top
+  -- must be here until globally initiallized structures get resolved into local requires
   scenes = {
     require("scenes.title_screen"),
     require("scenes.main_menu"),
@@ -148,38 +161,41 @@ function Game:_setup_co()
   for i, scene in ipairs(scenes) do
     scene:init()
   end
-  scene_manager:switchScene("titleScreen")
+  --sceneManager:switchToScene("titleScreen")
+  sceneManager:switchToScene("main_menu")
 end
 
-function Game:load(game_updater)
-  -- move to constructor
-  self.game_updater = game_updater
-  local user_input_conf = save.read_key_file()
-  if user_input_conf then
-    self.input.inputConfigurations = user_input_conf
+local function unitTests()
+  print("Running Unit Tests...")
+  require("PuzzleTests")
+  require("ServerQueueTests")
+  require("StackTests")
+  require("tableUtilsTest")
+  require("utilTests")
+  if PERFORMANCE_TESTS_ENABLED then
+    require("tests/performanceTests")
   end
+  print("Done!")
 end
-
-
 
 -- Called every few fractions of a second to update the game
 -- dt is the amount of time in seconds that has passed.
 function Game:update(dt)
-  if love.mouse.getX() == self._last_x and love.mouse.getY() == self._last_y then
-    if not self._pointer_hidden then
-      if self._input_delta > consts.MOUSE_POINTER_TIMEOUT then
-        self._pointer_hidden = true
+  if love.mouse.getX() == self.last_x and love.mouse.getY() == self.last_y then
+    if not self.pointer_hidden then
+      if self.input_delta > consts.MOUSE_POINTER_TIMEOUT then
+        self.pointer_hidden = true
         love.mouse.setVisible(false)
       else
-        self._input_delta = self._input_delta + dt
+        self.input_delta = self.input_delta + dt
       end
     end
   else
-    self._last_x = love.mouse.getX()
-    self._last_y = love.mouse.getY()
-    self._input_delta = 0.0
-    if self._pointer_hidden then
-      self._pointer_hidden = false
+    self.last_x = love.mouse.getX()
+    self.last_y = love.mouse.getY()
+    self.input_delta = 0.0
+    if self.pointer_hidden then
+      self.pointer_hidden = false
       love.mouse.setVisible(true)
     end
   end
@@ -191,32 +207,41 @@ function Game:update(dt)
   end
   
   local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
-  if GAME.previousWindowWidth ~= newPixelWidth then
-    GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
-    if GAME.match then
-      GAME.needsAssetReload = true
+  if self.previousWindowWidth ~= newPixelWidth or self.previousWindowHeight ~= newPixelHeight then
+    self:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
+    if self.match then
+      self.needsAssetReload = true
     else
-      GAME:refreshCanvasAndImagesForNewScale()
+      self:refreshCanvasAndImagesForNewScale()
     end
-    GAME.showGameScale = true
+    self.showGameScale = true
   end
   
   local status, err = nil
-  if coroutine.status(self._setup) ~= "dead" then
-    status, err = coroutine.resume(self._setup)
-  elseif scene_manager.active_scene then
-    scene_manager.active_scene:update(dt)
+  if coroutine.status(self.setup) ~= "dead" then
+    status, err = coroutine.resume(self.setup)
+    -- loading bar setup finished
+    if status and coroutine.status(self.setup) == "dead"  then
+      self:postSetup()
+      -- Run all unit tests now that we have everything loaded
+      if TESTS_ENABLED then
+        unitTests()
+      end
+    end
+  elseif sceneManager.activeScene then
+    sceneManager.activeScene:update(dt)
     -- update transition to use draw priority queue
-    if scene_manager.is_transitioning then
-      scene_manager:transition()
+    if sceneManager.isTransitioning then
+      sceneManager:transition()
     end
     status = true
-  elseif scene_manager.is_transitioning then
-    scene_manager:transition()
+  elseif sceneManager.isTransitioning then
+    sceneManager:transition()
     status = true
   else
     status, err = coroutine.resume(mainloop)
   end
+  
   if not status then
     local errorData = self:errorData(err, debug.traceback(mainloop))
     if GAME_UPDATER_GAME_VERSION then
@@ -230,21 +255,16 @@ function Game:update(dt)
   this_frame_messages = {}
 
   update_music()
+  self.rich_presence:runCallbacks()
 end
 
 function Game:draw()
-  -- if not main_font then
-  -- main_font = love.graphics.newFont("Oswald-Light.ttf", 15)
-  -- end
-  -- main_font:setLineHeight(0.66)
-  -- love.graphics.setFont(main_font)
   if self.foreground_overlay then
     local scale = consts.CANVAS_WIDTH / math.max(self.foreground_overlay:getWidth(), self.foreground_overlay:getHeight()) -- keep image ratio
     GraphicsUtil.menu_drawf(self.foreground_overlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
   end
 
   -- Clear the screen
-  love.graphics.setBlendMode("alpha", "alphamultiply")
   love.graphics.setCanvas(self.globalCanvas)
   love.graphics.setBackgroundColor(unpack(global_background_color))
   love.graphics.clear()
@@ -276,9 +296,19 @@ function Game:draw()
   love.graphics.setCanvas() -- render everything thats been added
   love.graphics.clear(love.graphics.getBackgroundColor()) -- clear in preperation for the next render
   
-  x, y, w, h = GraphicsUtil.scale_letterbox(love.graphics.getWidth(), love.graphics.getHeight(), 16, 9)
   love.graphics.setBlendMode("alpha", "premultiplied")
   love.graphics.draw(self.globalCanvas, self.canvasX, self.canvasY, 0, self.canvasXScale, self.canvasYScale)
+  love.graphics.setBlendMode("alpha", "alphamultiply")
+  
+  if self.showGameScale or config.debug_mode then
+    local scaleString = "Scale: " .. self.canvasXScale .. " (" .. canvas_width * self.canvasXScale .. " x " .. canvas_height * self.canvasYScale .. ")"
+    local newPixelWidth = love.graphics.getWidth()
+
+    if canvas_width * self.canvasXScale > newPixelWidth then
+      scaleString = scaleString .. " Clipped "
+    end
+    love.graphics.printf(scaleString, get_global_font_with_size(30), 5, 5, 2000, "left")
+  end
 
   -- draw background and its overlay
   if self.backgroundImage then
@@ -304,7 +334,7 @@ end
 
 function Game:errorData(errorString, traceBack)
   local system_info = "OS: " .. love.system.getOS()
-  local loveVersion = self._loveVersionStringValue
+  local loveVersion = self.loveVersionStringValue
   
   local errorData = { 
       stack = traceBack,
@@ -320,7 +350,7 @@ function Game:errorData(errorString, traceBack)
 end
 
 function Game:loveVersionString()
-  return self._loveVersionStringValue
+  return self.loveVersionStringValue
 end
 
 
@@ -339,10 +369,10 @@ function Game:updateCanvasPositionAndScale(newWindowWidth, newWindowHeight)
       local scale = availableScales[i]
       if config.gameScaleType ~= "auto" or 
         (newWindowWidth >= canvas_width * scale and newWindowHeight >= canvas_height * scale) then
-        GAME.canvasXScale = scale
-        GAME.canvasYScale = scale
-        GAME.canvasX = math.floor((newWindowWidth - (scale * canvas_width)) / 2)
-        GAME.canvasY = math.floor((newWindowHeight - (scale * canvas_height)) / 2)
+        self.canvasXScale = scale
+        self.canvasYScale = scale
+        self.canvasX = math.floor((newWindowWidth - (scale * canvas_width)) / 2)
+        self.canvasY = math.floor((newWindowHeight - (scale * canvas_height)) / 2)
         scaleIsUpdated = true
         break
       end
@@ -352,20 +382,13 @@ function Game:updateCanvasPositionAndScale(newWindowWidth, newWindowHeight)
   if scaleIsUpdated == false then
     -- The only thing left to do is scale to fit the window
     local w, h
-    GAME.canvasX, GAME.canvasY, w, h = scale_letterbox(newWindowWidth, newWindowHeight, 16, 9)
-    GAME.canvasXScale = w / canvas_width
-    GAME.canvasYScale = h / canvas_height
+    self.canvasX, self.canvasY, w, h = scale_letterbox(newWindowWidth, newWindowHeight, 16, 9)
+    self.canvasXScale = w / canvas_width
+    self.canvasYScale = h / canvas_height
   end
 
-  GAME.previousWindowWidth = newWindowWidth
-  GAME.previousWindowHeight = newWindowHeight
-end
-
--- Provides a scale that is on .5 boundary to make sure it renders well.
--- Useful for creating new canvas with a solid DPI
-function Game:newCanvasSnappedScale()
-  local result = math.max(1, math.floor(self.canvasXScale*2)/2)
-  return result
+  self.previousWindowWidth = newWindowWidth
+  self.previousWindowHeight = newWindowHeight
 end
 
 -- Reloads the canvas and all images / fonts for the new game scale
@@ -375,10 +398,10 @@ function Game:refreshCanvasAndImagesForNewScale()
     -- they will load through the normal process
   end
 
-  GAME:drawLoadingString(loc("ld_characters"))
+  self:drawLoadingString(loc("ld_characters"))
   coroutine.yield()
 
-  self.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME:newCanvasSnappedScale()})
+  self.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=self:newCanvasSnappedScale()})
   -- We need to reload all assets and fonts to get the new scaling info and filters
 
   -- Reload theme to get the new resolution assets

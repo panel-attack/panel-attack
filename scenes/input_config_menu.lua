@@ -2,7 +2,7 @@ local Scene = require("scenes.Scene")
 local Button = require("ui.Button")
 local Slider = require("ui.Slider")
 local Label = require("ui.Label")
-local scene_manager = require("scenes.scene_manager")
+local sceneManager = require("scenes.sceneManager")
 local Menu = require("ui.Menu")
 local ButtonGroup = require("ui.ButtonGroup")
 local consts = require("consts")
@@ -116,11 +116,11 @@ end
 
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  scene_manager:switchScene("main_menu")
+  sceneManager:switchToScene("main_menu")
 end
 
 function input_config_menu:init()
-  scene_manager:addScene(input_config_menu)
+  sceneManager:addScene(input_config_menu)
   
   local menu_options = {}
   menu_options[1] = {

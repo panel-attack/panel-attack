@@ -1,5 +1,5 @@
 local GameBase = require("scenes.GameBase")
-local scene_manager = require("scenes.scene_manager")
+local sceneManager = require("scenes.sceneManager")
 
 --@module time_attack_game
 local time_attack_game = GameBase("time_attack_game", {})
@@ -15,7 +15,7 @@ function time_attack_game:processGameResults(gameResult)
 end
 
 function time_attack_game:abortGame()
-  scene_manager:switchScene("time_attack_menu")
+  sceneManager:switchToScene("time_attack_menu")
 end
 
 function time_attack_game:customGameOverSetup()

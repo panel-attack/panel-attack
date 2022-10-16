@@ -1,5 +1,5 @@
 local GameBase = require("scenes.GameBase")
-local scene_manager = require("scenes.scene_manager")
+local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local consts = require("consts")
 
@@ -11,7 +11,7 @@ function replay_game:customLoad(scene_params)
   self.playbackSpeed = 1
   self.maximumSpeed = 20
 
-  loadFromReplay(replay)
+  Replay.loadFromFile(replay)
 end
 
 function replay_game:customRun()
@@ -51,7 +51,7 @@ function replay_game:customRun()
 end
 
 function replay_game:abortGame()
-  scene_manager:switchScene("replay_menu")
+  sceneManager:switchToScene("replay_menu")
 end
 
 function replay_game:customGameOverSetup()

@@ -8,6 +8,7 @@ local main_config_input = require("config_inputs")
 local ServerQueue = require("ServerQueue")
 local save = require("save")
 local tableUtils = require("tableUtils")
+local Game = require("Game")
 require("replay")
 
 local wait, resume = coroutine.yield, coroutine.resume
@@ -32,21 +33,6 @@ local main_menu_last_index = 1
 local puzzle_menu_last_index = 3
 
 function fmainloop()
-  -- local func, arg = main_select_mode, nil
-  -- Run Unit Tests
-  if TESTS_ENABLED then
-    -- Run all unit tests now that we have everything loaded
-    GAME:drawLoadingString("Running Unit Tests")
-    wait()
-    require("PuzzleTests")
-    require("ServerQueueTests")
-    require("StackTests")
-    require("tableUtilsTest")
-    if PERFORMANCE_TESTS_ENABLED then
-      require("tests/performanceTests")
-    end
-  end
-
   local func, arg = main_title, nil
 
   while true do
@@ -195,7 +181,7 @@ do
       table.insert(items, 6, {"Vs Computer", main_local_vs_computer_setup})
     end
 
-    main_menu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, main_menu_last_index)
+    main_menu = ClickMenu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, main_menu_last_index)
     for i = 1, #items do
       main_menu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
     end
@@ -217,7 +203,7 @@ do
       local fontHeight = get_global_font():getHeight()
       local infoYPosition = 705 - fontHeight/2
 
-      local loveString = Game.loveVersionString()
+      local loveString = GAME:loveVersionString()
       if loveString == "11.3.0" then
         gprintf(loc("love_version_warning"), -5, infoYPosition, canvas_width, "right")
         infoYPosition = infoYPosition - fontHeight
@@ -632,7 +618,7 @@ function training_setup()
     trainingSettingsMenu:selectNextIndex()
   end
   
-  trainingSettingsMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
+  trainingSettingsMenu = ClickMenu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
   trainingSettingsMenu:add_button("Custom", goToStart, goEscape, custom_left, custom_right)
   trainingSettingsMenu:add_button(loc("width"), nextMenu, goEscape, decrease_width, increase_width)
   trainingSettingsMenu:add_button(loc("height"), nextMenu, goEscape, decrease_height, increase_height)
@@ -822,7 +808,7 @@ local function main_select_speed_99(mode)
   end
 
   local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
-  gameSettingsMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, endlessMenuLastIndex)
+  gameSettingsMenu = ClickMenu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, endlessMenuLastIndex)
   gameSettingsMenu:add_button(loc("endless_type"), nextMenu, goEscape, toggleType, toggleType)
   addLevelButtons()
   gameSettingsMenu:add_button(loc("go_"), startGame, goEscape)
@@ -851,10 +837,10 @@ local function main_select_speed_99(mode)
 
       lastScore = tostring(lastScore)
       record = tostring(record)
-      draw_pixel_font("last score", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition, 0.5, 1.0)
-      draw_pixel_font(lastScore, themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition + 24, 0.5, 1.0)
-      draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition, 0.5, 1.0)
-      draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition + 24, 0.5, 1.0)
+      draw_pixel_font("last score", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition, 0.5, 1.0)
+      draw_pixel_font(lastScore, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition + 24, 0.5, 1.0)
+      draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition, 0.5, 1.0)
+      draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition + 24, 0.5, 1.0)
     end
 
     gameSettingsMenu:draw()
@@ -1100,7 +1086,7 @@ function main_net_vs_lobby()
         return rating
       end
       local menuHeight = (themes[config.theme].main_menu_y_max - lobby_menu_y)
-      lobby_menu = Click_menu(lobby_menu_x[showing_leaderboard], lobby_menu_y, nil, menuHeight, 1)
+      lobby_menu = ClickMenu(lobby_menu_x[showing_leaderboard], lobby_menu_y, nil, menuHeight, 1)
       for _, v in ipairs(unpaired_players) do
         if v ~= config.name then
           local unmatchedPlayer = v .. playerRatingString(v) .. (sent_requests[v] and " " .. loc("lb_request") or "") .. (willing_players[v] and " " .. loc("lb_received") or "")
@@ -1779,7 +1765,7 @@ function main_select_puzz()
   end
 
   local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
-  puzzleMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, puzzle_menu_last_index)
+  puzzleMenu = ClickMenu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, puzzle_menu_last_index)
   puzzleMenu:add_button(loc("level"), nextMenu, goEscape, decreaseLevel, increaseLevel)
   puzzleMenu:add_button(loc("randomColors"), update_randomColors, goEscape, update_randomColors, update_randomColors)
   for i = 1, #items do
@@ -1891,7 +1877,6 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX, keep
   end
 
   local t = 0
-  local font = love.graphics.getFont()
 
   local x = canvas_width / 2
   local y = canvas_height / 2
@@ -1935,7 +1920,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax, keepMusic, ar
   local timemin = 60 -- the minimum amount of frames the game over screen will be displayed for
 
   local t = 0 -- the amount of frames that have passed since the game over screen was displayed
-  local font = love.graphics.getFont()
+  local font = get_global_font()
   local winnerTime = 60
 
   if SFX_GameOver_Play == 1 then

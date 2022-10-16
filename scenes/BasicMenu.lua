@@ -3,7 +3,7 @@ local Button = require("ui.Button")
 local Slider = require("ui.Slider")
 local Label = require("ui.Label")
 local LevelSlider = require("ui.LevelSlider")
-local scene_manager = require("scenes.scene_manager")
+local sceneManager = require("scenes.sceneManager")
 local Menu = require("ui.Menu")
 local ButtonGroup = require("ui.ButtonGroup")
 local save = require("save")
@@ -72,16 +72,16 @@ function BasicMenu:startGame()
 
   GAME.match.P1:starting_state()
   
-  scene_manager:switchScene(self.game_scene)
+  sceneManager:switchToScene(self.game_scene)
 end
 
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  scene_manager:switchScene("main_menu")
+  sceneManager:switchToScene("main_menu")
 end
 
 function BasicMenu:init()
-  scene_manager:addScene(self)
+  sceneManager:addScene(self)
   
   local tickLength = 16
   self.level_slider = LevelSlider({
@@ -162,10 +162,10 @@ function BasicMenu:update()
     local xPosition2 = xPosition1 + 150
     local yPosition = 270
   
-    draw_pixel_font("last score", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition, 0.5, 1.0)
-    draw_pixel_font(lastScore, themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition + 24, 0.5, 1.0)
-    draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition, 0.5, 1.0)
-    draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition + 24, 0.5, 1.0)
+    draw_pixel_font("last lines", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition, 0.5, 1.0)
+    draw_pixel_font(lastScore,    themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition + 24, 0.5, 1.0)
+    draw_pixel_font("record",     themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition, 0.5, 1.0)
+    draw_pixel_font(record,       themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition + 24, 0.5, 1.0)
   
     self.classic_menu:update()
     self.classic_menu:draw()
