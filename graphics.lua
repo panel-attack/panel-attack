@@ -535,10 +535,10 @@ function Stack.render(self)
       draw_label(themes[config.theme].images.IMG_moves, (self.origin_x + themes[config.theme].moveLabel_Pos[1]) / GFX_SCALE, (self.pos_y + themes[config.theme].moveLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].moveLabel_Scale)
       if self.puzzle.puzzleType == "moves" then
         -- display moves left
-        draw_number(self.puzzle.remaining_moves, themes[config.theme].images.IMG_number_atlas_1P, 10, move_quads, self.score_x + themes[config.theme].move_Pos[1], self.score_y + themes[config.theme].move_Pos[2], themes[config.theme].move_Scale, (30 / themes[config.theme].images.numberWidth_1P * themes[config.theme].move_Scale), (38 / themes[config.theme].images.numberHeight_1P * themes[config.theme].move_Scale), "center", self.multiplication)
+        GraphicsUtil.draw_number(self.puzzle.remaining_moves, themes[config.theme].images.IMG_number_atlas_1P, move_quads, self.score_x + themes[config.theme].move_Pos[1], self.score_y + themes[config.theme].move_Pos[2], themes[config.theme].move_Scale, "center")
       else
         -- display total amount of moves
-        draw_number(math.abs(self.puzzle.remaining_moves), themes[config.theme].images.IMG_number_atlas_1P, 10, move_quads, self.score_x + themes[config.theme].move_Pos[1], self.score_y + themes[config.theme].move_Pos[2], themes[config.theme].move_Scale, (30 / themes[config.theme].images.numberWidth_1P * themes[config.theme].move_Scale), (38 / themes[config.theme].images.numberHeight_1P * themes[config.theme].move_Scale), "center", self.multiplication)  
+        GraphicsUtil.draw_number(math.abs(self.puzzle.remaining_moves), themes[config.theme].images.IMG_number_atlas_1P, move_quads, self.score_x + themes[config.theme].move_Pos[1], self.score_y + themes[config.theme].move_Pos[2], themes[config.theme].move_Scale, "center")
       end
     end
   end
@@ -546,13 +546,13 @@ function Stack.render(self)
   local function drawScore()
     --gprint(loc("pl_score", self.score), self.score_x, self.score_y-40)
     draw_label(themes[config.theme].images["IMG_score" .. self.id], self.origin_x + (themes[config.theme].scoreLabel_Pos[1] * self.mirror_x), self.pos_y + themes[config.theme].scoreLabel_Pos[2], 0, themes[config.theme].scoreLabel_Scale, self.multiplication)
-    draw_number(self.score, themes[config.theme].images["IMG_number_atlas" .. self.id], 10, score_quads, (self.origin_x + (themes[config.theme].score_Pos[1] * self.mirror_x)) * GFX_SCALE, (self.pos_y + themes[config.theme].score_Pos[2]) * GFX_SCALE, themes[config.theme].score_Scale, (15 / themes[config.theme].images["numberWidth" .. self.id] * themes[config.theme].score_Scale), (19.5 / themes[config.theme].images["numberHeight" .. self.id] * themes[config.theme].score_Scale), "center", self.multiplication)
+    GraphicsUtil.draw_number(self.score, themes[config.theme].images["IMG_number_atlas" .. self.id], score_quads, (self.origin_x + (themes[config.theme].score_Pos[1] * self.mirror_x)) * GFX_SCALE, (self.pos_y + themes[config.theme].score_Pos[2]) * GFX_SCALE, themes[config.theme].score_Scale, "center")
   end
 
   local function drawSpeed()
     --gprint(loc("pl_speed", self.speed), self.score_x, self.score_y+45)
     draw_label(themes[config.theme].images["IMG_speed" .. self.id], self.origin_x + themes[config.theme].speedLabel_Pos[1] * self.mirror_x, (self.pos_y + themes[config.theme].speedLabel_Pos[2]), 0, themes[config.theme].speedLabel_Scale, self.multiplication)
-    draw_number(self.speed, themes[config.theme].images["IMG_number_atlas" .. self.id], 10, speed_quads, (self.origin_x + (themes[config.theme].speed_Pos[1] * self.mirror_x)) * GFX_SCALE, (self.pos_y + themes[config.theme].speed_Pos[2]) * GFX_SCALE, themes[config.theme].speed_Scale, (15 / themes[config.theme].images["numberWidth" .. self.id] * themes[config.theme].speed_Scale), (19 / themes[config.theme].images["numberHeight" .. self.id] * themes[config.theme].speed_Scale), "center", self.multiplication)
+    GraphicsUtil.draw_number(self.speed, themes[config.theme].images["IMG_number_atlas" .. self.id], speed_quads, (self.origin_x + (themes[config.theme].speed_Pos[1] * self.mirror_x)) * GFX_SCALE, (self.pos_y + themes[config.theme].speed_Pos[2]) * GFX_SCALE, themes[config.theme].speed_Scale, "center")
   end
 
   local function drawTimer()
@@ -570,7 +570,7 @@ function Stack.render(self)
       end
       --gprint(loc("pl_time", string.format("%01d:%02d",mins,secs)), self.score_x, self.score_y+60)
       draw_label(themes[config.theme].images.IMG_time, (main_infos_screen_pos.x + themes[config.theme].timeLabel_Pos[1]) / GFX_SCALE, (main_infos_screen_pos.y + themes[config.theme].timeLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].timeLabel_Scale)
-      draw_time(string.format("%01d:%02d", mins, secs), time_quads, main_infos_screen_pos.x + themes[config.theme].time_Pos[1], main_infos_screen_pos.y + themes[config.theme].time_Pos[2], 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale)
+      GraphicsUtil.draw_time(string.format("%01d:%02d", mins, secs), time_quads, main_infos_screen_pos.x + themes[config.theme].time_Pos[1], main_infos_screen_pos.y + themes[config.theme].time_Pos[2], themes[config.theme].time_Scale)
     elseif self.match.mode == "puzzle" then
       -- puzzles don't have a timer...yet?
     else
@@ -578,7 +578,7 @@ function Stack.render(self)
       if self and self.which == 1 and self.game_stopwatch and tonumber(self.game_stopwatch) then
         --gprint(frames_to_time_string(self.game_stopwatch, self.match.mode == "endless"), main_infos_screen_pos.x+10, main_infos_screen_pos.y+6)
         draw_label(themes[config.theme].images.IMG_time, (main_infos_screen_pos.x + themes[config.theme].timeLabel_Pos[1]) / GFX_SCALE, (main_infos_screen_pos.y + themes[config.theme].timeLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].timeLabel_Scale)
-        draw_time(frames_to_time_string(self.game_stopwatch, self.match.mode == "endless"), time_quads, main_infos_screen_pos.x + themes[config.theme].time_Pos[1], main_infos_screen_pos.y + themes[config.theme].time_Pos[2], 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale)
+        GraphicsUtil.draw_time(frames_to_time_string(self.game_stopwatch, self.match.mode == "endless"), time_quads, main_infos_screen_pos.x + themes[config.theme].time_Pos[1], main_infos_screen_pos.y + themes[config.theme].time_Pos[2], themes[config.theme].time_Scale)
       end
     end
   end
