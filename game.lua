@@ -129,11 +129,20 @@ function Game:postSetup()
   
   -- must be here until globally initiallized structures get resolved into local requires
   scenes = {
+    require("scenes.titleScreen"),
+    require("scenes.mainMenu"),
+    require("scenes.inputConfigMenu")
   }
   for i, scene in ipairs(scenes) do
     scene:init()
   end
-  sceneManager:switchToScene(nil)
+
+  if themes[config.theme].images.bg_title then
+    sceneManager:switchToScene("titleScreen")
+  else
+    sceneManager:switchToScene("mainMenu")
+  end
+  
 end
 
 local function unitTests()
