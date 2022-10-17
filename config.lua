@@ -1,5 +1,5 @@
 json = require("dkjson")
-require("util")
+local util = require("util")
 require("consts")
 
 -- Default configuration values
@@ -130,19 +130,19 @@ config = {
         end
   
         if type(read_data.level) == "number" then
-          configTable.level = bound(1, read_data.level, 10)
+          configTable.level = util.bound(1, read_data.level, 10)
         end
         if type(read_data.endless_speed) == "number" then
-          configTable.endless_speed = bound(1, read_data.endless_speed, 99)
+          configTable.endless_speed = util.bound(1, read_data.endless_speed, 99)
         end
         if type(read_data.endless_difficulty) == "number" then
-          configTable.endless_difficulty = bound(1, read_data.endless_difficulty, 3)
+          configTable.endless_difficulty = util.bound(1, read_data.endless_difficulty, 3)
         end
         if type(read_data.endless_level) == "number" then
-          configTable.endless_level = bound(1, read_data.endless_level, 11)
+          configTable.endless_level = util.bound(1, read_data.endless_level, 11)
         end
         if type(read_data.puzzle_level) == "number" then
-          configTable.puzzle_level = bound(1, read_data.puzzle_level, 11)
+          configTable.puzzle_level = util.bound(1, read_data.puzzle_level, 11)
         end
         if type(read_data.puzzle_randomColors) == "boolean" then
           configTable.puzzle_randomColors = read_data.puzzle_randomColors
@@ -153,16 +153,16 @@ config = {
         end
   
         if type(read_data.master_volume) == "number" then
-          configTable.master_volume = bound(0, read_data.master_volume, 100)
+          configTable.master_volume = util.bound(0, read_data.master_volume, 100)
         end
         if type(read_data.SFX_volume) == "number" then
-          configTable.SFX_volume = bound(0, read_data.SFX_volume, 100)
+          configTable.SFX_volume = util.bound(0, read_data.SFX_volume, 100)
         end
         if type(read_data.music_volume) == "number" then
-          configTable.music_volume = bound(0, read_data.music_volume, 100)
+          configTable.music_volume = util.bound(0, read_data.music_volume, 100)
         end
         if type(read_data.input_repeat_delay) == "number" then
-          configTable.input_repeat_delay = bound(1, read_data.input_repeat_delay, 50)
+          configTable.input_repeat_delay = util.bound(1, read_data.input_repeat_delay, 50)
         end
         if type(read_data.debug_mode) == "boolean" then
           configTable.debug_mode = read_data.debug_mode
@@ -186,13 +186,13 @@ config = {
           configTable.save_replays_publicly = read_data.save_replays_publicly
         end
         if type(read_data.portrait_darkness) == "number" then
-          configTable.portrait_darkness = bound(0, read_data.portrait_darkness, 100)
+          configTable.portrait_darkness = util.bound(0, read_data.portrait_darkness, 100)
         end
         if type(read_data.popfx) == "boolean" then
           configTable.popfx = read_data.popfx
         end
         if type(read_data.cardfx_scale) == "number" then
-          configTable.cardfx_scale = bound(1, read_data.cardfx_scale, 200)
+          configTable.cardfx_scale = util.bound(1, read_data.cardfx_scale, 200)
         end
         if type(read_data.renderTelegraph) == "boolean" then
           configTable.renderTelegraph = read_data.renderTelegraph

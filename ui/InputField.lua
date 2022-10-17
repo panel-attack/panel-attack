@@ -97,7 +97,7 @@ function InputField:onBackspace()
 end
 
 function InputField:onMoveCursor(dir)
-  self.offset = util.clamp(0, self.offset + dir, utf8.len(self.value))
+  self.offset = util.bound(0, self.offset + dir, utf8.len(self.value))
 end
 
 function InputField:textInput(t)

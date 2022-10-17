@@ -1,6 +1,7 @@
 require("analytics")
 local logger = require("logger")
 local tableUtils = require("tableUtils")
+local util = require("util")
 
 -- Stuff defined in this file:
 --  . the data structures that store the configuration of
@@ -1594,8 +1595,8 @@ function Stack.simulate(self)
     if self.cur_dir and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and not self.cursor_lock then
       local prev_row = self.cur_row
       local prev_col = self.cur_col
-      self.cur_row = bound(1, self.cur_row + d_row[self.cur_dir], self.top_cur_row)
-      self.cur_col = bound(1, self.cur_col + d_col[self.cur_dir], width - 1)
+      self.cur_row = util.bound(1, self.cur_row + d_row[self.cur_dir], self.top_cur_row)
+      self.cur_col = util.bound(1, self.cur_col + d_col[self.cur_dir], width - 1)
       if (playMoveSounds and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and (self.cur_row ~= prev_row or self.cur_col ~= prev_col)) then
         if self:shouldChangeSoundEffects() then
           SFX_Cur_Move_Play = 1
@@ -1605,7 +1606,7 @@ function Stack.simulate(self)
         end
       end
     else
-      self.cur_row = bound(1, self.cur_row, self.top_cur_row)
+      self.cur_row = util.bound(1, self.cur_row, self.top_cur_row)
     end
 
     if self.cur_timer ~= self.cur_wait_time then
@@ -2711,7 +2712,7 @@ end
 function Stack.new_row(self)
   local panels = self.panels
   -- move cursor up
-  self.cur_row = bound(1, self.cur_row + 1, self.top_cur_row)
+  self.cur_row = util.bound(1, self.cur_row + 1, self.top_cur_row)
   -- move panels up
   for row = #panels + 1, 1, -1 do
     panels[row] = panels[row - 1]
