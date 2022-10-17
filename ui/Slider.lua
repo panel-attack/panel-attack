@@ -8,7 +8,7 @@ local Slider = class(
   function(self, options)
     self.min = options.min or 1
     self.max = options.max or 99
-    self.value = options.value and util.clamp(self.min, options.value, self.max) or math.floor((self.max - self.min) / 2)
+    self.value = options.value and util.bound(self.min, options.value, self.max) or math.floor((self.max - self.min) / 2)
     -- pixels per value change
     self.tickLength = options.tickLength or 1
     self.onValueChange = options.onValueChange or function() end
@@ -43,7 +43,7 @@ end
 
 function Slider:setValue(value)
   local prevValue = self.value
-  self.value = util.clamp(self.min, value, self.max)
+  self.value = util.bound(self.min, value, self.max)
   self.valueText = love.graphics.newText(love.graphics.getFont(), self.value)
   if self.value ~= prevValue then
     self:onValueChange()

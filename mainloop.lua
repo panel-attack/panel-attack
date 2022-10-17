@@ -7,6 +7,7 @@ local analytics = require("analytics")
 local main_config_input = require("config_inputs")
 local tableUtils = require("tableUtils")
 local Game = require("Game")
+local util = require("util")
 require("replay")
 
 local wait, resume = coroutine.yield, coroutine.resume
@@ -32,7 +33,7 @@ local puzzle_menu_last_index = 3
 
 function fmainloop()
   local func, arg = main_title, nil
-
+  
   while true do
     leftover_time = 1 / 120 -- prevents any left over time from getting big transitioning between menus
 ---@diagnostic disable-next-line: redundant-parameter
@@ -103,7 +104,7 @@ function main_title()
         elseif increment < 0 and percent <= 0.5 then
           increment = incrementAmount
         end
-        percent =  bound(0, percent + increment, 1)
+        percent =  util.bound(0, percent + increment, 1)
         
         if love.mouse.isDown(1, 2, 3) or #love.touch.getTouches() > 0 or (tableUtils.length(this_frame_released_keys) > 0 and totalTime > 0.1) then
           ret = {main_select_mode}
@@ -566,32 +567,32 @@ function training_setup()
   end
 
   local function custom_right()
-    customModeID = bound(1, customModeID + 1, #customTrainingModes)
+    customModeID = util.bound(1, customModeID + 1, #customTrainingModes)
     update_custom_setting()
   end
 
   local function custom_left()
-    customModeID = bound(1, customModeID - 1, #customTrainingModes)
+    customModeID = util.bound(1, customModeID - 1, #customTrainingModes)
     update_custom_setting()
   end
 
   local function increase_height()
-    trainingModeSettings.height = bound(1, trainingModeSettings.height + 1, 69)
+    trainingModeSettings.height = util.bound(1, trainingModeSettings.height + 1, 69)
     update_size()
   end
 
   local function decrease_height()
-    trainingModeSettings.height = bound(1, trainingModeSettings.height - 1, 69)
+    trainingModeSettings.height = util.bound(1, trainingModeSettings.height - 1, 69)
     update_size()
   end
 
   local function increase_width()
-    trainingModeSettings.width = bound(1, trainingModeSettings.width + 1, 6)
+    trainingModeSettings.width = util.bound(1, trainingModeSettings.width + 1, 6)
     update_size()
   end
 
   local function decrease_width()
-    trainingModeSettings.width = bound(1, trainingModeSettings.width - 1, 6)
+    trainingModeSettings.width = util.bound(1, trainingModeSettings.width - 1, 6)
     update_size()
   end
 
@@ -675,41 +676,41 @@ local function main_select_speed_99(mode)
 
   local function increaseSpeed(menu, button, index)
     if speed then
-      speed = bound(1, speed + 1, 99)
+      speed = util.bound(1, speed + 1, 99)
       updateMenus()
     end
   end
 
   local function decreaseSpeed(menu, button, index)
     if speed then
-      speed = bound(1, speed - 1, 99)
+      speed = util.bound(1, speed - 1, 99)
       updateMenus()
     end
   end
 
   local function increaseDifficulty(menu, button, index)
-    difficulty = bound(1, (difficulty or 1) + 1, 4)
+    difficulty = util.bound(1, (difficulty or 1) + 1, 4)
     level = nil
     speed = config.endless_speed or 1
     updateMenus()
   end
 
   local function decreaseDifficulty(menu, button, index)
-    difficulty = bound(1, (difficulty or 1) - 1, 4)
+    difficulty = util.bound(1, (difficulty or 1) - 1, 4)
     level = nil
     speed = config.endless_speed or 1
     updateMenus()
   end
 
   local function increaseLevel(menu, button, index)
-    level = bound(1, (level or 1) + 1, 11)
+    level = util.bound(1, (level or 1) + 1, 11)
     difficulty = nil
     speed = nil
     updateMenus()
   end
 
   local function decreaseLevel(menu, button, index)
-    level = bound(1, (level or 1) - 1, 11)
+    level = util.bound(1, (level or 1) - 1, 11)
     difficulty = nil
     speed = nil
     updateMenus()
@@ -802,7 +803,7 @@ local function main_select_speed_99(mode)
     updateMenuDifficulty()
     updateMenuSpeed()
     updateMenuLevel()
-    endlessMenuLastIndex = bound(1, #gameSettingsMenu.buttons - 1, #gameSettingsMenu.buttons)
+    endlessMenuLastIndex = util.bound(1, #gameSettingsMenu.buttons - 1, #gameSettingsMenu.buttons)
   end
 
   local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
@@ -851,7 +852,7 @@ local function main_select_speed_99(mode)
     )
 
     if startGameSet then
-      endlessMenuLastIndex = bound(1, #gameSettingsMenu.buttons - 1, #gameSettingsMenu.buttons)
+      endlessMenuLastIndex = util.bound(1, #gameSettingsMenu.buttons - 1, #gameSettingsMenu.buttons)
       gameSettingsMenu:remove_self()
       return main_endless_time_setup, {mode, speed, difficulty, level}
     elseif exitSet then
@@ -1113,7 +1114,7 @@ function main_net_vs_lobby()
         elseif oldLobbyMenu.active_idx == #oldLobbyMenu.buttons - 1 and #lobby_menu.buttons >= 2 then
           lobby_menu:set_active_idx(#lobby_menu.buttons - 1) --the position of the "hide leaderboard" menu item
         else
-          local desiredIndex = bound(1, oldLobbyMenu.active_idx, #lobby_menu.buttons)
+          local desiredIndex = util.bound(1, oldLobbyMenu.active_idx, #lobby_menu.buttons)
           local previousText = oldLobbyMenu.buttons[oldLobbyMenu.active_idx].stringText
           for i = 1, #lobby_menu.buttons do
             if #oldLobbyMenu.buttons >= i then
@@ -1558,7 +1559,7 @@ function main_replay()
         P2.max_runs_per_frame = 1
       end
     elseif menu_right() then
-      playbackSpeed = bound(1, playbackSpeed + 1, maximumSpeed)
+      playbackSpeed = util.bound(1, playbackSpeed + 1, maximumSpeed)
       if P1 then
         P1.max_runs_per_frame = playbackSpeed
       end
@@ -1566,7 +1567,7 @@ function main_replay()
         P2.max_runs_per_frame = playbackSpeed
       end
     elseif menu_left() then
-      playbackSpeed = bound(1, playbackSpeed - 1, maximumSpeed)
+      playbackSpeed = util.bound(1, playbackSpeed - 1, maximumSpeed)
       if P1 then
         P1.max_runs_per_frame = playbackSpeed
       end
@@ -1742,12 +1743,12 @@ function main_select_puzz()
   end
 
   local function increaseLevel()
-    level = bound(1, (level or 1) + 1, 11)
+    level = util.bound(1, (level or 1) + 1, 11)
     updateMenuLevel()
   end
 
   local function decreaseLevel()
-    level = bound(1, (level or 1) - 1, 11)
+    level = util.bound(1, (level or 1) - 1, 11)
     updateMenuLevel()
   end
 

@@ -3,6 +3,7 @@ local logger = require("logger")
 local inputFieldManager = require("ui.inputFieldManager")
 local inputManager = require("inputManager")
 local tableUtils = require("tableUtils")
+local util = require("util")
 
 -- The class that holds all input mappings and state
 -- TODO: move all state variables in here
@@ -471,7 +472,7 @@ local function get_being_pressed_for_duration_ratio(fixed, configurable, time)
         end
       end
     end
-    return bound(0, res, 1)
+    return util.bound(0, res, 1)
   end
 end
 

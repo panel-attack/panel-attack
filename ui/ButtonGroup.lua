@@ -51,7 +51,7 @@ local function setButtons(self, buttons, values, selectedIndex)
 end
 
 local function setActiveButton(self, selected_index)
-  local new_index = util.clamp(1, selected_index, #self.buttons)
+  local new_index = util.bound(1, selected_index, #self.buttons)
   self.buttons[new_index].onClick()
 end
 
