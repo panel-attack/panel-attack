@@ -2474,7 +2474,7 @@ function Stack.check_matches(self)
             if string.len(self.gpanel_buffer) <= 10 * self.width then
               local garbagePanels = PanelGenerator.makeGarbagePanels(self.match.seed + self.garbageGenCount, self.NCOLORS, self.gpanel_buffer, self.match.mode, self.level)
               self.gpanel_buffer = self.gpanel_buffer .. garbagePanels
-              logger.info("Generating garbage with seed: " .. self.match.seed + self.garbageGenCount .. " buffer: " .. self.gpanel_buffer)
+              logger.debug("Generating garbage with seed: " .. self.match.seed + self.garbageGenCount .. " buffer: " .. self.gpanel_buffer)
               self.garbageGenCount = self.garbageGenCount + 1
             end
             gpan_row = string.sub(self.gpanel_buffer, 1, 6)
@@ -2727,7 +2727,7 @@ function Stack.new_row(self)
       opponentLevel = self.garbage_target.level
     end
     self.panel_buffer = PanelGenerator.makePanels(self.match.seed + self.panelGenCount, self.NCOLORS, self.panel_buffer, self.match.mode, self.level, opponentLevel)
-    logger.info("generating panels with seed: " .. self.match.seed + self.panelGenCount .. " buffer: " .. self.panel_buffer)
+    logger.debug("generating panels with seed: " .. self.match.seed + self.panelGenCount .. " buffer: " .. self.panel_buffer)
     self.panelGenCount = self.panelGenCount + 1
   end
 
