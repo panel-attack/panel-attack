@@ -69,6 +69,9 @@ config = {
     display                       = 1,
     windowX                       = nil,
     windowY                       = nil,
+
+    
+    androidUseExternalStorage     = false,
   }
   
   -- writes to the "conf.json" file

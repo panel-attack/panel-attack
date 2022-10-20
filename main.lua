@@ -48,9 +48,20 @@ local last_y = 0
 local input_delta = 0.0
 local pointer_hidden = false
 local mainloop = nil
+local migrationCoroutine = nil
 
 -- Called at the beginning to load the game
 function love.load()
+  if love.system.getOS() == "Android" then
+    if AndroidMigration == nil then
+      if config.androidUseExternalStorage == false then
+        AndroidMigration = require("androidMigration.main")
+      end
+    else
+      migrationCoroutine = coroutine.create(AndroidMigration.run)
+    end
+  end
+
   if PROFILING_ENABLED then
     GAME.profiler:start()
   end
@@ -115,21 +126,32 @@ function love.update(dt)
     GAME.showGameScale = true
   end
 
-  local status, err = coroutine.resume(mainloop)
-  if not status then
-    local errorData = Game.errorData(err, debug.traceback(mainloop))
-    if GAME_UPDATER_GAME_VERSION then
-      send_error_report(errorData)
+  if migrationCoroutine ~= nil then
+    local status, err = coroutine.resume(migrationCoroutine)
+    if not status then
+      local errorData = Game.errorData(err, debug.traceback(migrationCoroutine))
+      if GAME_UPDATER_GAME_VERSION then
+        send_error_report(errorData)
+      end
+      error(err .. "\n\n" .. dump(errorData, true))
     end
-    error(err .. "\n\n" .. dump(errorData, true))
+  else
+    local status, err = coroutine.resume(mainloop)
+    if not status then
+      local errorData = Game.errorData(err, debug.traceback(mainloop))
+      if GAME_UPDATER_GAME_VERSION then
+        send_error_report(errorData)
+      end
+      error(err .. "\n\n" .. dump(errorData, true))
+    end
+    if server_queue and server_queue:size() > 0 then
+      logger.trace("Queue Size: " .. server_queue:size() .. " Data:" .. server_queue:to_short_string())
+    end
+    this_frame_messages = {}
+  
+    update_music()
+    GAME.rich_presence:runCallbacks()
   end
-  if server_queue and server_queue:size() > 0 then
-    logger.trace("Queue Size: " .. server_queue:size() .. " Data:" .. server_queue:to_short_string())
-  end
-  this_frame_messages = {}
-
-  update_music()
-  GAME.rich_presence:runCallbacks()
 end
 
 -- Called whenever the game needs to draw.
