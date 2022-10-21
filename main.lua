@@ -53,6 +53,15 @@ local migrationCoroutine = nil
 -- Called at the beginning to load the game
 function love.load()
   if love.system.getOS() == "Android" then
+    -- prevent portrait mode
+    local width, height, flags = love.window.getMode()
+    flags.resizable = false
+    if height > width then
+      height, width = width, height
+    end
+    love.window.setMode(width, height, flags)
+
+    -- migrate to external storage if it didn't already happen
     if AndroidMigration == nil then
       if config.androidUseExternalStorage == false then
         AndroidMigration = require("androidMigration.main")
