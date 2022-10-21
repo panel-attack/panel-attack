@@ -52,7 +52,7 @@ local migrationCoroutine = nil
 
 -- Called at the beginning to load the game
 function love.load()
-  if love.system.getOS() == "Windows" then
+  if love.system.getOS() == "Android" then
     -- prevent portrait mode
     local width, height, flags = love.window.getMode()
     flags.resizable = false

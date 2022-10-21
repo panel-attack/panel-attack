@@ -70,7 +70,7 @@ config = {
     windowX                       = nil,
     windowY                       = nil,
 
-    
+
     androidUseExternalStorage     = false,
   }
   
