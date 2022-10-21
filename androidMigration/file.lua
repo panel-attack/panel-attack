@@ -63,9 +63,10 @@ function AndroidMigration.recursiveRead(self, folder, fileTree)
     local info = love.filesystem.getInfo(file)
     if info then
       if info.type == "file" then
-        -- don't copy files from the migration app, reading from root directory reads from BOTH internal storage as well as the main game files
-        if string.sub(v, string.len(v) - 3, string.len(v)) ~= ".lua" then
-          self:logEvent("Reading file " .. v .. " in folder " .. folder .. " into memory")
+        -- don't copy files from the app, reading from root directory reads from BOTH internal storage as well as the main game files
+        -- but we only want to copy files in the save directory
+        if love.filesystem.getRealDirectory(file) == self.saveDirectory then
+          self:logEvent("Reading file " .. file .. " into memory")
           fileTree[folderName].files[v] = { type = "file", content = getFileContent(file), path = file }
           coroutine.yield()
         end
@@ -80,7 +81,7 @@ end
 function AndroidMigration.recursiveWrite(self, fileTree)
   for i, properties in pairs(fileTree) do
     if properties.type == "directory" then
-      self:logEvent("Creating folder " .. properties.path .. " to " .. DATA_LOCATION .. " storage")
+      self:logEvent("Creating folder " .. properties.path .. " in " .. DATA_LOCATION .. " storage")
       if not love.filesystem.getInfo(properties.path, "directory") then
         love.filesystem.createDirectory(properties.path)
       else

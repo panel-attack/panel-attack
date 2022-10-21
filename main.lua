@@ -52,19 +52,20 @@ local migrationCoroutine = nil
 
 -- Called at the beginning to load the game
 function love.load()
-  if love.system.getOS() == "Android" then
+  if love.system.getOS() == "Windows" then
     -- prevent portrait mode
     local width, height, flags = love.window.getMode()
     flags.resizable = false
     if height > width then
       height, width = width, height
     end
-    love.window.setMode(width, height, flags)
+    love.window.setMode(width, height - 20, flags)
 
     -- migrate to external storage if it didn't already happen
     if AndroidMigration == nil then
       if config.androidUseExternalStorage == false then
-        AndroidMigration = require("androidMigration.main")
+        require("androidMigration.migration")
+        migrationCoroutine = coroutine.create(AndroidMigration.run)
       end
     else
       migrationCoroutine = coroutine.create(AndroidMigration.run)
@@ -136,7 +137,7 @@ function love.update(dt)
   end
 
   if migrationCoroutine ~= nil then
-    local status, err = coroutine.resume(migrationCoroutine)
+    local status, err = coroutine.resume(migrationCoroutine, AndroidMigration)
     if not status then
       local errorData = Game.errorData(err, debug.traceback(migrationCoroutine))
       if GAME_UPDATER_GAME_VERSION then
