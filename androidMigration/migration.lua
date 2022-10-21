@@ -74,8 +74,8 @@ function AndroidMigration.terminateMigration(self, intendedLocation)
   _G.ACTION = nil
   _G.AndroidMigration = nil
   -- unload modules
-  package.loaded.androidMigration.migration = nil
-  package.loaded.androidMigration.file = nil
+  package.loaded["androidMigration.migration"] = nil
+  package.loaded["androidMigration.file"] = nil
 end
 
 function AndroidMigration.logEvent(self, ...)
