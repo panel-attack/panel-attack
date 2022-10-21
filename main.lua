@@ -139,7 +139,7 @@ function love.update(dt)
     GAME.showGameScale = true
   end
 
-  if migrationCoroutine ~= nil then
+  if migrationCoroutine ~= nil and coroutine.status(migrationCoroutine) ~= "dead" then
     local status, err = coroutine.resume(migrationCoroutine, AndroidMigration)
     if not status then
       local errorData = Game.errorData(err, debug.traceback(migrationCoroutine))
