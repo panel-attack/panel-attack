@@ -1,7 +1,7 @@
 ACTION = "READ"
 DATA_LOCATION = "INTERNAL"
 
-local AndroidMigration = { eventLog = {} }
+AndroidMigration = { eventLog = {} }
 
 require("androidMigration.file")
 

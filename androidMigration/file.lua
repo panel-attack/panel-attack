@@ -22,17 +22,6 @@ function AndroidMigration.recursiveRemoveFiles(self, folder)
   coroutine.yield()
 end
 
--- returns the number of elements in the table
---
--- unlike #tab, this also works for dictionaries and arrays starting at index 0 and that have "gaps" inbetween indices
-function table.length(tab)
-  local count = 0
-  for _ in pairs(tab) do
-    count = count + 1
-  end
-  return count
-end
-
 --[[ 
 filetree structure:
 
