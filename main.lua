@@ -66,6 +66,9 @@ function love.load()
       if config.androidUseExternalStorage == false then
         require("androidMigration.migration")
         migrationCoroutine = coroutine.create(AndroidMigration.run)
+      else
+        -- assume that migration was successfully terminated
+        migrationCoroutine = nil
       end
     else
       migrationCoroutine = coroutine.create(AndroidMigration.run)
