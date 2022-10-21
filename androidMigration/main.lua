@@ -55,6 +55,7 @@ function AndroidMigration.terminateMigration(self, intendedLocation)
   -- wipe globals
   _ENV.DATA_LOCATION = nil
   _ENV.ACTION = nil
+  _ENV.AndroidMigration = nil
   -- unload modules
   package.loaded.androidMigration.main = nil
   package.loaded.androidMigration.file = nil
