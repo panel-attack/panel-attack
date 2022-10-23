@@ -1,6 +1,6 @@
+local util = require("util")
 local consts = require("consts")
 json = require("dkjson")
-require("util")
 
 ---@module config
 -- Default configuration values

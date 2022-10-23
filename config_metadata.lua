@@ -11,15 +11,15 @@ local config_metadata = {
     save_replays_publicly = function(value) return save_replays_values[value] end
   },
   processValue = {
-    level = function(value) return util.clamp(1, value, 10) end,
-    endless_speed = function(value) return util.clamp(1, value, 99) end,
-    endless_difficulty = function(value) return util.clamp(1, value, 3) end,
-    master_volume = function(value) return util.clamp(0, value, 100) end,
-    SFX_volume = function(value) return util.clamp(0, value, 100) end,
-    music_volume = function(value) return util.clamp(0, value, 100) end,
-    input_repeat_delay = function(value) return util.clamp(1, value, 50) end,
-    portrait_darkness = function(value) return util.clamp(1, value, 50) end,
-    cardfx_scale = function(value) return util.clamp(1, value, 200) end
+    level = function(value) return util.bound(1, value, 10) end,
+    endless_speed = function(value) return util.bound(1, value, 99) end,
+    endless_difficulty = function(value) return util.bound(1, value, 3) end,
+    master_volume = function(value) return util.bound(0, value, 100) end,
+    SFX_volume = function(value) return util.bound(0, value, 100) end,
+    music_volume = function(value) return util.bound(0, value, 100) end,
+    input_repeat_delay = function(value) return util.bound(1, value, 50) end,
+    portrait_darkness = function(value) return util.bound(1, value, 50) end,
+    cardfx_scale = function(value) return util.bound(1, value, 200) end
   }
 }
 

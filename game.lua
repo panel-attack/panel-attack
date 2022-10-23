@@ -137,8 +137,8 @@ function Game:postSetup()
   
   -- must be here until globally initiallized structures get resolved into local requires
   scenes = {
-    require("scenes.title_screen"),
-    require("scenes.main_menu"),
+    require("scenes.titleScreen"),
+    require("scenes.mainMenu"),
     require("scenes.endless_menu"),
     require("scenes.endless_game"),
     require("scenes.time_attack_menu"),
@@ -151,7 +151,7 @@ function Game:postSetup()
     require("scenes.training_mode_character_select"),
     require("scenes.training_mode_game"),
     require("scenes.lobby"),
-    require("scenes.input_config_menu"),
+    require("scenes.inputConfigMenu"),
     require("scenes.replay_menu"),
     require("scenes.replay_game"),
     require("scenes.set_name_menu"),
@@ -161,8 +161,11 @@ function Game:postSetup()
   for i, scene in ipairs(scenes) do
     scene:init()
   end
-  --sceneManager:switchToScene("titleScreen")
-  sceneManager:switchToScene("main_menu")
+  if themes[config.theme].images.bg_title then
+    sceneManager:switchToScene("titleScreen")
+  else
+    sceneManager:switchToScene("mainMenu")
+  end
 end
 
 local function unitTests()

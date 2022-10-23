@@ -842,7 +842,7 @@ function CharacterSelect:update()
   
   if input.isDown["Swap2"] then
     if self.cursor_pos.x == button_info.leave.x and self.cursor_pos.y == button_info.leave.y then
-      sceneManager:switchToScene("main_menu")
+      sceneManager:switchToScene("mainMenu")
     else
       self:moveCursor(button_info.leave.x, button_info.leave.y)
     end

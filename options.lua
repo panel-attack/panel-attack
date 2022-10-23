@@ -1,6 +1,9 @@
-local options = {}
-local ClickMenu = require("ClickMenu")
 local analytics = require("analytics")
+local util = require("util")
+local ClickMenu = require("ClickMenu")
+
+local options = {}
+
 local wait = coroutine.yield
 local memory_before_options_menu = nil
 local theme_index
@@ -62,12 +65,12 @@ local function general_menu()
   end
 
   local function increase_input_repeat_delay()
-    config.input_repeat_delay = bound(0, config.input_repeat_delay + 1, 50)
+    config.input_repeat_delay = util.bound(0, config.input_repeat_delay + 1, 50)
     update_input_repeat_delay()
   end
 
   local function decrease_input_repeat_delay()
-    config.input_repeat_delay = bound(0, config.input_repeat_delay - 1, 50)
+    config.input_repeat_delay = util.bound(0, config.input_repeat_delay - 1, 50)
     update_input_repeat_delay()
   end
 
@@ -77,12 +80,12 @@ local function general_menu()
   end
 
   local function increase_publicness() -- privatize or publicize?
-    save_replays_preference_index = bound(1, save_replays_preference_index + 1, #save_replays_publicly_choices)
+    save_replays_preference_index = util.bound(1, save_replays_preference_index + 1, #save_replays_publicly_choices)
     update_replay_preference()
   end
 
   local function increase_privateness()
-    save_replays_preference_index = bound(1, save_replays_preference_index - 1, #save_replays_publicly_choices)
+    save_replays_preference_index = util.bound(1, save_replays_preference_index - 1, #save_replays_publicly_choices)
     update_replay_preference()
   end
 
@@ -141,12 +144,12 @@ local function graphics_menu()
   end
 
   local function next_theme()
-    theme_index = bound(1, theme_index + 1, #found_themes)
+    theme_index = util.bound(1, theme_index + 1, #found_themes)
     update_theme()
   end
 
   local function previous_theme()
-    theme_index = bound(1, theme_index - 1, #found_themes)
+    theme_index = util.bound(1, theme_index - 1, #found_themes)
     update_theme()
   end
 
@@ -189,12 +192,12 @@ local function graphics_menu()
   end
 
   local function previousScaleType()
-    scaleTypeIndex = bound(1, scaleTypeIndex - 1, #scaleTypeOptions)
+    scaleTypeIndex = util.bound(1, scaleTypeIndex - 1, #scaleTypeOptions)
     updateScaleType(false)
   end
 
   local function nextScaleType()
-    scaleTypeIndex = bound(1, scaleTypeIndex + 1, #scaleTypeOptions)
+    scaleTypeIndex = util.bound(1, scaleTypeIndex + 1, #scaleTypeOptions)
     updateScaleType(false)
   end
 
@@ -213,14 +216,14 @@ local function graphics_menu()
 
   local function previousFixedScale()
     if config.gameScaleType == "fixed" then
-      fixedScaleIndex = bound(1, fixedScaleIndex - 1, #GAME.availableScales)
+      fixedScaleIndex = util.bound(1, fixedScaleIndex - 1, #GAME.availableScales)
       updateFixedScale(false)
     end
   end
 
   local function nextFixedScale()
     if config.gameScaleType == "fixed" then
-      fixedScaleIndex = bound(1, fixedScaleIndex + 1, #GAME.availableScales)
+      fixedScaleIndex = util.bound(1, fixedScaleIndex + 1, #GAME.availableScales)
       updateFixedScale(false)
     end
   end
@@ -230,12 +233,12 @@ local function graphics_menu()
   end
 
   local function increase_portrait_darkness()
-    config.portrait_darkness = bound(0, config.portrait_darkness + 1, 100)
+    config.portrait_darkness = util.bound(0, config.portrait_darkness + 1, 100)
     update_portrait_darkness()
   end
 
   local function decrease_portrait_darkness()
-    config.portrait_darkness = bound(0, config.portrait_darkness - 1, 100)
+    config.portrait_darkness = util.bound(0, config.portrait_darkness - 1, 100)
     update_portrait_darkness()
   end
 
@@ -323,12 +326,12 @@ local function audio_menu(button_idx)
   end
 
   local function increase_master_volume()
-    config.master_volume = bound(0, config.master_volume + 1, 100)
+    config.master_volume = util.bound(0, config.master_volume + 1, 100)
     update_master_volume()
   end
 
   local function decrease_master_volume()
-    config.master_volume = bound(0, config.master_volume - 1, 100)
+    config.master_volume = util.bound(0, config.master_volume - 1, 100)
     update_master_volume()
   end
 
@@ -338,12 +341,12 @@ local function audio_menu(button_idx)
   end
 
   local function increase_sfx_volume()
-    config.SFX_volume = bound(0, config.SFX_volume + 1, 100)
+    config.SFX_volume = util.bound(0, config.SFX_volume + 1, 100)
     update_sfx_volume()
   end
 
   local function decrease_sfx_volume()
-    config.SFX_volume = bound(0, config.SFX_volume - 1, 100)
+    config.SFX_volume = util.bound(0, config.SFX_volume - 1, 100)
     update_sfx_volume()
   end
 
@@ -353,12 +356,12 @@ local function audio_menu(button_idx)
   end
 
   local function increase_music_volume()
-    config.music_volume = bound(0, config.music_volume + 1, 100)
+    config.music_volume = util.bound(0, config.music_volume + 1, 100)
     update_music_volume()
   end
 
   local function decrease_music_volume()
-    config.music_volume = bound(0, config.music_volume - 1, 100)
+    config.music_volume = util.bound(0, config.music_volume - 1, 100)
     update_music_volume()
   end
 
@@ -368,12 +371,12 @@ local function audio_menu(button_idx)
   end
 
   local function increase_character_frequency()
-    music_choice_frequency = bound(1, music_choice_frequency + 1, #use_music_from_choices)
+    music_choice_frequency = util.bound(1, music_choice_frequency + 1, #use_music_from_choices)
     update_music_frequency()
   end
 
   local function increase_stage_frequency()
-    music_choice_frequency = bound(1, music_choice_frequency - 1, #use_music_from_choices)
+    music_choice_frequency = util.bound(1, music_choice_frequency - 1, #use_music_from_choices)
     update_music_frequency()
   end
 
@@ -890,12 +893,12 @@ local function debug_menu(button_idx)
   local framesBehindLimit = 200
 
   local function increaseVsFramesBehind()
-    vsFramesBehind = bound(-framesBehindLimit, vsFramesBehind + 1, framesBehindLimit)
+    vsFramesBehind = util.bound(-framesBehindLimit, vsFramesBehind + 1, framesBehindLimit)
     updateVsFramesBehind()
   end
 
   local function decreaseVsFramesBehind()
-    vsFramesBehind = bound(-framesBehindLimit, vsFramesBehind - 1, framesBehindLimit)
+    vsFramesBehind = util.bound(-framesBehindLimit, vsFramesBehind - 1, framesBehindLimit)
     updateVsFramesBehind()
   end
 
@@ -1110,12 +1113,12 @@ function options.main(button_idx)
   end
 
   local function increase_language()
-    language_number = bound(1, language_number + 1, #localization:get_list_codes())
+    language_number = util.bound(1, language_number + 1, #localization:get_list_codes())
     update_language(true)
   end
 
   local function decrease_language()
-    language_number = bound(1, language_number - 1, #localization:get_list_codes())
+    language_number = util.bound(1, language_number - 1, #localization:get_list_codes())
     update_language(true)
   end
 

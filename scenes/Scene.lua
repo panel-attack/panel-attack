@@ -7,20 +7,13 @@ local Scene = class(
   end
 )
 
-function Scene:init()
-  
-end
+-- abstract functions to be implemented per scene
+function Scene:init() end
 
-function Scene:load()
-  
-end
+function Scene:load() end
 
-function Scene:update()
-  
-end
+function Scene:update() end
 
-function Scene:unload()
-  
-end
+function Scene:unload() end
 
 return Scene

@@ -76,7 +76,7 @@ end
 local function exitLobby()
   exit = true
   commonSelectLobby()
-  sceneManager:switchToScene("main_menu")
+  sceneManager:switchToScene("mainMenu")
   json_send({logout = true})
   --ret = {main_select_mode}
 end
@@ -121,7 +121,7 @@ function lobby:load(sceneParams)
   gprint(loc("lb_set_connect"), unpack(themes[config.theme].main_menu_screen_pos))
 
   if not network_init(sceneParams.ip, sceneParams.network_port) then
-    sceneManager:switchToScene("main_menu")
+    sceneManager:switchToScene("mainMenu")
     return
     --return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
   end
@@ -130,7 +130,7 @@ function lobby:load(sceneParams)
   while not connection_is_ready() do
     gprint(loc("lb_connecting"), unpack(themes[config.theme].main_menu_screen_pos))
     if not do_messages() then
-      sceneManager:switchToScene("main_menu")
+      sceneManager:switchToScene("mainMenu")
       return
       --return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
     end
@@ -203,7 +203,7 @@ function lobby:update()
         --TODO: create a menu here to let the user choose "continue unranked" or "get a new user_id"
         --login_status_message = "Login for ranked matches failed.\n"..msg.reason.."\n\nYou may continue unranked,\nor delete your invalid user_id file to have a new one assigned."
         login_status_message_duration = 10
-        sceneManager:switchToScene("main_menu")
+        sceneManager:switchToScene("mainMenu")
         return
         --return main_dumb_transition, {main_select_mode, loc("lb_error_msg") .. "\n\n" .. json.encode(msg), 60, 600}
       end
@@ -218,11 +218,11 @@ function lobby:update()
     updated = true
     items = {}
     if msg.choose_another_name and msg.choose_another_name.used_names then
-      sceneManager:switchToScene("main_menu")
+      sceneManager:switchToScene("mainMenu")
       return
       --return main_dumb_transition, {main_select_mode, loc("lb_used_name"), 60, 600}
     elseif msg.choose_another_name and msg.choose_another_name.reason then
-      sceneManager:switchToScene("main_menu")
+      sceneManager:switchToScene("mainMenu")
       return
       --return main_dumb_transition, {main_select_mode, "Error: " .. msg.choose_another_name.reason, 60, 300}
     end
@@ -414,7 +414,7 @@ function lobby:update()
   --  return unpack(ret)
   --end
   if not do_messages() then
-    sceneManager:switchToScene("main_menu")
+    sceneManager:switchToScene("mainMenu")
     return
     --return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
   end

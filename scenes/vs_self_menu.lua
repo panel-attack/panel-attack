@@ -4,7 +4,7 @@ local CharacterSelect = require("scenes.CharacterSelect")
 local vs_self_menu = CharacterSelect(
   "vs_self_menu", 
   {
-    previous_scene = "main_menu",
+    previous_scene = "mainMenu",
     next_scene = "vs_self_game"
   })
 

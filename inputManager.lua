@@ -72,11 +72,33 @@ function inputManager:joystickReleased(joystick, button)
   self.allKeys.isUp[key] = KEY_CHANGE.DETECTED
 end 
  
- -- maps joysticks' dpad state to the appropriate input maps
+ -- maps joysticks' analog sticks state to the appropriate input maps
 function inputManager:joystickToButtons()
   for _, joystick in ipairs(love.joystick.getJoysticks()) do 
-    for _, axis in ipairs({"left", "right"}) do
-      local dpadState = joystickManager:joystickToDPad(joystick, axis)
+    for axisIndex = 1, joystick:getAxisCount() / 2 do
+      local dpadState = joystickManager:joystickToDPad(joystick, axisIndex * 2 - 1, axisIndex * 2)
+      for key, isPressed in pairs(dpadState) do 
+        if isPressed then 
+          if not self.allKeys.isDown[key] and not self.allKeys.isPressed[key] then 
+            self.allKeys.isDown[key] = KEY_CHANGE.DETECTED 
+          end 
+        else 
+          if self.allKeys.isDown[key] or self.allKeys.isPressed[key] then 
+            self.allKeys.isDown[key] = KEY_CHANGE.NONE  
+            self.allKeys.isPressed[key] = KEY_CHANGE.NONE  
+            self.allKeys.isUp[key] = KEY_CHANGE.DETECTED 
+          end 
+        end 
+      end
+    end 
+  end 
+end
+
+ -- maps joysticks' dpad to the appropriate input maps
+function inputManager:dPadToButtons()
+  for _, joystick in ipairs(love.joystick.getJoysticks()) do
+    for hatIndex = 1, joystick:getHatCount() do
+      local dpadState = joystickManager:getDPadState(joystick, hatIndex)
       for key, isPressed in pairs(dpadState) do 
         if isPressed then 
           if not self.allKeys.isDown[key] and not self.allKeys.isPressed[key] then 
@@ -139,7 +161,8 @@ function inputManager:updateKeyMaps()
 end
  
 function inputManager:update(dt) 
-  self:joystickToButtons() 
+  self:joystickToButtons()
+  self:dPadToButtons()
   self:updateKeyStates(dt, self.allKeys)
   self:updateKeyStates(dt, self.mouse)
   self:updateKeyMaps()

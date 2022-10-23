@@ -44,7 +44,7 @@ function set_name_menu:update()
   end
   if input.allKeys.isDown["escape"] then
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-    sceneManager:switchToScene("main_menu")
+    sceneManager:switchToScene("mainMenu")
   end
   
   name_field:draw()

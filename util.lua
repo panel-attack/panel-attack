@@ -1,4 +1,5 @@
 local tableUtils = require("tableUtils")
+json = require("dkjson")
 
 local sort, pairs = table.sort, pairs
 local type, setmetatable, getmetatable = type, setmetatable, getmetatable
@@ -30,8 +31,10 @@ function util.split(input_str, sep)
   return t
 end
 
+local util = {}
+
 -- bounds b so a<=b<=c
-function bound(a, b, c)
+function util.bound(a, b, c)
   if b < a then
     return a
   elseif b > c then
@@ -235,7 +238,7 @@ for i = 1, 64 do
 end
 
 -- split the input string on some separator, returns table
-function split(inputstr, sep)
+function util.split(inputstr, sep)
   sep = sep or "%s"
   local t = {}
   for field, s in string.gmatch(inputstr, "([^" .. sep .. "]*)(" .. sep .. "?)") do

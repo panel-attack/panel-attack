@@ -22,7 +22,7 @@ local function setLabels(self, labels, values, selectedIndex)
 end
 
 local function setState(self, i)
-  local new_index = util.clamp(1, i, #self.labels)
+  local new_index = util.bound(1, i, #self.labels)
   if i ~= new_index then
     return
   end

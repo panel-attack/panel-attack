@@ -161,7 +161,7 @@ function replay_menu:update()
     replay_browser_menu()
 
     if input.allKeys.isDown["escape"] then
-      sceneManager:switchToScene("main_menu")
+      sceneManager:switchToScene("mainMenu")
     end
     if input.isDown["Swap1"] then
       play_optional_sfx(themes[config.theme].sounds.menu_validate)

@@ -1,5 +1,3 @@
-local consts = require("consts")
-local socket = require("socket")
 local transitionUtils = require("scenes.transitionUtils")
 
 --@module sceneManager

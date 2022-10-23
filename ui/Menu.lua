@@ -1,16 +1,8 @@
 local class = require("class")
-local replay_browser = require("replay_browser")
-local logger = require("logger")
-local options = require("options")
-local utf8 = require("utf8")
-local analytics = require("analytics")
-local main_config_input = require("config_inputs")
-local ServerQueue = require("ServerQueue")
 local UIElement = require("ui.UIElement")
 local Button = require("ui.Button")
 local Slider = require("ui.Slider")
 local Label = require("ui.Label")
-local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local consts = require("consts")
 
@@ -60,6 +52,10 @@ local arrow = love.graphics.newText(font, ">")
 Menu.setMenuItems = setMenuItems
 
 function Menu:update()
+  if not self.isEnabled then
+    return
+  end
+  
   if input:isPressedWithRepeat("Up", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     self.selectedIndex = ((self.selectedIndex - 2) % #self.menuItems) + 1
     play_optional_sfx(themes[config.theme].sounds.menu_move)

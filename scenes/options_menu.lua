@@ -50,7 +50,7 @@ local font = love.graphics.getFont()
 
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  sceneManager:switchToScene("main_menu")
+  sceneManager:switchToScene("mainMenu")
 end
 
 local function updateMenuLanguage()
