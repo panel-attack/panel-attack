@@ -2,11 +2,10 @@ require("consts")
 require("queue")
 require("server_queue")
 
---- @module globals
-local globals = {
-  canvas_width = 1280,
-  canvas_height = 720
-}
+
+canvas_width = 1280
+canvas_height = 720
+
 
 -- keyboard assignment vars
 keys = {}

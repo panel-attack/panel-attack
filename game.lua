@@ -32,7 +32,7 @@ local Game = class(
     self.renderDuringPause = false -- if the game can render when you are paused
     self.gfx_q = Queue()
     self.server_queue = ServerQueue()
-    self.main_menu_screen_pos = {globals.canvas_width / 2 - 108 + 50, globals.canvas_height / 2 - 111}
+    self.main_menu_screen_pos = {canvas_width / 2 - 108 + 50, canvas_height / 2 - 111}
     self.config = config
     self.localization = Localization()
     self.replay = {}
@@ -47,7 +47,7 @@ local Game = class(
     self.canvasHRatio = 9
     
     -- depends on canvasXScale
-    self.global_canvas = love.graphics.newCanvas(globals.canvas_width, globals.canvas_height, {dpiscale=newCanvasSnappedScale(self)})
+    self.global_canvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=newCanvasSnappedScale(self)})
     
     self.availableScales = {1, 1.5, 2, 2.5, 3}
     self.showGameScale = false
@@ -233,8 +233,8 @@ end
 
 function Game:draw()
   if self.foreground_overlay then
-    local scale = globals.canvas_width / math.max(self.foreground_overlay:getWidth(), self.foreground_overlay:getHeight()) -- keep image ratio
-    menu_drawf(self.foreground_overlay, globals.canvas_width / 2, globals.canvas_width / 2, "center", "center", 0, scale, scale)
+    local scale = canvas_width / math.max(self.foreground_overlay:getWidth(), self.foreground_overlay:getHeight()) -- keep image ratio
+    menu_drawf(self.foreground_overlay, canvas_width / 2, canvas_width / 2, "center", "center", 0, scale, scale)
   end
 
   -- Clear the screen
@@ -278,8 +278,8 @@ function Game:draw()
     self.backgroundImage:draw()
   end
   if self.background_overlay then
-    local scale = globals.canvas_width / math.max(self.background_overlay:getWidth(), self.background_overlay:getHeight()) -- keep image ratio
-    menu_drawf(self.background_overlay, globals.canvas_width / 2, globals.canvas_height / 2, "center", "center", 0, scale, scale)
+    local scale = canvas_width / math.max(self.background_overlay:getWidth(), self.background_overlay:getHeight()) -- keep image ratio
+    menu_drawf(self.background_overlay, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
   end
 end
 
