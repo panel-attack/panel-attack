@@ -2,6 +2,12 @@ require("consts")
 require("queue")
 require("server_queue")
 
+--- @module globals
+local globals = {
+  canvas_width = 1280,
+  canvas_height = 720
+}
+
 -- keyboard assignment vars
 keys = {}
 this_frame_keys = {}
@@ -49,3 +55,5 @@ SFX_GameOver_Play = 0
 global_op_state = nil
 
 current_use_music_from = "stage" -- either "stage" or "characters", no other values!
+
+return globals

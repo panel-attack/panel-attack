@@ -3,8 +3,6 @@ local tableUtils = require("tableUtils")
 --- @module consts
 local consts = {
   VERSION = "046",
-  CANVAS_WIDTH = 1280,
-  CANVAS_HEIGHT = 720,
   DEFAULT_THEME_DIR = "Panel Attack",
   RANDOM_CHARACTER_SPECIAL_VALUE = "__RandomCharacter",
   RANDOM_STAGE_SPECIAL_VALUE = "__RandomStage",
@@ -20,9 +18,6 @@ local consts = {
 
 -- The values in this file are constants (except in this file perhaps) and are expected never to change during the game, not to be confused with globals!
 VERSION = "046"
-
-canvas_width = 1280
-canvas_height = 720
 
 global_background_color = { 0.0, 0.0, 0.0 }
 

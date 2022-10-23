@@ -1,6 +1,7 @@
 -- The main game object for tracking everything in Panel Attack.
 -- Not to be confused with "Match" which is the current battle / instance of the game.
 local consts = require("consts")
+local globals = require("globals")
 local class = require("class")
 local logger = require("logger")
 local sound = require("sound")
@@ -31,7 +32,7 @@ local Game = class(
     self.renderDuringPause = false -- if the game can render when you are paused
     self.gfx_q = Queue()
     self.server_queue = ServerQueue()
-    self.main_menu_screen_pos = {consts.CANVAS_WIDTH / 2 - 108 + 50, consts.CANVAS_HEIGHT / 2 - 111}
+    self.main_menu_screen_pos = {globals.canvas_width / 2 - 108 + 50, globals.canvas_height / 2 - 111}
     self.config = config
     self.localization = Localization()
     self.replay = {}
@@ -42,9 +43,11 @@ local Game = class(
     self.canvasY = 0
     self.canvasXScale = 1
     self.canvasYScale = 1
+    self.canvasWRatio = 16
+    self.canvasHRatio = 9
     
     -- depends on canvasXScale
-    self.global_canvas = love.graphics.newCanvas(consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT, {dpiscale=newCanvasSnappedScale(self)})
+    self.global_canvas = love.graphics.newCanvas(globals.canvas_width, globals.canvas_height, {dpiscale=newCanvasSnappedScale(self)})
     
     self.availableScales = {1, 1.5, 2, 2.5, 3}
     self.showGameScale = false
@@ -230,8 +233,8 @@ end
 
 function Game:draw()
   if self.foreground_overlay then
-    local scale = consts.CANVAS_WIDTH / math.max(self.foreground_overlay:getWidth(), self.foreground_overlay:getHeight()) -- keep image ratio
-    menu_drawf(self.foreground_overlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
+    local scale = globals.canvas_width / math.max(self.foreground_overlay:getWidth(), self.foreground_overlay:getHeight()) -- keep image ratio
+    menu_drawf(self.foreground_overlay, globals.canvas_width / 2, globals.canvas_width / 2, "center", "center", 0, scale, scale)
   end
 
   -- Clear the screen
@@ -275,8 +278,8 @@ function Game:draw()
     self.backgroundImage:draw()
   end
   if self.background_overlay then
-    local scale = consts.CANVAS_WIDTH / math.max(self.background_overlay:getWidth(), self.background_overlay:getHeight()) -- keep image ratio
-    menu_drawf(self.background_overlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
+    local scale = globals.canvas_width / math.max(self.background_overlay:getWidth(), self.background_overlay:getHeight()) -- keep image ratio
+    menu_drawf(self.background_overlay, globals.canvas_width / 2, globals.canvas_height / 2, "center", "center", 0, scale, scale)
   end
 end
 
@@ -347,7 +350,7 @@ function Game:updateCanvasPositionAndScale(newWindowWidth, newWindowHeight)
   if scaleIsUpdated == false then
     -- The only thing left to do is scale to fit the window
     local w, h
-    self.canvasX, self.canvasY, w, h = scale_letterbox(newWindowWidth, newWindowHeight, 16, 9)
+    self.canvasX, self.canvasY, w, h = scale_letterbox(newWindowWidth, newWindowHeight, self.canvasWRatio, self.canvasHRatio)
     self.canvasXScale = w / canvas_width
     self.canvasYScale = h / canvas_height
   end

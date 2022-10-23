@@ -1,6 +1,7 @@
 json = require("dkjson")
 local util = require("util")
 require("consts")
+require("globals")
 
 -- Default configuration values
 config = {

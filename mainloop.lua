@@ -185,6 +185,7 @@ do
       main_menu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
     end
     main_menu:add_button(loc("mm_fullscreen", "(LAlt+Enter)"), fullscreen, goEscape)
+    main_menu:add_button("Portrait mode" --[[to do: loc("mm_portrait_mode")]], portrait_mode, goEscape)
     main_menu:add_button(loc("mm_quit"), exit_game, exit_game)
 
     while true do
@@ -1844,6 +1845,26 @@ end
 -- toggles fullscreen
 function fullscreen()
   love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
+  return main_select_mode
+end
+
+-- toggles portrait mode
+function portrait_mode()
+  if not GAME.portrait_mode then
+    GAME.portrait_mode = true
+    GAME.CanvasWRatio = 9
+    GAME.CanvasHRatio = 16
+    globals.canvas_width = 720
+    globals.canvas_height = 1280
+    love.window.setMode(720, 1280)
+  else
+    GAME.portrait_mode = false
+    GAME.CanvasWRatio = 16
+    GAME.CanvasHRatio = 9
+    globals.canvas_width = 1280
+    globals.canvas_height = 720
+    love.window.setMode(1280,720)
+  end
   return main_select_mode
 end
 
