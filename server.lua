@@ -312,8 +312,8 @@ function Room.add_spectator(self, new_spectator_connection)
     opponent_settings = {character = self.b.character, character_display_name = self.b.character_display_name, level = self.b.level, player_number = self.b.player_number}
   }
   if COMPRESS_SPECTATOR_REPLAYS_ENABLED then
-    msg.replay_of_match_so_far.vs.in_buf = compress_input_string(msg.replay_of_match_so_far.vs.in_buf)
-    msg.replay_of_match_so_far.vs.I = compress_input_string(msg.replay_of_match_so_far.vs.I)
+    msg.replay_of_match_so_far.vs.in_buf = compressInputsByTable(msg.replay_of_match_so_far.vs.in_buf)
+    msg.replay_of_match_so_far.vs.I = compressInputsByTable(msg.replay_of_match_so_far.vs.I)
   end
   new_spectator_connection:send(msg)
   msg = {spectators = self:spectator_names()}
@@ -804,8 +804,8 @@ function Room.resolve_game_outcome(self)
       end
       filename = filename .. ".txt"
       if self.replay.vs and COMPRESS_REPLAYS_ENABLED then
-        self.replay.vs.I = compress_input_string(self.replay.vs.I)
-        self.replay.vs.in_buf = compress_input_string(self.replay.vs.in_buf)
+        self.replay.vs.I = compressInputsByTable(self.replay.vs.I)
+        self.replay.vs.in_buf = compressInputsByTable(self.replay.vs.in_buf)
         logger.debug("Compressed vs I/in_buf")
         logger.info("saving compressed replay as " .. path .. sep .. filename)
       else

@@ -86,7 +86,7 @@ Stack =
     s.panel_buffer = ""
     s.gpanel_buffer = ""
     s.input_buffer = ""
-    s.confirmedInput = "" -- All inputs the player has input ever
+    s.confirmedInput = {} -- All inputs the player has input ever
     s.panels = {}
     s.width = 6
     s.height = 12
@@ -424,7 +424,7 @@ function Stack.restoreFromRollbackCopy(self, other)
   end
   -- The remaining inputs is the confirmed inputs not processed yet for this clock time
   -- We have processed CLOCK time number of inputs when we are at CLOCK, so we only want to process the CLOCK+1 input on
-  self.input_buffer = string.sub(self.confirmedInput, self.CLOCK+1)
+  self.input_buffer = table.concat(self.confirmedInput, nil, self.CLOCK + 1)
 end
 
 function Stack.rollbackToFrame(self, frame) 
@@ -1007,9 +1007,10 @@ function Stack.setupInput(self)
 end
 
 function Stack.receiveConfirmedInput(self, input)
-  self.confirmedInput = self.confirmedInput .. input
+  local inputs = string.toCharTable(input)
+  table.appendToList(self.confirmedInput, inputs)
   self.input_buffer = self.input_buffer .. input
-  --logger.debug("Player " .. self.which .. " got new input. Total length: " .. string.len(self.confirmedInput))
+  --logger.debug("Player " .. self.which .. " got new input. Total length: " .. table.length(self.confirmedInput))
 end
 
 -- Enqueue a card animation

@@ -234,6 +234,44 @@ function compress_input_string(inputs)
   end
 end
 
+function compressInputsByTable(inputs)
+  if inputs:match("%(%d+%)") or not inputs:match("[%a%+%/][%a%+%/]") then
+    -- Detected a digit enclosed in parentheses in the inputs, the inputs are already compressed.
+    return inputs
+  else
+    local compressedTable = {}
+    local inputTable = string.toCharTable(inputs)
+    local repeatCount = 1
+    local currentInput = inputTable[1]
+    local function addToTable()
+      -- write the input
+      if tonumber(currentInput) == nil then
+        compressedTable[#compressedTable+1] = currentInput .. repeatCount
+      else
+        local completeInput = "(" .. currentInput
+        for j = 2, repeatCount do
+          completeInput = completeInput .. currentInput
+        end
+        compressedTable[#compressedTable+1] = completeInput .. ")"
+      end
+    end
+
+    for i = 2, #inputTable do
+      if inputTable[i] ~= currentInput then
+        addToTable()
+        currentInput = inputTable[i]
+        repeatCount = 1
+      else
+        repeatCount = repeatCount + 1
+      end
+    end
+    -- add the final entry without having to check for table length in every iteration
+    addToTable()
+
+    return table.concat(compressedTable)
+  end
+end
+
 function uncompress_input_string(inputs)
   if inputs:match("[%a%+%/][%a%+%/]") then
     -- Detected two consecutive letters or symbols in the inputs, the inputs are not compressed.
@@ -248,6 +286,23 @@ function uncompress_input_string(inputs)
       end
     end
     return uncompressed_inputs
+  end
+end
+
+function uncompressInputsByTable(inputs)
+  if inputs:match("[%a%+%/][%a%+%/]") then
+    -- Detected two consecutive letters or symbols in the inputs, the inputs are not compressed.
+    return inputs
+  else
+    local inputChunks = {}
+    for w in inputs:gmatch("[%a%+%/]%d+%(?%d*%)?") do
+      inputChunks[#inputChunks+1] = string.rep(w:sub(1, 1), w:match("%d+"))
+      local input_value = w:match("%(%d+%)")
+      if input_value then
+        inputChunks[#inputChunks+1] = input_value:match("%d+")
+      end
+    end
+    return table.concat(inputChunks)
   end
 end
 
@@ -337,4 +392,12 @@ function json.isValid(str)
 
   -- if there is still backlog remaining, it means that some stuff didn't get closed
   return #searchBackLog == 0
+end
+
+function string.toCharTable(self)
+  local t = {}
+  for field, s in self:gmatch(".") do
+    table.insert(t, field)
+  end
+  return t
 end

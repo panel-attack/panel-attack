@@ -64,22 +64,22 @@ function write_replay_file(path, filename)
       file:open("w")
       logger.debug("Writing to Replay File")
       if replay.puzzle then
-        replay.puzzle.in_buf = compress_input_string(replay.puzzle.in_buf)
+        replay.puzzle.in_buf = compressInputsByTable(replay.puzzle.in_buf)
         logger.debug("Compressed puzzle in_buf")
         logger.debug(replay.puzzle.in_buf)
       else
         logger.debug("No Puzzle")
       end
       if replay.endless then
-        replay.endless.in_buf = compress_input_string(replay.endless.in_buf)
+        replay.endless.in_buf = compressInputsByTable(replay.endless.in_buf)
         logger.debug("Compressed endless in_buf")
         logger.debug(replay.endless.in_buf)
       else
         logger.debug("No Endless")
       end
       if replay.vs then
-        replay.vs.I = compress_input_string(replay.vs.I)
-        replay.vs.in_buf = compress_input_string(replay.vs.in_buf)
+        replay.vs.I = compressInputsByTable(replay.vs.I)
+        replay.vs.in_buf = compressInputsByTable(replay.vs.in_buf)
         logger.debug("Compressed vs I/in_buf")
       else
         logger.debug("No vs")

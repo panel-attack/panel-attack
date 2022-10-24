@@ -82,7 +82,7 @@ function Replay.loadFromFile(replay)
     P1:wait_for_random_character()
   end
 
-  P1:receiveConfirmedInput(uncompress_input_string(replay.in_buf))
+  P1:receiveConfirmedInput(uncompressInputsByTable(replay.in_buf))
   GAME.match.P1 = P1
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
@@ -91,7 +91,7 @@ function Replay.loadFromFile(replay)
   refreshBasedOnOwnMods(P1)
 
   if P2 then
-    P2:receiveConfirmedInput(uncompress_input_string(replay.I))
+    P2:receiveConfirmedInput(uncompressInputsByTable(replay.I))
 
     GAME.match.P2 = P2
     P2.do_countdown = replay.do_countdown or false
