@@ -858,7 +858,7 @@ function select_screen.start1pLocalMatch(self)
     local health = nil
     if GAME.battleRoom.trainingModeSettings.healthDifficulties then
       local difficulties = GAME.battleRoom.trainingModeSettings.healthDifficulties
-      health = Health(difficulties[currentStage][1], difficulties[currentStage][2], difficulties[currentStage][3])
+      health = Health(difficulties[currentStage][1], difficulties[currentStage][2], difficulties[currentStage][3], difficulties[currentStage][4])
     end
 
     local character = characters_ids_for_current_theme[((currentStage - 1) % #characters_ids_for_current_theme) + 1]
