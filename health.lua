@@ -13,22 +13,35 @@ local barWidth = 50
 
 Health =
   class(
-  function(self, secondsToppedOutToLose, lineClearGPM, height)
+  function(self, secondsToppedOutToLose, lineClearGPM, height, riseLevel)
     self.secondsToppedOutToLose = secondsToppedOutToLose
     self.maxSecondsToppedOutToLose = secondsToppedOutToLose
     self.lineClearRate = lineClearGPM / 60
     self.currentLines = 0
     self.lastWasFourCombo = false
     self.height = height
+    self.CLOCK = 0
+    self.riseLevel = riseLevel
+    self.currentRiseSpeed = level_to_starting_speed[self.riseLevel]
   end
 )
 
 function Health:run()
+
+  -- Increment rise speed if needed
+  if self.CLOCK > 0 and self.CLOCK % (15 * 60) == 0 then
+    self.currentRiseSpeed = math.min(self.currentRiseSpeed + 1, 99)
+  end
+
+  local risenLines = 1.0 / (speed_to_rise_time[self.currentRiseSpeed] * 16)
+  self.currentLines = self.currentLines + risenLines
+
   local decrementLines = (self.lineClearRate * (1/60.0))
   self.currentLines = math.max(0, self.currentLines - decrementLines)
   if self.currentLines >= self.height then
     self.secondsToppedOutToLose = math.max(0, self.secondsToppedOutToLose - (1/60.0))
   end
+  self.CLOCK = self.CLOCK + 1
 end
 
 function Health:receiveGarbage(frameToReceive, garbageList)
