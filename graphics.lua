@@ -478,7 +478,7 @@ function Stack.render(self)
   gfx_q:push({love.graphics.setStencilTest, {}})
   gfx_q:push({love.graphics.setCanvas, {GAME.globalCanvas}})
   gfx_q:push({love.graphics.setBlendMode, {"alpha", "premultiplied"}})
-  gfx_q:push({love.graphics.draw, {self.canvas, (self.pos_x - 4) * GFX_SCALE, (self.pos_y - 4) * GFX_SCALE}})
+  gfx_q:push({love.graphics.draw, {self.canvas, (self.pos_x - 4) * GFX_SCALE, (self.pos_y - 4) * GFX_SCALE, 0, self.gfx_scale / GFX_SCALE, self.gfx_scale / GFX_SCALE}})
   gfx_q:push({love.graphics.setBlendMode, {"alpha", "alphamultiply"}})
 
   self:draw_popfxs()

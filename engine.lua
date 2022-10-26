@@ -61,10 +61,8 @@ Stack =
     end
     if which == 1 and GAME.portrait_mode then
       s.gfx_scale = 4
-      print("gfx_scale for stack set to 4")
     else
       s.gfx_scale = GFX_SCALE
-      print("gfx_scale for stack UNCHANGED")
     end
     -- frame.png dimensions
     if wantsCanvas then
