@@ -269,3 +269,72 @@ function dump(o, includeNewLines)
     return tostring(o)
   end
 end
+
+function json.isValid(str)
+  local content = trim(str)
+  local length = string.len(content)
+  local firstChar = string.sub(content, 1, 1)
+  local lastChar = string.sub(content, length, length)
+  -- early quit condition for clearly non-matching files
+  if not table.contains({"{", "["}, firstChar) or not table.contains({"}", "]"}, lastChar) then
+    return false
+  end
+
+  -- for every { there needs to be a }
+  -- for every [ there needs to be a ]
+  -- for every : there needs to be either , or a new line (cause we use a fake/old json spec that is somewhat akin to YAML)
+  -- all of these 3 character typs need to respect sequence
+  -- {{[:,:,[]:,]}} 
+  -- track the expected closure characters based on openers from front to back:
+  -- }}],],,
+
+  -- any content inside "" is excluded from search
+  content = string.gsub(content, "\".-\"", "")
+
+  -- any comments are excluded from search
+  content = string.gsub(content, "/%*.-%*/", "")
+  content = string.gsub(content, "//.-\n", "")
+
+  -- any other content aside from key characters is getting purged for better overview
+  content = string.gsub(content, "[^%{%}%[%]:,\n]", "")
+
+  -- \n and , are interchangeable but there may be more \n for formatting purposes
+  -- replace all occurences of , with \n
+  content = string.gsub(content, ",", "\n")
+
+  local searchBackLog = {}
+  
+  for match in string.gmatch(content, ".") do
+    -- for each find, put the inverse character at the end of the table
+    -- search the table from end to start later (better performance compared to table.insert(table, value, 1)
+    if match == "{" then
+      searchBackLog[#searchBackLog+1] = "}"
+    elseif match == "[" then
+      searchBackLog[#searchBackLog+1] = "]"
+    elseif match == ":" then
+      searchBackLog[#searchBackLog+1] = "\n"
+    else
+      if searchBackLog[#searchBackLog] == match then
+        searchBackLog[#searchBackLog] = nil
+      elseif match == "\n" then
+        -- could be extra whitespace, skip
+      elseif searchBackLog[#searchBackLog] == "\n" then
+        -- the final attribute of a level does not need to be closed with a , or new line
+        searchBackLog[#searchBackLog] = nil
+        -- confirm that the next expected character matches
+        if searchBackLog[#searchBackLog] == match then
+          searchBackLog[#searchBackLog] = nil
+        else
+          -- not a json if it doesn't
+          return false
+        end
+      else
+        -- mismatch
+        return false
+      end
+    end
+  end
+
+  -- if there is still backlog remaining, it means that some stuff didn't get closed
+  return #searchBackLog == 0
+end
