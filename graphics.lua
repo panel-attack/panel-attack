@@ -461,7 +461,7 @@ function Stack.render(self)
     graphicsUtil.drawScaledImage(frameImage, 0, 0, 312, 612)
   end
   if wallImage then
-    graphicsUtil.drawScaledWidthImage(wallImage, 12, (4 - shake + self.height * 16)*GFX_SCALE, 288)
+    graphicsUtil.drawScaledWidthImage(wallImage, 12, (4 - shake + self.height * 16)*self.gfx_scale, 288)
   end
 
   -- Draw the cursor
@@ -491,11 +491,11 @@ function Stack.render(self)
     for row = 0, self.height do
       for col = 1, self.width do
         local panel = self.panels[row][col]
-        local draw_x = (self.pos_x + (col - 1) * 16) * GFX_SCALE
-        local draw_y = (self.pos_y + (11 - (row)) * 16 + self.displacement - shake) * GFX_SCALE
+        local draw_x = (self.pos_x + (col - 1) * 16) * self.gfx_scale
+        local draw_y = (self.pos_y + (11 - (row)) * 16 + self.displacement - shake) * self.gfx_scale
 
         -- Require hovering over a stack to show details
-        if mx >= self.pos_x * GFX_SCALE and mx <= (self.pos_x + self.width * 16) * GFX_SCALE then
+        if mx >= self.pos_x * self.gfx_scale and mx <= (self.pos_x + self.width * 16) * self.gfx_scale then
           if panel.color ~= 0 and panel.state ~= "popped" then
             gprint(panel.state, draw_x, draw_y)
             if panel.match_anyway ~= nil then
@@ -510,7 +510,7 @@ function Stack.render(self)
           end
         end
 
-        if mx >= draw_x and mx < draw_x + 16 * GFX_SCALE and my >= draw_y and my < draw_y + 16 * GFX_SCALE then
+        if mx >= draw_x and mx < draw_x + 16 * self.gfx_scale and my >= draw_y and my < draw_y + 16 * self.gfx_scale then
           local str = loc("pl_panel_info", row, col)
           for k, v in pairsSortedByKeys(panel) do
             str = str .. "\n" .. k .. ": " .. tostring(v)
@@ -896,7 +896,7 @@ function Stack.render(self)
       local chain_amount = chainData[i]
       if chain_amount and chain_amount > 0 then
         icon_width, icon_height = themes[config.theme].images.IMG_cards[true][i]:getDimensions()
-        draw(themes[config.theme].images.IMG_cards[true][i], x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+        draw(themes[config.theme].images.IMG_cards[true][i], x / self.gfx_scale, y / self.gfx_scale, 0, iconSize / icon_width, iconSize / icon_height)
         gprintf(chain_amount, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
         y = y + nextIconIncrement
       end
@@ -923,7 +923,7 @@ function Stack.render(self)
     for i, combo_amount in pairs(comboData) do
       if combo_amount and combo_amount > 0 then
         icon_width, icon_height = themes[config.theme].images.IMG_cards[false][i]:getDimensions()
-        draw(themes[config.theme].images.IMG_cards[false][i], xCombo / GFX_SCALE, yCombo / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+        draw(themes[config.theme].images.IMG_cards[false][i], xCombo / self.gfx_scale, yCombo / self.gfx_scale, 0, iconSize / icon_width, iconSize / icon_height)
         gprintf(combo_amount, xCombo + iconToTextSpacing, yCombo + 0, canvas_width, "left", nil, 1, fontIncrement)
         yCombo = yCombo + nextIconIncrement
       end

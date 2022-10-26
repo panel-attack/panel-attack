@@ -295,7 +295,7 @@ end
 
 function Telegraph:telegraphRenderXPosition(index)
 
-  local stackWidth = math.floor(self.owner.canvas:getWidth() / GFX_SCALE)
+  local stackWidth = math.floor(self.owner.canvas:getWidth() / self.owner.gfx_scale)
   local increment = -TELEGRAPH_BLOCK_WIDTH * self.owner.mirror_x
 
   local result = self.pos_x

@@ -59,10 +59,16 @@ Stack =
         s.NCOLORS = difficulty_to_ncolors_1Ptime[difficulty]
       end
     end
-
+    if which == 1 and GAME.portrait_mode then
+      s.gfx_scale = 4
+      print("gfx_scale for stack set to 4")
+    else
+      s.gfx_scale = GFX_SCALE
+      print("gfx_scale for stack UNCHANGED")
+    end
     -- frame.png dimensions
     if wantsCanvas then
-      s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale=GAME:newCanvasSnappedScale()})
+      s.canvas = love.graphics.newCanvas(104 * s.gfx_scale, 204 * s.gfx_scale, {dpiscale=GAME:newCanvasSnappedScale()})
     end
 
     if level then
@@ -414,6 +420,7 @@ function Stack.rollbackCopy(self, source, other)
   other.danger_timer = source.danger_timer
   other.analytic = deepcpy(source.analytic)
   other.game_over_clock = source.game_over_clock
+  other.gfx_scale = source.gfx_scale
 
   return other
 end
