@@ -1852,15 +1852,15 @@ end
 function portrait_mode()
   if not GAME.portrait_mode then
     GAME.portrait_mode = true
-    GAME.CanvasWRatio = 9
-    GAME.CanvasHRatio = 16
+    GAME.canvasWRatio = 9
+    GAME.canvasHRatio = 16
     canvas_width = 720
     canvas_height = 1280
-    love.window.setMode(720, 1280)
+    love.window.setMode(450, 800)
   else
     GAME.portrait_mode = false
-    GAME.CanvasWRatio = 16
-    GAME.CanvasHRatio = 9
+    GAME.canvasWRatio = 16
+    GAME.canvasHRatio = 9
     canvas_width = 1280
     canvas_height = 720
     love.window.setMode(1280,720)
