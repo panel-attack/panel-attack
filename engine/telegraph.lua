@@ -444,7 +444,7 @@ function Telegraph:render()
           end
 
           if stopperTime then
-            gprintf(stopperTime, draw_x*GFX_SCALE, (draw_y-8)*GFX_SCALE, 70, "center", nil, 1, large_font)
+            gprintf(stopperTime, draw_x*self.gfx_scale, (draw_y-8)*self.gfx_scale, 70, "center", nil, 1, large_font)
           end
         end
 
@@ -464,7 +464,7 @@ function Telegraph:render()
 
       -- Render a "G" for ghost
       if config.debug_mode then
-        gprintf("G", draw_x*GFX_SCALE, (draw_y-8)*GFX_SCALE, 70, "center", nil, 1, large_font)
+        gprintf("G", draw_x*self.gfx_scale, (draw_y-8)*self.gfx_scale, 70, "center", nil, 1, large_font)
       end
     end
 

@@ -461,7 +461,7 @@ function Stack.render(self)
     graphicsUtil.drawScaledImage(frameImage, 0, 0, 312, 612)
   end
   if wallImage then
-    graphicsUtil.drawScaledWidthImage(wallImage, 12, (4 - shake + self.height * 16)*self.gfx_scale, 288)
+    graphicsUtil.drawScaledWidthImage(wallImage, 12, (4 - shake + self.height * 16)* GFX_SCALE, 288)
   end
 
   -- Draw the cursor

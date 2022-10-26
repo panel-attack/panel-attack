@@ -60,13 +60,13 @@ Stack =
       end
     end
     if which == 1 and GAME.portrait_mode then
-      s.gfx_scale = 4
+      s.gfx_scale = 2
     else
       s.gfx_scale = GFX_SCALE
     end
     -- frame.png dimensions
     if wantsCanvas then
-      s.canvas = love.graphics.newCanvas(104 * s.gfx_scale, 204 * s.gfx_scale, {dpiscale=GAME:newCanvasSnappedScale()})
+      s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale=GAME:newCanvasSnappedScale()})
     end
 
     if level then
