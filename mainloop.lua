@@ -1023,9 +1023,9 @@ function main_net_vs_lobby()
         else
           GAME.battleRoom.playerNames[1] = config.name
           GAME.battleRoom.playerNames[2] = msg.opponent
+          love.window.requestAttention()
+          play_optional_sfx(themes[config.theme].sounds.notification)
         end
-        love.window.requestAttention()
-        play_optional_sfx(themes[config.theme].sounds.notification)
         lobby_menu:remove_self()
         return select_screen.main, {select_screen, "2p_net_vs", msg}
       end
