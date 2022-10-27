@@ -507,6 +507,9 @@ function Stack.render(self)
             if panel.chaining then
               gprint("chaining", draw_x, draw_y + 30)
             end
+            if self.touchedPanel and self.touchedPanel.row == row and self.touchedPanel.col == col then
+              gprint("touched", draw_x, draw_y + 20)
+            end
           end
         end
 

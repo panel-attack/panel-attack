@@ -335,7 +335,9 @@ function Stack.send_controls(self)
   end
 
   local playerNumber = self.which
-  local to_send = base64encode[
+  local to_send
+  if true or self.inputMethod == "controller" then --to do remove "true or" here
+    to_send = base64encode[
     (player_raise(playerNumber) and 32 or 0) + 
     (player_swap(playerNumber) and 16 or 0) + 
     (player_up(playerNumber) and 8 or 0) + 
@@ -343,7 +345,16 @@ function Stack.send_controls(self)
     (player_left(playerNumber) and 2 or 0) + 
     (player_right(playerNumber) and 1 or 0) + 1
     ]
-
+  elseif self.inputMethod == "touch" then
+    --[[
+    --to do: also encode taunt input?
+    to_send = base64encode[ --probably need to implement a base 512 encode or something
+    (player_raise(playerNumber) and 256 or 0) +
+    (self.touchedPanel and self.touchedPanel[row] or 0) * self.width +
+    (self.touchedPanel and self.touchedPanel[col] or 0)
+    ]
+    --]]
+  end
   if TCP_sock then
     net_send("I" .. to_send)
   end

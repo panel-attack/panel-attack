@@ -231,6 +231,8 @@ Stack =
     s.framesBehindArray = {}
     s.totalFramesBehind = 0
     s.warningsTriggered = {}
+    
+    s.inputMethod = "touch" --or "controller"
 
   end)
 
@@ -425,6 +427,7 @@ function Stack.rollbackCopy(self, source, other)
   other.analytic = deepcpy(source.analytic)
   other.game_over_clock = source.game_over_clock
   other.gfx_scale = source.gfx_scale
+  other.inputMethod = source.inputMethod
 
   return other
 end
@@ -902,6 +905,24 @@ end
 function Stack.controls(self)
   local new_dir = nil
   local sdata = self.input_state
+  --[[if self.inputMethod == "touch" then
+    self.touchedPanel=nil
+    ----move somewhere else in engine
+    local mx, my = GAME:transform_coordinates(love.mouse.getPosition())
+    if false and inputManager.mouse.isDown[1] then
+      for row = 0, self.height do
+        for col = 1, self.width do
+          if mx >= self.pos_x * self.gfx_scale and mx <= (self.pos_x + self.width * 16) * self.gfx_scale then
+            self.touchedPanel=self.panels[row][col]
+            --break --only single touch is supported, don't check for more touched panels
+          end
+        end
+      end
+    else
+      self.touchedPanel=nil
+    end
+    return --maybe we build this into an else if for readability later, but we don't need to continue
+  end--]]
   local raise, swap, up, down, left, right = unpack(base64decode[sdata])
   if (raise) and (not self.prevent_manual_raise) then
     self.manual_raise = true
