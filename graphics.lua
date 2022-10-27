@@ -77,7 +77,7 @@ function Stack.draw_cards(self)
         end
       end
       -- draw card
-      local iconSize = 48 / GFX_SCALE
+      local iconSize = 48 / self.gfx_scale
       local cardImage = themes[config.theme].images.IMG_cards[card.chain][card.n]
       local icon_width, icon_height = cardImage:getDimensions()
       local fade = 1 - math.min(0.5 * ((card.frame-1) / 22), 0.5)
@@ -595,6 +595,9 @@ function Stack.render(self)
   end
 
   local function drawMultibar()
+    if GAME.portrait_mode then
+      return
+    end
     -- Draw the stop time and healthbars
     --gprint(loc("pl_health", self.health), self.score_x, self.score_y-40)
     --(self.pos_x-4)*GFX_SCALE, (self.pos_y-4)*GFX_SCALE
@@ -764,6 +767,9 @@ function Stack.render(self)
   end
 
   local function drawMatchType()
+    if GAME.portrait_mode then
+      return
+    end
     if match_type ~= "" then
       local matchImage = nil
       --gprint(match_type, main_infos_screen_pos.x, main_infos_screen_pos.y-50)
@@ -781,13 +787,13 @@ function Stack.render(self)
 
   local function drawCommunityMessage()
     -- Draw the community message
-    if not config.debug_mode then
+    if not config.debug_mode and not GAME.portrait_mode then
       gprint(join_community_msg or "", main_infos_screen_pos.x - 45, main_infos_screen_pos.y + 550)
     end
   end
 
   local function drawAnalyticData()
-    if not config.enable_analytics or not self.drawsAnalytics then
+    if not config.enable_analytics or not self.drawsAnalytics or GAME.portrait_mode then
       return
     end
   

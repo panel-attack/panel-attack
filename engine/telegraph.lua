@@ -294,7 +294,7 @@ function Telegraph.pop_all_ready_garbage(self, time_to_check, just_peeking)
 end
 
 function Telegraph:telegraphRenderXPosition(index)
-
+  --todo portrait_mode: maybe use GFX_SCALE here.
   local stackWidth = math.floor(self.owner.canvas:getWidth() / self.owner.gfx_scale)
   local increment = -TELEGRAPH_BLOCK_WIDTH * self.owner.mirror_x
 

@@ -60,7 +60,7 @@ Stack =
       end
     end
     if which == 1 and GAME.portrait_mode then
-      s.gfx_scale = 2
+      s.gfx_scale = 5
     else
       s.gfx_scale = GFX_SCALE
     end
@@ -261,12 +261,18 @@ function Stack.moveForPlayerNumber(stack, player_num)
   -- on 150% scale
   if player_num == 1 then
     stack.pos_x = 80
+    
     stack.score_x = 546
     stack.mirror_x = 1
     stack.origin_x = stack.pos_x
     stack.multiplication = 0
     stack.id = "_1P"
     stack.VAR_numbers = ""
+    stack.pos_y = 4 + (108) / GFX_SCALE
+    if GAME.portrait_mode then
+      stack.pos_x = 20
+      stack.pos_y = 30 + 4 + (108) / GFX_SCALE
+    end
   elseif player_num == 2 then
     stack.pos_x = 248
     stack.score_x = 642
@@ -274,8 +280,8 @@ function Stack.moveForPlayerNumber(stack, player_num)
     stack.origin_x = stack.pos_x + (stack.canvas:getWidth() / GFX_SCALE) - 8
     stack.multiplication = 1
     stack.id = "_2P"
+    stack.pos_y = 4 + (108) / GFX_SCALE
   end
-  stack.pos_y = 4 + (108) / GFX_SCALE
   stack.score_y = 208
 end
 
