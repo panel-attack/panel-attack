@@ -346,14 +346,24 @@ function Stack.send_controls(self)
     (player_right(playerNumber) and 1 or 0) + 1
     ]
   elseif self.inputMethod == "touch" then
-    --[[
-    --to do: also encode taunt input?
-    to_send = base64encode[ --probably need to implement a base 512 encode or something
-    (player_raise(playerNumber) and 256 or 0) +
-    (self.touchedPanel and self.touchedPanel[row] or 0) * self.width +
-    (self.touchedPanel and self.touchedPanel[col] or 0)
-    ]
-    --]]
+    --we'll encode the touch input state as a hexidecimal number between 00 and FF,
+    --including whether raise is pressed, whether taunt is pressed, and the number of the currently touched panel. Example, panel with number 13 would be the one on the 3rd row, first column (in a 6 width stack).
+    --touched panel will be 0,0 if no panel is touched this frame.
+    --only one touched panel is supported, no multitouch.
+    local row, col = 0, 0
+    to_send = player_raise(playerNumber) and 128 or 0
+    if false --[[to do: use player_taunt(playerNumber)]] then 
+      to_send = to_send + 127
+      --note: you won't be able to taunt and touch a panel at the same time.
+    else
+      if self.touchedPanel then
+        row = self.touchedPanel.row
+        col = self.touchedPanel.col
+        to_send = to_send + ((row - 1) * self.width) + col
+      end
+    end
+    to_send = tonumber(to_send,16) --send as hexidecimal (two characters)
+    --note: touch input hexidecimal is later decoded by util.hexToTouchInputState(hex)
   end
   if TCP_sock then
     net_send("I" .. to_send)

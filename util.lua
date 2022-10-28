@@ -190,6 +190,37 @@ for i = 1, 64 do
   end
 end
 
+--takes a two digit hexidecimal number, returns whether raise is pressed, and which panel (row and column) is touched.  
+--Note: 0,0 means no panel is touched.
+function util.hexToTouchInputState(hex)
+  --quit
+  local dec = tonumber(hex,10)  -- convert to decimal
+  local raisePressed, tauntPressed, row_touched, col_touched = false, false, 0 , 0
+  if dec > 128 then
+    raisePressed = true
+    dec = dec - 128
+  end
+  if dec == 127 then
+    --Note: we'll return that taunt is pressed, and 0,0 for touched panel
+    --You won't be able to taunt and touch a panel at the same time.
+    return raisePressed, tauntPressed, row_touched, col_touched
+  end
+  row_touched, col_touched = util.panelNumberToRowAndCol(dec, 6--[[width]])
+  --to do: if we end up implementing different stack sizes, we may need to adjust this.  This will work for stacks with less than 127 panels.
+  return raisePressed, tauntPressed, row_touched, col_touched
+end
+
+
+function util.panelNumberToRowAndCol(num, width)
+-- example: panel number = 13, stack width = 6
+  local val, row, col = num, 0, 0
+  col = val % width -- eample: col = 1
+  val = val - col -- example: val now 12
+  row = (val / width) + 1 -- example: row = 3
+  return row, col --example: panel is on 3rd row, 1st column
+end
+
+
 -- split the input string on some separator, returns table
 function util.split(inputstr, sep)
   sep = sep or "%s"
