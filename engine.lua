@@ -905,24 +905,40 @@ end
 function Stack.controls(self)
   local new_dir = nil
   local sdata = self.input_state
-  --[[if self.inputMethod == "touch" then
+  if self.inputMethod == "touch" then
     self.touchedPanel=nil
     ----move somewhere else in engine
     local mx, my = GAME:transform_coordinates(love.mouse.getPosition())
-    if false and inputManager.mouse.isDown[1] then
-      for row = 0, self.height do
-        for col = 1, self.width do
-          if mx >= self.pos_x * self.gfx_scale and mx <= (self.pos_x + self.width * 16) * self.gfx_scale then
-            self.touchedPanel=self.panels[row][col]
-            --break --only single touch is supported, don't check for more touched panels
+    --print("Mouse is down? "..inputManager.mouse.isDown[1])
+    if true or inputManager.mouse.isDown[1] then
+      --print("mouse.isDown(1) was true!")
+      --check whether the mouse is over this stack
+      --if mx >= self.pos_x * self.gfx_scale and mx <= (self.pos_x + self.width * 16) * self.gfx_scale then
+        --px and py represent the origin of the panel we are currently checking if it's touched.
+        --local px, py = self.pos_x, self.pos_y --the stack's origin
+        
+        --[[
+        for row = 1, self.height do
+          for col = 1, self.width do
+            px = (self.pos_x + (col - 1) * 16) * self.gfx_scale
+            py = (self.pos_y + (11 - (row)) * 16 + self.displacement - shake) * self.gfx_scale
+            if mx >= px and mx < px + (16 * self.gfx_scale) and my >= py and my < py + (16 * self.gfx_scale) then
+              self.touchedPanel = { row = row, col = col}
+              --print("touched panel is "..row..","..col)
+              return --only single touch is supported, don't check for more touched panels
+            end
           end
         end
-      end
+        --]]
+        
+        --self.touchedPanel = {1,1}
+        
+      --end
     else
-      self.touchedPanel=nil
-    end
+      --self.touchedPanel=nil
+    end 
     return --maybe we build this into an else if for readability later, but we don't need to continue
-  end--]]
+  end
   local raise, swap, up, down, left, right = unpack(base64decode[sdata])
   if (raise) and (not self.prevent_manual_raise) then
     self.manual_raise = true
@@ -1030,8 +1046,15 @@ function Stack.setupInput(self)
 
   if self:game_ended() == false then 
     if self.input_buffer and string.len(self.input_buffer) > 0 then
-      self.input_state = string.sub(self.input_buffer, 1, 1)
-      self.input_buffer = string.sub(self.input_buffer, 2)
+      if false and self.inputMethod == "touch" then
+        --touch uses two characters per frame
+        self.input_state = string.sub(self.input_buffer, 1, 2)
+        self.input_buffer = string.sub(self.input_buffer, 3)
+      else
+        --keyboard/controller only uses one character per frame
+        self.input_state = string.sub(self.input_buffer, 1, 1)
+        self.input_buffer = string.sub(self.input_buffer, 2)
+      end
     end
   else
     self.input_state = self:idleInput()
