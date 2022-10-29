@@ -906,6 +906,7 @@ function Stack.controls(self)
   local new_dir = nil
   local sdata = self.input_state
   if self.inputMethod == "touch" then
+    print(love.mouse.isDown(1))
     self.touchedPanel=nil
     ----move somewhere else in engine
     local mx, my = GAME:transform_coordinates(love.mouse.getPosition())
