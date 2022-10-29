@@ -323,20 +323,24 @@ function Stack.handle_input_taunt(self)
 end
 
 function Stack.idleInput(self) 
-  return base64encode[1]
+  print("got to Stack.idleInput")
+  local ret = (self.inputMethod == "touch" and "00") or base64encode[1]
+  print("ret="..ret)
+  return ret
 end
 
 function Stack.send_controls(self)
-
+  print("got to Stack.send_controls")
   if self.is_local and TCP_sock and string.len(self.confirmedInput) > 0 and self.garbage_target and string.len(self.garbage_target.confirmedInput) == 0 then
     -- Send 1 frame at CLOCK time 0 then wait till we get our first input from the other player.
     -- This will cause a player that got the start message earlierer than the other player to wait for the other player just once.
+    print("send_controls returned immediately")
     return
   end
 
   local playerNumber = self.which
   local to_send
-  if true or self.inputMethod == "controller" then --to do remove "true or" here
+  if self.inputMethod == "controller" then --to do remove "true or" here
     to_send = base64encode[
     (player_raise(playerNumber) and 32 or 0) + 
     (player_swap(playerNumber) and 16 or 0) + 

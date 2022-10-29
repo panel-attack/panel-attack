@@ -171,6 +171,7 @@ function Match:debugCheckDivergence()
 end
 
 function Match:run()
+  print("got to Match:run()")
   local P1 = self.P1
   local P2 = self.P2
 
@@ -195,10 +196,11 @@ function Match:run()
   if self.P2CPU then
     self.P2CPU:run(P2)
   end
-
+  print("about to [match]:debugRollbackAndCaptureState()")
   self:debugRollbackAndCaptureState()
 
   if P1 and P1.is_local and not self.P1CPU and P1:game_ended() == false then
+    print("about to P1:send_controls()")
     P1:send_controls()
   end
   if P2 and P2.is_local and not self.P2CPU and P2:game_ended() == false then
@@ -212,6 +214,7 @@ function Match:run()
     
     ranP1 = false
     if P1 and P1:shouldRun(runsSoFar) then
+      print("about to run P1")
       P1:run()
       ranP1 = true
     end

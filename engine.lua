@@ -232,7 +232,7 @@ Stack =
     s.totalFramesBehind = 0
     s.warningsTriggered = {}
     
-    s.inputMethod = "touch" --or "controller"
+    s.inputMethod = "touch" --"touch" or "controller"
 
   end)
 
@@ -433,14 +433,15 @@ function Stack.rollbackCopy(self, source, other)
 end
 
 function Stack.restoreFromRollbackCopy(self, other)
+  print("got to Stack.restoreFromRollbackCopy(self, other)")
   self:rollbackCopy(other, self)
   if self.telegraph then
     self.telegraph.owner = self.garbage_target
     self.telegraph.sender = self
   end
   -- The remaining inputs is the confirmed inputs not processed yet for this clock time
-  -- We have processed CLOCK time number of inputs when we are at CLOCK, so we only want to process the CLOCK+1 input on
-  self.input_buffer = string.sub(self.confirmedInput, self.CLOCK+1)
+  -- We have processed CLOCK time number of inputs when we are at CLOCK, so we only want to process the CLOCK+1 input on (CLOCK*2+1 if inputMethod is touch)
+  self.input_buffer = string.sub(self.confirmedInput, self.CLOCK*((self.inputMethod == "touch" and 2) or 1) + 1)
 end
 
 function Stack.rollbackToFrame(self, frame) 
@@ -500,7 +501,7 @@ end
 -- Saves state in backups in case its needed for rollback
 -- NOTE: the CLOCK time is the save state for simulating right BEFORE that clock time is simulated
 function Stack.saveForRollback(self)
-
+  print("got to saveForRollback()")
   if self:shouldSaveRollback() == false then
     return
   end
@@ -962,20 +963,29 @@ end
 
 function Stack.shouldRun(self, runsSoFar) 
 
+  print("Got to Stack.shouldRun")
   -- We want to run after game over to show game over effects.
   if self:game_ended() then
     return runsSoFar == 0
   end
 
   -- Decide how many frames of input we should run.
-  local buffer_len = string.len(self.input_buffer)
-
+  local buffer_len = string.len(self.input_buffer) / ((self.inputMethod == "touch" and 2) or 1)
+  print("got to stack.shouldRun and past buffer_len definition. buffer_len: "..buffer_len)
   -- If we are local we always want to catch up and run the new input which is already appended
+  print("blah1")
   if self.is_local then
+    print("blah2")
+    print("buffer_len="..buffer_len)
+    print("self.is_local. returning "..tostring(buffer_len > 0))
     return buffer_len > 0
+  else
+    print("blah2b")
+    print("self.is_local was false, continuing")
   end
-
+  print("blah3")
   if self:behindRollback() then
+    print("self:behindRollback() was true, returning true")
     return true
   end
 
@@ -1006,14 +1016,16 @@ function Stack.shouldRun(self, runsSoFar)
     local maxRuns = math.min(2, self.max_runs_per_frame)
     return runsSoFar < maxRuns
   elseif buffer_len >= 1 then
+    print("buffer_len >= 1 was true, returning "..(runsSoFar == 0))
     return runsSoFar == 0
   end
-
+  print("end of shouldRun, returning false")
   return false
 end
 
 -- Runs one step of the stack.
 function Stack.run(self)
+  print("Got to stack run")
   if GAME.gameIsPaused then
     return
   end
@@ -1021,7 +1033,7 @@ function Stack.run(self)
   if self.is_local == false then
     if self.play_to_end then
       GAME.preventSounds = true
-      if string.len(self.input_buffer) < 4 then
+      if string.len(self.input_buffer) < 4 * ((self.inputMethod == "touch" and 2) or 1) then
         self.play_to_end = nil
         GAME.preventSounds = false
       end
@@ -1035,18 +1047,11 @@ end
 -- Grabs input from the buffer of inputs or from the controller and sends out to the network if needed.
 function Stack.setupInput(self) 
   self.input_state = nil
-
+  print("got to setupInput")
   if self:game_ended() == false then 
     if self.input_buffer and string.len(self.input_buffer) > 0 then
-      if false and self.inputMethod == "touch" then
-        --touch uses two characters per frame
-        self.input_state = string.sub(self.input_buffer, 1, 2)
-        self.input_buffer = string.sub(self.input_buffer, 3)
-      else
-        --keyboard/controller only uses one character per frame
-        self.input_state = string.sub(self.input_buffer, 1, 1)
-        self.input_buffer = string.sub(self.input_buffer, 2)
-      end
+      self.input_state = string.sub(self.input_buffer, 1, (self.inputMethod == "touch" and 2) or 1)
+      self.input_buffer = string.sub(self.input_buffer, (self.inputMethod == "touch" and 3) or 2)
     end
   else
     self.input_state = self:idleInput()
@@ -2048,6 +2053,7 @@ function Stack:receiveGarbage(frameToReceive, garbageList)
 end
 
 function Stack:updateFramesBehind()
+  print("got to Stack:updateFramesBehind()")
   if self.garbage_target and self.garbage_target ~= self then
     if not self.framesBehindArray[self.CLOCK] then
       local framesBehind = math.max(0, self.garbage_target.CLOCK - self.CLOCK)
@@ -2058,6 +2064,7 @@ function Stack:updateFramesBehind()
 end
 
 function Stack.behindRollback(self)
+  print("got to Stack.behindRollback")
   if self.lastRollbackFrame > self.CLOCK then
     return true
   end
