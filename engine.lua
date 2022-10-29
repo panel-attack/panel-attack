@@ -906,37 +906,28 @@ function Stack.controls(self)
   local new_dir = nil
   local sdata = self.input_state
   if self.inputMethod == "touch" then
-    print(love.mouse.isDown(1))
     self.touchedPanel=nil
-    ----move somewhere else in engine
     local mx, my = GAME:transform_coordinates(love.mouse.getPosition())
-    --print("Mouse is down? "..inputManager.mouse.isDown[1])
-    if true or inputManager.mouse.isDown[1] then
-      --print("mouse.isDown(1) was true!")
+    if love.mouse.isDown(1) then
       --check whether the mouse is over this stack
-      --if mx >= self.pos_x * self.gfx_scale and mx <= (self.pos_x + self.width * 16) * self.gfx_scale then
+      if mx >= self.pos_x * self.gfx_scale and mx <= (self.pos_x + self.width * 16) * self.gfx_scale then
         --px and py represent the origin of the panel we are currently checking if it's touched.
-        --local px, py = self.pos_x, self.pos_y --the stack's origin
-        
-        --[[
+        local px, py
         for row = 1, self.height do
           for col = 1, self.width do
+            --print("checking panel "..row..","..col)
             px = (self.pos_x + (col - 1) * 16) * self.gfx_scale
-            py = (self.pos_y + (11 - (row)) * 16 + self.displacement - shake) * self.gfx_scale
-            if mx >= px and mx < px + (16 * self.gfx_scale) and my >= py and my < py + (16 * self.gfx_scale) then
+            --to do: maybe self.displacement - shake here? ignoring shake for now.
+            py = (self.pos_y + (11 - (row)) * 16 + self.displacement) * self.gfx_scale
+            if mx >= px and mx < px + 16 * self.gfx_scale and my >= py and my < py + 16 * self.gfx_scale then
               self.touchedPanel = { row = row, col = col}
-              --print("touched panel is "..row..","..col)
               return --only single touch is supported, don't check for more touched panels
             end
           end
         end
-        --]]
-        
-        --self.touchedPanel = {1,1}
-        
-      --end
+      end
     else
-      --self.touchedPanel=nil
+      self.touchedPanel=nil
     end 
     return --maybe we build this into an else if for readability later, but we don't need to continue
   end
