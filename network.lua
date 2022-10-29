@@ -364,6 +364,11 @@ function Stack.send_controls(self)
     end
     to_send = tonumber(to_send,16) --send as hexidecimal (two characters)
     --note: touch input hexidecimal is later decoded by util.hexToTouchInputState(hex)
+    if to_send > 255 then
+      error("touch input state was encoded as greater than 255.  This is not supported!")
+    elseif to_send < 16 then
+      to_send = "0"..to_send --so it's still two digits
+    end
   end
   if TCP_sock then
     net_send("I" .. to_send)
