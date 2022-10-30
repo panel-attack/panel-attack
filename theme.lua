@@ -225,6 +225,7 @@ function Theme.graphics_init(self)
   self.images.IMG_char_sel_cursors = {}
   self.images.IMG_players = {}
   self.images.IMG_cursor = {}
+  self.images.IMG_cursor_touch = {}
   for player_num = 1, MAX_SUPPORTED_PLAYERS do
     self.images.IMG_players[player_num] = load_theme_img("p" .. player_num)
     self.images.IMG_char_sel_cursors[player_num] = {}
@@ -248,6 +249,11 @@ function Theme.graphics_init(self)
     end
     assert(cursorImage ~= nil)
     self.images.IMG_cursor[i] = cursorImage
+    --use left half the regular cursor for the touch cursor
+    cursor_touch_quads[i] = love.graphics.newQuad(0,0,cursorImage:getWidth()/2,cursorImage:getHeight(),cursorImage)
+    --use the whole thing for normal cursor
+    cursor_quads[i] = love.graphics.newQuad(0,0,cursorImage:getWidth(),cursorImage:getHeight(),cursorImage)
+    assert(cursor_touch_quads[i] ~= nil)
   end
 
   self.images.IMG_char_sel_cursor_halves = {left = {}, right = {}}

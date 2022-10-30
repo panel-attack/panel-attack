@@ -980,18 +980,27 @@ end
 
 -- Draw the stacks cursor
 function Stack.render_cursor(self)
-  local cursorImage = themes[config.theme].images.IMG_cursor[(floor(self.CLOCK / 16) % 2) + 1]
+  local cursorImage 
   local shake_idx = #shake_arr - self.shake_time
   local shake = ceil((shake_arr[shake_idx] or 0) * 13)
-  local scale_x = 40 / cursorImage:getWidth()
-  local scale_y = 24 / cursorImage:getHeight()
+  local quad_to_use
+  cursorImage = themes[config.theme].images.IMG_cursor[(floor(self.CLOCK / 16) % 2) + 1]
+  if self.inputMethod == "touch" then
+    quads_to_use = cursor_touch_quads
+    scale_x = 20 / cursorImage:getWidth()
+  else 
+    quads_to_use = cursor_quads
 
+  end
+  local scale_x = 40 / cursorImage:getWidth()
+  --draw(cur_img, cur_img_left, self.render_x - spacing, self.render_y - spacing, 0, cursor_scale, cursor_scale)
+  local scale_y = 24 / cursorImage:getHeight()
   if self.countdown_timer then
     if self.CLOCK % 2 == 0 then
-      draw(themes[config.theme].images.IMG_cursor[1], (self.cur_col - 1) * 16, (11 - (self.cur_row)) * 16 + self.displacement - shake, 0, scale_x, scale_y)
+      drawQ(themes[config.theme].images.IMG_cursor[1],quads_to_use[1], (self.cur_col - 1) * 16, (11 - (self.cur_row)) * 16 + self.displacement - shake, 0, scale_x, scale_y)
     end
   else
-    draw(cursorImage, (self.cur_col - 1) * 16, (11 - (self.cur_row)) * 16 + self.displacement - shake, 0, scale_x, scale_y)
+    drawQ(cursorImage, quads_to_use[(floor(self.CLOCK / 16) % 2) + 1], (self.cur_col - 1) * 16, (11 - (self.cur_row)) * 16 + self.displacement - shake, 0, scale_x, scale_y)
   end
 end
 

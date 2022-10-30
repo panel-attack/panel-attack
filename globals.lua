@@ -55,4 +55,7 @@ global_op_state = nil
 
 current_use_music_from = "stage" -- either "stage" or "characters", no other values!
 
+cursor_quads = {}
+cursor_touch_quads = {}
+  
 return globals
