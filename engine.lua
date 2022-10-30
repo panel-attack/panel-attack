@@ -1630,12 +1630,14 @@ function Stack.simulate(self)
     local playMoveSounds = true -- set this to false to disable move sounds for debugging
     if self.inputMethod == "touch" then
       if self.touchedPanel then
-        self.cur_row = self.touchedPanel.row
+        self.panel_first_touched = self.panel_first_touched or {row=self.touchedPanel.row, col = self.touchedPanel.col}
+        self.cur_row = self.panel_first_touched.row --lock row to the row first touched, until the touch is released
         self.cur_col = self.touchedPanel.col
       else
         self.cur_row = 0
         self.cur_col = 0
-        --and we won't draw it
+        self.panel_first_touched = nil
+        --and we won't draw the cursor
       end
     else
       if self.cur_dir and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and not self.cursor_lock then
@@ -1679,15 +1681,19 @@ function Stack.simulate(self)
     end
 
     -- SWAPPING
-    if (self.swap_1 or self.swap_2) and not swapped_this_frame then
-      local do_swap = self:canSwap(self.cur_row, self.cur_col)
+    if self.inputMethod == "touch" then
+      
+    else
+      if (self.swap_1 or self.swap_2) and not swapped_this_frame then
+        local do_swap = self:canSwap(self.cur_row, self.cur_col)
 
-      if do_swap then
-        self.do_swap = true
-        self.analytic:register_swap()
+        if do_swap then
+          self.do_swap = true
+          self.analytic:register_swap()
+        end
+        self.swap_1 = false
+        self.swap_2 = false
       end
-      self.swap_1 = false
-      self.swap_2 = false
     end
 
     -- MANUAL STACK RAISING
@@ -2760,6 +2766,9 @@ function Stack.new_row(self)
   local panels = self.panels
   -- move cursor up
   self.cur_row = util.bound(1, self.cur_row + 1, self.top_cur_row)
+  if self.panel_first_touched and self.panel_first_touched.row then
+    self.panel_first_touched.row = self.panel_first_touched.row + 1
+  end
   -- move panels up
   for row = #panels + 1, 1, -1 do
     panels[row] = panels[row - 1]
