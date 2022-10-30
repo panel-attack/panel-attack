@@ -359,12 +359,10 @@ function Stack.send_controls(self)
     if false --[[to do: use player_taunt(playerNumber)]] then 
       to_send = to_send + 127
       --note: you won't be able to taunt and touch a panel at the same time.
-    else
-      if self.touchedPanel then
-        row = self.touchedPanel.row
-        col = self.touchedPanel.col
-        to_send = to_send + ((row - 1) * self.width) + col
-      end
+    elseif self.touchedPanel then
+      row = self.touchedPanel.row
+      col = self.touchedPanel.col
+      to_send = to_send + ((row - 1) * self.width) + col
     end
     to_send = tonumber(to_send,16) --send as hexidecimal (two characters)
     --note: touch input hexidecimal is later decoded by util.hexToTouchInputState(hex)
@@ -374,6 +372,7 @@ function Stack.send_controls(self)
       to_send = "0"..to_send --so it's still two digits
     end
   end
+  print("network to_send="..to_send)
   if TCP_sock then
     net_send("I" .. to_send)
   end

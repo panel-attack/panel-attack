@@ -930,34 +930,36 @@ function Stack.controls(self)
     else
       self.touchedPanel=nil
     end 
-    return --maybe we build this into an else if for readability later, but we don't need to continue
-  end
-  local raise, swap, up, down, left, right = unpack(base64decode[sdata])
-  if (raise) and (not self.prevent_manual_raise) then
-    self.manual_raise = true
-    self.manual_raise_yet = false
-  end
-
-  self.swap_1 = swap
-  self.swap_2 = swap
-
-  if up then
-    new_dir = "up"
-  elseif down then
-    new_dir = "down"
-  elseif left then
-    new_dir = "left"
-  elseif right then
-    new_dir = "right"
-  end
-
-  if new_dir == self.cur_dir then
-    if self.cur_timer ~= self.cur_wait_time then
-      self.cur_timer = self.cur_timer + 1
-    end
   else
-    self.cur_dir = new_dir
-    self.cur_timer = 0
+    print("passed checking for touched panels")
+    self.touchedPanel=nil
+    local raise, swap, up, down, left, right = unpack(base64decode[sdata])
+    if (raise) and (not self.prevent_manual_raise) then
+      self.manual_raise = true
+      self.manual_raise_yet = false
+    end
+
+    self.swap_1 = swap
+    self.swap_2 = swap
+
+    if up then
+      new_dir = "up"
+    elseif down then
+      new_dir = "down"
+    elseif left then
+      new_dir = "left"
+    elseif right then
+      new_dir = "right"
+    end
+
+    if new_dir == self.cur_dir then
+      if self.cur_timer ~= self.cur_wait_time then
+        self.cur_timer = self.cur_timer + 1
+      end
+    else
+      self.cur_dir = new_dir
+      self.cur_timer = 0
+    end
   end
 end
 
@@ -970,6 +972,7 @@ function Stack.shouldRun(self, runsSoFar)
   end
 
   -- Decide how many frames of input we should run.
+  print("input_buffer="..self.input_buffer)
   local buffer_len = string.len(self.input_buffer) / ((self.inputMethod == "touch" and 2) or 1)
   print("got to stack.shouldRun and past buffer_len definition. buffer_len: "..buffer_len)
   -- If we are local we always want to catch up and run the new input which is already appended
@@ -1033,6 +1036,7 @@ function Stack.run(self)
   if self.is_local == false then
     if self.play_to_end then
       GAME.preventSounds = true
+      print("got to play_to_end, check input_buffer length")
       if string.len(self.input_buffer) < 4 * ((self.inputMethod == "touch" and 2) or 1) then
         self.play_to_end = nil
         GAME.preventSounds = false
@@ -1051,12 +1055,12 @@ function Stack.setupInput(self)
   if self:game_ended() == false then 
     if self.input_buffer and string.len(self.input_buffer) > 0 then
       self.input_state = string.sub(self.input_buffer, 1, (self.inputMethod == "touch" and 2) or 1)
-      self.input_buffer = string.sub(self.input_buffer, (self.inputMethod == "touch" and 3) or 2)
+      self.input_buffer = string.sub(self.input_buffer, ((self.inputMethod == "touch") and 3) or 2)
     end
   else
     self.input_state = self:idleInput()
   end
-
+  print("self.input_state="..self.input_state)
   self:controls()
 end
 
@@ -1124,6 +1128,7 @@ local d_row = {up = 1, down = -1, left = 0, right = 0}
 -- One run of the engine routine.
 function Stack.simulate(self)
   -- Don't run the main logic if the player has simulated past one of the game overs or the time attack time
+  print("got to stack.simulate")
   if self:game_ended() == false then
     self:prep_first_row()
     local panels = self.panels

@@ -1,5 +1,5 @@
 require("input")
-require("util")
+local util = require("util")
 local graphicsUtil = require("graphics_util")
 
 local floor = math.floor
@@ -739,7 +739,13 @@ function Stack.render(self)
       gprint(loc("pl_metal", (self.metal_panels_queued or 0)), self.score_x, self.score_y + 180)
     end
     if config.debug_mode and (self.input_state or self.taunt_up or self.taunt_down) then
-      local iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
+      local iraise, iswap, iup, idown, ileft, iright
+      local irow_touched, icol_touched
+      if self.inputMethod == "touch" then
+        iraise, irow_touched, icol_touched = util.hexToTouchInputState(self.input_state)
+      else 
+        iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
+      end
       local inputs_to_print = "inputs:"
       if iraise then
         inputs_to_print = inputs_to_print .. "\nraise"

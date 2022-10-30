@@ -214,6 +214,10 @@ function Game:update(dt)
     status = true
   else
     status, err = coroutine.resume(mainloop)
+    --the following helps troubleshooting if errorData below is so large as to cause a stack overflow.
+    if err then
+      print(err)
+    end
   end
   if not status then
     local errorData = self:errorData(err, debug.traceback(mainloop))
