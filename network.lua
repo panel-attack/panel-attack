@@ -368,7 +368,6 @@ function Stack.send_controls(self)
       to_send = "0"..to_send --so it's still two digits
     end
   end
-  print("network to_send="..to_send)
   if TCP_sock then
     net_send("I" .. to_send)
   end

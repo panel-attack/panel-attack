@@ -213,6 +213,9 @@ end
 
 function util.panelNumberToRowAndCol(num, width)
 -- example: panel number = 13, stack width = 6
+  if num == 0 then
+    return 0,0
+  end
   local val, row, col = num, 0, 0
   col = val % width -- eample: col = 1
   val = val - col -- example: val now 12

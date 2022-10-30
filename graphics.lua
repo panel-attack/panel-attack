@@ -740,9 +740,9 @@ function Stack.render(self)
     end
     if config.debug_mode and (self.input_state or self.taunt_up or self.taunt_down) then
       local iraise, iswap, iup, idown, ileft, iright
-      local irow_touched, icol_touched
+      local taunt_pressed, irow_touched, icol_touched
       if self.inputMethod == "touch" then
-        iraise, irow_touched, icol_touched = util.hexToTouchInputState(self.input_state)
+        iraise, taunt_pressed, irow_touched, icol_touched = util.hexToTouchInputState(self.input_state)
       else 
         iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
       end
@@ -770,6 +770,12 @@ function Stack.render(self)
       end
       if self.taunt_up then
         inputs_to_print = inputs_to_print .. "\ntaunt_up"
+      end
+      if irow_touched then
+        inputs_to_print = inputs_to_print .. "\nrow_touched:"..irow_touched
+      end
+      if icol_touched then
+        inputs_to_print = inputs_to_print .. "\ncol_touched:"..icol_touched
       end
       gprint(inputs_to_print, self.score_x, self.score_y + 195)
     end

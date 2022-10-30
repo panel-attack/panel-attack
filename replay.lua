@@ -81,8 +81,15 @@ function Replay.loadFromFile(replay)
     GAME.match.P1 = P1
     P1:wait_for_random_character()
   end
-
-  P1:receiveConfirmedInput(uncompress_input_string(replay.in_buf))
+  print("replay - about to have P1: receive confirmed input: "..uncompress_input_string(replay.in_buf))
+  print("raw input (not uncompressed)="..replay.in_buf)
+  --to do: save stack's input method to replay
+  if P1.inputMethod == "touch" then
+    P1:receiveConfirmedInput(replay.in_buf)
+  else
+    P1:receiveConfirmedInput(uncompress_input_string(replay.in_buf))
+  end
+  print("P1.input_buffer="..P1.input_buffer)
   GAME.match.P1 = P1
   P1.do_countdown = replay.do_countdown or false
   P1.max_runs_per_frame = 1
