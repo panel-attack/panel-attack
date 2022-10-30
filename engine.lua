@@ -428,6 +428,9 @@ function Stack.rollbackCopy(self, source, other)
   other.game_over_clock = source.game_over_clock
   other.gfx_scale = source.gfx_scale
   other.inputMethod = source.inputMethod
+  other.touchedPanel = deepcopy(source.touchedPanel)
+  other.prev_touchedPanel = deepcopy(source.prev_touchedPanel)
+  other.panel_first_touched = deepcopy(source.panel_first_touched)
 
   return other
 end
@@ -905,6 +908,10 @@ function Stack.controls(self)
   local new_dir = nil
   local sdata = self.input_state
   if self.inputMethod == "touch" then
+    self.prev_touchedPanel = {
+      (self.touchedPanel and self.touchedPanel.row) or 0,
+      (self.touchedPanel and self.touchedPanel.col) or 0
+      }
     self.touchedPanel=nil
     local mx, my = GAME:transform_coordinates(love.mouse.getPosition())
     if love.mouse.isDown(1) then
@@ -920,7 +927,12 @@ function Stack.controls(self)
             py = (self.pos_y + (11 - (row)) * 16 + self.displacement) * self.gfx_scale
             if mx >= px and mx < px + 16 * self.gfx_scale and my >= py and my < py + 16 * self.gfx_scale then
               self.touchedPanel = { row = row, col = col}
-              return --only single touch is supported, don't check for more touched panels
+              if self.touchedPanel.row == self.prev_touchedPanel.row and self.touchedPanel.col == self.prev_touchedPanel.col then
+                --we want this to be the selected panel in the case more than one panel is touched
+                return --don't look further
+              end
+              --otherwise, we'll continue looking for touched panels, and the panel with the largest panel coordinates (ie closer to 12,6) will be chosen as self.touchedPanel
+              --this may help us implement stealth.
             end
           end
         end
@@ -1682,7 +1694,24 @@ function Stack.simulate(self)
 
     -- SWAPPING
     if self.inputMethod == "touch" then
-      
+      if not swapped_this_frame and self.cur_row ~= 0 then
+        local do_swap
+        local cur_col_delta = self.cur_col - ((self.touchedPanel and self.touchedPanel.col) or self.cur_col)
+        if math.abs(cur_col_delta) > 1 then
+          print("stealth attempted, need to implement")
+          --to do: implement stealth
+        end
+        if cur_col_delta > 0 then
+          --swap right
+          do_swap = self:canSwap(self.cur_row, self.cur_col)
+          if do_swap then
+            self.do_swap = true
+            self.analytic:register_swap()
+          end
+        elseif cur_col_delta < 0 then
+          --swap left
+        end
+      end
     else
       if (self.swap_1 or self.swap_2) and not swapped_this_frame then
         local do_swap = self:canSwap(self.cur_row, self.cur_col)
