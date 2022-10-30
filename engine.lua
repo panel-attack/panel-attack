@@ -433,7 +433,6 @@ function Stack.rollbackCopy(self, source, other)
 end
 
 function Stack.restoreFromRollbackCopy(self, other)
-  print("got to Stack.restoreFromRollbackCopy(self, other)")
   self:rollbackCopy(other, self)
   if self.telegraph then
     self.telegraph.owner = self.garbage_target
@@ -501,7 +500,6 @@ end
 -- Saves state in backups in case its needed for rollback
 -- NOTE: the CLOCK time is the save state for simulating right BEFORE that clock time is simulated
 function Stack.saveForRollback(self)
-  print("got to saveForRollback()")
   if self:shouldSaveRollback() == false then
     return
   end
@@ -931,7 +929,6 @@ function Stack.controls(self)
       self.touchedPanel=nil
     end 
   else
-    print("passed checking for touched panels")
     self.touchedPanel=nil
     local raise, swap, up, down, left, right = unpack(base64decode[sdata])
     if (raise) and (not self.prevent_manual_raise) then
@@ -965,30 +962,19 @@ end
 
 function Stack.shouldRun(self, runsSoFar) 
 
-  print("Got to Stack.shouldRun")
   -- We want to run after game over to show game over effects.
   if self:game_ended() then
     return runsSoFar == 0
   end
 
   -- Decide how many frames of input we should run.
-  print("input_buffer="..self.input_buffer)
   local buffer_len = string.len(self.input_buffer) / ((self.inputMethod == "touch" and 2) or 1)
-  print("got to stack.shouldRun and past buffer_len definition. buffer_len: "..buffer_len)
   -- If we are local we always want to catch up and run the new input which is already appended
-  print("blah1")
   if self.is_local then
-    print("blah2")
-    print("buffer_len="..buffer_len)
-    print("self.is_local. returning "..tostring(buffer_len > 0))
     return buffer_len > 0
   else
-    print("blah2b")
-    print("self.is_local was false, continuing")
   end
-  print("blah3")
   if self:behindRollback() then
-    print("self:behindRollback() was true, returning true")
     return true
   end
 
@@ -1019,16 +1005,13 @@ function Stack.shouldRun(self, runsSoFar)
     local maxRuns = math.min(2, self.max_runs_per_frame)
     return runsSoFar < maxRuns
   elseif buffer_len >= 1 then
-    print("buffer_len >= 1 was true, returning "..(runsSoFar == 0))
     return runsSoFar == 0
   end
-  print("end of shouldRun, returning false")
   return false
 end
 
 -- Runs one step of the stack.
 function Stack.run(self)
-  print("Got to stack run")
   if GAME.gameIsPaused then
     return
   end
@@ -1036,7 +1019,6 @@ function Stack.run(self)
   if self.is_local == false then
     if self.play_to_end then
       GAME.preventSounds = true
-      print("got to play_to_end, check input_buffer length")
       if string.len(self.input_buffer) < 4 * ((self.inputMethod == "touch" and 2) or 1) then
         self.play_to_end = nil
         GAME.preventSounds = false
@@ -1051,7 +1033,6 @@ end
 -- Grabs input from the buffer of inputs or from the controller and sends out to the network if needed.
 function Stack.setupInput(self) 
   self.input_state = nil
-  print("got to setupInput")
   if self:game_ended() == false then 
     if self.input_buffer and string.len(self.input_buffer) > 0 then
       self.input_state = string.sub(self.input_buffer, 1, (self.inputMethod == "touch" and 2) or 1)
@@ -1060,7 +1041,6 @@ function Stack.setupInput(self)
   else
     self.input_state = self:idleInput()
   end
-  print("self.input_state="..self.input_state)
   self:controls()
 end
 
@@ -1128,7 +1108,6 @@ local d_row = {up = 1, down = -1, left = 0, right = 0}
 -- One run of the engine routine.
 function Stack.simulate(self)
   -- Don't run the main logic if the player has simulated past one of the game overs or the time attack time
-  print("got to stack.simulate")
   if self:game_ended() == false then
     self:prep_first_row()
     local panels = self.panels
@@ -2058,7 +2037,6 @@ function Stack:receiveGarbage(frameToReceive, garbageList)
 end
 
 function Stack:updateFramesBehind()
-  print("got to Stack:updateFramesBehind()")
   if self.garbage_target and self.garbage_target ~= self then
     if not self.framesBehindArray[self.CLOCK] then
       local framesBehind = math.max(0, self.garbage_target.CLOCK - self.CLOCK)
@@ -2069,7 +2047,6 @@ function Stack:updateFramesBehind()
 end
 
 function Stack.behindRollback(self)
-  print("got to Stack.behindRollback")
   if self.lastRollbackFrame > self.CLOCK then
     return true
   end
