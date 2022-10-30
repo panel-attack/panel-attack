@@ -1628,21 +1628,32 @@ function Stack.simulate(self)
 
     -- CURSOR MOVEMENT
     local playMoveSounds = true -- set this to false to disable move sounds for debugging
-    if self.cur_dir and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and not self.cursor_lock then
-      local prev_row = self.cur_row
-      local prev_col = self.cur_col
-      self.cur_row = util.bound(1, self.cur_row + d_row[self.cur_dir], self.top_cur_row)
-      self.cur_col = util.bound(1, self.cur_col + d_col[self.cur_dir], width - 1)
-      if (playMoveSounds and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and (self.cur_row ~= prev_row or self.cur_col ~= prev_col)) then
-        if self:shouldChangeSoundEffects() then
-          SFX_Cur_Move_Play = 1
-        end
-        if self.cur_timer ~= self.cur_wait_time then
-          self.analytic:register_move()
-        end
+    if self.inputMethod == "touch" then
+      if self.touchedPanel then
+        self.cur_row = self.touchedPanel.row
+        self.cur_col = self.touchedPanel.col
+      else
+        self.cur_row = 0
+        self.cur_col = 0
+        --and we won't draw it
       end
     else
-      self.cur_row = util.bound(1, self.cur_row, self.top_cur_row)
+      if self.cur_dir and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and not self.cursor_lock then
+        local prev_row = self.cur_row
+        local prev_col = self.cur_col
+        self.cur_row = util.bound(1, self.cur_row + d_row[self.cur_dir], self.top_cur_row)
+        self.cur_col = util.bound(1, self.cur_col + d_col[self.cur_dir], width - 1)
+        if (playMoveSounds and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and (self.cur_row ~= prev_row or self.cur_col ~= prev_col)) then
+          if self:shouldChangeSoundEffects() then
+            SFX_Cur_Move_Play = 1
+          end
+          if self.cur_timer ~= self.cur_wait_time then
+            self.analytic:register_move()
+          end
+        end
+      else
+        self.cur_row = util.bound(1, self.cur_row, self.top_cur_row)
+      end
     end
 
     if self.cur_timer ~= self.cur_wait_time then

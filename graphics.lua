@@ -986,6 +986,10 @@ function Stack.render_cursor(self)
   local quad_to_use
   cursorImage = themes[config.theme].images.IMG_cursor[(floor(self.CLOCK / 16) % 2) + 1]
   if self.inputMethod == "touch" then
+    if self.cur_row == 0 and self.cur_col == 0 then
+      --no panel is touched, let's not draw the cursor
+      return
+    end
     quads_to_use = cursor_touch_quads
     scale_x = 20 / cursorImage:getWidth()
   else 
