@@ -491,8 +491,8 @@ function Stack.render(self)
     for row = 0, self.height do
       for col = 1, self.width do
         local panel = self.panels[row][col]
-        local draw_x = (self.pos_x + (col - 1) * 16) * self.gfx_scale
-        local draw_y = (self.pos_y + (11 - (row)) * 16 + self.displacement - shake) * self.gfx_scale
+        local draw_x = (self.pos_x * GFX_SCALE) + ((col - 1) * 16) * self.gfx_scale
+        local draw_y = (self.pos_y * GFX_SCALE) + ((11 - (row)) * 16 + self.displacement - shake) * self.gfx_scale
 
         -- Require hovering over a stack to show details
         if mx >= self.pos_x * self.gfx_scale and mx <= (self.pos_x + self.width * 16) * self.gfx_scale then
