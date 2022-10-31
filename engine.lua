@@ -332,7 +332,7 @@ function Stack.rollbackCopy(self, source, other)
       clone_pool[#clone_pool] = nil
     end
   end
-  other.do_swap = source.do_swap
+  other.do_swap = deepcpy(source.do_swap)
   other.speed = source.speed
   other.health = source.health
   other.garbage_cols = deepcpy(source.garbage_cols)
@@ -908,10 +908,6 @@ function Stack.controls(self)
   local new_dir = nil
   local sdata = self.input_state
   if self.inputMethod == "touch" then
-    self.prev_touchedPanel = {
-      (self.touchedPanel and self.touchedPanel.row) or 0,
-      (self.touchedPanel and self.touchedPanel.col) or 0
-      }
     self.touchedPanel=nil
     local mx, my = GAME:transform_coordinates(love.mouse.getPosition())
     if love.mouse.isDown(1) then
@@ -927,7 +923,7 @@ function Stack.controls(self)
             py = (self.pos_y + (11 - (row)) * 16 + self.displacement) * self.gfx_scale
             if mx >= px and mx < px + 16 * self.gfx_scale and my >= py and my < py + 16 * self.gfx_scale then
               self.touchedPanel = { row = row, col = col}
-              if self.touchedPanel.row == self.prev_touchedPanel.row and self.touchedPanel.col == self.prev_touchedPanel.col then
+              if self.touchedPanel and self.prev_touchedPanel and self.touchedPanel.row == self.prev_touchedPanel.row and self.touchedPanel.col == self.prev_touchedPanel.col then
                 --we want this to be the selected panel in the case more than one panel is touched
                 return --don't look further
               end
@@ -1044,6 +1040,9 @@ end
 
 -- Grabs input from the buffer of inputs or from the controller and sends out to the network if needed.
 function Stack.setupInput(self) 
+  if self.inputMethod == "touch" then
+    self.prev_touchedPanel = deepcpy(self.touchedPanel)
+  end
   self.input_state = nil
   if self:game_ended() == false then 
     if self.input_buffer and string.len(self.input_buffer) > 0 then
@@ -1339,7 +1338,12 @@ function Stack.simulate(self)
 
     -- Begin the swap we input last frame.
     if self.do_swap then
-      self:swap()
+      if self.inputMethod == "touch" then
+        --do_swap should contain the coordinate of the left panel to be swapped
+        self:swap(unpack(self.do_swap))
+      else
+        self:swap()
+      end
       swapped_this_frame = true
       self.do_swap = nil
     end
@@ -1696,16 +1700,20 @@ function Stack.simulate(self)
     if self.inputMethod == "touch" then
       if not swapped_this_frame and self.cur_row ~= 0 then
         local do_swap
-        local cur_col_delta = self.cur_col - ((self.touchedPanel and self.touchedPanel.col) or self.cur_col)
+        print("cur_col:"..self.cur_col.." prev_touched_col:"..((self.prev_touchedPanel and self.prev_touchedPanel.col) or "nil"))
+        local cur_col_delta = self.cur_col - ((self.prev_touchedPanel and self.prev_touchedPanel.col) or self.cur_col)
         if math.abs(cur_col_delta) > 1 then
-          print("stealth attempted, need to implement")
-          --to do: implement stealth
+          print("two-touch stealth attempted, not implemented yet")
+          --to do: implement two-touch stealth
+          --this is where you touch two panels, and then release the first one
+          --we may not implement this at all since you can stealth without it.
         end
+        print("cur_col_delta:"..cur_col_delta)
         if cur_col_delta > 0 then
           --swap right
-          do_swap = self:canSwap(self.cur_row, self.cur_col)
+          do_swap = self:canSwap(self.panel_first_touched.row, self.prev_touchedPanel.col)
           if do_swap then
-            self.do_swap = true
+            self.do_swap = {self.panel_first_touched.row, self.prev_touchedPanel.col}
             self.analytic:register_swap()
           end
         elseif cur_col_delta < 0 then
@@ -2277,11 +2285,12 @@ function Stack.canSwap(self, row, column)
 end
 
 -- Swaps panels at the current cursor location
-function Stack.swap(self)
+function Stack.swap(self, row, col)
   local panels = self.panels
-  local row = self.cur_row
-  local col = self.cur_col
+  local row = row or self.cur_row
+  local col = col or self.cur_col
   self:processPuzzleSwap()
+  print("swapping at row,col:"..row..","..col)
   panels[row][col], panels[row][col + 1] = panels[row][col + 1], panels[row][col]
   local tmp_chaining = panels[row][col].chaining
   panels[row][col]:clear_flags()
@@ -2303,7 +2312,7 @@ function Stack.swap(self)
   -- If you're swapping a panel into a position
   -- above an empty space or above a falling piece
   -- then you can't take it back since it will start falling.
-  if self.cur_row ~= 1 then
+  if row ~= 1 then
     if (panels[row][col].color ~= 0) and (panels[row - 1][col].color == 0 or panels[row - 1][col].state == "falling") then
       panels[row][col].dont_swap = true
     end
@@ -2315,7 +2324,7 @@ function Stack.swap(self)
   -- If you're swapping a blank space under a panel,
   -- then you can't swap it back since the panel should
   -- start falling.
-  if self.cur_row ~= self.height then
+  if row ~= self.height then
     if panels[row][col].color == 0 and panels[row + 1][col].color ~= 0 then
       panels[row][col].dont_swap = true
     end
