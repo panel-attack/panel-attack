@@ -1718,6 +1718,11 @@ function Stack.simulate(self)
           end
         elseif cur_col_delta < 0 then
           --swap left
+          do_swap = self:canSwap(self.panel_first_touched.row, self.touchedPanel.col)
+          if do_swap then
+            self.do_swap = {self.panel_first_touched.row, self.touchedPanel.col}
+            self.analytic:register_swap()
+          end
         end
       end
     else
