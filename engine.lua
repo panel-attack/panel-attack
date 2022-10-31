@@ -272,6 +272,7 @@ function Stack.moveForPlayerNumber(stack, player_num)
     if GAME.portrait_mode then
       stack.pos_x = 20
       stack.pos_y = 30 + 4 + (108) / GFX_SCALE
+      stack.score_x = (stack.origin_x * GFX_SCALE) + (stack.canvas:getWidth() *  stack.gfx_scale) + 10
     end
   elseif player_num == 2 then
     stack.pos_x = 248
