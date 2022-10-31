@@ -919,9 +919,9 @@ function Stack.controls(self)
         for row = 1, self.height do
           for col = 1, self.width do
             --print("checking panel "..row..","..col)
-            px = (self.pos_x + (col - 1) * 16) * self.gfx_scale
+            px = (self.pos_x * GFX_SCALE) + ((col - 1) * 16) * self.gfx_scale
             --to do: maybe self.displacement - shake here? ignoring shake for now.
-            py = (self.pos_y + (11 - (row)) * 16 + self.displacement) * self.gfx_scale
+            py = (self.pos_y * GFX_SCALE) + ((11 - (row)) * 16 + self.displacement) * self.gfx_scale
             if mx >= px and mx < px + 16 * self.gfx_scale and my >= py and my < py + 16 * self.gfx_scale then
               self.touchedPanel = { row = row, col = col}
               if self.touchedPanel and self.prev_touchedPanel and self.touchedPanel.row == self.prev_touchedPanel.row and self.touchedPanel.col == self.prev_touchedPanel.col then
