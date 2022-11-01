@@ -918,7 +918,8 @@ function Stack.controls(self)
   local sdata = self.input_state
   if self.inputMethod == "touch" then
     self.touchedPanel=nil
-    if sdata then --input_state was provided already
+    if false and sdata then --input_state was provided already
+    --to do: remove "false and" and figure out why code for controller gets input from self.input state here, but for touch, we need to always get it from the touchscreen. 
       local iraise, taunt_pressed, irow_touched, icol_touched = util.hexToTouchInputState(sdata)
       if taunt_pressed then
         --to do: do something

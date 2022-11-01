@@ -101,7 +101,7 @@ function Replay.loadFromFile(replay)
     if P2.inputMethod == "touch" then
       P2:receiveConfirmedInput(replay.I)
     else
-      P2:receiveConfirmedInput(uncompress_input_string(replay.I)
+      P2:receiveConfirmedInput(uncompress_input_string(replay.I))
     end
     GAME.match.P2 = P2
     P2.do_countdown = replay.do_countdown or false
