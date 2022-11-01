@@ -98,8 +98,11 @@ function Replay.loadFromFile(replay)
   refreshBasedOnOwnMods(P1)
 
   if P2 then
-    P2:receiveConfirmedInput(uncompress_input_string(replay.I))
-
+    if P2.inputMethod == "touch" then
+      P2:receiveConfirmedInput(replay.I)
+    else
+      P2:receiveConfirmedInput(uncompress_input_string(replay.I)
+    end
     GAME.match.P2 = P2
     P2.do_countdown = replay.do_countdown or false
     P2.max_runs_per_frame = 1
