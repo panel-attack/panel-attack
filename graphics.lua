@@ -1,6 +1,7 @@
 require("input")
 local util = require("util")
 local graphicsUtil = require("graphics_util")
+local Button = require("ui.Button")
 
 local floor = math.floor
 local ceil = math.ceil
@@ -48,6 +49,13 @@ function Stack.update_cards(self)
     else
       card.frame = card.frame + 1
     end
+  end
+end
+
+-- Render stack buttons such as "Raise" 
+function Stack.draw_buttons(self)
+  for k, button in pairs (self.buttons) do
+    button:draw()
   end
 end
 
@@ -483,6 +491,7 @@ function Stack.render(self)
 
   self:draw_popfxs()
   self:draw_cards()
+  self:draw_buttons()
 
   -- Draw debug graphics if set
   if config.debug_mode then

@@ -336,7 +336,7 @@ function Stack.send_controls(self)
 
   local playerNumber = self.which
   local to_send
-  if self.inputMethod == "controller" then --to do remove "true or" here
+  if self.inputMethod == "controller" then
     to_send = base64encode[
     (player_raise(playerNumber) and 32 or 0) + 
     (player_swap(playerNumber) and 16 or 0) + 
@@ -351,22 +351,23 @@ function Stack.send_controls(self)
     --touched panel will be 0,0 if no panel is touched this frame.
     --only one touched panel is supported, no multitouch.
     local row, col = 0, 0
-    to_send = player_raise(playerNumber) and 128 or 0
+    to_send = 0
+    to_send = to_send + ((self.raise_touched and 128) or 0)
     if false --[[to do: use player_taunt(playerNumber)]] then 
       to_send = to_send + 127
       --note: you won't be able to taunt and touch a panel at the same time.
-    elseif self.touchedPanel then
+    elseif self.touchedPanel 
+      and not (self.touchedPanel.row == 0 and self.touchedPanel.col == 0) then
       row = self.touchedPanel.row
       col = self.touchedPanel.col
-      to_send = to_send + ((row - 1) * self.width) + col
+      to_send = tonumber(to_send + ((row - 1) * self.width) + col)
     end
-    to_send = tonumber(to_send,16) --send as hexidecimal (two characters)
-    --note: touch input hexidecimal is later decoded by util.hexToTouchInputState(hex)
-    if to_send > 255 then
-      error("touch input state was encoded as greater than 255.  This is not supported!")
-    elseif to_send < 16 then
-      to_send = "0"..to_send --so it's still two digits
+    if tonumber(to_send) > 255 then
+      error("touch input state was encoded as greater than 255: "..tonumber(to_send)..". This is not supported!")
     end
+    to_send = string.format("%02x", tonumber(to_send)) --send as hexidecimal (two characters)
+    --note: touch input hexadecimal is later decoded by util.hexToTouchInputState(hex)
+    print("after: "..to_send)
   end
   if TCP_sock then
     net_send("I" .. to_send)
