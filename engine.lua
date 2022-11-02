@@ -435,9 +435,9 @@ function Stack.rollbackCopy(self, source, other)
   other.game_over_clock = source.game_over_clock
   other.gfx_scale = source.gfx_scale
   other.inputMethod = source.inputMethod
-  other.touchedPanel = deepcopy(source.touchedPanel)
-  other.prev_touchedPanel = deepcopy(source.prev_touchedPanel)
-  other.panel_first_touched = deepcopy(source.panel_first_touched)
+  other.touchedPanel = deepcpy(source.touchedPanel)
+  other.prev_touchedPanel = deepcpy(source.prev_touchedPanel)
+  other.panel_first_touched = deepcpy(source.panel_first_touched)
   other.buttons = deepcpy(source.buttons)
   other.raise_touched = source.raise_touched
 

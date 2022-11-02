@@ -736,12 +736,22 @@ function Connection.I(self, message)
   end
 end
 
-function Connection.K(self, message) --like "I" messages, but for touch inputs
-  self:I(message)
-end
-
-function Connection.V(self.message) --like "U" messages, but for touch inputs
-  self:U(message)
+function Connection.K(self, message) --like "I" messages, but for touch inputs.  most code should be copied from function Connection.I
+    if self.opponent then
+    self.opponent:send("K" .. message)
+    if not self.room then
+      logger.warn("WARNING: missing room")
+      logger.warn(self.name)
+      logger.warn("doesn't have a room, we are wondering if this disconnects spectators")
+    end
+    if self.player_number == 1 and self.room then
+      self.room:send_to_spectators("V" .. message)
+      self.room.replay.vs.in_buf = self.room.replay.vs.in_buf .. message
+    elseif self.player_number == 2 and self.room then
+      self.room:send_to_spectators("K" .. message)
+      self.room.replay.vs.I = self.room.replay.vs.I .. message
+    end
+  end
 end
 
 

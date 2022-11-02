@@ -3,7 +3,7 @@ local logger = require("logger")
 local TCP_sock = nil
 
 -- Expected length for each message type
-local type_to_length = {G = 1, H = 1, N = 1, E = 4, P = 121, O = 121, I = 2, Q = 121, R = 121, L = 2, U = 2}
+local type_to_length = {G = 1, H = 1, N = 1, E = 4, P = 121, O = 121, I = 2, K = 3, Q = 121, R = 121, L = 2, U = 2, V = 3}
 local leftovers = "" -- Everything currently in the data queue
 local wait = coroutine.yield
 local floor = math.floor
@@ -129,7 +129,7 @@ local got_H = false
 -- Logs the network message if needed
 function printNetworkMessageForType(type)
   local result = false
-  if type ~= "I" and type ~= "U" then
+  if type ~= "I" and type ~= "K" and type ~= "U" and type ~= "V"then
     result = true
   end
   return result
@@ -204,7 +204,7 @@ end
 
 -- Process all game data messages in the queue
 function process_all_data_messages()
-  local messages = server_queue:pop_all_with("P", "O", "U", "I", "Q", "R")
+  local messages = server_queue:pop_all_with("P", "O", "U", "V", "I", "K", "Q", "R")
   for _, msg in ipairs(messages) do
     for type, data in pairs(msg) do
       if printNetworkMessageForType(type) then
@@ -223,7 +223,11 @@ function process_data_message(type, data)
     
   elseif type == "U" then
     P1:receiveConfirmedInput(data)
+  elseif type == "V" then
+    P1:receiveConfirmedInput(data)
   elseif type == "I" then
+    P2:receiveConfirmedInput(data)
+  elseif type == "K" then
     P2:receiveConfirmedInput(data)
   elseif type == "Q" then
     
@@ -412,7 +416,7 @@ function Stack.send_controls(self)
     --note: touch input hexadecimal is later decoded by util.hexToTouchInputState(hex)
   end
   if TCP_sock then
-    if self.inputMethod == touch then
+    if self.inputMethod == "touch" then
       net_send("K" .. to_send) --server will process this as an I message, but this takes two characters instead of one
     else
       net_send("I" .. to_send)
