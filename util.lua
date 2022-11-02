@@ -193,9 +193,7 @@ end
 --takes a two digit hexidecimal number, returns whether raise is pressed, and which panel (row and column) is touched.  
 --Note: 0,0 means no panel is touched.
 function util.hexToTouchInputState(hex)
-  print("Converting "..hex.." to decimal")
   local dec = tonumber(hex,16)  -- convert to decimal
-  print("decimal = "..dec)
   local raisePressed, tauntPressed, row_touched, col_touched = false, false, 0 , 0
   if dec >= 128 then
     raisePressed = true
@@ -217,10 +215,10 @@ function util.panelNumberToRowAndCol(num, width)
   if num == 0 then
     return 0,0
   end
-  local val, row, col = num, 0, 0
-  col = val % width -- eample: col = 1
-  val = val - col -- example: val now 12
-  row = (val / width) + 1 -- example: row = 3
+  local row, col = 0, 0
+  row = math.floor((num -1) / width) + 1 -- example: row = 3
+  col =  num - ((row - 1) * width) -- eample: col = 1
+   
   return row, col --example: panel is on 3rd row, 1st column
 end
 

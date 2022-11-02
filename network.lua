@@ -346,28 +346,68 @@ function Stack.send_controls(self)
     (player_right(playerNumber) and 1 or 0) + 1
     ]
   elseif self.inputMethod == "touch" then
+    local iraise, itaunt_pressed, irow_touched, icol_touched = false, false, 0, 0
     --we'll encode the touch input state as a hexidecimal number between 00 and FF,
     --including whether raise is pressed, whether taunt is pressed, and the number of the currently touched panel. Example, panel with number 13 would be the one on the 3rd row, first column (in a 6 width stack).
     --touched panel will be 0,0 if no panel is touched this frame.
     --only one touched panel is supported, no multitouch.
-    local row, col = 0, 0
+    local mx, my = GAME:transform_coordinates(love.mouse.getPosition())
+    if love.mouse.isDown(1) then
+      if self.buttons.raise:isSelected(mx,my) then
+        print("raise button selected")
+        iraise = true
+      else
+        iraise = false
+      end
+      --check whether the mouse is over this stack
+      if mx >= self.pos_x * self.gfx_scale and mx <= (self.pos_x + self.width * 16) * self.gfx_scale then
+        --px and py represent the origin of the panel we are currently checking if it's touched.
+        local px, py
+        local stop_looking = false
+        for row = 1, self.height do
+          for col = 1, self.width do
+            --print("checking panel "..row..","..col)
+            px = (self.pos_x * GFX_SCALE) + ((col - 1) * 16) * self.gfx_scale
+            --to do: maybe self.displacement - shake here? ignoring shake for now.
+            py = (self.pos_y * GFX_SCALE) + ((11 - (row)) * 16 + self.displacement) * self.gfx_scale
+            --check if mouse is touching panel in row, col
+            if mx >= px and mx < px + 16 * self.gfx_scale and my >= py and my < py + 16 * self.gfx_scale then
+              irow_touched = row
+              icol_touched = col
+              if self.prev_touchedPanel 
+                and row == self.prev_touchedPanel.row and col == self.prev_touchedPanel.col then
+                --we want this to be the selected panel in the case more than one panel is touched
+                stop_looking = true
+                break --don't look further
+              end
+              --otherwise, we'll continue looking for touched panels, and the panel with the largest panel coordinates (ie closer to 12,6) will be chosen as self.touchedPanel
+              --this may help us implement stealth.
+            end
+            if stop_looking then
+                break
+            end
+          end
+        end
+      end
+    else
+      iraise = false
+      itaunt_pressed = false
+      irow_touched = 0
+      icol_touched = 0
+    end
     to_send = 0
-    to_send = to_send + ((self.raise_touched and 128) or 0)
-    if false --[[to do: use player_taunt(playerNumber)]] then 
+    to_send = to_send + ((iraise and 128) or 0)
+    if itaunt_pressed then 
       to_send = to_send + 127
       --note: you won't be able to taunt and touch a panel at the same time.
-    elseif self.touchedPanel 
-      and not (self.touchedPanel.row == 0 and self.touchedPanel.col == 0) then
-      row = self.touchedPanel.row
-      col = self.touchedPanel.col
-      to_send = tonumber(to_send + ((row - 1) * self.width) + col)
+    elseif not (irow_touched == 0 and icol_touched == 0) then
+      to_send = to_send + ((irow_touched - 1) * self.width) + icol_touched
     end
     if tonumber(to_send) > 255 then
       error("touch input state was encoded as greater than 255: "..tonumber(to_send)..". This is not supported!")
     end
     to_send = string.format("%02x", tonumber(to_send)) --send as hexidecimal (two characters)
     --note: touch input hexadecimal is later decoded by util.hexToTouchInputState(hex)
-    print("after: "..to_send)
   end
   if TCP_sock then
     net_send("I" .. to_send)

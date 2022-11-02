@@ -917,56 +917,20 @@ function Stack.controls(self)
   local new_dir = nil
   local sdata = self.input_state
   if self.inputMethod == "touch" then
+    self.prev_touchedPanel = deepcpy(self.touchedPanel)
     self.touchedPanel=nil
-    if false and sdata then --input_state was provided already
-    --to do: remove "false and" and figure out why code for controller gets input from self.input state here, but for touch, we need to always get it from the touchscreen. 
-      local iraise, taunt_pressed, irow_touched, icol_touched = util.hexToTouchInputState(sdata)
-      if taunt_pressed then
-        --to do: do something
+    local iraise, itaunt_pressed, irow_touched, icol_touched = util.hexToTouchInputState(sdata)
+    if itaunt_pressed then
+      --to do: do something
+    end
+    self.touchedPanel = { row = irow_touched, col = icol_touched}
+    self.raise_touched = iraise
+    self.taunt_pressed = itaunt_pressed
+    if self.raise_touched then
+      if not self.prevent_manual_raise then
+        self.manual_raise = true
+        self.manual_raise_yet = false
       end
-      self.touchedPanel = { row = irow_touched, col = icol_touched}
-      self.raise_touched = iraise
-      self.taunt_pressed = taunt_pressed
-    else  --get from touchscreen
-      local mx, my = GAME:transform_coordinates(love.mouse.getPosition())
-      if love.mouse.isDown(1) then
-        if self.buttons.raise:isSelected(mx,my) then
-          print("raise button selected")
-          self.raise_touched = true
-        else
-          self.raise_touched = false
-        end
-        if self.raise_touched then
-          if not self.prevent_manual_raise then
-            self.manual_raise = true
-            self.manual_raise_yet = false
-          end
-        end
-        --check whether the mouse is over this stack
-        if mx >= self.pos_x * self.gfx_scale and mx <= (self.pos_x + self.width * 16) * self.gfx_scale then
-          --px and py represent the origin of the panel we are currently checking if it's touched.
-          local px, py
-          for row = 1, self.height do
-            for col = 1, self.width do
-              --print("checking panel "..row..","..col)
-              px = (self.pos_x * GFX_SCALE) + ((col - 1) * 16) * self.gfx_scale
-              --to do: maybe self.displacement - shake here? ignoring shake for now.
-              py = (self.pos_y * GFX_SCALE) + ((11 - (row)) * 16 + self.displacement) * self.gfx_scale
-              if mx >= px and mx < px + 16 * self.gfx_scale and my >= py and my < py + 16 * self.gfx_scale then
-                self.touchedPanel = { row = row, col = col}
-                if self.touchedPanel and self.prev_touchedPanel and self.touchedPanel.row == self.prev_touchedPanel.row and self.touchedPanel.col == self.prev_touchedPanel.col then
-                  --we want this to be the selected panel in the case more than one panel is touched
-                  return --don't look further
-                end
-                --otherwise, we'll continue looking for touched panels, and the panel with the largest panel coordinates (ie closer to 12,6) will be chosen as self.touchedPanel
-                --this may help us implement stealth.
-              end
-            end
-          end
-        end
-      else
-        self.touchedPanel = nil
-      end 
     end
   else --input method is controller
     self.touchedPanel=nil
@@ -1072,9 +1036,6 @@ end
 
 -- Grabs input from the buffer of inputs or from the controller and sends out to the network if needed.
 function Stack.setupInput(self) 
-  if self.inputMethod == "touch" then
-    self.prev_touchedPanel = deepcpy(self.touchedPanel)
-  end
   self.input_state = nil
   if self:game_ended() == false then 
     if self.input_buffer and string.len(self.input_buffer) > 0 then
@@ -1168,6 +1129,9 @@ function Stack.simulate(self)
         self.starting_cur_col = self.cur_col
         self.cur_row = self.height
         self.cur_col = self.width - 1
+        if self.inputMethod == "touch" then
+          self.cur_col = self.width
+        end
         self.countdown_cursor_state = "ready_falling"
         self.countdown_cur_speed = 4 --one move every this many frames
         self.cursor_lock = true
@@ -1677,9 +1641,15 @@ function Stack.simulate(self)
     -- CURSOR MOVEMENT
     local playMoveSounds = true -- set this to false to disable move sounds for debugging
     if self.inputMethod == "touch" then
-      if self.touchedPanel then
-        self.panel_first_touched = self.panel_first_touched or {row=self.touchedPanel.row, col = self.touchedPanel.col}
-        self.cur_row = self.panel_first_touched.row --lock row to the row first touched, until the touch is released
+      if self.touchedPanel and not (self.touchedPanel.row == 0 and self.touchedPanel.col == 0) then
+        if not self.prev_touchedPanel or (self.prev_touchedPanel.row == 0 and self.prev_touchedPanel.col == 0) then
+          self.panel_first_touched = deepcpy(self.touchedPanel)
+        end
+        if self.panel_first_touched and self.panel_first_touched.row ~= 0 then
+          self.cur_row = self.panel_first_touched.row --lock row to the row first touched, until the touch is released
+        else
+          self.cur_row = self.touchedPanel.row
+        end
         self.cur_col = self.touchedPanel.col
       else
         self.cur_row = 0
@@ -1733,7 +1703,11 @@ function Stack.simulate(self)
       if not swapped_this_frame and self.cur_row ~= 0 then
         local do_swap
         --print("cur_col:"..self.cur_col.." prev_touched_col:"..((self.prev_touchedPanel and self.prev_touchedPanel.col) or "nil"))
-        local cur_col_delta = self.cur_col - ((self.prev_touchedPanel and self.prev_touchedPanel.col) or self.cur_col)
+        local prev_touched_col = (self.prev_touchedPanel and self.prev_touchedPanel.col) or 0
+        local cur_col_delta = 0
+        if prev_touched_col ~= 0 then
+          cur_col_delta = self.cur_col - prev_touched_col
+        end
         if math.abs(cur_col_delta) > 1 then
           print("two-touch stealth attempted, not implemented yet")
           --to do: implement two-touch stealth
@@ -2327,7 +2301,6 @@ function Stack.swap(self, row, col)
   local row = row or self.cur_row
   local col = col or self.cur_col
   self:processPuzzleSwap()
-  print("swapping at row,col:"..row..","..col)
   panels[row][col], panels[row][col + 1] = panels[row][col + 1], panels[row][col]
   local tmp_chaining = panels[row][col].chaining
   panels[row][col]:clear_flags()
