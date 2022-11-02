@@ -24,8 +24,8 @@ local PLAYING = "playing" -- room states
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
 SERVER_MODE = true -- global to know the server is running the process
-local VERSION = "046"
-local type_to_length = {H = 4, E = 4, F = 4, P = 8, I = 2, L = 2, Q = 8, U = 2}
+local VERSION = "047"
+local type_to_length = {H = 4, E = 4, F = 4, P = 8, I = 2, K = 3, L = 2, Q = 8, U = 2, V = 3}
 local INDEX = 1 -- GLOBAL counter of the next available connection index
 local connections = {}
 local ROOMNUMBER = 1
@@ -735,6 +735,15 @@ function Connection.I(self, message)
     end
   end
 end
+
+function Connection.K(self, message) --like "I" messages, but for touch inputs
+  self:I(message)
+end
+
+function Connection.V(self.message) --like "U" messages, but for touch inputs
+  self:U(message)
+end
+
 
 function Room.send_to_spectators(self, message)
   --TODO: maybe try to do this in a different thread?

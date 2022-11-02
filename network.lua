@@ -152,7 +152,7 @@ end
 
 -- Adds the message to the network queue or processes it immediately in a couple cases
 function queue_message(type, data)
-  if type == "P" or type == "O" or type == "U" or type == "I" or type == "Q" or type == "R" then
+  if type == "P" or type == "O" or type == "U" or type == "V" or type == "I" or type == "K" or type == "Q" or type == "R" then
     local dataMessage = {}
     dataMessage[type] = data
     if printNetworkMessageForType(type) then
@@ -330,6 +330,8 @@ function Stack.send_controls(self)
   if self.is_local and TCP_sock and string.len(self.confirmedInput) > 0 and self.garbage_target and string.len(self.garbage_target.confirmedInput) == 0 then
     -- Send 1 frame at CLOCK time 0 then wait till we get our first input from the other player.
     -- This will cause a player that got the start message earlierer than the other player to wait for the other player just once.
+    print("self.confirmedInput="..(self.confirmedInput or "nil"))
+    print("self.input_buffer="..(self.input_buffer or "nil"))
     print("send_controls returned immediately")
     return
   end
@@ -410,7 +412,11 @@ function Stack.send_controls(self)
     --note: touch input hexadecimal is later decoded by util.hexToTouchInputState(hex)
   end
   if TCP_sock then
-    net_send("I" .. to_send)
+    if self.inputMethod == touch then
+      net_send("K" .. to_send) --server will process this as an I message, but this takes two characters instead of one
+    else
+      net_send("I" .. to_send)
+    end
   end
 
   self:handle_input_taunt()
