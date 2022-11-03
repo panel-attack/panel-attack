@@ -90,7 +90,7 @@ https://sheepolution.com/learn/book/contents
 ## Releasing
 
 To make a release we create a love file and put it on the server. Change the name of the love file to the output of a command like this:  
-    Stable:
+    Stable:  
         `echo "panel-$(date -u "+%Y-%m-%d_%H-%M-%S").love"`  
     Beta:  
         `echo "panel-beta-$(date -u "+%Y-%m-%d_%H-%M-%S").love"`  
