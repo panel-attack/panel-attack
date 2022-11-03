@@ -10,4 +10,3 @@ function class(init)
   setmetatable(c, mt)
   return c
 end
-return class

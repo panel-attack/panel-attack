@@ -1,6 +1,6 @@
 local socket = require("socket")
 local http = require("socket.http")
-local class = require("class")
+require("class")
 
 GameUpdater = class(function(self, name)
     if not name then error("GameUpdater: you need to specify a name") end
