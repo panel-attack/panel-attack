@@ -43,8 +43,8 @@ After coordinating with others, post pull requests against the `beta` branch.
 Try to follow the following code guidelines when contributing:
 - Separate functionality into separate files that only interact with each other as much as needed
 - Avoid globals
-- Class names Start with a capital like “BattleRoom”
-- All other names use camelCase
+- Class names Start with a capital like `BattleRoom`
+- All other names use `camelCase`
 - Make smaller methods
 - Don’t duplicate code, break it into smaller reusable chunks and use that in both spots
 
