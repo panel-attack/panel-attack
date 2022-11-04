@@ -200,14 +200,12 @@ local function drawPixelFontWithMap(string, atlas, font_map, x, y, x_scale, y_sc
 end
 
 -- Draws a time centered horizontally using the theme's time pixel font which is 0-9, then : then '
-function GraphicsUtil.draw_time(time, quads, x, y, scale, quads)
-  quads = quads or {}
+function GraphicsUtil.draw_time(time, quads, x, y, scale)
   drawPixelFontWithMap(time, themes[config.theme].images.IMG_timeNumber_atlas, time_pixel_font_map, x, y, scale, scale, "center", 0, quads)
 end
 
 -- Draws a number via the given font image that has 0-9
-function GraphicsUtil.draw_number(number, atlas, quads, x, y, scale, align, quads)
-  quads = quads or {}
+function GraphicsUtil.draw_number(number, atlas, quads, x, y, scale, align)
   drawPixelFontWithMap(tostring(number), atlas, number_pixel_font_map, x, y, scale, scale, align, 0, quads)
 end
 
