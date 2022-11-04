@@ -1,6 +1,7 @@
 local logger = require("logger")
 local graphics = require("select_screen.select_screen_graphics")
 local tableUtils = require("tableUtils")
+local util = require("util")
 
 local select_screen = {}
 
@@ -575,11 +576,11 @@ function select_screen.handleInput(self)
       local cursor = player.cursor
       if menu_prev_page(i) then
         if not cursor.selected then
-          self.current_page = bound(1, self.current_page - 1, self.pages_amount)
+          self.current_page = util.bound(1, self.current_page - 1, self.pages_amount)
         end
       elseif menu_next_page(i) then
         if not cursor.selected then
-          self.current_page = bound(1, self.current_page + 1, self.pages_amount)
+          self.current_page = util.bound(1, self.current_page + 1, self.pages_amount)
         end
       elseif menu_up(i) then
         if not cursor.selected then
@@ -592,7 +593,7 @@ function select_screen.handleInput(self)
       elseif menu_left(i) then
         if cursor.selected then
           if cursor.positionId == "__Level" then
-            player.level = bound(1, player.level - 1, #level_to_starting_speed) --which should equal the number of levels in the game
+            player.level = util.bound(1, player.level - 1, #level_to_starting_speed) --which should equal the number of levels in the game
           elseif cursor.positionId == "__Panels" then
             player.panels_dir = self.change_panels_dir(player.panels_dir, -1)
           elseif cursor.positionId == "__Stage" then
@@ -605,7 +606,7 @@ function select_screen.handleInput(self)
       elseif menu_right(i) then
         if cursor.selected then
           if cursor.positionId == "__Level" then
-            player.level = bound(1, player.level + 1, #level_to_starting_speed) --which should equal the number of levels in the game
+            player.level = util.bound(1, player.level + 1, #level_to_starting_speed) --which should equal the number of levels in the game
           elseif cursor.positionId == "__Panels" then
             player.panels_dir = self.change_panels_dir(player.panels_dir, 1)
           elseif cursor.positionId == "__Stage" then
