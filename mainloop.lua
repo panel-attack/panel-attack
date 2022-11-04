@@ -1,4 +1,5 @@
 local logger = require("logger")
+require("ChallengeMode")
 local select_screen = require("select_screen.select_screen")
 local replay_browser = require("replay_browser")
 local options = require("options")
@@ -311,17 +312,6 @@ local function pick_use_music_from()
   else
     current_use_music_from = percent == 1 and "stage" or "characters"
   end
-end
-
-function Stack.wait_for_random_character(self)
-  if self.character == random_character_special_value then
-    self.character = table.getRandomElement(characters_ids_for_current_theme)
-  end
-  if characters[self.character]:is_bundle() then -- may have picked a bundle
-    self.character = table.getRandomElement(characters[self.character].sub_characters)
-  end
-  character_loader_load(self.character)
-  character_loader_wait()
 end
 
 local function commonGameSetup()
@@ -658,21 +648,8 @@ function training_setup()
 
   local function start_training()
     customTrainingModes[0] = createBasicTrainingMode("", trainingModeSettings.width, trainingModeSettings.height)
-    local lineHeightToKill = 6
-    customTrainingModes[customModeID].healthDifficulties = {}
-    for i = 1, 10, 1 do
-      customTrainingModes[customModeID].healthDifficulties[i] = {1, 4 * (1 + .1 * i), lineHeightToKill, 2}
-    end
-    -- customTrainingModes[customModeID].healthDifficulties = {
-    --   -- secondsToppedOutToLose, lineClearGPM, lineHeightToKill, riseDifficulty
-    --   {1, 1, lineHeightToKill},
-    --   {2, 2, lineHeightToKill},
-    --   {3, 3, lineHeightToKill},
-    --   {4, 4, lineHeightToKill},
-    --   {10, 5, lineHeightToKill},
-    --   {10, 0, 30}
-    -- }
-    customTrainingModes[customModeID].stageTimes = {}
+
+    customTrainingModes[customModeID].challengeMode = ChallengeMode()
     ret = {main_local_vs_yourself_setup, {customTrainingModes[customModeID]}}
   end
 
@@ -1589,25 +1566,29 @@ function main_local_vs_yourself()
       finalizeAndWriteVsReplay(nil, nil)
     end
 
-    local lastStage = GAME.battleRoom.playerWinCounts[1] + 1
+    local transitionSoundEffect = themes[config.theme].sounds.game_over
+
     if gameResult > 0 then
       GAME.battleRoom.playerWinCounts[1] = GAME.battleRoom.playerWinCounts[1] + 1
+      transitionSoundEffect = P1:pick_win_sfx()
     end
     
-    if GAME.battleRoom.trainingModeSettings and GAME.battleRoom.trainingModeSettings.healthDifficulties then
+    local challengeMode = GAME.battleRoom.trainingModeSettings and GAME.battleRoom.trainingModeSettings.challengeMode
+    if challengeMode then
       local gameLength = GAME.match.P1.game_stopwatch
-      local previousLength = GAME.battleRoom.trainingModeSettings.stageTimes[lastStage] or 0
-      GAME.battleRoom.trainingModeSettings.stageTimes[lastStage] = gameLength + previousLength
+      challengeMode:recordStageResult(gameResult, gameLength)
 
-      if GAME.battleRoom.playerWinCounts[1] >= #GAME.battleRoom.trainingModeSettings.healthDifficulties then
+      -- If they beat all the stages, proceed to game end.
+      if challengeMode.nextStageIndex > #challengeMode.stages then
         return {game_over_transition,
-          {main_select_mode, nil, P1:pick_win_sfx()}
+          {main_select_mode, nil, transitionSoundEffect}
         }
       end
     end
 
+    -- Go to select screen to try again
     return {game_over_transition,
-          {select_screen.main, nil, P1:pick_win_sfx(), nil, false, {select_screen, "1p_vs_yourself"}}
+          {select_screen.main, nil, transitionSoundEffect, nil, false, {select_screen, "1p_vs_yourself"}}
         }
   end
 

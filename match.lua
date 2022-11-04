@@ -493,6 +493,11 @@ function Match.render(self)
         self.simulatedOpponent:render()
       end
 
+      local challengeMode = self.battleRoom.trainingModeSettings and self.battleRoom.trainingModeSettings.challengeMode
+      if challengeMode then
+        challengeMode:render()
+      end
+
       if self.battleRoom then
         if P1 and P1.telegraph then
           P1.telegraph:render()

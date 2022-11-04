@@ -852,27 +852,24 @@ function select_screen.start1pLocalMatch(self)
   P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
 
   if GAME.battleRoom.trainingModeSettings then
-
-    local currentStage = SimulatedOpponent.currentStageForWinCount(GAME.battleRoom.playerWinCounts[P1.player_number])
-
+    local character = P1.character
     local health = nil
-    if GAME.battleRoom.trainingModeSettings.healthDifficulties then
-      local difficulties = GAME.battleRoom.trainingModeSettings.healthDifficulties
-      health = Health(difficulties[currentStage][1], difficulties[currentStage][2], difficulties[currentStage][3], difficulties[currentStage][4])
+    local challengeMode = GAME.battleRoom.trainingModeSettings and GAME.battleRoom.trainingModeSettings.challengeMode
+    if challengeMode then
+      challengeMode:beginStage()
+      local currentStageIndex = challengeMode.currentStageIndex
+      local challengeStage = challengeMode.stages[currentStageIndex]
+      health = challengeStage:createHealth()
+      character = challengeMode:characterForStageNumber(currentStageIndex, P1.character)
+      character_loader_load(character)
+      character_loader_wait()
     end
-
-    local character = characters_ids_for_current_theme[((currentStage - 1) % #characters_ids_for_current_theme) + 1]
-    if characters[character]:is_bundle() then -- may have picked a bundle
-      character = characters[character].sub_characters[1]
-    end
-    character_loader_load(character)
-    character_loader_wait()
 
     local xPosition = 760
     local yPosition = 120
     local mirror = -1
     local simulatedOpponent = SimulatedOpponent(health, character, xPosition, yPosition, mirror)
-    local attackEngine = self:attackEngineForTrainingModeSettings(GAME.battleRoom.trainingModeSettings, simulatedOpponent)
+    local attackEngine = self:attackEngineForTrainingModeSettings(GAME.battleRoom.trainingModeSettings, simulatedOpponent, character)
     simulatedOpponent:setAttackEngine(attackEngine)
 
     GAME.match.simulatedOpponent = simulatedOpponent
@@ -912,11 +909,11 @@ function select_screen.start1pCpuMatch(self)
   return main_dumb_transition, {main_local_vs, "", 0, 0}
 end
 
-function select_screen.attackEngineForTrainingModeSettings(self, trainingModeSettings, opponent)
+function select_screen.attackEngineForTrainingModeSettings(self, trainingModeSettings, opponent, character)
   local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
   local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
   local disableQueueLimit = trainingModeSettings.disableQueueLimit or false
-  local attackEngine = AttackEngine(P1, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, opponent)
+  local attackEngine = AttackEngine(P1, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, opponent, character)
   for _, values in ipairs(trainingModeSettings.attackPatterns) do
     if values.chain then
       if type(values.chain) == "number" then

@@ -1,5 +1,6 @@
 local logger = require("logger")
 
+-- A simulated opponent sends attacks and takes damage from a player, it "loses" if it takes too many attacks.
 SimulatedOpponent =
   class(
   function(self, health, character, positionX, positionY, mirror)
@@ -14,14 +15,6 @@ SimulatedOpponent =
 
 function SimulatedOpponent:setAttackEngine(attackEngine) 
   self.attackEngine = attackEngine
-end
-
-function SimulatedOpponent.currentStageForWinCount(winCount) 
-  return winCount + 1
-end
-
-function SimulatedOpponent:currentStage() 
-  return SimulatedOpponent.currentStageForWinCount(GAME.battleRoom.playerWinCounts[P1.player_number])
 end
 
 function SimulatedOpponent:stackWidth()
@@ -51,53 +44,22 @@ function SimulatedOpponent:drawCharacter()
   local portraitImage = characterObject.images[portraitImageName]
   local portrait_w, portrait_h = portraitImage:getDimensions()
 
-  draw(portraitImage, self.pos_x + 50 / GFX_SCALE, self.pos_y, 0, 96 / portrait_w, 192 / portrait_h)
+  draw(portraitImage, self.pos_x, self.pos_y, 0, 96 / portrait_w, 192 / portrait_h)
 end
 
-function SimulatedOpponent:drawTimeSplits()
-  local totalTime = 0
-  local xPosition = 1160
-  local yPosition = 120
-  local yOffset = 30
-  local row = 0
-  for _, time in ipairs(GAME.battleRoom.trainingModeSettings.stageTimes) do
-    local time_quads = {}
-    totalTime = totalTime + time
-    GraphicsUtil.draw_time(frames_to_time_string(time, true), time_quads, xPosition, yPosition + yOffset * row, themes[config.theme].time_Scale)
-    row = row + 1
-  end
-
-  if GAME.match.P1:game_ended() == false then
-    local time = GAME.match.P1.game_stopwatch
-    local time_quads = {}
-    totalTime = totalTime + time
-    GraphicsUtil.draw_time(frames_to_time_string(time, true), time_quads, xPosition, yPosition + yOffset * row, themes[config.theme].time_Scale)
-    row = row + 1
-  end
-
-  set_color(1,1,0.8,1)
-  GraphicsUtil.draw_time(frames_to_time_string(totalTime, true), time_quads, xPosition, yPosition + yOffset * row, themes[config.theme].time_Scale)
-  set_color(1,1,1,1)
-end
-
-local stageQuads = {}
-
+local healthBarXOffset = -56
 function SimulatedOpponent.render(self)
 
   self:drawCharacter()
 
   if self.health then
-    self.health:render(self.pos_x * GFX_SCALE)
+    self.health:render(self.pos_x * GFX_SCALE + healthBarXOffset)
   end
 
   if self.attackEngine then
     self.attackEngine:render()
   end
 
-  self:drawTimeSplits()
-
-  -- todo print stage
-  GraphicsUtil.draw_number(self:currentStage(), themes[config.theme].images.IMG_number_atlas_2P, stageQuads, P1.score_x + themes[config.theme].win_Pos[1], P1.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, "center")
 end
 
 function SimulatedOpponent:receiveGarbage(frameToReceive, garbageList)

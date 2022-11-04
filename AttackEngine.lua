@@ -15,14 +15,14 @@ AttackPattern =
 -- An attack engine sends attacks based on a set of rules.
 AttackEngine =
   class(
-  function(self, target, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, sender)
+  function(self, target, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, sender, character)
     self.target = target
     self.delayBeforeStart = delayBeforeStart
     self.delayBeforeRepeat = delayBeforeRepeat
     self.disableQueueLimit = disableQueueLimit
     self.attackPatterns = {}
     self.CLOCK = 0
-    self.character = Character.wait_for_random_character(config.character)
+    self.character = Character.wait_for_random_character(character)
     self.telegraph = Telegraph(sender) 
   end
 )
