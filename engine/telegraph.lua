@@ -464,7 +464,7 @@ function Telegraph:render()
 
       -- Render a "G" for ghost
       if config.debug_mode then
-        gprintf("G", draw_x*self.gfx_scale, (draw_y-8)*self.gfx_scale, 70, "center", nil, 1, large_font)
+        gprintf("G", draw_x*self.owner.gfx_scale, (draw_y-8)*self.owner.gfx_scale, 70, "center", nil, 1, large_font)
       end
     end
 
