@@ -273,7 +273,8 @@ function Stack.moveForPlayerNumber(stack, player_num)
     if GAME.portrait_mode then
       stack.pos_x = 20
       stack.pos_y = 40 + 4 + (108) / GFX_SCALE
-      stack.score_x = (stack.pos_x * GFX_SCALE) + (stack.width * 16) * stack.gfx_scale + 10
+      stack.score_x = (stack.pos_x * GFX_SCALE) + (stack.width * 16) * stack.gfx_scale + 12
+      stack.score_y = 280
     end
   elseif player_num == 2 then
     stack.pos_x = 248
@@ -288,12 +289,12 @@ function Stack.moveForPlayerNumber(stack, player_num)
       stack.gfx_scale = 1
       stack.pos_x = 210
       stack.pos_y = 200
-      stack.score_x = 546
-      stack.score_y = 420
+      stack.score_x = 630
+      stack.score_y = 296
+      stack.origin_x = 310
     end
   end
   stack.origin_y = stack.pos_y
-  stack.score_y = 208
 end
 
 function Stack.divergenceString(stackToTest)
