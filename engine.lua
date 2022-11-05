@@ -269,6 +269,7 @@ function Stack.moveForPlayerNumber(stack, player_num)
     stack.VAR_numbers = ""
     stack.pos_y = 4 + (108) / GFX_SCALE
     stack.score_y = 208
+    stack.origin_x = stack.pos_x
     if GAME.portrait_mode then
       stack.pos_x = 20
       stack.pos_y = 40 + 4 + (108) / GFX_SCALE
@@ -282,6 +283,7 @@ function Stack.moveForPlayerNumber(stack, player_num)
     stack.id = "_2P"
     stack.pos_y = 4 + (108) / GFX_SCALE
     stack.score_y = 208
+    stack.origin_x = stack.pos_x + (stack.canvas:getWidth() / GFX_SCALE) - 8
     if GAME.portrait_mode then
       stack.gfx_scale = 1
       stack.pos_x = 210
@@ -290,7 +292,6 @@ function Stack.moveForPlayerNumber(stack, player_num)
       stack.score_y = 420
     end
   end
-  stack.origin_x = stack.pos_x
   stack.origin_y = stack.pos_y
   stack.score_y = 208
 end
