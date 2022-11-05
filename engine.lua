@@ -108,6 +108,7 @@ Stack =
         s.panels[i][j] = Panel()
       end
     end
+    s:moveForPlayerNumber(which)
 
     s.CLOCK = 0
     s.game_stopwatch = 0
