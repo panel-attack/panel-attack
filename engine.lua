@@ -93,7 +93,6 @@ Stack =
     s.buttons.raise = Button({label = "Raise", x = 400, y = 500, width = 50, height = 100, onClick = function() end--[[no sound affect, nothing--]], isVisible = (s.inputMethod == "touch")})  -- to do: localize "Raise"
     s.raise_touched = false
     
-    s:moveForPlayerNumber(which)
 
     s.panel_buffer = ""
     s.gpanel_buffer = ""
