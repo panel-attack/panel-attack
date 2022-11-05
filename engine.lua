@@ -296,6 +296,7 @@ function Stack.moveForPlayerNumber(stack, player_num)
     stack.id = "_2P"
     stack.pos_y = 4 + (108) / GFX_SCALE
     stack.score_y = 208
+    stack.buttons.raise.x = stack.score_x + 36
     stack.buttons.raise:setVisibility(true)
     stack.origin_x = stack.pos_x + (stack.canvas:getWidth() / GFX_SCALE) - 8
     if GAME.portrait_mode then
