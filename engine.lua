@@ -264,7 +264,6 @@ function Stack.moveForPlayerNumber(stack, player_num)
     
     stack.score_x = 546
     stack.mirror_x = 1
-    stack.origin_x = stack.pos_x
     stack.multiplication = 0
     stack.id = "_1P"
     stack.VAR_numbers = ""
@@ -273,8 +272,7 @@ function Stack.moveForPlayerNumber(stack, player_num)
     if GAME.portrait_mode then
       stack.pos_x = 20
       stack.pos_y = 40 + 4 + (108) / GFX_SCALE
-      stack.score_x = (stack.pos_x * GFX_SCALE) + (stack.pos_x + stack.width * 16) * stack.gfx_scale + 10
-      
+      stack.score_x = (stack.pos_x * GFX_SCALE) + (stack.width * 16) * stack.gfx_scale + 10
     end
   elseif player_num == 2 then
     stack.pos_x = 248
@@ -289,14 +287,12 @@ function Stack.moveForPlayerNumber(stack, player_num)
       stack.pos_x = 210
       stack.pos_y = 200
       stack.score_x = 546
-      stack.score_y = 420 --to do:change these score location values
-      --if stack.garbage_target then
-        --stack.set_garbage_target(stack.garbage_target)
-      --end
+      stack.score_y = 420
     end
-    stack.origin_x = stack.pos_x + (stack.canvas:getWidth() / GFX_SCALE) - 8
-    stack.origin_y = stack.pos_y
   end
+  stack.origin_x = stack.pos_x
+  stack.origin_y = stack.pos_y
+  stack.score_y = 208
 end
 
 function Stack.divergenceString(stackToTest)
