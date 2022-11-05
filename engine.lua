@@ -87,8 +87,6 @@ Stack =
     s.later_garbage = {} -- Queue of garbage that is done waiting in telegraph, and been popped out, and will be sent to our stack next frame
     s.garbage_q = GarbageQueue(s) -- Queue of garbage that is about to be dropped
 
-    s:moveForPlayerNumber(which)
-
     s.panel_buffer = ""
     s.gpanel_buffer = ""
     s.input_buffer = ""
@@ -203,6 +201,7 @@ Stack =
 
     s.analytic = AnalyticsInstance(s.is_local)
 
+    s:moveForPlayerNumber(s.which or 1)
     if s.match.mode == "vs" then
       s.telegraph = Telegraph(s, s) -- Telegraph holds the garbage that hasn't been committed yet and also tracks the attack animations
       -- NOTE: this is the telegraph above this stack, so the opponents puts garbage in this stack.
@@ -269,21 +268,34 @@ function Stack.moveForPlayerNumber(stack, player_num)
     stack.id = "_1P"
     stack.VAR_numbers = ""
     stack.pos_y = 4 + (108) / GFX_SCALE
+    stack.score_y = 208
     if GAME.portrait_mode then
       stack.pos_x = 20
-      stack.pos_y = 30 + 4 + (108) / GFX_SCALE
-      stack.score_x = (stack.origin_x * GFX_SCALE) + (stack.canvas:getWidth() *  stack.gfx_scale) + 10
+      stack.pos_y = 40 + 4 + (108) / GFX_SCALE
+      stack.score_x = (stack.pos_x * GFX_SCALE) + (stack.pos_x + stack.width * 16) * stack.gfx_scale + 10
+      
     end
   elseif player_num == 2 then
     stack.pos_x = 248
     stack.score_x = 642
     stack.mirror_x = -1
-    stack.origin_x = stack.pos_x + (stack.canvas:getWidth() / GFX_SCALE) - 8
     stack.multiplication = 1
     stack.id = "_2P"
     stack.pos_y = 4 + (108) / GFX_SCALE
+    stack.score_y = 208
+    if GAME.portrait_mode then
+      stack.gfx_scale = 1
+      stack.pos_x = 210
+      stack.pos_y = 200
+      stack.score_x = 546
+      stack.score_y = 420 --to do:change these score location values
+      --if stack.garbage_target then
+        --stack.set_garbage_target(stack.garbage_target)
+      --end
+    end
+    stack.origin_x = stack.pos_x + (stack.canvas:getWidth() / GFX_SCALE) - 8
+    stack.origin_y = stack.pos_y
   end
-  stack.score_y = 208
 end
 
 function Stack.divergenceString(stackToTest)
