@@ -90,6 +90,7 @@ score_chain_TA = {  0,   50,   80,  150,  300,
                  1300, 1500, 1800, [0]=0}
 
 GFX_SCALE = 3
+DEFAULT_TOUCH_RAISE_BUTTON_SIZE = {width = 50, height = 100}
 
 -- frames to use for the card animation
 card_animation = {false,

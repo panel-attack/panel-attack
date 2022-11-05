@@ -90,7 +90,7 @@ Stack =
     
     s.inputMethod = "touch" --"touch" or "controller"
     s.buttons = {}
-    s.buttons.raise = Button({label = "Raise", x = 400, y = 500, width = 50, height = 100, onClick = function() end--[[no sound affect, nothing--]], isVisible = (s.inputMethod == "touch")})  -- to do: localize "Raise"
+    s.buttons.raise = Button({label = "Raise", x = 400, y = 500, width = DEFAULT_TOUCH_RAISE_BUTTON_SIZE.width, height = DEFAULT_TOUCH_RAISE_BUTTON_SIZE.height, onClick = function() end--[[no sound affect, nothing--]], isVisible = (s.inputMethod == "touch")})  -- to do: localize "Raise"
     s.raise_touched = false
     
 
@@ -277,10 +277,13 @@ function Stack.moveForPlayerNumber(stack, player_num)
     stack.VAR_numbers = ""
     stack.pos_y = 4 + (108) / GFX_SCALE
     stack.score_y = 208
+    stack.buttons.raise.x = stack.score_x
     if GAME.portrait_mode then
       stack.pos_x = 20
       stack.pos_y = 40 + 4 + (108) / GFX_SCALE
       stack.score_x = (stack.pos_x * GFX_SCALE) + (stack.width * 16) * stack.gfx_scale + 10
+      stack.buttons.raise.x = (stack.pos_x * GFX_SCALE) + (stack.width * 16) * stack.gfx_scale + 40
+      stack.buttons.raise.y = 1000
     end
   elseif player_num == 2 then
     stack.pos_x = 248
@@ -290,18 +293,21 @@ function Stack.moveForPlayerNumber(stack, player_num)
     stack.id = "_2P"
     stack.pos_y = 4 + (108) / GFX_SCALE
     stack.score_y = 208
+    stack.buttons.raise:setVisibility(true)
     if GAME.portrait_mode then
       stack.gfx_scale = 1
       stack.pos_x = 210
       stack.pos_y = 200
       stack.score_x = 546
       stack.score_y = 420
+      stack.buttons.raise:setVisibility(false)
     end
   end
-  stack.buttons.raise.x = stack.score_x
   stack.origin_x = stack.pos_x
   stack.origin_y = stack.pos_y
   stack.score_y = 208
+  stack.buttons.raise.width = DEFAULT_TOUCH_RAISE_BUTTON_SIZE.width * stack.gfx_scale / GFX_SCALE
+  stack.buttons.raise.height = DEFAULT_TOUCH_RAISE_BUTTON_SIZE.height * stack.gfx_scale / GFX_SCALE
 end
 
 function Stack.divergenceString(stackToTest)
