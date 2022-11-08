@@ -1007,8 +1007,12 @@ function Stack.setupInput(self)
 end
 
 function Stack.receiveConfirmedInput(self, input)
-  local inputs = string.toCharTable(input)
-  table.appendToList(self.confirmedInput, inputs)
+  if string.len(input) == 1 then
+    self.confirmedInput[#self.confirmedInput+1] = input
+  else
+    local inputs = string.toCharTable(input)
+    table.appendToList(self.confirmedInput, inputs)
+  end
   self.input_buffer = self.input_buffer .. input
   --logger.debug("Player " .. self.which .. " got new input. Total length: " .. table.length(self.confirmedInput))
 end
