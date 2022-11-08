@@ -10,6 +10,11 @@ local Game = require("Game")
 local util = require("util")
 require("replay")
 
+local mobile = false
+if love.system.getOS() == 'iOS' or love.system.getOS() == 'Android' then
+  mobile = true
+end
+
 local wait, resume = coroutine.yield, coroutine.resume
 
 local main_endless_select, main_timeattack_select, makeSelectPuzzleSetFunction, main_net_vs_setup, main_select_puzz, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, exit_game, training_setup
@@ -119,8 +124,12 @@ end
 
 do
   function main_select_mode()
-    if GAME.portrait_mode == nil then
-      portrait_mode(config.portraitMode)
+    if GAME.portrait_mode == nil then --portrait_mode function hasn't run yet
+      if mobile and (config.portraitMode == nil) then --portrait mode preference was never saved, default true on mobile
+        portrait_mode(true) 
+      else
+        portrait_mode(config.portraitMode) --fine if we pass nil here.
+      end
     end
     CLICK_MENUS = {}
     if next(currently_playing_tracks) == nil then
@@ -1857,10 +1866,6 @@ function portrait_mode(portrait_mode_desired)
   local window_width, window_height = love.graphics.getDimensions()
   local new_width = window_width
   local was_fullscreen = love.window.getFullscreen()
-  local mobile = false
-  if love.system.getOS() == 'iOS' or love.system.getOS() == 'Android' then
-    mobile = true
-  end
   if portrait_mode_desired then
     GAME.portrait_mode = true
     GAME.canvasWRatio = 9

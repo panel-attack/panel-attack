@@ -66,7 +66,6 @@ config = {
     windowHeight                  = canvas_height,
     borderless                    = false,
     fullscreen                    = false,
-    portraitMode                  = false,
     vsync                         = 1,
     display                       = 1,
     windowX                       = nil,
