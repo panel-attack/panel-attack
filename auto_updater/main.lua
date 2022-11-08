@@ -7,13 +7,13 @@ local UPDATER_NAME = "panel-beta" -- you should name the distributed auto update
 local MAX_REQ_SIZE = 100000 -- 100kB
 
 -- GLOBALS
-GAME_UPDATER = GameUpdater(UPDATER_NAME)
+GAME_UPDATER = nil
 GAME_UPDATER_GAME_VERSION = nil
-GAME_UPDATER_CHECK_UPDATE_INGAME = (GAME_UPDATER.config.force_version == "")
+GAME_UPDATER_CHECK_UPDATE_INGAME = nil
 
 -- VARS
-local path = GAME_UPDATER.path
-local local_version = GAME_UPDATER:get_version()
+local path = nil
+local local_version = nil
 local top_version = nil
 local messages = ""
 local wait_messages = 0
@@ -21,7 +21,73 @@ local next_step = ""
 local wait_all_versions = nil
 local wait_download = nil
 
+local function start_game(file)
+  if not love.filesystem.mount(path..file, '') then error("Could not mount game file: "..file) end
+  GAME_UPDATER_GAME_VERSION = file:gsub("^panel%-", ""):gsub("%.love", "")
+  package.loaded.main = nil
+  package.loaded.conf = nil
+  love.conf = nil
+  love.init()
+  love.load(args)
+end
+
+local function display_message(txt)
+  if not love.window.isOpen() then love.window.setMode(800, 600) end
+  messages = messages..txt
+  wait_messages = 10
+end
+
+local function get_embedded_version()
+  for i, v in ipairs(love.filesystem.getDirectoryItems("")) do
+    if v:match('%.love$') then return v end
+  end
+  return nil
+end
+
+local function correctAndroidStartupConfig()
+  local function hasLocalInstallation()
+    local saveDirectory = love.filesystem.getSaveDirectory()
+    for i, v in ipairs(love.filesystem.getDirectoryItems("")) do
+      if love.filesystem.getRealDirectory(v) == saveDirectory then
+        return true
+      end
+    end
+    return false
+  end
+
+  if love.system.getOS() == "Android" and UseAndroidExternalStorage == false then
+    if not hasLocalInstallation() then
+      UseAndroidExternalStorage = true
+    end
+    
+    pcall(
+      function()
+        local file = love.filesystem.newFile("UseAndroidExternalStorage")
+        file:open("w")
+        file:write(tostring(UseAndroidExternalStorage))
+        file:close()
+      end
+    )
+
+    if UseAndroidExternalStorage then
+      _G.UseAndroidExternalStorage = nil
+      package.loaded.conf = nil
+      love.conf = nil
+      love.init()
+      love.load()
+    end
+  end
+end
+
 function love.load()
+  correctAndroidStartupConfig()
+
+  -- delayed initialisation as GameUpdater already writes into storage which ruins the function above
+  GAME_UPDATER = GameUpdater(UPDATER_NAME)
+  GAME_UPDATER_CHECK_UPDATE_INGAME = (GAME_UPDATER.config.force_version == "")
+  path = GAME_UPDATER.path
+  local_version = GAME_UPDATER:get_version()
+
   -- Cleanup old love files
   for i, v in ipairs(love.filesystem.getDirectoryItems(path)) do
     if v ~= local_version and v:match('%.love$') then
@@ -121,27 +187,4 @@ end
 
 function love.draw()
   love.graphics.print(messages, 10, 10)
-end
-
-function start_game(file)
-  if not love.filesystem.mount(path..file, '') then error("Could not mount game file: "..file) end
-  GAME_UPDATER_GAME_VERSION = file:gsub("^panel%-", ""):gsub("%.love", "")
-  package.loaded.main = nil
-  package.loaded.conf = nil
-  love.conf = nil
-  love.init()
-  love.load(args)
-end
-
-function display_message(txt)
-  if not love.window.isOpen() then love.window.setMode(800, 600) end
-  messages = messages..txt
-  wait_messages = 10
-end
-
-function get_embedded_version()
-  for i, v in ipairs(love.filesystem.getDirectoryItems("")) do
-    if v:match('%.love$') then return v end
-  end
-  return nil
 end
