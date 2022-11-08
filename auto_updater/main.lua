@@ -49,7 +49,8 @@ local function correctAndroidStartupConfig()
     local saveDirectory = love.filesystem.getSaveDirectory()
     for i, v in ipairs(love.filesystem.getDirectoryItems("")) do
       if love.filesystem.getRealDirectory(v) == saveDirectory then
-        return true
+        -- the config file itself might still live in internal storage as that is the default setting for love
+        return v.name ~= "UseAndroidExternalStorage"
       end
     end
     return false

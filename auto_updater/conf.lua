@@ -13,7 +13,9 @@ local function readUseAndroidExternalStorage()
 end
 
 function love.conf(t)
-  UseAndroidExternalStorage = readUseAndroidExternalStorage()
+  if UseAndroidExternalStorage == nil then
+    UseAndroidExternalStorage = readUseAndroidExternalStorage()
+  end
 
   t.identity = "Panel Attack" -- The name of the save directory (string)
   t.appendidentity = false -- Search files in source directory before save directory (boolean)
