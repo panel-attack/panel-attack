@@ -397,7 +397,7 @@ end
 function string.toCharTable(self)
   local t = {}
   for field, s in self:gmatch(".") do
-    table.insert(t, field)
+    t[#t+1] = field
   end
   return t
 end
