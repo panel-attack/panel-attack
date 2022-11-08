@@ -354,7 +354,7 @@ function Match.render(self)
 
 
     drawY = drawY + padding
-    gprintf("Confirmed " .. table.length(P1.confirmedInput) , drawX, drawY)
+    gprintf("Confirmed " .. #P1.confirmedInput , drawX, drawY)
 
     drawY = drawY + padding
     gprintf("input_buffer " .. string.len(P1.input_buffer) , drawX, drawY)
@@ -366,7 +366,7 @@ function Match.render(self)
     -- gprintf("P1 Panels: " .. P1.panel_buffer, drawX, drawY)
 
     -- drawY = drawY + padding
-    -- gprintf("P1 Confirmed " .. table.length(P1.confirmedInput) , drawX, drawY)
+    -- gprintf("P1 Confirmed " .. #P1.confirmedInput , drawX, drawY)
 
     -- drawY = drawY + padding
     -- gprintf("P1 Ended?: " .. tostring(P1:game_ended()), drawX, drawY)
@@ -437,7 +437,7 @@ function Match.render(self)
       gprintf("P1 Ahead: " .. framesAhead, drawX, drawY)
 
       drawY = drawY + padding
-      gprintf("Confirmed " .. table.length(P2.confirmedInput) , drawX, drawY)
+      gprintf("Confirmed " .. #P2.confirmedInput , drawX, drawY)
 
       drawY = drawY + padding
       gprintf("input_buffer " .. string.len(P2.input_buffer) , drawX, drawY)

@@ -103,3 +103,56 @@ stringCompression2()
 tableCompression2()
 stringDecompression2()
 tableDecompression2()
+
+
+-- performance comparison between string usage and table concat for singleplayer
+-- simulated for one minute without restorefromrollbackcopy and debugmode off
+
+local function testPerformanceString(seconds)
+  local confirmedInputsP1 = ""
+  local loopCount = seconds * 60
+
+  local startTime = love.timer.getTime()
+
+  for i = 1, loopCount do
+    -- check in send_controls
+    local len1 = string.len(confirmedInputsP1)
+    local len2 = string.len(confirmedInputsP1)
+    -- receiveConfirmedInput, called in send_controls
+    confirmedInputsP1 = confirmedInputsP1 .. "A"
+  end
+
+  print("string performance, took: " .. love.timer.getTime() - startTime .. " to concat inputs for a " .. seconds .. "s match")
+
+end
+
+local function testPerformanceTable(seconds)
+  local confirmedInputsP1 = {}
+  local loopCount = seconds * 60
+
+  local startTime = love.timer.getTime()
+
+  for i = 1, loopCount do
+    -- check in send_controls
+    local len1 = #confirmedInputsP1
+    local len2 = #confirmedInputsP1
+    -- receiveConfirmedInput, called in send_controls
+    local inputs = string.toCharTable("A")
+    table.appendToList(confirmedInputsP1, inputs)
+  end
+
+  print("table performance, took: " .. love.timer.getTime() - startTime .. " to concat inputs for a " .. seconds .. "s match")
+
+end
+
+testPerformanceString(60)
+testPerformanceTable(60)
+
+testPerformanceString(120)
+testPerformanceTable(120)
+
+testPerformanceString(300)
+testPerformanceTable(300)
+
+testPerformanceString(600)
+testPerformanceTable(600)

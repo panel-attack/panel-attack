@@ -328,7 +328,7 @@ end
 
 function Stack.send_controls(self)
 
-  if self.is_local and TCP_sock and table.length(self.confirmedInput) > 0 and self.garbage_target and table.length(self.garbage_target.confirmedInput) == 0 then
+  if self.is_local and TCP_sock and #self.confirmedInput > 0 and self.garbage_target and #self.garbage_target.confirmedInput == 0 then
     -- Send 1 frame at CLOCK time 0 then wait till we get our first input from the other player.
     -- This will cause a player that got the start message earlierer than the other player to wait for the other player just once.
     return
