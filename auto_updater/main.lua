@@ -70,7 +70,6 @@ local function correctAndroidStartupConfig()
     )
 
     if UseAndroidExternalStorage then
-      _G.UseAndroidExternalStorage = nil
       package.loaded.conf = nil
       love.conf = nil
       love.init()
