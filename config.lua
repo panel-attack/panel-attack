@@ -66,6 +66,7 @@ config = {
     windowHeight                  = canvas_height,
     borderless                    = false,
     fullscreen                    = false,
+    portraitMode                  = false,
     vsync                         = 1,
     display                       = 1,
     windowX                       = nil,
@@ -226,6 +227,9 @@ config = {
         end
         if type(read_data.fullscreen) == "boolean" then
           configTable.fullscreen = read_data.fullscreen
+        end
+        if type(read_data.portraitMode) == "boolean" then
+          configTable.portraitMode = read_data.portraitMode
         end
         if type(read_data.vsync) == "boolean" then
           configTable.vsync = read_data.vsync

@@ -119,6 +119,9 @@ end
 
 do
   function main_select_mode()
+    if GAME.portrait_mode == nil then
+      portrait_mode(config.portraitMode)
+    end
     CLICK_MENUS = {}
     if next(currently_playing_tracks) == nil then
       stop_the_music()
@@ -185,7 +188,7 @@ do
       main_menu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
     end
     main_menu:add_button(loc("mm_fullscreen", "(LAlt+Enter)"), fullscreen, goEscape)
-    main_menu:add_button("Portrait mode" --[[to do: loc("mm_portrait_mode")]], portrait_mode, goEscape)
+    main_menu:add_button("Portrait mode: " --[[to do: loc("mm_portrait_mode")]].. ((GAME.portrait_mode and "on") or "off"), handlePortraitModeToggle, goEscape)
     main_menu:add_button(loc("mm_quit"), exit_game, exit_game)
 
     while true do
@@ -1848,23 +1851,59 @@ function fullscreen()
   return main_select_mode
 end
 
--- toggles portrait mode
-function portrait_mode()
-  if not GAME.portrait_mode then
+-- sets game to portrait mode if portrait_mode_desired is true, else sets game to landscape
+-- does NOT return a function.  If calling this from a menu, be sure to return a menu function afterwards.
+function portrait_mode(portrait_mode_desired)
+  local window_width, window_height = love.graphics.getDimensions()
+  local new_width = window_width
+  local was_fullscreen = love.window.getFullscreen()
+  local mobile = false
+  if love.system.getOS() == 'iOS' or love.system.getOS() == 'Android' then
+    mobile = true
+  end
+  if portrait_mode_desired then
     GAME.portrait_mode = true
     GAME.canvasWRatio = 9
     GAME.canvasHRatio = 16
     canvas_width = 720
     canvas_height = 1280
-    love.window.setMode(450, 800)
-  else
+    --love.window.setMode(450, 800)
+    if window_width >= window_height then
+      --window is landscape. Let's use the current height as the new height, and decrease width.
+      if mobile then
+        love.window.setMode(1,2) --set to portrait
+        new_width, window_height = love.graphics.getDimensions()
+      else
+        new_width = math.ceil(window_height*9/16)
+        love.window.setMode(new_width, window_height ,{resizable=(not was_fullscreen), fullscreen = was_fullscreen})
+      end
+    end
+  else --portrait_mode_desired was false or nil - go to landscape
     GAME.portrait_mode = false
     GAME.canvasWRatio = 16
     GAME.canvasHRatio = 9
     canvas_width = 1280
     canvas_height = 720
-    love.window.setMode(1280,720)
+    --love.window.setMode(1280,720)
+    if window_width <= window_height then
+      --window is portrait. Let's use the current height as the new height, and increase width.
+      if mobile then
+        love.window.setMode(2,1) --set to landscape
+        new_width, window_height = love.graphics.getDimensions()
+      else
+        new_width = math.ceil(window_height*16/9)
+        love.window.setMode(new_width, window_height ,{resizable=(not was_fullscreen), fullscreen = was_fullscreen})
+      end
+    end
   end
+  GAME:updateCanvasPositionAndScale(new_width, window_height)
+  GAME:refreshCanvasAndImagesForNewScale()
+  return true
+end
+
+--toggles portrait mode
+function handlePortraitModeToggle()
+  portrait_mode(not GAME.portrait_mode)
   return main_select_mode
 end
 
@@ -2054,5 +2093,6 @@ function love.quit()
   config.windowWidth, config.windowHeight, _ = love.window.getMode( )
   config.maximizeOnStartup = love.window.isMaximized()
   config.fullscreen = love.window.getFullscreen()
+  config.portraitMode = GAME.portrait_mode
   write_conf_file()
 end
