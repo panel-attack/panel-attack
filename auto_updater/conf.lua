@@ -2,7 +2,7 @@ require("developer")
 
 local function readUseAndroidExternalStorage()
   if love.filesystem.getInfo("UseAndroidExternalStorage", "file") then
-    local file = love.filesystem.newFile("conf.json")
+    local file = love.filesystem.newFile("UseAndroidExternalStorage")
     file:open("r")
     local result = file:read(file:getSize())
     file:close()
