@@ -226,9 +226,17 @@ local function graphics_menu()
       updateFixedScale(false)
     end
   end
+  
+  local function update_orientation(noToggle)
+    if not noToggle then
+      config.renderTelegraph = not config.renderTelegraph
+      portrait_mode(not GAME.portrait_mode)
+    end
+    graphicsMenu:set_button_setting(4, (GAME.portrait_mode and "Portrait") or "Landscape")  --to do: localize 
+  end
 
   local function update_portrait_darkness()
-    graphicsMenu:set_button_setting(4, config.portrait_darkness)
+    graphicsMenu:set_button_setting(5, config.portrait_darkness)
   end
 
   local function increase_portrait_darkness()
@@ -245,21 +253,21 @@ local function graphics_menu()
     if not noToggle then
       config.popfx = not config.popfx
     end
-    graphicsMenu:set_button_setting(5, config.popfx and loc("op_on") or loc("op_off"))
+    graphicsMenu:set_button_setting(6, config.popfx and loc("op_on") or loc("op_off"))
   end
 
   local function update_renderTelegraph(noToggle)
     if not noToggle then
       config.renderTelegraph = not config.renderTelegraph
     end
-    graphicsMenu:set_button_setting(6, config.renderTelegraph and loc("op_on") or loc("op_off"))
+    graphicsMenu:set_button_setting(7, config.renderTelegraph and loc("op_on") or loc("op_off"))
   end
 
   local function update_renderAttacks(noToggle)
     if not noToggle then
       config.renderAttacks = not config.renderAttacks
     end
-    graphicsMenu:set_button_setting(7, config.renderAttacks and loc("op_on") or loc("op_off"))
+    graphicsMenu:set_button_setting(8, config.renderAttacks and loc("op_on") or loc("op_off"))
   end
 
   local function nextMenu()
@@ -278,6 +286,7 @@ local function graphics_menu()
   graphicsMenu:add_button(loc("op_theme"), next_theme, goEscape, previous_theme, next_theme)
   graphicsMenu:add_button(loc("op_scale"), nextScaleType, goEscape, previousScaleType, nextScaleType)
   graphicsMenu:add_button(loc("op_scale_fixed_value"), nextFixedScale, goEscape, previousFixedScale, nextFixedScale)
+  graphicsMenu:add_button("Orientation", update_orientation, goEscape, update_orientation, update_orientation)
   graphicsMenu:add_button(loc("op_portrait_darkness"), increase_portrait_darkness, goEscape, decrease_portrait_darkness, increase_portrait_darkness)
   graphicsMenu:add_button(loc("op_popfx"), update_popfx, goEscape, update_popfx, update_popfx)
   graphicsMenu:add_button(loc("op_renderTelegraph"), update_renderTelegraph, goEscape, update_renderTelegraph, update_renderTelegraph)
@@ -286,6 +295,7 @@ local function graphics_menu()
   update_theme()
   updateScaleType(true)
   updateFixedScale(true)
+  update_orientation(true)
   update_portrait_darkness()
   update_popfx(true)
   update_renderTelegraph(true)
