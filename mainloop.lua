@@ -197,7 +197,7 @@ do
       main_menu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
     end
     main_menu:add_button(loc("mm_fullscreen", "(LAlt+Enter)"), fullscreen, goEscape)
-    main_menu:add_button("Portrait mode: " --[[to do: loc("mm_portrait_mode")]].. ((GAME.portrait_mode and "on") or "off"), handlePortraitModeToggle, goEscape)
+    --main_menu:add_button("Portrait mode: " --[[to do: loc("mm_portrait_mode")]].. ((GAME.portrait_mode and "on") or "off"), handlePortraitModeToggle, goEscape)
     main_menu:add_button(loc("mm_quit"), exit_game, exit_game)
 
     while true do
@@ -1866,6 +1866,7 @@ function portrait_mode(portrait_mode_desired)
   local window_width, window_height = love.graphics.getDimensions()
   local new_width = window_width
   local was_fullscreen = love.window.getFullscreen()
+  config.portraitMode = portrait_mode_desired or false
   if portrait_mode_desired then
     GAME.portrait_mode = true
     GAME.canvasWRatio = 9
