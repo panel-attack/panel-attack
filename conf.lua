@@ -14,7 +14,7 @@ function love.conf(t)
   t.accelerometerjoystick = false     -- Enable the accelerometer on iOS and Android by exposing it as a Joystick (boolean)
   -- is loaded inside the auto updater
   --- game and auto updater should always start inside the same storage for the config to read and write correctly
-  if UseAndroidExternalStorage then
+  if UseAndroidExternalStorage ~= nil then
     t.externalstorage = UseAndroidExternalStorage    -- True to save files (and read from the save directory) in external storage on Android (boolean) 
   else
     -- game was started without auto_updater

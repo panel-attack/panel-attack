@@ -1,5 +1,3 @@
-require("developer")
-
 local function readUseAndroidExternalStorage()
   if love.filesystem.getInfo("UseAndroidExternalStorage", "file") then
     local file = love.filesystem.newFile("UseAndroidExternalStorage")
