@@ -4,6 +4,8 @@ local tableUtils = require("tableUtils")
 local util = require("util")
 
 local select_screen = {}
+select_screen.buttons = {}  --filled in select_screen_graphics.drawButton
+    
 
 local wait = coroutine.yield
 
@@ -172,6 +174,21 @@ function select_screen.move_cursor(self, cursor, direction)
   cursor_pos[1], cursor_pos[2] = can_x, can_y
   local character = characters[self.drawMap[self.current_page][can_x][can_y]]
   cursor.can_super_select = character and (character.stage or character.panels)
+end
+
+function select_screen.teleport_cursor(self, coord_x, coord_y)
+
+end
+
+function select_screen.click_or_tap(self,coord_x, coord_y)  
+  local cursor_pos = self.players[1].cursor.position
+  --Move the cursor to the clicked location
+  cursor_pos[1], cursor_pos[2] = coord_x, coord_y
+  local character = characters[self.drawMap[self.current_page][coord_x][coord_y]]
+  self.players[1].cursor.can_super_select = character and (character.stage or character.panels)
+  -- select it
+  self:on_select(self.players[1], false) --we'll say only player one can click the menu for now
+  --to do: make a way to super select by clicking.
 end
 
 -- Function to know what to do when you press select on your current cursor

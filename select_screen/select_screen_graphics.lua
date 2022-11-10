@@ -1,10 +1,12 @@
 local graphicsUtil = require("graphics_util")
+local Button = require("ui.Button")
 
 local select_screen_graphics = {
   v_align_center = {__Ready = true, __Random = true, __Leave = true},
   is_special_value = {__Leave = true, __Level = true, __Panels = true, __Ready = true, __Stage = true, __Mode = true, __Random = true},
   spacing = 8,
   text_height = 13,
+
 }
 
 function select_screen_graphics.draw(self, select_screen)
@@ -175,6 +177,26 @@ end
     if no_rect == false then
       grectangle("line", self.render_x, self.render_y, self.button_width, self.button_height)
     end
+    if not self.select_screen.buttons[y] then
+      self.select_screen.buttons[y] = {}
+    end
+    if not self.select_screen.buttons[y][x] then
+      local _x, _y = x, y
+      self.select_screen.buttons[y][x] = Button({x = self.render_x, y = self.render_y, width = self.button_width, height = self.button_height, onClick = function() self.select_screen:click_or_tap(x,y) end})
+      
+      print("button render x,y: "..self.select_screen.buttons[y][x].x..","..self.select_screen.buttons[y][x].y)
+    end
+    --[[else
+      self.select_screen.buttons[y][x].x = render_x
+      self.select_screen.buttons[y][x].y = render_y
+      self.select_screen.buttons[y][x].width = self.button_width
+      self.select_screen.buttons[y][x].height = self.button_height
+      self.select_screen.buttons[y][x].row = y
+      self.select_screen.buttons[y][x].col = x
+      self.select_screen.buttons[y][x]:setVisibility(true)
+      --]]
+        self.select_screen.buttons[y][x]:draw()
+    --end
     local character = characters[str]
     if str == "P1" then
       if self.select_screen.players[self.select_screen.my_player_number].selectedCharacter then
@@ -207,7 +229,7 @@ end
     if character then
       self:draw_character(character)
     end
-
+    
     -- Based on the string type, render the right type of button
     local pstr
     if string.sub(str, 1, 2) == "__" then

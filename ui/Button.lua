@@ -29,11 +29,13 @@ local Button = class(
     end
     self.onMouseUp = options.onMouseUp or function() end
     
-    -- text field is set in base class (UIElement)
-    local textWidth, textHeight = self.text:getDimensions()
-    -- stretch to fit text
-    self.width = math.max(textWidth + 6, self.width)
-    self.height = math.max(textHeight + 6, self.height)
+    if self.text then
+      -- text field is set in base class (UIElement)
+      local textWidth, textHeight = self.text:getDimensions()
+      -- stretch to fit text
+      self.width = math.max(textWidth + 6, self.width)
+      self.height = math.max(textHeight + 6, self.height)
+    end
     buttonManager.buttons[self.id] = self.isVisible and self or nil
     self.TYPE = "Button"
   end,
@@ -65,23 +67,23 @@ function Button:draw()
     GAME.gfx_q:push({love.graphics.setColor, self.backgroundColor})
     GAME.gfx_q:push({love.graphics.rectangle, {"fill", screenX, screenY, self.width, self.height}})
   end
-  
-  local textWidth, textHeight = self.text:getDimensions()
-  local xAlignments = {
-    center = {self.width / 2, textWidth / 2},
-    left = {0, 0},
-    right = {self.width, textWidth},
-  }
-  local yAlignments = {
-    center = {self.height / 2, textHeight / 2},
-    top = {0, 0},
-    bottom = {self.height, textHeight},
-  }
-  local xPosAlign, xOffset = unpack(xAlignments[self.halign])
-  local yPosAlign, yOffset = unpack(yAlignments[self.valign])
-  
-  GraphicsUtil.drawClearText(self.text, screenX + xPosAlign, screenY + yPosAlign, xOffset, yOffset)
-  
+  if self.text then
+    local textWidth, textHeight = self.text:getDimensions()
+    local xAlignments = {
+      center = {self.width / 2, textWidth / 2},
+      left = {0, 0},
+      right = {self.width, textWidth},
+    }
+    local yAlignments = {
+      center = {self.height / 2, textHeight / 2},
+      top = {0, 0},
+      bottom = {self.height, textHeight},
+    }
+    local xPosAlign, xOffset = unpack(xAlignments[self.halign])
+    local yPosAlign, yOffset = unpack(yAlignments[self.valign])
+    
+    GraphicsUtil.drawClearText(self.text, screenX + xPosAlign, screenY + yPosAlign, xOffset, yOffset)
+  end
   -- draw children
   UIElement.draw(self)
 end
