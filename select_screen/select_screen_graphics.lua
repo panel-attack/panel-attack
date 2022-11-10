@@ -159,8 +159,9 @@ function select_screen_graphics.draw1pRecords(self)
 end
 
 -- Draws a button for the select screen.
-  -- x grid position to draw in
-  -- y grid position to draw in
+  -- x grid position to draw in --as written, this corresponds with which horizontal row
+  -- y grid position to draw in --as written, this corresponds with which vertical column
+  -- the above feels backwards to Jon, but he is going along with it.
   -- w number of grids wide
   -- h number of grids high
   -- str the type of button to draw
@@ -177,26 +178,20 @@ end
     if no_rect == false then
       grectangle("line", self.render_x, self.render_y, self.button_width, self.button_height)
     end
-    if not self.select_screen.buttons[y] then
-      self.select_screen.buttons[y] = {}
+    --print("in drawButton, COLUMNS is: "..self.select_screen.COLUMNS)
+    if x >= 1 and x <= self.select_screen.ROWS and y >= 1 and y <= self.select_screen.COLUMNS then
+      if not self.select_screen.buttons[x] then
+        self.select_screen.buttons[x] = {}
+      end
+      if not self.select_screen.buttons[x][y] then
+        local _x, _y = x, y
+        print("creating button at x,y="..x..","..y)
+        self.select_screen.buttons[x][y] = Button({x = self.render_x, y = self.render_y, width = self.button_width, height = self.button_height, onClick = function() self.select_screen:click_or_tap(x,y) end})
+        
+        --print("button render x,y: "..self.select_screen.buttons[x][y].x..","..self.select_screen.buttons[y][x].y)
+      end
+      self.select_screen.buttons[x][y]:draw()
     end
-    if not self.select_screen.buttons[y][x] then
-      local _x, _y = x, y
-      self.select_screen.buttons[y][x] = Button({x = self.render_x, y = self.render_y, width = self.button_width, height = self.button_height, onClick = function() self.select_screen:click_or_tap(x,y) end})
-      
-      print("button render x,y: "..self.select_screen.buttons[y][x].x..","..self.select_screen.buttons[y][x].y)
-    end
-    --[[else
-      self.select_screen.buttons[y][x].x = render_x
-      self.select_screen.buttons[y][x].y = render_y
-      self.select_screen.buttons[y][x].width = self.button_width
-      self.select_screen.buttons[y][x].height = self.button_height
-      self.select_screen.buttons[y][x].row = y
-      self.select_screen.buttons[y][x].col = x
-      self.select_screen.buttons[y][x]:setVisibility(true)
-      --]]
-        self.select_screen.buttons[y][x]:draw()
-    --end
     local character = characters[str]
     if str == "P1" then
       if self.select_screen.players[self.select_screen.my_player_number].selectedCharacter then
