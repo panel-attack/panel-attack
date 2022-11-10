@@ -9,6 +9,9 @@ local uniqueId = 0
 local UIElement = class(
   function(self, options)
     -- local position relative to parent (or global pos if parent is nil)
+    if not options then
+      options = {}
+    end
     self.x = options.x or 0
     self.y = options.y or 0
     

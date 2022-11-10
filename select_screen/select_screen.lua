@@ -3,7 +3,7 @@ local graphics = require("select_screen.select_screen_graphics")
 local tableUtils = require("tableUtils")
 local util = require("util")
 
-local select_screen = {}
+local select_screen = {isVisible = true}
 select_screen.buttons = {}  --filled in select_screen_graphics.drawButton
     
 
@@ -185,6 +185,7 @@ function select_screen.click_or_tap(self,coord_x, coord_y)
   --Move the cursor to the clicked location
   cursor_pos[1], cursor_pos[2] = coord_x, coord_y
   local character = characters[self.drawMap[self.current_page][coord_x][coord_y]]
+  self.players[1].cursor.positionId = self.drawMap[self.current_page][cursor_pos[1]][cursor_pos[2]]
   self.players[1].cursor.can_super_select = character and (character.stage or character.panels)
   -- select it
   self:on_select(self.players[1], false) --we'll say only player one can click the menu for now
@@ -875,6 +876,8 @@ function select_screen.start1pLocalMatch(self)
   current_stage = self.players[self.my_player_number].stage
   stage_loader_load(current_stage)
   stage_loader_wait()
+  --to do: remove clickable buttons during the game.  They will get re-created when we draw the select screen again.
+  self:setVisibility(false)
   P1:starting_state()
   return main_dumb_transition, {main_local_vs_yourself, "", 0, 0}
 end
@@ -934,6 +937,16 @@ function select_screen.initialize(self, character_select_mode)
   end
   -- everything else gets its field directly on select_screen
   self.current_page = 1
+end
+
+function select_screen.setVisibility(isVisible)
+  select_screen.isVisible = isVisible
+  if select_screen.all_buttons then
+    select_screen.all_buttons:setVisibility(isVisible)
+  end
+  if not isVisible then
+    select_screen.buttons = {}
+  end
 end
 
 -- The main screen for selecting characters and settings for a match
@@ -1009,6 +1022,7 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
 
     -- Handle one player vs game setup
     if self.players[self.my_player_number].ready and self.character_select_mode == "1p_vs_yourself" then
+      self.setVisibility(false)
       return self:start1pLocalMatch()
     -- Handle two player vs game setup
     elseif select_screen.character_select_mode == "2p_local_vs" and self.players[self.my_player_number].ready and self.players[self.op_player_number].ready then

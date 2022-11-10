@@ -1,5 +1,6 @@
 local graphicsUtil = require("graphics_util")
 local Button = require("ui.Button")
+local UIElement = require("ui.UIElement")
 
 local select_screen_graphics = {
   v_align_center = {__Ready = true, __Random = true, __Leave = true},
@@ -10,6 +11,9 @@ local select_screen_graphics = {
 }
 
 function select_screen_graphics.draw(self, select_screen)
+  if not select_screen.isVisible then
+    return
+  end
   self.select_screen = select_screen
 
   select_screen_graphics.menu_width = select_screen.COLUMNS * 100
@@ -46,6 +50,7 @@ function select_screen_graphics.draw(self, select_screen)
     end
   end
 
+  self.select_screen.all_buttons:draw()
   self:drawPlayerInfo()
   self:drawMatchTypeString()
   self:drawPagingIndicator()
@@ -180,17 +185,20 @@ end
     end
     --print("in drawButton, COLUMNS is: "..self.select_screen.COLUMNS)
     if x >= 1 and x <= self.select_screen.ROWS and y >= 1 and y <= self.select_screen.COLUMNS then
+      if not self.select_screen.all_buttons then
+      self.select_screen.all_buttons = UIElement()
+      end
       if not self.select_screen.buttons[x] then
         self.select_screen.buttons[x] = {}
       end
       if not self.select_screen.buttons[x][y] then
         local _x, _y = x, y
         print("creating button at x,y="..x..","..y)
-        self.select_screen.buttons[x][y] = Button({x = self.render_x, y = self.render_y, width = self.button_width, height = self.button_height, onClick = function() self.select_screen:click_or_tap(x,y) end})
+        self.select_screen.buttons[x][y] = Button({parent = self.select_screen.all_buttons, x = self.render_x, y = self.render_y, width = self.button_width, height = self.button_height, onClick = function() self.select_screen:click_or_tap(x,y) end})
         
         --print("button render x,y: "..self.select_screen.buttons[x][y].x..","..self.select_screen.buttons[y][x].y)
       end
-      self.select_screen.buttons[x][y]:draw()
+      --Note: we'll draw self.select_screen.all_buttons later.  No need to draw each clickable button here.
     end
     local character = characters[str]
     if str == "P1" then
