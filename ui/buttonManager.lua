@@ -6,6 +6,10 @@ local buttonManager = {
 
 local selectedButton = nil
 
+function buttonManager.printButtonCount(self)
+print("Current button count: "..#self.buttons)
+end
+
 function buttonManager.update()
   -- there is no event for continous mouse pressed, so simulating it here
   if selectedButton and love.mouse.isDown(1) then

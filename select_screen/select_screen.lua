@@ -876,8 +876,6 @@ function select_screen.start1pLocalMatch(self)
   current_stage = self.players[self.my_player_number].stage
   stage_loader_load(current_stage)
   stage_loader_wait()
-  --to do: remove clickable buttons during the game.  They will get re-created when we draw the select screen again.
-  self:setVisibility(false)
   P1:starting_state()
   return main_dumb_transition, {main_local_vs_yourself, "", 0, 0}
 end
@@ -939,18 +937,16 @@ function select_screen.initialize(self, character_select_mode)
   self.current_page = 1
 end
 
-function select_screen.setVisibility(isVisible)
-  select_screen.isVisible = isVisible
-  if select_screen.all_buttons then
-    select_screen.all_buttons:setVisibility(isVisible)
-  end
-  if not isVisible then
-    select_screen.buttons = {}
+function select_screen.setVisibility(self, isVisible)
+  self.isVisible = isVisible
+  if self.all_buttons then
+    self.all_buttons:setVisibility(isVisible)
   end
 end
 
 -- The main screen for selecting characters and settings for a match
 function select_screen.main(self, character_select_mode, roomInitializationMessage)
+  self:setVisibility(true)
   self.roomInitializationMessage = roomInitializationMessage
   self:initialize(character_select_mode)
   self:loadThemeAssets()
@@ -1022,7 +1018,8 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
 
     -- Handle one player vs game setup
     if self.players[self.my_player_number].ready and self.character_select_mode == "1p_vs_yourself" then
-      self.setVisibility(false)
+       --to do: remove clickable buttons during the game.  They will get re-created when we draw the select screen again.
+      self:setVisibility(false)
       return self:start1pLocalMatch()
     -- Handle two player vs game setup
     elseif select_screen.character_select_mode == "2p_local_vs" and self.players[self.my_player_number].ready and self.players[self.op_player_number].ready then

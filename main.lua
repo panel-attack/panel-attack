@@ -108,7 +108,7 @@ function love.mousepressed(x, y, button)
   sliderManager.mousePressed(x, y)
   inputFieldManager.mousePressed(x, y)
   inputManager:mousePressed(x, y, button)
-
+  buttonManager:printButtonCount()
   for menu_name, menu in pairs(CLICK_MENUS) do
     menu:click_or_tap(GAME:transform_coordinates(x, y))
   end
