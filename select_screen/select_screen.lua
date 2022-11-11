@@ -11,7 +11,7 @@ local wait = coroutine.yield
 
 -- fills the provided map based on the provided template and return the amount of pages. __Empty values will be replaced by character_ids
 local function fill_map(template_map, map)
-  local X, Y = 5, 9
+  local X, Y = #template_map, #template_map[1]
   local pages_amount = 0
   local character_id_index = 1
   while true do
@@ -151,11 +151,13 @@ function select_screen.on_quit(self)
   if select_screen:isNetPlay() then
     GAME:clearMatch()
     if not select_screen.sendLeave() then
+      self:setVisibility(false)
       return {main_dumb_transition, {main_select_mode, loc("ss_error_leave"), 60, 300}}
     else
       -- don't immediately transition out, wait for the server to confirm our leave via handleServerMessages and quit from there
     end
   else
+    self:setVisibility(false)
     return {main_select_mode}
   end
 end
@@ -301,21 +303,49 @@ end
 function select_screen.getTemplateMap(self)
   logger.trace("current_server_supports_ranking: " .. tostring(current_server_supports_ranking))
   if self:isNetPlay() and current_server_supports_ranking then
-    return {
-      {"__Panels", "__Panels", "__Mode", "__Mode", "__Stage", "__Stage", "__Level", "__Level", "__Ready"},
-      {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-      {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-      {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-      {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}
-    }
+    if GAME.portrait_mode then
+      return {
+        {"__Panels", "__Panels", "__Level", "__Level", "__Ready"},
+        {"__Stage", "__Stage", "__Mode", "__Mode",  "__Random"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}
+        }
+    else
+      return {
+        {"__Panels", "__Panels", "__Mode", "__Mode", "__Stage", "__Stage", "__Level", "__Level", "__Ready"},
+        {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}
+      }
+    end
   else
-    return {
-      {"__Panels", "__Panels", "__Stage", "__Stage", "__Stage", "__Level", "__Level", "__Level", "__Ready"},
-      {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-      {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-      {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-      {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}
-    }
+    if GAME.portrait_mode then
+      return {
+        {"__Panels", "__Panels", "__Level", "__Level", "__Ready"},
+        {"__Stage", "__Stage", "__Empty", "__Empty",  "__Random"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}
+      }
+    else
+      return {
+        {"__Panels", "__Panels", "__Stage", "__Stage", "__Stage", "__Level", "__Level", "__Level", "__Ready"},
+        {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}
+      }
+    end
   end
 end
 

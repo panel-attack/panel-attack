@@ -214,7 +214,7 @@ do
       end
       
       local fontHeight = get_global_font():getHeight()
-      local infoYPosition = 705 - fontHeight/2
+      local infoYPosition = canvas_height - 30 - fontHeight/2
 
       local loveString = Game.loveVersionString()
       if loveString == "11.3.0" then
