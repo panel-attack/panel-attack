@@ -27,6 +27,36 @@ AttackEngine =
   end
 )
 
+function AttackEngine.createEngineForTrainingModeSettings(trainingModeSettings, opponent, character)
+  local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
+  local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
+  local disableQueueLimit = trainingModeSettings.disableQueueLimit or false
+  local attackEngine = AttackEngine(P1, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, opponent, character)
+  for _, values in ipairs(trainingModeSettings.attackPatterns) do
+    if values.chain then
+      if type(values.chain) == "number" then
+        for i = 1, values.height do
+          attackEngine:addAttackPattern(6, i, values.startTime + ((i-1) * values.chain), false, true)
+        end
+        attackEngine:addEndChainPattern(values.startTime + ((values.height - 1) * values.chain) + values.chainEndDelta)
+      elseif type(values.chain) == "table" then
+        for i, chainTime in ipairs(values.chain) do
+          attackEngine:addAttackPattern(6, i, chainTime, false, true)
+        end
+        attackEngine:addEndChainPattern(values.chainEndTime)
+      else
+        error("The 'chain' field in your attack file is invalid. It should either be a number or a list of numbers.")
+      end
+    else
+      attackEngine:addAttackPattern(values.width, values.height or 1, values.startTime, values.metal or false, false)
+    end
+  end
+
+  attackEngine:setTarget(P1)
+
+  return attackEngine
+end
+
 function AttackEngine:setTarget(target)
   self.target = target
   if self.telegraph then

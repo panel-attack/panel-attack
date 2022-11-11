@@ -4,18 +4,88 @@ require("ChallengeStage")
 -- Challenge Mode is a particular play through of the challenge mode in the game, it contains all the settings for the mode.
 ChallengeMode =
   class(
-  function(self)
+  function(self, difficulty)
     self.currentStageIndex = 0
     self.nextStageIndex = 1
     self.stages = {}
+    local stageCount = 10
+    local secondsToppedOutToLoseBase = 1
+    local secondsToppedOutToLoseIncrement = 0.1
+    local lineClearGPMBase = 4
+    local lineClearGPMIncrement = 0.4
     local lineHeightToKill = 6
-    for i = 1, 10, 1 do
-      self.stages[#self.stages+1] = ChallengeStage(i, 1, 4 * (1 + .1 * i), lineHeightToKill, 2)
+    local panelLevel = 2
+
+    if difficulty == 1 then
+      secondsToppedOutToLoseBase = 1
+      secondsToppedOutToLoseIncrement = 0.05
+      lineClearGPMBase = 3.3
+      lineClearGPMIncrement = 0.45
+      panelLevel = 2
+    elseif difficulty == 2 then
+      stageCount = 11
+      secondsToppedOutToLoseBase = 1.1
+      secondsToppedOutToLoseIncrement = 0.1
+      lineClearGPMBase = 5
+      lineClearGPMIncrement = 0.7
+      panelLevel = 4
+    elseif difficulty == 3 then
+      stageCount = 12
+      secondsToppedOutToLoseBase = 1.2
+      secondsToppedOutToLoseIncrement = 0.2
+      lineClearGPMBase = 15.5
+      lineClearGPMIncrement = 0.7
+      panelLevel = 6
+    elseif difficulty == 4 then
+      stageCount = 12
+      secondsToppedOutToLoseBase = 1.2
+      secondsToppedOutToLoseIncrement = 0.5
+      lineClearGPMBase = 15.5
+      lineClearGPMIncrement = 1.5
+      panelLevel = 6
+    elseif difficulty == 5 then
+      stageCount = 12
+      secondsToppedOutToLoseBase = 1.2
+      secondsToppedOutToLoseIncrement = 0.8
+      lineClearGPMBase = 30
+      lineClearGPMIncrement = 1.5
+      panelLevel = 8
+    elseif difficulty == 6 then
+      stageCount = 12
+      secondsToppedOutToLoseBase = 1.2
+      secondsToppedOutToLoseIncrement = 0.8
+      lineClearGPMBase = 35
+      lineClearGPMIncrement = 1.5
+      panelLevel = 10
     end
+
+    for stageIndex = 1, stageCount, 1 do
+      local incrementMultiplier = stageIndex - 1
+      local attackSettings = self:attackFile(difficulty, stageIndex)
+      local secondsToppedOutToLose = secondsToppedOutToLoseBase + secondsToppedOutToLoseIncrement * incrementMultiplier
+      local lineClearGPM = lineClearGPMBase + lineClearGPMIncrement * incrementMultiplier
+      self.stages[#self.stages+1] = ChallengeStage(stageIndex, secondsToppedOutToLose, lineClearGPM, lineHeightToKill, panelLevel, attackSettings)
+    end
+    
     self.stageTimeQuads = {}
     self.totalTimeQuads = {}
   end
 )
+
+function ChallengeMode:firstAttackFilePath(difficulty, stageIndex)
+  for i = stageIndex, 1, -1 do
+    local path = "default_data/training/challenge-" .. difficulty .. "-" .. i .. ".json"
+    if love.filesystem.getInfo(path) then
+      return path
+    end
+  end
+
+  return nil
+end
+
+function ChallengeMode:attackFile(difficulty, stageIndex)
+  return read_attack_file(self:firstAttackFilePath(difficulty, stageIndex))
+end
 
 function ChallengeMode:beginStage()
   self.currentStageIndex = self.nextStageIndex
@@ -78,29 +148,3 @@ function ChallengeMode:drawTimeSplits()
   GraphicsUtil.draw_time(frames_to_time_string(totalTime, true), self.totalTimeQuads, xPosition, yPosition + yOffset * row, themes[config.theme].time_Scale)
   set_color(1,1,1,1)
 end
-
-function ChallengeMode:characterForStageNumber(stageNumber, playerCharacter)
-  -- Get all other characters than the player character
-  local otherCharacters = {}
-  for _, currentCharacter in ipairs(characters_ids_for_current_theme) do
-    if currentCharacter ~= playerCharacter and characters[currentCharacter]:is_bundle() == false then
-      otherCharacters[#otherCharacters+1] = currentCharacter
-    end
-  end
-
-  -- If we couldn't find any characters, try sub characters as a last resort
-  if #otherCharacters == 0 then
-    for _, currentCharacter in ipairs(characters_ids_for_current_theme) do
-      if characters[currentCharacter]:is_bundle() == true then
-        currentCharacter = characters[currentCharacter].sub_characters[1]
-      end
-      if currentCharacter ~= playerCharacter then
-        otherCharacters[#otherCharacters+1] = currentCharacter
-      end 
-    end
-  end
-
-  local character = otherCharacters[((stageNumber - 1) % #otherCharacters) + 1]
-  return character
-end
-  

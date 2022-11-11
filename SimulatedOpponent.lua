@@ -22,7 +22,9 @@ function SimulatedOpponent:stackWidth()
 end
 
 function SimulatedOpponent:run()
-  self.health:run()
+  if self.health then
+    self.health:run()
+  end
   if not self:isLost() then
     if self.attackEngine then
       self.attackEngine:run()

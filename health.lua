@@ -36,7 +36,9 @@ function Health:run()
   local risenLines = 1.0 / (speed_to_rise_time[self.currentRiseSpeed] * 16)
   self.currentLines = self.currentLines + risenLines
 
-  local decrementLines = (self.lineClearRate * (1/60.0))
+  -- Harder to survive over time, simulating "stamina"
+  local staminaPercent = math.max(0.5, 1 - ((self.CLOCK / 60) * (0.01 / 10)))
+  local decrementLines = (self.lineClearRate * (1/60.0)) * staminaPercent
   self.currentLines = math.max(0, self.currentLines - decrementLines)
   if self.currentLines >= self.height then
     self.secondsToppedOutToLose = math.max(0, self.secondsToppedOutToLose - (1/60.0))

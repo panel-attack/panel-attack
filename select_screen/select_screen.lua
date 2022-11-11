@@ -280,13 +280,24 @@ function select_screen.getTemplateMap(self)
       {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}
     }
   else
-    return {
-      {"__Panels", "__Panels", "__Stage", "__Stage", "__Stage", "__Level", "__Level", "__Level", "__Ready"},
-      {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-      {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-      {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-      {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}
-    }
+    local challengeMode = GAME.battleRoom.trainingModeSettings and GAME.battleRoom.trainingModeSettings.challengeMode
+    if challengeMode then
+      return {
+        {"__Panels", "__Panels", "__Stage", "__Stage", "__Ready", "__Ready", "__Ready", "__Ready", "__Ready"},
+        {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}
+      }
+    else
+      return {
+        {"__Panels", "__Panels", "__Stage", "__Stage", "__Stage", "__Level", "__Level", "__Level", "__Ready"},
+        {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}
+      }
+    end
   end
 end
 
@@ -848,19 +859,24 @@ end
 
 -- returns transition to local_vs_yourself screen
 function select_screen.start1pLocalMatch(self)
+  local challengeMode = GAME.battleRoom.trainingModeSettings and GAME.battleRoom.trainingModeSettings.challengeMode
+  local challengeStage = nil
   GAME.match = Match("vs", GAME.battleRoom)
-  P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
+  local stackLevel = self.players[self.my_player_number].level
+  if challengeMode then
+    challengeMode:beginStage()
+    challengeStage = challengeMode.stages[challengeMode.currentStageIndex]
+    stackLevel = challengeStage.riseDifficulty
+  end
+  P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = stackLevel, character = self.players[self.my_player_number].character, player_number = 1}
 
   if GAME.battleRoom.trainingModeSettings then
     local character = P1.character
     local health = nil
-    local challengeMode = GAME.battleRoom.trainingModeSettings and GAME.battleRoom.trainingModeSettings.challengeMode
+    local attackEngine = nil
     if challengeMode then
-      challengeMode:beginStage()
-      local currentStageIndex = challengeMode.currentStageIndex
-      local challengeStage = challengeMode.stages[currentStageIndex]
       health = challengeStage:createHealth()
-      character = challengeMode:characterForStageNumber(currentStageIndex, P1.character)
+      character = challengeStage:characterForStageNumber(P1.character)
       character_loader_load(character)
       character_loader_wait()
     end
@@ -869,7 +885,11 @@ function select_screen.start1pLocalMatch(self)
     local yPosition = 120
     local mirror = -1
     local simulatedOpponent = SimulatedOpponent(health, character, xPosition, yPosition, mirror)
-    local attackEngine = self:attackEngineForTrainingModeSettings(GAME.battleRoom.trainingModeSettings, simulatedOpponent, character)
+    if challengeStage then
+      attackEngine = challengeStage:createAttackEngine(simulatedOpponent, character)
+    else
+      attackEngine = AttackEngine.createEngineForTrainingModeSettings(GAME.battleRoom.trainingModeSettings.attackSettings, simulatedOpponent, character)
+    end
     simulatedOpponent:setAttackEngine(attackEngine)
 
     GAME.match.simulatedOpponent = simulatedOpponent
@@ -907,36 +927,6 @@ function select_screen.start1pCpuMatch(self)
   P1:starting_state()
   P2:starting_state()
   return main_dumb_transition, {main_local_vs, "", 0, 0}
-end
-
-function select_screen.attackEngineForTrainingModeSettings(self, trainingModeSettings, opponent, character)
-  local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
-  local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
-  local disableQueueLimit = trainingModeSettings.disableQueueLimit or false
-  local attackEngine = AttackEngine(P1, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, opponent, character)
-  for _, values in ipairs(trainingModeSettings.attackPatterns) do
-    if values.chain then
-      if type(values.chain) == "number" then
-        for i = 1, values.height do
-          attackEngine:addAttackPattern(6, i, values.startTime + ((i-1) * values.chain), false, true)
-        end
-        attackEngine:addEndChainPattern(values.startTime + ((values.height - 1) * values.chain) + values.chainEndDelta)
-      elseif type(values.chain) == "table" then
-        for i, chainTime in ipairs(values.chain) do
-          attackEngine:addAttackPattern(6, i, chainTime, false, true)
-        end
-        attackEngine:addEndChainPattern(values.chainEndTime)
-      else
-        error("The 'chain' field in your attack file is invalid. It should either be a number or a list of numbers.")
-      end
-    else
-      attackEngine:addAttackPattern(values.width, values.height or 1, values.startTime, values.metal or false, false)
-    end
-  end
-
-  attackEngine:setTarget(P1)
-
-  return attackEngine
 end
 
 function select_screen.initialize(self, character_select_mode)

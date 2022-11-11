@@ -59,7 +59,6 @@ function fmainloop()
   if #FileUtil.getFilteredDirectoryItems("training") == 0 then
     recursive_copy("default_data/training", "training")
   end
-  read_attack_files("training")
 
   --check for game updates
   if GAME_UPDATER_CHECK_UPDATE_INGAME then
@@ -208,6 +207,7 @@ do
       {loc("mm_1_time"), main_timeattack_select},
       {loc("mm_1_vs"), main_local_vs_yourself_setup},
       {loc("mm_1_training"), training_setup},
+      {loc("mm_1_challenge_mode"), challenge_mode_setup},
       --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
       {loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
@@ -567,7 +567,7 @@ local function createBasicTrainingMode(name, width, height)
     attackPatterns[#attackPatterns+1] = {width = width, height = height, startTime = i, metal = false, chain = false, endsChain = false}
   end
 
-  local customTrainingModeData = {name = name, delayBeforeStart = delayBeforeStart, delayBeforeRepeat = delayBeforeRepeat, attackPatterns = attackPatterns}
+  local customTrainingModeData = {name = name, attackSettings = {delayBeforeStart = delayBeforeStart, delayBeforeRepeat = delayBeforeRepeat, attackPatterns = attackPatterns}}
 
   return customTrainingModeData
 end
@@ -582,8 +582,8 @@ function training_setup()
   customTrainingModes[1] = createBasicTrainingMode(loc("combo_storm"), 4, 1)
   customTrainingModes[2] = createBasicTrainingMode(loc("factory"), 6, 2)
   customTrainingModes[3] = createBasicTrainingMode(loc("large_garbage"), 6, 12)
-  for customfile, value in ipairs(trainings) do
-    customTrainingModes[#customTrainingModes+1] = value
+  for _, value in ipairs(read_attack_files("training")) do
+    customTrainingModes[#customTrainingModes+1] = {name = value.name, attackSettings = value}
   end
   
   local ret = nil
@@ -649,7 +649,6 @@ function training_setup()
   local function start_training()
     customTrainingModes[0] = createBasicTrainingMode("", trainingModeSettings.width, trainingModeSettings.height)
 
-    customTrainingModes[customModeID].challengeMode = ChallengeMode()
     ret = {main_local_vs_yourself_setup, {customTrainingModes[customModeID]}}
   end
 
@@ -678,6 +677,74 @@ function training_setup()
 
     if ret then
       trainingSettingsMenu:remove_self()
+      return unpack(ret)
+    end
+  end
+end
+
+function challenge_mode_setup()
+  local difficultySettings = {}
+  local customModeID = 1
+  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_1"), challengeMode = ChallengeMode(#difficultySettings+1) }
+  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_2"), challengeMode = ChallengeMode(#difficultySettings+1) }
+  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_3"), challengeMode = ChallengeMode(#difficultySettings+1) }
+  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_4"), challengeMode = ChallengeMode(#difficultySettings+1) }
+  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_5"), challengeMode = ChallengeMode(#difficultySettings+1) }
+  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_6"), challengeMode = ChallengeMode(#difficultySettings+1) }
+
+  local ret = nil
+  local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
+
+  local challengeModeMenu
+
+  local function update_custom_setting()
+    challengeModeMenu:set_button_setting(1, difficultySettings[customModeID].name)
+  end
+
+  local function custom_right()
+    customModeID = bound(1, customModeID + 1, #difficultySettings)
+    update_custom_setting()
+  end
+
+  local function custom_left()
+    customModeID = bound(1, customModeID - 1, #difficultySettings)
+    update_custom_setting()
+  end
+
+  local function goToStart()
+    challengeModeMenu:set_active_idx(#challengeModeMenu.buttons - 1)
+  end
+
+  local function goEscape()
+    challengeModeMenu:set_active_idx(#challengeModeMenu.buttons)
+  end
+
+  local function exitSettings()
+    ret = {main_select_mode}
+  end
+
+  local function start_challenge()
+    ret = {main_local_vs_yourself_setup, {difficultySettings[customModeID]}}
+  end
+
+  
+  challengeModeMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
+  challengeModeMenu:add_button("Difficulty", goToStart, goEscape, custom_left, custom_right)
+  challengeModeMenu:add_button(loc("go_"), start_challenge, goEscape)
+  challengeModeMenu:add_button(loc("back"), exitSettings, exitSettings)
+  challengeModeMenu:set_button_setting(1, difficultySettings[customModeID].name)
+
+  while true do
+    challengeModeMenu:draw()
+    wait()
+    variable_step(
+      function()
+        challengeModeMenu:update()
+      end
+    )
+
+    if ret then
+      challengeModeMenu:remove_self()
       return unpack(ret)
     end
   end

@@ -189,7 +189,25 @@ function read_puzzles()
   )
 end
 
+function read_attack_file(current_path)
+  local file = love.filesystem.newFile(current_path)
+  file:open("r")
+  local teh_json = file:read(file:getSize())
+  assert(teh_json ~= nil)
+  local training_conf = {}
+  for k, w in pairs(json.decode(teh_json)) do
+    training_conf[k] = w
+  end
+  if not training_conf.name or not type(training_conf.name) == "string" then
+    training_conf.name = v
+  end
+  file:close()
+
+  return training_conf
+end
+
 function read_attack_files(path)
+  local results = {}
   local lfs = love.filesystem
   local raw_dir_list = FileUtil.getFilteredDirectoryItems(path)
   for i, v in ipairs(raw_dir_list) do
@@ -199,23 +217,15 @@ function read_attack_files(path)
       if lfs.getInfo(current_path) then
         if lfs.getInfo(current_path).type == "directory" then
           read_attack_files(current_path)
-        elseif v ~= ".DS_Store" then
-          local file = love.filesystem.newFile(current_path)
-          file:open("r")
-          local teh_json = file:read(file:getSize())
-          local training_conf = {}
-          for k, w in pairs(json.decode(teh_json)) do
-            training_conf[k] = w
-          end
-          if not training_conf.name or not type(training_conf.name) == "string" then
-            training_conf.name = v
-          end
-          trainings[#trainings+1] = training_conf
-          file:close()
+        else
+          local training_conf = read_attack_file(current_path)
+          results[#results+1] = training_conf
         end
       end
     end
   end
+
+  return results
 end
 
 function print_list(t)

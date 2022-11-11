@@ -1,0 +1,34 @@
+{
+    "delayBeforeStart": 0,
+    "delayBeforeRepeat": 100,
+    "mergeComboMetalQueue": false,
+    "attackPatterns": [
+        {
+            "height": 3,
+            "startTime": 910,
+            "chain": 120,
+            "chainEndDelta": 80
+        },
+        {
+            "chain": false,
+            "startTime": 1820,
+            "metal": false,
+            "width": 5,
+            "height": 1
+        },
+        {
+            "chain": false,
+            "startTime": 2710,
+            "metal": false,
+            "width": 4,
+            "height": 1
+        },
+        {
+            "chain": false,
+            "startTime": 3510,
+            "metal": false,
+            "width": 4,
+            "height": 1
+        },
+    ]
+}
