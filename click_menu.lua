@@ -238,8 +238,6 @@ function Click_menu.layout_buttons(self)
   --but we ought to try to center menus for portrait mode, or they look too far right.
   if GAME.portrait_mode then
     self.x = (canvas_width / 2) - (self.width / 2)
-  else
-    self.x = self.xMin
   end
 
   self:show_controls(false)
