@@ -66,6 +66,8 @@ function Button:draw()
   else
     GAME.gfx_q:push({love.graphics.setColor, self.backgroundColor})
     GAME.gfx_q:push({love.graphics.rectangle, {"fill", screenX, screenY, self.width, self.height}})
+    GAME.gfx_q:push({love.graphics.setColor, {1,1,1,1}})
+    --whatever is drawing next should probably call setColor first, but we should probably at least set alpha to 1 for them
   end
   if self.text then
     local textWidth, textHeight = self.text:getDimensions()
