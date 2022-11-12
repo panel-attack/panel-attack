@@ -2,9 +2,9 @@ local logger = require("logger")
 local graphics = require("select_screen.select_screen_graphics")
 local tableUtils = require("tableUtils")
 local util = require("util")
+local UIElement = require("ui.UIElement")
 
 local select_screen = {isVisible = true}
-select_screen.buttons = {}  --filled in select_screen_graphics.drawButton
     
 
 local wait = coroutine.yield
@@ -152,13 +152,13 @@ function select_screen.on_quit(self)
     GAME:clearMatch()
     if not select_screen.sendLeave() then
       self:setVisibility(false)
-      return {main_dumb_transition, {main_select_mode, loc("ss_error_leave"), 60, 300}}
+      return {self:close(main_dumb_transition, {main_select_mode, loc("ss_error_leave"), 60, 300})}
     else
       -- don't immediately transition out, wait for the server to confirm our leave via handleServerMessages and quit from there
     end
   else
-    self:setVisibility(false)
-    return {main_select_mode}
+    
+    return self:close({main_select_mode})
   end
 end
 
@@ -935,7 +935,7 @@ function select_screen.start1pLocalMatch(self)
   stage_loader_load(current_stage)
   stage_loader_wait()
   P1:starting_state()
-  return main_dumb_transition, {main_local_vs_yourself, "", 0, 0}
+  return self:close(main_dumb_transition, {main_local_vs_yourself, "", 0, 0})
 end
 
 function select_screen.start1pCpuMatch(self)
@@ -991,8 +991,11 @@ function select_screen.initialize(self, character_select_mode)
   for i=1, tonumber(self.character_select_mode:sub(1, 1)) do
     self.players[i] = {}
   end
+  self.buttons = {}  --filled in select_screen_graphics.drawButton
+  self.all_buttons = UIElement()
   -- everything else gets its field directly on select_screen
   self.current_page = 1
+  self:setVisibility(true)
 end
 
 function select_screen.setVisibility(self, isVisible)
@@ -1002,9 +1005,14 @@ function select_screen.setVisibility(self, isVisible)
   end
 end
 
+function select_screen.close(self, nextFunction, args)
+  self:setVisibility(false) --this should remove all buttons from the button mananger
+  self = nil  -- delete the select screen.  Let another be created the next time one is needed.
+  return nextFunction, args
+end
+
 -- The main screen for selecting characters and settings for a match
 function select_screen.main(self, character_select_mode, roomInitializationMessage)
-  self:setVisibility(true)
   self.roomInitializationMessage = roomInitializationMessage
   self:initialize(character_select_mode)
   self:loadThemeAssets()
@@ -1077,7 +1085,6 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
     -- Handle one player vs game setup
     if self.players[self.my_player_number].ready and self.character_select_mode == "1p_vs_yourself" then
        --to do: remove clickable buttons during the game.  They will get re-created when we draw the select screen again.
-      self:setVisibility(false)
       return self:start1pLocalMatch()
     -- Handle two player vs game setup
     elseif select_screen.character_select_mode == "2p_local_vs" and self.players[self.my_player_number].ready and self.players[self.op_player_number].ready then

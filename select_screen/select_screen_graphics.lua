@@ -185,9 +185,6 @@ end
     end
     --print("in drawButton, COLUMNS is: "..self.select_screen.COLUMNS)
     if x >= 1 and x <= self.select_screen.ROWS and y >= 1 and y <= self.select_screen.COLUMNS then
-      if not self.select_screen.all_buttons then
-      self.select_screen.all_buttons = UIElement()
-      end
       if not self.select_screen.buttons[x] then
         self.select_screen.buttons[x] = {}
       end
