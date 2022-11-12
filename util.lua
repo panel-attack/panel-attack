@@ -208,37 +208,6 @@ function compress_input_string(inputs)
     -- Detected a digit enclosed in parentheses in the inputs, the inputs are already compressed.
     return inputs
   else
-    local compressed_inputs = ""
-    local buff = inputs:sub(1, 1)
-    local out_str, next_char = inputs:sub(1, 1)
-    for pos = 2, #inputs do
-      next_char = inputs:sub(pos, pos)
-      if next_char ~= out_str:sub(#out_str, #out_str) then
-        if buff:match("%d+") then
-          compressed_inputs = compressed_inputs .. "(" .. buff .. ")"
-        else
-          compressed_inputs = compressed_inputs .. buff:sub(1, 1) .. buff:len()
-        end
-        buff = ""
-      end
-      buff = buff .. inputs:sub(pos, pos)
-      out_str = out_str .. next_char
-    end
-    if buff:match("%d+") then
-      compressed_inputs = compressed_inputs .. "(" .. buff .. ")"
-    else
-      compressed_inputs = compressed_inputs .. buff:sub(1, 1) .. buff:len()
-    end
-    compressed_inputs = compressed_inputs:gsub("%)%(", "")
-    return compressed_inputs
-  end
-end
-
-function compressInputsByTable(inputs)
-  if inputs:match("%(%d+%)") or not inputs:match("[%a%+%/][%a%+%/]") then
-    -- Detected a digit enclosed in parentheses in the inputs, the inputs are already compressed.
-    return inputs
-  else
     local compressedTable = {}
     local inputTable = string.toCharTable(inputs)
     local repeatCount = 1
@@ -273,23 +242,6 @@ function compressInputsByTable(inputs)
 end
 
 function uncompress_input_string(inputs)
-  if inputs:match("[%a%+%/][%a%+%/]") then
-    -- Detected two consecutive letters or symbols in the inputs, the inputs are not compressed.
-    return inputs
-  else
-    local uncompressed_inputs = ""
-    for w in inputs:gmatch("[%a%+%/]%d+%(?%d*%)?") do
-      uncompressed_inputs = uncompressed_inputs .. string.rep(w:sub(1, 1), w:match("%d+"))
-      input_value = w:match("%(%d+%)")
-      if input_value then
-        uncompressed_inputs = uncompressed_inputs .. input_value:match("%d+")
-      end
-    end
-    return uncompressed_inputs
-  end
-end
-
-function uncompressInputsByTable(inputs)
   if inputs:match("[%a%+%/][%a%+%/]") then
     -- Detected two consecutive letters or symbols in the inputs, the inputs are not compressed.
     return inputs
