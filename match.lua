@@ -493,7 +493,7 @@ function Match.render(self)
         self.simulatedOpponent:render()
       end
 
-      local challengeMode = self.battleRoom.trainingModeSettings and self.battleRoom.trainingModeSettings.challengeMode
+      local challengeMode = self.battleRoom and self.battleRoom.trainingModeSettings and self.battleRoom.trainingModeSettings.challengeMode
       if challengeMode then
         challengeMode:render()
       end

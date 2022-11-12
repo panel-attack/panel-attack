@@ -1,0 +1,103 @@
+{
+    "delayBeforeRepeat": 91,
+    "delayBeforeStart": 0,
+    "mergeComboMetalQueue": false,
+    "attackPatterns": [
+        {
+            "chain": false,
+            "metal": false,
+            "width": 3,
+            "startTime": 312,
+            "height": 1
+        },
+        {
+            "chainEndTime": 459,
+            "chain": [
+                392
+            ]
+        },
+        {
+            "chain": false,
+            "metal": false,
+            "width": 3,
+            "startTime": 572,
+            "height": 1
+        },
+        {
+            "chainEndTime": 1390,
+            "chain": [
+                1280,
+                1281
+            ]
+        },
+        {
+            "chain": false,
+            "metal": false,
+            "width": 4,
+            "startTime": 1457,
+            "height": 1
+        },
+        {
+            "chainEndTime": 1615,
+            "chain": [
+                1547
+            ]
+        },
+        {
+            "chainEndTime": 2040,
+            "chain": [
+                1973
+            ]
+        },
+        {
+            "chain": false,
+            "metal": false,
+            "width": 5,
+            "startTime": 2264,
+            "height": 1
+        },
+        {
+            "chainEndTime": 3101,
+            "chain": [
+                2796,
+                2869,
+                2963,
+                3034
+            ]
+        },
+        {
+            "chain": false,
+            "metal": false,
+            "width": 5,
+            "startTime": 2869,
+            "height": 1
+        },
+        {
+            "chain": false,
+            "metal": false,
+            "width": 3,
+            "startTime": 3207,
+            "height": 1
+        },
+        {
+            "chain": false,
+            "metal": false,
+            "width": 3,
+            "startTime": 3654,
+            "height": 1
+        },
+        {
+            "chain": false,
+            "metal": false,
+            "width": 3,
+            "startTime": 3774,
+            "height": 1
+        },
+        {
+            "chainEndTime": 4019,
+            "chain": [
+                3949
+            ]
+        }
+    ],
+}
