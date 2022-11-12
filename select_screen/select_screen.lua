@@ -393,6 +393,12 @@ function select_screen.updateMatchTypeFromMessage(self, msg)
   end
 end
 
+function select_screen:inPlacementMatches()
+  return match_type == "Ranked" and self.currentRoomRatings and
+         (self.currentRoomRatings[self.my_player_number].placement_match_progress or 
+          self.currentRoomRatings[self.op_player_number].placement_match_progress)
+end
+
 function select_screen.updateExpectedWinRatios(self)
   self.currentRoomRatings = self.currentRoomRatings or {{new = 0, old = 0, difference = 0}, {new = 0, old = 0, difference = 0}}
   self.my_expected_win_ratio = nil
