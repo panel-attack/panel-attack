@@ -363,7 +363,7 @@ function select_screen.awaitRoomInitializationMessage(self)
     gprint(loc("ss_init"), unpack(themes[config.theme].main_menu_screen_pos))
     wait()
     if not do_messages() then
-      return {main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}}
+      return {self:close(main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300})}
     end
     retries = retries + 1
   end
@@ -372,7 +372,7 @@ function select_screen.awaitRoomInitializationMessage(self)
   if not self.roomInitializationMessage then
     -- abort due to timeout
     logger.warn(loc("ss_init_fail") .. "\n")
-    return {main_dumb_transition, {main_select_mode, loc("ss_init_fail") .. "\n\n" .. loc("ss_return"), 60, 300}}
+    return {self.close(main_dumb_transition, {main_select_mode, loc("ss_init_fail") .. "\n\n" .. loc("ss_return"), 60, 300})}
   end
 
   return nil
@@ -735,7 +735,7 @@ function select_screen.handleInput(self)
     if menu_escape() then
       self:on_quit()
       -- we left the select screen as a spectator, there is no need to wait on the server to confirm our leave
-      return {main_net_vs_lobby}
+      return {self:close(main_net_vs_lobby)}
     end
   end
 
@@ -773,7 +773,7 @@ function select_screen.handleServerMessages(self)
 
     if msg.leave_room then
       -- opponent left the select screen or server sent confirmation for our leave
-      return {main_dumb_transition, {main_net_vs_lobby, "", 0, 0}}
+      return {self.close(main_dumb_transition, {main_net_vs_lobby, "", 0, 0})}
     end
 
     if (msg.match_start or replay_of_match_so_far) and msg.player_settings and msg.opponent_settings then
@@ -897,7 +897,7 @@ function select_screen.startNetPlayMatch(self, msg)
   if P1.play_to_end or P2.play_to_end then
     to_print = loc("pl_spectate_join")
   end
-  return {main_dumb_transition, {main_net_vs, to_print, 10, 0}}
+  return {self.close(main_dumb_transition, {main_net_vs, to_print, 10, 0})}
 end
 
 -- returns transition to local vs screen
@@ -916,7 +916,7 @@ function select_screen.start2pLocalMatch(self)
 
   P1:starting_state()
   P2:starting_state()
-  return main_dumb_transition, {main_local_vs, "", 0, 0}
+  return self.close(main_dumb_transition, {main_local_vs, "", 0, 0})
 end
 
 -- returns transition to local_vs_yourself screen
@@ -955,7 +955,7 @@ function select_screen.start1pCpuMatch(self)
   P2:moveForPlayerNumber(2)
   P1:starting_state()
   P2:starting_state()
-  return main_dumb_transition, {main_local_vs, "", 0, 0}
+  return self:close(main_dumb_transition, {main_local_vs, "", 0, 0})
 end
 
 function select_screen.initializeAttackEngine(self)
@@ -1094,7 +1094,7 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
     -- Fetch the next network messages for 2p vs. When we get a start message we will transition there.
     elseif select_screen:isNetPlay() then
       if not do_messages() then
-        return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
+        return self.close(main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300})
       end
     end
   end
