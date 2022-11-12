@@ -1014,7 +1014,7 @@ function Stack.receiveConfirmedInput(self, input)
     table.appendToList(self.confirmedInput, inputs)
   end
   self.input_buffer = self.input_buffer .. input
-  --logger.debug("Player " .. self.which .. " got new input. Total length: " .. table.length(self.confirmedInput))
+  --logger.debug("Player " .. self.which .. " got new input. Total length: " .. #self.confirmedInput)
 end
 
 -- Enqueue a card animation
