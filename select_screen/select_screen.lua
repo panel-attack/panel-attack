@@ -666,7 +666,8 @@ function select_screen.handleInput(self)
         if not cursor.selected then
           self:move_cursor(cursor, down)
         end
-      elseif menu_left(i) then
+      elseif menu_left(i) or self.unhandled_step == "left" then
+        self.unhandled_step = nil
         if cursor.selected then
           if cursor.positionId == "__Level" then
             player.level = util.bound(1, player.level - 1, #level_to_starting_speed) --which should equal the number of levels in the game
@@ -679,7 +680,8 @@ function select_screen.handleInput(self)
         if not cursor.selected then
           self:move_cursor(cursor, left)
         end
-      elseif menu_right(i) then
+      elseif menu_right(i) or self.unhandled_step == "right" then
+        self.unhandled_step = nil
         if cursor.selected then
           if cursor.positionId == "__Level" then
             player.level = util.bound(1, player.level + 1, #level_to_starting_speed) --which should equal the number of levels in the game
@@ -993,6 +995,7 @@ function select_screen.initialize(self, character_select_mode)
   end
   self.buttons = {}  --filled in select_screen_graphics.drawButton
   self.all_buttons = UIElement()
+  self.steppers = UIElement()
   -- everything else gets its field directly on select_screen
   self.current_page = 1
   self:setVisibility(true)
@@ -1000,8 +1003,9 @@ end
 
 function select_screen.setVisibility(self, isVisible)
   self.isVisible = isVisible
-  if self.all_buttons then
-    self.all_buttons:setVisibility(isVisible)
+  self.all_buttons:setVisibility(isVisible)
+  if not isVisible then
+    self.steppers:setVisibility(false)
   end
 end
 

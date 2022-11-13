@@ -112,10 +112,12 @@ function UIElement:setVisibility(isVisible)
   end
 end
 
-function UIElement:setEnabled(isEnabled)
+function UIElement:setEnabled(isEnabled,noRecurse)
   self.isEnabled = isEnabled
-  for _, uiElement in ipairs(self.children) do
-    uiElement:setEnabled(isEnabled)
+  if not noRecurse then
+    for _, uiElement in ipairs(self.children) do
+      uiElement:setEnabled(isEnabled)
+    end
   end
 end
 

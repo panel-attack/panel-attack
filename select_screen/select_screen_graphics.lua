@@ -1,6 +1,9 @@
 local graphicsUtil = require("graphics_util")
 local Button = require("ui.Button")
 local UIElement = require("ui.UIElement")
+local Stepper = require("ui.Stepper")
+
+local uses_stepper = {__Stage = true, __Panels = true, __Level = true}
 
 local select_screen_graphics = {
   v_align_center = {__Ready = true, __Random = true, __Leave = true},
@@ -193,10 +196,35 @@ end
         print("creating button at x,y="..x..","..y)
         self.select_screen.buttons[x][y] = Button({x = self.render_x, y = self.render_y, width = self.button_width, height = self.button_height,  backgroundColor = {0,0,0,0}, onClick = function() self.select_screen.unhandled_click = {x,y} end})
         self.select_screen.all_buttons:addChild(self.select_screen.buttons[x][y])
-        
+        if uses_stepper[self.select_screen:getTemplateMap(self)
+        [x][y]] then
+          local button = self.select_screen.buttons[x][y]
+          local navButtonWidth = 25
+          button.stepper = UIElement({width = button.width})
+          button:addChild(button.stepper)
+          button.stepper.leftButton = Button({width = navButtonWidth, label = "<", translate = false, onClick = function() self.select_screen.unhandled_step = "left" end})
+          button.stepper.rightButton = Button({width = navButtonWidth, x = button.width - navButtonWidth, label = ">", translate = false, onClick = function() print("stepper clicked right!") self.select_screen.unhandled_step = "right" end})
+          button.stepper.finishedButton = Button({x = navButtonWidth, width = button.stepper.width - (navButtonWidth * 2), backgroundColor = {0,0,0,0}, onClick = self.select_screen.buttons[x][y].onClick or (function() end)})
+          button.stepper:addChild(button.stepper.leftButton)
+          button.stepper:addChild(button.stepper.rightButton)
+          button.stepper:addChild(button.stepper.finishedButton)
+          button.stepper:setVisibility(false)
+        end
         --print("button render x,y: "..self.select_screen.buttons[x][y].x..","..self.select_screen.buttons[y][x].y)
       end
       --Note: we'll draw self.select_screen.all_buttons later.  No need to draw each clickable button here.
+      if uses_stepper[str] then
+        local cursor = self.select_screen.players[1].cursor
+        if cursor.selected and cursor.positionId == str then 
+          --show stepper intead of main button
+          self.select_screen.buttons[x][y]:setVisibility(false, true)
+          self.select_screen.buttons[x][y].stepper:setVisibility(true)
+        else
+          --show main button, no stepper
+          self.select_screen.buttons[x][y]:setVisibility(true, true)
+          self.select_screen.buttons[x][y].stepper:setVisibility(false)
+        end
+      end
     end
     local character = characters[str]
     if str == "P1" then

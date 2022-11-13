@@ -54,6 +54,7 @@ end
 
 function Button:draw()
   if not self.isVisible then
+    UIElement.draw(self) -- draw children (if any are visible, which can happen if setVisible was called with noRecurse being true)
     return
   end
 
