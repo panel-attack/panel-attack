@@ -2055,7 +2055,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax, keepMusic, ar
         end
 
         -- if conditions are met, leave the game over screen
-        if t >= timemin and ((t >= timemax and timemax >= 0) or (menu_enter() or menu_escape())) or left_select_menu then
+        if t >= timemin and ((t >= timemax and timemax >= 0) or (menu_enter() or menu_escape() or love.mouse.isDown(1))) or left_select_menu then
           setMusicFadePercentage(1) -- reset the music back to normal config volume
           if not keepMusic then
             stop_the_music()
