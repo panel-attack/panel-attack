@@ -188,15 +188,15 @@ function select_screen.click_or_tap(self,coord_x, coord_y)
 end
 
 function select_screen.old_click_or_tap(self,coord_x, coord_y)  
-  local cursor_pos = self.players[1].cursor.position
+  local cursor_pos = self.players[self.my_player_number].cursor.position
   --Move the cursor to the clicked location
   cursor_pos[1], cursor_pos[2] = coord_x, coord_y
   local character = characters[self.drawMap[self.current_page][coord_x][coord_y]]
-  self.players[1].cursor.positionId = self.drawMap[self.current_page][cursor_pos[1]][cursor_pos[2]]
-  print("clicked positionId: "..self.players[1].cursor.positionId)
-  self.players[1].cursor.can_super_select = character and (character.stage or character.panels)
+  self.players[self.my_player_number].cursor.positionId = self.drawMap[self.current_page][cursor_pos[1]][cursor_pos[2]]
+  print("clicked positionId: "..self.players[self.my_player_number].cursor.positionId)
+  self.players[self.my_player_number].cursor.can_super_select = character and (character.stage or character.panels)
   -- select it
-  if self:on_select(self.players[1], false) then --we'll say only player one can click the menu for now
+  if self:on_select(self.players[self.my_player_number], false) then --we'll say only player one can click the menu for now
   --if this returns true, the player wants to leave
     return self:on_quit()
   end
@@ -628,17 +628,17 @@ function select_screen.handleInput(self)
   local up, down, left, right = {-1, 0}, {1, 0}, {0, -1}, {0, 1}
   if not GAME.battleRoom.spectating then
     if self.unhandled_click then
-      local cursor_pos = self.players[1].cursor.position
+      local cursor_pos = self.players[self.my_player_number].cursor.position
       local coord_x, coord_y = self.unhandled_click[1], self.unhandled_click[2]
       --Move the cursor to the clicked location
       cursor_pos[1], cursor_pos[2] = coord_x, coord_y
       local character = characters[self.drawMap[self.current_page][coord_x][coord_y]]
-      self.players[1].cursor.positionId = self.drawMap[self.current_page][coord_x][coord_y]
-      print("clicked positionId: "..self.players[1].cursor.positionId)
-      self.players[1].cursor.can_super_select = character and (character.stage or character.panels)
+      self.players[self.my_player_number].cursor.positionId = self.drawMap[self.current_page][coord_x][coord_y]
+      print("clicked positionId: "..self.players[self.my_player_number].cursor.positionId)
+      self.players[self.my_player_number].cursor.can_super_select = character and (character.stage or character.panels)
       -- select it
       self.unhandled_click = nil
-      if self:on_select(self.players[1], false) then --we'll say only player one can click the menu for now
+      if self:on_select(self.players[self.my_player_number], false) then --we'll say only player one can click the menu for now
       --if this returns true, the player wants to leave
         return self:on_quit()
       else

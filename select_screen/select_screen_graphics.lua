@@ -213,7 +213,7 @@ end
       end
       --Note: we'll draw self.select_screen.all_buttons later.  No need to draw each clickable button here.
       if uses_stepper[str] then
-        local cursor = self.select_screen.players[1].cursor
+        local cursor = self.select_screen.players[self.select_screen.my_player_number].cursor
         if cursor.selected and cursor.positionId == str then 
           --show stepper intead of main button
           self.select_screen.buttons[x][y]:setVisibility(false, true)
