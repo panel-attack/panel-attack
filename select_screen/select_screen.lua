@@ -209,6 +209,10 @@ function select_screen.on_select(self, player, super)
   local characterSelectionSoundHasBeenPlayed = false
   local selectable = {__Stage = true, __Panels = true, __Level = true, __Ready = true}
   print("on_select excecuting with positionId: "..player.cursor.positionId)
+  if not selectable[player.cursor.positionId] and player.cursor.selected then
+  -- we probably clicked a non-selectable button after having selected a selectable button. Let's set the cursor as not selected.
+    player.cursor.selected = false
+  end
   if selectable[player.cursor.positionId] then
     if player.cursor.selected and player.cursor.positionId == "__Stage" then
       -- load stage even if hidden!

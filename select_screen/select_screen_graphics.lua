@@ -1,7 +1,6 @@
 local graphicsUtil = require("graphics_util")
 local Button = require("ui.Button")
 local UIElement = require("ui.UIElement")
-local Stepper = require("ui.Stepper")
 
 local uses_stepper = {__Stage = true, __Panels = true, __Level = true}
 
@@ -199,12 +198,12 @@ end
         if uses_stepper[self.select_screen:getTemplateMap(self)
         [x][y]] then
           local button = self.select_screen.buttons[x][y]
-          local navButtonWidth = 25
-          button.stepper = UIElement({width = button.width})
+          local navButtonWidth = math.min(100, button.width / 2 - 20)
+          button.stepper = UIElement({width = button.width, height = button.height})
           button:addChild(button.stepper)
-          button.stepper.leftButton = Button({width = navButtonWidth, label = "<", translate = false, onClick = function() self.select_screen.unhandled_step = "left" end})
-          button.stepper.rightButton = Button({width = navButtonWidth, x = button.width - navButtonWidth, label = ">", translate = false, onClick = function() print("stepper clicked right!") self.select_screen.unhandled_step = "right" end})
-          button.stepper.finishedButton = Button({x = navButtonWidth, width = button.stepper.width - (navButtonWidth * 2), backgroundColor = {0,0,0,0}, onClick = self.select_screen.buttons[x][y].onClick or (function() end)})
+          button.stepper.leftButton = Button({width = navButtonWidth,height = button.height, label = "<", translate = false, onClick = function() self.select_screen.unhandled_step = "left" end})
+          button.stepper.rightButton = Button({width = navButtonWidth,height = button.height, x = button.width - navButtonWidth, label = ">", translate = false, onClick = function() print("stepper clicked right!") self.select_screen.unhandled_step = "right" end})
+          button.stepper.finishedButton = Button({x = navButtonWidth, width = button.stepper.width - (navButtonWidth * 2), height = button.height,backgroundColor = {0,0,0,0}, onClick = self.select_screen.buttons[x][y].onClick or (function() end)})
           button.stepper:addChild(button.stepper.leftButton)
           button.stepper:addChild(button.stepper.rightButton)
           button.stepper:addChild(button.stepper.finishedButton)
