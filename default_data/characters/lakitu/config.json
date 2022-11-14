@@ -1,4 +1,5 @@
 {
 	"id":"pa_characters_lakitu",
-	"name":"Lakitu"
+	"name":"Lakitu",
+	"stage":"pa_stages_wind"
 }

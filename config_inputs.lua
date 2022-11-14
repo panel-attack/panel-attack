@@ -3,10 +3,8 @@ local wait = coroutine.yield
 -- menu for configuring inputs
 local function main_config_input()
   local pretty_names = {loc("up"), loc("down"), loc("left"), loc("right"), "A", "B", "X", "Y", "L", "R", loc("start")}
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
   local ignoreMenuPressesTimer = nil
-
-  menu_y = menu_y + 40
 
   local active_configuration = 1 -- current configuration we are setting inputs for
   local inputConfiguration = GAME.input.inputConfigurations[active_configuration] -- keys for that configuration
@@ -56,7 +54,7 @@ local function main_config_input()
   end
 
   function createInputMenu(configurationNumber)
-    local clickMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
+    local clickMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
     clickMenu:add_button(loc("configuration") .. " ", incrementConfiguration, goEscape, decrementConfiguration, incrementConfiguration)
     clickMenu:set_button_setting(#clickMenu.buttons, configurationNumber)
     for i = 1, #key_names do
@@ -73,7 +71,7 @@ local function main_config_input()
   input_menu = createInputMenu(active_configuration)
 
   while true do
-    gprintf(loc("config_input_welcome"), 0, menu_y - 30, canvas_width, "center")
+    gprintf(loc("config_input_welcome"), 0, input_menu.y - 30, canvas_width, "center")
     input_menu:draw()
     wait()
     variable_step(

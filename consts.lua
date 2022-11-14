@@ -6,10 +6,8 @@ VERSION = "046"
 
 canvas_width = 1280
 canvas_height = 720
-legacy_canvas_width = 816
-legacy_canvas_height = 612
 
-global_background_color = { 0.1, 0.1, 0.1 }
+global_background_color = { 0.0, 0.0, 0.0 }
 
 mouse_pointer_timeout = 1.5 --seconds
 RATING_SPREAD_MODIFIER = 400 -- rating players must be within to play ranked
@@ -34,6 +32,11 @@ default_stages_folders = {"cave", "fire", "flower", "forest", "ice",
 
 random_stage_special_value = "__RandomStage"
 random_character_special_value = "__RandomCharacter"
+
+default_input_repeat_delay = 20
+
+large_font = 10 -- large font base+10
+small_font = -3 -- small font base-3
 
 key_names = {"up", "down", "left", "right", "swap1",
   "swap2", "taunt_up", "taunt_down", "raise1", "raise2", "pause"}

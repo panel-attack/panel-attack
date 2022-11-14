@@ -1,11 +1,13 @@
 require("stage_loader")
 local logger = require("logger")
+require("UpdatingImage")
 
 -- Stuff defined in this file:
 --  . the data structure that store a stage's data
 
 local basic_images = {"thumbnail"}
-local other_images = {"background"}
+local backgroundImageName = "background"
+local other_images = {backgroundImageName}
 local defaulted_images = {thumbnail = true, background = true} -- those images will be defaulted if missing
 local basic_musics = {}
 local other_musics = {"normal_music", "danger_music", "normal_music_start", "danger_music_start"}
@@ -106,26 +108,23 @@ end
 -- adds stages from the path given
 local function add_stages_from_dir_rec(path)
   local lfs = love.filesystem
-  local raw_dir_list = lfs.getDirectoryItems(path)
+  local raw_dir_list = FileUtil.getFilteredDirectoryItems(path)
   for i, v in ipairs(raw_dir_list) do
-    local start_of_v = string.sub(v, 0, string.len(prefix_of_ignored_dirs))
-    if start_of_v ~= prefix_of_ignored_dirs then
-      local current_path = path .. "/" .. v
-      if lfs.getInfo(current_path) and lfs.getInfo(current_path).type == "directory" then
-        -- call recursively: facade folder
-        add_stages_from_dir_rec(current_path)
+    local current_path = path .. "/" .. v
+    if lfs.getInfo(current_path) and lfs.getInfo(current_path).type == "directory" then
+      -- call recursively: facade folder
+      add_stages_from_dir_rec(current_path)
 
-        -- init stage: 'real' folder
-        local stage = Stage(current_path, v)
-        local success = stage:json_init()
+      -- init stage: 'real' folder
+      local stage = Stage(current_path, v)
+      local success = stage:json_init()
 
-        if success then
-          if stages[stage.id] ~= nil then
-            logger.trace(current_path .. " has been ignored since a stage with this id has already been found")
-          else
-            stages[stage.id] = stage
-            stages_ids[#stages_ids + 1] = stage.id
-          end
+      if success then
+        if stages[stage.id] ~= nil then
+          logger.trace(current_path .. " has been ignored since a stage with this id has already been found")
+        else
+          stages[stage.id] = stage
+          stages_ids[#stages_ids + 1] = stage.id
         end
       end
     end
@@ -221,6 +220,20 @@ function stages_init()
   end
 end
 
+-- for reloading the graphics if the window was resized
+function stages_reload_graphics()
+  -- reload the current stage graphics immediately
+  if stages[current_stage] then
+    stages[current_stage]:graphics_init(true, false)
+  end
+  -- lazy load the rest
+  for _, stage in pairs(stages) do
+    if stage.id ~= current_stage then
+      stage:graphics_init(false, false)
+    end
+  end
+end
+
 -- whether or not a stage is part of a bundle or not
 function Stage.is_bundle(self)
   return #self.sub_stages > 1
@@ -230,7 +243,7 @@ end
 function Stage.graphics_init(self, full, yields)
   local stage_images = full and other_images or basic_images
   for _, image_name in ipairs(stage_images) do
-    self.images[image_name] = load_img_from_supported_extensions(self.path .. "/" .. image_name)
+    self.images[image_name] = GraphicsUtil.loadImageFromSupportedExtensions(self.path .. "/" .. image_name)
     if not self.images[image_name] and defaulted_images[image_name] and not self:is_bundle() then
       self.images[image_name] = default_stage.images[image_name]
       if not self.images[image_name] then

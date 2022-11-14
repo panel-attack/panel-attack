@@ -3,11 +3,13 @@ local analytics = require("analytics")
 local wait = coroutine.yield
 local memory_before_options_menu = nil
 local theme_index
+local scaleTypeIndex
+local fixedScaleIndex
 local found_themes = {}
 
 local function general_menu()
   local ret = nil
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
   local save_replays_publicly_choices = {{"with my name", "op_replay_public_with_name"}, {"anonymously", "op_replay_public_anonymously"}, {"not at all", "op_replay_public_no"}}
   local save_replays_preference_index
   for k, v in ipairs(save_replays_publicly_choices) do
@@ -95,7 +97,7 @@ local function general_menu()
     ret = {options.main, {2}}
   end
 
-  generalMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
+  generalMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
   generalMenu:add_button(loc("op_vsync"), update_vsync, goEscape, update_vsync, update_vsync)
   generalMenu:add_button(loc("op_countdown"), update_countdown, goEscape, update_countdown, update_countdown)
   generalMenu:add_button(loc("op_fps"), update_fps, goEscape, update_fps, update_fps)
@@ -130,7 +132,7 @@ end
 
 local function graphics_menu()
   local ret = nil
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
   local graphicsMenu
 
   local function update_theme()
@@ -147,8 +149,83 @@ local function graphics_menu()
     update_theme()
   end
 
+  local scaleTypeOptions = {"auto", "fit", "fixed"}
+  local translatedScaleTypeOptions = {loc("op_scale_auto"), loc("op_scale_fit"), loc("op_scale_fixed")}
+  scaleTypeIndex = 1
+  for index, scaleType in ipairs(scaleTypeOptions) do
+    if scaleType == config.gameScaleType then
+      scaleTypeIndex = index
+      break
+    end
+  end
+  fixedScaleIndex = 1
+  for index, fixedScale in ipairs(GAME.availableScales) do
+    if fixedScale == config.gameScaleFixedValue then
+      fixedScaleIndex = index
+      break
+    end
+  end
+
+  local updateFixedScale
+
+  local function scaleSettingsChanged()
+    GAME.showGameScale = true
+    local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
+    local previousXScale = GAME.canvasXScale
+    GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
+    if previousXScale ~= GAME.canvasXScale then
+      GAME:refreshCanvasAndImagesForNewScale()
+    end
+  end
+
+  local function updateScaleType(noUpdate)
+    if noUpdate == false then
+      config.gameScaleType = scaleTypeOptions[scaleTypeIndex]
+      scaleSettingsChanged()
+    end
+    graphicsMenu:set_button_setting(2, translatedScaleTypeOptions[scaleTypeIndex])
+    updateFixedScale(true)
+  end
+
+  local function previousScaleType()
+    scaleTypeIndex = bound(1, scaleTypeIndex - 1, #scaleTypeOptions)
+    updateScaleType(false)
+  end
+
+  local function nextScaleType()
+    scaleTypeIndex = bound(1, scaleTypeIndex + 1, #scaleTypeOptions)
+    updateScaleType(false)
+  end
+
+  updateFixedScale = function(noUpdate)
+    if config.gameScaleType == "fixed" then
+      if noUpdate == false then
+        config.gameScaleFixedValue = GAME.availableScales[fixedScaleIndex]
+        scaleSettingsChanged()
+      end
+      graphicsMenu:set_button_setting(3, GAME.availableScales[fixedScaleIndex]) --todo localize
+    else
+      -- ideally we would hide this setting, but its too hard without better UI control support
+      graphicsMenu:set_button_setting(3, nil)
+    end
+  end
+
+  local function previousFixedScale()
+    if config.gameScaleType == "fixed" then
+      fixedScaleIndex = bound(1, fixedScaleIndex - 1, #GAME.availableScales)
+      updateFixedScale(false)
+    end
+  end
+
+  local function nextFixedScale()
+    if config.gameScaleType == "fixed" then
+      fixedScaleIndex = bound(1, fixedScaleIndex + 1, #GAME.availableScales)
+      updateFixedScale(false)
+    end
+  end
+
   local function update_portrait_darkness()
-    graphicsMenu:set_button_setting(2, config.portrait_darkness)
+    graphicsMenu:set_button_setting(4, config.portrait_darkness)
   end
 
   local function increase_portrait_darkness()
@@ -163,23 +240,23 @@ local function graphics_menu()
 
   local function update_popfx(noToggle)
     if not noToggle then
-      config.renderAttacks = not config.renderAttacks
+      config.popfx = not config.popfx
     end
-    graphicsMenu:set_button_setting(3, config.popfx and loc("op_on") or loc("op_off"))
+    graphicsMenu:set_button_setting(5, config.popfx and loc("op_on") or loc("op_off"))
   end
 
   local function update_renderTelegraph(noToggle)
     if not noToggle then
       config.renderTelegraph = not config.renderTelegraph
     end
-    graphicsMenu:set_button_setting(4, config.renderTelegraph and loc("op_on") or loc("op_off"))
+    graphicsMenu:set_button_setting(6, config.renderTelegraph and loc("op_on") or loc("op_off"))
   end
 
   local function update_renderAttacks(noToggle)
     if not noToggle then
       config.renderAttacks = not config.renderAttacks
     end
-    graphicsMenu:set_button_setting(5, config.renderAttacks and loc("op_on") or loc("op_off"))
+    graphicsMenu:set_button_setting(7, config.renderAttacks and loc("op_on") or loc("op_off"))
   end
 
   local function nextMenu()
@@ -194,14 +271,18 @@ local function graphics_menu()
     ret = {options.main, {3}}
   end
 
-  graphicsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
-  graphicsMenu:add_button(loc("op_theme"), nextMenu, goEscape, previous_theme, next_theme)
-  graphicsMenu:add_button(loc("op_portrait_darkness"), nextMenu, goEscape, decrease_portrait_darkness, increase_portrait_darkness)
+  graphicsMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
+  graphicsMenu:add_button(loc("op_theme"), next_theme, goEscape, previous_theme, next_theme)
+  graphicsMenu:add_button(loc("op_scale"), nextScaleType, goEscape, previousScaleType, nextScaleType)
+  graphicsMenu:add_button(loc("op_scale_fixed_value"), nextFixedScale, goEscape, previousFixedScale, nextFixedScale)
+  graphicsMenu:add_button(loc("op_portrait_darkness"), increase_portrait_darkness, goEscape, decrease_portrait_darkness, increase_portrait_darkness)
   graphicsMenu:add_button(loc("op_popfx"), update_popfx, goEscape, update_popfx, update_popfx)
   graphicsMenu:add_button(loc("op_renderTelegraph"), update_renderTelegraph, goEscape, update_renderTelegraph, update_renderTelegraph)
   graphicsMenu:add_button(loc("op_renderAttacks"), update_renderAttacks, goEscape, update_renderAttacks, update_renderAttacks)
   graphicsMenu:add_button(loc("back"), exitSettings, exitSettings)
   update_theme()
+  updateScaleType(true)
+  updateFixedScale(true)
   update_portrait_darkness()
   update_popfx(true)
   update_renderTelegraph(true)
@@ -225,8 +306,7 @@ end
 
 local function audio_menu(button_idx)
   local ret = nil
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
-  menu_y = menu_y + 70
+  local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
   local music_choice_frequency
   local use_music_from_choices = {{"stage", "op_only_stage"}, {"often_stage", "op_often_stage"}, {"either", "op_stage_characters"}, {"often_characters", "op_often_characters"}, {"characters", "op_only_characters"}}
   for k, v in ipairs(use_music_from_choices) do
@@ -307,7 +387,7 @@ local function audio_menu(button_idx)
     ret = {
       function()
         local audio_test_ret = nil
-        local menu_x, menu_y = unpack(main_menu_screen_pos)
+        local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
         local soundTestMenu
         local loaded_track_index = 0
         local index = 1
@@ -332,7 +412,7 @@ local function audio_menu(button_idx)
         local menu_validate_sound = themes[config.theme].sounds.menu_validate
         themes[config.theme].sounds.menu_validate = zero_sound
 
-        gprint(loc("op_music_load"), unpack(main_menu_screen_pos))
+        gprint(loc("op_music_load"), unpack(themes[config.theme].main_menu_screen_pos))
         wait()
 
         -- temporarily load music for characters that are not fully loaded to build tracklist, bundle characters add their subcharacters as tracks instead
@@ -707,7 +787,7 @@ local function audio_menu(button_idx)
           audio_test_ret = {audio_menu, {6}}
         end
         
-        soundTestMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
+        soundTestMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
         soundTestMenu:add_button(loc("character"), nextTrack, goBack, previousTrack, nextTrack)
         soundTestMenu:add_button(loc("op_music_type"), switchDanger, goBack, switchDanger, switchDanger)
         soundTestMenu:add_button(loc("op_music_play"), playOrStopMusic, goBack)
@@ -754,7 +834,7 @@ local function audio_menu(button_idx)
     ret = {options.main, {4}}
   end
 
-  audioMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
+  audioMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
   audioMenu:add_button(loc("op_vol"), nextMenu, goEscape, decrease_master_volume, increase_master_volume)
   audioMenu:add_button(loc("op_vol_sfx"), nextMenu, goEscape, decrease_sfx_volume, increase_sfx_volume)
   audioMenu:add_button(loc("op_vol_music"), nextMenu, goEscape, decrease_music_volume, increase_music_volume)
@@ -790,8 +870,7 @@ end
 
 local function debug_menu(button_idx)
   local ret = nil
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
-  menu_y = menu_y + 70
+  local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
   local vsFramesBehind = config.debug_vsFramesBehind or 0
   local debugMenu
 
@@ -831,7 +910,7 @@ local function debug_menu(button_idx)
     ret = {options.main, {5}}
   end
 
-  debugMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
+  debugMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
   debugMenu:add_button(loc("op_debug"), update_debug, goEscape, update_debug, update_debug)
   debugMenu:add_button("VS Frames Behind", nextMenu, goEscape, decreaseVsFramesBehind, increaseVsFramesBehind)
   debugMenu:add_button(loc("back"), exitSettings, exitSettings)
@@ -860,122 +939,70 @@ end
 
 local function about_menu(button_idx)
   local ret = nil
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
+  local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
   GAME.backgroundImage = themes[config.theme].images.bg_main
   local aboutMenu
 
-  local function show_themes_readme()
-    ret = {
-      function()
-        GAME.backgroundImage = themes[config.theme].images.bg_readme
-        reset_filters()
+  local function show_readme(filename, returnIndex)
+    GAME.backgroundImage = themes[config.theme].images.bg_readme
+    reset_filters()
 
-        if not love.filesystem.getInfo("themes/" .. prefix_of_ignored_dirs .. default_theme_dir) then
-          --print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
-          gprint(loc("op_copy_files"), 280, 280)
-          wait()
-          recursive_copy("themes/" .. default_theme_dir, "themes/" .. prefix_of_ignored_dirs .. default_theme_dir)
-
-          -- Android can't easily copy into the save dir, so do it for them to help.
-          recursive_copy("default_data/themes", "themes")
-        end
-
-        local readme = read_txt_file("readme_themes.txt")
-        while true do
-          gprint(readme, 15, 15)
-          wait()
-          local theme_ret = nil
-          variable_step(
-            function()
-              if menu_escape() or menu_enter() then
-                theme_ret = {about_menu, {1}}
-              end
+    local readme = read_txt_file(filename)
+    local text = love.graphics.newText(get_global_font(), readme)
+    local heightDiff = text:getHeight() - (canvas_height - 15)
+    local offset = 0
+    local scrollStep = 14
+    while true do
+      gfx_q:push({love.graphics.draw, {text, 15, 15, nil, nil, nil, nil, offset}})
+      wait()
+      local readmeRet = nil
+      variable_step(
+        function()
+          if menu_escape() or menu_enter() then
+            readmeRet = {about_menu, {returnIndex}}
+          elseif heightDiff > 0 then
+            if menu_up() then
+              offset = math.max(0, offset - scrollStep)
+            elseif menu_down() then
+              offset = math.min(heightDiff + (scrollStep - (heightDiff % scrollStep)), offset + scrollStep)
             end
-          )
-          if theme_ret then
-            return unpack(theme_ret)
           end
         end
+      )
+      if readmeRet then
+        return unpack(readmeRet)
       end
-    }
+    end
+  end
+
+  local function show_themes_readme()
+    if not love.filesystem.getInfo("themes/" .. prefix_of_ignored_dirs .. default_theme_dir) then
+      --print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
+      gprint(loc("op_copy_files"), 280, 280)
+      wait()
+      recursive_copy("themes/" .. default_theme_dir, "themes/" .. prefix_of_ignored_dirs .. default_theme_dir)
+
+      -- Android can't easily copy into the save dir, so do it for them to help.
+      recursive_copy("default_data/themes", "themes")
+    end
+
+    ret = {show_readme, {"readme_themes.txt", 1}}
   end
 
   local function show_characters_readme()
-    ret = {
-      function()
-        GAME.backgroundImage = themes[config.theme].images.bg_readme
-        reset_filters()
-
-        local readme = read_txt_file("readme_characters.txt")
-        while true do
-          gprint(readme, 15, 15)
-          wait()
-          local characters_ret = nil
-          variable_step(
-            function()
-              if menu_escape() or menu_enter() then
-                characters_ret = {about_menu, {2}}
-              end
-            end
-          )
-          if characters_ret then
-            return unpack(characters_ret)
-          end
-        end
-      end
-    }
+    ret = {show_readme, {"readme_characters.txt", 2}}
   end
 
   local function show_stages_readme()
-    ret = {
-      function()
-        GAME.backgroundImage = themes[config.theme].images.bg_readme
-        reset_filters()
-
-        local readme = read_txt_file("readme_stages.txt")
-        while true do
-          gprint(readme, 15, 15)
-          wait()
-          local stages_ret = nil
-          variable_step(
-            function()
-              if menu_escape() or menu_enter() then
-                stages_ret = {about_menu, {3}}
-              end
-            end
-          )
-          if stages_ret then
-            return unpack(stages_ret)
-          end
-        end
-      end
-    }
+    ret = {show_readme, {"readme_stages.txt", 3}}
   end
 
   local function show_panels_readme()
-    ret = {
-      function()
-        GAME.backgroundImage = themes[config.theme].images.bg_readme
-        reset_filters()
+    ret = {show_readme, {"readme_panels.txt", 4}}
+  end
 
-        local readme = read_txt_file("readme_panels.txt")
-        while true do
-          gprint(readme, 15, 15)
-          wait()
-          local panels_ret = nil
-          variable_step(
-            function()
-              if menu_escape() or menu_enter() then
-                panels_ret = {about_menu, {4}}
-              end
-            end
-          )
-          if panels_ret then
-            return unpack(panels_ret)
-          end
-        end
-      end
-    }
+  local function show_attack_readme()
+    ret = {show_readme, {"readme_training.txt", 5}}
   end
 
   local function show_system_info()
@@ -1007,7 +1034,7 @@ local function about_menu(button_idx)
           variable_step(
             function()
               if menu_escape() or menu_enter() then
-                panels_ret = {about_menu, {5}}
+                panels_ret = {about_menu, {6}}
               end
             end
           )
@@ -1028,14 +1055,15 @@ local function about_menu(button_idx)
   end
 
   local function exitSettings()
-    ret = {options.main, {5}}
+    ret = {options.main, {6}}
   end
 
-  aboutMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
+  aboutMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
   aboutMenu:add_button(loc("op_about_themes"), show_themes_readme, goEscape)
   aboutMenu:add_button(loc("op_about_characters"), show_characters_readme, goEscape)
   aboutMenu:add_button(loc("op_about_stages"), show_stages_readme, goEscape)
   aboutMenu:add_button(loc("op_about_panels"), show_panels_readme, goEscape)
+  aboutMenu:add_button("About Attack Files", show_attack_readme, goEscape)
   aboutMenu:add_button("System Info", show_system_info, goEscape)
   aboutMenu:add_button(loc("back"), exitSettings, exitSettings)
 
@@ -1061,8 +1089,7 @@ end
 
 function options.main(button_idx)
   local ret = nil
-  local menu_x, menu_y = unpack(main_menu_screen_pos)
-  menu_y = menu_y + 70
+  local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
   local language_number
   local language_choices = {}
   for k, v in ipairs(localization:get_list_codes()) do
@@ -1120,15 +1147,16 @@ function options.main(button_idx)
   end
 
   local function exitSettings()
-    gprint("writing config to file...", unpack(main_menu_screen_pos))
+    gprint("writing config to file...", unpack(themes[config.theme].main_menu_screen_pos))
     wait()
 
+    local previousMenuPosition = themes[config.theme].main_menu_screen_pos
     config.theme = found_themes[theme_index]
 
     write_conf_file()
 
     if config.theme ~= memory_before_options_menu.theme then
-      gprint(loc("op_reload_theme"), unpack(main_menu_screen_pos))
+      gprint(loc("op_reload_theme"), unpack(previousMenuPosition))
       wait()
       stop_the_music()
       theme_init()
@@ -1140,19 +1168,19 @@ function options.main(button_idx)
 
     -- stages before characters since they are part of their loading
     if config.theme ~= memory_before_options_menu.theme then
-      gprint(loc("op_reload_stages"), unpack(main_menu_screen_pos))
+      gprint(loc("op_reload_stages"), unpack(themes[config.theme].main_menu_screen_pos))
       wait()
       stages_init()
     end
 
     if config.theme ~= memory_before_options_menu.theme then
-      gprint(loc("op_reload_characters"), unpack(main_menu_screen_pos))
+      gprint(loc("op_reload_characters"), unpack(themes[config.theme].main_menu_screen_pos))
       wait()
       characters_init()
     end
 
     if config.enable_analytics ~= memory_before_options_menu.enable_analytics then
-      gprint(loc("op_reload_analytics"), unpack(main_menu_screen_pos))
+      gprint(loc("op_reload_analytics"), unpack(themes[config.theme].main_menu_screen_pos))
       wait()
       analytics.init()
     end
@@ -1164,7 +1192,7 @@ function options.main(button_idx)
     ret = {main_select_mode}
   end
 
-  optionsMenu = Click_menu(menu_x, menu_y, nil, canvas_height - menu_y - 10, 1)
+  optionsMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
   optionsMenu:add_button(loc("op_language"), nextMenu, goEscape, decrease_language, increase_language)
   optionsMenu:add_button(loc("op_general"), enter_general_menu, goEscape)
   optionsMenu:add_button(loc("op_graphics"), enter_graphics_menu, goEscape)
@@ -1178,7 +1206,7 @@ function options.main(button_idx)
     optionsMenu:set_active_idx(button_idx)
   else
     found_themes = {}
-    for k, v in ipairs(love.filesystem.getDirectoryItems("themes")) do
+    for k, v in ipairs(FileUtil.getFilteredDirectoryItems("themes")) do
       if love.filesystem.getInfo("themes/" .. v) and v:sub(0, prefix_of_ignored_dirs:len()) ~= prefix_of_ignored_dirs then
         found_themes[#found_themes + 1] = v
         if config.theme == v then

@@ -31,16 +31,20 @@ Note: non-optional data that are missing will automatically get replaced by defa
 - "chain/chain00", "chain/chain02", ... "chain/chain19", "combo/combo04", ..., "combo/combo66": chains and combo counter
 - "flags/": flags to be displayed in the select screen (based on the character's specified flags). Values are mostly the country codes from https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2, not all flags are available
 - "1", "2", "3": countdown
-- "p1", "p1_cursor", "p1_select_screen_cursor1", "p1_select_screen_cursor2": cursors for player 1, change p1 by p2 for those of player 2
+- "p1", "cursor1", "p1_select_screen_cursor1", "p1_select_screen_cursor2": cursors for player 1, change p1 by p2 for those of player 2
 - "ready", "loading", "super": displayed when a player is ready, loading, or super selecting something in the select screen
-- "frame", "wall": layout ingame
+- "frame", "wall", "healthbar_frame_1P", "healthbar_frame_1P_absolute": layout ingame
 - "random_stage", "random_character": thumbnail and icon for random stage and random character
 
 ~~ [.mp3, .ogg, .wav, .it, .flac] optional sounds are in parenthesis ~~
 
-- "sfx/countdown", "sfx/go", "sfx/move", "sfx/swap", "sfx/land", "sfx/gameover": game sfx
-- "sfx/fanfare1", "sfx/fanfare2", "sfx/fanfare3": fanfare
-- "sfx/thud_1", "sfx/thud_2", "sfx/thud_3": garbage thuds
+- "sfx/countdown", "sfx/go": played at the start of a match
+- "sfx/move", "sfx/swap": played when moving and swapping
+- "sfx/land": Played when a panel lands
+- "sfx/gameover": played when each game is over
+- "sfx/fanfare1": played when a player makes a x4 chain
+- "sfx/fanfare2": 5x chain, "sfx/fanfare3": x6 chain
+- "sfx/thud_1", "sfx/thud_2", "sfx/thud_3": garbage landing noise
 - "sfx/menu_move", "sfx/menu_validate", "sfx/menu_cancel": menu
 - "sfx/notification": will play upon receiving a request or a request's answer while playing online
 - "sfx/pop1-1", "sfx/pop1-2", ..., "sfx/pop1-10", "sfx/pop2-1", ..., "sfx/pop2-10", ..., "sfx/pop4-10": panel pops

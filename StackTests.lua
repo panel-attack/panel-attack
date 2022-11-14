@@ -16,3 +16,6 @@ stack:receiveConfirmedInput("AA") -- can't swap on first two frames ?!
 match:run()
 match:run()
 assert(stack:canSwap(1, 4), "should be able to swap")
+
+reset_filters()
+stop_the_music()

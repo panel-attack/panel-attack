@@ -60,8 +60,7 @@ Stack =
 
     -- frame.png dimensions
     if wantsCanvas then
-      s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE)
-      s.canvas:setFilter("nearest", "nearest")
+      s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale=GAME:newCanvasSnappedScale()})
     end
 
     if level then
@@ -134,14 +133,14 @@ Stack =
 
     s.NCOLORS = s.NCOLORS or 5
     s.score = 0 -- der skore
-    s.chain_counter = 0 -- how high is the current chain
+    s.chain_counter = 0 -- how high is the current chain (starts at 2)
 
     s.panels_in_top_row = false -- boolean, for losing the game
     s.danger = s.danger or false -- boolean, panels in the top row (danger)
     s.danger_music = s.danger_music or false -- changes music state
 
     s.n_active_panels = 0
-    s.prev_active_panels = 0
+    s.n_prev_active_panels = 0
     s.n_chain_panels = 0
 
     -- These change depending on the difficulty and speed levels:
@@ -225,6 +224,7 @@ Stack =
 
     s.framesBehindArray = {}
     s.totalFramesBehind = 0
+    s.warningsTriggered = {}
 
   end)
 
@@ -251,25 +251,26 @@ end
 
 -- Positions the stack draw position for the given player
 function Stack.moveForPlayerNumber(stack, player_num)
-  local stack_padding_x_for_legacy_pos = ((canvas_width - legacy_canvas_width) / 2)
+  -- Position of elements should ideally be on even coordinates to avoid non pixel alignment
+  -- on 150% scale
   if player_num == 1 then
-    stack.pos_x = 4 + stack_padding_x_for_legacy_pos / GFX_SCALE
-    stack.score_x = 315 + stack_padding_x_for_legacy_pos
+    stack.pos_x = 80
+    stack.score_x = 546
     stack.mirror_x = 1
     stack.origin_x = stack.pos_x
     stack.multiplication = 0
     stack.id = "_1P"
     stack.VAR_numbers = ""
   elseif player_num == 2 then
-    stack.pos_x = 172 + stack_padding_x_for_legacy_pos / GFX_SCALE
-    stack.score_x = 410 + stack_padding_x_for_legacy_pos
+    stack.pos_x = 248
+    stack.score_x = 642
     stack.mirror_x = -1
     stack.origin_x = stack.pos_x + (stack.canvas:getWidth() / GFX_SCALE) - 8
     stack.multiplication = 1
     stack.id = "_2P"
   end
-  stack.pos_y = 4 + (canvas_height - legacy_canvas_height) / GFX_SCALE
-  stack.score_y = 100 + (canvas_height - legacy_canvas_height)
+  stack.pos_y = 4 + (108) / GFX_SCALE
+  stack.score_y = 208
 end
 
 function Stack.divergenceString(stackToTest)
@@ -383,7 +384,7 @@ function Stack.rollbackCopy(self, source, other)
   other.score = source.score
   other.chain_counter = source.chain_counter
   other.n_active_panels = source.n_active_panels
-  other.prev_active_panels = source.prev_active_panels
+  other.n_prev_active_panels = source.n_prev_active_panels
   other.n_chain_panels = source.n_chain_panels
   other.FRAMECOUNT_RISE = source.FRAMECOUNT_RISE
   other.rise_timer = source.rise_timer
@@ -458,9 +459,36 @@ function Stack.rollbackToFrame(self, frame)
   end
 end
 
+function Stack:shouldSaveRollback()
+  if not GAME.match then
+    return false
+  end
+
+  if GAME.match.isFromReplay then
+    return true
+  end
+
+  -- if we don't have a garbage target, its is assumed we aren't being attacked either, which means we don't need to rollback
+  if not self.garbage_target then
+    return false
+  -- If we are behind the time that the opponent's new attacks would land, then we don't need to rollback
+  -- don't save the rollback info for performance reasons
+  -- this also includes local play and single player, since the clocks are <= 1 difference
+  elseif self.garbage_target.CLOCK + GARBAGE_DELAY_LAND_TIME > self.CLOCK then
+    return false
+  end
+
+  return true
+end
+
 -- Saves state in backups in case its needed for rollback
 -- NOTE: the CLOCK time is the save state for simulating right BEFORE that clock time is simulated
 function Stack.saveForRollback(self)
+
+  if self:shouldSaveRollback() == false then
+    return
+  end
+
   local prev_states = self.prev_states
   local garbage_target = self.garbage_target
   self.garbage_target = nil
@@ -655,7 +683,6 @@ end
 
 
 function Stack.set_puzzle_state(self, puzzle)
-  
   -- Copy the puzzle into our state
   local boardSizeInPanels = self.width * self.height
   while string.len(puzzle.stack) < boardSizeInPanels do
@@ -663,16 +690,11 @@ function Stack.set_puzzle_state(self, puzzle)
   end
 
   local puzzleString = puzzle.stack
-  if puzzle.randomizeColors then
-    puzzleString = Puzzle.randomizeColorString(puzzleString)
-  end
 
+  self.puzzle = puzzle
   self.panels = self:puzzleStringToPanels(puzzleString)
-  self.do_countdown = puzzle.do_countdown or false
-  self.puzzleType = puzzle.puzzleType or "moves"
-  if puzzle.moves ~= 0 then
-    self.puzzle_moves = puzzle.moves
-  end
+  self.do_countdown = puzzle.doCountdown or false
+  self.puzzle.remaining_moves = puzzle.moves
 
   -- transform any cleared garbage into colorless garbage panels
   self.gpanel_buffer = "9999999999999999999999999999999999999999999999999999999999999999999999999"
@@ -684,9 +706,10 @@ function Stack.puzzleStringToPanels(self, puzzleString)
   local garbageStartColumn = nil
   local isMetal = false
   local connectedGarbagePanels = nil
+  local rowCount = string.len(puzzleString) / 6
   -- chunk the aprilstack into rows
   -- it is necessary to go bottom up because garbage block panels contain the offset relative to their bottom left corner
-  for row = 1, 12 do
+  for row = 1, rowCount do
       local rowString = string.sub(puzzleString, #puzzleString - 5, #puzzleString)
       puzzleString = string.sub(puzzleString, 1, #puzzleString - 6)
       -- copy the panels into the row
@@ -724,10 +747,12 @@ function Stack.puzzleStringToPanels(self, puzzleString)
               local height = connectedGarbagePanels[#connectedGarbagePanels].y_offset + 1
               -- this is disregarding the possible existence of irregularly shaped garbage
               local width = garbageStartColumn - column + 1
+              local shake_time = garbage_to_shake_time[width * height]
               for i = 1, #connectedGarbagePanels do
                 connectedGarbagePanels[i].x_offset = connectedGarbagePanels[i].x_offset - column
                 connectedGarbagePanels[i].height = height
                 connectedGarbagePanels[i].width = width
+                connectedGarbagePanels[i].shake_time = shake_time
                 -- panels are already in the main table and they should already be updated by reference
               end
               garbageStartRow = nil
@@ -750,18 +775,33 @@ function Stack.puzzleStringToPanels(self, puzzleString)
   return panels
 end
 
+function Stack.toPuzzleInfo(self)
+  local puzzleInfo = {}
+  puzzleInfo["Player"] = self.match.battleRoom.playerNames[self.which]
+  puzzleInfo["Stop"] = self.stop_time
+  puzzleInfo["Shake"] = self.shake_time
+  puzzleInfo["Pre-Stop"] = self.pre_stop_time
+  puzzleInfo["Stack"] = Puzzle.toPuzzleString(self.panels)
+
+  return puzzleInfo
+end
+
 function Stack.puzzle_done(self)
   if not self.do_countdown then
     -- For now don't require active panels to be 0, we will still animate in game over,
     -- and we need to win immediately to avoid the failure below in the chain case.
     --if P1.n_active_panels == 0 then
-    --if self.puzzleType == "chain" or P1.prev_active_panels == 0 then
-    local panels = self.panels
-    for row = 1, self.height do
-      for col = 1, self.width do
-        local color = panels[row][col].color
-        if color ~= 0 and color ~= 9 then
-          return false
+    --if self.puzzle.puzzleType == "chain" or P1.n_prev_active_panels == 0 then
+    if self.puzzle.puzzleType == "clear" then
+      return not self:hasGarbage()
+    else
+      local panels = self.panels
+      for row = 1, self.height do
+        for col = 1, self.width do
+          local color = panels[row][col].color
+          if color ~= 0 and color ~= 9 then
+            return false
+          end
         end
       end
     end
@@ -774,14 +814,25 @@ function Stack.puzzle_done(self)
   return false
 end
 
-function Stack.puzzle_failed(self)
-  if not self.do_countdown then
-    if self.puzzleType == "moves" then
-      if self.n_active_panels == 0 and self.prev_active_panels == 0 then
-        return self.puzzle_moves == 0
+function Stack.hasGarbage(self)
+  -- garbage is more likely to be found at the top of the stack
+  for row = #self.panels, 1, -1 do
+    for column = 1, #self.panels[row] do
+      if self.panels[row][column].garbage and self.panels[row][column].state ~= "matched" then
+        return true
       end
-    elseif self.puzzleType and self.puzzleType == "chain" then
-      if self.n_active_panels == 0 and self.prev_active_panels == 0 and #self.analytic.data.reached_chains == 0 and self.analytic.data.destroyed_panels > 0 then
+    end
+  end
+
+  return false
+end
+
+function Stack.puzzle_failed(self)
+  if not self.do_countdown and not self:hasPendingAction() then
+    if self.puzzle.puzzleType == "moves" then
+        return self.puzzle.remaining_moves == 0
+    elseif self.puzzle.puzzleType == "chain" then
+      if #self.analytic.data.reached_chains == 0 and self.analytic.data.destroyed_panels > 0 then
         -- We finished matching but never made a chain -> fail
         return true
       end
@@ -789,10 +840,18 @@ function Stack.puzzle_failed(self)
         -- We achieved a chain, finished chaining, but haven't won yet -> fail
         return true
       end
+    elseif self.puzzle.puzzleType == "clear" then
+      if self:hasGarbage() then
+        return (self.puzzle.moves > 0 and self.puzzle.remaining_moves <= 0) or self.health <= 0
+      end
     end
   end
 
   return false
+end
+
+function Stack.hasPendingAction(self)
+  return self.n_active_panels > 0 or self.n_prev_active_panels > 0
 end
 
 function Stack.has_falling_garbage(self)
@@ -1145,11 +1204,16 @@ function Stack.simulate(self)
         table.insert(changeback_rows, panels[self.height - 3])
       end
       for _, prow in pairs(changeback_rows) do
-        for idx = 1, width do
-          if prow[idx].color ~= 0 then
-            toggle_back = false
-            break
+        if prow ~= nil and type(prow) == "table" then
+          for idx = 1, width do
+            if prow[idx].color ~= 0 then
+              toggle_back = false
+              break
+            end
           end
+        elseif self.warningsTriggered["Panels Invalid"] == nil then
+          logger.warn("Panels have invalid data in them, please tell your local developer." .. dump(panels, true))
+          self.warningsTriggered["Panels Invalid"] = true
         end
       end
       self.danger_music = not toggle_back
@@ -1160,7 +1224,7 @@ function Stack.simulate(self)
       self:new_row()
     end
     self.prev_rise_lock = self.rise_lock
-    self.rise_lock = self.n_active_panels ~= 0 or self.prev_active_panels ~= 0 or self.shake_time ~= 0 or self.do_countdown or self.do_swap
+    self.rise_lock = self.n_active_panels ~= 0 or self.n_prev_active_panels ~= 0 or self.shake_time ~= 0 or self.do_countdown or self.do_swap
     if self.prev_rise_lock and not self.rise_lock then
       self.prevent_manual_raise = false
     end
@@ -1185,27 +1249,37 @@ function Stack.simulate(self)
 
     -- Phase 0 //////////////////////////////////////////////////////////////
     -- Stack automatic rising
-    if self.speed ~= 0 and not self.manual_raise and self.stop_time == 0 and not self.rise_lock and self.match.mode ~= "puzzle" then
-      if self.panels_in_top_row then
-        self.health = self.health - 1
-        if self.health < 1 and self.shake_time < 1 then
-          self:set_game_over()
+    if self.speed ~= 0 and not self.manual_raise and self.stop_time == 0 and not self.rise_lock then
+      if self.match.mode == "puzzle" then
+        -- only reduce health after the first swap to give the player a chance to strategize
+        if self.puzzle.puzzleType == "clear" and self.puzzle.remaining_moves - self.puzzle.moves < 0 and self.shake_time < 1 then
+          self.health = self.health - 1
+          -- no gameover because it can't return otherwise, exit is taken care of by puzzle_failed
         end
       else
-        self.rise_timer = self.rise_timer - 1
-        if self.rise_timer <= 0 then -- try to rise
-          self.displacement = self.displacement - 1
-          if self.displacement == 0 then
-            self.prevent_manual_raise = false
-            self.top_cur_row = self.height
-            self:new_row()
+        if self.panels_in_top_row then
+          self.health = self.health - 1
+          if self.health < 1 and self.shake_time < 1 then
+            self:set_game_over()
           end
-          self.rise_timer = self.rise_timer + self.FRAMECOUNT_RISE
+        else
+          if self.match.mode ~= "puzzle" then
+            self.rise_timer = self.rise_timer - 1
+            if self.rise_timer <= 0 then -- try to rise
+              self.displacement = self.displacement - 1
+              if self.displacement == 0 then
+                self.prevent_manual_raise = false
+                self.top_cur_row = self.height
+                self:new_row()
+              end
+              self.rise_timer = self.rise_timer + self.FRAMECOUNT_RISE
+            end
+          end
         end
       end
     end
 
-    if not self.panels_in_top_row and not self:has_falling_garbage() then
+    if not self.panels_in_top_row and self.match.mode ~= "puzzle" and not self:has_falling_garbage() then
       self.health = self.max_health
     end
 
@@ -1614,8 +1688,9 @@ function Stack.simulate(self)
     -- lol owned
     end
 
-    self.prev_active_panels = self.n_active_panels
+    self.n_prev_active_panels = self.n_active_panels
     self.n_active_panels = 0
+    self.active_panels = {}
     for row = 1, self.height do
       for col = 1, self.width do
         local panel = panels[row][col]
@@ -1680,7 +1755,7 @@ function Stack.simulate(self)
 
     if self.garbage_q:len() > 0 then
       local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
-      local drop_it = not self.panels_in_top_row and not self:has_falling_garbage() and ((from_chain and next_garbage_block_height > 1) or (self.n_active_panels == 0 and self.prev_active_panels == 0))
+      local drop_it = not self.panels_in_top_row and not self:has_falling_garbage() and ((from_chain and next_garbage_block_height > 1) or (self.n_active_panels == 0 and self.n_prev_active_panels == 0))
       if drop_it and self.garbage_q:len() > 0 then
         if self:drop_garbage(unpack(self.garbage_q:peek())) then
           self.garbage_q:pop()
@@ -1841,13 +1916,10 @@ function Stack.simulate(self)
       if SFX_Fanfare_Play == 0 then
         --do nothing
       elseif SFX_Fanfare_Play >= 6 then
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         themes[config.theme].sounds.fanfare3:play()
       elseif SFX_Fanfare_Play >= 5 then
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         themes[config.theme].sounds.fanfare2:play()
       elseif SFX_Fanfare_Play >= 4 then
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         themes[config.theme].sounds.fanfare1:play()
       end
       SFX_Fanfare_Play = 0
@@ -1876,7 +1948,7 @@ function Stack.simulate(self)
         local popLevel = min(max(self.chain_counter, 1), 4)
         local popIndex = 1
         if SFX_Garbage_Pop_Play then
-          popIndex = SFX_Garbage_Pop_Play
+          popIndex = min(SFX_Garbage_Pop_Play + self.poppedPanelIndex, 10)
         else
           popIndex = min(self.poppedPanelIndex, 10)
         end
@@ -1971,7 +2043,7 @@ end
 
 
 function Stack.shouldChangeSoundEffects(self)
-  local result = self:shouldChangeMusic() and not SFX_mute
+  local result = self:shouldChangeMusic() and not GAME.muteSoundEffects
 
   return result
 end
@@ -2005,9 +2077,7 @@ function Stack.game_ended(self)
       return true
     end
   elseif self.match.mode == "puzzle" then
-    if self:puzzle_done() then
-      return true
-    elseif self:puzzle_failed() then
+    if self:puzzle_done() or self:puzzle_failed() then
       return true
     end
   end
@@ -2112,12 +2182,23 @@ function Stack.canSwap(self, row, column)
   -- If you have two pieces stacked vertically, you can't move
   -- both of them to the right or left by swapping with empty space.
   -- TODO: This might be wrong if something lands on a swapping panel?
-  if panels[row][column].color == 0 or panels[row][column + 1].color == 0 then
-    do_swap = do_swap and not (row ~= self.height and (panels[row + 1][column].state == "swapping" and panels[row + 1][column + 1].state == "swapping") and (panels[row + 1][column].color == 0 or panels[row + 1][column + 1].color == 0) and (panels[row + 1][column].color ~= 0 or panels[row + 1][column + 1].color ~= 0))
-    do_swap = do_swap and not (row ~= 1 and (panels[row - 1][column].state == "swapping" and panels[row - 1][column + 1].state == "swapping") and (panels[row - 1][column].color == 0 or panels[row - 1][column + 1].color == 0) and (panels[row - 1][column].color ~= 0 or panels[row - 1][column + 1].color ~= 0))
+  if panels[row][column].color == 0 or panels[row][column + 1].color == 0 then -- if either panel inside the cursor is air
+    do_swap = do_swap -- failing the condition if we already determined we cant swap 
+      and not -- one of the next 4 lines must be false in order to swap
+        (row ~= self.height -- true if cursor is not at top of stack
+        and (panels[row + 1][column].state == "swapping" and panels[row + 1][column + 1].state == "swapping") -- true if BOTH panels above cursor are swapping
+        and (panels[row + 1][column].color == 0 or panels[row + 1][column + 1].color == 0) -- true if either panel above the cursor is air
+        and (panels[row + 1][column].color ~= 0 or panels[row + 1][column + 1].color ~= 0)) -- true if either panel above the cursor is not air
+
+    do_swap = do_swap  -- failing the condition if we already determined we cant swap 
+      and not -- one of the next 4 lines must be false in order to swap
+        (row ~= 1 -- true if the cursor is not at the bottom of the stack
+        and (panels[row - 1][column].state == "swapping" and panels[row - 1][column + 1].state == "swapping") -- true if BOTH panels below cursor are swapping
+        and (panels[row - 1][column].color == 0 or panels[row - 1][column + 1].color == 0) -- true if either panel below the cursor is air
+        and (panels[row - 1][column].color ~= 0 or panels[row - 1][column + 1].color ~= 0)) -- true if either panel below the cursor is not air
   end
 
-  do_swap = do_swap and (self.puzzle_moves == nil or self.puzzle_moves > 0)
+  do_swap = do_swap and (not self.puzzle or self.puzzle.moves == 0 or self.puzzle.remaining_moves > 0)
 
   return do_swap
 end
@@ -2127,9 +2208,7 @@ function Stack.swap(self)
   local panels = self.panels
   local row = self.cur_row
   local col = self.cur_col
-  if self.puzzle_moves then
-    self.puzzle_moves = self.puzzle_moves - 1
-  end
+  self:processPuzzleSwap()
   panels[row][col], panels[row][col + 1] = panels[row][col + 1], panels[row][col]
   local tmp_chaining = panels[row][col].chaining
   panels[row][col]:clear_flags()
@@ -2170,6 +2249,17 @@ function Stack.swap(self)
     if panels[row][col + 1].color == 0 and panels[row + 1][col + 1].color ~= 0 then
       panels[row][col + 1].dont_swap = true
     end
+  end
+end
+
+function Stack.processPuzzleSwap(self)
+  if self.puzzle then
+    if self.puzzle.remaining_moves == self.puzzle.moves and self.puzzle.puzzleType == "clear" then
+      -- start depleting stop / shake time
+      self.stop_time = self.puzzle.stop_time
+      self.shake_time = self.puzzle.shake_time
+    end
+    self.puzzle.remaining_moves = self.puzzle.remaining_moves - 1
   end
 end
 
@@ -2262,6 +2352,15 @@ function Stack.check_matches(self)
     end
   end
 
+  -- Record whether each panel excludes matching once to prevent duplicated work.
+  local excludeMatchTable = {}
+  for row = 1, self.height do
+    excludeMatchTable[row] = {}
+    for col = 1, self.width do
+      excludeMatchTable[row][col] = panels[row][col]:exclude_match()
+    end
+  end
+
   local is_chain = false
   local combo_size = 0
   local floodQueue = Queue()
@@ -2269,7 +2368,7 @@ function Stack.check_matches(self)
     for col = 1, self.width do
       if
         row ~= 1 and row ~= self.height and --check vertical match centered here.
-          (not (panels[row - 1][col]:exclude_match() or panels[row][col]:exclude_match() or panels[row + 1][col]:exclude_match())) and
+          (not (excludeMatchTable[row - 1][col] or excludeMatchTable[row][col] or excludeMatchTable[row + 1][col])) and
           panels[row][col].color == panels[row - 1][col].color and
           panels[row][col].color == panels[row + 1][col].color
        then
@@ -2289,7 +2388,7 @@ function Stack.check_matches(self)
       end
       if
         col ~= 1 and col ~= self.width and --check horiz match centered here.
-          (not (panels[row][col - 1]:exclude_match() or panels[row][col]:exclude_match() or panels[row][col + 1]:exclude_match())) and
+          (not (excludeMatchTable[row][col - 1] or excludeMatchTable[row][col] or excludeMatchTable[row][col + 1])) and
           panels[row][col].color == panels[row][col - 1].color and
           panels[row][col].color == panels[row][col + 1].color
        then
@@ -2386,7 +2485,7 @@ function Stack.check_matches(self)
             if string.len(self.gpanel_buffer) <= 10 * self.width then
               local garbagePanels = PanelGenerator.makeGarbagePanels(self.match.seed + self.garbageGenCount, self.NCOLORS, self.gpanel_buffer, self.match.mode, self.level)
               self.gpanel_buffer = self.gpanel_buffer .. garbagePanels
-              logger.info("Generating garbage with seed: " .. self.match.seed + self.garbageGenCount .. " buffer: " .. self.gpanel_buffer)
+              logger.debug("Generating garbage with seed: " .. self.match.seed + self.garbageGenCount .. " buffer: " .. self.gpanel_buffer)
               self.garbageGenCount = self.garbageGenCount + 1
             end
             gpan_row = string.sub(self.gpanel_buffer, 1, 6)
@@ -2445,9 +2544,14 @@ function Stack.check_matches(self)
   end
 
   if (combo_size ~= 0) then
-    self.combos[self.CLOCK] = combo_size
-    if self.garbage_target and self.telegraph and metal_count == 3 and combo_size >= 3 then
-      self.telegraph:push({6, 1, true, false}, first_panel_col, first_panel_row, self.CLOCK)
+    if self.garbage_target and self.telegraph then
+      if metal_count >= 3 then
+        -- Give a shock garbage for every shock block after 2
+        for i = 3, metal_count do
+          self.telegraph:push({6, 1, true, false}, first_panel_col, first_panel_row, self.CLOCK)
+          self:recordComboHistory(self.CLOCK, 6, 1, true)
+        end
+      end
     end
     self.analytic:register_destroyed_panels(combo_size)
     if (combo_size > 3) then
@@ -2466,16 +2570,12 @@ function Stack.check_matches(self)
 
       self:enqueue_card(false, first_panel_col, first_panel_row, combo_size)
       if self.garbage_target and self.telegraph then
-        if metal_count > 3 then
-          for i = 3, metal_count do
-            self.telegraph:push({6, 1, true, false}, first_panel_col, first_panel_row, self.CLOCK)
-          end
-        end
-        if metal_count ~= combo_size then
-          local combo_pieces = combo_garbage[combo_size]
-          for i=1,#combo_pieces do
-            self.telegraph:push({combo_pieces[i], 1, false, false}, first_panel_col, first_panel_row, self.CLOCK)
-          end
+        local combo_pieces = combo_garbage[combo_size]
+        for i=1,#combo_pieces do
+          -- Give out combo garbage based on the lookup table, even if we already made shock garbage,
+          -- OP! Too bad its hard to get shock panels in vs. :)
+          self.telegraph:push({combo_pieces[i], 1, false, false}, first_panel_col, first_panel_row, self.CLOCK)
+          self:recordComboHistory(self.CLOCK, combo_pieces[i], 1, false)
         end
       end
       --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
@@ -2486,9 +2586,11 @@ function Stack.check_matches(self)
     if (is_chain) then
       if self.chain_counter == 2 then
         self.chains.current = self.CLOCK
-        self.chains[self.CLOCK] = {start = self.CLOCK}  -- a bit redundant, but might come in handy, maybe, probably not.  The key is the same as .start.
+        self.chains[self.chains.current] = {starts = {}}
       end
-      self.chains[self.chains.current].size = self.chain_counter
+      local currentChainData = self.chains[self.chains.current]
+      currentChainData.size = self.chain_counter
+      currentChainData.starts[#currentChainData.starts+1] = self.CLOCK
       self:enqueue_card(true, first_panel_col, first_panel_row, self.chain_counter)
     --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
     --          first_panel_row<<4+P1StackPosY+self.displacement-9);
@@ -2606,6 +2708,15 @@ function Stack.set_hoverers(self, row, col, hover_time, add_chaining, extra_tick
   end
 end
 
+function Stack:recordComboHistory(time, width, height, metal)
+
+  if self.combos[time] == nil then 
+    self.combos[time] = {} 
+  end
+  
+  self.combos[time][#self.combos[time]+1] = {width = width, height = height, metal = metal}
+end
+
 -- Adds a new row to the play field
 function Stack.new_row(self)
   local panels = self.panels
@@ -2627,7 +2738,7 @@ function Stack.new_row(self)
       opponentLevel = self.garbage_target.level
     end
     self.panel_buffer = PanelGenerator.makePanels(self.match.seed + self.panelGenCount, self.NCOLORS, self.panel_buffer, self.match.mode, self.level, opponentLevel)
-    logger.info("generating panels with seed: " .. self.match.seed + self.panelGenCount .. " buffer: " .. self.panel_buffer)
+    logger.debug("generating panels with seed: " .. self.match.seed + self.panelGenCount .. " buffer: " .. self.panel_buffer)
     self.panelGenCount = self.panelGenCount + 1
   end
 
@@ -2665,4 +2776,37 @@ function Stack.new_row(self)
   end
   self.panel_buffer = string.sub(self.panel_buffer, 7)
   self.displacement = 16
+end
+
+function Stack:getAttackPatternData() 
+
+  local data = {}
+  data.name = "Player " .. self.which
+  data.mergeComboMetalQueue = false
+  data.delayBeforeStart = 0
+  data.delayBeforeRepeat = 91
+  self.chains.current = nil
+  local defaultEndTime = 70
+  local sortedAttackPatterns = {}
+
+  -- Add in all the chains by time
+  for time, currentChain in pairsSortedByKeys(self.chains) do
+    local endTime = currentChain.finish or currentChain.starts[#currentChain.starts] + defaultEndTime
+    sortedAttackPatterns[time] = {chain = currentChain.starts, chainEndTime = endTime}
+  end
+
+  -- Add in all the combos by time
+  for time, combos in pairsSortedByKeys(self.combos) do
+    for index, garbage in ipairs(combos) do
+      sortedAttackPatterns[time] = {width = garbage.width, height = garbage.height, startTime = time, chain = false, metal = garbage.metal}
+    end
+  end
+
+  -- Save the final attack patterns in sorted order without the times since the file format doesn't want that (duplicate data)
+  data.attackPatterns = {}
+  for _, attackPattern in pairsSortedByKeys(sortedAttackPatterns) do
+    data.attackPatterns[#data.attackPatterns+1] = attackPattern
+  end
+
+  return data
 end
