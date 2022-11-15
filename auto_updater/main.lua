@@ -48,17 +48,24 @@ local function correctAndroidStartupConfig()
   local function hasLocalInstallation()
     local saveDirectory = love.filesystem.getSaveDirectory()
     for i, v in ipairs(love.filesystem.getDirectoryItems("")) do
-      if love.filesystem.getRealDirectory(v) == saveDirectory then
-        -- the config file itself might still live in internal storage as that is the default setting for love
-        return v.name ~= "UseAndroidExternalStorage"
+      -- the config file itself might still live in internal storage as that is the default setting for love
+      if love.filesystem.getRealDirectory(v) == saveDirectory and v.name ~= "UseAndroidExternalStorage" then
+        return true
       end
     end
     return false
   end
 
-  if love.system.getOS() == "Android" and UseAndroidExternalStorage == false then
-    if not hasLocalInstallation() then
+  if love.system.getOS() == "Android" then
+    if UseAndroidExternalStorage == false and not hasLocalInstallation() then
+      -- no internal install present, use external storage
       UseAndroidExternalStorage = true
+    elseif UseAndroidExternalStorage == true and not hasLocalInstallation() then
+      -- fine, new installation in external storage then
+    elseif UseAndroidExternalStorage == true and hasLocalInstallation() then
+      -- all good
+    elseif UseAndroidExternalStorage == false and hasLocalInstallation() then
+      -- equally all good, using the internal storage until user actively migrates
     end
     
     pcall(
@@ -70,7 +77,7 @@ local function correctAndroidStartupConfig()
       end
     )
 
-    if UseAndroidExternalStorage then
+    if UseAndroidExternalStorage == true then
       package.loaded.conf = nil
       love.conf = nil
       love.init()
