@@ -91,6 +91,7 @@ score_chain_TA = {  0,   50,   80,  150,  300,
 
 GFX_SCALE = 3
 DEFAULT_TOUCH_RAISE_BUTTON_SIZE = {width = 50, height = 100}
+TOUCH_SWAP_COOLDOWN_DEFAULT = 2  -- default number of cooldown frames between touch-input swaps, after the first 2 swaps after a touch is initiated, to prevent excessive accidental stealths
 
 -- frames to use for the card animation
 card_animation = {false,
