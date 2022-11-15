@@ -802,8 +802,8 @@ function select_screen.startNetPlayMatch(self, msg)
     for k, v in pairs(replay_of_match_so_far.vs) do
       replay.vs[k] = v
     end
-    P1:receiveConfirmedInput(replay_of_match_so_far.vs.in_buf)
-    P2:receiveConfirmedInput(replay_of_match_so_far.vs.I)
+    P1:receiveConfirmedInput(uncompress_input_string(replay_of_match_so_far.vs.in_buf))
+    P2:receiveConfirmedInput(uncompress_input_string(replay_of_match_so_far.vs.I))
     
     replay_of_match_so_far = nil
     --this makes non local stacks run until caught up

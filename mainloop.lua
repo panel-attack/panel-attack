@@ -392,7 +392,7 @@ end
 
 local function finalizeAndWriteReplay(extraPath, extraFilename)
 
-  replay[GAME.match.mode].in_buf = P1.confirmedInput
+  replay[GAME.match.mode].in_buf = table.concat(P1.confirmedInput)
 
   local now = os.date("*t", to_UTC(os.time()))
   local sep = "/"
@@ -420,7 +420,7 @@ local function finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGam
   end
 
   if P2 then
-    replay[GAME.match.mode].I = P2.confirmedInput
+    replay[GAME.match.mode].I = table.concat(P2.confirmedInput)
 
     local rep_a_name, rep_b_name = battleRoom.playerNames[1], battleRoom.playerNames[2]
     --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"

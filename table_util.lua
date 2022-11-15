@@ -63,7 +63,7 @@ end
 function table.appendToList(list, tab)
   assert(table.isList(tab), "insertListAt can only be used with continuously integer indexed tables")
   for i = 1, #tab do
-    table.insert(list, #list + 1, tab[i])
+    list[#list+1] = tab[i]
   end
 end
 

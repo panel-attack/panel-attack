@@ -243,12 +243,12 @@ function Match:run()
 
   if P1 then
     if P1.is_local and not P1:game_ended() then
-      assert(string.len(P1.input_buffer) == 0, "Local games should always simulate all inputs")
+      assert(#P1.input_buffer == 0, "Local games should always simulate all inputs")
     end
   end
   if P2 then
     if P2.is_local and not P2:game_ended() then
-      assert(string.len(P2.input_buffer) == 0, "Local games should always simulate all inputs")
+      assert(#P2.input_buffer == 0, "Local games should always simulate all inputs")
     end
   end
 
@@ -354,10 +354,10 @@ function Match.render(self)
 
 
     drawY = drawY + padding
-    gprintf("Confirmed " .. string.len(P1.confirmedInput) , drawX, drawY)
+    gprintf("Confirmed " .. #P1.confirmedInput , drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("input_buffer " .. string.len(P1.input_buffer) , drawX, drawY)
+    gprintf("input_buffer " .. #P1.input_buffer , drawX, drawY)
 
     drawY = drawY + padding
     gprintf("rollbackCount " .. P1.rollbackCount , drawX, drawY)
@@ -366,7 +366,7 @@ function Match.render(self)
     -- gprintf("P1 Panels: " .. P1.panel_buffer, drawX, drawY)
 
     -- drawY = drawY + padding
-    -- gprintf("P1 Confirmed " .. string.len(P1.confirmedInput) , drawX, drawY)
+    -- gprintf("P1 Confirmed " .. #P1.confirmedInput , drawX, drawY)
 
     -- drawY = drawY + padding
     -- gprintf("P1 Ended?: " .. tostring(P1:game_ended()), drawX, drawY)
@@ -437,10 +437,10 @@ function Match.render(self)
       gprintf("P1 Ahead: " .. framesAhead, drawX, drawY)
 
       drawY = drawY + padding
-      gprintf("Confirmed " .. string.len(P2.confirmedInput) , drawX, drawY)
+      gprintf("Confirmed " .. #P2.confirmedInput , drawX, drawY)
 
       drawY = drawY + padding
-      gprintf("input_buffer " .. string.len(P2.input_buffer) , drawX, drawY)
+      gprintf("input_buffer " .. #P2.input_buffer , drawX, drawY)
 
       drawY = drawY + padding
       gprintf("rollbackCount " .. P2.rollbackCount , drawX, drawY)
