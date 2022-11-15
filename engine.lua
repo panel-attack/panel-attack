@@ -2800,20 +2800,30 @@ function Stack:getAttackPatternData()
   -- Add in all the chains by time
   for time, currentChain in pairsSortedByKeys(self.chains) do
     local endTime = currentChain.finish or currentChain.starts[#currentChain.starts] + defaultEndTime
-    sortedAttackPatterns[time] = {chain = currentChain.starts, chainEndTime = endTime}
+    if sortedAttackPatterns[time] == nil then
+      sortedAttackPatterns[time] = {}
+    end
+    local attackPatternBucket = sortedAttackPatterns[time]
+    attackPatternBucket[#attackPatternBucket+1] = {chain = currentChain.starts, chainEndTime = endTime}
   end
 
   -- Add in all the combos by time
   for time, combos in pairsSortedByKeys(self.combos) do
     for index, garbage in ipairs(combos) do
-      sortedAttackPatterns[time] = {width = garbage.width, height = garbage.height, startTime = time, chain = false, metal = garbage.metal}
+      if sortedAttackPatterns[time] == nil then
+        sortedAttackPatterns[time] = {}
+      end
+      local attackPatternBucket = sortedAttackPatterns[time]
+      attackPatternBucket[#attackPatternBucket+1] = {width = garbage.width, height = garbage.height, startTime = time, chain = false, metal = garbage.metal}
     end
   end
 
   -- Save the final attack patterns in sorted order without the times since the file format doesn't want that (duplicate data)
   data.attackPatterns = {}
-  for _, attackPattern in pairsSortedByKeys(sortedAttackPatterns) do
-    data.attackPatterns[#data.attackPatterns+1] = attackPattern
+  for _, attackPatterns in pairsSortedByKeys(sortedAttackPatterns) do
+    for _, attackPattern in ipairs(attackPatterns) do
+      data.attackPatterns[#data.attackPatterns+1] = attackPattern
+    end
   end
 
   return data
