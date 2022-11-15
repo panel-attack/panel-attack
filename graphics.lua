@@ -780,11 +780,17 @@ function Stack.render(self)
       if self.taunt_up then
         inputs_to_print = inputs_to_print .. "\ntaunt_up"
       end
-      if irow_touched then
-        inputs_to_print = inputs_to_print .. "\nrow_touched:"..irow_touched
-      end
-      if icol_touched then
-        inputs_to_print = inputs_to_print .. "\ncol_touched:"..icol_touched
+      if self.inputMethod == "touch" then
+        if irow_touched and icol_touched then
+          inputs_to_print = inputs_to_print .. "\npanel_touched:"..irow_touched..","..icol_touched
+        end
+        inputs_to_print = inputs_to_print .. "\ntouchedPanel:"..self.touchedPanel.row..","..self.touchedPanel.col
+        inputs_to_print = inputs_to_print .. "\npanel_first_touched:"..self.panel_first_touched.row..","..self.panel_first_touched.col
+        inputs_to_print = inputs_to_print .. "\nprev_touchedPanel:"..self.prev_touchedPanel.row..","..self.prev_touchedPanel.col
+        inputs_to_print = inputs_to_print .. "\ntouch_target_col:"..self.touch_target_col
+        inputs_to_print = inputs_to_print .. "\nlingering_touch_cursor:"..self.lingering_touch_cursor.row..","..self.lingering_touch_cursor.col
+        inputs_to_print = inputs_to_print .. "\nswaps_this_touch:"..self.swaps_this_touch
+        inputs_to_print = inputs_to_print .. "\ntouch_swap_cooldown_timer:"..self.touch_swap_cooldown_timer
       end
       gprint(inputs_to_print, self.score_x, self.score_y + 195)
     end
