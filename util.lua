@@ -139,11 +139,6 @@ function table_to_string(tab)
   return ret
 end
 
--- DEPRECATED, use non global math.sign
-function sign(x)
-  return math.sign(x)
-end
-
 function math.sign(v)
 	return (v >= 0 and 1) or -1
 end
