@@ -1801,7 +1801,7 @@ function Stack.simulate(self)
       end
 
       --try to swap toward self.touch_target_col
-      if swap_cooldown_timer == 0 and not linger_swap_attempted then
+      if self.touch_swap_cooldown_timer == 0 and not linger_swap_attempted then
         if self.touch_target_col ~= 0 and self.cur_col ~= 0 and self.touch_target_col ~= self.cur_col then
           local cursor_target_delta = self.touch_target_col - self.cur_col
           local swap_successful = false
