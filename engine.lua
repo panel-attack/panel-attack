@@ -1764,9 +1764,12 @@ function Stack.simulate(self)
           end
         end
         if not linger_swap_attempted then
+          --we touched somewhere else on the stack
           --put the cursor at touchedPanel
           self.cur_row = self.touchedPanel.row
           self.cur_col = self.touchedPanel.col
+          --remove linger panel selection
+        self.lingering_touch_cursor = {row = 0, col = 0}
         end
       end
       
@@ -1778,11 +1781,7 @@ function Stack.simulate(self)
         print("linger swap was successful!")
       end
       
-      if not linger_swap_attempted then
-        --we touched somewhere else on the stack
-        --remove linger panel selection
-        self.lingering_touch_cursor = {row = 0, col = 0}
-      end
+      
       
       --touch is ongoing
       if self.touchedPanel and not (self.touchedPanel.row == 0 and self.touchedPanel.col == 0) then
@@ -1791,10 +1790,12 @@ function Stack.simulate(self)
 
       --touch was released
       if (self.prev_touchedPanel and not (self.prev_touchedPanel.row == 0 and self.prev_touchedPanel.col == 0)) and (not self.touchedPanel or (self.touchedPanel.row == 0 and self.touchedPanel.col == 0)) then
+        print("touch was released!")
         self.touch_target_col = self.prev_touchedPanel.col
         self.panel_first_touched = {row = 0, col = 0} 
         --check if we need to set lingering panel
         if self.swaps_this_touch == 0 and self.prev_touchedPanel.row == self.cur_row and self.prev_touchedPanel.col == self.cur_col then --to do: or we tried to swap and couldn't
+          print("lingering_touch_cursor set to "..self.cur_row..","..self.cur_col) 
           self.lingering_touch_cursor = {row = self.cur_row, col = self.cur_col}
         end
       end
