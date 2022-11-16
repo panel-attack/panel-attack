@@ -1796,7 +1796,6 @@ function Stack.simulate(self)
       --touch was released
       if (self.prev_touchedPanel and not (self.prev_touchedPanel.row == 0 and self.prev_touchedPanel.col == 0)) and (not self.touchedPanel or (self.touchedPanel.row == 0 and self.touchedPanel.col == 0)) then
         print("touch was released!")
-        --self.touch_target_col = self.prev_touchedPanel.col
         self.panel_first_touched = {row = 0, col = 0} 
         --check if we need to set lingering panel because user tapped a panel, didn't move it, and released it.
         if self.swaps_this_touch == 0 and self.prev_touchedPanel.row == self.cur_row and self.prev_touchedPanel.col == self.cur_col then --to do: or we tried to swap and couldn't
@@ -1804,11 +1803,12 @@ function Stack.simulate(self)
           self.lingering_touch_cursor = {row = self.cur_row, col = self.cur_col}
         end
         --if no lingering_touch_cursor, remove cursor from the display.
-        if not self.lingering_touch_cursor or (self.lingering_touch_cursor.row == 0 and self.lingering_touch_cursor.col == 0) then
+        -- and the cursor has reached self.touch_target_col
+        if not self.lingering_touch_cursor or (self.lingering_touch_cursor.row == 0 and self.lingering_touch_cursor.col == 0) and self.cur_col == self.touch_target_col then
           self.cur_row = 0
           self.cur_col = 0
         end
-        self.swaps_this_touch = 0
+        --self.swaps_this_touch = 0
       end
 
       --try to swap toward self.touch_target_col
