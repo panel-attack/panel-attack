@@ -1,4 +1,5 @@
 local logger = require("logger")
+local util = require("util")
 
 local TCP_sock = nil
 
@@ -359,18 +360,15 @@ function Stack.send_controls(self)
     --only one touched panel is supported, no multitouch.
     local mx, my = GAME:transform_coordinates(love.mouse.getPosition())
     if love.mouse.isDown(1) then
-      if self.buttons.raise:isSelected(mx,my) then
-        print("raise button selected")
-        iraise = true
-      else
-        iraise = false
-      end
+      --note: a stack is still "touched" if we touched the stack, and have dragged the mouse or touch off the stack, until we lift the touch
       --check whether the mouse is over this stack
-      if mx >= self.pos_x * self.gfx_scale and mx <= (self.pos_x + self.width * 16) * self.gfx_scale then
+      if mx >= self.pos_x * self.gfx_scale and mx <= (self.pos_x + self.width * 16) * self.gfx_scale and
+      my >= self.pos_y * self.gfx_scale and my <= (self.pos_y + self.height * 16) * self.gfx_scale then
+        self.touched = true
         --px and py represent the origin of the panel we are currently checking if it's touched.
         local px, py
         local stop_looking = false
-        for row = 1, self.height do
+        for row = 0, self.height do
           for col = 1, self.width do
             --print("checking panel "..row..","..col)
             px = (self.pos_x * GFX_SCALE) + ((col - 1) * 16) * self.gfx_scale
@@ -378,7 +376,7 @@ function Stack.send_controls(self)
             py = (self.pos_y * GFX_SCALE) + ((11 - (row)) * 16 + self.displacement) * self.gfx_scale
             --check if mouse is touching panel in row, col
             if mx >= px and mx < px + 16 * self.gfx_scale and my >= py and my < py + 16 * self.gfx_scale then
-              irow_touched = row
+              irow_touched = math.max(row, 1) --if touching row 0, let's say we are touching row 1
               icol_touched = col
               if self.prev_touchedPanel 
                 and row == self.prev_touchedPanel.row and col == self.prev_touchedPanel.col then
@@ -394,12 +392,28 @@ function Stack.send_controls(self)
             end
           end
         end
+      elseif self.touched then --we have touched the stack, and have moved the touch off the edge, without releasing
+        --let's say we are still touching the panel we had touched last.
+        irow_touched = self.touchedPanel.row
+        icol_touched = self.touchedPanel.col
+      elseif self.buttons.raise:isSelected(mx,my) then
+        --note: changed this to an elseif.  
+        --This means we won't be able to press raise by accident if we dragged too far off the stack, into the raise button
+        --but we also won't be able to input swaps and press raise at the same time, though the network protocol allows touching a panel and raising at the same time
+        --Endaris has said we don't need to be able to swap and raise at the same time anyway though.
+        iraise = true
+      else
+        iraise = false
       end
     else
+      self.touched = false
       iraise = false
       itaunt_pressed = false
       irow_touched = 0
       icol_touched = 0
+    end
+    if not(irow_touched == 0 and icol_touched == 0) then
+      print("touched panel: "..irow_touched..","..icol_touched)
     end
     to_send = 0
     to_send = to_send + ((iraise and 128) or 0)
