@@ -1285,7 +1285,7 @@ function main_net_vs_setup(ip, network_port)
     end
   end
   P1 = nil
-  P2 = {}
+  P2 = nil
   server_queue = ServerQueue()
   gprint(loc("lb_set_connect"), unpack(themes[config.theme].main_menu_screen_pos))
   wait()
