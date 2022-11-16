@@ -1785,7 +1785,7 @@ function Stack.simulate(self)
       
       --touch is ongoing
       if self.touchedPanel and not (self.touchedPanel.row == 0 and self.touchedPanel.col == 0) then
-        --if lingering_touch_cursor isn't set, we we'll set a target for normal drag swapping.
+        --if lingering_touch_cursor isn't set, we'll set a target for normal drag swapping.
         if not self.lingering_touch_cursor or (self.lingering_touch_cursor.row == 0 and self.lingering_touch_cursor.col == 0) then
           self.touch_target_col = self.touchedPanel.col
         else
@@ -1798,7 +1798,7 @@ function Stack.simulate(self)
         print("touch was released!")
         --self.touch_target_col = self.prev_touchedPanel.col
         self.panel_first_touched = {row = 0, col = 0} 
-        --check if we need to set lingering panel
+        --check if we need to set lingering panel because user tapped a panel, didn't move it, and released it.
         if self.swaps_this_touch == 0 and self.prev_touchedPanel.row == self.cur_row and self.prev_touchedPanel.col == self.cur_col then --to do: or we tried to swap and couldn't
           print("lingering_touch_cursor set to "..self.cur_row..","..self.cur_col) 
           self.lingering_touch_cursor = {row = self.cur_row, col = self.cur_col}
@@ -1816,19 +1816,25 @@ function Stack.simulate(self)
         if self.touch_target_col ~= 0 and self.cur_col ~= 0 and self.touch_target_col ~= self.cur_col then
           local cursor_target_delta = self.touch_target_col - self.cur_col
           local swap_successful = false
+          local swap_origin = {row = 0, col = 0}
+          local swap_destination = {row = 0, col = 0}
           if (cursor_target_delta) > 0 then
             --try to swap right
-            swap_successful = self:canSwap(self.cur_row, self.cur_col)
+            swap_origin = {row = self.cur_row, col = self.cur_col}
+            swap_destination = {row = self.cur_row, col = self.cur_col + 1}
+            swap_successful = self:canSwap(swap_origin.row, swap_origin.col)
             if swap_successful then
-              self.do_swap = {self.cur_row, self.cur_col}
-              self.cur_col = self.cur_col + 1
+              self.do_swap = {swap_origin.row, swap_origin.col}
+              self.cur_col = swap_destination.col
             end
           elseif cursor_target_delta < 0 then
             --try to swap left
-            swap_successful = self:canSwap(self.cur_row, self.cur_col-1)
+            swap_origin = {row = self.cur_row, col = self.cur_col}
+            swap_destination = {row = self.cur_row, col = self.cur_col - 1}
+            swap_successful = self:canSwap(swap_destination.row, swap_destination.col)
             if swap_successful then
-              self.do_swap = {self.cur_row, self.cur_col-1}
-              self.cur_col = self.cur_col - 1
+              self.do_swap = {swap_destination.row, swap_destination.col}
+              self.cur_col = swap_destination.col
             end
           end
           if swap_successful then 
@@ -1836,9 +1842,14 @@ function Stack.simulate(self)
             if self.swaps_this_touch >= 2 then --third swap onward is slowed down to prevent excessive or accidental stealths
               self.touch_swap_cooldown_timer = TOUCH_SWAP_COOLDOWN_DEFAULT
             end
-          else  --we failed to swap toward the target, perhaps there are clearing panels in the way or something.
-            print("lingering_touch_cursor was set because a normal swap was unsuccessful")
-            self.lingering_touch_cursor = {row = self.cur_row, col = self.cur_col}
+          else  --we failed to swap toward the target, perhaps there are clearing panels in the way or something. 
+            --Let's set lingering_touch_cursor to the origin of the failed swap
+            --however, don't do this if swap failed because panels attempted to be swapped were both blank (color 0).
+            if self.panels[swap_origin.row][swap_origin.col].color ~= 0 
+              and self.panels[swap_destination.row][swap_destination.col].color ~= 0 then
+              print("lingering_touch_cursor was set because a normal swap was unsuccessful")
+              self.lingering_touch_cursor = {row = self.cur_row, col = self.cur_col}
+            end
           end
         end
       end --of self.touch_swap_cooldown_timer was 0
