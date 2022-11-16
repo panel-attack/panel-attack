@@ -1833,7 +1833,7 @@ function Stack.simulate(self)
           end
           if swap_successful then 
             self.swaps_this_touch = self.swaps_this_touch + 1
-            if self.swaps_this_touch > 2 then 
+            if self.swaps_this_touch >= 2 then --third swap onward is slowed down to prevent excessive or accidental stealths
               self.touch_swap_cooldown_timer = TOUCH_SWAP_COOLDOWN_DEFAULT
             end
           else  --we failed to swap toward the target, perhaps there are clearing panels in the way or something.
