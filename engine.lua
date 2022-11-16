@@ -1755,7 +1755,7 @@ function Stack.simulate(self)
               self.do_swap = {self.touchedPanel.row,self.touchedPanel.col}
             end
           else
-             print("linger_swap_delta should have been -1 or 1, and was"..linger_swap_delta..".  Please report this to Jon")
+             print("linger_swap_delta was not -1 or 1, it was "..linger_swap_delta..".  not attempting a swap")
           end
           if linger_swap_successful  then
             self.lingering_touch_cursor = {row = 0, col = 0} --(else leave it as it was, so we can try to tap adjacent again later)
@@ -1785,19 +1785,30 @@ function Stack.simulate(self)
       
       --touch is ongoing
       if self.touchedPanel and not (self.touchedPanel.row == 0 and self.touchedPanel.col == 0) then
-      self.touch_target_col = self.touchedPanel.col
+        --if lingering_touch_cursor isn't set, we we'll set a target for normal drag swapping.
+        if not self.lingering_touch_cursor or (self.lingering_touch_cursor.row == 0 and self.lingering_touch_cursor.col == 0) then
+          self.touch_target_col = self.touchedPanel.col
+        else
+          self.touch_target_col = 0
+        end
       end
 
       --touch was released
       if (self.prev_touchedPanel and not (self.prev_touchedPanel.row == 0 and self.prev_touchedPanel.col == 0)) and (not self.touchedPanel or (self.touchedPanel.row == 0 and self.touchedPanel.col == 0)) then
         print("touch was released!")
-        self.touch_target_col = self.prev_touchedPanel.col
+        --self.touch_target_col = self.prev_touchedPanel.col
         self.panel_first_touched = {row = 0, col = 0} 
         --check if we need to set lingering panel
         if self.swaps_this_touch == 0 and self.prev_touchedPanel.row == self.cur_row and self.prev_touchedPanel.col == self.cur_col then --to do: or we tried to swap and couldn't
           print("lingering_touch_cursor set to "..self.cur_row..","..self.cur_col) 
           self.lingering_touch_cursor = {row = self.cur_row, col = self.cur_col}
         end
+        --if no lingering_touch_cursor, remove cursor from the display.
+        if not self.lingering_touch_cursor or (self.lingering_touch_cursor.row == 0 and self.lingering_touch_cursor.col == 0) then
+          self.cur_row = 0
+          self.cur_col = 0
+        end
+        self.swaps_this_touch = 0
       end
 
       --try to swap toward self.touch_target_col
@@ -1820,17 +1831,18 @@ function Stack.simulate(self)
               self.cur_col = self.cur_col - 1
             end
           end
-        end
-        if swap_successful then 
-          self.swaps_this_touch = self.swaps_this_touch + 1
-          if self.swaps_this_touch > 2 then 
-            self.touch_swap_cooldown_timer = consts.TOUCH_SWAP_COOLDOWN_DEFAULT
+          if swap_successful then 
+            self.swaps_this_touch = self.swaps_this_touch + 1
+            if self.swaps_this_touch > 2 then 
+              self.touch_swap_cooldown_timer = TOUCH_SWAP_COOLDOWN_DEFAULT
+            end
+          else  --we failed to swap toward the target, perhaps there are clearing panels in the way or something.
+            print("lingering_touch_cursor was set because a normal swap was unsuccessful")
+            self.lingering_touch_cursor = {row = self.cur_row, col = self.cur_col}
           end
-        else  --we failed to swap toward the target, perhaps there are clearing panels in the way or something.
-          self.lingering_touch_cursor = {row = self.cur_row, col = self.cur_col}
         end
       end --of self.touch_swap_cooldown_timer was 0
-    else
+    else --input method is controller
       if (self.swap_1 or self.swap_2) and not swapped_this_frame then
         local do_swap = self:canSwap(self.cur_row, self.cur_col)
 
@@ -2912,14 +2924,16 @@ end
 function Stack.new_row(self)
   local panels = self.panels
   -- move cursor up
-  self.cur_row = util.bound(1, self.cur_row + 1, self.top_cur_row)
+  if (self.inputMethod == "touch" and self.cur_row ~= 0) or not self.inputMethod == "touch" then
+    self.cur_row = util.bound(1, self.cur_row + 1, self.top_cur_row)
+  end
   if self.panel_first_touched and self.panel_first_touched.row 
     and self.panel_first_touched.row ~= 0 then
-    self.panel_first_touched.row = self.panel_first_touched.row + 1
+    self.panel_first_touched.row = util.bound(1,self.panel_first_touched.row + 1, self.top_cur_row)
   end
   if self.lingering_touch_cursor and self.lingering_touch_cursor.row 
     and self.lingering_touch_cursor.row ~= 0 then
-    self.lingering_touch_cursor.row = self.lingering_touch_cursor.row + 1
+    self.lingering_touch_cursor.row = util.bound(1,self.lingering_touch_cursor.row + 1, self.top_cur_row)
   end
   -- move panels up
   for row = #panels + 1, 1, -1 do
