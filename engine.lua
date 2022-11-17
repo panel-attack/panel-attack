@@ -1717,150 +1717,150 @@ function Stack.simulate(self)
 
     -- SWAPPING (this also moves the cursor, if touch input)
     if self.inputMethod == "touch" then
-      local cursor_target_delta = 0 --how many rows are we from the target (- means we should swap left, + means we should swap right)
-      
-      if self.touch_target_col ~= 0 and self.cur_col ~= 0 then
-        cursor_target_delta = self.touch_target_col - self.cur_col
-      end
-      if self.touch_swap_cooldown_timer > 0 then
-         self.touch_swap_cooldown_timer = self.touch_swap_cooldown_timer - 1
-      end
-
-      --touch was initiated
-      if (not self.prev_touchedPanel or (self.prev_touchedPanel.row == 0 and self.prev_touchedPanel.col == 0)) and self.touchedPanel and not (self.touchedPanel.row == 0 and self.touchedPanel.col == 0) then
-        print("touch was initiated")
-        self.panel_first_touched = deepcpy(self.touchedPanel)
-        self.touch_target_col = self.touchedPanel.col
-        self.swaps_this_touch = 0
-        self.touch_swap_cooldown_timer = 0
+        local cursor_target_delta = 0 --how many rows are we from the target (- means we should swap left, + means we should swap right)
         
-        -- check for attempt to swap with self.lingering_touch_cursor
-        -- ie we touched a panel horizontally adjacent to self.lingering_touch_cursor
-        local linger_swap_attempted = false
-        local linger_swap_successful = false
-        if self.lingering_touch_cursor.col ~= 0 and self.lingering_touch_cursor.row == self.touchedPanel.row then
-          local linger_swap_delta = self.touchedPanel.col - self.lingering_touch_cursor.col
-          if linger_swap_delta == 1  then
-           --try to swap right
-           linger_swap_attempted = true
-           linger_swap_successful = self:canSwap(self.lingering_touch_cursor.row, self.lingering_touch_cursor.col)
-            if linger_swap_successful then
-              self.do_swap = {self.lingering_touch_cursor.row, self.lingering_touch_cursor.col}
-            end
-          elseif linger_swap_delta == -1 then
-            -- try to swap left
-            linger_swap_attempted = true
-            linger_swap_successful = self:canSwap(self.touchedPanel.row, self.touchedPanel.col)
-            if linger_swap_successful then
-              self.do_swap = {self.touchedPanel.row,self.touchedPanel.col}
-            end
-          else
-             print("linger_swap_delta was not -1 or 1, it was "..linger_swap_delta..".  not attempting a swap")
-          end
-          if linger_swap_successful  then
-            self.lingering_touch_cursor = {row = 0, col = 0} --(else leave it as it was, so we can try to tap adjacent again later)
-            self.cur_col = self.cur_col + linger_swap_delta
-            self.swaps_this_touch = self.swaps_this_touch + 1
-          end
+        if self.touch_target_col ~= 0 and self.cur_col ~= 0 then
+          cursor_target_delta = self.touch_target_col - self.cur_col
         end
-        if not linger_swap_attempted then
-          --we touched somewhere else on the stack
-          --put the cursor at touchedPanel
-          self.cur_row = self.touchedPanel.row
-          self.cur_col = self.touchedPanel.col
-          --remove linger panel selection
-        self.lingering_touch_cursor = {row = 0, col = 0}
+        if self.touch_swap_cooldown_timer > 0 then
+           self.touch_swap_cooldown_timer = self.touch_swap_cooldown_timer - 1
         end
-      end
-      
-      --print whether linger swap was attempted or successful
-      if linger_swap_attempted then
-        print("linger swap was attempted!")
-      end
-      if linger_swap_successful then
-        print("linger swap was successful!")
-      end
-      
-      
-      
-      --touch is ongoing
-      if self.touchedPanel and not (self.touchedPanel.row == 0 and self.touchedPanel.col == 0) then
-        --if lingering_touch_cursor isn't set, we'll set a target for normal drag swapping.
-        if not self.lingering_touch_cursor or (self.lingering_touch_cursor.row == 0 and self.lingering_touch_cursor.col == 0) then
+
+        --touch was initiated
+        if (not self.prev_touchedPanel or (self.prev_touchedPanel.row == 0 and self.prev_touchedPanel.col == 0)) and self.touchedPanel and not (self.touchedPanel.row == 0 and self.touchedPanel.col == 0) then
+          print("touch was initiated")
+          self.panel_first_touched = deepcpy(self.touchedPanel)
           self.touch_target_col = self.touchedPanel.col
-        else -- lingering_touch_cursor is set
-          --don't drag the panel at lingering_touch_cursor
-          self.touch_target_col = 0
-          --if we've dragged our touch off the lingering cursor location, and back again, let's make the panel draggable once more
-          if self.prev_touchedPanel.col ~= self.lingering_touch_cursor.col and self.touchedPanel.col == self.lingering_touch_cursor.col then
-            self.lingering_touch_cursor = {row = 0, col = 0}
+          self.swaps_this_touch = 0
+          self.touch_swap_cooldown_timer = 0
+          
+          -- check for attempt to swap with self.lingering_touch_cursor
+          -- ie we touched a panel horizontally adjacent to self.lingering_touch_cursor
+          local linger_swap_attempted = false
+          local linger_swap_successful = false
+          if self.lingering_touch_cursor.col ~= 0 and self.lingering_touch_cursor.row == self.touchedPanel.row then
+            local linger_swap_delta = self.touchedPanel.col - self.lingering_touch_cursor.col
+            if linger_swap_delta == 1  then
+             --try to swap right
+             linger_swap_attempted = true
+             linger_swap_successful = self:canSwap(self.lingering_touch_cursor.row, self.lingering_touch_cursor.col)
+              if linger_swap_successful then
+                self.do_swap = {self.lingering_touch_cursor.row, self.lingering_touch_cursor.col}
+              end
+            elseif linger_swap_delta == -1 then
+              -- try to swap left
+              linger_swap_attempted = true
+              linger_swap_successful = self:canSwap(self.touchedPanel.row, self.touchedPanel.col)
+              if linger_swap_successful then
+                self.do_swap = {self.touchedPanel.row,self.touchedPanel.col}
+              end
+            else
+               print("linger_swap_delta was not -1 or 1, it was "..linger_swap_delta..".  not attempting a swap")
+            end
+            if linger_swap_successful  then
+              self.lingering_touch_cursor = {row = 0, col = 0} --(else leave it as it was, so we can try to tap adjacent again later)
+              self.cur_col = self.cur_col + linger_swap_delta
+              self.swaps_this_touch = self.swaps_this_touch + 1
+            end
+          end
+          if not linger_swap_attempted then
+            --we touched somewhere else on the stack
+            --put the cursor at touchedPanel
+            self.cur_row = self.touchedPanel.row
+            self.cur_col = self.touchedPanel.col
+            --remove linger panel selection
+          self.lingering_touch_cursor = {row = 0, col = 0}
           end
         end
-      end
+        
+        --print whether linger swap was attempted or successful
+        if linger_swap_attempted then
+          print("linger swap was attempted!")
+        end
+        if linger_swap_successful then
+          print("linger swap was successful!")
+        end
+        
+        
+        
+        --touch is ongoing
+        if self.touchedPanel and not (self.touchedPanel.row == 0 and self.touchedPanel.col == 0) then
+          --if lingering_touch_cursor isn't set, we'll set a target for normal drag swapping.
+          if not self.lingering_touch_cursor or (self.lingering_touch_cursor.row == 0 and self.lingering_touch_cursor.col == 0) then
+            self.touch_target_col = self.touchedPanel.col
+          else -- lingering_touch_cursor is set
+            --don't drag the panel at lingering_touch_cursor
+            self.touch_target_col = 0
+            --if we've dragged our touch off the lingering cursor location, and back again, let's make the panel draggable once more
+            if self.prev_touchedPanel.col ~= self.lingering_touch_cursor.col and self.touchedPanel.col == self.lingering_touch_cursor.col then
+              self.lingering_touch_cursor = {row = 0, col = 0}
+            end
+          end
+        end
 
-      --touch was released
-      if (self.prev_touchedPanel and not (self.prev_touchedPanel.row == 0 and self.prev_touchedPanel.col == 0)) and (not self.touchedPanel or (self.touchedPanel.row == 0 and self.touchedPanel.col == 0)) then
-        print("touch was released!")
-        self.panel_first_touched = {row = 0, col = 0} 
-        -- --check if we need to set lingering panel because user tapped a panel, didn't move it, and released it.
-        -- if self.swaps_this_touch == 0 and self.prev_touchedPanel.row == self.cur_row and self.prev_touchedPanel.col == self.cur_col then --to do: or we tried to swap and couldn't
-          -- print("lingering_touch_cursor set to "..self.cur_row..","..self.cur_col) 
-          -- self.lingering_touch_cursor = {row = self.cur_row, col = self.cur_col}
-        -- end
-        --if no lingering_touch_cursor, remove cursor from the display.
-        -- and the cursor has reached self.touch_target_col
-        if not self.lingering_touch_cursor or (self.lingering_touch_cursor.row == 0 and self.lingering_touch_cursor.col == 0) and self.cur_col == self.touch_target_col then
-          self.cur_row = 0
-          self.cur_col = 0
+        --touch was released
+        if (self.prev_touchedPanel and not (self.prev_touchedPanel.row == 0 and self.prev_touchedPanel.col == 0)) and (not self.touchedPanel or (self.touchedPanel.row == 0 and self.touchedPanel.col == 0)) then
+          print("touch was released!")
+          self.panel_first_touched = {row = 0, col = 0} 
+          -- --check if we need to set lingering panel because user tapped a panel, didn't move it, and released it.
+          -- if self.swaps_this_touch == 0 and self.prev_touchedPanel.row == self.cur_row and self.prev_touchedPanel.col == self.cur_col then --to do: or we tried to swap and couldn't
+            -- print("lingering_touch_cursor set to "..self.cur_row..","..self.cur_col) 
+            -- self.lingering_touch_cursor = {row = self.cur_row, col = self.cur_col}
+          -- end
+          --if no lingering_touch_cursor, remove cursor from the display.
+          -- and the cursor has reached self.touch_target_col
+          if not self.lingering_touch_cursor or (self.lingering_touch_cursor.row == 0 and self.lingering_touch_cursor.col == 0) and self.cur_col == self.touch_target_col then
+            self.cur_row = 0
+            self.cur_col = 0
+          end
+          --self.swaps_this_touch = 0
         end
-        --self.swaps_this_touch = 0
-      end
 
-      --try to swap toward self.touch_target_col
-      if self.touch_swap_cooldown_timer == 0 and not linger_swap_attempted then
-        if self.touch_target_col ~= 0 and self.cur_col ~= 0 and self.touch_target_col ~= self.cur_col then
-          local cursor_target_delta = self.touch_target_col - self.cur_col
-          local swap_successful = false
-          local swap_origin = {row = 0, col = 0}
-          local swap_destination = {row = 0, col = 0}
-          if (cursor_target_delta) > 0 then
-            --try to swap right
-            swap_origin = {row = self.cur_row, col = self.cur_col}
-            swap_destination = {row = self.cur_row, col = self.cur_col + 1}
-            swap_successful = self:canSwap(swap_origin.row, swap_origin.col)
-            if swap_successful then
-              self.do_swap = {swap_origin.row, swap_origin.col}
-              self.cur_col = swap_destination.col
+        --try to swap toward self.touch_target_col
+        if self.touch_swap_cooldown_timer == 0 and not linger_swap_attempted then
+          if self.touch_target_col ~= 0 and self.cur_col ~= 0 and self.touch_target_col ~= self.cur_col then
+            local cursor_target_delta = self.touch_target_col - self.cur_col
+            local swap_successful = false
+            local swap_origin = {row = 0, col = 0}
+            local swap_destination = {row = 0, col = 0}
+            if (cursor_target_delta) > 0 then
+              --try to swap right
+              swap_origin = {row = self.cur_row, col = self.cur_col}
+              swap_destination = {row = self.cur_row, col = self.cur_col + 1}
+              swap_successful = self:canSwap(swap_origin.row, swap_origin.col)
+              if swap_successful then
+                self.do_swap = {swap_origin.row, swap_origin.col}
+                self.cur_col = swap_destination.col
+              end
+            elseif cursor_target_delta < 0 then
+              --try to swap left
+              swap_origin = {row = self.cur_row, col = self.cur_col}
+              swap_destination = {row = self.cur_row, col = self.cur_col - 1}
+              swap_successful = self:canSwap(swap_destination.row, swap_destination.col)
+              if swap_successful then
+                self.do_swap = {swap_destination.row, swap_destination.col}
+                self.cur_col = swap_destination.col
+              end
             end
-          elseif cursor_target_delta < 0 then
-            --try to swap left
-            swap_origin = {row = self.cur_row, col = self.cur_col}
-            swap_destination = {row = self.cur_row, col = self.cur_col - 1}
-            swap_successful = self:canSwap(swap_destination.row, swap_destination.col)
-            if swap_successful then
-              self.do_swap = {swap_destination.row, swap_destination.col}
-              self.cur_col = swap_destination.col
+            if swap_successful then 
+              self.swaps_this_touch = self.swaps_this_touch + 1
+              if self.swaps_this_touch >= 2 then --third swap onward is slowed down to prevent excessive or accidental stealths
+                self.touch_swap_cooldown_timer = TOUCH_SWAP_COOLDOWN_DEFAULT
+              end
+            else  --we failed to swap toward the target, perhaps there are clearing panels in the way or something. 
+              --Let's set lingering_touch_cursor to the origin of the failed swap
+              --however, don't do this if swap failed because panels attempted to be swapped were both blank (color 0).
+              if self.panels[swap_origin.row][swap_origin.col].color ~= 0 
+                and self.panels[swap_destination.row][swap_destination.col].color ~= 0 then
+                print("lingering_touch_cursor was set because a normal swap was unsuccessful")
+                self.lingering_touch_cursor = {row = self.cur_row, col = self.cur_col}
+              else --we tried to swap through empty space.  Let's put the cursor on swap_destination.
+                self.cur_row = swap_destination.row
+                self.cur_col = swap_destination.col
+              end
             end
           end
-          if swap_successful then 
-            self.swaps_this_touch = self.swaps_this_touch + 1
-            if self.swaps_this_touch >= 2 then --third swap onward is slowed down to prevent excessive or accidental stealths
-              self.touch_swap_cooldown_timer = TOUCH_SWAP_COOLDOWN_DEFAULT
-            end
-          else  --we failed to swap toward the target, perhaps there are clearing panels in the way or something. 
-            --Let's set lingering_touch_cursor to the origin of the failed swap
-            --however, don't do this if swap failed because panels attempted to be swapped were both blank (color 0).
-            if self.panels[swap_origin.row][swap_origin.col].color ~= 0 
-              and self.panels[swap_destination.row][swap_destination.col].color ~= 0 then
-              print("lingering_touch_cursor was set because a normal swap was unsuccessful")
-              self.lingering_touch_cursor = {row = self.cur_row, col = self.cur_col}
-            else --we tried to swap through empty space.  Let's put the cursor on swap_destination.
-              self.cur_row = swap_destination.row
-              self.cur_col = swap_destination.col
-            end
-          end
-        end
-      end --of self.touch_swap_cooldown_timer was 0
+        end --of self.touch_swap_cooldown_timer was 0
     else --input method is controller
       if (self.swap_1 or self.swap_2) and not swapped_this_frame then
         local do_swap = self:canSwap(self.cur_row, self.cur_col)
