@@ -103,7 +103,7 @@ Stack =
     s.swaps_this_touch = 0  -- number of swaps that have been initiated since the last time s.panel_first_touched was 0,0
     -- TOUCH_SWAP_COOLDOWN_DEFAULT -- declared in consts.lua. probably set to 2 
     s.touch_swap_cooldown_timer = 0 -- if this is zero, a swap can happen.  set to consts.TOUCH_SWAP_COOLDOWN_DEFAULT on each swap after the first. decrement by 1 each frame.
-
+    s.touched = false -- whether the stack (panels) are touched.  Still true if touch is dragged off the stack, but not released yet.
     
 
     s.panel_buffer = ""
@@ -467,11 +467,18 @@ function Stack.rollbackCopy(self, source, other)
   other.game_over_clock = source.game_over_clock
   other.gfx_scale = source.gfx_scale
   other.inputMethod = source.inputMethod
-  other.touchedPanel = deepcpy(source.touchedPanel)
-  other.prev_touchedPanel = deepcpy(source.prev_touchedPanel)
-  other.panel_first_touched = deepcpy(source.panel_first_touched)
-  other.buttons = deepcpy(source.buttons)
-  other.raise_touched = source.raise_touched
+  if source.inputMethod == "touch" then
+    other.touchedPanel = deepcpy(source.touchedPanel)
+    other.prev_touchedPanel = deepcpy(source.prev_touchedPanel)
+    other.panel_first_touched = deepcpy(source.panel_first_touched)
+    other.touch_target_col = source.touch_target_col
+    other.lingering_touch_cursor = deepcpy(source.lingering_touch_cursor)
+    other.swaps_this_touch = source.swaps_this_touch
+    other.touch_swap_cooldown_timer = source.touch_swap_cooldown_timer
+    other.touched = source.touched
+    --other.buttons = deepcpy(source.buttons)
+    other.raise_touched = source.raise_touched
+  end
 
   return other
 end
