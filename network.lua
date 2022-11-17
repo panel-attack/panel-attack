@@ -362,8 +362,8 @@ function Stack.send_controls(self)
     if love.mouse.isDown(1) then
       --note: a stack is still "touched" if we touched the stack, and have dragged the mouse or touch off the stack, until we lift the touch
       --check whether the mouse is over this stack
-      if mx >= self.pos_x * self.gfx_scale and mx <= (self.pos_x + self.width * 16) * self.gfx_scale and
-      my >= self.pos_y * self.gfx_scale and my <= (self.pos_y + self.height * 16) * self.gfx_scale then
+      if mx >= self.pos_x * GFX_SCALE and mx <= (self.pos_x + self.width * 16) * self.gfx_scale and
+      my >= self.pos_y * GFX_SCALE and my <= (self.pos_y + self.height * 16) * self.gfx_scale then
         self.touched = true
         --px and py represent the origin of the panel we are currently checking if it's touched.
         local px, py
