@@ -412,9 +412,9 @@ function Stack.send_controls(self)
       irow_touched = 0
       icol_touched = 0
     end
-    if not(irow_touched == 0 and icol_touched == 0) then
-      print("touched panel: "..irow_touched..","..icol_touched)
-    end
+    -- if not(irow_touched == 0 and icol_touched == 0) then
+      -- print("touched panel: "..irow_touched..","..icol_touched)
+    -- end
     to_send = 0
     to_send = to_send + ((iraise and 128) or 0)
     if itaunt_pressed then 

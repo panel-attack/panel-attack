@@ -1854,6 +1854,9 @@ function Stack.simulate(self)
               and self.panels[swap_destination.row][swap_destination.col].color ~= 0 then
               print("lingering_touch_cursor was set because a normal swap was unsuccessful")
               self.lingering_touch_cursor = {row = self.cur_row, col = self.cur_col}
+            else --we tried to swap through empty space.  Let's put the cursor on swap_destination.
+              self.cur_row = swap_destination.row
+              self.cur_col = swap_destination.col
             end
           end
         end
