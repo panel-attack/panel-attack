@@ -256,13 +256,13 @@ function Theme.graphics_init(self)
     for position_num = 1, 2 do
       local cur_width, cur_height = self.images.IMG_char_sel_cursors[player_num][position_num]:getDimensions()
       local half_width, half_height = cur_width / 2, cur_height / 2 -- TODO: is these unused vars an error ??? -Endu
-      self.images.IMG_char_sel_cursor_halves["left"][player_num][position_num] = love.graphics.newQuad(0, 0, half_width, cur_height, cur_width, cur_height)
+      self.images.IMG_char_sel_cursor_halves["left"][player_num][position_num] = GraphicsUtil:newRecycledQuad(0, 0, half_width, cur_height, cur_width, cur_height)
     end
     self.images.IMG_char_sel_cursor_halves.right[player_num] = {}
     for position_num = 1, 2 do
       local cur_width, cur_height = self.images.IMG_char_sel_cursors[player_num][position_num]:getDimensions()
       local half_width, half_height = cur_width / 2, cur_height / 2
-      self.images.IMG_char_sel_cursor_halves.right[player_num][position_num] = love.graphics.newQuad(half_width, 0, half_width, cur_height, cur_width, cur_height)
+      self.images.IMG_char_sel_cursor_halves.right[player_num][position_num] = GraphicsUtil:newRecycledQuad(half_width, 0, half_width, cur_height, cur_width, cur_height)
     end
   end
 
