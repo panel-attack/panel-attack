@@ -175,7 +175,7 @@ do
       --{loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
       --{loc("mm_2_vs_online", ""), main_net_vs_setup, {"betaserver.panelattack.com", 59569}},
-      --{loc("mm_2_vs_online", "devserver.panelattack.com"), main_net_vs_setup, {"devserver.panelattack.com", 59568}},
+      {loc("mm_2_vs_online", "devserver.panelattack.com"), main_net_vs_setup, {"devserver.panelattack.com", 59568}},
       --{loc("mm_2_vs_online", "(USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)"), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "This test build is for offline-use only"), main_select_mode},
       --{loc("mm_2_vs_online", "domi1819.xyz"), main_net_vs_setup, {"domi1819.xyz"}},
