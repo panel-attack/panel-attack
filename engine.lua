@@ -1788,8 +1788,13 @@ function Stack.simulate(self)
         --if lingering_touch_cursor isn't set, we'll set a target for normal drag swapping.
         if not self.lingering_touch_cursor or (self.lingering_touch_cursor.row == 0 and self.lingering_touch_cursor.col == 0) then
           self.touch_target_col = self.touchedPanel.col
-        else
+        else -- lingering_touch_cursor is set
+          --don't drag the panel at lingering_touch_cursor
           self.touch_target_col = 0
+          --if we've dragged our touch off the lingering cursor location, and back again, let's make the panel draggable once more
+          if self.prev_touchedPanel.col ~= self.lingering_touch_cursor.col and self.touchedPanel.col == self.lingering_touch_cursor.col then
+            self.lingering_touch_cursor = {row = 0, col = 0}
+          end
         end
       end
 
@@ -1797,11 +1802,11 @@ function Stack.simulate(self)
       if (self.prev_touchedPanel and not (self.prev_touchedPanel.row == 0 and self.prev_touchedPanel.col == 0)) and (not self.touchedPanel or (self.touchedPanel.row == 0 and self.touchedPanel.col == 0)) then
         print("touch was released!")
         self.panel_first_touched = {row = 0, col = 0} 
-        --check if we need to set lingering panel because user tapped a panel, didn't move it, and released it.
-        if self.swaps_this_touch == 0 and self.prev_touchedPanel.row == self.cur_row and self.prev_touchedPanel.col == self.cur_col then --to do: or we tried to swap and couldn't
-          print("lingering_touch_cursor set to "..self.cur_row..","..self.cur_col) 
-          self.lingering_touch_cursor = {row = self.cur_row, col = self.cur_col}
-        end
+        -- --check if we need to set lingering panel because user tapped a panel, didn't move it, and released it.
+        -- if self.swaps_this_touch == 0 and self.prev_touchedPanel.row == self.cur_row and self.prev_touchedPanel.col == self.cur_col then --to do: or we tried to swap and couldn't
+          -- print("lingering_touch_cursor set to "..self.cur_row..","..self.cur_col) 
+          -- self.lingering_touch_cursor = {row = self.cur_row, col = self.cur_col}
+        -- end
         --if no lingering_touch_cursor, remove cursor from the display.
         -- and the cursor has reached self.touch_target_col
         if not self.lingering_touch_cursor or (self.lingering_touch_cursor.row == 0 and self.lingering_touch_cursor.col == 0) and self.cur_col == self.touch_target_col then
