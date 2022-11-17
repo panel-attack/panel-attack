@@ -1717,6 +1717,7 @@ function Stack.simulate(self)
 
     -- SWAPPING (this also moves the cursor, if touch input)
     if self.inputMethod == "touch" then
+      if not self.cursor_lock then
         local cursor_target_delta = 0 --how many rows are we from the target (- means we should swap left, + means we should swap right)
         
         if self.touch_target_col ~= 0 and self.cur_col ~= 0 then
@@ -1861,6 +1862,7 @@ function Stack.simulate(self)
             end
           end
         end --of self.touch_swap_cooldown_timer was 0
+      end
     else --input method is controller
       if (self.swap_1 or self.swap_2) and not swapped_this_frame then
         local do_swap = self:canSwap(self.cur_row, self.cur_col)
