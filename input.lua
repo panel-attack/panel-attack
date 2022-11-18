@@ -232,7 +232,6 @@ function love.keypressed(key, scancode, rep)
       love.graphics.captureScreenshot("screenshots/" .. filename)
       return true
     end
-    
   end
 
   local function handleCopy()
