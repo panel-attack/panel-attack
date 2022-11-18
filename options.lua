@@ -259,6 +259,13 @@ local function graphics_menu()
     graphicsMenu:set_button_setting(7, config.renderAttacks and loc("op_on") or loc("op_off"))
   end
 
+  local function update_cardTransparency(noToggle)
+    if not noToggle then
+      config.cardTransparency = not config.cardTransparency
+    end
+    graphicsMenu:set_button_setting(8, config.cardTransparency and loc("op_on") or loc("op_off"))
+  end
+
   local function nextMenu()
     graphicsMenu:selectNextIndex()
   end
@@ -279,6 +286,7 @@ local function graphics_menu()
   graphicsMenu:add_button(loc("op_popfx"), update_popfx, goEscape, update_popfx, update_popfx)
   graphicsMenu:add_button(loc("op_renderTelegraph"), update_renderTelegraph, goEscape, update_renderTelegraph, update_renderTelegraph)
   graphicsMenu:add_button(loc("op_renderAttacks"), update_renderAttacks, goEscape, update_renderAttacks, update_renderAttacks)
+  graphicsMenu:add_button(loc("op_cardTransparency"), update_cardTransparency, goEscape, update_cardTransparency, update_cardTransparency)
   graphicsMenu:add_button(loc("back"), exitSettings, exitSettings)
   update_theme()
   updateScaleType(true)
@@ -287,6 +295,7 @@ local function graphics_menu()
   update_popfx(true)
   update_renderTelegraph(true)
   update_renderAttacks(true)
+  update_cardTransparency(true)
 
   while true do
     graphicsMenu:draw()

@@ -318,6 +318,7 @@ op_portrait_darkness,Options: darkness of the portraits in game,Portrait Darknes
 op_popfx,Options: Whether pop effects should show,Pop Effects,Effets Pop,Efeitos de Explosão,パネル消しエフェクト,efectos pop,Popeffekte,Effetti pop
 op_renderTelegraph,Options: Whether the telegraph above the stack should show,Show Telegraph,Montrer le télégraphe,Mostrar telégrafo,テレグラフを表示,Mostrar telégrafo,Telegraph zeigen,Mostra telegrafo
 op_renderAttacks,Options: Whether the telegraph attack animations should show,Show Attacks,Montrer des attaques,Mostrar ataques,攻撃を示す,Mostrar ataques,Angriffe anzeigen,Mostra attacchi
+op_cardTransparency,Options: Whether the combo / chain cards should become transparent,Card Transparency,Transparence des cartes,Transparência do cartão,カードの透明性,Transparencia de la tarjeta,Kartentransparenz,Trasparenza della carta
 op_cardfx_scale,Options: how far away the popfx particles converge onto your combo/chain before it pops,Attack Particle Distance,Distance des particules d'attaque,Alcance de Partículas de Ataque,攻撃パーティクル発生距離,Distancia de partículas de ataque,Skalierung der Popeffekte bei Kombos und Ketten,Distanza delle particelle di attacco
 opponent_level,,Opponent's level,Niveau adverse,Nível do oponente,相手のレベル,Nivel del oponente,Level des Gegners,Livello dell'avversario
 pl_pause_help,,Press Start again to resume,Appuyer sur Start pour continuer,Pressione Começar novamente para continuar,STARTで再開,"Presiona ""Start"" para resumir","Drücke Start um fortzufahren","Premi ""Start"" di nuovo per riprendere"

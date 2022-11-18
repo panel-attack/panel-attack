@@ -53,6 +53,7 @@ config = {
     cardfx_scale                  = 100,
     renderTelegraph               = true,
     renderAttacks                 = true,
+    cardTransparency              = true,
     defaultPanelsCopied           = false,
   
     -- True if we immediately want to maximize the screen on startup
@@ -199,6 +200,9 @@ config = {
         end
         if type(read_data.renderAttacks) == "boolean" then
           configTable.renderAttacks = read_data.renderAttacks
+        end
+        if type(read_data.cardTransparency) == "boolean" then
+          configTable.cardTransparency = read_data.cardTransparency
         end
         if type(read_data.defaultPanelsCopied) == "boolean" then
           configTable.defaultPanelsCopied = read_data.defaultPanelsCopied
