@@ -1808,13 +1808,6 @@ function Stack.simulate(self)
                 -- self.lingering_touch_cursor = {row = 0, col = 0}
               -- end
             end
-            --if panel at cur_row, cur_col gets certain flags, deselect it, and end the touch
-            local panel = self.panels[self.cur_row][self.cur_col]
-            if panel:exclude_hover() or panel.state == "matched" then
-              self.cur_row = 0
-              self.cur_col = 0
-              self.force_touch_release = true
-            end
           end
         end
 
@@ -1839,7 +1832,18 @@ function Stack.simulate(self)
 
         --try to swap toward self.touch_target_col
         if self.touch_swap_cooldown_timer == 0 and not linger_swap_attempted then
-          if self.touch_target_col ~= 0 and self.cur_col ~= 0 and self.touch_target_col ~= self.cur_col then
+          --if panel at cur_row, cur_col gets certain flags, deselect it, and end the touch
+          if (self.cur_row ~= 0 and self.cur_col ~= 0) then
+            local panel = self.panels[self.cur_row][self.cur_col]
+            if panel:exclude_hover() or panel.state == "matched" then
+              self.cur_row = 0
+              self.cur_col = 0
+              self.lingering_touch_cursor = {row = 0, col = 0}
+              self.touch_target_col = 0
+              self.force_touch_release = true
+            end
+          end
+          if not self.force_touch_release and self.touch_target_col ~= 0 and self.cur_col ~= 0 and self.touch_target_col ~= self.cur_col then
             local cursor_target_delta = self.touch_target_col - self.cur_col
             local swap_successful = false
             local swap_origin = {row = 0, col = 0}
