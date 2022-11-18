@@ -21,14 +21,12 @@ function BattleRoom.updateWinCounts(self, winCounts)
   self.playerWinCounts = winCounts
 end
 
-function BattleRoom:lossCountForPlayerNumber(playerNumber)
-  local totalLosses = 0
-  for currentPlayerNumber, winCount in ipairs(self.playerWinCounts) do
-    if playerNumber ~= currentPlayerNumber then
-      totalLosses = totalLosses + winCount
-    end
+function BattleRoom:totalGames()
+  local totalGames = 0
+  for _, winCount in ipairs(self.playerWinCounts) do
+    totalGames = totalGames + winCount
   end
-  return totalLosses
+  return totalGames
 end
 
 -- Returns the player with more win count.

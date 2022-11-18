@@ -89,7 +89,7 @@ end
 -- Returns a string with the players rating, win rate, and expected rating
 function select_screen_graphics.get_player_state_str(self, player_number, includeWinRatio, rating_difference, expected_win_ratio)
   local win_count = GAME.battleRoom.playerWinCounts[player_number]
-  local op_win_count = GAME.battleRoom:lossCountForPlayerNumber(player_number)
+  local totalGames = GAME.battleRoom:totalGames()
 
   local state = ""
   if current_server_supports_ranking then
@@ -105,11 +105,11 @@ function select_screen_graphics.get_player_state_str(self, player_number, includ
       state = state .. "\n"
     end
     state = state .. loc("ss_wins") .. " " .. win_count
-    if (current_server_supports_ranking and expected_win_ratio) or win_count + op_win_count > 0 then
+    if (current_server_supports_ranking and expected_win_ratio) or totalGames > 0 then
       state = state .. "\n" .. loc("ss_winrate") .. "\n"
       local need_line_return = false
-      if win_count + op_win_count > 0 then
-        state = state .. "    " .. loc("ss_current_rating") .. " " .. (100 * round(win_count / (op_win_count + win_count), 2)) .. "%"
+      if totalGames > 0 then
+        state = state .. "    " .. loc("ss_current_rating") .. " " .. (100 * round(win_count / (totalGames), 2)) .. "%"
         need_line_return = true
       end
       if current_server_supports_ranking and expected_win_ratio then
