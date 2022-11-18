@@ -2,7 +2,7 @@ local tableUtils = require("tableUtils")
 
 --- @module consts
 local consts = {
-  VERSION = "048",
+  VERSION = "049",
   DEFAULT_THEME_DIR = "Panel Attack",
   RANDOM_CHARACTER_SPECIAL_VALUE = "__RandomCharacter",
   RANDOM_STAGE_SPECIAL_VALUE = "__RandomStage",
@@ -17,7 +17,7 @@ local consts = {
 -- TODO: Move all values below to the above table
 
 -- The values in this file are constants (except in this file perhaps) and are expected never to change during the game, not to be confused with globals!
-VERSION = "048"
+VERSION = "049"
 
 global_background_color = { 0.0, 0.0, 0.0 }
 
