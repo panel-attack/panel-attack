@@ -85,8 +85,8 @@ Stack =
 
     s.panel_buffer = ""
     s.gpanel_buffer = ""
-    s.input_buffer = ""
-    s.confirmedInput = "" -- All inputs the player has input ever
+    s.input_buffer = {} -- Inputs that haven't been processed yet
+    s.confirmedInput = {} -- All inputs the player has input ever
     s.panels = {}
     s.width = 6
     s.height = 12
@@ -424,7 +424,10 @@ function Stack.restoreFromRollbackCopy(self, other)
   end
   -- The remaining inputs is the confirmed inputs not processed yet for this clock time
   -- We have processed CLOCK time number of inputs when we are at CLOCK, so we only want to process the CLOCK+1 input on
-  self.input_buffer = string.sub(self.confirmedInput, self.CLOCK+1)
+  self.input_buffer = {}
+  for i = self.CLOCK + 1, #self.confirmedInput do
+    self.input_buffer[#self.input_buffer+1] = self.confirmedInput[i]
+  end
 end
 
 function Stack.rollbackToFrame(self, frame) 
@@ -459,14 +462,33 @@ function Stack.rollbackToFrame(self, frame)
   end
 end
 
+function Stack:shouldSaveRollback()
+  if not GAME.match then
+    return false
+  end
+
+  if GAME.match.isFromReplay then
+    return true
+  end
+
+  -- if we don't have a garbage target, its is assumed we aren't being attacked either, which means we don't need to rollback
+  if not self.garbage_target then
+    return false
+  -- If we are behind the time that the opponent's new attacks would land, then we don't need to rollback
+  -- don't save the rollback info for performance reasons
+  -- this also includes local play and single player, since the clocks are <= 1 difference
+  elseif self.garbage_target.CLOCK + GARBAGE_DELAY_LAND_TIME > self.CLOCK then
+    return false
+  end
+
+  return true
+end
+
 -- Saves state in backups in case its needed for rollback
 -- NOTE: the CLOCK time is the save state for simulating right BEFORE that clock time is simulated
 function Stack.saveForRollback(self)
 
-  -- If we are behind the time that the opponent's new attacks would land, then we don't need to rollback
-  -- don't save the rollback info for performance reasons
-  -- TODO still save for replays so we can rewind
-  if self.garbage_target and self.garbage_target.CLOCK + GARBAGE_DELAY_LAND_TIME > self.CLOCK then
+  if self:shouldSaveRollback() == false then
     return
   end
 
@@ -674,7 +696,7 @@ function Stack.set_puzzle_state(self, puzzle)
 
   self.puzzle = puzzle
   self.panels = self:puzzleStringToPanels(puzzleString)
-  self.do_countdown = puzzle.do_countdown or false
+  self.do_countdown = puzzle.doCountdown or false
   self.puzzle.remaining_moves = puzzle.moves
 
   -- transform any cleared garbage into colorless garbage panels
@@ -907,7 +929,7 @@ function Stack.shouldRun(self, runsSoFar)
   end
 
   -- Decide how many frames of input we should run.
-  local buffer_len = string.len(self.input_buffer)
+  local buffer_len = #self.input_buffer
 
   -- If we are local we always want to catch up and run the new input which is already appended
   if self.is_local then
@@ -924,7 +946,7 @@ function Stack.shouldRun(self, runsSoFar)
       -- Don't fall behind if the game is over for the other player
       if self.garbage_target and self.garbage_target:game_ended() == false then
         -- If we are at the end of the replay we want to catch up
-        if network_connected() or string.len(self.garbage_target.input_buffer) > 0 then
+        if network_connected() or #self.garbage_target.input_buffer > 0 then
           local framesBehind = math.abs(config.debug_vsFramesBehind)
           if self.CLOCK >= self.garbage_target.CLOCK - framesBehind then
             return false
@@ -960,7 +982,7 @@ function Stack.run(self)
   if self.is_local == false then
     if self.play_to_end then
       GAME.preventSounds = true
-      if string.len(self.input_buffer) < 4 then
+      if #self.input_buffer < 4 then
         self.play_to_end = nil
         GAME.preventSounds = false
       end
@@ -976,9 +998,8 @@ function Stack.setupInput(self)
   self.input_state = nil
 
   if self:game_ended() == false then 
-    if self.input_buffer and string.len(self.input_buffer) > 0 then
-      self.input_state = string.sub(self.input_buffer, 1, 1)
-      self.input_buffer = string.sub(self.input_buffer, 2)
+    if self.input_buffer and #self.input_buffer > 0 then
+      self.input_state = table.remove(self.input_buffer, 1)
     end
   else
     self.input_state = self:idleInput()
@@ -988,9 +1009,15 @@ function Stack.setupInput(self)
 end
 
 function Stack.receiveConfirmedInput(self, input)
-  self.confirmedInput = self.confirmedInput .. input
-  self.input_buffer = self.input_buffer .. input
-  --logger.debug("Player " .. self.which .. " got new input. Total length: " .. string.len(self.confirmedInput))
+  if string.len(input) == 1 then
+    self.confirmedInput[#self.confirmedInput+1] = input
+    self.input_buffer[#self.input_buffer+1] = input
+  else
+    local inputs = string.toCharTable(input)
+    table.appendToList(self.confirmedInput, inputs)
+    table.appendToList(self.input_buffer, inputs)
+  end
+  --logger.debug("Player " .. self.which .. " got new input. Total length: " .. #self.confirmedInput)
 end
 
 -- Enqueue a card animation
@@ -1897,13 +1924,10 @@ function Stack.simulate(self)
       if SFX_Fanfare_Play == 0 then
         --do nothing
       elseif SFX_Fanfare_Play >= 6 then
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         themes[config.theme].sounds.fanfare3:play()
       elseif SFX_Fanfare_Play >= 5 then
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         themes[config.theme].sounds.fanfare2:play()
       elseif SFX_Fanfare_Play >= 4 then
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         themes[config.theme].sounds.fanfare1:play()
       end
       SFX_Fanfare_Play = 0
@@ -1932,7 +1956,7 @@ function Stack.simulate(self)
         local popLevel = min(max(self.chain_counter, 1), 4)
         local popIndex = 1
         if SFX_Garbage_Pop_Play then
-          popIndex = SFX_Garbage_Pop_Play
+          popIndex = min(SFX_Garbage_Pop_Play + self.poppedPanelIndex, 10)
         else
           popIndex = min(self.poppedPanelIndex, 10)
         end
@@ -2027,7 +2051,7 @@ end
 
 
 function Stack.shouldChangeSoundEffects(self)
-  local result = self:shouldChangeMusic() and not SFX_mute
+  local result = self:shouldChangeMusic() and not GAME.muteSoundEffects
 
   return result
 end
@@ -2166,9 +2190,20 @@ function Stack.canSwap(self, row, column)
   -- If you have two pieces stacked vertically, you can't move
   -- both of them to the right or left by swapping with empty space.
   -- TODO: This might be wrong if something lands on a swapping panel?
-  if panels[row][column].color == 0 or panels[row][column + 1].color == 0 then
-    do_swap = do_swap and not (row ~= self.height and (panels[row + 1][column].state == "swapping" and panels[row + 1][column + 1].state == "swapping") and (panels[row + 1][column].color == 0 or panels[row + 1][column + 1].color == 0) and (panels[row + 1][column].color ~= 0 or panels[row + 1][column + 1].color ~= 0))
-    do_swap = do_swap and not (row ~= 1 and (panels[row - 1][column].state == "swapping" and panels[row - 1][column + 1].state == "swapping") and (panels[row - 1][column].color == 0 or panels[row - 1][column + 1].color == 0) and (panels[row - 1][column].color ~= 0 or panels[row - 1][column + 1].color ~= 0))
+  if panels[row][column].color == 0 or panels[row][column + 1].color == 0 then -- if either panel inside the cursor is air
+    do_swap = do_swap -- failing the condition if we already determined we cant swap 
+      and not -- one of the next 4 lines must be false in order to swap
+        (row ~= self.height -- true if cursor is not at top of stack
+        and (panels[row + 1][column].state == "swapping" and panels[row + 1][column + 1].state == "swapping") -- true if BOTH panels above cursor are swapping
+        and (panels[row + 1][column].color == 0 or panels[row + 1][column + 1].color == 0) -- true if either panel above the cursor is air
+        and (panels[row + 1][column].color ~= 0 or panels[row + 1][column + 1].color ~= 0)) -- true if either panel above the cursor is not air
+
+    do_swap = do_swap  -- failing the condition if we already determined we cant swap 
+      and not -- one of the next 4 lines must be false in order to swap
+        (row ~= 1 -- true if the cursor is not at the bottom of the stack
+        and (panels[row - 1][column].state == "swapping" and panels[row - 1][column + 1].state == "swapping") -- true if BOTH panels below cursor are swapping
+        and (panels[row - 1][column].color == 0 or panels[row - 1][column + 1].color == 0) -- true if either panel below the cursor is air
+        and (panels[row - 1][column].color ~= 0 or panels[row - 1][column + 1].color ~= 0)) -- true if either panel below the cursor is not air
   end
 
   do_swap = do_swap and (not self.puzzle or self.puzzle.moves == 0 or self.puzzle.remaining_moves > 0)
@@ -2458,7 +2493,7 @@ function Stack.check_matches(self)
             if string.len(self.gpanel_buffer) <= 10 * self.width then
               local garbagePanels = PanelGenerator.makeGarbagePanels(self.match.seed + self.garbageGenCount, self.NCOLORS, self.gpanel_buffer, self.match.mode, self.level)
               self.gpanel_buffer = self.gpanel_buffer .. garbagePanels
-              logger.info("Generating garbage with seed: " .. self.match.seed + self.garbageGenCount .. " buffer: " .. self.gpanel_buffer)
+              logger.debug("Generating garbage with seed: " .. self.match.seed + self.garbageGenCount .. " buffer: " .. self.gpanel_buffer)
               self.garbageGenCount = self.garbageGenCount + 1
             end
             gpan_row = string.sub(self.gpanel_buffer, 1, 6)
@@ -2711,7 +2746,7 @@ function Stack.new_row(self)
       opponentLevel = self.garbage_target.level
     end
     self.panel_buffer = PanelGenerator.makePanels(self.match.seed + self.panelGenCount, self.NCOLORS, self.panel_buffer, self.match.mode, self.level, opponentLevel)
-    logger.info("generating panels with seed: " .. self.match.seed + self.panelGenCount .. " buffer: " .. self.panel_buffer)
+    logger.debug("generating panels with seed: " .. self.match.seed + self.panelGenCount .. " buffer: " .. self.panel_buffer)
     self.panelGenCount = self.panelGenCount + 1
   end
 
@@ -2765,20 +2800,30 @@ function Stack:getAttackPatternData()
   -- Add in all the chains by time
   for time, currentChain in pairsSortedByKeys(self.chains) do
     local endTime = currentChain.finish or currentChain.starts[#currentChain.starts] + defaultEndTime
-    sortedAttackPatterns[time] = {chain = currentChain.starts, chainEndTime = endTime}
+    if sortedAttackPatterns[time] == nil then
+      sortedAttackPatterns[time] = {}
+    end
+    local attackPatternBucket = sortedAttackPatterns[time]
+    attackPatternBucket[#attackPatternBucket+1] = {chain = currentChain.starts, chainEndTime = endTime}
   end
 
   -- Add in all the combos by time
   for time, combos in pairsSortedByKeys(self.combos) do
     for index, garbage in ipairs(combos) do
-      sortedAttackPatterns[time] = {width = garbage.width, height = garbage.height, startTime = time, chain = false, metal = garbage.metal}
+      if sortedAttackPatterns[time] == nil then
+        sortedAttackPatterns[time] = {}
+      end
+      local attackPatternBucket = sortedAttackPatterns[time]
+      attackPatternBucket[#attackPatternBucket+1] = {width = garbage.width, height = garbage.height, startTime = time, chain = false, metal = garbage.metal}
     end
   end
 
   -- Save the final attack patterns in sorted order without the times since the file format doesn't want that (duplicate data)
   data.attackPatterns = {}
-  for _, attackPattern in pairsSortedByKeys(sortedAttackPatterns) do
-    data.attackPatterns[#data.attackPatterns+1] = attackPattern
+  for _, attackPatterns in pairsSortedByKeys(sortedAttackPatterns) do
+    for _, attackPattern in ipairs(attackPatterns) do
+      data.attackPatterns[#data.attackPatterns+1] = attackPattern
+    end
   end
 
   return data

@@ -218,7 +218,7 @@ end
 
 function love.keypressed(key, scancode, rep)
   local function handleFullscreenToggle()
-    if key == "return" and not rep and love.keyboard.isDown("lalt") then
+    if key == "return" and not rep and (love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt")) then
       love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
       return true
     end

@@ -243,12 +243,12 @@ function Match:run()
 
   if P1 then
     if P1.is_local and not P1:game_ended() then
-      assert(string.len(P1.input_buffer) == 0, "Local games should always simulate all inputs")
+      assert(#P1.input_buffer == 0, "Local games should always simulate all inputs")
     end
   end
   if P2 then
     if P2.is_local and not P2:game_ended() then
-      assert(string.len(P2.input_buffer) == 0, "Local games should always simulate all inputs")
+      assert(#P2.input_buffer == 0, "Local games should always simulate all inputs")
     end
   end
 
@@ -304,12 +304,12 @@ function Match.render(self)
     if P2 then
       -- P1 win count graphics
       draw_label(themes[config.theme].images.IMG_wins, (P1.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
-      draw_number(GAME.battleRoom.playerWinCounts[P1.player_number], themes[config.theme].images.IMG_timeNumber_atlas, 12, P1_win_quads, P1.score_x + themes[config.theme].win_Pos[1], P1.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale, "center")
+      GraphicsUtil.draw_number(GAME.battleRoom.playerWinCounts[P1.player_number], themes[config.theme].images.IMG_number_atlas_1P, P1_win_quads, P1.score_x + themes[config.theme].win_Pos[1], P1.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, "center")
       -- P2 username
       gprint((GAME.battleRoom.playerNames[2] or ""), P2.score_x + themes[config.theme].name_Pos[1], P2.score_y + themes[config.theme].name_Pos[2])
       -- P2 win count graphics
       draw_label(themes[config.theme].images.IMG_wins, (P2.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P2.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
-      draw_number(GAME.battleRoom.playerWinCounts[P2.player_number], themes[config.theme].images.IMG_timeNumber_atlas, 12, P2_win_quads, P2.score_x + themes[config.theme].win_Pos[1], P2.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale, "center")
+      GraphicsUtil.draw_number(GAME.battleRoom.playerWinCounts[P2.player_number], themes[config.theme].images.IMG_number_atlas_2P, P2_win_quads, P2.score_x + themes[config.theme].win_Pos[1], P2.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, "center")
     end
 
     if not config.debug_mode then --this is printed in the same space as the debug details
@@ -325,7 +325,7 @@ function Match.render(self)
         if type(rating_to_print) == "number" then
           if GAME.showRatings == "rating" then
             draw_label(themes[config.theme].images.IMG_rating_1P, (P1.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
-            draw_number(rating_to_print, themes[config.theme].images.IMG_number_atlas_1P, 10, P1_rating_quads, P1.score_x + themes[config.theme].rating_Pos[1], P1.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, (15 / themes[config.theme].images.numberWidth_1P * themes[config.theme].rating_Scale), (19 / themes[config.theme].images.numberHeight_1P * themes[config.theme].rating_Scale), "center")
+            GraphicsUtil.draw_number(rating_to_print, themes[config.theme].images.IMG_number_atlas_1P, P1_rating_quads, P1.score_x + themes[config.theme].rating_Pos[1], P1.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, "center")
           elseif GAME.showRatings == "league" then
             local leagueString = Leagues.leagueNameForRating(rating_to_print)
             if leagueString then
@@ -344,7 +344,7 @@ function Match.render(self)
         if type(op_rating_to_print) == "number" then
           if GAME.showRatings == "rating" then
             draw_label(themes[config.theme].images.IMG_rating_2P, (P2.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (P2.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
-            draw_number(op_rating_to_print, themes[config.theme].images.IMG_number_atlas_2P, 10, P2_rating_quads, P2.score_x + themes[config.theme].rating_Pos[1], P2.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, (15 / themes[config.theme].images.numberWidth_2P * themes[config.theme].rating_Scale), (19 / themes[config.theme].images.numberHeight_2P * themes[config.theme].rating_Scale), "center")
+            GraphicsUtil.draw_number(op_rating_to_print, themes[config.theme].images.IMG_number_atlas_2P, P2_rating_quads, P2.score_x + themes[config.theme].rating_Pos[1], P2.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, "center")
           elseif GAME.showRatings == "league" then
             local leagueString = Leagues.leagueNameForRating(op_rating_to_print)
             if leagueString then
@@ -369,10 +369,10 @@ function Match.render(self)
 
 
     drawY = drawY + padding
-    gprintf("Confirmed " .. string.len(P1.confirmedInput) , drawX, drawY)
+    gprintf("Confirmed " .. #P1.confirmedInput , drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("input_buffer " .. string.len(P1.input_buffer) , drawX, drawY)
+    gprintf("input_buffer " .. #P1.input_buffer , drawX, drawY)
 
     drawY = drawY + padding
     gprintf("rollbackCount " .. P1.rollbackCount , drawX, drawY)
@@ -381,7 +381,7 @@ function Match.render(self)
     -- gprintf("P1 Panels: " .. P1.panel_buffer, drawX, drawY)
 
     -- drawY = drawY + padding
-    -- gprintf("P1 Confirmed " .. string.len(P1.confirmedInput) , drawX, drawY)
+    -- gprintf("P1 Confirmed " .. #P1.confirmedInput , drawX, drawY)
 
     -- drawY = drawY + padding
     -- gprintf("P1 Ended?: " .. tostring(P1:game_ended()), drawX, drawY)
@@ -452,10 +452,10 @@ function Match.render(self)
       gprintf("P1 Ahead: " .. framesAhead, drawX, drawY)
 
       drawY = drawY + padding
-      gprintf("Confirmed " .. string.len(P2.confirmedInput) , drawX, drawY)
+      gprintf("Confirmed " .. #P2.confirmedInput , drawX, drawY)
 
       drawY = drawY + padding
-      gprintf("input_buffer " .. string.len(P2.input_buffer) , drawX, drawY)
+      gprintf("input_buffer " .. #P2.input_buffer , drawX, drawY)
 
       drawY = drawY + padding
       gprintf("rollbackCount " .. P2.rollbackCount , drawX, drawY)

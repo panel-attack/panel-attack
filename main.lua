@@ -7,6 +7,7 @@ require("util")
 require("table_util")
 require("consts")
 require("league")
+require("FileUtil")
 require("queue")
 require("globals")
 require("character") -- after globals!
@@ -19,6 +20,7 @@ require("AttackEngine")
 require("localization")
 require("graphics")
 GAME.input = require("input")
+require("replay")
 require("network")
 require("Puzzle")
 require("PuzzleSet")
@@ -32,6 +34,11 @@ require("theme")
 require("click_menu")
 require("computerPlayers.computerPlayer")
 require("rich_presence.RichPresence")
+
+if PROFILING_ENABLED then
+  GAME.profiler = require("profiler")
+end
+
 local logger = require("logger")
 GAME.scores = require("scores")
 GAME.rich_presence = RichPresence()
@@ -45,6 +52,10 @@ local mainloop = nil
 
 -- Called at the beginning to load the game
 function love.load()
+  if PROFILING_ENABLED then
+    GAME.profiler:start()
+  end
+  
   love.graphics.setDefaultFilter("linear", "linear")
   if config.maximizeOnStartup and not love.window.isMaximized() then
     love.window.maximize()
