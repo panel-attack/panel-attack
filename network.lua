@@ -195,7 +195,7 @@ function drop_old_data_messages()
       break
     end
 
-    if not message["P"] and not message["O"] and not message["U"] and not message["I"] and not message["Q"] and not message["R"] then
+    if not message["P"] and not message["O"] and not message["U"] and not message["V"] and not message["I"] and not message["K"]} and not message["Q"] and not message["R"] then
       break -- Found a "J" message. Stop. Future data is for next game
     else
       server_queue:pop() -- old data, drop it
