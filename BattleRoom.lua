@@ -6,8 +6,11 @@ BattleRoom =
   class(
   function(self, mode)
     self.playerWinCounts = {}
+    self.modifiedWinCounts = {}
     self.playerWinCounts[1] = 0
     self.playerWinCounts[2] = 0
+    self.modifiedWinCounts[1] = 0
+    self.modifiedWinCounts[2] = 0
     self.mode = mode
     self.playerNames = {} -- table with player which number -> display name
     self.playerNames[1] = config.name or loc("player_n", "1")

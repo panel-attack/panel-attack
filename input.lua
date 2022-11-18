@@ -276,16 +276,20 @@ function love.keypressed(key, scancode, rep)
   local function modifyWinCounts()
     if GAME.battleRoom and (love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt")) then
       if key == "1" then -- Add to P1's win count
-        GAME.battleRoom.playerWinCounts[1] = math.max(0, GAME.battleRoom.playerWinCounts[1] + 1)
+        GAME.battleRoom.modifiedWinCounts[1] = math.max(0, GAME.battleRoom.modifiedWinCounts[1] + 1)
       end
       if key == "2" then -- Subtract from P1's win count
-        GAME.battleRoom.playerWinCounts[1] = math.max(0, GAME.battleRoom.playerWinCounts[1] - 1)
+        GAME.battleRoom.modifiedWinCounts[1] = math.max(0, GAME.battleRoom.modifiedWinCounts[1] - 1)
       end
       if key == "3" then -- Add to P2's win count
-        GAME.battleRoom.playerWinCounts[2] = math.max(0, GAME.battleRoom.playerWinCounts[2] + 1)
+        GAME.battleRoom.modifiedWinCounts[2] = math.max(0, GAME.battleRoom.modifiedWinCounts[2] + 1)
       end
       if key == "4" then -- Subtract from P2's win count
-        GAME.battleRoom.playerWinCounts[2] = math.max(0, GAME.battleRoom.playerWinCounts[2] - 1)
+        GAME.battleRoom.modifiedWinCounts[2] = math.max(0, GAME.battleRoom.modifiedWinCounts[2] - 1)
+      end
+      if key == "5" then -- Reset key
+        GAME.battleRoom.modifiedWinCounts[1] = 0
+        GAME.battleRoom.modifiedWinCounts[2] = 0
       end
     end
   end
