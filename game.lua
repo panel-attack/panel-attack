@@ -25,6 +25,7 @@ Game =
     self.needsAssetReload = false
     self.previousWindowWidth = 0
     self.previousWindowHeight = 0
+    self.showRatings = "rating" -- nil, "rating", "league"
   end
 )
 

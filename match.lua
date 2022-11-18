@@ -21,6 +21,11 @@ Match =
     self.isFromReplay = false
     self.current_music_is_casual = true
     self.startTimestamp = os.time(os.date("*t"))
+
+    self.player1NameTextObject = love.graphics.newText(get_global_font(), (GAME.battleRoom and GAME.battleRoom.playerNames[1]) or "")
+    self.player2NameTextObject = love.graphics.newText(get_global_font(), (GAME.battleRoom and GAME.battleRoom.playerNames[2]) or "")
+    self.playerLeagueTextObjects = {}
+
     if (P2 or mode == "vs") and GAME.battleRoom then
       GAME.rich_presence:setPresence(
       (GAME.battleRoom.spectating and "Spectating" or "Playing") .. " a " .. match_type .. " match",
@@ -300,13 +305,13 @@ function Match.render(self)
   -- Draw VS HUD
   if self.battleRoom and (GAME.gameIsPaused == false or GAME.renderDuringPause) then
     -- P1 username
-    gprint((GAME.battleRoom.playerNames[1] or ""), P1.score_x + themes[config.theme].name_Pos[1], P1.score_y + themes[config.theme].name_Pos[2])
+    GraphicsUtil.drawClearText(self.player1NameTextObject, P1.score_x + themes[config.theme].name_Pos[1], P1.score_y + themes[config.theme].name_Pos[2])
     if P2 then
       -- P1 win count graphics
       draw_label(themes[config.theme].images.IMG_wins, (P1.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
       GraphicsUtil.draw_number(GAME.battleRoom.playerWinCounts[P1.player_number], themes[config.theme].images.IMG_number_atlas_1P, P1_win_quads, P1.score_x + themes[config.theme].win_Pos[1], P1.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, "center")
       -- P2 username
-      gprint((GAME.battleRoom.playerNames[2] or ""), P2.score_x + themes[config.theme].name_Pos[1], P2.score_y + themes[config.theme].name_Pos[2])
+      GraphicsUtil.drawClearText(self.player2NameTextObject, P2.score_x + themes[config.theme].name_Pos[1], P2.score_y + themes[config.theme].name_Pos[2])
       -- P2 win count graphics
       draw_label(themes[config.theme].images.IMG_wins, (P2.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P2.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
       GraphicsUtil.draw_number(GAME.battleRoom.playerWinCounts[P2.player_number], themes[config.theme].images.IMG_number_atlas_2P, P2_win_quads, P2.score_x + themes[config.theme].win_Pos[1], P2.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, "center")
@@ -316,45 +321,7 @@ function Match.render(self)
       gprint(spectators_string, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
     end
 
-    if match_type == "Ranked" then
-      if self.room_ratings and self.room_ratings[self.my_player_number] and self.room_ratings[self.my_player_number].new then
-        local rating_to_print = nil
-        if self.room_ratings[self.my_player_number].new > 0 then
-          rating_to_print = self.room_ratings[self.my_player_number].new
-        end
-        if type(rating_to_print) == "number" then
-          if GAME.showRatings == "rating" then
-            draw_label(themes[config.theme].images.IMG_rating_1P, (P1.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
-            GraphicsUtil.draw_number(rating_to_print, themes[config.theme].images.IMG_number_atlas_1P, P1_rating_quads, P1.score_x + themes[config.theme].rating_Pos[1], P1.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, "center")
-          elseif GAME.showRatings == "league" then
-            local leagueString = Leagues.leagueNameForRating(rating_to_print)
-            if leagueString then
-              draw_label(themes[config.theme].images.IMG_rating_1P, (P1.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
-              gprint(leagueString, P1.score_x + themes[config.theme].rating_Pos[1], P1.score_y + themes[config.theme].rating_Pos[2])
-            end
-          end
-        end
-      end
-      if self.room_ratings and self.room_ratings[self.op_player_number] and self.room_ratings[self.op_player_number].new then
-        local op_rating_to_print = nil
-        if self.room_ratings[self.op_player_number].new > 0 then
-          op_rating_to_print = self.room_ratings[self.op_player_number].new
-        end
-        
-        if type(op_rating_to_print) == "number" then
-          if GAME.showRatings == "rating" then
-            draw_label(themes[config.theme].images.IMG_rating_2P, (P2.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (P2.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
-            GraphicsUtil.draw_number(op_rating_to_print, themes[config.theme].images.IMG_number_atlas_2P, P2_rating_quads, P2.score_x + themes[config.theme].rating_Pos[1], P2.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, "center")
-          elseif GAME.showRatings == "league" then
-            local leagueString = Leagues.leagueNameForRating(op_rating_to_print)
-            if leagueString then
-              draw_label(themes[config.theme].images.IMG_rating_2P, (P2.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (P2.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
-              gprint(leagueString, P2.score_x + themes[config.theme].rating_Pos[1], P1.score_y + themes[config.theme].rating_Pos[2])
-            end
-          end
-        end
-      end
-    end
+    self:drawRankedGraphics()
   end
 
   if config.debug_mode then
@@ -518,5 +485,40 @@ function Match.render(self)
     local y = 5
     draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
     gprint("A warning has occurred, please post your warnings.txt file and this replay to #panel-attack-bugs in the discord.", x + iconSize, y)
+  end
+end
+
+function Match:drawRankedGraphics() 
+  if match_type == "Ranked" then
+    self:drawRankedGraphicsForPlayer(self.my_player_number, themes[config.theme].images.IMG_rating_1P, themes[config.theme].images.IMG_number_atlas_1P, P1, P1_rating_quads)
+    self:drawRankedGraphicsForPlayer(self.op_player_number, themes[config.theme].images.IMG_rating_2P, themes[config.theme].images.IMG_number_atlas_2P, P2, P2_rating_quads)
+  end
+end
+
+function Match:drawRankedGraphicsForPlayer(playerNumber, ratingLabelAsset, numberAtlas, stackObject, ratingQuads) 
+  if self.room_ratings and self.room_ratings[playerNumber] and self.room_ratings[playerNumber].new then
+    local rating_to_print = nil
+    if self.room_ratings[playerNumber].new > 0 then
+      rating_to_print = self.room_ratings[playerNumber].new
+    end
+    if type(rating_to_print) == "number" then
+      if GAME.showRatings == "rating" then
+        draw_label(ratingLabelAsset, (stackObject.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (stackObject.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
+        GraphicsUtil.draw_number(rating_to_print, numberAtlas, ratingQuads, stackObject.score_x + themes[config.theme].rating_Pos[1], stackObject.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, "center")
+      elseif GAME.showRatings == "league" then
+        if self.playerLeagueTextObjects[playerNumber] == nil then
+          local leagueString = Leagues.leagueNameForRating(rating_to_print)
+          if leagueString then
+            self.playerLeagueTextObjects[playerNumber] = love.graphics.newText(get_global_font(), leagueString)
+          end
+        end
+    
+        if self.playerLeagueTextObjects[playerNumber] then
+          draw_label(ratingLabelAsset, (stackObject.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (stackObject.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
+          local textWidth = self.playerLeagueTextObjects[playerNumber]:getWidth()
+          GraphicsUtil.drawClearText(self.playerLeagueTextObjects[playerNumber], stackObject.score_x - textWidth/2.0 + themes[config.theme].rating_Pos[1], stackObject.score_y + themes[config.theme].rating_Pos[2])
+        end
+      end
+    end
   end
 end
