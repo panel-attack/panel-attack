@@ -258,6 +258,29 @@ function Stack.setLevel(self, level)
   end
 end
 
+-- Should be called prior to clearing the stack.
+-- Consider recycling any memory that might leave around a lot of garbage.
+-- Note: You can just leave the variables to clear / garbage collect on their own if they aren't large.
+function Stack:deinit()
+  for _, quad in ipairs(self.time_quads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  for _, quad in ipairs(self.move_quads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  for _, quad in ipairs(self.score_quads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  for _, quad in ipairs(self.speed_quads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  GraphicsUtil:releaseQuad(self.level_quad)
+  GraphicsUtil:releaseQuad(self.healthQuad)
+  GraphicsUtil:releaseQuad(self.multi_prestopQuad)
+  GraphicsUtil:releaseQuad(self.multi_stopQuad)
+  GraphicsUtil:releaseQuad(self.multi_shakeQuad)
+end
+
 -- Positions the stack draw position for the given player
 function Stack.moveForPlayerNumber(stack, player_num)
   -- Position of elements should ideally be on even coordinates to avoid non pixel alignment
