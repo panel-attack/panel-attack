@@ -344,9 +344,7 @@ function select_screen_graphics.draw_character(self, character)
   end
 end
 
--- Draws the players "flashing ready" effect on their current cursor
-function select_screen_graphics.draw_super_select(self, player_num)
-  local super_select_pixelcode = [[
+local super_select_pixelcode = [[
       uniform float percent;
       vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
       {
@@ -360,9 +358,12 @@ function select_screen_graphics.draw_super_select(self, player_num)
       }
   ]]
 
-  -- one per player, should we put them into cursor_data even though it's meaningless?
-  local super_select_shaders = {love.graphics.newShader(super_select_pixelcode), love.graphics.newShader(super_select_pixelcode)}
+-- one per player, should we put them into cursor_data even though it's meaningless?
+local super_select_shaders = {love.graphics.newShader(super_select_pixelcode), love.graphics.newShader(super_select_pixelcode)}
 
+-- Draws the players "flashing ready" effect on their current cursor
+function select_screen_graphics.draw_super_select(self, player_num)
+  
   local ratio = select_being_pressed_ratio(player_num)
   if ratio > super_selection_enable_ratio then
     super_select_shaders[player_num]:send("percent", linear_smooth(ratio, super_selection_enable_ratio, 1.0))
