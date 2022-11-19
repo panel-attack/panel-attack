@@ -139,16 +139,22 @@ function table_to_string(tab)
   return ret
 end
 
-function sign(x)
-  return (x<0 and -1) or 1
+function math.sign(v)
+	return (v >= 0 and 1) or -1
 end
 
---Note: this round() doesn't work with negative numbers
-function round(positive_decimal_number, number_of_decimal_places)
-  if not number_of_decimal_places then
-    number_of_decimal_places = 0
+function math.round(number, numberOfDecimalPlaces)
+  local multiplier = 10^(numberOfDecimalPlaces or 0)
+  if number >= 0 then
+    return math.floor(number * multiplier + 0.5) / multiplier
+  else 
+    return math.ceil(number * multiplier - 0.5) / multiplier 
   end
-  return math.floor(positive_decimal_number * 10 ^ number_of_decimal_places + 0.5) / 10 ^ number_of_decimal_places
+end
+
+-- DEPRECATED, use non global math.round
+function round(positive_decimal_number, number_of_decimal_places)
+  return math.round(positive_decimal_number, number_of_decimal_places)
 end
 
 -- Returns a time string for the number of frames
