@@ -56,38 +56,41 @@ function select_screen_graphics.drawPlayerInfo(self)
   assert(GAME.battleRoom, "need battle room")
   assert(self.select_screen.my_player_number and (self.select_screen.my_player_number == 1 or self.select_screen.my_player_number == 2), "need number")
   local my_rating_difference, op_rating_difference = self:calculateRatingDiffBetweenGames()
-  self:drawButton(0, 2, 2, 1, self:get_player_state_str(self.select_screen.my_player_number, my_rating_difference, GAME.battleRoom.playerWinCounts[self.select_screen.my_player_number], GAME.battleRoom.playerWinCounts[self.select_screen.op_player_number], self.select_screen.my_expected_win_ratio), "left", "top", true)
+  local includeWinRatio = self.select_screen.players[self.select_screen.my_player_number].level == self.select_screen.players[self.select_screen.op_player_number].level
+  self:drawButton(0, 2, 2, 1, self:get_player_state_str(self.select_screen.my_player_number, includeWinRatio, my_rating_difference, self.select_screen.my_expected_win_ratio), "left", "top", true)
   if self.select_screen.players[self.select_screen.my_player_number] and GAME.battleRoom.playerNames[2] then
     self:drawButton(0, 7, 1, 1, "P2", "center")
-    self:drawButton(0, 8, 2, 1, self:get_player_state_str(self.select_screen.op_player_number, op_rating_difference, GAME.battleRoom.playerWinCounts[self.select_screen.op_player_number], GAME.battleRoom.playerWinCounts[self.select_screen.my_player_number], self.select_screen.op_expected_win_ratio), "left", "top", true)
+    self:drawButton(0, 8, 2, 1, self:get_player_state_str(self.select_screen.op_player_number, includeWinRatio, op_rating_difference, self.select_screen.op_expected_win_ratio), "left", "top", true)
   end
+end
+
+function select_screen_graphics:ratingDifferenceString(playerNumber) 
+  local result = ""
+  if current_server_supports_ranking and not self.select_screen:inPlacementMatches() then
+    if self.select_screen.currentRoomRatings[playerNumber].difference then
+      if self.select_screen.currentRoomRatings[playerNumber].difference > 0 then
+        result = "(+" .. self.select_screen.currentRoomRatings[playerNumber].difference .. ") "
+      elseif self.select_screen.currentRoomRatings[playerNumber].difference < 0 then
+        result = "(" .. self.select_screen.currentRoomRatings[playerNumber].difference .. ") "
+      end
+    end
+  end
+  return result
 end
 
 function select_screen_graphics.calculateRatingDiffBetweenGames(self)
   -- Calculate the rating difference
-  local my_rating_difference = ""
-  local op_rating_difference = ""
-  if current_server_supports_ranking and not self.select_screen.currentRoomRatings[self.select_screen.my_player_number].placement_match_progress then
-    if self.select_screen.currentRoomRatings[self.select_screen.my_player_number].difference then
-      if self.select_screen.currentRoomRatings[self.select_screen.my_player_number].difference >= 0 then
-        my_rating_difference = "(+" .. self.select_screen.currentRoomRatings[self.select_screen.my_player_number].difference .. ") "
-      else
-        my_rating_difference = "(" .. self.select_screen.currentRoomRatings[self.select_screen.my_player_number].difference .. ") "
-      end
-    end
-    if self.select_screen.currentRoomRatings[self.select_screen.op_player_number].difference then
-      if self.select_screen.currentRoomRatings[self.select_screen.op_player_number].difference >= 0 then
-        op_rating_difference = "(+" .. self.select_screen.currentRoomRatings[self.select_screen.op_player_number].difference .. ") "
-      else
-        op_rating_difference = "(" .. self.select_screen.currentRoomRatings[self.select_screen.op_player_number].difference .. ") "
-      end
-    end
-  end
+  local my_rating_difference = self:ratingDifferenceString(self.select_screen.my_player_number)
+  local op_rating_difference = self:ratingDifferenceString(self.select_screen.op_player_number)
+
   return my_rating_difference, op_rating_difference
 end
 
 -- Returns a string with the players rating, win rate, and expected rating
-function select_screen_graphics.get_player_state_str(self, player_number, rating_difference, win_count, op_win_count, expected_win_ratio)
+function select_screen_graphics.get_player_state_str(self, player_number, includeWinRatio, rating_difference, expected_win_ratio)
+  local win_count = GAME.battleRoom.playerWinCounts[player_number]
+  local totalGames = GAME.battleRoom:totalGames()
+
   local state = ""
   if current_server_supports_ranking then
     state = state .. loc("ss_rating") .. " " .. (self.select_screen.currentRoomRatings[player_number].league or "")
@@ -102,18 +105,20 @@ function select_screen_graphics.get_player_state_str(self, player_number, rating
       state = state .. "\n"
     end
     state = state .. loc("ss_wins") .. " " .. win_count
-    if (current_server_supports_ranking and expected_win_ratio) or win_count + op_win_count > 0 then
+    if (current_server_supports_ranking and expected_win_ratio) or totalGames > 0 then
       state = state .. "\n" .. loc("ss_winrate") .. "\n"
       local need_line_return = false
-      if win_count + op_win_count > 0 then
-        state = state .. "    " .. loc("ss_current_rating") .. " " .. (100 * round(win_count / (op_win_count + win_count), 2)) .. "%"
+      if totalGames > 0 then
+        state = state .. "    " .. loc("ss_current_rating") .. " " .. (100 * round(win_count / (totalGames), 2)) .. "%"
         need_line_return = true
       end
       if current_server_supports_ranking and expected_win_ratio then
         if need_line_return then
           state = state .. "\n"
         end
-        state = state .. "    " .. loc("ss_expected_rating") .. " " .. expected_win_ratio .. "%"
+        if includeWinRatio then
+          state = state .. "    " .. loc("ss_expected_rating") .. " " .. expected_win_ratio .. "%"
+        end
       end
     end
   end

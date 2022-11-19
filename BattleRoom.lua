@@ -21,6 +21,14 @@ function BattleRoom.updateWinCounts(self, winCounts)
   self.playerWinCounts = winCounts
 end
 
+function BattleRoom:totalGames()
+  local totalGames = 0
+  for _, winCount in ipairs(self.playerWinCounts) do
+    totalGames = totalGames + winCount
+  end
+  return totalGames
+end
+
 -- Returns the player with more win count.
 -- TODO handle ties?
 function BattleRoom.winningPlayer(self)
