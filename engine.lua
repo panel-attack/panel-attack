@@ -88,7 +88,7 @@ Stack =
     s.later_garbage = {} -- Queue of garbage that is done waiting in telegraph, and been popped out, and will be sent to our stack next frame
     s.garbage_q = GarbageQueue(s) -- Queue of garbage that is about to be dropped
     
-    s.inputMethod = "touch" --"touch" or "controller"
+    s.inputMethod = inputMethod or (which == 1 and config.inputMethod) or "controller" --"touch" or "controller"
     s.buttons = {}
     s.buttons.raise = Button({label = "Raise", x = 400, y = 500, width = DEFAULT_TOUCH_RAISE_BUTTON_SIZE.width, height = DEFAULT_TOUCH_RAISE_BUTTON_SIZE.height, onClick = function() end--[[no sound affect, nothing--]], isVisible = (s.inputMethod == "touch")})  -- to do: localize "Raise"
     s.raise_touched = false

@@ -158,8 +158,8 @@ function start_match(a, b)
     match_start = true,
     ranked = false,
     stage = a.room.stage,
-    player_settings = {character = a.character, character_display_name = a.character_display_name, level = a.level, panels_dir = a.panels_dir, player_number = a.player_number},
-    opponent_settings = {character = b.character, character_display_name = b.character_display_name, level = b.level, panels_dir = b.panels_dir, player_number = b.player_number}
+    player_settings = {character = a.character, character_display_name = a.character_display_name, level = a.level, inputMethod = (a.inputMethod or "controller"), panels_dir = a.panels_dir, player_number = a.player_number},
+    opponent_settings = {character = b.character, character_display_name = b.character_display_name, level = b.level, inputMethod = (b.inputMethod or "controller", panels_dir = b.panels_dir, player_number = b.player_number}
   }
   local room_is_ranked, reasons = a.room:rating_adjustment_approved()
   if room_is_ranked then
@@ -308,8 +308,8 @@ function Room.add_spectator(self, new_spectator_connection)
     stage = self.stage,
     replay_of_match_so_far = self.replay,
     ranked = self:rating_adjustment_approved(),
-    player_settings = {character = self.a.character, character_display_name = self.a.character_display_name, level = self.a.level, player_number = self.a.player_number},
-    opponent_settings = {character = self.b.character, character_display_name = self.b.character_display_name, level = self.b.level, player_number = self.b.player_number}
+    player_settings = {character = self.a.character, character_display_name = self.a.character_display_name, level = self.a.level, inputMethod = (self.a.inputMethod or "controller", player_number = self.a.player_number},
+    opponent_settings = {character = self.b.character, character_display_name = self.b.character_display_name, level = self.b.level, inputMethod = (self.b.inputMethod or "controller"), player_number = self.b.player_number}
   }
   if COMPRESS_SPECTATOR_REPLAYS_ENABLED then
     msg.replay_of_match_so_far.vs.in_buf = compress_input_string(msg.replay_of_match_so_far.vs.in_buf)
@@ -525,7 +525,7 @@ Connection =
 )
 
 function Connection.menu_state(self)
-  state = {cursor = self.cursor, stage = self.stage, stage_is_random = self.stage_is_random, ready = self.ready, character = self.character, character_is_random = self.character_is_random, character_display_name = self.character_display_name, panels_dir = self.panels_dir, level = self.level, ranked = self.wants_ranked_match}
+  state = {cursor = self.cursor, stage = self.stage, stage_is_random = self.stage_is_random, ready = self.ready, character = self.character, character_is_random = self.character_is_random, character_display_name = self.character_display_name, panels_dir = self.panels_dir, level = self.level, inputMethod = (self.inputMethod or "controller"), ranked = self.wants_ranked_match}
   return state
   --note: player_number here is the player_number of the connection as according to the server, not the "which" of any Stack
 end
@@ -938,6 +938,10 @@ function Room.rating_adjustment_approved(self)
   if players[1].level ~= players[2].level then
     reasons[#reasons + 1] = "Levels don't match"
   end
+  
+  if players[1].inputMethod == "touch" or players[2].inputMethod == "touch" then
+    reasons[#reasons + 1] = "Touch input it not currently allowed in ranked matches"
+  end
   for player_number = 1, 2 do
     if not playerbase.players[players[player_number].user_id] or not players[player_number].logged_in or playerbase.deleted_players[players[player_number].user_id] then
       reasons[#reasons + 1] = players[player_number].name .. " didn't log in"
@@ -1332,6 +1336,7 @@ function Connection.J(self, message)
       self.stage_is_random = message.stage_is_random
       self.panels_dir = message.panels_dir
       self.level = message.level
+      self.inputMethod = (message.inputMethod or "controller")
       self.save_replays_publicly = message.save_replays_publicly
       self.wants_ranked_match = message.ranked
       lobby_changed = true
@@ -1378,6 +1383,7 @@ function Connection.J(self, message)
     end
   elseif self.state == "character select" and message.menu_state then
     self.level = message.menu_state.level
+    self.inputMethod = (message.inputMethod or "controller") --one day we will require message to include input method, but it is not this day.
     self.character = message.menu_state.character
     self.character_is_random = message.menu_state.character_is_random
     self.character_display_name = message.menu_state.character_display_name
@@ -1411,6 +1417,8 @@ function Connection.J(self, message)
         in_buf = "",
         P1_level = self.room.a.level,
         P2_level = self.room.b.level,
+        P1_inputMethod = self.room.a.inputMethod or "controller",
+        P2_inputMethod = self.room.b.inputMethod or "controller",
         P1_char = self.room.a.character,
         P2_char = self.room.b.character,
         ranked = self.room:rating_adjustment_approved(),

@@ -254,6 +254,7 @@ function network_init(ip, network_port)
   local sent_json = {
     name = config.name,
     level = config.level,
+    inputMethod = config.inputMethod or "controller",
     panels_dir = config.panels,
     character = config.character,
     character_is_random = ((config.character == random_character_special_value or characters[config.character]:is_bundle()) and config.character or nil),

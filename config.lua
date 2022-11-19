@@ -21,6 +21,7 @@ config = {
     use_music_from                = "either",
     -- Level (2P modes / 1P vs yourself mode)
     level                         = 5,
+    --purposely not defining inputMethod here so it can be decided by whether we are running a mobile OS (early in main_select_mode)
     endless_speed                 = 1,
     endless_difficulty            = 1,
     endless_level                 = nil, -- nil indicates we want to use classic difficulty
@@ -132,6 +133,9 @@ config = {
   
         if type(read_data.level) == "number" then
           configTable.level = util.bound(1, read_data.level, 10)
+        end 
+        if type(read_data.inputMethod) == "string" then
+          configTable.inputMethod = read_data.inputMethod
         end
         if type(read_data.endless_speed) == "number" then
           configTable.endless_speed = util.bound(1, read_data.endless_speed, 99)

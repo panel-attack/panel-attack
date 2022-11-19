@@ -131,6 +131,13 @@ do
         portrait_mode(config.portraitMode) --fine if we pass nil here.
       end
     end
+    if config.inputMethod == nil then
+      if mobile then
+        config.inputMethod = "touch"
+      else
+        config.inputMethod = "controller"
+      end
+    end
     CLICK_MENUS = {}
     if next(currently_playing_tracks) == nil then
       stop_the_music()

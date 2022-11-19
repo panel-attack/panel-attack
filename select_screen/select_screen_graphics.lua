@@ -6,7 +6,7 @@ local uses_stepper = {__Stage = true, __Panels = true, __Level = true}
 
 local select_screen_graphics = {
   v_align_center = {__Ready = true, __Random = true, __Leave = true},
-  is_special_value = {__Leave = true, __Level = true, __Panels = true, __Ready = true, __Stage = true, __Mode = true, __Random = true},
+  is_special_value = {__Leave = true, __Level = true, __InputMethod = true, __Panels = true, __Ready = true, __Stage = true, __Mode = true, __Random = true},
   spacing = 8,
   text_height = 13,
 
@@ -270,6 +270,13 @@ end
       else
         self:draw_match_type(self.select_screen.players[self.select_screen.my_player_number], 1, 0.5 * self.button_height)
       end
+    elseif str == "__InputMethod" then
+      if (self.select_screen:isMultiplayer()) then
+        self:draw_input_method(self.select_screen.players[self.select_screen.my_player_number], 1, 0.4 * self.button_height)
+        self:draw_input_method(self.select_screen.players[self.select_screen.op_player_number], 2, 0.7 * self.button_height)
+      else
+        self:draw_input_method(self.select_screen.players[self.select_screen.my_player_number], 1, 0.5 * self.button_height)
+      end
     elseif str == "__Panels" then
       if (self.select_screen:isMultiplayer()) then
         self:draw_panels(self.select_screen.players[self.select_screen.my_player_number], 1, 0.4 * self.button_height)
@@ -303,7 +310,7 @@ end
       pstr = str:gsub("^%l", string.upper)
     end
     if str ~= "__Empty" and str ~= "__Reserved" then
-      local loc_str = {Level = loc("level"), Mode = loc("mode"), Stage = loc("stage"), Panels = loc("panels"), Ready = loc("ready"), Random = loc("random"), Leave = loc("leave")}
+      local loc_str = {Level = loc("level"), InputMethod = loc("input"), Mode = loc("mode"), Stage = loc("stage"), Panels = loc("panels"), Ready = loc("ready"), Random = loc("random"), Leave = loc("leave")}
       local to_p = loc_str[pstr]
 
       local widthForAlignment = self.button_width
@@ -540,6 +547,20 @@ function select_screen_graphics.draw_match_type(self, player, player_number, y_p
     to_print = loc("ss_casual") .. " [" .. loc("ss_ranked") .. "]"
   else
     to_print = "[" .. loc("ss_casual") .. "] " .. loc("ss_ranked")
+  end
+  gprint(to_print, self.render_x + padding_x, self.render_y + y_padding - 0.5 * self.text_height - 1)
+end
+
+-- Draw the Controller/Touch selection UI
+function select_screen_graphics.draw_input_method(self, player, player_number, y_padding)
+  local padding_x = math.floor(0.5 *self.button_width - themes[config.theme].images.IMG_players[player_number]:getWidth() * 0.5 - 46) -- ty GIMP; no way to know the size of the text?
+  menu_drawf(themes[config.theme].images.IMG_players[player_number], self.render_x + padding_x, self.render_y + y_padding, "center", "center")
+  padding_x = padding_x + themes[config.theme].images.IMG_players[player_number]:getWidth()
+  local to_print
+  if player.inputMethod == "touch" then
+    to_print = loc("ss_controller") .. " [" .. loc("ss_touch") .. "]"
+  else
+    to_print = "[" .. loc("ss_controller") .. "] " .. loc("ss_touch")
   end
   gprint(to_print, self.render_x + padding_x, self.render_y + y_padding - 0.5 * self.text_height - 1)
 end
