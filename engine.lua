@@ -2971,7 +2971,7 @@ end
 function Stack.new_row(self)
   local panels = self.panels
   -- move cursor up
-  if (self.inputMethod == "touch" and self.cur_row ~= 0) or not self.inputMethod == "touch" then
+  if (self.inputMethod == "touch" and self.cur_row ~= 0) or self.inputMethod ~= "touch" then
     self.cur_row = util.bound(1, self.cur_row + 1, self.top_cur_row)
   end
   if self.panel_first_touched and self.panel_first_touched.row 
