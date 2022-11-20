@@ -159,7 +159,7 @@ function start_match(a, b)
     ranked = false,
     stage = a.room.stage,
     player_settings = {character = a.character, character_display_name = a.character_display_name, level = a.level, inputMethod = (a.inputMethod or "controller"), panels_dir = a.panels_dir, player_number = a.player_number},
-    opponent_settings = {character = b.character, character_display_name = b.character_display_name, level = b.level, inputMethod = (b.inputMethod or "controller", panels_dir = b.panels_dir, player_number = b.player_number}
+    opponent_settings = {character = b.character, character_display_name = b.character_display_name, level = b.level, inputMethod = (b.inputMethod or "controller"), panels_dir = b.panels_dir, player_number = b.player_number}
   }
   local room_is_ranked, reasons = a.room:rating_adjustment_approved()
   if room_is_ranked then
@@ -308,7 +308,7 @@ function Room.add_spectator(self, new_spectator_connection)
     stage = self.stage,
     replay_of_match_so_far = self.replay,
     ranked = self:rating_adjustment_approved(),
-    player_settings = {character = self.a.character, character_display_name = self.a.character_display_name, level = self.a.level, inputMethod = (self.a.inputMethod or "controller", player_number = self.a.player_number},
+    player_settings = {character = self.a.character, character_display_name = self.a.character_display_name, level = self.a.level, inputMethod = (self.a.inputMethod or "controller"), player_number = self.a.player_number},
     opponent_settings = {character = self.b.character, character_display_name = self.b.character_display_name, level = self.b.level, inputMethod = (self.b.inputMethod or "controller"), player_number = self.b.player_number}
   }
   if COMPRESS_SPECTATOR_REPLAYS_ENABLED then

@@ -19,7 +19,7 @@ function Replay.loadFromPath(path)
     replay = {}
     replay = json.decode(file)
     if not replay.engineVersion then
-        replay.engineVersion = "046"
+        replay.engineVersion = "049"
     end
 
     return true
@@ -36,11 +36,11 @@ function Replay.loadFromFile(replay)
     assert(replay.seed, "invalid replay: seed must be set")
     GAME.match.seed = replay.seed
     GAME.match.isFromReplay = true
-    P1 = Stack{which=1, match=GAME.match, is_local=false, level=replay.P1_level, inputMethod=(replay.inputMethod) or "controller", character=replay.P1_char}
+    P1 = Stack{which=1, match=GAME.match, is_local=false, level=replay.P1_level, inputMethod=(replay.P1_inputMethod) or "controller", character=replay.P1_char}
 
     if replay.I and string.len(replay.I) > 0 then
       assert(replay.P2_level, "invalid replay: player 1 level missing from vs replay")
-      P2 = Stack{which=2, match=GAME.match, is_local=false, level=replay.P2_level, character=replay.P2_char, inputMethod=(replay.inputMethod) or "controller"}
+      P2 = Stack{which=2, match=GAME.match, is_local=false, level=replay.P2_level, character=replay.P2_char, inputMethod=(replay.P2_inputMethod) or "controller"}
       
       P1:set_garbage_target(P2)
       P2:set_garbage_target(P1)
@@ -81,7 +81,6 @@ function Replay.loadFromFile(replay)
     GAME.match.P1 = P1
     P1:wait_for_random_character()
   end
-  ----to do: save stack's input method to replay
   if P1.inputMethod == "touch" then
     P1:receiveConfirmedInput(replay.in_buf)
   else

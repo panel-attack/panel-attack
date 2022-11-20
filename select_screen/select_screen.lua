@@ -559,7 +559,7 @@ function select_screen.initializeFromMenuState(self, playerNumber, menuState)
   self.players[playerNumber].character = characters[menuState.character] and menuState.character or nil
   self.players[playerNumber].selectedCharacter = menuState.character_is_random and menuState.character_is_random or menuState.character
   self.players[playerNumber].level = menuState.level
-  self.players[playerNumber].level = menuState.inputMethod
+  self.players[playerNumber].inputMethod = menuState.inputMethod
   self.players[playerNumber].panels_dir = menuState.panels_dir
   self.players[playerNumber].ready = false
   self.players[playerNumber].wants_ready = menuState.wants_ready or false
