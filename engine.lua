@@ -309,6 +309,8 @@ function Stack.divergenceString(stackToTest)
 end
 
 -- Backup important variables into the passed in variable to be restored in rollback. Note this doesn't do a full copy.
+-- param source the stack to copy from
+-- param other the variable to copy to
 function Stack.rollbackCopy(self, source, other)
   if other == nil then
     if #clone_pool == 0 then
@@ -859,9 +861,9 @@ end
 
 function Stack.has_falling_garbage(self)
   for i = 1, self.height + 3 do --we shouldn't have to check quite 3 rows above height, but just to make sure...
-    local prow = self.panels[i]
+    local panelRow = self.panels[i]
     for j = 1, self.width do
-      if prow and prow[j].garbage and prow[j].state == "falling" then
+      if panelRow and panelRow[j].garbage and panelRow[j].state == "falling" then
         return true
       end
     end
@@ -1083,7 +1085,6 @@ function Stack.simulate(self)
     local panels = self.panels
     local width = self.width
     local height = self.height
-    local prow = nil
     local panel = nil
     local swapped_this_frame = nil
     if self.do_countdown then
@@ -1156,33 +1157,37 @@ function Stack.simulate(self)
     self.panels_in_top_row = false
     local top_row = self.height
     --self.displacement%16==0 and self.height or self.height-1
-    prow = panels[top_row]
-    for idx = 1, width do
-      if prow[idx]:dangerous() then
-        self.panels_in_top_row = true
+    do
+      local panelRow = panels[top_row]
+      for idx = 1, width do
+        if panelRow[idx]:dangerous() then
+          self.panels_in_top_row = true
+        end
       end
     end
 
     -- calculate which columns should bounce
-    self.danger = false
-    prow = panels[self.height - 1]
-    for idx = 1, width do
-      if prow[idx]:dangerous() then
-        self.danger = true
-        self.danger_col[idx] = true
-      else
-        self.danger_col[idx] = false
+    do
+      self.danger = false
+      local panelRow = panels[self.height - 1]
+      for idx = 1, width do
+        if panelRow[idx]:dangerous() then
+          self.danger = true
+          self.danger_col[idx] = true
+        else
+          self.danger_col[idx] = false
+        end
       end
-    end
-    if self.danger then
-      if self.panels_in_top_row and self.speed ~= 0 and self.match.mode ~= "puzzle" then
-        -- Player has topped out, panels hold the "flattened" frame
-        self.danger_timer = 15
-      elseif self.stop_time == 0 then
-        self.danger_timer = self.danger_timer - 1
-      end
-      if self.danger_timer < 0 then
-        self.danger_timer = 17
+      if self.danger then
+        if self.panels_in_top_row and self.speed ~= 0 and self.match.mode ~= "puzzle" then
+          -- Player has topped out, panels hold the "flattened" frame
+          self.danger_timer = 15
+        elseif self.stop_time == 0 then
+          self.danger_timer = self.danger_timer - 1
+        end
+        if self.danger_timer < 0 then
+          self.danger_timer = 17
+        end
       end
     end
 
@@ -1191,9 +1196,9 @@ function Stack.simulate(self)
     -- and to play casual when nothing in top 3 or 4 rows
     if not self.danger_music then
       -- currently playing casual
-      for _, prow in pairs({panels[self.height], panels[self.height - 1], panels[self.height - 2]}) do
+      for _, panelRow in pairs({panels[self.height], panels[self.height - 1], panels[self.height - 2]}) do
         for idx = 1, width do
-          if prow[idx].color ~= 0 and prow[idx].state ~= "falling" or prow[idx]:dangerous() then
+          if panelRow[idx].color ~= 0 and panelRow[idx].state ~= "falling" or panelRow[idx]:dangerous() then
             self.danger_music = true
             break
           end
@@ -1211,10 +1216,10 @@ function Stack.simulate(self)
       if (config.danger_music_changeback_delay) then
         table.insert(changeback_rows, panels[self.height - 3])
       end
-      for _, prow in pairs(changeback_rows) do
-        if prow ~= nil and type(prow) == "table" then
+      for _, panelRow in pairs(changeback_rows) do
+        if panelRow ~= nil and type(panelRow) == "table" then
           for idx = 1, width do
-            if prow[idx].color ~= 0 then
+            if panelRow[idx].color ~= 0 then
               toggle_back = false
               break
             end
@@ -1353,11 +1358,11 @@ function Stack.simulate(self)
             end
           elseif (panel.state == "normal" or panel.state == "falling") then
             if panel.x_offset == 0 then
-              local prow = panels[row - 1]
+              local panelRow = panels[row - 1]
               local supported = false
               if panel.y_offset == 0 then
                 for i = col, col + panel.width - 1 do
-                  supported = supported or prow[i]:support_garbage()
+                  supported = supported or panelRow[i]:support_garbage()
                 end
               else
                 supported = not propogate_fall[col]
@@ -1746,7 +1751,7 @@ function Stack.simulate(self)
     --   local spawn_col = cols[cols.idx]
     --   local spawn_row = #self.panels
     --   for idx=spawn_col, spawn_col+next_garbage_block_width-1 do
-    --     if prow[idx]:dangerous() then 
+    --     if panelRow[idx]:dangerous() then 
     --       garbage_fits_in_populated_top_row = nil
     --     end
     --   end
@@ -2277,9 +2282,9 @@ function Stack.remove_extra_rows(self)
   local width = self.width
   for row = #panels, self.height + 1, -1 do
     local nonempty = false
-    local prow = panels[row]
+    local panelRow = panels[row]
     for col = 1, width do
-      nonempty = nonempty or (prow[col].color ~= 0)
+      nonempty = nonempty or (panelRow[col].color ~= 0)
     end
     if nonempty then
       break
