@@ -79,6 +79,9 @@ function Stack.draw_cards(self)
       -- draw card
       local iconSize = 48 / GFX_SCALE
       local cardImage = themes[config.theme].images.IMG_cards[card.chain][card.n]
+      if cardImage == nil then
+       cardImage = themes[config.theme].images.IMG_cards[card.chain][0]
+      end
       local icon_width, icon_height = cardImage:getDimensions()
       local fade = 1 - math.min(0.5 * ((card.frame-1) / 22), 0.5)
       set_color(1, 1, 1, fade)
@@ -895,8 +898,12 @@ function Stack.render(self)
     for i = 2, themes[config.theme].chainCardLimit + 1 do
       local chain_amount = chainData[i]
       if chain_amount and chain_amount > 0 then
-        icon_width, icon_height = themes[config.theme].images.IMG_cards[true][i]:getDimensions()
-        draw(themes[config.theme].images.IMG_cards[true][i], x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+        local cardImage = themes[config.theme].images.IMG_cards[true][i]
+        if cardImage == nil then
+          cardImage = themes[config.theme].images.IMG_cards[true][0]
+        end
+        icon_width, icon_height = cardImage:getDimensions()
+        draw(cardImage, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
         gprintf(chain_amount, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
         y = y + nextIconIncrement
       end
