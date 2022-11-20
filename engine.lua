@@ -226,6 +226,15 @@ Stack =
     s.totalFramesBehind = 0
     s.warningsTriggered = {}
 
+    s.time_quads = {}
+    s.move_quads = {}
+    s.score_quads = {}
+    s.speed_quads = {}
+    s.level_quad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images["IMG_levelNumber_atlas" .. s.id]:getWidth() / 11, themes[config.theme].images["IMG_levelNumber_atlas" .. s.id]:getHeight(), themes[config.theme].images["IMG_levelNumber_atlas" .. s.id]:getDimensions())
+    s.healthQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight(), themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight())
+    s.multi_prestopQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_prestop_bar:getWidth(), themes[config.theme].images.IMG_multibar_prestop_bar:getHeight(), themes[config.theme].images.IMG_multibar_prestop_bar:getWidth(), themes[config.theme].images.IMG_multibar_prestop_bar:getHeight())
+    s.multi_stopQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_stop_bar:getWidth(), themes[config.theme].images.IMG_multibar_stop_bar:getHeight(), themes[config.theme].images.IMG_multibar_stop_bar:getWidth(), themes[config.theme].images.IMG_multibar_stop_bar:getHeight())
+    s.multi_shakeQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight(), themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight())
   end)
 
 function Stack.setLevel(self, level)
@@ -247,6 +256,29 @@ function Stack.setLevel(self, level)
   else
     self.NCOLORS = level_to_ncolors_vs[level]
   end
+end
+
+-- Should be called prior to clearing the stack.
+-- Consider recycling any memory that might leave around a lot of garbage.
+-- Note: You can just leave the variables to clear / garbage collect on their own if they aren't large.
+function Stack:deinit()
+  for _, quad in ipairs(self.time_quads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  for _, quad in ipairs(self.move_quads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  for _, quad in ipairs(self.score_quads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  for _, quad in ipairs(self.speed_quads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  GraphicsUtil:releaseQuad(self.level_quad)
+  GraphicsUtil:releaseQuad(self.healthQuad)
+  GraphicsUtil:releaseQuad(self.multi_prestopQuad)
+  GraphicsUtil:releaseQuad(self.multi_stopQuad)
+  GraphicsUtil:releaseQuad(self.multi_shakeQuad)
 end
 
 -- Positions the stack draw position for the given player
@@ -1026,12 +1058,12 @@ function Stack.enqueue_card(self, chain, x, y, n)
     return
   end
 
-  card_burstAtlas = nil
-  card_burstParticle = nil
+  local card_burstAtlas = nil
+  local card_burstParticle = nil
   if config.popfx == true then
     card_burstAtlas = characters[self.character].images["burst"]
-    card_burstFrameDimension = card_burstAtlas:getWidth() / 9
-    card_burstParticle = love.graphics.newQuad(card_burstFrameDimension, 0, card_burstFrameDimension, card_burstFrameDimension, card_burstAtlas:getDimensions())
+    local card_burstFrameDimension = card_burstAtlas:getWidth() / 9
+    card_burstParticle = GraphicsUtil:newRecycledQuad(card_burstFrameDimension, 0, card_burstFrameDimension, card_burstFrameDimension, card_burstAtlas:getDimensions())
   end
   self.card_q:push({frame = 1, chain = chain, x = x, y = y, n = n, burstAtlas = card_burstAtlas, burstParticle = card_burstParticle})
 end
@@ -1042,18 +1074,24 @@ function Stack.enqueue_popfx(self, x, y, popsize)
     return
   end
 
+  local burstAtlas = nil
+  local burstFrameDimension = nil
+  local burstParticle = nil
+  local bigParticle = nil
+  local fadeAtlas = nil
+  local fadeFrameDimension = nil
+  local fadeParticle = nil
   if characters[self.character].images["burst"] then
     burstAtlas = characters[self.character].images["burst"]
     burstFrameDimension = burstAtlas:getWidth() / 9
-    burstParticle = love.graphics.newQuad(burstFrameDimension, 0, burstFrameDimension, burstFrameDimension, burstAtlas:getDimensions())
-    bigParticle = love.graphics.newQuad(0, 0, burstFrameDimension, burstFrameDimension, burstAtlas:getDimensions())
+    burstParticle = GraphicsUtil:newRecycledQuad(burstFrameDimension, 0, burstFrameDimension, burstFrameDimension, burstAtlas:getDimensions())
+    bigParticle = GraphicsUtil:newRecycledQuad(0, 0, burstFrameDimension, burstFrameDimension, burstAtlas:getDimensions())
   end
   if characters[self.character].images["fade"] then
     fadeAtlas = characters[self.character].images["fade"]
     fadeFrameDimension = fadeAtlas:getWidth() / 9
-    fadeParticle = love.graphics.newQuad(fadeFrameDimension, 0, fadeFrameDimension, fadeFrameDimension, fadeAtlas:getDimensions())
+    fadeParticle = GraphicsUtil:newRecycledQuad(fadeFrameDimension, 0, fadeFrameDimension, fadeFrameDimension, fadeAtlas:getDimensions())
   end
-  poptype = "small"
   self.pop_q:push(
     {
       frame = 1,

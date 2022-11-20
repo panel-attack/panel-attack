@@ -146,6 +146,10 @@ function select_screen_graphics.drawPagingIndicator(self)
   end
 end
 
+local lastLinesLabelQuads = {}
+local lastLinesQuads = {}
+local recordLabelQuads = {}
+local recordQuads = {}
 function select_screen_graphics.draw1pRecords(self)
   -- Draw the current score and record
   if self.select_screen.character_select_mode == "1p_vs_yourself" and not GAME.battleRoom.trainingModeSettings then
@@ -154,10 +158,10 @@ function select_screen_graphics.draw1pRecords(self)
     local yPosition = 24
     local lastScore = tostring(GAME.scores:lastVsScoreForLevel(self.select_screen.players[self.select_screen.my_player_number].level))
     local record = tostring(GAME.scores:recordVsScoreForLevel(self.select_screen.players[self.select_screen.my_player_number].level))
-    draw_pixel_font("last lines", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition, 0.5, 1.0)
-    draw_pixel_font(lastScore,    themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition + 24, 0.5, 1.0)
-    draw_pixel_font("record",     themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition, 0.5, 1.0)
-    draw_pixel_font(record,       themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition + 24, 0.5, 1.0)
+    draw_pixel_font("last lines", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition, 0.5, 1.0, nil, nil, lastLinesLabelQuads)
+    draw_pixel_font(lastScore,    themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition + 24, 0.5, 1.0, nil, nil, lastLinesQuads)
+    draw_pixel_font("record",     themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition, 0.5, 1.0, nil, nil, recordLabelQuads)
+    draw_pixel_font(record,       themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition + 24, 0.5, 1.0, nil, nil, recordQuads)
   end
 end
 

@@ -35,6 +35,20 @@ Match =
   end
 )
 
+-- Should be called prior to clearing the match.
+-- Consider recycling any memory that might leave around a lot of garbage.
+-- Note: You can just leave the variables to clear / garbage collect on their own if they aren't large.
+function Match:deinit()
+  if self.P1 then
+    self.P1:deinit()
+    self.P1 = nil
+  end
+  if self.P2 then
+    self.P2:deinit()
+    self.P2 = nil
+  end
+end
+
 function Match:gameEndedClockTime()
 
   local result = self.P1.game_over_clock
@@ -424,6 +438,14 @@ function Match.render(self)
       drawY = drawY + padding
       gprintf("gameEndedClockTime " .. gameEndedClockTime, drawX, drawY)
     end
+
+    -- drawY = drawY + padding
+    -- local memoryCount = collectgarbage("count")
+    -- memoryCount = round(memoryCount / 1000, 1)
+    -- gprintf("Memory " .. memoryCount .. " MB", drawX, drawY)
+
+    -- drawY = drawY + padding
+    -- gprintf("quadPool " .. #GraphicsUtil.quadPool, drawX, drawY)
 
     if P2 then 
       drawX = 800
