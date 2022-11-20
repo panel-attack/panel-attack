@@ -918,7 +918,7 @@ function select_screen.start2pLocalMatch(self)
   GAME.match = Match("vs", GAME.battleRoom)
   P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, inputMethod = config.inputMethod, character = self.players[self.my_player_number].character, player_number = 1}
   GAME.match.P1 = P1
-  P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, input_method = "controller", character = self.players[self.op_player_number].character, player_number = 2}
+  P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, inputMethod = "controller", character = self.players[self.op_player_number].character, player_number = 2}
   --note: local P2 not currently allowed to use "touch" input method
   GAME.match.P2 = P2
   P1:set_garbage_target(P2)
