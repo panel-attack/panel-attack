@@ -82,7 +82,7 @@ function Telegraph.saveClone(toSave)
   clone_pool[#clone_pool + 1] = toSave
 end
 
-function Telegraph.rollbackCopy(self, source, other)
+function Telegraph.rollbackCopy(source, other)
   if other == nil then
     if #clone_pool == 0 then
       other = Telegraph(source.sender, source.owner)
