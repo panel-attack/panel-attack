@@ -231,6 +231,7 @@ function Theme.graphics_init(self)
       if self.images.IMG_cards[true][i] == nil then
         endOfChainCardsReached = true
         self.images.IMG_cards[true][i] = self.images.IMG_cards[true][0]
+        self.chainCardLimit = i - 1
       end
     end
   end

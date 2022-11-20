@@ -873,16 +873,16 @@ function Stack.render(self)
   
     -- Clean up the chain data so we only show chains up to the highest chain the user has done
     local chainData = {}
-    local chain_above_13 = analytic:compute_above_13()
+    local chain_above_limit = analytic:compute_above_chain_card_limit()
   
-    for i = 2, 13, 1 do
+    for i = 2, themes[config.theme].chainCardLimit, 1 do
       if not analytic.data.reached_chains[i] then
         chainData[i] = 0
       else
         chainData[i] = analytic.data.reached_chains[i]
       end
     end
-    table.insert(chainData, chain_above_13)
+    table.insert(chainData, chain_above_limit)
     for i = #chainData, 0, -1 do
       if chainData[i] and chainData[i] == 0 then
         chainData[i] = nil
@@ -892,7 +892,7 @@ function Stack.render(self)
     end
   
     -- Draw the chain images
-    for i = 2, 14 do
+    for i = 2, themes[config.theme].chainCardLimit + 1 do
       local chain_amount = chainData[i]
       if chain_amount and chain_amount > 0 then
         icon_width, icon_height = themes[config.theme].images.IMG_cards[true][i]:getDimensions()
