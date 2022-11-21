@@ -186,7 +186,7 @@ do
       --{loc("mm_2_vs_online", "(USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)"), main_net_vs_setup, {"18.188.43.50"}},
       --{loc("mm_2_vs_online", "This test build is for offline-use only"), main_select_mode},
       --{loc("mm_2_vs_online", "domi1819.xyz"), main_net_vs_setup, {"domi1819.xyz"}},
-      {loc("mm_2_vs_online", "(development-use only)"), main_net_vs_setup, {"localhost"}},
+      --{loc("mm_2_vs_online", "(development-use only)"), main_net_vs_setup, {"localhost"}},
       --{loc("mm_2_vs_online", "LittleEndu's server"), main_net_vs_setup, {"51.15.207.223"}},
       --{loc("mm_2_vs_online", "server for ranked Ex Mode"), main_net_vs_setup, {"exserver.panelattack.com", 49568}},
       {loc("mm_2_vs_local"), main_local_vs_setup},
