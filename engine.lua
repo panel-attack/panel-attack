@@ -28,6 +28,7 @@ Stack =
     -- level or difficulty should be set
     assert(arguments.level ~= nil or arguments.difficulty ~= nil)
     local level = arguments.level
+    local inputMethod = arguments.inputMethod
     local difficulty = arguments.difficulty
     local speed = arguments.speed
     local player_number = arguments.player_number or which
@@ -90,7 +91,7 @@ Stack =
     
     s.inputMethod = inputMethod or (which == 1 and config.inputMethod) or "controller" --"touch" or "controller"
     s.buttons = {}
-    s.buttons.raise = Button({label = "Raise", x = 400, y = 500, width = DEFAULT_TOUCH_RAISE_BUTTON_SIZE.width, height = DEFAULT_TOUCH_RAISE_BUTTON_SIZE.height, onClick = function() end--[[no sound affect, nothing--]], isVisible = (s.inputMethod == "touch")})  -- to do: localize "Raise"
+    s.buttons.raise = Button({label = "Raise", x = 400, y = 500, width = DEFAULT_TOUCH_RAISE_BUTTON_SIZE.width, height = DEFAULT_TOUCH_RAISE_BUTTON_SIZE.height, onClick = function() end--[[no sound affect, nothing--]], isVisible = s.is_local and (s.inputMethod == "touch")})  -- to do: localize "Raise"
     s.raise_touched = false
     
     --touch variables
@@ -251,6 +252,7 @@ Stack =
     s.framesBehindArray = {}
     s.totalFramesBehind = 0
     s.warningsTriggered = {}
+    print("stack which="..s.which.."created with input:"..s.inputMethod)
     
 
   end)

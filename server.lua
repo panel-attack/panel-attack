@@ -1383,7 +1383,7 @@ function Connection.J(self, message)
     end
   elseif self.state == "character select" and message.menu_state then
     self.level = message.menu_state.level
-    self.inputMethod = (message.inputMethod or "controller") --one day we will require message to include input method, but it is not this day.
+    self.inputMethod = (message.menu_state.inputMethod or "controller") --one day we will require message to include input method, but it is not this day.
     self.character = message.menu_state.character
     self.character_is_random = message.menu_state.character_is_random
     self.character_display_name = message.menu_state.character_display_name

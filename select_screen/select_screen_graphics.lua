@@ -192,7 +192,6 @@ end
       end
       if not self.select_screen.buttons[x][y] then
         local _x, _y = x, y
-        print("creating button at x,y="..x..","..y)
         self.select_screen.buttons[x][y] = Button({x = self.render_x, y = self.render_y, width = self.button_width, height = self.button_height,  backgroundColor = {0,0,0,0}, onClick = function() self.select_screen.unhandled_click = {x,y} end})
         self.select_screen.all_buttons:addChild(self.select_screen.buttons[x][y])
         if uses_stepper[self.select_screen:getTemplateMap(self)

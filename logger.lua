@@ -9,7 +9,7 @@ local INFO = 2
 local WARN = 3
 local ERROR = 4
 
-local LOG_LEVEL = TRACE
+local LOG_LEVEL = WARN
 
 function logger.trace(msg)
     if LOG_LEVEL <= TRACE then
@@ -47,7 +47,7 @@ function direct_log(prefix, msg)
     -- Lua date format strings reference: https://www.lua.org/pil/22.1.html
     -- %x - Date
     -- %X - Time
-    local message = os.date("%x %X") .. "." .. socket_millis .. " " .. prefix .. ": " .. msg
+    local message = os.date("%x %X") .. "." .. socket_millis .. " " .. prefix .. ": " .. (msg or "nil") -- or "nil" for the sake of not crashing the server if we try to log nil.
     print(message)
     -- note the space in the string below is on purpose
     if SERVER_MODE == nil and (prefix == "ERROR" or prefix == " WARN") then
