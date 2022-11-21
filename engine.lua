@@ -2418,6 +2418,7 @@ function Stack.set_game_over(self)
       end
     end
   end
+  self.buttons.raise:setVisibility(false)
 end
 
 -- Randomly returns a win sound if the character has one
