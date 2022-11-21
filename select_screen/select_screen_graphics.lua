@@ -56,7 +56,7 @@ function select_screen_graphics.drawPlayerInfo(self)
   assert(GAME.battleRoom, "need battle room")
   assert(self.select_screen.my_player_number and (self.select_screen.my_player_number == 1 or self.select_screen.my_player_number == 2), "need number")
   local my_rating_difference, op_rating_difference = self:calculateRatingDiffBetweenGames()
-  local includeWinRatio = self.select_screen.players[self.select_screen.my_player_number].level == self.select_screen.players[self.select_screen.op_player_number].level
+  local includeWinRatio = self.select_screen.op_player_number and self.select_screen.players[self.select_screen.my_player_number].level == self.select_screen.players[self.select_screen.op_player_number].level
   self:drawButton(0, 2, 2, 1, self:get_player_state_str(self.select_screen.my_player_number, includeWinRatio, my_rating_difference, self.select_screen.my_expected_win_ratio), "left", "top", true)
   if self.select_screen.players[self.select_screen.my_player_number] and GAME.battleRoom.playerNames[2] then
     self:drawButton(0, 7, 1, 1, "P2", "center")

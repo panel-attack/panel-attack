@@ -343,7 +343,7 @@ end
 -- Backup important variables into the passed in variable to be restored in rollback. Note this doesn't do a full copy.
 -- param source the stack to copy from
 -- param other the variable to copy to
-function Stack.rollbackCopy(self, source, other)
+function Stack.rollbackCopy(source, other)
   if other == nil then
     if #clone_pool == 0 then
       other = {}
@@ -368,13 +368,13 @@ function Stack.rollbackCopy(self, source, other)
   other.later_garbage = deepcpy(source.later_garbage)
   other.garbage_q = source.garbage_q:makeCopy()
   if source.telegraph then
-    other.telegraph = source.telegraph:rollbackCopy(source.telegraph, other.telegraph)
+    other.telegraph = Telegraph.rollbackCopy(source.telegraph, other.telegraph)
   end
   local width = source.width or other.width
   local height_to_cpy = #source.panels
   other.panels = other.panels or {}
   local startRow = 1
-  if self.panels[0] then
+  if source.panels[0] then
     startRow = 0
   end
   for i = startRow, height_to_cpy do
@@ -451,7 +451,7 @@ function Stack.rollbackCopy(self, source, other)
 end
 
 function Stack.restoreFromRollbackCopy(self, other)
-  self:rollbackCopy(other, self)
+  Stack.rollbackCopy(other, self)
   if self.telegraph then
     self.telegraph.owner = self.garbage_target
     self.telegraph.sender = self
@@ -531,7 +531,7 @@ function Stack.saveForRollback(self)
   self.garbage_target = nil
   self.prev_states = nil
   self:remove_extra_rows()
-  prev_states[self.CLOCK] = self:rollbackCopy(self)
+  prev_states[self.CLOCK] = Stack.rollbackCopy(self)
   self.prev_states = prev_states
   self.garbage_target = garbage_target
   local deleteFrame = self.CLOCK - MAX_LAG - 1
@@ -1116,7 +1116,7 @@ local d_col = {up = 0, down = 0, left = -1, right = 1}
 local d_row = {up = 1, down = -1, left = 0, right = 0}
 
 function Stack.hasPanelsInTopRow(self)
-  local panelRow = panels[self.height]
+  local panelRow = self.panels[self.height]
   for idx = 1, self.width do
     if panelRow[idx]:dangerous() then
       return true
