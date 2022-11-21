@@ -40,6 +40,10 @@ function BattleRoom.winningPlayer(self)
   return P2
 end
 
+function BattleRoom.getPlayerWinCount(self, playerNumber)
+ return self.playerWinCounts[playerNumber] + self.modifiedWinCounts[playerNumber]
+end
+
 function BattleRoom.matchOutcome(self)
   
   local gameResult = P1:gameResult()
