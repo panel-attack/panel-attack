@@ -212,13 +212,22 @@ function Theme.graphics_init(self)
   for i = 4, 66 do
     self.images.IMG_cards[false][i] = load_theme_img("combo/combo" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "")
   end
+  -- mystery chain
+  self.images.IMG_cards[true][0] = load_theme_img("chain/chain00")
   for i = 2, 13 do
+    -- with backup from default theme
     self.images.IMG_cards[true][i] = load_theme_img("chain/chain" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "")
   end
-
-  self.images.IMG_cards[true][14] = load_theme_img("chain/chain00")
-  for i = 15, 99 do
-    self.images.IMG_cards[true][i] = self.images.IMG_cards[true][14]
+  -- load as many more chain cards as there are available until 99, we will substitue in the mystery card if a card is missing
+  self.chainCardLimit = 99
+  for i = 14, 99 do
+    -- without backup from default theme
+    self.images.IMG_cards[true][i] = load_theme_img("chain/chain" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "", false)
+    if self.images.IMG_cards[true][i] == nil then
+      self.images.IMG_cards[true][i] = self.images.IMG_cards[true][0]
+      self.chainCardLimit = i - 1
+      break
+    end
   end
 
   local MAX_SUPPORTED_PLAYERS = 2
