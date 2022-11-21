@@ -224,7 +224,7 @@ function Theme.graphics_init(self)
     -- without backup from default theme
     self.images.IMG_cards[true][i] = load_theme_img("chain/chain" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "", false)
     if self.images.IMG_cards[true][i] == nil then
-      self.images.IMG_cards[true][i] = self.images.IMG_cards[true][0]
+      setmetatable(self.images.IMG_cards[true],{__index = function () return self.images.IMG_cards[true][0] end}) -- set table default
       self.chainCardLimit = i - 1
       break
     end
