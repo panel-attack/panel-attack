@@ -413,6 +413,15 @@ function Stack.send_controls(self)
       irow_touched = 0
       icol_touched = 0
     end
+    if love.mouse.isDown(2) then
+      --if using right mouse button on the stack, we are inputting "raise"
+      --also works if we have left mouse buttoned the stack, dragged off, are still holding left mouse button, and then also hold down right mouse button.
+      if self.touched or mx >= self.pos_x * GFX_SCALE and mx <= (self.pos_x * GFX_SCALE) + (self.width * 16) * self.gfx_scale and
+      my >= self.pos_y * GFX_SCALE and my <= (self.pos_y * GFX_SCALE) + (self.height* 16) * self.gfx_scale then
+        iraise = true
+      end
+    end
+    
     -- if not(irow_touched == 0 and icol_touched == 0) then
       -- print("touched panel: "..irow_touched..","..icol_touched)
     -- end
