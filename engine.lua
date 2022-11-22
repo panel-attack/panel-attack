@@ -91,7 +91,7 @@ Stack =
     
     s.inputMethod = inputMethod or (which == 1 and config.inputMethod) or "controller" --"touch" or "controller"
     s.buttons = {}
-    s.buttons.raise = Button({label = "Raise", x = 400, y = 500, width = DEFAULT_TOUCH_RAISE_BUTTON_SIZE.width, height = DEFAULT_TOUCH_RAISE_BUTTON_SIZE.height, onClick = function() end--[[no sound affect, nothing--]], isVisible = s.is_local and (s.inputMethod == "touch")})  -- to do: localize "Raise"
+    s.buttons.raise = Button({label = loc("raise"), x = 400, y = 500, width = DEFAULT_TOUCH_RAISE_BUTTON_SIZE.width, height = DEFAULT_TOUCH_RAISE_BUTTON_SIZE.height, onClick = function() end--[[no sound affect, nothing--]], isVisible = s.is_local and (s.inputMethod == "touch")})  -- to do: localize "Raise"
     s.raise_touched = false
     
     --touch variables

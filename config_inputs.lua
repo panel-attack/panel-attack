@@ -43,6 +43,11 @@ local function main_config_input()
       table.insert(idxs_to_set, i + 1)
     end
   end
+  
+  local function toggleInput()
+    config.inputMethod = ((config.inputMethod == "controller") and "touch") or "controller"
+    input_menu:set_button_setting(#input_menu.buttons-1, loc("ss_"..config.inputMethod))
+  end
 
   local function goEscape()
     input_menu:set_active_idx(#input_menu.buttons)
@@ -63,6 +68,8 @@ local function main_config_input()
       clickMenu:set_button_setting(#clickMenu.buttons, cleanString)
     end
     clickMenu:add_button(loc("op_all_keys") .. " ", selectAllKeys, goEscape)
+    clickMenu:add_button(loc("input") .. " ", toggleInput, goEscape) 
+    clickMenu:set_button_setting(#clickMenu.buttons, loc("ss_"..config.inputMethod))
     clickMenu:add_button(loc("back") .. " ", mainMenu, mainMenu)
 
     return clickMenu

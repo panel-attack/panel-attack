@@ -4,7 +4,7 @@ back,Return to previous thing,Back,Retour,Voltar,戻る,Volver,Zurück,Indietro
 difficulty,,Difficulty,Difficulté,Dificuldade,難易度,Dificultad,Schwierigkeit,Difficoltà
 easy,,Easy,Facile,Fácil,EASY,Fácil,Leicht,Facile
 hard,,Hard,Difficile,Difícil,HARD,Difícil,Schwer,Difficile
-input,as in �type of input method� ie �touch� or �controller�,Input,Input,Input,Input,Input,Input,Input
+input,as in �type of input method� ie �touch� or �controller�,Input,Saisir,Entrada,??,Aporte,Eingang,Ingresso
 level,,Level,Niveau,Nível,LV,Nivel,Level,Livello
 randomColors,Option to randomize panel colors,Random Colors,Couleurs aléatoires,Cores aleatórias,ランダムな色,Colores al azar,Zufällige Farben,Colori casuali
 normal,,Normal,Normal,Normal,NORMAL,Normal,Normal,Normale
@@ -20,6 +20,7 @@ down,,Down,Bas,Baixo,下,Abajo,runter,Giù
 left,,Left,Gauche,Esquerda,左,Izquierda,links,Sinistra
 right,,Right,Droite,Direita,右,Derecha,rechts,Destra
 start,,Start,Start,Começar,START,Empezar,Start,Avvio
+raise,button used to raise the stack,Raise,Soulever,Levantar,???,Elevar,Heben,Aumentare
 player,,Player,Joueur,Jogador,プレイヤー,Jugador,Spieler,Giocatore
 player_n,,Player %1,Joueur %1,Jogador %1,プレイヤー%1,Jugador %1,Spieler %1,Giocatore %1
 page,,Page,Page,Página,ページ,Página,Seite,Pagina
@@ -434,7 +435,7 @@ em %2","スコア %1
 en %2",Du hast in %2 %1 Punkte erzielt,"Il tuo punteggio è %1
 in 2%"
 ss_casual,,Casual,Normal,Casual,カジュアル,Casual,Normal,Normale
-ss_controller,Type of input method � controller,Controller,Controller,Controller,Controller,Controller,Controller,Controller
+ss_controller,Type of input method � controller,Controller,Manette,Controlador,??????,Controlador,Regler,Controller
 ss_current_rating,,current:,courant :,atual:,現在：,Actual:,derzeitig:,corrente:
 ss_disconnect,,Disconnected from server.,Vous êtes deconnecté du serveur.,Desconectado do servidor.,サーバーから切断されました。,Desconectado del servidor.,Verbindung zum Server verloren.,Disconnesso dal server.
 ss_room_closed_in_game,Message shown when room closes mid game,"The connection to the match was lost. Usually this happens due to an unstable network connection from one of the players, but this could also be a bug or crash.","La connexion au match a été perdue. usuellement, cela se produit en raison d'une connexion réseau instable de l'un des joueurs, mais cela pourrait également être un bug ou un crash.","A conexão com a partida foi perdida. usoramente isso acontece devido a uma conexão de rede instável de um dos jogadores, mas isso também pode ser um bug ou acidente.",試合への接続が失われました。USLAVEこれは、プレーヤーの1つからの不安定なネットワーク接続が原因で起こりますが、これもバグやクラッシュになる可能性があります。,"La conexión con el partido se perdió. usualmente esto sucede debido a una conexión de red inestable de uno de los jugadores, pero esto también podría ser un error o un choque.","Die Verbindung zum Spiel war verloren. usuell passiert dies aufgrund einer instabilen Netzwerkverbindung von einem der Spieler, aber dies könnte auch ein Fehler oder ein Absturz sein.","La connessione alla partita è stata persa. usualmente ciò accade a causa di una connessione di rete instabile da uno dei giocatori, ma questo potrebbe anche essere un bug o un incidente."
@@ -452,7 +453,7 @@ ss_p_wins,,%1 wins,%1 gagne,%1 vence,%1の勝ち,%1 Gana,%1 gewinnt,%1 vince
 ss_ranked,Message to indicated ranked play,Ranked,Classé,Ranqueada,レート戦,Clasificado,Ranked,Classificato
 ss_rating,,Rating:,Classement :,Classificação:,レート：,Clasificación:,Punktzahl:,Classificazione:
 ss_return,,Returning to main menu...,Retour au menu principal...,Voltar ao menu principal...,メインメニューに戻ります...,Regresando al menú principal...,Kehre zum Hauptmenü zurück...,Ritorno al menù principale...
-ss_touch,"Type of input method � touch, as in �touch screen�",Touch,Touch,Touch,Touch,Touch,Touch,Touch
+ss_touch,"Type of input method � touch, as in �touch screen�",Touch,Toucher,Toque,???,Tocar,Ber�hren,Tocco
 ss_winrate,,Winrate:,Taux de victoire :,Taxa de vitórias:,勝率：,Racha de victorias:,Gewinnrate:,Rateo delle vittorie:
 ss_wins,,Wins:,Victoires :,Vitórias:,勝ち：,Gana:,Siege:,Vittorie:
 ss_ex_mode,,EX Mode,EX Mode,Modo EX,EXモード,Modo EX,EX,Modalità EX
