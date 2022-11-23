@@ -233,7 +233,7 @@ function love.draw()
 
   -- Draw the FPS if enabled
   if config ~= nil and config.show_fps then
-    gprintf("leftover_time: " .. math.round(leftover_time, 4), 1, 1)
+    gprintf("FPS: " .. love.timer.getFPS(), 1, 1)
   end
 
   -- local memoryCount = collectgarbage("count")
@@ -249,7 +249,7 @@ function love.draw()
   end
   gfx_q:clear()
   if config.show_fps then
-	  fpsGraph.drawGraphs({testGraph, testGraph2, testGraph3})
+	  --fpsGraph.drawGraphs({testGraph, testGraph2, testGraph3})
   end
 
   love.graphics.setCanvas() -- render everything thats been added
