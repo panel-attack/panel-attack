@@ -2,6 +2,8 @@ require("class")
 socket = require("socket")
 GAME = require("game")
 require("match")
+local batteries = require("batteries")
+local fpsGraph = require("libraries.FPSGraph")
 require("BattleRoom")
 require("util")
 require("table_util")
@@ -49,8 +51,19 @@ local input_delta = 0.0
 local pointer_hidden = false
 local mainloop = nil
 
+local testGraph = nil
+local testGraph2 = nil
+local testGraph3 = nil
+
 -- Called at the beginning to load the game
 function love.load()
+  	-- fps graph
+	testGraph = fpsGraph.createGraph(0, 0, 1200, 400, 1 / 120)
+	-- memory graph
+	testGraph2 = fpsGraph.createGraph(0, 260)
+	-- spare time graph
+	testGraph3 = fpsGraph.createGraph(0, 600, 1200, 100, 1 / 120)
+
   if PROFILING_ENABLED then
     GAME.profiler:start()
   end
@@ -76,9 +89,79 @@ function love.focus(f)
   GAME.focused = f
 end
 
+local consts = {}
+consts.FRAME_RATE = 1/60
+
+local prev_time = 0
+local sleep_ratio = .9
+local leftOverRatio = .1
+function love.run()
+	if love.load then love.load(love.arg.parseGameArguments(arg), arg) end
+
+	-- We don't want the first frame's dt to include time taken by love.load.
+	if love.timer then love.timer.step() end
+
+	local dt = 0  
+
+  -- Main loop time.
+	return function()
+    local waitAmount = consts.FRAME_RATE - (leftover_time * leftOverRatio)
+    fpsGraph.updateGraph(testGraph3, waitAmount, "waitAmount: " .. waitAmount, dt)
+
+    local targetTime = prev_time + waitAmount
+    local currentTime = love.timer.getTime()
+
+    -- Sleep for 90% of our time to wait to save cpu
+    local sleepTime = (targetTime - currentTime) * sleep_ratio
+    if love.timer and sleepTime > 0 then 
+      love.timer.sleep(sleepTime) 
+    end
+
+    -- While loop the last little bit to be more accurate
+    currentTime = love.timer.getTime()
+    while currentTime < targetTime do
+      currentTime = love.timer.getTime()
+    end
+
+    prev_time = currentTime
+  
+    -- Process events.
+    if love.event then
+      love.event.pump()
+      for name, a,b,c,d,e,f in love.event.poll() do
+        if name == "quit" then
+          if not love.quit or not love.quit() then
+            return a or 0
+          end
+        end
+        love.handlers[name](a,b,c,d,e,f)
+      end
+    end
+
+    -- Update dt, as we'll be passing it to update
+    if love.timer then dt = love.timer.step() end
+
+    fpsGraph.updateGraph(testGraph, dt, "dt: " .. dt, dt)
+
+    -- Call update and draw
+    if love.update then love.update(dt) end -- will pass 0 if love.timer is disabled
+
+    if love.graphics and love.graphics.isActive() then
+      love.graphics.origin()
+      love.graphics.clear(love.graphics.getBackgroundColor())
+
+      if love.draw then love.draw() end
+
+      love.graphics.present()
+    end
+  end
+end
+
 -- Called every few fractions of a second to update the game
 -- dt is the amount of time in seconds that has passed.
 function love.update(dt)
+	fpsGraph.updateMem(testGraph2, dt)
+
   if love.mouse.getX() == last_x and love.mouse.getY() == last_y then
     if not pointer_hidden then
       if input_delta > mouse_pointer_timeout then
@@ -130,6 +213,10 @@ function love.update(dt)
 
   update_music()
   GAME.rich_presence:runCallbacks()
+  
+  if GAME.memoryFix then
+    batteries(0.001, nil, nil)
+  end
 end
 
 -- Called whenever the game needs to draw.
@@ -146,8 +233,12 @@ function love.draw()
 
   -- Draw the FPS if enabled
   if config ~= nil and config.show_fps then
-    gprintf("FPS: " .. love.timer.getFPS(), 1, 1)
+    gprintf("leftover_time: " .. math.round(leftover_time, 4), 1, 1)
   end
+
+  -- local memoryCount = collectgarbage("count")
+  -- memoryCount = round(memoryCount / 1000, 1)
+  -- gprintf("Memory " .. memoryCount .. " MB", 1, 100)
 
   if STONER_MODE then 
     gprintf("STONER", 1, 1 + (11 * 4))
@@ -157,6 +248,7 @@ function love.draw()
     gfx_q[i][1](unpack(gfx_q[i][2]))
   end
   gfx_q:clear()
+	fpsGraph.drawGraphs({testGraph, testGraph2, testGraph3})
 
   love.graphics.setCanvas() -- render everything thats been added
   love.graphics.clear(love.graphics.getBackgroundColor()) -- clear in preperation for the next render
