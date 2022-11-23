@@ -58,7 +58,7 @@ local testGraph3 = nil
 -- Called at the beginning to load the game
 function love.load()
   	-- fps graph
-	testGraph = fpsGraph.createGraph(0, 0, 1200, 400, 1 / 120)
+	testGraph = fpsGraph.createGraph(0, 0, 1200, 50, 1 / 120)
 	-- memory graph
 	testGraph2 = fpsGraph.createGraph(0, 260)
 	-- spare time graph
@@ -248,7 +248,9 @@ function love.draw()
     gfx_q[i][1](unpack(gfx_q[i][2]))
   end
   gfx_q:clear()
-	fpsGraph.drawGraphs({testGraph, testGraph2, testGraph3})
+  if config.show_fps then
+	  fpsGraph.drawGraphs({testGraph, testGraph2, testGraph3})
+  end
 
   love.graphics.setCanvas() -- render everything thats been added
   love.graphics.clear(love.graphics.getBackgroundColor()) -- clear in preperation for the next render
