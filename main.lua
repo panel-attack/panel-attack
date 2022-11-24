@@ -57,12 +57,6 @@ local testGraph3 = nil
 
 -- Called at the beginning to load the game
 function love.load()
-  	-- fps graph
-	testGraph = fpsGraph.createGraph(0, 0, 1200, 50, 1 / 120)
-	-- memory graph
-	testGraph2 = fpsGraph.createGraph(0, 260)
-	-- spare time graph
-	testGraph3 = fpsGraph.createGraph(0, 600, 1200, 100, 1 / 120)
 
   if PROFILING_ENABLED then
     GAME.profiler:start()
@@ -160,7 +154,24 @@ end
 -- Called every few fractions of a second to update the game
 -- dt is the amount of time in seconds that has passed.
 function love.update(dt)
-	fpsGraph.updateMem(testGraph2, dt)
+
+  if config.show_fps and config.debug_mode then
+    if testGraph == nil then
+      local updateSpeed = 0.25
+
+      -- fps graph
+      testGraph = fpsGraph.createGraph(0, 0, 1200, 50, updateSpeed)
+      -- memory graph
+      testGraph2 = fpsGraph.createGraph(0, 260, nil, nil, updateSpeed)
+      -- spare time graph
+      testGraph3 = fpsGraph.createGraph(0, 600, 1200, 100, updateSpeed)
+    end
+    local fps = math.round(1.0 / dt, 1)
+    fpsGraph.updateGraph(testGraph, fps, "FPS: " .. fps, dt)
+    fpsGraph.updateMem(testGraph2, dt)
+    local sparePercent = math.round(timeToWaitDelta / (consts.FRAME_RATE) * 100, 1)
+    fpsGraph.updateGraph(testGraph3, sparePercent, "Spare %: " .. sparePercent .. " leftovers: " .. leftover_time - consts.FRAME_RATE .. " dt: " .. dt, dt)
+  end
 
   if love.mouse.getX() == last_x and love.mouse.getY() == last_y then
     if not pointer_hidden then
@@ -248,8 +259,8 @@ function love.draw()
     gfx_q[i][1](unpack(gfx_q[i][2]))
   end
   gfx_q:clear()
-  if config.show_fps then
-	  --fpsGraph.drawGraphs({testGraph, testGraph2, testGraph3})
+  if testGraph then
+	  fpsGraph.drawGraphs({testGraph, testGraph2, testGraph3})
   end
 
   love.graphics.setCanvas() -- render everything thats been added
