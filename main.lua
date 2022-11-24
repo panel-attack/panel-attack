@@ -99,9 +99,12 @@ function love.run()
 
   -- Main loop time.
 	return function()
-    local waitAmount = consts.FRAME_RATE - (leftover_time * leftOverRatio)
+    local targetDelta = consts.FRAME_RATE
+    if leftover_time > consts.FRAME_RATE / 2 then
+      targetDelta = targetDelta - (leftover_time * leftOverRatio)
+    end
 
-    local targetTime = prev_time + waitAmount
+    local targetTime = prev_time + targetDelta
     local currentTime = love.timer.getTime()
 
     -- Sleep for 90% of our time to wait to save cpu
@@ -223,7 +226,7 @@ function love.update(dt)
   GAME.rich_presence:runCallbacks()
   
   if GAME.memoryFix then
-    batteries(0.001, nil, nil)
+    batteries(0.0001, nil, nil)
   end
 end
 
@@ -242,6 +245,10 @@ function love.draw()
   -- Draw the FPS if enabled
   if config ~= nil and config.show_fps then
     gprintf("FPS: " .. love.timer.getFPS(), 1, 1)
+    gprintf("leftover_time: " .. leftover_time, 1, 40)
+    local memoryCount = collectgarbage("count")
+    memoryCount = round(memoryCount / 1000, 1)
+    gprintf("Memory " .. memoryCount .. " MB", 1, 100)
   end
 
   -- local memoryCount = collectgarbage("count")

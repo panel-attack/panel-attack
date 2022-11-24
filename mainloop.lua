@@ -4,6 +4,7 @@ local replay_browser = require("replay_browser")
 local options = require("options")
 local utf8 = require("utf8")
 local analytics = require("analytics")
+require("memoryUsage")
 local main_config_input = require("config_inputs")
 require("replay")
 
