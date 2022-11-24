@@ -134,11 +134,14 @@ end
 function Stack.draw_popfxs(self)
   for i = self.pop_q.first, self.pop_q.last do
     local popfx = self.pop_q[i]
-    local draw_x = (self.pos_x) + (popfx.x - 1) * 16
-    local draw_y = (self.pos_y) + (11 - popfx.y) * 16 + self.displacement
-    local burstScale = characters[self.character].popfx_burstScale
-    local fadeScale = characters[self.character].popfx_fadeScale
-    local burstParticle_atlas = popfx.burstAtlas
+    --local draw_x = (self.pos_x) + (popfx.x - 1) * 16
+    --local draw_y = (self.pos_y) + (11 - popfx.y) * 16 + self.displacement
+    local stack_scale_mod = self.gfx_scale / GFX_SCALE
+    local draw_x = self.pos_x + (popfx.x - 1) * 16 * stack_scale_mod
+    local draw_y = self.pos_y + ((11 - popfx.y) * 16 + self.displacement) * stack_scale_mod
+    local burstScale = characters[self.character].popfx_burstScale * stack_scale_mod
+    local fadeScale = characters[self.character].popfx_fadeScale * stack_scale_mod
+    local burstParticle_atlas = popfx.burstAtlas 
     local burstParticle = popfx.burstParticle
     local burstFrameDimension = popfx.burstFrameDimension
     local fadeParticle_atlas = popfx.fadeAtlas
@@ -151,16 +154,16 @@ function Stack.draw_popfxs(self)
           burstParticle:setViewport(burstFrame[2] * burstFrameDimension, 0, burstFrameDimension, burstFrameDimension, burstParticle_atlas:getDimensions())
           positions = {
             -- four corner
-            {x = draw_x - burstFrame[1], y = draw_y - burstFrame[1]},
-            {x = draw_x + 15 + burstFrame[1], y = draw_y - burstFrame[1]},
-            {x = draw_x - burstFrame[1], y = draw_y + 15 + burstFrame[1]},
-            {x = draw_x + 15 + burstFrame[1], y = draw_y + 15 + burstFrame[1]},
+            {x = draw_x - burstFrame[1] * stack_scale_mod, y = draw_y - burstFrame[1] * stack_scale_mod},
+            {x = draw_x + (15 + burstFrame[1]) * stack_scale_mod, y = draw_y - burstFrame[1] * stack_scale_mod},
+            {x = draw_x - burstFrame[1] * stack_scale_mod, y = draw_y + (15 + burstFrame[1]) * stack_scale_mod},
+            {x = draw_x + (15 + burstFrame[1]) * stack_scale_mod, y = draw_y + (15 + burstFrame[1]) * stack_scale_mod},
             -- top and bottom
-            {x = draw_x, y = draw_y - (burstFrame[1] * 2)},
-            {x = draw_x, y = draw_y + 10 + (burstFrame[1] * 2)},
+            {x = draw_x, y = draw_y - (burstFrame[1] * 2) * stack_scale_mod},
+            {x = draw_x, y = draw_y + (10 + burstFrame[1] * 2) * stack_scale_mod},
             -- left and right
-            {x = draw_x + 5 - (burstFrame[1] * 2), y = draw_y},
-            {x = draw_x + 10 + (burstFrame[1] * 2), y = draw_y}
+            {x = draw_x + (5 - (burstFrame[1] * 2)) * stack_scale_mod, y = draw_y},
+            {x = draw_x + (10 + (burstFrame[1] * 2)) * stack_scale_mod, y = draw_y}
           }
 
           if characters[self.character].popfx_burstrotate == true then
