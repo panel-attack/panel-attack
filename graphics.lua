@@ -134,8 +134,6 @@ end
 function Stack.draw_popfxs(self)
   for i = self.pop_q.first, self.pop_q.last do
     local popfx = self.pop_q[i]
-    --local draw_x = (self.pos_x) + (popfx.x - 1) * 16
-    --local draw_y = (self.pos_y) + (11 - popfx.y) * 16 + self.displacement
     local stack_scale_mod = self.gfx_scale / GFX_SCALE
     local draw_x = self.pos_x + (popfx.x - 1) * 16 * stack_scale_mod
     local draw_y = self.pos_y + ((11 - popfx.y) * 16 + self.displacement) * stack_scale_mod
