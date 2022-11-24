@@ -100,7 +100,6 @@ function love.run()
   -- Main loop time.
 	return function()
     local waitAmount = consts.FRAME_RATE - (leftover_time * leftOverRatio)
-    fpsGraph.updateGraph(testGraph3, waitAmount, "waitAmount: " .. waitAmount, dt)
 
     local targetTime = prev_time + waitAmount
     local currentTime = love.timer.getTime()
@@ -135,8 +134,6 @@ function love.run()
     -- Update dt, as we'll be passing it to update
     if love.timer then dt = love.timer.step() end
 
-    fpsGraph.updateGraph(testGraph, dt, "dt: " .. dt, dt)
-
     -- Call update and draw
     if love.update then love.update(dt) end -- will pass 0 if love.timer is disabled
 
@@ -169,8 +166,8 @@ function love.update(dt)
     local fps = math.round(1.0 / dt, 1)
     fpsGraph.updateGraph(testGraph, fps, "FPS: " .. fps, dt)
     fpsGraph.updateMem(testGraph2, dt)
-    local sparePercent = math.round(timeToWaitDelta / (consts.FRAME_RATE) * 100, 1)
-    fpsGraph.updateGraph(testGraph3, sparePercent, "Spare %: " .. sparePercent .. " leftovers: " .. leftover_time - consts.FRAME_RATE .. " dt: " .. dt, dt)
+    --local sparePercent = math.round(timeToWaitDelta / (consts.FRAME_RATE) * 100, 1)
+    --fpsGraph.updateGraph(testGraph3, sparePercent, "Spare %: " .. sparePercent .. " leftovers: " .. leftover_time - consts.FRAME_RATE .. " dt: " .. dt, dt)
   end
 
   if love.mouse.getX() == last_x and love.mouse.getY() == last_y then
