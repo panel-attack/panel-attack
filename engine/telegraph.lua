@@ -368,7 +368,7 @@ function Telegraph:render()
               -- TODO make this more performant?
               garbage_block.x, garbage_block.y = telegraph_to_render:telegraphLoopAttackPosition(garbage_block, frames_since_earned)
 
-              draw(characters[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y, 0, atk_scale, atk_scale)
+              draw(characters[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y, 0, atk_scale * self.sender.gfx_scale / GFX_SCALE, atk_scale * self.sender.gfx_scale / GFX_SCALE)
             else
               --move toward destination
 
@@ -380,7 +380,7 @@ function Telegraph:render()
               garbage_block.x = loopX + percent * (garbage_block.destination_x - loopX)
               garbage_block.y = loopY + percent * (garbage_block.destination_y - loopY)
 
-              draw(characters[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y, 0, atk_scale, atk_scale)
+              draw(characters[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y, 0, atk_scale * self.sender.gfx_scale / GFX_SCALE, atk_scale * self.sender.gfx_scale / GFX_SCALE)
             end
           end
         end
