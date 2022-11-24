@@ -11,6 +11,7 @@ local Menu = require("ui.Menu")
 local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local ClickMenu = require("ClickMenu")
+local util = require("util")
 
 --@module MainMenu
 local lobby = Scene("lobby")
@@ -330,7 +331,7 @@ function lobby:update()
       elseif oldLobbyMenu.active_idx == #oldLobbyMenu.buttons - 1 and #lobby_menu.buttons >= 2 then
         lobby_menu:set_active_idx(#lobby_menu.buttons - 1) --the position of the "hide leaderboard" menu item
       else
-        local desiredIndex = bound(1, oldLobbyMenu.active_idx, #lobby_menu.buttons)
+        local desiredIndex = util.bound(1, oldLobbyMenu.active_idx, #lobby_menu.buttons)
         local previousText = oldLobbyMenu.buttons[oldLobbyMenu.active_idx].stringText
         for i = 1, #lobby_menu.buttons do
           if #oldLobbyMenu.buttons >= i then

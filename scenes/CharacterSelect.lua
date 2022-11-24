@@ -6,6 +6,7 @@ local input = require("inputManager")
 local LevelSlider = require("ui.LevelSlider")
 local tableUtils = require("tableUtils")
 local consts = require("consts")
+local util = require("util")
 
 local MAX_CHARACTERS_PER_PAGE = 34
 local MAX_ROWS = 5
@@ -444,7 +445,7 @@ function CharacterSelect:init()
       isVisible = false,
       onClick = function()
         play_optional_sfx(themes[config.theme].sounds.menu_move)
-        self.current_page = bound(1, self.current_page - 1, self.num_character_pages)
+        self.current_page = util.bound(1, self.current_page - 1, self.num_character_pages)
         self:showCharacterPage(self.current_page)
       end
     })
@@ -458,7 +459,7 @@ function CharacterSelect:init()
       isVisible = false,
       onClick = function()
         play_optional_sfx(themes[config.theme].sounds.menu_move)
-        self.current_page = bound(1, self.current_page + 1, self.num_character_pages)
+        self.current_page = util.bound(1, self.current_page + 1, self.num_character_pages)
         self:showCharacterPage(self.current_page)
       end
     })
