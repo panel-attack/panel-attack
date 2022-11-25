@@ -472,8 +472,8 @@ local function runMainGameLoop(updateFunction, variableStepFunction, abortGameFu
               handle_pause()
 
               if menu_escape_game() then
-                GAME:clearMatch()
                 returnFunction = abortGameFunction()
+                GAME:clearMatch()
               end
             end
           end
@@ -685,12 +685,12 @@ end
 function challenge_mode_setup()
   local difficultySettings = {}
   local customModeID = 1
-  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_1"), challengeMode = ChallengeMode(#difficultySettings+1) }
-  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_2"), challengeMode = ChallengeMode(#difficultySettings+1) }
-  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_3"), challengeMode = ChallengeMode(#difficultySettings+1) }
-  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_4"), challengeMode = ChallengeMode(#difficultySettings+1) }
-  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_5"), challengeMode = ChallengeMode(#difficultySettings+1) }
-  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_6"), challengeMode = ChallengeMode(#difficultySettings+1) }
+  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_" .. #difficultySettings+1), challengeMode = ChallengeMode(#difficultySettings+1) }
+  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_" .. #difficultySettings+1), challengeMode = ChallengeMode(#difficultySettings+1) }
+  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_" .. #difficultySettings+1), challengeMode = ChallengeMode(#difficultySettings+1) }
+  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_" .. #difficultySettings+1), challengeMode = ChallengeMode(#difficultySettings+1) }
+  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_" .. #difficultySettings+1), challengeMode = ChallengeMode(#difficultySettings+1) }
+  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_" .. #difficultySettings+1), challengeMode = ChallengeMode(#difficultySettings+1) }
 
   local ret = nil
   local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
@@ -1616,6 +1616,13 @@ function main_local_vs_yourself()
   end
 
   local function abortGame() 
+
+    local challengeMode = GAME.battleRoom.trainingModeSettings and GAME.battleRoom.trainingModeSettings.challengeMode
+    if challengeMode then
+      local gameLength = GAME.match.P1.game_stopwatch
+      challengeMode:recordStageResult(-1, gameLength)
+    end
+
     return {main_dumb_transition, {
       select_screen.main, -- next_func
       "", -- text
