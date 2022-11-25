@@ -8,6 +8,8 @@ ChallengeMode =
     self.currentStageIndex = 0
     self.nextStageIndex = 1
     self.stages = {}
+    self.difficultyName = loc("challenge_difficulty_" .. difficulty)
+    self.continues = 0
     local stageCount = 10
     local secondsToppedOutToLoseBase = 1
     local secondsToppedOutToLoseIncrement = 0.1
@@ -96,6 +98,8 @@ function ChallengeMode:recordStageResult(gameResult, gameLength)
 
   if gameResult > 0 then
     self.nextStageIndex = self.currentStageIndex + 1
+  elseif gameResult < 0 then
+    self.continues = self.continues + 1
   end
 
   local challengeStage = self.stages[lastStageIndex]
@@ -107,11 +111,19 @@ local stageQuads = {}
 function ChallengeMode.render(self)
   self:drawTimeSplits()
 
-  local stageX = 614
-  local stageY = 440
+  local drawX = 614
+  local drawY = 440
   local limit = 400
-  gprintf("Stage", stageX - limit/2, stageY, limit, "center", nil, nil, 10)
-  GraphicsUtil.draw_number(self.currentStageIndex, themes[config.theme].images.IMG_number_atlas_2P, stageQuads, stageX, stageY + 26, themes[config.theme].win_Scale, "center")
+  gprintf("Difficulty", drawX - limit/2, drawY, limit, "center", nil, nil, 10)
+  gprintf(self.difficultyName, drawX - limit/2, drawY + 26, limit, "center", nil, nil, 10)
+
+  drawY = 520
+  gprintf("Stage", drawX - limit/2, drawY, limit, "center", nil, nil, 10)
+  GraphicsUtil.draw_number(self.currentStageIndex, themes[config.theme].images.IMG_number_atlas_2P, stageQuads, drawX, drawY + 26, themes[config.theme].win_Scale, "center")
+
+  drawY = 600
+  gprintf("Continues", drawX - limit/2, drawY, limit, "center", nil, nil, 10)
+  gprintf(self.continues, drawX - limit/2, drawY + 26, limit, "center", nil, nil, 10)
 end
 
 
