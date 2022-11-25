@@ -1,9 +1,9 @@
 local logger = require("logger")
+require("util")
 
 local TELEGRAPH_HEIGHT = 16
 local TELEGRAPH_PADDING = 2 --vertical space between telegraph and stack
 local TELEGRAPH_BLOCK_WIDTH = 26
-local TELEGRAPH_ATTACK_MAX_SPEED = 8 --fastest an attack can travel toward the telegraph per frame
 
 local clone_pool = {}
 
@@ -391,6 +391,9 @@ function Telegraph:render()
     
     -- Render if we are "currently chaining" for debug purposes
     if config.debug_mode and telegraph_to_render.senderCurrentlyChaining then
+      local orig_atk_w, orig_atk_h = characters[senderCharacter].telegraph_garbage_images["attack"]:getDimensions()
+      local atk_scale = 16 / math.max(orig_atk_w, orig_atk_h) -- keep image ratio
+  
       draw(characters[senderCharacter].telegraph_garbage_images["attack"], telegraph_to_render:telegraphRenderXPosition(-1), telegraph_to_render.pos_y, 0, atk_scale, atk_scale)
     end
 
