@@ -92,6 +92,9 @@ function AttackEngine.run(self)
     highestStartTime = math.max(self.attackPatterns[i].startTime, highestStartTime)
   end
 
+  local maxChain = 0
+  local hasCombo = false
+  local hasMetal = false
   local totalAttackTimeBeforeRepeat = self.delayBeforeRepeat + highestStartTime - self.delayBeforeStart
   if self.disableQueueLimit or self.target.garbage_q:len() <= 72 then
     for i = 1, #self.attackPatterns do
@@ -102,7 +105,15 @@ function AttackEngine.run(self)
           if self.attackPatterns[i].endsChain then
             self.telegraph:chainingEnded(self.CLOCK)
           else
-            self.telegraph:push(self.attackPatterns[i].garbage, math.random(11, 17), math.random(1, 11), self.CLOCK)
+            local garbage = self.attackPatterns[i].garbage
+            if garbage[4] then
+              local chainCounter = garbage[2] + 1
+              maxChain = math.max(chainCounter, maxChain)
+            else
+              hasCombo = true
+            end
+            hasMetal = garbage[3] or hasMetal
+            self.telegraph:push(garbage, math.random(11, 17), math.random(1, 11), self.CLOCK)
           end
         end
       end
@@ -110,6 +121,15 @@ function AttackEngine.run(self)
   end
 
   self.telegraph:popAllAndSendToTarget(self.CLOCK, self.target)
+
+  local metalCount = 0
+  if hasMetal then
+    metalCount = 3
+  end
+  local newComboChainInfo = Stack.comboChainSoundInfo(hasCombo, maxChain, metalCount)    
+  if newComboChainInfo then
+    characters[self.character]:play_combo_chain_sfx(newComboChainInfo)
+  end
 
   self.CLOCK = self.CLOCK + 1
 end

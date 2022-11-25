@@ -1924,9 +1924,7 @@ function Stack.simulate(self)
         SFX_Go_Play = 0
       end
       if self.combo_chain_play then
-        themes[config.theme].sounds.land:stop()
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        characters[self.character]:play_combo_chain_sfx(self.combo_chain_play)
+        self:playComboChainSoundInfo(self.combo_chain_play)
         self.combo_chain_play = nil
       end
       if SFX_garbage_match_play then
@@ -2667,14 +2665,6 @@ function Stack.check_matches(self)
       --MrStopState=1;
       --MrStopTimer=MrStopAni[self.stop_time];
       --TODO: Mr Stop ^
-      -- @CardsOfTheHeart says there are 4 chain sfx: --x2/x3, --x4, --x5 is x2/x3 with an echo effect, --x6+ is x4 with an echo effect
-      if self:shouldChangeSoundEffects() then
-        if is_chain then
-          self.combo_chain_play = {e_chain_or_combo.chain, self.chain_counter}
-        elseif combo_size > 3 then
-          self.combo_chain_play = {e_chain_or_combo.combo, "combos"}
-        end
-      end
       self.sfx_land = false
     end
     --if garbage_size > 0 then
@@ -2684,12 +2674,40 @@ function Stack.check_matches(self)
     self.manual_raise = false
     --self.score_render=1;
     --Nope.
-    if metal_count > 5 then
-      self.combo_chain_play = {e_chain_or_combo.combo, "combo_echos"}
-    elseif metal_count > 2 then
-      self.combo_chain_play = {e_chain_or_combo.combo, "combos"}
+    if self:shouldChangeSoundEffects() then
+      local chainSize = 0
+      if is_chain then
+        chainSize = self.chain_counter
+      end
+      local newComboChainInfo = Stack.comboChainSoundInfo(combo_size > 3, chainSize, metal_count)
+      if newComboChainInfo then
+        self.combo_chain_play = newComboChainInfo
+      end
     end
   end
+end
+
+function Stack.comboChainSoundInfo(containsCombo, chainCounter, metalCount)
+  local result = nil
+  if (containsCombo or chainCounter > 0) then
+    if chainCounter > 0 then
+      result = {e_chain_or_combo.chain, chainCounter}
+    elseif containsCombo then
+      result = {e_chain_or_combo.combo, "combos"}
+    end
+  end
+  if metalCount > 5 then
+    result = {e_chain_or_combo.combo, "combo_echos"}
+  elseif metalCount > 2 then
+    result = {e_chain_or_combo.combo, "combos"}
+  end
+  return result
+end
+
+function Stack:playComboChainSoundInfo(comboChainSoundInfo)
+  themes[config.theme].sounds.land:stop()
+  themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+  characters[self.character]:play_combo_chain_sfx(comboChainSoundInfo)
 end
 
 -- Sets the hovering state on the appropriate panels
