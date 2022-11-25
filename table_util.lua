@@ -95,6 +95,7 @@ function table.indexOf(tab, element)
   return nil
 end
 
+require("class")
 
 -- a list is formerly defined as a table with monotonously increasing integer based keys starting at 1 so that #tab computes properly
 -- the list may also start at index 0 which has to be indicated upon construction by setting zeroIndexed = true
@@ -105,21 +106,19 @@ List = class(function(self, zeroIndexed)
   else
     self.firstIndex = 1
   end
-end,
-table)
+end)
 
 -- returns the index of the first occurence of element in the table
 function List.indexOf(list, element)
   for i = list.firstIndex, #list do
     if list[i] == element then
       return i
-    end if
+    end
   end
 end
-
 -- the length of the list, accounting for the first index potentially being 0 instead
 function List.length(list)
-    return #list + (1 - self.firstIndex)
+    return #list + (1 - list.firstIndex)
 end
 
 function List.trueForAny(list, condition)
@@ -140,14 +139,15 @@ function List.trueForAll(list, condition)
   return true
 end
 
+-- function to make sure that elements are appended correctly to index 0 in case of a 0 based list
 function List.append(list, element)
   list[list:length() + list.firstIndex] = element
 end
 
 -- appends all entries of tab to the end of list
-function List.appendList(list, tab)
-  for i = list.firstIndex, #tab do
-    list:append(element)
+function List.appendList(list, otherList)
+  for i = otherList.firstIndex, #otherList do
+    list:append(otherList[i])
   end
 end
 
@@ -202,4 +202,18 @@ end
 
 function List.getRandomElement(list)
   return list[math.random(#list)]
+end
+
+function List.concat(list, separator, startIndex, endIndex)
+  if separator == nil or type(separator) ~= "string" then
+    separator = ""
+  end
+  if startIndex == nil or tonumber(startIndex) == nil then
+    startIndex = list.firstIndex
+  end
+  if endIndex == nil or tonumber(endIndex) == nil then
+    endIndex = #list
+  end
+  
+  return table.concat(list, separator, startIndex, endIndex)
 end

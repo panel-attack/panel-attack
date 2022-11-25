@@ -85,7 +85,7 @@ local function testPerformanceString(seconds)
 end
 
 local function testPerformanceTable(seconds)
-  local confirmedInputsP1 = {}
+  local confirmedInputsP1 = List(true)
   local loopCount = seconds * 60
 
   local totalTime = 0
@@ -93,11 +93,11 @@ local function testPerformanceTable(seconds)
   for i = 1, loopCount do
     local time = love.timer.getTime()
     -- check in send_controls
-    local len1 = #confirmedInputsP1
-    local len2 = #confirmedInputsP1
+    local len1 = confirmedInputsP1:length()
+    local len2 = confirmedInputsP1:length()
     -- receiveConfirmedInput, called in send_controls
     local inputs = string.toCharTable("A")
-    table.appendToList(confirmedInputsP1, inputs)
+    confirmedInputsP1:appendList(inputs)
     local loopTime = love.timer.getTime() - time
     totalTime = totalTime + loopTime
     if i == loopCount then
@@ -109,7 +109,7 @@ local function testPerformanceTable(seconds)
 end
 
 local function testPerformanceTableStringLen(seconds)
-  local confirmedInputsP1 = {}
+  local confirmedInputsP1 = List(true)
   local loopCount = seconds * 60
 
   local totalTime = 0
@@ -117,15 +117,15 @@ local function testPerformanceTableStringLen(seconds)
   for i = 1, loopCount do
     local time = love.timer.getTime()
     -- check in send_controls
-    local len1 = #confirmedInputsP1
-    local len2 = #confirmedInputsP1
+    local len1 = confirmedInputsP1:length()
+    local len2 = confirmedInputsP1:length()
     -- receiveConfirmedInput, called in send_controls
     local input = "A"
     if string.len(input) == 1 then
-      confirmedInputsP1[#confirmedInputsP1+1] = input
+      confirmedInputsP1:append(input)
     else
       local inputs = string.toCharTable(input)
-      table.appendToList(confirmedInputsP1, inputs)
+      confirmedInputsP1:appendList(inputs)
     end
     local loopTime = love.timer.getTime() - time
     totalTime = totalTime + loopTime

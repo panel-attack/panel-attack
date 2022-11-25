@@ -85,8 +85,8 @@ Stack =
 
     s.panel_buffer = ""
     s.gpanel_buffer = ""
-    s.input_buffer = {} -- Inputs that haven't been processed yet
-    s.confirmedInput = {} -- All inputs the player has input ever
+    s.input_buffer = List() -- Inputs that haven't been processed yet
+    s.confirmedInput = List(true) -- All inputs the player has input ever
     s.panels = {}
     s.width = 6
     s.height = 12
@@ -458,9 +458,9 @@ function Stack.restoreFromRollbackCopy(self, other)
   end
   -- The remaining inputs is the confirmed inputs not processed yet for this clock time
   -- We have processed CLOCK time number of inputs when we are at CLOCK, so we only want to process the CLOCK+1 input on
-  self.input_buffer = {}
-  for i = self.CLOCK + 1, #self.confirmedInput do
-    self.input_buffer[#self.input_buffer+1] = self.confirmedInput[i]
+  self.input_buffer = List()
+  for i = self.CLOCK + 1, confirmedInput:length() do
+    self.input_buffer:append(self.confirmedInput[i])
   end
 end
 
@@ -963,7 +963,7 @@ function Stack.shouldRun(self, runsSoFar)
   end
 
   -- Decide how many frames of input we should run.
-  local buffer_len = #self.input_buffer
+  local buffer_len = self.input_buffer:length()
 
   -- If we are local we always want to catch up and run the new input which is already appended
   if self.is_local then
@@ -980,7 +980,7 @@ function Stack.shouldRun(self, runsSoFar)
       -- Don't fall behind if the game is over for the other player
       if self.garbage_target and self.garbage_target:game_ended() == false then
         -- If we are at the end of the replay we want to catch up
-        if network_connected() or #self.garbage_target.input_buffer > 0 then
+        if network_connected() or self.garbage_target.input_buffer:length() > 0 then
           local framesBehind = math.abs(config.debug_vsFramesBehind)
           if self.CLOCK >= self.garbage_target.CLOCK - framesBehind then
             return false
@@ -1016,7 +1016,7 @@ function Stack.run(self)
   if self.is_local == false then
     if self.play_to_end then
       GAME.preventSounds = true
-      if #self.input_buffer < 4 then
+      if self.input_buffer:length() < 4 then
         self.play_to_end = nil
         GAME.preventSounds = false
       end
@@ -1032,7 +1032,7 @@ function Stack.setupInput(self)
   self.input_state = nil
 
   if self:game_ended() == false then 
-    if self.input_buffer and #self.input_buffer > 0 then
+    if self.input_buffer and self.input_buffer:length() > 0 then
       self.input_state = table.remove(self.input_buffer, 1)
     end
   else
@@ -1044,14 +1044,14 @@ end
 
 function Stack.receiveConfirmedInput(self, input)
   if string.len(input) == 1 then
-    self.confirmedInput[#self.confirmedInput+1] = input
-    self.input_buffer[#self.input_buffer+1] = input
+    self.confirmedInput:append(input)
+    self.input_buffer:append(input)
   else
     local inputs = string.toCharTable(input)
-    table.appendToList(self.confirmedInput, inputs)
-    table.appendToList(self.input_buffer, inputs)
+    self.confirmedInput:appendList(inputs)
+    self.input_buffer:appendList(inputs)
   end
-  --logger.debug("Player " .. self.which .. " got new input. Total length: " .. #self.confirmedInput)
+  --logger.debug("Player " .. self.which .. " got new input. Total length: " .. confirmedInput:length()
 end
 
 -- Enqueue a card animation
