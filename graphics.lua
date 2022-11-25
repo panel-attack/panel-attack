@@ -64,10 +64,12 @@ function Stack.draw_cards(self)
   for i = self.card_q.first, self.card_q.last do
     local card = self.card_q[i]
     if card_animation[card.frame] then
-      local draw_x = (self.pos_x) + (card.x - 1) * 16
-      local draw_y = (self.pos_y) + (11 - card.y) * 16 + self.displacement - card_animation[card.frame]
+      local stack_scale_mod = self.gfx_scale / GFX_SCALE
+      local draw_x = (self.pos_x) + (card.x - 1) * 16 * stack_scale_mod
+      local draw_y = (self.pos_y) + ((11 - card.y) * 16 + self.displacement - card_animation[card.frame]) * stack_scale_mod
       if config.popfx == true and card.frame then
         burstFrameDimension = card.burstAtlas:getWidth() / 9
+        --todo: should burstFrameDimension be a local variable here?
         -- draw cardfx
         if card.frame <= 21 then
           radius = (200 - (card.frame * 7)) * (config.cardfx_scale / 100)
@@ -81,15 +83,16 @@ function Stack.draw_cards(self)
         for i = 1, 6, 1 do
           local cardfx_x = draw_x + math.cos(math.rad((i * 60) + (card.frame * 5))) * radius
           local cardfx_y = draw_y + math.sin(math.rad((i * 60) + (card.frame * 5))) * radius
-          qdraw(card.burstAtlas, card.burstParticle, cardfx_x, cardfx_y, 0, 16 / burstFrameDimension, 16 / burstFrameDimension)
+          qdraw(card.burstAtlas, card.burstParticle, cardfx_x, cardfx_y, 0, 16 / burstFrameDimension  * stack_scale_mod , 16 / burstFrameDimension  * stack_scale_mod)
         end
       end
       -- draw card
-      local iconSize = 48 / self.gfx_scale
+      local iconSize = (48 / GFX_SCALE) * stack_scale_mod
       local cardImage = themes[config.theme].images.IMG_cards[card.chain][card.n]
       local icon_width, icon_height = cardImage:getDimensions()
       local fade = 1 - math.min(0.5 * ((card.frame-1) / 22), 0.5)
       set_color(1, 1, 1, fade)
+      print("stack_scale_mod is: "..stack_scale_mod)
       draw(cardImage, draw_x, draw_y, 0, iconSize / icon_width, iconSize / icon_height)
       set_color(1, 1, 1, 1)
     end
