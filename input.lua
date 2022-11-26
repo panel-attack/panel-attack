@@ -259,12 +259,12 @@ function love.keypressed(key, scancode, rep)
       end
 
       if stack then
-        local data = stack:getAttackPatternData()
+        local data, state = stack:getAttackPatternData()
         pcall(
           function()
             local file = love.filesystem.newFile("dumpAttackPattern.json")
             file:open("w")
-            file:write(json.encode(data))
+            file:write(json.encode(data, state))
             file:close()
           end
         )

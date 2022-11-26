@@ -2826,7 +2826,16 @@ end
 function Stack:getAttackPatternData() 
 
   local data = {}
-  data.name = "Player " .. self.which
+  data.extraInfo = {}
+  data.extraInfo.playerName = self.match.battleRoom.playerNames[self.which] or "Player"
+  data.extraInfo.gpm = self.analytic.lastGPM or 0
+  data.extraInfo.matchLength = " "
+  if self.game_stopwatch and tonumber(self.game_stopwatch) then
+    data.extraInfo.matchLength = frames_to_time_string(self.game_stopwatch)
+  end
+  local now = os.date("*t", to_UTC(os.time()))
+  data.extraInfo.dateGenerated = string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
+
   data.mergeComboMetalQueue = false
   data.delayBeforeStart = 0
   data.delayBeforeRepeat = 91
@@ -2853,5 +2862,7 @@ function Stack:getAttackPatternData()
     data.attackPatterns[#data.attackPatterns+1] = attackPattern
   end
 
-  return data
+  local state = {keyorder = {"extraInfo", "playerName", "gpm", "matchLength", "dateGenerated", "mergeComboMetalQueue", "delayBeforeStart", "delayBeforeRepeat", "attackPatterns"}}
+
+  return data, state
 end
