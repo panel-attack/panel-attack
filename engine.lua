@@ -535,7 +535,7 @@ function Stack.saveForRollback(self)
   self.prev_states = prev_states
   self.garbage_target = garbage_target
   local deleteFrame = self.CLOCK - MAX_LAG - 1
-  if prev_states[deleteFrame] and not self.match.isFromReplay then
+  if prev_states[deleteFrame] then
     Telegraph.saveClone(prev_states[deleteFrame].telegraph)
 
      -- Has a reference to stacks we don't want kept around
