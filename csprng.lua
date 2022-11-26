@@ -222,7 +222,6 @@ function generate_isaac(entropy)
       randrsl[i] = entropy[i]
     end
   else
-    print("2. seed_from_mt")
     seed_from_mt()
   end
   for i = 1, 256 do
@@ -237,7 +236,6 @@ local function getRandom()
   if #mm > 0 then
     return table.remove(mm, 1)
   else
-    print("generating_isaac")
     generate_isaac()
     return table.remove(mm, 1)
   end
