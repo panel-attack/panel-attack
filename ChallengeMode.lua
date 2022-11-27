@@ -132,7 +132,17 @@ function ChallengeMode:drawTimeSplits()
   local xPosition = 1160
   local yPosition = 120
   local yOffset = 30
+  local backgroundPadding = 6
   local row = 0
+  local padding = 6
+  local width = 200
+  local height = yOffset * (#self.stages + 1) + padding * 2
+
+  -- Background
+  grectangle_color("fill", (xPosition - width/2) / GFX_SCALE , yPosition / GFX_SCALE, width/GFX_SCALE, height/GFX_SCALE, 0, 0, 0, 0.5)
+
+  yPosition = yPosition + padding
+
   for i = 1, self.currentStageIndex do
     if self.stageTimeQuads[i] == nil then
       self.stageTimeQuads[i] = {}
