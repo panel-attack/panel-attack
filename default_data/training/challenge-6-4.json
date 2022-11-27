@@ -1,9 +1,9 @@
 {
     "extraInfo": {
-        "playerName": "PDR_Lava",
-        "gpm": "19.4",
-        "matchLength": "1:05",
-        "dateGenerated": "2022-11-26-23-06-26"
+        "playerName": "Galadic97",
+        "gpm": "16.4",
+        "matchLength": "1:17",
+        "dateGenerated": "2022-11-26-23-17-56"
     },
     "mergeComboMetalQueue": false,
     "delayBeforeStart": 0,
@@ -12,146 +12,147 @@
         {
             "height": 1,
             "chain": false,
-            "startTime": 295,
+            "startTime": 282,
             "metal": false,
-            "width": 3
+            "width": 4
         },
         {
-            "chainEndTime": 578,
+            "chainEndTime": 642,
             "chain": [
-                377,
-                444,
-                519
+                372,
+                441,
+                508,
+                575
             ]
         },
         {
-            "chainEndTime": 1054,
+            "chainEndTime": 778,
             "chain": [
-                909,
-                976
+                711
             ]
         },
         {
             "height": 1,
             "chain": false,
-            "startTime": 1231,
+            "startTime": 1441,
+            "metal": false,
+            "width": 4
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 1566,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 1764,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 1964,
+            "metal": false,
+            "width": 4
+        },
+        {
+            "chainEndTime": 2585,
+            "chain": [
+                2413
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 2413,
             "metal": false,
             "width": 5
         },
         {
             "height": 1,
             "chain": false,
-            "startTime": 1347,
+            "startTime": 2626,
             "metal": false,
-            "width": 5
+            "width": 3
         },
         {
-            "chainEndTime": 1504,
+            "chainEndTime": 2879,
             "chain": [
-                1435
+                2803
             ]
         },
         {
             "height": 1,
             "chain": false,
-            "startTime": 1521,
+            "startTime": 3081,
             "metal": false,
             "width": 3
         },
         {
             "height": 1,
             "chain": false,
-            "startTime": 1803,
+            "startTime": 3215,
             "metal": false,
             "width": 4
         },
         {
-            "height": 1,
-            "chain": false,
-            "startTime": 1854,
-            "metal": false,
-            "width": 3
-        },
-        {
-            "height": 1,
-            "chain": false,
-            "startTime": 1943,
-            "metal": false,
-            "width": 3
-        },
-        {
-            "chainEndTime": 2362,
+            "chainEndTime": 3365,
             "chain": [
-                2211
+                3298
             ]
         },
         {
             "height": 1,
             "chain": false,
-            "startTime": 2389,
+            "startTime": 3397,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 3758,
+            "chain": [
+                3480,
+                3557,
+                3624,
+                3691
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 3480,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 4371,
+            "chain": [
+                4302
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 4326,
             "metal": false,
             "width": 3
         },
         {
             "height": 1,
             "chain": false,
-            "startTime": 2389,
-            "metal": false,
-            "width": 4
-        },
-        {
-            "height": 1,
-            "chain": false,
-            "startTime": 2690,
+            "startTime": 4746,
             "metal": false,
             "width": 3
         },
         {
-            "chainEndTime": 2889,
+            "chainEndTime": 4891,
             "chain": [
-                2816,
-                2817
+                4821
             ]
-        },
-        {
-            "height": 1,
-            "chain": false,
-            "startTime": 3109,
-            "metal": false,
-            "width": 4
-        },
-        {
-            "chainEndTime": 3353,
-            "chain": [
-                3294
-            ]
-        },
-        {
-            "height": 1,
-            "chain": false,
-            "startTime": 3588,
-            "metal": false,
-            "width": 4
-        },
-        {
-            "chainEndTime": 3738,
-            "chain": [
-                3671
-            ]
-        },
-        {
-            "height": 1,
-            "chain": false,
-            "startTime": 3782,
-            "metal": false,
-            "width": 3
-        },
-        {
-            "height": 1,
-            "chain": false,
-            "startTime": 4085,
-            "metal": false,
-            "width": 5
         }
     ]
 }
