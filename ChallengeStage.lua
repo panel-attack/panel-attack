@@ -4,11 +4,10 @@ require("health")
 -- Challenge Stage is a particular stage in challenge mode.
 ChallengeStage =
   class(
-  function(self, stageNumber, secondsToppedOutToLose, lineClearGPM, startingLines, lineHeightToKill, riseDifficulty, attackSettings)
+  function(self, stageNumber, secondsToppedOutToLose, lineClearGPM, lineHeightToKill, riseDifficulty, attackSettings)
     self.stageNumber = stageNumber
     self.secondsToppedOutToLose = secondsToppedOutToLose
     self.lineClearGPM = lineClearGPM
-    self.startingLines = startingLines or 0
     self.lineHeightToKill = lineHeightToKill
     self.riseDifficulty = riseDifficulty
     self.expendedTime = 0
@@ -18,7 +17,7 @@ ChallengeStage =
 
 
 function ChallengeStage:createHealth()
-  return Health(self.secondsToppedOutToLose, self.lineClearGPM, self.startingLines, self.lineHeightToKill, self.riseDifficulty)
+  return Health(self.secondsToppedOutToLose, self.lineClearGPM, self.lineHeightToKill, self.riseDifficulty)
 end
 
 function ChallengeStage:createAttackEngine(opponent, character)

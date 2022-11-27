@@ -13,13 +13,12 @@ local barWidth = 50
 
 Health =
   class(
-  function(self, secondsToppedOutToLose, lineClearGPM, startingLines, height, riseLevel)
+  function(self, secondsToppedOutToLose, lineClearGPM, height, riseLevel)
     self.secondsToppedOutToLose = secondsToppedOutToLose
     self.maxSecondsToppedOutToLose = secondsToppedOutToLose
     self.lineClearRate = lineClearGPM / 60
+    self.currentLines = 0
     self.lastWasFourCombo = false
-    self.startingLines = startingLines or 0
-    self.currentLines = self.startingLines
     self.height = height
     self.CLOCK = 0
     self.riseLevel = riseLevel
@@ -40,15 +39,7 @@ function Health:run()
   -- Harder to survive over time, simulating "stamina"
   local staminaPercent = math.max(0.5, 1 - ((self.CLOCK / 60) * (0.01 / 10)))
   local decrementLines = (self.lineClearRate * (1/60.0)) * staminaPercent
-
-  -- Slow down "clearing" near the bottom as you can't really attack well with that few panels
-  -- and it will make the user feel like they lost all progress.
-  if self.currentLines <= 6 then
-    decrementLines = decrementLines * decrementLines / 36
-  end
-  
   self.currentLines = math.max(0, self.currentLines - decrementLines)
-
   if self.currentLines >= self.height then
     self.secondsToppedOutToLose = math.max(0, self.secondsToppedOutToLose - (1/60.0))
   end
