@@ -33,8 +33,8 @@ function Health:run()
     self.currentRiseSpeed = math.min(self.currentRiseSpeed + 1, 99)
   end
 
-  local risenLines = 1.0 / (speed_to_rise_time[self.currentRiseSpeed] * 16)
-  self.currentLines = self.currentLines + risenLines
+  -- local risenLines = 1.0 / (speed_to_rise_time[self.currentRiseSpeed] * 16)
+  -- self.currentLines = self.currentLines + risenLines
 
   -- Harder to survive over time, simulating "stamina"
   local staminaPercent = math.max(0.5, 1 - ((self.CLOCK / 60) * (0.01 / 10)))

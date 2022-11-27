@@ -64,9 +64,9 @@ ChallengeMode =
     for stageIndex = 1, stageCount, 1 do
       local incrementMultiplier = stageIndex - 1
       local attackSettings = self:attackFile(difficulty, stageIndex)
-      local secondsToppedOutToLose = secondsToppedOutToLoseBase + secondsToppedOutToLoseIncrement * incrementMultiplier
+      local secondsToppedOutToLose = (secondsToppedOutToLoseBase + secondsToppedOutToLoseIncrement * incrementMultiplier) * 10
       local lineClearGPM = lineClearGPMBase + lineClearGPMIncrement * incrementMultiplier
-      self.stages[#self.stages+1] = ChallengeStage(stageIndex, secondsToppedOutToLose, lineClearGPM, lineHeightToKill, panelLevel, attackSettings)
+      self.stages[#self.stages+1] = ChallengeStage(stageIndex, 0.00001, 0, secondsToppedOutToLose, panelLevel, attackSettings)
     end
     
     self.stageTimeQuads = {}
