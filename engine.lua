@@ -2888,7 +2888,7 @@ function Stack:getAttackPatternData()
   local data = {}
   data.extraInfo = {}
   data.extraInfo.playerName = self.match.battleRoom.playerNames[self.which] or "Player"
-  data.extraInfo.gpm = self.analytic.lastGPM or 0
+  data.extraInfo.gpm = self.analytic:getRoundedGPM(self.CLOCK) or 0
   data.extraInfo.matchLength = " "
   if self.game_stopwatch and tonumber(self.game_stopwatch) then
     data.extraInfo.matchLength = frames_to_time_string(self.game_stopwatch)
@@ -2935,4 +2935,15 @@ function Stack:getAttackPatternData()
   local state = {keyorder = {"extraInfo", "playerName", "gpm", "matchLength", "dateGenerated", "mergeComboMetalQueue", "delayBeforeStart", "delayBeforeRepeat", "attackPatterns"}}
 
   return data, state
+end
+
+function Stack:saveAttackPatternsToPath(data, state, path)
+  pcall(
+    function()
+      local file = love.filesystem.newFile(path)
+      file:open("w")
+      file:write(json.encode(data, state))
+      file:close()
+    end
+  )
 end

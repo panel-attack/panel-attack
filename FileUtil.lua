@@ -9,6 +9,11 @@ FileUtil =
   end
 )
 
+-- Returns the file extension part of a path or nil if it doesn't have one.
+function FileUtil.getFileExtension(path)
+  return path:match("^.+(%..+)$")
+end
+
 function FileUtil.getFilteredDirectoryItems(path)
   local results = {}
 

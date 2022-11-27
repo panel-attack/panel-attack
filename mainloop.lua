@@ -75,6 +75,7 @@ function fmainloop()
     require("StackTests")
     require("table_util_tests")
     require("utilTests")
+    --require("replayAnalyzer")
     if PERFORMANCE_TESTS_ENABLED then
       require("tests/performanceTests")
     end

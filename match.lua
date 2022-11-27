@@ -41,11 +41,9 @@ Match =
 function Match:deinit()
   if self.P1 then
     self.P1:deinit()
-    self.P1 = nil
   end
   if self.P2 then
     self.P2:deinit()
-    self.P2 = nil
   end
 end
 
