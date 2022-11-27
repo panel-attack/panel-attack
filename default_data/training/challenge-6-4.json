@@ -1,9 +1,9 @@
 {
     "extraInfo": {
-        "playerName": "Galadic97",
-        "gpm": "16.4",
-        "matchLength": "1:17",
-        "dateGenerated": "2022-11-26-23-17-56"
+        "playerName": "Newsy",
+        "gpm": "17.8",
+        "matchLength": "1:06",
+        "dateGenerated": "2022-11-26-22-48-45"
     },
     "mergeComboMetalQueue": false,
     "delayBeforeStart": 0,
@@ -12,147 +12,120 @@
         {
             "height": 1,
             "chain": false,
-            "startTime": 282,
+            "startTime": 619,
             "metal": false,
-            "width": 4
+            "width": 3
         },
         {
-            "chainEndTime": 642,
+            "chainEndTime": 968,
             "chain": [
-                372,
-                441,
-                508,
-                575
-            ]
-        },
-        {
-            "chainEndTime": 778,
-            "chain": [
-                711
+                696,
+                765,
+                832,
+                899
             ]
         },
         {
             "height": 1,
             "chain": false,
-            "startTime": 1441,
-            "metal": false,
-            "width": 4
-        },
-        {
-            "height": 1,
-            "chain": false,
-            "startTime": 1566,
+            "startTime": 1615,
             "metal": false,
             "width": 3
         },
         {
             "height": 1,
             "chain": false,
-            "startTime": 1764,
+            "startTime": 1722,
             "metal": false,
             "width": 3
         },
         {
-            "height": 1,
-            "chain": false,
-            "startTime": 1964,
-            "metal": false,
-            "width": 4
-        },
-        {
-            "chainEndTime": 2585,
+            "chainEndTime": 1868,
             "chain": [
-                2413
+                1799
             ]
         },
         {
             "height": 1,
             "chain": false,
-            "startTime": 2413,
+            "startTime": 1926,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 2070,
+            "chain": [
+                2003
+            ]
+        },
+        {
+            "chainEndTime": 2304,
+            "chain": [
+                2235
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 2389,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 2667,
+            "chain": [
+                2608
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 2777,
             "metal": false,
             "width": 5
         },
         {
-            "height": 1,
-            "chain": false,
-            "startTime": 2626,
-            "metal": false,
-            "width": 3
-        },
-        {
-            "chainEndTime": 2879,
+            "chainEndTime": 3260,
             "chain": [
-                2803
+                3150,
+                3151
             ]
         },
         {
             "height": 1,
             "chain": false,
-            "startTime": 3081,
+            "startTime": 3489,
             "metal": false,
             "width": 3
         },
         {
-            "height": 1,
-            "chain": false,
-            "startTime": 3215,
-            "metal": false,
-            "width": 4
-        },
-        {
-            "chainEndTime": 3365,
+            "chainEndTime": 3616,
             "chain": [
-                3298
+                3544
             ]
         },
         {
             "height": 1,
             "chain": false,
-            "startTime": 3397,
+            "startTime": 3655,
             "metal": false,
             "width": 3
         },
         {
-            "chainEndTime": 3758,
+            "chainEndTime": 4027,
             "chain": [
-                3480,
-                3557,
-                3624,
-                3691
+                3735,
+                3802,
+                3871,
+                3938
             ]
         },
         {
             "height": 1,
             "chain": false,
-            "startTime": 3480,
+            "startTime": 3938,
             "metal": false,
-            "width": 3
-        },
-        {
-            "chainEndTime": 4371,
-            "chain": [
-                4302
-            ]
-        },
-        {
-            "height": 1,
-            "chain": false,
-            "startTime": 4326,
-            "metal": false,
-            "width": 3
-        },
-        {
-            "height": 1,
-            "chain": false,
-            "startTime": 4746,
-            "metal": false,
-            "width": 3
-        },
-        {
-            "chainEndTime": 4891,
-            "chain": [
-                4821
-            ]
+            "width": 5
         }
     ]
 }

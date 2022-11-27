@@ -6,7 +6,7 @@ ChallengeMode =
   class(
   function(self, difficulty)
     self.currentStageIndex = 0
-    self.nextStageIndex = 1
+    self.nextStageIndex = self.currentStageIndex + 1
     self.stages = {}
     self.difficultyName = loc("challenge_difficulty_" .. difficulty)
     self.continues = 0
@@ -48,14 +48,14 @@ ChallengeMode =
     elseif difficulty == 5 then
       stageCount = 12
       secondsToppedOutToLoseBase = 1.2
-      secondsToppedOutToLoseIncrement = 0.8
+      secondsToppedOutToLoseIncrement = 4.0
       lineClearGPMBase = 30
       lineClearGPMIncrement = 1.5
       panelLevel = 8
     elseif difficulty == 6 then
       stageCount = 12
       secondsToppedOutToLoseBase = 1.2
-      secondsToppedOutToLoseIncrement = 0.8
+      secondsToppedOutToLoseIncrement = 4.0
       lineClearGPMBase = 35
       lineClearGPMIncrement = 1.5
       panelLevel = 10
