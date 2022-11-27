@@ -15,7 +15,8 @@ ChallengeMode =
     local secondsToppedOutToLoseIncrement = 0.1
     local lineClearGPMBase = 4
     local lineClearGPMIncrement = 0.4
-    local lineHeightToKill = 6
+    local startingLines = 6
+    local lineHeightToKill = 12
     local panelLevel = 2
 
     if difficulty == 1 then
@@ -66,7 +67,7 @@ ChallengeMode =
       local attackSettings = self:attackFile(difficulty, stageIndex)
       local secondsToppedOutToLose = secondsToppedOutToLoseBase + secondsToppedOutToLoseIncrement * incrementMultiplier
       local lineClearGPM = lineClearGPMBase + lineClearGPMIncrement * incrementMultiplier
-      self.stages[#self.stages+1] = ChallengeStage(stageIndex, secondsToppedOutToLose, lineClearGPM, lineHeightToKill, panelLevel, attackSettings)
+      self.stages[#self.stages+1] = ChallengeStage(stageIndex, secondsToppedOutToLose, lineClearGPM, startingLines, lineHeightToKill, panelLevel, attackSettings)
     end
     
     self.stageTimeQuads = {}
