@@ -460,7 +460,7 @@ function Telegraph:render()
       local orig_grb_w, orig_grb_h = characters[senderCharacter].telegraph_garbage_images[height][6]:getDimensions()
       local grb_scale_x = 24 / orig_grb_w
       local grb_scale_y = 16 / orig_grb_h
-      draw(characters[senderCharacter].telegraph_garbage_images[height][6], draw_x, draw_y, 0, grb_scale_x, grb_scale_y)
+      draw(characters[senderCharacter].telegraph_garbage_images[height][6], draw_x, draw_y, 0, grb_scale_x * self.owner.gfx_scale / GFX_SCALE, grb_scale_y * self.owner.gfx_scale / GFX_SCALE)
 
       -- Render a "G" for ghost
       if config.debug_mode then
