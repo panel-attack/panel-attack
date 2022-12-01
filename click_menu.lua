@@ -20,6 +20,7 @@ Click_menu =
     self.maxHeight = maxHeight or (canvas_height - (2 * defaultPadding)) --scrolling does care about height
     self.new_item_y = 0
     local menuXPosition = -100
+    self.menuFont = get_global_font()
     self.menu_controls = {
       up = {
         text = love.graphics.newText(get_global_font(), "^"),
@@ -74,6 +75,10 @@ Click_menu =
     self.id = #CLICK_MENUS
     self.top_visible_button = 1
     self.clock = 1
+    if GAME.portrait_mode then
+      self.menuFont = get_global_font_with_size(20)
+      self.padding_between_buttons = 24
+    end
 
     self:layout_buttons()
   end
@@ -81,16 +86,16 @@ Click_menu =
 
 function Click_menu:reloadGraphics()
   for k, v in pairs(self.buttons) do
-    v.text = love.graphics.newText(get_global_font(), v.stringText)
+    v.text = love.graphics.newText(self.menuFont, v.stringText)
     if v.currentSettingText then
-      v.current_setting = love.graphics.newText(get_global_font(), v.currentSettingText)
+      v.current_setting = love.graphics.newText(self.menuFont, v.currentSettingText)
     end
   end
 end
 
 function Click_menu.add_button(self, string_text, selectFunction, escapeFunction, leftFunction, rightFunction)
   self.buttons[#self.buttons + 1] = {
-    text = love.graphics.newText(get_global_font(), string_text),
+    text = love.graphics.newText(self.menuFont, string_text),
     stringText = string_text,
     currentSettingText = nil,
     x = 0,
@@ -118,13 +123,13 @@ end
 
 -- Sets the string for the menu text
 function Click_menu.set_button_text(self, button_idx, string)
-  self.buttons[button_idx].text = love.graphics.newText(get_global_font(), string)
+  self.buttons[button_idx].text = love.graphics.newText(self.menuFont(), string)
 end
 
 
 -- Sets the string to render to the right of the menu text
 function Click_menu.set_button_setting(self, button_idx, new_setting)
-  self.buttons[button_idx].current_setting = love.graphics.newText(get_global_font(), new_setting)
+  self.buttons[button_idx].current_setting = love.graphics.newText(self.menuFont, new_setting)
   self.buttons[button_idx].currentSettingText = new_setting
 end
 
