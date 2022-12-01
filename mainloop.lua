@@ -38,7 +38,20 @@ local puzzle_menu_last_index = 3
 
 function fmainloop()
   local func, arg = main_title, nil
-  
+  if GAME.portrait_mode == nil then --portrait_mode function hasn't run yet
+    if mobile and (config.portraitMode == nil) then --portrait mode preference was never saved, default true on mobile
+      portrait_mode(true) 
+    else
+      portrait_mode(config.portraitMode) --fine if we pass nil here.
+    end
+  end
+  if config.inputMethod == nil then
+    if mobile then
+      config.inputMethod = "touch"
+    else
+      config.inputMethod = "controller"
+    end
+  end
   while true do
     leftover_time = 1 / 120 -- prevents any left over time from getting big transitioning between menus
 ---@diagnostic disable-next-line: redundant-parameter
@@ -124,20 +137,6 @@ end
 
 do
   function main_select_mode()
-    if GAME.portrait_mode == nil then --portrait_mode function hasn't run yet
-      if mobile and (config.portraitMode == nil) then --portrait mode preference was never saved, default true on mobile
-        portrait_mode(true) 
-      else
-        portrait_mode(config.portraitMode) --fine if we pass nil here.
-      end
-    end
-    if config.inputMethod == nil then
-      if mobile then
-        config.inputMethod = "touch"
-      else
-        config.inputMethod = "controller"
-      end
-    end
     CLICK_MENUS = {}
     if next(currently_playing_tracks) == nil then
       stop_the_music()
