@@ -75,7 +75,7 @@ end
 
 function Telegraph:updatePosition()
   self.pos_x = self.owner.pos_x - 4
-  self.pos_y = self.owner.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
+  self.pos_y = self.owner.pos_y - 4 - TELEGRAPH_HEIGHT * self.owner.gfx_scale / GFX_SCALE - TELEGRAPH_PADDING
 end
 
 function Telegraph.saveClone(toSave)
@@ -295,8 +295,8 @@ end
 
 function Telegraph:telegraphRenderXPosition(index)
   --todo portrait_mode: maybe use GFX_SCALE here.
-  local stackWidth = math.floor(self.owner.canvas:getWidth() / self.owner.gfx_scale)
-  local increment = -TELEGRAPH_BLOCK_WIDTH * self.owner.mirror_x
+  local stackWidth = math.floor(self.owner.canvas:getWidth() / GFX_SCALE * (self.owner.gfx_scale / GFX_SCALE))
+  local increment = -TELEGRAPH_BLOCK_WIDTH * (self.owner.gfx_scale / GFX_SCALE) * self.owner.mirror_x
 
   local result = self.pos_x
   if self.owner.which == 1 then
@@ -417,7 +417,7 @@ function Telegraph:render()
           local orig_grb_w, orig_grb_h = characters[senderCharacter].telegraph_garbage_images[height][current_block[1]]:getDimensions()
           local grb_scale_x = 24 / orig_grb_w
           local grb_scale_y = 16 / orig_grb_h
-          draw(characters[senderCharacter].telegraph_garbage_images[height--[[height]]][current_block[1]--[[width]]], draw_x, draw_y, 0, grb_scale_x, grb_scale_y)
+          draw(characters[senderCharacter].telegraph_garbage_images[height--[[height]]][current_block[1]--[[width]]], draw_x, draw_y, 0,  grb_scale_x * self.owner.gfx_scale / GFX_SCALE, grb_scale_y * self.owner.gfx_scale / GFX_SCALE)
         else
           local orig_mtl_w, orig_mtl_h = characters[senderCharacter].telegraph_garbage_images["metal"]:getDimensions()
           local mtl_scale_x = 24 / orig_mtl_w
