@@ -231,6 +231,7 @@ local function graphics_menu()
     if not noToggle then
       config.renderTelegraph = not config.renderTelegraph
       portrait_mode(not GAME.portrait_mode)
+      ret = {graphics_menu}
     end
     graphicsMenu:set_button_setting(4, (GAME.portrait_mode and "Portrait") or "Landscape")  --to do: localize 
   end

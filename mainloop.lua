@@ -1912,8 +1912,9 @@ function portrait_mode(portrait_mode_desired)
       end
     end
   end
-  --GAME:updateCanvasPositionAndScale(new_width, window_height)
-  --GAME:refreshCanvasAndImagesForNewScale()
+  GAME:updateCanvasPositionAndScale(new_width, window_height)
+  GAME:refreshCanvasAndImagesForNewScale()
+  
   return true
 end
 
