@@ -354,7 +354,7 @@ function Stack.send_controls(self)
     (player_right(playerNumber) and 1 or 0) + 1
     ]
   elseif self.inputMethod == "touch" then
-    local iraise, itaunt_pressed, irow_touched, icol_touched = false, false, 0, 0
+    local iraise, itaunt_pressed, irow_touched, icol_touched = false, false, self.touchedPanel.row, self.touchedPanel.col
     --we'll encode the touch input state as a hexidecimal number between 00 and FF,
     --including whether raise is pressed, whether taunt is pressed, and the number of the currently touched panel. Example, panel with number 13 would be the one on the 3rd row, first column (in a 6 width stack).
     --touched panel will be 0,0 if no panel is touched this frame.
@@ -368,6 +368,9 @@ function Stack.send_controls(self)
         self.touched = true
         --px and py represent the origin of the panel we are currently checking if it's touched.
         local px, py
+        local buffer = .25 * 16 * self.gfx_scale -- % of the panel size
+        local leftEdge, rightEdge -- the left and right edge of the panel
+        local leftBufferEdge, rightBufferEdge -- the left and right edge inset by the buffer
         local stop_looking = false
         for row = 0, self.height do
           for col = 1, self.width do
@@ -376,7 +379,17 @@ function Stack.send_controls(self)
             --to do: maybe self.displacement - shake here? ignoring shake for now.
             py = (self.pos_y * GFX_SCALE) + ((11 - (row)) * 16 + self.displacement) * self.gfx_scale
             --check if mouse is touching panel in row, col
-            if mx >= px and mx < px + 16 * self.gfx_scale and my >= py and my < py + 16 * self.gfx_scale then
+            leftEdge = px
+            rightEdge = px + 16 * self.gfx_scale
+            leftBufferEdge = leftEdge + buffer
+            rightBufferEdge = rightEdge - buffer
+            if mx >= leftEdge and mx < rightEdge and my >= py and my < py + 16 * self.gfx_scale then
+              if irow_touched ~= 0 and icol_touched ~= 0 then
+                -- If we were touching, but we haven't passed the buffer yet, we aren't ready to change the panel yet.
+                if not (mx >= leftBufferEdge and mx < rightBufferEdge and my >= py and my < py + 16 * self.gfx_scale) then
+                  break
+                end
+              end
               irow_touched = math.max(row, 1) --if touching row 0, let's say we are touching row 1
               icol_touched = col
               if self.prev_touchedPanel 
