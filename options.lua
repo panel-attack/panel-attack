@@ -229,7 +229,6 @@ local function graphics_menu()
   
   local function update_orientation(noToggle)
     if not noToggle then
-      config.renderTelegraph = not config.renderTelegraph
       portrait_mode(not GAME.portrait_mode)
       ret = {graphics_menu}
     end
