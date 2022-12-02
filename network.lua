@@ -365,44 +365,53 @@ function Stack.send_controls(self)
       --check whether the mouse is over this stack
       if mx >= self.pos_x * GFX_SCALE and mx <= (self.pos_x * GFX_SCALE) + (self.width * 16) * self.gfx_scale and
       my >= self.pos_y * GFX_SCALE and my <= (self.pos_y * GFX_SCALE) + (self.height* 16) * self.gfx_scale then
-        self.touched = true
-        --px and py represent the origin of the panel we are currently checking if it's touched.
-        local px, py
-        local buffer = .25 * 16 * self.gfx_scale -- % of the panel size
-        local leftEdge, rightEdge -- the left and right edge of the panel
-        local leftBufferEdge, rightBufferEdge -- the left and right edge inset by the buffer
-        local stop_looking = false
-        for row = 0, self.height do
-          for col = 1, self.width do
-            --print("checking panel "..row..","..col)
-            px = (self.pos_x * GFX_SCALE) + ((col - 1) * 16) * self.gfx_scale
-            --to do: maybe self.displacement - shake here? ignoring shake for now.
-            py = (self.pos_y * GFX_SCALE) + ((11 - (row)) * 16 + self.displacement) * self.gfx_scale
-            --check if mouse is touching panel in row, col
-            leftEdge = px
-            rightEdge = px + 16 * self.gfx_scale
-            leftBufferEdge = leftEdge + buffer
-            rightBufferEdge = rightEdge - buffer
-            if mx >= leftEdge and mx < rightEdge and my >= py and my < py + 16 * self.gfx_scale then
-              if irow_touched ~= 0 and icol_touched ~= 0 then
-                -- If we were touching, but we haven't passed the buffer yet, we aren't ready to change the panel yet.
-                if not (mx >= leftBufferEdge and mx < rightBufferEdge and my >= py and my < py + 16 * self.gfx_scale) then
-                  break
+        if self.touched == false then
+          self.touched = true
+        end
+
+        if irow_touched ~= 0 and icol_touched ~= 0 then
+          local panelSize = 16 * self.gfx_scale -- % of the panel size
+          local requiredDragAmount = .55 * panelSize -- % of the panel size
+          local deltaX = mx - self.lastTouchX
+          if deltaX > requiredDragAmount and icol_touched < self.width then
+            self.lastTouchX = self.lastTouchX + panelSize
+            icol_touched = icol_touched + 1
+          elseif deltaX < -requiredDragAmount and icol_touched > 1 then
+            self.lastTouchX = self.lastTouchX - panelSize
+            icol_touched = icol_touched - 1
+          end
+        else
+          --px and py represent the origin of the panel we are currently checking if it's touched.
+          local px, py
+          local leftEdge, rightEdge -- the left and right edge of the panel
+          local leftBufferEdge, rightBufferEdge -- the left and right edge inset by the buffer
+          local stop_looking = false
+          for row = 0, self.height do
+            for col = 1, self.width do
+              --print("checking panel "..row..","..col)
+              px = (self.pos_x * GFX_SCALE) + ((col - 1) * 16) * self.gfx_scale
+              --to do: maybe self.displacement - shake here? ignoring shake for now.
+              py = (self.pos_y * GFX_SCALE) + ((11 - (row)) * 16 + self.displacement) * self.gfx_scale
+              --check if mouse is touching panel in row, col
+              leftEdge = px
+              rightEdge = px + 16 * self.gfx_scale
+              if mx >= leftEdge and mx < rightEdge and my >= py and my < py + 16 * self.gfx_scale then
+                irow_touched = math.max(row, 1) --if touching row 0, let's say we are touching row 1
+                icol_touched = col
+                self.lastTouchX = mx
+                self.lastTouchY = my
+                if self.prev_touchedPanel 
+                  and row == self.prev_touchedPanel.row and col == self.prev_touchedPanel.col then
+                  --we want this to be the selected panel in the case more than one panel is touched
+                  stop_looking = true
+                  break --don't look further
                 end
+                --otherwise, we'll continue looking for touched panels, and the panel with the largest panel coordinates (ie closer to 12,6) will be chosen as self.touchedPanel
+                --this may help us implement stealth.
               end
-              irow_touched = math.max(row, 1) --if touching row 0, let's say we are touching row 1
-              icol_touched = col
-              if self.prev_touchedPanel 
-                and row == self.prev_touchedPanel.row and col == self.prev_touchedPanel.col then
-                --we want this to be the selected panel in the case more than one panel is touched
-                stop_looking = true
-                break --don't look further
+              if stop_looking then
+                  break
               end
-              --otherwise, we'll continue looking for touched panels, and the panel with the largest panel coordinates (ie closer to 12,6) will be chosen as self.touchedPanel
-              --this may help us implement stealth.
-            end
-            if stop_looking then
-                break
             end
           end
         end
