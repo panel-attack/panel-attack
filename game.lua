@@ -29,7 +29,10 @@ Game =
 )
 
 function Game.clearMatch(self)
-  self.match = nil
+  if self.match then
+    self.match:deinit()
+    self.match = nil
+  end
   self.gameIsPaused = false
   self.renderDuringPause = false
   self.preventSounds = false

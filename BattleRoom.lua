@@ -6,8 +6,11 @@ BattleRoom =
   class(
   function(self, mode)
     self.playerWinCounts = {}
+    self.modifiedWinCounts = {}
     self.playerWinCounts[1] = 0
     self.playerWinCounts[2] = 0
+    self.modifiedWinCounts[1] = 0
+    self.modifiedWinCounts[2] = 0
     self.mode = mode
     self.playerNames = {} -- table with player which number -> display name
     self.playerNames[1] = config.name or loc("player_n", "1")
@@ -19,6 +22,14 @@ BattleRoom =
 
 function BattleRoom.updateWinCounts(self, winCounts)
   self.playerWinCounts = winCounts
+end
+
+function BattleRoom:totalGames()
+  local totalGames = 0
+  for _, winCount in ipairs(self.playerWinCounts) do
+    totalGames = totalGames + winCount
+  end
+  return totalGames
 end
 
 -- Returns the player with more win count.
@@ -35,6 +46,10 @@ function BattleRoom.winningPlayer(self)
 
   logger.trace("Player " .. P2.which .. " (" .. P2.player_number .. ") has more wins")
   return P2
+end
+
+function BattleRoom.getPlayerWinCount(self, playerNumber)
+ return self.playerWinCounts[playerNumber] + self.modifiedWinCounts[playerNumber]
 end
 
 function BattleRoom.matchOutcome(self)

@@ -232,7 +232,7 @@ do
     for i = 1, #items do
       main_menu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
     end
-    main_menu:add_button(loc("mm_fullscreen", "(LAlt+Enter)"), fullscreen, goEscape)
+    main_menu:add_button(loc("mm_fullscreen", "(Alt+Enter)"), fullscreen, goEscape)
     main_menu:add_button(loc("mm_quit"), exit_game, exit_game)
 
     while true do
@@ -392,7 +392,7 @@ end
 
 local function finalizeAndWriteReplay(extraPath, extraFilename)
 
-  replay[GAME.match.mode].in_buf = P1.confirmedInput
+  replay[GAME.match.mode].in_buf = table.concat(P1.confirmedInput)
 
   local now = os.date("*t", to_UTC(os.time()))
   local sep = "/"
@@ -420,7 +420,7 @@ local function finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGam
   end
 
   if P2 then
-    replay[GAME.match.mode].I = P2.confirmedInput
+    replay[GAME.match.mode].I = table.concat(P2.confirmedInput)
 
     local rep_a_name, rep_b_name = battleRoom.playerNames[1], battleRoom.playerNames[2]
     --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
@@ -865,6 +865,11 @@ local function main_select_speed_99(mode)
   end
   updateMenus()
 
+  local lastScoreLabelQuads = {}
+  local lastScoreQuads = {}
+  local recordLabelQuads = {}
+  local recordQuads = {}
+
   while true do
 
     if difficulty then
@@ -884,10 +889,10 @@ local function main_select_speed_99(mode)
 
       lastScore = tostring(lastScore)
       record = tostring(record)
-      draw_pixel_font("last score", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition, 0.5, 1.0)
-      draw_pixel_font(lastScore, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition + 24, 0.5, 1.0)
-      draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition, 0.5, 1.0)
-      draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition + 24, 0.5, 1.0)
+      draw_pixel_font("last score", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition, 0.5, 1.0, nil, nil, lastScoreLabelQuads)
+      draw_pixel_font(lastScore, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition + 24, 0.5, 1.0, nil, nil, lastScoreQuads)
+      draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition, 0.5, 1.0, nil, nil, recordLabelQuads)
+      draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition + 24, 0.5, 1.0, nil, nil, recordQuads)
     end
 
     gameSettingsMenu:draw()
@@ -1285,7 +1290,7 @@ function main_net_vs_setup(ip, network_port)
     end
   end
   P1 = nil
-  P2 = {}
+  P2 = nil
   server_queue = ServerQueue()
   gprint(loc("lb_set_connect"), unpack(themes[config.theme].main_menu_screen_pos))
   wait()
@@ -1607,20 +1612,31 @@ function main_replay()
         P2.max_runs_per_frame = 1
       end
     elseif menu_right() then
-      playbackSpeed = bound(1, playbackSpeed + 1, maximumSpeed)
+      playbackSpeed = bound(-1, playbackSpeed + 1, maximumSpeed)
       if P1 then
-        P1.max_runs_per_frame = playbackSpeed
+        P1.max_runs_per_frame = math.max(playbackSpeed, 0)
       end
       if P2 then
-        P2.max_runs_per_frame = playbackSpeed
+        P2.max_runs_per_frame = math.max(playbackSpeed, 0)
       end
     elseif menu_left() then
-      playbackSpeed = bound(1, playbackSpeed - 1, maximumSpeed)
+      playbackSpeed = bound(-1, playbackSpeed - 1, maximumSpeed)
       if P1 then
-        P1.max_runs_per_frame = playbackSpeed
+        P1.max_runs_per_frame = math.max(playbackSpeed, 0)
       end
       if P2 then
-        P2.max_runs_per_frame = playbackSpeed
+        P2.max_runs_per_frame = math.max(playbackSpeed, 0)
+      end
+    end
+
+    if playbackSpeed == -1 then
+      if P1 and P1.CLOCK > 0 and P1.prev_states[P1.CLOCK-1] then
+        P1:rollbackToFrame(P1.CLOCK-1)
+        P1.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
+      end
+      if P2 and P2.CLOCK > 0 and P2.prev_states[P2.CLOCK-1] then
+        P2:rollbackToFrame(P2.CLOCK-1)
+        P2.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
       end
     end
   end

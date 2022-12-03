@@ -9,7 +9,7 @@ randomColors,Option to randomize panel colors,Random Colors,Couleurs aléatoires
 normal,,Normal,Normal,Normal,NORMAL,Normal,Normal,Normale
 speed,,Speed,Vitesse,Velocidade,スピード,Velocidad,Geschwindigkeit,Velocità
 factory,Training mode that drops multiple tiers of chain garbage,Factory,Usine,Fábrica,工場,Fábrica,Fabrik,Fabbrica
-combo_storm,Training mode that drops lots of small combo blocks in a row,Combo Storm,Tempête combo,Tempestade de combinação,コンボ嵐,Tormenta combo,Combo Storm.,Combo Storm.
+combo_storm,Training mode that drops lots of small combo blocks in a row,Combo Storm,Tempête combo,Tempestade de combinação,コンボ嵐,Tormenta combo,Combo Storm,Combo Storm.
 large_garbage,Training mode that drops huge chain blocks,Large Garbage,Gros ordures,Grande lixo,大規模なごみ,Basura grande,Großer Müll,Grande spazzatura
 width,width of garbage blocks in training mode,Width,Largeur,Largura,幅,Ancho,Breite,Larghezza
 height,height of garbage blocks in training mode,Height,Hauteur,Altura,高さ,Altura,Höhe,Altezza
@@ -73,7 +73,7 @@ Você pode continuar em partidas não ranqueadas.","レートマッチのログ�
 Es posible que el servidor no soporte partidas clasificatorias.
 
 
-Solamente puedes jugar partidas normales (unranked).","Die Anmeldung für bewertetes Spiel hat zu lange gedauert.
+Solamente puedes jugar partidas normales (unranked).","Die Anmeldung für das bewertete Spiel hat zu lange gedauert.
 Der Server unterstützt vermutlich keine Rangliste.
 
 Du kannst ohne Wertung weiterspielen.","L'accesso alle partite classificate è scaduto.
@@ -81,10 +81,10 @@ Questo server probabilmente non supporta le partite classificate.
 
 
 Puoi continuare a giocare in modalità non clasificata."
-lb_new_id,,need a new user id,besoin d'un nouvel identifiant utilisateur,necessário novo ID de usuário,新しいユーザーIDが必要です,Se necesita un nuevo ID de usuario,Neue Spieler-ID benötigt,Necessario nuovo ID utente.
-lb_received,,(wants to play with you :o),(vous invite à jouer :o),(quer jogar com você :o),（対戦を申し込まれました！（・o・））,(quiere jugar contigo :o),(will mit dir spielen),(vuole giocare con te :o)
-lb_request,,(request sent),(demande envoyée),(solicitação enviada),（対戦申請中）,(petición enviada),(Anfrage geschickt),(richiesta inviata)
-lb_select_player,,Select a player name to ask for a match.,Selectionnez un joueur avec qui jouer.,Selecione um nome de jogador para solicitar uma partida.,プレイヤー名を選択して対戦を申し込んで下さい。,Selecciona el nombre de un jugador para enviarle solicitud de partida.,"Wähle einen Namen aus, um den Spieler zum Spiel zu bitten",Seleziona il nome di un giocatore con cui giocare.
+lb_new_id,,need a new user id,besoin d'un nouvel identifiant utilisateur,necessário novo ID de usuário,新しいユーザーIDが必要です,Se necesita un nuevo ID de usuario,Du benötigst eine neue Spieler-ID.,Necessario nuovo ID utente.
+lb_received,,(wants to play with you :o),(vous invite à jouer :o),(quer jogar com você :o),（対戦を申し込まれました！（・o・））,(quiere jugar contigo :o),(möchte mit dir spielen),(vuole giocare con te :o)
+lb_request,,(request sent),(demande envoyée),(solicitação enviada),（対戦申請中）,(petición enviada),(Anfrage gesendet),(richiesta inviata)
+lb_select_player,,Select a player name to ask for a match.,Selectionnez un joueur avec qui jouer.,Selecione um nome de jogador para solicitar uma partida.,プレイヤー名を選択して対戦を申し込んで下さい。,Selecciona el nombre de un jugador para enviarle solicitud de partida.,"Wähle einen Spieler aus, um ihn herauszufordern.",Seleziona il nome di un giocatore con cui giocare.
 lb_set_connect,,Setting up connection...,Préparation de la connexion...,Estabelecendo conexão...,接続しています…,Estableciendo conexión...,Verbindungsaufbau...,Stabilendo la connessione...
 lb_hide_board,,Hide Leaderboard,Cacher le classement,Ocultar Placar de Classificação,ランキングを非表示,Ocultar Tabla de Puntuación,Rangliste verbergen,Nascondi la classifica
 lb_spectate,,spectate,regarder,assistir,観戦する,espectar,zuschauen,Assisti
@@ -138,14 +138,14 @@ puede que este no se haya dado cuenta, intenta unirte de nuevo.
 
 Esto también puede ocurrir si tienes dos
 Instancias abiertas del juego.
-Pulsa ""Cambiar"" o ""Volver"" para continuar.","Fehler: Name wird schon verwendet :<
+Pulsa ""Cambiar"" o ""Volver"" para continuar.","Fehler: Dieser Name wird bereits verwendet :<
 
-Wenn du die Lobby gerade erst verlassen hast, kann es sein, dass der Server dies noch nicht bemerkt hat, versuch erneut hereinzukommen.
+Wenn du die Lobby gerade erst verlassen hast, könnte es sein, dass der Server dich noch nicht abgemeldet hat. Versuche es bitte erneut.
 
-Das kann ebenfalls passieren, wenn du Panel Attack mehrfache geöffnet hast.
+Das kann ebenfalls passieren, wenn du Panel Attack mehrfach geöffnet hast.
 
 
-Drück die Tauschtaste oder Zurück um fortzufahren.","Errore: nome già in uso :<
+Drücke die Tausch-Taste (A/B) oder die Esc-Taste, um fortzufahren.","Errore: nome già in uso :<
 
 
 Se hai appena lasciato il server,
@@ -180,46 +180,46 @@ Vecchio nome: ""%1""
 Nuovo nome: ""%2"""
 lb_welcome_back,,"Welcome back, %1","Vous êtes de retour, %1","Bem-vindo(a) de volta, %1",おかえりなさい、%1,"Bienvenido de vuelta, %1","Willkommen zurück, %1","Bentornato, %1"
 lb_you,,You,Vous,Você,あなた,Tú,Du,Tu
-ld_puzzles,,Copying puzzles readme...,Copie du fichier readme des puzzles...,Copiando leia-me de quebra-cabeças...,パズルのREADMEをコピーしています...,"Copiando el archivo ""readme"" de puzzles",Kopiere Liesmich für Puzzles...,Copia dell'archivio readme dei puzzle...
+ld_puzzles,,Copying puzzles readme...,Copie du fichier readme des puzzles...,Copiando leia-me de quebra-cabeças...,パズルのREADMEをコピーしています...,"Copiando el archivo ""readme"" de puzzles",Kopiere README für Puzzles...,Copia dell'archivio readme dei puzzle...
 ld_replay,,Loading replays...,Chargement des replays...,Carregando replays...,リプレイを読み込みしています…,Cargando repeticiones...,Lade Replays...,Caricamento dei replay...
 ld_theme,,Loading theme...,Chargement du thème...,Carregando temas...,テーマを読み込みしています…,Cargando tema...,Lade Themes...,Caricamento dei temi...
 ld_characters,,Preloading characters...,Préchargement des personnages...,Pré-carregando personagens...,キャラクターを読み込みしています…,Pre-cargando personajes...,Lade Charaktere...,Pre-caricamento dei personaggi...
 ld_stages,,Preloading stages...,Préchargement des terrains...,Pré-carregando cenários...,ステージを読み込みしています…,Pre-cargando escenarios...,Lade Arenen...,Pre-caricamento degli scenari...
 ld_panels,,Loading panels...,Chargement des blocs...,Carregando painéis...,パネルを読み込みしています…,Cargando paneles...,Lade Panels...,Caricamento delle tessere...
 ld_analytics,,Loading analytics...,Chargement des statistiques...,Carregando estatísticas...,解析を読み込みしています…,Cargando estadísticas....,Lade Statistikmodul...,Caricamento delle statistiche...
-mm_1_endless,,1P endless,1J infini,1J infinito,1P エンドレス,1J interminable,1SP Endless,1P infinito
-mm_1_puzzle,,1P puzzle,1J puzzle,1J quebra-cabeça,1P パズル,1J Puzzle,1SP Puzzle,1P puzzle
-mm_1_time,,1P time attack,1J contre la montre,1J contra o tempo,1P スコアアタック,1J Contrareloj,1SP Time Attack,1P a tempo
-mm_1_training,Vs training mode,1P training,Formation 1P,treinamento 1P,1P トレーニング,entrenamiento 1P,1SP Training,Allenamento 1P
-mm_1_vs,,1P vs yourself,1J vs soi-même,1J vs você mesmo,1P じぶんとのたたかい,1J vs Tú,1SP gegen dich selbst,1P vs te stesso
-mm_2_vs_local,,2P vs local game,2J vs en local,2J vs jogo local,2P ローカルVS,2J vs partida local,2SP vs lokal,2P vs in locale
-mm_2_vs_online,,2P vs online %1,2J vs en ligne %1,2J vs online %1,2P オンラインVS %1,2J vs partida en línea %1,2SP vs online %1,2P vs online %1
+mm_1_endless,,1P endless,1J infini,1J infinito,1P エンドレス,1J interminable,1P Endlos,1P infinito
+mm_1_puzzle,,1P puzzle,1J puzzle,1J quebra-cabeça,1P パズル,1J Puzzle,1P Puzzle,1P puzzle
+mm_1_time,,1P time attack,1J contre la montre,1J contra o tempo,1P スコアアタック,1J Contrareloj,1P Time Attack,1P a tempo
+mm_1_training,Vs training mode,1P training,Formation 1P,treinamento 1P,1P トレーニング,entrenamiento 1P,1P Training,Allenamento 1P
+mm_1_vs,,1P vs yourself,1J vs soi-même,1J vs você mesmo,1P じぶんとのたたかい,1J vs Tú,1P gegen dich selbst,1P vs te stesso
+mm_2_vs_local,,2P vs local game,2J vs en local,2J vs jogo local,2P ローカルVS,2J vs partida local,2P lokal,2P vs in locale
+mm_2_vs_online,,2P vs online %1,2J vs en ligne %1,2J vs online %1,2P オンラインVS %1,2J vs partida en línea %1,2P online %1,2P vs online %1
 mm_2_vs,,2P vs,2J vs,2J vs,2P VS,2J vs,2SP vs,2P vs
 mm_configure,,Configure input,Configurer les touches,Configurar teclas,入力コンフィグ,Configurar teclas,Tastenkonfiguration,Configura i tasti
 mm_fullscreen,,Fullscreen %1,Plein Écran %1,Tela cheia %1,フルスクリーン %1,Pantalla completa %1,Vollbild %1,Schermo inteto 1%
-mm_music_test,,Music test,Musique test,Teste de música,サウンドテスト,Prueba de música,Musik testen,Testa la musica
-mm_no_support_fullscreen,,Your graphics card doesn't support canvases for fullscreen,Votre carte graphique ne supporte pas le plein écran,Sua placa de vídeo não suporta tela cheia,お使いのグラフィックカードはフルスクリーンのキャンバスに対応していません,Tu tarjeta gráfica no soporta bordes en pantalla completa.,Deine Grafikkarte unterstützt keine Vollbildauflösungen,La tua scheda grafica non supporta la modalità schermo intero.
+mm_music_test,,Music test,Musique test,Teste de música,サウンドテスト,Prueba de música,Musik-Test,Testa la musica
+mm_no_support_fullscreen,,Your graphics card doesn't support canvases for fullscreen,Votre carte graphique ne supporte pas le plein écran,Sua placa de vídeo não suporta tela cheia,お使いのグラフィックカードはフルスクリーンのキャンバスに対応していません,Tu tarjeta gráfica no soporta bordes en pantalla completa.,Deine Grafikkarte unterstützt keine Vollbildauflösungen.,La tua scheda grafica non supporta la modalità schermo intero.
 mm_options,,Options,Options,Opções,オプション,Opciones,Optionen,Opzioni
 mm_quit,,Quit,Quitter,Sair,終わる,Salir,Verlassen,Esci
 mm_replay_of,,Replay of %1,Replay de %1,Replay de %1,%1のリプレイ,Ver repetición de %1,Replay von %1,Replay di 1%
-mm_set_name,,Set name,Changer de pseudo,Trocar apelido,ユーザー名設定,Definir nombre,Namen festlegen,Imposta il nome
-nt_ver_err,,PLEASE DOWNLOAD the latest version of the game from #welcome-getting-started at the TetrisAttackOnline Discord http://discord.panelattack.com,S'IL VOUS PLAIT TELECHARGER la dernière version du jeu sur le discord TetrisAttackOnline http://discord.panelattack.comdans #welcome-getting-started,FAÇA O DOWNLOAD da versão mais recente do jogo em # Welcome-Getting-Started no TetrisAttackOnline Discord http://discord.panelattack.com,TetrisAttackOnline Discord http://discord.panelattack.comで、ゲームの最新バージョンを＃welcome-getting-startedからダウンロードして下さい。,POR FAVOR DESCARGA la última version del juego en #welcome-getting-started En el servidor de discord de TetrisAttackOnline:http://discord.panelattack.com,Bitte lade dir die neueste Version des Spiels aus dem #welcome-getting-started channel auf dem TetrisAttackOnline Discord http://discord.panelattack.com herunter.,"Per favore, scarica l'ultima versione del gioco da #welcome-getting-started sul server Discord TetrisAttackOnline http://discord.panelattack.com"
-nt_conn_timeout,,Failed to connect to the server.,Impossible de se connecter au serveur.,Falha ao conectar o servidor.,サーバーに接続が失敗しました。,Error al conectarse al servidor.,Konnte keine Verbindung zum Server herstellen.,Errore di connessione al server.
-nt_msg_err,,"Network error, message could not be decoded: ""%1""","Erreur réseau, le message ne peut pas être décodé: ""%1""","Erro de conexão, a mensagem não pôde ser codificada: ""%1""","ネットワークエラー、メッセージのデコード失敗: ""%1""","Error de red, el mensaje no pudo ser decodificado: ""%1""","Netzwerkfehler, die folgende Nachricht konnte nicht entschlüsselt werden: %1","Errore di network, il messaggio non può essere decodificato: ""%1"""
-nt_player_err,,Server did not send number of players.,Le serveur n'a pas envoyé le nombre de joueurs.,O servidor não emitiu nº de jogadores.,サーバーからプレイヤー人数を受信しませんでした。,El servidor no envio la cantidad de jugadores.,Server schickte nicht die Anzahl der Spieler,Il server non ha inviato il numero di giocatori.
+mm_set_name,,Set name,Changer de pseudo,Trocar apelido,ユーザー名設定,Definir nombre,Name festlegen,Imposta il nome
+nt_ver_err,,PLEASE DOWNLOAD the latest version of the game from #welcome-getting-started at the TetrisAttackOnline Discord http://discord.panelattack.com,S'IL VOUS PLAIT TELECHARGER la dernière version du jeu sur le discord TetrisAttackOnline http://discord.panelattack.comdans #welcome-getting-started,FAÇA O DOWNLOAD da versão mais recente do jogo em # Welcome-Getting-Started no TetrisAttackOnline Discord http://discord.panelattack.com,TetrisAttackOnline Discord http://discord.panelattack.comで、ゲームの最新バージョンを＃welcome-getting-startedからダウンロードして下さい。,POR FAVOR DESCARGA la última version del juego en #welcome-getting-started En el servidor de discord de TetrisAttackOnline:http://discord.panelattack.com,Bitte lade dir die neueste Version des Spiels aus dem #setup-Kanal des Tetris Attack Online Discord-Servers http://discord.panelattack.com oder von der Panel Attack Website http://panelattack.com herunter.,"Per favore, scarica l'ultima versione del gioco da #welcome-getting-started sul server Discord TetrisAttackOnline http://discord.panelattack.com"
+nt_conn_timeout,,Failed to connect to the server.,Impossible de se connecter au serveur.,Falha ao conectar o servidor.,サーバーに接続が失敗しました。,Error al conectarse al servidor.,Es konnte keine Verbindung zum Server hergestellt werden.,Errore di connessione al server.
+nt_msg_err,,"Network error, message could not be decoded: ""%1""","Erreur réseau, le message ne peut pas être décodé: ""%1""","Erro de conexão, a mensagem não pôde ser codificada: ""%1""","ネットワークエラー、メッセージのデコード失敗: ""%1""","Error de red, el mensaje no pudo ser decodificado: ""%1""","Netzwerkfehler: Die folgende Nachricht konnte nicht entschlüsselt werden: %1","Errore di network, il messaggio non può essere decodificato: ""%1"""
+nt_player_err,,Server did not send number of players.,Le serveur n'a pas envoyé le nombre de joueurs.,O servidor não emitiu nº de jogadores.,サーバーからプレイヤー人数を受信しませんでした。,El servidor no envio la cantidad de jugadores.,Server schickte die Anzahl der Spieler nicht.,Il server non ha inviato il numero di giocatori.
 op_general,Options: General,General,Général,Em geral,全般的,General,Allgemein,Generale
 op_graphics,Options: Graphics,Graphics,Graphique,Gráficos,グラフィック,Gráficos,Grafik,Grafica
 op_audio,Options: Audio,Audio,l'audio,Áudio.,オーディオ,Audio,Audio,Audio
 op_debug,Options: Debug,Debug,Déboguer,Depurar,デバッグ,Depurar,Debuggen,Debug.
 op_about,Options: About,About,Sur,Sobre,だいたい,Sobre,Über,Di
-op_none,,none,rien,Nenhum,無し,Nada,keine,Niente
+op_none,,none,rien,Nenhum,無し,Nada,keiner,Niente
 op_on,,On,On,Ativ.,ON,On,An,On
 op_off,,Off,Off,Desat.,OFF,Off,Aus,Off
 op_all_keys,,Set all keys,Définir toutes les touches,Definir todas as teclas,すべてのキーを設定する,Definir todas las teclas,Alle Tasten festlegen,Imposta tutti i tasti
-op_about_characters,,About custom characters,À propos des personnages personnalisés,Sobre personagens personalizados,カスタムキャラクターについて,Acerca de personajes personalizados,Über selbstgemachte Charaktere,A propostio dei personaggi personalizzabili
-op_about_themes,,About custom themes,À propos des thèmes personnalisés,Sobre temas personalizados,カスタムテーマについて,Acerca de temas personalizados,Über selbstgemachte Themes,A proposito dei temi personalizzabili
-op_about_stages,,About custom stages,À propos des terrains personnalisés,Sobre cenários personalizados,カスタムステージについて,Acerca de escenarios personalizados,Über selbstgemachte Arenen,A proposito degli scenari personalizzabili
-op_about_panels,,About custom panels,À propos des blocs personnalisés,Sobre painéis personalizados,カスタムパネルについて,Acerca de paneles personalizados,Über selbstgemachte Panels,A propostio delle tessere personalizzabili
+op_about_characters,,About custom characters,À propos des personnages personnalisés,Sobre personagens personalizados,カスタムキャラクターについて,Acerca de personajes personalizados,How to: Eigene Charaktere hinzufügen,A propostio dei personaggi personalizzabili
+op_about_themes,,About custom themes,À propos des thèmes personnalisés,Sobre temas personalizados,カスタムテーマについて,Acerca de temas personalizados,How to: Eigene Themes entwickeln,A proposito dei temi personalizzabili
+op_about_stages,,About custom stages,À propos des terrains personnalisés,Sobre cenários personalizados,カスタムステージについて,Acerca de escenarios personalizados,How to: Eigene Arenen erstellen,A proposito degli scenari personalizzabili
+op_about_panels,,About custom panels,À propos des blocs personnalisés,Sobre painéis personalizados,カスタムパネルについて,Acerca de paneles personalizados,How to: Eigene Panels kreieren,A propostio delle tessere personalizzabili
 op_analytics,,Enable analytics,Activer les statistiques,Ativar estatísticas,解析を有効にする,Habilitar estadísticas,Statistiken aktivieren,Attiva statistiche
 op_copy_files,,"Hold on.  Copying an example folder to make this easier...
 
@@ -254,9 +254,9 @@ Esto tomará algunos segundos o quizás un minuto o dos.
 
 No te preocupes si la ventana se pone inactiva, se bloquea o ""No responde""","Warte einen Moment. Ein Beispielordner wird angelegt, um die Sache einfacher zu machen.
 
-Das könnte einige Sekunden dauern oder vielleicht sogar eine Minute oder zwei.
+Dies könnte einige Sekunden dauern, möglicherweise aber auch eine bis zwei Minuten.
 
-Mach dir keine Sorgen, wenn das Fenster inaktiv scheint oder als ""reagiert nicht"" angezeigt wird.","Un momento. Copia di una cartella d'esempio per rendere il tutto più facile...
+Wenn das Fenster inaktiv zu sein scheint oder als ""reagiert nicht"" angezeigt wird, ist dies bei dem Prozess völlig normal.","Un momento. Copia di una cartella d'esempio per rendere il tutto più facile...
 
 
 Ci potrebbe volere qualche secondo, o forse anche un minuto o due.
@@ -276,7 +276,7 @@ op_scale_fit,The scale type that fits the graphics as big as they can be to the 
 op_scale_fixed,The scale type that uses a fixed scale value no matter what,Fixed Scale,Échelle fixe,Escala fixa,固定スケール,Escala fija,Feste Skala,Scala fissa
 op_scale_fixed_value,The setting for the picked scale value in fixed mode,Fixed Scale,Échelle fixe,Escala fixa,固定スケール,Escala fija,Feste Skala,Scala fissa
 op_ingame_infos,,Show informations during gameplay,Afficher les données pendant la partie,Mostrar informações durante partida,プレイ中情報表示,Mostrar información durante la partida,Informationen während des Spiels anzeigen,Mostra informazioni nel corso della partita
-op_use_music_from,,Use music from,Utiliser les musiques des,Usar música de,使用BGM,Usar música desde,Spiele die Musik von,Usa musica da
+op_use_music_from,,Use music from,Utiliser les musiques des,Usar música de,使用BGM,Usar música desde,Musikauswahl,Usa musica da
 op_only_stage,,Stage 100% | Character 0%,Terrain 100% | Personnage 0%,Cenário 100% | Personagens 0%,ステージ 100% | キャラクター  0%,Escenario 100% | Personaje 0%,Arena 100% | Charakter 0%,Scenario 100% | Personaggio 0%
 op_often_stage,,Stage 75% | Character 25%,Terrain 75% | Personnage 25%,Cenário 75% | Personagens 25%,ステージ 75% | キャラクター  25%,Escenario 75% | Personaje 25%,Arena 75% | Charakter 25%,Scenario 75% | Personaggio 25%
 op_stage_characters,,Stage 50% | Character 50%,Terrain 50% | Personnage 50%,Cenário 50% | Personagens 50%,ステージ 50% | キャラクター  50%,Escenario 50% | Personaje 50%,Arena 50% | Charakter 50%,Scenario 50% | Personaggio 50%
@@ -285,7 +285,7 @@ op_only_characters,,Stage 0% | Character 100%,Terrain 0% | Personnage 100%,Cená
 op_music_current,,Currently playing:,Music actuel :,Reproduzindo agora:,現在再生中：,Música actual:,Aktuelle Musik:,Musica in riproduzone:
 op_music_delay,,Danger music change-back delay,Délai du changement de la musique en mode danger,Atraso na mudança de música de perigo,ピンチBGM切り替えディレイ,Retrasar cambio de melodía de peligro,Verzögerung für die Rückkehr aus der Gefahrenmusik,Ritardo del cambiamento della musica di pericolo
 op_music_intro,,Playing the intro,Joue l'intro,Reproduzindo introdução,イントロ表示,Reproduciendo la intro,Intro wird abgespielt,Riproduci la intro
-op_music_load,,Loading required sounds... (this may take a while),Chargement des sons nécessaires... (cela peut prendre un certain temps),Carregando sons necessários ... (isso pode demorar um pouco),必要なサウンドを読み込みしています...（多少時間がかかるかも）,Cargando los sonidos requeridos...(esto tomará un momento),Benötigte Sounds werden geladen... (das kann einige Zeit dauern),Caricamento dei suoni necessari (ci potrebbe volere un po'...)
+op_music_load,,Loading required sounds... (this may take a while),Chargement des sons nécessaires... (cela peut prendre un certain temps),Carregando sons necessários ... (isso pode demorar um pouco),必要なサウンドを読み込みしています...（多少時間がかかるかも）,Cargando los sonidos requeridos...(esto tomará un momento),Benötigte Sounds werden geladen... (das könnte einige Zeit dauern),Caricamento dei suoni necessari (ci potrebbe volere un po'...)
 op_music_loop,,Playing main loop,Joue la boucle,Reproduzindo loop principal,メインループを再生しています,Reproduciendo bucle principal,Hauptthema wird abgespielt,Riproduzione del loop principale
 op_music_nav,,"%1 and %2 to navigate songs
 %3 to leave","%1 et %2 pour naviguer entre les musiques
@@ -299,10 +299,10 @@ op_music_stop,Stop music button in Sound Test,Stop,Arrêter,Pare,やめる,Deten
 op_music_type,Select music type in Sound Test,Music type,La musique,Música,音楽,Música,Musik,Musica
 op_music_sfx,Sound Effect in Sound Test,SFX,Sonner,Som,?,Sonar,Klang,Suono
 op_panels,,Panels set,Choisir les blocs,Definir painéis,パネルセット,Set de paneles,Panelset,Scelta delle tessere
-op_reload_analytics,,reloading analytics...,rechargement des statistiques...,recarregando estatísticas...,解析を再読み込みしています...,Recargando estadísticas...,Statistiken neu laden...,Ricaricamento delle statistiche...
-op_reload_characters,,reloading characters...,rechargement des personnages...,recarregando personagens...,キャラクターを再読み込みしています...,Recargando personajes...,Charaktere neu laden...,Ricaricamento dei personaggi...
-op_reload_stages,,reloading stages...,rechargement des terrains...,recarregando cenários...,ステージを再読み込みしています…,recargando escenarios...,Arenen neu laden...,Ricarimento degli scenari...
-op_reload_theme,,reloading theme...,rechargement du thème...,recarregando tema...,テーマを再読み込みしています…,recargando temas...,Themes neu laden...,Ricaricamento dei temi...
+op_reload_analytics,,reloading analytics...,rechargement des statistiques...,recarregando estatísticas...,解析を再読み込みしています...,Recargando estadísticas...,Statistiken werden neugeladen...,Ricaricamento delle statistiche...
+op_reload_characters,,reloading characters...,rechargement des personnages...,recarregando personagens...,キャラクターを再読み込みしています...,Recargando personajes...,Charaktere werden neugeladen...,Ricaricamento dei personaggi...
+op_reload_stages,,reloading stages...,rechargement des terrains...,recarregando cenários...,ステージを再読み込みしています…,recargando escenarios...,Arenen werden neugeladen...,Ricarimento degli scenari...
+op_reload_theme,,reloading theme...,rechargement du thème...,recarregando tema...,テーマを再読み込みしています…,recargando temas...,Themen werden neugeladen...,Ricaricamento dei temi...
 op_replay_public,,Save replays publicly,Sauvegarder les replays publiquement,Salvar replays publicamente,リプレイを,Grabar repeticiones públicamente,Replays öffentlich abspeichern,Salva i replay pubblicamente
 op_replay_public_no,,No,Non,Não,公開しない,No,Nein,No
 op_replay_public_anonymously,,Anonymously,Anonymement,Anônimo,匿名で公開する,Anónimamente,Anonym,Anonimamente
@@ -316,11 +316,11 @@ op_vsync,,V-Sync,V-Sync,V-Sync,垂直同期,Sincronización Vertical (V-Sync),V-
 op_input_delay,,Key repeat delay (offline only),Délai de répétition des touches,Atraso na repetição das teclas (apenas offline),DAS 設定（オフラインのみ）,Retraso de repetición de las teclas (Solo fuera de línea),Verzögerung für die Tastenwiederholung bei gedrückt halten (nur offline),Ritardo della ripetizione dell'input (solo offline)
 op_portrait_darkness,Options: darkness of the portraits in game,Portrait Darkness,Portrait Obscurité,Claridade de Retratos,背景の暗さ,Retrato Oscuridad,Helligkeit des Charakterporträts während des Spiels,Oscurità del ritratto
 op_popfx,Options: Whether pop effects should show,Pop Effects,Effets Pop,Efeitos de Explosão,パネル消しエフェクト,efectos pop,Popeffekte,Effetti pop
-op_renderTelegraph,Options: Whether the telegraph above the stack should show,Show Telegraph,Montrer le télégraphe,Mostrar telégrafo,テレグラフを表示,Mostrar telégrafo,Telegraph zeigen.,Mostra telegrafo
-op_renderAttacks,Options: Whether the telegraph attack animations should show,Show Attacks,Montrer des attaques,Mostrar ataques,攻撃を示す,Mostrar ataques,Angriffe anzeigen.,Mostra attacchi
+op_renderTelegraph,Options: Whether the telegraph above the stack should show,Show Telegraph,Montrer le télégraphe,Mostrar telégrafo,テレグラフを表示,Mostrar telégrafo,Telegraph zeigen,Mostra telegrafo
+op_renderAttacks,Options: Whether the telegraph attack animations should show,Show Attacks,Montrer des attaques,Mostrar ataques,攻撃を示す,Mostrar ataques,Angriffe anzeigen,Mostra attacchi
 op_cardfx_scale,Options: how far away the popfx particles converge onto your combo/chain before it pops,Attack Particle Distance,Distance des particules d'attaque,Alcance de Partículas de Ataque,攻撃パーティクル発生距離,Distancia de partículas de ataque,Skalierung der Popeffekte bei Kombos und Ketten,Distanza delle particelle di attacco
 opponent_level,,Opponent's level,Niveau adverse,Nível do oponente,相手のレベル,Nivel del oponente,Level des Gegners,Livello dell'avversario
-pl_pause_help,,Press Start again to resume,Appuyer sur Start pour continuer,Pressione Começar novamente para continuar,STARTで再開,"Presiona ""Start"" para resumir",Drücke Start um fortzufahren,"Premi ""Start"" di nuovo per riprendere"
+pl_pause_help,,Press Start again to resume,Appuyer sur Start pour continuer,Pressione Começar novamente para continuar,STARTで再開,"Presiona ""Start"" para resumir","Drücke Start um fortzufahren","Premi ""Start"" di nuovo per riprendere"
 pl_1_win,,P1 wins ^^,J1 gagne ^^,J1 vence ^^,1Pの勝ち！ ＾＾,J1 gana ^^,Spieler 1 gewinnt,P1 vince ^^
 pl_2_win,,P2 wins ^^,J2 gagne ^^,J2 vence ^^,2Pの勝ち！ ＾＾,J2 gana ^^,Spieler 2 gewinnt,P2 vince ^^
 pl_cleared,,cleared: %1,détruit : %1,destruido: %1,消したパネル：%1個,despejado: %1,Cleared: %1,Completato: %1
@@ -354,7 +354,7 @@ Catching up...","Chargement du match en cours.
 Synchronisation...","Entrou em partida em andamento.
 Sincronizando...","進行中の対戦に入りました。
 同期中…","Te uniste a una partida en progreso.
-Sincronizando...","Einem laufenden Spiel beigetreten.
+Sincronizando...","Du bist einem laufenden Spiel beigetreten.
 Hole zum aktuellen Stand auf...","Caricamento di una partita in corso.
 Sincronizzazione..."
 pl_spectators,,Spectator(s):,Spectateurs(s) :,Espectador(es):,観客：,Espectador(es)：,Zuschauer:,Spettatori:
@@ -369,8 +369,8 @@ Ceci est un bug connu, mais vous pouvez le signaler sur notre discord sur :
 Este é um bug conhecido, mas você pode postar em #panel-attack-bugs-features
 se quiser.","ゲームの開始がタイムアウトしました。
 これは既知のバグですが、＃panel-attack-bugs-featuresに報告してもいいですよ。","se agotó el tiempo para empezar la partida.
-Este es un bug conocido, pero si queres puedes postearlo en #panel-attack-bugs-features","Verfügbare Zeit für den Spielstart wurde überschritten.
-Das ist ein bekanntes Problem, aber du kannst es trotzdem in #panel-attack-bugs-features melden, wenn du möchtest.","Il caricamento della partita ha richiesto troppo tempo.
+Este es un bug conocido, pero si queres puedes postearlo en #panel-attack-bugs-features","Die verfügbare Zeit für den Spielstart wurde überschritten.
+Das ist ein bekanntes Problem, aber du kannst es trotzdem in #panel-attack-bugs melden, wenn du möchtest.","Il caricamento della partita ha richiesto troppo tempo.
 Questo è un bug gà noto, ma puoi postarlo su #panel-attack-bugs-features
 se ti va."
 pl_you_lose,,You lose :(,Vous avez perdu :(,Você perdeu :(,あなたの負け・・・。 -_-,Has perdido :(,Du hast verloren :-(,Hai perso :(
@@ -408,10 +408,10 @@ para instruções","注：新しいカスタムパズルを
 
 
 Revisa el archivo README y el set de puzzles de ejemplo en su correspondiente carpeta
-para más infomación.","Anmerkung: Du kannst unter Windows neue selbstgemachte Puzzles an folgendem Pfad ablegen:
+para más infomación.","Anmerkung: Du kannst unter Windows neue, selbstgemachte Puzzles an folgendem Pfad ablegen:
 
 %appdata%\Panel Attack\puzzles
-(kopiere es in die Navigationsleiste des Explorers und drücke Enter)
+(Kopiere das in die Navigationsleiste des Explorers und drücke danach Enter, sieh für andere Betriebssysteme unter http://panelattack.com/faq.html nach)
 
 Schau dir für weitere Informationen die README und das Beispielpuzzleset an.","Nota: puoi inserire nuovi puzzle in:
 
@@ -424,7 +424,7 @@ pz_puzzles,,Puzzles:,Puzzles :,Quebra-cabeças:,パズル：,Puzzles:,Puzzles:,P
 rp_endless,,endless,infini,Infinito,エンドレス,Interminable,Endlos,infinito
 rp_no_endless,,I don't have an endless replay :(,Je n'ai pas de replay infini :(,Não possuo replay sem fim :(,エンドレスのリプレイはありません -_-,No encuentro ninguna repetición del modo Interminable :(,Ich habe kein Replay für Endless :-(,Non ho un replay della modalità infinito :(
 rp_no_puzzle,,I don't have a puzzle replay :(,Je n'ai pas de replay puzzle :(,Não possuo replay de quebra-cabeça :(,パズルのリプレイはありません -_-,No encuentro ninguna repetición del modo Puzzle :(,Ich habe kein Puzzle Replay :-(,Non ho un replay della modalità puzzle :(
-rp_no_replay,,I don't have a vs replay :(,Je n'ai pas de replay :(,Não possuo replay vs :(,VSリプレイはありません -_-,No encuentro ninguna repetición del modo VS :(,Ich habe kein VS Mode Replay :-(,Non ho un replay della modalità vs :(
+rp_no_replay,,I don't have a vs replay :(,Je n'ai pas de replay :(,Não possuo replay vs :(,VSリプレイはありません -_-,No encuentro ninguna repetición del modo VS :(,Keine Replays vorhanden. :-(,Non ho un replay della modalità vs :(
 rp_score,,"You scored %1
 in %2","Vous avez fait %1
 en %2","Você pontuou %1
@@ -436,20 +436,20 @@ ss_casual,,Casual,Normal,Casual,カジュアル,Casual,Normal,Normale
 ss_current_rating,,current:,courant :,atual:,現在：,Actual:,derzeitig:,corrente:
 ss_disconnect,,Disconnected from server.,Vous êtes deconnecté du serveur.,Desconectado do servidor.,サーバーから切断されました。,Desconectado del servidor.,Verbindung zum Server verloren.,Disconnesso dal server.
 ss_could_not_connect,Shown when the server could not be reached,Could not connect to the server.,Ne peut se connecter au serveur.,Não pôde conectar-se ao servidor.,サーバーに接続できませんでした。,No se puede conectar con el servidor.,Konnte keine Verbindung zum Server herstellen.,Impossibile connettersi al server.
-ss_room_closed_in_game,Message shown when room closes mid game,"The connection to the match was lost. Usually this happens due to an unstable network connection from one of the players, but this could also be a bug or crash.","La connexion au match a été perdue. usuellement, cela se produit en raison d'une connexion réseau instable de l'un des joueurs, mais cela pourrait également être un bug ou un crash.","A conexão com a partida foi perdida. usoramente isso acontece devido a uma conexão de rede instável de um dos jogadores, mas isso também pode ser um bug ou acidente.",試合への接続が失われました。USLAVEこれは、プレーヤーの1つからの不安定なネットワーク接続が原因で起こりますが、これもバグやクラッシュになる可能性があります。,"La conexión con el partido se perdió. usualmente esto sucede debido a una conexión de red inestable de uno de los jugadores, pero esto también podría ser un error o un choque.","Die Verbindung zum Spiel war verloren. usuell passiert dies aufgrund einer instabilen Netzwerkverbindung von einem der Spieler, aber dies könnte auch ein Fehler oder ein Absturz sein.","La connessione alla partita è stata persa. usualmente ciò accade a causa di una connessione di rete instabile da uno dei giocatori, ma questo potrebbe anche essere un bug o un incidente."
-ss_latency_error,Message shown when the connection is too unstable,The network connection is too unstable to continue the game. It could be your connection or the opponent's.,La connexion réseau est trop instable pour continuer le jeu. Cela pourrait être votre connexion ou les adversaires.,A conexão de rede é muito instável para continuar o jogo. Pode ser sua conexão ou os adversários.,ネットワーク接続は、ゲームを続行するには不安定すぎます。それはあなたの接続または対戦相手かもしれません。,La conexión de red es demasiado inestable para continuar el juego. Podría ser tu conexión o a los oponentes.,"Die Netzwerkverbindung ist zu instabil, um das Spiel fortzusetzen. Es könnte Ihre Verbindung oder die Gegner sein.",La connessione di rete è troppo instabile per continuare il gioco. Potrebbe essere la tua connessione o gli avversari.
-ss_average_frames_behind,Prints the average number of frames behind,Average frames behind: %1,Cadres moyens derrière: %1,Quadros médios por trás: %1,後ろの平均フレーム：％1,Marcos promedio detrás: %1,Durchschnittliche Rahmen hinter: %1,Cornici medi dietro: %1
-ss_average_frames_behind_player,Prints the average number of frames behind a player was.,Average frames behind for %1 was %2,Les cadres moyens derrière pour %1 étaient %2,Quadros médios por %1 foi %2,％1の平均フレームは％2でした。,Los marcos promedio detrás de %1 fue %2.,Durchschnittliche Rahmen hinter %1 waren %2.,I telai medi dietro per %1 era %2.
+ss_room_closed_in_game,Message shown when room closes mid game,"The connection to the match was lost. Usually this happens due to an unstable network connection from one of the players, but this could also be a bug or crash.","La connexion au match a été perdue. usuellement, cela se produit en raison d'une connexion réseau instable de l'un des joueurs, mais cela pourrait également être un bug ou un crash.","A conexão com a partida foi perdida. usoramente isso acontece devido a uma conexão de rede instável de um dos jogadores, mas isso também pode ser um bug ou acidente.",試合への接続が失われました。USLAVEこれは、プレーヤーの1つからの不安定なネットワーク接続が原因で起こりますが、これもバグやクラッシュになる可能性があります。,"La conexión con el partido se perdió. usualmente esto sucede debido a una conexión de red inestable de uno de los jugadores, pero esto también podría ser un error o un choque.","Die Verbindung zum Spiel wurde unterbrochen. Normalerweise passiert dies aufgrund einer instabilen Netzwerkverbindung von einem der Spieler, allerdings kann der Verbindungsabbruch auch durch einen Programmabsturz beim Gegner hervorgerufen worden sein.","La connessione alla partita è stata persa. usualmente ciò accade a causa di una connessione di rete instabile da uno dei giocatori, ma questo potrebbe anche essere un bug o un incidente."
+ss_latency_error,Message shown when the connection is too unstable,The network connection is too unstable to continue the game. It could be your connection or the opponent's.,La connexion réseau est trop instable pour continuer le jeu. Cela pourrait être votre connexion ou les adversaires.,A conexão de rede é muito instável para continuar o jogo. Pode ser sua conexão ou os adversários.,ネットワーク接続は、ゲームを続行するには不安定すぎます。それはあなたの接続または対戦相手かもしれません。,La conexión de red es demasiado inestable para continuar el juego. Podría ser tu conexión o a los oponentes.,"Die Netzwerkverbindung ist zu instabil, um das Spiel fortzusetzen. Es könnte deine Verbindung oder die des Gegners sein.",La connessione di rete è troppo instabile per continuare il gioco. Potrebbe essere la tua connessione o gli avversari.
+ss_average_frames_behind,Prints the average number of frames behind,Average frames behind: %1,Cadres moyens derrière: %1,Quadros médios por trás: %1,後ろの平均フレーム：％1,Marcos promedio detrás: %1,Durchschnittliche Frames Verzögerung: %1,Cornici medi dietro: %1
+ss_average_frames_behind_player,Prints the average number of frames behind a player was.,Average frames behind for %1 was %2,Les cadres moyens derrière pour %1 étaient %2,Quadros médios por %1 foi %2,％1の平均フレームは％2でした。,Los marcos promedio detrás de %1 fue %2.,Durchschnittliche Frames hinter %1 waren %2.,I telai medi dietro per %1 era %2.
 ss_draw,,Draw,Egalité,Empate,引き分け,Empate,Unentschieden,Pareggio
 ss_err_no_reason,,Reason unknown,Erreur inconnue,Motivo desconhecido,理由不明,Razón desconocida,Grund unbekannt,Ragione sconosciuta
 ss_error_leave,,Error when leaving online,Erreur en quittant le serveur,Erro ao sair do servidor,オンラインを離れる際のエラー,Error al salir de en línea,Fehler beim Verlassen des Servers,Errore nell'uscita dal server
 ss_expected_rating,,expected:,attendu :,expectativa:,予想：,Esperado:,erwartet:,atteso:
-ss_init,,Waiting for room initialization...,En attente de la création de la salle...,Aguardando inicialização da sala...,ルームの初期化を待っています…,Esperando la inicialización de la sala.,Warte auf Initialisierung des Raumes,Attesa per l'inizializzazione della stanza...
+ss_init,,Waiting for room initialization...,En attente de la création de la salle...,Aguardando inicialização da sala...,ルームの初期化を待っています…,Esperando la inicialización de la sala.,Warte auf Initialisierung des Raumes...,Attesa per l'inizializzazione della stanza...
 ss_init_fail,,Room initialization failed.,Problème lors de la création de la salle.,Falha ao iniciar sala.,ルームの初期化に失敗しました。,Falló la inicialización de la sala.,Initialisierung des Raumes fehlgeschlagen.,Inizializzazione della stanza fallita.
 ss_not_ranked,Message indicating not ranked right before the reason why,Not ranked.,Non classé.,Casual,レート変動なし。,Sin clasificar.,Nicht bewertet.,Non classificato.
 ss_p_wins,,%1 wins,%1 gagne,%1 vence,%1の勝ち,%1 Gana,%1 gewinnt,%1 vince
 ss_ranked,Message to indicated ranked play,Ranked,Classé,Ranqueada,レート戦,Clasificado,Ranked,Classificato
-ss_rating,,Rating:,Classement :,Classificação:,レート：,Clasificación:,Punktzahl:,Classificazione:
+ss_rating,,Rating:,Classement :,Classificação:,レート：,Clasificación:,Rang:,Classificazione:
 ss_return,,Returning to main menu...,Retour au menu principal...,Voltar ao menu principal...,メインメニューに戻ります...,Regresando al menú principal...,Kehre zum Hauptmenü zurück...,Ritorno al menù principale...
 ss_winrate,,Winrate:,Taux de victoire :,Taxa de vitórias:,勝率：,Racha de victorias:,Gewinnrate:,Rateo delle vittorie:
 ss_wins,,Wins:,Victoires :,Vitórias:,勝ち：,Gana:,Siege:,Vittorie:
@@ -461,7 +461,7 @@ rp_browser_up,,up,monter,acima,戻る,volver,zurück ins übergeordnete Verzeich
 rp_browser_root,,root,racine,raiz,ルート,raíz,Wurzel,sorgente
 rp_browser_more,,more,plus,mais,次,más,mehr,altro
 rp_browser_info_2p_vs,,2P VS,2J VS,2J VS,2P VS,2J VS,2P VS,2P VS
-rp_browser_info_1p_vs,,VS Yourself,VS soi-même,VS Você mesmo,じぶんとのたたかい,VS Tú,Gegen dich selbst,VS Te stesso
+rp_browser_info_1p_vs,,VS Yourself,VS soi-même,VS Você mesmo,じぶんとのたたかい,VS Tú,1P gegen dich selbst,VS Te stesso
 rp_browser_info_1p,,1P,1J,1J,1P,1J,1P,1P
 rp_browser_info_2p,,2P,2J,2J,2P,2J,2P,2P
 rp_browser_info_name,,Name: %1,Nom : %1,Apelido %1,名前：%1,Nombre: %1,Name: %1,Nome: 1%
@@ -469,7 +469,7 @@ rp_browser_info_level,,Level: %1,Niveau : %1,Nível: %1,LV：%1,Nivel: %1,Level:
 rp_browser_info_character,,Character: %1,Personnage : %1,Personagem: 1%,キャラクター：%1,Personaje: %1,Charakter: %1,Personaggio: 1%
 rp_browser_info_casual,,Casual Match,Match Normal,Partida Casual,カジュアル対戦,Partida Casual,Normale Partie,Partita Normale
 rp_browser_info_ranked,,Ranked Match,Match Classé,Partida Ranqueada,レート対戦,Partida Clasificatoria,Bewertete Partie,Partita Classificata
-rp_browser_info_endless,,Endless,Infini,Infinito,エンドレス,Interminable,Endless,Infinito
+rp_browser_info_endless,,Endless,Infini,Infinito,エンドレス,Interminable,Endlos,Infinito
 rp_browser_info_time_trial,,Time Trial,Contre la montre,Contra o Tempo,スコアアタック,Contrareloj,Time Attack,A Tempo
 rp_browser_info_speed,,Speed: %1,Vitesse : %1,Velocidade: %1,SPEED LV：%1,Velocidad: %1,Geschwindigkeit: %1,Velocità: 1%
 rp_browser_info_difficulty,,Difficulty: %1,Difficulté : %1,Dificuldade: %1,難易度：%1,Dificultad: %1,Schwierigkeit: %1,Difficoltà: 1%
@@ -480,10 +480,10 @@ rp_browser_error_unknown_replay_type,,Unknown replay type,Type de replay inconnu
 rp_browser_error_loading,,Error loading replay: %1,Erreur au chargement du replay : %1,Erro ao carregar replay: %1,リプレイ読み込みエラー：%1,Error cargando la repetición: %1,Fehler beim Laden des Replays: %1,Errore nel caricamento del replay: 1%
 rp_browser_error_unknown_filetype,,Unknown filetype %1. (%2),Type de fichier inconnu %1. (%2),Tipo de arquivo desconhecido %1. (%2),ファイル種類%1不明。(%2),Formato de archivo desconocido %1. (%2),Unbekannter Dateityp %1. (%2),Tipo di file sconosciuto %1. (%2)
 rp_browser_error_file_not_found,,File not found! (%1),Fichier introuvable ! (%1),Arquivo não encontrado! (%1),ファイルを見つけませんでした！,¡No se encontró el archivo! (%1),Datei nicht gefunden! (%1),File non trovato! (%1)
-rp_browser_wrong_version,Error shown when trying to load a old version replay,This replay can not be viewed because it was played on a different version of the game.,Cette rediffusion ne peut pas être vue car elle a été jouée sur une version différente du jeu.,Essa repetição não pode ser vista porque foi jogada em uma versão diferente do jogo.,このリプレイは、ゲームの別のバージョンで再生されたため表示できません。,Esta repetición no se puede ver porque se jugó en una versión diferente del juego.,"Diese Wiederholung kann nicht angesehen werden, da er auf einer anderen Version des Spiels gespielt wurde.",Questo replay non può essere visto perché è stato giocato su una versione diversa del gioco.
+rp_browser_wrong_version,Error shown when trying to load a old version replay,This replay can not be viewed because it was played on a different version of the game.,Cette rediffusion ne peut pas être vue car elle a été jouée sur une version différente du jeu.,Essa repetição não pode ser vista porque foi jogada em uma versão diferente do jogo.,このリプレイは、ゲームの別のバージョンで再生されたため表示できません。,Esta repetición no se puede ver porque se jugó en una versión diferente del juego.,"Diese Wiederholung kann nicht angesehen werden, da sie auf einer älteren Version des Spiels gespielt wurde. Du kannst auf dem Discord-Server nach einer geeigneten Version zum abspielen fragen.",Questo replay non può essere visto perché è stato giocato su una versione diversa del gioco.
 mm_replay_browser,,Replay Browser,Bibliothèque des replays,Navegador de Replays,リプレイブラウザ,Navegador de reproducción,Replay Browser,Navigatore Replay
-continue_button,Text shown to press any key to continue,Press Any Button,Appuyer sur un bouton,Pressione qualquer botão,任意のボタンを押します,Pulse cualquier botón,Drücke irgend einen Knopf,Premere qualsiasi pulsante
-player_press_key,,Player %1 press any key,Le joueur %1 appuie sur n'importe quelle touche,O jogador %1 carregue em qualquer tecla,プレーヤー％1　PUSH ANY KEY,Jugador %1 presione cualquier tecla,Spieler %1 drücke eine beliebige Taste,Il giocatore %1 preme un tasto qualsiasi
-config_input_welcome,Shown on the configure input screen,Set a input configuration for each keyboard / controller you want to be able to use.,Définissez une configuration d'entrée pour chaque clavier/contrôleur que vous souhaitez pouvoir utiliser.,Defina uma configuração de entrada para cada teclado / controlador que deseja usar.,使用するキーボード/コントローラーごとにキーコンフィグを設定して下さい。,Establezca una configuración de entrada para cada teclado / controlador que desee poder utilizar.,Gib eine Eingabekonfiguration für alle Kontroller oder Tastaturen an,Imposta una configurazione di input per ogni tastiera/controller che desideri utilizzare.
+continue_button,Text shown to press any key to continue,Press Any Button,Appuyer sur un bouton,Pressione qualquer botão,任意のボタンを押します,Pulse cualquier botón,Bitte drücke eine beliebige Taste.,Premere qualsiasi pulsante
+player_press_key,,Player %1 press any key,Le joueur %1 appuie sur n'importe quelle touche,O jogador %1 carregue em qualquer tecla,プレーヤー％1　PUSH ANY KEY,Jugador %1 presione cualquier tecla,Spieler %1: Drücke eine beliebige Taste,Il giocatore %1 preme un tasto qualsiasi
+config_input_welcome,Shown on the configure input screen,Set a input configuration for each keyboard / controller you want to be able to use.,Définissez une configuration d'entrée pour chaque clavier/contrôleur que vous souhaitez pouvoir utiliser.,Defina uma configuração de entrada para cada teclado / controlador que deseja usar.,使用するキーボード/コントローラーごとにキーコンフィグを設定して下さい。,Establezca una configuración de entrada para cada teclado / controlador que desee poder utilizar.,Gib eine Eingabekonfiguration für deinen Kontroller oder deine Tastaturen an.,Imposta una configurazione di input per ogni tastiera/controller che desideri utilizzare.
 configuration,Configuration for controller / keyboard setup,Configuration,Configuration,Configuração,キーコンフィグ,Configuración,Konfiguration,Configurazione
-love_version_warning,Warning shown to users using love 11.3,"You are using an outdated version of Panel Attack which uses an old LOVE version, please download the latest version from the website / discord.","Vous utilisez une version obsolète de l'attaque de panneau qui utilise une ancienne version d'amour, veuillez télécharger la dernière version du site Web / Discord.","Você está usando uma versão desatualizada do painel de ataque que usa uma versão antiga do amor, faça o download da versão mais recente do site / discórdia.",古いLoveバージョンを使用する古いバージョンのパネル攻撃を使用しています。ウェブサイト / Discordから最新バージョンをダウンロードしてください。,"Está utilizando una versión obsoleta de Panel Attack que utiliza una vieja versión de amor, descargue la última versión del sitio web / discordia.","Sie verwenden eine veraltete Version des Panel -Angriffs, die eine alte Love -Version verwendet. Laden Sie die neueste Version von der Website / Discord herunter.","Stai usando una versione obsoleta dell'attacco del pannello che utilizza una vecchia versione d'amore, scarica l'ultima versione dal sito Web / discordia."
+love_version_warning,Warning shown to users using love 11.3,"You are using an outdated version of Panel Attack which uses an old LOVE version, please download the latest version from the website / discord.","Vous utilisez une version obsolète de l'attaque de panneau qui utilise une ancienne version d'amour, veuillez télécharger la dernière version du site Web / Discord.","Você está usando uma versão desatualizada do painel de ataque que usa uma versão antiga do amor, faça o download da versão mais recente do site / discórdia.",古いLoveバージョンを使用する古いバージョンのパネル攻撃を使用しています。ウェブサイト / Discordから最新バージョンをダウンロードしてください。,"Está utilizando una versión obsoleta de Panel Attack que utiliza una vieja versión de amor, descargue la última versión del sitio web / discordia.","Du verwendest eine Version von Panel Attack, die eine veraltete LÖVE-Version verwendet. Bitte lade die neueste Version von der Website oder dem Discord herunter.","Stai usando una versione obsoleta dell'attacco del pannello che utilizza una vecchia versione d'amore, scarica l'ultima versione dal sito Web / discordia."
