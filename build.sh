@@ -1,9 +1,7 @@
-#!/bin/sh
-# This script assumes you are running it on a Windows machine with 32 bit LÖVE installed in the default location
-# How to add zip to git bash under windows: https://stackoverflow.com/a/55749636
-
+#!/bin/bash
+# This script assumes you are running it on a Linux machine 
 rm panel*.love panel.zip panel.exe auto_updater/panel*.love
-zip -r panel-attack.love *.* README THANKS COPYING characters default_data engine panels rich_presence select_screen stages themes
+zip -rq panel-attack.love *.* README THANKS COPYING characters default_data engine panels rich_presence select_screen stages themes
 mv panel-attack.love auto_updater/panel-attack.love
 cd auto_updater
 zip -r ../panel-attack.love *
@@ -12,8 +10,16 @@ mkdir -p love
 mv panel-attack.love love/panel-attack.love
 echo "Build windows exe"
 
-# If not running windows, change love source location here
-cp -f '/c/Program Files (x86)/LOVE/SDL2.dll' '/c/Program Files (x86)/LOVE/OpenAL32.dll' '/c/Program Files (x86)/LOVE/love.dll' '/c/Program Files (x86)/LOVE/lua51.dll' '/c/Program Files (x86)/LOVE/mpg123.dll' '/c/Program Files (x86)/LOVE/msvcp120.dll' '/c/Program Files (x86)/LOVE/msvcr120.dll' '/c/Program Files (x86)/LOVE/license.txt' '/c/Program Files (x86)/LOVE/love.exe' love
+# Provide a path to the contents of the unzipped 32-bit windows version of love downloaded from the love2d mainpage
+cp '/home/florian/Apps/love-11.4-win32/SDL2.dll' love
+cp '/home/florian/Apps/love-11.4-win32/OpenAL32.dll' love
+cp '/home/florian/Apps/love-11.4-win32/love.dll' love
+cp '/home/florian/Apps/love-11.4-win32/lua51.dll' love
+cp '/home/florian/Apps/love-11.4-win32/mpg123.dll' love
+cp '/home/florian/Apps/love-11.4-win32/msvcp120.dll' love
+cp '/home/florian/Apps/love-11.4-win32/msvcr120.dll' love
+cp '/home/florian/Apps/love-11.4-win32/license.txt' love
+cp '/home/florian/Apps/love-11.4-win32/love.exe' love
 cd ./love
 cat love.exe panel-attack.love > panel.exe
 zip -u ../panel.zip *.dll license.txt panel.exe
