@@ -22,5 +22,6 @@ cp '/home/florian/Apps/love-11.4-win32/license.txt' love
 cp '/home/florian/Apps/love-11.4-win32/love.exe' love
 cd ./love
 cat love.exe panel-attack.love > panel.exe
+cp panel.exe ../panel.love
 zip -u ../panel.zip *.dll license.txt panel.exe
 

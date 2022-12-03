@@ -175,7 +175,7 @@ function love.draw()
     love.graphics.printf(scaleString, get_global_font_with_size(30), 5, 5, 2000, "left")
   end
 
-  if love.system.getOS() == "Android" then
+  if love.system.getOS() == "Android" or DEBUG_ENABLED then
     local saveDir = love.filesystem.getSaveDirectory()
     love.graphics.printf(saveDir, get_global_font_with_size(30), 5, 50, 2000, "left")
   end
