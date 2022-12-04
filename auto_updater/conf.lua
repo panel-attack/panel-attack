@@ -11,7 +11,10 @@ local function readUseAndroidExternalStorage()
 end
 
 function love.conf(t)
-  UseAndroidExternalStorage = readUseAndroidExternalStorage()
+  -- only read from file on initial boot - afterwards respect whatever was set before reboot
+  if UseAndroidExternalStorage == nil then
+    UseAndroidExternalStorage = readUseAndroidExternalStorage()
+  end
 
   t.identity = "Panel Attack" -- The name of the save directory (string)
   t.appendidentity = false -- Search files in source directory before save directory (boolean)
@@ -54,13 +57,13 @@ function love.conf(t)
   t.modules.joystick = false -- Enable the joystick module (boolean)
   t.modules.keyboard = false -- Enable the keyboard module (boolean)
   t.modules.math = false -- Enable the math module (boolean)
-  t.modules.mouse = false -- Enable the mouse module (boolean)
+  t.modules.mouse = true -- Enable the mouse module (boolean)
   t.modules.physics = false -- Enable the physics module (boolean)
   t.modules.sound = false -- Enable the sound module (boolean)
   t.modules.system = true -- Enable the system module (boolean)
   t.modules.thread = true -- Enable the thread module (boolean)
   t.modules.timer = false -- Enable the timer module (boolean), Disabling it will result 0 delta time in love.update
-  t.modules.touch = false -- Enable the touch module (boolean)
+  t.modules.touch = true -- Enable the touch module (boolean)
   t.modules.video = false -- Enable the video module (boolean)
   t.modules.window = true -- Enable the window module (boolean)
 end

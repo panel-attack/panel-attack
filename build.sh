@@ -1,7 +1,7 @@
 #!/bin/bash
 # This script assumes you are running it on a Linux machine 
 rm panel*.love panel.zip panel.exe auto_updater/panel*.love
-zip -rq panel-attack.love *.* README THANKS COPYING characters default_data engine panels rich_presence select_screen stages themes
+zip -rq panel-attack.love *.* README THANKS COPYING characters computerPlayers default_data engine panels rich_presence select_screen stages themes
 mv panel-attack.love auto_updater/panel-attack.love
 cd auto_updater
 zip -r ../panel-attack.love *

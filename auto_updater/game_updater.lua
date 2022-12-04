@@ -1,5 +1,3 @@
-local socket = require("socket")
-local http = require("socket.http")
 require("class")
 
 GameUpdater = class(function(self, name)
