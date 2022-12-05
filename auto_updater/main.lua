@@ -21,6 +21,7 @@ local updaterDirectory = nil
 local local_version = nil
 -- local variable used to hold all list of versions available on the server for UPDATER_NAME
 local all_versions = nil
+local gameStartVersion = nil
 local updateLog = {}
 
 local function logMessage(txt)
@@ -32,9 +33,8 @@ local function start_game(file)
   if not love.filesystem.mount(updaterDirectory..file, '') then error("Could not mount game file: "..file) end
   GAME_UPDATER_GAME_VERSION = file:gsub("^panel%-", ""):gsub("%.love", "")
   logMessage("Starting game version " .. file)
-  for i = 1, 500 do
-    coroutine.yield()
-  end
+  -- for debugging purposes
+  love.timer.sleep(3)
   package.loaded.main = nil
   package.loaded.conf = nil
   love.conf = nil
@@ -104,11 +104,18 @@ local function cleanUpOldVersions()
 end
 
 local function shouldCheckForUpdate()
-  return GAME_UPDATER.config.auto_update and not (
-    GAME_UPDATER.check_timestamp ~= nil 
-    and os.time() < GAME_UPDATER.check_timestamp + GAME_UPDATER.config.launch_check_interval 
-    and local_version
-    and (GAME_UPDATER.config.force_version == "" or GAME_UPDATER.config.force_version == local_version))
+  if gameStartVersion ~= nil then
+    -- we already have the version we want (forcedVersion), no point in checking
+    return false
+  end
+
+  if local_version == nil and get_embedded_version() == nil then
+    -- if there is no local version available at all, try to fetch an update, even if auto_update is off
+    return true
+  end
+
+  -- go with the auto_updater config setting
+  return GAME_UPDATER.config.auto_update
 end
 
 local function getAvailableVersions()
@@ -138,11 +145,15 @@ local function containsForcedVersion(versions)
   return false
 end
 
-local function startEmbeddedVersion()
+local function setGameStartVersion(version)
+  GAME_UPDATER:change_version(version)
+  gameStartVersion = version
+end
+
+local function setEmbeddedAsGameStartVersion()
   local embeddedVersion = get_embedded_version()
   love.filesystem.write(updaterDirectory..embeddedVersion, love.filesystem.read(embeddedVersion))
-  GAME_UPDATER:change_version(embeddedVersion)
-  start_game(embeddedVersion)
+  setGameStartVersion(embeddedVersion)
 end
 
 local function awaitGameDownload(version)
@@ -158,6 +169,51 @@ local function awaitGameDownload(version)
 end
 
 local function run()
+
+  logMessage("Checking for versions online...")
+  all_versions = getAvailableVersions()
+
+  if GAME_UPDATER.config.force_version ~= "" then
+    if containsForcedVersion(all_versions) then
+      awaitGameDownload(GAME_UPDATER.config.force_version)
+      setGameStartVersion(GAME_UPDATER.config.force_version)
+    else
+      local err = 'Could not find online version: "'..GAME_UPDATER.config.force_version..'" (force_version)\nAvailable versions are:\n'
+        for _, v in pairs(all_versions) do err = err..v.."\n" end
+        error(err)
+    end
+    -- no point looking for updates with a forced version - var is already initialized like that
+    -- GAME_UPDATER_CHECK_UPDATE_INGAME = false
+
+  else
+    -- all_versions returns an empty table at minimum so no need to nil check
+    if #all_versions > 0 then
+      if all_versions[1] == local_version then
+        logMessage("Your game is already up to date!")
+        setGameStartVersion(local_version)
+      elseif all_versions[1] == get_embedded_version() then
+        logMessage("Your game is already up to date!")
+        setEmbeddedAsGameStartVersion()
+      else
+        logMessage("A new version of the game has been found!")
+        awaitGameDownload(all_versions[1])
+        setGameStartVersion(all_versions[1])
+      end
+    elseif local_version then
+      logMessage("Did not find online versions, starting the local version")
+      setGameStartVersion(local_version)
+    else
+      -- there is no recent version 
+      logMessage("No online or local version found, trying to launch embedded version...")
+      if get_embedded_version() == nil then
+        error('Could not find an embedded version of the game\nPlease connect to the internet and restart the game.')
+      end
+      setEmbeddedAsGameStartVersion()
+    end
+  end
+end
+
+function love.load()
   logMessage("Starting auto updater...")
   correctAndroidStartupConfig()
 
@@ -169,68 +225,18 @@ local function run()
 
   cleanUpOldVersions()
 
-  coroutine.yield()
+  if GAME_UPDATER.config.force_version ~= "" then
+    if GAME_UPDATER.config.force_version == local_version then
+      -- no point updating when we already have exactly the version we want
+      setGameStartVersion(local_version)
+    elseif GAME_UPDATER_GAME_VERSION.config.force_version == get_embedded_version() then
+      setEmbeddedAsGameStartVersion()
+    end
+  end
 
   if shouldCheckForUpdate() then
-    logMessage("Checking for versions online...")
-    all_versions = getAvailableVersions()
+    UPDATER_COROUTINE = coroutine.create(run)
   end
-
-  if GAME_UPDATER.config.force_version ~= "" then
-    logMessage("You're using a special version of the auto-updater")
-    logMessage("The game version is locked to " .. GAME_UPDATER.config.force_version)
-    -- directly check local version as there is little point to DL if it is already present
-    if GAME_UPDATER.config.force_version == local_version then
-      logMessage("Correct version is already installed!")
-      start_game(local_version)
-    elseif GAME_UPDATER.config.force_version == get_embedded_version() then
-      logMessage("Correct version is already installed!")
-      startEmbeddedVersion()
-    else
-      if containsForcedVersion(all_versions) then
-        awaitGameDownload(GAME_UPDATER.config.force_version)
-        GAME_UPDATER:change_version(GAME_UPDATER.config.force_version)
-        start_game(GAME_UPDATER.config.force_version)
-      else
-        local err = 'Could not find online version: "'..GAME_UPDATER.config.force_version..'" (force_version)\nAvailable versions are:\n'
-          for _, v in pairs(all_versions) do err = err..v.."\n" end
-          error(err)
-      end
-    end
-    -- no point looking for updates with a forced version - var is already initialized like that
-    -- GAME_UPDATER_CHECK_UPDATE_INGAME = false
-  else
-    if all_versions ~= nil and #all_versions > 0 then
-      -- we already checked for updates, don't check again on main game start
-      GAME_UPDATER_CHECK_UPDATE_INGAME = false
-      if all_versions[1] == local_version then
-        logMessage("Your game is already up to date!")
-        start_game(local_version)
-      elseif all_versions[1] == get_embedded_version() then
-        logMessage("Your game is already up to date!")
-        startEmbeddedVersion()
-      else
-        logMessage("A new version of the game has been found!")
-        awaitGameDownload(all_versions[1])
-        GAME_UPDATER:change_version(all_versions[1])
-        start_game(all_versions[1])
-      end
-    elseif local_version then
-      logMessage("Did not check or find online versions, starting the local version")
-      start_game(local_version)
-    else
-      -- there is no recent version 
-      logMessage("No online or local version found, trying to launch embedded version...")
-      if get_embedded_version() == nil then
-        error('Could not find an embedded version of the game\nPlease connect to the internet and restart the game.')
-      end
-      startEmbeddedVersion()
-    end
-  end
-end
-
-function love.load()
-  UPDATER_COROUTINE = coroutine.create(run)
 end
 
 function love.update(dt)
@@ -239,6 +245,8 @@ function love.update(dt)
     if not status then
       error(err .. "\n\n" .. debug.traceback(UPDATER_COROUTINE))
     end
+  else
+    start_game(gameStartVersion)
   end
 end
 
