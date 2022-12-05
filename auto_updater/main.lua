@@ -61,9 +61,12 @@ local function correctAndroidStartupConfig()
     return false
   end
 
+  local storageChanged = false
+
   if love.system.getOS() == "Android" then
     if UseAndroidExternalStorage == false and not hasLocalInstallation() then
       logMessage("No internal install present, change to external storage")
+      storageChanged = true
       UseAndroidExternalStorage = true
     elseif UseAndroidExternalStorage == true and not hasLocalInstallation() then
       logMessage("No installation detected, creating fresh install in external storage...")
@@ -83,7 +86,7 @@ local function correctAndroidStartupConfig()
       end
     )
 
-    if UseAndroidExternalStorage == true then
+    if storageChanged == true then
       package.loaded.conf = nil
       love.conf = nil
       love.init()
