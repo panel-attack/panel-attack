@@ -75,15 +75,16 @@ local function correctAndroidStartupConfig()
 
   if love.system.getOS() == "Android" then
     local storageChanged = false
-    if UseAndroidExternalStorage == false and not hasLocalInstallation() then
+    local hasInstallation = hasLocalInstallation()
+    if UseAndroidExternalStorage == false and hasInstallation then
       logMessage("No internal install present, restarting in external storage")
       storageChanged = true
       UseAndroidExternalStorage = true
-    elseif UseAndroidExternalStorage == true and not hasLocalInstallation() then
+    elseif UseAndroidExternalStorage == true and not hasInstallation then
       logMessage("No installation detected, creating fresh install in external storage...")
-    elseif UseAndroidExternalStorage == true and hasLocalInstallation() then
+    elseif UseAndroidExternalStorage == true and hasInstallation then
       logMessage("Installation in external storage detected...")
-    elseif UseAndroidExternalStorage == false and hasLocalInstallation() then
+    elseif UseAndroidExternalStorage == false and hasInstallation then
       logMessage("Installation in internal storage detected...")
       -- legacy support, using the internal storage until user actively migrates
     end
