@@ -29,17 +29,27 @@ local function logMessage(txt)
   updateLog[#updateLog+1] = txt
 end
 
+local time = nil
+local announcedStart = false
 local function start_game(file)
-  if not love.filesystem.mount(updaterDirectory..file, '') then error("Could not mount game file: "..file) end
-  GAME_UPDATER_GAME_VERSION = file:gsub("^panel%-", ""):gsub("%.love", "")
-  logMessage("Starting game version " .. file)
+  local currentTime = love.timer.getTime()
   -- for debugging purposes
-  love.timer.sleep(3)
-  package.loaded.main = nil
-  package.loaded.conf = nil
-  love.conf = nil
-  love.init()
-  love.load(args)
+  if time == nil then
+    time = currentTime
+  end
+  if announcedStart == false and currentTime > (time + 3) and currentTime <= (time + 5) then
+    logMessage("Starting game version " .. file)
+    announcedStart = true
+  elseif (love.timer.getTime() > (time + 10)) then
+    --nothing
+    if not love.filesystem.mount(updaterDirectory..file, '') then error("Could not mount game file: "..file) end
+    GAME_UPDATER_GAME_VERSION = file:gsub("^panel%-", ""):gsub("%.love", "")
+    package.loaded.main = nil
+    package.loaded.conf = nil
+    love.conf = nil
+    love.init()
+    love.load(args)
+  end
 end
 
 local function get_embedded_version()
@@ -54,18 +64,19 @@ local function correctAndroidStartupConfig()
     local saveDirectory = love.filesystem.getSaveDirectory()
     for i, v in ipairs(love.filesystem.getDirectoryItems("")) do
       -- the config file itself might still live in internal storage as that is the default setting for love
-      if love.filesystem.getRealDirectory(v) == saveDirectory and v.name ~= "UseAndroidExternalStorage" then
+      if love.filesystem.getRealDirectory(v) == saveDirectory and v ~= "UseAndroidExternalStorage" then
+        logMessage("Installation detected in " .. saveDirectory)
+        logMessage("Installation indicated by file " .. v)
         return true
       end
     end
     return false
   end
 
-  local storageChanged = false
-
   if love.system.getOS() == "Android" then
+    local storageChanged = false
     if UseAndroidExternalStorage == false and not hasLocalInstallation() then
-      logMessage("No internal install present, change to external storage")
+      logMessage("No internal install present, restarting in external storage")
       storageChanged = true
       UseAndroidExternalStorage = true
     elseif UseAndroidExternalStorage == true and not hasLocalInstallation() then
@@ -87,6 +98,7 @@ local function correctAndroidStartupConfig()
     )
 
     if storageChanged == true then
+      package.loaded.main = nil
       package.loaded.conf = nil
       love.conf = nil
       love.init()
@@ -168,6 +180,20 @@ local function awaitGameDownload(version)
   return channelMessage
 end
 
+local function setFallbackVersion()
+  if local_version then
+    logMessage("Falling back to local version")
+    setGameStartVersion(local_version)
+  else
+    -- there is no recent version 
+    logMessage("Falling back to embedded version")
+    if get_embedded_version() == nil then
+      error('Could not find an embedded version of the game\nPlease connect to the internet and restart the game.')
+    end
+    setEmbeddedAsGameStartVersion()
+  end
+end
+
 local function run()
 
   logMessage("Checking for versions online...")
@@ -199,17 +225,10 @@ local function run()
         awaitGameDownload(all_versions[1])
         setGameStartVersion(all_versions[1])
       end
-    elseif local_version then
-      logMessage("Did not find online versions, starting the local version")
-      setGameStartVersion(local_version)
     else
-      -- there is no recent version 
-      logMessage("No online or local version found, trying to launch embedded version...")
-      if get_embedded_version() == nil then
-        error('Could not find an embedded version of the game\nPlease connect to the internet and restart the game.')
-      end
-      setEmbeddedAsGameStartVersion()
+      logMessage("No online version found for " .. UPDATER_NAME)
     end
+    coroutine.yield()
   end
 end
 
@@ -236,16 +255,22 @@ function love.load()
 
   if shouldCheckForUpdate() then
     UPDATER_COROUTINE = coroutine.create(run)
+  else
+    logMessage("Not checking online versions as either a forced version is used or auto_update is disabled")
   end
 end
 
 function love.update(dt)
+  print(love.timer.getTime())
   if UPDATER_COROUTINE ~= nil and coroutine.status(UPDATER_COROUTINE) ~= "dead" then
     local status, err = coroutine.resume(UPDATER_COROUTINE)
     if not status then
       error(err .. "\n\n" .. debug.traceback(UPDATER_COROUTINE))
     end
   else
+    if gameStartVersion == nil then
+      setFallbackVersion()
+    end
     start_game(gameStartVersion)
   end
 end
