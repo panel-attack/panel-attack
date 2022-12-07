@@ -261,7 +261,6 @@ function love.load()
 end
 
 function love.update(dt)
-  print(love.timer.getTime())
   if UPDATER_COROUTINE ~= nil and coroutine.status(UPDATER_COROUTINE) ~= "dead" then
     local status, err = coroutine.resume(UPDATER_COROUTINE)
     if not status then
