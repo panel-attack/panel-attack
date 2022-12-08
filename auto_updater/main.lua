@@ -40,7 +40,7 @@ local function start_game(file)
   if announcedStart == false and currentTime > (time + 3) and currentTime <= (time + 5) then
     logMessage("Starting game version " .. file)
     announcedStart = true
-  elseif (love.timer.getTime() > (time + 10)) then
+  elseif (love.timer.getTime() > (time + 5)) then
     --nothing
     if not love.filesystem.mount(updaterDirectory..file, '') then error("Could not mount game file: "..file) end
     GAME_UPDATER_GAME_VERSION = file:gsub("^panel%-", ""):gsub("%.love", "")
@@ -75,18 +75,21 @@ local function correctAndroidStartupConfig()
 
   if love.system.getOS() == "Android" then
     local storageChanged = false
-    local hasInstallation = hasLocalInstallation()
-    if UseAndroidExternalStorage == false and hasInstallation then
-      logMessage("No internal install present, restarting in external storage")
-      storageChanged = true
-      UseAndroidExternalStorage = true
-    elseif UseAndroidExternalStorage == true and not hasInstallation then
-      logMessage("No installation detected, creating fresh install in external storage...")
-    elseif UseAndroidExternalStorage == true and hasInstallation then
-      logMessage("Installation in external storage detected...")
-    elseif UseAndroidExternalStorage == false and hasInstallation then
-      logMessage("Installation in internal storage detected...")
+    if hasLocalInstallation() then
+      if UseAndroidExternalStorage == true then
+        logMessage("Installation in external storage detected...")
+      else
+        logMessage("Installation in internal storage detected...")
       -- legacy support, using the internal storage until user actively migrates
+      end
+    else
+      if UseAndroidExternalStorage == true then
+        logMessage("No installation detected, creating fresh install in external storage...")
+      else
+        logMessage("No internal install present, restarting in external storage")
+        storageChanged = true
+        UseAndroidExternalStorage = true
+      end
     end
     
     pcall(
