@@ -25,10 +25,10 @@
 
 local fpsGraph = {}
 
-fpsGraph.fpsFont = love.graphics.newFont(8)
+fpsGraph.fpsFont = love.graphics.newFont(12)
 
 -- creates a graph table (too lazy to make objects and stuff)
-function fpsGraph.createGraph(x, y, width, height, delay, draggable)
+function fpsGraph.createGraph(x, y, width, height, delay, maxValue, draggable)
 
 	-- create a value table such that the distance between two points is atleast 2 pixels
 	local vals = {}
@@ -43,9 +43,10 @@ function fpsGraph.createGraph(x, y, width, height, delay, draggable)
 		width = width or 50, --  | dimensions of the graph
 		height = height or 30, --|
 		delay = delay or 0.5, -- delay until the next update
-		draggable = draggable or true, -- whether it is draggable or not
+		draggable = draggable or false, -- whether it is draggable or not
 		vals = vals, -- the values of the graph
 		vmax = 0, -- the maximum value of the graph
+		maxValue = maxValue, -- fixed max value for graph if given
 		cur_time = 0, -- the current time of the graph
 		label = "graph", -- the label of the graph (changes when called by an update function)
 		_dx = 0, -- used for calculating the distance between the mouse and the pos
@@ -89,16 +90,20 @@ function fpsGraph.updateGraph(graph, val, label, dt)
 		table.insert(graph.vals, val)
 
 		-- get the new max variable
-		local max = 0
-		for i=1, #graph.vals do
-			local v = graph.vals[i]
-			if v > max then
-				max = v
+		if graph.maxValue == nil then
+			local max = 0
+			for i=1, #graph.vals do
+				local v = graph.vals[i]
+				if v > max then
+					max = v
+				end
 			end
+			graph.vmax = max
+		else 
+			graph.vmax = graph.maxValue
 		end
 
 		-- update the max and label variables
-		graph.vmax = max
 		graph.label = label
 	end
 end
@@ -120,13 +125,15 @@ end
 -- draws all the graphs in your list
 function fpsGraph.drawGraphs(graphs)
 	-- set default font
+	local oldFont = love.graphics.getFont()
+	-- set default font
 	love.graphics.setFont(fpsGraph.fpsFont)
 
 	-- loop through all of the graphs
 	for j=1, #graphs do
 		local v = graphs[j]
 		-- round values
-		local maxVal = math.ceil(v.vmax/10)*10+20
+		local maxVal = v.vmax -- math.ceil(v.vmax/10)*10+20
 		local len = #v.vals
 		local step = v.width/len
 
@@ -134,13 +141,15 @@ function fpsGraph.drawGraphs(graphs)
 		for i=2, len do
 			local a = v.vals[i-1]
 			local b = v.vals[i]
-			love.graphics.line(step*(i-2)+v.x, v.height*(-a/maxVal+1)+v.y,
-							   step*(i-1)+v.x, v.height*(-b/maxVal+1)+v.y)
+			love.graphics.line(step*(i-2)+v.x, v.height*(-a/maxVal)+v.y,
+							   step*(i-1)+v.x, v.height*(-b/maxVal)+v.y)
 		end
 
 		-- print the label of the graph
 		love.graphics.print(v.label, v.x, v.height+v.y-8)
 	end
+
+	love.graphics.setFont(oldFont)
 end
 
 return fpsGraph
