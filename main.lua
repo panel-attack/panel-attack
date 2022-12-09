@@ -194,7 +194,7 @@ function love.update(dt)
   if config.show_fps and config.debug_mode then
     if testGraph[1] == nil then
       local updateSpeed = consts.frameRate * 1
-      local x = 0
+      local x = 880
       local y = 0
       local width = 400
       local height = 50
@@ -290,12 +290,11 @@ function love.draw()
 
   -- Draw the FPS if enabled
   if config ~= nil and config.show_fps then
-    --gprintf("FPS: " .. love.timer.getFPS(), 1, 1)
-    --gprintf("leftover_time: " .. leftover_time, 1, 300)
-   -- local memoryCount = collectgarbage("count")
-    --memoryCount = round(memoryCount / 1000, 1)
-    --gprintf("Memory " .. memoryCount .. " MB", 1, 400)
-	  BarGraph.drawGraphs(testGraph)
+    if testGraph[1] then
+      BarGraph.drawGraphs(testGraph)
+    else
+      gprintf("FPS: " .. love.timer.getFPS(), 1, 1)
+    end
   end
 
   if STONER_MODE then 
