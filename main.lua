@@ -3,11 +3,11 @@ socket = require("socket")
 GAME = require("game")
 require("match")
 local batteries = require("batteries")
-local BarGraph = require("libraries.BarGraph")
+local RunTimeGraph = require("RunTimeGraph")
 require("BattleRoom")
 require("util")
 require("table_util")
-require("consts")
+local consts = require("consts")
 require("FileUtil")
 require("queue")
 require("globals")
@@ -51,8 +51,6 @@ local input_delta = 0.0
 local pointer_hidden = false
 local mainloop = nil
 
-local testGraph = {}
-
 -- Called at the beginning to load the game
 function love.load()
 
@@ -81,14 +79,9 @@ function love.focus(f)
   GAME.focused = f
 end
 
-local consts = {}
-consts.frameRate = 1/60
-
-local sleepAmount = 0
-local previousTime = 0
-local sleepRatio = .99
-
-local function customSleep()
+-- Sleeps just the right amount of time to make our next update step be one frame long.
+-- If we have leftover time that hasn't been run yet, it will sleep less to catchup.
+local function customSleep(runMetrics)
 
   local targetDelay = consts.frameRate
   -- We want leftover time to be above 0 but less than a quarter frame.
@@ -99,11 +92,12 @@ local function customSleep()
     targetDelay = math.max(targetDelay, 0)
   end
 
-  local targetTime = previousTime + targetDelay
+  local targetTime = runMetrics.previousSleepEnd + targetDelay
   local originalTime = love.timer.getTime()
   local currentTime = originalTime
 
   -- Sleep a percentage of our time to wait to save cpu
+  local sleepRatio = .99
   local sleepTime = (targetTime - currentTime) * sleepRatio
   if love.timer and sleepTime > 0 then 
     love.timer.sleep(sleepTime) 
@@ -115,12 +109,24 @@ local function customSleep()
     currentTime = love.timer.getTime()
   end
 
-  previousTime = currentTime
-  sleepAmount = currentTime - originalTime
+  runMetrics.previousSleepEnd = currentTime
+  runMetrics.sleepDuration = currentTime - originalTime
 end
 
+local runMetrics = {}
+runMetrics.previousSleepEnd = 0
+runMetrics.dt = 0
+runMetrics.sleepDuration = 0
+runMetrics.updateDuration = 0
+runMetrics.drawDuration = 0
+runMetrics.presentDuration = 0
+
+local runTimeGraph = nil
+
 function love.run()
-	if love.load then love.load(love.arg.parseGameArguments(arg), arg) end
+	if love.load then
+    love.load(love.arg.parseGameArguments(arg), arg)
+  end
 
 	-- We don't want the first frame's dt to include time taken by love.load.
 	if love.timer then love.timer.step() end
@@ -129,7 +135,7 @@ function love.run()
 
   -- Main loop time.
 	return function()
-    customSleep()
+    customSleep(runMetrics)
 
     -- Process events.
     if love.event then
@@ -147,14 +153,16 @@ function love.run()
     -- Update dt, as we'll be passing it to update
     if love.timer then
       dt = love.timer.step()
+      runMetrics.dt = dt
     end
 
-    local preUpdateTime = love.timer.getTime()
 
     -- Call update and draw
     if love.update then
-      love.update(dt)
-    end -- will pass 0 if love.timer is disabled
+      local preUpdateTime = love.timer.getTime()
+      love.update(dt) -- will pass 0 if love.timer is disabled
+      runMetrics.updateDuration = love.timer.getTime() - preUpdateTime
+    end
 
     local graphicsActive = love.graphics and love.graphics.isActive()
     if graphicsActive then
@@ -162,27 +170,18 @@ function love.run()
       love.graphics.clear(love.graphics.getBackgroundColor())
 
       if love.draw then 
+        local preDrawTime = love.timer.getTime()
         love.draw()
+        runMetrics.drawDuration = love.timer.getTime() - preDrawTime
       end
-    end
 
-    local updateTimeTaken = love.timer.getTime() - preUpdateTime
-    
-    local presentTimeTaken = 0
-    if graphicsActive then
       local prePresentTime = love.timer.getTime()
       love.graphics.present()
-      presentTimeTaken = love.timer.getTime() - prePresentTime
+      runMetrics.presentDuration = love.timer.getTime() - prePresentTime
     end
 
-    if testGraph[1] then
-      local fps = math.round(1.0 / dt, 1)
-      testGraph[1]:updateGraph({fps}, "FPS: " .. fps, dt)
-      local memoryCount = collectgarbage("count")
-      memoryCount = round(memoryCount / 1024, 1)
-      testGraph[2]:updateGraph({memoryCount}, "Memory: " .. memoryCount .. " Mb", dt)
-      testGraph[3]:updateGraph({leftover_time}, "leftover_time " .. leftover_time, dt)
-      testGraph[4]:updateGraph({updateTimeTaken, sleepAmount, presentTimeTaken}, "Run Loop " .. updateTimeTaken .. " " .. sleepAmount .. " " .. presentTimeTaken, dt)
+    if runTimeGraph ~= nil then
+      runTimeGraph:updateWithMetrics(runMetrics)
     end
   end
 end
@@ -192,30 +191,8 @@ end
 function love.update(dt)
 
   if config.show_fps and config.debug_mode then
-    if testGraph[1] == nil then
-      local updateSpeed = consts.frameRate * 1
-      local x = 880
-      local y = 0
-      local width = 400
-      local height = 50
-      local padding = 80
-      -- fps graph
-      testGraph[#testGraph+1] = BarGraph(x, y, width, height, updateSpeed, 60)
-      testGraph[#testGraph]:setFillColor({0,1,0,1}, 1)
-      y = y + height + padding
-      -- memory graph
-      testGraph[#testGraph+1] = BarGraph(x, y, width, height, updateSpeed, 20)
-      y = y + height + padding
-      -- leftover time
-      testGraph[#testGraph+1] = BarGraph(x, y, width, height, updateSpeed, consts.frameRate * 1)
-      testGraph[#testGraph]:setFillColor({0,1,1,1}, 1)
-      y = y + height + padding
-      -- run loop graph
-      testGraph[#testGraph+1] = BarGraph(x, y, width, height, updateSpeed, consts.frameRate * 1)
-      testGraph[#testGraph]:setFillColor({0,1,0,1}, 1) -- update
-      testGraph[#testGraph]:setFillColor({0,0,1,1}, 2) -- sleep
-      testGraph[#testGraph]:setFillColor({1,1,0,1}, 3) -- present
-      y = y + height + padding
+    if runTimeGraph == nil then
+      runTimeGraph = RunTimeGraph()
     end
   end
 
@@ -290,8 +267,8 @@ function love.draw()
 
   -- Draw the FPS if enabled
   if config ~= nil and config.show_fps then
-    if testGraph[1] then
-      BarGraph.drawGraphs(testGraph)
+    if runTimeGraph then
+      runTimeGraph:draw()
     else
       gprintf("FPS: " .. love.timer.getFPS(), 1, 1)
     end
