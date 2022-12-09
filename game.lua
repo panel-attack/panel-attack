@@ -25,7 +25,6 @@ Game =
     self.needsAssetReload = false
     self.previousWindowWidth = 0
     self.previousWindowHeight = 0
-    self.memoryFix = 1
   end
 )
 

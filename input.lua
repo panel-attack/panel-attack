@@ -273,13 +273,6 @@ function love.keypressed(key, scancode, rep)
     end
   end
 
-  local function handleMemoryFix()
-    if key == "`" and not rep then
-      GAME.memoryFix = not GAME.memoryFix
-      return true
-    end
-  end
-
   local function modifyWinCounts()
     if GAME.battleRoom and (love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt")) then
       if key == "1" then -- Add to P1's win count
@@ -305,7 +298,6 @@ function love.keypressed(key, scancode, rep)
      handleScreenshot() or
      handleCopy() or
      handleDumpAttackPattern() or
-     handleMemoryFix() or
      modifyWinCounts() then
     return
   end

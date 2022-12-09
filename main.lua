@@ -194,6 +194,8 @@ function love.update(dt)
     if runTimeGraph == nil then
       runTimeGraph = RunTimeGraph()
     end
+  else 
+    runTimeGraph = nil
   end
 
   if love.mouse.getX() == last_x and love.mouse.getY() == last_y then
@@ -248,9 +250,7 @@ function love.update(dt)
   update_music()
   GAME.rich_presence:runCallbacks()
   
-  if GAME.memoryFix then
-    batteries(0.0001, nil, nil)
-  end
+  batteries(0.0001, nil, nil)
 end
 
 -- Called whenever the game needs to draw.
