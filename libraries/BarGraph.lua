@@ -78,7 +78,6 @@ function BarGraph.drawGraphs(graphs)
 		local graph = graphs[j]
 		local maxVal = graph.maxValue
 
-		-- draw graph
 		local xPosition = graph.x
 		for _, values in ipairs(graph.vals) do
 			assert(type(values) == "table")
@@ -96,6 +95,10 @@ function BarGraph.drawGraphs(graphs)
 			end
 			xPosition = xPosition + graph.barWidth
 		end
+
+		gfx_q:push({ love.graphics.setColor, {1, 1, 1, 0.8} })
+		gfx_q:push({ love.graphics.rectangle, { "line", graph.x + 0.5, graph.y + 0.5, graph.width -1, graph.height -1 }})
+
 		gfx_q:push({ love.graphics.setColor, { 1, 1, 1, 1 } })
 
 		gfx_q:push({ love.graphics.print, { graph.label, graph.x, graph.height + graph.y + 8 } })

@@ -82,11 +82,43 @@ function love.focus(f)
 end
 
 local consts = {}
-consts.FRAME_RATE = 1/60
+consts.frameRate = 1/60
 
-local prev_time = 0
-local sleep_ratio = .9
-local leftOverRatio = .1
+local sleepAmount = 0
+local previousTime = 0
+local sleepRatio = .99
+
+local function customSleep()
+
+  local targetDelay = consts.frameRate
+  -- We want leftover time to be above 0 but less than a quarter frame.
+  -- If it goes above that, only wait enough to get it down to that.
+  local maxLeftOverTime = consts.frameRate / 4
+  if leftover_time > maxLeftOverTime then
+    targetDelay = targetDelay - (leftover_time - maxLeftOverTime)
+    targetDelay = math.max(targetDelay, 0)
+  end
+
+  local targetTime = previousTime + targetDelay
+  local originalTime = love.timer.getTime()
+  local currentTime = originalTime
+
+  -- Sleep a percentage of our time to wait to save cpu
+  local sleepTime = (targetTime - currentTime) * sleepRatio
+  if love.timer and sleepTime > 0 then 
+    love.timer.sleep(sleepTime) 
+  end
+  currentTime = love.timer.getTime()
+
+  -- While loop the last little bit to be more accurate
+  while currentTime < targetTime do
+    currentTime = love.timer.getTime()
+  end
+
+  previousTime = currentTime
+  sleepAmount = currentTime - originalTime
+end
+
 function love.run()
 	if love.load then love.load(love.arg.parseGameArguments(arg), arg) end
 
@@ -97,28 +129,8 @@ function love.run()
 
   -- Main loop time.
 	return function()
-    local targetDelta = consts.FRAME_RATE
-    if leftover_time > consts.FRAME_RATE / 2 then
-      targetDelta = targetDelta - (leftover_time * leftOverRatio)
-    end
+    customSleep()
 
-    local targetTime = prev_time + targetDelta
-    local currentTime = love.timer.getTime()
-
-    -- Sleep for 90% of our time to wait to save cpu
-    local sleepTime = (targetTime - currentTime) * sleep_ratio
-    if love.timer and sleepTime > 0 then 
-      love.timer.sleep(sleepTime) 
-    end
-
-    -- While loop the last little bit to be more accurate
-    currentTime = love.timer.getTime()
-    while currentTime < targetTime do
-      currentTime = love.timer.getTime()
-    end
-
-    prev_time = currentTime
-  
     -- Process events.
     if love.event then
       love.event.pump()
@@ -133,18 +145,44 @@ function love.run()
     end
 
     -- Update dt, as we'll be passing it to update
-    if love.timer then dt = love.timer.step() end
+    if love.timer then
+      dt = love.timer.step()
+    end
+
+    local preUpdateTime = love.timer.getTime()
 
     -- Call update and draw
-    if love.update then love.update(dt) end -- will pass 0 if love.timer is disabled
+    if love.update then
+      love.update(dt)
+    end -- will pass 0 if love.timer is disabled
 
-    if love.graphics and love.graphics.isActive() then
+    local graphicsActive = love.graphics and love.graphics.isActive()
+    if graphicsActive then
       love.graphics.origin()
       love.graphics.clear(love.graphics.getBackgroundColor())
 
-      if love.draw then love.draw() end
+      if love.draw then 
+        love.draw()
+      end
+    end
 
+    local updateTimeTaken = love.timer.getTime() - preUpdateTime
+    
+    local presentTimeTaken = 0
+    if graphicsActive then
+      local prePresentTime = love.timer.getTime()
       love.graphics.present()
+      presentTimeTaken = love.timer.getTime() - prePresentTime
+    end
+
+    if testGraph[1] then
+      local fps = math.round(1.0 / dt, 1)
+      testGraph[1]:updateGraph({fps}, "FPS: " .. fps, dt)
+      local memoryCount = collectgarbage("count")
+      memoryCount = round(memoryCount / 1024, 1)
+      testGraph[2]:updateGraph({memoryCount}, "Memory: " .. memoryCount .. " Mb", dt)
+      testGraph[3]:updateGraph({leftover_time}, "leftover_time " .. leftover_time, dt)
+      testGraph[4]:updateGraph({updateTimeTaken, sleepAmount, presentTimeTaken}, "Run Loop " .. updateTimeTaken .. " " .. sleepAmount .. " " .. presentTimeTaken, dt)
     end
   end
 end
@@ -155,24 +193,28 @@ function love.update(dt)
 
   if config.show_fps and config.debug_mode then
     if testGraph[1] == nil then
-      local updateSpeed = consts.frameRate * 2
+      local updateSpeed = consts.frameRate * 1
       local x = 0
       local y = 0
       local width = 400
       local height = 50
       local padding = 80
       -- fps graph
-      testGraph[#testGraph+1] = BarGraph(x, y, width, height, updateSpeed, 70)
+      testGraph[#testGraph+1] = BarGraph(x, y, width, height, updateSpeed, 60)
+      testGraph[#testGraph]:setFillColor({0,1,0,1}, 1)
       y = y + height + padding
       -- memory graph
       testGraph[#testGraph+1] = BarGraph(x, y, width, height, updateSpeed, 20)
+      y = y + height + padding
+      -- leftover time
+      testGraph[#testGraph+1] = BarGraph(x, y, width, height, updateSpeed, consts.frameRate * 1)
+      testGraph[#testGraph]:setFillColor({0,1,1,1}, 1)
       y = y + height + padding
       -- run loop graph
       testGraph[#testGraph+1] = BarGraph(x, y, width, height, updateSpeed, consts.frameRate * 1)
       testGraph[#testGraph]:setFillColor({0,1,0,1}, 1) -- update
       testGraph[#testGraph]:setFillColor({0,0,1,1}, 2) -- sleep
       testGraph[#testGraph]:setFillColor({1,1,0,1}, 3) -- present
-      testGraph[#testGraph]:setFillColor({1,1,1,1}, 4) -- leftover time
       y = y + height + padding
     end
   end
