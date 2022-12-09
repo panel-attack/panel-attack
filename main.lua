@@ -3,7 +3,7 @@ socket = require("socket")
 GAME = require("game")
 require("match")
 local batteries = require("batteries")
-local fpsGraph = require("libraries.FPSGraph")
+local BarGraph = require("libraries.BarGraph")
 require("BattleRoom")
 require("util")
 require("table_util")
@@ -51,9 +51,7 @@ local input_delta = 0.0
 local pointer_hidden = false
 local mainloop = nil
 
-local testGraph = nil
-local testGraph2 = nil
-local testGraph3 = nil
+local testGraph = {}
 
 -- Called at the beginning to load the game
 function love.load()
@@ -156,21 +154,27 @@ end
 function love.update(dt)
 
   if config.show_fps and config.debug_mode then
-    if testGraph == nil then
-      local updateSpeed = 0.25
-
+    if testGraph[1] == nil then
+      local updateSpeed = consts.frameRate * 2
+      local x = 0
+      local y = 0
+      local width = 400
+      local height = 50
+      local padding = 80
       -- fps graph
-      testGraph = fpsGraph.createGraph(0, 0, 1200, 50, updateSpeed)
+      testGraph[#testGraph+1] = BarGraph(x, y, width, height, updateSpeed, 70)
+      y = y + height + padding
       -- memory graph
-      testGraph2 = fpsGraph.createGraph(0, 260, nil, nil, updateSpeed)
-      -- spare time graph
-      testGraph3 = fpsGraph.createGraph(0, 600, 1200, 100, updateSpeed)
+      testGraph[#testGraph+1] = BarGraph(x, y, width, height, updateSpeed, 20)
+      y = y + height + padding
+      -- run loop graph
+      testGraph[#testGraph+1] = BarGraph(x, y, width, height, updateSpeed, consts.frameRate * 1)
+      testGraph[#testGraph]:setFillColor({0,1,0,1}, 1) -- update
+      testGraph[#testGraph]:setFillColor({0,0,1,1}, 2) -- sleep
+      testGraph[#testGraph]:setFillColor({1,1,0,1}, 3) -- present
+      testGraph[#testGraph]:setFillColor({1,1,1,1}, 4) -- leftover time
+      y = y + height + padding
     end
-    local fps = math.round(1.0 / dt, 1)
-    fpsGraph.updateGraph(testGraph, fps, "FPS: " .. fps, dt)
-    fpsGraph.updateMem(testGraph2, dt)
-    --local sparePercent = math.round(timeToWaitDelta / (consts.FRAME_RATE) * 100, 1)
-    --fpsGraph.updateGraph(testGraph3, sparePercent, "Spare %: " .. sparePercent .. " leftovers: " .. leftover_time - consts.FRAME_RATE .. " dt: " .. dt, dt)
   end
 
   if love.mouse.getX() == last_x and love.mouse.getY() == last_y then
@@ -244,16 +248,13 @@ function love.draw()
 
   -- Draw the FPS if enabled
   if config ~= nil and config.show_fps then
-    gprintf("FPS: " .. love.timer.getFPS(), 1, 1)
-    gprintf("leftover_time: " .. leftover_time, 1, 40)
-    local memoryCount = collectgarbage("count")
-    memoryCount = round(memoryCount / 1000, 1)
-    gprintf("Memory " .. memoryCount .. " MB", 1, 100)
+    --gprintf("FPS: " .. love.timer.getFPS(), 1, 1)
+    --gprintf("leftover_time: " .. leftover_time, 1, 300)
+   -- local memoryCount = collectgarbage("count")
+    --memoryCount = round(memoryCount / 1000, 1)
+    --gprintf("Memory " .. memoryCount .. " MB", 1, 400)
+	  BarGraph.drawGraphs(testGraph)
   end
-
-  -- local memoryCount = collectgarbage("count")
-  -- memoryCount = round(memoryCount / 1000, 1)
-  -- gprintf("Memory " .. memoryCount .. " MB", 1, 100)
 
   if STONER_MODE then 
     gprintf("STONER", 1, 1 + (11 * 4))
@@ -263,9 +264,6 @@ function love.draw()
     gfx_q[i][1](unpack(gfx_q[i][2]))
   end
   gfx_q:clear()
-  if testGraph then
-	  fpsGraph.drawGraphs({testGraph, testGraph2, testGraph3})
-  end
 
   love.graphics.setCanvas() -- render everything thats been added
   love.graphics.clear(love.graphics.getBackgroundColor()) -- clear in preperation for the next render
