@@ -14,11 +14,10 @@ local DragAndDrop = {
 function DragAndDrop.importMods(self, assetType)
   local files = DragAndDrop.getSubDirs(DragAndDrop.modDir .. "/" ..assetType)
   for j = 1, #files do
-    local dir = assetType.."/"..files[j]
-    local mod = DragAndDrop:loadMod(dir, assetType)
+    local mod = DragAndDrop:loadMod(files[j], assetType)
     if self.modIsValid(mod) then
       if not self.modExists(mod) then
-        recursive_copy(mod.fullDirectory, dir)
+        recursive_copy(mod.fullDirectory, mod.targetDirectory)
         self.imported[#self.imported+1] = mod
       else
         -- save mod name to prompt user for decision later
@@ -33,7 +32,7 @@ end
 function DragAndDrop.loadMod(self, directory, assetType)
   local mod = {}
   mod.directoryName = directory
-  mod.fullDirectory = self.modDir .. "/" .. directory
+  mod.fullDirectory = self.modDir .. "/" .. assetType.. "/" .. directory
   mod.targetDirectory = assetType .. "/" .. directory
   mod.assetType = assetType
   local config_file = lfs.newFile(mod.fullDirectory .. "/config.json", "r")
@@ -66,8 +65,22 @@ function DragAndDrop.modIsValid(mod)
   end
 end
 
-function DragAndDrop.promptOverwrite(self, assetName)
-  return false
+local overwritePrompt = "The imported mod %s already exists, do you wish to overwrite the existing version?"
+function DragAndDrop.promptOverwrite(assetName)
+  while true do
+    gfx_q:push({love.graphics.draw, {string.format(overwritePrompt, assetName), 15, 15, nil, nil, nil, nil}})
+    gfx_q:push({love.graphics.draw, {"Press Escape for No, or Enter for Yes", 15, 45, nil, nil, nil, nil}})
+    coroutine.yield()
+    variable_step(
+      function()
+        if menu_escape() then
+          return false
+        elseif menu_enter() then
+          return true
+        end
+      end
+    )
+  end
 end
 
 function love.filedropped(file)
@@ -90,15 +103,15 @@ function DragAndDrop.acceptFile(self, path)
       end
 
       for i = 1, #self.existingAssets do
-        -- prompt
-        if self:promptOverwrite(self.existingAssets[i]) then
+        if self.promptOverwrite(self.existingAssets[i]) then
           recursive_copy(self.existingAssets[i].source, self.existingAssets[i].destination)
+          self.imported[#self.imported+1] = self.existingAssets[i]
         end
       end
 
       self:reloadModsBasedOnImport()
 
-      -- report about unknown files and invalid mods
+      -- TODO: report about unknown files and invalid mods
       lfs.unmount(DragAndDrop.modDir)
     end
   end
@@ -159,7 +172,7 @@ function DragAndDrop.modExists(mod)
   elseif mod.assetType == "stages" then
     return table.contains(stages_ids, mod.config.id)
   elseif mod.assetType == "themes" then
-    return table.contains(DragAndDrop.getSubDirs("themes"), mod.directoryName)
+    return table.contains(FileUtil.getFilteredDirectoryItems("themes"), mod.directoryName)
   end
   return false
 end
