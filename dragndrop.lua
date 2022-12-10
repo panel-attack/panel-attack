@@ -59,8 +59,10 @@ function DragAndDrop.modIsValid(mod)
     else
       return false
     end
-  else
+  elseif mod.assetType == "themes" then
     return mod.config ~= nil
+  else
+    return mod.config.id ~= nil
   end
 end
 
