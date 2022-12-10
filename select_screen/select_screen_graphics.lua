@@ -427,10 +427,9 @@ end
 function select_screen_graphics.draw_panels(self, player, player_number, y_padding)
   local panels_max_width = 0.25 * self.button_height
   local panels_width = math.min(panels_max_width, 20)
+  local colorCount = level_to_ncolors_vs[player.level] + (player.colorCountOffset or 0)
   local padding_x = 0.5 * self.button_width - 3 * panels_width -- center them, not 3.5 mysteriously?
-  if player.level >= 9 then
-    padding_x = padding_x - 0.5 * panels_width
-  end
+  padding_x = padding_x - (0.5 * panels_width * (colorCount - 5))
   local is_selected = player.cursor.selected and player.cursor.positionId == "__Panels"
   if is_selected then
     padding_x = padding_x - panels_width
@@ -440,16 +439,22 @@ function select_screen_graphics.draw_panels(self, player, player_number, y_paddi
   padding_x = padding_x + panels_width
   if is_selected then
     gprintf("<", self.render_x + padding_x - 0.5 * panels_width, self.render_y + y_padding - 0.5 * self.text_height, panels_width, "center")
+    gprintf("^", self.render_x + 100 - self.spacing, self.render_y + y_padding * 0.4, panels_width, "center")
     padding_x = padding_x + panels_width
   end
   for i = 1, 8 do
-    if i ~= 7 and (i ~= 6 or player.level >= 9) then
+    if i <= colorCount or i == 8 then
       menu_drawf(panels[player.panels_dir].images.classic[i][1], self.render_x + padding_x, self.render_y + y_padding, "center", "center", 0, panels_scale, panels_scale)
       padding_x = padding_x + panels_width
     end
   end
   if is_selected then
     gprintf(">", self.render_x + padding_x - 0.5 * panels_width, self.render_y + y_padding - 0.5 * self.text_height, panels_width, "center")
+    if #self.select_screen.players == 1 then
+      gprintf("v", self.render_x + 100 - self.spacing, self.render_y + y_padding * 1.3, panels_width, "center")
+    else
+      gprintf("v", self.render_x + 100 - self.spacing, self.render_y + y_padding * 2, panels_width, "center")
+    end
   end
 end
 

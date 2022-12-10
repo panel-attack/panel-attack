@@ -258,6 +258,10 @@ function Stack.setLevel(self, level)
   end
 end
 
+function Stack.overrideColorCount(self, count)
+  self.NCOLORS = count
+end
+
 -- Should be called prior to clearing the stack.
 -- Consider recycling any memory that might leave around a lot of garbage.
 -- Note: You can just leave the variables to clear / garbage collect on their own if they aren't large.
