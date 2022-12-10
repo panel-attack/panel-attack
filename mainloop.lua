@@ -180,8 +180,7 @@ do
     undo_stonermode()
     GAME.backgroundImage = themes[config.theme].images.bg_main
     GAME.battleRoom = nil
-    GAME.input:clearInputConfigurationsForPlayers()
-    GAME.input:requestPlayerInputConfigurationAssignments(1)
+    GAME.input:setMultiConfigInput()
     reset_filters()
     local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
     local main_menu
@@ -1470,8 +1469,7 @@ function main_local_vs_setup()
   GAME.battleRoom = BattleRoom()
   GAME.battleRoom.playerNames[1] = loc("player_n", "1")
   GAME.battleRoom.playerNames[2] = loc("player_n", "2")
-  GAME.input:clearInputConfigurationsForPlayers()
-  GAME.input:requestPlayerInputConfigurationAssignments(2)
+  GAME.input:setSingleConfigInput(2)
   return select_screen.main, {select_screen, "2p_local_vs"}
 end
 
