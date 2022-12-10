@@ -933,6 +933,13 @@ end
 
 -- The main screen for selecting characters and settings for a match
 function select_screen.main(self, character_select_mode, roomInitializationMessage)
+  -- 2p vs local needs to have its input properly divided in select screen already
+  -- meaning we do NOT want to reset to player 1 reacting to inputs from all configurations
+  -- for all others, the player can hold their decision until game start
+  if not self:isMultiplayer() or self:isNetPlay() then
+    GAME.input:setMultiConfigInput()
+  end
+
   self.roomInitializationMessage = roomInitializationMessage
   self:initialize(character_select_mode)
   self:loadThemeAssets()
@@ -956,13 +963,6 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
 
   if self:isMultiplayer() then
     self:setUpOpponentPlayer()
-  end
-
-  -- 2p vs local needs to have its input properly divided in select screen already
-  -- meaning we do NOT want to reset to player 1 reacting to inputs from all configurations
-  -- for all others, the player can hold their decision until game start
-  if not self:isMultiplayer() or self:isNetPlay() then
-    GAME.input:setMultiConfigInput()
   end
 
   self:refreshReadyStates()
