@@ -67,9 +67,13 @@ end
 
 local overwritePrompt = "The imported mod %s already exists, do you wish to overwrite the existing version?"
 function DragAndDrop.promptOverwrite(assetName)
+  -- TODO: We can't draw directly when coming from the love.filedropped or love.directorydropped callback
+  -- reason being that we are not on the main thread (and in fact not even in a coroutine we could yield in)
   while true do
-    gfx_q:push({love.graphics.draw, {string.format(overwritePrompt, assetName), 15, 15, nil, nil, nil, nil}})
-    gfx_q:push({love.graphics.draw, {"Press Escape for No, or Enter for Yes", 15, 45, nil, nil, nil, nil}})
+    GAME.backgroundImage:draw()
+    gprint(string.format(overwritePrompt, assetName),15, 15, colors.white, 10)
+    --gfx_q:push({love.graphics.draw, {string.format(overwritePrompt, assetName), 15, 15, nil, nil, nil, nil}})
+    --gfx_q:push({love.graphics.draw, {"Press Escape for No, or Enter for Yes", 15, 45, nil, nil, nil, nil}})
     coroutine.yield()
     variable_step(
       function()
