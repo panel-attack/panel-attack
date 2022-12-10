@@ -1,6 +1,8 @@
 require("util")
 require("table_util")
 
+local lfs = love.filesystem
+
 local DragAndDrop = {
   existingAssets = {},
   imported = {},
@@ -34,7 +36,7 @@ function DragAndDrop.loadMod(self, directory, assetType)
   mod.fullDirectory = self.modDir .. "/" .. directory
   mod.targetDirectory = assetType .. "/" .. directory
   mod.assetType = assetType
-  local config_file = love.filesystem.newFile(mod.fullDirectory .. "/config.json", "r")
+  local config_file = lfs.newFile(mod.fullDirectory .. "/config.json", "r")
   if config_file then
     mod.config = {}
     local configJson = config_file:read(config_file:getSize())
@@ -42,17 +44,24 @@ function DragAndDrop.loadMod(self, directory, assetType)
       mod.config[k] = v
     end
 
-    mod.files = love.filesystem.getDirectoryItems(mod.fullDirectory)
+    mod.files = lfs.getDirectoryItems(mod.fullDirectory)
   end
 
   return mod
 end
 
 function DragAndDrop.modIsValid(mod)
-  if mod.assetType ~= "puzzles" then
+  if mod.assetType == "puzzles" then
+    local puzzleFile = lfs.newFile(mod.fullDirectory, "r")
+    if puzzleFile then
+      local puzzleContent = puzzleFile:read(puzzleFile:getSize())
+      return json.isValid(puzzleContent)
+    else
+      return false
+    end
+  else
     return mod.config ~= nil
   end
-  return true
 end
 
 function DragAndDrop.promptOverwrite(self, assetName)
@@ -85,12 +94,10 @@ function DragAndDrop.acceptFile(self, path)
         end
       end
 
-      for _, mod in pairs(self.imported) do
-        -- load the mod into the game
-      end
+      self:reloadModsBasedOnImport()
 
       -- report about unknown files and invalid mods
-      love.filesystem.unmount(DragAndDrop.modDir)
+      lfs.unmount(DragAndDrop.modDir)
     end
   end
 end
@@ -98,18 +105,18 @@ end
 -- returns the name under which the mod directory was mounted
 -- returns nil if no mods were found
 function DragAndDrop.mountModDirectory(path)
-  love.filesystem.mount(path, "droppedDir")
+  lfs.mount(path, "droppedDir")
   local modDirectory = DragAndDrop.getModDirectory("droppedDir")
   if modDirectory then
     return modDirectory
   else
-    love.filesystem.unmount(path)
+    lfs.unmount(path)
   end
 end
 
 function DragAndDrop.getModDirectory(path)
   local modDirectory = nil
-  if love.filesystem.getInfo(path, "directory") then
+  if lfs.getInfo(path, "directory") then
     local droppedDirs = DragAndDrop.getSubDirs(path)
     if #table.getIntersection(DragAndDrop.validDirNames, droppedDirs) > 0 then
       modDirectory = path
@@ -127,9 +134,9 @@ function DragAndDrop.getModDirectory(path)
 end
 
 function DragAndDrop.getSubDirs(path)
-  local files = love.filesystem.getDirectoryItems(path)
+  local files = lfs.getDirectoryItems(path)
   files = table.filter(files, function(file) 
-    return love.filesystem.getInfo(path .. "/" .. file, "directory")
+    return lfs.getInfo(path .. "/" .. file, "directory")
   end)
   return files
 end
@@ -153,4 +160,40 @@ function DragAndDrop.modExists(mod)
     return table.contains(DragAndDrop.getSubDirs("themes"), mod.directoryName)
   end
   return false
+end
+
+function DragAndDrop.reloadModsBasedOnImport(self)
+  if #self.imported > 0 then
+    local mods = self.imported
+    if table.trueForAny(mods, function(mod) return mod.assetType == "characters" end) then
+      GAME:drawLoadingString(loc("ld_characters"))
+      coroutine.yield()
+      characters_init()
+    end
+  
+    if table.trueForAny(mods, function(mod) return mod.assetType == "panels" end) then
+      GAME:drawLoadingString(loc("ld_panels"))
+      coroutine.yield()
+      panels_init()
+    end
+  
+    if table.trueForAny(mods, function(mod) return mod.assetType == "stages" end) then
+      GAME:drawLoadingString(loc("ld_stages"))
+      coroutine.yield()
+      stages_init()
+    end
+  
+    if table.trueForAny(mods, function(mod) return mod.assetType == "puzzles" end) then
+      -- no loc string for loading puzzles and it's likely so fast that it's not worth it anyway
+      read_puzzles()
+    end
+  
+    -- themes get read inside of options.lua on the fly from disk based on directory name
+    if table.filter(mods, function(mod) return mod.assetType == "themes" and mod.directoryName == config.theme end)  then
+      -- that means a reinit is only necessary if the theme currently in use got updated
+      GAME:drawLoadingString(loc("ld_theme"))
+      coroutine.yield()
+      theme_init()
+    end
+  end
 end
