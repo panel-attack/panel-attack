@@ -81,48 +81,62 @@ local function refresh_sent_garbage_lines(analytic)
   analytic.sent_garbage_lines = sent_garbage_lines_count
 end
 
+-- this is a function that exists to address issue https://github.com/panel-attack/panel-attack/issues/609
+-- analytics - per standard - increment the values on number indices such as used_combos[4] = used_combos[4] + 1
+-- for unknown reasons, at some point in time, some combos started to get saved as string values - and they are loaded every time on analytics.init
+-- the json library we use does not support string and integer keys on the same table and only saves the entries with a string key to analytics.json
+-- due to that, combo data is lost and in this function any string indices are converted to int
+-- honestly no idea how they ever became strings, I assume someone fixed that already in the past but the lingering data continued to screw stuff over
+local function correctComboIndices(analytics_data)
+  local correctedCombos = {}
+  local maxIndex = 0
+  for key, value in pairs(analytics_data["overall"]["used_combos"]) do
+    local numberKey = tonumber(key)
+    if type(numberKey) == "number" then
+      if correctedCombos[numberKey] then
+        correctedCombos[numberKey] = correctedCombos[numberKey] + value
+      else
+        correctedCombos[numberKey] = value
+      end
+
+      maxIndex = math.max(maxIndex, numberKey)
+    else
+      error("Invalid combo key in analytics.json: " .. key)
+    end
+  end
+
+  -- fill up so that the table becomes indexable
+  for i = 1, maxIndex do
+    if not correctedCombos[i] then
+      correctedCombos[i] = 0
+    end
+  end
+
+  analytics_data["overall"]["used_combos"] = correctedCombos
+
+  return analytics_data
+end
+
 function analytics.init()
   pcall(
     function()
-      local read_data = {}
       local analytics_file, err = love.filesystem.newFile("analytics.json", "r")
       if analytics_file then
         local teh_json = analytics_file:read(analytics_file:getSize())
-        for k, v in pairs(json.decode(teh_json)) do
-          read_data[k] = v
+        analytics_file:close()
+        analytics_data = json.decode(teh_json)
+
+
+        analytic_clear(analytics_data.last_game)
+        analytics_data = correctComboIndices(analytics_data)
+
+        -- do stuff regarding version compatibility here, before we patch it
+        if analytics_data.version < 2 then
+          refresh_sent_garbage_lines(analytics_data.overall)
         end
-      end
 
-      if read_data.version and type(read_data.version) == "number" then
-        analytics_data.version = read_data.version
+        analytics_data.version = analytics_version
       end
-      local analytics_filters = {"last_game", "overall"}
-      local number_params = {"destroyed_panels", "sent_garbage_lines", "move_count", "swap_count"}
-      local table_params = {"reached_chains", "used_combos"}
-      for _, analytic in pairs(analytics_filters) do
-        if read_data[analytic] and type(read_data[analytic]) == "table" then
-          for n, param in pairs(number_params) do
-            if read_data[analytic][param] and type(read_data[analytic][param]) == "number" then
-              analytics_data[analytic][param] = read_data[analytic][param]
-            end
-          end
-          for m, param in pairs(table_params) do
-            if read_data[analytic][param] and type(read_data[analytic][param]) == "table" then
-              analytics_data[analytic][param] = read_data[analytic][param]
-            end
-          end
-        end
-      end
-
-      analytic_clear(analytics_data.last_game)
-
-      -- do stuff regarding version compatibility here, before we patch it
-      if analytics_data.version < 2 then
-        refresh_sent_garbage_lines(analytics_data.overall)
-      end
-
-      analytics_data.version = analytics_version
-      analytics_file:close()
     end
   )
 end
@@ -144,13 +158,13 @@ local function output_pretty_analytics()
         text = text .. "Moved " .. analytic.move_count .. " times.\n"
         text = text .. "Swapped " .. analytic.swap_count .. " times.\n"
         text = text .. "Performed combos:\n"
-        for k, v in pairs(analytic.used_combos) do
-          if k then
-            text = text .. "\t" .. v .. " combo(s) of size " .. k .. "\n"
+        for j = 4, #analytic.used_combos do
+          if analytic.used_combos[j] > 0 then
+            text = text .. "\t" .. analytic.used_combos[j] .. " combo(s) of size " .. j .. "\n"
           end
         end
         text = text .. "Reached chains:\n"
-        for k, v in pairs(analytic.reached_chains) do
+        for k, v in ipairs(analytic.reached_chains) do
           if k then
             text = text .. "\t" .. v .. " chain(s) have ended at length " .. k .. "\n"
           end
