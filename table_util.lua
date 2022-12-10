@@ -21,18 +21,13 @@ end
 -- returns all elements in a new table that fulfill the filter condition
 function table.filter(tab, filter)
   local filteredTable = {}
-
-  if table.isList(tab) then
-    for i = 1, #tab do
-      if filter(tab[i]) then
-        table.insert(filteredTable, tab[i])
+  local preserveKeys = #tab == 0
+  for key, value in pairs(tab) do
+    if filter(value) then
+      if not preserveKeys then
+        key = #filteredTable+1
       end
-    end
-  else
-    for key, value in pairs(tab) do
-      if filter(value) then
-        filteredTable[key] = value
-      end
+      filteredTable[key] = value
     end
   end
 
@@ -61,15 +56,13 @@ end
 
 -- appends all entries of tab to the end of list
 function table.appendToList(list, tab)
-  assert(table.isList(tab), "insertListAt can only be used with continuously integer indexed tables")
   for i = 1, #tab do
-    table.insert(list, #list + 1, tab[i])
+    list[#list+1] = tab[i]
   end
 end
 
 -- inserts all entries of tab starting at the specified position of list
 function table.insertListAt(list, position, tab)
-  assert(table.isList(tab), "insertListAt can only be used with continuously integer indexed tables")
   for i = #tab, 1, -1 do
     table.insert(list, position, tab[i])
   end
@@ -96,7 +89,7 @@ end
 
 -- Randomly grabs a value from the table
 function table.getRandomElement(tab)
-  if table.isList(tab) then
+  if #tab > 0 then
     return tab[math.random(#tab)]
   else
     -- pairs already returns in an arbitrary order but I'm not sure if it's truly random
@@ -109,12 +102,6 @@ function table.getRandomElement(tab)
       end
     end
   end
-end
-
--- returns true if the table uses sequential integer indices without gaps
-function table.isList(tab)
-  -- the tab[1] check is just to get dictionaries out of the way really quickly
-  return tab[1] ~= nil and #tab == table.length(tab)
 end
 
 -- returns all keys of a table, sorted using the standard comparator to account for sequence based tables

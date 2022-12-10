@@ -139,16 +139,22 @@ function table_to_string(tab)
   return ret
 end
 
-function sign(x)
-  return (x<0 and -1) or 1
+function math.sign(v)
+	return (v >= 0 and 1) or -1
 end
 
---Note: this round() doesn't work with negative numbers
-function round(positive_decimal_number, number_of_decimal_places)
-  if not number_of_decimal_places then
-    number_of_decimal_places = 0
+function math.round(number, numberOfDecimalPlaces)
+  local multiplier = 10^(numberOfDecimalPlaces or 0)
+  if number >= 0 then
+    return math.floor(number * multiplier + 0.5) / multiplier
+  else 
+    return math.ceil(number * multiplier - 0.5) / multiplier 
   end
-  return math.floor(positive_decimal_number * 10 ^ number_of_decimal_places + 0.5) / 10 ^ number_of_decimal_places
+end
+
+-- DEPRECATED, use non global math.round
+function round(positive_decimal_number, number_of_decimal_places)
+  return math.round(positive_decimal_number, number_of_decimal_places)
 end
 
 -- Returns a time string for the number of frames
@@ -203,41 +209,41 @@ function trim(s)
   return (s:gsub("^%s*(.-)%s*$", "%1"))
 end
 
--- Gets all the contents of a directory
-function get_directory_contents(path)
-  local path = (path and path or "")
-  local results = love.filesystem.getDirectoryItems(path)
-  return results
-end
-
 function compress_input_string(inputs)
   if inputs:match("%(%d+%)") or not inputs:match("[%a%+%/][%a%+%/]") then
     -- Detected a digit enclosed in parentheses in the inputs, the inputs are already compressed.
     return inputs
   else
-    local compressed_inputs = ""
-    local buff = inputs:sub(1, 1)
-    local out_str, next_char = inputs:sub(1, 1)
-    for pos = 2, #inputs do
-      next_char = inputs:sub(pos, pos)
-      if next_char ~= out_str:sub(#out_str, #out_str) then
-        if buff:match("%d+") then
-          compressed_inputs = compressed_inputs .. "(" .. buff .. ")"
-        else
-          compressed_inputs = compressed_inputs .. buff:sub(1, 1) .. buff:len()
+    local compressedTable = {}
+    local inputTable = string.toCharTable(inputs)
+    local repeatCount = 1
+    local currentInput = inputTable[1]
+    local function addToTable()
+      -- write the input
+      if tonumber(currentInput) == nil then
+        compressedTable[#compressedTable+1] = currentInput .. repeatCount
+      else
+        local completeInput = "(" .. currentInput
+        for j = 2, repeatCount do
+          completeInput = completeInput .. currentInput
         end
-        buff = ""
+        compressedTable[#compressedTable+1] = completeInput .. ")"
       end
-      buff = buff .. inputs:sub(pos, pos)
-      out_str = out_str .. next_char
     end
-    if buff:match("%d+") then
-      compressed_inputs = compressed_inputs .. "(" .. buff .. ")"
-    else
-      compressed_inputs = compressed_inputs .. buff:sub(1, 1) .. buff:len()
+
+    for i = 2, #inputTable do
+      if inputTable[i] ~= currentInput then
+        addToTable()
+        currentInput = inputTable[i]
+        repeatCount = 1
+      else
+        repeatCount = repeatCount + 1
+      end
     end
-    compressed_inputs = compressed_inputs:gsub("%)%(", "")
-    return compressed_inputs
+    -- add the final entry without having to check for table length in every iteration
+    addToTable()
+
+    return table.concat(compressedTable)
   end
 end
 
@@ -246,15 +252,15 @@ function uncompress_input_string(inputs)
     -- Detected two consecutive letters or symbols in the inputs, the inputs are not compressed.
     return inputs
   else
-    local uncompressed_inputs = ""
+    local inputChunks = {}
     for w in inputs:gmatch("[%a%+%/]%d+%(?%d*%)?") do
-      uncompressed_inputs = uncompressed_inputs .. string.rep(w:sub(1, 1), w:match("%d+"))
-      input_value = w:match("%(%d+%)")
+      inputChunks[#inputChunks+1] = string.rep(w:sub(1, 1), w:match("%d+"))
+      local input_value = w:match("%(%d+%)")
       if input_value then
-        uncompressed_inputs = uncompressed_inputs .. input_value:match("%d+")
+        inputChunks[#inputChunks+1] = input_value:match("%d+")
       end
     end
-    return uncompressed_inputs
+    return table.concat(inputChunks)
   end
 end
 
@@ -275,4 +281,81 @@ function dump(o, includeNewLines)
   else
     return tostring(o)
   end
+end
+
+function json.isValid(str)
+  local content = trim(str)
+  local length = string.len(content)
+  local firstChar = string.sub(content, 1, 1)
+  local lastChar = string.sub(content, length, length)
+  -- early quit condition for clearly non-matching files
+  if not table.contains({"{", "["}, firstChar) or not table.contains({"}", "]"}, lastChar) then
+    return false
+  end
+
+  -- for every { there needs to be a }
+  -- for every [ there needs to be a ]
+  -- for every : there needs to be either , or a new line (cause we use a fake/old json spec that is somewhat akin to YAML)
+  -- all of these 3 character typs need to respect sequence
+  -- {{[:,:,[]:,]}} 
+  -- track the expected closure characters based on openers from front to back:
+  -- }}],],,
+
+  -- any content inside "" is excluded from search
+  content = string.gsub(content, "\".-\"", "")
+
+  -- any comments are excluded from search
+  content = string.gsub(content, "/%*.-%*/", "")
+  content = string.gsub(content, "//.-\n", "")
+
+  -- any other content aside from key characters is getting purged for better overview
+  content = string.gsub(content, "[^%{%}%[%]:,\n]", "")
+
+  -- \n and , are interchangeable but there may be more \n for formatting purposes
+  -- replace all occurences of , with \n
+  content = string.gsub(content, ",", "\n")
+
+  local searchBackLog = {}
+  
+  for match in string.gmatch(content, ".") do
+    -- for each find, put the inverse character at the end of the table
+    -- search the table from end to start later (better performance compared to table.insert(table, value, 1)
+    if match == "{" then
+      searchBackLog[#searchBackLog+1] = "}"
+    elseif match == "[" then
+      searchBackLog[#searchBackLog+1] = "]"
+    elseif match == ":" then
+      searchBackLog[#searchBackLog+1] = "\n"
+    else
+      if searchBackLog[#searchBackLog] == match then
+        searchBackLog[#searchBackLog] = nil
+      elseif match == "\n" then
+        -- could be extra whitespace, skip
+      elseif searchBackLog[#searchBackLog] == "\n" then
+        -- the final attribute of a level does not need to be closed with a , or new line
+        searchBackLog[#searchBackLog] = nil
+        -- confirm that the next expected character matches
+        if searchBackLog[#searchBackLog] == match then
+          searchBackLog[#searchBackLog] = nil
+        else
+          -- not a json if it doesn't
+          return false
+        end
+      else
+        -- mismatch
+        return false
+      end
+    end
+  end
+
+  -- if there is still backlog remaining, it means that some stuff didn't get closed
+  return #searchBackLog == 0
+end
+
+function string.toCharTable(self)
+  local t = {}
+  for field in self:gmatch(".") do
+    t[#t+1] = field
+  end
+  return t
 end

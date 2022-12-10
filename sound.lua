@@ -16,7 +16,7 @@ end
 -- Play the sound if sounds aren't muted
 -- plays sfx
 function play_optional_sfx(sfx)
-  if not SFX_mute and sfx ~= nil then
+  if not GAME.muteSoundEffects and sfx ~= nil then
     sfx:stop()
     sfx:play()
   end

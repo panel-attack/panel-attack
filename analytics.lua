@@ -53,15 +53,15 @@ for i = 1, 72 do
   amount_of_garbages_lines_per_combo[i] = amount_of_garbages_lines_per_combo[i] or amount_of_garbages_lines_per_combo[i - 1]
 end
 
-local function compute_above_13(analytic)
+local function compute_above_chain_card_limit(analytic)
   --computing chain ? count
-  local chain_above_13 = 0
+  local chain_above_limit = 0
   for k, v in pairs(analytic.reached_chains) do
-    if k > 13 then
-      chain_above_13 = chain_above_13 + v
+    if k > themes[config.theme].chainCardLimit then
+      chain_above_limit = chain_above_limit + v
     end
   end
-  return chain_above_13
+  return chain_above_limit
 end
 
 local function refresh_sent_garbage_lines(analytic)
@@ -76,7 +76,7 @@ local function refresh_sent_garbage_lines(analytic)
       sent_garbage_lines_count = sent_garbage_lines_count + (i - 1) * analytic.reached_chains[i]
     end
   end
-  local chain_above_13 = compute_above_13(analytics.last_game)
+  local chain_above_13 = compute_above_chain_card_limit(analytics.last_game)
   sent_garbage_lines_count = sent_garbage_lines_count + 13 * chain_above_13
   analytic.sent_garbage_lines = sent_garbage_lines_count
 end
@@ -183,8 +183,8 @@ local function write_analytics_files()
   )
 end
 
-function AnalyticsInstance.compute_above_13(self)
-  return compute_above_13(self.data)
+function AnalyticsInstance.compute_above_chain_card_limit(self)
+  return compute_above_chain_card_limit(self.data)
 end
 
 function AnalyticsInstance.data_update_list(self)
@@ -213,8 +213,6 @@ function AnalyticsInstance.register_destroyed_panels(self, amount)
 end
 
 function AnalyticsInstance.register_chain(self, size)
-  local max_size = math.min(size, 13)
-
   local analytics_filters = self:data_update_list()
   for _, analytic in pairs(analytics_filters) do
     if not analytic.reached_chains[size] then
@@ -222,8 +220,7 @@ function AnalyticsInstance.register_chain(self, size)
     else
       analytic.reached_chains[size] = analytic.reached_chains[size] + 1
     end
-    size = math.min(size, 13)
-    analytic.sent_garbage_lines = analytic.sent_garbage_lines + (max_size - 1)
+    analytic.sent_garbage_lines = analytic.sent_garbage_lines + (size - 1)
   end
 end
 
