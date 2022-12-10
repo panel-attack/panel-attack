@@ -88,6 +88,7 @@ local function read_score_file()
       local file, err = love.filesystem.newFile("scores.json", "r")
       if file then
         local teh_json = file:read(file:getSize())
+        file:close()
         for k, v in pairs(json.decode(teh_json)) do
           read_data[k] = v
         end
@@ -107,7 +108,6 @@ local function read_score_file()
         if read_data.endless then scores.endless = read_data.endless end
       end
 
-      file:close()
     end
   )
 
