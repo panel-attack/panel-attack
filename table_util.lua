@@ -130,7 +130,7 @@ end
 -- in case of a dictionary table, both key and value need to be the same
 function table.getIntersection(tab1, tab2)
   local newTab = {}
-  if table.isList(tab1) and table.isList(tab2) then
+  if #tab1 > 0 and #tab2 > 0 then
     for i = 1, #tab1 do
       for j = 1, #tab2 do
         if tab1[i] == tab2[j] then
