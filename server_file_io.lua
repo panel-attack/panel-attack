@@ -21,16 +21,6 @@ function makeDirectoryRecursive(path)
   end
 end
 
-function fileExists(filename, type)
-  local path = lfs.currentdir()
-  for file in lfs:dir(path) do
-    if filename == file then
-      return type == nil or lfs.attributes(path .. "/" .. file).mode == type
-    end
-  end
-  return false
-end
-
 function write_players_file()
   local status, error = pcall(
     function()
@@ -114,33 +104,6 @@ function write_error_report(error_report_json)
   )
 end
 
-local leaderboardLastWritten = nil
-function backupLeaderboard()
-  local status, error = pcall(function()
-    local currentDate = os.date("*t")
-    if leaderboardLastWritten == nil or leaderboardLastWritten["day"] ~= currentDate["day"] then
-      local timeCutOff = os.time(leaderboardLastWritten)
-      local leaderboardTable = {}
-      leaderboardTable[1] = {"user_id", "user_name", "rating", "ranked_games_played", "ranked_games_won"}
-      for user_id, v in pairs(leaderboard.players) do
-        -- to save storage, only save data for people that logged in since the last write
-        -- may result in inaccurate tracking as login is only reset on login, not on disconnect
-        if v.last_login_time > timeCutOff then
-          leaderboardTable[#leaderboardTable + 1] = {user_id, v.user_name, v.rating, v.ranked_games_played, v.ranked_games_won}
-        end
-      end
-      if not fileExists("history", "directory") then
-        lfs.mkdir("history")
-      end
-      csvfile.write(string.format("./history/leaderboard-%04d-%02d-%02d.csv", currentDate.year, currentDate.month, currentDate.day), leaderboardTable)
-      leaderboardLastWritten = currentDate
-    end
-  end)
-  if not status then
-    logger.error("Failed to backup leaderboard file with error: " .. error)
-  end
-end
-
 function write_leaderboard_file()
   local status, error = pcall(
     function()
@@ -166,8 +129,6 @@ function write_leaderboard_file()
   )
   if not status then
     logger.error("Failed to write leaderboard file with error: " .. error)
-  else
-    backupLeaderboard()
   end
 end
 
