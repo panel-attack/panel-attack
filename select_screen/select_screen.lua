@@ -842,14 +842,10 @@ end
 function select_screen.start2pLocalMatch(self)
   GAME.match = Match("vs", GAME.battleRoom)
   P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
-  if self.players[1].colorCount then
-    P1:overrideColorCount(self.players[1].colorCount)
-  end
+  P1:overrideColorCount(level_to_ncolors_vs[self.players[1].level] + self.players[1].colorCountOffset)
   GAME.match.P1 = P1
   P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, character = self.players[self.op_player_number].character, player_number = 2}
-  if self.players[2].colorCount then
-    P2:overrideColorCount(self.players[2].colorCount)
-  end
+  P2:overrideColorCount(level_to_ncolors_vs[self.players[2].level] + self.players[2].colorCountOffset)
   GAME.match.P2 = P2
   P1:set_garbage_target(P2)
   P2:set_garbage_target(P1)
@@ -867,9 +863,7 @@ end
 function select_screen.start1pLocalMatch(self)
   GAME.match = Match("vs", GAME.battleRoom)
   P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
-  if self.players[1].colorCount then
-    P1:overrideColorCount(self.players[1].colorCount)
-  end
+  P1:overrideColorCount(level_to_ncolors_vs[self.players[1].level] + self.players[1].colorCountOffset)
   if GAME.battleRoom.trainingModeSettings then
     self:initializeAttackEngine()
   end
