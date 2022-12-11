@@ -312,7 +312,6 @@ op_sonds,unused...,Sounds theme,Thème des sons,Tema dos sons,サウンドセッ
 op_vol,,Master Volume,Volume Global,Vol. principal,マスターボリューム,Volumen principal,Lautstärke,Volume principale
 op_vol_music,,Music Volume,Volume Musique,Vol. da música,BGMボリューム,Volumen de música,Lautstärke der Musik,Volume della musica
 op_vol_sfx,,SFX Volume,Volume Effets,Vol. Efeitos Esp.,SFXボリューム,Volumen de sonido,Lautstärke der Soundeffekte,Volume SFX
-op_vsync,,V-Sync,V-Sync,V-Sync,垂直同期,Sincronización Vertical (V-Sync),V-Sync,V-Sync
 op_input_delay,,Key repeat delay (offline only),Délai de répétition des touches,Atraso na repetição das teclas (apenas offline),DAS 設定（オフラインのみ）,Retraso de repetición de las teclas (Solo fuera de línea),Verzögerung für die Tastenwiederholung bei gedrückt halten (nur offline),Ritardo della ripetizione dell'input (solo offline)
 op_portrait_darkness,Options: darkness of the portraits in game,Portrait Darkness,Portrait Obscurité,Claridade de Retratos,背景の暗さ,Retrato Oscuridad,Helligkeit des Charakterporträts während des Spiels,Oscurità del ritratto
 op_popfx,Options: Whether pop effects should show,Pop Effects,Effets Pop,Efeitos de Explosão,パネル消しエフェクト,efectos pop,Popeffekte,Effetti pop

@@ -65,7 +65,6 @@ config = {
     windowHeight                  = canvas_height,
     borderless                    = false,
     fullscreen                    = false,
-    vsync                         = 1,
     display                       = 1,
     windowX                       = nil,
     windowY                       = nil,
@@ -225,9 +224,6 @@ config = {
         end
         if type(read_data.fullscreen) == "boolean" then
           configTable.fullscreen = read_data.fullscreen
-        end
-        if type(read_data.vsync) == "boolean" then
-          configTable.vsync = read_data.vsync
         end
         if type(read_data.display) == "number" then
           configTable.display = read_data.display
