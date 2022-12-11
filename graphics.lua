@@ -774,7 +774,7 @@ function Stack.render(self)
   local function drawCommunityMessage()
     -- Draw the community message
     if not config.debug_mode then
-      gprint(join_community_msg or "", main_infos_screen_pos.x - 45, main_infos_screen_pos.y + 550)
+      gprintf(join_community_msg or "", 0, main_infos_screen_pos.y + 550, canvas_width, "center")
     end
   end
 

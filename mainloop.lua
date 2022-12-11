@@ -1214,7 +1214,7 @@ function main_net_vs_lobby()
       if showing_leaderboard then
         gprint(leaderboard_string, lobby_menu_x[showing_leaderboard] + 400, lobby_menu_y)
       end
-      gprint(join_community_msg, themes[config.theme].main_menu_screen_pos[1] + 30, canvas_height - 50)
+      gprintf(join_community_msg, 0, 668, canvas_width,"center")
       lobby_menu:draw()
     end
     updated = false
