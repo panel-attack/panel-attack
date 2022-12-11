@@ -96,6 +96,7 @@ config = {
         file:open("r")
         local read_data = {}
         local teh_json = file:read(file:getSize())
+        file:close()
         for k, v in pairs(json.decode(teh_json)) do
           read_data[k] = v
         end
@@ -243,8 +244,6 @@ config = {
         if type(read_data.windowY) == "number" then
           configTable.windowY = read_data.windowY
         end
-  
-        file:close()
       end
     )
   end
