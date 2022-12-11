@@ -30,6 +30,7 @@ require("timezones")
 require("gen_panels")
 require("panels")
 require("theme")
+local utf8 = require("utf8")
 require("click_menu")
 require("computerPlayers.computerPlayer")
 require("rich_presence.RichPresence")
@@ -198,37 +199,76 @@ end
 -- click_or_tap(_x, _y, {id = id, x = _x, y = _y, dx = dx, dy = dy, pressure = pressure})
 -- end
 
-function love.errhand(err)
-  if not love.window or not love.graphics or not love.event then return end
+function love.errorhandler(msg)
+
+  if not love.window or not love.graphics or not love.event then
+    return
+  end
 
   if not love.graphics.isCreated() or not love.window.isOpen() then
     local success, status = pcall(love.window.setMode, 800, 600)
-    if not success or not status then return end
+    if not success or not status then
+      return
+    end
   end
+
+  msg = tostring(msg)
+  local sanitizedMessageLines = {}
+  for char in msg:gmatch(utf8.charpattern) do
+    table.insert(sanitizedMessageLines, char)
+  end
+  local sanitizedMessage = table.concat(sanitizedMessageLines)
+
+  local trace = crashTrace or debug.traceback("", 4)
+  local traceLines = {}
+  for l in trace:gmatch("(.-)\n") do
+    if not l:match("boot.lua") and not l:match("stack traceback:") then
+      table.insert(traceLines, l)
+    end
+  end
+  local sanitizedTrace = table.concat(traceLines, "\n")
+  local detailedErrorLogString = Game.detailedErrorLogString(sanitizedMessage, sanitizedTrace)
+  if GAME_UPDATER_GAME_VERSION then
+    send_error_report(detailedErrorLogString)
+  end
+
+  local errorLines = {}
+  table.insert(errorLines, "Error\n")
+  table.insert(errorLines, detailedErrorLogString)
+  if #sanitizedMessage ~= #msg then
+    table.insert(errorLines, "Invalid UTF-8 string in error message.")
+  end
+  table.insert(errorLines, "\n")
+
+  local messageToDraw = table.concat(errorLines, "\n")
+  messageToDraw = messageToDraw:gsub("\t", "    ")
+  messageToDraw = messageToDraw:gsub("%[string \"(.-)\"%]", "%1")
+
+  print(messageToDraw)
 
   -- Reset state.
   if love.mouse then
     love.mouse.setVisible(true)
     love.mouse.setGrabbed(false)
     love.mouse.setRelativeMode(false)
+    if love.mouse.isCursorSupported() then
+      love.mouse.setCursor()
+    end
   end
   if love.joystick then
     -- Stop all joystick vibrations.
-    for i, v in ipairs(love.joystick.getJoysticks()) do v:setVibration() end
+    for i, v in ipairs(love.joystick.getJoysticks()) do
+      v:setVibration()
+    end
   end
-  if love.audio then love.audio.stop() end
+  if love.audio then
+    love.audio.stop()
+  end
+
   love.graphics.reset()
-
-  love.graphics.setBackgroundColor(0, 0, 0)
-  love.graphics.setColor(255, 255, 255, 255)
-
-  love.graphics.clear(love.graphics.getBackgroundColor())
+  love.graphics.setFont(get_font_delta(4))
+  love.graphics.setColor(1, 1, 1)
   love.graphics.origin()
-
-  local trace = crashTrace or debug.traceback("", 4)
-  trace = string.gsub(trace, "stack traceback:", "")
-  local detailedErrorLogString = Game.detailedErrorLogString(err, trace)
-  if GAME_UPDATER_GAME_VERSION then send_error_report(detailedErrorLogString) end
 
   local scale = 1
   if GAME then
@@ -237,17 +277,18 @@ function love.errhand(err)
   end
 
   local bugImage = nil
-  if themes and config.theme and themes[config.theme] and
-      themes[config.theme].images then
+  if themes and config.theme and themes[config.theme] and themes[config.theme].images then
     bugImage = themes[config.theme].images.IMG_bug
   end
   local function draw()
+    if not love.graphics.isActive() then
+      return
+    end
 
     love.graphics.clear(love.graphics.getBackgroundColor())
     local positionX = love.window.toPixels(70)
     local positionY = positionX
-    love.graphics.printf(detailedErrorLogString, positionX, positionY,
-                         love.graphics.getWidth() - positionX)
+    love.graphics.printf(messageToDraw, positionX, positionY, love.graphics.getWidth() - positionX)
     if bugImage then
       positionX = positionX + 700
       love.graphics.draw(bugImage, positionX, positionY, 0, 1, 1)
@@ -256,27 +297,52 @@ function love.errhand(err)
     love.graphics.present()
   end
 
-  while true do
+  local fullErrorText = messageToDraw
+  local function copyToClipboard()
+    if not love.system then
+      return
+    end
+    love.system.setClipboardText(fullErrorText)
+    messageToDraw = messageToDraw .. "\nCopied to clipboard!"
+  end
+
+  if love.system then
+    messageToDraw = messageToDraw .. "\n\nPress Ctrl+C or tap to copy this error"
+  end
+
+  return function()
     love.event.pump()
 
     for e, a, b, c in love.event.poll() do
       if e == "quit" then
-        return
+        return 1
       elseif e == "keypressed" and a == "escape" then
-        return
+        return 1
+      elseif e == "keypressed" and a == "c" and love.keyboard.isDown("lctrl", "rctrl") then
+        copyToClipboard()
       elseif e == "touchpressed" then
         local name = love.window.getTitle()
-        if #name == 0 or name == "Untitled" then name = "Game" end
+        if #name == 0 or name == "Untitled" then
+          name = "Game"
+        end
         local buttons = {"OK", "Cancel"}
-        local pressed = love.window.showMessageBox("Quit " .. name .. "?", "",
-                                                   buttons)
-        if pressed == 1 then return end
+        if love.system then
+          buttons[3] = "Copy to clipboard"
+        end
+        local pressed = love.window.showMessageBox("Quit " .. name .. "?", "", buttons)
+        if pressed == 1 then
+          return 1
+        elseif pressed == 3 then
+          copyToClipboard()
+        end
       end
     end
 
     draw()
 
-    if love.timer then love.timer.sleep(0.1) end
+    if love.timer then
+      love.timer.sleep(0.1)
+    end
   end
 
 end
