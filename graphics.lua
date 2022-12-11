@@ -906,7 +906,8 @@ function Stack.render(self)
         comboData[i] = 0
       end
     end
-    for i = #comboData, 0, -1 do
+    local maxCombo = maxComboReached(analytic.data)
+    for i = maxCombo, 0, -1 do
       if comboData[i] and comboData[i] == 0 then
         comboData[i] = nil
       else

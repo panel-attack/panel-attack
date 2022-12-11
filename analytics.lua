@@ -12,9 +12,9 @@ local function create_blank_data()
     move_count = 0,
     -- the amount of times the panels were swapped
     swap_count = 0,
-    -- 1 to X, mystery chains are recorded as whatever chain they were, 1 is obviously meaningless
+    -- sparse dictionary with a count of each chain reached, mystery chains are recorded as whatever chain they were, 1 is obviously meaningless
     reached_chains = {},
-    -- 1 to 40, 1 to 3 being meaningless
+    -- sparse dictionary with a count of each combo reached, 1 to 3 being meaningless
     used_combos = {}
   }
 end
@@ -81,16 +81,33 @@ local function refresh_sent_garbage_lines(analytic)
   analytic.sent_garbage_lines = sent_garbage_lines_count
 end
 
+--TODO: cleanup all functions in this file to be object oriented and not global
+function maxComboReached(data)
+  local maxCombo = 0
+  for index, _ in pairs(data.used_combos) do
+    maxCombo = math.max(index, maxCombo)
+  end
+  return maxCombo
+end
+
+--TODO: cleanup all functions in this file to be object oriented and not global
+function maxChainReached(data)
+  local maxChain = 0
+  for index, _ in pairs(data.reached_chains) do
+    maxChain = math.max(index, maxChain)
+  end
+  return maxChain
+end
+
 -- this is a function that exists to address issue https://github.com/panel-attack/panel-attack/issues/609
 -- analytics - per standard - increment the values on number indices such as used_combos[4] = used_combos[4] + 1
 -- for unknown reasons, at some point in time, some combos started to get saved as string values - and they are loaded every time on analytics.init
 -- the json library we use does not support string and integer keys on the same table and only saves the entries with a string key to analytics.json
 -- due to that, combo data is lost and in this function any string indices are converted to int
 -- honestly no idea how they ever became strings, I assume someone fixed that already in the past but the lingering data continued to screw stuff over
-local function correctComboIndices(analytics_data)
+local function correctComboIndices(dataToCorrect)
   local correctedCombos = {}
-  local maxIndex = 0
-  for key, value in pairs(analytics_data["overall"]["used_combos"]) do
+  for key, value in pairs(dataToCorrect["overall"]["used_combos"]) do
     local numberKey = tonumber(key)
     if type(numberKey) == "number" then
       if correctedCombos[numberKey] then
@@ -98,23 +115,12 @@ local function correctComboIndices(analytics_data)
       else
         correctedCombos[numberKey] = value
       end
-
-      maxIndex = math.max(maxIndex, numberKey)
-    else
-      error("Invalid combo key in analytics.json: " .. key)
     end
   end
 
-  -- fill up so that the table becomes indexable
-  for i = 1, maxIndex do
-    if not correctedCombos[i] then
-      correctedCombos[i] = 0
-    end
-  end
+  dataToCorrect["overall"]["used_combos"] = correctedCombos
 
-  analytics_data["overall"]["used_combos"] = correctedCombos
-
-  return analytics_data
+  return dataToCorrect
 end
 
 function analytics.init()
@@ -142,36 +148,37 @@ function analytics.init()
 end
 
 local function output_pretty_analytics()
+  if not config.enable_analytics then
+    return
+  end
+
+  local analytics_filters = {analytics_data.last_game, analytics_data.overall}
+  local titles = {"Last game\n-------------------------------------\n", "Overall\n-------------------------------------\n"}
+  local text = ""
+  for i, analytic in pairs(analytics_filters) do
+    text = text .. titles[i]
+    text = text .. "Destroyed " .. analytic.destroyed_panels .. " panels.\n"
+    text = text .. "Sent " .. analytic.sent_garbage_lines .. " lines of garbage.\n"
+    text = text .. "Moved " .. analytic.move_count .. " times.\n"
+    text = text .. "Swapped " .. analytic.swap_count .. " times.\n"
+    text = text .. "Performed combos:\n"
+    local maxCombo = maxComboReached(analytic)
+    for j = 4, maxCombo do
+      if analytic.used_combos[j] ~= nil then
+        text = text .. "\t" .. analytic.used_combos[j] .. " combo(s) of size " .. j .. "\n"
+      end
+    end
+    text = text .. "Reached chains:\n"
+    local maxChain = maxChainReached(analytic)
+    for j = 2, maxChain do
+      if analytic.reached_chains[j] ~= nil then
+        text = text .. "\t" .. analytic.reached_chains[j] .. " chain(s) have ended at length " .. j .. "\n"
+      end
+    end
+    text = text .. "\n\n"
+  end
   pcall(
     function()
-      if not config.enable_analytics then
-        return
-      end
-
-      local analytics_filters = {analytics_data.last_game, analytics_data.overall}
-      local titles = {"Last game\n-------------------------------------\n", "Overall\n-------------------------------------\n"}
-      local text = ""
-      for i, analytic in pairs(analytics_filters) do
-        text = text .. titles[i]
-        text = text .. "Destroyed " .. analytic.destroyed_panels .. " panels.\n"
-        text = text .. "Sent " .. analytic.sent_garbage_lines .. " lines of garbage.\n"
-        text = text .. "Moved " .. analytic.move_count .. " times.\n"
-        text = text .. "Swapped " .. analytic.swap_count .. " times.\n"
-        text = text .. "Performed combos:\n"
-        for j = 4, #analytic.used_combos do
-          if analytic.used_combos[j] > 0 then
-            text = text .. "\t" .. analytic.used_combos[j] .. " combo(s) of size " .. j .. "\n"
-          end
-        end
-        text = text .. "Reached chains:\n"
-        for k, v in ipairs(analytic.reached_chains) do
-          if k then
-            text = text .. "\t" .. v .. " chain(s) have ended at length " .. k .. "\n"
-          end
-        end
-        text = text .. "\n\n"
-      end
-
       local file = love.filesystem.newFile("analytics.txt")
       file:open("w")
       file:write(text)
@@ -191,10 +198,9 @@ local function write_analytics_files()
       file:open("w")
       file:write(json.encode(analytics_data))
       file:close()
-
-      output_pretty_analytics()
     end
   )
+  output_pretty_analytics()
 end
 
 function AnalyticsInstance.compute_above_chain_card_limit(self)
