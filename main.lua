@@ -199,90 +199,84 @@ end
 -- end
 
 function love.errhand(err)
-    if not love.window or not love.graphics or not love.event then return end
+  if not love.window or not love.graphics or not love.event then return end
 
-    if not love.graphics.isCreated() or not love.window.isOpen() then
-        local success, status = pcall(love.window.setMode, 800, 600)
-        if not success or not status then return end
-    end
+  if not love.graphics.isCreated() or not love.window.isOpen() then
+    local success, status = pcall(love.window.setMode, 800, 600)
+    if not success or not status then return end
+  end
 
-    -- Reset state.
-    if love.mouse then
-        love.mouse.setVisible(true)
-        love.mouse.setGrabbed(false)
-        love.mouse.setRelativeMode(false)
-    end
-    if love.joystick then
-        -- Stop all joystick vibrations.
-        for i, v in ipairs(love.joystick.getJoysticks()) do
-            v:setVibration()
-        end
-    end
-    if love.audio then love.audio.stop() end
-    love.graphics.reset()
+  -- Reset state.
+  if love.mouse then
+    love.mouse.setVisible(true)
+    love.mouse.setGrabbed(false)
+    love.mouse.setRelativeMode(false)
+  end
+  if love.joystick then
+    -- Stop all joystick vibrations.
+    for i, v in ipairs(love.joystick.getJoysticks()) do v:setVibration() end
+  end
+  if love.audio then love.audio.stop() end
+  love.graphics.reset()
 
-    love.graphics.setBackgroundColor(0, 0, 0)
-    love.graphics.setColor(255, 255, 255, 255)
+  love.graphics.setBackgroundColor(0, 0, 0)
+  love.graphics.setColor(255, 255, 255, 255)
+
+  love.graphics.clear(love.graphics.getBackgroundColor())
+  love.graphics.origin()
+
+  local trace = crashTrace or debug.traceback("", 4)
+  trace = string.gsub(trace, "stack traceback:", "")
+  local detailedErrorLogString = Game.detailedErrorLogString(err, trace)
+  if GAME_UPDATER_GAME_VERSION then send_error_report(detailedErrorLogString) end
+
+  local scale = 1
+  if GAME then
+    scale = GAME:newCanvasSnappedScale()
+    love.graphics.scale(scale, scale)
+  end
+
+  local bugImage = nil
+  if themes and config.theme and themes[config.theme] and
+      themes[config.theme].images then
+    bugImage = themes[config.theme].images.IMG_bug
+  end
+  local function draw()
 
     love.graphics.clear(love.graphics.getBackgroundColor())
-    love.graphics.origin()
-
-    local trace = crashTrace or debug.traceback("", 4)
-    trace = string.gsub(trace, "stack traceback:", "")
-    local detailedErrorLogString = Game.detailedErrorLogString(err, trace)
-    if GAME_UPDATER_GAME_VERSION then
-        send_error_report(detailedErrorLogString)
+    local positionX = love.window.toPixels(70)
+    local positionY = positionX
+    love.graphics.printf(detailedErrorLogString, positionX, positionY,
+                         love.graphics.getWidth() - positionX)
+    if bugImage then
+      positionX = positionX + 700
+      love.graphics.draw(bugImage, positionX, positionY, 0, 1, 1)
     end
 
-    local scale = 1
-    if GAME then
-        scale = GAME:newCanvasSnappedScale()
-        love.graphics.scale(scale, scale)
+    love.graphics.present()
+  end
+
+  while true do
+    love.event.pump()
+
+    for e, a, b, c in love.event.poll() do
+      if e == "quit" then
+        return
+      elseif e == "keypressed" and a == "escape" then
+        return
+      elseif e == "touchpressed" then
+        local name = love.window.getTitle()
+        if #name == 0 or name == "Untitled" then name = "Game" end
+        local buttons = {"OK", "Cancel"}
+        local pressed = love.window.showMessageBox("Quit " .. name .. "?", "",
+                                                   buttons)
+        if pressed == 1 then return end
+      end
     end
 
-    local bugImage = nil
-    if themes and config.theme and themes[config.theme] and
-        themes[config.theme].images then
-        bugImage = themes[config.theme].images.IMG_bug
-    end
-    local function draw()
+    draw()
 
-        love.graphics.clear(love.graphics.getBackgroundColor())
-        local positionX = love.window.toPixels(70)
-        local positionY = positionX
-        love.graphics.printf(detailedErrorLogString, positionX, positionY,
-                             love.graphics.getWidth() - positionX)
-        if bugImage then
-            positionX = positionX + 700
-            love.graphics.draw(bugImage, positionX, positionY, 0, 1, 1)
-        end
-
-        love.graphics.present()
-    end
-
-    while true do
-        love.event.pump()
-
-        for e, a, b, c in love.event.poll() do
-            if e == "quit" then
-                return
-            elseif e == "keypressed" and a == "escape" then
-                return
-            elseif e == "touchpressed" then
-                local name = love.window.getTitle()
-                if #name == 0 or name == "Untitled" then
-                    name = "Game"
-                end
-                local buttons = {"OK", "Cancel"}
-                local pressed = love.window.showMessageBox("Quit " .. name ..
-                                                               "?", "", buttons)
-                if pressed == 1 then return end
-            end
-        end
-
-        draw()
-
-        if love.timer then love.timer.sleep(0.1) end
-    end
+    if love.timer then love.timer.sleep(0.1) end
+  end
 
 end
