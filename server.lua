@@ -557,7 +557,7 @@ function Connection.send(self, stuff)
     end
   end
   if not foo[1] then
-    logger.info("Closing connection for " .. (self.name or "nil") .. ". During Connection.send, foo[1] was nil after " .. times_to_retry .. " retries were attempted")
+    logger.debug("Closing connection for " .. (self.name or "nil") .. ". During Connection.send, foo[1] was nil after " .. times_to_retry .. " retries were attempted")
     self:close()
   end
 end
