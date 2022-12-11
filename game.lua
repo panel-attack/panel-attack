@@ -42,21 +42,24 @@ function Game.clearMatch(self)
   P2 = nil
 end
 
-function Game.errorData(errorString, traceBack)
+function Game.detailedErrorLogString(errorString, traceBack)
   local system_info = "OS: " .. love.system.getOS()
-  local loveVersion = Game.loveVersionString()
-  
-  local errorData = { 
-      stack = traceBack,
-      name = config.name or "Unknown",
-      error = errorString,
-      engine_version = VERSION,
-      release_version = GAME_UPDATER_GAME_VERSION or "Unknown",
-      operating_system = system_info or "Unknown",
-      love_version = loveVersion or "Unknown"
-    }
+  local loveVersion = Game.loveVersionString() or "Unknown"
+  local newLine = "\n"
+  local username = config.name or "Unknown"
+  local buildVersion = GAME_UPDATER_GAME_VERSION or "Unknown"
+  local systemInfo = system_info or "Unknown"
 
-  return errorData
+  local detailedErrorLogString = 
+    "Stack Trace: " .. traceBack .. newLine ..
+    "Username: " .. username .. newLine ..
+    "Error Message: " .. errorString .. newLine ..
+    "Engine Version: " .. VERSION .. newLine ..
+    "Build Version: " .. buildVersion .. newLine ..
+    "Operating System: " .. systemInfo .. newLine ..
+    "Love Version: " .. loveVersion
+
+  return detailedErrorLogString
 end
 
 local loveVersionStringValue = nil
