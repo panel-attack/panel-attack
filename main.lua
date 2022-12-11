@@ -248,19 +248,19 @@ function love.errhand(err)
   if themes and config.theme and themes[config.theme] and themes[config.theme].images then
     bugImage = themes[config.theme].images.IMG_bug
   end
-	local function draw()
+  local function draw()
 
-		love.graphics.clear(love.graphics.getBackgroundColor())
-		local positionX = love.window.toPixels(70)
+    love.graphics.clear(love.graphics.getBackgroundColor())
+    local positionX = love.window.toPixels(70)
     local positionY = positionX
-		love.graphics.printf(detailedErrorLogString, positionX, positionY, love.graphics.getWidth() - positionX)
+    love.graphics.printf(detailedErrorLogString, positionX, positionY, love.graphics.getWidth() - positionX)
     if bugImage then
       positionX = positionX + 700
       love.graphics.draw(bugImage, positionX, positionY, 0, 1, 1)
     end
 
-		love.graphics.present()
-	end
+    love.graphics.present()
+  end
 
 	while true do
 		love.event.pump()
@@ -281,11 +281,11 @@ function love.errhand(err)
 			end
 		end
 
-		draw()
+    draw()
 
-		if love.timer then
-			love.timer.sleep(0.1)
-		end
-	end
+    if love.timer then
+      love.timer.sleep(0.1)
+    end
+  end
 
 end
