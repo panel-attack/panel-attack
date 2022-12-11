@@ -390,8 +390,44 @@ local function handle_pause(self)
   end
 end
 
-local function finalizeAndWriteReplay(extraPath, extraFilename)
+local function addReplayStatisticsToReplay(replay)
+  if config.enable_analytics then
+    if GAME.match.mode == "vs" and P2 then
+      replay[GAME.match.mode].match_type = match_type
+      local p1GameResult = P1:gameResult()
+      if p1GameResult == 1 then
+        replay[GAME.match.mode].winner = P1.which
+      elseif p1GameResult == -1 then
+        replay[GAME.match.mode].winner = P2.which
+      elseif p1GameResult == 0 then
+        replay[GAME.match.mode].winner = "draw"
+      end
+    end
+    replay[GAME.match.mode].stats = {}
+    replay[GAME.match.mode].stats["duration"] = GAME.match:gameEndedClockTime()
+    
+    if P1 then
+      replay[GAME.match.mode].stats[P1.which] = P1.analytic.data
+      replay[GAME.match.mode].stats[P1.which]["score"] = P1.score
+      if GAME.match.mode == "vs" and GAME.match.room_ratings then
+        replay[GAME.match.mode].stats[P1.which]["rating"] = GAME.match.room_ratings[P1.which]
+      end
+    end
 
+    if P2 then
+      replay[GAME.match.mode].stats[P2.which] = P2.analytic.data
+      replay[GAME.match.mode].stats[P2.which]["score"] = P2.score
+      if GAME.match.mode == "vs" and GAME.match.room_ratings then
+        replay[GAME.match.mode].stats[P2.which]["rating"] = GAME.match.room_ratings[P2.which]
+      end
+    end
+  end
+
+  return replay
+end
+
+local function finalizeAndWriteReplay(extraPath, extraFilename)
+  replay = addReplayStatisticsToReplay(replay)
   replay[GAME.match.mode].in_buf = table.concat(P1.confirmedInput)
 
   local now = os.date("*t", to_UTC(os.time()))
@@ -1563,7 +1599,7 @@ function main_local_vs_yourself()
       0, -- timemax
       nil, -- winnerSFX
       false, -- keepMusic
-      {select_screen, "1p_vs_yourself"} -- args
+      {select_screen, "1p_vs_yourself"} -- args:
     }}
   end
   
