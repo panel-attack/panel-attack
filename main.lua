@@ -227,9 +227,12 @@ function love.errorhandler(msg)
     end
   end
   local sanitizedTrace = table.concat(traceLines, "\n")
-  local detailedErrorLogString = Game.detailedErrorLogString(sanitizedMessage, sanitizedTrace)
+  
+  local errorData = Game.errorData(sanitizedMessage, sanitizedTrace)
+  local detailedErrorLogString = Game.detailedErrorLogString(errorData)
+  errorData.detailedErrorLogString = detailedErrorLogString
   if GAME_UPDATER_GAME_VERSION then
-    send_error_report(detailedErrorLogString)
+    send_error_report(errorData)
   end
 
   local errorLines = {}
