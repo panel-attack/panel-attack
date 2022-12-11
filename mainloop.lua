@@ -429,6 +429,7 @@ end
 local function finalizeAndWriteReplay(extraPath, extraFilename)
   replay = addReplayStatisticsToReplay(replay)
   replay[GAME.match.mode].in_buf = table.concat(P1.confirmedInput)
+  replay[GAME.match.mode].stage = current_stage
 
   local now = os.date("*t", to_UTC(os.time()))
   local sep = "/"
