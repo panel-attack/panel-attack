@@ -441,7 +441,7 @@ local function finalizeAndWriteReplay(extraPath, extraFilename)
   if extraFilename then
     filename = filename .. "-" .. extraFilename
   end
-  filename = filename .. ".txt"
+  filename = filename .. ".json"
   logger.debug("saving replay as " .. path .. sep .. filename)
   write_replay_file(path, filename)
 end
