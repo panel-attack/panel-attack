@@ -817,7 +817,7 @@ function select_screen.startNetPlayMatch(self, msg)
     P2.play_to_end = true
   end
 
-  GAME.input:setSingleConfigInput(1)
+  GAME.input:requestSingleInputConfigurationForPlayerCount(1)
 
   -- Proceed to the game screen and start the game
   P1:starting_state()
@@ -865,7 +865,7 @@ function select_screen.start1pLocalMatch(self)
   stage_loader_load(current_stage)
   stage_loader_wait()
 
-  GAME.input:setSingleConfigInput(1)
+  GAME.input:requestSingleInputConfigurationForPlayerCount(1)
 
   P1:starting_state()
   return main_dumb_transition, {main_local_vs_yourself, "", 0, 0}
@@ -887,7 +887,7 @@ function select_screen.start1pCpuMatch(self)
   stage_loader_wait()
   P2:moveForPlayerNumber(2)
 
-  GAME.input:setSingleConfigInput(1)
+  GAME.input:requestSingleInputConfigurationForPlayerCount(1)
 
   P1:starting_state()
   P2:starting_state()
@@ -937,7 +937,7 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
   -- meaning we do NOT want to reset to player 1 reacting to inputs from all configurations
   -- for all others, the player can hold their decision until game start
   if not self:isMultiplayer() or self:isNetPlay() then
-    GAME.input:setMultiConfigInput()
+    GAME.input:allowAllInputConfigurations()
   end
 
   self.roomInitializationMessage = roomInitializationMessage

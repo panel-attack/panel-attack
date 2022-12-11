@@ -415,7 +415,7 @@ function Input.getInputConfigurationsForPlayerNumber(self, playerNumber)
   return results
 end
 
-function Input.setSingleConfigInput(self, playerCount)
+function Input.requestSingleInputConfigurationForPlayerCount(self, playerCount)
   if playerCount == nil then
     playerCount = 1
   end
@@ -423,7 +423,7 @@ function Input.setSingleConfigInput(self, playerCount)
   self:requestPlayerInputConfigurationAssignments(playerCount)
 end
 
-function Input.setMultiConfigInput(self)
+function Input.allowAllInputConfigurations(self)
   self.playerInputConfigurationsMap[1] = self.inputConfigurations
 end
 
