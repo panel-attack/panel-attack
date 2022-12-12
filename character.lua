@@ -184,24 +184,6 @@ function Character.json_init(self)
   return false
 end
 
-function Character.stop_sounds(self)
-  -- SFX
-  for _, sound_table in ipairs(self.sounds) do
-    if type(sound_table) == "table" then
-      for _, sound in pairs(sound_table) do
-        sound:stop()
-      end
-    end
-  end
-
-  -- music
-  for _, music in ipairs(self.musics) do
-    if self.musics[music] then
-      self.musics[music]:stop()
-    end
-  end
-end
-
 function Character.play_selection_sfx(self)
   if not GAME.muteSoundEffects and #self.sounds.selections ~= 0 then
     self.sounds.selections[math.random(#self.sounds.selections)]:play()
