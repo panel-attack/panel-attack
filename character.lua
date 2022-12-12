@@ -32,7 +32,7 @@ Character =
     self.popfx_burstScale = 1
     self.popfx_fadeScale = 1
     self.music_style = "normal"
-    self.files = love.filesystem.getDirectoryItems(self.path)
+    self.files = table.map(love.filesystem.getDirectoryItems(self.path), function(file) return FileUtil.getFileNameWithoutExtension(file) end)
   end
 )
 
@@ -309,6 +309,9 @@ local defaulted_musics = {} -- those musics will be defaulted if missing
 
 function Character.sound_init(self, full, yields)
   -- SFX
+  if full then
+    coroutine.yield()
+  end
   local character_sfx = full and other_sfx or basic_sfx
   for _, sfx in ipairs(character_sfx) do
     self.sounds[sfx] = self:loadSfx(sfx, yields)
@@ -369,24 +372,27 @@ The level of sound loading is determined via "mayHaveSubSfx"
 local mayHaveSubSfx = { chain = true, combo = true, shock = true}
 
 function Character.loadSfx(self, name, yields)
+  
+
   local sfx = {}
 
   local stringLen = string.len(name)
   local files = table.filter(self.files, function(file) return string.find(file, name, nil, true) end)
-  files = table.map(files, function(filename) return FileUtil.getFileNameWithoutExtension(filename) end)
 
   local maxIndex = 0
   -- load sounds
   for i = 1, #files do
-    stringLen = string.len(files[i])
-    local index = string.find(files[i], "%d+", stringLen + 1)
+    stringLen = string.len(name)
+    local index = tonumber(string.match(files[i], "%d+", stringLen + 1))
     if index == nil then
       -- indicates that there is no index, implicit 1
       index = 1
     end
 
     if mayHaveSubSfx[name] then
-      sfx[index] = self:loadSubSfx(name, index)
+      if sfx[index] == nil then
+        sfx[index] = self:loadSubSfx(name, index)
+      end
     else
       local sound = load_sound_from_supported_extensions(self.path .. "/" .. files[i], false)
       if sound ~= nil then
@@ -422,13 +428,15 @@ function Character.loadSubSfx(self, name, index)
   local stringLen = string.len(name..index)
   local subfiles = table.filter(self.files,
                     function(file)
-                      return string.find(file, name .. index) and
+                      return file == name..index or
+                            (string.find(file, name .. index) and
                             -- exclude chain22 while searching for chain2
-                            tonumber(string.sub(file, stringLen + 1, stringLen + 1)) == nil
+                            tonumber(string.sub(file, stringLen + 1, stringLen + 1)) == nil and
+                            -- exclude combo_echo / chain_echo, only take comboN_M/chainN_M
+                            tonumber(string.sub(file, stringLen + 2, stringLen + 2)) ~= nil)
                     end)
 
   if #subfiles > 0 then
-    subfiles = table.map(subfiles, function(filename) return FileUtil.getFileNameWithoutExtension(filename) end)
     for j = 1, #subfiles do
       local subSound = load_sound_from_supported_extensions(self.path .. "/" .. subfiles[j], false)
       if subSound ~= nil then
@@ -444,7 +452,6 @@ function Character.loadSubSfx(self, name, index)
   end
 end
 
-local fallsBackToChain = { chain_echo = true, chain2_echo = true}
 function Character.fillInMissingSounds(self, sfxTable,  name, maxIndex)
   local fillUpSound = nil
   if maxIndex > 0 then
@@ -535,16 +542,21 @@ function Character.playChainSfx(self, length)
     end
   else --elseif self.chain_style == chainStyle.per_chain then
     length = math.max(length, 2)
-    if length > 13 then
-      length = 0
+    if self.sounds.chain[length] then
+      self.sounds.chain[length][math.random(#self.sounds.chain[length])]:play()
+    else
+      self.sounds.chain[0][math.random(#self.sounds.chain[0])]:play()
     end
-    self.sounds.chain[length][math.random(#self.sounds.chain[length])]:play()
   end
 end
 
 function Character.playShockSfx(self, size)
   if #self.sounds.shock > 0 then
-    self.sounds.shock[size][math.random(#self.sounds.shock[size])]:play()
+    if self.sounds.shock[size] then
+      self.sounds.shock[size][math.random(#self.sounds.shock[size])]:play()
+    else
+      self.sounds.shock[0][math.random(#self.sounds.shock[0])]:play()
+    end
   else
     if size >= 6 and #self.sounds.combo_echo > 0 then
       self.sounds.combo_echo[math.random(#self.sounds.combo_echo)]:play()
