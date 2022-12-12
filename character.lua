@@ -550,7 +550,7 @@ function Character.playShockSfx(self, size)
 end
 
 -- Stops old combo / chaing sounds and plays the appropriate chain or combo sound
-function Character.play_combo_chain_sfx(self, chain_combo)
+function Character.playAttackSfx(self, attack)
   local function stopPreviousSounds()
     local function stopIfPlaying(audioSource)
       if audioSource:isPlaying() then
@@ -590,12 +590,12 @@ function Character.play_combo_chain_sfx(self, chain_combo)
     stopPreviousSounds()
 
     -- play combos or chains
-    if chain_combo.type == e_chain_or_combo.combo then
-      self:playComboSfx(chain_combo.size)
-    elseif chain_combo.type == e_chain_or_combo.shock then
-      self:playShockSfx(chain_combo.size)
+    if attack.type == e_chain_or_combo.combo then
+      self:playComboSfx(attack.size)
+    elseif attack.type == e_chain_or_combo.shock then
+      self:playShockSfx(attack.size)
     else --elseif chain_combo.type == e_chain_or_combo.chain then
-      self:playChainSfx(chain_combo.size)
+      self:playChainSfx(attack.size)
     end
   end
 end

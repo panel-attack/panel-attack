@@ -1956,7 +1956,7 @@ function Stack.simulate(self)
       if self.combo_chain_play then
         themes[config.theme].sounds.land:stop()
         themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        characters[self.character]:play_combo_chain_sfx(self.combo_chain_play)
+        characters[self.character]:playAttackSfx(self.combo_chain_play)
         self.combo_chain_play = nil
       end
       if SFX_garbage_match_play then
