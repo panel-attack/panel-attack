@@ -49,7 +49,7 @@ Other image assets:
 
 ~~ [.mp3, .ogg, .wav, .it, .flac] optional sounds are in parenthesis ~~
 - Combo: You may select one of two systems, to be specified in the config.json of your character.
-	classic system: 
+	classic system [DEFAULT]: 
 		"combo" (,"combo2", "combo3"...): combo [selected at random if more than one]
 	per_combo system: 
 		Provide a sfx for each combo size. More than one variation may be provided for each size by appending _# to the filename where # is a number. If that is the case, selection between the available files is random.
@@ -76,7 +76,7 @@ Other image assets:
 					..., 
 					x13 "chain13"(, "chain13_2", ...), 
 					x13+ "chain0"(, ...)
-	classic system [DEPRECATED]: 
+	classic system [DEPRECATED][DEFAULT]: 
 		x2/3 plays "chain",  
 		x4 plays "chain2", 
 		x5 plays "chain_echo", 

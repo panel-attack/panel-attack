@@ -372,8 +372,6 @@ The level of sound loading is determined via "mayHaveSubSfx"
 local mayHaveSubSfx = { chain = true, combo = true, shock = true}
 
 function Character.loadSfx(self, name, yields)
-  
-
   local sfx = {}
 
   local stringLen = string.len(name)
