@@ -553,39 +553,6 @@ function Character.graphics_uninit(self)
   self.telegraph_garbage_images = {}
 end
 
-function Character.init_sfx_variants(self, sfx_array, sfx_name, sfx_suffix_at_higher_count)
-  sfx_suffix_at_higher_count = sfx_suffix_at_higher_count or ""
-
-  -- be careful is we are to support chain2X sfx since chain21 will be found and used for chain2 (unwanted behavior), might be a future bug!
-  local sound_name = sfx_name .. sfx_suffix_at_higher_count .. 1
-  if self.sounds.others[sfx_name] then
-    -- "combo" in others will be stored in 'combos' and 'others' will be freed from it
-    sfx_array[1] = self.sounds.others[sfx_name]
-    self.sounds.others[sfx_name] = nil
-  elseif sfx_suffix_at_higher_count == "" then
-    local sound = load_sound_from_supported_extensions(self.path .. "/" .. sound_name, false)
-    if sound then
-      sfx_array[1] = sound
-    end
-  else
-    local sound = load_sound_from_supported_extensions(self.path .. "/" .. sfx_name, false)
-    if sound then
-      sfx_array[1] = sound
-    end
-  end
-
-  -- search for all variants
-  local sfx_count = 1
-  while sfx_array[sfx_count] do
-    sfx_count = sfx_count + 1
-    sound_name = sfx_name .. sfx_suffix_at_higher_count .. sfx_count
-    local sound = load_sound_from_supported_extensions(self.path .. "/" .. sound_name, false)
-    if sound then
-      sfx_array[sfx_count] = sound
-    end
-  end
-end
-
 function Character.apply_config_volume(self)
   set_volume(self.sounds, config.SFX_volume / 100)
   set_volume(self.musics, config.music_volume / 100)
