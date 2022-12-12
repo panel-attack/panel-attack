@@ -385,7 +385,7 @@ function Character.graphics_init(self, full, yields)
     if not self.telegraph_garbage_images["metal"] and default_character.telegraph_garbage_images["metal"] then
       self.telegraph_garbage_images["metal"] = default_character.telegraph_garbage_images["metal"]
       logger.debug("DEFAULT used for telegraph/6-wide-metal")
-    elseif not self.telegraph_garbage_images[1][garbage_w] then
+    elseif not self.telegraph_garbage_images["metal"] then
       logger.debug("FAILED TO LOAD: telegraph/6-wide-metal")
     end
     logger.debug("telegraph/attack")
@@ -393,7 +393,7 @@ function Character.graphics_init(self, full, yields)
     if not self.telegraph_garbage_images["attack"] and default_character.telegraph_garbage_images["attack"] then
       self.telegraph_garbage_images["attack"] = default_character.telegraph_garbage_images["attack"]
       logger.debug("DEFAULT used for telegraph/attack")
-    elseif not self.telegraph_garbage_images[1][garbage_w] then
+    elseif not self.telegraph_garbage_images["attack"] then
       logger.debug("FAILED TO LOAD: telegraph/attack")
     end
   end
