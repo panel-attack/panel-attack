@@ -467,7 +467,7 @@ end
 function Character.sound_uninit(self)
   -- SFX
   for _, sound in ipairs(other_sfx) do
-    self.sounds.others[sound] = nil
+    self.sounds[sound] = nil
   end
 
   -- music
@@ -602,8 +602,8 @@ end
 -- sound playing / sound control
 
 function Character.play_selection_sfx(self)
-  if not GAME.muteSoundEffects and #self.sounds.selections ~= 0 then
-    self.sounds.selections[math.random(#self.sounds.selections)]:play()
+  if not GAME.muteSoundEffects and #self.sounds.selection ~= 0 then
+    self.sounds.selection[math.random(#self.sounds.selection)]:play()
     return true
   end
   return false
