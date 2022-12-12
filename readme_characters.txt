@@ -48,11 +48,41 @@ Other image assets:
 - "burst" or "fade": The image used for popfx. The image should be 9 equal sized frames in a row, first frame is the telegraph, frames 2 to 9 are the burst or fade animation
 
 ~~ [.mp3, .ogg, .wav, .it, .flac] optional sounds are in parenthesis ~~
-- "combo" (,"combo2", "combo3"...): combo [selected at random if more than one]
-- ("combo_echo", ("combo_echo2", "combo_echo3"...)): six metal blocks combo [selected at random if more than one]
-- Chain: depending on the current chain length and the defined mode, the appopriate sound file will be played:
-    classic system: x2/3 plays "chain",  x4 plays "chain2", x5 plays "chain_echo", x6+ plays "chain2_echo"
-    per_chain system: x2 "chain2"(, "chain2_2", "chain2_3"...), x3 "chain3"(, "chain3_2", "chain3_3"...), ..., x13 "chain13"(, "chain13_2", ...), x13+ "chain0"(, ...) [selected at random if more than one]
+- Combo: You may select one of two systems, to be specified in the config.json of your character.
+	classic system: 
+		"combo" (,"combo2", "combo3"...): combo [selected at random if more than one]
+	per_combo system: 
+		Provide a sfx for each combo size. More than one variation may be provided for each size by appending _# to the filename where # is a number. If that is the case, selection between the available files is random.
+		If no file is provided for a certain combo size the first available lower combo sfx will be played instead. This means the minimum of per_combo style sfx consists of only a single "combo4" sfx.
+		Example: 	+4 "combo4"(, "combo4_2", "combo4_3"...), 
+					+5 "combo5"(, "combo5_2, "combo5_3"...), 
+					...,
+					+20 "combo20"(, "combo20_2", ...)
+					+27 "combo27"(, "combo27_2", ...)
+		While the combo size you may provide files for is not limited, combos above +27 will not send any more garbage, having no added value as a sound cue.
+	If no combo sfx are provided at all, the default chain sound will be used instead.
+- Shock: For shock matches and combos, provide a sfx for each match/combo size. More than one variation may be provided for each size by appending _# to the filename where # is a number. If that is the case, selection between the available files is random.
+	Example:	+3 "shock3"(, "shock3_2, "shock3_3" ...),
+				+4 "shock4"(, "shock4_2, "shock4_3" ...),
+				...,
+				+7 "shock7"(, "shock7_2, ...)
+	[DEPRECATED] "combo_echo", ("combo_echo2", "combo_echo3"...) will get used upon a +6 or +7 shock combo. These files have no effect if shock files are present.
+- Chain: You may select one of two systems, to be specified in the config.json of your character. Per_chain is strongly suggested.
+    per_chain system: 
+		Provide a sfx for each chain length. More than one variation may be provided for each length by appending _# to the filename where # is a number. If that is the case, selection between the available files is random.
+		If no file is provided for a certain chain length the first available lower chain sfx will be played instead. This means the minimum of per_chain style sfx consists of only a single "chain" or "chain2" sfx.
+		Example: 	x2 "chain2"(, "chain2_2", "chain2_3"...), 
+					x3 "chain3"(, "chain3_2", "chain3_3"...), 
+					..., 
+					x13 "chain13"(, "chain13_2", ...), 
+					x13+ "chain0"(, ...)
+	classic system [DEPRECATED]: 
+		x2/3 plays "chain",  
+		x4 plays "chain2", 
+		x5 plays "chain_echo", 
+		x6+ plays "chain2_echo"
+	Due to backwards compatibility reason the classic system remains as the default.
+	If you wish to use classic style chain sounds, you can use the per_chain system and add "chain" as "chain2", "chain2" as "chain4", "chain_echo" as "chain5" and "chain2_echo" as "chain6".
 - ("garbage_match" (,"garbage_match2", "garbage_match3"...)): played when clearing garbage [selected at random if more than one]
 - ("garbage_land" (,"garbage_land2", "garbage_land3"...)): played when garbage lands on your side [selected at random if more than one]
 - ("selection", ("selection2", "selection3"...)): upon selection [selected at random if more than one]
@@ -61,5 +91,5 @@ Other image assets:
 - "normal_music": music that will be played while playing with this character if the option use_music_from's value is characters and your character gets picked
 - ("danger_music"): music that will be used when a player is in danger (top of the screen) if the option use_music_from's value is characters and your character gets picked
 
-Note: providing just a "chain" or just a "combo" SFX is OK. It would get used for all combos and chains.
+Note: providing just a "chain" SFX is OK. It would get used for all combos and chains.
 Note: if your music has an intro, cut it from the main music file, and name it "normal_music_start" or "danger_music_start"

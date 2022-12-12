@@ -2696,9 +2696,9 @@ function Stack.check_matches(self)
       -- @CardsOfTheHeart says there are 4 chain sfx: --x2/x3, --x4, --x5 is x2/x3 with an echo effect, --x6+ is x4 with an echo effect
       if self:shouldChangeSoundEffects() then
         if is_chain then
-          self.combo_chain_play = {e_chain_or_combo.chain, self.chain_counter}
+          self.combo_chain_play = {type = e_chain_or_combo.chain, size = self.chain_counter}
         elseif combo_size > 3 then
-          self.combo_chain_play = {e_chain_or_combo.combo, "combos"}
+          self.combo_chain_play = {type = e_chain_or_combo.combo, size = combo_size}
         end
       end
       self.sfx_land = false
@@ -2710,10 +2710,8 @@ function Stack.check_matches(self)
     self.manual_raise = false
     --self.score_render=1;
     --Nope.
-    if metal_count > 5 then
-      self.combo_chain_play = {e_chain_or_combo.combo, "combo_echos"}
-    elseif metal_count > 2 then
-      self.combo_chain_play = {e_chain_or_combo.combo, "combos"}
+    if metal_count > 2 then
+      self.combo_chain_play = { type = e_chain_or_combo.shock, size = metal_count}
     end
   end
 end
