@@ -197,6 +197,8 @@ function Character.playComboSfx(self, size)
   if self.sounds.combo[0] == nil then
     -- no combos loaded, try to fallback to the fallback chain sound
     if self.sounds.chain[0] == nil then
+      -- technically we should always have a default chain sound from the default_character
+      -- so if this error ever occurs, something is seriously cursed
       error("Found neither chain nor combo sfx upon trying to play combo sfx")
     else
       self.sounds.chain[0][math.random(#self.sounds.chain[0])]:play()
@@ -710,28 +712,6 @@ function Character.fillInMissingSounds(self, sfxTable,  name, maxIndex)
       end
     end
   end
-end
-
--- reminder func, these fallbacks should respectively be applied in their PlayXyzSfx function rather than juggling around pointers
-function Character.applyFallback(self)
-
-    -- fallback case: chain/combo can be used for the other one if missing and for the longer names versions ("combo" used for "combo_echo" for instance)
-    if not self.sounds.others[sfx] then
-      if sfx == "chain" then
-        self.sounds.others[sfx] = load_sound_from_supported_extensions(self.path .. "/combo", false)
-      elseif sfx == "combo" then
-        self.sounds.others[sfx] = self.sounds.others["chain"]
-      elseif sfx == "combo_echo" then
-        self.sounds.others[sfx] = self.sounds.others["combo"]
-      elseif string.find(sfx, "chain") then
-        self.sounds.others[sfx] = self.sounds.others["chain"]
-      elseif string.find(sfx, "combo") then
-        self.sounds.others[sfx] = self.sounds.others["combo"]
-      end
-    end
-    if not self.sounds.others[sfx] and defaulted_sfxs[sfx] and not self:is_bundle() then
-      self.sounds.others[sfx] = default_character.sounds.others[sfx] or zero_sound
-    end
 end
 
 function Character.sound_init(self, full, yields)
