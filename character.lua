@@ -144,6 +144,12 @@ function Character.unload(self)
   logger.trace("unloaded character " .. self.id)
 end
 
+function Character.loadDefaultCharacter()
+  default_character = Character("characters/__default", "__default")
+  default_character:preload()
+  default_character:load(true)
+end
+
 function Character.is_bundle(self)
   return #self.sub_characters > 1
 end
@@ -360,14 +366,13 @@ self.sounds["win"] = { win, win2, win3}
 The level of sound loading is determined via "mayHaveSubSfx"
 ]]--
 
-local mayHaveSubSfx = { chains = true, combos = true, shock = true}
+local mayHaveSubSfx = { chain = true, combo = true, shock = true}
 
 function Character.loadSfx(self, name, yields)
   local sfx = {}
 
-  local matchPattern = name .. "%d*"
   local stringLen = string.len(name)
-  local files = table.filter(self.files, function(file) return string.find(file, matchPattern, nil, true) end)
+  local files = table.filter(self.files, function(file) return string.find(file, name, nil, true) end)
   files = table.map(files, function(filename) return FileUtil.getFileNameWithoutExtension(filename) end)
 
   local maxIndex = 0
@@ -375,7 +380,7 @@ function Character.loadSfx(self, name, yields)
   for i = 1, #files do
     stringLen = string.len(files[i])
     local index = string.find(files[i], "%d+", stringLen + 1)
-    if index == "fail" then
+    if index == nil then
       -- indicates that there is no index, implicit 1
       index = 1
     end
@@ -398,7 +403,9 @@ function Character.loadSfx(self, name, yields)
     end
   end
 
-  self:fillInMissingSounds(sfx, name, maxIndex)
+  if mayHaveSubSfx[name] then
+    self:fillInMissingSounds(sfx, name, maxIndex)
+  end
 
   return sfx
 end
@@ -437,33 +444,31 @@ function Character.loadSubSfx(self, name, index)
   end
 end
 
+local fallsBackToChain = { chain_echo = true, chain2_echo = true}
 function Character.fillInMissingSounds(self, sfxTable,  name, maxIndex)
-  -- fill up missing indexes up to the highest recorded one
   local fillUpSound = nil
+  if maxIndex > 0 then
+    -- fallback sound for combos/chains higher than the highest available file is the file with the maximum index
+    -- unless set differently (such as for chains via the chain0 file)
+    fillUpSound = sfxTable[maxIndex]
+  end
+  -- fill up missing indexes up to the highest recorded one
   for i = 0, maxIndex do
-    if sfxTable[name][i] then
-      fillUpSound = self.sounds[name][i]
+    if sfxTable and sfxTable[i] then
+      fillUpSound = sfxTable[i]
     else
       sfxTable[i] = fillUpSound
     end
   end
 
   if sfxTable[0] == nil then
-    -- fallback sound for combos/chains higher than the highest available file is the file with the maximum index
-    -- unless set differently (such as for chains via the chain0 file)
-    if fillUpSound then
-      sfxTable[0] = fillUpSound
-    elseif default_character.sounds[name][0] then
+    if default_character.sounds[name] and default_character.sounds[name][0] then
       sfxTable[0] = default_character.sounds[name][0]
-    else
-      if not mayHaveSubSfx[name] then
-        sfxTable[0] = zero_sound
-      else
-        -- shock falls back to combo if nil
-        -- combo falls back to chain if nil
-        -- chain is bundled with the default character and should never be nil
-      end
     end
+  else
+    -- shock falls back to combo if nil
+    -- combo falls back to chain if nil
+    -- chain is bundled with the default character and should never be nil
   end
 end
 
@@ -597,6 +602,48 @@ function Character.playAttackSfx(self, attack)
     else --elseif chain_combo.type == e_chain_or_combo.chain then
       self:playChainSfx(attack.size)
     end
+  end
+end
+
+function Character.playGarbageMatchSfx(self)
+  for _, v in pairs(self.sounds.garbage_match) do
+    v:stop()
+  end
+  if #self.sounds.garbage_match ~= 0 then
+    self.sounds.garbage_match[math.random(#self.sounds.garbage_match)]:play()
+  end
+end
+
+function Character.playGarbageLandSfx(self)
+  if #self.sounds.garbage_land ~= 0 then
+    for _, v in pairs(self.sounds.garbage_land) do
+      v:stop()
+    end
+    self.sounds.garbage_land[math.random(#self.sounds.garbage_land)]:play()
+  end
+end
+
+-- tauntUp is rolled by the stack in order to send the exact same taunt index to the enemy as plays locally
+function Character.playTauntUpSfx(self, tauntUp)
+  for _, t in ipairs(self.sounds.taunt_up) do
+    t:stop()
+  end
+  if self.sounds.taunt_up[tauntUp] then
+    self.sounds.taunt_up[tauntUp]:play()
+  else
+    self.sounds.taunt_up[math.random(#self.sounds.taunt_up)]:play()
+  end
+end
+
+-- tauntDown is rolled by the stack in order to send the exact same taunt index to the enemy as plays locally
+function Character.playTauntDownSfx(self, tauntDown)
+  for _, t in ipairs(self.sounds.taunt_down) do
+    t:stop()
+  end
+  if self.sounds.taunt_down[tauntDown] then
+    self.sounds.taunt_down[tauntDown]:play()
+  else
+    self.sounds.taunt_down[math.random(#self.sounds.taunt_down)]:play()
   end
 end
 

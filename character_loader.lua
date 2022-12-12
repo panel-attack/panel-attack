@@ -1,5 +1,7 @@
 require("queue")
 require("globals")
+require("character")
+local logger = require("logger")
 
 local loading_queue = Queue()
 
@@ -173,9 +175,7 @@ function characters_init()
   end
 
   -- actual init for all characters, starting with the default one
-  default_character = Character("characters/__default", "__default")
-  default_character:preload()
-  default_character:load(true)
+  Character.loadDefaultCharacter()
 
   for _, character in pairs(characters) do
     character:preload()

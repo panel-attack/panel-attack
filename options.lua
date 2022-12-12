@@ -539,13 +539,13 @@ local function audio_menu(button_idx)
               end
               musics_to_use = characters[tracks[index].id].musics
 
-              addSounds("combo", characters[tracks[index].id].sounds.combos, " ")
+              addSounds("combo", characters[tracks[index].id].sounds.combo, " ")
 
-              if next(characters[tracks[index].id].sounds.combos) and next(characters[tracks[index].id].sounds.combo_echos) and not (characters[tracks[index].id].sounds.combos[1] == characters[tracks[index].id].sounds.combo_echos[1]) then
+              if next(characters[tracks[index].id].sounds.combo) and next(characters[tracks[index].id].sounds.combo_echo) and not (characters[tracks[index].id].sounds.combo[1] == characters[tracks[index].id].sounds.combo_echo[1]) then
                 addSounds("combo echo", characters[tracks[index].id].sounds.combo_echos, " ")
               end
 
-              if next(characters[tracks[index].id].sounds.chains) == nil and next(characters[tracks[index].id].sounds.others) and not (characters[tracks[index].id].sounds.others["chain"] == characters[tracks[index].id].sounds.combos[1]) then
+              if next(characters[tracks[index].id].sounds.chain) == nil and next(characters[tracks[index].id].sounds.others) and not (characters[tracks[index].id].sounds.others["chain"] == characters[tracks[index].id].sounds.combo[1]) then
                 addSound("chain", characters[tracks[index].id].sounds.others["chain"])
                 if characters[tracks[index].id].sounds.others["chain"] ~= characters[tracks[index].id].sounds.others["chain2"] then
                   addSound("chain 2", characters[tracks[index].id].sounds.others["chain2"])
@@ -558,27 +558,27 @@ local function audio_menu(button_idx)
                 end
               else
                 for i=2,13 do
-                  if characters[tracks[index].id].sounds.chains[i] ~=nil and i==2 or not content_equal(characters[tracks[index].id].sounds.chains[i-1], characters[tracks[index].id].sounds.chains[i]) then
-                    addSounds("chain "..i, characters[tracks[index].id].sounds.chains[i], "-")
+                  if characters[tracks[index].id].sounds.chain[i] ~=nil and i==2 or not content_equal(characters[tracks[index].id].sounds.chain[i-1], characters[tracks[index].id].sounds.chain[i]) then
+                    addSounds("chain "..i, characters[tracks[index].id].sounds.chain[i], "-")
                   end
                 end
-                if characters[tracks[index].id].sounds.chains[0] ~=nil and not content_equal(characters[tracks[index].id].sounds.chains[13], characters[tracks[index].id].sounds.chains[0]) then
-                  addSounds("chain ?", characters[tracks[index].id].sounds.chains[0], "-")
+                if characters[tracks[index].id].sounds.chain[0] ~=nil and not content_equal(characters[tracks[index].id].sounds.chain[13], characters[tracks[index].id].sounds.chain[0]) then
+                  addSounds("chain ?", characters[tracks[index].id].sounds.chain[0], "-")
                 end
               end
 
-              addSounds("garbage match", characters[tracks[index].id].sounds.garbage_matches, " ")
-              addSounds("garbage land", characters[tracks[index].id].sounds.garbage_lands, " ")
+              addSounds("garbage match", characters[tracks[index].id].sounds.garbage_match, " ")
+              addSounds("garbage land", characters[tracks[index].id].sounds.garbage_land, " ")
               
               if next(characters[tracks[index].id].sounds.selections) == nil and tracks[index].parent_id then
-                addSounds("selection", characters[tracks[index].parent_id].sounds.selections, " ")
+                addSounds("selection", characters[tracks[index].parent_id].sounds.selection, " ")
               else
-                addSounds("selection", characters[tracks[index].id].sounds.selections, " ")
+                addSounds("selection", characters[tracks[index].id].sounds.selection, " ")
               end
 
-              addSounds("win", characters[tracks[index].id].sounds.wins, " ")
-              addSounds("taunt up", characters[tracks[index].id].sounds.taunt_ups, " ")
-              addSounds("taunt down", characters[tracks[index].id].sounds.taunt_downs, " ")
+              addSounds("win", characters[tracks[index].id].sounds.win, " ")
+              addSounds("taunt up", characters[tracks[index].id].sounds.taunt_up, " ")
+              addSounds("taunt down", characters[tracks[index].id].sounds.taunt_down, " ")
               
               current_sound_index = 1
 
