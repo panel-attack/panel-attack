@@ -1,78 +1,13 @@
+--[[ for readability purposes this file is structured in 3 parts:
+General character informating, loading and unloading
+Graphics
+Sound
+]]--
+
 require("character_loader")
 local logger = require("logger")
 
--- Stuff defined in this file: the data structure that store a character's data
-
-local basic_images = {"icon"}
-local other_images = {
-  "topleft",
-  "botleft",
-  "topright",
-  "botright",
-  "top",
-  "bot",
-  "left",
-  "right",
-  "face",
-  "face2",
-  "pop",
-  "doubleface",
-  "filler1",
-  "filler2",
-  "flash",
-  "portrait",
-  "portrait2",
-  "burst",
-  "fade"
-}
-local defaulted_images = {
-  icon = true,
-  topleft = true,
-  botleft = true,
-  topright = true,
-  botright = true,
-  top = true,
-  bot = true,
-  left = true,
-  right = true,
-  face = true,
-  -- used for garbage blocks of odd-numbered widths if available, face otherwise
-  face2 = false,
-  pop = true,
-  doubleface = true,
-  filler1 = true,
-  filler2 = true,
-  flash = true,
-  portrait = true,
-  portrait2 = false,
-  burst = true,
-  fade = true
-} -- those images will be defaulted if missing
-local basic_sfx = {"selection"}
-local other_sfx = {
-  "chain",
-  "combo",
-  -- legacy +6/+7 shock, to be used if shock is not present
-  "combo_echo",
-  "shock",
-  -- for classic style chains
-  "chain_echo",
-  "chain2_echo",
-
-  "garbage_match",
-  "garbage_land",
-  "win",
-  "taunt_up",
-  "taunt_down"}
-local defaulted_sfxs = {} -- those sfxs will be defaulted if missing
-local basic_musics = {}
-local other_musics = {"normal_music", "danger_music", "normal_music_start", "danger_music_start"}
-local defaulted_musics = {} -- those musics will be defaulted if missing
-
 local default_character = nil -- holds default assets fallbacks
-
-local chainStyle = {classic = 0, per_chain = 1}
-local comboStyle = {classic = 0, per_combo = 1}
 
 Character =
   class(
@@ -182,137 +117,6 @@ function Character.json_init(self)
   end
 
   return false
-end
-
-function Character.play_selection_sfx(self)
-  if not GAME.muteSoundEffects and #self.sounds.selections ~= 0 then
-    self.sounds.selections[math.random(#self.sounds.selections)]:play()
-    return true
-  end
-  return false
-end
-
-function Character.playComboSfx(self, size)
-  -- self.sounds.combo[0] is the fallback combo sound which is guaranteed to be set if there is a combo sfx
-  if self.sounds.combo[0] == nil then
-    -- no combos loaded, try to fallback to the fallback chain sound
-    if self.sounds.chain[0] == nil then
-      -- technically we should always have a default chain sound from the default_character
-      -- so if this error ever occurs, something is seriously cursed
-      error("Found neither chain nor combo sfx upon trying to play combo sfx")
-    else
-      self.sounds.chain[0][math.random(#self.sounds.chain[0])]:play()
-    end
-  else
-    -- combo sfx available!
-    if self.combo_style == comboStyle.classic then
-      -- roll among all combos in case a per_combo style character had its combostyle changed to classic
-      local rolledIndex = math.random(#self.sounds.combo)
-      self.sounds.combo[rolledIndex][math.random(#self.sounds.combo[rolledIndex])]:play()
-    else
-      if self.sounds.combo[size] then
-        self.sounds.combo[size][math.random(#self.sounds.combo[size])]:play()
-      else
-        -- use fallback sound if the combo size is higher than the highest combo sfx
-        self.sounds.combo[0][math.random(#self.sounds.combo[0])]:play()
-      end
-    end
-  end
-end
-
-function Character.playChainSfx(self, length)
-  if self.chain_style == chainStyle.classic then
-    if length < 4 then
-      -- chain needs special indexing as it shares its table with per_chain style chain sfx
-      self.sounds.chain[1][math.random(#self.sounds.chain[1])]:play()
-    elseif length == 4 then
-      -- chain needs special indexing as it shares its table with per_chain style chain sfx
-      self.sounds.chain[2][math.random(#self.sounds.chain[2])]:play()
-    elseif length == 5 then
-      if #self.sounds.chain_echo > 0 then
-        self.sounds.chain_echo[math.random(#self.sounds.chain_echo)]:play()
-      else
-        -- fallback to chain instead of its own fallback
-        self.sounds.chain[0][math.random(#self.sounds.chain[0])]:play()
-      end
-    elseif length >= 6 then
-      if #self.sounds.chain2_echo > 0 then
-        self.sounds.chain2_echo[math.random(#self.sounds.chain2_echo)]:play()
-      else
-        -- fallback to chain instead of its own fallback
-        self.sounds.chain[0][math.random(#self.sounds.chain[0])]:play()
-      end
-    end
-  else --elseif self.chain_style == chainStyle.per_chain then
-    length = math.max(length, 2)
-    if length > 13 then
-      length = 0
-    end
-    self.sounds.chain[length][math.random(#self.sounds.chain[length])]:play()
-  end
-end
-
-function Character.playShockSfx(self, size)
-  if #self.sounds.shock > 0 then
-    self.sounds.shock[size][math.random(#self.sounds.shock[size])]:play()
-  else
-    if size >= 6 and #self.sounds.combo_echo > 0 then
-      self.sounds.combo_echo[math.random(#self.sounds.combo_echo)]:play()
-    else
-      self:playComboSfx(size)
-    end
-  end
-end
-
--- Stops old combo / chaing sounds and plays the appropriate chain or combo sound
-function Character.play_combo_chain_sfx(self, chain_combo)
-  local function stopPreviousSounds()
-    local function stopIfPlaying(audioSource)
-      if audioSource:isPlaying() then
-        audioSource:stop()
-      end
-    end
-    -- stop previous sounds if any
-    for _, sfxForIndex in pairs(self.sounds.combo) do
-      for _, sound in pairs(sfxForIndex) do
-        stopIfPlaying(sound)
-      end
-    end
-    for _, sound in pairs(self.sounds.combo_echo) do
-      stopIfPlaying(sound)
-    end
-    for _, sfxForIndex in pairs(self.sounds.shock) do
-      for _, sound in pairs(sfxForIndex) do
-        stopIfPlaying(sound)
-      end
-    end
-    for _, sfxForIndex in pairs(self.sounds.chain) do
-      for _, sound in pairs(sfxForIndex) do
-        stopIfPlaying(sound)
-      end
-    end
-    if self.chain_style == chainStyle.classic then
-      for _, sound in pairs(self.sounds.chain_echo) do
-        stopIfPlaying(sound)
-      end
-      for _, sound in pairs(self.sounds.chain2_echo) do
-        stopIfPlaying(sound)
-      end
-    end
-  end
-
-  if not GAME.muteSoundEffects then
-    stopPreviousSounds()
-
-    -- play combos or chains
-    if chain_combo.type == e_chain_or_combo.combo then
-      self:playComboSfx(chain_combo.size)
-    elseif chain_combo.type == e_chain_or_combo.shock then
-      self:playShockSfx(chain_combo.size)
-    else --elseif chain_combo.type == e_chain_or_combo.chain then
-      self:playChainSfx(chain_combo.size)
-    end
-  end
 end
 
 function Character.preload(self)
@@ -469,6 +273,59 @@ function characters_init()
   end
 end
 
+function Character.is_bundle(self)
+  return #self.sub_characters > 1
+end
+
+
+-- GRAPHICS
+
+local basic_images = {"icon"}
+local other_images = {
+  "topleft",
+  "botleft",
+  "topright",
+  "botright",
+  "top",
+  "bot",
+  "left",
+  "right",
+  "face",
+  "face2",
+  "pop",
+  "doubleface",
+  "filler1",
+  "filler2",
+  "flash",
+  "portrait",
+  "portrait2",
+  "burst",
+  "fade"
+}
+local defaulted_images = {
+  icon = true,
+  topleft = true,
+  botleft = true,
+  topright = true,
+  botright = true,
+  top = true,
+  bot = true,
+  left = true,
+  right = true,
+  face = true,
+  -- used for garbage blocks of odd-numbered widths if available, face otherwise
+  face2 = false,
+  pop = true,
+  doubleface = true,
+  filler1 = true,
+  filler2 = true,
+  flash = true,
+  portrait = true,
+  portrait2 = false,
+  burst = true,
+  fade = true
+} -- those images will be defaulted if missing
+
 -- for reloading the graphics if the window was resized
 function characters_reload_graphics()
   local characterIds = shallowcpy(characters_ids_for_current_theme)
@@ -480,10 +337,6 @@ function characters_reload_graphics()
     end
     characters[character]:graphics_init(fullLoad, false)
   end
-end
-
-function Character.is_bundle(self)
-  return #self.sub_characters > 1
 end
 
 function Character.graphics_init(self, full, yields)
@@ -553,25 +406,90 @@ function Character.graphics_uninit(self)
   self.telegraph_garbage_images = {}
 end
 
-function Character.apply_config_volume(self)
-  set_volume(self.sounds, config.SFX_volume / 100)
-  set_volume(self.musics, config.music_volume / 100)
+
+
+-- SOUND
+
+local basic_sfx = {"selection"}
+local other_sfx = {
+  "chain",
+  "combo",
+  -- legacy +6/+7 shock, to be used if shock is not present
+  "combo_echo",
+  "shock",
+  -- for classic style chains
+  "chain_echo",
+  "chain2_echo",
+
+  "garbage_match",
+  "garbage_land",
+  "win",
+  "taunt_up",
+  "taunt_down"}
+local basic_musics = {}
+local other_musics = {"normal_music", "danger_music", "normal_music_start", "danger_music_start"}
+local defaulted_musics = {} -- those musics will be defaulted if missing
+
+local chainStyle = {classic = 0, per_chain = 1}
+local comboStyle = {classic = 0, per_combo = 1}
+
+function Character.sound_init(self, full, yields)
+  -- SFX
+  local character_sfx = full and other_sfx or basic_sfx
+  for _, sfx in ipairs(character_sfx) do
+    self.sounds[sfx] = self:loadSfx(sfx, yields)
+  end
+
+  -- music
+  local character_musics = full and other_musics or basic_musics
+  for _, music in ipairs(character_musics) do
+    self.musics[music] = load_sound_from_supported_extensions(self.path .. "/" .. music, true)
+    -- Set looping status for music.
+    -- Intros won't loop, but other parts should.
+    if self.musics[music] then
+      if not string.find(music, "start") then
+        self.musics[music]:setLooping(true)
+      else
+        self.musics[music]:setLooping(false)
+      end
+    elseif not self.musics[music] and defaulted_musics[music] and not self:is_bundle() then
+      self.musics[music] = default_character.musics[music] or zero_sound
+    end
+
+    if yields then
+      coroutine.yield()
+    end
+  end
+
+  self:apply_config_volume()
+end
+
+function Character.sound_uninit(self)
+  -- SFX
+  for _, sound in ipairs(other_sfx) do
+    self.sounds.others[sound] = nil
+  end
+
+  -- music
+  for _, music in ipairs(other_musics) do
+    self.musics[music] = nil
+  end
 end
 
 --[[
+Explanation for sound loading process
+
 Standard expected structure for sound files is as follows:
 self.sounds holds a dictionary with the keys in basic_sfx and other_sfx
 The values of that dictionary are tables that contain integer numbered sfx, e.g.
 self.sounds["combo"] = {}
 For some sfx types, sfx can possibly contain sub sfx. That is selected via randomization upon being played.
 For that reason each index in that table holds another table with possible sounds for that selection value:
-self.sounds["combo"][1] = { standardsfx, alternativesfx, alternativesfx2}
-self.sounds["combo"][2] = { standardsfx}
-For most sounds that logically shouldn't contain alternative sfx, the amount of items in each table should be 1
-Randomized access for such sounds should be called as follows:
-local index = math.random(#self.sounds[sfxName])
-self.sounds[sfxName][index][math.random(#self.sounds[sfxName][index])].
-Ideally this should be wrapped in a function for readability.
+self.sounds["combo"][4] = { standardsfx, alternativesfx, alternativesfx2}
+self.sounds["combo"][5] = { standardsfx}
+For most sounds that aren't divided by size one level is omitted and they don't load the variations as subSfx:
+self.sounds["win"] = { win, win2, win3}
+The level of sound loading is determined via "mayHaveSubSfx"
 ]]--
 
 local mayHaveSubSfx = { chains = true, combos = true, shock = true}
@@ -681,45 +599,140 @@ function Character.fillInMissingSounds(self, sfxTable,  name, maxIndex)
   end
 end
 
-function Character.sound_init(self, full, yields)
-  -- SFX
-  local character_sfx = full and other_sfx or basic_sfx
-  for _, sfx in ipairs(character_sfx) do
-    self.sounds[sfx] = self:loadSfx(sfx, yields)
+-- sound playing / sound control
+
+function Character.play_selection_sfx(self)
+  if not GAME.muteSoundEffects and #self.sounds.selections ~= 0 then
+    self.sounds.selections[math.random(#self.sounds.selections)]:play()
+    return true
   end
-
-  -- music
-  local character_musics = full and other_musics or basic_musics
-  for _, music in ipairs(character_musics) do
-    self.musics[music] = load_sound_from_supported_extensions(self.path .. "/" .. music, true)
-    -- Set looping status for music.
-    -- Intros won't loop, but other parts should.
-    if self.musics[music] then
-      if not string.find(music, "start") then
-        self.musics[music]:setLooping(true)
-      else
-        self.musics[music]:setLooping(false)
-      end
-    elseif not self.musics[music] and defaulted_musics[music] and not self:is_bundle() then
-      self.musics[music] = default_character.musics[music] or zero_sound
-    end
-
-    if yields then
-      coroutine.yield()
-    end
-  end
-
-  self:apply_config_volume()
+  return false
 end
 
-function Character.sound_uninit(self)
-  -- SFX
-  for _, sound in ipairs(other_sfx) do
-    self.sounds.others[sound] = nil
+function Character.playComboSfx(self, size)
+  -- self.sounds.combo[0] is the fallback combo sound which is guaranteed to be set if there is a combo sfx
+  if self.sounds.combo[0] == nil then
+    -- no combos loaded, try to fallback to the fallback chain sound
+    if self.sounds.chain[0] == nil then
+      -- technically we should always have a default chain sound from the default_character
+      -- so if this error ever occurs, something is seriously cursed
+      error("Found neither chain nor combo sfx upon trying to play combo sfx")
+    else
+      self.sounds.chain[0][math.random(#self.sounds.chain[0])]:play()
+    end
+  else
+    -- combo sfx available!
+    if self.combo_style == comboStyle.classic then
+      -- roll among all combos in case a per_combo style character had its combostyle changed to classic
+      local rolledIndex = math.random(#self.sounds.combo)
+      self.sounds.combo[rolledIndex][math.random(#self.sounds.combo[rolledIndex])]:play()
+    else
+      if self.sounds.combo[size] then
+        self.sounds.combo[size][math.random(#self.sounds.combo[size])]:play()
+      else
+        -- use fallback sound if the combo size is higher than the highest combo sfx
+        self.sounds.combo[0][math.random(#self.sounds.combo[0])]:play()
+      end
+    end
+  end
+end
+
+function Character.playChainSfx(self, length)
+  if self.chain_style == chainStyle.classic then
+    if length < 4 then
+      -- chain needs special indexing as it shares its table with per_chain style chain sfx
+      self.sounds.chain[1][math.random(#self.sounds.chain[1])]:play()
+    elseif length == 4 then
+      -- chain needs special indexing as it shares its table with per_chain style chain sfx
+      self.sounds.chain[2][math.random(#self.sounds.chain[2])]:play()
+    elseif length == 5 then
+      if #self.sounds.chain_echo > 0 then
+        self.sounds.chain_echo[math.random(#self.sounds.chain_echo)]:play()
+      else
+        -- fallback to chain instead of its own fallback
+        self.sounds.chain[0][math.random(#self.sounds.chain[0])]:play()
+      end
+    elseif length >= 6 then
+      if #self.sounds.chain2_echo > 0 then
+        self.sounds.chain2_echo[math.random(#self.sounds.chain2_echo)]:play()
+      else
+        -- fallback to chain instead of its own fallback
+        self.sounds.chain[0][math.random(#self.sounds.chain[0])]:play()
+      end
+    end
+  else --elseif self.chain_style == chainStyle.per_chain then
+    length = math.max(length, 2)
+    if length > 13 then
+      length = 0
+    end
+    self.sounds.chain[length][math.random(#self.sounds.chain[length])]:play()
+  end
+end
+
+function Character.playShockSfx(self, size)
+  if #self.sounds.shock > 0 then
+    self.sounds.shock[size][math.random(#self.sounds.shock[size])]:play()
+  else
+    if size >= 6 and #self.sounds.combo_echo > 0 then
+      self.sounds.combo_echo[math.random(#self.sounds.combo_echo)]:play()
+    else
+      self:playComboSfx(size)
+    end
+  end
+end
+
+-- Stops old combo / chaing sounds and plays the appropriate chain or combo sound
+function Character.play_combo_chain_sfx(self, chain_combo)
+  local function stopPreviousSounds()
+    local function stopIfPlaying(audioSource)
+      if audioSource:isPlaying() then
+        audioSource:stop()
+      end
+    end
+    -- stop previous sounds if any
+    for _, sfxForIndex in pairs(self.sounds.combo) do
+      for _, sound in pairs(sfxForIndex) do
+        stopIfPlaying(sound)
+      end
+    end
+    for _, sound in pairs(self.sounds.combo_echo) do
+      stopIfPlaying(sound)
+    end
+    for _, sfxForIndex in pairs(self.sounds.shock) do
+      for _, sound in pairs(sfxForIndex) do
+        stopIfPlaying(sound)
+      end
+    end
+    for _, sfxForIndex in pairs(self.sounds.chain) do
+      for _, sound in pairs(sfxForIndex) do
+        stopIfPlaying(sound)
+      end
+    end
+    if self.chain_style == chainStyle.classic then
+      for _, sound in pairs(self.sounds.chain_echo) do
+        stopIfPlaying(sound)
+      end
+      for _, sound in pairs(self.sounds.chain2_echo) do
+        stopIfPlaying(sound)
+      end
+    end
   end
 
-  -- music
-  for _, music in ipairs(other_musics) do
-    self.musics[music] = nil
+  if not GAME.muteSoundEffects then
+    stopPreviousSounds()
+
+    -- play combos or chains
+    if chain_combo.type == e_chain_or_combo.combo then
+      self:playComboSfx(chain_combo.size)
+    elseif chain_combo.type == e_chain_or_combo.shock then
+      self:playShockSfx(chain_combo.size)
+    else --elseif chain_combo.type == e_chain_or_combo.chain then
+      self:playChainSfx(chain_combo.size)
+    end
   end
+end
+
+function Character.apply_config_volume(self)
+  set_volume(self.sounds, config.SFX_volume / 100)
+  set_volume(self.musics, config.music_volume / 100)
 end
