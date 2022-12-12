@@ -487,6 +487,10 @@ function Character.play_selection_sfx(self)
   return false
 end
 
+local function defaultChainPlayback(character)
+  character.sounds.chain[0][math.random(#character.sounds.chain[0])]:play()
+end
+
 function Character.playComboSfx(self, size)
   -- self.sounds.combo[0] is the fallback combo sound which is guaranteed to be set if there is a combo sfx
   if self.sounds.combo[0] == nil then
@@ -496,7 +500,7 @@ function Character.playComboSfx(self, size)
       -- so if this error ever occurs, something is seriously cursed
       error("Found neither chain nor combo sfx upon trying to play combo sfx")
     else
-      self.sounds.chain[0][math.random(#self.sounds.chain[0])]:play()
+      defaultChainPlayback(self)
     end
   else
     -- combo sfx available!
@@ -519,23 +523,31 @@ function Character.playChainSfx(self, length)
   if self.chain_style == chainStyle.classic then
     if length < 4 then
       -- chain needs special indexing as it shares its table with per_chain style chain sfx
-      self.sounds.chain[1][math.random(#self.sounds.chain[1])]:play()
+      if self.sounds.chain[1] then
+        self.sounds.chain[1][math.random(#self.sounds.chain[1])]:play()
+      else
+        defaultChainPlayback(self)
+      end
     elseif length == 4 then
       -- chain needs special indexing as it shares its table with per_chain style chain sfx
-      self.sounds.chain[2][math.random(#self.sounds.chain[2])]:play()
+      if self.sounds.chain[2] then
+        self.sounds.chain[2][math.random(#self.sounds.chain[2])]:play()
+      else
+        defaultChainPlayback(self)
+      end
     elseif length == 5 then
       if #self.sounds.chain_echo > 0 then
         self.sounds.chain_echo[math.random(#self.sounds.chain_echo)]:play()
       else
         -- fallback to chain instead of its own fallback
-        self.sounds.chain[0][math.random(#self.sounds.chain[0])]:play()
+        defaultChainPlayback(self)
       end
     elseif length >= 6 then
       if #self.sounds.chain2_echo > 0 then
         self.sounds.chain2_echo[math.random(#self.sounds.chain2_echo)]:play()
       else
         -- fallback to chain instead of its own fallback
-        self.sounds.chain[0][math.random(#self.sounds.chain[0])]:play()
+        defaultChainPlayback(self)
       end
     end
   else --elseif self.chain_style == chainStyle.per_chain then
@@ -543,7 +555,7 @@ function Character.playChainSfx(self, length)
     if self.sounds.chain[length] then
       self.sounds.chain[length][math.random(#self.sounds.chain[length])]:play()
     else
-      self.sounds.chain[0][math.random(#self.sounds.chain[0])]:play()
+      defaultChainPlayback(self)
     end
   end
 end
