@@ -12,11 +12,13 @@ Note: non-optional data that is missing will automatically get replaced by defau
 ~~ [.json] ~~
 - "config": this file holds data for the configuration of your character. The inside should look like that:
 	Minimum options:
-	- id: unique identifier of this character. IF MISSING YOUR CHARACTER MAY BE IGNORED!
-		  your id should be long and unique so that the game can properly distinguish between different character mods of potentially the same character
-		  it is generally recommended to add your username to the id to ensure its uniqueness, e.g. "Sil_Paper_Mario" for a character mod of Mario by user Sil based on the Paper Mario games
-	- name: display name of this character, this value will be displayed in the lobby and will also serve as a fallback when trying to match your opponent's character
-		    the folder name will be displayed if this value is missing
+	- id: 
+	  unique identifier of this character. IF MISSING YOUR CHARACTER MAY BE IGNORED!
+	  your id should be long and unique so that the game can properly distinguish between different character mods of potentially the same character
+	  it is generally recommended to add your username to the id to ensure its uniqueness, e.g. "Sil_Paper_Mario" for a character mod of Mario by user Sil based on the Paper Mario games
+	- name: 
+	  display name of this character, this value will be displayed in the lobby and will also serve as a fallback when trying to match your opponent's character
+	  the folder name will be displayed if this value is missing
 	Super select options:
 	- (stage): this specifies which stage to select along the character when 'super selecting' it
 	- (panels): this specifies which panels to select along the character when 'super selecting' it
@@ -47,33 +49,37 @@ See https://cdn.discordapp.com/attachments/417706389813592068/874106744392007680
 - corners, recommended size: 24x9px
 	- "topleft", "botleft", "topright", "botright", the names say everything
 - sides
-	- "top", "bot": sprites for covering the top and bottom side of the garbage
-		get stretched to the width of the garbage
-		recommended size: 6px high
-	- "left", "right": sprites for the left and right side of the garbage
-		get stretched to the height of the garbage
-		recommended size: 24px wide
+	- "top", "bot": 
+	  sprites for covering the top and bottom side of the garbage
+	  get stretched to the width of the garbage
+	  recommended size: 6px high
+	- "left", "right": 
+	  sprites for the left and right side of the garbage
+	  get stretched to the height of the garbage
+	  recommended size: 24px wide
 - center icon
-	- "face": sprite for the center of garbage pieces of odd-numbered height (1, 3, ...)
-		recommended size: 48x48px
-	- "face2": optional sprite that replaces face on garbage pieces of odd-numbered width
-		recommended size: 48x48px
-	- "doubleface": sprite for the center of garbage pieces of even-numbered height (2, 4, ...)
-		recommended size: 48x96px
+	- "face": 
+	  sprite for the center of garbage pieces of odd-numbered height (1, 3, ...)
+	  recommended size: 48x48px
+	- "face2": 
+	  optional sprite that replaces face on garbage pieces of odd-numbered width
+	  recommended size: 48x48px
+	- "doubleface": 
+	  sprite for the center of garbage pieces of even-numbered height (2, 4, ...)
+	  recommended size: 48x96px
 - filler sprites, recommended size: 48x48px
-	Filler sprites are drawn first, then everything else is getting drawn on top, potentially obscuring the left/right of a filler sprite.
-	Putting things too close to the edge or the middle may cause unsightly cutoffs at edges with the garbage borders and the center icon.
-	Good use of face/face2 may alleviate these issues for the center.
+  Filler sprites are drawn first, then everything else is getting drawn on top, potentially obscuring the left/right/edge of a filler sprite.
+  Putting things too close to the edge or the middle may cause unsightly cutoffs.
+  Good use of face/face2 may alleviate these issues for the center.
 	- "filler1": filling up the garbage blocks
 	- "filler2": filling up the garbage blocks for blocks with height 3 and up, alternating with filler1
 - clear sprites, recommendded size: 48x48px
 	- "pop": appearance for garbage panels after it got cleared but did not reveal the actual panel yet
 	- "flash": sprite for when the garbage gets cleared, rapidly alternates with pop for a short time
 
-Tips: 
-
 Other image assets:
-- "portrait", "portrait2": display of your character ingame on the player 1/2 side, recommended size: 288x576
+- "portrait", "portrait2": 
+  display of your character ingame on the player 1/2 side, recommended size: 288x576
   if portrait2 is not provided a mirrored version of portrait will be used instead
 - "icon": display in the lobby, recommended size: 84x84
 - "burst" or "fade": The image used for popfx. The image should be 9 equal sized frames in a row, first frame is the telegraph, frames 2 to 9 are the burst or fade animation
@@ -90,11 +96,12 @@ Most SFX allow you to provide multiple variations. If multiple files are present
 		per_combo system: 
 			Provide a sfx for each combo size. More than one variation may be provided for each size by appending _# to the filename where # is a number.
 			If no file is provided for a certain combo size the first available lower combo sfx will be played instead. This means the minimum of per_combo style sfx consists of only a single "combo4" sfx.
-			Example: 	+4 "combo4"(, "combo4_2", "combo4_3"...), 
-						+5 "combo5"(, "combo5_2, "combo5_3"...), 
-						...,
-						+20 "combo20"(, "combo20_2", ...)
-						+27 "combo27"(, "combo27_2", ...)
+			Example: 	
+					+4 "combo4"(, "combo4_2", "combo4_3"...), 
+					+5 "combo5"(, "combo5_2, "combo5_3"...), 
+					...,
+					+20 "combo20"(, "combo20_2", ...)
+					+27 "combo27"(, "combo27_2", ...)
 			While the combo size you may provide files for is not limited, combos above +27 will not send any more garbage, having no added value as a sound cue.
 		If no combo sfx are provided at all, the default chain sound will be used instead.
 
@@ -104,11 +111,12 @@ Most SFX allow you to provide multiple variations. If multiple files are present
 		per_chain system: 
 			Provide a sfx for each chain length. More than one variation may be provided for each length by appending _# to the filename where # is a number.
 			If no file is provided for a certain chain length the first available lower chain sfx will be played instead. This means the minimum of per_chain style sfx consists of only a single "chain" or "chain2" sfx.
-			Example: 	x2 "chain2"(, "chain2_2", "chain2_3"...), 
-						x3 "chain3"(, "chain3_2", "chain3_3"...), 
-						..., 
-						x13 "chain13"(, "chain13_2", ...), 
-						x13+ "chain0"(, ...)
+			Example: 	
+					x2 "chain2"(, "chain2_2", "chain2_3"...), 
+					x3 "chain3"(, "chain3_2", "chain3_3"...), 
+					..., 
+					x13 "chain13"(, "chain13_2", ...), 
+					x13+ "chain0"(, ...)
 		classic system [DEPRECATED][DEFAULT]: 
 			x2/3 plays "chain",  
 			x4 plays "chain2", 
@@ -120,10 +128,11 @@ Most SFX allow you to provide multiple variations. If multiple files are present
 	- shock: 
 		For shock matches and combos, provide a sfx for each match/combo size. 
 		More than one variation may be provided for each size by appending _# to the filename where # is a number.
-		Example:	+3 "shock3"(, "shock3_2, "shock3_3" ...),
-					+4 "shock4"(, "shock4_2, "shock4_3" ...),
-					...,
-					+7 "shock7"(, "shock7_2, ...)
+		Example:		
+				+3 "shock3"(, "shock3_2, "shock3_3" ...),
+				+4 "shock4"(, "shock4_2, "shock4_3" ...),
+				...,
+				+7 "shock7"(, "shock7_2, ...)
 		[DEPRECATED] "combo_echo", ("combo_echo2", "combo_echo3"...) will get used upon a +6 or +7 shock combo. These files have no effect if shock files are present.
 - Other SFX
   all other SFX will randomly select from all variations if additional numbered files are provided such as file, file2, file3, file4
