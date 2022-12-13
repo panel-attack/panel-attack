@@ -309,9 +309,6 @@ local defaulted_musics = {} -- those musics will be defaulted if missing
 
 function Character.sound_init(self, full, yields)
   -- SFX
-  if full then
-    coroutine.yield()
-  end
   local character_sfx = full and other_sfx or basic_sfx
   for _, sfx in ipairs(character_sfx) do
     self.sounds[sfx] = self:loadSfx(sfx, yields)
@@ -396,14 +393,14 @@ function Character.loadSfx(self, name, yields)
       if sound ~= nil then
         sfx[index] = sound
       end
+
+      if yields then
+        coroutine.yield()
+      end
     end
 
     if sfx[index] then
       maxIndex = math.max(maxIndex, index)
-    end
-
-    if yields then
-      coroutine.yield()
     end
   end
 
@@ -415,7 +412,7 @@ function Character.loadSfx(self, name, yields)
 end
 
 -- loads all variations for the sfx with the base name sfxName and returns them in a continuous integer key'd table
-function Character.loadSubSfx(self, name, index)
+function Character.loadSubSfx(self, name, index, yields)
   local sfxTable = {}
 
   if index == 1 then
@@ -439,6 +436,9 @@ function Character.loadSubSfx(self, name, index)
       local subSound = load_sound_from_supported_extensions(self.path .. "/" .. subfiles[j], false)
       if subSound ~= nil then
         sfxTable[#sfxTable+1] = subSound
+      end
+      if yields then
+        coroutine.yield()
       end
     end
   end

@@ -517,8 +517,8 @@ local function audio_menu(button_idx)
         end
 
         local function addSounds(sound_name, sound_table, spacer)
-          for num, sound in ipairs(sound_table) do
-            addSound(sound_name .. ((num==1 and "") or (spacer .. num)), sound)
+          for i = 1, #sound_table do
+            addSound(sound_name .. ((i==1 and "") or (spacer .. i)), sound_table[i], i)
           end
         end
 
@@ -575,7 +575,7 @@ local function audio_menu(button_idx)
                 end
               end
 
-              table.sort(character_sounds, function(a, b) return a.name <= b.name end)
+              table.sort(character_sounds, function(a, b) return a.name < b.name end)
               soundTestMenu:set_button_setting(4, character_sounds[1].name)
 
               current_sound_index = 1
@@ -647,7 +647,7 @@ local function audio_menu(button_idx)
           soundTestMenu:set_button_setting(1, tracks[index].name)
           if tracks[index].is_character then
             soundTestMenu:set_button_text(1, loc("character"))
-            soundTestMenu:set_button_setting(4, character_sounds[1].name)
+            soundTestMenu:set_button_setting(4, "chain")
           else
             soundTestMenu:set_button_text(1, loc("stage"))
             soundTestMenu:set_button_setting(4, loc("op_none"))
@@ -671,7 +671,7 @@ local function audio_menu(button_idx)
           soundTestMenu:set_button_setting(1, tracks[index].name)
           if tracks[index].is_character then
             soundTestMenu:set_button_text(1, loc("character"))
-            soundTestMenu:set_button_setting(4, character_sounds[1].name)
+            soundTestMenu:set_button_setting(4, "chain")
           else
             soundTestMenu:set_button_text(1, loc("stage"))
             soundTestMenu:set_button_setting(4, loc("op_none"))
