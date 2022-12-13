@@ -795,6 +795,7 @@ function Stack.render(self)
         inputs_to_print = inputs_to_print .. "\nlingering_touch_cursor:"..self.lingering_touch_cursor.row..","..self.lingering_touch_cursor.col
         inputs_to_print = inputs_to_print .. "\nswaps_this_touch:"..self.swaps_this_touch
         inputs_to_print = inputs_to_print .. "\ntouch_swap_cooldown_timer:"..self.touch_swap_cooldown_timer
+        inputs_to_print = inputs_to_print .. "\nstack.touched:"..(self.touched and "true" or "false")
       end
       gprint(inputs_to_print, self.score_x, self.score_y + 195)
     end
