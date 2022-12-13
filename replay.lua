@@ -19,7 +19,7 @@ function Replay.loadFromPath(path)
     replay = {}
     replay = json.decode(file)
     if not replay.engineVersion then
-        replay.engineVersion = "050"
+        replay.engineVersion = "051"
     end
 
     return true
