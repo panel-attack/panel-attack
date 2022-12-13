@@ -1828,8 +1828,8 @@ function Stack.simulate(self)
           if not self.lingering_touch_cursor or (self.lingering_touch_cursor.row == 0 and self.lingering_touch_cursor.col == 0) and self.cur_col == self.touch_target_col then
             self.cur_row = 0
             self.cur_col = 0
+            self.swaps_this_touch = 0
           end
-          --self.swaps_this_touch = 0
         end
 
         --try to swap toward self.touch_target_col
@@ -1840,6 +1840,7 @@ function Stack.simulate(self)
             if panel:exclude_hover() or panel.state == "matched" then
               self.cur_row = 0
               self.cur_col = 0
+              self.swaps_this_touch = 0
               self.lingering_touch_cursor = {row = 0, col = 0}
               self.touch_target_col = 0
               self.force_touch_release = true
