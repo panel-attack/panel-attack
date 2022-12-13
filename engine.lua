@@ -1843,7 +1843,9 @@ function Stack.simulate(self)
               self.swaps_this_touch = 0
               self.lingering_touch_cursor = {row = 0, col = 0}
               self.touch_target_col = 0
-              self.force_touch_release = true
+              if self.touched then
+                self.force_touch_release = true
+              end
             end
           end
           if not self.force_touch_release and self.touch_target_col ~= 0 and self.cur_col ~= 0 and self.touch_target_col ~= self.cur_col then
