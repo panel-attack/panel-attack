@@ -108,3 +108,9 @@ function find_and_add_music(musics, music_type)
   music_t[love.timer.getTime()] = make_music_t(start_music)
   music_t[love.timer.getTime() + start_music:getDuration()] = make_music_t(loop_music, true)
 end
+
+function stopIfPlaying(audioSource)
+  if audioSource:isPlaying() then
+    audioSource:stop()
+  end
+end

@@ -374,7 +374,7 @@ function Character.loadSfx(self, name, yields)
   local stringLen = string.len(name)
   local files = table.filter(self.files, function(file) return string.find(file, name, nil, true) end)
 
-  local maxIndex = 0
+  local maxIndex = -1
   -- load sounds
   for i = 1, #files do
     stringLen = string.len(name)
@@ -483,16 +483,20 @@ end
 
 -- sound playing / sound control
 
+local function playRandomSfx(sfxTable, fallback)
+  if sfxTable and #sfxTable > 0 then
+    sfxTable[math.random(#sfxTable)]:play()
+  elseif fallback then
+    playRandomSfx(fallback)
+  end
+end
+
 function Character.play_selection_sfx(self)
   if not GAME.muteSoundEffects and #self.sounds.selection ~= 0 then
-    self.sounds.selection[math.random(#self.sounds.selection)]:play()
+    playRandomSfx(self.sounds.selection)
     return true
   end
   return false
-end
-
-local function defaultChainPlayback(character)
-  character.sounds.chain[0][math.random(#character.sounds.chain[0])]:play()
 end
 
 function Character.playComboSfx(self, size)
@@ -504,21 +508,17 @@ function Character.playComboSfx(self, size)
       -- so if this error ever occurs, something is seriously cursed
       error("Found neither chain nor combo sfx upon trying to play combo sfx")
     else
-      defaultChainPlayback(self)
+      playRandomSfx(self.sounds.chain[0])
     end
   else
     -- combo sfx available!
     if self.combo_style == comboStyle.classic then
       -- roll among all combos in case a per_combo style character had its combostyle changed to classic
       local rolledIndex = math.random(#self.sounds.combo)
-      self.sounds.combo[rolledIndex][math.random(#self.sounds.combo[rolledIndex])]:play()
+      playRandomSfx(self.sounds.combo[rolledIndex])
     else
-      if self.sounds.combo[size] then
-        self.sounds.combo[size][math.random(#self.sounds.combo[size])]:play()
-      else
-        -- use fallback sound if the combo size is higher than the highest combo sfx
-        self.sounds.combo[0][math.random(#self.sounds.combo[0])]:play()
-      end
+      -- use fallback sound if the combo size is higher than the highest combo sfx
+      playRandomSfx(self.sounds.combo[size], self.sounds.combo[0])
     end
   end
 end
@@ -526,54 +526,29 @@ end
 function Character.playChainSfx(self, length)
   if self.chain_style == chainStyle.classic then
     if length < 4 then
-      -- chain needs special indexing as it shares its table with per_chain style chain sfx
       if self.sounds.chain[1] then
-        self.sounds.chain[1][math.random(#self.sounds.chain[1])]:play()
-      else
-        defaultChainPlayback(self)
+        playRandomSfx(self.sounds.chain[1], self.sounds.chain[0])
       end
     elseif length == 4 then
-      -- chain needs special indexing as it shares its table with per_chain style chain sfx
-      if self.sounds.chain[2] then
-        self.sounds.chain[2][math.random(#self.sounds.chain[2])]:play()
-      else
-        defaultChainPlayback(self)
-      end
+        playRandomSfx(self.sounds.chain[2], self.sounds.chain[0])
     elseif length == 5 then
-      if #self.sounds.chain_echo > 0 then
-        self.sounds.chain_echo[math.random(#self.sounds.chain_echo)]:play()
-      else
         -- fallback to chain instead of its own fallback
-        defaultChainPlayback(self)
-      end
+        playRandomSfx(self.sounds.chain_echo, self.sounds.chain[0])
     elseif length >= 6 then
-      if #self.sounds.chain2_echo > 0 then
-        self.sounds.chain2_echo[math.random(#self.sounds.chain2_echo)]:play()
-      else
-        -- fallback to chain instead of its own fallback
-        defaultChainPlayback(self)
-      end
+      -- fallback to chain instead of its own fallback
+      playRandomSfx(self.sounds.chain2_echo, self.sounds.chain[0])
     end
   else --elseif self.chain_style == chainStyle.per_chain then
-    length = math.max(length, 2)
-    if self.sounds.chain[length] then
-      self.sounds.chain[length][math.random(#self.sounds.chain[length])]:play()
-    else
-      defaultChainPlayback(self)
-    end
+    playRandomSfx(self.sounds.chain[length], self.sounds.chain[0])
   end
 end
 
 function Character.playShockSfx(self, size)
   if #self.sounds.shock > 0 then
-    if self.sounds.shock[size] then
-      self.sounds.shock[size][math.random(#self.sounds.shock[size])]:play()
-    else
-      self.sounds.shock[0][math.random(#self.sounds.shock[0])]:play()
-    end
+    playRandomSfx(self.sounds.shock[size], self.sounds.shock[0])
   else
     if size >= 6 and #self.sounds.combo_echo > 0 then
-      self.sounds.combo_echo[math.random(#self.sounds.combo_echo)]:play()
+      playRandomSfx(self.sounds.combo_echo)
     else
       self:playComboSfx(size)
     end
@@ -583,28 +558,23 @@ end
 -- Stops old combo / chaing sounds and plays the appropriate chain or combo sound
 function Character.playAttackSfx(self, attack)
   local function stopPreviousSounds()
-    local function stopIfPlaying(audioSource)
-      if audioSource:isPlaying() then
-        audioSource:stop()
-      end
-    end
     -- stop previous sounds if any
-    for _, sfxForIndex in pairs(self.sounds.combo) do
-      for _, sound in pairs(sfxForIndex) do
-        stopIfPlaying(sound)
+    for _, v in pairs(self.sounds.combo) do
+      for i = 1, #v do
+        stopIfPlaying(v[i])
       end
     end
-    for _, sound in pairs(self.sounds.combo_echo) do
-      stopIfPlaying(sound)
+    for i = 1, #self.sounds.combo_echo do
+      stopIfPlaying(self.sounds.combo_echo[i])
     end
-    for _, sfxForIndex in pairs(self.sounds.shock) do
-      for _, sound in pairs(sfxForIndex) do
-        stopIfPlaying(sound)
+    for _, v in pairs(self.sounds.shock) do
+      for i = 1, #v do
+        stopIfPlaying(v[i])
       end
     end
-    for _, sfxForIndex in pairs(self.sounds.chain) do
-      for _, sound in pairs(sfxForIndex) do
-        stopIfPlaying(sound)
+    for _, v in pairs(self.sounds.chain) do
+      for i = 1, #v do
+        stopIfPlaying(v[i])
       end
     end
     if self.chain_style == chainStyle.classic then
@@ -632,44 +602,48 @@ function Character.playAttackSfx(self, attack)
 end
 
 function Character.playGarbageMatchSfx(self)
-  for _, v in pairs(self.sounds.garbage_match) do
-    v:stop()
-  end
   if #self.sounds.garbage_match ~= 0 then
-    self.sounds.garbage_match[math.random(#self.sounds.garbage_match)]:play()
+    for _, v in pairs(self.sounds.garbage_match) do
+      stopIfPlaying(v)
+    end
+    playRandomSfx(self.sounds.garbage_match)
   end
 end
 
 function Character.playGarbageLandSfx(self)
   if #self.sounds.garbage_land ~= 0 then
     for _, v in pairs(self.sounds.garbage_land) do
-      v:stop()
+      stopIfPlaying(v)
     end
-    self.sounds.garbage_land[math.random(#self.sounds.garbage_land)]:play()
+    playRandomSfx(self.sounds.garbage_land)
   end
 end
 
--- tauntUp is rolled by the stack in order to send the exact same taunt index to the enemy as plays locally
+-- tauntUp is rolled externally in order to send the exact same taunt index to the enemy as plays locally
 function Character.playTauntUpSfx(self, tauntUp)
-  for _, t in ipairs(self.sounds.taunt_up) do
-    t:stop()
-  end
-  if self.sounds.taunt_up[tauntUp] then
-    self.sounds.taunt_up[tauntUp]:play()
-  else
-    self.sounds.taunt_up[math.random(#self.sounds.taunt_up)]:play()
+  if #self.sounds.taunt_up ~= 0 then
+    for _, t in ipairs(self.sounds.taunt_up) do
+      stopIfPlaying(t)
+    end
+    if self.sounds.taunt_up[tauntUp] then
+      self.sounds.taunt_up[tauntUp]:play()
+    else
+      playRandomSfx(self.sounds.taunt_up)
+    end
   end
 end
 
--- tauntDown is rolled by the stack in order to send the exact same taunt index to the enemy as plays locally
+-- tauntDown is rolled externally in order to send the exact same taunt index to the enemy as plays locally
 function Character.playTauntDownSfx(self, tauntDown)
-  for _, t in ipairs(self.sounds.taunt_down) do
-    t:stop()
-  end
-  if self.sounds.taunt_down[tauntDown] then
-    self.sounds.taunt_down[tauntDown]:play()
-  else
-    self.sounds.taunt_down[math.random(#self.sounds.taunt_down)]:play()
+  if #self.sounds.taunt_down ~= 0 then
+    for _, t in ipairs(self.sounds.taunt_down) do
+      stopIfPlaying(t)
+    end
+    if self.sounds.taunt_down[tauntDown] then
+      self.sounds.taunt_down[tauntDown]:play()
+    else
+      playRandomSfx(self.sounds.taunt_down)
+    end
   end
 end
 
