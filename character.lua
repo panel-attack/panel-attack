@@ -369,7 +369,7 @@ self.sounds["win"] = { win, win2, win3}
 The level of sound loading is determined via "mayHaveSubSfx"
 ]]--
 
-local mayHaveSubSfx = { chain = true, combo = true, shock = true}
+local perSizeSfxStart = { chain = 2, combo = 4, shock = 3}
 
 function Character.loadSfx(self, name, yields)
   local sfx = {}
@@ -387,7 +387,7 @@ function Character.loadSfx(self, name, yields)
       index = 1
     end
 
-    if mayHaveSubSfx[name] then
+    if perSizeSfxStart[name] then
       if sfx[index] == nil then
         sfx[index] = self:loadSubSfx(name, index)
       end
@@ -407,7 +407,7 @@ function Character.loadSfx(self, name, yields)
     end
   end
 
-  if mayHaveSubSfx[name] then
+  if perSizeSfxStart[name] then
     self:fillInMissingSounds(sfx, name, maxIndex)
   end
 
@@ -455,14 +455,18 @@ function Character.fillInMissingSounds(self, sfxTable,  name, maxIndex)
   if maxIndex > 0 then
     -- fallback sound for combos/chains higher than the highest available file is the file with the maximum index
     -- unless set differently (such as for chains via the chain0 file)
-    fillUpSound = sfxTable[maxIndex]
+    sfxTable[0] = sfxTable[maxIndex]
   end
   -- fill up missing indexes up to the highest recorded one
   for i = 0, maxIndex do
     if sfxTable and sfxTable[i] then
       fillUpSound = sfxTable[i]
     else
-      sfxTable[i] = fillUpSound
+      if i >= perSizeSfxStart[name] then
+        sfxTable[i] = fillUpSound
+      else
+        sfxTable[i] = {}
+      end
     end
   end
 
