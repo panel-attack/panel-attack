@@ -387,7 +387,6 @@ local function audio_menu(button_idx)
         local playing = false
         local tracks = {}
         local character_sounds = {}
-        local character_sounds_keys = {}
         local current_sound_index = 0
 
         local ram_load = 0
@@ -485,7 +484,7 @@ local function audio_menu(button_idx)
             stop_the_music()
             if tracks[loaded_track_index].is_character then
               for _, v in pairs(character_sounds) do
-                v:stop()
+                v.sound:stop()
               end
               character_sounds = {}
               if not characters[tracks[loaded_track_index].id].fully_loaded then
@@ -504,7 +503,6 @@ local function audio_menu(button_idx)
             normalMusic = {}
             dangerMusic = {}
             character_sounds = {}
-            character_sounds_keys = {}
             loaded = false
             playing = false
             soundTestMenu:set_button_text(3, loc("op_music_play"))
@@ -514,8 +512,7 @@ local function audio_menu(button_idx)
 
         local function addSound(name, sound)
           if sound then
-            character_sounds[#character_sounds + 1] = sound
-            character_sounds_keys[#character_sounds_keys + 1] = name
+            character_sounds[#character_sounds + 1] = { name = name, sound = sound}
           end
         end
 
@@ -578,6 +575,9 @@ local function audio_menu(button_idx)
                 end
               end
 
+              table.sort(character_sounds, function(a, b) return a.name <= b.name end)
+              soundTestMenu:set_button_setting(4, character_sounds[1].name)
+
               current_sound_index = 1
 
             else
@@ -588,7 +588,6 @@ local function audio_menu(button_idx)
 
               current_sound_index = 0
               character_sounds = {}
-              character_sounds_keys = {}
               soundTestMenu:set_button_setting(4, loc("op_none"))
             end
             if tracks[index].style == "dynamic" then
@@ -648,7 +647,7 @@ local function audio_menu(button_idx)
           soundTestMenu:set_button_setting(1, tracks[index].name)
           if tracks[index].is_character then
             soundTestMenu:set_button_text(1, loc("character"))
-            soundTestMenu:set_button_setting(4, "combo")
+            soundTestMenu:set_button_setting(4, character_sounds[1].name)
           else
             soundTestMenu:set_button_text(1, loc("stage"))
             soundTestMenu:set_button_setting(4, loc("op_none"))
@@ -672,7 +671,7 @@ local function audio_menu(button_idx)
           soundTestMenu:set_button_setting(1, tracks[index].name)
           if tracks[index].is_character then
             soundTestMenu:set_button_text(1, loc("character"))
-            soundTestMenu:set_button_setting(4, "combo")
+            soundTestMenu:set_button_setting(4, character_sounds[1].name)
           else
             soundTestMenu:set_button_text(1, loc("stage"))
             soundTestMenu:set_button_setting(4, loc("op_none"))
@@ -721,13 +720,13 @@ local function audio_menu(button_idx)
             if not loaded then
               loadTrack()
             end
-            if next(character_sounds_keys) then
+            if next(character_sounds) then
               if current_sound_index == #character_sounds then
                 current_sound_index = 1
               else
                 current_sound_index = current_sound_index + 1
               end
-              soundTestMenu:set_button_setting(4, character_sounds_keys[current_sound_index])
+              soundTestMenu:set_button_setting(4, character_sounds[current_sound_index].name)
             end
           end
         end
@@ -737,13 +736,13 @@ local function audio_menu(button_idx)
             if not loaded then
               loadTrack()
             end
-            if next(character_sounds_keys) then
+            if next(character_sounds) then
               if current_sound_index == 1 then
                 current_sound_index = #character_sounds
               else
                 current_sound_index = current_sound_index - 1
               end
-              soundTestMenu:set_button_setting(4, character_sounds_keys[current_sound_index])
+              soundTestMenu:set_button_setting(4, character_sounds[current_sound_index].name)
             end
           end
         end
@@ -754,9 +753,9 @@ local function audio_menu(button_idx)
               loadTrack()
             end
             for _, v in pairs(character_sounds) do
-              v:stop()
+              v.sound:stop()
             end
-            play_optional_sfx(character_sounds[current_sound_index])
+            play_optional_sfx(character_sounds[current_sound_index].sound)
           end
         end
   
@@ -788,7 +787,6 @@ local function audio_menu(button_idx)
         else
           soundTestMenu:set_button_setting(2, loc("op_none"))
         end
-        soundTestMenu:set_button_setting(4, "combo")
         unloadTrack()
         loadTrack()
         unloadTrack()
