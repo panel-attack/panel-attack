@@ -558,6 +558,8 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
       finalizeAndWriteReplay(extraPath, extraFilename)
     end
 
+    GAME.input:allowAllInputConfigurations()
+
     return {game_over_transition, {nextFunction, nil, P1:pick_win_sfx()}}
   end
   
