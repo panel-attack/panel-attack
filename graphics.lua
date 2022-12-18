@@ -774,7 +774,7 @@ function Stack.render(self)
   local function drawCommunityMessage()
     -- Draw the community message
     if not config.debug_mode then
-      gprint(join_community_msg or "", main_infos_screen_pos.x - 45, main_infos_screen_pos.y + 550)
+      gprintf(join_community_msg or "", 0, main_infos_screen_pos.y + 550, canvas_width, "center")
     end
   end
 
@@ -905,7 +905,8 @@ function Stack.render(self)
         comboData[i] = 0
       end
     end
-    for i = #comboData, 0, -1 do
+    local maxCombo = maxComboReached(analytic.data)
+    for i = maxCombo, 0, -1 do
       if comboData[i] and comboData[i] == 0 then
         comboData[i] = nil
       else

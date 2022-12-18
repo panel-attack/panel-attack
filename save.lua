@@ -22,8 +22,8 @@ function read_key_file()
       local file = love.filesystem.newFile("keysV2.txt")
       file:open("r")
       local teh_json = file:read(file:getSize())
-      local user_conf = json.decode(teh_json)
       file:close()
+      local user_conf = json.decode(teh_json)
       for k, v in ipairs(user_conf) do
         inputConfigs[k] = v
       end
@@ -110,8 +110,8 @@ function read_user_id_file()
       local file = love.filesystem.newFile("servers/" .. GAME.connected_server_ip .. "/user_id.txt")
       file:open("r")
       my_user_id = file:read()
-      my_user_id = my_user_id:match("^%s*(.-)%s*$")
       file:close()
+      my_user_id = my_user_id:match("^%s*(.-)%s*$")
     end
   )
 end
@@ -156,6 +156,7 @@ function read_puzzles()
           local file = love.filesystem.newFile("puzzles/" .. filename)
           file:open("r")
           local teh_json = file:read(file:getSize())
+          file:close()
           local current_json = json.decode(teh_json) or {}
           if current_json["Version"] == 2 then
             for _, puzzleSet in pairs(current_json["Puzzle Sets"]) do
@@ -210,17 +211,14 @@ function read_attack_files(path)
   local results = {}
   local lfs = love.filesystem
   local raw_dir_list = FileUtil.getFilteredDirectoryItems(path)
-  for i, v in ipairs(raw_dir_list) do
-    local start_of_v = string.sub(v, 0, string.len(prefix_of_ignored_dirs))
-    if start_of_v ~= prefix_of_ignored_dirs then
-      local current_path = path .. "/" .. v
-      if lfs.getInfo(current_path) then
-        if lfs.getInfo(current_path).type == "directory" then
-          read_attack_files(current_path)
-        else
-          local training_conf = read_attack_file(current_path)
-          results[#results+1] = training_conf
-        end
+  for _, v in ipairs(raw_dir_list) do
+    local current_path = path .. "/" .. v
+    if lfs.getInfo(current_path) then
+      if lfs.getInfo(current_path).type == "directory" then
+        read_attack_files(current_path)
+      else
+        local training_conf = read_attack_file(current_path)
+        results[#results+1] = training_conf
       end
     end
   end

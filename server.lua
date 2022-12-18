@@ -557,7 +557,7 @@ function Connection.send(self, stuff)
     end
   end
   if not foo[1] then
-    logger.warn("Closing connection for " .. (self.name or "nil") .. ". During Connection.send, foo[1] was nil after " .. times_to_retry .. " retries were attempted")
+    logger.debug("Closing connection for " .. (self.name or "nil") .. ". During Connection.send, foo[1] was nil after " .. times_to_retry .. " retries were attempted")
     self:close()
   end
 end
@@ -600,7 +600,7 @@ function Connection.login(self, user_id)
   elseif playerbase.players[self.user_id] ~= self.name then
     if playerbase:nameTaken(self.user_id, self.name) then
       self:send({choose_another_name = {reason = "That player name is already taken"}})
-      logger.warn("Login failure: Player tried to use already taken name: " .. self.name)
+      logger.warn("Login failure: Player (" .. self.user_id .. ") tried to use already taken name: " .. self.name)
     else 
       local the_old_name = playerbase.players[self.user_id]
       playerbase:update(self.user_id, self.name)
@@ -609,7 +609,7 @@ function Connection.login(self, user_id)
       end
       self.logged_in = true
       self:send({login_successful = true, name_changed = true, old_name = the_old_name, new_name = self.name})
-      logger.warn("Login successful and changed name " .. the_old_name .. " to " .. self.name)
+      logger.warn("Login successful and " .. self.user_id .. " changed name " .. the_old_name .. " to " .. self.name)
     end
   elseif playerbase.players[self.user_id] then
     self.logged_in = true
@@ -1625,7 +1625,7 @@ while true do
   if now ~= prev_now then
     for _, v in pairs(connections) do
       if now - v.last_read > 10 then
-        logger.warn("about to close connection for " .. (v.name or "nil") .. ". Connection timed out (>10 sec)")
+        logger.debug("about to close connection for " .. (v.name or "nil") .. ". Connection timed out (>10 sec)")
         v:close()
       elseif now - v.last_read > 1 then
         v:send("ELOL")
