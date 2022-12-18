@@ -20,44 +20,37 @@ local function general_menu()
   end
   local generalMenu
 
-  local function update_vsync(noToggle)
-    if not noToggle then
-      config.vsync = not config.vsync
-      love.window.setVSync(config.vsync and 1 or 0)
-    end
-    generalMenu:set_button_setting(1, config.vsync and loc("op_on") or loc("op_off"))
-  end
 
   local function update_countdown(noToggle)
     if not noToggle then
       config.ready_countdown_1P = not config.ready_countdown_1P
     end
-    generalMenu:set_button_setting(2, config.ready_countdown_1P and loc("op_on") or loc("op_off"))
+    generalMenu:set_button_setting(1, config.ready_countdown_1P and loc("op_on") or loc("op_off"))
   end
 
   local function update_fps(noToggle)
     if not noToggle then
       config.show_fps = not config.show_fps
     end
-    generalMenu:set_button_setting(3, config.show_fps and loc("op_on") or loc("op_off"))
+    generalMenu:set_button_setting(2, config.show_fps and loc("op_on") or loc("op_off"))
   end
 
   local function update_infos(noToggle)
     if not noToggle then
       config.show_ingame_infos = not config.show_ingame_infos
     end
-    generalMenu:set_button_setting(4, config.show_ingame_infos and loc("op_on") or loc("op_off"))
+    generalMenu:set_button_setting(3, config.show_ingame_infos and loc("op_on") or loc("op_off"))
   end
 
   local function update_analytics(noToggle)
     if not noToggle then
       config.enable_analytics = not config.enable_analytics
     end
-    generalMenu:set_button_setting(5, config.enable_analytics and loc("op_on") or loc("op_off"))
+    generalMenu:set_button_setting(4, config.enable_analytics and loc("op_on") or loc("op_off"))
   end
 
   local function update_input_repeat_delay()
-    generalMenu:set_button_setting(6, config.input_repeat_delay)
+    generalMenu:set_button_setting(5, config.input_repeat_delay)
   end
 
   local function increase_input_repeat_delay()
@@ -72,7 +65,7 @@ local function general_menu()
 
   local function update_replay_preference()
     config.save_replays_publicly = save_replays_publicly_choices[save_replays_preference_index][1]
-    generalMenu:set_button_setting(7, loc(save_replays_publicly_choices[save_replays_preference_index][2]))
+    generalMenu:set_button_setting(6, loc(save_replays_publicly_choices[save_replays_preference_index][2]))
   end
 
   local function increase_publicness() -- privatize or publicize?
@@ -98,7 +91,6 @@ local function general_menu()
   end
 
   generalMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
-  generalMenu:add_button(loc("op_vsync"), update_vsync, goEscape, update_vsync, update_vsync)
   generalMenu:add_button(loc("op_countdown"), update_countdown, goEscape, update_countdown, update_countdown)
   generalMenu:add_button(loc("op_fps"), update_fps, goEscape, update_fps, update_fps)
   generalMenu:add_button(loc("op_ingame_infos"), update_infos, goEscape, update_infos, update_infos)
@@ -106,7 +98,6 @@ local function general_menu()
   generalMenu:add_button(loc("op_input_delay"), nextMenu, goEscape, decrease_input_repeat_delay, increase_input_repeat_delay)
   generalMenu:add_button(loc("op_replay_public"), nextMenu, goEscape, increase_publicness, increase_privateness)
   generalMenu:add_button(loc("back"), exitSettings, exitSettings)
-  update_vsync(true)
   update_countdown(true)
   update_fps(true)
   update_infos(true)
