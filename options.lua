@@ -1,5 +1,6 @@
 local options = {}
 local analytics = require("analytics")
+local consts = require("consts")
 local wait = coroutine.yield
 local memory_before_options_menu = nil
 local theme_index
@@ -967,11 +968,11 @@ local function about_menu(button_idx)
   end
 
   local function show_themes_readme()
-    if not love.filesystem.getInfo("themes/" .. prefix_of_ignored_dirs .. default_theme_dir) then
+    if not love.filesystem.getInfo("themes/" .. prefix_of_ignored_dirs .. consts.defaultThemeDirectory) then
       --print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
       gprint(loc("op_copy_files"), 280, 280)
       wait()
-      recursive_copy("themes/" .. default_theme_dir, "themes/" .. prefix_of_ignored_dirs .. default_theme_dir)
+      recursive_copy("themes/" .. consts.defaultThemeDirectory, "themes/" .. prefix_of_ignored_dirs .. consts.defaultThemeDirectory)
 
       -- Android can't easily copy into the save dir, so do it for them to help.
       recursive_copy("default_data/themes", "themes")

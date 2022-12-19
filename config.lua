@@ -1,6 +1,6 @@
 json = require("dkjson")
 require("util")
-require("consts")
+local consts = require("consts")
 
 -- Default configuration values
 config = {
@@ -10,7 +10,7 @@ config = {
       -- Lang used for localization
     language_code                 = "EN",
   
-    theme                         = default_theme_dir,
+    theme                         = consts.defaultThemeDirectory,
     panels                     	  = nil, -- setup later in panel init
     character                     = random_character_special_value,
     stage                         = random_stage_special_value,
