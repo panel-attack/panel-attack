@@ -484,19 +484,19 @@ end
 -- sound playing / sound control
 
 local function playRandomSfx(sfxTable, fallback)
-  if sfxTable and #sfxTable > 0 then
-    sfxTable[math.random(#sfxTable)]:play()
-  elseif fallback then
-    playRandomSfx(fallback)
+  if not GAME.muteSoundEffects then
+    if sfxTable and #sfxTable > 0 then
+      sfxTable[math.random(#sfxTable)]:play()
+    elseif fallback then
+      playRandomSfx(fallback)
+    end
   end
 end
 
 function Character.play_selection_sfx(self)
-  if not GAME.muteSoundEffects and #self.sounds.selection ~= 0 then
-    playRandomSfx(self.sounds.selection)
-    return true
-  end
-  return false
+  playRandomSfx(self.sounds.selection)
+  -- deliver feedback so that the game can play a menu sound instead if there was no selection SFX
+  return #self.sounds.selection ~= 0
 end
 
 function Character.playComboSfx(self, size)
@@ -587,17 +587,15 @@ function Character.playAttackSfx(self, attack)
     end
   end
 
-  if not GAME.muteSoundEffects then
-    stopPreviousSounds()
+  stopPreviousSounds()
 
-    -- play combos or chains
-    if attack.type == e_chain_or_combo.combo then
-      self:playComboSfx(attack.size)
-    elseif attack.type == e_chain_or_combo.shock then
-      self:playShockSfx(attack.size)
-    else --elseif chain_combo.type == e_chain_or_combo.chain then
-      self:playChainSfx(attack.size)
-    end
+  -- play combos or chains
+  if attack.type == e_chain_or_combo.combo then
+    self:playComboSfx(attack.size)
+  elseif attack.type == e_chain_or_combo.shock then
+    self:playShockSfx(attack.size)
+  else --elseif chain_combo.type == e_chain_or_combo.chain then
+    self:playChainSfx(attack.size)
   end
 end
 
