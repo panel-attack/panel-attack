@@ -71,16 +71,6 @@ function Stage.json_init(self)
   return false
 end
 
--- stops stage sounds
-function Stage.stop_sounds(self)
-  -- music
-  for _, music in ipairs(self.musics) do
-    if self.musics[music] then
-      self.musics[music]:stop()
-    end
-  end
-end
-
 -- preemptively loads a stage
 function Stage.preload(self)
   logger.trace("preloading stage " .. self.id)
