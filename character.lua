@@ -596,14 +596,6 @@ function Character.playAttackSfx(self, attack)
         stopIfPlaying(v[i])
       end
     end
-    if self.chain_style == chainStyle.classic then
-      for _, sound in pairs(self.sounds.chain_echo) do
-        stopIfPlaying(sound)
-      end
-      for _, sound in pairs(self.sounds.chain2_echo) do
-        stopIfPlaying(sound)
-      end
-    end
   end
 
   stopPreviousSounds()
