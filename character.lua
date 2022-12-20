@@ -370,16 +370,23 @@ function Character.reassignLegacySfx(self)
     end
     if #self.sounds.chain2_echo > 0 then
       self.sounds.chain[6] = self.sounds.chain2_echo
+      -- shouldn't show up in sound test any longer
       self.sounds.chain2_echo = nil
       maxIndex = 6
     end
     if #self.sounds.chain_echo > 0 then
       self.sounds.chain[5] = self.sounds.chain_echo
+      -- shouldn't show up in sound test any longer
       self.sounds.chain_echo = nil
       maxIndex = math.max(5, maxIndex)
     end
     
     self:fillInMissingSounds(self.sounds.chain, "chain", maxIndex)
+
+    if #self.sounds.shock > 0 then
+      -- combo_echo won't get used if shock is present, so it shouldn't show up in sound test any longer
+      self.sounds.combo_echo = nil
+    end
   end
 end
 
