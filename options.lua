@@ -968,11 +968,11 @@ local function about_menu(button_idx)
   end
 
   local function show_themes_readme()
-    if not love.filesystem.getInfo("themes/" .. prefix_of_ignored_dirs .. consts.defaultThemeDirectory) then
+    if not love.filesystem.getInfo("themes/" .. prefix_of_ignored_dirs .. consts.DEFAULT_THEME_DIRECTORY) then
       --print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
       gprint(loc("op_copy_files"), 280, 280)
       wait()
-      recursive_copy("themes/" .. consts.defaultThemeDirectory, "themes/" .. prefix_of_ignored_dirs .. consts.defaultThemeDirectory)
+      recursive_copy("themes/" .. consts.DEFAULT_THEME_DIRECTORY, "themes/" .. prefix_of_ignored_dirs .. consts.DEFAULT_THEME_DIRECTORY)
 
       -- Android can't easily copy into the save dir, so do it for them to help.
       recursive_copy("default_data/themes", "themes")

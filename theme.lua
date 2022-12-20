@@ -26,7 +26,7 @@ local function load_theme_img(name, useBackup)
   end
   local img = GraphicsUtil.loadImageFromSupportedExtensions("themes/" .. config.theme .. "/" .. name)
   if not img and useBackup then
-    img = GraphicsUtil.loadImageFromSupportedExtensions("themes/" .. consts.defaultThemeDirectory .. "/" .. name)
+    img = GraphicsUtil.loadImageFromSupportedExtensions("themes/" .. consts.DEFAULT_THEME_DIRECTORY .. "/" .. name)
   end
   return img
 end
@@ -297,7 +297,7 @@ function Theme.sound_init(self)
   local function load_theme_sfx(SFX_name)
     local dirs_to_check = {
       "themes/" .. config.theme .. "/sfx/",
-      "themes/" .. consts.defaultThemeDirectory .. "/sfx/"
+      "themes/" .. consts.DEFAULT_THEME_DIRECTORY .. "/sfx/"
     }
     return find_sound(SFX_name, dirs_to_check)
   end

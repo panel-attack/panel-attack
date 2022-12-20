@@ -83,10 +83,10 @@ end
 -- If we have leftover time that hasn't been run yet, it will sleep less to catchup.
 local function customSleep(runMetrics)
 
-  local targetDelay = consts.frameRate
+  local targetDelay = consts.FRAME_RATE
   -- We want leftover time to be above 0 but less than a quarter frame.
   -- If it goes above that, only wait enough to get it down to that.
-  local maxLeftOverTime = consts.frameRate / 4
+  local maxLeftOverTime = consts.FRAME_RATE / 4
   if leftover_time > maxLeftOverTime then
     targetDelay = targetDelay - (leftover_time - maxLeftOverTime)
     targetDelay = math.max(targetDelay, 0)

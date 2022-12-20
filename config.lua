@@ -10,7 +10,7 @@ config = {
       -- Lang used for localization
     language_code                 = "EN",
   
-    theme                         = consts.defaultThemeDirectory,
+    theme                         = consts.DEFAULT_THEME_DIRECTORY,
     panels                     	  = nil, -- setup later in panel init
     character                     = random_character_special_value,
     stage                         = random_stage_special_value,
