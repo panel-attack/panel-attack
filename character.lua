@@ -555,7 +555,7 @@ function Character.playShockSfx(self, size)
   end
 end
 
--- Stops old combo / chaing sounds and plays the appropriate chain or combo sound
+-- Stops old combo / chain sounds and plays the appropriate chain or combo sound
 function Character.playAttackSfx(self, attack)
   local function stopPreviousSounds()
     -- stop previous sounds if any
