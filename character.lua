@@ -314,6 +314,10 @@ function Character.sound_init(self, full, yields)
     self.sounds[sfx] = self:loadSfx(sfx, yields)
   end
 
+  if full then
+    self:reassignLegacySfx()
+  end
+
   -- music
   local character_musics = full and other_musics or basic_musics
   for _, music in ipairs(character_musics) do
@@ -347,6 +351,35 @@ function Character.sound_uninit(self)
   -- music
   for _, music in ipairs(other_musics) do
     self.musics[music] = nil
+  end
+end
+
+function Character.reassignLegacySfx(self)
+  if self.chain_style == chainStyle.classic then
+    local maxIndex = -1
+    for i = #self.sounds.chain, 0, -1 do
+      if i == 2 and self.sounds.chain[i] then
+        self.sounds.chain[4] = self.sounds.chain[2]
+        maxIndex = i
+      elseif i == 1 and self.sounds.chain[i] then
+        self.sounds.chain[2] = self.sounds.chain[1]
+        maxIndex = math.max(i, maxIndex)
+      else
+        self.sounds.chain[i] = nil
+      end
+    end
+    if #self.sounds.chain2_echo > 0 then
+      self.sounds.chain[6] = self.sounds.chain2_echo
+      self.sounds.chain2_echo = nil
+      maxIndex = 6
+    end
+    if #self.sounds.chain_echo > 0 then
+      self.sounds.chain[5] = self.sounds.chain_echo
+      self.sounds.chain_echo = nil
+      maxIndex = math.max(5, maxIndex)
+    end
+    
+    self:fillInMissingSounds(self.sounds.chain, "chain", maxIndex)
   end
 end
 
@@ -465,6 +498,7 @@ function Character.fillInMissingSounds(self, sfxTable,  name, maxIndex)
       if i >= perSizeSfxStart[name] then
         sfxTable[i] = fillUpSound
       else
+        -- leave it empty so it doesn't show up in sound test
         sfxTable[i] = {}
       end
     end
@@ -524,23 +558,8 @@ function Character.playComboSfx(self, size)
 end
 
 function Character.playChainSfx(self, length)
-  if self.chain_style == chainStyle.classic then
-    if length < 4 then
-      if self.sounds.chain[1] then
-        playRandomSfx(self.sounds.chain[1], self.sounds.chain[0])
-      end
-    elseif length == 4 then
-        playRandomSfx(self.sounds.chain[2], self.sounds.chain[0])
-    elseif length == 5 then
-        -- fallback to chain instead of its own fallback
-        playRandomSfx(self.sounds.chain_echo, self.sounds.chain[0])
-    elseif length >= 6 then
-      -- fallback to chain instead of its own fallback
-      playRandomSfx(self.sounds.chain2_echo, self.sounds.chain[0])
-    end
-  else --elseif self.chain_style == chainStyle.per_chain then
-    playRandomSfx(self.sounds.chain[length], self.sounds.chain[0])
-  end
+  -- chain[0] always exists by virtue of the default character SFX
+  playRandomSfx(self.sounds.chain[length], self.sounds.chain[0])
 end
 
 function Character.playShockSfx(self, size)
