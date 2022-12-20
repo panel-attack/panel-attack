@@ -3,6 +3,8 @@ local logger = require("logger")
 
 -- Sets the volumes based on the current player configuration settings
 function apply_config_volume()
+  GAME.muteSoundEffects = (config.master_volume == 0 or config.SFX_volume == 0)
+
   love.audio.setVolume(config.master_volume / 100)
   themes[config.theme]:apply_config_volume()
   for _, character in pairs(characters) do
