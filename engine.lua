@@ -1097,7 +1097,7 @@ function Stack.enqueue_card(self, chain, x, y, n)
 end
 
 function Stack:wait_for_random_character()
-  self.character = Character.wait_for_random_character(self.character)
+  self.character = wait_for_random_character(self.character)
 end
 
 -- Enqueue a pop animation
@@ -1698,17 +1698,11 @@ function Stack.simulate(self)
     -- TAUNTING
     if self:shouldChangeSoundEffects() then
       if self.taunt_up ~= nil then
-        for _, t in ipairs(characters[self.character].sounds.taunt_ups) do
-          t:stop()
-        end
-        characters[self.character].sounds.taunt_ups[self.taunt_up]:play()
+        characters[self.character]:playTauntUpSfx(self.taunt_up)
         self:taunt("taunt_up")
         self.taunt_up = nil
       elseif self.taunt_down ~= nil then
-        for _, t in ipairs(characters[self.character].sounds.taunt_downs) do
-          t:stop()
-        end
-        characters[self.character].sounds.taunt_downs[self.taunt_down]:play()
+        characters[self.character]:playTauntDownSfx(self.taunt_down)
         self:taunt("taunt_down")
         self.taunt_down = nil
       end
@@ -1983,12 +1977,7 @@ function Stack.simulate(self)
         self.combo_chain_play = nil
       end
       if SFX_garbage_match_play then
-        for _, v in pairs(characters[self.character].sounds.garbage_matches) do
-          v:stop()
-        end
-        if #characters[self.character].sounds.garbage_matches ~= 0 then
-          characters[self.character].sounds.garbage_matches[math.random(#characters[self.character].sounds.garbage_matches)]:play()
-        end
+        characters[self.character]:playGarbageMatchSfx()
         SFX_garbage_match_play = nil
       end
       if SFX_Fanfare_Play == 0 then
@@ -2014,11 +2003,8 @@ function Stack.simulate(self)
         else
           themes[config.theme].sounds.garbage_thud[self.sfx_garbage_thud]:play()
         end
-        if #characters[self.character].sounds.garbage_lands ~= 0 and interrupted_thud == nil then
-          for _, v in pairs(characters[self.character].sounds.garbage_lands) do
-            v:stop()
-          end
-          characters[self.character].sounds.garbage_lands[math.random(#characters[self.character].sounds.garbage_lands)]:play()
+        if interrupted_thud == nil then
+          characters[self.character]:playGarbageLandSfx()
         end
         self.sfx_garbage_thud = 0
       end
@@ -2244,8 +2230,8 @@ end
 
 -- Randomly returns a win sound if the character has one
 function Stack.pick_win_sfx(self)
-  if #characters[self.character].sounds.wins ~= 0 then
-    return characters[self.character].sounds.wins[math.random(#characters[self.character].sounds.wins)]
+  if #characters[self.character].sounds.win ~= 0 then
+    return characters[self.character].sounds.win[math.random(#characters[self.character].sounds.win)]
   else
     return themes[config.theme].sounds.fanfare1 -- TODO add a default win sound
   end
@@ -2732,14 +2718,14 @@ function Stack.check_matches(self)
     --end
 
     self.manual_raise = false
-    --self.score_render=1;
-    --Nope.
+
+    -- Calculate Attack Sound Effects
     if self:shouldChangeSoundEffects() then
       local chainSize = 0
       if is_chain then
         chainSize = self.chain_counter
       end
-      local newComboChainInfo = Stack.comboChainSoundInfo(combo_size > 3, chainSize, metal_count)
+      local newComboChainInfo = Stack.comboChainSoundInfo(combo_size, chainSize, metal_count)
       if newComboChainInfo then
         self.combo_chain_play = newComboChainInfo
       end
@@ -2747,19 +2733,17 @@ function Stack.check_matches(self)
   end
 end
 
-function Stack.comboChainSoundInfo(containsCombo, chainCounter, metalCount)
+function Stack.comboChainSoundInfo(comboSize, chainCounter, metalCount)
   local result = nil
-  if (containsCombo or chainCounter > 0) then
+  if (comboSize > 3 or chainCounter > 0) then
     if chainCounter > 0 then
-      result = {e_chain_or_combo.chain, chainCounter}
-    elseif containsCombo then
-      result = {e_chain_or_combo.combo, "combos"}
+      result = {type = e_chain_or_combo.chain, size = chainCounter}
+    elseif comboSize > 3 then
+      result = {type = e_chain_or_combo.combo, size = comboSize}
     end
   end
-  if metalCount > 5 then
-    result = {e_chain_or_combo.combo, "combo_echos"}
-  elseif metalCount > 2 then
-    result = {e_chain_or_combo.combo, "combos"}
+  if metalCount > 2 then
+    result = {type = e_chain_or_combo.shock, size = metalCount}
   end
   return result
 end
@@ -2767,7 +2751,7 @@ end
 function Stack:playComboChainSoundInfo(comboChainSoundInfo)
   themes[config.theme].sounds.land:stop()
   themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-  characters[self.character]:play_combo_chain_sfx(comboChainSoundInfo)
+  characters[self.character]:playAttackSfx(comboChainSoundInfo)
 end
 
 -- Sets the hovering state on the appropriate panels

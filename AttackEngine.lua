@@ -22,7 +22,7 @@ AttackEngine =
     self.disableQueueLimit = disableQueueLimit
     self.attackPatterns = {}
     self.CLOCK = 0
-    self.character = Character.wait_for_random_character(character)
+    self.character = wait_for_random_character(character)
     self.telegraph = Telegraph(sender) 
   end
 )
@@ -93,7 +93,7 @@ function AttackEngine.run(self)
   end
 
   local maxChain = 0
-  local hasCombo = false
+  local maxCombo = 0
   local hasMetal = false
   local totalAttackTimeBeforeRepeat = self.delayBeforeRepeat + highestStartTime - self.delayBeforeStart
   if self.disableQueueLimit or self.target.garbage_q:len() <= 72 then
@@ -110,7 +110,7 @@ function AttackEngine.run(self)
               local chainCounter = garbage[2] + 1
               maxChain = math.max(chainCounter, maxChain)
             else
-              hasCombo = true
+              maxCombo = garbage[1] + 1 -- TODO: Handle combos SFX greather than 7
             end
             hasMetal = garbage[3] or hasMetal
             self.telegraph:push(garbage, math.random(11, 17), math.random(1, 11), self.CLOCK)
@@ -126,9 +126,9 @@ function AttackEngine.run(self)
   if hasMetal then
     metalCount = 3
   end
-  local newComboChainInfo = Stack.comboChainSoundInfo(hasCombo, maxChain, metalCount)    
+  local newComboChainInfo = Stack.comboChainSoundInfo(maxCombo, maxChain, metalCount)    
   if newComboChainInfo then
-    characters[self.character]:play_combo_chain_sfx(newComboChainInfo)
+    characters[self.character]:playAttackSfx(newComboChainInfo)
   end
 
   self.CLOCK = self.CLOCK + 1
