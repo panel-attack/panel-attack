@@ -103,7 +103,7 @@ config = {
   
         -- do stuff using read_data.version for retrocompatibility here
   
-        if type(read_data.theme) == "string" and love.filesystem.getInfo("themes/" .. read_data.theme) then
+        if type(read_data.theme) == "string" and love.filesystem.getInfo("themes/" .. read_data.theme .. "/config.json") then
           configTable.theme = read_data.theme
         end
   
