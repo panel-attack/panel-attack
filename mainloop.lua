@@ -1323,25 +1323,20 @@ function main_net_vs()
   
   local function update()
     local function handleTaunt()
+      local function getCharacter(playerNumber)
+        if P1.player_number == playerNumber then
+          return characters[P1.character]
+        elseif P2.player_number == playerNumber then
+          return characters[P2.character]
+        end
+      end
+
       local messages = server_queue:pop_all_with("taunt")
       for _, msg in ipairs(messages) do
         if msg.taunt then -- receive taunts
-          local taunts = nil
-          -- P1.character and P2.character are supposed to be already filtered with current mods, taunts may differ though!
-          if msg.player_number == select_screen.my_player_number then
-            taunts = characters[P1.character].sounds[msg.type]
-          elseif msg.player_number == select_screen.op_player_number then
-            taunts = characters[P2.character].sounds[msg.type]
-          end
-          if taunts then
-            for _, t in ipairs(taunts) do
-              t:stop()
-            end
-            if msg.index <= #taunts then
-              taunts[msg.index]:play()
-            elseif #taunts ~= 0 then
-              taunts[math.random(#taunts)]:play()
-            end
+          local character = getCharacter(msg.player_number)
+          if character ~= nil then
+            character:playTaunt(msg.type, msg.index)
           end
        end
       end
