@@ -317,9 +317,9 @@ function Stack.render(self)
       local panel = self.panels[row][col]
       local draw_x = 4 + (col - 1) * 16
       local draw_y = 4 + (11 - (row)) * 16 + self.displacement - shake
-      if panel.color ~= 0 and panel.state ~= "popped" then
+      if panel.color ~= 0 and panel.state ~= Panel.states.popped then
         local draw_frame = 1
-        if panel.garbage then
+        if panel.type == Panel.types.garbage then
           local imgs = {flash = metals.flash}
           if not panel.metal then
             if not self.garbage_target then 
@@ -373,7 +373,7 @@ function Stack.render(self)
               draw(imgs.botright, draw_x + 16 * width - 8, draw_y + 13, 0, 8 / corner_w, 3 / corner_h)
             end
           end
-          if panel.state == "matched" then
+          if panel.state == Panel.state.matched then
             local flash_time = panel.initial_time - panel.timer
             if flash_time >= self.FRAMECOUNT_FLASH then
               if panel.timer > panel.pop_time then
@@ -402,7 +402,7 @@ function Stack.render(self)
             end
           end
         else
-          if panel.state == "matched" then
+          if panel.state == Panel.states.matched then
             local flash_time = self.FRAMECOUNT_MATCH - panel.timer
             if flash_time >= self.FRAMECOUNT_FLASH then
               draw_frame = 6
@@ -411,19 +411,19 @@ function Stack.render(self)
             else
               draw_frame = 5
             end
-          elseif panel.state == "popping" then
+          elseif panel.state == Panel.states.popping then
             draw_frame = 6
-          elseif panel.state == "landing" then
+          elseif panel.state == Panel.states.landing then
             draw_frame = bounce_table[panel.timer + 1]
-          elseif panel.state == "swapping" then
-            if panel.is_swapping_from_left then
+          elseif panel.state == Panel.states.swapping then
+            if panel.isSwappingFromLeft then
               draw_x = draw_x - panel.timer * 4
             else
               draw_x = draw_x + panel.timer * 4
             end
-          elseif panel.state == "dead" then
+          elseif panel.state == Panel.states.dead then
             draw_frame = 6
-          elseif panel.state == "dimmed" then
+          elseif panel.state == Panel.states.dimmed then
             draw_frame = 7
           elseif panel.fell_from_garbage then
             draw_frame = garbage_bounce_table[panel.fell_from_garbage] or 1
@@ -488,7 +488,7 @@ function Stack.render(self)
 
         -- Require hovering over a stack to show details
         if mx >= self.pos_x * GFX_SCALE and mx <= (self.pos_x + self.width * 16) * GFX_SCALE then
-          if panel.color ~= 0 and panel.state ~= "popped" then
+          if panel.color ~= 0 and panel.state ~= Panel.states.popped then
             gprint(panel.state, draw_x, draw_y)
             if panel.match_anyway ~= nil then
               gprint(tostring(panel.match_anyway), draw_x, draw_y + 10)
