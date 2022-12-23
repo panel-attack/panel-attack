@@ -641,6 +641,7 @@ function Character.playTauntUpSfx(self, tauntUp)
     for _, t in ipairs(self.sounds.taunt_up) do
       stopIfPlaying(t)
     end
+    -- self might be a replacement character with less taunts than the selected one so confirm the index first
     if self.sounds.taunt_up[tauntUp] then
       self.sounds.taunt_up[tauntUp]:play()
     else
@@ -649,17 +650,26 @@ function Character.playTauntUpSfx(self, tauntUp)
   end
 end
 
--- tauntDown is rolled externally in order to send the exact same taunt index to the enemy as plays locally
 function Character.playTauntDownSfx(self, tauntDown)
   if #self.sounds.taunt_down ~= 0 then
     for _, t in ipairs(self.sounds.taunt_down) do
       stopIfPlaying(t)
     end
+    -- self might be a replacement character with less taunts than the selected one so confirm the index first
     if self.sounds.taunt_down[tauntDown] then
       self.sounds.taunt_down[tauntDown]:play()
     else
       playRandomSfx(self.sounds.taunt_down)
     end
+  end
+end
+
+function Character.playTaunt(self, tauntType, index)
+  -- find instead of equals for forward compatibility
+  if string.find(tauntType, "up", nil, true) then
+    self:playTauntUpSfx(index)
+  elseif string.find(tauntType, "down", nil, true) then
+    self:playTauntDownSfx(index)
   end
 end
 
