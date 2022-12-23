@@ -180,8 +180,7 @@ do
     undo_stonermode()
     GAME.backgroundImage = themes[config.theme].images.bg_main
     GAME.battleRoom = nil
-    GAME.input:clearInputConfigurationsForPlayers()
-    GAME.input:requestPlayerInputConfigurationAssignments(1)
+    GAME.input:allowAllInputConfigurations()
     reset_filters()
     local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
     local main_menu
@@ -559,6 +558,8 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
       finalizeAndWriteReplay(extraPath, extraFilename)
     end
 
+    GAME.input:allowAllInputConfigurations()
+
     return {game_over_transition, {nextFunction, nil, P1:pick_win_sfx()}}
   end
   
@@ -774,6 +775,7 @@ local function main_select_speed_99(mode)
       write_conf_file()
     end
     stop_the_music()
+    GAME.input:requestSingleInputConfigurationForPlayerCount(1)
     startGameSet = true
   end
 
@@ -1465,8 +1467,7 @@ function main_local_vs_setup()
   GAME.battleRoom = BattleRoom()
   GAME.battleRoom.playerNames[1] = loc("player_n", "1")
   GAME.battleRoom.playerNames[2] = loc("player_n", "2")
-  GAME.input:clearInputConfigurationsForPlayers()
-  GAME.input:requestPlayerInputConfigurationAssignments(2)
+  GAME.input:requestSingleInputConfigurationForPlayerCount(2)
   return select_screen.main, {select_screen, "2p_local_vs"}
 end
 
