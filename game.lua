@@ -5,6 +5,7 @@ local class = require("class")
 local logger = require("logger")
 local sound = require("sound")
 local analytics = require("analytics")
+local manualGC = require("libraries.batteries.manual_gc")
 local sceneManager = require("scenes.sceneManager")
 local scenes = nil
 
@@ -226,6 +227,8 @@ function Game:update(dt)
 
   update_music()
   self.rich_presence:runCallbacks()
+  
+  manualGC(0.0001, nil, nil)
 end
 
 function Game:draw()
@@ -281,7 +284,10 @@ function Game:draw()
 end
 
 function Game:clearMatch()
-  self.match = nil
+  if self.match then
+    self.match:deinit()
+    self.match = nil
+  end
   self.gameIsPaused = false
   self.renderDuringPause = false
   self.preventSounds = false

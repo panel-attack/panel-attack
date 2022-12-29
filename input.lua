@@ -226,7 +226,7 @@ function love.keypressed(key, scancode, rep)
   end
 
   local function handleFullscreenToggle()
-    if key == "return" and not rep and love.keyboard.isDown("lalt") then
+    if key == "return" and not rep and (love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt")) then
       love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
       return true
     end
@@ -280,11 +280,33 @@ function love.keypressed(key, scancode, rep)
       end
     end
   end
+
+  local function modifyWinCounts()
+    if GAME.battleRoom and (love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt")) then
+      if key == "1" then -- Add to P1's win count
+        GAME.battleRoom.modifiedWinCounts[1] = math.max(0, GAME.battleRoom.modifiedWinCounts[1] + 1)
+      end
+      if key == "2" then -- Subtract from P1's win count
+        GAME.battleRoom.modifiedWinCounts[1] = math.max(0, GAME.battleRoom.modifiedWinCounts[1] - 1)
+      end
+      if key == "3" then -- Add to P2's win count
+        GAME.battleRoom.modifiedWinCounts[2] = math.max(0, GAME.battleRoom.modifiedWinCounts[2] + 1)
+      end
+      if key == "4" then -- Subtract from P2's win count
+        GAME.battleRoom.modifiedWinCounts[2] = math.max(0, GAME.battleRoom.modifiedWinCounts[2] - 1)
+      end
+      if key == "5" then -- Reset key
+        GAME.battleRoom.modifiedWinCounts[1] = 0
+        GAME.battleRoom.modifiedWinCounts[2] = 0
+      end
+    end
+  end
   
   if handleFullscreenToggle() or
      handleScreenshot() or
      handleCopy() or
-     handleDumpAttackPattern() then
+     handleDumpAttackPattern() or
+     modifyWinCounts() then
     return
   end
 
@@ -370,14 +392,10 @@ end
 
 -- Requests the next inputs assign configurations to players, up to the number of players passed in
 function Input.requestPlayerInputConfigurationAssignments(self, numberOfPlayers)
-  if numberOfPlayers == 1 then
-    self.playerInputConfigurationsMap[1] = self.inputConfigurations
-  else
-    if #input.playerInputConfigurationsMap < numberOfPlayers then
-      self.acceptingPlayerInputConfigurationAssignments = true
-      self.availableInputConfigurationsToAssign = deepcpy(self.inputConfigurations)
-      self.numberOfPlayersAcceptingInputConfiguration = numberOfPlayers
-    end
+  if #input.playerInputConfigurationsMap < numberOfPlayers then
+    self.acceptingPlayerInputConfigurationAssignments = true
+    self.availableInputConfigurationsToAssign = deepcpy(self.inputConfigurations)
+    self.numberOfPlayersAcceptingInputConfiguration = numberOfPlayers
   end
 end
 
@@ -408,6 +426,18 @@ function Input.getInputConfigurationsForPlayerNumber(self, playerNumber)
   return results
 end
 
+function Input.requestSingleInputConfigurationForPlayerCount(self, playerCount)
+  if playerCount == nil then
+    playerCount = 1
+  end
+  self:clearInputConfigurationsForPlayers()
+  self:requestPlayerInputConfigurationAssignments(playerCount)
+end
+
+function Input.allowAllInputConfigurations(self)
+  self.playerInputConfigurationsMap[1] = self.inputConfigurations
+end
+
 -- Makes a function that will return true if one of the fixed keys or configurable keys was pressed for the passed in player.
 -- Also returns the sound effect callback function
 -- fixed -- the set of key names that always work
@@ -434,7 +464,7 @@ local function input_key_func(fixed, configurable, query, sound, ...)
     end
 
     for i = 1, #configurable do
-      for index, inputConfiguration in ipairs(input:getInputConfigurationsForPlayerNumber(playerNumber)) do
+      for _, inputConfiguration in ipairs(input:getInputConfigurationsForPlayerNumber(playerNumber)) do
         local keyname = inputConfiguration[configurable[i]]
         if keyname then
           res = res or query(keyname, other_args) and not menu_reserved_keys[keyname]
