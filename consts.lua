@@ -13,13 +13,10 @@ local consts = {
   KEY_NAMES = {"up", "down", "left", "right", "swap1", "swap2", "taunt_up", "taunt_down", "raise1", "raise2", "start"},
   FRAME_RATE = 1 / 60,
   KEY_DELAY = .25,
-  KEY_REPEAT_PERIOD = .05
+  KEY_REPEAT_PERIOD = .05,
 }
 
 -- TODO: Move all values below to the above table
-
-local consts = {}
-consts.frameRate = 1/60
 
 -- The values in this file are constants (except in this file perhaps) and are expected never to change during the game, not to be confused with globals!
 VERSION = "046"

@@ -2,7 +2,7 @@ local BarGraph = require("libraries.BarGraph")
 local consts = require("consts")
 
 local RunTimeGraph = class(function(self)
-  local updateSpeed = consts.frameRate * 1
+  local updateSpeed = consts.FRAME_RATE * 1
   local x = 880
   local y = 0
   local width = 400
@@ -20,12 +20,12 @@ local RunTimeGraph = class(function(self)
   y = y + height + padding
 
   -- leftover time
-  self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, consts.frameRate * 1)
+  self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, consts.FRAME_RATE * 1)
   self.graphs[#self.graphs]:setFillColor({0, 1, 1, 1}, 1)
   y = y + height + padding
 
   -- run loop graph
-  self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, consts.frameRate * 1)
+  self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, consts.FRAME_RATE * 1)
   self.graphs[#self.graphs]:setFillColor({0, 1, 0, 1}, 1) -- update
   self.graphs[#self.graphs]:setFillColor({1, 0.5, 0, 1}, 2) -- draw
   self.graphs[#self.graphs]:setFillColor({0, 0, 1, 1}, 3) -- sleep
