@@ -17,7 +17,7 @@ UpdatingImage =
     self.quad = nil
     if self.tiled then
       -- note how the Quad's width and height are larger than the image width and height.
-      self.quad = love.graphics.newQuad(0, 0, self.width, self.height, self.image:getDimensions())
+      self.quad = GraphicsUtil:newRecycledQuad(0, 0, self.width, self.height, self.image:getDimensions())
     end
   end
 )

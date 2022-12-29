@@ -23,44 +23,37 @@ local function general_menu()
   end
   local generalMenu
 
-  local function update_vsync(noToggle)
-    if not noToggle then
-      config.vsync = not config.vsync
-      love.window.setVSync(config.vsync and 1 or 0)
-    end
-    generalMenu:set_button_setting(1, config.vsync and loc("op_on") or loc("op_off"))
-  end
 
   local function update_countdown(noToggle)
     if not noToggle then
       config.ready_countdown_1P = not config.ready_countdown_1P
     end
-    generalMenu:set_button_setting(2, config.ready_countdown_1P and loc("op_on") or loc("op_off"))
+    generalMenu:set_button_setting(1, config.ready_countdown_1P and loc("op_on") or loc("op_off"))
   end
 
   local function update_fps(noToggle)
     if not noToggle then
       config.show_fps = not config.show_fps
     end
-    generalMenu:set_button_setting(3, config.show_fps and loc("op_on") or loc("op_off"))
+    generalMenu:set_button_setting(2, config.show_fps and loc("op_on") or loc("op_off"))
   end
 
   local function update_infos(noToggle)
     if not noToggle then
       config.show_ingame_infos = not config.show_ingame_infos
     end
-    generalMenu:set_button_setting(4, config.show_ingame_infos and loc("op_on") or loc("op_off"))
+    generalMenu:set_button_setting(3, config.show_ingame_infos and loc("op_on") or loc("op_off"))
   end
 
   local function update_analytics(noToggle)
     if not noToggle then
       config.enable_analytics = not config.enable_analytics
     end
-    generalMenu:set_button_setting(5, config.enable_analytics and loc("op_on") or loc("op_off"))
+    generalMenu:set_button_setting(4, config.enable_analytics and loc("op_on") or loc("op_off"))
   end
 
   local function update_input_repeat_delay()
-    generalMenu:set_button_setting(6, config.input_repeat_delay)
+    generalMenu:set_button_setting(5, config.input_repeat_delay)
   end
 
   local function increase_input_repeat_delay()
@@ -75,7 +68,7 @@ local function general_menu()
 
   local function update_replay_preference()
     config.save_replays_publicly = save_replays_publicly_choices[save_replays_preference_index][1]
-    generalMenu:set_button_setting(7, loc(save_replays_publicly_choices[save_replays_preference_index][2]))
+    generalMenu:set_button_setting(6, loc(save_replays_publicly_choices[save_replays_preference_index][2]))
   end
 
   local function increase_publicness() -- privatize or publicize?
@@ -101,7 +94,6 @@ local function general_menu()
   end
 
   generalMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
-  generalMenu:add_button(loc("op_vsync"), update_vsync, goEscape, update_vsync, update_vsync)
   generalMenu:add_button(loc("op_countdown"), update_countdown, goEscape, update_countdown, update_countdown)
   generalMenu:add_button(loc("op_fps"), update_fps, goEscape, update_fps, update_fps)
   generalMenu:add_button(loc("op_ingame_infos"), update_infos, goEscape, update_infos, update_infos)
@@ -109,7 +101,6 @@ local function general_menu()
   generalMenu:add_button(loc("op_input_delay"), nextMenu, goEscape, decrease_input_repeat_delay, increase_input_repeat_delay)
   generalMenu:add_button(loc("op_replay_public"), nextMenu, goEscape, increase_publicness, increase_privateness)
   generalMenu:add_button(loc("back"), exitSettings, exitSettings)
-  update_vsync(true)
   update_countdown(true)
   update_fps(true)
   update_infos(true)
@@ -399,7 +390,6 @@ local function audio_menu(button_idx)
         local playing = false
         local tracks = {}
         local character_sounds = {}
-        local character_sounds_keys = {}
         local current_sound_index = 0
 
         local ram_load = 0
@@ -497,7 +487,7 @@ local function audio_menu(button_idx)
             stop_the_music()
             if tracks[loaded_track_index].is_character then
               for _, v in pairs(character_sounds) do
-                v:stop()
+                v.sound:stop()
               end
               character_sounds = {}
               if not characters[tracks[loaded_track_index].id].fully_loaded then
@@ -516,7 +506,6 @@ local function audio_menu(button_idx)
             normalMusic = {}
             dangerMusic = {}
             character_sounds = {}
-            character_sounds_keys = {}
             loaded = false
             playing = false
             soundTestMenu:set_button_text(3, loc("op_music_play"))
@@ -526,14 +515,29 @@ local function audio_menu(button_idx)
 
         local function addSound(name, sound)
           if sound then
-            character_sounds[#character_sounds + 1] = sound
-            character_sounds_keys[#character_sounds_keys + 1] = name
+            character_sounds[#character_sounds + 1] = { name = name, sound = sound}
           end
         end
 
         local function addSounds(sound_name, sound_table, spacer)
-          for num, sound in ipairs(sound_table) do
-            addSound(sound_name .. ((num==1 and "") or (spacer .. num)), sound)
+          for i = 1, #sound_table do
+            addSound(sound_name .. ((i==1 and "") or (spacer .. i)), sound_table[i], i)
+          end
+        end
+
+        local function addAttackSfx(character, key)
+          for i = 1, #character.sounds[key] do
+            if i == 1 then
+              addSounds(key, character.sounds[key][i], " ")
+            else
+              addSounds(key .. i, character.sounds[key][i], " ")
+            end
+          end
+                                                    --per_chain
+          if (key == "chain" and character.chain_style == 1) or
+                                                    --per_combo
+             (key == "combo" and character.combo_style == 1) then
+            addSounds(key .. " ?", character.sounds[key][0], " ")
           end
         end
 
@@ -551,47 +555,32 @@ local function audio_menu(button_idx)
               end
               musics_to_use = characters[tracks[index].id].musics
 
-              addSounds("combo", characters[tracks[index].id].sounds.combos, " ")
-
-              if next(characters[tracks[index].id].sounds.combos) and next(characters[tracks[index].id].sounds.combo_echos) and not (characters[tracks[index].id].sounds.combos[1] == characters[tracks[index].id].sounds.combo_echos[1]) then
-                addSounds("combo echo", characters[tracks[index].id].sounds.combo_echos, " ")
+              local parent = nil
+              if tracks[index].parent_id then
+                parent = characters[tracks[index].parent_id]
               end
-
-              if next(characters[tracks[index].id].sounds.chains) == nil and next(characters[tracks[index].id].sounds.others) and not (characters[tracks[index].id].sounds.others["chain"] == characters[tracks[index].id].sounds.combos[1]) then
-                addSound("chain", characters[tracks[index].id].sounds.others["chain"])
-                if characters[tracks[index].id].sounds.others["chain"] ~= characters[tracks[index].id].sounds.others["chain2"] then
-                  addSound("chain 2", characters[tracks[index].id].sounds.others["chain2"])
-                end
-                if characters[tracks[index].id].sounds.others["chain2"] ~= characters[tracks[index].id].sounds.others["chain_echo"] then
-                  addSound("chain echo", characters[tracks[index].id].sounds.others["chain_echo"])
-                end
-                if characters[tracks[index].id].sounds.others["chain_echo"] ~= characters[tracks[index].id].sounds.others["chain2_echo"] then
-                  addSound("chain 2 echo", characters[tracks[index].id].sounds.others["chain2_echo"])
-                end
-              else
-                for i=2,13 do
-                  if characters[tracks[index].id].sounds.chains[i] ~=nil and i==2 or not content_equal(characters[tracks[index].id].sounds.chains[i-1], characters[tracks[index].id].sounds.chains[i]) then
-                    addSounds("chain "..i, characters[tracks[index].id].sounds.chains[i], "-")
+              local attackSfx = { chain = true, combo = true, shock = true}
+              for key, value in pairs(characters[tracks[index].id].sounds) do
+                if not attackSfx[key] then
+                  if (value == nil or #value == 0) and parent then
+                    addSounds(key, parent[key], " ")
+                  else
+                    addSounds(key, value, " ")
+                  end
+                else
+                  if (value[0] == nil or #value[0] == 0) then
+                    if parent then
+                      addAttackSfx(parent, key)
+                    end
+                  else
+                    addAttackSfx(characters[tracks[index].id], key)
                   end
                 end
-                if characters[tracks[index].id].sounds.chains[0] ~=nil and not content_equal(characters[tracks[index].id].sounds.chains[13], characters[tracks[index].id].sounds.chains[0]) then
-                  addSounds("chain ?", characters[tracks[index].id].sounds.chains[0], "-")
-                end
               end
 
-              addSounds("garbage match", characters[tracks[index].id].sounds.garbage_matches, " ")
-              addSounds("garbage land", characters[tracks[index].id].sounds.garbage_lands, " ")
-              
-              if next(characters[tracks[index].id].sounds.selections) == nil and tracks[index].parent_id then
-                addSounds("selection", characters[tracks[index].parent_id].sounds.selections, " ")
-              else
-                addSounds("selection", characters[tracks[index].id].sounds.selections, " ")
-              end
+              table.sort(character_sounds, function(a, b) return a.name < b.name end)
+              soundTestMenu:set_button_setting(4, character_sounds[1].name)
 
-              addSounds("win", characters[tracks[index].id].sounds.wins, " ")
-              addSounds("taunt up", characters[tracks[index].id].sounds.taunt_ups, " ")
-              addSounds("taunt down", characters[tracks[index].id].sounds.taunt_downs, " ")
-              
               current_sound_index = 1
 
             else
@@ -602,7 +591,6 @@ local function audio_menu(button_idx)
 
               current_sound_index = 0
               character_sounds = {}
-              character_sounds_keys = {}
               soundTestMenu:set_button_setting(4, loc("op_none"))
             end
             if tracks[index].style == "dynamic" then
@@ -662,7 +650,7 @@ local function audio_menu(button_idx)
           soundTestMenu:set_button_setting(1, tracks[index].name)
           if tracks[index].is_character then
             soundTestMenu:set_button_text(1, loc("character"))
-            soundTestMenu:set_button_setting(4, "combo")
+            soundTestMenu:set_button_setting(4, "chain")
           else
             soundTestMenu:set_button_text(1, loc("stage"))
             soundTestMenu:set_button_setting(4, loc("op_none"))
@@ -686,7 +674,7 @@ local function audio_menu(button_idx)
           soundTestMenu:set_button_setting(1, tracks[index].name)
           if tracks[index].is_character then
             soundTestMenu:set_button_text(1, loc("character"))
-            soundTestMenu:set_button_setting(4, "combo")
+            soundTestMenu:set_button_setting(4, "chain")
           else
             soundTestMenu:set_button_text(1, loc("stage"))
             soundTestMenu:set_button_setting(4, loc("op_none"))
@@ -735,13 +723,13 @@ local function audio_menu(button_idx)
             if not loaded then
               loadTrack()
             end
-            if next(character_sounds_keys) then
+            if next(character_sounds) then
               if current_sound_index == #character_sounds then
                 current_sound_index = 1
               else
                 current_sound_index = current_sound_index + 1
               end
-              soundTestMenu:set_button_setting(4, character_sounds_keys[current_sound_index])
+              soundTestMenu:set_button_setting(4, character_sounds[current_sound_index].name)
             end
           end
         end
@@ -751,13 +739,13 @@ local function audio_menu(button_idx)
             if not loaded then
               loadTrack()
             end
-            if next(character_sounds_keys) then
+            if next(character_sounds) then
               if current_sound_index == 1 then
                 current_sound_index = #character_sounds
               else
                 current_sound_index = current_sound_index - 1
               end
-              soundTestMenu:set_button_setting(4, character_sounds_keys[current_sound_index])
+              soundTestMenu:set_button_setting(4, character_sounds[current_sound_index].name)
             end
           end
         end
@@ -768,9 +756,9 @@ local function audio_menu(button_idx)
               loadTrack()
             end
             for _, v in pairs(character_sounds) do
-              v:stop()
+              v.sound:stop()
             end
-            play_optional_sfx(character_sounds[current_sound_index])
+            play_optional_sfx(character_sounds[current_sound_index].sound)
           end
         end
   
@@ -802,7 +790,6 @@ local function audio_menu(button_idx)
         else
           soundTestMenu:set_button_setting(2, loc("op_none"))
         end
-        soundTestMenu:set_button_setting(4, "combo")
         unloadTrack()
         loadTrack()
         unloadTrack()

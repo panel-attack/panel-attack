@@ -13,7 +13,7 @@ local consts = {
   KEY_NAMES = {"Up", "Down", "Left", "Right", "Swap1", "Swap2", "TauntUp", "TauntDown", "Raise1", "Raise2", "Start"},
   FRAME_RATE = 1 / 60,
   KEY_DELAY = .25,
-  KEY_REPEAT_PERIOD = .05
+  KEY_REPEAT_PERIOD = .05,
 }
 
 -- TODO: Move all values below to the above table
@@ -227,7 +227,7 @@ colors = {  red     = {220/255, 50/255,  47/255 },
             black   = {20/255,  20/255,  20/255 },
             dgray   = {28/255,  28/255,  28/255 }}
 
-e_chain_or_combo = { combo=0, chain=1 }
+e_chain_or_combo = { combo=0, chain=1, shock=2 }
             
 panel_color_number_to_upper = {"A", "B", "C", "D", "E", "F", "G", "H",[0]="0"}
 panel_color_number_to_lower = {"a", "b", "c", "d", "e", "f", "g", "h",[0]="0"}
