@@ -19,8 +19,8 @@ local RunTimeGraph = class(function(self)
   self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, 20)
   y = y + height + padding
 
-  -- leftover time
-  self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, consts.FRAME_RATE * 1)
+  -- Delta frames
+  self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, 4)
   self.graphs[#self.graphs]:setFillColor({0, 1, 1, 1}, 1)
   y = y + height + padding
 
@@ -43,7 +43,8 @@ function RunTimeGraph:updateWithMetrics(runMetrics)
   memoryCount = round(memoryCount / 1024, 1)
   self.graphs[2]:updateGraph({memoryCount}, "Memory: " .. memoryCount .. " Mb", dt)
 
-  self.graphs[3]:updateGraph({leftover_time}, "leftover_time " .. leftover_time, dt)
+  local frames = dt / consts.FRAME_RATE
+  self.graphs[3]:updateGraph({frames}, "Delta Frames: " .. frames, dt)
 
   self.graphs[4]:updateGraph({runMetrics.updateDuration, runMetrics.drawDuration, runMetrics.sleepDuration, runMetrics.presentDuration},
                              "Run Loop", dt)

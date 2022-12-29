@@ -181,7 +181,11 @@ function Game:update(dt)
     end
   end
 
-  leftover_time = leftover_time + dt
+  if sceneManager.activeScene == nil then
+    leftover_time = leftover_time + dt
+  else
+    leftover_time = 0
+  end
   
   if self.backgroundImage then
     self.backgroundImage:update(dt)

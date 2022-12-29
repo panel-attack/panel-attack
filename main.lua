@@ -106,7 +106,7 @@ local function customSleep(runMetrics)
   local currentTime = originalTime
 
   -- Sleep a percentage of our time to wait to save cpu
-  local sleepRatio = .99
+  local sleepRatio = .90
   local sleepTime = (targetTime - currentTime) * sleepRatio
   if love.timer and sleepTime > 0 then
     love.timer.sleep(sleepTime)
