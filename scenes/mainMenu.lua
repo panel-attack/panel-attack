@@ -37,7 +37,7 @@ local menuItems = {
   --{Button({label = "mm_2_vs_online", extra_labels = {"(development-use only)"}, onClick = genOnClickFn(main_net_vs_setup, {"localhost"})})},
   {Button({label = "mm_2_vs_local", onClick = genOnClickFn(main_local_vs_setup)})},
   {Button({label = "mm_replay_browser", onClick = function() switchToScene("replay_menu") end})},
-  {Button({label = "mm_configure", onClick = function() switchToScene("input_config_menu") end})},
+  {Button({label = "mm_configure", onClick = function() switchToScene("inputConfigMenu") end})},
   {Button({label = "mm_set_name", onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) sceneManager:switchToScene("set_name_menu", {prevScene = "main_menu"}) end})},
   {Button({label = "mm_options", onClick = function() switchToScene("options_menu") end})},
   {Button({label = "mm_fullscreen", extra_labels = {"\n(LAlt+Enter)"}, onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) fullscreen() end})},
@@ -60,7 +60,6 @@ function mainMenu:load()
   character_loader_clear()
   stage_loader_clear()
   resetNetwork()
-  GAME.backgroundImage = themes[config.theme].images.bg_main
   GAME.battleRoom = nil
   GAME.input:clearInputConfigurationsForPlayers()
   GAME.input:requestPlayerInputConfigurationAssignments(1)
@@ -68,6 +67,10 @@ function mainMenu:load()
   match_type_message = ""
   self.menu:updateLabel()
   self.menu:setVisibility(true)
+end
+
+function mainMenu:drawBackground()
+  themes[config.theme].images.bg_main:draw()
 end
 
 function mainMenu:update()

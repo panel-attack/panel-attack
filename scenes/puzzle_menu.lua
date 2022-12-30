@@ -94,11 +94,14 @@ function puzzle_menu:load()
   if themes[config.theme].musics.main then
     find_and_add_music(themes[config.theme].musics, "main")
   end
-  GAME.backgroundImage = themes[config.theme].images.bg_main
   reset_filters()
   
   self.menu:updateLabel()
   self.menu:setVisibility(true)
+end
+
+function puzzle_menu:drawBackground()
+  themes[config.theme].images.bg_main:draw()
 end
 
 function puzzle_menu:update()

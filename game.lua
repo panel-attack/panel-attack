@@ -262,9 +262,13 @@ function Game:update(dt)
 end
 
 function Game:draw()
-  if self.foreground_overlay then
-    local scale = consts.CANVAS_WIDTH / math.max(self.foreground_overlay:getWidth(), self.foreground_overlay:getHeight()) -- keep image ratio
-    GraphicsUtil.menu_drawf(self.foreground_overlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
+  if sceneManager.activeScene then
+    sceneManager.activeScene:drawForeground()
+  else
+    if self.foreground_overlay then
+      local scale = consts.CANVAS_WIDTH / math.max(self.foreground_overlay:getWidth(), self.foreground_overlay:getHeight()) -- keep image ratio
+      GraphicsUtil.menu_drawf(self.foreground_overlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
+    end
   end
 
   -- Clear the screen
@@ -314,13 +318,17 @@ function Game:draw()
   end
 
   -- draw background and its overlay
-  if self.backgroundImage then
-    self.backgroundImage:draw()
-  end
-  
-  if self.background_overlay then
-    local scale = consts.CANVAS_WIDTH / math.max(self.background_overlay:getWidth(), self.background_overlay:getHeight()) -- keep image ratio
-    GraphicsUtil.menu_drawf(self.background_overlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
+  if sceneManager.activeScene then
+    sceneManager.activeScene:drawBackground()
+  else
+    if self.backgroundImage then
+      self.backgroundImage:draw()
+    end
+    
+    if self.background_overlay then
+      local scale = consts.CANVAS_WIDTH / math.max(self.background_overlay:getWidth(), self.background_overlay:getHeight()) -- keep image ratio
+      GraphicsUtil.menu_drawf(self.background_overlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
+    end
   end
 end
 

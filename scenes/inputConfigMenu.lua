@@ -165,7 +165,6 @@ function inputConfigMenu:init()
 end
 
 function inputConfigMenu:load()
-  GAME.backgroundImage = themes[config.theme].images.bg_main
   reset_filters()
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")
@@ -173,6 +172,10 @@ function inputConfigMenu:load()
   
   self.menu:updateLabel()
   self.menu:setVisibility(true)
+end
+
+function inputConfigMenu:drawBackground()
+  themes[config.theme].images.bg_main:draw()
 end
 
 function inputConfigMenu:update()

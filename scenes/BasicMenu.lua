@@ -1,3 +1,4 @@
+local class = require("class")
 local Scene = require("scenes.Scene")
 local Button = require("ui.Button")
 local Slider = require("ui.Slider")
@@ -136,7 +137,6 @@ function BasicMenu:load()
   self.classic_menu:updateLabel()
   self.modern_menu:updateLabel()
   
-  GAME.backgroundImage = themes[config.theme].images.bg_main
   reset_filters()
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")
@@ -154,7 +154,11 @@ function BasicMenu:load()
   end
 end
 
-function BasicMenu:update()  
+function BasicMenu:drawBackground() 
+  themes[config.theme].images.bg_main:draw() 
+end
+
+function BasicMenu:update()
   if self.type_buttons.value == "Classic" then
     local lastScore, record = unpack(self:getScores(difficulty_buttons.value))
   

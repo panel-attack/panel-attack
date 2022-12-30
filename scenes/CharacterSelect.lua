@@ -1,4 +1,5 @@
 local Scene = require("scenes.Scene")
+local class = require("class")
 local logger = require("logger")
 local Button = require("ui.Button")
 local sceneManager = require("scenes.sceneManager")
@@ -554,7 +555,6 @@ function CharacterSelect:load()
     find_and_add_music(themes[config.theme].musics, "main")
   end
 
-  GAME.backgroundImage = themes[config.theme].images.bg_select_screen
   reset_filters()
   
   op_win_count = op_win_count or 0
@@ -592,6 +592,10 @@ function CharacterSelect:load()
   add_client_data(self.cursor_data[1].state)
   
   refresh_loaded_and_ready(self.cursor_data[1].state, self.cursor_data[2] and self.cursor_data[2].state or nil)
+end
+
+function CharacterSelect:drawBackground()
+  themes[config.theme].images.bg_select_screen:draw()
 end
 
 -- Draw the base cursor for the player

@@ -1,4 +1,6 @@
+local class = require("class")
 local Scene = require("scenes.Scene")
+local GraphicsUtil = require("graphics_util")
 local replay_browser = require("replay_browser")
 local logger = require("logger")
 local options = require("options")
@@ -27,6 +29,7 @@ local GameBase = class(
     self.winner_SFX = nil
     self.keep_music = false
     self.current_stage = config.stage
+    self.backgroundImage = nil
   end,
   Scene
 )
@@ -117,9 +120,7 @@ function GameBase:useCurrentStage()
   
   stage_loader_load(self.current_stage)
   stage_loader_wait()
-  GAME.backgroundImage = UpdatingImage(stages[self.current_stage].images.background, false, 0, 0, canvas_width, canvas_height)
-  GAME.background_overlay = themes[config.theme].images.bg_overlay
-  GAME.foreground_overlay = themes[config.theme].images.fg_overlay
+  self.backgroundImage = UpdatingImage(stages[self.current_stage].images.background, false, 0, 0, canvas_width, canvas_height)
 end
 
 local function pickUseMusicFrom()
@@ -147,7 +148,22 @@ function GameBase:load(scene_params)
   replay = createNewReplay(GAME.match)
 end
 
+function GameBase:drawForeground()
+  local foregroundOverlay = themes[config.theme].images.fg_overlay
+  if foregroundOverlay then
+    local scale = consts.CANVAS_WIDTH / math.max(foregroundOverlay:getWidth(), foregroundOverlay:getHeight()) -- keep image ratio
+    GraphicsUtil.menu_drawf(foregroundOverlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
+  end
+end
 
+function GameBase:drawBackground()
+  self.backgroundImage:draw()
+  local backgroundOverlay = themes[config.theme].images.bg_overlay
+  if backgroundOverlay then
+    local scale = consts.CANVAS_WIDTH / math.max(backgroundOverlay:getWidth(), backgroundOverlay:getHeight()) -- keep image ratio
+    GraphicsUtil.menu_drawf(backgroundOverlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
+  end
+end
 
 function GameBase:handlePause()
   if GAME.match.supportsPause and (input.isDown["Start"] or (not GAME.focused and not GAME.gameIsPaused)) then

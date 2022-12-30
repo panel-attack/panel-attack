@@ -19,8 +19,10 @@ function titleScreen:init()
   sceneManager:addScene(titleScreen)
 end
 
-function titleScreen:load()
-  GAME.backgroundImage = themes[config.theme].images.bg_title
+function titleScreen:load() end
+
+function titleScreen:drawBackground()
+  themes[config.theme].images.bg_title:draw()
 end
 
 function titleScreen:update()

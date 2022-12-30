@@ -147,9 +147,11 @@ function replay_menu:load()
   state = "browser"
   replay_browser_update()
 
-  GAME.backgroundImage = themes[config.theme].images.bg_main
-
   GAME.renderDuringPause = true
+end
+
+function replay_menu:drawBackground()
+  themes[config.theme].images.bg_main:draw()
 end
 
 function replay_menu:update()

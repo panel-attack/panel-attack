@@ -123,13 +123,16 @@ function training_mode_menu:init()
 end
 
 function training_mode_menu:load()
-  GAME.backgroundImage = themes[config.theme].images.bg_main
   reset_filters()
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")
   end
   
   self.menu:setVisibility(true)
+end
+
+function training_mode_menu:drawBackground()
+  themes[config.theme].images.bg_main:draw()
 end
 
 function training_mode_menu:update()

@@ -19,6 +19,7 @@ menu_y = menu_y + 70
 local language_number
 local language_choices = {}
 local language_names = {}
+local backgroundImage = nil
 for k, v in ipairs(localization:get_list_codes()) do
   language_choices[k] = v
   language_names[#language_names + 1] = {v, localization.data[v]["LANG"]}
@@ -103,7 +104,7 @@ end
 
 local function setupDrawThemesInfo()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  GAME.backgroundImage = themes[config.theme].images.bg_readme
+  backgroundImage = themes[config.theme].images.bg_readme
   reset_filters()
 
   if not love.filesystem.getInfo("themes/" .. prefix_of_ignored_dirs .. default_theme_dir) then
@@ -121,7 +122,7 @@ end
 
 local function setupInfo(info_type)
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  GAME.backgroundImage = themes[config.theme].images.bg_readme
+  backgroundImage = themes[config.theme].images.bg_readme
   reset_filters()
   options_state = "info"
   info_name = info_type
@@ -130,7 +131,7 @@ end
 
 local function setupSystemInfo()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  GAME.backgroundImage = themes[config.theme].images.bg_readme
+  backgroundImage = themes[config.theme].images.bg_readme
   reset_filters()
   local renderer_name, renderer_version, graphics_card_vendor, graphics_card_name = love.graphics.getRendererInfo()
   local sys_info = {}
@@ -158,7 +159,7 @@ local function drawSystemInfo()
   gprint(info_string, 15, 15)
   if input.isDown["Swap2"] then
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-    GAME.backgroundImage = themes[config.theme].images.bg_main
+    backgroundImage = themes[config.theme].images.bg_main
     reset_filters()
     options_state = "menus"
     menus["about_menu"]:setVisibility(true)
@@ -169,7 +170,7 @@ local function drawInfo(text)
   gprint(about_text[text], 15, 15)
   if input.isDown["Swap2"] then
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-    GAME.backgroundImage = themes[config.theme].images.bg_main
+    backgroundImage = themes[config.theme].images.bg_main
     reset_filters()
     options_state = "menus"
     menus["about_menu"]:setVisibility(true)
@@ -267,7 +268,7 @@ function options_menu:init()
         config.theme = value
         stop_the_music()
         theme_init()
-        GAME.backgroundImage = themes[config.theme].images.bg_main
+        backgroundImage = themes[config.theme].images.bg_main
         if themes[config.theme].musics["main"] then
           find_and_add_music(themes[config.theme].musics, "main")
         end
@@ -354,11 +355,16 @@ function options_menu:init()
 end
 
 function options_menu:load()
+  backgroundImage = themes[config.theme].images.bg_main
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")
   end
   options_state = "menus"
   menus[active_menu_name]:setVisibility(true)
+end
+
+function options_menu:drawBackground()
+  backgroundImage:draw()
 end
 
 function options_menu:update()

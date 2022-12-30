@@ -32,6 +32,10 @@ function set_name_menu:load(sceneParams)
   self.prevScene = sceneParams.prevScene
 end
 
+function set_name_menu:drawBackground()
+  themes[config.theme].images.bg_main:draw()
+end
+
 function set_name_menu:update()
   local to_print = loc("op_enter_name") .. " (" .. name_field.value:len() .. "/" .. NAME_LENGTH_LIMIT .. ")"
   gprint(to_print, unpack(main_menu_screen_pos))
