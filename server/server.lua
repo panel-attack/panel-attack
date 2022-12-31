@@ -6,6 +6,7 @@ require("stridx")
 require("gen_panels")
 require("csprng")
 require("server.server_file_io")
+require("server.Room")
 require("util")
 require("timezones")
 local lfs = require("lfs")
@@ -19,8 +20,6 @@ local lobby_changed = false
 local time = os.time
 local floor = math.floor
 local TIMEOUT = 10
-local CHARACTERSELECT = "character select" -- room states
-local PLAYING = "playing" -- room states
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
 SERVER_MODE = true -- global to know the server is running the process
@@ -28,7 +27,7 @@ local VERSION = "046"
 local type_to_length = {H = 4, E = 4, F = 4, P = 8, I = 2, L = 2, Q = 8, U = 2}
 local INDEX = 1 -- GLOBAL counter of the next available connection index
 local connections = {}
-local ROOMNUMBER = 1
+local roomNumberIndex = 1 -- the next available room number
 local rooms = {}
 local name_to_idx = {} -- mapping of names to their connection unique INDEX
 local socket_to_idx = {}
@@ -115,7 +114,9 @@ function create_room(a, b)
   lobby_changed = true
   clear_proposals(a.name)
   clear_proposals(b.name)
-  local new_room = Room(a, b)
+  local new_room = Room(a, b, roomNumberIndex, leaderboard)
+  roomNumberIndex = roomNumberIndex + 1
+  rooms[new_room.roomNumber] = new_room
   local a_msg, b_msg = {create_room = true}, {create_room = true}
   a_msg.your_player_number = 1
   a_msg.op_player_number = 2
@@ -195,177 +196,6 @@ function start_match(a, b)
   for k, v in pairs(a.room.spectators) do
     v:setup_game()
   end
-end
-
-Room =
-  class(
-  function(self, a, b)
-    --TODO: it would be nice to call players a and b something more like self.players[1] and self.players[2]
-    self.a = a --player a
-    self.b = b --player b
-    self.stage = nil
-    self.name = a.name .. " vs " .. b.name
-    self.roomNumber = ROOMNUMBER
-    ROOMNUMBER = ROOMNUMBER + 1
-    self.a.room = self
-    self.b.room = self
-    self.spectators = {}
-    self.win_counts = {}
-    self.win_counts[1] = 0
-    self.win_counts[2] = 0
-    local a_rating, b_rating
-    local a_placement_match_progress, b_placement_match_progress
-
-    if a.user_id then
-      if leaderboard.players[a.user_id] and leaderboard.players[a.user_id].rating then
-        a_rating = round(leaderboard.players[a.user_id].rating)
-      end
-      local a_qualifies, a_progress = qualifies_for_placement(a.user_id)
-      if not (leaderboard.players[a.user_id] and leaderboard.players[a.user_id].placement_done) and not a_qualifies then
-        a_placement_match_progress = a_progress
-      end
-    end
-
-    if b.user_id then
-      if leaderboard.players[b.user_id] and leaderboard.players[b.user_id].rating then
-        b_rating = round(leaderboard.players[b.user_id].rating or 0)
-      end
-      local b_qualifies, b_progress = qualifies_for_placement(b.user_id)
-      if not (leaderboard.players[b.user_id] and leaderboard.players[b.user_id].placement_done) and not b_qualifies then
-        b_placement_match_progress = b_progress
-      end
-    end
-
-    self.ratings = {
-      {old = a_rating or 0, new = a_rating or 0, difference = 0, league = get_league(a_rating or 0), placement_match_progress = a_placement_match_progress},
-      {old = b_rating or 0, new = b_rating or 0, difference = 0, league = get_league(b_rating or 0), placement_match_progress = b_placement_match_progress}
-    }
-
-    self.game_outcome_reports = {}
-    rooms[self.roomNumber] = self
-  end
-)
-
-function Room.character_select(self)
-  self:prepare_character_select()
-  self:send({character_select = true, create_room = true, rating_updates = true, ratings = self.ratings, a_menu_state = self.a:menu_state(), b_menu_state = self.b:menu_state()})
-end
-
-function Room.prepare_character_select(self)
-  logger.debug("Called Server.lua Room.character_select")
-  self.a.state = "character select"
-  self.b.state = "character select"
-  if self.a.player_number and self.a.player_number ~= 0 and self.a.player_number ~= 1 then
-    logger.debug("initializing room. player a does not have player_number 1. Swapping players a and b")
-    self.a, self.b = self.b, self.a
-    if self.a.player_number == 1 then
-      logger.debug("Success. player a has player_number 1 now.")
-    else
-      logger.error("ERROR. Player a still doesn't have player_number 1")
-    end
-  else
-    self.a.player_number = 1
-    self.b.player_number = 2
-  end
-  self.a.cursor = "__Ready"
-  self.b.cursor = "__Ready"
-  self.a.ready = false
-  self.b.ready = false
-  -- local msg = {spectate_request_granted = true, spectate_request_rejected = false, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()}
-  -- for k,v in ipairs(self.spectators) do
-  -- self.spectators[k]:send(msg)
-  -- end
-end
-
-function Room.state(self)
-  if self.a.state == "character select" then
-    return CHARACTERSELECT
-  elseif self.a.state == "playing" then
-    return PLAYING
-  else
-    return self.a.state
-  end
-end
-
-function Room.is_spectatable(self)
-  return self.a.state == "character select"
-end
-
-function Room.add_spectator(self, new_spectator_connection)
-  new_spectator_connection.state = "spectating"
-  new_spectator_connection.room = self
-  self.spectators[#self.spectators + 1] = new_spectator_connection
-  logger.debug(new_spectator_connection.name .. " joined " .. self.name .. " as a spectator")
-  msg = {
-    spectate_request_granted = true,
-    spectate_request_rejected = false,
-    rating_updates = true,
-    ratings = self.ratings,
-    a_menu_state = self.a:menu_state(),
-    b_menu_state = self.b:menu_state(),
-    win_counts = self.win_counts,
-    match_start = replay_of_match_so_far ~= nil,
-    stage = self.stage,
-    replay_of_match_so_far = self.replay,
-    ranked = self:rating_adjustment_approved(),
-    player_settings = {character = self.a.character, character_display_name = self.a.character_display_name, level = self.a.level, player_number = self.a.player_number},
-    opponent_settings = {character = self.b.character, character_display_name = self.b.character_display_name, level = self.b.level, player_number = self.b.player_number}
-  }
-  if COMPRESS_SPECTATOR_REPLAYS_ENABLED then
-    msg.replay_of_match_so_far.vs.in_buf = compress_input_string(msg.replay_of_match_so_far.vs.in_buf)
-    msg.replay_of_match_so_far.vs.I = compress_input_string(msg.replay_of_match_so_far.vs.I)
-  end
-  new_spectator_connection:send(msg)
-  msg = {spectators = self:spectator_names()}
-  logger.debug("sending spectator list: " .. json.encode(msg))
-  self:send(msg)
-  lobby_changed = true
-end
-
-function Room.spectator_names(self)
-  local list = {}
-  for k, v in pairs(self.spectators) do
-    list[#list + 1] = v.name
-  end
-  return list
-end
-
-function Room.remove_spectator(self, connection)
-  for k, v in pairs(self.spectators) do
-    if v.name == connection.name then
-      self.spectators[k].state = "lobby"
-      logger.debug(connection.name .. " left " .. self.name .. " as a spectator")
-      self.spectators[k] = nil
-      connection.room = nil
-      lobby_changed = true
-    end
-  end
-  msg = {spectators = self:spectator_names()}
-  logger.debug("sending spectator list: " .. json.encode(msg))
-  self:send(msg)
-end
-
-function Room.close(self)
-  if self.a then
-    self.a.player_number = 0
-    self.a.state = "lobby"
-    self.a.room = nil
-  end
-  if self.b then
-    self.b.player_number = 0
-    self.b.state = "lobby"
-    self.b.room = nil
-  end
-  for k, v in pairs(self.spectators) do
-    if v.room then
-      v.room = nil
-      v.state = "lobby"
-    end
-  end
-  if rooms[self.roomNumber] then
-    rooms[self.roomNumber] = nil
-  end
-  self:send_to_spectators({leave_room = true})
 end
 
 function roomNumberToRoom(roomNr)
@@ -668,13 +498,29 @@ function is_banned(IP)
   return is_banned
 end
 
+local function closeRoom(room)
+  room:close()
+  if rooms[room.roomNumber] then
+    rooms[room.roomNumber] = nil
+  end
+end
+
+local function addSpectator(room, connection)
+  room:add_spectator(connection)
+  lobby_changed = true
+end
+
+local function removeSpectator(room, connection)
+  lobby_changed = room:remove_spectator(connection)
+end
+
 function Connection.opponent_disconnected(self)
   self.opponent = nil
   self.state = "lobby"
   lobby_changed = true
   if self.room then
     logger.debug("Closing room for " .. (self.name or "nil") .. " because opponent disconnected.")
-    self.room:close()
+    closeRoom(self.room)
   end
   self:send({leave_room = true})
 end
@@ -694,9 +540,9 @@ function Connection.close(self)
   end
   if self.room and (self.room.a.name == self.name or self.room.b.name == self.name) then
     logger.trace("about to close room for " .. (self.name or "nil") .. ".  Connection.close was called")
-    self.room:close()
+    closeRoom(self.room)
   elseif self.room then
-    self.room:remove_spectator(self)
+    removeSpectator(self.room, self)
   end
   clear_proposals(self.name)
   if self.opponent then
@@ -1338,21 +1184,21 @@ function Connection.J(self, message)
     if self.state ~= "lobby" then
       if requestedRoom then
         logger.debug("removing " .. self.name .. " from room nr " .. message.spectate_request.roomNumber)
-        requestedRoom:remove_spectator()
+        removeSpectator(requestedRoom, self)
       else
         logger.warn("could not find room to remove " .. self.name)
         self.state = "lobby"
       end
     end
-    if requestedRoom and requestedRoom:state() == CHARACTERSELECT then
+    if requestedRoom and requestedRoom:state() == "character select" then
       -- TODO: allow them to join
       logger.debug("join allowed")
       logger.debug("adding " .. self.name .. " to room nr " .. message.spectate_request.roomNumber)
-      requestedRoom:add_spectator(self)
-    elseif requestedRoom and requestedRoom:state() == PLAYING then
+      addSpectator(requestedRoom, self)
+    elseif requestedRoom and requestedRoom:state() == "playing" then
       logger.debug("join-in-progress allowed")
       logger.debug("adding " .. self.name .. " to room nr " .. message.spectate_request.roomNumber)
-      requestedRoom:add_spectator(self)
+      addSpectator(requestedRoom, self)
     else
       -- TODO: tell the client the join request failed, couldn't find the room.
       logger.warn("couldn't find room")
@@ -1431,7 +1277,7 @@ function Connection.J(self, message)
       end
     end
   elseif (self.state == "spectating") and message.leave_room then
-    self.room:remove_spectator(self)
+    removeSpectator(self.room, self)
   end
 end
 
@@ -1457,14 +1303,14 @@ function Connection.data_received(self, data)
       end
       local jmsg = data:sub(5, msg_len + 4)
       logger.debug("got JSON message " .. jmsg)
-      logger.debug(
-        "Pcall results for json: ",
-        pcall(
+      local status, error = pcall(
           function()
             self:J(jmsg)
           end
         )
-      )
+      if error and type(error) == "string" then
+        logger.debug("Pcall results for json: " .. status)
+      end
       data = data:sub(msg_len + 5)
     else
       if msg_type ~= "I" and msg_type ~= "F" then
