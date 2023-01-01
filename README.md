@@ -55,7 +55,7 @@ Try to follow the following code guidelines when contributing:
 - Class names start with a capital like `BattleRoom`
 - All other names use `camelCase`
 - You should set your editor to use 2 spaces of identation. (not tabs)
-- Set your column width to 140
+- Set your column width to 1000
 - All control flow like if and functions should be on multiple lines, not condensed into a single line. Putting it all on a single line can make it harder to follow the flow.
 
 For those using VSCode we recommend using this [styling extension](https://marketplace.visualstudio.com/items?itemName=Koihik.vscode-lua-format) with the configuration file in the repository named VsCodeStyleConfig.lua-format
