@@ -712,8 +712,6 @@ end
 --]]
 
 local server_socket = nil
-local server = nil
-function load_server()
 
 logger.info("Starting up server  with port: " .. (SERVER_PORT or 49569))
 server_socket = socket.bind("*", SERVER_PORT or 49569) --for official server
@@ -771,16 +769,14 @@ logger.debug("initialized!")
 -- print("get_timezone_offset(os.time()) output: "..get_timezone_offset(os.time()))
 -- print("get_tzoffset(get_timezone()) output:"..get_tzoffset(get_timezone()))
 
-server = Server()
-end
-
-load_server()
+local server = Server()
 
 -- Called every few fractions of a second to update the game
 -- dt is the amount of time in seconds that has passed.
 local prev_now = time()
 local lastFlushTime = prev_now
-while true do
+
+function Server:update()
   server_socket:settimeout(0)
   if TCP_NODELAY_ENABLED then
     server_socket:setoption("tcp-nodelay", true)
@@ -843,3 +839,5 @@ while true do
   -- If the lobby changed tell everyone
   server:broadcast_lobby()
 end
+
+return server
