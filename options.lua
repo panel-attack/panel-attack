@@ -1,5 +1,6 @@
 local options = {}
 local analytics = require("analytics")
+local consts = require("consts")
 local wait = coroutine.yield
 local memory_before_options_menu = nil
 local theme_index
@@ -963,11 +964,11 @@ local function about_menu(button_idx)
   end
 
   local function show_themes_readme()
-    if not love.filesystem.getInfo("themes/" .. prefix_of_ignored_dirs .. default_theme_dir) then
+    if not love.filesystem.getInfo("themes/" .. prefix_of_ignored_dirs .. consts.DEFAULT_THEME_DIRECTORY) then
       --print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
       gprint(loc("op_copy_files"), 280, 280)
       wait()
-      recursive_copy("themes/" .. default_theme_dir, "themes/" .. prefix_of_ignored_dirs .. default_theme_dir)
+      recursive_copy("themes/" .. consts.DEFAULT_THEME_DIRECTORY, "themes/" .. prefix_of_ignored_dirs .. consts.DEFAULT_THEME_DIRECTORY)
 
       -- Android can't easily copy into the save dir, so do it for them to help.
       recursive_copy("default_data/themes", "themes")
@@ -1193,8 +1194,8 @@ function options.main(button_idx)
     optionsMenu:set_active_idx(button_idx)
   else
     found_themes = {}
-    for k, v in ipairs(FileUtil.getFilteredDirectoryItems("themes")) do
-      if love.filesystem.getInfo("themes/" .. v) and v:sub(0, prefix_of_ignored_dirs:len()) ~= prefix_of_ignored_dirs then
+    for _, v in ipairs(FileUtil.getFilteredDirectoryItems("themes")) do
+      if love.filesystem.getInfo("themes/" .. v) and love.filesystem.getInfo("themes/" .. v .. "/config.json") then
         found_themes[#found_themes + 1] = v
         if config.theme == v then
           theme_index = #found_themes
