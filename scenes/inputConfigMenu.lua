@@ -33,8 +33,8 @@ function inputConfigMenu:setSettingKeyState(settingKey)
   self.menu:setEnabled(not settingKey)
 end
 
-function inputConfigMenu:updateInputConfigSet(value)
-  configIndex = value
+function inputConfigMenu:updateInputConfigMenuLabels(index)
+  configIndex = index
   play_optional_sfx(themes[config.theme].sounds.menu_move)
   for i, key in ipairs(consts.KEY_NAMES) do
     local keyName = GAME.input:cleanNameForButton(GAME.input.inputConfigurations[configIndex][key]) or loc("op_none")
@@ -136,7 +136,7 @@ function inputConfigMenu:init()
           max = GAME.input.maxConfigurations,
           value = 1,
           tickLength = 10,
-          onValueChange = function(slider) inputConfigMenu:updateInputConfigSet(slider.value) end})
+          onValueChange = function(slider) inputConfigMenu:updateInputConfigMenuLabels(slider.value) end})
     }
   for i, key in ipairs(consts.KEY_NAMES) do
     local keyName = GAME.input:cleanNameForButton(GAME.input.inputConfigurations[configIndex][key]) or loc("op_none")
