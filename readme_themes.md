@@ -1,27 +1,26 @@
-Adding/modding themes:
+You can also find this file with prettier formatting at https://github.com/panel-attack/panel-attack/blob/beta/readme_themes.md  
 
-Step by step instructions (Windows example):
+This README consists of 2 parts.  
+In part 1 some general thoughts on theme creation are discussed.  
+In part 2 you can find an exhaustive list of all assets used for theme.  
 
-1. Press the Windows key then type "%appdata%" without quotes and hit enter.
+# How to approach theme creation
 
-2. See the folder located in: %appdata%\Panel Attack\themes\__Panel Attack for a reference of where your files should go and how they should be named.
-   
-Note: folders starting with "__" will be ignored upon loading. You may choose to remove those "__" to mod default themes
+## Graphics 
 
-3. Create a folder with your theme. The name of the folder will be the id of your theme.
+Theme creation is quite different from the creation of other mods.  
+Unlike with characters or stages where you provide assets that will go into one exact spot with one exact resolution, themes don't limit you too much.  
+Many files in fact do not have a specific size or aspect ratio but merely a configurable anchor point to place them.  
+Due to this, it is required for theme assets that you specify how big the file is relative to the canvas of 1280x720.  
 
-4. Place assets, sounds and txt files in that folder with the proper names to add your data. Exhaustive list below.
 
-~~~~ Exhaustive list of a theme folder data! ~~~~
 
-Note: non-optional data that are missing will automatically get replaced by default ones so they are kinda optional in that sense
+# Theme configuration and asset list
 
-- "*.ttf": add this file to customize the font, the file may have any name as long as the extension is ".ttf". Font size can be changed in the config.json file with the parameter "font_size" with an integer font size
+Theme configuration works differently from character or stage configuration as the theme id never has to be shared over network.
+For this reason the "id" of the theme is always the foldername.  
 
-~~ [.txt] ~~
-
-- "characters": add this file with one character ID per line to limit characters you can pick and random characters
-- "stages": list of the stages to be displayed in the select screen
+## Graphic assets
 
 ~~ [.png, .jpg] ~~
 
@@ -36,6 +35,9 @@ Note: non-optional data that are missing will automatically get replaced by defa
 - "frame", "wall", "healthbar_frame_1P", "healthbar_frame_1P_absolute": layout ingame
 - "random_stage", "random_character": thumbnail and icon for random stage and random character
 
+
+## SFX assets
+
 ~~ [.mp3, .ogg, .wav, .it, .flac] optional sounds are in parenthesis ~~
 
 - "sfx/countdown", "sfx/go": played at the start of a match
@@ -48,5 +50,36 @@ Note: non-optional data that are missing will automatically get replaced by defa
 - "sfx/menu_move", "sfx/menu_validate", "sfx/menu_cancel": menu
 - "sfx/notification": will play upon receiving a request or a request's answer while playing online
 - "sfx/pop1-1", "sfx/pop1-2", ..., "sfx/pop1-10", "sfx/pop2-1", ..., "sfx/pop2-10", ..., "sfx/pop4-10": panel pops
+
+## Music assets
+
 - ("music/main", ("music/main_start")), ("music/select_screen", ("music/select_screen_start")): musics that will be used in those menus, "main" will be used as fallback if "select_screen" is missing. 
 "_start"s are played before the normal versions, once.
+
+
+## Miscellaneous assets
+
+### Font
+
+You may provide a font by simply dropping a .ttf font file in the theme folder.  
+
+#### config
+
+The font's size can be changed in the config.json file with the parameter font_size.  
+The value given should be a whole number.
+
+----
+
+#### Character selection filters
+
+You may override the visible state configured in each character's/stage's configuration by providing respective files that explicitly state the visible mods.
+
+#### characters.txt
+
+If present, only characters listed in this file will show up in character selection.  
+Separate the IDs by new lines.
+
+#### stages.txt
+
+If present, only stages listed in this file will show up in stage selection.  
+Separate the IDs by new lines.
