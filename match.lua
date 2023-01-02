@@ -40,6 +40,20 @@ Match =
   end
 )
 
+-- Should be called prior to clearing the match.
+-- Consider recycling any memory that might leave around a lot of garbage.
+-- Note: You can just leave the variables to clear / garbage collect on their own if they aren't large.
+function Match:deinit()
+  if self.P1 then
+    self.P1:deinit()
+    self.P1 = nil
+  end
+  if self.P2 then
+    self.P2:deinit()
+    self.P2 = nil
+  end
+end
+
 function Match:gameEndedClockTime()
 
   local result = self.P1.game_over_clock
@@ -309,12 +323,12 @@ function Match.render(self)
     if P2 then
       -- P1 win count graphics
       draw_label(themes[config.theme].images.IMG_wins, (P1.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
-      GraphicsUtil.draw_number(GAME.battleRoom.playerWinCounts[P1.player_number], themes[config.theme].images.IMG_number_atlas_1P, P1_win_quads, P1.score_x + themes[config.theme].win_Pos[1], P1.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, "center")
+      GraphicsUtil.draw_number(GAME.battleRoom:getPlayerWinCount(P1.player_number), themes[config.theme].images.IMG_number_atlas_1P, P1_win_quads, P1.score_x + themes[config.theme].win_Pos[1], P1.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, "center")
       -- P2 username
       GraphicsUtil.drawClearText(self.player2NameTextObject, P2.score_x + themes[config.theme].name_Pos[1], P2.score_y + themes[config.theme].name_Pos[2])
       -- P2 win count graphics
       draw_label(themes[config.theme].images.IMG_wins, (P2.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P2.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
-      GraphicsUtil.draw_number(GAME.battleRoom.playerWinCounts[P2.player_number], themes[config.theme].images.IMG_number_atlas_2P, P2_win_quads, P2.score_x + themes[config.theme].win_Pos[1], P2.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, "center")
+      GraphicsUtil.draw_number(GAME.battleRoom:getPlayerWinCount(P2.player_number), themes[config.theme].images.IMG_number_atlas_2P, P2_win_quads, P2.score_x + themes[config.theme].win_Pos[1], P2.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, "center")
     end
 
     if not config.debug_mode then --this is printed in the same space as the debug details
@@ -406,6 +420,14 @@ function Match.render(self)
       drawY = drawY + padding
       gprintf("gameEndedClockTime " .. gameEndedClockTime, drawX, drawY)
     end
+
+    -- drawY = drawY + padding
+    -- local memoryCount = collectgarbage("count")
+    -- memoryCount = round(memoryCount / 1000, 1)
+    -- gprintf("Memory " .. memoryCount .. " MB", drawX, drawY)
+
+    -- drawY = drawY + padding
+    -- gprintf("quadPool " .. #GraphicsUtil.quadPool, drawX, drawY)
 
     if P2 then 
       drawX = 800

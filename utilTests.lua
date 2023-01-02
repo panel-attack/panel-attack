@@ -1,5 +1,27 @@
 require("util")
 
+-- math.sign tests
+assert(math.sign(0.5) == 1)
+assert(math.sign(2) == 1)
+assert(math.sign(-0.5) == -1)
+assert(math.sign(-2) == -1)
+assert(math.sign(0) == 1)
+
+-- math.round tests
+assert(math.round(0.5) == 1)
+assert(math.round(0.49) == 0)
+assert(math.round(0.1) == 0)
+assert(math.round(-0.1) == 0)
+assert(math.round(-0.5) == -1)
+assert(math.round(-0.51) == -1)
+assert(math.round(-1.1) == -1)
+assert(math.round(-1.5) == -2)
+assert(math.round(-1.51) == -2)
+assert(math.round(12, -1) == 10)
+assert(math.round(0.11, 1) == 0.1)
+assert(math.round(-1.11, 1) == -1.1)
+assert(math.round(0.119, 2) == 0.12)
+
 local dirtyCharacterJson = "{\n\t\"id\":\"Giana\",\n\t\"name\":\"Giana\"\n\t\"chain_style\":\"per_chain\"\n\t\"music_style\":\"dynamic\"\n}"
 local puzzleJson = "{\n  \"Version\": 2,\n  \"Puzzle Sets\": [\n    [\n      \"Set Name\": \"clear puzzle test\",\n      \"Puzzles\": [\n\t\t[\n          \"Puzzle Type\": \"clear\",\n          \"Do Countdown\": false,\n          \"Moves\": 1,\n          \"Stack\": \n           \"\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   920000\n\t\t   290000\n\t\t   920000\",\n        ],\n\t\t[\n          \"Puzzle Type\": \"clear\",\n          \"Do Countdown\": false,\n          \"Moves\": 0,\n          \"Stack\": \n           \"\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   020000\n\t\t   122[=]\n\t\t   245156\n\t\t   325363\",\n\t\t   \"Stop\": 60\n        ],\n      ]\n    ],\n  ]\n}"
 local themeJson = "{\n\"healthbar_frame_Pos\": [-17, -4],\n\"healthbar_frame_Scale\": 3,\n\"healthbar_Pos\": [-13, 148],\n\"healthbar_Scale\": 1,\n\"healthbar_Rotate\": 0,\n\"prestop_frame_Pos\": [100, 1090],\n\"prestop_frame_Scale\": 1,\n\"prestop_bar_Pos\": [110, 1097],\n\"prestop_bar_Scale\": 1,\n\"prestop_bar_Rotate\": 0,\n\"prestop_Pos\": [120, 1105],\n\"prestop_Scale\": 1,\n\"stop_frame_Pos\": [100, 1120],\n\"stop_frame_Scale\": 1,\n\"stop_bar_Pos\": [110, 1127],\n\"stop_bar_Scale\": 1,\n\"stop_bar_Rotate\": 0,\n\"stop_Pos\": [120, 1135],\n\"stop_Scale\": 1,\n\"shake_frame_Pos\": [100, 1150],\n\"shake_frame_Scale\": 1,\n\"shake_bar_Pos\": [110, 1157],\n\"shake_bar_Scale\": 1,\n\"shake_bar_Rotate\": 0,\n\"shake_Pos\": [120, 1165],\n\"shake_Scale\": 1,\n\"multibar_frame_Pos\": [110, 1100],\n\"multibar_frame_Scale\": 1,\n\"multibar_Pos\": [-13, 96],\n\"multibar_Scale\": 1\n}"

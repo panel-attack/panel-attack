@@ -28,7 +28,7 @@ function love.conf(t)
   t.window.minheight = 1                   -- Minimum window height if the window is resizable (number)
   t.window.fullscreen = config.fullscreen  -- Enable fullscreen (boolean)
   t.window.fullscreentype = "desktop"      -- Choose between "desktop" fullscreen or "exclusive" fullscreen mode (string)
-  t.window.vsync = config.vsync            -- Vertical sync mode (number)
+  t.window.vsync = 0            -- Vertical sync mode (number)
   t.window.msaa = 0                        -- The number of samples to use with multi-sampled antialiasing (number)
   t.window.depth = nil                     -- The number of bits per sample in the depth buffer
   t.window.stencil = nil                   -- The number of bits per sample in the stencil buffer

@@ -226,6 +226,15 @@ Stack =
     s.totalFramesBehind = 0
     s.warningsTriggered = {}
 
+    s.time_quads = {}
+    s.move_quads = {}
+    s.score_quads = {}
+    s.speed_quads = {}
+    s.level_quad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images["IMG_levelNumber_atlas" .. s.id]:getWidth() / 11, themes[config.theme].images["IMG_levelNumber_atlas" .. s.id]:getHeight(), themes[config.theme].images["IMG_levelNumber_atlas" .. s.id]:getDimensions())
+    s.healthQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight(), themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight())
+    s.multi_prestopQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_prestop_bar:getWidth(), themes[config.theme].images.IMG_multibar_prestop_bar:getHeight(), themes[config.theme].images.IMG_multibar_prestop_bar:getWidth(), themes[config.theme].images.IMG_multibar_prestop_bar:getHeight())
+    s.multi_stopQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_stop_bar:getWidth(), themes[config.theme].images.IMG_multibar_stop_bar:getHeight(), themes[config.theme].images.IMG_multibar_stop_bar:getWidth(), themes[config.theme].images.IMG_multibar_stop_bar:getHeight())
+    s.multi_shakeQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight(), themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight())
   end)
 
 function Stack.setLevel(self, level)
@@ -247,6 +256,29 @@ function Stack.setLevel(self, level)
   else
     self.NCOLORS = level_to_ncolors_vs[level]
   end
+end
+
+-- Should be called prior to clearing the stack.
+-- Consider recycling any memory that might leave around a lot of garbage.
+-- Note: You can just leave the variables to clear / garbage collect on their own if they aren't large.
+function Stack:deinit()
+  for _, quad in ipairs(self.time_quads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  for _, quad in ipairs(self.move_quads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  for _, quad in ipairs(self.score_quads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  for _, quad in ipairs(self.speed_quads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  GraphicsUtil:releaseQuad(self.level_quad)
+  GraphicsUtil:releaseQuad(self.healthQuad)
+  GraphicsUtil:releaseQuad(self.multi_prestopQuad)
+  GraphicsUtil:releaseQuad(self.multi_stopQuad)
+  GraphicsUtil:releaseQuad(self.multi_shakeQuad)
 end
 
 -- Positions the stack draw position for the given player
@@ -309,7 +341,9 @@ function Stack.divergenceString(stackToTest)
 end
 
 -- Backup important variables into the passed in variable to be restored in rollback. Note this doesn't do a full copy.
-function Stack.rollbackCopy(self, source, other)
+-- param source the stack to copy from
+-- param other the variable to copy to
+function Stack.rollbackCopy(source, other)
   if other == nil then
     if #clone_pool == 0 then
       other = {}
@@ -334,13 +368,13 @@ function Stack.rollbackCopy(self, source, other)
   other.later_garbage = deepcpy(source.later_garbage)
   other.garbage_q = source.garbage_q:makeCopy()
   if source.telegraph then
-    other.telegraph = source.telegraph:rollbackCopy(source.telegraph, other.telegraph)
+    other.telegraph = Telegraph.rollbackCopy(source.telegraph, other.telegraph)
   end
   local width = source.width or other.width
   local height_to_cpy = #source.panels
   other.panels = other.panels or {}
   local startRow = 1
-  if self.panels[0] then
+  if source.panels[0] then
     startRow = 0
   end
   for i = startRow, height_to_cpy do
@@ -417,7 +451,7 @@ function Stack.rollbackCopy(self, source, other)
 end
 
 function Stack.restoreFromRollbackCopy(self, other)
-  self:rollbackCopy(other, self)
+  Stack.rollbackCopy(other, self)
   if self.telegraph then
     self.telegraph.owner = self.garbage_target
     self.telegraph.sender = self
@@ -497,7 +531,7 @@ function Stack.saveForRollback(self)
   self.garbage_target = nil
   self.prev_states = nil
   self:remove_extra_rows()
-  prev_states[self.CLOCK] = self:rollbackCopy(self)
+  prev_states[self.CLOCK] = Stack.rollbackCopy(self)
   self.prev_states = prev_states
   self.garbage_target = garbage_target
   local deleteFrame = self.CLOCK - MAX_LAG - 1
@@ -859,9 +893,9 @@ end
 
 function Stack.has_falling_garbage(self)
   for i = 1, self.height + 3 do --we shouldn't have to check quite 3 rows above height, but just to make sure...
-    local prow = self.panels[i]
+    local panelRow = self.panels[i]
     for j = 1, self.width do
-      if prow and prow[j].garbage and prow[j].state == "falling" then
+      if panelRow and panelRow[j].garbage and panelRow[j].state == "falling" then
         return true
       end
     end
@@ -1026,12 +1060,12 @@ function Stack.enqueue_card(self, chain, x, y, n)
     return
   end
 
-  card_burstAtlas = nil
-  card_burstParticle = nil
+  local card_burstAtlas = nil
+  local card_burstParticle = nil
   if config.popfx == true then
     card_burstAtlas = characters[self.character].images["burst"]
-    card_burstFrameDimension = card_burstAtlas:getWidth() / 9
-    card_burstParticle = love.graphics.newQuad(card_burstFrameDimension, 0, card_burstFrameDimension, card_burstFrameDimension, card_burstAtlas:getDimensions())
+    local card_burstFrameDimension = card_burstAtlas:getWidth() / 9
+    card_burstParticle = GraphicsUtil:newRecycledQuad(card_burstFrameDimension, 0, card_burstFrameDimension, card_burstFrameDimension, card_burstAtlas:getDimensions())
   end
   self.card_q:push({frame = 1, chain = chain, x = x, y = y, n = n, burstAtlas = card_burstAtlas, burstParticle = card_burstParticle})
 end
@@ -1042,18 +1076,24 @@ function Stack.enqueue_popfx(self, x, y, popsize)
     return
   end
 
+  local burstAtlas = nil
+  local burstFrameDimension = nil
+  local burstParticle = nil
+  local bigParticle = nil
+  local fadeAtlas = nil
+  local fadeFrameDimension = nil
+  local fadeParticle = nil
   if characters[self.character].images["burst"] then
     burstAtlas = characters[self.character].images["burst"]
     burstFrameDimension = burstAtlas:getWidth() / 9
-    burstParticle = love.graphics.newQuad(burstFrameDimension, 0, burstFrameDimension, burstFrameDimension, burstAtlas:getDimensions())
-    bigParticle = love.graphics.newQuad(0, 0, burstFrameDimension, burstFrameDimension, burstAtlas:getDimensions())
+    burstParticle = GraphicsUtil:newRecycledQuad(burstFrameDimension, 0, burstFrameDimension, burstFrameDimension, burstAtlas:getDimensions())
+    bigParticle = GraphicsUtil:newRecycledQuad(0, 0, burstFrameDimension, burstFrameDimension, burstAtlas:getDimensions())
   end
   if characters[self.character].images["fade"] then
     fadeAtlas = characters[self.character].images["fade"]
     fadeFrameDimension = fadeAtlas:getWidth() / 9
-    fadeParticle = love.graphics.newQuad(fadeFrameDimension, 0, fadeFrameDimension, fadeFrameDimension, fadeAtlas:getDimensions())
+    fadeParticle = GraphicsUtil:newRecycledQuad(fadeFrameDimension, 0, fadeFrameDimension, fadeFrameDimension, fadeAtlas:getDimensions())
   end
-  poptype = "small"
   self.pop_q:push(
     {
       frame = 1,
@@ -1075,15 +1115,88 @@ end
 local d_col = {up = 0, down = 0, left = -1, right = 1}
 local d_row = {up = 1, down = -1, left = 0, right = 0}
 
+function Stack.hasPanelsInTopRow(self)
+  local panelRow = self.panels[self.height]
+  for idx = 1, self.width do
+    if panelRow[idx]:dangerous() then
+      return true
+    end
+  end
+  return false
+end
+
+function Stack.updateDangerBounce(self)
+-- calculate which columns should bounce
+  self.danger = false
+  local panelRow = self.panels[self.height - 1]
+  for idx = 1, self.width do
+    if panelRow[idx]:dangerous() then
+      self.danger = true
+      self.danger_col[idx] = true
+    else
+      self.danger_col[idx] = false
+    end
+  end
+  if self.danger then
+    if self.panels_in_top_row and self.speed ~= 0 and self.match.mode ~= "puzzle" then
+      -- Player has topped out, panels hold the "flattened" frame
+      self.danger_timer = 15
+    elseif self.stop_time == 0 then
+      self.danger_timer = self.danger_timer - 1
+    end
+    if self.danger_timer < 0 then
+      self.danger_timer = 17
+    end
+  end
+end
+-- determine whether to play danger music
+-- Changed this to play danger when something in top 3 rows
+-- and to play normal music when nothing in top 3 or 4 rows
+function Stack.shouldPlayDangerMusic(self)
+  if not self.danger_music then
+    -- currently playing normal music
+    for row = self.height - 2, self.height do
+      local panelRow = self.panels[row]
+      for column = 1, self.width do
+        if panelRow[column].color ~= 0 and panelRow[column].state ~= "falling" or panelRow[column]:dangerous() then
+          if self.shake_time > 0 then
+            return false
+          else
+            return true
+          end
+        end
+      end
+    end
+  else
+    --currently playing danger
+    local minRowForDangerMusic = self.height - 2
+    if config.danger_music_changeback_delay then
+      minRowForDangerMusic = self.height - 3
+    end
+    for row = minRowForDangerMusic, self.height do
+      local panelRow = self.panels[row]
+      if panelRow ~= nil and type(panelRow) == "table" then
+        for column = 1, self.width do
+          if panelRow[column].color ~= 0 then
+            return true
+          end
+        end
+      elseif self.warningsTriggered["Panels Invalid"] == nil then
+        logger.warn("Panels have invalid data in them, please tell your local developer." .. dump(panels, true))
+        self.warningsTriggered["Panels Invalid"] = true
+      end
+    end
+  end
+
+  return false
+end
+
 -- One run of the engine routine.
 function Stack.simulate(self)
   -- Don't run the main logic if the player has simulated past one of the game overs or the time attack time
   if self:game_ended() == false then
     self:prep_first_row()
     local panels = self.panels
-    local width = self.width
-    local height = self.height
-    local prow = nil
     local panel = nil
     local swapped_this_frame = nil
     if self.do_countdown then
@@ -1153,79 +1266,9 @@ function Stack.simulate(self)
       self.stop_time = self.stop_time - 1
     end
 
-    self.panels_in_top_row = false
-    local top_row = self.height
-    --self.displacement%16==0 and self.height or self.height-1
-    prow = panels[top_row]
-    for idx = 1, width do
-      if prow[idx]:dangerous() then
-        self.panels_in_top_row = true
-      end
-    end
-
-    -- calculate which columns should bounce
-    self.danger = false
-    prow = panels[self.height - 1]
-    for idx = 1, width do
-      if prow[idx]:dangerous() then
-        self.danger = true
-        self.danger_col[idx] = true
-      else
-        self.danger_col[idx] = false
-      end
-    end
-    if self.danger then
-      if self.panels_in_top_row and self.speed ~= 0 and self.match.mode ~= "puzzle" then
-        -- Player has topped out, panels hold the "flattened" frame
-        self.danger_timer = 15
-      elseif self.stop_time == 0 then
-        self.danger_timer = self.danger_timer - 1
-      end
-      if self.danger_timer < 0 then
-        self.danger_timer = 17
-      end
-    end
-
-    -- determine whether to play danger music
-    -- Changed this to play danger when something in top 3 rows
-    -- and to play casual when nothing in top 3 or 4 rows
-    if not self.danger_music then
-      -- currently playing casual
-      for _, prow in pairs({panels[self.height], panels[self.height - 1], panels[self.height - 2]}) do
-        for idx = 1, width do
-          if prow[idx].color ~= 0 and prow[idx].state ~= "falling" or prow[idx]:dangerous() then
-            self.danger_music = true
-            break
-          end
-        end
-      end
-      if self.shake_time > 0 then
-        self.danger_music = false
-      end
-    else
-      --currently playing danger
-      local toggle_back = true
-      -- Normally, change back if nothing is in the top 3 rows
-      local changeback_rows = {panels[self.height], panels[self.height - 1], panels[self.height - 2]}
-      -- But optionally, wait until nothing is in the fourth row
-      if (config.danger_music_changeback_delay) then
-        table.insert(changeback_rows, panels[self.height - 3])
-      end
-      for _, prow in pairs(changeback_rows) do
-        if prow ~= nil and type(prow) == "table" then
-          for idx = 1, width do
-            if prow[idx].color ~= 0 then
-              toggle_back = false
-              break
-            end
-          end
-        elseif self.warningsTriggered["Panels Invalid"] == nil then
-          logger.warn("Panels have invalid data in them, please tell your local developer." .. dump(panels, true))
-          self.warningsTriggered["Panels Invalid"] = true
-        end
-      end
-      self.danger_music = not toggle_back
-    end
+    self.panels_in_top_row = self:hasPanelsInTopRow()
+    self:updateDangerBounce()
+    self.danger_music = self:shouldPlayDangerMusic()
 
     if self.displacement == 0 and self.has_risen then
       self.top_cur_row = self.height
@@ -1307,7 +1350,7 @@ function Stack.simulate(self)
     -- Clean up the value we're using to match newly hovering panels
     -- This is pretty dirty :(
     for row = 1, #panels do
-      for col = 1, width do
+      for col = 1, self.width do
         panels[row][col].match_anyway = nil
       end
     end
@@ -1316,11 +1359,10 @@ function Stack.simulate(self)
     -- Timer-expiring actions + falling
     local propogate_fall = {false, false, false, false, false, false}
     local skip_col = 0
-    local fallen_garbage = 0
     local shake_time = 0
     popsize = "small"
     for row = 1, #panels do
-      for col = 1, width do
+      for col = 1, self.width do
         local cntinue = false
         if skip_col > 0 then
           skip_col = skip_col - 1
@@ -1352,12 +1394,17 @@ function Stack.simulate(self)
               end
             end
           elseif (panel.state == "normal" or panel.state == "falling") then
+            -- x_offset relative to the right side of the garbage
             if panel.x_offset == 0 then
-              local prow = panels[row - 1]
               local supported = false
+              -- y_offset relative to the bottom of the garbage
               if panel.y_offset == 0 then
+                -- width refers to how wide the garbage is, check if there is support anywhere along the width
                 for i = col, col + panel.width - 1 do
-                  supported = supported or prow[i]:support_garbage()
+                  if panels[row - 1][i]:support_garbage() then
+                    supported = true
+                    break
+                  end
                 end
               else
                 supported = not propogate_fall[col]
@@ -1602,7 +1649,7 @@ function Stack.simulate(self)
       local prev_row = self.cur_row
       local prev_col = self.cur_col
       self.cur_row = bound(1, self.cur_row + d_row[self.cur_dir], self.top_cur_row)
-      self.cur_col = bound(1, self.cur_col + d_col[self.cur_dir], width - 1)
+      self.cur_col = bound(1, self.cur_col + d_col[self.cur_dir], self.width - 1)
       if (playMoveSounds and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and (self.cur_row ~= prev_row or self.cur_col ~= prev_col)) then
         if self:shouldChangeSoundEffects() then
           SFX_Cur_Move_Play = 1
@@ -1621,17 +1668,11 @@ function Stack.simulate(self)
     -- TAUNTING
     if self:shouldChangeSoundEffects() then
       if self.taunt_up ~= nil then
-        for _, t in ipairs(characters[self.character].sounds.taunt_ups) do
-          t:stop()
-        end
-        characters[self.character].sounds.taunt_ups[self.taunt_up]:play()
+        characters[self.character]:playTauntUpSfx(self.taunt_up)
         self:taunt("taunt_up")
         self.taunt_up = nil
       elseif self.taunt_down ~= nil then
-        for _, t in ipairs(characters[self.character].sounds.taunt_downs) do
-          t:stop()
-        end
-        characters[self.character].sounds.taunt_downs[self.taunt_down]:play()
+        characters[self.character]:playTauntDownSfx(self.taunt_down)
         self:taunt("taunt_down")
         self.taunt_down = nil
       end
@@ -1729,8 +1770,8 @@ function Stack.simulate(self)
 
     self.panels_in_top_row = false
     -- If any dangerous panels are in the top row, garbage should not fall.
-    for col_idx = 1, width do
-      if panels[top_row][col_idx]:dangerous() then
+    for col_idx = 1, self.width do
+      if panels[self.height][col_idx]:dangerous() then
         self.panels_in_top_row = true
       end
     end
@@ -1746,15 +1787,15 @@ function Stack.simulate(self)
     --   local spawn_col = cols[cols.idx]
     --   local spawn_row = #self.panels
     --   for idx=spawn_col, spawn_col+next_garbage_block_width-1 do
-    --     if prow[idx]:dangerous() then 
+    --     if panelRow[idx]:dangerous() then 
     --       garbage_fits_in_populated_top_row = nil
     --     end
     --   end
     -- end
     
     -- If any panels (dangerous or not) are in rows above the top row, garbage should not fall.
-    for row_idx = top_row + 1, #self.panels do
-      for col_idx = 1, width do
+    for row_idx = self.height + 1, #self.panels do
+      for col_idx = 1, self.width do
         if panels[row_idx][col_idx].color ~= 0 then
           self.panels_in_top_row = true
         end
@@ -1909,16 +1950,11 @@ function Stack.simulate(self)
       if self.combo_chain_play then
         themes[config.theme].sounds.land:stop()
         themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        characters[self.character]:play_combo_chain_sfx(self.combo_chain_play)
+        characters[self.character]:playAttackSfx(self.combo_chain_play)
         self.combo_chain_play = nil
       end
       if SFX_garbage_match_play then
-        for _, v in pairs(characters[self.character].sounds.garbage_matches) do
-          v:stop()
-        end
-        if #characters[self.character].sounds.garbage_matches ~= 0 then
-          characters[self.character].sounds.garbage_matches[math.random(#characters[self.character].sounds.garbage_matches)]:play()
-        end
+        characters[self.character]:playGarbageMatchSfx()
         SFX_garbage_match_play = nil
       end
       if SFX_Fanfare_Play == 0 then
@@ -1944,11 +1980,8 @@ function Stack.simulate(self)
         else
           themes[config.theme].sounds.garbage_thud[self.sfx_garbage_thud]:play()
         end
-        if #characters[self.character].sounds.garbage_lands ~= 0 and interrupted_thud == nil then
-          for _, v in pairs(characters[self.character].sounds.garbage_lands) do
-            v:stop()
-          end
-          characters[self.character].sounds.garbage_lands[math.random(#characters[self.character].sounds.garbage_lands)]:play()
+        if interrupted_thud == nil then
+          characters[self.character]:playGarbageLandSfx()
         end
         self.sfx_garbage_thud = 0
       end
@@ -2152,9 +2185,8 @@ function Stack.set_game_over(self)
   if self.canvas then
     local popsize = "small"
     local panels = self.panels
-    local width = self.width
     for row = 1, #panels do
-      for col = 1, width do
+      for col = 1, self.width do
         local panel = panels[row][col]
         panel.state = "dead"
         if row == #panels then
@@ -2167,8 +2199,8 @@ end
 
 -- Randomly returns a win sound if the character has one
 function Stack.pick_win_sfx(self)
-  if #characters[self.character].sounds.wins ~= 0 then
-    return characters[self.character].sounds.wins[math.random(#characters[self.character].sounds.wins)]
+  if #characters[self.character].sounds.win ~= 0 then
+    return characters[self.character].sounds.win[math.random(#characters[self.character].sounds.win)]
   else
     return themes[config.theme].sounds.fanfare1 -- TODO add a default win sound
   end
@@ -2274,12 +2306,11 @@ end
 -- Removes unneeded rows
 function Stack.remove_extra_rows(self)
   local panels = self.panels
-  local width = self.width
   for row = #panels, self.height + 1, -1 do
     local nonempty = false
-    local prow = panels[row]
-    for col = 1, width do
-      nonempty = nonempty or (prow[col].color ~= 0)
+    local panelRow = panels[row]
+    for col = 1, self.width do
+      nonempty = nonempty or (panelRow[col].color ~= 0)
     end
     if nonempty then
       break
@@ -2651,9 +2682,9 @@ function Stack.check_matches(self)
       -- @CardsOfTheHeart says there are 4 chain sfx: --x2/x3, --x4, --x5 is x2/x3 with an echo effect, --x6+ is x4 with an echo effect
       if self:shouldChangeSoundEffects() then
         if is_chain then
-          self.combo_chain_play = {e_chain_or_combo.chain, self.chain_counter}
+          self.combo_chain_play = {type = e_chain_or_combo.chain, size = self.chain_counter}
         elseif combo_size > 3 then
-          self.combo_chain_play = {e_chain_or_combo.combo, "combos"}
+          self.combo_chain_play = {type = e_chain_or_combo.combo, size = combo_size}
         end
       end
       self.sfx_land = false
@@ -2665,10 +2696,8 @@ function Stack.check_matches(self)
     self.manual_raise = false
     --self.score_render=1;
     --Nope.
-    if metal_count > 5 then
-      self.combo_chain_play = {e_chain_or_combo.combo, "combo_echos"}
-    elseif metal_count > 2 then
-      self.combo_chain_play = {e_chain_or_combo.combo, "combos"}
+    if metal_count > 2 then
+      self.combo_chain_play = { type = e_chain_or_combo.shock, size = metal_count}
     end
   end
 end

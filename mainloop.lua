@@ -180,8 +180,7 @@ do
     undo_stonermode()
     GAME.backgroundImage = themes[config.theme].images.bg_main
     GAME.battleRoom = nil
-    GAME.input:clearInputConfigurationsForPlayers()
-    GAME.input:requestPlayerInputConfigurationAssignments(1)
+    GAME.input:allowAllInputConfigurations()
     reset_filters()
     local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
     local main_menu
@@ -559,6 +558,8 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
       finalizeAndWriteReplay(extraPath, extraFilename)
     end
 
+    GAME.input:allowAllInputConfigurations()
+
     return {game_over_transition, {nextFunction, nil, P1:pick_win_sfx()}}
   end
   
@@ -774,6 +775,7 @@ local function main_select_speed_99(mode)
       write_conf_file()
     end
     stop_the_music()
+    GAME.input:requestSingleInputConfigurationForPlayerCount(1)
     startGameSet = true
   end
 
@@ -865,6 +867,11 @@ local function main_select_speed_99(mode)
   end
   updateMenus()
 
+  local lastScoreLabelQuads = {}
+  local lastScoreQuads = {}
+  local recordLabelQuads = {}
+  local recordQuads = {}
+
   while true do
 
     if difficulty then
@@ -884,10 +891,10 @@ local function main_select_speed_99(mode)
 
       lastScore = tostring(lastScore)
       record = tostring(record)
-      draw_pixel_font("last score", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition, 0.5, 1.0)
-      draw_pixel_font(lastScore, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition + 24, 0.5, 1.0)
-      draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition, 0.5, 1.0)
-      draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition + 24, 0.5, 1.0)
+      draw_pixel_font("last score", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition, 0.5, 1.0, nil, nil, lastScoreLabelQuads)
+      draw_pixel_font(lastScore, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition + 24, 0.5, 1.0, nil, nil, lastScoreQuads)
+      draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition, 0.5, 1.0, nil, nil, recordLabelQuads)
+      draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition + 24, 0.5, 1.0, nil, nil, recordQuads)
     end
 
     gameSettingsMenu:draw()
@@ -1215,7 +1222,7 @@ function main_net_vs_lobby()
       if showing_leaderboard then
         gprint(leaderboard_string, lobby_menu_x[showing_leaderboard] + 400, lobby_menu_y)
       end
-      gprint(join_community_msg, themes[config.theme].main_menu_screen_pos[1] + 30, canvas_height - 50)
+      gprintf(join_community_msg, 0, 668, canvas_width,"center")
       lobby_menu:draw()
     end
     updated = false
@@ -1291,7 +1298,7 @@ function main_net_vs_setup(ip, network_port)
     end
   end
   P1 = nil
-  P2 = {}
+  P2 = nil
   server_queue = ServerQueue()
   gprint(loc("lb_set_connect"), unpack(themes[config.theme].main_menu_screen_pos))
   wait()
@@ -1324,25 +1331,20 @@ function main_net_vs()
   
   local function update()
     local function handleTaunt()
+      local function getCharacter(playerNumber)
+        if P1.player_number == playerNumber then
+          return characters[P1.character]
+        elseif P2.player_number == playerNumber then
+          return characters[P2.character]
+        end
+      end
+
       local messages = server_queue:pop_all_with("taunt")
       for _, msg in ipairs(messages) do
         if msg.taunt then -- receive taunts
-          local taunts = nil
-          -- P1.character and P2.character are supposed to be already filtered with current mods, taunts may differ though!
-          if msg.player_number == select_screen.my_player_number then
-            taunts = characters[P1.character].sounds[msg.type]
-          elseif msg.player_number == select_screen.op_player_number then
-            taunts = characters[P2.character].sounds[msg.type]
-          end
-          if taunts then
-            for _, t in ipairs(taunts) do
-              t:stop()
-            end
-            if msg.index <= #taunts then
-              taunts[msg.index]:play()
-            elseif #taunts ~= 0 then
-              taunts[math.random(#taunts)]:play()
-            end
+          local character = getCharacter(msg.player_number)
+          if character ~= nil then
+            character:playTaunt(msg.type, msg.index)
           end
        end
       end
@@ -1471,8 +1473,7 @@ function main_local_vs_setup()
   GAME.battleRoom = BattleRoom()
   GAME.battleRoom.playerNames[1] = loc("player_n", "1")
   GAME.battleRoom.playerNames[2] = loc("player_n", "2")
-  GAME.input:clearInputConfigurationsForPlayers()
-  GAME.input:requestPlayerInputConfigurationAssignments(2)
+  GAME.input:requestSingleInputConfigurationForPlayerCount(2)
   return select_screen.main, {select_screen, "2p_local_vs"}
 end
 
@@ -1613,20 +1614,31 @@ function main_replay()
         P2.max_runs_per_frame = 1
       end
     elseif menu_right() then
-      playbackSpeed = bound(1, playbackSpeed + 1, maximumSpeed)
+      playbackSpeed = bound(-1, playbackSpeed + 1, maximumSpeed)
       if P1 then
-        P1.max_runs_per_frame = playbackSpeed
+        P1.max_runs_per_frame = math.max(playbackSpeed, 0)
       end
       if P2 then
-        P2.max_runs_per_frame = playbackSpeed
+        P2.max_runs_per_frame = math.max(playbackSpeed, 0)
       end
     elseif menu_left() then
-      playbackSpeed = bound(1, playbackSpeed - 1, maximumSpeed)
+      playbackSpeed = bound(-1, playbackSpeed - 1, maximumSpeed)
       if P1 then
-        P1.max_runs_per_frame = playbackSpeed
+        P1.max_runs_per_frame = math.max(playbackSpeed, 0)
       end
       if P2 then
-        P2.max_runs_per_frame = playbackSpeed
+        P2.max_runs_per_frame = math.max(playbackSpeed, 0)
+      end
+    end
+
+    if playbackSpeed == -1 then
+      if P1 and P1.CLOCK > 0 and P1.prev_states[P1.CLOCK-1] then
+        P1:rollbackToFrame(P1.CLOCK-1)
+        P1.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
+      end
+      if P2 and P2.CLOCK > 0 and P2.prev_states[P2.CLOCK-1] then
+        P2:rollbackToFrame(P2.CLOCK-1)
+        P2.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
       end
     end
   end

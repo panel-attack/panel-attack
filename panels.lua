@@ -17,6 +17,7 @@ function Panels.id_init(self)
   local config_file, err = love.filesystem.newFile(self.path .. "/config.json", "r")
   if config_file then
     local teh_json = config_file:read(config_file:getSize())
+    config_file:close()
     for k, v in pairs(json.decode(teh_json)) do
       read_data[k] = v
     end
