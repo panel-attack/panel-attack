@@ -1,6 +1,7 @@
 -- The main game object for tracking everything in Panel Attack.
 -- Not to be confused with "Match" which is the current battle / instance of the game.
 local consts = require("consts")
+local GraphicsUtil = require("graphics_util")
 local class = require("class")
 local logger = require("logger")
 local sound = require("sound")
@@ -245,20 +246,19 @@ function Game:update(dt)
 end
 
 function Game:draw()
-  if self.foreground_overlay then
-    local scale = consts.CANVAS_WIDTH / math.max(self.foreground_overlay:getWidth(), self.foreground_overlay:getHeight()) -- keep image ratio
+  if sceneManager.activeScene then
+    sceneManager.activeScene:drawForeground()
+  else
+    if self.foreground_overlay then
+      local scale = consts.CANVAS_WIDTH / math.max(self.foreground_overlay:getWidth(), self.foreground_overlay:getHeight()) -- keep image ratio
     menu_drawf(self.foreground_overlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
+    end
   end
 
   -- Clear the screen
   love.graphics.setCanvas(self.globalCanvas)
   love.graphics.setBackgroundColor(unpack(global_background_color))
   love.graphics.clear()
-
-  -- Draw the FPS if enabled
-  if self.config.show_fps then
-    gprintf("FPS: " .. love.timer.getFPS(), 1, 1)
-  end
 
   if STONER_MODE then
     gprintf("STONER", 1, 1 + (11 * 4))
@@ -268,14 +268,12 @@ function Game:draw()
     self.gfx_q[i][1](unpack(self.gfx_q[i][2]))
   end
   self.gfx_q:clear()
-
-  love.graphics.setCanvas() -- render everything thats been added
-  love.graphics.clear(love.graphics.getBackgroundColor()) -- clear in preperation for the next render
-    
-  love.graphics.setBlendMode("alpha", "premultiplied")
-  love.graphics.draw(self.globalCanvas, self.canvasX, self.canvasY, 0, self.canvasXScale, self.canvasYScale)
-  love.graphics.setBlendMode("alpha", "alphamultiply")
-
+  
+  -- Draw the FPS if enabled
+  if self.config.show_fps then
+    love.graphics.print("FPS: " .. love.timer.getFPS(), 1, 1)
+  end
+  
   if self.showGameScale or config.debug_mode then
     local scaleString = "Scale: " .. self.canvasXScale .. " (" .. canvas_width * self.canvasXScale .. " x " .. canvas_height * self.canvasYScale .. ")"
     local newPixelWidth = love.graphics.getWidth()
@@ -283,16 +281,28 @@ function Game:draw()
     if canvas_width * self.canvasXScale > newPixelWidth then
       scaleString = scaleString .. " Clipped "
     end
-    love.graphics.printf(scaleString, get_global_font_with_size(30), 5, 5, 2000, "left")
+    love.graphics.printf(scaleString, GraphicsUtil.getGlobalFontWithSize(30), 5, 5, 2000, "left")
   end
 
+  love.graphics.setCanvas() -- render everything thats been added
+  love.graphics.clear(love.graphics.getBackgroundColor()) -- clear in preperation for the next render
+  
+  love.graphics.setBlendMode("alpha", "premultiplied")
+  love.graphics.draw(self.globalCanvas, self.canvasX, self.canvasY, 0, self.canvasXScale, self.canvasYScale)
+  love.graphics.setBlendMode("alpha", "alphamultiply")
+
   -- draw background and its overlay
-  if self.backgroundImage then
-    self.backgroundImage:draw()
-  end
-  if self.background_overlay then
-    local scale = consts.CANVAS_WIDTH / math.max(self.background_overlay:getWidth(), self.background_overlay:getHeight()) -- keep image ratio
+  if sceneManager.activeScene then
+    sceneManager.activeScene:drawBackground()
+  else
+    if self.backgroundImage then
+      self.backgroundImage:draw()
+    end
+    
+    if self.background_overlay then
+      local scale = consts.CANVAS_WIDTH / math.max(self.background_overlay:getWidth(), self.background_overlay:getHeight()) -- keep image ratio
     menu_drawf(self.background_overlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
+    end
   end
 end
 

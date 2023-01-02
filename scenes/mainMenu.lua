@@ -4,6 +4,7 @@ local Menu = require("ui.Menu")
 local sceneManager = require("scenes.sceneManager")
 local replay_browser = require("replay_browser")
 local options = require("options")
+local GraphicsUtil = require("graphics_util")
 
 -- need to load the existing global scene functions until they get ported to scenes
 require("mainloop")
@@ -33,15 +34,8 @@ local menuItems = {
   {Button({label = "mm_1_vs", onClick = genOnClickFn(main_local_vs_yourself_setup)})},
   {Button({label = "mm_1_training", onClick = genOnClickFn(training_setup)})},
   {Button({label = "mm_2_vs_online", extra_labels = {""}, onClick = genOnClickFn(main_net_vs_setup, {"18.188.43.50"})})},
-  --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
-  --Button({label = "mm_2_vs_online", extra_labels = {"\nTelegraph Server"}, onClick = genOnClickFn(main_net_vs_setup, {"betaserver.panelattack.com", 59569})}),
-  --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
-  --{loc("mm_2_vs_online", "betaserver.panelattack.com"), main_net_vs_setup, {"betaserver.panelattack.com"}},
-  --{loc("mm_2_vs_online", "(USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)"), main_net_vs_setup, {"18.188.43.50"}},
-  --{loc("mm_2_vs_online", "This test build is for offline-use only"), main_select_mode},
-  --{loc("mm_2_vs_online", "domi1819.xyz"), main_net_vs_setup, {"domi1819.xyz"}},
-  --{loc("mm_2_vs_online", "(development-use only)"), main_net_vs_setup, {"localhost"}},
-  --{loc("mm_2_vs_online", "LittleEndu's server"), main_net_vs_setup, {"51.15.207.223"}},
+  --{Button({label = "mm_2_vs_online", extra_labels = {"\nTelegraph Server"}, onClick = genOnClickFn(main_net_vs_setup, {"betaserver.panelattack.com", 59569})})},
+  --{Button({label = "mm_2_vs_online", extra_labels = {"(development-use only)"}, onClick = genOnClickFn(main_net_vs_setup, {"localhost"})})},
   {Button({label = "mm_2_vs_local", onClick = genOnClickFn(main_local_vs_setup)})},
   {Button({label = "mm_replay_browser", onClick = genOnClickFn(replay_browser.main)})},
   {Button({label = "mm_configure", onClick = function() switchToScene("inputConfigMenu") end})},
@@ -67,7 +61,6 @@ function mainMenu:load()
   character_loader_clear()
   stage_loader_clear()
   resetNetwork()
-  GAME.backgroundImage = themes[config.theme].images.bg_main
   GAME.battleRoom = nil
   GAME.input:clearInputConfigurationsForPlayers()
   GAME.input:requestPlayerInputConfigurationAssignments(1)
@@ -75,6 +68,10 @@ function mainMenu:load()
   match_type_message = ""
   self.menu:updateLabel()
   self.menu:setVisibility(true)
+end
+
+function mainMenu:drawBackground()
+  themes[config.theme].images.bg_main:draw()
 end
 
 function mainMenu:update()
@@ -86,7 +83,7 @@ function mainMenu:update()
     end
   end
 
-  local fontHeight = get_global_font():getHeight()
+  local fontHeight = GraphicsUtil.getGlobalFont():getHeight()
   local infoYPosition = 705 - fontHeight/2
 
   local loveString = GAME:loveVersionString()

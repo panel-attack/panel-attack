@@ -9,6 +9,7 @@ local consts = require("consts")
 local input = require("inputManager")
 local joystickManager = require("joystickManager")
 local util = require("util")
+local GraphicsUtil = require("graphics_util")
 
 --@module inputConfigMenu
 local inputConfigMenu = Scene("inputConfigMenu")
@@ -16,7 +17,7 @@ local inputConfigMenu = Scene("inputConfigMenu")
 inputConfigMenu.settingKey = false
 inputConfigMenu.menu = nil -- set in load
 
-local font = love.graphics.getFont()
+local font = GraphicsUtil.getGlobalFont()
 local pendingInputText = "__"
 local configIndex = 1
 
@@ -165,7 +166,6 @@ function inputConfigMenu:init()
 end
 
 function inputConfigMenu:load()
-  GAME.backgroundImage = themes[config.theme].images.bg_main
   reset_filters()
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")
@@ -173,6 +173,10 @@ function inputConfigMenu:load()
   
   self.menu:updateLabel()
   self.menu:setVisibility(true)
+end
+
+function inputConfigMenu:drawBackground()
+  themes[config.theme].images.bg_main:draw()
 end
 
 function inputConfigMenu:update()

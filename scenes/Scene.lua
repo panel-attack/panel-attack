@@ -14,6 +14,10 @@ function Scene:load() end
 
 function Scene:update() end
 
+function Scene:drawBackground() end
+
+function Scene:drawForeground() end
+
 function Scene:unload() end
 
 return Scene
