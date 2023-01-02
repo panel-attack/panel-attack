@@ -983,19 +983,19 @@ local function about_menu(button_idx)
       recursive_copy("default_data/themes", "themes")
     end
 
-    ret = {show_readme, {"readme_themes.txt", 1}}
+    ret = {show_readme, {"readme_themes.md", 1}}
   end
 
   local function show_characters_readme()
-    ret = {show_readme, {"readme_characters.txt", 2}}
+    ret = {show_readme, {"readme_characters.md", 2}}
   end
 
   local function show_stages_readme()
-    ret = {show_readme, {"readme_stages.txt", 3}}
+    ret = {show_readme, {"readme_stages.md", 3}}
   end
 
   local function show_panels_readme()
-    ret = {show_readme, {"readme_panels.txt", 4}}
+    ret = {show_readme, {"readme_panels.md", 4}}
   end
 
   local function show_attack_readme()
