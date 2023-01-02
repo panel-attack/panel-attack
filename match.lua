@@ -319,13 +319,13 @@ function Match.render(self)
   -- Draw VS HUD
   if self.battleRoom and (GAME.gameIsPaused == false or GAME.renderDuringPause) then
     -- P1 username
-    GraphicsUtil.drawClearText(self.player1NameTextObject, P1.score_x + themes[config.theme].name_Pos[1], P1.score_y + themes[config.theme].name_Pos[2])
+    GraphicsUtil.drawBoldText(self.player1NameTextObject, P1.score_x + themes[config.theme].name_Pos[1], P1.score_y + themes[config.theme].name_Pos[2])
     if P2 then
       -- P1 win count graphics
       draw_label(themes[config.theme].images.IMG_wins, (P1.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
       GraphicsUtil.draw_number(GAME.battleRoom:getPlayerWinCount(P1.player_number), themes[config.theme].images.IMG_number_atlas_1P, P1_win_quads, P1.score_x + themes[config.theme].win_Pos[1], P1.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, "center")
       -- P2 username
-      GraphicsUtil.drawClearText(self.player2NameTextObject, P2.score_x + themes[config.theme].name_Pos[1], P2.score_y + themes[config.theme].name_Pos[2])
+      GraphicsUtil.drawBoldText(self.player2NameTextObject, P2.score_x + themes[config.theme].name_Pos[1], P2.score_y + themes[config.theme].name_Pos[2])
       -- P2 win count graphics
       draw_label(themes[config.theme].images.IMG_wins, (P2.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P2.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
       GraphicsUtil.draw_number(GAME.battleRoom:getPlayerWinCount(P2.player_number), themes[config.theme].images.IMG_number_atlas_2P, P2_win_quads, P2.score_x + themes[config.theme].win_Pos[1], P2.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, "center")
@@ -538,7 +538,7 @@ function Match:drawRankedGraphicsForPlayer(playerNumber, ratingLabelAsset, numbe
         if self.playerLeagueTextObjects[playerNumber] then
           draw_label(ratingLabelAsset, (stackObject.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (stackObject.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
           local textWidth = self.playerLeagueTextObjects[playerNumber]:getWidth()
-          GraphicsUtil.drawClearText(self.playerLeagueTextObjects[playerNumber], stackObject.score_x - textWidth/2.0 + themes[config.theme].rating_Pos[1], stackObject.score_y + themes[config.theme].rating_Pos[2])
+          GraphicsUtil.drawBoldText(self.playerLeagueTextObjects[playerNumber], stackObject.score_x - textWidth/2.0 + themes[config.theme].rating_Pos[1], stackObject.score_y + themes[config.theme].rating_Pos[2])
         end
       end
     end

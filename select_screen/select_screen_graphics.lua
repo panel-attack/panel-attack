@@ -64,14 +64,10 @@ function select_screen_graphics.drawPlayerInfo(self)
       includeWinRatio = player1.level == player2.level
     end
   end
-  if config.showRatingDetails then
-    self:drawButton(0, 2, 2, 1, self:get_player_state_str(self.select_screen.my_player_number, includeWinRatio, my_rating_difference, self.select_screen.my_expected_win_ratio), "left", "top", true)
-  end
+  self:drawButton(0, 2, 2, 1, self:get_player_state_str(self.select_screen.my_player_number, includeWinRatio, my_rating_difference, self.select_screen.my_expected_win_ratio), "left", "top", true)
   if self.select_screen.players[self.select_screen.my_player_number] and GAME.battleRoom.playerNames[2] then
     self:drawButton(0, 7, 1, 1, "P2", "center")
-    if config.showRatingDetails then
-      self:drawButton(0, 8, 2, 1, self:get_player_state_str(self.select_screen.op_player_number, includeWinRatio, op_rating_difference, self.select_screen.op_expected_win_ratio), "left", "top", true)
-    end
+    self:drawButton(0, 8, 2, 1, self:get_player_state_str(self.select_screen.op_player_number, includeWinRatio, op_rating_difference, self.select_screen.op_expected_win_ratio), "left", "top", true)
   end
 end
 
@@ -118,7 +114,7 @@ function select_screen_graphics.get_player_state_str(self, player_number, includ
       state = state .. "\n"
     end
     state = state .. loc("ss_wins") .. " " .. win_count
-    if (current_server_supports_ranking and expected_win_ratio) or totalGames > 0 and config.showRatingDetails then
+    if ((current_server_supports_ranking and expected_win_ratio) or totalGames > 0) and config.showRatingDetails then
       state = state .. "\n" .. loc("ss_winrate") .. "\n"
       local need_line_return = false
       if totalGames > 0 then
