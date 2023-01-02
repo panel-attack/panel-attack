@@ -35,6 +35,7 @@ config = {
     music_volume                  = 100,
     -- Debug mode flag
     debug_mode                    = false,
+    debugShowServers              = false,
     -- Show FPS in the top-left corner of the screen
     show_fps                      = false,
     -- Show ingame infos while playing the game
@@ -166,6 +167,9 @@ config = {
         end
         if type(read_data.debug_mode) == "boolean" then
           configTable.debug_mode = read_data.debug_mode
+        end
+        if type(read_data.debugShowServers) == "boolean" then
+          configTable.debugShowServers = read_data.debugShowServers
         end
         if type(read_data.show_fps) == "boolean" then
           configTable.show_fps = read_data.show_fps
