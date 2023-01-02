@@ -79,6 +79,13 @@ local function general_menu()
     update_replay_preference()
   end
 
+  local function update_RatingDetails(noToggle)
+    if not noToggle then
+      config.showRatingDetails = not config.showRatingDetails
+    end
+    generalMenu:set_button_setting(7, config.showRatingDetails and loc("op_on") or loc("op_off"))
+  end
+
   local function nextMenu()
     generalMenu:selectNextIndex()
   end
@@ -98,6 +105,7 @@ local function general_menu()
   generalMenu:add_button(loc("op_analytics"), update_analytics, goEscape, update_analytics, update_analytics)
   generalMenu:add_button(loc("op_input_delay"), nextMenu, goEscape, decrease_input_repeat_delay, increase_input_repeat_delay)
   generalMenu:add_button(loc("op_replay_public"), nextMenu, goEscape, increase_publicness, increase_privateness)
+  generalMenu:add_button(loc("op_rating_details"), nextMenu, goEscape, update_RatingDetails, update_RatingDetails)
   generalMenu:add_button(loc("back"), exitSettings, exitSettings)
   update_countdown(true)
   update_fps(true)
@@ -105,6 +113,7 @@ local function general_menu()
   update_analytics(true)
   update_input_repeat_delay()
   update_replay_preference()
+  update_RatingDetails(true)
 
   while true do
     generalMenu:draw()

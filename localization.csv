@@ -307,6 +307,7 @@ op_replay_public,,Save replays publicly,Sauvegarder les replays publiquement,Sal
 op_replay_public_no,,No,Non,Não,公開しない,No,Nein,No
 op_replay_public_anonymously,,Anonymously,Anonymement,Anônimo,匿名で公開する,Anónimamente,Anonym,Anonimamente
 op_replay_public_with_name,,With my name,Avec mon pseudo,Com meu apelido,ユーザー名付きで公開する,Con mi nombre,Mit meinem Benutzernamen,Con il mio nome
+op_rating_details,"Whether to show rating points, win rates etc",Show Rating Details,Afficher les détails de la notation,Mostrar detalhes de classificação,評価の詳細を表示します,Detalles de calificación de espectáculos,Bewertungsdetails anzeigen,Mostra i dettagli di valutazione
 op_save,,writing config to file...,sauvegarde de la configuration...,salvando configuração no arquivo...,ファイルに設定を書き込んでいます...,Escribiendo configuración al archivo...,Speichere Konfiguration in Datei...,Salvataggio delle configurazioni su file...
 op_sonds,unused...,Sounds theme,Thème des sons,Tema dos sons,サウンドセット,Set de sonidos,Soundset,Tema dei suoni
 op_vol,,Master Volume,Volume Global,Vol. principal,マスターボリューム,Volumen principal,Lautstärke,Volume principale

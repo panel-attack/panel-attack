@@ -524,10 +524,10 @@ function Match:drawRankedGraphicsForPlayer(playerNumber, ratingLabelAsset, numbe
       rating_to_print = self.room_ratings[playerNumber].new
     end
     if type(rating_to_print) == "number" then
-      if GAME.showRatings == "rating" then
+      if config.showRatingDetails then
         draw_label(ratingLabelAsset, (stackObject.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (stackObject.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
         GraphicsUtil.draw_number(rating_to_print, numberAtlas, ratingQuads, stackObject.score_x + themes[config.theme].rating_Pos[1], stackObject.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, "center")
-      elseif GAME.showRatings == "league" then
+      else
         if self.playerLeagueTextObjects[playerNumber] == nil then
           local leagueString = Leagues.leagueNameForRating(rating_to_print)
           if leagueString then

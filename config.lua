@@ -48,6 +48,7 @@ config = {
     enable_analytics              = true,
     -- Save replays setting
     save_replays_publicly         = "with my name",
+    showRatingDetails             = true,
     portrait_darkness             = 70,
     popfx                         = true,
     cardfx_scale                  = 100,
@@ -184,6 +185,9 @@ config = {
         end
         if type(read_data.save_replays_publicly) == "string" and save_replays_values[read_data.save_replays_publicly] then
           configTable.save_replays_publicly = read_data.save_replays_publicly
+        end
+        if type(read_data.showRatingDetails) == "boolean" then
+          configTable.showRatingDetails = read_data.showRatingDetails
         end
         if type(read_data.portrait_darkness) == "number" then
           configTable.portrait_darkness = bound(0, read_data.portrait_darkness, 100)
