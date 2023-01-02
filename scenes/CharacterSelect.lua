@@ -8,6 +8,7 @@ local LevelSlider = require("ui.LevelSlider")
 local tableUtils = require("tableUtils")
 local consts = require("consts")
 local util = require("util")
+local GraphicsUtil = require("graphics_util")
 
 local MAX_CHARACTERS_PER_PAGE = 34
 local MAX_ROWS = 5
@@ -81,8 +82,8 @@ local CharacterSelect = class(
 )
 
 local brackets = {
-  left = love.graphics.newText(love.graphics.getFont(), "<"),
-  right = love.graphics.newText(love.graphics.getFont(), ">")
+  left = love.graphics.newText(GraphicsUtil.getGlobalFont(), "<"),
+  right = love.graphics.newText(GraphicsUtil.getGlobalFont(), ">")
 }
 
 local function gridToScreen(x, y)
@@ -547,7 +548,7 @@ function CharacterSelect:load()
   GAME.battleRoom.playerNames[2] = nil
   my_player_number = 1
   op_state = nil
-  self.player_name_text = love.graphics.newText(love.graphics.getFont(), GAME.battleRoom.playerNames[1])
+  self.player_name_text = love.graphics.newText(GraphicsUtil.getGlobalFont(), GAME.battleRoom.playerNames[1])
   if themes[config.theme].musics.select_screen then
     stop_the_music()
     find_and_add_music(themes[config.theme].musics, "select_screen")

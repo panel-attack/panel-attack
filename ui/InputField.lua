@@ -5,10 +5,12 @@ local class = require("class")
 local UIElement = require("ui.UIElement")
 local inputFieldManager = require("ui.inputFieldManager")
 
+local GraphicsUtil = require("graphics_util")
+
 --@module InputField
 local InputField = class(
   function(self, options)
-    self.placeholderText = love.graphics.newText(love.graphics.getFont(), options.placeholder) or love.graphics.newText(love.graphics.getFont(), "Input Field")
+    self.placeholderText = love.graphics.newText(GraphicsUtil.getGlobalFont(), options.placeholder) or love.graphics.newText(GraphicsUtil.getGlobalFont(), "Input Field")
     self.value = options.value or ""
     self.charLimit = options.charLimit or 16
     self.filterAlphanumeric = options.filterAlphanumeric or (options.filterAlphanumeric == nil and true)
@@ -22,7 +24,7 @@ local InputField = class(
     self.halign = options.halign or 'left'
     self.valign = options.valign or 'center'
     
-    self.text = love.graphics.newText(love.graphics.getFont(), self.value)
+    self.text = love.graphics.newText(GraphicsUtil.getGlobalFont(), self.value)
     -- stretch to fit text
     local textWidth, textHeight = self.text:getDimensions()
     self.width = math.max(textWidth + 6, self.width)
@@ -39,7 +41,7 @@ local InputField = class(
 )
 
 local textOffset = 4
-local textCursor = love.graphics.newText(love.graphics.getFont(), "|")
+local textCursor = love.graphics.newText(GraphicsUtil.getGlobalFont(), "|")
 
 function InputField:setVisibility(isVisible)
   inputFieldManager.inputFields[self.id] = isVisible and self or nil
@@ -57,7 +59,7 @@ function InputField:getCursorPos()
 
   local byteoffset = utf8.offset(self.value, self.offset)
   local text = string.sub(self.value, 1, byteoffset)
-  return self.x + textOffset + love.graphics.newText(love.graphics.getFont(), text):getWidth()
+  return self.x + textOffset + love.graphics.newText(GraphicsUtil.getGlobalFont(), text):getWidth()
 end
 
 function InputField:setFocus(x, y)
@@ -92,7 +94,7 @@ function InputField:onBackspace()
   else
     self.value = string.sub(self.value, 1, byteoffset) .. string.sub(self.value, byteoffset2 + 1, strByteLength)
   end
-  self.text = love.graphics.newText(love.graphics.getFont(), self.value)
+  self.text = love.graphics.newText(GraphicsUtil.getGlobalFont(), self.value)
   self.offset = self.offset - 1
 end
 
@@ -114,7 +116,7 @@ function InputField:textInput(t)
     else
       self.value = string.sub(self.value, 1, byteoffset) .. t .. string.sub(self.value, byteoffset + 1, strByteLength)
     end
-    self.text = love.graphics.newText(love.graphics.getFont(), self.value)
+    self.text = love.graphics.newText(GraphicsUtil.getGlobalFont(), self.value)
     self.offset = self.offset + 1
   end
 end

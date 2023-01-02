@@ -14,11 +14,12 @@ local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local util = require("util")
 local save = require("save")
+local GraphicsUtil = require("graphics_util")
 
 --@module MainMenu
 local replay_menu = Scene("replay_menu")
 
-local font = love.graphics.getFont()
+local font = GraphicsUtil.getGlobalFont()
 local selection = nil
 local base_path = "replays"
 local current_path = "/"

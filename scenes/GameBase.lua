@@ -182,7 +182,7 @@ function GameBase:handlePause()
 end
 
 local t = 0 -- the amount of frames that have passed since the game over screen was displayed
-local font = love.graphics.getFont()
+local font = GraphicsUtil.getGlobalFont()
 local timemin = 60 -- the minimum amount of frames the game over screen will be displayed for
 local timemax = -1
 local winnerTime = 60

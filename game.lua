@@ -297,7 +297,7 @@ function Game:draw()
     if canvas_width * self.canvasXScale > newPixelWidth then
       scaleString = scaleString .. " Clipped "
     end
-    love.graphics.printf(scaleString, get_global_font_with_size(30), 5, 5, 2000, "left")
+    love.graphics.printf(scaleString, GraphicsUtil.getGlobalFontWithSize(30), 5, 5, 2000, "left")
   end
 
   love.graphics.setCanvas() -- render everything thats been added
@@ -314,7 +314,7 @@ function Game:draw()
     if canvas_width * self.canvasXScale > newPixelWidth then
       scaleString = scaleString .. " Clipped "
     end
-    love.graphics.printf(scaleString, get_global_font_with_size(30), 5, 5, 2000, "left")
+    love.graphics.printf(scaleString, GraphicsUtil.getGlobalFontWithSize(30), 5, 5, 2000, "left")
   end
 
   -- draw background and its overlay

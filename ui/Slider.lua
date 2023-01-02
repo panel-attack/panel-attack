@@ -2,6 +2,7 @@ local class = require("class")
 local UIElement = require("ui.UIElement")
 local sliderManager = require("ui.sliderManager")
 local util = require("util")
+local GraphicsUtil = require("graphics_util")
 
 --@module Slider
 local Slider = class(
@@ -13,9 +14,9 @@ local Slider = class(
     self.tickLength = options.tickLength or 1
     self.onValueChange = options.onValueChange or function() end
     
-    self.minText = love.graphics.newText(love.graphics.getFont(), self.min)
-    self.maxText = love.graphics.newText(love.graphics.getFont(), self.max)
-    self.valueText = love.graphics.newText(love.graphics.getFont(), self.value)
+    self.minText = love.graphics.newText(GraphicsUtil.getGlobalFont(), self.min)
+    self.maxText = love.graphics.newText(GraphicsUtil.getGlobalFont(), self.max)
+    self.valueText = love.graphics.newText(GraphicsUtil.getGlobalFont(), self.value)
     
     sliderManager.sliders[self.id] = self.isVisible and self or nil
     self.TYPE = "Slider"
@@ -44,7 +45,7 @@ end
 function Slider:setValue(value)
   local prevValue = self.value
   self.value = util.bound(self.min, value, self.max)
-  self.valueText = love.graphics.newText(love.graphics.getFont(), self.value)
+  self.valueText = love.graphics.newText(GraphicsUtil.getGlobalFont(), self.value)
   if self.value ~= prevValue then
     self:onValueChange()
   end

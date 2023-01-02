@@ -6,6 +6,8 @@ local Label = require("ui.Label")
 local input = require("inputManager")
 local consts = require("consts")
 
+local GraphicsUtil = require("graphics_util")
+
 local BUTTON_PADDING = 5
 
 local function setMenuItems(self, menuItems)
@@ -46,7 +48,7 @@ local Menu = class(
   UIElement
 )
 
-local font = love.graphics.getFont()
+local font = GraphicsUtil.getGlobalFont()
 local arrow = love.graphics.newText(font, ">")
 
 Menu.setMenuItems = setMenuItems

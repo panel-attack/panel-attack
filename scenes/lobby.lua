@@ -12,6 +12,7 @@ local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local ClickMenu = require("ClickMenu")
 local util = require("util")
+local GraphicsUtil = require("graphics_util")
 
 --@module MainMenu
 local lobby = Scene("lobby")
@@ -357,7 +358,7 @@ function lobby:update()
     local noticeHeight = 0
     local button_padding = 4
     if noticeText ~= noticeLastText then
-      noticeTextObject = love.graphics.newText(get_global_font(), noticeText)
+      noticeTextObject = love.graphics.newText(GraphicsUtil.getGlobalFont(), noticeText)
       noticeHeight = noticeTextObject:getHeight() + (button_padding * 2)
       lobby_menu.yMin = lobby_menu_y + noticeHeight
       local menuHeight = (themes[config.theme].main_menu_y_max - lobby_menu.yMin)

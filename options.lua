@@ -1,6 +1,7 @@
 local analytics = require("analytics")
 local util = require("util")
 local ClickMenu = require("ClickMenu")
+local GraphicsUtil = require("graphics_util")
 
 local options = {}
 
@@ -952,7 +953,7 @@ local function about_menu(button_idx)
     reset_filters()
 
     local readme = read_txt_file(filename)
-    local text = love.graphics.newText(get_global_font(), readme)
+    local text = love.graphics.newText(GraphicsUtil.getGlobalFont(), readme)
     local heightDiff = text:getHeight() - (canvas_height - 15)
     local offset = 0
     local scrollStep = 14

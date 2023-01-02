@@ -8,6 +8,7 @@ local sceneManager = require("scenes.sceneManager")
 local Menu = require("ui.Menu")
 local ButtonGroup = require("ui.ButtonGroup")
 local save = require("save")
+local GraphicsUtil = require("graphics_util")
 
 --@module BasicMenu
 local BasicMenu = class(
@@ -28,7 +29,7 @@ local speed_slider = Slider({
     isVisible = false
 })
 
-local font = love.graphics.getFont() 
+local font = GraphicsUtil.getGlobalFont()
 local difficulty_buttons = ButtonGroup(
     {
       buttons = {

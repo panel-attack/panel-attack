@@ -9,6 +9,7 @@ local consts = require("consts")
 local input = require("inputManager")
 local joystickManager = require("joystickManager")
 local util = require("util")
+local GraphicsUtil = require("graphics_util")
 
 --@module inputConfigMenu
 local inputConfigMenu = Scene("inputConfigMenu")
@@ -16,7 +17,7 @@ local inputConfigMenu = Scene("inputConfigMenu")
 inputConfigMenu.settingKey = false
 inputConfigMenu.menu = nil -- set in load
 
-local font = love.graphics.getFont()
+local font = GraphicsUtil.getGlobalFont()
 local pendingInputText = "__"
 local configIndex = 1
 

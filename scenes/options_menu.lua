@@ -9,6 +9,7 @@ local ButtonGroup = require("ui.ButtonGroup")
 local Stepper = require("ui.Stepper")
 local input = require("inputManager")
 local save = require("save")
+local GraphicsUtil = require("graphics_util")
 
 --@module BasicMenu
 local options_menu = Scene("options_menu")
@@ -47,7 +48,7 @@ local found_themes = {}
 local about_text = {}
 local info_string
 
-local font = love.graphics.getFont()
+local font = GraphicsUtil.getGlobalFont()
 
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)

@@ -4,6 +4,7 @@ local Menu = require("ui.Menu")
 local sceneManager = require("scenes.sceneManager")
 local replay_browser = require("replay_browser")
 local options = require("options")
+local GraphicsUtil = require("graphics_util")
 
 -- need to load the existing global scene functions until they get ported to scenes
 require("mainloop")
@@ -82,7 +83,7 @@ function mainMenu:update()
     end
   end
 
-  local fontHeight = get_global_font():getHeight()
+  local fontHeight = GraphicsUtil.getGlobalFont():getHeight()
   local infoYPosition = 705 - fontHeight/2
 
   local loveString = GAME:loveVersionString()

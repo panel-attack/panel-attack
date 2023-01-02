@@ -1,4 +1,5 @@
 local class = require("class")
+local GraphicsUtil = require("graphics_util")
 
 local uniqueId = 0
 
@@ -38,7 +39,7 @@ local UIElement = class(
     
     -- private members
     if self.label then
-      self.text = love.graphics.newText(love.graphics.getFont(), self.translate and loc(self.label, unpack(self.extraLabels)) or self.label)
+      self.text = love.graphics.newText(GraphicsUtil.getGlobalFont(), self.translate and loc(self.label, unpack(self.extraLabels)) or self.label)
     end
     
     self.id = uniqueId
@@ -86,7 +87,7 @@ function UIElement:updateLabel(label)
   end
 
   if self.label and (self.translate or label) then
-    self.text = love.graphics.newText(love.graphics.getFont(), self.translate and loc(self.label, unpack(self.extraLabels)) or self.label)
+    self.text = love.graphics.newText(GraphicsUtil.getGlobalFont(), self.translate and loc(self.label, unpack(self.extraLabels)) or self.label)
   end
   
   for _, uiElement in ipairs(self.children) do
