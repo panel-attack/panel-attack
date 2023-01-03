@@ -326,12 +326,11 @@ function Panel.enterHoverState(self, panelBelow)
       self.timer = self.framecounts.HOVER
       self.chaining = chaining or panelBelow.justPopped
     else
-      -- inherit hovertime and chaining state from panel below
+      -- inherit hovertime from panel below
       self.timer = panelBelow.timer
       self.chaining = chaining
     end
   end
-
 end
 
 -- panels in these states automatically transform when the timer reaches 0
@@ -347,7 +346,7 @@ function Panel.runStateAction(self, panels)
         self:timerRanOut(panels)
       end
     end
-  elseif self.state == Panel.states.falling then
+  elseif self.state == Panel.states.falling or self.state == Panel.states.normal then
     self:changeState(panels)
   end
 end
@@ -365,7 +364,7 @@ end
 function Panel.changeState(self, panels)
   local stateTable = nil
   if self.state == Panel.states.normal then
-    
+    stateTable = normalState
   elseif self.state == Panel.states.swapping then
     stateTable = swappingState
   elseif self.state == Panel.states.matched then
