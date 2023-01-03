@@ -1808,6 +1808,7 @@ end
 
 -- menu for setting the username
 function main_set_name()
+  GAME.backgroundImage = themes[config.theme].images.bg_main
   local name = config.name or ""
   love.keyboard.setTextInput(true) -- enables user to type
   while true do

@@ -28,9 +28,19 @@ local function shortenControllerName(name)
   return nameToShortName[name] or name
 end
 
-function inputConfigMenu:setSettingKeyState(settingKey)
-  self.settingKey = settingKey
-  self.menu:setEnabled(not settingKey)
+-- Represents the state of love.run while the key in isDown/isUp is active
+-- NOT_SETTING: when we are not polling for a new key
+-- SETTING_KEY_TRANSITION: skip a frame so we don't use the button activation key as the configured key
+-- SETTING_KEY: currently polling for a single key
+-- SETTING_ALL_KEY_TRANSITION: skip a frame so we don't use the button activation key as the configured key
+-- SETTING_ALL_KEYS: currently polling for all keys
+-- This is only used within this file, external users should simply treat isDown/isUp as a boolean
+local KEY_SETTING_STATE = { NOT_SETTING = nil, SETTING_KEY_TRANSITION = 1, SETTING_KEY = 2, SETTING_ALL_KEYS_TRANSITION = 3, SETTING_ALL_KEYS = 4 }
+
+function inputConfigMenu:setSettingKeyState(keySettingState)
+  self.settingKey = keySettingState ~= KEY_SETTING_STATE.NOT_SETTING
+  self.settingKeyState = keySettingState
+  self.menu:setEnabled(not self.settingKey)
 end
 
 function inputConfigMenu:updateInputConfigMenuLabels(index)
@@ -47,18 +57,7 @@ function inputConfigMenu:updateInputConfigMenuLabels(index)
   end
 end
 
-function inputConfigMenu:pollAndSetKey(key, index)
-  coroutine.yield()
-  self.menu.menuItems[index + 1].children[1]:updateLabel(pendingInputText)
-  self.menu.selectedId = index + 1
-  local pressedKey = nil
-  while not pressedKey do
-    for p, _ in pairs(input.allKeys.isDown) do
-      pressedKey = p
-      break
-    end
-    coroutine.yield()
-  end
+function inputConfigMenu:updateKey(key, pressedKey, index)
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
   local keyDisplayName = pressedKey
   if string.match(pressedKey, ":") then
@@ -68,46 +67,53 @@ function inputConfigMenu:pollAndSetKey(key, index)
   end
   GAME.input.inputConfigurations[configIndex][key] = pressedKey
   self.menu.menuItems[index + 1].children[1]:updateLabel(keyDisplayName)
-end
-
-function inputConfigMenu:setKeyFn(key, index)
-  self:pollAndSetKey(key, index)
   write_key_file()
-  self:setSettingKeyState(false)
 end
 
-function inputConfigMenu:setAllKeysFn()
-    coroutine.yield()
-    
-  for i, key in ipairs(consts.KEY_NAMES) do
-    self:pollAndSetKey(key, i)
+function inputConfigMenu:setKey(key, index)
+  local pressedKey = next(input.allKeys.isDown)
+  if pressedKey then
+    self:updateKey(key, pressedKey, index)
+    self:setSettingKeyState(KEY_SETTING_STATE.NOT_SETTING)
   end
-
-  write_key_file()
-  self:setSettingKeyState(false)
 end
 
-function inputConfigMenu:setKey(key)
+function inputConfigMenu:setAllKeys()
+  local pressedKey = next(input.allKeys.isDown)
+  if pressedKey then
+    inputConfigMenu:updateKey(consts.KEY_NAMES[self.index], pressedKey, self.index)
+    if self.index < #consts.KEY_NAMES then
+      self.index = self.index + 1
+      self.menu.menuItems[self.index + 1].children[1]:updateLabel(pendingInputText)
+      self.menu.selectedIndex = self.index + 1
+      self:setSettingKeyState(KEY_SETTING_STATE.SETTING_ALL_KEYS_TRANSITION)
+    else
+      self:setSettingKeyState(KEY_SETTING_STATE.NOT_SETTING)
+    end
+  end
+end
+
+function inputConfigMenu:setKeyStart(key)
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  local index = nil
+  self.key = key
+  self.index = nil
   for i, k in ipairs(consts.KEY_NAMES) do
     if k == key then
-      index = i
+      self.index = i
       break
     end
   end
-  self:setSettingKeyState(true)
-  self.setKeyCo = coroutine.create(function(key) self:setKeyFn(key, index) end)
-  coroutine.resume(self.setKeyCo, key, index)
+  self.menu.menuItems[self.index + 1].children[1]:updateLabel(pendingInputText)
+  self.menu.selectedIndex = self.index + 1
+  self:setSettingKeyState(KEY_SETTING_STATE.SETTING_KEY_TRANSITION)
 end
 
-
-
-function inputConfigMenu:setAllKeys() 
+function inputConfigMenu:setAllKeysStart()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  self:setSettingKeyState(true)
-  self.setKeyCo = coroutine.create(function() self:setAllKeysFn() end)
-  coroutine.resume(self.setKeyCo)
+  self.index = 1
+  self.menu.menuItems[self.index + 1].children[1]:updateLabel(pendingInputText)
+  self.menu.selectedIndex = self.index + 1
+  self:setSettingKeyState(KEY_SETTING_STATE.SETTING_ALL_KEYS_TRANSITION)
 end
 
 local function clearAllInputs(menuOptions)
@@ -147,14 +153,14 @@ function inputConfigMenu:init()
           translate = false,
           onClick = function() 
             if not self.settingKey then
-              self:setKey(key)
+              self:setKeyStart(key)
             end
           end}), 
       label}
   end
   menuOptions[#menuOptions + 1] = {
     Button({label = "op_all_keys",
-    onClick = function() inputConfigMenu:setAllKeys() end})}
+    onClick = function() inputConfigMenu:setAllKeysStart() end})}
   menuOptions[#menuOptions + 1] = {
     Button({label = "Clear All Inputs", translate = false,
     onClick = function() clearAllInputs(menuOptions) end})}
@@ -180,11 +186,18 @@ function inputConfigMenu:drawBackground()
 end
 
 function inputConfigMenu:update()
-  if self.settingKey then
-    coroutine.resume(self.setKeyCo)
-  end
   self.menu:update()
   self.menu:draw()
+  
+  if self.settingKeyState == KEY_SETTING_STATE.SETTING_KEY_TRANSITION then
+    self:setSettingKeyState(KEY_SETTING_STATE.SETTING_KEY)
+  elseif self.settingKeyState == KEY_SETTING_STATE.SETTING_ALL_KEYS_TRANSITION then
+    self:setSettingKeyState(KEY_SETTING_STATE.SETTING_ALL_KEYS)
+  elseif self.settingKeyState == KEY_SETTING_STATE.SETTING_KEY then
+    inputConfigMenu:setKey(self.key, self.index)
+  elseif self.settingKeyState == KEY_SETTING_STATE.SETTING_ALL_KEYS then
+    inputConfigMenu:setAllKeys()
+  end
 end
 
 function inputConfigMenu:unload()  
