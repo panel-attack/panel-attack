@@ -1,11 +1,12 @@
 -- Represents an individual panel in the stack
 Panel =
 class(
-  function(p, id, row, column)
+  function(p, id, row, column, frameTimes)
     p:clear()
     p.id = id
     p.row = row
     p.column = column
+    p.frameTimes = frameTimes
   end
 )
 
@@ -22,6 +23,123 @@ Panel.states = {
   dimmed = 8,
   dead = 9
 }
+
+local normalState = {}
+local swappingState = {}
+local matchedState = {}
+local poppingState = {}
+local poppedState = {}
+local hoverState = {}
+local fallingState = {}
+local landingState = {}
+local dimmedState = {}
+
+function normalState.changeState(panel, panels)
+  local row = panel.row
+  local col = panel.column
+  local panelBelow = panels[row - 1][col]
+
+  if panelBelow.changedState then
+    if panelBelow.state == Panel.states.hovering then
+      panel:enterHoverState(panelBelow)
+    end
+    -- all other transformations from normal state are actively set by stack routines for:
+    -- swap
+    -- checkMatches
+    -- death
+  end
+end
+
+function matchedState.changeState(panel, panels)
+  -- This panel's match just finished the whole
+  -- flashing and looking distressed thing.
+  -- It is given a pop time based on its place
+  -- in the match.
+  panel.state = Panel.states.popping
+  panel.timer = panel.combo_index * panel.framecounts.POP
+end
+
+function poppingState.changeState(panel, panels)
+
+end
+
+function poppedState.changeState(panel, panels)
+  -- It's time for this panel
+  -- to be gone forever :'(
+    panel:clear()
+    -- Flag as popped so panels above can know whether they should be chaining or not
+    panel.justPopped = true
+end
+
+function hoverState.changeState(panel, panels)
+  local row = panel.row
+  local col = panel.column
+
+  if panels[row - 1][col].state == Panel.states.hovering then
+    -- if the panel below is hovering as well, always match its hovertime
+    panel.timer = panels[row - 1][col].timer
+  elseif panels[row - 1][col].color ~= 0 then
+    -- if the panel below is not hovering and not empty, we land (commonly happens for panels transformed from garbage)
+    panel.state = Panel.states.landing
+    -- TODO Endaris: This timer is solely for animation, should put that elsewhere
+    panel.timer = 12
+    panel.changedState = true
+  else
+    -- This panel is no longer hovering.
+    -- it will now fall without sitting around
+    -- for any longer!
+    panel.state = Panel.states.falling
+    panels[row][col], panels[row - 1][col] = panels[row - 1][col], panels[row][col]
+    panel.timer = 0
+    panel.changedState = true
+  end
+end
+
+function fallingState.changeState(panel, panels)
+  local row = panel.row
+  local col = panel.column
+  local panelBelow = panels[row - 1][col]
+
+  local function land()
+    panel.state = Panel.states.landing
+    panel.timer = 12
+    if self:shouldChangeSoundEffects() then
+      self.sfx_land = true
+    end
+  end
+
+  local function fall()
+    panels[row - 1][col], panels[row][col] = panels[row][col], panels[row - 1][col]
+    panels[row][col]:clear()
+  end
+
+  if row == 1 then
+    -- if it's on the bottom row, it should surely land
+    land()
+  elseif panels[row - 1][col].color ~= 0 then
+    -- if there's a panel below, this panel's gonna land
+    if panels[row - 1][col].state == Panel.states.falling then
+      -- if the panel below had a falling state it should've fallen before
+      error("Trying to fall down on a panel that is falling but didn't fell")
+    else
+      -- if it lands on a hovering panel, it inherits that panel's hover time instead
+      if panels[row - 1][col].state == Panel.states.hovering then
+        panel.state = Panel.states.hovering
+        panel:enterHoverState(panelBelow)
+      else
+        land()
+      end
+    end
+  else
+    -- empty panel below
+    fall()
+  end
+end
+
+function landingState.changeState(panel, panels)
+  panel.state = Panel.states.normal
+end
+
 
 function Panel.regularColorsArray()
   return {
@@ -74,7 +192,7 @@ function Panel.clear(self)
   self.y_offset = nil
   self.width = nil
   self.height = nil
-  self.type = nil
+  self.type = Panel.states.empty
   self.metal = nil
   self.shake_time = nil
   self.match_anyway = nil
@@ -163,18 +281,13 @@ function Panel.clear_flags(self)
   -- Animation timer for "bounce" after falling from garbage.
   self.fell_from_garbage = nil
   self.state = Panel.states.normal
+  self.queuedState = nil
   self.changedState = false
 end
 
 function Panel.update(self, panels)
   if self.stateChanged then
     self.stateChanged = false
-  end
-
-  local panelBelow = panels[self.row - 1][self.column]
-
-  if panelBelow and panelBelow.stateChanged then
-    self:panelBelowChanged(panelBelow)
   end
 
   self:runStateAction(panels)
@@ -191,15 +304,33 @@ function Panel.swapStarted(self, isSwappingFromLeft, newColumn)
   self.column = newColumn
 end
 
-function Panel.panelBelowChanged(self, panelBelow)
-  if self.state == Panel.states.normal then
+function Panel.enterHoverState(self, panelBelow)
+  if self.type == Panel.types.garbage then
+    if self.y_offset == -1 then
+      local color = self.color
+      self:clear()
+      self.color = color
+      self.chaining = true
+      self.timer = self.framecounts.GPHOVER
+      self.fell_from_garbage = 12
+    else
+      self.state = Panel.states.normal
+    end
+  else
+    local chaining = self.chaining
+    self:clear_flags()
+    self.state = Panel.states.hovering
+
     if panelBelow.type == Panel.types.empty then
-      self:enterHoverState()
+      -- use max hover time
+      self.timer = self.framecounts.HOVER
+      self.chaining = chaining or panelBelow.justPopped
+    else
+      -- inherit hovertime and chaining state from panel below
+      self.timer = panelBelow.timer
+      self.chaining = chaining
     end
   end
-end
-
-function Panel.enterHoverState(self)
 
 end
 
@@ -207,20 +338,63 @@ end
 local timerBasedStates = {Panel.states.swapping, Panel.states.hovering, Panel.states.landing, Panel.states.matched, Panel.states.popping, Panel.states.popped}
 
 function Panel.runStateAction(self, panels)
+  self.stateChanged = false
   if table.contains(timerBasedStates, self.state) then
     -- decrement timer
     if self.timer and self.timer > 0 then
       self.timer = self.timer - 1
       if self.timer == 0 then
-        self:timerRanOut()
+        self:timerRanOut(panels)
       end
     end
   elseif self.state == Panel.states.falling then
-    
-    self.stateChanged = true
+    self:changeState(panels)
   end
 end
 
-function Panel.timerRanOut(self)
-  self.stateChanged = true
+function Panel.timerRanOut(self, panels)
+  if self.queuedState then
+    self.state = self.queuedState.state
+    self.timer = self.queuedState.timer
+    self.stateChanged = true
+  else
+    self:changeState(panels)
+  end
+end
+
+function Panel.changeState(self, panels)
+  local stateTable = nil
+  if self.state == Panel.states.normal then
+    
+  elseif self.state == Panel.states.swapping then
+    stateTable = swappingState
+  elseif self.state == Panel.states.matched then
+    stateTable = matchedState
+  elseif self.state == Panel.states.popping then
+    stateTable = poppingState
+  elseif self.state == Panel.states.popped then
+    stateTable = poppedState
+  elseif self.state == Panel.states.hovering then
+    stateTable = hoverState
+  elseif self.state == Panel.states.falling then
+    stateTable = fallingState
+  elseif self.state == Panel.states.landing then
+    stateTable = landingState
+  end
+
+  stateTable.changeState(self, panels)
+end
+
+function Panel.supportedFromBelow(self, panels)
+  if self.type == Panel.types.garbage then
+    -- check if it supported in any column over the entire width of the garbage
+    for column = self.column, self.column + math.abs(self.x_offset) - 1 do
+      if panels[self.row - 1][column].type ~= Panel.types.empty then
+        return true
+      end
+    end
+    return false
+  else
+    return panels[self.row - 1][self.column].type ~= Panel.types.empty
+  end
 end
