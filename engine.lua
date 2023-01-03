@@ -1046,28 +1046,11 @@ end
 
 
 function Stack.updatePanels2(self)
-
+  self.shake_time_on_frame = 0
   for row = 1, #self.panels do
-    for col = 1, #self.width do
+    for col = 1, self.width do
       local panel = self.panels[row][col]
-      if panel.type == Panel.types.garbage then
-
-        -- garbage may only drop if there is no support along the entirety of its width
-        if not panel:supportedFromBelow(self.panels) then
-          panels[row - 1][col]:clear()
-          panels[row][col].state = Panel.states.falling
-          panels[row - 1][col], panels[row][col] = panels[row][col], panels[row - 1][col]
-        end
-
-        -- as we iterate over the entire stack from bottom to top anyway, the other rows will fall as the row variable counts up
-
-      elseif panel.type == Panel.types.empty then
-        --empty panels only update their swapped state to verify swappability of surrounding panels
-        
-      else
-        -- regular panels drop individually but may propagate their states upwards
-
-      end
+      panel:runStateAction(self.panels)
     end
   end
 end
@@ -1262,7 +1245,7 @@ function Stack.updatePanels(self)
           elseif panel.state == Panel.states.popping then
             --logger.debug("POP")
             if (panel.combo_size > 6) or self.chain_counter > 1 then
-              popsize = Panel.states.normal
+              popsize = "normal"
             end
             if self.chain_counter > 2 then
               popsize = "big"
@@ -1516,11 +1499,17 @@ function Stack.simulate(self)
       end
     end
 
-    self:updatePanels()
+    self:updatePanels2()
+    print("print for frame " .. self.CLOCK)
+    for row = 1, #panels do
+      for col = 1, self.width do
+        print(panels[row][col])
+      end
+    end
 
     local prev_shake_time = self.shake_time
     self.shake_time = self.shake_time - 1
-    self.shake_time = max(self.shake_time, shake_time)
+    self.shake_time = max(self.shake_time, self.shake_time_on_frame)
     if self.shake_time == 0 then
       self.peak_shake_time = 0
     end
@@ -2639,6 +2628,9 @@ function Stack.new_row(self)
   -- move panels up
   for row = #panels + 1, 1, -1 do
     panels[row] = panels[row - 1]
+    for col = #panels[row], 1, -1 do
+      panels[row][col].row = row
+    end
   end
   panels[0] = {}
   -- put bottom row into play
@@ -2738,6 +2730,18 @@ end
 function Stack.createPanel(self, row, column)
   self.panelsCreated = self.panelsCreated + 1
   local panel = Panel(self.panels_created, row, column, self.FRAMECOUNTS)
+  panel.onPop = function(panel)
+    self:onPop(panel)
+  end
+  panel.onPopped = function(panel)
+    self:onPopped(panel)
+  end
+  panel.onLand = function(panel)
+    self:onLand(panel)
+  end
+  panel.onGarbageLand = function(panel)
+    self:onGarbageLand(panel)
+  end
   self.panels[row][column] = panel
   return panel
 end
@@ -2754,4 +2758,63 @@ function Stack.updatePanel(self, panel)
   end
 
   panel:runStateAction(self.panels)
+end
+
+function Stack.onPop(self, panel)
+  --logger.debug("POP")
+  if (panel.combo_size > 6) or self.chain_counter > 1 then
+    popsize = "normal"
+  end
+  if self.chain_counter > 2 then
+    popsize = "big"
+  end
+  if self.chain_counter > 3 then
+    popsize = "giant"
+  end
+  if config.popfx == true then
+    self:enqueue_popfx(panel.column, panel.row, popsize)
+  end
+  self.score = self.score + 10
+
+  self.panels_cleared = self.panels_cleared + 1
+  if self.match.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
+    self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
+  end
+  if self:shouldChangeSoundEffects() then
+    SFX_Pop_Play = 1
+  end
+  self.poppedPanelIndex = panel.combo_index
+end
+
+function Stack.onPopped(self, panel)
+  if self.panels_to_speedup then
+    self.panels_to_speedup = self.panels_to_speedup - 1
+  end
+  if panel.chaining then
+    self.n_chain_panels = self.n_chain_panels - 1
+  end
+end
+
+function Stack.onLand(self, panel)
+  if self:shouldChangeSoundEffects() then
+    self.sfx_land = true
+  end
+end
+
+function Stack.onGarbageLand(self, panel)
+  if panel.shake_time and panel.state == Panel.states.normal then
+    if panel.row <= self.height then
+      if self:shouldChangeSoundEffects() then
+        if panel.height > 3 then
+          self.sfx_garbage_thud = 3
+        else
+          self.sfx_garbage_thud = panel.height
+        end
+      end
+      self.shake_time_on_frame = max(self.shake_time_on_frame, panel.shake_time, self.peak_shake_time or 0)
+      --a smaller garbage block landing should renew the largest of the previous blocks' shake times since our shake time was last zero.
+      self.peak_shake_time = max(self.shake_time_on_frame, self.peak_shake_time or 0)
+      panel.shake_time = nil
+    end
+  end
 end

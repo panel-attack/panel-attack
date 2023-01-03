@@ -12,7 +12,7 @@ Game =
     self.droppedFrames = 0
     self.puzzleSets = {} -- all the puzzles loaded into the game
     self.gameIsPaused = false -- game can be paused while playing on local
-    self.renderDuringPause = false -- if the game can render when you are paused
+    self.renderDuringPause = true -- if the game can render when you are paused
     self.currently_paused_tracks = {} -- list of tracks currently paused
     self.rich_presence = nil
     self.muteSoundEffects = false
@@ -34,7 +34,7 @@ function Game.clearMatch(self)
     self.match = nil
   end
   self.gameIsPaused = false
-  self.renderDuringPause = false
+  self.renderDuringPause = true
   self.preventSounds = false
   self.currently_paused_tracks = {}
   self.muteSoundEffects = false

@@ -375,7 +375,7 @@ function Stack.render(self)
           end
           if panel.state == Panel.state.matched then
             local flash_time = panel.initial_time - panel.timer
-            if flash_time >= self.FRAMECOUNT_FLASH then
+            if flash_time >= self.FRAMECOUNTS.FLASH then
               if panel.timer > panel.pop_time then
                 if panel.metal then
                   draw(metals.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
@@ -403,8 +403,8 @@ function Stack.render(self)
           end
         else
           if panel.state == Panel.states.matched then
-            local flash_time = self.FRAMECOUNT_MATCH - panel.timer
-            if flash_time >= self.FRAMECOUNT_FLASH then
+            local flash_time = self.FRAMECOUNTS.MATCH - panel.timer
+            if flash_time >= self.FRAMECOUNTS.FLASH then
               draw_frame = 6
             elseif flash_time % 2 == 1 then
               draw_frame = 1
@@ -488,8 +488,28 @@ function Stack.render(self)
 
         -- Require hovering over a stack to show details
         if mx >= self.pos_x * GFX_SCALE and mx <= (self.pos_x + self.width * 16) * GFX_SCALE then
-          if panel.color ~= 0 and panel.state ~= Panel.states.popped then
-            gprint(panel.state, draw_x, draw_y)
+        
+            if panel.state == Panel.states.normal then
+              gprint("normal", draw_x, draw_y)
+            elseif panel.state == Panel.states.swapping then
+              gprint("swapping", draw_x, draw_y)
+            elseif panel.state == Panel.states.matched then
+              gprint("matched", draw_x, draw_y)
+            elseif panel.state == Panel.states.popping then
+              gprint("popping", draw_x, draw_y)
+            elseif panel.state == Panel.states.popped then
+              gprint("popped", draw_x, draw_y)
+            elseif panel.state == Panel.states.hovering then
+              gprint("hovering", draw_x, draw_y)
+            elseif panel.state == Panel.states.falling then
+              gprint("falling", draw_x, draw_y)
+            elseif panel.state == Panel.states.landing then
+              gprint("landing", draw_x, draw_y)
+            elseif panel.state == Panel.states.dimmed then
+              gprint("dimmed", draw_x, draw_y)
+            elseif panel.state == Panel.states.dead then
+              gprint("dead", draw_x, draw_y)
+            end
             if panel.match_anyway ~= nil then
               gprint(tostring(panel.match_anyway), draw_x, draw_y + 10)
               if panel.debug_tag then
@@ -500,7 +520,6 @@ function Stack.render(self)
               gprint("chaining", draw_x, draw_y + 30)
             end
           end
-        end
 
         if mx >= draw_x and mx < draw_x + 16 * GFX_SCALE and my >= draw_y and my < draw_y + 16 * GFX_SCALE then
           local str = loc("pl_panel_info", row, col)
