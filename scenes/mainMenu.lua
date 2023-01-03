@@ -12,7 +12,7 @@ require("mainloop")
 --@module MainMenu
 local mainMenu = Scene("mainMenu")
 
-local function genOnClickFn(myFunction, args)
+local function genLegacyMainloopFn(myFunction, args)
   local onClick = function()
     func = myFunction
     arg = args
@@ -28,19 +28,19 @@ local switchToScene = function(scene)
 end
 
 local menuItems = {
-  {Button({label = "mm_1_endless", onClick = genOnClickFn(main_endless_select)})},
-  {Button({label = "mm_1_puzzle", onClick = genOnClickFn(main_select_puzz)})},
-  {Button({label = "mm_1_time", onClick = genOnClickFn(main_timeattack_select)})},
-  {Button({label = "mm_1_vs", onClick = genOnClickFn(main_local_vs_yourself_setup)})},
-  {Button({label = "mm_1_training", onClick = genOnClickFn(training_setup)})},
-  {Button({label = "mm_2_vs_online", extra_labels = {""}, onClick = genOnClickFn(main_net_vs_setup, {"18.188.43.50"})})},
+  {Button({label = "mm_1_endless", onClick = genLegacyMainloopFn(main_endless_select)})},
+  {Button({label = "mm_1_puzzle", onClick = genLegacyMainloopFn(main_select_puzz)})},
+  {Button({label = "mm_1_time", onClick = genLegacyMainloopFn(main_timeattack_select)})},
+  {Button({label = "mm_1_vs", onClick = genLegacyMainloopFn(main_local_vs_yourself_setup)})},
+  {Button({label = "mm_1_training", onClick = genLegacyMainloopFn(training_setup)})},
+  {Button({label = "mm_2_vs_online", extra_labels = {""}, onClick = genLegacyMainloopFn(main_net_vs_setup, {"18.188.43.50"})})},
   --{Button({label = "mm_2_vs_online", extra_labels = {"\nTelegraph Server"}, onClick = genOnClickFn(main_net_vs_setup, {"betaserver.panelattack.com", 59569})})},
   --{Button({label = "mm_2_vs_online", extra_labels = {"(development-use only)"}, onClick = genOnClickFn(main_net_vs_setup, {"localhost"})})},
-  {Button({label = "mm_2_vs_local", onClick = genOnClickFn(main_local_vs_setup)})},
-  {Button({label = "mm_replay_browser", onClick = genOnClickFn(replay_browser.main)})},
+  {Button({label = "mm_2_vs_local", onClick = genLegacyMainloopFn(main_local_vs_setup)})},
+  {Button({label = "mm_replay_browser", onClick = genLegacyMainloopFn(replay_browser.main)})},
   {Button({label = "mm_configure", onClick = function() switchToScene("inputConfigMenu") end})},
-  {Button({label = "mm_set_name", onClick = genOnClickFn(main_set_name)})},
-  {Button({label = "mm_options", onClick = genOnClickFn(options.main)})},
+  {Button({label = "mm_set_name", onClick = genLegacyMainloopFn(main_set_name)})},
+  {Button({label = "mm_options", onClick = genLegacyMainloopFn(options.main)})},
   {Button({label = "mm_fullscreen", extra_labels = {"\n(LAlt+Enter)"}, onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) fullscreen() end})},
   {Button({label = "mm_quit", onClick = love.event.quit})}
 }

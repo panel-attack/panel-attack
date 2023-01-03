@@ -28,7 +28,7 @@ local stickMap = {
 
 -- map of LOVE's hat directions to a list of readable directions
 local joystickHatToDirs = {
-  c = {},
+  c = {}, -- centered
   u = {"up"},
   d = {"down"},
   l = {"left"},
