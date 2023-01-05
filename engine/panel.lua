@@ -34,6 +34,10 @@ Panel.states = {
   dead = 9
 }
 
+-- all possible states a panel can have
+-- the state tables provide functions that describe their state transformations
+-- the state tables provide booleans that describe which actions are possible in their state
+-- the state table of a panel can be acquired via Panel:getStateTable()
 local normalState = {}
 local swappingState = {}
 local matchedState = {}
@@ -43,6 +47,7 @@ local hoverState = {}
 local fallingState = {}
 local landingState = {}
 local dimmedState = {}
+-- local deadState = {}
 
 local function getPanelBelow(panel, panels)
   if panel.row <= 1 then
@@ -52,7 +57,7 @@ local function getPanelBelow(panel, panels)
   end
 end
 
-function normalState.changeState(panel, panels)
+normalState.changeState = function(panel, panels)
   local panelBelow = getPanelBelow(panel, panels)
 
   if panel.type == Panel.types.panel
@@ -82,7 +87,7 @@ function normalState.changeState(panel, panels)
   end
 end
 
-function swappingState.changeState(panel, panels)
+swappingState.changeState = function(panel, panels)
   local panelBelow = getPanelBelow(panel, panels)
 
   if panelBelow and panelBelow.color == 0 then
@@ -99,7 +104,7 @@ end
 
 -- if a panel exits popped state while there is swapping panel above, 
 -- the panels above the swapping panel should still get chaining state and start to hover immediately
-function swappingState.propagateChaining(panel, panels)
+swappingState.propagatesChaining = function(panel, panels)
   local panelBelow = getPanelBelow(panel, panels)
 
   if panelBelow and panelBelow.stateChanged and panelBelow.propagatesChaining then
@@ -109,7 +114,7 @@ function swappingState.propagateChaining(panel, panels)
   end
 end
 
-function matchedState.changeState(panel, panels)
+matchedState.changeState = function(panel, panels)
   if panel.type == Panel.types.panel then
     -- This panel's match just finished the whole flashing and looking distressed thing.
     -- It is given a pop time based on its place in the match.
@@ -139,7 +144,7 @@ poppedState.changeState = function(panel, panels)
   panel:onPopped()
   panel:clear()
   -- Flag as popped so panels above can know whether they should be chaining or not
-  panel.propagateChaining = true
+  panel.propagatesChaining = true
   panel.stateChanged = true
 end
 
@@ -196,18 +201,17 @@ fallingState.changeState = function(panel, panels)
 end
 
 
-function landingState.changeState(panel, panels)
+landingState.changeState = function(panel, panels)
   panel.state = Panel.states.normal
   panel.stateChanged = true
 end
 
--- states:
--- swapping, matched, popping, popped, hovering,
--- falling, dimmed, landing, normal
--- flags:
--- from_left
--- dont_swap
--- chaining
+dimmedState.changeState = function(panel, panels)
+  if panel.row >= 1 then
+    panel.state = Panel.states.normal
+    panel.stateChanged = true
+  end
+end
 
 -- exclude hover
 normalState.excludeHover = false
@@ -218,7 +222,7 @@ poppedState.excludeHover = true
 hoverState.excludeHover = true
 fallingState.excludeHover = true
 landingState.excludeHover = false
--- dimmedState.excludeHover = true
+dimmedState.excludeHover = true
 -- deadState.excludeHover = true
 
 function Panel.exclude_hover(self)
@@ -238,7 +242,7 @@ poppedState.excludeMatch = true
 hoverState.excludeMatch = false
 fallingState.excludeMatch = true
 landingState.excludeMatch = false
--- dimmedState.excludeMatch = true
+dimmedState.excludeMatch = true
 -- deadState.excludeMatch = true
 
 function Panel.exclude_match(self)
@@ -441,7 +445,7 @@ local timerBasedStates = {Panel.states.swapping, Panel.states.hovering, Panel.st
 
 function Panel.runStateAction(self, panels)
   self.stateChanged = false
-  self.propagateChaining = false
+  self.propagatesChaining = false
 
   if self.state == Panel.states.matched then
     phi = 5
@@ -460,7 +464,7 @@ function Panel.runStateAction(self, panels)
   end
 
   if self.state == Panel.states.swapping then
-    swappingState.propagateChaining(self, panels)
+    swappingState.propagatesChaining(self, panels)
   end
 end
 
@@ -496,6 +500,8 @@ function Panel.getStateTable(self)
     return fallingState
   elseif self.state == Panel.states.landing then
     return landingState
+  elseif self.state == Panel.states.dimmed then
+    return dimmedState
   end
 end
 
