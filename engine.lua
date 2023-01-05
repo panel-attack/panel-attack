@@ -2731,7 +2731,7 @@ end
 
 function Stack.createPanel(self, row, column)
   self.panelsCreated = self.panelsCreated + 1
-  local panel = Panel(self.panels_created, row, column, self.FRAMECOUNTS)
+  local panel = Panel(self.panelsCreated, row, column, self.FRAMECOUNTS)
   panel.onPop = function(panel)
     self:onPop(panel)
   end

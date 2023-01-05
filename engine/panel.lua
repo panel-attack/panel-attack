@@ -19,7 +19,7 @@ class(
   end
 )
 
-Panel.types = { empty = 0, panel = 1, garbage = 2}
+Panel.types = { panel = 0, garbage = 1}
 Panel.states = {
   normal = 0,
   swapping = 1,
@@ -46,7 +46,7 @@ local hoverState = {}
 local fallingState = {}
 local landingState = {}
 local dimmedState = {}
--- local deadState = {}
+local deadState = {}
 
 local function getPanelBelow(panel, panels)
   if panel.row <= 1 then
@@ -212,6 +212,10 @@ dimmedState.changeState = function(panel, panels)
   end
 end
 
+deadState.changeState = function(panel, panels)
+  error("There is no conclusion more natural than death")
+end
+
 -- exclude hover
 normalState.excludeHover = false
 swappingState.excludeHover = false
@@ -222,7 +226,7 @@ hoverState.excludeHover = true
 fallingState.excludeHover = true
 landingState.excludeHover = false
 dimmedState.excludeHover = true
--- deadState.excludeHover = true
+deadState.excludeHover = true
 
 function Panel.exclude_hover(self)
   if self.type == Panel.types.garbage then
@@ -242,7 +246,7 @@ hoverState.excludeMatch = false
 fallingState.excludeMatch = true
 landingState.excludeMatch = false
 dimmedState.excludeMatch = true
--- deadState.excludeMatch = true
+deadState.excludeMatch = true
 
 function Panel.exclude_match(self)
   -- panels without colors can't match
@@ -269,7 +273,7 @@ hoverState.excludeSwap = true
 fallingState.excludeSwap = false
 landingState.excludeSwap = false
 dimmedState.excludeSwap = true
--- deadState.excludeSwap = true
+deadState.excludeSwap = true
 
 function Panel.exclude_swap(self)
   -- the panel was flagged as unswappable inside of the swap function
@@ -348,7 +352,11 @@ function Panel.clear(self, clearChaining, clearColor)
 end
 
 function Panel.dangerous(self)
-  return self.color ~= 0 and not (self.state == Panel.states.falling and self.type == Panel.types.garbage)
+  if self.type == Panel.types.garbage then
+    return self.state ~= Panel.states.falling
+  else
+    return self.color ~= 0
+  end
 end
 
 function Panel.has_flags(self)
@@ -510,6 +518,8 @@ function Panel.getStateTable(self)
     return landingState
   elseif self.state == Panel.states.dimmed then
     return dimmedState
+  elseif self.state == Panel.states.dead then
+    return deadState
   end
 end
 
