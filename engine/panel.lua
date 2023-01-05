@@ -169,13 +169,14 @@ function fallingState.changeState(panel, panels)
   if panel.row == 1 then
     -- if it's on the bottom row, it should surely land
     panel:land()
-  elseif panel:supportedFromBelow(panels) ~= 0 then
+  elseif panel:supportedFromBelow(panels) then
     if panel.type == Panel.types.garbage then
       panel.state = Panel.states.normal
       panel.stateChanged = true
     elseif panel.color ~= 0 then
       local panelBelow = getPanelBelow(panel, panels)
-      -- if there's a panel below, this panel's gonna land
+      -- if there's a panel below, this panel's going to land
+      -- no need to nil check as there was a row 1 check further up
       if panelBelow.state == Panel.states.falling  then
         -- if the panel below had a falling state it should've fallen before
         error("Trying to fall down into a panel that is falling but didn't fall")
@@ -193,7 +194,7 @@ function fallingState.changeState(panel, panels)
     panel:fall(panels)
   end
 
-  panel.stateChanged = true
+  -- stateChanged is set in the fall/land functions respectively
 end
 
 function landingState.changeState(panel, panels)
