@@ -8,7 +8,7 @@ class(
   function(p, id, row, column, frameTimes)
     local metatable = getmetatable(p)
     metatable.__tostring = function(panel)
-      return "row:"..panel.row..",col:"..panel.column..",color:"..panel.color..",state:"..panel.state
+      return "row:"..panel.row..",col:"..panel.column..",color:"..panel.color..",state:"..panel.state..",timer:"..panel.timer
     end
     setmetatable(p, metatable)
     p:clear()
@@ -511,4 +511,17 @@ function Panel.land(self)
     self:onGarbageLand()
   end
   self.stateChanged = true
+end
+
+function Panel.setTimer(self, frames)
+  if self.state == Panel.states.matched then
+    local x = 1+1
+  end
+  self.timer = frames
+end
+
+function Panel.decrementTimer(self)
+  if self.timer > 0 then
+    self.timer = self.timer - 1
+  end
 end

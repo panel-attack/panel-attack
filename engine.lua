@@ -1074,7 +1074,7 @@ function Stack.updatePanels(self)
       elseif panel.type == Panel.types.garbage then
         if panel.state == Panel.states.matched then
           -- try to fall
-          panel.timer = panel.timer - 1
+          panel:decrementTimer()
           if panel.timer == panel.pop_time then
             if config.popfx == true then
               self:enqueue_popfx(col, row, popsize)
@@ -1148,7 +1148,7 @@ function Stack.updatePanels(self)
           propogate_fall[col] = false
         else
           panel.state = Panel.states.falling
-          panel.timer = 0
+          panel:setTimer(0)
         end
       end
       if cntinue then
@@ -1158,7 +1158,7 @@ function Stack.updatePanels(self)
           -- if there's a panel below, this panel's gonna land
           -- unless the panel below is falling.
           panel.state = Panel.states.landing
-          panel.timer = 12
+          panel:setTimer(12)
           if self:shouldChangeSoundEffects() then
             self.sfx_land = true
           end
@@ -1170,7 +1170,7 @@ function Stack.updatePanels(self)
             self:set_hoverers(row, col, panels[row - 1][col].timer, false, false)
           else
             panel.state = Panel.states.landing
-            panel.timer = 12
+            panel:setTimer(12)
           end
           if self:shouldChangeSoundEffects() then
             self.sfx_land = true
@@ -1180,7 +1180,7 @@ function Stack.updatePanels(self)
           panels[row][col]:clear()
         end
       elseif panel:has_flags() and panel.timer ~= 0 then
-        panel.timer = panel.timer - 1
+        panel:decrementTimer()
         if panel.timer == 0 then
           if panel.state == Panel.states.swapping then
             -- a swap has completed here.
@@ -1222,14 +1222,14 @@ function Stack.updatePanels(self)
               -- This panel is no longer hovering.
               -- it will now fall without sitting around
               -- for any longer!
-              panel.timer = panels[row - 1][col].timer
+              panel:setTimer(panels[row - 1][col].timer)
             elseif panels[row - 1][col].color ~= 0 then
               panel.state = Panel.states.landing
-              panel.timer = 12
+              panel:setTimer(12)
             else
               panel.state = Panel.states.falling
               panels[row][col], panels[row - 1][col] = panels[row - 1][col], panels[row][col]
-              panel.timer = 0
+              panel:setTimer(0)
               -- Not sure if needed:
               panels[row][col]:clear_flags()
             end
@@ -1241,7 +1241,7 @@ function Stack.updatePanels(self)
             -- It is given a pop time based on its place
             -- in the match.
             panel.state = Panel.states.popping
-            panel.timer = panel.combo_index * self.FRAMECOUNTS.POP
+            panel:setTimer(panel.combo_index * self.FRAMECOUNTS.POP)
           elseif panel.state == Panel.states.popping then
             --logger.debug("POP")
             if (panel.combo_size > 6) or self.chain_counter > 1 then
@@ -1286,7 +1286,7 @@ function Stack.updatePanels(self)
               self:set_hoverers(row + 1, col, self.FRAMECOUNTS.HOVER + 1, true, false, true, "combo")
             else
               panel.state = Panel.states.popped
-              panel.timer = (panel.combo_size - panel.combo_index) * self.FRAMECOUNTS.POP
+              panel:setTimer((panel.combo_size - panel.combo_index) * self.FRAMECOUNTS.POP)
               self.panels_cleared = self.panels_cleared + 1
               if self.match.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
                 self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
@@ -2379,7 +2379,7 @@ function Stack.check_matches(self)
       local panel = panels[row][col]
       if garbage[panel] then
         panel.state = Panel.states.matched
-        panel.timer = garbage_match_time + 1
+        panel:setTimer(garbage_match_time + 1)
         panel.initial_time = garbage_match_time
         panel.pop_time = self.FRAMECOUNTS.POP * garbage_index
         panel.pop_index = min(max(garbage_size - garbage_index, 1), 10)
@@ -2409,7 +2409,7 @@ function Stack.check_matches(self)
             metal_count = metal_count + 1
           end
           panel.state = Panel.states.matched
-          panel.timer = self.FRAMECOUNTS.MATCH + 1
+          panel:setTimer(self.FRAMECOUNTS.MATCH + 1)
           if is_chain and not panel.chaining then
             panel.chaining = true
             self.n_chain_panels = self.n_chain_panels + 1
@@ -2596,9 +2596,9 @@ function Stack.set_hoverers(self, row, col, hover_time, add_chaining, extra_tick
         if chaining or adding_chaining then
           panel.chaining = true
         end
-        panel.timer = hovers_time
+        panel:setTimer(hovers_time)
         if extra_tick then
-          panel.timer = panel.timer + not_first
+          panel.setTimer(panel.timer + not_first)
         end
         if adding_chaining then
           self.n_chain_panels = self.n_chain_panels + 1
