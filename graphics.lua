@@ -373,7 +373,7 @@ function Stack.render(self)
               draw(imgs.botright, draw_x + 16 * width - 8, draw_y + 13, 0, 8 / corner_w, 3 / corner_h)
             end
           end
-          if panel.state == Panel.state.matched then
+          if panel.state == Panel.states.matched then
             local flash_time = panel.initial_time - panel.timer
             if flash_time >= self.FRAMECOUNTS.FLASH then
               if panel.timer > panel.pop_time then

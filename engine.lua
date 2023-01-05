@@ -390,7 +390,7 @@ function Stack.rollbackCopy(source, other)
     for j = 1, width do
       local opanel = other.panels[i][j]
       local spanel = source.panels[i][j]
-      opanel:clear()
+      opanel:clear(true, true)
       for k, v in pairs(spanel) do
         opanel[k] = v
       end
@@ -606,6 +606,7 @@ function Stack.puzzleStringToPanels(self, puzzleString)
           local color = string.sub(rowString, column, column)
           if not garbageStartRow and tonumber(color) then
             local panel = self:createPanel(row, column)
+            panel.type = Panel.types.panel
             panel.color = tonumber(color)
             panels[row][column] = panel
           else
@@ -1085,9 +1086,7 @@ function Stack.updatePanels(self)
           end
           if panel.timer == 0 then
             if panel.y_offset == -1 then
-              local color, chaining = panel.color, panel.chaining
-              panel:clear()
-              panel.color, panel.chaining = color, chaining
+              panel:clear(false, false)
               self:set_hoverers(row, col, self.FRAMECOUNTS.GPHOVER, true, true)
               panel.fell_from_garbage = 12
             else
@@ -1118,7 +1117,7 @@ function Stack.updatePanels(self)
             else
               skip_col = panel.width - 1
               for x = col, col - 1 + panel.width do
-                panels[row - 1][x]:clear()
+                panels[row - 1][x]:clear(true, true)
                 propogate_fall[x] = true
                 panels[row][x].state = Panel.states.falling
                 panels[row - 1][x], panels[row][x] = panels[row][x], panels[row - 1][x]
@@ -1177,7 +1176,7 @@ function Stack.updatePanels(self)
           end
         else
           panels[row - 1][col], panels[row][col] = panels[row][col], panels[row - 1][col]
-          panels[row][col]:clear()
+          panels[row][col]:clear(true, true)
         end
       elseif panel:has_flags() and panel.timer ~= 0 then
         panel:decrementTimer()
@@ -2125,9 +2124,9 @@ function Stack.swap(self)
   self:processPuzzleSwap()
   local leftPanel = panels[row][col]
   local rightPanel = panels[row][col + 1]
-  leftPanel:startSwap(true, col + 1)
-  rightPanel:startSwap(false, col)
-  panels[row][col], panels[row][col + 1] = rightPanel, leftPanel
+  leftPanel:startSwap(true)
+  rightPanel:startSwap(false)
+  Panel.switch(leftPanel, rightPanel, panels)
 
   if self:shouldChangeSoundEffects() then
     SFX_Swap_Play = 1
@@ -2234,6 +2233,8 @@ function Stack.drop_garbage(self, width, height, metal)
       panel.x_offset = x - spawn_col
       panel.shake_time = shake_time
       panel.state = Panel.states.falling
+      panel.row = y
+      panel.column = x
       if metal then
         panel.metal = metal
       end
@@ -2678,6 +2679,7 @@ function Stack.new_row(self)
       end
     end
     panel.color = this_panel_color + 0
+    panel.type = Panel.types.panel
     panel.state = Panel.states.dimmed
   end
   self.panel_buffer = string.sub(self.panel_buffer, 7)

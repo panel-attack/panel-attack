@@ -11,12 +11,11 @@ class(
       return "row:"..panel.row..",col:"..panel.column..",color:"..panel.color..",state:"..panel.state..",timer:"..panel.timer
     end
     setmetatable(p, metatable)
-    p:clear()
+    p:clear(true, true)
     p.id = id
     p.row = row
     p.column = column
     p.frameTimes = frameTimes
-    
   end
 )
 
@@ -81,7 +80,7 @@ normalState.changeState = function(panel, panels)
       -- death
     end
   elseif panel.type == Panel.types.garbage then
-    if not panel.supportedFromBelow(panels) then
+    if not panel:supportedFromBelow(panels) then
       panel:fall(panels)
     end
   end
@@ -142,7 +141,7 @@ poppedState.changeState = function(panel, panels)
   -- It's time for this panel
   -- to be gone forever :'(
   panel:onPopped()
-  panel:clear()
+  panel:clear(true, true)
   -- Flag as popped so panels above can know whether they should be chaining or not
   panel.propagatesChaining = true
   panel.stateChanged = true
@@ -254,6 +253,9 @@ function Panel.exclude_match(self)
     return true
   else
     local state = self:getStateTable()
+    if state == nil then
+      local phi = 5
+    end
     return state.excludeMatch
   end
 end
@@ -309,10 +311,12 @@ function Panel.allPossibleColorsArray()
 end
 
 -- Sets all variables to the default settings
-function Panel.clear(self)
+function Panel.clear(self, clearChaining, clearColor)
   -- color 0 is an empty panel.
   -- colors 1-7 are normal colors, 8 is [!], 9 is garbage.
-  self.color = 0
+  if clearColor then
+    self.color = 0
+  end
   -- A panel's timer indicates for how many more frames it will:
   --  . be swapping
   --  . sit in the MATCHED state before being set POPPING
@@ -340,26 +344,7 @@ function Panel.clear(self)
   self.match_anyway = nil
 
   -- Also flags
-  self:clear_flags()
-end
-
-function Panel.support_garbage(self)
-  return self.color ~= 0 or self.hovering
-end
-
--- "Block garbage fall" means
--- "falling-ness should not propogate up through this panel"
--- We need this because garbage doesn't hover, it just falls
--- opportunistically.
-local block_garbage_fall_set = {
-  matched = true,
-  popping = true,
-  popped = true,
-  hovering = true,
-  swapping = true
-}
-function Panel.block_garbage_fall(self)
-  return block_garbage_fall_set[self.state] or self.color == 0
+  self:clear_flags(clearChaining)
 end
 
 function Panel.dangerous(self)
@@ -370,13 +355,15 @@ function Panel.has_flags(self)
   return (self.state ~= Panel.states.normal) or self.isSwappingFromLeft or self.dont_swap or self.chaining
 end
 
-function Panel.clear_flags(self)
+function Panel.clear_flags(self, clearChaining)
   self.combo_index = nil
   self.combo_size = nil
   self.chain_index = nil
   self.isSwappingFromLeft = nil
   self.dont_swap = nil
-  self.chaining = nil
+  if clearChaining then
+    self.chaining = nil
+  end
   -- Animation timer for "bounce" after falling from garbage.
   self.fell_from_garbage = nil
   self.state = Panel.states.normal
@@ -392,7 +379,7 @@ function Panel.update(self, panels)
   self:runStateAction(panels)
 end
 
-function Panel.startSwap(self, isSwappingFromLeft, newColumn)
+function Panel.startSwap(self, isSwappingFromLeft)
   local chaining = self.chaining
   self:clear_flags()
   self.stateChanged = true
@@ -400,15 +387,38 @@ function Panel.startSwap(self, isSwappingFromLeft, newColumn)
   self.chaining = chaining
   self.timer = 4
   self.isSwappingFromLeft = isSwappingFromLeft
-  self.column = newColumn
+end
+
+-- a switch is NOT a swap
+-- a switch is the universal act of switching the positions of 2 adjacent panels on the board
+-- this may be used for falling and also swapping interactions as a surefire way to update both panels
+function Panel.switch(panel1, panel2, panels)
+  -- confirm the panel positions are up to date
+  assert(panel1.id == panels[panel1.row][panel1.column].id)
+  assert(panel2.id == panels[panel2.row][panel2.column].id)
+
+  -- confirm the panels are directly adjacent to each other
+  local rowDiff = panel1.row - panel2.row
+  local colDiff = panel1.column - panel2.column
+  assert(math.abs(rowDiff + colDiff) == 1)
+
+  local coordinates1 = { row = panel1.row, column = panel1.column}
+  local coordinates2 = { row = panel2.row, column = panel2.column}
+
+  -- update the coordinates on the panels
+  panel1.row = coordinates2.row
+  panel1.column = coordinates2.column
+  panel2.row = coordinates1.row
+  panel2.column = coordinates1.column
+
+  panels[coordinates1.row][coordinates1.column] = panel2
+  panels[coordinates2.row][coordinates2.column] = panel1
 end
 
 function Panel.enterHoverState(self, panelBelow)
   if self.type == Panel.types.garbage then
     if self.y_offset == -1 then
-      local color = self.color
-      self:clear()
-      self.color = color
+      self:clear(true, false)
       self.chaining = true
       self.timer = self.frameTimes.GPHOVER
       self.fell_from_garbage = 12
@@ -431,7 +441,9 @@ function Panel.enterHoverState(self, panelBelow)
         self.timer = panelBelow.timer
       else
         -- if the panel below is swapping, hover for the sum of remaining swaptime + hovertime
-        self.timer = self.frameTimes.HOVER + panelBelow.timer -- -1? it's like that in the original code
+        -- The original code subtracted 1 extra because the swap panel is above when set_hoverer is called
+        -- so it has yet to get its timer decremented
+        self.timer = self.frameTimes.HOVER + panelBelow.timer
       end
     end
   end
@@ -446,10 +458,6 @@ local timerBasedStates = {Panel.states.swapping, Panel.states.hovering, Panel.st
 function Panel.runStateAction(self, panels)
   self.stateChanged = false
   self.propagatesChaining = false
-
-  if self.state == Panel.states.matched then
-    phi = 5
-  end
 
   if table.contains(timerBasedStates, self.state) then
     -- decrement timer
@@ -506,13 +514,13 @@ function Panel.getStateTable(self)
 end
 
 function Panel.supportedFromBelow(self, panels)
-  if self.row == 1 then
+  if self.row <= 1 then
     return true
   end
 
   if self.type == Panel.types.garbage then
     -- check if it supported in any column over the entire width of the garbage
-    for column = self.column, self.column + math.abs(self.x_offset) - 1 do
+    for column = self.column - self.x_offset, self.column - self.x_offset + self.width - 1 do
       if panels[self.row - 1][column].color ~= 0 then
         return true
       end
@@ -524,13 +532,9 @@ function Panel.supportedFromBelow(self, panels)
 end
 
 function Panel.fall(self, panels)
-  local row = self.row
-  local col = self.column
   local panelBelow = getPanelBelow(self, panels)
-  panels[row - 1][col], panels[row][col] = self, panelBelow
-  self.row = row - 1
-  panelBelow = row
-  panels[row][col]:clear()
+  Panel.switch(self, panelBelow, panels)
+  panelBelow:clear(true, true)
   if self.state ~= Panel.states.falling then
     self.state = Panel.states.falling
     self.timer = 0
