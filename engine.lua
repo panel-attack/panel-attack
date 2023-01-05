@@ -814,7 +814,11 @@ end
 
 function Stack.toPuzzleInfo(self)
   local puzzleInfo = {}
-  puzzleInfo["Player"] = self.match.battleRoom.playerNames[self.which]
+  if self.match.battleRoom then
+    puzzleInfo["Player"] = self.match.battleRoom.playerNames[self.which]
+  else
+    puzzleInfo["Player"] = config.name
+  end
   puzzleInfo["Stop"] = self.stop_time
   puzzleInfo["Shake"] = self.shake_time
   puzzleInfo["Pre-Stop"] = self.pre_stop_time
