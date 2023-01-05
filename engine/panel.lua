@@ -119,10 +119,9 @@ function matchedState.changeState(panel, panels)
   elseif panel.type == Panel.types.garbage then
     panel:enterHoverState()
   end
-  
 end
 
-function poppingState.changeState(panel, panels)
+poppingState.changeState = function(panel, panels)
   panel:onPop()
   -- If it is the last panel to pop, it has to skip popped state
   if panel.combo_size == panel.combo_index then
@@ -134,17 +133,17 @@ function poppingState.changeState(panel, panels)
   end
 end
 
-function poppedState.changeState(panel, panels)
+poppedState.changeState = function(panel, panels)
   -- It's time for this panel
   -- to be gone forever :'(
-    panel:onPopped()
-    panel:clear()
-    -- Flag as popped so panels above can know whether they should be chaining or not
-    panel.propagateChaining = true
-    panel.stateChanged = true
-  end
+  panel:onPopped()
+  panel:clear()
+  -- Flag as popped so panels above can know whether they should be chaining or not
+  panel.propagateChaining = true
+  panel.stateChanged = true
+end
 
-function hoverState.changeState(panel, panels)
+hoverState.changeState = function(panel, panels)
   local panelBelow = getPanelBelow(panel, panels)
 
   if panelBelow then
@@ -162,10 +161,9 @@ function hoverState.changeState(panel, panels)
   else
     error("Hovering panel in row 1 detected, commencing self-destruction sequence")
   end
-  
 end
 
-function fallingState.changeState(panel, panels)
+fallingState.changeState = function(panel, panels)
   if panel.row == 1 then
     -- if it's on the bottom row, it should surely land
     panel:land()
@@ -197,11 +195,89 @@ function fallingState.changeState(panel, panels)
   -- stateChanged is set in the fall/land functions respectively
 end
 
+
 function landingState.changeState(panel, panels)
   panel.state = Panel.states.normal
   panel.stateChanged = true
 end
 
+-- states:
+-- swapping, matched, popping, popped, hovering,
+-- falling, dimmed, landing, normal
+-- flags:
+-- from_left
+-- dont_swap
+-- chaining
+
+-- exclude hover
+normalState.excludeHover = false
+swappingState.excludeHover = false
+matchedState.excludeHover = true
+poppingState.excludeHover = true
+poppedState.excludeHover = true
+hoverState.excludeHover = true
+fallingState.excludeHover = true
+landingState.excludeHover = false
+-- dimmedState.excludeHover = true
+-- deadState.excludeHover = true
+
+function Panel.exclude_hover(self)
+  if self.type == Panel.types.garbage then
+    return true
+  else
+    local state = self:getStateTable()
+    return state.excludeHover
+  end
+end
+
+normalState.excludeMatch = false
+swappingState.excludeMatch = true
+matchedState.excludeMatch = true
+poppingState.excludeMatch = true
+poppedState.excludeMatch = true
+hoverState.excludeMatch = false
+fallingState.excludeMatch = true
+landingState.excludeMatch = false
+-- dimmedState.excludeMatch = true
+-- deadState.excludeMatch = true
+
+function Panel.exclude_match(self)
+  -- panels without colors can't match
+  if self.color == 0 or self.color == 9 then
+    return true
+  -- i'm still figuring out how exactly that match_anyway flag works
+  elseif self.state == Panel.states.hovering and not self.match_anyway then
+    return true
+  else
+    local state = self:getStateTable()
+    return state.excludeMatch
+  end
+end
+
+normalState.excludeSwap = false
+swappingState.excludeSwap = false
+matchedState.excludeSwap = true
+poppingState.excludeSwap = true
+poppedState.excludeSwap = true
+hoverState.excludeSwap = true
+fallingState.excludeSwap = false
+landingState.excludeSwap = false
+dimmedState.excludeSwap = true
+-- deadState.excludeSwap = true
+
+function Panel.exclude_swap(self)
+  -- the panel was flagged as unswappable inside of the swap function
+  -- this flag should honestly go die and the connected checks should be part of the canSwap func if possible
+  if self.dont_swap then
+    return true
+  -- can't swap garbage panels or even garbage to start with
+  elseif self.type == Panel.types.garbage then
+    return true
+  else
+    local state = self:getStateTable()
+    return state.excludeSwap
+  end
+end
 
 function Panel.regularColorsArray()
   return {
@@ -261,49 +337,6 @@ function Panel.clear(self)
 
   -- Also flags
   self:clear_flags()
-end
-
--- states:
--- swapping, matched, popping, popped, hovering,
--- falling, dimmed, landing, normal
--- flags:
--- from_left
--- dont_swap
--- chaining
-
-local exclude_hover_set = {
-  matched = true,
-  popping = true,
-  popped = true,
-  hovering = true,
-  falling = true
-}
-function Panel.exclude_hover(self)
-  return exclude_hover_set[self.state] or self.type == Panel.types.garbage
-end
-
-local exclude_match_set = {
-  swapping = true,
-  matched = true,
-  popping = true,
-  popped = true,
-  dimmed = true,
-  falling = true
-}
-function Panel.exclude_match(self)
-  return exclude_match_set[self.state] or self.color == 0 or self.color == 9 or
-      (self.state == Panel.states.hovering and not self.match_anyway)
-end
-
-local exclude_swap_set = {
-  matched = true,
-  popping = true,
-  popped = true,
-  hovering = true,
-  dimmed = true
-}
-function Panel.exclude_swap(self)
-  return exclude_swap_set[self.state] or self.dont_swap or self.type == Panel.types.garbage
 end
 
 function Panel.support_garbage(self)
@@ -442,26 +475,28 @@ function Panel.timerRanOut(self, panels)
 end
 
 function Panel.changeState(self, panels)
-  local stateTable = nil
-  if self.state == Panel.states.normal then
-    stateTable = normalState
-  elseif self.state == Panel.states.swapping then
-    stateTable = swappingState
-  elseif self.state == Panel.states.matched then
-    stateTable = matchedState
-  elseif self.state == Panel.states.popping then
-    stateTable = poppingState
-  elseif self.state == Panel.states.popped then
-    stateTable = poppedState
-  elseif self.state == Panel.states.hovering then
-    stateTable = hoverState
-  elseif self.state == Panel.states.falling then
-    stateTable = fallingState
-  elseif self.state == Panel.states.landing then
-    stateTable = landingState
-  end
-
+  local stateTable = self:getStateTable()
   stateTable.changeState(self, panels)
+end
+
+function Panel.getStateTable(self)
+  if self.state == Panel.states.normal then
+    return normalState
+  elseif self.state == Panel.states.swapping then
+    return swappingState
+  elseif self.state == Panel.states.matched then
+    return matchedState
+  elseif self.state == Panel.states.popping then
+    return poppingState
+  elseif self.state == Panel.states.popped then
+    return poppedState
+  elseif self.state == Panel.states.hovering then
+    return hoverState
+  elseif self.state == Panel.states.falling then
+    return fallingState
+  elseif self.state == Panel.states.landing then
+    return landingState
+  end
 end
 
 function Panel.supportedFromBelow(self, panels)
