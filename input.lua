@@ -381,14 +381,10 @@ end
 
 -- Requests the next inputs assign configurations to players, up to the number of players passed in
 function Input.requestPlayerInputConfigurationAssignments(self, numberOfPlayers)
-  if numberOfPlayers == 1 then
-    self.playerInputConfigurationsMap[1] = self.inputConfigurations
-  else
-    if #input.playerInputConfigurationsMap < numberOfPlayers then
-      self.acceptingPlayerInputConfigurationAssignments = true
-      self.availableInputConfigurationsToAssign = deepcpy(self.inputConfigurations)
-      self.numberOfPlayersAcceptingInputConfiguration = numberOfPlayers
-    end
+  if #input.playerInputConfigurationsMap < numberOfPlayers then
+    self.acceptingPlayerInputConfigurationAssignments = true
+    self.availableInputConfigurationsToAssign = deepcpy(self.inputConfigurations)
+    self.numberOfPlayersAcceptingInputConfiguration = numberOfPlayers
   end
 end
 
@@ -419,6 +415,18 @@ function Input.getInputConfigurationsForPlayerNumber(self, playerNumber)
   return results
 end
 
+function Input.requestSingleInputConfigurationForPlayerCount(self, playerCount)
+  if playerCount == nil then
+    playerCount = 1
+  end
+  self:clearInputConfigurationsForPlayers()
+  self:requestPlayerInputConfigurationAssignments(playerCount)
+end
+
+function Input.allowAllInputConfigurations(self)
+  self.playerInputConfigurationsMap[1] = self.inputConfigurations
+end
+
 -- Makes a function that will return true if one of the fixed keys or configurable keys was pressed for the passed in player.
 -- Also returns the sound effect callback function
 -- fixed -- the set of key names that always work
@@ -445,7 +453,7 @@ local function input_key_func(fixed, configurable, query, sound, ...)
     end
 
     for i = 1, #configurable do
-      for index, inputConfiguration in ipairs(input:getInputConfigurationsForPlayerNumber(playerNumber)) do
+      for _, inputConfiguration in ipairs(input:getInputConfigurationsForPlayerNumber(playerNumber)) do
         local keyname = inputConfiguration[configurable[i]]
         if keyname then
           res = res or query(keyname, other_args) and not menu_reserved_keys[keyname]
