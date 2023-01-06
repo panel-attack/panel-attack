@@ -257,9 +257,6 @@ function Panel.exclude_match(self)
     return true
   else
     local state = self:getStateTable()
-    if state == nil then
-      local phi = 5
-    end
     return state.excludeMatch
   end
 end
@@ -431,6 +428,7 @@ function Panel.enterHoverState(self, panelBelow)
       self.timer = self.frameTimes.GPHOVER
       self.fell_from_garbage = 12
       self.state = Panel.states.hovering
+      self.propagatesChaining = true
     else
       self.state = Panel.states.normal
     end
@@ -454,9 +452,10 @@ function Panel.enterHoverState(self, panelBelow)
         self.timer = self.frameTimes.HOVER + panelBelow.timer
       end
     end
+
+    self.propagatesChaining = panelBelow.propagatesChaining
   end
 
-  self.propagatesChaining = panelBelow.propagatesChaining
   self.stateChanged = true
 end
 
