@@ -146,7 +146,6 @@ Stack =
 
     s.n_active_panels = 0
     s.n_prev_active_panels = 0
-    s.n_chain_panels = 0
 
     -- These change depending on the difficulty and speed levels:
     s.FRAMECOUNTS.HOVER = s.FRAMECOUNTS.HOVER or FC_HOVER[s.difficulty]
@@ -424,7 +423,6 @@ function Stack.rollbackCopy(source, other)
   other.chain_counter = source.chain_counter
   other.n_active_panels = source.n_active_panels
   other.n_prev_active_panels = source.n_prev_active_panels
-  other.n_chain_panels = source.n_chain_panels
   other.FRAMECOUNTS.RISE = source.FRAMECOUNTS.RISE
   other.rise_timer = source.rise_timer
   other.manual_raise = source.manual_raise
@@ -730,7 +728,7 @@ function Stack.puzzle_failed(self)
         -- We finished matching but never made a chain -> fail
         return true
       end
-      if #self.analytic.data.reached_chains > 0 and self.n_chain_panels == 0 then
+      if #self.analytic.data.reached_chains > 0 and not self:hasChainingPanels() then
         -- We achieved a chain, finished chaining, but haven't won yet -> fail
         return true
       end
@@ -1282,9 +1280,6 @@ function Stack.updatePanels(self)
               if self.panels_to_speedup then
                 self.panels_to_speedup = self.panels_to_speedup - 1
               end
-              if panel.chaining then
-                self.n_chain_panels = self.n_chain_panels - 1
-              end
               panel:clear_flags()
               self:set_hoverers(row + 1, col, self.FRAMECOUNTS.HOVER + 1, true, false, true, "combo")
             else
@@ -1304,9 +1299,6 @@ function Stack.updatePanels(self)
             -- to be gone forever :'(
             if self.panels_to_speedup then
               self.panels_to_speedup = self.panels_to_speedup - 1
-            end
-            if panel.chaining then
-              self.n_chain_panels = self.n_chain_panels - 1
             end
             panel.color = 0
             panel:clear_flags()
@@ -1616,7 +1608,7 @@ function Stack.simulate(self)
     end
 
     -- if at the end of the routine there are no chain panels, the chain ends.
-    if self.chain_counter ~= 0 and self.n_chain_panels == 0 then
+    if self.chain_counter ~= 0 and not self:hasChainingPanels() then
       self.chains[self.chains.current].finish = self.CLOCK
       self.chains[self.chains.current].size = self.chain_counter
       self.chains.last_complete = self.current
@@ -2335,7 +2327,6 @@ function Stack.check_matches(self)
           end
           if panel.match_anyway and panel.chaining then
             panel.chaining = nil
-            self.n_chain_panels = self.n_chain_panels - 1
           end
           is_chain = is_chain or panel.chaining
         end
@@ -2355,7 +2346,6 @@ function Stack.check_matches(self)
           end
           if panel.match_anyway and panel.chaining then
             panel.chaining = nil
-            self.n_chain_panels = self.n_chain_panels - 1
           end
           is_chain = is_chain or panel.chaining
         end
@@ -2449,7 +2439,6 @@ function Stack.check_matches(self)
           panel.color = string.sub(gpan_row, col, col) + 0
           if is_chain then
             panel.chaining = true
-            self.n_chain_panels = self.n_chain_panels + 1
           end
         end
         garbage_index = garbage_index - 1
@@ -2462,7 +2451,6 @@ function Stack.check_matches(self)
           panel:setTimer(self.FRAMECOUNTS.MATCH + 1)
           if is_chain and not panel.chaining then
             panel.chaining = true
-            self.n_chain_panels = self.n_chain_panels + 1
           end
           panel.combo_index = combo_index
           panel.combo_size = combo_size
@@ -2486,11 +2474,9 @@ function Stack.check_matches(self)
               if panels[row - 1][col].state ~= Panel.states.swapping and panel.chaining then
                 --if panel.chaining then
                 panel.chaining = nil
-                self.n_chain_panels = self.n_chain_panels - 1
               end
             elseif (panel.chaining) then
               panel.chaining = nil
-              self.n_chain_panels = self.n_chain_panels - 1
             end
           end
         end
@@ -2650,9 +2636,6 @@ function Stack.set_hoverers(self, row, col, hover_time, add_chaining, extra_tick
         if extra_tick then
           panel.setTimer(panel.timer + not_first)
         end
-        if adding_chaining then
-          self.n_chain_panels = self.n_chain_panels + 1
-        end
       end
       not_first = 1
     end
@@ -2793,6 +2776,9 @@ function Stack.createPanel(self, row, column)
   panel.onGarbageLand = function(panel)
     self:onGarbageLand(panel)
   end
+  panel.onChaining = function(panel)
+    self:onChaining(panel)
+  end
   self.panels[row][column] = panel
   return panel
 end
@@ -2841,9 +2827,6 @@ function Stack.onPopped(self, panel)
   if self.panels_to_speedup then
     self.panels_to_speedup = self.panels_to_speedup - 1
   end
-  if panel.chaining then
-    self.n_chain_panels = self.n_chain_panels - 1
-  end
 end
 
 function Stack.onLand(self, panel)
@@ -2873,4 +2856,17 @@ function Stack.onGarbageLand(self, panel)
       self.garbageLandedThisFrame[#self.garbageLandedThisFrame+1] = panel.garbageId
     end
   end
+end
+
+function Stack.hasChainingPanels(self)
+  -- row 0 panels can never chain cause they're dimmed
+  for row = 1, #self.panels do
+    for col = 1, self.width do
+      if self.panels[row][col].chaining then
+        return true
+      end
+    end
+  end
+
+  return false
 end

@@ -397,7 +397,7 @@ function Match.render(self)
     end
 
     drawY = drawY + padding
-    gprintf("chain panels " .. P1.n_chain_panels, drawX, drawY)
+    gprintf("has chain panels " .. tostring(P1:hasChainingPanels()), drawX, drawY)
 
     -- if P1.telegraph then
     --   drawY = drawY + padding

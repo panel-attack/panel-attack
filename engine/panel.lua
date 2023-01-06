@@ -414,7 +414,7 @@ end
 function Panel.enterHoverState(self, panelBelow)
   if self.type == Panel.types.garbage then
     if self.y_offset == -1 then
-      self:clear(true, false)
+      self:clear(false, false)
       self.chaining = true
       self.timer = self.frameTimes.GPHOVER
       self.fell_from_garbage = 12
@@ -424,10 +424,10 @@ function Panel.enterHoverState(self, panelBelow)
       self.state = Panel.states.normal
     end
   else
-    local chaining = self.chaining
-    self:clear_flags()
+    self:clear_flags(false)
     self.state = Panel.states.hovering
-    self.chaining = chaining or panelBelow.propagatesChaining
+    self.chaining = self.chaining or panelBelow.propagatesChaining
+    self.propagatesChaining = panelBelow.propagatesChaining
 
     if panelBelow.color == 0 then
       -- use max hover time
@@ -443,8 +443,6 @@ function Panel.enterHoverState(self, panelBelow)
         self.timer = self.frameTimes.HOVER + panelBelow.timer
       end
     end
-
-    self.propagatesChaining = panelBelow.propagatesChaining
   end
 
   self.stateChanged = true
