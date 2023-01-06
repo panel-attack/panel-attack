@@ -521,11 +521,17 @@ function Panel.supportedFromBelow(self, panels)
     for column = self.column - self.x_offset, self.column - self.x_offset + self.width - 1 do
       local panel = panels[self.row - 1][column]
       if panel.color ~= 0 then
-        if panel.type == Panel.types.garbage then
-        -- panels belonging to the same brick of garbage can't be considered as supporting
-          return self.garbageId ~= panel.garbageId
+        if panel.type == Panel.types.panel then
+          return true
+        else
+          -- panels belonging to the same brick of garbage can't be considered as supporting
+          if self.garbageId == panel.garbageId then
+            -- unless the y offset is different
+            return self.y_offset ~= panel.y_offset
+          else
+            return true
+          end
         end
-        return true
       end
     end
     return false
