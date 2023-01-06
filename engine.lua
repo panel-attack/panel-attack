@@ -1338,6 +1338,28 @@ function Stack.updatePanels(self)
   end
 end
 
+function Stack.shouldDropGarbage(self)
+  local hasActivePanels = self.n_active_panels > 0 or self.n_prev_active_panels > 0
+
+  -- this is legit ugly, these should rather be returned in a parameter table
+  -- or even better in a dedicated garbage class table
+  local _, next_garbage_block_height, _, from_chain = unpack(self.garbage_q:peek())
+
+  -- new garbage can't drop if the stack is full
+  -- new garbage always drops one by one
+  if not self.panels_in_top_row and not self:has_falling_garbage() then
+    if next_garbage_block_height > 1 then
+      -- drop chain garbage higher than 1 row immediately
+      return from_chain
+      -- there is a gap here for combo garbage higher than 1 but unless you implement a meme mode,
+      -- that doesn't exist anyway
+    else
+      -- otherwise garbage should only be dropped if there are no active panels
+      return not hasActivePanels
+    end
+  end
+end
+
 -- One run of the engine routine.
 function Stack.simulate(self)
   -- Don't run the main logic if the player has simulated past one of the game overs or the time attack time
@@ -1694,9 +1716,7 @@ function Stack.simulate(self)
     end
 
     if self.garbage_q:len() > 0 then
-      local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
-      local drop_it = not self.panels_in_top_row and not self:has_falling_garbage() and ((from_chain and next_garbage_block_height > 1) or (self.n_active_panels == 0 and self.n_prev_active_panels == 0))
-      if drop_it and self.garbage_q:len() > 0 then
+      if self:shouldDropGarbage() then
         if self:tryDropGarbage(unpack(self.garbage_q:peek())) then
           self.garbage_q:pop()
         end
@@ -2237,7 +2257,7 @@ end
 
 function Stack.dropGarbage(self, originRow, originCol, width, height, isMetal)
   local function isPartOfGarbage(column)
-    return column >= originCol and column <= (originCol + width - 1)
+    return column >= originCol and column < (originCol + width)
   end
 
   self.garbageCreated = self.garbageCreated + 1
@@ -2247,6 +2267,7 @@ function Stack.dropGarbage(self, originRow, originCol, width, height, isMetal)
     if not self.panels[row] then
       self.panels[row] = {}
       -- every row that will receive garbage needs to be fully filled up
+      -- so iterate from 1 to stack width instead of column to column + width - 1
       for col = 1, self.width do
         self.panels[row][col] = self:createPanel(row, col)
 
