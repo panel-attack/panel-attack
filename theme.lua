@@ -1,5 +1,6 @@
 require("graphics_util")
 require("sound_util")
+local consts = require("consts")
 local logger = require("logger")
 
 local musics = {"main", "select_screen", "main_start", "select_screen_start"} -- the music used in a theme
@@ -25,7 +26,7 @@ local function load_theme_img(name, useBackup)
   end
   local img = GraphicsUtil.loadImageFromSupportedExtensions("themes/" .. config.theme .. "/" .. name)
   if not img and useBackup then
-    img = GraphicsUtil.loadImageFromSupportedExtensions("themes/" .. default_theme_dir .. "/" .. name)
+    img = GraphicsUtil.loadImageFromSupportedExtensions("themes/" .. consts.DEFAULT_THEME_DIRECTORY .. "/" .. name)
   end
   return img
 end
@@ -296,7 +297,7 @@ function Theme.sound_init(self)
   local function load_theme_sfx(SFX_name)
     local dirs_to_check = {
       "themes/" .. config.theme .. "/sfx/",
-      "themes/" .. default_theme_dir .. "/sfx/"
+      "themes/" .. consts.DEFAULT_THEME_DIRECTORY .. "/sfx/"
     }
     return find_sound(SFX_name, dirs_to_check)
   end

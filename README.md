@@ -43,11 +43,22 @@ After coordinating with others, post pull requests against the `beta` branch.
 Try to follow the following code guidelines when contributing:
 - Separate functionality into separate files that only interact with each other as much as needed
 - Avoid globals
-- Class names Start with a capital like `BattleRoom`
-- All other names use `camelCase`
 - Make smaller methods
 - Don’t duplicate code, break it into smaller reusable chunks and use that in both spots
+- Writing tests for how the code should work is extremely beneficial
+- Follow the formatting guidelines below
+- Constants should be local to a file / scope unless they need to be shared everywhere
 
+## Formatting Guidelines
+
+- Constants should be `ALL_CAPS_WITH_UNDERSCORES_BETWEEN_WORDS`
+- Class names start with a capital like `BattleRoom`
+- All other names use `camelCase`
+- You should set your editor to use 2 spaces of identation. (not tabs)
+- Set your column width to 1000
+- All control flow like if and functions should be on multiple lines, not condensed into a single line. Putting it all on a single line can make it harder to follow the flow.
+
+For those using VSCode we recommend using this [styling extension](https://marketplace.visualstudio.com/items?itemName=Koihik.vscode-lua-format) with the configuration file in the repository named VsCodeStyleConfig.lua-format
 
 ## Release schedule
 
