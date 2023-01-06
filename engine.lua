@@ -89,6 +89,7 @@ Stack =
     s.gpanel_buffer = ""
     s.input_buffer = {} -- Inputs that haven't been processed yet
     s.confirmedInput = {} -- All inputs the player has input ever
+    s.garbageCreated = 0
     s.panelsCreated = 0
     s.panels = {}
     s.width = 6
@@ -610,6 +611,8 @@ function Stack.puzzleStringToPanels(self, puzzleString)
             panel.color = tonumber(color)
             panels[row][column] = panel
           else
+
+            -- TODO: assign garbage id to a new garbage block so garbage knows where it belongs regardless
             -- start of a garbage block
             if color == "]" or color == "}" then
               garbageStartRow = row
@@ -1679,7 +1682,7 @@ function Stack.simulate(self)
       local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
       local drop_it = not self.panels_in_top_row and not self:has_falling_garbage() and ((from_chain and next_garbage_block_height > 1) or (self.n_active_panels == 0 and self.n_prev_active_panels == 0))
       if drop_it and self.garbage_q:len() > 0 then
-        if self:drop_garbage(unpack(self.garbage_q:peek())) then
+        if self:tryDropGarbage(unpack(self.garbage_q:peek())) then
           self.garbage_q:pop()
         end
       end
@@ -2185,11 +2188,14 @@ function Stack.remove_extra_rows(self)
   end
 end
 
--- drops a width x height garbage.
-function Stack.drop_garbage(self, width, height, metal)
+-- tries to drop a width x height garbage.
+-- returns true if garbage was dropped, false otherwise
+function Stack.tryDropGarbage(self, width, height, metal)
 
   logger.debug("dropping garbage at frame "..self.CLOCK)
   local spawn_row = self.height + 1
+  local cols = self.garbage_cols[width]
+  local spawn_col = cols[cols.idx]
 
   -- Do one last check for panels in the way.
   for i = spawn_row, #self.panels do
@@ -2208,40 +2214,47 @@ function Stack.drop_garbage(self, width, height, metal)
   if self.canvas ~= nil then
     logger.trace(string.format("Dropping garbage on player %d - height %d  width %d  %s", self.player_number, height, width, metal and "Metal" or ""))
   end
-
-  for i = self.height + 1, spawn_row + height - 1 do
-    if not self.panels[i] then
-      self.panels[i] = {}
-      for j = 1, self.width do
-        self.panels[i][j] = self:createPanel(i, j)
-      end
-    end
-  end
-
-  local cols = self.garbage_cols[width]
-  local spawn_col = cols[cols.idx]
-  cols.idx = wrap(1, cols.idx + 1, #cols)
-  local shake_time = garbage_to_shake_time[width * height]
-  for y = spawn_row, spawn_row + height - 1 do
-    for x = spawn_col, spawn_col + width - 1 do
-      local panel = self.panels[y][x]
-      panel.type = Panel.types.garbage
-      panel.color = 9
-      panel.width = width
-      panel.height = height
-      panel.y_offset = y - spawn_row
-      panel.x_offset = x - spawn_col
-      panel.shake_time = shake_time
-      panel.state = Panel.states.falling
-      panel.row = y
-      panel.column = x
-      if metal then
-        panel.metal = metal
-      end
-    end
-  end
+  
+  self:dropGarbage(spawn_row, spawn_col, width, height, metal)
 
   return true
+end
+
+function Stack.dropGarbage(self, originRow, originCol, width, height, isMetal)
+  local function isPartOfGarbage(column)
+    return column >= originCol and column <= (originCol + width - 1)
+  end
+
+  self.garbageCreated = self.garbageCreated + 1
+  local shakeTime = garbage_to_shake_time[width * height]
+
+  for row = originRow, originRow + height - 1 do
+    if not self.panels[row] then
+      self.panels[row] = {}
+      -- every row that will receive garbage needs to be fully filled up
+      for col = 1, self.width do
+        self.panels[row][col] = self:createPanel(row, col)
+
+        if isPartOfGarbage(col) then
+          local panel = self.panels[row][col]
+          panel.garbageId = self.garbageCreated
+          panel.type = Panel.types.garbage
+          panel.color = 9
+          panel.width = width
+          panel.height = height
+          panel.y_offset = row - originRow
+          panel.x_offset = col - originCol
+          panel.shake_time = shakeTime
+          panel.state = Panel.states.falling
+          panel.row = row
+          panel.column = col
+          if isMetal then
+            panel.metal = isMetal
+          end
+        end
+      end
+    end
+  end
 end
 
 -- Goes through whole stack checking for matches and updating chains etc based on matches.

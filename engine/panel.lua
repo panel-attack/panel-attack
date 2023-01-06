@@ -531,7 +531,12 @@ function Panel.supportedFromBelow(self, panels)
   if self.type == Panel.types.garbage then
     -- check if it supported in any column over the entire width of the garbage
     for column = self.column - self.x_offset, self.column - self.x_offset + self.width - 1 do
-      if panels[self.row - 1][column].color ~= 0 then
+      local panel = panels[self.row - 1][column]
+      if panel.color ~= 0 then
+        if panel.type == Panel.types.garbage then
+        -- panels belonging to the same brick of garbage can't be considered as supporting
+          return self.garbageId ~= panel.garbageId
+        end
         return true
       end
     end
