@@ -173,22 +173,13 @@ fallingState.changeState = function(panel, panels)
     panel:land()
   elseif panel:supportedFromBelow(panels) then
     if panel.type == Panel.types.garbage then
-      panel.state = Panel.states.normal
-      panel.stateChanged = true
-    elseif panel.color ~= 0 then
+      panel:land()
+    else
       local panelBelow = getPanelBelow(panel, panels)
-      -- if there's a panel below, this panel's going to land
-      -- no need to nil check as there was a row 1 check further up
-      if panelBelow.state == Panel.states.falling  then
-        -- if the panel below had a falling state it should've fallen before
-        error("Trying to fall down into a panel that is falling but didn't fall")
+      if panelBelow.state == Panel.states.hovering then
+        panel:enterHoverState(panelBelow)
       else
-        -- if it lands on a hovering panel, it inherits that panel's hover time instead
-        if panelBelow.state == Panel.states.hovering then
-          panel:enterHoverState(panelBelow)
-        else
-          panel:land()
-        end
+        panel:land()
       end
     end
   else

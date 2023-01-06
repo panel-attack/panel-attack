@@ -90,6 +90,7 @@ Stack =
     s.input_buffer = {} -- Inputs that haven't been processed yet
     s.confirmedInput = {} -- All inputs the player has input ever
     s.garbageCreated = 0
+    s.garbageLandedThisFrame = {}
     s.panelsCreated = 0
     s.panels = {}
     s.width = 6
@@ -1345,6 +1346,7 @@ function Stack.simulate(self)
     local panels = self.panels
     local panel = nil
     local swapped_this_frame = nil
+    self.garbageLandedThisFrame = {}
     if self.do_countdown then
       self.game_stopwatch_running = false
       self.rise_lock = true
@@ -1624,6 +1626,7 @@ function Stack.simulate(self)
             self.n_active_panels = self.n_active_panels + 1
           end
         else
+          -- this only works because we know that garbage panels can't be swapped
           if panel.state == Panel.states.swapping then
             self.n_active_panels = self.n_active_panels + 1
           else
@@ -2829,7 +2832,8 @@ function Stack.onLand(self, panel)
 end
 
 function Stack.onGarbageLand(self, panel)
-  if panel.shake_time and panel.state == Panel.states.normal then
+  if panel.shake_time and panel.state == Panel.states.normal
+   and not table.contains(self.garbageLandedThisFrame, panel.garbageId) then
     if panel.row <= self.height then
       if self:shouldChangeSoundEffects() then
         if panel.height > 3 then
@@ -2842,6 +2846,10 @@ function Stack.onGarbageLand(self, panel)
       --a smaller garbage block landing should renew the largest of the previous blocks' shake times since our shake time was last zero.
       self.peak_shake_time = max(self.shake_time_on_frame, self.peak_shake_time or 0)
       panel.shake_time = nil
+
+      -- to prevent from running this code dozens of time for the same garbage block
+      -- all panels of a garbage block have the same id + shake time
+      self.garbageLandedThisFrame[#self.garbageLandedThisFrame+1] = panel.garbageId
     end
   end
 end
