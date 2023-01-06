@@ -2718,7 +2718,7 @@ function Stack.new_row(self)
   self.displacement = 16
 end
 
-function Stack:getAttackPatternData() 
+function Stack:getAttackPatternData()
 
   local data = {}
   data.name = "Player " .. self.which
@@ -2775,9 +2775,6 @@ function Stack.createPanel(self, row, column)
   end
   panel.onGarbageLand = function(panel)
     self:onGarbageLand(panel)
-  end
-  panel.onChaining = function(panel)
-    self:onChaining(panel)
   end
   self.panels[row][column] = panel
   return panel
