@@ -142,7 +142,7 @@ poppedState.changeState = function(panel, panels)
   -- to be gone forever :'(
   panel:onPopped()
   panel:clear(true, true)
-  -- Flag as popped so panels above can know whether they should be chaining or not
+  -- Flag so panels above can know whether they should be chaining or not
   panel.propagatesChaining = true
   panel.stateChanged = true
 end
