@@ -405,23 +405,15 @@ function love.errorhandler(msg)
     love.graphics.scale(scale, scale)
   end
 
-  local bugImage = nil
-  if themes and config.theme and themes[config.theme] and themes[config.theme].images then
-    bugImage = themes[config.theme].images.IMG_bug
-  end
   local function draw()
     if not love.graphics.isActive() then
       return
     end
 
     love.graphics.clear(love.graphics.getBackgroundColor())
-    local positionX = love.window.toPixels(70)
+    local positionX = 40
     local positionY = positionX
     love.graphics.printf(messageToDraw, positionX, positionY, love.graphics.getWidth() - positionX)
-    if bugImage then
-      positionX = positionX + 700
-      love.graphics.draw(bugImage, positionX, positionY, 0, 1, 1)
-    end
 
     love.graphics.present()
   end

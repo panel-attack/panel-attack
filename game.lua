@@ -64,6 +64,8 @@ end
 
 function Game.detailedErrorLogString(errorData)
   local newLine = "\n"
+  local now = os.date("*t", to_UTC(os.time()))
+  local formattedTime = string.format("%04d-%02d-%02d %02d:%02d:%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
 
   local detailedErrorLogString = 
     "Stack Trace: " .. errorData.stack .. newLine ..
@@ -72,7 +74,8 @@ function Game.detailedErrorLogString(errorData)
     "Engine Version: " .. errorData.engine_version .. newLine ..
     "Build Version: " .. errorData.release_version .. newLine ..
     "Operating System: " .. errorData.operating_system .. newLine ..
-    "Love Version: " .. errorData.love_version
+    "Love Version: " .. errorData.love_version .. newLine .. 
+    "UTC Time: " .. formattedTime
 
   return detailedErrorLogString
 end
