@@ -1619,8 +1619,20 @@ function Stack.simulate(self)
     for row = 1, self.height do
       for col = 1, self.width do
         local panel = panels[row][col]
-        if (panel.type == Panel.types.garbage and panel.state ~= Panel.states.normal) or (panel.color ~= 0 and panel.state ~= Panel.states.landing and (panel:exclude_hover() or panel.state == Panel.states.swapping) and not panel.type == Panel.types.garbage) or panel.state == Panel.states.swapping then
-          self.n_active_panels = self.n_active_panels + 1
+        if panel.type == Panel.types.garbage then
+          if panel.state ~= Panel.states.normal then
+            self.n_active_panels = self.n_active_panels + 1
+          end
+        else
+          if panel.state == Panel.states.swapping then
+            self.n_active_panels = self.n_active_panels + 1
+          else
+            if panel.color ~= 0
+            and panel.state ~= Panel.states.landing
+            and panel:exclude_hover() then
+              self.n_active_panels = self.n_active_panels + 1
+            end
+          end
         end
       end
     end
