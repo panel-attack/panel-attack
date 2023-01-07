@@ -1,5 +1,5 @@
 require("util")
-require("server_globals")
+require("server.server_globals")
 require("csprng")
 local logger = require("logger")
 
@@ -10,6 +10,13 @@ PanelGenerator =
 
   end
 )
+
+local PANEL_COLOR_NUMBER_TO_UPPER = {"A", "B", "C", "D", "E", "F", "G", "H",[0]="0"}
+local PANEL_COLOR_NUMBER_TO_LOWER = {"a", "b", "c", "d", "e", "f", "g", "h",[0]="0"}
+PanelGenerator.PANEL_COLOR_TO_NUMBER = { ["A"]=1, ["B"]=2, ["C"]=3, ["D"]=4, ["E"]=5, ["F"]=6, ["G"]=7, ["H"]=8,
+                          ["a"]=1, ["b"]=2, ["c"]=3, ["d"]=4, ["e"]=5, ["f"]=6, ["g"]=7, ["h"]=8,
+                          ["1"]=1, ["2"]=2, ["3"]=3, ["4"]=4, ["5"]=5, ["6"]=6, ["7"]=7, ["8"]=8,
+                          ["0"]=0}
 
 function PanelGenerator.setSeed(seed)
   if seed then
@@ -22,15 +29,15 @@ function PanelGenerator.privateGeneratePanels(rows_to_make, ncolors, previousPan
 
   for x = 0, rows_to_make - 1 do
     for y = 0, 5 do
-      local previousTwoMatchOnThisRow = y > 1 and panel_color_to_number[string.sub(result, -1, -1)] == panel_color_to_number[string.sub(result, -2, -2)]
+      local previousTwoMatchOnThisRow = y > 1 and PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -1, -1)] == PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -2, -2)]
       local nogood = true
       local color = 0
-      local belowColor = panel_color_to_number[string.sub(result, -6, -6)]
+      local belowColor = PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -6, -6)]
       while nogood do
         color = love.math.random(1, ncolors)
-        nogood = (previousTwoMatchOnThisRow and color == panel_color_to_number[string.sub(result, -1, -1)]) or -- Can't have three in a row on this column
+        nogood = (previousTwoMatchOnThisRow and color == PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -1, -1)]) or -- Can't have three in a row on this column
                  color == belowColor or -- can't have the same color as below
-                 (y > 0 and color == panel_color_to_number[string.sub(result, -1, -1)] and disallowAdjacentColors) -- on level 8+ vs, don't allow any adjacent colors
+                 (y > 0 and color == PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -1, -1)] and disallowAdjacentColors) -- on level 8+ vs, don't allow any adjacent colors
       end
       result = result .. tostring(color)
     end
@@ -44,8 +51,8 @@ function PanelGenerator.privateCheckPanels(ret)
   if TESTS_ENABLED then
     assert(string.len(ret) % 6 == 0)
     for i = 7, string.len(ret) do
-      local color = panel_color_to_number[string.sub(ret, i, i)]
-      if color ~= 0 and color == panel_color_to_number[string.sub(ret, i-6, i-6)] then
+      local color = PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(ret, i, i)]
+      if color ~= 0 and color == PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(ret, i-6, i-6)] then
         error("invalid panels")
       end
     end
@@ -109,9 +116,9 @@ function PanelGenerator.makePanels(seed, ncolors, prev_panels, mode, level, oppo
         local chr_from_ret = string.sub(ret, (i - 1) * row_width + j, (i - 1) * row_width + j)
         local num_from_ret = tonumber(chr_from_ret)
         if j == first then
-          new_row = new_row .. (panel_color_number_to_upper[num_from_ret] or chr_from_ret or "0")
+          new_row = new_row .. (PANEL_COLOR_NUMBER_TO_UPPER[num_from_ret] or chr_from_ret or "0")
         elseif j == second then
-          new_row = new_row .. (panel_color_number_to_lower[num_from_ret] or chr_from_ret or "0")
+          new_row = new_row .. (PANEL_COLOR_NUMBER_TO_LOWER[num_from_ret] or chr_from_ret or "0")
         else
           new_row = new_row .. chr_from_ret
         end
