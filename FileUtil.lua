@@ -25,3 +25,7 @@ function FileUtil.getFilteredDirectoryItems(path)
 
   return results
 end
+
+function FileUtil.getFileNameWithoutExtension(filename)
+  return filename:gsub("%..*", "")
+end

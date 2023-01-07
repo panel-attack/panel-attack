@@ -11,8 +11,6 @@ local wait, resume = coroutine.yield, coroutine.resume
 
 local main_endless_select, main_timeattack_select, makeSelectPuzzleSetFunction, main_net_vs_setup, main_select_puzz, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, exit_game, training_setup
 
-local PLAYING = "playing" -- room states
-local CHARACTERSELECT = "character select" -- room states
 connection_up_time = 0 -- connection_up_time counts "E" messages, not seconds
 logged_in = 0
 GAME.connected_server_ip = nil -- the ip address of the server you are connected to
@@ -180,8 +178,7 @@ do
     undo_stonermode()
     GAME.backgroundImage = themes[config.theme].images.bg_main
     GAME.battleRoom = nil
-    GAME.input:clearInputConfigurationsForPlayers()
-    GAME.input:requestPlayerInputConfigurationAssignments(1)
+    GAME.input:allowAllInputConfigurations()
     reset_filters()
     local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
     local main_menu
@@ -207,22 +204,18 @@ do
       {loc("mm_1_time"), main_timeattack_select},
       {loc("mm_1_vs"), main_local_vs_yourself_setup},
       {loc("mm_1_training"), training_setup},
-      --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
       {loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
-      --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
-      --{loc("mm_2_vs_online", ""), main_net_vs_setup, {"betaserver.panelattack.com", 59569}},
-      --{loc("mm_2_vs_online", "(USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)"), main_net_vs_setup, {"18.188.43.50"}},
-      --{loc("mm_2_vs_online", "This test build is for offline-use only"), main_select_mode},
-      --{loc("mm_2_vs_online", "domi1819.xyz"), main_net_vs_setup, {"domi1819.xyz"}},
-      --{loc("mm_2_vs_online", "(development-use only)"), main_net_vs_setup, {"localhost"}},
-      --{loc("mm_2_vs_online", "LittleEndu's server"), main_net_vs_setup, {"51.15.207.223"}},
-      --{loc("mm_2_vs_online", "server for ranked Ex Mode"), main_net_vs_setup, {"exserver.panelattack.com", 49568}},
       {loc("mm_2_vs_local"), main_local_vs_setup},
       {loc("mm_replay_browser"), replay_browser.main},
       {loc("mm_configure"), main_config_input},
       {loc("mm_set_name"), main_set_name},
       {loc("mm_options"), options.main}
     }
+
+    if config.debugShowServers then
+      table.insert(items, 7, {"Beta Server", main_net_vs_setup, {"betaserver.panelattack.com", 59569}})
+      table.insert(items, 8, {"Localhost Server", main_net_vs_setup, {"localhost"}})
+    end
 
     if TESTS_ENABLED then
       table.insert(items, 6, {"Vs Computer", main_local_vs_computer_setup})
@@ -559,6 +552,8 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
       finalizeAndWriteReplay(extraPath, extraFilename)
     end
 
+    GAME.input:allowAllInputConfigurations()
+
     return {game_over_transition, {nextFunction, nil, P1:pick_win_sfx()}}
   end
   
@@ -774,6 +769,7 @@ local function main_select_speed_99(mode)
       write_conf_file()
     end
     stop_the_music()
+    GAME.input:requestSingleInputConfigurationForPlayerCount(1)
     startGameSet = true
   end
 
@@ -1323,25 +1319,20 @@ function main_net_vs()
   
   local function update()
     local function handleTaunt()
+      local function getCharacter(playerNumber)
+        if P1.player_number == playerNumber then
+          return characters[P1.character]
+        elseif P2.player_number == playerNumber then
+          return characters[P2.character]
+        end
+      end
+
       local messages = server_queue:pop_all_with("taunt")
       for _, msg in ipairs(messages) do
         if msg.taunt then -- receive taunts
-          local taunts = nil
-          -- P1.character and P2.character are supposed to be already filtered with current mods, taunts may differ though!
-          if msg.player_number == select_screen.my_player_number then
-            taunts = characters[P1.character].sounds[msg.type]
-          elseif msg.player_number == select_screen.op_player_number then
-            taunts = characters[P2.character].sounds[msg.type]
-          end
-          if taunts then
-            for _, t in ipairs(taunts) do
-              t:stop()
-            end
-            if msg.index <= #taunts then
-              taunts[msg.index]:play()
-            elseif #taunts ~= 0 then
-              taunts[math.random(#taunts)]:play()
-            end
+          local character = getCharacter(msg.player_number)
+          if character ~= nil then
+            character:playTaunt(msg.type, msg.index)
           end
        end
       end
@@ -1470,8 +1461,7 @@ function main_local_vs_setup()
   GAME.battleRoom = BattleRoom()
   GAME.battleRoom.playerNames[1] = loc("player_n", "1")
   GAME.battleRoom.playerNames[2] = loc("player_n", "2")
-  GAME.input:clearInputConfigurationsForPlayers()
-  GAME.input:requestPlayerInputConfigurationAssignments(2)
+  GAME.input:requestSingleInputConfigurationForPlayerCount(2)
   return select_screen.main, {select_screen, "2p_local_vs"}
 end
 
