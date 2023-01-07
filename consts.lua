@@ -2,7 +2,7 @@ require("util")
 require("table_util")
 
 local consts = {}
-consts.frameRate = 1/60
+consts.FRAME_RATE = 1/60
 
 -- The values in this file are constants (except in this file perhaps) and are expected never to change during the game, not to be confused with globals!
 VERSION = "046"
@@ -21,7 +21,7 @@ assert(super_selection_enable_ratio<1.0,"")
 
 prefix_of_ignored_dirs = "__"
 
-default_theme_dir = "Panel Attack"
+consts.DEFAULT_THEME_DIRECTORY = "Panel Attack Modern"
 
 default_characters_folders = {"lip", "windy", "sherbet", "thiana", "ruby",
               "elias", "flare", "neris", "seren", "phoenix", 
