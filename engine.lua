@@ -1524,12 +1524,6 @@ function Stack.simulate(self)
     end
 
     self:updatePanels2()
-    print("print for frame " .. self.CLOCK)
-    for row = 1, #panels do
-      for col = 1, self.width do
-        print(panels[row][col])
-      end
-    end
 
     local prev_shake_time = self.shake_time
     self.shake_time = self.shake_time - 1
@@ -2225,13 +2219,10 @@ end
 -- returns true if garbage was dropped, false otherwise
 function Stack.tryDropGarbage(self, width, height, metal)
 
-  logger.debug("dropping garbage at frame "..self.CLOCK)
-  local spawn_row = self.height + 1
-  local cols = self.garbage_cols[width]
-  local spawn_col = cols[cols.idx]
+  logger.debug("trying to drop garbage at frame "..self.CLOCK)
 
   -- Do one last check for panels in the way.
-  for i = spawn_row, #self.panels do
+  for i = self.height + 1, #self.panels do
     if self.panels[i] then
       for j = 1, self.width do
         if self.panels[i][j] then
@@ -2247,13 +2238,25 @@ function Stack.tryDropGarbage(self, width, height, metal)
   if self.canvas ~= nil then
     logger.trace(string.format("Dropping garbage on player %d - height %d  width %d  %s", self.player_number, height, width, metal and "Metal" or ""))
   end
-  
-  self:dropGarbage(spawn_row, spawn_col, width, height, metal)
+
+  self:dropGarbage(width, height, metal)
 
   return true
 end
 
-function Stack.dropGarbage(self, originRow, originCol, width, height, isMetal)
+function Stack.getGarbageSpawnColumn(self, garbageWidth)
+  local cols = self.garbage_cols[garbageWidth]
+  local spawnColumn = cols[cols.idx]
+  -- the next piece of garbage of that width should fall at a different idx
+  cols.idx = wrap(1, cols.idx + 1, #cols)
+  return spawnColumn
+end
+
+function Stack.dropGarbage(self, width, height, isMetal)
+  -- garbage always drops in row 13
+  local originRow = self.height + 1
+  -- combo garbage will alternate it's spawn column
+  local originCol = self:getGarbageSpawnColumn(width)
   local function isPartOfGarbage(column)
     return column >= originCol and column < (originCol + width)
   end
