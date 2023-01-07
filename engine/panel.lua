@@ -70,8 +70,13 @@ normalState.changeState = function(panel, panels)
         and panelBelow.propagatesChaining then
         panel:enterHoverState(panelBelow)
       elseif panelBelow.color == 0 and panelBelow.state == Panel.states.normal then
-        panel:enterHoverState(panelBelow)
-        panel.stateChanged = true
+        if panelBelow.propagatesFalling then
+          -- the panel below is empty because garbage below dropped
+          -- in that case, skip the hover and fall immediately with the garbage
+          panel:fall(panels)
+        else
+          panel:enterHoverState(panelBelow)
+        end
       end
       -- all other transformations from normal state are actively set by stack routines:
       -- swap
@@ -102,7 +107,7 @@ end
 
 -- if a panel exits popped state while there is swapping panel above, 
 -- the panels above the swapping panel should still get chaining state and start to hover immediately
-swappingState.propagatesChaining = function(panel, panels)
+swappingState.propagateChaining = function(panel, panels)
   local panelBelow = getPanelBelow(panel, panels)
 
   if panelBelow and panelBelow.stateChanged and panelBelow.propagatesChaining then
@@ -193,7 +198,7 @@ end
 
 landingState.changeState = function(panel, panels)
   -- landing state only exists for the animation
-  -- functionally it's just a glorified normal state
+  -- functionally it's just a normal state
   normalState.changeState(panel, panels)
 
   if not panel.stateChanged then
@@ -285,6 +290,26 @@ function Panel.exclude_swap(self)
     return state.excludeSwap
   end
 end
+
+-- Garbage blocks fall without a hover time
+-- rather than starting to hover, panels on top should fall together with the garbage
+
+normalState.propagatesFalling = true
+swappingState.propagatesFalling = false
+matchedState.propagatesFalling = false
+poppingState.propagatesFalling = false
+poppedState.propagatesFalling = false
+hoverState.propagatesFalling = false
+fallingState.propagatesFalling = true
+landingState.propagatesFalling = true
+dimmedState.propagatesFalling = false
+deadState.propagatesFalling = false
+
+
+
+  function Panel.block_garbage_fall(self)
+    return block_garbage_fall_set[self.state] or self.color == 0
+  end
 
 function Panel.regularColorsArray()
   return {
@@ -476,8 +501,10 @@ end
 local timerBasedStates = {Panel.states.swapping, Panel.states.hovering, Panel.states.matched, Panel.states.popping, Panel.states.popped}
 
 function Panel.runStateAction(self, panels)
+  -- reset all flags that only count for 1 frame to alert panels above of special behavior
   self.stateChanged = false
   self.propagatesChaining = false
+  self.propagatesFalling = false
 
   if table.contains(timerBasedStates, self.state) then
     -- decrement timer
@@ -494,7 +521,7 @@ function Panel.runStateAction(self, panels)
   end
 
   if self.state == Panel.states.swapping then
-    swappingState.propagatesChaining(self, panels)
+    swappingState.propagateChaining(self, panels)
   end
 end
 
@@ -568,6 +595,8 @@ function Panel.fall(self, panels)
   local panelBelow = getPanelBelow(self, panels)
   Panel.switch(self, panelBelow, panels)
   panelBelow:clear(true, true)
+  panelBelow.propagatesFalling = true
+  panelBelow.stateChanged = true
   if self.state ~= Panel.states.falling then
     self.state = Panel.states.falling
     self.timer = 0
