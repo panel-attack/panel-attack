@@ -66,8 +66,7 @@ normalState.changeState = function(panel, panels)
         panel:enterHoverState(panelBelow)
         panel.stateChanged = true
       elseif panelBelow.state == Panel.states.swapping
-        and panelBelow.queuedState ~= nil
-        and panelBelow.queuedState.state == Panel.states.hovering
+        and panelBelow.queuedHover == true
         and panelBelow.propagatesChaining then
         panel:enterHoverState(panelBelow)
       elseif panelBelow.color == 0 and panelBelow.state == Panel.states.normal then
@@ -107,7 +106,7 @@ swappingState.propagatesChaining = function(panel, panels)
   local panelBelow = getPanelBelow(panel, panels)
 
   if panelBelow and panelBelow.stateChanged and panelBelow.propagatesChaining then
-    panel.queuedState = { state = Panel.states.hovering, timer = panel.frameTimes.HOVER}
+    panel.queuedHover = true
     panel.stateChanged = true
     panel.propagatesChaining = true
   end
@@ -373,7 +372,7 @@ function Panel.clear_flags(self, clearChaining)
   -- Animation timer for "bounce" after falling from garbage.
   self.fell_from_garbage = nil
   self.state = Panel.states.normal
-  self.queuedState = nil
+  self.queuedHover = nil
   self.stateChanged = false
   self.propagatesChaining = false
 end
@@ -434,25 +433,40 @@ function Panel.enterHoverState(self, panelBelow)
       self.state = Panel.states.normal
     end
   else
+    local hoverTime = nil
+    if self.state == Panel.states.falling then
+      -- falling panels inherit the hover time from the panel below
+      hoverTime = panelBelow.timer
+    elseif self.state == Panel.states.swapping then
+      -- panels coming out of a swap always receive full hovertime
+      -- even when swapped on top of another hovering panel
+      hoverTime = self.frameTimes.HOVER
+    elseif self.state == Panel.states.normal
+        or self.state == Panel.states.landing then
+      -- normal panels inherit the hover time from the panel below
+      if panelBelow.color ~= 0 then
+        if panelBelow.state == Panel.states.swapping
+          and panelBelow.propagatesChaining then
+          -- if the panel below is swapping but propagates chaining due to a pop further below,
+          --  the hovertime is the sum of remaining swap time and max hover time
+          hoverTime = panelBelow.timer + self.frameTimes.HOVER
+        else
+          hoverTime = panelBelow.timer
+        end
+      else
+      -- if the panel below does not have a color, full hover time is given
+        hoverTime = self.frameTimes.HOVER
+      end
+    else
+      error("Panel in state " .. self.state .. " is trying to hover")
+    end
+
     self:clear_flags(false)
     self.state = Panel.states.hovering
     self.chaining = self.chaining or panelBelow.propagatesChaining
     self.propagatesChaining = panelBelow.propagatesChaining
 
-    if panelBelow.color == 0 then
-      -- use max hover time
-      self.timer = self.frameTimes.HOVER
-    else
-      -- inherit hovertime from panel below
-      if panelBelow.state == Panel.states.hovering then
-        self.timer = panelBelow.timer
-      else
-        -- if the panel below is swapping, hover for the sum of remaining swaptime + hovertime
-        -- The original code subtracted 1 extra because the swap panel is above when set_hoverer is called
-        -- so it has yet to get its timer decremented
-        self.timer = self.frameTimes.HOVER + panelBelow.timer
-      end
-    end
+    self.timer = hoverTime
   end
 
   self.stateChanged = true
@@ -485,10 +499,8 @@ function Panel.runStateAction(self, panels)
 end
 
 function Panel.timerRanOut(self, panels)
-  if self.queuedState then
-    self.state = self.queuedState.state
-    self.timer = self.queuedState.timer
-    self.stateChanged = true
+  if self.queuedHover then
+    self:enterHoverState(getPanelBelow(self, panels))
   else
     self:changeState(panels)
   end
