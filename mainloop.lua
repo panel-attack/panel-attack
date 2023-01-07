@@ -1580,7 +1580,7 @@ function main_replay()
 
   Replay.loadFromFile(replay)
 
-  local function update() 
+  local function update()
   end
 
   local frameAdvance = false

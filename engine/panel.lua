@@ -176,6 +176,7 @@ fallingState.changeState = function(panel, panels)
       panel:land()
     else
       local panelBelow = getPanelBelow(panel, panels)
+      -- no need to nil check because the panel would always get landed at row 1 before getting here
       if panelBelow.state == Panel.states.hovering then
         panel:enterHoverState(panelBelow)
       else

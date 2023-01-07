@@ -385,7 +385,9 @@ function Stack.rollbackCopy(source, other)
     if other.panels[i] == nil then
       other.panels[i] = {}
       for j = 1, width do
-        other.panels[i][j] = other:createPanel(i, j)
+        -- other isn't a stack object and therefore doesn't know the method
+        -- as all fields will get overwritten anyway further below, it doesn't matter that this is being overwritten
+        other.panels[i][j] = source:createPanel(i, j)
       end
     end
     for j = 1, width do
@@ -423,7 +425,6 @@ function Stack.rollbackCopy(source, other)
   other.chain_counter = source.chain_counter
   other.n_active_panels = source.n_active_panels
   other.n_prev_active_panels = source.n_prev_active_panels
-  other.FRAMECOUNTS.RISE = source.FRAMECOUNTS.RISE
   other.rise_timer = source.rise_timer
   other.manual_raise = source.manual_raise
   other.manual_raise_yet = source.manual_raise_yet
