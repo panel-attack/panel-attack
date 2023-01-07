@@ -193,8 +193,17 @@ end
 
 
 landingState.changeState = function(panel, panels)
-  panel.state = Panel.states.normal
-  panel.stateChanged = true
+  -- landing state only exists for the animation
+  -- functionally it's just a glorified normal state
+  normalState.changeState(panel, panels)
+
+  if not panel.stateChanged then
+    panel.timer = panel.timer - 1
+    if panel.timer == 0 then
+      panel.state = Panel.states.normal
+      panel.stateChanged = true
+    end  
+  end
 end
 
 dimmedState.changeState = function(panel, panels)
@@ -450,7 +459,7 @@ function Panel.enterHoverState(self, panelBelow)
 end
 
 -- panels in these states automatically transform when the timer reaches 0
-local timerBasedStates = {Panel.states.swapping, Panel.states.hovering, Panel.states.landing, Panel.states.matched, Panel.states.popping, Panel.states.popped}
+local timerBasedStates = {Panel.states.swapping, Panel.states.hovering, Panel.states.matched, Panel.states.popping, Panel.states.popped}
 
 function Panel.runStateAction(self, panels)
   self.stateChanged = false
@@ -464,7 +473,9 @@ function Panel.runStateAction(self, panels)
         self:timerRanOut(panels)
       end
     end
-  elseif self.state == Panel.states.falling or self.state == Panel.states.normal then
+  elseif self.state == Panel.states.falling
+      or self.state == Panel.states.normal
+      or self.state == Panel.states.landing then
     self:changeState(panels)
   end
 
