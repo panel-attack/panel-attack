@@ -381,13 +381,14 @@ function Stack.rollbackCopy(source, other)
   if source.panels[0] then
     startRow = 0
   end
+  other.panelsCreated = source.panelsCreated
   for i = startRow, height_to_cpy do
     if other.panels[i] == nil then
       other.panels[i] = {}
       for j = 1, width do
         -- other isn't a stack object and therefore doesn't know the method
         -- as all fields will get overwritten anyway further below, it doesn't matter that this is being overwritten
-        other.panels[i][j] = source:createPanel(i, j)
+        other.panels[i][j] = Stack.createPanel(other, i, j)
       end
     end
     for j = 1, width do
