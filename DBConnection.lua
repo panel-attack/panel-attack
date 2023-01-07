@@ -19,7 +19,7 @@ DROP TABLE IF EXISTS Player;
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS Player(
-  userID INTEGER PRIMARY KEY NOT NULL,
+  privatePlayerID INTEGER PRIMARY KEY NOT NULL,
   publicPlayerID INTEGER,
   username TEXT NOT NULL,
   rating REAL NOT NULL DEFAULT 0,
@@ -47,19 +47,21 @@ CREATE TABLE IF NOT EXISTS PlayerGameResult(
   FOREIGN KEY(playerID) REFERENCES Player(publicPlayerID),
   FOREIGN KEY(gameID) REFERENCES Game(gameID)
 );]]
-local insertPlayerStatement = assert(db:prepare("INSERT INTO Player(userID, username) VALUES (?, ?)"))
-local updatePlayerRatingStatement = assert(db:prepare("UPDATE Player SET rating = ? WHERE userID = ?"))
-local updatePlayerNameStatement = assert(db:prepare("UPDATE Player SET username = ? WHERE userID = ?"))
+local insertPlayerStatement = assert(db:prepare("INSERT INTO Player(privatePlayerID, username) VALUES (?, ?)"))
+local updatePlayerRatingStatement = assert(db:prepare("UPDATE Player SET rating = ? WHERE privatePlayerID = ?"))
+local updatePlayerNameStatement = assert(db:prepare("UPDATE Player SET username = ? WHERE privatePlayerID = ?"))
 local selectLeaderboardStatement = assert(db:prepare("SELECT username, rating FROM Player"))
 
 local insertGameStatement = assert(db:prepare("INSERT INTO Game(gameID, ranked) VALUES (?, ?)"))
 
-local insertPlayerGameResultStatement = assert(db:prepare("INSERT INTO PlayerGameResult(playerID, gameID, level, placement) VALUES (?, ?, ?, ?)"))
+-- TODO: Make work with foreign keys
+--local insertPlayerGameResultStatement = assert(db:prepare("INSERT INTO PlayerGameResult(playerID, gameID, level, placement) VALUES (?, ?, ?, ?)"))
+
 local selectPlayerGamesStatement = assert(db:prepare("SELECT gameID FROM PlayerGameResult WHERE playerID = ?"))
 
 
-local function insertNewPlayer(userID, username)
-  insertPlayerStatement:bind_values(userID, username)
+local function insertNewPlayer(privatePlayerID, username)
+  insertPlayerStatement:bind_values(privatePlayerID, username)
   insertPlayerStatement:step()
   insertPlayerStatement:reset()
 end
@@ -69,6 +71,6 @@ insertNewPlayer(2, "Shosoul")
 insertNewPlayer(3, "Sho")
 
 for row in db:nrows("SELECT * FROM Player") do
-  print(row.userID, row.username)
+  print(row.privatePlayerID, row.username)
 end
 

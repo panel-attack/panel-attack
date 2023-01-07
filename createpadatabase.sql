@@ -1,4 +1,3 @@
-
 DROP TABLE IF EXISTS PlayerGameResult;
 DROP TABLE IF EXISTS Game;
 DROP TABLE IF EXISTS Player;
@@ -6,7 +5,8 @@ DROP TABLE IF EXISTS Player;
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS Player(
-  userID INTEGER PRIMARY KEY NOT NULL,
+  privatePlayerID INTEGER PRIMARY KEY NOT NULL,
+  publicPlayerID INTEGER,
   username TEXT NOT NULL,
   rating REAL NOT NULL DEFAULT 0,
   placementDone BOOLEAN NOT NULL CHECK (rating IN (0, 1)) DEFAULT 0,
@@ -18,10 +18,6 @@ CREATE TABLE IF NOT EXISTS Player(
   youtuber BOOLEAN CHECK (youtuber IN (0, 1)),
   twitchStreamer BOOLEAN CHECK (twitchStreamer IN (0, 1))
 );
-INSERT INTO Player(userID, username) VALUES (1, "ShosoulDev");
-INSERT INTO Player(userID, username) VALUES (2, "Shosoul");
-INSERT INTO Player(userID, username) VALUES (3, "Sho");
-SELECT * FROM Player;
 
 CREATE TABLE IF NOT EXISTS Game(
   gameID INTEGER PRIMARY KEY NOT NULL,
@@ -34,7 +30,5 @@ CREATE TABLE IF NOT EXISTS PlayerGameResult(
   gameID INTEGER NOT NULL,
   level INTEGER NOT NULL,
   placement INTEGER NOT NULL,
-  FOREIGN KEY(playerID) REFERENCES Player(userID),
+  FOREIGN KEY(playerID) REFERENCES Player(publicPlayerID),
   FOREIGN KEY(gameID) REFERENCES Game(gameID)
-);
-
