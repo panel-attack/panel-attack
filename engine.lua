@@ -2663,15 +2663,25 @@ function Stack.new_row(self)
   local panels = self.panels
   -- move cursor up
   self.cur_row = bound(1, self.cur_row + 1, self.top_cur_row)
+
+  -- create new row at the top
+  local stackHeight = #panels + 1
+  panels[stackHeight] = {}
+
+  for col = 1, self.width do
+    panels[stackHeight][col] = self:createPanel(stackHeight, col)
+  end
+
   -- move panels up
-  for row = #panels + 1, 1, -1 do
-    panels[row] = panels[row - 1]
+  for row = stackHeight, 1, -1 do
     for col = #panels[row], 1, -1 do
-      panels[row][col].row = row
+      Panel.switch(panels[row][col], panels[row - 1][col], panels)
     end
   end
-  panels[0] = {}
-  -- put bottom row into play
+
+  -- the new row we created earlier at the top is now at row 0!
+  -- while the former row 0 is at row 1 and in play
+  -- therefore we need to override dimmed state in row 1
   for col = 1, self.width do
     panels[1][col].state = Panel.states.normal
   end
@@ -2686,7 +2696,7 @@ function Stack.new_row(self)
     self.panelGenCount = self.panelGenCount + 1
   end
 
-  -- generate a new row
+  -- assign colors to the new row 0
   local metal_panels_this_row = 0
   if self.metal_panels_queued > 3 then
     self.metal_panels_queued = self.metal_panels_queued - 2
@@ -2696,8 +2706,7 @@ function Stack.new_row(self)
     metal_panels_this_row = 1
   end
   for col = 1, self.width do
-    local panel = self:createPanel(0, col)
-    panels[0][col] = panel
+    local panel = panels[0][col]
     local this_panel_color = string.sub(self.panel_buffer, col, col)
     --a capital letter for the place where the first shock block should spawn (if earned), and a lower case letter is where a second should spawn (if earned).  (color 8 is metal)
     if tonumber(this_panel_color) then
