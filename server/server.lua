@@ -21,7 +21,6 @@ local time = os.time
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
 SERVER_MODE = true -- global to know the server is running the process
-local VERSION = "046"
 local connectionNumberIndex = 1 -- GLOBAL counter of the next available connection index
 local roomNumberIndex = 1 -- the next available room number
 local rooms = {}  
