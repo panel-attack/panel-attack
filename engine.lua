@@ -2803,13 +2803,13 @@ function Stack.new_row(self)
       if metal_panels_this_row > 0 then
         this_panel_color = 8
       else
-        this_panel_color = panel_color_to_number[this_panel_color]
+        this_panel_color = PanelGenerator.PANEL_COLOR_TO_NUMBER[this_panel_color]
       end
     elseif this_panel_color >= "a" and this_panel_color <= "z" then
       if metal_panels_this_row > 1 then
         this_panel_color = 8
       else
-        this_panel_color = panel_color_to_number[this_panel_color]
+        this_panel_color = PanelGenerator.PANEL_COLOR_TO_NUMBER[this_panel_color]
       end
     end
     panel.color = this_panel_color + 0
