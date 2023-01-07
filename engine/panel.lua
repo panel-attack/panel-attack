@@ -300,16 +300,20 @@ matchedState.propagatesFalling = false
 poppingState.propagatesFalling = false
 poppedState.propagatesFalling = false
 hoverState.propagatesFalling = false
+-- it's reasonable to assume this never
 fallingState.propagatesFalling = true
 landingState.propagatesFalling = true
 dimmedState.propagatesFalling = false
 deadState.propagatesFalling = false
 
-
-
-  function Panel.block_garbage_fall(self)
-    return block_garbage_fall_set[self.state] or self.color == 0
+function Panel.block_garbage_fall(self)
+  if self.color == 0 then
+    return true
+  else
+    local stateTable = self:getStateTable()
+    return not stateTable.propagatesFalling
   end
+end
 
 function Panel.regularColorsArray()
   return {
@@ -594,9 +598,11 @@ end
 function Panel.fall(self, panels)
   local panelBelow = getPanelBelow(self, panels)
   Panel.switch(self, panelBelow, panels)
-  panelBelow:clear(true, true)
-  panelBelow.propagatesFalling = true
-  panelBelow.stateChanged = true
+  if self.type == Panel.types.garbage then
+    -- panels above should fall immediately rather than starting to hover
+    panelBelow.propagatesFalling = true
+    panelBelow.stateChanged = true
+  end
   if self.state ~= Panel.states.falling then
     self.state = Panel.states.falling
     self.timer = 0
