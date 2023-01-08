@@ -91,17 +91,25 @@ normalState.changeState = function(panel, panels)
 end
 
 swappingState.changeState = function(panel, panels)
-  local panelBelow = getPanelBelow(panel, panels)
-
-  if panelBelow and panelBelow.color == 0 then
-    panel:enterHoverState(panelBelow)
-  elseif panelBelow and panelBelow.state == Panel.states.hovering then
-    panel:enterHoverState(panelBelow)
-  else
+  local function finishSwap()
     panel.state = Panel.states.normal
     panel.dont_swap = nil
     panel.isSwappingFromLeft = nil
     panel.stateChanged = true
+  end
+
+  local panelBelow = getPanelBelow(panel, panels)
+
+  if panel.color == 0 then
+    finishSwap()
+  else
+    if panelBelow and panelBelow.color == 0 then
+      panel:enterHoverState(panelBelow)
+    elseif panelBelow and panelBelow.state == Panel.states.hovering then
+      panel:enterHoverState(panelBelow)
+    else
+      finishSwap()
+    end
   end
 end
 
@@ -110,8 +118,8 @@ end
 swappingState.propagateChaining = function(panel, panels)
   local panelBelow = getPanelBelow(panel, panels)
 
-  if panelBelow and panelBelow.stateChanged and panelBelow.propagatesChaining and panel.color ~= 0 then
-    panel.queuedHover = true
+  if panelBelow and panelBelow.stateChanged and panelBelow.propagatesChaining then
+    panel.queuedHover = (panel.color ~= 0)
     panel.stateChanged = true
     panel.propagatesChaining = true
   end
