@@ -1052,7 +1052,7 @@ function Stack.shouldPlayDangerMusic(self)
   return false
 end
 
-function Stack.updatePanels2(self)
+function Stack.updatePanels(self)
   self.shake_time_on_frame = 0
   for row = 1, #self.panels do
     for col = 1, self.width do
@@ -1244,7 +1244,7 @@ function Stack.simulate(self)
       end
     end
 
-    self:updatePanels2()
+    self:updatePanels()
 
     local prev_shake_time = self.shake_time
     self.shake_time = self.shake_time - 1
@@ -2536,6 +2536,7 @@ end
 
 function Stack.onGarbageLand(self, panel)
   if panel.shake_time and panel.state == Panel.states.normal
+    -- only parts of the garbage that are on the visible board can be considered for shake
     and panel.row <= self.height then
     --runtime optimization to not repeatedly update shaketime for the same piece of garbage
     if not table.contains(self.garbageLandedThisFrame, panel.garbageId) then
