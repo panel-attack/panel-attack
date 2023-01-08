@@ -34,7 +34,7 @@ Panel.states = {
 }
 
 -- all possible states a panel can have
--- the state tables provide functions that describe their state transformations
+-- the state tables provide functions that describe their state update/transformations
 -- the state tables provide booleans that describe which actions are possible in their state
 -- the state table of a panel can be acquired via Panel:getStateTable()
 local normalState = {}
@@ -56,7 +56,7 @@ local function getPanelBelow(panel, panels)
   end
 end
 
-normalState.changeState = function(panel, panels)
+normalState.update = function(panel, panels)
   local panelBelow = getPanelBelow(panel, panels)
 
   if panel.type == Panel.types.panel
@@ -64,7 +64,6 @@ normalState.changeState = function(panel, panels)
     if panelBelow and panelBelow.stateChanged then
       if panelBelow.state == Panel.states.hovering then
         panel:enterHoverState(panelBelow)
-        panel.stateChanged = true
       elseif panelBelow.state == Panel.states.swapping
         and panelBelow.queuedHover == true
         and panelBelow.propagatesChaining then
@@ -86,6 +85,17 @@ normalState.changeState = function(panel, panels)
   elseif panel.type == Panel.types.garbage then
     if not panel:supportedFromBelow(panels) then
       panel:fall(panels)
+    end
+  end
+end
+
+swappingState.update = function(panel, panels)
+  panel:decrementTimer()
+  if panel.timer == 0 then
+    if panel.queuedHover then
+      panel:enterHoverState(getPanelBelow(panel, panels))
+    else
+      swappingState.changeState(panel, panels)
     end
   end
 end
@@ -125,6 +135,13 @@ swappingState.propagateChaining = function(panel, panels)
   end
 end
 
+matchedState.update = function(panel, panels)
+  panel:decrementTimer()
+  if panel.timer == 0 then
+    matchedState.changeState(panel, panels)
+  end
+end
+
 matchedState.changeState = function(panel, panels)
   if panel.type == Panel.types.panel then
     -- This panel's match just finished the whole flashing and looking distressed thing.
@@ -134,6 +151,13 @@ matchedState.changeState = function(panel, panels)
     panel.stateChanged = true
   elseif panel.type == Panel.types.garbage then
     panel:enterHoverState()
+  end
+end
+
+poppingState.update = function(panel, panels)
+  panel:decrementTimer()
+  if panel.timer == 0 then
+    poppingState.changeState(panel, panels)
   end
 end
 
@@ -149,6 +173,13 @@ poppingState.changeState = function(panel, panels)
   end
 end
 
+poppedState.update = function(panel, panels)
+  panel:decrementTimer()
+  if panel.timer == 0 then
+    poppedState.changeState(panel, panels)
+  end
+end
+
 poppedState.changeState = function(panel, panels)
   -- It's time for this panel
   -- to be gone forever :'(
@@ -157,6 +188,17 @@ poppedState.changeState = function(panel, panels)
   -- Flag so panels above can know whether they should be chaining or not
   panel.propagatesChaining = true
   panel.stateChanged = true
+end
+
+hoverState.update = function(panel, panels)
+  panel:decrementTimer()
+  if panel.timer == 0 then
+    hoverState.changeState(panel, panels)
+  end
+
+  if not panel.stateChanged and panel.fell_from_garbage then
+    panel.fell_from_garbage = panel.fell_from_garbage - 1
+  end
 end
 
 hoverState.changeState = function(panel, panels)
@@ -179,7 +221,7 @@ hoverState.changeState = function(panel, panels)
   end
 end
 
-fallingState.changeState = function(panel, panels)
+fallingState.update = function(panel, panels)
   if panel.row == 1 then
     -- if it's on the bottom row, it should surely land
     panel:land()
@@ -201,32 +243,40 @@ fallingState.changeState = function(panel, panels)
   end
 
   -- stateChanged is set in the fall/land functions respectively
+  if not panel.stateChanged and panel.fell_from_garbage then
+    panel.fell_from_garbage = panel.fell_from_garbage - 1
+  end
 end
 
-
-landingState.changeState = function(panel, panels)
-  -- landing state only exists for the animation
-  -- functionally it's just a normal state
-  normalState.changeState(panel, panels)
+landingState.update = function(panel, panels)
+  normalState.update(panel, panels)
 
   if not panel.stateChanged then
-    panel.timer = panel.timer - 1
+    panel:decrementTimer()
     if panel.timer == 0 then
-      panel.state = Panel.states.normal
-      panel.stateChanged = true
-    end  
+      landingState.changeState(panel)
+    end
   end
 end
 
-dimmedState.changeState = function(panel, panels)
+landingState.changeState = function(panel)
+  panel.state = Panel.states.normal
+  panel.stateChanged = true
+end
+
+dimmedState.update = function(panel, panels)
   if panel.row >= 1 then
-    panel.state = Panel.states.normal
-    panel.stateChanged = true
+    dimmedState.changeState(panel)
   end
 end
 
-deadState.changeState = function(panel, panels)
-  error("There is no conclusion more natural than death")
+dimmedState.changeState = function(panel)
+  panel.state = Panel.states.normal
+  panel.stateChanged = true
+end
+
+deadState.update = function(panel, panels)
+  -- dead is dead
 end
 
 -- exclude hover
@@ -415,10 +465,18 @@ function Panel.clear_flags(self, clearChaining)
 end
 
 function Panel.update(self, panels)
+  -- reset all flags that only count for 1 frame to alert panels above of special behavior
   self.stateChanged = false
   self.propagatesChaining = false
+  self.propagatesFalling = false
 
-  self:runStateAction(panels)
+  local stateTable = self:getStateTable()
+  stateTable.update(self, panels)
+
+  -- edge case, not sure if this can be put into swappingState.update without breaking things
+  if self.state == Panel.states.swapping then
+    swappingState.propagateChaining(self, panels)
+  end
 end
 
 function Panel.startSwap(self, isSwappingFromLeft)
@@ -429,6 +487,9 @@ function Panel.startSwap(self, isSwappingFromLeft)
   self.chaining = chaining
   self.timer = 4
   self.isSwappingFromLeft = isSwappingFromLeft
+  if self.fell_from_garbage then
+    self.fell_from_garbage = nil
+  end
 end
 
 -- a switch is NOT a swap
@@ -509,47 +570,6 @@ function Panel.enterHoverState(self, panelBelow)
   self.stateChanged = true
 end
 
--- panels in these states automatically transform when the timer reaches 0
-local timerBasedStates = {Panel.states.swapping, Panel.states.hovering, Panel.states.matched, Panel.states.popping, Panel.states.popped}
-
-function Panel.runStateAction(self, panels)
-  -- reset all flags that only count for 1 frame to alert panels above of special behavior
-  self.stateChanged = false
-  self.propagatesChaining = false
-  self.propagatesFalling = false
-
-  if table.contains(timerBasedStates, self.state) then
-    -- decrement timer
-    if self.timer and self.timer > 0 then
-      self.timer = self.timer - 1
-      if self.timer == 0 then
-        self:timerRanOut(panels)
-      end
-    end
-  elseif self.state == Panel.states.falling
-      or self.state == Panel.states.normal
-      or self.state == Panel.states.landing then
-    self:changeState(panels)
-  end
-
-  if self.state == Panel.states.swapping then
-    swappingState.propagateChaining(self, panels)
-  end
-end
-
-function Panel.timerRanOut(self, panels)
-  if self.queuedHover then
-    self:enterHoverState(getPanelBelow(self, panels))
-  else
-    self:changeState(panels)
-  end
-end
-
-function Panel.changeState(self, panels)
-  local stateTable = self:getStateTable()
-  stateTable.changeState(self, panels)
-end
-
 function Panel.getStateTable(self)
   if self.state == Panel.states.normal then
     return normalState
@@ -621,11 +641,15 @@ end
 function Panel.land(self)
   if self.type == self.types.panel then
     if self.state == Panel.states.falling then
-      -- don't do stuff on 0 height falls
+      -- don't alert the stack on 0 height falls
       self:onLand()
     end
+    if self.fell_from_garbage then
+    -- terminate falling animation related stuff
+      self.fell_from_garbage = nil
+    end
     self.state = Panel.states.landing
-      -- TODO Endaris: This timer is solely for animation, should put that elsewhere
+      -- This timer is solely for animation, should probably put that elsewhere
     self.timer = 12
   elseif self.type == self.types.garbage then
     self.state = Panel.states.normal
@@ -634,10 +658,8 @@ function Panel.land(self)
   self.stateChanged = true
 end
 
+-- dedicated setter to troubleshoot timers constantly being overwritten by engine
 function Panel.setTimer(self, frames)
-  if self.state == Panel.states.matched then
-    local x = 1+1
-  end
   self.timer = frames
 end
 

@@ -1057,7 +1057,7 @@ function Stack.updatePanels(self)
   for row = 1, #self.panels do
     for col = 1, self.width do
       local panel = self.panels[row][col]
-      panel:runStateAction(self.panels)
+      panel:update(self.panels)
     end
   end
 end
@@ -2162,6 +2162,9 @@ function Stack.check_matches(self)
           panel.combo_index = combo_index
           panel.combo_size = combo_size
           panel.chain_index = self.chain_counter
+          if panel.fell_from_garbage then
+            panel.fell_from_garbage = nil
+          end
           combo_index = combo_index - 1
           if combo_index == 0 then
             first_panel_col = col
