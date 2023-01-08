@@ -348,7 +348,7 @@ end
 
 local function handle_pause(self)
   if GAME.match.supportsPause then
-    if menu_pause() or (not GAME.focused and not GAME.gameIsPaused) then
+    if menu_pause() or (not GAME.focused and not GAME.gameIsPaused) or (GAME.gameIsPaused and love.mouse.isDown(1)) then
       GAME.gameIsPaused = not GAME.gameIsPaused
 
       setMusicPaused(GAME.gameIsPaused)
