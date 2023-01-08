@@ -726,7 +726,7 @@ function Stack.hasGarbage(self)
 end
 
 function Stack.puzzle_failed(self)
-  if not self.do_countdown and not self:hasPendingAction() then
+  if not self.do_countdown and not self:hasActivePanels() then
     if self.puzzle.puzzleType == "moves" then
         return self.puzzle.remaining_moves == 0
     elseif self.puzzle.puzzleType == "chain" then
@@ -748,7 +748,7 @@ function Stack.puzzle_failed(self)
   return false
 end
 
-function Stack.hasPendingAction(self)
+function Stack.hasActivePanels(self)
   return self.n_active_panels > 0 or self.n_prev_active_panels > 0
 end
 
@@ -1052,8 +1052,6 @@ function Stack.shouldPlayDangerMusic(self)
   return false
 end
 
-
-
 function Stack.updatePanels2(self)
   self.shake_time_on_frame = 0
   for row = 1, #self.panels do
@@ -1064,281 +1062,7 @@ function Stack.updatePanels2(self)
   end
 end
 
-function Stack.updatePanels(self)
-  -- Phase 2. /////////////////////////////////////////////////////////////
-  -- Timer-expiring actions + falling
-  local propogate_fall = {false, false, false, false, false, false}
-  local skip_col = 0
-  local shake_time = 0
-  popsize = "small"
-  for row = 1, #panels do
-    for col = 1, self.width do
-      local cntinue = false
-      if skip_col > 0 then
-        skip_col = skip_col - 1
-        cntinue = true
-      end
-      local panel = panels[row][col]
-      if cntinue then
-      elseif panel.type == Panel.types.garbage then
-        if panel.state == Panel.states.matched then
-          -- try to fall
-          panel:decrementTimer()
-          if panel.timer == panel.pop_time then
-            if config.popfx == true then
-              self:enqueue_popfx(col, row, popsize)
-            end
-            if self:shouldChangeSoundEffects() then
-              SFX_Garbage_Pop_Play = panel.pop_index
-            end
-          end
-          if panel.timer == 0 then
-            if panel.y_offset == -1 then
-              panel:clear(false, false)
-              self:set_hoverers(row, col, self.FRAMECOUNTS.GPHOVER, true, true)
-              panel.fell_from_garbage = 12
-            else
-              panel.state = Panel.states.normal
-            end
-          end
-        elseif (panel.state == Panel.states.normal or panel.state == Panel.states.falling) then
-          -- x_offset relative to the right side of the garbage
-          if panel.x_offset == 0 then
-            local supported = false
-            -- y_offset relative to the bottom of the garbage
-            if panel.y_offset == 0 then
-              -- width refers to how wide the garbage is, check if there is support anywhere along the width
-              for i = col, col + panel.width - 1 do
-                if panels[row - 1][i]:support_garbage() then
-                  supported = true
-                  break
-                end
-              end
-            else
-              supported = not propogate_fall[col]
-            end
-            if supported then
-              for x = col, col - 1 + panel.width do
-                panels[row][x].state = Panel.states.normal
-                propogate_fall[x] = false
-              end
-            else
-              skip_col = panel.width - 1
-              for x = col, col - 1 + panel.width do
-                panels[row - 1][x]:clear(true, true)
-                propogate_fall[x] = true
-                panels[row][x].state = Panel.states.falling
-                panels[row - 1][x], panels[row][x] = panels[row][x], panels[row - 1][x]
-              end
-            end
-          end
-          if panel.shake_time and panel.state == Panel.states.normal then
-            if row <= self.height then
-              if self:shouldChangeSoundEffects() then
-                if panel.height > 3 then
-                  self.sfx_garbage_thud = 3
-                else
-                  self.sfx_garbage_thud = panel.height
-                end
-              end
-              shake_time = max(shake_time, panel.shake_time, self.peak_shake_time or 0)
-              --a smaller garbage block landing should renew the largest of the previous blocks' shake times since our shake time was last zero.
-              self.peak_shake_time = max(shake_time, self.peak_shake_time or 0)
-              panel.shake_time = nil
-            end
-          end
-        end
-        cntinue = true
-      end
-      if propogate_fall[col] and not cntinue then
-        if panel:block_garbage_fall() then
-          propogate_fall[col] = false
-        else
-          panel.state = Panel.states.falling
-          panel:setTimer(0)
-        end
-      end
-      if cntinue then
-      elseif panel.state == Panel.states.falling then
-        -- if it's on the bottom row, it should surely land
-        if row == 1 then
-          -- if there's a panel below, this panel's gonna land
-          -- unless the panel below is falling.
-          panel.state = Panel.states.landing
-          panel:setTimer(12)
-          if self:shouldChangeSoundEffects() then
-            self.sfx_land = true
-          end
-        elseif panels[row - 1][col].color ~= 0 and panels[row - 1][col].state ~= Panel.states.falling then
-          -- if it lands on a hovering panel, it inherits
-          -- that panel's hover time.
-          if panels[row - 1][col].state == Panel.states.hovering then
-            panel.state = Panel.states.normal
-            self:set_hoverers(row, col, panels[row - 1][col].timer, false, false)
-          else
-            panel.state = Panel.states.landing
-            panel:setTimer(12)
-          end
-          if self:shouldChangeSoundEffects() then
-            self.sfx_land = true
-          end
-        else
-          panels[row - 1][col], panels[row][col] = panels[row][col], panels[row - 1][col]
-          panels[row][col]:clear(true, true)
-        end
-      elseif panel:has_flags() and panel.timer ~= 0 then
-        panel:decrementTimer()
-        if panel.timer == 0 then
-          if panel.state == Panel.states.swapping then
-            -- a swap has completed here.
-            panel.state = Panel.states.normal
-            panel.dont_swap = nil
-            local from_left = panel.isSwappingFromLeft
-            panel.isSwappingFromLeft = nil
-            -- Now there are a few cases where some hovering must
-            -- be done.
-            if panel.color ~= 0 then
-              if row ~= 1 then
-                if panels[row - 1][col].color == 0 then
-                  self:set_hoverers(row, col, self.FRAMECOUNTS.HOVER, false, true, false)
-                  -- if there is no panel beneath this panel
-                  -- it will begin to hover.
-                  -- CRAZY BUG EMULATION:
-                  -- the space it was swapping from hovers too
-                  if from_left then
-                    if panels[row][col - 1].state == Panel.states.falling then
-                      self:set_hoverers(row, col - 1, self.FRAMECOUNTS.HOVER, false, true)
-                    end
-                  else
-                    if panels[row][col + 1].state == Panel.states.falling then
-                      self:set_hoverers(row, col + 1, self.FRAMECOUNTS.HOVER + 1, false, false)
-                    end
-                  end
-                elseif panels[row - 1][col].state == Panel.states.hovering then
-                  -- swap may have landed on a hover
-                  self:set_hoverers(row, col, self.FRAMECOUNTS.HOVER, false, true, panels[row - 1][col].match_anyway, "inherited")
-                end
-              end
-            else
-              -- an empty space finished swapping...
-              -- panels above it hover
-              self:set_hoverers(row + 1, col, self.FRAMECOUNTS.HOVER + 1, false, false, false, "empty")
-            end
-          elseif panel.state == Panel.states.hovering then
-            if panels[row - 1][col].state == Panel.states.hovering then
-              -- This panel is no longer hovering.
-              -- it will now fall without sitting around
-              -- for any longer!
-              panel:setTimer(panels[row - 1][col].timer)
-            elseif panels[row - 1][col].color ~= 0 then
-              panel.state = Panel.states.landing
-              panel:setTimer(12)
-            else
-              panel.state = Panel.states.falling
-              panels[row][col], panels[row - 1][col] = panels[row - 1][col], panels[row][col]
-              panel:setTimer(0)
-              -- Not sure if needed:
-              panels[row][col]:clear_flags()
-            end
-          elseif panel.state == Panel.states.landing then
-            panel.state = Panel.states.normal
-          elseif panel.state == Panel.states.matched then
-            -- This panel's match just finished the whole
-            -- flashing and looking distressed thing.
-            -- It is given a pop time based on its place
-            -- in the match.
-            panel.state = Panel.states.popping
-            panel:setTimer(panel.combo_index * self.FRAMECOUNTS.POP)
-          elseif panel.state == Panel.states.popping then
-            --logger.debug("POP")
-            if (panel.combo_size > 6) or self.chain_counter > 1 then
-              popsize = "normal"
-            end
-            if self.chain_counter > 2 then
-              popsize = "big"
-            end
-            if self.chain_counter > 3 then
-              popsize = "giant"
-            end
-            if config.popfx == true then
-              self:enqueue_popfx(col, row, popsize)
-            end
-            self.score = self.score + 10
-            -- self.score_render=1;
-            -- TODO: What is self.score_render?
-            -- this panel just popped
-            -- Now it's invisible, but sits and waits
-            -- for the last panel in the combo to pop
-            -- before actually being removed.
-
-            -- If it is the last panel to pop,
-            -- it should be removed immediately!
-            if panel.combo_size == panel.combo_index then
-              self.panels_cleared = self.panels_cleared + 1
-              if self.match.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
-                self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
-              end
-              if self:shouldChangeSoundEffects() then
-                SFX_Pop_Play = 1
-              end
-              self.poppedPanelIndex = panel.combo_index
-              panel.color = 0
-              if self.panels_to_speedup then
-                self.panels_to_speedup = self.panels_to_speedup - 1
-              end
-              panel:clear_flags()
-              self:set_hoverers(row + 1, col, self.FRAMECOUNTS.HOVER + 1, true, false, true, "combo")
-            else
-              panel.state = Panel.states.popped
-              panel:setTimer((panel.combo_size - panel.combo_index) * self.FRAMECOUNTS.POP)
-              self.panels_cleared = self.panels_cleared + 1
-              if self.match.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
-                self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
-              end
-              if self:shouldChangeSoundEffects() then
-                SFX_Pop_Play = 1
-              end
-              self.poppedPanelIndex = panel.combo_index
-            end
-          elseif panel.state == Panel.states.popped then
-            -- It's time for this panel
-            -- to be gone forever :'(
-            if self.panels_to_speedup then
-              self.panels_to_speedup = self.panels_to_speedup - 1
-            end
-            panel.color = 0
-            panel:clear_flags()
-            -- Any panels sitting on top of it
-            -- hover and are flagged as CHAINING
-            self:set_hoverers(row + 1, col, self.FRAMECOUNTS.HOVER + 1, true, false, true, Panel.states.popped)
-          elseif panel.state == Panel.states.dead then
-            -- Nothing to do here, the player lost.
-          else
-            -- what the heck.
-            -- if a timer runs out and the routine can't
-            -- figure out what flag it is, tell brandon.
-            -- No seriously, email him or something.
-            error("something terrible happened\n" .. "panel.state was " .. tostring(panel.state) .. " when a timer expired?!\n" .. "panel.isSwappingFromLeft = " .. tostring(panel.isSwappingFromLeft) .. "\n" .. "panel.dont_swap = " .. tostring(panel.dont_swap) .. "\n" .. "panel.chaining = " .. tostring(panel.chaining))
-          end
-        -- the timer-expiring action has completed
-        end
-      end
-      -- Advance the fell-from-garbage bounce timer, or clear it and stop animating if the panel isn't hovering or falling.
-      if cntinue then
-      elseif panel.fell_from_garbage then
-        if panel.state ~= Panel.states.hovering and panel.state ~= Panel.states.falling then
-          panel.fell_from_garbage = nil
-        else
-          panel.fell_from_garbage = panel.fell_from_garbage - 1
-        end
-      end
-    end
-  end
-end
-
 function Stack.shouldDropGarbage(self)
-  local hasActivePanels = self.n_active_panels > 0 or self.n_prev_active_panels > 0
-
   -- this is legit ugly, these should rather be returned in a parameter table
   -- or even better in a dedicated garbage class table
   local _, next_garbage_block_height, _, from_chain = unpack(self.garbage_q:peek())
@@ -1353,7 +1077,7 @@ function Stack.shouldDropGarbage(self)
       -- that doesn't exist anyway
     else
       -- otherwise garbage should only be dropped if there are no active panels
-      return not hasActivePanels
+      return not self:hasActivePanels()
     end
   end
 end
@@ -1442,11 +1166,8 @@ function Stack.simulate(self)
       self.top_cur_row = self.height
       self:new_row()
     end
-    self.prev_rise_lock = self.rise_lock
-    self.rise_lock = self.n_active_panels ~= 0 or self.n_prev_active_panels ~= 0 or self.shake_time ~= 0 or self.do_countdown or self.do_swap
-    if self.prev_rise_lock and not self.rise_lock then
-      self.prevent_manual_raise = false
-    end
+
+    self:updateRiseLock()
 
     -- Increase the speed if applicable
     if self.speed_times then
@@ -1629,30 +1350,7 @@ function Stack.simulate(self)
     -- lol owned
     end
 
-    self.n_prev_active_panels = self.n_active_panels
-    self.n_active_panels = 0
-    self.active_panels = {}
-    for row = 1, self.height do
-      for col = 1, self.width do
-        local panel = panels[row][col]
-        if panel.type == Panel.types.garbage then
-          if panel.state ~= Panel.states.normal then
-            self.n_active_panels = self.n_active_panels + 1
-          end
-        else
-          -- this only works because we know that garbage panels can't be swapped
-          if panel.state == Panel.states.swapping then
-            self.n_active_panels = self.n_active_panels + 1
-          else
-            if panel.color ~= 0
-            and panel.state ~= Panel.states.landing
-            and panel:exclude_hover() then
-              self.n_active_panels = self.n_active_panels + 1
-            end
-          end
-        end
-      end
-    end
+    self:updateActivePanels()
 
     if self.telegraph then
       local to_send = self.telegraph:pop_all_ready_garbage(self.CLOCK)
@@ -2798,20 +2496,6 @@ function Stack.createPanel(self, row, column)
   return panel
 end
 
-function Stack.updatePanel(self, panel)
-  if panel.stateChanged then
-    panel.stateChanged = false
-  end
-
-  local panelBelow = self.panels[panel.row - 1][panel.column]
-
-  if panelBelow and panelBelow.stateChanged then
-    panel:panelBelowChanged(panelBelow)
-  end
-
-  panel:runStateAction(self.panels)
-end
-
 function Stack.onPop(self, panel)
   --logger.debug("POP")
   if (panel.combo_size > 6) or self.chain_counter > 1 then
@@ -2852,8 +2536,9 @@ end
 
 function Stack.onGarbageLand(self, panel)
   if panel.shake_time and panel.state == Panel.states.normal
-   and not table.contains(self.garbageLandedThisFrame, panel.garbageId) then
-    if panel.row <= self.height then
+    and panel.row <= self.height then
+    --runtime optimization to not repeatedly update shaketime for the same piece of garbage
+    if not table.contains(self.garbageLandedThisFrame, panel.garbageId) then
       if self:shouldChangeSoundEffects() then
         if panel.height > 3 then
           self.sfx_garbage_thud = 3
@@ -2864,12 +2549,14 @@ function Stack.onGarbageLand(self, panel)
       self.shake_time_on_frame = max(self.shake_time_on_frame, panel.shake_time, self.peak_shake_time or 0)
       --a smaller garbage block landing should renew the largest of the previous blocks' shake times since our shake time was last zero.
       self.peak_shake_time = max(self.shake_time_on_frame, self.peak_shake_time or 0)
-      panel.shake_time = nil
 
       -- to prevent from running this code dozens of time for the same garbage block
       -- all panels of a garbage block have the same id + shake time
       self.garbageLandedThisFrame[#self.garbageLandedThisFrame+1] = panel.garbageId
     end
+
+    -- whether we ran through it or not, the panel should lose its shake time
+    panel.shake_time = nil
   end
 end
 
@@ -2885,4 +2572,57 @@ function Stack.hasChainingPanels(self)
   end
 
   return false
+end
+
+function Stack.updateActivePanels(self)
+  self.n_prev_active_panels = self.n_active_panels
+  self.n_active_panels = #self:getActivePanels()
+end
+
+function Stack.getActivePanels(self)
+  local activePanels = {}
+
+  for row = 1, self.height do
+    for col = 1, self.width do
+      local panel = self.panels[row][col]
+      if panel.type == Panel.types.garbage then
+        if panel.state ~= Panel.states.normal then
+          activePanels[#activePanels+1] = panel
+        end
+      else
+        -- this only works because we know that garbage panels can't be swapped
+        if panel.state == Panel.states.swapping then
+          activePanels[#activePanels+1] = panel
+        else
+          if panel.color ~= 0
+          and panel.state ~= Panel.states.landing
+          and panel:exclude_hover() then
+            activePanels[#activePanels+1] = panel
+          end
+        end
+      end
+    end
+  end
+
+  return activePanels
+end
+
+function Stack.updateRiseLock(self)
+  self.prev_rise_lock = self.rise_lock
+  if self.do_countdown then
+    self.rise_lock = true
+  elseif self.do_swap then
+    self.rise_lock = true
+  elseif self.shake_time > 0 then
+    self.rise_lock = true
+  elseif self:hasActivePanels() then
+    self.rise_lock = true
+  else
+    self.rise_lock = false
+  end
+
+  -- prevent manual raise is set true when manually raising
+  if self.prev_rise_lock and not self.rise_lock then
+    self.prevent_manual_raise = false
+  end
 end

@@ -399,6 +399,12 @@ function Match.render(self)
     drawY = drawY + padding
     gprintf("has chain panels " .. tostring(P1:hasChainingPanels()), drawX, drawY)
 
+    drawY = drawY + padding
+    gprintf("has active panels " .. tostring(P1:hasActivePanels()), drawX, drawY)
+
+    drawY = drawY + padding
+    gprintf("riselock " .. tostring(P1.rise_lock), drawX, drawY)
+
     -- if P1.telegraph then
     --   drawY = drawY + padding
     --   gprintf("incoming chains " .. P1.telegraph.garbage_queue.chain_garbage:len(), drawX, drawY)
