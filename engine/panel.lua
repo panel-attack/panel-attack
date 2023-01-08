@@ -110,7 +110,7 @@ end
 swappingState.propagateChaining = function(panel, panels)
   local panelBelow = getPanelBelow(panel, panels)
 
-  if panelBelow and panelBelow.stateChanged and panelBelow.propagatesChaining then
+  if panelBelow and panelBelow.stateChanged and panelBelow.propagatesChaining and panel.color ~= 0 then
     panel.queuedHover = true
     panel.stateChanged = true
     panel.propagatesChaining = true

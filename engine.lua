@@ -2877,7 +2877,8 @@ function Stack.hasChainingPanels(self)
   -- row 0 panels can never chain cause they're dimmed
   for row = 1, #self.panels do
     for col = 1, self.width do
-      if self.panels[row][col].chaining then
+      local panel = self.panels[row][col]
+      if panel.chaining and panel.color ~= 0 then
         return true
       end
     end
