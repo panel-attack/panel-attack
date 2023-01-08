@@ -2314,46 +2314,6 @@ function Stack.check_matches(self)
   end
 end
 
--- Sets the hovering state on the appropriate panels
-function Stack.set_hoverers(self, row, col, hover_time, add_chaining, extra_tick, match_anyway, debug_tag)
-  assert(type(match_anyway) ~= "string")
-  -- the extra_tick flag is for use during Phase 1&2,
-  -- when panels above the first should be given an extra tick of hover time.
-  -- This is because their timers will be decremented once on the same tick
-  -- they are set, as Phase 1&2 iterates backward through the stack.
-  local not_first = 0 -- if 1, the current panel isn't the first one
-  local hovers_time = hover_time
-  local brk = row > #self.panels
-  local panels = self.panels
-  while not brk do
-    local panel = panels[row][col]
-    if panel.color == 0 or panel:exclude_hover() or panel.state == Panel.states.hovering and panel.timer <= hover_time then
-      brk = true
-    else
-      if panel.state == Panel.states.swapping then
-        hovers_time = hovers_time + panels[row][col].timer - 1
-      else
-        local chaining = panel.chaining
-        panel:clear_flags()
-        panel.state = Panel.states.hovering
-        panel.match_anyway = match_anyway
-        panel.debug_tag = debug_tag
-        local adding_chaining = (not chaining) and panel.color ~= 9 and add_chaining
-        if chaining or adding_chaining then
-          panel.chaining = true
-        end
-        panel:setTimer(hovers_time)
-        if extra_tick then
-          panel.setTimer(panel.timer + not_first)
-        end
-      end
-      not_first = 1
-    end
-    row = row + 1
-    brk = brk or row > #self.panels
-  end
-end
-
 function Stack:recordComboHistory(time, width, height, metal)
 
   if self.combos[time] == nil then 

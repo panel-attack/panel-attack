@@ -1,7 +1,3 @@
-local function panelToString(panel)
-  return "row:"..panel.row..",col:"..panel.column..",color:"..panel.color..",state:"..panel.state
-end
-
 -- Represents an individual panel in the stack
 Panel =
 class(
@@ -19,6 +15,18 @@ class(
   end
 )
 
+-- convenience function for getting panel in the row below if there is one
+local function getPanelBelow(panel, panels)
+  if panel.row <= 1 then
+    return nil
+  else
+    return panels[panel.row - 1][panel.column]
+  end
+end
+
+-- can probably switch that out for a bool again
+-- originally I had 3 types: empty, panel and garbage
+-- but I eventually reverted to color checking for empty panels
 Panel.types = { panel = 0, garbage = 1}
 Panel.states = {
   normal = 0,
@@ -48,14 +56,6 @@ local landingState = {}
 local dimmedState = {}
 local deadState = {}
 
-local function getPanelBelow(panel, panels)
-  if panel.row <= 1 then
-    return nil
-  else
-    return panels[panel.row - 1][panel.column]
-  end
-end
-
 normalState.update = function(panel, panels)
   local panelBelow = getPanelBelow(panel, panels)
 
@@ -84,6 +84,7 @@ normalState.update = function(panel, panels)
     end
   elseif panel.type == Panel.types.garbage then
     if not panel:supportedFromBelow(panels) then
+      -- Garbage blocks fall without a hover time
       panel:fall(panels)
     end
   end
@@ -291,6 +292,8 @@ landingState.excludeHover = false
 dimmedState.excludeHover = true
 deadState.excludeHover = true
 
+-- this name legit makes no sense at all with the values of the states
+-- ported 1:1 from old code
 function Panel.exclude_hover(self)
   if self.type == Panel.types.garbage then
     return true
@@ -311,6 +314,8 @@ landingState.excludeMatch = false
 dimmedState.excludeMatch = true
 deadState.excludeMatch = true
 
+-- returns false if this panel can be matched
+-- true if it cannot be matched
 function Panel.exclude_match(self)
   -- panels without colors can't match
   if self.color == 0 or self.color == 9 then
@@ -335,6 +340,8 @@ landingState.excludeSwap = false
 dimmedState.excludeSwap = true
 deadState.excludeSwap = true
 
+-- returns false if this panel can be swapped
+-- true if it can not be swapped
 function Panel.exclude_swap(self)
   -- the panel was flagged as unswappable inside of the swap function
   -- this flag should honestly go die and the connected checks should be part of the canSwap func if possible
@@ -349,30 +356,7 @@ function Panel.exclude_swap(self)
   end
 end
 
--- Garbage blocks fall without a hover time
--- rather than starting to hover, panels on top should fall together with the garbage
-
-normalState.propagatesFalling = true
-swappingState.propagatesFalling = false
-matchedState.propagatesFalling = false
-poppingState.propagatesFalling = false
-poppedState.propagatesFalling = false
-hoverState.propagatesFalling = false
--- it's reasonable to assume this never
-fallingState.propagatesFalling = true
-landingState.propagatesFalling = true
-dimmedState.propagatesFalling = false
-deadState.propagatesFalling = false
-
-function Panel.block_garbage_fall(self)
-  if self.color == 0 then
-    return true
-  else
-    local stateTable = self:getStateTable()
-    return not stateTable.propagatesFalling
-  end
-end
-
+-- returns a table with panel color indices (used for puzzle color randomization)
 function Panel.regularColorsArray()
   return {
     1, -- hearts
@@ -385,12 +369,14 @@ function Panel.regularColorsArray()
   -- Note see the methods below for square, shock, and colorless
 end
 
+-- returns a table with panel color indices (for puzzle color randomization)
 function Panel.extendedRegularColorsArray()
   local result = Panel.regularColorsArray()
   result[#result + 1] = 7 -- squares
   return result
 end
 
+-- returns a table with panel color indices
 function Panel.allPossibleColorsArray()
   local result = Panel.extendedRegularColorsArray()
   result[#result + 1] = 8 -- shock
@@ -419,22 +405,36 @@ function Panel.clear(self, clearChaining, clearColor)
   -- The timer is also used to offset the panel's
   -- position on the screen.
 
+  -- total time for the panel to go from being matched to converting into a non-garbage panel
   self.initial_time = nil
+  -- variables for handling pop FX
   self.pop_time = nil
   self.pop_index = nil
+
+  -- garbage fields
+  -- garbage is anchored at the bottom left corner with 0 for x and y offset
   self.x_offset = nil
   self.y_offset = nil
+  -- total width and height of the garbage block
   self.width = nil
   self.height = nil
-  self.type = Panel.types.panel
+  -- may indicate shock garbage
   self.metal = nil
+  -- all panels in a garbage block have the same shake_time
+  -- the shake_time gets cleared once the panel lands for the first time while on screen
   self.shake_time = nil
+
+  -- garbage panels and regular panels behave differently in about any scenario
+  self.type = Panel.types.panel
+
   self.match_anyway = nil
 
   -- Also flags
   self:clear_flags(clearChaining)
 end
 
+-- function used by the stack to determine whether there are panels in a row (read: the top row)
+-- name is pretty misleading but I don't have a good idea rn
 function Panel.dangerous(self)
   if self.type == Panel.types.garbage then
     return self.state ~= Panel.states.falling
@@ -443,27 +443,69 @@ function Panel.dangerous(self)
   end
 end
 
+-- returns true if there is about anything out of the ordinary about this panel
 function Panel.has_flags(self)
-  return (self.state ~= Panel.states.normal) or self.isSwappingFromLeft or self.dont_swap or self.chaining
+  if self.state ~= Panel.states.normal then
+    return true
+  --elseif self.isSwappingFromLeft then
+  --this is obsolete; if it was swapping from left, panel state would be swapping and thus ~= normal
+  elseif self.dont_swap then
+    return true
+  elseif self.chaining then
+    -- panels that are chaining are traditionally hovering, landing, falling or swapping
+    -- keeping this for safety for now
+    return true
+  else
+    return false
+  end
 end
 
+-- clears information relating to state, matches and various stuff
+-- a true argument must be supplied to clear the chaining flag as well
 function Panel.clear_flags(self, clearChaining)
+  -- determines what can happen with this panel
+  -- or what will happen with it if nothing else happens with it
+  -- in normal state normally nothing happens until you touch it or its surroundings
+  self.state = Panel.states.normal
+
+  -- combo fields
+  -- index compared against size determines the pop timing
   self.combo_index = nil
   self.combo_size = nil
+
+  -- number of the chain link if this panel got matched as part of a chain (I think)
   self.chain_index = nil
+
+  -- a direction indicator so we can check if swaps are possible with currently swapping panels
+  -- ...and their surroundings
   self.isSwappingFromLeft = nil
+  -- if a panel is not supposed to be swappable it gets flagged down with this
+  -- in the future this should probably get axed
+  -- in about all scenarios swapping is forbidden cause a panel should hover after completing its swap
+  -- or something like that...so we could check "queuedHover" instead (see below)
   self.dont_swap = nil
+  -- if a panel is swapping while the panel below finishes its popped state
+  -- then this panel should be forced to hover after and the panels above as well
+  -- indicated by this bool for itself and the panels above
+  self.queuedHover = nil
+
+  -- this is optional to be cleared cause a lot of times we want to keep that information
   if clearChaining then
     self.chaining = nil
   end
   -- Animation timer for "bounce" after falling from garbage.
   self.fell_from_garbage = nil
-  self.state = Panel.states.normal
-  self.queuedHover = nil
+
+  -- a convenience bool to know whether we should take a closer look at a panel this frame or not
   self.stateChanged = false
+
+  -- panels are updated bottom to top
+  -- panels will check if this is set on the panel below to update their chaining state
+  -- in combination with their own state
   self.propagatesChaining = false
 end
 
+-- updates the panel for this frame based on its state and its surroundings
 function Panel.update(self, panels)
   -- reset all flags that only count for 1 frame to alert panels above of special behavior
   self.stateChanged = false
@@ -479,6 +521,7 @@ function Panel.update(self, panels)
   end
 end
 
+-- sets all necessary information to make the panel start swapping
 function Panel.startSwap(self, isSwappingFromLeft)
   local chaining = self.chaining
   self:clear_flags()
@@ -518,6 +561,9 @@ function Panel.switch(panel1, panel2, panels)
   panels[coordinates2.row][coordinates2.column] = panel1
 end
 
+-- the panel enters hover state
+-- hover state is the most complex in terms of different timers and panel types
+-- it also propagates chain state
 function Panel.enterHoverState(self, panelBelow)
   if self.type == Panel.types.garbage then
     if self.y_offset == -1 then
@@ -570,6 +616,7 @@ function Panel.enterHoverState(self, panelBelow)
   self.stateChanged = true
 end
 
+-- gets the table holding the information and functions of the state the panel is in
 function Panel.getStateTable(self)
   if self.state == Panel.states.normal then
     return normalState
@@ -594,6 +641,7 @@ function Panel.getStateTable(self)
   end
 end
 
+-- returns true if there are "stable" panels below that keep it from falling down
 function Panel.supportedFromBelow(self, panels)
   if self.row <= 1 then
     return true
@@ -623,9 +671,11 @@ function Panel.supportedFromBelow(self, panels)
   end
 end
 
+-- switches the panel with the panel below and refreshes its state/flags according with its type
 function Panel.fall(self, panels)
   local panelBelow = getPanelBelow(self, panels)
   Panel.switch(self, panelBelow, panels)
+  -- panelBelow is now actually panelAbove
   if self.type == Panel.types.garbage then
     -- panels above should fall immediately rather than starting to hover
     panelBelow.propagatesFalling = true
@@ -638,6 +688,7 @@ function Panel.fall(self, panels)
   end
 end
 
+-- makes the panel enter landing state and informs the stack about the event depending on panel type
 function Panel.land(self)
   if self.type == self.types.panel then
     if self.state == Panel.states.falling then
@@ -663,6 +714,7 @@ function Panel.setTimer(self, frames)
   self.timer = frames
 end
 
+-- decrements the panels timer by 1 if it's above 0
 function Panel.decrementTimer(self)
   if self.timer > 0 then
     self.timer = self.timer - 1
