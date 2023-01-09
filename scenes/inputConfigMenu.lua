@@ -21,6 +21,9 @@ local font = GraphicsUtil.getGlobalFont()
 local pendingInputText = "__"
 local configIndex = 1
 
+local SET_KEY_DELAY = .25 -- delay between selecting change key and actually polling for new input
+local transitionTimer = 0
+
 local function shortenControllerName(name)
   local nameToShortName = {
     ["Nintendo Switch Pro Controller"] = "Switch Pro Con"
@@ -38,6 +41,7 @@ end
 local KEY_SETTING_STATE = { NOT_SETTING = nil, SETTING_KEY_TRANSITION = 1, SETTING_KEY = 2, SETTING_ALL_KEYS_TRANSITION = 3, SETTING_ALL_KEYS = 4 }
 
 function inputConfigMenu:setSettingKeyState(keySettingState)
+  transitionTimer = 0
   self.settingKey = keySettingState ~= KEY_SETTING_STATE.NOT_SETTING
   self.settingKeyState = keySettingState
   self.menu:setEnabled(not self.settingKey)
@@ -185,14 +189,20 @@ function inputConfigMenu:drawBackground()
   themes[config.theme].images.bg_main:draw()
 end
 
-function inputConfigMenu:update()
+function inputConfigMenu:update(dt)
   self.menu:update()
   self.menu:draw()
   
   if self.settingKeyState == KEY_SETTING_STATE.SETTING_KEY_TRANSITION then
-    self:setSettingKeyState(KEY_SETTING_STATE.SETTING_KEY)
+    transitionTimer = transitionTimer + dt
+    if transitionTimer >= SET_KEY_DELAY then
+      self:setSettingKeyState(KEY_SETTING_STATE.SETTING_KEY)
+    end
   elseif self.settingKeyState == KEY_SETTING_STATE.SETTING_ALL_KEYS_TRANSITION then
-    self:setSettingKeyState(KEY_SETTING_STATE.SETTING_ALL_KEYS)
+    transitionTimer = transitionTimer + dt
+    if transitionTimer >= SET_KEY_DELAY then
+      self:setSettingKeyState(KEY_SETTING_STATE.SETTING_ALL_KEYS)
+    end
   elseif self.settingKeyState == KEY_SETTING_STATE.SETTING_KEY then
     inputConfigMenu:setKey(self.key, self.index)
   elseif self.settingKeyState == KEY_SETTING_STATE.SETTING_ALL_KEYS then

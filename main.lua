@@ -60,7 +60,9 @@ GAME.rich_presence = RichPresence()
 
 -- Called at the beginning to load the game
 -- Either called directly or from auto_updater
-function love.load(args)  
+function love.load(args) 
+  love.keyboard.setTextInput(false)
+  
   if PROFILING_ENABLED then
     GAME.profiler:start()
   end

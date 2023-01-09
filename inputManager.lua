@@ -51,6 +51,8 @@ for i = 1, inputManager.maxConfigurations do
   } 
 end
 
+-- map of menu key names (used in inputManager.isDown/Up/Pressed & isPressedWithRepeat)
+-- and a tuple of {list of reserved keys, configured game key}
 local menuReservedKeysMap = {
   MenuUp = {{"up"}, "Up"}, 
   MenuDown = {{"down"}, "Down"}, 
@@ -63,6 +65,7 @@ local menuReservedKeysMap = {
   MenuSelect = {{"return", "kpenter", "z"}, "Swap1"},
 }
 
+-- useful alternate representations of the above information
 local menuKeyNames = {}
 local menuReservedKeys = {}
 local keyNameToMenuKeys = {}
