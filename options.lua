@@ -1078,6 +1078,7 @@ local function about_menu(button_idx)
 end
 
 function options.main(button_idx)
+  GAME.backgroundImage = themes[config.theme].images.bg_main
   local ret = nil
   local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
   local language_number

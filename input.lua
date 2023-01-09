@@ -506,7 +506,7 @@ local function get_being_pressed_for_duration_ratio(fixed, configurable, time)
   end
 end
 
-menu_reserved_keys = {"up", "down", "left", "right", "escape", "x", "pageup", "pagedown", "backspace", "return", "kenter", "z"}
+menu_reserved_keys = {"up", "down", "left", "right", "escape", "x", "pageup", "pagedown", "backspace", "return", "kpenter", "z"}
 menu_up =
   input_key_func(
   {"up"},
@@ -573,7 +573,7 @@ menu_next_page =
 menu_backspace = input_key_func({"backspace"}, {"backspace"}, repeating_key)
 menu_long_enter =
   input_key_func(
-  {"return", "kenter", "z"},
+  {"return", "kpenter", "z"},
   {"swap1"},
   released_key_after_time,
   function()
@@ -583,7 +583,7 @@ menu_long_enter =
 )
 menu_enter =
   input_key_func(
-  {"return", "kenter", "z"},
+  {"return", "kpenter", "z"},
   {"swap1"},
   released_key_before_time,
   function()
@@ -593,7 +593,7 @@ menu_enter =
 )
 menu_enter_one_press =
   input_key_func(
-  {"return", "kenter", "z"},
+  {"return", "kpenter", "z"},
   {"swap1"},
   released_key,
   function()
@@ -603,7 +603,7 @@ menu_enter_one_press =
 )
 menu_pause =
   input_key_func(
-  {"return", "kenter"},
+  {"return", "kpenter"},
   {"pause"},
   normal_key,
   function()
@@ -612,7 +612,7 @@ menu_pause =
 )
 menu_return_once =
   input_key_func(
-  {"return", "kenter"},
+  {"return", "kpenter"},
   {},
   released_key_before_time,
   function()
@@ -705,6 +705,6 @@ function menu_escape_game()
   return false
 end
 
-select_being_pressed_ratio = get_being_pressed_for_duration_ratio({"return", "kenter", "z"}, {"swap1"}, super_selection_duration)
+select_being_pressed_ratio = get_being_pressed_for_duration_ratio({"return", "kpenter", "z"}, {"swap1"}, super_selection_duration)
 
 return input

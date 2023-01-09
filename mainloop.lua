@@ -536,6 +536,7 @@ local function createBasicTrainingMode(name, width, height)
 end
 
 function training_setup()
+  GAME.backgroundImage = themes[config.theme].images.bg_main
   local trainingModeSettings = {}
   trainingModeSettings.height = 1
   trainingModeSettings.width = 4

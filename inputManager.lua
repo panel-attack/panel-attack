@@ -49,7 +49,34 @@ for i = 1, inputManager.maxConfigurations do
     isPressed = {}, 
     isUp = {} 
   } 
-end 
+end
+
+local menuReservedKeysMap = {
+  MenuUp = {{"up"}, "Up"}, 
+  MenuDown = {{"down"}, "Down"}, 
+  MenuLeft = {{"left"}, "Left"}, 
+  MenuRight = {{"right"}, "Right"}, 
+  MenuEsc = {{"escape", "x"}, "Swap2"},
+  MenuNextPage = {{"pageup"}, "Raise1"}, 
+  MenuPrevPage = {{"pagedown"}, "Raise2"}, 
+  MenuBack = {{"backspace"}, ""}, 
+  MenuSelect = {{"return", "kpenter", "z"}, "Swap1"},
+}
+
+local menuKeyNames = {}
+local menuReservedKeys = {}
+local keyNameToMenuKeys = {}
+
+for menuKeyName, keys in pairs(menuReservedKeysMap) do
+  menuKeyNames[#menuKeyNames + 1] = menuKeyName
+  for _, key in ipairs(keys[1]) do
+    menuReservedKeys[key] = true
+  end
+end
+
+for menuKeyName, keyName in pairs(menuReservedKeysMap) do
+  keyNameToMenuKeys[keyName[2]] = menuKeyName
+end
  
 function inputManager:keyPressed(key, scancode, isrepeat) 
   self.allKeys.isDown[key] = KEY_CHANGE.DETECTED
@@ -140,24 +167,45 @@ function inputManager:updateKeyStates(dt, keys)
   end 
 end
 
+function inputManager:aliasKey(key, keyAlias)
+  self.isDown[keyAlias] = self.isDown[keyAlias] or self.allKeys.isDown[key] 
+  self.isUp[keyAlias] = self.isUp[keyAlias] or self.allKeys.isUp[key] 
+  if self.allKeys.isPressed[key] and (not self.isPressed[keyAlias] or self.allKeys.isPressed[key] > self.isPressed[keyAlias]) then  
+    self.isPressed[keyAlias] = self.allKeys.isPressed[key] 
+  end 
+end
+
 -- copy over specific raw key states into the custom input structures defined in the header
 function inputManager:updateKeyMaps()
-  for _, key in ipairs(consts.KEY_NAMES) do 
-    self.isDown[key] = KEY_CHANGE.NONE 
-    self.isUp[key] = KEY_CHANGE.NONE 
-    self.isPressed[key] = KEY_CHANGE.NONE 
-    for i = 1, GAME.input.maxConfigurations do
-      self.player[i].isDown[key] = self.allKeys.isDown[GAME.input.inputConfigurations[i][key]] 
-      self.player[i].isUp[key] = self.allKeys.isUp[GAME.input.inputConfigurations[i][key]] 
-      self.player[i].isPressed[key] = self.allKeys.isPressed[GAME.input.inputConfigurations[i][key]] 
-       
-      self.isDown[key] = self.isDown[key] or self.allKeys.isDown[GAME.input.inputConfigurations[i][key]] 
-      self.isUp[key] = self.isUp[key] or self.allKeys.isUp[GAME.input.inputConfigurations[i][key]] 
-      if self.allKeys.isPressed[GAME.input.inputConfigurations[i][key]] and (not self.isPressed[key] or self.allKeys.isPressed[GAME.input.inputConfigurations[i][key]] > self.isPressed[key]) then  
-        self.isPressed[key] = self.allKeys.isPressed[GAME.input.inputConfigurations[i][key]] 
-      end 
+  -- set the reserved key aliases
+  for keyAlias, keys in pairs(menuReservedKeysMap) do 
+    self.isDown[keyAlias] = KEY_CHANGE.NONE 
+    self.isUp[keyAlias] = KEY_CHANGE.NONE 
+    self.isPressed[keyAlias] = KEY_CHANGE.NONE 
+    for _, key in ipairs(keys[1]) do
+      self:aliasKey(key, keyAlias)
     end 
-  end 
+  end
+
+  for _, keyAlias in ipairs(consts.KEY_NAMES) do 
+    self.isDown[keyAlias] = KEY_CHANGE.NONE 
+    self.isUp[keyAlias] = KEY_CHANGE.NONE 
+    self.isPressed[keyAlias] = KEY_CHANGE.NONE 
+    for i = 1, GAME.input.maxConfigurations do
+      local key = GAME.input.inputConfigurations[i][keyAlias]
+      self.player[i].isDown[keyAlias] = self.allKeys.isDown[key] 
+      self.player[i].isUp[keyAlias] = self.allKeys.isUp[key] 
+      self.player[i].isPressed[keyAlias] = self.allKeys.isPressed[key] 
+      
+      self:aliasKey(key, keyAlias)
+      
+      -- copy over configured keys into the menu reserved key aliases if they are not menu reserved keys themselves
+      if keyNameToMenuKeys[keyAlias] and not menuReservedKeys[key] then
+        local menuKeyAlias = keyNameToMenuKeys[keyAlias]
+        self:aliasKey(key, menuKeyAlias)
+      end
+    end 
+  end
 end
  
 function inputManager:update(dt) 
@@ -193,7 +241,8 @@ end
  
 function inputManager:isPressedWithRepeat(key, delay, repeatPeriod) 
   local inputs = self.allKeys 
-  if tableUtils.trueForAny(consts.KEY_NAMES, function(k) return k == key end) then 
+  if tableUtils.trueForAny(consts.KEY_NAMES, function(k) return k == key end) or 
+     tableUtils.trueForAny(menuKeyNames, function(k) return k == key end) then 
     inputs = inputManager 
   end 
   if inputs.isPressed[key] then 
