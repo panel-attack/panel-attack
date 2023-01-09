@@ -1877,18 +1877,18 @@ function Stack.simulate(self)
               if self.swaps_this_touch >= 2 then --third swap onward is slowed down to prevent excessive or accidental stealths
                 self.touch_swap_cooldown_timer = TOUCH_SWAP_COOLDOWN_DEFAULT
               end
-            else  --we failed to swap toward the target, perhaps there are clearing panels in the way or something. 
-              --Let's set lingering_touch_cursor to the origin of the failed swap
-              --however, don't do this if swap failed because panels attempted to be swapped were both blank (color 0).
-              --also, don't do it if either panel is garbage
-              if (self.panels[swap_origin.row][swap_origin.col].color ~= 0 
-                and self.panels[swap_destination.row][swap_destination.col].color ~= 0)
-                and not (self.panels[swap_origin.row][swap_origin.col].color == 9 or self.panels[swap_destination.row][swap_destination.col].color == 9) then
-                print("lingering_touch_cursor was set because a normal swap was unsuccessful")
-                self.lingering_touch_cursor = {row = self.cur_row, col = self.cur_col}
-              else --we tried to swap through empty space.  Let's put the cursor on swap_destination.
+            else  --we failed to swap toward the target
+              --if both origin and destination are blank panels
+              if (self.panels[swap_origin.row][swap_origin.col].color == 0
+                and self.panels[swap_destination.row][swap_destination.col].color == 0) then
+                --we tried to swap two empty panels.  Let's put the cursor on swap_destination
                 self.cur_row = swap_destination.row
                 self.cur_col = swap_destination.col
+              --elseif there are clearing panels in the way of the swap 
+              elseif self.panels[swap_destination.row][swap_destination.col]:exclude_swap() then
+                --let's set lingering_touch_cursor to the origin of the failed swap
+                print("lingering_touch_cursor was set because destination panel was not swappable")
+                self.lingering_touch_cursor = {row = self.cur_row, col = self.cur_col}
               end
             end
           end
