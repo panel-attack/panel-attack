@@ -1,7 +1,9 @@
 require("game_updater")
+require("developer")
+local CustomRun = require("CustomRun")
 
 -- CONSTANTS
-local UPDATER_NAME = "panel-beta" -- you should name the distributed auto updater zip the same as this
+local UPDATER_NAME = "avsavav" -- you should name the distributed auto updater zip the same as this
 -- use a different name for the different versions of the updater
 -- ex: "panel" for the release, "panel-beta" for the main beta, "panel-exmode" for testing the EX Mode
 local MAX_REQ_SIZE = 100000 -- 100kB
@@ -122,6 +124,8 @@ end
 function love.draw()
   love.graphics.print(messages, 10, 10)
 end
+
+love.run = CustomRun.run
 
 function start_game(file)
   if not love.filesystem.mount(path..file, '') then error("Could not mount game file: "..file) end

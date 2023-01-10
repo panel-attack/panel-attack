@@ -1,3 +1,4 @@
+local CustomRun = require("CustomRun")
 local logger = require("logger")
 local select_screen = require("select_screen.select_screen")
 local replay_browser = require("replay_browser")
@@ -143,6 +144,11 @@ function main_title()
     local lastTime = leftover_time
     wait()
     totalTime = totalTime + (leftover_time - lastTime)
+
+    if totalTime > 5 then
+      CustomRun.sleep = function ()
+      end
+    end
     variable_step(
       function()
         if increment > 0 and percent >= 1 then
