@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS PlayerGameResult(
 --local selectPlayerGamesStatement = assert(db:prepare("SELECT gameID FROM PlayerGameResult WHERE playerID = ?"))
 
 local insertPlayerStatement = assert(db:prepare("INSERT OR IGNORE INTO Player(privatePlayerID, username) VALUES (?, ?)"))
-function PADatabase.insertNewPlayer(privatePlayerID, username)
+function PADatabase.insertNewPlayer(self, privatePlayerID, username)
   insertPlayerStatement:bind_values(privatePlayerID, username)
   insertPlayerStatement:step()
   if insertPlayerStatement:reset() ~= 0 then
@@ -72,7 +72,7 @@ function PADatabase.insertNewPlayer(privatePlayerID, username)
 end
 
 local updatePlayerRatingStatement = assert(db:prepare("UPDATE Player SET rating = ? WHERE privatePlayerID = ?"))
-function PADatabase.updatePlayerRating(privatePlayerID, newRating)
+function PADatabase.updatePlayerRating(self, privatePlayerID, newRating)
   updatePlayerRatingStatement:bind_values(newRating, privatePlayerID)
   updatePlayerRatingStatement:step()
   if updatePlayerRatingStatement:reset() ~= 0 then
@@ -81,7 +81,7 @@ function PADatabase.updatePlayerRating(privatePlayerID, newRating)
 end
 
 local updatePlayerUsernameStatement = assert(db:prepare("UPDATE Player SET username = ? WHERE privatePlayerID = ?"))
-function PADatabase.updatePlayerUsername(privatePlayerID, username)
+function PADatabase.updatePlayerUsername(self, privatePlayerID, username)
   updatePlayerUsernameStatement:bind_values(privatePlayerID, username)
   updatePlayerUsernameStatement:step()
   if updatePlayerUsernameStatement:reset() ~= 0 then
