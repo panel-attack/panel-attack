@@ -82,6 +82,7 @@ function Connection.login(self, user_id)
   if self.logged_in then
     self:send(self.server:lobby_state())
     leaderboard:update_timestamp(user_id)
+    self.server.database:insertNewPlayer(user_id, self.name)
   end
 
   return self.logged_in
