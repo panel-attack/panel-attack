@@ -15,11 +15,8 @@
 	<ul>
 
 		<li><a href="#sqlite3_complete">sqlite3.complete</a></li>
-        <li><a href="#sqlite3_lversion">sqlite3.lversion</a></li>
 		<li><a href="#sqlite3_open">sqlite3.open</a></li>
-        <li><a href="#sqlite3_open_memory">sqlite3.open_memory</a></li>
-        <li><a href="#sqlite3_open_ptr">sqlite3.open_ptr</a></li>
-        <li><a href="#sqlite3_backup_init">sqlite3.backup_init</a></li>
+		<li><a href="#sqlite3_open_memory">sqlite3.open_memory</a></li>
 		<li><a href="#sqlite3_temp_directory">sqlite3.temp_directory</a></li>
 		<li><a href="#sqlite3_version">sqlite3.version</a></li>
 	</ul>
@@ -32,7 +29,6 @@
 		<li><a href="#db_changes">db:changes</a></li>
 		<li><a href="#db_close">db:close</a></li>
 		<li><a href="#db_close_vm">db:close_vm</a></li>
-        <li><a href="#db_get_ptr">db:get_ptr</a></li>
         <li><a href="#db_commit_hook">db:commit_hook</a></li>
 		<li><a href="#db_create_aggregate">db:create_aggregate</a></li>
 		<li><a href="#db_create_collation">db:create_collation</a></li>
@@ -40,11 +36,9 @@
 		<li><a href="#db_errcode">db:errcode</a></li>
 		<li><a href="#db_errmsg">db:errmsg</a></li>
 		<li><a href="#db_exec">db:exec</a></li>
-        <li><a href="#db_interrupt">db:interrupt</a></li>
-        <li><a href="#db_db_filename">db:db_filename</a></li>
+		<li><a href="#db_interrupt">db:interrupt</a></li>
 		<li><a href="#db_isopen">db:isopen</a></li>
 		<li><a href="#db_last_insert_rowid">db:last_insert_rowid</a></li>
-		<li><a href="#db_load_extension">db:load_extension</a></li>
 		<li><a href="#db_nrows">db:nrows</a></li>
 		<li><a href="#db_prepare">db:prepare</a></li>
 		<li><a href="#db_progress_handler">db:progress_handler</a></li>
@@ -79,38 +73,28 @@
 		<li><a href="#stmt_get_value">stmt:get_value</a></li>
 		<li><a href="#stmt_get_values">stmt:get_values</a></li>
 		<li><a href="#stmt_isopen">stmt:isopen</a></li>
-        <li><a href="#stmt_last_insert_rowid">stmt:last_insert_rowid</a></li>
 		<li><a href="#stmt_nrows">stmt:nrows</a></li>
 		<li><a href="#stmt_reset">stmt:reset</a></li>
 		<li><a href="#stmt_rows">stmt:rows</a></li>
 		<li><a href="#stmt_step">stmt:step</a></li>
-        <li><a href="#stmt_urows">stmt:urows</a></li>
+		<li><a href="#stmt_urows">stmt:urows</a></li>
 	</ul>
 
-    <li><a href="#methods_for_callback_contexts">Methods for callback contexts</a></li>
-    <ul>
+	<li><a href="#methods_for_callback_contexts">Methods for callback contexts</a></li>
+	<ul>
 
-        <li><a href="#context_aggregate_count">context:aggregate_count</a></li>
-        <li><a href="#context_get_aggregate_data">context:get_aggregate_data</a></li>
-        <li><a href="#context_set_aggregate_data">context:set_aggregate_data</a></li>
-        <li><a href="#context_result">context:result</a></li>
-        <li><a href="#context_result_null">context:result_null</a></li>
-        <li><a href="#context_result_number">context:result_number</a></li>
-        <li><a href="#context_result_int">context:result_int</a></li>
-        <li><a href="#context_result_text">context:result_text</a></li>
-        <li><a href="#context_result_blob">context:result_blob</a></li>
-        <li><a href="#context_result_error">context:result_error</a></li>
-        <li><a href="#context_user_data">context:user_data</a></li>
-    </ul>
-
-    <li><a href="#methods_for_online_backup">Methods for Online Backup</a></li>
-    <ul>
-
-        <li><a href="#bu_step">backup:step</a></li>
-        <li><a href="#bu_remaining">backup:remaining</a></li>
-        <li><a href="#bu_pagecount">backup:pagecount</a></li>
-        <li><a href="#bu_finish">backup:finish</a></li>
-    </ul>
+		<li><a href="#context_aggregate_count">context:aggregate_count</a></li>
+		<li><a href="#context_get_aggregate_data">context:get_aggregate_data</a></li>
+		<li><a href="#context_set_aggregate_data">context:set_aggregate_data</a></li>
+		<li><a href="#context_result">context:result</a></li>
+		<li><a href="#context_result_null">context:result_null</a></li>
+		<li><a href="#context_result_number">context:result_number</a></li>
+		<li><a href="#context_result_int">context:result_int</a></li>
+		<li><a href="#context_result_text">context:result_text</a></li>
+		<li><a href="#context_result_blob">context:result_blob</a></li>
+		<li><a href="#context_result_error">context:result_error</a></li>
+		<li><a href="#context_user_data">context:user_data</a></li>
+	</ul>
 
 	<li><a href="#numerical_error_and_result_codes">Numerical error and result codes</a></li>
 	<li><a href="#version">VERSION</a></li>
@@ -125,25 +109,15 @@
 </p>
 <hr />
 <h1><a name="name">NAME</a></h1>
-<p><strong>LuaSQLite 3</strong> - a Lua 5.1 to 5.3 wrapper for the SQLite3 library</p>
+<p><strong>LuaSQLite 3</strong> - a Lua 5.1 and Lua 5.2 wrapper for the SQLite3 library</p>
 <p>
 </p>
 <hr />
 <h1><a name="overview">OVERVIEW</a></h1>
 <p><strong>LuaSQLite 3</strong> is a thin wrapper around the public domain SQLite3
 database engine.</p>
-<p>There are two modules, identical except that one links SQLite3 dynamically, the other 
-statically.</p>
-<p>The module <code>lsqlite3</code> links SQLite3 dynamically. 
-To use this module you need the SQLite3 library (DLL or .so).
-You can get it from <a href="http://www.sqlite.org/">http://www.sqlite.org/</a>
-</p>
-<p>The module <code>lsqlite3complete</code> links SQLite3 statically.
-The SQLite3 amalgamation source code is included in 
-the LuaSQLite 3 distribution.</p>
-<p>Both modules support the creation and manipulation of 
-SQLite3 databases. After a <code>sqlite3 = require('lsqlite3')</code> 
-(or <code>sqlite3 = require('lsqlite3complete')</code>) the exported 
+<p>The <code>lsqlite3</code> module supports the creation and manipulation of 
+SQLite3 databases. After a <code>sqlite3 = require('lsqlite3')</code> the exported 
 functions are called with prefix <code>sqlite3</code>. However, most sqlite3 
 functions are called via an object-oriented interface to either 
 database or SQL statement objects; see below for details.</p>
@@ -151,9 +125,7 @@ database or SQL statement objects; see below for details.</p>
 works, it just describes the Lua binding and the available functions.
 For more information about the SQL features supported by SQLite3 and
 details about the syntax of SQL statements and queries, please see the
-<strong>SQLite3 documentation</strong> 
-<a href="http://www.sqlite.org/">http://www.sqlite.org/</a>. 
-Using some of the
+<strong>SQLite3 documentation</strong> <a href="http://www.sqlite.org/">http://www.sqlite.org/</a>. Using some of the
 advanced features (how to use callbacks, for instance) will require 
 some familiarity with the SQLite3 API.</p>
 <p>
@@ -162,18 +134,15 @@ some familiarity with the SQLite3 API.</p>
 <h1><a name="download">DOWNLOAD</a></h1>
 <p><strong>LuaSQLite 3</strong> source code can be downloaded from its 
 Fossil (<a href="http://lua.sqlite.org/">http://lua.sqlite.org/</a>) page.</p>
-<p>For <code>lsqlite3</code> (but not for <code>lsqlite3complete</code>) you will also need to 
-build or obtain an SQLite3 loadable library (DLL or .so). 
-See <a href="http://www.sqlite.org/">http://www.sqlite.org/</a> for obtaining SQLite3 
+<p>You will also need to build or obtain an SQLite3 loadable library 
+(DLL or .so). See <a href="http://www.sqlite.org/">http://www.sqlite.org/</a> for obtaining SQLite3 
 source code or downloading a binary SQLite3 library.</p>
 <p>
 </p>
 <hr />
 <h1><a name="installation">INSTALLATION</a></h1>
 <p>Luarocks (<a href="http://luarocks.org/">http://luarocks.org/</a>) is the preferred mechanism 
-to build and install <code>lsqlite3</code> or <code>lsqlite3complete</code>; for 
-<code>lsqlite3</code> it assumes an SQLite3 library is already installed. For 
-<code>lsqlite3complete</code> no SQLite3 library is needed.</p>
+to build and install <code>lsqlite3</code>; it assumes an SQLite3 library is already installed.</p>
 <p>
 </p>
 <hr />
@@ -189,7 +158,7 @@ an enhanced version of Michael Roth's <code>lunit</code> called <code>lunitx</co
 tests were also derived from Michael's <strong>lua-sqlite3</strong> module, and more unit tests 
 added by Doug Currie. Get <code>lunitx</code> using Luarocks.</p>
 <p>The distribution also contains some functional tests by Tiago.</p>
-<p>This version of <code>lsqlite3</code> was tested with SQLite 3.11.0 and 3.15.1.</p>
+<p>This version of <code>lsqlite3</code> was tested with SQLite 3.7.16.1.</p>
 <p>
 </p>
 <hr />
@@ -220,18 +189,6 @@ specific database, see <a href="#database_methods">Database methods</a>). Exampl
         myDB:close()  -- close</pre>
 <p>In case of an error, the function returns nil, an error code and an
 error message.</p>
-<p>Since 0.9.4, there is a second optional flags argument to <code>sqlite3.open</code>.
-<pre>
-        sqlite3.open(filename, flags)</pre></p>
-<p>
-See <a href="https://www.sqlite.org/c3ref/open.html">sqlite3_open_v2</a> for an explanation of
-these flags and options.</p>
-<p>
-Example:
-<pre>
-        local db = sqlite3.open('foo.db', sqlite3.OPEN_READWRITE + sqlite3.OPEN_CREATE + sqlite3.OPEN_SHAREDCACHE)
-</pre>
-The default value for flags is <code>sqlite3.OPEN_READWRITE + sqlite3.OPEN_CREATE</code>.</p>
 <p>
 </p>
 <h2><a name="sqlite3_open_memory">sqlite3.open_memory</a></h2>
@@ -241,32 +198,6 @@ The default value for flags is <code>sqlite3.OPEN_READWRITE + sqlite3.OPEN_CREAT
 userdata. In case of an error, the function returns nil, an error code
 and an error message. (In-memory databases are volatile as they are
 never stored on disk.)</p>
-<p>
-</p>
-<h2><a name="sqlite3_open_ptr">sqlite3.open_ptr</a></h2>
-<pre>
-        sqlite3.open_ptr(db_ptr)</pre>
-<p>Opens the SQLite database corresponding to the light userdata <code>db_ptr</code> and returns 
-its handle as userdata. Use <a href="#db_get_ptr"><code>db:get_ptr</code></a> to get 
-a <code>db_ptr</code> for an open database.</p>
-<p>
-</p>
-<h2><a name="sqlite3_backup_init">sqlite3.backup_init</a></h2>
-<pre>
-        sqlite3.backup_init(target_db, target_name, source_db, source_name)</pre>
-<p>Starts an SQLite Online Backup from <code>source_db</code> to <code>target_db</code> and 
-returns its handle as userdata. The <code>source_db</code> and <code>target_db</code> are
-open databases; they may be in-memory or file-based databases. The <code>target_name</code> and
-<code>source_name</code> are "main" for the main database, "temp" for the temporary database, or 
-the name specified after the AS keyword in an ATTACH statement for an attached database.</p>
-<p>The source and target databases must be different, or else the init call will fail with an 
-error. A call to <code>sqlite3.backup_init</code> will fail, returning NULL, if there is already 
-a read or read-write transaction open on the target database.
-</p>
-<p>If an error occurs within <code>sqlite3.backup_init</code>, then NULL is returned, and an 
-error code and error message are stored in <code>target_db</code>. The error code and message 
-for the failed call can be retrieved using the <a href="#db_errcode"><code>db:errcode</code></a>, 
-or <a href="#db_errmsg"><code>db:errmsg</code></a>.</p>
 <p>
 </p>
 <h2><a name="sqlite3_temp_directory">sqlite3.temp_directory</a></h2>
@@ -281,13 +212,7 @@ the function simply returns the current temporary directory.</p>
 <h2><a name="sqlite3_version">sqlite3.version</a></h2>
 <pre>
         sqlite3.version()</pre>
-<p>Returns a string with SQLite version information, in the form 'x.y[.z[.p]]'.</p>
-<p>
-</p>
-<h2><a name="sqlite3_lversion">sqlite3.lversion</a></h2>
-<pre>
-        sqlite3.lversion()</pre>
-<p>Returns a string with lsqlite3 library version information, in the form 'x.y[.z]'.</p>
+<p>Returns a string with SQLite version information, in the form 'x.y[.z]'.</p>
 <p>
 </p>
 <hr />
@@ -348,16 +273,6 @@ have been finalized before this function is called. The function returns
 <p>Finalizes all statements that have not been explicitly finalized. If
 <code>temponly</code> is true, only internal, temporary statements are finalized.
 This function returns nothing.</p>
-<p>
-</p>
-<h2><a name="db_get_ptr">db:get_ptr</a></h2>
-<pre>
-        db:get_ptr()</pre>
-<p>Returns a lightuserdata corresponding to the open <code>db</code>. Use with 
-<a href="#sqlite3_open_ptr"><code>sqlite3.open_ptr</code></a> to pass a database connection
-between threads. (When using lsqlite3 in a multithreaded environment, each thread has a separate 
-Lua environment; full userdata structures can't be passed from one thread to another, but this 
-is possible with lightuserdata.)</p>
 <p>
 </p>
 <h2><a name="db_commit_hook">db:commit_hook</a></h2>
@@ -459,22 +374,6 @@ number of parameters as given in nargs. Here is an example:</p>
         end</pre>
 <p>
 </p>
-<h2><a name="db_load_extension">db:load_extension</a></h2>
-<pre>
-        db:load_extension([name,[entrypoint]])</pre>
-
-<p>When a <code>name</code> is provided, loads an SQLite extension library from the 
-named file into this database connection. The optional <code>entrypoint</code> is the 
-library initialization function name; if not supplied, SQLite tries various default 
-entrypoint names. Returns <code>true</code> when successful, or <code>false</code> and 
-an error string otherwise.
-</p>
-<p>When called with no arguments, disables the load_extension() SQL function, which is 
-enabled as a side effect of calling <code>db:load_extension</code> with a 
-<code>name</code>.
-</p>
-<p>
-</p>
 <h2><a name="db_errcode">db:errcode</a></h2>
 <pre>
         db:errcode()
@@ -532,17 +431,6 @@ all subsequent SQL statements are skipped and <code>db:exec()</code> returns
         db:interrupt()</pre>
 <p>This function causes any pending database operation to abort and return
 at the next opportunity. This function returns nothing.</p>
-<p>
-</p>
-<h2><a name="db_db_filename">db:db_filename</a></h2>
-<pre>
-        db:db_filename(name)</pre>
-<p>This function returns the filename associated with database <code>name</code> of connection 
-<code>db</code>. The <code>name</code> may be "main" for the main database file, or 
-the name specified after the AS keyword in an ATTACH statement for an attached database. 
-If there is no attached database <code>name</code> on the database connection <code>db</code>, 
-then no value is returned; if database <code>name</code> is a temporary or in-memory database, 
-then an empty string is returned.</p>
 <p>
 </p>
 <h2><a name="db_isopen">db:isopen</a></h2>
@@ -725,11 +613,8 @@ methods.</p>
 <pre>
         stmt:bind(n[,value])</pre>
 <p>Binds value to statement parameter <code>n</code>. If the type of value is string 
-it is bound as text. If the type of value is number, then with Lua prior to 5.3 
-it is bound as a double, with Lua 5.3 it is bound as an integer or double
-depending on its subtype using <code>lua_isinteger</code>. If <code>value</code> is a
-boolean then it is bound as 0 for <code>false</code> or 1 for <code>true</code>.
-If <code>value</code> is nil or missing, any previous binding is removed. The function
+or number, it is bound as text or double, respectively. If <code>value</code> is a
+boolean or nil or missing, any previous binding is removed. The function
 returns <code>sqlite3.OK</code> on success or else a numerical error code (see
 <a href="#numerical_error_and_result_codes">Numerical error and result codes</a>).</p>
 <p>
@@ -967,14 +852,6 @@ statement stmt. Each iteration returns the values for the current row.
 This is the prepared statement equivalent of <a href="#db_urows"><code>db:urows()</code></a>.</p>
 <p>
 </p>
-<h2><a name="stmt_last_insert_rowid">stmt:last_insert_rowid</a></h2>
-<pre>
-        stmt:last_insert_rowid()</pre>
-<p>This function returns the rowid of the most recent INSERT into the
-database corresponding to this statement. 
-See <a href="#db_last_insert_rowid"><code>db:last_insert_rowid()</code></a>.</p>
-<p>
-</p>
 <hr />
 <h1><a name="methods_for_callback_contexts">Methods for callback contexts</a></h1>
 <p>A callback context is available as a parameter inside the callback
@@ -1061,67 +938,6 @@ function (see <a href="#db_create_aggregate"><code>db:create_aggregate()</code><
 <p>
 </p>
 <hr />
-<h1><a name="methods_for_online_backup">Methods for Online Backup</a></h1>
-<p>A backup userdata is created using <code>backup = </code>
-<a href="#sqlite3_backup_init"><code>sqlite3.backup_init(...)</code></a>. It is then 
-used to step the backup, or inquire about its progress.</p>
-<p>
-</p>
-<h2><a name="bu_step">backup:step</a></h2>
-<pre>
-        backup:step(nPages)</pre>
-<p>Returns the status of the backup after stepping <code>nPages</code>. It is called one or more 
-times to transfer the data between the two databases.</p>
-<p><code>backup:step(nPages)</code> will copy up to <code>nPages</code> pages between the 
-source and destination databases specified by <code>backup</code> userdata. 
-If <code>nPages</code> is negative, all remaining source pages are copied. 
-</p>
-<p> If <code>backup:step(nPages)</code> successfully copies <code>nPages</code> pages and there 
-are still more pages to be copied, then the function returns <code>sqlite3.OK</code>. 
-If <code>backup:step(nPages)</code> successfully finishes copying all pages from source to 
-destination, then it returns <code>sqlite3.DONE</code>. If an error occurs during the step, then 
-an error code is returned. such as <code>sqlite3.READONLY</code>, <code>sqlite3.NOMEM</code>, 
-<code>sqlite3.BUSY</code>, <code>sqlite3.LOCKED</code>, or an <code>sqlite3.IOERR_XXX</code> 
-extended error code.
-</p>
-<p>
-</p>
-<h2><a name="bu_remaining">backup:remaining</a></h2>
-<pre>
-        backup:remaining()</pre>
-<p>Returns the number of pages still to be backed up at the conclusion of the most recent step.
-</p>
-<p>
-</p>
-<h2><a name="bu_pagecount">backup:pagecount</a></h2>
-<pre>
-        backup:pagecount()</pre>
-<p>Returns the total number of pages in the source database at the conclusion of the most recent
-step.</p>
-<p>
-</p>
-<h2><a name="bu_finish">backup:finish</a></h2>
-<pre>
-        backup:finish()</pre>
-<p>When <code>backup:step(nPages)</code> has returned <code>sqlite3.DONE</code>, or when the 
-application wishes to abandon the backup operation, the application should destroy the backup 
-by calling <code>backup:finish()</code>. This releases all resources associated with the backup. 
-If <code>backup:step(nPages)</code> has not yet returned <code>sqlite3.DONE</code>, then any 
-active write-transaction on the destination database is rolled back. After the call, the backup 
-userdata corresponds to a completed backup, and should not be used.
-</p>
-<p>The value returned by <code>backup:finish()</code> is <code>sqlite3.OK</code> if no errors 
-occurred, regardless or whether or not the backup completed. If an out-of-memory condition or IO 
-error occurred during any prior step on the same backup, then <code>backup:finish()</code> 
-returns the corresponding error code.
-</p>
-<p>A return of <code>sqlite3.BUSY</code> or <code>sqlite3.LOCKED</code> from 
-<code>backup:step(nPages)</code> is not a permanent error and does not affect the return value 
-of <code>backup:finish()</code>.
-</p>
-<p>
-</p>
-<hr />
 <h1><a name="numerical_error_and_result_codes">Numerical error and result codes</a></h1>
 <p>The following constants are defined by module sqlite3:</p>
 <pre>
@@ -1143,25 +959,19 @@ of <code>backup:finish()</code>.
   DETACH: 25              ALTER_TABLE: 26       REINDEX: 27           ANALYZE: 28
   CREATE_VTABLE: 29       DROP_VTABLE: 30       FUNCTION: 31          SAVEPOINT: 32
 </pre>
-<p>and the Open Flags:</p>
-<pre>
-  OPEN_READONLY           OPEN_READWRITE        OPEN_CREATE           OPEN_URI
-  OPEN_MEMORY             OPEN_NOMUTEX          OPEN_FULLMUTEX        OPEN_SHAREDCACHE
-  OPEN_PRIVATECACHE
-</pre>
 <p>For details about their exact meaning please see the <strong>SQLite3
 documentation</strong> <a href="http://www.sqlite.org/">http://www.sqlite.org/</a>.</p>
 <p>
 </p>
 <hr />
 <h1><a name="version">VERSION</a></h1>
-<p>This is <code>lsqlite3</code> version &quot;0.9.4&quot;, also tagged as <code>fsl_9x</code>.</p>
+<p>This is <code>lsqlite3</code> version <code>fsl_9</code>, also known as &quot;devel-0.9&quot;.</p>
 <p>
 </p>
 <hr />
 <h1><a name="credits">CREDITS</a></h1>
 <p><code>lsqlite3</code> was developed by Tiago Dionizio and Doug Currie with 
-contributions from Thomas Lauer, Michael Roth, and Wolfgang Oertl.</p>
+contributions from Thomas Lauer and Michael Roth.</p>
 <p>This documentation is based on the &quot;(very) preliminary&quot; documents
 for the Idle-SQLite3 database module. Thanks to Thomas Lauer for
 making it available.</p>
@@ -1172,11 +982,11 @@ making it available.</p>
 <pre>
     /************************************************************************
     * lsqlite3                                                              *
-    * Copyright (C) 2002-2016 Tiago Dionizio, Doug Currie                   *
+    * Copyright (C) 2002-2013 Tiago Dionizio, Doug Currie                   *
     * All rights reserved.                                                  *
     * Author    : Tiago Dionizio &lt;tiago.dionizio@ist.utl.pt&gt;                *
     * Author    : Doug Currie &lt;doug.currie@alum.mit.edu&gt;                    *
-    * Library   : lsqlite3 - an SQLite 3 database binding for Lua 5         *
+    * Library   : lsqlite3 - a SQLite 3 database binding for Lua 5          *
     *                                                                       *
     * Permission is hereby granted, free of charge, to any person obtaining *
     * a copy of this software and associated documentation files (the       *
