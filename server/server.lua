@@ -612,6 +612,8 @@ read_leaderboard_file()
 for k, v in pairs(playerbase.players) do
   if leaderboard.players[k] then
     leaderboard.players[k].user_name = v
+    database:insertNewPlayer(leaderboard.players[k].user_id, leaderboard.players[k].user_name, leaderboard.players[k].rating)
+
   end
 end
 logger.debug("leaderboard json:")

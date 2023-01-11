@@ -62,9 +62,10 @@ CREATE TABLE IF NOT EXISTS PlayerGameResult(
 
 --local selectPlayerGamesStatement = assert(db:prepare("SELECT gameID FROM PlayerGameResult WHERE playerID = ?"))
 
-local insertPlayerStatement = assert(db:prepare("INSERT OR IGNORE INTO Player(privatePlayerID, username) VALUES (?, ?)"))
-function PADatabase.insertNewPlayer(self, privatePlayerID, username)
-  insertPlayerStatement:bind_values(privatePlayerID, username)
+
+local insertPlayerStatement = assert(db:prepare("INSERT OR IGNORE INTO Player(privatePlayerID, username, rating) VALUES (?, ?, ?)"))
+function PADatabase.insertNewPlayer(self, privatePlayerID, username, rating)
+  insertPlayerStatement:bind_values(privatePlayerID, username, rating)
   insertPlayerStatement:step()
   if insertPlayerStatement:reset() ~= 0 then
     print(db:errmsg())
