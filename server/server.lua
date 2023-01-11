@@ -322,7 +322,7 @@ function adjust_ratings(room, winning_player_number)
       if not PLACEMENT_MATCHES_ENABLED then
         leaderboard.players[players[player_number].user_id].placement_done = true
       end
-      database.updatePlayerRating(players[player_number].user_id, DEFAULT_RATING)
+      database:updatePlayerRating(players[player_number].user_id, DEFAULT_RATING)
       write_leaderboard_file()
     end
   end
@@ -347,7 +347,7 @@ function adjust_ratings(room, winning_player_number)
       if placement_done[players[player_number].opponent.user_id] then
         logger.debug("Player " .. player_number .. " played a non-placement ranked match.  Updating his rating now.")
         room.ratings[player_number].new = calculate_rating_adjustment(leaderboard.players[players[player_number].user_id].rating, leaderboard.players[players[player_number].opponent.user_id].rating, Oa, k)
-        database.updatePlayerRating(players[player_number].user_id, room.ratings[player_number].new)
+        database:updatePlayerRating(players[player_number].user_id, room.ratings[player_number].new)
       else
         logger.debug("Player " .. player_number .. " played ranked against an unranked opponent.  We'll process this match when his opponent has finished placement")
         room.ratings[player_number].placement_matches_played = leaderboard.players[players[player_number].user_id].ranked_games_played

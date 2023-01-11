@@ -54,6 +54,7 @@ function Connection.login(self, user_id)
       self.user_id = their_new_user_id
       self.logged_in = true
       logger.info("New user: " .. self.name .. " was created")
+      self.server.database:insertNewPlayer(their_new_user_id, self.name)
     end
   elseif not playerbase.players[self.user_id] then
     deny_login(self, "The user_id provided was not found on this server")
@@ -82,7 +83,6 @@ function Connection.login(self, user_id)
   if self.logged_in then
     self:send(self.server:lobby_state())
     leaderboard:update_timestamp(user_id)
-    self.server.database:insertNewPlayer(user_id, self.name)
   end
 
   return self.logged_in
