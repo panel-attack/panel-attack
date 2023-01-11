@@ -21,7 +21,7 @@ local font = GraphicsUtil.getGlobalFont()
 local pendingInputText = "__"
 local configIndex = 1
 
-local SET_KEY_DELAY = .25 -- delay between selecting change key and actually polling for new input
+local SET_KEY_DELAY = .5 -- delay (in seconds) between selecting change key and actually polling for new input
 local transitionTimer = 0
 
 local function shortenControllerName(name)
