@@ -609,11 +609,19 @@ read_players_file()
 read_deleted_players_file()
 leaderboard = Leaderboard("leaderboard")
 read_leaderboard_file()
+
+local isPlayerTableEmpty = database:getPlayerRecordCount() == 0
+
 for k, v in pairs(playerbase.players) do
   if leaderboard.players[k] then
     leaderboard.players[k].user_name = v
-    database:insertNewPlayer(leaderboard.players[k].user_id, leaderboard.players[k].user_name, leaderboard.players[k].rating)
-
+    if isPlayerTableEmpty then
+      database:insertNewPlayer(k, leaderboard.players[k].user_name)
+      database:insertPlayerELOChange(k, leaderboard.players[k].rating)
+    end
+  elseif isPlayerTableEmpty then
+    database:insertNewPlayer(k, v)
+    database:insertPlayerELOChange(k, 0)
   end
 end
 logger.debug("leaderboard json:")
