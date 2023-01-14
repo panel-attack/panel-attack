@@ -290,7 +290,9 @@ function love.update(dt)
 end
 
 function love.draw()
-  love.graphics.print("Your save directory is: " .. love.filesystem.getSaveDirectory(), 10, 10)
+  if debugMode then
+    love.graphics.print("Your save directory is: " .. love.filesystem.getSaveDirectory(), 10, 10)
+  end
 
   for i = 1, #updateLog do
     if updateLog[i] then
