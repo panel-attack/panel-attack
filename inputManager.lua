@@ -228,6 +228,7 @@ end
 function inputManager:mouseReleased(x, y, button)
   self.mouse.isDown[button] = KEY_CHANGE.NONE
   self.mouse.isPressed[button] = KEY_CHANGE.NONE
+  self.allKeys.isPressed[button] = KEY_CHANGE.NONE 
   self.mouse.isUp[button] = KEY_CHANGE.DETECTED
   self.mouse.x = x
   self.mouse.y = y

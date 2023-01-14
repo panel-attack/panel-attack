@@ -14,6 +14,9 @@ local joystickManager = {
 -- this is to give each joystick an id that will remain consistant over multiple sessions (the joystick IDs can change per session)
 local guidsToJoysticks = {}
 
+-- mapping of joystick to a table of axis and their default value
+local joystickToDefaultAxisPositions = {}
+
 -- list of (directions, axis) pairs for the 8 cardinal directions
 local stickMap = { 
   {"-x"}, 
@@ -51,9 +54,21 @@ function joystickManager:getJoystickButtonName(joystick, button)
   return string.format("%s:%s:%s", joystick:getGUID(), guidsToJoysticks[joystick:getGUID()][joystick:getID()], button)
 end 
 
+function joystickManager:recordDefaultAxis(joystick)
+  if joystickToDefaultAxisPositions[joystick] == nil then
+    joystickToDefaultAxisPositions[joystick] = {}
+    for axisIndex = 1, joystick:getAxisCount() do
+      local baseValue = joystick:getAxis(axisIndex)
+      joystickToDefaultAxisPositions[joystick][axisIndex] = baseValue
+    end
+  end
+end
+
 -- maps joysticks to buttons by converting the {x, y} axis values to {direction, magnitude} pair
 -- this will give more even mapping along the diagonals when thresholded by a single value (joystickSensitivity)
 function joystickManager:joystickToDPad(joystick, xAxisIndex, yAxisIndex)
+  self:recordDefaultAxis(joystick)
+
   local axis = yAxisIndex/2
   local x = "x"..axis
   local y = "y"..axis
@@ -65,8 +80,8 @@ function joystickManager:joystickToDPad(joystick, xAxisIndex, yAxisIndex)
     [joystickManager:getJoystickButtonName(joystick, "-"..y)] = false
   }
   
-  local xValue = joystick:getAxis(xAxisIndex)
-  local yValue = joystick:getAxis(yAxisIndex)
+  local xValue = joystickToDefaultAxisPositions[joystick][xAxisIndex] - joystick:getAxis(xAxisIndex)
+  local yValue = joystickToDefaultAxisPositions[joystick][yAxisIndex] - joystick:getAxis(yAxisIndex)
 
   -- not taking the square root to get the magnitude since it's it more expensive than squaring the joystickSensitivity
   local magSquared = xValue * xValue + yValue * yValue
