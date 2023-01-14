@@ -319,7 +319,7 @@ function Stack.render(self)
       local draw_y = 4 + (11 - (row)) * 16 + self.displacement - shake
       if panel.color ~= 0 and panel.state ~= Panel.states.popped then
         local draw_frame = 1
-        if panel.type == Panel.types.garbage then
+        if panel.isGarbage then
           local imgs = {flash = metals.flash}
           if not panel.metal then
             if not self.garbage_target then 
