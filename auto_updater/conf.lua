@@ -46,7 +46,6 @@ function love.conf(t)
   t.window.highdpi = false -- Enable high-dpi mode for the window on a Retina display (boolean)
   t.window.x = nil -- The x-coordinate of the window's position in the specified display (number)
   t.window.y = nil -- The y-coordinate of the window's position in the specified display (number)
-  t.window = nil
 
   t.modules.audio = false -- Enable the audio module (boolean)
   t.modules.data = true -- Enable the data module (boolean, mandatory)

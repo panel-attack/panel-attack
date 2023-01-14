@@ -24,6 +24,7 @@ local all_versions = nil
 local gameStartVersion = nil
 local updateLog = {}
 local debugMode = false
+local updateString = "Checking for updates"
 
 local function logMessage(txt)
   if not love.window.isOpen() then love.window.setMode(800, 600) end
@@ -176,6 +177,7 @@ end
 
 local function awaitGameDownload(version)
   local downloadThread = GAME_UPDATER:async_download_file(version)
+  updateString = "Downloading new version\n" .. version
   logMessage("Downloading new version " .. version .. "...")
   local channelMessage = nil
   while channelMessage == nil do
@@ -289,15 +291,40 @@ function love.update(dt)
   end
 end
 
+local indicatorTimer = 0
+local indicator = { false, false, false }
+local width, height = love.graphics.getDimensions()
+local font = love.graphics.newFont(24)
 function love.draw()
   if debugMode then
     love.graphics.print("Your save directory is: " .. love.filesystem.getSaveDirectory(), 10, 10)
+    for i = 1, #updateLog do
+      if updateLog[i] then
+        love.graphics.print(updateLog[i], 30, 60 + i * 15)
+        i = i + 1
+      end
+    end
+  else
+    love.graphics.printf(updateString, font, 0, height / 2 - 12, width, "center")
   end
 
-  for i = 1, #updateLog do
-    if updateLog[i] then
-      love.graphics.print(updateLog[i], 30, 60 + i * 15)
-      i = i + 1
-    end
+  -- draw an indicator to indicate that the window is alive and kicking even during a download
+  indicatorTimer = indicatorTimer + 1
+  if indicatorTimer % 60 == 20 then
+    indicator[1] = not indicator[1]
+  elseif indicatorTimer % 60 == 40 then
+    indicator[2] = not indicator[2]
+  elseif indicatorTimer % 60 == 0 then
+    indicator[3] = not indicator[3]
+  end
+
+  if indicator[1] then
+    love.graphics.print(".", font, width / 2 - 15, height * 0.75)
+  end
+  if indicator[2] then
+    love.graphics.print(".", font, width / 2     , height * 0.75)
+  end
+  if indicator[3] then
+    love.graphics.print(".", font, width / 2 + 15, height * 0.75)
   end
 end
