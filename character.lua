@@ -419,9 +419,14 @@ function Character.loadSfx(self, name, yields)
   for i = 1, #files do
     stringLen = string.len(name)
     local index = tonumber(string.match(files[i], "%d+", stringLen + 1))
-    -- variable to deal with files that have a 1 suffix or no suffix at all
+
     -- for files with no suffix at all, index would be nil but they should go in sfx[1] instead
-    local targetIndex = index and index or 1
+    local targetIndex = 1
+    if index ~= nil then
+      -- otherwise use the index as normal
+      targetIndex = index
+    end
+
 
     if perSizeSfxStart[name] then
       if sfx[targetIndex] == nil then
