@@ -610,20 +610,33 @@ read_deleted_players_file()
 leaderboard = Leaderboard("leaderboard")
 read_leaderboard_file()
 
-local isPlayerTableEmpty = database:getPlayerRecordCount() == 0
 
-for k, v in pairs(playerbase.players) do
-  if leaderboard.players[k] then
-    leaderboard.players[k].user_name = v
-    if isPlayerTableEmpty then
-      database:insertNewPlayer(k, leaderboard.players[k].user_name)
-      database:insertPlayerELOChange(k, leaderboard.players[k].rating)
+local function importDatabase()
+  local usedNames = {}
+  local cleanedPlayerData = {}
+  for key, value in pairs(playerbase.players) do
+    local name = value
+    while usedNames[name] ~= nil do
+      name = name .. math.random(1, 9999)
     end
-  elseif isPlayerTableEmpty then
+    cleanedPlayerData[key] = value
+    usedNames[name] = true
+  end
+
+  for k, v in pairs(cleanedPlayerData) do
+    local rating = 0
+    if leaderboard.players[k] then
+      rating = leaderboard.players[k].rating
+    end
     database:insertNewPlayer(k, v)
-    database:insertPlayerELOChange(k, 0)
+    database:insertPlayerELOChange(k, rating)
   end
 end
+local isPlayerTableEmpty = database:getPlayerRecordCount() == 0
+if isPlayerTableEmpty then
+  importDatabase()
+end
+
 logger.debug("leaderboard json:")
 logger.debug(json.encode(leaderboard.players))
 write_leaderboard_file()

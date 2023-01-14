@@ -79,7 +79,9 @@ function PADatabase.insertNewPlayer(self, privatePlayerID, username)
   insertPlayerStatement:step()
   if insertPlayerStatement:reset() ~= 0 then
     print(db:errmsg())
+    return false
   end
+  return true
 end
 
 --[[local updatePlayerRatingStatement = assert(db:prepare("UPDATE Player SET rating = ? WHERE privatePlayerID = ?"))
@@ -97,7 +99,9 @@ function PADatabase.updatePlayerUsername(self, privatePlayerID, username)
   updatePlayerUsernameStatement:step()
   if updatePlayerUsernameStatement:reset() ~= 0 then
     print(db:errmsg())
+    return false
   end
+  return true
 end
 
 local insertPlayerELOChangeStatement = assert(db:prepare("INSERT INTO PlayerELOHistory(publicPlayerID, rating) VALUES ((SELECT publicPlayerID FROM Player WHERE privatePlayerID = ?), ?)"))
@@ -106,7 +110,9 @@ function PADatabase.insertPlayerELOChange(self, privatePlayerID, rating)
   insertPlayerELOChangeStatement:step()
   if insertPlayerELOChangeStatement:reset() ~= 0 then
     print(db:errmsg())
+    return false
   end
+  return true
 end
 
 local selectPlayerRecordCount = assert(db:prepare("SELECT COUNT(*) FROM Player"))
@@ -115,6 +121,7 @@ function PADatabase.getPlayerRecordCount()
   local recordCount = selectPlayerRecordCount:get_value(0) -- this is the row count.
   if selectPlayerRecordCount:reset() ~= 0 then
     print(db:errmsg())
+    return -1
   end
   return recordCount
 end
