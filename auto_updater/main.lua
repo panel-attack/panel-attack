@@ -1,7 +1,7 @@
 require("game_updater")
 
 -- CONSTANTS
-local UPDATER_NAME = "panel-test" -- you should name the distributed auto updater zip the same as this
+local UPDATER_NAME = "panel-beta" -- you should name the distributed auto updater zip the same as this
 -- use a different name for the different versions of the updater
 -- ex: "panel" for the release, "panel-beta" for the main beta, "panel-exmode" for testing the EX Mode
 local MAX_REQ_SIZE = 100000 -- 100kB
@@ -23,6 +23,7 @@ local local_version = nil
 local all_versions = nil
 local gameStartVersion = nil
 local updateLog = {}
+local debugMode = false
 
 local function logMessage(txt)
   if not love.window.isOpen() then love.window.setMode(800, 600) end
@@ -37,10 +38,11 @@ local function start_game(file)
   if time == nil then
     time = currentTime
   end
-  if announcedStart == false and currentTime > (time + 3) and currentTime <= (time + 5) then
+  -- this delays the startup so you can actually read the messages logged by the auto updater
+  if debugMode and announcedStart == false and currentTime > (time + 3) and currentTime <= (time + 5) then
     logMessage("Starting game version " .. file)
     announcedStart = true
-  elseif (love.timer.getTime() > (time + 5)) then
+  else
     --nothing
     if not love.filesystem.mount(updaterDirectory..file, '') then error("Could not mount game file: "..file) end
     GAME_UPDATER_GAME_VERSION = file:gsub("^panel%-", ""):gsub("%.love", "")
@@ -236,7 +238,16 @@ local function run()
   end
 end
 
-function love.load()
+local function setDebugFlag(args)
+  for i = 1, #args do
+    if tostring(args[i]):lower() == "debug" then
+      debugMode = true
+    end
+  end
+end
+
+function love.load(args)
+  setDebugFlag(args)
   logMessage("Starting auto updater...")
   correctAndroidStartupConfig()
 
