@@ -24,10 +24,6 @@ local function getPanelBelow(panel, panels)
   end
 end
 
--- can probably switch that out for a bool again
--- originally I had 3 types: empty, panel and garbage
--- but I eventually reverted to color checking for empty panels
-Panel.types = { panel = 0, garbage = 1}
 Panel.states = {
   normal = 0,
   swapping = 1,
@@ -59,33 +55,35 @@ local deadState = {}
 normalState.update = function(panel, panels)
   local panelBelow = getPanelBelow(panel, panels)
 
-  if panel.type == Panel.types.panel
-    and panel.color ~= 0 then
-    if panelBelow and panelBelow.stateChanged then
-      if panelBelow.state == Panel.states.hovering then
-        panel:enterHoverState(panelBelow)
-      elseif panelBelow.state == Panel.states.swapping
-        and panelBelow.queuedHover == true
-        and panelBelow.propagatesChaining then
-        panel:enterHoverState(panelBelow)
-      elseif panelBelow.color == 0 and panelBelow.state == Panel.states.normal then
-        if panelBelow.propagatesFalling then
-          -- the panel below is empty because garbage below dropped
-          -- in that case, skip the hover and fall immediately with the garbage
-          panel:fall(panels)
-        else
-          panel:enterHoverState(panelBelow)
-        end
-      end
-      -- all other transformations from normal state are actively set by stack routines:
-      -- swap
-      -- checkMatches
-      -- death
-    end
-  elseif panel.type == Panel.types.garbage then
+  if panel.isGarbage then
     if not panel:supportedFromBelow(panels) then
       -- Garbage blocks fall without a hover time
       panel:fall(panels)
+    end
+  else
+    -- empty panels can only be normal or swapping and don't passively enter other states
+    if panel.color ~= 0 then
+      if panelBelow and panelBelow.stateChanged then
+        if panelBelow.state == Panel.states.hovering then
+          panel:enterHoverState(panelBelow)
+        elseif panelBelow.state == Panel.states.swapping
+          and panelBelow.queuedHover == true
+          and panelBelow.propagatesChaining then
+          panel:enterHoverState(panelBelow)
+        elseif panelBelow.color == 0 and panelBelow.state == Panel.states.normal then
+          if panelBelow.propagatesFalling then
+            -- the panel below is empty because garbage below dropped
+            -- in that case, skip the hover and fall immediately with the garbage
+            panel:fall(panels)
+          else
+            panel:enterHoverState(panelBelow)
+          end
+        end
+        -- all other transformations from normal state are actively set by stack routines:
+        -- swap
+        -- checkMatches
+        -- death
+      end
     end
   end
 end
@@ -144,14 +142,14 @@ matchedState.update = function(panel, panels)
 end
 
 matchedState.changeState = function(panel, panels)
-  if panel.type == Panel.types.panel then
+  if panel.isGarbage then
+    panel:enterHoverState()
+  else
     -- This panel's match just finished the whole flashing and looking distressed thing.
     -- It is given a pop time based on its place in the match.
     panel.state = Panel.states.popping
     panel.timer = panel.combo_index * panel.frameTimes.POP
     panel.stateChanged = true
-  elseif panel.type == Panel.types.garbage then
-    panel:enterHoverState()
   end
 end
 
@@ -227,7 +225,7 @@ fallingState.update = function(panel, panels)
     -- if it's on the bottom row, it should surely land
     panel:land()
   elseif panel:supportedFromBelow(panels) then
-    if panel.type == Panel.types.garbage then
+    if panel.isGarbage then
       panel:land()
     else
       local panelBelow = getPanelBelow(panel, panels)
@@ -295,7 +293,7 @@ deadState.excludeHover = true
 -- this name legit makes no sense at all with the values of the states
 -- ported 1:1 from old code
 function Panel.exclude_hover(self)
-  if self.type == Panel.types.garbage then
+  if self.isGarbage then
     return true
   else
     local state = self:getStateTable()
@@ -348,7 +346,7 @@ function Panel.exclude_swap(self)
   if self.dont_swap then
     return true
   -- can't swap garbage panels or even garbage to start with
-  elseif self.type == Panel.types.garbage then
+  elseif self.isGarbage then
     return true
   else
     local state = self:getStateTable()
@@ -425,7 +423,7 @@ function Panel.clear(self, clearChaining, clearColor)
   self.shake_time = nil
 
   -- garbage panels and regular panels behave differently in about any scenario
-  self.type = Panel.types.panel
+  self.isGarbage = false
 
   self.match_anyway = nil
 
@@ -436,7 +434,7 @@ end
 -- function used by the stack to determine whether there are panels in a row (read: the top row)
 -- name is pretty misleading but I don't have a good idea rn
 function Panel.dangerous(self)
-  if self.type == Panel.types.garbage then
+  if self.isGarbage then
     return self.state ~= Panel.states.falling
   else
     return self.color ~= 0
@@ -562,11 +560,12 @@ function Panel.switch(panel1, panel2, panels)
 end
 
 -- the panel enters hover state
--- hover state is the most complex in terms of different timers and panel types
+-- hover state is the most complex in terms of different timers and garbage vs non-garbage
 -- it also propagates chain state
 function Panel.enterHoverState(self, panelBelow)
-  if self.type == Panel.types.garbage then
+  if self.isGarbage then
     if self.y_offset == -1 then
+      -- this is the hover enter after garbage match that converts the garbage panel into a regular panel
       self:clear(false, false)
       self.chaining = true
       self.timer = self.frameTimes.GPHOVER
@@ -574,6 +573,7 @@ function Panel.enterHoverState(self, panelBelow)
       self.state = Panel.states.hovering
       self.propagatesChaining = true
     else
+      -- garbage doesn't hover
       self.state = Panel.states.normal
     end
   else
@@ -647,12 +647,12 @@ function Panel.supportedFromBelow(self, panels)
     return true
   end
 
-  if self.type == Panel.types.garbage then
+  if self.isGarbage then
     -- check if it supported in any column over the entire width of the garbage
     for column = self.column - self.x_offset, self.column - self.x_offset + self.width - 1 do
       local panel = panels[self.row - 1][column]
       if panel.color ~= 0 then
-        if panel.type == Panel.types.panel then
+        if panel.isGarbage == false then
           return true
         else
           -- panels belonging to the same brick of garbage can't be considered as supporting
@@ -671,12 +671,12 @@ function Panel.supportedFromBelow(self, panels)
   end
 end
 
--- switches the panel with the panel below and refreshes its state/flags according with its type
+-- switches the panel with the panel below and refreshes its state/flags
 function Panel.fall(self, panels)
   local panelBelow = getPanelBelow(self, panels)
   Panel.switch(self, panelBelow, panels)
   -- panelBelow is now actually panelAbove
-  if self.type == Panel.types.garbage then
+  if self.isGarbage then
     -- panels above should fall immediately rather than starting to hover
     panelBelow.propagatesFalling = true
     panelBelow.stateChanged = true
@@ -688,9 +688,12 @@ function Panel.fall(self, panels)
   end
 end
 
--- makes the panel enter landing state and informs the stack about the event depending on panel type
+-- makes the panel enter landing state and informs the stack about the event depending on whether it's garbage or not
 function Panel.land(self)
-  if self.type == self.types.panel then
+  if self.isGarbage then
+    self.state = Panel.states.normal
+    self:onGarbageLand()
+  else
     if self.state == Panel.states.falling then
       -- don't alert the stack on 0 height falls
       self:onLand()
@@ -702,9 +705,6 @@ function Panel.land(self)
     self.state = Panel.states.landing
       -- This timer is solely for animation, should probably put that elsewhere
     self.timer = 12
-  elseif self.type == self.types.garbage then
-    self.state = Panel.states.normal
-    self:onGarbageLand()
   end
   self.stateChanged = true
 end

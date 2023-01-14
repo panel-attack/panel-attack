@@ -608,7 +608,6 @@ function Stack.puzzleStringToPanels(self, puzzleString)
           local color = string.sub(rowString, column, column)
           if not garbageStartRow and tonumber(color) then
             local panel = self:createPanel(row, column)
-            panel.type = Panel.types.panel
             panel.color = tonumber(color)
             panels[row][column] = panel
           else
@@ -624,7 +623,7 @@ function Stack.puzzleStringToPanels(self, puzzleString)
               end
             end
             local panel = self:createPanel(row, column)
-            panel.type = Panel.types.garbage
+            panel.isGarbage = true
             panel.color = 9
             panel.y_offset = row - garbageStartRow
             -- iterating the row right to left to make sure we catch the start of each garbage block
@@ -715,7 +714,7 @@ function Stack.hasGarbage(self)
   -- garbage is more likely to be found at the top of the stack
   for row = #self.panels, 1, -1 do
     for column = 1, #self.panels[row] do
-      if self.panels[row][column].type == Panel.types.garbage
+      if self.panels[row][column].isGarbage
         and self.panels[row][column].state ~= Panel.states.matched then
         return true
       end
@@ -756,7 +755,7 @@ function Stack.has_falling_garbage(self)
   for i = 1, self.height + 3 do --we shouldn't have to check quite 3 rows above height, but just to make sure...
     local panelRow = self.panels[i]
     for j = 1, self.width do
-      if panelRow and panelRow[j].type == Panel.types.garbage and panelRow[j].state == Panel.states.falling then
+      if panelRow and panelRow[j].isGarbage and panelRow[j].state == Panel.states.falling then
         return true
       end
     end
@@ -1973,7 +1972,7 @@ function Stack.dropGarbage(self, width, height, isMetal)
         if isPartOfGarbage(col) then
           local panel = self.panels[row][col]
           panel.garbageId = self.garbageCreated
-          panel.type = Panel.types.garbage
+          panel.isGarbage = true
           panel.color = 9
           panel.width = width
           panel.height = height
@@ -2071,9 +2070,9 @@ function Stack.check_matches(self)
     local panel = panels[y][x]
 
     -- We found a new panel we haven't handled yet that we should
-    if ((panel.type == Panel.types.garbage and panel.state == Panel.states.normal) or panel.matching) and ((normal and not seen[panel]) or (metal and not seenm[panel])) then
+    if ((panel.isGarbage and panel.state == Panel.states.normal) or panel.matching) and ((normal and not seen[panel]) or (metal and not seenm[panel])) then
       -- We matched a new garbage
-      if ((metal and panel.metal) or (normal and not panel.metal)) and panel.type == Panel.types.garbage and not garbage[panel] then
+      if ((metal and panel.metal) or (normal and not panel.metal)) and panel.isGarbage and not garbage[panel] then
         garbage[panel] = true
         if self:shouldChangeSoundEffects() then
           SFX_garbage_match_play = true
@@ -2084,7 +2083,7 @@ function Stack.check_matches(self)
       end
       seen[panel] = seen[panel] or normal
       seenm[panel] = seenm[panel] or metal
-      if panel.type == Panel.types.garbage then
+      if panel.isGarbage then
         normal = normal and not panel.metal
         metal = metal and panel.metal
       end
@@ -2390,7 +2389,6 @@ function Stack.new_row(self)
       end
     end
     panel.color = this_panel_color + 0
-    panel.type = Panel.types.panel
     panel.state = Panel.states.dimmed
   end
   self.panel_buffer = string.sub(self.panel_buffer, 7)
@@ -2549,7 +2547,7 @@ function Stack.getActivePanels(self)
   for row = 1, self.height do
     for col = 1, self.width do
       local panel = self.panels[row][col]
-      if panel.type == Panel.types.garbage then
+      if panel.isGarbage then
         if panel.state ~= Panel.states.normal then
           activePanels[#activePanels+1] = panel
         end
