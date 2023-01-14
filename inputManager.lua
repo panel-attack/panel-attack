@@ -255,6 +255,69 @@ function inputManager:isPressedWithRepeat(key, delay, repeatPeriod)
   else 
     return inputs.isDown[key] 
   end 
-end 
+end
+
+-- input migration utils
+local function convertButton(rawButton)
+  local letterToDir = {
+    u = "up",
+    d = "down",
+    l = "left",
+    r = "right",
+  }
+  local button = {rawButton:match("hat(%d+)-(%l+)")}
+  if #button ~= 0 then
+    return string.format("%s%d", letterToDir[button[2]], button[1])
+  end
+  
+  button = {rawButton:match("axis(%d+)([%+|%-])")}
+  if #button ~= 0 then
+    return string.format("%s%s%d", button[2], button[1] % 2 == 0 and "y"  or "x", math.ceil(button[1] / 2.0))
+  end
+  
+  return rawButton
+end
+
+local function convertKey(key)
+  if not key then
+    return nil
+  end
+  
+  local joystickNameParts = {key:match("(.*)#([^-]*)-(.*)")}
+  if #joystickNameParts ~= 0 then
+    return string.format("%s:%s:%s", joystickNameParts[1], joystickNameParts[2], convertButton(joystickNameParts[3]))
+  end
+  
+  joystickNameParts = {key:match("([^-]*)-(.*)")}
+  if #joystickNameParts ~= 0 then
+    return string.format("%s:0:%s", joystickNameParts[1], convertButton(joystickNameParts[2]))
+  end
+  
+  return key
+end
+
+function inputManager:migrateInputConfigs(inputConfigs)
+  local oldToNewKeyMap = {
+    up = "Up",
+    down = "Down",
+    left = "Left",
+    right = "Right",
+    swap1 = "Swap1",
+    swap2 = "Swap2",
+    taunt_up = "TauntUp",
+    taunt_down = "TauntDown",
+    raise1 = "Raise1",
+    raise2 = "Raise2",
+    pause = "Start",
+  }
+  if tableUtils.trueForAll(inputConfigs, function(inputConfig) return not inputConfig["Start"] end) then
+    for i, inputConfig in ipairs(inputConfigs) do
+      for oldKey, newKey in pairs(oldToNewKeyMap) do
+        inputConfigs[i][newKey] = convertKey(inputConfig[oldKey])
+      end
+    end
+  end
+  return inputConfigs
+end
  
 return inputManager

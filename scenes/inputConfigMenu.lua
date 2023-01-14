@@ -47,29 +47,29 @@ function inputConfigMenu:setSettingKeyState(keySettingState)
   self.menu:setEnabled(not self.settingKey)
 end
 
+function inputConfigMenu:getKeyDisplayName(key)
+  local keyDisplayName = key
+  if key and string.match(key, ":") then
+    local controllerKeySplit = util.split(key, ":")
+    local controllerName = shortenControllerName(joystickManager.guidToName[controllerKeySplit[1]] or "Unplugged Controller")
+    keyDisplayName = string.format("%s (%s-%s)", controllerKeySplit[3], controllerName, controllerKeySplit[2])
+  end
+  return keyDisplayName or loc("op_none")
+end
+
 function inputConfigMenu:updateInputConfigMenuLabels(index)
   configIndex = index
   play_optional_sfx(themes[config.theme].sounds.menu_move)
   for i, key in ipairs(consts.KEY_NAMES) do
-    local keyName = GAME.input:cleanNameForButton(GAME.input.inputConfigurations[configIndex][key]) or loc("op_none")
-    if string.match(keyName, ":") then
-      local controllerKeySplit = util.split(keyName, ":")
-      local controllerName = shortenControllerName(joystickManager.guidToName[controllerKeySplit[2]])
-      keyName = string.format("%s (%s-%s)", controllerKeySplit[1], controllerName, controllerKeySplit[3])
-    end
-    self.menu.menuItems[i + 1].children[1]:updateLabel(keyName)
+    local keyDisplayName = inputConfigMenu:getKeyDisplayName(GAME.input.inputConfigurations[configIndex][key])
+    self.menu.menuItems[i + 1].children[1]:updateLabel(keyDisplayName)
   end
 end
 
 function inputConfigMenu:updateKey(key, pressedKey, index)
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  local keyDisplayName = pressedKey
-  if string.match(pressedKey, ":") then
-    local controllerKeySplit = util.split(pressedKey, ":")
-    local controllerName = shortenControllerName(joystickManager.guidToName[controllerKeySplit[2]])
-    keyDisplayName = string.format("%s (%s-%s)", controllerKeySplit[1], controllerName, controllerKeySplit[3])
-  end
   GAME.input.inputConfigurations[configIndex][key] = pressedKey
+  local keyDisplayName = inputConfigMenu:getKeyDisplayName(pressedKey)
   self.menu.menuItems[index + 1].children[1]:updateLabel(keyDisplayName)
   write_key_file()
 end
@@ -149,7 +149,7 @@ function inputConfigMenu:init()
           onValueChange = function(slider) inputConfigMenu:updateInputConfigMenuLabels(slider.value) end})
     }
   for i, key in ipairs(consts.KEY_NAMES) do
-    local keyName = GAME.input:cleanNameForButton(GAME.input.inputConfigurations[configIndex][key]) or loc("op_none")
+    local keyName = inputConfigMenu:getKeyDisplayName(GAME.input.inputConfigurations[configIndex][key])
     local label = Label({label = keyName, translate = false, width = 200})
     menuOptions[#menuOptions + 1] = {
       Button({

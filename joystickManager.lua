@@ -46,8 +46,9 @@ function joystickManager:getJoystickButtonName(joystick, button)
   end 
   if not guidsToJoysticks[joystick:getGUID()][joystick:getID()] then 
     guidsToJoysticks[joystick:getGUID()][joystick:getID()] = tableUtils.length(guidsToJoysticks[joystick:getGUID()]) 
-  end 
-  return string.format("%s:%s:%s", button, joystick:getGUID(), guidsToJoysticks[joystick:getGUID()][joystick:getID()]) 
+  end
+
+  return string.format("%s:%s:%s", joystick:getGUID(), guidsToJoysticks[joystick:getGUID()][joystick:getID()], button)
 end 
 
 -- maps joysticks to buttons by converting the {x, y} axis values to {direction, magnitude} pair
