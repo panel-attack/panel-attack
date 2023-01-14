@@ -16,14 +16,14 @@ local function genLegacyMainloopFn(myFunction, args)
   local onClick = function()
     func = myFunction
     arg = args
-    play_optional_sfx(themes[config.theme].sounds.menu_validate)
+    Menu.playValidationSfx()
     sceneManager:switchToScene(nil)
   end
   return onClick
 end
 
 local switchToScene = function(scene)
-  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  Menu.playValidationSfx()
   sceneManager:switchToScene(scene)
 end
 
@@ -41,7 +41,7 @@ local menuItems = {
   {Button({label = "mm_configure", onClick = function() switchToScene("inputConfigMenu") end})},
   {Button({label = "mm_set_name", onClick = genLegacyMainloopFn(main_set_name)})},
   {Button({label = "mm_options", onClick = genLegacyMainloopFn(options.main)})},
-  {Button({label = "mm_fullscreen", extra_labels = {"\n(LAlt+Enter)"}, onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) fullscreen() end})},
+  {Button({label = "mm_fullscreen", extra_labels = {"\n(LAlt+Enter)"}, onClick = function() Menu.playValidationSfx() fullscreen() end})},
   {Button({label = "mm_quit", onClick = love.event.quit})}
 }
 

@@ -120,4 +120,14 @@ function Menu:draw()
   UIElement.draw(self)
 end
 
+
+-- sound effects
+function Menu.playValidationSfx()
+  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+end
+
+function Menu.playMoveSfx()
+  play_optional_sfx(themes[config.theme].sounds.menu_move)
+end
+
 return Menu

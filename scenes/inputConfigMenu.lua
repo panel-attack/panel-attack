@@ -59,7 +59,7 @@ end
 
 function inputConfigMenu:updateInputConfigMenuLabels(index)
   configIndex = index
-  play_optional_sfx(themes[config.theme].sounds.menu_move)
+  Menu.playMoveSfx()
   for i, key in ipairs(consts.KEY_NAMES) do
     local keyDisplayName = inputConfigMenu:getKeyDisplayName(GAME.input.inputConfigurations[configIndex][key])
     self.menu.menuItems[i + 1].children[1]:updateLabel(keyDisplayName)
@@ -67,7 +67,7 @@ function inputConfigMenu:updateInputConfigMenuLabels(index)
 end
 
 function inputConfigMenu:updateKey(key, pressedKey, index)
-  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  Menu.playValidationSfx()
   GAME.input.inputConfigurations[configIndex][key] = pressedKey
   local keyDisplayName = inputConfigMenu:getKeyDisplayName(pressedKey)
   self.menu.menuItems[index + 1].children[1]:updateLabel(keyDisplayName)
@@ -98,7 +98,7 @@ function inputConfigMenu:setAllKeys()
 end
 
 function inputConfigMenu:setKeyStart(key)
-  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  Menu.playValidationSfx()
   self.key = key
   self.index = nil
   for i, k in ipairs(consts.KEY_NAMES) do
@@ -113,7 +113,7 @@ function inputConfigMenu:setKeyStart(key)
 end
 
 function inputConfigMenu:setAllKeysStart()
-  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  Menu.playValidationSfx()
   self.index = 1
   self.menu.menuItems[self.index + 1].children[1]:updateLabel(pendingInputText)
   self.menu.selectedIndex = self.index + 1
@@ -121,7 +121,7 @@ function inputConfigMenu:setAllKeysStart()
 end
 
 local function clearAllInputs(menuOptions)
-  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  Menu.playValidationSfx()
   for i, key in ipairs(consts.KEY_NAMES) do
     GAME.input.inputConfigurations[configIndex][key] = nil
     local keyName = loc("op_none")
@@ -131,7 +131,7 @@ local function clearAllInputs(menuOptions)
 end
 
 local function exitMenu()
-  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  Menu.playValidationSfx()
   sceneManager:switchToScene("mainMenu")
 end
 
