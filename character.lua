@@ -419,19 +419,23 @@ function Character.loadSfx(self, name, yields)
   for i = 1, #files do
     stringLen = string.len(name)
     local index = tonumber(string.match(files[i], "%d+", stringLen + 1))
-    if index == nil then
-      -- indicates that there is no index, implicit 1
-      index = 1
+
+    -- for files with no suffix at all, index would be nil but they should go in sfx[1] instead
+    local targetIndex = 1
+    if index ~= nil then
+      -- otherwise use the index as normal
+      targetIndex = index
     end
 
+
     if perSizeSfxStart[name] then
-      if sfx[index] == nil then
-        sfx[index] = self:loadSubSfx(name, index)
+      if sfx[targetIndex] == nil then
+        sfx[targetIndex] = self:loadSubSfx(name, index)
       end
     else
       local sound = load_sound_from_supported_extensions(self.path .. "/" .. files[i], false)
       if sound ~= nil then
-        sfx[index] = sound
+        sfx[targetIndex] = sound
       end
 
       if yields then
@@ -439,8 +443,8 @@ function Character.loadSfx(self, name, yields)
       end
     end
 
-    if sfx[index] then
-      maxIndex = math.max(maxIndex, index)
+    if sfx[targetIndex] then
+      maxIndex = math.max(maxIndex, targetIndex)
     end
   end
 
@@ -455,9 +459,9 @@ end
 function Character.loadSubSfx(self, name, index, yields)
   local sfxTable = {}
 
-  if index == 1 then
-    -- index 1 is implicit, e.g. chain, chain_2, chain2, chain2_2
-    -- so change it to an empty string so it isn't counted towards string length when searching variations
+  if index == nil then
+    -- index 1 can be implicit, e.g. chain, chain_2, chain2, chain2_2 (actually the official spec)
+    -- change it to an empty string so it doesn't crash on concat
     index = ""
   end
   local stringLen = string.len(name..index)
