@@ -301,6 +301,11 @@ function love.draw()
     love.graphics.printf(scaleString, get_global_font_with_size(30), 5, 5, 2000, "left")
   end
 
+  if DEBUG_ENABLED and love.system.getOS() == "Android" then
+    local saveDir = love.filesystem.getSaveDirectory()
+    love.graphics.printf(saveDir, get_global_font_with_size(30), 5, 50, 2000, "left")
+  end
+
   -- draw background and its overlay
   if GAME.backgroundImage then
     GAME.backgroundImage:draw()

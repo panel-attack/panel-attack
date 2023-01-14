@@ -1,5 +1,3 @@
-local socket = require("socket")
-local http = require("socket.http")
 require("class")
 
 GameUpdater = class(function(self, name)
@@ -68,6 +66,7 @@ end
 function GameUpdater.change_version(self, filename)
   if filename and love.filesystem.getInfo(self.path..filename) then
     love.filesystem.write(self.version_file, filename)
+    self.local_version = filename
     return true
   end
   return false
