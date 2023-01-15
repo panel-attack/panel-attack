@@ -13,6 +13,7 @@ require("queue")
 require("globals")
 require("character_loader") -- after globals!
 local CustomRun = require("CustomRun")
+local DefaultLoveRunFunctions = require("DefaultLoveRunFunctions")
 require("stage") -- after globals!
 require("save")
 require("engine/GarbageQueue")
@@ -61,6 +62,8 @@ function love.load()
   if PROFILING_ENABLED then
     GAME.profiler:start()
   end
+
+  love.pa_runInternal = CustomRun.innerRun
   
   love.graphics.setDefaultFilter("linear", "linear")
   if config.maximizeOnStartup and not love.window.isMaximized() then

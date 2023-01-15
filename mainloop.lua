@@ -1,4 +1,3 @@
-local CustomRun = require("CustomRun")
 local logger = require("logger")
 local select_screen = require("select_screen.select_screen")
 local replay_browser = require("replay_browser")
@@ -145,9 +144,6 @@ function main_title()
     wait()
     totalTime = totalTime + (leftover_time - lastTime)
 
-    if totalTime > 5 then
-      love.pa_runInternal = CustomRun.runInternal
-    end
     variable_step(
       function()
         if increment > 0 and percent >= 1 then
@@ -260,6 +256,17 @@ do
         if has_game_update then
           menu_draw(panels[config.panels].images.classic[1][1], 1262, 685)
         end
+      end
+
+      local runningFromAutoUpdater = GAME_UPDATER_GAME_VERSION ~= nil
+      local autoUpdaterOutOfDate = (GAME_UPDATER_VERSION == nil or GAME_UPDATER_VERSION < 1.1)
+      if runningFromAutoUpdater and autoUpdaterOutOfDate then
+        local downloadLink = "panelattack.com/panel.zip"
+        if UPDATER_NAME == "panel-beta" then
+          downloadLink = "panelattack.com/panel-beta.zip"
+        end
+        gprintf(loc("auto_updater_version_warning") .. " " .. downloadLink, -5, infoYPosition, canvas_width, "right")
+        infoYPosition = infoYPosition - fontHeight
       end
 
       wait()

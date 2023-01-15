@@ -46,7 +46,7 @@ function CustomRun:sleep()
   CustomRun.runMetrics.sleepDuration = currentTime - originalTime
 end
 
-function CustomRun.runInternal()
+function CustomRun.innerRun()
 
   if love.timer then
     CustomRun.sleep()
