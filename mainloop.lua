@@ -146,8 +146,7 @@ function main_title()
     totalTime = totalTime + (leftover_time - lastTime)
 
     if totalTime > 5 then
-      CustomRun.sleep = function ()
-      end
+      love.pa_runInternal = CustomRun.runInternal
     end
     variable_step(
       function()

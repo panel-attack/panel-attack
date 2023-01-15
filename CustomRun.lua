@@ -99,25 +99,4 @@ function CustomRun.runInternal()
   end
 end
 
-function CustomRun.run()
-  if love.load then
-    love.load(love.arg.parseGameArguments(arg), arg)
-  end
-
-  -- We don't want the first frame's dt to include time taken by love.load.
-  if love.timer then
-    love.timer.step()
-  end
-
-  local dt = 0
-
-  -- Main loop time.
-  return function()
-    local result = CustomRun.runInternal()
-    if result then
-      return result
-    end
-  end
-end
-
 return CustomRun

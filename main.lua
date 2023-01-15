@@ -55,8 +55,6 @@ local input_delta = 0.0
 local pointer_hidden = false
 local mainloop = nil
 
-love.run = CustomRun.run
-
 -- Called at the beginning to load the game
 function love.load()
 
