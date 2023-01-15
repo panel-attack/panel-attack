@@ -10,7 +10,7 @@ UPDATER_NAME = "panel-beta" -- you should name the distributed auto updater zip 
 -- use a different name for the different versions of the updater
 -- ex: "panel" for the release, "panel-beta" for the main beta, "panel-exmode" for testing the EX Mode
 GAME_UPDATER = nil
-GAME_UPDATER_VERSION = 1.0 -- nil was prior to Jan 15, 2023 where we added version
+GAME_UPDATER_VERSION = 1.1 -- nil was prior to Jan 15, 2023 where we added version
 GAME_UPDATER_GAME_VERSION = nil
 -- determines whether the maingame should check for updates on startup separately
 GAME_UPDATER_CHECK_UPDATE_INGAME = nil
