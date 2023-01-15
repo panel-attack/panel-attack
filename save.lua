@@ -9,7 +9,7 @@ local logger = require("logger")
 function write_key_file()
   pcall(
     function()
-      local file = love.filesystem.newFile("keysV2.txt")
+      local file = love.filesystem.newFile("keysV3.txt")
       file:open("w")
       file:write(json.encode(GAME.input.inputConfigurations))
       file:close()
@@ -19,8 +19,15 @@ end
 
 -- reads the "keys.txt" file
 function read_key_file()
-  local file = love.filesystem.newFile("keysV2.txt")
+  local file = love.filesystem.newFile("keysV3.txt")
   local ok, err = file:open("r")
+  local migrateInputs = false
+  
+  if not ok then
+    file = love.filesystem.newFile("keysV2.txt")
+    ok, err = file:open("r")
+    migrateInputs = true
+  end
   
   if not ok then
     return GAME.input.inputConfigurations
@@ -31,8 +38,10 @@ function read_key_file()
   
   local inputConfigs = json.decode(jsonInputConfig)
   
-  -- migrate old input configs
-  inputConfigs = inputManager:migrateInputConfigs(inputConfigs)
+  if migrateInputs then
+    -- migrate old input configs
+    inputConfigs = inputManager:migrateInputConfigs(inputConfigs)
+  end
   
   return inputConfigs
 end
