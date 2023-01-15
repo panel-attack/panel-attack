@@ -1005,7 +1005,7 @@ local function about_menu(button_idx)
         sys_info[#sys_info + 1] = {name = "Operating System", value = love.system.getOS()} 
         sys_info[#sys_info + 1] = {name = "Renderer", value = renderer_name.." "..renderer_version}
         sys_info[#sys_info + 1] = {name = "Graphics Card", value = graphics_card_name}
-        sys_info[#sys_info + 1] = {name = "LOVE Version", value = Game.loveVersionString()} 
+        sys_info[#sys_info + 1] = {name = "LOVE Version", value = GAME.loveVersionString()} 
         sys_info[#sys_info + 1] = {name = "Panel Attack Engine Version", value = VERSION} 
         sys_info[#sys_info + 1] = {name = "Panel Attack Release Version", value = GAME_UPDATER_GAME_VERSION} 
         sys_info[#sys_info + 1] = {name = "Save Data Directory Path", value = love.filesystem.getSaveDirectory()}  
@@ -1078,6 +1078,7 @@ local function about_menu(button_idx)
 end
 
 function options.main(button_idx)
+  GAME.backgroundImage = themes[config.theme].images.bg_main
   local ret = nil
   local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
   local language_number

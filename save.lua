@@ -1,3 +1,5 @@
+local tableUtils = require("tableUtils")
+local inputManager = require("inputManager")
 -- the save.lua file contains the read/write functions
 
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
@@ -7,30 +9,41 @@ local logger = require("logger")
 function write_key_file()
   pcall(
     function()
-      local file = love.filesystem.newFile("keysV2.txt")
+      local file = love.filesystem.newFile("keysV3.txt")
       file:open("w")
       file:write(json.encode(GAME.input.inputConfigurations))
       file:close()
     end
   )
 end
+
 -- reads the "keys.txt" file
 function read_key_file()
-  pcall(
-    function()
-      local inputConfigs = GAME.input.inputConfigurations
-      local file = love.filesystem.newFile("keysV2.txt")
-      file:open("r")
-      local teh_json = file:read(file:getSize())
-      file:close()
-      local user_conf = json.decode(teh_json)
-      for k, v in ipairs(user_conf) do
-        inputConfigs[k] = v
-      end
-
-      GAME.input.inputConfigurations = inputConfigs
-    end
-  )
+  local file = love.filesystem.newFile("keysV3.txt")
+  local ok, err = file:open("r")
+  local migrateInputs = false
+  
+  if not ok then
+    file = love.filesystem.newFile("keysV2.txt")
+    ok, err = file:open("r")
+    migrateInputs = true
+  end
+  
+  if not ok then
+    return GAME.input.inputConfigurations
+  end
+  
+  local jsonInputConfig = file:read(file:getSize())
+  file:close()
+  
+  local inputConfigs = json.decode(jsonInputConfig)
+  
+  if migrateInputs then
+    -- migrate old input configs
+    inputConfigs = inputManager:migrateInputConfigs(inputConfigs)
+  end
+  
+  return inputConfigs
 end
 
 -- reads the .txt file of the given path and filename

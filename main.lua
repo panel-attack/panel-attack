@@ -60,7 +60,9 @@ GAME.rich_presence = RichPresence()
 
 -- Called at the beginning to load the game
 -- Either called directly or from auto_updater
-function love.load(args)  
+function love.load(args) 
+  love.keyboard.setTextInput(false)
+  
   if PROFILING_ENABLED then
     GAME.profiler:start()
   end
@@ -106,7 +108,7 @@ local function customSleep(runMetrics)
   local currentTime = originalTime
 
   -- Sleep a percentage of our time to wait to save cpu
-  local sleepRatio = .99
+  local sleepRatio = .90
   local sleepTime = (targetTime - currentTime) * sleepRatio
   if love.timer and sleepTime > 0 then
     love.timer.sleep(sleepTime)

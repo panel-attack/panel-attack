@@ -8,11 +8,13 @@ local main_config_input = require("config_inputs")
 local tableUtils = require("tableUtils")
 local Game = require("Game")
 local util = require("util")
+local GraphicsUtil = require("graphics_util")
 require("replay")
 
 local wait, resume = coroutine.yield, coroutine.resume
 
-local main_endless_select, main_timeattack_select, makeSelectPuzzleSetFunction, main_net_vs_setup, main_select_puzz, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, exit_game, training_setup
+-- making these global until they get ported to scenes
+--local main_endless_select, main_timeattack_select, makeSelectPuzzleSetFunction, main_net_vs_setup, main_select_puzz, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, exit_game, training_setup
 
 local PLAYING = "playing" -- room states
 local CHARACTERSELECT = "character select" -- room states
@@ -32,8 +34,6 @@ local main_menu_last_index = 1
 local puzzle_menu_last_index = 3
 
 function fmainloop()
-  local func, arg = main_title, nil
-  
   while true do
     leftover_time = 1 / 120 -- prevents any left over time from getting big transitioning between menus
 ---@diagnostic disable-next-line: redundant-parameter
@@ -198,7 +198,7 @@ do
         end
       end
       
-      local fontHeight = get_global_font():getHeight()
+      local fontHeight = GraphicsUtil.getGlobalFont():getHeight()
       local infoYPosition = 705 - fontHeight/2
 
       local loveString = Game.loveVersionString()
@@ -536,6 +536,7 @@ local function createBasicTrainingMode(name, width, height)
 end
 
 function training_setup()
+  GAME.backgroundImage = themes[config.theme].images.bg_main
   local trainingModeSettings = {}
   trainingModeSettings.height = 1
   trainingModeSettings.width = 4
@@ -1147,7 +1148,7 @@ function main_net_vs_lobby()
       local noticeHeight = 0
       local button_padding = 4
       if noticeText ~= noticeLastText then
-        noticeTextObject = love.graphics.newText(get_global_font(), noticeText)
+        noticeTextObject = love.graphics.newText(GraphicsUtil.getGlobalFont(), noticeText)
         noticeHeight = noticeTextObject:getHeight() + (button_padding * 2)
         lobby_menu.yMin = lobby_menu_y + noticeHeight
         local menuHeight = (themes[config.theme].main_menu_y_max - lobby_menu.yMin)
@@ -1808,6 +1809,7 @@ end
 
 -- menu for setting the username
 function main_set_name()
+  GAME.backgroundImage = themes[config.theme].images.bg_main
   local name = config.name or ""
   love.keyboard.setTextInput(true) -- enables user to type
   while true do
@@ -1892,7 +1894,7 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX, keep
   local x = canvas_width / 2
   local y = canvas_height / 2
   local backgroundPadding = 10
-  local textObject = love.graphics.newText(get_global_font(), text)
+  local textObject = love.graphics.newText(GraphicsUtil.getGlobalFont(), text)
   local width = textObject:getWidth()
   local height = textObject:getHeight()
   
@@ -1931,7 +1933,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax, keepMusic, ar
   local timemin = 60 -- the minimum amount of frames the game over screen will be displayed for
 
   local t = 0 -- the amount of frames that have passed since the game over screen was displayed
-  local font = get_global_font()
+  local font = GraphicsUtil.getGlobalFont()
   local winnerTime = 60
 
   if SFX_GameOver_Play == 1 then

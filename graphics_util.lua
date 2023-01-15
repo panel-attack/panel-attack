@@ -343,7 +343,7 @@ local function privateMakeFont(fontPath, size)
 end
 
 -- Creates a new font based on the current font and a delta
-function get_global_font_with_size(fontSize)
+function GraphicsUtil.getGlobalFontWithSize(fontSize)
   local f = GraphicsUtil.fontCache[fontSize]
   if not f then
     f = privateMakeFont(GraphicsUtil.fontFile, fontSize)
@@ -356,19 +356,19 @@ function set_global_font(filepath, size)
   GraphicsUtil.fontCache = {}
   GraphicsUtil.fontFile = filepath
   GraphicsUtil.fontSize = size
-  local createdFont = get_global_font_with_size(size)
+  local createdFont = GraphicsUtil.getGlobalFontWithSize(size)
   love.graphics.setFont(createdFont)
 end
 
 -- Returns the current global font
-function get_global_font()
-  return get_global_font_with_size(GraphicsUtil.fontSize)
+function GraphicsUtil.getGlobalFont()
+  return GraphicsUtil.getGlobalFontWithSize(GraphicsUtil.fontSize)
 end
 
 -- Creates a new font based on the current font and a delta
 function get_font_delta(with_delta_size)
   local font_size = GraphicsUtil.fontSize + with_delta_size
-  return get_global_font_with_size(font_size)
+  return GraphicsUtil.getGlobalFontWithSize(font_size)
 end
 
 function set_font(font)
@@ -400,7 +400,7 @@ function gprintf(str, x, y, limit, halign, color, scale, font_delta_size)
   set_color(r,g,b,a)
   gfx_q:push({love.graphics.printf, {str, x, y, limit, halign, 0, scale}})
   if font_delta_size ~= 0 then
-    set_font(get_global_font())
+    set_font(GraphicsUtil.getGlobalFont())
   end
   set_color(1,1,1,1)
 end

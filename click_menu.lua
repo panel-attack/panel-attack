@@ -1,4 +1,4 @@
-require("graphics_util")
+local GraphicsUtil = require("graphics_util")
 local logger = require("logger")
 
 CLICK_MENUS = {} -- All click menus currently showing in the game
@@ -22,7 +22,7 @@ Click_menu =
     local menuXPosition = -100
     self.menu_controls = {
       up = {
-        text = love.graphics.newText(get_global_font(), "^"),
+        text = love.graphics.newText(GraphicsUtil.getGlobalFont(), "^"),
         x = menuXPosition,
         y = 10,
         w = 30,
@@ -31,7 +31,7 @@ Click_menu =
         visible = false
       },
       down = {
-        text = love.graphics.newText(get_global_font(), "v"),
+        text = love.graphics.newText(GraphicsUtil.getGlobalFont(), "v"),
         x = menuXPosition,
         y = 90,
         w = 30,
@@ -40,7 +40,7 @@ Click_menu =
         visible = false
       },
       left = {
-        text = love.graphics.newText(get_global_font(), "<"),
+        text = love.graphics.newText(GraphicsUtil.getGlobalFont(), "<"),
         x = menuXPosition - 35,
         y = 50,
         w = 30,
@@ -49,7 +49,7 @@ Click_menu =
         visible = false
       },
       right = {
-        text = love.graphics.newText(get_global_font(), ">"),
+        text = love.graphics.newText(GraphicsUtil.getGlobalFont(), ">"),
         x = menuXPosition + 35,
         y = 50,
         w = 30,
@@ -81,16 +81,16 @@ Click_menu =
 
 function Click_menu:reloadGraphics()
   for k, v in pairs(self.buttons) do
-    v.text = love.graphics.newText(get_global_font(), v.stringText)
+    v.text = love.graphics.newText(GraphicsUtil.getGlobalFont(), v.stringText)
     if v.currentSettingText then
-      v.current_setting = love.graphics.newText(get_global_font(), v.currentSettingText)
+      v.current_setting = love.graphics.newText(GraphicsUtil.getGlobalFont(), v.currentSettingText)
     end
   end
 end
 
 function Click_menu.add_button(self, string_text, selectFunction, escapeFunction, leftFunction, rightFunction)
   self.buttons[#self.buttons + 1] = {
-    text = love.graphics.newText(get_global_font(), string_text),
+    text = love.graphics.newText(GraphicsUtil.getGlobalFont(), string_text),
     stringText = string_text,
     currentSettingText = nil,
     x = 0,
@@ -118,13 +118,13 @@ end
 
 -- Sets the string for the menu text
 function Click_menu.set_button_text(self, button_idx, string)
-  self.buttons[button_idx].text = love.graphics.newText(get_global_font(), string)
+  self.buttons[button_idx].text = love.graphics.newText(GraphicsUtil.getGlobalFont(), string)
 end
 
 
 -- Sets the string to render to the right of the menu text
 function Click_menu.set_button_setting(self, button_idx, new_setting)
-  self.buttons[button_idx].current_setting = love.graphics.newText(get_global_font(), new_setting)
+  self.buttons[button_idx].current_setting = love.graphics.newText(GraphicsUtil.getGlobalFont(), new_setting)
   self.buttons[button_idx].currentSettingText = new_setting
 end
 

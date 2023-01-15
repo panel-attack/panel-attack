@@ -10,7 +10,7 @@ local consts = {
   RANDOM_STAGE_SPECIAL_VALUE = "__RandomStage",
   DEFAULT_INPUT_REPEAT_DELAY = 20,
   MOUSE_POINTER_TIMEOUT = 1.5, --seconds
-  KEY_NAMES = {"up", "down", "left", "right", "swap1", "swap2", "taunt_up", "taunt_down", "raise1", "raise2", "start"},
+  KEY_NAMES = {"Up", "Down", "Left", "Right", "Swap1", "Swap2", "TauntUp", "TauntDown", "Raise1", "Raise2", "Start"},
   FRAME_RATE = 1 / 60,
   KEY_DELAY = .25,
   KEY_REPEAT_PERIOD = .05,
@@ -55,8 +55,7 @@ default_input_repeat_delay = 20
 large_font = 10 -- large font base+10
 small_font = -3 -- small font base-3
 
-key_names = {"up", "down", "left", "right", "swap1",
-  "swap2", "taunt_up", "taunt_down", "raise1", "raise2", "pause"}
+key_names = {"Up", "Down", "Left", "Right", "Swap1", "Swap2", "TauntUp", "TauntDown", "Raise1", "Raise2", "Start"}
 
 -- frames to use for bounce animation
 bounce_table = {1, 1, 1, 1,
