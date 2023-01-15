@@ -149,23 +149,23 @@ end
 function inputManager:updateKeyStates(dt, keys)
   currentDt = dt 
   for key, _ in pairs(keys.isDown) do 
-    if self.allKeys.isDown[key] == KEY_CHANGE.DETECTED then 
-      self.allKeys.isDown[key] = KEY_CHANGE.APPLIED  
+    if keys.isDown[key] == KEY_CHANGE.DETECTED then 
+      keys.isDown[key] = KEY_CHANGE.APPLIED  
     else 
-      self.allKeys.isDown[key] = KEY_CHANGE.NONE 
-      self.allKeys.isPressed[key] = dt 
+      keys.isDown[key] = KEY_CHANGE.NONE 
+      keys.isPressed[key] = dt 
     end 
   end 
  
   for key, _ in pairs(keys.isPressed) do 
-    self.allKeys.isPressed[key] = self.allKeys.isPressed[key] + dt 
+    keys.isPressed[key] = keys.isPressed[key] + dt 
   end 
    
   for key, _ in pairs(keys.isUp) do 
-    if self.allKeys.isUp[key] == KEY_CHANGE.DETECTED then 
-      self.allKeys.isUp[key] = KEY_CHANGE.APPLIED   
+    if keys.isUp[key] == KEY_CHANGE.DETECTED then 
+      keys.isUp[key] = KEY_CHANGE.APPLIED   
     else 
-      self.allKeys.isUp[key] = KEY_CHANGE.NONE 
+      keys.isUp[key] = KEY_CHANGE.NONE 
     end 
   end 
 end
@@ -220,7 +220,9 @@ function inputManager:update(dt)
 end 
 
 function inputManager:mousePressed(x, y, button)
-  self.mouse.isDown[button] = KEY_CHANGE.DETECTED
+  if not self.mouse.isDown[button] and not self.mouse.isPressed[button] then
+    self.mouse.isDown[button] = KEY_CHANGE.DETECTED
+  end
   self.mouse.x = x
   self.mouse.y = y
 end
@@ -228,7 +230,6 @@ end
 function inputManager:mouseReleased(x, y, button)
   self.mouse.isDown[button] = KEY_CHANGE.NONE
   self.mouse.isPressed[button] = KEY_CHANGE.NONE
-  self.allKeys.isPressed[button] = KEY_CHANGE.NONE 
   self.mouse.isUp[button] = KEY_CHANGE.DETECTED
   self.mouse.x = x
   self.mouse.y = y
@@ -273,7 +274,7 @@ local function convertButton(rawButton)
   
   button = {rawButton:match("axis(%d+)([%+|%-])")}
   if #button ~= 0 then
-    return string.format("%s%s%d", button[2], button[1] % 2 == 0 and "y"  or "x", math.ceil(button[1] / 2.0))
+    return string.format("%s%s%d", button[2] == "+" and "-"  or "+", button[1] % 2 == 0 and "y"  or "x", math.ceil(button[1] / 2.0))
   end
   
   return rawButton
