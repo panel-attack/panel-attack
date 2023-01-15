@@ -390,38 +390,38 @@ local function handle_pause(self)
 end
 
 local function addReplayStatisticsToReplay(replay)
-  if config.enable_analytics then
-    local r = replay[GAME.match.mode]
-    r.duration = GAME.match:gameEndedClockTime()
-    if GAME.match.mode == "vs" and P2 then
-      r.match_type = match_type
-      local p1GameResult = P1:gameResult()
-      if p1GameResult == 1 then
-        r.winner = P1.which
-      elseif p1GameResult == -1 then
-        r.winner = P2.which
-      elseif p1GameResult == 0 then
-        r.winner = "draw"
-      end
+  local r = replay[GAME.match.mode]
+  r.duration = GAME.match:gameEndedClockTime()
+  if GAME.match.mode == "vs" and P2 then
+    r.match_type = match_type
+    local p1GameResult = P1:gameResult()
+    if p1GameResult == 1 then
+      r.winner = P1.which
+    elseif p1GameResult == -1 then
+      r.winner = P2.which
+    elseif p1GameResult == 0 then
+      r.winner = 0
     end
-    r.playerStats = {}
-    
-    if P1 then
-      r.playerStats[P1.which].number = P1.which
-      r.playerStats[P1.which] = P1.analytic.data
-      r.playerStats[P1.which].score = P1.score
-      if GAME.match.mode == "vs" and GAME.match.room_ratings then
-        r.playerStats[P1.which].rating = GAME.match.room_ratings[P1.which]
-      end
+  end
+  r.playerStats = {}
+  
+  if P1 then
+    r.playerStats[P1.which] = {}
+    r.playerStats[P1.which].number = P1.which
+    r.playerStats[P1.which] = P1.analytic.data
+    r.playerStats[P1.which].score = P1.score
+    if GAME.match.mode == "vs" and GAME.match.room_ratings then
+      r.playerStats[P1.which].rating = GAME.match.room_ratings[P1.which]
     end
+  end
 
-    if P2 then
-      r.playerStats[P2.which].number = P2.which
-      r.playerStats[P2.which] = P2.analytic.data
-      r.playerStats[P2.which].score = P2.score
-      if GAME.match.mode == "vs" and GAME.match.room_ratings then
-        r.playerStats[P2.which].rating = GAME.match.room_ratings[P2.which]
-      end
+  if P2 then
+    r.playerStats[P2.which] = {}
+    r.playerStats[P2.which].number = P2.which
+    r.playerStats[P2.which] = P2.analytic.data
+    r.playerStats[P2.which].score = P2.score
+    if GAME.match.mode == "vs" and GAME.match.room_ratings then
+      r.playerStats[P2.which].rating = GAME.match.room_ratings[P2.which]
     end
   end
 
