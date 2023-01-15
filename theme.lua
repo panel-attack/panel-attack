@@ -39,44 +39,50 @@ Theme =
     self.sounds = {} -- theme sfx
     self.musics = {} -- theme music
     self.font = {} -- font
-    self.matchtypeLabel_Pos = {-40, -30} -- the position of the "match type" label
-    self.matchtypeLabel_Scale = 3 -- the scale size of the "match type" lavel
-    self.timeLabel_Pos = {-4, 2} -- the position of the timer label
-    self.timeLabel_Scale = 2 -- the scale size of the timer label
-    self.time_Pos = {26, 26} -- the position of the timer
-    self.time_Scale = 2 -- the scale size of the timer
-    self.name_Pos = {20, -30} -- the position of the name
-    self.moveLabel_Pos = {468, 170} -- the position of the move label
-    self.moveLabel_Scale = 2 -- the scale size of the move label
-    self.move_Pos = {40, 34} -- the position of the move
+
+    self.main_menu_screen_pos = {0, 0} -- the top center position of most menus
+    self.main_menu_y_max = 0
+    self.main_menu_max_height = 0
+    
+    -- All of the values below are placeholders, the real numbers are loaded from the default theme config file
+    self.matchtypeLabel_Pos = {0, 0} -- the position of the "match type" label
+    self.matchtypeLabel_Scale = 1 -- the scale size of the "match type" lavel
+    self.timeLabel_Pos = {0, 0}  -- the position of the timer label
+    self.timeLabel_Scale = 1 -- the scale size of the timer label
+    self.time_Pos = {0, 0}  -- the position of the timer
+    self.time_Scale = 1 -- the scale size of the timer
+    self.name_Pos = {0, 0}  -- the position of the name
+    self.moveLabel_Pos = {0, 0}  -- the position of the move label
+    self.moveLabel_Scale = 1 -- the scale size of the move label
+    self.move_Pos = {0, 0} -- the position of the move
     self.move_Scale = 1 -- the scale size of the move
-    self.scoreLabel_Pos = {104, 25} -- the position of the score label
-    self.scoreLabel_Scale = 2 -- the scale size of the score label
-    self.score_Pos = {116, 32} -- the position of the score
-    self.score_Scale = 1.5 -- the scale size of the score
-    self.speedLabel_Pos = {106, 42} -- the position of the speed label
-    self.speedLabel_Scale = 2 -- the scale size of the speed label
-    self.speed_Pos = {116, 48} -- the position of the speed
-    self.speed_Scale = 1.35 -- the scale size of the speed
-    self.levelLabel_Pos = {104, 58} -- the position of the level label
-    self.levelLabel_Scale = 2 -- the scale size of the level label
-    self.level_Pos = {112, 66} -- the position of the level
+    self.scoreLabel_Pos = {0, 0} -- the position of the score label
+    self.scoreLabel_Scale = 1 -- the scale size of the score label
+    self.score_Pos = {0, 0} -- the position of the score
+    self.score_Scale = 1 -- the scale size of the score
+    self.speedLabel_Pos = {0, 0} -- the position of the speed label
+    self.speedLabel_Scale = 1 -- the scale size of the speed label
+    self.speed_Pos = {0, 0} -- the position of the speed
+    self.speed_Scale = 1 -- the scale size of the speed
+    self.levelLabel_Pos = {0, 0} -- the position of the level label
+    self.levelLabel_Scale = 1 -- the scale size of the level label
+    self.level_Pos = {0, 0} -- the position of the level
     self.level_Scale = 1 -- the scale size of the level
-    self.winLabel_Pos = {10, 190} -- the position of the win label
-    self.winLabel_Scale = 2 -- the scale size of the win label
-    self.win_Pos = {40, 220} -- the position of the win counter
-    self.win_Scale = 2 -- the scale size of the win counter
-    self.ratingLabel_Pos = {5, 140} -- the position of the rating label
-    self.ratingLabel_Scale = 2 -- the scale size of the rating label
-    self.rating_Pos = {38, 160} -- the position of the rating value
+    self.winLabel_Pos = {0, 0} -- the position of the win label
+    self.winLabel_Scale = 1 -- the scale size of the win label
+    self.win_Pos = {0, 0} -- the position of the win counter
+    self.win_Scale = 1 -- the scale size of the win counter
+    self.ratingLabel_Pos = {0, 0} -- the position of the rating label
+    self.ratingLabel_Scale = 1 -- the scale size of the rating label
+    self.rating_Pos = {0, 0} -- the position of the rating value
     self.rating_Scale = 1 -- the scale size of the rating value
-    self.spectators_Pos = {547, 460} -- the position of the spectator list
-    self.healthbar_frame_Pos = {-17, -4} -- the position of the healthbar frame
-    self.healthbar_frame_Scale = 3 -- the scale size of the healthbar frame
-    self.healthbar_Pos = {-13, 148} -- the position of the healthbar
+    self.spectators_Pos = {0, 0} -- the position of the spectator list
+    self.healthbar_frame_Pos = {0, 0} -- the position of the healthbar frame
+    self.healthbar_frame_Scale = 1 -- the scale size of the healthbar frame
+    self.healthbar_Pos = {0, 0} -- the position of the healthbar
     self.healthbar_Scale = 1 -- the scale size of the healthbar
     self.healthbar_Rotate = 0 -- the rotation of the healthbar
-    self.multibar_Pos = {-13, 96} -- the position of the multibar
+    self.multibar_Pos = {0, 0} -- the position of the multibar
     self.multibar_Scale = 1 -- the scale size of the multibar
     self.multibar_is_absolute = false -- if the multibar should render in absolute scale
     self.bg_title_is_tiled = false -- if the image should tile (default is stretch)
@@ -91,10 +97,6 @@ Theme =
     self.bg_readme_is_tiled = false -- if the image should tile (default is stretch)
     self.bg_readme_speed_x = 0
     self.bg_readme_speed_y = 0
-    self.main_menu_screen_pos = {0, 0} -- the top center position of most menus
-    self.main_menu_y_max = 0
-    self.main_menu_max_height = 0
-    self.main_meny_y_center = 0
   end
 )
 
@@ -351,12 +353,26 @@ end
 -- initializes theme using the json settings
 function Theme.json_init(self)
   local read_data = {}
-  local config_file, err = love.filesystem.newFile("themes/" .. config.theme .. "/config.json", "r")
+  
+  -- First read the default theme json
+  local config_file, err = love.filesystem.newFile("themes/" .. consts.DEFAULT_THEME_DIRECTORY .. "/config.json", "r")
   if config_file then
     local teh_json = config_file:read(config_file:getSize())
     config_file:close()
     for k, v in pairs(json.decode(teh_json)) do
       read_data[k] = v
+    end
+  end
+
+  -- Then override with custom theme
+  if config.theme ~= consts.DEFAULT_THEME_DIRECTORY then
+    local config_file, err = love.filesystem.newFile("themes/" .. config.theme .. "/config.json", "r")
+    if config_file then
+      local teh_json = config_file:read(config_file:getSize())
+      config_file:close()
+      for k, v in pairs(json.decode(teh_json)) do
+        read_data[k] = v
+      end
     end
   end
 
