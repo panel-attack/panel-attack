@@ -24,12 +24,13 @@ main_menu_screen_pos = GAME.main_menu_screen_pos
 ClickMenu = require("ClickMenu")
 
 require("match")
+local RunTimeGraph = require("RunTimeGraph")
 require("BattleRoom")
 require("util")
 require("FileUtil")
 
 require("globals")
-require("character") -- after globals!
+require("character_loader") -- after globals!
 require("stage") -- after globals!
 
 require("localization")
@@ -57,6 +58,7 @@ require("gen_panels")
 require("panels")
 require("Theme")
 require("dump")
+local utf8 = require("utf8")
 require("computerPlayers.computerPlayer")
 
 if PROFILING_ENABLED then
@@ -66,8 +68,34 @@ end
 GAME.scores = require("scores")
 GAME.rich_presence = RichPresence()
 
+local runTimeGraph = nil
+local runMetrics = {
+  previousSleepEnd = 0,
+  dt = 0,
+  sleepDuration = 0,
+  updateDuration = 0,
+  drawDuration = 0,
+  presentDuration = 0
+}
+
 local prev_time = 0
-local sleep_ratio = .9
+
+-- Sleeps just the right amount of time to make our next update step be one frame long.
+-- If we have leftover time that hasn't been run yet, it will sleep less to catchup.
+local function customSleep()
+  local sleep_ratio = .9
+  local current_time = love.timer.getTime()
+  local wait_time = (prev_time + consts.FRAME_RATE - current_time) * sleep_ratio
+  if love.timer and wait_time > 0 then 
+    love.timer.sleep(wait_time) 
+  end
+  current_time = love.timer.getTime()
+  while prev_time + consts.FRAME_RATE > current_time do
+    current_time = love.timer.getTime()
+  end
+  prev_time = current_time
+end
+
 function love.run()
 	if love.load then love.load(love.arg.parseGameArguments(arg), arg) end
 
@@ -78,16 +106,7 @@ function love.run()
 
   -- Main loop time.
 	return function()
-    local current_time = love.timer.getTime()
-    local wait_time = (prev_time + consts.FRAME_RATE - current_time) * sleep_ratio
-    if love.timer and wait_time > 0 then 
-      love.timer.sleep(wait_time) 
-    end
-    current_time = love.timer.getTime()
-    while prev_time + consts.FRAME_RATE > current_time do
-      current_time = love.timer.getTime()
-    end
-    prev_time = current_time
+    customSleep()
   
     -- Process events.
     if love.event then
@@ -160,11 +179,25 @@ function love.update(dt)
   buttonManager.update()
   inputFieldManager.update()
 
+  if config.show_fps and config.debug_mode then
+    if runTimeGraph == nil then
+      runTimeGraph = RunTimeGraph()
+    end
+  else
+    runTimeGraph = nil
+  end
+  
   GAME:update(dt)
 end
 
 -- Called whenever the game needs to draw.
 function love.draw()
+  if config ~= nil and config.show_fps then
+    if runTimeGraph then
+      runTimeGraph:draw()
+    end
+  end
+
   GAME:draw()
 end
 
@@ -209,3 +242,146 @@ end
 -- local _x, _y = GAME:transform_coordinates(x, y)
 -- click_or_tap(_x, _y, {id = id, x = _x, y = _y, dx = dx, dy = dy, pressure = pressure})
 -- end
+
+function love.errorhandler(msg)
+
+  if not love.window or not love.graphics or not love.event then
+    return
+  end
+
+  if not love.graphics.isCreated() or not love.window.isOpen() then
+    local success, status = pcall(love.window.setMode, 800, 600)
+    if not success or not status then
+      return
+    end
+  end
+
+  msg = tostring(msg)
+  local sanitizedMessageLines = {}
+  for char in msg:gmatch(utf8.charpattern) do
+    table.insert(sanitizedMessageLines, char)
+  end
+  local sanitizedMessage = table.concat(sanitizedMessageLines)
+
+  local trace = GAME.crashTrace or debug.traceback("", 3)
+  local traceLines = {}
+  for l in trace:gmatch("(.-)\n") do
+    if not l:match("boot.lua") and not l:match("stack traceback:") then
+      table.insert(traceLines, l)
+    end
+  end
+  local sanitizedTrace = table.concat(traceLines, "\n")
+  
+  local errorData = GAME.errorData(sanitizedMessage, sanitizedTrace)
+  local detailedErrorLogString = GAME.detailedErrorLogString(errorData)
+  errorData.detailedErrorLogString = detailedErrorLogString
+  if GAME_UPDATER_GAME_VERSION then
+    send_error_report(errorData)
+  end
+
+  local errorLines = {}
+  table.insert(errorLines, "Error\n")
+  table.insert(errorLines, detailedErrorLogString)
+  if #sanitizedMessage ~= #msg then
+    table.insert(errorLines, "Invalid UTF-8 string in error message.")
+  end
+  table.insert(errorLines, "\n")
+
+  local messageToDraw = table.concat(errorLines, "\n")
+  messageToDraw = messageToDraw:gsub("\t", "    ")
+  messageToDraw = messageToDraw:gsub("%[string \"(.-)\"%]", "%1")
+
+  print(messageToDraw)
+
+  -- Reset state.
+  if love.mouse then
+    love.mouse.setVisible(true)
+    love.mouse.setGrabbed(false)
+    love.mouse.setRelativeMode(false)
+    if love.mouse.isCursorSupported() then
+      love.mouse.setCursor()
+    end
+  end
+  if love.joystick then
+    -- Stop all joystick vibrations.
+    for i, v in ipairs(love.joystick.getJoysticks()) do
+      v:setVibration()
+    end
+  end
+  if love.audio then
+    love.audio.stop()
+  end
+
+  love.graphics.reset()
+  love.graphics.setFont(get_font_delta(4))
+  love.graphics.setColor(1, 1, 1)
+  love.graphics.origin()
+
+  local scale = 1
+  if GAME then
+    scale = GAME:newCanvasSnappedScale()
+    love.graphics.scale(scale, scale)
+  end
+
+  local function draw()
+    if not love.graphics.isActive() then
+      return
+    end
+
+    love.graphics.clear(love.graphics.getBackgroundColor())
+    local positionX = 40
+    local positionY = positionX
+    love.graphics.printf(messageToDraw, positionX, positionY, love.graphics.getWidth() - positionX)
+
+    love.graphics.present()
+  end
+
+  local fullErrorText = messageToDraw
+  local function copyToClipboard()
+    if not love.system then
+      return
+    end
+    love.system.setClipboardText(fullErrorText)
+    messageToDraw = messageToDraw .. "\nCopied to clipboard!"
+  end
+
+  if love.system then
+    messageToDraw = messageToDraw .. "\n\nPress Ctrl+C or tap to copy this error"
+  end
+
+  return function()
+    love.event.pump()
+
+    for e, a, b, c in love.event.poll() do
+      if e == "quit" then
+        return 1
+      elseif e == "keypressed" and a == "escape" then
+        return 1
+      elseif e == "keypressed" and a == "c" and love.keyboard.isDown("lctrl", "rctrl") then
+        copyToClipboard()
+      elseif e == "touchpressed" then
+        local name = love.window.getTitle()
+        if #name == 0 or name == "Untitled" then
+          name = "Game"
+        end
+        local buttons = {"OK", "Cancel"}
+        if love.system then
+          buttons[3] = "Copy to clipboard"
+        end
+        local pressed = love.window.showMessageBox("Quit " .. name .. "?", "", buttons)
+        if pressed == 1 then
+          return 1
+        elseif pressed == 3 then
+          copyToClipboard()
+        end
+      end
+    end
+
+    draw()
+
+    if love.timer then
+      love.timer.sleep(0.1)
+    end
+  end
+
+end

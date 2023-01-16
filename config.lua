@@ -1,6 +1,5 @@
 local util = require("util")
 local consts = require("consts")
-json = require("dkjson")
 
 ---@module config
 -- Default configuration values
@@ -11,14 +10,12 @@ local config = {
   -- Lang used for localization
   language_code                 = "EN",
 
-  theme                         = consts.DEFAULT_THEME_DIR,
+  theme                         = consts.DEFAULT_THEME_DIRECTORY,
   panels                     	  = nil,
   character                     = consts.RANDOM_CHARACTER_SPECIAL_VALUE,
   stage                         = consts.RANDOM_STAGE_SPECIAL_VALUE,
 
   ranked                        = true,
-
-  vsync                         = false,
 
   use_music_from                = "either",
   -- Level (2P modes / 1P vs yourself mode)
@@ -38,6 +35,7 @@ local config = {
   music_volume                  = 100,
   -- Debug mode flag
   debug_mode                    = false,
+  debugShowServers              = false,
   -- Show FPS in the top-left corner of the screen
   show_fps                      = false,
   -- Show ingame infos while playing the game
@@ -69,7 +67,6 @@ local config = {
   windowHeight                  = consts.CANVAS_HEIGHT,
   borderless                    = false,
   fullscreen                    = false,
-  vsync                         = 1,
   display                       = 1,
   windowX                       = nil,
   windowY                       = nil,

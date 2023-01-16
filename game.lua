@@ -8,6 +8,7 @@ local logger = require("logger")
 local sound = require("sound")
 local Localization = require("Localization")
 local analytics = require("analytics")
+local manualGC = require("libraries.batteries.manual_gc")
 local sceneManager = require("scenes.sceneManager")
 local scenes = nil
 
@@ -57,7 +58,7 @@ local Game = class(
     self.needsAssetReload = false
     self.previousWindowWidth = 0
     self.previousWindowHeight = 0
-
+    self.crashTrace = nil -- set to the trace of your thread before throwing an error if you use a coroutine
     -- private members
     self.pointer_hidden = false
     self.last_x = 0
@@ -203,7 +204,11 @@ function Game:update(dt)
     end
   end
 
-  leftover_time = leftover_time + dt
+  if sceneManager.activeScene == nil then
+    leftover_time = leftover_time + dt
+  else
+    leftover_time = 0
+  end
   
   if self.backgroundImage then
     self.backgroundImage:update(dt)
@@ -220,16 +225,18 @@ function Game:update(dt)
     self.showGameScale = true
   end
   
-  local status, err = nil
+  local status, err = nil, nil
   if coroutine.status(self.setup) ~= "dead" then
     status, err = coroutine.resume(self.setup)
     -- loading bar setup finished
-    if status and coroutine.status(self.setup) == "dead"  then
+    if status and coroutine.status(self.setup) == "dead" then
       self:postSetup()
       -- Run all unit tests now that we have everything loaded
       if TESTS_ENABLED then
         unitTests()
       end
+    elseif not status then
+      self.crashTrace = debug.traceback(self.setup)
     end
   elseif sceneManager.activeScene then
     sceneManager.activeScene:update(dt)
@@ -243,14 +250,13 @@ function Game:update(dt)
     status = true
   else
     status, err = coroutine.resume(mainloop)
+    if not status then
+      self.crashTrace = debug.traceback(mainloop)
+    end
   end
   
   if not status then
-    local errorData = self:errorData(err, debug.traceback(mainloop))
-    if GAME_UPDATER_GAME_VERSION then
-      send_error_report(errorData)
-    end
-    error(err .. "\n\n" .. dump(errorData))
+    error(err)
   end
   if self.server_queue and self.server_queue:size() > 0 then
     logger.trace("Queue Size: " .. self.server_queue:size() .. " Data:" .. self.server_queue:to_short_string())
@@ -259,6 +265,8 @@ function Game:update(dt)
 
   update_music()
   self.rich_presence:runCallbacks()
+  
+  manualGC(0.0001, nil, nil)
 end
 
 function Game:draw()
@@ -300,22 +308,17 @@ function Game:draw()
     love.graphics.printf(scaleString, GraphicsUtil.getGlobalFontWithSize(30), 5, 5, 2000, "left")
   end
 
+  if DEBUG_ENABLED and love.system.getOS() == "Android" then
+    local saveDir = love.filesystem.getSaveDirectory()
+    love.graphics.printf(saveDir, get_global_font_with_size(30), 5, 50, 2000, "left")
+  end
+
   love.graphics.setCanvas() -- render everything thats been added
   love.graphics.clear(love.graphics.getBackgroundColor()) -- clear in preperation for the next render
   
   love.graphics.setBlendMode("alpha", "premultiplied")
   love.graphics.draw(self.globalCanvas, self.canvasX, self.canvasY, 0, self.canvasXScale, self.canvasYScale)
   love.graphics.setBlendMode("alpha", "alphamultiply")
-  
-  if self.showGameScale or config.debug_mode then
-    local scaleString = "Scale: " .. self.canvasXScale .. " (" .. canvas_width * self.canvasXScale .. " x " .. canvas_height * self.canvasYScale .. ")"
-    local newPixelWidth = love.graphics.getWidth()
-
-    if canvas_width * self.canvasXScale > newPixelWidth then
-      scaleString = scaleString .. " Clipped "
-    end
-    love.graphics.printf(scaleString, GraphicsUtil.getGlobalFontWithSize(30), 5, 5, 2000, "left")
-  end
 
   -- draw background and its overlay
   if sceneManager.activeScene then
@@ -333,7 +336,10 @@ function Game:draw()
 end
 
 function Game:clearMatch()
-  self.match = nil
+  if self.match then
+    self.match:deinit()
+    self.match = nil
+  end
   self.gameIsPaused = false
   self.renderDuringPause = false
   self.preventSounds = false
@@ -345,19 +351,40 @@ end
 
 function Game:errorData(errorString, traceBack)
   local system_info = "OS: " .. love.system.getOS()
-  local loveVersion = self.loveVersionStringValue
-  
+  local loveVersion = self.loveVersionStringValue or "Unknown"
+  local username = config.name or "Unknown"
+  local buildVersion = GAME_UPDATER_GAME_VERSION or "Unknown"
+  local systemInfo = system_info or "Unknown"
+
   local errorData = { 
       stack = traceBack,
-      name = config.name or "Unknown",
+      name = username,
       error = errorString,
       engine_version = VERSION,
-      release_version = GAME_UPDATER_GAME_VERSION or "Unknown",
-      operating_system = system_info or "Unknown",
-      love_version = loveVersion or "Unknown"
+      release_version = buildVersion,
+      operating_system = systemInfo,
+      love_version = loveVersion
     }
 
   return errorData
+end
+
+function Game.detailedErrorLogString(errorData)
+  local newLine = "\n"
+  local now = os.date("*t", to_UTC(os.time()))
+  local formattedTime = string.format("%04d-%02d-%02d %02d:%02d:%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
+
+  local detailedErrorLogString = 
+    "Stack Trace: " .. errorData.stack .. newLine ..
+    "Username: " .. errorData.name .. newLine ..
+    "Error Message: " .. errorData.error .. newLine ..
+    "Engine Version: " .. errorData.engine_version .. newLine ..
+    "Build Version: " .. errorData.release_version .. newLine ..
+    "Operating System: " .. errorData.operating_system .. newLine ..
+    "Love Version: " .. errorData.love_version .. newLine .. 
+    "UTC Time: " .. formattedTime
+
+  return detailedErrorLogString
 end
 
 function Game:loveVersionString()

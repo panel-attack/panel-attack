@@ -167,10 +167,14 @@ function BasicMenu:update()
     local xPosition2 = xPosition1 + 150
     local yPosition = 270
   
-    draw_pixel_font("last lines", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition, 0.5, 1.0)
-    draw_pixel_font(lastScore,    themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition + 24, 0.5, 1.0)
-    draw_pixel_font("record",     themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition, 0.5, 1.0)
-    draw_pixel_font(record,       themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition + 24, 0.5, 1.0)
+    local lastScoreLabelQuads = {}
+    local lastScoreQuads = {}
+    local recordLabelQuads = {}
+    local recordQuads = {}
+    draw_pixel_font("last score", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition, 0.5, 1.0, nil, nil, lastScoreLabelQuads)
+    draw_pixel_font(lastScore, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition + 24, 0.5, 1.0, nil, nil, lastScoreQuads)
+    draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition, 0.5, 1.0, nil, nil, recordLabelQuads)
+    draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition + 24, 0.5, 1.0, nil, nil, recordQuads)
   
     self.classic_menu:update()
     self.classic_menu:draw()
@@ -181,7 +185,7 @@ function BasicMenu:update()
   
 end
 
-function BasicMenu:unload()  
+function BasicMenu:unload() 
   if self.type_buttons.value == "Classic" then
     self.classic_menu:setVisibility(false)
   else

@@ -6,7 +6,7 @@ local save_replays_values = {["with my name"] = true, anonymously = true, ["not 
 --@module config_metadata
 local config_metadata = {
   isValid = {
-    theme = function(value) return love.filesystem.getInfo("themes/" .. value) end,
+    theme = function(value) return love.filesystem.getInfo("themes/" .. value .. "/config.json") end,
     use_music_from = function(value) return use_music_from_values[value] end,
     save_replays_publicly = function(value) return save_replays_values[value] end
   },

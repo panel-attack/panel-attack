@@ -15,7 +15,7 @@ Input =
     for i = 1, self.maxConfigurations do
       self.inputConfigurations[#self.inputConfigurations+1] = {}
     end
-    self.inputConfigurations[1] = {up="up", down="down", left="left", right="right", swap1="z", swap2="x", taunt_up="y", taunt_down="u", raise1="c", raise2="v", pause="p"}
+    self.inputConfigurations[1] = {Up="up", Down="down", Left="left", Right="right", Swap1="z", Swap2="x", TauntUp="y", TauntDown="u", Raise1="c", Raise2="v", Start="p"}
     self.playerInputConfigurationsMap = {} -- playerNumber -> table of all inputConfigurations assigned to that player
     self.acceptingPlayerInputConfigurationAssignments = false -- If true the next inputs that come in will assign to the next player that doesn't have assignments
     self.availableInputConfigurationsToAssign = nil -- the list of available input configurations to assign, only valid while acceptingPlayerInputConfigurationAssignments is set
@@ -155,7 +155,7 @@ function Input.cleanNameForButton(self, buttonString)
   end
 
   if not result then
-    -- Match any number of letters, numbers, and # followed by a dash and replace with "Unplogged Controller"
+    -- Match any number of letters, numbers, and # followed by a dash and replace with "Unplugged Controller"
     local resultString, count = string.gsub(buttonString, "^([%w%d%#]+%-)(.*)$", "Unplugged Controller %2")
     if count > 0 then
       result = resultString
@@ -225,7 +225,7 @@ function love.keypressed(key, scancode, rep)
     inputManager:keyPressed(key, scancode, rep)
   end
   local function handleFullscreenToggle()
-    if key == "return" and not rep and love.keyboard.isDown("lalt") then
+    if key == "return" and not rep and (love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt")) then
       love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
       return true
     end
@@ -279,11 +279,33 @@ function love.keypressed(key, scancode, rep)
       end
     end
   end
+
+  local function modifyWinCounts()
+    if GAME.battleRoom and (love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt")) then
+      if key == "1" then -- Add to P1's win count
+        GAME.battleRoom.modifiedWinCounts[1] = math.max(0, GAME.battleRoom.modifiedWinCounts[1] + 1)
+      end
+      if key == "2" then -- Subtract from P1's win count
+        GAME.battleRoom.modifiedWinCounts[1] = math.max(0, GAME.battleRoom.modifiedWinCounts[1] - 1)
+      end
+      if key == "3" then -- Add to P2's win count
+        GAME.battleRoom.modifiedWinCounts[2] = math.max(0, GAME.battleRoom.modifiedWinCounts[2] + 1)
+      end
+      if key == "4" then -- Subtract from P2's win count
+        GAME.battleRoom.modifiedWinCounts[2] = math.max(0, GAME.battleRoom.modifiedWinCounts[2] - 1)
+      end
+      if key == "5" then -- Reset key
+        GAME.battleRoom.modifiedWinCounts[1] = 0
+        GAME.battleRoom.modifiedWinCounts[2] = 0
+      end
+    end
+  end
   
   if handleFullscreenToggle() or
      handleScreenshot() or
      handleCopy() or
-     handleDumpAttackPattern() then
+     handleDumpAttackPattern() or
+     modifyWinCounts() then
     return
   end
 
@@ -368,14 +390,10 @@ end
 
 -- Requests the next inputs assign configurations to players, up to the number of players passed in
 function Input.requestPlayerInputConfigurationAssignments(self, numberOfPlayers)
-  if numberOfPlayers == 1 then
-    self.playerInputConfigurationsMap[1] = self.inputConfigurations
-  else
-    if #input.playerInputConfigurationsMap < numberOfPlayers then
-      self.acceptingPlayerInputConfigurationAssignments = true
-      self.availableInputConfigurationsToAssign = deepcpy(self.inputConfigurations)
-      self.numberOfPlayersAcceptingInputConfiguration = numberOfPlayers
-    end
+  if #input.playerInputConfigurationsMap < numberOfPlayers then
+    self.acceptingPlayerInputConfigurationAssignments = true
+    self.availableInputConfigurationsToAssign = deepcpy(self.inputConfigurations)
+    self.numberOfPlayersAcceptingInputConfiguration = numberOfPlayers
   end
 end
 
@@ -406,6 +424,18 @@ function Input.getInputConfigurationsForPlayerNumber(self, playerNumber)
   return results
 end
 
+function Input.requestSingleInputConfigurationForPlayerCount(self, playerCount)
+  if playerCount == nil then
+    playerCount = 1
+  end
+  self:clearInputConfigurationsForPlayers()
+  self:requestPlayerInputConfigurationAssignments(playerCount)
+end
+
+function Input.allowAllInputConfigurations(self)
+  self.playerInputConfigurationsMap[1] = self.inputConfigurations
+end
+
 -- Makes a function that will return true if one of the fixed keys or configurable keys was pressed for the passed in player.
 -- Also returns the sound effect callback function
 -- fixed -- the set of key names that always work
@@ -432,7 +462,7 @@ local function input_key_func(fixed, configurable, query, sound, ...)
     end
 
     for i = 1, #configurable do
-      for index, inputConfiguration in ipairs(input:getInputConfigurationsForPlayerNumber(playerNumber)) do
+      for _, inputConfiguration in ipairs(input:getInputConfigurationsForPlayerNumber(playerNumber)) do
         local keyname = inputConfiguration[configurable[i]]
         if keyname then
           res = res or query(keyname, other_args) and not menu_reserved_keys[keyname]
@@ -474,7 +504,7 @@ local function get_being_pressed_for_duration_ratio(fixed, configurable, time)
   end
 end
 
-menu_reserved_keys = {"up", "down", "left", "right", "escape", "x", "pageup", "pagedown", "backspace", "return", "kenter", "z"}
+menu_reserved_keys = {"up", "down", "left", "right", "escape", "x", "pageup", "pagedown", "backspace", "return", "kpenter", "z"}
 menu_up =
   input_key_func(
   {"up"},
@@ -541,7 +571,7 @@ menu_next_page =
 menu_backspace = input_key_func({"backspace"}, {"backspace"}, repeating_key)
 menu_long_enter =
   input_key_func(
-  {"return", "kenter", "z"},
+  {"return", "kpenter", "z"},
   {"swap1"},
   released_key_after_time,
   function()
@@ -551,7 +581,7 @@ menu_long_enter =
 )
 menu_enter =
   input_key_func(
-  {"return", "kenter", "z"},
+  {"return", "kpenter", "z"},
   {"swap1"},
   released_key_before_time,
   function()
@@ -561,7 +591,7 @@ menu_enter =
 )
 menu_enter_one_press =
   input_key_func(
-  {"return", "kenter", "z"},
+  {"return", "kpenter", "z"},
   {"swap1"},
   released_key,
   function()
@@ -571,7 +601,7 @@ menu_enter_one_press =
 )
 menu_pause =
   input_key_func(
-  {"return", "kenter"},
+  {"return", "kpenter"},
   {"pause"},
   normal_key,
   function()
@@ -580,7 +610,7 @@ menu_pause =
 )
 menu_return_once =
   input_key_func(
-  {"return", "kenter"},
+  {"return", "kpenter"},
   {},
   released_key_before_time,
   function()
@@ -591,7 +621,7 @@ menu_return_once =
 menu_advance_frame =
   input_key_func(
   {},
-  {"swap1"},
+  {"Swap1"},
   normal_key,
   function()
     return nil
@@ -601,7 +631,7 @@ menu_advance_frame =
 player_reset =
   input_key_func(
   {},
-  {"taunt_down", "taunt_up"},
+  {"TauntDown", "TauntUp"},
   normal_key,
   function()
     return themes[config.theme].sounds.menu_cancel
@@ -611,56 +641,56 @@ player_reset =
 player_taunt_up =
   input_key_func(
   {},
-  {"taunt_up"},
+  {"TauntUp"},
   normal_key,
   nil
 )
 player_taunt_down =
   input_key_func(
   {},
-  {"taunt_down"},
+  {"TauntDown"},
   normal_key,
   nil
 )
 player_raise =
   input_key_func(
   {},
-  {"raise1", "raise2"},
+  {"Raise1", "Raise2"},
   key_is_down,
   nil
 )
 player_swap =
   input_key_func(
   {},
-  {"swap1", "swap2"},
+  {"Swap1", "Swap2"},
   normal_key,
   nil
 )
 player_up =
   input_key_func(
   {},
-  {"up"},
+  {"Up"},
   key_is_down,
   nil
 )
 player_down =
   input_key_func(
   {},
-  {"down"},
+  {"Down"},
   key_is_down,
   nil
 )
 player_left =
   input_key_func(
   {},
-  {"left"},
+  {"Left"},
   key_is_down,
   nil
 )
 player_right =
   input_key_func(
   {},
-  {"right"},
+  {"Right"},
   key_is_down,
   nil
 )
@@ -673,6 +703,6 @@ function menu_escape_game()
   return false
 end
 
-select_being_pressed_ratio = get_being_pressed_for_duration_ratio({"return", "kenter", "z"}, {"swap1"}, super_selection_duration)
+select_being_pressed_ratio = get_being_pressed_for_duration_ratio({"return", "kpenter", "z"}, {"swap1"}, super_selection_duration)
 
 return input

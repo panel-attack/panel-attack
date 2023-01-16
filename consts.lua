@@ -5,7 +5,7 @@ local consts = {
   VERSION = "046",
   CANVAS_WIDTH = 1280,
   CANVAS_HEIGHT = 720,
-  DEFAULT_THEME_DIR = "Panel Attack",
+  DEFAULT_THEME_DIRECTORY = "Panel Attack Modern",
   RANDOM_CHARACTER_SPECIAL_VALUE = "__RandomCharacter",
   RANDOM_STAGE_SPECIAL_VALUE = "__RandomStage",
   DEFAULT_INPUT_REPEAT_DELAY = 20,
@@ -13,7 +13,7 @@ local consts = {
   KEY_NAMES = {"Up", "Down", "Left", "Right", "Swap1", "Swap2", "TauntUp", "TauntDown", "Raise1", "Raise2", "Start"},
   FRAME_RATE = 1 / 60,
   KEY_DELAY = .25,
-  KEY_REPEAT_PERIOD = .05
+  KEY_REPEAT_PERIOD = .05,
 }
 
 -- TODO: Move all values below to the above table
@@ -34,8 +34,6 @@ super_selection_enable_ratio = 0.3 -- ratio at which super enable is considered 
 assert(super_selection_enable_ratio<1.0,"")
 
 prefix_of_ignored_dirs = "__"
-
-default_theme_dir = "Panel Attack"
 
 default_characters_folders = {"lip", "windy", "sherbet", "thiana", "ruby",
               "elias", "flare", "neris", "seren", "phoenix", 
@@ -226,14 +224,7 @@ colors = {  red     = {220/255, 50/255,  47/255 },
             black   = {20/255,  20/255,  20/255 },
             dgray   = {28/255,  28/255,  28/255 }}
 
-e_chain_or_combo = { combo=0, chain=1 }
-            
-panel_color_number_to_upper = {"A", "B", "C", "D", "E", "F", "G", "H",[0]="0"}
-panel_color_number_to_lower = {"a", "b", "c", "d", "e", "f", "g", "h",[0]="0"}
-panel_color_to_number = { ["A"]=1, ["B"]=2, ["C"]=3, ["D"]=4, ["E"]=5, ["F"]=6, ["G"]=7, ["H"]=8,
-                          ["a"]=1, ["b"]=2, ["c"]=3, ["d"]=4, ["e"]=5, ["f"]=6, ["g"]=7, ["h"]=8,
-                          ["1"]=1, ["2"]=2, ["3"]=3, ["4"]=4, ["5"]=5, ["6"]=6, ["7"]=7, ["8"]=8,
-                          ["0"]=0}
+e_chain_or_combo = { combo=0, chain=1, shock=2 }
 
 garbage_to_shake_time = {
   [0] = 0,

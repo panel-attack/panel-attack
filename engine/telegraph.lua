@@ -82,7 +82,7 @@ function Telegraph.saveClone(toSave)
   clone_pool[#clone_pool + 1] = toSave
 end
 
-function Telegraph.rollbackCopy(self, source, other)
+function Telegraph.rollbackCopy(source, other)
   if other == nil then
     if #clone_pool == 0 then
       other = Telegraph(source.sender, source.owner)
@@ -358,7 +358,7 @@ function Telegraph:render()
               garbage_block.origin_y = (11-attack.origin_row) * 16 + telegraph_to_render.sender.pos_y + telegraph_to_render.sender.displacement - card_animation[#card_animation]
               garbage_block.x = garbage_block.origin_x
               garbage_block.y = garbage_block.origin_y
-              garbage_block.direction = garbage_block.direction or sign(garbage_block.destination_x - garbage_block.origin_x) --should give -1 for left, or 1 for right
+              garbage_block.direction = garbage_block.direction or math.sign(garbage_block.destination_x - garbage_block.origin_x) --should give -1 for left, or 1 for right
             end
 
             if frames_since_earned <= self:attackStartFrame() + #telegraph_attack_animation_speed then
@@ -392,6 +392,8 @@ function Telegraph:render()
     
     -- Render if we are "currently chaining" for debug purposes
     if config.debug_mode and telegraph_to_render.senderCurrentlyChaining then
+      local orig_atk_w, orig_atk_h = characters[senderCharacter].telegraph_garbage_images["attack"]:getDimensions()
+      local atk_scale = 16 / math.max(orig_atk_w, orig_atk_h) -- keep image ratio
       draw(characters[senderCharacter].telegraph_garbage_images["attack"], telegraph_to_render:telegraphRenderXPosition(-1), telegraph_to_render.pos_y, 0, atk_scale, atk_scale)
     end
 

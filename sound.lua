@@ -6,6 +6,8 @@ local sound = {}
 
 -- Sets the volumes based on the current player configuration settings
 function apply_config_volume()
+  GAME.muteSoundEffects = (config.master_volume == 0 or config.SFX_volume == 0)
+
   love.audio.setVolume(config.master_volume / 100)
   themes[config.theme]:apply_config_volume()
   for _, character in pairs(characters) do
@@ -124,6 +126,12 @@ function find_and_add_music(musics, music_type)
   end
   music_t[love.timer.getTime()] = make_music_t(start_music)
   music_t[love.timer.getTime() + start_music:getDuration()] = make_music_t(loop_music, true)
+end
+
+function stopIfPlaying(audioSource)
+  if audioSource:isPlaying() then
+    audioSource:stop()
+  end
 end
 
 return sound

@@ -9,7 +9,8 @@ require("consts")
 local GraphicsUtil = {
   fontFile = nil,
   fontSize = 12,
-  fontCache = {}
+  fontCache = {},
+  quadPool = {}
 }
 
 function GraphicsUtil.privateLoadImage(path_and_name)
@@ -159,6 +160,7 @@ local function drawPixelFontWithMap(string, atlas, font_map, x, y, x_scale, y_sc
   y_scale = y_scale or 1
   align = align or "left"
   font_map = font_map or standard_pixel_font_map
+  assert(quads ~= nil)
 
   local atlasFrameCount = tableUtils.length(font_map)
   local atlasWidth = atlas:getWidth()
@@ -173,10 +175,8 @@ local function drawPixelFontWithMap(string, atlas, font_map, x, y, x_scale, y_sc
     return 
   end
 
-  quads = quads or {}
-
   while #quads < #string do
-    table.insert(quads, love.graphics.newQuad(0, 0, characterWidth, characterHeight, atlasWidth, atlasHeight))
+    table.insert(quads, GraphicsUtil:newRecycledQuad(0, 0, characterWidth, characterHeight, atlasWidth, atlasHeight))
   end
 
   for i = 1, #string, 1 do
@@ -220,6 +220,31 @@ end
 -- atlas - the image to use as the pixel font
 function draw_pixel_font(string, atlas, x, y, x_scale, y_scale, align, characterSpacing, quads)
   drawPixelFontWithMap(string, atlas, standard_pixel_font_map, x, y, x_scale, y_scale, align, characterSpacing, quads)
+end
+
+local maxQuadPool = 100
+
+-- Creates a new quad, recycling one if one exists in the pool to reduce memory.
+function GraphicsUtil:newRecycledQuad(x, y, width, height, sw, sh)
+  local result = nil
+  if #self.quadPool == 0 then
+    result = love.graphics.newQuad(x, y, width, height, sw, sh)
+  else
+    result = self.quadPool[#self.quadPool]
+    self.quadPool[#self.quadPool] = nil
+    result:setViewport(x, y, width, height, sw, sh)
+  end
+  
+  return result
+end
+
+-- Stop using a quad and add it to the pool for reuse
+function GraphicsUtil:releaseQuad(quad)
+  if #self.quadPool >= maxQuadPool then
+    quad:release()
+  else
+    self.quadPool[#self.quadPool+1] = quad
+  end
 end
 
 -- Draws an image at the given position, using the quad for the viewport

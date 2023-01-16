@@ -12,38 +12,38 @@ require("mainloop")
 --@module MainMenu
 local mainMenu = Scene("mainMenu")
 
-local function genOnClickFn(myFunction, args)
+local function genLegacyMainloopFn(myFunction, args)
   local onClick = function()
     func = myFunction
     arg = args
-    play_optional_sfx(themes[config.theme].sounds.menu_validate)
+    Menu.playValidationSfx()
     sceneManager:switchToScene(nil)
   end
   return onClick
 end
 
 local switchToScene = function(scene)
-  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  Menu.playValidationSfx()
   sceneManager:switchToScene(scene)
 end
 
 local menuItems = {
-  {Button({label = "mm_1_endless", onClick = function() switchToScene("endless_menu") end})},
-  {Button({label = "mm_1_puzzle", onClick = function() switchToScene("puzzle_menu") end})},
-  {Button({label = "mm_1_time", onClick = function() switchToScene("time_attack_menu") end})},
-  {Button({label = "mm_1_vs", onClick = function() switchToScene("vs_self_menu") end})},
-  {Button({label = "mm_1_training", onClick = function() switchToScene("training_mode_menu") end})},
-  {Button({label = "mm_2_vs_online", extra_labels = {""}, onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) sceneManager:switchToScene("lobby", {ip = "18.188.43.50"}) end})},
-  --{Button({label = "mm_2_vs_online", extra_labels = {"\nTelegraph Server"}, onClick = genOnClickFn(main_net_vs_setup, {"betaserver.panelattack.com", 59569})})},
-  --{Button({label = "mm_2_vs_online", extra_labels = {"(development-use only)"}, onClick = genOnClickFn(main_net_vs_setup, {"localhost"})})},
-  {Button({label = "mm_2_vs_local", onClick = genOnClickFn(main_local_vs_setup)})},
-  {Button({label = "mm_replay_browser", onClick = function() switchToScene("replay_menu") end})},
-  {Button({label = "mm_configure", onClick = function() switchToScene("inputConfigMenu") end})},
-  {Button({label = "mm_set_name", onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) sceneManager:switchToScene("set_name_menu", {prevScene = "main_menu"}) end})},
-  {Button({label = "mm_options", onClick = function() switchToScene("options_menu") end})},
-  {Button({label = "mm_fullscreen", extra_labels = {"\n(LAlt+Enter)"}, onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) fullscreen() end})},
-  {Button({label = "mm_quit", onClick = love.event.quit})}
-}
+  {Button({label = "mm_1_endless", onClick = function() switchToScene("endless_menu") end})}, 
+  {Button({label = "mm_1_puzzle", onClick = function() switchToScene("puzzle_menu") end})}, 
+  {Button({label = "mm_1_time", onClick = function() switchToScene("time_attack_menu") end})}, 
+  {Button({label = "mm_1_vs", onClick = function() switchToScene("vs_self_menu") end})}, 
+  {Button({label = "mm_1_training", onClick = function() switchToScene("training_mode_menu") end})}, 
+  {Button({label = "mm_2_vs_online", extra_labels = {""}, onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) sceneManager:switchToScene("lobby", {ip = "18.188.43.50"}) end})}, 
+  --{Button({label = "mm_2_vs_online", extra_labels = {"\nTelegraph Server"}, onClick = genOnClickFn(main_net_vs_setup, {"betaserver.panelattack.com", 59569})})}, 
+  --{Button({label = "mm_2_vs_online", extra_labels = {"(development-use only)"}, onClick = genOnClickFn(main_net_vs_setup, {"localhost"})})}, 
+  {Button({label = "mm_2_vs_local", onClick = genLegacyMainloopFn(main_local_vs_setup)})}, 
+  {Button({label = "mm_replay_browser", onClick = function() switchToScene("replay_menu") end})}, 
+  {Button({label = "mm_configure", onClick = function() switchToScene("inputConfigMenu") end})}, 
+  {Button({label = "mm_set_name", onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) sceneManager:switchToScene("set_name_menu", {prevScene = "main_menu"}) end})}, 
+  {Button({label = "mm_options", onClick = function() switchToScene("options_menu") end})}, 
+  {Button({label = "mm_fullscreen", extra_labels = {"\n(LAlt+Enter)"}, onClick = function() play_optional_sfx(themes[config.theme].sounds.menu_validate) fullscreen() end})}, 
+  {Button({label = "mm_quit", onClick = love.event.quit})} 
+} 
 
 function mainMenu:init()
   sceneManager:addScene(self)

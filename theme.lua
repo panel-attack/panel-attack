@@ -1,6 +1,7 @@
 local GraphicsUtil = require("graphics_util")
 require("sound_util")
 local class = require("class")
+local consts = require("consts")
 local logger = require("logger")
 
 local musics = {"main", "select_screen", "main_start", "select_screen_start"} -- the music used in a theme
@@ -26,7 +27,7 @@ local function load_theme_img(name, useBackup)
   end
   local img = GraphicsUtil.loadImageFromSupportedExtensions("themes/" .. config.theme .. "/" .. name)
   if not img and useBackup then
-    img = GraphicsUtil.loadImageFromSupportedExtensions("themes/" .. default_theme_dir .. "/" .. name)
+    img = GraphicsUtil.loadImageFromSupportedExtensions("themes/" .. consts.DEFAULT_THEME_DIRECTORY .. "/" .. name)
   end
   return img
 end
@@ -212,13 +213,22 @@ function Theme.graphics_init(self)
   for i = 4, 66 do
     self.images.IMG_cards[false][i] = load_theme_img("combo/combo" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "")
   end
+  -- mystery chain
+  self.images.IMG_cards[true][0] = load_theme_img("chain/chain00")
   for i = 2, 13 do
+    -- with backup from default theme
     self.images.IMG_cards[true][i] = load_theme_img("chain/chain" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "")
   end
-
-  self.images.IMG_cards[true][14] = load_theme_img("chain/chain00")
-  for i = 15, 99 do
-    self.images.IMG_cards[true][i] = self.images.IMG_cards[true][14]
+  -- load as many more chain cards as there are available until 99, we will substitue in the mystery card if a card is missing
+  self.chainCardLimit = 99
+  for i = 14, 99 do
+    -- without backup from default theme
+    self.images.IMG_cards[true][i] = load_theme_img("chain/chain" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "", false)
+    if self.images.IMG_cards[true][i] == nil then
+      self.images.IMG_cards[true][i] = self.images.IMG_cards[true][0]
+      self.chainCardLimit = i - 1
+      break
+    end
   end
 
   local MAX_SUPPORTED_PLAYERS = 2
@@ -256,13 +266,13 @@ function Theme.graphics_init(self)
     for position_num = 1, 2 do
       local cur_width, cur_height = self.images.IMG_char_sel_cursors[player_num][position_num]:getDimensions()
       local half_width, half_height = cur_width / 2, cur_height / 2 -- TODO: is these unused vars an error ??? -Endu
-      self.images.IMG_char_sel_cursor_halves["left"][player_num][position_num] = love.graphics.newQuad(0, 0, half_width, cur_height, cur_width, cur_height)
+      self.images.IMG_char_sel_cursor_halves["left"][player_num][position_num] = GraphicsUtil:newRecycledQuad(0, 0, half_width, cur_height, cur_width, cur_height)
     end
     self.images.IMG_char_sel_cursor_halves.right[player_num] = {}
     for position_num = 1, 2 do
       local cur_width, cur_height = self.images.IMG_char_sel_cursors[player_num][position_num]:getDimensions()
       local half_width, half_height = cur_width / 2, cur_height / 2
-      self.images.IMG_char_sel_cursor_halves.right[player_num][position_num] = love.graphics.newQuad(half_width, 0, half_width, cur_height, cur_width, cur_height)
+      self.images.IMG_char_sel_cursor_halves.right[player_num][position_num] = GraphicsUtil:newRecycledQuad(half_width, 0, half_width, cur_height, cur_width, cur_height)
     end
   end
 
@@ -287,7 +297,7 @@ function Theme.sound_init(self)
   local function load_theme_sfx(SFX_name)
     local dirs_to_check = {
       "themes/" .. config.theme .. "/sfx/",
-      "themes/" .. default_theme_dir .. "/sfx/"
+      "themes/" .. consts.DEFAULT_THEME_DIRECTORY .. "/sfx/"
     }
     return find_sound(SFX_name, dirs_to_check)
   end
@@ -344,6 +354,7 @@ function Theme.json_init(self)
   local config_file, err = love.filesystem.newFile("themes/" .. config.theme .. "/config.json", "r")
   if config_file then
     local teh_json = config_file:read(config_file:getSize())
+    config_file:close()
     for k, v in pairs(json.decode(teh_json)) do
       read_data[k] = v
     end

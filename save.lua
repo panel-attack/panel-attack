@@ -2,6 +2,8 @@ local config = require("config")
 local config_metadata = require("config_metadata")
 local replay_browser = require("replay_browser")
 local json = require("dkjson")
+local tableUtils = require("tableUtils")
+local inputManager = require("inputManager")
 
 --- @module save
 -- the save.lua file contains the read/write functions
@@ -14,28 +16,12 @@ local logger = require("logger")
 function write_key_file()
   pcall(
     function()
-      local file = love.filesystem.newFile("keysV2.txt")
+      local file = love.filesystem.newFile("keysV3.txt")
       file:open("w")
       file:write(json.encode(GAME.input.inputConfigurations))
       file:close()
     end
   )
-end
--- reads the "keys.txt" file
-function save.read_key_file()
-  local file = love.filesystem.newFile("keysV2.txt")
-  local ok, err = file:open("r")
-  
-  if not ok then
-    return nil
-  end
-  
-  local json_user_conf = file:read(file:getSize())
-  file:close()
-  
-  local user_conf = json.decode(json_user_conf)
-  
-  return user_conf
 end
 
 -- reads the .txt file of the given path and filename
@@ -55,6 +41,35 @@ function save.read_txt_file(path_and_filename)
     s = s:gsub("\r\n?", "\n")
   end
   return s or "Failed to read file"
+end
+
+-- reads the "keys.txt" file
+function save.read_key_file()
+  local file = love.filesystem.newFile("keysV3.txt")
+  local ok, err = file:open("r")
+  local migrateInputs = false
+  
+  if not ok then
+    file = love.filesystem.newFile("keysV2.txt")
+    ok, err = file:open("r")
+    migrateInputs = true
+  end
+  
+  if not ok then
+    return GAME.input.inputConfigurations
+  end
+  
+  local jsonInputConfig = file:read(file:getSize())
+  file:close()
+  
+  local inputConfigs = json.decode(jsonInputConfig)
+  
+  if migrateInputs then
+    -- migrate old input configs
+    inputConfigs = inputManager:migrateInputConfigs(inputConfigs)
+  end
+  
+  return inputConfigs
 end
 
 -- reads the .txt file of the given path and filename
@@ -114,17 +129,14 @@ function save.readConfigFile()
   local user_config = json.decode(json_user_config)
   
   -- do stuff using read_data.version for retrocompatibility here
-
   -- language_code, panels, character and stage are patched later on by their own subsystems, we store their values in config for now!
   for key, value in pairs(config) do
     if user_config[key] ~= nil
         and type(user_config[key]) == type(config[key]) 
-        and (not config_metadata.isValid[key] or config_metadata.isValid[key](value)) then
-      local user_value = user_config[key]
+        and (not config_metadata.isValid[key] or config_metadata.isValid[key](user_config[key])) then
       if config_metadata.processValue[key] then
-        user_value = config_metadata.processValue[key](user_value)
+        user_config[key] = config_metadata.processValue[key](user_config[key])
       end
-      user_config[key] = user_value
     else
       user_config[key] = value
     end
@@ -268,8 +280,8 @@ function read_user_id_file()
       local file = love.filesystem.newFile("servers/" .. GAME.connected_server_ip .. "/user_id.txt")
       file:open("r")
       my_user_id = file:read()
-      my_user_id = my_user_id:match("^%s*(.-)%s*$")
       file:close()
+      my_user_id = my_user_id:match("^%s*(.-)%s*$")
     end
   )
 end
@@ -314,6 +326,7 @@ function read_puzzles()
           local file = love.filesystem.newFile("puzzles/" .. filename)
           file:open("r")
           local teh_json = file:read(file:getSize())
+          file:close()
           local current_json = json.decode(teh_json) or {}
           if current_json["Version"] == 2 then
             for _, puzzleSet in pairs(current_json["Puzzle Sets"]) do
@@ -390,6 +403,7 @@ function read_attack_files(path)
           local file = love.filesystem.newFile(current_path)
           file:open("r")
           local teh_json = file:read(file:getSize())
+          file:close()
           local training_conf = {}
           for k, w in pairs(json.decode(teh_json)) do
             training_conf[k] = w
@@ -398,7 +412,6 @@ function read_attack_files(path)
             training_conf.name = v
           end
           trainings[#trainings+1] = training_conf
-          file:close()
         end
       end
     end

@@ -58,19 +58,19 @@ function Menu:update()
     return
   end
   
-  if input:isPressedWithRepeat("Up", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+  if input:isPressedWithRepeat("MenuUp", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     self.selectedIndex = ((self.selectedIndex - 2) % #self.menuItems) + 1
     play_optional_sfx(themes[config.theme].sounds.menu_move)
   end
   
-  if input:isPressedWithRepeat("Down", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+  if input:isPressedWithRepeat("MenuDown", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     self.selectedIndex = (self.selectedIndex % #self.menuItems) + 1
     play_optional_sfx(themes[config.theme].sounds.menu_move)
   end
 
   local itemController = self.menuItems[self.selectedIndex].children[1]
   if itemController then
-    if input:isPressedWithRepeat("Left", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+    if input:isPressedWithRepeat("MenuLeft", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
       if itemController.TYPE == "Slider" then
         itemController:setValue(itemController.value - 1)
       elseif itemController.TYPE == "ButtonGroup" then
@@ -80,7 +80,7 @@ function Menu:update()
       end
     end
 
-    if input:isPressedWithRepeat("Right", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+    if input:isPressedWithRepeat("MenuRight", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
       if itemController.TYPE == "Slider" then
         itemController:setValue(itemController.value + 1)
       elseif itemController.TYPE == "ButtonGroup" then
@@ -91,13 +91,13 @@ function Menu:update()
     end
   end
   
-  if input.isDown["Start"] or input.isDown["Swap1"]  then
+  if input.isDown["MenuSelect"]  then
     if self.menuItems[self.selectedIndex].TYPE == "Button" then
       self.menuItems[self.selectedIndex].onClick()
     end
   end
   
-  if input.isDown["Swap2"] then
+  if input.isDown["MenuEsc"] then
     if self.selectedIndex ~= #self.menuItems then
       self.selectedIndex = #self.menuItems
       play_optional_sfx(themes[config.theme].sounds.menu_cancel)
@@ -120,6 +120,16 @@ function Menu:draw()
   
   -- draw children
   UIElement.draw(self)
+end
+
+
+-- sound effects
+function Menu.playValidationSfx()
+  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+end
+
+function Menu.playMoveSfx()
+  play_optional_sfx(themes[config.theme].sounds.menu_move)
 end
 
 return Menu

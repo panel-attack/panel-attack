@@ -14,15 +14,15 @@ function inputFieldManager.update()
     return
   end
 
-  if input:isPressedWithRepeat("backspace", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD)then
+  if input:isPressedWithRepeat("MenuEsc", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD)then
     selectedInputField:onBackspace()
   end
   
-  if input:isPressedWithRepeat("left", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+  if input:isPressedWithRepeat("MenuLeft", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     selectedInputField:onMoveCursor(-1)
   end
   
-  if input:isPressedWithRepeat("right", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+  if input:isPressedWithRepeat("MenuRight", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     selectedInputField:onMoveCursor(1)
   end
 end
