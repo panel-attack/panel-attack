@@ -99,4 +99,30 @@ function CustomRun.innerRun()
   end
 end
 
+-- This is a copy of the outer run loop that love uses.
+-- We have broken it up into calling a inner function so we can change the inner function in the game love file to override behavior
+-- If you change this file also change DefaultLoveRunFunction's equivalent method
+function CustomRun.run()
+  if love.load then
+    love.load(love.arg.parseGameArguments(arg), arg)
+  end
+
+  -- We don't want the first frame's dt to include time taken by love.load.
+  if love.timer then
+    love.timer.step()
+  end
+
+  dt = 0
+
+  -- Main loop time.
+  return function()
+    if love.pa_runInternal then
+      local result = love.pa_runInternal()
+      if result then
+        return result
+      end
+    end
+  end
+end
+
 return CustomRun

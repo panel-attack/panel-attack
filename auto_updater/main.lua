@@ -1,6 +1,8 @@
 require("game_updater")
-require("developer")
 local DefaultLoveRunFunctions = require("DefaultLoveRunFunctions")
+
+love.pa_runInternal = DefaultLoveRunFunctions.innerRun
+love.run = DefaultLoveRunFunctions.run
 
 -- CONSTANTS
 local MAX_REQ_SIZE = 100000 -- 100kB
@@ -252,8 +254,6 @@ local function setDebugFlag(args)
 end
 
 function love.load(args)
-
-  love.pa_runInternal = DefaultLoveRunFunctions.innerRun
 
   setDebugFlag(args)
   logMessage("Starting auto updater...")

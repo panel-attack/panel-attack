@@ -13,7 +13,6 @@ require("queue")
 require("globals")
 require("character_loader") -- after globals!
 local CustomRun = require("CustomRun")
-local DefaultLoveRunFunctions = require("DefaultLoveRunFunctions")
 require("stage") -- after globals!
 require("save")
 require("engine/GarbageQueue")
@@ -38,6 +37,15 @@ local utf8 = require("utf8")
 require("click_menu")
 require("computerPlayers.computerPlayer")
 require("rich_presence.RichPresence")
+
+if GAME_UPDATER then
+-- we started from auto_updater so we're already inside of love.run and can't break out
+-- auto_updater overwrites love.run with a function that refers to `pa_runInternal` for its gameloop function
+-- so by overwriting that, the new runInternal will get used on the next iteration
+  love.pa_runInternal = customRun.runInternal
+else
+  love.run = CustomRun.run
+end
 
 local crashTrace = nil -- set to the trace of your thread before throwing an error if you use a coroutine
 

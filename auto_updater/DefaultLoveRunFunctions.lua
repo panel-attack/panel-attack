@@ -36,7 +36,8 @@ end
 
 -- This is a copy of the outer run loop that love uses.
 -- We have broken it up into calling a inner function so we can change the inner function in the game love file to override behavior
-function love.run()
+-- If you change this file also change CustomRun's equivalent method
+function DefaultLoveRunFunctions.run()
   if love.load then
     love.load(love.arg.parseGameArguments(arg), arg)
   end
