@@ -532,7 +532,7 @@ end
 local function playRandomSfx(sfxTable, fallback)
   if not GAME.muteSoundEffects then
     if sfxTable and #sfxTable > 0 then
-      table.getRandomElement(sfxTable):play()
+      tableUtils.getRandomElement(sfxTable):play()
     elseif fallback then
       playRandomSfx(fallback)
     end
