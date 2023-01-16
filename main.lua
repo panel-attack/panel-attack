@@ -38,12 +38,10 @@ require("click_menu")
 require("computerPlayers.computerPlayer")
 require("rich_presence.RichPresence")
 
-if GAME_UPDATER then
--- we started from auto_updater so we're already inside of love.run and can't break out
--- auto_updater overwrites love.run with a function that refers to `pa_runInternal` for its gameloop function
+-- We override love.run with a function that refers to `pa_runInternal` for its gameloop function
 -- so by overwriting that, the new runInternal will get used on the next iteration
-  love.pa_runInternal = CustomRun.innerRun
-else
+love.pa_runInternal = CustomRun.innerRun
+if GAME_UPDATER == nil then
   love.run = CustomRun.run
 end
 
