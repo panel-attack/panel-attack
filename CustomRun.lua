@@ -46,6 +46,8 @@ function CustomRun:sleep()
   CustomRun.runMetrics.sleepDuration = currentTime - originalTime
 end
 
+-- This is our custom version of run that uses a custom sleep and records metrics.
+local dt = 0
 function CustomRun.innerRun()
 
   if love.timer then
@@ -101,7 +103,7 @@ end
 
 -- This is a copy of the outer run loop that love uses.
 -- We have broken it up into calling a inner function so we can change the inner function in the game love file to override behavior
--- If you change this file also change DefaultLoveRunFunction's equivalent method
+-- If you change this function also change DefaultLoveRunFunction's equivalent method
 function CustomRun.run()
   if love.load then
     love.load(love.arg.parseGameArguments(arg), arg)

@@ -42,7 +42,7 @@ if GAME_UPDATER then
 -- we started from auto_updater so we're already inside of love.run and can't break out
 -- auto_updater overwrites love.run with a function that refers to `pa_runInternal` for its gameloop function
 -- so by overwriting that, the new runInternal will get used on the next iteration
-  love.pa_runInternal = customRun.runInternal
+  love.pa_runInternal = CustomRun.innerRun
 else
   love.run = CustomRun.run
 end
@@ -70,8 +70,6 @@ function love.load()
   if PROFILING_ENABLED then
     GAME.profiler:start()
   end
-
-  love.pa_runInternal = CustomRun.innerRun
   
   love.graphics.setDefaultFilter("linear", "linear")
   if config.maximizeOnStartup and not love.window.isMaximized() then

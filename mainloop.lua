@@ -262,7 +262,7 @@ do
       local autoUpdaterOutOfDate = (GAME_UPDATER_VERSION == nil or GAME_UPDATER_VERSION < 1.1)
       if runningFromAutoUpdater and autoUpdaterOutOfDate then
         local downloadLink = "panelattack.com/panel.zip"
-        if UPDATER_NAME == "panel-beta" then
+        if GAME_UPDATER.name == "panel-beta" then
           downloadLink = "panelattack.com/panel-beta.zip"
         end
         gprintf(loc("auto_updater_version_warning") .. " " .. downloadLink, -5, infoYPosition, canvas_width, "right")
