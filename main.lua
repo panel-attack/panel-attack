@@ -12,6 +12,7 @@ require("FileUtil")
 require("queue")
 require("globals")
 require("character_loader") -- after globals!
+local CustomRun = require("CustomRun")
 require("stage") -- after globals!
 require("save")
 require("engine/GarbageQueue")
@@ -36,6 +37,15 @@ local utf8 = require("utf8")
 require("click_menu")
 require("computerPlayers.computerPlayer")
 require("rich_presence.RichPresence")
+
+-- We override love.run with a function that refers to `pa_runInternal` for its gameloop function
+-- so by overwriting that, the new runInternal will get used on the next iteration
+love.pa_runInternal = CustomRun.innerRun
+if GAME_UPDATER == nil then
+  -- We don't have an autoupdater, so we need to override run.
+  -- In the autoupdater case run will already have been overridden and be running
+  love.run = CustomRun.run
+end
 
 local crashTrace = nil -- set to the trace of your thread before throwing an error if you use a coroutine
 
@@ -82,124 +92,16 @@ function love.focus(f)
   GAME.focused = f
 end
 
--- Sleeps just the right amount of time to make our next update step be one frame long.
--- If we have leftover time that hasn't been run yet, it will sleep less to catchup.
-local function customSleep(runMetrics)
-
-  local targetDelay = consts.FRAME_RATE
-  -- We want leftover time to be above 0 but less than a quarter frame.
-  -- If it goes above that, only wait enough to get it down to that.
-  local maxLeftOverTime = consts.FRAME_RATE / 4
-  if leftover_time > maxLeftOverTime then
-    targetDelay = targetDelay - (leftover_time - maxLeftOverTime)
-    targetDelay = math.max(targetDelay, 0)
-  end
-
-  local targetTime = runMetrics.previousSleepEnd + targetDelay
-  local originalTime = love.timer.getTime()
-  local currentTime = originalTime
-
-  -- Sleep a percentage of our time to wait to save cpu
-  local sleepRatio = .99
-  local sleepTime = (targetTime - currentTime) * sleepRatio
-  if love.timer and sleepTime > 0 then
-    love.timer.sleep(sleepTime)
-  end
-  currentTime = love.timer.getTime()
-
-  -- While loop the last little bit to be more accurate
-  while currentTime < targetTime do
-    currentTime = love.timer.getTime()
-  end
-
-  runMetrics.previousSleepEnd = currentTime
-  runMetrics.sleepDuration = currentTime - originalTime
-end
-
-local runMetrics = {}
-runMetrics.previousSleepEnd = 0
-runMetrics.dt = 0
-runMetrics.sleepDuration = 0
-runMetrics.updateDuration = 0
-runMetrics.drawDuration = 0
-runMetrics.presentDuration = 0
-
-local runTimeGraph = nil
-
-function love.run()
-  if love.load then
-    love.load(love.arg.parseGameArguments(arg), arg)
-  end
-
-  -- We don't want the first frame's dt to include time taken by love.load.
-  if love.timer then
-    love.timer.step()
-  end
-
-  local dt = 0
-
-  -- Main loop time.
-  return function()
-    customSleep(runMetrics)
-
-    -- Process events.
-    if love.event then
-      love.event.pump()
-      for name, a, b, c, d, e, f in love.event.poll() do
-        if name == "quit" then
-          if not love.quit or not love.quit() then
-            return a or 0
-          end
-        end
-        love.handlers[name](a, b, c, d, e, f)
-      end
-    end
-
-    -- Update dt, as we'll be passing it to update
-    if love.timer then
-      dt = love.timer.step()
-      runMetrics.dt = dt
-    end
-
-    -- Call update and draw
-    if love.update then
-      local preUpdateTime = love.timer.getTime()
-      love.update(dt) -- will pass 0 if love.timer is disabled
-      runMetrics.updateDuration = love.timer.getTime() - preUpdateTime
-    end
-
-    local graphicsActive = love.graphics and love.graphics.isActive()
-    if graphicsActive then
-      love.graphics.origin()
-      love.graphics.clear(love.graphics.getBackgroundColor())
-
-      if love.draw then
-        local preDrawTime = love.timer.getTime()
-        love.draw()
-        runMetrics.drawDuration = love.timer.getTime() - preDrawTime
-      end
-
-      local prePresentTime = love.timer.getTime()
-      love.graphics.present()
-      runMetrics.presentDuration = love.timer.getTime() - prePresentTime
-    end
-
-    if runTimeGraph ~= nil then
-      runTimeGraph:updateWithMetrics(runMetrics)
-    end
-  end
-end
-
 -- Called every few fractions of a second to update the game
 -- dt is the amount of time in seconds that has passed.
 function love.update(dt)
 
   if config.show_fps and config.debug_mode then
-    if runTimeGraph == nil then
-      runTimeGraph = RunTimeGraph()
+    if CustomRun.runTimeGraph == nil then
+      CustomRun.runTimeGraph = RunTimeGraph()
     end
   else
-    runTimeGraph = nil
+    CustomRun.runTimeGraph = nil
   end
 
   if love.mouse.getX() == last_x and love.mouse.getY() == last_y then
@@ -268,8 +170,8 @@ function love.draw()
 
   -- Draw the FPS if enabled
   if config ~= nil and config.show_fps then
-    if runTimeGraph then
-      runTimeGraph:draw()
+    if CustomRun.runTimeGraph then
+      CustomRun.runTimeGraph:draw()
     else
       gprintf("FPS: " .. love.timer.getFPS(), 1, 1)
     end
