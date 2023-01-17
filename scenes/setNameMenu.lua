@@ -12,10 +12,10 @@ local save = require("save")
 --@module setNameMenu
 local setNameMenu = Scene("setNameMenu")
 
-local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
-local name_field = InputField({
-    x = menu_x - 25,
-    y = menu_y + 50,
+local menuX, menuY = unpack(themes[config.theme].main_menu_screen_pos)
+local nameField = InputField({
+    x = menuX - 25,
+    y = menuY + 50,
     width = 200,
     height = 25,
     placeholder = "username",
@@ -28,8 +28,8 @@ function setNameMenu:init()
 end
 
 function setNameMenu:load(sceneParams)
-  name_field:setVisibility(true)
-  name_field:setFocus(0, 0)
+  nameField:setVisibility(true)
+  nameField:setFocus(0, 0)
   self.prevScene = sceneParams.prevScene
 end
 
@@ -38,12 +38,12 @@ function setNameMenu:drawBackground()
 end
 
 function setNameMenu:update()
-  local to_print = loc("op_enter_name") .. " (" .. name_field.value:len() .. "/" .. NAME_LENGTH_LIMIT .. ")"
-  gprint(to_print, unpack(themes[config.theme].main_menu_screen_pos))
+  local toPrint = loc("op_enter_name") .. " (" .. nameField.value:len() .. "/" .. NAME_LENGTH_LIMIT .. ")"
+  gprint(toPrint, unpack(themes[config.theme].main_menu_screen_pos))
   
   if input.allKeys.isDown["return"] then
     play_optional_sfx(themes[config.theme].sounds.menu_validate)
-    config.name = name_field.value
+    config.name = nameField.value
     save.write_conf_file()
     sceneManager:switchToScene(self.prevScene)
   end
@@ -52,12 +52,12 @@ function setNameMenu:update()
     sceneManager:switchToScene("mainMenu")
   end
   
-  name_field:draw()
+  nameField:draw()
 end
 
 function setNameMenu:unload()  
-  name_field:setVisibility(false)
-  name_field:unfocus()
+  nameField:setVisibility(false)
+  nameField:unfocus()
 end
 
 return setNameMenu

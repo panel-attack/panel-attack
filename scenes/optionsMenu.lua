@@ -16,36 +16,34 @@ local GraphicsUtil = require("graphics_util")
 local optionsMenu = Scene("optionsMenu")
 
 local ret = nil
-local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
-menu_y = menu_y + 70
-local language_number
-local language_choices = {}
-local language_names = {}
+local languageNumber
+local languageChoices = {}
+local languageName = {}
 local backgroundImage = nil
 for k, v in ipairs(localization:get_list_codes()) do
-  language_choices[k] = v
-  language_names[#language_names + 1] = {v, localization.data[v]["LANG"]}
+  languageChoices[k] = v
+  languageName[#languageName + 1] = {v, localization.data[v]["LANG"]}
   if localization:get_language() == v then
-    language_number = k
+    languageNumber = k
   end
 end
 
-local options_state
-local active_menu_name = "base_menu"
-local info_name
+local optionsState
+local activeMenuName = "baseMenu"
+local infoName
 
 local menus = {
-  base_menu = nil,
-  general_menu = nil,
-  graphics_menu = nil,
-  audio_menu = nil,
-  debug_menu = nil,
-  about_menu = nil,
+  baseMenu = nil,
+  generalMenu = nil,
+  graphicsMenu = nil,
+  audioMenu = nil,
+  debugMenu = nil,
+  aboutMenu = nil,
 }
 
-local found_themes = {}
-local about_text = {}
-local info_string
+local foundThemes = {}
+local aboutText = {}
+local infoString
 
 local font = GraphicsUtil.getGlobalFont()
 
@@ -55,19 +53,19 @@ local function exitMenu()
 end
 
 local function updateMenuLanguage()
-  for menu_name, menu in pairs(menus) do
+  for _, menu in pairs(menus) do
     menu:updateLabel()
   end
 end
 
-local function switchMenu(menu_name)
+local function switchMenu(menuName)
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  menus[menu_name]:setVisibility(true)
-  menus[active_menu_name]:setVisibility(false)
-  active_menu_name = menu_name
+  menus[menuName]:setVisibility(true)
+  menus[activeMenuName]:setVisibility(false)
+  activeMenuName = menuName
 end
 
-local function createToggleButtonGroup(config_field, on_change_fn)
+local function createToggleButtonGroup(configField, onChangeFn)
   return ButtonGroup(
     {
       buttons = {
@@ -75,28 +73,28 @@ local function createToggleButtonGroup(config_field, on_change_fn)
         Button({width = 60, label = "op_on"}),
       },
       values = {false, true},
-      selectedIndex = config[config_field] and 2 or 1,
+      selectedIndex = config[configField] and 2 or 1,
       onChange = function(value) 
         play_optional_sfx(themes[config.theme].sounds.menu_move) 
-        config[config_field] = value
-        if on_change_fn then
-          on_change_fn()
+        config[configField] = value
+        if onChangeFn then
+          onChangeFn()
         end
       end
     }
   )
 end
 
-local function createConfigSlider(config_field, min, max, on_value_change_fn)
+local function createConfigSlider(configField, min, max, onValueChangeFn)
   return Slider({
     min = min, 
     max = max, 
-    value = config[config_field] or 20,
+    value = config[configField] or 20,
     tickLength = math.ceil(100 / max),
     onValueChange = function(slider)
-      config[config_field] = slider.value
-      if on_value_change_fn then
-        on_value_change_fn(slider)
+      config[configField] = slider.value
+      if onValueChangeFn then
+        onValueChangeFn(slider)
       end
     end
   })
@@ -115,89 +113,89 @@ local function setupDrawThemesInfo()
     -- Android can't easily copy into the save dir, so do it for them to help.
     recursive_copy("default_data/themes", "themes")
   end
-  options_state = "info"
-  info_name = "themes"
-  menus["about_menu"]:setVisibility(false)
+  optionsState = "info"
+  infoName = "themes"
+  menus["aboutMenu"]:setVisibility(false)
 end
 
-local function setupInfo(info_type)
+local function setupInfo(infoType)
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
   backgroundImage = themes[config.theme].images.bg_readme
   reset_filters()
-  options_state = "info"
-  info_name = info_type
-  menus["about_menu"]:setVisibility(false)
+  optionsState = "info"
+  infoName = infoType
+  menus["aboutMenu"]:setVisibility(false)
 end
 
 local function setupSystemInfo()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
   backgroundImage = themes[config.theme].images.bg_readme
   reset_filters()
-  local renderer_name, renderer_version, graphics_card_vendor, graphics_card_name = love.graphics.getRendererInfo()
-  local sys_info = {}
-  sys_info[#sys_info + 1] = {name = "Operating System", value = love.system.getOS()} 
-  sys_info[#sys_info + 1] = {name = "Renderer", value = renderer_name.." "..renderer_version}
-  sys_info[#sys_info + 1] = {name = "Graphics Card", value = graphics_card_name}
-  sys_info[#sys_info + 1] = {name = "LOVE Version", value = GAME:loveVersionString()} 
-  sys_info[#sys_info + 1] = {name = "Panel Attack Engine Version", value = VERSION} 
-  sys_info[#sys_info + 1] = {name = "Panel Attack Release Version", value = GAME_UPDATER_GAME_VERSION} 
-  sys_info[#sys_info + 1] = {name = "Save Data Directory Path", value = love.filesystem.getSaveDirectory()}  
-  sys_info[#sys_info + 1] = {name = "Characters [Enabled/Total]", value = #characters_ids_for_current_theme.."/"..#characters_ids} 
-  sys_info[#sys_info + 1] = {name = "Stages [Enabled/Total]", value = #stages_ids_for_current_theme.."/"..#stages_ids} 
-  sys_info[#sys_info + 1] = {name = "Total Panel Sets", value = #panels_ids} 
-  sys_info[#sys_info + 1] = {name = "Total Themes", value = #found_themes}
+  local rendererName, rendererVersion, graphicsCardVender, graphicsCardName = love.graphics.getRendererInfo()
+  local sysInfo = {}
+  sysInfo[#sysInfo + 1] = {name = "Operating System", value = love.system.getOS()} 
+  sysInfo[#sysInfo + 1] = {name = "Renderer", value = rendererName.." "..rendererVersion}
+  sysInfo[#sysInfo + 1] = {name = "Graphics Card", value = graphicsCardName}
+  sysInfo[#sysInfo + 1] = {name = "LOVE Version", value = GAME:loveVersionString()} 
+  sysInfo[#sysInfo + 1] = {name = "Panel Attack Engine Version", value = VERSION} 
+  sysInfo[#sysInfo + 1] = {name = "Panel Attack Release Version", value = GAME_UPDATER_GAME_VERSION} 
+  sysInfo[#sysInfo + 1] = {name = "Save Data Directory Path", value = love.filesystem.getSaveDirectory()}  
+  sysInfo[#sysInfo + 1] = {name = "Characters [Enabled/Total]", value = #characters_ids_for_current_theme.."/"..#characters_ids} 
+  sysInfo[#sysInfo + 1] = {name = "Stages [Enabled/Total]", value = #stages_ids_for_current_theme.."/"..#stages_ids} 
+  sysInfo[#sysInfo + 1] = {name = "Total Panel Sets", value = #panels_ids} 
+  sysInfo[#sysInfo + 1] = {name = "Total Themes", value = #foundThemes}
 
-  info_string = ""
-  for index, info in ipairs(sys_info) do
-    info_string = info_string .. info.name .. ": " .. (info.value or "Unknown") .. "\n"
+  infoString = ""
+  for index, info in ipairs(sysInfo) do
+    infoString = infoString .. info.name .. ": " .. (info.value or "Unknown") .. "\n"
   end
-  options_state = "system_info"
-  menus["about_menu"]:setVisibility(false)
+  optionsState = "system_info"
+  menus["aboutMenu"]:setVisibility(false)
 end
 
 local function drawSystemInfo()
-  gprint(info_string, 15, 15)
+  gprint(infoString, 15, 15)
   if input.isDown["Swap2"] then
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)
     backgroundImage = themes[config.theme].images.bg_main
     reset_filters()
-    options_state = "menus"
-    menus["about_menu"]:setVisibility(true)
+    optionsState = "menus"
+    menus["aboutMenu"]:setVisibility(true)
   end
 end
 
 local function drawInfo(text)
-  gprint(about_text[text], 15, 15)
+  gprint(aboutText[text], 15, 15)
   if input.isDown["Swap2"] then
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)
     backgroundImage = themes[config.theme].images.bg_main
     reset_filters()
-    options_state = "menus"
-    menus["about_menu"]:setVisibility(true)
+    optionsState = "menus"
+    menus["aboutMenu"]:setVisibility(true)
   end
 end
 
 function optionsMenu:init()
   sceneManager:addScene(self)
-  about_text["themes"] = save.read_txt_file("readme_themes.txt")
-  about_text["characters"] = save.read_txt_file("readme_characters.txt")
-  about_text["stages"] = save.read_txt_file("readme_stages.txt")
-  about_text["panels"] = save.read_txt_file("readme_panels.txt")
-  about_text["attackFiles"] = save.read_txt_file("readme_training.txt")
+  aboutText["themes"] = save.read_txt_file("readme_themes.txt")
+  aboutText["characters"] = save.read_txt_file("readme_characters.txt")
+  aboutText["stages"] = save.read_txt_file("readme_stages.txt")
+  aboutText["panels"] = save.read_txt_file("readme_panels.txt")
+  aboutText["attackFiles"] = save.read_txt_file("readme_training.txt")
 
-  local language_labels = {}
-  for k, v in ipairs(language_names) do
-    language_labels[#language_labels + 1] = Label({
+  local languageLabels = {}
+  for k, v in ipairs(languageName) do
+    languageLabels[#languageLabels + 1] = Label({
         label = v[2],
         translate = false,
         width = 70,
         height = 25})
   end
-  local language_stepper = Stepper(
+  local languageStepper = Stepper(
     {
-      labels = language_labels,
-      values = language_names,
-      selectedIndex = language_number,
+      labels = languageLabels,
+      values = languageName,
+      selectedIndex = languageNumber,
       onChange = function(value) 
         play_optional_sfx(themes[config.theme].sounds.menu_move) 
         localization:set_language(value[1])
@@ -207,19 +205,19 @@ function optionsMenu:init()
   )
   
   
-  local label_width = 130
-  local base_menu_options = {
-    {Label({width = label_width, label = "op_language"}), language_stepper},
-    {Button({width = label_width, label = "op_general", onClick = function() switchMenu("general_menu") end})},
-    {Button({width = label_width, label = "op_graphics", onClick = function() switchMenu("graphics_menu") end})},
-    {Button({width = label_width, label = "op_audio", onClick = function() switchMenu("audio_menu") end})},
-    {Button({width = label_width, label = "op_debug", onClick = function() switchMenu("debug_menu") end})},
-    {Button({width = label_width, label = "op_about", onClick = function() switchMenu("about_menu") end})},
-    {Button({width = label_width, label = "back", onClick = exitMenu})},
+  local labelWidth = 130
+  local baseMenuOptions = {
+    {Label({width = labelWidth, label = "op_language"}), languageStepper},
+    {Button({width = labelWidth, label = "op_general", onClick = function() switchMenu("generalMenu") end})},
+    {Button({width = labelWidth, label = "op_graphics", onClick = function() switchMenu("graphicsMenu") end})},
+    {Button({width = labelWidth, label = "op_audio", onClick = function() switchMenu("audioMenu") end})},
+    {Button({width = labelWidth, label = "op_debug", onClick = function() switchMenu("debugMenu") end})},
+    {Button({width = labelWidth, label = "op_about", onClick = function() switchMenu("aboutMenu") end})},
+    {Button({width = labelWidth, label = "back", onClick = exitMenu})},
   }
 
-  local save_replays_publicly_index_map = {["with my name"] = 1, ["anonymously"] = 2, ["not at all"] = 3}
-  local public_replay_button_group = ButtonGroup(
+  local saveReplaysPubliclyIndexMap = {["with my name"] = 1, ["anonymously"] = 2, ["not at all"] = 3}
+  local publicReplayButtonGroup = ButtonGroup(
     {
       buttons = {
         Button({label = "op_replay_public_with_name"}),
@@ -227,7 +225,7 @@ function optionsMenu:init()
         Button({label = "op_replay_public_no"}),
       },
       values = {"with my name", "anonymously", "not at all"},
-      selectedIndex = save_replays_publicly_index_map[config.save_replays_publicly],
+      selectedIndex = saveReplaysPubliclyIndexMap[config.save_replays_publicly],
       onChange = function(value) 
         play_optional_sfx(themes[config.theme].sounds.menu_move) 
         config.save_replays_publicly = value
@@ -235,33 +233,33 @@ function optionsMenu:init()
     }
   )
 
-  local general_menu_options = {
-    {Label({width = label_width, label = "op_countdown"}), createToggleButtonGroup("ready_countdown_1P")},
-    {Label({width = label_width, label = "op_fps"}), createToggleButtonGroup("show_fps")},
-    {Label({width = label_width, label = "op_ingame_infos"}), createToggleButtonGroup("show_ingame_infos")},
-    {Label({width = label_width, label = "op_analytics"}), createToggleButtonGroup("enable_analytics")},
-    {Label({width = label_width, label = "op_input_delay"}), createConfigSlider("input_repeat_delay", 0, 50)},
-    {Label({width = label_width, label = "op_replay_public"}), public_replay_button_group},
-    {Button({width = label_width, label = "back", onClick = function() switchMenu("base_menu") end})},
+  local generalMenuOptions = {
+    {Label({width = labelWidth, label = "op_countdown"}), createToggleButtonGroup("ready_countdown_1P")},
+    {Label({width = labelWidth, label = "op_fps"}), createToggleButtonGroup("show_fps")},
+    {Label({width = labelWidth, label = "op_ingame_infos"}), createToggleButtonGroup("show_ingame_infos")},
+    {Label({width = labelWidth, label = "op_analytics"}), createToggleButtonGroup("enable_analytics")},
+    {Label({width = labelWidth, label = "op_input_delay"}), createConfigSlider("input_repeat_delay", 0, 50)},
+    {Label({width = labelWidth, label = "op_replay_public"}), publicReplayButtonGroup},
+    {Button({width = labelWidth, label = "back", onClick = function() switchMenu("baseMenu") end})},
   }
 
-  local theme_index
-  local theme_buttons = {}
+  local themeIndex
+  local themeButtons = {}
   for k, v in ipairs(love.filesystem.getDirectoryItems("themes")) do
     if love.filesystem.getInfo("themes/" .. v) and v:sub(0, prefix_of_ignored_dirs:len()) ~= prefix_of_ignored_dirs then
-      found_themes[#found_themes + 1] = v
-      theme_buttons[#theme_buttons + 1] = Button({label = v, translate = false})
+      foundThemes[#foundThemes + 1] = v
+      themeButtons[#themeButtons + 1] = Button({label = v, translate = false})
       if config.theme == v then
-        theme_index = #found_themes
+        themeIndex = #foundThemes
       end
     end
   end
   
-  local theme_button_group = ButtonGroup(
+  local themeButtonGroup = ButtonGroup(
     {
-      buttons = theme_buttons,
-      values = found_themes,
-      selectedIndex = theme_index,
+      buttons = themeButtons,
+      values = foundThemes,
+      selectedIndex = themeIndex,
       onChange = function(value) 
         play_optional_sfx(themes[config.theme].sounds.menu_move) 
         config.theme = value
@@ -275,25 +273,25 @@ function optionsMenu:init()
     }
   )
   
-  local graphics_menu_options = {
-    {Label({width = label_width, label = "op_theme"}), theme_button_group},
-    {Label({width = label_width, label = "op_portrait_darkness"}), createConfigSlider("portrait_darkness", 0, 100)},
-    {Label({width = label_width, label = "op_popfx"}), createToggleButtonGroup("popfx")},
-    {Label({width = label_width, label = "op_renderTelegraph"}), createToggleButtonGroup("renderTelegraph")},
-    {Label({width = label_width, label = "op_renderAttacks"}), createToggleButtonGroup("renderAttacks")},
-    {Button({width = label_width, label = "back", onClick = function() switchMenu("base_menu") end})},
+  local graphicsMenuOptions = {
+    {Label({width = labelWidth, label = "op_theme"}), themeButtonGroup},
+    {Label({width = labelWidth, label = "op_portrait_darkness"}), createConfigSlider("portrait_darkness", 0, 100)},
+    {Label({width = labelWidth, label = "op_popfx"}), createToggleButtonGroup("popfx")},
+    {Label({width = labelWidth, label = "op_renderTelegraph"}), createToggleButtonGroup("renderTelegraph")},
+    {Label({width = labelWidth, label = "op_renderAttacks"}), createToggleButtonGroup("renderAttacks")},
+    {Button({width = labelWidth, label = "back", onClick = function() switchMenu("baseMenu") end})},
   }
   
-  local sound_test_menu_options = {
-    {Label({width = label_width, label = "character"})},
-    {Label({width = label_width, label = "op_music_type"})},
-    {Label({width = label_width, label = "op_music_play"})},
-    {Label({width = label_width, label = "op_music_sfx"})},
-    {Button({width = label_width, label = "back", onClick = function() switchMenu("audio_menu") end})},
+  local soundTestMenuOptions = {
+    {Label({width = labelWidth, label = "character"})},
+    {Label({width = labelWidth, label = "op_music_type"})},
+    {Label({width = labelWidth, label = "op_music_play"})},
+    {Label({width = labelWidth, label = "op_music_sfx"})},
+    {Button({width = labelWidth, label = "back", onClick = function() switchMenu("audioMenu") end})},
   }
         
-  local music_frequency_index_map = {["stage"] = 1, ["often_stage"] = 2, ["either"] = 3, ["often_characters"] = 4, ["characters"] = 5}
-  local music_frequency_stepper = Stepper(
+  local musicFrequencyIndexMap = {["stage"] = 1, ["often_stage"] = 2, ["either"] = 3, ["often_characters"] = 4, ["characters"] = 5}
+  local musicFrequencyStepper = Stepper(
     {
       labels = {
         Label({label = "op_only_stage"}),
@@ -303,7 +301,7 @@ function optionsMenu:init()
         Label({label = "op_only_characters"}),
       },
       values = {"stage", "often_stage", "either", "often_characters", "characters"},
-      selectedIndex = music_frequency_index_map[config.use_music_from],
+      selectedIndex = musicFrequencyIndexMap[config.use_music_from],
       onChange = function(value) 
         play_optional_sfx(themes[config.theme].sounds.menu_move)
         config.use_music_from = value
@@ -311,44 +309,44 @@ function optionsMenu:init()
     }
   )
   
-  local audio_menu_options = {
-    {Label({width = label_width, label = "op_vol"}), createConfigSlider("master_volume", 0, 100, function() apply_config_volume() end)},
-    {Label({width = label_width, label = "op_vol_sfx"}), createConfigSlider("SFX_volume", 0, 100, function() apply_config_volume() end)},
-    {Label({width = label_width, label = "op_vol_music"}), createConfigSlider("music_volume", 0, 100, function() apply_config_volume() end)},
-    {Label({width = label_width, label = "op_use_music_from"}), music_frequency_stepper},
-    {Label({width = label_width, label = "op_music_delay"}), createToggleButtonGroup("danger_music_changeback_delay")},
-    {Button({width = label_width, label = "mm_music_test", onClick = function() sceneManager:switchToScene("soundTest") end})},
-    {Button({width = label_width, label = "back", onClick = function() switchMenu("base_menu") end})},
+  local audioMenuOptions = {
+    {Label({width = labelWidth, label = "op_vol"}), createConfigSlider("master_volume", 0, 100, function() apply_config_volume() end)},
+    {Label({width = labelWidth, label = "op_vol_sfx"}), createConfigSlider("SFX_volume", 0, 100, function() apply_config_volume() end)},
+    {Label({width = labelWidth, label = "op_vol_music"}), createConfigSlider("music_volume", 0, 100, function() apply_config_volume() end)},
+    {Label({width = labelWidth, label = "op_use_music_from"}), musicFrequencyStepper},
+    {Label({width = labelWidth, label = "op_music_delay"}), createToggleButtonGroup("danger_music_changeback_delay")},
+    {Button({width = labelWidth, label = "mm_music_test", onClick = function() sceneManager:switchToScene("soundTest") end})},
+    {Button({width = labelWidth, label = "back", onClick = function() switchMenu("baseMenu") end})},
   }
   
-  local debut_menu_options = {
-    {Label({width = label_width, label = "op_debug"}), createToggleButtonGroup("debug_mode")},
-    {Label({width = label_width, label = "VS Frames Behind", translate = false}), createConfigSlider("debug_vsFramesBehind", -200, 200)},
-    {Button({width = label_width, label = "back", onClick = function() switchMenu("base_menu") end})},
+  local debugMenuOptions = {
+    {Label({width = labelWidth, label = "op_debug"}), createToggleButtonGroup("debug_mode")},
+    {Label({width = labelWidth, label = "VS Frames Behind", translate = false}), createConfigSlider("debug_vsFramesBehind", -200, 200)},
+    {Button({width = labelWidth, label = "back", onClick = function() switchMenu("baseMenu") end})},
   }
   
-  local about_menu_options = {
-    {Button({width = label_width, label = "op_about_themes", onClick = setupDrawThemesInfo})},
-    {Button({width = label_width, label = "op_about_characters", onClick = function() setupInfo("characters") end})},
-    {Button({width = label_width, label = "op_about_stages", onClick = function() setupInfo("stages") end})},
-    {Button({width = label_width, label = "op_about_panels", onClick = function() setupInfo("panels") end})},
-    {Button({width = label_width, label = "About Attack Files", translate = false, onClick = function() setupInfo("attackFiles") end})},
-    {Button({width = label_width, label = "System Info", translate = false, onClick = setupSystemInfo})},
-    {Button({width = label_width, label = "back", onClick = function() switchMenu("base_menu") end})},
+  local aboutMenuOptions = {
+    {Button({width = labelWidth, label = "op_about_themes", onClick = setupDrawThemesInfo})},
+    {Button({width = labelWidth, label = "op_about_characters", onClick = function() setupInfo("characters") end})},
+    {Button({width = labelWidth, label = "op_about_stages", onClick = function() setupInfo("stages") end})},
+    {Button({width = labelWidth, label = "op_about_panels", onClick = function() setupInfo("panels") end})},
+    {Button({width = labelWidth, label = "About Attack Files", translate = false, onClick = function() setupInfo("attackFiles") end})},
+    {Button({width = labelWidth, label = "System Info", translate = false, onClick = setupSystemInfo})},
+    {Button({width = labelWidth, label = "back", onClick = function() switchMenu("baseMenu") end})},
   }
   
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
   x = x - 70--- 400
   y = y + 10
-  menus["base_menu"] = Menu({menuItems = base_menu_options, x = x, y = y})
-  menus["general_menu"] = Menu({menuItems = general_menu_options, x = x, y = y})
-  menus["graphics_menu"] = Menu({menuItems = graphics_menu_options, x = x, y = y})
-  menus["sound_test_menu"] = Menu({menuItems = sound_test_menu_options, x = x, y = y})
-  menus["audio_menu"] = Menu({menuItems = audio_menu_options, x = x, y = y})
-  menus["debug_menu"] = Menu({menuItems = debut_menu_options, x = x, y = y})
-  menus["about_menu"] = Menu({menuItems = about_menu_options, x = x, y = y})
+  menus["baseMenu"] = Menu({menuItems = baseMenuOptions, x = x, y = y})
+  menus["generalMenu"] = Menu({menuItems = generalMenuOptions, x = x, y = y})
+  menus["graphicsMenu"] = Menu({menuItems = graphicsMenuOptions, x = x, y = y})
+  menus["soundTestMenu"] = Menu({menuItems = soundTestMenuOptions, x = x, y = y})
+  menus["audioMenu"] = Menu({menuItems = audioMenuOptions, x = x, y = y})
+  menus["debugMenu"] = Menu({menuItems = debugMenuOptions, x = x, y = y})
+  menus["aboutMenu"] = Menu({menuItems = aboutMenuOptions, x = x, y = y})
 
-  for menu_name, menu in pairs(menus) do
+  for _, menu in pairs(menus) do
     menu:setVisibility(false)
   end
 end
@@ -358,8 +356,8 @@ function optionsMenu:load()
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")
   end
-  options_state = "menus"
-  menus[active_menu_name]:setVisibility(true)
+  optionsState = "menus"
+  menus[activeMenuName]:setVisibility(true)
 end
 
 function optionsMenu:drawBackground()
@@ -367,18 +365,18 @@ function optionsMenu:drawBackground()
 end
 
 function optionsMenu:update()
-  if options_state == "menus" then
-    menus[active_menu_name]:update()
-    menus[active_menu_name]:draw()
-  elseif options_state == "info" then
-    drawInfo(info_name)
-  elseif options_state == "system_info" then
+  if optionsState == "menus" then
+    menus[activeMenuName]:update()
+    menus[activeMenuName]:draw()
+  elseif optionsState == "info" then
+    drawInfo(infoName)
+  elseif optionsState == "system_info" then
     drawSystemInfo()
   end
 end
 
 function optionsMenu:unload()
-  menus[active_menu_name]:setVisibility(false)
+  menus[activeMenuName]:setVisibility(false)
 end
 
 return optionsMenu

@@ -7,7 +7,7 @@ local BUTTON_PADDING = 5
 
 local function setLabels(self, labels, values, selectedIndex)
   if self.labels then
-    self.label[self.selectedIndex]:detach()
+    self.labels[self.selectedIndex]:detach()
   end
   
   self.selectedIndex = selectedIndex
