@@ -1,5 +1,4 @@
 require("util")
-require("server.server_globals")
 require("csprng")
 local logger = require("logger")
 
