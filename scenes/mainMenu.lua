@@ -39,8 +39,8 @@ local menuItems = {
   {Button({label = "mm_2_vs_local", onClick = genLegacyMainloopFn(main_local_vs_setup)})},
   {Button({label = "mm_replay_browser", onClick = genLegacyMainloopFn(replay_browser.main)})},
   {Button({label = "mm_configure", onClick = function() switchToScene("inputConfigMenu") end})},
-  {Button({label = "mm_set_name", onClick = genLegacyMainloopFn(main_set_name)})},
-  {Button({label = "mm_options", onClick = genLegacyMainloopFn(options.main)})},
+  {Button({label = "mm_set_name", onClick = function() Menu.playValidationSfx() sceneManager:switchToScene("setNameMenu", {prevScene = "mainMenu"}) end})},
+  {Button({label = "mm_options", onClick = function() switchToScene("optionsMenu") end})},
   {Button({label = "mm_fullscreen", extra_labels = {"\n(LAlt+Enter)"}, onClick = function() Menu.playValidationSfx() fullscreen() end})},
   {Button({label = "mm_quit", onClick = love.event.quit})}
 }

@@ -5,6 +5,8 @@ local inputManager = require("inputManager")
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 local logger = require("logger")
 
+local save = {}
+
 -- writes to the "keys.txt" file
 function write_key_file()
   pcall(
@@ -18,7 +20,7 @@ function write_key_file()
 end
 
 -- reads the "keys.txt" file
-function read_key_file()
+function save.read_key_file()
   local file = love.filesystem.newFile("keysV3.txt")
   local ok, err = file:open("r")
   local migrateInputs = false
@@ -47,7 +49,7 @@ function read_key_file()
 end
 
 -- reads the .txt file of the given path and filename
-function read_txt_file(path_and_filename)
+function save.read_txt_file(path_and_filename)
   local s
   pcall(
     function()
@@ -305,3 +307,5 @@ function recursiveRemoveFiles(folder, targetName)
     end
   end
 end
+
+return save
