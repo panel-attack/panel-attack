@@ -19,6 +19,7 @@ GARBAGE_DELAY_LAND_TIME = 60 -- this is the amount of time after garbage leaves 
 						  -- technically this was 0 in classic games, but we are using this value to make rollback less noticable and match PA history
 GARBAGE_TRANSIT_TIME = 45 -- the amount of time the garbage attack animation plays before getting to the telegraph
 MAX_LAG = 200 + GARBAGE_TELEGRAPH_TIME -- maximum amount of lag before net games abort
+NAME_LENGTH_LIMIT = 16
 
 gfx_q = Queue()
 
