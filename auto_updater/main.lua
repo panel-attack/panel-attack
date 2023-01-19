@@ -29,8 +29,13 @@ local updateLog = {}
 local debugMode = false
 local updateString = "Checking for updates"
 
+local loadingIndicator = require("loadingIndicator")
+local bigFont = love.graphics.newFont(24)
+
 local function logMessage(txt)
-  if not love.window.isOpen() then love.window.setMode(800, 600) end
+  if not love.window.isOpen() then
+    love.window.setMode(800, 600)
+  end
   updateLog[#updateLog+1] = txt
 end
 
@@ -44,18 +49,27 @@ end
 local embeddedVersion = get_embedded_version()
 
 local function delayGameStart()
-  local frameCount = 0
-  -- called wait a frame cause auto_updater uses vsync
-  local waitAFrame = function()
-    frameCount = frameCount + 1
-    coroutine.yield()
-  end
-  local cr = coroutine.create(waitAFrame)
+  local startTime = love.timer.getTime()
+  local currentTime = startTime
+  local dt = 0
+  local announcedStart = false
 
-  while frameCount < 300 do
-    coroutine.resume(cr)
-    if frameCount == 180 then
+  while currentTime - startTime < 5 do
+    local loopDt = love.timer.getTime() - currentTime
+    dt = dt + loopDt
+    currentTime = currentTime + loopDt
+
+    -- bit dirty but as we can't be inside of a coroutine for reboot, make our own drawloop here
+    if dt >= (1/60) then
+      dt = 0
+      love.graphics.clear()
+      love.draw()
+      love.graphics.present()
+      love.timer.sleep(0.01)
+    end
+    if not announcedStart and currentTime - startTime >= 3 then
       logMessage("Starting game version " .. gameStartVersion)
+      announcedStart = true
     end
   end
 end
@@ -278,7 +292,8 @@ local function startGame()
 end
 
 function love.load(args)
-
+  loadingIndicator:setDrawPosition(love.graphics:getDimensions())
+  loadingIndicator:setFont(bigFont)
   setDebugFlag(args)
   logMessage("Starting auto updater...")
   correctAndroidStartupConfig()
@@ -313,14 +328,12 @@ function love.update(dt)
       error(err .. "\n\n" .. debug.traceback(UPDATER_COROUTINE))
     end
   else
+    -- we cannot reboot the game proper while inside the coroutine
     startGame()
   end
 end
 
-local indicatorTimer = 0
-local indicator = { false, false, false }
 local width, height = love.graphics.getDimensions()
-local font = love.graphics.newFont(24)
 function love.draw()
   if debugMode then
     love.graphics.print("Your save directory is: " .. love.filesystem.getSaveDirectory(), 10, 10)
@@ -331,26 +344,8 @@ function love.draw()
       end
     end
   else
-    love.graphics.printf(updateString, font, 0, height / 2 - 12, width, "center")
+    love.graphics.printf(updateString, bigFont, 0, height / 2 - 12, width, "center")
   end
 
-  -- draw an indicator to indicate that the window is alive and kicking even during a download
-  indicatorTimer = indicatorTimer + 1
-  if indicatorTimer % 60 == 20 then
-    indicator[1] = not indicator[1]
-  elseif indicatorTimer % 60 == 40 then
-    indicator[2] = not indicator[2]
-  elseif indicatorTimer % 60 == 0 then
-    indicator[3] = not indicator[3]
-  end
-
-  if indicator[1] then
-    love.graphics.print(".", font, width / 2 - 15, height * 0.75)
-  end
-  if indicator[2] then
-    love.graphics.print(".", font, width / 2     , height * 0.75)
-  end
-  if indicator[3] then
-    love.graphics.print(".", font, width / 2 + 15, height * 0.75)
-  end
+  loadingIndicator:draw()
 end
