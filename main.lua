@@ -23,7 +23,7 @@ require("stage") -- after globals!
 require("localization")
 require("queue")
 require("save")
-local Game = require("Game")
+local Game = require("game")
 -- move to load once global dependencies have been resolved
 GAME = Game()
 -- temp hack to keep modules dependent on the global gfx_q working, please use GAME:gfx_q instead
