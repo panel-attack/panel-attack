@@ -44,7 +44,7 @@ function setNameMenu:update()
   if input.allKeys.isDown["return"] then
     play_optional_sfx(themes[config.theme].sounds.menu_validate)
     config.name = nameField.value
-    save.write_conf_file()
+    write_conf_file()
     sceneManager:switchToScene(self.prevScene)
   end
   if input.allKeys.isDown["escape"] then
