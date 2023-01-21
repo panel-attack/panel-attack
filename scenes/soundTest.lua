@@ -200,7 +200,7 @@ function soundTest:init()
 end
 
 function soundTest:load()
-  backgroundImg = themes[config.theme].images.bg_main:draw()
+  backgroundImg = themes[config.theme].images.bg_main
 
   -- stop main music
   stop_all_audio()
