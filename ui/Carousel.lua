@@ -1,8 +1,9 @@
 local class = require("class")
 local UiElement = require("ui.UIElement")
+local Button = require("ui.Button")
 local CarouselPassenger = require("ui.CarouselPassenger")
 local GraphicsUtil = require("graphics_util")
-local Util = require ("util")
+local Util = require("util")
 local canBeFocused = require("ui.Focusable")
 local input = require("inputManager")
 
@@ -26,14 +27,44 @@ local StageCarousel = class(function(carousel, options)
   end
 
   carousel.font = GraphicsUtil.getGlobalFontWithSize(calculateFontSize(carousel.width, carousel.height))
-  carousel.leftArrow = love.graphics.newText(carousel.font, "<")
-  carousel.rightArrow = love.graphics.newText(carousel.font, ">")
+  carousel:createNavigationButtons()
+
   carousel.TYPE = "Carousel"
-end,
-UiElement)
+end, UiElement)
+
+function StageCarousel.createNavigationButtons(self)
+  self.leftButton =
+    Button({
+      x = self.width * 0.05,
+      y = self.height * 0.5,
+      width = self.width * 0.3,
+      height = self.height * 0.5,
+      halign = "center",
+      valign = "center",
+      onClick = function()
+        self:moveToNextPassenger(-1)
+      end,
+      text = love.graphics.newText(self.font, "<"),
+      parent = self
+    })
+  self.rightButton =
+    Button({
+      x = self.width * 0.75,
+      y = self.height * 0.5,
+      width = self.width * 0.3,
+      height = self.height * 0.5,
+      halign = "center",
+      valign = "center",
+      onClick = function()
+        self:moveToNextPassenger(1)
+      end,
+      text = love.graphics.newText(self.font, ">"),
+      parent = self
+    })
+end
 
 function StageCarousel.addPassenger(self, passenger)
-  self.passengers[#self.passengers+1] = passenger
+  self.passengers[#self.passengers + 1] = passenger
 end
 
 function StageCarousel.removeSelectedPassenger(self)
@@ -70,14 +101,15 @@ function StageCarousel:draw()
   menu_drawf(passenger.image, x + self.width / 2, y + self.height / 2, "center", "center", 0, aspectRatio.x / imgWidth, aspectRatio.y / imgHeight)
 
   -- text below
+  -- Sankyr might tell me this should be a label but it's kinda bleh
   if not passenger.fontText then
     passenger.fontText = love.graphics.newText(self.font, passenger.text)
   end
   GraphicsUtil.printText(passenger.fontText, x + self.width / 2, y + self.height * 0.85, "center")
 
   if self.hasFocus then
-    GAME.gfx_q:push({love.graphics.draw, {self.leftArrow, x + self.width * 0.05, y + self.height / 2, 0, 1, 1, 0, self.leftArrow:getHeight() / 2}})
-    GAME.gfx_q:push({love.graphics.draw, {self.rightArrow, x + self.width * 0.95, y + self.height / 2, 0, 1, 1, self.rightArrow:getWidth(), self.rightArrow:getHeight() / 2}})
+    self.leftButton:draw()
+    self.rightButton:draw()
   end
 
   -- because i'm graphics dumb, draw borders around the thing
@@ -93,7 +125,6 @@ end
 function StageCarousel:onBack()
   self:yieldFocus()
 end
-
 
 -- the parent makes sure this is only called while focused
 function StageCarousel:receiveInputs()

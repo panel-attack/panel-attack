@@ -223,6 +223,7 @@ function inputManager:mousePressed(x, y, button)
   if not self.mouse.isDown[button] and not self.mouse.isPressed[button] then
     self.mouse.isDown[button] = KEY_CHANGE.DETECTED
   end
+  -- is it intentional we're never setting mouse.isPressed?
   self.mouse.x = x
   self.mouse.y = y
 end
