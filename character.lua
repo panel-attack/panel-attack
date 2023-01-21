@@ -5,6 +5,7 @@ Sound
 ]]--
 local logger = require("logger")
 local tableUtils = require("tableUtils")
+local FileUtils = require("FileUtils")
 
 local default_character = nil -- holds default assets fallbacks
 
@@ -33,7 +34,7 @@ Character =
     self.popfx_burstScale = 1
     self.popfx_fadeScale = 1
     self.music_style = "normal"
-    self.files = tableUtils.map(love.filesystem.getDirectoryItems(self.path), function(file) return FileUtil.getFileNameWithoutExtension(file) end)
+    self.files = tableUtils.map(love.filesystem.getDirectoryItems(self.path), function(file) return FileUtils.getFileNameWithoutExtension(file) end)
   end
 )
 

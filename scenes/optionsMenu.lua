@@ -7,10 +7,11 @@ local sceneManager = require("scenes.sceneManager")
 local Menu = require("ui.Menu")
 local ButtonGroup = require("ui.ButtonGroup")
 local Stepper = require("ui.Stepper")
-local input = require("inputManager")
+local inputManager = require("inputManager")
 local save = require("save")
 local consts = require("consts")
 local GraphicsUtil = require("graphics_util")
+local FileUtils = require("FileUtils")
 
 --@module BasicMenu
 local optionsMenu = Scene("optionsMenu")
@@ -28,6 +29,7 @@ for k, v in ipairs(localization:get_list_codes()) do
   end
 end
 
+local SCROLL_STEP = 14
 local optionsState
 local activeMenuName = "baseMenu"
 local infoName
@@ -44,11 +46,12 @@ local menus = {
 local foundThemes = {}
 local aboutText = {}
 local infoString
+local infoOffset = 0
 
 local font = GraphicsUtil.getGlobalFont()
 
 local function exitMenu()
-  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  Menu.playValidationSfx()
   sceneManager:switchToScene("mainMenu")
 end
 
@@ -59,7 +62,7 @@ local function updateMenuLanguage()
 end
 
 local function switchMenu(menuName)
-  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  Menu.playValidationSfx()
   menus[menuName]:setVisibility(true)
   menus[activeMenuName]:setVisibility(false)
   activeMenuName = menuName
@@ -75,7 +78,7 @@ local function createToggleButtonGroup(configField, onChangeFn)
       values = {false, true},
       selectedIndex = config[configField] and 2 or 1,
       onChange = function(value) 
-        play_optional_sfx(themes[config.theme].sounds.menu_move) 
+        Menu.playMoveSfx()
         config[configField] = value
         if onChangeFn then
           onChangeFn()
@@ -101,7 +104,7 @@ local function createConfigSlider(configField, min, max, onValueChangeFn)
 end
 
 local function setupDrawThemesInfo()
-  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  Menu.playValidationSfx()
   backgroundImage = themes[config.theme].images.bg_readme
   reset_filters()
 
@@ -113,22 +116,24 @@ local function setupDrawThemesInfo()
     -- Android can't easily copy into the save dir, so do it for them to help.
     recursive_copy("default_data/themes", "themes")
   end
+  infoOffset = 0
   optionsState = "info"
   infoName = "themes"
   menus["aboutMenu"]:setVisibility(false)
 end
 
 local function setupInfo(infoType)
-  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  Menu.playValidationSfx()
   backgroundImage = themes[config.theme].images.bg_readme
   reset_filters()
+  infoOffset = 0
   optionsState = "info"
   infoName = infoType
   menus["aboutMenu"]:setVisibility(false)
 end
 
 local function setupSystemInfo()
-  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  Menu.playValidationSfx()
   backgroundImage = themes[config.theme].images.bg_readme
   reset_filters()
   local rendererName, rendererVersion, graphicsCardVender, graphicsCardName = love.graphics.getRendererInfo()
@@ -155,8 +160,8 @@ end
 
 local function drawSystemInfo()
   gprint(infoString, 15, 15)
-  if input.isDown["Swap2"] then
-    play_optional_sfx(themes[config.theme].sounds.menu_cancel)
+  if inputManager.isDown["MenuEsc"] then
+    Menu.playCancelSfx()
     backgroundImage = themes[config.theme].images.bg_main
     reset_filters()
     optionsState = "menus"
@@ -165,41 +170,56 @@ local function drawSystemInfo()
 end
 
 local function drawInfo(text)
-  gprint(aboutText[text], 15, 15)
-  if input.isDown["Swap2"] then
-    play_optional_sfx(themes[config.theme].sounds.menu_cancel)
+  gfx_q:push({love.graphics.draw, {aboutText[text], 15, 15, nil, nil, nil, nil, infoOffset}})
+  if inputManager.isDown["MenuEsc"] then
+    Menu.playCancelSfx()
     backgroundImage = themes[config.theme].images.bg_main
     reset_filters()
     optionsState = "menus"
     menus["aboutMenu"]:setVisibility(true)
   end
+  if inputManager:isPressedWithRepeat("MenuUp", .25, 30/1000.0) then
+    Menu.playMoveSfx()
+    infoOffset = math.max(0, infoOffset - SCROLL_STEP)
+  end
+  if inputManager:isPressedWithRepeat("MenuDown", .25, 30/1000.0) then
+    Menu.playMoveSfx()
+    local textWidth, textHeight = aboutText[text]:getDimensions()
+    if textHeight > canvas_height - 15 then
+      infoOffset = math.min(infoOffset + SCROLL_STEP, textHeight - (canvas_height - 15))
+    end
+  end
 end
 
 function optionsMenu:init()
   sceneManager:addScene(self)
-  aboutText["themes"] = save.read_txt_file("readme_themes.txt")
-  aboutText["characters"] = save.read_txt_file("readme_characters.txt")
-  aboutText["stages"] = save.read_txt_file("readme_stages.txt")
-  aboutText["panels"] = save.read_txt_file("readme_panels.txt")
-  aboutText["attackFiles"] = save.read_txt_file("readme_training.txt")
+  aboutText["themes"] = love.graphics.newText(GraphicsUtil.getGlobalFont(), save.read_txt_file("readme_themes.txt"))
+  aboutText["characters"] = love.graphics.newText(GraphicsUtil.getGlobalFont(), save.read_txt_file("readme_characters.txt"))
+  aboutText["stages"] = love.graphics.newText(GraphicsUtil.getGlobalFont(), save.read_txt_file("readme_stages.txt"))
+  aboutText["panels"] = love.graphics.newText(GraphicsUtil.getGlobalFont(), save.read_txt_file("readme_panels.txt"))
+  aboutText["attackFiles"] = love.graphics.newText(GraphicsUtil.getGlobalFont(), save.read_txt_file("readme_training.txt"))
 
   local languageLabels = {}
   for k, v in ipairs(languageName) do
+    local lang = config.language_code
+    localization:set_language(v[1])
     languageLabels[#languageLabels + 1] = Label({
         label = v[2],
         translate = false,
         width = 70,
         height = 25})
+    localization:set_language(lang)
   end
+  
   local languageStepper = Stepper(
     {
       labels = languageLabels,
       values = languageName,
       selectedIndex = languageNumber,
-      onChange = function(value) 
-        play_optional_sfx(themes[config.theme].sounds.menu_move) 
+      onChange = function(value)
+        Menu.playMoveSfx()
         localization:set_language(value[1])
-        updateMenuLanguage() 
+        updateMenuLanguage()
       end
     }
   )
@@ -227,7 +247,7 @@ function optionsMenu:init()
       values = {"with my name", "anonymously", "not at all"},
       selectedIndex = saveReplaysPubliclyIndexMap[config.save_replays_publicly],
       onChange = function(value) 
-        play_optional_sfx(themes[config.theme].sounds.menu_move) 
+        Menu.playMoveSfx() 
         config.save_replays_publicly = value
       end
     }
@@ -244,24 +264,22 @@ function optionsMenu:init()
   }
 
   local themeIndex
-  local themeButtons = {}
-  for k, v in ipairs(love.filesystem.getDirectoryItems("themes")) do
-    if love.filesystem.getInfo("themes/" .. v) and v:sub(0, prefix_of_ignored_dirs:len()) ~= prefix_of_ignored_dirs then
-      foundThemes[#foundThemes + 1] = v
-      themeButtons[#themeButtons + 1] = Button({label = v, translate = false})
-      if config.theme == v then
-        themeIndex = #foundThemes
-      end
+  local themeLabels = {}
+  for i, v in ipairs(FileUtils.getFilteredDirectoryItems("themes")) do
+    foundThemes[#foundThemes + 1] = v
+    themeLabels[#themeLabels + 1] = Label({label = v, translate = false})
+    if config.theme == v then
+      themeIndex = #foundThemes
     end
   end
   
-  local themeButtonGroup = ButtonGroup(
+  local themeButtonGroup = Stepper(
     {
-      buttons = themeButtons,
+      labels = themeLabels,
       values = foundThemes,
       selectedIndex = themeIndex,
       onChange = function(value) 
-        play_optional_sfx(themes[config.theme].sounds.menu_move) 
+        Menu.playMoveSfx() 
         config.theme = value
         stop_the_music()
         theme_init()
@@ -303,7 +321,7 @@ function optionsMenu:init()
       values = {"stage", "often_stage", "either", "often_characters", "characters"},
       selectedIndex = musicFrequencyIndexMap[config.use_music_from],
       onChange = function(value) 
-        play_optional_sfx(themes[config.theme].sounds.menu_move)
+        Menu.playMoveSfx()
         config.use_music_from = value
       end
     }
@@ -364,7 +382,8 @@ function optionsMenu:drawBackground()
   backgroundImage:draw()
 end
 
-function optionsMenu:update()
+function optionsMenu:update(dt)
+  backgroundImage:update(dt)
   if optionsState == "menus" then
     menus[activeMenuName]:update()
     menus[activeMenuName]:draw()

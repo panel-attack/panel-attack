@@ -8,6 +8,8 @@ local Menu = require("ui.Menu")
 local ButtonGroup = require("ui.ButtonGroup")
 local input = require("inputManager")
 local save = require("save")
+local tableUtils = require("tableUtils")
+local utf8 = require("utf8")
 
 --@module setNameMenu
 local setNameMenu = Scene("setNameMenu")
@@ -23,32 +25,46 @@ local nameField = InputField({
     isVisible = false
 })
 
+local warningText = ""
+local backgroundImg = nil -- set in load
+
 function setNameMenu:init()
   sceneManager:addScene(self)
 end
 
 function setNameMenu:load(sceneParams)
+  backgroundImg = themes[config.theme].images.bg_main
   nameField:setVisibility(true)
   nameField:setFocus(0, 0)
+  nameField.offset = utf8.len(nameField.value)
   self.prevScene = sceneParams.prevScene
 end
 
 function setNameMenu:drawBackground()
-  themes[config.theme].images.bg_main:draw()
+  backgroundImg:draw()
 end
 
-function setNameMenu:update()
-  local toPrint = loc("op_enter_name") .. " (" .. nameField.value:len() .. "/" .. NAME_LENGTH_LIMIT .. ")"
+function setNameMenu:update(dt)
+  backgroundImg:update(dt)
+  if not input.allKeys.isDown["return"] and tableUtils.trueForAny(input.allKeys.isDown, function(val) return val end) then
+    warningText = ""
+  end
+
+  local toPrint = loc("op_enter_name") .. " (" .. nameField.value:len() .. "/" .. NAME_LENGTH_LIMIT .. ")" .. "\n" .. warningText
   gprint(toPrint, unpack(themes[config.theme].main_menu_screen_pos))
   
   if input.allKeys.isDown["return"] then
-    play_optional_sfx(themes[config.theme].sounds.menu_validate)
-    config.name = nameField.value
-    write_conf_file()
-    sceneManager:switchToScene(self.prevScene)
+    if nameField.value == "" then
+      warningText = loc("op_username_blank_warning")
+    else
+      Menu.playValidationSfx()
+      config.name = nameField.value
+      write_conf_file()
+      sceneManager:switchToScene(self.prevScene)
+    end
   end
   if input.allKeys.isDown["escape"] then
-    play_optional_sfx(themes[config.theme].sounds.menu_cancel)
+    Menu.playCancelSfx()
     sceneManager:switchToScene("mainMenu")
   end
   

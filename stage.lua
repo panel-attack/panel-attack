@@ -1,6 +1,7 @@
 require("stage_loader")
 local logger = require("logger")
 local tableUtils = require("tableUtils")
+local FileUtils = require("FileUtils")
 require("UpdatingImage")
 
 -- Stuff defined in this file:
@@ -100,7 +101,7 @@ end
 -- adds stages from the path given
 local function add_stages_from_dir_rec(path)
   local lfs = love.filesystem
-  local raw_dir_list = FileUtil.getFilteredDirectoryItems(path)
+  local raw_dir_list = FileUtils.getFilteredDirectoryItems(path)
   for i, v in ipairs(raw_dir_list) do
     local current_path = path .. "/" .. v
     if lfs.getInfo(current_path) and lfs.getInfo(current_path).type == "directory" then

@@ -14,6 +14,8 @@ local soundTestMenu
 
 local menuValidateSound
 
+local backgroundImg = nil -- set in load
+
 local function playMusic(source, id, musicType)
   local musicToUse
   local musicStyle
@@ -198,6 +200,8 @@ function soundTest:init()
 end
 
 function soundTest:load()
+  backgroundImg = themes[config.theme].images.bg_main:draw()
+
   -- stop main music
   stop_all_audio()
 
@@ -210,12 +214,13 @@ function soundTest:load()
 end
 
 function soundTest:drawBackground()
-  themes[config.theme].images.bg_main:draw()
+  backgroundImg:draw()
 end
 
-function soundTest:update()
+function soundTest:update(dt)
   soundTestMenu:update()
   soundTestMenu:draw()
+  backgroundImg:update(dt)
 end
 
 --fallback to main theme if nothing is playing or if dynamic music is playing, dynamic music cannot cleanly be "carried out" of the sound test due to the master volume reapplication in the audio options menu

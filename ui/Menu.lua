@@ -122,6 +122,10 @@ end
 
 
 -- sound effects
+function Menu.playCancelSfx()
+  play_optional_sfx(themes[config.theme].sounds.menu_cancel)
+end
+
 function Menu.playValidationSfx()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
 end
