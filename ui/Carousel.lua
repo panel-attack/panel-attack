@@ -47,8 +47,8 @@ end
 function Carousel.createNavigationButtons(self)
   self.leftButton =
     Button({
-      x = self.width * 0.05,
-      y = self.height * 0.5,
+      x = - (self.width * 0.05),
+      y = self.height * 0.25,
       width = self.width * 0.3,
       height = self.height * 0.5,
       onClick = function()
@@ -60,7 +60,7 @@ function Carousel.createNavigationButtons(self)
   self.rightButton =
     Button({
       x = self.width * 0.75,
-      y = self.height * 0.5,
+      y = self.height * 0.25,
       width = self.width * 0.3,
       height = self.height * 0.5,
       onClick = function()

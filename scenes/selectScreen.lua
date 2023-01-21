@@ -2,7 +2,6 @@ local Scene = require("scenes.Scene")
 local Button = require("ui.Button")
 local logger = require("logger")
 local Carousel = require("ui.Carousel")
-local CarouselPassenger = require("ui.CarouselPassenger")
 local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local directsFocus = require("ui.FocusDirector")
@@ -50,10 +49,10 @@ function selectScreen:init()
   sceneManager:addScene(self)
 end
 
+-- I kind of dislike how PA silently dies without even crashing if there's an error inside of load
 function selectScreen:load()
   loadStages()
 end
-
 
 function selectScreen:drawBackground()
   themes[config.theme].images.bg_select_screen:draw()

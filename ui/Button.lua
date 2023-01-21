@@ -13,6 +13,8 @@ local Button = class(
     -- text alignments settings
     -- must be one of the following values:
     -- left, right, center
+    -- we should ngl have button alignments too
+    -- trying to center is a pain in the arse
     self.halign = options.halign or "center"
     self.valign = options.valign or "center"
     
