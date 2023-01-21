@@ -31,7 +31,7 @@ local menuItems = {
   {Button({label = "mm_1_endless", onClick = genLegacyMainloopFn(main_endless_select)})},
   {Button({label = "mm_1_puzzle", onClick = genLegacyMainloopFn(main_select_puzz)})},
   {Button({label = "mm_1_time", onClick = genLegacyMainloopFn(main_timeattack_select)})},
-  {Button({label = "mm_1_vs", onClick = genLegacyMainloopFn(main_local_vs_yourself_setup)})},
+  {Button({label = "mm_1_vs", onClick = function() switchToScene("selectScreen") end})},
   {Button({label = "mm_1_training", onClick = genLegacyMainloopFn(training_setup)})},
   {Button({label = "mm_2_vs_online", extra_labels = {""}, onClick = genLegacyMainloopFn(main_net_vs_setup, {"18.188.43.50"})})},
   --{Button({label = "mm_2_vs_online", extra_labels = {"\nTelegraph Server"}, onClick = genOnClickFn(main_net_vs_setup, {"betaserver.panelattack.com", 59569})})},

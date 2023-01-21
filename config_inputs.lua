@@ -1,4 +1,5 @@
 local wait = coroutine.yield
+local util = require("util")
 
 -- menu for configuring inputs
 local function main_config_input()
@@ -14,7 +15,7 @@ local function main_config_input()
   local ret = nil
 
   local function decrementConfiguration()
-    active_configuration = wrap(1, active_configuration - 1, GAME.input.maxConfigurations)
+    active_configuration = util.wrap(1, active_configuration - 1, GAME.input.maxConfigurations)
     inputConfiguration = GAME.input.inputConfigurations[active_configuration]
     if input_menu then
       input_menu:remove_self()
@@ -23,7 +24,7 @@ local function main_config_input()
   end
 
   local function incrementConfiguration()
-    active_configuration = wrap(1, active_configuration + 1, GAME.input.maxConfigurations)
+    active_configuration = util.wrap(1, active_configuration + 1, GAME.input.maxConfigurations)
     inputConfiguration = GAME.input.inputConfigurations[active_configuration]
     if input_menu then
       input_menu:remove_self()

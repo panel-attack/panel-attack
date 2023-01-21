@@ -1,5 +1,5 @@
 require("input")
-require("util")
+local util = require("util")
 local graphicsUtil = require("graphics_util")
 
 local floor = math.floor
@@ -428,7 +428,7 @@ function Stack.render(self)
           elseif panel.fell_from_garbage then
             draw_frame = garbage_bounce_table[panel.fell_from_garbage] or 1
           elseif self.danger_col[col] then
-            draw_frame = danger_bounce_table[wrap(1, self.danger_timer + 1 + floor((col - 1) / 2), #danger_bounce_table)]
+            draw_frame = danger_bounce_table[util.wrap(1, self.danger_timer + 1 + floor((col - 1) / 2), #danger_bounce_table)]
           else
             draw_frame = 1
           end

@@ -1739,7 +1739,7 @@ function main_select_puzz()
   end
 
   -- Ensure the last index is sane in case puzzles got reloaded differently
-  puzzle_menu_last_index = wrap(3, puzzle_menu_last_index, #items + 2)
+  puzzle_menu_last_index = util.wrap(3, puzzle_menu_last_index, #items + 2)
 
   local function updateMenuLevel()
     local levelString = ""

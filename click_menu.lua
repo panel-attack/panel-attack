@@ -1,5 +1,6 @@
 local GraphicsUtil = require("graphics_util")
 local logger = require("logger")
+local util = require("util")
 
 CLICK_MENUS = {} -- All click menus currently showing in the game
 
@@ -173,7 +174,7 @@ end
 
 -- Sets the current selected button and scrolls to it if needed
 function Click_menu.set_active_idx(self, idx)
-  idx = wrap(1, idx, #self.buttons)
+  idx = util.wrap(1, idx, #self.buttons)
   self.active_idx = idx
   self:update_top_button()
   self:layout_buttons()
@@ -258,11 +259,11 @@ function Click_menu.selectButton(self, buttonIndex)
 end
 
 function Click_menu.selectPreviousIndex(self)
-  self:set_active_idx(wrap(1, self.active_idx - 1, #self.buttons))
+  self:set_active_idx(util.wrap(1, self.active_idx - 1, #self.buttons))
 end
 
 function Click_menu.selectNextIndex(self)
-  self:set_active_idx(wrap(1, self.active_idx + 1, #self.buttons))
+  self:set_active_idx(util.wrap(1, self.active_idx + 1, #self.buttons))
 end
 
 -- Responds to input

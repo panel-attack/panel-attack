@@ -1,4 +1,5 @@
 local replay_browser = {}
+local util = require("util")
 
 replay_browser.selection = nil
 replay_browser.base_path = "replays"
@@ -42,7 +43,7 @@ function replay_browser.main()
   end
 
   local function replay_browser_cursor(move)
-    replay_browser.cursor_pos = wrap(0, replay_browser.cursor_pos + move, #replay_browser.path_contents)
+    replay_browser.cursor_pos = util.wrap(0, replay_browser.cursor_pos + move, #replay_browser.path_contents)
     if replay_browser.cursor_pos <= replay_browser.replay_id_top then
       replay_browser.replay_id_top = math.max(replay_browser.cursor_pos, 1) - 1
     end

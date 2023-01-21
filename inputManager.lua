@@ -244,7 +244,7 @@ local function quantize(x, period)
   return math.floor(x / period) * period 
 end 
  
-function inputManager:isPressedWithRepeat(key, delay, repeatPeriod) 
+function inputManager:isPressedWithRepeat(key, delay, repeatPeriod)
   local inputs = self.allKeys 
   if tableUtils.trueForAny(consts.KEY_NAMES, function(k) return k == key end) or 
      tableUtils.trueForAny(menuKeyNames, function(k) return k == key end) then 

@@ -2361,7 +2361,7 @@ function Stack.drop_garbage(self, width, height, metal)
 
   local cols = self.garbage_cols[width]
   local spawn_col = cols[cols.idx]
-  cols.idx = wrap(1, cols.idx + 1, #cols)
+  cols.idx = util.wrap(1, cols.idx + 1, #cols)
   local shake_time = garbage_to_shake_time[width * height]
   for y = spawn_row, spawn_row + height - 1 do
     for x = spawn_col, spawn_col + width - 1 do

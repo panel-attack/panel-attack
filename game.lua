@@ -139,7 +139,8 @@ function Game:postSetup()
     require("scenes.inputConfigMenu"),
     require("scenes.optionsMenu"),
     require("scenes.soundTest"),
-    require("scenes.setNameMenu")
+    require("scenes.setNameMenu"),
+    require("scenes.selectScreen"),
   }
   for i, scene in ipairs(scenes) do
     scene:init()

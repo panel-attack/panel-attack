@@ -22,7 +22,7 @@ function linear_smooth(value, min, max)
 end
 
 -- mods b so a<=b<=c
-function wrap(a, b, c)
+function util.wrap(a, b, c)
   return (b - a) % (c - a + 1) + a
 end
 
