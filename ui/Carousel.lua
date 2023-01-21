@@ -1,17 +1,16 @@
 local class = require("class")
 local UiElement = require("ui.UIElement")
 local Button = require("ui.Button")
-local CarouselPassenger = require("ui.CarouselPassenger")
 local GraphicsUtil = require("graphics_util")
 local Util = require("util")
 local canBeFocused = require("ui.Focusable")
 local input = require("inputManager")
 
-local function calculateFontSize(width, height)
+local function calculateFontSize(height)
   return math.floor(height / 10) + 1
 end
 
-local StageCarousel = class(function(carousel, options)
+local Carousel = class(function(carousel, options)
   canBeFocused(carousel)
 
   if options.passengers == nil then
@@ -26,21 +25,32 @@ local StageCarousel = class(function(carousel, options)
     carousel.selectedId = 1
   end
 
-  carousel.font = GraphicsUtil.getGlobalFontWithSize(calculateFontSize(carousel.width, carousel.height))
+  carousel.font = GraphicsUtil.getGlobalFontWithSize(calculateFontSize(carousel.height))
   carousel:createNavigationButtons()
 
   carousel.TYPE = "Carousel"
 end, UiElement)
 
-function StageCarousel.createNavigationButtons(self)
+function Carousel.createPassenger(id, image, text)
+  local passenger = {}
+  passenger.id = id
+  if image then
+    passenger.image = image
+  else
+    passenger.image = themes[config.theme].images.IMG_random_stage
+  end
+  passenger.text = text
+  assert(id and text, "A carousel passenger needs to have an id, an image and a text!")
+  return passenger
+end
+
+function Carousel.createNavigationButtons(self)
   self.leftButton =
     Button({
       x = self.width * 0.05,
       y = self.height * 0.5,
       width = self.width * 0.3,
       height = self.height * 0.5,
-      halign = "center",
-      valign = "center",
       onClick = function()
         self:moveToNextPassenger(-1)
       end,
@@ -53,8 +63,6 @@ function StageCarousel.createNavigationButtons(self)
       y = self.height * 0.5,
       width = self.width * 0.3,
       height = self.height * 0.5,
-      halign = "center",
-      valign = "center",
       onClick = function()
         self:moveToNextPassenger(1)
       end,
@@ -63,27 +71,27 @@ function StageCarousel.createNavigationButtons(self)
     })
 end
 
-function StageCarousel.addPassenger(self, passenger)
+function Carousel.addPassenger(self, passenger)
   self.passengers[#self.passengers + 1] = passenger
 end
 
-function StageCarousel.removeSelectedPassenger(self)
+function Carousel.removeSelectedPassenger(self)
   local passenger = self:getSelectedPassenger()
   table.remove(self.passengers, passenger)
   -- selectedId may be out of bounds now
   self.selectedId = Util.wrap(1, self.selectedId, #self.passengers)
 end
 
-function StageCarousel.moveToNextPassenger(self, directionSign)
+function Carousel.moveToNextPassenger(self, directionSign)
   play_optional_sfx(themes[config.theme].sounds.menu_move)
   self.selectedId = Util.wrap(1, self.selectedId + directionSign, #self.passengers)
 end
 
-function StageCarousel.getSelectedPassenger(self)
+function Carousel.getSelectedPassenger(self)
   return self.passengers[self.selectedId]
 end
 
-function StageCarousel.setPassenger(self, passengerId)
+function Carousel.setPassenger(self, passengerId)
   for i = 1, #self.passengers do
     if self.passengers[i].id == passengerId then
       self.selectedId = i
@@ -92,7 +100,7 @@ function StageCarousel.setPassenger(self, passengerId)
 end
 
 local aspectRatio = {x = 80, y = 45}
-function StageCarousel:draw()
+function Carousel:draw()
   assert(#self.passengers > 0, "This carousel has no passengers!")
   local passenger = self:getSelectedPassenger()
   local imgWidth, imgHeight = passenger.image:getDimensions()
@@ -117,17 +125,17 @@ function StageCarousel:draw()
 end
 
 -- this should/may be overwritten by the parent
-function StageCarousel:onSelect()
+function Carousel:onSelect()
   self:onBack()
 end
 
 -- this should/may be overwritten by the parent
-function StageCarousel:onBack()
+function Carousel:onBack()
   self:yieldFocus()
 end
 
 -- the parent makes sure this is only called while focused
-function StageCarousel:receiveInputs()
+function Carousel:receiveInputs()
   if input:isPressedWithRepeat("Left", 0.25, 0.25) then
     self:moveToNextPassenger(-1)
   elseif input:isPressedWithRepeat("Right", 0.25, 0.25) then
@@ -140,15 +148,8 @@ function StageCarousel:receiveInputs()
     self:onBack()
   end
 
-  -- TODO: Interpret touch/mouse inputs
+  -- TODO: Interpret touch inputs like swipes
+  -- probably needs some groundwork in inputManager though
 end
 
--- function StageCarousel.onMove(direction)
-
--- end
-
--- function StageCarousel.onSwipe(direction)
-
--- end
-
-return StageCarousel
+return Carousel

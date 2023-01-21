@@ -21,11 +21,11 @@ local stage = config.stage
 local function loadStages()
   for i = 1, #stages_ids_for_current_theme do
     local stage = stages[stages_ids_for_current_theme[i]]
-    local passenger = CarouselPassenger(stage.id, stage.images.thumbnail, stage.display_name)
+    local passenger = Carousel.createPassenger(stage.id, stage.images.thumbnail, stage.display_name)
     stageCarousel:addPassenger(passenger)
   end
   -- offer up the random stage for selection
-  local randomStage = CarouselPassenger(random_stage_special_value, themes[config.theme].images.IMG_random_stage, loc("random"))
+  local randomStage = Carousel.createPassenger(random_stage_special_value, themes[config.theme].images.IMG_random_stage, loc("random"))
   stageCarousel:addPassenger(randomStage)
 
   -- set the config stage as initial selection
