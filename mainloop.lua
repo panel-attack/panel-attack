@@ -12,8 +12,6 @@ local wait, resume = coroutine.yield, coroutine.resume
 
 local main_endless_select, main_timeattack_select, makeSelectPuzzleSetFunction, main_net_vs_setup, main_select_puzz, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, exit_game, training_setup
 
-local PLAYING = "playing" -- room states
-local CHARACTERSELECT = "character select" -- room states
 connection_up_time = 0 -- connection_up_time counts "E" messages, not seconds
 logged_in = 0
 GAME.connected_server_ip = nil -- the ip address of the server you are connected to
@@ -146,6 +144,7 @@ function main_title()
     local lastTime = leftover_time
     wait()
     totalTime = totalTime + (leftover_time - lastTime)
+
     variable_step(
       function()
         if increment > 0 and percent >= 1 then
@@ -259,6 +258,17 @@ do
         if has_game_update then
           menu_draw(panels[config.panels].images.classic[1][1], 1262, 685)
         end
+      end
+
+      local runningFromAutoUpdater = GAME_UPDATER_GAME_VERSION ~= nil
+      local autoUpdaterOutOfDate = (GAME_UPDATER_VERSION == nil or GAME_UPDATER_VERSION < 1.1)
+      if runningFromAutoUpdater and autoUpdaterOutOfDate then
+        local downloadLink = "panelattack.com/panel.zip"
+        if GAME_UPDATER.name == "panel-beta" then
+          downloadLink = "panelattack.com/panel-beta.zip"
+        end
+        gprintf(loc("auto_updater_version_warning") .. " " .. downloadLink, -5, infoYPosition, canvas_width, "right")
+        infoYPosition = infoYPosition - fontHeight
       end
 
       wait()

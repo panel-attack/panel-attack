@@ -496,3 +496,4 @@ challenge_difficulty_6,level 10 - a low level 10 online player,Lava,Lava,Lava,La
 challenge_difficulty_7,level 10 - an average level 10 online player,Meteor,Meteor,Meteor,Meteor,Meteor,Meteor,Meteor
 challenge_difficulty_8,level 10 - a great level 10 online player,Super Nova,Super Nova,Super Nova,Super Nova,Super Nova,Super Nova,Super Nova
 challenge_difficulty_9,level 10 - an expert level 10 online player,Black Hole,Black Hole,Black Hole,Black Hole,Black Hole,Black Hole,Black Hole
+auto_updater_version_warning,Warning shown to users with an old autoupdater,"New autoupdater available, please install from","Nouveau autoupdater disponible, veuillez installer à partir de","Novo autoupdater disponível, instale de",新しいautoupdaterを利用できます。からインストールしてください,"Nuevo autoupdater disponible, instale desde","Ein neuer Updater ist verfügbar, bitte lade ihn unter folgendem Link herunter:","Nuovo autoupdater disponibile, installa da"

@@ -44,19 +44,40 @@ end
 
 function Game.errorData(errorString, traceBack)
   local system_info = "OS: " .. love.system.getOS()
-  local loveVersion = Game.loveVersionString()
-  
+  local loveVersion = Game.loveVersionString() or "Unknown"
+  local username = config.name or "Unknown"
+  local buildVersion = GAME_UPDATER_GAME_VERSION or "Unknown"
+  local systemInfo = system_info or "Unknown"
+
   local errorData = { 
       stack = traceBack,
-      name = config.name or "Unknown",
+      name = username,
       error = errorString,
       engine_version = VERSION,
-      release_version = GAME_UPDATER_GAME_VERSION or "Unknown",
-      operating_system = system_info or "Unknown",
-      love_version = loveVersion or "Unknown"
+      release_version = buildVersion,
+      operating_system = systemInfo,
+      love_version = loveVersion
     }
 
   return errorData
+end
+
+function Game.detailedErrorLogString(errorData)
+  local newLine = "\n"
+  local now = os.date("*t", to_UTC(os.time()))
+  local formattedTime = string.format("%04d-%02d-%02d %02d:%02d:%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
+
+  local detailedErrorLogString = 
+    "Stack Trace: " .. errorData.stack .. newLine ..
+    "Username: " .. errorData.name .. newLine ..
+    "Error Message: " .. errorData.error .. newLine ..
+    "Engine Version: " .. errorData.engine_version .. newLine ..
+    "Build Version: " .. errorData.release_version .. newLine ..
+    "Operating System: " .. errorData.operating_system .. newLine ..
+    "Love Version: " .. errorData.love_version .. newLine .. 
+    "UTC Time: " .. formattedTime
+
+  return detailedErrorLogString
 end
 
 local loveVersionStringValue = nil
