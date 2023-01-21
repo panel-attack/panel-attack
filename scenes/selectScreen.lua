@@ -66,9 +66,11 @@ function selectScreen:update()
     self.focused:receiveInputs()
   else
     if input.isDown["Swap1"] or input.isDown["Start"] then
+      play_optional_sfx(themes[config.theme].sounds.menu_enter)
       self:setFocus(stageCarousel)
     elseif input:isPressedWithRepeat("Swap2", 10, 10) then
-      sceneManager:switchToScene("main_menu")
+      play_optional_sfx(themes[config.theme].sounds.menu_cancel)
+      sceneManager:switchToScene("mainMenu")
     end
   end
 end
