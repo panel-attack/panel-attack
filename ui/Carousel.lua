@@ -6,11 +6,8 @@ local Util = require ("util")
 local canBeFocused = require("ui.Focusable")
 local input = require("inputManager")
 
-local xPadding = 0.05
-local yPadding = 0.05
-
 local function calculateFontSize(width, height)
-  return 9
+  return math.floor(height / 10) + 1
 end
 
 local StageCarousel = class(function(carousel, options)
@@ -63,27 +60,28 @@ function StageCarousel.setPassenger(self, passengerId)
   end
 end
 
+local aspectRatio = {x = 80, y = 45}
 function StageCarousel:draw()
   assert(#self.passengers > 0, "This carousel has no passengers!")
   local passenger = self:getSelectedPassenger()
-  if passenger.image == nil then
-    local phi = 5
-  end
   local imgWidth, imgHeight = passenger.image:getDimensions()
   local x, y = self:getScreenPos()
   -- draw the image centered
-  GAME.gfx_q:push({love.graphics.draw, {passenger.image, x * (1 + xPadding), y * (1 + yPadding), 0, 80 / imgWidth, 45 / imgHeight, imgWidth / 2, imgHeight / 2}})
+  menu_drawf(passenger.image, x + self.width / 2, y + self.height / 2, "center", "center", 0, aspectRatio.x / imgWidth, aspectRatio.y / imgHeight)
 
   -- text below
   if not passenger.fontText then
     passenger.fontText = love.graphics.newText(self.font, passenger.text)
   end
-  GAME.gfx_q:push({love.graphics.draw, {passenger.fontText,  x * (1 + xPadding), y * (1 + yPadding) - 10, 0, 1, 1, math.floor(passenger.fontText:getWidth() / 2), 0}})
+  GraphicsUtil.printText(passenger.fontText, x + self.width / 2, y + self.height * 0.85, "center")
 
   if self.hasFocus then
-    GAME.gfx_q:push({love.graphics.draw, {self.leftArrow, x + 2, y + self.height / 2, 0, 1, 1, 0, self.leftArrow:getHeight() / 2}})
-    GAME.gfx_q:push({love.graphics.draw, {self.rightArrow, x + self.width - 5, y + self.height / 2, 0, 1, 1, self.rightArrow:getWidth(), self.rightArrow:getHeight() / 2}})
+    GAME.gfx_q:push({love.graphics.draw, {self.leftArrow, x + self.width * 0.05, y + self.height / 2, 0, 1, 1, 0, self.leftArrow:getHeight() / 2}})
+    GAME.gfx_q:push({love.graphics.draw, {self.rightArrow, x + self.width * 0.95, y + self.height / 2, 0, 1, 1, self.rightArrow:getWidth(), self.rightArrow:getHeight() / 2}})
   end
+
+  -- because i'm graphics dumb, draw borders around the thing
+  grectangle("line", x, y, self.width, self.height)
 end
 
 -- this should/may be overwritten by the parent

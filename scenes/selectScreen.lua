@@ -9,10 +9,10 @@ local directsFocus = require("ui.FocusDirector")
 require("tableUtils")
 
 local stageCarousel = Carousel({
-  x = 100,
+  x = 200,
   y = 100,
-  width = 84,
-  height = 84
+  width = 134,
+  height = 134
 })
 
 --local players = {}
