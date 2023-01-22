@@ -304,6 +304,8 @@ function Theme.sound_init(self)
     return find_sound(SFX_name, dirs_to_check)
   end
 
+  self.zero_sound = load_sound_from_supported_extensions("zero_music")
+
   -- SFX
   self.sounds = {
     cur_move = load_theme_sfx("move"),
