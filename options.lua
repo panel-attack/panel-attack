@@ -408,10 +408,10 @@ local function audio_menu(button_idx)
         wait()
 
         -- temporarily load music for characters that are not fully loaded to build tracklist, bundle characters add their subcharacters as tracks instead
-        for _, chstages in ipairs(characters_ids_for_current_theme) do
-          ifstagescters[character_id].fully_loaded then
+        for _, character_id in ipairs(characters_ids_for_current_theme) do
+          if characters[character_id].fully_loaded then
             characters[character_id]:sound_init(true, false)
-          endstages
+          end
           local character = characters[character_id]
           if next(character.sub_characters) == nil then
             tracks[#tracks + 1] = {
@@ -425,10 +425,10 @@ local function audio_menu(button_idx)
             }
             ram_load = ram_load + 1
           else
-            for _, sustagesr_id in ipairs(character.sub_characters) do
-              ifstagescters[sub_character_id].fully_loaded then
+            for _, sub_character_id in ipairs(character.sub_characters) do
+              if characters[sub_character_id].fully_loaded then
                 characters[sub_character_id]:sound_init(true, false)
-              endstages
+              end
               local subcharacter = characters[sub_character_id]
               tracks[#tracks + 1] = {
               is_character = true,
@@ -439,13 +439,13 @@ local function audio_menu(button_idx)
               has_danger = subcharacter.musics.danger_music and true,
               style = subcharacter.music_style or "normal"
               }
-              ram_loastagesad + 1
-              ifstagescters[sub_character_id].fully_loaded then
+              ram_load = ram_load + 1
+              if not characters[sub_character_id].fully_loaded then
                 characters[sub_character_id]:sound_uninit(true, false)
               end
             end
-          endstages
-          ifstagescters[character_id].fully_loaded then
+          end
+          if characters[character_id].fully_loaded then
             characters[character_id]:sound_uninit() -- give thanks to our memory bandwidth
           end
           if ram_load > max_ram_load then
@@ -488,12 +488,12 @@ local function audio_menu(button_idx)
               for _, v in pairs(character_sounds) do
                 v.sound:stop()
               end
-              charactstages= {}
-              ifstagescters[tracks[loaded_track_index].id].fully_loaded then
+              character_sounds= {}
+              if characters[tracks[loaded_track_index].id].fully_loaded then
                 characters[tracks[loaded_track_index].id]:sound_uninit()
               end
-              if tracksstagesrent_id then
-                ifstagescters[tracks[loaded_track_index].parent_id].fully_loaded then
+              if tracks[index].parent_id then
+                if characters[tracks[loaded_track_index].parent_id].fully_loaded then
                   characters[tracks[loaded_track_index].parent_id]:sound_uninit(true, false)
                 end
               end
@@ -545,17 +545,17 @@ local function audio_menu(button_idx)
             unloadTrack()
           end
           if not loaded then
-            if tracksstages_character then
-              ifstagescters[tracks[index].id].fully_loaded then
+            if tracks[index].is_character then
+              if characters[tracks[index].id].fully_loaded then
                 characters[tracks[index].id]:sound_init(true, false)
-                ifstagesdex].parent_id then
+                if tracks[index].parent_id then
                   characters[tracks[index].parent_id]:sound_init(true, false)
                 end
-              endstages
+              end
               musics_to_use = characters[tracks[index].id].musics
 
               local parent = nil
-              if tracks[istagesnt_id then
+              if tracks[index].parent_id then
                 parent = characters[tracks[index].parent_id]
               end
               local attackSfx = { chaistagescombo = true, shock = true}
@@ -571,7 +571,7 @@ local function audio_menu(button_idx)
                     if parent then
                       addAttackSfx(parent, key)
                     end
-                  elsestages
+                  else
                     addAttackSfx(characters[tracks[index].id], key)
                   end
                 end

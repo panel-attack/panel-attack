@@ -9,6 +9,7 @@ local analytics = require("analytics")
 local manualGC = require("libraries.batteries.manual_gc")
 local sceneManager = require("scenes.sceneManager")
 local save = require("save")
+local characterLoader = require("character_loader")
 local scenes = nil
 
 -- Provides a scale that is on .5 boundary to make sure it renders well.
@@ -102,7 +103,7 @@ function Game:setupCo()
   
   self:drawLoadingString(loc("ld_characters"))
   coroutine.yield()
-  characters_init()
+  characterLoader.initCharacters()
   
   self:drawLoadingString(loc("ld_analytics"))
   coroutine.yield()
