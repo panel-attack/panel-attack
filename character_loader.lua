@@ -110,7 +110,7 @@ function CharacterLoader.fillCharacterIds()
   local copy_of_characters_ids = shallowcpy(characters_ids)
   characters_ids = {} -- clean up
   for _, character_id in ipairs(copy_of_characters_ids) do
-    local character = character[character_id]
+    local character = characters[character_id]
     if #character.sub_characters > 0 then -- bundle character (needs to be filtered if invalid)
       local copy_of_sub_characters = shallowcpy(character.sub_characters)
       character.sub_characters = {}
