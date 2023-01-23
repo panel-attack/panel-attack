@@ -190,14 +190,14 @@ function CharacterLoader.initCharacters()
     end
   end
 
-  if config.character ~= random_character_special_value and not character[config.character]:is_bundle() then
+  if config.character ~= random_character_special_value and not characters[config.character]:is_bundle() then
     CharacterLoader.load(config.character)
     CharacterLoader.wait()
   end
 end
 
 function CharacterLoader.resolveCharacterSelection(characterId)
-  if character[characterId] then
+  if characters[characterId] then
     characterId = CharacterLoader.resolveBundle(characterId)
   else
     -- resolve via random selection
@@ -208,8 +208,8 @@ function CharacterLoader.resolveCharacterSelection(characterId)
 end
 
 function CharacterLoader.resolveBundle(characterId)
-  while character[characterId]:is_bundle() do
-    characterId = tableUtils.getRandomElement(character[characterId].sub_characters)
+  while characters[characterId]:is_bundle() do
+    characterId = tableUtils.getRandomElement(characters[characterId].sub_characters)
   end
 
   return characterId
