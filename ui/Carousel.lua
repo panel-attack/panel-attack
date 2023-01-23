@@ -1,6 +1,6 @@
 local class = require("class")
 local UiElement = require("ui.UIElement")
-local Button = require("ui.Button")
+local ArrowButton = require("ui.ArrowButton")
 local GraphicsUtil = require("graphics_util")
 local Util = require("util")
 local canBeFocused = require("ui.Focusable")
@@ -46,7 +46,7 @@ end
 
 function Carousel.createNavigationButtons(self)
   self.leftButton =
-    Button({
+    ArrowButton({
       x = - (self.width * 0.05),
       y = self.height * 0.25,
       width = self.width * 0.3,
@@ -58,7 +58,7 @@ function Carousel.createNavigationButtons(self)
       parent = self
     })
   self.rightButton =
-    Button({
+    ArrowButton({
       x = self.width * 0.75,
       y = self.height * 0.25,
       width = self.width * 0.3,
