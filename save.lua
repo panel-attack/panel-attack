@@ -1,5 +1,7 @@
 local tableUtils = require("tableUtils")
 local inputManager = require("inputManager")
+local FileUtils = require("FileUtils")
+
 -- the save.lua file contains the read/write functions
 
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
@@ -135,7 +137,7 @@ end
 function write_puzzles()
   pcall(
     function()
-      local currentPuzzles = FileUtil.getFilteredDirectoryItems("puzzles") or {}
+      local currentPuzzles = FileUtils.getFilteredDirectoryItems("puzzles") or {}
       local customPuzzleExists = false
       for _, filename in pairs(currentPuzzles) do
         if love.filesystem.getInfo("puzzles/" .. filename) and filename ~= "stock (example).json" and filename ~= "README.txt" then
@@ -161,7 +163,7 @@ function read_puzzles()
       -- replay.in_buf=table.concat(replay.in_buf)
       -- end
 
-      puzzle_packs = FileUtil.getFilteredDirectoryItems("puzzles") or {}
+      puzzle_packs = FileUtils.getFilteredDirectoryItems("puzzles") or {}
       logger.debug("loading custom puzzles...")
       for _, filename in pairs(puzzle_packs) do
         logger.trace(filename)
@@ -207,7 +209,7 @@ end
 
 function read_attack_files(path)
   local lfs = love.filesystem
-  local raw_dir_list = FileUtil.getFilteredDirectoryItems(path)
+  local raw_dir_list = FileUtils.getFilteredDirectoryItems(path)
   for i, v in ipairs(raw_dir_list) do
     local start_of_v = string.sub(v, 0, string.len(prefix_of_ignored_dirs))
     if start_of_v ~= prefix_of_ignored_dirs then

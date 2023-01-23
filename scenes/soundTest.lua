@@ -14,6 +14,8 @@ local soundTestMenu
 
 local menuValidateSound
 
+local backgroundImg = nil -- set in load
+
 local function playMusic(source, id, musicType)
   local musicToUse
   local musicStyle
@@ -88,8 +90,8 @@ function soundTest:init()
       labels = characterLabels,
       values = characterIds,
       selectedIndex = 1,
-      onChange = function(value) 
-        play_optional_sfx(themes[config.theme].sounds.menu_move)
+      onChange = function(value)
+        Menu.playMoveSfx()
 
         local labels, values = createSfxMenuInfo(value)
         sfxStepper:setLabels(labels, values, 1)
@@ -118,7 +120,7 @@ function soundTest:init()
       values = stageIds,
       selectedIndex = 1,
       onChange = function(value) 
-        play_optional_sfx(themes[config.theme].sounds.menu_move)
+        Menu.playMoveSfx()
         if playButtonGroup.value == "stage" then
           playMusic("stage", value, musicTypeButtonGroup.value)
         end
@@ -135,7 +137,7 @@ function soundTest:init()
       values = {"normal_music", "danger_music"},
       selectedIndex = 1,
       onChange = function(value)
-        play_optional_sfx(themes[config.theme].sounds.menu_move)
+        Menu.playMoveSfx()
         if playButtonGroup.value == "character" then
           playMusic(playButtonGroup.value, characterStepper.value, value)
         elseif playButtonGroup.value == "stage" then
@@ -155,7 +157,7 @@ function soundTest:init()
       values = {"", "character", "stage"},
       selectedIndex = 1,
       onChange = function(value)
-        play_optional_sfx(themes[config.theme].sounds.menu_move)
+        Menu.playMoveSfx()
         if value == "character" then
           playMusic(value, characterStepper.value, musicTypeButtonGroup.value)
         elseif value == "stage" then
@@ -175,29 +177,37 @@ function soundTest:init()
       values = values,
       selectedIndex = 1,
       onChange = function(value)
-        play_optional_sfx(themes[config.theme].sounds.menu_move)
+        Menu.playMoveSfx()
       end
     }
   )
   
+  local playCharacterSFXFn = function() 
+    if #sfxStepper.labels > 0 then
+      love.audio.play(love.audio.newSource(characters[characterStepper.value].path.."/"..sfxStepper.value, "static"))
+    end
+  end
+
   local menuLabelWidth = 120
   local soundTestMenuOptions = {
     {Label({width = menuLabelWidth, label = "character"}), characterStepper},
     {Label({width = menuLabelWidth, label = "stage"}), stageStepper},
     {Label({width = menuLabelWidth, label = "op_music_type"}), musicTypeButtonGroup},
     {Label({width = menuLabelWidth, label = "Background", translate = false}), playButtonGroup},
-    {Button({width = menuLabelWidth, label = "op_music_sfx", onClick = function() love.audio.play(love.audio.newSource(characters[characterStepper.value].path.."/"..sfxStepper.value, "static")) end}), sfxStepper},
+    {Button({width = menuLabelWidth, label = "op_music_sfx", onClick = playCharacterSFXFn}), sfxStepper},
     {Button({width = menuLabelWidth, label = "back", onClick = function() sceneManager:switchToScene("optionsMenu") end})},
   }
   
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
-  x = x - 70--- 400
+  x = x - 20
   y = y + 10
   soundTestMenu = Menu({menuItems = soundTestMenuOptions, x = x, y = y})
   soundTestMenu:setVisibility(false)
 end
 
 function soundTest:load()
+  backgroundImg = themes[config.theme].images.bg_main
+
   -- stop main music
   stop_all_audio()
 
@@ -210,12 +220,13 @@ function soundTest:load()
 end
 
 function soundTest:drawBackground()
-  themes[config.theme].images.bg_main:draw()
+  backgroundImg:draw()
 end
 
-function soundTest:update()
+function soundTest:update(dt)
   soundTestMenu:update()
   soundTestMenu:draw()
+  backgroundImg:update(dt)
 end
 
 --fallback to main theme if nothing is playing or if dynamic music is playing, dynamic music cannot cleanly be "carried out" of the sound test due to the master volume reapplication in the audio options menu

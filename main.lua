@@ -14,7 +14,6 @@ require("match")
 local RunTimeGraph = require("RunTimeGraph")
 require("BattleRoom")
 require("util")
-require("FileUtil")
 
 require("globals")
 require("stage") -- after globals!

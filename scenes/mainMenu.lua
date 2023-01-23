@@ -52,11 +52,12 @@ function mainMenu:init()
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
   self.menu = Menu({
       menuItems = menuItems,
-      x = x, y = y})
+      x = x + 55, y = y})
   self.menu:setVisibility(false)
 end
 
 function mainMenu:load()
+  self.backgroundImg = themes[config.theme].images.bg_main
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")
   end
@@ -73,10 +74,10 @@ function mainMenu:load()
 end
 
 function mainMenu:drawBackground()
-  themes[config.theme].images.bg_main:draw()
+  self.backgroundImg:draw()
 end
 
-function mainMenu:update()
+function mainMenu:update(dt)
   if wait_game_update ~= nil then
     has_game_update = wait_game_update:pop()
     if has_game_update ~= nil and has_game_update then
@@ -85,6 +86,7 @@ function mainMenu:update()
     end
   end
 
+  self.backgroundImg:update(dt)
   local fontHeight = GraphicsUtil.getGlobalFont():getHeight()
   local infoYPosition = 705 - fontHeight/2
 

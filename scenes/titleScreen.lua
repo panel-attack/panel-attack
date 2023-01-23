@@ -16,17 +16,22 @@ local function titleDrawPressStart(percent)
   gprintf(loc("continue_button"), x, y, textMaxWidth, "center", {1,1,1,percent}, nil, 16)
 end
 
+local backgroundImg = nil
+
 function titleScreen:init()
   sceneManager:addScene(titleScreen)
 end
 
-function titleScreen:load() end
-
-function titleScreen:drawBackground()
-  themes[config.theme].images.bg_title:draw()
+function titleScreen:load() 
+  backgroundImg = themes[config.theme].images.bg_title
 end
 
-function titleScreen:update()
+function titleScreen:drawBackground()
+  backgroundImg:draw()
+end
+
+function titleScreen:update(dt)
+  backgroundImg:update(dt)
   titleDrawPressStart(((math.sin(5 * love.timer.getTime()) / 2 + .5) ^ .5) / 2 + .5)
   local keyPressed = tableUtils.trueForAny(input.isDown, function(key) return key end)
   if love.mouse.isDown(1, 2, 3) or #love.touch.getTouches() > 0 or keyPressed then

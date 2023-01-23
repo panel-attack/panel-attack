@@ -2,6 +2,7 @@ require("queue")
 require("globals")
 require("character")
 local logger = require("logger")
+local FileUtils = require("FileUtils")
 local tableUtils = require("tableUtils")
 
 local loading_queue = Queue()
@@ -76,7 +77,7 @@ end
 -- Adds all the characters recursively in a folder to the global characters variable
 function CharacterLoader.addCharactersFromDirectoryRecursively(path)
   local lfs = love.filesystem
-  local raw_dir_list = FileUtil.getFilteredDirectoryItems(path)
+  local raw_dir_list = FileUtils.getFilteredDirectoryItems(path)
   for i, v in ipairs(raw_dir_list) do
     local start_of_v = string.sub(v, 0, string.len(prefix_of_ignored_dirs))
     if start_of_v ~= prefix_of_ignored_dirs then

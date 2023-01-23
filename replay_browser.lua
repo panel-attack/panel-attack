@@ -1,3 +1,4 @@
+local FileUtils = require("FileUtils")
 local replay_browser = {}
 local util = require("util")
 
@@ -61,7 +62,7 @@ function replay_browser.main()
       end
       replay_browser.current_path = new_path
     end
-    replay_browser.path_contents = FileUtil.getFilteredDirectoryItems(replay_browser.base_path .. replay_browser.current_path)
+    replay_browser.path_contents = FileUtils.getFilteredDirectoryItems(replay_browser.base_path .. replay_browser.current_path)
   end
 
   local function replay_browser_go_up()
