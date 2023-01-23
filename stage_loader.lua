@@ -67,7 +67,7 @@ function StageLoader.clear()
 end
 
 
-function StageLoader.resolveCharacterSelection(stageId)
+function StageLoader.resolveStageSelection(stageId)
   if stages[stageId] then
     stageId = StageLoader.resolveBundle(stageId)
   else

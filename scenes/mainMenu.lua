@@ -6,6 +6,7 @@ local replay_browser = require("replay_browser")
 local options = require("options")
 local GraphicsUtil = require("graphics_util")
 local characterLoader = require("character_loader")
+local stageLoader = require("stage_loader")
 
 -- need to load the existing global scene functions until they get ported to scenes
 require("mainloop")
@@ -60,7 +61,7 @@ function mainMenu:load()
     find_and_add_music(themes[config.theme].musics, "main")
   end
   characterLoader.clear()
-  stage_loader_clear()
+  stageLoader.clear()
   resetNetwork()
   GAME.battleRoom = nil
   GAME.input:clearInputConfigurationsForPlayers()
