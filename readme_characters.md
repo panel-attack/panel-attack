@@ -70,7 +70,7 @@ There is a reasonable low-effort way around truly having to deal with it:
 Look through other characters.  
 Pick one that has a fitting color + border for your character.  
 Copy its garbage assets to your character!  
-The borders are the most annoying part and now you don't have to them anymore!
+The borders are the most annoying part and now you don't have to do them anymore!
 
 ##### Personalising the garbage!
 
