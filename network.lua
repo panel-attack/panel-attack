@@ -251,13 +251,13 @@ function network_init(ip, network_port)
     level = config.level,
     panels_dir = config.panels,
     character = config.character,
-    character_is_random = ((config.character == random_character_special_value or characters[config.character]:is_bundle()) and config.character or nil),
+    character_is_random = ((config.character == random_character_special_value or stages[config.character]:is_bundle()) and config.character or nil),
     stage = config.stage,
     ranked = config.ranked,
     stage_is_random = ((config.stage == random_stage_special_value or stages[config.stage]:is_bundle()) and config.stage or nil),
     save_replays_publicly = config.save_replays_publicly
   }
-  sent_json.character_display_name = sent_json.character_is_random and "" or characters[config.character].display_name
+  sent_json.character_display_name = sent_json.character_is_random and "" or stages[config.character].display_name
   json_send(sent_json)
   return true
 end
@@ -309,13 +309,13 @@ end
 
 function Stack.handle_input_taunt(self)
 
-  if player_taunt_up(self.which) and self:can_taunt() and #characters[self.character].sounds.taunt_up > 0 then
-    self.taunt_up = math.random(#characters[self.character].sounds.taunt_up)
+  if player_taunt_up(self.which) and self:can_taunt() and #stages[self.character].sounds.taunt_up > 0 then
+    self.taunt_up = math.random(#stages[self.character].sounds.taunt_up)
     if TCP_sock then
       json_send({taunt = true, type = "taunt_ups", index = self.taunt_up})
     end
-  elseif player_taunt_down(self.which) and self:can_taunt() and #characters[self.character].sounds.taunt_down > 0 then
-    self.taunt_down = math.random(#characters[self.character].sounds.taunt_down)
+  elseif player_taunt_down(self.which) and self:can_taunt() and #stages[self.character].sounds.taunt_down > 0 then
+    self.taunt_down = math.random(#stages[self.character].sounds.taunt_down)
     if TCP_sock then
       json_send({taunt = true, type = "taunt_downs", index = self.taunt_down})
     end

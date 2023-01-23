@@ -212,7 +212,7 @@ function characters_reload_graphics()
     local fullLoad = false
     if character == config.character or (P1 and character == P1.character) or (P2 and character == P2.character) then
       fullLoad = true
-    end
+    stages
     characters[character]:graphics_init(fullLoad, false)
   end
 end

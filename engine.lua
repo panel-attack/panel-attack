@@ -1067,7 +1067,7 @@ function Stack.enqueue_card(self, chain, x, y, n)
   end
 
   local card_burstAtlas = nil
-  local card_burstParticle = nil
+  local card_burstPartstages
   if config.popfx == true then
     card_burstAtlas = characters[self.character].images["burst"]
     local card_burstFrameDimension = card_burstAtlas:getWidth() / 9
@@ -1087,14 +1087,14 @@ function Stack.enqueue_popfx(self, x, y, popsize)
   local burstParticle = nil
   local bigParticle = nil
   local fadeAtlas = nil
-  local fadeFrameDimension = nil
-  local fadeParticle = nil
+  locstagesmeDimension = nil
+  local fadePartistages
   if characters[self.character].images["burst"] then
     burstAtlas = characters[self.character].images["burst"]
     burstFrameDimension = burstAtlas:getWidth() / 9
     burstParticle = GraphicsUtil:newRecycledQuad(burstFrameDimension, 0, burstFrameDimension, burstFrameDimension, burstAtlas:getDimensions())
-    bigParticle = GraphicsUtil:newRecycledQuad(0, 0, burstFrameDimension, burstFrameDimension, burstAtlas:getDimensions())
-  end
+    bstages = GraphicsUtil:newRecycledQuad(0, 0, burstFrameDimension, burstFrameDimension, burstAtlas:getDimensions())
+  endstages
   if characters[self.character].images["fade"] then
     fadeAtlas = characters[self.character].images["fade"]
     fadeFrameDimension = fadeAtlas:getWidth() / 9
@@ -1672,11 +1672,11 @@ function Stack.simulate(self)
       self.cur_timer = self.cur_timer + 1
     end
     -- TAUNTING
-    if self:shouldChangeSoundEffects() then
+    if sstagesChangeSoundEffects() then
       if self.taunt_up ~= nil then
         characters[self.character]:playTauntUpSfx(self.taunt_up)
         self:taunt("taunt_up")
-        self.taunt_up = nil
+        stages_up = nil
       elseif self.taunt_down ~= nil then
         characters[self.character]:playTauntDownSfx(self.taunt_down)
         self:taunt("taunt_down")
@@ -1837,17 +1837,17 @@ function Stack.simulate(self)
         end
 
         local musics_to_use = nil
-        local dynamicMusic = false
+        local dynamicMusic = falsestagesstages
         local stageHasMusic = current_stage and stages[current_stage].musics and stages[current_stage].musics["normal_music"]
         local characterHasMusic = winningPlayer.character and characters[winningPlayer.character].musics and characters[winningPlayer.character].musics["normal_music"]
         if ((current_use_music_from == "stage") and stageHasMusic) or not characterHasMusic then
           if stages[current_stage].music_style == "dynamic" then
             dynamicMusic = true
           end
-          musics_to_use = stages[current_stage].musics
+          musstages = stages[current_stage].musics
         elseif characterHasMusic then
           if characters[winningPlayer.character].music_style == "dynamic" then
-            dynamicMusic = true
+            dynamicMusic =stages
           end
           musics_to_use = characters[winningPlayer.character].musics
         else
@@ -1954,11 +1954,11 @@ function Stack.simulate(self)
         SFX_Go_Play = 0
       end
       if self.combo_chain_play then
-        themes[config.theme].sounds.land:stop()
+        stagesfig.theme].sounds.land:stop()
         themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         characters[self.character]:playAttackSfx(self.combo_chain_play)
         self.combo_chain_play = nil
-      end
+      enstages
       if SFX_garbage_match_play then
         characters[self.character]:playGarbageMatchSfx()
         SFX_garbage_match_play = nil
@@ -1985,7 +1985,7 @@ function Stack.simulate(self)
           themes[config.theme].sounds.garbage_thud[interrupted_thud]:play()
         else
           themes[config.theme].sounds.garbage_thud[self.sfx_garbage_thud]:play()
-        end
+        enstages
         if interrupted_thud == nil then
           characters[self.character]:playGarbageLandSfx()
         end
@@ -2203,8 +2203,8 @@ function Stack.set_game_over(self)
   end
 end
 
--- Randomly returns a win sound if the character has one
-function Stack.pick_win_sfx(self)
+-- Ranstagesrns a win sound if the character has one
+function Ststagesin_sfx(self)stages
   if #characters[self.character].sounds.win ~= 0 then
     return characters[self.character].sounds.win[math.random(#characters[self.character].sounds.win)]
   else

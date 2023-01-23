@@ -8,7 +8,7 @@ local loading_queue = Queue()
 
 local loading_character = nil
 
-characters = {} -- holds all characters, most of them will not be fully loaded
+stages = {} -- holds all characters, most of them will not be fully loaded
 characters_ids = {} -- holds all characters ids
 characters_ids_for_current_theme = {} -- holds characters ids for the current theme, those characters will appear in the lobby
 characters_ids_by_display_names = {} -- holds keys to array of character ids holding that name
@@ -17,7 +17,7 @@ local CharacterLoader = {}
 
 -- queues a character to be loaded
 function CharacterLoader.load(character_id)
-  if characters[character_id] and not characters[character_id].fully_loaded then
+  if stages[character_id] and not stages[character_id].fully_loaded then
     loading_queue:push(character_id)
   end
 end
@@ -32,7 +32,7 @@ function CharacterLoader.update()
       character_name,
       coroutine.create(
         function()
-          characters[character_name]:load(instant_load_enabled)
+          stages[character_name]:load(instant_load_enabled)
         end
       )
     }
@@ -66,7 +66,7 @@ end
 -- Unloads all characters not in use by config or player 2
 function CharacterLoader.clear()
   local p2_local_character = global_op_state and global_op_state.character or nil
-  for character_id, character in pairs(characters) do
+  for character_id, character in pairs(stages) do
     if character.fully_loaded and character_id ~= config.character and character_id ~= p2_local_character then
       character:unload()
     end
@@ -90,11 +90,11 @@ function CharacterLoader.addCharactersFromDirectoryRecursively(path)
         local success = character:json_init()
 
         if success then
-          if characters[character.id] ~= nil then
+          if stages[character.id] ~= nil then
             logger.trace(current_path .. " has been ignored since a character with this id has already been found")
           else
             -- logger.trace(current_path.." has been added to the character list!")
-            characters[character.id] = character
+            stages[character.id] = character
             characters_ids[#characters_ids + 1] = character.id
           end
         end
@@ -110,12 +110,12 @@ function CharacterLoader.fillCharacterIds()
   local copy_of_characters_ids = shallowcpy(characters_ids)
   characters_ids = {} -- clean up
   for _, character_id in ipairs(copy_of_characters_ids) do
-    local character = characters[character_id]
+    local character = stages[character_id]
     if #character.sub_characters > 0 then -- bundle character (needs to be filtered if invalid)
       local copy_of_sub_characters = shallowcpy(character.sub_characters)
       character.sub_characters = {}
       for _, sub_character in ipairs(copy_of_sub_characters) do
-        if characters[sub_character] and #characters[sub_character].sub_characters == 0 then -- inner bundles are prohibited
+        if stages[sub_character] and #stages[sub_character].sub_characters == 0 then -- inner bundles are prohibited
           character.sub_characters[#character.sub_characters + 1] = sub_character
           logger.trace(character.id .. " has " .. sub_character .. " as part of its subcharacters.")
         end
@@ -136,7 +136,7 @@ function CharacterLoader.fillCharacterIds()
 
   -- characters are removed outside of the loop since erasing while iterating isn't working
   for _, invalid_character in pairs(invalid) do
-    characters[invalid_character] = nil
+    stages[invalid_character] = nil
   end
 end
 
@@ -154,14 +154,14 @@ function CharacterLoader.initCharacters()
   if love.filesystem.getInfo("themes/" .. config.theme .. "/characters.txt") then
     for line in love.filesystem.lines("themes/" .. config.theme .. "/characters.txt") do
       line = trim(line) -- remove whitespace
-      if characters[line] then
+      if stages[line] then
         -- found at least a valid character in a characters.txt file
         characters_ids_for_current_theme[#characters_ids_for_current_theme + 1] = line
       end
     end
   else
     for _, character_id in ipairs(characters_ids) do
-      if characters[character_id].is_visible then
+      if stages[character_id].is_visible then
         characters_ids_for_current_theme[#characters_ids_for_current_theme + 1] = character_id
       end
     end
@@ -173,14 +173,14 @@ function CharacterLoader.initCharacters()
   end
 
   -- fix config character if it's missing
-  if not config.character or (config.character ~= random_character_special_value and not characters[config.character]) then
+  if not config.character or (config.character ~= random_character_special_value and not stages[config.character]) then
     config.character = tableUtils.getRandomElement(characters_ids_for_current_theme)
   end
 
   -- actual init for all characters, starting with the default one
   Character.loadDefaultCharacter()
 
-  for _, character in pairs(characters) do
+  for _, character in pairs(stages) do
     character:preload()
 
     if characters_ids_by_display_names[character.display_name] then
@@ -190,14 +190,14 @@ function CharacterLoader.initCharacters()
     end
   end
 
-  if config.character ~= random_character_special_value and not characters[config.character]:is_bundle() then
+  if config.character ~= random_character_special_value and not stages[config.character]:is_bundle() then
     CharacterLoader.load(config.character)
     CharacterLoader.wait()
   end
 end
 
 function CharacterLoader.resolveCharacterSelection(characterId)
-  if characters[characterId] then
+  if stages[characterId] then
     characterId = CharacterLoader.resolveBundle(characterId)
   else
     -- resolve via random selection
@@ -208,8 +208,8 @@ function CharacterLoader.resolveCharacterSelection(characterId)
 end
 
 function CharacterLoader.resolveBundle(characterId)
-  while characters[characterId]:is_bundle() do
-    characterId = tableUtils.getRandomElement(characters[characterId].sub_characters)
+  while stages[characterId]:is_bundle() do
+    characterId = tableUtils.getRandomElement(stages[characterId].sub_characters)
   end
 
   return characterId

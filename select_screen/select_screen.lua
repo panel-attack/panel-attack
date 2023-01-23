@@ -2,6 +2,8 @@ local logger = require("logger")
 local graphics = require("select_screen.select_screen_graphics")
 local tableUtils = require("tableUtils")
 local util = require("util")
+local stageLoader = require("stage_loader")
+local characterLoader = require("character_loader")
 
 local select_screen = {}
 
@@ -39,12 +41,12 @@ end
 function refreshBasedOnOwnMods(player)
   -- Resolve the current character if it is random
   local function resolveRandomCharacter()
-      if characters[player.character] == nil and player.selectedCharacter == random_character_special_value then
+      if stages[player.character] == nil and player.selectedCharacter == random_character_special_value then
         player.character = tableUtils.getRandomElement(characters_ids_for_current_theme)
       end
 
-      if characters[player.character]:is_bundle() then
-        player.character = tableUtils.getRandomElement(characters[player.character].sub_characters)
+      if stages[player.character]:is_bundle() then
+        player.character = tableUtils.getRandomElement(stages[player.character].sub_characters)
       end
   end
 
@@ -89,7 +91,7 @@ function refreshBasedOnOwnMods(player)
 
       resolveRandomStage()
       player.stage_display_name = stages[player.stage].stage_display_name
-      stage_loader_load(player.stage)
+      stageLoader.load(player.stage)
     end
 
     -- character
@@ -101,13 +103,13 @@ function refreshBasedOnOwnMods(player)
         player.selectedCharacter = player.character
         player.character = nil
       end
-      if characters[player.selectedCharacter] then
+      if stages[player.selectedCharacter] then
         if player.character ~= player.selectedCharacter then
           player.character = player.selectedCharacter
         end
       else
         -- when there is no stage or the stage the other player selected, check if there's a character with the same name
-        if player.character_display_name and characters_ids_by_display_names[player.character_display_name] and not characters[characters_ids_by_display_names[player.character_display_name][1]]:is_bundle() then
+        if player.character_display_name and characters_ids_by_display_names[player.character_display_name] and not stages[characters_ids_by_display_names[player.character_display_name][1]]:is_bundle() then
           player.character = characters_ids_by_display_names[player.character_display_name][1]
         elseif player.selectedCharacter ~= random_character_special_value then
           -- don't have the selected character and it's not random, use a random character
@@ -117,8 +119,8 @@ function refreshBasedOnOwnMods(player)
       end
 
       resolveRandomCharacter()
-      player.character_display_name = characters[player.character].character_display_name
-      character_loader_load(player.character)
+      player.character_display_name = stages[player.character].character_display_name
+      characterLoader.load(player.character)
     end
   end
 end
@@ -170,7 +172,7 @@ function select_screen.move_cursor(self, cursor, direction)
     can_x, can_y = wrap(1, can_x + dx, self.ROWS), wrap(1, can_y + dy, self.COLUMNS)
   end
   cursor_pos[1], cursor_pos[2] = can_x, can_y
-  local character = characters[self.drawMap[self.current_page][can_x][can_y]]
+  local character = stages[self.drawMap[self.current_page][can_x][can_y]]
   cursor.can_super_select = character and (character.stage or character.panels)
 end
 
@@ -182,7 +184,7 @@ function select_screen.on_select(self, player, super)
   if selectable[player.cursor.positionId] then
     if player.cursor.selected and player.cursor.positionId == "__Stage" then
       -- load stage even if hidden!
-      stage_loader_load(player.stage)
+      stageLoader.load(player.stage)
     end
     player.cursor.selected = not player.cursor.selected
   elseif player.cursor.positionId == "__Leave" then
@@ -197,9 +199,9 @@ function select_screen.on_select(self, player, super)
     player.ranked = not player.ranked
   elseif (player.cursor.positionId ~= "__Empty" and player.cursor.positionId ~= "__Reserved") then
     player.selectedCharacter = player.cursor.positionId
-    local character = characters[player.selectedCharacter]
+    local character = stages[player.selectedCharacter]
     if character then
-      characterSelectionSoundHasBeenPlayed = characters[player.selectedCharacter]:play_selection_sfx()
+      characterSelectionSoundHasBeenPlayed = stages[player.selectedCharacter]:play_selection_sfx()
       if super then
         if character.stage then
           player.selectedStage = character.stage
@@ -235,7 +237,7 @@ end
 
 -- Makes sure all the client data is up to date and ready
 function select_screen.refreshLoadingState(self, playerNumber)
-  self.players[playerNumber].loaded = characters[self.players[playerNumber].character] and characters[self.players[playerNumber].character].fully_loaded and stages[self.players[playerNumber].stage] and stages[self.players[playerNumber].stage].fully_loaded
+  self.players[playerNumber].loaded = stages[self.players[playerNumber].character] and stages[self.players[playerNumber].character].fully_loaded and stages[self.players[playerNumber].stage] and stages[self.players[playerNumber].stage].fully_loaded
 end
 
 -- Returns the panel dir for the given increment
@@ -496,7 +498,7 @@ function select_screen.initializeFromMenuState(self, playerNumber, menuState)
   self.players[playerNumber].ranked = menuState.ranked
   self.players[playerNumber].stage = menuState.stage
   self.players[playerNumber].selectedStage = menuState.stage_is_random
-  self.players[playerNumber].character = characters[menuState.character] and menuState.character or nil
+  self.players[playerNumber].character = stages[menuState.character] and menuState.character or nil
   self.players[playerNumber].selectedCharacter = menuState.character_is_random and menuState.character_is_random or menuState.character
   self.players[playerNumber].level = menuState.level
   self.players[playerNumber].panels_dir = menuState.panels_dir
@@ -779,8 +781,8 @@ function select_screen.startNetPlayMatch(self, msg)
   refreshBasedOnOwnMods(msg) -- for stage only, other data are meaningless to us
   -- mainly for spectator mode, those characters have already been loaded otherwise
   current_stage = msg.stage
-  character_loader_wait()
-  stage_loader_wait()
+  characterLoader.wait()
+  stageLoader.wait()
   GAME.match = Match("vs", GAME.battleRoom)
 
   GAME.match.seed = self:getSeed(msg)
@@ -842,8 +844,8 @@ function select_screen.start2pLocalMatch(self)
   P1:set_garbage_target(P2)
   P2:set_garbage_target(P1)
   current_stage = self.players[math.random(1, #self.players)].stage
-  stage_loader_load(current_stage)
-  stage_loader_wait()
+  stageLoader.load(current_stage)
+  stageLoader.wait()
   P2:moveForPlayerNumber(2)
 
   P1:starting_state()
@@ -864,8 +866,8 @@ function select_screen.start1pLocalMatch(self)
   end
   P2 = nil
   current_stage = self.players[self.my_player_number].stage
-  stage_loader_load(current_stage)
-  stage_loader_wait()
+  stageLoader.load(current_stage)
+  stageLoader.wait()
 
   GAME.input:requestSingleInputConfigurationForPlayerCount(1)
 
@@ -885,8 +887,8 @@ function select_screen.start1pCpuMatch(self)
   P1.garbage_target = P2
   P2.garbage_target = P1
   current_stage = self.players[self.my_player_number].stage
-  stage_loader_load(current_stage)
-  stage_loader_wait()
+  stageLoader.load(current_stage)
+  stageLoader.wait()
   P2:moveForPlayerNumber(2)
 
   GAME.input:requestSingleInputConfigurationForPlayerCount(1)
@@ -997,8 +999,8 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
       function()
         self.menu_clock = self.menu_clock + 1
 
-        character_loader_update()
-        stage_loader_update()
+        characterLoader.update()
+        stageLoader.update()
         self:refreshLoadingState(self.my_player_number)
         if self:isMultiplayer() then
           self:refreshLoadingState(self.op_player_number)

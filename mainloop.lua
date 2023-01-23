@@ -9,7 +9,8 @@ local tableUtils = require("tableUtils")
 local Game = require("game")
 local util = require("util")
 local GraphicsUtil = require("graphics_util")
-local characterLoader = require("character_loader") -- after globals!
+local characterLoader = require("character_loader")
+local stageLoader = require("stage_loader")
 require("replay")
 
 local wait, resume = coroutine.yield, coroutine.resume
@@ -126,7 +127,7 @@ do
       end
     end
     characterLoader.clear()
-    stage_loader_clear()
+    stageLoader.clear()
     resetNetwork()
     undo_stonermode()
     GAME.backgroundImage = themes[config.theme].images.bg_main
@@ -228,8 +229,8 @@ local function use_current_stage()
   if current_stage == nil then
     pick_random_stage()
   else
-    stage_loader_load(current_stage)
-    stage_loader_wait()
+    stageLoader.load(current_stage)
+    stageLoader.wait()
     GAME.backgroundImage = UpdatingImage(stages[current_stage].images.background, false, 0, 0, canvas_width, canvas_height)
     GAME.background_overlay = themes[config.theme].images.bg_overlay
     GAME.foreground_overlay = themes[config.theme].images.fg_overlay
@@ -263,8 +264,8 @@ function Stack.wait_for_random_character(self)
   if self.character == random_character_special_value then
     self.character = tableUtils.getRandomElement(characters_ids_for_current_theme)
   end
-  if characters[self.character]:is_bundle() then -- may have picked a bundle
-    self.character = tableUtils.getRandomElement(characters[self.character].sub_characters)
+  if stages[self.character]:is_bundle() then -- may have picked a bundle
+    self.character = tableUtils.getRandomElement(stages[self.character].sub_characters)
   end
   characterLoader.load(self.character)
   characterLoader.wait()
@@ -885,8 +886,8 @@ function main_net_vs_lobby()
   GAME.battleRoom = nil
   undo_stonermode()
   reset_filters()
-  character_loader_clear()
-  stage_loader_clear()
+  characterLoader.clear()
+  stageLoader.clear()
   local items
   local unpaired_players = {} -- list
   local willing_players = {} -- set
@@ -1275,9 +1276,9 @@ function main_net_vs()
     local function handleTaunt()
       local function getCharacter(playerNumber)
         if P1.player_number == playerNumber then
-          return characters[P1.character]
+          return stages[P1.character]
         elseif P2.player_number == playerNumber then
-          return characters[P2.character]
+          return stages[P2.character]
         end
       end
 

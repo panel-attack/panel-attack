@@ -3,6 +3,7 @@ local util = require("util")
 local tableUtil = require("tableUtil")
 local logger = require("logger")
 local characterLoader = require("character_loader")
+local stageLoader = require("stage_loader")
 
 local players = {}
 -- stage
@@ -26,11 +27,13 @@ local MatchSetup = class(
 )
 
 function MatchSetup.setStage(player, stageId)
+  stageId = stageLoader.resolveStageSelection(stageId)
   players[player].stageId = stageId
-
+  stageLoader.load(stageId)
 end
 
 function MatchSetup.setCharacter(player, characterId)
+  characterId = characterLoader.resolveCharacterSelection(characterId)
   players[player].characterId = characterId
   characterLoader.load(characterId)
 end

@@ -25,7 +25,7 @@ themes = {} -- initialized in theme.lua
 characters = {} -- initialized in character.lua
 characters_ids = {} -- initialized in character.lua
 characters_ids_for_current_theme = {} -- initialized in character.lua
-characters_ids_by_display_names = {} -- initialized in character.lua
+stages_ids_by_display_names = {} -- initialized in character.lua
 
 stages = {} -- initialized in stage.lua
 stages_ids = {} -- initialized in stage.lua
