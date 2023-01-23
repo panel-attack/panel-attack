@@ -66,7 +66,7 @@ function selectScreen:update()
     self.focused:receiveInputs()
   else
     if input.isDown["Swap1"] or input.isDown["Start"] then
-      play_optional_sfx(themes[config.theme].sounds.menu_enter)
+      play_optional_sfx(themes[config.theme].sounds.menu_validate)
       self:setFocus(stageCarousel)
     elseif input:isPressedWithRepeat("Swap2", 10, 10) then
       play_optional_sfx(themes[config.theme].sounds.menu_cancel)

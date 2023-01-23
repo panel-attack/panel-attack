@@ -1,13 +1,48 @@
 local tableUtils = require("tableUtils")
+local MatchSetup = require("MatchSetup")
+local GameModes = require("GameModes")
 
 local MatchSetupNetwork = class(
-  function(self, matchSetup)
-    self.matchSetup = matchSetup
+  function(self)
   end
 )
 
-function MatchSetupNetwork:createMatchSetup()
-  
+function MatchSetupNetwork:hasActiveMatchSetup()
+  return self.matchSetup ~= nil
+end
+
+function MatchSetupNetwork:createMatchSetup(message)
+  -- for future online modes, the server communication should be rewritten
+  -- the message should then contain game mode and a more generic array for transmitting player information
+  self.matchSetup = MatchSetup(GameModes.TwoPlayerVersus, true, message.your_player_number)
+  self:applyMenuState(1, message.a_menu_state)
+  self:applyMenuState(2, message.b_menu_state)
+
+  if message.rating_updates then
+    self.matchSetup.setRating(1, message.rating[1].new)
+    self.matchSetup.setRating(2, message.rating[2].new)
+  end
+end
+
+function MatchSetupNetwork:enterMatchAsSpectator(message)
+  self.matchSetup = MatchSetup(GameModes.TwoPlayerVersus, true)
+  self:applyMenuState(1, message.a_menu_state)
+  self:applyMenuState(2, message.b_menu_state)
+
+  if message.rating_updates then
+    self.matchSetup.setRating(1, message.rating[1].new)
+    self.matchSetup.setRating(2, message.rating[2].new)
+  end
+
+  if message.win_counts then
+    self:applyWinCounts(message.win_counts)
+  end
+
+  if message.replay_of_match_so_far then
+    --TODO maybe we can manage to get this out of mainloop this time around to unglobal it
+    replay_of_match_so_far = message.replay_of_match_so_far
+    self.matchSetup:start(message.stage, replay_of_match_so_far.vs.seed)
+  end
 end
 
 function MatchSetupNetwork:update()
@@ -15,7 +50,7 @@ function MatchSetupNetwork:update()
     local roomCreationMessages = self:getRoomCreationMessages()
     -- not sure but I assume order *could* be important
     for _, message in ipairs(roomCreationMessages) do
-      
+      self:applyByMessageType(message)
     end
   else
     local updateMessages = self:getUpdateMessages()
@@ -27,13 +62,11 @@ function MatchSetupNetwork:update()
 end
 
 function MatchSetupNetwork:getRoomCreationMessages()
-  local roomStartMessages = server_queue:pop_next_with("create_room", "character_select", "spectate_request_granted")
-
-  return roomStartMessages
+  return server_queue:pop_next_with("create_room", "spectate_request_granted")
 end
 
 function MatchSetupNetwork:getUpdateMessages()
-  local updateMessages = server_queue:pop_all_with(
+  return server_queue:pop_all_with(
     "win_counts",
     "menu_state",
     "ranked_match_approved",
@@ -41,22 +74,40 @@ function MatchSetupNetwork:getUpdateMessages()
     "match_start",
     "ranked_match_denied"
   )
+end
 
-  return updateMessages
+--helper function to get the player number of the opponent if there is a local player in the room
+local function getOpponentPlayerNumber(matchSetup)
+  local players = {1, 2}
+  table.remove(players, matchSetup.localPlayerNumber)
+  -- after removing the player number, only the opponent number remains...
+  return players[1]
 end
 
 function MatchSetupNetwork:applyByMessageType(message)
   if message.win_counts then
     self:applyWinCounts(message.win_counts)
   elseif message.menu_state then
-    self:applyMenuState(message.menu_state)
+    -- the server sends this in at least 2 different variants depending on if we're spectating or not
+    if not message.player_number then
+      -- if there is no player number this implicitly means it's the menu state of our opponent!
+      message.player_number = getOpponentPlayerNumber(self.matchSetup)
+    end
+    self:applyMenuState(message.player_number, message.menu_state)
   elseif message.ranked_match_approved or message.ranked_match_denied then
     self:applyRankedStatus(message)
+  elseif message.leave_room then
+    self.matchSetup:leave()
+  elseif message.match_start then
+    self:startMatch(message)
+  elseif message.create_room then
+    self:createMatchSetup(message)
+  elseif message.spectate_request_granted then
+    self:enterMatchAsSpectator(message)
   end
 end
 
-function MatchSetupNetwork:applyMenuState(menuState)
-  local player = menuState.player_number
+function MatchSetupNetwork:applyMenuState(player, menuState)
   self.matchSetup:setRanked(player, menuState.ranked)
   self.matchSetup:setStage(player, menuState.stage)
   self.matchSetup:setCharacter(player, menuState.character)
@@ -101,19 +152,20 @@ function MatchSetupNetwork:startMatch(message)
   self.matchSetup:start(message.stage, seed)
 end
 
---[[ if msg.menu_state then
-  self:updatePlayerFromMenuStateMessage(msg)
-end
+function MatchSetupNetwork:sendMenuState()
+  local menuState = {}
+  local mS = self.matchSetup
+  local playerNumber = mS.localPlayerNumber
+  menuState.character = mS.players[playerNumber].characterId
+  menuState.character_display_name = characters[mS.players[playerNumber].characterId].display_name
+  menuState.loaded = mS.players[playerNumber].hasLoaded
+  menuState.cursor = mS.players[playerNumber].cursorPositionId
+  menuState.panels_dir = mS.players[playerNumber].panels
+  menuState.ranked = mS.players[playerNumber].wantsRanked
+  menuState.stage = mS.players[playerNumber].stageId
+  menuState.wants_ready = mS.players[playerNumber].wantsReady
+  menuState.ready = menuState.wants_ready and menuState.loaded
+  menuState.level = mS.players[playerNumber].level
 
-if msg.ranked_match_approved or msg.ranked_match_denied then
-  self:updateRankedStatusFromMessage(msg)
+  json_send({menu_state = menuState})
 end
-
-if msg.leave_room then
-  -- opponent left the select screen or server sent confirmation for our leave
-  return {main_dumb_transition, {main_net_vs_lobby, "", 0, 0}}
-end
-
-if (msg.match_start or replay_of_match_so_far) and msg.player_settings and msg.opponent_settings then
-  return self:startNetPlayMatch(msg)
-end ]]

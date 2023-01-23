@@ -5,121 +5,165 @@ local logger = require("logger")
 local characterLoader = require("character_loader")
 local stageLoader = require("stage_loader")
 local GameModes = require("GameModes")
-
-local players = {}
 -- stage
 -- character
 -- level
+-- speed
+-- difficulty
 -- panels
--- ranked
--- ready
+-- wantsRanked
+-- wantsReady
 -- playerNumber
 -- rating
 
-local MatchSetup = class(
-  function(match, playerCount, mode, online)
-    match.playerCount = playerCount
-    match.mode = mode
-    match.online = online
-    for i = 1, playerCount do
-      players[i] = {}
-      players[i].rating = {}
-      if not online then
-        players[i].isLocal = true
-      end
-    end
-
-    if mode.style == GameModes.Styles.Choose then
-      -- default mode to classic
-      match.style = GameModes.Styles.Classic
-    else
-      match.style = mode.style
-    end
-
+local MatchSetup = class(function(match, mode, online, localPlayerNumber)
+  match.mode = mode
+  match.online = online
+  if online then
+    -- if we're not online, we're not spectating
+    match.spectating = (localPlayerNumber == nil)
+    -- if we're not online, all players are local anyway
+    match.localPlayerNumber = localPlayerNumber
   end
-)
 
-function MatchSetup.setStage(player, stageId)
-  if stageId ~= players[player].stageId then
+  match.players = {}
+  for i = 1, mode.playerCount do
+    match.players[i] = {}
+    match.players[i].rating = {}
+    if not online or i == localPlayerNumber then
+      match.players[i].isLocal = true
+    end
+  end
+
+  if mode.style == GameModes.Styles.Choose then
+    -- default mode to classic
+    match.style = GameModes.Styles.Classic
+  else
+    match.style = mode.style
+  end
+end)
+
+function MatchSetup:setStage(player, stageId)
+  if stageId ~= self.players[player].stageId then
     stageId = stageLoader.resolveStageSelection(stageId)
-    players[player].stageId = stageId
+    self.players[player].stageId = stageId
     stageLoader.load(stageId)
   end
 end
 
-function MatchSetup.setCharacter(player, characterId)
-  if characterId ~= players[player].characterId then
+function MatchSetup:setCharacter(player, characterId)
+  if characterId ~= self.players[player].characterId then
     characterId = characterLoader.resolveCharacterSelection(characterId)
-    players[player].characterId = characterId
+    self.players[player].characterId = characterId
     characterLoader.load(characterId)
   end
 end
 
 -- panels don't have an id although they should have one
-function MatchSetup.setPanels(player, panelId)
+function MatchSetup:setPanels(player, panelId)
   -- panels are always loaded
   if panels[panelId] then
-    players[player].panelId = panelId
+    self.players[player].panelId = panelId
   else
     -- default back to player panels always
-    players[player].panelId = config.panels
+    self.players[player].panelId = config.panels
   end
 end
 
-function MatchSetup.setRanked(player, wantsRanked)
-  players[player].wantsRanked = wantsRanked
-end
-
-function MatchSetup.setWantsReady(player, wantsReady)
-  players[player].wantsReady = wantsReady
-end
-
-function MatchSetup.setLoaded(player, hasLoaded)
-  players[player].hasLoaded = hasLoaded
-end
-
-function MatchSetup.setRating(player, rating)
-  if players[player].rating.new then
-    players[player].rating.old = players[player].rating.new
+function MatchSetup:setRanked(player, wantsRanked)
+  if self.online and self.mode.selectRanked then
+    self.players[player].wantsRanked = wantsRanked
+  else
+    error("Trying to set ranked in a game mode that doesn't support ranked play")
   end
-  players[player].rating.new = rating
 end
 
-function MatchSetup.setPuzzleFile(player, puzzleFile)
-  players[player].puzzleFile = puzzleFile
+function MatchSetup:setWantsReady(player, wantsReady)
+  self.players[player].wantsReady = wantsReady
 end
 
-function MatchSetup.setTrainingFile(player, trainingFile)
-  players[player].trainingFile = trainingFile
+function MatchSetup:setLoaded(player, hasLoaded)
+  self.players[player].hasLoaded = hasLoaded
 end
 
-function MatchSetup.setStyle(styleChoice)
-  style = styleChoice
+function MatchSetup:setRating(player, rating)
+  if self.players[player].rating.new then
+    self.players[player].rating.old = self.players[player].rating.new
+  end
+  self.players[player].rating.new = rating
 end
 
-function MatchSetup:setSpeed(speed)
-  self.speed = speed
+function MatchSetup:setPuzzleFile(player, puzzleFile)
+  if self.mode.selectFile == GameModes.FileSelection.Puzzle then
+    self.players[player].puzzleFile = puzzleFile
+  else
+    error("Trying to set a puzzle file in a game mode that doesn't support puzzle file selection")
+  end
+end
+
+function MatchSetup:setTrainingFile(player, trainingFile)
+  if self.mode.selectFile == GameModes.FileSelection.Training then
+    self.players[player].trainingFile = trainingFile
+  else
+    error("Trying to set a training file in a game mode that doesn't support training file selection")
+  end
+end
+
+function MatchSetup:setStyle(styleChoice)
+  if self.mode.style == GameModes.Styles.Choose then
+    self.style = styleChoice
+  else
+    error("Trying to set difficulty style in a game mode that doesn't support style selection")
+  end
+end
+
+function MatchSetup:setDifficulty(player, difficulty)
+  if self.style == GameModes.Styles.Classic then
+    self.players[player].difficulty = difficulty
+  else
+    error("Trying to set difficulty while a non-classic style was selected")
+  end
+end
+
+function MatchSetup:setSpeed(player, speed)
+  if self.style == GameModes.Styles.Classic then
+    self.players[player].speed = speed
+  else
+    error("Trying to set speed while a non-classic style was selected")
+  end
 end
 
 function MatchSetup:setWinCount(player, winCount)
-  players[player].winCount = winCount
+  if self.mode.playerCount > 1 then
+    self.players[player].winCount = winCount
+  else
+    error("Trying to set win count in one player modes")
+  end
 end
 
 function MatchSetup:setLevel(player, level)
-  players[player].level = level
+  if self.style == GameModes.Styles.Classic then
+    error("Trying to set level while classic style was selected")
+  else
+    self.players[player].level = level
+  end
 end
 
 function MatchSetup:setReady(player, ready)
-  players[player].ready = ready
+  self.players[player].ready = ready
 end
 
 function MatchSetup:setCursorPositionId(player, cursorPositionId)
-  players[player].cursorPositionId = cursorPositionId
+  self.players[player].cursorPositionId = cursorPositionId
 end
 
 function MatchSetup:updateRankedStatus(rankedStatus, comments)
-  self.ranked = rankedStatus
-  self.rankedComments = comments
+  if self.online and self.mode.selectRanked then
+    self.ranked = rankedStatus
+    self.rankedComments = comments
+  else
+    error("Trying to apply ranked state to the match even though it is either not online or does not support ranked")
+  end
 end
 
 function MatchSetup:abort()
@@ -133,12 +177,15 @@ function MatchSetup:start(stageId, seed)
   GAME.match = Match("vs", GAME.battleRoom)
   if seed then
     GAME.match.seed = seed
-  elseif self.online and #players > 1 then
+  elseif self.online and #self.players > 1 then
     GAME.match.seed = self:generateSeed()
+  elseif self.online and self.ranked and #self.players == 1 then
+    -- not used yet but for future time attack leaderboard
+    error("Didn't get provided with a seed from the server")
   else
     -- calling the Match constructor automatically creates a seed on it
   end
-  
+
   if match_type == "Ranked" then
     GAME.match.room_ratings = self.currentRoomRatings
     GAME.match.my_player_number = self.my_player_number
@@ -148,25 +195,123 @@ function MatchSetup:start(stageId, seed)
   characterLoader.wait()
   stageLoader.wait()
 
-  for playerId = 1, #players do
-    if playerId == 1 then
-      P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
-  GAME.match.P1 = P1
-  P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, character = self.players[self.op_player_number].character, player_number = 2}
-  GAME.match.P2 = P2
+  local stacks = {}
+
+  for playerId = 1, #self.players do
+    stacks[playerId] = Stack {
+      which = 1,
+      match = GAME.match,
+      is_local = self.players[playerId].isLocal,
+      panels_dir = self.players[playerId].panels,
+      level = self.players[playerId].level,
+      character = self.players[playerId].character,
+      player_number = playerId
+    }
+  end
+
+  if self.localPlayerNumber then
+    -- to make sure the local player ends up as player 1 locally
+    -- but without messing up the interpretation of server messages by flipping numbers
+    table.sort(stacks, function(a, b) return a.isLocal > b.isLocal end)
+  end
+
+  if self.mode.stackInteraction == GameModes.StackInteraction.Versus then
+    for i = 1, #stacks do
+      for j = 1, #stacks do
+        if i ~= j then
+          -- once we have more than 2P modes, set_garbage_target needs to put these into an array instead
+          -- or we rework it anyway for teams
+          stacks[i]:set_garbage_target(stacks[j])
+        end
+      end
+    end
+  elseif self.mode.stackInteraction == GameModes.StackInteraction.Self then
+    for i = 1, #stacks do
+      stacks[i]:set_garbage_target(stacks[i])
+    end
+  elseif self.mode.stackInteraction == GameModes.StackInteraction.AttackEngine then
+    for i = 1, #stacks do
+      self:addAttackEngine(stacks[i])
     end
   end
+
+  P1 = stacks[1]
+  GAME.match.P1 = stacks[1]
+  if stacks[2] then
+    P2 = stacks[2]
+    GAME.match.P2 = stacks[2]
+    P2:moveForPlayerNumber(2)
+  end
+
+  replay = createNewReplay(GAME.match)
+
+  if not self.localPlayerNumber then
+    -- we're spectating
+    stacks[1]:receiveConfirmedInput(uncompress_input_string(replay_of_match_so_far.vs.in_buf))
+    if stacks[2] then
+      stacks[2]:receiveConfirmedInput(uncompress_input_string(replay_of_match_so_far.vs.I))
+    end
+
+    replay_of_match_so_far = nil
+    --this makes non local stacks run until caught up
+    P1.play_to_end = true
+    P2.play_to_end = true
+  end
+
+  if self.online and self.localPlayerNumber then
+    GAME.input:requestSingleInputConfigurationForPlayerCount(1)
+  elseif not self.online then
+    GAME.input:requestSingleInputConfigurationForPlayerCount(#self.players)
+  end
+
+  -- Proceed to the game screen and start the game
+  P1:starting_state()
+  P2:starting_state()
+
+  local to_print = loc("pl_game_start") .. "\n" .. loc("level") .. ": " .. P1.level .. "\n" .. loc("opponent_level") .. ": " .. P2.level
+  if P1.play_to_end or P2.play_to_end then
+    to_print = loc("pl_spectate_join")
+  end
+  return {main_dumb_transition, {main_net_vs, to_print, 10, 0}}
+end
+
+function MatchSetup:addAttackEngine(stack)
+  local trainingModeSettings = GAME.battleRoom.trainingModeSettings
+  local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
+  local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
+  local disableQueueLimit = trainingModeSettings.disableQueueLimit or false
+  local attackEngine = AttackEngine(stack, delayBeforeStart, delayBeforeRepeat, disableQueueLimit)
+  for _, values in ipairs(trainingModeSettings.attackPatterns) do
+    if values.chain then
+      if type(values.chain) == "number" then
+        for i = 1, values.height do
+          attackEngine:addAttackPattern(6, i, values.startTime + ((i-1) * values.chain), false, true)
+        end
+        attackEngine:addEndChainPattern(values.startTime + ((values.height - 1) * values.chain) + values.chainEndDelta)
+      elseif type(values.chain) == "table" then
+        for i, chainTime in ipairs(values.chain) do
+          attackEngine:addAttackPattern(6, i, chainTime, false, true)
+        end
+        attackEngine:addEndChainPattern(values.chainEndTime)
+      else
+        error("The 'chain' field in your attack file is invalid. It should either be a number or a list of numbers.")
+      end
+    else
+      attackEngine:addAttackPattern(values.width, values.height or 1, values.startTime, values.metal or false, false)
+    end
+  end
+
+  return attackEngine
 end
 
 function MatchSetup:generateSeed()
   local seed = 17
-  seed = seed * 37 + players[1].rating
-  seed = seed * 37 + players[2].rating;
-  seed = seed * 37 + GAME.battleRoom.playerWinCounts[1];
-  seed = seed * 37 + GAME.battleRoom.playerWinCounts[2];
+  seed = seed * 37 + self.players[1].rating.new
+  seed = seed * 37 + self.players[2].rating.new
+  seed = seed * 37 + GAME.battleRoom.playerWinCounts[1]
+  seed = seed * 37 + GAME.battleRoom.playerWinCounts[2]
 
   return seed
 end
-
 
 return MatchSetup
