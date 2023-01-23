@@ -414,12 +414,12 @@ function Telegraph:render()
         if not current_block[3]--[[is_metal]] then
           local height = math.min(current_block[2], 14)
           if height > 1 then -- For illegal chain garbage, default to using the chain size graphics
-            current_block[1] = 6stages
+            current_block[1] = stages
           end
           local orig_grb_w, orig_grb_h = characters[senderCharacter].telegraph_garbage_images[height][current_block[1]]:getDimensions()
           localstages_x = 24 / orig_grb_w
           local grb_scale_y = 16 / orig_grb_h
-          draw(characters[senderCharacterstagesh_garbage_images[height--[[height]]][current_block[1]--[[width]]], draw_x, draw_y, 0, grb_scale_x, grb_scale_y)
+          draw(characters[senderCharacter].telegraph_garbage_images[height--[[height]]][current_block[1]--[[width]]], draw_x, draw_y, 0, grb_scale_x, grb_scale_y)
         else
           local orig_mtl_w, orig_mtl_h = characters[senderCharacter].telegraph_garbage_images["metal"]:getDimensions()
           localstages_x = 24 / orig_mtl_w
