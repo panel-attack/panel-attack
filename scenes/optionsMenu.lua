@@ -12,6 +12,7 @@ local save = require("save")
 local consts = require("consts")
 local GraphicsUtil = require("graphics_util")
 local FileUtils = require("FileUtils")
+local analytics = require("analytics")
 
 --@module BasicMenu
 local optionsMenu = Scene("optionsMenu")
@@ -257,7 +258,7 @@ function optionsMenu:init()
     {Label({width = labelWidth, label = "op_countdown"}), createToggleButtonGroup("ready_countdown_1P")},
     {Label({width = labelWidth, label = "op_fps"}), createToggleButtonGroup("show_fps")},
     {Label({width = labelWidth, label = "op_ingame_infos"}), createToggleButtonGroup("show_ingame_infos")},
-    {Label({width = labelWidth, label = "op_analytics"}), createToggleButtonGroup("enable_analytics")},
+    {Label({width = labelWidth, label = "op_analytics"}), createToggleButtonGroup("enable_analytics", function() analytics.init() end)},
     {Label({width = labelWidth, label = "op_input_delay"}), createConfigSlider("input_repeat_delay", 0, 50)},
     {Label({width = labelWidth, label = "op_replay_public"}), publicReplayButtonGroup},
     {Button({width = labelWidth, label = "back", onClick = function() switchMenu("baseMenu") end})},
@@ -273,7 +274,7 @@ function optionsMenu:init()
     end
   end
   
-  local themeButtonGroup = Stepper(
+  local themeStepper = Stepper(
     {
       labels = themeLabels,
       values = foundThemes,
@@ -283,6 +284,8 @@ function optionsMenu:init()
         config.theme = value
         stop_the_music()
         theme_init()
+        stages_init()
+        characters_init()
         backgroundImage = themes[config.theme].images.bg_main
         if themes[config.theme].musics["main"] then
           find_and_add_music(themes[config.theme].musics, "main")
@@ -292,7 +295,7 @@ function optionsMenu:init()
   )
   
   local graphicsMenuOptions = {
-    {Label({width = labelWidth, label = "op_theme"}), themeButtonGroup},
+    {Label({width = labelWidth, label = "op_theme"}), themeStepper},
     {Label({width = labelWidth, label = "op_portrait_darkness"}), createConfigSlider("portrait_darkness", 0, 100)},
     {Label({width = labelWidth, label = "op_popfx"}), createToggleButtonGroup("popfx")},
     {Label({width = labelWidth, label = "op_renderTelegraph"}), createToggleButtonGroup("renderTelegraph")},
