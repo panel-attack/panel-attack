@@ -13,15 +13,15 @@ local players = {}
 -- playerNumber
 -- rating
 
-local GameSetup = class(
-  function(game, playerCount, mode)
-    game.playerCount = playerCount
-    game.mode = mode
+local MatchSetup = class(
+  function(match, playerCount, mode, online)
+    match.playerCount = playerCount
+    match.mode = mode
   end
 )
 
-function GameSetup.func()
+function MatchSetup.func()
 
 end
 
-return GameSetup
+return MatchSetup
