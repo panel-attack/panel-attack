@@ -191,6 +191,7 @@ end
 local function setEmbeddedAsGameStartVersion()
   love.filesystem.write(GAME_UPDATER.path..embeddedVersion, love.filesystem.read(embeddedVersion))
   setGameStartVersion(embeddedVersion)
+  return true
 end
 
 local function awaitGameDownload(version)
@@ -276,7 +277,7 @@ local function startGame()
   elseif local_version and tryMountGame(local_version) then
     logMessage("Falling back to local version")
     reinitLove()
-  elseif embeddedVersion and tryMountGame(embeddedVersion) then
+  elseif embeddedVersion and setEmbeddedAsGameStartVersion() and tryMountGame(embeddedVersion) then
     logMessage("Falling back to embedded version")
     reinitLove()
   else
