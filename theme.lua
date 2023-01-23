@@ -40,6 +40,68 @@ Theme =
   end
 )
 
+-- Returns a list of keys and their type allowed in theme config files
+function Theme:configurableKeys() 
+  local result = {}
+
+  result["version"] = "number"
+  result["matchtypeLabel_Pos"] = "table"
+  result["matchtypeLabel_Scale"] = "number"
+  result["timeLabel_Pos"] = "table"
+  result["timeLabel_Scale"] = "number"
+  result["time_Pos"] = "table"
+  result["time_Scale"] = "number"
+  result["moveLabel_Pos"] = "table"
+  result["moveLabel_Scale"] = "number"
+  result["move_Pos"] = "table"
+  result["move_Scale"] = "number"
+  result["scoreLabel_Pos"] = "table"
+  result["scoreLabel_Scale"] = "number"
+  result["score_Pos"] = "table"
+  result["score_Scale"] = "number"
+  result["speedLabel_Pos"] = "table"
+  result["speedLabel_Scale"] = "number"
+  result["speed_Pos"] = "table"
+  result["speed_Scale"] = "number"
+  result["levelLabel_Pos"] = "table"
+  result["levelLabel_Scale"] = "number"
+  result["level_Pos"] = "table"
+  result["level_Scale"] = "number"
+  result["winLabel_Pos"] = "table"
+  result["winLabel_Scale"] = "number"
+  result["win_Pos"] = "table"
+  result["win_Scale"] = "number"
+  result["name_Pos"] = "table"
+  result["ratingLabel_Pos"] = "table"
+  result["ratingLabel_Scale"] = "number"
+  result["rating_Pos"] = "table"
+  result["rating_Scale"] = "number"
+  result["spectators_Pos"] = "table"
+  result["healthbar_frame_Pos"] = "table"
+  result["healthbar_frame_Scale"] = "number"
+  result["healthbar_Pos"] = "table"
+  result["healthbar_Scale"] = "number"
+  result["healthbar_Rotate"] = "number"
+  result["multibar_Pos"] = "table"
+  result["multibar_Scale"] = "number"
+  result["multibar_is_absolute"] = "boolean"
+  result["font_size"] = "number"
+  result["bg_title_speed_x"] = "number"
+  result["bg_title_speed_y"] = "number"
+  result["bg_main_speed_x"] = "number"
+  result["bg_main_speed_y"] = "number"
+  result["bg_select_screen_speed_x"] = "number"
+  result["bg_select_screen_speed_y"] = "number"
+  result["bg_readme_speed_x"] = "number"
+  result["bg_readme_speed_y"] = "number"
+  result["bg_title_is_tiled"] = "boolean"
+  result["bg_main_is_tiled"] = "boolean"
+  result["bg_select_screen_is_tiled"] = "boolean"
+  result["bg_readme_is_tiled"] = "boolean"
+
+  return result
+end
+
 function Theme:loadVersion1DefaultValues()
   -- Version 1 values
   -- All of the default values below are legacy "version 1" values, the modern values are are loaded from the default theme config file
@@ -364,6 +426,35 @@ function Theme.sound_init(self)
   self:apply_config_volume()
 end
 
+function Theme.upgradeAndSaveVerboseConfig(self)
+  if self.version == 1 then
+    self.version = 2
+    self:saveVerboseConfig()
+  end
+end
+
+function Theme.saveVerboseConfig(self)
+  local jsonPath = Theme.themeDirectoryPath .. self.name .. "/config.json"
+
+  -- Get the data from the file in case there is something we don't know about
+  local jsonData = self:getJSONDataForFile(jsonPath)
+
+  -- Save off any configurable data that may have changed / upgraded
+  local configurableKeys = self:configurableKeys()
+  for key, _ in pairs(configurableKeys) do
+    jsonData[key] = self[key]
+  end
+  
+  pcall(
+    function()
+      local file = love.filesystem.newFile(jsonPath)
+      file:open("w")
+      file:write(json.encode(jsonData))
+      file:close()
+    end
+  )
+end
+
 -- initializes theme using the json settings
 function Theme.json_init(self)
   -- Start with the default theme
@@ -378,6 +469,8 @@ function Theme.json_init(self)
       self:loadVersion1DefaultValues()
     end
     self:applyJSONData(customData)
+
+    self:upgradeAndSaveVerboseConfig()
   end
 end
 
@@ -408,254 +501,18 @@ end
 -- applies all the JSON values from a table
 function Theme:applyJSONData(read_data)
 
+  for key, keyType in pairs(self:configurableKeys()) do
+    if read_data[key] and type(read_data[key]) == keyType then
+      self[key] = read_data[key]
+    end
+  end
+
+  -- Handle non standard mappings
+  if self.font_size then
+    self.font.size = self.font_size
+    self.font_size = nil
+  end
   self.version = self:versionForJSONVersion(read_data.version)
-
-  -- Matchtype label position
-  if read_data.matchtypeLabel_Pos and type(read_data.matchtypeLabel_Pos) == "table" then
-    self.matchtypeLabel_Pos = read_data.matchtypeLabel_Pos
-  end
-
-  -- Matchtype label scale
-  if read_data.matchtypeLabel_Scale and type(read_data.matchtypeLabel_Scale) == "number" then
-    self.matchtypeLabel_Scale = read_data.matchtypeLabel_Scale
-  end
-
-  -- Time label position
-  if read_data.timeLabel_Pos and type(read_data.timeLabel_Pos) == "table" then
-    self.timeLabel_Pos = read_data.timeLabel_Pos
-  end
-
-  -- Time label scale
-  if read_data.timeLabel_Scale and type(read_data.timeLabel_Scale) == "number" then
-    self.timeLabel_Scale = read_data.timeLabel_Scale
-  end
-
-  -- Time position
-  if read_data.time_Pos and type(read_data.time_Pos) == "table" then
-    self.time_Pos = read_data.time_Pos
-  end
-
-  -- Time scale
-  if read_data.time_Scale and type(read_data.time_Scale) == "number" then
-    self.time_Scale = read_data.time_Scale
-  end
-
-  -- Move label position
-  if read_data.moveLabel_Pos and type(read_data.moveLabel_Pos) == "table" then
-    self.moveLabel_Pos = read_data.moveLabel_Pos
-  end
-
-  -- Move label scale
-  if read_data.moveLabel_Scale and type(read_data.moveLabel_Scale) == "number" then
-    self.moveLabel_Scale = read_data.moveLabel_Scale
-  end
-
-  -- Move position
-  if read_data.move_Pos and type(read_data.move_Pos) == "table" then
-    self.move_Pos = read_data.move_Pos
-  end
-
-  -- Move scale
-  if read_data.move_Scale and type(read_data.move_Scale) == "number" then
-    self.move_Scale = read_data.move_Scale
-  end
-
-  -- Score label position
-  if read_data.scoreLabel_Pos and type(read_data.scoreLabel_Pos) == "table" then
-    self.scoreLabel_Pos = read_data.scoreLabel_Pos
-  end
-
-  -- Score label scale
-  if read_data.scoreLabel_Scale and type(read_data.scoreLabel_Scale) == "number" then
-    self.scoreLabel_Scale = read_data.scoreLabel_Scale
-  end
-
-  -- Score position
-  if read_data.score_Pos and type(read_data.score_Pos) == "table" then
-    self.score_Pos = read_data.score_Pos
-  end
-
-  -- Score scale
-  if read_data.score_Scale and type(read_data.score_Scale) == "number" then
-    self.score_Scale = read_data.score_Scale
-  end
-
-  -- Speed label position
-  if read_data.speedLabel_Pos and type(read_data.speedLabel_Pos) == "table" then
-    self.speedLabel_Pos = read_data.speedLabel_Pos
-  end
-
-  -- Speed label scale
-  if read_data.speedLabel_Scale and type(read_data.speedLabel_Scale) == "number" then
-    self.speedLabel_Scale = read_data.speedLabel_Scale
-  end
-
-  -- Speed position
-  if read_data.speed_Pos and type(read_data.speed_Pos) == "table" then
-    self.speed_Pos = read_data.speed_Pos
-  end
-
-  -- Speed scale
-  if read_data.speed_Scale and type(read_data.speed_Scale) == "number" then
-    self.speed_Scale = read_data.speed_Scale
-  end
-
-  -- Level label position
-  if read_data.levelLabel_Pos and type(read_data.levelLabel_Pos) == "table" then
-    self.levelLabel_Pos = read_data.levelLabel_Pos
-  end
-
-  -- Level label scale
-  if read_data.levelLabel_Scale and type(read_data.levelLabel_Scale) == "number" then
-    self.levelLabel_Scale = read_data.levelLabel_Scale
-  end
-
-  -- Level position
-  if read_data.level_Pos and type(read_data.level_Pos) == "table" then
-    self.level_Pos = read_data.level_Pos
-  end
-
-  -- Level scale
-  if read_data.level_Scale and type(read_data.level_Scale) == "number" then
-    self.level_Scale = read_data.level_Scale
-  end
-
-  -- Wins label position
-  if read_data.winLabel_Pos and type(read_data.winLabel_Pos) == "table" then
-    self.winLabel_Pos = read_data.winLabel_Pos
-  end
-
-  -- Wins label scale
-  if read_data.winLabel_Scale and type(read_data.winLabel_Scale) == "number" then
-    self.winLabel_Scale = read_data.winLabel_Scale
-  end
-
-  -- Wins position
-  if read_data.win_Pos and type(read_data.win_Pos) == "table" then
-    self.win_Pos = read_data.win_Pos
-  end
-
-  -- Wins scale
-  if read_data.win_Scale and type(read_data.win_Scale) == "number" then
-    self.win_Scale = read_data.win_Scale
-  end
-
-  -- Name position
-  if read_data.name_Pos and type(read_data.name_Pos) == "table" then
-    self.name_Pos = read_data.name_Pos
-  end
-
-  -- Rating label position
-  if read_data.ratingLabel_Pos and type(read_data.ratingLabel_Pos) == "table" then
-    self.ratingLabel_Pos = read_data.ratingLabel_Pos
-  end
-
-  -- Rating label scale
-  if read_data.ratingLabel_Scale and type(read_data.ratingLabel_Scale) == "number" then
-    self.ratingLabel_Scale = read_data.ratingLabel_Scale
-  end
-
-  -- Rating position
-  if read_data.rating_Pos and type(read_data.rating_Pos) == "table" then
-    self.rating_Pos = read_data.rating_Pos
-  end
-
-  -- Rating scale
-  if read_data.rating_Scale and type(read_data.rating_Scale) == "number" then
-    self.rating_Scale = read_data.rating_Scale
-  end
-
-  -- Spectators position
-  if read_data.spectators_Pos and type(read_data.spectators_Pos) == "table" then
-    self.spectators_Pos = read_data.spectators_Pos
-  end
-
-  -- Healthbar frame position
-  if read_data.healthbar_frame_Pos and type(read_data.healthbar_frame_Pos) == "table" then
-    self.healthbar_frame_Pos = read_data.healthbar_frame_Pos
-  end
-
-  -- Healthbar frame scale
-  if read_data.healthbar_frame_Scale and type(read_data.healthbar_frame_Scale) == "number" then
-    self.healthbar_frame_Scale = read_data.healthbar_frame_Scale
-  end
-
-  -- Healthbar position
-  if read_data.healthbar_Pos and type(read_data.healthbar_Pos) == "table" then
-    self.healthbar_Pos = read_data.healthbar_Pos
-  end
-
-  -- Healthbar scale
-  if read_data.healthbar_Scale and type(read_data.healthbar_Scale) == "number" then
-    self.healthbar_Scale = read_data.healthbar_Scale
-  end
-
-  -- Healthbar Rotate
-  if read_data.healthbar_Rotate and type(read_data.healthbar_Rotate) == "number" then
-    self.healthbar_Rotate = read_data.healthbar_Rotate
-  end
-
-  -- Multibar position
-  if read_data.multibar_Pos and type(read_data.multibar_Pos) == "table" then
-    self.multibar_Pos = read_data.multibar_Pos
-  end
-
-  -- Multibar scale
-  if read_data.multibar_Scale and type(read_data.multibar_Scale) == "number" then
-    self.multibar_Scale = read_data.multibar_Scale
-  end
-
-  -- Multibar is absolute
-  if read_data.multibar_is_absolute and type(read_data.multibar_is_absolute) == "boolean" then
-    self.multibar_is_absolute = read_data.multibar_is_absolute
-  end
-
-  -- Font size
-  if read_data.font_size and type(read_data.font_size) == "number" then
-    self.font.size = read_data.font_size
-  end
-  
-  -- Background Speeds
-  if read_data.bg_title_speed_x and type(read_data.bg_title_speed_x) == "number" then
-    self.bg_title_speed_x = read_data.bg_title_speed_x
-  end
-  if read_data.bg_title_speed_y and type(read_data.bg_title_speed_y) == "number" then
-    self.bg_title_speed_y = read_data.bg_title_speed_y
-  end
-
-  if read_data.bg_main_speed_x and type(read_data.bg_main_speed_x) == "number" then
-    self.bg_main_speed_x = read_data.bg_main_speed_x
-  end
-  if read_data.bg_main_speed_y and type(read_data.bg_main_speed_y) == "number" then
-    self.bg_main_speed_y = read_data.bg_main_speed_y
-  end
-
-  if read_data.bg_select_screen_speed_x and type(read_data.bg_select_screen_speed_x) == "number" then
-    self.bg_select_screen_speed_x = read_data.bg_select_screen_speed_x
-  end
-  if read_data.bg_select_screen_speed_y and type(read_data.bg_select_screen_speed_y) == "number" then
-    self.bg_select_screen_speed_y = read_data.bg_select_screen_speed_y
-  end
-
-  if read_data.bg_readme_speed_x and type(read_data.bg_readme_speed_x) == "number" then
-    self.bg_readme_speed_x = read_data.bg_readme_speed_x
-  end
-  if read_data.bg_readme_speed_y and type(read_data.bg_readme_speed_y) == "number" then
-    self.bg_readme_speed_y = read_data.bg_readme_speed_y
-  end
-
-  if read_data.bg_title_is_tiled and type(read_data.bg_title_is_tiled) == "boolean" then
-    self.bg_title_is_tiled = read_data.bg_title_is_tiled
-  end
-  if read_data.bg_main_is_tiled and type(read_data.bg_main_is_tiled) == "boolean" then
-    self.bg_main_is_tiled = read_data.bg_main_is_tiled
-  end
-  if read_data.bg_select_screen_is_tiled and type(read_data.bg_select_screen_is_tiled) == "boolean" then
-    self.bg_select_screen_is_tiled = read_data.bg_select_screen_is_tiled
-  end
-  if read_data.bg_readme_is_tiled and type(read_data.bg_readme_is_tiled) == "boolean" then
-    self.bg_readme_is_tiled = read_data.bg_readme_is_tiled
-  end
 end
 
 function Theme:final_init()
