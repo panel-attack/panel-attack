@@ -41,12 +41,12 @@ end
 function refreshBasedOnOwnMods(player)
   -- Resolve the current character if it is random
   local function resolveRandomCharacter()
-      if stages[player.character] == nil and player.selectedCharacter == random_character_special_value then
+      if characters[player.character] == nil and player.selectedCharacter == random_character_special_value then
         player.character = tableUtils.getRandomElement(characters_ids_for_current_theme)
       end
 
-      if stages[player.character]:is_bundle() then
-        player.character = tableUtils.getRandomElement(stages[player.character].sub_characters)
+      if characters[player.character]:is_bundle() then
+        player.character = tableUtils.getRandomElement(characters[player.character].sub_characters)
       end
   end
 
@@ -103,13 +103,13 @@ function refreshBasedOnOwnMods(player)
         player.selectedCharacter = player.character
         player.character = nil
       end
-      if stages[player.selectedCharacter] then
+      if characters[player.selectedCharacter] then
         if player.character ~= player.selectedCharacter then
           player.character = player.selectedCharacter
         end
       else
         -- when there is no stage or the stage the other player selected, check if there's a character with the same name
-        if player.character_display_name and characters_ids_by_display_names[player.character_display_name] and not stages[characters_ids_by_display_names[player.character_display_name][1]]:is_bundle() then
+        if player.character_display_name and characters_ids_by_display_names[player.character_display_name] and not characters[characters_ids_by_display_names[player.character_display_name][1]]:is_bundle() then
           player.character = characters_ids_by_display_names[player.character_display_name][1]
         elseif player.selectedCharacter ~= random_character_special_value then
           -- don't have the selected character and it's not random, use a random character
@@ -119,7 +119,7 @@ function refreshBasedOnOwnMods(player)
       end
 
       resolveRandomCharacter()
-      player.character_display_name = stages[player.character].character_display_name
+      player.character_display_name = characters[player.character].character_display_name
       characterLoader.load(player.character)
     end
   end
@@ -172,7 +172,7 @@ function select_screen.move_cursor(self, cursor, direction)
     can_x, can_y = wrap(1, can_x + dx, self.ROWS), wrap(1, can_y + dy, self.COLUMNS)
   end
   cursor_pos[1], cursor_pos[2] = can_x, can_y
-  local character = stages[self.drawMap[self.current_page][can_x][can_y]]
+  local character = characters[self.drawMap[self.current_page][can_x][can_y]]
   cursor.can_super_select = character and (character.stage or character.panels)
 end
 
@@ -199,9 +199,9 @@ function select_screen.on_select(self, player, super)
     player.ranked = not player.ranked
   elseif (player.cursor.positionId ~= "__Empty" and player.cursor.positionId ~= "__Reserved") then
     player.selectedCharacter = player.cursor.positionId
-    local character = stages[player.selectedCharacter]
+    local character = characters[player.selectedCharacter]
     if character then
-      characterSelectionSoundHasBeenPlayed = stages[player.selectedCharacter]:play_selection_sfx()
+      characterSelectionSoundHasBeenPlayed = characters[player.selectedCharacter]:play_selection_sfx()
       if super then
         if character.stage then
           player.selectedStage = character.stage
@@ -237,7 +237,7 @@ end
 
 -- Makes sure all the client data is up to date and ready
 function select_screen.refreshLoadingState(self, playerNumber)
-  self.players[playerNumber].loaded = stages[self.players[playerNumber].character] and stages[self.players[playerNumber].character].fully_loaded and stages[self.players[playerNumber].stage] and stages[self.players[playerNumber].stage].fully_loaded
+  self.players[playerNumber].loaded = characters[self.players[playerNumber].character] and characters[self.players[playerNumber].character].fully_loaded and stages[self.players[playerNumber].stage] and stages[self.players[playerNumber].stage].fully_loaded
 end
 
 -- Returns the panel dir for the given increment

@@ -1276,9 +1276,9 @@ function main_net_vs()
     local function handleTaunt()
       local function getCharacter(playerNumber)
         if P1.player_number == playerNumber then
-          return stages[P1.character]
+          return characters[P1.character]
         elseif P2.player_number == playerNumber then
-          return stages[P2.character]
+          return characters[P2.character]
         end
       end
 

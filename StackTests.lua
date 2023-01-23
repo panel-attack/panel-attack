@@ -6,7 +6,7 @@ stack.do_countdown = false
 stack:wait_for_random_character()
 pick_random_stage()
 
-assert(stages ~= nil, "no characters")
+assert(characters ~= nil, "no characters")
 stack:set_puzzle_state(Puzzle(nil, nil, 1, "011010"))
 
 assert(stack.panels[1][1].color == 0, "wrong color")

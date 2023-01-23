@@ -409,7 +409,7 @@ local function audio_menu(button_idx)
 
         -- temporarily load music for characters that are not fully loaded to build tracklist, bundle characters add their subcharacters as tracks instead
         for _, character_id in ipairs(characters_ids_for_current_theme) do
-          if characters[character_id].fully_loaded then
+          if not characters[character_id].fully_loaded then
             characters[character_id]:sound_init(true, false)
           end
           local character = characters[character_id]
@@ -426,7 +426,7 @@ local function audio_menu(button_idx)
             ram_load = ram_load + 1
           else
             for _, sub_character_id in ipairs(character.sub_characters) do
-              if characters[sub_character_id].fully_loaded then
+              if not characters[sub_character_id].fully_loaded then
                 characters[sub_character_id]:sound_init(true, false)
               end
               local subcharacter = characters[sub_character_id]
@@ -445,7 +445,7 @@ local function audio_menu(button_idx)
               end
             end
           end
-          if characters[character_id].fully_loaded then
+          if not characters[character_id].fully_loaded then
             characters[character_id]:sound_uninit() -- give thanks to our memory bandwidth
           end
           if ram_load > max_ram_load then
@@ -488,8 +488,8 @@ local function audio_menu(button_idx)
               for _, v in pairs(character_sounds) do
                 v.sound:stop()
               end
-              character_sounds= {}
-              if characters[tracks[loaded_track_index].id].fully_loaded then
+              character_sounds = {}
+              if not characters[tracks[loaded_track_index].id].fully_loaded then
                 characters[tracks[loaded_track_index].id]:sound_uninit()
               end
               if tracks[index].parent_id then
@@ -546,7 +546,7 @@ local function audio_menu(button_idx)
           end
           if not loaded then
             if tracks[index].is_character then
-              if characters[tracks[index].id].fully_loaded then
+              if not characters[tracks[index].id].fully_loaded then
                 characters[tracks[index].id]:sound_init(true, false)
                 if tracks[index].parent_id then
                   characters[tracks[index].parent_id]:sound_init(true, false)

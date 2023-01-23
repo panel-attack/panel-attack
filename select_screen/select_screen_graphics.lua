@@ -191,26 +191,26 @@ end
     if no_rect == false then
       grectangle("line", self.render_x, self.render_y, self.button_width, self.button_height)
     end
-    local character = stages[str]
+    local character = characters[str]
     if str == "P1" then
       if self.select_screen.players[self.select_screen.my_player_number].selectedCharacter then
         if self.select_screen.players[self.select_screen.my_player_number].selectedCharacter == random_character_special_value then
           character = random_character_special_value
         else
-          character = stages[self.select_screen.players[self.select_screen.my_player_number].selectedCharacter]
+          character = characters[self.select_screen.players[self.select_screen.my_player_number].selectedCharacter]
         end
       else
-        character = stages[self.select_screen.players[self.select_screen.my_player_number].character]
+        character = characters[self.select_screen.players[self.select_screen.my_player_number].character]
       end
     elseif str == "P2" then
       if self.select_screen.players[self.select_screen.op_player_number].selectedCharacter then
         if self.select_screen.players[self.select_screen.op_player_number].selectedCharacter == random_character_special_value then
           character = random_character_special_value
         else
-          character = stages[self.select_screen.players[self.select_screen.op_player_number].selectedCharacter]
+          character = characters[self.select_screen.players[self.select_screen.op_player_number].selectedCharacter]
         end
       else
-        character = stages[self.select_screen.players[self.select_screen.op_player_number].character]
+        character = characters[self.select_screen.players[self.select_screen.op_player_number].character]
       end
     end
     local x_add, y_add = 0, 0
@@ -321,24 +321,24 @@ function select_screen_graphics.draw_character(self, character)
     local sub_characters = character.sub_characters
     local sub_characters_count = math.min(4, #sub_characters) -- between 2 and 4 (inclusive), by design
 
-    local thumbnail_1 = stages[sub_characters[1]].images.icon
+    local thumbnail_1 = characters[sub_characters[1]].images.icon
     local thumb_y_padding = 0.25 * self.button_height
     local thumb_1_and_2_y_padding = sub_characters_count >= 3 and -thumb_y_padding or 0
     local scale_1 = self.button_width * 0.5 / math.max(thumbnail_1:getWidth(), thumbnail_1:getHeight())
     menu_drawf(thumbnail_1, self.render_x + 0.25 * self.button_width, self.render_y + 0.5 * self.button_height + thumb_1_and_2_y_padding, "center", "center", 0, scale_1, scale_1)
 
-    local thumbnail_2 = stages[sub_characters[2]].images.icon
+    local thumbnail_2 = characters[sub_characters[2]].images.icon
     local scale_2 = self.button_width * 0.5 / math.max(thumbnail_2:getWidth(), thumbnail_2:getHeight())
     menu_drawf(thumbnail_2, self.render_x + 0.75 * self.button_width, self.render_y + 0.5 * self.button_height + thumb_1_and_2_y_padding, "center", "center", 0, scale_2, scale_2)
 
     if sub_characters_count >= 3 then
-      local thumbnail_3 = stages[sub_characters[3]].images.icon
+      local thumbnail_3 = characters[sub_characters[3]].images.icon
       local scale_3 = self.button_width * 0.5 / math.max(thumbnail_3:getWidth(), thumbnail_3:getHeight())
       local thumb_3_x_padding = sub_characters_count == 3 and 0.25 * self.button_width or 0
       menu_drawf(thumbnail_3, self.render_x + 0.25 * self.button_width + thumb_3_x_padding, self.render_y + 0.75 * self.button_height, "center", "center", 0, scale_3, scale_3)
     end
     if sub_characters_count == 4 then
-      local thumbnail_4 = stages[sub_characters[4]].images.icon
+      local thumbnail_4 = characters[sub_characters[4]].images.icon
       local scale_4 = self.button_width * 0.5 / math.max(thumbnail_4:getWidth(), thumbnail_4:getHeight())
       menu_drawf(thumbnail_4, self.render_x + 0.75 * self.button_width, self.render_y + 0.75 * self.button_height, "center", "center", 0, scale_4, scale_4)
     end
@@ -411,7 +411,7 @@ end
 
 -- Draw the players current character, player number etc
 function select_screen_graphics.draw_player(self, player, player_number)
-  if stages[player.character] and not stages[player.character].fully_loaded then
+  if characters[player.character] and not characters[player.character].fully_loaded then
     local scaleX = self.button_width / themes[config.theme].images.IMG_loading:getWidth()
     menu_drawf(themes[config.theme].images.IMG_loading, self.render_x +self.button_width * 0.5, self.render_y + self.button_height * 0.5, "center", "center", 0, scaleX, scaleX)
   elseif player.wants_ready then

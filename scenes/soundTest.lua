@@ -18,11 +18,11 @@ local function playMusic(source, id, musicType)
   local musicToUse
   local musicStyle
   if source == "character" then
-    if not stages[id].fully_loaded and not stages[id].musics[musicType] then
-      stages[id]:sound_init(true, false)
+    if not characters[id].fully_loaded and not characters[id].musics[musicType] then
+      characters[id]:sound_init(true, false)
     end
-    musicToUse = stages[id].musics
-    musicStyle = stages[id].music_style
+    musicToUse = characters[id].musics
+    musicStyle = characters[id].music_style
   elseif source == "stage" then
     if not stages[id].fully_loaded and not stages[id].musics[musicType] then
       stages[id]:sound_init(true, false)
@@ -48,7 +48,7 @@ local function playMusic(source, id, musicType)
 end
 
 local function createSfxMenuInfo(characterId)
-  local characterFiles = love.filesystem.getDirectoryItems(stages[characterId].path)
+  local characterFiles = love.filesystem.getDirectoryItems(characters[characterId].path)
   local musicFiles = {normal_music = true, normal_music_start = true, danger_music = true, danger_music_start = true}
   local supportedSoundFormats = {mp3 = true, ogg = true, wav = true, it = true, flac = true}
   local soundFiles = tableUtils.filter(characterFiles, function(fileName) return not musicFiles[string.match(fileName, "(.*)[.]")] and supportedSoundFormats[string.match(fileName, "[.](.*)")] end)
@@ -71,7 +71,7 @@ function soundTest:init()
   
   local characterLabels = {}
   local characterIds = {}
-  for _, character in pairs(stages) do
+  for _, character in pairs(characters) do
     characterLabels[#characterLabels + 1] = Label({
         label = character.display_name,
         translate = false,
@@ -186,7 +186,7 @@ function soundTest:init()
     {Label({width = menuLabelWidth, label = "stage"}), stageStepper},
     {Label({width = menuLabelWidth, label = "op_music_type"}), musicTypeButtonGroup},
     {Label({width = menuLabelWidth, label = "Background", translate = false}), playButtonGroup},
-    {Button({width = menuLabelWidth, label = "op_music_sfx", onClick = function() love.audio.play(love.audio.newSource(stages[characterStepper.value].path.."/"..sfxStepper.value, "static")) end}), sfxStepper},
+    {Button({width = menuLabelWidth, label = "op_music_sfx", onClick = function() love.audio.play(love.audio.newSource(characters[characterStepper.value].path.."/"..sfxStepper.value, "static")) end}), sfxStepper},
     {Button({width = menuLabelWidth, label = "back", onClick = function() sceneManager:switchToScene("optionsMenu") end})},
   }
   

@@ -8,7 +8,7 @@ local loading_queue = Queue()
 
 local loading_character = nil
 
-stages = {} -- holds all characters, most of them will not be fully loaded
+character = {} -- holds all characters, most of them will not be fully loaded
 characters_ids = {} -- holds all characters ids
 characters_ids_for_current_theme = {} -- holds characters ids for the current theme, those characters will appear in the lobby
 characters_ids_by_display_names = {} -- holds keys to array of character ids holding that name
@@ -17,7 +17,7 @@ local CharacterLoader = {}
 
 -- queues a character to be loaded
 function CharacterLoader.load(character_id)
-  if stages[character_id] and not stages[character_id].fully_loaded then
+  if character[character_id] and not character[character_id].fully_loaded then
     loading_queue:push(character_id)
   end
 end
@@ -32,7 +32,7 @@ function CharacterLoader.update()
       character_name,
       coroutine.create(
         function()
-          stages[character_name]:load(instant_load_enabled)
+          character[character_name]:load(instant_load_enabled)
         end
       )
     }
@@ -66,7 +66,7 @@ end
 -- Unloads all characters not in use by config or player 2
 function CharacterLoader.clear()
   local p2_local_character = global_op_state and global_op_state.character or nil
-  for character_id, character in pairs(stages) do
+  for character_id, character in pairs(character) do
     if character.fully_loaded and character_id ~= config.character and character_id ~= p2_local_character then
       character:unload()
     end
@@ -90,11 +90,11 @@ function CharacterLoader.addCharactersFromDirectoryRecursively(path)
         local success = character:json_init()
 
         if success then
-          if stages[character.id] ~= nil then
+          if character[character.id] ~= nil then
             logger.trace(current_path .. " has been ignored since a character with this id has already been found")
           else
             -- logger.trace(current_path.." has been added to the character list!")
-            stages[character.id] = character
+            character[character.id] = character
             characters_ids[#characters_ids + 1] = character.id
           end
         end
@@ -110,12 +110,12 @@ function CharacterLoader.fillCharacterIds()
   local copy_of_characters_ids = shallowcpy(characters_ids)
   characters_ids = {} -- clean up
   for _, character_id in ipairs(copy_of_characters_ids) do
-    local character = stages[character_id]
+    local character = character[character_id]
     if #character.sub_characters > 0 then -- bundle character (needs to be filtered if invalid)
       local copy_of_sub_characters = shallowcpy(character.sub_characters)
       character.sub_characters = {}
       for _, sub_character in ipairs(copy_of_sub_characters) do
-        if stages[sub_character] and #stages[sub_character].sub_characters == 0 then -- inner bundles are prohibited
+        if character[sub_character] and #character[sub_character].sub_characters == 0 then -- inner bundles are prohibited
           character.sub_characters[#character.sub_characters + 1] = sub_character
           logger.trace(character.id .. " has " .. sub_character .. " as part of its subcharacters.")
         end
@@ -136,7 +136,7 @@ function CharacterLoader.fillCharacterIds()
 
   -- characters are removed outside of the loop since erasing while iterating isn't working
   for _, invalid_character in pairs(invalid) do
-    stages[invalid_character] = nil
+    character[invalid_character] = nil
   end
 end
 
@@ -154,14 +154,14 @@ function CharacterLoader.initCharacters()
   if love.filesystem.getInfo("themes/" .. config.theme .. "/characters.txt") then
     for line in love.filesystem.lines("themes/" .. config.theme .. "/characters.txt") do
       line = trim(line) -- remove whitespace
-      if stages[line] then
+      if character[line] then
         -- found at least a valid character in a characters.txt file
         characters_ids_for_current_theme[#characters_ids_for_current_theme + 1] = line
       end
     end
   else
     for _, character_id in ipairs(characters_ids) do
-      if stages[character_id].is_visible then
+      if character[character_id].is_visible then
         characters_ids_for_current_theme[#characters_ids_for_current_theme + 1] = character_id
       end
     end
@@ -173,14 +173,14 @@ function CharacterLoader.initCharacters()
   end
 
   -- fix config character if it's missing
-  if not config.character or (config.character ~= random_character_special_value and not stages[config.character]) then
+  if not config.character or (config.character ~= random_character_special_value and not character[config.character]) then
     config.character = tableUtils.getRandomElement(characters_ids_for_current_theme)
   end
 
   -- actual init for all characters, starting with the default one
   Character.loadDefaultCharacter()
 
-  for _, character in pairs(stages) do
+  for _, character in pairs(character) do
     character:preload()
 
     if characters_ids_by_display_names[character.display_name] then
@@ -190,14 +190,14 @@ function CharacterLoader.initCharacters()
     end
   end
 
-  if config.character ~= random_character_special_value and not stages[config.character]:is_bundle() then
+  if config.character ~= random_character_special_value and not character[config.character]:is_bundle() then
     CharacterLoader.load(config.character)
     CharacterLoader.wait()
   end
 end
 
 function CharacterLoader.resolveCharacterSelection(characterId)
-  if stages[characterId] then
+  if character[characterId] then
     characterId = CharacterLoader.resolveBundle(characterId)
   else
     -- resolve via random selection
@@ -208,8 +208,8 @@ function CharacterLoader.resolveCharacterSelection(characterId)
 end
 
 function CharacterLoader.resolveBundle(characterId)
-  while stages[characterId]:is_bundle() do
-    characterId = tableUtils.getRandomElement(stages[characterId].sub_characters)
+  while character[characterId]:is_bundle() do
+    characterId = tableUtils.getRandomElement(character[characterId].sub_characters)
   end
 
   return characterId

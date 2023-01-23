@@ -99,22 +99,22 @@ function Stack.update_popfxs(self)
   
   for i = self.pop_q.first, self.pop_q.last do
     local popfx = self.pop_q[i]
-    if stages[self.character].popfx_style == "burst" or stages[self.character].popfx_style == "fadeburst" then
+    if characters[self.character].popfx_style == "burst" or characters[self.character].popfx_style == "fadeburst" then
       popfx_animation = popfx_burst_animation
     end
-    if stages[self.character].popfx_style == "fade" then
+    if characters[self.character].popfx_style == "fade" then
       popfx_animation = popfx_fade_animation
     end
     if popfx_burst_animation[popfx.frame] then
       popfx.frame = popfx.frame + 1
       if (popfx_burst_animation[popfx.frame] == nil) then
-        if stages[self.character].images["burst"] then
+        if characters[self.character].images["burst"] then
           GraphicsUtil:releaseQuad(popfx.burstParticle)
         end
-        if stages[self.character].images["fade"] then
+        if characters[self.character].images["fade"] then
           GraphicsUtil:releaseQuad(popfx.fadeParticle)
         end
-        if stages[self.character].images["burst"] then
+        if characters[self.character].images["burst"] then
           GraphicsUtil:releaseQuad(popfx.bigParticle)
         end
         self.pop_q:pop()
@@ -131,16 +131,16 @@ function Stack.draw_popfxs(self)
     local popfx = self.pop_q[i]
     local draw_x = (self.pos_x) + (popfx.x - 1) * 16
     local draw_y = (self.pos_y) + (11 - popfx.y) * 16 + self.displacement
-    local burstScale = stages[self.character].popfx_burstScale
-    local fadeScale = stages[self.character].popfx_fadeScale
+    local burstScale = characters[self.character].popfx_burstScale
+    local fadeScale = characters[self.character].popfx_fadeScale
     local burstParticle_atlas = popfx.burstAtlas
     local burstParticle = popfx.burstParticle
     local burstFrameDimension = popfx.burstFrameDimension
     local fadeParticle_atlas = popfx.fadeAtlas
     local fadeParticle = popfx.fadeParticle
     local fadeFrameDimension = popfx.fadeFrameDimension
-    if stages[self.character].popfx_style == "burst" or stages[self.character].popfx_style == "fadeburst" then
-      if stages[self.character].images["burst"] then
+    if characters[self.character].popfx_style == "burst" or characters[self.character].popfx_style == "fadeburst" then
+      if characters[self.character].images["burst"] then
         burstFrame = popfx_burst_animation[popfx.frame]
         if popfx_burst_animation[popfx.frame] then
           burstParticle:setViewport(burstFrame[2] * burstFrameDimension, 0, burstFrameDimension, burstFrameDimension, burstParticle_atlas:getDimensions())
@@ -158,7 +158,7 @@ function Stack.draw_popfxs(self)
             {x = draw_x + 10 + (burstFrame[1] * 2), y = draw_y}
           }
 
-          if stages[self.character].popfx_burstrotate == true then
+          if characters[self.character].popfx_burstrotate == true then
             topRot = {math.rad(45), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
             bottomRot = {math.rad(-135), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
             leftRot = {math.rad(-45), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
@@ -229,8 +229,8 @@ function Stack.draw_popfxs(self)
         end
       end
     end
-    if stages[self.character].popfx_style == "fade" or stages[self.character].popfx_style == "fadeburst" then
-      if stages[self.character].images["fade"] then
+    if characters[self.character].popfx_style == "fade" or characters[self.character].popfx_style == "fadeburst" then
+      if characters[self.character].images["fade"] then
         fadeFrame = popfx_fade_animation[popfx.frame]
         if (fadeFrame ~= nil) then
           fadeParticle:setViewport(fadeFrame * fadeFrameDimension, 0, fadeFrameDimension, fadeFrameDimension, fadeParticle_atlas:getDimensions())
@@ -273,11 +273,11 @@ function Stack.render(self)
 
   -- draw inside stack's frame canvas
   local portrait_image = "portrait"
-  if not (self.which == 1) and stages[self.character].images["portrait2"] then
+  if not (self.which == 1) and characters[self.character].images["portrait2"] then
     portrait_image = "portrait2"
   end
 
-  local portrait_w, portrait_h = stages[self.character].images[portrait_image]:getDimensions()
+  local portrait_w, portrait_h = characters[self.character].images[portrait_image]:getDimensions()
 
   -- Draw the portrait (with fade and inversion if needed)
   if self.do_countdown == false then
@@ -292,9 +292,9 @@ function Stack.render(self)
     end
   end
   if self.which == 1 or portrait_image == "portrait2" then
-    draw(stages[self.character].images[portrait_image], 4, 4, 0, 96 / portrait_w, 192 / portrait_h)
+    draw(characters[self.character].images[portrait_image], 4, 4, 0, 96 / portrait_w, 192 / portrait_h)
   else
-    draw(stages[self.character].images[portrait_image], 100, 4, 0, (96/portrait_w)*-1, 192/portrait_h)
+    draw(characters[self.character].images[portrait_image], 100, 4, 0, (96/portrait_w)*-1, 192/portrait_h)
   end
   grectangle_color("fill", 4, 4, 96, 192, 0, 0, 0, self.portraitFade)
 
@@ -323,9 +323,9 @@ function Stack.render(self)
           local imgs = {flash = metals.flash}
           if not panel.metal then
             if not self.garbage_target then 
-              imgs = stages[self.character].images
+              imgs = characters[self.character].images
             else
-              imgs = stages[self.garbage_target.character].images
+              imgs = characters[self.garbage_target.character].images
             end
           end
           if panel.x_offset == 0 and panel.y_offset == 0 then
@@ -811,8 +811,8 @@ function Stack.render(self)
     y = y + nextIconIncrement
   
     -- Garbage sent
-    icon_width, icon_height = stages[self.character].images.face:getDimensions()
-    draw(stages[self.character].images.face, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+    icon_width, icon_height = characters[self.character].images.face:getDimensions()
+    draw(characters[self.character].images.face, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
     gprintf(analytic.data.sent_garbage_lines, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
   
     y = y + nextIconIncrement

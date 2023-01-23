@@ -1067,7 +1067,7 @@ function Stack.enqueue_card(self, chain, x, y, n)
   end
 
   local card_burstAtlas = nil
-  local card_burstPartstages
+  local card_burstParticle
   if config.popfx == true then
     card_burstAtlas = characters[self.character].images["burst"]
     local card_burstFrameDimension = card_burstAtlas:getWidth() / 9
@@ -1672,11 +1672,11 @@ function Stack.simulate(self)
       self.cur_timer = self.cur_timer + 1
     end
     -- TAUNTING
-    if sstagesChangeSoundEffects() then
+    if self:shouldChangeSoundEffects() then
       if self.taunt_up ~= nil then
         characters[self.character]:playTauntUpSfx(self.taunt_up)
         self:taunt("taunt_up")
-        stages_up = nil
+        self.taunt_up = nil
       elseif self.taunt_down ~= nil then
         characters[self.character]:playTauntDownSfx(self.taunt_down)
         self:taunt("taunt_down")
@@ -1837,17 +1837,17 @@ function Stack.simulate(self)
         end
 
         local musics_to_use = nil
-        local dynamicMusic = falsestagesstages
+        local dynamicMusic = false
         local stageHasMusic = current_stage and stages[current_stage].musics and stages[current_stage].musics["normal_music"]
         local characterHasMusic = winningPlayer.character and characters[winningPlayer.character].musics and characters[winningPlayer.character].musics["normal_music"]
         if ((current_use_music_from == "stage") and stageHasMusic) or not characterHasMusic then
           if stages[current_stage].music_style == "dynamic" then
             dynamicMusic = true
           end
-          musstages = stages[current_stage].musics
+          musics_to_use = stages[current_stage].musics
         elseif characterHasMusic then
           if characters[winningPlayer.character].music_style == "dynamic" then
-            dynamicMusic =stages
+            dynamicMusic = true
           end
           musics_to_use = characters[winningPlayer.character].musics
         else
@@ -2203,7 +2203,7 @@ function Stack.set_game_over(self)
   end
 end
 
--- Ranstagesrns a win sound if the character has one
+-- Randomly returns a win sound if the character has one
 function Stack.pick_win_sfx(self)
   if #characters[self.character].sounds.win ~= 0 then
     return characters[self.character].sounds.win[math.random(#characters[self.character].sounds.win)]

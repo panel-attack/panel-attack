@@ -7,7 +7,7 @@ function apply_config_volume()
 
   love.audio.setVolume(config.master_volume / 100)
   themes[config.theme]:apply_config_volume()
-  for _, character in pairs(stages) do
+  for _, character in pairs(characters) do
     character:apply_config_volume()
   end
   for _, stage in pairs(stages) do
