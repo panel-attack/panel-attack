@@ -70,3 +70,30 @@ function AttackEngine.run(self)
 
   self.clock = self.clock + 1
 end
+
+function AttackEngine:loadAttackPatterns(attackPatterns)
+  for _, values in ipairs(attackPatterns) do
+    if values.chain then
+      if type(values.chain) == "number" then
+        for i = 1, values.height do
+          self:addAttackPattern(6, i, values.startTime + ((i-1) * values.chain), false, true)
+        end
+        self:addEndChainPattern(values.startTime + ((values.height - 1) * values.chain) + values.chainEndDelta)
+      elseif type(values.chain) == "table" then
+        for i, chainTime in ipairs(values.chain) do
+          self:addAttackPattern(6, i, chainTime, false, true)
+        end
+        self:addEndChainPattern(values.chainEndTime)
+      else
+        error("The 'chain' field in your attack file is invalid. It should either be a number or a list of numbers.")
+      end
+    else
+      self:addAttackPattern(values.width, values.height or 1, values.startTime, values.metal or false, false)
+    end
+  end
+end
+
+function AttackEngine:setTarget(target)
+  self.target = target
+  target.attackEngine = self
+end

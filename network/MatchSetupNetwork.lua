@@ -1,6 +1,7 @@
 local tableUtils = require("tableUtils")
 local MatchSetup = require("MatchSetup")
 local GameModes = require("GameModes")
+local sceneManager = require("scenes.sceneManager")
 
 local MatchSetupNetwork = class(
   function(self)
@@ -22,9 +23,11 @@ function MatchSetupNetwork:createMatchSetup(message)
     self.matchSetup.setRating(1, message.rating[1].new)
     self.matchSetup.setRating(2, message.rating[2].new)
   end
+
+  sceneManager:switchToScene("selectScreen", { network = self })
 end
 
-function MatchSetupNetwork:enterMatchAsSpectator(message)
+function MatchSetupNetwork:joinMatchAsSpectator(message)
   self.matchSetup = MatchSetup(GameModes.TwoPlayerVersus, true)
   self:applyMenuState(1, message.a_menu_state)
   self:applyMenuState(2, message.b_menu_state)
@@ -42,6 +45,8 @@ function MatchSetupNetwork:enterMatchAsSpectator(message)
     --TODO maybe we can manage to get this out of mainloop this time around to unglobal it
     replay_of_match_so_far = message.replay_of_match_so_far
     self.matchSetup:start(message.stage, replay_of_match_so_far.vs.seed)
+  else
+    sceneManager:switchToScene("selectScreen", { network = self })
   end
 end
 
@@ -103,7 +108,7 @@ function MatchSetupNetwork:applyByMessageType(message)
   elseif message.create_room then
     self:createMatchSetup(message)
   elseif message.spectate_request_granted then
-    self:enterMatchAsSpectator(message)
+    self:joinMatchAsSpectator(message)
   end
 end
 
@@ -149,7 +154,7 @@ function MatchSetupNetwork:startMatch(message)
     seed = replay_of_match_so_far.vs.seed
   end
 
-  self.matchSetup:start(message.stage, seed)
+  self.matchSetup:startMatch(message.stage, seed, replay_of_match_so_far)
 end
 
 function MatchSetupNetwork:sendMenuState()

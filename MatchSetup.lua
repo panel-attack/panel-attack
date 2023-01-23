@@ -5,6 +5,7 @@ local logger = require("logger")
 local characterLoader = require("character_loader")
 local stageLoader = require("stage_loader")
 local GameModes = require("GameModes")
+local sceneManager = require("scenes.sceneManager")
 -- stage
 -- character
 -- level
@@ -176,23 +177,18 @@ function MatchSetup:abort()
   self.abort = true
 end
 
-function MatchSetup:start(stageId, seed)
-  self.stage = stageLoader.resolveStageSelection(stageId)
-  -- TODO check if we can unglobalize that
-  current_stage = self.stage
+function MatchSetup:startMatch(stageId, seed, replayOfMatch)
+  -- lock down configuration to one per player to avoid macro like abuses via multiple configs
+  if self.online and self.localPlayerNumber then
+    GAME.input:requestSingleInputConfigurationForPlayerCount(1)
+  elseif not self.online then
+    GAME.input:requestSingleInputConfigurationForPlayerCount(#self.players)
+  end
 
   GAME.match = Match("vs", GAME.battleRoom)
 
-  if seed then
-    GAME.match.seed = seed
-  elseif self.online and #self.players > 1 then
-    GAME.match.seed = self:generateSeed()
-  elseif self.online and self.ranked and #self.players == 1 then
-    -- not used yet but for future time attack leaderboard
-    error("Didn't get provided with a seed from the server")
-  else
-    -- calling the Match constructor automatically creates a seed on it
-  end
+  self:setMatchStage(stageId)
+  self:setSeed(seed)
 
   if match_type == "Ranked" then
     -- legacy crutches
@@ -216,6 +212,90 @@ function MatchSetup:start(stageId, seed)
   characterLoader.wait()
   stageLoader.wait()
 
+  local stacks = self:createStacks()
+
+  if replayOfMatch then
+    self:loadReplayData(stacks, replayOfMatch)
+  end
+
+  -- declaring the stacks on P1/match last cause we want to get rid of them in the future
+  P1 = stacks[1]
+  GAME.match.P1 = stacks[1]
+  if stacks[2] then
+    P2 = stacks[2]
+    GAME.match.P2 = stacks[2]
+    P2:moveForPlayerNumber(2)
+  end
+
+  replay = createNewReplay(GAME.match)
+
+  local to_print = loc("pl_game_start") .. "\n" .. loc("level") .. ": " .. P1.level .. "\n" .. loc("opponent_level") .. ": " .. P2.level
+  if P1.play_to_end or P2.play_to_end then
+    to_print = loc("pl_spectate_join")
+  end
+  sceneManager:switchToScene(nil)
+  return function()
+    func = main_dumb_transition
+    arg = {main_net_vs, to_print, 10, 0}
+    sceneManager:switchToScene(nil)
+  end
+
+  -- alternatively
+  --sceneManager:switchToScene("GameBase")
+end
+
+function MatchSetup:setMatchStage(stageId)
+  if stageId then
+    -- we got one from the server
+    self.stageId = stageLoader.resolveStageSelection(stageId)
+  else
+    self.stageId = stageLoader.resolveStageSelection(tableUtil.getRandomElement(stages_ids_for_current_theme))
+  end
+  stageLoader.load(self.stageId)
+  -- TODO check if we can unglobalize that
+  current_stage = self.stageId
+end
+
+function MatchSetup:getAttackEngine()
+  -- TODO: Get these settings via self.trainingFile instead
+  local trainingModeSettings = GAME.battleRoom.trainingModeSettings
+  local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
+  local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
+  local disableQueueLimit = trainingModeSettings.disableQueueLimit or false
+  local attackEngine = AttackEngine(nil, delayBeforeStart, delayBeforeRepeat, disableQueueLimit)
+  attackEngine:loadAttackPatterns(trainingModeSettings.attackPatterns)
+
+  return attackEngine
+end
+
+function MatchSetup:generateSeed()
+  local seed = 17
+  seed = seed * 37 + self.players[1].rating.new
+  seed = seed * 37 + self.players[2].rating.new
+  seed = seed * 37 + GAME.battleRoom.playerWinCounts[1]
+  seed = seed * 37 + GAME.battleRoom.playerWinCounts[2]
+
+  return seed
+end
+
+function MatchSetup:getRatingDiff(player)
+  return self.players[player].rating.new - self.players[player].rating.old
+end
+
+function MatchSetup:setSeed(seed)
+  if seed then
+    GAME.match.seed = seed
+  elseif self.online and #self.players > 1 then
+    GAME.match.seed = self:generateSeed()
+  elseif self.online and self.ranked and #self.players == 1 then
+    -- not used yet but for future time attack leaderboard
+    error("Didn't get provided with a seed from the server")
+  else
+    -- GAME.match has a random seed by default already
+  end
+end
+
+function MatchSetup:createStacks()
   local stacks = {}
 
   for playerId = 1, #self.players do
@@ -240,8 +320,8 @@ function MatchSetup:start(stageId, seed)
     for i = 1, #stacks do
       for j = 1, #stacks do
         if i ~= j then
-          -- once we have more than 2P modes, set_garbage_target needs to put these into an array instead
-          -- or we rework it anyway for teams
+          -- once we have more than 2P in a single mode, set_garbage_target needs to put these into an array
+          -- or we rework it anyway for team play
           stacks[i]:set_garbage_target(stacks[j])
         end
       end
@@ -251,94 +331,38 @@ function MatchSetup:start(stageId, seed)
       stacks[i]:set_garbage_target(stacks[i])
     end
   elseif self.mode.stackInteraction == GameModes.StackInteraction.AttackEngine then
+    local attackEngine self:getAttackEngine()
     for i = 1, #stacks do
-      self:addAttackEngine(stacks[i])
+      local attackEngineClone = deepcpy(attackEngine)
+      attackEngineClone:setTarget(stacks[i])
     end
   end
 
-  replay = createNewReplay(GAME.match)
-
-  if not self.localPlayerNumber then
-    -- we're spectating
-    stacks[1]:receiveConfirmedInput(uncompress_input_string(replay_of_match_so_far.vs.in_buf))
-    if stacks[2] then
-      stacks[2]:receiveConfirmedInput(uncompress_input_string(replay_of_match_so_far.vs.I))
-    end
-
-    replay_of_match_so_far = nil
-    --this makes non local stacks run until caught up
-    P1.play_to_end = true
-    P2.play_to_end = true
-  end
-
-  if self.online and self.localPlayerNumber then
-    GAME.input:requestSingleInputConfigurationForPlayerCount(1)
-  elseif not self.online then
-    GAME.input:requestSingleInputConfigurationForPlayerCount(#self.players)
-  end
-
-  -- Proceed to the game screen and start the game
+  -- Prepare to start the game
   for i = 1, #stacks do
     stacks[i]:starting_state()
   end
 
-  -- declaring the stacks on P1/match last cause we want to get rid of them in the future
-  P1 = stacks[1]
-  GAME.match.P1 = stacks[1]
-  if stacks[2] then
-    P2 = stacks[2]
-    GAME.match.P2 = stacks[2]
-    P2:moveForPlayerNumber(2)
-  end
-
-  local to_print = loc("pl_game_start") .. "\n" .. loc("level") .. ": " .. P1.level .. "\n" .. loc("opponent_level") .. ": " .. P2.level
-  if P1.play_to_end or P2.play_to_end then
-    to_print = loc("pl_spectate_join")
-  end
-  return {main_dumb_transition, {main_net_vs, to_print, 10, 0}}
-
-  -- alternatively
-  --sceneManager:switchToScene("GameBase")
+  return stacks
 end
 
-function MatchSetup:addAttackEngine(stack)
-  -- TODO: Get these settings from self.trainingFile instead
-  local trainingModeSettings = GAME.battleRoom.trainingModeSettings
-  local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
-  local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
-  local disableQueueLimit = trainingModeSettings.disableQueueLimit or false
-  local attackEngine = AttackEngine(stack, delayBeforeStart, delayBeforeRepeat, disableQueueLimit)
-  for _, values in ipairs(trainingModeSettings.attackPatterns) do
-    if values.chain then
-      if type(values.chain) == "number" then
-        for i = 1, values.height do
-          attackEngine:addAttackPattern(6, i, values.startTime + ((i-1) * values.chain), false, true)
-        end
-        attackEngine:addEndChainPattern(values.startTime + ((values.height - 1) * values.chain) + values.chainEndDelta)
-      elseif type(values.chain) == "table" then
-        for i, chainTime in ipairs(values.chain) do
-          attackEngine:addAttackPattern(6, i, chainTime, false, true)
-        end
-        attackEngine:addEndChainPattern(values.chainEndTime)
-      else
-        error("The 'chain' field in your attack file is invalid. It should either be a number or a list of numbers.")
-      end
-    else
-      attackEngine:addAttackPattern(values.width, values.height or 1, values.startTime, values.metal or false, false)
+function MatchSetup:loadReplayData(stacks, replay)
+  if not self.localPlayerNumber then
+    -- we're spectating
+    stacks[1]:receiveConfirmedInput(uncompress_input_string(replay.vs.in_buf))
+    if stacks[2] then
+      stacks[2]:receiveConfirmedInput(uncompress_input_string(replay.vs.I))
+    end
+
+    replay_of_match_so_far = nil
+    --this makes non local stacks run until caught up
+    stacks[1].play_to_end = true
+    if stacks[2] then
+      stacks[2].play_to_end = true
     end
   end
 
-  return attackEngine
-end
-
-function MatchSetup:generateSeed()
-  local seed = 17
-  seed = seed * 37 + self.players[1].rating.new
-  seed = seed * 37 + self.players[2].rating.new
-  seed = seed * 37 + GAME.battleRoom.playerWinCounts[1]
-  seed = seed * 37 + GAME.battleRoom.playerWinCounts[2]
-
-  return seed
+  return stacks
 end
 
 return MatchSetup
