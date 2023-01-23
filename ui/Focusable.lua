@@ -1,6 +1,7 @@
 -- use in tandem with FocusDirector.lua
 
 local function canBeFocused(table)
+  table.isFocusable = true
   table.hasFocus = false
   table.setFocus = function()
     table.hasFocus = true

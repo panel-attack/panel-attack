@@ -52,6 +52,7 @@ end
 -- I kind of dislike how PA silently dies without even crashing if there's an error inside of load
 function selectScreen:load()
   loadStages()
+  
 end
 
 function selectScreen:drawBackground()
