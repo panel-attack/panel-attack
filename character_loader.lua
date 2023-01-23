@@ -136,7 +136,7 @@ function CharacterLoader.fillCharacterIds()
 
   -- characters are removed outside of the loop since erasing while iterating isn't working
   for _, invalid_character in pairs(invalid) do
-    character[invalid_character] = nil
+    characters[invalid_character] = nil
   end
 end
 
@@ -154,14 +154,14 @@ function CharacterLoader.initCharacters()
   if love.filesystem.getInfo("themes/" .. config.theme .. "/characters.txt") then
     for line in love.filesystem.lines("themes/" .. config.theme .. "/characters.txt") do
       line = trim(line) -- remove whitespace
-      if character[line] then
+      if characters[line] then
         -- found at least a valid character in a characters.txt file
         characters_ids_for_current_theme[#characters_ids_for_current_theme + 1] = line
       end
     end
   else
     for _, character_id in ipairs(characters_ids) do
-      if character[character_id].is_visible then
+      if characters[character_id].is_visible then
         characters_ids_for_current_theme[#characters_ids_for_current_theme + 1] = character_id
       end
     end
@@ -173,14 +173,14 @@ function CharacterLoader.initCharacters()
   end
 
   -- fix config character if it's missing
-  if not config.character or (config.character ~= random_character_special_value and not character[config.character]) then
+  if not config.character or (config.character ~= random_character_special_value and not characters[config.character]) then
     config.character = tableUtils.getRandomElement(characters_ids_for_current_theme)
   end
 
   -- actual init for all characters, starting with the default one
   Character.loadDefaultCharacter()
 
-  for _, character in pairs(character) do
+  for _, character in pairs(characters) do
     character:preload()
 
     if characters_ids_by_display_names[character.display_name] then
