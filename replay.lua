@@ -1,4 +1,4 @@
-
+local characterLoader = require("character_loader")
 
 -- A replay is a particular recording of a play of the game. Temporarily this is just helper methods.
 Replay =
@@ -99,7 +99,7 @@ function Replay.loadFromFile(replay)
     P2.cur_wait_time = replayDetails.P2_cur_wait_time or default_input_repeat_delay
     refreshBasedOnOwnMods(P2)
   end
-  character_loader_wait()
+  characterLoader.wait()
 
   P1:starting_state()
 

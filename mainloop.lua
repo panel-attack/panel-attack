@@ -9,6 +9,7 @@ local tableUtils = require("tableUtils")
 local Game = require("game")
 local util = require("util")
 local GraphicsUtil = require("graphics_util")
+local characterLoader = require("character_loader") -- after globals!
 require("replay")
 
 local wait, resume = coroutine.yield, coroutine.resume
@@ -124,7 +125,7 @@ do
         find_and_add_music(themes[config.theme].musics, "main")
       end
     end
-    character_loader_clear()
+    characterLoader.clear()
     stage_loader_clear()
     resetNetwork()
     undo_stonermode()
@@ -265,8 +266,8 @@ function Stack.wait_for_random_character(self)
   if characters[self.character]:is_bundle() then -- may have picked a bundle
     self.character = tableUtils.getRandomElement(characters[self.character].sub_characters)
   end
-  character_loader_load(self.character)
-  character_loader_wait()
+  characterLoader.load(self.character)
+  characterLoader.wait()
 end
 
 local function commonGameSetup()

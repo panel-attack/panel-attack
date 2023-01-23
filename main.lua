@@ -17,7 +17,6 @@ require("util")
 require("FileUtil")
 
 require("globals")
-require("character_loader") -- after globals!
 require("stage") -- after globals!
 
 require("localization")
