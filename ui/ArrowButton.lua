@@ -33,4 +33,4 @@ function ArrowButton:draw()
   GraphicsUtil.drawClearText(self.text, screenX + xPosAlign, screenY + yPosAlign, xOffset, yOffset)
 end
 
-return Button
+return ArrowButton
