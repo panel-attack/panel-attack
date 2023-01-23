@@ -8,7 +8,7 @@ local loading_queue = Queue()
 
 local loading_character = nil
 
-character = {} -- holds all characters, most of them will not be fully loaded
+characters = {} -- holds all characters, most of them will not be fully loaded
 characters_ids = {} -- holds all characters ids
 characters_ids_for_current_theme = {} -- holds characters ids for the current theme, those characters will appear in the lobby
 characters_ids_by_display_names = {} -- holds keys to array of character ids holding that name
@@ -17,7 +17,7 @@ local CharacterLoader = {}
 
 -- queues a character to be loaded
 function CharacterLoader.load(character_id)
-  if character[character_id] and not character[character_id].fully_loaded then
+  if characters[character_id] and not characters[character_id].fully_loaded then
     loading_queue:push(character_id)
   end
 end
@@ -32,7 +32,7 @@ function CharacterLoader.update()
       character_name,
       coroutine.create(
         function()
-          character[character_name]:load(instant_load_enabled)
+          characters[character_name]:load(instant_load_enabled)
         end
       )
     }
@@ -66,7 +66,7 @@ end
 -- Unloads all characters not in use by config or player 2
 function CharacterLoader.clear()
   local p2_local_character = global_op_state and global_op_state.character or nil
-  for character_id, character in pairs(character) do
+  for character_id, character in pairs(characters) do
     if character.fully_loaded and character_id ~= config.character and character_id ~= p2_local_character then
       character:unload()
     end
@@ -90,11 +90,11 @@ function CharacterLoader.addCharactersFromDirectoryRecursively(path)
         local success = character:json_init()
 
         if success then
-          if character[character.id] ~= nil then
+          if characters[character.id] ~= nil then
             logger.trace(current_path .. " has been ignored since a character with this id has already been found")
           else
             -- logger.trace(current_path.." has been added to the character list!")
-            character[character.id] = character
+            characters[character.id] = character
             characters_ids[#characters_ids + 1] = character.id
           end
         end
@@ -115,7 +115,7 @@ function CharacterLoader.fillCharacterIds()
       local copy_of_sub_characters = shallowcpy(character.sub_characters)
       character.sub_characters = {}
       for _, sub_character in ipairs(copy_of_sub_characters) do
-        if character[sub_character] and #character[sub_character].sub_characters == 0 then -- inner bundles are prohibited
+        if characters[sub_character] and #characters[sub_character].sub_characters == 0 then -- inner bundles are prohibited
           character.sub_characters[#character.sub_characters + 1] = sub_character
           logger.trace(character.id .. " has " .. sub_character .. " as part of its subcharacters.")
         end

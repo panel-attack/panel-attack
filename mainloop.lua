@@ -264,8 +264,8 @@ function Stack.wait_for_random_character(self)
   if self.character == random_character_special_value then
     self.character = tableUtils.getRandomElement(characters_ids_for_current_theme)
   end
-  if stages[self.character]:is_bundle() then -- may have picked a bundle
-    self.character = tableUtils.getRandomElement(stages[self.character].sub_characters)
+  if characters[self.character]:is_bundle() then -- may have picked a bundle
+    self.character = tableUtils.getRandomElement(characters[self.character].sub_characters)
   end
   characterLoader.load(self.character)
   characterLoader.wait()

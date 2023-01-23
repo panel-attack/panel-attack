@@ -368,7 +368,7 @@ function Telegraph:render()
               -- TODO make this more performant?
               garbage_block.x, garbage_block.y = telegraph_to_render:telegraphLoopAttackPosition(garbage_block, frames_since_earned)
 
-              draw(character[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y, 0, atk_scale, atk_scale)
+              draw(characters[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y, 0, atk_scale, atk_scale)
             else
               --move toward destination
 
@@ -380,7 +380,7 @@ function Telegraph:render()
               garbage_block.x = loopX + percent * (garbage_block.destination_x - loopX)
               garbage_block.y = loopY + percent * (garbage_block.destination_y - loopY)
 
-              draw(character[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y, 0, atk_scale, atk_scale)
+              draw(characters[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y, 0, atk_scale, atk_scale)
             end
           end
         end
@@ -457,7 +457,7 @@ function Telegraph:render()
     
     if not drewChain and telegraph_to_render.garbage_queue.ghost_chain then
       local draw_x = self:telegraphRenderXPosition(0)
-      local draw_y = telegraph_to_render
+      local draw_y = telegraph_to_render.pos_y
       local height = math.min(telegraph_to_render.garbage_queue.ghost_chain, 14)
       local orig_grb_w, orig_grb_h = characters[senderCharacter].telegraph_garbage_images[height][6]:getDimensions()
       local grb_scale_x = 24 / orig_grb_w
