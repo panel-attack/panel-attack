@@ -457,7 +457,7 @@ function Telegraph:render()
     
     if not drewChain and telegraph_to_render.garbage_queue.ghost_chain then
       local draw_x = self:telegraphRenderXPosition(0)
-      local draw_y = telegraph_to_renstages
+      local draw_y = telegraph_to_render
       local height = math.min(telegraph_to_render.garbage_queue.ghost_chain, 14)
       local orig_grb_w, orig_grb_h = characters[senderCharacter].telegraph_garbage_images[height][6]:getDimensions()
       localstages_x = 24 / orig_grb_w

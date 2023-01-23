@@ -558,7 +558,7 @@ local function audio_menu(button_idx)
               if tracks[index].parent_id then
                 parent = characters[tracks[index].parent_id]
               end
-              local attackSfx = { chaistagescombo = true, shock = true}
+              local attackSfx = { chain = true, combo = true, shock = true}
               for key, value in pairs(characters[tracks[index].id].sounds) do
                 if not attackSfx[key] then
                   if (value == nil or #value == 0) and parent then
