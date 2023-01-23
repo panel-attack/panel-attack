@@ -50,7 +50,7 @@ function mainMenu:init()
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
   self.menu = Menu({
       menuItems = menuItems,
-      x = x, y = y})
+      x = x + 55, y = y})
   self.menu:setVisibility(false)
 end
 
