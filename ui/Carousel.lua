@@ -141,7 +141,7 @@ function Carousel:receiveInputs()
   elseif input:isPressedWithRepeat("Right", 0.25, 0.25) then
     self:moveToNextPassenger(1)
   elseif input.isDown["Swap1"] or input.isDown["Start"] then
-    play_optional_sfx(themes[config.theme].sounds.menu_enter)
+    play_optional_sfx(themes[config.theme].sounds.menu_validate)
     self:onSelect()
   elseif input.isDown["Swap2"] or input.isDown["Escape"] then
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)
