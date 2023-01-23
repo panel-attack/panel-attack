@@ -161,6 +161,12 @@ function MatchSetup:updateRankedStatus(rankedStatus, comments)
   if self.online and self.mode.selectRanked then
     self.ranked = rankedStatus
     self.rankedComments = comments
+    -- legacy crutches
+    if self.ranked then
+      match_type = "Ranked"
+    else
+      match_type = "Casual"
+    end
   else
     error("Trying to apply ranked state to the match even though it is either not online or does not support ranked")
   end
@@ -172,9 +178,11 @@ end
 
 function MatchSetup:start(stageId, seed)
   self.stage = stageLoader.resolveStageSelection(stageId)
+  -- TODO check if we can unglobalize that
   current_stage = self.stage
 
   GAME.match = Match("vs", GAME.battleRoom)
+
   if seed then
     GAME.match.seed = seed
   elseif self.online and #self.players > 1 then
@@ -187,8 +195,21 @@ function MatchSetup:start(stageId, seed)
   end
 
   if match_type == "Ranked" then
-    GAME.match.room_ratings = self.currentRoomRatings
-    GAME.match.my_player_number = self.my_player_number
+    -- legacy crutches
+    GAME.match.room_ratings = {
+
+    }
+    if self.localPlayerNumber then
+      GAME.match.my_player_number = self.localPlayerNumber
+      if self.localPlayerNumber == 1 then
+        GAME.match.op_player_number = 2
+      else
+        GAME.match.op_player_number = 1
+      end
+    else
+      GAME.match.my_player_number = 1
+      GAME.match.op_player_number = 2
+    end
     GAME.match.op_player_number = self.op_player_number
   end
 
@@ -199,7 +220,7 @@ function MatchSetup:start(stageId, seed)
 
   for playerId = 1, #self.players do
     stacks[playerId] = Stack {
-      which = 1,
+      which = playerId,
       match = GAME.match,
       is_local = self.players[playerId].isLocal,
       panels_dir = self.players[playerId].panels,
@@ -235,14 +256,6 @@ function MatchSetup:start(stageId, seed)
     end
   end
 
-  P1 = stacks[1]
-  GAME.match.P1 = stacks[1]
-  if stacks[2] then
-    P2 = stacks[2]
-    GAME.match.P2 = stacks[2]
-    P2:moveForPlayerNumber(2)
-  end
-
   replay = createNewReplay(GAME.match)
 
   if not self.localPlayerNumber then
@@ -265,17 +278,31 @@ function MatchSetup:start(stageId, seed)
   end
 
   -- Proceed to the game screen and start the game
-  P1:starting_state()
-  P2:starting_state()
+  for i = 1, #stacks do
+    stacks[i]:starting_state()
+  end
+
+  -- declaring the stacks on P1/match last cause we want to get rid of them in the future
+  P1 = stacks[1]
+  GAME.match.P1 = stacks[1]
+  if stacks[2] then
+    P2 = stacks[2]
+    GAME.match.P2 = stacks[2]
+    P2:moveForPlayerNumber(2)
+  end
 
   local to_print = loc("pl_game_start") .. "\n" .. loc("level") .. ": " .. P1.level .. "\n" .. loc("opponent_level") .. ": " .. P2.level
   if P1.play_to_end or P2.play_to_end then
     to_print = loc("pl_spectate_join")
   end
   return {main_dumb_transition, {main_net_vs, to_print, 10, 0}}
+
+  -- alternatively
+  --sceneManager:switchToScene("GameBase")
 end
 
 function MatchSetup:addAttackEngine(stack)
+  -- TODO: Get these settings from self.trainingFile instead
   local trainingModeSettings = GAME.battleRoom.trainingModeSettings
   local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
   local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
