@@ -199,7 +199,7 @@ function soundTest:init()
   }
   
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
-  x = x - 70--- 400
+  x = x - 20
   y = y + 10
   soundTestMenu = Menu({menuItems = soundTestMenuOptions, x = x, y = y})
   soundTestMenu:setVisibility(false)

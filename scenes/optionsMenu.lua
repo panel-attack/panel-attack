@@ -354,7 +354,7 @@ function optionsMenu:init()
   }
   
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
-  x = x - 70--- 400
+  x = x - 20
   y = y + 10
   menus["baseMenu"] = Menu({menuItems = baseMenuOptions, x = x, y = y})
   menus["generalMenu"] = Menu({menuItems = generalMenuOptions, x = x, y = y})

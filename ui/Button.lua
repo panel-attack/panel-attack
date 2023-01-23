@@ -32,7 +32,7 @@ local Button = class(
     -- text field is set in base class (UIElement)
     local textWidth, textHeight = self.text:getDimensions()
     -- stretch to fit text
-    self.width = math.max(textWidth + 6, self.width)
+    self.width = math.max(textWidth + 15, self.width)
     self.height = math.max(textHeight + 6, self.height)
     buttonManager.buttons[self.id] = self.isVisible and self or nil
     self.TYPE = "Button"

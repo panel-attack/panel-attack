@@ -8,7 +8,7 @@ local Label = class(
     -- stretch to fit text
     local textWidth, textHeight = self.text:getDimensions()
     self.width = math.max(textWidth + 15, self.width)
-    self.height = math.max(textHeight + 15, self.height)
+    self.height = math.max(textHeight + 6, self.height)
     self.TYPE = "Label"
   end,
   UIElement
