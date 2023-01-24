@@ -6,7 +6,8 @@ local Label = require("ui.Label")
 local input = require("inputManager")
 local consts = require("consts")
 
-local BUTTON_PADDING = 5
+local BUTTON_HORIZONTAL_PADDING = 6
+local BUTTON_VERTICAL_PADDING = 4 -- increase this when we have scrolling menus 8?
 
 local function setMenuItems(self, menuItems)
   self.selectedIndex = 1
@@ -20,10 +21,10 @@ local function setMenuItems(self, menuItems)
   
   for i, menuItem in ipairs(menuItems) do
     if i > 1 then 
-       menuItem[1].y = menuItems[i - 1][1].y + menuItems[i - 1][1].height + BUTTON_PADDING
+       menuItem[1].y = menuItems[i - 1][1].y + menuItems[i - 1][1].height + BUTTON_VERTICAL_PADDING
     end
     if menuItem[2] then
-      menuItem[2].x = menuItem[1].width + BUTTON_PADDING
+      menuItem[2].x = menuItem[1].width + BUTTON_HORIZONTAL_PADDING
       menuItem[1]:addChild(menuItem[2])
     end
     self:addChild(menuItem[1])
