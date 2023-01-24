@@ -290,6 +290,7 @@ function optionsMenu:init()
         if themes[config.theme].musics["main"] then
           find_and_add_music(themes[config.theme].musics, "main")
         end
+        optionsMenu:repositionMenus()
       end
     }
   )
@@ -356,23 +357,42 @@ function optionsMenu:init()
     {Button({width = labelWidth, label = "back", onClick = function() switchMenu("baseMenu") end})},
   }
   
-  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
-  x = x - 20
-  y = y + 10
-  menus["baseMenu"] = Menu({menuItems = baseMenuOptions, x = x, y = y})
-  menus["generalMenu"] = Menu({menuItems = generalMenuOptions, x = x, y = y})
-  menus["graphicsMenu"] = Menu({menuItems = graphicsMenuOptions, x = x, y = y})
-  menus["soundTestMenu"] = Menu({menuItems = soundTestMenuOptions, x = x, y = y})
-  menus["audioMenu"] = Menu({menuItems = audioMenuOptions, x = x, y = y})
-  menus["debugMenu"] = Menu({menuItems = debugMenuOptions, x = x, y = y})
-  menus["aboutMenu"] = Menu({menuItems = aboutMenuOptions, x = x, y = y})
+  menus["baseMenu"] = Menu({menuItems = baseMenuOptions})
+  menus["generalMenu"] = Menu({menuItems = generalMenuOptions})
+  menus["graphicsMenu"] = Menu({menuItems = graphicsMenuOptions})
+  menus["soundTestMenu"] = Menu({menuItems = soundTestMenuOptions})
+  menus["audioMenu"] = Menu({menuItems = audioMenuOptions})
+  menus["debugMenu"] = Menu({menuItems = debugMenuOptions})
+  menus["aboutMenu"] = Menu({menuItems = aboutMenuOptions})
 
   for _, menu in pairs(menus) do
     menu:setVisibility(false)
   end
 end
 
+function optionsMenu:repositionMenus()
+  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
+  x = x - 20
+  y = y + 10
+  menus["baseMenu"].x = x
+  menus["baseMenu"].y = y
+  menus["generalMenu"].x = x
+  menus["generalMenu"].y = y
+  menus["graphicsMenu"].x = x
+  menus["graphicsMenu"].y = y
+  menus["soundTestMenu"].x = x
+  menus["soundTestMenu"].y = y
+  menus["audioMenu"].x = x
+  menus["audioMenu"].y = y
+  menus["debugMenu"].x = x
+  menus["debugMenu"].y = y
+  menus["aboutMenu"].x = x
+  menus["aboutMenu"].y = y
+end
+
 function optionsMenu:load()
+  self:repositionMenus()
+  
   backgroundImage = themes[config.theme].images.bg_main
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")

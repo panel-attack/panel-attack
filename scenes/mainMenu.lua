@@ -47,14 +47,16 @@ local menuItems = {
 
 function mainMenu:init()
   sceneManager:addScene(self)
-  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
   self.menu = Menu({
-      menuItems = menuItems,
-      x = x + 55, y = y})
+      menuItems = menuItems})
   self.menu:setVisibility(false)
 end
 
 function mainMenu:load()
+  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
+  self.menu.x = x + 55
+  self.menu.y = y
+  
   self.backgroundImg = themes[config.theme].images.bg_main
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")

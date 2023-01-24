@@ -198,14 +198,15 @@ function soundTest:init()
     {Button({width = menuLabelWidth, label = "back", onClick = function() sceneManager:switchToScene("optionsMenu") end})},
   }
   
-  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
-  x = x - 20
-  y = y + 10
-  soundTestMenu = Menu({menuItems = soundTestMenuOptions, x = x, y = y})
+  soundTestMenu = Menu({menuItems = soundTestMenuOptions})
   soundTestMenu:setVisibility(false)
 end
 
 function soundTest:load()
+  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
+  soundTestMenu.x = x - 20
+  soundTestMenu.y = y + 10
+  
   backgroundImg = themes[config.theme].images.bg_main
 
   -- stop main music
