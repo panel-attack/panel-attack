@@ -116,13 +116,13 @@ function CustomRun.innerRun()
     CustomRun.runMetrics.presentDuration = love.timer.getTime() - prePresentTime
   end
 
-  local preGc1Time = love.timer.getTime()
-  CustomRun.runMetrics.gcCyclesFinished = CustomRun.runMetrics.gcCyclesFinished + manualGC(0.0001, 128, true)
-  CustomRun.runMetrics.gcDuration = love.timer.getTime() - preGc1Time
-
   if CustomRun.runTimeGraph ~= nil then
     CustomRun.runTimeGraph:updateWithMetrics(CustomRun.runMetrics)
   end
+
+  local preGc1Time = love.timer.getTime()
+  CustomRun.runMetrics.gcCyclesFinished = CustomRun.runMetrics.gcCyclesFinished + manualGC(0.0001, 128, true)
+  CustomRun.runMetrics.gcDuration = love.timer.getTime() - preGc1Time
 end
 
 -- This is a copy of the outer run loop that love uses.
