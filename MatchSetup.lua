@@ -1,6 +1,6 @@
 local class = require("class")
 local util = require("util")
-local tableUtil = require("tableUtil")
+local tableUtils = require("tableUtils")
 local logger = require("logger")
 local characterLoader = require("character_loader")
 local stageLoader = require("stage_loader")
@@ -19,6 +19,13 @@ local sceneManager = require("scenes.sceneManager")
 
 local MatchSetup = class(function(match, mode, online, localPlayerNumber)
   match.mode = mode
+  if mode.style == GameModes.Styles.Choose then
+    -- default mode to classic
+    match.style = GameModes.Styles.Classic
+  else
+    match.style = mode.style
+  end
+
   match.online = online
   if online then
     -- if we're not online, we're not spectating
@@ -33,16 +40,27 @@ local MatchSetup = class(function(match, mode, online, localPlayerNumber)
     match.players[i].rating = {}
     if not online or i == localPlayerNumber then
       match.players[i].isLocal = true
+      match:initializeLocalPlayer(i)
     end
   end
-
-  if mode.style == GameModes.Styles.Choose then
-    -- default mode to classic
-    match.style = GameModes.Styles.Classic
-  else
-    match.style = mode.style
-  end
 end)
+
+function MatchSetup:initializeLocalPlayer(playerNumber)
+  if self.mode.style == GameModes.Classic then
+    self:setDifficulty(playerNumber, config.endless_difficulty)
+    self:setSpeed(playerNumber, config.endless_speed)
+  else
+    self:setLevel(playerNumber, config.level)
+  end
+
+  self:setCharacter(playerNumber, config.character)
+  self:setStage(playerNumber, config.stage)
+  self:setPanels(playerNumber, config.panels)
+  
+  if self.online and self.mode.selectRanked then
+    self:setRanked(playerNumber, config.ranked)
+  end
+end
 
 function MatchSetup:setStage(player, stageId)
   if stageId ~= self.players[player].stageId then
@@ -111,6 +129,7 @@ function MatchSetup:setTrainingFile(player, trainingFile)
 end
 
 function MatchSetup:setStyle(styleChoice)
+  -- not sure if style should be configurable per player, doesn't seem to make sense
   if self.mode.style == GameModes.Styles.Choose then
     self.style = styleChoice
   else
@@ -249,7 +268,7 @@ function MatchSetup:setMatchStage(stageId)
     -- we got one from the server
     self.stageId = stageLoader.resolveStageSelection(stageId)
   else
-    self.stageId = stageLoader.resolveStageSelection(tableUtil.getRandomElement(stages_ids_for_current_theme))
+    self.stageId = stageLoader.resolveStageSelection(tableUtils.getRandomElement(stages_ids_for_current_theme))
   end
   stageLoader.load(self.stageId)
   -- TODO check if we can unglobalize that
@@ -363,6 +382,23 @@ function MatchSetup:loadReplayData(stacks, replay)
   end
 
   return stacks
+end
+
+function MatchSetup:updateLoadingState()
+  local fullyLoaded = true
+  for i = 1, #self.players do
+    if not characters[self.players[i].characterId].fully_loaded
+    or not stages[self.players[i].stageId].fully_loaded then
+      fullyLoaded = false
+    end
+  end
+
+  for i = 1, #self.players do
+    -- only need to update for local players, network will update us for others
+    if self.players[i].isLocal then
+      self:setLoaded(i, fullyLoaded)
+    end
+  end
 end
 
 return MatchSetup
