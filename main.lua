@@ -2,7 +2,6 @@ require("class")
 socket = require("socket")
 GAME = require("game")
 require("match")
-local manualGC = require("libraries.batteries.manual_gc")
 local RunTimeGraph = require("RunTimeGraph")
 require("BattleRoom")
 require("util")
@@ -152,8 +151,6 @@ function love.update(dt)
 
   update_music()
   GAME.rich_presence:runCallbacks()
-  
-  manualGC(0.0001, nil, nil)
 end
 
 -- Called whenever the game needs to draw.

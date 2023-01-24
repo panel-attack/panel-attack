@@ -50,22 +50,25 @@ freely, subject to the following restrictions:
 return function(time_budget, memory_ceiling, disable_otherwise)
 	time_budget = time_budget or 1e-3
 	memory_ceiling = memory_ceiling or 64
-    local max_steps = 10000
 	local steps = 0
 	local start_time = love.timer.getTime()
+  local cyclesFinished = 0
 	while
-		love.timer.getTime() - start_time < time_budget and
-		steps < max_steps
+		love.timer.getTime() - start_time < time_budget
 	do
-		collectgarbage("step", 1)
+    if collectgarbage("step", 1) then
+      cyclesFinished = cyclesFinished + 1
+    end
 		steps = steps + 1
 	end
 	--safety net
 	if collectgarbage("count") / 1024 > memory_ceiling then
 		collectgarbage("collect")
+    cyclesFinished = cyclesFinished + 1
 	end
 	--don't collect gc outside this margin
 	if disable_otherwise then
 		collectgarbage("stop")
 	end
+  return cyclesFinished
 end

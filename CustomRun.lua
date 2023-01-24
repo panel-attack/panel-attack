@@ -1,3 +1,4 @@
+local manualGC = require("libraries.batteries.manual_gc")
 
 local CustomRun = {}
 CustomRun.FRAME_RATE = 1 / 60
@@ -8,13 +9,15 @@ CustomRun.runMetrics.sleepDuration = 0
 CustomRun.runMetrics.updateDuration = 0
 CustomRun.runMetrics.drawDuration = 0
 CustomRun.runMetrics.presentDuration = 0
+CustomRun.runMetrics.gcDuration = 0
+CustomRun.runMetrics.gcCyclesFinished = 0
 CustomRun.runTimeGraph = nil
 
 leftover_time = 0
 
 -- Sleeps just the right amount of time to make our next update step be one frame long.
 -- If we have leftover time that hasn't been run yet, it will sleep less to catchup.
-function CustomRun:sleep()
+function CustomRun.sleep()
 
   local targetDelay = CustomRun.FRAME_RATE
   -- We want leftover time to be above 0 but less than a quarter frame.
@@ -30,10 +33,18 @@ function CustomRun:sleep()
   local currentTime = originalTime
 
   -- Sleep a percentage of our time to wait to save cpu
-  local sleepRatio = .99
-  local sleepTime = (targetTime - currentTime) * sleepRatio
-  if love.timer and sleepTime > 0 then
-    love.timer.sleep(sleepTime)
+  local gcRatio = 0.5
+  local idleTime = targetTime - currentTime
+  if love.timer and idleTime > 0 then
+    CustomRun.runMetrics.gcCyclesFinished = manualGC(idleTime * gcRatio)
+    currentTime = love.timer.getTime()
+    CustomRun.runMetrics.gcDuration = CustomRun.runMetrics.gcDuration + (currentTime - originalTime)
+    originalTime = currentTime
+    idleTime = targetTime - currentTime
+  end
+  local sleepRatio = .98
+  if love.timer and idleTime > 0 then
+    love.timer.sleep(idleTime * sleepRatio)
   end
   currentTime = love.timer.getTime()
 
@@ -49,7 +60,6 @@ end
 -- This is our custom version of run that uses a custom sleep and records metrics.
 local dt = 0
 function CustomRun.innerRun()
-
   if love.timer then
     CustomRun.sleep()
   end
@@ -99,6 +109,10 @@ function CustomRun.innerRun()
   if CustomRun.runTimeGraph ~= nil then
     CustomRun.runTimeGraph:updateWithMetrics(CustomRun.runMetrics)
   end
+
+  local preGc1Time = love.timer.getTime()
+  CustomRun.runMetrics.gcCyclesFinished = CustomRun.runMetrics.gcCyclesFinished + manualGC(0.0001, nil, nil)
+  CustomRun.runMetrics.gcDuration = love.timer.getTime() - preGc1Time
 end
 
 -- This is a copy of the outer run loop that love uses.
