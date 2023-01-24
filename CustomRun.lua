@@ -8,6 +8,7 @@ CustomRun.runMetrics.dt = 0
 CustomRun.runMetrics.sleepDuration = 0
 CustomRun.runMetrics.updateDuration = 0
 CustomRun.runMetrics.drawDuration = 0
+CustomRun.runMetrics.drawGraphDuration = 0
 CustomRun.runMetrics.presentDuration = 0
 CustomRun.runMetrics.gcDuration = 0
 CustomRun.runMetrics.gcCyclesFinished = 0
@@ -36,7 +37,7 @@ function CustomRun.sleep()
   local gcRatio = 0.5
   local idleTime = targetTime - currentTime
   if love.timer and idleTime > 0 then
-    CustomRun.runMetrics.gcCyclesFinished = manualGC(idleTime * gcRatio)
+    CustomRun.runMetrics.gcCyclesFinished = manualGC(idleTime * gcRatio, nil, DEBUG_ENABLED)
     currentTime = love.timer.getTime()
     CustomRun.runMetrics.gcDuration = CustomRun.runMetrics.gcDuration + (currentTime - originalTime)
     originalTime = currentTime
@@ -95,6 +96,13 @@ function CustomRun.innerRun()
     love.graphics.origin()
     love.graphics.clear(love.graphics.getBackgroundColor())
 
+    -- draw the RunTimeGraph here so it doesn't contribute to the love.draw load
+    if CustomRun.runTimeGraph then
+      local preGraphDrawTime = love.timer.getTime()
+      CustomRun.runTimeGraph:draw()
+      CustomRun.runMetrics.drawGraphDuration = love.timer.getTime() - preGraphDrawTime
+    end
+
     if love.draw then
       local preDrawTime = love.timer.getTime()
       love.draw()
@@ -111,7 +119,7 @@ function CustomRun.innerRun()
   end
 
   local preGc1Time = love.timer.getTime()
-  CustomRun.runMetrics.gcCyclesFinished = CustomRun.runMetrics.gcCyclesFinished + manualGC(0.0001, nil, nil)
+  CustomRun.runMetrics.gcCyclesFinished = CustomRun.runMetrics.gcCyclesFinished + manualGC(0.0001, nil, DEBUG_ENABLED)
   CustomRun.runMetrics.gcDuration = love.timer.getTime() - preGc1Time
 end
 

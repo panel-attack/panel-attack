@@ -167,9 +167,7 @@ function love.draw()
 
   -- Draw the FPS if enabled
   if config ~= nil and config.show_fps then
-    if CustomRun.runTimeGraph then
-      CustomRun.runTimeGraph:draw()
-    else
+    if not CustomRun.runTimeGraph then
       gprintf("FPS: " .. love.timer.getFPS(), 1, 1)
     end
   end
