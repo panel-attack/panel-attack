@@ -56,7 +56,8 @@ return function(time_budget, memory_ceiling, disable_otherwise)
   local cyclesFinished = 0
 	while
 		love.timer.getTime() - start_time < time_budget and
-    steps < maxSteps
+    steps < maxSteps and
+    cyclesFinished < 10
 	do
     if collectgarbage("step", 1) then
       cyclesFinished = cyclesFinished + 1
