@@ -49,3 +49,10 @@ assert(v1Theme.images.bg_main ~= nil)
 assert(v1Theme.multibar_is_absolute == false) -- old v1 default
 assert(v1Theme.bg_main_is_tiled == true) -- override from v1 default
 recursiveRemoveDirectory(Theme.themeDirectoryPath .. v1Theme.name)
+
+local v2AbsoluteTheme = Theme("V2AbsoluteTheme")
+assert(v2AbsoluteTheme ~= nil)
+assert(v2AbsoluteTheme.name == "V2AbsoluteTheme")
+assert(v2AbsoluteTheme.version == 2)
+assert(v2AbsoluteTheme.multibar_is_absolute == false) -- override
+recursiveRemoveDirectory(Theme.themeDirectoryPath .. v2AbsoluteTheme.name)

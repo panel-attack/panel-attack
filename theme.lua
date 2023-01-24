@@ -500,9 +500,9 @@ end
 
 -- applies all the JSON values from a table
 function Theme:applyJSONData(read_data)
-
-  for key, keyType in pairs(self:configurableKeys()) do
-    if read_data[key] and type(read_data[key]) == keyType then
+  local configurableKeys = self:configurableKeys()
+  for key, value in pairs(read_data) do
+    if configurableKeys[key] ~= nil and type(value) == configurableKeys[key] then
       self[key] = read_data[key]
     end
   end
