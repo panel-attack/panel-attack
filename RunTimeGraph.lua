@@ -25,7 +25,7 @@ local RunTimeGraph = class(function(self)
   y = y + height + padding
 
   -- gc time
-  self.graphs[#self.graphs+1] = BarGraph(x, y, width, height, updateSpeed, 5)
+  self.graphs[#self.graphs+1] = BarGraph(x, y, width, height, updateSpeed, 12)
   self.graphs[#self.graphs]:setFillColor({1, 0, 1, 1}, 1)
   y = y + height + padding
 
