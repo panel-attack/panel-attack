@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # This script builds the love files, and the windows exe for the game
 # pass "auto-updater" for the first argument if you want a auto updater built, "local" if you want just a local build, and "just-love" if you want just the love files
 # pass "discard-love" for the second argument if you want to delete the love files
