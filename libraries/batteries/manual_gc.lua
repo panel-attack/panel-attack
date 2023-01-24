@@ -46,6 +46,7 @@ freely, subject to the following restrictions:
     situation and crash your game. test extensively before you
     ship a game with this set true.
 ]]
+local maxSteps = 10000
 
 return function(time_budget, memory_ceiling, disable_otherwise)
 	time_budget = time_budget or 1e-3
@@ -54,7 +55,8 @@ return function(time_budget, memory_ceiling, disable_otherwise)
 	local start_time = love.timer.getTime()
   local cyclesFinished = 0
 	while
-		love.timer.getTime() - start_time < time_budget
+		love.timer.getTime() - start_time < time_budget and
+    steps < maxSteps
 	do
     if collectgarbage("step", 1) then
       cyclesFinished = cyclesFinished + 1

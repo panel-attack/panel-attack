@@ -34,16 +34,18 @@ function CustomRun.sleep()
   local currentTime = originalTime
 
   -- Sleep a percentage of our time to wait to save cpu
-  local gcRatio = 0.5
+  local gcRatio = 0.99
   local idleTime = targetTime - currentTime
   if love.timer and idleTime > 0 then
-    CustomRun.runMetrics.gcCyclesFinished = manualGC(idleTime * gcRatio, nil, DEBUG_ENABLED)
+    CustomRun.runMetrics.gcCyclesFinished = manualGC(idleTime * gcRatio, 128, true)
     currentTime = love.timer.getTime()
     CustomRun.runMetrics.gcDuration = CustomRun.runMetrics.gcDuration + (currentTime - originalTime)
     originalTime = currentTime
+    -- manual GC may finish ahead of time on powerful machines due to working more than enough
     idleTime = targetTime - currentTime
   end
-  local sleepRatio = .98
+  -- sleep for the remaining time
+  local sleepRatio = 0.98
   if love.timer and idleTime > 0 then
     love.timer.sleep(idleTime * sleepRatio)
   end
@@ -114,13 +116,13 @@ function CustomRun.innerRun()
     CustomRun.runMetrics.presentDuration = love.timer.getTime() - prePresentTime
   end
 
+  local preGc1Time = love.timer.getTime()
+  CustomRun.runMetrics.gcCyclesFinished = CustomRun.runMetrics.gcCyclesFinished + manualGC(0.0001, 128, true)
+  CustomRun.runMetrics.gcDuration = love.timer.getTime() - preGc1Time
+
   if CustomRun.runTimeGraph ~= nil then
     CustomRun.runTimeGraph:updateWithMetrics(CustomRun.runMetrics)
   end
-
-  local preGc1Time = love.timer.getTime()
-  CustomRun.runMetrics.gcCyclesFinished = CustomRun.runMetrics.gcCyclesFinished + manualGC(0.0001, nil, DEBUG_ENABLED)
-  CustomRun.runMetrics.gcDuration = love.timer.getTime() - preGc1Time
 end
 
 -- This is a copy of the outer run loop that love uses.
