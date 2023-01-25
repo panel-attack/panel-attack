@@ -389,7 +389,7 @@ function Connection.J(self, message)
     end
   elseif self.state == "playing" and message.game_over then
     self.room.game_outcome_reports[self.player_number] = message.outcome
-    if self.room:resolve_game_outcome() then
+    if self.room:resolve_game_outcome(self.server.database) then
       logger.debug("\n*******************************")
       logger.debug("***" .. self.room.a.name .. " " .. self.room.win_counts[1] .. " - " .. self.room.win_counts[2] .. " " .. self.room.b.name .. "***")
       logger.debug("*******************************\n")

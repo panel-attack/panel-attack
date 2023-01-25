@@ -128,7 +128,7 @@ end
 local insertGameStatement = assert(db:prepare("INSERT INTO Game(ranked) VALUES (?)"))
 -- returns the gameID
 function PADatabase.insertGame(ranked)
-  insertGameStatement:bind_values(ranked)
+  insertGameStatement:bind_values(ranked and 1 or 0)
   insertGameStatement:step()
   if insertGameStatement:reset() ~= 0 then
     print(db:errmsg())
@@ -137,9 +137,9 @@ function PADatabase.insertGame(ranked)
   return db:last_insert_rowid()
 end
 
-local insertPlayerGameResultStatement = assert(db:prepare("INSERT INTO PlayerGameResult(playerID, gameID, level, placement) VALUES (?, ?, ?, ?)"))
-function PADatabase.insertPlayerGameResult(playerID, gameID, level, placement)
-  insertPlayerGameResultStatement:bind_values(playerID, gameID, level, placement)
+local insertPlayerGameResultStatement = assert(db:prepare("INSERT INTO PlayerGameResult(playerID, gameID, level, placement) VALUES ((SELECT publicPlayerID FROM Player WHERE privatePlayerID = ?), ?, ?, ?)"))
+function PADatabase.insertPlayerGameResult(privatePlayerID, gameID, level, placement)
+  insertPlayerGameResultStatement:bind_values(privatePlayerID, gameID, level, placement)
   insertPlayerGameResultStatement:step()
   if insertPlayerGameResultStatement:reset() ~= 0 then
     print(db:errmsg())
