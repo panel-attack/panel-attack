@@ -121,7 +121,8 @@ function CustomRun.innerRun()
   end
 
   local preGc1Time = love.timer.getTime()
-  CustomRun.runMetrics.gcCyclesFinished = CustomRun.runMetrics.gcCyclesFinished + manualGC(0.0001, 128, true)
+  -- always collect garbage for at least 1ms, even if we're already behind on time
+  CustomRun.runMetrics.gcCyclesFinished = CustomRun.runMetrics.gcCyclesFinished + manualGC(0.001, 128, true)
   CustomRun.runMetrics.gcDuration = love.timer.getTime() - preGc1Time
 end
 
