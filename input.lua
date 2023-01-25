@@ -293,12 +293,19 @@ function love.keypressed(key, scancode, rep)
       end
     end
   end
+
+  local function toggleDebugMode()
+    if key == "f5" then
+      config.debug_mode = not config.debug_mode
+    end
+  end
   
   if handleFullscreenToggle() or
      handleScreenshot() or
      handleCopy() or
      handleDumpAttackPattern() or
-     modifyWinCounts() then
+     modifyWinCounts() or
+     toggleDebugMode() then
     return
   end
 
