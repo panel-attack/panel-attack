@@ -196,8 +196,6 @@ function Room.resolve_game_outcome(self, database)
   if not self.game_outcome_reports[1] or not self.game_outcome_reports[2] then
     return false
   else
-    local gameID = database:insertGame(self.replay.vs.ranked)
-    self.replay.vs.gameID = gameID
     local outcome = nil
     if self.game_outcome_reports[1] ~= self.game_outcome_reports[2] then
       --if clients disagree, the server needs to decide the outcome, perhaps by watching a replay it had created during the game.
@@ -207,6 +205,15 @@ function Room.resolve_game_outcome(self, database)
     else
       outcome = self.game_outcome_reports[1]
     end
+    self.replay.vs.gameID = database:insertGame(self.replay.vs.ranked)
+    if outcome ~= 0 then
+      database:insertPlayerGameResult(self.a.user_id, self.replay.vs.gameID, self.replay.vs.P1_level, (self.a.player_number == outcome) and 1 or 2)
+      database:insertPlayerGameResult(self.b.user_id, self.replay.vs.gameID, self.replay.vs.P2_level, (self.b.player_number == outcome) and 1 or 2)
+    else
+      database:insertPlayerGameResult(self.a.user_id, self.replay.vs.gameID, self.replay.vs.P1_level, 0)
+      database:insertPlayerGameResult(self.b.user_id, self.replay.vs.gameID, self.replay.vs.P2_level, 0)
+    end
+
     logger.debug("resolve_game_outcome says: " .. outcome)
     --outcome is the player number of the winner, or 0 for a tie
     if self.a.save_replays_publicly ~= "not at all" and self.b.save_replays_publicly ~= "not at all" then
@@ -252,13 +259,6 @@ function Room.resolve_game_outcome(self, database)
       write_replay_file(self.replay, path, filename)
     else
       logger.debug("replay not saved because a player didn't want it saved")
-    end
-    if outcome ~= 0 then
-      database:insertPlayerGameResult(self.a.user_id, gameID, self.replay.vs.P1_level, (self.a.player_number == outcome) and 1 or 2)
-      database:insertPlayerGameResult(self.b.user_id, gameID, self.replay.vs.P2_level, (self.b.player_number == outcome) and 1 or 2)
-    else
-      database:insertPlayerGameResult(self.a.user_id, gameID, self.replay.vs.P1_level, 0)
-      database:insertPlayerGameResult(self.b.user_id, gameID, self.replay.vs.P2_level, 0)
     end
 
     self.replay = nil
