@@ -1,15 +1,14 @@
-require("class")
+local class = require("class")
 local logger = require("logger")
 
 -- Utility methods for drawing
-FileUtil =
-  class(
+local FileUtils = class(
   function(self)
     
   end
 )
 
-function FileUtil.getFilteredDirectoryItems(path)
+function FileUtils.getFilteredDirectoryItems(path)
   local results = {}
 
   local directoryList = love.filesystem.getDirectoryItems(path)
@@ -26,6 +25,8 @@ function FileUtil.getFilteredDirectoryItems(path)
   return results
 end
 
-function FileUtil.getFileNameWithoutExtension(filename)
+function FileUtils.getFileNameWithoutExtension(filename)
   return filename:gsub("%..*", "")
 end
+
+return FileUtils

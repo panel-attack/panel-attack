@@ -32,7 +32,6 @@ function UpdatingImage:update(dt)
 end
 
 function UpdatingImage:draw()
-
   local x_scale = 1
   local y_scale = 1
   if not self.tiled then   

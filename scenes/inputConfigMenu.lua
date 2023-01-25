@@ -16,6 +16,7 @@ local inputConfigMenu = Scene("inputConfigMenu")
 
 inputConfigMenu.settingKey = false
 inputConfigMenu.menu = nil -- set in load
+inputConfigMenu.backgroundImg = nil -- set in load
 
 local font = GraphicsUtil.getGlobalFont()
 local pendingInputText = "__"
@@ -166,17 +167,21 @@ function inputConfigMenu:init()
     onClick = function() clearAllInputs(menuOptions) end})}
   menuOptions[#menuOptions + 1] = {Button({label = "back", onClick = exitMenu})}
   
-  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
-  self.menu = Menu({menuItems = menuOptions, x = x, y = y})
+  self.menu = Menu({menuItems = menuOptions})
   self.menu:setVisibility(false)
 end
 
 function inputConfigMenu:load()
+  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
+  self.menu.x = x
+  self.menu.y = y
+
   reset_filters()
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")
   end
   
+  self.backgroundImg = themes[config.theme].images.bg_main
   self.menu:updateLabel()
   self.menu:setVisibility(true)
 end
@@ -186,6 +191,7 @@ function inputConfigMenu:drawBackground()
 end
 
 function inputConfigMenu:update(dt)
+  self.backgroundImg:update(dt)
   self.menu:update()
   self.menu:draw()
 
