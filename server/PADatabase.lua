@@ -27,20 +27,9 @@ CREATE TABLE IF NOT EXISTS PlayerELOHistory(
   updateTime TIME TIMESTAMP DEFAULT (strftime('%s', 'now')),
   FOREIGN KEY(publicPlayerID) REFERENCES Player(publicPlayerID)
 );
-]]
---[[
-
-CREATE TRIGGER IF NOT EXISTS trig_ratingUpdate BEFORE UPDATE ON Player
-WHEN (OLD.rating != NEW.rating)
-BEGIN
-  INSERT INTO PlayerELOHistory(publicPlayerID, rating) VALUES (NEW.publicPlayerID, NEW.rating);
-END;  
-
-DROP TABLE IF EXISTS PlayerGameResult;
-DROP TABLE IF EXISTS Game;
 
 CREATE TABLE IF NOT EXISTS Game(
-  gameID INTEGER PRIMARY KEY NOT NULL,
+  gameID INTEGER PRIMARY KEY AUTOINCREMENT,
   ranked BOOLEAN NOT NULL CHECK (ranked IN (0, 1)),
   timePlayed TIME TIMESTAMP NOT NULL DEFAULT (strftime('%s', 'now'))
 );
@@ -54,6 +43,17 @@ CREATE TABLE IF NOT EXISTS PlayerGameResult(
   FOREIGN KEY(gameID) REFERENCES Game(gameID)
 );
 ]]
+--[[
+
+CREATE TRIGGER IF NOT EXISTS trig_ratingUpdate BEFORE UPDATE ON Player
+WHEN (OLD.rating != NEW.rating)
+BEGIN
+  INSERT INTO PlayerELOHistory(publicPlayerID, rating) VALUES (NEW.publicPlayerID, NEW.rating);
+END;  
+
+DROP TABLE IF EXISTS PlayerGameResult;
+DROP TABLE IF EXISTS Game;
+
 --local selectLeaderboardStatement = assert(db:prepare("SELECT username, rating FROM Player"))
 --local insertGameStatement = assert(db:prepare("INSERT INTO Game(gameID, ranked) VALUES (?, ?)"))
 
@@ -61,6 +61,14 @@ CREATE TABLE IF NOT EXISTS PlayerGameResult(
 --local insertPlayerGameResultStatement = assert(db:prepare("INSERT INTO PlayerGameResult(playerID, gameID, level, placement) VALUES (?, ?, ?, ?)"))
 
 --local selectPlayerGamesStatement = assert(db:prepare("SELECT gameID FROM PlayerGameResult WHERE playerID = ?"))
+--[[local updatePlayerRatingStatement = assert(db:prepare("UPDATE Player SET rating = ? WHERE privatePlayerID = ?"))
+function PADatabase.updatePlayerRating(self, privatePlayerID, newRating)
+  updatePlayerRatingStatement:bind_values(newRating, privatePlayerID)
+  updatePlayerRatingStatement:step()
+  if updatePlayerRatingStatement:reset() ~= 0 then
+    print(db:errmsg())
+  end
+end]]
 
 local selectPlayerRecordValuesStatement = assert(db:prepare("SELECT * FROM Player where privatePlayerID = ?"))
 local function getPlayerValues(privatePlayerID)
@@ -83,15 +91,6 @@ function PADatabase.insertNewPlayer(self, privatePlayerID, username)
   end
   return true
 end
-
---[[local updatePlayerRatingStatement = assert(db:prepare("UPDATE Player SET rating = ? WHERE privatePlayerID = ?"))
-function PADatabase.updatePlayerRating(self, privatePlayerID, newRating)
-  updatePlayerRatingStatement:bind_values(newRating, privatePlayerID)
-  updatePlayerRatingStatement:step()
-  if updatePlayerRatingStatement:reset() ~= 0 then
-    print(db:errmsg())
-  end
-end]]
 
 local updatePlayerUsernameStatement = assert(db:prepare("UPDATE Player SET username = ? WHERE privatePlayerID = ?"))
 function PADatabase.updatePlayerUsername(self, privatePlayerID, username)
@@ -126,4 +125,26 @@ function PADatabase.getPlayerRecordCount()
   return recordCount
 end
 
+local insertGameStatement = assert(db:prepare("INSERT INTO Game(ranked) VALUES (?)"))
+-- returns the gameID
+function PADatabase.insertGame(ranked)
+  insertGameStatement:bind_values(ranked)
+  insertGameStatement:step()
+  if insertGameStatement:reset() ~= 0 then
+    print(db:errmsg())
+    return false
+  end
+  return db:last_insert_rowid()
+end
+
+local insertPlayerGameResultStatement = assert(db:prepare("INSERT INTO PlayerGameResult(playerID, gameID, level, placement) VALUES (?, ?, ?, ?)"))
+function PADatabase.insertPlayerGameResult(playerID, gameID, level, placement)
+  insertPlayerGameResultStatement:bind_values(playerID, gameID, level, placement)
+  insertPlayerGameResultStatement:step()
+  if insertPlayerGameResultStatement:reset() ~= 0 then
+    print(db:errmsg())
+    return false
+  end
+  return true
+end
 return PADatabase
