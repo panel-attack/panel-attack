@@ -1,0 +1,55 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "type": "lua-local",
+        "request": "launch",
+        "name": "Debug and Test",
+        "program": {
+          "command": "love"
+        },
+        "args": [
+          ".",
+          "debug",
+          "test"
+        ],
+        "breakInCoroutines": true
+      },
+      {
+        "type": "lua-local",
+        "request": "launch",
+        "name": "Release",
+        "program": {
+          "command": "love"
+        },
+        "args": [
+          "."
+        ],
+      },
+      {
+        "type": "lua-local",
+        "request": "launch",
+        "name": "Profile",
+        "program": {
+            "command": "love"
+        },
+        "args": [
+            ".",
+            "profile",
+        ],
+      },
+      {
+        "type": "lua-local",
+        "request": "launch",
+        "name": "Performance Tests",
+        "program": {
+            "command": "love"
+        },
+        "args": [
+            ".",
+            "test",
+            "performanceTests"
+        ],
+      }
+    ]
+  }
