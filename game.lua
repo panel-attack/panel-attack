@@ -9,6 +9,8 @@ local sound = require("sound")
 local analytics = require("analytics")
 local manualGC = require("libraries.batteries.manual_gc")
 local sceneManager = require("scenes.sceneManager")
+local save = require("save")
+local FileUtils = require("FileUtils")
 local scenes = nil
 
 -- Provides a scale that is on .5 boundary to make sure it renders well.
@@ -76,7 +78,7 @@ Game.newCanvasSnappedScale = newCanvasSnappedScale
 function Game:load(game_updater)
   -- move to constructor
   self.game_updater = game_updater
-  local user_input_conf = read_key_file()
+  local user_input_conf = save.read_key_file()
   if user_input_conf then
     self.input.inputConfigurations = user_input_conf
   end
@@ -120,7 +122,7 @@ function Game:postSetup()
   love.filesystem.createDirectory("stages")
   love.filesystem.createDirectory("training")
   
-  if #FileUtil.getFilteredDirectoryItems("training") == 0 then
+  if #FileUtils.getFilteredDirectoryItems("training") == 0 then
     recursive_copy("default_data/training", "training")
   end
   read_attack_files("training")
@@ -138,7 +140,10 @@ function Game:postSetup()
   scenes = {
     require("scenes.titleScreen"),
     require("scenes.mainMenu"),
-    require("scenes.inputConfigMenu")
+    require("scenes.inputConfigMenu"),
+    require("scenes.optionsMenu"),
+    require("scenes.soundTest"),
+    require("scenes.setNameMenu")
   }
   for i, scene in ipairs(scenes) do
     scene:init()

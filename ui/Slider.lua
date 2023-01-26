@@ -24,7 +24,7 @@ local Slider = class(
 )
 
 local xOffset = 10
-local yOffset = 15
+local yOffset = 20
 
 function Slider:setVisibility(isVisible)
   sliderManager.sliders[self.id] = isVisible and self or nil
@@ -67,9 +67,14 @@ function Slider:draw()
   GAME.gfx_q:push({love.graphics.circle, {"fill", screenX + xOffset + (self.value - self.min + .5) * self.tickLength, screenY + yOffset + 2.5, 7.5, 32}})
   GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
   
-  GAME.gfx_q:push({love.graphics.draw, {self.minText, screenX + xOffset - self.minText:getWidth() - 7, screenY + yOffset, 0, 1, 1, 0, 0}})
-  GAME.gfx_q:push({love.graphics.draw, {self.maxText, screenX + xOffset + (self.max - self.min + 1) * self.tickLength + 7, screenY + yOffset, 0, 1, 1, 0, 0}})
-  GAME.gfx_q:push({love.graphics.draw, {self.valueText, screenX + xOffset + (self.value - self.min + .5) * self.tickLength - 5, screenY + yOffset - 20, 0, 1, 1, 0, 0}})
+  local textWidth, textHeight = self.minText:getDimensions()
+  GAME.gfx_q:push({love.graphics.draw, {self.minText, screenX + xOffset - textWidth * .3, screenY, 0, 1, 1, 0, 0}})
+  
+  textWidth, textHeight = self.maxText:getDimensions()
+  GAME.gfx_q:push({love.graphics.draw, {self.maxText, screenX + xOffset + (self.max - self.min) * self.tickLength - textWidth * .7, screenY, 0, 1, 1, 0, 0}})
+  
+  textWidth, textHeight = self.valueText:getDimensions()
+  GAME.gfx_q:push({love.graphics.draw, {self.valueText, screenX + xOffset + ((self.max - self.min) / 2.0) * self.tickLength - textWidth / 2, screenY, 0, 1, 1, 0, 0}})
   
   -- draw children
   UIElement.draw(self)

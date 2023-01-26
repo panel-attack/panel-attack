@@ -60,7 +60,15 @@ function InputField:getCursorPos()
   return self.x + textOffset + love.graphics.newText(love.graphics.getFont(), text):getWidth()
 end
 
+function InputField:unfocus()
+  inputFieldManager.selectedInputField = nil
+  love.keyboard.setTextInput(false)
+  self.hasFocus = false
+end
+
 function InputField:setFocus(x, y)
+  inputFieldManager.selectedInputField = self
+  love.keyboard.setTextInput(true)
   self.hasFocus = true
   self.offset = 0
   local prevX = self:getCursorPos()

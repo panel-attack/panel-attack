@@ -1,3 +1,4 @@
+local FileUtils = require("FileUtils")
 local analytics = require("analytics")
 local util = require("util")
 local options = {}
@@ -1215,7 +1216,7 @@ function options.main(button_idx)
     optionsMenu:set_active_idx(button_idx)
   else
     found_themes = {}
-    for _, v in ipairs(FileUtil.getFilteredDirectoryItems("themes")) do
+    for _, v in ipairs(FileUtils.getFilteredDirectoryItems("themes")) do
       if love.filesystem.getInfo("themes/" .. v) and love.filesystem.getInfo("themes/" .. v .. "/config.json") then
         found_themes[#found_themes + 1] = v
         if config.theme == v then
