@@ -2,10 +2,12 @@
 -- Not to be confused with "Match" which is the current battle / instance of the game.
 local consts = require("consts")
 local globals = require("globals")
+local GraphicsUtil = require("graphics_util")
 local class = require("class")
 local logger = require("logger")
 local sound = require("sound")
 local analytics = require("analytics")
+local manualGC = require("libraries.batteries.manual_gc")
 local sceneManager = require("scenes.sceneManager")
 local scenes = nil
 
@@ -54,6 +56,8 @@ local Game = class(
     self.needsAssetReload = false
     self.previousWindowWidth = 0
     self.previousWindowHeight = 0
+
+    self.crashTrace = nil -- set to the trace of your thread before throwing an error if you use a coroutine
     
     -- private members
     self.pointer_hidden = false
@@ -132,11 +136,20 @@ function Game:postSetup()
   
   -- must be here until globally initiallized structures get resolved into local requires
   scenes = {
+    require("scenes.titleScreen"),
+    require("scenes.mainMenu"),
+    require("scenes.inputConfigMenu")
   }
   for i, scene in ipairs(scenes) do
     scene:init()
   end
-  sceneManager:switchToScene(nil)
+
+  if themes[config.theme].images.bg_title then
+    sceneManager:switchToScene("titleScreen")
+  else
+    sceneManager:switchToScene("mainMenu")
+  end
+  
 end
 
 local function unitTests()
@@ -174,7 +187,11 @@ function Game:update(dt)
     end
   end
 
-  leftover_time = leftover_time + dt
+  if sceneManager.activeScene == nil then
+    leftover_time = leftover_time + dt
+  else
+    leftover_time = 0
+  end
   
   if self.backgroundImage then
     self.backgroundImage:update(dt)
@@ -191,16 +208,18 @@ function Game:update(dt)
     self.showGameScale = true
   end
   
-  local status, err = nil
+  local status, err = nil, nil
   if coroutine.status(self.setup) ~= "dead" then
     status, err = coroutine.resume(self.setup)
     -- loading bar setup finished
-    if status and coroutine.status(self.setup) == "dead"  then
+    if status and coroutine.status(self.setup) == "dead" then
       self:postSetup()
       -- Run all unit tests now that we have everything loaded
       if TESTS_ENABLED then
         unitTests()
       end
+    elseif not status then
+      self.crashTrace = debug.traceback(self.setup)
     end
   elseif sceneManager.activeScene then
     sceneManager.activeScene:update(dt)
@@ -218,13 +237,12 @@ function Game:update(dt)
     if err then
       print(err)
     end
+    if not status then
+      self.crashTrace = debug.traceback(mainloop)
+    end
   end
   if not status then
-    local errorData = self:errorData(err, debug.traceback(mainloop))
-    if GAME_UPDATER_GAME_VERSION then
-      send_error_report(errorData)
-    end
-    error(err .. "\n\n" .. dump(errorData, true))
+    error(err)
   end
   if self.server_queue and self.server_queue:size() > 0 then
     logger.trace("Queue Size: " .. self.server_queue:size() .. " Data:" .. self.server_queue:to_short_string())
@@ -233,23 +251,25 @@ function Game:update(dt)
 
   update_music()
   self.rich_presence:runCallbacks()
+  
+  manualGC(0.0001, nil, nil)
 end
 
 function Game:draw()
-  if self.foreground_overlay then
-    local scale = canvas_width / math.max(self.foreground_overlay:getWidth(), self.foreground_overlay:getHeight()) -- keep image ratio
-    menu_drawf(self.foreground_overlay, canvas_width / 2, canvas_width / 2, "center", "center", 0, scale, scale)
+  if sceneManager.activeScene then
+    sceneManager.activeScene:drawForeground()
+  else
+    if self.foreground_overlay then
+      --note: canvas_width is variable in touch-controls branch, as we allow changing to portrait orientation.  No longer a constant.
+      local scale = canvas_width / math.max(self.foreground_overlay:getWidth(), self.foreground_overlay:getHeight()) -- keep image ratio
+      menu_drawf(self.foreground_overlay, canvas_width / 2, canvas_width / 2, "center", "center", 0, scale, scale)
+    end
   end
 
   -- Clear the screen
   love.graphics.setCanvas(self.globalCanvas)
   love.graphics.setBackgroundColor(unpack(global_background_color))
   love.graphics.clear()
-
-  -- Draw the FPS if enabled
-  if self.config.show_fps then
-    gprintf("FPS: " .. love.timer.getFPS(), 1, 1)
-  end
 
   if STONER_MODE then
     gprintf("STONER", 1, 1 + (11 * 4))
@@ -259,14 +279,12 @@ function Game:draw()
     self.gfx_q[i][1](unpack(self.gfx_q[i][2]))
   end
   self.gfx_q:clear()
-
-  love.graphics.setCanvas() -- render everything thats been added
-  love.graphics.clear(love.graphics.getBackgroundColor()) -- clear in preperation for the next render
-    
-  love.graphics.setBlendMode("alpha", "premultiplied")
-  love.graphics.draw(self.globalCanvas, self.canvasX, self.canvasY, 0, self.canvasXScale, self.canvasYScale)
-  love.graphics.setBlendMode("alpha", "alphamultiply")
-
+  
+  -- Draw the FPS if enabled
+  if self.config.show_fps then
+    love.graphics.print("FPS: " .. love.timer.getFPS(), 1, 1)
+  end
+  
   if self.showGameScale or config.debug_mode then
     local scaleString = "Scale: " .. self.canvasXScale .. " (" .. canvas_width * self.canvasXScale .. " x " .. canvas_height * self.canvasYScale .. ")"
     local newPixelWidth = love.graphics.getWidth()
@@ -274,21 +292,41 @@ function Game:draw()
     if canvas_width * self.canvasXScale > newPixelWidth then
       scaleString = scaleString .. " Clipped "
     end
-    love.graphics.printf(scaleString, get_global_font_with_size(30), 5, 5, 2000, "left")
+    love.graphics.printf(scaleString, GraphicsUtil.getGlobalFontWithSize(30), 5, 5, 2000, "left")
   end
 
+  if DEBUG_ENABLED and love.system.getOS() == "Android" then
+    local saveDir = love.filesystem.getSaveDirectory()
+    love.graphics.printf(saveDir, get_global_font_with_size(30), 5, 50, 2000, "left")
+  end 
+
+  love.graphics.setCanvas() -- render everything thats been added
+  love.graphics.clear(love.graphics.getBackgroundColor()) -- clear in preperation for the next render
+  
+  love.graphics.setBlendMode("alpha", "premultiplied")
+  love.graphics.draw(self.globalCanvas, self.canvasX, self.canvasY, 0, self.canvasXScale, self.canvasYScale)
+  love.graphics.setBlendMode("alpha", "alphamultiply")
+
   -- draw background and its overlay
-  if self.backgroundImage then
-    self.backgroundImage:draw()
-  end
-  if self.background_overlay then
-    local scale = canvas_width / math.max(self.background_overlay:getWidth(), self.background_overlay:getHeight()) -- keep image ratio
-    menu_drawf(self.background_overlay, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
+  if sceneManager.activeScene then
+    sceneManager.activeScene:drawBackground()
+  else
+    if self.backgroundImage then
+      self.backgroundImage:draw()
+    end
+    
+    if self.background_overlay then
+      local scale = canvas_width / math.max(self.background_overlay:getWidth(), self.background_overlay:getHeight()) -- keep image ratio
+      menu_drawf(self.background_overlay, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
+    end
   end
 end
 
 function Game:clearMatch()
-  self.match = nil
+  if self.match then
+    self.match:deinit()
+    self.match = nil
+  end
   self.gameIsPaused = false
   self.renderDuringPause = false
   self.preventSounds = false
@@ -300,19 +338,40 @@ end
 
 function Game.errorData(errorString, traceBack)
   local system_info = "OS: " .. love.system.getOS()
-  local loveVersion = Game.loveVersionString()
-  
+  local loveVersion = Game.loveVersionString() or "Unknown"
+  local username = config.name or "Unknown"
+  local buildVersion = GAME_UPDATER_GAME_VERSION or "Unknown"
+  local systemInfo = system_info or "Unknown"
+
   local errorData = { 
       stack = traceBack,
-      name = config.name or "Unknown",
+      name = username,
       error = errorString,
       engine_version = VERSION,
-      release_version = GAME_UPDATER_GAME_VERSION or "Unknown",
-      operating_system = system_info or "Unknown",
-      love_version = loveVersion or "Unknown"
+      release_version = buildVersion,
+      operating_system = systemInfo,
+      love_version = loveVersion
     }
 
   return errorData
+end
+
+function Game.detailedErrorLogString(errorData)
+  local newLine = "\n"
+  local now = os.date("*t", to_UTC(os.time()))
+  local formattedTime = string.format("%04d-%02d-%02d %02d:%02d:%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
+
+  local detailedErrorLogString = 
+    "Stack Trace: " .. errorData.stack .. newLine ..
+    "Username: " .. errorData.name .. newLine ..
+    "Error Message: " .. errorData.error .. newLine ..
+    "Engine Version: " .. errorData.engine_version .. newLine ..
+    "Build Version: " .. errorData.release_version .. newLine ..
+    "Operating System: " .. errorData.operating_system .. newLine ..
+    "Love Version: " .. errorData.love_version .. newLine .. 
+    "UTC Time: " .. formattedTime
+
+  return detailedErrorLogString
 end
 
 local loveVersionStringValue = nil

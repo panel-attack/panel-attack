@@ -17,8 +17,20 @@ local class = function(init, parent)
   local metatable = {
     __index = parent,
     __call = function(_, ...)
-      local self = parent and parent(...) or {}
-      setmetatable(self, { __index = class_tbl })
+      local self = {}
+      local index = class_tbl
+      if parent then
+        self = parent(...)
+        index = {}
+        -- must deep copy the __index table (aka the parent class itself) otherwise this will modify it
+        for k, v in pairs(getmetatable(self).__index) do
+          index[k] = v
+        end
+        for k, v in pairs(class_tbl) do
+          index[k] = v
+        end
+      end
+      setmetatable(self, { __index = index })
       init(self, ...)
       return self
     end

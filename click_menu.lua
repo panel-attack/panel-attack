@@ -1,4 +1,4 @@
-require("graphics_util")
+local GraphicsUtil = require("graphics_util")
 local logger = require("logger")
 
 CLICK_MENUS = {} -- All click menus currently showing in the game
@@ -23,7 +23,7 @@ Click_menu =
     self.menuFont = get_global_font()
     self.menu_controls = {
       up = {
-        text = love.graphics.newText(get_global_font(), "^"),
+        text = love.graphics.newText(GraphicsUtil.getGlobalFont(), "^"),
         x = menuXPosition,
         y = 10,
         w = 30,
@@ -32,7 +32,7 @@ Click_menu =
         visible = false
       },
       down = {
-        text = love.graphics.newText(get_global_font(), "v"),
+        text = love.graphics.newText(GraphicsUtil.getGlobalFont(), "v"),
         x = menuXPosition,
         y = 90,
         w = 30,
@@ -41,7 +41,7 @@ Click_menu =
         visible = false
       },
       left = {
-        text = love.graphics.newText(get_global_font(), "<"),
+        text = love.graphics.newText(GraphicsUtil.getGlobalFont(), "<"),
         x = menuXPosition - 35,
         y = 50,
         w = 30,
@@ -50,7 +50,7 @@ Click_menu =
         visible = false
       },
       right = {
-        text = love.graphics.newText(get_global_font(), ">"),
+        text = love.graphics.newText(GraphicsUtil.getGlobalFont(), ">"),
         x = menuXPosition + 35,
         y = 50,
         w = 30,

@@ -8,6 +8,7 @@ local main_config_input = require("config_inputs")
 local tableUtils = require("tableUtils")
 local Game = require("Game")
 local util = require("util")
+local GraphicsUtil = require("graphics_util")
 require("replay")
 
 local mobile = false
@@ -17,10 +18,9 @@ end
 
 local wait, resume = coroutine.yield, coroutine.resume
 
-local main_endless_select, main_timeattack_select, makeSelectPuzzleSetFunction, main_net_vs_setup, main_select_puzz, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, exit_game, training_setup
+-- making these global until they get ported to scenes
+--local main_endless_select, main_timeattack_select, makeSelectPuzzleSetFunction, main_net_vs_setup, main_select_puzz, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, exit_game, training_setup
 
-local PLAYING = "playing" -- room states
-local CHARACTERSELECT = "character select" -- room states
 connection_up_time = 0 -- connection_up_time counts "E" messages, not seconds
 logged_in = 0
 GAME.connected_server_ip = nil -- the ip address of the server you are connected to
@@ -37,7 +37,6 @@ local main_menu_last_index = 1
 local puzzle_menu_last_index = 3
 
 function fmainloop()
-  local func, arg = main_title, nil
   if GAME.portrait_mode == nil then --portrait_mode function hasn't run yet
     if mobile and (config.portraitMode == nil) then --portrait mode preference was never saved, default true on mobile
       portrait_mode(true) 
@@ -150,8 +149,7 @@ do
     undo_stonermode()
     GAME.backgroundImage = themes[config.theme].images.bg_main
     GAME.battleRoom = nil
-    GAME.input:clearInputConfigurationsForPlayers()
-    GAME.input:requestPlayerInputConfigurationAssignments(1)
+    GAME.input:allowAllInputConfigurations()
     reset_filters()
     local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
     local main_menu
@@ -177,23 +175,19 @@ do
       {loc("mm_1_time"), main_timeattack_select},
       {loc("mm_1_vs"), main_local_vs_yourself_setup},
       {loc("mm_1_training"), training_setup},
-      --{loc("mm_2_vs_online", "burke.ro"), main_net_vs_setup, {"burke.ro"}},
-      --{loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
-      --{loc("mm_2_vs_online", "Shosoul's Server"), main_net_vs_setup, {"149.28.227.184"}},
-      --{loc("mm_2_vs_online", ""), main_net_vs_setup, {"betaserver.panelattack.com", 59569}},
-      {loc("mm_2_vs_online", "devserver.panelattack.com"), main_net_vs_setup, {"devserver.panelattack.com", 59568}},
-      --{loc("mm_2_vs_online", "(USE ONLY WITH OTHER CLIENTS ON THIS TEST BUILD 025beta)"), main_net_vs_setup, {"18.188.43.50"}},
-      --{loc("mm_2_vs_online", "This test build is for offline-use only"), main_select_mode},
-      --{loc("mm_2_vs_online", "domi1819.xyz"), main_net_vs_setup, {"domi1819.xyz"}},
-      --{loc("mm_2_vs_online", "(development-use only)"), main_net_vs_setup, {"localhost"}},
-      --{loc("mm_2_vs_online", "LittleEndu's server"), main_net_vs_setup, {"51.15.207.223"}},
-      --{loc("mm_2_vs_online", "server for ranked Ex Mode"), main_net_vs_setup, {"exserver.panelattack.com", 49568}},
+      {loc("mm_2_vs_online", "main server"), main_net_vs_setup, {"18.188.43.50"}},
+      {loc("mm_2_vs_online", "touch-compatible server"), main_net_vs_setup, {"devserver.panelattack.com", 59568}},
       {loc("mm_2_vs_local"), main_local_vs_setup},
       {loc("mm_replay_browser"), replay_browser.main},
       {loc("mm_configure"), main_config_input},
       {loc("mm_set_name"), main_set_name},
       {loc("mm_options"), options.main}
     }
+
+    if config.debugShowServers then
+      table.insert(items, 7, {"Beta Server", main_net_vs_setup, {"betaserver.panelattack.com", 59569}})
+      table.insert(items, 8, {"Localhost Server", main_net_vs_setup, {"localhost"}})
+    end
 
     if TESTS_ENABLED then
       table.insert(items, 6, {"Vs Computer", main_local_vs_computer_setup})
@@ -203,8 +197,7 @@ do
     for i = 1, #items do
       main_menu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
     end
-    main_menu:add_button(loc("mm_fullscreen", "(LAlt+Enter)"), fullscreen, goEscape)
-    --main_menu:add_button("Portrait mode: " --[[to do: loc("mm_portrait_mode")]].. ((GAME.portrait_mode and "on") or "off"), handlePortraitModeToggle, goEscape)
+    main_menu:add_button(loc("mm_fullscreen", "(Alt+Enter)"), fullscreen, goEscape)
     main_menu:add_button(loc("mm_quit"), exit_game, exit_game)
 
     while true do
@@ -219,7 +212,7 @@ do
         end
       end
       
-      local fontHeight = get_global_font():getHeight()
+      local fontHeight = GraphicsUtil.getGlobalFont():getHeight()
       local infoYPosition = canvas_height - 30 - fontHeight/2
 
       local loveString = Game.loveVersionString()
@@ -366,7 +359,7 @@ end
 
 local function finalizeAndWriteReplay(extraPath, extraFilename)
 
-  replay[GAME.match.mode].in_buf = P1.confirmedInput
+  replay[GAME.match.mode].in_buf = table.concat(P1.confirmedInput)
 
   local now = os.date("*t", to_UTC(os.time()))
   local sep = "/"
@@ -379,7 +372,7 @@ local function finalizeAndWriteReplay(extraPath, extraFilename)
     filename = filename .. "-" .. extraFilename
   end
   filename = filename .. ".txt"
-  logger.info("saving replay as " .. path .. sep .. filename)
+  logger.debug("saving replay as " .. path .. sep .. filename)
   write_replay_file(path, filename)
 end
 
@@ -394,7 +387,7 @@ local function finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGam
   end
 
   if P2 then
-    replay[GAME.match.mode].I = P2.confirmedInput
+    replay[GAME.match.mode].I = table.concat(P2.confirmedInput)
 
     local rep_a_name, rep_b_name = battleRoom.playerNames[1], battleRoom.playerNames[2]
     --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
@@ -533,6 +526,8 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
       finalizeAndWriteReplay(extraPath, extraFilename)
     end
 
+    GAME.input:allowAllInputConfigurations()
+
     return {game_over_transition, {nextFunction, nil, P1:pick_win_sfx()}}
   end
   
@@ -557,6 +552,7 @@ local function createBasicTrainingMode(name, width, height)
 end
 
 function training_setup()
+  GAME.backgroundImage = themes[config.theme].images.bg_main
   local trainingModeSettings = {}
   trainingModeSettings.height = 1
   trainingModeSettings.width = 4
@@ -748,6 +744,7 @@ local function main_select_speed_99(mode)
       write_conf_file()
     end
     stop_the_music()
+    GAME.input:requestSingleInputConfigurationForPlayerCount(1)
     startGameSet = true
   end
 
@@ -839,6 +836,11 @@ local function main_select_speed_99(mode)
   end
   updateMenus()
 
+  local lastScoreLabelQuads = {}
+  local lastScoreQuads = {}
+  local recordLabelQuads = {}
+  local recordQuads = {}
+
   while true do
 
     if difficulty then
@@ -858,10 +860,10 @@ local function main_select_speed_99(mode)
 
       lastScore = tostring(lastScore)
       record = tostring(record)
-      draw_pixel_font("last score", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition, 0.5, 1.0)
-      draw_pixel_font(lastScore, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition + 24, 0.5, 1.0)
-      draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition, 0.5, 1.0)
-      draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition + 24, 0.5, 1.0)
+      draw_pixel_font("last score", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition, 0.5, 1.0, nil, nil, lastScoreLabelQuads)
+      draw_pixel_font(lastScore, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition + 24, 0.5, 1.0, nil, nil, lastScoreQuads)
+      draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition, 0.5, 1.0, nil, nil, recordLabelQuads)
+      draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition + 24, 0.5, 1.0, nil, nil, recordQuads)
     end
 
     gameSettingsMenu:draw()
@@ -997,9 +999,9 @@ function main_net_vs_lobby()
         else
           GAME.battleRoom.playerNames[1] = config.name
           GAME.battleRoom.playerNames[2] = msg.opponent
+          love.window.requestAttention()
+          play_optional_sfx(themes[config.theme].sounds.notification)
         end
-        love.window.requestAttention()
-        play_optional_sfx(themes[config.theme].sounds.notification)
         lobby_menu:remove_self()
         return select_screen.main, {select_screen, "2p_net_vs", msg}
       end
@@ -1162,7 +1164,7 @@ function main_net_vs_lobby()
       local noticeHeight = 0
       local button_padding = 4
       if noticeText ~= noticeLastText then
-        noticeTextObject = love.graphics.newText(get_global_font(), noticeText)
+        noticeTextObject = love.graphics.newText(GraphicsUtil.getGlobalFont(), noticeText)
         noticeHeight = noticeTextObject:getHeight() + (button_padding * 2)
         lobby_menu.yMin = lobby_menu_y + noticeHeight
         local menuHeight = (themes[config.theme].main_menu_y_max - lobby_menu.yMin)
@@ -1183,7 +1185,7 @@ function main_net_vs_lobby()
       if showing_leaderboard then
         gprint(leaderboard_string, lobby_menu_x[showing_leaderboard] + 400, lobby_menu_y)
       end
-      gprint(join_community_msg, themes[config.theme].main_menu_screen_pos[1] + 30, canvas_height - 50)
+      gprintf(join_community_msg, 0, 668, canvas_width,"center")
       lobby_menu:draw()
     end
     updated = false
@@ -1259,12 +1261,12 @@ function main_net_vs_setup(ip, network_port)
     end
   end
   P1 = nil
-  P2 = {}
+  P2 = nil
   server_queue = ServerQueue()
   gprint(loc("lb_set_connect"), unpack(themes[config.theme].main_menu_screen_pos))
   wait()
   if not network_init(ip, network_port) then
-    return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
+    return main_dumb_transition, {main_select_mode, loc("ss_could_not_connect") .. "\n\n" .. loc("ss_return"), 60, 300}
   end
   local timeout_counter = 0
   while not connection_is_ready() do
@@ -1292,25 +1294,20 @@ function main_net_vs()
   
   local function update()
     local function handleTaunt()
+      local function getCharacter(playerNumber)
+        if P1.player_number == playerNumber then
+          return characters[P1.character]
+        elseif P2.player_number == playerNumber then
+          return characters[P2.character]
+        end
+      end
+
       local messages = server_queue:pop_all_with("taunt")
       for _, msg in ipairs(messages) do
         if msg.taunt then -- receive taunts
-          local taunts = nil
-          -- P1.character and P2.character are supposed to be already filtered with current mods, taunts may differ though!
-          if msg.player_number == select_screen.my_player_number then
-            taunts = characters[P1.character].sounds[msg.type]
-          elseif msg.player_number == select_screen.op_player_number then
-            taunts = characters[P2.character].sounds[msg.type]
-          end
-          if taunts then
-            for _, t in ipairs(taunts) do
-              t:stop()
-            end
-            if msg.index <= #taunts then
-              taunts[msg.index]:play()
-            elseif #taunts ~= 0 then
-              taunts[math.random(#taunts)]:play()
-            end
+          local character = getCharacter(msg.player_number)
+          if character ~= nil then
+            character:playTaunt(msg.type, msg.index)
           end
        end
       end
@@ -1439,8 +1436,7 @@ function main_local_vs_setup()
   GAME.battleRoom = BattleRoom()
   GAME.battleRoom.playerNames[1] = loc("player_n", "1")
   GAME.battleRoom.playerNames[2] = loc("player_n", "2")
-  GAME.input:clearInputConfigurationsForPlayers()
-  GAME.input:requestPlayerInputConfigurationAssignments(2)
+  GAME.input:requestSingleInputConfigurationForPlayerCount(2)
   return select_screen.main, {select_screen, "2p_local_vs"}
 end
 
@@ -1581,20 +1577,31 @@ function main_replay()
         P2.max_runs_per_frame = 1
       end
     elseif menu_right() then
-      playbackSpeed = util.bound(1, playbackSpeed + 1, maximumSpeed)
+      playbackSpeed = util.bound(-1, playbackSpeed + 1, maximumSpeed)
       if P1 then
-        P1.max_runs_per_frame = playbackSpeed
+        P1.max_runs_per_frame = math.max(playbackSpeed, 0)
       end
       if P2 then
-        P2.max_runs_per_frame = playbackSpeed
+        P2.max_runs_per_frame = math.max(playbackSpeed, 0)
       end
     elseif menu_left() then
-      playbackSpeed = util.bound(1, playbackSpeed - 1, maximumSpeed)
+      playbackSpeed = util.bound(-1, playbackSpeed - 1, maximumSpeed)
       if P1 then
-        P1.max_runs_per_frame = playbackSpeed
+        P1.max_runs_per_frame = math.max(playbackSpeed, 0)
       end
       if P2 then
-        P2.max_runs_per_frame = playbackSpeed
+        P2.max_runs_per_frame = math.max(playbackSpeed, 0)
+      end
+    end
+
+    if playbackSpeed == -1 then
+      if P1 and P1.CLOCK > 0 and P1.prev_states[P1.CLOCK-1] then
+        P1:rollbackToFrame(P1.CLOCK-1)
+        P1.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
+      end
+      if P2 and P2.CLOCK > 0 and P2.prev_states[P2.CLOCK-1] then
+        P2:rollbackToFrame(P2.CLOCK-1)
+        P2.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
       end
     end
   end
@@ -1818,6 +1825,7 @@ end
 
 -- menu for setting the username
 function main_set_name()
+  GAME.backgroundImage = themes[config.theme].images.bg_main
   local name = config.name or ""
   love.keyboard.setTextInput(true) -- enables user to type
   while true do
@@ -1956,7 +1964,7 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX, keep
   local x = canvas_width / 2
   local y = canvas_height / 2
   local backgroundPadding = 10
-  local textObject = love.graphics.newText(get_global_font(), text)
+  local textObject = love.graphics.newText(GraphicsUtil.getGlobalFont(), text)
   local width = textObject:getWidth()
   local height = textObject:getHeight()
   
@@ -1995,7 +2003,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax, keepMusic, ar
   local timemin = 60 -- the minimum amount of frames the game over screen will be displayed for
 
   local t = 0 -- the amount of frames that have passed since the game over screen was displayed
-  local font = get_global_font()
+  local font = GraphicsUtil.getGlobalFont()
   local winnerTime = 60
 
   if SFX_GameOver_Play == 1 then

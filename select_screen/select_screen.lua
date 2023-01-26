@@ -460,6 +460,12 @@ function select_screen.updateMatchTypeFromMessage(self, msg)
   end
 end
 
+function select_screen:inPlacementMatches()
+  return match_type == "Ranked" and self.currentRoomRatings and
+         (self.currentRoomRatings[self.my_player_number].placement_match_progress or 
+          self.currentRoomRatings[self.op_player_number].placement_match_progress)
+end
+
 function select_screen.updateExpectedWinRatios(self)
   self.currentRoomRatings = self.currentRoomRatings or {{new = 0, old = 0, difference = 0}, {new = 0, old = 0, difference = 0}}
   self.my_expected_win_ratio = nil
@@ -893,14 +899,16 @@ function select_screen.startNetPlayMatch(self, msg)
     for k, v in pairs(replay_of_match_so_far.vs) do
       replay.vs[k] = v
     end
-    P1:receiveConfirmedInput(replay_of_match_so_far.vs.in_buf)
-    P2:receiveConfirmedInput(replay_of_match_so_far.vs.I)
+    P1:receiveConfirmedInput(uncompress_input_string(replay_of_match_so_far.vs.in_buf))
+    P2:receiveConfirmedInput(uncompress_input_string(replay_of_match_so_far.vs.I))
     
     replay_of_match_so_far = nil
     --this makes non local stacks run until caught up
     P1.play_to_end = true
     P2.play_to_end = true
   end
+
+  GAME.input:requestSingleInputConfigurationForPlayerCount(1)
 
   -- Proceed to the game screen and start the game
   P1:starting_state()
@@ -948,6 +956,9 @@ function select_screen.start1pLocalMatch(self)
   current_stage = self.players[self.my_player_number].stage
   stage_loader_load(current_stage)
   stage_loader_wait()
+
+  GAME.input:requestSingleInputConfigurationForPlayerCount(1)
+
   P1:starting_state()
   return self:close(main_dumb_transition, {main_local_vs_yourself, "", 0, 0})
 end
@@ -967,6 +978,9 @@ function select_screen.start1pCpuMatch(self)
   stage_loader_load(current_stage)
   stage_loader_wait()
   P2:moveForPlayerNumber(2)
+
+  GAME.input:requestSingleInputConfigurationForPlayerCount(1)
+
   P1:starting_state()
   P2:starting_state()
   return self:close(main_dumb_transition, {main_local_vs, "", 0, 0})
@@ -1029,6 +1043,13 @@ end
 
 -- The main screen for selecting characters and settings for a match
 function select_screen.main(self, character_select_mode, roomInitializationMessage)
+  -- 2p vs local needs to have its input properly divided in select screen already
+  -- meaning we do NOT want to reset to player 1 reacting to inputs from all configurations
+  -- for all others, the player can hold their decision until game start
+  if not self:isMultiplayer() or self:isNetPlay() then
+    GAME.input:allowAllInputConfigurations()
+  end
+
   self.roomInitializationMessage = roomInitializationMessage
   self:initialize(character_select_mode)
   self:loadThemeAssets()
@@ -1038,7 +1059,7 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
   self:setInitialCursors()
 
   -- Setup settings for Main Character Select for 2 Player over Network
-  if select_screen:isNetPlay() then
+  if self:isNetPlay() then
     local abort = self:setupForNetPlay()
     if abort then
       -- abort due to connection loss or timeout
@@ -1053,6 +1074,7 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
   if self:isMultiplayer() then
     self:setUpOpponentPlayer()
   end
+
   self:refreshReadyStates()
 
   self.myPreviousConfig = deepcpy(self.players[self.my_player_number])
