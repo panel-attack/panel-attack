@@ -1056,7 +1056,7 @@ function Stack.shouldRun(self, runsSoFar)
   end
 
   -- Decide how many frames of input we should run.
-  local buffer_len = string.len(self.input_buffer) / ((self.inputMethod == "touch" and 2) or 1)
+  local buffer_len = #self.input_buffer
   -- If we are local we always want to catch up and run the new input which is already appended
   if self.is_local then
     return buffer_len > 0
@@ -1133,6 +1133,7 @@ end
 
 function Stack.receiveConfirmedInput(self, input)
   local singleInputLength = 1
+  print("self.inputMethod is " .. self.inputMethod)
   if self.inputMethod == "touch" then
     singleInputLength = 2 --touch inputs use two characters for single input
   end
@@ -1150,12 +1151,10 @@ function Stack.receiveConfirmedInput(self, input)
     while string.len(input) > 0 do 
       idx = idx + 1
       --throw an error if we are for example expecting a 2-character input, and there is only one character left in input
-      assert(string.len(input) <= singleInputLength)
-      local singleInput = string.sub(inputs, 1, singleInputLength)
+      assert(string.len(input) >= singleInputLength)
+      local singleInput = string.sub(input, 1, singleInputLength)
       inputs[idx] = singleInput
       input = string.sub(input, singleInputLength + 1)
-      if string.len(input) > 0 then
-        --error if we are for example expecting a 2-character input, and there is only one character left in input
     end
     tableUtils.appendToList(self.confirmedInput, inputs)
     tableUtils.appendToList(self.input_buffer, inputs)
@@ -1769,7 +1768,7 @@ function Stack.simulate(self)
         local prev_row = self.cur_row
         local prev_col = self.cur_col
         self.cur_row = util.bound(1, self.cur_row + d_row[self.cur_dir], self.top_cur_row)
-        self.cur_col = util.bound(1, self.cur_col + d_col[self.cur_dir], width - 1)
+        self.cur_col = util.bound(1, self.cur_col + d_col[self.cur_dir], self.width - 1)
         if (playMoveSounds and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and (self.cur_row ~= prev_row or self.cur_col ~= prev_col)) then
           if self:shouldChangeSoundEffects() then
             SFX_Cur_Move_Play = 1
