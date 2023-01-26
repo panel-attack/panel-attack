@@ -1,5 +1,6 @@
 local Scene = require("scenes.Scene")
 local Button = require("ui.Button")
+local consts = require("consts")
 local Menu = require("ui.Menu")
 local sceneManager = require("scenes.sceneManager")
 local replay_browser = require("replay_browser")
@@ -29,34 +30,46 @@ local switchToScene = function(scene)
   sceneManager:switchToScene(scene)
 end
 
+local BUTTON_WIDTH = 140
+local function createMainMenuButton(label, onClick, extra_labels, translate)
+  if translate == nil then
+    translate = true
+  end
+  return Button({label = label, extra_labels = extra_labels, translate = translate, onClick = onClick, width = BUTTON_WIDTH})
+end
+
 local menuItems = {
-  {Button({label = "mm_1_endless", onClick = genLegacyMainloopFn(main_endless_select)})},
-  {Button({label = "mm_1_puzzle", onClick = genLegacyMainloopFn(main_select_puzz)})},
-  {Button({label = "mm_1_time", onClick = genLegacyMainloopFn(main_timeattack_select)})},
-  {Button({label = "mm_1_vs", onClick = function() switchToScene("selectScreen") end})},
-  {Button({label = "mm_1_training", onClick = genLegacyMainloopFn(training_setup)})},
-  {Button({label = "mm_2_vs_online", extra_labels = {""}, onClick = genLegacyMainloopFn(main_net_vs_setup, {"18.188.43.50"})})},
-  --{Button({label = "mm_2_vs_online", extra_labels = {"\nTelegraph Server"}, onClick = genOnClickFn(main_net_vs_setup, {"betaserver.panelattack.com", 59569})})},
-  --{Button({label = "mm_2_vs_online", extra_labels = {"(development-use only)"}, onClick = genOnClickFn(main_net_vs_setup, {"localhost"})})},
-  {Button({label = "mm_2_vs_local", onClick = genLegacyMainloopFn(main_local_vs_setup)})},
-  {Button({label = "mm_replay_browser", onClick = genLegacyMainloopFn(replay_browser.main)})},
-  {Button({label = "mm_configure", onClick = function() switchToScene("inputConfigMenu") end})},
-  {Button({label = "mm_set_name", onClick = function() Menu.playValidationSfx() sceneManager:switchToScene("setNameMenu", {prevScene = "mainMenu"}) end})},
-  {Button({label = "mm_options", onClick = function() switchToScene("optionsMenu") end})},
-  {Button({label = "mm_fullscreen", extra_labels = {"\n(LAlt+Enter)"}, onClick = function() Menu.playValidationSfx() fullscreen() end})},
-  {Button({label = "mm_quit", onClick = love.event.quit})}
+  {createMainMenuButton("mm_1_endless", genLegacyMainloopFn(main_endless_select))},
+  {createMainMenuButton("mm_1_puzzle", genLegacyMainloopFn(main_select_puzz))},
+  {createMainMenuButton("mm_1_time", genLegacyMainloopFn(main_timeattack_select))},
+  {createMainMenuButton("mm_1_vs", function() switchToScene("selectScreen") end)},
+  {createMainMenuButton("mm_1_training", genLegacyMainloopFn(training_setup))},
+  {createMainMenuButton("mm_2_vs_online", genLegacyMainloopFn(main_net_vs_setup, {"18.188.43.50"}),  {""})},
+  {createMainMenuButton("mm_2_vs_local", genLegacyMainloopFn(main_local_vs_setup))},
+  {createMainMenuButton("mm_replay_browser", genLegacyMainloopFn(replay_browser.main))},
+  {createMainMenuButton("mm_configure", function() switchToScene("inputConfigMenu") end)},
+  {createMainMenuButton("mm_set_name", function() Menu.playValidationSfx() sceneManager:switchToScene("setNameMenu", {prevScene = "mainMenu"}) end)},
+  {createMainMenuButton("mm_options", function() switchToScene("optionsMenu") end)},
+  {createMainMenuButton("mm_fullscreen", function() Menu.playValidationSfx() fullscreen() end, {"\n(LAlt+Enter)"})},
+  {createMainMenuButton("mm_quit", love.event.quit)}
 }
+
+if config.debugShowServers then
+  table.insert(menuItems, 7, {createMainMenuButton("Beta Server", genLegacyMainloopFn(main_net_vs_setup, {"betaserver.panelattack.com", 59569}),  {""}, false)})
+  table.insert(menuItems, 8, {createMainMenuButton("Localhost Server", genLegacyMainloopFn(main_net_vs_setup, {"localhost"}),  {""}, false)})
+end
 
 function mainMenu:init()
   sceneManager:addScene(self)
-  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
-  self.menu = Menu({
-      menuItems = menuItems,
-      x = x + 55, y = y})
+  self.menu = Menu({menuItems = menuItems})
   self.menu:setVisibility(false)
 end
 
 function mainMenu:load()
+  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
+  self.menu.x = (consts.CANVAS_WIDTH / 2) - BUTTON_WIDTH / 2
+  self.menu.y = y
+  
   self.backgroundImg = themes[config.theme].images.bg_main
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")
