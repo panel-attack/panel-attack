@@ -175,8 +175,8 @@ function stages_init()
     fill_stages_ids()
   end
 
-  if love.filesystem.getInfo("themes/" .. config.theme .. "/stages.txt") then
-    for line in love.filesystem.lines("themes/" .. config.theme .. "/stages.txt") do
+  if love.filesystem.getInfo(Theme.themeDirectoryPath .. config.theme .. "/stages.txt") then
+    for line in love.filesystem.lines(Theme.themeDirectoryPath .. config.theme .. "/stages.txt") do
       line = trim(line) -- remove whitespace
       -- found at least a valid stage in a stages.txt file
       if stages[line] then
@@ -276,7 +276,7 @@ function Stage.sound_init(self, full, yields)
         self.musics[music]:setLooping(false)
       end
     elseif not self.musics[music] and defaulted_musics[music] then
-      self.musics[music] = default_stage.musics[music] or zero_sound
+      self.musics[music] = default_stage.musics[music] or themes[config.theme].zero_sound
     end
 
     if yields then
