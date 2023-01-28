@@ -6,7 +6,7 @@ CustomRun.runMetrics = {}
 CustomRun.runMetrics.previousSleepEnd = 0
 CustomRun.runMetrics.dt = 0
 CustomRun.runMetrics.updateDuration = 0
-CustomRun.runMetrics.drawGraphDuration = 0
+CustomRun.runMetrics.graphDuration = 0
 CustomRun.runMetrics.drawDuration = 0
 CustomRun.runMetrics.presentDuration = 0
 CustomRun.runMetrics.gcDuration = 0
@@ -96,7 +96,7 @@ function CustomRun.innerRun()
     if CustomRun.runTimeGraph then
       local preGraphDrawTime = love.timer.getTime()
       CustomRun.runTimeGraph:draw()
-      CustomRun.runMetrics.drawGraphDuration = love.timer.getTime() - preGraphDrawTime
+      CustomRun.runMetrics.graphDuration = CustomRun.runMetrics.graphDuration + (love.timer.getTime() - preGraphDrawTime)
     end
 
     if love.draw then
@@ -115,7 +115,9 @@ function CustomRun.innerRun()
   end
 
   if CustomRun.runTimeGraph ~= nil then
+    local preGraphUpdateTime = love.timer.getTime()
     CustomRun.runTimeGraph:updateWithMetrics(CustomRun.runMetrics)
+    CustomRun.runMetrics.graphDuration = love.timer.getTime() - preGraphUpdateTime
   end
 end
 
