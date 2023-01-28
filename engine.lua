@@ -349,22 +349,23 @@ function Stack.rollbackCopy(source, other)
       other = {}
     else
       other = clone_pool[#clone_pool]
+      other.isClone = true
       clone_pool[#clone_pool] = nil
     end
   end
   other.do_swap = source.do_swap
   other.speed = source.speed
   other.health = source.health
-  other.garbage_cols = deepcpy(source.garbage_cols)
-  --[[if source.garbage_cols then
-    other.garbage_idxs = other.garbage_idxs or {}
-    local n_g_cols = #(source.garbage_cols or other.garbage_cols)
-    for i=1,n_g_cols do
-      other.garbage_idxs[i]=source.garbage_cols[i].idx
+
+  -- backup the spawn indices of garbage per its width
+  if other.isClone then
+    for garbageWidth = 1, #source.garbage_cols do
+      other.garbage_cols[garbageWidth].idx = source.garbage_cols[garbageWidth].idx
     end
   else
-
-  end--]]
+    other.garbage_cols = deepcpy(source.garbage_cols)
+  end
+  
   other.later_garbage = deepcpy(source.later_garbage)
   other.garbage_q = source.garbage_q:makeCopy()
   if source.telegraph then
@@ -393,6 +394,7 @@ function Stack.rollbackCopy(source, other)
       end
     end
   end
+  -- this is too eliminate offscreen rows of chain garbage higher up that the clone might have had
   for i = height_to_cpy + 1, #other.panels do
     other.panels[i] = nil
   end
@@ -432,9 +434,7 @@ function Stack.rollbackCopy(source, other)
   other.shake_time = source.shake_time
   other.peak_shake_time = source.peak_shake_time
   other.do_countdown = source.do_countdown
-  other.ready_y = source.ready_y
-  other.combos = deepcpy(source.combos)
-  other.chains = deepcpy(source.chains)
+  other.ready_y = source.ready_y  
   other.panel_buffer = source.panel_buffer
   other.gpanel_buffer = source.gpanel_buffer
   other.panelGenCount = source.panelGenCount
@@ -446,6 +446,28 @@ function Stack.rollbackCopy(source, other)
   other.danger_timer = source.danger_timer
   other.analytic = deepcpy(source.analytic)
   other.game_over_clock = source.game_over_clock
+
+  if not other.isClone then
+    other.combos = {}
+    other.chains = {}
+  end
+
+  -- just creating a new table and putting in the frame values one by one is enough
+  for frame, value in pairs(source.combos) do
+    -- values inside the combos table are de facto immutable since players can't travel back in time to change them
+    -- due to that there is no need to overwrite a value if we already have it
+    if not other.combos[frame] then
+      -- nor do we have to deepcopy it, referencing it is enough
+      other.combos[frame] = value
+    end
+  end
+
+  -- same as above but without comments
+  for frame, value in pairs(source.chains) do
+    if not other.chains[frame] then
+      other.chains[frame] = value
+    end
+  end
 
   return other
 end
