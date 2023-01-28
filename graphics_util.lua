@@ -1,4 +1,4 @@
-require("consts")
+local consts = require("consts")
 local logger = require("logger")
 local tableUtils = require("tableUtils")
 

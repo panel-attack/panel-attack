@@ -54,8 +54,10 @@ local Stepper = class(
     
     setLabels(self, options.labels, options.values, self.selectedIndex)
     
-    self.labels[self.selectedIndex]:setVisibility(self.isVisible)
-    self.rightButton.x = self.labels[self.selectedIndex].width + 25 + 10
+    if #self.labels > 0 then
+      self.labels[self.selectedIndex]:setVisibility(self.isVisible)
+      self.rightButton.x = self.labels[self.selectedIndex].width + 25 + 10
+    end
 
     for i, label in ipairs(self.labels) do
       label:setVisibility(false)
