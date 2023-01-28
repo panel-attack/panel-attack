@@ -49,8 +49,11 @@ freely, subject to the following restrictions:
 
 return function(time_budget, memory_ceiling, disable_otherwise)
 	time_budget = time_budget or 1e-3
-	memory_ceiling = memory_ceiling or 64
-    local max_steps = 10000
+  -- 64 MB memory is too low for long replays, they are guaranteed to hit the limit
+  -- On weaker machines, it may pile up so quickly that even 128 may be breached (accumulating several MBs per second)
+  -- so putting 256 MB for now
+	memory_ceiling = memory_ceiling or 256
+  local max_steps = 10000
 	local steps = 0
 	local start_time = love.timer.getTime()
 	while
