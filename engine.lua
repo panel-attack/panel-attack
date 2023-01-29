@@ -456,7 +456,6 @@ function Stack.rollbackCopy(source, other)
     other.chains = {}
   end
 
-
   -- because this function is also used to apply a rollback (aka source could be older than other)
   -- we need to remove any data for frames higher than source.CLOCK, just in case
   for frame, _ in pairs(other.combos) do
@@ -486,16 +485,19 @@ function Stack.rollbackCopy(source, other)
   
   -- chains are a work in progress unlike combos
   for frame, value in pairs(source.chains) do
-    if frame == source.chains.current then
-      -- due to that we must always deepcpy the current ongoing chain as it may get extended by source
-      other.chains[frame] = deepcpy(value)
-    elseif frame == other.chains.current then
-      -- the clone we come from holds a deepcopy of this chain and therefore it wouldn't have received further updates
-      other.chains[frame] = value
-      -- if we were still on the same chain, it would have gotten deepcopied above instead
-    elseif not other.chains[frame] then
-      -- all new completed chains are immutable already and can be assigned per reference
-      other.chains[frame] = value
+    -- chains contains two string type indices in current and last_complete, don't typecrash on them
+    if tonumber(frame) then
+      if source.chains.current and frame == source.chains.current then
+        -- due to that we must always deepcpy the current ongoing chain as it may get extended by source
+        other.chains[frame] = deepcpy(value)
+      elseif other.chains.current and frame == other.chains.current then
+        -- the clone we come from holds a deepcopy of this chain and therefore it wouldn't have received further updates
+        other.chains[frame] = value
+        -- if we were still on the same chain, it would have gotten deepcopied above instead
+      elseif not other.chains[frame] then
+        -- all new completed chains are immutable already and can be assigned per reference
+        other.chains[frame] = value
+      end
     end
   end
   other.chains.current = source.chains.current
