@@ -512,7 +512,7 @@ function Stack.render(self)
           local drawY = 10
 
           grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 100/GFX_SCALE, 100/GFX_SCALE, 0, 0, 0, 0.5, true)
-          gprintf({str, drawX, drawY, drawDirectly = true})
+          gprintf(str, drawX, drawY, nil, nil, nil, nil, nil, true)
         end
       end
     end
@@ -713,16 +713,16 @@ function Stack.render(self)
     end
 
     if config.debug_mode and self.danger then
-      gprint({"danger", self.score_x, self.score_y + 135, drawDirectly = true})
+      gprint("danger", self.score_x, self.score_y + 135, nil, nil, true)
     end
     if config.debug_mode and self.danger_music then
-      gprint({"danger music", self.score_x, self.score_y + 150, drawDirectly = true})
+      gprint("danger music", self.score_x, self.score_y + 150, nil, nil, true)
     end
     if config.debug_mode then
-      gprint({loc("pl_cleared", (self.panels_cleared or 0)), self.score_x, self.score_y + 165, drawDirectly = true})
+      gprint(loc("pl_cleared", (self.panels_cleared or 0)), self.score_x, self.score_y + 165, nil, nil, true)
     end
     if config.debug_mode then
-      gprint({loc("pl_metal", (self.metal_panels_queued or 0)), self.score_x, self.score_y + 180, drawDirectly = true})
+      gprint(loc("pl_metal", (self.metal_panels_queued or 0)), self.score_x, self.score_y + 180, nil, nil, true)
     end
     if config.debug_mode and (self.input_state or self.taunt_up or self.taunt_down) then
       local iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
@@ -751,7 +751,7 @@ function Stack.render(self)
       if self.taunt_up then
         inputs_to_print = inputs_to_print .. "\ntaunt_up"
       end
-      gprint({inputs_to_print, self.score_x, self.score_y + 195, drawDirectly = true})
+      gprint(inputs_to_print, self.score_x, self.score_y + 195, nil, nil, true)
     end
   end
 
@@ -774,7 +774,7 @@ function Stack.render(self)
   local function drawCommunityMessage()
     -- Draw the community message
     if not config.debug_mode then
-      gprintf({join_community_msg or "", 0, main_infos_screen_pos.y + 550, canvas_width, "center", drawDirectly = true})
+      gprintf(join_community_msg or "", 0, main_infos_screen_pos.y + 550, canvas_width, "center", nil, nil, nil, true)
     end
   end
 

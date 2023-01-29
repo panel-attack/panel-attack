@@ -35,7 +35,7 @@ function CustomRun.sleep()
 
   local idleTime = targetTime - currentTime
   -- Spend as much time as necessary collecting garbage, but at least 0.1ms
-  manualGc(math.min(0.0001, idleTime * 0.99), 256, true)
+  manualGc(math.max(0.0001, idleTime * 0.99), 256, false)
   currentTime = love.timer.getTime()
   CustomRun.runMetrics.gcDuration = currentTime - originalTime
   originalTime = currentTime
