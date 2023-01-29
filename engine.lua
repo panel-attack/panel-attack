@@ -11,6 +11,8 @@ local min, pairs, deepcpy = math.min, pairs, deepcpy
 local max = math.max
 local garbage_bounce_time = #garbage_bounce_table
 
+local DT_SPEED_INCREASE = 15 * 60 -- frames it takes to increase the speed level by 1
+
 -- Represents the full panel stack for one player
 Stack =
   class(
@@ -62,10 +64,27 @@ Stack =
       s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale=GAME:newCanvasSnappedScale()})
     end
 
+    -- The player's speed level decides the amount of time
+    -- the stack takes to rise automatically
+    if speed then
+      s.speed = speed
+    end
+
     if level then
       s:setLevel(level)
-      speed = speed or level_to_starting_speed[level]
+      -- mode 1: increase speed based on fixed intervals
+      s.speedIncreaseMode = 1
+      s.nextSpeedIncreaseClock = DT_SPEED_INCREASE
+    else
+      s.difficulty = difficulty or 2
+      -- mode 2: increase speed based on how many panels were cleared
+      s.speedIncreaseMode = 2
+      if not speed then
+        s.speed = 1
+      end
+      s.panels_to_speedup = panels_to_next_speed[s.speed]
     end
+
     s.health = s.max_health
 
     s.garbage_cols = {
@@ -115,13 +134,6 @@ Stack =
     -- set true if this column is near the top
     s.danger_timer = 0 -- decides bounce frame when in danger
 
-    s.difficulty = difficulty or 2
-
-    s.speed = speed or 1 -- The player's speed level decides the amount of time
-    -- the stack takes to rise automatically
-    if s.speed_times == nil then
-      s.panels_to_speedup = panels_to_next_speed[s.speed]
-    end
     s.rise_timer = 1 -- When this value reaches 0, the stack will rise a pixel
     s.rise_lock = false -- If the stack is rise locked, it won't rise until it is
     -- unlocked.
@@ -239,8 +251,11 @@ Stack =
 
 function Stack.setLevel(self, level)
   self.level = level
-  --difficulty           = level_to_difficulty[level]
-  self.speed_times = {15 * 60, idx = 1, delta = 15 * 60}
+  if not self.speed then
+    -- there is no UI for it yet but we may want to support using levels with a different starting speed at some point
+    self.speed = level_to_starting_speed[level]
+  end
+  -- mode 1: increase speed per time interval?
   self.max_health = level_to_hang_time[level]
   self.FRAMECOUNT_HOVER = level_to_hover[level]
   self.FRAMECOUNT_GPHOVER = level_to_garbage_panel_hover[level]
@@ -413,7 +428,7 @@ function Stack.rollbackCopy(source, other)
   other.top_cur_row = source.top_cur_row
   other.cursor_lock = source.cursor_lock
   other.displacement = source.displacement
-  other.speed_times = deepcpy(source.speed_times)
+  other.nextSpeedIncreaseClock = source.nextSpeedIncreaseClock
   other.panels_to_speedup = source.panels_to_speedup
   other.stop_time = source.stop_time
   other.pre_stop_time = source.pre_stop_time
@@ -1348,18 +1363,15 @@ function Stack.simulate(self)
     end
 
     -- Increase the speed if applicable
-    if self.speed_times then
-      local time = self.speed_times[self.speed_times.idx]
-      if self.CLOCK == time then
+    if self.speedIncreaseMode == 1 then
+      -- increase per interval
+      if self.CLOCK == self.nextSpeedIncreaseClock then
         self.speed = min(self.speed + 1, 99)
         self.FRAMECOUNT_RISE = speed_to_rise_time[self.speed]
-        if self.speed_times.idx ~= #self.speed_times then
-          self.speed_times.idx = self.speed_times.idx + 1
-        else
-          self.speed_times[self.speed_times.idx] = time + self.speed_times.delta
-        end
+        self.nextSpeedIncreaseClock = self.nextSpeedIncreaseClock + DT_SPEED_INCREASE
       end
     elseif self.panels_to_speedup <= 0 then
+      -- mode 2: increase speed based on cleared panels
       self.speed = min(self.speed + 1, 99)
       self.panels_to_speedup = self.panels_to_speedup + panels_to_next_speed[self.speed]
       self.FRAMECOUNT_RISE = speed_to_rise_time[self.speed]
