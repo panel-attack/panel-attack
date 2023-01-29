@@ -10,7 +10,6 @@ local logger = require("logger")
 local min, pairs, deepcpy = math.min, pairs, deepcpy
 local max = math.max
 local garbage_bounce_time = #garbage_bounce_table
-local clone_pool = {}
 
 -- Represents the full panel stack for one player
 Stack =
@@ -219,6 +218,7 @@ Stack =
     s.panelGenCount = 0
     s.garbageGenCount = 0
 
+    s.clonePool = {} -- pool of stale rollback copies, used to save memory on consecutive rollback
     s.rollbackCount = 0 -- the number of times total we have done rollback
     s.lastRollbackFrame = -1 -- the last frame we had to rollback from
 
@@ -345,12 +345,12 @@ end
 -- param other the variable to copy to
 function Stack.rollbackCopy(source, other)
   if other == nil then
-    if #clone_pool == 0 then
+    if #source.clonePool == 0 then
       other = {}
     else
-      other = clone_pool[#clone_pool]
+      other = source.clonePool[#source.clonePool]
       other.isClone = true
-      clone_pool[#clone_pool] = nil
+      source.clonePool[#source.clonePool] = nil
     end
   end
   other.do_swap = source.do_swap
@@ -456,32 +456,19 @@ function Stack.rollbackCopy(source, other)
     other.chains = {}
   end
 
+
   -- because this function is also used to apply a rollback (aka source could be older than other)
-  -- we need to remove any frame values higher than source, just in case
-  local comboFrames = table.getKeys(other.combos)
-  -- getKeys returns the keys ordered by standard comparator so we can go from back to front
-  for i=#comboFrames, 1, -1 do
-    if comboFrames[i] >= source.CLOCK then
-      other.combos[comboFrames[i]] = nil
-    else
-      -- and then break out once we reach the first one that is below the clock
-      break
+  -- we need to remove any data for frames higher than source.CLOCK, just in case
+  for frame, _ in pairs(other.combos) do
+    if frame >= source.CLOCK then
+      other.combos[frame] = nil
     end
   end
 
-  -- getKeys would crash otherwise trying to compare number and string
-  -- since for Lua chains[1] is the same as chains.1 (except that that's invalid syntax)
-  -- and correspondingly chains.current is the same as chains["current"]
-  other.chains.current = nil
-
   -- otherwise same as combos above
-  local chainFrames = table.getKeys(other.chains)
-  for i=#chainFrames, 1, -1 do
-    -- for inexplicable reasons, there are occasional string keys in this table
-    if tonumber(chainFrames[i]) >= source.CLOCK then
-      other.chains[chainFrames[i]] = nil
-    else
-      break
+  for frame, _ in pairs(other.chains) do
+    if tonumber(frame) and frame >= source.CLOCK then
+      other.chains[frame] = nil
     end
   end
 
@@ -544,6 +531,10 @@ function Stack.rollbackToFrame(self, frame)
     assert(prev_states[frame])
     self:restoreFromRollbackCopy(prev_states[frame])
 
+    for f = frame, currentFrame do
+      self:deleteRollbackCopy(f)
+    end
+
     if self.garbage_target and self.garbage_target.later_garbage then
       -- The garbage that we send this time might (rarely) not be the same
       -- as the garbage we sent before.  Wipe out the garbage we sent before...
@@ -598,14 +589,18 @@ function Stack.saveForRollback(self)
   self.prev_states = prev_states
   self.garbage_target = garbage_target
   local deleteFrame = self.CLOCK - MAX_LAG - 1
-  if prev_states[deleteFrame] then
-    Telegraph.saveClone(prev_states[deleteFrame].telegraph)
+  self:deleteRollbackCopy(deleteFrame)
+end
+
+function Stack.deleteRollbackCopy(self, frame)
+  if self.prev_states[frame] then
+    Telegraph.saveClone(self.prev_states[frame].telegraph)
 
      -- Has a reference to stacks we don't want kept around
-    prev_states[deleteFrame].telegraph = nil
+    self.prev_states[frame].telegraph = nil
 
-    clone_pool[#clone_pool + 1] = prev_states[deleteFrame]
-    prev_states[deleteFrame] = nil
+    self.clonePool[#self.clonePool + 1] = self.prev_states[frame]
+    self.prev_states[frame] = nil
   end
 end
 
