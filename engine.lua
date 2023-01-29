@@ -447,14 +447,48 @@ function Stack.rollbackCopy(source, other)
   other.analytic = deepcpy(source.analytic)
   other.game_over_clock = source.game_over_clock
 
+  -- DISCLAIMER
+  -- The following code does NOT work completely (yet)
+  -- The only thing it breaks is the attackpattern export in case a rollback does occur
+
   if not other.isClone then
     other.combos = {}
     other.chains = {}
   end
 
+  -- because this function is also used to apply a rollback (aka source could be older than other)
+  -- we need to remove any frame values higher than source, just in case
+  local comboFrames = table.getKeys(other.combos)
+  -- getKeys returns the keys ordered by standard comparator so we can go from back to front
+  for i=#comboFrames, 1, -1 do
+    if comboFrames[i] >= source.CLOCK then
+      other.combos[comboFrames[i]] = nil
+    else
+      -- and then break out once we reach the first one that is below the clock
+      break
+    end
+  end
+
+  -- getKeys would crash otherwise trying to compare number and string
+  -- since for Lua chains[1] is the same as chains.1 (except that that's invalid syntax)
+  -- and correspondingly chains.current is the same as chains["current"]
+  other.chains.current = nil
+
+  -- otherwise same as combos above
+  local chainFrames = table.getKeys(other.chains)
+  for i=#chainFrames, 1, -1 do
+    -- for inexplicable reasons, there are occasional string keys in this table
+    if tonumber(chainFrames[i]) >= source.CLOCK then
+      other.chains[chainFrames[i]] = nil
+    else
+      break
+    end
+  end
+
   -- just creating a new table and putting in the frame values one by one is enough
   for frame, value in pairs(source.combos) do
     -- values inside the combos table are de facto immutable since players can't travel back in time to change them
+    -- at best they can rollback the game and make it disappear to create it from scratch again later
     -- due to that there is no need to overwrite a value if we already have it
     if not other.combos[frame] then
       -- nor do we have to deepcopy it, referencing it is enough
@@ -462,10 +496,17 @@ function Stack.rollbackCopy(source, other)
     end
   end
 
-  -- same as above but without comments
+  other.chains.current = source.chains.current
+  -- chains are a work in progress unlike combos
   for frame, value in pairs(source.chains) do
-    if not other.chains[frame] then
+    if frame == source.chains.current then
+      -- due to that we must always deepcpy the current ongoing chain as it may get extended by source
+      other.chains[frame] = deepcpy(value)
+    elseif not other.chains[frame] then
+      -- all completed chains are immutable like combos
       other.chains[frame] = value
+      -- they could still be changed by using rollback
+      -- but in that case that rollbackCopy is going to have a deepcopy of it
     end
   end
 
