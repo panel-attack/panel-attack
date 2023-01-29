@@ -84,9 +84,9 @@ function Stack.draw_cards(self)
       end
       local icon_width, icon_height = cardImage:getDimensions()
       local fade = 1 - math.min(0.5 * ((card.frame-1) / 22), 0.5)
-      set_color(1, 1, 1, fade)
+      set_color(1, 1, 1, fade, true)
       draw(cardImage, draw_x, draw_y, 0, iconSize / icon_width, iconSize / icon_height, true)
-      set_color(1, 1, 1, 1)
+      set_color(1, 1, 1, 1, true)
     end
   end
 end

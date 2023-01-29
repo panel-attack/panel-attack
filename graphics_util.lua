@@ -270,7 +270,7 @@ function qdraw(img, quad, x, y, rot, x_scale, y_scale, x_offset, y_offset, mirro
   y_offset = y_offset or 0
   mirror = mirror or 0
 
-  qX, qY, qW, qH = quad:getViewport()
+  local qX, qY, qW, qH = quad:getViewport()
   if mirror == 1 then
     x = x - (qW*x_scale)
   end
@@ -347,7 +347,7 @@ function gprint(str, x, y, color, scale, drawDirectly)
   y = y or 0
   scale = scale or 1
   color = color or nil
-  set_color(0, 0, 0, 1)
+  set_color(0, 0, 0, 1, drawDirectly)
   if drawDirectly then
     love.graphics.print(str, x+1, y+1, 0, scale)
   else
@@ -357,13 +357,13 @@ function gprint(str, x, y, color, scale, drawDirectly)
   if color ~= nil then
     r,g,b,a = unpack(color)
   end
-  set_color(r,g,b,a)
+  set_color(r,g,b,a, drawDirectly)
   if drawDirectly then
     love.graphics.print(str, x, y, 0, scale)
   else
     gfx_q:push({love.graphics.print, {str, x, y, 0, scale}})
   end
-  set_color(1,1,1,1)
+  set_color(1,1,1,1, drawDirectly)
 end
 
 local function privateMakeFont(fontPath, size)
@@ -429,7 +429,7 @@ function gprintf(str, x, y, limit, halign, color, scale, font_delta_size, drawDi
   limit = limit or canvas_width
   font_delta_size = font_delta_size or 0
   halign = halign or "left"
-  set_color(0, 0, 0, 1)
+  set_color(0, 0, 0, 1, drawDirectly)
   if font_delta_size ~= 0 then
     set_font(get_font_delta(font_delta_size), drawDirectly)
   end
@@ -442,7 +442,7 @@ function gprintf(str, x, y, limit, halign, color, scale, font_delta_size, drawDi
   if color ~= nil then
     r,g,b,a = unpack(color)
   end
-  set_color(r,g,b,a)
+  set_color(r,g,b,a, drawDirectly)
   if drawDirectly then
     love.graphics.printf(str, x, y, limit, halign, 0, scale)
   else
@@ -451,17 +451,21 @@ function gprintf(str, x, y, limit, halign, color, scale, font_delta_size, drawDi
   if font_delta_size ~= 0 then
     set_font(get_global_font(), drawDirectly)
   end
-  set_color(1,1,1,1)
+  set_color(1,1,1,1, drawDirectly)
 end
 
 local _r, _g, _b, _a
-function set_color(r, g, b, a)
+function set_color(r, g, b, a, directly)
   a = a or 1
   -- only do it if this color isn't the same as the previous one...
   if _r~=r or _g~=g or _b~=b or _a~=a then
       _r,_g,_b,_a = r,g,b,a
-      gfx_q:push({love.graphics.setColor, {r, g, b, a}})
-  end
+      if directly then
+        love.graphics.setColor(r, g, b, a)
+      else
+        gfx_q:push({love.graphics.setColor, {r, g, b, a}})
+      end
+    end
 end
 
 -- TODO this should be in a util file
