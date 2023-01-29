@@ -483,19 +483,22 @@ function Stack.rollbackCopy(source, other)
     end
   end
 
-  other.chains.current = source.chains.current
+  
   -- chains are a work in progress unlike combos
   for frame, value in pairs(source.chains) do
     if frame == source.chains.current then
       -- due to that we must always deepcpy the current ongoing chain as it may get extended by source
       other.chains[frame] = deepcpy(value)
-    elseif not other.chains[frame] then
-      -- all completed chains are immutable like combos
+    elseif frame == other.chains.current then
+      -- the clone we come from holds a deepcopy of this chain and therefore it wouldn't have received further updates
       other.chains[frame] = value
-      -- they could still be changed by using rollback
-      -- but in that case that rollbackCopy is going to have a deepcopy of it
+      -- if we were still on the same chain, it would have gotten deepcopied above instead
+    elseif not other.chains[frame] then
+      -- all new completed chains are immutable already and can be assigned per reference
+      other.chains[frame] = value
     end
   end
+  other.chains.current = source.chains.current
 
   return other
 end
