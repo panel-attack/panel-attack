@@ -45,7 +45,7 @@ end
 
 function BarGraph.drawGraphs(graphs)
   local oldFont = love.graphics.getFont()
-  gfx_q:push({love.graphics.setFont, {BarGraph.font}})
+  love.graphics.setFont(BarGraph.font)
 
   -- loop through all of the graphs
   for j = 1, #graphs do
@@ -60,24 +60,24 @@ function BarGraph.drawGraphs(graphs)
         local height = graph.height * (value / maxVal)
         local fillColor = graph.fillColors[index] or {1, 1, 1, 0.8}
         local strokeColor = graph.strokeColors[index] or {0, 0, 0, 0.4}
-        gfx_q:push({love.graphics.setColor, fillColor})
-        gfx_q:push({love.graphics.rectangle, {"fill", xPosition, yPosition - height, graph.barWidth, height}})
-        gfx_q:push({love.graphics.setColor, strokeColor})
-        gfx_q:push({love.graphics.rectangle, {"line", xPosition + 0.5, yPosition - height + 0.5, graph.barWidth - 1, height - 1}})
+        love.graphics.setColor(fillColor)
+        love.graphics.rectangle("fill", xPosition, yPosition - height, graph.barWidth, height)
+        love.graphics.setColor(strokeColor)
+        love.graphics.rectangle("line", xPosition + 0.5, yPosition - height + 0.5, graph.barWidth - 1, height - 1)
         yPosition = yPosition - height
       end
       xPosition = xPosition + graph.barWidth
     end
 
-    gfx_q:push({love.graphics.setColor, {1, 1, 1, 0.8}})
-    gfx_q:push({love.graphics.rectangle, {"line", graph.x + 0.5, graph.y + 0.5, graph.width - 1, graph.height - 1}})
+    love.graphics.setColor(1, 1, 1, 0.8)
+    love.graphics.rectangle("line", graph.x + 0.5, graph.y + 0.5, graph.width - 1, graph.height - 1)
 
-    gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
+    love.graphics.setColor(1, 1, 1, 1)
 
-    gfx_q:push({love.graphics.print, {graph.label, graph.x, graph.height + graph.y + 8}})
+    love.graphics.print(graph.label, graph.x, graph.height + graph.y + 8)
   end
 
-  gfx_q:push({love.graphics.setFont, {oldFont}})
+  love.graphics.setFont(oldFont)
 end
 
 return BarGraph

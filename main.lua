@@ -176,6 +176,7 @@ function love.draw()
     gprintf("STONER", 1, 1 + (11 * 4))
   end
 
+  print("graphics queue contains " .. gfx_q:len() .. " draw instructions")
   for i = gfx_q.first, gfx_q.last do
     gfx_q[i][1](unpack(gfx_q[i][2]))
   end

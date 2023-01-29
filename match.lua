@@ -283,7 +283,7 @@ function Match.render(self)
   local P2 = self.P2
   
   if GAME.droppedFrames > 10 and config.show_fps then
-    gprint("Dropped Frames: " .. GAME.droppedFrames, 1, 12)
+    gprint("Dropped Frames: " .. GAME.droppedFrames, 1, 12, nil, nil, true)
   end
 
   if config.show_fps and P1 and P2 then
@@ -293,10 +293,10 @@ function Match.render(self)
     local behind = math.abs(P1.CLOCK - P2.CLOCK)
 
     if P1Behind > 0 then
-      gprint("P1 Average Latency: " .. P1Behind, 1, 23)
+      gprint("P1 Average Latency: " .. P1Behind, 1, 23, nil, nil, true)
     end
     if P2Behind > 0 then
-      gprint("P2 Average Latency: " .. P2Behind, 1, 34)
+      gprint("P2 Average Latency: " .. P2Behind, 1, 34, nil, nil, true)
     end
     
     if GAME.battleRoom.spectating and behind > MAX_LAG * 0.75 then
@@ -304,7 +304,7 @@ function Match.render(self)
       local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
       local x = (canvas_width / 2) - (iconSize / 2)
       local y = (canvas_height / 2) - (iconSize / 2)
-      draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+      draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height, true)
     end
   end
   
@@ -314,20 +314,20 @@ function Match.render(self)
   -- Draw VS HUD
   if self.battleRoom and (GAME.gameIsPaused == false or GAME.renderDuringPause) then
     -- P1 username
-    gprint((GAME.battleRoom.playerNames[1] or ""), P1.score_x + themes[config.theme].name_Pos[1], P1.score_y + themes[config.theme].name_Pos[2])
+    gprint((GAME.battleRoom.playerNames[1] or ""), P1.score_x + themes[config.theme].name_Pos[1], P1.score_y + themes[config.theme].name_Pos[2], nil, nil, true)
     if P2 then
       -- P1 win count graphics
-      draw_label(themes[config.theme].images.IMG_wins, (P1.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
-      GraphicsUtil.draw_number(GAME.battleRoom:getPlayerWinCount(P1.player_number), themes[config.theme].images.IMG_number_atlas_1P, P1_win_quads, P1.score_x + themes[config.theme].win_Pos[1], P1.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, "center")
+      draw_label(themes[config.theme].images.IMG_wins, (P1.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale, nil, true)
+      GraphicsUtil.draw_number(GAME.battleRoom:getPlayerWinCount(P1.player_number), themes[config.theme].images.IMG_number_atlas_1P, P1_win_quads, P1.score_x + themes[config.theme].win_Pos[1], P1.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, "center", true)
       -- P2 username
-      gprint((GAME.battleRoom.playerNames[2] or ""), P2.score_x + themes[config.theme].name_Pos[1], P2.score_y + themes[config.theme].name_Pos[2])
+      gprint((GAME.battleRoom.playerNames[2] or ""), P2.score_x + themes[config.theme].name_Pos[1], P2.score_y + themes[config.theme].name_Pos[2], nil, nil, true)
       -- P2 win count graphics
-      draw_label(themes[config.theme].images.IMG_wins, (P2.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P2.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
-      GraphicsUtil.draw_number(GAME.battleRoom:getPlayerWinCount(P2.player_number), themes[config.theme].images.IMG_number_atlas_2P, P2_win_quads, P2.score_x + themes[config.theme].win_Pos[1], P2.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, "center")
+      draw_label(themes[config.theme].images.IMG_wins, (P2.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P2.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale, nil, true)
+      GraphicsUtil.draw_number(GAME.battleRoom:getPlayerWinCount(P2.player_number), themes[config.theme].images.IMG_number_atlas_2P, P2_win_quads, P2.score_x + themes[config.theme].win_Pos[1], P2.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, "center", true)
     end
 
     if not config.debug_mode then --this is printed in the same space as the debug details
-      gprint(spectators_string, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
+      gprint(spectators_string, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2], nil, nil, true)
     end
 
     if match_type == "Ranked" then
@@ -337,9 +337,9 @@ function Match.render(self)
           rating_to_print = self.room_ratings[self.my_player_number].new
         end
         --gprint(rating_to_print, P1.score_x, P1.score_y-30)
-        draw_label(themes[config.theme].images.IMG_rating_1P, (P1.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
+        draw_label(themes[config.theme].images.IMG_rating_1P, (P1.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale, nil, true)
         if type(rating_to_print) == "number" then
-          GraphicsUtil.draw_number(rating_to_print, themes[config.theme].images.IMG_number_atlas_1P, P1_rating_quads, P1.score_x + themes[config.theme].rating_Pos[1], P1.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, "center")
+          GraphicsUtil.draw_number(rating_to_print, themes[config.theme].images.IMG_number_atlas_1P, P1_rating_quads, P1.score_x + themes[config.theme].rating_Pos[1], P1.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, "center", true)
         end
       end
       if self.room_ratings and self.room_ratings[self.op_player_number] and self.room_ratings[self.op_player_number].new then
@@ -348,9 +348,9 @@ function Match.render(self)
           op_rating_to_print = self.room_ratings[self.op_player_number].new
         end
         --gprint(op_rating_to_print, P2.score_x, P2.score_y-30)
-        draw_label(themes[config.theme].images.IMG_rating_2P, (P2.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (P2.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
+        draw_label(themes[config.theme].images.IMG_rating_2P, (P2.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (P2.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale, nil, true)
         if type(op_rating_to_print) == "number" then
-          GraphicsUtil.draw_number(op_rating_to_print, themes[config.theme].images.IMG_number_atlas_2P, P2_rating_quads, P2.score_x + themes[config.theme].rating_Pos[1], P2.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, "center")
+          GraphicsUtil.draw_number(op_rating_to_print, themes[config.theme].images.IMG_number_atlas_2P, P2_rating_quads, P2.score_x + themes[config.theme].rating_Pos[1], P2.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, "center", true)
         end
       end
     end
@@ -362,19 +362,19 @@ function Match.render(self)
     local drawY = 10
     local padding = 14
 
-    grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 1000/GFX_SCALE, 100/GFX_SCALE, 0, 0, 0, 0.5)
+    grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 1000/GFX_SCALE, 100/GFX_SCALE, 0, 0, 0, 0.5, true)
     
-    gprintf("Clock " .. P1.CLOCK, drawX, drawY)
+    gprintf("Clock " .. P1.CLOCK, drawX, drawY, nil, nil, nil, nil, nil, true)
 
 
     drawY = drawY + padding
-    gprintf("Confirmed " .. #P1.confirmedInput , drawX, drawY)
+    gprintf("Confirmed " .. #P1.confirmedInput , drawX, drawY, nil, nil, nil, nil, nil, true)
 
     drawY = drawY + padding
-    gprintf("input_buffer " .. #P1.input_buffer , drawX, drawY)
+    gprintf("input_buffer " .. #P1.input_buffer , drawX, drawY, nil, nil, nil, nil, nil, true)
 
     drawY = drawY + padding
-    gprintf("rollbackCount " .. P1.rollbackCount , drawX, drawY)
+    gprintf("rollbackCount " .. P1.rollbackCount , drawX, drawY, nil, nil, nil, nil, nil, true)
 
     -- drawY = drawY + padding
     -- gprintf("P1 Panels: " .. P1.panel_buffer, drawX, drawY)
@@ -393,11 +393,11 @@ function Match.render(self)
 
     if P1.game_over_clock > 0 then
       drawY = drawY + padding
-      gprintf("game_over_clock " .. P1.game_over_clock, drawX, drawY)
+      gprintf("game_over_clock " .. P1.game_over_clock, drawX, drawY, nil, nil, nil, nil, nil, true)
     end
 
     drawY = drawY + padding
-    gprintf("chain panels " .. P1.n_chain_panels, drawX, drawY)
+    gprintf("chain panels " .. P1.n_chain_panels, drawX, drawY, nil, nil, nil, nil, nil, true)
 
     -- if P1.telegraph then
     --   drawY = drawY + padding
@@ -423,20 +423,20 @@ function Match.render(self)
     drawY = drawY + padding
     local totalTime = love.timer.getTime() - self.createTime
     local timePercent = round(self.timeSpentRunning / totalTime, 5)
-    gprintf("Time Percent Running Match: " .. timePercent, drawX, drawY)
+    gprintf("Time Percent Running Match: " .. timePercent, drawX, drawY, nil, nil, nil, nil, nil, true)
 
     drawY = drawY + padding
     local maxTime = round(self.maxTimeSpentRunning, 5)
-    gprintf("Max Stack Update: " .. maxTime, drawX, drawY)
+    gprintf("Max Stack Update: " .. maxTime, drawX, drawY, nil, nil, nil, nil, nil, true)
 
     drawY = drawY + padding
-    gprintf("Seed " .. GAME.match.seed, drawX, drawY)
+    gprintf("Seed " .. GAME.match.seed, drawX, drawY, nil, nil, nil, nil, nil, true)
 
     local gameEndedClockTime = self:gameEndedClockTime()
 
     if gameEndedClockTime > 0 then
       drawY = drawY + padding
-      gprintf("gameEndedClockTime " .. gameEndedClockTime, drawX, drawY)
+      gprintf("gameEndedClockTime " .. gameEndedClockTime, drawX, drawY, nil, nil, nil, nil, nil, true)
     end
 
     -- drawY = drawY + padding
@@ -452,24 +452,24 @@ function Match.render(self)
       drawY = 10 - padding
 
       drawY = drawY + padding
-      gprintf("Clock " .. P2.CLOCK, drawX, drawY)
+      gprintf("Clock " .. P2.CLOCK, drawX, drawY, nil, nil, nil, nil, nil, true)
 
       drawY = drawY + padding
       local framesAhead = P1.CLOCK - P2.CLOCK
-      gprintf("P1 Ahead: " .. framesAhead, drawX, drawY)
+      gprintf("P1 Ahead: " .. framesAhead, drawX, drawY, nil, nil, nil, nil, nil, true)
 
       drawY = drawY + padding
-      gprintf("Confirmed " .. #P2.confirmedInput , drawX, drawY)
+      gprintf("Confirmed " .. #P2.confirmedInput , drawX, drawY, nil, nil, nil, nil, nil, true)
 
       drawY = drawY + padding
-      gprintf("input_buffer " .. #P2.input_buffer , drawX, drawY)
+      gprintf("input_buffer " .. #P2.input_buffer , drawX, drawY, nil, nil, nil, nil, nil, true)
 
       drawY = drawY + padding
-      gprintf("rollbackCount " .. P2.rollbackCount , drawX, drawY)
+      gprintf("rollbackCount " .. P2.rollbackCount , drawX, drawY, nil, nil, nil, nil, nil, true)
 
       if P2.game_over_clock > 0 then
         drawY = drawY + padding
-        gprintf("game_over_clock " .. P2.game_over_clock, drawX, drawY)
+        gprintf("game_over_clock " .. P2.game_over_clock, drawX, drawY, nil, nil, nil, nil, nil, true)
       end
 
       -- if P2.telegraph then
@@ -523,7 +523,7 @@ function Match.render(self)
     local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
     local x = 5
     local y = 5
-    draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-    gprint("A warning has occurred, please post your warnings.txt file and this replay to #panel-attack-bugs in the discord.", x + iconSize, y)
+    draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height, true)
+    gprint("A warning has occurred, please post your warnings.txt file and this replay to #panel-attack-bugs in the discord.", x + iconSize, y, nil, nil, true)
   end
 end
