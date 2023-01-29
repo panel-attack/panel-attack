@@ -108,9 +108,6 @@ end
 function table.getKeys(tab)
   local keys = {}
   for key, _ in pairs(tab) do
-    if type(key) == "string" then
-      local phi = 0
-    end
     table.insert(keys, key)
   end
   table.sort(keys)
