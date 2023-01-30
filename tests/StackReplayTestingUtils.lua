@@ -10,16 +10,15 @@ function StackReplayTestingUtils:simulateReplayWithPath(path)
   assert(GAME ~= nil)
   assert(GAME.match ~= nil)
   assert(GAME.match.P1 ~= nil)
-  assert(GAME.match.P2 ~= nil)
 
   local match = GAME.match
 
   local startTime = love.timer.getTime()
 
-  local matchOutcome = match.battleRoom:matchOutcome()
-  while matchOutcome == nil do
+  local gameResult = match.P1:gameResult()
+  while gameResult == nil do
       match:run()
-      matchOutcome = match.battleRoom:matchOutcome()
+      gameResult = match.P1:gameResult()
   end
   local endTime = love.timer.getTime()
 
