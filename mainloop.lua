@@ -76,8 +76,8 @@ function fmainloop()
     require("table_util_tests")
     require("utilTests")
     -- Medium level tests (integration tests)
-    require("tests.ReplayTests")
-    require("tests.RollbackReplayTests")
+    require("tests.StackReplayTests")
+    require("tests.StackRollbackReplayTests")
     -- Performance Tests
     if PERFORMANCE_TESTS_ENABLED then
       require("tests/performanceTests")
