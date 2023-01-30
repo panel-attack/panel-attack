@@ -1,4 +1,3 @@
-local logger = require("logger")
 require("table_util")
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local testReplayFolder = "tests/replays/"
