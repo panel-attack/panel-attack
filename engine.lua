@@ -89,9 +89,17 @@ Stack =
     s.gpanel_buffer = ""
     s.input_buffer = {} -- Inputs that haven't been processed yet
     s.confirmedInput = {} -- All inputs the player has input ever
-    s.garbageCreated = 0
+    -- The number of individual garbage blocks created on this stack
+    -- used for giving a unique identifier to each new garbage block
+    s.garbageCreatedCount = 0
     s.garbageLandedThisFrame = {}
-    s.panelsCreated = 0
+    -- The number of individual panels created on this stack
+    -- used for giving new panels their own unique identifier
+    s.panelsCreatedCount = 0
+    -- 2 dimensional table for containing all panels
+    -- panel[i] gets the row where i is the index of the row with 1 being the most bottom row that is in play (not dimmed)
+    -- panel[i][j] gets the panel at row i where j is the column index counting from left to right starting from 1
+    -- the update order for panels is bottom to top and left to right as well
     s.panels = {}
     s.width = 6
     s.height = 12
