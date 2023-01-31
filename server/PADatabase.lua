@@ -1,5 +1,6 @@
 local sqlite3 = require("lsqlite3")
 local db = sqlite3.open("PADatabase.sqlite3")
+local logger = require("logger")
 
 PADatabase =
   class(
@@ -43,32 +44,6 @@ CREATE TABLE IF NOT EXISTS PlayerGameResult(
   FOREIGN KEY(gameID) REFERENCES Game(gameID)
 );
 ]]
---[[
-
-CREATE TRIGGER IF NOT EXISTS trig_ratingUpdate BEFORE UPDATE ON Player
-WHEN (OLD.rating != NEW.rating)
-BEGIN
-  INSERT INTO PlayerELOHistory(publicPlayerID, rating) VALUES (NEW.publicPlayerID, NEW.rating);
-END;  
-
-DROP TABLE IF EXISTS PlayerGameResult;
-DROP TABLE IF EXISTS Game;
-
---local selectLeaderboardStatement = assert(db:prepare("SELECT username, rating FROM Player"))
---local insertGameStatement = assert(db:prepare("INSERT INTO Game(gameID, ranked) VALUES (?, ?)"))
-
--- TODO: Make work with foreign keys
---local insertPlayerGameResultStatement = assert(db:prepare("INSERT INTO PlayerGameResult(playerID, gameID, level, placement) VALUES (?, ?, ?, ?)"))
-
---local selectPlayerGamesStatement = assert(db:prepare("SELECT gameID FROM PlayerGameResult WHERE playerID = ?"))
---[[local updatePlayerRatingStatement = assert(db:prepare("UPDATE Player SET rating = ? WHERE privatePlayerID = ?"))
-function PADatabase.updatePlayerRating(self, privatePlayerID, newRating)
-  updatePlayerRatingStatement:bind_values(newRating, privatePlayerID)
-  updatePlayerRatingStatement:step()
-  if updatePlayerRatingStatement:reset() ~= 0 then
-    print(db:errmsg())
-  end
-end]]
 
 local selectPlayerRecordValuesStatement = assert(db:prepare("SELECT * FROM Player where privatePlayerID = ?"))
 local function getPlayerValues(privatePlayerID)
