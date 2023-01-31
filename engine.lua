@@ -153,9 +153,8 @@ Stack =
     s.FRAMECOUNTS.FACE = s.FRAMECOUNTS.FACE or FC_FACE[s.difficulty]
     s.FRAMECOUNTS.POP = s.FRAMECOUNTS.POP or FC_POP[s.difficulty]
     s.FRAMECOUNTS.MATCH = s.FRAMECOUNTS.FACE + s.FRAMECOUNTS.FLASH
-    s.FRAMECOUNTS.RISE = speed_to_rise_time[s.speed]
 
-    s.rise_timer = s.FRAMECOUNTS.RISE
+    s.rise_timer = speed_to_rise_time[s.speed]
 
     -- Player input stuff:
     s.manual_raise = false -- set until raising is completed
@@ -1173,7 +1172,6 @@ function Stack.simulate(self)
       local time = self.speed_times[self.speed_times.idx]
       if self.CLOCK == time then
         self.speed = min(self.speed + 1, 99)
-        self.FRAMECOUNTS.RISE = speed_to_rise_time[self.speed]
         if self.speed_times.idx ~= #self.speed_times then
           self.speed_times.idx = self.speed_times.idx + 1
         else
@@ -1183,7 +1181,6 @@ function Stack.simulate(self)
     elseif self.panels_to_speedup <= 0 then
       self.speed = min(self.speed + 1, 99)
       self.panels_to_speedup = self.panels_to_speedup + panels_to_next_speed[self.speed]
-      self.FRAMECOUNTS.RISE = speed_to_rise_time[self.speed]
     end
 
     -- Phase 0 //////////////////////////////////////////////////////////////
@@ -1211,7 +1208,7 @@ function Stack.simulate(self)
                 self.top_cur_row = self.height
                 self:new_row()
               end
-              self.rise_timer = self.rise_timer + self.FRAMECOUNTS.RISE
+              self.rise_timer = self.rise_timer + speed_to_rise_time[self.speed]
             end
           end
         end
