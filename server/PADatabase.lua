@@ -69,7 +69,7 @@ end
 
 local updatePlayerUsernameStatement = assert(db:prepare("UPDATE Player SET username = ? WHERE privatePlayerID = ?"))
 function PADatabase.updatePlayerUsername(self, privatePlayerID, username)
-  updatePlayerUsernameStatement:bind_values(privatePlayerID, username)
+  updatePlayerUsernameStatement:bind_values(username, privatePlayerID)
   updatePlayerUsernameStatement:step()
   if updatePlayerUsernameStatement:reset() ~= 0 then
     print(db:errmsg())
