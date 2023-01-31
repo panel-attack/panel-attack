@@ -599,6 +599,7 @@ end
 
 function Stack.puzzleStringToPanels(self, puzzleString)
   local panels = {}
+  local garbageId = 0
   local garbageStartRow = nil
   local garbageStartColumn = nil
   local isMetal = false
@@ -618,8 +619,6 @@ function Stack.puzzleStringToPanels(self, puzzleString)
             panel.color = tonumber(color)
             panels[row][column] = panel
           else
-
-            -- TODO: assign garbage id to a new garbage block so garbage knows where it belongs regardless
             -- start of a garbage block
             if color == "]" or color == "}" then
               garbageStartRow = row
@@ -630,6 +629,8 @@ function Stack.puzzleStringToPanels(self, puzzleString)
               end
             end
             local panel = self:createPanel(row, column)
+            panel.garbageId = garbageId
+            garbageId = garbageId + 1
             panel.isGarbage = true
             panel.color = 9
             panel.y_offset = row - garbageStartRow
@@ -652,6 +653,7 @@ function Stack.puzzleStringToPanels(self, puzzleString)
                 connectedGarbagePanels[i].height = height
                 connectedGarbagePanels[i].width = width
                 connectedGarbagePanels[i].shake_time = shake_time
+                connectedGarbagePanels[i].garbageId = garbageId
                 -- panels are already in the main table and they should already be updated by reference
               end
               garbageStartRow = nil
