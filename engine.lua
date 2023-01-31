@@ -388,7 +388,7 @@ function Stack.rollbackCopy(source, other)
   if source.panels[0] then
     startRow = 0
   end
-  other.panelsCreated = source.panelsCreated
+  other.panelsCreatedCount = source.panelsCreatedCount
   for i = startRow, height_to_cpy do
     if other.panels[i] == nil then
       other.panels[i] = {}
@@ -1963,7 +1963,7 @@ function Stack.dropGarbage(self, width, height, isMetal)
     return column >= originCol and column < (originCol + width)
   end
 
-  self.garbageCreated = self.garbageCreated + 1
+  self.garbageCreatedCount = self.garbageCreatedCount + 1
   local shakeTime = garbage_to_shake_time[width * height]
 
   for row = originRow, originRow + height - 1 do
@@ -1976,7 +1976,7 @@ function Stack.dropGarbage(self, width, height, isMetal)
 
         if isPartOfGarbage(col) then
           local panel = self.panels[row][col]
-          panel.garbageId = self.garbageCreated
+          panel.garbageId = self.garbageCreatedCount
           panel.isGarbage = true
           panel.color = 9
           panel.width = width
@@ -2444,8 +2444,8 @@ function Stack:getAttackPatternData()
 end
 
 function Stack.createPanel(self, row, column)
-  self.panelsCreated = self.panelsCreated + 1
-  local panel = Panel(self.panelsCreated, row, column, self.FRAMECOUNTS)
+  self.panelsCreatedCount = self.panelsCreatedCount + 1
+  local panel = Panel(self.panelsCreatedCount, row, column, self.FRAMECOUNTS)
   panel.onPop = function(panel)
     self:onPop(panel)
   end
