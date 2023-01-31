@@ -2564,8 +2564,8 @@ function Stack.getActivePanels(self)
           activePanels[#activePanels+1] = panel
         else
           if panel.color ~= 0
-          and panel.state ~= Panel.states.landing
-          and panel:exclude_hover() then
+          and panel.state ~= Panel.states.normal
+          and panel.state ~= Panel.states.landing then
             activePanels[#activePanels+1] = panel
           end
         end

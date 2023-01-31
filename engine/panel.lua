@@ -287,29 +287,6 @@ deadState.update = function(panel, panels)
   -- dead is dead
 end
 
--- exclude hover
-normalState.excludeHover = false
-swappingState.excludeHover = false
-matchedState.excludeHover = true
-poppingState.excludeHover = true
-poppedState.excludeHover = true
-hoverState.excludeHover = true
-fallingState.excludeHover = true
-landingState.excludeHover = false
-dimmedState.excludeHover = true
-deadState.excludeHover = true
-
--- this name legit makes no sense at all with the values of the states
--- ported 1:1 from old code
-function Panel.exclude_hover(self)
-  if self.isGarbage then
-    return true
-  else
-    local state = self:getStateTable()
-    return state.excludeHover
-  end
-end
-
 normalState.excludeMatch = false
 swappingState.excludeMatch = true
 matchedState.excludeMatch = true
@@ -521,6 +498,8 @@ function Panel.startSwap(self, isSwappingFromLeft)
   self.timer = 4
   self.isSwappingFromLeft = isSwappingFromLeft
   if self.fell_from_garbage then
+    -- fell_from_garbage is used for a bounce animation upon falling from matched garbage
+    -- upon starting a swap, it should no longer animate
     self.fell_from_garbage = nil
   end
 end
