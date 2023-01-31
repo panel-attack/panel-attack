@@ -143,7 +143,14 @@ end
 
 matchedState.changeState = function(panel, panels)
   if panel.isGarbage then
-    panel:enterHoverState()
+    if panel.y_offset == -1 then
+      -- this means the matched garbage panel is part of the bottom row of the garbage
+      -- so it will actually convert itself into a non-garbage panel and start to hover
+      panel:enterHoverState()
+    else
+      -- upper rows of chain type garbage just return to being unmatched garbage
+      panel.state = Panel.states.normal
+    end
   else
     -- This panel's match just finished the whole flashing and looking distressed thing.
     -- It is given a pop time based on its place in the match.
@@ -564,18 +571,14 @@ end
 -- it also propagates chain state
 function Panel.enterHoverState(self, panelBelow)
   if self.isGarbage then
-    if self.y_offset == -1 then
-      -- this is the hover enter after garbage match that converts the garbage panel into a regular panel
-      self:clear(false, false)
-      self.chaining = true
-      self.timer = self.frameTimes.GPHOVER
-      self.fell_from_garbage = 12
-      self.state = Panel.states.hovering
-      self.propagatesChaining = true
-    else
-      -- garbage doesn't hover
-      self.state = Panel.states.normal
-    end
+    -- this is the hover enter after garbage match that converts the garbage panel into a regular panel
+    -- clear resets its garbage flag to false, turning it into a normal panel!
+    self:clear(false, false)
+    self.chaining = true
+    self.timer = self.frameTimes.GPHOVER
+    self.fell_from_garbage = 12
+    self.state = Panel.states.hovering
+    self.propagatesChaining = true
   else
     local hoverTime = nil
     if self.state == Panel.states.falling then
