@@ -61,6 +61,16 @@ function logGameResult(player1ID, player2ID, player1Won, rankedValue)
   end
 end
 
+function readGameResults()
+  local gameResults
+  pcall(
+    function()
+      gameResults = csvfile.read("GameResults.csv")
+    end
+  )
+  return gameResults
+end
+
 function write_deleted_players_file()
   local status, error = pcall(
     function()

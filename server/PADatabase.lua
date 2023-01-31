@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS Game(
 CREATE TABLE IF NOT EXISTS PlayerGameResult(
   playerID INTEGER NOT NULL,
   gameID INTEGER NOT NULL,
-  level INTEGER NOT NULL,
+  level INTEGER,
   placement INTEGER NOT NULL,
   FOREIGN KEY(playerID) REFERENCES Player(publicPlayerID),
   FOREIGN KEY(gameID) REFERENCES Game(gameID)
@@ -147,4 +147,15 @@ function PADatabase.insertPlayerGameResult(self, privatePlayerID, gameID, level,
   end
   return true
 end
+
+-- Stop statements from being committed
+function PADatabase.beginTransaction(self)
+  db:exec("BEGIN")
+end
+
+-- Commit all statements that were run since the start of beginTransaction
+function PADatabase.commitTransaction(self)
+  db:exec("COMMIT")
+end
+
 return PADatabase

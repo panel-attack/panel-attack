@@ -623,6 +623,8 @@ local function importDatabase()
     usedNames[name] = true
   end
 
+  database:beginTransaction() -- this stops the database from attempting to commit every statement individually 
+  logger.info("Importing leaderboard.csv to database")
   for k, v in pairs(cleanedPlayerData) do
     local rating = 0
     if leaderboard.players[k] then
@@ -631,7 +633,28 @@ local function importDatabase()
     database:insertNewPlayer(k, v)
     database:insertPlayerELOChange(k, rating)
   end
-end
+
+  local gameMatches = readGameResults()
+  if gameMatches then -- only do it if there was a gameResults file to begin with
+    logger.info("Importing GameResults.csv to database")
+    for _, result in ipairs(gameMatches) do
+      local player1ID = result[1]
+      local player2ID = result[2]
+      local player1Won = result[3] == 1
+      local ranked = result[4] == 1
+      local gameID = database:insertGame(ranked)
+      if player1Won then
+        database:insertPlayerGameResult(player1ID, gameID, nil,  1)
+        database:insertPlayerGameResult(player2ID, gameID, nil,  2)
+      else
+        database:insertPlayerGameResult(player2ID, gameID, nil,  1)
+        database:insertPlayerGameResult(player1ID, gameID, nil,  2)
+      end
+    end
+  end
+  database:commitTransaction() -- bulk commit every statement from the start of beginTransaction
+  end
+  
 local isPlayerTableEmpty = database:getPlayerRecordCount() == 0
 if isPlayerTableEmpty then
   importDatabase()
