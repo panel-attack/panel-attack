@@ -51,7 +51,7 @@ local function getPlayerValues(privatePlayerID)
   selectPlayerRecordValuesStatement:step()
   local playerValues = selectPlayerRecordValuesStatement:get_named_values()
   if selectPlayerRecordValuesStatement:reset() ~= 0 then
-    print(db:errmsg())
+    logger.error(db:errmsg())
   end
   return playerValues
 end
@@ -61,7 +61,7 @@ function PADatabase.insertNewPlayer(self, privatePlayerID, username)
   insertPlayerStatement:bind_values(privatePlayerID, username)
   insertPlayerStatement:step()
   if insertPlayerStatement:reset() ~= 0 then
-    print(db:errmsg())
+    logger.error(db:errmsg())
     return false
   end
   return true
@@ -72,7 +72,7 @@ function PADatabase.updatePlayerUsername(self, privatePlayerID, username)
   updatePlayerUsernameStatement:bind_values(username, privatePlayerID)
   updatePlayerUsernameStatement:step()
   if updatePlayerUsernameStatement:reset() ~= 0 then
-    print(db:errmsg())
+    logger.error(db:errmsg())
     return false
   end
   return true
@@ -83,7 +83,7 @@ function PADatabase.insertPlayerELOChange(self, privatePlayerID, rating)
   insertPlayerELOChangeStatement:bind_values(privatePlayerID, rating or 1500)
   insertPlayerELOChangeStatement:step()
   if insertPlayerELOChangeStatement:reset() ~= 0 then
-    print(db:errmsg())
+    logger.error(db:errmsg())
     return false
   end
   return true
@@ -94,7 +94,7 @@ function PADatabase.getPlayerRecordCount()
   selectPlayerRecordCount:step()
   local recordCount = selectPlayerRecordCount:get_value(0) -- this is the row count.
   if selectPlayerRecordCount:reset() ~= 0 then
-    print(db:errmsg())
+    logger.error(db:errmsg())
     return -1
   end
   return recordCount
@@ -106,7 +106,7 @@ function PADatabase.insertGame(self, ranked)
   insertGameStatement:bind_values(ranked and 1 or 0)
   insertGameStatement:step()
   if insertGameStatement:reset() ~= 0 then
-    print(db:errmsg())
+    logger.error(db:errmsg())
     return false
   end
   return db:last_insert_rowid()
@@ -117,7 +117,7 @@ function PADatabase.insertPlayerGameResult(self, privatePlayerID, gameID, level,
   insertPlayerGameResultStatement:bind_values(privatePlayerID, gameID, level, placement)
   insertPlayerGameResultStatement:step()
   if insertPlayerGameResultStatement:reset() ~= 0 then
-    print(db:errmsg())
+    logger.error(db:errmsg())
     return false
   end
   return true
