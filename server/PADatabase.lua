@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS Player(
 
 CREATE TABLE IF NOT EXISTS PlayerELOHistory(
   publicPlayerID INTEGER,
-  rating REAL NOT NULL,
+  rating REAL NOT NULL DEFAULT 1500,
   updateTime TIME TIMESTAMP DEFAULT (strftime('%s', 'now')),
   FOREIGN KEY(publicPlayerID) REFERENCES Player(publicPlayerID)
 );
