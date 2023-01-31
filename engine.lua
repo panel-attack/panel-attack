@@ -2559,15 +2559,11 @@ function Stack.getActivePanels(self)
           activePanels[#activePanels+1] = panel
         end
       else
-        -- this only works because we know that garbage panels can't be swapped
-        if panel.state == Panel.states.swapping then
+        if panel.color ~= 0
+        -- dimmed is implicitly filtered by only checking in row 1 and up
+        and panel.state ~= Panel.states.normal
+        and panel.state ~= Panel.states.landing then
           activePanels[#activePanels+1] = panel
-        else
-          if panel.color ~= 0
-          and panel.state ~= Panel.states.normal
-          and panel.state ~= Panel.states.landing then
-            activePanels[#activePanels+1] = panel
-          end
         end
       end
     end
