@@ -20,8 +20,6 @@ GAME_UPDATER_CHECK_UPDATE_INGAME = nil
 UPDATER_COROUTINE = nil
 
 -- VARS
--- the directory in the saveDirectory where the updater with the specific UPDATER_NAME saves its version files
-local updaterDirectory = nil
 -- the string saved inside of /updater/UPDATER_NAME/.version
 local local_version = nil
 -- local variable used to hold all list of versions available on the server for UPDATER_NAME
@@ -31,33 +29,14 @@ local updateLog = {}
 local debugMode = false
 local updateString = "Checking for updates"
 
-local function logMessage(txt)
-  if not love.window.isOpen() then love.window.setMode(800, 600) end
-  updateLog[#updateLog+1] = txt
-end
+local loadingIndicator = require("loadingIndicator")
+local bigFont = love.graphics.newFont(24)
 
-local time = nil
-local announcedStart = false
-local function start_game(file)
-  local currentTime = love.timer.getTime()
-  -- for debugging purposes
-  if time == nil then
-    time = currentTime
+local function logMessage(txt)
+  if not love.window.isOpen() then
+    love.window.setMode(800, 600)
   end
-  -- this delays the startup so you can actually read the messages logged by the auto updater
-  if debugMode and announcedStart == false and currentTime > (time + 3) and currentTime <= (time + 5) then
-    logMessage("Starting game version " .. file)
-    announcedStart = true
-  else
-    --nothing
-    if not love.filesystem.mount(updaterDirectory..file, '') then error("Could not mount game file: "..file) end
-    GAME_UPDATER_GAME_VERSION = file:gsub("^panel%-", ""):gsub("%.love", "")
-    package.loaded.main = nil
-    package.loaded.conf = nil
-    love.conf = nil
-    love.init()
-    love.load(args)
-  end
+  updateLog[#updateLog+1] = txt
 end
 
 local function get_embedded_version()
@@ -65,6 +44,46 @@ local function get_embedded_version()
     if v:match('%.love$') then return v end
   end
   return nil
+end
+
+local embeddedVersion = get_embedded_version()
+
+local function delayGameStart()
+  local startTime = love.timer.getTime()
+  local currentTime = startTime
+  local dt = 0
+  local announcedStart = false
+
+  while currentTime - startTime < 5 do
+    local loopDt = love.timer.getTime() - currentTime
+    dt = dt + loopDt
+    currentTime = currentTime + loopDt
+
+    -- bit dirty but as we can't be inside of a coroutine for reboot, make our own drawloop here
+    if dt >= (1/60) then
+      dt = 0
+      love.graphics.clear()
+      love.draw()
+      love.graphics.present()
+      love.timer.sleep(0.01)
+    end
+    if not announcedStart and currentTime - startTime >= 3 then
+      logMessage("Starting game version " .. gameStartVersion)
+      announcedStart = true
+    end
+  end
+end
+
+local function reinitLove()
+  if debugMode then
+    delayGameStart()
+  end
+  package.loaded.main = nil
+  package.loaded.conf = nil
+  love.conf = nil
+  love.init()
+  -- command line args for love automatically are saved inside a global args table
+  love.load(args)
 end
 
 local function correctAndroidStartupConfig()
@@ -110,19 +129,15 @@ local function correctAndroidStartupConfig()
     )
 
     if storageChanged == true then
-      package.loaded.main = nil
-      package.loaded.conf = nil
-      love.conf = nil
-      love.init()
-      love.load()
+      reinitLove()
     end
   end
 end
 
 local function cleanUpOldVersions()
-  for i, v in ipairs(love.filesystem.getDirectoryItems(updaterDirectory)) do
+  for i, v in ipairs(love.filesystem.getDirectoryItems(GAME_UPDATER.path)) do
     if v ~= local_version and v:match('%.love$') then
-      love.filesystem.remove(updaterDirectory..v)
+      love.filesystem.remove(GAME_UPDATER.path .. v)
     end
   end
 end
@@ -133,7 +148,7 @@ local function shouldCheckForUpdate()
     return false
   end
 
-  if local_version == nil and get_embedded_version() == nil then
+  if local_version == nil and embeddedVersion == nil then
     -- if there is no local version available at all, try to fetch an update, even if auto_update is off
     return true
   end
@@ -170,14 +185,13 @@ local function containsForcedVersion(versions)
 end
 
 local function setGameStartVersion(version)
-  GAME_UPDATER:change_version(version)
   gameStartVersion = version
 end
 
 local function setEmbeddedAsGameStartVersion()
-  local embeddedVersion = get_embedded_version()
-  love.filesystem.write(updaterDirectory..embeddedVersion, love.filesystem.read(embeddedVersion))
+  love.filesystem.write(GAME_UPDATER.path..embeddedVersion, love.filesystem.read(embeddedVersion))
   setGameStartVersion(embeddedVersion)
+  return true
 end
 
 local function awaitGameDownload(version)
@@ -191,20 +205,6 @@ local function awaitGameDownload(version)
   end
 
   return channelMessage
-end
-
-local function setFallbackVersion()
-  if local_version then
-    logMessage("Falling back to local version")
-    setGameStartVersion(local_version)
-  else
-    -- there is no recent version 
-    logMessage("Falling back to embedded version")
-    if get_embedded_version() == nil then
-      error('Could not find an embedded version of the game\nPlease connect to the internet and restart the game.')
-    end
-    setEmbeddedAsGameStartVersion()
-  end
 end
 
 local function run()
@@ -230,7 +230,7 @@ local function run()
       if all_versions[1] == local_version then
         logMessage("Your game is already up to date!")
         setGameStartVersion(local_version)
-      elseif all_versions[1] == get_embedded_version() then
+      elseif all_versions[1] == embeddedVersion then
         logMessage("Your game is already up to date!")
         setEmbeddedAsGameStartVersion()
       else
@@ -253,8 +253,48 @@ local function setDebugFlag(args)
   end
 end
 
-function love.load(args)
+-- mounts the game file
+-- if successful it will return true and update the game version on GAME_UPDATER
+-- it will also set gameStartVersion to itself
+-- if unsuccessful it will return false and do nothing more
+local function tryMountGame(version)
+  if love.filesystem.mount(GAME_UPDATER.path .. version, '') then
+    GAME_UPDATER:change_version(version)
+    GAME_UPDATER_GAME_VERSION = version:gsub("^panel%-", ""):gsub("%.love", "")
+    -- for logging
+    gameStartVersion = version
+    return true
+  end
+  return false
+end
 
+local function startGame()
+  -- it may happen that a version cannot be mounted
+  -- reason will usually be an interrupted download of a new game version,
+  -- leaving the user with a bricked game file
+  if gameStartVersion and tryMountGame(gameStartVersion) then
+    reinitLove()
+  elseif local_version and tryMountGame(local_version) then
+    logMessage("Falling back to local version")
+    reinitLove()
+  elseif embeddedVersion and setEmbeddedAsGameStartVersion() and tryMountGame(embeddedVersion) then
+    logMessage("Falling back to embedded version")
+    reinitLove()
+  else
+    -- everything failed, there is no game file to boot with
+    -- make sure to clean up all left-over bricked versions
+    -- if any client could be mounted, bricked versions will get cleaned up in `load` on next startup
+    -- but if nothing can get mounted, a bricked versions might remain and prevent a redownload
+    local_version = nil
+    cleanUpOldVersions()
+    error("Could not mount a game file in the " .. UPDATER_NAME .. " auto_updater.\n" ..
+          "Please try redownloading the game.")
+  end
+end
+
+function love.load(args)
+  loadingIndicator:setDrawPosition(love.graphics:getDimensions())
+  loadingIndicator:setFont(bigFont)
   setDebugFlag(args)
   logMessage("Starting auto updater...")
   correctAndroidStartupConfig()
@@ -262,7 +302,6 @@ function love.load(args)
   -- delayed initialisation as GameUpdater already writes into storage which ruins the function above
   GAME_UPDATER = GameUpdater(UPDATER_NAME)
   GAME_UPDATER_CHECK_UPDATE_INGAME = (GAME_UPDATER.config.force_version == "")
-  updaterDirectory = GAME_UPDATER.path
   local_version = GAME_UPDATER:get_version()
 
   cleanUpOldVersions()
@@ -271,7 +310,7 @@ function love.load(args)
     if GAME_UPDATER.config.force_version == local_version then
       -- no point updating when we already have exactly the version we want
       setGameStartVersion(local_version)
-    elseif GAME_UPDATER_GAME_VERSION.config.force_version == get_embedded_version() then
+    elseif GAME_UPDATER_GAME_VERSION.config.force_version == embeddedVersion then
       setEmbeddedAsGameStartVersion()
     end
   end
@@ -290,17 +329,12 @@ function love.update(dt)
       error(err .. "\n\n" .. debug.traceback(UPDATER_COROUTINE))
     end
   else
-    if gameStartVersion == nil then
-      setFallbackVersion()
-    end
-    start_game(gameStartVersion)
+    -- we cannot reboot the game proper while inside the coroutine
+    startGame()
   end
 end
 
-local indicatorTimer = 0
-local indicator = { false, false, false }
 local width, height = love.graphics.getDimensions()
-local font = love.graphics.newFont(24)
 function love.draw()
   if debugMode then
     love.graphics.print("Your save directory is: " .. love.filesystem.getSaveDirectory(), 10, 10)
@@ -311,26 +345,8 @@ function love.draw()
       end
     end
   else
-    love.graphics.printf(updateString, font, 0, height / 2 - 12, width, "center")
+    love.graphics.printf(updateString, bigFont, 0, height / 2 - 12, width, "center")
   end
 
-  -- draw an indicator to indicate that the window is alive and kicking even during a download
-  indicatorTimer = indicatorTimer + 1
-  if indicatorTimer % 60 == 20 then
-    indicator[1] = not indicator[1]
-  elseif indicatorTimer % 60 == 40 then
-    indicator[2] = not indicator[2]
-  elseif indicatorTimer % 60 == 0 then
-    indicator[3] = not indicator[3]
-  end
-
-  if indicator[1] then
-    love.graphics.print(".", font, width / 2 - 15, height * 0.75)
-  end
-  if indicator[2] then
-    love.graphics.print(".", font, width / 2     , height * 0.75)
-  end
-  if indicator[3] then
-    love.graphics.print(".", font, width / 2 + 15, height * 0.75)
-  end
+  loadingIndicator:draw()
 end

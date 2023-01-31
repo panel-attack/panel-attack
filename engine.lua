@@ -883,7 +883,7 @@ function Stack.puzzleStringToPanels(self, puzzleString)
   panels[0] = {}
   for column = 6, 1, -1 do
     local panel = Panel()
-    panel.color = 0
+    panel.color = 9
     panels[0][column] = panel
   end
 

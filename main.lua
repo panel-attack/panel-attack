@@ -2,7 +2,6 @@ require("class")
 socket = require("socket")
 GAME = require("game")
 require("match")
-local manualGC = require("libraries.batteries.manual_gc")
 local RunTimeGraph = require("RunTimeGraph")
 require("BattleRoom")
 require("util")
@@ -32,7 +31,7 @@ require("sound")
 require("timezones")
 require("gen_panels")
 require("panels")
-require("theme")
+require("Theme")
 local utf8 = require("utf8")
 require("click_menu")
 require("computerPlayers.computerPlayer")
@@ -152,8 +151,6 @@ function love.update(dt)
 
   update_music()
   GAME.rich_presence:runCallbacks()
-  
-  manualGC(0.0001, nil, nil)
 end
 
 -- Called whenever the game needs to draw.
@@ -170,9 +167,7 @@ function love.draw()
 
   -- Draw the FPS if enabled
   if config ~= nil and config.show_fps then
-    if CustomRun.runTimeGraph then
-      CustomRun.runTimeGraph:draw()
-    else
+    if not CustomRun.runTimeGraph then
       gprintf("FPS: " .. love.timer.getFPS(), 1, 1)
     end
   end
