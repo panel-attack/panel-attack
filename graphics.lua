@@ -488,7 +488,7 @@ function Stack.render(self)
 
         -- Require hovering over a stack to show details
         if mx >= self.pos_x * GFX_SCALE and mx <= (self.pos_x + self.width * 16) * GFX_SCALE then
-        
+          if not (panel.color == 0 and panel.state == Panel.states.normal) then
             if panel.state == Panel.states.normal then
               gprint("normal", draw_x, draw_y)
             elseif panel.state == Panel.states.swapping then
@@ -520,6 +520,7 @@ function Stack.render(self)
               gprint("chaining", draw_x, draw_y + 30)
             end
           end
+        end
 
         if mx >= draw_x and mx < draw_x + 16 * GFX_SCALE and my >= draw_y and my < draw_y + 16 * GFX_SCALE then
           local str = loc("pl_panel_info", row, col)
