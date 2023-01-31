@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS Player(
 
 CREATE TABLE IF NOT EXISTS PlayerELOHistory(
   publicPlayerID INTEGER,
-  rating REAL NOT NULL DEFAULT 1500,
+  rating REAL NOT NULL,
   updateTime TIME TIMESTAMP DEFAULT (strftime('%s', 'now')),
   FOREIGN KEY(publicPlayerID) REFERENCES Player(publicPlayerID)
 );
@@ -105,7 +105,7 @@ end
 
 local insertPlayerELOChangeStatement = assert(db:prepare("INSERT INTO PlayerELOHistory(publicPlayerID, rating) VALUES ((SELECT publicPlayerID FROM Player WHERE privatePlayerID = ?), ?)"))
 function PADatabase.insertPlayerELOChange(self, privatePlayerID, rating)
-  insertPlayerELOChangeStatement:bind_values(privatePlayerID, rating)
+  insertPlayerELOChangeStatement:bind_values(privatePlayerID, rating or 1500)
   insertPlayerELOChangeStatement:step()
   if insertPlayerELOChangeStatement:reset() ~= 0 then
     print(db:errmsg())
