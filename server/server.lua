@@ -653,7 +653,7 @@ local function importDatabase()
     end
   end
   database:commitTransaction() -- bulk commit every statement from the start of beginTransaction
-  end
+end
   
 local isPlayerTableEmpty = database:getPlayerRecordCount() == 0
 if isPlayerTableEmpty then
