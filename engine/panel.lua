@@ -270,6 +270,8 @@ landingState.changeState = function(panel)
   panel.stateChanged = true
 end
 
+-- while these dimmedState functions should be correct, they are currently unused
+-- new row generation and turning row 0 into row 1 is still handled by the stack as of now
 dimmedState.update = function(panel, panels)
   if panel.row >= 1 then
     dimmedState.changeState(panel)
@@ -445,23 +447,6 @@ function Panel.dangerous(self)
     return self.state ~= Panel.states.falling
   else
     return self.color ~= 0
-  end
-end
-
--- returns true if there is about anything out of the ordinary about this panel
-function Panel.has_flags(self)
-  if self.state ~= Panel.states.normal then
-    return true
-  --elseif self.isSwappingFromLeft then
-  --this is obsolete; if it was swapping from left, panel state would be swapping and thus ~= normal
-  elseif self.dont_swap then
-    return true
-  elseif self.chaining then
-    -- panels that are chaining are traditionally hovering, landing, falling or swapping
-    -- keeping this for safety for now
-    return true
-  else
-    return false
   end
 end
 
@@ -652,7 +637,9 @@ function Panel.supportedFromBelow(self, panels)
 
   if self.isGarbage then
     -- check if it supported in any column over the entire width of the garbage
-    for column = self.column - self.x_offset, self.column - self.x_offset + self.width - 1 do
+    local startColumn = self.column - self.x_offset
+    local endColumn = self.column - self.x_offset + self.width - 1
+    for column = startColumn, endColumn do
       local panel = panels[self.row - 1][column]
       if panel.color ~= 0 then
         if panel.isGarbage == false then
