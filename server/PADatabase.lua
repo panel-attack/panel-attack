@@ -148,7 +148,7 @@ function PADatabase.insertPlayerGameResult(self, privatePlayerID, gameID, level,
   return true
 end
 
--- Stop statements from being committed
+-- Stop statements from being committed until commitTransaction is called
 function PADatabase.beginTransaction(self)
   db:exec("BEGIN")
 end
