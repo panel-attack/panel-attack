@@ -71,6 +71,7 @@ function Connection.login(self, user_id)
       end
       self.logged_in = true
       self:send({login_successful = true, name_changed = true, old_name = the_old_name, new_name = self.name})
+      self.server.database:updatePlayerUsername(self.user_id, self.name)
       logger.warn("Login successful and " .. self.user_id .. " changed name " .. the_old_name .. " to " .. self.name)
     end
   elseif playerbase.players[self.user_id] then
