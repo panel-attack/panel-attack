@@ -84,3 +84,21 @@ end
 
 frameTricksTest()
 
+-- Tests a catch that also did a "sync" (two separate matches on the same frame)
+local function catchAndSyncTest()
+  match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-31-08-57-51-Galadic97-L10-vs-iTSMEJASOn-L8-Casual-P1wins.txt")
+  assert(match ~= nil)
+  assert(match.mode == "vs")
+  assert(match.seed == 8739468)
+  assert(match.P1.game_over_clock == 0)
+  assert(match.P1.level == 10)
+  assert(table.length(match.P1.chains) == 4)
+  assert(table.length(match.P1.combos) == 6)
+  assert(match.P2.game_over_clock == 2431)
+  assert(match.P2.level == 8)
+  assert(table.length(match.P2.chains) == 2)
+  assert(table.length(match.P2.combos) == 2)
+  assert(match.P1:gameResult() == 1)
+end
+
+catchAndSyncTest()
