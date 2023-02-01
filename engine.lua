@@ -472,7 +472,7 @@ function Stack.rollbackToFrame(self, frame)
     if self.garbage_target then
       self.garbage_target.tooFarBehindError = true
     end
-    return -- EARLY RETURN
+    return false -- EARLY RETURN
   end
 
   if frame < currentFrame then
@@ -497,6 +497,8 @@ function Stack.rollbackToFrame(self, frame)
     self.rollbackCount = self.rollbackCount + 1
     self.lastRollbackFrame = currentFrame
   end
+
+  return true
 end
 
 function Stack:shouldSaveRollback()

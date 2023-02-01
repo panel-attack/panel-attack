@@ -85,3 +85,41 @@ local function rollbackNotPastAttackTest()
 end
 
 rollbackNotPastAttackTest()
+
+-- Vs rollback before attack even happened
+-- Make sure the attack only happens once and only once if we rollback before it happened
+local function rollbackFullyPastAttack()
+  match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "v046-2023-02-01-05-38-16-vsSelf-L8.txt")
+
+  StackReplayTestingUtils:simulateMatch(match, 360)
+  assert(match.P1.combos[344] ~= nil and match.P1.combos[344][1].width == 3)
+
+  match:debugRollbackAndCaptureState(344)
+  assert(match.P1.combos[344] == nil)
+
+  StackReplayTestingUtils:simulateMatch(match, 480)
+
+  assert(match.P1.chains[428] ~= nil and match.P1.chains[428].size == 2)
+  assert(match.P1.combos[344] ~= nil and match.P1.combos[344][1].width == 3)
+
+  match:debugRollbackAndCaptureState(420)
+  assert(match.P1.chains[428] == nil)
+  assert(match.P1.combos[344] ~= nil and match.P1.combos[344][1].width == 3)
+
+  StackReplayTestingUtils:simulateMatch(match, 480)
+  assert(match.P1.chains[428] ~= nil and match.P1.chains[428].size == 2)
+  assert(match.P1.combos[344] ~= nil and match.P1.combos[344][1].width == 3)
+
+  StackReplayTestingUtils:fullySimulateMatch(match)
+  assert(match.P1.chains[428] ~= nil and match.P1.chains[428].size == 4)
+  assert(match.P1.combos[344] ~= nil and match.P1.combos[344][1].width == 3)
+  assert(match ~= nil)
+  assert(match.mode == "vs")
+  assert(match.seed == 3917661)
+  assert(match.P1.game_over_clock == 797)
+  assert(match.P1.level == 8)
+  assert(table.length(match.P1.chains) == 1)
+  assert(table.length(match.P1.combos) == 1)
+end
+
+rollbackFullyPastAttack()

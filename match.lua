@@ -109,9 +109,11 @@ function Match:debugRollbackAndCaptureState(clockGoal)
     self.savedStackP2 = P2.prev_states[P2.CLOCK]
   end
 
-  P1:rollbackToFrame(clockGoal)
+  local rollbackResult = P1:rollbackToFrame(clockGoal)
+  assert(rollbackResult)
   if P2 then
-    P2:rollbackToFrame(clockGoal)
+    rollbackResult = P2:rollbackToFrame(clockGoal)
+    assert(rollbackResult)
   end
 end
 
