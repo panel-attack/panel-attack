@@ -87,14 +87,20 @@ Stack =
 
     s.health = s.max_health
 
-    s.garbage_cols = {
-      {1, 2, 3, 4, 5, 6, idx = 1},
-      {1, 3, 5, idx = 1},
-      {1, 4, idx = 1},
-      {1, 2, 3, idx = 1},
-      {1, 2, idx = 1},
-      {1, idx = 1}
+    -- Which columns each size garbage is allowed to fall in.
+    -- This is typically constant but maybe some day we would allow different ones 
+    -- for different game modes or need to change it based on board width.
+    s.garbageSizeDropColumnMaps = {
+      {1, 2, 3, 4, 5, 6},
+      {1, 3, 5,},
+      {1, 4},
+      {1, 2, 3},
+      {1, 2},
+      {1}
     }
+    -- The current index of the above table we are currently using for the drop column.
+    -- This increases by 1 wrapping every time garbage drops.
+    s.currentGarbageDropColumnIndexes = {1, 1, 1, 1, 1, 1}
 
     s.later_garbage = {} -- Queue of garbage that is done waiting in telegraph, and been popped out, and will be sent to our stack next frame
     s.garbage_q = GarbageQueue(s) -- Queue of garbage that is about to be dropped
@@ -214,18 +220,15 @@ Stack =
     end
 
     s.combos = {} -- Tracks the combos made throughout the whole game. Key is the clock time, value is the combo size
-
-    s.chains = {} -- Tracks the chains mades throughout the whole game
+    s.chains = {} -- Tracks the chains made throughout the whole game
     --[[
-      .last_complete - the CLOCK index into the last chain or nil if no chains this game yet
-      .current - the CLOCK index into the current chain or nil if no chain active
-      indexes
         Key - CLOCK time the chain started
         Value -
 	        start - CLOCK time the chain started (same as key)
 	        finish - CLOCK time the chain finished
 	        size - the chain size 2, 3, etc
     ]]
+    s.currentChainStartFrame = nil -- The start frame of the current active chain or nil if no chain is active
 
     s.panelGenCount = 0
     s.garbageGenCount = 0
@@ -364,7 +367,6 @@ function Stack.rollbackCopy(source, other)
       other = {}
     else
       other = source.clonePool[#source.clonePool]
-      other.isClone = true
       source.clonePool[#source.clonePool] = nil
     end
   end
@@ -372,13 +374,11 @@ function Stack.rollbackCopy(source, other)
   other.speed = source.speed
   other.health = source.health
 
-  -- backup the spawn indices of garbage per its width
-  if other.isClone then
-    for garbageWidth = 1, #source.garbage_cols do
-      other.garbage_cols[garbageWidth].idx = source.garbage_cols[garbageWidth].idx
-    end
-  else
-    other.garbage_cols = deepcpy(source.garbage_cols)
+  if other.currentGarbageDropColumnIndexes == nil then
+    other.currentGarbageDropColumnIndexes = {}
+  end
+  for garbageWidth = 1, #source.currentGarbageDropColumnIndexes do
+    other.currentGarbageDropColumnIndexes[garbageWidth] = source.currentGarbageDropColumnIndexes[garbageWidth]
   end
   
   other.later_garbage = deepcpy(source.later_garbage)
@@ -461,61 +461,7 @@ function Stack.rollbackCopy(source, other)
   other.danger_timer = source.danger_timer
   other.analytic = deepcpy(source.analytic)
   other.game_over_clock = source.game_over_clock
-
-  -- DISCLAIMER
-  -- The following code does NOT work completely (yet)
-  -- The only thing it breaks is the attackpattern export in case a rollback does occur
-
-  if not other.isClone then
-    other.combos = {}
-    other.chains = {}
-  end
-
-  -- because this function is also used to apply a rollback (aka source could be older than other)
-  -- we need to remove any data for frames higher than source.CLOCK, just in case
-  for frame, _ in pairs(other.combos) do
-    if frame >= source.CLOCK then
-      other.combos[frame] = nil
-    end
-  end
-
-  -- otherwise same as combos above
-  for frame, _ in pairs(other.chains) do
-    if tonumber(frame) and frame >= source.CLOCK then
-      other.chains[frame] = nil
-    end
-  end
-
-  -- just creating a new table and putting in the frame values one by one is enough
-  for frame, value in pairs(source.combos) do
-    -- values inside the combos table are de facto immutable since players can't travel back in time to change them
-    -- at best they can rollback the game and make it disappear to create it from scratch again later
-    -- due to that there is no need to overwrite a value if we already have it
-    if not other.combos[frame] then
-      -- nor do we have to deepcopy it, referencing it is enough
-      other.combos[frame] = value
-    end
-  end
-
-  
-  -- chains are a work in progress unlike combos
-  for frame, value in pairs(source.chains) do
-    -- chains contains two string type indices in current and last_complete, don't typecrash on them
-    if tonumber(frame) then
-      if source.chains.current and frame == source.chains.current then
-        -- due to that we must always deepcpy the current ongoing chain as it may get extended by source
-        other.chains[frame] = deepcpy(value)
-      elseif other.chains.current and frame == other.chains.current then
-        -- the clone we come from holds a deepcopy of this chain and therefore it wouldn't have received further updates
-        other.chains[frame] = value
-        -- if we were still on the same chain, it would have gotten deepcopied above instead
-      elseif not other.chains[frame] then
-        -- all new completed chains are immutable already and can be assigned per reference
-        other.chains[frame] = value
-      end
-    end
-  end
-  other.chains.current = source.chains.current
+  other.currentChainStartFrame = source.currentChainStartFrame
 
   return other
 end
@@ -562,6 +508,18 @@ function Stack.rollbackToFrame(self, frame)
         if k > frame then
           self.garbage_target.later_garbage[k] = nil
         end
+      end
+    end
+
+    for chainFrame, _ in pairs(self.chains) do
+      if chainFrame >= frame then
+        self.chains[chainFrame] = nil
+      end
+    end
+    
+    for comboFrame, _ in pairs(self.combos) do
+      if comboFrame >= frame then
+        self.combos[comboFrame] = nil
       end
     end
 
@@ -1796,10 +1754,9 @@ function Stack.simulate(self)
 
     -- if at the end of the routine there are no chain panels, the chain ends.
     if self.chain_counter ~= 0 and self.n_chain_panels == 0 then
-      self.chains[self.chains.current].finish = self.CLOCK
-      self.chains[self.chains.current].size = self.chain_counter
-      self.chains.last_complete = self.current
-      self.chains.current = nil
+      self.chains[self.currentChainStartFrame].finish = self.CLOCK
+      self.chains[self.currentChainStartFrame].size = self.chain_counter
+      self.currentChainStartFrame = nil
       if self:shouldChangeSoundEffects() then
         SFX_Fanfare_Play = self.chain_counter
       end
@@ -2432,9 +2389,10 @@ function Stack.drop_garbage(self, width, height, metal)
     end
   end
 
-  local cols = self.garbage_cols[width]
-  local spawn_col = cols[cols.idx]
-  cols.idx = wrap(1, cols.idx + 1, #cols)
+  local columns = self.garbageSizeDropColumnMaps[width]
+  local index = self.currentGarbageDropColumnIndexes[width]
+  local spawn_col = columns[index]
+  self.currentGarbageDropColumnIndexes[width] = wrap(1, index + 1, #columns)
   local shake_time = garbage_to_shake_time[width * height]
   for y = spawn_row, spawn_row + height - 1 do
     for x = spawn_col, spawn_col + width - 1 do
@@ -2703,10 +2661,10 @@ function Stack.check_matches(self)
     end
     if (is_chain) then
       if self.chain_counter == 2 then
-        self.chains.current = self.CLOCK
-        self.chains[self.chains.current] = {starts = {}}
+        self.currentChainStartFrame = self.CLOCK
+        self.chains[self.currentChainStartFrame] = {starts = {}}
       end
-      local currentChainData = self.chains[self.chains.current]
+      local currentChainData = self.chains[self.currentChainStartFrame]
       currentChainData.size = self.chain_counter
       currentChainData.starts[#currentChainData.starts+1] = self.CLOCK
       self:enqueue_card(true, first_panel_col, first_panel_row, self.chain_counter)
@@ -2901,7 +2859,7 @@ function Stack:getAttackPatternData()
   data.mergeComboMetalQueue = false
   data.delayBeforeStart = 0
   data.delayBeforeRepeat = 91
-  self.chains.current = nil
+  self.currentChainStartFrame = nil
   local defaultEndTime = 70
   local sortedAttackPatterns = {}
 
