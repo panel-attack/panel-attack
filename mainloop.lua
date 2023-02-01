@@ -71,6 +71,7 @@ function fmainloop()
     require("PuzzleTests")
     require("ServerQueueTests")
     require("StackTests")
+    require("tests.ThemeTests")
     require("table_util_tests")
     require("utilTests")
     if PERFORMANCE_TESTS_ENABLED then

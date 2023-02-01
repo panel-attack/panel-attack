@@ -35,7 +35,7 @@ function CustomRun.sleep()
 
   local idleTime = targetTime - currentTime
   -- Spend as much time as necessary collecting garbage, but at least 0.1ms
-  manualGc(math.max(0.0001, idleTime * 0.99), 256, false)
+  manualGc(math.max(0.0001, idleTime * 0.99))
   currentTime = love.timer.getTime()
   CustomRun.runMetrics.gcDuration = currentTime - originalTime
   originalTime = currentTime
@@ -91,6 +91,13 @@ function CustomRun.innerRun()
   if graphicsActive then
     love.graphics.origin()
     love.graphics.clear(love.graphics.getBackgroundColor())
+
+    -- draw the RunTimeGraph here so it doesn't contribute to the love.draw load
+    if CustomRun.runTimeGraph then
+      local preGraphDrawTime = love.timer.getTime()
+      CustomRun.runTimeGraph:draw()
+      CustomRun.runMetrics.graphDuration = CustomRun.runMetrics.graphDuration + (love.timer.getTime() - preGraphDrawTime)
+    end
 
     if love.draw then
       local preDrawTime = love.timer.getTime()

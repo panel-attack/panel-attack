@@ -102,7 +102,7 @@ end
 -- Finds the given music file with the given type and adds it to the queue
 function find_and_add_music(musics, music_type)
   logger.debug("music " .. music_type .. " is now playing")
-  local start_music = musics[music_type .. "_start"] or zero_sound
+  local start_music = musics[music_type .. "_start"] or themes[config.theme].zero_sound
   local loop_music = musics[music_type]
   if not loop_music or not start_music or loop_music:isPlaying() or start_music:isPlaying() then
     return
