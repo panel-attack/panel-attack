@@ -25,20 +25,21 @@ function StackReplayTestingUtils:simulateStack(stack, clockGoal)
     stack:run()
     stack:saveForRollback()
   end
+  assert(match.P1.CLOCK == clockGoal)
 end
 
-function StackReplayTestingUtils:simulateMatch(match, clockGoal)
+function StackReplayTestingUtils:simulateMatchUntil(match, clockGoal)
   while match.P1.CLOCK < clockGoal do
       match:run()
   end
+  assert(match.P1.CLOCK == clockGoal)
 end
 
 -- Runs the given clock time both with and without rollback
-function StackReplayTestingUtils:simulateMatchAtClockWithRollback(match, clock)
-  StackReplayTestingUtils:simulateMatch(match, clock)
-  assert(match.P1.CLOCK == clock)
+function StackReplayTestingUtils:simulateMatchWithRollbackAtClock(match, clock)
+  StackReplayTestingUtils:simulateMatchUntil(match, clock)
   match:debugRollbackAndCaptureState(clock-1)
-  StackReplayTestingUtils:simulateMatch(match, clock)
+  StackReplayTestingUtils:simulateMatchUntil(match, clock)
 end
 
 function StackReplayTestingUtils:setupReplayWithPath(path)

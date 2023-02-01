@@ -484,11 +484,11 @@ function Stack.rollbackToFrame(self, frame)
     if self.garbage_target and self.garbage_target.later_garbage then
       -- The garbage that we send this time might (rarely) not be the same
       -- as the garbage we sent before.  Wipe out the garbage we sent before...
+      local targetFrame = frame + GARBAGE_DELAY_LAND_TIME
       for k, v in pairs(self.garbage_target.later_garbage) do
         -- The time we actually affected the target was garbage delay away,
         -- so we only need to remove it if its at least that far away
-        local target = frame + GARBAGE_DELAY_LAND_TIME
-        if k >= target then
+        if k >= targetFrame then
           self.garbage_target.later_garbage[k] = nil
         end
       end

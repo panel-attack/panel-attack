@@ -11,7 +11,7 @@ local function rollbackPastAttackTest()
   local aheadTime = 500
   local garbageTelegraphPopTime = 463
   local rollbackTime = garbageTelegraphPopTime
-  StackReplayTestingUtils:simulateMatch(match, startClock)
+  StackReplayTestingUtils:simulateMatchUntil(match, startClock)
   StackReplayTestingUtils:simulateStack(match.P1, aheadTime)
 
   -- Simulate to a point P1 has sent an attack to P2
@@ -24,7 +24,7 @@ local function rollbackPastAttackTest()
   assert(match.P2.later_garbage[523] == nil)
 
   -- Simulate again, attack shoudld pop off again
-  StackReplayTestingUtils:simulateMatch(match, aheadTime)
+  StackReplayTestingUtils:simulateMatchUntil(match, aheadTime)
 
   assert(match.P2.later_garbage[523] ~= nil and #match.P2.later_garbage[523] == 1)
 
@@ -54,7 +54,7 @@ local function rollbackNotPastAttackTest()
   local aheadTime = 500
   local garbageTelegraphPopTime = 463
   local rollbackTime = garbageTelegraphPopTime + 1
-  StackReplayTestingUtils:simulateMatch(match, startClock)
+  StackReplayTestingUtils:simulateMatchUntil(match, startClock)
   StackReplayTestingUtils:simulateStack(match.P1, aheadTime)
 
   -- Simulate to a point P1 has sent an attack to P2
@@ -65,7 +65,7 @@ local function rollbackNotPastAttackTest()
   assert(match.P2.later_garbage[523] ~= nil and #match.P2.later_garbage[523] == 1)
 
   -- Simulate again, attack shouldn't pop off again
-  StackReplayTestingUtils:simulateMatch(match, aheadTime)
+  StackReplayTestingUtils:simulateMatchUntil(match, aheadTime)
 
   assert(match.P2.later_garbage[523] ~= nil and #match.P2.later_garbage[523] == 1)
 
@@ -91,13 +91,13 @@ rollbackNotPastAttackTest()
 local function rollbackFullyPastAttack()
   match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "v046-2023-02-01-05-38-16-vsSelf-L8.txt")
 
-  StackReplayTestingUtils:simulateMatch(match, 360)
+  StackReplayTestingUtils:simulateMatchUntil(match, 360)
   assert(match.P1.combos[344] ~= nil and match.P1.combos[344][1].width == 3)
 
   match:debugRollbackAndCaptureState(344)
   assert(match.P1.combos[344] == nil)
 
-  StackReplayTestingUtils:simulateMatch(match, 480)
+  StackReplayTestingUtils:simulateMatchUntil(match, 480)
 
   assert(match.P1.chains[428] ~= nil and match.P1.chains[428].size == 2)
   assert(match.P1.combos[344] ~= nil and match.P1.combos[344][1].width == 3)
@@ -106,7 +106,7 @@ local function rollbackFullyPastAttack()
   assert(match.P1.chains[428] == nil)
   assert(match.P1.combos[344] ~= nil and match.P1.combos[344][1].width == 3)
 
-  StackReplayTestingUtils:simulateMatch(match, 480)
+  StackReplayTestingUtils:simulateMatchUntil(match, 480)
   assert(match.P1.chains[428] ~= nil and match.P1.chains[428].size == 2)
   assert(match.P1.combos[344] ~= nil and match.P1.combos[344][1].width == 3)
 
