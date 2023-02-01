@@ -46,9 +46,8 @@ Try to follow the following code guidelines when contributing:
 - Make smaller methods
 - Don’t duplicate code, break it into smaller reusable chunks and use that in both spots
 - Writing tests for how the code should work is extremely beneficial
-- Constants should be local to a file / scope unless they need to be shared everywhere
-- Avoid the use of shortlived tables and consider pooling if you can't
 - Follow the formatting guidelines below
+- Constants should be local to a file / scope unless they need to be shared everywhere
 
 ## Formatting Guidelines
 

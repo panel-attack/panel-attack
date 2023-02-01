@@ -3,34 +3,35 @@ local consts = require("consts")
 
 local RunTimeGraph = class(function(self)
   local updateSpeed = consts.FRAME_RATE * 1
-  local x = 880
-  local y = 0
-  local width = 400
+  local valueCount = 60
+  local width = valueCount * 8
   local height = 50
+  local x = canvas_width - width
+  local y = 4
   local padding = 80
   self.graphs = {}
 
   -- fps graph
-  self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, 60)
+  self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, 60, valueCount)
   self.graphs[#self.graphs]:setFillColor({0, 1, 0, 1}, 1)
   y = y + height + padding
 
   -- memory graph
-  self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, 20)
+  self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, 256, valueCount)
   y = y + height + padding
 
   -- leftover time
-  self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, consts.FRAME_RATE * 1)
+  self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, consts.FRAME_RATE * 1, valueCount)
   self.graphs[#self.graphs]:setFillColor({0, 1, 1, 1}, 1)
   y = y + height + padding
 
   -- run loop graph
-  self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, consts.FRAME_RATE * 1)
+  self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, consts.FRAME_RATE * 1, valueCount)
   self.graphs[#self.graphs]:setFillColor({0, 1, 0, 1}, 1) -- love.update
-  self.graphs[#self.graphs]:setFillColor({0, 0.5, 1, 1}, 2) -- self:draw + self:updateWithMetrics
-  self.graphs[#self.graphs]:setFillColor({1, 0.5, 0, 1}, 3) -- love.draw
+  self.graphs[#self.graphs]:setFillColor({1, 0.3, 0.3, 1}, 3) -- love.draw
+  self.graphs[#self.graphs]:setFillColor({0.5, 0.5, 0.5, 1}, 2) -- self:draw + self:updateWithMetrics
   self.graphs[#self.graphs]:setFillColor({1, 1, 1, 1}, 4) -- love.present
-  self.graphs[#self.graphs]:setFillColor({1, 0, 1, 1}, 5) -- manualGc
+  self.graphs[#self.graphs]:setFillColor({0.2, 0.2, 1, 1}, 5) -- manualGc
   self.graphs[#self.graphs]:setFillColor({0, 0, 1, 1}, 6) -- love.timer.sleep
 
   y = y + height + padding
@@ -49,8 +50,8 @@ function RunTimeGraph:updateWithMetrics(runMetrics)
   self.graphs[3]:updateGraph({leftover_time}, "leftover_time " .. leftover_time, dt)
 
   self.graphs[4]:updateGraph({runMetrics.updateDuration,
-                              runMetrics.graphDuration,
                               runMetrics.drawDuration,
+                              runMetrics.graphDuration,
                               runMetrics.presentDuration,
                               runMetrics.gcDuration,
                               runMetrics.sleepDuration
@@ -59,7 +60,14 @@ function RunTimeGraph:updateWithMetrics(runMetrics)
 end
 
 function RunTimeGraph:draw()
+  love.graphics.push()
+
+  love.graphics.translate(GAME.canvasX, GAME.canvasY)
+  love.graphics.scale(GAME.canvasXScale, GAME.canvasYScale)
+
   BarGraph.drawGraphs(self.graphs)
+
+  love.graphics.pop()
 end
 
 return RunTimeGraph
