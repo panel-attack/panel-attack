@@ -68,12 +68,17 @@ function fmainloop()
     -- Run all unit tests now that we have everything loaded
     GAME:drawLoadingString("Running Unit Tests")
     wait()
+    -- Small tests (unit tests)
     require("PuzzleTests")
     require("ServerQueueTests")
     require("StackTests")
     require("tests.ThemeTests")
     require("table_util_tests")
     require("utilTests")
+    -- Medium level tests (integration tests)
+    require("tests.StackReplayTests")
+    require("tests.StackRollbackReplayTests")
+    -- Performance Tests
     if PERFORMANCE_TESTS_ENABLED then
       require("tests/performanceTests")
     end

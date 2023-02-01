@@ -472,7 +472,7 @@ function Stack.rollbackToFrame(self, frame)
     if self.garbage_target then
       self.garbage_target.tooFarBehindError = true
     end
-    return -- EARLY RETURN
+    return false -- EARLY RETURN
   end
 
   if frame < currentFrame then
@@ -484,8 +484,11 @@ function Stack.rollbackToFrame(self, frame)
     if self.garbage_target and self.garbage_target.later_garbage then
       -- The garbage that we send this time might (rarely) not be the same
       -- as the garbage we sent before.  Wipe out the garbage we sent before...
+      local targetFrame = frame + GARBAGE_DELAY_LAND_TIME
       for k, v in pairs(self.garbage_target.later_garbage) do
-        if k > frame then
+        -- The time we actually affected the target was garbage delay away,
+        -- so we only need to remove it if its at least that far away
+        if k >= targetFrame then
           self.garbage_target.later_garbage[k] = nil
         end
       end
@@ -494,6 +497,8 @@ function Stack.rollbackToFrame(self, frame)
     self.rollbackCount = self.rollbackCount + 1
     self.lastRollbackFrame = currentFrame
   end
+
+  return true
 end
 
 function Stack:shouldSaveRollback()
@@ -2029,6 +2034,7 @@ function Stack.simulate(self)
   self:update_cards()
 end
 
+-- Called on a stack by the attacker with the time to start processing the garbage drop
 function Stack:receiveGarbage(frameToReceive, garbageList)
 
   -- If we are past the frame the attack would be processed we need to rollback
