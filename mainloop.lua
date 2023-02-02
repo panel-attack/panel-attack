@@ -510,7 +510,7 @@ local function runMainGameLoop(updateFunction, variableStepFunction, abortGameFu
 
     -- Render only if we are not catching up to a current spectate match
     if not (P1 and P1.play_to_end) and not (P2 and P2.play_to_end) then
-      GAME.match:render()
+      gfx_q:push({Match.render, {GAME.match}})
       wait()
     end
 
@@ -2049,7 +2049,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax, keepMusic, ar
   end
 
   while true do
-    GAME.match:render()
+    gfx_q:push({Match.render, {GAME.match}})
     gprint(text, (canvas_width - font:getWidth(text)) / 2, 10)
     gprint(button_text, (canvas_width - font:getWidth(button_text)) / 2, 10 + 30)
     wait()

@@ -973,7 +973,7 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
 
   -- Main loop for running the select screen and drawing
   while true do
-    graphics:draw(self)
+    gfx_q:push({graphics.draw, {graphics, self}})
 
     if select_screen:isNetPlay() then
       local leaveRoom = self:handleServerMessages()

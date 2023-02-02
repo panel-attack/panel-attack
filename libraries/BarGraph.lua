@@ -1,18 +1,21 @@
 -- Inspired by https://github.com/icrawler/FPSGraph but mostly rewritten.
 
-local BarGraph = class(function(self, x, y, width, height, delay, maxValue)
+local BarGraph = class(function(self, x, y, width, height, delay, maxValue, valueCount)
   assert(width >= 10)
   assert(maxValue ~= nil)
+  assert(valueCount > 1)
 
   local vals = {}
-  self.barWidth = 4
-  for i = 1, math.floor((width) / self.barWidth) do
+  self.barCount = valueCount
+  self.currentIndex = 1
+  for _ = 1, self.barCount do
     table.insert(vals, {0})
   end
 
   self.x = math.floor(x or 0) -- | position of the graph
   self.y = math.floor(y or 0) -- |
-  self.width = width --  | dimensions of the graph
+  self.barWidth = math.floor(width / valueCount)
+  self.width = self.barWidth * valueCount
   self.height = height or 30 -- |
   self.delay = delay or 0.5 -- delay until the next update
   self.vals = vals -- the values of the graph
@@ -33,8 +36,12 @@ function BarGraph:updateGraph(val, label, dt)
   while self.cur_time >= self.delay do
     self.cur_time = self.cur_time - self.delay
 
-    table.remove(self.vals, 1)
-    table.insert(self.vals, val)
+    self.vals[self.currentIndex] = val
+    if self.currentIndex == self.barCount then
+      self.currentIndex = 1
+    else
+      self.currentIndex = self.currentIndex + 1
+    end
   end
   self.label = label
 end
@@ -45,7 +52,7 @@ end
 
 function BarGraph.drawGraphs(graphs)
   local oldFont = love.graphics.getFont()
-  gfx_q:push({love.graphics.setFont, {BarGraph.font}})
+  love.graphics.setFont(BarGraph.font)
 
   -- loop through all of the graphs
   for j = 1, #graphs do
@@ -53,31 +60,39 @@ function BarGraph.drawGraphs(graphs)
     local maxVal = graph.maxValue
 
     local xPosition = graph.x
-    for _, values in ipairs(graph.vals) do
+    for i = 1, graph.barCount do
+      local valueIndex = graph.currentIndex - 1 + i
+      if valueIndex > graph.barCount then
+        valueIndex = valueIndex - graph.barCount
+      end
+      local values = graph.vals[valueIndex]
       assert(type(values) == "table")
       local yPosition = graph.y + graph.height
       for index, value in ipairs(values) do
         local height = graph.height * (value / maxVal)
         local fillColor = graph.fillColors[index] or {1, 1, 1, 0.8}
         local strokeColor = graph.strokeColors[index] or {0, 0, 0, 0.4}
-        gfx_q:push({love.graphics.setColor, fillColor})
-        gfx_q:push({love.graphics.rectangle, {"fill", xPosition, yPosition - height, graph.barWidth, height}})
-        gfx_q:push({love.graphics.setColor, strokeColor})
-        gfx_q:push({love.graphics.rectangle, {"line", xPosition + 0.5, yPosition - height + 0.5, graph.barWidth - 1, height - 1}})
+        love.graphics.setColor(unpack(fillColor))
+        love.graphics.rectangle("fill", xPosition, yPosition - height, graph.barWidth, height)
+        love.graphics.setColor(unpack(strokeColor))
+        love.graphics.rectangle("line", xPosition + 0.5, yPosition - height + 0.5, graph.barWidth - 1, height - 1)
         yPosition = yPosition - height
       end
       xPosition = xPosition + graph.barWidth
     end
 
-    gfx_q:push({love.graphics.setColor, {1, 1, 1, 0.8}})
-    gfx_q:push({love.graphics.rectangle, {"line", graph.x + 0.5, graph.y + 0.5, graph.width - 1, graph.height - 1}})
+    love.graphics.setColor(1, 1, 1, 0.8)
+    love.graphics.rectangle("line", graph.x + 0.5, graph.y + 0.5, graph.width - 1, graph.height - 1)
 
-    gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
+    love.graphics.setColor(0, 0, 0, 0.8)
+    love.graphics.rectangle("fill", graph.x, graph.height + graph.y + 8, graph.width, 20)
 
-    gfx_q:push({love.graphics.print, {graph.label, graph.x, graph.height + graph.y + 8}})
+    love.graphics.setColor(1, 1, 1, 1)
+    local padding = 4
+    love.graphics.print(graph.label, graph.x + padding, graph.height + graph.y + 8 + padding)
   end
 
-  gfx_q:push({love.graphics.setFont, {oldFont}})
+  love.graphics.setFont(oldFont)
 end
 
 return BarGraph
