@@ -109,7 +109,7 @@ function Health:renderPartialScaledImage(image, x, y, maxWidth, maxHeight, perce
   
   local xPosition = x + (1 - percentageX) * maxWidth
   local yPosition = y + (1 - percentageY) * maxHeight
-  gfx_q:push({love.graphics.draw, {image, quad, xPosition, yPosition, 0, scaleX, scaleY}})
+  love.graphics.draw(image, quad, xPosition, yPosition, 0, scaleX, scaleY)
 end
 
 
