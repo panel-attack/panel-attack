@@ -52,7 +52,7 @@ end
 
 function BarGraph.drawGraphs(graphs)
   local oldFont = love.graphics.getFont()
-  gfx_q:push({love.graphics.setFont, {BarGraph.font}})
+  love.graphics.setFont(BarGraph.font)
 
   -- loop through all of the graphs
   for j = 1, #graphs do
