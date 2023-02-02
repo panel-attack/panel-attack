@@ -144,14 +144,6 @@ panels_to_next_speed =
   45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
   45, 45, 45, 45, 45, 45, 45, 45, math.huge}
 
--- vs mode and 2P time attack use a speed system in which
--- speed increases every 15 seconds.  However, instead of
--- exposing speed and difficulty directly, they expose levels.
--- A level is a speed, a difficulty, and an amount of time
--- that can be spent at the top of the screen without dying.
--- level also determines the number of colors
---level_to_difficulty        = {  1,  1,  2,  2,  2,  2,  2,  3,  3,  3}
-
 -- What speed level you start on.
 level_to_starting_speed        = {  1,  5,  9, 13, 17, 21, 25, 29, 27, 32, 45}
 -- How long you can spend at the top of the screen without dying, in frames ("Health").

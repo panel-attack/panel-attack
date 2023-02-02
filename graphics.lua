@@ -266,10 +266,10 @@ function Stack.render(self)
     love.graphics.setShader()
   end
 
-  gfx_q:push({love.graphics.setCanvas, {{self.canvas, stencil = true}}})
-  gfx_q:push({love.graphics.clear, {}})
-  gfx_q:push({love.graphics.stencil, {frame_mask, "replace", 1}})
-  gfx_q:push({love.graphics.setStencilTest, {"greater", 0}})
+  love.graphics.setCanvas({self.canvas, stencil = true})
+  love.graphics.clear()
+  love.graphics.stencil(frame_mask, "replace", 1)
+  love.graphics.setStencilTest("greater", 0)
 
   -- draw inside stack's frame canvas
   local portrait_image = "portrait"
@@ -467,11 +467,11 @@ function Stack.render(self)
   end
   -- ends here
 
-  gfx_q:push({love.graphics.setStencilTest, {}})
-  gfx_q:push({love.graphics.setCanvas, {GAME.globalCanvas}})
-  gfx_q:push({love.graphics.setBlendMode, {"alpha", "premultiplied"}})
-  gfx_q:push({love.graphics.draw, {self.canvas, (self.pos_x - 4) * GFX_SCALE, (self.pos_y - 4) * GFX_SCALE}})
-  gfx_q:push({love.graphics.setBlendMode, {"alpha", "alphamultiply"}})
+  love.graphics.setStencilTest()
+  love.graphics.setCanvas(GAME.globalCanvas)
+  love.graphics.setBlendMode("alpha", "premultiplied")
+  love.graphics.draw(self.canvas, (self.pos_x - 4) * GFX_SCALE, (self.pos_y - 4) * GFX_SCALE)
+  love.graphics.setBlendMode("alpha", "alphamultiply")
 
   self:draw_popfxs()
   self:draw_cards()

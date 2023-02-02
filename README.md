@@ -48,6 +48,7 @@ Try to follow the following code guidelines when contributing:
 - Writing tests for how the code should work is extremely beneficial
 - Follow the formatting guidelines below
 - Constants should be local to a file / scope unless they need to be shared everywhere
+- Avoid the use of shortlived tables and consider pooling if you can't
 
 ## Formatting Guidelines
 
