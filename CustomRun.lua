@@ -92,19 +92,19 @@ function CustomRun.innerRun()
     love.graphics.origin()
     love.graphics.clear(love.graphics.getBackgroundColor())
 
-    -- draw the RunTimeGraph here so it doesn't contribute to the love.draw load
-    if CustomRun.runTimeGraph then
-      local preGraphDrawTime = love.timer.getTime()
-      CustomRun.runTimeGraph:draw()
-      CustomRun.runMetrics.graphDuration = CustomRun.runMetrics.graphDuration + (love.timer.getTime() - preGraphDrawTime)
-    end
-
     if love.draw then
       local preDrawTime = love.timer.getTime()
       love.draw()
       CustomRun.runMetrics.drawDuration = love.timer.getTime() - preDrawTime
     end
 
+    -- draw the RunTimeGraph here so it doesn't contribute to the love.draw load
+    if CustomRun.runTimeGraph then
+      local preGraphDrawTime = love.timer.getTime()
+      CustomRun.runTimeGraph:draw()
+      CustomRun.runMetrics.graphDuration = CustomRun.runMetrics.graphDuration + (love.timer.getTime() - preGraphDrawTime)
+    end
+    
     local prePresentTime = love.timer.getTime()
     love.graphics.present()
     CustomRun.runMetrics.presentDuration = love.timer.getTime() - prePresentTime
