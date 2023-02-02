@@ -26,6 +26,7 @@ function Replay.loadFromPath(path)
 end
 
 function Replay.loadFromFile(replay)
+  assert(replay ~= nil)
   local replayDetails
   if replay.vs then
     GAME.battleRoom = BattleRoom()

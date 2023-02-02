@@ -33,6 +33,10 @@ function Game.clearMatch(self)
     self.match:deinit()
     self.match = nil
   end
+  self:reset()
+end
+
+function Game:reset()
   self.gameIsPaused = false
   self.renderDuringPause = false
   self.preventSounds = false

@@ -68,12 +68,17 @@ function fmainloop()
     -- Run all unit tests now that we have everything loaded
     GAME:drawLoadingString("Running Unit Tests")
     wait()
+    -- Small tests (unit tests)
     require("PuzzleTests")
     require("ServerQueueTests")
     require("StackTests")
     require("tests.ThemeTests")
     require("table_util_tests")
     require("utilTests")
+    -- Medium level tests (integration tests)
+    require("tests.StackReplayTests")
+    require("tests.StackRollbackReplayTests")
+    -- Performance Tests
     if PERFORMANCE_TESTS_ENABLED then
       require("tests/performanceTests")
     end
@@ -396,9 +401,49 @@ local function handle_pause(self)
   end
 end
 
-local function finalizeAndWriteReplay(extraPath, extraFilename)
+local function addReplayStatisticsToReplay(replay)
+  local r = replay[GAME.match.mode]
+  r.duration = GAME.match:gameEndedClockTime()
+  if GAME.match.mode == "vs" and P2 then
+    r.match_type = match_type
+    local p1GameResult = P1:gameResult()
+    if p1GameResult == 1 then
+      r.winner = P1.which
+    elseif p1GameResult == -1 then
+      r.winner = P2.which
+    elseif p1GameResult == 0 then
+      r.winner = 0
+    end
+  end
+  r.playerStats = {}
+  
+  if P1 then
+    r.playerStats[P1.which] = {}
+    r.playerStats[P1.which].number = P1.which
+    r.playerStats[P1.which] = P1.analytic.data
+    r.playerStats[P1.which].score = P1.score
+    if GAME.match.mode == "vs" and GAME.match.room_ratings then
+      r.playerStats[P1.which].rating = GAME.match.room_ratings[P1.which]
+    end
+  end
 
+  if P2 then
+    r.playerStats[P2.which] = {}
+    r.playerStats[P2.which].number = P2.which
+    r.playerStats[P2.which] = P2.analytic.data
+    r.playerStats[P2.which].score = P2.score
+    if GAME.match.mode == "vs" and GAME.match.room_ratings then
+      r.playerStats[P2.which].rating = GAME.match.room_ratings[P2.which]
+    end
+  end
+
+  return replay
+end
+
+local function finalizeAndWriteReplay(extraPath, extraFilename)
+  replay = addReplayStatisticsToReplay(replay)
   replay[GAME.match.mode].in_buf = table.concat(P1.confirmedInput)
+  replay[GAME.match.mode].stage = current_stage
 
   local now = os.date("*t", to_UTC(os.time()))
   local sep = "/"
@@ -410,7 +455,7 @@ local function finalizeAndWriteReplay(extraPath, extraFilename)
   if extraFilename then
     filename = filename .. "-" .. extraFilename
   end
-  filename = filename .. ".txt"
+  filename = filename .. ".json"
   logger.debug("saving replay as " .. path .. sep .. filename)
   write_replay_file(path, filename)
 end
@@ -1566,7 +1611,7 @@ function main_local_vs_yourself()
       0, -- timemax
       nil, -- winnerSFX
       false, -- keepMusic
-      {select_screen, "1p_vs_yourself"} -- args
+      {select_screen, "1p_vs_yourself"} -- args:
     }}
   end
   
