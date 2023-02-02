@@ -10,7 +10,8 @@ local logger = require("logger")
 local min, pairs, deepcpy = math.min, pairs, deepcpy
 local max = math.max
 local garbage_bounce_time = #garbage_bounce_table
-local clone_pool = {}
+
+local DT_SPEED_INCREASE = 15 * 60 -- frames it takes to increase the speed level by 1
 
 -- Represents the full panel stack for one player
 Stack =
@@ -63,20 +64,43 @@ Stack =
       s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale=GAME:newCanvasSnappedScale()})
     end
 
+    -- The player's speed level decides the amount of time
+    -- the stack takes to rise automatically
+    if speed then
+      s.speed = speed
+    end
+
     if level then
       s:setLevel(level)
-      speed = speed or level_to_starting_speed[level]
+      -- mode 1: increase speed based on fixed intervals
+      s.speedIncreaseMode = 1
+      s.nextSpeedIncreaseClock = DT_SPEED_INCREASE
+    else
+      s.difficulty = difficulty or 2
+      -- mode 2: increase speed based on how many panels were cleared
+      s.speedIncreaseMode = 2
+      if not speed then
+        s.speed = 1
+      end
+      s.panels_to_speedup = panels_to_next_speed[s.speed]
     end
+
     s.health = s.max_health
 
-    s.garbage_cols = {
-      {1, 2, 3, 4, 5, 6, idx = 1},
-      {1, 3, 5, idx = 1},
-      {1, 4, idx = 1},
-      {1, 2, 3, idx = 1},
-      {1, 2, idx = 1},
-      {1, idx = 1}
+    -- Which columns each size garbage is allowed to fall in.
+    -- This is typically constant but maybe some day we would allow different ones 
+    -- for different game modes or need to change it based on board width.
+    s.garbageSizeDropColumnMaps = {
+      {1, 2, 3, 4, 5, 6},
+      {1, 3, 5,},
+      {1, 4},
+      {1, 2, 3},
+      {1, 2},
+      {1}
     }
+    -- The current index of the above table we are currently using for the drop column.
+    -- This increases by 1 wrapping every time garbage drops.
+    s.currentGarbageDropColumnIndexes = {1, 1, 1, 1, 1, 1}
 
     s.later_garbage = {} -- Queue of garbage that is done waiting in telegraph, and been popped out, and will be sent to our stack next frame
     s.garbage_q = GarbageQueue(s) -- Queue of garbage that is about to be dropped
@@ -116,13 +140,6 @@ Stack =
     -- set true if this column is near the top
     s.danger_timer = 0 -- decides bounce frame when in danger
 
-    s.difficulty = difficulty or 2
-
-    s.speed = speed or 1 -- The player's speed level decides the amount of time
-    -- the stack takes to rise automatically
-    if s.speed_times == nil then
-      s.panels_to_speedup = panels_to_next_speed[s.speed]
-    end
     s.rise_timer = 1 -- When this value reaches 0, the stack will rise a pixel
     s.rise_lock = false -- If the stack is rise locked, it won't rise until it is
     -- unlocked.
@@ -203,22 +220,20 @@ Stack =
     end
 
     s.combos = {} -- Tracks the combos made throughout the whole game. Key is the clock time, value is the combo size
-
-    s.chains = {} -- Tracks the chains mades throughout the whole game
+    s.chains = {} -- Tracks the chains made throughout the whole game
     --[[
-      .last_complete - the CLOCK index into the last chain or nil if no chains this game yet
-      .current - the CLOCK index into the current chain or nil if no chain active
-      indexes
         Key - CLOCK time the chain started
         Value -
-	        start - CLOCK time the chain started (same as key)
+	        starts - array of CLOCK times for the start of each match in the chain
 	        finish - CLOCK time the chain finished
 	        size - the chain size 2, 3, etc
     ]]
+    s.currentChainStartFrame = nil -- The start frame of the current active chain or nil if no chain is active
 
     s.panelGenCount = 0
     s.garbageGenCount = 0
 
+    s.clonePool = {} -- pool of stale rollback copies, used to save memory on consecutive rollback
     s.rollbackCount = 0 -- the number of times total we have done rollback
     s.lastRollbackFrame = -1 -- the last frame we had to rollback from
 
@@ -239,8 +254,11 @@ Stack =
 
 function Stack.setLevel(self, level)
   self.level = level
-  --difficulty           = level_to_difficulty[level]
-  self.speed_times = {15 * 60, idx = 1, delta = 15 * 60}
+  if not self.speed then
+    -- there is no UI for it yet but we may want to support using levels with a different starting speed at some point
+    self.speed = level_to_starting_speed[level]
+  end
+  -- mode 1: increase speed per time interval?
   self.max_health = level_to_hang_time[level]
   self.FRAMECOUNT_HOVER = level_to_hover[level]
   self.FRAMECOUNT_GPHOVER = level_to_garbage_panel_hover[level]
@@ -345,26 +363,24 @@ end
 -- param other the variable to copy to
 function Stack.rollbackCopy(source, other)
   if other == nil then
-    if #clone_pool == 0 then
+    if #source.clonePool == 0 then
       other = {}
     else
-      other = clone_pool[#clone_pool]
-      clone_pool[#clone_pool] = nil
+      other = source.clonePool[#source.clonePool]
+      source.clonePool[#source.clonePool] = nil
     end
   end
   other.do_swap = source.do_swap
   other.speed = source.speed
   other.health = source.health
-  other.garbage_cols = deepcpy(source.garbage_cols)
-  --[[if source.garbage_cols then
-    other.garbage_idxs = other.garbage_idxs or {}
-    local n_g_cols = #(source.garbage_cols or other.garbage_cols)
-    for i=1,n_g_cols do
-      other.garbage_idxs[i]=source.garbage_cols[i].idx
-    end
-  else
 
-  end--]]
+  if other.currentGarbageDropColumnIndexes == nil then
+    other.currentGarbageDropColumnIndexes = {}
+  end
+  for garbageWidth = 1, #source.currentGarbageDropColumnIndexes do
+    other.currentGarbageDropColumnIndexes[garbageWidth] = source.currentGarbageDropColumnIndexes[garbageWidth]
+  end
+  
   other.later_garbage = deepcpy(source.later_garbage)
   other.garbage_q = source.garbage_q:makeCopy()
   if source.telegraph then
@@ -393,6 +409,7 @@ function Stack.rollbackCopy(source, other)
       end
     end
   end
+  -- this is too eliminate offscreen rows of chain garbage higher up that the clone might have had
   for i = height_to_cpy + 1, #other.panels do
     other.panels[i] = nil
   end
@@ -411,7 +428,7 @@ function Stack.rollbackCopy(source, other)
   other.top_cur_row = source.top_cur_row
   other.cursor_lock = source.cursor_lock
   other.displacement = source.displacement
-  other.speed_times = deepcpy(source.speed_times)
+  other.nextSpeedIncreaseClock = source.nextSpeedIncreaseClock
   other.panels_to_speedup = source.panels_to_speedup
   other.stop_time = source.stop_time
   other.pre_stop_time = source.pre_stop_time
@@ -432,9 +449,7 @@ function Stack.rollbackCopy(source, other)
   other.shake_time = source.shake_time
   other.peak_shake_time = source.peak_shake_time
   other.do_countdown = source.do_countdown
-  other.ready_y = source.ready_y
-  other.combos = deepcpy(source.combos)
-  other.chains = deepcpy(source.chains)
+  other.ready_y = source.ready_y  
   other.panel_buffer = source.panel_buffer
   other.gpanel_buffer = source.gpanel_buffer
   other.panelGenCount = source.panelGenCount
@@ -446,6 +461,7 @@ function Stack.rollbackCopy(source, other)
   other.danger_timer = source.danger_timer
   other.analytic = deepcpy(source.analytic)
   other.game_over_clock = source.game_over_clock
+  other.currentChainStartFrame = source.currentChainStartFrame
 
   return other
 end
@@ -481,6 +497,10 @@ function Stack.rollbackToFrame(self, frame)
     assert(prev_states[frame])
     self:restoreFromRollbackCopy(prev_states[frame])
 
+    for f = frame, currentFrame do
+      self:deleteRollbackCopy(f)
+    end
+
     if self.garbage_target and self.garbage_target.later_garbage then
       -- The garbage that we send this time might (rarely) not be the same
       -- as the garbage we sent before.  Wipe out the garbage we sent before...
@@ -491,6 +511,34 @@ function Stack.rollbackToFrame(self, frame)
         if k >= targetFrame then
           self.garbage_target.later_garbage[k] = nil
         end
+      end
+    end
+
+    for chainFrame, _ in pairs(self.chains) do
+      if chainFrame >= frame then
+        self.chains[chainFrame] = nil
+      end
+    end
+
+    -- This variable has already been restored above, if its set, that means a chain is in progress
+    -- and we may not have removed the entries that happened before the rollback
+    if self.currentChainStartFrame then
+      local currentChain = self.chains[self.currentChainStartFrame]
+      local size = 0
+      for index, chainFrame in ipairs(currentChain.starts) do
+        if chainFrame >= frame then
+          currentChain.starts[index] = nil
+        else
+          size = size + 1
+        end
+      end
+      currentChain.finish = nil
+      currentChain.size = size + 1
+    end
+    
+    for comboFrame, _ in pairs(self.combos) do
+      if comboFrame >= frame then
+        self.combos[comboFrame] = nil
       end
     end
 
@@ -540,14 +588,18 @@ function Stack.saveForRollback(self)
   self.prev_states = prev_states
   self.garbage_target = garbage_target
   local deleteFrame = self.CLOCK - MAX_LAG - 1
-  if prev_states[deleteFrame] then
-    Telegraph.saveClone(prev_states[deleteFrame].telegraph)
+  self:deleteRollbackCopy(deleteFrame)
+end
+
+function Stack.deleteRollbackCopy(self, frame)
+  if self.prev_states[frame] then
+    Telegraph.saveClone(self.prev_states[frame].telegraph)
 
      -- Has a reference to stacks we don't want kept around
-    prev_states[deleteFrame].telegraph = nil
+    self.prev_states[frame].telegraph = nil
 
-    clone_pool[#clone_pool + 1] = prev_states[deleteFrame]
-    prev_states[deleteFrame] = nil
+    self.clonePool[#self.clonePool + 1] = self.prev_states[frame]
+    self.prev_states[frame] = nil
   end
 end
 
@@ -1290,18 +1342,15 @@ function Stack.simulate(self)
     end
 
     -- Increase the speed if applicable
-    if self.speed_times then
-      local time = self.speed_times[self.speed_times.idx]
-      if self.CLOCK == time then
+    if self.speedIncreaseMode == 1 then
+      -- increase per interval
+      if self.CLOCK == self.nextSpeedIncreaseClock then
         self.speed = min(self.speed + 1, 99)
         self.FRAMECOUNT_RISE = speed_to_rise_time[self.speed]
-        if self.speed_times.idx ~= #self.speed_times then
-          self.speed_times.idx = self.speed_times.idx + 1
-        else
-          self.speed_times[self.speed_times.idx] = time + self.speed_times.delta
-        end
+        self.nextSpeedIncreaseClock = self.nextSpeedIncreaseClock + DT_SPEED_INCREASE
       end
     elseif self.panels_to_speedup <= 0 then
+      -- mode 2: increase speed based on cleared panels
       self.speed = min(self.speed + 1, 99)
       self.panels_to_speedup = self.panels_to_speedup + panels_to_next_speed[self.speed]
       self.FRAMECOUNT_RISE = speed_to_rise_time[self.speed]
@@ -1726,10 +1775,9 @@ function Stack.simulate(self)
 
     -- if at the end of the routine there are no chain panels, the chain ends.
     if self.chain_counter ~= 0 and self.n_chain_panels == 0 then
-      self.chains[self.chains.current].finish = self.CLOCK
-      self.chains[self.chains.current].size = self.chain_counter
-      self.chains.last_complete = self.current
-      self.chains.current = nil
+      self.chains[self.currentChainStartFrame].finish = self.CLOCK
+      self.chains[self.currentChainStartFrame].size = self.chain_counter
+      self.currentChainStartFrame = nil
       if self:shouldChangeSoundEffects() then
         SFX_Fanfare_Play = self.chain_counter
       end
@@ -2363,9 +2411,10 @@ function Stack.drop_garbage(self, width, height, metal)
     end
   end
 
-  local cols = self.garbage_cols[width]
-  local spawn_col = cols[cols.idx]
-  cols.idx = wrap(1, cols.idx + 1, #cols)
+  local columns = self.garbageSizeDropColumnMaps[width]
+  local index = self.currentGarbageDropColumnIndexes[width]
+  local spawn_col = columns[index]
+  self.currentGarbageDropColumnIndexes[width] = wrap(1, index + 1, #columns)
   local shake_time = garbage_to_shake_time[width * height]
   for y = spawn_row, spawn_row + height - 1 do
     for x = spawn_col, spawn_col + width - 1 do
@@ -2634,10 +2683,10 @@ function Stack.check_matches(self)
     end
     if (is_chain) then
       if self.chain_counter == 2 then
-        self.chains.current = self.CLOCK
-        self.chains[self.chains.current] = {starts = {}}
+        self.currentChainStartFrame = self.CLOCK
+        self.chains[self.currentChainStartFrame] = {starts = {}}
       end
-      local currentChainData = self.chains[self.chains.current]
+      local currentChainData = self.chains[self.currentChainStartFrame]
       currentChainData.size = self.chain_counter
       currentChainData.starts[#currentChainData.starts+1] = self.CLOCK
       self:enqueue_card(true, first_panel_col, first_panel_row, self.chain_counter)
@@ -2832,7 +2881,7 @@ function Stack:getAttackPatternData()
   data.mergeComboMetalQueue = false
   data.delayBeforeStart = 0
   data.delayBeforeRepeat = 91
-  self.chains.current = nil
+  self.currentChainStartFrame = nil
   local defaultEndTime = 70
   local sortedAttackPatterns = {}
 
