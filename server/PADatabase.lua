@@ -15,10 +15,6 @@ CREATE TABLE IF NOT EXISTS Player(
   publicPlayerID INTEGER PRIMARY KEY AUTOINCREMENT,
   privatePlayerID INTEGER NOT NULL UNIQUE,
   username TEXT NOT NULL,
-  placementDone BOOLEAN NOT NULL CHECK (placementDone IN (0, 1)) DEFAULT 0,
-  placementRating REAL NOT NULL DEFAULT 0,
-  rankedGamesPlayed INTEGER NOT NULL DEFAULT 0,
-  rankedGamesWon INTEGER NOT NULL DEFAULT 0,
   lastLoginTime TIME TIMESTAMP DEFAULT (strftime('%s', 'now'))
 );
 
@@ -36,11 +32,11 @@ CREATE TABLE IF NOT EXISTS Game(
 );
 
 CREATE TABLE IF NOT EXISTS PlayerGameResult(
-  playerID INTEGER NOT NULL,
+  publicPlayerID INTEGER NOT NULL,
   gameID INTEGER NOT NULL,
   level INTEGER,
   placement INTEGER NOT NULL,
-  FOREIGN KEY(playerID) REFERENCES Player(publicPlayerID),
+  FOREIGN KEY(publicPlayerID) REFERENCES Player(publicPlayerID),
   FOREIGN KEY(gameID) REFERENCES Game(gameID)
 );
 ]]
@@ -112,7 +108,7 @@ function PADatabase.insertGame(self, ranked)
   return db:last_insert_rowid()
 end
 
-local insertPlayerGameResultStatement = assert(db:prepare("INSERT INTO PlayerGameResult(playerID, gameID, level, placement) VALUES ((SELECT publicPlayerID FROM Player WHERE privatePlayerID = ?), ?, ?, ?)"))
+local insertPlayerGameResultStatement = assert(db:prepare("INSERT INTO PlayerGameResult(publicPlayerID, gameID, level, placement) VALUES ((SELECT publicPlayerID FROM Player WHERE privatePlayerID = ?), ?, ?, ?)"))
 function PADatabase.insertPlayerGameResult(self, privatePlayerID, gameID, level, placement)
   insertPlayerGameResultStatement:bind_values(privatePlayerID, gameID, level, placement)
   insertPlayerGameResultStatement:step()
