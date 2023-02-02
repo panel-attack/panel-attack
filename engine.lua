@@ -224,7 +224,7 @@ Stack =
     --[[
         Key - CLOCK time the chain started
         Value -
-	        start - CLOCK time the chain started (same as key)
+	        starts - array of CLOCK times for the start of each match in the chain
 	        finish - CLOCK time the chain finished
 	        size - the chain size 2, 3, etc
     ]]
@@ -518,6 +518,22 @@ function Stack.rollbackToFrame(self, frame)
       if chainFrame >= frame then
         self.chains[chainFrame] = nil
       end
+    end
+
+    -- This variable has already been restored above, if its set, that means a chain is in progress
+    -- and we may not have removed the entries that happened before the rollback
+    if self.currentChainStartFrame then
+      local currentChain = self.chains[self.currentChainStartFrame]
+      local size = 0
+      for index, chainFrame in ipairs(currentChain.starts) do
+        if chainFrame >= frame then
+          currentChain.starts[index] = nil
+        else
+          size = size + 1
+        end
+      end
+      currentChain.finish = nil
+      currentChain.size = size + 1
     end
     
     for comboFrame, _ in pairs(self.combos) do
