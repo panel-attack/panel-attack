@@ -101,8 +101,8 @@ local function testTableFilterDict()
     end
   )
   assert(table.length(filteredTable) == 2)
-  for i = 1, table.length(expected) do
-    assert(deep_content_equal(filteredTable[i], expected[i]))
+  for key, _ in pairs(expected) do
+    assert(deep_content_equal(filteredTable[key], expected[key]))
   end
 
   logger.trace("passed test testTableFilterDict")
@@ -196,6 +196,28 @@ local function testTableTrueForAllDict()
   logger.trace("passed test testTableAllDict")
 end
 
+local function testTableAppendToListEmpty()
+  local testData = {}
+  local extraData = {
+    {row = 4, column = 1, color = 5},
+    {row = 5, column = 1, color = 1}
+  }
+
+  local expected = {
+    {row = 4, column = 1, color = 5},
+    {row = 5, column = 1, color = 1}
+  }
+
+  table.appendToList(testData, extraData)
+
+  assert(#testData == #expected)
+  for i = 1, #expected do
+    assert(deep_content_equal(testData[i], expected[i]))
+  end
+
+  logger.trace("passed test testTableAppendToListEmpty")
+end
+
 local function testTableAppendToList()
   local testData = getTestDataList()
   local extraData = {
@@ -250,6 +272,28 @@ local function testTableInsertListAt()
   logger.trace("passed test testTableInsertListAt")
 end
 
+local function testTableInsertListAtEmpty()
+  local testData = {}
+  local extraData = {
+    {row = 4, column = 1, color = 5},
+    {row = 5, column = 1, color = 1}
+  }
+
+  local expected = {
+    {row = 4, column = 1, color = 5},
+    {row = 5, column = 1, color = 1}
+  }
+
+  table.insertListAt(testData, 1, extraData)
+
+  assert(#testData == #expected)
+  for i = 1, #expected do
+    assert(deep_content_equal(testData[i], expected[i]))
+  end
+
+  logger.trace("passed test testTableInsertListAtEmpty")
+end
+
 local function testTableContainsList()
   local testData = getTestDataList()
   local data1 = {row = 1, column = 1, color = 2}
@@ -297,6 +341,33 @@ local function testTableGetKeys()
   logger.trace("passed test testTableGetKeys")
 end
 
+local function testRandomElementEmpty()
+  local testData = {}
+
+  local result = table.getRandomElement(testData)
+  assert(result == nil)
+
+  logger.trace("passed test local function testRandomElementEmpty")
+end
+
+local function testRandomElementList()
+  local testData = {1, 2, 3}
+
+  local result = table.getRandomElement(testData)
+  assert(result ~= nil)
+
+  logger.trace("passed test testRandomElementList")
+end
+
+local function testRandomElementDict()
+  local testData = {bob = 1, alice = 3}
+
+  local result = table.getRandomElement(testData)
+  assert(result ~= nil)
+
+  logger.trace("passed test testRandomElementDict")
+end
+
 testTableGetKeys()
 testTableTrueForAllList()
 testTableTrueForAllDict()
@@ -307,8 +378,13 @@ testTableContainsDict()
 testTableContainsDictKeys()
 testTableFilterList()
 testTableFilterDict()
-testTableInsertListAt()
+testTableAppendToListEmpty()
 testTableAppendToList()
+testTableInsertListAt()
+testTableInsertListAtEmpty()
 testTableLength()
 testTableMapList()
 testTableMapDict()
+testRandomElementEmpty()
+testRandomElementList()
+testRandomElementDict()

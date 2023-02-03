@@ -35,6 +35,20 @@ Match =
   end
 )
 
+-- Should be called prior to clearing the match.
+-- Consider recycling any memory that might leave around a lot of garbage.
+-- Note: You can just leave the variables to clear / garbage collect on their own if they aren't large.
+function Match:deinit()
+  if self.P1 then
+    self.P1:deinit()
+    self.P1 = nil
+  end
+  if self.P2 then
+    self.P2:deinit()
+    self.P2 = nil
+  end
+end
+
 function Match:gameEndedClockTime()
 
   local result = self.P1.game_over_clock
@@ -114,6 +128,16 @@ function Match:debugRollbackAndCaptureState()
   if P2 then
     P2:rollbackToFrame(P2.CLOCK - rollbackAmount)
   end
+end
+
+function Match:warningOccurred()
+  local P1 = self.P1
+  local P2 = self.P2
+  
+  if (P1 and table.length(P1.warningsTriggered) > 0) or (P2 and table.length(P2.warningsTriggered) > 0) then
+    return true
+  end
+  return false
 end
 
 function Match:debugAssertDivergence(stack, savedStack)
@@ -233,12 +257,12 @@ function Match:run()
 
   if P1 then
     if P1.is_local and not P1:game_ended() then
-      assert(string.len(P1.input_buffer) == 0, "Local games should always simulate all inputs")
+      assert(#P1.input_buffer == 0, "Local games should always simulate all inputs")
     end
   end
   if P2 then
     if P2.is_local and not P2:game_ended() then
-      assert(string.len(P2.input_buffer) == 0, "Local games should always simulate all inputs")
+      assert(#P2.input_buffer == 0, "Local games should always simulate all inputs")
     end
   end
 
@@ -294,12 +318,12 @@ function Match.render(self)
     if P2 then
       -- P1 win count graphics
       draw_label(themes[config.theme].images.IMG_wins, (P1.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
-      draw_number(GAME.battleRoom.playerWinCounts[P1.player_number], themes[config.theme].images.IMG_timeNumber_atlas, 12, P1_win_quads, P1.score_x + themes[config.theme].win_Pos[1], P1.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale, "center")
+      GraphicsUtil.draw_number(GAME.battleRoom:getPlayerWinCount(P1.player_number), themes[config.theme].images.IMG_number_atlas_1P, P1_win_quads, P1.score_x + themes[config.theme].win_Pos[1], P1.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, "center")
       -- P2 username
       gprint((GAME.battleRoom.playerNames[2] or ""), P2.score_x + themes[config.theme].name_Pos[1], P2.score_y + themes[config.theme].name_Pos[2])
       -- P2 win count graphics
       draw_label(themes[config.theme].images.IMG_wins, (P2.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P2.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
-      draw_number(GAME.battleRoom.playerWinCounts[P2.player_number], themes[config.theme].images.IMG_timeNumber_atlas, 12, P2_win_quads, P2.score_x + themes[config.theme].win_Pos[1], P2.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, 20 / themes[config.theme].images.timeNumberWidth * themes[config.theme].time_Scale, 26 / themes[config.theme].images.timeNumberHeight * themes[config.theme].time_Scale, "center")
+      GraphicsUtil.draw_number(GAME.battleRoom:getPlayerWinCount(P2.player_number), themes[config.theme].images.IMG_number_atlas_2P, P2_win_quads, P2.score_x + themes[config.theme].win_Pos[1], P2.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, "center")
     end
 
     if not config.debug_mode then --this is printed in the same space as the debug details
@@ -315,7 +339,7 @@ function Match.render(self)
         --gprint(rating_to_print, P1.score_x, P1.score_y-30)
         draw_label(themes[config.theme].images.IMG_rating_1P, (P1.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
         if type(rating_to_print) == "number" then
-          draw_number(rating_to_print, themes[config.theme].images.IMG_number_atlas_1P, 10, P1_rating_quads, P1.score_x + themes[config.theme].rating_Pos[1], P1.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, (15 / themes[config.theme].images.numberWidth_1P * themes[config.theme].rating_Scale), (19 / themes[config.theme].images.numberHeight_1P * themes[config.theme].rating_Scale), "center")
+          GraphicsUtil.draw_number(rating_to_print, themes[config.theme].images.IMG_number_atlas_1P, P1_rating_quads, P1.score_x + themes[config.theme].rating_Pos[1], P1.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, "center")
         end
       end
       if self.room_ratings and self.room_ratings[self.op_player_number] and self.room_ratings[self.op_player_number].new then
@@ -326,7 +350,7 @@ function Match.render(self)
         --gprint(op_rating_to_print, P2.score_x, P2.score_y-30)
         draw_label(themes[config.theme].images.IMG_rating_2P, (P2.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (P2.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
         if type(op_rating_to_print) == "number" then
-          draw_number(op_rating_to_print, themes[config.theme].images.IMG_number_atlas_2P, 10, P2_rating_quads, P2.score_x + themes[config.theme].rating_Pos[1], P2.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, (15 / themes[config.theme].images.numberWidth_2P * themes[config.theme].rating_Scale), (19 / themes[config.theme].images.numberHeight_2P * themes[config.theme].rating_Scale), "center")
+          GraphicsUtil.draw_number(op_rating_to_print, themes[config.theme].images.IMG_number_atlas_2P, P2_rating_quads, P2.score_x + themes[config.theme].rating_Pos[1], P2.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, "center")
         end
       end
     end
@@ -344,10 +368,10 @@ function Match.render(self)
 
 
     drawY = drawY + padding
-    gprintf("Confirmed " .. string.len(P1.confirmedInput) , drawX, drawY)
+    gprintf("Confirmed " .. #P1.confirmedInput , drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("input_buffer " .. string.len(P1.input_buffer) , drawX, drawY)
+    gprintf("input_buffer " .. #P1.input_buffer , drawX, drawY)
 
     drawY = drawY + padding
     gprintf("rollbackCount " .. P1.rollbackCount , drawX, drawY)
@@ -356,7 +380,7 @@ function Match.render(self)
     -- gprintf("P1 Panels: " .. P1.panel_buffer, drawX, drawY)
 
     -- drawY = drawY + padding
-    -- gprintf("P1 Confirmed " .. string.len(P1.confirmedInput) , drawX, drawY)
+    -- gprintf("P1 Confirmed " .. #P1.confirmedInput , drawX, drawY)
 
     -- drawY = drawY + padding
     -- gprintf("P1 Ended?: " .. tostring(P1:game_ended()), drawX, drawY)
@@ -415,6 +439,14 @@ function Match.render(self)
       gprintf("gameEndedClockTime " .. gameEndedClockTime, drawX, drawY)
     end
 
+    -- drawY = drawY + padding
+    -- local memoryCount = collectgarbage("count")
+    -- memoryCount = round(memoryCount / 1000, 1)
+    -- gprintf("Memory " .. memoryCount .. " MB", drawX, drawY)
+
+    -- drawY = drawY + padding
+    -- gprintf("quadPool " .. #GraphicsUtil.quadPool, drawX, drawY)
+
     if P2 then 
       drawX = 800
       drawY = 10 - padding
@@ -427,10 +459,10 @@ function Match.render(self)
       gprintf("P1 Ahead: " .. framesAhead, drawX, drawY)
 
       drawY = drawY + padding
-      gprintf("Confirmed " .. string.len(P2.confirmedInput) , drawX, drawY)
+      gprintf("Confirmed " .. #P2.confirmedInput , drawX, drawY)
 
       drawY = drawY + padding
-      gprintf("input_buffer " .. string.len(P2.input_buffer) , drawX, drawY)
+      gprintf("input_buffer " .. #P2.input_buffer , drawX, drawY)
 
       drawY = drawY + padding
       gprintf("rollbackCount " .. P2.rollbackCount , drawX, drawY)
@@ -484,5 +516,14 @@ function Match.render(self)
         end
       end
     end
+  end
+
+  if (self:warningOccurred()) then
+    local iconSize = 20
+    local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
+    local x = 5
+    local y = 5
+    draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+    gprint("A warning has occurred, please post your warnings.txt file and this replay to #panel-attack-bugs in the discord.", x + iconSize, y)
   end
 end

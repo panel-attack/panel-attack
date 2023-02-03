@@ -1,5 +1,7 @@
 json = require("dkjson")
-require("consts")
+require("util")
+local consts = require("consts")
+require("Theme") -- needed for directory location
 
 -- Default configuration values
 config = {
@@ -9,7 +11,7 @@ config = {
       -- Lang used for localization
     language_code                 = "EN",
   
-    theme                         = default_theme_dir,
+    theme                         = consts.DEFAULT_THEME_DIRECTORY,
     panels                     	  = nil, -- setup later in panel init
     character                     = random_character_special_value,
     stage                         = random_stage_special_value,
@@ -34,6 +36,7 @@ config = {
     music_volume                  = 100,
     -- Debug mode flag
     debug_mode                    = false,
+    debugShowServers              = false,
     -- Show FPS in the top-left corner of the screen
     show_fps                      = false,
     -- Show ingame infos while playing the game
@@ -64,7 +67,6 @@ config = {
     windowHeight                  = canvas_height,
     borderless                    = false,
     fullscreen                    = false,
-    vsync                         = 1,
     display                       = 1,
     windowX                       = nil,
     windowY                       = nil,
@@ -96,13 +98,14 @@ config = {
         file:open("r")
         local read_data = {}
         local teh_json = file:read(file:getSize())
+        file:close()
         for k, v in pairs(json.decode(teh_json)) do
           read_data[k] = v
         end
   
         -- do stuff using read_data.version for retrocompatibility here
   
-        if type(read_data.theme) == "string" and love.filesystem.getInfo("themes/" .. read_data.theme) then
+        if type(read_data.theme) == "string" and love.filesystem.getInfo(Theme.themeDirectoryPath .. read_data.theme .. "/config.json") then
           configTable.theme = read_data.theme
         end
   
@@ -166,6 +169,9 @@ config = {
         if type(read_data.debug_mode) == "boolean" then
           configTable.debug_mode = read_data.debug_mode
         end
+        if type(read_data.debugShowServers) == "boolean" then
+          configTable.debugShowServers = read_data.debugShowServers
+        end
         if type(read_data.show_fps) == "boolean" then
           configTable.show_fps = read_data.show_fps
         end
@@ -225,9 +231,6 @@ config = {
         if type(read_data.fullscreen) == "boolean" then
           configTable.fullscreen = read_data.fullscreen
         end
-        if type(read_data.vsync) == "boolean" then
-          configTable.vsync = read_data.vsync
-        end
         if type(read_data.display) == "number" then
           configTable.display = read_data.display
         end
@@ -246,8 +249,6 @@ config = {
         if type(read_data.windowY) == "number" then
           configTable.windowY = read_data.windowY
         end
-  
-        file:close()
       end
     )
   end

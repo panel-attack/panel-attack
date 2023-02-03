@@ -1,3 +1,4 @@
+local graphicsUtil = require("graphics_util")
 
 local select_screen_graphics = {
   v_align_center = {__Ready = true, __Random = true, __Leave = true},
@@ -55,38 +56,48 @@ function select_screen_graphics.drawPlayerInfo(self)
   assert(GAME.battleRoom, "need battle room")
   assert(self.select_screen.my_player_number and (self.select_screen.my_player_number == 1 or self.select_screen.my_player_number == 2), "need number")
   local my_rating_difference, op_rating_difference = self:calculateRatingDiffBetweenGames()
-  self:drawButton(0, 2, 2, 1, self:get_player_state_str(self.select_screen.my_player_number, my_rating_difference, GAME.battleRoom.playerWinCounts[self.select_screen.my_player_number], GAME.battleRoom.playerWinCounts[self.select_screen.op_player_number], self.select_screen.my_expected_win_ratio), "left", "top", true)
+  local includeWinRatio = false
+  if self.select_screen.op_player_number and self.select_screen.players then
+    local player1 = self.select_screen.players[self.select_screen.my_player_number]
+    local player2 = self.select_screen.players[self.select_screen.op_player_number]
+    if player1 and player2 then
+      includeWinRatio = player1.level == player2.level
+    end
+  end
+  self:drawButton(0, 2, 2, 1, self:get_player_state_str(self.select_screen.my_player_number, includeWinRatio, my_rating_difference, self.select_screen.my_expected_win_ratio), "left", "top", true)
   if self.select_screen.players[self.select_screen.my_player_number] and GAME.battleRoom.playerNames[2] then
     self:drawButton(0, 7, 1, 1, "P2", "center")
-    self:drawButton(0, 8, 2, 1, self:get_player_state_str(self.select_screen.op_player_number, op_rating_difference, GAME.battleRoom.playerWinCounts[self.select_screen.op_player_number], GAME.battleRoom.playerWinCounts[self.select_screen.my_player_number], self.select_screen.op_expected_win_ratio), "left", "top", true)
+    self:drawButton(0, 8, 2, 1, self:get_player_state_str(self.select_screen.op_player_number, includeWinRatio, op_rating_difference, self.select_screen.op_expected_win_ratio), "left", "top", true)
   end
+end
+
+function select_screen_graphics:ratingDifferenceString(playerNumber) 
+  local result = ""
+  if current_server_supports_ranking and not self.select_screen:inPlacementMatches() then
+    if self.select_screen.currentRoomRatings[playerNumber].difference then
+      if self.select_screen.currentRoomRatings[playerNumber].difference > 0 then
+        result = "(+" .. self.select_screen.currentRoomRatings[playerNumber].difference .. ") "
+      elseif self.select_screen.currentRoomRatings[playerNumber].difference < 0 then
+        result = "(" .. self.select_screen.currentRoomRatings[playerNumber].difference .. ") "
+      end
+    end
+  end
+  return result
 end
 
 function select_screen_graphics.calculateRatingDiffBetweenGames(self)
   -- Calculate the rating difference
-  local my_rating_difference = ""
-  local op_rating_difference = ""
-  if current_server_supports_ranking and not self.select_screen.currentRoomRatings[self.select_screen.my_player_number].placement_match_progress then
-    if self.select_screen.currentRoomRatings[self.select_screen.my_player_number].difference then
-      if self.select_screen.currentRoomRatings[self.select_screen.my_player_number].difference >= 0 then
-        my_rating_difference = "(+" .. self.select_screen.currentRoomRatings[self.select_screen.my_player_number].difference .. ") "
-      else
-        my_rating_difference = "(" .. self.select_screen.currentRoomRatings[self.select_screen.my_player_number].difference .. ") "
-      end
-    end
-    if self.select_screen.currentRoomRatings[self.select_screen.op_player_number].difference then
-      if self.select_screen.currentRoomRatings[self.select_screen.op_player_number].difference >= 0 then
-        op_rating_difference = "(+" .. self.select_screen.currentRoomRatings[self.select_screen.op_player_number].difference .. ") "
-      else
-        op_rating_difference = "(" .. self.select_screen.currentRoomRatings[self.select_screen.op_player_number].difference .. ") "
-      end
-    end
-  end
+  local my_rating_difference = self:ratingDifferenceString(self.select_screen.my_player_number)
+  local op_rating_difference = self:ratingDifferenceString(self.select_screen.op_player_number)
+
   return my_rating_difference, op_rating_difference
 end
 
 -- Returns a string with the players rating, win rate, and expected rating
-function select_screen_graphics.get_player_state_str(self, player_number, rating_difference, win_count, op_win_count, expected_win_ratio)
+function select_screen_graphics.get_player_state_str(self, player_number, includeWinRatio, rating_difference, expected_win_ratio)
+  local win_count = GAME.battleRoom.playerWinCounts[player_number]
+  local totalGames = GAME.battleRoom:totalGames()
+
   local state = ""
   if current_server_supports_ranking then
     state = state .. loc("ss_rating") .. " " .. (self.select_screen.currentRoomRatings[player_number].league or "")
@@ -101,18 +112,20 @@ function select_screen_graphics.get_player_state_str(self, player_number, rating
       state = state .. "\n"
     end
     state = state .. loc("ss_wins") .. " " .. win_count
-    if (current_server_supports_ranking and expected_win_ratio) or win_count + op_win_count > 0 then
+    if (current_server_supports_ranking and expected_win_ratio) or totalGames > 0 then
       state = state .. "\n" .. loc("ss_winrate") .. "\n"
       local need_line_return = false
-      if win_count + op_win_count > 0 then
-        state = state .. "    " .. loc("ss_current_rating") .. " " .. (100 * round(win_count / (op_win_count + win_count), 2)) .. "%"
+      if totalGames > 0 then
+        state = state .. "    " .. loc("ss_current_rating") .. " " .. (100 * round(win_count / (totalGames), 2)) .. "%"
         need_line_return = true
       end
       if current_server_supports_ranking and expected_win_ratio then
         if need_line_return then
           state = state .. "\n"
         end
-        state = state .. "    " .. loc("ss_expected_rating") .. " " .. expected_win_ratio .. "%"
+        if includeWinRatio then
+          state = state .. "    " .. loc("ss_expected_rating") .. " " .. expected_win_ratio .. "%"
+        end
       end
     end
   end
@@ -140,6 +153,10 @@ function select_screen_graphics.drawPagingIndicator(self)
   end
 end
 
+local lastLinesLabelQuads = {}
+local lastLinesQuads = {}
+local recordLabelQuads = {}
+local recordQuads = {}
 function select_screen_graphics.draw1pRecords(self)
   -- Draw the current score and record
   if self.select_screen.character_select_mode == "1p_vs_yourself" and not GAME.battleRoom.trainingModeSettings then
@@ -148,10 +165,10 @@ function select_screen_graphics.draw1pRecords(self)
     local yPosition = 24
     local lastScore = tostring(GAME.scores:lastVsScoreForLevel(self.select_screen.players[self.select_screen.my_player_number].level))
     local record = tostring(GAME.scores:recordVsScoreForLevel(self.select_screen.players[self.select_screen.my_player_number].level))
-    draw_pixel_font("last lines", themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition, 0.5, 1.0)
-    draw_pixel_font(lastScore,    themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition1, yPosition + 24, 0.5, 1.0)
-    draw_pixel_font("record",     themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition, 0.5, 1.0)
-    draw_pixel_font(record,       themes[config.theme].images.IMG_pixelFont_blue_atlas, standard_pixel_font_map(), xPosition2, yPosition + 24, 0.5, 1.0)
+    draw_pixel_font("last lines", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition, 0.5, 1.0, nil, nil, lastLinesLabelQuads)
+    draw_pixel_font(lastScore,    themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition + 24, 0.5, 1.0, nil, nil, lastLinesQuads)
+    draw_pixel_font("record",     themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition, 0.5, 1.0, nil, nil, recordLabelQuads)
+    draw_pixel_font(record,       themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition + 24, 0.5, 1.0, nil, nil, recordQuads)
   end
 end
 
@@ -196,7 +213,6 @@ end
         character = characters[self.select_screen.players[self.select_screen.op_player_number].character]
       end
     end
-    local width_for_alignment =self.button_width
     local x_add, y_add = 0, 0
     if valign == "center" then
       y_add = math.floor(0.5 * self.button_height - 0.5 * self.text_height) - 3
@@ -252,6 +268,20 @@ end
     elseif string.sub(str, 1, 2) ~= "__" then -- catch random_character_special_value case
       pstr = str:gsub("^%l", string.upper)
     end
+    if str ~= "__Empty" and str ~= "__Reserved" then
+      local loc_str = {Level = loc("level"), Mode = loc("mode"), Stage = loc("stage"), Panels = loc("panels"), Ready = loc("ready"), Random = loc("random"), Leave = loc("leave")}
+      local to_p = loc_str[pstr]
+
+      local widthForAlignment = self.button_width
+      if character and character ~= random_character_special_value then
+        local height = 17
+        grectangle_color("fill", self.render_x / GFX_SCALE, (self.render_y + y_add) / GFX_SCALE, self.button_width/GFX_SCALE, height/GFX_SCALE, 0, 0, 0, 0.5)
+        x_add = 0.025 * self.button_width
+        widthForAlignment = 0.95 * self.button_width
+      end
+
+      gprintf(not to_p and pstr or to_p, self.render_x + x_add, self.render_y + y_add, widthForAlignment, halign)
+    end
     if x ~= 0 then
       if self.select_screen.players[self.select_screen.my_player_number] and self.select_screen.players[self.select_screen.my_player_number].cursor.positionId == str and ((str ~= "__Empty" and str ~= "__Reserved") or (self.select_screen.players[self.select_screen.my_player_number].cursor.position[1] == x and self.select_screen.players[self.select_screen.my_player_number].cursor.position[2] == y)) then
         self:draw_cursor(self.button_height, self.spacing, 1, self.select_screen.players[self.select_screen.my_player_number].ready)
@@ -265,19 +295,6 @@ end
           self:draw_super_select(2)
         end
       end
-    end
-    if str ~= "__Empty" and str ~= "__Reserved" then
-      local loc_str = {Level = loc("level"), Mode = loc("mode"), Stage = loc("stage"), Panels = loc("panels"), Ready = loc("ready"), Random = loc("random"), Leave = loc("leave")}
-      local to_p = loc_str[pstr]
-
-      if character and character ~= random_character_special_value then
-        local height = 17
-        grectangle_color("fill", self.render_x / GFX_SCALE, (self.render_y + y_add) / GFX_SCALE, self.button_width/GFX_SCALE, height/GFX_SCALE, 0, 0, 0, 0.5)
-        x_add = 0.025 * self.button_width
-        width_for_alignment = 0.95 * self.button_width
-      end
-
-      gprintf(not to_p and pstr or to_p, self.render_x + x_add, self.render_y + y_add, width_for_alignment, halign)
     end
   end
 
@@ -338,9 +355,7 @@ function select_screen_graphics.draw_character(self, character)
   end
 end
 
--- Draws the players "flashing ready" effect on their current cursor
-function select_screen_graphics.draw_super_select(self, player_num)
-  local super_select_pixelcode = [[
+local super_select_pixelcode = [[
       uniform float percent;
       vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
       {
@@ -354,9 +369,12 @@ function select_screen_graphics.draw_super_select(self, player_num)
       }
   ]]
 
-  -- one per player, should we put them into cursor_data even though it's meaningless?
-  local super_select_shaders = {love.graphics.newShader(super_select_pixelcode), love.graphics.newShader(super_select_pixelcode)}
+-- one per player, should we put them into cursor_data even though it's meaningless?
+local super_select_shaders = {love.graphics.newShader(super_select_pixelcode), love.graphics.newShader(super_select_pixelcode)}
 
+-- Draws the players "flashing ready" effect on their current cursor
+function select_screen_graphics.draw_super_select(self, player_num)
+  
   local ratio = select_being_pressed_ratio(player_num)
   if ratio > super_selection_enable_ratio then
     super_select_shaders[player_num]:send("percent", linear_smooth(ratio, super_selection_enable_ratio, 1.0))
@@ -394,7 +412,8 @@ end
 -- Draw the players current character, player number etc
 function select_screen_graphics.draw_player(self, player, player_number)
   if characters[player.character] and not characters[player.character].fully_loaded then
-    menu_drawf(themes[config.theme].images.IMG_loading, self.render_x +self.button_width * 0.5, self.render_y + self.button_height * 0.5, "center", "center")
+    local scaleX = self.button_width / themes[config.theme].images.IMG_loading:getWidth()
+    menu_drawf(themes[config.theme].images.IMG_loading, self.render_x +self.button_width * 0.5, self.render_y + self.button_height * 0.5, "center", "center", 0, scaleX, scaleX)
   elseif player.wants_ready then
     menu_drawf(themes[config.theme].images.IMG_ready, self.render_x +self.button_width * 0.5, self.render_y + self.button_height * 0.5, "center", "center")
   end
@@ -407,8 +426,8 @@ end
 -- Draw the panel selection UI
 function select_screen_graphics.draw_panels(self, player, player_number, y_padding)
   local panels_max_width = 0.25 * self.button_height
-  local panels_width = math.min(panels_max_width, panels[player.panels_dir].images.classic[1][1]:getWidth())
-  local padding_x = 0.5 *self.button_width - 3 * panels_width -- center them, not 3.5 mysteriously?
+  local panels_width = math.min(panels_max_width, 20)
+  local padding_x = 0.5 * self.button_width - 3 * panels_width -- center them, not 3.5 mysteriously?
   if player.level >= 9 then
     padding_x = padding_x - 0.5 * panels_width
   end
@@ -436,38 +455,45 @@ end
 
 -- Draw the difficulty level selection UI
 function select_screen_graphics.draw_levels(self, player, player_number, y_padding)
-  local level_max_width = 0.2 * self.button_height
-  local level_width = math.min(level_max_width, themes[config.theme].images.IMG_levels[1]:getWidth())
-  local padding_x = math.floor(0.5 *self.button_width - 5.5 * level_width)
+  local leftRightIndicatorWidth = 8 -- width of "<" and ">" 
+  local playerNumberWidth = themes[config.theme].images.IMG_players[player_number]:getWidth()
+  local outsidePadding = 8 -- padding on the left and right of "<" and ">"
+  local paddingWidth = 4 -- padding between "<" levels, and ">"
+  local reservedSpace = (outsidePadding * 2) + (leftRightIndicatorWidth * 2) + (paddingWidth) + (playerNumberWidth) -- fixed amount of space needed for the cursors etc
+  local spaceAvailable = (self.button_width - reservedSpace)
+  local level_width = math.floor(spaceAvailable / #level_to_starting_speed)
   local is_selected = player.cursor.selected and player.cursor.positionId == "__Level"
+  local drawX = outsidePadding
+
+  menu_drawf(themes[config.theme].images.IMG_players[player_number], self.render_x + drawX, self.render_y + y_padding, "center", "center")
+  drawX = drawX + playerNumberWidth
+
   if is_selected then
-    padding_x = padding_x - level_width
+    -- Draw little text arrow on left to indicate you can move the level
+    gprintf("<", self.render_x + drawX, self.render_y + y_padding - 0.5 * self.text_height, nil, "left")
   end
-  local level_scale = level_width / themes[config.theme].images.IMG_levels[1]:getWidth()
-  menu_drawf(themes[config.theme].images.IMG_players[player_number], self.render_x + padding_x, self.render_y + y_padding, "center", "center")
-  local ex_scaling = level_width / themes[config.theme].images.IMG_levels[11]:getWidth()
-  menu_drawf(themes[config.theme].images.IMG_players[player_number], self.render_x + padding_x, self.render_y + y_padding, "center", "center")
-  padding_x = padding_x + level_width
-  if is_selected then
-    gprintf("<", self.render_x + padding_x - 0.5 * level_width, self.render_y + y_padding - 0.5 * self.text_height, level_width, "center")
-    padding_x = padding_x + level_width
-  end
+  drawX = drawX + leftRightIndicatorWidth + paddingWidth
+
   for i = 1, #level_to_starting_speed do --which should equal the number of levels in the game
-    local additional_padding = math.floor(0.5 * (themes[config.theme].images.IMG_levels[i]:getWidth() - level_width))
-    padding_x = padding_x + additional_padding
+    local level_scale = level_width / themes[config.theme].images.IMG_levels[i]:getWidth()
     local use_unfocus = player.level < i
     if use_unfocus then
-      menu_drawf(themes[config.theme].images.IMG_levels_unfocus[i], self.render_x + padding_x, self.render_y + y_padding, "center", "center", 0, (i == 11 and ex_scaling or level_scale), (i == 11 and ex_scaling or level_scale))
+      menu_drawf(themes[config.theme].images.IMG_levels_unfocus[i], self.render_x + drawX, self.render_y + y_padding, "left", "center", 0, level_scale, level_scale)
     else
-      menu_drawf(themes[config.theme].images.IMG_levels[i], self.render_x + padding_x, self.render_y + y_padding, "center", "center", 0, (i == 11 and ex_scaling or level_scale), (i == 11 and ex_scaling or level_scale))
+      menu_drawf(themes[config.theme].images.IMG_levels[i], self.render_x + drawX, self.render_y + y_padding, "left", "center", 0, level_scale, level_scale)
     end
     if i == player.level then
-      menu_drawf(themes[config.theme].images.IMG_level_cursor, self.render_x + padding_x, self.render_y + y_padding + themes[config.theme].images.IMG_levels[i]:getHeight() * 0.5, "center", "top", 0, (i == 11 and ex_scaling or level_scale), (i == 11 and ex_scaling or level_scale))
+      local cursorScale = 5 / themes[config.theme].images.IMG_level_cursor:getWidth()
+      menu_drawf(themes[config.theme].images.IMG_level_cursor, self.render_x + drawX + level_width / 2, self.render_y + y_padding + themes[config.theme].images.IMG_levels[i]:getHeight() * 0.5 * level_scale, "center", "top", 0, cursorScale, cursorScale)
     end
-    padding_x = padding_x + level_width + additional_padding
+
+    drawX = drawX + level_width
   end
+
+  drawX = drawX + paddingWidth
   if is_selected then
-    gprintf(">", self.render_x + padding_x - 0.5 * level_width, self.render_y + y_padding - 0.5 * self.text_height, level_width, "center")
+    -- Draw little text arrow on right to indicate you can move the level
+    gprintf(">", self.render_x + drawX, self.render_y + y_padding - 0.5 * self.text_height, nil, "left")
   end
 end
 

@@ -35,6 +35,7 @@ function Stage.json_init(self)
   local config_file, err = love.filesystem.newFile(self.path .. "/config.json", "r")
   if config_file then
     local teh_json = config_file:read(config_file:getSize())
+    config_file:close()
     for k, v in pairs(json.decode(teh_json)) do
       read_data[k] = v
     end
@@ -70,16 +71,6 @@ function Stage.json_init(self)
   return false
 end
 
--- stops stage sounds
-function Stage.stop_sounds(self)
-  -- music
-  for _, music in ipairs(self.musics) do
-    if self.musics[music] then
-      self.musics[music]:stop()
-    end
-  end
-end
-
 -- preemptively loads a stage
 function Stage.preload(self)
   logger.trace("preloading stage " .. self.id)
@@ -108,26 +99,23 @@ end
 -- adds stages from the path given
 local function add_stages_from_dir_rec(path)
   local lfs = love.filesystem
-  local raw_dir_list = lfs.getDirectoryItems(path)
+  local raw_dir_list = FileUtil.getFilteredDirectoryItems(path)
   for i, v in ipairs(raw_dir_list) do
-    local start_of_v = string.sub(v, 0, string.len(prefix_of_ignored_dirs))
-    if start_of_v ~= prefix_of_ignored_dirs then
-      local current_path = path .. "/" .. v
-      if lfs.getInfo(current_path) and lfs.getInfo(current_path).type == "directory" then
-        -- call recursively: facade folder
-        add_stages_from_dir_rec(current_path)
+    local current_path = path .. "/" .. v
+    if lfs.getInfo(current_path) and lfs.getInfo(current_path).type == "directory" then
+      -- call recursively: facade folder
+      add_stages_from_dir_rec(current_path)
 
-        -- init stage: 'real' folder
-        local stage = Stage(current_path, v)
-        local success = stage:json_init()
+      -- init stage: 'real' folder
+      local stage = Stage(current_path, v)
+      local success = stage:json_init()
 
-        if success then
-          if stages[stage.id] ~= nil then
-            logger.trace(current_path .. " has been ignored since a stage with this id has already been found")
-          else
-            stages[stage.id] = stage
-            stages_ids[#stages_ids + 1] = stage.id
-          end
+      if success then
+        if stages[stage.id] ~= nil then
+          logger.trace(current_path .. " has been ignored since a stage with this id has already been found")
+        else
+          stages[stage.id] = stage
+          stages_ids[#stages_ids + 1] = stage.id
         end
       end
     end
@@ -187,8 +175,8 @@ function stages_init()
     fill_stages_ids()
   end
 
-  if love.filesystem.getInfo("themes/" .. config.theme .. "/stages.txt") then
-    for line in love.filesystem.lines("themes/" .. config.theme .. "/stages.txt") do
+  if love.filesystem.getInfo(Theme.themeDirectoryPath .. config.theme .. "/stages.txt") then
+    for line in love.filesystem.lines(Theme.themeDirectoryPath .. config.theme .. "/stages.txt") do
       line = trim(line) -- remove whitespace
       -- found at least a valid stage in a stages.txt file
       if stages[line] then
@@ -288,7 +276,7 @@ function Stage.sound_init(self, full, yields)
         self.musics[music]:setLooping(false)
       end
     elseif not self.musics[music] and defaulted_musics[music] then
-      self.musics[music] = default_stage.musics[music] or zero_sound
+      self.musics[music] = default_stage.musics[music] or themes[config.theme].zero_sound
     end
 
     if yields then

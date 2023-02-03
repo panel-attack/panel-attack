@@ -15,6 +15,7 @@ Game =
     self.renderDuringPause = false -- if the game can render when you are paused
     self.currently_paused_tracks = {} -- list of tracks currently paused
     self.rich_presence = nil
+    self.muteSoundEffects = false
     self.canvasX = 0
     self.canvasY = 0
     self.canvasXScale = 1
@@ -28,29 +29,55 @@ Game =
 )
 
 function Game.clearMatch(self)
-  self.match = nil
+  if self.match then
+    self.match:deinit()
+    self.match = nil
+  end
   self.gameIsPaused = false
   self.renderDuringPause = false
+  self.preventSounds = false
   self.currently_paused_tracks = {}
+  self.muteSoundEffects = false
   P1 = nil
   P2 = nil
 end
 
 function Game.errorData(errorString, traceBack)
   local system_info = "OS: " .. love.system.getOS()
-  local loveVersion = Game.loveVersionString()
-  
+  local loveVersion = Game.loveVersionString() or "Unknown"
+  local username = config.name or "Unknown"
+  local buildVersion = GAME_UPDATER_GAME_VERSION or "Unknown"
+  local systemInfo = system_info or "Unknown"
+
   local errorData = { 
       stack = traceBack,
-      name = config.name or "Unknown",
+      name = username,
       error = errorString,
       engine_version = VERSION,
-      release_version = GAME_UPDATER_GAME_VERSION or "Unknown",
-      operating_system = system_info or "Unknown",
-      love_version = loveVersion or "Unknown"
+      release_version = buildVersion,
+      operating_system = systemInfo,
+      love_version = loveVersion
     }
 
   return errorData
+end
+
+function Game.detailedErrorLogString(errorData)
+  local newLine = "\n"
+  local now = os.date("*t", to_UTC(os.time()))
+  local formattedTime = string.format("%04d-%02d-%02d %02d:%02d:%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
+
+  local detailedErrorLogString = 
+    "Stack Trace: " .. errorData.stack .. newLine ..
+    "Username: " .. errorData.name .. newLine ..
+    "Error Message: " .. errorData.error .. newLine ..
+    "Engine Version: " .. errorData.engine_version .. newLine ..
+    "Build Version: " .. errorData.release_version .. newLine ..
+    "Operating System: " .. errorData.operating_system .. newLine ..
+    "Love Version: " .. errorData.love_version .. newLine .. 
+    "UTC Time: " .. formattedTime
+
+  return detailedErrorLogString
 end
 
 local loveVersionStringValue = nil
