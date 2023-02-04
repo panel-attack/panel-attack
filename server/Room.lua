@@ -205,13 +205,14 @@ function Room.resolve_game_outcome(self, database)
     else
       outcome = self.game_outcome_reports[1]
     end
-    self.replay.vs.gameID = database:insertGame(self.replay.vs.ranked)
+    local gameID = database:insertGame(self.replay.vs.ranked)
+    self.replay.vs.gameID = gameID
     if outcome ~= 0 then
-      database:insertPlayerGameResult(self.a.user_id, self.replay.vs.gameID, self.replay.vs.P1_level, (self.a.player_number == outcome) and 1 or 2)
-      database:insertPlayerGameResult(self.b.user_id, self.replay.vs.gameID, self.replay.vs.P2_level, (self.b.player_number == outcome) and 1 or 2)
+      database:insertPlayerGameResult(self.a.user_id, gameID, self.replay.vs.P1_level, (self.a.player_number == outcome) and 1 or 2)
+      database:insertPlayerGameResult(self.b.user_id, gameID, self.replay.vs.P2_level, (self.b.player_number == outcome) and 1 or 2)
     else
-      database:insertPlayerGameResult(self.a.user_id, self.replay.vs.gameID, self.replay.vs.P1_level, 0)
-      database:insertPlayerGameResult(self.b.user_id, self.replay.vs.gameID, self.replay.vs.P2_level, 0)
+      database:insertPlayerGameResult(self.a.user_id, gameID, self.replay.vs.P1_level, 0)
+      database:insertPlayerGameResult(self.b.user_id, gameID, self.replay.vs.P2_level, 0)
     end
 
     logger.debug("resolve_game_outcome says: " .. outcome)
@@ -292,7 +293,7 @@ function Room.resolve_game_outcome(self, database)
           logger.trace("Player " .. i .. " scored")
           self.win_counts[i] = self.win_counts[i] + 1
           if shouldAdjustRatings then
-            adjust_ratings(self, i)
+            adjust_ratings(self, i, gameID)
           else
             logger.debug("Not adjusting ratings because: " .. reasons[1])
           end

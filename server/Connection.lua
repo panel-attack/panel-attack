@@ -55,7 +55,7 @@ function Connection.login(self, user_id)
       self.logged_in = true
       logger.info("New user: " .. self.name .. " was created")
       self.server.database:insertNewPlayer(their_new_user_id, self.name)
-      self.server.database:insertPlayerELOChange(their_new_user_id, 0)
+      self.server.database:insertPlayerELOChange(their_new_user_id, 0, 0)
     end
   elseif not playerbase.players[self.user_id] then
     deny_login(self, "The user_id provided was not found on this server")

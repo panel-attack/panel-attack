@@ -308,7 +308,7 @@ function calculate_rating_adjustment(Rc, Ro, Oa, k) -- -- print("calculating exp
   return Rn
 end
 
-function adjust_ratings(room, winning_player_number)
+function adjust_ratings(room, winning_player_number, gameID)
   logger.debug("Adjusting the rating of " .. room.a.name .. " and " .. room.b.name .. ". Player " .. winning_player_number .. " wins!")
   local players = {room.a, room.b}
   local continue = true
@@ -321,7 +321,7 @@ function adjust_ratings(room, winning_player_number)
       logger.debug("Gave " .. playerbase.players[players[player_number].user_id] .. " a new rating of " .. DEFAULT_RATING)
       if not PLACEMENT_MATCHES_ENABLED then
         leaderboard.players[players[player_number].user_id].placement_done = true
-        database:insertPlayerELOChange(players[player_number].user_id, DEFAULT_RATING)
+        database:insertPlayerELOChange(players[player_number].user_id, DEFAULT_RATING, gameID)
       end
       write_leaderboard_file()
     end
@@ -347,7 +347,7 @@ function adjust_ratings(room, winning_player_number)
       if placement_done[players[player_number].opponent.user_id] then
         logger.debug("Player " .. player_number .. " played a non-placement ranked match.  Updating his rating now.")
         room.ratings[player_number].new = calculate_rating_adjustment(leaderboard.players[players[player_number].user_id].rating, leaderboard.players[players[player_number].opponent.user_id].rating, Oa, k)
-        database:insertPlayerELOChange(players[player_number].user_id, room.ratings[player_number].new)
+        database:insertPlayerELOChange(players[player_number].user_id, room.ratings[player_number].new, gameID)
       else
         logger.debug("Player " .. player_number .. " played ranked against an unranked opponent.  We'll process this match when his opponent has finished placement")
         room.ratings[player_number].placement_matches_played = leaderboard.players[players[player_number].user_id].ranked_games_played
@@ -631,7 +631,7 @@ local function importDatabase()
       rating = leaderboard.players[k].rating
     end
     database:insertNewPlayer(k, v)
-    database:insertPlayerELOChange(k, rating)
+    database:insertPlayerELOChange(k, rating, 0)
   end
 
   local gameMatches = readGameResults()

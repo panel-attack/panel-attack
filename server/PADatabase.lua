@@ -18,18 +18,13 @@ CREATE TABLE IF NOT EXISTS Player(
   lastLoginTime TIME TIMESTAMP DEFAULT (strftime('%s', 'now'))
 );
 
-CREATE TABLE IF NOT EXISTS PlayerELOHistory(
-  publicPlayerID INTEGER,
-  rating REAL NOT NULL,
-  updateTime TIME TIMESTAMP DEFAULT (strftime('%s', 'now')),
-  FOREIGN KEY(publicPlayerID) REFERENCES Player(publicPlayerID)
-);
-
 CREATE TABLE IF NOT EXISTS Game(
   gameID INTEGER PRIMARY KEY AUTOINCREMENT,
   ranked BOOLEAN NOT NULL CHECK (ranked IN (0, 1)),
   timePlayed TIME TIMESTAMP NOT NULL DEFAULT (strftime('%s', 'now'))
 );
+
+INSERT INTO Game(gameID, ranked) VALUES (0, 1); -- Placeholder game for imported Elo history
 
 CREATE TABLE IF NOT EXISTS PlayerGameResult(
   publicPlayerID INTEGER NOT NULL,
@@ -39,6 +34,13 @@ CREATE TABLE IF NOT EXISTS PlayerGameResult(
   FOREIGN KEY(publicPlayerID) REFERENCES Player(publicPlayerID),
   FOREIGN KEY(gameID) REFERENCES Game(gameID)
 );
+
+CREATE TABLE IF NOT EXISTS PlayerELOHistory(
+  publicPlayerID INTEGER,
+  rating REAL NOT NULL,
+  gameID INTEGER NOT NULL,
+  FOREIGN KEY(gameID) REFERENCES Game(gameID)
+);
 ]]
 
 local selectPlayerRecordValuesStatement = assert(db:prepare("SELECT * FROM Player where privatePlayerID = ?"))
@@ -46,7 +48,7 @@ local function getPlayerValues(privatePlayerID)
   selectPlayerRecordValuesStatement:bind_values(privatePlayerID)
   selectPlayerRecordValuesStatement:step()
   local playerValues = selectPlayerRecordValuesStatement:get_named_values()
-  if selectPlayerRecordValuesStatement:reset() ~= 0 then
+  if selectPlayerRecordValuesStatement:reset() ~= sqlite3.OK then
     logger.error(db:errmsg())
   end
   return playerValues
@@ -56,7 +58,7 @@ local insertPlayerStatement = assert(db:prepare("INSERT OR IGNORE INTO Player(pr
 function PADatabase.insertNewPlayer(self, privatePlayerID, username)
   insertPlayerStatement:bind_values(privatePlayerID, username)
   insertPlayerStatement:step()
-  if insertPlayerStatement:reset() ~= 0 then
+  if insertPlayerStatement:reset() ~= sqlite3.OK then
     logger.error(db:errmsg())
     return false
   end
@@ -67,18 +69,18 @@ local updatePlayerUsernameStatement = assert(db:prepare("UPDATE Player SET usern
 function PADatabase.updatePlayerUsername(self, privatePlayerID, username)
   updatePlayerUsernameStatement:bind_values(username, privatePlayerID)
   updatePlayerUsernameStatement:step()
-  if updatePlayerUsernameStatement:reset() ~= 0 then
+  if updatePlayerUsernameStatement:reset() ~= sqlite3.OK then
     logger.error(db:errmsg())
     return false
   end
   return true
 end
 
-local insertPlayerELOChangeStatement = assert(db:prepare("INSERT INTO PlayerELOHistory(publicPlayerID, rating) VALUES ((SELECT publicPlayerID FROM Player WHERE privatePlayerID = ?), ?)"))
-function PADatabase.insertPlayerELOChange(self, privatePlayerID, rating)
-  insertPlayerELOChangeStatement:bind_values(privatePlayerID, rating or 1500)
+local insertPlayerELOChangeStatement = assert(db:prepare("INSERT INTO PlayerELOHistory(publicPlayerID, rating, gameID) VALUES ((SELECT publicPlayerID FROM Player WHERE privatePlayerID = ?), ?, ?)"))
+function PADatabase.insertPlayerELOChange(self, privatePlayerID, rating, gameID)
+  insertPlayerELOChangeStatement:bind_values(privatePlayerID, rating or 1500, gameID)
   insertPlayerELOChangeStatement:step()
-  if insertPlayerELOChangeStatement:reset() ~= 0 then
+  if insertPlayerELOChangeStatement:reset() ~= sqlite3.OK then
     logger.error(db:errmsg())
     return false
   end
@@ -89,9 +91,9 @@ local selectPlayerRecordCount = assert(db:prepare("SELECT COUNT(*) FROM Player")
 function PADatabase.getPlayerRecordCount()
   selectPlayerRecordCount:step()
   local recordCount = selectPlayerRecordCount:get_value(0) -- this is the row count.
-  if selectPlayerRecordCount:reset() ~= 0 then
+  if selectPlayerRecordCount:reset() ~= sqlite3.OK then
     logger.error(db:errmsg())
-    return -1
+    return nil
   end
   return recordCount
 end
@@ -101,9 +103,9 @@ local insertGameStatement = assert(db:prepare("INSERT INTO Game(ranked) VALUES (
 function PADatabase.insertGame(self, ranked)
   insertGameStatement:bind_values(ranked and 1 or 0)
   insertGameStatement:step()
-  if insertGameStatement:reset() ~= 0 then
+  if insertGameStatement:reset() ~= sqlite3.OK then
     logger.error(db:errmsg())
-    return false
+    return nil
   end
   return db:last_insert_rowid()
 end
@@ -112,7 +114,7 @@ local insertPlayerGameResultStatement = assert(db:prepare("INSERT INTO PlayerGam
 function PADatabase.insertPlayerGameResult(self, privatePlayerID, gameID, level, placement)
   insertPlayerGameResultStatement:bind_values(privatePlayerID, gameID, level, placement)
   insertPlayerGameResultStatement:step()
-  if insertPlayerGameResultStatement:reset() ~= 0 then
+  if insertPlayerGameResultStatement:reset() ~= sqlite3.OK then
     logger.error(db:errmsg())
     return false
   end
@@ -121,12 +123,20 @@ end
 
 -- Stop statements from being committed until commitTransaction is called
 function PADatabase.beginTransaction(self)
-  db:exec("BEGIN")
+  if db:exec("BEGIN;") ~= sqlite3.OK then
+    logger.error(db:errmsg())
+    return false
+  end
+  return true
 end
 
 -- Commit all statements that were run since the start of beginTransaction
 function PADatabase.commitTransaction(self)
-  db:exec("COMMIT")
+  if db:exec("COMMIT;") ~= sqlite3.OK then
+    logger.error(db:errmsg())
+    return false
+  end
+  return true
 end
 
 return PADatabase
