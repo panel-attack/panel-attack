@@ -191,7 +191,7 @@ function Room.send(self, message)
   self:send_to_spectators(message)
 end
 
-function Room.resolve_game_outcome(self)
+function Room.resolve_game_outcome(self, database)
   --Note: return value is whether the outcome could be resolved
   if not self.game_outcome_reports[1] or not self.game_outcome_reports[2] then
     return false
@@ -205,6 +205,16 @@ function Room.resolve_game_outcome(self)
     else
       outcome = self.game_outcome_reports[1]
     end
+    local gameID = database:insertGame(self.replay.vs.ranked)
+    self.replay.vs.gameID = gameID
+    if outcome ~= 0 then
+      database:insertPlayerGameResult(self.a.user_id, gameID, self.replay.vs.P1_level, (self.a.player_number == outcome) and 1 or 2)
+      database:insertPlayerGameResult(self.b.user_id, gameID, self.replay.vs.P2_level, (self.b.player_number == outcome) and 1 or 2)
+    else
+      database:insertPlayerGameResult(self.a.user_id, gameID, self.replay.vs.P1_level, 0)
+      database:insertPlayerGameResult(self.b.user_id, gameID, self.replay.vs.P2_level, 0)
+    end
+
     logger.debug("resolve_game_outcome says: " .. outcome)
     --outcome is the player number of the winner, or 0 for a tie
     if self.a.save_replays_publicly ~= "not at all" and self.b.save_replays_publicly ~= "not at all" then
@@ -251,6 +261,7 @@ function Room.resolve_game_outcome(self)
     else
       logger.debug("replay not saved because a player didn't want it saved")
     end
+
     self.replay = nil
 
     --check that it's ok to adjust ratings
@@ -282,7 +293,7 @@ function Room.resolve_game_outcome(self)
           logger.trace("Player " .. i .. " scored")
           self.win_counts[i] = self.win_counts[i] + 1
           if shouldAdjustRatings then
-            adjust_ratings(self, i)
+            adjust_ratings(self, i, gameID)
           else
             logger.debug("Not adjusting ratings because: " .. reasons[1])
           end

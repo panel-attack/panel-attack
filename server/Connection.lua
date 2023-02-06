@@ -54,6 +54,8 @@ function Connection.login(self, user_id)
       self.user_id = their_new_user_id
       self.logged_in = true
       logger.info("New user: " .. self.name .. " was created")
+      self.server.database:insertNewPlayer(their_new_user_id, self.name)
+      self.server.database:insertPlayerELOChange(their_new_user_id, 0, 0)
     end
   elseif not playerbase.players[self.user_id] then
     deny_login(self, "The user_id provided was not found on this server")
@@ -70,6 +72,7 @@ function Connection.login(self, user_id)
       end
       self.logged_in = true
       self:send({login_successful = true, name_changed = true, old_name = the_old_name, new_name = self.name})
+      self.server.database:updatePlayerUsername(self.user_id, self.name)
       logger.warn("Login successful and " .. self.user_id .. " changed name " .. the_old_name .. " to " .. self.name)
     end
   elseif playerbase.players[self.user_id] then
@@ -388,7 +391,7 @@ function Connection.J(self, message)
     end
   elseif self.state == "playing" and message.game_over then
     self.room.game_outcome_reports[self.player_number] = message.outcome
-    if self.room:resolve_game_outcome() then
+    if self.room:resolve_game_outcome(self.server.database) then
       logger.debug("\n*******************************")
       logger.debug("***" .. self.room.a.name .. " " .. self.room.win_counts[1] .. " - " .. self.room.win_counts[2] .. " " .. self.room.b.name .. "***")
       logger.debug("*******************************\n")

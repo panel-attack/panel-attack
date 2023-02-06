@@ -13,6 +13,7 @@ require("server.Room")
 require("util")
 require("timezones")
 local lfs = require("lfs")
+local database = require("server.PADatabase")
 
 local pairs = pairs
 local ipairs = ipairs
@@ -39,6 +40,7 @@ Server =
     s.connections = {} -- all connection objects
     s.name_to_idx = {} -- mapping of player names to their unique connectionNumberIndex
     s.socket_to_idx = {} -- mapping of sockets to their unique connectionNumberIndex
+    s.database = database
   end
 )
 
@@ -306,7 +308,7 @@ function calculate_rating_adjustment(Rc, Ro, Oa, k) -- -- print("calculating exp
   return Rn
 end
 
-function adjust_ratings(room, winning_player_number)
+function adjust_ratings(room, winning_player_number, gameID)
   logger.debug("Adjusting the rating of " .. room.a.name .. " and " .. room.b.name .. ". Player " .. winning_player_number .. " wins!")
   local players = {room.a, room.b}
   local continue = true
@@ -319,6 +321,7 @@ function adjust_ratings(room, winning_player_number)
       logger.debug("Gave " .. playerbase.players[players[player_number].user_id] .. " a new rating of " .. DEFAULT_RATING)
       if not PLACEMENT_MATCHES_ENABLED then
         leaderboard.players[players[player_number].user_id].placement_done = true
+        database:insertPlayerELOChange(players[player_number].user_id, DEFAULT_RATING, gameID)
       end
       write_leaderboard_file()
     end
@@ -344,6 +347,7 @@ function adjust_ratings(room, winning_player_number)
       if placement_done[players[player_number].opponent.user_id] then
         logger.debug("Player " .. player_number .. " played a non-placement ranked match.  Updating his rating now.")
         room.ratings[player_number].new = calculate_rating_adjustment(leaderboard.players[players[player_number].user_id].rating, leaderboard.players[players[player_number].opponent.user_id].rating, Oa, k)
+        database:insertPlayerELOChange(players[player_number].user_id, room.ratings[player_number].new, gameID)
       else
         logger.debug("Player " .. player_number .. " played ranked against an unranked opponent.  We'll process this match when his opponent has finished placement")
         room.ratings[player_number].placement_matches_played = leaderboard.players[players[player_number].user_id].ranked_games_played
@@ -605,11 +609,57 @@ read_players_file()
 read_deleted_players_file()
 leaderboard = Leaderboard("leaderboard")
 read_leaderboard_file()
-for k, v in pairs(playerbase.players) do
-  if leaderboard.players[k] then
-    leaderboard.players[k].user_name = v
+
+
+local function importDatabase()
+  local usedNames = {}
+  local cleanedPlayerData = {}
+  for key, value in pairs(playerbase.players) do
+    local name = value
+    while usedNames[name] ~= nil do
+      name = name .. math.random(1, 9999)
+    end
+    cleanedPlayerData[key] = value
+    usedNames[name] = true
   end
+
+  database:beginTransaction() -- this stops the database from attempting to commit every statement individually 
+  logger.info("Importing leaderboard.csv to database")
+  for k, v in pairs(cleanedPlayerData) do
+    local rating = 0
+    if leaderboard.players[k] then
+      rating = leaderboard.players[k].rating
+    end
+    database:insertNewPlayer(k, v)
+    database:insertPlayerELOChange(k, rating, 0)
+  end
+
+  local gameMatches = readGameResults()
+  if gameMatches then -- only do it if there was a gameResults file to begin with
+    logger.info("Importing GameResults.csv to database")
+    for _, result in ipairs(gameMatches) do
+      local player1ID = result[1]
+      local player2ID = result[2]
+      local player1Won = result[3] == 1
+      local ranked = result[4] == 1
+      local gameID = database:insertGame(ranked)
+      if player1Won then
+        database:insertPlayerGameResult(player1ID, gameID, nil,  1)
+        database:insertPlayerGameResult(player2ID, gameID, nil,  2)
+      else
+        database:insertPlayerGameResult(player2ID, gameID, nil,  1)
+        database:insertPlayerGameResult(player1ID, gameID, nil,  2)
+      end
+    end
+  end
+  database:commitTransaction() -- bulk commit every statement from the start of beginTransaction
 end
+  
+local isPlayerTableEmpty = database:getPlayerRecordCount() == 0
+if isPlayerTableEmpty then
+  importDatabase()
+end
+
 logger.debug("leaderboard json:")
 logger.debug(json.encode(leaderboard.players))
 write_leaderboard_file()
