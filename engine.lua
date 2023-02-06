@@ -1,5 +1,7 @@
 require("analytics")
+local TouchDataEncoding = require("engine.TouchDataEncoding")
 local logger = require("logger")
+local utf8 = require("utf8")
 
 -- Stuff defined in this file:
 --  . the data structures that store the configuration of
@@ -12,6 +14,7 @@ local max = math.max
 local garbage_bounce_time = #garbage_bounce_table
 
 local DT_SPEED_INCREASE = 15 * 60 -- frames it takes to increase the speed level by 1
+local TOUCH_SWAP_COOLDOWN = 5  -- default number of cooldown frames between touch-input swaps, applied after the first 2 swaps after a touch is initiated, to prevent excessive or accidental stealths
 
 -- Represents the full panel stack for one player
 Stack =
@@ -26,6 +29,7 @@ Stack =
     -- level or difficulty should be set
     assert(arguments.level ~= nil or arguments.difficulty ~= nil)
     local level = arguments.level
+    local inputMethod = arguments.inputMethod or (which == 1 and config.inputMethod) or "controller" --"touch" or "controller"
     local difficulty = arguments.difficulty
     local speed = arguments.speed
     local player_number = arguments.player_number or which
@@ -104,8 +108,22 @@ Stack =
 
     s.later_garbage = {} -- Queue of garbage that is done waiting in telegraph, and been popped out, and will be sent to our stack next frame
     s.garbage_q = GarbageQueue(s) -- Queue of garbage that is about to be dropped
-
-    s:moveForPlayerNumber(which)
+    
+    s.inputMethod = inputMethod
+    s.raise_touched = false
+    
+    --touch variables
+    --if any is {row = 0, col = 0}, this is the equivalent if the variable being nil.  They do not describe any panel in the stack at the moment.
+    s.touchedPanel = {row = 0, col = 0}  -- panel that is currently touched
+    s.panel_first_touched = {row = 0, col = 0}  --panel that was first touched, since touchedPanel was 0,0.
+    s.prev_touchedPanel = {row = 0, col = 0}  --panel that was touched last frame
+    s.touch_target_col = 0 -- this is the destination column we will always be trying to swap toward. Set to s.touchedPanel.col or if that's 0, use s.prev_touchedPanel.col, or if that's 0, use existing s.touch_target_col.  if target is reached by s.cur_col, set s.touch_target_col to 0.
+    s.lingering_touch_cursor = {row = 0, col = 0} --origin of a failed swap, leave the cursor here even if the touch is released.  Also, leave the cursor here if a panel was touched, and then released without the touch moving.  This will allow us to tap an adjacent panel to try to swap with it.
+    s.swaps_this_touch = 0  -- number of swaps that have been initiated since the last time s.panel_first_touched was 0,0
+    s.touch_swap_cooldown_timer = 0 -- if this is zero, a swap can happen.  set to TOUCH_SWAP_COOLDOWN on each swap after the first. decrement by 1 each frame.
+    s.touched = false -- whether the stack (panels) are touched.  Still true if touch is dragged off the stack, but not released yet.
+    s.force_touch_release = false
+    
 
     s.panel_buffer = ""
     s.gpanel_buffer = ""
@@ -120,6 +138,7 @@ Stack =
         s.panels[i][j] = Panel()
       end
     end
+    s:moveForPlayerNumber(which)
 
     s.CLOCK = 0
     s.game_stopwatch = 0
@@ -250,6 +269,16 @@ Stack =
     s.multi_prestopQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_prestop_bar:getWidth(), themes[config.theme].images.IMG_multibar_prestop_bar:getHeight(), themes[config.theme].images.IMG_multibar_prestop_bar:getWidth(), themes[config.theme].images.IMG_multibar_prestop_bar:getHeight())
     s.multi_stopQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_stop_bar:getWidth(), themes[config.theme].images.IMG_multibar_stop_bar:getHeight(), themes[config.theme].images.IMG_multibar_stop_bar:getWidth(), themes[config.theme].images.IMG_multibar_stop_bar:getHeight())
     s.multi_shakeQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight(), themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight())
+
+    local cursorImage = themes[config.theme].images.IMG_cursor[1]
+    local imageWidth = cursorImage:getWidth()
+    local imageHeight = cursorImage:getHeight()
+    local cursorWidth = imageWidth
+    if s.inputMethod == "touch" then
+      cursorWidth = imageWidth / 2
+    end
+    s.cursorQuad = GraphicsUtil:newRecycledQuad(0, 0, cursorWidth, imageHeight, imageWidth, imageHeight)
+    assert(s.cursorQuad ~= nil)
   end)
 
 function Stack.setLevel(self, level)
@@ -297,6 +326,7 @@ function Stack:deinit()
   GraphicsUtil:releaseQuad(self.multi_prestopQuad)
   GraphicsUtil:releaseQuad(self.multi_stopQuad)
   GraphicsUtil:releaseQuad(self.multi_shakeQuad)
+  GraphicsUtil:releaseQuad(self.cursorQuad)
 end
 
 -- Positions the stack draw position for the given player
@@ -370,7 +400,7 @@ function Stack.rollbackCopy(source, other)
       source.clonePool[#source.clonePool] = nil
     end
   end
-  other.do_swap = source.do_swap
+  other.do_swap = deepcpy(source.do_swap)
   other.speed = source.speed
   other.health = source.health
 
@@ -463,6 +493,20 @@ function Stack.rollbackCopy(source, other)
   other.game_over_clock = source.game_over_clock
   other.currentChainStartFrame = source.currentChainStartFrame
 
+  -- TODO evaluate this...
+  if source.inputMethod == "touch" then
+    other.touchedPanel = deepcpy(source.touchedPanel)
+    other.prev_touchedPanel = deepcpy(source.prev_touchedPanel)
+    other.panel_first_touched = deepcpy(source.panel_first_touched)
+    other.touch_target_col = source.touch_target_col
+    other.lingering_touch_cursor = deepcpy(source.lingering_touch_cursor)
+    other.swaps_this_touch = source.swaps_this_touch
+    other.touch_swap_cooldown_timer = source.touch_swap_cooldown_timer
+    other.touched = source.touched
+    other.raise_touched = source.raise_touched
+    other.force_touch_release = source. force_touch_release
+  end
+    
   return other
 end
 
@@ -987,32 +1031,49 @@ end
 function Stack.controls(self)
   local new_dir = nil
   local sdata = self.input_state
-  local raise, swap, up, down, left, right = unpack(base64decode[sdata])
-  if (raise) and (not self.prevent_manual_raise) then
-    self.manual_raise = true
-    self.manual_raise_yet = false
-  end
-
-  self.swap_1 = swap
-  self.swap_2 = swap
-
-  if up then
-    new_dir = "up"
-  elseif down then
-    new_dir = "down"
-  elseif left then
-    new_dir = "left"
-  elseif right then
-    new_dir = "right"
-  end
-
-  if new_dir == self.cur_dir then
-    if self.cur_timer ~= self.cur_wait_time then
-      self.cur_timer = self.cur_timer + 1
+  if self.inputMethod == "touch" then
+    self.prev_touchedPanel = deepcpy(self.touchedPanel)
+    local iraise, icol_touched, irow_touched = TouchDataEncoding.latinStringToTouchData(sdata, self.width)
+    if irow_touched ~= 0 and icol_touched ~= 0 then
+      --print(tostring(iraise) .. " " .. tostring(irow_touched) .. " " .. tostring(icol_touched))
     end
-  else
-    self.cur_dir = new_dir
-    self.cur_timer = 0
+    self.touchedPanel = { row = irow_touched, col = icol_touched}
+    self.raise_touched = iraise
+    if self.raise_touched then
+      if not self.prevent_manual_raise then
+        self.manual_raise = true
+        self.manual_raise_yet = false
+      end
+    end
+  else --input method is controller
+    self.touchedPanel = nil
+    local raise, swap, up, down, left, right = unpack(base64decode[sdata])
+    if (raise) and (not self.prevent_manual_raise) then
+      self.manual_raise = true
+      self.manual_raise_yet = false
+    end
+
+    self.swap_1 = swap
+    self.swap_2 = swap
+
+    if up then
+      new_dir = "up"
+    elseif down then
+      new_dir = "down"
+    elseif left then
+      new_dir = "left"
+    elseif right then
+      new_dir = "right"
+    end
+
+    if new_dir == self.cur_dir then
+      if self.cur_timer ~= self.cur_wait_time then
+        self.cur_timer = self.cur_timer + 1
+      end
+    else
+      self.cur_dir = new_dir
+      self.cur_timer = 0
+    end
   end
 end
 
@@ -1104,7 +1165,7 @@ function Stack.setupInput(self)
 end
 
 function Stack.receiveConfirmedInput(self, input)
-  if string.len(input) == 1 then
+  if utf8.len(input) == 1 then
     self.confirmedInput[#self.confirmedInput+1] = input
     self.input_buffer[#self.input_buffer+1] = input
   else
@@ -1269,6 +1330,9 @@ function Stack.simulate(self)
         self.starting_cur_col = self.cur_col
         self.cur_row = self.height
         self.cur_col = self.width - 1
+        if self.inputMethod == "touch" then
+          self.cur_col = self.width
+        end
         self.countdown_cursor_state = "ready_falling"
         self.countdown_cur_speed = 4 --one move every this many frames
         self.cursor_lock = true
@@ -1398,7 +1462,7 @@ function Stack.simulate(self)
 
     -- Begin the swap we input last frame.
     if self.do_swap then
-      self:swap()
+      self:swap(unpack(self.do_swap))
       swapped_this_frame = true
       self.do_swap = nil
     end
@@ -1703,21 +1767,25 @@ function Stack.simulate(self)
 
     -- CURSOR MOVEMENT
     local playMoveSounds = true -- set this to false to disable move sounds for debugging
-    if self.cur_dir and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and not self.cursor_lock then
-      local prev_row = self.cur_row
-      local prev_col = self.cur_col
-      self.cur_row = bound(1, self.cur_row + d_row[self.cur_dir], self.top_cur_row)
-      self.cur_col = bound(1, self.cur_col + d_col[self.cur_dir], self.width - 1)
-      if (playMoveSounds and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and (self.cur_row ~= prev_row or self.cur_col ~= prev_col)) then
-        if self:shouldChangeSoundEffects() then
-          SFX_Cur_Move_Play = 1
-        end
-        if self.cur_timer ~= self.cur_wait_time then
-          self.analytic:register_move()
-        end
-      end
+    if self.inputMethod == "touch" then
+        --with touch, cursor movement happens along with swapping
     else
-      self.cur_row = bound(1, self.cur_row, self.top_cur_row)
+      if self.cur_dir and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and not self.cursor_lock then
+        local prev_row = self.cur_row
+        local prev_col = self.cur_col
+        self.cur_row = bound(1, self.cur_row + d_row[self.cur_dir], self.top_cur_row)
+        self.cur_col = bound(1, self.cur_col + d_col[self.cur_dir], self.width - 1)
+        if (playMoveSounds and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and (self.cur_row ~= prev_row or self.cur_col ~= prev_col)) then
+          if self:shouldChangeSoundEffects() then
+            SFX_Cur_Move_Play = 1
+          end
+          if self.cur_timer ~= self.cur_wait_time then
+            self.analytic:register_move()
+          end
+        end
+      else
+        self.cur_row = bound(1, self.cur_row, self.top_cur_row)
+      end
     end
 
     if self.cur_timer ~= self.cur_wait_time then
@@ -1736,16 +1804,178 @@ function Stack.simulate(self)
       end
     end
 
-    -- SWAPPING
-    if (self.swap_1 or self.swap_2) and not swapped_this_frame then
-      local do_swap = self:canSwap(self.cur_row, self.cur_col)
+    -- SWAPPING (this also moves the cursor, if touch input)
+    if self.inputMethod == "touch" then
+      if not self.cursor_lock then
+        if not self.force_touch_release then
+          if self.touch_swap_cooldown_timer > 0 then
+             self.touch_swap_cooldown_timer = self.touch_swap_cooldown_timer - 1
+          end
 
-      if do_swap then
-        self.do_swap = true
-        self.analytic:register_swap()
+          --touch was initiated
+          if (not self.prev_touchedPanel or (self.prev_touchedPanel.row == 0 and self.prev_touchedPanel.col == 0)) and self.touchedPanel and not (self.touchedPanel.row == 0 and self.touchedPanel.col == 0) then
+            print("touch was initiated")
+            self.panel_first_touched = deepcpy(self.touchedPanel)
+            self.touch_target_col = self.touchedPanel.col
+            self.swaps_this_touch = 0
+            self.touch_swap_cooldown_timer = 0
+            
+            -- check for attempt to swap with self.lingering_touch_cursor
+            -- ie we touched a panel horizontally adjacent to self.lingering_touch_cursor
+            local linger_swap_attempted = false
+            local linger_swap_successful = false
+            if self.lingering_touch_cursor.col ~= 0 and self.lingering_touch_cursor.row == self.touchedPanel.row then
+              local linger_swap_delta = self.touchedPanel.col - self.lingering_touch_cursor.col
+              if linger_swap_delta == 1  then
+               --try to swap right
+               linger_swap_attempted = true
+               linger_swap_successful = self:canSwap(self.lingering_touch_cursor.row, self.lingering_touch_cursor.col)
+                if linger_swap_successful then
+                  self.do_swap = {self.lingering_touch_cursor.row, self.lingering_touch_cursor.col}
+                end
+              elseif linger_swap_delta == -1 then
+                -- try to swap left
+                linger_swap_attempted = true
+                linger_swap_successful = self:canSwap(self.touchedPanel.row, self.touchedPanel.col)
+                if linger_swap_successful then
+                  self.do_swap = {self.touchedPanel.row,self.touchedPanel.col}
+                end
+              else
+                 print("linger_swap_delta was not -1 or 1, it was "..linger_swap_delta..".  not attempting a swap")
+              end
+              if linger_swap_successful  then
+                self.lingering_touch_cursor = {row = 0, col = 0} --(else leave it as it was, so we can try to tap adjacent again later)
+                self.cur_col = self.cur_col + linger_swap_delta
+                self.swaps_this_touch = self.swaps_this_touch + 1
+              end
+            end
+            if not linger_swap_attempted then
+              --we touched somewhere else on the stack
+              --put the cursor at touchedPanel
+              self.cur_row = self.touchedPanel.row
+              self.cur_col = self.touchedPanel.col
+              --remove linger panel selection
+              self.lingering_touch_cursor = {row = 0, col = 0}
+            end
+          end
+          
+          --print whether linger swap was attempted or successful
+          if linger_swap_attempted then
+            print("linger swap was attempted!")
+          end
+          if linger_swap_successful then
+            print("linger swap was successful!")
+          end
+          
+          --touch is ongoing
+          if self.touchedPanel and not (self.touchedPanel.row == 0 and self.touchedPanel.col == 0) then
+            --if lingering_touch_cursor isn't set, we'll set a target for normal drag swapping.
+            if not self.lingering_touch_cursor or (self.lingering_touch_cursor.row == 0 and self.lingering_touch_cursor.col == 0) then
+              self.touch_target_col = self.touchedPanel.col
+            else -- lingering_touch_cursor is set
+              --don't drag the panel at lingering_touch_cursor
+              self.touch_target_col = 0
+              --the following was decided against, commenting it out
+              -- --if we've dragged our touch off the lingering cursor location, and back again, let's make the panel draggable once more
+              -- if self.prev_touchedPanel.col ~= self.lingering_touch_cursor.col and self.touchedPanel.col == self.lingering_touch_cursor.col then
+                -- self.lingering_touch_cursor = {row = 0, col = 0}
+              -- end
+            end
+          end
+        end
+
+        --touch was released
+        if (self.prev_touchedPanel and not (self.prev_touchedPanel.row == 0 and self.prev_touchedPanel.col == 0)) and (not self.touchedPanel or (self.touchedPanel.row == 0 and self.touchedPanel.col == 0)) then
+          print("touch was released!")
+          self.force_touch_release = false
+          self.panel_first_touched = {row = 0, col = 0} 
+          -- --check if we need to set lingering panel because user tapped a panel, didn't move it, and released it.
+          -- if self.swaps_this_touch == 0 and self.prev_touchedPanel.row == self.cur_row and self.prev_touchedPanel.col == self.cur_col then --to do: or we tried to swap and couldn't
+            -- print("lingering_touch_cursor set to "..self.cur_row..","..self.cur_col) 
+            -- self.lingering_touch_cursor = {row = self.cur_row, col = self.cur_col}
+          -- end
+          --if no lingering_touch_cursor, remove cursor from the display.
+          -- and the cursor has reached self.touch_target_col
+          if not self.lingering_touch_cursor or (self.lingering_touch_cursor.row == 0 and self.lingering_touch_cursor.col == 0) and self.cur_col == self.touch_target_col then
+            self.cur_row = 0
+            self.cur_col = 0
+            self.swaps_this_touch = 0
+          end
+        end
+
+        --try to swap toward self.touch_target_col
+        if self.touch_swap_cooldown_timer == 0 and not linger_swap_attempted then
+          --if panel at cur_row, cur_col gets certain flags, deselect it, and end the touch
+          if (self.cur_row ~= 0 and self.cur_col ~= 0) then
+            local panel = self.panels[self.cur_row][self.cur_col]
+            if panel:exclude_hover() or panel.state == "matched" then
+              self.cur_row = 0
+              self.cur_col = 0
+              self.swaps_this_touch = 0
+              self.lingering_touch_cursor = {row = 0, col = 0}
+              self.touch_target_col = 0
+              if self.touched then
+                self.force_touch_release = true
+              end
+            end
+          end
+          if not self.force_touch_release and self.touch_target_col ~= 0 and self.cur_col ~= 0 and self.touch_target_col ~= self.cur_col then
+            local cursor_target_delta = self.touch_target_col - self.cur_col
+            local swap_successful = false
+            local swap_origin = {row = 0, col = 0}
+            local swap_destination = {row = 0, col = 0}
+            if (cursor_target_delta) > 0 then
+              --try to swap right
+              swap_origin = {row = self.cur_row, col = self.cur_col}
+              swap_destination = {row = self.cur_row, col = self.cur_col + 1}
+              swap_successful = self:canSwap(swap_origin.row, swap_origin.col)
+              if swap_successful then
+                self.do_swap = {swap_origin.row, swap_origin.col}
+                self.cur_col = swap_destination.col
+              end
+            elseif cursor_target_delta < 0 then
+              --try to swap left
+              swap_origin = {row = self.cur_row, col = self.cur_col}
+              swap_destination = {row = self.cur_row, col = self.cur_col - 1}
+              swap_successful = self:canSwap(swap_destination.row, swap_destination.col)
+              if swap_successful then
+                self.do_swap = {swap_destination.row, swap_destination.col}
+                self.cur_col = swap_destination.col
+              end
+            end
+            if swap_successful then 
+              self.swaps_this_touch = self.swaps_this_touch + 1
+              if self.swaps_this_touch >= 2 then --third swap onward is slowed down to prevent excessive or accidental stealths
+                self.touch_swap_cooldown_timer = TOUCH_SWAP_COOLDOWN
+              end
+            else  --we failed to swap toward the target
+              --if both origin and destination are blank panels
+              if (self.panels[swap_origin.row][swap_origin.col].color == 0
+                and self.panels[swap_destination.row][swap_destination.col].color == 0) then
+                --we tried to swap two empty panels.  Let's put the cursor on swap_destination
+                self.cur_row = swap_destination.row
+                self.cur_col = swap_destination.col
+              --elseif there are clearing panels in the way of the swap 
+              elseif self.panels[swap_destination.row][swap_destination.col]:exclude_swap() then
+                --let's set lingering_touch_cursor to the origin of the failed swap
+                print("lingering_touch_cursor was set because destination panel was not swappable")
+                self.lingering_touch_cursor = {row = self.cur_row, col = self.cur_col}
+              end
+            end
+          end
+        end --of self.touch_swap_cooldown_timer was 0
       end
-      self.swap_1 = false
-      self.swap_2 = false
+    else --input method is controller
+      if (self.swap_1 or self.swap_2) and not swapped_this_frame then
+        local do_swap = self:canSwap(self.cur_row, self.cur_col)
+
+        if do_swap then
+          self.do_swap = {self.cur_row, self.cur_col}
+          self.analytic:register_swap()
+        end
+        self.swap_1 = false
+        self.swap_2 = false
+      end
     end
 
     -- MANUAL STACK RAISING
@@ -2302,10 +2532,8 @@ function Stack.canSwap(self, row, column)
 end
 
 -- Swaps panels at the current cursor location
-function Stack.swap(self)
+function Stack.swap(self, row, col)
   local panels = self.panels
-  local row = self.cur_row
-  local col = self.cur_col
   self:processPuzzleSwap()
   panels[row][col], panels[row][col + 1] = panels[row][col + 1], panels[row][col]
   local tmp_chaining = panels[row][col].chaining
@@ -2328,7 +2556,7 @@ function Stack.swap(self)
   -- If you're swapping a panel into a position
   -- above an empty space or above a falling piece
   -- then you can't take it back since it will start falling.
-  if self.cur_row ~= 1 then
+  if row ~= 1 then
     if (panels[row][col].color ~= 0) and (panels[row - 1][col].color == 0 or panels[row - 1][col].state == "falling") then
       panels[row][col].dont_swap = true
     end
@@ -2340,7 +2568,7 @@ function Stack.swap(self)
   -- If you're swapping a blank space under a panel,
   -- then you can't swap it back since the panel should
   -- start falling.
-  if self.cur_row ~= self.height then
+  if row ~= self.height then
     if panels[row][col].color == 0 and panels[row + 1][col].color ~= 0 then
       panels[row][col].dont_swap = true
     end
@@ -2817,7 +3045,15 @@ end
 function Stack.new_row(self)
   local panels = self.panels
   -- move cursor up
-  self.cur_row = bound(1, self.cur_row + 1, self.top_cur_row)
+  if (self.inputMethod == "touch" and self.cur_row ~= 0) or self.inputMethod ~= "touch" then
+    self.cur_row = bound(1, self.cur_row + 1, self.top_cur_row)
+  end
+  if self.panel_first_touched and self.panel_first_touched.row and self.panel_first_touched.row ~= 0 then
+    self.panel_first_touched.row = bound(1,self.panel_first_touched.row + 1, self.top_cur_row)
+  end
+  if self.lingering_touch_cursor and self.lingering_touch_cursor.row and self.lingering_touch_cursor.row ~= 0 then
+    self.lingering_touch_cursor.row = bound(1,self.lingering_touch_cursor.row + 1, self.top_cur_row)
+  end
   -- move panels up
   for row = #panels + 1, 1, -1 do
     panels[row] = panels[row - 1]

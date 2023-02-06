@@ -956,18 +956,27 @@ end
 
 -- Draw the stacks cursor
 function Stack.render_cursor(self)
+  if self.inputMethod == "touch" then
+    if self.cur_row == 0 and self.cur_col == 0 then
+      --no panel is touched, let's not draw the cursor
+      return
+    end
+  end
+
   local cursorImage = themes[config.theme].images.IMG_cursor[(floor(self.CLOCK / 16) % 2) + 1]
   local shake_idx = #shake_arr - self.shake_time
   local shake = ceil((shake_arr[shake_idx] or 0) * 13)
   local scale_x = 40 / cursorImage:getWidth()
   local scale_y = 24 / cursorImage:getHeight()
 
+  local renderCursor = true
   if self.countdown_timer then
-    if self.CLOCK % 2 == 0 then
-      draw(themes[config.theme].images.IMG_cursor[1], (self.cur_col - 1) * 16, (11 - (self.cur_row)) * 16 + self.displacement - shake, 0, scale_x, scale_y)
+    if self.CLOCK % 2 ~= 0 then
+      renderCursor = false
     end
-  else
-    draw(cursorImage, (self.cur_col - 1) * 16, (11 - (self.cur_row)) * 16 + self.displacement - shake, 0, scale_x, scale_y)
+  end
+  if renderCursor then
+    qdraw(cursorImage, self.cursorQuad, (self.cur_col - 1) * 16, (11 - (self.cur_row)) * 16 + self.displacement - shake, 0, scale_x, scale_y)
   end
 end
 

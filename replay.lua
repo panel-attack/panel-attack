@@ -6,7 +6,16 @@ class(
     function(self)
     end
   )
-  
+
+function Replay.replayCanBeViewed(replay)
+  if replay.engineVersion >= VERSION_MIN_VIEW and replay.engineVersion <= VERSION then
+    if not replay.puzzle then
+      return true
+    end
+  end
+
+  return false
+end
 
 function Replay.loadFromPath(path)
     local file, error_msg = love.filesystem.read(path)
@@ -47,11 +56,13 @@ function Replay.loadFromFile(replay)
 
   if replay.vs then
     assert(replayDetails.P1_level, "invalid replay: player 1 level missing from vs replay")
-    P1 = Stack{which=1, match=GAME.match, is_local=false, level=replayDetails.P1_level, character=replayDetails.P1_char}
+    local inputType1 = (replayDetails.P1_inputMethod) or "controller"
+    P1 = Stack{which=1, match=GAME.match, is_local=false, level=replayDetails.P1_level, character=replayDetails.P1_char, inputMethod=inputType1}
 
     if replayDetails.I and string.len(replayDetails.I)> 0 then
       assert(replayDetails.P2_level, "invalid replay: player 1 level missing from vs replay")
-      P2 = Stack{which=2, match=GAME.match, is_local=false, level=replayDetails.P2_level, character=replayDetails.P2_char}
+      local inputType2 = (replayDetails.P2_inputMethod) or "controller"
+      P2 = Stack{which=2, match=GAME.match, is_local=false, level=replayDetails.P2_level, character=replayDetails.P2_char, inputMethod=inputType2}
       
       P1:set_garbage_target(P2)
       P2:set_garbage_target(P1)
@@ -108,3 +119,5 @@ function Replay.loadFromFile(replay)
     P2:starting_state()
   end
 end
+
+return Replay

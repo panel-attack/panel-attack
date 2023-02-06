@@ -73,6 +73,7 @@ function fmainloop()
     require("ServerQueueTests")
     require("StackTests")
     require("tests.ThemeTests")
+    require("tests.TouchDataEncodingTests")
     require("table_util_tests")
     require("utilTests")
     -- Medium level tests (integration tests)
@@ -364,6 +365,7 @@ function createNewReplay(match)
     modeReplay.Q = ""
     modeReplay.in_buf = ""
     modeReplay.P1_level = P1.level
+    modeReplay.P1_inputMethod = P1.inputMethod
     modeReplay.P1_name = GAME.battleRoom.playerNames[1]
     modeReplay.P1_char = P1.character
     modeReplay.P1_char = P1.character
@@ -371,6 +373,7 @@ function createNewReplay(match)
     modeReplay.do_countdown = true
     if P2 then
       modeReplay.P2_level = P2.level
+      modeReplay.P2_inputMethod = P2.inputMethod
       modeReplay.P2_name = GAME.battleRoom.playerNames[2]
       modeReplay.P2_char = P2.character
       modeReplay.P2_cur_wait_time = P2.cur_wait_time
@@ -2100,7 +2103,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax, keepMusic, ar
         end
 
         -- if conditions are met, leave the game over screen
-        if t >= timemin and ((t >= timemax and timemax >= 0) or (menu_enter() or menu_escape())) or left_select_menu then
+        if t >= timemin and ((t >= timemax and timemax >= 0) or (menu_enter() or menu_escape() or love.mouse.isDown(1))) or left_select_menu then
           setMusicFadePercentage(1) -- reset the music back to normal config volume
           if not keepMusic then
             stop_the_music()
