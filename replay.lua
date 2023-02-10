@@ -88,8 +88,8 @@ function Replay.loadFromFile(replay)
     end
 
   elseif replay.endless or replay.time then
-
-    P1 = Stack{which=1, match=GAME.match, is_local=false, speed=replayDetails.speed, difficulty=replayDetails.difficulty}
+    local inputMethod = (replayDetails.inputMethod) or "controller"
+    P1 = Stack{which=1, match=GAME.match, is_local=false, speed=replayDetails.speed, difficulty=replayDetails.difficulty, inputMethod=inputMethod}
     GAME.match.P1 = P1
     P1:wait_for_random_character()
   end

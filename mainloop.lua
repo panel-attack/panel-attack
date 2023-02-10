@@ -358,6 +358,7 @@ function createNewReplay(match)
     modeReplay.difficulty = P1.difficulty
     modeReplay.cur_wait_time = P1.cur_wait_time or default_input_repeat_delay
     modeReplay.in_buf = ""
+    modeReplay.inputMethod = P1.inputMethod
   elseif mode == "vs" then
     modeReplay.P = ""
     modeReplay.O = ""
@@ -382,7 +383,6 @@ function createNewReplay(match)
       modeReplay.P2_win_count = GAME.match.battleRoom.playerWinCounts[P2.player_number]
     end
   end
-
   return result
 end
 
