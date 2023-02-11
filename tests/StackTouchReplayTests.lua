@@ -3,7 +3,7 @@ local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local testReplayFolder = "tests/replays/"
 
 -- Tests a catch that also did a "sync" (two separate matches on the same frame)
-local function catchAndSyncTest()
+local function simpleTouchTest()
   match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v047-2023-02-06-05-21-16-Spd5-Dif1-endless.json")
   assert(match ~= nil)
   assert(match.mode == "endless")
@@ -14,4 +14,4 @@ local function catchAndSyncTest()
   assert(table.length(match.P1.combos) == 0)
 end
 
-catchAndSyncTest()
+simpleTouchTest()
