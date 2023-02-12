@@ -1021,18 +1021,15 @@ end
 function Stack.controls(self)
   local new_dir = nil
   local sdata = self.input_state
+  local raise
   if self.inputMethod == "touch" then
     self.touchInputController.prev_touchedPanel = deepcpy(self.touchInputController.touchedPanel)
-    local iraise, icol_touched, irow_touched = TouchDataEncoding.latinStringToTouchData(sdata, self.width)
-    self.touchInputController.touchedPanel = { row = irow_touched, col = icol_touched}
-    if iraise then
-      if not self.prevent_manual_raise then
-        self.manual_raise = true
-        self.manual_raise_yet = false
-      end
-    end
+    local icol_touched, irow_touched
+    raise, icol_touched, irow_touched = TouchDataEncoding.latinStringToTouchData(sdata, self.width)
+    self.touchInputController.touchedPanel = {row = irow_touched, col = icol_touched}
   else --input method is controller
-    local raise, swap, up, down, left, right = unpack(base64decode[sdata])
+    local swap, up, down, left, right
+    raise, swap, up, down, left, right = unpack(base64decode[sdata])
     if (raise) and (not self.prevent_manual_raise) then
       self.manual_raise = true
       self.manual_raise_yet = false
@@ -1058,6 +1055,13 @@ function Stack.controls(self)
     else
       self.cur_dir = new_dir
       self.cur_timer = 0
+    end
+  end
+
+  if raise then
+    if not self.prevent_manual_raise then
+      self.manual_raise = true
+      self.manual_raise_yet = false
     end
   end
 end

@@ -726,15 +726,15 @@ function Stack.render(self)
       gprint(loc("pl_metal", (self.metal_panels_queued or 0)), self.score_x, self.score_y + 180)
     end
     if config.debug_mode and (self.input_state or self.taunt_up or self.taunt_down) then
-      local iraise, iswap, iup, idown, ileft, iright
+      local raise, iswap, iup, idown, ileft, iright
       local irow_touched, icol_touched
       if self.inputMethod == "touch" then
-        iraise, icol_touched, irow_touched = TouchDataEncoding.latinStringToTouchData(self.input_state, self.width)
+        raise, icol_touched, irow_touched = TouchDataEncoding.latinStringToTouchData(self.input_state, self.width)
       else 
-        iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
+        raise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
       end
       local inputs_to_print = "inputs:"
-      if iraise then
+      if raise then
         inputs_to_print = inputs_to_print .. "\nraise"
       end --◄▲▼►
       if iswap then
@@ -759,16 +759,7 @@ function Stack.render(self)
         inputs_to_print = inputs_to_print .. "\ntaunt_up"
       end
       if self.inputMethod == "touch" then
-        inputs_to_print = inputs_to_print .. "\npanel_touched:"..irow_touched..","..icol_touched
-        inputs_to_print = inputs_to_print .. "\ncursor:".. self.cur_col ..",".. self.cur_row
-        inputs_to_print = inputs_to_print .. "\ntouchedPanel:"..self.touchInputController.touchedPanel.row..","..self.touchInputController.touchedPanel.col
-        inputs_to_print = inputs_to_print .. "\npanel_first_touched:"..self.touchInputController.panel_first_touched.row..","..self.touchInputController.panel_first_touched.col
-        inputs_to_print = inputs_to_print .. "\nprev_touchedPanel:"..self.touchInputController.prev_touchedPanel.row..","..self.touchInputController.prev_touchedPanel.col
-        inputs_to_print = inputs_to_print .. "\ntouch_target_col:"..self.touchInputController.touch_target_col
-        inputs_to_print = inputs_to_print .. "\nlingering_touch_cursor:"..self.touchInputController.lingering_touch_cursor.row..","..self.touchInputController.lingering_touch_cursor.col
-        inputs_to_print = inputs_to_print .. "\nswaps_this_touch:"..self.touchInputController.swaps_this_touch
-        inputs_to_print = inputs_to_print .. "\ntouch_swap_cooldown_timer:"..self.touchInputController.touch_swap_cooldown_timer
-        inputs_to_print = inputs_to_print .. "\nstack.touched:"..(self.touchInputController.touched and "true" or "false")
+        inputs_to_print = inputs_to_print .. self.touchInputController:debugString()
       end
       gprint(inputs_to_print, self.score_x, self.score_y + 195)
     end

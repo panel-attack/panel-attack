@@ -27,7 +27,7 @@ function TouchInputController:encodedCharacterForCurrentTouchInput()
   --only one touched panel is supported, no multitouch.
   local mx, my = GAME:transform_coordinates(love.mouse.getPosition())
   if love.mouse.isDown(1) then
-    --note: a stack is still "touched" if we touched the stack, and have dragged the mouse or touch off the stack, until we lift the touch
+    --note: a stack is still "touchingStack" if we touched the stack, and have dragged the mouse or touch off the stack, until we lift the touch
     --check whether the mouse is over this stack
     if mx >= self.stack.pos_x * GFX_SCALE and mx <= (self.stack.pos_x * GFX_SCALE) + (self.stack.width * 16) * GFX_SCALE and
     my >= self.stack.pos_y * GFX_SCALE and my <= (self.stack.pos_y * GFX_SCALE) + (self.stack.height* 16) * GFX_SCALE then
@@ -251,6 +251,20 @@ function TouchInputController:stackIsCreatingNewRow()
   if self.lingering_touch_cursor and self.lingering_touch_cursor.row and self.lingering_touch_cursor.row ~= 0 then
     self.lingering_touch_cursor.row = bound(1,self.lingering_touch_cursor.row + 1, self.stack.top_cur_row)
   end
+end
+
+function TouchInputController:debugString()
+  local inputs_to_print = ""
+  inputs_to_print = inputs_to_print .. "\ncursor:".. self.stack.cur_col ..",".. self.stack.cur_row
+  inputs_to_print = inputs_to_print .. "\ntouchedPanel:"..self.touchedPanel.row..","..self.touchedPanel.col
+  inputs_to_print = inputs_to_print .. "\npanel_first_touched:"..self.panel_first_touched.row..","..self.panel_first_touched.col
+  inputs_to_print = inputs_to_print .. "\nprev_touchedPanel:"..self.prev_touchedPanel.row..","..self.prev_touchedPanel.col
+  inputs_to_print = inputs_to_print .. "\ntouch_target_col:"..self.touch_target_col
+  inputs_to_print = inputs_to_print .. "\nlingering_touch_cursor:"..self.lingering_touch_cursor.row..","..self.lingering_touch_cursor.col
+  inputs_to_print = inputs_to_print .. "\nswaps_this_touch:"..self.swaps_this_touch
+  inputs_to_print = inputs_to_print .. "\ntouch_swap_cooldown_timer:"..self.touch_swap_cooldown_timer
+  inputs_to_print = inputs_to_print .. "\ntouchingStack:"..(self.touchingStack and "true" or "false")
+  return inputs_to_print
 end
 
 return TouchInputController
