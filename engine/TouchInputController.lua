@@ -127,7 +127,7 @@ function TouchInputController:handleSwap()
               self.stack.do_swap = {self.touchedPanel.row,self.touchedPanel.col}
             end
           else
-             print("linger_swap_delta was not -1 or 1, it was "..linger_swap_delta..".  not attempting a swap")
+            logger.trace("linger_swap_delta was not -1 or 1, it was "..linger_swap_delta..".  not attempting a swap")
           end
           if linger_swap_successful  then
             self.lingering_touch_cursor = {row = 0, col = 0} --(else leave it as it was, so we can try to tap adjacent again later)
@@ -235,12 +235,21 @@ function TouchInputController:handleSwap()
           --elseif there are clearing panels in the way of the swap 
           elseif self.stack.panels[swap_destination.row][swap_destination.col]:exclude_swap() then
             --let's set lingering_touch_cursor to the origin of the failed swap
-            print("lingering_touch_cursor was set because destination panel was not swappable")
+            logger.trace("lingering_touch_cursor was set because destination panel was not swappable")
             self.lingering_touch_cursor = {row = self.stack.cur_row, col = self.stack.cur_col}
           end
         end
       end
     end --of self.touch_swap_cooldown_timer was 0
+  end
+end
+
+function TouchInputController:stackIsCreatingNewRow()
+  if self.panel_first_touched and self.panel_first_touched.row and self.panel_first_touched.row ~= 0 then
+    self.panel_first_touched.row = bound(1,self.panel_first_touched.row + 1, self.stack.top_cur_row)
+  end
+  if self.lingering_touch_cursor and self.lingering_touch_cursor.row and self.lingering_touch_cursor.row ~= 0 then
+    self.lingering_touch_cursor.row = bound(1,self.lingering_touch_cursor.row + 1, self.stack.top_cur_row)
   end
 end
 

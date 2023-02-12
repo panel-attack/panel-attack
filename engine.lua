@@ -2856,14 +2856,11 @@ end
 function Stack.new_row(self)
   local panels = self.panels
   -- move cursor up
-  if (self.inputMethod == "touch" and self.cur_row ~= 0) or self.inputMethod ~= "touch" then
+  if self.cur_row ~= 0 then
     self.cur_row = bound(1, self.cur_row + 1, self.top_cur_row)
   end
-  if self.touchInputController.panel_first_touched and self.touchInputController.panel_first_touched.row and self.touchInputController.panel_first_touched.row ~= 0 then
-    self.touchInputController.panel_first_touched.row = bound(1,self.touchInputController.panel_first_touched.row + 1, self.top_cur_row)
-  end
-  if self.touchInputController.lingering_touch_cursor and self.touchInputController.lingering_touch_cursor.row and self.touchInputController.lingering_touch_cursor.row ~= 0 then
-    self.touchInputController.lingering_touch_cursor.row = bound(1,self.touchInputController.lingering_touch_cursor.row + 1, self.top_cur_row)
+  if self.inputMethod == "touch" then
+    self.touchInputController:stackIsCreatingNewRow()
   end
   -- move panels up
   for row = #panels + 1, 1, -1 do
