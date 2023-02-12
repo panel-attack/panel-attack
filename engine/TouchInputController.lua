@@ -253,6 +253,7 @@ function TouchInputController:stackIsCreatingNewRow()
   end
 end
 
+-- Returns a debug string useful for printing on screen during debugging
 function TouchInputController:debugString()
   local inputs_to_print = ""
   inputs_to_print = inputs_to_print .. "\ncursor:".. self.stack.cur_col ..",".. self.stack.cur_row

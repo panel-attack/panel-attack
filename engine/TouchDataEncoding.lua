@@ -1,9 +1,13 @@
 local utf8 = require("utf8")
 
+-- Represents an encoding scheme that saves a panel column, row, and raise data into a single unicode character
+-- so it can be somewhat understood in the replay file and easy to trasmit over the network.
 local TouchDataEncoding = {}
 
+-- Start at a unicode point that is mostly printable characters that are distinguishable
 local START_LATIN_NUMBER = 256
 
+-- Given a stack width and number, returns which panel it is in the stack, left to right, bottom to top
 local function panelNumberToRowAndCol(num, width)
   if num == 0 then
     return 0,0
@@ -14,6 +18,7 @@ local function panelNumberToRowAndCol(num, width)
   return column, row
 end
 
+-- Given an encoded latin unicode character, decodes it back into a raise, column, and row
 function TouchDataEncoding.latinStringToTouchData(latinString, width)
   local raise = false
   local row = 0
@@ -35,6 +40,7 @@ function TouchDataEncoding.latinStringToTouchData(latinString, width)
   return raise, column, row
 end
 
+-- Given a raise, column and row, encodes it as a single latin unicode character
 function TouchDataEncoding.touchDataToLatinString(raise, column, row, width)
   local codePoint = ((raise and 1) or 0)
   if row ~= 0 or column ~= 0 then

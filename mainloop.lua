@@ -76,6 +76,7 @@ function fmainloop()
     require("tests.TouchDataEncodingTests")
     require("table_util_tests")
     require("utilTests")
+    require("tests.StackTouchReplayTests")
     -- Medium level tests (integration tests)
     require("tests.StackReplayTests")
     require("tests.StackRollbackReplayTests")
@@ -569,7 +570,7 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
   end
   commonGameSetup()
 
-  P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, speed=speed, difficulty=difficulty, level=level, character=config.character}
+  P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, speed=speed, difficulty=difficulty, level=level, character=config.character, inputMethod=config.inputMethod}
 
   GAME.match.P1 = P1
   P1:wait_for_random_character()
@@ -1748,7 +1749,7 @@ function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx)
     end
 
     GAME.match = Match("puzzle")
-    P1 = Stack{which=1, match=GAME.match, is_local=true, level=config.puzzle_level, character=character}
+    P1 = Stack{which=1, match=GAME.match, is_local=true, level=config.puzzle_level, character=character, inputMethod=config.inputMethod}
     GAME.match.P1 = P1
     P1:wait_for_random_character()
     if not character then
