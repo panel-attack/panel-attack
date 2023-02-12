@@ -117,14 +117,14 @@ function TouchInputController:handleSwap()
            linger_swap_attempted = true
            linger_swap_successful = self.stack:canSwap(self.lingering_touch_cursor.row, self.lingering_touch_cursor.col)
             if linger_swap_successful then
-              self.stack.do_swap = {self.lingering_touch_cursor.row, self.lingering_touch_cursor.col}
+              self.stack:setQueuedSwapPosition(self.lingering_touch_cursor.row, self.lingering_touch_cursor.col)
             end
           elseif linger_swap_delta == -1 then
             -- try to swap left
             linger_swap_attempted = true
             linger_swap_successful = self.stack:canSwap(self.touchedPanel.row, self.touchedPanel.col)
             if linger_swap_successful then
-              self.stack.do_swap = {self.touchedPanel.row,self.touchedPanel.col}
+              self.stack:setQueuedSwapPosition(self.touchedPanel.row,self.touchedPanel.col)
             end
           else
             logger.trace("linger_swap_delta was not -1 or 1, it was "..linger_swap_delta..".  not attempting a swap")
@@ -207,7 +207,7 @@ function TouchInputController:handleSwap()
           swap_destination = {row = self.stack.cur_row, col = self.stack.cur_col + 1}
           swap_successful = self.stack:canSwap(swap_origin.row, swap_origin.col)
           if swap_successful then
-            self.stack.do_swap = {swap_origin.row, swap_origin.col}
+            self.stack:setQueuedSwapPosition(swap_origin.row, swap_origin.col)
             self.stack.cur_col = swap_destination.col
           end
         elseif cursor_target_delta < 0 then
@@ -216,7 +216,7 @@ function TouchInputController:handleSwap()
           swap_destination = {row = self.stack.cur_row, col = self.stack.cur_col - 1}
           swap_successful = self.stack:canSwap(swap_destination.row, swap_destination.col)
           if swap_successful then
-            self.stack.do_swap = {swap_destination.row, swap_destination.col}
+            self.stack:setQueuedSwapPosition(swap_destination.row, swap_destination.col)
             self.stack.cur_col = swap_destination.col
           end
         end

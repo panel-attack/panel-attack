@@ -29,7 +29,7 @@ Stack =
     -- level or difficulty should be set
     assert(arguments.level ~= nil or arguments.difficulty ~= nil)
     local level = arguments.level
-    local inputMethod = arguments.inputMethod or (which == 1 and config.inputMethod) or "controller" --"touch" or "controller"
+    local inputMethod = arguments.inputMethod or "controller" --"touch" or "controller"
     local difficulty = arguments.difficulty
     local speed = arguments.speed
     local player_number = arguments.player_number or which
@@ -110,8 +110,9 @@ Stack =
     s.garbage_q = GarbageQueue(s) -- Queue of garbage that is about to be dropped
     
     s.inputMethod = inputMethod
-    
-    s.touchInputController = TouchInputController(s)
+    if s.inputMethod == "touch" then
+      s.touchInputController = TouchInputController(s)
+    end
 
     s.panel_buffer = ""
     s.gpanel_buffer = ""
@@ -195,6 +196,8 @@ Stack =
     s.cur_dir = nil -- the direction pressed
     s.cur_row = 7 -- the row the cursor's on
     s.cur_col = 3 -- the column the left half of the cursor's on
+    s.queuedSwapColumn = 0 -- the left column of the two columns to swap or 0 if no swap queued
+    s.queuedSwapRow = 0 -- the row of the queued swap or 0 if no swap queued
     s.top_cur_row = s.height + (s.match.mode == "puzzle" and 0 or -1)
 
     s.poppedPanelIndex = s.poppedPanelIndex or 1
@@ -388,7 +391,8 @@ function Stack.rollbackCopy(source, other)
       source.clonePool[#source.clonePool] = nil
     end
   end
-  other.do_swap = deepcpy(source.do_swap)
+  other.queuedSwapColumn = source.queuedSwapColumn
+  other.queuedSwapRow = source.queuedSwapRow
   other.speed = source.speed
   other.health = source.health
 
@@ -982,6 +986,18 @@ function Stack.has_falling_garbage(self)
   return false
 end
 
+function Stack:swapQueued()
+  if self.queuedSwapColumn ~= 0 and self.queuedSwapRow ~= 0 then
+    return true
+  end
+  return false
+end
+
+function Stack:setQueuedSwapPosition(column, row)
+  self.queuedSwapColumn = column
+  self.queuedSwapRow = row
+end
+
 -- Setup the stack at a new starting state
 function Stack.starting_state(self, n)
   if self.do_first_row then
@@ -1369,7 +1385,7 @@ function Stack.simulate(self)
       self:new_row()
     end
     self.prev_rise_lock = self.rise_lock
-    self.rise_lock = self.n_active_panels ~= 0 or self.n_prev_active_panels ~= 0 or self.shake_time ~= 0 or self.do_countdown or self.do_swap
+    self.rise_lock = self.n_active_panels ~= 0 or self.n_prev_active_panels ~= 0 or self.shake_time ~= 0 or self.do_countdown or self:swapQueued()
     if self.prev_rise_lock and not self.rise_lock then
       self.prevent_manual_raise = false
     end
@@ -1430,10 +1446,10 @@ function Stack.simulate(self)
     end
 
     -- Begin the swap we input last frame.
-    if self.do_swap then
-      self:swap(unpack(self.do_swap))
+    if self:swapQueued() then
+      self:swap(self.queuedSwapColumn, self.queuedSwapRow)
       swapped_this_frame = true
-      self.do_swap = nil
+      self:setQueuedSwapPosition(0, 0)
     end
 
     -- Look for matches.
@@ -1778,10 +1794,9 @@ function Stack.simulate(self)
       self.touchInputController:handleSwap()
     else --input method is controller
       if (self.swap_1 or self.swap_2) and not swapped_this_frame then
-        local do_swap = self:canSwap(self.cur_row, self.cur_col)
-
-        if do_swap then
-          self.do_swap = {self.cur_row, self.cur_col}
+        local canSwap = self:canSwap(self.cur_row, self.cur_col)
+        if canSwap then
+          self:setQueuedSwapPosition(self.cur_col, self.cur_row)
           self.analytic:register_swap()
         end
         self.swap_1 = false
