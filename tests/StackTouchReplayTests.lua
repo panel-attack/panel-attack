@@ -2,7 +2,44 @@ require("table_util")
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local testReplayFolder = "tests/replays/"
 
--- Tests a catch that also did a "sync" (two separate matches on the same frame)
+-- Tests the following use cases
+-- Touch and drag to swap, then release
+-- Expected:
+-- Cursor appears, Panels dragged swap, cursor is removed
+
+-- Touch and drag into a matching column and release
+-- Cursor should stay
+-- Expected:
+-- Can tap to insert into the lingering spot
+-- Can tap to swap with the opposite spot
+
+-- Touch and drag into a matching column and release
+-- Cursor should stay
+-- Tap repeatedly until you can insert
+-- Expected:
+-- Can tap repeatedly and insert if timed right
+
+-- Touch and drag into a matching column, don’t release
+-- Expected:
+-- No swap (game doesn’t buffer)
+
+-- Touch and drag into a matching column and release
+-- Cursor should stay
+-- Touch a non adjacent panel
+-- Expected:Cursor changes to new spot
+
+-- Touch and drag across a whole row then release
+-- Expected:
+-- Cursor swaps fast on the first two swaps (stealth) slower on the remaining)
+
+-- Touch and drag a panel so it falls
+-- Expected:
+-- Panel falls, becomes deselected
+
+-- Setup a chain so a panel is about to match, touch and hold that panel
+-- Expected:
+-- Panel matches, becomes deselected
+
 local function simpleTouchTest()
   match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v047-2023-02-13-02-07-36-Spd3-Dif1-endless.json")
   assert(match ~= nil)
