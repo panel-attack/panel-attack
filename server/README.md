@@ -4,6 +4,9 @@
 
 
 ### lua 5.1
+We target a version of lua 5.1 that has a couple fixes, namely the one that comes from luajit
+
+If you just try to run lua5.1 you will get an error about math.random interval
 
 linux / macos
 ```
@@ -51,13 +54,41 @@ sudo luarocks --lua-dir=/opt/homebrew/opt/lua@5.1 install luasocket
 sudo luarocks --lua-dir=/opt/homebrew/opt/lua@5.1 install luafilesystem
 ```
 
+### lsqlite3
+
+```
+sudo luarocks --lua-dir=/opt/homebrew/opt/lua@5.1 install sqlite3
+sudo luarocks --lua-dir=/opt/homebrew/opt/lua@5.1 install lsqlite3
+```
+
+if that doesn't work you can use 
+```
+sudo luarocks --lua-dir=/opt/homebrew/opt/lua@5.1 install lsqlite3complete
+```
+and change the require to use lsqlite3complete
+
 ### Add lua to your path
 
-This step depends more on your shell and environment, but make sure lua and the luarocks install directorys are on your path
+This step depends more on your shell and environment, but make sure lua's install directory is on your path
 
 macOS fish shell example
 ```
-set PATH /Users/YOURUSERDIR/.luarocks/bin $PATH
+fish_add_path --path /opt/homebrew/lib/lua
+```
+
+### Add luarocks 5.1 to your lua search path
+
+This step depends more on your shell and environment, but make sure luarock's install directory is on your path
+
+macOS fish shell example
+```
+luarocks path --lua-version 5.1
+```
+
+Take that output and put it in your config file
+
+```
+vi ~/.config/fish/config.fish
 ```
 
 ## Checkout Repository
