@@ -76,10 +76,10 @@ function fmainloop()
     require("tests.TouchDataEncodingTests")
     require("table_util_tests")
     require("utilTests")
-    require("tests.StackTouchReplayTests")
     -- Medium level tests (integration tests)
     require("tests.StackReplayTests")
     require("tests.StackRollbackReplayTests")
+    require("tests.StackTouchReplayTests")
     -- Performance Tests
     if PERFORMANCE_TESTS_ENABLED then
       require("tests/performanceTests")
