@@ -594,14 +594,18 @@ function Character.playAttackSfx(self, attack)
         stopIfPlaying(v[i])
       end
     end
-    for i = 1, #self.sounds.combo_echo do
-      stopIfPlaying(self.sounds.combo_echo[i])
-    end
-    for _, v in pairs(self.sounds.shock) do
-      for i = 1, #v do
-        stopIfPlaying(v[i])
+    if table.length(self.sounds.shock) > 0 then
+      for _, v in pairs(self.sounds.shock) do
+        for i = 1, #v do
+          stopIfPlaying(v[i])
+        end
+      end
+    else
+      for i = 1, #self.sounds.combo_echo do
+        stopIfPlaying(self.sounds.combo_echo[i])
       end
     end
+
     for _, v in pairs(self.sounds.chain) do
       for i = 1, #v do
         stopIfPlaying(v[i])
