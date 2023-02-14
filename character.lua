@@ -386,7 +386,7 @@ function Character.reassignLegacySfx(self)
 
   if #self.sounds.shock > 0 then
     -- combo_echo won't get used if shock is present, so it shouldn't show up in sound test any longer
-    self.sounds.combo_echo = nil
+    self.sounds.combo_echo = {}
   end
 end
 
