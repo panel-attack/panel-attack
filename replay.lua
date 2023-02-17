@@ -1,4 +1,4 @@
-
+local utf8 = require("utf8Additions")
 
 -- A replay is a particular recording of a play of the game. Temporarily this is just helper methods.
 Replay =
@@ -59,7 +59,7 @@ function Replay.loadFromFile(replay)
     local inputType1 = (replayDetails.P1_inputMethod) or "controller"
     P1 = Stack{which=1, match=GAME.match, is_local=false, level=replayDetails.P1_level, character=replayDetails.P1_char, inputMethod=inputType1}
 
-    if replayDetails.I and string.len(replayDetails.I)> 0 then
+    if replayDetails.I and utf8.len(replayDetails.I)> 0 then
       assert(replayDetails.P2_level, "invalid replay: player 1 level missing from vs replay")
       local inputType2 = (replayDetails.P2_inputMethod) or "controller"
       P2 = Stack{which=2, match=GAME.match, is_local=false, level=replayDetails.P2_level, character=replayDetails.P2_char, inputMethod=inputType2}

@@ -1,3 +1,5 @@
+SERVER_MODE = true -- global to know the server is running the process
+
 local socket = require("socket")
 local logger = require("logger")
 require("class")
@@ -22,7 +24,6 @@ local lobby_changed = false
 local time = os.time
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
-SERVER_MODE = true -- global to know the server is running the process
 local connectionNumberIndex = 1 -- GLOBAL counter of the next available connection index
 local roomNumberIndex = 1 -- the next available room number
 local rooms = {}  
@@ -157,7 +158,7 @@ end
 
 function Server:start_match(a, b)
   if (a.player_number ~= 1) then
-    logger.debug("Match starting, players a and b need to be swapped.")
+    logger.debug("players a and b need to be swapped.")
     a, b = b, a
     if (a.player_number == 1) then
       logger.debug("Success, player a now has player_number 1.")
@@ -171,8 +172,8 @@ function Server:start_match(a, b)
     match_start = true,
     ranked = false,
     stage = a.room.stage,
-    player_settings = {character = a.character, character_display_name = a.character_display_name, level = a.level, panels_dir = a.panels_dir, player_number = a.player_number},
-    opponent_settings = {character = b.character, character_display_name = b.character_display_name, level = b.level, panels_dir = b.panels_dir, player_number = b.player_number}
+    player_settings = {character = a.character, character_display_name = a.character_display_name, level = a.level, panels_dir = a.panels_dir, player_number = a.player_number, inputMethod = a.inputMethod},
+    opponent_settings = {character = b.character, character_display_name = b.character_display_name, level = b.level, panels_dir = b.panels_dir, player_number = b.player_number, inputMethod = b.inputMethod}
   }
   local room_is_ranked, reasons = a.room:rating_adjustment_approved()
   if room_is_ranked then

@@ -1,4 +1,4 @@
-local utf8 = require("utf8")
+local utf8 = require("utf8Additions")
 local pairs = pairs
 local type, setmetatable, getmetatable = type, setmetatable, getmetatable
 
@@ -335,9 +335,9 @@ end
 
 function json.isValid(str)
   local content = trim(str)
-  local length = string.len(content)
-  local firstChar = string.sub(content, 1, 1)
-  local lastChar = string.sub(content, length, length)
+  local length = utf8.len(content)
+  local firstChar = utf8.sub(content, 1, 1)
+  local lastChar = utf8.sub(content, length, length)
   -- early quit condition for clearly non-matching files
   if not table.contains({"{", "["}, firstChar) or not table.contains({"}", "]"}, lastChar) then
     return false

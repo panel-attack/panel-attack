@@ -114,8 +114,8 @@ function Room.add_spectator(self, new_spectator_connection)
     stage = self.stage,
     replay_of_match_so_far = self.replay,
     ranked = self:rating_adjustment_approved(),
-    player_settings = {character = self.a.character, character_display_name = self.a.character_display_name, level = self.a.level, player_number = self.a.player_number},
-    opponent_settings = {character = self.b.character, character_display_name = self.b.character_display_name, level = self.b.level, player_number = self.b.player_number}
+    player_settings = {character = self.a.character, character_display_name = self.a.character_display_name, level = self.a.level, player_number = self.a.player_number, inputMethod = self.a.inputMethod},
+    opponent_settings = {character = self.b.character, character_display_name = self.b.character_display_name, level = self.b.level, player_number = self.b.player_number, inputMethod = self.b.inputMethod}
   }
   if COMPRESS_SPECTATOR_REPLAYS_ENABLED then
     msg.replay_of_match_so_far.vs.in_buf = compress_input_string(msg.replay_of_match_so_far.vs.in_buf)
@@ -365,6 +365,9 @@ function Room.rating_adjustment_approved(self)
   end
   if players[1].level ~= players[2].level then
     reasons[#reasons + 1] = "Levels don't match"
+  end
+  if players[1].inputMethod == "touch" or players[2].inputMethod == "touch" then
+    reasons[#reasons + 1] = "Touch input it not currently allowed in ranked matches"
   end
   for player_number = 1, 2 do
     if not playerbase.players[players[player_number].user_id] or not players[player_number].logged_in or playerbase.deleted_players[players[player_number].user_id] then
