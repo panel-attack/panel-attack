@@ -295,7 +295,7 @@ function love.keypressed(key, scancode, rep)
   end
 
   local function toggleDebugMode()
-    if key == "f10" and (love.keyboard.isDown("rctrl") or love.keyboard.isDown("lctrl")) and (love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt")) then
+    if key == "d" and (love.keyboard.isDown("rctrl") or love.keyboard.isDown("lctrl")) and (love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt")) and (love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")) then
       config.debug_mode = not config.debug_mode
     end
   end
