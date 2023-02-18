@@ -134,7 +134,7 @@ function TouchInputController:handleSwap()
           if linger_swap_delta == 1  then
             --try to swap right
             linger_swap_attempted = true
-            linger_swap_successful = self.stack:canSwap(self.lingering_touch_cursor.col, self.lingering_touch_cursor.row)
+            linger_swap_successful = self.stack:canSwap(self.lingering_touch_cursor.row, self.lingering_touch_cursor.col)
             if linger_swap_successful then
               cursorColumn = self.lingering_touch_cursor.col
               cursorRow = self.lingering_touch_cursor.row
@@ -142,7 +142,7 @@ function TouchInputController:handleSwap()
           elseif linger_swap_delta == -1 then
             -- try to swap left
             linger_swap_attempted = true
-            linger_swap_successful = self.stack:canSwap(self.touchedPanel.col, self.touchedPanel.row)
+            linger_swap_successful = self.stack:canSwap(self.touchedPanel.row, self.touchedPanel.col)
             if linger_swap_successful then
               cursorColumn = self.touchedPanel.col
               cursorRow = self.touchedPanel.row
@@ -227,7 +227,7 @@ function TouchInputController:handleSwap()
             --try to swap right
             swap_origin = {row = self.stack.cur_row, col = self.stack.cur_col}
             swap_destination = {row = self.stack.cur_row, col = self.stack.cur_col + 1}
-            swap_successful = self.stack:canSwap(swap_origin.col, swap_origin.row)
+            swap_successful = self.stack:canSwap(swap_origin.row, swap_origin.col)
             if swap_successful then
               cursorColumn = swap_destination.col
             end
@@ -235,7 +235,7 @@ function TouchInputController:handleSwap()
             --try to swap left
             swap_origin = {row = self.stack.cur_row, col = self.stack.cur_col}
             swap_destination = {row = self.stack.cur_row, col = self.stack.cur_col - 1}
-            swap_successful = self.stack:canSwap(swap_destination.col, swap_destination.row)
+            swap_successful = self.stack:canSwap(swap_destination.row, swap_destination.col)
             if swap_successful then
               cursorColumn = swap_destination.col
             end

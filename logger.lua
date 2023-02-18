@@ -47,10 +47,6 @@ function logger.error(msg)
 end
 
 function direct_log(prefix, msg)
-  if msg == nil then
-    return
-  end
-
   local socket_millis = math.floor(socket.gettime()%1 * 1000)
 
   -- Lua date format strings reference: https://www.lua.org/pil/22.1.html

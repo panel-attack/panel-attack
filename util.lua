@@ -210,6 +210,7 @@ function trim(s)
   return (s:gsub("^%s*(.-)%s*$", "%1"))
 end
 
+-- Returns if the unicode codepoint (representative number) is either the left or right parenthesis
 local function codePointIsParenthesis(codePoint)
   if codePoint >= 40 and codePoint <= 41 then
     return true
@@ -217,6 +218,7 @@ local function codePointIsParenthesis(codePoint)
   return false
 end
 
+-- Returns if the unicode codepoint (representative number) is a digit from 0-9
 local function codePointIsDigit(codePoint)
   if codePoint >= 48 and codePoint <= 57 then
     return true

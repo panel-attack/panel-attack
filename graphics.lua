@@ -726,15 +726,14 @@ function Stack.render(self)
       gprint(loc("pl_metal", (self.metal_panels_queued or 0)), self.score_x, self.score_y + 180)
     end
     if config.debug_mode and (self.input_state or self.taunt_up or self.taunt_down) then
-      local raise, iswap, iup, idown, ileft, iright
-      local irow_touched, icol_touched
+      local iraise, iswap, iup, idown, ileft, iright
       if self.inputMethod == "touch" then
-        raise, icol_touched, irow_touched = TouchDataEncoding.latinStringToTouchData(self.input_state, self.width)
+        iraise, _, _ = TouchDataEncoding.latinStringToTouchData(self.input_state, self.width)
       else 
-        raise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
+        iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
       end
       local inputs_to_print = "inputs:"
-      if raise then
+      if iraise then
         inputs_to_print = inputs_to_print .. "\nraise"
       end --◄▲▼►
       if iswap then

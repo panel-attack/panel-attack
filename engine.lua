@@ -270,7 +270,6 @@ Stack =
       cursorWidth = imageWidth / 2
     end
     s.cursorQuad = GraphicsUtil:newRecycledQuad(0, 0, cursorWidth, imageHeight, imageWidth, imageHeight)
-    assert(s.cursorQuad ~= nil)
   end)
 
 function Stack.setLevel(self, level)
@@ -1030,7 +1029,7 @@ function Stack.controls(self)
         -- We moved the cursor from a previous column, swap
         if self.cur_col ~= 0 and self.cur_row ~= 0 and cursorColumn ~= self.cur_col and cursorRow ~= 0 then
           local swapColumn = math.min(self.cur_col, cursorColumn)
-          if self:canSwap(swapColumn, cursorRow) then
+          if self:canSwap(cursorRow, swapColumn) then
             self:setQueuedSwapPosition(swapColumn, cursorRow)
           end
         end
@@ -1458,7 +1457,7 @@ function Stack.simulate(self)
 
     -- Begin the swap we input last frame.
     if self:swapQueued() then
-      self:swap(self.queuedSwapColumn, self.queuedSwapRow)
+      self:swap(self.queuedSwapRow, self.queuedSwapColumn)
       swapped_this_frame = true
       self:setQueuedSwapPosition(0, 0)
     end
@@ -1804,7 +1803,7 @@ function Stack.simulate(self)
     -- Note: Swapping is queued in Stack.controls for touch mode
     if self.inputMethod == "controller" then
       if (self.swap_1 or self.swap_2) and not swapped_this_frame then
-        local canSwap = self:canSwap(self.cur_col, self.cur_row)
+        local canSwap = self:canSwap(self.cur_row, self.cur_col)
         if canSwap then
           self:setQueuedSwapPosition(self.cur_col, self.cur_row)
           self.analytic:register_swap()
@@ -2330,7 +2329,7 @@ function Stack.pick_win_sfx(self)
   end
 end
 
-function Stack.canSwap(self, column, row)
+function Stack.canSwap(self, row, column)
   local panels = self.panels
   local width = self.width
   local height = self.height
@@ -2368,7 +2367,7 @@ function Stack.canSwap(self, column, row)
 end
 
 -- Swaps panels at the current cursor location
-function Stack:swap(col, row)
+function Stack:swap(row, col)
   local panels = self.panels
   self:processPuzzleSwap()
   panels[row][col], panels[row][col + 1] = panels[row][col + 1], panels[row][col]

@@ -15,7 +15,7 @@ local function panelNumberToRowAndCol(num, width)
   local row = math.floor((num - 1) / width) + 1
   local column =  num - ((row - 1) * width)
     
-  return column, row
+  return row, column
 end
 
 -- Given an encoded latin unicode character, decodes it back into a raise, column, and row
@@ -35,7 +35,7 @@ function TouchDataEncoding.latinStringToTouchData(latinString, width)
     end
     local panelNumber = math.floor(codePoint / 2)
 
-    column, row = panelNumberToRowAndCol(panelNumber, width)
+    row, column = panelNumberToRowAndCol(panelNumber, width)
   end
   return raise, column, row
 end
