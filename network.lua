@@ -59,7 +59,7 @@ function net_send(stringData)
     if fullMessageSent then
       logger.trace("json bytes sent in one go: " .. tostring(fullMessageSent))
     else
-      logger.error("Error sending network message: " .. (error or ""))
+      logger.error("Error sending network message: " .. (error or "") .. " only sent " .. (partialBytesSent or "0") .. "bytes")
     end
   else
     if lastSendTime == nil then
@@ -84,7 +84,7 @@ end
 -- Send a json message with the "J" type
 function json_send(obj)
   local json = json.encode(obj)
-  local message = NetworkProtocol.markedMessageForTypeAndBody("J", json)
+  local message = NetworkProtocol.markedMessageForTypeAndBody(NetworkProtocol.clientMessageTypes.jsonMessage.prefix, json)
   return net_send(message)
 end
 
@@ -100,15 +100,6 @@ function undo_stonermode()
 end
 
 local got_H = false
-
--- Logs the network message if needed
-function printNetworkMessageForType(type)
-  local result = false
-  if type ~= "I" and type ~= "U" then
-    result = true
-  end
-  return result
-end
 
 -- list of spectators
 function spectator_list_string(list)
@@ -127,23 +118,19 @@ end
 
 -- Adds the message to the network queue or processes it immediately in a couple cases
 function queue_message(type, data)
-  if type == "U" or type == "I" then
+  if type == NetworkProtocol.serverMessageTypes.opponentInput.prefix or type == NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix then
     local dataMessage = {}
     dataMessage[type] = data
-    if printNetworkMessageForType(type) then
-      logger.debug("Queuing: " .. type .. " with data:" .. data)
-    end
+    logger.debug("Queuing: " .. type .. " with data:" .. data)
     server_queue:push(dataMessage)
-  elseif type == "L" then
-    error(loc("nt_ver_err"))
-  elseif type == "H" then
+  elseif type == NetworkProtocol.serverMessageTypes.versionCorrect.prefix then
     got_H = true
-  elseif type == "N" then
+  elseif type == NetworkProtocol.serverMessageTypes.versionWrong.prefix then
     error(loc("nt_ver_err"))
-  elseif type == "E" then
-    net_send("F" .. data)
+  elseif type == NetworkProtocol.serverMessageTypes.ping.prefix then
+    net_send(NetworkProtocol.clientMessageTypes.acknowledgedPing.prefix)
     connection_up_time = connection_up_time + 1 --connection_up_time counts "E" messages, not seconds
-  elseif type == "J" then
+  elseif type == NetworkProtocol.serverMessageTypes.jsonMessage.prefix then
     local current_message = json.decode(data)
     this_frame_messages[#this_frame_messages + 1] = current_message
     if not current_message then
@@ -154,9 +141,7 @@ function queue_message(type, data)
       spectators_string = spectator_list_string(current_message.spectators)
       return
     end
-    if printNetworkMessageForType(type) then
-      logger.debug("Queuing: " .. type .. " with data:" .. dump(current_message))
-    end
+    logger.debug("Queuing JSON: " .. dump(current_message))
     server_queue:push(current_message)
   end
 end
@@ -169,8 +154,8 @@ function drop_old_data_messages()
       break
     end
 
-    if not message["U"] and not message["I"] then
-      break -- Found a "J" message. Stop. Future data is for next game
+    if not message[NetworkProtocol.serverMessageTypes.opponentInput.prefix] and not message[NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix] then
+      break -- Found a non user input message. Stop. Future data is for next game
     else
       server_queue:pop() -- old data, drop it
     end
@@ -179,12 +164,10 @@ end
 
 -- Process all game data messages in the queue
 function process_all_data_messages()
-  local messages = server_queue:pop_all_with("U", "I")
+  local messages = server_queue:pop_all_with(NetworkProtocol.serverMessageTypes.opponentInput.prefix, NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix)
   for _, msg in ipairs(messages) do
     for type, data in pairs(msg) do
-      if printNetworkMessageForType(type) then
-        logger.debug("Processing: " .. type .. " with data:" .. data)
-      end
+      logger.debug("Processing: " .. type .. " with data:" .. data)
       process_data_message(type, data)
     end
   end
@@ -192,9 +175,9 @@ end
 
 -- Handler for the various "game data" message types
 function process_data_message(type, data)
-  if type == "U" then
+  if type == NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix then
     P1:receiveConfirmedInput(data)
-  elseif type == "I" then
+  elseif type == NetworkProtocol.serverMessageTypes.opponentInput.prefix then
     P2:receiveConfirmedInput(data)
   end
 end
@@ -203,15 +186,13 @@ end
 function network_init(ip, network_port)
   TCP_sock = socket.tcp()
   TCP_sock:settimeout(7)
-  if not TCP_sock:connect(ip, network_port or 49569) then --for official server
-    --if not TCP_sock:connect(ip,59569) then --for beta server
-    --error(loc("nt_conn_timeout"))
+  if not TCP_sock:connect(ip, network_port or 49569) then
     return false
   end
   TCP_sock:setoption("tcp-nodelay", true)
   TCP_sock:settimeout(0)
   got_H = false
-  net_send("H" .. VERSION)
+  net_send(NetworkProtocol.clientMessageTypes.versionCheck.prefix .. VERSION)
   assert(config.name and config.save_replays_publicly)
   local sent_json = {
     name = config.name,
@@ -321,7 +302,7 @@ function Stack.send_controls(self)
     to_send = self.touchInputController:encodedCharacterForCurrentTouchInput()
   end
   if TCP_sock then
-    local message = NetworkProtocol.markedMessageForTypeAndBody("I", to_send)
+    local message = NetworkProtocol.markedMessageForTypeAndBody(NetworkProtocol.clientMessageTypes.playerInput.prefix, to_send)
     net_send(message)
   end
 

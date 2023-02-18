@@ -2,9 +2,6 @@ require("class")
 local logger = require("logger")
 local NetworkProtocol = require("NetworkProtocol")
 
-local byte = string.byte
-local char = string.char
-local floor = math.floor
 local time = os.time
 local utf8 = require("utf8Additions")
 require("tests.utf8AdditionsTests")
@@ -103,28 +100,23 @@ end
 function Connection.send(self, stuff)
   if type(stuff) == "table" then
     local json = json.encode(stuff)
-    stuff = NetworkProtocol.markedMessageForTypeAndBody("J", json)
-    logger.debug("stuff: " .. stuff)
+    stuff = NetworkProtocol.markedMessageForTypeAndBody(NetworkProtocol.serverMessageTypes.jsonMessage.prefix, json)
+    logger.debug("Sending JSON: " .. stuff)
   else
-    if stuff[1] ~= "E" then -- stuff[1] ~= "I" and stuff[1] ~= "U"
-      logger.debug("sending non-json " .. stuff)
-    end
+    logger.debug("sending non-json " .. stuff)
   end
   local retry_count = 0
   local times_to_retry = 5
   local foo = {}
   while not foo[1] and retry_count <= 5 do
     foo = {self.socket:send(stuff)}
-    if stuff[1] ~= "I" and stuff[1] ~= "U" and stuff[1] ~= "E" then
-      logger.trace(unpack(foo))
-    end
     if not foo[1] then
-      logger.debug("WARNING: Connection.send failed. will retry...")
+      logger.debug("Connection.send failed. will retry...")
       retry_count = retry_count + 1
     end
   end
   if not foo[1] then
-    logger.debug("Closing connection for " .. (self.name or "nil") .. ". During Connection.send, foo[1] was nil after " .. times_to_retry .. " retries were attempted")
+    logger.debug("Closing connection for " .. (self.name or "nil") .. ". Connection.send failed after " .. times_to_retry .. " retries were attempted")
     self:close()
   end
 end
@@ -150,6 +142,7 @@ function Connection.setup_game(self)
 end
 
 function Connection.close(self)
+  logger.debug("Closing connection to " .. self.index)
   if self.state == "lobby" then
     self.server:setLobbyChanged()
   end
@@ -171,19 +164,19 @@ function Connection.close(self)
   self.socket:close()
 end
 
--- "H" is used to make sure we are running the client and server agree on version
+-- Handle NetworkProtocol.clientMessageTypes.versionCheck
 function Connection.H(self, version)
   if version ~= VERSION and not ANY_ENGINE_VERSION_ENABLED then
-    self:send("N")
+    self:send(NetworkProtocol.serverMessageTypes.versionWrong.prefix)
   else
-    self:send("H")
+    self:send(NetworkProtocol.serverMessageTypes.versionCorrect.prefix)
   end
 end
 
--- "I" is used to send player input to and from the server
+-- Handle NetworkProtocol.clientMessageTypes.playerInput
 function Connection.I(self, message)
   if self.opponent then
-    local iMessage = NetworkProtocol.markedMessageForTypeAndBody("I", message)
+    local iMessage = NetworkProtocol.markedMessageForTypeAndBody(NetworkProtocol.serverMessageTypes.opponentInput.prefix, message)
     self.opponent:send(iMessage)
     if not self.room then
       logger.warn("WARNING: missing room")
@@ -191,7 +184,7 @@ function Connection.I(self, message)
       logger.warn("doesn't have a room, we are wondering if this disconnects spectators")
     end
     if self.player_number == 1 and self.room then
-      local uMessage = NetworkProtocol.markedMessageForTypeAndBody("U", message)
+      local uMessage = NetworkProtocol.markedMessageForTypeAndBody(NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix, message)
       self.room:send_to_spectators(uMessage)
       self.room.replay.vs.in_buf = self.room.replay.vs.in_buf .. message
     elseif self.player_number == 2 and self.room then
@@ -201,16 +194,11 @@ function Connection.I(self, message)
   end
 end
 
--- "F" means the client told us they are still here
-function Connection.F(self, message)
+-- Handle clientMessageTypes.acknowledgedPing
+function Connection.E(self, message)
 end
 
-local ok_ncolors = {}
-for i = 2, 7 do
-  ok_ncolors[i .. ""] = true
-end
-
--- "J" means we got a JSON message
+-- Handle clientMessageTypes.jsonMessage
 function Connection.J(self, message)
   message = json.decode(message)
   local response
@@ -293,12 +281,9 @@ function Connection.J(self, message)
       end
     end
     if requestedRoom and requestedRoom:state() == "character select" then
-      -- TODO: allow them to join
-      logger.debug("join allowed")
       logger.debug("adding " .. self.name .. " to room nr " .. message.spectate_request.roomNumber)
       self.server:addSpectator(requestedRoom, self)
     elseif requestedRoom and requestedRoom:state() == "playing" then
-      logger.debug("join-in-progress allowed")
       logger.debug("adding " .. self.name .. " to room nr " .. message.spectate_request.roomNumber)
       self.server:addSpectator(requestedRoom, self)
     else
@@ -407,14 +392,14 @@ function Connection.data_received(self, data)
   end
 end
 
-function Connection:processMessage(type, data)
+function Connection:processMessage(messageType, data)
   local status, error = pcall(
       function()
-        self[type](self, data)
+        self[messageType](self, data)
       end
     )
-  if error and type(error) == "string" then
-    logger.error("pcall error results: " .. tostring(status))
+  if status == false and error and type(error) == "string" then
+    logger.error("pcall error results: " .. tostring(error))
   end
 end
 

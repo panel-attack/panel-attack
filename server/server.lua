@@ -7,6 +7,7 @@ json = require("dkjson")
 require("stridx")
 require("gen_panels")
 require("csprng")
+local NetworkProtocol = require("NetworkProtocol")
 require("server.server_globals")
 require("server.server_file_io")
 require("server.Connection")
@@ -574,32 +575,10 @@ function Server:broadcast_lobby()
   end
 end
 
---[[function process_game_over_message(sender, message)
-  sender.room.game_outcome_reports[sender.player_number] = {i_won=message.i_won, tie=message.tie}
-  print("processing game_over message. Sender: "..sender.name)
-  local reports = sender.room.game_outcome_reports
-  if not reports[sender.opponent.player_number] then
-    sender.room.game_outcome_reports["official outcome"] = "pending other player's report"
-  elseif reports[1].tie and reports[2].tie then
-    sender.room.game_outcome_reports["official outcome"] = "tie"
-  elseif reports[1].i_won ~= not reports[2].i_won or reports[1].tie ~= reports[2].tie then
-    sender.room.game_outcome_reports["official outcome"] = "clients disagree"
-  elseif reports[1].i_won then
-    sender.room.game_outcome_reports["official outcome"] = 1
-  elseif reports[2].i_won then
-    sender.room.game_outcome_reports["official outcome"] = 2
-  else
-    print("Error: nobody won or tied?")
-  end
-  print("process_game_over_message outcome for "..sender.room.name..": "..sender.room.game_outcome_reports["official outcome"])
-end
---]]
-
 local server_socket = nil
 
 logger.info("Starting up server  with port: " .. (SERVER_PORT or 49569))
-server_socket = socket.bind("*", SERVER_PORT or 49569) --for official server
---local server_socket = socket.bind("*", 59569) --for beta server
+server_socket = socket.bind("*", SERVER_PORT or 49569)
 server_socket:settimeout(0)
 if TCP_NODELAY_ENABLED then
   server_socket:setoption("tcp-nodelay", true)
@@ -749,7 +728,7 @@ function Server:update()
         logger.debug("Closing connection for " .. (v.name or "nil") .. ". Connection timed out (>10 sec)")
         v:close()
       elseif now - v.last_read > 1 then
-        v:send("ELOL") -- Request a ping to make sure the connection is still active
+        v:send(NetworkProtocol.serverMessageTypes.ping.prefix) -- Request a ping to make sure the connection is still active
       end
     end
     

@@ -3,20 +3,37 @@ local utf8 = require("utf8Additions")
 
 local NetworkProtocol = {}
 
-local char = string.char
-local byte = string.byte
-local floor = math.floor
-
-
-
-local serverMessageTypeToLength = {E = 4, I = 2, L = 2, G = 1, H = 1, N = 1, U = 2}
-local clientMessageTypeToLength = {E = 4, F = 4, H = 4, I = 2, L = 2, U = 2}
-
-NetworkProtocol.serverMessageTypes = { opponentInput = {"U", 2} }
-
 local messageEndMarker = "←J←"
 
--- Creates a JSON message string
+-- All the types sent by clients and servers
+-- Prefix is what is put at the front of the message
+-- Then size data follows in normal single byte sequence.
+-- if size is nil then a variable utf8 byte sequence follows terminated by messageEndMarker
+NetworkProtocol.clientMessageTypes = { 
+  jsonMessage = {prefix="J", size=nil}, -- Generic JSON message sent from the client
+  playerInput = {prefix="I", size=nil}, -- Player input (touch or controller) from the client
+  acknowledgedPing = {prefix="E", size=1}, -- Respond back from the servers ping to confirm we are still connected
+  versionCheck = {prefix="H", size=4} -- Sent on initial connection with the VERSION number to confirm client and server agree
+}
+NetworkProtocol.clientPrefixToMessageType = {}
+for _, value in pairs(NetworkProtocol.clientMessageTypes) do
+  NetworkProtocol.clientPrefixToMessageType[value.prefix] = value
+end
+
+NetworkProtocol.serverMessageTypes = { 
+  jsonMessage = {prefix="J", size=nil}, -- Generic JSON message sent from the server
+  opponentInput = {prefix="I", size=nil}, -- Player input (touch or controller) sent to the client about it's opponent
+  secondOpponentInput = {prefix="U", size=nil}, -- Player input (touch or controller) sent to the client for player two if spectating
+  versionCorrect = {prefix="H", size=1}, -- Sent to the client if the VERSION they sent is allowed
+  versionWrong = {prefix="N", size=1}, -- Sent to the client if the VERSION they sent is not allowed
+  ping = {prefix="E", size=1} -- Sent to the client to confirm they are still connected
+}
+NetworkProtocol.serverPrefixToMessageType = {}
+for _, value in pairs(NetworkProtocol.serverMessageTypes) do
+  NetworkProtocol.serverPrefixToMessageType[value.prefix] = value
+end
+
+-- Creates a UTF8 message string with the type at the beginning and the end marker at the end
 function NetworkProtocol.markedMessageForTypeAndBody(type, body)
   return type .. body .. messageEndMarker
 end
@@ -30,26 +47,32 @@ function NetworkProtocol.getMessageFromString(messageBuffer, isServerMessage)
   end
 
   local type = string.sub(messageBuffer, 1, 1)
-  if type == "J" or type == "I" or type == "U" then
+
+  local messageType = nil
+  if isServerMessage then
+    messageType = NetworkProtocol.serverPrefixToMessageType[type]
+  else
+    messageType = NetworkProtocol.clientPrefixToMessageType[type]
+  end
+
+  if messageType and messageType.size == nil then
     local finishStart, finishEnd = string.find(messageBuffer, messageEndMarker)
     if finishStart ~= nil then
       local message = string.sub(messageBuffer, 2, finishStart-1)
       local remainingBuffer = string.sub(messageBuffer, finishEnd+1)
       return type, message, remainingBuffer
     else
-      logger.trace("not all data recieved, waiting")
+      logger.trace("not all UTF8 data recieved, waiting: " .. messageBuffer)
       return nil
     end
   else
-    local len = 0
-    if isServerMessage then
-      len = serverMessageTypeToLength[type]
-    else
-      len = clientMessageTypeToLength[type]
+    if messageType == nil then
+      logger.error("Got invalid message type: " .. type)
+      return nil
     end
-
-    if len == nil or len > string.len(messageBuffer) then
-      logger.trace("not all data recieved, waiting")
+    local len = messageType.size
+    if len > string.len(messageBuffer) then
+      logger.trace("not all base message for type " .. type .. ", waiting: " .. messageBuffer)
       return nil
     end
 
@@ -57,34 +80,6 @@ function NetworkProtocol.getMessageFromString(messageBuffer, isServerMessage)
     local remainingBuffer = string.sub(messageBuffer, len+1)
     return type, message, remainingBuffer
   end
-end
-
-function NetworkProtocol.J(lengthString)
-  -- local codePointResult = nil
-  -- for _, codePoint in utf8.codes(lengthString) do
-  --   codePointResult = codePoint
-  --   break
-  -- end
-  local result = byte(string.sub(lengthString, 1, 1)) * 65536 + byte(string.sub(lengthString, 2, 2)) * 256 + byte(string.sub(lengthString, 3, 3))
-  --local result = codePointResult - START_LATIN_NUMBER
-  return result
-end
-
-function NetworkProtocol.JSONlengthFromString(lengthString)
-  -- local codePointResult = nil
-  -- for _, codePoint in utf8.codes(lengthString) do
-  --   codePointResult = codePoint
-  --   break
-  -- end
-  local result = byte(string.sub(lengthString, 1, 1)) * 65536 + byte(string.sub(lengthString, 2, 2)) * 256 + byte(string.sub(lengthString, 3, 3))
-  --local result = codePointResult - START_LATIN_NUMBER
-  return result
-end
-
-function NetworkProtocol.JSONStringFromLength(length)
-  local result = char(floor(length / 65536)) .. char(floor((length / 256) % 256)) .. char(length % 256)
-  --local result = utf8.char(length + START_LATIN_NUMBER)
-  return result
 end
 
 return NetworkProtocol
