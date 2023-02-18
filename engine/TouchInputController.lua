@@ -31,35 +31,12 @@ function TouchInputController:encodedCharacterForCurrentTouchInput()
   if love.mouse.isDown(1) then
     --note: a stack is still "touchingStack" if we touched the stack, and have dragged the mouse or touch off the stack, until we lift the touch
     --check whether the mouse is over this stack
-    if mouseX >= self.stack.pos_x * GFX_SCALE and mouseX <= (self.stack.pos_x * GFX_SCALE) + (self.stack.width * 16) * GFX_SCALE and
-    mouseY >= self.stack.pos_y * GFX_SCALE and mouseY <= (self.stack.pos_y * GFX_SCALE) + (self.stack.height* 16) * GFX_SCALE then
+    if self:isMouseOverStack(mouseX, mouseY) then
       self.touchingStack = true
-      --px and py represent the origin of the panel we are currently checking if it's touched.
-      local px, py
-      local stop_looking = false
-      for row = 0, self.stack.height do
-        for col = 1, self.stack.width do
-          --print("checking panel "..row..","..col)
-          px = (self.stack.pos_x * GFX_SCALE) + ((col - 1) * 16) * GFX_SCALE
-          --to do: maybe self.stack.displacement - shake here? ignoring shake for now.
-          py = (self.stack.pos_y * GFX_SCALE) + ((11 - (row)) * 16 + self.stack.displacement) * GFX_SCALE
-          --check if mouse is touching panel in row, col
-          if mouseX >= px and mouseX < px + 16 * GFX_SCALE and mouseY >= py and mouseY < py + 16 * GFX_SCALE then
-            rowTouched = math.max(row, 1) --if touching row 0, let's say we are touching row 1
-            columnTouched = col
-            if self.stack.previousTouchedPanel 
-              and row == self.stack.previousTouchedPanel.row and col == self.stack.previousTouchedPanel.col then
-              --we want this to be the selected panel in the case more than one panel is touched
-              stop_looking = true
-              break --don't look further
-            end
-            --otherwise, we'll continue looking for touched panels, and the panel with the largest panel coordinates (ie closer to 12,6) will be chosen as self.stack.touchedPanel
-            --this may help us implement stealth.
-          end
-          if stop_looking then
-              break
-          end
-        end
+      local tempRowTouched, tempColumnTouched = self:touchedPanelCoordinate(mouseX, mouseY)
+      if tempRowTouched ~= nil then
+        rowTouched = tempRowTouched
+        columnTouched = tempColumnTouched
       end
     elseif self.touchingStack then --we have touched the stack, and have moved the touch off the edge, without releasing
       --let's say we are still touching the panel we had touched last.
@@ -83,8 +60,7 @@ function TouchInputController:encodedCharacterForCurrentTouchInput()
   if love.mouse.isDown(2) then
     --if using right mouse button on the stack, we are inputting "raise"
     --also works if we have left mouse buttoned the stack, dragged off, are still holding left mouse button, and then also hold down right mouse button.
-    if self.touchingStack or mouseX >= self.stack.pos_x * GFX_SCALE and mouseX <= (self.stack.pos_x * GFX_SCALE) + (self.stack.width * 16) * GFX_SCALE and
-    mouseY >= self.stack.pos_y * GFX_SCALE and mouseY <= (self.stack.pos_y * GFX_SCALE) + (self.stack.height* 16) * GFX_SCALE then
+    if self.touchingStack or self:isMouseOverStack(mouseX, mouseY) then
       shouldRaise = true
     end
   end
@@ -96,6 +72,44 @@ function TouchInputController:encodedCharacterForCurrentTouchInput()
   
   local result = TouchDataEncoding.touchDataToLatinString(shouldRaise, cursorRow, cursorColumn, self.stack.width)
   return result
+end
+
+function TouchInputController:isMouseOverStack(mouseX, mouseY)
+  return 
+    mouseX >= self.stack.pos_x * GFX_SCALE and mouseX <= (self.stack.pos_x * GFX_SCALE) + (self.stack.width * 16) * GFX_SCALE and
+    mouseY >= self.stack.pos_y * GFX_SCALE and mouseY <= (self.stack.pos_y * GFX_SCALE) + (self.stack.height* 16) * GFX_SCALE
+end
+
+-- Returns the touched panel coordinate or nil if the stack isn't currently touched
+function TouchInputController:touchedPanelCoordinate(mouseX, mouseY)
+  local stackHeight = self.stack.height
+  local stackWidth = self.stack.width
+  -- for row = 0, self.stack.height do
+  --   for column = 1, self.stack.width do
+  local stackLeft = (self.stack.pos_x * GFX_SCALE)
+  local stackTop = (self.stack.pos_y * GFX_SCALE)
+  local panelSize = 16 * GFX_SCALE
+  local stackRight = stackLeft + stackWidth * panelSize
+  local stackBottom = stackTop + stackHeight * panelSize
+
+  if mouseX < stackLeft then
+    return nil, nil
+  end
+  if mouseY < stackTop then
+    return nil, nil
+  end
+  if mouseX >= stackRight then
+    return nil, nil
+  end
+  if mouseY >= stackBottom then
+    return nil, nil
+  end
+
+  local displacement =  self.stack.displacement * GFX_SCALE
+  local row = math.floor((stackBottom - mouseY + displacement) / panelSize)
+  local column = math.floor((mouseX - stackLeft) / panelSize) + 1
+
+  return row, column
 end
 
 function TouchInputController:lingeringTouchIsSet()
@@ -118,9 +132,7 @@ function TouchInputController:handleSwap()
         self.touchSwapCooldownTimer = self.touchSwapCooldownTimer - 1
     end
 
-    --touch was initiated
-    if (not self.previousTouchedPanel or (self.previousTouchedPanel.row == 0 and self.previousTouchedPanel.col == 0)) and
-        self.touchedPanel and not (self.touchedPanel.row == 0 and self.touchedPanel.col == 0) then
+    if self:touchInitiated() then
       self.panelFirstTouched = deepcpy(self.touchedPanel)
       self.touchTargetColumn = self.touchedPanel.col
       self.swapsThisTouch = 0
@@ -169,8 +181,7 @@ function TouchInputController:handleSwap()
       end
     end
     
-    --touch is ongoing
-    if self.touchedPanel and not (self.touchedPanel.row == 0 and self.touchedPanel.col == 0) then
+    if self:touchOngoing() then
       --if lingeringTouchCursor isn't set, we'll set a target for normal drag swapping.
       if self:lingeringTouchIsSet() == false then
         self.touchTargetColumn = self.touchedPanel.col
@@ -185,8 +196,7 @@ function TouchInputController:handleSwap()
       end
     end
 
-    --touch was released
-    if (self.previousTouchedPanel and not (self.previousTouchedPanel.row == 0 and self.previousTouchedPanel.col == 0)) and (not self.touchedPanel or (self.touchedPanel.row == 0 and self.touchedPanel.col == 0)) then
+    if self:touchReleased() then
       self.panelFirstTouched = {row = 0, col = 0} 
       -- --check if we need to set lingering panel because user tapped a panel, didn't move it, and released it.
       -- if self.swapsThisTouch == 0 and self.previousTouchedPanel.row == self.cur_row and self.previousTouchedPanel.col == self.cur_col then --to do: or we tried to swap and couldn't
@@ -277,6 +287,19 @@ function TouchInputController:handleSwap()
   end
 
   return cursorRow, cursorColumn
+end
+
+function TouchInputController:touchInitiated()
+  return (not self.previousTouchedPanel or (self.previousTouchedPanel.row == 0 and self.previousTouchedPanel.col == 0)) and
+  self.touchedPanel and not (self.touchedPanel.row == 0 and self.touchedPanel.col == 0)
+end
+
+function TouchInputController:touchOngoing()
+  return self.touchedPanel and not (self.touchedPanel.row == 0 and self.touchedPanel.col == 0)
+end
+
+function TouchInputController:touchReleased()
+  return (self.previousTouchedPanel and not (self.previousTouchedPanel.row == 0 and self.previousTouchedPanel.col == 0)) and (not self.touchedPanel or (self.touchedPanel.row == 0 and self.touchedPanel.col == 0))
 end
 
 function TouchInputController:stackIsCreatingNewRow()
