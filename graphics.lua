@@ -479,7 +479,7 @@ function Stack.render(self)
 
   -- Draw debug graphics if set
   if config.debug_mode then
-    local mx, my = GAME:transform_coordinates(love.mouse.getPosition())
+    local mouseX, mouseY = GAME:transform_coordinates(love.mouse.getPosition())
 
     for row = 0, self.height do
       for col = 1, self.width do
@@ -488,7 +488,7 @@ function Stack.render(self)
         local draw_y = (self.pos_y + (11 - (row)) * 16 + self.displacement - shake) * GFX_SCALE
 
         -- Require hovering over a stack to show details
-        if mx >= self.pos_x * GFX_SCALE and mx <= (self.pos_x + self.width * 16) * GFX_SCALE then
+        if mouseX >= self.pos_x * GFX_SCALE and mouseX <= (self.pos_x + self.width * 16) * GFX_SCALE then
           if panel.color ~= 0 and panel.state ~= "popped" then
             gprint(panel.state, draw_x, draw_y)
             if panel.match_anyway ~= nil then
@@ -503,7 +503,7 @@ function Stack.render(self)
           end
         end
 
-        if mx >= draw_x and mx < draw_x + 16 * GFX_SCALE and my >= draw_y and my < draw_y + 16 * GFX_SCALE then
+        if mouseX >= draw_x and mouseX < draw_x + 16 * GFX_SCALE and mouseY >= draw_y and mouseY < draw_y + 16 * GFX_SCALE then
           local str = loc("pl_panel_info", row, col)
           for k, v in pairsSortedByKeys(panel) do
             str = str .. "\n" .. k .. ": " .. tostring(v)

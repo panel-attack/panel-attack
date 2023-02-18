@@ -37,11 +37,11 @@ function TouchDataEncoding.latinStringToTouchData(latinString, width)
 
     row, column = panelNumberToRowAndCol(panelNumber, width)
   end
-  return raise, column, row
+  return raise, row, column
 end
 
 -- Given a raise, column and row, encodes it as a single latin unicode character
-function TouchDataEncoding.touchDataToLatinString(raise, column, row, width)
+function TouchDataEncoding.touchDataToLatinString(raise, row, column, width)
   local codePoint = ((raise and 1) or 0)
   if row ~= 0 or column ~= 0 then
     local panelNumber = ((row - 1) * width) + column

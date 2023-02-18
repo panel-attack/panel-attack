@@ -1023,7 +1023,7 @@ function Stack.controls(self)
   local raise
   if self.inputMethod == "touch" then
     local cursorColumn, cursorRow
-    raise, cursorColumn, cursorRow = TouchDataEncoding.latinStringToTouchData(sdata, self.width)
+    raise, cursorRow, cursorColumn = TouchDataEncoding.latinStringToTouchData(sdata, self.width)
     if self.cursorLock == false then
       if self.cur_col ~= cursorColumn or self.cur_row ~= cursorRow or (cursorColumn == 0 and cursorRow == 0) then
         -- We moved the cursor from a previous column, swap

@@ -9,8 +9,8 @@ local function testWithBoardSize(width, height)
     end
     for column = 1, width do
       for row = 1, height do
-        local latinString = TouchDataEncoding.touchDataToLatinString(raise, column, row, width)
-        local raise2, column2, row2 = TouchDataEncoding.latinStringToTouchData(latinString, width)
+        local latinString = TouchDataEncoding.touchDataToLatinString(raise, row, column, width)
+        local raise2, row2, column2 = TouchDataEncoding.latinStringToTouchData(latinString, width)
         assert(raise == raise2)
         assert(column == column2)
         assert(row == row2)

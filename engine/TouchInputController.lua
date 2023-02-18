@@ -11,26 +11,28 @@ TouchInputController =
     self.stack = stack
     --if any is {row = 0, col = 0}, this is the equivalent if the variable being nil.  They do not describe any panel in the stack at the moment.
     self.touchedPanel = {row = 0, col = 0}  -- panel that is currently touched
-    self.panel_first_touched = {row = 0, col = 0}  --panel that was first touched, since touchedPanel was 0,0.
-    self.prev_touchedPanel = {row = 0, col = 0}  --panel that was touched last frame
-    self.touch_target_col = 0 -- this is the destination column we will always be trying to swap toward. Set to self.touchedPanel.col or if that's 0, use self.prev_touchedPanel.col, or if that's 0, use existing self.touch_target_col.  if target is reached by self.cur_col, set self.touch_target_col to 0.
-    self.lingering_touch_cursor = {row = 0, col = 0} --origin of a failed swap, leave the cursor here even if the touch is released.  Also, leave the cursor here if a panel was touched, and then released without the touch moving.  This will allow us to tap an adjacent panel to try to swap with it.
-    self.swaps_this_touch = 0  -- number of swaps that have been initiated since the last time self.panel_first_touched was 0,0
-    self.touch_swap_cooldown_timer = 0 -- if this is zero, a swap can happen.  set to TOUCH_SWAP_COOLDOWN on each swap after the first. decrement by 1 each frame.
+    self.panelFirstTouched = {row = 0, col = 0}  --panel that was first touched, since touchedPanel was 0,0.
+    self.previousTouchedPanel = {row = 0, col = 0}  --panel that was touched last frame
+    self.touchTargetColumn = 0 -- this is the destination column we will always be trying to swap toward. Set to self.touchedPanel.col or if that's 0, use self.previousTouchedPanel.col, or if that's 0, use existing self.touchTargetColumn.  if target is reached by self.cur_col, set self.touchTargetColumn to 0.
+    self.lingeringTouchCursor = {row = 0, col = 0} --origin of a failed swap, leave the cursor here even if the touch is released.  Also, leave the cursor here if a panel was touched, and then released without the touch moving.  This will allow us to tap an adjacent panel to try to swap with it.
+    self.swapsThisTouch = 0  -- number of swaps that have been initiated since the last time self.panelFirstTouched was 0,0
+    self.touchSwapCooldownTimer = 0 -- if this is zero, a swap can happen.  set to TOUCH_SWAP_COOLDOWN on each swap after the first. decrement by 1 each frame.
   end
 )
 
 -- Interprets the current touch state and returns an encoded character for the raise and cursor state
 function TouchInputController:encodedCharacterForCurrentTouchInput()
-  local iraise, irow_touched, icol_touched = false, 0, 0
+  local shouldRaise = false
+  local rowTouched = 0
+  local columnTouched = 0
   --we'll encode the touched panel and if raise is happening in a unicode character
   --only one touched panel is supported, no multitouch.
-  local mx, my = GAME:transform_coordinates(love.mouse.getPosition())
+  local mouseX, mouseY = GAME:transform_coordinates(love.mouse.getPosition())
   if love.mouse.isDown(1) then
     --note: a stack is still "touchingStack" if we touched the stack, and have dragged the mouse or touch off the stack, until we lift the touch
     --check whether the mouse is over this stack
-    if mx >= self.stack.pos_x * GFX_SCALE and mx <= (self.stack.pos_x * GFX_SCALE) + (self.stack.width * 16) * GFX_SCALE and
-    my >= self.stack.pos_y * GFX_SCALE and my <= (self.stack.pos_y * GFX_SCALE) + (self.stack.height* 16) * GFX_SCALE then
+    if mouseX >= self.stack.pos_x * GFX_SCALE and mouseX <= (self.stack.pos_x * GFX_SCALE) + (self.stack.width * 16) * GFX_SCALE and
+    mouseY >= self.stack.pos_y * GFX_SCALE and mouseY <= (self.stack.pos_y * GFX_SCALE) + (self.stack.height* 16) * GFX_SCALE then
       self.touchingStack = true
       --px and py represent the origin of the panel we are currently checking if it's touched.
       local px, py
@@ -42,11 +44,11 @@ function TouchInputController:encodedCharacterForCurrentTouchInput()
           --to do: maybe self.stack.displacement - shake here? ignoring shake for now.
           py = (self.stack.pos_y * GFX_SCALE) + ((11 - (row)) * 16 + self.stack.displacement) * GFX_SCALE
           --check if mouse is touching panel in row, col
-          if mx >= px and mx < px + 16 * GFX_SCALE and my >= py and my < py + 16 * GFX_SCALE then
-            irow_touched = math.max(row, 1) --if touching row 0, let's say we are touching row 1
-            icol_touched = col
-            if self.stack.prev_touchedPanel 
-              and row == self.stack.prev_touchedPanel.row and col == self.stack.prev_touchedPanel.col then
+          if mouseX >= px and mouseX < px + 16 * GFX_SCALE and mouseY >= py and mouseY < py + 16 * GFX_SCALE then
+            rowTouched = math.max(row, 1) --if touching row 0, let's say we are touching row 1
+            columnTouched = col
+            if self.stack.previousTouchedPanel 
+              and row == self.stack.previousTouchedPanel.row and col == self.stack.previousTouchedPanel.col then
               --we want this to be the selected panel in the case more than one panel is touched
               stop_looking = true
               break --don't look further
@@ -61,49 +63,49 @@ function TouchInputController:encodedCharacterForCurrentTouchInput()
       end
     elseif self.touchingStack then --we have touched the stack, and have moved the touch off the edge, without releasing
       --let's say we are still touching the panel we had touched last.
-      irow_touched = self.touchedPanel.row
-      icol_touched = self.touchedPanel.col
+      rowTouched = self.touchedPanel.row
+      columnTouched = self.touchedPanel.col
     elseif false then -- TODO replace with button
       --note: changed this to an elseif.  
       --This means we won't be able to press raise by accident if we dragged too far off the stack, into the raise button
       --but we also won't be able to input swaps and press raise at the same time, though the network protocol allows touching a panel and raising at the same time
       --Endaris has said we don't need to be able to swap and raise at the same time anyway though.
-      iraise = true
+      shouldRaise = true
     else
-      iraise = false
+      shouldRaise = false
     end
   else
     self.touchingStack = false
-    iraise = false
-    irow_touched = 0
-    icol_touched = 0
+    shouldRaise = false
+    rowTouched = 0
+    columnTouched = 0
   end
   if love.mouse.isDown(2) then
     --if using right mouse button on the stack, we are inputting "raise"
     --also works if we have left mouse buttoned the stack, dragged off, are still holding left mouse button, and then also hold down right mouse button.
-    if self.touchingStack or mx >= self.stack.pos_x * GFX_SCALE and mx <= (self.stack.pos_x * GFX_SCALE) + (self.stack.width * 16) * GFX_SCALE and
-    my >= self.stack.pos_y * GFX_SCALE and my <= (self.stack.pos_y * GFX_SCALE) + (self.stack.height* 16) * GFX_SCALE then
-      iraise = true
+    if self.touchingStack or mouseX >= self.stack.pos_x * GFX_SCALE and mouseX <= (self.stack.pos_x * GFX_SCALE) + (self.stack.width * 16) * GFX_SCALE and
+    mouseY >= self.stack.pos_y * GFX_SCALE and mouseY <= (self.stack.pos_y * GFX_SCALE) + (self.stack.height* 16) * GFX_SCALE then
+      shouldRaise = true
     end
   end
   
-  self.prev_touchedPanel = deepcpy(self.touchedPanel)
-  self.touchedPanel = {row = irow_touched, col = icol_touched}
+  self.previousTouchedPanel = deepcpy(self.touchedPanel)
+  self.touchedPanel = {row = rowTouched, col = columnTouched}
 
-  local cursorColumn, cursorRow = self:handleSwap()
+  local cursorRow, cursorColumn = self:handleSwap()
   
-  local result = TouchDataEncoding.touchDataToLatinString(iraise, cursorColumn, cursorRow, self.stack.width)
+  local result = TouchDataEncoding.touchDataToLatinString(shouldRaise, cursorRow, cursorColumn, self.stack.width)
   return result
 end
 
 function TouchInputController:lingeringTouchIsSet()
-  if self.lingering_touch_cursor.col ~= 0 and self.lingering_touch_cursor.row ~= 0 then
+  if self.lingeringTouchCursor.col ~= 0 and self.lingeringTouchCursor.row ~= 0 then
     return true
   end
   return false
 end
 
--- Given the current touch state, returns the new cursor column and row
+-- Given the current touch state, returns the new cursor row and column
 function TouchInputController:handleSwap()
   local cursorColumn = 0
   local cursorRow = 0
@@ -112,32 +114,32 @@ function TouchInputController:handleSwap()
     cursorColumn = self.stack.cur_col
     cursorRow = self.stack.cur_row
 
-    if self.touch_swap_cooldown_timer > 0 then
-        self.touch_swap_cooldown_timer = self.touch_swap_cooldown_timer - 1
+    if self.touchSwapCooldownTimer > 0 then
+        self.touchSwapCooldownTimer = self.touchSwapCooldownTimer - 1
     end
 
     --touch was initiated
-    if (not self.prev_touchedPanel or (self.prev_touchedPanel.row == 0 and self.prev_touchedPanel.col == 0)) and
+    if (not self.previousTouchedPanel or (self.previousTouchedPanel.row == 0 and self.previousTouchedPanel.col == 0)) and
         self.touchedPanel and not (self.touchedPanel.row == 0 and self.touchedPanel.col == 0) then
-      self.panel_first_touched = deepcpy(self.touchedPanel)
-      self.touch_target_col = self.touchedPanel.col
-      self.swaps_this_touch = 0
-      self.touch_swap_cooldown_timer = 0
+      self.panelFirstTouched = deepcpy(self.touchedPanel)
+      self.touchTargetColumn = self.touchedPanel.col
+      self.swapsThisTouch = 0
+      self.touchSwapCooldownTimer = 0
       
-      -- check for attempt to swap with self.lingering_touch_cursor
-      -- ie we touched a panel horizontally adjacent to self.lingering_touch_cursor
+      -- check for attempt to swap with self.lingeringTouchCursor
+      -- ie we touched a panel horizontally adjacent to self.lingeringTouchCursor
       if self:lingeringTouchIsSet() then
         local linger_swap_attempted = false
         local linger_swap_successful = false
-        if self.lingering_touch_cursor.row == self.touchedPanel.row then
-          local linger_swap_delta = self.touchedPanel.col - self.lingering_touch_cursor.col
+        if self.lingeringTouchCursor.row == self.touchedPanel.row then
+          local linger_swap_delta = self.touchedPanel.col - self.lingeringTouchCursor.col
           if linger_swap_delta == 1  then
             --try to swap right
             linger_swap_attempted = true
-            linger_swap_successful = self.stack:canSwap(self.lingering_touch_cursor.row, self.lingering_touch_cursor.col)
+            linger_swap_successful = self.stack:canSwap(self.lingeringTouchCursor.row, self.lingeringTouchCursor.col)
             if linger_swap_successful then
-              cursorColumn = self.lingering_touch_cursor.col
-              cursorRow = self.lingering_touch_cursor.row
+              cursorColumn = self.lingeringTouchCursor.col
+              cursorRow = self.lingeringTouchCursor.row
             end
           elseif linger_swap_delta == -1 then
             -- try to swap left
@@ -149,14 +151,14 @@ function TouchInputController:handleSwap()
             end
           end
           if linger_swap_successful then
-            self.lingering_touch_cursor = {row = 0, col = 0} --(else leave it as it was, so we can try to tap adjacent again later)
-            self.swaps_this_touch = self.swaps_this_touch + 1
+            self.lingeringTouchCursor = {row = 0, col = 0} --(else leave it as it was, so we can try to tap adjacent again later)
+            self.swapsThisTouch = self.swapsThisTouch + 1
           end
         end
         if linger_swap_attempted == false then
           -- We touched somewhere else on the stack
           -- clear cursor, lingering and touched panel so we can do another initial touch next frame
-          self.lingering_touch_cursor = {row = 0, col = 0}
+          self.lingeringTouchCursor = {row = 0, col = 0}
           self.touchedPanel = {row = 0, col = 0}
           cursorColumn = 0
           cursorRow = 0
@@ -169,36 +171,36 @@ function TouchInputController:handleSwap()
     
     --touch is ongoing
     if self.touchedPanel and not (self.touchedPanel.row == 0 and self.touchedPanel.col == 0) then
-      --if lingering_touch_cursor isn't set, we'll set a target for normal drag swapping.
+      --if lingeringTouchCursor isn't set, we'll set a target for normal drag swapping.
       if self:lingeringTouchIsSet() == false then
-        self.touch_target_col = self.touchedPanel.col
-      else -- lingering_touch_cursor is set
-        --don't drag the panel at lingering_touch_cursor
-        self.touch_target_col = 0
+        self.touchTargetColumn = self.touchedPanel.col
+      else -- lingeringTouchCursor is set
+        --don't drag the panel at lingeringTouchCursor
+        self.touchTargetColumn = 0
         --the following was decided against, commenting it out
         -- --if we've dragged our touch off the lingering cursor location, and back again, let's make the panel draggable once more
-        -- if self.prev_touchedPanel.col ~= self.lingering_touch_cursor.col and self.touchedPanel.col == self.lingering_touch_cursor.col then
-          -- self.lingering_touch_cursor = {row = 0, col = 0}
+        -- if self.previousTouchedPanel.col ~= self.lingeringTouchCursor.col and self.touchedPanel.col == self.lingeringTouchCursor.col then
+          -- self.lingeringTouchCursor = {row = 0, col = 0}
         -- end
       end
     end
 
     --touch was released
-    if (self.prev_touchedPanel and not (self.prev_touchedPanel.row == 0 and self.prev_touchedPanel.col == 0)) and (not self.touchedPanel or (self.touchedPanel.row == 0 and self.touchedPanel.col == 0)) then
-      self.panel_first_touched = {row = 0, col = 0} 
+    if (self.previousTouchedPanel and not (self.previousTouchedPanel.row == 0 and self.previousTouchedPanel.col == 0)) and (not self.touchedPanel or (self.touchedPanel.row == 0 and self.touchedPanel.col == 0)) then
+      self.panelFirstTouched = {row = 0, col = 0} 
       -- --check if we need to set lingering panel because user tapped a panel, didn't move it, and released it.
-      -- if self.swaps_this_touch == 0 and self.prev_touchedPanel.row == self.cur_row and self.prev_touchedPanel.col == self.cur_col then --to do: or we tried to swap and couldn't
-        -- print("lingering_touch_cursor set to "..self.cur_row..","..self.cur_col) 
-        -- self.lingering_touch_cursor = {row = self.cur_row, col = self.cur_col}
+      -- if self.swapsThisTouch == 0 and self.previousTouchedPanel.row == self.cur_row and self.previousTouchedPanel.col == self.cur_col then --to do: or we tried to swap and couldn't
+        -- print("lingeringTouchCursor set to "..self.cur_row..","..self.cur_col) 
+        -- self.lingeringTouchCursor = {row = self.cur_row, col = self.cur_col}
       -- end
-      --if no lingering_touch_cursor, remove cursor from the display.
-      -- and the cursor has reached self.touch_target_col
-      if self:lingeringTouchIsSet() == false and self.stack.cur_col == self.touch_target_col then
+      --if no lingeringTouchCursor, remove cursor from the display.
+      -- and the cursor has reached self.touchTargetColumn
+      if self:lingeringTouchIsSet() == false and self.stack.cur_col == self.touchTargetColumn then
         cursorColumn = 0
         cursorRow = 0
       end
-      self.touch_target_col = 0
-      self.swaps_this_touch = 0
+      self.touchTargetColumn = 0
+      self.swapsThisTouch = 0
     end
 
     --if panel at cur_row, cur_col gets certain flags, deselect it, and end the touch
@@ -207,19 +209,19 @@ function TouchInputController:handleSwap()
       if panel:exclude_hover() or panel.state == "matched" then
         cursorColumn = 0
         cursorRow = 0
-        self.swaps_this_touch = 0
-        self.lingering_touch_cursor = {row = 0, col = 0}
-        self.touch_target_col = 0
+        self.swapsThisTouch = 0
+        self.lingeringTouchCursor = {row = 0, col = 0}
+        self.touchTargetColumn = 0
       end
     end
 
     if self:lingeringTouchIsSet() then
       -- Don't auto swap while lingering touch is set
-    elseif self.touch_target_col ~= 0 then
-      if self.touch_swap_cooldown_timer == 0 then
-        --try to swap toward self.touch_target_col
-        if self.stack.cur_col ~= 0 and self.touch_target_col ~= self.stack.cur_col then
-          local cursor_target_delta = self.touch_target_col - self.stack.cur_col
+    elseif self.touchTargetColumn ~= 0 then
+      if self.touchSwapCooldownTimer == 0 then
+        --try to swap toward self.touchTargetColumn
+        if self.stack.cur_col ~= 0 and self.touchTargetColumn ~= self.stack.cur_col then
+          local cursor_target_delta = self.touchTargetColumn - self.stack.cur_col
           local swap_successful = false
           local swap_origin = {row = 0, col = 0}
           local swap_destination = {row = 0, col = 0}
@@ -244,13 +246,13 @@ function TouchInputController:handleSwap()
               -- We aren't touching anything anymore, clear the cursor
               cursorColumn = 0
               cursorRow = 0
-              self.touch_target_col = 0
+              self.touchTargetColumn = 0
             end
           end
           if swap_successful then 
-            self.swaps_this_touch = self.swaps_this_touch + 1
-            if self.swaps_this_touch >= 2 then --third swap onward is slowed down to prevent excessive or accidental stealths
-              self.touch_swap_cooldown_timer = TOUCH_SWAP_COOLDOWN
+            self.swapsThisTouch = self.swapsThisTouch + 1
+            if self.swapsThisTouch >= 2 then --third swap onward is slowed down to prevent excessive or accidental stealths
+              self.touchSwapCooldownTimer = TOUCH_SWAP_COOLDOWN
             end
           else  --we failed to swap toward the target
             --if both origin and destination are blank panels
@@ -261,28 +263,28 @@ function TouchInputController:handleSwap()
               cursorRow = swap_destination.row
             --elseif there are clearing panels in the way of the swap 
             elseif self.stack.panels[swap_destination.row][swap_destination.col]:exclude_swap() then
-              --let's set lingering_touch_cursor to the origin of the failed swap
-              logger.trace("lingering_touch_cursor was set because destination panel was not swappable")
-              self.lingering_touch_cursor = {row = self.stack.cur_row, col = self.stack.cur_col}
+              --let's set lingeringTouchCursor to the origin of the failed swap
+              logger.trace("lingeringTouchCursor was set because destination panel was not swappable")
+              self.lingeringTouchCursor = {row = self.stack.cur_row, col = self.stack.cur_col}
             end
           end
         end
-      end --of self.touch_swap_cooldown_timer was 0
+      end --of self.touchSwapCooldownTimer was 0
     else
       cursorColumn = 0
       cursorRow = 0
     end
   end
 
-  return cursorColumn, cursorRow
+  return cursorRow, cursorColumn
 end
 
 function TouchInputController:stackIsCreatingNewRow()
-  if self.panel_first_touched and self.panel_first_touched.row and self.panel_first_touched.row ~= 0 then
-    self.panel_first_touched.row = bound(1,self.panel_first_touched.row + 1, self.stack.top_cur_row)
+  if self.panelFirstTouched and self.panelFirstTouched.row and self.panelFirstTouched.row ~= 0 then
+    self.panelFirstTouched.row = bound(1,self.panelFirstTouched.row + 1, self.stack.top_cur_row)
   end
-  if self.lingering_touch_cursor and self.lingering_touch_cursor.row and self.lingering_touch_cursor.row ~= 0 then
-    self.lingering_touch_cursor.row = bound(1,self.lingering_touch_cursor.row + 1, self.stack.top_cur_row)
+  if self.lingeringTouchCursor and self.lingeringTouchCursor.row and self.lingeringTouchCursor.row ~= 0 then
+    self.lingeringTouchCursor.row = bound(1,self.lingeringTouchCursor.row + 1, self.stack.top_cur_row)
   end
 end
 
@@ -291,12 +293,12 @@ function TouchInputController:debugString()
   local inputs_to_print = ""
   inputs_to_print = inputs_to_print .. "\ncursor:".. self.stack.cur_col ..",".. self.stack.cur_row
   inputs_to_print = inputs_to_print .. "\ntouchedPanel:"..self.touchedPanel.col..","..self.touchedPanel.row
-  inputs_to_print = inputs_to_print .. "\npanel_first_touched:"..self.panel_first_touched.col..","..self.panel_first_touched.row
-  inputs_to_print = inputs_to_print .. "\nprev_touchedPanel:"..self.prev_touchedPanel.col..","..self.prev_touchedPanel.row
-  inputs_to_print = inputs_to_print .. "\ntouch_target_col:"..self.touch_target_col
-  inputs_to_print = inputs_to_print .. "\nlingering_touch_cursor:"..self.lingering_touch_cursor.col..","..self.lingering_touch_cursor.row
-  inputs_to_print = inputs_to_print .. "\nswaps_this_touch:"..self.swaps_this_touch
-  inputs_to_print = inputs_to_print .. "\ntouch_swap_cooldown_timer:"..self.touch_swap_cooldown_timer
+  inputs_to_print = inputs_to_print .. "\npanelFirstTouched:"..self.panelFirstTouched.col..","..self.panelFirstTouched.row
+  inputs_to_print = inputs_to_print .. "\npreviousTouchedPanel:"..self.previousTouchedPanel.col..","..self.previousTouchedPanel.row
+  inputs_to_print = inputs_to_print .. "\ntouchTargetColumn:"..self.touchTargetColumn
+  inputs_to_print = inputs_to_print .. "\nlingeringTouchCursor:"..self.lingeringTouchCursor.col..","..self.lingeringTouchCursor.row
+  inputs_to_print = inputs_to_print .. "\nswapsThisTouch:"..self.swapsThisTouch
+  inputs_to_print = inputs_to_print .. "\ntouchSwapCooldownTimer:"..self.touchSwapCooldownTimer
   inputs_to_print = inputs_to_print .. "\ntouchingStack:"..(self.touchingStack and "true" or "false")
   return inputs_to_print
 end
