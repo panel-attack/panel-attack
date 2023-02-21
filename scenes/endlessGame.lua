@@ -1,7 +1,7 @@
 local GameBase = require("scenes.GameBase")
 local sceneManager = require("scenes.sceneManager")
 
---@module endless_game
+--@module endlessGame
 local endlessGame = GameBase("endlessGame", {})
 
 function endlessGame:processGameResults(gameResult) 
@@ -19,8 +19,8 @@ function endlessGame:abortGame()
 end
 
 function endlessGame:customGameOverSetup()
-  self.winner_SFX = GAME.match.P1:pick_win_sfx()
-  self.next_scene = "endlessMenu"
+  self.winnerSFX = GAME.match.P1:pick_win_sfx()
+  self.nextScene = "endlessMenu"
 end
 
 return endlessGame

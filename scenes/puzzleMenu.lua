@@ -1,10 +1,5 @@
 local Scene = require("scenes.Scene")
-local replay_browser = require("replay_browser")
 local logger = require("logger")
-local options = require("options")
-local utf8 = require("utf8")
-local analytics = require("analytics")
-local main_config_input = require("config_inputs")
 local Button = require("ui.Button")
 local Menu = require("ui.Menu")
 local ButtonGroup = require("ui.ButtonGroup")
@@ -12,8 +7,6 @@ local LevelSlider = require("ui.LevelSlider")
 local Label = require("ui.Label")
 local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
-local util = require("util")
-local save = require("save")
 local GraphicsUtil = require("graphics_util")
 
 --@module puzzleMenu
@@ -21,26 +14,26 @@ local puzzleMenu = Scene("puzzleMenu")
 
 local font = GraphicsUtil.getGlobalFont()
   
-function puzzleMenu:startGame(puzzle_set)
+function puzzleMenu:startGame(puzzleSet)
   current_stage = config.stage
   if current_stage == random_stage_special_value then
     current_stage = nil
   end
   
   if config.puzzle_randomColors then
-    puzzle_set = deepcpy(puzzle_set)
+    puzzleSet = deepcpy(puzzleSet)
 
-    for _, puzzle in pairs(puzzle_set.puzzles) do
+    for _, puzzle in pairs(puzzleSet.puzzles) do
       puzzle.stack = Puzzle.randomizeColorString(puzzle.stack)
     end
   end
   
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  sceneManager:switchToScene("puzzleGame", {puzzle_set = puzzle_set, puzzle_index = 1})
+  sceneManager:switchToScene("puzzleGame", {puzzleSet = puzzleSet, puzzleIndex = 1})
   
-  if config.puzzle_level ~= self.level_slider.value or config.puzzle_randomColors ~= self.random_colors_buttons.value then
-    config.puzzle_level = self.level_slider.value
-    config.puzzle_randomColors = self.random_colors_buttons.value 
+  if config.puzzle_level ~= self.levelSlider.value or config.puzzle_randomColors ~= self.randomColorsButtons.value then
+    config.puzzle_level = self.levelSlider.value
+    config.puzzle_randomColors = self.randomColorsButtons.value 
     logger.debug("saving settings...")
     write_conf_file()
   end
@@ -55,36 +48,36 @@ function puzzleMenu:init()
   sceneManager:addScene(puzzleMenu)
 
   local tickLength = 16
-  self.level_slider = LevelSlider({
+  self.levelSlider = LevelSlider({
       tickLength = tickLength,
       onValueChange = function(s)
         play_optional_sfx(themes[config.theme].sounds.menu_move)
       end
     })
   
-  self.random_colors_buttons = ButtonGroup(
+  self.randomColorsButtons = ButtonGroup(
     {
       buttons = {
         Button({label = "op_off", width = 60, height = 25}),
         Button({label = "op_on", width = 60, height = 25}),
       },
       values = {false, true},
-      selected_index = config.puzzle_randomColors and 2 or 1,
+      selectedIndex = config.puzzle_randomColors and 2 or 1,
       onChange = function() play_optional_sfx(themes[config.theme].sounds.menu_move) end
     }
   )
   
-  local menu_options = {
-    {Label({label = "level", isVisible = false}), self.level_slider},
-    {Label({label = "randomColors", isVisible = false}), self.random_colors_buttons},
+  local menuOptions = {
+    {Label({label = "level", isVisible = false}), self.levelSlider},
+    {Label({label = "randomColors", isVisible = false}), self.randomColorsButtons},
   }
 
-  for puzzle_set_name, puzzle_set in pairsSortedByKeys(GAME.puzzleSets) do
-    menu_options[#menu_options + 1] = {Button({label = puzzle_set_name, translate = false, onClick = function() self:startGame(puzzle_set) end})}
+  for puzzleSetName, puzzleSet in pairsSortedByKeys(GAME.puzzleSets) do
+    menuOptions[#menuOptions + 1] = {Button({label = puzzleSetName, translate = false, onClick = function() self:startGame(puzzleSet) end})}
   end
-  menu_options[#menu_options + 1] = {Button({label = "back", onClick = exitMenu})}
+  menuOptions[#menuOptions + 1] = {Button({label = "back", onClick = exitMenu})}
   
-  self.menu = Menu({menuItems = menu_options})
+  self.menu = Menu({menuItems = menuOptions})
   self.menu:setVisibility(false)
 end
 

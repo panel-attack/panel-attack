@@ -14,36 +14,34 @@ local GraphicsUtil = require("graphics_util")
 local BasicMenu = class(
   function (self, name, options)
     self.name = name
-    self.game_mode = options.game_mode
-    self.game_scene = options.game_scene
+    self.gameMode = options.gameMode
+    self.gameScene = options.gameScene
   end,
   Scene
 )
 
-local selected_id = 1
-
 function BasicMenu:startGame()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
   
-  if config.endless_speed ~= self.speed_slider.value or config.endless_difficulty ~= self.difficulty_buttons.value then
-    config.endless_speed = self.speed_slider.value
-    config.endless_difficulty = self.difficulty_buttons.value
+  if config.endless_speed ~= self.speedSlider.value or config.endless_difficulty ~= self.difficultyButtons.value then
+    config.endless_speed = self.speedSlider.value
+    config.endless_difficulty = self.difficultyButtons.value
     --gprint("saving settings...", unpack(main_menu_screen_pos))
     --wait()
     write_conf_file()
   end
   
-  GAME.match = Match(self.game_mode)
+  GAME.match = Match(self.gameMode)
 
   current_stage = config.stage
   if current_stage == random_stage_special_value then
     current_stage = nil
   end
 
-  if self.type_buttons.value == "Classic" then
-    GAME.match.P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, speed=self.speed_slider.value, difficulty=self.difficulty_buttons.value, character=config.character}
+  if self.typeButtons.value == "Classic" then
+    GAME.match.P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, speed=self.speedSlider.value, difficulty=self.difficultyButtons.value, character=config.character}
   else
-    GAME.match.P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, level=self.level_slider.value, character=config.character}
+    GAME.match.P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, level=self.levelSlider.value, character=config.character}
   end
   GAME.match.P1:wait_for_random_character()
   GAME.match.P1.do_countdown = config.ready_countdown_1P or false
@@ -51,7 +49,7 @@ function BasicMenu:startGame()
 
   GAME.match.P1:starting_state()
   
-  sceneManager:switchToScene(self.game_scene)
+  sceneManager:switchToScene(self.gameScene)
 end
 
 local function exitMenu()
@@ -62,14 +60,14 @@ end
 function BasicMenu:init()
   sceneManager:addScene(self)
   
-  self.speed_slider = Slider({
+  self.speedSlider = Slider({
     min = 1, 
     max = 99, 
     value = GAME.config.endless_speed or 1, 
     isVisible = false
   })
 
-  self.difficulty_buttons = ButtonGroup(
+  self.difficultyButtons = ButtonGroup(
       {
         buttons = {
           Button({label = "easy", width = 60, height = 25}),
@@ -79,83 +77,83 @@ function BasicMenu:init()
           Button({label = "EX Mode", translate = false}),
         },
         values = {1, 2, 3, 4},
-        selected_index = GAME.config.endless_difficulty or 1,
+        selectedIndex = GAME.config.endless_difficulty or 1,
         onChange = function() play_optional_sfx(themes[config.theme].sounds.menu_move) end
       }
   )
   
   local tickLength = 16
-  self.level_slider = LevelSlider({
+  self.levelSlider = LevelSlider({
       tickLength = tickLength,
       onValueChange = function(s)
         play_optional_sfx(themes[config.theme].sounds.menu_move)
       end
     })
   
-  self.type_buttons = ButtonGroup(
+  self.typeButtons = ButtonGroup(
     {
       buttons = {
         Button({label = "endless_classic", onClick = function()
-              self.modern_menu:setVisibility(false)
-              self.classic_menu:setVisibility(true)
+              self.modernMenu:setVisibility(false)
+              self.classicMenu:setVisibility(true)
               end, width = 60, height = 25}),
         Button({label = "endless_modern", onClick = function()
-              self.classic_menu:setVisibility(false) 
-              self.modern_menu:setVisibility(true)
+              self.classicMenu:setVisibility(false) 
+              self.modernMenu:setVisibility(true)
               end, width = 60, height = 25}),
       },
       values = {"Classic", "Modern"},
-      selected_index = 2,
+      selectedIndex = 2,
       onChange = function() play_optional_sfx(themes[config.theme].sounds.menu_move) end
     }
   )
   
-  local modern_menu_options = {
-    {Label({label = "endless_type"}), self.type_buttons},
-    {Label({label = "level"}), self.level_slider},
+  local modernMenuOptions = {
+    {Label({label = "endless_type"}), self.typeButtons},
+    {Label({label = "level"}), self.levelSlider},
     {Button({label = "go_", onClick = function() self:startGame() end})},
     {Button({label = "back", onClick = exitMenu})},
   }
   
-  local classic_menu_options = {
-    modern_menu_options[1],
-    {Label({label = "speed", isVisible = false}), self.speed_slider},
-    {Label({label = "difficulty", isVisible = false}), self.difficulty_buttons},
+  local classicMenuOptions = {
+    modernMenuOptions[1],
+    {Label({label = "speed", isVisible = false}), self.speedSlider},
+    {Label({label = "difficulty", isVisible = false}), self.difficultyButtons},
     {Button({label = "go_", onClick = function() self:startGame() end})},
     {Button({label = "back", onClick = exitMenu})},
   }
   
-  self.classic_menu = Menu({menuItems = classic_menu_options})
-  self.modern_menu = Menu({menuItems = modern_menu_options})
-  self.classic_menu:setVisibility(false)
-  self.modern_menu:setVisibility(false)
+  self.classicMenu = Menu({menuItems = classicMenuOptions})
+  self.modernMenu = Menu({menuItems = modernMenuOptions})
+  self.classicMenu:setVisibility(false)
+  self.modernMenu:setVisibility(false)
 end
 
 function BasicMenu:load()
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
   y = y + 100
-  self.classic_menu.x = x
-  self.classic_menu.y = y
-  self.modern_menu.x = x
-  self.modern_menu.y = y
+  self.classicMenu.x = x
+  self.classicMenu.y = y
+  self.modernMenu.x = x
+  self.modernMenu.y = y
   
-  self.classic_menu:updateLabel()
-  self.modern_menu:updateLabel()
+  self.classicMenu:updateLabel()
+  self.modernMenu:updateLabel()
   
   reset_filters()
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")
   end
 
-  for i, button in ipairs(self.difficulty_buttons.buttons) do
+  for i, button in ipairs(self.difficultyButtons.buttons) do
     button.width = 60
     button.height = 25
   end
   
-  if self.type_buttons.value == "Classic" then
-    self.classic_menu:setVisibility(true)
+  if self.typeButtons.value == "Classic" then
+    self.classicMenu:setVisibility(true)
   else
-    self.modern_menu:setVisibility(true)
+    self.modernMenu:setVisibility(true)
   end
 end
 
@@ -164,8 +162,8 @@ function BasicMenu:drawBackground()
 end
 
 function BasicMenu:update()
-  if self.type_buttons.value == "Classic" then
-    local lastScore, record = unpack(self:getScores(self.difficulty_buttons.value))
+  if self.typeButtons.value == "Classic" then
+    local lastScore, record = unpack(self:getScores(self.difficultyButtons.value))
   
     local xPosition1 = 520
     local xPosition2 = xPosition1 + 150
@@ -180,20 +178,20 @@ function BasicMenu:update()
     draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition, 0.5, 1.0, nil, nil, recordLabelQuads)
     draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition + 24, 0.5, 1.0, nil, nil, recordQuads)
   
-    self.classic_menu:update()
-    self.classic_menu:draw()
+    self.classicMenu:update()
+    self.classicMenu:draw()
   else
-    self.modern_menu:update()
-    self.modern_menu:draw()
+    self.modernMenu:update()
+    self.modernMenu:draw()
   end
   
 end
 
 function BasicMenu:unload() 
-  if self.type_buttons.value == "Classic" then
-    self.classic_menu:setVisibility(false)
+  if self.typeButtons.value == "Classic" then
+    self.classicMenu:setVisibility(false)
   else
-    self.modern_menu:setVisibility(false)
+    self.modernMenu:setVisibility(false)
   end
   stop_the_music()
 end

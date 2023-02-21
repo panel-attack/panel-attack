@@ -19,8 +19,8 @@ function timeAttackGame:abortGame()
 end
 
 function timeAttackGame:customGameOverSetup()
-  self.winner_SFX = GAME.match.P1:pick_win_sfx()
-  self.next_scene = "timeAttackMenu"
+  self.winnerSFX = GAME.match.P1:pick_win_sfx()
+  self.nextScene = "timeAttackMenu"
 end
 
 return timeAttackGame

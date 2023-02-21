@@ -1,20 +1,10 @@
 local class = require("class")
 local Scene = require("scenes.Scene")
 local GraphicsUtil = require("graphics_util")
-local replay_browser = require("replay_browser")
 local logger = require("logger")
-local options = require("options")
-local utf8 = require("utf8")
 local analytics = require("analytics")
-local main_config_input = require("config_inputs")
-local Button = require("ui.Button")
-local Menu = require("ui.Menu")
-local ButtonGroup = require("ui.ButtonGroup")
-local LevelSlider = require("ui.LevelSlider")
-local Label = require("ui.Label")
 local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
-local util = require("util")
 local save = require("save")
 local tableUtils = require("tableUtils")
 local consts = require("consts")
@@ -23,22 +13,27 @@ local consts = require("consts")
 local GameBase = class(
   function (self, name, options)
     self.name = name
-    self.abort_game = false
+    self.shouldAbortGame = false
     self.text = ""
-    self.winner_SFX = nil
-    self.keep_music = false
-    self.current_stage = config.stage
+    self.winnerSFX = nil
+    self.keepMusic = false
+    self.currentStage = config.stage
     self.backgroundImage = nil
     
-    self.debugData = {}
+    self.frameInfo = {
+      frameCount = nil,
+      startTime = nil,
+      currentTime = nil,
+      expectedFrameCount = nil
+    }
   end,
   Scene
 )
 
--- abstract functions
+-- begin abstract functions
 function GameBase:processGameResults(gameResult) end
 
-function GameBase:customLoad(scene_params) end
+function GameBase:customLoad(sceneParams) end
 
 function GameBase:abortGame() end
 
@@ -70,31 +65,29 @@ function GameBase:finalizeAndWriteReplay(extraPath, extraFilename)
   save.write_replay_file(path, filename)
 end
 
-function GameBase:finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGame)
-
+function GameBase:finalizeAndWriteVsReplay(battleRoom, outcomeClaim, incompleteGame)
   incompleteGame = incompleteGame or false
   
   local extraPath, extraFilename
   if GAME.match.P2 then
     replay[GAME.match.mode].I = GAME.match.P2.confirmedInput
 
-    local rep_a_name, rep_b_name = battleRoom.playerNames[1], battleRoom.playerNames[2]
     --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
-    if rep_b_name < rep_a_name then
-      extraPath = rep_b_name .. "-vs-" .. rep_a_name
+    if battleRoom.playerNames[2] < battleRoom.playerNames[1] then
+      extraPath = battleRoom.playerNames[2] .. "-vs-" .. battleRoom.playerNames[1]
     else
-      extraPath = rep_a_name .. "-vs-" .. rep_b_name
+      extraPath = battleRoom.playerNames[1] .. "-vs-" .. battleRoom.playerNames[2]
     end
-    extraFilename = rep_a_name .. "-L" .. GAME.match.P1.level .. "-vs-" .. rep_b_name .. "-L" .. GAME.match.P2.level
+    extraFilename = battleRoom.playerNames[1] .. "-L" .. GAME.match.P1.level .. "-vs-" .. battleRoom.playerNames[2] .. "-L" .. GAME.match.P2.level
     if match_type and match_type ~= "" then
       extraFilename = extraFilename .. "-" .. match_type
     end
     if incompleteGame then
       extraFilename = extraFilename .. "-INCOMPLETE"
     else
-      if outcome_claim == 1 or outcome_claim == 2 then
-        extraFilename = extraFilename .. "-P" .. outcome_claim .. "wins"
-      elseif outcome_claim == 0 then
+      if outcomeClaim == 1 or outcomeClaim == 2 then
+        extraFilename = extraFilename .. "-P" .. outcomeClaim .. "wins"
+      elseif outcomeClaim == 0 then
         extraFilename = extraFilename .. "-draw"
       end
     end
@@ -107,9 +100,9 @@ function GameBase:finalizeAndWriteVsReplay(battleRoom, outcome_claim, incomplete
 end
 
 function GameBase:pickRandomStage()
-  self.current_stage = tableUtils.getRandomElement(stages_ids_for_current_theme)
-  if stages[self.current_stage]:is_bundle() then -- may pick a bundle!
-    self.current_stage = tableUtils.getRandomElement(stages[self.current_stage].sub_stages)
+  self.currentStage = tableUtils.getRandomElement(stages_ids_for_current_theme)
+  if stages[self.currentStage]:is_bundle() then -- may pick a bundle!
+    self.currentStage = tableUtils.getRandomElement(stages[self.currentStage].sub_stages)
   end
 end
 
@@ -117,11 +110,11 @@ function GameBase:useCurrentStage()
   if config.stage == consts.RANDOM_STAGE_SPECIAL_VALUE then
     self:pickRandomStage()
   end
-  current_stage = self.current_stage
+  current_stage = self.currentStage
   
-  stage_loader_load(self.current_stage)
+  stage_loader_load(self.currentStage)
   stage_loader_wait()
-  self.backgroundImage = UpdatingImage(stages[self.current_stage].images.background, false, 0, 0, canvas_width, canvas_height)
+  self.backgroundImage = UpdatingImage(stages[self.currentStage].images.background, false, 0, 0, canvas_width, canvas_height)
 end
 
 local function pickUseMusicFrom()
@@ -139,15 +132,16 @@ local function pickUseMusicFrom()
   end
 end
 
-function GameBase:load(scene_params)
+function GameBase:load(sceneParams)
   leftover_time = 1 / 120
-  self.abort_game = false
+  self.shouldAbortGame = false
   self:useCurrentStage()
   pickUseMusicFrom()
-  self:customLoad(scene_params)
+  self:customLoad(sceneParams)
   replay = createNewReplay(GAME.match)
   
-  self.debugData.startTime = nil
+  self.frameInfo.startTime = nil
+  self.frameInfo.frameCount = -1
 end
 
 function GameBase:drawForeground()
@@ -170,7 +164,7 @@ end
 function GameBase:handlePause()
   if GAME.match.supportsPause and (input.isDown["Start"] or (not GAME.focused and not GAME.gameIsPaused)) then
     GAME.gameIsPaused = not GAME.gameIsPaused
-    print(dump(self.debugData))
+    print(dump(self.frameInfo))
 
     setMusicPaused(GAME.gameIsPaused)
 
@@ -192,11 +186,6 @@ local winnerTime = 60
 local initialMusicVolumes = {}
 
 function GameBase:setupGameOver()
-  --timemax = timemax or -1 -- negative values means the user needs to press enter/escape to continue
-  --text = text or ""
-  --keepMusic = keepMusic or false
-  --local button_text = loc("continue_button") or ""
-  
   t = 0 -- the amount of frames that have passed since the game over screen was displayed
   timemin = 60 -- the minimum amount of frames the game over screen will be displayed for
   timemax = -1
@@ -224,7 +213,7 @@ function GameBase:runGameOver()
   gprint(loc("continue_button"), (canvas_width - font:getWidth(loc("continue_button"))) / 2, 10 + 30)
   -- wait()
   local ret = nil
-  if not self.keep_music then
+  if not self.keepMusic then
     -- Fade the music out over time
     local fadeMusicLength = 3 * 60
     if t <= fadeMusicLength then
@@ -244,9 +233,9 @@ function GameBase:runGameOver()
   -- Play the winner sound effect after a delay
   if not SFX_mute then
     if t >= winnerTime then
-      if self.winner_SFX ~= nil then -- play winnerSFX then nil it so it doesn't loop
-        self.winner_SFX:play()
-        self.winner_SFX = nil
+      if self.winnerSFX ~= nil then -- play winnerSFX then nil it so it doesn't loop
+        self.winnerSFX:play()
+        self.winnerSFX = nil
       end
     end
   end
@@ -258,26 +247,26 @@ function GameBase:runGameOver()
     do_messages() -- recieve messages so we know if the next game is in the queue
   end
 
-  local left_select_menu = false -- Whether a message has been sent that indicates a match has started or the room has closed
+  local leftSelectMenu = false -- Whether a message has been sent that indicates a match has started or the room has closed
   if this_frame_messages then
     for _, msg in ipairs(this_frame_messages) do
       -- if a new match has started or the room is being closed, flag the left select menu variavle
       if msg.match_start or replay_of_match_so_far or msg.leave_room then
-        left_select_menu = true
+        leftSelectMenu = true
       end
     end
   end
 
   -- if conditions are met, leave the game over screen
-  local key_pressed = tableUtils.trueForAny(input.isDown, function(key) return key end)
-  if t >= timemin and ((t >= timemax and timemax >= 0) or key_pressed) or left_select_menu then
+  local keyPressed = tableUtils.trueForAny(input.isDown, function(key) return key end)
+  if t >= timemin and ((t >= timemax and timemax >= 0) or keyPressed) or leftSelectMenu then
     play_optional_sfx(themes[config.theme].sounds.menu_validate)
     setMusicFadePercentage(1) -- reset the music back to normal config volume
     if not keep_music then
       stop_the_music()
     end
     SFX_GameOver_Play = 0
-    sceneManager:switchToScene(self.next_scene, self.next_scene_params)
+    sceneManager:switchToScene(self.nextScene, self.nextSceneParams)
   end
   t = t + 1
   
@@ -285,39 +274,30 @@ function GameBase:runGameOver()
 end
 
 function GameBase:runGame(dt)
-  if self.debugData.startTime == nil then
-    self.debugData.startTime = love.timer.getTime()
-    self.debugData.frameCount = -1
+  if self.frameInfo.startTime == nil then
+    self.frameInfo.startTime = love.timer.getTime()
   end
   
-  self.debugData.numRepeats = 0
+  local numRepeats = 0
+  self.frameInfo.currentTime = love.timer.getTime()
   repeat 
-    self.debugData.frameCount = self.debugData.frameCount + 1
-    self.debugData.currentTime = love.timer.getTime()
-    self.debugData.expectedFrameCount = (self.debugData.currentTime - self.debugData.startTime) * 60
-    self.debugData.numRepeats = self.debugData.numRepeats + 1
-  gfx_q:push({love.graphics.setColor, {0, 0, 0, 1}})
-  gfx_q:push({love.graphics.print, {string.format("startTime: %f\ncurrentTime: %f\nexpectedFrameNum: %d\nactualFrameNum: %d", 
-          self.debugData.startTime, 
-          self.debugData.currentTime, 
-          self.debugData.expectedFrameCount,
-          self.debugData.frameCount), 0, 0}})
-  gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
+    self.frameInfo.frameCount = self.frameInfo.frameCount + 1
+    self.frameInfo.expectedFrameCount = math.ceil((self.frameInfo.currentTime - self.frameInfo.startTime) * 60)
+    numRepeats = numRepeats + 1
     GAME.match:run()
     self:customRun()
-    dt = dt - consts.FRAME_RATE
-  until (self.debugData.frameCount >= self.debugData.expectedFrameCount)
+  until (self.frameInfo.frameCount >= self.frameInfo.expectedFrameCount)
   
   if not ((GAME.match.P1 and GAME.match.P1.play_to_end) or (GAME.match.P2 and GAME.match.P2.play_to_end)) then
     self:handlePause()
 
     if GAME.gameIsPaused and input.isDown["MenuEsc"] then
       self:abortGame()
-      self.abort_game = true
+      self.shouldAbortGame = true
     end
   end
   
-  if self.abort_game then
+  if self.shouldAbortGame then
     return
   end
   
@@ -342,9 +322,9 @@ function GameBase:update(dt)
 end
 
 function GameBase:unload()
-  local game_result = GAME.match.P1:gameResult()
-  if game_result then
-    self:processGameResults(game_result)
+  local gameResult = GAME.match.P1:gameResult()
+  if gameResult then
+    self:processGameResults(gameResult)
   end
   analytics.game_ends(GAME.match.P1.analytic)
   GAME:clearMatch()
