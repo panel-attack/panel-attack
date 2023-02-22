@@ -196,7 +196,6 @@ Stack =
     s.cur_dir = nil -- the direction pressed
     s.cur_row = 7 -- the row the cursor's on
     s.cur_col = 3 -- the column the left half of the cursor's on
-    s.cursorLock = true
     s.queuedSwapColumn = 0 -- the left column of the two columns to swap or 0 if no swap queued
     s.queuedSwapRow = 0 -- the row of the queued swap or 0 if no swap queued
     s.top_cur_row = s.height + (s.match.mode == "puzzle" and 0 or -1)
@@ -1024,18 +1023,16 @@ function Stack.controls(self)
   if self.inputMethod == "touch" then
     local cursorColumn, cursorRow
     raise, cursorRow, cursorColumn = TouchDataEncoding.latinStringToTouchData(sdata, self.width)
-    if self.cursorLock == false then
-      if self.cur_col ~= cursorColumn or self.cur_row ~= cursorRow or (cursorColumn == 0 and cursorRow == 0) then
-        -- We moved the cursor from a previous column, swap
-        if self.cur_col ~= 0 and self.cur_row ~= 0 and cursorColumn ~= self.cur_col and cursorRow ~= 0 then
-          local swapColumn = math.min(self.cur_col, cursorColumn)
-          if self:canSwap(cursorRow, swapColumn) then
-            self:setQueuedSwapPosition(swapColumn, cursorRow)
-          end
+    if self.cur_col ~= cursorColumn or self.cur_row ~= cursorRow or (cursorColumn == 0 and cursorRow == 0) then
+      -- We moved the cursor from a previous column, try to swap
+      if self.cur_col ~= 0 and self.cur_row ~= 0 and cursorColumn ~= self.cur_col and cursorRow ~= 0 then
+        local swapColumn = math.min(self.cur_col, cursorColumn)
+        if self:canSwap(cursorRow, swapColumn) then
+          self:setQueuedSwapPosition(swapColumn, cursorRow)
         end
-        self.cur_col = cursorColumn
-        self.cur_row = cursorRow
       end
+      self.cur_col = cursorColumn
+      self.cur_row = cursorRow
     end
   else --input method is controller
     local swap, up, down, left, right
@@ -1704,7 +1701,7 @@ function Stack.simulate(self)
     if self.inputMethod == "touch" then
         --with touch, cursor movement happen at stack:control time
     else
-      if self.cur_dir and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and not self.cursor_lock then
+      if self.cur_dir and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) then
         local prev_row = self.cur_row
         local prev_col = self.cur_col
         self.cur_row = bound(1, self.cur_row + d_row[self.cur_dir], self.top_cur_row)
@@ -2101,7 +2098,6 @@ function Stack:runCountDownIfNeeded()
       end
       self.countdown_cursor_state = "ready_falling"
       self.countdown_cur_speed = 4 --one move every this many frames
-      self.cursorLock = true
     end
     if self.countdown_CLOCK == 8 then
       self.countdown_cursor_state = "moving_down"
@@ -2124,7 +2120,6 @@ function Stack:runCountDownIfNeeded()
     if self.countdown_timer then
       if self.countdown_timer == 0 then
         --we are done counting down
-        self.cursorLock = false
         self.do_countdown = nil
         self.countdown_timer = nil
         self.starting_cur_row = nil
@@ -2336,8 +2331,6 @@ end
 
 function Stack.canSwap(self, row, column)
   local panels = self.panels
-  local width = self.width
-  local height = self.height
   -- in order for a swap to occur, one of the two panels in
   -- the cursor must not be a non-panel.
   local do_swap =
