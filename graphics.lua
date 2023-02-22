@@ -281,15 +281,16 @@ function Stack.render(self)
   local portrait_w, portrait_h = characters[self.character].images[portrait_image]:getDimensions()
 
   -- Draw the portrait (with fade and inversion if needed)
-  if self.do_countdown == false then
-    self.portraitFade = 0.3
-  else
+  if self.do_countdown then
+    -- self.portraitFade starts at 0 (no fade)
     if self.countdown_CLOCK then
-      if self.countdown_CLOCK > 50 and self.countdown_CLOCK < 80 then
-        self.portraitFade = ((config.portrait_darkness / 100) / 79) * self.countdown_CLOCK
+      local desiredFade = config.portrait_darkness / 100
+      local startFrame = 50
+      local fadeDuration = 30
+      if self.countdown_CLOCK > 50 and self.countdown_CLOCK <= startFrame + fadeDuration then
+        local percent = (self.countdown_CLOCK - startFrame) / fadeDuration
+        self.portraitFade = desiredFade * percent
       end
-    elseif self.CLOCK > 200 then
-      self.portraitFade = config.portrait_darkness / 100
     end
   end
   if self.which == 1 or portrait_image == "portrait2" then
@@ -995,17 +996,14 @@ function Stack.render_countdown(self)
     local ready_x = 16
     local initial_ready_y = 4
     local ready_y_drop_speed = 6
+    local ready_y = initial_ready_y + (math.min(8, self.countdown_CLOCK) - 1) * ready_y_drop_speed
     local countdown_x = 44
     local countdown_y = 68
     if self.countdown_CLOCK <= 8 then
-      local ready_y = initial_ready_y + (self.CLOCK - 1) * ready_y_drop_speed
       draw(themes[config.theme].images.IMG_ready, ready_x, ready_y)
-      if self.countdown_CLOCK == 8 then
-        self.ready_y = ready_y
-      end
     elseif self.countdown_CLOCK >= 9 and self.countdown_timer and self.countdown_timer > 0 then
       if self.countdown_timer >= 100 then
-        draw(themes[config.theme].images.IMG_ready, ready_x, self.ready_y or initial_ready_y + 8 * 6)
+        draw(themes[config.theme].images.IMG_ready, ready_x, ready_y)
       end
       local IMG_number_to_draw = themes[config.theme].images.IMG_numbers[math.ceil(self.countdown_timer / 60)]
       if IMG_number_to_draw then

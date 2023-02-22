@@ -469,7 +469,6 @@ function Stack.rollbackCopy(source, other)
   other.shake_time = source.shake_time
   other.peak_shake_time = source.peak_shake_time
   other.do_countdown = source.do_countdown
-  other.ready_y = source.ready_y  
   other.panel_buffer = source.panel_buffer
   other.gpanel_buffer = source.gpanel_buffer
   other.panelGenCount = source.panelGenCount
@@ -2120,7 +2119,7 @@ function Stack:runCountDownIfNeeded()
     if self.countdown_timer then
       if self.countdown_timer == 0 then
         --we are done counting down
-        self.do_countdown = nil
+        self.do_countdown = false
         self.countdown_timer = nil
         self.starting_cur_row = nil
         self.starting_cur_col = nil
@@ -2142,8 +2141,6 @@ function Stack:runCountDownIfNeeded()
     if self.countdown_CLOCK then
       self.countdown_CLOCK = self.countdown_CLOCK + 1
     end
-  else 
-    self.game_stopwatch_running = true
   end
 end
 
