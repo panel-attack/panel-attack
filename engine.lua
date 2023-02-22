@@ -1316,69 +1316,8 @@ function Stack.simulate(self)
     local panels = self.panels
     local panel = nil
     local swapped_this_frame = nil
-    if self.do_countdown then
-      self.game_stopwatch_running = false
-      self.rise_lock = true
-      if not self.countdown_cursor_state then
-        self.countdown_CLOCK = self.CLOCK
-        self.starting_cur_row = self.cur_row
-        self.starting_cur_col = self.cur_col
-        self.cur_row = self.height
-        self.cur_col = self.width - 1
-        if self.inputMethod == "touch" then
-          self.cur_col = self.width
-        end
-        self.countdown_cursor_state = "ready_falling"
-        self.countdown_cur_speed = 4 --one move every this many frames
-        self.cursorLock = true
-      end
-      if self.countdown_CLOCK == 8 then
-        self.countdown_cursor_state = "moving_down"
-        self.countdown_timer = 180 --3 seconds at 60 fps
-      elseif self.countdown_cursor_state == "moving_down" then
-        --move down
-        if self.cur_row == self.starting_cur_row then
-          self.countdown_cursor_state = "moving_left"
-        elseif self.CLOCK % self.countdown_cur_speed == 0 then
-          self.cur_row = self.cur_row - 1
-        end
-      elseif self.countdown_cursor_state == "moving_left" then
-        --move left
-        if self.cur_col == self.starting_cur_col then
-          self.countdown_cursor_state = "ready"
-        elseif self.CLOCK % self.countdown_cur_speed == 0 then
-          self.cur_col = self.cur_col - 1
-        end
-      end
-      if self.countdown_timer then
-        if self.countdown_timer == 0 then
-          --we are done counting down
-          self.cursorLock = false
-          self.do_countdown = nil
-          self.countdown_timer = nil
-          self.starting_cur_row = nil
-          self.starting_cur_col = nil
-          self.countdown_CLOCK = nil
-          self.game_stopwatch_running = true
-          if self.which == 1 and self:shouldChangeSoundEffects() then
-            SFX_Go_Play = 1
-          end
-        elseif self.countdown_timer and self.countdown_timer % 60 == 0 and self.which == 1 then
-          --play beep for timer dropping to next second in 3-2-1 countdown
-          if self.which == 1 and self:shouldChangeSoundEffects() then
-            SFX_Countdown_Play = 1
-          end
-        end
-        if self.countdown_timer then
-          self.countdown_timer = self.countdown_timer - 1
-        end
-      end
-      if self.countdown_CLOCK then
-        self.countdown_CLOCK = self.countdown_CLOCK + 1
-      end
-    else 
-      self.game_stopwatch_running = true
-    end
+
+    self:runCountDownIfNeeded()
 
     if self.pre_stop_time ~= 0 then
       self.pre_stop_time = self.pre_stop_time - 1
@@ -2145,6 +2084,72 @@ function Stack.simulate(self)
 
   self:update_popfxs()
   self:update_cards()
+end
+
+function Stack:runCountDownIfNeeded()
+  if self.do_countdown then
+    self.game_stopwatch_running = false
+    self.rise_lock = true
+    if not self.countdown_cursor_state then
+      self.countdown_CLOCK = self.CLOCK
+      self.starting_cur_row = self.cur_row
+      self.starting_cur_col = self.cur_col
+      self.cur_row = self.height
+      self.cur_col = self.width - 1
+      if self.inputMethod == "touch" then
+        self.cur_col = self.width
+      end
+      self.countdown_cursor_state = "ready_falling"
+      self.countdown_cur_speed = 4 --one move every this many frames
+      self.cursorLock = true
+    end
+    if self.countdown_CLOCK == 8 then
+      self.countdown_cursor_state = "moving_down"
+      self.countdown_timer = 180 --3 seconds at 60 fps
+    elseif self.countdown_cursor_state == "moving_down" then
+      --move down
+      if self.cur_row == self.starting_cur_row then
+        self.countdown_cursor_state = "moving_left"
+      elseif self.CLOCK % self.countdown_cur_speed == 0 then
+        self.cur_row = self.cur_row - 1
+      end
+    elseif self.countdown_cursor_state == "moving_left" then
+      --move left
+      if self.cur_col == self.starting_cur_col then
+        self.countdown_cursor_state = "ready"
+      elseif self.CLOCK % self.countdown_cur_speed == 0 then
+        self.cur_col = self.cur_col - 1
+      end
+    end
+    if self.countdown_timer then
+      if self.countdown_timer == 0 then
+        --we are done counting down
+        self.cursorLock = false
+        self.do_countdown = nil
+        self.countdown_timer = nil
+        self.starting_cur_row = nil
+        self.starting_cur_col = nil
+        self.countdown_CLOCK = nil
+        self.game_stopwatch_running = true
+        if self.which == 1 and self:shouldChangeSoundEffects() then
+          SFX_Go_Play = 1
+        end
+      elseif self.countdown_timer and self.countdown_timer % 60 == 0 and self.which == 1 then
+        --play beep for timer dropping to next second in 3-2-1 countdown
+        if self.which == 1 and self:shouldChangeSoundEffects() then
+          SFX_Countdown_Play = 1
+        end
+      end
+      if self.countdown_timer then
+        self.countdown_timer = self.countdown_timer - 1
+      end
+    end
+    if self.countdown_CLOCK then
+      self.countdown_CLOCK = self.countdown_CLOCK + 1
+    end
+  else 
+    self.game_stopwatch_running = true
+  end
 end
 
 -- Called on a stack by the attacker with the time to start processing the garbage drop
