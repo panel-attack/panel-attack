@@ -132,6 +132,11 @@ local function pickUseMusicFrom()
   end
 end
 
+function GameBase:initializeFrameInfo()
+  self.frameInfo.startTime = nil
+  self.frameInfo.frameCount = -1
+end
+
 function GameBase:load(sceneParams)
   leftover_time = 1 / 120
   self.shouldAbortGame = false
@@ -140,8 +145,7 @@ function GameBase:load(sceneParams)
   self:customLoad(sceneParams)
   replay = createNewReplay(GAME.match)
   
-  self.frameInfo.startTime = nil
-  self.frameInfo.frameCount = -1
+  self:initializeFrameInfo()
 end
 
 function GameBase:drawForeground()
@@ -163,6 +167,9 @@ end
 
 function GameBase:handlePause()
   if GAME.match.supportsPause and (input.isDown["Start"] or (not GAME.focused and not GAME.gameIsPaused)) then
+    if GAME.gameIsPaused then
+      self:initializeFrameInfo()
+    end
     GAME.gameIsPaused = not GAME.gameIsPaused
     print(dump(self.frameInfo))
 
