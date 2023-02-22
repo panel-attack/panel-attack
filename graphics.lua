@@ -287,7 +287,9 @@ function Stack.render(self)
       local desiredFade = config.portrait_darkness / 100
       local startFrame = 50
       local fadeDuration = 30
-      if self.countdown_CLOCK > 50 and self.countdown_CLOCK <= startFrame + fadeDuration then
+      if self.countdown_CLOCK <= 50 then
+        self.portraitFade = 0
+      elseif self.countdown_CLOCK > 50 and self.countdown_CLOCK <= startFrame + fadeDuration then
         local percent = (self.countdown_CLOCK - startFrame) / fadeDuration
         self.portraitFade = desiredFade * percent
       end

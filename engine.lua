@@ -15,6 +15,7 @@ local max = math.max
 local garbage_bounce_time = #garbage_bounce_table
 
 local DT_SPEED_INCREASE = 15 * 60 -- frames it takes to increase the speed level by 1
+local COUNTDOWN_CURSOR_SPEED = 4 --one move every this many frames
 
 -- Represents the full panel stack for one player
 Stack =
@@ -40,7 +41,7 @@ Stack =
     s.character = character
     s.max_health = 1
     s.panels_dir = panels_dir
-    s.portraitFade = 0
+    s.portraitFade = config.portrait_darkness / 100 -- will be set back to 0 if count down happens
     s.is_local = is_local
 
     s.drawsAnalytics = true
@@ -131,7 +132,7 @@ Stack =
 
     s.CLOCK = 0
     s.game_stopwatch = 0
-    s.game_stopwatch_running = false
+    s.game_stopwatch_running = true -- set to false if countdown starts
     s.do_countdown = true
     s.max_runs_per_frame = 3
 
@@ -436,10 +437,6 @@ function Stack.rollbackCopy(source, other)
   end
 
   other.countdown_CLOCK = source.countdown_CLOCK
-  other.starting_cur_row = source.starting_cur_row
-  other.starting_cur_col = source.starting_cur_col
-  other.countdown_cursor_state = source.countdown_cursor_state
-  other.countdown_cur_speed = source.countdown_cur_speed
   other.countdown_timer = source.countdown_timer
   other.CLOCK = source.CLOCK
   other.game_stopwatch = source.game_stopwatch
@@ -1703,8 +1700,7 @@ function Stack.simulate(self)
       if self.cur_dir and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) then
         local prev_row = self.cur_row
         local prev_col = self.cur_col
-        self.cur_row = bound(1, self.cur_row + d_row[self.cur_dir], self.top_cur_row)
-        self.cur_col = bound(1, self.cur_col + d_col[self.cur_dir], self.width - 1)
+        self:moveCursorInDirection(self.cur_dir)
         if (playMoveSounds and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and (self.cur_row ~= prev_row or self.cur_col ~= prev_col)) then
           if self:shouldChangeSoundEffects() then
             SFX_Cur_Move_Play = 1
@@ -2086,43 +2082,32 @@ function Stack:runCountDownIfNeeded()
   if self.do_countdown then
     self.game_stopwatch_running = false
     self.rise_lock = true
-    if not self.countdown_cursor_state then
+    if not self.countdown_CLOCK then
       self.countdown_CLOCK = self.CLOCK
-      self.starting_cur_row = self.cur_row
-      self.starting_cur_col = self.cur_col
       self.cur_row = self.height
       self.cur_col = self.width - 1
       if self.inputMethod == "touch" then
         self.cur_col = self.width
       end
-      self.countdown_cursor_state = "ready_falling"
-      self.countdown_cur_speed = 4 --one move every this many frames
     end
+    local COUNTDOWN_LENGTH = 180 --3 seconds at 60 fps
     if self.countdown_CLOCK == 8 then
-      self.countdown_cursor_state = "moving_down"
-      self.countdown_timer = 180 --3 seconds at 60 fps
-    elseif self.countdown_cursor_state == "moving_down" then
-      --move down
-      if self.cur_row == self.starting_cur_row then
-        self.countdown_cursor_state = "moving_left"
-      elseif self.CLOCK % self.countdown_cur_speed == 0 then
-        self.cur_row = self.cur_row - 1
-      end
-    elseif self.countdown_cursor_state == "moving_left" then
-      --move left
-      if self.cur_col == self.starting_cur_col then
-        self.countdown_cursor_state = "ready"
-      elseif self.CLOCK % self.countdown_cur_speed == 0 then
-        self.cur_col = self.cur_col - 1
-      end
+      self.countdown_timer = COUNTDOWN_LENGTH
     end
     if self.countdown_timer then
+      local countDownFrame = COUNTDOWN_LENGTH - self.countdown_timer
+      if countDownFrame > 0 and countDownFrame % COUNTDOWN_CURSOR_SPEED == 0 then
+        local moveIndex = math.floor(countDownFrame / COUNTDOWN_CURSOR_SPEED)
+        if moveIndex <= 4 then
+          self:moveCursorInDirection("down")
+        elseif moveIndex <= 6 then
+          self:moveCursorInDirection("left")
+        end
+      end
       if self.countdown_timer == 0 then
         --we are done counting down
         self.do_countdown = false
         self.countdown_timer = nil
-        self.starting_cur_row = nil
-        self.starting_cur_col = nil
         self.countdown_CLOCK = nil
         self.game_stopwatch_running = true
         if self.which == 1 and self:shouldChangeSoundEffects() then
@@ -2142,6 +2127,12 @@ function Stack:runCountDownIfNeeded()
       self.countdown_CLOCK = self.countdown_CLOCK + 1
     end
   end
+end
+
+function Stack:moveCursorInDirection(directionString)
+  assert(directionString ~= nil and type(directionString) == "string")
+  self.cur_row = bound(1, self.cur_row + d_row[directionString], self.top_cur_row)
+  self.cur_col = bound(1, self.cur_col + d_col[directionString], self.width - 1)
 end
 
 -- Called on a stack by the attacker with the time to start processing the garbage drop
