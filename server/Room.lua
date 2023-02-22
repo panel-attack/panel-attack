@@ -367,7 +367,7 @@ function Room.rating_adjustment_approved(self)
     reasons[#reasons + 1] = "Levels don't match"
   end
   if players[1].inputMethod == "touch" or players[2].inputMethod == "touch" then
-    reasons[#reasons + 1] = "Touch input it not currently allowed in ranked matches"
+    reasons[#reasons + 1] = "Touch input is not currently allowed in ranked matches."
   end
   for player_number = 1, 2 do
     if not playerbase.players[players[player_number].user_id] or not players[player_number].logged_in or playerbase.deleted_players[players[player_number].user_id] then
