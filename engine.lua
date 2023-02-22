@@ -1019,16 +1019,30 @@ function Stack.controls(self)
   if self.inputMethod == "touch" then
     local cursorColumn, cursorRow
     raise, cursorRow, cursorColumn = TouchDataEncoding.latinStringToTouchData(sdata, self.width)
-    if self.cur_col ~= cursorColumn or self.cur_row ~= cursorRow or (cursorColumn == 0 and cursorRow == 0) then
-      -- We moved the cursor from a previous column, try to swap
-      if self.cur_col ~= 0 and self.cur_row ~= 0 and cursorColumn ~= self.cur_col and cursorRow ~= 0 then
-        local swapColumn = math.min(self.cur_col, cursorColumn)
-        if self:canSwap(cursorRow, swapColumn) then
-          self:setQueuedSwapPosition(swapColumn, cursorRow)
-        end
+    local canSetCursor = true
+    if self.do_countdown then      
+      if self.animatingCursorDuringCountdown then
+        canSetCursor = false
       end
-      self.cur_col = cursorColumn
-      self.cur_row = cursorRow
+    end
+
+    if canSetCursor then
+      if self.cur_col ~= cursorColumn or self.cur_row ~= cursorRow or (cursorColumn == 0 and cursorRow == 0) then
+        -- We moved the cursor from a previous column, try to swap
+        if self.cur_col ~= 0 and self.cur_row ~= 0 and cursorColumn ~= self.cur_col and cursorRow ~= 0 then
+          local swapColumn = math.min(self.cur_col, cursorColumn)
+          if self:canSwap(cursorRow, swapColumn) then
+            self:setQueuedSwapPosition(swapColumn, cursorRow)
+          end
+        end
+        self.cur_col = cursorColumn
+        self.cur_row = cursorRow
+      end
+    end
+
+    -- Make sure we don't set the cursor higher than the top allowed row
+    if self.cur_row > 0 and self.cur_row > self.top_cur_row then
+      self.cur_row = self.top_cur_row
     end
   else --input method is controller
     local swap, up, down, left, right
@@ -2084,6 +2098,7 @@ function Stack:runCountDownIfNeeded()
     self.rise_lock = true
     if not self.countdown_CLOCK then
       self.countdown_CLOCK = self.CLOCK
+      self.animatingCursorDuringCountdown = true
       self.cur_row = self.height
       self.cur_col = self.width - 1
       if self.inputMethod == "touch" then
@@ -2102,6 +2117,12 @@ function Stack:runCountDownIfNeeded()
           self:moveCursorInDirection("down")
         elseif moveIndex <= 6 then
           self:moveCursorInDirection("left")
+        elseif moveIndex == 10 then
+          self.animatingCursorDuringCountdown = false
+          if self.inputMethod == "touch" then
+            self.cur_row = 0
+            self.cur_col = 0
+          end
         end
       end
       if self.countdown_timer == 0 then
@@ -2109,6 +2130,7 @@ function Stack:runCountDownIfNeeded()
         self.do_countdown = false
         self.countdown_timer = nil
         self.countdown_CLOCK = nil
+        self.animatingCursorDuringCountdown = nil
         self.game_stopwatch_running = true
         if self.which == 1 and self:shouldChangeSoundEffects() then
           SFX_Go_Play = 1
