@@ -333,7 +333,7 @@ function Stack:deinit()
   GraphicsUtil:releaseQuad(self.multi_prestopQuad)
   GraphicsUtil:releaseQuad(self.multi_stopQuad)
   GraphicsUtil:releaseQuad(self.multi_shakeQuad)
-  for _, quad in ipairs(self.cursorQuad) do
+  for _, quad in ipairs(self.cursorQuads) do
     GraphicsUtil:releaseQuad(quad)
   end
 end
