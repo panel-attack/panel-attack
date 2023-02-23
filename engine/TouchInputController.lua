@@ -33,11 +33,7 @@ function TouchInputController:encodedCharacterForCurrentTouchInput()
     --check whether the mouse is over this stack
     if self:isMouseOverStack(mouseX, mouseY) then
       self.touchingStack = true
-      local tempRowTouched, tempColumnTouched = self:touchedPanelCoordinate(mouseX, mouseY)
-      if tempRowTouched ~= nil then
-        rowTouched = tempRowTouched
-        columnTouched = tempColumnTouched
-      end
+      rowTouched, columnTouched = self:touchedPanelCoordinate(mouseX, mouseY)
     elseif self.touchingStack then --we have touched the stack, and have moved the touch off the edge, without releasing
       --let's say we are still touching the panel we had touched last.
       rowTouched = self.touchedPanel.row
@@ -84,8 +80,6 @@ end
 function TouchInputController:touchedPanelCoordinate(mouseX, mouseY)
   local stackHeight = self.stack.height
   local stackWidth = self.stack.width
-  -- for row = 0, self.stack.height do
-  --   for column = 1, self.stack.width do
   local stackLeft = (self.stack.pos_x * GFX_SCALE)
   local stackTop = (self.stack.pos_y * GFX_SCALE)
   local panelSize = 16 * GFX_SCALE
@@ -93,16 +87,16 @@ function TouchInputController:touchedPanelCoordinate(mouseX, mouseY)
   local stackBottom = stackTop + stackHeight * panelSize
 
   if mouseX < stackLeft then
-    return nil, nil
+    return 0, 0
   end
   if mouseY < stackTop then
-    return nil, nil
+    return 0, 0
   end
   if mouseX >= stackRight then
-    return nil, nil
+    return 0, 0
   end
   if mouseY >= stackBottom then
-    return nil, nil
+    return 0, 0
   end
 
   local displacement =  self.stack.displacement * GFX_SCALE
