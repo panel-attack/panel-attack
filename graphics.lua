@@ -978,7 +978,9 @@ function Stack.render_cursor(self)
   local cursorImage = themes[config.theme].images.IMG_cursor[(floor(self.CLOCK / 16) % 2) + 1]
   local shake_idx = #shake_arr - self.shake_time
   local shake = ceil((shake_arr[shake_idx] or 0) * 13)
-  local scale_x = 40 / cursorImage:getWidth()
+  local desiredCursorWidth = 40
+  local panelWidth = 16
+  local scale_x = desiredCursorWidth / cursorImage:getWidth()
   local scale_y = 24 / cursorImage:getHeight()
 
   local renderCursor = true
@@ -988,7 +990,11 @@ function Stack.render_cursor(self)
     end
   end
   if renderCursor then
-    qdraw(cursorImage, self.cursorQuad, (self.cur_col - 1) * 16, (11 - (self.cur_row)) * 16 + self.displacement - shake, 0, scale_x, scale_y)
+    local xPosition = (self.cur_col - 1) * panelWidth
+    qdraw(cursorImage, self.cursorQuads[1], xPosition, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
+    if self.inputMethod == "touch" then
+      qdraw(cursorImage, self.cursorQuads[2], xPosition + 12, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
+    end
   end
 end
 
