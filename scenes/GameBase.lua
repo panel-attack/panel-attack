@@ -134,7 +134,7 @@ end
 
 function GameBase:initializeFrameInfo()
   self.frameInfo.startTime = nil
-  self.frameInfo.frameCount = -1
+  self.frameInfo.frameCount = 0
 end
 
 function GameBase:load(sceneParams)
@@ -171,7 +171,6 @@ function GameBase:handlePause()
       self:initializeFrameInfo()
     end
     GAME.gameIsPaused = not GAME.gameIsPaused
-    print(dump(self.frameInfo))
 
     setMusicPaused(GAME.gameIsPaused)
 
@@ -285,15 +284,18 @@ function GameBase:runGame(dt)
     self.frameInfo.startTime = love.timer.getTime()
   end
   
-  local numRepeats = 0
+  local framesRun = 0
   self.frameInfo.currentTime = love.timer.getTime()
+  self.frameInfo.expectedFrameCount = math.ceil((self.frameInfo.currentTime - self.frameInfo.startTime) * 60)
   repeat 
     self.frameInfo.frameCount = self.frameInfo.frameCount + 1
-    self.frameInfo.expectedFrameCount = math.ceil((self.frameInfo.currentTime - self.frameInfo.startTime) * 60)
-    numRepeats = numRepeats + 1
+    framesRun = framesRun + 1
     GAME.match:run()
     self:customRun()
   until (self.frameInfo.frameCount >= self.frameInfo.expectedFrameCount)
+  if framesRun > 1 then
+    GAME.droppedFrames = GAME.droppedFrames + framesRun - 1
+  end
   
   if not ((GAME.match.P1 and GAME.match.P1.play_to_end) or (GAME.match.P2 and GAME.match.P2.play_to_end)) then
     self:handlePause()

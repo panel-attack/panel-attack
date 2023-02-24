@@ -283,7 +283,7 @@ function Match.render(self)
   local P1 = self.P1
   local P2 = self.P2
   
-  if GAME.droppedFrames > 10 and config.show_fps then
+  if GAME.droppedFrames > 0 and config.show_fps then
     gprint("Dropped Frames: " .. GAME.droppedFrames, 1, 12)
   end
 
