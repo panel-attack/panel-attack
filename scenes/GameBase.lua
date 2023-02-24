@@ -166,7 +166,7 @@ function GameBase:drawBackground()
 end
 
 function GameBase:handlePause()
-  if GAME.match.supportsPause and (input.isDown["Start"] or (not GAME.focused and not GAME.gameIsPaused)) then
+  if GAME.match.supportsPause and (input.isDown["MenuSelect"] or (not GAME.focused and not GAME.gameIsPaused)) then
     if GAME.gameIsPaused then
       self:initializeFrameInfo()
     end
