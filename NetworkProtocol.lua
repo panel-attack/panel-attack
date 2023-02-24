@@ -34,6 +34,16 @@ for _, value in pairs(NetworkProtocol.serverMessageTypes) do
 end
 
 -- Creates a UTF8 message string with the type at the beginning and the end marker at the end
+function NetworkProtocol.isMessageTypeVerbose(type)
+  if type == NetworkProtocol.serverMessageTypes.ping.prefix or 
+    type == NetworkProtocol.serverMessageTypes.opponentInput.prefix or 
+    type == NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix then
+    return true
+  end
+  return false
+end
+
+-- Creates a UTF8 message string with the type at the beginning and the end marker at the end
 function NetworkProtocol.markedMessageForTypeAndBody(type, body)
   return type .. body .. messageEndMarker
 end

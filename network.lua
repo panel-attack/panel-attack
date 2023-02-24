@@ -57,7 +57,7 @@ function net_send(stringData)
   if not STONER_MODE then
     local fullMessageSent, error, partialBytesSent = TCP_sock:send(stringData)
     if fullMessageSent then
-      logger.trace("json bytes sent in one go: " .. tostring(fullMessageSent))
+      --logger.trace("json bytes sent in one go: " .. tostring(fullMessageSent))
     else
       logger.error("Error sending network message: " .. (error or "") .. " only sent " .. (partialBytesSent or "0") .. "bytes")
     end
@@ -84,6 +84,7 @@ end
 -- Send a json message with the "J" type
 function json_send(obj)
   local json = json.encode(obj)
+  logger.debug("Sending JSON: " .. json)
   local message = NetworkProtocol.markedMessageForTypeAndBody(NetworkProtocol.clientMessageTypes.jsonMessage.prefix, json)
   return net_send(message)
 end
@@ -225,7 +226,7 @@ function send_error_report(errorData)
 end
 
 function connection_is_ready()
-  return got_H and #this_frame_messages > 0
+  return got_H
 end
 
 -- Processes messages that came in from the server

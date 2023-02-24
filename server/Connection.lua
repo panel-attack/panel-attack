@@ -84,8 +84,8 @@ function Connection.login(self, user_id)
   end
 
   if self.logged_in then
-    self:send(self.server:lobby_state())
     leaderboard:update_timestamp(user_id)
+    self.server:setLobbyChanged()
   end
 
   return self.logged_in
@@ -101,9 +101,14 @@ function Connection.send(self, stuff)
   if type(stuff) == "table" then
     local json = json.encode(stuff)
     stuff = NetworkProtocol.markedMessageForTypeAndBody(NetworkProtocol.serverMessageTypes.jsonMessage.prefix, json)
-    logger.debug("Sending JSON: " .. stuff)
+    logger.debug("Connection " .. self.index .. " Sending JSON: " .. stuff)
   else
-    logger.debug("sending non-json " .. stuff)
+    if type(stuff) == "string" then
+      local type = stuff[1]
+      if NetworkProtocol.isMessageTypeVerbose(type) == false then
+        logger.debug("Connection " .. self.index .. " sending " .. stuff)
+      end
+    end
   end
   local retry_count = 0
   local times_to_retry = 5
@@ -251,14 +256,10 @@ function Connection.J(self, message)
       self.inputMethod = (message.inputMethod or "controller")
       self.save_replays_publicly = message.save_replays_publicly
       self.wants_ranked_match = message.ranked
-      self.server:setLobbyChanged()
       self.state = "lobby"
       self.server.name_to_idx[self.name] = self.index
+      -- Don't update lobby yet, we will do that when they are logged in
     end
-  elseif message.taunt then
-    message.player_number = self.player_number
-    self.opponent:send(message)
-    self.room:send_to_spectators(message)
   elseif message.login_request then
     self:login(message.user_id)
   elseif message.logout then
@@ -344,6 +345,10 @@ function Connection.J(self, message)
       logger.debug("about to send match start to spectators of " .. (self.name or "nil") .. " and " .. (self.opponent.name or "nil"))
       self.room:send_to_spectators(message) -- TODO: may need to include in the message who is sending the message
     end
+  elseif self.state == "playing" and message.taunt then
+    message.player_number = self.player_number
+    self.opponent:send(message)
+    self.room:send_to_spectators(message)
   elseif self.state == "playing" and message.game_over then
     self.room.game_outcome_reports[self.player_number] = message.outcome
     if self.room:resolve_game_outcome(self.server.database) then
@@ -393,6 +398,9 @@ function Connection.data_received(self, data)
 end
 
 function Connection:processMessage(messageType, data)
+  if messageType ~= NetworkProtocol.clientMessageTypes.acknowledgedPing.prefix then
+    logger.trace(self.index .. "- processing message:" .. messageType .. " data: " .. data)
+  end
   local status, error = pcall(
       function()
         self[messageType](self, data)

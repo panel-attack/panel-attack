@@ -125,7 +125,7 @@ end
 
 -- a and be are connection objects
 function Server:create_room(a, b)
-  lobby_changed = true
+  self:setLobbyChanged()
   self:clear_proposals(a.name)
   self:clear_proposals(b.name)
   local new_room = Room(a, b, roomNumberIndex, leaderboard)
@@ -201,7 +201,7 @@ function Server:start_match(a, b)
   a.room:send_to_spectators(msg)
   msg.player_settings, msg.opponent_settings = msg.opponent_settings, msg.player_settings
   b:send(msg)
-  lobby_changed = true
+  self:setLobbyChanged()
   a:setup_game()
   b:setup_game()
   if not a.room then
@@ -278,11 +278,13 @@ end
 
 function Server:addSpectator(room, connection)
   room:add_spectator(connection)
-  lobby_changed = true
+  self:setLobbyChanged()
 end
 
 function Server:removeSpectator(room, connection)
-  lobby_changed = room:remove_spectator(connection)
+  if room:remove_spectator(connection) then
+    self:setLobbyChanged()
+  end
 end
 
 
