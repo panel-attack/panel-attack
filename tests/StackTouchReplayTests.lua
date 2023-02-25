@@ -2,7 +2,9 @@ require("table_util")
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local testReplayFolder = "tests/replays/"
 
--- Tests the following use cases
+-- Tests a replay doing the following use cases
+-- Note this doesn't test the TouchInputController currently because it just executes the already encoded inputs.
+
 -- Touch and drag to swap, then release
 -- Expected:
 -- Cursor appears, Panels dragged swap, cursor is removed

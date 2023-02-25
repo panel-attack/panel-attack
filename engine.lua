@@ -2357,6 +2357,7 @@ function Stack.pick_win_sfx(self)
   end
 end
 
+-- returns true if the panel in row/column can be swapped with the panel to its right (column + 1)
 function Stack.canSwap(self, row, column)
   local panels = self.panels
   -- in order for a swap to occur, one of the two panels in

@@ -70,7 +70,7 @@ config = {
     display                       = 1,
     windowX                       = nil,
     windowY                       = nil,
-    --inputMethod                 = "touch"
+    -- inputMethod                 = "touch"
   }
   
   -- writes to the "conf.json" file
