@@ -34,14 +34,23 @@ function CustomRun.sleep()
   local currentTime = originalTime
 
   local idleTime = targetTime - currentTime
-  -- Spend as much time as necessary collecting garbage, but at least 0.1ms
-  manualGc(math.max(0.0001, idleTime * 0.99))
-  currentTime = love.timer.getTime()
-  CustomRun.runMetrics.gcDuration = currentTime - originalTime
-  originalTime = currentTime
-  idleTime = targetTime - currentTime
+  -- actively collecting garbage is very CPU intensive
+  -- only do it if the game has uncharacteristally high memory 
+  if collectgarbage("count") / 1024 > 20 or
+  -- or while a match is on-going
+    (GAME and GAME.match and not GAME.gameIsPaused and GAME.focused) then
+    -- Spend as much time as necessary collecting garbage, but at least 0.1ms
+    -- manualGc itself has a ceiling at which it will stop
+    manualGc(math.max(0.0001, idleTime * 0.99))
+    currentTime = love.timer.getTime()
+    CustomRun.runMetrics.gcDuration = currentTime - originalTime
+    originalTime = currentTime
+    idleTime = targetTime - currentTime
+  else
+    CustomRun.runMetrics.gcDuration = 0
+  end
 
-  -- Sleep any remaining amount of time to fill up the frametime
+  -- Sleep any remaining amount of time to fill up the frametime to 1/60 of a second
   -- On most machines GC will have reduced the remaining idle time to near nothing
   -- But strong machines may exit garbage collection early and need to sleep the remaining time
   if idleTime > 0 then
