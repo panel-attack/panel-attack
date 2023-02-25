@@ -60,7 +60,6 @@ function GameBase:finalizeAndWriteReplay(extraPath, extraFilename)
     filename = filename .. "-" .. extraFilename
   end
   filename = filename .. ".txt"
-  save.write_replay_file()
   logger.info("saving replay as " .. path .. sep .. filename)
   save.write_replay_file(path, filename)
 end

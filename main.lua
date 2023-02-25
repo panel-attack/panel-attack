@@ -21,7 +21,7 @@ require("stage") -- after globals!
 
 require("localization")
 require("queue")
-require("save")
+local save = require("save")
 local Game = require("Game")
 -- move to load once global dependencies have been resolved
 GAME = Game()

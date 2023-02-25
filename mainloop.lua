@@ -5,6 +5,7 @@ local options = require("options")
 local utf8 = require("utf8")
 local analytics = require("analytics")
 local main_config_input = require("config_inputs")
+local save = require("save")
 local tableUtils = require("tableUtils")
 local Game = require("Game")
 local util = require("util")
@@ -349,7 +350,7 @@ local function finalizeAndWriteReplay(extraPath, extraFilename)
   end
   filename = filename .. ".txt"
   logger.debug("saving replay as " .. path .. sep .. filename)
-  write_replay_file(path, filename)
+  save.write_replay_file(path, filename)
 end
 
 local function finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGame)

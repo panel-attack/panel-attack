@@ -70,7 +70,7 @@ function save.read_txt_file(path_and_filename)
 end
 
 -- writes a replay file of the given path and filename
-function write_replay_file(path, filename)
+function save.write_replay_file(path, filename)
   assert(path ~= nil)
   assert(filename ~= nil)
   pcall(
