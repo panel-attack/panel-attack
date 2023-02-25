@@ -1,4 +1,5 @@
 local logger = require("logger")
+local manualGc = require("libraries.batteries.manual_gc")
 
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =
@@ -32,8 +33,13 @@ Match =
       nil,
       true)
     end
+    self:init()
   end
 )
+
+function Match:init()
+  collectgarbage("stop")
+end
 
 -- Should be called prior to clearing the match.
 -- Consider recycling any memory that might leave around a lot of garbage.
@@ -47,6 +53,7 @@ function Match:deinit()
     self.P2:deinit()
     self.P2 = nil
   end
+  collectgarbage("restart")
 end
 
 function Match:gameEndedClockTime()
