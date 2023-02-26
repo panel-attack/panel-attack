@@ -2646,7 +2646,7 @@ function Stack.check_matches(self)
       if metal_count >= 3 then
         -- Give a shock garbage for every shock block after 2
         for i = 3, metal_count do
-          self.telegraph:push({6, 1, true, false}, first_panel_col, first_panel_row, self.CLOCK)
+          self.telegraph:push({width = 6, height = 1, isMetal = true, isChain = false}, first_panel_col, first_panel_row, self.CLOCK)
           self:recordComboHistory(self.CLOCK, 6, 1, true)
         end
       end
@@ -2672,13 +2672,10 @@ function Stack.check_matches(self)
         for i=1,#combo_pieces do
           -- Give out combo garbage based on the lookup table, even if we already made shock garbage,
           -- OP! Too bad its hard to get shock panels in vs. :)
-          self.telegraph:push({combo_pieces[i], 1, false, false}, first_panel_col, first_panel_row, self.CLOCK)
+          self.telegraph:push({width = combo_pieces[i], height = 1, isMetal = false, isChain = false}, first_panel_col, first_panel_row, self.CLOCK)
           self:recordComboHistory(self.CLOCK, combo_pieces[i], 1, false)
         end
       end
-      --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
-      --          first_panel_row<<4+P1StackPosY+self.displacement-9);
-      --TODO: this stuff ^
       first_panel_row = first_panel_row + 1 -- offset chain cards
     end
     if (is_chain) then
@@ -2693,7 +2690,7 @@ function Stack.check_matches(self)
     --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
     --          first_panel_row<<4+P1StackPosY+self.displacement-9);
       if self.garbage_target and self.telegraph then
-        self.telegraph:push({6, self.chain_counter - 1, false, true}, first_panel_col, first_panel_row, self.CLOCK)
+        self.telegraph:push({width = 6, height = self.chain_counter - 1, isMetal = false, isChain = true}, first_panel_col, first_panel_row, self.CLOCK)
       end
     end
     local chain_bonus = self.chain_counter
