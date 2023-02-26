@@ -92,10 +92,8 @@ function Telegraph.rollbackCopy(source, other)
     end
   end
 
-  if config.renderTelegraph then
-    other.garbage_queue = source.garbage_queue:makeCopy()
-    other.stoppers = deepcpy(source.stoppers)
-  end
+  other.garbage_queue = source.garbage_queue:makeCopy()
+  other.stoppers = deepcpy(source.stoppers)
   if config.renderAttacks then
     other.attacks = deepcpy(source.attacks)
   end
