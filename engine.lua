@@ -2272,7 +2272,7 @@ function Stack:matchMatchingPanels(matchingPanels, isChain)
 end
 
 function Stack:pushGarbage(coordinate, comboSize, isChain, metalCount)
-  if self.garbageTarget and self.telegraph then
+  if self.garbage_target and self.telegraph then
     for i = 3, metalCount do
       self.telegraph:push({width = 6, height = 1, isMetal = true, isChain = false}, coordinate.column, coordinate.row, self.CLOCK)
       self:recordComboHistory(self.CLOCK, 6, 1, true)
@@ -2875,6 +2875,7 @@ function Stack.new_row(self)
   -- therefore we need to override dimmed state in row 1
   for col = 1, self.width do
     panels[1][col].state = Panel.states.normal
+    panels[1][col].stateChanged = true
   end
 
   if string.len(self.panel_buffer) <= 10 * self.width then
