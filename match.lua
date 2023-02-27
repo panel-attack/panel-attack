@@ -487,10 +487,10 @@ function Match.render(self)
 
       if self.battleRoom then
         if P1 and P1.telegraph then
-          P1.telegraph:render()
+          P1.telegraph.graphics:render()
         end
         if P2 and P2.telegraph then
-          P2.telegraph:render()
+          P2.telegraph.graphics:render()
         end
       end
     end

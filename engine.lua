@@ -607,7 +607,7 @@ function Stack.set_garbage_target(self, new_target)
   self.garbage_target = new_target
   if self.telegraph then
     self.telegraph.owner = new_target
-    self.telegraph:updatePosition()
+    self.telegraph.graphics:updatePosition()
   end
 end
 
