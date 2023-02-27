@@ -5,33 +5,45 @@ GarbageQueue = class(function(s)
     s.combo_garbage = {Queue(),Queue(),Queue(),Queue(),Queue(),Queue()} --index here represents width, and length represents how many of that width queued
     s.metal = Queue()
   end)
-  
+
   function GarbageQueue.makeCopy(self)
     local other = GarbageQueue()
-    other.chain_garbage = deepcpy(self.chain_garbage)
-    for i=1, 6 do
-      other.combo_garbage[i] = deepcpy(self.combo_garbage[i])
+    local activeChain = self.chain_garbage:peek()
+    if activeChain then
+      -- width, height, metal, from_chain, finalized
+      other.chain_garbage:push({activeChain[1], activeChain[2], activeChain[3], activeChain[4], activeChain[5]})
+      for i = self.chain_garbage.first + 1, self.chain_garbage.last do
+        other.chain_garbage:push(self.chain_garbage[i])
+      end
     end
-    other.metal = deepcpy(self.metal)
+
+    for i = 1, 6 do
+      other.combo_garbage[i] = {}
+      for j = self.combo_garbage[i].first, self.combo_garbage[i].last do
+        other.combo_garbage[i]:push(self.combo_garbage[i][j])
+      end
+    end
+    for i = self.metal.first, self.metal.last do
+      other.metal:push(self.metal[i])
+    end
     other.ghost_chain = self.ghost_chain
     return other
   end
-  
-  function GarbageQueue.push(self, garbage)
-    if garbage then
-      for k,v in pairs(garbage) do
-        local width, height, metal, from_chain, finalized = unpack(v)
-        if width and height then
-          if metal and (GAME.battleRoom.trainingModeSettings == nil or not GAME.battleRoom.trainingModeSettings.mergeComboMetalQueue) then
-            self.metal:push(v)
-          elseif from_chain or (height > 1 and not GAME.battleRoom.trainingModeSettings) then
-            if not from_chain then
+
+  function GarbageQueue.push(self, garbageArray)
+    if garbageArray then
+      for _, garbage in pairs(garbageArray) do
+        if garbage.width and garbage.height then
+          if garbage.isMetal and (GAME.battleRoom.trainingModeSettings == nil or not GAME.battleRoom.trainingModeSettings.mergeComboMetalQueue) then
+            self.metal:push(garbage)
+          elseif garbage.isChain or (garbage.height > 1 and not GAME.battleRoom.trainingModeSettings) then
+            if not garbage.isChain then
               error("ERROR: garbage with height > 1 was not marked as 'from_chain'")
             end
-            self.chain_garbage:push(v)
+            self.chain_garbage:push(garbage)
             self.ghost_chain = nil
           else
-            self.combo_garbage[width]:push(v)
+            self.combo_garbage[garbage.width]:push(garbage)
           end
         end
       end
@@ -54,12 +66,12 @@ GarbageQueue = class(function(s)
       end
     end
     --check for any combo garbage, and return the smallest one, if any
-    for k,v in ipairs(self.combo_garbage) do
+    for _, v in ipairs(self.combo_garbage) do
       if v:peek() then
         if not just_peeking then
           return v:pop()
         end
-          --returning {width, height, is_metal, is_from_chain}
+          --returning {width = width, height = height, isMetal = is_metal, isChain = is_from_chain}
         return v:peek()
       end
     end
@@ -135,7 +147,7 @@ GarbageQueue = class(function(s)
   --returns the index of the first garbage block matching the requested type and size, or where it would go if it was in the Garbage_Queue.
     --note: the first index for our implemented Queue object is 0, not 1
     --this will return 0 for the first index.
-  function GarbageQueue.get_idx_of_garbage(self, garbage_width, garbage_height, is_metal, from_chain)
+  function GarbageQueue.get_idx_of_garbage(self, garbage)
     local copy = self:makeCopy()
     local idx = -1
     local idx_found = false
@@ -143,12 +155,12 @@ GarbageQueue = class(function(s)
     local current_block = copy:pop()
     while current_block and not idx_found do
       idx = idx + 1
-      if from_chain and current_block[4]--[[from_chain]] and current_block[2]--[[height]] >= garbage_height then
+      if garbage.isChain and current_block.isChain and current_block.height >= garbage.height then
         idx_found = true
-      elseif not from_chain and not current_block[4]--[[from_chain]] and current_block[1]--[[width]] >= garbage_width then
+      elseif not garbage.isChain and not current_block.isChain and current_block.width >= garbage.width then
         idx_found = true
       end
-      current_block = copy:pop()  
+      current_block = copy:pop()
     end
     if idx == -1 then
       idx = 0

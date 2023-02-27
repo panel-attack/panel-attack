@@ -505,7 +505,7 @@ function Stack.rollbackToFrame(self, frame)
       -- The garbage that we send this time might (rarely) not be the same
       -- as the garbage we sent before.  Wipe out the garbage we sent before...
       local targetFrame = frame + GARBAGE_DELAY_LAND_TIME
-      for k, v in pairs(self.garbage_target.later_garbage) do
+      for k, _ in pairs(self.garbage_target.later_garbage) do
         -- The time we actually affected the target was garbage delay away,
         -- so we only need to remove it if its at least that far away
         if k >= targetFrame then
@@ -1811,7 +1811,7 @@ function Stack.simulate(self)
       if to_send and to_send[1] then
         -- Right now the training attacks are put on the players telegraph, 
         -- but they really should be a seperate telegraph since the telegraph on the player's stack is for sending outgoing attacks.
-        local receiver = self.garbage_target or self 
+        local receiver = self.garbage_target or self
         receiver:receiveGarbage(self.CLOCK + GARBAGE_DELAY_LAND_TIME, to_send)
       end
     end
@@ -1860,10 +1860,10 @@ function Stack.simulate(self)
     end
 
     if self.garbage_q:len() > 0 then
-      local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
-      local drop_it = not self.panels_in_top_row and not self:has_falling_garbage() and ((from_chain and next_garbage_block_height > 1) or (self.n_active_panels == 0 and self.n_prev_active_panels == 0))
+      local garbage = self.garbage_q:peek()
+      local drop_it = not self.panels_in_top_row and not self:has_falling_garbage() and ((garbage.isChain and garbage.height > 1) or (self.n_active_panels == 0 and self.n_prev_active_panels == 0))
       if drop_it and self.garbage_q:len() > 0 then
-        if self:drop_garbage(unpack(self.garbage_q:peek())) then
+        if self:drop_garbage(garbage) then
           self.garbage_q:pop()
         end
       end
@@ -2379,7 +2379,7 @@ function Stack.remove_extra_rows(self)
 end
 
 -- drops a width x height garbage.
-function Stack.drop_garbage(self, width, height, metal)
+function Stack.drop_garbage(self, garbage)
 
   logger.debug("dropping garbage at frame "..self.CLOCK)
   local spawn_row = self.height + 1
@@ -2402,7 +2402,7 @@ function Stack.drop_garbage(self, width, height, metal)
     logger.trace(string.format("Dropping garbage on player %d - height %d  width %d  %s", self.player_number, height, width, metal and "Metal" or ""))
   end
 
-  for i = self.height + 1, spawn_row + height - 1 do
+  for i = self.height + 1, spawn_row + garbage.height - 1 do
     if not self.panels[i] then
       self.panels[i] = {}
       for j = 1, self.width do
@@ -2411,25 +2411,23 @@ function Stack.drop_garbage(self, width, height, metal)
     end
   end
 
-  local columns = self.garbageSizeDropColumnMaps[width]
-  local index = self.currentGarbageDropColumnIndexes[width]
+  local columns = self.garbageSizeDropColumnMaps[garbage.width]
+  local index = self.currentGarbageDropColumnIndexes[garbage.width]
   local spawn_col = columns[index]
-  self.currentGarbageDropColumnIndexes[width] = wrap(1, index + 1, #columns)
-  local shake_time = garbage_to_shake_time[width * height]
-  for y = spawn_row, spawn_row + height - 1 do
-    for x = spawn_col, spawn_col + width - 1 do
+  self.currentGarbageDropColumnIndexes[garbage.width] = wrap(1, index + 1, #columns)
+  local shake_time = garbage_to_shake_time[garbage.width * garbage.height]
+  for y = spawn_row, spawn_row + garbage.height - 1 do
+    for x = spawn_col, spawn_col + garbage.width - 1 do
       local panel = self.panels[y][x]
       panel.garbage = true
       panel.color = 9
-      panel.width = width
-      panel.height = height
+      panel.width = garbage.width
+      panel.height = garbage.height
       panel.y_offset = y - spawn_row
       panel.x_offset = x - spawn_col
       panel.shake_time = shake_time
       panel.state = "falling"
-      if metal then
-        panel.metal = metal
-      end
+      panel.metal = garbage.isMetal
     end
   end
 
