@@ -33,7 +33,7 @@ Stack =
     local character = arguments.character or config.character
 
     s.match = match
-    s.character = character
+    s.character = resolveCharacterSelection(character)
     s.max_health = 1
     s.panels_dir = panels_dir
     s.portraitFade = 0
@@ -2399,7 +2399,7 @@ function Stack.drop_garbage(self, garbage)
   end
 
   if self.canvas ~= nil then
-    logger.trace(string.format("Dropping garbage on player %d - height %d  width %d  %s", self.player_number, height, width, metal and "Metal" or ""))
+    logger.trace(string.format("Dropping garbage on player %d - height %d  width %d  %s", self.player_number, garbage.height, garbage.width, garbage.isMetal and "Metal" or ""))
   end
 
   for i = self.height + 1, spawn_row + garbage.height - 1 do

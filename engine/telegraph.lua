@@ -30,17 +30,20 @@ end)
 
 function Telegraph:preloadGraphics()
   if config.renderAttacks or config.renderTelegraph then
-    local character = self.sender.character
+    character_loader_load(self.sender.character)
+    character_loader_wait()
+    local telegraphImages = characters[self.sender.character].telegraph_garbage_images
+
     self.gfx = {}
     self.gfx.attack = {}
-    self.gfx.attack.image = characters[character].telegraph_garbage_images["attack"]
+    self.gfx.attack.image = telegraphImages["attack"]
     self.gfx.attack.width, self.gfx.attack.height = self.gfx.attack.image:getDimensions()
     self.gfx.attack.scale = 16 / math.max(self.gfx.attack.width, self.gfx.attack.height)
     if config.renderTelegraph then
       -- metal
       self.gfx.telegraph = {}
       self.gfx.telegraph.metal = {}
-      self.gfx.telegraph.metal.image = characters[character].telegraph_garbage_images["metal"]
+      self.gfx.telegraph.metal.image = telegraphImages["metal"]
       local metalWidth, metalHeight = self.gfx.telegraph.metal.image:getDimensions()
       self.gfx.telegraph.metal.xScale = 24 / metalWidth
       self.gfx.telegraph.metal.yScale = 16 / metalHeight
@@ -49,7 +52,7 @@ function Telegraph:preloadGraphics()
       self.gfx.telegraph.chain = {}
       for garbageHeight = 1, 14 do
         self.gfx.telegraph.chain[garbageHeight] = {}
-        self.gfx.telegraph.chain[garbageHeight].image = characters[character].telegraph_garbage_images[garbageHeight][6]
+        self.gfx.telegraph.chain[garbageHeight].image = telegraphImages[garbageHeight][6]
         local imageWidth, imageHeight = self.gfx.telegraph.chain[garbageHeight].image:getDimensions()
         self.gfx.telegraph.chain[garbageHeight].xScale = 24 / imageWidth
         self.gfx.telegraph.chain[garbageHeight].yScale = 16 / imageHeight
@@ -59,7 +62,7 @@ function Telegraph:preloadGraphics()
       self.gfx.telegraph.combo = {}
       for garbageWidth = 1, 6 do
         self.gfx.telegraph.combo[garbageWidth] = {}
-        self.gfx.telegraph.combo[garbageWidth].image = characters[character].telegraph_garbage_images[1][garbageWidth]
+        self.gfx.telegraph.combo[garbageWidth].image = telegraphImages[1][garbageWidth]
         local imageWidth, imageHeight = self.gfx.telegraph.combo[garbageWidth].image:getDimensions()
         self.gfx.telegraph.combo[garbageWidth].xScale = 24 / imageWidth
         self.gfx.telegraph.combo[garbageWidth].yScale = 16 / imageHeight
@@ -375,7 +378,7 @@ function Telegraph:render()
 end
 
 function Telegraph:renderAttacks()
-  for timeAttackInteracts, attacks_this_frame in pairs(self.attacks) do
+  for timeAttackInteracts, attacksThisFrame in pairs(self.attacks) do
     local frames_since_earned = self.sender.CLOCK - timeAttackInteracts
     if frames_since_earned <= self:attackStartFrame() then
       -- don't draw anything yet, card animation is still in progress.
@@ -383,7 +386,7 @@ function Telegraph:renderAttacks()
       -- Attack is done, remove.
       self.attacks[timeAttackInteracts] = nil
     else
-      for _, attack in ipairs(attacks_this_frame) do
+      for _, attack in ipairs(attacksThisFrame) do
         for _, garbage_block in ipairs(attack.stuff_to_send) do
           garbage_block.destination_x = self:telegraphRenderXPosition(
                                             self.garbage_queue:get_idx_of_garbage(garbage_block)) +
@@ -494,7 +497,7 @@ function Telegraph:renderTelegraph()
     -- local draw_y = self.pos_y -- already defined like this further above
     local height = math.min(self.garbage_queue.ghost_chain, 14)
     local chainGfx = self.gfx.telegraph.chain[height]
-    draw(chainGfx, draw_x, draw_y, 0, chainGfx.xScale, chainGfx.yScale)
+    draw(chainGfx.image, draw_x, draw_y, 0, chainGfx.xScale, chainGfx.yScale)
 
     -- Render a "G" for ghost
     if config.debug_mode then

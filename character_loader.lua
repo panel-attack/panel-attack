@@ -196,3 +196,22 @@ function characters_init()
     character_loader_wait()
   end
 end
+
+function resolveCharacterSelection(characterId)
+  if not characters[characterId] then
+    -- resolve via random selection
+    characterId = table.getRandomElement(characters_ids_for_current_theme)
+  end
+
+  characterId = resolveCharacterBundle(characterId)
+
+  return characterId
+end
+
+function resolveCharacterBundle(characterId)
+  while characters[characterId]:is_bundle() do
+    characterId = table.getRandomElement(characters[characterId].sub_characters)
+  end
+
+  return characterId
+end
