@@ -23,10 +23,10 @@ local function rollbackPastAttackTest()
   -- This should cause the attack to be undone
   assert(match.P2.later_garbage[523] == nil)
 
-  -- Simulate again, attack shoudld pop off again
+  -- Simulate again, attack should pop off again
   StackReplayTestingUtils:simulateMatchUntil(match, aheadTime)
 
-  assert(match.P2.later_garbage[523] ~= nil and #match.P2.later_garbage[523] == 1)
+  assert(match.P2.later_garbage[523] ~= nil and #match.P2.later_garbage[523] == 1, "attack scheduled for frame 523 not found anymore after rollback")
 
   StackReplayTestingUtils:fullySimulateMatch(match)
 
