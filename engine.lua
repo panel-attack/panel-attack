@@ -2159,10 +2159,6 @@ function Stack:checkMatches()
     self.analytic:register_destroyed_panels(#matchingPanels)
     self:updateScoreWithCombo(#matchingPanels)
 
-    -- don't check isChain for this!
-    -- needs to be outside of chaining to reproduce matches during a chain giving the same score as the chain link
-    self:updateScoreWithChain()
-
     self.manual_raise = false
 
     local isChain = table.trueForAny(matchingPanels, function(panel)
@@ -2171,6 +2167,10 @@ function Stack:checkMatches()
     if isChain then
       self:incrementChainCounter()
     end
+
+    -- don't check isChain for this!
+    -- needs to be outside of chaining to reproduce matches during a chain giving the same score as the chain link
+    self:updateScoreWithChain()
 
     local firstPanelToPop, metalCount = self:matchMatchingPanels(matchingPanels, isChain)
 
