@@ -140,7 +140,7 @@ function GarbageQueue:growChain(timeAttackInteracts, newChain)
   local result = nil
 
   if newChain then
-    result = {{width = 6, height = 1, isMetal = false, isChain = true, timeAttackInteracts = timeAttackInteracts}}
+    result = {{width = 6, height = 1, isMetal = false, isChain = true, timeAttackInteracts = timeAttackInteracts, finalized = nil}}
     self:push(result)
   else
     result = self.chain_garbage[self.chain_garbage.first]

@@ -25,7 +25,7 @@ Telegraph = class(function(self, sender, owner)
 end)
 
 function Telegraph:saveClone(toSave)
-  self.clonePool[#self.clonePool+1] = toSave
+  self.clonePool[#self.clonePool + 1] = toSave
 end
 
 function Telegraph:getRecycledInstance()
@@ -96,7 +96,13 @@ function Telegraph:addComboGarbage(garbage, timeAttackInteracts)
   logger.debug("Telegraph.add_combo_garbage " .. (garbage.width or "nil") .. " " .. (garbage.isMetal and "true" or "false"))
   local garbageToSend = {}
   if garbage.isMetal and (GAME.battleRoom.trainingModeSettings == nil or not GAME.battleRoom.trainingModeSettings.mergeComboMetalQueue) then
-    garbageToSend[#garbageToSend + 1] = {width = 6, height = 1, isMetal = true, isChain = false, timeAttackInteracts = timeAttackInteracts}
+    garbageToSend[#garbageToSend + 1] = {
+      width = 6,
+      height = 1,
+      isMetal = true,
+      isChain = false,
+      timeAttackInteracts = timeAttackInteracts
+    }
     self.stoppers.metal = timeAttackInteracts + GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME
   else
     garbageToSend[#garbageToSend + 1] = {
@@ -122,15 +128,15 @@ function Telegraph:chainingEnded(frameEnded)
   self:privateChainingEnded(frameEnded)
 end
 
-function Telegraph:privateChainingEnded(timeAttackInteracts)
+function Telegraph:privateChainingEnded(chainEndTime)
 
   self.senderCurrentlyChaining = false
   local chain = self.garbageQueue.chain_garbage[self.garbageQueue.chain_garbage.last]
-  if chain.timeAttackInteracts >= timeAttackInteracts then
+  if chain.timeAttackInteracts >= chainEndTime then
     logger.error("Finalizing a chain that ended before it was earned.")
   end
-  logger.debug("finalizing chain at " .. timeAttackInteracts)
-  chain.finalized = timeAttackInteracts
+  logger.debug("finalizing chain at " .. chainEndTime)
+  chain.finalized = chainEndTime
 end
 
 function Telegraph.growChain(self, timeAttackInteracts)
