@@ -59,8 +59,8 @@ TelegraphGraphics = class(function(self, telegraph)
 end)
 
 function TelegraphGraphics:updatePosition()
-  self.posX = self.telegraph.owner.posX - 4
-  self.posY = self.telegraph.owner.posY - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
+  self.posX = self.telegraph.owner.pos_x - 4
+  self.posY = self.telegraph.owner.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
 end
 
 function TelegraphGraphics:preloadGraphics()
@@ -121,19 +121,19 @@ function TelegraphGraphics:telegraphRenderXPosition(index)
   return result
 end
 
-function TelegraphGraphics:telegraphLoopAttackPosition(garbage_block, frames_since_earned)
+function TelegraphGraphics:telegraphLoopAttackPosition(garbage, attackAge)
 
-  local resultX, resultY = garbage_block.origin_x, garbage_block.origin_y
+  local resultX, resultY = garbage.xOrigin, garbage.yOrigin
 
-  if frames_since_earned > self.attackStartFrame + #TELEGRAPH_ATTACK_ANIMATION_SPEED then
-    frames_since_earned = self.attackStartFrame + #TELEGRAPH_ATTACK_ANIMATION_SPEED
+  if attackAge > self.attackStartFrame + #TELEGRAPH_ATTACK_ANIMATION_SPEED then
+    attackAge = self.attackStartFrame + #TELEGRAPH_ATTACK_ANIMATION_SPEED
   end
 
-  -- We can't gaurantee every frame was rendered, so we must calculate the exact location regardless of how many frames happened.
+  -- We can't guarantee every frame was rendered, so we must calculate the exact location regardless of how many frames happened.
   -- TODO make this more performant?
-  for frame = 1, frames_since_earned - self.attackStartFrame do
-    resultX = resultX + TELEGRAPH_ATTACK_ANIMATION[garbage_block.direction][frame].dx
-    resultY = resultY + TELEGRAPH_ATTACK_ANIMATION[garbage_block.direction][frame].dy
+  for frame = 1, attackAge - self.attackStartFrame do
+    resultX = resultX + TELEGRAPH_ATTACK_ANIMATION[garbage.direction][frame].dx
+    resultY = resultY + TELEGRAPH_ATTACK_ANIMATION[garbage.direction][frame].dy
   end
 
   return resultX, resultY
@@ -159,8 +159,8 @@ function TelegraphGraphics:renderAttacks()
           garbage.yDestination = garbage.yDestination or (self.posY - TELEGRAPH_PADDING)
 
           if not garbage.xOrigin or not garbage.yOrigin then
-            garbage.xOrigin = (attack.originColumn - 1) * 16 + sender.posX
-            garbage.yOrigin = (11 - attack.originRow) * 16 + sender.posY +
+            garbage.xOrigin = (attack.originColumn - 1) * 16 + sender.pos_x
+            garbage.yOrigin = (11 - attack.originRow) * 16 + sender.pos_y +
                                          sender.displacement - card_animation[#card_animation]
             garbage.x = garbage.xOrigin
             garbage.y = garbage.yOrigin
