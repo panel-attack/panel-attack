@@ -11,6 +11,8 @@ TelegraphGraphics = class(function(self, telegraph)
   self.receiver = telegraph.owner
   self:updatePosition()
   self:preloadGraphics()
+  -- some constant used for drawing
+  self.attackStartFrame = 1
 end)
 
 -- The telegraph_attack_animation below refers the little loop shape attacks make before they start traveling toward the target.
@@ -124,13 +126,13 @@ function TelegraphGraphics:telegraphLoopAttackPosition(garbage_block, frames_sin
 
   local resultX, resultY = garbage_block.origin_x, garbage_block.origin_y
 
-  if frames_since_earned > self.telegraph.attackStartFrame + #telegraph_attack_animation_speed then
-    frames_since_earned = self.telegraph.attackStartFrame + #telegraph_attack_animation_speed
+  if frames_since_earned > self.attackStartFrame + #telegraph_attack_animation_speed then
+    frames_since_earned = self.attackStartFrame + #telegraph_attack_animation_speed
   end
 
   -- We can't gaurantee every frame was rendered, so we must calculate the exact location regardless of how many frames happened.
   -- TODO make this more performant?
-  for frame = 1, frames_since_earned - self.telegraph.attackStartFrame do
+  for frame = 1, frames_since_earned - self.attackStartFrame do
     resultX = resultX + telegraph_attack_animation[garbage_block.direction][frame].dx
     resultY = resultY + telegraph_attack_animation[garbage_block.direction][frame].dy
   end
@@ -144,16 +146,16 @@ function TelegraphGraphics:renderAttacks()
 
   for timeAttackInteracts, attacksThisFrame in pairs(telegraph.attacks) do
     local frames_since_earned = telegraph.sender.CLOCK - timeAttackInteracts
-    if frames_since_earned <= telegraph.attackStartFrame then
+    if frames_since_earned <= self.attackStartFrame then
       -- don't draw anything yet, card animation is still in progress.
     elseif frames_since_earned >= GARBAGE_TRANSIT_TIME then
       -- Attack is done, remove.
       telegraph.attacks[timeAttackInteracts] = nil
     else
       for _, attack in ipairs(attacksThisFrame) do
-        for _, garbage_block in ipairs(attack.stuff_to_send) do
+        for _, garbage_block in ipairs(attack.garbageToSend) do
           garbage_block.destination_x = self:telegraphRenderXPosition(
-                                            telegraph.garbage_queue:get_idx_of_garbage(garbage_block)) +
+                                            telegraph.garbageQueue:get_idx_of_garbage(garbage_block)) +
                                             (TELEGRAPH_BLOCK_WIDTH / 2) - ((TELEGRAPH_BLOCK_WIDTH / self.gfx.attack.width) / 2)
           garbage_block.destination_y = garbage_block.destination_y or (self.pos_y - TELEGRAPH_PADDING)
 
@@ -166,7 +168,7 @@ function TelegraphGraphics:renderAttacks()
             garbage_block.direction = garbage_block.direction or math.sign(garbage_block.destination_x - garbage_block.origin_x) -- should give -1 for left, or 1 for right
           end
 
-          if frames_since_earned <= telegraph.attackStartFrame + #telegraph_attack_animation_speed then
+          if frames_since_earned <= self.attackStartFrame + #telegraph_attack_animation_speed then
             -- draw telegraph attack animation, little loop down and to the side of origin.
 
             -- We can't gaurantee every frame was rendered, so we must calculate the exact location regardless of how many frames happened.
@@ -178,8 +180,8 @@ function TelegraphGraphics:renderAttacks()
             -- move toward destination
 
             local loopX, loopY = self:telegraphLoopAttackPosition(garbage_block, frames_since_earned)
-            local framesHappened = frames_since_earned - (telegraph.attackStartFrame + #telegraph_attack_animation_speed)
-            local totalFrames = GARBAGE_TRANSIT_TIME - (telegraph.attackStartFrame + #telegraph_attack_animation_speed)
+            local framesHappened = frames_since_earned - (self.attackStartFrame + #telegraph_attack_animation_speed)
+            local totalFrames = GARBAGE_TRANSIT_TIME - (self.attackStartFrame + #telegraph_attack_animation_speed)
             local percent = framesHappened / totalFrames
 
             garbage_block.x = loopX + percent * (garbage_block.destination_x - loopX)
@@ -203,7 +205,7 @@ function TelegraphGraphics:renderTelegraph()
   end
 
   -- then draw the telegraph's garbage queue, leaving an empty space until such a time as the attack arrives (earned_frame-GARBAGE_TRANSIT_TIME)
-  local g_queue_to_draw = telegraph.garbage_queue:makeCopy()
+  local g_queue_to_draw = telegraph.garbageQueue:makeCopy()
   local current_block = g_queue_to_draw:pop()
   local draw_y = self.pos_y
   local drewChain = false
@@ -237,7 +239,7 @@ function TelegraphGraphics:renderTelegraph()
         local stopperTime = nil
 
         if current_block.isChain then
-          stopperTime = telegraph.stoppers.chain[telegraph.garbage_queue.chain_garbage.first]
+          stopperTime = telegraph.stoppers.chain[telegraph.garbageQueue.chain_garbage.first]
           if stopperTime and current_block.finalized then
             stopperTime = stopperTime .. " F"
           end
@@ -259,10 +261,10 @@ function TelegraphGraphics:renderTelegraph()
     currentIndex = currentIndex + 1
   end
 
-  if not drewChain and telegraph.garbage_queue.ghost_chain then
+  if not drewChain and telegraph.garbageQueue.ghost_chain then
     local draw_x = self:telegraphRenderXPosition(0)
     -- local draw_y = self.pos_y -- already defined like this further above
-    local height = math.min(telegraph.garbage_queue.ghost_chain, 14)
+    local height = math.min(telegraph.garbageQueue.ghost_chain, 14)
     local chainGfx = self.gfx.telegraph.chain[height]
     draw(chainGfx.image, draw_x, draw_y, 0, chainGfx.xScale, chainGfx.yScale)
 
