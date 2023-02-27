@@ -23,13 +23,14 @@ local BasicMenu = class(
 function BasicMenu:startGame()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
   
-  if config.endless_speed ~= self.speedSlider.value or config.endless_difficulty ~= self.difficultyButtons.value then
-    config.endless_speed = self.speedSlider.value
-    config.endless_difficulty = self.difficultyButtons.value
-    --gprint("saving settings...", unpack(main_menu_screen_pos))
-    --wait()
-    write_conf_file()
+  config.endless_speed = self.speedSlider.value
+  config.endless_difficulty = self.difficultyButtons.value
+  if self.typeButtons.value == "Classic" then
+    config.endless_level = nil
+  else
+    config.endless_level = self.levelSlider.value
   end
+  write_conf_file()
   
   GAME.match = Match(self.gameMode)
 
@@ -85,6 +86,7 @@ function BasicMenu:init()
   local tickLength = 16
   self.levelSlider = LevelSlider({
       tickLength = tickLength,
+      value = config.endless_level or 5,
       onValueChange = function(s)
         play_optional_sfx(themes[config.theme].sounds.menu_move)
       end
@@ -103,7 +105,7 @@ function BasicMenu:init()
               end, width = 60, height = 25}),
       },
       values = {"Classic", "Modern"},
-      selectedIndex = 2,
+      selectedIndex = config.endless_level and 2 or 1,
       onChange = function() play_optional_sfx(themes[config.theme].sounds.menu_move) end
     }
   )
@@ -165,9 +167,10 @@ function BasicMenu:update()
   if self.typeButtons.value == "Classic" then
     local lastScore, record = unpack(self:getScores(self.difficultyButtons.value))
   
-    local xPosition1 = 520
+    local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
+    local xPosition1 = menu_x
     local xPosition2 = xPosition1 + 150
-    local yPosition = 270
+    local yPosition = menu_y + 50
   
     local lastScoreLabelQuads = {}
     local lastScoreQuads = {}

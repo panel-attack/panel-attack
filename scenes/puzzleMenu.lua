@@ -102,7 +102,6 @@ end
 
 function puzzleMenu:update()
   gprint(loc("pz_puzzles"), unpack(themes[config.theme].main_menu_screen_pos))
-  gprint(loc("pz_info"), themes[config.theme].main_menu_screen_pos[1] - 300, themes[config.theme].main_menu_screen_pos[2] + 220)
       
   self.menu:update()
   self.menu:draw()
