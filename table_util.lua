@@ -83,7 +83,7 @@ end
 -- use this when you want to pretend that your table is a hashset
 function table.appendIfNotExists(tab, element)
   if not table.contains(tab, element) then
-    table.insert(tab, #tab + 1, element)
+    tab[#tab+1] = element
   end
 end
 
@@ -124,4 +124,8 @@ function table.indexOf(tab, element)
   end
 
   return nil
+end
+
+function table.hasElements(tab)
+  return next(tab) ~= nil
 end

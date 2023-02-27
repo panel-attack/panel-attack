@@ -478,6 +478,12 @@ function Panel.update(self, panels)
   self.stateChanged = false
   self.propagatesChaining = false
   self.propagatesFalling = false
+  self.match_anyway = nil
+  -- the flags for indicating a (possible garbage) match during the checkMatch process
+  -- clear it here to not have to make an extra iteration through all panels
+  self.matching = false
+  self.matchesMetal = false
+  self.matchesGarbage = false
 
   local stateTable = self:getStateTable()
   stateTable.update(self, panels)

@@ -1128,8 +1128,7 @@ function Stack.updatePanels(self)
   self.shake_time_on_frame = 0
   for row = 1, #self.panels do
     for col = 1, self.width do
-      local panel = self.panels[row][col]
-      panel:update(self.panels)
+      self.panels[row][col]:update(self.panels)
     end
   end
 end
@@ -1303,13 +1302,6 @@ function Stack.simulate(self)
 
     -- Look for matches.
     self:checkMatches()
-    -- Clean up the value we're using to match newly hovering panels
-    -- This is pretty dirty :(
-    for row = 1, #panels do
-      for col = 1, self.width do
-        panels[row][col].match_anyway = nil
-      end
-    end
 
     self:updatePanels()
 
@@ -2148,66 +2140,86 @@ function Stack:getMatchingPanels()
   return matchingPanels
 end
 
+function Stack:getMetalCount(panels)
+  local metalCount = 0
+  for i = 1, #panels do
+    if panels[i].color == 8 then
+      metalCount = metalCount + 1
+    end
+  end
+  return metalCount
+end
+
+function Stack:isChainLink(matchingPanels)
+  return table.trueForAny(matchingPanels, function(panel)
+    return panel.chaining
+  end)
+end
+
 function Stack:checkMatches()
   if self.do_countdown then
     return
   end
 
   local matchingPanels = self:getMatchingPanels()
+  local comboSize = #matchingPanels
 
-  if #matchingPanels > 0 then
-    self.analytic:register_destroyed_panels(#matchingPanels)
-    self:updateScoreWithCombo(#matchingPanels)
-
-    self.manual_raise = false
-
-    local isChain = table.trueForAny(matchingPanels, function(panel)
-      return panel.chaining
-    end)
-    if isChain then
+  if #comboSize > 0 then
+    local metalCount = self:getMetalCount(matchingPanels)
+    local isChainLink = self:isChainLink(matchingPanels)
+    if isChainLink then
       self:incrementChainCounter()
     end
+    -- interrupt any ongoing manual raise
+    self.manual_raise = false
 
-    -- don't check isChain for this!
-    -- needs to be outside of chaining to reproduce matches during a chain giving the same score as the chain link
-    self:updateScoreWithChain()
-
-    local firstPanelToPop, metalCount = self:matchMatchingPanels(matchingPanels, isChain)
-
+    local attackGfxOrigin = self:matchMatchingPanels(matchingPanels, isChainLink)
     local garbagePanels = self:getConnectedGarbagePanels(matchingPanels)
-
-    local garbagePanelCount = 0
-    if table.length(garbagePanels) > 0 then
-      for row = 1, self.height do
-        if garbagePanels[row] then
-          garbagePanelCount = garbagePanelCount + #garbagePanels[row]
-        end
-      end
-      local garbageMatchTime = self.FRAMECOUNTS.MATCH + self.FRAMECOUNTS.POP * (#matchingPanels + garbagePanelCount)
-      self:matchGarbagePanels(garbagePanels, garbageMatchTime, isChain, garbagePanelCount)
+    local garbagePanelCount = #garbagePanels
+    if garbagePanelCount > 0 then
+      local garbageMatchTime = self.FRAMECOUNTS.MATCH + self.FRAMECOUNTS.POP * (comboSize + garbagePanelCount)
+      self:matchGarbagePanels(garbagePanels, garbageMatchTime, isChainLink, garbagePanelCount)
     end
 
-    self:pushGarbage(firstPanelToPop, #matchingPanels, isChain, metalCount)
-
-    if #matchingPanels > 3 then
-      self:showComboCard(firstPanelToPop, #matchingPanels)
-      if isChain then
-        -- increment so the chain card is shown 1 panel above in case we also did a chain
-        firstPanelToPop.row = firstPanelToPop.row + 1
-      end
-    end
-
-    if isChain then
-      self:saveChainData()
-      self:showChainCard(firstPanelToPop)
-    end
-
-    self:awardStopTime(#matchingPanels, isChain, metalCount)
-    local preStopTime = self.FRAMECOUNTS.MATCH + self.FRAMECOUNTS.POP * (#matchingPanels + garbagePanelCount)
+    local preStopTime = self.FRAMECOUNTS.MATCH + self.FRAMECOUNTS.POP * (comboSize + garbagePanelCount)
     self.pre_stop_time = max(self.pre_stop_time, preStopTime)
+
+    if comboSize > 3 or isChainLink or metalCount > 0 then
+      self:pushGarbage(attackGfxOrigin, comboSize, isChainLink, metalCount)
+      self:awardStopTime(comboSize, isChainLink, metalCount)
+    end
+
+    self.analytic:register_destroyed_panels(comboSize)
+    self:updateScoreWithBonus()
+    self:showCards(isChainLink, comboSize, attackGfxOrigin)
   end
 
   self:updateNonMatchingPanels()
+end
+
+function Stack:showCards(isChainLink, comboSize, attackGfxOrigin)
+  if comboSize > 3 then
+    self:enqueue_card(false, attackGfxOrigin.column, attackGfxOrigin.row, comboSize)
+
+    if isChainLink then
+      -- increment so the chain card is shown 1 panel above in case we also did a chain
+      attackGfxOrigin.row = attackGfxOrigin.row + 1
+    end
+  end
+
+  if isChainLink then
+    self:enqueue_card(true, attackGfxOrigin.column, attackGfxOrigin.row, self.chain_counter)
+  end
+end
+
+-- awards bonus score for chains/combos
+-- always call after the logic for incrementing the chain counter
+function Stack:updateScoreWithBonus(comboSize)
+  -- don't check isChain for this!
+  -- needs to be outside of chaining to reproduce matches during a chain giving the same score as the chain link
+  self:updateScoreWithChain()
+
+  self:updateScoreWithCombo(comboSize)
 end
 
 function Stack:updateNonMatchingPanels()
@@ -2239,20 +2251,31 @@ function Stack:updateNonMatchingPanels()
   end
 end
 
-function Stack:matchMatchingPanels(matchingPanels, isChain)
-  table.sort(matchingPanels, function(a, b)
+function Stack:sortByPopOrder(panelList, isGarbage)
+  table.sort(panelList, function(a, b)
     if a.row == b.row then
-      return a.column > b.column
+      if isGarbage then
+        return a.column > b.column
+      else
+        return a.column < b.column
+      end
     else
-      return a.row < b.row
+      if isGarbage then
+        return a.row > b.row
+      else
+        return a.row < b.row
+      end
     end
   end)
-  local metalCount = 0
+
+  return panelList
+end
+
+function Stack:matchMatchingPanels(matchingPanels, isChain)
+  matchingPanels = self:sortByPopOrder(matchingPanels, false)
+
   for i = 1, #matchingPanels do
     local panel = matchingPanels[i]
-    if panel.color == 8 then
-      metalCount = metalCount + 1
-    end
     panel.state = Panel.states.matched
     panel:setTimer(self.FRAMECOUNTS.MATCH + 1)
     if isChain and not panel.chaining then
@@ -2266,43 +2289,42 @@ function Stack:matchMatchingPanels(matchingPanels, isChain)
     panel.combo_size = #matchingPanels
   end
 
-  local firstPanelToPop = {row = matchingPanels[#matchingPanels].row, column = matchingPanels[#matchingPanels].column}
+  local firstCellToPop = {row = matchingPanels[#matchingPanels].row, column = matchingPanels[#matchingPanels].column}
 
-  return firstPanelToPop, metalCount
+  return firstCellToPop
 end
 
 function Stack:pushGarbage(coordinate, comboSize, isChain, metalCount)
   if self.garbage_target and self.telegraph then
     for i = 3, metalCount do
-      self.telegraph:push({width = 6, height = 1, isMetal = true, isChain = false}, coordinate.column, coordinate.row, self.CLOCK)
+      self.telegraph:push({width = 6, height = 1, isMetal = true, isChain = false},
+                           coordinate.column,
+                           coordinate.row,
+                           self.CLOCK)
       self:recordComboHistory(self.CLOCK, 6, 1, true)
     end
+
     local combo_pieces = combo_garbage[comboSize]
     for i = 1, #combo_pieces do
       -- Give out combo garbage based on the lookup table, even if we already made shock garbage,
-      self.telegraph:push({width = combo_pieces[i], height = 1, isMetal = false, isChain = false}, coordinate.column, coordinate.row,
+      self.telegraph:push({width = combo_pieces[i], height = 1, isMetal = false, isChain = false},
+                          coordinate.column,
+                          coordinate.row,
                           self.CLOCK)
       self:recordComboHistory(self.CLOCK, combo_pieces[i], 1, false)
     end
-  end
 
-  if isChain then
-    if self.garbage_target and self.telegraph then
-      self.telegraph:push({width = 6, height = self.chain_counter - 1, isMetal = false, isChain = true}, coordinate.column, coordinate.row,
+    if isChain then
+      self.telegraph:push({width = 6, height = self.chain_counter - 1, isMetal = false, isChain = true},
+                          coordinate.column,
+                          coordinate.row,
                           self.CLOCK)
+      self:recordChainHistory()
     end
   end
 end
 
-function Stack:showComboCard(coordinate, comboSize)
-  self:enqueue_card(false, coordinate.column, coordinate.row, comboSize)
-end
-
-function Stack:showChainCard(coordinate)
-  self:enqueue_card(true, coordinate.column, coordinate.row, self.chain_counter)
-end
-
-function Stack:saveChainData()
+function Stack:recordChainHistory()
   if self.chain_counter == 2 then
     self.currentChainStartFrame = self.CLOCK
     self.chains[self.currentChainStartFrame] = {starts = {}}
@@ -2381,45 +2403,33 @@ function Stack:awardStopTime(comboSize, isChain, metalCount)
 end
 
 function Stack:matchGarbagePanels(garbagePanels, garbageMatchTime, isChain, garbagePanelCount)
-  local panelIndex = 0
-  for row = 1, self.height do
-    if garbagePanels[row] then
-      for column = self.width, 1, -1 do
-        local panel = garbagePanels[row][column]
-        if panel then
-          panelIndex = panelIndex + 1
-          panel.state = Panel.states.matched
-          panel:setTimer(garbageMatchTime + 1)
-          panel.initial_time = garbageMatchTime
-          panel.pop_time = self.FRAMECOUNTS.POP * (garbagePanelCount - panelIndex)
-          panel.pop_index = min(max(panelIndex, 1), 10)
-          panel.y_offset = panel.y_offset - 1
-          panel.height = panel.height - 1
-        end
-      end
-    end
+  self:sortByPopOrder(garbagePanels, true)
+
+  for i = 1, garbagePanelCount do
+    local panel = garbagePanels[i]
+    panel.state = Panel.states.matched
+    panel:setTimer(garbageMatchTime + 1)
+    panel.initial_time = garbageMatchTime
+    panel.pop_time = self.FRAMECOUNTS.POP * (garbagePanelCount - i)
+    panel.pop_index = min(max(i, 1), 10)
+    panel.y_offset = panel.y_offset - 1
+    panel.height = panel.height - 1
   end
+
   self:convertGarbagePanels(isChain)
 end
 
 -- checks the stack for garbage panels that have a negative y offset and assigns them a color from the gpanel_buffer
 function Stack:convertGarbagePanels(isChain)
+  -- color assignments are done per row so we need to iterate the stack properly
   for row = 1, self.height do
     local garbagePanelRow = nil
-    for column = self.width, 1, -1 do
+    for column = 1, self.width do
       local panel = self.panels[row][column]
       if panel.y_offset == -1 then
         -- the bottom row of the garbage piece is about to transform into panels
         if garbagePanelRow == nil then
-          if string.len(self.gpanel_buffer) <= 10 * self.width then
-            local garbagePanels = PanelGenerator.makeGarbagePanels(self.match.seed + self.garbageGenCount, self.NCOLORS, self.gpanel_buffer,
-                                                                   self.match.mode, self.level)
-            self.gpanel_buffer = self.gpanel_buffer .. garbagePanels
-            logger.debug("Generating garbage with seed: " .. self.match.seed + self.garbageGenCount .. " buffer: " .. self.gpanel_buffer)
-            self.garbageGenCount = self.garbageGenCount + 1
-          end
-          garbagePanelRow = string.sub(self.gpanel_buffer, 1, 6)
-          self.gpanel_buffer = string.sub(self.gpanel_buffer, 7)
+          garbagePanelRow = self:getGarbagePanelRow()
         end
         panel.color = string.sub(garbagePanelRow, column, column) + 0
         if isChain then
@@ -2428,6 +2438,23 @@ function Stack:convertGarbagePanels(isChain)
       end
     end
   end
+end
+
+function Stack:refillGarbagePanelBuffer()
+  local garbagePanels = PanelGenerator.makeGarbagePanels(self.match.seed + self.garbageGenCount, self.NCOLORS, self.gpanel_buffer,
+                                                         self.match.mode, self.level)
+  self.gpanel_buffer = self.gpanel_buffer .. garbagePanels
+  logger.debug("Generating garbage with seed: " .. self.match.seed + self.garbageGenCount .. " buffer: " .. self.gpanel_buffer)
+  self.garbageGenCount = self.garbageGenCount + 1
+end
+
+function Stack:getGarbagePanelRow()
+  if string.len(self.gpanel_buffer) <= 10 * self.width then
+    self:refillGarbagePanelBuffer()
+  end
+  local garbagePanelRow = string.sub(self.gpanel_buffer, 1, 6)
+  self.gpanel_buffer = string.sub(self.gpanel_buffer, 7)
+  return garbagePanelRow
 end
 
 function Stack:incrementChainCounter()
@@ -2477,14 +2504,11 @@ function Stack:getConnectedGarbagePanels(matchingPanels)
   while panelsToCheck:len() > 0 do
     local panel = panelsToCheck:pop()
     -- avoid doublechecking the same panel
-    if not table.contains(panelsChecked, panel.id) then
+    if not panelsChecked[panel.id] then
       if panel.isGarbage and panel.state == Panel.states.normal then
         if (panel.metal and panel.matchesMetal) or (not panel.metal and panel.matchesGarbage) then
           panel.matching = true
-          if not garbagePanels[panel.row] then
-            garbagePanels[panel.row] = {}
-          end
-          garbagePanels[panel.row][panel.column] = panel
+          garbagePanels[#garbagePanels + 1] = panel
 
           if panel.row > 1 then
             local panelToCheck = self.panels[panel.row - 1][panel.column]
@@ -2516,7 +2540,7 @@ function Stack:getConnectedGarbagePanels(matchingPanels)
         end
       end
 
-      panelsChecked[#panelsChecked + 1] = panel.id
+      panelsChecked[panel.id] = true
     end
   end
 
@@ -2671,6 +2695,9 @@ function Stack.createPanel(self, row, column)
   panel.onGarbageLand = function(panel)
     self:onGarbageLand(panel)
   end
+  panel.onMatch = function(panels)
+    self:onMatch(panels)
+  end
   self.panels[row][column] = panel
   return panel
 end
@@ -2736,6 +2763,14 @@ function Stack.onGarbageLand(self, panel)
 
     -- whether we ran through it or not, the panel should lose its shake time
     panel.shake_time = nil
+  end
+end
+
+function Stack.onMatch(self, panels)
+  table.join(self.matchingPanels, panels)
+
+  if next(panels).color == 8 then
+    self.metalCountMatchedThisFrame = self.metalCountMatchedThisFrame + #panels
   end
 end
 
